@@ -1,0 +1,14 @@
+{
+  "run_id": "647909830ca2489aa83640a67b9775b2",
+  "model": "unknown",
+  "backend": "mock",
+  "steps": 2,
+  "duration_ticks": 20,
+  "peak_pop": 7,
+  "end_pop": 7,
+  "created_wealth": null,
+  "survival_score": 0.25,
+  "availability_score": 20.0,
+  "total_score": 23.75,
+  "milestones": []
+}

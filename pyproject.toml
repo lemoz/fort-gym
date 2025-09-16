@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fort-gym"
+version = "0.0.1"
+description = "Benchmark suite for evaluating Dwarf Fortress automation agents."
+readme = "README.md"
+authors = [
+  { name = "fort-gym contributors" }
+]
+license = { file = "LICENSE" }
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi",
+  "uvicorn[standard]",
+  "pydantic>=2",
+  "typer",
+  "httpx",
+  "pytest"
+]
+
+[project.optional-dependencies]
+agent = [
+  "openai",
+  "anthropic"
+]
+proto = [
+  "grpcio-tools"
+]
+dev = [
+  "pytest",
+  "ruff",
+  "mypy"
+]
+
+[project.scripts]
+fort-gym = "fort_gym.bench.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/your-org/fort-gym"
+Documentation = "https://github.com/your-org/fort-gym/tree/main/docs"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["fort_gym*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.isort]
+profile = "black"

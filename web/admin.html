@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fort-Gym Admin Panel</title>
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #0f141f; color: #f2f4f9; margin: 0; }
+    header { padding: 2.5rem 8vw; background: linear-gradient(120deg, #243152, #0f141f); }
+    header h1 { margin: 0 0 0.5rem 0; }
+    header p { margin: 0; max-width: 48rem; }
+    section { padding: 2rem 8vw; }
+    form { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-top: 1rem; }
+    label { display: flex; flex-direction: column; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; color: #9fb1d6; }
+    input, select { margin-top: 0.4rem; padding: 0.6rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(12,18,30,0.9); color: #fff; }
+    button { padding: 0.6rem 1.2rem; border-radius: 999px; border: none; cursor: pointer; background: #4f7cff; color: #fff; font-weight: 600; }
+    button.secondary { background: rgba(255,255,255,0.15); }
+    table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; }
+    th, td { padding: 0.75rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: left; }
+    th { text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.08em; color: #9fb1d6; }
+    .actions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    pre { background: rgba(0,0,0,0.65); border-radius: 12px; padding: 1rem; height: 260px; overflow-y: auto; font-family: 'SFMono-Regular', monospace; font-size: 0.85rem; }
+    .share-links { margin-top: 0.5rem; font-size: 0.8rem; color: #9fb1d6; }
+    .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: rgba(0,0,0,0.8); padding: 1rem 1.5rem; border-radius: 12px; display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Fort-Gym Admin Panel</h1>
+    <p>Launch mock benchmark runs, monitor live telemetry, and mint read-only share links for spectators. Public viewers only interact with the `/public/*` namespace.</p>
+  </header>
+
+  <section>
+    <h2>Launch Run</h2>
+    <form id="run-form">
+      <label>Backend
+        <select name="backend">
+          <option value="mock" selected>mock</option>
+          <option value="dfhack">dfhack</option>
+        </select>
+      </label>
+      <label>Model
+        <select name="model">
+          <option value="random" selected>random</option>
+          <option value="fake">fake</option>
+          <option value="openai">openai</option>
+          <option value="anthropic">anthropic</option>
+        </select>
+      </label>
+      <label>Max Steps
+        <input type="number" name="max_steps" value="10" min="1">
+      </label>
+      <label>Ticks / Step
+        <input type="number" name="ticks_per_step" value="100" min="1">
+      </label>
+      <div style="display:flex; align-items:flex-end;">
+        <button type="submit">Start Run</button>
+      </div>
+    </form>
+    <p style="font-size:0.85rem; color:#9fb1d6;">LLM models require API keys in the service environment.</p>
+    <div id="run-result" style="margin-top:1rem; font-size:0.9rem; color:#9fb1d6;"></div>
+  </section>
+
+  <section>
+    <h2>Start 10-Run Job</h2>
+    <form id="job-form">
+      <label>Backend
+        <select name="backend">
+          <option value="mock" selected>mock</option>
+          <option value="dfhack">dfhack</option>
+        </select>
+      </label>
+      <label>Model
+        <select name="model">
+          <option value="random" selected>random</option>
+          <option value="fake">fake</option>
+          <option value="openai">openai</option>
+          <option value="anthropic">anthropic</option>
+        </select>
+      </label>
+      <label>Runs
+        <input type="number" name="n" value="10" min="1">
+      </label>
+      <label>Parallelism
+        <input type="number" name="parallelism" value="2" min="1">
+      </label>
+      <label>Max Steps
+        <input type="number" name="max_steps" value="200" min="1">
+      </label>
+      <label>Ticks / Step
+        <input type="number" name="ticks_per_step" value="100" min="1">
+      </label>
+      <div style="display:flex; align-items:flex-end;">
+        <button type="submit">Launch Job</button>
+      </div>
+    </form>
+    <p style="font-size:0.85rem; color:#9fb1d6;">LLM models require API keys and may incur API usage costs.</p>
+    <div id="job-result" style="margin-top:1rem; font-size:0.9rem; color:#9fb1d6;"></div>
+    <table>
+      <thead>
+        <tr><th>Job ID</th><th>Status</th><th>Progress</th><th>Parallelism</th><th>Actions</th></tr>
+      </thead>
+      <tbody id="jobs-body"></tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Active & Recent Runs</h2>
+    <button type="button" id="runs-reset" class="secondary">Show All Runs</button>
+    <table>
+      <thead>
+        <tr><th>Run ID</th><th>Model</th><th>Status</th><th>Step</th><th>Score</th><th>Actions</th></tr>
+      </thead>
+      <tbody id="runs-body"></tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Live Tail</h2>
+    <form id="tail-form" style="grid-template-columns: repeat(auto-fit, minmax(220px, auto)); align-items:center;">
+      <label style="max-width:240px;">Run ID
+        <input type="text" name="run_id" placeholder="paste run id" required>
+      </label>
+      <div style="display:flex; gap:0.5rem;">
+        <button type="submit">Stream</button>
+        <button type="button" id="tail-stop" class="secondary">Stop</button>
+      </div>
+    </form>
+    <pre id="admin-log">Connect to a run to start tailing events.</pre>
+  </section>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const runForm = document.getElementById('run-form');
+    const runResult = document.getElementById('run-result');
+    const runsBody = document.getElementById('runs-body');
+    const runsReset = document.getElementById('runs-reset');
+    const jobForm = document.getElementById('job-form');
+    const jobResult = document.getElementById('job-result');
+    const jobsBody = document.getElementById('jobs-body');
+    const tailForm = document.getElementById('tail-form');
+    const tailStop = document.getElementById('tail-stop');
+    const adminLog = document.getElementById('admin-log');
+    const toast = document.getElementById('toast');
+    let adminSource = null;
+    let runsCache = [];
+
+    function showToast(message, tone='info') {
+      toast.textContent = message;
+      toast.style.display = 'block';
+      toast.style.background = tone === 'error' ? 'rgba(217,83,79,0.9)' : 'rgba(79,124,255,0.9)';
+      setTimeout(() => { toast.style.display = 'none'; }, 2500);
+    }
+
+    async function fetchJSON(url, options) {
+      const res = await fetch(url, options);
+      if (!res.ok) {
+        const detail = await res.text();
+        throw new Error(detail || res.statusText);
+      }
+      return res.headers.get('content-type')?.includes('application/json') ? res.json() : res.text();
+    }
+
+    function renderRunsList(runs) {
+      runsBody.innerHTML = '';
+      runs.forEach(run => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><code>${run.id}</code></td>
+          <td>${run.model}</td>
+          <td>${run.status}</td>
+          <td>${run.step}</td>
+          <td>${run.score != null ? run.score.toFixed(2) : '—'}</td>
+          <td class="actions"></td>
+        `;
+        const actionsCell = tr.querySelector('.actions');
+        const makeButton = (label, handler, secondary=false) => {
+          const btn = document.createElement('button');
+          btn.textContent = label;
+          if (secondary) btn.className = 'secondary';
+          btn.onclick = handler;
+          return btn;
+        };
+        actionsCell.appendChild(makeButton('Pause', () => mutate(`/runs/${run.id}/pause`, 'paused')));
+        actionsCell.appendChild(makeButton('Resume', () => mutate(`/runs/${run.id}/resume`, 'running'), true));
+        actionsCell.appendChild(makeButton('Stop', () => mutate(`/runs/${run.id}/stop`, 'stopped'), true));
+        actionsCell.appendChild(makeButton('Share', () => share(run.id)));
+        runsBody.appendChild(tr);
+      });
+    }
+
+    async function loadRuns() {
+      try {
+        const data = await fetchJSON('/runs');
+        runsCache = data || [];
+        renderRunsList(runsCache);
+      } catch (err) {
+        showToast('Failed to load runs', 'error');
+      }
+    }
+
+    async function mutate(url, action) {
+      try {
+        await fetchJSON(url, { method: 'POST' });
+        showToast(`Run ${action}`);
+        loadRuns();
+      } catch (err) {
+        showToast(`Failed to ${action}: ${err.message}`, 'error');
+      }
+    }
+
+    async function share(runId) {
+      try {
+        const res = await fetchJSON(`/runs/${runId}/share`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ scope: ['live','replay','export'], ttl_seconds: 86400 }),
+        });
+        const shareBox = document.createElement('div');
+        shareBox.className = 'share-links';
+        shareBox.innerHTML = `
+          <div>Token: <code>${res.token}</code></div>
+          <div><a href="/public/runs/${res.token}" target="_blank">Public Run Page</a></div>
+          <div><a href="/public/runs/${res.token}/events/replay?speed=4" target="_blank">Replay ×4</a></div>
+          <div><a href="/public/runs/${res.token}/export/trace" target="_blank">Export NDJSON</a></div>
+        `;
+        showToast('Share token created');
+        runResult.appendChild(shareBox);
+        loadRuns();
+      } catch (err) {
+        showToast(`Share failed: ${err.message}`, 'error');
+      }
+    }
+
+    function renderJobs(jobs) {
+      jobsBody.innerHTML = '';
+      jobs.forEach(job => {
+        const jobRuns = job.run_ids || [];
+        const completed = jobRuns.length;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><code>${job.job_id}</code></td>
+          <td>${job.status}</td>
+          <td>${completed}/${job.n}</td>
+          <td>${job.parallelism}</td>
+          <td class="actions"></td>
+        `;
+        const actionsCell = tr.querySelector('.actions');
+        const viewBtn = document.createElement('button');
+        viewBtn.className = 'secondary';
+        viewBtn.textContent = 'Show Runs';
+        viewBtn.onclick = () => {
+          if (!runsCache.length) {
+            showToast('Runs not loaded yet', 'error');
+            return;
+          }
+          const subset = runsCache.filter(run => jobRuns.includes(run.id));
+          if (subset.length) {
+            renderRunsList(subset);
+            runResult.textContent = `Showing runs for job ${job.job_id}`;
+          } else {
+            showToast('No completed runs for this job yet', 'error');
+          }
+        };
+        actionsCell.appendChild(viewBtn);
+        jobsBody.appendChild(tr);
+      });
+    }
+
+    async function loadJobs() {
+      try {
+        const jobs = await fetchJSON('/jobs');
+        renderJobs(jobs || []);
+      } catch (err) {
+        showToast('Failed to load jobs', 'error');
+      }
+    }
+
+    runForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      const formData = new FormData(runForm);
+      const payload = Object.fromEntries(formData.entries());
+      payload.max_steps = Number(payload.max_steps);
+      payload.ticks_per_step = Number(payload.ticks_per_step);
+      try {
+        const res = await fetchJSON('/runs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        runResult.textContent = `Run started: ${res.id}`;
+        showToast('Run launched');
+        runForm.reset();
+        loadRuns();
+      } catch (err) {
+        showToast(`Launch failed: ${err.message}`, 'error');
+      }
+    });
+
+    jobForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      const formData = new FormData(jobForm);
+      const payload = Object.fromEntries(formData.entries());
+      payload.n = Number(payload.n);
+      payload.parallelism = Number(payload.parallelism);
+      payload.max_steps = Number(payload.max_steps);
+      payload.ticks_per_step = Number(payload.ticks_per_step);
+      try {
+        const res = await fetchJSON('/jobs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        jobResult.textContent = `Job started: ${res.job_id}`;
+        showToast('Job launched');
+        loadJobs();
+      } catch (err) {
+        showToast(`Job launch failed: ${err.message}`, 'error');
+      }
+    });
+
+    tailForm.addEventListener('submit', event => {
+      event.preventDefault();
+      const runId = new FormData(tailForm).get('run_id');
+      if (!runId) return;
+      if (adminSource) adminSource.close();
+      adminLog.textContent = '';
+      adminSource = new EventSource(`/runs/${encodeURIComponent(runId)}/events/stream`);
+      adminSource.onmessage = (evt) => {
+        adminLog.textContent += evt.data + '\n';
+        adminLog.scrollTop = adminLog.scrollHeight;
+      };
+      adminSource.onerror = () => {
+        if (adminSource) adminSource.close();
+        adminSource = null;
+        showToast('Stream ended', 'error');
+      };
+    });
+
+    tailStop.addEventListener('click', () => {
+      if (adminSource) {
+        adminSource.close();
+        adminSource = null;
+        adminLog.textContent = 'Stream stopped.';
+      }
+    });
+
+    runsReset.addEventListener('click', () => {
+      renderRunsList(runsCache);
+      runResult.textContent = '';
+    });
+
+    loadRuns();
+    loadJobs();
+    setInterval(loadRuns, 5000);
+    setInterval(loadJobs, 3000);
+  </script>
+</body>
+</html>

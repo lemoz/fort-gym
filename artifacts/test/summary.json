@@ -1,0 +1,14 @@
+{
+  "run_id": "abc",
+  "model": "unknown",
+  "backend": "unknown",
+  "steps": 0,
+  "duration_ticks": 0,
+  "peak_pop": 0,
+  "end_pop": 0,
+  "created_wealth": null,
+  "survival_score": 0.0,
+  "availability_score": 0.0,
+  "total_score": 0.0,
+  "milestones": []
+}

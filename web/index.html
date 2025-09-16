@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fort-Gym: Dwarf Fortress Agent Benchmark</title>
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; background: #0b0d12; color: #f5f7fb; }
+    header, section { padding: 3rem 8vw; }
+    header { background: radial-gradient(circle at top left, #28334a, #0b0d12); color: #fff; }
+    h1 { font-size: 2.8rem; margin-bottom: 0.5rem; }
+    h2 { margin-top: 0; font-size: 2rem; }
+    p.lede { font-size: 1.2rem; max-width: 45rem; }
+    a.cta { display: inline-block; margin-top: 1rem; padding: 0.75rem 1.5rem; background: #4f7cff; color: #fff; text-decoration: none; border-radius: 999px; font-weight: 600; }
+    a.cta:hover { background: #6b8dff; }
+
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
+    .card { background: rgba(15, 21, 33, 0.9); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 1.25rem; box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
+    .card h3 { margin: 0 0 0.5rem 0; font-size: 1.2rem; }
+    .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.75rem; background: rgba(79,124,255,0.2); color: #9ab3ff; margin-right: 0.5rem; }
+    .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+    button, .link-btn { padding: 0.5rem 1rem; border-radius: 999px; border: none; cursor: pointer; font-weight: 600; }
+    button { background: #4f7cff; color: #fff; }
+    button.secondary { background: rgba(255,255,255,0.08); color: #e5ecff; }
+    button:hover { opacity: 0.9; }
+    button:disabled { opacity: 0.35; cursor: not-allowed; }
+    .link-btn { background: rgba(255,255,255,0.1); color: #e5ecff; text-decoration: none; }
+    .link-btn.disabled { opacity: 0.35; pointer-events: none; }
+
+    .log-wrap { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 2rem; }
+    pre { background: rgba(0, 0, 0, 0.6); padding: 1rem; border-radius: 12px; height: 280px; overflow-y: auto; font-family: 'SFMono-Regular', Menlo, Monaco, monospace; font-size: 0.85rem; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; }
+    th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    th { text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.08em; }
+
+    ul { list-style: disc inside; max-width: 45rem; }
+    footer { text-align: center; padding: 2rem 8vw; background: #05070b; color: #9fb1d6; font-size: 0.9rem; }
+    .highlights { margin-top: 1.5rem; background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px; min-height: 120px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Fort-Gym: Dwarf Fortress Agent Benchmark</h1>
+    <p class="lede">Watch AI overseers build, survive, and score in real time. Share live dashboards with a token, replay breathtaking recoveries, and study the leaderboard of agent models.</p>
+    <a class="cta" href="#explainer">Learn how it works</a>
+  </header>
+
+  <section id="live">
+    <h2>Live Now</h2>
+    <p>Curated public runs that are currently active or recently paused. Click “Watch Live” for real-time telemetry, “Replay ×4” for speedy NDJSON playback, or grab an export for deeper analysis.</p>
+    <div id="live-runs" class="cards"></div>
+    <div class="log-wrap">
+      <div>
+        <h3>Live Stream</h3>
+        <pre id="live-log">Choose a run to watch events as they happen.</pre>
+      </div>
+      <div>
+        <h3>Replay Log</h3>
+        <pre id="replay-log">Load a replay to see the step-by-step story.</pre>
+      </div>
+    </div>
+  </section>
+
+  <section id="leaderboard">
+    <h2>Leaderboard</h2>
+    <p>Aggregated statistics across shared runs. Scores are computed from composite metrics emitted at the end of each step.</p>
+    <table>
+      <thead>
+        <tr><th>Model</th><th>Mean Score</th><th>Runs</th><th>Survival %</th></tr>
+      </thead>
+      <tbody id="leaderboard-body"></tbody>
+    </table>
+  </section>
+
+  <section id="highlights">
+    <h2>Highlights</h2>
+    <p>Recent milestones pulled from public traces. Select a run to populate contextual notes.</p>
+    <div id="highlights-list" class="highlights">No highlights yet. Pick a run above to load milestone excerpts.</div>
+  </section>
+
+  <section id="explainer">
+    <h2>How It Works</h2>
+    <ul>
+      <li>Each benchmark turn pauses the simulation, encodes observations, lets the agent choose exactly one action, and then advances the fortress.</li>
+      <li>Actions must match the fort-gym schema and are validated before execution to keep runs deterministic and comparable.</li>
+      <li>Scores blend survival, resource stocks, and milestone bonuses. Read more in the documentation and architecture notes.</li>
+      <li>The entire project is open-source — contribute agents, environments, or analysis tooling.</li>
+    </ul>
+    <a class="cta" href="https://github.com/your-org/fort-gym" target="_blank" rel="noopener">View Repository</a>
+  </section>
+
+  <footer>
+    fort-gym &middot; Share tokens expose read-only data streams. Admin tooling lives at <code>web/admin.html</code>.
+  </footer>
+
+  <script>
+  const liveContainer = document.getElementById('live-runs');
+  const liveLog = document.getElementById('live-log');
+  const replayLog = document.getElementById('replay-log');
+  const leaderboardBody = document.getElementById('leaderboard-body');
+  const highlightsBox = document.getElementById('highlights-list');
+  let highlightAbort = null;
+  const SURVIVAL_WEIGHT = 30;
+
+  async function fetchJSON(url) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(res.statusText);
+      return await res.json();
+    } catch (err) {
+      console.warn('fetch error', url, err);
+      return null;
+    }
+  }
+
+  function clearLogs() {
+    liveLog.textContent = 'Choose a run to watch events as they happen.';
+    replayLog.textContent = 'Load a replay to see the step-by-step story.';
+  }
+
+  function renderLiveRuns(runs) {
+    liveContainer.innerHTML = '';
+    if (!runs || !runs.length) {
+      const empty = document.createElement('p');
+      empty.textContent = 'No public runs are live right now. Check back soon!';
+      liveContainer.appendChild(empty);
+      return;
+    }
+    runs.forEach(run => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <h3>${run.model}</h3>
+        <div><span class="badge">${run.backend}</span><span class="badge">${run.status}</span></div>
+        <p>Step ${run.step}</p>
+        <p>${run.score !== null && run.score !== undefined ? `Score: ${run.score.toFixed(2)}` : 'Score pending'}</p>
+      `;
+      const actions = document.createElement('div');
+      actions.className = 'actions';
+
+      const liveBtn = document.createElement('button');
+      liveBtn.textContent = 'Watch Live';
+      liveBtn.onclick = () => {
+        watchLive(run.token);
+        loadHighlights(run.token);
+      };
+      if (!(run.scopes || []).includes('live')) {
+        liveBtn.disabled = true;
+        liveBtn.title = 'Live stream not shared for this run';
+      }
+      actions.appendChild(liveBtn);
+
+      const replayBtn = document.createElement('button');
+      replayBtn.className = 'secondary';
+      replayBtn.textContent = 'Replay ×4';
+      replayBtn.onclick = () => {
+        replay(run.token, 4);
+        loadHighlights(run.token);
+      };
+      if (!(run.scopes || []).includes('replay')) {
+        replayBtn.disabled = true;
+        replayBtn.title = 'Replay not available for this run';
+      }
+      actions.appendChild(replayBtn);
+
+      const exportLink = document.createElement('a');
+      exportLink.className = 'link-btn';
+      exportLink.textContent = 'Export NDJSON';
+      exportLink.href = `/public/runs/${run.token}/export/trace`;
+      exportLink.target = '_blank';
+      if (!(run.scopes || []).includes('export')) {
+        exportLink.classList.add('disabled');
+        exportLink.onclick = (e) => e.preventDefault();
+        exportLink.title = 'Export not shared for this run';
+      }
+      actions.appendChild(exportLink);
+
+      card.appendChild(actions);
+      liveContainer.appendChild(card);
+    });
+  }
+
+  async function refreshLiveRuns() {
+    const data = await fetchJSON('/public/runs');
+    if (!data) return;
+    const liveCandidates = data.filter(run => ['running', 'paused'].includes(run.status)).slice(0, 6);
+    renderLiveRuns(liveCandidates);
+  }
+
+  async function refreshLeaderboard() {
+    const data = await fetchJSON('/public/leaderboard');
+    if (!data) return;
+    leaderboardBody.innerHTML = '';
+    (data || []).slice(0, 10).forEach(row => {
+      const tr = document.createElement('tr');
+      const mean = row.mean_score != null ? row.mean_score.toFixed(2) : '—';
+      const survivalBase = row.survival_mean != null ? Number(row.survival_mean) : 0;
+      const survival = SURVIVAL_WEIGHT ? Math.round((survivalBase / SURVIVAL_WEIGHT) * 100) : 0;
+      tr.innerHTML = `<td>${row.model}</td><td>${mean}</td><td>${row.runs}</td><td>${survival}%</td>`;
+      leaderboardBody.appendChild(tr);
+    });
+  }
+
+  async function loadHighlights(token) {
+    if (highlightAbort) highlightAbort.abort();
+    const controller = new AbortController();
+    highlightAbort = controller;
+    highlightsBox.textContent = 'Loading highlights...';
+    try {
+      const res = await fetch(`/public/runs/${token}/export/trace`, { signal: controller.signal });
+      if (!res.ok) throw new Error('export unavailable');
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      const highlights = [];
+      while (highlights.length < 6) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          try {
+            const obj = JSON.parse(line);
+            const events = obj.events || [];
+            events.forEach(evt => {
+              if (evt.type === 'score' && evt.data && evt.data.milestones && evt.data.milestones.length) {
+                evt.data.milestones.forEach(m => highlights.push(`[step ${obj.step}] ${m}`));
+              }
+            });
+          } catch (_) {}
+          if (highlights.length >= 6) break;
+        }
+      }
+      highlightsBox.innerHTML = highlights.length ? `<ul>${highlights.map(h => `<li>${h}</li>`).join('')}</ul>` : 'No milestones recorded yet.';
+      await reader.cancel().catch(() => {});
+    } catch (err) {
+      if (controller.signal.aborted) return;
+      highlightsBox.textContent = 'Unable to load highlights for this run.';
+    }
+  }
+
+  </script>
+
+<script>
+let es;
+let liveToken = null;
+let liveRetry = 1000;
+function watchLive(token){
+  if (liveToken !== token) {
+    liveRetry = 1000;
+  }
+  liveToken = token;
+  if(es) es.close();
+  const log = document.getElementById('live-log');
+  log.textContent = '';
+  es = new EventSource(`/public/runs/${token}/events/stream`);
+  es.onopen = () => { liveRetry = 1000; };
+  es.onmessage = (e)=>{ log.textContent += e.data + "\n"; log.scrollTop = log.scrollHeight; };
+  es.addEventListener('state', (e)=>{ log.textContent += "[state] "+e.data+"\n"; });
+  es.addEventListener('action',(e)=>{ log.textContent += "[action] "+e.data+"\n"; });
+  es.onerror = ()=>{ es && es.close(); liveRetry = Math.min(4000, liveRetry + 500); setTimeout(()=>{ if(liveToken === token) watchLive(token); }, liveRetry); };
+}
+function replay(token, speed=4){
+  if(es) es.close();
+  const log = document.getElementById('replay-log');
+  log.textContent = '';
+  es = new EventSource(`/public/runs/${token}/events/replay?speed=${speed}`);
+  es.onmessage = (e)=>{ log.textContent += e.data + "\n"; log.scrollTop = log.scrollHeight; };
+  es.addEventListener('score', (e)=>{ log.textContent += "[score] "+e.data+"\n"; });
+  es.onerror = ()=>{ es && es.close(); /* no reconnect on replay */ };
+}
+</script>
+
+  <script>
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      refreshLiveRuns();
+      refreshLeaderboard();
+    }
+  });
+
+  clearLogs();
+  refreshLiveRuns();
+  refreshLeaderboard();
+  setInterval(refreshLiveRuns, 3000);
+  setInterval(refreshLeaderboard, 10000);
+  </script>
+</body>
+</html>
