@@ -1,0 +1,9 @@
+---
+- hosts: gce
+  become: true
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  roles:
+    - role: base
+    - role: dfhack
+    - role: fortgym

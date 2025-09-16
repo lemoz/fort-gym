@@ -1,0 +1,61 @@
+---
+- name: Ensure fort-gym install directory exists
+  file:
+    path: "{{ fortgym_install_dir }}"
+    state: directory
+    owner: "{{ service_user }}"
+    group: "{{ service_group }}"
+    mode: '0755'
+
+- name: Git clone fort-gym repository
+  git:
+    repo: "{{ fortgym_repo_url }}"
+    dest: "{{ fortgym_install_dir }}"
+    version: "{{ fortgym_checkout_ref }}"
+    update: true
+    force: true
+
+- name: Ensure virtualenv directory
+  file:
+    path: "{{ fortgym_venv_dir }}"
+    state: directory
+    owner: "{{ service_user }}"
+    group: "{{ service_group }}"
+    mode: '0755'
+
+- name: Create Python virtual environment
+  command: python3 -m venv "{{ fortgym_venv_dir }}"
+  args:
+    creates: "{{ fortgym_venv_dir }}/bin/activate"
+
+- name: Upgrade pip in virtualenv
+  command: "{{ fortgym_venv_dir }}/bin/pip install --upgrade pip"
+
+- name: Install fort-gym package
+  command: "{{ fortgym_venv_dir }}/bin/pip install -e {{ fortgym_install_dir }}[dev]"
+
+- name: Render fort-gym environment file
+  template:
+    src: fort-gym.env.j2
+    dest: "{{ fortgym_env_path }}"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Render fort-gym API systemd unit
+  template:
+    src: fort-gym-api.service.j2
+    dest: /etc/systemd/system/fort-gym-api.service
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Reload systemd
+  systemd:
+    daemon_reload: true
+
+- name: Enable/disable fort-gym API service
+  systemd:
+    name: fort-gym-api.service
+    enabled: "{{ fortgym_service_enabled }}"
+    state: "{{ 'started' if fortgym_service_enabled else 'stopped' }}"

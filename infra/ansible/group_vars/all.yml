@@ -1,0 +1,49 @@
+---
+# Repository and install paths
+fortgym_repo_url: "https://github.com/lemoz/fort-gym.git"
+fortgym_checkout_ref: "main"
+fortgym_install_dir: "/opt/fort-gym"
+fortgym_venv_dir: "{{ fortgym_install_dir }}/.venv"
+fortgym_env_path: "/etc/fort-gym.env"
+fortgym_service_enabled: false
+fortgym_service_port: 8000
+
+# DFHack distribution (set to a valid tarball/zip URL during deployment)
+dfhack_archive_url: "https://example.com/path/to/dfhack-linux.tar.xz"
+dfhack_archive_checksum: ""
+dfhack_install_dir: "/opt/dfhack"
+dfhack_env_path: "/etc/dfhack.env"
+dfhack_remote_port: 5000
+dfhack_service_enabled: true
+
+dfhack_display: ":99"
+
+# System accounts
+service_user: "ubuntu"
+service_group: "ubuntu"
+
+# Allowed TCP ports through UFW
+allow_tcp_ports:
+  - 5000
+  - 8000
+
+# Base packages required by fort-gym + DFHack
+base_packages:
+  - xvfb
+  - xauth
+  - x11-xserver-utils
+  - fonts-dejavu-core
+  - libglu1-mesa
+  - libxrender1
+  - libxi6
+  - libxrandr2
+  - libxcursor1
+  - unzip
+  - curl
+  - ca-certificates
+  - jq
+  - git
+  - python3
+  - python3-venv
+  - python3-pip
+  - ufw

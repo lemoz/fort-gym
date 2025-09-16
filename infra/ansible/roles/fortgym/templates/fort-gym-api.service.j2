@@ -1,0 +1,15 @@
+[Unit]
+Description=fort-gym API server
+After=network.target dfhack-headless.service
+
+[Service]
+EnvironmentFile={{ fortgym_env_path }}
+User={{ service_user }}
+Group={{ service_group }}
+WorkingDirectory={{ fortgym_install_dir }}
+ExecStart={{ fortgym_venv_dir }}/bin/uvicorn fort_gym.bench.api.server:app --host 0.0.0.0 --port {{ fortgym_service_port }}
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

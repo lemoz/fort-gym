@@ -1,0 +1,60 @@
+---
+- name: Ensure DFHack install directory is absent
+  file:
+    path: "{{ dfhack_install_dir }}"
+    state: absent
+
+- name: Create DFHack install directory
+  file:
+    path: "{{ dfhack_install_dir }}"
+    state: directory
+    owner: "{{ service_user }}"
+    group: "{{ service_group }}"
+    mode: '0755'
+
+- name: Download DFHack archive
+  get_url:
+    url: "{{ dfhack_archive_url }}"
+    dest: /tmp/dfhack.tar.xz
+    mode: '0644'
+    checksum: "{{ dfhack_archive_checksum | default(omit) }}"
+
+- name: Extract DFHack archive
+  unarchive:
+    src: /tmp/dfhack.tar.xz
+    dest: "{{ dfhack_install_dir }}"
+    remote_src: true
+    extra_opts:
+      - "--strip-components=1"
+
+- name: Copy remote init helper
+  copy:
+    src: "{{ playbook_dir }}/../files/df_remote_init.lua"
+    dest: "{{ dfhack_install_dir }}/df_remote_init.lua"
+    mode: '0644'
+
+- name: Render DFHack environment file
+  template:
+    src: dfhack.env.j2
+    dest: "{{ dfhack_env_path }}"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Deploy DFHack systemd service
+  template:
+    src: dfhack-headless.service.j2
+    dest: /etc/systemd/system/dfhack-headless.service
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Reload systemd
+  systemd:
+    daemon_reload: true
+
+- name: Enable and start DFHack service
+  systemd:
+    name: dfhack-headless.service
+    enabled: "{{ dfhack_service_enabled }}"
+    state: "{{ 'started' if dfhack_service_enabled else 'stopped' }}"

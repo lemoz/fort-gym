@@ -1,0 +1,34 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Install base packages
+  apt:
+    name: "{{ base_packages }}"
+    state: present
+
+- name: Enable UFW
+  ufw:
+    state: enabled
+    policy: deny
+
+- name: Allow required TCP ports
+  ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop: "{{ allow_tcp_ports }}"
+
+- name: Ensure service group exists
+  group:
+    name: "{{ service_group }}"
+    state: present
+
+- name: Ensure service user exists
+  user:
+    name: "{{ service_user }}"
+    state: present
+    groups: "{{ service_group }}"
+    append: true
