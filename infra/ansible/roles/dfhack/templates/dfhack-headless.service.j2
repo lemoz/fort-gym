@@ -7,7 +7,9 @@ EnvironmentFile={{ dfhack_env_path }}
 User={{ service_user }}
 Group={{ service_group }}
 WorkingDirectory={{ dfhack_install_dir }}
-ExecStart=/bin/bash -c "Xvfb ${DISPLAY} -screen 0 1280x800x24 & echo $! > /tmp/xvfb-dfhack.pid && trap 'kill $(cat /tmp/xvfb-dfhack.pid)' EXIT && sleep 2 && ./dfhack +lua dfhack.run_script('df_remote_init.lua')"
+ExecStart={{ dfhack_install_dir }}/dfhack-headless.sh
+StandardOutput=journal
+StandardError=journal
 Restart=on-failure
 RestartSec=5
 

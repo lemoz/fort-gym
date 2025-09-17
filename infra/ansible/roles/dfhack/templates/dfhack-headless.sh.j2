@@ -1,0 +1,24 @@
+#!/bin/bash
+set -euo pipefail
+
+XVFB_PID_FILE="/tmp/xvfb-dfhack.pid"
+
+cleanup() {
+  if [[ -f "$XVFB_PID_FILE" ]]; then
+    kill "$(cat "$XVFB_PID_FILE")" >/dev/null 2>&1 || true
+    rm -f "$XVFB_PID_FILE"
+  fi
+}
+trap cleanup EXIT
+
+echo "[dfhack-headless] starting Xvfb on ${DISPLAY}"
+Xvfb "${DISPLAY}" -screen 0 1280x800x24 &
+echo $! > "$XVFB_PID_FILE"
+
+export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:+$LD_LIBRARY_PATH:}$(pwd)/hack:$(pwd)/hack/libs"
+sleep 1
+
+echo "[dfhack-headless] launching dfhack with remote init"
+./dfhack +lua "dfhack.run_script('df_remote_init.lua')" |& sed -u 's/^/[dfhack] /'
+status=${PIPESTATUS[0]}
+exit $status

@@ -7,6 +7,17 @@
     group: "{{ service_group }}"
     mode: '0755'
 
+- name: Allow git safe directory
+  shell: |
+    git config --global --get-all safe.directory | grep -Fx "{{ fortgym_install_dir }}" >/dev/null 2>&1 || \
+    git config --global --add safe.directory "{{ fortgym_install_dir }}"
+  args:
+    executable: /bin/bash
+
+- name: Debug fort-gym repo URL
+  debug:
+    var: fortgym_repo_url
+
 - name: Git clone fort-gym repository
   git:
     repo: "{{ fortgym_repo_url }}"
@@ -14,6 +25,15 @@
     version: "{{ fortgym_checkout_ref }}"
     update: true
     force: true
+
+- name: Ensure fort-gym tree ownership
+  file:
+    path: "{{ fortgym_install_dir }}"
+    owner: "{{ service_user }}"
+    group: "{{ service_group }}"
+    recurse: true
+    state: directory
+
 
 - name: Ensure virtualenv directory
   file:
@@ -24,7 +44,7 @@
     mode: '0755'
 
 - name: Create Python virtual environment
-  command: python3 -m venv "{{ fortgym_venv_dir }}"
+  command: "{{ fortgym_python_executable | default('python3') }} -m venv {{ fortgym_venv_dir }}"
   args:
     creates: "{{ fortgym_venv_dir }}/bin/activate"
 

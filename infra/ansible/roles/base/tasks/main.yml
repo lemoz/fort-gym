@@ -9,17 +9,17 @@
     name: "{{ base_packages }}"
     state: present
 
-- name: Enable UFW
-  ufw:
-    state: enabled
-    policy: deny
-
 - name: Allow required TCP ports
   ufw:
     rule: allow
     port: "{{ item }}"
     proto: tcp
   loop: "{{ allow_tcp_ports }}"
+
+- name: Enable UFW with default deny
+  ufw:
+    state: enabled
+    policy: deny
 
 - name: Ensure service group exists
   group:

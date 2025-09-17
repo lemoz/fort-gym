@@ -34,8 +34,8 @@ vm-provision:
 	ansible-playbook -i infra/ansible/inventory.ini infra/ansible/playbooks/site.yml
 
 vm-start:
-	ansible -i infra/ansible/inventory.ini gce -b -m systemd -a "name=dfhack-headless.service state=started"
-	ansible -i infra/ansible/inventory.ini gce -b -m systemd -a "name=fort-gym-api.service state=started" || true
+	ansible -i infra/ansible/inventory.ini dfhack_host -b -m systemd -a "name=dfhack-headless.service state=started"
+	ansible -i infra/ansible/inventory.ini dfhack_host -b -m systemd -a "name=fort-gym-api.service state=started" || true
 
 vm-status:
-	ansible -i infra/ansible/inventory.ini gce -b -m shell -a "systemctl status dfhack-headless.service fort-gym-api.service --no-pager || true"
+	ansible -i infra/ansible/inventory.ini dfhack_host -b -m shell -a "systemctl status dfhack-headless.service fort-gym-api.service --no-pager || true"

@@ -1,93 +1,84 @@
 # fort-gym
 
-An open-source benchmark for evaluating autonomous agents overseeing Dwarf Fortress colonies via DFHack.
+## Overview
+fort-gym is a Dwarf Fortress agent benchmark with two backends: a deterministic mock environment for local development and a DFHack-powered backend for live fortress runs on Linux. Agents issue exactly one action per step, the harness records every observation/state/action to JSONL, streams live updates over SSE, and exposes admin/public web UIs plus 10-run job orchestration with summaries and leaderboards.
 
-## Project Goals
-- Provide a reproducible harness for stepping agents through fortress management with a strict action schema.
-- Capture rich observations, memory, and scoring artifacts for benchmarking.
-- Enable orchestration of multiple fortress runs with API and web dashboard support.
+## Local (Mock) Quickstart
+```bash
+pip install -e .[dev]
+fort-gym api              # API on :8000
+# open web/admin.html and start a mock run (model=fake|random)
+```
+Artifacts (trace JSONL + summary) land under `fort_gym/artifacts/<run_id>/`. You can replay them via the public UI (`web/index.html`) or inspect the leaderboard which reads summaries.
 
-## Non-Goals
-- Adventure Mode agent support.
-- Per-dwarf autonomous brains beyond a single overseer controller.
-- Pixel or vision-based observation channels.
+## Deploy on a Google Cloud VM (DFHack)
+### Prerequisites
+- Google Cloud SDK (`gcloud`) configured with project/zone.
+- VM firewall needs TCP 5000 (DFHack) and 8000 (fort-gym API).
 
-## Quickstart (Mock)
-1. `make api` to launch the FastAPI development server.
-2. Check service health: `curl http://localhost:8000/health`.
-3. Kick off a placeholder run: `curl -X POST http://localhost:8000/runs` and copy the returned `run_id`.
-4. Stream updates via SSE: open `http://localhost:8000/runs/<run_id>/events/stream` or load `web/index.html` in a static server to see live logs.
-
-## DFHack Backend
-- Generate protobuf bindings once per DFHack release: `make proto` (requires `grpcio-tools`).
-- Start Dwarf Fortress with DFHack's remote server enabled (`remote` plugin) and ensure it listens on the configured host/port (defaults: `127.0.0.1:5000`).
-- Launch a run targeting DFHack once the backend is available; the CLI defaults to the mock environment for now.
-- Headless environments may need `xvfb-run` or similar virtual displays; see the [Travis CI headless guide](https://docs.travis-ci.com/user/gui-and-headless-browsers/).
-
-### Reference links
-- DFHack Remote API overview: [docs.dfhack.org](https://docs.dfhack.org/en/stable/docs/dev/Remote.html)
-- RemoteFortressReader plugin details: [docs.dfhack.org tools](https://docs.dfhack.org/en/stable/docs/tools/RemoteFortressReader.html)
-
-
-### Action Schema Example
-```json
-{
-  "type": "BUILD",
-  "params": {
-    "structure": "workshop",
-    "material": "granite",
-    "location": [1, 1, 0]
-  },
-  "intent": "Expand crafting capacity"
-}
+### Create the VM + firewall rules
+```bash
+gcloud compute firewall-rules create allow-dfhack --allow tcp:5000 --direction=INGRESS --target-tags=dfhack
+gcloud compute firewall-rules create allow-fortgym --allow tcp:8000 --direction=INGRESS --target-tags=fortgym
+gcloud compute instances create dfhack-host   --machine-type=e2-standard-2   --image-family=ubuntu-2204-lts --image-project=ubuntu-os-cloud   --boot-disk-size=50GB   --tags=dfhack,fortgym
 ```
 
-### SSE Event Frame
+### Provision with Ansible
+1. Edit `infra/ansible/inventory.ini` with your VM IP/user/key.
+2. Update `infra/ansible/group_vars/all.yml`:
+   - `dfhack_archive_url` (Linux DF+DFHack bundle) and optional checksum.
+   - `service_user`/`service_group` (default `ubuntu`).
+   - `fortgym_repo_url` (defaults to this repo) & `fortgym_checkout_ref`.
+3. Run:
+```bash
+make vm-provision
+make vm-start
+make vm-status
 ```
-event: state
-data: {"run_id": "<id>", "step": 0, "state": {"time": 0}}
 
+### What it does
+- Installs Xvfb and dependencies, downloads DF/DFHack to `/opt/dfhack`, and runs `dfhack-headless` with the remote plugin listening on `0.0.0.0:5000`.
+- Clones fort-gym into `/opt/fort-gym`, sets up a virtualenv, installs the package.
+- Deploys an optional `fort-gym-api` service on `0.0.0.0:8000` (disabled unless `fortgym_service_enabled: true`).
+
+## Running DFHack Jobs from the API
+If the API service is enabled:
+```bash
+curl -s -X POST http://<VM_IP>:8000/jobs   -H 'Content-Type: application/json'   -d '{"model":"fake","backend":"mock","n":10,"parallelism":2,"max_steps":100,"ticks_per_step":50}'
 ```
+Otherwise SSH into the VM, run `fort-gym api` manually, and use the admin UI in a browser.
 
-## Documentation
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for design notes as they develop.
+## Environment & Keys
+Copy the example env and fill it in:
+```bash
+cp .env.example .env
+```
+- `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` required for those agents.
+- DFHack backend runs on Linux; macOS typically uses the mock backend or targets the Linux VM.
 
-## CLI Quickstart
-- Install editable package: `pip install -e .`
-- Run the development API server: `fort-gym api`
-- Execute a mock benchmark stepper: `fort-gym mock-run`
-- List available API routes: `fort-gym routes`
+## Variables Reference (Ansible)
+| Variable | Description |
+|----------|-------------|
+| `dfhack_install_dir` | Path where DF/DFHack is installed (`/opt/dfhack`). |
+| `dfhack_archive_url` | URL of Linux DFHack bundle to download. |
+| `dfhack_remote_port` | Remote plugin TCP port (default 5000). |
+| `service_user` / `service_group` | Unix account running services. |
+| `fortgym_repo_url` | Git repository URL (default GitHub). |
+| `fortgym_checkout_ref` | Branch/tag for fort-gym checkout. |
+| `fortgym_install_dir` | Install path (`/opt/fort-gym`). |
+| `fortgym_venv_dir` | Virtualenv directory (`/opt/fort-gym/.venv`). |
+| `fortgym_service_enabled` | Enable fort-gym API systemd service (false by default). |
+| `fortgym_service_port` | API bind port (default 8000). |
+| `allow_tcp_ports` | List of TCP ports opened via UFW (e.g. [22, 5000, 8000]). |
 
-## Public vs Admin UI
-- **Public (read-only):** open `web/index.html` directly or serve the directory via `python -m http.server -d web 8080`. Spectators can browse live runs, leaderboards, and consume share-token SSE feeds.
-- **Admin:** open `web/admin.html` for lifecycle controls. Start runs, pause/resume/stop them, and mint share links that unlock public live, replay, or export access.
+## Security Notes
+- Restrict inbound traffic to trusted IPs using GCE firewall rules or UFW.
+- Consider a reverse proxy with auth in front of the fort-gym API.
+- Rotate API keys regularly; never commit `.env` with secrets.
 
-### Batch jobs (10-run)
-- Start via Admin panel or API:
-  ```bash
-  curl -X POST localhost:8000/jobs -H 'Content-Type: application/json' \
-    -d '{"model":"random","backend":"mock","n":10,"parallelism":2,"max_steps":200,"ticks_per_step":100}'
-  ```
-- Results: each run writes `trace.jsonl` and `summary.json`; leaderboard reads summaries.
-
-## DFHack Alpha
-- DFHack binaries are currently published for Linux/Windows only. On macOS run the mock backend locally and use a Linux VM/host for DFHack experiments.
-- Launch DFHack headless (Linux host/VM): set `DF_DIR` and optional `DFHACK_PORT`, then run `make df-headless` in another terminal. This wraps Dwarf Fortress with `Xvfb` and expects DFHack's remote plugin to listen on that port.
-- Enable the backend by exporting `DFHACK_ENABLED=1` (and adjust `DFHACK_HOST` / `DFHACK_PORT` if needed). The API and CLI will otherwise refuse DFHack runs.
-- Start a run with `backend="dfhack"` via the admin panel or API. Current support covers basic state polling plus `DIG` designations, manager `ORDER`s, and a Carpenter Workshop `BUILD`. Failures trigger stderr events and terminate the run gracefully.
-
-## LLM Agents
-- `random`: built-in baseline that emits schema-valid actions with no external calls.
-- `fake`: deterministic tool-call responses for tests and demos (no API requirement).
-- `openai`: function-calling agent. Configure `OPENAI_API_KEY`, `OPENAI_MODEL`, `LLM_MAX_TOKENS`, and `LLM_TEMP`.
-- `anthropic`: Claude tool-use agent. Configure `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`, plus the shared limits above.
-
-**Action Tool Contract** — All LLM agents must answer via the `submit_action` tool/function exactly once per step. See `fort_gym/bench/env/actions.py` (and `ACTIONS.md`) for schema details.
-
-## Local Setup Checklist
-1. Copy `.env` (already scaffolded) and fill in:
-   - OpenAI/Anthropic API keys if you plan to run LLM agents.
-   - `DFHACK_ENABLED=1`, `DF_DIR`, `DFHACK_HOST`, `DFHACK_PORT` only when targeting a Linux DFHack host or VM; leave disabled for mock runs.
-2. Install dependencies: `pip install -e .[dev]` plus provider SDKs (`openai`, `anthropic`) when required.
-3. For DFHack testing, spin up a Linux machine/VM, launch DFHack via `make df-headless`, and confirm the `remote` plugin listens on the desired port.
-4. Start the API (`fort-gym api`) or run CLI helpers (`fort-gym mock-run`, `fort-gym routes`). Use the admin panel to submit runs with your chosen backend and agent model.
+## Troubleshooting
+- **DFHack service won’t start**: check `/var/log/syslog` and `journalctl -u dfhack-headless`. Verify `dfhack_archive_url` points to a Linux build.
+- **Remote not listening**: ensure the remote plugin is enabled; run `ss -lntp | grep 5000`.
+- **SSE shows no events**: confirm `fort-gym api` is running; inspect browser devtools for SSE/CORS issues.
+- **Jobs stall**: query `/jobs` to inspect JobRegistry state; review server logs.
+- **LLM invalid actions**: adjust prompts or ACTION_TOOL_SPEC usage; ensure the tool call returns a single action dict.

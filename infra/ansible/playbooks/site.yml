@@ -1,5 +1,5 @@
 ---
-- hosts: gce
+- hosts: dfhack_host
   become: true
   vars:
     ansible_python_interpreter: /usr/bin/python3
