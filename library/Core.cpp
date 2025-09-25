@@ -81,6 +81,7 @@ distribution.
 #include <sstream>
 #include <forward_list>
 #include <type_traits>
+#include <cstdint>
 #include <cstdarg>
 #include <SDL_events.h>
 
@@ -92,6 +93,35 @@ using namespace DFHack;
 using namespace df::enums;
 using df::global::init;
 using df::global::world;
+
+namespace {
+
+// === DFHack RPC autoboot (headless-safe) ===
+static std::once_flag g_remote_once;
+
+static void ensure_remote_server_started() {
+    std::call_once(g_remote_once, []{
+        uint16_t port = 5000;
+        if (const char* e = getenv("DFHACK_PORT")) {
+            long v = strtol(e, nullptr, 10);
+            if (v > 0 && v < 65536) {
+                port = static_cast<uint16_t>(v);
+            }
+        }
+        bool ok = false;
+        try {
+            ok = DFHack::ServerMain::listen(port).get();
+        } catch (...) {
+            ok = false;
+        }
+        std::ofstream("/opt/dwarf-fortress/dfhack-remote.log", std::ios::app)
+            << (ok ? "[core-autoboot] listening on " : "[core-autoboot] failed on ")
+            << port << std::endl;
+    });
+}
+// === end autoboot ===
+
+}
 
 // FIXME: A lot of code in one file, all doing different things... there's something fishy about it.
 
@@ -1583,6 +1613,8 @@ bool Core::InitSimulationThread()
     if(errorstate)
         return false;
 
+    ensure_remote_server_started();
+
     // Lock the CoreSuspendMutex until the thread exits or call Core::Shutdown
     // Core::Update will temporary unlock when there is any commands queued
     MainThread::suspend().lock();
@@ -1705,8 +1737,8 @@ bool Core::InitSimulationThread()
     // create plugin manager
     plug_mgr = new PluginManager(this);
     plug_mgr->init();
-    std::cerr << "Starting the TCP listener.\n";
-    auto listen = ServerMain::listen(RemoteClient::GetDefaultPort());
+
+
     IODATA *temp = new IODATA;
     temp->core = this;
     temp->plug_mgr = plug_mgr;
@@ -1728,9 +1760,6 @@ bool Core::InitSimulationThread()
     d->hotkeythread = std::thread(fHKthread, (void *) temp);
     started = true;
     modstate = 0;
-
-    if (!listen.get())
-        std::cerr << "TCP listen failed.\n";
 
     if (df::global::game)
     {
