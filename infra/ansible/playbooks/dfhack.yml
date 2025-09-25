@@ -1,0 +1,5 @@
+---
+- hosts: dfhack_host
+  become: yes
+  roles:
+    - dfhack

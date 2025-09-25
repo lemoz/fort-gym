@@ -1,125 +1,126 @@
 ---
-- name: Ensure DFHack install directory is absent
-  file:
-    path: "{{ dfhack_install_dir }}"
-    state: absent
+- name: Ensure DFHack build dependencies are installed
+  apt:
+    name:
+      - build-essential
+      - cmake
+      - ninja-build
+      - git
+      - libprotobuf-dev
+      - protobuf-compiler
+      - libsdl2-dev
+      - libncursesw6
+      - libbz2-dev
+      - zlib1g-dev
+      - libtinfo-dev
+      - pkg-config
+    state: present
+    update_cache: yes
+  become: yes
 
-- name: Create DFHack install directory
+- name: Create DFHack build directories
   file:
-    path: "{{ dfhack_install_dir }}"
+    path: "{{ item }}"
     state: directory
-    owner: "{{ service_user }}"
-    group: "{{ service_group }}"
     mode: '0755'
+  loop:
+    - /opt/dfhack-src
+    - /opt/dfhack-build
+  become: yes
 
+- name: Sync DFHack source tree to target
+  synchronize:
+    src: "{{ playbook_dir }}/../../dfhack-work/src/"
+    dest: /opt/dfhack-src/
+    delete: yes
+  delegate_to: localhost
+  become: yes
 
-- name: Download Dwarf Fortress archive
-  get_url:
-    url: "{{ dwarf_fortress_archive_url }}"
-    dest: /tmp/dwarf-fortress.tar.bz2
-    mode: '0644'
+- name: Configure DFHack
+  command: >-
+    cmake -S /opt/dfhack-src
+          -B /opt/dfhack-build
+          -G Ninja
+          -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          -DCMAKE_INSTALL_PREFIX=/opt/dwarf-fortress
+  args:
+    creates: /opt/dfhack-build/build.ninja
+  become: yes
 
-- name: Extract Dwarf Fortress archive
-  unarchive:
-    src: /tmp/dwarf-fortress.tar.bz2
-    dest: "{{ dfhack_install_dir }}"
-    remote_src: true
-    extra_opts:
-      - "--strip-components=1"
-- name: Download DFHack archive
-  get_url:
-    url: "{{ dfhack_archive_url }}"
-    dest: /tmp/dfhack.tar.xz
-    mode: '0644'
-    checksum: "{{ dfhack_archive_checksum | default(omit) }}"
+- name: Build DFHack
+  command: cmake --build /opt/dfhack-build -j
+  become: yes
 
-- name: Extract DFHack archive
-  unarchive:
-    src: /tmp/dfhack.tar.xz
-    dest: "{{ dfhack_install_dir }}"
-    remote_src: true
-    extra_opts:
-      - "--strip-components=1"
+- name: Install DFHack into Dwarf Fortress bundle
+  command: cmake --install /opt/dfhack-build
+  become: yes
 
-
-- name: Ensure dwarfort symlink
+- name: Ensure DFHack config directory exists
   file:
-    src: "{{ dfhack_install_dir }}/libs/Dwarf_Fortress"
-    dest: "{{ dfhack_install_dir }}/dwarfort"
-    state: link
-    owner: "{{ service_user }}"
-    group: "{{ service_group }}"
-
-- name: Ensure DFHack tree ownership
-  file:
-    path: "{{ dfhack_install_dir }}"
-    owner: "{{ service_user }}"
-    group: "{{ service_group }}"
-    recurse: true
-
-- name: Remove bundled libstdc++
-  file:
-    path: "{{ dfhack_install_dir }}/libs/libstdc++.so.6"
-    state: absent
-    force: true
-
-- name: Remove bundled libgcc
-  file:
-    path: "{{ dfhack_install_dir }}/libs/libgcc_s.so.1"
-    state: absent
-    force: true
-
-- name: Ensure dfhack config dir
-  file:
-    path: "{{ dfhack_install_dir }}/dfhack-config"
+    path: /opt/dwarf-fortress/dfhack-config
     state: directory
-    owner: "{{ service_user }}"
-    group: "{{ service_group }}"
     mode: '0755'
+  become: yes
 
-- name: Render remote server config
-  template:
-    src: remote-server.json.j2
-    dest: "{{ dfhack_install_dir }}/dfhack-config/remote-server.json"
-    owner: "{{ service_user }}"
-    group: "{{ service_group }}"
-    mode: '0644'
-- name: Copy remote init helper
+- name: Write remote-server.json
   copy:
-    src: "{{ playbook_dir }}/../files/df_remote_init.lua"
-    dest: "{{ dfhack_install_dir }}/df_remote_init.lua"
+    dest: /opt/dwarf-fortress/dfhack-config/remote-server.json
     mode: '0644'
+    content: |
+      { "port": 5000, "allow_remote": false }
+  notify: Restart dfhack
+  become: yes
 
-
-- name: Install DFHack headless launcher
-  template:
-    src: dfhack-headless.sh.j2
-    dest: "{{ dfhack_install_dir }}/dfhack-headless.sh"
-    owner: "{{ service_user }}"
-    group: "{{ service_group }}"
-    mode: '0755'
-- name: Render DFHack environment file
-  template:
-    src: dfhack.env.j2
-    dest: "{{ dfhack_env_path }}"
-    owner: root
-    group: root
-    mode: '0644'
-
-- name: Deploy DFHack systemd service
-  template:
-    src: dfhack-headless.service.j2
+- name: Install DFHack headless systemd unit
+  copy:
     dest: /etc/systemd/system/dfhack-headless.service
-    owner: root
-    group: root
     mode: '0644'
+    content: |
+      [Unit]
+      Description=DFHack headless (RPC at boot)
+      After=network.target
 
-- name: Reload systemd
-  systemd:
-    daemon_reload: true
+      [Service]
+      Type=simple
+      WorkingDirectory=/opt/dwarf-fortress
+      Environment=PRINT_MODE=TEXT
+      Environment=SDL_VIDEODRIVER=dummy
+      Environment=DFHACK_HEADLESS=1
+      Environment=DFHACK_PORT=5000
+      ExecStart=/opt/dwarf-fortress/dfhack
+      Restart=always
+      RestartSec=2
+      PrivateNetwork=no
+      StandardOutput=append:/opt/dwarf-fortress/dfhack-stdout.log
+      StandardError=append:/opt/dwarf-fortress/dfhack-stderr.log
 
-- name: Enable and start DFHack service
+      [Install]
+      WantedBy=multi-user.target
+  notify: Restart dfhack
+  become: yes
+
+- name: Enable dfhack-headless service
   systemd:
-    name: dfhack-headless.service
-    enabled: "{{ dfhack_service_enabled }}"
-    state: "{{ 'started' if dfhack_service_enabled else 'stopped' }}"
+    name: dfhack-headless
+    enabled: true
+  become: yes
+
+- name: Verify DFHack RPC listener is active
+  shell: "ss -lntp | grep -E '127\\.0\\.0\\.1:5000.+dwarfort'"
+  register: dfhack_listener
+  changed_when: false
+  failed_when: dfhack_listener.rc != 0
+  become: yes
+
+- name: Verify dfhack-run can connect
+  shell: "cd /opt/dwarf-fortress && ./dfhack-run help >/dev/null"
+  changed_when: false
+  become: yes
+
+handlers:
+  - name: Restart dfhack
+    systemd:
+      name: dfhack-headless
+      state: restarted
+      daemon_reload: true
+    become: yes
