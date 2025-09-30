@@ -1,0 +1,10 @@
+#!/usr/bin/expect -f
+set timeout -1
+spawn -noecho /opt/dwarf-fortress/bin/dfhack-headless.sh
+set i 0
+while {$i < 12} {
+  after 400
+  send "\r"
+  incr i
+}
+interact

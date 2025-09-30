@@ -1,0 +1,21 @@
+[Unit]
+Description=DF + DFHack (headless, RPC autoboot)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/dwarf-fortress
+Environment=LD_PRELOAD=
+Environment=DFHACK_PORT=5000
+Environment=TERM=xterm-256color
+Environment=DFHACK_HEADLESS=1
+Environment=DFHACK_DISABLE_CONSOLE=1
+ExecStart=/opt/dwarf-fortress/bin/dfhack-headless-pty.exp
+Restart=always
+RestartSec=2
+PrivateNetwork=no
+StandardOutput=append:/opt/dwarf-fortress/dfhack-stdout.log
+StandardError=append:/opt/dwarf-fortress/dfhack-stderr.log
+
+[Install]
+WantedBy=multi-user.target

@@ -14,6 +14,7 @@
       - zlib1g-dev
       - libtinfo-dev
       - pkg-config
+      - expect
     state: present
     update_cache: yes
   become: yes
@@ -22,6 +23,8 @@
   file:
     path: "{{ item }}"
     state: directory
+    owner: cdossman
+    group: cdossman
     mode: '0755'
   loop:
     - /opt/dfhack-src
@@ -29,11 +32,19 @@
   become: yes
 
 - name: Sync DFHack source tree to target
-  synchronize:
-    src: "{{ playbook_dir }}/../../dfhack-work/src/"
-    dest: /opt/dfhack-src/
-    delete: yes
+  command: >-
+    rsync --archive --compress --delete
+          --rsync-path="mkdir -p /opt/dfhack-src && rsync"
+          --rsh="ssh -i {{ ansible_ssh_private_key_file }} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+          /Users/cdossman/dfhack-work/src/ {{ ansible_user }}@{{ ansible_host }}:/opt/dfhack-src/
   delegate_to: localhost
+  become: no
+
+- name: Apply core autoboot patch to DFHack
+  ansible.builtin.patch:
+    src: "{{ role_path }}/../../files/dfhack-core-autoboot.patch"
+    basedir: /opt/dfhack-src
+    strip: 1
   become: yes
 
 - name: Configure DFHack
@@ -62,6 +73,55 @@
     mode: '0755'
   become: yes
 
+- name: Ensure Dwarf Fortress init uses TEXT mode
+  lineinfile:
+    path: /opt/dwarf-fortress/data/init/init.txt
+    regexp: '^\s*\[PRINT_MODE'
+    line: '[PRINT_MODE:TEXT]'
+  become: yes
+
+- name: Ensure Dwarf Fortress intro movie is disabled
+  lineinfile:
+    path: /opt/dwarf-fortress/data/init/init.txt
+    regexp: '^\s*\[INTRO'
+    line: '[INTRO:OFF]'
+  become: yes
+
+- name: Ensure Dwarf Fortress does not prompt for fullscreen toggle
+  lineinfile:
+    path: /opt/dwarf-fortress/data/init/init.txt
+    regexp: '^\s*\[ASK_TOGGLE_FULLSCREEN'
+    line: '[ASK_TOGGLE_FULLSCREEN:NO]'
+  become: yes
+
+- name: Ensure Dwarf Fortress fullscreen defaults to NO
+  lineinfile:
+    path: /opt/dwarf-fortress/data/init/init.txt
+    regexp: '^\s*\[FULLSCREEN'
+    line: '[FULLSCREEN:NO]'
+  become: yes
+
+- name: Ensure Dwarf Fortress text font is curses
+  lineinfile:
+    path: /opt/dwarf-fortress/data/init/init.txt
+    regexp: '^\s*\[TEXT_FONT'
+    line: '[TEXT_FONT:curses_640x300.bmp]'
+  become: yes
+
+- name: Ensure Dwarf Fortress window font is curses
+  lineinfile:
+    path: /opt/dwarf-fortress/data/init/init.txt
+    regexp: '^\s*\[FONT'
+    line: '[FONT:curses_640x300.bmp]'
+  become: yes
+
+- name: Ensure Dwarf Fortress full font is curses
+  lineinfile:
+    path: /opt/dwarf-fortress/data/init/init.txt
+    regexp: '^\s*\[FULLFONT'
+    line: '[FULLFONT:curses_640x300.bmp]'
+  become: yes
+
 - name: Write remote-server.json
   copy:
     dest: /opt/dwarf-fortress/dfhack-config/remote-server.json
@@ -71,31 +131,33 @@
   notify: Restart dfhack
   become: yes
 
+- name: Remove legacy autoboot plugin autoload
+  file:
+    path: /opt/dwarf-fortress/dfhack-config/autoload/autoboot_remote.plugin
+    state: absent
+  become: yes
+
+- name: Install dfhack headless launcher script
+  copy:
+    src: "{{ role_path }}/../../files/dfhack-headless.sh"
+    dest: /opt/dwarf-fortress/bin/dfhack-headless.sh
+    mode: '0755'
+  notify: Restart dfhack
+  become: yes
+
+- name: Install dfhack headless PTY expect wrapper
+  copy:
+    src: "{{ role_path }}/../../files/dfhack-headless-pty.exp"
+    dest: /opt/dwarf-fortress/bin/dfhack-headless-pty.exp
+    mode: '0755'
+  notify: Restart dfhack
+  become: yes
+
 - name: Install DFHack headless systemd unit
   copy:
+    src: "{{ role_path }}/../../files/dfhack-headless.service"
     dest: /etc/systemd/system/dfhack-headless.service
     mode: '0644'
-    content: |
-      [Unit]
-      Description=DFHack headless (RPC at boot)
-      After=network.target
-
-      [Service]
-      Type=simple
-      WorkingDirectory=/opt/dwarf-fortress
-      Environment=PRINT_MODE=TEXT
-      Environment=SDL_VIDEODRIVER=dummy
-      Environment=DFHACK_HEADLESS=1
-      Environment=DFHACK_PORT=5000
-      ExecStart=/opt/dwarf-fortress/dfhack
-      Restart=always
-      RestartSec=2
-      PrivateNetwork=no
-      StandardOutput=append:/opt/dwarf-fortress/dfhack-stdout.log
-      StandardError=append:/opt/dwarf-fortress/dfhack-stderr.log
-
-      [Install]
-      WantedBy=multi-user.target
   notify: Restart dfhack
   become: yes
 
@@ -109,18 +171,16 @@
   shell: "ss -lntp | grep -E '127\\.0\\.0\\.1:5000.+dwarfort'"
   register: dfhack_listener
   changed_when: false
-  failed_when: dfhack_listener.rc != 0
+  retries: 15
+  delay: 2
+  until: dfhack_listener.rc == 0
   become: yes
 
 - name: Verify dfhack-run can connect
   shell: "cd /opt/dwarf-fortress && ./dfhack-run help >/dev/null"
+  register: dfhack_run
   changed_when: false
+  retries: 5
+  delay: 2
+  until: dfhack_run.rc == 0
   become: yes
-
-handlers:
-  - name: Restart dfhack
-    systemd:
-      name: dfhack-headless
-      state: restarted
-      daemon_reload: true
-    become: yes

@@ -1,0 +1,87 @@
+diff --git a/library/Core.cpp b/library/Core.cpp
+index da829d127..5cf4f2e4f 100644
+--- a/library/Core.cpp
++++ b/library/Core.cpp
+@@ -87,6 +87,7 @@ distribution.
+ 
+ #ifdef LINUX_BUILD
+ #include <dlfcn.h>
++#include <cstdlib>
+ #endif
+ 
+ using namespace DFHack;
+@@ -100,23 +101,36 @@ namespace {
+ static std::once_flag g_remote_once;
+ 
+ static void ensure_remote_server_started() {
+-    std::call_once(g_remote_once, []{
++    std::call_once(g_remote_once, [](){
++        std::cerr << "[core-autoboot] ensure start\n";
+         uint16_t port = 5000;
+-        if (const char* e = getenv("DFHACK_PORT")) {
+-            long v = strtol(e, nullptr, 10);
+-            if (v > 0 && v < 65536) {
+-                port = static_cast<uint16_t>(v);
++        if (const char* env = std::getenv("DFHACK_PORT")) {
++            long val = std::strtol(env, nullptr, 10);
++            if (val > 0 && val < 65536) {
++                port = static_cast<uint16_t>(val);
+             }
+         }
+         bool ok = false;
++        std::string err;
+         try {
+             ok = DFHack::ServerMain::listen(port).get();
++        } catch (const std::exception& ex) {
++            err = ex.what();
+         } catch (...) {
+-            ok = false;
++            err = "unknown";
+         }
+-        std::ofstream("/opt/dwarf-fortress/dfhack-remote.log", std::ios::app)
+-            << (ok ? "[core-autoboot] listening on " : "[core-autoboot] failed on ")
+-            << port << std::endl;
++        std::ofstream log("/opt/dwarf-fortress/dfhack-remote.log", std::ios::app);
++        if (!log) {
++            std::cerr << "[core-autoboot] failed to open dfhack-remote.log" << std::endl;
++        }
++        if (!err.empty()) {
++            log << "[core-autoboot] exception: " << err << "\n";
++        }
++
++        log << (ok ? "[core-autoboot] listening on " : "[core-autoboot] failed on ")
++            << port << "\n";
++        std::cerr << (ok ? "[core-autoboot] listening on " : "[core-autoboot] failed on ")
++                  << port << std::endl;
+     });
+ }
+ // === end autoboot ===
+@@ -1471,6 +1485,7 @@ Core::Core() :
+     top_viewscreen = NULL;
+ 
+     color_ostream::log_errors_to_stderr = true;
++    ensure_remote_server_started();
+ };
+ 
+ void Core::fatal (std::string output)
+@@ -1603,18 +1618,18 @@ bool Core::InitMainThread() {
+     // Init global object pointers
+     df::global::InitGlobals();
+ 
++    ensure_remote_server_started();
+     return true;
+ }
+ 
+ bool Core::InitSimulationThread()
+ {
++    ensure_remote_server_started();
+     if(started)
+         return true;
+     if(errorstate)
+         return false;
+ 
+-    ensure_remote_server_started();
+-
+     // Lock the CoreSuspendMutex until the thread exits or call Core::Shutdown
+     // Core::Update will temporary unlock when there is any commands queued
+     MainThread::suspend().lock();
