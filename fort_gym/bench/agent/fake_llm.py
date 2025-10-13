@@ -14,8 +14,8 @@ class FakeLLMAgent(Agent):
 
     def decide(self, obs_text: str, obs_json: Dict[str, Any]) -> Dict[str, Any]:
         action = {
-            "type": "DIG",
-            "params": {"area": [60, 18, 0], "size": [3, 3, 1]},
+            "type": "WAIT",
+            "params": {},
             "intent": "fake agent baseline",
         }
         return parse_action(action)

@@ -7,6 +7,8 @@ produced via ``make proto``.
 from __future__ import annotations
 
 from importlib import import_module
+import sys
+from pathlib import Path
 from typing import Any
 
 PROTO_VERSION = "52.04-r1"
@@ -18,6 +20,12 @@ class ProtoLoadError(RuntimeError):
 
 def ensure_proto_modules() -> dict[str, Any]:
     """Attempt to import generated protobuf modules and return them."""
+
+    generated_dir = Path(__file__).resolve().parent / "generated"
+    if generated_dir.is_dir():
+        path_str = str(generated_dir)
+        if path_str not in sys.path:
+            sys.path.insert(0, path_str)
 
     try:
         core = import_module("fort_gym.bench.env.remote_proto.generated.CoreProtocol_pb2")

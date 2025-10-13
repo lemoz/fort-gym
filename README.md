@@ -23,30 +23,139 @@ gcloud compute firewall-rules create allow-fortgym --allow tcp:8000 --direction=
 gcloud compute instances create dfhack-host   --machine-type=e2-standard-2   --image-family=ubuntu-2204-lts --image-project=ubuntu-os-cloud   --boot-disk-size=50GB   --tags=dfhack,fortgym
 ```
 
-### Provision with Ansible
+### Provision with Ansible (optional)
 1. Edit `infra/ansible/inventory.ini` with your VM IP/user/key.
 2. Update `infra/ansible/group_vars/all.yml`:
    - `dfhack_archive_url` (Linux DF+DFHack bundle) and optional checksum.
    - `service_user`/`service_group` (default `ubuntu`).
    - `fortgym_repo_url` (defaults to this repo) & `fortgym_checkout_ref`.
 3. Run:
-```bash
-make vm-provision
-make vm-start
-make vm-status
-```
+   ```bash
+   make vm-provision
+   make vm-start
+   make vm-status
+   ```
 
-### What it does
-- Installs Xvfb and dependencies, downloads DF/DFHack to `/opt/dfhack`, and runs `dfhack-headless` with the remote plugin listening on `0.0.0.0:5000`.
-- Clones fort-gym into `/opt/fort-gym`, sets up a virtualenv, installs the package.
-- Deploys an optional `fort-gym-api` service on `0.0.0.0:8000` (disabled unless `fortgym_service_enabled: true`).
+### Headless DFHack runtime checklist
+These are the manual steps we currently run on `dfhack-host` before kicking off live jobs:
+
+1. **Upload and unpack the fortress save.**
+   ```bash
+   gcloud compute scp ~/Desktop/mvp_test1.zip dfhack-host:/tmp/
+   gcloud compute ssh dfhack-host --command '
+     set -e
+     cd /opt/dwarf-fortress
+     mkdir -p data/save
+     unzip -o /tmp/mvp_test1.zip -d data/save/
+     test -f data/save/mvp_test1/world.sav
+   '
+   ```
+
+2. **Regenerate DFHack protobuf bindings.** The public DFHack repo for 0.47.05 no longer ships the remote fort proto sources, so we copy them from the checked-out `dfhack-src` tree that ships with the VM image:
+   ```bash
+   gcloud compute ssh dfhack-host --command '
+     set -e
+     SRC=/opt/fort-gym/fort_gym/bench/env/remote_proto
+     rm -rf "${SRC}/generated"
+     mkdir -p "${SRC}/generated"
+     source /opt/fort-gym/.venv/bin/activate
+     cd ${SRC}/sources/library/proto
+     python -m grpc_tools.protoc --proto_path=. --python_out=../../../generated CoreProtocol.proto Basic.proto BasicApi.proto
+     cd ${SRC}/sources/plugins/remotefortressreader/proto
+     python -m grpc_tools.protoc --proto_path=. --proto_path=../../../library/proto --python_out=../../../../generated RemoteFortressReader.proto ItemdefInstrument.proto DwarfControl.proto AdventureControl.proto ui_sidebar_mode.proto
+     : > ${SRC}/generated/__init__.py
+   '
+   ```
+
+3. **Configure DFHack to auto-load the save and expose the remote plugin on loopback.**
+   ```bash
+   gcloud compute ssh dfhack-host --command "
+     sudo tee /opt/dwarf-fortress/dfhack-config/init/dfhack.init >/dev/null <<'EOF'
+enable remotefortressreader
+remote stop 2> /dev/null
+remote start 127.0.0.1 5000
+remote allow-remote yes
+load-save mvp_test1
+EOF
+   "
+   ```
+
+4. **Install the systemd service.**
+   ```bash
+   gcloud compute ssh dfhack-host --command "
+     sudo tee /etc/systemd/system/dfhack.service >/dev/null <<'EOF'
+[Unit]
+Description=Dwarf Fortress 0.47.05 + DFHack headless (loopback only)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/dwarf-fortress
+Environment=DFHACK_DISABLE_CONSOLE=1
+Environment=SDL_VIDEODRIVER=dummy
+Environment=TERM=xterm-256color
+ExecStart=/opt/dwarf-fortress/bin/dfhack-headless.sh +load-save mvp_test1
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=full
+ProtectHome=true
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+MemoryMax=1G
+TasksMax=512
+KillMode=control-group
+
+[Install]
+WantedBy=multi-user.target
+EOF
+     sudo systemctl daemon-reload
+     sudo systemctl enable dfhack.service
+     sudo systemctl restart dfhack.service
+   "
+   ```
+   Verify it came up cleanly:
+   ```bash
+   gcloud compute ssh dfhack-host --command '
+     sudo systemctl status dfhack.service --no-pager
+     sudo ss -lntp | grep 5000
+     /opt/dwarf-fortress/dfhack-run lua "print(dfhack.getSavePath())"
+   '
+   ```
+
+5. **Run the fort-gym API in tmux.**
+   ```bash
+   gcloud compute ssh dfhack-host --command '
+     cd /opt/fort-gym
+     source .venv/bin/activate
+     export DFHACK_ENABLED=1 DFHACK_HOST=127.0.0.1 DFHACK_PORT=5000
+     tmux new-session -d -s fortgym "uvicorn fort_gym.bench.api.server:app --host 0.0.0.0 --port 8000 > /tmp/fort-gym-api.log 2>&1"
+     tmux list-sessions | grep fortgym
+     ss -lntp | grep 8000
+     curl -s http://127.0.0.1:8000/docs | head -n 5
+   '
+   ```
+   To inspect later: `tmux attach -t fortgym` (detach via `Ctrl-b d`).
 
 ## Running DFHack Jobs from the API
-If the API service is enabled:
+With the service running:
 ```bash
-curl -s -X POST http://<VM_IP>:8000/jobs   -H 'Content-Type: application/json'   -d '{"model":"fake","backend":"mock","n":10,"parallelism":2,"max_steps":100,"ticks_per_step":50}'
+curl -s -X POST http://127.0.0.1:8000/runs \
+  -H 'Content-Type: application/json' \
+  -d '{"backend":"dfhack","model":"fake","max_steps":50,"ticks_per_step":500}'
 ```
-Otherwise SSH into the VM, run `fort-gym api` manually, and use the admin UI in a browser.
+Then:
+```bash
+curl -s http://127.0.0.1:8000/runs/<run_id>
+curl -N "http://127.0.0.1:8000/runs/<run_id>/events/stream" | head -n 15
+ls -l fort_gym/artifacts/<run_id>/
+head -n 3 fort_gym/artifacts/<run_id>/trace.jsonl
+cat fort_gym/artifacts/<run_id>/summary.json | jq .
+```
+The SSE endpoint emits `state`, `action`, `validation`, `execute`, `advance`, `metrics`, and `score` events. `summary.json` accumulates aggregate metrics (currently a simple placeholder for DFHack runs).
 
 ## Environment & Keys
 Copy the example env and fill it in:
@@ -79,6 +188,7 @@ cp .env.example .env
 ## Troubleshooting
 - **DFHack service won’t start**: check `/var/log/syslog` and `journalctl -u dfhack-headless`. Verify `dfhack_archive_url` points to a Linux build.
 - **Remote not listening**: ensure the remote plugin is enabled; run `ss -lntp | grep 5000`.
-- **SSE shows no events**: confirm `fort-gym api` is running; inspect browser devtools for SSE/CORS issues.
-- **Jobs stall**: query `/jobs` to inspect JobRegistry state; review server logs.
+- **SSE shows no events**: confirm the tmux `fortgym` session is live; inspect `/tmp/fort-gym-api.log` for stack traces.
+- **Jobs stall**: query `/runs/<id>` to check progress, tail `/tmp/fort-gym-api.log`, and ensure DFHack remote is responsive (`/opt/dwarf-fortress/dfhack-run lua 'print(dfhack.getSavePath())'`).
+- **Missing DFHack protobuf bindings**: the `make proto` helper expects protos in `fort_gym/bench/env/remote_proto/sources`. If upstream URLs move, copy the `.proto` files out of `/opt/dfhack-src` and regenerate with the commands listed above.
 - **LLM invalid actions**: adjust prompts or ACTION_TOOL_SPEC usage; ensure the tool call returns a single action dict.

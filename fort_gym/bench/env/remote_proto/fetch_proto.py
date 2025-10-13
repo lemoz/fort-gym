@@ -44,16 +44,18 @@ def download_protos(version: str, target: Path) -> list[Path]:
     return downloaded
 
 
-def run_protoc(proto_root: Path, proto_paths: Iterable[Path], output_dir: Path) -> None:
+def run_protoc(proto_root: Path, sources_dir: Path, proto_paths: Iterable[Path], output_dir: Path) -> None:
     args = [
         "python",
         "-m",
         "grpc_tools.protoc",
-        f"--proto_path={proto_root}",
+        f"--proto_path={sources_dir}",
+        f"--proto_path={sources_dir / 'library' / 'proto'}",
+        f"--proto_path={sources_dir / 'plugins' / 'remotefortressreader' / 'proto'}",
         f"--python_out={output_dir}",
-    ] + [str(p.relative_to(proto_root)) for p in proto_paths]
+    ] + [str(p.relative_to(sources_dir)) for p in proto_paths]
     print("Running:", " ".join(args))
-    subprocess.check_call(args, cwd=proto_root)
+    subprocess.check_call(args, cwd=sources_dir)
 
 
 def main() -> None:
@@ -68,7 +70,7 @@ def main() -> None:
     files = download_protos(args.version, sources_dir)
     generated = proto_root / "gen"
     generated.mkdir(parents=True, exist_ok=True)
-    run_protoc(proto_root, files, generated)
+    run_protoc(proto_root, sources_dir, files, generated)
     print("Generated bindings in", generated)
 
 

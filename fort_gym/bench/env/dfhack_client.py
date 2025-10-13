@@ -49,7 +49,7 @@ class DFHackClient:
 
     MAGIC_REQUEST = b"DFHack?\n"
     MAGIC_REPLY = b"DFHack!\n"
-    HEADER_STRUCT = struct.Struct("<hiI")  # id, padding, size
+    HEADER_STRUCT = struct.Struct("<hHI")  # id, padding, size
 
     RPC_BIND_METHOD = 0
     RPC_RUN_COMMAND = 1
