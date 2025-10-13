@@ -6,6 +6,8 @@ from typing import Any, Dict, Optional
 
 from .actions import validate_action
 from .dfhack_client import DFHackClient, DFHackUnavailableError
+from ..dfhack_backend import designate_rect as safe_designate_rect
+from ..dfhack_backend import queue_manager_order as safe_queue_manager_order
 from .mock_env import MockEnvironment
 from .state_reader import StateReader
 
@@ -52,19 +54,27 @@ class Executor:
             if action_type == "DIG":
                 area = params.get("area", (0, 0, 0))
                 size = params.get("size", (1, 1, 1))
-                x1, y1, z = area
-                width, height, depth = size
-                x2 = x1 + max(1, int(width)) - 1
-                y2 = y1 + max(1, int(height)) - 1
-                z2 = z + max(1, int(depth)) - 1
-                ok, why = self._dfhack_client.designate_rect(x1, y1, z, x2, y2, z2)
-                return {"accepted": bool(ok), "why": why}
+                x1, y1, z = map(int, area)
+                width, height, depth = map(int, size)
+                x2 = x1 + max(1, width) - 1
+                y2 = y1 + max(1, height) - 1
+                z2 = z + max(1, depth) - 1
+                result = safe_designate_rect("dig", x1, y1, z, x2, y2, z2)
+                return {
+                    "accepted": bool(result.get("ok")),
+                    "why": None if result.get("ok") else result.get("error"),
+                    "result": result,
+                }
 
             if action_type == "ORDER":
-                job = params.get("job") or ""
+                job = (params.get("job") or "").lower()
                 qty = int(params.get("quantity", 1))
-                ok, why = self._dfhack_client.queue_manager_order(job, qty)
-                return {"accepted": bool(ok), "why": why}
+                result = safe_queue_manager_order(job, qty)
+                return {
+                    "accepted": bool(result.get("ok")),
+                    "why": None if result.get("ok") else result.get("error"),
+                    "result": result,
+                }
 
             if action_type == "BUILD":
                 kind = params.get("kind")

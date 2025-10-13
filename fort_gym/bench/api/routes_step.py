@@ -173,7 +173,16 @@ async def step_endpoint(payload: StepRequest) -> StepResponse:
             state_after_apply = state_before
         else:
             execute_result = executor.apply(action, backend="dfhack", state=obs_json)
-            state_after_apply = execute_result.get("state") or state_before
+            error_message = None
+            if not execute_result.get("accepted"):
+                error_message = execute_result.get("why")
+                result_payload = execute_result.get("result") or {}
+                error_message = error_message or result_payload.get("error")
+                if error_message:
+                    _emit_event(run.run_id, events, "stderr", {"message": error_message})
+                state_after_apply = state_before
+            else:
+                state_after_apply = execute_result.get("state") or state_before
         _emit_event(run.run_id, events, "execute", {"result": execute_result})
 
         advance_state = dfhack_client.advance(max_ticks)
@@ -275,6 +284,12 @@ async def step_endpoint(payload: StepRequest) -> StepResponse:
                 "summary": summary_payload,
             },
         )
+        if not execute_result.get("accepted"):
+            error_message = execute_result.get("why")
+            result_payload = execute_result.get("result") or {}
+            error_message = error_message or result_payload.get("error")
+            if error_message:
+                response.info["error"] = error_message
         return response
     finally:
         with context.lock:

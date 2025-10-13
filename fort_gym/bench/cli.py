@@ -45,10 +45,19 @@ def api(port: int = 8000, reload: bool = True) -> None:
 
 
 @app.command("mock-run")
-def mock_run(max_steps: int = 3, ticks_per_step: int = 10) -> None:
+def mock_run(
+    max_steps: int = 3,
+    ticks_per_step: int = 10,
+    safe: bool = True,
+) -> None:
     """Run a short mock environment loop and print the run identifier."""
 
-    run_id = run_once(RandomAgent(), env="mock", max_steps=max_steps, ticks_per_step=ticks_per_step)
+    run_id = run_once(
+        RandomAgent(safe=safe),
+        env="mock",
+        max_steps=max_steps,
+        ticks_per_step=ticks_per_step,
+    )
     typer.echo(run_id)
 
 

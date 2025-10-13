@@ -158,6 +158,13 @@ cat artifacts/<run_id>/summary.json | jq .
 > Note: the interactive `/step` flow is validated against the single-action schema used by the `fake` agent. Manager orders issued by the exploratory `random` agent remain experimental and may be rejected until DFHack execution coverage improves.
 The SSE endpoint emits `state`, `action`, `validation`, `execute`, `advance`, `metrics`, and `score` events. `summary.json` accumulates aggregate metrics (currently a simple placeholder for DFHack runs).
 
+Generate a leaderboard snapshot for the static site:
+
+```bash
+python scripts/publish_leaderboard.py
+cat web/leaderboard.json | head
+```
+
 ## Environment & Keys
 Copy the example env and fill it in:
 ```bash

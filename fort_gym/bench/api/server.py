@@ -13,7 +13,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 
 from importlib import import_module
 
-from ..agent.base import AGENT_FACTORIES, Agent
+from ..agent.base import AGENT_FACTORIES, Agent, RandomAgent
 from ..run.jobs import JOB_REGISTRY, JobInfo as RegistryJobInfo
 from ..run.runner import run_once
 from ..run.storage import RUN_REGISTRY, RunInfo as RegistryRunInfo, ShareToken
@@ -133,6 +133,8 @@ async def create_run(payload: RunCreateRequest) -> RunInfo:
 
     def _target() -> None:
         agent = agent_factory()
+        if isinstance(agent, RandomAgent) and payload.safe is not None:
+            agent.set_safe(bool(payload.safe))
         run_once(
             agent,
             backend=payload.backend,
@@ -307,6 +309,8 @@ async def create_job(payload: JobCreate) -> JobInfo:
 
     def make_run() -> str:
         agent = agent_factory()
+        if isinstance(agent, RandomAgent) and payload.safe is not None:
+            agent.set_safe(bool(payload.safe))
         return run_once(
             agent,
             backend=payload.backend,

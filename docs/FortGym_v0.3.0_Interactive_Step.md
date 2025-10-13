@@ -17,3 +17,14 @@ grep 'HTTP/1.1 429' /tmp/step2.h
 ### Environment
 - DFHack 0.47.05-r8 headless, bound to 127.0.0.1:5000
 - Fort-Gym API on port 8000 (tmux session `fortgym`)
+
+### Live Action Safety
+- Manager orders restricted to: bed, door, table, chair, barrel, bin (qty ≤ 5).
+- Dig/channel rectangles limited to 30×30 tiles; chop leverages `autochop`.
+- All DFHack helpers run via `dfhack-run` with a 2.5s timeout; failures surface as SSE `stderr` events and noop steps.
+- `RandomAgent` defaults to the safe action set; `--safe/--no-safe` flag toggles behaviour in CLI demos.
+
+### Live Tests
+```bash
+DFHACK_LIVE=1 pytest -q -k actions_live
+```

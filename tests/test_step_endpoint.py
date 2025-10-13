@@ -49,11 +49,11 @@ class _StubDFHackClient:
         self._ticks += ticks
         return self.get_state()
 
-    def designate_rect(self, *_args: Any, **_kwargs: Any) -> tuple[bool, None]:
-        return True, None
+    def designate_rect(self, *_args: Any, **_kwargs: Any) -> Dict[str, Any]:
+        return {"ok": True}
 
-    def queue_manager_order(self, *_args: Any, **_kwargs: Any) -> tuple[bool, None]:
-        return True, None
+    def queue_manager_order(self, *_args: Any, **_kwargs: Any) -> Dict[str, Any]:
+        return {"ok": True}
 
 
 @pytest.fixture(autouse=True)
@@ -83,6 +83,14 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(routes_step, "get_settings", lambda: stub_settings)
     monkeypatch.setattr("fort_gym.bench.config.get_settings", lambda: stub_settings)
     monkeypatch.setattr(routes_step, "DFHackClient", _StubDFHackClient)
+    monkeypatch.setattr(
+        "fort_gym.bench.env.executor.safe_designate_rect",
+        lambda *args, **kwargs: {"ok": True},
+    )
+    monkeypatch.setattr(
+        "fort_gym.bench.env.executor.safe_queue_manager_order",
+        lambda *args, **kwargs: {"ok": True},
+    )
     return TestClient(app)
 
 

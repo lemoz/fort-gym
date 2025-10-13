@@ -34,6 +34,7 @@ class RunCreateRequest(BaseModel):
     max_steps: int = Field(default=5, ge=1)
     ticks_per_step: int = Field(default=100, ge=1)
     model: ModelType = "random"
+    safe: Optional[bool] = True
 
 
 class JobInfo(BaseModel):
@@ -120,6 +121,7 @@ class JobCreate(BaseModel):
     parallelism: int = Field(default=2, ge=1)
     max_steps: int = Field(default=200, ge=1)
     ticks_per_step: int = Field(default=100, ge=1)
+    safe: Optional[bool] = True
 
 
 class JobInfo(BaseModel):
