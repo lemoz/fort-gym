@@ -11,6 +11,16 @@ fort-gym api              # API on :8000
 ```
 Artifacts (trace JSONL + summary) land under `artifacts/<run_id>/`. You can replay them via the public UI (`web/index.html`) or inspect the leaderboard which reads summaries.
 
+## Mac Local Development with DFHack
+
+For local development on macOS using the **Lazy Mac Pack** with DFHack, see **[MAC_SETUP.md](MAC_SETUP.md)** for complete instructions including:
+- Configuring DF for remote access (TEXT mode, remote plugin)
+- Setting `DFROOT` environment variable
+- Installing hook scripts
+- Running the API against local DF on port 5000
+
+The same fort-gym codebase works on both Mac and Linux—only the `DFROOT` path differs.
+
 ## Deploy on a Google Cloud VM (DFHack)
 ### Prerequisites
 - Google Cloud SDK (`gcloud`) configured with project/zone.

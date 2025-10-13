@@ -46,7 +46,7 @@ def download_protos(version: str, target: Path) -> list[Path]:
 
 def run_protoc(proto_root: Path, sources_dir: Path, proto_paths: Iterable[Path], output_dir: Path) -> None:
     args = [
-        "python",
+        "python3",
         "-m",
         "grpc_tools.protoc",
         f"--proto_path={sources_dir}",

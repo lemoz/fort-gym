@@ -6,16 +6,14 @@ import json
 import subprocess
 from typing import Dict, List
 
+from .config import DFROOT, DFHACK_RUN
+
 
 class DFHackError(RuntimeError):
     """Raised when DFHack commands fail or time out."""
 
 
-DFHACK_CWD = "/opt/dwarf-fortress"
-DFHACK_RUN = "/opt/dwarf-fortress/dfhack-run"
-
-
-def run_dfhack(args: List[str], *, timeout: float = 2.5, cwd: str = DFHACK_CWD) -> str:
+def run_dfhack(args: List[str], *, timeout: float = 2.5, cwd: str = str(DFROOT)) -> str:
     """Execute a DFHack command with tight bounds and return stdout."""
 
     try:
@@ -36,7 +34,7 @@ def run_dfhack(args: List[str], *, timeout: float = 2.5, cwd: str = DFHACK_CWD) 
 def run_lua_file(path: str, *args: str, timeout: float = 2.5) -> Dict[str, object]:
     """Invoke a DFHack Lua script and parse JSON output."""
 
-    command = [DFHACK_RUN, "lua", "-q", "-f", path]
+    command = [str(DFHACK_RUN), "lua", "-q", "-f", path]
     command.extend(args)
     out = run_dfhack(command, timeout=timeout)
     if not out:

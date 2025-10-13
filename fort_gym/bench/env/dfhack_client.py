@@ -92,6 +92,13 @@ class DFHackClient:
         except ProtoLoadError as exc:
             raise DFHackUnavailableError(str(exc)) from exc
 
+        # Check if protos are actually loaded (empty dict if DF_PROTO_ENABLED=0)
+        if not modules:
+            raise DFHackUnavailableError(
+                "DFHack protobuf bindings disabled (DF_PROTO_ENABLED=0). "
+                "Set DF_PROTO_ENABLED=1 to enable DFHack backend, or use backend='mock' for local development."
+            )
+
         self._core = modules["core"]
         self._fortress = modules["fortress"]
 

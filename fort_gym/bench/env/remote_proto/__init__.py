@@ -7,11 +7,15 @@ produced via ``make proto``.
 from __future__ import annotations
 
 from importlib import import_module
+import os
 import sys
 from pathlib import Path
 from typing import Any
 
 PROTO_VERSION = "52.04-r1"
+
+# Flag to enable/disable proto loading (useful for local Mac dev without protos)
+DF_PROTO_ENABLED = os.getenv("DF_PROTO_ENABLED", "0") == "1"
 
 
 class ProtoLoadError(RuntimeError):
@@ -19,7 +23,18 @@ class ProtoLoadError(RuntimeError):
 
 
 def ensure_proto_modules() -> dict[str, Any]:
-    """Attempt to import generated protobuf modules and return them."""
+    """Attempt to import generated protobuf modules and return them.
+
+    If DF_PROTO_ENABLED=0 (default), returns empty dict to allow local development
+    without DFHack protobuf bindings. The DFHack backend will fail gracefully.
+
+    Set DF_PROTO_ENABLED=1 to enable full proto support (required for DFHack backend).
+    """
+
+    if not DF_PROTO_ENABLED:
+        # Skip proto loading for local development
+        # DFHack backend will fail gracefully if attempted
+        return {}
 
     generated_dir = Path(__file__).resolve().parent / "generated"
     if generated_dir.is_dir():

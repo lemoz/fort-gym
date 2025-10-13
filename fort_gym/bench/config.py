@@ -10,6 +10,25 @@ from typing import Optional
 from pydantic import BaseModel
 
 
+# DFHack path configuration (Mac vs Linux)
+DFROOT = Path(os.getenv("DFROOT", "/opt/dwarf-fortress"))
+DFHACK_RUN = DFROOT / "dfhack-run"
+
+
+def dfhack_cmd(*args: str) -> list[str]:
+    """Return the absolute dfhack-run command sequence for subprocess calls.
+
+    Usage:
+        subprocess.check_output(dfhack_cmd("lua", "-e", "print('hello')"))
+
+    Environment:
+        Set DFROOT to point to your DF installation:
+        - Mac (Lazy Mac Pack): export DFROOT="$HOME/Applications/Lazy Mac Pack/Dwarf Fortress"
+        - Linux/VM: export DFROOT="/opt/dwarf-fortress" (default)
+    """
+    return [str(DFHACK_RUN), *args]
+
+
 def _load_dotenv() -> None:
     env_path = Path(".env")
     if not env_path.is_file():
@@ -70,4 +89,12 @@ def have_anthropic() -> bool:
     return bool(get_settings().ANTHROPIC_API_KEY)
 
 
-__all__ = ["Settings", "get_settings", "have_openai", "have_anthropic"]
+__all__ = [
+    "Settings",
+    "get_settings",
+    "have_openai",
+    "have_anthropic",
+    "DFROOT",
+    "DFHACK_RUN",
+    "dfhack_cmd",
+]

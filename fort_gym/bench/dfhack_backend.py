@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from typing import Dict, Iterable
 
+from .config import DFROOT
 from .dfhack_exec import DFHackError, run_lua_file
 
-HOOK_ROOT = "/opt/dwarf-fortress/hook"
+HOOK_ROOT = DFROOT / "hook"
 
 ALLOWED_ITEMS = {"bed", "door", "table", "chair", "barrel", "bin"}
 MAX_QTY = 5
@@ -16,7 +17,7 @@ VALID_KINDS: Iterable[str] = ("dig", "channel", "chop")
 
 
 def _hook_path(name: str) -> str:
-    return f"{HOOK_ROOT}/{name}"
+    return str(HOOK_ROOT / name)
 
 
 def queue_manager_order(item: str, qty: int) -> Dict[str, object]:
