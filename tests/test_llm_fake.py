@@ -19,3 +19,4 @@ def test_fake_llm_emits_dig(tmp_path, monkeypatch) -> None:
     with trace_path.open("r", encoding="utf-8") as handle:
         records = [json.loads(line) for line in handle if line.strip()]
     assert any(rec.get("action", {}).get("type") == "DIG" for rec in records)
+    get_settings.cache_clear()  # type: ignore[attr-defined]

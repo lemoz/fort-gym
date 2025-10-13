@@ -9,7 +9,7 @@ pip install -e .[dev]
 fort-gym api              # API on :8000
 # open web/admin.html and start a mock run (model=fake|random)
 ```
-Artifacts (trace JSONL + summary) land under `fort_gym/artifacts/<run_id>/`. You can replay them via the public UI (`web/index.html`) or inspect the leaderboard which reads summaries.
+Artifacts (trace JSONL + summary) land under `artifacts/<run_id>/`. You can replay them via the public UI (`web/index.html`) or inspect the leaderboard which reads summaries.
 
 ## Deploy on a Google Cloud VM (DFHack)
 ### Prerequisites
@@ -151,10 +151,11 @@ Then:
 ```bash
 curl -s http://127.0.0.1:8000/runs/<run_id>
 curl -N "http://127.0.0.1:8000/runs/<run_id>/events/stream" | head -n 15
-ls -l fort_gym/artifacts/<run_id>/
-head -n 3 fort_gym/artifacts/<run_id>/trace.jsonl
-cat fort_gym/artifacts/<run_id>/summary.json | jq .
+ls -l artifacts/<run_id>/
+head -n 3 artifacts/<run_id>/trace.jsonl
+cat artifacts/<run_id>/summary.json | jq .
 ```
+> Note: the interactive `/step` flow is validated against the single-action schema used by the `fake` agent. Manager orders issued by the exploratory `random` agent remain experimental and may be rejected until DFHack execution coverage improves.
 The SSE endpoint emits `state`, `action`, `validation`, `execute`, `advance`, `metrics`, and `score` events. `summary.json` accumulates aggregate metrics (currently a simple placeholder for DFHack runs).
 
 ## Environment & Keys

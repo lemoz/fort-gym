@@ -17,6 +17,7 @@ from ..agent.base import AGENT_FACTORIES, Agent
 from ..run.jobs import JOB_REGISTRY, JobInfo as RegistryJobInfo
 from ..run.runner import run_once
 from ..run.storage import RUN_REGISTRY, RunInfo as RegistryRunInfo, ShareToken
+from .routes_step import router as step_router
 from .schemas import (
     JobCreate,
     JobInfo,
@@ -28,6 +29,7 @@ from .schemas import (
 from .sse import ndjson_iter, sse_event, stream_queue
 
 app = FastAPI(title="fort-gym API")
+app.include_router(step_router)
 
 
 ARTIFACTS_ROOT = Path(__file__).resolve().parents[2] / "artifacts"

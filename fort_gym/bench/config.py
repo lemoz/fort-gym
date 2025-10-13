@@ -30,7 +30,7 @@ class Settings(BaseModel):
     DFHACK_HOST: str = os.getenv("DFHACK_HOST", "127.0.0.1")
     DFHACK_PORT: int = int(os.getenv("DFHACK_PORT", "5000"))
     TICKS_PER_STEP: int = int(os.getenv("TICKS_PER_STEP", "200"))
-    ARTIFACTS_DIR: str = os.getenv("ARTIFACTS_DIR", "fort_gym/artifacts")
+    ARTIFACTS_DIR: str = os.getenv("ARTIFACTS_DIR", "artifacts")
     OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY")
     OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
     ANTHROPIC_API_KEY: Optional[str] = os.getenv("ANTHROPIC_API_KEY")
@@ -46,7 +46,20 @@ class Settings(BaseModel):
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
     _load_dotenv()
-    return Settings()
+    return Settings(
+        DFHACK_ENABLED=bool(int(os.getenv("DFHACK_ENABLED", "0"))),
+        DFHACK_HOST=os.getenv("DFHACK_HOST", "127.0.0.1"),
+        DFHACK_PORT=int(os.getenv("DFHACK_PORT", "5000")),
+        TICKS_PER_STEP=int(os.getenv("TICKS_PER_STEP", "200")),
+        ARTIFACTS_DIR=os.getenv("ARTIFACTS_DIR", "artifacts"),
+        OPENAI_API_KEY=os.getenv("OPENAI_API_KEY"),
+        OPENAI_MODEL=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
+        ANTHROPIC_API_KEY=os.getenv("ANTHROPIC_API_KEY"),
+        ANTHROPIC_MODEL=os.getenv("ANTHROPIC_MODEL", "claude-3-5-sonnet-latest"),
+        LLM_MAX_TOKENS=int(os.getenv("LLM_MAX_TOKENS", "512")),
+        LLM_TEMP=float(os.getenv("LLM_TEMP", "0.1")),
+        LLM_RATE_LIMIT_TPS=float(os.getenv("LLM_RATE_LIMIT_TPS", "1.0")),
+    )
 
 
 def have_openai() -> bool:

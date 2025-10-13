@@ -93,6 +93,24 @@ class ShareCreate(BaseModel):
     ttl_seconds: Optional[int] = Field(default=86400, ge=60)
 
 
+class StepRequest(BaseModel):
+    """Interactive step request payload."""
+
+    run_id: str
+    action: Dict[str, Any] = Field(default_factory=dict)
+    min_step_period_ms: Optional[int] = Field(default=1000, ge=0)
+    max_ticks: Optional[int] = Field(default=500, ge=0)
+
+
+class StepResponse(BaseModel):
+    """Interactive step response schema."""
+
+    observation: Dict[str, Any]
+    reward: float
+    done: bool
+    info: Dict[str, Any] = Field(default_factory=dict)
+
+
 class JobCreate(BaseModel):
     """Request payload for launching batched runs."""
 
