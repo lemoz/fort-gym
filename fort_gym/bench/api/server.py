@@ -9,7 +9,8 @@ from pathlib import Path
 from typing import AsyncGenerator, Callable, Dict, Iterable, List, Optional
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from importlib import import_module
 
@@ -33,6 +34,24 @@ app.include_router(step_router)
 
 
 ARTIFACTS_ROOT = Path(__file__).resolve().parents[2] / "artifacts"
+WEB_ROOT = Path(__file__).resolve().parents[3] / "web"
+
+
+# ---------------------------------------------------------------------------
+# Static file serving for web UI
+# ---------------------------------------------------------------------------
+
+
+@app.get("/", response_class=FileResponse)
+async def serve_index():
+    """Serve the public spectator UI."""
+    return FileResponse(WEB_ROOT / "index.html", media_type="text/html")
+
+
+@app.get("/admin", response_class=FileResponse)
+async def serve_admin():
+    """Serve the admin panel."""
+    return FileResponse(WEB_ROOT / "admin.html", media_type="text/html")
 
 
 def _artifacts_path(run_id: str) -> Path:

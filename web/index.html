@@ -183,8 +183,12 @@
   async function refreshLiveRuns() {
     const data = await fetchJSON('/public/runs');
     if (!data) return;
-    const liveCandidates = data.filter(run => ['running', 'paused'].includes(run.status)).slice(0, 6);
-    renderLiveRuns(liveCandidates);
+    // Show all public runs (running first, then completed), up to 6
+    const sorted = data.sort((a, b) => {
+      const order = { running: 0, paused: 1, completed: 2, failed: 3 };
+      return (order[a.status] || 9) - (order[b.status] || 9);
+    });
+    renderLiveRuns(sorted.slice(0, 6));
   }
 
   async function refreshLeaderboard() {

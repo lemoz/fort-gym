@@ -11,6 +11,9 @@ from contextlib import suppress
 from dataclasses import dataclass
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
+from ..dfhack_backend import advance_ticks_exact
+from ..dfhack_exec import read_game_state as cli_read_game_state
+
 try:  # pragma: no cover - optional dependency
     from google.protobuf.message import Message  # type: ignore
 except ModuleNotFoundError:  # noqa: pragma: no cover
@@ -76,6 +79,7 @@ class DFHackClient:
         self._fortress = None
         self._method_cache: dict[Tuple[str, str, str, str], int] = {}
         self._capture_text: Optional[List[str]] = None
+        self._last_tick_info: Dict[str, Any] = {}
 
     # ------------------------------------------------------------------
     # Connection orchestration
@@ -159,42 +163,24 @@ class DFHackClient:
     def advance(self, ticks: int) -> Dict[str, Any]:
         self._ensure_connection()
         if ticks <= 0:
+            self._last_tick_info = {"ok": False, "error": "invalid_ticks"}
             return self.get_state()
 
-        try:
-            self._run_command("advtools", ["advance", str(ticks)])
-        except DFHackError:
-            self.resume()
-            time.sleep(min(0.5, ticks / 1200))
-            self.pause()
+        tick_info = advance_ticks_exact(int(ticks), repause=True)
+        self._last_tick_info = dict(tick_info) if isinstance(tick_info, dict) else tick_info
 
         return self.get_state()
+
+    @property
+    def last_tick_info(self) -> Dict[str, Any]:
+        return self._last_tick_info
 
     def get_state(self) -> Dict[str, Any]:
         self._ensure_connection()
 
-        lua_script = """
-local json = require('json')
-local units = require('dfhack.units')
-local state = {}
-state.time = df.global.cur_year_tick or 0
-local pop = 0
-for _, unit in ipairs(df.global.world.units.active) do
-  if units.isCitizen(unit) then pop = pop + 1 end
-end
-state.population = pop
-state.stocks = {food=0, drink=0, wood=0, stone=0}
-state.hostiles = false
-state.dead = 0
-state.recent_events = {}
-dfhack.print(json.encode(state))
-"""
-
-        try:
-            output = self._run_command("lua", [lua_script], capture_output=True) or []
-            payload = output[-1] if output else "{}"
-            data = json.loads(payload)
-        except (DFHackError, json.JSONDecodeError, IndexError):
+        # Use CLI-based state reading since RPC doesn't capture dfhack.print output
+        data = cli_read_game_state()
+        if not data:
             data = {
                 "time": 0,
                 "population": 0,
