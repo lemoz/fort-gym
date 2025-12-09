@@ -169,7 +169,7 @@ See `fort_gym/bench/config.py` for full list.
 - **Web UI**: http://34.41.155.134:8000/ (spectator), http://34.41.155.134:8000/admin (admin)
 - **DFHack RPC**: port 5000 (loopback)
 - **DFHack version**: v0.47.05
-- **Save loaded**: `region1`
+- **Save loaded**: `fresh_embark`
 
 ### Starting the API on VM
 ```bash
@@ -266,6 +266,63 @@ wo.amount_total = qty
 wo.amount_left = qty
 df.global.world.manager_orders:insert("#", wo)
 ```
+
+## Roadmap: Agent Memory & Experimentation System
+
+The following features are planned to improve agent performance through memory, tools, and systematic experimentation.
+
+### Current Limitation
+Each step is currently **stateless** - the agent makes a fresh LLM call with no memory of previous steps. Keystroke mode has minimal context: last 5 actions shown in observation text, but no conversation history or goal tracking.
+
+### Planned Features
+
+#### 1. Agent Memory (Hybrid Strategy)
+- **Last N steps**: Keep full conversation history for recent steps (configurable window, default 10)
+- **Summary of older steps**: Compress older history into a running summary
+- **Implementation**: New `MemoryManager` class in `fort_gym/bench/agent/memory.py`
+
+#### 2. Agent Tools
+- **Web search**: Agent can look up Dwarf Fortress information during decision-making
+- **DF Wiki tool**: Query embedded DF documentation
+- **Implementation**: New `ToolManager` class in `fort_gym/bench/agent/tools.py`
+
+#### 3. Experimentation Framework
+YAML-based configuration system to test different agent variants:
+
+```yaml
+# Example: experiments/with_memory.yaml
+name: hybrid-memory-10
+agent_type: anthropic-keystroke
+memory_strategy: hybrid
+memory_window: 10
+tools_enabled: [df_wiki]
+max_steps: 50
+```
+
+**Experiment types**:
+- Different memory strategies (none, conversation, summary, hybrid)
+- Different system prompts
+- Different tools enabled/disabled
+- A/B testing between agent variants
+
+**New files**:
+- `fort_gym/bench/experiment/config.py` - Config dataclasses
+- `fort_gym/bench/experiment/runner.py` - Experiment execution
+- `fort_gym/bench/experiment/analysis.py` - Comparison utilities
+- `fort_gym/bench/agent/experimental.py` - Configurable agent
+
+**New API endpoints**:
+- `POST /experiments` - Launch experiment from config
+- `GET /experiments` - List all experiment runs
+- `GET /experiments/compare?ids=run1,run2` - Compare results
+
+### Implementation Order
+1. Memory Manager - Core memory abstraction
+2. Experimental Agent - Agent that uses memory
+3. Config System - Load experiments from YAML
+4. Tool Manager - Web search / wiki tools
+5. API Endpoints - Launch/compare experiments
+6. Analysis Tools - Compare results across runs
 
 ## Known Issues
 

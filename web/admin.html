@@ -22,12 +22,25 @@
     .share-links { margin-top: 0.5rem; font-size: 0.8rem; color: #9fb1d6; }
     .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: rgba(0,0,0,0.8); padding: 1rem 1.5rem; border-radius: 12px; display: none; }
   </style>
+<!-- pcface bitmap font library for pixel-perfect CP437 rendering -->
+<script src="https://cdn.jsdelivr.net/npm/pcface@0.3.0/src/pcface.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pcface@0.3.0/out/moderndos-8x16/fontlist.js"></script>
 </head>
 <body>
   <header>
     <h1>Fort-Gym Admin Panel</h1>
     <p>Launch mock benchmark runs, monitor live telemetry, and mint read-only share links for spectators. Public viewers only interact with the `/public/*` namespace.</p>
   </header>
+
+  <section>
+    <h2>Live Game View</h2>
+    <div style="display:flex; gap:1rem; align-items:center; margin-bottom:1rem;">
+      <button type="button" id="live-start">Start Live View</button>
+      <button type="button" id="live-stop" class="secondary">Stop</button>
+      <span id="live-status" style="font-size:0.85rem; color:#9fb1d6;">Not streaming</span>
+    </div>
+    <canvas id="game-canvas" width="640" height="384" style="background:#000; border:2px solid rgba(255,255,255,0.15); border-radius:8px; image-rendering:pixelated;"></canvas>
+  </section>
 
   <section>
     <h2>Launch Run</h2>
@@ -142,8 +155,89 @@
     const tailStop = document.getElementById('tail-stop');
     const adminLog = document.getElementById('admin-log');
     const toast = document.getElementById('toast');
+    const gameCanvas = document.getElementById('game-canvas');
+    const liveStart = document.getElementById('live-start');
+    const liveStop = document.getElementById('live-stop');
+    const liveStatus = document.getElementById('live-status');
     let adminSource = null;
     let runsCache = [];
+    let liveInterval = null;
+
+    // DF color palette (16 colors)
+    const DF_COLORS = [
+      '#000000', '#000080', '#008000', '#008080', '#800000', '#800080', '#808000', '#c0c0c0',
+      '#808080', '#0000ff', '#00ff00', '#00ffff', '#ff0000', '#ff00ff', '#ffff00', '#ffffff'
+    ];
+    const CHAR_W = 8, CHAR_H = 16, SCALE = 1;
+
+    function renderScreenshot(data) {
+      const { width, height, tiles } = data;
+      const ctx = gameCanvas.getContext('2d');
+
+      // Resize canvas if needed
+      const canvasW = width * CHAR_W * SCALE;
+      const canvasH = height * CHAR_H * SCALE;
+      if (gameCanvas.width !== canvasW || gameCanvas.height !== canvasH) {
+        gameCanvas.width = canvasW;
+        gameCanvas.height = canvasH;
+      }
+
+      // Clear canvas
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, canvasW, canvasH);
+
+      // Draw each tile using pcface bitmap rendering
+      // Note: CopyScreen returns tiles in COLUMN-MAJOR order (top-to-bottom, then next column)
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const [ch, fg, bg] = tiles[x * height + y];  // column-major indexing
+          const px = x * CHAR_W * SCALE;
+          const py = y * CHAR_H * SCALE;
+
+          // Draw background
+          if (bg > 0) {
+            ctx.fillStyle = DF_COLORS[bg % 16];
+            ctx.fillRect(px, py, CHAR_W * SCALE, CHAR_H * SCALE);
+          }
+
+          // Draw character using pcface bitmap
+          if (ch > 0 && ch < 256 && typeof pcface !== 'undefined') {
+            ctx.fillStyle = DF_COLORS[fg % 16];
+            pcface.drawChar(PC_FACE_MODERNDOS_8X16_FONT_LIST, ctx, CHAR_W, ch, px, py, SCALE);
+          }
+        }
+      }
+    }
+
+    async function fetchScreenshot() {
+      try {
+        const res = await fetch('/screenshot');
+        if (!res.ok) throw new Error(res.statusText);
+        const data = await res.json();
+        renderScreenshot(data);
+        liveStatus.textContent = `Streaming (${new Date().toLocaleTimeString()})`;
+        liveStatus.style.color = '#4f7cff';
+      } catch (err) {
+        liveStatus.textContent = `Error: ${err.message}`;
+        liveStatus.style.color = '#d9534f';
+      }
+    }
+
+    liveStart.addEventListener('click', () => {
+      if (liveInterval) return;
+      liveStatus.textContent = 'Starting...';
+      fetchScreenshot();
+      liveInterval = setInterval(fetchScreenshot, 500);
+    });
+
+    liveStop.addEventListener('click', () => {
+      if (liveInterval) {
+        clearInterval(liveInterval);
+        liveInterval = null;
+        liveStatus.textContent = 'Stopped';
+        liveStatus.style.color = '#9fb1d6';
+      }
+    });
 
     function showToast(message, tone='info') {
       toast.textContent = message;
