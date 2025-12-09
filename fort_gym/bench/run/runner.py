@@ -145,6 +145,7 @@ def run_once(
         raise ValueError(f"Unsupported backend: {backend_name}")
 
     previous_state: Optional[Dict[str, Any]] = None
+    action_history: List[Dict[str, Any]] = []  # Track recent actions for keystroke mode memory
 
     def publish_event(step: int, event_type: str, payload: Dict[str, Any], events: List[Dict[str, Any]]) -> None:
         data = {"run_id": run_identifier, "step": step, **payload}
@@ -194,7 +195,11 @@ def run_once(
 
                 # Get screen text for keystroke mode
                 screen_text = get_screen_text() if is_keystroke_mode else None
-                obs_text, obs_json = encode_observation(state_before, screen_text=screen_text)
+                obs_text, obs_json = encode_observation(
+                    state_before,
+                    screen_text=screen_text,
+                    action_history=action_history if is_keystroke_mode else None,
+                )
                 publish_event(step, "state", {"state": obs_json, "text": obs_text}, events)
 
                 raw_action = agent.decide(obs_text, obs_json)
@@ -270,6 +275,17 @@ def run_once(
                     break
                 publish_event(step, "execute", {"result": execute_result}, events)
                 state_after_apply = execute_result.get("state") or state_before
+
+                # Track action for history (keystroke mode memory)
+                if is_keystroke_mode:
+                    action_history.append({
+                        "step": step,
+                        "keys": action.get("params", {}).get("keys", []),
+                        "intent": action.get("intent", ""),
+                    })
+                    # Keep only last 5 actions
+                    if len(action_history) > 5:
+                        action_history.pop(0)
 
                 try:
                     advance_state = call_with_retry("advance", advance_env)
@@ -367,6 +383,22 @@ def run_once(
         raise
     finally:
         if dfhack_client:
+            # Pause game before closing to prevent it from running between runs
+            try:
+                dfhack_client.pause()
+            except Exception:
+                pass  # Best effort via RPC
+            # Also try direct dfhack-run as fallback
+            try:
+                import subprocess
+                from ..config import dfhack_cmd
+                subprocess.run(
+                    dfhack_cmd("lua", "df.global.pause_state = true"),
+                    timeout=5,
+                    capture_output=True,
+                )
+            except Exception:
+                pass  # Best effort
             dfhack_client.close()
 
     return run_identifier

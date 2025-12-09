@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 
 def redact_noise(state: Dict[str, Any]) -> Dict[str, Any]:
@@ -13,12 +13,14 @@ def redact_noise(state: Dict[str, Any]) -> Dict[str, Any]:
 def encode_observation(
     state: Dict[str, Any],
     screen_text: Optional[str] = None,
+    action_history: Optional[List[Dict[str, Any]]] = None,
 ) -> Tuple[str, Dict[str, Any]]:
     """Return (text_summary, machine_state) tuple for a given environment state.
 
     Args:
         state: Game state dictionary
         screen_text: Optional screen text from CopyScreen (for keystroke mode)
+        action_history: Optional list of recent actions (for keystroke mode memory)
 
     Returns:
         Tuple of (text observation for agent, cleaned state dict)
@@ -51,6 +53,20 @@ def encode_observation(
 
 == STATUS ==
 {chr(10).join(status_lines)}"""
+        # Add action history if available
+        if action_history:
+            history_lines = []
+            for a in action_history:
+                step_num = a.get("step", "?")
+                intent = a.get("intent", "no intent")
+                keys = a.get("keys", [])
+                # Show first few keys to keep it concise
+                keys_preview = keys[:5] if len(keys) > 5 else keys
+                keys_str = ", ".join(keys_preview)
+                if len(keys) > 5:
+                    keys_str += f"... (+{len(keys) - 5} more)"
+                history_lines.append(f"  Step {step_num}: {intent} → [{keys_str}]")
+            summary_text += f"\n\n== RECENT ACTIONS ==\n" + "\n".join(history_lines)
     else:
         # Original format for toolbox mode
         bullets = [f"- {line}" for line in status_lines]

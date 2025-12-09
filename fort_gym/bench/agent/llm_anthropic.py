@@ -22,6 +22,27 @@ ANTHROPIC_TOOL = {
 # Keystroke mode system prompt
 KEYSTROKE_SYSTEM_PROMPT = """You are playing Dwarf Fortress. You control the game by sending keystrokes.
 
+## Your Objective
+You are managing a dwarf fortress. **TAKE ACTION to improve the colony - don't just explore menus!**
+
+IMPORTANT: The main menu (showing options like "d: Designations", "b: Building") is the NORMAL game view - it is NOT an overlay to close! To take actions, just press the corresponding key directly.
+
+**DO SOMETHING CONSTRUCTIVE EACH TURN:**
+1. **Dig more space**: D_DESIGNATE → DESIGNATE_DIG → select area with CURSOR + SELECT
+2. **Build workshops/furniture**: D_BUILDJOB → select building type
+3. **Create stockpiles**: D_STOCKPILES → define storage area
+
+**DON'T waste turns just looking around.** Open a menu, then complete an action within it.
+
+If you're unsure what to do, **ALWAYS dig**. Designate a small 3x3 mining area - it's always useful.
+
+Use LEAVESCREEN only to exit SUB-menus (like after designating an area).
+
+Tips:
+- If Food/Drink is 0, the fortress is starving - dig for underground water/farms
+- Mining creates space and resources - when in doubt, DIG MORE
+- Don't check the same menu repeatedly - check once, then ACT
+
 ## Screen
 You see the current game screen as text (80 columns x 25 rows). The screen shows the DF interface including menus, the map view, and status information.
 
@@ -39,6 +60,18 @@ Return a KEYSTROKE action with a list of key names to press in sequence.
 - SELECT - Confirm/Enter
 - LEAVESCREEN - Cancel/Escape
 - DESELECT - Clear selection
+
+### Typing Letters (IMPORTANT!)
+Many DF menus show options like "a - Do something". To select these, you must TYPE THE LETTER using STRING_A### format where ### is the ASCII code:
+- STRING_A097 = 'a', STRING_A098 = 'b', STRING_A099 = 'c', STRING_A100 = 'd'
+- STRING_A101 = 'e', STRING_A102 = 'f', STRING_A103 = 'g', STRING_A104 = 'h'
+- STRING_A105 = 'i', STRING_A106 = 'j', STRING_A107 = 'k', STRING_A108 = 'l'
+- STRING_A109 = 'm', STRING_A110 = 'n', STRING_A111 = 'o', STRING_A112 = 'p'
+- STRING_A113 = 'q', STRING_A114 = 'r', STRING_A115 = 's', STRING_A116 = 't'
+- STRING_A117 = 'u', STRING_A118 = 'v', STRING_A119 = 'w', STRING_A120 = 'x'
+- STRING_A121 = 'y', STRING_A122 = 'z'
+
+Example: If you see "a - Finish conversation", send STRING_A097 to press 'a'.
 
 ### Main Menus (press from main view)
 - D_DESIGNATE - Open designate menu (d key)
@@ -72,11 +105,19 @@ Always return exactly one action:
   "intent": "Brief description of what you're trying to do"
 }
 
+## Closing Popups and Notifications
+Some popups say "Press Enter to close" but SELECT doesn't always work. If SELECT doesn't close a popup after 2-3 tries, try these alternatives:
+- STANDARDSCROLL_PAGEDOWN - Often works for notification popups
+- STRING_A032 (Space) - Sometimes needed to dismiss notifications
+- LEAVESCREEN - Works for most dialogs and sub-menus
+
 ## Tips
 - Look at the screen to understand current context/menu state
-- If you see a menu, navigate it appropriately
+- If you see a menu with lettered options like "a - Something", use STRING_A### to type that letter
+- If you see a dialog or popup, dismiss it first before trying other actions
 - Start with simple actions like exploring or designating a small dig area
-- Watch the screen feedback to see results of your actions"""
+- Watch the screen feedback to see results of your actions
+- **IMPORTANT**: If an action doesn't work after 2-3 tries, try a DIFFERENT key or approach. Don't repeat the same action endlessly."""
 
 
 KEYSTROKE_TOOL_SPEC = {

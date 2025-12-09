@@ -139,6 +139,13 @@ The `anthropic-keystroke` agent enables Claude to control DF via raw keystrokes:
 - Claude decides what keys to press based on screen content
 - Keys sent via `devel/send-key` command
 - Key module: `fort_gym/bench/env/keystroke_exec.py`
+- **Action history**: Last 5 actions shown in observation for context/memory
+- **Pause on end**: Game is paused when run completes to prevent state drift
+
+The system prompt encourages Claude to take action (dig, build, create stockpiles) rather than just exploring menus. Key behaviors:
+- Recognizes main menu is NOT an overlay to dismiss
+- Uses STRING_A### keys for typing letters (e.g., STRING_A097 = 'a')
+- Tries alternative keys (STANDARDSCROLL_PAGEDOWN, Space) when SELECT doesn't close popups
 
 ## Environment Variables
 
