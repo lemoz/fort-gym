@@ -44,6 +44,15 @@ class OrderParams(BaseModel):
     at: Optional[str] = None
 
 
+class KeystrokeParams(BaseModel):
+    """Parameters for KEYSTROKE actions - raw keyboard input."""
+
+    keys: list[str] = Field(..., description="List of interface_key names to send")
+
+    class Config:
+        extra = "forbid"
+
+
 class BaseAction(BaseModel):
     """Base set of properties available across all actions."""
 
@@ -93,6 +102,12 @@ class NoteAction(BaseAction):
     type: Literal["NOTE"]
 
 
+class KeystrokeAction(BaseAction):
+    """Raw keystroke input action for direct game control."""
+    type: Literal["KEYSTROKE"]
+    params: KeystrokeParams
+
+
 ActionUnion = Annotated[
     Union[
         DigAction,
@@ -103,6 +118,7 @@ ActionUnion = Annotated[
         AssignAction,
         AlertAction,
         NoteAction,
+        KeystrokeAction,
     ],
     Field(discriminator="type"),
 ]
@@ -112,7 +128,7 @@ class ActionModel(BaseModel):
     action: ActionUnion
 
 
-ALLOWED_TYPES = {"DIG", "BUILD", "ZONE", "STOCKPILE", "ORDER", "ASSIGN", "ALERT", "NOTE"}
+ALLOWED_TYPES = {"DIG", "BUILD", "ZONE", "STOCKPILE", "ORDER", "ASSIGN", "ALERT", "NOTE", "KEYSTROKE"}
 
 
 def parse_action(obj_or_str: Dict[str, Any] | str) -> Dict[str, Any]:
@@ -156,6 +172,14 @@ def validate_action(state: Dict[str, Any], action: Dict[str, Any]) -> tuple[bool
     if action_type == "ORDER":
         if "job" not in params or "quantity" not in params:
             return False, "ORDER action requires job and quantity"
+    if action_type == "KEYSTROKE":
+        keys = params.get("keys")
+        if not keys:
+            return False, "KEYSTROKE action requires non-empty keys list"
+        if not isinstance(keys, list):
+            return False, "KEYSTROKE keys must be a list"
+        if len(keys) > 100:
+            return False, "KEYSTROKE keys list too long (max 100)"
 
     map_bounds = state.get("map_bounds")
     location = params.get("location")

@@ -13,6 +13,7 @@ from .dfhack_exec import (
     set_paused,
     tick_read,
 )
+from .env.keystroke_exec import execute_keystroke_action
 
 HOOK_ROOT = DFROOT / "hook"
 
@@ -175,4 +176,5 @@ __all__ = [
     "designate_rect",
     "advance_ticks_exact_external",
     "advance_ticks_exact",
+    "execute_keystroke_action",
 ]

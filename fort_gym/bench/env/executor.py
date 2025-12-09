@@ -8,6 +8,7 @@ from .actions import validate_action
 from .dfhack_client import DFHackClient, DFHackUnavailableError
 from ..dfhack_backend import designate_rect as safe_designate_rect
 from ..dfhack_backend import queue_manager_order as safe_queue_manager_order
+from .keystroke_exec import execute_keystroke_action
 from .mock_env import MockEnvironment
 from .state_reader import StateReader
 
@@ -91,6 +92,17 @@ class Executor:
                     return {"accepted": False, "why": f"Invalid coordinates: {exc}"}
                 ok, why = self._dfhack_client.place_building(kind, x, y, z)
                 return {"accepted": bool(ok), "why": why}
+
+            if action_type == "KEYSTROKE":
+                keys = params.get("keys", [])
+                if not keys:
+                    return {"accepted": False, "why": "Empty keys list"}
+                result = execute_keystroke_action(keys)
+                return {
+                    "accepted": bool(result.get("ok")),
+                    "why": None if result.get("ok") else result.get("error"),
+                    "result": result,
+                }
 
             return {"accepted": False, "why": f"Unsupported DFHack action: {action_type}"}
 

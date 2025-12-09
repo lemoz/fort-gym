@@ -175,6 +175,41 @@ cat artifacts/<run_id>/summary.json | jq .
 > Note: the interactive `/step` flow is validated against the single-action schema used by the `fake` agent. Manager orders issued by the exploratory `random` agent remain experimental and may be rejected until DFHack execution coverage improves.
 The SSE endpoint emits `state`, `action`, `validation`, `execute`, `advance`, `metrics`, and `score` events. `summary.json` accumulates aggregate metrics (currently a simple placeholder for DFHack runs).
 
+## Keystroke Control Mode (Claude Plays Like a Human)
+
+The `anthropic-keystroke` model enables Claude to control Dwarf Fortress via raw keystrokes, seeing the game screen and sending key commands just like a human player would.
+
+### How It Works
+1. **Screen Observation**: The game screen is captured via DFHack's CopyScreen RPC and converted to an 80x25 text representation
+2. **Claude Decides**: Claude sees the screen text and decides what keystrokes to send
+3. **Keystroke Execution**: Keys are sent via DFHack's `devel/send-key` command
+4. **Game Responds**: The game processes the input and advances
+
+### Running Keystroke Mode
+```bash
+curl -s -X POST http://127.0.0.1:8000/runs \
+  -H 'Content-Type: application/json' \
+  -d '{"backend":"dfhack","model":"anthropic-keystroke","max_steps":10,"ticks_per_step":200}'
+```
+
+### Available Keys
+Common interface keys include:
+- **Navigation**: `CURSOR_UP`, `CURSOR_DOWN`, `CURSOR_LEFT`, `CURSOR_RIGHT`, `CURSOR_UP_Z`, `CURSOR_DOWN_Z`
+- **Selection**: `SELECT`, `DESELECT`, `LEAVESCREEN`
+- **Main Menus**: `D_DESIGNATE`, `D_BUILDJOB`, `D_STOCKPILES`, `D_ZONES`, `D_ORDERS`
+- **Designate**: `DESIGNATE_DIG`, `DESIGNATE_CHANNEL`, `DESIGNATE_STAIR_DOWN`, `DESIGNATE_CHOP`
+
+Full list of 1600+ keys available via: `dfhack-run lua "@df.interface_key"`
+
+### Example Output
+```json
+{
+  "type": "KEYSTROKE",
+  "params": {"keys": ["D_DESIGNATE", "DESIGNATE_DIG", "CURSOR_DOWN", "SELECT"]},
+  "intent": "Designating a dig area below current position"
+}
+```
+
 Generate a leaderboard snapshot for the static site:
 
 ```bash

@@ -53,7 +53,7 @@ class Settings(BaseModel):
     OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY")
     OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
     ANTHROPIC_API_KEY: Optional[str] = os.getenv("ANTHROPIC_API_KEY")
-    ANTHROPIC_MODEL: str = os.getenv("ANTHROPIC_MODEL", "claude-3-5-sonnet-latest")
+    ANTHROPIC_MODEL: str = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-5")
     LLM_MAX_TOKENS: int = int(os.getenv("LLM_MAX_TOKENS", "512"))
     LLM_TEMP: float = float(os.getenv("LLM_TEMP", "0.1"))
     LLM_RATE_LIMIT_TPS: float = float(os.getenv("LLM_RATE_LIMIT_TPS", "1.0"))
@@ -74,7 +74,7 @@ def get_settings() -> Settings:
         OPENAI_API_KEY=os.getenv("OPENAI_API_KEY"),
         OPENAI_MODEL=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
         ANTHROPIC_API_KEY=os.getenv("ANTHROPIC_API_KEY"),
-        ANTHROPIC_MODEL=os.getenv("ANTHROPIC_MODEL", "claude-3-5-sonnet-latest"),
+        ANTHROPIC_MODEL=os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-5"),
         LLM_MAX_TOKENS=int(os.getenv("LLM_MAX_TOKENS", "512")),
         LLM_TEMP=float(os.getenv("LLM_TEMP", "0.1")),
         LLM_RATE_LIMIT_TPS=float(os.getenv("LLM_RATE_LIMIT_TPS", "1.0")),

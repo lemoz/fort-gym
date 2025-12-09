@@ -72,6 +72,15 @@ def run_once(
     executor = Executor()
     dfhack_client: Optional[DFHackClient] = None
 
+    tick_info_state: Dict[str, Any] = {}
+
+    # Detect keystroke mode from model name
+    is_keystroke_mode = model.endswith("-keystroke")
+
+    def get_screen_text() -> str:
+        """Get screen text for keystroke mode, empty string otherwise."""
+        return ""
+
     if backend_name == "mock":
         mock_env = MockEnvironment()
         mock_env.reset(seed=123)
@@ -87,7 +96,10 @@ def run_once(
             return executor.apply(action_dict, backend="mock", state=state)
 
         def advance_env() -> Dict[str, Any]:
-            return mock_env.advance(ticks)
+            nonlocal tick_info_state
+            result = mock_env.advance(ticks)
+            tick_info_state = {"ok": True, "ticks_advanced": ticks}
+            return result
 
     elif backend_name == "dfhack":
         if not settings.DFHACK_ENABLED:
@@ -116,7 +128,18 @@ def run_once(
             return executor.apply(action_dict, backend="dfhack", state=state)
 
         def advance_env() -> Dict[str, Any]:
-            return dfhack_client.advance(ticks)
+            nonlocal tick_info_state
+            state = dfhack_client.advance(ticks)
+            tick_info_state = dict(dfhack_client.last_tick_info or {})
+            return state
+
+        if is_keystroke_mode:
+            def get_screen_text() -> str:
+                """Get screen text for keystroke mode."""
+                try:
+                    return dfhack_client.get_screen_text()
+                except Exception:
+                    return "(screen capture failed)"
 
     else:
         raise ValueError(f"Unsupported backend: {backend_name}")
@@ -141,6 +164,7 @@ def run_once(
         with trace_path.open("w", encoding="utf-8") as fh:
             for step in range(max_steps):
                 events: List[Dict[str, Any]] = []
+                tick_info_state = {}
 
                 pause_env()
 
@@ -167,7 +191,10 @@ def run_once(
                             ended_at=datetime.utcnow(),
                         )
                     break
-                obs_text, obs_json = encode_observation(state_before)
+
+                # Get screen text for keystroke mode
+                screen_text = get_screen_text() if is_keystroke_mode else None
+                obs_text, obs_json = encode_observation(state_before, screen_text=screen_text)
                 publish_event(step, "state", {"state": obs_json, "text": obs_text}, events)
 
                 raw_action = agent.decide(obs_text, obs_json)
@@ -255,7 +282,12 @@ def run_once(
                         )
                     break
                 pause_env()
-                publish_event(step, "advance", {"state": advance_state}, events)
+                publish_event(
+                    step,
+                    "advance",
+                    {"state": advance_state, "tick_advance": tick_info_state},
+                    events,
+                )
 
                 metrics_snapshot = metrics.step_snapshot(advance_state)
                 publish_event(step, "metrics", {"metrics": metrics_snapshot}, events)
@@ -294,6 +326,7 @@ def run_once(
                         "milestones": milestone_notes,
                     },
                     "events": events,
+                    "tick_advance": tick_info_state,
                 }
                 fh.write(json.dumps(record_line) + "\n")
 

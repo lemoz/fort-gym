@@ -39,6 +39,81 @@ class DFHackUnavailableError(DFHackError):
     """Raised when the remote DFHack interface is not reachable."""
 
 
+def screen_to_text(screen: Dict[str, Any]) -> str:
+    """Convert CopyScreen response to plain text string.
+
+    The tiles array from CopyScreen is in column-major order (column 0 row 0-24,
+    then column 1 row 0-24, etc.). Each tile is [character, foreground, background].
+
+    Args:
+        screen: Dict with 'width', 'height', 'tiles' from get_screen()
+
+    Returns:
+        Multi-line string representation of the screen
+    """
+    width = screen.get("width", 80)
+    height = screen.get("height", 25)
+    tiles = screen.get("tiles", [])
+
+    if not tiles:
+        return "(empty screen)"
+
+    lines = []
+    for row in range(height):
+        line_chars = []
+        for col in range(width):
+            # Column-major: index = col * height + row
+            idx = col * height + row
+            if idx < len(tiles):
+                char_code = tiles[idx][0]
+                # Convert to printable ASCII, use space for non-printables
+                if 32 <= char_code < 127:
+                    line_chars.append(chr(char_code))
+                elif char_code == 0:
+                    line_chars.append(' ')
+                else:
+                    # CP437 extended chars - map common ones, otherwise use placeholder
+                    # Common DF characters: walls, floors, etc.
+                    cp437_map = {
+                        176: '#',  # Light shade (wall)
+                        177: '#',  # Medium shade
+                        178: '#',  # Dark shade
+                        219: '#',  # Full block
+                        220: '_',  # Lower half block
+                        223: '-',  # Upper half block
+                        249: '.',  # Bullet (floor)
+                        250: '.',  # Interpunct
+                        254: '*',  # Square
+                        # Box drawing
+                        179: '|', 180: '+', 191: '+', 192: '+',
+                        193: '+', 194: '+', 195: '+', 196: '-',
+                        197: '+', 217: '+', 218: '+',
+                        # Arrows
+                        24: '^', 25: 'v', 26: '>', 27: '<',
+                        # Other common
+                        1: '@',    # Smiley (dwarf)
+                        2: '@',    # Inverse smiley
+                        3: '<3',   # Heart
+                        4: '<>',   # Diamond
+                        5: '*',    # Club
+                        6: '*',    # Spade
+                        7: 'o',    # Bullet
+                        15: '*',   # Sun
+                        30: '^',   # Up triangle
+                        31: 'v',   # Down triangle
+                    }
+                    line_chars.append(cp437_map.get(char_code, '?'))
+            else:
+                line_chars.append(' ')
+        lines.append(''.join(line_chars).rstrip())
+
+    # Remove trailing empty lines
+    while lines and not lines[-1]:
+        lines.pop()
+
+    return '\n'.join(lines)
+
+
 @dataclass
 class CallDescriptor:
     method: str
@@ -216,6 +291,15 @@ class DFHackClient:
             "height": response.height,
             "tiles": tiles,
         }
+
+    def get_screen_text(self) -> str:
+        """Capture current DF screen and return as plain text string.
+
+        Returns an 80x25 (or actual dimensions) text representation of the screen,
+        suitable for passing to an LLM agent.
+        """
+        screen = self.get_screen()
+        return screen_to_text(screen)
 
     def designate_rect(self, x1: int, y1: int, z1: int, x2: int, y2: int, z2: int) -> Tuple[bool, Optional[str]]:
         self._ensure_connection()
@@ -399,4 +483,5 @@ __all__ = [
     "DFHackClient",
     "DFHackError",
     "DFHackUnavailableError",
+    "screen_to_text",
 ]

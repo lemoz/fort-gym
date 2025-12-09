@@ -120,6 +120,7 @@ OPTIONAL_AGENT_MODULES = {
     "fake": "fort_gym.bench.agent.fake_llm",
     "openai": "fort_gym.bench.agent.llm_openai",
     "anthropic": "fort_gym.bench.agent.llm_anthropic",
+    "anthropic-keystroke": "fort_gym.bench.agent.llm_anthropic",
 }
 
 

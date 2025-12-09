@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 
 
 BackendType = Literal["mock", "dfhack"]
-ModelType = Literal["random", "fake", "openai", "anthropic"]
+ModelType = Literal["random", "fake", "openai", "anthropic", "anthropic-keystroke"]
 
 
 class RunInfo(BaseModel):

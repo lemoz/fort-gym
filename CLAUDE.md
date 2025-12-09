@@ -126,9 +126,19 @@ Agents must implement `Agent.decide(obs_text: str, obs_json: dict) -> dict` retu
 - `RandomAgent` (always available)
 - `FakeAgent` (deterministic responses, requires `fort_gym.bench.agent.fake_llm`)
 - OpenAI agents (requires `OPENAI_API_KEY`)
-- Anthropic agents (requires `ANTHROPIC_API_KEY`)
+- Anthropic agents (requires `ANTHROPIC_API_KEY`):
+  - `anthropic` - Toolbox mode with predefined actions (DIG, BUILD, ORDER)
+  - `anthropic-keystroke` - Pure keystroke control, Claude sees screen and sends key commands
 
 Register new agents via `AGENT_FACTORIES` in `agent/base.py`.
+
+### Keystroke Mode
+
+The `anthropic-keystroke` agent enables Claude to control DF via raw keystrokes:
+- Screen captured via CopyScreen RPC, converted to 80x25 text
+- Claude decides what keys to press based on screen content
+- Keys sent via `devel/send-key` command
+- Key module: `fort_gym/bench/env/keystroke_exec.py`
 
 ## Environment Variables
 
