@@ -74,23 +74,30 @@ These are the manual steps we currently run on `dfhack-host` before kicking off 
      cd ${SRC}/sources/plugins/remotefortressreader/proto
      python -m grpc_tools.protoc --proto_path=. --proto_path=../../../library/proto --python_out=../../../../generated RemoteFortressReader.proto ItemdefInstrument.proto DwarfControl.proto AdventureControl.proto ui_sidebar_mode.proto
      : > ${SRC}/generated/__init__.py
+  '
+  ```
+
+3. **Install fort-gym hook scripts (safety helpers).**
+   ```bash
+   gcloud compute ssh dfhack-host --command '
+     set -e
+     cd /opt/fort-gym
+     install -m 0644 hook/order_make.lua /opt/dwarf-fortress/hook/order_make.lua
+     install -m 0644 hook/designate_rect.lua /opt/dwarf-fortress/hook/designate_rect.lua
    '
    ```
 
-3. **Configure DFHack to auto-load the save and expose the remote plugin on loopback.**
+4. **Configure DFHack to enable RemoteFortressReader (case-sensitive).**
    ```bash
    gcloud compute ssh dfhack-host --command "
      sudo tee /opt/dwarf-fortress/dfhack-config/init/dfhack.init >/dev/null <<'EOF'
-enable remotefortressreader
-remote stop 2> /dev/null
-remote start 127.0.0.1 5000
-remote allow-remote yes
-load-save mvp_test1
+# Enable RemoteFortressReader for CopyScreen API (used by Live Game View)
+enable RemoteFortressReader
 EOF
    "
    ```
 
-4. **Install the systemd service.**
+5. **Install the systemd service.**
    ```bash
    gcloud compute ssh dfhack-host --command "
      sudo tee /etc/systemd/system/dfhack.service >/dev/null <<'EOF'
@@ -136,7 +143,7 @@ EOF
    '
    ```
 
-5. **Run the fort-gym API in tmux.**
+6. **Run the fort-gym API in tmux.**
    ```bash
    gcloud compute ssh dfhack-host --command '
      cd /opt/fort-gym
@@ -197,6 +204,17 @@ cp .env.example .env
 | `fortgym_service_enabled` | Enable fort-gym API systemd service (false by default). |
 | `fortgym_service_port` | API bind port (default 8000). |
 | `allow_tcp_ports` | List of TCP ports opened via UFW (e.g. [22, 5000, 8000]). |
+
+## Web UI
+
+The web interface at `http://<host>:8000/` provides:
+
+- **Live Game View**: Real-time rendering of the DF screen using the `/screenshot` API endpoint. Click "Start Live View" to begin streaming. Uses [pcface](https://github.com/susam/pcface) for pixel-perfect CP437 bitmap font rendering.
+- **Leaderboard**: Aggregated scores across public runs.
+- **Live/Replay Streams**: SSE event streams for watching runs in real-time or replaying traces.
+- **Admin Panel** (`/admin`): Create runs, manage jobs, generate share tokens.
+
+The Live Game View captures the screen via RemoteFortressReader's `CopyScreen` RPC (tiles are returned in column-major order) and renders them on an HTML canvas with proper DF color palette.
 
 ## Security Notes
 - Restrict inbound traffic to trusted IPs using GCE firewall rules or UFW.

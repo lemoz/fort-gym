@@ -36,6 +36,19 @@
     ul { list-style: disc inside; max-width: 45rem; }
     footer { text-align: center; padding: 2rem 8vw; background: #05070b; color: #9fb1d6; font-size: 0.9rem; }
     .highlights { margin-top: 1.5rem; background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px; min-height: 120px; }
+
+    /* Game view styles */
+    .game-view { margin-top: 2rem; }
+    .game-view h3 { margin-bottom: 1rem; }
+    #game-canvas {
+      background: #000;
+      border: 2px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+    .game-controls { margin-top: 0.5rem; display: flex; gap: 0.5rem; align-items: center; }
+    .game-status { font-size: 0.85rem; color: #9fb1d6; }
   </style>
 </head>
 <body>
@@ -57,6 +70,14 @@
       <div>
         <h3>Replay Log</h3>
         <pre id="replay-log">Load a replay to see the step-by-step story.</pre>
+      </div>
+    </div>
+    <div class="game-view">
+      <h3>Live Game View</h3>
+      <canvas id="game-canvas" width="640" height="384"></canvas>
+      <div class="game-controls">
+        <button id="toggle-stream" onclick="toggleGameStream()">Start Live View</button>
+        <span id="game-status" class="game-status">Click to start streaming the game screen.</span>
       </div>
     </div>
   </section>
@@ -274,6 +295,88 @@ function replay(token, speed=4){
   es.onmessage = (e)=>{ log.textContent += e.data + "\n"; log.scrollTop = log.scrollHeight; };
   es.addEventListener('score', (e)=>{ log.textContent += "[score] "+e.data+"\n"; });
   es.onerror = ()=>{ es && es.close(); /* no reconnect on replay */ };
+}
+</script>
+
+<!-- pcface bitmap font library for pixel-perfect CP437 rendering -->
+<script src="https://cdn.jsdelivr.net/npm/pcface@0.3.0/src/pcface.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pcface@0.3.0/out/moderndos-8x16/fontlist.js"></script>
+
+<script>
+// DF color palette (16 colors)
+const DF_COLORS = [
+  '#000000', '#000080', '#008000', '#008080', '#800000', '#800080', '#808000', '#c0c0c0',
+  '#808080', '#0000ff', '#00ff00', '#00ffff', '#ff0000', '#ff00ff', '#ffff00', '#ffffff'
+];
+
+const CHAR_W = 8, CHAR_H = 16, SCALE = 1;
+let gameStreamInterval = null;
+let gameCanvas, gameCtx;
+
+async function fetchAndRenderScreen() {
+  try {
+    const res = await fetch('/screenshot');
+    if (!res.ok) throw new Error(res.statusText);
+    const data = await res.json();
+    renderScreen(data);
+    document.getElementById('game-status').textContent = `Live: ${data.width}x${data.height} tiles`;
+  } catch (err) {
+    document.getElementById('game-status').textContent = 'Error: ' + err.message;
+  }
+}
+
+function renderScreen(data) {
+  const { width, height, tiles } = data;
+
+  // Resize canvas if needed
+  const canvasW = width * CHAR_W * SCALE;
+  const canvasH = height * CHAR_H * SCALE;
+  if (gameCanvas.width !== canvasW || gameCanvas.height !== canvasH) {
+    gameCanvas.width = canvasW;
+    gameCanvas.height = canvasH;
+  }
+
+  // Clear canvas
+  gameCtx.fillStyle = '#000';
+  gameCtx.fillRect(0, 0, canvasW, canvasH);
+
+  // Draw each tile using pcface bitmap rendering
+  // Note: CopyScreen returns tiles in COLUMN-MAJOR order (top-to-bottom, then next column)
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const [ch, fg, bg] = tiles[x * height + y];  // column-major indexing
+      const px = x * CHAR_W * SCALE;
+      const py = y * CHAR_H * SCALE;
+
+      // Draw background
+      if (bg > 0) {
+        gameCtx.fillStyle = DF_COLORS[bg % 16];
+        gameCtx.fillRect(px, py, CHAR_W * SCALE, CHAR_H * SCALE);
+      }
+
+      // Draw character using pcface bitmap
+      if (ch > 0 && ch < 256 && typeof pcface !== 'undefined') {
+        gameCtx.fillStyle = DF_COLORS[fg % 16];
+        pcface.drawChar(PC_FACE_MODERNDOS_8X16_FONT_LIST, gameCtx, CHAR_W, ch, px, py, SCALE);
+      }
+    }
+  }
+}
+
+function toggleGameStream() {
+  const btn = document.getElementById('toggle-stream');
+  if (gameStreamInterval) {
+    clearInterval(gameStreamInterval);
+    gameStreamInterval = null;
+    btn.textContent = 'Start Live View';
+    document.getElementById('game-status').textContent = 'Streaming stopped.';
+  } else {
+    gameCanvas = document.getElementById('game-canvas');
+    gameCtx = gameCanvas.getContext('2d');
+    fetchAndRenderScreen();
+    gameStreamInterval = setInterval(fetchAndRenderScreen, 500);
+    btn.textContent = 'Stop Live View';
+  }
 }
 </script>
 

@@ -313,6 +313,55 @@ async def public_export(token: str) -> StreamingResponse:
     return StreamingResponse(iterator(), media_type="application/x-ndjson")
 
 
+# ---------------------------------------------------------------------------
+# Screenshot endpoints for live game visualization
+# ---------------------------------------------------------------------------
+
+_screenshot_client = None
+
+
+def _get_screenshot_client():
+    """Get or create a DFHack client for screenshot capture."""
+    global _screenshot_client
+    if _screenshot_client is not None:
+        return _screenshot_client
+    try:
+        from ..env.dfhack_client import DFHackClient, DFHackUnavailableError
+        client = DFHackClient()
+        client.connect()
+        _screenshot_client = client
+        return client
+    except Exception:
+        return None
+
+
+@app.get("/screenshot")
+async def admin_screenshot() -> JSONResponse:
+    """Capture the current DF screen (admin endpoint)."""
+    client = _get_screenshot_client()
+    if client is None:
+        raise HTTPException(status_code=503, detail="DFHack not available")
+    try:
+        screen = client.get_screen()
+        return JSONResponse(screen)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Screenshot failed: {exc}")
+
+
+@app.get("/public/runs/{token}/screenshot")
+async def public_screenshot(token: str) -> JSONResponse:
+    """Capture the current DF screen for a public run (requires 'live' scope)."""
+    _require_share(token, scope="live")
+    client = _get_screenshot_client()
+    if client is None:
+        raise HTTPException(status_code=503, detail="DFHack not available")
+    try:
+        screen = client.get_screen()
+        return JSONResponse(screen)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Screenshot failed: {exc}")
+
+
 @app.post("/jobs", response_model=JobInfo)
 async def create_job(payload: JobCreate) -> JobInfo:
     loop = asyncio.get_running_loop()

@@ -193,6 +193,30 @@ class DFHackClient:
         data.setdefault("map_bounds", (0, 0, 0))
         return data
 
+    def get_screen(self) -> Dict[str, Any]:
+        """Capture the current DF screen via RemoteFortressReader CopyScreen RPC.
+
+        Returns a dict with width, height, and tiles array where each tile is
+        [character, foreground_color, background_color].
+        """
+        self._ensure_connection()
+        response = self._call(
+            CallDescriptor(
+                "CopyScreen",
+                self._core.EmptyMessage,
+                self._fortress.ScreenCapture,
+                "RemoteFortressReader",
+            )
+        )
+        tiles = []
+        for tile in response.tiles:
+            tiles.append([tile.character, tile.foreground, tile.background])
+        return {
+            "width": response.width,
+            "height": response.height,
+            "tiles": tiles,
+        }
+
     def designate_rect(self, x1: int, y1: int, z1: int, x2: int, y2: int, z2: int) -> Tuple[bool, Optional[str]]:
         self._ensure_connection()
         script = """
