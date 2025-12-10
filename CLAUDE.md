@@ -173,43 +173,50 @@ See `fort_gym/bench/config.py` for full list.
 
 ### Full System Startup (from scratch)
 
-1. **Start DFHack headless service**:
+Both services are managed via systemd and auto-start on boot.
+
+1. **Start services** (if not running):
 ```bash
-ssh cdossman@34.41.155.134 'sudo systemctl start dfhack-headless'
+ssh cdossman@34.41.155.134 'sudo systemctl start dfhack-headless fort-gym-api'
 ```
 
-2. **Wait for DFHack to load** (~20-30 seconds for world to load):
+2. **Check status**:
 ```bash
-# Check status
-ssh cdossman@34.41.155.134 'systemctl status dfhack-headless | head -10'
-
-# Verify DFHack responds
-ssh cdossman@34.41.155.134 'cd /opt/dwarf-fortress && ./dfhack-run lua "print(df.global.cur_year_tick)"'
+ssh cdossman@34.41.155.134 'systemctl status dfhack-headless fort-gym-api'
 ```
 
-3. **Verify RemoteFortressReader plugin is enabled**:
-```bash
-ssh cdossman@34.41.155.134 'cd /opt/dwarf-fortress && ./dfhack-run plug | grep RemoteFortressReader'
-# Should show: RemoteFortressReader     loaded    2  enabled
-```
-
-4. **Start the API server**:
-```bash
-ssh cdossman@34.41.155.134 'cd /opt/fort-gym && \
-  tmux new-session -d -s fortgym "source .venv/bin/activate && \
-  export DFHACK_HOST=127.0.0.1 DFHACK_PORT=5000 DFHACK_ENABLED=1 DF_PROTO_ENABLED=1 && \
-  uvicorn fort_gym.bench.api.server:app --host 0.0.0.0 --port 8000"'
-```
-
-5. **Test the system**:
+3. **Test the system**:
 ```bash
 # Check API responds
-curl -s http://34.41.155.134:8000/runs | jq
+curl -s http://34.41.155.134:8000/health
 
-# Start a test run
+# Start a test run (auto-creates share token for spectator view)
 curl -s -X POST http://34.41.155.134:8000/runs \
   -H "Content-Type: application/json" \
-  -d '{"backend": "dfhack", "model": "anthropic-keystroke", "max_steps": 2}'
+  -d '{"backend": "dfhack", "model": "anthropic-keystroke", "max_steps": 5}'
+```
+
+### Systemd Services
+
+**fort-gym-api.service** (`/etc/systemd/system/fort-gym-api.service`):
+- Runs as `cdossman` user
+- Loads env from `/etc/fort-gym.env` (contains ANTHROPIC_API_KEY)
+- Auto-restarts on failure
+
+**dfhack-headless.service** (`/etc/systemd/system/dfhack-headless.service`):
+- Runs as `ubuntu` user
+- Loads save specified in ExecStart (currently `current`)
+- Logs to `/opt/dwarf-fortress/dfhack-stdout.log`
+
+```bash
+# Restart API after code deploy
+ssh cdossman@34.41.155.134 'sudo systemctl restart fort-gym-api'
+
+# View API logs
+ssh cdossman@34.41.155.134 'sudo journalctl -u fort-gym-api -f'
+
+# View DFHack logs
+ssh cdossman@34.41.155.134 'tail -f /opt/dwarf-fortress/dfhack-stdout.log'
 ```
 
 ### Deploying Code Changes to VM

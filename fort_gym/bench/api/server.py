@@ -151,6 +151,9 @@ async def create_run(payload: RunCreateRequest) -> RunInfo:
         loop=loop,
     )
 
+    # Auto-create share token so run appears in public spectator view
+    RUN_REGISTRY.create_share(record.run_id, scope=["live", "replay", "export"])
+
     def _target() -> None:
         agent = agent_factory()
         if isinstance(agent, RandomAgent) and payload.safe is not None:

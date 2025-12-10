@@ -540,10 +540,13 @@
     function updateStats(metrics) {
       if (!metrics) return;
 
-      const pop = metrics.pop ?? '--';
-      const food = metrics.food ?? '--';
-      const drink = metrics.drink ?? '--';
-      const wealth = metrics.wealth ?? '--';
+      // Handle both formats:
+      // - metrics format: {pop, food, drink, wealth}
+      // - state format: {population, stocks: {food, drink, wealth}}
+      const pop = metrics.pop ?? metrics.population ?? '--';
+      const food = metrics.food ?? metrics.stocks?.food ?? '--';
+      const drink = metrics.drink ?? metrics.stocks?.drink ?? '--';
+      const wealth = metrics.wealth ?? metrics.stocks?.wealth ?? '--';
 
       statPop.textContent = pop;
       statFood.textContent = food;
@@ -727,8 +730,8 @@
         if (lines.length === 0) return;
 
         // Parse all lines to build chart, actions, and get final state
-        resetChart();
-        resetActions();
+        // NOTE: Caller is responsible for resetting before calling this function
+        // Do NOT reset here - it causes race conditions with SSE updates
         allMilestones = [];
 
         for (const line of lines) {
