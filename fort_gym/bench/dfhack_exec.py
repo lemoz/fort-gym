@@ -114,8 +114,23 @@ def read_game_state(timeout: float = 2.5) -> Dict[str, object]:
 local json = require('json')
 local state = {}
 state.time = df.global.cur_year_tick or 0
-state.population = #df.global.world.units.active
-state.stocks = {food=0, drink=0, wood=0, stone=0}
+
+-- Count only citizen dwarves
+local dwarf_count = 0
+for _, u in ipairs(df.global.world.units.active) do
+    if dfhack.units.isCitizen(u) and not dfhack.units.isDead(u) then
+        dwarf_count = dwarf_count + 1
+    end
+end
+state.population = dwarf_count
+
+-- Use pre-computed food/drink counts from ui.tasks.food (no iteration needed)
+local food_stats = df.global.ui.tasks.food
+local food_count = (food_stats.meat or 0) + (food_stats.fish or 0) + (food_stats.plant or 0) + (food_stats.other or 0)
+local drink_count = food_stats.drink or 0
+local wealth = df.global.ui.tasks.wealth.total or 0
+
+state.stocks = {food=food_count, drink=drink_count, wood=0, stone=0, wealth=wealth}
 state.hostiles = false
 state.dead = 0
 state.recent_events = {}

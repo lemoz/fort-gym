@@ -26,12 +26,26 @@ def _to_float(value: Optional[float]) -> float:
 
 
 def composite_score(summary: Dict[str, float]) -> float:
-    """Compute a heuristic composite score from summary aggregates."""
+    """Compute a heuristic composite score from summary aggregates.
 
-    duration = _to_float(summary.get("duration_ticks"))
-    peak_pop = _to_float(summary.get("peak_pop"))
-    drink_fraction = max(0.0, min(1.0, _to_float(summary.get("drink_availability"))))
-    wealth_value = _to_float(summary.get("created_wealth"))
+    Accepts both summary format (duration_ticks, peak_pop, drink_availability, created_wealth)
+    and metrics format (time, pop, drink, wealth).
+    """
+
+    # Accept both field name formats
+    duration = _to_float(summary.get("duration_ticks") or summary.get("time"))
+    peak_pop = _to_float(summary.get("peak_pop") or summary.get("pop"))
+
+    # drink_availability is a fraction (0-1), drink is absolute count
+    drink_avail = summary.get("drink_availability")
+    if drink_avail is not None:
+        drink_fraction = max(0.0, min(1.0, _to_float(drink_avail)))
+    else:
+        # Convert absolute drink count to availability (>= 20 = good)
+        drink_count = _to_float(summary.get("drink"))
+        drink_fraction = min(1.0, drink_count / DRINK_THRESHOLD) if drink_count > 0 else 0.0
+
+    wealth_value = _to_float(summary.get("created_wealth") or summary.get("wealth"))
 
     survival_component = (min(duration, TARGET_SURVIVAL_TICKS) / TARGET_SURVIVAL_TICKS) * SURVIVAL_WEIGHT
     pop_component = (min(peak_pop, POP_CAP) / POP_CAP) * POP_WEIGHT

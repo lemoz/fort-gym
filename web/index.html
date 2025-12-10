@@ -4,395 +4,866 @@
   <meta charset="UTF-8">
   <title>Fort-Gym: Dwarf Fortress Agent Benchmark</title>
   <style>
-    body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; background: #0b0d12; color: #f5f7fb; }
-    header, section { padding: 3rem 8vw; }
-    header { background: radial-gradient(circle at top left, #28334a, #0b0d12); color: #fff; }
-    h1 { font-size: 2.8rem; margin-bottom: 0.5rem; }
-    h2 { margin-top: 0; font-size: 2rem; }
-    p.lede { font-size: 1.2rem; max-width: 45rem; }
-    a.cta { display: inline-block; margin-top: 1rem; padding: 0.75rem 1.5rem; background: #4f7cff; color: #fff; text-decoration: none; border-radius: 999px; font-weight: 600; }
-    a.cta:hover { background: #6b8dff; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #0b0d12;
+      color: #f5f7fb;
+      min-height: 100vh;
+    }
 
-    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
-    .card { background: rgba(15, 21, 33, 0.9); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 1.25rem; box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
-    .card h3 { margin: 0 0 0.5rem 0; font-size: 1.2rem; }
-    .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.75rem; background: rgba(79,124,255,0.2); color: #9ab3ff; margin-right: 0.5rem; }
-    .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
-    button, .link-btn { padding: 0.5rem 1rem; border-radius: 999px; border: none; cursor: pointer; font-weight: 600; }
-    button { background: #4f7cff; color: #fff; }
-    button.secondary { background: rgba(255,255,255,0.08); color: #e5ecff; }
-    button:hover { opacity: 0.9; }
-    button:disabled { opacity: 0.35; cursor: not-allowed; }
-    .link-btn { background: rgba(255,255,255,0.1); color: #e5ecff; text-decoration: none; }
-    .link-btn.disabled { opacity: 0.35; pointer-events: none; }
+    /* Header bar */
+    .header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1.5rem;
+      background: linear-gradient(180deg, #1a2233, #0f1520);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .header-bar h1 {
+      font-size: 1.25rem;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .header-bar h1 span { font-size: 1.5rem; }
+    .run-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .run-selector {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #fff;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .run-selector:hover { background: rgba(255,255,255,0.15); }
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.75rem;
+      background: rgba(79,124,255,0.2);
+      border-radius: 999px;
+      font-size: 0.85rem;
+      color: #9ab3ff;
+    }
+    .badge-pill.running { background: rgba(0,200,100,0.2); color: #6fdf9f; }
+    .badge-pill.score { background: rgba(255,200,0,0.2); color: #ffd966; font-weight: 600; }
 
-    .log-wrap { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 2rem; }
-    pre { background: rgba(0, 0, 0, 0.6); padding: 1rem; border-radius: 12px; height: 280px; overflow-y: auto; font-family: 'SFMono-Regular', Menlo, Monaco, monospace; font-size: 0.85rem; }
+    /* Main layout */
+    .main-content {
+      padding: 1rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
 
-    table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; }
-    th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.05); }
-    th { text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.08em; }
-
-    ul { list-style: disc inside; max-width: 45rem; }
-    footer { text-align: center; padding: 2rem 8vw; background: #05070b; color: #9fb1d6; font-size: 0.9rem; }
-    .highlights { margin-top: 1.5rem; background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px; min-height: 120px; }
-
-    /* Game view styles */
-    .game-view { margin-top: 2rem; }
-    .game-view h3 { margin-bottom: 1rem; }
+    /* Game view section */
+    .game-section {
+      background: rgba(0,0,0,0.4);
+      border-radius: 12px;
+      padding: 1rem;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .game-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+    .game-header h2 { margin: 0; font-size: 1rem; color: #9fb1d6; }
+    .game-status { font-size: 0.8rem; color: #6b7c99; }
     #game-canvas {
+      display: block;
+      width: 100%;
+      max-width: 960px;
+      margin: 0 auto;
       background: #000;
-      border: 2px solid rgba(255,255,255,0.1);
+      border: 2px solid rgba(255,255,255,0.15);
       border-radius: 8px;
       image-rendering: pixelated;
       image-rendering: crisp-edges;
     }
-    .game-controls { margin-top: 0.5rem; display: flex; gap: 0.5rem; align-items: center; }
-    .game-status { font-size: 0.85rem; color: #9fb1d6; }
+    .no-game-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 400px;
+      color: #6b7c99;
+      gap: 1rem;
+    }
+    .no-game-placeholder span { font-size: 3rem; }
+
+    /* Dashboard row */
+    .dashboard-row {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 1rem;
+    }
+    @media (max-width: 900px) {
+      .dashboard-row { grid-template-columns: 1fr; }
+    }
+
+    /* Stats panel */
+    .stats-panel {
+      background: rgba(15, 21, 33, 0.9);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 1.25rem;
+    }
+    .stats-panel h3 {
+      margin: 0 0 1rem 0;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #6b7c99;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+    }
+    .stat-card {
+      background: rgba(0,0,0,0.3);
+      border-radius: 8px;
+      padding: 0.75rem;
+      text-align: center;
+    }
+    .stat-card .label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #6b7c99;
+      margin-bottom: 0.25rem;
+    }
+    .stat-card .value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+    .stat-card .value.healthy { color: #6fdf9f; }
+    .stat-card .value.warning { color: #ffd966; }
+    .stat-card .value.critical { color: #ff6b6b; }
+    .stat-card.score-card {
+      grid-column: span 2;
+      background: linear-gradient(135deg, rgba(79,124,255,0.15), rgba(79,124,255,0.05));
+      border: 1px solid rgba(79,124,255,0.3);
+    }
+    .stat-card.score-card .value {
+      font-size: 2.5rem;
+      color: #4f7cff;
+    }
+    .milestones {
+      margin-top: 1rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    .milestones h4 {
+      margin: 0 0 0.5rem 0;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #6b7c99;
+    }
+    .milestone-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+    .milestone-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.25rem 0.5rem;
+      background: rgba(111,223,159,0.15);
+      border-radius: 6px;
+      font-size: 0.75rem;
+      color: #6fdf9f;
+    }
+    .milestone-badge.pending {
+      background: rgba(107,124,153,0.15);
+      color: #6b7c99;
+    }
+
+    /* Chart panel */
+    .chart-panel {
+      background: rgba(15, 21, 33, 0.9);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 1.25rem;
+    }
+    .chart-panel h3 {
+      margin: 0 0 0.75rem 0;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #6b7c99;
+    }
+    .chart-container {
+      position: relative;
+      height: 200px;
+    }
+
+    /* Agent intent panel */
+    .agent-panel {
+      background: rgba(15, 21, 33, 0.95);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+    }
+    .agent-panel h3 {
+      margin: 0 0 0.5rem 0;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #6b7c99;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .agent-panel h3 span { font-size: 1rem; }
+    .agent-actions-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .agent-action-item {
+      background: rgba(0,0,0,0.3);
+      border-radius: 6px;
+      padding: 0.6rem 0.75rem;
+      border-left: 3px solid rgba(79,124,255,0.5);
+    }
+    .agent-action-item.empty {
+      color: #6b7c99;
+      font-style: italic;
+      border-left-color: transparent;
+    }
+    .agent-action-item .step-num {
+      font-size: 0.7rem;
+      color: #6b7c99;
+      text-transform: uppercase;
+      margin-bottom: 0.25rem;
+    }
+    .agent-action-item .intent {
+      font-size: 0.95rem;
+      color: #e5ecff;
+      margin-bottom: 0.35rem;
+    }
+    .agent-action-item .keys {
+      font-family: 'SFMono-Regular', Menlo, Monaco, monospace;
+      font-size: 0.75rem;
+      color: #9ab3ff;
+    }
+    .agent-action-item .keys .key {
+      display: inline-block;
+      padding: 0.1rem 0.35rem;
+      background: rgba(79,124,255,0.2);
+      border-radius: 3px;
+      margin-right: 0.2rem;
+      margin-bottom: 0.2rem;
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 1.5rem;
+      color: #6b7c99;
+      font-size: 0.8rem;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      margin-top: 1rem;
+    }
+    footer a { color: #9ab3ff; text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Fort-Gym: Dwarf Fortress Agent Benchmark</h1>
-    <p class="lede">Watch AI overseers build, survive, and score in real time. Share live dashboards with a token, replay breathtaking recoveries, and study the leaderboard of agent models.</p>
-    <a class="cta" href="#explainer">Learn how it works</a>
-  </header>
+  <!-- Header bar -->
+  <div class="header-bar">
+    <h1><span>&#x1F3F0;</span> Fort-Gym Live</h1>
+    <div class="run-info">
+      <select id="run-selector" class="run-selector">
+        <option value="">Select a run...</option>
+      </select>
+      <span id="status-badge" class="badge-pill">No run selected</span>
+      <span id="step-badge" class="badge-pill">Step --</span>
+      <span id="score-badge" class="badge-pill score">Score --</span>
+    </div>
+  </div>
 
-  <section id="live">
-    <h2>Live Now</h2>
-    <p>Curated public runs that are currently active or recently paused. Click “Watch Live” for real-time telemetry, “Replay ×4” for speedy NDJSON playback, or grab an export for deeper analysis.</p>
-    <div id="live-runs" class="cards"></div>
-    <div class="log-wrap">
-      <div>
-        <h3>Live Stream</h3>
-        <pre id="live-log">Choose a run to watch events as they happen.</pre>
+  <!-- Main content -->
+  <div class="main-content">
+    <!-- Game view -->
+    <div class="game-section">
+      <div class="game-header">
+        <h2>Live Game View</h2>
+        <span id="game-status" class="game-status">Waiting for run...</span>
       </div>
-      <div>
-        <h3>Replay Log</h3>
-        <pre id="replay-log">Load a replay to see the step-by-step story.</pre>
+      <div id="game-container">
+        <div class="no-game-placeholder" id="no-game">
+          <span>&#x1F3AE;</span>
+          <p>Select a run above to start watching</p>
+        </div>
+        <canvas id="game-canvas" width="960" height="400" style="display: none;"></canvas>
       </div>
     </div>
-    <div class="game-view">
-      <h3>Live Game View</h3>
-      <canvas id="game-canvas" width="640" height="384"></canvas>
-      <div class="game-controls">
-        <button id="toggle-stream" onclick="toggleGameStream()">Start Live View</button>
-        <span id="game-status" class="game-status">Click to start streaming the game screen.</span>
+
+    <!-- Dashboard row: Stats + Chart -->
+    <div class="dashboard-row">
+      <!-- Stats panel -->
+      <div class="stats-panel">
+        <h3>Fortress Stats</h3>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="label">Population</div>
+            <div class="value healthy" id="stat-pop">--</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Food</div>
+            <div class="value healthy" id="stat-food">--</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Drink</div>
+            <div class="value healthy" id="stat-drink">--</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Wealth</div>
+            <div class="value" id="stat-wealth">--</div>
+          </div>
+          <div class="stat-card score-card">
+            <div class="label">Score</div>
+            <div class="value" id="stat-score">--</div>
+          </div>
+        </div>
+        <div class="milestones">
+          <h4>Milestones</h4>
+          <div class="milestone-list" id="milestone-list">
+            <span class="milestone-badge pending">None yet</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chart panel -->
+      <div class="chart-panel">
+        <h3>Score Timeline</h3>
+        <div class="chart-container">
+          <canvas id="score-chart"></canvas>
+        </div>
       </div>
     </div>
-  </section>
 
-  <section id="leaderboard">
-    <h2>Leaderboard</h2>
-    <p>Aggregated statistics across shared runs. Scores are computed from composite metrics emitted at the end of each step.</p>
-    <table>
-      <thead>
-        <tr><th>Model</th><th>Mean Score</th><th>Runs</th><th>Survival %</th></tr>
-      </thead>
-      <tbody id="leaderboard-body"></tbody>
-    </table>
-  </section>
-
-  <section id="highlights">
-    <h2>Highlights</h2>
-    <p>Recent milestones pulled from public traces. Select a run to populate contextual notes.</p>
-    <div id="highlights-list" class="highlights">No highlights yet. Pick a run above to load milestone excerpts.</div>
-  </section>
-
-  <section id="explainer">
-    <h2>How It Works</h2>
-    <ul>
-      <li>Each benchmark turn pauses the simulation, encodes observations, lets the agent choose exactly one action, and then advances the fortress.</li>
-      <li>Actions must match the fort-gym schema and are validated before execution to keep runs deterministic and comparable.</li>
-      <li>Scores blend survival, resource stocks, and milestone bonuses. Read more in the documentation and architecture notes.</li>
-      <li>The entire project is open-source — contribute agents, environments, or analysis tooling.</li>
-    </ul>
-    <a class="cta" href="https://github.com/your-org/fort-gym" target="_blank" rel="noopener">View Repository</a>
-  </section>
+    <!-- Agent actions panel -->
+    <div class="agent-panel">
+      <h3><span>&#x1F916;</span> Agent Actions (Last 10)</h3>
+      <div id="agent-actions-list" class="agent-actions-list">
+        <div class="agent-action-item empty">No actions yet...</div>
+      </div>
+    </div>
+  </div>
 
   <footer>
-    fort-gym &middot; Share tokens expose read-only data streams. Admin tooling lives at <code>web/admin.html</code>.
+    Fort-Gym Benchmark &middot; <a href="/admin">Admin Panel</a> &middot; <a href="https://github.com/your-org/fort-gym" target="_blank">GitHub</a>
   </footer>
 
+  <!-- pcface bitmap font library -->
+  <script src="https://cdn.jsdelivr.net/npm/pcface@0.3.0/src/pcface.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pcface@0.3.0/out/moderndos-8x16/fontlist.js"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
   <script>
-  const liveContainer = document.getElementById('live-runs');
-  const liveLog = document.getElementById('live-log');
-  const replayLog = document.getElementById('replay-log');
-  const leaderboardBody = document.getElementById('leaderboard-body');
-  const highlightsBox = document.getElementById('highlights-list');
-  let highlightAbort = null;
-  const SURVIVAL_WEIGHT = 30;
+    // ===============================
+    // State management
+    // ===============================
+    let currentRun = null;
+    let currentToken = null;
+    let eventSource = null;
+    let gameInterval = null;
+    let scoreChart = null;
+    let scoreData = { steps: [], scores: [] };
 
-  async function fetchJSON(url) {
-    try {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(res.statusText);
-      return await res.json();
-    } catch (err) {
-      console.warn('fetch error', url, err);
-      return null;
-    }
-  }
+    // DOM elements
+    const runSelector = document.getElementById('run-selector');
+    const statusBadge = document.getElementById('status-badge');
+    const stepBadge = document.getElementById('step-badge');
+    const scoreBadge = document.getElementById('score-badge');
+    const gameCanvas = document.getElementById('game-canvas');
+    const gameCtx = gameCanvas.getContext('2d');
+    const gameStatus = document.getElementById('game-status');
+    const noGamePlaceholder = document.getElementById('no-game');
+    const statPop = document.getElementById('stat-pop');
+    const statFood = document.getElementById('stat-food');
+    const statDrink = document.getElementById('stat-drink');
+    const statWealth = document.getElementById('stat-wealth');
+    const statScore = document.getElementById('stat-score');
+    const milestoneList = document.getElementById('milestone-list');
+    const agentActionsList = document.getElementById('agent-actions-list');
+    let recentActions = [];  // Store last 10 actions
 
-  function clearLogs() {
-    liveLog.textContent = 'Choose a run to watch events as they happen.';
-    replayLog.textContent = 'Load a replay to see the step-by-step story.';
-  }
+    // ===============================
+    // DF color palette & rendering
+    // ===============================
+    const DF_COLORS = [
+      '#000000', '#000080', '#008000', '#008080', '#800000', '#800080', '#808000', '#c0c0c0',
+      '#808080', '#0000ff', '#00ff00', '#00ffff', '#ff0000', '#ff00ff', '#ffff00', '#ffffff'
+    ];
+    const CHAR_W = 8, CHAR_H = 16, SCALE = 1.5;
 
-  function renderLiveRuns(runs) {
-    liveContainer.innerHTML = '';
-    if (!runs || !runs.length) {
-      const empty = document.createElement('p');
-      empty.textContent = 'No public runs are live right now. Check back soon!';
-      liveContainer.appendChild(empty);
-      return;
-    }
-    runs.forEach(run => {
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.innerHTML = `
-        <h3>${run.model}</h3>
-        <div><span class="badge">${run.backend}</span><span class="badge">${run.status}</span></div>
-        <p>Step ${run.step}</p>
-        <p>${run.score !== null && run.score !== undefined ? `Score: ${run.score.toFixed(2)}` : 'Score pending'}</p>
-      `;
-      const actions = document.createElement('div');
-      actions.className = 'actions';
+    function renderScreen(data) {
+      const { width, height, tiles } = data;
+      const canvasW = width * CHAR_W * SCALE;
+      const canvasH = height * CHAR_H * SCALE;
 
-      const liveBtn = document.createElement('button');
-      liveBtn.textContent = 'Watch Live';
-      liveBtn.onclick = () => {
-        watchLive(run.token);
-        loadHighlights(run.token);
-      };
-      if (!(run.scopes || []).includes('live')) {
-        liveBtn.disabled = true;
-        liveBtn.title = 'Live stream not shared for this run';
+      if (gameCanvas.width !== canvasW || gameCanvas.height !== canvasH) {
+        gameCanvas.width = canvasW;
+        gameCanvas.height = canvasH;
       }
-      actions.appendChild(liveBtn);
 
-      const replayBtn = document.createElement('button');
-      replayBtn.className = 'secondary';
-      replayBtn.textContent = 'Replay ×4';
-      replayBtn.onclick = () => {
-        replay(run.token, 4);
-        loadHighlights(run.token);
-      };
-      if (!(run.scopes || []).includes('replay')) {
-        replayBtn.disabled = true;
-        replayBtn.title = 'Replay not available for this run';
-      }
-      actions.appendChild(replayBtn);
+      gameCtx.fillStyle = '#000';
+      gameCtx.fillRect(0, 0, canvasW, canvasH);
 
-      const exportLink = document.createElement('a');
-      exportLink.className = 'link-btn';
-      exportLink.textContent = 'Export NDJSON';
-      exportLink.href = `/public/runs/${run.token}/export/trace`;
-      exportLink.target = '_blank';
-      if (!(run.scopes || []).includes('export')) {
-        exportLink.classList.add('disabled');
-        exportLink.onclick = (e) => e.preventDefault();
-        exportLink.title = 'Export not shared for this run';
-      }
-      actions.appendChild(exportLink);
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const [ch, fg, bg] = tiles[x * height + y];
+          const px = x * CHAR_W * SCALE;
+          const py = y * CHAR_H * SCALE;
 
-      card.appendChild(actions);
-      liveContainer.appendChild(card);
-    });
-  }
+          if (bg > 0) {
+            gameCtx.fillStyle = DF_COLORS[bg % 16];
+            gameCtx.fillRect(px, py, CHAR_W * SCALE, CHAR_H * SCALE);
+          }
 
-  async function refreshLiveRuns() {
-    const data = await fetchJSON('/public/runs');
-    if (!data) return;
-    // Show all public runs (running first, then completed), up to 6
-    const sorted = data.sort((a, b) => {
-      const order = { running: 0, paused: 1, completed: 2, failed: 3 };
-      return (order[a.status] || 9) - (order[b.status] || 9);
-    });
-    renderLiveRuns(sorted.slice(0, 6));
-  }
-
-  async function refreshLeaderboard() {
-    const data = await fetchJSON('/public/leaderboard');
-    if (!data) return;
-    leaderboardBody.innerHTML = '';
-    (data || []).slice(0, 10).forEach(row => {
-      const tr = document.createElement('tr');
-      const mean = row.mean_score != null ? row.mean_score.toFixed(2) : '—';
-      const survivalBase = row.survival_mean != null ? Number(row.survival_mean) : 0;
-      const survival = SURVIVAL_WEIGHT ? Math.round((survivalBase / SURVIVAL_WEIGHT) * 100) : 0;
-      tr.innerHTML = `<td>${row.model}</td><td>${mean}</td><td>${row.runs}</td><td>${survival}%</td>`;
-      leaderboardBody.appendChild(tr);
-    });
-  }
-
-  async function loadHighlights(token) {
-    if (highlightAbort) highlightAbort.abort();
-    const controller = new AbortController();
-    highlightAbort = controller;
-    highlightsBox.textContent = 'Loading highlights...';
-    try {
-      const res = await fetch(`/public/runs/${token}/export/trace`, { signal: controller.signal });
-      if (!res.ok) throw new Error('export unavailable');
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
-      const highlights = [];
-      while (highlights.length < 6) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-        for (const line of lines) {
-          if (!line.trim()) continue;
-          try {
-            const obj = JSON.parse(line);
-            const events = obj.events || [];
-            events.forEach(evt => {
-              if (evt.type === 'score' && evt.data && evt.data.milestones && evt.data.milestones.length) {
-                evt.data.milestones.forEach(m => highlights.push(`[step ${obj.step}] ${m}`));
-              }
-            });
-          } catch (_) {}
-          if (highlights.length >= 6) break;
+          if (ch > 0 && ch < 256 && typeof pcface !== 'undefined') {
+            gameCtx.fillStyle = DF_COLORS[fg % 16];
+            pcface.drawChar(PC_FACE_MODERNDOS_8X16_FONT_LIST, gameCtx, CHAR_W, ch, px, py, SCALE);
+          }
         }
       }
-      highlightsBox.innerHTML = highlights.length ? `<ul>${highlights.map(h => `<li>${h}</li>`).join('')}</ul>` : 'No milestones recorded yet.';
-      await reader.cancel().catch(() => {});
-    } catch (err) {
-      if (controller.signal.aborted) return;
-      highlightsBox.textContent = 'Unable to load highlights for this run.';
     }
-  }
 
-  </script>
-
-<script>
-let es;
-let liveToken = null;
-let liveRetry = 1000;
-function watchLive(token){
-  if (liveToken !== token) {
-    liveRetry = 1000;
-  }
-  liveToken = token;
-  if(es) es.close();
-  const log = document.getElementById('live-log');
-  log.textContent = '';
-  es = new EventSource(`/public/runs/${token}/events/stream`);
-  es.onopen = () => { liveRetry = 1000; };
-  es.onmessage = (e)=>{ log.textContent += e.data + "\n"; log.scrollTop = log.scrollHeight; };
-  es.addEventListener('state', (e)=>{ log.textContent += "[state] "+e.data+"\n"; });
-  es.addEventListener('action',(e)=>{ log.textContent += "[action] "+e.data+"\n"; });
-  es.onerror = ()=>{ es && es.close(); liveRetry = Math.min(4000, liveRetry + 500); setTimeout(()=>{ if(liveToken === token) watchLive(token); }, liveRetry); };
-}
-function replay(token, speed=4){
-  if(es) es.close();
-  const log = document.getElementById('replay-log');
-  log.textContent = '';
-  es = new EventSource(`/public/runs/${token}/events/replay?speed=${speed}`);
-  es.onmessage = (e)=>{ log.textContent += e.data + "\n"; log.scrollTop = log.scrollHeight; };
-  es.addEventListener('score', (e)=>{ log.textContent += "[score] "+e.data+"\n"; });
-  es.onerror = ()=>{ es && es.close(); /* no reconnect on replay */ };
-}
-</script>
-
-<!-- pcface bitmap font library for pixel-perfect CP437 rendering -->
-<script src="https://cdn.jsdelivr.net/npm/pcface@0.3.0/src/pcface.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/pcface@0.3.0/out/moderndos-8x16/fontlist.js"></script>
-
-<script>
-// DF color palette (16 colors)
-const DF_COLORS = [
-  '#000000', '#000080', '#008000', '#008080', '#800000', '#800080', '#808000', '#c0c0c0',
-  '#808080', '#0000ff', '#00ff00', '#00ffff', '#ff0000', '#ff00ff', '#ffff00', '#ffffff'
-];
-
-const CHAR_W = 8, CHAR_H = 16, SCALE = 1;
-let gameStreamInterval = null;
-let gameCanvas, gameCtx;
-
-async function fetchAndRenderScreen() {
-  try {
-    const res = await fetch('/screenshot');
-    if (!res.ok) throw new Error(res.statusText);
-    const data = await res.json();
-    renderScreen(data);
-    document.getElementById('game-status').textContent = `Live: ${data.width}x${data.height} tiles`;
-  } catch (err) {
-    document.getElementById('game-status').textContent = 'Error: ' + err.message;
-  }
-}
-
-function renderScreen(data) {
-  const { width, height, tiles } = data;
-
-  // Resize canvas if needed
-  const canvasW = width * CHAR_W * SCALE;
-  const canvasH = height * CHAR_H * SCALE;
-  if (gameCanvas.width !== canvasW || gameCanvas.height !== canvasH) {
-    gameCanvas.width = canvasW;
-    gameCanvas.height = canvasH;
-  }
-
-  // Clear canvas
-  gameCtx.fillStyle = '#000';
-  gameCtx.fillRect(0, 0, canvasW, canvasH);
-
-  // Draw each tile using pcface bitmap rendering
-  // Note: CopyScreen returns tiles in COLUMN-MAJOR order (top-to-bottom, then next column)
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const [ch, fg, bg] = tiles[x * height + y];  // column-major indexing
-      const px = x * CHAR_W * SCALE;
-      const py = y * CHAR_H * SCALE;
-
-      // Draw background
-      if (bg > 0) {
-        gameCtx.fillStyle = DF_COLORS[bg % 16];
-        gameCtx.fillRect(px, py, CHAR_W * SCALE, CHAR_H * SCALE);
-      }
-
-      // Draw character using pcface bitmap
-      if (ch > 0 && ch < 256 && typeof pcface !== 'undefined') {
-        gameCtx.fillStyle = DF_COLORS[fg % 16];
-        pcface.drawChar(PC_FACE_MODERNDOS_8X16_FONT_LIST, gameCtx, CHAR_W, ch, px, py, SCALE);
+    async function fetchScreen() {
+      try {
+        const res = await fetch('/screenshot');
+        if (!res.ok) throw new Error(res.statusText);
+        const data = await res.json();
+        renderScreen(data);
+        gameStatus.textContent = `Live: ${data.width}x${data.height} tiles`;
+        gameCanvas.style.display = 'block';
+        noGamePlaceholder.style.display = 'none';
+      } catch (err) {
+        gameStatus.textContent = 'Screen unavailable: ' + err.message;
       }
     }
-  }
-}
 
-function toggleGameStream() {
-  const btn = document.getElementById('toggle-stream');
-  if (gameStreamInterval) {
-    clearInterval(gameStreamInterval);
-    gameStreamInterval = null;
-    btn.textContent = 'Start Live View';
-    document.getElementById('game-status').textContent = 'Streaming stopped.';
-  } else {
-    gameCanvas = document.getElementById('game-canvas');
-    gameCtx = gameCanvas.getContext('2d');
-    fetchAndRenderScreen();
-    gameStreamInterval = setInterval(fetchAndRenderScreen, 500);
-    btn.textContent = 'Stop Live View';
-  }
-}
-</script>
-
-  <script>
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') {
-      refreshLiveRuns();
-      refreshLeaderboard();
+    // ===============================
+    // Chart.js setup
+    // ===============================
+    function initChart() {
+      const ctx = document.getElementById('score-chart').getContext('2d');
+      scoreChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [{
+            label: 'Score',
+            data: [],
+            borderColor: '#4f7cff',
+            backgroundColor: 'rgba(79, 124, 255, 0.1)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 3,
+            pointBackgroundColor: '#4f7cff',
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: {
+              title: { display: true, text: 'Step', color: '#6b7c99' },
+              ticks: { color: '#6b7c99' },
+              grid: { color: 'rgba(255,255,255,0.05)' }
+            },
+            y: {
+              title: { display: true, text: 'Score', color: '#6b7c99' },
+              min: 0,
+              max: 100,
+              ticks: { color: '#6b7c99' },
+              grid: { color: 'rgba(255,255,255,0.05)' }
+            }
+          }
+        }
+      });
     }
-  });
 
-  clearLogs();
-  refreshLiveRuns();
-  refreshLeaderboard();
-  setInterval(refreshLiveRuns, 3000);
-  setInterval(refreshLeaderboard, 10000);
+    function updateChart(step, score) {
+      scoreData.steps.push(step);
+      scoreData.scores.push(score);
+      scoreChart.data.labels = scoreData.steps;
+      scoreChart.data.datasets[0].data = scoreData.scores;
+      scoreChart.update('none');
+    }
+
+    function resetChart() {
+      scoreData = { steps: [], scores: [] };
+      if (scoreChart) {
+        scoreChart.data.labels = [];
+        scoreChart.data.datasets[0].data = [];
+        scoreChart.update('none');
+      }
+    }
+
+    // ===============================
+    // Stats update functions
+    // ===============================
+    function getStatClass(value, low, high) {
+      if (value <= low) return 'critical';
+      if (value <= high) return 'warning';
+      return 'healthy';
+    }
+
+    function updateStats(metrics) {
+      if (!metrics) return;
+
+      const pop = metrics.pop ?? '--';
+      const food = metrics.food ?? '--';
+      const drink = metrics.drink ?? '--';
+      const wealth = metrics.wealth ?? '--';
+
+      statPop.textContent = pop;
+      statFood.textContent = food;
+      statDrink.textContent = drink;
+      statWealth.textContent = typeof wealth === 'number' ? wealth.toLocaleString() : wealth;
+
+      // Color coding
+      statPop.className = 'value ' + (typeof pop === 'number' ? getStatClass(pop, 3, 7) : '');
+      statFood.className = 'value ' + (typeof food === 'number' ? getStatClass(food, 10, 30) : '');
+      statDrink.className = 'value ' + (typeof drink === 'number' ? getStatClass(drink, 10, 30) : '');
+    }
+
+    function updateScore(value) {
+      const display = typeof value === 'number' ? value.toFixed(1) : '--';
+      statScore.textContent = display;
+      scoreBadge.textContent = 'Score ' + display;
+    }
+
+    function updateMilestones(milestones) {
+      if (!milestones || milestones.length === 0) {
+        milestoneList.innerHTML = '<span class="milestone-badge pending">None yet</span>';
+        return;
+      }
+      milestoneList.innerHTML = milestones.map(m =>
+        `<span class="milestone-badge">&#x2713; ${typeof m === 'object' ? m.k : m}</span>`
+      ).join('');
+    }
+
+    function addAction(step, action) {
+      if (!action) return;
+
+      const intent = action.intent || action.raw?.intent || 'No intent specified';
+      const keys = action.raw?.params?.keys || action.params?.keys || [];
+
+      // Add to front of list
+      recentActions.unshift({ step, intent, keys });
+      // Keep only last 10
+      if (recentActions.length > 10) {
+        recentActions = recentActions.slice(0, 10);
+      }
+
+      renderActionsList();
+    }
+
+    function renderActionsList() {
+      if (recentActions.length === 0) {
+        agentActionsList.innerHTML = '<div class="agent-action-item empty">No actions yet...</div>';
+        return;
+      }
+
+      agentActionsList.innerHTML = recentActions.map(a => {
+        const keysHtml = a.keys.length > 0
+          ? a.keys.slice(0, 8).map(k => `<span class="key">${k}</span>`).join('') +
+            (a.keys.length > 8 ? `<span class="key">+${a.keys.length - 8}</span>` : '')
+          : '<span class="key">--</span>';
+        return `
+          <div class="agent-action-item">
+            <div class="step-num">Step ${a.step}</div>
+            <div class="intent">"${a.intent}"</div>
+            <div class="keys">${keysHtml}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function resetActions() {
+      recentActions = [];
+      renderActionsList();
+    }
+
+    // ===============================
+    // SSE event handling
+    // ===============================
+    function connectToRun(token, skipReset = false) {
+      if (eventSource) {
+        eventSource.close();
+      }
+
+      // Only reset if not skipped (e.g., on reconnect we preserve data)
+      if (!skipReset) {
+        resetChart();
+        allMilestones = [];
+      }
+      currentToken = token;
+
+      eventSource = new EventSource(`/public/runs/${token}/events/stream`);
+
+      eventSource.addEventListener('state', (e) => {
+        try {
+          const data = JSON.parse(e.data);
+          updateStats(data.state || {});
+          stepBadge.textContent = `Step ${data.step ?? '--'}`;
+        } catch (err) {}
+      });
+
+      eventSource.addEventListener('metrics', (e) => {
+        try {
+          const data = JSON.parse(e.data);
+          updateStats(data.metrics || {});
+        } catch (err) {}
+      });
+
+      eventSource.addEventListener('score', (e) => {
+        try {
+          const data = JSON.parse(e.data);
+          updateScore(data.value);
+          updateChart(data.step, data.value);
+          if (data.milestones && data.milestones.length > 0) {
+            allMilestones = [...allMilestones, ...data.milestones];
+            updateMilestones(allMilestones);
+          }
+        } catch (err) {}
+      });
+
+      eventSource.addEventListener('action', (e) => {
+        try {
+          const data = JSON.parse(e.data);
+          addAction(data.step ?? '?', data);
+        } catch (err) {}
+      });
+
+      eventSource.onerror = () => {
+        // Reconnect after 2 seconds, preserving existing data
+        setTimeout(() => {
+          if (currentToken === token) {
+            connectToRun(token, true);  // skipReset=true to preserve chart/milestone data
+          }
+        }, 2000);
+      };
+    }
+
+    let allMilestones = [];
+
+    // ===============================
+    // Run selector
+    // ===============================
+    async function loadRuns() {
+      try {
+        const res = await fetch('/public/runs');
+        if (!res.ok) return;
+        const runs = await res.json();
+
+        runSelector.innerHTML = '<option value="">Select a run...</option>';
+
+        // Sort: running first, then by step desc
+        runs.sort((a, b) => {
+          if (a.status === 'running' && b.status !== 'running') return -1;
+          if (b.status === 'running' && a.status !== 'running') return 1;
+          return (b.step || 0) - (a.step || 0);
+        });
+
+        runs.forEach(run => {
+          const opt = document.createElement('option');
+          opt.value = run.token;
+          opt.textContent = `${run.model} - ${run.status} (Step ${run.step || 0})`;
+          opt.dataset.run = JSON.stringify(run);
+          runSelector.appendChild(opt);
+        });
+
+        // Auto-select first run if none selected (prefer running, then any)
+        if (!currentToken && runs.length > 0) {
+          const runToSelect = runs.find(r => r.status === 'running') || runs[0];
+          if (runToSelect) {
+            runSelector.value = runToSelect.token;
+            selectRun(runToSelect.token);
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to load runs:', err);
+      }
+    }
+
+    // Load trace data for completed runs to show final stats
+    async function loadTraceData(token) {
+      try {
+        const res = await fetch(`/public/runs/${token}/export/trace`);
+        if (!res.ok) return;
+
+        const text = await res.text();
+        const lines = text.trim().split('\n').filter(l => l);
+        if (lines.length === 0) return;
+
+        // Parse all lines to build chart, actions, and get final state
+        resetChart();
+        resetActions();
+        allMilestones = [];
+
+        for (const line of lines) {
+          try {
+            const record = JSON.parse(line);
+
+            // Update chart with each step's score
+            if (record.score && typeof record.score.value === 'number') {
+              updateChart(record.step, record.score.value);
+            }
+
+            // Collect milestones
+            if (record.score?.milestones) {
+              allMilestones = [...allMilestones, ...record.score.milestones];
+            }
+
+            // Collect actions (will be reversed, so most recent first)
+            if (record.action) {
+              addAction(record.step, record.action);
+            }
+          } catch (e) {}
+        }
+
+        // Get final line for stats
+        const lastRecord = JSON.parse(lines[lines.length - 1]);
+
+        // Update stats from metrics or observation
+        const metrics = lastRecord.metrics || {};
+        const obs = lastRecord.observation || {};
+        updateStats({
+          pop: metrics.pop ?? obs.population,
+          food: metrics.food ?? obs.stocks?.food,
+          drink: metrics.drink ?? obs.stocks?.drink,
+          wealth: metrics.wealth ?? obs.stocks?.wealth
+        });
+
+        // Update score
+        if (lastRecord.score?.value !== undefined) {
+          updateScore(lastRecord.score.value);
+        }
+
+        // Update milestones
+        updateMilestones(allMilestones);
+
+        // Update step badge
+        stepBadge.textContent = `Step ${lastRecord.step ?? '--'}`;
+
+      } catch (err) {
+        console.warn('Failed to load trace:', err);
+      }
+    }
+
+    function selectRun(token) {
+      if (!token) {
+        statusBadge.textContent = 'No run selected';
+        statusBadge.className = 'badge-pill';
+        stepBadge.textContent = 'Step --';
+        scoreBadge.textContent = 'Score --';
+        gameCanvas.style.display = 'none';
+        noGamePlaceholder.style.display = 'flex';
+        if (gameInterval) clearInterval(gameInterval);
+        if (eventSource) eventSource.close();
+        return;
+      }
+
+      // Find run data
+      const opt = runSelector.querySelector(`option[value="${token}"]`);
+      let run = null;
+      if (opt && opt.dataset.run) {
+        run = JSON.parse(opt.dataset.run);
+        statusBadge.textContent = run.status;
+        statusBadge.className = 'badge-pill ' + (run.status === 'running' ? 'running' : '');
+        stepBadge.textContent = `Step ${run.step || 0}`;
+        if (run.score !== null && run.score !== undefined) {
+          updateScore(run.score);
+        }
+      }
+
+      // Start game stream
+      gameCanvas.style.display = 'block';
+      noGamePlaceholder.style.display = 'none';
+      if (gameInterval) clearInterval(gameInterval);
+      fetchScreen();
+      gameInterval = setInterval(fetchScreen, 500);
+
+      // Reset data before loading trace (do this BEFORE async load)
+      resetChart();
+      resetActions();
+      allMilestones = [];
+
+      // Load trace data (for completed runs, this gives us the full history)
+      // Then override with run's final score (summary score is more accurate)
+      loadTraceData(token).then(() => {
+        if (run && run.score !== null && run.score !== undefined) {
+          updateScore(run.score);
+        }
+      });
+
+      // Connect to SSE for live updates (only for running runs)
+      // For completed runs, trace data is sufficient
+      if (run && run.status === 'running') {
+        connectToRun(token, true);  // skipReset since we already reset above
+      } else {
+        // Close any existing connection
+        if (eventSource) {
+          eventSource.close();
+          eventSource = null;
+        }
+        currentToken = token;
+      }
+    }
+
+    runSelector.addEventListener('change', (e) => {
+      selectRun(e.target.value);
+    });
+
+    // ===============================
+    // Initialize
+    // ===============================
+    document.addEventListener('DOMContentLoaded', () => {
+      initChart();
+      loadRuns();
+      // Refresh run list periodically
+      setInterval(loadRuns, 5000);
+    });
+
+    // Pause when tab is hidden
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        if (gameInterval) clearInterval(gameInterval);
+      } else if (currentToken) {
+        fetchScreen();
+        gameInterval = setInterval(fetchScreen, 500);
+      }
+    });
   </script>
 </body>
 </html>

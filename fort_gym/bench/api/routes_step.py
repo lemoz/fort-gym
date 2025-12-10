@@ -186,8 +186,14 @@ async def step_endpoint(payload: StepRequest) -> StepResponse:
         _emit_event(run.run_id, events, "execute", {"result": execute_result})
 
         advance_state = dfhack_client.advance(max_ticks)
+        tick_info = dfhack_client.last_tick_info or {}
         dfhack_client.pause()
-        _emit_event(run.run_id, events, "advance", {"state": advance_state})
+        _emit_event(
+            run.run_id,
+            events,
+            "advance",
+            {"state": advance_state, "tick_advance": tick_info},
+        )
 
         metrics_snapshot = metrics.step_snapshot(advance_state)
         _emit_event(run.run_id, events, "metrics", {"metrics": metrics_snapshot})
@@ -234,6 +240,7 @@ async def step_endpoint(payload: StepRequest) -> StepResponse:
             "now_hz": now_hz,
             "ts": end_ms,
             "last_obs": metrics_snapshot,
+            "tick_advance": tick_info,
         }
         _emit_event(run.run_id, events, "step", step_event)
 
@@ -252,6 +259,7 @@ async def step_endpoint(payload: StepRequest) -> StepResponse:
             "score": score_value,
             "reward": {"delta": reward_delta, "cumulative": context.reward_cum},
             "events": events,
+            "tick_advance": tick_info,
         }
         context.trace_path.parent.mkdir(parents=True, exist_ok=True)
         with context.trace_path.open("a", encoding="utf-8") as handle:
@@ -272,24 +280,38 @@ async def step_endpoint(payload: StepRequest) -> StepResponse:
         else:
             RUN_REGISTRY.set_status(run.run_id, status="running", step=step_index)
 
+        info_payload: Dict[str, Any] = {
+            "step_idx": step_index,
+            "reward_cum": context.reward_cum,
+            "metrics": metrics_snapshot,
+            "score": score_value,
+            "summary": summary_payload,
+            "tick_advance": tick_info,
+        }
+        if not tick_info.get("ok"):
+            info_payload["error"] = f"tick_advance_failed:{tick_info.get('error')}"
+        else:
+            if tick_info.get("timeout"):
+                info_payload["warn"] = "tick_advance_timeout"
+            elif tick_info.get("ticks_advanced", 0) < 1:
+                info_payload["warn"] = "no_ticks_advanced"
+
         response = StepResponse(
             observation=advance_state,
             reward=reward_delta,
             done=context.completed,
-            info={
-                "step_idx": step_index,
-                "reward_cum": context.reward_cum,
-                "metrics": metrics_snapshot,
-                "score": score_value,
-                "summary": summary_payload,
-            },
+            info=info_payload,
         )
         if not execute_result.get("accepted"):
             error_message = execute_result.get("why")
             result_payload = execute_result.get("result") or {}
             error_message = error_message or result_payload.get("error")
             if error_message:
-                response.info["error"] = error_message
+                existing_error = response.info.get("error")
+                if existing_error and existing_error != error_message:
+                    response.info["error"] = f"{existing_error}; {error_message}"
+                else:
+                    response.info["error"] = error_message
         return response
     finally:
         with context.lock:

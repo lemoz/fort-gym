@@ -256,8 +256,20 @@ The Live Game View captures the screen via RemoteFortressReader's `CopyScreen` R
 - Consider a reverse proxy with auth in front of the fort-gym API.
 - Rotate API keys regularly; never commit `.env` with secrets.
 
+## Roadmap
+
+### Agent Memory & Experimentation System (Planned)
+
+Currently each agent step is stateless. Planned improvements:
+
+1. **Hybrid Memory**: Last N steps as full conversation + summary of older history
+2. **Agent Tools**: Web search and DF Wiki lookup during decision-making
+3. **Experimentation Framework**: YAML-based configs to test different memory strategies, prompts, and tools
+
+See `CLAUDE.md` for detailed design.
+
 ## Troubleshooting
-- **DFHack service won’t start**: check `/var/log/syslog` and `journalctl -u dfhack-headless`. Verify `dfhack_archive_url` points to a Linux build.
+- **DFHack service won't start**: check `/var/log/syslog` and `journalctl -u dfhack-headless`. Verify `dfhack_archive_url` points to a Linux build.
 - **Remote not listening**: ensure the remote plugin is enabled; run `ss -lntp | grep 5000`.
 - **SSE shows no events**: confirm the tmux `fortgym` session is live; inspect `/tmp/fort-gym-api.log` for stack traces.
 - **Jobs stall**: query `/runs/<id>` to check progress, tail `/tmp/fort-gym-api.log`, and ensure DFHack remote is responsive (`/opt/dwarf-fortress/dfhack-run lua 'print(dfhack.getSavePath())'`).

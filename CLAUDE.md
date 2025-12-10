@@ -169,31 +169,87 @@ See `fort_gym/bench/config.py` for full list.
 - **Web UI**: http://34.41.155.134:8000/ (spectator), http://34.41.155.134:8000/admin (admin)
 - **DFHack RPC**: port 5000 (loopback)
 - **DFHack version**: v0.47.05
-- **Save loaded**: `fresh_embark`
+- **Save loaded**: `current` (systemd service config)
 
-### Starting the API on VM
+### Full System Startup (from scratch)
+
+1. **Start DFHack headless service**:
 ```bash
-ssh cdossman@34.41.155.134
-cd /opt/fort-gym
-tmux new-session -d -s fortgym "source .venv/bin/activate && \
+ssh cdossman@34.41.155.134 'sudo systemctl start dfhack-headless'
+```
+
+2. **Wait for DFHack to load** (~20-30 seconds for world to load):
+```bash
+# Check status
+ssh cdossman@34.41.155.134 'systemctl status dfhack-headless | head -10'
+
+# Verify DFHack responds
+ssh cdossman@34.41.155.134 'cd /opt/dwarf-fortress && ./dfhack-run lua "print(df.global.cur_year_tick)"'
+```
+
+3. **Verify RemoteFortressReader plugin is enabled**:
+```bash
+ssh cdossman@34.41.155.134 'cd /opt/dwarf-fortress && ./dfhack-run plug | grep RemoteFortressReader'
+# Should show: RemoteFortressReader     loaded    2  enabled
+```
+
+4. **Start the API server**:
+```bash
+ssh cdossman@34.41.155.134 'cd /opt/fort-gym && \
+  tmux new-session -d -s fortgym "source .venv/bin/activate && \
   export DFHACK_HOST=127.0.0.1 DFHACK_PORT=5000 DFHACK_ENABLED=1 DF_PROTO_ENABLED=1 && \
-  uvicorn fort_gym.bench.api.server:app --host 0.0.0.0 --port 8000"
+  uvicorn fort_gym.bench.api.server:app --host 0.0.0.0 --port 8000"'
+```
+
+5. **Test the system**:
+```bash
+# Check API responds
+curl -s http://34.41.155.134:8000/runs | jq
+
+# Start a test run
+curl -s -X POST http://34.41.155.134:8000/runs \
+  -H "Content-Type: application/json" \
+  -d '{"backend": "dfhack", "model": "anthropic-keystroke", "max_steps": 2}'
 ```
 
 ### Deploying Code Changes to VM
 ```bash
-# Sync entire package
-rsync -avz --exclude='.venv' --exclude='__pycache__' --exclude='artifacts' --exclude='.git' \
+# Sync entire package (use SSH key)
+rsync -avz -e "ssh -i ~/.ssh/google_compute_engine" \
+  --exclude='.venv' --exclude='__pycache__' --exclude='artifacts' --exclude='.git' \
   fort_gym/ cdossman@34.41.155.134:/opt/fort-gym/fort_gym/
 
 # Sync web files
-rsync -avz web/ cdossman@34.41.155.134:/opt/fort-gym/web/
+rsync -avz -e "ssh -i ~/.ssh/google_compute_engine" \
+  web/ cdossman@34.41.155.134:/opt/fort-gym/web/
 
 # Restart API after deploy
-ssh cdossman@34.41.155.134 'tmux kill-session -t fortgym; cd /opt/fort-gym && \
+ssh -i ~/.ssh/google_compute_engine cdossman@34.41.155.134 \
+  'tmux kill-session -t fortgym 2>/dev/null; cd /opt/fort-gym && \
   tmux new-session -d -s fortgym "source .venv/bin/activate && \
   export DFHACK_HOST=127.0.0.1 DFHACK_PORT=5000 DFHACK_ENABLED=1 DF_PROTO_ENABLED=1 && \
   uvicorn fort_gym.bench.api.server:app --host 0.0.0.0 --port 8000"'
+```
+
+### Creating Public Share Tokens
+Runs must have share tokens to appear in the public UI:
+```bash
+curl -s -X POST "http://34.41.155.134:8000/runs/{run_id}/share" \
+  -H "Content-Type: application/json" \
+  -d '{"scopes": ["export", "live", "replay"]}'
+```
+
+### Troubleshooting
+
+**DFHack keeps crashing**: Check the save being loaded. Edit `/etc/systemd/system/dfhack-headless.service` to change the save name (e.g., `current` or `fresh_embark`).
+
+**RemoteFortressReader won't enable**: This plugin sometimes fails on first load. Wait for the world to fully load, then verify with `plug` command.
+
+**API timeouts**: Ensure DFHack is fully loaded before starting the API. The API creates RPC connections that will fail if DFHack isn't ready.
+
+**Artifacts not showing in UI**: The API looks for artifacts in `/opt/fort-gym/fort_gym/artifacts/`. Ensure this is symlinked to `/opt/fort-gym/artifacts/`:
+```bash
+ln -s /opt/fort-gym/artifacts /opt/fort-gym/fort_gym/artifacts
 ```
 
 ## DFHack CLI Compatibility

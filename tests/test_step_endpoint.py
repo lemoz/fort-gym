@@ -22,6 +22,7 @@ class _StubDFHackClient:
 
     def __post_init__(self) -> None:
         self._ticks = 0
+        self._tick_info: Dict[str, Any] = {}
 
     def connect(self) -> None:  # pragma: no cover - stub
         return
@@ -47,6 +48,7 @@ class _StubDFHackClient:
 
     def advance(self, ticks: int) -> Dict[str, Any]:
         self._ticks += ticks
+        self._tick_info = {"ok": True, "requested": ticks, "ticks_advanced": ticks}
         return self.get_state()
 
     def designate_rect(self, *_args: Any, **_kwargs: Any) -> Dict[str, Any]:
@@ -54,6 +56,10 @@ class _StubDFHackClient:
 
     def queue_manager_order(self, *_args: Any, **_kwargs: Any) -> Dict[str, Any]:
         return {"ok": True}
+
+    @property
+    def last_tick_info(self) -> Dict[str, Any]:
+        return self._tick_info
 
 
 @pytest.fixture(autouse=True)
@@ -137,6 +143,8 @@ def test_step_updates_artifacts_and_sse(client: TestClient, tmp_path):
     body = response.json()
     assert body["reward"] == pytest.approx(body["info"]["reward_cum"])
     assert body["done"] is False
+    assert body["info"]["tick_advance"]["ok"] is True
+    assert body["info"]["tick_advance"]["ticks_advanced"] == 100
 
     summary_path = tmp_path / run_id / "summary.json"
     assert summary_path.exists()
@@ -159,3 +167,7 @@ def test_step_updates_artifacts_and_sse(client: TestClient, tmp_path):
         except asyncio.QueueEmpty:
             break
     assert any(evt.get("t") == "step" for evt in events)
+    assert any(
+        evt.get("t") == "advance" and "tick_advance" in evt.get("data", {})
+        for evt in events
+    )
