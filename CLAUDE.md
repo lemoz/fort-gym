@@ -219,24 +219,39 @@ ssh cdossman@34.41.155.134 'sudo journalctl -u fort-gym-api -f'
 ssh cdossman@34.41.155.134 'tail -f /opt/dwarf-fortress/dfhack-stdout.log'
 ```
 
-### Deploying Code Changes to VM
+### Deploying Code Changes to VM (Best Practice)
+
+We want the production VM to be reproducible and drift‑free.
+
+**Rules**
+- `/opt/fort-gym` is the **production checkout** and must stay on a clean git commit (preferably a tag). No rsync/manual edits here.
+- Use a separate **test checkout** (e.g. `~/fort-gym-test`) for trying WIP branches/SHAs.
+- The API runs under systemd (`fort-gym-api.service`). Do not start uvicorn in tmux.
+
+**Workflow**
+1. **Local**: commit + push to GitHub.
+2. **VM test**: pull that exact commit into the test checkout and run smoke/live tests:
 ```bash
-# Sync entire package (use SSH key)
-rsync -avz -e "ssh -i ~/.ssh/google_compute_engine" \
-  --exclude='.venv' --exclude='__pycache__' --exclude='artifacts' --exclude='.git' \
-  fort_gym/ cdossman@34.41.155.134:/opt/fort-gym/fort_gym/
-
-# Sync web files
-rsync -avz -e "ssh -i ~/.ssh/google_compute_engine" \
-  web/ cdossman@34.41.155.134:/opt/fort-gym/web/
-
-# Restart API after deploy
-ssh -i ~/.ssh/google_compute_engine cdossman@34.41.155.134 \
-  'tmux kill-session -t fortgym 2>/dev/null; cd /opt/fort-gym && \
-  tmux new-session -d -s fortgym "source .venv/bin/activate && \
-  export DFHACK_HOST=127.0.0.1 DFHACK_PORT=5000 DFHACK_ENABLED=1 DF_PROTO_ENABLED=1 && \
-  uvicorn fort_gym.bench.api.server:app --host 0.0.0.0 --port 8000"'
+ssh -i ~/.ssh/google_compute_engine cdossman@34.41.155.134 '
+  cd ~/fort-gym-test &&
+  git fetch origin &&
+  git checkout <sha-or-branch> &&
+  source /opt/fort-gym/.venv/bin/activate &&
+  pytest -q
+'
 ```
+3. **VM deploy**: fast‑forward production to the same SHA and restart the API:
+```bash
+ssh -i ~/.ssh/google_compute_engine cdossman@34.41.155.134 '
+  sudo systemctl stop fort-gym-api &&
+  cd /opt/fort-gym &&
+  git fetch origin &&
+  git reset --hard <sha-or-tag> &&
+  sudo systemctl start fort-gym-api
+'
+```
+
+If you must rsync for speed, do it **only** to the test checkout with strict excludes, never `/opt/fort-gym`.
 
 ### Creating Public Share Tokens
 Runs must have share tokens to appear in the public UI:
