@@ -229,6 +229,10 @@ We want the production VM to be reproducible and drift‑free.
 - The API runs under systemd (`fort-gym-api.service`). Do not start uvicorn in tmux.
 
 **Workflow**
+Convenience wrappers live in the Makefile:
+- `make vm-test SHA=<sha-or-branch> [LIVE=1]`
+- `make vm-deploy SHA=<sha-or-tag>`
+
 1. **Local**: commit + push to GitHub.
 2. **VM test**: pull that exact commit into the test checkout and run smoke/live tests:
 ```bash
