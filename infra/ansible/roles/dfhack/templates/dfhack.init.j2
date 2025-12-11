@@ -1,0 +1,7 @@
+lua (function()
+  local f = io.open('dfhack-init-marker', 'a')
+  if f then f:write(os.date('%Y-%m-%dT%H:%M:%S'), '\n'); f:close() end
+end)()
+script hack/init/dfhack.keybindings.init
+script hack/init/dfhack.tools.init
+lua dfhack.run_script('df_remote_init')

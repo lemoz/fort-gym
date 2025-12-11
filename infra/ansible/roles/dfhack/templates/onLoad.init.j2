@@ -1,0 +1,5 @@
+lua (function()
+  local f = io.open('dfhack-onload-marker', 'a')
+  if f then f:write(os.date('%Y-%m-%dT%H:%M:%S'), '\n'); f:close() end
+end)()
+lua dfhack.run_script('df_remote_init')

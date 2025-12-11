@@ -1,0 +1,106 @@
+---
+- name: Stop DFHack while rebuilding (if present)
+  systemd:
+    name: dfhack-headless.service
+    state: stopped
+  failed_when: false
+  register: _dfhack_build_stop
+
+- name: Install DFHack build dependencies
+  apt:
+    name:
+      - build-essential
+      - cmake
+      - ninja-build
+      - git
+      - python3
+      - python3-distutils
+      - python3-pip
+      - unzip
+      - libprotobuf-dev
+      - protobuf-compiler
+      - zlib1g-dev
+      - libbz2-dev
+      - libtinfo-dev
+      - pkg-config
+      - libxml-libxml-perl
+      - libxml-libxslt-perl
+    state: present
+    update_cache: true
+
+- name: Ensure build directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - "{{ dfhack_build_workdir }}"
+    - "{{ dfhack_build_src_dir }}"
+
+- name: Clone DFHack source
+  git:
+    repo: https://github.com/DFHack/dfhack.git
+    dest: "{{ dfhack_build_src_dir }}"
+    version: "{{ dfhack_source_ref }}"
+    depth: 1
+    force: true
+    recursive: true
+
+- name: Reset build directory
+  file:
+    path: "{{ dfhack_build_build_dir }}"
+    state: absent
+
+- name: Download Dwarf Fortress archive for build
+  get_url:
+    url: "{{ dwarf_fortress_archive_url }}"
+    dest: /tmp/dwarf-fortress.tar.bz2
+    mode: '0644'
+
+- name: Remove existing DFHack install directory for rebuild
+  file:
+    path: "{{ dfhack_install_dir }}"
+    state: absent
+
+- name: Create DFHack install directory for rebuild
+  file:
+    path: "{{ dfhack_install_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Extract Dwarf Fortress into install directory
+  unarchive:
+    src: /tmp/dwarf-fortress.tar.bz2
+    dest: "{{ dfhack_install_dir }}"
+    remote_src: true
+    extra_opts:
+      - "--strip-components=1"
+
+- name: Remove existing build tree DwarfFortress link
+  file:
+    path: "{{ dfhack_build_src_dir }}/DwarfFortress"
+    state: absent
+
+- name: Link build tree to install directory assets
+  file:
+    path: "{{ dfhack_build_src_dir }}/DwarfFortress"
+    state: link
+    src: "{{ dfhack_install_dir }}"
+
+- name: Configure DFHack build
+  command: >-
+    cmake -S {{ dfhack_build_src_dir }}
+          -B {{ dfhack_build_build_dir }}
+          -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_INSTALL_PREFIX={{ dfhack_install_dir }}
+  args:
+    creates: "{{ dfhack_build_build_dir }}/build.ninja"
+
+- name: Build DFHack
+  command: >-
+    cmake --build {{ dfhack_build_build_dir }}
+          -j{{ dfhack_build_jobs | default(ansible_processor_vcpus | default(ansible_processor_count | default(2))) }}
+
+- name: Install DFHack into target directory
+  command: cmake --install {{ dfhack_build_build_dir }} --prefix {{ dfhack_install_dir }}
