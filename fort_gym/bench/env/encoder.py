@@ -14,6 +14,7 @@ def encode_observation(
     state: Dict[str, Any],
     screen_text: Optional[str] = None,
     action_history: Optional[List[Dict[str, Any]]] = None,
+    last_action_result: Optional[Dict[str, Any]] = None,
 ) -> Tuple[str, Dict[str, Any]]:
     """Return (text_summary, machine_state) tuple for a given environment state.
 
@@ -21,6 +22,7 @@ def encode_observation(
         state: Game state dictionary
         screen_text: Optional screen text from CopyScreen (for keystroke mode)
         action_history: Optional list of recent actions (for keystroke mode memory)
+        last_action_result: Optional result from previous action (for feedback)
 
     Returns:
         Tuple of (text observation for agent, cleaned state dict)
@@ -32,13 +34,31 @@ def encode_observation(
     stocks = clean_state.get("stocks", {})
     risks = clean_state.get("risks", [])
     reminders = clean_state.get("reminders", [])
+    pause_state = clean_state.get("pause_state", None)
 
     # Build status section
-    status_lines = [
+    status_lines = []
+
+    # Game state feedback (critical for agent to know if game is running)
+    if pause_state is True:
+        status_lines.append("Game Status: PAUSED (press SPACE to unpause)")
+    elif pause_state is False:
+        status_lines.append("Game Status: RUNNING")
+
+    # Last action result feedback
+    if last_action_result is not None:
+        accepted = last_action_result.get("accepted", last_action_result.get("ok", True))
+        if accepted:
+            status_lines.append("Last Action: ACCEPTED")
+        else:
+            reason = last_action_result.get("reason", last_action_result.get("error", "unknown"))
+            status_lines.append(f"Last Action: REJECTED - {reason}")
+
+    status_lines.extend([
         f"Time: tick {time_tick}",
         f"Population: {population} dwarves",
         f"Food: {stocks.get('food', 0)}, Drink: {stocks.get('drink', 0)}",
-    ]
+    ])
 
     if risks:
         status_lines.append("Risks: " + ", ".join(risks))

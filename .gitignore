@@ -11,3 +11,8 @@ __pycache__/
 fort_gym/bench/env/remote_proto/gen/
 
 .gcloud/
+
+# Local run artifacts and scratch scripts
+artifacts/
+fort_gym/artifacts/
+tmp_*

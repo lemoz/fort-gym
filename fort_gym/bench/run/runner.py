@@ -146,6 +146,7 @@ def run_once(
 
     previous_state: Optional[Dict[str, Any]] = None
     action_history: List[Dict[str, Any]] = []  # Track recent actions for keystroke mode memory
+    last_action_result: Optional[Dict[str, Any]] = None  # Track previous action result for feedback
 
     def publish_event(step: int, event_type: str, payload: Dict[str, Any], events: List[Dict[str, Any]]) -> None:
         data = {"run_id": run_identifier, "step": step, **payload}
@@ -199,6 +200,7 @@ def run_once(
                     state_before,
                     screen_text=screen_text,
                     action_history=action_history if is_keystroke_mode else None,
+                    last_action_result=last_action_result,
                 )
                 publish_event(step, "state", {"state": obs_json, "text": obs_text}, events)
 
@@ -212,6 +214,7 @@ def run_once(
                     reason = "Multiple actions are not supported"
                     validation = {"valid": False, "reason": reason}
                     publish_event(step, "validation", validation, events)
+                    last_action_result = {"accepted": False, "reason": reason}
                     record_line = {
                         "run_id": run_identifier,
                         "step": step,
@@ -231,6 +234,7 @@ def run_once(
                 except (TypeError, ValueError) as exc:
                     validation = {"valid": False, "reason": str(exc)}
                     publish_event(step, "validation", validation, events)
+                    last_action_result = {"accepted": False, "reason": str(exc)}
                     record_line = {
                         "run_id": run_identifier,
                         "step": step,
@@ -249,6 +253,7 @@ def run_once(
                 validation = {"valid": valid, "reason": reason}
                 publish_event(step, "validation", validation, events)
                 if not valid:
+                    last_action_result = {"accepted": False, "reason": reason}
                     record_line = {
                         "run_id": run_identifier,
                         "step": step,
@@ -275,6 +280,9 @@ def run_once(
                     break
                 publish_event(step, "execute", {"result": execute_result}, events)
                 state_after_apply = execute_result.get("state") or state_before
+
+                # Track action result for next step's feedback
+                last_action_result = execute_result
 
                 # Track action for history (keystroke mode memory)
                 if is_keystroke_mode:
@@ -373,6 +381,19 @@ def run_once(
                     },
                 },
             )
+
+        # Auto-analyze trace with LLM (optional - requires GOOGLE_API_KEY)
+        try:
+            from ..eval.analyzer import TraceAnalyzer, save_analysis
+            import os
+            if os.environ.get("GOOGLE_API_KEY"):
+                analyzer = TraceAnalyzer()
+                analysis = analyzer.analyze(trace_path)
+                save_analysis(analysis, trace_path.parent)
+        except Exception as e:
+            # Analysis is optional - don't fail the run if it errors
+            import logging
+            logging.getLogger(__name__).warning(f"Auto-analysis skipped: {e}")
     except Exception:
         if registry:
             registry.set_status(

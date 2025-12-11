@@ -283,6 +283,19 @@ DFHack output includes ANSI color codes (`\x1b[0m`) that must be stripped before
 - Lint with `ruff check fort_gym tests` and `mypy fort_gym`
 - Modules: `snake_case`, classes: `PascalCase`, constants: `UPPER_SNAKE_CASE`
 
+## Design Principles
+
+### Prefer LLMs Over Heuristics
+For analysis, pattern detection, and anomaly detection tasks, **always use LLM-based approaches** instead of hardcoded heuristics. Heuristics are biased toward known patterns and cannot discover new failure modes.
+
+**Trace Analysis**: Use Gemini 3.0 Pro Preview (1M token context) for analyzing run traces:
+- For traces < 1M tokens: Single LLM call with full trace
+- For traces > 1M tokens: Chunk at 500k tokens, carry forward key insights to next chunk
+- Let the LLM identify patterns, anomalies, and generate hypotheses without predefined rules
+
+**Environment Variables**:
+- `GOOGLE_API_KEY` - Required for Gemini-based trace analysis
+
 ## Testing
 
 - Tests live in `tests/` mirroring `fort_gym/bench/` structure
@@ -337,6 +350,39 @@ The following features are planned to improve agent performance through memory, 
 ### Current Limitation
 Each step is currently **stateless** - the agent makes a fresh LLM call with no memory of previous steps. Keystroke mode has minimal context: last 5 actions shown in observation text, but no conversation history or goal tracking.
 
+### Implemented Features
+
+#### Trace Analysis (LLM-based)
+Automated post-run analysis using Gemini 3.0 Pro Preview to identify failure patterns and generate improvement hypotheses.
+
+**Usage**:
+```bash
+# Analyze a completed run
+fort-gym analyze <run_id>
+
+# Auto-analysis runs after each run (if GOOGLE_API_KEY is set)
+```
+
+**Output**: `analysis.json` and `analysis.txt` in the run's artifact directory.
+
+**Chunking**: For traces > 1M tokens, chunks at 500k with carry-forward of insights.
+
+#### Action Feedback in Observations
+Agent now receives feedback about game state and action results:
+
+**Observation text now includes**:
+```
+Game Status: PAUSED (press SPACE to unpause)
+Last Action: REJECTED - tile not accessible
+Time: tick 1000
+Population: 7 dwarves
+...
+```
+
+**State JSON includes**:
+- `pause_state: true/false` - Whether game is paused
+- Previous action result is tracked and passed to encoder
+
 ### Planned Features
 
 #### 1. Agent Memory (Hybrid Strategy)
@@ -380,12 +426,13 @@ max_steps: 50
 - `GET /experiments/compare?ids=run1,run2` - Compare results
 
 ### Implementation Order
-1. Memory Manager - Core memory abstraction
-2. Experimental Agent - Agent that uses memory
-3. Config System - Load experiments from YAML
-4. Tool Manager - Web search / wiki tools
-5. API Endpoints - Launch/compare experiments
-6. Analysis Tools - Compare results across runs
+1. **Action Feedback** - Add pause_state and action results to observation (quick win, high impact)
+2. Memory Manager - Core memory abstraction
+3. Experimental Agent - Agent that uses memory
+4. Config System - Load experiments from YAML
+5. Tool Manager - Web search / wiki tools
+6. API Endpoints - Launch/compare experiments
+7. Analysis Tools - Compare results across runs
 
 ## Known Issues
 

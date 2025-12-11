@@ -115,6 +115,9 @@ local json = require('json')
 local state = {}
 state.time = df.global.cur_year_tick or 0
 
+-- Pause state - critical for agent to know if game is running
+state.pause_state = df.global.pause_state and true or false
+
 -- Count only citizen dwarves
 local dwarf_count = 0
 for _, u in ipairs(df.global.world.units.active) do
