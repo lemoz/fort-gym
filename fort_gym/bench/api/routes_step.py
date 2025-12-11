@@ -10,7 +10,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
 from ..config import get_settings
 from ..env.actions import parse_action, validate_action
@@ -20,6 +20,7 @@ from ..env.executor import Executor
 from ..env.state_reader import StateReader
 from ..eval import metrics, milestones, scoring
 from ..run.storage import RUN_REGISTRY, RunInfo
+from .auth import require_admin
 from .schemas import StepRequest, StepResponse
 
 
@@ -102,7 +103,7 @@ def _emit_event(run_id: str, events: list[Dict[str, Any]], event_type: str, data
 
 
 @router.post("/step", response_model=StepResponse)
-async def step_endpoint(payload: StepRequest) -> StepResponse:
+async def step_endpoint(payload: StepRequest, _: None = Depends(require_admin)) -> StepResponse:
     settings = get_settings()
     if not settings.DFHACK_ENABLED:
         raise HTTPException(status_code=400, detail="DFHack backend is disabled.")

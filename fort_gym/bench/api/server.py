@@ -8,7 +8,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import AsyncGenerator, Callable, Dict, Iterable, List, Optional
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse, StreamingResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -18,8 +18,11 @@ from ..agent.base import AGENT_FACTORIES, Agent, RandomAgent
 from ..run.jobs import JOB_REGISTRY, JobInfo as RegistryJobInfo
 from ..run.runner import run_once
 from ..run.storage import RUN_REGISTRY, RunInfo as RegistryRunInfo, ShareToken
+from ..env.keystroke_exec import execute_keystroke_action
+from .auth import require_admin
 from .routes_step import router as step_router
 from .schemas import (
+    AdminKeysRequest,
     JobCreate,
     JobInfo,
     RunCreateRequest,
@@ -49,7 +52,7 @@ async def serve_index():
 
 
 @app.get("/admin", response_class=FileResponse)
-async def serve_admin():
+async def serve_admin(_: None = Depends(require_admin)):
     """Serve the admin panel."""
     return FileResponse(WEB_ROOT / "admin.html", media_type="text/html")
 
@@ -112,7 +115,7 @@ async def health() -> JSONResponse:
 
 
 @app.get("/runs", response_model=List[RunInfo])
-async def list_runs() -> List[RunInfo]:
+async def list_runs(_: None = Depends(require_admin)) -> List[RunInfo]:
     return [_serialize(record) for record in RUN_REGISTRY.list()]
 
 
@@ -138,7 +141,7 @@ def _get_agent_factory(model: str) -> Callable[[], Agent]:
 
 
 @app.post("/runs", response_model=RunInfo)
-async def create_run(payload: RunCreateRequest) -> RunInfo:
+async def create_run(payload: RunCreateRequest, _: None = Depends(require_admin)) -> RunInfo:
     loop = asyncio.get_running_loop()
 
     agent_factory = _get_agent_factory(payload.model)
@@ -176,7 +179,7 @@ async def create_run(payload: RunCreateRequest) -> RunInfo:
 
 
 @app.get("/runs/{run_id}", response_model=RunInfo)
-async def get_run(run_id: str) -> RunInfo:
+async def get_run(run_id: str, _: None = Depends(require_admin)) -> RunInfo:
     record = RUN_REGISTRY.get(run_id)
     if record is None:
         raise HTTPException(status_code=404, detail="Run not found")
@@ -184,7 +187,9 @@ async def get_run(run_id: str) -> RunInfo:
 
 
 @app.get("/runs/{run_id}/events/stream")
-async def stream_events(run_id: str, request: Request) -> StreamingResponse:
+async def stream_events(
+    run_id: str, request: Request, _: None = Depends(require_admin)
+) -> StreamingResponse:
     queue = RUN_REGISTRY.get_queue(run_id)
     if queue is None:
         raise HTTPException(status_code=404, detail="Run not found")
@@ -193,7 +198,7 @@ async def stream_events(run_id: str, request: Request) -> StreamingResponse:
 
 
 @app.post("/runs/{run_id}/pause")
-async def pause_run(run_id: str) -> JSONResponse:
+async def pause_run(run_id: str, _: None = Depends(require_admin)) -> JSONResponse:
     if RUN_REGISTRY.get(run_id) is None:
         raise HTTPException(status_code=404, detail="Run not found")
     RUN_REGISTRY.set_status(run_id, status="paused")
@@ -201,7 +206,7 @@ async def pause_run(run_id: str) -> JSONResponse:
 
 
 @app.post("/runs/{run_id}/resume")
-async def resume_run(run_id: str) -> JSONResponse:
+async def resume_run(run_id: str, _: None = Depends(require_admin)) -> JSONResponse:
     if RUN_REGISTRY.get(run_id) is None:
         raise HTTPException(status_code=404, detail="Run not found")
     RUN_REGISTRY.set_status(run_id, status="running")
@@ -209,7 +214,7 @@ async def resume_run(run_id: str) -> JSONResponse:
 
 
 @app.post("/runs/{run_id}/stop")
-async def stop_run(run_id: str) -> JSONResponse:
+async def stop_run(run_id: str, _: None = Depends(require_admin)) -> JSONResponse:
     if RUN_REGISTRY.get(run_id) is None:
         raise HTTPException(status_code=404, detail="Run not found")
     RUN_REGISTRY.set_status(run_id, status="stopped", ended_at=datetime.utcnow())
@@ -217,7 +222,9 @@ async def stop_run(run_id: str) -> JSONResponse:
 
 
 @app.post("/runs/{run_id}/share")
-async def create_share(run_id: str, body: ShareCreate) -> Dict[str, object]:
+async def create_share(
+    run_id: str, body: ShareCreate, _: None = Depends(require_admin)
+) -> Dict[str, object]:
     if RUN_REGISTRY.get(run_id) is None:
         raise HTTPException(status_code=404, detail="Run not found")
     scope = body.scope or ["live", "replay", "export"]
@@ -233,7 +240,7 @@ async def create_share(run_id: str, body: ShareCreate) -> Dict[str, object]:
 
 
 @app.get("/runs/{run_id}/export/trace")
-async def export_trace(run_id: str) -> StreamingResponse:
+async def export_trace(run_id: str, _: None = Depends(require_admin)) -> StreamingResponse:
     path = _artifacts_path(run_id)
     if not path.exists():
         raise HTTPException(status_code=404, detail="Trace not available")
@@ -340,7 +347,7 @@ def _get_screenshot_client():
 
 
 @app.get("/screenshot")
-async def admin_screenshot() -> JSONResponse:
+async def admin_screenshot(_: None = Depends(require_admin)) -> JSONResponse:
     """Capture the current DF screen (admin endpoint)."""
     client = _get_screenshot_client()
     if client is None:
@@ -366,8 +373,20 @@ async def public_screenshot(token: str) -> JSONResponse:
         raise HTTPException(status_code=500, detail=f"Screenshot failed: {exc}")
 
 
+@app.post("/admin/keys")
+async def admin_keys(payload: AdminKeysRequest, _: None = Depends(require_admin)) -> JSONResponse:
+    """Send raw DF interface keys for manual admin control."""
+    from ..config import get_settings
+
+    settings = get_settings()
+    if not settings.DFHACK_ENABLED:
+        raise HTTPException(status_code=400, detail="DFHack backend disabled")
+    result = execute_keystroke_action(payload.keys)
+    return JSONResponse(result)
+
+
 @app.post("/jobs", response_model=JobInfo)
-async def create_job(payload: JobCreate) -> JobInfo:
+async def create_job(payload: JobCreate, _: None = Depends(require_admin)) -> JobInfo:
     loop = asyncio.get_running_loop()
 
     agent_factory = _get_agent_factory(payload.model)
@@ -398,12 +417,12 @@ async def create_job(payload: JobCreate) -> JobInfo:
 
 
 @app.get("/jobs", response_model=List[JobInfo])
-async def list_jobs() -> List[JobInfo]:
+async def list_jobs(_: None = Depends(require_admin)) -> List[JobInfo]:
     return [_serialize_job(job) for job in JOB_REGISTRY.list()]
 
 
 @app.get("/jobs/{job_id}", response_model=JobInfo)
-async def get_job(job_id: str) -> JobInfo:
+async def get_job(job_id: str, _: None = Depends(require_admin)) -> JobInfo:
     job = JOB_REGISTRY.get(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")

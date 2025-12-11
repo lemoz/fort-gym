@@ -136,3 +136,9 @@ class JobInfo(BaseModel):
     status: str
     created_at: datetime
     finished_at: Optional[datetime] = None
+
+
+class AdminKeysRequest(BaseModel):
+    """Admin keystroke payload for manual DF control."""
+
+    keys: List[str] = Field(..., min_length=1, max_length=100)

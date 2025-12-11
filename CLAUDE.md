@@ -227,6 +227,7 @@ We want the production VM to be reproducible and drift‑free.
 - `/opt/fort-gym` is the **production checkout** and must stay on a clean git commit (preferably a tag). No rsync/manual edits here.
 - Use a separate **test checkout** (e.g. `~/fort-gym-test`) for trying WIP branches/SHAs.
 - The API runs under systemd (`fort-gym-api.service`). Do not start uvicorn in tmux.
+- For public deployments, set `FORT_GYM_ADMIN_PASSWORD` (and optionally `FORT_GYM_ADMIN_USER`) to protect admin UI and non‑public endpoints.
 
 **Workflow**
 Convenience wrappers live in the Makefile:

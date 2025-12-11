@@ -37,7 +37,9 @@
     <div style="display:flex; gap:1rem; align-items:center; margin-bottom:1rem;">
       <button type="button" id="live-start">Start Live View</button>
       <button type="button" id="live-stop" class="secondary">Stop</button>
+      <button type="button" id="keyboard-toggle" class="secondary">Enable Keyboard</button>
       <span id="live-status" style="font-size:0.85rem; color:#9fb1d6;">Not streaming</span>
+      <span id="keyboard-status" style="font-size:0.85rem; color:#9fb1d6;">Keyboard off</span>
     </div>
     <canvas id="game-canvas" width="640" height="384" style="background:#000; border:2px solid rgba(255,255,255,0.15); border-radius:8px; image-rendering:pixelated;"></canvas>
   </section>
@@ -159,9 +161,12 @@
     const liveStart = document.getElementById('live-start');
     const liveStop = document.getElementById('live-stop');
     const liveStatus = document.getElementById('live-status');
+    const keyboardToggle = document.getElementById('keyboard-toggle');
+    const keyboardStatus = document.getElementById('keyboard-status');
     let adminSource = null;
     let runsCache = [];
     let liveInterval = null;
+    let keyboardEnabled = false;
 
     // DF color palette (16 colors)
     const DF_COLORS = [
@@ -222,6 +227,76 @@
         liveStatus.style.color = '#d9534f';
       }
     }
+
+    function keyToDfKeys(evt) {
+      // Ignore when typing in form controls
+      const tag = (document.activeElement && document.activeElement.tagName || '').toLowerCase();
+      if (['input', 'textarea', 'select', 'button'].includes(tag)) return null;
+
+      if (evt.key === 'ArrowUp') return ['CURSOR_UP'];
+      if (evt.key === 'ArrowDown') return ['CURSOR_DOWN'];
+      if (evt.key === 'ArrowLeft') return ['CURSOR_LEFT'];
+      if (evt.key === 'ArrowRight') return ['CURSOR_RIGHT'];
+      if (evt.key === 'PageUp') return ['STANDARDSCROLL_PAGEUP'];
+      if (evt.key === 'PageDown') return ['STANDARDSCROLL_PAGEDOWN'];
+      if (evt.key === 'Enter') return ['SELECT'];
+      if (evt.key === 'Escape') return ['LEAVESCREEN'];
+      if (evt.key === ' ') return ['STRING_A032'];
+
+      if (evt.key && evt.key.length === 1) {
+        const code = evt.key.charCodeAt(0);
+        if (code <= 127) {
+          return [`STRING_A${code.toString().padStart(3, '0')}`];
+        }
+      }
+
+      return null;
+    }
+
+    async function sendAdminKeys(keys) {
+      const res = await fetch('/admin/keys', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keys }),
+      });
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(txt || res.statusText);
+      }
+      return res.json();
+    }
+
+    function updateKeyboardUI() {
+      if (keyboardEnabled) {
+        keyboardToggle.textContent = 'Disable Keyboard';
+        keyboardStatus.textContent = 'Keyboard on';
+        keyboardStatus.style.color = '#4f7cff';
+      } else {
+        keyboardToggle.textContent = 'Enable Keyboard';
+        keyboardStatus.textContent = 'Keyboard off';
+        keyboardStatus.style.color = '#9fb1d6';
+      }
+    }
+
+    keyboardToggle.addEventListener('click', () => {
+      keyboardEnabled = !keyboardEnabled;
+      updateKeyboardUI();
+      showToast(keyboardEnabled ? 'Keyboard control enabled' : 'Keyboard control disabled');
+    });
+
+    document.addEventListener('keydown', async (evt) => {
+      if (!keyboardEnabled) return;
+      if (evt.repeat) return;
+      const keys = keyToDfKeys(evt);
+      if (!keys) return;
+      evt.preventDefault();
+      try {
+        await sendAdminKeys(keys);
+      } catch (err) {
+        console.error('send-key failed', err);
+        showToast('Keystroke failed: ' + err.message);
+      }
+    });
 
     liveStart.addEventListener('click', () => {
       if (liveInterval) return;
