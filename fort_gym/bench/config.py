@@ -48,6 +48,7 @@ class Settings(BaseModel):
     DFHACK_ENABLED: bool = bool(int(os.getenv("DFHACK_ENABLED", "0")))
     DFHACK_HOST: str = os.getenv("DFHACK_HOST", "127.0.0.1")
     DFHACK_PORT: int = int(os.getenv("DFHACK_PORT", "5000"))
+    FORT_GYM_SEED_SAVE: Optional[str] = os.getenv("FORT_GYM_SEED_SAVE")
     TICKS_PER_STEP: int = int(os.getenv("TICKS_PER_STEP", "200"))
     ARTIFACTS_DIR: str = os.getenv("ARTIFACTS_DIR", "artifacts")
     OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY")
@@ -69,6 +70,7 @@ def get_settings() -> Settings:
         DFHACK_ENABLED=bool(int(os.getenv("DFHACK_ENABLED", "0"))),
         DFHACK_HOST=os.getenv("DFHACK_HOST", "127.0.0.1"),
         DFHACK_PORT=int(os.getenv("DFHACK_PORT", "5000")),
+        FORT_GYM_SEED_SAVE=os.getenv("FORT_GYM_SEED_SAVE"),
         TICKS_PER_STEP=int(os.getenv("TICKS_PER_STEP", "200")),
         ARTIFACTS_DIR=os.getenv("ARTIFACTS_DIR", "artifacts"),
         OPENAI_API_KEY=os.getenv("OPENAI_API_KEY"),

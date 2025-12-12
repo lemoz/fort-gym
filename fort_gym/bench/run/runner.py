@@ -20,6 +20,7 @@ from ..env.state_reader import StateReader
 from ..eval import metrics, milestones, scoring
 from ..eval.summary import RunSummary, summarize
 from .storage import RUN_REGISTRY, RunRegistry
+from .seed_reset import maybe_reset_dfhack_seed
 
 
 def _artifacts_root() -> Path:
@@ -104,6 +105,9 @@ def run_once(
     elif backend_name == "dfhack":
         if not settings.DFHACK_ENABLED:
             raise RuntimeError("DFHack backend disabled. Set DFHACK_ENABLED=1 to use it.")
+
+        # If configured, reset the save from a pristine seed before connecting.
+        maybe_reset_dfhack_seed(settings)
 
         dfhack_client = DFHackClient(host=settings.DFHACK_HOST, port=settings.DFHACK_PORT)
         try:
