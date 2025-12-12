@@ -54,7 +54,11 @@ def reset_current_from_seed(
     seed_dir = saves_dir / seed_name
     current_dir = saves_dir / "current"
 
-    if not seed_dir.is_dir():
+    try:
+        seed_exists = seed_dir.is_dir()
+    except PermissionError:
+        seed_exists = _sudo_is_dir(seed_dir)
+    if not seed_exists:
         raise SeedResetError(f"Seed save not found: {seed_dir}")
 
     try:
@@ -109,5 +113,13 @@ def _wait_for_port(host: str, port: int, timeout_s: float) -> None:
     raise SeedResetError(f"DFHack RPC did not come up on {host}:{port}: {last_error}")
 
 
-__all__ = ["SeedResetError", "maybe_reset_dfhack_seed", "reset_current_from_seed"]
+def _sudo_is_dir(path: Path) -> bool:
+    """Check directory existence via sudo when direct stat is blocked."""
+    try:
+        subprocess.check_call(["sudo", "-n", "test", "-d", str(path)])
+        return True
+    except Exception:
+        return False
 
+
+__all__ = ["SeedResetError", "maybe_reset_dfhack_seed", "reset_current_from_seed"]

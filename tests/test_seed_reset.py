@@ -29,3 +29,19 @@ def test_reset_current_from_seed_rejects_bad_name(tmp_path):
     with pytest.raises(SeedResetError):
         reset_current_from_seed("../bad", dfroot=tmp_path, restart_service=False)
 
+
+def test_reset_current_from_seed_handles_permission_error(monkeypatch, tmp_path):
+    from fort_gym.bench.run import seed_reset
+
+    dfroot = tmp_path / "df"
+    saves_dir = dfroot / "data" / "save"
+    seed_dir = saves_dir / "seed_region2_fresh"
+    seed_dir.mkdir(parents=True)
+    (seed_dir / "foo.txt").write_text("hi", encoding="utf-8")
+
+    # Simulate permissions preventing Path.is_dir() from stat'ing the seed.
+    monkeypatch.setattr(type(seed_dir), "is_dir", lambda _self: (_ for _ in ()).throw(PermissionError()))
+    monkeypatch.setattr(seed_reset, "_sudo_is_dir", lambda _p: True)
+
+    seed_reset.reset_current_from_seed("seed_region2_fresh", dfroot=dfroot, restart_service=False)
+    assert (saves_dir / "current" / "foo.txt").read_text(encoding="utf-8") == "hi"
