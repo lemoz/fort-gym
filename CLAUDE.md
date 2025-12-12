@@ -146,6 +146,7 @@ The system prompt encourages Claude to take action (dig, build, create stockpile
 - Recognizes main menu is NOT an overlay to dismiss
 - Uses STRING_A### keys for typing letters (e.g., STRING_A097 = 'a')
 - Tries alternative keys (STANDARDSCROLL_PAGEDOWN, Space) when SELECT doesn't close popups
+- On embark site selection (`viewscreen_choose_start_sitest`), the `e` hotkey maps to interface key `SETUP_EMBARK`. fort-gym auto-translates `STRING_A101`/`CUSTOM_E` to `SETUP_EMBARK` so keystroke/admin control can embark reliably.
 
 ## Environment Variables
 
@@ -157,6 +158,7 @@ Copy `.env.example` to `.env` and configure:
 - `DFROOT` - Path to DF installation (auto-detected: `/opt/dwarf-fortress` on Linux, override for Mac)
   - Mac (Lazy Mac Pack): `export DFROOT="$HOME/Applications/Lazy Mac Pack/Dwarf Fortress"`
   - Linux/VM: `/opt/dwarf-fortress` (default)
+- `FORT_GYM_SEED_SAVE` - Optional pristine seed save name. When set and backend is `dfhack`, fort-gym copies this save to `current` and restarts `dfhack-headless` before each run, ensuring a clean baseline.
 - `TICKS_PER_STEP` - Game ticks to advance per step (default 200)
 - `ARTIFACTS_DIR` - Where to store run artifacts (default fort_gym/artifacts)
 
@@ -169,7 +171,25 @@ See `fort_gym/bench/config.py` for full list.
 - **Web UI**: http://34.41.155.134:8000/ (spectator), http://34.41.155.134:8000/admin (admin)
 - **DFHack RPC**: port 5000 (loopback)
 - **DFHack version**: v0.47.05
-- **Save loaded**: `current` (systemd service config)
+- **Save loaded**: `current` (systemd service config, reset from seed before runs)
+
+### Seed Save Workflow (VM)
+We keep a read-only pristine seed save and reset `current` from it before every DFHack run.
+
+- **Seed save**: `/opt/dwarf-fortress/data/save/seed_region2_fresh` (read-only)
+- **Runtime save**: `/opt/dwarf-fortress/data/save/current`
+- **Automation**: set `FORT_GYM_SEED_SAVE=seed_region2_fresh` in `/etc/fort-gym.env`. fort-gym will:
+  1. Copy `seed_region2_fresh` → `current`
+  2. Restart `dfhack-headless` (reloads `current`)
+  3. Start the run
+
+If you need a new seed:
+1. Boot DF to title, create/embark a fresh fortress, save immediately, and exit.
+2. Copy to a new read-only seed folder:
+   `sudo cp -a /opt/dwarf-fortress/data/save/<new_world> /opt/dwarf-fortress/data/save/seed_<name> && sudo chmod -R a-w /opt/dwarf-fortress/data/save/seed_<name>`
+3. Update `FORT_GYM_SEED_SAVE` to the new seed name.
+
+**Important**: keep `/opt/dwarf-fortress/bin/df-ready.sh` disabled (no-op). Earlier autoload logic there caused DF segfaults during startup/worldgen.
 
 ### Full System Startup (from scratch)
 
