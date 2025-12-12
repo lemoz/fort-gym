@@ -7,6 +7,7 @@ import time
 from typing import Dict, List, Tuple
 
 from ..config import dfhack_cmd
+from ..dfhack_exec import run_lua_expr
 
 
 # Common interface keys for Dwarf Fortress v0.47.05
@@ -99,6 +100,8 @@ VALID_KEYS: set[str] = {
     "ZOOM_IN", "ZOOM_OUT", "ZOOM_TOGGLE", "ZOOM_RESET",
     "FPS_UP", "FPS_DOWN",
     "TOGGLE_FULLSCREEN", "HELP", "OPTIONS",
+    # Embark/location setup
+    "SETUP_EMBARK",
 
     # Extended character input (ASCII codes as STRING_A000-STRING_A127)
     # These allow typing arbitrary characters
@@ -114,6 +117,33 @@ class KeystrokeError(Exception):
     pass
 
 
+def _get_viewscreen_type() -> str | None:
+    """Best-effort current viewscreen type for context-aware key translation."""
+    try:
+        out = run_lua_expr(
+            "local v=dfhack.gui.getCurViewscreen(); print(v._type or '')",
+            timeout=0.5,
+        )
+    except Exception:
+        return None
+    out = out.strip()
+    if not out:
+        return None
+    # Typical form: "<type: viewscreen_choose_start_sitest>"
+    if out.startswith("<type:") and out.endswith(">"):
+        return out[len("<type:") : -1].strip()
+    return out
+
+
+def _translate_key(key: str, screen_type: str | None) -> str:
+    """Translate raw keys into DF interface keys based on current screen."""
+    if screen_type == "viewscreen_choose_start_sitest":
+        # Embark site selection uses SETUP_EMBARK, not raw 'e'
+        if key in {"STRING_A101", "CUSTOM_E"}:
+            return "SETUP_EMBARK"
+    return key
+
+
 def send_key(key: str, timeout: float = 5.0) -> bool:
     """Send a single keystroke to DFHack.
 
@@ -127,10 +157,10 @@ def send_key(key: str, timeout: float = 5.0) -> bool:
     Raises:
         KeystrokeError: If DFHack command fails
     """
-    if key not in VALID_KEYS:
-        return False
-
     try:
+        key = _translate_key(key, _get_viewscreen_type())
+        if key not in VALID_KEYS:
+            return False
         cmd = dfhack_cmd("devel/send-key", key)
         subprocess.check_call(cmd, timeout=timeout, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         time.sleep(0.05)  # Small delay for game to process
@@ -155,7 +185,9 @@ def send_sequence(keys: List[str], delay: float = 0.05) -> Tuple[int, str]:
     if not keys:
         return 0, ""
 
+    screen_type = _get_viewscreen_type()
     for i, key in enumerate(keys):
+        key = _translate_key(key, screen_type)
         if key not in VALID_KEYS:
             return i, f"Invalid key at position {i}: {key}"
 
