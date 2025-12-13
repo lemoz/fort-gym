@@ -33,7 +33,10 @@ log "SSH connection successful!"
 log "Stopping dfhack-headless and cleaning up..."
 $REMOTE 'set -e
 sudo systemctl stop dfhack-headless || true
-sudo pkill -f "dwarfort|dfhack-headless-pty.exp|dfhack-run|ensure.touch" || true
+sudo pkill -x dwarfort || true
+sudo pkill -f "[d]fhack-headless-pty\\.exp" || true
+sudo pkill -f "[d]fhack-run" || true
+sudo pkill -f "ensure\\.touc[h]" || true
 sudo rm -f /opt/dwarf-fortress/ensure.touch
 sudo truncate -s 0 /opt/dwarf-fortress/dfhack-stdout.log /opt/dwarf-fortress/dfhack-stderr.log /opt/dwarf-fortress/dfhack-remote.log || true
 '

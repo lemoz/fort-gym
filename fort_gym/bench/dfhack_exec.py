@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import json
 import re
+import shlex
 import subprocess
+import sys
+from shutil import which
 from typing import Dict, List
 
 from .config import DFROOT, DFHACK_RUN, dfhack_cmd
@@ -14,10 +17,38 @@ class DFHackError(RuntimeError):
     """Raised when DFHack commands fail or time out."""
 
 
+def _maybe_wrap_with_script(args: List[str]) -> List[str]:
+    """Wrap a DFHack invocation in a pseudo-tty when available.
+
+    Some DFHack builds crash when stdout isn't a tty (e.g. headless systemd).
+    Wrapping with `script -q -c ... /dev/null` forces a pty and stabilizes output.
+    """
+
+    if not args:
+        return args
+
+    if sys.platform == "win32":
+        return args
+
+    # macOS ships a BSD `script` without `-c`; only wrap on Linux where util-linux is standard.
+    if not sys.platform.startswith("linux"):
+        return args
+
+    if which("script") is None:
+        return args
+
+    argv0 = args[0]
+    if not argv0.endswith("dfhack-run"):
+        return args
+
+    return ["script", "-q", "-c", shlex.join(args), "/dev/null"]
+
+
 def run_dfhack(args: List[str], *, timeout: float = 2.5, cwd: str = str(DFROOT)) -> str:
     """Execute a DFHack command with tight bounds and return stdout."""
 
     try:
+        args = _maybe_wrap_with_script(args)
         output = subprocess.check_output(
             args,
             cwd=cwd,
