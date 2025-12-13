@@ -15,6 +15,7 @@ from fastapi.staticfiles import StaticFiles
 from importlib import import_module
 
 from ..agent.base import AGENT_FACTORIES, Agent, RandomAgent
+from ..config import get_settings
 from ..run.jobs import JOB_REGISTRY, JobInfo as RegistryJobInfo
 from ..run.runner import run_once
 from ..run.storage import RUN_REGISTRY, RunInfo as RegistryRunInfo, ShareToken
@@ -36,7 +37,7 @@ app = FastAPI(title="fort-gym API")
 app.include_router(step_router)
 
 
-ARTIFACTS_ROOT = Path(__file__).resolve().parents[2] / "artifacts"
+ARTIFACTS_ROOT = Path(get_settings().ARTIFACTS_DIR).resolve()
 WEB_ROOT = Path(__file__).resolve().parents[3] / "web"
 
 

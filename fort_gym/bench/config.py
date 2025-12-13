@@ -51,7 +51,7 @@ class Settings(BaseModel):
     FORT_GYM_SEED_SAVE: Optional[str] = os.getenv("FORT_GYM_SEED_SAVE")
     FORT_GYM_RUNTIME_SAVE: str = os.getenv("FORT_GYM_RUNTIME_SAVE", "current")
     TICKS_PER_STEP: int = int(os.getenv("TICKS_PER_STEP", "200"))
-    ARTIFACTS_DIR: str = os.getenv("ARTIFACTS_DIR", "artifacts")
+    ARTIFACTS_DIR: str = os.getenv("ARTIFACTS_DIR", "fort_gym/artifacts")
     OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY")
     OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
     ANTHROPIC_API_KEY: Optional[str] = os.getenv("ANTHROPIC_API_KEY")
@@ -74,7 +74,7 @@ def get_settings() -> Settings:
         FORT_GYM_SEED_SAVE=os.getenv("FORT_GYM_SEED_SAVE"),
         FORT_GYM_RUNTIME_SAVE=os.getenv("FORT_GYM_RUNTIME_SAVE", "current"),
         TICKS_PER_STEP=int(os.getenv("TICKS_PER_STEP", "200")),
-        ARTIFACTS_DIR=os.getenv("ARTIFACTS_DIR", "artifacts"),
+        ARTIFACTS_DIR=os.getenv("ARTIFACTS_DIR", "fort_gym/artifacts"),
         OPENAI_API_KEY=os.getenv("OPENAI_API_KEY"),
         OPENAI_MODEL=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
         ANTHROPIC_API_KEY=os.getenv("ANTHROPIC_API_KEY"),

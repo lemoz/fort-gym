@@ -11,7 +11,7 @@ from fort_gym.bench.run.runner import run_once
 def test_mock_run_produces_trace() -> None:
     run_id = run_once(RandomAgent(), env="mock", max_steps=3, ticks_per_step=10)
 
-    artifacts_root = Path(__file__).resolve().parents[1] / "artifacts"
+    artifacts_root = Path(__file__).resolve().parents[1] / "fort_gym" / "artifacts"
     artifact_dir = artifacts_root / run_id
     trace_path = artifact_dir / "trace.jsonl"
 
