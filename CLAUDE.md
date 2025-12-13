@@ -73,9 +73,11 @@ make vm-start
 # Check service status
 make vm-status
 
-# Toggle between overlay vs built DFHack
-make vm-use-overlay  # Use pre-built DFHack bundle
-make vm-use-build    # Build DFHack from source
+# Run pytest in the VM test checkout
+make vm-test
+
+# Deploy current origin/main to the production checkout
+make vm-deploy
 ```
 
 ### Local DFHack Testing
@@ -158,7 +160,8 @@ Copy `.env.example` to `.env` and configure:
 - `DFROOT` - Path to DF installation (auto-detected: `/opt/dwarf-fortress` on Linux, override for Mac)
   - Mac (Lazy Mac Pack): `export DFROOT="$HOME/Applications/Lazy Mac Pack/Dwarf Fortress"`
   - Linux/VM: `/opt/dwarf-fortress` (default)
-- `FORT_GYM_SEED_SAVE` - Optional pristine seed save name. When set and backend is `dfhack`, fort-gym copies this save to `current` and restarts `dfhack-headless` before each run, ensuring a clean baseline.
+- `FORT_GYM_SEED_SAVE` - Optional pristine seed save name. When set and backend is `dfhack`, fort-gym copies this save to `FORT_GYM_RUNTIME_SAVE` and restarts `dfhack-headless` (then `load-save`s that runtime) before each run.
+- `FORT_GYM_RUNTIME_SAVE` - Runtime save directory name to load after seed reset (default `current`).
 - `TICKS_PER_STEP` - Game ticks to advance per step (default 200)
 - `ARTIFACTS_DIR` - Where to store run artifacts (default fort_gym/artifacts)
 
@@ -171,22 +174,27 @@ See `fort_gym/bench/config.py` for full list.
 - **Web UI**: http://34.41.155.134:8000/ (spectator), http://34.41.155.134:8000/admin (admin)
 - **DFHack RPC**: port 5000 (loopback)
 - **DFHack version**: v0.47.05
-- **Save loaded**: `current` (systemd service config, reset from seed before runs)
+- **Save loaded**: `region1` (reset from seed before runs)
 
 ### Seed Save Workflow (VM)
-We keep a read-only pristine seed save and reset `current` from it before every DFHack run.
+We keep a read-only pristine seed save and reset the runtime save from it before every DFHack run.
 
-- **Seed save**: `/opt/dwarf-fortress/data/save/seed_region2_fresh` (read-only)
-- **Runtime save**: `/opt/dwarf-fortress/data/save/current`
-- **Automation**: set `FORT_GYM_SEED_SAVE=seed_region2_fresh` in `/etc/fort-gym.env`. fort-gym will:
-  1. Copy `seed_region2_fresh` → `current`
-  2. Restart `dfhack-headless` (reloads `current`)
-  3. Start the run
+- **Seed save**: `/opt/dwarf-fortress/data/seed_saves/seed_region1_fresh` (read-only)
+- **Runtime save**: `/opt/dwarf-fortress/data/save/region1`
+- **Automation**: set in `/etc/fort-gym.env`:
+  - `FORT_GYM_SEED_SAVE=seed_region1_fresh`
+  - `FORT_GYM_RUNTIME_SAVE=region1`
+
+fort-gym will:
+1. Copy the seed → runtime save
+2. Restart `dfhack-headless`
+3. `load-save` the runtime save and wait for the map to load
+4. Start the run
 
 If you need a new seed:
 1. Boot DF to title, create/embark a fresh fortress, save immediately, and exit.
 2. Copy to a new read-only seed folder:
-   `sudo cp -a /opt/dwarf-fortress/data/save/<new_world> /opt/dwarf-fortress/data/save/seed_<name> && sudo chmod -R a-w /opt/dwarf-fortress/data/save/seed_<name>`
+   `sudo cp -a /opt/dwarf-fortress/data/save/<new_world> /opt/dwarf-fortress/data/seed_saves/seed_<name> && sudo chmod -R a-w /opt/dwarf-fortress/data/seed_saves/seed_<name>`
 3. Update `FORT_GYM_SEED_SAVE` to the new seed name.
 
 **Important**: keep `/opt/dwarf-fortress/bin/df-ready.sh` disabled (no-op). Earlier autoload logic there caused DF segfaults during startup/worldgen.
@@ -211,7 +219,7 @@ ssh cdossman@34.41.155.134 'systemctl status dfhack-headless fort-gym-api'
 curl -s http://34.41.155.134:8000/health
 
 # Start a test run (auto-creates share token for spectator view)
-curl -s -X POST http://34.41.155.134:8000/runs \
+curl -s -u admin:'<password>' -X POST http://34.41.155.134:8000/runs \
   -H "Content-Type: application/json" \
   -d '{"backend": "dfhack", "model": "anthropic-keystroke", "max_steps": 5}'
 ```
@@ -225,7 +233,7 @@ curl -s -X POST http://34.41.155.134:8000/runs \
 
 **dfhack-headless.service** (`/etc/systemd/system/dfhack-headless.service`):
 - Runs as `ubuntu` user
-- Loads save specified in ExecStart (currently `current`)
+- Starts DF + DFHack headless; fort-gym uses `load-save $FORT_GYM_RUNTIME_SAVE` during seed reset (currently `region1`)
 - Logs to `/opt/dwarf-fortress/dfhack-stdout.log`
 
 ```bash
@@ -281,23 +289,18 @@ If you must rsync for speed, do it **only** to the test checkout with strict exc
 ### Creating Public Share Tokens
 Runs must have share tokens to appear in the public UI:
 ```bash
-curl -s -X POST "http://34.41.155.134:8000/runs/{run_id}/share" \
+curl -s -u admin:'<password>' -X POST "http://34.41.155.134:8000/runs/{run_id}/share" \
   -H "Content-Type: application/json" \
-  -d '{"scopes": ["export", "live", "replay"]}'
+  -d '{"scope": ["export", "live", "replay"]}'
 ```
 
 ### Troubleshooting
 
-**DFHack keeps crashing**: Check the save being loaded. Edit `/etc/systemd/system/dfhack-headless.service` to change the save name (e.g., `current` or `fresh_embark`).
+**DFHack keeps crashing**: Usually a bad save under `/opt/dwarf-fortress/data/save/` (DF scans saves on boot). Keep pristine seeds under `/opt/dwarf-fortress/data/seed_saves/` and set `/etc/fort-gym.env` `FORT_GYM_SEED_SAVE` + `FORT_GYM_RUNTIME_SAVE`, then restart `dfhack-headless`.
 
 **RemoteFortressReader won't enable**: This plugin sometimes fails on first load. Wait for the world to fully load, then verify with `plug` command.
 
 **API timeouts**: Ensure DFHack is fully loaded before starting the API. The API creates RPC connections that will fail if DFHack isn't ready.
-
-**Artifacts not showing in UI**: The API looks for artifacts in `/opt/fort-gym/fort_gym/artifacts/`. Ensure this is symlinked to `/opt/fort-gym/artifacts/`:
-```bash
-ln -s /opt/fort-gym/artifacts /opt/fort-gym/fort_gym/artifacts
-```
 
 ## DFHack CLI Compatibility
 
