@@ -21,6 +21,9 @@ class RunInfo(BaseModel):
     finished_at: Optional[datetime] = None
     backend: BackendType = "mock"
     model: str = "unknown"
+    git_sha: Optional[str] = None
+    seed_save: Optional[str] = None
+    runtime_save: Optional[str] = None
     max_steps: int = 0
     ticks_per_step: int = 0
     step: int = 0
@@ -77,9 +80,14 @@ class RunInfoPublic(BaseModel):
 
     run_id: str
     model: str
+    git_sha: Optional[str] = None
     backend: BackendType
     status: str
     step: int
+    max_steps: int = 0
+    ticks_per_step: int = 0
+    seed_save: Optional[str] = None
+    runtime_save: Optional[str] = None
     started_at: Optional[datetime] = None
     finished_at: Optional[datetime] = None
     score: Optional[float] = None

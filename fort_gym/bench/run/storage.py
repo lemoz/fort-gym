@@ -590,6 +590,122 @@ class RunRegistry:
         leaderboard.sort(key=lambda item: item["mean_score"], reverse=True)
         return leaderboard
 
+    def best_scores_over_time(
+        self,
+        *,
+        days: int = 30,
+        backend: Optional[str] = None,
+        model: Optional[str] = None,
+        max_steps: Optional[int] = None,
+        limit_per_series: int = 500,
+    ) -> list[Dict[str, Any]]:
+        """Return best-score time series per (model, git_sha, backend)."""
+
+        conn = self._ensure_conn()
+        now_dt = datetime.utcnow()
+        since_dt = now_dt - timedelta(days=max(1, int(days)))
+        now = now_dt.isoformat()
+        since = since_dt.isoformat()
+
+        where: list[str] = [
+            "(s.expires_at IS NULL OR s.expires_at > ?)",
+            "r.ended_at IS NOT NULL",
+            "r.total_score IS NOT NULL",
+            "r.ended_at >= ?",
+        ]
+        params: list[object] = [now, since]
+
+        if backend:
+            where.append("r.backend = ?")
+            params.append(str(backend))
+        if model:
+            where.append("r.model = ?")
+            params.append(str(model))
+        if max_steps is not None:
+            where.append("r.max_steps = ?")
+            params.append(int(max_steps))
+
+        query = f"""
+            SELECT
+              r.run_id, r.backend, r.model, r.git_sha, r.max_steps, r.ticks_per_step,
+              r.ended_at, r.total_score,
+              s.token AS share_token, s.scope_json AS share_scope_json,
+              s.expires_at AS share_expires_at, s.created_at AS share_created_at
+            FROM runs r
+            JOIN shares s ON s.run_id = r.run_id
+            WHERE {' AND '.join(where)}
+            ORDER BY r.ended_at ASC
+        """
+
+        with self._db_lock:
+            rows = conn.execute(query, params).fetchall()
+
+        runs: Dict[str, sqlite3.Row] = {}
+        shares_by_run: Dict[str, list[ShareToken]] = {}
+        for row in rows:
+            run_id = str(row["run_id"])
+            runs.setdefault(run_id, row)
+            try:
+                scopes = set(json.loads(row["share_scope_json"]))
+            except Exception:
+                scopes = set()
+            shares_by_run.setdefault(run_id, []).append(
+                ShareToken(
+                    token=str(row["share_token"]),
+                    run_id=run_id,
+                    scope=scopes,
+                    expires_at=_dt_from_iso(row["share_expires_at"]),
+                    created_at=_dt_from_iso(row["share_created_at"]) or datetime.utcnow(),
+                )
+            )
+
+        grouped: Dict[Tuple[str, str, str], list[Dict[str, Any]]] = {}
+        for run_id, run_row in runs.items():
+            share = self._select_share(shares_by_run.get(run_id, []))
+            if not share:
+                continue
+            ended_at = _dt_from_iso(run_row["ended_at"])
+            if ended_at is None:
+                continue
+            score = float(run_row["total_score"])
+            git_sha = str(run_row["git_sha"] or "unknown")
+            key = (str(run_row["model"]), git_sha, str(run_row["backend"]))
+            grouped.setdefault(key, []).append(
+                {
+                    "t": ended_at.isoformat(),
+                    "score": score,
+                    "run_id": run_id,
+                    "token": share.token,
+                    "max_steps": int(run_row["max_steps"]),
+                    "ticks_per_step": int(run_row["ticks_per_step"]),
+                }
+            )
+
+        series: list[Dict[str, Any]] = []
+        for (model_name, git_sha, backend_name), points in grouped.items():
+            points.sort(key=lambda item: item["t"])
+            best = float("-inf")
+            best_point: Optional[Dict[str, Any]] = None
+            for point in points:
+                if point["score"] >= best:
+                    best = point["score"]
+                    best_point = point
+                point["best"] = best
+            if limit_per_series and len(points) > limit_per_series:
+                points = points[-int(limit_per_series) :]
+            series.append(
+                {
+                    "model": model_name,
+                    "git_sha": git_sha,
+                    "backend": backend_name,
+                    "points": points,
+                    "best": best_point,
+                }
+            )
+
+        series.sort(key=lambda item: (item.get("best") or {}).get("score", 0.0), reverse=True)
+        return series
+
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
@@ -675,4 +791,3 @@ RUN_REGISTRY = RunRegistry()
 
 
 __all__ = ["RUN_REGISTRY", "RunInfo", "RunRegistry", "ShareToken"]
-

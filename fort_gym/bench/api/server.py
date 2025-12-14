@@ -93,6 +93,12 @@ async def serve_admin(_: None = Depends(require_admin)):
     return FileResponse(WEB_ROOT / "admin.html", media_type="text/html")
 
 
+@app.get("/leaderboard", response_class=FileResponse)
+async def serve_leaderboard():
+    """Serve the public leaderboard UI."""
+    return FileResponse(WEB_ROOT / "leaderboard.html", media_type="text/html")
+
+
 def _artifacts_path(run_id: str) -> Path:
     return ARTIFACTS_ROOT / run_id / "trace.jsonl"
 
@@ -104,6 +110,9 @@ def _serialize(record: RegistryRunInfo) -> RunInfo:
         id=record.run_id,
         backend=record.backend,
         model=record.model,
+        git_sha=getattr(record, "git_sha", None),
+        seed_save=getattr(record, "seed_save", None),
+        runtime_save=getattr(record, "runtime_save", None),
         status=record.status,
         step=record.step,
         max_steps=record.max_steps,
@@ -120,9 +129,14 @@ def _serialize_public(record: RegistryRunInfo, share: ShareToken) -> RunInfoPubl
     return RunInfoPublic(
         run_id=record.run_id,
         model=record.model,
+        git_sha=getattr(record, "git_sha", None),
         backend=record.backend,
         status=record.status,
         step=record.step,
+        max_steps=record.max_steps,
+        ticks_per_step=record.ticks_per_step,
+        seed_save=getattr(record, "seed_save", None),
+        runtime_save=getattr(record, "runtime_save", None),
         started_at=record.started_at,
         finished_at=record.ended_at,
         score=summary.get("total_score") or metadata.get("last_score"),
@@ -303,6 +317,23 @@ async def public_runs() -> List[RunInfoPublic]:
 @app.get("/public/leaderboard")
 async def public_leaderboard(limit: int = 50) -> List[Dict[str, object]]:
     return RUN_REGISTRY.public_leaderboard(limit)
+
+
+@app.get("/public/leaderboard/best-over-time")
+async def public_best_over_time(
+    days: int = 30,
+    backend: Optional[str] = None,
+    model: Optional[str] = None,
+    max_steps: Optional[int] = None,
+    limit_per_series: int = 500,
+) -> List[Dict[str, object]]:
+    return RUN_REGISTRY.best_scores_over_time(
+        days=days,
+        backend=backend,
+        model=model,
+        max_steps=max_steps,
+        limit_per_series=limit_per_series,
+    )
 
 
 @app.get("/public/runs/{token}", response_model=RunInfoPublic)
