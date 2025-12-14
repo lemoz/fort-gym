@@ -54,6 +54,11 @@
 - name: Install fort-gym package
   command: "{{ fortgym_venv_dir }}/bin/pip install -e {{ fortgym_install_dir }}[dev]"
 
+- name: Ensure admin password is set for production
+  fail:
+    msg: "Set FORT_GYM_ADMIN_PASSWORD in your shell environment before running Ansible."
+  when: (lookup('env','FORT_GYM_ADMIN_PASSWORD') | default('', true)) == ''
+
 - name: Render fort-gym environment file
   template:
     src: fort-gym.env.j2

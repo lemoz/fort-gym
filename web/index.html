@@ -373,7 +373,7 @@
   </div>
 
   <footer>
-    Fort-Gym Benchmark &middot; <a href="/admin">Admin Panel</a> &middot; <a href="https://github.com/your-org/fort-gym" target="_blank">GitHub</a>
+    Fort-Gym Benchmark &middot; <a href="/leaderboard">Leaderboard</a> &middot; <a href="/admin">Admin Panel</a> &middot; <a href="https://github.com/lemoz/fort-gym" target="_blank">GitHub</a>
   </footer>
 
   <!-- pcface bitmap font library -->
@@ -393,6 +393,10 @@
     let gameInterval = null;
     let scoreChart = null;
     let scoreData = { steps: [], scores: [] };
+    const presetToken = new URLSearchParams(window.location.search).get('token');
+    if (presetToken) {
+      currentToken = presetToken;
+    }
 
     // DOM elements
     const runSelector = document.getElementById('run-selector');
@@ -455,7 +459,8 @@
 
     async function fetchScreen() {
       try {
-        const res = await fetch('/screenshot');
+        if (!currentToken) return;
+        const res = await fetch(`/public/runs/${currentToken}/screenshot`);
         if (!res.ok) throw new Error(res.statusText);
         const data = await res.json();
         renderScreen(data);
@@ -853,7 +858,12 @@
     // ===============================
     document.addEventListener('DOMContentLoaded', () => {
       initChart();
-      loadRuns();
+      loadRuns().then(() => {
+        if (presetToken) {
+          runSelector.value = presetToken;
+          selectRun(presetToken);
+        }
+      });
       // Refresh run list periodically
       setInterval(loadRuns, 5000);
     });

@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fort-Gym Leaderboard</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #0b0d12;
+      color: #f5f7fb;
+      min-height: 100vh;
+    }
+    .header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1.5rem;
+      background: linear-gradient(180deg, #1a2233, #0f1520);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .header-bar h1 {
+      font-size: 1.1rem;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .header-bar a {
+      color: #9ab3ff;
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .header-bar a:hover { text-decoration: underline; }
+
+    .main {
+      padding: 1rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .panel {
+      background: rgba(0,0,0,0.4);
+      border-radius: 12px;
+      padding: 1rem;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: end;
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      font-size: 0.8rem;
+      color: #9fb1d6;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      min-width: 160px;
+    }
+
+    input, select {
+      padding: 0.6rem;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(12,18,30,0.9);
+      color: #fff;
+      font-size: 0.95rem;
+    }
+
+    button {
+      padding: 0.65rem 1.1rem;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      background: #4f7cff;
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .note {
+      font-size: 0.9rem;
+      color: #8aa0c7;
+      margin-top: 0.5rem;
+    }
+
+    .chart-container {
+      width: 100%;
+      height: 420px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+    }
+    th, td {
+      padding: 0.7rem 0.9rem;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      text-align: left;
+      vertical-align: middle;
+    }
+    th {
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      color: #9fb1d6;
+    }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.25rem 0.55rem;
+      background: rgba(79,124,255,0.18);
+      border-radius: 999px;
+      color: #9ab3ff;
+      font-size: 0.8rem;
+      white-space: nowrap;
+    }
+    .actions a {
+      color: #9ab3ff;
+      text-decoration: none;
+      margin-right: 0.75rem;
+      white-space: nowrap;
+    }
+    .actions a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="header-bar">
+    <h1>&#x1F3C6; Fort-Gym Leaderboard</h1>
+    <div style="display:flex; gap:1rem; align-items:center;">
+      <a href="/">Live View</a>
+      <a href="/admin">Admin</a>
+      <a href="https://github.com/lemoz/fort-gym" target="_blank">GitHub</a>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="panel">
+      <div class="controls">
+        <label>Days
+          <input id="days" type="number" min="1" value="30" />
+        </label>
+        <label>Backend
+          <select id="backend">
+            <option value="" selected>all</option>
+            <option value="dfhack">dfhack</option>
+            <option value="mock">mock</option>
+          </select>
+        </label>
+        <label>Model
+          <input id="model" type="text" placeholder="e.g. anthropic" />
+        </label>
+        <label>Max Steps (optional)
+          <input id="max-steps" type="number" min="1" placeholder="e.g. 100" />
+        </label>
+        <button id="refresh">Refresh</button>
+      </div>
+      <div class="note">Shows the best score so far over time, grouped by <span class="tag">model@git_sha</span>.</div>
+    </div>
+
+    <div class="panel">
+      <h2 style="margin:0 0 0.75rem 0; font-size:1rem; color:#9fb1d6;">Best Score Over Time</h2>
+      <div class="chart-container">
+        <canvas id="chart"></canvas>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2 style="margin:0 0 0.75rem 0; font-size:1rem; color:#9fb1d6;">Top Series (Best Run Links)</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Series</th>
+            <th>Backend</th>
+            <th>Runs</th>
+            <th>Best Score</th>
+            <th>Best At</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="rows">
+          <tr><td colspan="6" style="color:#8aa0c7;">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script>
+    let chart = null;
+    let currentSeries = [];
+
+    function shortSha(sha) {
+      if (!sha) return 'unknown';
+      return sha.length > 10 ? sha.slice(0, 10) : sha;
+    }
+
+    function seriesLabel(s) {
+      return `${s.model}@${shortSha(s.git_sha)}`;
+    }
+
+    function toEpochMs(iso) {
+      const ms = Date.parse(iso);
+      return Number.isFinite(ms) ? ms : 0;
+    }
+
+    function initChart() {
+      const ctx = document.getElementById('chart').getContext('2d');
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: { datasets: [] },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          parsing: false,
+          interaction: { mode: 'nearest', intersect: false },
+          scales: {
+            x: {
+              type: 'linear',
+              ticks: {
+                color: '#9fb1d6',
+                callback: (value) => {
+                  const d = new Date(value);
+                  return isNaN(d.getTime()) ? '' : d.toLocaleDateString();
+                }
+              },
+              grid: { color: 'rgba(255,255,255,0.06)' }
+            },
+            y: {
+              ticks: { color: '#9fb1d6' },
+              grid: { color: 'rgba(255,255,255,0.06)' }
+            }
+          },
+          plugins: {
+            legend: { labels: { color: '#e5ecff' } },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}`,
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function renderTable(series) {
+      const tbody = document.getElementById('rows');
+      if (!series || series.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="color:#8aa0c7;">No runs found.</td></tr>';
+        return;
+      }
+
+      const rows = series.map(s => {
+        const best = s.best || null;
+        const bestScore = best && typeof best.score === 'number' ? best.score.toFixed(2) : '--';
+        const bestAt = best && best.t ? new Date(best.t).toLocaleString() : '--';
+        const runCount = (s.points || []).length;
+        const token = best && best.token ? best.token : null;
+
+        const watchLink = token ? `/?token=${encodeURIComponent(token)}` : '#';
+        const traceLink = token ? `/public/runs/${encodeURIComponent(token)}/export/trace` : '#';
+        const replayLink = token ? `/public/runs/${encodeURIComponent(token)}/events/replay` : '#';
+
+        return `
+          <tr>
+            <td><span class="tag">${seriesLabel(s)}</span></td>
+            <td>${s.backend}</td>
+            <td>${runCount}</td>
+            <td style="font-weight:700; color:#ffd966;">${bestScore}</td>
+            <td>${bestAt}</td>
+            <td class="actions">
+              <a href="${watchLink}">Watch</a>
+              <a href="${replayLink}" target="_blank">Replay SSE</a>
+              <a href="${traceLink}" target="_blank">Trace</a>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      tbody.innerHTML = rows;
+    }
+
+    function renderChart(series) {
+      if (!chart) return;
+      const palette = ['#4f7cff', '#6fdf9f', '#ffd966', '#ff6b6b', '#c77dff', '#4dd0e1', '#f48fb1'];
+
+      const datasets = series.slice(0, 7).map((s, idx) => {
+        const points = (s.points || []).map(p => ({ x: toEpochMs(p.t), y: p.best }));
+        return {
+          label: `${seriesLabel(s)} (${s.backend})`,
+          data: points,
+          borderColor: palette[idx % palette.length],
+          backgroundColor: palette[idx % palette.length],
+          borderWidth: 2,
+          pointRadius: 0,
+          tension: 0.2,
+        };
+      });
+
+      chart.data.datasets = datasets;
+      chart.update('none');
+    }
+
+    async function refresh() {
+      const days = document.getElementById('days').value || '30';
+      const backend = document.getElementById('backend').value || '';
+      const model = document.getElementById('model').value || '';
+      const maxSteps = document.getElementById('max-steps').value || '';
+
+      const params = new URLSearchParams();
+      params.set('days', days);
+      params.set('limit_per_series', '500');
+      if (backend) params.set('backend', backend);
+      if (model) params.set('model', model);
+      if (maxSteps) params.set('max_steps', maxSteps);
+
+      const url = `/public/leaderboard/best-over-time?${params.toString()}`;
+      const res = await fetch(url);
+      if (!res.ok) {
+        document.getElementById('rows').innerHTML = `<tr><td colspan="6" style="color:#ff6b6b;">Error: ${res.status}</td></tr>`;
+        return;
+      }
+
+      currentSeries = await res.json();
+      renderTable(currentSeries);
+      renderChart(currentSeries);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initChart();
+      refresh();
+      document.getElementById('refresh').addEventListener('click', refresh);
+    });
+  </script>
+</body>
+</html>
+

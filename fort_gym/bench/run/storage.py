@@ -1,17 +1,71 @@
-"""In-memory registry tracking runs, share tokens, and streaming events."""
+"""SQLite-backed registry tracking runs, share tokens, and streaming events.
+
+Runs and share tokens persist across API restarts via SQLite. Live SSE events are
+still delivered via in-memory asyncio queues and are not replayed from the DB
+(replay uses the persisted NDJSON trace file).
+"""
 
 from __future__ import annotations
 
 import asyncio
+import json
+import os
 import secrets
+import sqlite3
+import subprocess
 import threading
 import uuid
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Any, Dict, Iterable, Optional, Set, Tuple
+
+from ..config import get_settings
 
 
 EventPayload = Dict[str, Any]
+
+
+def _dt_to_iso(value: Optional[datetime]) -> Optional[str]:
+    return value.isoformat() if value else None
+
+
+def _dt_from_iso(value: Optional[str]) -> Optional[datetime]:
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value)
+    except ValueError:
+        return None
+
+
+_GIT_SHA_UNSET: object = object()
+_GIT_SHA_CACHE: object = _GIT_SHA_UNSET
+
+
+def _git_sha() -> Optional[str]:
+    global _GIT_SHA_CACHE
+    if _GIT_SHA_CACHE is not _GIT_SHA_UNSET:
+        return _GIT_SHA_CACHE  # type: ignore[return-value]
+
+    env_sha = os.getenv("FORT_GYM_GIT_SHA")
+    if env_sha:
+        _GIT_SHA_CACHE = env_sha
+        return env_sha
+
+    try:
+        repo_root = Path(__file__).resolve().parents[3]
+        sha = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"],
+            cwd=str(repo_root),
+            text=True,
+            stderr=subprocess.DEVNULL,
+        ).strip()
+        _GIT_SHA_CACHE = sha
+        return sha
+    except Exception:
+        _GIT_SHA_CACHE = None
+        return None
 
 
 @dataclass
@@ -29,6 +83,11 @@ class RunInfo:
     ended_at: Optional[datetime] = None
     queue: Optional[asyncio.Queue[EventPayload]] = field(default=None, repr=False)
     loop: Optional[asyncio.AbstractEventLoop] = field(default=None, repr=False)
+    git_sha: Optional[str] = None
+    seed_save: Optional[str] = None
+    runtime_save: Optional[str] = None
+    artifacts_dir: Optional[str] = None
+    trace_path: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict, repr=False)
     latest_summary: Optional[Dict[str, Any]] = field(default=None, repr=False)
 
@@ -45,14 +104,107 @@ class ShareToken:
 
 
 class RunRegistry:
-    """Thread-safe store for run metadata and SSE queues."""
+    """Thread-safe run registry with SQLite persistence."""
 
-    def __init__(self) -> None:
-        self._runs: Dict[str, RunInfo] = {}
-        self._lock = threading.Lock()
-        self._shares: Dict[str, ShareToken] = {}
-        self._shares_by_run: Dict[str, Set[str]] = {}
+    def __init__(self, *, db_path: Optional[Path] = None) -> None:
+        self._db_path_override = db_path
+        self._conn: Optional[sqlite3.Connection] = None
+        self._db_lock = threading.Lock()
+        self._init_lock = threading.Lock()
+        self._queues: Dict[str, asyncio.Queue[EventPayload]] = {}
+        self._loops: Dict[str, asyncio.AbstractEventLoop] = {}
 
+    # ------------------------------------------------------------------
+    # SQLite wiring
+    # ------------------------------------------------------------------
+    def _db_path(self) -> Path:
+        if self._db_path_override is not None:
+            return self._db_path_override
+        env_path = os.getenv("FORT_GYM_DB_PATH")
+        if env_path:
+            return Path(env_path).expanduser()
+        artifacts_dir = Path(get_settings().ARTIFACTS_DIR).resolve()
+        artifacts_dir.mkdir(parents=True, exist_ok=True)
+        return artifacts_dir / "fort_gym.sqlite3"
+
+    def _ensure_conn(self) -> sqlite3.Connection:
+        if self._conn is not None:
+            return self._conn
+        with self._init_lock:
+            if self._conn is not None:
+                return self._conn
+            path = self._db_path()
+            path.parent.mkdir(parents=True, exist_ok=True)
+            conn = sqlite3.connect(str(path), check_same_thread=False)
+            conn.row_factory = sqlite3.Row
+            with conn:
+                conn.execute("PRAGMA foreign_keys = ON")
+                conn.execute("PRAGMA journal_mode = WAL")
+                conn.execute("PRAGMA synchronous = NORMAL")
+                self._ensure_schema(conn)
+                self._mark_interrupted_runs(conn)
+            self._conn = conn
+            return conn
+
+    @staticmethod
+    def _ensure_schema(conn: sqlite3.Connection) -> None:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS runs (
+              run_id TEXT PRIMARY KEY,
+              backend TEXT NOT NULL,
+              model TEXT NOT NULL,
+              max_steps INTEGER NOT NULL,
+              ticks_per_step INTEGER NOT NULL,
+              status TEXT NOT NULL,
+              step INTEGER NOT NULL,
+              created_at TEXT NOT NULL,
+              started_at TEXT,
+              ended_at TEXT,
+              git_sha TEXT,
+              seed_save TEXT,
+              runtime_save TEXT,
+              artifacts_dir TEXT,
+              trace_path TEXT,
+              last_score REAL,
+              total_score REAL,
+              survival_score REAL,
+              milestones_json TEXT,
+              summary_json TEXT
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS shares (
+              token TEXT PRIMARY KEY,
+              run_id TEXT NOT NULL,
+              scope_json TEXT NOT NULL,
+              expires_at TEXT,
+              created_at TEXT NOT NULL,
+              FOREIGN KEY(run_id) REFERENCES runs(run_id) ON DELETE CASCADE
+            )
+            """
+        )
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_runs_model_sha ON runs(model, git_sha)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_runs_end ON runs(ended_at)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_shares_run ON shares(run_id)")
+
+    @staticmethod
+    def _mark_interrupted_runs(conn: sqlite3.Connection) -> None:
+        now = datetime.utcnow().isoformat()
+        conn.execute(
+            """
+            UPDATE runs
+               SET status = 'failed', ended_at = COALESCE(ended_at, ?)
+             WHERE status = 'running' AND ended_at IS NULL
+            """,
+            (now,),
+        )
+
+    # ------------------------------------------------------------------
+    # Run lifecycle
+    # ------------------------------------------------------------------
     def create(
         self,
         *,
@@ -65,9 +217,54 @@ class RunRegistry:
     ) -> RunInfo:
         """Register a new run and return its record."""
 
-        queue: asyncio.Queue[EventPayload] = asyncio.Queue(maxsize=512)
+        conn = self._ensure_conn()
+
         identifier = run_id or uuid.uuid4().hex
-        record = RunInfo(
+        queue: asyncio.Queue[EventPayload] = asyncio.Queue(maxsize=512)
+
+        now = datetime.utcnow()
+        settings = get_settings()
+        artifacts_root = Path(settings.ARTIFACTS_DIR).resolve()
+        artifacts_dir = artifacts_root / identifier
+        trace_path = artifacts_dir / "trace.jsonl"
+
+        git_sha = _git_sha()
+        seed_save = settings.FORT_GYM_SEED_SAVE
+        runtime_save = getattr(settings, "FORT_GYM_RUNTIME_SAVE", None)
+
+        with self._db_lock:
+            row = conn.execute("SELECT 1 FROM runs WHERE run_id = ?", (identifier,)).fetchone()
+            if row is not None:
+                raise ValueError(f"Run '{identifier}' already registered")
+            conn.execute(
+                """
+                INSERT INTO runs (
+                  run_id, backend, model, max_steps, ticks_per_step,
+                  status, step, created_at, git_sha, seed_save, runtime_save,
+                  artifacts_dir, trace_path
+                ) VALUES (?, ?, ?, ?, ?, 'pending', 0, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    identifier,
+                    backend,
+                    model,
+                    int(max_steps),
+                    int(ticks_per_step),
+                    now.isoformat(),
+                    git_sha,
+                    seed_save,
+                    runtime_save,
+                    str(artifacts_dir),
+                    str(trace_path),
+                ),
+            )
+            conn.commit()
+
+            self._queues[identifier] = queue
+            if loop is not None:
+                self._loops[identifier] = loop
+
+        return RunInfo(
             run_id=identifier,
             backend=backend,
             model=model,
@@ -75,24 +272,30 @@ class RunRegistry:
             ticks_per_step=ticks_per_step,
             queue=queue,
             loop=loop,
+            git_sha=git_sha,
+            seed_save=seed_save,
+            runtime_save=runtime_save,
+            artifacts_dir=str(artifacts_dir),
+            trace_path=str(trace_path),
         )
 
-        with self._lock:
-            if identifier in self._runs:
-                raise ValueError(f"Run '{identifier}' already registered")
-            self._runs[identifier] = record
-        return record
-
     def get(self, run_id: str) -> Optional[RunInfo]:
-        with self._lock:
-            record = self._runs.get(run_id)
-            if record is None:
+        conn = self._ensure_conn()
+        with self._db_lock:
+            row = conn.execute("SELECT * FROM runs WHERE run_id = ?", (run_id,)).fetchone()
+            if row is None:
                 return None
-            return replace(record)
+            queue = self._queues.get(run_id)
+            loop = self._loops.get(run_id)
+        return self._row_to_runinfo(row, queue=queue, loop=loop)
 
     def list(self) -> list[RunInfo]:
-        with self._lock:
-            return [replace(record) for record in self._runs.values()]
+        conn = self._ensure_conn()
+        with self._db_lock:
+            rows = conn.execute("SELECT * FROM runs ORDER BY created_at DESC").fetchall()
+            queues = dict(self._queues)
+            loops = dict(self._loops)
+        return [self._row_to_runinfo(row, queue=queues.get(row["run_id"]), loop=loops.get(row["run_id"])) for row in rows]
 
     def set_status(
         self,
@@ -103,64 +306,56 @@ class RunRegistry:
         started_at: Optional[datetime] = None,
         ended_at: Optional[datetime] = None,
     ) -> None:
-        with self._lock:
-            record = self._runs.get(run_id)
-            if not record:
-                return
-            if status is not None:
-                record.status = status
-                if status in {"completed", "failed", "stopped"}:
-                    record.metadata["survived"] = status == "completed"
-            if step is not None:
-                record.step = step
-            if started_at is not None:
-                record.started_at = started_at
-            if ended_at is not None:
-                record.ended_at = ended_at
-
-    def get_queue(self, run_id: str) -> Optional[asyncio.Queue[EventPayload]]:
-        with self._lock:
-            record = self._runs.get(run_id)
-            if not record:
-                return None
-            return record.queue
+        conn = self._ensure_conn()
+        updates: list[str] = []
+        params: list[object] = []
+        if status is not None:
+            updates.append("status = ?")
+            params.append(status)
+        if step is not None:
+            updates.append("step = ?")
+            params.append(int(step))
+        if started_at is not None:
+            updates.append("started_at = ?")
+            params.append(_dt_to_iso(started_at))
+        if ended_at is not None:
+            updates.append("ended_at = ?")
+            params.append(_dt_to_iso(ended_at))
+        if not updates:
+            return
+        params.append(run_id)
+        with self._db_lock:
+            conn.execute(f"UPDATE runs SET {', '.join(updates)} WHERE run_id = ?", params)
+            conn.commit()
 
     def bind_loop(self, run_id: str, loop: asyncio.AbstractEventLoop) -> None:
-        with self._lock:
-            record = self._runs.get(run_id)
-            if record:
-                record.loop = loop
+        with self._db_lock:
+            self._loops[run_id] = loop
+
+    def get_queue(self, run_id: str) -> Optional[asyncio.Queue[EventPayload]]:
+        with self._db_lock:
+            return self._queues.get(run_id)
 
     def append_event(self, run_id: str, event: EventPayload) -> None:
-        with self._lock:
-            record = self._runs.get(run_id)
-            if not record or not record.queue:
-                return
+        with self._db_lock:
+            queue = self._queues.get(run_id)
+            loop = self._loops.get(run_id)
 
-            event_type = event.get("t", "message")
-            data = event.get("data", {})
-            record.metadata["last_event_at"] = datetime.utcnow()
-            if event_type == "state":
-                record.metadata["last_state"] = data.get("state")
-            if event_type == "score":
+        if queue is None:
+            return
+
+        payload = {"t": event.get("t", "message"), "data": event.get("data", {})}
+        event_type = payload["t"]
+        data = payload["data"] or {}
+
+        if event_type == "score":
+            score_value = data.get("total_score")
+            if score_value is None:
                 score_value = data.get("score")
-                if score_value is None:
-                    score_value = data.get("value")
-                if score_value is not None:
-                    try:
-                        record.metadata["last_score"] = float(score_value)
-                    except (TypeError, ValueError):
-                        pass
-                if "milestones" in data:
-                    record.metadata["milestones"] = data["milestones"]
-
-            queue = record.queue
-            loop = record.loop
-
-        payload = {
-            "t": event.get("t", "message"),
-            "data": event.get("data", {}),
-        }
+            if score_value is None:
+                score_value = data.get("value")
+            milestones = data.get("milestones")
+            self._update_score(run_id, score_value, milestones)
 
         def push() -> None:
             try:
@@ -177,20 +372,68 @@ class RunRegistry:
         else:
             push()
 
+    def _update_score(self, run_id: str, score_value: object, milestones: object) -> None:
+        conn = self._ensure_conn()
+        score: Optional[float] = None
+        if score_value is not None:
+            try:
+                score = float(score_value)
+            except (TypeError, ValueError):
+                score = None
+        milestones_json: Optional[str] = None
+        if milestones is not None:
+            try:
+                milestones_json = json.dumps(milestones)
+            except TypeError:
+                milestones_json = None
+        with self._db_lock:
+            if score is None and milestones_json is None:
+                return
+            sets: list[str] = []
+            params: list[object] = []
+            if score is not None:
+                sets.append("last_score = ?")
+                params.append(score)
+            if milestones_json is not None:
+                sets.append("milestones_json = ?")
+                params.append(milestones_json)
+            params.append(run_id)
+            conn.execute(f"UPDATE runs SET {', '.join(sets)} WHERE run_id = ?", params)
+            conn.commit()
+
+    def set_summary(self, run_id: str, summary: Dict[str, Any]) -> None:
+        conn = self._ensure_conn()
+        summary_json = json.dumps(summary)
+        total_score = summary.get("total_score")
+        survival_score = summary.get("survival_score")
+        milestones = summary.get("milestones")
+        milestones_json = json.dumps(milestones) if milestones is not None else None
+
+        with self._db_lock:
+            conn.execute(
+                """
+                UPDATE runs
+                   SET summary_json = ?,
+                       total_score = COALESCE(?, total_score),
+                       survival_score = COALESCE(?, survival_score),
+                       milestones_json = COALESCE(?, milestones_json),
+                       last_score = COALESCE(?, last_score)
+                 WHERE run_id = ?
+                """,
+                (
+                    summary_json,
+                    total_score,
+                    survival_score,
+                    milestones_json,
+                    total_score,
+                    run_id,
+                ),
+            )
+            conn.commit()
+
     # ------------------------------------------------------------------
     # Share token helpers
     # ------------------------------------------------------------------
-    def _prune_shares_locked(self) -> None:
-        now = datetime.utcnow()
-        expired = [token for token, share in self._shares.items() if share.expires_at and share.expires_at < now]
-        for token in expired:
-            share = self._shares.pop(token)
-            run_tokens = self._shares_by_run.get(share.run_id)
-            if run_tokens:
-                run_tokens.discard(token)
-                if not run_tokens:
-                    self._shares_by_run.pop(share.run_id, None)
-
     def create_share(
         self,
         run_id: str,
@@ -198,117 +441,350 @@ class RunRegistry:
         scope: Optional[Iterable[str]] = None,
         ttl_seconds: Optional[int] = 86400,
     ) -> ShareToken:
-        with self._lock:
-            if run_id not in self._runs:
+        conn = self._ensure_conn()
+        token = secrets.token_urlsafe(24)
+        resolved_scope = {str(item) for item in (scope or {"live", "replay", "export"})}
+        expires_at = datetime.utcnow() + timedelta(seconds=int(ttl_seconds)) if ttl_seconds is not None else None
+
+        with self._db_lock:
+            exists = conn.execute("SELECT 1 FROM runs WHERE run_id = ?", (run_id,)).fetchone()
+            if exists is None:
                 raise KeyError(run_id)
-            token = secrets.token_urlsafe(24)
-            resolved_scope = {str(item) for item in (scope or {"live", "replay", "export"})}
-            expires_at = (
-                datetime.utcnow() + timedelta(seconds=int(ttl_seconds))
-                if ttl_seconds is not None
-                else None
+            conn.execute(
+                """
+                INSERT INTO shares (token, run_id, scope_json, expires_at, created_at)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (
+                    token,
+                    run_id,
+                    json.dumps(sorted(resolved_scope)),
+                    _dt_to_iso(expires_at),
+                    datetime.utcnow().isoformat(),
+                ),
             )
-            share = ShareToken(
-                token=token,
-                run_id=run_id,
-                scope=resolved_scope,
-                expires_at=expires_at,
-                created_at=datetime.utcnow(),
-            )
-            self._shares[token] = share
-            self._shares_by_run.setdefault(run_id, set()).add(token)
-            return share
+            conn.commit()
+
+        return ShareToken(
+            token=token,
+            run_id=run_id,
+            scope=resolved_scope,
+            expires_at=expires_at,
+            created_at=datetime.utcnow(),
+        )
 
     def get_share(self, token: str) -> Optional[ShareToken]:
-        with self._lock:
-            self._prune_shares_locked()
-            share = self._shares.get(token)
-            if not share:
-                return None
-            return share
+        conn = self._ensure_conn()
+        now = datetime.utcnow().isoformat()
+        with self._db_lock:
+            row = conn.execute(
+                """
+                SELECT token, run_id, scope_json, expires_at, created_at
+                  FROM shares
+                 WHERE token = ?
+                   AND (expires_at IS NULL OR expires_at > ?)
+                """,
+                (token, now),
+            ).fetchone()
+        if row is None:
+            return None
+        return self._row_to_sharetoken(row)
 
-    def _select_share(self, tokens: Iterable[str]) -> Optional[ShareToken]:
+    def list_public(self) -> list[Tuple[RunInfo, ShareToken]]:
+        conn = self._ensure_conn()
+        now = datetime.utcnow().isoformat()
+        with self._db_lock:
+            rows = conn.execute(
+                """
+                SELECT
+                  r.*,
+                  s.token AS share_token,
+                  s.scope_json AS share_scope_json,
+                  s.expires_at AS share_expires_at,
+                  s.created_at AS share_created_at
+                FROM shares s
+                JOIN runs r ON r.run_id = s.run_id
+                WHERE s.expires_at IS NULL OR s.expires_at > ?
+                """,
+                (now,),
+            ).fetchall()
+
+        grouped: Dict[str, Tuple[sqlite3.Row, list[ShareToken]]] = {}
+        for row in rows:
+            run_id = str(row["run_id"])
+            share = ShareToken(
+                token=str(row["share_token"]),
+                run_id=run_id,
+                scope=set(json.loads(row["share_scope_json"])),
+                expires_at=_dt_from_iso(row["share_expires_at"]),
+                created_at=_dt_from_iso(row["share_created_at"]) or datetime.utcnow(),
+            )
+            item = grouped.get(run_id)
+            if item is None:
+                grouped[run_id] = (row, [share])
+            else:
+                item[1].append(share)
+
+        items: list[Tuple[RunInfo, ShareToken]] = []
+        for run_row, shares in grouped.values():
+            share = self._select_share(shares)
+            if share is None:
+                continue
+            items.append((self._row_to_runinfo(run_row), share))
+        return items
+
+    @staticmethod
+    def _select_share(tokens: Iterable[ShareToken]) -> Optional[ShareToken]:
         preferred: Optional[ShareToken] = None
         fallback: Optional[ShareToken] = None
-        for token in tokens:
-            share = self._shares.get(token)
-            if not share:
-                continue
+        for share in tokens:
             if "live" in share.scope and preferred is None:
                 preferred = share
             if fallback is None:
                 fallback = share
         return preferred or fallback
 
-    def list_public(self) -> list[Tuple[RunInfo, ShareToken]]:
-        with self._lock:
-            self._prune_shares_locked()
-            items: list[Tuple[RunInfo, ShareToken]] = []
-            for run_id, tokens in self._shares_by_run.items():
-                record = self._runs.get(run_id)
-                if not record:
-                    continue
-                share = self._select_share(tokens)
-                if not share:
-                    continue
-                items.append((replace(record), share))
-            return items
-
     def public_leaderboard(self, limit: int = 50) -> list[Dict[str, Any]]:
-        with self._lock:
-            self._prune_shares_locked()
-            run_ids = [rid for rid in self._shares_by_run if rid in self._runs]
-            run_ids.sort(key=lambda rid: self._runs[rid].started_at or datetime.min, reverse=True)
-            run_ids = run_ids[:limit]
+        conn = self._ensure_conn()
+        now = datetime.utcnow().isoformat()
+        with self._db_lock:
+            rows = conn.execute(
+                """
+                SELECT r.model, r.summary_json
+                  FROM runs r
+                  JOIN shares s ON s.run_id = r.run_id
+                 WHERE (s.expires_at IS NULL OR s.expires_at > ?)
+                   AND r.summary_json IS NOT NULL
+                 ORDER BY COALESCE(r.ended_at, r.created_at) DESC
+                 LIMIT ?
+                """,
+                (now, int(limit)),
+            ).fetchall()
 
-            aggregates: Dict[str, Dict[str, Any]] = {}
-            for run_id in run_ids:
-                record = self._runs[run_id]
-                summary = record.latest_summary
-                if not summary:
-                    continue
-                stats = aggregates.setdefault(
-                    record.model,
-                    {
-                        "model": record.model,
-                        "runs": 0,
-                        "total_score": 0.0,
-                        "survival_total": 0.0,
-                    },
-                )
-                stats["runs"] += 1
-                stats["total_score"] += float(summary.get("total_score", 0.0))
-                stats["survival_total"] += float(summary.get("survival_score", 0.0))
+        aggregates: Dict[str, Dict[str, Any]] = {}
+        for row in rows:
+            model = str(row["model"])
+            try:
+                summary = json.loads(row["summary_json"])
+            except Exception:
+                continue
+            stats = aggregates.setdefault(
+                model,
+                {"model": model, "runs": 0, "total_score": 0.0, "survival_total": 0.0},
+            )
+            stats["runs"] += 1
+            stats["total_score"] += float(summary.get("total_score", 0.0))
+            stats["survival_total"] += float(summary.get("survival_score", 0.0))
 
         leaderboard: list[Dict[str, Any]] = []
         for stats in aggregates.values():
             runs = stats["runs"] or 1
-            mean_score = stats["total_score"] / runs
-            survival_mean = stats["survival_total"] / runs
             leaderboard.append(
                 {
                     "model": stats["model"],
                     "runs": stats["runs"],
-                    "mean_score": round(mean_score, 2),
-                    "survival_mean": round(survival_mean, 2),
+                    "mean_score": round(stats["total_score"] / runs, 2),
+                    "survival_mean": round(stats["survival_total"] / runs, 2),
                 }
             )
-
         leaderboard.sort(key=lambda item: item["mean_score"], reverse=True)
         return leaderboard
 
-    def set_summary(self, run_id: str, summary: Dict[str, Any]) -> None:
-        with self._lock:
-            record = self._runs.get(run_id)
-            if not record:
-                return
-            record.latest_summary = summary
-            if "total_score" in summary:
-                record.metadata["last_score"] = summary["total_score"]
-            if "milestones" in summary:
-                record.metadata["milestones"] = summary["milestones"]
-            if "survival_score" in summary:
-                record.metadata["survived"] = summary.get("survival_score", 0) > 0
+    def best_scores_over_time(
+        self,
+        *,
+        days: int = 30,
+        backend: Optional[str] = None,
+        model: Optional[str] = None,
+        max_steps: Optional[int] = None,
+        limit_per_series: int = 500,
+    ) -> list[Dict[str, Any]]:
+        """Return best-score time series per (model, git_sha, backend)."""
+
+        conn = self._ensure_conn()
+        now_dt = datetime.utcnow()
+        since_dt = now_dt - timedelta(days=max(1, int(days)))
+        now = now_dt.isoformat()
+        since = since_dt.isoformat()
+
+        where: list[str] = [
+            "(s.expires_at IS NULL OR s.expires_at > ?)",
+            "r.ended_at IS NOT NULL",
+            "r.total_score IS NOT NULL",
+            "r.ended_at >= ?",
+        ]
+        params: list[object] = [now, since]
+
+        if backend:
+            where.append("r.backend = ?")
+            params.append(str(backend))
+        if model:
+            where.append("r.model = ?")
+            params.append(str(model))
+        if max_steps is not None:
+            where.append("r.max_steps = ?")
+            params.append(int(max_steps))
+
+        query = f"""
+            SELECT
+              r.run_id, r.backend, r.model, r.git_sha, r.max_steps, r.ticks_per_step,
+              r.ended_at, r.total_score,
+              s.token AS share_token, s.scope_json AS share_scope_json,
+              s.expires_at AS share_expires_at, s.created_at AS share_created_at
+            FROM runs r
+            JOIN shares s ON s.run_id = r.run_id
+            WHERE {' AND '.join(where)}
+            ORDER BY r.ended_at ASC
+        """
+
+        with self._db_lock:
+            rows = conn.execute(query, params).fetchall()
+
+        runs: Dict[str, sqlite3.Row] = {}
+        shares_by_run: Dict[str, list[ShareToken]] = {}
+        for row in rows:
+            run_id = str(row["run_id"])
+            runs.setdefault(run_id, row)
+            try:
+                scopes = set(json.loads(row["share_scope_json"]))
+            except Exception:
+                scopes = set()
+            shares_by_run.setdefault(run_id, []).append(
+                ShareToken(
+                    token=str(row["share_token"]),
+                    run_id=run_id,
+                    scope=scopes,
+                    expires_at=_dt_from_iso(row["share_expires_at"]),
+                    created_at=_dt_from_iso(row["share_created_at"]) or datetime.utcnow(),
+                )
+            )
+
+        grouped: Dict[Tuple[str, str, str], list[Dict[str, Any]]] = {}
+        for run_id, run_row in runs.items():
+            share = self._select_share(shares_by_run.get(run_id, []))
+            if not share:
+                continue
+            ended_at = _dt_from_iso(run_row["ended_at"])
+            if ended_at is None:
+                continue
+            score = float(run_row["total_score"])
+            git_sha = str(run_row["git_sha"] or "unknown")
+            key = (str(run_row["model"]), git_sha, str(run_row["backend"]))
+            grouped.setdefault(key, []).append(
+                {
+                    "t": ended_at.isoformat(),
+                    "score": score,
+                    "run_id": run_id,
+                    "token": share.token,
+                    "max_steps": int(run_row["max_steps"]),
+                    "ticks_per_step": int(run_row["ticks_per_step"]),
+                }
+            )
+
+        series: list[Dict[str, Any]] = []
+        for (model_name, git_sha, backend_name), points in grouped.items():
+            points.sort(key=lambda item: item["t"])
+            best = float("-inf")
+            best_point: Optional[Dict[str, Any]] = None
+            for point in points:
+                if point["score"] >= best:
+                    best = point["score"]
+                    best_point = point
+                point["best"] = best
+            if limit_per_series and len(points) > limit_per_series:
+                points = points[-int(limit_per_series) :]
+            series.append(
+                {
+                    "model": model_name,
+                    "git_sha": git_sha,
+                    "backend": backend_name,
+                    "points": points,
+                    "best": best_point,
+                }
+            )
+
+        series.sort(key=lambda item: (item.get("best") or {}).get("score", 0.0), reverse=True)
+        return series
+
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+    def _row_to_runinfo(
+        self,
+        row: sqlite3.Row,
+        *,
+        queue: Optional[asyncio.Queue[EventPayload]] = None,
+        loop: Optional[asyncio.AbstractEventLoop] = None,
+    ) -> RunInfo:
+        metadata: Dict[str, Any] = {}
+        if row["last_score"] is not None:
+            metadata["last_score"] = float(row["last_score"])
+        if row["milestones_json"]:
+            try:
+                metadata["milestones"] = json.loads(row["milestones_json"])
+            except Exception:
+                pass
+        if row["survival_score"] is not None:
+            try:
+                metadata["survived"] = float(row["survival_score"]) > 0
+            except Exception:
+                pass
+
+        latest_summary: Optional[Dict[str, Any]] = None
+        if row["summary_json"]:
+            try:
+                latest_summary = json.loads(row["summary_json"])
+            except Exception:
+                latest_summary = None
+
+        return RunInfo(
+            run_id=str(row["run_id"]),
+            backend=str(row["backend"]),
+            model=str(row["model"]),
+            max_steps=int(row["max_steps"]),
+            ticks_per_step=int(row["ticks_per_step"]),
+            status=str(row["status"]),
+            step=int(row["step"]),
+            started_at=_dt_from_iso(row["started_at"]),
+            ended_at=_dt_from_iso(row["ended_at"]),
+            queue=queue,
+            loop=loop,
+            git_sha=row["git_sha"],
+            seed_save=row["seed_save"],
+            runtime_save=row["runtime_save"],
+            artifacts_dir=row["artifacts_dir"],
+            trace_path=row["trace_path"],
+            metadata=metadata,
+            latest_summary=latest_summary,
+        )
+
+    @staticmethod
+    def _row_to_sharetoken(row: sqlite3.Row) -> ShareToken:
+        try:
+            scope = set(json.loads(row["scope_json"]))
+        except Exception:
+            scope = set()
+        return ShareToken(
+            token=str(row["token"]),
+            run_id=str(row["run_id"]),
+            scope=scope,
+            expires_at=_dt_from_iso(row["expires_at"]),
+            created_at=_dt_from_iso(row["created_at"]) or datetime.utcnow(),
+        )
+
+    # ------------------------------------------------------------------
+    # Test helpers
+    # ------------------------------------------------------------------
+    def reset_for_tests(self) -> None:
+        """Clear DB state and in-memory queues (pytest helper)."""
+
+        conn = self._ensure_conn()
+        with self._db_lock:
+            conn.execute("DELETE FROM shares")
+            conn.execute("DELETE FROM runs")
+            conn.commit()
+            self._queues.clear()
+            self._loops.clear()
 
 
 RUN_REGISTRY = RunRegistry()

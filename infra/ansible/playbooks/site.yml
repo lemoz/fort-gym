@@ -7,3 +7,4 @@
     - role: base
     - role: dfhack
     - role: fortgym
+    - role: caddy

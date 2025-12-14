@@ -64,21 +64,16 @@ class _StubDFHackClient:
 
 @pytest.fixture(autouse=True)
 def _clean_state():
-    with RUN_REGISTRY._lock:  # type: ignore[attr-defined]
-        RUN_REGISTRY._runs.clear()  # type: ignore[attr-defined]
-        RUN_REGISTRY._shares.clear()  # type: ignore[attr-defined]
-        RUN_REGISTRY._shares_by_run.clear()  # type: ignore[attr-defined]
+    RUN_REGISTRY.reset_for_tests()
     routes_step._reset_step_contexts_for_tests()
     yield
-    with RUN_REGISTRY._lock:  # type: ignore[attr-defined]
-        RUN_REGISTRY._runs.clear()  # type: ignore[attr-defined]
-        RUN_REGISTRY._shares.clear()  # type: ignore[attr-defined]
-        RUN_REGISTRY._shares_by_run.clear()  # type: ignore[attr-defined]
+    RUN_REGISTRY.reset_for_tests()
     routes_step._reset_step_contexts_for_tests()
 
 
 @pytest.fixture
 def client(tmp_path, monkeypatch):
+    monkeypatch.setenv("FORT_GYM_INSECURE_ADMIN", "1")
     stub_settings = SimpleNamespace(
         DFHACK_ENABLED=True,
         DFHACK_HOST="127.0.0.1",

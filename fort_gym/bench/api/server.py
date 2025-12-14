@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 import threading
 from datetime import datetime
 from pathlib import Path
@@ -21,6 +22,7 @@ from ..run.runner import run_once
 from ..run.storage import RUN_REGISTRY, RunInfo as RegistryRunInfo, ShareToken
 from ..env.keystroke_exec import execute_keystroke_action
 from .auth import require_admin
+from .rate_limit import RateLimiter, get_rate_limit_client_id, get_rate_limit_config
 from .routes_step import router as step_router
 from .schemas import (
     AdminKeysRequest,
@@ -35,6 +37,39 @@ from .sse import ndjson_iter, sse_event, stream_queue
 
 app = FastAPI(title="fort-gym API")
 app.include_router(step_router)
+
+_RATE_LIMITER = RateLimiter()
+
+
+@app.middleware("http")
+async def _rate_limit_middleware(request: Request, call_next):  # type: ignore[no-untyped-def]
+    if os.getenv("FORT_GYM_RATE_LIMIT_ENABLED", "1") != "1":
+        return await call_next(request)
+
+    path = request.url.path
+    bucket: Optional[str] = None
+
+    # Admin panel + admin-only endpoints (HTML + screenshot + key injection).
+    if path == "/admin" or path.startswith("/admin/") or path == "/screenshot":
+        bucket = "admin"
+
+    # Run management endpoints are admin-only but high-impact, so rate limit separately.
+    if path == "/runs" or path.startswith("/runs/"):
+        bucket = "runs"
+
+    if bucket:
+        admin_rpm, runs_rpm = get_rate_limit_config()
+        rpm = admin_rpm if bucket == "admin" else runs_rpm
+        client_id = get_rate_limit_client_id(request)
+        ok, retry_after = _RATE_LIMITER.allow(bucket, client_id, capacity=rpm, refill_per_s=rpm / 60.0)
+        if not ok:
+            return JSONResponse(
+                {"detail": "Rate limit exceeded", "retry_after": round(retry_after, 2)},
+                status_code=429,
+                headers={"Retry-After": str(int(retry_after) + 1)},
+            )
+
+    return await call_next(request)
 
 
 ARTIFACTS_ROOT = Path(get_settings().ARTIFACTS_DIR).resolve()
@@ -58,6 +93,12 @@ async def serve_admin(_: None = Depends(require_admin)):
     return FileResponse(WEB_ROOT / "admin.html", media_type="text/html")
 
 
+@app.get("/leaderboard", response_class=FileResponse)
+async def serve_leaderboard():
+    """Serve the public leaderboard UI."""
+    return FileResponse(WEB_ROOT / "leaderboard.html", media_type="text/html")
+
+
 def _artifacts_path(run_id: str) -> Path:
     return ARTIFACTS_ROOT / run_id / "trace.jsonl"
 
@@ -69,6 +110,9 @@ def _serialize(record: RegistryRunInfo) -> RunInfo:
         id=record.run_id,
         backend=record.backend,
         model=record.model,
+        git_sha=getattr(record, "git_sha", None),
+        seed_save=getattr(record, "seed_save", None),
+        runtime_save=getattr(record, "runtime_save", None),
         status=record.status,
         step=record.step,
         max_steps=record.max_steps,
@@ -85,9 +129,14 @@ def _serialize_public(record: RegistryRunInfo, share: ShareToken) -> RunInfoPubl
     return RunInfoPublic(
         run_id=record.run_id,
         model=record.model,
+        git_sha=getattr(record, "git_sha", None),
         backend=record.backend,
         status=record.status,
         step=record.step,
+        max_steps=record.max_steps,
+        ticks_per_step=record.ticks_per_step,
+        seed_save=getattr(record, "seed_save", None),
+        runtime_save=getattr(record, "runtime_save", None),
         started_at=record.started_at,
         finished_at=record.ended_at,
         score=summary.get("total_score") or metadata.get("last_score"),
@@ -268,6 +317,23 @@ async def public_runs() -> List[RunInfoPublic]:
 @app.get("/public/leaderboard")
 async def public_leaderboard(limit: int = 50) -> List[Dict[str, object]]:
     return RUN_REGISTRY.public_leaderboard(limit)
+
+
+@app.get("/public/leaderboard/best-over-time")
+async def public_best_over_time(
+    days: int = 30,
+    backend: Optional[str] = None,
+    model: Optional[str] = None,
+    max_steps: Optional[int] = None,
+    limit_per_series: int = 500,
+) -> List[Dict[str, object]]:
+    return RUN_REGISTRY.best_scores_over_time(
+        days=days,
+        backend=backend,
+        model=model,
+        max_steps=max_steps,
+        limit_per_series=limit_per_series,
+    )
 
 
 @app.get("/public/runs/{token}", response_model=RunInfoPublic)

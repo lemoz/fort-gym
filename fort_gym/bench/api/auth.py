@@ -21,8 +21,13 @@ def require_admin(credentials: Optional[HTTPBasicCredentials] = Depends(_basic_s
     """Guard admin endpoints with Basic Auth when configured."""
 
     admin_password = os.getenv("FORT_GYM_ADMIN_PASSWORD")
-    if not admin_password:
-        return  # Auth disabled (dev default)
+    if admin_password is None or admin_password == "":
+        if os.getenv("FORT_GYM_INSECURE_ADMIN", "0") == "1":
+            return  # explicitly opt-in for local dev only
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Admin endpoints disabled. Set FORT_GYM_ADMIN_PASSWORD to enable.",
+        )
 
     admin_user = os.getenv("FORT_GYM_ADMIN_USER", "admin")
     if credentials is None:
@@ -44,4 +49,3 @@ def require_admin(credentials: Optional[HTTPBasicCredentials] = Depends(_basic_s
 
 
 __all__ = ["require_admin"]
-
