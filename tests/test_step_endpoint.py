@@ -79,6 +79,7 @@ def _clean_state():
 
 @pytest.fixture
 def client(tmp_path, monkeypatch):
+    monkeypatch.setenv("FORT_GYM_INSECURE_ADMIN", "1")
     stub_settings = SimpleNamespace(
         DFHACK_ENABLED=True,
         DFHACK_HOST="127.0.0.1",

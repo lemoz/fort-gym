@@ -455,7 +455,8 @@
 
     async function fetchScreen() {
       try {
-        const res = await fetch('/screenshot');
+        if (!currentToken) return;
+        const res = await fetch(`/public/runs/${currentToken}/screenshot`);
         if (!res.ok) throw new Error(res.statusText);
         const data = await res.json();
         renderScreen(data);

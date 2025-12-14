@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 import threading
 from datetime import datetime
 from pathlib import Path
@@ -21,6 +22,7 @@ from ..run.runner import run_once
 from ..run.storage import RUN_REGISTRY, RunInfo as RegistryRunInfo, ShareToken
 from ..env.keystroke_exec import execute_keystroke_action
 from .auth import require_admin
+from .rate_limit import RateLimiter, get_rate_limit_client_id, get_rate_limit_config
 from .routes_step import router as step_router
 from .schemas import (
     AdminKeysRequest,
@@ -35,6 +37,39 @@ from .sse import ndjson_iter, sse_event, stream_queue
 
 app = FastAPI(title="fort-gym API")
 app.include_router(step_router)
+
+_RATE_LIMITER = RateLimiter()
+
+
+@app.middleware("http")
+async def _rate_limit_middleware(request: Request, call_next):  # type: ignore[no-untyped-def]
+    if os.getenv("FORT_GYM_RATE_LIMIT_ENABLED", "1") != "1":
+        return await call_next(request)
+
+    path = request.url.path
+    bucket: Optional[str] = None
+
+    # Admin panel + admin-only endpoints (HTML + screenshot + key injection).
+    if path == "/admin" or path.startswith("/admin/") or path == "/screenshot":
+        bucket = "admin"
+
+    # Run management endpoints are admin-only but high-impact, so rate limit separately.
+    if path == "/runs" or path.startswith("/runs/"):
+        bucket = "runs"
+
+    if bucket:
+        admin_rpm, runs_rpm = get_rate_limit_config()
+        rpm = admin_rpm if bucket == "admin" else runs_rpm
+        client_id = get_rate_limit_client_id(request)
+        ok, retry_after = _RATE_LIMITER.allow(bucket, client_id, capacity=rpm, refill_per_s=rpm / 60.0)
+        if not ok:
+            return JSONResponse(
+                {"detail": "Rate limit exceeded", "retry_after": round(retry_after, 2)},
+                status_code=429,
+                headers={"Retry-After": str(int(retry_after) + 1)},
+            )
+
+    return await call_next(request)
 
 
 ARTIFACTS_ROOT = Path(get_settings().ARTIFACTS_DIR).resolve()
