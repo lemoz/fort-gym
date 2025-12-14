@@ -91,7 +91,7 @@ make df-headless
 ### Core Package Structure
 - `fort_gym/bench/agent/` - Agent implementations (base.py defines the Agent ABC)
 - `fort_gym/bench/env/` - Environment adapters: mock_env.py (deterministic), dfhack_client.py (gRPC), executor.py (action dispatcher)
-- `fort_gym/bench/run/` - Orchestration: runner.py (main run loop), jobs.py (batch orchestration), storage.py (in-memory registry)
+- `fort_gym/bench/run/` - Orchestration: runner.py (main run loop), jobs.py (batch orchestration), storage.py (SQLite-backed run registry)
 - `fort_gym/bench/api/` - FastAPI server and SSE streaming
 - `fort_gym/bench/eval/` - Metrics, scoring, milestones, and summary generation
 - `fort_gym/bench/cli.py` - `fort-gym` CLI entrypoint (Typer)
@@ -118,9 +118,9 @@ make df-headless
    - Spawns worker threads that call `runner.run_once()` with RUN_REGISTRY bound
 
 5. **API endpoints** (`api/server.py`):
-   - Admin: POST /runs, POST /jobs, GET /runs, GET /jobs/{id}
-   - Public: GET /public/runs/{token}, GET /public/trace/{token}
-   - SSE: GET /runs/{id}/events, GET /public/runs/{token}/events
+   - Admin: `/runs`, `/jobs`, `/runs/{id}/events/stream`, `/screenshot`, `/admin/keys`
+   - Public: `/`, `/leaderboard`, `/public/runs`, `/public/runs/{token}/events/{stream|replay}`, `/public/runs/{token}/export/trace`
+   - Public leaderboard data: `/public/leaderboard/best-over-time`
 
 ### Agents
 
@@ -154,6 +154,9 @@ The system prompt encourages Claude to take action (dig, build, create stockpile
 
 Copy `.env.example` to `.env` and configure:
 - `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` - Required for LLM agents
+- `FORT_GYM_ADMIN_PASSWORD` - Required for `/admin` and all admin APIs (`/runs`, `/jobs`, `/step`, `/screenshot`, `/admin/keys`)
+- `FORT_GYM_ADMIN_USER` - Basic auth user (default `admin`)
+- `FORT_GYM_INSECURE_ADMIN=1` - Dev-only escape hatch to enable admin endpoints without a password
 - `DFHACK_ENABLED` - Set to 1 to enable DFHack backend
 - `DF_PROTO_ENABLED` - Set to 1 to enable DFHack protobuf bindings (required for DFHack backend)
 - `DFHACK_HOST` / `DFHACK_PORT` - DFHack remote plugin endpoint (default 127.0.0.1:5000)
@@ -164,6 +167,9 @@ Copy `.env.example` to `.env` and configure:
 - `FORT_GYM_RUNTIME_SAVE` - Runtime save directory name to load after seed reset (default `current`).
 - `TICKS_PER_STEP` - Game ticks to advance per step (default 200)
 - `ARTIFACTS_DIR` - Where to store run artifacts (default fort_gym/artifacts)
+- `FORT_GYM_DB_PATH` - SQLite path for persistent run history (default `$ARTIFACTS_DIR/fort_gym.sqlite3`)
+- `FORT_GYM_TRUST_PROXY=1` - Trust `X-Forwarded-For` when behind a local reverse proxy (Caddy/Nginx)
+- `FORT_GYM_RATE_LIMIT_ADMIN_RPM` / `FORT_GYM_RATE_LIMIT_RUNS_RPM` - Simple in-process rate limits
 
 See `fort_gym/bench/config.py` for full list.
 
@@ -171,10 +177,13 @@ See `fort_gym/bench/config.py` for full list.
 
 ### Current VM
 - **IP**: 34.41.155.134
-- **Web UI**: http://34.41.155.134:8000/ (spectator), http://34.41.155.134:8000/admin (admin)
+- **Web UI**: https://34.41.155.134.nip.io/ (spectator), https://34.41.155.134.nip.io/admin (admin)
+- **Leaderboard**: https://34.41.155.134.nip.io/leaderboard
 - **DFHack RPC**: port 5000 (loopback)
 - **DFHack version**: v0.47.05
 - **Save loaded**: `region1` (reset from seed before runs)
+ 
+If you don't have a domain yet, `*.nip.io` is a convenient stopgap for real HTTPS certs.
 
 ### Seed Save Workflow (VM)
 We keep a read-only pristine seed save and reset the runtime save from it before every DFHack run.
@@ -216,10 +225,10 @@ ssh cdossman@34.41.155.134 'systemctl status dfhack-headless fort-gym-api'
 3. **Test the system**:
 ```bash
 # Check API responds
-curl -s http://34.41.155.134:8000/health
+curl -s https://34.41.155.134.nip.io/health
 
 # Start a test run (auto-creates share token for spectator view)
-curl -s -u admin:'<password>' -X POST http://34.41.155.134:8000/runs \
+curl -s -u admin:'<password>' -X POST https://34.41.155.134.nip.io/runs \
   -H "Content-Type: application/json" \
   -d '{"backend": "dfhack", "model": "anthropic-keystroke", "max_steps": 5}'
 ```
@@ -289,7 +298,7 @@ If you must rsync for speed, do it **only** to the test checkout with strict exc
 ### Creating Public Share Tokens
 Runs must have share tokens to appear in the public UI:
 ```bash
-curl -s -u admin:'<password>' -X POST "http://34.41.155.134:8000/runs/{run_id}/share" \
+curl -s -u admin:'<password>' -X POST "https://34.41.155.134.nip.io/runs/{run_id}/share" \
   -H "Content-Type: application/json" \
   -d '{"scope": ["export", "live", "replay"]}'
 ```
@@ -356,10 +365,10 @@ Infrastructure uses Ansible playbooks in `infra/ansible/`:
 - Edit `inventory.ini` with VM IP/user/SSH key
 - Configure `group_vars/all.yml` (DFHack archive URL, service settings)
 - Playbooks install Xvfb, DF/DFHack to `/opt/dfhack`, fort-gym to `/opt/fort-gym`
-- Services: `dfhack-headless.service` (port 5000), `fort-gym-api.service` (port 8000)
+- Services: `dfhack-headless.service` (loopback 5000), `fort-gym-api.service` (127.0.0.1:8000), `caddy` (public 80/443)
 - Default service user: `ubuntu`
 
-Firewall: open TCP ports 5000 (DFHack) and 8000 (fort-gym API).
+Firewall: open TCP ports 80/443 for HTTPS; keep 8000 private (loopback) and never expose DFHack RPC directly.
 
 ## DFHack v0.47.05 Compatibility Notes
 
