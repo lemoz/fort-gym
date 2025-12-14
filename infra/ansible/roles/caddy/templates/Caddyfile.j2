@@ -1,0 +1,15 @@
+{% if fortgym_tls_mode | default('internal') == 'acme' and (fortgym_domain | default('')) | length > 0 %}
+{{ fortgym_domain }} {
+  reverse_proxy 127.0.0.1:{{ fortgym_service_port }}
+}
+{% else %}
+:80 {
+  redir https://{host}{uri} permanent
+}
+
+:443 {
+  tls internal
+  reverse_proxy 127.0.0.1:{{ fortgym_service_port }}
+}
+{% endif %}
+

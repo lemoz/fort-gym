@@ -29,7 +29,12 @@ service_group: "dfh"
 allow_tcp_ports:
   - 22
   - 5000
-  - 8000
+  - 80
+  - 443
+
+# Public HTTPS reverse proxy (Caddy)
+fortgym_tls_mode: "internal"  # set to "acme" and configure fortgym_domain for real certs
+fortgym_domain: ""
 
 # Base packages required by fort-gym + DFHack
 base_packages:
