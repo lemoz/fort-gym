@@ -86,6 +86,57 @@ make vm-deploy
 make df-headless
 ```
 
+## Operating Model (CEO + Subagents)
+
+We work best when tasks are delegated to small, well-scoped “subagent briefs” with explicit completion criteria.
+
+**Reality check**: This repo is typically developed with multiple Codex CLI sessions (one per subagent). From within a single assistant session, we can’t literally spawn parallel agents, but we can write the briefs and you can run them in parallel terminals.
+
+### Subagent Brief Template (Contract)
+
+Copy/paste this into a fresh Codex CLI session (max model config) as the entire prompt:
+
+**Objective**
+- What exactly to accomplish (1–2 sentences).
+
+**Context**
+- Repo path + relevant files to read first.
+- Any URLs/endpoints to verify.
+
+**Scope**
+- In-scope (bullet list).
+- Out-of-scope (bullet list).
+
+**Deliverables**
+- Concrete artifacts: files to change/add, commands to run, screenshots/logs to capture.
+- Required docs updates (if any).
+
+**Acceptance Criteria**
+- Observable behavior changes (API/UI).
+- Tests to run (exact commands) and expected results.
+- Backward-compat constraints (if relevant).
+
+**Constraints**
+- Don’t refactor unrelated code.
+- Keep changes minimal and consistent with existing style.
+- No secrets in diffs/logs.
+
+**Reporting Format**
+- Return: (1) what changed, (2) how to verify, (3) risks/edge cases.
+
+### CEO Workflow (How We Use Briefs)
+
+1. CEO defines 1–3 briefs max (right-sized; ≤1–2 days each).
+2. Each subagent works on a dedicated branch and pushes frequently.
+3. CEO reviews diffs, runs validation, merges to `main`, and deploys to the VM.
+4. CEO updates `CLAUDE.md` when the workflow itself changes (so future-us stays aligned).
+
+### Right-Sizing Guidelines
+
+- Prefer “one surface area”: one endpoint, one DB migration, one page, one infra role.
+- If a brief needs more than ~5 files or involves >2 subsystems, split it.
+- Always include: exact test commands + a concrete “done” signal.
+
 ## Architecture
 
 ### Core Package Structure
