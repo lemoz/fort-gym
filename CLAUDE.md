@@ -256,44 +256,40 @@ ssh cdossman@34.41.155.134 'sudo journalctl -u fort-gym-api -f'
 ssh cdossman@34.41.155.134 'tail -f /opt/dwarf-fortress/dfhack-stdout.log'
 ```
 
-### Deploying Code Changes to VM (Best Practice)
+### VM Workflow (User Folder → Production)
 
-We want the production VM to be reproducible and drift‑free.
+We want the VM to be reproducible and drift‑free, while keeping day-to-day work in the user home directory.
+
+**Directories**
+- `~/fort-gym-test` (VM user folder): **scratch/test checkout** for running pytest, trying WIP SHAs, and ad-hoc experiments.
+- `/opt/fort-gym` (system folder): **production checkout** used by systemd. Keep it clean; update it only via `make vm-deploy`.
 
 **Rules**
-- `/opt/fort-gym` is the **production checkout** and must stay on a clean git commit (preferably a tag). No rsync/manual edits here.
-- Use a separate **test checkout** (e.g. `~/fort-gym-test`) for trying WIP branches/SHAs.
-- The API runs under systemd (`fort-gym-api.service`). Do not start uvicorn in tmux.
-- For public deployments, set `FORT_GYM_ADMIN_PASSWORD` (and optionally `FORT_GYM_ADMIN_USER`) to protect admin UI and non‑public endpoints.
+- Never edit `/opt/fort-gym` by hand or via rsync. Treat it as a deployed artifact.
+- Do all day-to-day work against git commits (feature branches) and test them from `~/fort-gym-test`.
+- The API runs under systemd (`fort-gym-api.service`) behind HTTPS (Caddy). Do not start uvicorn in tmux on the prod VM.
+- For public deployments, `FORT_GYM_ADMIN_PASSWORD` must be non-empty or admin endpoints are disabled.
 
 **Workflow**
 Convenience wrappers live in the Makefile:
 - `make vm-test SHA=<sha-or-branch> [LIVE=1]`
 - `make vm-deploy SHA=<sha-or-tag>`
 
-1. **Local**: commit + push to GitHub.
-2. **VM test**: pull that exact commit into the test checkout and run smoke/live tests:
+1. **Local**: create a branch, commit, push.
+2. **VM test**: run tests on the VM (avoids bogging down your laptop):
 ```bash
-ssh -i ~/.ssh/google_compute_engine cdossman@34.41.155.134 '
-  cd ~/fort-gym-test &&
-  git fetch origin &&
-  git checkout <sha-or-branch> &&
-  source /opt/fort-gym/.venv/bin/activate &&
-  pytest -q
-'
+make vm-test SHA=origin/<branch>
+# Optional live DFHack checks:
+make vm-test SHA=origin/<branch> LIVE=1
 ```
-3. **VM deploy**: fast‑forward production to the same SHA and restart the API:
+3. **Merge**: once tested, merge to `main` (PR merge preferred).
+4. **VM deploy**: deploy the exact git ref to production and restart the API:
 ```bash
-ssh -i ~/.ssh/google_compute_engine cdossman@34.41.155.134 '
-  sudo systemctl stop fort-gym-api &&
-  cd /opt/fort-gym &&
-  git fetch origin &&
-  git reset --hard <sha-or-tag> &&
-  sudo systemctl start fort-gym-api
-'
+make vm-deploy SHA=origin/main
+curl -fsSL https://34.41.155.134.nip.io/health
 ```
 
-If you must rsync for speed, do it **only** to the test checkout with strict excludes, never `/opt/fort-gym`.
+If you must rsync for speed, do it **only** to `~/fort-gym-test` with strict excludes, never `/opt/fort-gym`.
 
 ### Creating Public Share Tokens
 Runs must have share tokens to appear in the public UI:
