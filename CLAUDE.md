@@ -90,7 +90,36 @@ make df-headless
 
 We work best when tasks are delegated to small, well-scoped “subagent briefs” with explicit completion criteria.
 
-**Reality check**: This repo is typically developed with multiple Codex CLI sessions (one per subagent). From within a single assistant session, we can’t literally spawn parallel agents, but we can write the briefs and you can run them in parallel terminals.
+This repo is typically developed with multiple Codex CLI agents running in parallel. The safest way to do this is:
+- one **git worktree** per subagent (isolated working tree + branch)
+- optionally, one **tmux window** per subagent (easy supervision + logs)
+
+### Launching Subagents (Worktrees + tmux)
+
+1. Create a worktree per subagent:
+```bash
+mkdir -p .agents
+git worktree add .agents/agent-1 -b agent/agent-1
+```
+
+2. Run the subagent non-interactively (recommended flags: strong model + no approvals + workspace-write):
+```bash
+codex exec -m o3 -a never -s workspace-write -C .agents/agent-1 -o .agents/agent-1.last.md - < .agents/agent-1.brief.md
+```
+
+3. Optional: supervise multiple subagents in tmux:
+```bash
+tmux new-session -d -s fortgym-agents
+tmux new-window -t fortgym-agents -n agent-1 "cd $PWD/.agents/agent-1 && codex exec -m o3 -a never -s workspace-write -o $PWD/.agents/agent-1.last.md - < $PWD/.agents/agent-1.brief.md | tee $PWD/.agents/agent-1.log"
+tmux attach -t fortgym-agents
+```
+
+4. When done: run tests, commit, push, and open a PR:
+```bash
+cd .agents/agent-1
+../../.venv/bin/python -m pytest -q
+git status -sb
+```
 
 ### Subagent Brief Template (Contract)
 
