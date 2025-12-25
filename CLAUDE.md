@@ -104,23 +104,23 @@ git worktree add .agents/agent-1 -b agent/agent-1
 
 2. Run the subagent non-interactively (per OpenAI Codex CLI docs, `codex exec` is no-approval and defaults to `read-only`; use `--full-auto` to allow edits):
 ```bash
-codex exec --full-auto -m gpt-5.1-codex-max -C .agents/agent-1 -o .agents/agent-1.last.md - < .agents/agent-1.brief.md
+codex exec --full-auto -m gpt-5.2-codex -C .agents/agent-1 -o .agents/agent-1.last.md - < .agents/agent-1.brief.md
 ```
 
-To crank reasoning to “extra high” (supported on `gpt-5.1-codex-max` and `gpt-5.2` per Codex docs):
+To crank reasoning to “extra high” (supported on `gpt-5.1-codex-max` and `gpt-5.2` per Codex docs; if `gpt-5.2-codex` isn’t available in your account, use `gpt-5.2`):
 ```bash
-codex exec --full-auto -m gpt-5.2 -c model_reasoning_effort=xhigh -C .agents/agent-1 -o .agents/agent-1.last.md - < .agents/agent-1.brief.md
+codex exec --full-auto -m gpt-5.2-codex -c model_reasoning_effort=xhigh -C .agents/agent-1 -o .agents/agent-1.last.md - < .agents/agent-1.brief.md
 ```
 
 If the brief requires network access (fetching docs, installing deps, etc), use:
 ```bash
-codex exec --sandbox danger-full-access -m gpt-5.1-codex-max -C .agents/agent-1 -o .agents/agent-1.last.md - < .agents/agent-1.brief.md
+codex exec --sandbox danger-full-access -m gpt-5.2-codex -C .agents/agent-1 -o .agents/agent-1.last.md - < .agents/agent-1.brief.md
 ```
 
 3. Optional: supervise multiple subagents in tmux:
 ```bash
 tmux new-session -d -s fortgym-agents
-tmux new-window -t fortgym-agents -n agent-1 "cd $PWD/.agents/agent-1 && codex exec --full-auto -m gpt-5.1-codex-max -o $PWD/.agents/agent-1.last.md - < $PWD/.agents/agent-1.brief.md | tee $PWD/.agents/agent-1.log"
+tmux new-window -t fortgym-agents -n agent-1 "cd $PWD/.agents/agent-1 && codex exec --full-auto -m gpt-5.2-codex -o $PWD/.agents/agent-1.last.md - < $PWD/.agents/agent-1.brief.md | tee $PWD/.agents/agent-1.log"
 tmux attach -t fortgym-agents
 ```
 
