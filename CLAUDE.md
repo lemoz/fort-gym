@@ -107,6 +107,11 @@ git worktree add .agents/agent-1 -b agent/agent-1
 codex exec --full-auto -m gpt-5.1-codex-max -C .agents/agent-1 -o .agents/agent-1.last.md - < .agents/agent-1.brief.md
 ```
 
+To crank reasoning to “extra high” (supported on `gpt-5.1-codex-max` and `gpt-5.2` per Codex docs):
+```bash
+codex exec --full-auto -m gpt-5.2 -c model_reasoning_effort=xhigh -C .agents/agent-1 -o .agents/agent-1.last.md - < .agents/agent-1.brief.md
+```
+
 If the brief requires network access (fetching docs, installing deps, etc), use:
 ```bash
 codex exec --sandbox danger-full-access -m gpt-5.1-codex-max -C .agents/agent-1 -o .agents/agent-1.last.md - < .agents/agent-1.brief.md
