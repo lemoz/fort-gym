@@ -174,6 +174,7 @@ OPTIONAL_AGENT_MODULES = {
     "openai": "fort_gym.bench.agent.llm_openai",
     "anthropic": "fort_gym.bench.agent.llm_anthropic",
     "anthropic-keystroke": "fort_gym.bench.agent.llm_anthropic",
+    "anthropic-research": "fort_gym.bench.agent.llm_anthropic_research",
 }
 
 
