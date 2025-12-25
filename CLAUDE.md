@@ -102,15 +102,20 @@ mkdir -p .agents
 git worktree add .agents/agent-1 -b agent/agent-1
 ```
 
-2. Run the subagent non-interactively (recommended flags: strong model + no approvals + workspace-write):
+2. Run the subagent non-interactively (per OpenAI Codex CLI docs, `codex exec` is no-approval and defaults to `read-only`; use `--full-auto` to allow edits):
 ```bash
-codex exec -m o3 -a never -s workspace-write -C .agents/agent-1 -o .agents/agent-1.last.md - < .agents/agent-1.brief.md
+codex exec --full-auto -m gpt-5.1-codex-max -C .agents/agent-1 -o .agents/agent-1.last.md - < .agents/agent-1.brief.md
+```
+
+If the brief requires network access (fetching docs, installing deps, etc), use:
+```bash
+codex exec --sandbox danger-full-access -m gpt-5.1-codex-max -C .agents/agent-1 -o .agents/agent-1.last.md - < .agents/agent-1.brief.md
 ```
 
 3. Optional: supervise multiple subagents in tmux:
 ```bash
 tmux new-session -d -s fortgym-agents
-tmux new-window -t fortgym-agents -n agent-1 "cd $PWD/.agents/agent-1 && codex exec -m o3 -a never -s workspace-write -o $PWD/.agents/agent-1.last.md - < $PWD/.agents/agent-1.brief.md | tee $PWD/.agents/agent-1.log"
+tmux new-window -t fortgym-agents -n agent-1 "cd $PWD/.agents/agent-1 && codex exec --full-auto -m gpt-5.1-codex-max -o $PWD/.agents/agent-1.last.md - < $PWD/.agents/agent-1.brief.md | tee $PWD/.agents/agent-1.log"
 tmux attach -t fortgym-agents
 ```
 
@@ -120,6 +125,18 @@ cd .agents/agent-1
 ../../.venv/bin/python -m pytest -q
 git status -sb
 ```
+
+### OpenAI Codex CLI Docs (Canonical)
+
+If anything here conflicts with upstream behavior, prefer the upstream docs:
+- https://github.com/openai/codex (README + docs)
+- Non-interactive mode: https://github.com/openai/codex/blob/main/docs/exec.md
+- Sandbox & approvals: https://github.com/openai/codex/blob/main/docs/sandbox.md
+- Configuration + profiles: https://github.com/openai/codex/blob/main/docs/config.md
+
+Useful flags for contract-style subagents:
+- `--json` to stream machine-readable events (progress + command/file ops).
+- `--output-schema <schema.json>` to require a structured final answer (JSON Schema).
 
 ### Subagent Brief Template (Contract)
 
