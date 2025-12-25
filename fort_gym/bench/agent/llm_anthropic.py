@@ -102,8 +102,23 @@ Always return exactly one action:
 {
   "type": "KEYSTROKE",
   "params": {"keys": ["KEY1", "KEY2", ...]},
-  "intent": "Brief description of what you're trying to do"
+  "intent": "Brief description of what you're trying to do",
+  "advance_ticks": 200
 }
+
+## Time Control (IMPORTANT!)
+YOU control time. The game is PAUSED until you request time to pass.
+
+- **advance_ticks: 0** - No time passes. Use for menu navigation, looking around.
+- **advance_ticks: 100-200** - Let dwarves work briefly. Good after giving orders.
+- **advance_ticks: 500+** - Watch significant progress. Use after designating dig areas.
+
+**Strategy:**
+1. Navigate menus with advance_ticks: 0 (instant, no time wasted)
+2. After completing an action (dig designation, build order), set advance_ticks: 200+ to let dwarves work
+3. If you see danger or need to react quickly, use advance_ticks: 0 to stay in control
+
+Your previous actions show how much time you requested in parentheses, e.g., "(+200t)" or "(paused)".
 
 ## Closing Popups and Notifications
 Some popups say "Press Enter to close" but SELECT doesn't always work. If SELECT doesn't close a popup after 2-3 tries, try these alternatives:
@@ -144,6 +159,13 @@ KEYSTROKE_TOOL_SPEC = {
             "intent": {
                 "type": "string",
                 "description": "Brief description of what this action accomplishes",
+            },
+            "advance_ticks": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2000,
+                "default": 0,
+                "description": "Number of game ticks to advance after keystrokes. 0 = stay paused (for menu navigation). 100-500 = let dwarves work.",
             },
         },
         "required": ["type", "params", "intent"],

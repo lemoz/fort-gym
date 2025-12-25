@@ -96,10 +96,13 @@ def run_once(
         def apply_action(action_dict: Dict[str, Any], state: Dict[str, Any]) -> Dict[str, Any]:
             return executor.apply(action_dict, backend="mock", state=state)
 
-        def advance_env() -> Dict[str, Any]:
+        def advance_env(num_ticks: int) -> Dict[str, Any]:
             nonlocal tick_info_state
-            result = mock_env.advance(ticks)
-            tick_info_state = {"ok": True, "ticks_advanced": ticks}
+            if num_ticks <= 0:
+                tick_info_state = {"ok": True, "ticks_advanced": 0, "skipped": True}
+                return mock_env.observe()
+            result = mock_env.advance(num_ticks)
+            tick_info_state = {"ok": True, "ticks_advanced": num_ticks}
             return result
 
     elif backend_name == "dfhack":
@@ -131,9 +134,12 @@ def run_once(
         def apply_action(action_dict: Dict[str, Any], state: Dict[str, Any]) -> Dict[str, Any]:
             return executor.apply(action_dict, backend="dfhack", state=state)
 
-        def advance_env() -> Dict[str, Any]:
+        def advance_env(num_ticks: int) -> Dict[str, Any]:
             nonlocal tick_info_state
-            state = dfhack_client.advance(ticks)
+            if num_ticks <= 0:
+                tick_info_state = {"ok": True, "ticks_advanced": 0, "skipped": True}
+                return StateReader.from_dfhack(dfhack_client)
+            state = dfhack_client.advance(num_ticks)
             tick_info_state = dict(dfhack_client.last_tick_info or {})
             return state
 
@@ -294,13 +300,16 @@ def run_once(
                         "step": step,
                         "keys": action.get("params", {}).get("keys", []),
                         "intent": action.get("intent", ""),
+                        "advance_ticks": action.get("advance_ticks", ticks),
                     })
                     # Keep only last 5 actions
                     if len(action_history) > 5:
                         action_history.pop(0)
 
+                # Use agent-requested ticks, falling back to default if not specified
+                requested_ticks = action.get("advance_ticks", ticks)
                 try:
-                    advance_state = call_with_retry("advance", advance_env)
+                    advance_state = call_with_retry("advance", lambda: advance_env(requested_ticks))
                 except DFHackError:
                     if registry:
                         registry.set_status(
@@ -309,7 +318,7 @@ def run_once(
                             ended_at=datetime.utcnow(),
                         )
                     break
-                pause_env()
+                # Game stays paused - agent controls time
                 publish_event(
                     step,
                     "advance",

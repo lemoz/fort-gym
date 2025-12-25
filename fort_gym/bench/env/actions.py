@@ -59,6 +59,12 @@ class BaseAction(BaseModel):
     type: str
     params: Dict[str, Any] = Field(default_factory=dict)
     intent: Optional[str] = Field(default=None, description="Optional short rationale provided by the agent.")
+    advance_ticks: int = Field(
+        default=0,
+        ge=0,
+        le=2000,
+        description="Number of game ticks to advance after executing this action. 0 = no time passes (stay paused).",
+    )
 
     model_config = {
         "extra": "ignore",
@@ -210,6 +216,13 @@ ACTION_TOOL_SPEC = {
             },
             "params": {"type": "object"},
             "intent": {"type": "string"},
+            "advance_ticks": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2000,
+                "default": 0,
+                "description": "Game ticks to advance after action. 0 = stay paused.",
+            },
         },
         "required": ["type", "params"],
     },

@@ -80,12 +80,14 @@ def encode_observation(
                 step_num = a.get("step", "?")
                 intent = a.get("intent", "no intent")
                 keys = a.get("keys", [])
+                ticks_advanced = a.get("advance_ticks", 0)
                 # Show first few keys to keep it concise
                 keys_preview = keys[:5] if len(keys) > 5 else keys
                 keys_str = ", ".join(keys_preview)
                 if len(keys) > 5:
                     keys_str += f"... (+{len(keys) - 5} more)"
-                history_lines.append(f"  Step {step_num}: {intent} → [{keys_str}]")
+                time_str = f"+{ticks_advanced}t" if ticks_advanced > 0 else "paused"
+                history_lines.append(f"  Step {step_num}: {intent} → [{keys_str}] ({time_str})")
             summary_text += f"\n\n== RECENT ACTIONS ==\n" + "\n".join(history_lines)
     else:
         # Original format for toolbox mode
