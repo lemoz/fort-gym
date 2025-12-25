@@ -76,7 +76,8 @@ def run_once(
     tick_info_state: Dict[str, Any] = {}
 
     # Detect keystroke mode from model name
-    is_keystroke_mode = model.endswith("-keystroke")
+    # Models that need screen capture: *-keystroke, *-research
+    is_keystroke_mode = model.endswith("-keystroke") or model.endswith("-research")
 
     def get_screen_text() -> str:
         """Get screen text for keystroke mode, empty string otherwise."""
