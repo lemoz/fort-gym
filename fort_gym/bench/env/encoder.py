@@ -10,11 +10,56 @@ def redact_noise(state: Dict[str, Any]) -> Dict[str, Any]:
     return state
 
 
+def _compute_screen_diff(prev: str, curr: str) -> Dict[str, Any]:
+    """Compare two screen captures and return diff info."""
+    if not prev or not curr:
+        return {"has_prev": False}
+
+    prev_lines = prev.strip().split("\n")
+    curr_lines = curr.strip().split("\n")
+
+    # Count changed lines (ignoring minor whitespace)
+    changed_lines = 0
+    total_lines = max(len(prev_lines), len(curr_lines))
+
+    for i in range(total_lines):
+        p = prev_lines[i].strip() if i < len(prev_lines) else ""
+        c = curr_lines[i].strip() if i < len(curr_lines) else ""
+        if p != c:
+            changed_lines += 1
+
+    # Find cursor position (X marker) in both
+    def find_cursor(lines: List[str]) -> Optional[Tuple[int, int]]:
+        for row, line in enumerate(lines):
+            # Look for X in the map area (typically left portion before menu)
+            col = line.find("X")
+            if col != -1 and col < 50:  # X in map area, not menu text
+                return (row, col)
+        return None
+
+    prev_cursor = find_cursor(prev_lines)
+    curr_cursor = find_cursor(curr_lines)
+
+    cursor_moved = prev_cursor != curr_cursor
+
+    return {
+        "has_prev": True,
+        "changed_lines": changed_lines,
+        "total_lines": total_lines,
+        "change_pct": (changed_lines / total_lines * 100) if total_lines > 0 else 0,
+        "screen_identical": changed_lines == 0,
+        "cursor_moved": cursor_moved,
+        "prev_cursor": prev_cursor,
+        "curr_cursor": curr_cursor,
+    }
+
+
 def encode_observation(
     state: Dict[str, Any],
     screen_text: Optional[str] = None,
     action_history: Optional[List[Dict[str, Any]]] = None,
     last_action_result: Optional[Dict[str, Any]] = None,
+    previous_screen: Optional[str] = None,
 ) -> Tuple[str, Dict[str, Any]]:
     """Return (text_summary, machine_state) tuple for a given environment state.
 
@@ -53,6 +98,34 @@ def encode_observation(
         else:
             reason = last_action_result.get("reason", last_action_result.get("error", "unknown"))
             status_lines.append(f"Last Action: REJECTED - {reason}")
+
+    # Screen change feedback - critical for agent to know if actions had effect
+    if screen_text and previous_screen:
+        diff = _compute_screen_diff(previous_screen, screen_text)
+        if diff.get("has_prev"):
+            if diff.get("screen_identical"):
+                status_lines.append("⚠️ WARNING: Screen UNCHANGED - your action may have had NO EFFECT!")
+                status_lines.append("   Try a DIFFERENT approach or key sequence.")
+            elif not diff.get("cursor_moved") and diff.get("change_pct", 100) < 10:
+                status_lines.append("⚠️ NOTICE: Cursor did NOT move. Screen barely changed.")
+                status_lines.append("   Your navigation keys may not be working as expected.")
+            elif diff.get("cursor_moved"):
+                prev_pos = diff.get("prev_cursor")
+                curr_pos = diff.get("curr_cursor")
+                if prev_pos and curr_pos:
+                    dy = curr_pos[0] - prev_pos[0]
+                    dx = curr_pos[1] - prev_pos[1]
+                    direction = []
+                    if dy < 0:
+                        direction.append(f"up {-dy}")
+                    elif dy > 0:
+                        direction.append(f"down {dy}")
+                    if dx < 0:
+                        direction.append(f"left {-dx}")
+                    elif dx > 0:
+                        direction.append(f"right {dx}")
+                    if direction:
+                        status_lines.append(f"Cursor moved: {', '.join(direction)} tiles")
 
     status_lines.extend([
         f"Time: tick {time_tick}",

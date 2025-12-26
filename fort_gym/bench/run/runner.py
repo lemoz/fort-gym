@@ -158,6 +158,7 @@ def run_once(
     previous_state: Optional[Dict[str, Any]] = None
     action_history: List[Dict[str, Any]] = []  # Track recent actions for keystroke mode memory
     last_action_result: Optional[Dict[str, Any]] = None  # Track previous action result for feedback
+    previous_screen = None  # Track previous screen for diff feedback (no type annotation for nonlocal)
 
     def publish_event(step: int, event_type: str, payload: Dict[str, Any], events: List[Dict[str, Any]]) -> None:
         data = {"run_id": run_identifier, "step": step, **payload}
@@ -212,7 +213,11 @@ def run_once(
                     screen_text=screen_text,
                     action_history=action_history if is_keystroke_mode else None,
                     last_action_result=last_action_result,
+                    previous_screen=previous_screen if is_keystroke_mode else None,
                 )
+                # Update previous_screen for next step's diff
+                if is_keystroke_mode:
+                    previous_screen = screen_text
                 publish_event(step, "state", {"state": obs_json, "text": obs_text}, events)
 
                 raw_action = agent.decide(obs_text, obs_json)
