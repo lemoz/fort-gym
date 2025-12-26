@@ -20,48 +20,68 @@ RESEARCH_KEYSTROKE_PROMPT = """You are playing Dwarf Fortress. You control the g
 ## Your Objective
 Manage a thriving dwarf fortress. You start with 7 dwarves on an embark site.
 
-## CRITICAL: Understanding the Screen
-The left side shows the MAP VIEW. Learn to read it:
-- `#` = Solid stone/mountain wall (CAN BE MINED!)
-- `^` or `*` = Trees and shrubs (surface vegetation)
-- `.` `,` `'` `"` = Grass and ground (cannot dig here)
-- `~` = Water
-- `≈` = Deep water
-- `@` or letters = Your cursor or dwarves
-- `X` = Your cursor position
+## CRITICAL: Understanding the Screen Layout
 
-The RIGHT side shows either:
-- Main menu options (a: Announcements, b: Building, d: Designations, etc.)
-- OR a submenu with specific options
+The screen is divided into THREE COLUMNS (left to right):
+
+### COLUMN 1 (LEFT ~25 chars): LOCAL MAP
+This is YOUR view - where your cursor is and where you designate actions!
+- Shows ~25 character wide area of terrain
+- Your cursor appears as `X` (yellow) - THIS IS WHERE YOU'RE POINTING
+- Terrain symbols:
+  - `τ` `f` `"` = Trees and plants (surface, can chop but NOT mine)
+  - `.` `,` `'` = Grass/ground (surface, cannot dig)
+  - `#` = STONE WALL - this is what you want to mine!
+  - `≈` `~` = Water
+  - `@` or colored letters = Dwarves
+- The LOCAL MAP scrolls as you move the cursor
+
+### COLUMN 2 (MIDDLE ~35 chars): MENU
+Shows current menu options and commands:
+- Main menu: "d: Designations", "b: Building", etc.
+- Submenus: "d: Mine", "h: Channel", etc.
+- Status info like "Selection: 3x3x1"
+- This tells you WHAT COMMANDS ARE AVAILABLE
+
+### COLUMN 3 (RIGHT ~20 chars): REGIONAL MAP
+A zoomed-out overview showing the whole embark area:
+- Green `↑` arrows = Trees/forest
+- Blue areas = Water/rivers
+- Gray/brown = Mountains/stone (your target!)
+- Shows where you are in the bigger picture
+- The cursor position is also shown here
+
+## KEY INSIGHT: Focus on COLUMN 1 (LOCAL MAP)
+When navigating, watch the LEFT column to see:
+1. Where your X cursor is
+2. What terrain is around it
+3. Whether you're on grass (bad for mining) or near stone (good!)
+
+The gray/brown area in the REGIONAL MAP (right) = mountains = where you want to dig!
 
 ## STRATEGY: What You Should Actually Do
 
-### First Priority: Find and dig into a MOUNTAIN
-1. Look at the screen - find the `#` symbols (that's stone you can dig!)
-2. The `#` wall is usually on the RIGHT side of the map
-3. Navigate your cursor TO the `#` wall before trying to dig
-4. Dig INTO the mountain to create shelter
+### First Priority: Navigate to STONE and dig into it
+1. Look at the REGIONAL MAP (right column) - find the gray/mountain area
+2. Move cursor toward the mountain area (usually need to go RIGHT or DOWN)
+3. Watch the LOCAL MAP (left column) to see when you reach stone `#`
+4. Open Designate (d) → Mine (d)
+5. Position cursor ON the `#` stone tiles
+6. Press SELECT to start, move to expand area, press SELECT to confirm
+7. Let dwarves work (advance time)
 
-### Your First Steps Should Be:
-1. Press `k` (Look mode) to understand the terrain
-2. Navigate to find where the mountain/cliff face is
-3. Go to Designate (d) → Mine (d)
-4. Move cursor to the stone wall `#`
-5. Mark an area to dig (3x3 is good to start)
-6. Unpause to let dwarves work
+### How to Know You're in the Right Place:
+- LOCAL MAP shows `#` symbols = You found stone! Mine here!
+- REGIONAL MAP shows cursor in gray area = You're at the mountain
+- If you only see `τ` `f` `.` = You're still in forest, keep moving!
 
 ### Common Mistakes to Avoid:
-- DON'T try to dig on grass/trees (`.` `^` `*` tiles) - it won't work!
-- DON'T stay on the surface - you need underground shelter
-- DON'T just repeat the same action if it's not working
+- DON'T try to mine where you only see trees/grass - move to find stone first!
+- DON'T ignore the screen feedback - if cursor didn't move, try different keys
+- DON'T just repeat failed actions - change your approach!
 
 ## Using the Research Tool
-You have a `web_search` tool. Use it to look up:
-- "dwarf fortress quickstart guide"
-- "dwarf fortress first embark what to do"
-- "dwarf fortress digging tutorial"
-
-When stuck, SEARCH for help before guessing!
+You have a `web_search` tool. Use it when stuck to look up guides.
 
 ## Key Reference
 
