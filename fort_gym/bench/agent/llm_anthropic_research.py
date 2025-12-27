@@ -28,13 +28,21 @@ The screen is divided into THREE COLUMNS (left to right):
 This is YOUR view - where your cursor is and where you designate actions!
 - Shows ~25 character wide area of terrain
 - Your cursor appears as `X` (yellow) - THIS IS WHERE YOU'RE POINTING
-- Terrain symbols:
-  - `τ` `f` `"` = Trees and plants (surface, can chop but NOT mine)
-  - `.` `,` `'` = Grass/ground (surface, cannot dig)
-  - `#` = STONE WALL - this is what you want to mine!
+
+**IMPORTANT: The `#` at the very START of each line is a SCREEN BORDER, not stone!**
+Look INSIDE the map area for terrain:
+- Terrain symbols INSIDE the map:
+  - `τ` `f` `"` `O` = Trees and plants (surface forest - NOT mineable!)
+  - `.` `,` `'` = Grass/ground (surface - NOT mineable!)
+  - `#` INSIDE the map (not at edges) = STONE WALL - this IS mineable!
   - `≈` `~` = Water
   - `@` or colored letters = Dwarves
 - The LOCAL MAP scrolls as you move the cursor
+
+**If you only see trees/grass in the local map, the stone is UNDERGROUND!**
+- Use CURSOR_DOWN_Z to go DOWN one z-level
+- Keep going down until you see `#` stone tiles INSIDE the map
+- Mountain embark sites have stone 1-3 z-levels below the surface
 
 ### COLUMN 2 (MIDDLE ~35 chars): MENU
 Shows current menu options and commands:
@@ -61,19 +69,26 @@ The gray/brown area in the REGIONAL MAP (right) = mountains = where you want to 
 
 ## STRATEGY: What You Should Actually Do
 
-### First Priority: Navigate to STONE and dig into it
-1. Look at the REGIONAL MAP (right column) - find the gray/mountain area
-2. Move cursor toward the mountain area (usually need to go RIGHT or DOWN)
-3. Watch the LOCAL MAP (left column) to see when you reach stone `#`
-4. Open Designate (d) → Mine (d)
-5. Position cursor ON the `#` stone tiles
-6. Press SELECT to start, move to expand area, press SELECT to confirm
-7. Let dwarves work (advance time)
+### First Priority: FIND STONE (it's usually underground!)
+1. Look at LOCAL MAP - if you only see trees (`τ` `f` `O`) and grass (`. , '`), stone is BELOW you
+2. Press CURSOR_DOWN_Z to go down one z-level (this is the `>` key motion)
+3. Keep going down until you see `#` stone tiles INSIDE the local map
+4. Once you see stone `#`, THEN open Designate → Mine
+
+### How to Dig Once You Find Stone:
+1. Open Designate menu: D_DESIGNATE
+2. Select Mine: DESIGNATE_DIG (or press 'd')
+3. Move cursor to a `#` stone tile
+4. Press SELECT to mark first corner
+5. Move cursor to expand selection (3x5 tiles is good)
+6. Press SELECT again to confirm
+7. Press LEAVESCREEN to exit menu
+8. Advance time (advance_ticks: 500) to let dwarves dig
 
 ### How to Know You're in the Right Place:
-- LOCAL MAP shows `#` symbols = You found stone! Mine here!
-- REGIONAL MAP shows cursor in gray area = You're at the mountain
-- If you only see `τ` `f` `.` = You're still in forest, keep moving!
+- LOCAL MAP shows `#` symbols INSIDE (not at edges) = You found stone! Mine here!
+- If you only see `τ` `f` `.` `O` = You're on surface, GO DOWN (CURSOR_DOWN_Z)
+- The STATUS will show "Selection: 3x5x1" when you're designating an area
 
 ### Common Mistakes to Avoid:
 - DON'T try to mine where you only see trees/grass - move to find stone first!
