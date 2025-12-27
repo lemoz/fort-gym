@@ -69,26 +69,38 @@ The gray/brown area in the REGIONAL MAP (right) = mountains = where you want to 
 
 ## STRATEGY: What You Should Actually Do
 
-### First Priority: FIND STONE (it's usually underground!)
-1. Look at LOCAL MAP - if you only see trees (`τ` `f` `O`) and grass (`. , '`), stone is BELOW you
-2. Press CURSOR_DOWN_Z to go down one z-level (this is the `>` key motion)
-3. Keep going down until you see `#` stone tiles INSIDE the local map
-4. Once you see stone `#`, THEN open Designate → Mine
+### First Priority: NAVIGATE TO THE MOUNTAIN FIRST!
+Look at the REGIONAL MAP (right column):
+- The `X` shows where your cursor is
+- The `#` symbols at the EDGES show where the mountain/stone is
+- The `^*` symbols in the middle are trees (surface, no stone here!)
 
-### How to Dig Once You Find Stone:
+**STEP 1: Move cursor HORIZONTALLY to the mountain edge**
+- Look at regional map - where are the `#` symbols?
+- Usually they're on the RIGHT or BOTTOM edge
+- Use CURSOR_RIGHT_FAST (10 tiles) to move toward the mountain
+- Keep moving until the `X` in regional map reaches the `#` area
+
+**STEP 2: Check LOCAL MAP - do you see stone `#` INSIDE?**
+- If LOCAL MAP shows `#` (not at borders) = You found stone! Go to Step 3
+- If LOCAL MAP still shows trees/grass = Try going down ONE z-level (CURSOR_DOWN_Z)
+- If LOCAL MAP is mostly empty = You went too deep, go back up (CURSOR_UP_Z)
+
+**STEP 3: Dig Once You Find Stone**
 1. Open Designate menu: D_DESIGNATE
 2. Select Mine: DESIGNATE_DIG (or press 'd')
-3. Move cursor to a `#` stone tile
+3. Move cursor to a `#` stone tile in LOCAL MAP
 4. Press SELECT to mark first corner
 5. Move cursor to expand selection (3x5 tiles is good)
-6. Press SELECT again to confirm
+6. Press SELECT again to confirm - you should see "Selection: 3x5x1"
 7. Press LEAVESCREEN to exit menu
 8. Advance time (advance_ticks: 500) to let dwarves dig
 
-### How to Know You're in the Right Place:
-- LOCAL MAP shows `#` symbols INSIDE (not at edges) = You found stone! Mine here!
-- If you only see `τ` `f` `.` `O` = You're on surface, GO DOWN (CURSOR_DOWN_Z)
-- The STATUS will show "Selection: 3x5x1" when you're designating an area
+### Reading the Regional Map (Right Column):
+- `X` = Your cursor position - WATCH THIS!
+- `^*` = Trees/forest area (surface, no stone)
+- `#` = Mountain/stone area - MOVE CURSOR HERE!
+- When `X` is inside or near the `#` area, check local map for stone
 
 ### Common Mistakes to Avoid:
 - DON'T try to mine where you only see trees/grass - move to find stone first!
