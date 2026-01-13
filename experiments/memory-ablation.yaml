@@ -1,0 +1,14 @@
+name: memory-ablation
+description: Compare memory window sizes
+base_config:
+  backend: mock
+  max_steps: 50
+  model: anthropic-keystroke
+variants:
+  - name: no-memory
+    memory_window: 0
+  - name: short-memory
+    memory_window: 5
+  - name: long-memory
+    memory_window: 20
+runs_per_variant: 3

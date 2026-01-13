@@ -64,9 +64,10 @@ class MemoryManager:
         step_max_chars: int = 240,
         summarizer: SummaryFn | None = None,
     ) -> None:
-        if window_size <= 0:
-            raise ValueError("window_size must be >= 1")
+        if window_size < 0:
+            raise ValueError("window_size must be >= 0")
         self.window_size = window_size
+        self._enabled = window_size > 0
         self.summary_max_chars = summary_max_chars
         self.step_max_chars = step_max_chars
         self.recent_steps: List[StepRecord] = []
@@ -75,6 +76,8 @@ class MemoryManager:
         self._summarizer = summarizer or self._default_summarizer
 
     def add_step(self, observation: str, action: Dict[str, Any], result: str) -> None:
+        if not self._enabled:
+            return
         self._step_counter += 1
         record = StepRecord(
             step=self._step_counter,
@@ -86,6 +89,8 @@ class MemoryManager:
         self.compress_old_steps()
 
     def get_context(self) -> str:
+        if not self._enabled:
+            return ""
         if not self.summary and not self.recent_steps:
             return ""
         lines = ["== MEMORY =="]
@@ -97,6 +102,8 @@ class MemoryManager:
         return "\n".join(lines).strip()
 
     def compress_old_steps(self) -> None:
+        if not self._enabled:
+            return
         if len(self.recent_steps) <= self.window_size:
             return
         overflow = self.recent_steps[:-self.window_size]
