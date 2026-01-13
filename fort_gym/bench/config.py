@@ -59,6 +59,7 @@ class Settings(BaseModel):
     LLM_MAX_TOKENS: int = int(os.getenv("LLM_MAX_TOKENS", "512"))
     LLM_TEMP: float = float(os.getenv("LLM_TEMP", "0.1"))
     LLM_RATE_LIMIT_TPS: float = float(os.getenv("LLM_RATE_LIMIT_TPS", "1.0"))
+    MEMORY_WINDOW: int = int(os.getenv("FORT_GYM_MEMORY_WINDOW", "10"))
 
     class Config:
         frozen = True
@@ -82,6 +83,7 @@ def get_settings() -> Settings:
         LLM_MAX_TOKENS=int(os.getenv("LLM_MAX_TOKENS", "512")),
         LLM_TEMP=float(os.getenv("LLM_TEMP", "0.1")),
         LLM_RATE_LIMIT_TPS=float(os.getenv("LLM_RATE_LIMIT_TPS", "1.0")),
+        MEMORY_WINDOW=int(os.getenv("FORT_GYM_MEMORY_WINDOW", "10")),
     )
 
 

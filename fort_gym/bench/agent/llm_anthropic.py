@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import json
+import os
 import time
 from importlib import import_module
 from typing import Any, Dict, Optional
 
 from .base import Agent, register_agent
+from .memory import MemoryManager
 from ..config import get_settings
 from ..env.actions import ACTION_TOOL_SPEC, parse_action, system_prompt_v1
 
@@ -262,6 +264,15 @@ class AnthropicKeystrokeAgent(Agent):
             raise RuntimeError("ANTHROPIC_API_KEY not configured")
         self._client = None
         self._last_call = 0.0
+        self._memory = MemoryManager(window_size=self._resolve_memory_window())
+        self._pending_observation: Optional[str] = None
+        self._pending_action: Optional[Dict[str, Any]] = None
+
+    def _resolve_memory_window(self) -> int:
+        env_value = os.getenv("FORT_GYM_MEMORY_WINDOW")
+        if env_value is not None:
+            return int(env_value)
+        return self._settings.MEMORY_WINDOW
 
     def _rate_limit(self) -> None:
         limit = self._settings.LLM_RATE_LIMIT_TPS
@@ -290,7 +301,16 @@ class AnthropicKeystrokeAgent(Agent):
         """Decide on a keystroke action based on screen observation."""
         # For keystroke mode, obs_text already contains screen + status
         # We don't need to include full JSON state since screen is the primary input
-        content = obs_text
+        if self._pending_observation is not None and self._pending_action is not None:
+            self._memory.add_step(self._pending_observation, self._pending_action, obs_text)
+
+        memory_context = self._memory.get_context()
+        if memory_context:
+            content = f"{memory_context}\n\n== CURRENT OBSERVATION ==\n{obs_text}"
+        else:
+            content = obs_text
+
+        base_content = content
         last_error: Optional[Exception] = None
 
         for attempt in range(3):
@@ -323,21 +343,26 @@ class AnthropicKeystrokeAgent(Agent):
             # Validate it's a KEYSTROKE action
             if tool_payload.get("type") != "KEYSTROKE":
                 last_error = ValueError(f"Expected KEYSTROKE action, got {tool_payload.get('type')}")
-                content += f"\n\nYou must return a KEYSTROKE action. Try again."
+                content = base_content + "\n\nYou must return a KEYSTROKE action. Try again."
                 continue
 
             params = tool_payload.get("params", {})
             keys = params.get("keys", [])
             if not keys or not isinstance(keys, list):
                 last_error = ValueError("KEYSTROKE action must have non-empty keys list")
-                content += f"\n\nKEYSTROKE action requires a non-empty keys list. Try again."
+                content = base_content + "\n\nKEYSTROKE action requires a non-empty keys list. Try again."
                 continue
 
             try:
-                return parse_action(tool_payload)
+                action = parse_action(tool_payload)
             except ValueError as exc:
                 last_error = exc
-                content += f"\n\nPrevious response invalid ({exc}). Provide valid KEYSTROKE action."
+                content = base_content + f"\n\nPrevious response invalid ({exc}). Provide valid KEYSTROKE action."
+                continue
+
+            self._pending_observation = obs_text
+            self._pending_action = action
+            return action
 
         raise RuntimeError(f"Anthropic keystroke agent failed: {last_error}")
 
