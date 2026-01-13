@@ -6,10 +6,11 @@ import json
 import os
 import time
 from importlib import import_module
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from .base import Agent, register_agent
 from .memory import MemoryManager
+from .tools import ToolManager
 from ..config import get_settings
 from ..env.actions import ACTION_TOOL_SPEC, parse_action, system_prompt_v1
 
@@ -50,6 +51,10 @@ You see the current game screen as text (80 columns x 25 rows). The screen shows
 
 ## Actions
 Return a KEYSTROKE action with a list of key names to press in sequence.
+
+## Tools
+You can call the df_wiki tool to look up gameplay rules and commands. Use it when you
+are unsure about designations, buildings, orders, stockpiles, or other mechanics.
 
 ## Key Reference
 
@@ -267,6 +272,8 @@ class AnthropicKeystrokeAgent(Agent):
         self._memory = MemoryManager(window_size=self._resolve_memory_window())
         self._pending_observation: Optional[str] = None
         self._pending_action: Optional[Dict[str, Any]] = None
+        self._tool_manager = ToolManager(["df_wiki"])
+        self._tool_events: List[Dict[str, Any]] = []
 
     def _resolve_memory_window(self) -> int:
         env_value = os.getenv("FORT_GYM_MEMORY_WINDOW")
@@ -310,10 +317,13 @@ class AnthropicKeystrokeAgent(Agent):
         else:
             content = obs_text
 
-        base_content = content
         last_error: Optional[Exception] = None
+        messages: List[Dict[str, Any]] = [
+            {"role": "user", "content": [{"type": "text", "text": content}]}
+        ]
+        tools = [KEYSTROKE_ANTHROPIC_TOOL, *self._tool_manager.tool_specs()]
 
-        for attempt in range(3):
+        for _ in range(5):
             self._rate_limit()
             client = self._client_instance()
             response = client.messages.create(
@@ -321,50 +331,118 @@ class AnthropicKeystrokeAgent(Agent):
                 max_tokens=self._settings.LLM_MAX_TOKENS,
                 temperature=self._settings.LLM_TEMP,
                 system=KEYSTROKE_SYSTEM_PROMPT,
-                tools=[KEYSTROKE_ANTHROPIC_TOOL],
-                messages=[
-                    {
-                        "role": "user",
-                        "content": [{"type": "text", "text": content}],
-                    }
-                ],
+                tools=tools,
+                messages=messages,
             )
 
             tool_payload = None
+            tool_uses = []
             for item in response.content:
-                if item.type == "tool_use" and item.name == "submit_action":
-                    tool_payload = item.input
-                    break
+                if item.type == "tool_use":
+                    if item.name == "submit_action":
+                        tool_payload = item.input
+                    else:
+                        tool_uses.append(item)
 
-            if tool_payload is None:
-                last_error = ValueError("Model did not use submit_action tool")
+            if tool_payload is not None:
+                # Validate it's a KEYSTROKE action
+                if tool_payload.get("type") != "KEYSTROKE":
+                    last_error = ValueError(
+                        f"Expected KEYSTROKE action, got {tool_payload.get('type')}"
+                    )
+                    messages.append({"role": "assistant", "content": response.content})
+                    messages.append(
+                        {
+                            "role": "user",
+                            "content": [{"type": "text", "text": "You must return a KEYSTROKE action."}],
+                        }
+                    )
+                    continue
+
+                params = tool_payload.get("params", {})
+                keys = params.get("keys", [])
+                if not keys or not isinstance(keys, list):
+                    last_error = ValueError("KEYSTROKE action must have non-empty keys list")
+                    messages.append({"role": "assistant", "content": response.content})
+                    messages.append(
+                        {
+                            "role": "user",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": "KEYSTROKE action requires a non-empty keys list.",
+                                }
+                            ],
+                        }
+                    )
+                    continue
+
+                try:
+                    action = parse_action(tool_payload)
+                except ValueError as exc:
+                    last_error = exc
+                    messages.append({"role": "assistant", "content": response.content})
+                    messages.append(
+                        {
+                            "role": "user",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": f"Previous response invalid ({exc}). Provide valid KEYSTROKE action.",
+                                }
+                            ],
+                        }
+                    )
+                    continue
+
+                self._pending_observation = obs_text
+                self._pending_action = action
+                return action
+
+            if tool_uses:
+                messages.append({"role": "assistant", "content": response.content})
+                tool_results = []
+                for tool_use in tool_uses:
+                    tool_input = tool_use.input or {}
+                    question = tool_input.get("question", "")
+                    if not isinstance(question, str):
+                        question = str(question)
+                    result = self._tool_manager.query(tool_use.name, question)
+                    self._tool_events.append(
+                        {
+                            "tool": tool_use.name,
+                            "input": tool_input,
+                            "output": result,
+                        }
+                    )
+                    tool_results.append(
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": tool_use.id,
+                            "content": result,
+                        }
+                    )
+
+                messages.append({"role": "user", "content": tool_results})
                 continue
 
-            # Validate it's a KEYSTROKE action
-            if tool_payload.get("type") != "KEYSTROKE":
-                last_error = ValueError(f"Expected KEYSTROKE action, got {tool_payload.get('type')}")
-                content = base_content + "\n\nYou must return a KEYSTROKE action. Try again."
-                continue
-
-            params = tool_payload.get("params", {})
-            keys = params.get("keys", [])
-            if not keys or not isinstance(keys, list):
-                last_error = ValueError("KEYSTROKE action must have non-empty keys list")
-                content = base_content + "\n\nKEYSTROKE action requires a non-empty keys list. Try again."
-                continue
-
-            try:
-                action = parse_action(tool_payload)
-            except ValueError as exc:
-                last_error = exc
-                content = base_content + f"\n\nPrevious response invalid ({exc}). Provide valid KEYSTROKE action."
-                continue
-
-            self._pending_observation = obs_text
-            self._pending_action = action
-            return action
+            last_error = ValueError("Model did not return an action")
+            messages.append({"role": "assistant", "content": response.content})
+            messages.append(
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": "Please use the submit_action tool to send keystrokes."}
+                    ],
+                }
+            )
 
         raise RuntimeError(f"Anthropic keystroke agent failed: {last_error}")
+
+    def pop_tool_events(self) -> List[Dict[str, Any]]:
+        events = list(self._tool_events)
+        self._tool_events.clear()
+        return events
 
 
 register_agent("anthropic-keystroke", lambda: AnthropicKeystrokeAgent())

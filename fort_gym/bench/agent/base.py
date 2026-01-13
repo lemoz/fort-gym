@@ -17,6 +17,10 @@ class Agent(ABC):
     def decide(self, obs_text: str, obs_json: Dict[str, Any]) -> Dict[str, Any]:
         """Return exactly one action dict based on the observation."""
 
+    def pop_tool_events(self) -> List[Dict[str, Any]]:
+        """Return tool-call events emitted during the last decision step."""
+        return []
+
 
 class RandomAgent(Agent):
     """Random policy emitting syntactically valid actions."""

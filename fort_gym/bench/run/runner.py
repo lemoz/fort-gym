@@ -221,6 +221,18 @@ def run_once(
                 publish_event(step, "state", {"state": obs_json, "text": obs_text}, events)
 
                 raw_action = agent.decide(obs_text, obs_json)
+                tool_events = agent.pop_tool_events()
+                for tool_event in tool_events:
+                    publish_event(
+                        step,
+                        "tool_call",
+                        {
+                            "tool": tool_event.get("tool"),
+                            "input": tool_event.get("input"),
+                            "output": tool_event.get("output"),
+                        },
+                        events,
+                    )
                 publish_event(step, "action", {"raw": raw_action}, events)
 
                 if not isinstance(raw_action, dict):
