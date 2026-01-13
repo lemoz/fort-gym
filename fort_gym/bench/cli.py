@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import uvicorn
 
 from .agent.base import RandomAgent
 from .api.server import app as fastapi_app
+from .config import get_settings
 from .run.runner import run_once
 
 try:  # pragma: no cover - exercised in runtime environments
@@ -40,9 +42,12 @@ app = typer.Typer(name="fort-gym")
 
 
 @app.command()
-def api(port: int = 8000, reload: bool = True) -> None:
+def api(port: int = 8000, reload: bool = True, memory_window: int | None = None) -> None:
     """Start the FastAPI development server."""
 
+    if memory_window is not None:
+        os.environ["FORT_GYM_MEMORY_WINDOW"] = str(memory_window)
+        get_settings.cache_clear()  # type: ignore[attr-defined]
     uvicorn.run("fort_gym.bench.api.server:app", port=port, reload=reload)
 
 
