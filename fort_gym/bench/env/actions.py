@@ -108,6 +108,10 @@ class NoteAction(BaseAction):
     type: Literal["NOTE"]
 
 
+class WaitAction(BaseAction):
+    type: Literal["WAIT"]
+
+
 class KeystrokeAction(BaseAction):
     """Raw keystroke input action for direct game control."""
     type: Literal["KEYSTROKE"]
@@ -124,6 +128,7 @@ ActionUnion = Annotated[
         AssignAction,
         AlertAction,
         NoteAction,
+        WaitAction,
         KeystrokeAction,
     ],
     Field(discriminator="type"),
@@ -134,7 +139,18 @@ class ActionModel(BaseModel):
     action: ActionUnion
 
 
-ALLOWED_TYPES = {"DIG", "BUILD", "ZONE", "STOCKPILE", "ORDER", "ASSIGN", "ALERT", "NOTE", "KEYSTROKE"}
+ALLOWED_TYPES = {
+    "DIG",
+    "BUILD",
+    "ZONE",
+    "STOCKPILE",
+    "ORDER",
+    "ASSIGN",
+    "ALERT",
+    "NOTE",
+    "WAIT",
+    "KEYSTROKE",
+}
 
 
 def parse_action(obj_or_str: Dict[str, Any] | str) -> Dict[str, Any]:
@@ -212,7 +228,17 @@ ACTION_TOOL_SPEC = {
         "properties": {
             "type": {
                 "type": "string",
-                "enum": ["DIG", "BUILD", "ZONE", "STOCKPILE", "ORDER", "ASSIGN", "ALERT", "NOTE"],
+                "enum": [
+                    "DIG",
+                    "BUILD",
+                    "ZONE",
+                    "STOCKPILE",
+                    "ORDER",
+                    "ASSIGN",
+                    "ALERT",
+                    "NOTE",
+                    "WAIT",
+                ],
             },
             "params": {"type": "object"},
             "intent": {"type": "string"},
