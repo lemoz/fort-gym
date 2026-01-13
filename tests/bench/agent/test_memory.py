@@ -8,6 +8,15 @@ def test_memory_context_empty() -> None:
     assert memory.get_context() == ""
 
 
+def test_memory_window_zero_disables_memory() -> None:
+    memory = MemoryManager(window_size=0)
+    memory.add_step("obs one", {"type": "KEYSTROKE", "params": {"keys": ["A"]}}, "res one")
+
+    assert memory.get_context() == ""
+    assert memory.summary == ""
+    assert memory.recent_steps == []
+
+
 def test_memory_window_and_summary() -> None:
     memory = MemoryManager(window_size=2, summary_max_chars=500, step_max_chars=80)
     memory.add_step("obs one", {"type": "KEYSTROKE", "params": {"keys": ["A"]}}, "res one")

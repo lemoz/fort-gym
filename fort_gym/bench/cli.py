@@ -69,6 +69,18 @@ def mock_run(
 
 
 @app.command()
+def experiment(config: str) -> None:
+    """Run an experiment from a YAML configuration file."""
+
+    from .experiment.runner import ExperimentRunner
+
+    runner = ExperimentRunner()
+    result = runner.run_from_path(config)
+    typer.echo(result.experiment_id)
+    typer.echo(result.artifacts_dir)
+
+
+@app.command()
 def routes() -> None:
     """List API routes for sanity checking."""
 

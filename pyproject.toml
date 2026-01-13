@@ -16,6 +16,7 @@ dependencies = [
   "fastapi",
   "uvicorn[standard]",
   "pydantic>=2",
+  "pyyaml",
   "typer",
   "httpx",
   "pytest"
