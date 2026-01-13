@@ -38,6 +38,8 @@ class Executor:
             valid, reason = validate_action(current_state, action)
             if not valid:
                 raise ValueError(f"Invalid action: {reason}")
+            if action.get("type") == "WAIT":
+                return {"accepted": True, "state": current_state}
             new_state = self._mock_env.apply(action)
             return {"accepted": True, "state": new_state}
 
@@ -51,6 +53,9 @@ class Executor:
 
             action_type = action.get("type")
             params = action.get("params", {})
+
+            if action_type == "WAIT":
+                return {"accepted": True, "state": current_state}
 
             if action_type == "DIG":
                 area = params.get("area", (0, 0, 0))
