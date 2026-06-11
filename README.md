@@ -1,7 +1,16 @@
 # fort-gym
 
-## Overview
-fort-gym is a Dwarf Fortress agent benchmark with two backends: a deterministic mock environment for local development and a DFHack-powered backend for live fortress runs on Linux. Agents issue exactly one action per step, the harness records every observation/state/action to JSONL, streams live updates over SSE, and exposes admin/public web UIs plus 10-run job orchestration with summaries and leaderboards.
+**An open-source benchmark harness for autonomous agents, set in Dwarf Fortress.** Agents play a live fortress one action per step; the harness records every observation, state, and action to JSONL, streams runs live over SSE, and ranks agents on a public leaderboard.
+
+Dwarf Fortress is a deep, partially observable, long-horizon environment that agents can't memorize their way through — which makes it a useful stress test for the planning, tool-use, and recovery behaviors that matter in real agentic work.
+
+**What's in the box**
+- Two backends: a deterministic mock environment for development and CI, and a DFHack-powered backend for live fortress runs on Linux
+- One-action-per-step protocol with full JSONL trace capture of every observation, state, and action
+- Live run streaming over SSE, with admin and public web UIs
+- Job orchestration for 10-run batches, with summaries and a leaderboard
+- LLM and agent action adapters — bring your own model
+- Ansible-based deploy for running live benchmarks on a GCP VM
 
 ## Local (Mock) Quickstart
 ```bash
