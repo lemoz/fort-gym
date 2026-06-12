@@ -1,0 +1,87 @@
+from __future__ import annotations
+
+from types import SimpleNamespace
+from typing import Any
+
+from fort_gym.bench.agent.llm_anthropic import AnthropicActionAgent
+from fort_gym.bench.config import get_settings
+
+
+class _FakeMessages:
+    def __init__(self) -> None:
+        self.requests: list[dict[str, Any]] = []
+
+    def create(self, **kwargs: Any) -> Any:
+        self.requests.append(kwargs)
+        return SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="submit_action",
+                    input={
+                        "type": "WAIT",
+                        "params": {},
+                        "intent": "wait for the fortress state to advance",
+                        "advance_ticks": 10,
+                    },
+                )
+            ],
+            usage=SimpleNamespace(input_tokens=1234, output_tokens=56),
+        )
+
+
+class _FakeAnthropicClient:
+    last_instance: "_FakeAnthropicClient | None" = None
+
+    def __init__(self, api_key: str) -> None:
+        self.api_key = api_key
+        self.messages = _FakeMessages()
+        _FakeAnthropicClient.last_instance = self
+
+
+def test_anthropic_default_model_tracks_current_sonnet(monkeypatch) -> None:
+    monkeypatch.delenv("ANTHROPIC_MODEL", raising=False)
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    try:
+        assert get_settings().ANTHROPIC_MODEL == "claude-sonnet-4-6"
+    finally:
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+
+def test_anthropic_agent_records_usage_event(monkeypatch) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.delenv("ANTHROPIC_MODEL", raising=False)
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "anthropic"
+        return SimpleNamespace(Anthropic=_FakeAnthropicClient)
+
+    monkeypatch.setattr(
+        "fort_gym.bench.agent.llm_anthropic.import_module",
+        fake_import_module,
+    )
+
+    try:
+        agent = AnthropicActionAgent()
+        action = agent.decide("mock observation", {"drink": 100})
+        events = agent.pop_tool_events()
+    finally:
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["type"] == "WAIT"
+    assert events == [
+        {
+            "tool": "anthropic.messages.create",
+            "input": {
+                "model": "claude-sonnet-4-6",
+                "max_tokens": 512,
+                "temperature": 0.1,
+            },
+            "output": {"usage": {"input_tokens": 1234, "output_tokens": 56}},
+        }
+    ]
+    assert _FakeAnthropicClient.last_instance is not None
+    assert _FakeAnthropicClient.last_instance.api_key == "test-key"
+    request = _FakeAnthropicClient.last_instance.messages.requests[0]
+    assert request["model"] == "claude-sonnet-4-6"

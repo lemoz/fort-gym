@@ -52,6 +52,14 @@ fort-gym scenario-run drink-scarcity
 The scenario starts the mock fortress below the safe drink threshold and writes
 assertion results into `summary.json` under `scenario_assertions`.
 
+To run Claude on the mock backend, install the optional agent dependencies:
+```bash
+python -m pip install -e '.[agent]'
+```
+
+Then see `examples/claude-sonnet-4-6-mock/` for a committed Sonnet 4.6 trace,
+the exact one-step run command, and request cost estimate.
+
 ## Mac Local Development with DFHack
 
 For local development on macOS using the **Lazy Mac Pack** with DFHack, see **[MAC_SETUP.md](MAC_SETUP.md)** for complete instructions including:

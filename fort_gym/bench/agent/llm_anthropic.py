@@ -186,6 +186,48 @@ KEYSTROKE_ANTHROPIC_TOOL = {
 }
 
 
+def _usage_payload(response: Any) -> Dict[str, int]:
+    usage = getattr(response, "usage", None)
+    if usage is None:
+        return {}
+    keys = (
+        "input_tokens",
+        "output_tokens",
+        "cache_creation_input_tokens",
+        "cache_read_input_tokens",
+    )
+    payload: Dict[str, int] = {}
+    for key in keys:
+        value = getattr(usage, key, None)
+        if value is not None:
+            payload[key] = int(value)
+    return payload
+
+
+def _append_usage_event(
+    events: List[Dict[str, Any]],
+    response: Any,
+    *,
+    model: str,
+    max_tokens: int,
+    temperature: float,
+) -> None:
+    usage = _usage_payload(response)
+    if not usage:
+        return
+    events.append(
+        {
+            "tool": "anthropic.messages.create",
+            "input": {
+                "model": model,
+                "max_tokens": max_tokens,
+                "temperature": temperature,
+            },
+            "output": {"usage": usage},
+        }
+    )
+
+
 class AnthropicActionAgent(Agent):
     """Calls Anthropic Messages API with tool-use for submit_action."""
 
@@ -195,6 +237,7 @@ class AnthropicActionAgent(Agent):
             raise RuntimeError("ANTHROPIC_API_KEY not configured")
         self._client = None
         self._last_call = 0.0
+        self._tool_events: List[Dict[str, Any]] = []
 
     def _rate_limit(self) -> None:
         limit = self._settings.LLM_RATE_LIMIT_TPS
@@ -239,6 +282,13 @@ class AnthropicActionAgent(Agent):
                     }
                 ],
             )
+            _append_usage_event(
+                self._tool_events,
+                response,
+                model=self._settings.ANTHROPIC_MODEL,
+                max_tokens=self._settings.LLM_MAX_TOKENS,
+                temperature=self._settings.LLM_TEMP,
+            )
 
             tool_payload = None
             for item in response.content:
@@ -255,6 +305,11 @@ class AnthropicActionAgent(Agent):
                 content += f"\n\nPrevious response invalid ({exc}). Provide one action."
 
         raise RuntimeError(f"Anthropic agent failed to produce action: {last_error}")
+
+    def pop_tool_events(self) -> List[Dict[str, Any]]:
+        events = list(self._tool_events)
+        self._tool_events.clear()
+        return events
 
 
 register_agent("anthropic", lambda: AnthropicActionAgent())
@@ -333,6 +388,13 @@ class AnthropicKeystrokeAgent(Agent):
                 system=KEYSTROKE_SYSTEM_PROMPT,
                 tools=tools,
                 messages=messages,
+            )
+            _append_usage_event(
+                self._tool_events,
+                response,
+                model=self._settings.ANTHROPIC_MODEL,
+                max_tokens=self._settings.LLM_MAX_TOKENS,
+                temperature=self._settings.LLM_TEMP,
             )
 
             tool_payload = None
