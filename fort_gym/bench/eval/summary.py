@@ -15,6 +15,7 @@ class RunSummary(BaseModel):
     run_id: str
     model: str = "unknown"
     backend: str = "unknown"
+    scenario: Optional[str] = None
     steps: int = 0
     duration_ticks: int = 0
     peak_pop: int = 0
@@ -24,6 +25,7 @@ class RunSummary(BaseModel):
     availability_score: float = 0.0
     total_score: float = 0.0
     milestones: List[Dict[str, Any]] = Field(default_factory=list)
+    scenario_assertions: List[Dict[str, Any]] = Field(default_factory=list)
 
 
 def _model_dump(model: BaseModel) -> Dict[str, Any]:

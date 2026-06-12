@@ -44,6 +44,14 @@ FORT_GYM_INSECURE_ADMIN=1 fort-gym api --no-reload
 Artifacts (trace JSONL + summary) land under `fort_gym/artifacts/<run_id>/`. You
 can replay them via the public UI (`/`) or inspect the leaderboard (`/leaderboard`).
 
+Run the built-in drink-scarcity scenario pack with assertion checks:
+```bash
+fort-gym scenario-run drink-scarcity
+```
+
+The scenario starts the mock fortress below the safe drink threshold and writes
+assertion results into `summary.json` under `scenario_assertions`.
+
 ## Mac Local Development with DFHack
 
 For local development on macOS using the **Lazy Mac Pack** with DFHack, see **[MAC_SETUP.md](MAC_SETUP.md)** for complete instructions including:

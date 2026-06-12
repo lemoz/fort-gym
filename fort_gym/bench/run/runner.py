@@ -16,6 +16,7 @@ from ..env.dfhack_client import DFHackClient, DFHackError, DFHackUnavailableErro
 from ..env.encoder import encode_observation
 from ..env.executor import Executor
 from ..env.mock_env import MockEnvironment
+from ..env.scenarios import evaluate_scenario_assertions, get_mock_scenario
 from ..env.state_reader import StateReader
 from ..eval import metrics, milestones, scoring
 from ..eval.summary import RunSummary, summarize
@@ -39,11 +40,14 @@ def run_once(
     run_id: Optional[str] = None,
     registry: Optional[RunRegistry] = None,
     loop: Optional[asyncio.AbstractEventLoop] = None,
+    scenario: Optional[str] = None,
 ) -> str:
     """Execute a run and persist a JSONL trace while streaming events."""
 
     settings = get_settings()
     backend_name = env or backend
+    if scenario and backend_name != "mock":
+        raise ValueError("Scenarios are currently supported only by the mock backend")
     ticks = ticks_per_step if ticks_per_step is not None else settings.TICKS_PER_STEP
     run_identifier = run_id or uuid.uuid4().hex
     artifacts_dir = _artifacts_root() / run_identifier
@@ -84,7 +88,7 @@ def run_once(
         return ""
 
     if backend_name == "mock":
-        mock_env = MockEnvironment()
+        mock_env = MockEnvironment(scenario_name=scenario)
         mock_env.reset(seed=123)
         executor = Executor(mock_env=mock_env)
 
@@ -397,6 +401,14 @@ def run_once(
         summary = summarize(trace_path)
         summary.model = model
         summary.backend = backend_name
+        if scenario:
+            summary.scenario = scenario
+            scenario_pack = get_mock_scenario(scenario)
+            summary_payload = _dump_model(summary)
+            summary.scenario_assertions = evaluate_scenario_assertions(
+                scenario_pack,
+                summary=summary_payload,
+            )
         summary_path = trace_path.with_name("summary.json")
         summary_path.write_text(json.dumps(_dump_model(summary), indent=2), encoding="utf-8")
         if registry:
