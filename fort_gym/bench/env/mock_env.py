@@ -6,6 +6,8 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 import random
 
+from .scenarios import MockScenario, get_mock_scenario
+
 
 @dataclass
 class MockEnvironment:
@@ -18,16 +20,19 @@ class MockEnvironment:
     risks: List[str] = field(default_factory=list)
     reminders: List[str] = field(default_factory=list)
     recent_events: List[str] = field(default_factory=list)
+    scenario_name: Optional[str] = None
     rng: random.Random = field(init=False)
 
     def __post_init__(self) -> None:
         self.rng = random.Random(self.seed)
 
-    def reset(self, seed: Optional[int] = None) -> None:
+    def reset(self, seed: Optional[int] = None, scenario_name: Optional[str] = None) -> None:
         """Reset environment to deterministic seed."""
 
         if seed is not None:
             self.seed = seed
+        if scenario_name is not None:
+            self.scenario_name = scenario_name
         self.rng.seed(self.seed)
         self.time = 0
         self.population = 7
@@ -35,6 +40,22 @@ class MockEnvironment:
         self.risks = []
         self.reminders = []
         self.recent_events = []
+        if self.scenario_name:
+            self._apply_scenario(get_mock_scenario(self.scenario_name))
+
+    def _apply_scenario(self, scenario: MockScenario) -> None:
+        initial = scenario.initial_state
+        if "time" in initial:
+            self.time = int(initial["time"])
+        if "population" in initial:
+            self.population = int(initial["population"])
+        if isinstance(initial.get("stocks"), dict):
+            self.stocks.update(initial["stocks"])
+        if isinstance(initial.get("risks"), list):
+            self.risks = [str(item) for item in initial["risks"]]
+        if isinstance(initial.get("reminders"), list):
+            self.reminders = [str(item) for item in initial["reminders"]]
+        self.recent_events.append(f"Scenario loaded: {scenario.name}")
 
     def observe(self) -> Dict[str, Any]:
         """Return current observable state."""
@@ -46,6 +67,7 @@ class MockEnvironment:
             "risks": list(self.risks),
             "reminders": list(self.reminders),
             "recent_events": list(self.recent_events[-5:]),
+            "scenario": self.scenario_name,
             "dwarves": [
                 {"name": f"Dwarf {i+1}", "mood": "content"}
                 for i in range(self.population)

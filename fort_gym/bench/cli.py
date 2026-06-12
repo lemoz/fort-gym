@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import socket
 from pathlib import Path
@@ -11,6 +12,7 @@ import uvicorn
 from .agent.base import RandomAgent
 from .api.server import app as fastapi_app
 from .config import get_settings
+from .env.scenarios import get_mock_scenario
 from .run.runner import run_once
 from .run.storage import RUN_REGISTRY, RunRegistry
 
@@ -150,6 +152,41 @@ def mock_run(
         ticks_per_step=ticks_per_step,
     )
     typer.echo(run_id)
+
+
+@app.command("scenario-run")
+def scenario_run(
+    name: str,
+    max_steps: int = 3,
+    ticks_per_step: int = 10,
+) -> None:
+    """Run a built-in mock scenario pack and report assertion results."""
+
+    scenario = get_mock_scenario(name)
+    run_id = run_once(
+        RandomAgent(safe=True),
+        backend="mock",
+        model="random",
+        max_steps=max_steps,
+        ticks_per_step=ticks_per_step,
+        scenario=scenario.name,
+    )
+    summary_path = Path(get_settings().ARTIFACTS_DIR).resolve() / run_id / "summary.json"
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    assertions = summary.get("scenario_assertions") or []
+    failures = [item for item in assertions if not item.get("ok")]
+
+    typer.echo(f"Scenario: {scenario.name}")
+    typer.echo(f"Run: {run_id}")
+    typer.echo(f"Summary: {summary_path}")
+    for item in assertions:
+        status = "PASS" if item.get("ok") else "FAIL"
+        typer.echo(
+            f"  [{status}] {item.get('path')} {item.get('op')} "
+            f"{item.get('expected')} (actual: {item.get('actual')})"
+        )
+    if failures:
+        raise typer.Exit(1)
 
 
 @app.command()
