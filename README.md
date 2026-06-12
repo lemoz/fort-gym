@@ -14,12 +14,31 @@ Dwarf Fortress is a deep, partially observable, long-horizon environment that ag
 
 ## Local (Mock) Quickstart
 ```bash
-pip install -e .[dev]
-export FORT_GYM_INSECURE_ADMIN=1   # dev-only; in prod set FORT_GYM_ADMIN_PASSWORD
-fort-gym api                       # API on :8000
-# open http://127.0.0.1:8000/admin and start a mock run (model=fake|random)
+git clone https://github.com/lemoz/fort-gym.git
+cd fort-gym
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e '.[dev]'
+fort-gym quickstart
 ```
-Artifacts (trace JSONL + summary) land under `fort_gym/artifacts/<run_id>/`. You can replay them via the public UI (`/`) or inspect the leaderboard (`/leaderboard`).
+
+The quickstart command runs a local mock benchmark, records the trace and summary,
+creates a local public share token, then serves the API on `127.0.0.1:8000`. Open
+`http://127.0.0.1:8000/leaderboard` to inspect the leaderboard. This path does not
+require DFHack or an API key.
+
+If port 8000 is already in use, `fort-gym quickstart` automatically serves on the
+next available localhost port. You can also choose one explicitly with
+`fort-gym quickstart --port 8018`.
+
+If you only want to generate the run artifacts and start the server later:
+```bash
+fort-gym quickstart --no-serve
+FORT_GYM_INSECURE_ADMIN=1 fort-gym api --no-reload
+```
+
+Artifacts (trace JSONL + summary) land under `fort_gym/artifacts/<run_id>/`. You
+can replay them via the public UI (`/`) or inspect the leaderboard (`/leaderboard`).
 
 ## Mac Local Development with DFHack
 
