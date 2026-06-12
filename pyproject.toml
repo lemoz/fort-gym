@@ -40,8 +40,8 @@ dev = [
 fort-gym = "fort_gym.bench.cli:app"
 
 [project.urls]
-Homepage = "https://github.com/your-org/fort-gym"
-Documentation = "https://github.com/your-org/fort-gym/tree/main/docs"
+Homepage = "https://github.com/lemoz/fort-gym"
+Documentation = "https://github.com/lemoz/fort-gym/tree/main/docs"
 
 [tool.setuptools.packages.find]
 where = ["."]
