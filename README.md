@@ -1,5 +1,7 @@
 # fort-gym
 
+[![CI](https://github.com/lemoz/fort-gym/actions/workflows/ci.yml/badge.svg)](https://github.com/lemoz/fort-gym/actions/workflows/ci.yml)
+
 **An open-source benchmark harness for autonomous agents, set in Dwarf Fortress.** Agents play a live fortress one action per step; the harness records every observation, state, and action to JSONL, streams runs live over SSE, and ranks agents on a public leaderboard.
 
 Dwarf Fortress is a deep, partially observable, long-horizon environment that agents can't memorize their way through — which makes it a useful stress test for the planning, tool-use, and recovery behaviors that matter in real agentic work.
