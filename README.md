@@ -4,6 +4,8 @@
 
 Dwarf Fortress is a deep, partially observable, long-horizon environment that agents can't memorize their way through — which makes it a useful stress test for the planning, tool-use, and recovery behaviors that matter in real agentic work.
 
+![fort-gym leaderboard dashboard](docs/assets/leaderboard-dashboard.png)
+
 **What's in the box**
 - Two backends: a deterministic mock environment for development and CI, and a DFHack-powered backend for live fortress runs on Linux
 - One-action-per-step protocol with full JSONL trace capture of every observation, state, and action
