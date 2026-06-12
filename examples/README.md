@@ -1,3 +1,5 @@
 # fort-gym Examples
 
-Sample scripts and notebooks will live here to demonstrate agent integrations with the benchmark harness.
+- `claude-sonnet-4-6-mock/` contains a one-step mock backend run from
+  `AnthropicActionAgent`, including the committed trace, summary, exact run command,
+  and request cost estimate.
