@@ -387,6 +387,9 @@ make vm-test SHA=origin/<branch> LIVE=1
 
 # Full clean-clone live smoke on dfhack-host:
 make vm-live-smoke VM_LIVE_SMOKE_REF=<branch-or-main>
+
+# Full live demo rehearsal with public endpoint checks and packet output:
+make vm-live-demo VM_LIVE_DEMO_REF=<branch-or-main>
 ```
 3. **Merge**: once tested, merge to `main` (PR merge preferred).
 4. **VM deploy**: deploy the exact git ref to production and restart the API:
