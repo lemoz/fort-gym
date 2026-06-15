@@ -4,5 +4,5 @@ from __future__ import annotations
 def test_routes_import() -> None:
     from fort_gym.bench.api.server import app
 
-    paths = sorted(route.path for route in app.routes)
+    paths = sorted(route.path for route in app.routes if hasattr(route, "path"))
     assert "/runs" in "".join(paths)

@@ -278,14 +278,15 @@ See `fort_gym/bench/config.py` for full list.
 ## GCE VM Deployment (dfhack-host)
 
 ### Current VM
+- **GCP project/zone**: `scrolller-307201` / `us-central1-a`
 - **IP**: 34.41.155.134
-- **Web UI**: https://34.41.155.134.nip.io/ (spectator), https://34.41.155.134.nip.io/admin (admin)
-- **Leaderboard**: https://34.41.155.134.nip.io/leaderboard
+- **Web UI**: http://34.41.155.134/ (spectator), http://34.41.155.134/admin (admin)
+- **Leaderboard**: http://34.41.155.134/leaderboard
 - **DFHack RPC**: port 5000 (loopback)
 - **DFHack version**: v0.47.05
 - **Save loaded**: `region1` (reset from seed before runs)
  
-If you don't have a domain yet, `*.nip.io` is a convenient stopgap for real HTTPS certs.
+HTTPS is not currently configured on this VM; Caddy serves the API on port 80.
 
 ### Seed Save Workflow (VM)
 We keep a read-only pristine seed save and reset the runtime save from it before every DFHack run.
@@ -327,10 +328,10 @@ ssh cdossman@34.41.155.134 'systemctl status dfhack-headless fort-gym-api'
 3. **Test the system**:
 ```bash
 # Check API responds
-curl -s https://34.41.155.134.nip.io/health
+curl -s http://34.41.155.134/health
 
 # Start a test run (auto-creates share token for spectator view)
-curl -s -u admin:'<password>' -X POST https://34.41.155.134.nip.io/runs \
+curl -s -u admin:'<password>' -X POST http://34.41.155.134/runs \
   -H "Content-Type: application/json" \
   -d '{"backend": "dfhack", "model": "anthropic-keystroke", "max_steps": 5}'
 ```
@@ -383,12 +384,15 @@ Convenience wrappers live in the Makefile:
 make vm-test SHA=origin/<branch>
 # Optional live DFHack checks:
 make vm-test SHA=origin/<branch> LIVE=1
+
+# Full clean-clone live smoke on dfhack-host:
+make vm-live-smoke VM_LIVE_SMOKE_REF=<branch-or-main>
 ```
 3. **Merge**: once tested, merge to `main` (PR merge preferred).
 4. **VM deploy**: deploy the exact git ref to production and restart the API:
 ```bash
 make vm-deploy SHA=origin/main
-curl -fsSL https://34.41.155.134.nip.io/health
+curl -fsSL http://34.41.155.134/health
 ```
 
 If you must rsync for speed, do it **only** to `~/fort-gym-test` with strict excludes, never `/opt/fort-gym`.
@@ -396,7 +400,7 @@ If you must rsync for speed, do it **only** to `~/fort-gym-test` with strict exc
 ### Creating Public Share Tokens
 Runs must have share tokens to appear in the public UI:
 ```bash
-curl -s -u admin:'<password>' -X POST "https://34.41.155.134.nip.io/runs/{run_id}/share" \
+curl -s -u admin:'<password>' -X POST "http://34.41.155.134/runs/{run_id}/share" \
   -H "Content-Type: application/json" \
   -d '{"scope": ["export", "live", "replay"]}'
 ```

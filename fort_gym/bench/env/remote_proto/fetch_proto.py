@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import argparse
 import os
+import shutil
 import subprocess
+import sys
 from pathlib import Path
 from typing import Iterable
 
@@ -44,34 +46,52 @@ def download_protos(version: str, target: Path) -> list[Path]:
     return downloaded
 
 
-def run_protoc(proto_root: Path, sources_dir: Path, proto_paths: Iterable[Path], output_dir: Path) -> None:
+def flatten_protos(proto_paths: Iterable[Path], target: Path) -> list[Path]:
+    """Copy downloaded protos into one directory for flat Python module generation."""
+
+    if target.exists():
+        shutil.rmtree(target)
+    target.mkdir(parents=True, exist_ok=True)
+    flattened: list[Path] = []
+    for source in proto_paths:
+        dest = target / source.name
+        shutil.copy2(source, dest)
+        flattened.append(dest)
+    return flattened
+
+
+def run_protoc(sources_dir: Path, proto_paths: Iterable[Path], output_dir: Path) -> None:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    (output_dir / "__init__.py").touch()
     args = [
-        "python3",
+        sys.executable,
         "-m",
         "grpc_tools.protoc",
         f"--proto_path={sources_dir}",
-        f"--proto_path={sources_dir / 'library' / 'proto'}",
-        f"--proto_path={sources_dir / 'plugins' / 'remotefortressreader' / 'proto'}",
         f"--python_out={output_dir}",
-    ] + [str(p.relative_to(sources_dir)) for p in proto_paths]
+    ] + [p.name for p in proto_paths]
     print("Running:", " ".join(args))
     subprocess.check_call(args, cwd=sources_dir)
+
+
+def generate_bindings(version: str = DEFAULT_VERSION) -> Path:
+    proto_root = Path(__file__).resolve().parent
+    sources_dir = proto_root / "sources"
+    sources_dir.mkdir(parents=True, exist_ok=True)
+
+    files = download_protos(version, sources_dir)
+    flat_sources = flatten_protos(files, proto_root / "_flat_sources")
+    generated = proto_root / "generated"
+    run_protoc(proto_root / "_flat_sources", flat_sources, generated)
+    print("Generated bindings in", generated)
+    return generated
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--version", default=DEFAULT_VERSION, help="DFHack release tag")
     args = parser.parse_args()
-
-    proto_root = Path(__file__).resolve().parent
-    sources_dir = proto_root / "sources"
-    sources_dir.mkdir(parents=True, exist_ok=True)
-
-    files = download_protos(args.version, sources_dir)
-    generated = proto_root / "gen"
-    generated.mkdir(parents=True, exist_ok=True)
-    run_protoc(proto_root, sources_dir, files, generated)
-    print("Generated bindings in", generated)
+    generate_bindings(args.version)
 
 
 if __name__ == "__main__":  # pragma: no cover - utility entrypoint

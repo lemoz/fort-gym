@@ -23,11 +23,14 @@ fort-gym executes DFHack actions exclusively through curated Lua helpers stored 
 
 The `advance_ticks_exact_external()` function handles tick advancement:
 
-1. Enables `nopause 1` to prevent auto-pausing (required in headless mode)
-2. Unpauses the game via `df.global.pause_state = false`
-3. Polls `df.global.cur_year_tick` until the requested ticks elapse
-4. Re-pauses the game
+1. Enables `nopause 1` to prevent auto-pausing while the smoke check is running
+2. Samples `df.global.cur_year_tick` to see whether the headless game is already moving
+3. Attempts to unpause only if the tick clock is stalled
+4. Polls `df.global.cur_year_tick` until the requested ticks elapse
+5. Attempts to re-pause as best effort and reports whether the final pause state stuck
 
 Timeout is set to `max(10000, ticks * 200)` ms to accommodate slow headless FPS (~5-10 ticks/second).
+On the current `dfhack-host`, pause commands are not durable, so successful advancement is based on
+the observed tick delta rather than the pause flag.
 
 For integration tests that exercise the live DFHack path, set `DFHACK_LIVE=1` before invoking `pytest -k actions_live`.
