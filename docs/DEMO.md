@@ -87,9 +87,10 @@ make vm-live-agent-suite VM_LIVE_AGENT_REF=main \
 ```
 
 The suite writes a Markdown packet and `scorecard.json` with median scores,
-work scores, target-room work progress, public run/replay URLs, and trace
-diagnostics such as invalid actions, status menu exploration, tick-only scoring,
-dig attempts, and ticks advanced.
+work scores, completion scores, target-room designation/completion progress,
+public run/replay URLs, and trace diagnostics such as invalid actions, status
+menu exploration, tick-only scoring, no-mining-progress blockers, dig attempts,
+and ticks advanced.
 
 ## Live sequence
 

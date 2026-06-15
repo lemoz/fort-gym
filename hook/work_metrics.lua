@@ -44,9 +44,12 @@ local target_tiles = 0
 local target_dig_designations = 0
 local target_floor_tiles = 0
 local target_wall_tiles = 0
+local target_hidden_tiles = 0
+local target_visible_tiles = 0
 local target_missing_blocks = 0
 local sx = region.x_count_block
 local sy = region.y_count_block
+local block_count = #region.map_blocks
 
 for tx = rx1, rx2 do
   for ty = ry1, ry2 do
@@ -54,13 +57,21 @@ for tx = rx1, rx2 do
     local bx = math.floor(tx / 16)
     local by = math.floor(ty / 16)
     local index = bx + by * sx + rz * sx * sy
-    local block = region.map_blocks[index]
+    local block = nil
+    if bx >= 0 and by >= 0 and bx < sx and by < sy and index >= 0 and index < block_count then
+      block = region.map_blocks[index]
+    end
     if block then
       local dx = tx % 16
       local dy = ty % 16
       local designation = block.designation[dx][dy]
       if designation and designation.dig ~= no_dig then
         target_dig_designations = target_dig_designations + 1
+      end
+      if designation and designation.hidden then
+        target_hidden_tiles = target_hidden_tiles + 1
+      elseif designation then
+        target_visible_tiles = target_visible_tiles + 1
       end
 
       local tiletype = block.tiletype[dx][dy]
@@ -89,14 +100,43 @@ if df.global.world.jobs and df.global.world.jobs.list then
   end
 end
 
+local citizens_total = 0
+local miners_total = 0
+local citizens_on_target_z = 0
+if df.global.world.units and df.global.world.units.active then
+  for _, unit in ipairs(df.global.world.units.active) do
+    if dfhack.units.isCitizen(unit) and not dfhack.units.isDead(unit) then
+      citizens_total = citizens_total + 1
+      if unit.pos and unit.pos.z == rz then
+        citizens_on_target_z = citizens_on_target_z + 1
+      end
+      if unit.status and unit.status.labors then
+        for labor, enabled in pairs(unit.status.labors) do
+          if enabled and tostring(labor) == 'MINE' then
+            miners_total = miners_total + 1
+            break
+          end
+        end
+      end
+    end
+  end
+end
+
 print(json.encode({
   ok = true,
   target_rect = { rx1, ry1, rz, rx2, ry2, rz },
+  target_z = rz,
+  window_z = df.global.window_z or 0,
   target_tiles = target_tiles,
   target_dig_designations = target_dig_designations,
   target_floor_tiles = target_floor_tiles,
   target_wall_tiles = target_wall_tiles,
+  target_hidden_tiles = target_hidden_tiles,
+  target_visible_tiles = target_visible_tiles,
   target_missing_blocks = target_missing_blocks,
   active_jobs = active_jobs,
   active_dig_jobs = active_dig_jobs,
+  citizens_total = citizens_total,
+  miners_total = miners_total,
+  citizens_on_target_z = citizens_on_target_z,
 }))

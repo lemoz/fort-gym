@@ -24,6 +24,8 @@ def test_work_progress_delta_counts_target_room_progress() -> None:
         "target_floor_tiles_delta": 5,
         "target_wall_tiles_delta": 5,
         "active_dig_jobs_delta": 1,
+        "designation_progress": 11,
+        "completion_progress": 5,
         "work_progress": 11,
     }
 
@@ -48,3 +50,25 @@ def test_composite_score_includes_bounded_work_component() -> None:
     )
 
     assert with_work - without_work == scoring.WORK_WEIGHT
+
+
+def test_composite_score_includes_bounded_completion_component() -> None:
+    without_completion = scoring.composite_score(
+        {
+            "duration_ticks": 0,
+            "peak_pop": 0,
+            "drink_availability": 0,
+            "created_wealth": 0,
+        }
+    )
+    with_completion = scoring.composite_score(
+        {
+            "duration_ticks": 0,
+            "peak_pop": 0,
+            "drink_availability": 0,
+            "created_wealth": 0,
+            "completion_progress": scoring.TARGET_COMPLETION_PROGRESS,
+        }
+    )
+
+    assert with_completion - without_completion == scoring.COMPLETION_WEIGHT

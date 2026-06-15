@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import os
 from typing import Any, Dict, Optional
 
 from .actions import validate_action
 from .dfhack_client import DFHackClient, DFHackUnavailableError
+from ..dfhack_backend import complete_dig_rect as safe_complete_dig_rect
 from ..dfhack_backend import designate_rect as safe_designate_rect
 from ..dfhack_backend import queue_manager_order as safe_queue_manager_order
 from .keystroke_exec import execute_keystroke_action
@@ -66,6 +68,9 @@ class Executor:
                 y2 = y1 + max(1, height) - 1
                 z2 = z + max(1, depth) - 1
                 result = safe_designate_rect("dig", x1, y1, z, x2, y2, z2)
+                if result.get("ok") and os.getenv("FORT_GYM_DFHACK_COMPLETE_DIG", "1") != "0":
+                    completion = safe_complete_dig_rect(x1, y1, z, x2, y2, z2)
+                    result = {**result, "completion": completion}
                 return {
                     "accepted": bool(result.get("ok")),
                     "why": None if result.get("ok") else result.get("error"),
