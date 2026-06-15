@@ -161,6 +161,7 @@ def run_once(
         raise ValueError(f"Unsupported backend: {backend_name}")
 
     previous_state: Optional[Dict[str, Any]] = None
+    baseline_work: Optional[Dict[str, Any]] = None
     action_history: List[Dict[str, Any]] = []  # Track recent actions for keystroke mode memory
     last_action_result: Optional[Dict[str, Any]] = None  # Track previous action result for feedback
     previous_screen = None  # Track previous screen for diff feedback (no type annotation for nonlocal)
@@ -210,6 +211,9 @@ def run_once(
                             ended_at=datetime.utcnow(),
                         )
                     break
+                if baseline_work is None:
+                    work_snapshot = state_before.get("work")
+                    baseline_work = dict(work_snapshot) if isinstance(work_snapshot, dict) else {}
 
                 # Get screen text for keystroke mode
                 screen_text = get_screen_text() if is_keystroke_mode else None
@@ -354,6 +358,13 @@ def run_once(
                 )
 
                 metrics_snapshot = metrics.step_snapshot(advance_state)
+                current_work = advance_state.get("work")
+                metrics_snapshot.update(
+                    metrics.work_progress_delta(
+                        current_work if isinstance(current_work, dict) else {},
+                        baseline_work,
+                    )
+                )
                 metrics_snapshot["run_elapsed_ticks"] = elapsed_ticks_total
                 publish_event(step, "metrics", {"metrics": metrics_snapshot}, events)
 

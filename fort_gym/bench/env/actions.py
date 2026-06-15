@@ -255,7 +255,7 @@ ACTION_TOOL_SPEC = {
 }
 
 
-system_prompt_v1 = """You are the fortress overseer. One action per step. Never return multiple actions or plans.\nWhen unsure, prefer small, safe actions.\nExamples:\n- DIG: {"type":"DIG","params":{"area":[60,18,0],"size":[5,5,1]}}\n- BUILD: {"type":"BUILD","params":{"kind":"CarpenterWorkshop","x":65,"y":22,"z":0}}\n- ORDER: {"type":"ORDER","params":{"at":"Still","job":"BrewDrink","qty":10}}"""
+system_prompt_v1 = """You are the fortress overseer. One action per step. Never return multiple actions or plans.\nWhen unsure, prefer small, safe actions.\nExamples:\n- DIG: {"type":"DIG","params":{"area":[50,35,0],"size":[5,5,1]}}\n- BUILD: {"type":"BUILD","params":{"kind":"CarpenterWorkshop","x":65,"y":22,"z":0}}\n- ORDER: {"type":"ORDER","params":{"at":"Still","job":"BrewDrink","qty":10}}"""
 
 
 __all__ = [

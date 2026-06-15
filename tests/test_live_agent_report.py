@@ -102,26 +102,55 @@ def test_diagnose_actions_flags_live_blockers():
     ]
 
 
+def test_diagnose_actions_flags_tick_only_work_score():
+    diagnostics = cli._diagnose_actions(
+        [
+            {
+                "type": "WAIT",
+                "valid": True,
+                "accepted": True,
+                "ticks_advanced": 500,
+            }
+        ],
+        {
+            "duration_ticks": 500,
+            "work_score": 0.0,
+            "work_progress": 0,
+            "target_floor_tiles_delta": 0,
+            "target_wall_tiles_delta": 0,
+        },
+    )
+
+    assert "no_dig_designation" in diagnostics["blockers"]
+    assert "tick_only_score" in diagnostics["blockers"]
+    assert diagnostics["work_progress"] == 0
+    assert diagnostics["work_score"] == 0.0
+
+
 def test_write_live_agent_suite_artifacts(tmp_path):
     baseline_runs = [
-        {
-            "trial": 1,
-            "model": "fake",
-            "status": "completed",
-            "score": 23.5,
-            "public_run_url": "http://example.test/base-1",
-            "public_replay_url": "http://example.test/base-1/replay",
-            "diagnostics": {"steps": 4, "accepted_actions": 4, "ticks_advanced": 0},
-        },
-        {
-            "trial": 2,
-            "model": "fake",
-            "status": "completed",
-            "score": 23.5,
-            "public_run_url": "http://example.test/base-2",
-            "public_replay_url": "http://example.test/base-2/replay",
-            "diagnostics": {"steps": 4, "accepted_actions": 4, "ticks_advanced": 0},
-        },
+            {
+                "trial": 1,
+                "model": "fake",
+                "status": "completed",
+                "score": 23.5,
+                "work_score": 0.0,
+                "work_progress": 0,
+                "public_run_url": "http://example.test/base-1",
+                "public_replay_url": "http://example.test/base-1/replay",
+                "diagnostics": {"steps": 4, "accepted_actions": 4, "ticks_advanced": 0, "work_progress": 0},
+            },
+            {
+                "trial": 2,
+                "model": "fake",
+                "status": "completed",
+                "score": 23.5,
+                "work_score": 0.0,
+                "work_progress": 0,
+                "public_run_url": "http://example.test/base-2",
+                "public_replay_url": "http://example.test/base-2/replay",
+                "diagnostics": {"steps": 4, "accepted_actions": 4, "ticks_advanced": 0, "work_progress": 0},
+            },
     ]
     variant_runs = {
         "anthropic-keystroke": [
@@ -130,18 +159,22 @@ def test_write_live_agent_suite_artifacts(tmp_path):
                 "model": "anthropic-keystroke",
                 "status": "completed",
                 "score": 29.85,
+                "work_score": 2.0,
+                "work_progress": 5,
                 "public_run_url": "http://example.test/key-1",
                 "public_replay_url": "http://example.test/key-1/replay",
-                "diagnostics": {"steps": 4, "accepted_actions": 4, "ticks_advanced": 508},
+                "diagnostics": {"steps": 4, "accepted_actions": 4, "ticks_advanced": 508, "work_progress": 5},
             },
             {
                 "trial": 2,
                 "model": "anthropic-keystroke",
                 "status": "completed",
                 "score": 23.5,
+                "work_score": 0.0,
+                "work_progress": 0,
                 "public_run_url": "http://example.test/key-2",
                 "public_replay_url": "http://example.test/key-2/replay",
-                "diagnostics": {"steps": 4, "accepted_actions": 4, "ticks_advanced": 0},
+                "diagnostics": {"steps": 4, "accepted_actions": 4, "ticks_advanced": 0, "work_progress": 0},
             },
         ],
         "anthropic-dig-first": [
@@ -150,18 +183,22 @@ def test_write_live_agent_suite_artifacts(tmp_path):
                 "model": "anthropic-dig-first",
                 "status": "completed",
                 "score": 35.0,
+                "work_score": 10.0,
+                "work_progress": 25,
                 "public_run_url": "http://example.test/dig-1",
                 "public_replay_url": "http://example.test/dig-1/replay",
-                "diagnostics": {"steps": 4, "accepted_actions": 4, "ticks_advanced": 920},
+                "diagnostics": {"steps": 4, "accepted_actions": 4, "ticks_advanced": 920, "work_progress": 25},
             },
             {
                 "trial": 2,
                 "model": "anthropic-dig-first",
                 "status": "completed",
                 "score": 34.0,
+                "work_score": 8.0,
+                "work_progress": 20,
                 "public_run_url": "http://example.test/dig-2",
                 "public_replay_url": "http://example.test/dig-2/replay",
-                "diagnostics": {"steps": 4, "accepted_actions": 4, "ticks_advanced": 840},
+                "diagnostics": {"steps": 4, "accepted_actions": 4, "ticks_advanced": 840, "work_progress": 20},
             },
         ],
     }
@@ -190,8 +227,12 @@ def test_write_live_agent_suite_artifacts(tmp_path):
     assert comparison["baseline"]["median_score"] == 23.5
     assert comparison["best_model"] == "anthropic-dig-first"
     assert comparison["best_median_delta"] == 11.0
+    assert comparison["baseline"]["median_work_progress"] == 0.0
+    assert comparison["variants"][1]["median_work_score"] == 9.0
+    assert comparison["variants"][1]["median_work_progress"] == 22.5
     assert markdown_path == tmp_path / "live-agent-suite-test" / "live_agent_suite_report.md"
     assert json_path == tmp_path / "live-agent-suite-test" / "scorecard.json"
     assert "Best model: `anthropic-dig-first`" in text
+    assert "Median work progress: `22.5`" in text
     assert "http://example.test/dig-1" in text
     assert '"scorecard_json"' in json_text

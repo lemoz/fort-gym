@@ -8,7 +8,14 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
-from .scoring import AVAIL_WEIGHT, SURVIVAL_WEIGHT, TARGET_SURVIVAL_TICKS, composite_score
+from .scoring import (
+    AVAIL_WEIGHT,
+    SURVIVAL_WEIGHT,
+    TARGET_SURVIVAL_TICKS,
+    TARGET_WORK_PROGRESS,
+    WORK_WEIGHT,
+    composite_score,
+)
 
 
 class RunSummary(BaseModel):
@@ -23,6 +30,12 @@ class RunSummary(BaseModel):
     created_wealth: Optional[int] = None
     survival_score: float = 0.0
     availability_score: float = 0.0
+    work_score: float = 0.0
+    work_progress: int = 0
+    target_dig_designations_delta: int = 0
+    target_floor_tiles_delta: int = 0
+    target_wall_tiles_delta: int = 0
+    active_dig_jobs_delta: int = 0
     total_score: float = 0.0
     milestones: List[Dict[str, Any]] = Field(default_factory=list)
     scenario_assertions: List[Dict[str, Any]] = Field(default_factory=list)
@@ -65,6 +78,11 @@ def summarize(trace_path: Path) -> RunSummary:
     casualty_spike = False
     hostiles_present = False
     milestones: List[Dict[str, Any]] = []
+    work_progress = 0
+    target_dig_designations_delta = 0
+    target_floor_tiles_delta = 0
+    target_wall_tiles_delta = 0
+    active_dig_jobs_delta = 0
 
     with trace_path.open("r", encoding="utf-8") as handle:
         for line in handle:
@@ -91,6 +109,24 @@ def summarize(trace_path: Path) -> RunSummary:
             elapsed = metrics_snapshot.get("run_elapsed_ticks")
             if elapsed is not None:
                 max_elapsed_ticks = max(max_elapsed_ticks, _to_int(elapsed, default=max_elapsed_ticks))
+
+            work_progress = max(work_progress, _to_int(metrics_snapshot.get("work_progress")))
+            target_dig_designations_delta = max(
+                target_dig_designations_delta,
+                _to_int(metrics_snapshot.get("target_dig_designations_delta")),
+            )
+            target_floor_tiles_delta = max(
+                target_floor_tiles_delta,
+                _to_int(metrics_snapshot.get("target_floor_tiles_delta")),
+            )
+            target_wall_tiles_delta = max(
+                target_wall_tiles_delta,
+                _to_int(metrics_snapshot.get("target_wall_tiles_delta")),
+            )
+            active_dig_jobs_delta = max(
+                active_dig_jobs_delta,
+                _to_int(metrics_snapshot.get("active_dig_jobs_delta")),
+            )
 
             tick_advance = record.get("tick_advance") or {}
             if isinstance(tick_advance, dict) and "ticks_advanced" in tick_advance:
@@ -155,12 +191,14 @@ def summarize(trace_path: Path) -> RunSummary:
         "peak_pop": peak_pop,
         "drink_availability": drink_availability,
         "created_wealth": wealth,
+        "work_progress": work_progress,
         "casualty_spike": casualty_spike,
         "hostiles_present": hostiles_present,
     }
 
     survival_score = (min(duration, TARGET_SURVIVAL_TICKS) / TARGET_SURVIVAL_TICKS) * SURVIVAL_WEIGHT
     availability_score = drink_availability * AVAIL_WEIGHT
+    work_score = (min(work_progress, TARGET_WORK_PROGRESS) / TARGET_WORK_PROGRESS) * WORK_WEIGHT
     total_score = composite_score(summary_payload)
 
     summary = RunSummary(
@@ -172,6 +210,12 @@ def summarize(trace_path: Path) -> RunSummary:
         created_wealth=wealth,
         survival_score=round(survival_score, 2),
         availability_score=round(availability_score, 2),
+        work_score=round(work_score, 2),
+        work_progress=work_progress,
+        target_dig_designations_delta=target_dig_designations_delta,
+        target_floor_tiles_delta=target_floor_tiles_delta,
+        target_wall_tiles_delta=target_wall_tiles_delta,
+        active_dig_jobs_delta=active_dig_jobs_delta,
         total_score=total_score,
         milestones=milestones,
     )

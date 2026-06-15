@@ -402,6 +402,10 @@ make vm-live-agent-suite VM_LIVE_AGENT_REF=<branch-or-main> \
   LIVE_AGENT_MODELS=anthropic-keystroke,anthropic-dig-first \
   LIVE_AGENT_TRIALS=2 LIVE_AGENT_MAX_STEPS=4
 ```
+
+The suite scorecard includes both total score and target-room work metrics from
+`hook/work_metrics.lua`: work score, work progress, dig-designation delta,
+opened floor/wall delta, active dig jobs, and tick-only/no-mining blockers.
 3. **Merge**: once tested, merge to `main` (PR merge preferred).
 4. **VM deploy**: deploy the exact git ref to production and restart the API:
 ```bash

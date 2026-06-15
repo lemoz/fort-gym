@@ -14,6 +14,42 @@ def _to_int(value: Any, default: int = 0) -> int:
         return default
 
 
+def work_progress_delta(
+    current_work: Dict[str, Any] | None,
+    baseline_work: Dict[str, Any] | None,
+) -> Dict[str, int]:
+    """Compute bounded target-region work deltas from live work snapshots."""
+
+    current = current_work or {}
+    baseline = baseline_work or {}
+    designations_delta = max(
+        0,
+        _to_int(current.get("target_dig_designations"))
+        - _to_int(baseline.get("target_dig_designations")),
+    )
+    floor_delta = max(
+        0,
+        _to_int(current.get("target_floor_tiles"))
+        - _to_int(baseline.get("target_floor_tiles")),
+    )
+    wall_delta = max(
+        0,
+        _to_int(baseline.get("target_wall_tiles"))
+        - _to_int(current.get("target_wall_tiles")),
+    )
+    active_dig_jobs_delta = max(
+        0,
+        _to_int(current.get("active_dig_jobs")) - _to_int(baseline.get("active_dig_jobs")),
+    )
+    return {
+        "target_dig_designations_delta": designations_delta,
+        "target_floor_tiles_delta": floor_delta,
+        "target_wall_tiles_delta": wall_delta,
+        "active_dig_jobs_delta": active_dig_jobs_delta,
+        "work_progress": max(designations_delta, floor_delta, wall_delta) + active_dig_jobs_delta,
+    }
+
+
 def step_snapshot(state: Dict[str, Any]) -> Dict[str, Any]:
     """Extract normalized metrics from a raw environment state."""
 
@@ -43,4 +79,20 @@ def step_snapshot(state: Dict[str, Any]) -> Dict[str, Any]:
         "hostiles": bool(hostiles_raw),
         "dead": _to_int(state.get("dead"), default=0),
     }
+    work = state.get("work")
+    if isinstance(work, dict):
+        snapshot["work"] = {
+            "ok": bool(work.get("ok", False)),
+            "target_rect": work.get("target_rect"),
+            "target_tiles": _to_int(work.get("target_tiles")),
+            "target_dig_designations": _to_int(work.get("target_dig_designations")),
+            "target_floor_tiles": _to_int(work.get("target_floor_tiles")),
+            "target_wall_tiles": _to_int(work.get("target_wall_tiles")),
+            "target_missing_blocks": _to_int(work.get("target_missing_blocks")),
+            "active_jobs": _to_int(work.get("active_jobs")),
+            "active_dig_jobs": _to_int(work.get("active_dig_jobs")),
+        }
     return snapshot
+
+
+__all__ = ["step_snapshot", "work_progress_delta"]

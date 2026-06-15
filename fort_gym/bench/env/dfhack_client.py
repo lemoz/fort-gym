@@ -11,7 +11,7 @@ from contextlib import suppress
 from dataclasses import dataclass
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
-from ..dfhack_backend import advance_ticks_exact
+from ..dfhack_backend import advance_ticks_exact, read_work_metrics
 from ..dfhack_exec import read_game_state as cli_read_game_state
 
 try:  # pragma: no cover - optional dependency
@@ -266,6 +266,7 @@ class DFHackClient:
         data.setdefault("risks", [])
         data.setdefault("reminders", [])
         data.setdefault("map_bounds", (0, 0, 0))
+        data["work"] = read_work_metrics()
         return data
 
     def get_screen(self) -> Dict[str, Any]:

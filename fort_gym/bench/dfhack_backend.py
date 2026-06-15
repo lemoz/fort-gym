@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import os
 import time
+from pathlib import Path
 from typing import Dict, Iterable
 
 from .config import DFROOT
@@ -10,16 +12,34 @@ from .dfhack_exec import DFHackError, read_pause_state, run_dfhack, run_lua_file
 from .env.keystroke_exec import execute_keystroke_action
 
 HOOK_ROOT = DFROOT / "hook"
+REPO_HOOK_ROOT = Path(__file__).resolve().parents[2] / "hook"
 
 ALLOWED_ITEMS = {"bed", "door", "table", "chair", "barrel", "bin"}
 MAX_QTY = 5
 MAX_RECT_W = 30
 MAX_RECT_H = 30
 VALID_KINDS: Iterable[str] = ("dig", "channel", "chop")
+DEFAULT_WORK_RECT = (50, 35, 0, 54, 39, 0)
 
 
 def _hook_path(name: str) -> str:
-    return str(HOOK_ROOT / name)
+    installed_path = HOOK_ROOT / name
+    if installed_path.exists():
+        return str(installed_path)
+    return str(REPO_HOOK_ROOT / name)
+
+
+def _work_rect_from_env() -> tuple[int, int, int, int, int, int]:
+    raw = os.getenv("FORT_GYM_WORK_RECT")
+    if not raw:
+        return DEFAULT_WORK_RECT
+    parts = [part.strip() for part in raw.split(",") if part.strip()]
+    if len(parts) != 6:
+        return DEFAULT_WORK_RECT
+    try:
+        return tuple(int(part) for part in parts)  # type: ignore[return-value]
+    except ValueError:
+        return DEFAULT_WORK_RECT
 
 
 def queue_manager_order(item: str, qty: int) -> Dict[str, object]:
@@ -46,6 +66,31 @@ def designate_rect(kind: str, x1: int, y1: int, z1: int, x2: int, y2: int, z2: i
         return run_lua_file(
             _hook_path("designate_rect.lua"),
             kind_lower,
+            str(int(x1)),
+            str(int(y1)),
+            str(int(z1)),
+            str(int(x2)),
+            str(int(y2)),
+            str(int(z2)),
+        )
+    except DFHackError as exc:
+        return {"ok": False, "error": str(exc)}
+
+
+def read_work_metrics(rect: tuple[int, int, int, int, int, int] | None = None) -> Dict[str, object]:
+    """Read bounded live work metrics for a target rectangle."""
+
+    x1, y1, z1, x2, y2, z2 = rect or _work_rect_from_env()
+    width = abs(int(x2) - int(x1)) + 1
+    height = abs(int(y2) - int(y1)) + 1
+    if int(z1) != int(z2):
+        return {"ok": False, "error": "z_span_not_supported"}
+    if width > MAX_RECT_W or height > MAX_RECT_H:
+        return {"ok": False, "error": "rect_too_large"}
+
+    try:
+        return run_lua_file(
+            _hook_path("work_metrics.lua"),
             str(int(x1)),
             str(int(y1)),
             str(int(z1)),
@@ -211,6 +256,7 @@ __all__ = [
     "MAX_RECT_H",
     "queue_manager_order",
     "designate_rect",
+    "read_work_metrics",
     "advance_ticks_exact_external",
     "advance_ticks_exact",
     "execute_keystroke_action",
