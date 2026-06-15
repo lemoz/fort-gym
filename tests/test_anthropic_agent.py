@@ -3,7 +3,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 from typing import Any
 
-from fort_gym.bench.agent.llm_anthropic import AnthropicActionAgent
+from fort_gym.bench.agent.llm_anthropic import AnthropicActionAgent, KEYSTROKE_SYSTEM_PROMPT
 from fort_gym.bench.config import get_settings
 
 
@@ -85,3 +85,9 @@ def test_anthropic_agent_records_usage_event(monkeypatch) -> None:
     assert _FakeAnthropicClient.last_instance.api_key == "test-key"
     request = _FakeAnthropicClient.last_instance.messages.requests[0]
     assert request["model"] == "claude-sonnet-4-6"
+
+
+def test_keystroke_prompt_is_action_first() -> None:
+    assert "FIRST ACTION RULE" in KEYSTROKE_SYSTEM_PROMPT
+    assert "D_DESIGNATE" in KEYSTROKE_SYSTEM_PROMPT
+    assert "advance_ticks\": 200" in KEYSTROKE_SYSTEM_PROMPT

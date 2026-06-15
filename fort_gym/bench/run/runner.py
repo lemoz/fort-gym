@@ -78,6 +78,7 @@ def run_once(
     dfhack_client: Optional[DFHackClient] = None
 
     tick_info_state: Dict[str, Any] = {}
+    elapsed_ticks_total = 0
 
     # Detect keystroke mode from model name
     # Models that need screen capture: *-keystroke, *-research
@@ -341,6 +342,10 @@ def run_once(
                         )
                     break
                 # Game stays paused - agent controls time
+                try:
+                    elapsed_ticks_total += max(0, int(tick_info_state.get("ticks_advanced") or 0))
+                except (TypeError, ValueError):
+                    pass
                 publish_event(
                     step,
                     "advance",
@@ -349,9 +354,12 @@ def run_once(
                 )
 
                 metrics_snapshot = metrics.step_snapshot(advance_state)
+                metrics_snapshot["run_elapsed_ticks"] = elapsed_ticks_total
                 publish_event(step, "metrics", {"metrics": metrics_snapshot}, events)
 
-                score_value = scoring.composite_score(metrics_snapshot)
+                score_metrics = dict(metrics_snapshot)
+                score_metrics["time"] = elapsed_ticks_total
+                score_value = scoring.composite_score(score_metrics)
                 milestone_notes = (
                     milestones.detect(previous_state or state_before, advance_state)
                     if previous_state is not None

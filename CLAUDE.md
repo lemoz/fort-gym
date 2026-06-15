@@ -390,6 +390,11 @@ make vm-live-smoke VM_LIVE_SMOKE_REF=<branch-or-main>
 
 # Full live demo rehearsal with public endpoint checks and packet output:
 make vm-live-demo VM_LIVE_DEMO_REF=<branch-or-main>
+
+# Real-model public API run plus baseline comparison packet:
+make vm-deploy SHA=origin/<branch-or-main>
+make vm-live-agent VM_LIVE_AGENT_REF=<branch-or-main> \
+  LIVE_AGENT_MODEL=anthropic-keystroke LIVE_AGENT_MAX_STEPS=4
 ```
 3. **Merge**: once tested, merge to `main` (PR merge preferred).
 4. **VM deploy**: deploy the exact git ref to production and restart the API:

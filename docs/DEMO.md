@@ -49,6 +49,33 @@ RUN_DIR=/home/cdossman/fort-gym-live-demo.<suffix>
 Open the generated packet if you want the live DFHack artifact paths and endpoint
 checks in one place before the demo.
 
+To rehearse a real model run that appears in the public UI and compares against a
+deterministic baseline:
+
+```bash
+make vm-deploy SHA=origin/main
+make vm-live-agent VM_LIVE_AGENT_REF=main LIVE_AGENT_MODEL=anthropic-keystroke LIVE_AGENT_MAX_STEPS=4
+```
+
+Expected output shape:
+
+```text
+RUN_DIR=/home/cdossman/fort-gym-live-agent.<suffix>
+{
+  "ok": true,
+  "comparison": {
+    "baseline_score": <number>,
+    "model_score": <number>,
+    "score_delta": <number>
+  },
+  "runs": {
+    "baseline": {"public_run_url": "...", "public_replay_url": "..."},
+    "model": {"public_run_url": "...", "public_replay_url": "..."}
+  },
+  "packet": ".../live_agent_report.md"
+}
+```
+
 ## Live sequence
 
 ### 0:00 to 0:20 - frame the project
