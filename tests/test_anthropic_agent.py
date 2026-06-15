@@ -103,6 +103,9 @@ def test_dig_first_prompt_uses_structured_control() -> None:
     assert "structured action API" in DIG_FIRST_SYSTEM_PROMPT
     assert '"type":"DIG"' in DIG_FIRST_SYSTEM_PROMPT
     assert '"advance_ticks":500' in DIG_FIRST_SYSTEM_PROMPT
+    assert "target_dig_designations == 0 means no dig has been designated yet" in DIG_FIRST_SYSTEM_PROMPT
+    assert "target_wall_tiles > 0 means the target is still solid wall" in DIG_FIRST_SYSTEM_PROMPT
+    assert "Only WAIT when target_dig_designations > 0" in DIG_FIRST_SYSTEM_PROMPT
     assert "Do not drive the Dwarf Fortress UI with keystrokes" in DIG_FIRST_SYSTEM_PROMPT
 
 

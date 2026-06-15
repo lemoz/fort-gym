@@ -95,3 +95,63 @@ def test_summarize_prefers_run_elapsed_ticks(tmp_path) -> None:
     assert summary.duration_ticks == 200
     assert summary.survival_score == 2.5
     assert summary.total_score < 53.5
+
+
+def test_summarize_tracks_work_progress(tmp_path) -> None:
+    trace_path = Path(tmp_path) / "trace.jsonl"
+    records = [
+        {
+            "run_id": "run-work",
+            "step": 0,
+            "metrics": {
+                "time": 100,
+                "run_elapsed_ticks": 500,
+                "pop": 7,
+                "drink": 60,
+                "food": 45,
+                "wealth": 9,
+                "dead": 0,
+                "hostiles": False,
+                "work_progress": 10,
+                "target_dig_designations_delta": 10,
+                "target_floor_tiles_delta": 0,
+                "target_wall_tiles_delta": 0,
+                "active_dig_jobs_delta": 1,
+            },
+            "tick_advance": {"ticks_advanced": 500},
+            "events": [],
+        },
+        {
+            "run_id": "run-work",
+            "step": 1,
+            "metrics": {
+                "time": 600,
+                "run_elapsed_ticks": 1000,
+                "pop": 7,
+                "drink": 60,
+                "food": 45,
+                "wealth": 9,
+                "dead": 0,
+                "hostiles": False,
+                "work_progress": 25,
+                "target_dig_designations_delta": 25,
+                "target_floor_tiles_delta": 8,
+                "target_wall_tiles_delta": 8,
+                "active_dig_jobs_delta": 1,
+            },
+            "tick_advance": {"ticks_advanced": 500},
+            "events": [],
+        },
+    ]
+    with trace_path.open("w", encoding="utf-8") as handle:
+        for record in records:
+            handle.write(json.dumps(record) + "\n")
+
+    summary = summarize(trace_path)
+
+    assert summary.work_progress == 25
+    assert summary.work_score == 10.0
+    assert summary.target_dig_designations_delta == 25
+    assert summary.target_floor_tiles_delta == 8
+    assert summary.target_wall_tiles_delta == 8
+    assert summary.active_dig_jobs_delta == 1

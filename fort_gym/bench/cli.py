@@ -704,6 +704,13 @@ def _diagnose_actions(
         blockers.append("status_menu_exploration")
     if _as_int(summary.get("duration_ticks")) > 0 and designation_attempts == 0:
         blockers.append("score_from_survival_without_work")
+    work_progress = _as_int(summary.get("work_progress"))
+    target_floor_tiles_delta = _as_int(summary.get("target_floor_tiles_delta"))
+    target_wall_tiles_delta = _as_int(summary.get("target_wall_tiles_delta"))
+    if _as_int(summary.get("duration_ticks")) > 0 and work_progress == 0:
+        blockers.append("tick_only_score")
+    if work_progress > 0 and target_floor_tiles_delta == 0 and target_wall_tiles_delta == 0:
+        blockers.append("no_mining_progress")
 
     invalid_rate = round(invalid_actions / total_actions, 3) if total_actions else 0.0
     return {
@@ -714,6 +721,12 @@ def _diagnose_actions(
         "ticks_advanced": ticks_advanced,
         "designation_attempts": designation_attempts,
         "status_menu_actions": status_menu_actions,
+        "work_score": _as_float(summary.get("work_score")),
+        "work_progress": work_progress,
+        "target_dig_designations_delta": _as_int(summary.get("target_dig_designations_delta")),
+        "target_floor_tiles_delta": target_floor_tiles_delta,
+        "target_wall_tiles_delta": target_wall_tiles_delta,
+        "active_dig_jobs_delta": _as_int(summary.get("active_dig_jobs_delta")),
         "blockers": blockers,
     }
 
@@ -783,6 +796,12 @@ def _run_api_agent(
         "summary_steps": summary.get("steps"),
         "duration_ticks": summary.get("duration_ticks"),
         "survival_score": summary.get("survival_score"),
+        "work_score": summary.get("work_score"),
+        "work_progress": summary.get("work_progress"),
+        "target_dig_designations_delta": summary.get("target_dig_designations_delta"),
+        "target_floor_tiles_delta": summary.get("target_floor_tiles_delta"),
+        "target_wall_tiles_delta": summary.get("target_wall_tiles_delta"),
+        "active_dig_jobs_delta": summary.get("active_dig_jobs_delta"),
         "public_token": token,
         "public_run_url": f"{public_base_url.rstrip('/')}/public/runs/{token}" if token else None,
         "public_replay_url": f"{public_base_url.rstrip('/')}/public/runs/{token}/events/replay" if token else None,
@@ -900,7 +919,13 @@ def _merge_diagnostics(runs: list[dict[str, object]]) -> dict[str, object]:
         "ticks_advanced": 0,
         "designation_attempts": 0,
         "status_menu_actions": 0,
+        "work_progress": 0,
+        "target_dig_designations_delta": 0,
+        "target_floor_tiles_delta": 0,
+        "target_wall_tiles_delta": 0,
+        "active_dig_jobs_delta": 0,
     }
+    work_score_total = 0.0
     blockers: dict[str, int] = {}
     steps = 0
     for run in runs:
@@ -908,6 +933,7 @@ def _merge_diagnostics(runs: list[dict[str, object]]) -> dict[str, object]:
         steps += _as_int(diagnostics.get("steps"))
         for key in totals:
             totals[key] += _as_int(diagnostics.get(key))
+        work_score_total += _as_float(diagnostics.get("work_score"))
         for blocker in diagnostics.get("blockers", []) if isinstance(diagnostics.get("blockers"), list) else []:
             blocker_name = str(blocker)
             blockers[blocker_name] = blockers.get(blocker_name, 0) + 1
@@ -915,6 +941,7 @@ def _merge_diagnostics(runs: list[dict[str, object]]) -> dict[str, object]:
     return {
         "steps": steps,
         **totals,
+        "work_score_total": round(work_score_total, 2),
         "invalid_action_rate": invalid_rate,
         "blockers": blockers,
     }
@@ -927,6 +954,8 @@ def _variant_scorecard(
     baseline_median: float,
 ) -> dict[str, object]:
     scores = _score_values(runs)
+    work_scores = [_as_float(run.get("work_score")) for run in runs if run.get("work_score") is not None]
+    work_progress = [_as_float(run.get("work_progress")) for run in runs if run.get("work_progress") is not None]
     median_score = _median(scores)
     return {
         "model": model,
@@ -935,6 +964,10 @@ def _variant_scorecard(
         "scores": scores,
         "median_score": median_score,
         "median_delta_vs_baseline": round(median_score - baseline_median, 2),
+        "work_scores": work_scores,
+        "median_work_score": _median(work_scores),
+        "work_progress": work_progress,
+        "median_work_progress": _median(work_progress),
         "best_run_url": _public_url_for_extreme(runs, reverse=True),
         "worst_run_url": _public_url_for_extreme(runs, reverse=False),
         "diagnostics": _merge_diagnostics(runs),
@@ -947,6 +980,12 @@ def _build_suite_comparison(
     variant_runs: dict[str, list[dict[str, object]]],
 ) -> dict[str, object]:
     baseline_scores = _score_values(baseline_runs)
+    baseline_work_scores = [
+        _as_float(run.get("work_score")) for run in baseline_runs if run.get("work_score") is not None
+    ]
+    baseline_work_progress = [
+        _as_float(run.get("work_progress")) for run in baseline_runs if run.get("work_progress") is not None
+    ]
     baseline_median = _median(baseline_scores)
     variants = [
         _variant_scorecard(
@@ -971,6 +1010,10 @@ def _build_suite_comparison(
             "completed_runs": _completed_runs(baseline_runs),
             "scores": baseline_scores,
             "median_score": baseline_median,
+            "work_scores": baseline_work_scores,
+            "median_work_score": _median(baseline_work_scores),
+            "work_progress": baseline_work_progress,
+            "median_work_progress": _median(baseline_work_progress),
             "best_run_url": _public_url_for_extreme(baseline_runs, reverse=True),
             "worst_run_url": _public_url_for_extreme(baseline_runs, reverse=False),
             "diagnostics": _merge_diagnostics(baseline_runs),
@@ -1024,6 +1067,8 @@ def _write_live_agent_suite_artifacts(
         f"- Model: `{baseline.get('model')}`",
         f"- Scores: `{baseline.get('scores')}`",
         f"- Median: `{baseline.get('median_score')}`",
+        f"- Work scores: `{baseline.get('work_scores')}`",
+        f"- Median work progress: `{baseline.get('median_work_progress')}`",
         f"- Best run: {baseline.get('best_run_url')}",
         f"- Worst run: {baseline.get('worst_run_url')}",
         f"- Diagnostics: `{baseline.get('diagnostics')}`",
@@ -1041,6 +1086,8 @@ def _write_live_agent_suite_artifacts(
                 f"- Scores: `{variant.get('scores')}`",
                 f"- Median: `{variant.get('median_score')}`",
                 f"- Median delta vs baseline: `{variant.get('median_delta_vs_baseline')}`",
+                f"- Work scores: `{variant.get('work_scores')}`",
+                f"- Median work progress: `{variant.get('median_work_progress')}`",
                 f"- Best run: {variant.get('best_run_url')}",
                 f"- Worst run: {variant.get('worst_run_url')}",
                 f"- Diagnostics: `{variant.get('diagnostics')}`",

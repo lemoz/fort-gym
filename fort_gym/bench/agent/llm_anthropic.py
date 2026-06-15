@@ -27,12 +27,14 @@ DIG_FIRST_SYSTEM_PROMPT = """You are the fortress overseer. One action per step.
 Use fort-gym's structured action API. Do not drive the Dwarf Fortress UI with keystrokes.
 
 Your priority is to create useful underground workspace and then let dwarves work:
-1. First action: emit a DIG action with area [60, 18, 0], size [5, 5, 1], and advance_ticks 500.
-2. If a dig has already been designated, prefer WAIT with params {} and advance_ticks 500 so work can progress.
-3. Only build or order after there is evidence that digging progressed.
+1. First action: emit a DIG action with area [50, 35, 0], size [5, 5, 1], and advance_ticks 500.
+2. Read work metrics literally: target_dig_designations == 0 means no dig has been designated yet.
+3. target_wall_tiles > 0 means the target is still solid wall and should be mined, not treated as completed work.
+4. Only WAIT when target_dig_designations > 0 or target_floor_tiles > 0 shows the dig is already designated or mined.
+5. Only build or order after there is evidence that digging progressed.
 
 Examples:
-- DIG: {"type":"DIG","params":{"area":[60,18,0],"size":[5,5,1]},"intent":"designate a starter room","advance_ticks":500}
+- DIG: {"type":"DIG","params":{"area":[50,35,0],"size":[5,5,1]},"intent":"designate a starter room","advance_ticks":500}
 - WAIT: {"type":"WAIT","params":{},"intent":"let miners work","advance_ticks":500}
 
 The harness executes DIG directly through DFHack, so a structured DIG is more reliable than opening menus.

@@ -6,11 +6,12 @@ fort-gym executes DFHack actions exclusively through curated Lua helpers stored 
 
 - `hook/order_make.lua` enqueues manager orders for a limited set of goods (`bed`, `door`, `table`, `chair`, `barrel`, `bin`). Quantities are clamped to 1–5 and the script returns JSON describing the outcome.
 - `hook/designate_rect.lua` designates dig/channel rectangles or triggers a tree chop pulse. Rectangles are limited to 30×30 tiles.
+- `hook/work_metrics.lua` reads bounded target-room progress for the default clean 5×5 starter room (`50,35,0` to `54,39,0`), including dig designations, opened floor/wall deltas, and active dig jobs. Scorecards use this to distinguish elapsed ticks from actual fortress work.
 
 ## Python Adapters
 
 - `fort_gym.bench.dfhack_exec` provides helpers like `run_dfhack`, `run_lua_file`, `run_lua_expr`, `tick_read`, `set_paused`, and `read_game_state`, wrapping dfhack-run with tight timeouts and consistent `DFHackError` handling.
-- `fort_gym.bench.dfhack_backend` exposes high-level helpers `queue_manager_order`, `designate_rect`, and `advance_ticks_exact_external`. Each helper returns JSON-compatible dictionaries with an `ok` flag and `error` value if applicable.
+- `fort_gym.bench.dfhack_backend` exposes high-level helpers `queue_manager_order`, `designate_rect`, `read_work_metrics`, and `advance_ticks_exact_external`. Each helper returns JSON-compatible dictionaries with an `ok` flag and `error` value if applicable.
 - `read_game_state()` retrieves tick count, population, and stocks via CLI since RPC does not capture Lua print output.
 
 ## Runtime Guarantees

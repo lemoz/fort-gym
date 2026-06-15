@@ -21,6 +21,10 @@ class MockEnvironment:
     reminders: List[str] = field(default_factory=list)
     recent_events: List[str] = field(default_factory=list)
     scenario_name: Optional[str] = None
+    target_dig_designations: int = 0
+    target_floor_tiles: int = 0
+    target_wall_tiles: int = 25
+    active_dig_jobs: int = 0
     rng: random.Random = field(init=False)
 
     def __post_init__(self) -> None:
@@ -40,6 +44,10 @@ class MockEnvironment:
         self.risks = []
         self.reminders = []
         self.recent_events = []
+        self.target_dig_designations = 0
+        self.target_floor_tiles = 0
+        self.target_wall_tiles = 25
+        self.active_dig_jobs = 0
         if self.scenario_name:
             self._apply_scenario(get_mock_scenario(self.scenario_name))
 
@@ -74,6 +82,16 @@ class MockEnvironment:
             ],
             "map_bounds": (200, 200, 50),
             "workshops": {"CarpenterWorkshop": 0},
+            "work": {
+                "ok": True,
+                "target_rect": [50, 35, 0, 54, 39, 0],
+                "target_tiles": 25,
+                "target_dig_designations": self.target_dig_designations,
+                "target_floor_tiles": self.target_floor_tiles,
+                "target_wall_tiles": self.target_wall_tiles,
+                "active_jobs": self.active_dig_jobs,
+                "active_dig_jobs": self.active_dig_jobs,
+            },
         }
 
     def apply(self, action: Dict[str, Any]) -> Dict[str, Any]:
@@ -86,6 +104,11 @@ class MockEnvironment:
 
         if action_type == "DIG":
             self.stocks["food"] = max(0, self.stocks["food"] - 1)
+            area = params.get("area") or params.get("location") or []
+            size = params.get("size") or [1, 1, 1]
+            if list(area)[:3] == [50, 35, 0]:
+                self.target_dig_designations = min(25, int(size[0]) * int(size[1]))
+                self.active_dig_jobs = 1
         elif action_type == "BUILD":
             self.stocks["drink"] = max(0, self.stocks["drink"] - 1)
         elif action_type == "ORDER":
@@ -106,6 +129,13 @@ class MockEnvironment:
         drink_loss = ticks // 60
         self.stocks["food"] = max(0, self.stocks["food"] - food_loss)
         self.stocks["drink"] = max(0, self.stocks["drink"] - drink_loss)
+        if self.target_dig_designations and ticks > 0:
+            mined = min(self.target_dig_designations, max(1, ticks // 200))
+            self.target_dig_designations -= mined
+            self.target_floor_tiles = min(25, self.target_floor_tiles + mined)
+            self.target_wall_tiles = max(0, self.target_wall_tiles - mined)
+            if self.target_dig_designations == 0:
+                self.active_dig_jobs = 0
 
         # Deterministic population changes for demonstration
         if self.time and self.time % 1000 == 0:

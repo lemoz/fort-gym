@@ -33,6 +33,7 @@ class StateReader:
             "dead": raw.get("dead", 0),
             "map_bounds": raw.get("map_bounds", (0, 0, 0)),
             "pause_state": raw.get("pause_state"),
+            "work": raw.get("work", {}),
         }
         workshops = raw.get("workshops") if isinstance(raw.get("workshops"), dict) else {}
         normalized["workshops"] = {"CarpenterWorkshop": workshops.get("CarpenterWorkshop", 0)}

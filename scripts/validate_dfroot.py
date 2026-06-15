@@ -63,7 +63,7 @@ def main() -> int:
         print(f"✓ hook/ directory exists")
 
         # Check for hook scripts
-        expected_hooks = ["order_make.lua", "designate_rect.lua"]
+        expected_hooks = ["order_make.lua", "designate_rect.lua", "work_metrics.lua"]
         missing = [h for h in expected_hooks if not (hook_dir / h).exists()]
 
         if missing:
