@@ -35,9 +35,17 @@ IMPORTANT: The main menu (showing options like "d: Designations", "b: Building")
 2. **Build workshops/furniture**: D_BUILDJOB → select building type
 3. **Create stockpiles**: D_STOCKPILES → define storage area
 
-**DON'T waste turns just looking around.** Open a menu, then complete an action within it.
+**DON'T waste turns just looking around.** The observation already includes status, food, drink, population, and the current screen. Do NOT press z/status/announcements/reports in the opening turns.
 
 If you're unsure what to do, **ALWAYS dig**. Designate a small 3x3 mining area - it's always useful.
+
+**FIRST ACTION RULE:** If the screen is the default fortress view with the Designations menu available, your first action must be a complete dig attempt, not a status check:
+{
+  "type": "KEYSTROKE",
+  "params": {"keys": ["D_DESIGNATE", "DESIGNATE_DIG", "SELECT", "CURSOR_RIGHT", "CURSOR_DOWN", "SELECT", "LEAVESCREEN"]},
+  "intent": "designate a small starter dig and let dwarves begin work",
+  "advance_ticks": 200
+}
 
 Use LEAVESCREEN only to exit SUB-menus (like after designating an area).
 

@@ -7,6 +7,8 @@ import os
 import shutil
 import socket
 import subprocess
+import base64
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.error import HTTPError, URLError
@@ -54,6 +56,7 @@ PUBLIC_REHEARSAL_PATHS = (
     "/leaderboard",
     "/public/leaderboard/best-over-time",
 )
+TERMINAL_RUN_STATUSES = {"completed", "failed", "stopped"}
 
 
 def _available_port(start: int) -> int:
@@ -532,6 +535,326 @@ def live_demo_rehearsal(
     }
     typer.echo(json.dumps(rehearsal, indent=2, sort_keys=True))
     if not rehearsal["ok"]:
+        raise typer.Exit(1)
+
+
+def _json_request(
+    *,
+    method: str,
+    base_url: str,
+    path: str,
+    payload: dict[str, object] | None = None,
+    admin_user: str | None = None,
+    admin_password: str | None = None,
+    timeout: float = 30.0,
+) -> object:
+    data = None if payload is None else json.dumps(payload).encode("utf-8")
+    request = Request(
+        f"{base_url.rstrip('/')}/{path.lstrip('/')}",
+        data=data,
+        method=method,
+        headers={"User-Agent": "fort-gym-live-agent-report/1.0"},
+    )
+    if data is not None:
+        request.add_header("Content-Type", "application/json")
+    if admin_password:
+        user = admin_user or "admin"
+        token = base64.b64encode(f"{user}:{admin_password}".encode("utf-8")).decode("ascii")
+        request.add_header("Authorization", f"Basic {token}")
+    with urlopen(request, timeout=timeout) as response:
+        body = response.read()
+    if not body:
+        return {}
+    return json.loads(body.decode("utf-8"))
+
+
+def _find_public_run(public_base_url: str, run_id: str) -> dict[str, object] | None:
+    payload = _json_request(method="GET", base_url=public_base_url, path="/public/runs")
+    if not isinstance(payload, list):
+        return None
+    for item in payload:
+        if isinstance(item, dict) and item.get("run_id") == run_id:
+            return item
+    return None
+
+
+def _load_trace_records(run_id: str, server_artifacts_dir: str | None) -> tuple[list[dict[str, object]], str | None]:
+    if not server_artifacts_dir:
+        return [], None
+    trace_path = Path(server_artifacts_dir).expanduser().resolve() / run_id / "trace.jsonl"
+    if not trace_path.is_file():
+        return [], str(trace_path)
+    records = [
+        json.loads(line)
+        for line in trace_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    return records, str(trace_path)
+
+
+def _load_summary(run_id: str, server_artifacts_dir: str | None) -> tuple[dict[str, object], str | None]:
+    if not server_artifacts_dir:
+        return {}, None
+    summary_path = Path(server_artifacts_dir).expanduser().resolve() / run_id / "summary.json"
+    if not summary_path.is_file():
+        return {}, str(summary_path)
+    return json.loads(summary_path.read_text(encoding="utf-8")), str(summary_path)
+
+
+def _summarize_actions(records: list[dict[str, object]]) -> list[dict[str, object]]:
+    actions = []
+    for record in records:
+        action = record.get("action") if isinstance(record.get("action"), dict) else record.get("raw_action")
+        if not isinstance(action, dict):
+            action = {}
+        validation = record.get("validation") if isinstance(record.get("validation"), dict) else {}
+        execute = record.get("execute") if isinstance(record.get("execute"), dict) else {}
+        score = record.get("score") if isinstance(record.get("score"), dict) else {}
+        tick_advance = record.get("tick_advance") if isinstance(record.get("tick_advance"), dict) else {}
+        actions.append(
+            {
+                "step": record.get("step"),
+                "type": action.get("type"),
+                "intent": action.get("intent"),
+                "params": action.get("params"),
+                "advance_ticks": action.get("advance_ticks"),
+                "valid": validation.get("valid"),
+                "accepted": execute.get("accepted", execute.get("ok")),
+                "ticks_advanced": tick_advance.get("ticks_advanced"),
+                "score": score.get("value"),
+            }
+        )
+    return actions
+
+
+def _run_api_agent(
+    *,
+    api_base_url: str,
+    public_base_url: str,
+    admin_user: str,
+    admin_password: str,
+    model: str,
+    backend: str,
+    max_steps: int,
+    ticks_per_step: int,
+    server_artifacts_dir: str | None,
+    poll_interval: float,
+    timeout_seconds: int,
+) -> dict[str, object]:
+    created = _json_request(
+        method="POST",
+        base_url=api_base_url,
+        path="/runs",
+        payload={
+            "backend": backend,
+            "model": model,
+            "max_steps": max_steps,
+            "ticks_per_step": ticks_per_step,
+        },
+        admin_user=admin_user,
+        admin_password=admin_password,
+    )
+    if not isinstance(created, dict) or not created.get("id"):
+        raise RuntimeError(f"Run creation failed for {model}: {created}")
+
+    run_id = str(created["id"])
+    deadline = time.monotonic() + timeout_seconds
+    latest = dict(created)
+    while time.monotonic() < deadline:
+        latest_payload = _json_request(
+            method="GET",
+            base_url=api_base_url,
+            path=f"/runs/{run_id}",
+            admin_user=admin_user,
+            admin_password=admin_password,
+        )
+        if isinstance(latest_payload, dict):
+            latest = latest_payload
+        if latest.get("status") in TERMINAL_RUN_STATUSES:
+            break
+        time.sleep(poll_interval)
+
+    public_run = _find_public_run(public_base_url, run_id) or {}
+    token = public_run.get("token")
+    records, trace_path = _load_trace_records(run_id, server_artifacts_dir)
+    summary, summary_path = _load_summary(run_id, server_artifacts_dir)
+    score = latest.get("score")
+    if score is None:
+        score = summary.get("total_score")
+    return {
+        "run_id": run_id,
+        "model": model,
+        "backend": backend,
+        "status": latest.get("status"),
+        "score": score,
+        "summary_total_score": summary.get("total_score"),
+        "summary_steps": summary.get("steps"),
+        "duration_ticks": summary.get("duration_ticks"),
+        "survival_score": summary.get("survival_score"),
+        "public_token": token,
+        "public_run_url": f"{public_base_url.rstrip('/')}/public/runs/{token}" if token else None,
+        "public_replay_url": f"{public_base_url.rstrip('/')}/public/runs/{token}/events/replay" if token else None,
+        "public_trace_url": f"{public_base_url.rstrip('/')}/public/runs/{token}/export/trace" if token else None,
+        "leaderboard_url": f"{public_base_url.rstrip('/')}/leaderboard",
+        "trace": trace_path,
+        "summary": summary_path,
+        "trace_steps": len(records),
+        "actions": _summarize_actions(records),
+    }
+
+
+def _write_live_agent_packet(
+    *,
+    report: dict[str, object],
+    packet_path: str | None,
+    server_artifacts_dir: str | None,
+) -> Path:
+    runs = report.get("runs") if isinstance(report.get("runs"), dict) else {}
+    model_run = runs.get("model") if isinstance(runs, dict) and isinstance(runs.get("model"), dict) else {}
+    run_id = model_run.get("run_id") or "live-agent-report"
+    if packet_path:
+        target_path = Path(packet_path).expanduser().resolve()
+    elif server_artifacts_dir:
+        target_path = Path(server_artifacts_dir).expanduser().resolve() / str(run_id) / "live_agent_report.md"
+    else:
+        target_path = Path.cwd() / "live_agent_report.md"
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+
+    generated_at = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    comparison = report.get("comparison") if isinstance(report.get("comparison"), dict) else {}
+    lines = [
+        "# fort-gym live agent report",
+        "",
+        f"Generated: {generated_at}",
+        f"Status: {'PASS' if report.get('ok') else 'FAIL'}",
+        f"Result: `{comparison.get('result')}`",
+        f"Score delta: `{comparison.get('score_delta')}`",
+        "",
+        "## Public URLs",
+        "",
+    ]
+    for label in ("baseline", "model"):
+        run = runs.get(label) if isinstance(runs, dict) and isinstance(runs.get(label), dict) else {}
+        lines.extend(
+            [
+                f"### {label}",
+                "",
+                f"- Run: `{run.get('run_id')}`",
+                f"- Model: `{run.get('model')}`",
+                f"- Status: `{run.get('status')}`",
+                f"- Score: `{run.get('score')}`",
+                f"- Public run: {run.get('public_run_url')}",
+                f"- Public replay: {run.get('public_replay_url')}",
+                f"- Trace export: {run.get('public_trace_url')}",
+                f"- Local trace: `{run.get('trace')}`",
+                f"- Local summary: `{run.get('summary')}`",
+                "",
+                "Actions:",
+            ]
+        )
+        actions = run.get("actions") if isinstance(run.get("actions"), list) else []
+        if not actions:
+            lines.append("- none captured")
+        for action in actions:
+            if not isinstance(action, dict):
+                continue
+            lines.append(
+                f"- step {action.get('step')}: {action.get('type')} "
+                f"ticks={action.get('ticks_advanced')} score={action.get('score')} "
+                f"intent={action.get('intent')!r}"
+            )
+        lines.append("")
+
+    lines.extend(
+        [
+            "## JSON",
+            "",
+            "```json",
+            json.dumps(report, indent=2, sort_keys=True),
+            "```",
+            "",
+        ]
+    )
+    target_path.write_text("\n".join(lines), encoding="utf-8")
+    return target_path
+
+
+@app.command("live-agent-report")
+def live_agent_report(
+    model: str = "anthropic-keystroke",
+    baseline_model: str = "fake",
+    backend: str = "dfhack",
+    max_steps: int = 4,
+    ticks_per_step: int = 10,
+    api_base_url: str = "http://127.0.0.1:8000",
+    public_base_url: str = "http://34.41.155.134",
+    admin_user: str | None = None,
+    admin_password: str | None = None,
+    server_artifacts_dir: str | None = "/opt/fort-gym/fort_gym/artifacts",
+    timeout_seconds: int = 600,
+    poll_interval: float = 5.0,
+    packet_path: str | None = None,
+) -> None:
+    """Run a baseline and real model through the public API, then compare scores."""
+
+    resolved_user = admin_user or os.getenv("FORT_GYM_ADMIN_USER", "admin")
+    resolved_password = admin_password or os.getenv("FORT_GYM_ADMIN_PASSWORD")
+    if not resolved_password:
+        typer.echo("FORT_GYM_ADMIN_PASSWORD or --admin-password is required.")
+        raise typer.Exit(1)
+
+    baseline = _run_api_agent(
+        api_base_url=api_base_url,
+        public_base_url=public_base_url,
+        admin_user=resolved_user,
+        admin_password=resolved_password,
+        model=baseline_model,
+        backend=backend,
+        max_steps=max_steps,
+        ticks_per_step=ticks_per_step,
+        server_artifacts_dir=server_artifacts_dir,
+        poll_interval=poll_interval,
+        timeout_seconds=timeout_seconds,
+    )
+    model_result = _run_api_agent(
+        api_base_url=api_base_url,
+        public_base_url=public_base_url,
+        admin_user=resolved_user,
+        admin_password=resolved_password,
+        model=model,
+        backend=backend,
+        max_steps=max_steps,
+        ticks_per_step=ticks_per_step,
+        server_artifacts_dir=server_artifacts_dir,
+        poll_interval=poll_interval,
+        timeout_seconds=timeout_seconds,
+    )
+
+    baseline_score = float(baseline.get("score") or 0.0)
+    model_score = float(model_result.get("score") or 0.0)
+    score_delta = round(model_score - baseline_score, 2)
+    comparison = {
+        "baseline_score": baseline_score,
+        "model_score": model_score,
+        "score_delta": score_delta,
+        "result": "model_higher" if score_delta > 0 else "model_not_higher",
+    }
+    report = {
+        "ok": baseline.get("status") == "completed" and model_result.get("status") == "completed",
+        "comparison": comparison,
+        "runs": {
+            "baseline": baseline,
+            "model": model_result,
+        },
+    }
+    packet = _write_live_agent_packet(
+        report=report,
+        packet_path=packet_path,
+        server_artifacts_dir=server_artifacts_dir,
+    )
+    report["packet"] = str(packet)
+    typer.echo(json.dumps(report, indent=2, sort_keys=True))
+    if not report["ok"]:
         raise typer.Exit(1)
 
 

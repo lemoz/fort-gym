@@ -53,6 +53,11 @@ def summarize(trace_path: Path) -> RunSummary:
     run_id = "unknown"
     steps_seen = -1
     duration = 0
+    duration_from_tick_advance = 0
+    saw_tick_advance = False
+    max_elapsed_ticks = 0
+    first_time_tick: Optional[int] = None
+    last_time_tick: Optional[int] = None
     peak_pop = 0
     end_pop = 0
     wealth: Optional[int] = None
@@ -77,7 +82,20 @@ def summarize(trace_path: Path) -> RunSummary:
 
             metrics_snapshot = record.get("metrics") or {}
             time_tick = metrics_snapshot.get("time") or metrics_snapshot.get("time_tick")
-            duration = max(duration, _to_int(time_tick, default=duration))
+            if time_tick is not None:
+                time_value = _to_int(time_tick, default=last_time_tick or 0)
+                if first_time_tick is None:
+                    first_time_tick = time_value
+                last_time_tick = time_value
+
+            elapsed = metrics_snapshot.get("run_elapsed_ticks")
+            if elapsed is not None:
+                max_elapsed_ticks = max(max_elapsed_ticks, _to_int(elapsed, default=max_elapsed_ticks))
+
+            tick_advance = record.get("tick_advance") or {}
+            if isinstance(tick_advance, dict) and "ticks_advanced" in tick_advance:
+                saw_tick_advance = True
+                duration_from_tick_advance += max(0, _to_int(tick_advance.get("ticks_advanced")))
 
             pop = metrics_snapshot.get("pop")
             if pop is None:
@@ -121,6 +139,13 @@ def summarize(trace_path: Path) -> RunSummary:
                         milestones.append(item)
                     else:
                         milestones.append({"k": str(item), "ts": data.get("step")})
+
+    if max_elapsed_ticks > 0:
+        duration = max_elapsed_ticks
+    elif saw_tick_advance:
+        duration = duration_from_tick_advance
+    elif first_time_tick is not None and last_time_tick is not None:
+        duration = max(0, last_time_tick - first_time_tick)
 
     total_steps = steps_seen + 1 if steps_seen >= 0 else 0
     drink_availability = (drink_sufficient / total_steps) if total_steps else 0.0
