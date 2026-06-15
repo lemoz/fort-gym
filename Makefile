@@ -1,4 +1,4 @@
-.PHONY: install lint fmt test api mock-run live-smoke live-demo-rehearsal live-agent-report proto clean-proto compile df-headless vm-provision vm-start vm-status vm-test vm-deploy vm-live-smoke vm-live-demo vm-live-agent
+.PHONY: install lint fmt test api mock-run live-smoke live-demo-rehearsal live-agent-report live-agent-suite proto clean-proto compile df-headless vm-provision vm-start vm-status vm-test vm-deploy vm-live-smoke vm-live-demo vm-live-agent vm-live-agent-suite
 
 # ------------------------------------------------------------------------------
 # Remote VM helpers (override via `make VAR=value`)
@@ -19,6 +19,8 @@ VM_LIVE_AGENT_REF ?= main
 PUBLIC_BASE_URL ?= http://$(VM_HOST)
 LIVE_AGENT_MODEL ?= anthropic-keystroke
 LIVE_AGENT_BASELINE_MODEL ?= fake
+LIVE_AGENT_MODELS ?= anthropic-keystroke,anthropic-dig-first
+LIVE_AGENT_TRIALS ?= 2
 LIVE_AGENT_MAX_STEPS ?= 4
 LIVE_AGENT_TICKS_PER_STEP ?= 10
 
@@ -58,6 +60,9 @@ live-demo-rehearsal:
 live-agent-report:
 	fort-gym live-agent-report
 
+live-agent-suite:
+	fort-gym live-agent-suite
+
 compile:
 	python -m compileall -q fort_gym
 
@@ -94,3 +99,6 @@ vm-live-demo:
 
 vm-live-agent:
 	$(VM_GCLOUD_SSH) 'set -euo pipefail; RUN_DIR=$$(mktemp -d /home/$(VM_USER)/fort-gym-live-agent.XXXXXX); echo "RUN_DIR=$$RUN_DIR"; git clone --depth 1 --branch $(VM_LIVE_AGENT_REF) https://github.com/lemoz/fort-gym.git "$$RUN_DIR" >/dev/null; cd "$$RUN_DIR"; set -a; . /etc/fort-gym.env; set +a; export PYTHONPATH="$$RUN_DIR"; $(VM_VENV_DIR)/bin/python -c "from fort_gym.bench.cli import app; app()" live-agent-report --model $(LIVE_AGENT_MODEL) --baseline-model $(LIVE_AGENT_BASELINE_MODEL) --max-steps $(LIVE_AGENT_MAX_STEPS) --ticks-per-step $(LIVE_AGENT_TICKS_PER_STEP) --public-base-url $(PUBLIC_BASE_URL) --server-artifacts-dir $(VM_PROD_DIR)/fort_gym/artifacts'
+
+vm-live-agent-suite:
+	$(VM_GCLOUD_SSH) 'set -euo pipefail; RUN_DIR=$$(mktemp -d /home/$(VM_USER)/fort-gym-live-agent-suite.XXXXXX); echo "RUN_DIR=$$RUN_DIR"; git clone --depth 1 --branch $(VM_LIVE_AGENT_REF) https://github.com/lemoz/fort-gym.git "$$RUN_DIR" >/dev/null; cd "$$RUN_DIR"; set -a; . /etc/fort-gym.env; set +a; export PYTHONPATH="$$RUN_DIR"; $(VM_VENV_DIR)/bin/python -c "from fort_gym.bench.cli import app; app()" live-agent-suite --models $(LIVE_AGENT_MODELS) --baseline-model $(LIVE_AGENT_BASELINE_MODEL) --trials $(LIVE_AGENT_TRIALS) --max-steps $(LIVE_AGENT_MAX_STEPS) --ticks-per-step $(LIVE_AGENT_TICKS_PER_STEP) --public-base-url $(PUBLIC_BASE_URL) --server-artifacts-dir $(VM_PROD_DIR)/fort_gym/artifacts'

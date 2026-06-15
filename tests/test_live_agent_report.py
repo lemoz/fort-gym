@@ -69,3 +69,129 @@ def test_write_live_agent_packet(tmp_path):
     assert "Score delta: `2.5`" in text
     assert "http://example.test/public/runs/model/events/replay" in text
     assert "step 0: KEYSTROKE ticks=200 score=26.0" in text
+
+
+def test_diagnose_actions_flags_live_blockers():
+    diagnostics = cli._diagnose_actions(
+        [
+            {
+                "type": "KEYSTROKE",
+                "params": {"keys": ["STRING_A122"]},
+                "valid": True,
+                "accepted": True,
+                "ticks_advanced": 0,
+            },
+            {
+                "type": "KEYSTROKE",
+                "params": {"keys": ["D_DESIGNATE", "DESIGNATE_DIG"]},
+                "valid": True,
+                "accepted": True,
+                "ticks_advanced": 0,
+            },
+        ],
+        {"duration_ticks": 0},
+    )
+
+    assert diagnostics["accepted_actions"] == 2
+    assert diagnostics["designation_attempts"] == 1
+    assert diagnostics["status_menu_actions"] == 1
+    assert diagnostics["ticks_advanced"] == 0
+    assert diagnostics["blockers"] == [
+        "designation_without_time",
+        "status_menu_exploration",
+    ]
+
+
+def test_write_live_agent_suite_artifacts(tmp_path):
+    baseline_runs = [
+        {
+            "trial": 1,
+            "model": "fake",
+            "status": "completed",
+            "score": 23.5,
+            "public_run_url": "http://example.test/base-1",
+            "public_replay_url": "http://example.test/base-1/replay",
+            "diagnostics": {"steps": 4, "accepted_actions": 4, "ticks_advanced": 0},
+        },
+        {
+            "trial": 2,
+            "model": "fake",
+            "status": "completed",
+            "score": 23.5,
+            "public_run_url": "http://example.test/base-2",
+            "public_replay_url": "http://example.test/base-2/replay",
+            "diagnostics": {"steps": 4, "accepted_actions": 4, "ticks_advanced": 0},
+        },
+    ]
+    variant_runs = {
+        "anthropic-keystroke": [
+            {
+                "trial": 1,
+                "model": "anthropic-keystroke",
+                "status": "completed",
+                "score": 29.85,
+                "public_run_url": "http://example.test/key-1",
+                "public_replay_url": "http://example.test/key-1/replay",
+                "diagnostics": {"steps": 4, "accepted_actions": 4, "ticks_advanced": 508},
+            },
+            {
+                "trial": 2,
+                "model": "anthropic-keystroke",
+                "status": "completed",
+                "score": 23.5,
+                "public_run_url": "http://example.test/key-2",
+                "public_replay_url": "http://example.test/key-2/replay",
+                "diagnostics": {"steps": 4, "accepted_actions": 4, "ticks_advanced": 0},
+            },
+        ],
+        "anthropic-dig-first": [
+            {
+                "trial": 1,
+                "model": "anthropic-dig-first",
+                "status": "completed",
+                "score": 35.0,
+                "public_run_url": "http://example.test/dig-1",
+                "public_replay_url": "http://example.test/dig-1/replay",
+                "diagnostics": {"steps": 4, "accepted_actions": 4, "ticks_advanced": 920},
+            },
+            {
+                "trial": 2,
+                "model": "anthropic-dig-first",
+                "status": "completed",
+                "score": 34.0,
+                "public_run_url": "http://example.test/dig-2",
+                "public_replay_url": "http://example.test/dig-2/replay",
+                "diagnostics": {"steps": 4, "accepted_actions": 4, "ticks_advanced": 840},
+            },
+        ],
+    }
+    comparison = cli._build_suite_comparison(
+        baseline_runs=baseline_runs,
+        variant_runs=variant_runs,
+    )
+    report = {
+        "ok": True,
+        "suite_id": "live-agent-suite-test",
+        "comparison": comparison,
+        "runs": {
+            "baseline": baseline_runs,
+            "variants": variant_runs,
+        },
+    }
+
+    markdown_path, json_path = cli._write_live_agent_suite_artifacts(
+        report=report,
+        packet_path=None,
+        server_artifacts_dir=str(tmp_path),
+    )
+
+    text = markdown_path.read_text(encoding="utf-8")
+    json_text = json_path.read_text(encoding="utf-8")
+    assert comparison["baseline"]["median_score"] == 23.5
+    assert comparison["best_model"] == "anthropic-dig-first"
+    assert comparison["best_median_delta"] == 11.0
+    assert markdown_path == tmp_path / "live-agent-suite-test" / "live_agent_suite_report.md"
+    assert json_path == tmp_path / "live-agent-suite-test" / "scorecard.json"
+    assert "Best model: `anthropic-dig-first`" in text
+    assert "http://example.test/dig-1" in text
+    assert '"scorecard_json"' in json_text

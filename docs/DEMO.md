@@ -76,6 +76,20 @@ RUN_DIR=/home/cdossman/fort-gym-live-agent.<suffix>
 }
 ```
 
+To compare multiple live model/control variants across repeated trials, run the
+suite command:
+
+```bash
+make vm-deploy SHA=origin/main
+make vm-live-agent-suite VM_LIVE_AGENT_REF=main \
+  LIVE_AGENT_MODELS=anthropic-keystroke,anthropic-dig-first \
+  LIVE_AGENT_TRIALS=2 LIVE_AGENT_MAX_STEPS=4
+```
+
+The suite writes a Markdown packet and `scorecard.json` with median scores,
+public run/replay URLs, and trace diagnostics such as invalid actions, status
+menu exploration, dig attempts, and ticks advanced.
+
 ## Live sequence
 
 ### 0:00 to 0:20 - frame the project
