@@ -57,6 +57,9 @@ PUBLIC_REHEARSAL_PATHS = (
     "/public/leaderboard/best-over-time",
 )
 TERMINAL_RUN_STATUSES = {"completed", "failed", "stopped"}
+DEFAULT_LIVE_AGENT_MODELS = "anthropic-keystroke,anthropic-dig-first"
+STATUS_MENU_KEYS = {"D_STATUS", "D_ANNOUNCE", "D_REPORTS", "STRING_A122"}
+DESIGNATION_KEYS = {"D_DESIGNATE", "DESIGNATE_DIG"}
 
 
 def _available_port(start: int) -> int:
@@ -627,6 +630,94 @@ def _summarize_actions(records: list[dict[str, object]]) -> list[dict[str, objec
     return actions
 
 
+def _as_float(value: object, default: float = 0.0) -> float:
+    try:
+        if value is None:
+            return default
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _as_int(value: object, default: int = 0) -> int:
+    try:
+        if value is None:
+            return default
+        return int(value)
+    except (TypeError, ValueError):
+        try:
+            return int(float(value))  # type: ignore[arg-type]
+        except (TypeError, ValueError):
+            return default
+
+
+def _median(values: list[float]) -> float:
+    if not values:
+        return 0.0
+    ordered = sorted(values)
+    midpoint = len(ordered) // 2
+    if len(ordered) % 2:
+        return round(ordered[midpoint], 2)
+    return round((ordered[midpoint - 1] + ordered[midpoint]) / 2.0, 2)
+
+
+def _split_models(models: str) -> list[str]:
+    return [item.strip() for item in models.split(",") if item.strip()]
+
+
+def _action_keys(action: dict[str, object]) -> set[str]:
+    params = action.get("params") if isinstance(action.get("params"), dict) else {}
+    keys = params.get("keys") if isinstance(params, dict) else None
+    if not isinstance(keys, list):
+        return set()
+    return {str(key) for key in keys}
+
+
+def _diagnose_actions(
+    actions: list[dict[str, object]],
+    summary: dict[str, object],
+) -> dict[str, object]:
+    total_actions = len(actions)
+    invalid_actions = sum(1 for action in actions if action.get("valid") is False)
+    accepted_actions = sum(1 for action in actions if action.get("accepted") is True)
+    ticks_advanced = sum(_as_int(action.get("ticks_advanced")) for action in actions)
+    designation_attempts = 0
+    status_menu_actions = 0
+    for action in actions:
+        action_type = action.get("type")
+        keys = _action_keys(action)
+        if action_type == "DIG" or keys.intersection(DESIGNATION_KEYS):
+            designation_attempts += 1
+        if keys.intersection(STATUS_MENU_KEYS):
+            status_menu_actions += 1
+
+    blockers = []
+    if invalid_actions:
+        blockers.append("invalid_actions")
+    if accepted_actions == 0 and total_actions:
+        blockers.append("no_accepted_actions")
+    if designation_attempts == 0:
+        blockers.append("no_dig_designation")
+    if designation_attempts and ticks_advanced == 0:
+        blockers.append("designation_without_time")
+    if status_menu_actions:
+        blockers.append("status_menu_exploration")
+    if _as_int(summary.get("duration_ticks")) > 0 and designation_attempts == 0:
+        blockers.append("score_from_survival_without_work")
+
+    invalid_rate = round(invalid_actions / total_actions, 3) if total_actions else 0.0
+    return {
+        "steps": total_actions,
+        "accepted_actions": accepted_actions,
+        "invalid_actions": invalid_actions,
+        "invalid_action_rate": invalid_rate,
+        "ticks_advanced": ticks_advanced,
+        "designation_attempts": designation_attempts,
+        "status_menu_actions": status_menu_actions,
+        "blockers": blockers,
+    }
+
+
 def _run_api_agent(
     *,
     api_base_url: str,
@@ -678,6 +769,7 @@ def _run_api_agent(
     token = public_run.get("token")
     records, trace_path = _load_trace_records(run_id, server_artifacts_dir)
     summary, summary_path = _load_summary(run_id, server_artifacts_dir)
+    actions = _summarize_actions(records)
     score = latest.get("score")
     if score is None:
         score = summary.get("total_score")
@@ -699,7 +791,8 @@ def _run_api_agent(
         "trace": trace_path,
         "summary": summary_path,
         "trace_steps": len(records),
-        "actions": _summarize_actions(records),
+        "actions": actions,
+        "diagnostics": _diagnose_actions(actions, summary),
     }
 
 
@@ -779,6 +872,223 @@ def _write_live_agent_packet(
     return target_path
 
 
+def _score_values(runs: list[dict[str, object]]) -> list[float]:
+    return [_as_float(run.get("score")) for run in runs if run.get("score") is not None]
+
+
+def _completed_runs(runs: list[dict[str, object]]) -> int:
+    return sum(1 for run in runs if run.get("status") == "completed")
+
+
+def _public_url_for_extreme(
+    runs: list[dict[str, object]],
+    *,
+    reverse: bool,
+) -> str | None:
+    scored = [run for run in runs if run.get("score") is not None]
+    if not scored:
+        return None
+    chosen = sorted(scored, key=lambda run: _as_float(run.get("score")), reverse=reverse)[0]
+    url = chosen.get("public_run_url")
+    return str(url) if url else None
+
+
+def _merge_diagnostics(runs: list[dict[str, object]]) -> dict[str, object]:
+    totals = {
+        "accepted_actions": 0,
+        "invalid_actions": 0,
+        "ticks_advanced": 0,
+        "designation_attempts": 0,
+        "status_menu_actions": 0,
+    }
+    blockers: dict[str, int] = {}
+    steps = 0
+    for run in runs:
+        diagnostics = run.get("diagnostics") if isinstance(run.get("diagnostics"), dict) else {}
+        steps += _as_int(diagnostics.get("steps"))
+        for key in totals:
+            totals[key] += _as_int(diagnostics.get(key))
+        for blocker in diagnostics.get("blockers", []) if isinstance(diagnostics.get("blockers"), list) else []:
+            blocker_name = str(blocker)
+            blockers[blocker_name] = blockers.get(blocker_name, 0) + 1
+    invalid_rate = round(totals["invalid_actions"] / steps, 3) if steps else 0.0
+    return {
+        "steps": steps,
+        **totals,
+        "invalid_action_rate": invalid_rate,
+        "blockers": blockers,
+    }
+
+
+def _variant_scorecard(
+    *,
+    model: str,
+    runs: list[dict[str, object]],
+    baseline_median: float,
+) -> dict[str, object]:
+    scores = _score_values(runs)
+    median_score = _median(scores)
+    return {
+        "model": model,
+        "runs": len(runs),
+        "completed_runs": _completed_runs(runs),
+        "scores": scores,
+        "median_score": median_score,
+        "median_delta_vs_baseline": round(median_score - baseline_median, 2),
+        "best_run_url": _public_url_for_extreme(runs, reverse=True),
+        "worst_run_url": _public_url_for_extreme(runs, reverse=False),
+        "diagnostics": _merge_diagnostics(runs),
+    }
+
+
+def _build_suite_comparison(
+    *,
+    baseline_runs: list[dict[str, object]],
+    variant_runs: dict[str, list[dict[str, object]]],
+) -> dict[str, object]:
+    baseline_scores = _score_values(baseline_runs)
+    baseline_median = _median(baseline_scores)
+    variants = [
+        _variant_scorecard(
+            model=model,
+            runs=runs,
+            baseline_median=baseline_median,
+        )
+        for model, runs in variant_runs.items()
+    ]
+    best_variant = None
+    if variants:
+        best_variant = sorted(
+            variants,
+            key=lambda item: _as_float(item.get("median_delta_vs_baseline")),
+            reverse=True,
+        )[0]
+    best_delta = _as_float(best_variant.get("median_delta_vs_baseline")) if best_variant else 0.0
+    return {
+        "baseline": {
+            "model": baseline_runs[0].get("model") if baseline_runs else None,
+            "runs": len(baseline_runs),
+            "completed_runs": _completed_runs(baseline_runs),
+            "scores": baseline_scores,
+            "median_score": baseline_median,
+            "best_run_url": _public_url_for_extreme(baseline_runs, reverse=True),
+            "worst_run_url": _public_url_for_extreme(baseline_runs, reverse=False),
+            "diagnostics": _merge_diagnostics(baseline_runs),
+        },
+        "variants": variants,
+        "best_model": best_variant.get("model") if best_variant else None,
+        "best_median_delta": best_delta,
+        "result": "variant_higher" if best_delta > 0 else "no_variant_higher",
+    }
+
+
+def _write_live_agent_suite_artifacts(
+    *,
+    report: dict[str, object],
+    packet_path: str | None,
+    server_artifacts_dir: str | None,
+) -> tuple[Path, Path]:
+    suite_id = str(report.get("suite_id") or "live-agent-suite")
+    if packet_path:
+        markdown_path = Path(packet_path).expanduser().resolve()
+        target_dir = markdown_path.parent
+    elif server_artifacts_dir:
+        target_dir = Path(server_artifacts_dir).expanduser().resolve() / suite_id
+        markdown_path = target_dir / "live_agent_suite_report.md"
+    else:
+        target_dir = Path.cwd() / suite_id
+        markdown_path = target_dir / "live_agent_suite_report.md"
+
+    target_dir.mkdir(parents=True, exist_ok=True)
+    json_path = target_dir / "scorecard.json"
+    report["packet"] = str(markdown_path)
+    report["scorecard_json"] = str(json_path)
+
+    generated_at = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    comparison = report.get("comparison") if isinstance(report.get("comparison"), dict) else {}
+    baseline = comparison.get("baseline") if isinstance(comparison.get("baseline"), dict) else {}
+    variants = comparison.get("variants") if isinstance(comparison.get("variants"), list) else []
+
+    lines = [
+        "# fort-gym live agent suite",
+        "",
+        f"Generated: {generated_at}",
+        f"Suite: `{suite_id}`",
+        f"Status: {'PASS' if report.get('ok') else 'FAIL'}",
+        f"Result: `{comparison.get('result')}`",
+        f"Best model: `{comparison.get('best_model')}`",
+        f"Best median delta: `{comparison.get('best_median_delta')}`",
+        "",
+        "## Baseline",
+        "",
+        f"- Model: `{baseline.get('model')}`",
+        f"- Scores: `{baseline.get('scores')}`",
+        f"- Median: `{baseline.get('median_score')}`",
+        f"- Best run: {baseline.get('best_run_url')}",
+        f"- Worst run: {baseline.get('worst_run_url')}",
+        f"- Diagnostics: `{baseline.get('diagnostics')}`",
+        "",
+        "## Variants",
+        "",
+    ]
+    for variant in variants:
+        if not isinstance(variant, dict):
+            continue
+        lines.extend(
+            [
+                f"### {variant.get('model')}",
+                "",
+                f"- Scores: `{variant.get('scores')}`",
+                f"- Median: `{variant.get('median_score')}`",
+                f"- Median delta vs baseline: `{variant.get('median_delta_vs_baseline')}`",
+                f"- Best run: {variant.get('best_run_url')}",
+                f"- Worst run: {variant.get('worst_run_url')}",
+                f"- Diagnostics: `{variant.get('diagnostics')}`",
+                "",
+            ]
+        )
+
+    lines.extend(
+        [
+            "## Public Runs",
+            "",
+        ]
+    )
+    runs = report.get("runs") if isinstance(report.get("runs"), dict) else {}
+    baseline_runs = runs.get("baseline") if isinstance(runs.get("baseline"), list) else []
+    variant_runs = runs.get("variants") if isinstance(runs.get("variants"), dict) else {}
+    for run in baseline_runs:
+        if isinstance(run, dict):
+            lines.append(
+                f"- baseline trial {run.get('trial')}: score={run.get('score')} "
+                f"run={run.get('public_run_url')} replay={run.get('public_replay_url')}"
+            )
+    for model, model_runs in variant_runs.items():
+        if not isinstance(model_runs, list):
+            continue
+        for run in model_runs:
+            if isinstance(run, dict):
+                lines.append(
+                    f"- {model} trial {run.get('trial')}: score={run.get('score')} "
+                    f"run={run.get('public_run_url')} replay={run.get('public_replay_url')}"
+                )
+    lines.extend(
+        [
+            "",
+            "## JSON",
+            "",
+            "```json",
+            json.dumps(report, indent=2, sort_keys=True),
+            "```",
+            "",
+        ]
+    )
+
+    json_path.write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
+    markdown_path.write_text("\n".join(lines), encoding="utf-8")
+    return markdown_path, json_path
+
+
 @app.command("live-agent-report")
 def live_agent_report(
     model: str = "anthropic-keystroke",
@@ -853,6 +1163,112 @@ def live_agent_report(
         server_artifacts_dir=server_artifacts_dir,
     )
     report["packet"] = str(packet)
+    typer.echo(json.dumps(report, indent=2, sort_keys=True))
+    if not report["ok"]:
+        raise typer.Exit(1)
+
+
+@app.command("live-agent-suite")
+def live_agent_suite(
+    models: str = DEFAULT_LIVE_AGENT_MODELS,
+    baseline_model: str = "fake",
+    trials: int = 2,
+    backend: str = "dfhack",
+    max_steps: int = 4,
+    ticks_per_step: int = 10,
+    api_base_url: str = "http://127.0.0.1:8000",
+    public_base_url: str = "http://34.41.155.134",
+    admin_user: str | None = None,
+    admin_password: str | None = None,
+    server_artifacts_dir: str | None = "/opt/fort-gym/fort_gym/artifacts",
+    timeout_seconds: int = 600,
+    poll_interval: float = 5.0,
+    packet_path: str | None = None,
+) -> None:
+    """Run a multi-trial live-agent scorecard through the public API."""
+
+    model_names = _split_models(models)
+    if not model_names:
+        typer.echo("--models must include at least one model name.")
+        raise typer.Exit(1)
+    if trials < 1:
+        typer.echo("--trials must be at least 1.")
+        raise typer.Exit(1)
+
+    resolved_user = admin_user or os.getenv("FORT_GYM_ADMIN_USER", "admin")
+    resolved_password = admin_password or os.getenv("FORT_GYM_ADMIN_PASSWORD")
+    if not resolved_password:
+        typer.echo("FORT_GYM_ADMIN_PASSWORD or --admin-password is required.")
+        raise typer.Exit(1)
+
+    baseline_runs: list[dict[str, object]] = []
+    variant_runs: dict[str, list[dict[str, object]]] = {model: [] for model in model_names}
+    for trial in range(1, trials + 1):
+        typer.echo(f"Starting baseline trial {trial}/{trials}: {baseline_model}", err=True)
+        baseline = _run_api_agent(
+            api_base_url=api_base_url,
+            public_base_url=public_base_url,
+            admin_user=resolved_user,
+            admin_password=resolved_password,
+            model=baseline_model,
+            backend=backend,
+            max_steps=max_steps,
+            ticks_per_step=ticks_per_step,
+            server_artifacts_dir=server_artifacts_dir,
+            poll_interval=poll_interval,
+            timeout_seconds=timeout_seconds,
+        )
+        baseline["trial"] = trial
+        baseline_runs.append(baseline)
+
+        for model in model_names:
+            typer.echo(f"Starting model trial {trial}/{trials}: {model}", err=True)
+            result = _run_api_agent(
+                api_base_url=api_base_url,
+                public_base_url=public_base_url,
+                admin_user=resolved_user,
+                admin_password=resolved_password,
+                model=model,
+                backend=backend,
+                max_steps=max_steps,
+                ticks_per_step=ticks_per_step,
+                server_artifacts_dir=server_artifacts_dir,
+                poll_interval=poll_interval,
+                timeout_seconds=timeout_seconds,
+            )
+            result["trial"] = trial
+            variant_runs[model].append(result)
+
+    comparison = _build_suite_comparison(
+        baseline_runs=baseline_runs,
+        variant_runs=variant_runs,
+    )
+    all_runs = baseline_runs + [
+        run
+        for runs_for_model in variant_runs.values()
+        for run in runs_for_model
+    ]
+    suite_id = f"live-agent-suite-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}"
+    report = {
+        "ok": all(run.get("status") == "completed" for run in all_runs),
+        "suite_id": suite_id,
+        "trials": trials,
+        "backend": backend,
+        "max_steps": max_steps,
+        "ticks_per_step": ticks_per_step,
+        "baseline_model": baseline_model,
+        "models": model_names,
+        "comparison": comparison,
+        "runs": {
+            "baseline": baseline_runs,
+            "variants": variant_runs,
+        },
+    }
+    _write_live_agent_suite_artifacts(
+        report=report,
+        packet_path=packet_path,
+        server_artifacts_dir=server_artifacts_dir,
+    )
     typer.echo(json.dumps(report, indent=2, sort_keys=True))
     if not report["ok"]:
         raise typer.Exit(1)

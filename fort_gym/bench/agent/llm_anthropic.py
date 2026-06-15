@@ -22,6 +22,23 @@ ANTHROPIC_TOOL = {
 }
 
 
+DIG_FIRST_SYSTEM_PROMPT = """You are the fortress overseer. One action per step. Never return multiple actions or plans.
+
+Use fort-gym's structured action API. Do not drive the Dwarf Fortress UI with keystrokes.
+
+Your priority is to create useful underground workspace and then let dwarves work:
+1. First action: emit a DIG action with area [60, 18, 0], size [5, 5, 1], and advance_ticks 500.
+2. If a dig has already been designated, prefer WAIT with params {} and advance_ticks 500 so work can progress.
+3. Only build or order after there is evidence that digging progressed.
+
+Examples:
+- DIG: {"type":"DIG","params":{"area":[60,18,0],"size":[5,5,1]},"intent":"designate a starter room","advance_ticks":500}
+- WAIT: {"type":"WAIT","params":{},"intent":"let miners work","advance_ticks":500}
+
+The harness executes DIG directly through DFHack, so a structured DIG is more reliable than opening menus.
+Return exactly one submit_action tool call."""
+
+
 # Keystroke mode system prompt
 KEYSTROKE_SYSTEM_PROMPT = """You are playing Dwarf Fortress. You control the game by sending keystrokes.
 
@@ -239,10 +256,11 @@ def _append_usage_event(
 class AnthropicActionAgent(Agent):
     """Calls Anthropic Messages API with tool-use for submit_action."""
 
-    def __init__(self) -> None:
+    def __init__(self, *, system_prompt: str = system_prompt_v1) -> None:
         self._settings = get_settings()
         if not self._settings.ANTHROPIC_API_KEY:
             raise RuntimeError("ANTHROPIC_API_KEY not configured")
+        self._system_prompt = system_prompt
         self._client = None
         self._last_call = 0.0
         self._tool_events: List[Dict[str, Any]] = []
@@ -281,7 +299,7 @@ class AnthropicActionAgent(Agent):
                 model=self._settings.ANTHROPIC_MODEL,
                 max_tokens=self._settings.LLM_MAX_TOKENS,
                 temperature=self._settings.LLM_TEMP,
-                system=system_prompt_v1,
+                system=self._system_prompt,
                 tools=[ANTHROPIC_TOOL],
                 messages=[
                     {
@@ -321,6 +339,16 @@ class AnthropicActionAgent(Agent):
 
 
 register_agent("anthropic", lambda: AnthropicActionAgent())
+
+
+class AnthropicDigFirstAgent(AnthropicActionAgent):
+    """Structured Anthropic policy that starts with a direct DFHack DIG action."""
+
+    def __init__(self) -> None:
+        super().__init__(system_prompt=DIG_FIRST_SYSTEM_PROMPT)
+
+
+register_agent("anthropic-dig-first", lambda: AnthropicDigFirstAgent())
 
 
 class AnthropicKeystrokeAgent(Agent):
@@ -518,4 +546,10 @@ class AnthropicKeystrokeAgent(Agent):
 register_agent("anthropic-keystroke", lambda: AnthropicKeystrokeAgent())
 
 
-__all__ = ["AnthropicActionAgent", "AnthropicKeystrokeAgent"]
+__all__ = [
+    "AnthropicActionAgent",
+    "AnthropicDigFirstAgent",
+    "AnthropicKeystrokeAgent",
+    "DIG_FIRST_SYSTEM_PROMPT",
+    "KEYSTROKE_SYSTEM_PROMPT",
+]

@@ -232,6 +232,7 @@ Agents must implement `Agent.decide(obs_text: str, obs_json: dict) -> dict` retu
 - OpenAI agents (requires `OPENAI_API_KEY`)
 - Anthropic agents (requires `ANTHROPIC_API_KEY`):
   - `anthropic` - Toolbox mode with predefined actions (DIG, BUILD, ORDER)
+  - `anthropic-dig-first` - Toolbox mode tuned to start with a direct DFHack DIG action
   - `anthropic-keystroke` - Pure keystroke control, Claude sees screen and sends key commands
 
 Register new agents via `AGENT_FACTORIES` in `agent/base.py`.
@@ -395,6 +396,11 @@ make vm-live-demo VM_LIVE_DEMO_REF=<branch-or-main>
 make vm-deploy SHA=origin/<branch-or-main>
 make vm-live-agent VM_LIVE_AGENT_REF=<branch-or-main> \
   LIVE_AGENT_MODEL=anthropic-keystroke LIVE_AGENT_MAX_STEPS=4
+
+# Multi-trial live scorecard across model/control variants:
+make vm-live-agent-suite VM_LIVE_AGENT_REF=<branch-or-main> \
+  LIVE_AGENT_MODELS=anthropic-keystroke,anthropic-dig-first \
+  LIVE_AGENT_TRIALS=2 LIVE_AGENT_MAX_STEPS=4
 ```
 3. **Merge**: once tested, merge to `main` (PR merge preferred).
 4. **VM deploy**: deploy the exact git ref to production and restart the API:

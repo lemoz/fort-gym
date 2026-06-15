@@ -3,7 +3,13 @@ from __future__ import annotations
 from types import SimpleNamespace
 from typing import Any
 
-from fort_gym.bench.agent.llm_anthropic import AnthropicActionAgent, KEYSTROKE_SYSTEM_PROMPT
+from fort_gym.bench.agent.llm_anthropic import (
+    AnthropicActionAgent,
+    AnthropicDigFirstAgent,
+    DIG_FIRST_SYSTEM_PROMPT,
+    KEYSTROKE_SYSTEM_PROMPT,
+)
+from fort_gym.bench.api.schemas import RunCreateRequest
 from fort_gym.bench.config import get_settings
 
 
@@ -91,3 +97,41 @@ def test_keystroke_prompt_is_action_first() -> None:
     assert "FIRST ACTION RULE" in KEYSTROKE_SYSTEM_PROMPT
     assert "D_DESIGNATE" in KEYSTROKE_SYSTEM_PROMPT
     assert "advance_ticks\": 200" in KEYSTROKE_SYSTEM_PROMPT
+
+
+def test_dig_first_prompt_uses_structured_control() -> None:
+    assert "structured action API" in DIG_FIRST_SYSTEM_PROMPT
+    assert '"type":"DIG"' in DIG_FIRST_SYSTEM_PROMPT
+    assert '"advance_ticks":500' in DIG_FIRST_SYSTEM_PROMPT
+    assert "Do not drive the Dwarf Fortress UI with keystrokes" in DIG_FIRST_SYSTEM_PROMPT
+
+
+def test_dig_first_agent_uses_custom_prompt(monkeypatch) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.delenv("ANTHROPIC_MODEL", raising=False)
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "anthropic"
+        return SimpleNamespace(Anthropic=_FakeAnthropicClient)
+
+    monkeypatch.setattr(
+        "fort_gym.bench.agent.llm_anthropic.import_module",
+        fake_import_module,
+    )
+
+    try:
+        agent = AnthropicDigFirstAgent()
+        action = agent.decide("mock observation", {"drink": 100})
+    finally:
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["type"] == "WAIT"
+    assert _FakeAnthropicClient.last_instance is not None
+    request = _FakeAnthropicClient.last_instance.messages.requests[0]
+    assert request["system"] == DIG_FIRST_SYSTEM_PROMPT
+
+
+def test_api_accepts_dig_first_model() -> None:
+    request = RunCreateRequest(model="anthropic-dig-first", backend="dfhack")
+    assert request.model == "anthropic-dig-first"
