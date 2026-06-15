@@ -113,10 +113,20 @@ def test_summarize_tracks_work_progress(tmp_path) -> None:
                 "dead": 0,
                 "hostiles": False,
                 "work_progress": 10,
+                "designation_progress": 10,
+                "completion_progress": 0,
                 "target_dig_designations_delta": 10,
                 "target_floor_tiles_delta": 0,
                 "target_wall_tiles_delta": 0,
                 "active_dig_jobs_delta": 1,
+                "work": {
+                    "target_hidden_tiles": 25,
+                    "citizens_total": 7,
+                    "miners_total": 1,
+                    "citizens_on_target_z": 0,
+                    "target_z": 0,
+                    "window_z": 177,
+                },
             },
             "tick_advance": {"ticks_advanced": 500},
             "events": [],
@@ -134,10 +144,20 @@ def test_summarize_tracks_work_progress(tmp_path) -> None:
                 "dead": 0,
                 "hostiles": False,
                 "work_progress": 25,
+                "designation_progress": 25,
+                "completion_progress": 8,
                 "target_dig_designations_delta": 25,
                 "target_floor_tiles_delta": 8,
                 "target_wall_tiles_delta": 8,
                 "active_dig_jobs_delta": 1,
+                "work": {
+                    "target_hidden_tiles": 0,
+                    "citizens_total": 7,
+                    "miners_total": 1,
+                    "citizens_on_target_z": 0,
+                    "target_z": 0,
+                    "window_z": 177,
+                },
             },
             "tick_advance": {"ticks_advanced": 500},
             "events": [],
@@ -151,7 +171,16 @@ def test_summarize_tracks_work_progress(tmp_path) -> None:
 
     assert summary.work_progress == 25
     assert summary.work_score == 10.0
+    assert summary.designation_progress == 25
+    assert summary.completion_progress == 8
+    assert summary.completion_score == 3.2
     assert summary.target_dig_designations_delta == 25
     assert summary.target_floor_tiles_delta == 8
     assert summary.target_wall_tiles_delta == 8
     assert summary.active_dig_jobs_delta == 1
+    assert summary.target_hidden_tiles == 25
+    assert summary.citizens_total == 7
+    assert summary.miners_total == 1
+    assert summary.citizens_on_target_z == 0
+    assert summary.target_z == 0
+    assert summary.window_z == 177

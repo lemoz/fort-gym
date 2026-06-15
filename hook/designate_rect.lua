@@ -52,6 +52,7 @@ local function set_tile(x, y, z, mode)
   if bx < 0 or by < 0 or bx >= sx or by >= sy then return end
 
   local index = bx + by * sx + z * sx * sy
+  if index < 0 or index >= #region.map_blocks then return end
   local block = region.map_blocks[index]
   if not block then return end
 
@@ -62,6 +63,7 @@ local function set_tile(x, y, z, mode)
   elseif mode == 'channel' then
     designation.dig = df.tile_dig_designation.Channel
   end
+  block.flags.designated = true
 end
 
 for tx = rx1, rx2 do

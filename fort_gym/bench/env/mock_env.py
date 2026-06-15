@@ -85,12 +85,20 @@ class MockEnvironment:
             "work": {
                 "ok": True,
                 "target_rect": [50, 35, 0, 54, 39, 0],
+                "target_z": 0,
+                "window_z": 0,
                 "target_tiles": 25,
                 "target_dig_designations": self.target_dig_designations,
                 "target_floor_tiles": self.target_floor_tiles,
                 "target_wall_tiles": self.target_wall_tiles,
+                "target_hidden_tiles": 0,
+                "target_visible_tiles": 25,
+                "target_missing_blocks": 0,
                 "active_jobs": self.active_dig_jobs,
                 "active_dig_jobs": self.active_dig_jobs,
+                "citizens_total": self.population,
+                "miners_total": 1,
+                "citizens_on_target_z": self.population,
             },
         }
 

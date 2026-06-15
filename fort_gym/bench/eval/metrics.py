@@ -41,12 +41,16 @@ def work_progress_delta(
         0,
         _to_int(current.get("active_dig_jobs")) - _to_int(baseline.get("active_dig_jobs")),
     )
+    designation_progress = designations_delta + active_dig_jobs_delta
+    completion_progress = max(floor_delta, wall_delta)
     return {
         "target_dig_designations_delta": designations_delta,
         "target_floor_tiles_delta": floor_delta,
         "target_wall_tiles_delta": wall_delta,
         "active_dig_jobs_delta": active_dig_jobs_delta,
-        "work_progress": max(designations_delta, floor_delta, wall_delta) + active_dig_jobs_delta,
+        "designation_progress": designation_progress,
+        "completion_progress": completion_progress,
+        "work_progress": max(designation_progress, completion_progress),
     }
 
 
@@ -85,12 +89,19 @@ def step_snapshot(state: Dict[str, Any]) -> Dict[str, Any]:
             "ok": bool(work.get("ok", False)),
             "target_rect": work.get("target_rect"),
             "target_tiles": _to_int(work.get("target_tiles")),
+            "target_z": _to_int(work.get("target_z")),
+            "window_z": _to_int(work.get("window_z")),
             "target_dig_designations": _to_int(work.get("target_dig_designations")),
             "target_floor_tiles": _to_int(work.get("target_floor_tiles")),
             "target_wall_tiles": _to_int(work.get("target_wall_tiles")),
+            "target_hidden_tiles": _to_int(work.get("target_hidden_tiles")),
+            "target_visible_tiles": _to_int(work.get("target_visible_tiles")),
             "target_missing_blocks": _to_int(work.get("target_missing_blocks")),
             "active_jobs": _to_int(work.get("active_jobs")),
             "active_dig_jobs": _to_int(work.get("active_dig_jobs")),
+            "citizens_total": _to_int(work.get("citizens_total")),
+            "miners_total": _to_int(work.get("miners_total")),
+            "citizens_on_target_z": _to_int(work.get("citizens_on_target_z")),
         }
     return snapshot
 

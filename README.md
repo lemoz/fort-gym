@@ -114,7 +114,7 @@ head -n 3 fort_gym/artifacts/<run_id>/trace.jsonl
 cat fort_gym/artifacts/<run_id>/summary.json | jq .
 ```
 > Note: the interactive `/step` flow is validated against the single-action schema used by the `fake` agent. Manager orders issued by the exploratory `random` agent remain experimental and may be rejected until DFHack execution coverage improves.
-The SSE endpoint emits `state`, `action`, `validation`, `execute`, `advance`, `metrics`, and `score` events. `summary.json` accumulates aggregate metrics (currently a simple placeholder for DFHack runs).
+The SSE endpoint emits `state`, `action`, `validation`, `execute`, `advance`, `metrics`, and `score` events. `summary.json` accumulates aggregate metrics, including live DFHack work and completion progress when target-room metrics are available.
 
 ## Keystroke Control Mode (Claude Plays Like a Human)
 

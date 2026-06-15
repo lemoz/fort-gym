@@ -48,7 +48,7 @@ def queue_manager_order(item: str, qty: int) -> Dict[str, object]:
     qty_clamped = max(1, min(int(qty), MAX_QTY))
     try:
         return run_lua_file(_hook_path("order_make.lua"), item, str(qty_clamped))
-    except DFHackError as exc:
+    except (DFHackError, OSError) as exc:
         return {"ok": False, "error": str(exc)}
 
 
@@ -73,7 +73,31 @@ def designate_rect(kind: str, x1: int, y1: int, z1: int, x2: int, y2: int, z2: i
             str(int(y2)),
             str(int(z2)),
         )
-    except DFHackError as exc:
+    except (DFHackError, OSError) as exc:
+        return {"ok": False, "error": str(exc)}
+
+
+def complete_dig_rect(x1: int, y1: int, z1: int, x2: int, y2: int, z2: int) -> Dict[str, object]:
+    """Complete bounded DFHack dig designations by converting wall tiles to floors."""
+
+    width = abs(int(x2) - int(x1)) + 1
+    height = abs(int(y2) - int(y1)) + 1
+    if int(z1) != int(z2):
+        return {"ok": False, "error": "z_span_not_supported"}
+    if width > MAX_RECT_W or height > MAX_RECT_H:
+        return {"ok": False, "error": "rect_too_large"}
+
+    try:
+        return run_lua_file(
+            _hook_path("complete_dig_rect.lua"),
+            str(int(x1)),
+            str(int(y1)),
+            str(int(z1)),
+            str(int(x2)),
+            str(int(y2)),
+            str(int(z2)),
+        )
+    except (DFHackError, OSError) as exc:
         return {"ok": False, "error": str(exc)}
 
 
@@ -256,6 +280,7 @@ __all__ = [
     "MAX_RECT_H",
     "queue_manager_order",
     "designate_rect",
+    "complete_dig_rect",
     "read_work_metrics",
     "advance_ticks_exact_external",
     "advance_ticks_exact",
