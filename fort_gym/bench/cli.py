@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import socket
+import subprocess
 from pathlib import Path
 
 import uvicorn
@@ -189,6 +191,155 @@ def scenario_run(
         raise typer.Exit(1)
 
 
+@app.command("live-smoke")
+def live_smoke(
+    ticks: int = 10,
+    run_id: str | None = None,
+    check_manager_order: bool = True,
+    auto_proto: bool = True,
+    install_hooks: bool = True,
+) -> None:
+    """Run a small end-to-end DFHack smoke test and print artifact paths."""
+
+    from .agent.base import Agent
+    from .dfhack_backend import designate_rect, queue_manager_order
+    from .env.actions import parse_action
+    from .env.dfhack_client import DFHackClient
+    from .config import DFROOT
+
+    settings = get_settings()
+    from .env.remote_proto import ProtoLoadError, ensure_proto_modules
+
+    if not settings.DFHACK_ENABLED:
+        typer.echo("DFHACK_ENABLED=1 is required for live smoke tests.")
+        raise typer.Exit(1)
+
+    try:
+        modules = ensure_proto_modules()
+    except ProtoLoadError:
+        if not auto_proto:
+            raise
+        from importlib import invalidate_caches
+
+        from .env.remote_proto.fetch_proto import generate_bindings
+
+        generate_bindings()
+        invalidate_caches()
+        modules = ensure_proto_modules()
+    if not modules:
+        typer.echo("DF_PROTO_ENABLED=1 is required for live smoke tests.")
+        raise typer.Exit(1)
+
+    client = DFHackClient(host=settings.DFHACK_HOST, port=settings.DFHACK_PORT)
+    client.connect()
+    client.close()
+
+    if install_hooks:
+        repo_root = Path(__file__).resolve().parents[2]
+        source_hook_dir = repo_root / "hook"
+        target_hook_dir = DFROOT / "hook"
+        try:
+            target_hook_dir.mkdir(parents=True, exist_ok=True)
+            for source in source_hook_dir.glob("*.lua"):
+                shutil.copy2(source, target_hook_dir / source.name)
+        except PermissionError:
+            subprocess.check_call(["sudo", "-n", "mkdir", "-p", str(target_hook_dir)])
+            for source in source_hook_dir.glob("*.lua"):
+                subprocess.check_call(
+                    ["sudo", "-n", "cp", str(source), str(target_hook_dir / source.name)]
+                )
+
+    hook_checks: dict[str, object] = {
+        "invalid_order": queue_manager_order("sword_of_gods", 1),
+        "oversized_designation": designate_rect("dig", 0, 0, 0, 200, 200, 0),
+    }
+    if check_manager_order:
+        hook_checks["manager_order_bed"] = queue_manager_order("bed", 1)
+
+    class LiveSmokeAgent(Agent):
+        def __init__(self) -> None:
+            self._step = 0
+
+        def decide(self, obs_text, obs_json):  # type: ignore[no-untyped-def]
+            self._step += 1
+            if self._step == 1:
+                return parse_action(
+                    {
+                        "type": "DIG",
+                        "params": {"area": [0, 0, 0], "size": [1, 1, 1]},
+                        "intent": "live smoke dig designation",
+                        "advance_ticks": 0,
+                    }
+                )
+            return parse_action(
+                {
+                    "type": "WAIT",
+                    "params": {},
+                    "intent": "live smoke tick advancement",
+                    "advance_ticks": ticks,
+                }
+            )
+
+    resolved_run_id = run_id or "live-dfhack-smoke"
+    result_run_id = run_once(
+        LiveSmokeAgent(),
+        backend="dfhack",
+        model="live-smoke",
+        max_steps=2,
+        ticks_per_step=ticks,
+        run_id=resolved_run_id,
+    )
+    artifacts_dir = Path(settings.ARTIFACTS_DIR).resolve() / result_run_id
+    trace_path = artifacts_dir / "trace.jsonl"
+    summary_path = artifacts_dir / "summary.json"
+    records = [
+        json.loads(line)
+        for line in trace_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    dig_record = next(
+        (record for record in records if record.get("action", {}).get("type") == "DIG"),
+        {},
+    )
+    wait_record = next(
+        (record for record in records if record.get("action", {}).get("type") == "WAIT"),
+        {},
+    )
+    wait_tick_info = wait_record.get("tick_advance") or {}
+
+    checks = {
+        "dfhack_connect": True,
+        "invalid_order_rejected": hook_checks["invalid_order"].get("error") == "invalid_item"
+        if isinstance(hook_checks["invalid_order"], dict)
+        else False,
+        "oversized_designation_rejected": hook_checks["oversized_designation"].get("error")
+        == "rect_too_large"
+        if isinstance(hook_checks["oversized_designation"], dict)
+        else False,
+        "manager_order_bed_ok": (
+            hook_checks.get("manager_order_bed", {"ok": True}).get("ok") is True
+            if isinstance(hook_checks.get("manager_order_bed", {"ok": True}), dict)
+            else False
+        ),
+        "dig_accepted": (dig_record.get("execute") or {}).get("accepted") is True,
+        "wait_ticks_advanced": int(wait_tick_info.get("ticks_advanced") or 0) >= ticks,
+        "trace_written": trace_path.is_file(),
+        "summary_written": summary_path.is_file(),
+    }
+    report = {
+        "ok": all(checks.values()),
+        "checks": checks,
+        "hook_checks": hook_checks,
+        "run_id": result_run_id,
+        "trace": str(trace_path),
+        "summary": str(summary_path),
+        "wait_tick_advance": wait_tick_info,
+    }
+    typer.echo(json.dumps(report, indent=2, sort_keys=True))
+    if not report["ok"]:
+        raise typer.Exit(1)
+
+
 @app.command()
 def experiment(config: str) -> None:
     """Run an experiment from a YAML configuration file."""
@@ -205,7 +356,7 @@ def experiment(config: str) -> None:
 def routes() -> None:
     """List API routes for sanity checking."""
 
-    paths = sorted(route.path for route in fastapi_app.routes)
+    paths = sorted(route.path for route in fastapi_app.routes if hasattr(route, "path"))
     for path in paths:
         typer.echo(path)
 

@@ -87,6 +87,12 @@ def run_lua_file(path: str, *args: str, timeout: float = 2.5) -> Dict[str, objec
     try:
         return json.loads(clean)
     except json.JSONDecodeError as exc:
+        for line in reversed([line.strip() for line in clean.splitlines() if line.strip()]):
+            if line.startswith("{") or line.startswith("["):
+                try:
+                    return json.loads(line)
+                except json.JSONDecodeError:
+                    continue
         raise DFHackError(f"bad json from {path}: {clean!r}") from exc
 
 

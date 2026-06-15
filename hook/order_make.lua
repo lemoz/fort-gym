@@ -6,12 +6,12 @@ local item = tostring(args[1] or '')
 local qty = tonumber(args[2]) or 1
 
 local whitelist = {
-  bed = 'Make Bed',
-  door = 'Make Door',
-  table = 'Make Table',
-  chair = 'Make Throne',
-  barrel = 'Make Barrel',
-  bin = 'Make Bin',
+  bed = 'ConstructBed',
+  door = 'ConstructDoor',
+  table = 'ConstructTable',
+  chair = 'ConstructThrone',
+  barrel = 'MakeBarrel',
+  bin = 'ConstructBin',
 }
 
 local jobname = whitelist[item]
@@ -22,11 +22,32 @@ end
 
 if qty < 1 or qty > 5 then qty = 1 end
 
-local wo = df.workorder.WorkOrder:new()
-wo.job_type = df.job_type[jobname:gsub(' ', '')]
+local job_type = df.job_type[jobname]
+if not job_type then
+  print(json.encode({ ok = false, error = 'unsupported_job_type', job = jobname }))
+  return
+end
+
+local manager_orders = df.global.world.manager_orders
+if not manager_orders then
+  print(json.encode({ ok = false, error = 'manager_orders_unavailable' }))
+  return
+end
+
+local wo = df.manager_order:new()
+wo.job_type = job_type
 wo.amount_total = qty
-df.global.world.manager_workorders:insert('#', wo)
+wo.amount_left = qty
+manager_orders:insert('#', wo)
 
-dfhack.run_script('orders', 'process-new')
+local processed_ok, processed_error = pcall(function()
+  dfhack.run_script('orders', 'process-new')
+end)
 
-print(json.encode({ ok = true, item = item, qty = qty }))
+print(json.encode({
+  ok = true,
+  item = item,
+  qty = qty,
+  processed = processed_ok,
+  process_error = processed_ok and nil or tostring(processed_error),
+}))

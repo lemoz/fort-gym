@@ -4,7 +4,7 @@ from __future__ import annotations
 def test_public_routes_exist() -> None:
     from fort_gym.bench.api.server import app
 
-    paths = {route.path for route in app.routes}
+    paths = {route.path for route in app.routes if hasattr(route, "path")}
     assert "/public/runs" in paths
     assert "/public/leaderboard" in paths
     assert "/public/runs/{token}" in paths
