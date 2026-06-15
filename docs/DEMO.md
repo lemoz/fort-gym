@@ -24,6 +24,31 @@ Expected test result:
 
 Keep two terminals open in the repo root and have a browser ready.
 
+If the live DFHack VM is part of the interview, rehearse it before the call:
+
+```bash
+make vm-live-demo VM_LIVE_DEMO_REF=main
+```
+
+Expected output shape:
+
+```text
+RUN_DIR=/home/cdossman/fort-gym-live-demo.<suffix>
+{
+  "ok": true,
+  "live_smoke": {
+    "ok": true,
+    "trace": ".../trace.jsonl",
+    "summary": ".../summary.json"
+  },
+  "packet": ".../live_demo_packet.md",
+  "public_endpoint_checks": [...]
+}
+```
+
+Open the generated packet if you want the live DFHack artifact paths and endpoint
+checks in one place before the demo.
+
 ## Live sequence
 
 ### 0:00 to 0:20 - frame the project

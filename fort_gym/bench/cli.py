@@ -7,7 +7,10 @@ import os
 import shutil
 import socket
 import subprocess
+from datetime import datetime, timezone
 from pathlib import Path
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 
 import uvicorn
 
@@ -45,6 +48,12 @@ except ImportError:  # pragma: no cover - fallback when typer missing
 
 
 app = typer.Typer(name="fort-gym")
+
+PUBLIC_REHEARSAL_PATHS = (
+    "/health",
+    "/leaderboard",
+    "/public/leaderboard/best-over-time",
+)
 
 
 def _available_port(start: int) -> int:
@@ -191,15 +200,14 @@ def scenario_run(
         raise typer.Exit(1)
 
 
-@app.command("live-smoke")
-def live_smoke(
+def _run_live_smoke(
     ticks: int = 10,
     run_id: str | None = None,
     check_manager_order: bool = True,
     auto_proto: bool = True,
     install_hooks: bool = True,
-) -> None:
-    """Run a small end-to-end DFHack smoke test and print artifact paths."""
+) -> dict[str, object]:
+    """Run a small end-to-end DFHack smoke test and return artifact paths."""
 
     from .agent.base import Agent
     from .dfhack_backend import designate_rect, queue_manager_order
@@ -335,8 +343,195 @@ def live_smoke(
         "summary": str(summary_path),
         "wait_tick_advance": wait_tick_info,
     }
+    return report
+
+
+@app.command("live-smoke")
+def live_smoke(
+    ticks: int = 10,
+    run_id: str | None = None,
+    check_manager_order: bool = True,
+    auto_proto: bool = True,
+    install_hooks: bool = True,
+) -> None:
+    """Run a small end-to-end DFHack smoke test and print artifact paths."""
+
+    report = _run_live_smoke(
+        ticks=ticks,
+        run_id=run_id,
+        check_manager_order=check_manager_order,
+        auto_proto=auto_proto,
+        install_hooks=install_hooks,
+    )
     typer.echo(json.dumps(report, indent=2, sort_keys=True))
     if not report["ok"]:
+        raise typer.Exit(1)
+
+
+def _check_public_endpoint(base_url: str, path: str, timeout: float = 5.0) -> dict[str, object]:
+    normalized_url = f"{base_url.rstrip('/')}/{path.lstrip('/')}"
+    request = Request(
+        normalized_url,
+        headers={"User-Agent": "fort-gym-live-demo-rehearsal/1.0"},
+    )
+    try:
+        with urlopen(request, timeout=timeout) as response:
+            body = response.read(2048)
+            status = int(response.status)
+            content_type = response.headers.get("content-type", "")
+    except HTTPError as exc:
+        return {
+            "ok": False,
+            "url": normalized_url,
+            "status": exc.code,
+            "error": str(exc),
+        }
+    except (OSError, TimeoutError, URLError) as exc:
+        return {
+            "ok": False,
+            "url": normalized_url,
+            "error": str(exc),
+        }
+    return {
+        "ok": 200 <= status < 400,
+        "url": normalized_url,
+        "status": status,
+        "content_type": content_type,
+        "bytes_read": len(body),
+    }
+
+
+def _write_live_demo_packet(
+    *,
+    report: dict[str, object],
+    endpoint_checks: list[dict[str, object]],
+    public_base_url: str,
+    packet_path: str | None = None,
+) -> Path:
+    summary_path = Path(str(report["summary"])).resolve()
+    trace_path = Path(str(report["trace"])).resolve()
+    target_path = Path(packet_path).expanduser().resolve() if packet_path else summary_path.parent / "live_demo_packet.md"
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+
+    checks = report.get("checks") if isinstance(report.get("checks"), dict) else {}
+    tick_info = report.get("wait_tick_advance") if isinstance(report.get("wait_tick_advance"), dict) else {}
+    generated_at = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+
+    lines = [
+        "# fort-gym live demo rehearsal",
+        "",
+        f"Generated: {generated_at}",
+        f"Status: {'PASS' if report.get('ok') and all(check.get('ok') for check in endpoint_checks) else 'FAIL'}",
+        f"Run ID: `{report.get('run_id')}`",
+        f"Public base URL: `{public_base_url.rstrip('/')}`",
+        "",
+        "## One-command rehearsal",
+        "",
+        "```bash",
+        "make vm-live-demo VM_LIVE_DEMO_REF=<branch-or-main>",
+        "```",
+        "",
+        "## Live DFHack checks",
+        "",
+    ]
+    for name, ok in sorted(checks.items()):
+        marker = "x" if ok else " "
+        lines.append(f"- [{marker}] `{name}`")
+    lines.extend(
+        [
+            "",
+            "## Public endpoint checks",
+            "",
+        ]
+    )
+    for check in endpoint_checks:
+        marker = "x" if check.get("ok") else " "
+        status = check.get("status", "error")
+        lines.append(f"- [{marker}] GET `{check.get('url')}` -> `{status}`")
+
+    lines.extend(
+        [
+            "",
+            "## Artifacts",
+            "",
+            f"- Trace: `{trace_path}`",
+            f"- Summary: `{summary_path}`",
+            f"- Packet: `{target_path}`",
+            "",
+            "## Expected output shape",
+            "",
+            "```json",
+            json.dumps(
+                {
+                    "ok": True,
+                    "live_smoke": {
+                        "ok": True,
+                        "run_id": report.get("run_id"),
+                        "trace": str(trace_path),
+                        "summary": str(summary_path),
+                        "wait_tick_advance": {
+                            "requested": tick_info.get("requested"),
+                            "ticks_advanced": tick_info.get("ticks_advanced"),
+                        },
+                    },
+                    "public_endpoint_checks": [
+                        {"ok": check.get("ok"), "url": check.get("url"), "status": check.get("status")}
+                        for check in endpoint_checks
+                    ],
+                    "packet": str(target_path),
+                },
+                indent=2,
+                sort_keys=True,
+            ),
+            "```",
+            "",
+            "## Talk track",
+            "",
+            "The live path now proves the same harness loop against DFHack: connect, validate safety rails, run a DIG action, advance live ticks with WAIT, and write trace artifacts. The public endpoint checks prove the deployed spectator surface is reachable before the demo starts.",
+            "",
+        ]
+    )
+    target_path.write_text("\n".join(lines), encoding="utf-8")
+    return target_path
+
+
+@app.command("live-demo-rehearsal")
+def live_demo_rehearsal(
+    ticks: int = 10,
+    run_id: str | None = None,
+    public_base_url: str = "http://34.41.155.134",
+    public_paths: str = ",".join(PUBLIC_REHEARSAL_PATHS),
+    endpoint_timeout: float = 5.0,
+    packet_path: str | None = None,
+) -> None:
+    """Run live DFHack smoke plus public endpoint checks and write a demo packet."""
+
+    report = _run_live_smoke(
+        ticks=ticks,
+        run_id=run_id or "live-dfhack-demo-rehearsal",
+        check_manager_order=True,
+        auto_proto=True,
+        install_hooks=True,
+    )
+    paths = [path.strip() for path in public_paths.split(",") if path.strip()]
+    endpoint_checks = [
+        _check_public_endpoint(public_base_url, path, timeout=endpoint_timeout)
+        for path in paths
+    ]
+    packet = _write_live_demo_packet(
+        report=report,
+        endpoint_checks=endpoint_checks,
+        public_base_url=public_base_url,
+        packet_path=packet_path,
+    )
+    rehearsal = {
+        "ok": bool(report.get("ok")) and all(check.get("ok") for check in endpoint_checks) and packet.is_file(),
+        "live_smoke": report,
+        "packet": str(packet),
+        "public_endpoint_checks": endpoint_checks,
+    }
+    typer.echo(json.dumps(rehearsal, indent=2, sort_keys=True))
+    if not rehearsal["ok"]:
         raise typer.Exit(1)
 
 

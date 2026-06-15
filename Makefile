@@ -1,4 +1,4 @@
-.PHONY: install lint fmt test api mock-run live-smoke proto clean-proto compile df-headless vm-provision vm-start vm-status vm-test vm-deploy vm-live-smoke
+.PHONY: install lint fmt test api mock-run live-smoke live-demo-rehearsal proto clean-proto compile df-headless vm-provision vm-start vm-status vm-test vm-deploy vm-live-smoke vm-live-demo
 
 # ------------------------------------------------------------------------------
 # Remote VM helpers (override via `make VAR=value`)
@@ -14,6 +14,8 @@ VM_TEST_DIR ?= ~/fort-gym-test
 VM_PROD_DIR ?= /opt/fort-gym
 VM_VENV_DIR ?= /opt/fort-gym/.venv
 VM_LIVE_SMOKE_REF ?= main
+VM_LIVE_DEMO_REF ?= main
+PUBLIC_BASE_URL ?= http://$(VM_HOST)
 
 # Git ref to test/deploy (branch, tag, or SHA)
 SHA ?= origin/main
@@ -45,6 +47,9 @@ mock-run:
 live-smoke:
 	fort-gym live-smoke
 
+live-demo-rehearsal:
+	fort-gym live-demo-rehearsal
+
 compile:
 	python -m compileall -q fort_gym
 
@@ -75,3 +80,6 @@ vm-deploy:
 
 vm-live-smoke:
 	$(VM_GCLOUD_SSH) 'set -euo pipefail; RUN_DIR=$$(mktemp -d /home/$(VM_USER)/fort-gym-live-smoke.XXXXXX); echo "RUN_DIR=$$RUN_DIR"; git clone --depth 1 --branch $(VM_LIVE_SMOKE_REF) https://github.com/lemoz/fort-gym.git "$$RUN_DIR" >/dev/null; cd "$$RUN_DIR"; $(VM_VENV_DIR)/bin/python -m pip install -q grpcio-tools; set -a; . /etc/fort-gym.env; set +a; export PYTHONPATH="$$RUN_DIR"; export ARTIFACTS_DIR="$$RUN_DIR/artifacts-live"; export FORT_GYM_DB_PATH="$$RUN_DIR/artifacts-live/fort_gym.sqlite3"; unset GOOGLE_API_KEY; $(VM_VENV_DIR)/bin/python -c "from fort_gym.bench.cli import app; app()" live-smoke --run-id live-dfhack-smoke'
+
+vm-live-demo:
+	$(VM_GCLOUD_SSH) 'set -euo pipefail; RUN_DIR=$$(mktemp -d /home/$(VM_USER)/fort-gym-live-demo.XXXXXX); echo "RUN_DIR=$$RUN_DIR"; git clone --depth 1 --branch $(VM_LIVE_DEMO_REF) https://github.com/lemoz/fort-gym.git "$$RUN_DIR" >/dev/null; cd "$$RUN_DIR"; $(VM_VENV_DIR)/bin/python -m pip install -q grpcio-tools; set -a; . /etc/fort-gym.env; set +a; export PYTHONPATH="$$RUN_DIR"; export ARTIFACTS_DIR="$$RUN_DIR/artifacts-live"; export FORT_GYM_DB_PATH="$$RUN_DIR/artifacts-live/fort_gym.sqlite3"; unset GOOGLE_API_KEY; $(VM_VENV_DIR)/bin/python -c "from fort_gym.bench.cli import app; app()" live-demo-rehearsal --run-id live-dfhack-demo-rehearsal --public-base-url $(PUBLIC_BASE_URL)'
