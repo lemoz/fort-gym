@@ -107,6 +107,63 @@
     }
     .game-header h2 { margin: 0; font-size: 1rem; color: #9fb1d6; }
     .game-status { font-size: 0.8rem; color: #6b7c99; }
+    .replay-controls {
+      display: none;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin: 0 0 0.75rem 0;
+      padding: 0.7rem 0.75rem;
+      background: rgba(15, 21, 33, 0.85);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+    }
+    .replay-controls button {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.08);
+      color: #dbe6ff;
+      cursor: pointer;
+    }
+    .replay-controls button:hover { background: rgba(255,255,255,0.14); }
+    .replay-controls input[type="range"] {
+      flex: 1 1 14rem;
+      min-width: 10rem;
+      accent-color: #4f7cff;
+    }
+    .replay-step-label {
+      min-width: 5rem;
+      color: #dbe6ff;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .replay-legend {
+      display: flex;
+      gap: 0.55rem;
+      flex-wrap: wrap;
+      color: #9fb1d6;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      white-space: nowrap;
+    }
+    .legend-swatch {
+      width: 0.8rem;
+      height: 0.8rem;
+      border-radius: 3px;
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+    .legend-starter { background: #4f7cff; }
+    .legend-connector { background: #43c6ac; }
+    .legend-workshop-room { background: #78d66d; }
+    .legend-production { background: #f5c542; }
     #game-canvas {
       display: block;
       width: 100%;
@@ -333,8 +390,20 @@
     <!-- Game view -->
     <div class="game-section">
       <div class="game-header">
-        <h2>Live Game View</h2>
+        <h2 id="game-title">Run View</h2>
         <span id="game-status" class="game-status">Waiting for run...</span>
+      </div>
+      <div id="replay-controls" class="replay-controls" aria-label="Saved run replay controls">
+        <button id="replay-prev" type="button" title="Previous step" aria-label="Previous step">&#9664;</button>
+        <input id="replay-step-slider" type="range" min="0" max="0" value="0" aria-label="Replay step">
+        <button id="replay-next" type="button" title="Next step" aria-label="Next step">&#9654;</button>
+        <span id="replay-step-label" class="replay-step-label">Step --</span>
+        <div class="replay-legend" aria-label="Replay legend">
+          <span class="legend-item"><span class="legend-swatch legend-starter"></span>Starter</span>
+          <span class="legend-item"><span class="legend-swatch legend-connector"></span>Connector</span>
+          <span class="legend-item"><span class="legend-swatch legend-workshop-room"></span>Workshop room</span>
+          <span class="legend-item"><span class="legend-swatch legend-production"></span>Production</span>
+        </div>
       </div>
       <div id="game-container">
         <div class="no-game-placeholder" id="no-game">
@@ -431,6 +500,9 @@
     let gameInterval = null;
     let scoreChart = null;
     let scoreData = { steps: [], scores: [] };
+    let viewMode = 'empty';
+    let replayRecords = [];
+    let replayStepIndex = 0;
     const presetToken = new URLSearchParams(window.location.search).get('token');
     if (presetToken) {
       currentToken = presetToken;
@@ -442,10 +514,16 @@
     const stepBadge = document.getElementById('step-badge');
     const scoreBadge = document.getElementById('score-badge');
     const runLinks = document.getElementById('run-links');
+    const gameTitle = document.getElementById('game-title');
     const gameCanvas = document.getElementById('game-canvas');
     const gameCtx = gameCanvas.getContext('2d');
     const gameStatus = document.getElementById('game-status');
     const noGamePlaceholder = document.getElementById('no-game');
+    const replayControls = document.getElementById('replay-controls');
+    const replayPrev = document.getElementById('replay-prev');
+    const replayNext = document.getElementById('replay-next');
+    const replayStepSlider = document.getElementById('replay-step-slider');
+    const replayStepLabel = document.getElementById('replay-step-label');
     const statPop = document.getElementById('stat-pop');
     const statFood = document.getElementById('stat-food');
     const statDrink = document.getElementById('stat-drink');
@@ -534,6 +612,39 @@
       }
     }
 
+    function stopLiveScreen() {
+      if (gameInterval) {
+        clearInterval(gameInterval);
+        gameInterval = null;
+      }
+    }
+
+    function setViewMode(mode) {
+      viewMode = mode;
+      replayControls.style.display = mode === 'replay' ? 'flex' : 'none';
+      if (mode === 'replay') {
+        gameTitle.textContent = 'Saved Run Replay';
+      } else if (mode === 'live') {
+        gameTitle.textContent = 'Current VM Screen';
+      } else {
+        gameTitle.textContent = 'Run View';
+      }
+    }
+
+    function showPlaceholder(text) {
+      gameCanvas.style.display = 'none';
+      noGamePlaceholder.style.display = 'flex';
+      const placeholderText = noGamePlaceholder.querySelector('p');
+      if (placeholderText && text) {
+        placeholderText.textContent = text;
+      }
+    }
+
+    function showCanvas() {
+      gameCanvas.style.display = 'block';
+      noGamePlaceholder.style.display = 'none';
+    }
+
     async function fetchScreen() {
       try {
         if (!currentToken) return;
@@ -548,6 +659,388 @@
         gameStatus.textContent = 'Screen unavailable: ' + err.message;
       }
     }
+
+    function parseTraceRecords(text) {
+      return text.trim().split('\n')
+        .filter(Boolean)
+        .map(line => JSON.parse(line));
+    }
+
+    function toNumber(value, fallback = 0) {
+      const number = Number(value);
+      return Number.isFinite(number) ? number : fallback;
+    }
+
+    function normalizeRect(rect) {
+      if (!Array.isArray(rect) || rect.length < 6) return null;
+      const x1 = toNumber(rect[0]);
+      const y1 = toNumber(rect[1]);
+      const z1 = toNumber(rect[2]);
+      const x2 = toNumber(rect[3]);
+      const y2 = toNumber(rect[4]);
+      const z2 = toNumber(rect[5]);
+      return [
+        Math.min(x1, x2),
+        Math.min(y1, y2),
+        Math.min(z1, z2),
+        Math.max(x1, x2),
+        Math.max(y1, y2),
+        Math.max(z1, z2)
+      ];
+    }
+
+    function rectFromArea(area, size) {
+      if (!Array.isArray(area) || !Array.isArray(size)) return null;
+      const x = toNumber(area[0]);
+      const y = toNumber(area[1]);
+      const z = toNumber(area[2]);
+      const w = Math.max(1, toNumber(size[0], 1));
+      const h = Math.max(1, toNumber(size[1], 1));
+      const d = Math.max(1, toNumber(size[2], 1));
+      return [x, y, z, x + w - 1, y + h - 1, z + d - 1];
+    }
+
+    function rectArea(rect) {
+      if (!rect) return 0;
+      return Math.max(0, rect[3] - rect[0] + 1) * Math.max(0, rect[4] - rect[1] + 1);
+    }
+
+    function getRecordWork(record) {
+      return record?.state_after_advance?.work
+        || record?.state_after_apply?.work
+        || record?.metrics?.work
+        || record?.observation?.work
+        || {};
+    }
+
+    function findActionRect(records, predicate) {
+      for (const record of records) {
+        const action = record.action || {};
+        if (predicate(action, record)) {
+          return normalizeRect(rectFromArea(action.params?.area, action.params?.size));
+        }
+      }
+      return null;
+    }
+
+    function findBuildAction(records, maxIndex) {
+      for (let index = Math.min(maxIndex, records.length - 1); index >= 0; index--) {
+        const action = records[index]?.action || {};
+        if (action.type === 'BUILD') return action;
+      }
+      return null;
+    }
+
+    function buildReplaySnapshot(index) {
+      const boundedIndex = Math.max(0, Math.min(index, replayRecords.length - 1));
+      const record = replayRecords[boundedIndex] || {};
+      const finalRecord = replayRecords[replayRecords.length - 1] || {};
+      const work = getRecordWork(record);
+      const finalWork = getRecordWork(finalRecord);
+      const targetRect = normalizeRect(work.target_rect)
+        || normalizeRect(finalWork.target_rect)
+        || findActionRect(replayRecords, action => action.type === 'DIG');
+      const connectorRect = normalizeRect(work.fortress_connector_rect)
+        || normalizeRect(finalWork.fortress_connector_rect)
+        || findActionRect(replayRecords, action => action.type === 'DIG' && action.params?.area?.[0] === 55);
+      const workshopRoomRect = normalizeRect(work.fortress_workshop_room_rect)
+        || normalizeRect(finalWork.fortress_workshop_room_rect)
+        || findActionRect(replayRecords, action => action.type === 'DIG' && action.params?.area?.[0] === 58);
+      const buildAction = findBuildAction(replayRecords, boundedIndex);
+      const action = record.action || {};
+      const metrics = record.metrics || {};
+      const score = record.score || {};
+
+      return {
+        index: boundedIndex,
+        record,
+        action,
+        metrics,
+        score,
+        targetRect,
+        connectorRect,
+        workshopRoomRect,
+        targetFloors: toNumber(work.target_floor_tiles),
+        targetTiles: toNumber(work.target_tiles, rectArea(targetRect)),
+        connectorFloors: toNumber(work.fortress_connector_floor_tiles),
+        connectorTiles: toNumber(work.fortress_connector_tiles, rectArea(connectorRect)),
+        workshopRoomFloors: toNumber(work.fortress_workshop_room_floor_tiles),
+        workshopRoomTiles: toNumber(work.fortress_workshop_room_tiles, rectArea(workshopRoomRect)),
+        complexityProgress: toNumber(metrics.complexity_progress),
+        productionProgress: toNumber(metrics.production_progress),
+        carpenterWorkshops: toNumber(work.carpenter_workshops),
+        buildAction
+      };
+    }
+
+    function replayBounds(snapshot) {
+      const rects = [
+        snapshot.targetRect,
+        snapshot.connectorRect,
+        snapshot.workshopRoomRect
+      ].filter(Boolean);
+      if (snapshot.buildAction?.params) {
+        const x = toNumber(snapshot.buildAction.params.x);
+        const y = toNumber(snapshot.buildAction.params.y);
+        const z = toNumber(snapshot.buildAction.params.z);
+        rects.push([x, y, z, x + 2, y + 2, z]);
+      }
+      if (rects.length === 0) return null;
+      return {
+        x1: Math.min(...rects.map(rect => rect[0])) - 1,
+        y1: Math.min(...rects.map(rect => rect[1])) - 1,
+        x2: Math.max(...rects.map(rect => rect[3])) + 1,
+        y2: Math.max(...rects.map(rect => rect[4])) + 1
+      };
+    }
+
+    function drawReplayText(text, x, y, options = {}) {
+      gameCtx.fillStyle = options.color || '#dbe6ff';
+      gameCtx.font = `${options.weight || 500} ${options.size || 14}px 'Segoe UI', Arial, sans-serif`;
+      gameCtx.textAlign = options.align || 'left';
+      gameCtx.textBaseline = options.baseline || 'top';
+      gameCtx.fillText(text, x, y);
+    }
+
+    function wrapReplayText(text, x, y, maxWidth, lineHeight, color = '#9fb1d6') {
+      const words = String(text || '').split(/\s+/).filter(Boolean);
+      let line = '';
+      let cursorY = y;
+      gameCtx.font = "500 13px 'Segoe UI', Arial, sans-serif";
+      gameCtx.fillStyle = color;
+      for (const word of words) {
+        const testLine = line ? `${line} ${word}` : word;
+        if (gameCtx.measureText(testLine).width > maxWidth && line) {
+          gameCtx.fillText(line, x, cursorY);
+          line = word;
+          cursorY += lineHeight;
+        } else {
+          line = testLine;
+        }
+      }
+      if (line) gameCtx.fillText(line, x, cursorY);
+      return cursorY + lineHeight;
+    }
+
+    function drawRoomTiles(room, scale) {
+      const { rect, completed, fill, stroke, label, progressLabel } = room;
+      if (!rect) return;
+      const x = scale.left + (rect[0] - scale.x1) * scale.tile;
+      const y = scale.top + (rect[1] - scale.y1) * scale.tile;
+      const width = (rect[3] - rect[0] + 1) * scale.tile;
+      const height = (rect[4] - rect[1] + 1) * scale.tile;
+
+      gameCtx.save();
+      gameCtx.lineWidth = 2;
+      gameCtx.strokeStyle = stroke;
+      gameCtx.fillStyle = completed ? fill : 'rgba(107,124,153,0.13)';
+      gameCtx.fillRect(x, y, width, height);
+      gameCtx.strokeRect(x, y, width, height);
+
+      if (completed) {
+        gameCtx.fillStyle = fill;
+        for (let ty = rect[1]; ty <= rect[4]; ty++) {
+          for (let tx = rect[0]; tx <= rect[3]; tx++) {
+            const px = scale.left + (tx - scale.x1) * scale.tile + 2;
+            const py = scale.top + (ty - scale.y1) * scale.tile + 2;
+            gameCtx.fillRect(px, py, scale.tile - 4, scale.tile - 4);
+          }
+        }
+      } else {
+        gameCtx.setLineDash([5, 5]);
+        gameCtx.strokeStyle = 'rgba(159,177,214,0.4)';
+        gameCtx.strokeRect(x + 4, y + 4, Math.max(0, width - 8), Math.max(0, height - 8));
+      }
+
+      gameCtx.setLineDash([]);
+      drawReplayText(label, x + width / 2, y + height / 2 - 8, {
+        color: completed ? '#08111f' : '#9fb1d6',
+        size: Math.max(10, Math.min(13, scale.tile * 0.45)),
+        weight: 700,
+        align: 'center'
+      });
+      drawReplayText(progressLabel, x + width / 2, y + height + 6, {
+        color: '#9fb1d6',
+        size: 11,
+        weight: 600,
+        align: 'center'
+      });
+      gameCtx.restore();
+    }
+
+    function drawWorkshop(snapshot, scale) {
+      const action = snapshot.buildAction;
+      if (!action?.params) return;
+      const x = toNumber(action.params.x);
+      const y = toNumber(action.params.y);
+      const px = scale.left + (x - scale.x1) * scale.tile;
+      const py = scale.top + (y - scale.y1) * scale.tile;
+      const size = scale.tile * 3;
+      gameCtx.save();
+      gameCtx.fillStyle = snapshot.carpenterWorkshops > 0 || snapshot.productionProgress > 0
+        ? 'rgba(245,197,66,0.82)'
+        : 'rgba(245,197,66,0.22)';
+      gameCtx.strokeStyle = '#f5c542';
+      gameCtx.lineWidth = 3;
+      gameCtx.fillRect(px, py, size, size);
+      gameCtx.strokeRect(px, py, size, size);
+      drawReplayText('CW', px + size / 2, py + size / 2 - 8, {
+        color: '#111827',
+        size: Math.max(12, scale.tile * 0.55),
+        weight: 800,
+        align: 'center'
+      });
+      gameCtx.restore();
+    }
+
+    function updateReplayStats(snapshot) {
+      const metrics = snapshot.metrics || {};
+      const obs = snapshot.record?.state_after_advance || snapshot.record?.observation || {};
+      updateStats({
+        pop: metrics.pop ?? obs.population,
+        food: metrics.food ?? obs.stocks?.food,
+        drink: metrics.drink ?? obs.stocks?.drink,
+        wealth: metrics.wealth ?? obs.stocks?.wealth,
+        complexity_progress: metrics.complexity_progress,
+        work: getRecordWork(snapshot.record)
+      });
+      if (typeof snapshot.score.value === 'number') {
+        updateScore(snapshot.score.value);
+      }
+      stepBadge.textContent = `Step ${snapshot.record?.step ?? snapshot.index}`;
+    }
+
+    function renderSavedRunReplay(index) {
+      if (!replayRecords.length) {
+        showPlaceholder('Trace unavailable for selected run');
+        return;
+      }
+
+      replayStepIndex = Math.max(0, Math.min(index, replayRecords.length - 1));
+      const snapshot = buildReplaySnapshot(replayStepIndex);
+      const bounds = replayBounds(snapshot);
+      if (!bounds) {
+        showPlaceholder('No fortress geometry in trace');
+        return;
+      }
+
+      const canvasW = 960;
+      const canvasH = 480;
+      if (gameCanvas.width !== canvasW || gameCanvas.height !== canvasH) {
+        gameCanvas.width = canvasW;
+        gameCanvas.height = canvasH;
+      }
+      showCanvas();
+
+      gameCtx.fillStyle = '#070a10';
+      gameCtx.fillRect(0, 0, canvasW, canvasH);
+      gameCtx.fillStyle = '#0f1521';
+      gameCtx.fillRect(28, 28, 620, 424);
+      gameCtx.strokeStyle = 'rgba(255,255,255,0.08)';
+      gameCtx.strokeRect(28, 28, 620, 424);
+
+      const mapCols = bounds.x2 - bounds.x1 + 1;
+      const mapRows = bounds.y2 - bounds.y1 + 1;
+      const tile = Math.max(18, Math.min(44, Math.floor(Math.min(560 / mapCols, 350 / mapRows))));
+      const scale = {
+        x1: bounds.x1,
+        y1: bounds.y1,
+        tile,
+        left: 28 + Math.floor((620 - mapCols * tile) / 2),
+        top: 72 + Math.floor((320 - mapRows * tile) / 2)
+      };
+
+      gameCtx.strokeStyle = 'rgba(159,177,214,0.09)';
+      gameCtx.lineWidth = 1;
+      for (let col = 0; col <= mapCols; col++) {
+        const x = scale.left + col * tile;
+        gameCtx.beginPath();
+        gameCtx.moveTo(x, scale.top);
+        gameCtx.lineTo(x, scale.top + mapRows * tile);
+        gameCtx.stroke();
+      }
+      for (let row = 0; row <= mapRows; row++) {
+        const y = scale.top + row * tile;
+        gameCtx.beginPath();
+        gameCtx.moveTo(scale.left, y);
+        gameCtx.lineTo(scale.left + mapCols * tile, y);
+        gameCtx.stroke();
+      }
+
+      drawReplayText('FORTRESS PLAN', 52, 46, { color: '#9fb1d6', size: 13, weight: 800 });
+      drawRoomTiles({
+        rect: snapshot.targetRect,
+        completed: snapshot.targetFloors > 0,
+        fill: 'rgba(79,124,255,0.88)',
+        stroke: '#4f7cff',
+        label: 'START',
+        progressLabel: `${snapshot.targetFloors}/${snapshot.targetTiles || rectArea(snapshot.targetRect)}`
+      }, scale);
+      drawRoomTiles({
+        rect: snapshot.connectorRect,
+        completed: snapshot.connectorFloors > 0,
+        fill: 'rgba(67,198,172,0.88)',
+        stroke: '#43c6ac',
+        label: 'HALL',
+        progressLabel: `${snapshot.connectorFloors}/${snapshot.connectorTiles || rectArea(snapshot.connectorRect)}`
+      }, scale);
+      drawRoomTiles({
+        rect: snapshot.workshopRoomRect,
+        completed: snapshot.workshopRoomFloors > 0,
+        fill: 'rgba(120,214,109,0.88)',
+        stroke: '#78d66d',
+        label: 'WORK',
+        progressLabel: `${snapshot.workshopRoomFloors}/${snapshot.workshopRoomTiles || rectArea(snapshot.workshopRoomRect)}`
+      }, scale);
+      drawWorkshop(snapshot, scale);
+
+      gameCtx.fillStyle = '#101827';
+      gameCtx.fillRect(680, 28, 252, 424);
+      gameCtx.strokeStyle = 'rgba(255,255,255,0.08)';
+      gameCtx.strokeRect(680, 28, 252, 424);
+      drawReplayText(`Step ${snapshot.record.step ?? snapshot.index}`, 704, 52, {
+        color: '#f5f7fb',
+        size: 22,
+        weight: 800
+      });
+      drawReplayText(snapshot.action.type || 'STATE', 704, 84, {
+        color: '#9ab3ff',
+        size: 14,
+        weight: 800
+      });
+      const scoreValue = typeof snapshot.score.value === 'number' ? snapshot.score.value.toFixed(1) : '--';
+      drawReplayText(`Score ${scoreValue}`, 704, 112, { color: '#ffd966', size: 16, weight: 800 });
+      let nextY = wrapReplayText(snapshot.action.intent || 'Saved run state', 704, 146, 204, 17);
+      nextY += 12;
+      drawReplayText(`Starter: ${snapshot.targetFloors}/${snapshot.targetTiles || rectArea(snapshot.targetRect)} tiles`, 704, nextY);
+      drawReplayText(`Connector: ${snapshot.connectorFloors}/${snapshot.connectorTiles || rectArea(snapshot.connectorRect)} tiles`, 704, nextY + 26);
+      drawReplayText(`Workshop room: ${snapshot.workshopRoomFloors}/${snapshot.workshopRoomTiles || rectArea(snapshot.workshopRoomRect)} tiles`, 704, nextY + 52);
+      drawReplayText(`Complexity: ${snapshot.complexityProgress}`, 704, nextY + 78);
+      drawReplayText(`Production: ${snapshot.productionProgress}`, 704, nextY + 104);
+      drawReplayText(snapshot.carpenterWorkshops > 0 ? 'Carpenter Workshop placed' : 'Workshop not placed yet', 704, nextY + 138, {
+        color: snapshot.carpenterWorkshops > 0 ? '#f5c542' : '#6b7c99',
+        size: 13,
+        weight: 700
+      });
+
+      replayStepSlider.max = Math.max(0, replayRecords.length - 1);
+      replayStepSlider.value = replayStepIndex;
+      replayStepLabel.textContent = `Step ${snapshot.record.step ?? replayStepIndex}/${replayRecords.length - 1}`;
+      replayPrev.disabled = replayStepIndex <= 0;
+      replayNext.disabled = replayStepIndex >= replayRecords.length - 1;
+      gameStatus.textContent = `Saved replay: step ${snapshot.record.step ?? replayStepIndex} of ${replayRecords.length - 1}`;
+      updateReplayStats(snapshot);
+    }
+
+    function setReplayRecords(records) {
+      replayRecords = records;
+      replayStepIndex = Math.max(0, records.length - 1);
+      replayStepSlider.min = 0;
+      replayStepSlider.max = Math.max(0, records.length - 1);
+      replayStepSlider.value = replayStepIndex;
+      renderSavedRunReplay(replayStepIndex);
+    }
+
 
     // ===============================
     // Chart.js setup
@@ -828,21 +1321,19 @@
     async function loadTraceData(token) {
       try {
         const res = await fetch(`/public/runs/${token}/export/trace`);
-        if (!res.ok) return;
+        if (!res.ok) return [];
 
         const text = await res.text();
-        const lines = text.trim().split('\n').filter(l => l);
-        if (lines.length === 0) return;
+        const records = parseTraceRecords(text);
+        if (records.length === 0) return [];
 
         // Parse all lines to build chart, actions, and get final state
         // NOTE: Caller is responsible for resetting before calling this function
         // Do NOT reset here - it causes race conditions with SSE updates
         allMilestones = [];
 
-        for (const line of lines) {
+        for (const record of records) {
           try {
-            const record = JSON.parse(line);
-
             // Update chart with each step's score
             if (record.score && typeof record.score.value === 'number') {
               updateChart(record.step, record.score.value);
@@ -861,7 +1352,7 @@
         }
 
         // Get final line for stats
-        const lastRecord = JSON.parse(lines[lines.length - 1]);
+        const lastRecord = records[records.length - 1];
 
         // Update stats from metrics or observation
         const metrics = lastRecord.metrics || {};
@@ -885,27 +1376,32 @@
 
         // Update step badge
         stepBadge.textContent = `Step ${lastRecord.step ?? '--'}`;
+        return records;
 
       } catch (err) {
         console.warn('Failed to load trace:', err);
+        return [];
       }
     }
 
     function selectRun(token) {
       if (!token) {
+        currentToken = null;
+        replayRecords = [];
         statusBadge.textContent = 'No run selected';
         statusBadge.className = 'badge-pill';
         stepBadge.textContent = 'Step --';
         scoreBadge.textContent = 'Score --';
-        gameCanvas.style.display = 'none';
-        noGamePlaceholder.style.display = 'flex';
-        if (gameInterval) clearInterval(gameInterval);
+        setViewMode('empty');
+        showPlaceholder('Select a run above to start watching');
+        stopLiveScreen();
         if (eventSource) eventSource.close();
         updateRunLinks('');
         return;
       }
 
       // Find run data
+      currentToken = token;
       const opt = runSelector.querySelector(`option[value="${token}"]`);
       let run = null;
       if (opt && opt.dataset.run) {
@@ -918,13 +1414,18 @@
         }
       }
 
-      // Start game stream
       updateRunLinks(token);
-      gameCanvas.style.display = 'block';
-      noGamePlaceholder.style.display = 'none';
-      if (gameInterval) clearInterval(gameInterval);
-      fetchScreen();
-      gameInterval = setInterval(fetchScreen, 500);
+      stopLiveScreen();
+      const isRunning = run && run.status === 'running';
+      if (isRunning) {
+        setViewMode('live');
+        showCanvas();
+        fetchScreen();
+        gameInterval = setInterval(fetchScreen, 500);
+      } else {
+        setViewMode('replay');
+        showPlaceholder('Loading saved run replay');
+      }
 
       // Reset data before loading trace (do this BEFORE async load)
       resetChart();
@@ -933,7 +1434,16 @@
 
       // Load trace data (for completed runs, this gives us the full history)
       // Then override with run's final score (summary score is more accurate)
-      loadTraceData(token).then(() => {
+      loadTraceData(token).then((records) => {
+        if (currentToken !== token) return;
+        if (!isRunning) {
+          if (records && records.length > 0) {
+            setReplayRecords(records);
+          } else {
+            showPlaceholder('Trace unavailable for selected run');
+            gameStatus.textContent = 'Saved replay unavailable';
+          }
+        }
         if (run && run.score !== null && run.score !== undefined) {
           updateScore(run.score);
         }
@@ -975,11 +1485,25 @@
     // Pause when tab is hidden
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') {
-        if (gameInterval) clearInterval(gameInterval);
-      } else if (currentToken) {
+        stopLiveScreen();
+      } else if (currentToken && viewMode === 'live') {
         fetchScreen();
         gameInterval = setInterval(fetchScreen, 500);
+      } else if (viewMode === 'replay' && replayRecords.length > 0) {
+        renderSavedRunReplay(replayStepIndex);
       }
+    });
+
+    replayPrev.addEventListener('click', () => {
+      renderSavedRunReplay(replayStepIndex - 1);
+    });
+
+    replayNext.addEventListener('click', () => {
+      renderSavedRunReplay(replayStepIndex + 1);
+    });
+
+    replayStepSlider.addEventListener('input', (e) => {
+      renderSavedRunReplay(Number(e.target.value));
     });
   </script>
 </body>
