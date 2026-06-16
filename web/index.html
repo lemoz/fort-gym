@@ -19,6 +19,8 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem 1rem;
       padding: 0.75rem 1.5rem;
       background: linear-gradient(180deg, #1a2233, #0f1520);
       border-bottom: 1px solid rgba(255,255,255,0.1);
@@ -34,6 +36,10 @@
     .run-info {
       display: flex;
       align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      flex: 1 1 42rem;
+      min-width: min(100%, 22rem);
       gap: 1rem;
     }
     .run-selector {
@@ -44,8 +50,27 @@
       border-radius: 8px;
       font-size: 0.9rem;
       cursor: pointer;
+      flex: 1 1 22rem;
+      min-width: min(100%, 22rem);
+      max-width: 42rem;
     }
     .run-selector:hover { background: rgba(255,255,255,0.15); }
+    .run-links {
+      display: none;
+      gap: 0.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .run-links a {
+      color: #dbe6ff;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 6px;
+      padding: 0.32rem 0.55rem;
+      font-size: 0.8rem;
+      text-decoration: none;
+    }
+    .run-links a:hover { background: rgba(255,255,255,0.14); }
     .badge-pill {
       display: inline-flex;
       align-items: center;
@@ -299,6 +324,7 @@
       <span id="status-badge" class="badge-pill">No run selected</span>
       <span id="step-badge" class="badge-pill">Step --</span>
       <span id="score-badge" class="badge-pill score">Score --</span>
+      <div id="run-links" class="run-links" aria-label="Selected run inspection links"></div>
     </div>
   </div>
 
@@ -403,6 +429,7 @@
     const statusBadge = document.getElementById('status-badge');
     const stepBadge = document.getElementById('step-badge');
     const scoreBadge = document.getElementById('score-badge');
+    const runLinks = document.getElementById('run-links');
     const gameCanvas = document.getElementById('game-canvas');
     const gameCtx = gameCanvas.getContext('2d');
     const gameStatus = document.getElementById('game-status');
@@ -415,6 +442,41 @@
     const milestoneList = document.getElementById('milestone-list');
     const agentActionsList = document.getElementById('agent-actions-list');
     let recentActions = [];  // Store last 10 actions
+
+    function formatRunStarted(value) {
+      if (!value) return 'unknown time';
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return 'unknown time';
+      return date.toLocaleString([], {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    function formatRunLabel(run) {
+      const score = run.score !== null && run.score !== undefined
+        ? Number(run.score).toFixed(1)
+        : '--';
+      const token = run.token ? String(run.token).slice(0, 8) : 'no-token';
+      return `${formatRunStarted(run.started_at)} · ${run.model} · ${run.status} · step ${run.step || 0} · score ${score} · ${token}`;
+    }
+
+    function updateRunLinks(token) {
+      if (!token) {
+        runLinks.style.display = 'none';
+        runLinks.innerHTML = '';
+        return;
+      }
+      const encoded = encodeURIComponent(token);
+      runLinks.innerHTML = `
+        <a href="/?token=${encoded}" title="Open this run page">Run</a>
+        <a href="/public/runs/${encoded}/events/replay?speed=4" title="Replay saved SSE events">Replay</a>
+        <a href="/public/runs/${encoded}/export/trace" title="Open NDJSON trace export">Trace</a>
+      `;
+      runLinks.style.display = 'flex';
+    }
 
     // ===============================
     // DF color palette & rendering
@@ -696,20 +758,28 @@
 
         runSelector.innerHTML = '<option value="">Select a run...</option>';
 
-        // Sort: running first, then by step desc
+        // Sort: running first, then newest run, then by step desc
         runs.sort((a, b) => {
           if (a.status === 'running' && b.status !== 'running') return -1;
           if (b.status === 'running' && a.status !== 'running') return 1;
+          const aTime = Date.parse(a.started_at || '') || 0;
+          const bTime = Date.parse(b.started_at || '') || 0;
+          if (aTime !== bTime) return bTime - aTime;
           return (b.step || 0) - (a.step || 0);
         });
 
         runs.forEach(run => {
           const opt = document.createElement('option');
           opt.value = run.token;
-          opt.textContent = `${run.model} - ${run.status} (Step ${run.step || 0})`;
+          opt.textContent = formatRunLabel(run);
+          opt.title = `${run.run_id} · ${run.git_sha || 'unknown sha'}`;
           opt.dataset.run = JSON.stringify(run);
           runSelector.appendChild(opt);
         });
+
+        if (currentToken) {
+          runSelector.value = currentToken;
+        }
 
         // Auto-select first run if none selected (prefer running, then any)
         if (!currentToken && runs.length > 0) {
@@ -799,6 +869,7 @@
         noGamePlaceholder.style.display = 'flex';
         if (gameInterval) clearInterval(gameInterval);
         if (eventSource) eventSource.close();
+        updateRunLinks('');
         return;
       }
 
@@ -816,6 +887,7 @@
       }
 
       // Start game stream
+      updateRunLinks(token);
       gameCanvas.style.display = 'block';
       noGamePlaceholder.style.display = 'none';
       if (gameInterval) clearInterval(gameInterval);
