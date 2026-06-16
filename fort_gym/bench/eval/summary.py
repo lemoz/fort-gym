@@ -14,7 +14,9 @@ from .scoring import (
     SURVIVAL_WEIGHT,
     TARGET_COMPLETION_PROGRESS,
     TARGET_SURVIVAL_TICKS,
+    TARGET_UTILITY_PROGRESS,
     TARGET_WORK_PROGRESS,
+    UTILITY_WEIGHT,
     WORK_WEIGHT,
     composite_score,
 )
@@ -34,13 +36,22 @@ class RunSummary(BaseModel):
     availability_score: float = 0.0
     work_score: float = 0.0
     completion_score: float = 0.0
+    utility_score: float = 0.0
     work_progress: int = 0
     designation_progress: int = 0
     completion_progress: int = 0
+    utility_progress: int = 0
     target_dig_designations_delta: int = 0
     target_floor_tiles_delta: int = 0
     target_wall_tiles_delta: int = 0
     active_dig_jobs_delta: int = 0
+    utility_action_progress: int = 0
+    manager_orders_delta: int = 0
+    manager_order_quantity_delta: int = 0
+    carpenter_workshops_delta: int = 0
+    manager_orders_count: int = 0
+    manager_orders_amount_left: int = 0
+    carpenter_workshops: int = 0
     target_hidden_tiles: int = 0
     citizens_total: int = 0
     miners_total: int = 0
@@ -92,10 +103,18 @@ def summarize(trace_path: Path) -> RunSummary:
     work_progress = 0
     designation_progress = 0
     completion_progress = 0
+    utility_progress = 0
     target_dig_designations_delta = 0
     target_floor_tiles_delta = 0
     target_wall_tiles_delta = 0
     active_dig_jobs_delta = 0
+    utility_action_progress = 0
+    manager_orders_delta = 0
+    manager_order_quantity_delta = 0
+    carpenter_workshops_delta = 0
+    manager_orders_count = 0
+    manager_orders_amount_left = 0
+    carpenter_workshops = 0
     target_hidden_tiles = 0
     citizens_total = 0
     miners_total = 0
@@ -138,6 +157,10 @@ def summarize(trace_path: Path) -> RunSummary:
                 completion_progress,
                 _to_int(metrics_snapshot.get("completion_progress")),
             )
+            utility_progress = max(
+                utility_progress,
+                _to_int(metrics_snapshot.get("utility_progress")),
+            )
             target_dig_designations_delta = max(
                 target_dig_designations_delta,
                 _to_int(metrics_snapshot.get("target_dig_designations_delta")),
@@ -154,6 +177,22 @@ def summarize(trace_path: Path) -> RunSummary:
                 active_dig_jobs_delta,
                 _to_int(metrics_snapshot.get("active_dig_jobs_delta")),
             )
+            utility_action_progress = max(
+                utility_action_progress,
+                _to_int(metrics_snapshot.get("utility_action_progress")),
+            )
+            manager_orders_delta = max(
+                manager_orders_delta,
+                _to_int(metrics_snapshot.get("manager_orders_delta")),
+            )
+            manager_order_quantity_delta = max(
+                manager_order_quantity_delta,
+                _to_int(metrics_snapshot.get("manager_order_quantity_delta")),
+            )
+            carpenter_workshops_delta = max(
+                carpenter_workshops_delta,
+                _to_int(metrics_snapshot.get("carpenter_workshops_delta")),
+            )
             work_snapshot = metrics_snapshot.get("work")
             if isinstance(work_snapshot, dict):
                 target_hidden_tiles = max(
@@ -168,6 +207,18 @@ def summarize(trace_path: Path) -> RunSummary:
                 )
                 target_z = _to_int(work_snapshot.get("target_z"), target_z)
                 window_z = _to_int(work_snapshot.get("window_z"), window_z)
+                manager_orders_count = max(
+                    manager_orders_count,
+                    _to_int(work_snapshot.get("manager_orders_count")),
+                )
+                manager_orders_amount_left = max(
+                    manager_orders_amount_left,
+                    _to_int(work_snapshot.get("manager_orders_amount_left")),
+                )
+                carpenter_workshops = max(
+                    carpenter_workshops,
+                    _to_int(work_snapshot.get("carpenter_workshops")),
+                )
 
             tick_advance = record.get("tick_advance") or {}
             if isinstance(tick_advance, dict) and "ticks_advanced" in tick_advance:
@@ -234,6 +285,7 @@ def summarize(trace_path: Path) -> RunSummary:
         "created_wealth": wealth,
         "work_progress": work_progress,
         "completion_progress": completion_progress,
+        "utility_progress": utility_progress,
         "casualty_spike": casualty_spike,
         "hostiles_present": hostiles_present,
     }
@@ -244,6 +296,9 @@ def summarize(trace_path: Path) -> RunSummary:
     completion_score = (
         min(completion_progress, TARGET_COMPLETION_PROGRESS) / TARGET_COMPLETION_PROGRESS
     ) * COMPLETION_WEIGHT
+    utility_score = (
+        min(utility_progress, TARGET_UTILITY_PROGRESS) / TARGET_UTILITY_PROGRESS
+    ) * UTILITY_WEIGHT
     total_score = composite_score(summary_payload)
 
     summary = RunSummary(
@@ -257,13 +312,22 @@ def summarize(trace_path: Path) -> RunSummary:
         availability_score=round(availability_score, 2),
         work_score=round(work_score, 2),
         completion_score=round(completion_score, 2),
+        utility_score=round(utility_score, 2),
         work_progress=work_progress,
         designation_progress=designation_progress,
         completion_progress=completion_progress,
+        utility_progress=utility_progress,
         target_dig_designations_delta=target_dig_designations_delta,
         target_floor_tiles_delta=target_floor_tiles_delta,
         target_wall_tiles_delta=target_wall_tiles_delta,
         active_dig_jobs_delta=active_dig_jobs_delta,
+        utility_action_progress=utility_action_progress,
+        manager_orders_delta=manager_orders_delta,
+        manager_order_quantity_delta=manager_order_quantity_delta,
+        carpenter_workshops_delta=carpenter_workshops_delta,
+        manager_orders_count=manager_orders_count,
+        manager_orders_amount_left=manager_orders_amount_left,
+        carpenter_workshops=carpenter_workshops,
         target_hidden_tiles=target_hidden_tiles,
         citizens_total=citizens_total,
         miners_total=miners_total,

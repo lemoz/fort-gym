@@ -365,6 +365,18 @@ def run_once(
                         baseline_work,
                     )
                 )
+                metrics_snapshot.update(
+                    metrics.utility_progress_delta(
+                        current_work if isinstance(current_work, dict) else {},
+                        baseline_work,
+                    )
+                )
+                utility_action = metrics.utility_action_progress(action, execute_result)
+                metrics_snapshot.update(utility_action)
+                metrics_snapshot["utility_progress"] = max(
+                    int(metrics_snapshot.get("utility_progress") or 0),
+                    int(utility_action.get("utility_action_progress") or 0),
+                )
                 metrics_snapshot["run_elapsed_ticks"] = elapsed_ticks_total
                 publish_event(step, "metrics", {"metrics": metrics_snapshot}, events)
 

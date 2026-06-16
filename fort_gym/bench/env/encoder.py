@@ -80,6 +80,7 @@ def encode_observation(
     risks = clean_state.get("risks", [])
     reminders = clean_state.get("reminders", [])
     pause_state = clean_state.get("pause_state", None)
+    work = clean_state.get("work") if isinstance(clean_state.get("work"), dict) else {}
 
     # Build status section
     status_lines = []
@@ -132,6 +133,19 @@ def encode_observation(
         f"Population: {population} dwarves",
         f"Food: {stocks.get('food', 0)}, Drink: {stocks.get('drink', 0)}",
     ])
+    if work:
+        status_lines.append(
+            "Target room: "
+            f"floors={work.get('target_floor_tiles', 0)}/{work.get('target_tiles', 0)}, "
+            f"walls={work.get('target_wall_tiles', 0)}, "
+            f"designations={work.get('target_dig_designations', 0)}"
+        )
+        status_lines.append(
+            "Utility work: "
+            f"manager_orders={work.get('manager_orders_count', 0)}, "
+            f"order_qty_left={work.get('manager_orders_amount_left', 0)}, "
+            f"carpenter_workshops={work.get('carpenter_workshops', 0)}"
+        )
 
     if risks:
         status_lines.append("Risks: " + ", ".join(risks))

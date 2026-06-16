@@ -364,7 +364,7 @@ end
                 args.extend(materials)
             self._run_command("build-now", args)
             return True, None
-        except DFHackError as exc:
+        except (DFHackError, OSError, TimeoutError) as exc:
             return False, str(exc)
 
     # ------------------------------------------------------------------
