@@ -6,7 +6,9 @@ from typing import Any
 from fort_gym.bench.agent.llm_anthropic import (
     AnthropicActionAgent,
     AnthropicDigFirstAgent,
+    AnthropicFortressPlanAgent,
     DIG_FIRST_SYSTEM_PROMPT,
+    FORTRESS_PLAN_SYSTEM_PROMPT,
     KEYSTROKE_SYSTEM_PROMPT,
 )
 from fort_gym.bench.api.schemas import RunCreateRequest
@@ -113,6 +115,14 @@ def test_dig_first_prompt_uses_structured_control() -> None:
     assert "Do not drive the Dwarf Fortress UI with keystrokes" in DIG_FIRST_SYSTEM_PROMPT
 
 
+def test_fortress_plan_prompt_uses_two_room_layout() -> None:
+    assert "two-room fortress plan" in FORTRESS_PLAN_SYSTEM_PROMPT
+    assert '"area":[55,37,0],"size":[3,1,1]' in FORTRESS_PLAN_SYSTEM_PROMPT
+    assert '"area":[58,35,0],"size":[5,5,1]' in FORTRESS_PLAN_SYSTEM_PROMPT
+    assert '"kind":"CarpenterWorkshop","x":59,"y":36,"z":0' in FORTRESS_PLAN_SYSTEM_PROMPT
+    assert "fortress_complexity_spaces_completed reaches 2" in FORTRESS_PLAN_SYSTEM_PROMPT
+
+
 def test_dig_first_agent_uses_custom_prompt(monkeypatch) -> None:
     monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
     monkeypatch.delenv("ANTHROPIC_MODEL", raising=False)
@@ -139,6 +149,37 @@ def test_dig_first_agent_uses_custom_prompt(monkeypatch) -> None:
     assert request["system"] == DIG_FIRST_SYSTEM_PROMPT
 
 
+def test_fortress_plan_agent_uses_custom_prompt(monkeypatch) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.delenv("ANTHROPIC_MODEL", raising=False)
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "anthropic"
+        return SimpleNamespace(Anthropic=_FakeAnthropicClient)
+
+    monkeypatch.setattr(
+        "fort_gym.bench.agent.llm_anthropic.import_module",
+        fake_import_module,
+    )
+
+    try:
+        agent = AnthropicFortressPlanAgent()
+        action = agent.decide("mock observation", {"drink": 100})
+    finally:
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["type"] == "WAIT"
+    assert _FakeAnthropicClient.last_instance is not None
+    request = _FakeAnthropicClient.last_instance.messages.requests[0]
+    assert request["system"] == FORTRESS_PLAN_SYSTEM_PROMPT
+
+
 def test_api_accepts_dig_first_model() -> None:
     request = RunCreateRequest(model="anthropic-dig-first", backend="dfhack")
     assert request.model == "anthropic-dig-first"
+
+
+def test_api_accepts_fortress_plan_model() -> None:
+    request = RunCreateRequest(model="anthropic-fortress-plan", backend="dfhack")
+    assert request.model == "anthropic-fortress-plan"

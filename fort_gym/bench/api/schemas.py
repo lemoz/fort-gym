@@ -15,6 +15,7 @@ ModelType = Literal[
     "openai",
     "anthropic",
     "anthropic-dig-first",
+    "anthropic-fortress-plan",
     "anthropic-keystroke",
     "anthropic-research",
 ]

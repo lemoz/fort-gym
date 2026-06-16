@@ -377,6 +377,12 @@ def run_once(
                         baseline_work,
                     )
                 )
+                metrics_snapshot.update(
+                    metrics.complexity_progress_delta(
+                        current_work if isinstance(current_work, dict) else {},
+                        baseline_work,
+                    )
+                )
                 utility_action = metrics.utility_action_progress(action, execute_result)
                 metrics_snapshot.update(utility_action)
                 metrics_snapshot["utility_progress"] = max(

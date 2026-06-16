@@ -64,6 +64,28 @@ def test_production_progress_delta_counts_workshop_placements() -> None:
     }
 
 
+def test_complexity_progress_delta_counts_second_room_shape() -> None:
+    baseline = {
+        "fortress_complexity_floor_tiles": 0,
+        "fortress_complexity_wall_tiles": 28,
+        "fortress_complexity_spaces_completed": 0,
+    }
+    current = {
+        "fortress_complexity_floor_tiles": 28,
+        "fortress_complexity_wall_tiles": 0,
+        "fortress_complexity_spaces_completed": 2,
+    }
+
+    delta = metrics.complexity_progress_delta(current, baseline)
+
+    assert delta == {
+        "complexity_floor_tiles_delta": 28,
+        "complexity_wall_tiles_delta": 28,
+        "complexity_spaces_delta": 2,
+        "complexity_progress": 38,
+    }
+
+
 def test_utility_action_progress_counts_accepted_safe_actions() -> None:
     order_progress = metrics.utility_action_progress(
         {"type": "ORDER", "params": {"job": "bed", "quantity": 5}},
@@ -174,3 +196,25 @@ def test_composite_score_includes_bounded_production_component() -> None:
     )
 
     assert with_production - without_production == scoring.PRODUCTION_WEIGHT
+
+
+def test_composite_score_includes_bounded_complexity_component() -> None:
+    without_complexity = scoring.composite_score(
+        {
+            "duration_ticks": 0,
+            "peak_pop": 0,
+            "drink_availability": 0,
+            "created_wealth": 0,
+        }
+    )
+    with_complexity = scoring.composite_score(
+        {
+            "duration_ticks": 0,
+            "peak_pop": 0,
+            "drink_availability": 0,
+            "created_wealth": 0,
+            "complexity_progress": scoring.TARGET_COMPLEXITY_PROGRESS,
+        }
+    )
+
+    assert with_complexity - without_complexity == scoring.COMPLEXITY_WEIGHT

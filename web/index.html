@@ -371,6 +371,18 @@
             <div class="label">Score</div>
             <div class="value" id="stat-score">--</div>
           </div>
+          <div class="stat-card">
+            <div class="label">Complexity</div>
+            <div class="value healthy" id="stat-complexity">--</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Plan Spaces</div>
+            <div class="value healthy" id="stat-plan-spaces">--</div>
+          </div>
+          <div class="stat-card score-card">
+            <div class="label">Workshop Room</div>
+            <div class="value" id="stat-workshop-room">--</div>
+          </div>
         </div>
         <div class="milestones">
           <h4>Milestones</h4>
@@ -439,6 +451,9 @@
     const statDrink = document.getElementById('stat-drink');
     const statWealth = document.getElementById('stat-wealth');
     const statScore = document.getElementById('stat-score');
+    const statComplexity = document.getElementById('stat-complexity');
+    const statPlanSpaces = document.getElementById('stat-plan-spaces');
+    const statWorkshopRoom = document.getElementById('stat-workshop-room');
     const milestoneList = document.getElementById('milestone-list');
     const agentActionsList = document.getElementById('agent-actions-list');
     let recentActions = [];  // Store last 10 actions
@@ -614,16 +629,31 @@
       const food = metrics.food ?? metrics.stocks?.food ?? '--';
       const drink = metrics.drink ?? metrics.stocks?.drink ?? '--';
       const wealth = metrics.wealth ?? metrics.stocks?.wealth ?? '--';
+      const work = metrics.work || {};
+      const complexity = metrics.complexity_progress ?? metrics.complexity ?? '--';
+      const spaces = metrics.fortress_complexity_spaces_completed
+        ?? work.fortress_complexity_spaces_completed
+        ?? '--';
+      const workshopFloors = metrics.fortress_workshop_room_floor_tiles
+        ?? work.fortress_workshop_room_floor_tiles
+        ?? '--';
 
       statPop.textContent = pop;
       statFood.textContent = food;
       statDrink.textContent = drink;
       statWealth.textContent = typeof wealth === 'number' ? wealth.toLocaleString() : wealth;
+      statComplexity.textContent = complexity;
+      statPlanSpaces.textContent = typeof spaces === 'number' ? `${spaces}/2` : spaces;
+      statWorkshopRoom.textContent = typeof workshopFloors === 'number'
+        ? `${workshopFloors}/25`
+        : workshopFloors;
 
       // Color coding
       statPop.className = 'value ' + (typeof pop === 'number' ? getStatClass(pop, 3, 7) : '');
       statFood.className = 'value ' + (typeof food === 'number' ? getStatClass(food, 10, 30) : '');
       statDrink.className = 'value ' + (typeof drink === 'number' ? getStatClass(drink, 10, 30) : '');
+      statComplexity.className = 'value ' + (typeof complexity === 'number' ? getStatClass(complexity, 0, 20) : '');
+      statPlanSpaces.className = 'value ' + (typeof spaces === 'number' ? getStatClass(spaces, 0, 1) : '');
     }
 
     function updateScore(value) {
@@ -840,7 +870,9 @@
           pop: metrics.pop ?? obs.population,
           food: metrics.food ?? obs.stocks?.food,
           drink: metrics.drink ?? obs.stocks?.drink,
-          wealth: metrics.wealth ?? obs.stocks?.wealth
+          wealth: metrics.wealth ?? obs.stocks?.wealth,
+          complexity_progress: metrics.complexity_progress,
+          work: metrics.work
         });
 
         // Update score

@@ -6,6 +6,7 @@ from typing import Any, Dict
 
 UTILITY_WORKSHOP_PROGRESS = 5
 PRODUCTION_WORKSHOP_PROGRESS = 5
+COMPLEXITY_SPACE_PROGRESS = 5
 
 
 def _to_int(value: Any, default: int = 0) -> int:
@@ -109,6 +110,38 @@ def production_progress_delta(
     }
 
 
+def complexity_progress_delta(
+    current_work: Dict[str, Any] | None,
+    baseline_work: Dict[str, Any] | None,
+) -> Dict[str, int]:
+    """Compute visible fortress-layout complexity from the planned second space."""
+
+    current = current_work or {}
+    baseline = baseline_work or {}
+    floor_delta = max(
+        0,
+        _to_int(current.get("fortress_complexity_floor_tiles"))
+        - _to_int(baseline.get("fortress_complexity_floor_tiles")),
+    )
+    wall_delta = max(
+        0,
+        _to_int(baseline.get("fortress_complexity_wall_tiles"))
+        - _to_int(current.get("fortress_complexity_wall_tiles")),
+    )
+    spaces_delta = max(
+        0,
+        _to_int(current.get("fortress_complexity_spaces_completed"))
+        - _to_int(baseline.get("fortress_complexity_spaces_completed")),
+    )
+    complexity_tiles_delta = max(floor_delta, wall_delta)
+    return {
+        "complexity_floor_tiles_delta": floor_delta,
+        "complexity_wall_tiles_delta": wall_delta,
+        "complexity_spaces_delta": spaces_delta,
+        "complexity_progress": complexity_tiles_delta + spaces_delta * COMPLEXITY_SPACE_PROGRESS,
+    }
+
+
 def utility_action_progress(action: Dict[str, Any], execute_result: Dict[str, Any]) -> Dict[str, int]:
     """Return useful-work progress proven by an accepted structured action."""
 
@@ -180,12 +213,36 @@ def step_snapshot(state: Dict[str, Any]) -> Dict[str, Any]:
             "manager_orders_count": _to_int(work.get("manager_orders_count")),
             "manager_orders_amount_left": _to_int(work.get("manager_orders_amount_left")),
             "carpenter_workshops": _to_int(work.get("carpenter_workshops")),
+            "fortress_plan_name": work.get("fortress_plan_name"),
+            "fortress_connector_floor_tiles": _to_int(
+                work.get("fortress_connector_floor_tiles")
+            ),
+            "fortress_connector_wall_tiles": _to_int(
+                work.get("fortress_connector_wall_tiles")
+            ),
+            "fortress_workshop_room_floor_tiles": _to_int(
+                work.get("fortress_workshop_room_floor_tiles")
+            ),
+            "fortress_workshop_room_wall_tiles": _to_int(
+                work.get("fortress_workshop_room_wall_tiles")
+            ),
+            "fortress_complexity_tiles": _to_int(work.get("fortress_complexity_tiles")),
+            "fortress_complexity_floor_tiles": _to_int(
+                work.get("fortress_complexity_floor_tiles")
+            ),
+            "fortress_complexity_wall_tiles": _to_int(
+                work.get("fortress_complexity_wall_tiles")
+            ),
+            "fortress_complexity_spaces_completed": _to_int(
+                work.get("fortress_complexity_spaces_completed")
+            ),
         }
     return snapshot
 
 
 __all__ = [
     "step_snapshot",
+    "complexity_progress_delta",
     "production_progress_delta",
     "utility_action_progress",
     "utility_progress_delta",

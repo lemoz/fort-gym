@@ -77,3 +77,20 @@ def test_build_workshop_rejects_outside_target_room_without_live_dfhack():
     result = build_workshop("CarpenterWorkshop", 0, 0, 0)
     assert result.get("ok") is False
     assert result.get("error") == "outside_work_rect"
+
+
+def test_build_workshop_allows_planned_annex_without_live_dfhack(monkeypatch):
+    from fort_gym.bench import dfhack_backend
+
+    calls = []
+
+    def fake_run_lua_file(path, *args):
+        calls.append((path, args))
+        return {"ok": True, "kind": args[0], "x": int(args[1]), "y": int(args[2]), "z": int(args[3])}
+
+    monkeypatch.setattr(dfhack_backend, "run_lua_file", fake_run_lua_file)
+
+    result = dfhack_backend.build_workshop("CarpenterWorkshop", 59, 36, 0)
+
+    assert result == {"ok": True, "kind": "CarpenterWorkshop", "x": 59, "y": 36, "z": 0}
+    assert calls

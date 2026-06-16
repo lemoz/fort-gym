@@ -146,6 +146,15 @@ def encode_observation(
             f"order_qty_left={work.get('manager_orders_amount_left', 0)}, "
             f"carpenter_workshops={work.get('carpenter_workshops', 0)}"
         )
+        if work.get("fortress_plan_name"):
+            status_lines.append(
+                "Fortress plan: "
+                f"connector_floors={work.get('fortress_connector_floor_tiles', 0)}/"
+                f"{work.get('fortress_connector_tiles', 0)}, "
+                f"workshop_room_floors={work.get('fortress_workshop_room_floor_tiles', 0)}/"
+                f"{work.get('fortress_workshop_room_tiles', 0)}, "
+                f"completed_spaces={work.get('fortress_complexity_spaces_completed', 0)}/2"
+            )
 
     if risks:
         status_lines.append("Risks: " + ", ".join(risks))
