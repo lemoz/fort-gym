@@ -74,6 +74,14 @@ async def _rate_limit_middleware(request: Request, call_next):  # type: ignore[n
 
 ARTIFACTS_ROOT = Path(get_settings().ARTIFACTS_DIR).resolve()
 WEB_ROOT = Path(__file__).resolve().parents[3] / "web"
+HTML_CACHE_HEADERS = {
+    "Cache-Control": "no-store, max-age=0",
+    "Pragma": "no-cache",
+}
+
+
+def _html_file_response(filename: str) -> FileResponse:
+    return FileResponse(WEB_ROOT / filename, media_type="text/html", headers=HTML_CACHE_HEADERS)
 
 
 # ---------------------------------------------------------------------------
@@ -84,19 +92,19 @@ WEB_ROOT = Path(__file__).resolve().parents[3] / "web"
 @app.get("/", response_class=FileResponse)
 async def serve_index():
     """Serve the public spectator UI."""
-    return FileResponse(WEB_ROOT / "index.html", media_type="text/html")
+    return _html_file_response("index.html")
 
 
 @app.get("/admin", response_class=FileResponse)
 async def serve_admin(_: None = Depends(require_admin)):
     """Serve the admin panel."""
-    return FileResponse(WEB_ROOT / "admin.html", media_type="text/html")
+    return _html_file_response("admin.html")
 
 
 @app.get("/leaderboard", response_class=FileResponse)
 async def serve_leaderboard():
     """Serve the public leaderboard UI."""
-    return FileResponse(WEB_ROOT / "leaderboard.html", media_type="text/html")
+    return _html_file_response("leaderboard.html")
 
 
 def _artifacts_path(run_id: str) -> Path:
