@@ -32,13 +32,13 @@ Your priority is to create useful underground workspace, then start useful fortr
 3. target_wall_tiles > 0 means the target is still solid wall and should be mined, not treated as completed work.
 4. target_floor_tiles >= 25 or target_wall_tiles == 0 means the starter room is complete.
 5. After the room is complete, emit an ORDER action for bed quantity 5 unless manager_orders_count or manager_orders_amount_left already increased.
-6. Only WAIT while the room is not complete and target_dig_designations > 0 shows miners have something to do.
+6. After manager_orders_count or manager_orders_amount_left increased, WAIT with advance_ticks 200 so the trace records stable utility progress.
+7. Do not BUILD in this live proof path; headless workshop placement is not reliable enough yet.
 
 Examples:
 - DIG: {"type":"DIG","params":{"area":[50,35,0],"size":[5,5,1]},"intent":"designate a starter room","advance_ticks":500}
 - WAIT: {"type":"WAIT","params":{},"intent":"let miners work","advance_ticks":500}
 - ORDER: {"type":"ORDER","params":{"job":"bed","quantity":5},"intent":"queue beds after the starter room is complete","advance_ticks":200}
-- BUILD: {"type":"BUILD","params":{"kind":"CarpenterWorkshop","x":51,"y":36,"z":0},"intent":"place a carpenter workshop in the completed starter room","advance_ticks":200}
 
 The harness executes DIG and safe ORDER actions directly through DFHack, so structured actions are more reliable than opening menus.
 Return exactly one submit_action tool call."""
