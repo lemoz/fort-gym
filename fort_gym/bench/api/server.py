@@ -424,31 +424,47 @@ def _get_screenshot_client():
         return None
 
 
+def _reset_screenshot_client() -> None:
+    """Drop a cached DFHack screenshot connection after a transport failure."""
+    global _screenshot_client
+    client = _screenshot_client
+    _screenshot_client = None
+    if client is not None:
+        close = getattr(client, "close", None)
+        if callable(close):
+            try:
+                close()
+            except Exception:
+                pass
+
+
+def _capture_screenshot() -> Dict[str, object]:
+    """Capture the DF screen, reconnecting once when the cached socket is stale."""
+    last_error: Optional[Exception] = None
+    for _attempt in range(2):
+        client = _get_screenshot_client()
+        if client is None:
+            raise HTTPException(status_code=503, detail="DFHack not available")
+        try:
+            return client.get_screen()
+        except Exception as exc:
+            last_error = exc
+            _reset_screenshot_client()
+
+    raise HTTPException(status_code=500, detail=f"Screenshot failed: {last_error}")
+
+
 @app.get("/screenshot")
 async def admin_screenshot(_: None = Depends(require_admin)) -> JSONResponse:
     """Capture the current DF screen (admin endpoint)."""
-    client = _get_screenshot_client()
-    if client is None:
-        raise HTTPException(status_code=503, detail="DFHack not available")
-    try:
-        screen = client.get_screen()
-        return JSONResponse(screen)
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Screenshot failed: {exc}")
+    return JSONResponse(_capture_screenshot())
 
 
 @app.get("/public/runs/{token}/screenshot")
 async def public_screenshot(token: str) -> JSONResponse:
     """Capture the current DF screen for a public run (requires 'live' scope)."""
     _require_share(token, scope="live")
-    client = _get_screenshot_client()
-    if client is None:
-        raise HTTPException(status_code=503, detail="DFHack not available")
-    try:
-        screen = client.get_screen()
-        return JSONResponse(screen)
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Screenshot failed: {exc}")
+    return JSONResponse(_capture_screenshot())
 
 
 @app.post("/admin/keys")
