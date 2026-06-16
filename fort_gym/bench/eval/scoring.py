@@ -13,8 +13,10 @@ AVAIL_WEIGHT = 20.0
 WEALTH_WEIGHT = 15.0
 WORK_WEIGHT = 10.0
 COMPLETION_WEIGHT = 10.0
+UTILITY_WEIGHT = 10.0
 TARGET_WORK_PROGRESS = 25
 TARGET_COMPLETION_PROGRESS = 25
+TARGET_UTILITY_PROGRESS = 5
 DRINK_THRESHOLD = 20
 CASUALTY_PENALTY = 10.0
 HOSTILES_PENALTY = 10.0
@@ -52,6 +54,7 @@ def composite_score(summary: Dict[str, float]) -> float:
     wealth_value = _to_float(summary.get("created_wealth") or summary.get("wealth"))
     work_progress = _to_float(summary.get("work_progress"))
     completion_progress = _to_float(summary.get("completion_progress"))
+    utility_progress = _to_float(summary.get("utility_progress"))
 
     survival_component = (min(duration, TARGET_SURVIVAL_TICKS) / TARGET_SURVIVAL_TICKS) * SURVIVAL_WEIGHT
     pop_component = (min(peak_pop, POP_CAP) / POP_CAP) * POP_WEIGHT
@@ -61,6 +64,9 @@ def composite_score(summary: Dict[str, float]) -> float:
     completion_component = (
         min(completion_progress, TARGET_COMPLETION_PROGRESS) / TARGET_COMPLETION_PROGRESS
     ) * COMPLETION_WEIGHT
+    utility_component = (
+        min(utility_progress, TARGET_UTILITY_PROGRESS) / TARGET_UTILITY_PROGRESS
+    ) * UTILITY_WEIGHT
 
     penalties = 0.0
     if summary.get("casualty_spike"):
@@ -75,6 +81,7 @@ def composite_score(summary: Dict[str, float]) -> float:
         + wealth_component
         + work_component
         + completion_component
+        + utility_component
         - penalties
     )
     return round(total, 2)
@@ -90,6 +97,8 @@ __all__ = [
     "WEALTH_WEIGHT",
     "WORK_WEIGHT",
     "COMPLETION_WEIGHT",
+    "UTILITY_WEIGHT",
     "TARGET_WORK_PROGRESS",
     "TARGET_COMPLETION_PROGRESS",
+    "TARGET_UTILITY_PROGRESS",
 ]

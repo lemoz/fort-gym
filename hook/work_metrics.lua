@@ -100,6 +100,53 @@ if df.global.world.jobs and df.global.world.jobs.list then
   end
 end
 
+local manager_orders_count = 0
+local manager_orders_amount_left = 0
+local manager_orders_amount_total = 0
+if df.global.world.manager_orders then
+  for _, order in ipairs(df.global.world.manager_orders) do
+    manager_orders_count = manager_orders_count + 1
+    manager_orders_amount_left = manager_orders_amount_left + (tonumber(order.amount_left) or 0)
+    manager_orders_amount_total = manager_orders_amount_total + (tonumber(order.amount_total) or 0)
+  end
+end
+
+local workshop_count = 0
+local carpenter_workshops = 0
+local buildings = df.global.world.buildings and df.global.world.buildings.all
+if buildings then
+  pcall(function()
+    local carpenter_type = nil
+    if df.workshop_type then
+      carpenter_type = df.workshop_type.Carpenters or df.workshop_type.Carpenter
+    end
+    for _, building in ipairs(buildings) do
+      local is_workshop = false
+      local ok_type, building_type = pcall(function() return building:getType() end)
+      if ok_type and building_type == df.building_type.Workshop then
+        is_workshop = true
+      end
+      local ok_instance, is_instance = pcall(function()
+        return df.building_workshopst and df.building_workshopst:is_instance(building)
+      end)
+      if ok_instance and is_instance then
+        is_workshop = true
+      end
+
+      if is_workshop then
+        workshop_count = workshop_count + 1
+        local ok_subtype, subtype = pcall(function() return building.subtype end)
+        local subtype_name = ok_subtype and tostring(subtype) or ''
+        if (ok_subtype and carpenter_type and subtype == carpenter_type)
+            or subtype_name == 'Carpenters'
+            or subtype_name == 'Carpenter' then
+          carpenter_workshops = carpenter_workshops + 1
+        end
+      end
+    end
+  end)
+end
+
 local citizens_total = 0
 local miners_total = 0
 local citizens_on_target_z = 0
@@ -136,6 +183,11 @@ print(json.encode({
   target_missing_blocks = target_missing_blocks,
   active_jobs = active_jobs,
   active_dig_jobs = active_dig_jobs,
+  manager_orders_count = manager_orders_count,
+  manager_orders_amount_left = manager_orders_amount_left,
+  manager_orders_amount_total = manager_orders_amount_total,
+  workshop_count = workshop_count,
+  carpenter_workshops = carpenter_workshops,
   citizens_total = citizens_total,
   miners_total = miners_total,
   citizens_on_target_z = citizens_on_target_z,

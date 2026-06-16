@@ -127,6 +127,39 @@ def test_diagnose_actions_flags_tick_only_work_score():
     assert diagnostics["work_score"] == 0.0
 
 
+def test_diagnose_actions_flags_completed_room_without_utility():
+    diagnostics = cli._diagnose_actions(
+        [
+            {
+                "type": "DIG",
+                "valid": True,
+                "accepted": True,
+                "ticks_advanced": 500,
+            },
+            {
+                "type": "WAIT",
+                "valid": True,
+                "accepted": True,
+                "ticks_advanced": 500,
+            },
+        ],
+        {
+            "duration_ticks": 1000,
+            "work_score": 10.0,
+            "completion_score": 10.0,
+            "utility_score": 0.0,
+            "work_progress": 25,
+            "completion_progress": 25,
+            "utility_progress": 0,
+        },
+    )
+
+    assert "completed_room_without_utility_action" in diagnostics["blockers"]
+    assert "completed_room_without_utility_progress" in diagnostics["blockers"]
+    assert diagnostics["utility_progress"] == 0
+    assert diagnostics["utility_score"] == 0.0
+
+
 def test_write_live_agent_suite_artifacts(tmp_path):
     baseline_runs = [
             {
@@ -136,11 +169,19 @@ def test_write_live_agent_suite_artifacts(tmp_path):
                 "score": 23.5,
                 "work_score": 0.0,
                 "completion_score": 0.0,
+                "utility_score": 0.0,
                 "work_progress": 0,
                 "completion_progress": 0,
+                "utility_progress": 0,
                 "public_run_url": "http://example.test/base-1",
                 "public_replay_url": "http://example.test/base-1/replay",
-                "diagnostics": {"steps": 4, "accepted_actions": 4, "ticks_advanced": 0, "work_progress": 0},
+                "diagnostics": {
+                    "steps": 4,
+                    "accepted_actions": 4,
+                    "ticks_advanced": 0,
+                    "work_progress": 0,
+                    "utility_progress": 0,
+                },
             },
             {
                 "trial": 2,
@@ -149,11 +190,19 @@ def test_write_live_agent_suite_artifacts(tmp_path):
                 "score": 23.5,
                 "work_score": 0.0,
                 "completion_score": 0.0,
+                "utility_score": 0.0,
                 "work_progress": 0,
                 "completion_progress": 0,
+                "utility_progress": 0,
                 "public_run_url": "http://example.test/base-2",
                 "public_replay_url": "http://example.test/base-2/replay",
-                "diagnostics": {"steps": 4, "accepted_actions": 4, "ticks_advanced": 0, "work_progress": 0},
+                "diagnostics": {
+                    "steps": 4,
+                    "accepted_actions": 4,
+                    "ticks_advanced": 0,
+                    "work_progress": 0,
+                    "utility_progress": 0,
+                },
             },
     ]
     variant_runs = {
@@ -165,11 +214,19 @@ def test_write_live_agent_suite_artifacts(tmp_path):
                 "score": 29.85,
                 "work_score": 2.0,
                 "completion_score": 0.0,
+                "utility_score": 0.0,
                 "work_progress": 5,
                 "completion_progress": 0,
+                "utility_progress": 0,
                 "public_run_url": "http://example.test/key-1",
                 "public_replay_url": "http://example.test/key-1/replay",
-                "diagnostics": {"steps": 4, "accepted_actions": 4, "ticks_advanced": 508, "work_progress": 5},
+                "diagnostics": {
+                    "steps": 4,
+                    "accepted_actions": 4,
+                    "ticks_advanced": 508,
+                    "work_progress": 5,
+                    "utility_progress": 0,
+                },
             },
             {
                 "trial": 2,
@@ -178,11 +235,19 @@ def test_write_live_agent_suite_artifacts(tmp_path):
                 "score": 23.5,
                 "work_score": 0.0,
                 "completion_score": 0.0,
+                "utility_score": 0.0,
                 "work_progress": 0,
                 "completion_progress": 0,
+                "utility_progress": 0,
                 "public_run_url": "http://example.test/key-2",
                 "public_replay_url": "http://example.test/key-2/replay",
-                "diagnostics": {"steps": 4, "accepted_actions": 4, "ticks_advanced": 0, "work_progress": 0},
+                "diagnostics": {
+                    "steps": 4,
+                    "accepted_actions": 4,
+                    "ticks_advanced": 0,
+                    "work_progress": 0,
+                    "utility_progress": 0,
+                },
             },
         ],
         "anthropic-dig-first": [
@@ -193,11 +258,20 @@ def test_write_live_agent_suite_artifacts(tmp_path):
                 "score": 35.0,
                 "work_score": 10.0,
                 "completion_score": 10.0,
+                "utility_score": 10.0,
                 "work_progress": 25,
                 "completion_progress": 25,
+                "utility_progress": 5,
                 "public_run_url": "http://example.test/dig-1",
                 "public_replay_url": "http://example.test/dig-1/replay",
-                "diagnostics": {"steps": 4, "accepted_actions": 4, "ticks_advanced": 920, "work_progress": 25},
+                "diagnostics": {
+                    "steps": 4,
+                    "accepted_actions": 4,
+                    "ticks_advanced": 920,
+                    "work_progress": 25,
+                    "utility_progress": 5,
+                    "utility_score": 10.0,
+                },
             },
             {
                 "trial": 2,
@@ -206,11 +280,20 @@ def test_write_live_agent_suite_artifacts(tmp_path):
                 "score": 34.0,
                 "work_score": 8.0,
                 "completion_score": 8.0,
+                "utility_score": 8.0,
                 "work_progress": 20,
                 "completion_progress": 20,
+                "utility_progress": 4,
                 "public_run_url": "http://example.test/dig-2",
                 "public_replay_url": "http://example.test/dig-2/replay",
-                "diagnostics": {"steps": 4, "accepted_actions": 4, "ticks_advanced": 840, "work_progress": 20},
+                "diagnostics": {
+                    "steps": 4,
+                    "accepted_actions": 4,
+                    "ticks_advanced": 840,
+                    "work_progress": 20,
+                    "utility_progress": 4,
+                    "utility_score": 8.0,
+                },
             },
         ],
     }
@@ -244,10 +327,13 @@ def test_write_live_agent_suite_artifacts(tmp_path):
     assert comparison["variants"][1]["median_work_progress"] == 22.5
     assert comparison["variants"][1]["median_completion_score"] == 9.0
     assert comparison["variants"][1]["median_completion_progress"] == 22.5
+    assert comparison["variants"][1]["median_utility_score"] == 9.0
+    assert comparison["variants"][1]["median_utility_progress"] == 4.5
     assert markdown_path == tmp_path / "live-agent-suite-test" / "live_agent_suite_report.md"
     assert json_path == tmp_path / "live-agent-suite-test" / "scorecard.json"
     assert "Best model: `anthropic-dig-first`" in text
     assert "Median work progress: `22.5`" in text
     assert "Median completion progress: `22.5`" in text
+    assert "Median utility progress: `4.5`" in text
     assert "http://example.test/dig-1" in text
     assert '"scorecard_json"' in json_text

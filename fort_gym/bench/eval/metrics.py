@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
+UTILITY_WORKSHOP_PROGRESS = 5
+
 
 def _to_int(value: Any, default: int = 0) -> int:
     try:
@@ -54,6 +56,59 @@ def work_progress_delta(
     }
 
 
+def utility_progress_delta(
+    current_work: Dict[str, Any] | None,
+    baseline_work: Dict[str, Any] | None,
+) -> Dict[str, int]:
+    """Compute bounded useful-work deltas from live work snapshots."""
+
+    current = current_work or {}
+    baseline = baseline_work or {}
+    manager_orders_delta = max(
+        0,
+        _to_int(current.get("manager_orders_count"))
+        - _to_int(baseline.get("manager_orders_count")),
+    )
+    manager_order_quantity_delta = max(
+        0,
+        _to_int(current.get("manager_orders_amount_left"))
+        - _to_int(baseline.get("manager_orders_amount_left")),
+    )
+    carpenter_workshops_delta = max(
+        0,
+        _to_int(current.get("carpenter_workshops"))
+        - _to_int(baseline.get("carpenter_workshops")),
+    )
+    order_progress = max(manager_orders_delta, manager_order_quantity_delta)
+    workshop_progress = carpenter_workshops_delta * UTILITY_WORKSHOP_PROGRESS
+    return {
+        "manager_orders_delta": manager_orders_delta,
+        "manager_order_quantity_delta": manager_order_quantity_delta,
+        "carpenter_workshops_delta": carpenter_workshops_delta,
+        "utility_progress": order_progress + workshop_progress,
+    }
+
+
+def utility_action_progress(action: Dict[str, Any], execute_result: Dict[str, Any]) -> Dict[str, int]:
+    """Return useful-work progress proven by an accepted structured action."""
+
+    if not execute_result.get("accepted", execute_result.get("ok", False)):
+        return {"utility_action_progress": 0}
+
+    params = action.get("params") if isinstance(action.get("params"), dict) else {}
+    action_type = action.get("type")
+    if action_type == "ORDER":
+        return {
+            "utility_action_progress": min(
+                UTILITY_WORKSHOP_PROGRESS,
+                max(1, _to_int(params.get("quantity"), default=1)),
+            ),
+        }
+    if action_type == "BUILD" and params.get("kind") == "CarpenterWorkshop":
+        return {"utility_action_progress": UTILITY_WORKSHOP_PROGRESS}
+    return {"utility_action_progress": 0}
+
+
 def step_snapshot(state: Dict[str, Any]) -> Dict[str, Any]:
     """Extract normalized metrics from a raw environment state."""
 
@@ -102,8 +157,16 @@ def step_snapshot(state: Dict[str, Any]) -> Dict[str, Any]:
             "citizens_total": _to_int(work.get("citizens_total")),
             "miners_total": _to_int(work.get("miners_total")),
             "citizens_on_target_z": _to_int(work.get("citizens_on_target_z")),
+            "manager_orders_count": _to_int(work.get("manager_orders_count")),
+            "manager_orders_amount_left": _to_int(work.get("manager_orders_amount_left")),
+            "carpenter_workshops": _to_int(work.get("carpenter_workshops")),
         }
     return snapshot
 
 
-__all__ = ["step_snapshot", "work_progress_delta"]
+__all__ = [
+    "step_snapshot",
+    "utility_action_progress",
+    "utility_progress_delta",
+    "work_progress_delta",
+]

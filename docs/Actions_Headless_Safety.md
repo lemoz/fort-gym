@@ -7,7 +7,7 @@ fort-gym executes DFHack actions exclusively through curated Lua helpers stored 
 - `hook/order_make.lua` enqueues manager orders for a limited set of goods (`bed`, `door`, `table`, `chair`, `barrel`, `bin`). Quantities are clamped to 1–5 and the script returns JSON describing the outcome.
 - `hook/designate_rect.lua` designates dig/channel rectangles or triggers a tree chop pulse. Rectangles are limited to 30×30 tiles.
 - `hook/complete_dig_rect.lua` completes bounded dig designations by converting designated wall tiles to floor tiles. It is intentionally labeled as DFHack completion, not dwarf labor, and reports changed/skipped tiles as JSON.
-- `hook/work_metrics.lua` reads bounded target-room progress for the default clean 5×5 starter room (`50,35,0` to `54,39,0`), including dig designations, opened floor/wall deltas, hidden target tiles, target/citizen z-level diagnostics, and active dig jobs. Scorecards use this to distinguish elapsed ticks, designations, and actual tile completion.
+- `hook/work_metrics.lua` reads bounded target-room progress for the default clean 5×5 starter room (`50,35,0` to `54,39,0`), including dig designations, opened floor/wall deltas, hidden target tiles, target/citizen z-level diagnostics, active dig jobs, manager-order counts, and carpenter-workshop counts. Scorecards use this to distinguish elapsed ticks, designations, actual tile completion, and bounded utility-work starts.
 
 ## Python Adapters
 
