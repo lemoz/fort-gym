@@ -683,6 +683,7 @@ def _diagnose_actions(
     ticks_advanced = sum(_as_int(action.get("ticks_advanced")) for action in actions)
     designation_attempts = 0
     utility_attempts = 0
+    production_attempts = 0
     status_menu_actions = 0
     for action in actions:
         action_type = action.get("type")
@@ -691,6 +692,8 @@ def _diagnose_actions(
             designation_attempts += 1
         if action_type in {"BUILD", "ORDER"}:
             utility_attempts += 1
+        if action_type == "BUILD":
+            production_attempts += 1
         if keys.intersection(STATUS_MENU_KEYS):
             status_menu_actions += 1
 
@@ -710,6 +713,7 @@ def _diagnose_actions(
     work_progress = _as_int(summary.get("work_progress"))
     completion_progress = _as_int(summary.get("completion_progress"))
     utility_progress = _as_int(summary.get("utility_progress"))
+    production_progress = _as_int(summary.get("production_progress"))
     target_floor_tiles_delta = _as_int(summary.get("target_floor_tiles_delta"))
     target_wall_tiles_delta = _as_int(summary.get("target_wall_tiles_delta"))
     if _as_int(summary.get("duration_ticks")) > 0 and work_progress == 0:
@@ -724,6 +728,10 @@ def _diagnose_actions(
         blockers.append("completed_room_without_utility_action")
     if completion_progress >= 25 and utility_progress == 0:
         blockers.append("completed_room_without_utility_progress")
+    if completion_progress >= 25 and production_attempts == 0:
+        blockers.append("completed_room_without_production_action")
+    if completion_progress >= 25 and production_progress == 0:
+        blockers.append("completed_room_without_production_progress")
 
     invalid_rate = round(invalid_actions / total_actions, 3) if total_actions else 0.0
     return {
@@ -734,14 +742,17 @@ def _diagnose_actions(
         "ticks_advanced": ticks_advanced,
         "designation_attempts": designation_attempts,
         "utility_attempts": utility_attempts,
+        "production_attempts": production_attempts,
         "status_menu_actions": status_menu_actions,
         "work_score": _as_float(summary.get("work_score")),
         "completion_score": _as_float(summary.get("completion_score")),
         "utility_score": _as_float(summary.get("utility_score")),
+        "production_score": _as_float(summary.get("production_score")),
         "work_progress": work_progress,
         "designation_progress": _as_int(summary.get("designation_progress")),
         "completion_progress": completion_progress,
         "utility_progress": utility_progress,
+        "production_progress": production_progress,
         "target_dig_designations_delta": _as_int(summary.get("target_dig_designations_delta")),
         "target_floor_tiles_delta": target_floor_tiles_delta,
         "target_wall_tiles_delta": target_wall_tiles_delta,
@@ -750,6 +761,7 @@ def _diagnose_actions(
         "manager_orders_delta": _as_int(summary.get("manager_orders_delta")),
         "manager_order_quantity_delta": _as_int(summary.get("manager_order_quantity_delta")),
         "carpenter_workshops_delta": _as_int(summary.get("carpenter_workshops_delta")),
+        "production_workshops_delta": _as_int(summary.get("production_workshops_delta")),
         "manager_orders_count": _as_int(summary.get("manager_orders_count")),
         "manager_orders_amount_left": _as_int(summary.get("manager_orders_amount_left")),
         "carpenter_workshops": _as_int(summary.get("carpenter_workshops")),
@@ -829,10 +841,12 @@ def _run_api_agent(
         "work_score": summary.get("work_score"),
         "completion_score": summary.get("completion_score"),
         "utility_score": summary.get("utility_score"),
+        "production_score": summary.get("production_score"),
         "work_progress": summary.get("work_progress"),
         "designation_progress": summary.get("designation_progress"),
         "completion_progress": summary.get("completion_progress"),
         "utility_progress": summary.get("utility_progress"),
+        "production_progress": summary.get("production_progress"),
         "target_dig_designations_delta": summary.get("target_dig_designations_delta"),
         "target_floor_tiles_delta": summary.get("target_floor_tiles_delta"),
         "target_wall_tiles_delta": summary.get("target_wall_tiles_delta"),
@@ -841,6 +855,7 @@ def _run_api_agent(
         "manager_orders_delta": summary.get("manager_orders_delta"),
         "manager_order_quantity_delta": summary.get("manager_order_quantity_delta"),
         "carpenter_workshops_delta": summary.get("carpenter_workshops_delta"),
+        "production_workshops_delta": summary.get("production_workshops_delta"),
         "manager_orders_count": summary.get("manager_orders_count"),
         "manager_orders_amount_left": summary.get("manager_orders_amount_left"),
         "carpenter_workshops": summary.get("carpenter_workshops"),
@@ -965,11 +980,13 @@ def _merge_diagnostics(runs: list[dict[str, object]]) -> dict[str, object]:
         "ticks_advanced": 0,
         "designation_attempts": 0,
         "utility_attempts": 0,
+        "production_attempts": 0,
         "status_menu_actions": 0,
         "work_progress": 0,
         "designation_progress": 0,
         "completion_progress": 0,
         "utility_progress": 0,
+        "production_progress": 0,
         "target_dig_designations_delta": 0,
         "target_floor_tiles_delta": 0,
         "target_wall_tiles_delta": 0,
@@ -978,6 +995,7 @@ def _merge_diagnostics(runs: list[dict[str, object]]) -> dict[str, object]:
         "manager_orders_delta": 0,
         "manager_order_quantity_delta": 0,
         "carpenter_workshops_delta": 0,
+        "production_workshops_delta": 0,
         "manager_orders_count": 0,
         "manager_orders_amount_left": 0,
         "carpenter_workshops": 0,
@@ -989,6 +1007,7 @@ def _merge_diagnostics(runs: list[dict[str, object]]) -> dict[str, object]:
     work_score_total = 0.0
     completion_score_total = 0.0
     utility_score_total = 0.0
+    production_score_total = 0.0
     blockers: dict[str, int] = {}
     steps = 0
     for run in runs:
@@ -999,6 +1018,7 @@ def _merge_diagnostics(runs: list[dict[str, object]]) -> dict[str, object]:
         work_score_total += _as_float(diagnostics.get("work_score"))
         completion_score_total += _as_float(diagnostics.get("completion_score"))
         utility_score_total += _as_float(diagnostics.get("utility_score"))
+        production_score_total += _as_float(diagnostics.get("production_score"))
         for blocker in diagnostics.get("blockers", []) if isinstance(diagnostics.get("blockers"), list) else []:
             blocker_name = str(blocker)
             blockers[blocker_name] = blockers.get(blocker_name, 0) + 1
@@ -1009,6 +1029,7 @@ def _merge_diagnostics(runs: list[dict[str, object]]) -> dict[str, object]:
         "work_score_total": round(work_score_total, 2),
         "completion_score_total": round(completion_score_total, 2),
         "utility_score_total": round(utility_score_total, 2),
+        "production_score_total": round(production_score_total, 2),
         "invalid_action_rate": invalid_rate,
         "blockers": blockers,
     }
@@ -1035,6 +1056,16 @@ def _variant_scorecard(
     utility_progress = [
         _as_float(run.get("utility_progress")) for run in runs if run.get("utility_progress") is not None
     ]
+    production_scores = [
+        _as_float(run.get("production_score"))
+        for run in runs
+        if run.get("production_score") is not None
+    ]
+    production_progress = [
+        _as_float(run.get("production_progress"))
+        for run in runs
+        if run.get("production_progress") is not None
+    ]
     median_score = _median(scores)
     return {
         "model": model,
@@ -1055,6 +1086,10 @@ def _variant_scorecard(
         "median_utility_score": _median(utility_scores),
         "utility_progress": utility_progress,
         "median_utility_progress": _median(utility_progress),
+        "production_scores": production_scores,
+        "median_production_score": _median(production_scores),
+        "production_progress": production_progress,
+        "median_production_progress": _median(production_progress),
         "best_run_url": _public_url_for_extreme(runs, reverse=True),
         "worst_run_url": _public_url_for_extreme(runs, reverse=False),
         "diagnostics": _merge_diagnostics(runs),
@@ -1093,6 +1128,16 @@ def _build_suite_comparison(
         for run in baseline_runs
         if run.get("utility_progress") is not None
     ]
+    baseline_production_scores = [
+        _as_float(run.get("production_score"))
+        for run in baseline_runs
+        if run.get("production_score") is not None
+    ]
+    baseline_production_progress = [
+        _as_float(run.get("production_progress"))
+        for run in baseline_runs
+        if run.get("production_progress") is not None
+    ]
     baseline_median = _median(baseline_scores)
     variants = [
         _variant_scorecard(
@@ -1129,6 +1174,10 @@ def _build_suite_comparison(
             "median_utility_score": _median(baseline_utility_scores),
             "utility_progress": baseline_utility_progress,
             "median_utility_progress": _median(baseline_utility_progress),
+            "production_scores": baseline_production_scores,
+            "median_production_score": _median(baseline_production_scores),
+            "production_progress": baseline_production_progress,
+            "median_production_progress": _median(baseline_production_progress),
             "best_run_url": _public_url_for_extreme(baseline_runs, reverse=True),
             "worst_run_url": _public_url_for_extreme(baseline_runs, reverse=False),
             "diagnostics": _merge_diagnostics(baseline_runs),
@@ -1137,6 +1186,41 @@ def _build_suite_comparison(
         "best_model": best_variant.get("model") if best_variant else None,
         "best_median_delta": best_delta,
         "result": "variant_higher" if best_delta > 0 else "no_variant_higher",
+    }
+
+
+def _suite_progress_gate(comparison: dict[str, object]) -> dict[str, object]:
+    variants = comparison.get("variants") if isinstance(comparison.get("variants"), list) else []
+    passing_models: list[str] = []
+    model_progress: list[dict[str, object]] = []
+    for variant in variants:
+        if not isinstance(variant, dict):
+            continue
+        completion_progress = _as_float(variant.get("median_completion_progress"))
+        utility_progress = _as_float(variant.get("median_utility_progress"))
+        production_progress = _as_float(variant.get("median_production_progress"))
+        model = str(variant.get("model") or "")
+        passes = completion_progress > 0 and utility_progress > 0 and production_progress > 0
+        if passes and model:
+            passing_models.append(model)
+        model_progress.append(
+            {
+                "model": model,
+                "completion_progress": completion_progress,
+                "utility_progress": utility_progress,
+                "production_progress": production_progress,
+                "ok": passes,
+            }
+        )
+    return {
+        "ok": bool(passing_models),
+        "required": {
+            "median_completion_progress": "> 0",
+            "median_utility_progress": "> 0",
+            "median_production_progress": "> 0",
+        },
+        "passing_models": passing_models,
+        "models": model_progress,
     }
 
 
@@ -1166,6 +1250,7 @@ def _write_live_agent_suite_artifacts(
     comparison = report.get("comparison") if isinstance(report.get("comparison"), dict) else {}
     baseline = comparison.get("baseline") if isinstance(comparison.get("baseline"), dict) else {}
     variants = comparison.get("variants") if isinstance(comparison.get("variants"), list) else []
+    progress_gate = report.get("progress_gate") if isinstance(report.get("progress_gate"), dict) else {}
 
     lines = [
         "# fort-gym live agent suite",
@@ -1173,6 +1258,8 @@ def _write_live_agent_suite_artifacts(
         f"Generated: {generated_at}",
         f"Suite: `{suite_id}`",
         f"Status: {'PASS' if report.get('ok') else 'FAIL'}",
+        f"Progress gate: {'PASS' if progress_gate.get('ok') else 'FAIL'}",
+        f"Passing progress models: `{progress_gate.get('passing_models')}`",
         f"Result: `{comparison.get('result')}`",
         f"Best model: `{comparison.get('best_model')}`",
         f"Best median delta: `{comparison.get('best_median_delta')}`",
@@ -1188,6 +1275,8 @@ def _write_live_agent_suite_artifacts(
         f"- Median completion progress: `{baseline.get('median_completion_progress')}`",
         f"- Utility scores: `{baseline.get('utility_scores')}`",
         f"- Median utility progress: `{baseline.get('median_utility_progress')}`",
+        f"- Production scores: `{baseline.get('production_scores')}`",
+        f"- Median production progress: `{baseline.get('median_production_progress')}`",
         f"- Best run: {baseline.get('best_run_url')}",
         f"- Worst run: {baseline.get('worst_run_url')}",
         f"- Diagnostics: `{baseline.get('diagnostics')}`",
@@ -1211,6 +1300,8 @@ def _write_live_agent_suite_artifacts(
                 f"- Median completion progress: `{variant.get('median_completion_progress')}`",
                 f"- Utility scores: `{variant.get('utility_scores')}`",
                 f"- Median utility progress: `{variant.get('median_utility_progress')}`",
+                f"- Production scores: `{variant.get('production_scores')}`",
+                f"- Median production progress: `{variant.get('median_production_progress')}`",
                 f"- Best run: {variant.get('best_run_url')}",
                 f"- Worst run: {variant.get('worst_run_url')}",
                 f"- Diagnostics: `{variant.get('diagnostics')}`",
@@ -1413,14 +1504,16 @@ def live_agent_suite(
         baseline_runs=baseline_runs,
         variant_runs=variant_runs,
     )
+    progress_gate = _suite_progress_gate(comparison)
     all_runs = baseline_runs + [
         run
         for runs_for_model in variant_runs.values()
         for run in runs_for_model
     ]
+    all_completed = all(run.get("status") == "completed" for run in all_runs)
     suite_id = f"live-agent-suite-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}"
     report = {
-        "ok": all(run.get("status") == "completed" for run in all_runs),
+        "ok": all_completed and bool(progress_gate.get("ok")),
         "suite_id": suite_id,
         "trials": trials,
         "backend": backend,
@@ -1428,6 +1521,8 @@ def live_agent_suite(
         "ticks_per_step": ticks_per_step,
         "baseline_model": baseline_model,
         "models": model_names,
+        "all_runs_completed": all_completed,
+        "progress_gate": progress_gate,
         "comparison": comparison,
         "runs": {
             "baseline": baseline_runs,

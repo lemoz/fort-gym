@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any, Dict
 
 UTILITY_WORKSHOP_PROGRESS = 5
+PRODUCTION_WORKSHOP_PROGRESS = 5
 
 
 def _to_int(value: Any, default: int = 0) -> int:
@@ -89,6 +90,25 @@ def utility_progress_delta(
     }
 
 
+def production_progress_delta(
+    current_work: Dict[str, Any] | None,
+    baseline_work: Dict[str, Any] | None,
+) -> Dict[str, int]:
+    """Compute bounded production/build deltas from live work snapshots."""
+
+    current = current_work or {}
+    baseline = baseline_work or {}
+    carpenter_workshops_delta = max(
+        0,
+        _to_int(current.get("carpenter_workshops"))
+        - _to_int(baseline.get("carpenter_workshops")),
+    )
+    return {
+        "production_workshops_delta": carpenter_workshops_delta,
+        "production_progress": carpenter_workshops_delta * PRODUCTION_WORKSHOP_PROGRESS,
+    }
+
+
 def utility_action_progress(action: Dict[str, Any], execute_result: Dict[str, Any]) -> Dict[str, int]:
     """Return useful-work progress proven by an accepted structured action."""
 
@@ -166,6 +186,7 @@ def step_snapshot(state: Dict[str, Any]) -> Dict[str, Any]:
 
 __all__ = [
     "step_snapshot",
+    "production_progress_delta",
     "utility_action_progress",
     "utility_progress_delta",
     "work_progress_delta",

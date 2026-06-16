@@ -7,6 +7,7 @@ from typing import Any, Dict, Optional
 
 from .actions import validate_action
 from .dfhack_client import DFHackClient, DFHackUnavailableError
+from ..dfhack_backend import build_workshop as safe_build_workshop
 from ..dfhack_backend import complete_dig_rect as safe_complete_dig_rect
 from ..dfhack_backend import designate_rect as safe_designate_rect
 from ..dfhack_backend import queue_manager_order as safe_queue_manager_order
@@ -100,8 +101,12 @@ class Executor:
                     z = int(params.get("z", 0))
                 except (KeyError, TypeError, ValueError) as exc:
                     return {"accepted": False, "why": f"Invalid coordinates: {exc}"}
-                ok, why = self._dfhack_client.place_building(kind, x, y, z)
-                return {"accepted": bool(ok), "why": why}
+                result = safe_build_workshop(kind, x, y, z)
+                return {
+                    "accepted": bool(result.get("ok")),
+                    "why": None if result.get("ok") else result.get("error"),
+                    "result": result,
+                }
 
             if action_type == "KEYSTROKE":
                 keys = params.get("keys", [])

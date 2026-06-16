@@ -15,6 +15,7 @@ HOOK_ROOT = DFROOT / "hook"
 REPO_HOOK_ROOT = Path(__file__).resolve().parents[2] / "hook"
 
 ALLOWED_ITEMS = {"bed", "door", "table", "chair", "barrel", "bin"}
+ALLOWED_WORKSHOPS = {"CarpenterWorkshop"}
 MAX_QTY = 5
 MAX_RECT_W = 30
 MAX_RECT_H = 30
@@ -48,6 +49,33 @@ def queue_manager_order(item: str, qty: int) -> Dict[str, object]:
     qty_clamped = max(1, min(int(qty), MAX_QTY))
     try:
         return run_lua_file(_hook_path("order_make.lua"), item, str(qty_clamped))
+    except (DFHackError, OSError) as exc:
+        return {"ok": False, "error": str(exc)}
+
+
+def build_workshop(kind: str, x: int, y: int, z: int) -> Dict[str, object]:
+    """Place a bounded safe workshop in the configured target work rectangle."""
+
+    if kind not in ALLOWED_WORKSHOPS:
+        return {"ok": False, "error": "invalid_kind"}
+
+    x_val = int(x)
+    y_val = int(y)
+    z_val = int(z)
+    rx1, ry1, rz1, rx2, ry2, rz2 = _work_rect_from_env()
+    if rz1 != rz2 or z_val != rz1:
+        return {"ok": False, "error": "outside_work_rect"}
+    if x_val < rx1 or y_val < ry1 or x_val + 2 > rx2 or y_val + 2 > ry2:
+        return {"ok": False, "error": "outside_work_rect"}
+
+    try:
+        return run_lua_file(
+            _hook_path("build_workshop.lua"),
+            kind,
+            str(x_val),
+            str(y_val),
+            str(z_val),
+        )
     except (DFHackError, OSError) as exc:
         return {"ok": False, "error": str(exc)}
 
@@ -279,6 +307,7 @@ __all__ = [
     "MAX_RECT_W",
     "MAX_RECT_H",
     "queue_manager_order",
+    "build_workshop",
     "designate_rect",
     "complete_dig_rect",
     "read_work_metrics",

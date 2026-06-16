@@ -148,16 +148,22 @@ def test_diagnose_actions_flags_completed_room_without_utility():
             "work_score": 10.0,
             "completion_score": 10.0,
             "utility_score": 0.0,
+            "production_score": 0.0,
             "work_progress": 25,
             "completion_progress": 25,
             "utility_progress": 0,
+            "production_progress": 0,
         },
     )
 
     assert "completed_room_without_utility_action" in diagnostics["blockers"]
     assert "completed_room_without_utility_progress" in diagnostics["blockers"]
+    assert "completed_room_without_production_action" in diagnostics["blockers"]
+    assert "completed_room_without_production_progress" in diagnostics["blockers"]
     assert diagnostics["utility_progress"] == 0
     assert diagnostics["utility_score"] == 0.0
+    assert diagnostics["production_progress"] == 0
+    assert diagnostics["production_score"] == 0.0
 
 
 def test_write_live_agent_suite_artifacts(tmp_path):
@@ -170,9 +176,11 @@ def test_write_live_agent_suite_artifacts(tmp_path):
                 "work_score": 0.0,
                 "completion_score": 0.0,
                 "utility_score": 0.0,
+                "production_score": 0.0,
                 "work_progress": 0,
                 "completion_progress": 0,
                 "utility_progress": 0,
+                "production_progress": 0,
                 "public_run_url": "http://example.test/base-1",
                 "public_replay_url": "http://example.test/base-1/replay",
                 "diagnostics": {
@@ -181,6 +189,7 @@ def test_write_live_agent_suite_artifacts(tmp_path):
                     "ticks_advanced": 0,
                     "work_progress": 0,
                     "utility_progress": 0,
+                    "production_progress": 0,
                 },
             },
             {
@@ -191,9 +200,11 @@ def test_write_live_agent_suite_artifacts(tmp_path):
                 "work_score": 0.0,
                 "completion_score": 0.0,
                 "utility_score": 0.0,
+                "production_score": 0.0,
                 "work_progress": 0,
                 "completion_progress": 0,
                 "utility_progress": 0,
+                "production_progress": 0,
                 "public_run_url": "http://example.test/base-2",
                 "public_replay_url": "http://example.test/base-2/replay",
                 "diagnostics": {
@@ -202,6 +213,7 @@ def test_write_live_agent_suite_artifacts(tmp_path):
                     "ticks_advanced": 0,
                     "work_progress": 0,
                     "utility_progress": 0,
+                    "production_progress": 0,
                 },
             },
     ]
@@ -215,9 +227,11 @@ def test_write_live_agent_suite_artifacts(tmp_path):
                 "work_score": 2.0,
                 "completion_score": 0.0,
                 "utility_score": 0.0,
+                "production_score": 0.0,
                 "work_progress": 5,
                 "completion_progress": 0,
                 "utility_progress": 0,
+                "production_progress": 0,
                 "public_run_url": "http://example.test/key-1",
                 "public_replay_url": "http://example.test/key-1/replay",
                 "diagnostics": {
@@ -226,6 +240,7 @@ def test_write_live_agent_suite_artifacts(tmp_path):
                     "ticks_advanced": 508,
                     "work_progress": 5,
                     "utility_progress": 0,
+                    "production_progress": 0,
                 },
             },
             {
@@ -236,9 +251,11 @@ def test_write_live_agent_suite_artifacts(tmp_path):
                 "work_score": 0.0,
                 "completion_score": 0.0,
                 "utility_score": 0.0,
+                "production_score": 0.0,
                 "work_progress": 0,
                 "completion_progress": 0,
                 "utility_progress": 0,
+                "production_progress": 0,
                 "public_run_url": "http://example.test/key-2",
                 "public_replay_url": "http://example.test/key-2/replay",
                 "diagnostics": {
@@ -247,6 +264,7 @@ def test_write_live_agent_suite_artifacts(tmp_path):
                     "ticks_advanced": 0,
                     "work_progress": 0,
                     "utility_progress": 0,
+                    "production_progress": 0,
                 },
             },
         ],
@@ -259,9 +277,11 @@ def test_write_live_agent_suite_artifacts(tmp_path):
                 "work_score": 10.0,
                 "completion_score": 10.0,
                 "utility_score": 10.0,
+                "production_score": 10.0,
                 "work_progress": 25,
                 "completion_progress": 25,
                 "utility_progress": 5,
+                "production_progress": 5,
                 "public_run_url": "http://example.test/dig-1",
                 "public_replay_url": "http://example.test/dig-1/replay",
                 "diagnostics": {
@@ -271,6 +291,8 @@ def test_write_live_agent_suite_artifacts(tmp_path):
                     "work_progress": 25,
                     "utility_progress": 5,
                     "utility_score": 10.0,
+                    "production_progress": 5,
+                    "production_score": 10.0,
                 },
             },
             {
@@ -281,9 +303,11 @@ def test_write_live_agent_suite_artifacts(tmp_path):
                 "work_score": 8.0,
                 "completion_score": 8.0,
                 "utility_score": 8.0,
+                "production_score": 8.0,
                 "work_progress": 20,
                 "completion_progress": 20,
                 "utility_progress": 4,
+                "production_progress": 4,
                 "public_run_url": "http://example.test/dig-2",
                 "public_replay_url": "http://example.test/dig-2/replay",
                 "diagnostics": {
@@ -293,6 +317,8 @@ def test_write_live_agent_suite_artifacts(tmp_path):
                     "work_progress": 20,
                     "utility_progress": 4,
                     "utility_score": 8.0,
+                    "production_progress": 4,
+                    "production_score": 8.0,
                 },
             },
         ],
@@ -301,9 +327,11 @@ def test_write_live_agent_suite_artifacts(tmp_path):
         baseline_runs=baseline_runs,
         variant_runs=variant_runs,
     )
+    progress_gate = cli._suite_progress_gate(comparison)
     report = {
-        "ok": True,
+        "ok": progress_gate["ok"],
         "suite_id": "live-agent-suite-test",
+        "progress_gate": progress_gate,
         "comparison": comparison,
         "runs": {
             "baseline": baseline_runs,
@@ -329,11 +357,45 @@ def test_write_live_agent_suite_artifacts(tmp_path):
     assert comparison["variants"][1]["median_completion_progress"] == 22.5
     assert comparison["variants"][1]["median_utility_score"] == 9.0
     assert comparison["variants"][1]["median_utility_progress"] == 4.5
+    assert comparison["variants"][1]["median_production_score"] == 9.0
+    assert comparison["variants"][1]["median_production_progress"] == 4.5
+    assert progress_gate["ok"] is True
+    assert progress_gate["passing_models"] == ["anthropic-dig-first"]
     assert markdown_path == tmp_path / "live-agent-suite-test" / "live_agent_suite_report.md"
     assert json_path == tmp_path / "live-agent-suite-test" / "scorecard.json"
     assert "Best model: `anthropic-dig-first`" in text
+    assert "Progress gate: PASS" in text
+    assert "Passing progress models: `['anthropic-dig-first']`" in text
     assert "Median work progress: `22.5`" in text
     assert "Median completion progress: `22.5`" in text
     assert "Median utility progress: `4.5`" in text
+    assert "Median production progress: `4.5`" in text
     assert "http://example.test/dig-1" in text
     assert '"scorecard_json"' in json_text
+
+
+def test_suite_progress_gate_requires_completion_utility_and_production():
+    comparison = {
+        "variants": [
+            {
+                "model": "anthropic-dig-first",
+                "median_completion_progress": 25,
+                "median_utility_progress": 5,
+                "median_production_progress": 0,
+            }
+        ]
+    }
+
+    gate = cli._suite_progress_gate(comparison)
+
+    assert gate["ok"] is False
+    assert gate["passing_models"] == []
+    assert gate["models"] == [
+        {
+            "model": "anthropic-dig-first",
+            "completion_progress": 25.0,
+            "utility_progress": 5.0,
+            "production_progress": 0.0,
+            "ok": False,
+        }
+    ]

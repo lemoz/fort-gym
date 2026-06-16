@@ -16,8 +16,10 @@ from .scoring import (
     TARGET_SURVIVAL_TICKS,
     TARGET_UTILITY_PROGRESS,
     TARGET_WORK_PROGRESS,
+    TARGET_PRODUCTION_PROGRESS,
     UTILITY_WEIGHT,
     WORK_WEIGHT,
+    PRODUCTION_WEIGHT,
     composite_score,
 )
 
@@ -37,10 +39,12 @@ class RunSummary(BaseModel):
     work_score: float = 0.0
     completion_score: float = 0.0
     utility_score: float = 0.0
+    production_score: float = 0.0
     work_progress: int = 0
     designation_progress: int = 0
     completion_progress: int = 0
     utility_progress: int = 0
+    production_progress: int = 0
     target_dig_designations_delta: int = 0
     target_floor_tiles_delta: int = 0
     target_wall_tiles_delta: int = 0
@@ -49,6 +53,7 @@ class RunSummary(BaseModel):
     manager_orders_delta: int = 0
     manager_order_quantity_delta: int = 0
     carpenter_workshops_delta: int = 0
+    production_workshops_delta: int = 0
     manager_orders_count: int = 0
     manager_orders_amount_left: int = 0
     carpenter_workshops: int = 0
@@ -104,6 +109,7 @@ def summarize(trace_path: Path) -> RunSummary:
     designation_progress = 0
     completion_progress = 0
     utility_progress = 0
+    production_progress = 0
     target_dig_designations_delta = 0
     target_floor_tiles_delta = 0
     target_wall_tiles_delta = 0
@@ -112,6 +118,7 @@ def summarize(trace_path: Path) -> RunSummary:
     manager_orders_delta = 0
     manager_order_quantity_delta = 0
     carpenter_workshops_delta = 0
+    production_workshops_delta = 0
     manager_orders_count = 0
     manager_orders_amount_left = 0
     carpenter_workshops = 0
@@ -161,6 +168,10 @@ def summarize(trace_path: Path) -> RunSummary:
                 utility_progress,
                 _to_int(metrics_snapshot.get("utility_progress")),
             )
+            production_progress = max(
+                production_progress,
+                _to_int(metrics_snapshot.get("production_progress")),
+            )
             target_dig_designations_delta = max(
                 target_dig_designations_delta,
                 _to_int(metrics_snapshot.get("target_dig_designations_delta")),
@@ -192,6 +203,10 @@ def summarize(trace_path: Path) -> RunSummary:
             carpenter_workshops_delta = max(
                 carpenter_workshops_delta,
                 _to_int(metrics_snapshot.get("carpenter_workshops_delta")),
+            )
+            production_workshops_delta = max(
+                production_workshops_delta,
+                _to_int(metrics_snapshot.get("production_workshops_delta")),
             )
             work_snapshot = metrics_snapshot.get("work")
             if isinstance(work_snapshot, dict):
@@ -286,6 +301,7 @@ def summarize(trace_path: Path) -> RunSummary:
         "work_progress": work_progress,
         "completion_progress": completion_progress,
         "utility_progress": utility_progress,
+        "production_progress": production_progress,
         "casualty_spike": casualty_spike,
         "hostiles_present": hostiles_present,
     }
@@ -299,6 +315,9 @@ def summarize(trace_path: Path) -> RunSummary:
     utility_score = (
         min(utility_progress, TARGET_UTILITY_PROGRESS) / TARGET_UTILITY_PROGRESS
     ) * UTILITY_WEIGHT
+    production_score = (
+        min(production_progress, TARGET_PRODUCTION_PROGRESS) / TARGET_PRODUCTION_PROGRESS
+    ) * PRODUCTION_WEIGHT
     total_score = composite_score(summary_payload)
 
     summary = RunSummary(
@@ -313,10 +332,12 @@ def summarize(trace_path: Path) -> RunSummary:
         work_score=round(work_score, 2),
         completion_score=round(completion_score, 2),
         utility_score=round(utility_score, 2),
+        production_score=round(production_score, 2),
         work_progress=work_progress,
         designation_progress=designation_progress,
         completion_progress=completion_progress,
         utility_progress=utility_progress,
+        production_progress=production_progress,
         target_dig_designations_delta=target_dig_designations_delta,
         target_floor_tiles_delta=target_floor_tiles_delta,
         target_wall_tiles_delta=target_wall_tiles_delta,
@@ -325,6 +346,7 @@ def summarize(trace_path: Path) -> RunSummary:
         manager_orders_delta=manager_orders_delta,
         manager_order_quantity_delta=manager_order_quantity_delta,
         carpenter_workshops_delta=carpenter_workshops_delta,
+        production_workshops_delta=production_workshops_delta,
         manager_orders_count=manager_orders_count,
         manager_orders_amount_left=manager_orders_amount_left,
         carpenter_workshops=carpenter_workshops,

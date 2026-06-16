@@ -61,3 +61,19 @@ def test_complete_dig_rect_rejects_z_spans_without_live_dfhack():
     result = complete_dig_rect(0, 0, 0, 1, 1, 1)
     assert result.get("ok") is False
     assert result.get("error") == "z_span_not_supported"
+
+
+def test_build_workshop_rejects_invalid_kind_without_live_dfhack():
+    from fort_gym.bench.dfhack_backend import build_workshop
+
+    result = build_workshop("MagmaForge", 51, 36, 0)
+    assert result.get("ok") is False
+    assert result.get("error") == "invalid_kind"
+
+
+def test_build_workshop_rejects_outside_target_room_without_live_dfhack():
+    from fort_gym.bench.dfhack_backend import build_workshop
+
+    result = build_workshop("CarpenterWorkshop", 0, 0, 0)
+    assert result.get("ok") is False
+    assert result.get("error") == "outside_work_rect"
