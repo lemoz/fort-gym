@@ -278,10 +278,12 @@ def test_write_live_agent_suite_artifacts(tmp_path):
                 "completion_score": 10.0,
                 "utility_score": 10.0,
                 "production_score": 10.0,
+                "complexity_score": 15.0,
                 "work_progress": 25,
                 "completion_progress": 25,
                 "utility_progress": 5,
                 "production_progress": 5,
+                "complexity_progress": 38,
                 "public_run_url": "http://example.test/dig-1",
                 "public_replay_url": "http://example.test/dig-1/replay",
                 "diagnostics": {
@@ -293,6 +295,8 @@ def test_write_live_agent_suite_artifacts(tmp_path):
                     "utility_score": 10.0,
                     "production_progress": 5,
                     "production_score": 10.0,
+                    "complexity_progress": 38,
+                    "complexity_score": 15.0,
                 },
             },
             {
@@ -304,10 +308,12 @@ def test_write_live_agent_suite_artifacts(tmp_path):
                 "completion_score": 8.0,
                 "utility_score": 8.0,
                 "production_score": 8.0,
+                "complexity_score": 11.05,
                 "work_progress": 20,
                 "completion_progress": 20,
                 "utility_progress": 4,
                 "production_progress": 4,
+                "complexity_progress": 28,
                 "public_run_url": "http://example.test/dig-2",
                 "public_replay_url": "http://example.test/dig-2/replay",
                 "diagnostics": {
@@ -319,6 +325,8 @@ def test_write_live_agent_suite_artifacts(tmp_path):
                     "utility_score": 8.0,
                     "production_progress": 4,
                     "production_score": 8.0,
+                    "complexity_progress": 28,
+                    "complexity_score": 11.05,
                 },
             },
         ],
@@ -359,6 +367,8 @@ def test_write_live_agent_suite_artifacts(tmp_path):
     assert comparison["variants"][1]["median_utility_progress"] == 4.5
     assert comparison["variants"][1]["median_production_score"] == 9.0
     assert comparison["variants"][1]["median_production_progress"] == 4.5
+    assert comparison["variants"][1]["median_complexity_score"] == 13.03
+    assert comparison["variants"][1]["median_complexity_progress"] == 33.0
     assert progress_gate["ok"] is True
     assert progress_gate["passing_models"] == ["anthropic-dig-first"]
     assert markdown_path == tmp_path / "live-agent-suite-test" / "live_agent_suite_report.md"
@@ -370,11 +380,12 @@ def test_write_live_agent_suite_artifacts(tmp_path):
     assert "Median completion progress: `22.5`" in text
     assert "Median utility progress: `4.5`" in text
     assert "Median production progress: `4.5`" in text
+    assert "Median complexity progress: `33.0`" in text
     assert "http://example.test/dig-1" in text
     assert '"scorecard_json"' in json_text
 
 
-def test_suite_progress_gate_requires_completion_utility_and_production():
+def test_suite_progress_gate_requires_completion_utility_production_and_complexity():
     comparison = {
         "variants": [
             {
@@ -382,6 +393,7 @@ def test_suite_progress_gate_requires_completion_utility_and_production():
                 "median_completion_progress": 25,
                 "median_utility_progress": 5,
                 "median_production_progress": 0,
+                "median_complexity_progress": 38,
             }
         ]
     }
@@ -396,6 +408,27 @@ def test_suite_progress_gate_requires_completion_utility_and_production():
             "completion_progress": 25.0,
             "utility_progress": 5.0,
             "production_progress": 0.0,
+            "complexity_progress": 38.0,
             "ok": False,
         }
     ]
+
+
+def test_suite_progress_gate_requires_complexity_progress():
+    comparison = {
+        "variants": [
+            {
+                "model": "anthropic-dig-first",
+                "median_completion_progress": 25,
+                "median_utility_progress": 5,
+                "median_production_progress": 5,
+                "median_complexity_progress": 0,
+            }
+        ]
+    }
+
+    gate = cli._suite_progress_gate(comparison)
+
+    assert gate["ok"] is False
+    assert gate["passing_models"] == []
+    assert gate["required"]["median_complexity_progress"] == "> 0"

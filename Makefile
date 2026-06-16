@@ -19,9 +19,9 @@ VM_LIVE_AGENT_REF ?= main
 PUBLIC_BASE_URL ?= http://$(VM_HOST)
 LIVE_AGENT_MODEL ?= anthropic-keystroke
 LIVE_AGENT_BASELINE_MODEL ?= fake
-LIVE_AGENT_MODELS ?= anthropic-keystroke,anthropic-dig-first
+LIVE_AGENT_MODELS ?= anthropic-dig-first,anthropic-fortress-plan
 LIVE_AGENT_TRIALS ?= 2
-LIVE_AGENT_MAX_STEPS ?= 4
+LIVE_AGENT_MAX_STEPS ?= 6
 LIVE_AGENT_TICKS_PER_STEP ?= 10
 
 # Git ref to test/deploy (branch, tag, or SHA)

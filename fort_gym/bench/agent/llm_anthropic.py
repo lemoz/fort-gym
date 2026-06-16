@@ -45,6 +45,35 @@ The harness executes DIG, safe ORDER actions, and bounded CarpenterWorkshop BUIL
 Return exactly one submit_action tool call."""
 
 
+FORTRESS_PLAN_SYSTEM_PROMPT = """You are the fortress overseer. One action per step. Never return multiple actions or plans.
+
+Use fort-gym's structured action API. Do not drive the Dwarf Fortress UI with keystrokes.
+
+Your objective is to create a visible, purposeful two-room fortress plan, not just a single starter room:
+1. Dig the starter room first: DIG area [50, 35, 0], size [5, 5, 1], advance_ticks 500.
+2. When target_floor_tiles >= 25 or target_wall_tiles == 0, dig the connector hallway: DIG area [55, 37, 0], size [3, 1, 1], advance_ticks 250.
+3. When fortress_connector_floor_tiles >= 3, dig the workshop room: DIG area [58, 35, 0], size [5, 5, 1], advance_ticks 500.
+4. When fortress_workshop_room_floor_tiles >= 25, queue useful work: ORDER bed quantity 5 unless manager_orders_count or manager_orders_amount_left already increased.
+5. After the order exists, place production in the workshop room: BUILD CarpenterWorkshop at x=59, y=36, z=0 unless carpenter_workshops already increased.
+6. After the workshop exists, WAIT with advance_ticks 200 so the public trace records stable fortress complexity and production progress.
+
+Read work metrics literally:
+- target_floor_tiles tracks the starter room.
+- fortress_connector_floor_tiles tracks the east connector hallway; 3 means complete.
+- fortress_workshop_room_floor_tiles tracks the second 5x5 workshop room; 25 means complete.
+- fortress_complexity_spaces_completed reaches 2 when the connector and workshop room are both visibly opened.
+
+Examples:
+- DIG starter: {"type":"DIG","params":{"area":[50,35,0],"size":[5,5,1]},"intent":"carve the first room of the fortress plan","advance_ticks":500}
+- DIG connector: {"type":"DIG","params":{"area":[55,37,0],"size":[3,1,1]},"intent":"connect the starter room to the workshop annex","advance_ticks":250}
+- DIG workshop room: {"type":"DIG","params":{"area":[58,35,0],"size":[5,5,1]},"intent":"carve a dedicated workshop room east of the starter room","advance_ticks":500}
+- ORDER: {"type":"ORDER","params":{"job":"bed","quantity":5},"intent":"queue useful furniture work after the rooms exist","advance_ticks":200}
+- BUILD: {"type":"BUILD","params":{"kind":"CarpenterWorkshop","x":59,"y":36,"z":0},"intent":"place production in the dedicated workshop room","advance_ticks":200}
+- WAIT: {"type":"WAIT","params":{},"intent":"let the completed two-room fortress plan stabilize in the trace","advance_ticks":200}
+
+Return exactly one submit_action tool call."""
+
+
 # Keystroke mode system prompt
 KEYSTROKE_SYSTEM_PROMPT = """You are playing Dwarf Fortress. You control the game by sending keystrokes.
 
@@ -357,6 +386,16 @@ class AnthropicDigFirstAgent(AnthropicActionAgent):
 register_agent("anthropic-dig-first", lambda: AnthropicDigFirstAgent())
 
 
+class AnthropicFortressPlanAgent(AnthropicActionAgent):
+    """Structured Anthropic policy for a visible two-room fortress plan."""
+
+    def __init__(self) -> None:
+        super().__init__(system_prompt=FORTRESS_PLAN_SYSTEM_PROMPT)
+
+
+register_agent("anthropic-fortress-plan", lambda: AnthropicFortressPlanAgent())
+
+
 class AnthropicKeystrokeAgent(Agent):
     """Anthropic agent for keystroke-based game control."""
 
@@ -555,7 +594,9 @@ register_agent("anthropic-keystroke", lambda: AnthropicKeystrokeAgent())
 __all__ = [
     "AnthropicActionAgent",
     "AnthropicDigFirstAgent",
+    "AnthropicFortressPlanAgent",
     "AnthropicKeystrokeAgent",
     "DIG_FIRST_SYSTEM_PROMPT",
+    "FORTRESS_PLAN_SYSTEM_PROMPT",
     "KEYSTROKE_SYSTEM_PROMPT",
 ]

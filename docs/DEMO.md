@@ -82,18 +82,20 @@ suite command:
 ```bash
 make vm-deploy SHA=origin/main
 make vm-live-agent-suite VM_LIVE_AGENT_REF=main \
-  LIVE_AGENT_MODELS=anthropic-keystroke,anthropic-dig-first \
-  LIVE_AGENT_TRIALS=2 LIVE_AGENT_MAX_STEPS=4
+  LIVE_AGENT_MODELS=anthropic-dig-first,anthropic-fortress-plan \
+  LIVE_AGENT_TRIALS=2 LIVE_AGENT_MAX_STEPS=6
 ```
 
 The suite writes a Markdown packet and `scorecard.json` with median scores,
-work scores, completion scores, utility scores, production scores, target-room
-designation/completion/utility/production progress, public run/replay URLs, and
-trace diagnostics such as invalid actions, status menu exploration, tick-only
-scoring, no-mining-progress blockers, completed-room-without-utility blockers,
-completed-room-without-production blockers, dig attempts, utility attempts,
-production attempts, and ticks advanced. The suite exits non-zero unless at
-least one model has positive median completion, utility, and production progress.
+work scores, completion scores, utility scores, production scores, complexity
+scores, target-room designation/completion/utility/production/complexity
+progress, public run/replay URLs, and trace diagnostics such as invalid actions,
+status menu exploration, tick-only scoring, no-mining-progress blockers,
+completed-room-without-utility blockers, completed-room-without-production
+blockers, production-without-complexity blockers, dig attempts, utility attempts,
+production attempts, complexity attempts, and ticks advanced. The suite exits
+non-zero unless at least one model has positive median completion, utility,
+production, and visible fortress complexity progress.
 
 ## Live sequence
 

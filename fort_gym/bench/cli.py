@@ -57,7 +57,7 @@ PUBLIC_REHEARSAL_PATHS = (
     "/public/leaderboard/best-over-time",
 )
 TERMINAL_RUN_STATUSES = {"completed", "failed", "stopped"}
-DEFAULT_LIVE_AGENT_MODELS = "anthropic-keystroke,anthropic-dig-first"
+DEFAULT_LIVE_AGENT_MODELS = "anthropic-dig-first,anthropic-fortress-plan"
 STATUS_MENU_KEYS = {"D_STATUS", "D_ANNOUNCE", "D_REPORTS", "STRING_A122"}
 DESIGNATION_KEYS = {"D_DESIGNATE", "DESIGNATE_DIG"}
 
@@ -684,12 +684,18 @@ def _diagnose_actions(
     designation_attempts = 0
     utility_attempts = 0
     production_attempts = 0
+    complexity_attempts = 0
     status_menu_actions = 0
     for action in actions:
         action_type = action.get("type")
         keys = _action_keys(action)
         if action_type == "DIG" or keys.intersection(DESIGNATION_KEYS):
             designation_attempts += 1
+        if action_type == "DIG":
+            params = action.get("params") if isinstance(action.get("params"), dict) else {}
+            area = params.get("area")
+            if isinstance(area, (list, tuple)) and list(area[:3]) != [50, 35, 0]:
+                complexity_attempts += 1
         if action_type in {"BUILD", "ORDER"}:
             utility_attempts += 1
         if action_type == "BUILD":
@@ -714,6 +720,7 @@ def _diagnose_actions(
     completion_progress = _as_int(summary.get("completion_progress"))
     utility_progress = _as_int(summary.get("utility_progress"))
     production_progress = _as_int(summary.get("production_progress"))
+    complexity_progress = _as_int(summary.get("complexity_progress"))
     target_floor_tiles_delta = _as_int(summary.get("target_floor_tiles_delta"))
     target_wall_tiles_delta = _as_int(summary.get("target_wall_tiles_delta"))
     if _as_int(summary.get("duration_ticks")) > 0 and work_progress == 0:
@@ -732,6 +739,10 @@ def _diagnose_actions(
         blockers.append("completed_room_without_production_action")
     if completion_progress >= 25 and production_progress == 0:
         blockers.append("completed_room_without_production_progress")
+    if production_progress > 0 and complexity_attempts == 0:
+        blockers.append("production_without_complexity_action")
+    if production_progress > 0 and complexity_progress == 0:
+        blockers.append("production_without_complexity_progress")
 
     invalid_rate = round(invalid_actions / total_actions, 3) if total_actions else 0.0
     return {
@@ -743,21 +754,27 @@ def _diagnose_actions(
         "designation_attempts": designation_attempts,
         "utility_attempts": utility_attempts,
         "production_attempts": production_attempts,
+        "complexity_attempts": complexity_attempts,
         "status_menu_actions": status_menu_actions,
         "work_score": _as_float(summary.get("work_score")),
         "completion_score": _as_float(summary.get("completion_score")),
         "utility_score": _as_float(summary.get("utility_score")),
         "production_score": _as_float(summary.get("production_score")),
+        "complexity_score": _as_float(summary.get("complexity_score")),
         "work_progress": work_progress,
         "designation_progress": _as_int(summary.get("designation_progress")),
         "completion_progress": completion_progress,
         "utility_progress": utility_progress,
         "production_progress": production_progress,
+        "complexity_progress": complexity_progress,
         "target_dig_designations_delta": _as_int(summary.get("target_dig_designations_delta")),
         "target_floor_tiles_delta": target_floor_tiles_delta,
         "target_wall_tiles_delta": target_wall_tiles_delta,
         "active_dig_jobs_delta": _as_int(summary.get("active_dig_jobs_delta")),
         "utility_action_progress": _as_int(summary.get("utility_action_progress")),
+        "complexity_floor_tiles_delta": _as_int(summary.get("complexity_floor_tiles_delta")),
+        "complexity_wall_tiles_delta": _as_int(summary.get("complexity_wall_tiles_delta")),
+        "complexity_spaces_delta": _as_int(summary.get("complexity_spaces_delta")),
         "manager_orders_delta": _as_int(summary.get("manager_orders_delta")),
         "manager_order_quantity_delta": _as_int(summary.get("manager_order_quantity_delta")),
         "carpenter_workshops_delta": _as_int(summary.get("carpenter_workshops_delta")),
@@ -765,6 +782,10 @@ def _diagnose_actions(
         "manager_orders_count": _as_int(summary.get("manager_orders_count")),
         "manager_orders_amount_left": _as_int(summary.get("manager_orders_amount_left")),
         "carpenter_workshops": _as_int(summary.get("carpenter_workshops")),
+        "fortress_complexity_floor_tiles": _as_int(summary.get("fortress_complexity_floor_tiles")),
+        "fortress_complexity_spaces_completed": _as_int(
+            summary.get("fortress_complexity_spaces_completed")
+        ),
         "target_hidden_tiles": _as_int(summary.get("target_hidden_tiles")),
         "citizens_total": _as_int(summary.get("citizens_total")),
         "miners_total": _as_int(summary.get("miners_total")),
@@ -842,16 +863,21 @@ def _run_api_agent(
         "completion_score": summary.get("completion_score"),
         "utility_score": summary.get("utility_score"),
         "production_score": summary.get("production_score"),
+        "complexity_score": summary.get("complexity_score"),
         "work_progress": summary.get("work_progress"),
         "designation_progress": summary.get("designation_progress"),
         "completion_progress": summary.get("completion_progress"),
         "utility_progress": summary.get("utility_progress"),
         "production_progress": summary.get("production_progress"),
+        "complexity_progress": summary.get("complexity_progress"),
         "target_dig_designations_delta": summary.get("target_dig_designations_delta"),
         "target_floor_tiles_delta": summary.get("target_floor_tiles_delta"),
         "target_wall_tiles_delta": summary.get("target_wall_tiles_delta"),
         "active_dig_jobs_delta": summary.get("active_dig_jobs_delta"),
         "utility_action_progress": summary.get("utility_action_progress"),
+        "complexity_floor_tiles_delta": summary.get("complexity_floor_tiles_delta"),
+        "complexity_wall_tiles_delta": summary.get("complexity_wall_tiles_delta"),
+        "complexity_spaces_delta": summary.get("complexity_spaces_delta"),
         "manager_orders_delta": summary.get("manager_orders_delta"),
         "manager_order_quantity_delta": summary.get("manager_order_quantity_delta"),
         "carpenter_workshops_delta": summary.get("carpenter_workshops_delta"),
@@ -859,6 +885,13 @@ def _run_api_agent(
         "manager_orders_count": summary.get("manager_orders_count"),
         "manager_orders_amount_left": summary.get("manager_orders_amount_left"),
         "carpenter_workshops": summary.get("carpenter_workshops"),
+        "fortress_plan_name": summary.get("fortress_plan_name"),
+        "fortress_connector_floor_tiles": summary.get("fortress_connector_floor_tiles"),
+        "fortress_workshop_room_floor_tiles": summary.get("fortress_workshop_room_floor_tiles"),
+        "fortress_complexity_floor_tiles": summary.get("fortress_complexity_floor_tiles"),
+        "fortress_complexity_spaces_completed": summary.get(
+            "fortress_complexity_spaces_completed"
+        ),
         "target_hidden_tiles": summary.get("target_hidden_tiles"),
         "citizens_total": summary.get("citizens_total"),
         "miners_total": summary.get("miners_total"),
@@ -981,17 +1014,22 @@ def _merge_diagnostics(runs: list[dict[str, object]]) -> dict[str, object]:
         "designation_attempts": 0,
         "utility_attempts": 0,
         "production_attempts": 0,
+        "complexity_attempts": 0,
         "status_menu_actions": 0,
         "work_progress": 0,
         "designation_progress": 0,
         "completion_progress": 0,
         "utility_progress": 0,
         "production_progress": 0,
+        "complexity_progress": 0,
         "target_dig_designations_delta": 0,
         "target_floor_tiles_delta": 0,
         "target_wall_tiles_delta": 0,
         "active_dig_jobs_delta": 0,
         "utility_action_progress": 0,
+        "complexity_floor_tiles_delta": 0,
+        "complexity_wall_tiles_delta": 0,
+        "complexity_spaces_delta": 0,
         "manager_orders_delta": 0,
         "manager_order_quantity_delta": 0,
         "carpenter_workshops_delta": 0,
@@ -999,6 +1037,8 @@ def _merge_diagnostics(runs: list[dict[str, object]]) -> dict[str, object]:
         "manager_orders_count": 0,
         "manager_orders_amount_left": 0,
         "carpenter_workshops": 0,
+        "fortress_complexity_floor_tiles": 0,
+        "fortress_complexity_spaces_completed": 0,
         "target_hidden_tiles": 0,
         "citizens_total": 0,
         "miners_total": 0,
@@ -1008,6 +1048,7 @@ def _merge_diagnostics(runs: list[dict[str, object]]) -> dict[str, object]:
     completion_score_total = 0.0
     utility_score_total = 0.0
     production_score_total = 0.0
+    complexity_score_total = 0.0
     blockers: dict[str, int] = {}
     steps = 0
     for run in runs:
@@ -1019,6 +1060,7 @@ def _merge_diagnostics(runs: list[dict[str, object]]) -> dict[str, object]:
         completion_score_total += _as_float(diagnostics.get("completion_score"))
         utility_score_total += _as_float(diagnostics.get("utility_score"))
         production_score_total += _as_float(diagnostics.get("production_score"))
+        complexity_score_total += _as_float(diagnostics.get("complexity_score"))
         for blocker in diagnostics.get("blockers", []) if isinstance(diagnostics.get("blockers"), list) else []:
             blocker_name = str(blocker)
             blockers[blocker_name] = blockers.get(blocker_name, 0) + 1
@@ -1030,6 +1072,7 @@ def _merge_diagnostics(runs: list[dict[str, object]]) -> dict[str, object]:
         "completion_score_total": round(completion_score_total, 2),
         "utility_score_total": round(utility_score_total, 2),
         "production_score_total": round(production_score_total, 2),
+        "complexity_score_total": round(complexity_score_total, 2),
         "invalid_action_rate": invalid_rate,
         "blockers": blockers,
     }
@@ -1066,6 +1109,16 @@ def _variant_scorecard(
         for run in runs
         if run.get("production_progress") is not None
     ]
+    complexity_scores = [
+        _as_float(run.get("complexity_score"))
+        for run in runs
+        if run.get("complexity_score") is not None
+    ]
+    complexity_progress = [
+        _as_float(run.get("complexity_progress"))
+        for run in runs
+        if run.get("complexity_progress") is not None
+    ]
     median_score = _median(scores)
     return {
         "model": model,
@@ -1090,6 +1143,10 @@ def _variant_scorecard(
         "median_production_score": _median(production_scores),
         "production_progress": production_progress,
         "median_production_progress": _median(production_progress),
+        "complexity_scores": complexity_scores,
+        "median_complexity_score": _median(complexity_scores),
+        "complexity_progress": complexity_progress,
+        "median_complexity_progress": _median(complexity_progress),
         "best_run_url": _public_url_for_extreme(runs, reverse=True),
         "worst_run_url": _public_url_for_extreme(runs, reverse=False),
         "diagnostics": _merge_diagnostics(runs),
@@ -1138,6 +1195,16 @@ def _build_suite_comparison(
         for run in baseline_runs
         if run.get("production_progress") is not None
     ]
+    baseline_complexity_scores = [
+        _as_float(run.get("complexity_score"))
+        for run in baseline_runs
+        if run.get("complexity_score") is not None
+    ]
+    baseline_complexity_progress = [
+        _as_float(run.get("complexity_progress"))
+        for run in baseline_runs
+        if run.get("complexity_progress") is not None
+    ]
     baseline_median = _median(baseline_scores)
     variants = [
         _variant_scorecard(
@@ -1178,6 +1245,10 @@ def _build_suite_comparison(
             "median_production_score": _median(baseline_production_scores),
             "production_progress": baseline_production_progress,
             "median_production_progress": _median(baseline_production_progress),
+            "complexity_scores": baseline_complexity_scores,
+            "median_complexity_score": _median(baseline_complexity_scores),
+            "complexity_progress": baseline_complexity_progress,
+            "median_complexity_progress": _median(baseline_complexity_progress),
             "best_run_url": _public_url_for_extreme(baseline_runs, reverse=True),
             "worst_run_url": _public_url_for_extreme(baseline_runs, reverse=False),
             "diagnostics": _merge_diagnostics(baseline_runs),
@@ -1199,8 +1270,14 @@ def _suite_progress_gate(comparison: dict[str, object]) -> dict[str, object]:
         completion_progress = _as_float(variant.get("median_completion_progress"))
         utility_progress = _as_float(variant.get("median_utility_progress"))
         production_progress = _as_float(variant.get("median_production_progress"))
+        complexity_progress = _as_float(variant.get("median_complexity_progress"))
         model = str(variant.get("model") or "")
-        passes = completion_progress > 0 and utility_progress > 0 and production_progress > 0
+        passes = (
+            completion_progress > 0
+            and utility_progress > 0
+            and production_progress > 0
+            and complexity_progress > 0
+        )
         if passes and model:
             passing_models.append(model)
         model_progress.append(
@@ -1209,6 +1286,7 @@ def _suite_progress_gate(comparison: dict[str, object]) -> dict[str, object]:
                 "completion_progress": completion_progress,
                 "utility_progress": utility_progress,
                 "production_progress": production_progress,
+                "complexity_progress": complexity_progress,
                 "ok": passes,
             }
         )
@@ -1218,6 +1296,7 @@ def _suite_progress_gate(comparison: dict[str, object]) -> dict[str, object]:
             "median_completion_progress": "> 0",
             "median_utility_progress": "> 0",
             "median_production_progress": "> 0",
+            "median_complexity_progress": "> 0",
         },
         "passing_models": passing_models,
         "models": model_progress,
@@ -1277,6 +1356,8 @@ def _write_live_agent_suite_artifacts(
         f"- Median utility progress: `{baseline.get('median_utility_progress')}`",
         f"- Production scores: `{baseline.get('production_scores')}`",
         f"- Median production progress: `{baseline.get('median_production_progress')}`",
+        f"- Complexity scores: `{baseline.get('complexity_scores')}`",
+        f"- Median complexity progress: `{baseline.get('median_complexity_progress')}`",
         f"- Best run: {baseline.get('best_run_url')}",
         f"- Worst run: {baseline.get('worst_run_url')}",
         f"- Diagnostics: `{baseline.get('diagnostics')}`",
@@ -1302,6 +1383,8 @@ def _write_live_agent_suite_artifacts(
                 f"- Median utility progress: `{variant.get('median_utility_progress')}`",
                 f"- Production scores: `{variant.get('production_scores')}`",
                 f"- Median production progress: `{variant.get('median_production_progress')}`",
+                f"- Complexity scores: `{variant.get('complexity_scores')}`",
+                f"- Median complexity progress: `{variant.get('median_complexity_progress')}`",
                 f"- Best run: {variant.get('best_run_url')}",
                 f"- Worst run: {variant.get('worst_run_url')}",
                 f"- Diagnostics: `{variant.get('diagnostics')}`",
@@ -1435,7 +1518,7 @@ def live_agent_suite(
     baseline_model: str = "fake",
     trials: int = 2,
     backend: str = "dfhack",
-    max_steps: int = 4,
+    max_steps: int = 6,
     ticks_per_step: int = 10,
     api_base_url: str = "http://127.0.0.1:8000",
     public_base_url: str = "http://34.41.155.134",

@@ -233,6 +233,7 @@ Agents must implement `Agent.decide(obs_text: str, obs_json: dict) -> dict` retu
 - Anthropic agents (requires `ANTHROPIC_API_KEY`):
   - `anthropic` - Toolbox mode with predefined actions (DIG, BUILD, ORDER)
   - `anthropic-dig-first` - Toolbox mode tuned to start with a direct DFHack DIG action
+  - `anthropic-fortress-plan` - Toolbox mode tuned to carve a connector plus workshop annex before placing production
   - `anthropic-keystroke` - Pure keystroke control, Claude sees screen and sends key commands
 
 Register new agents via `AGENT_FACTORIES` in `agent/base.py`.
@@ -399,17 +400,18 @@ make vm-live-agent VM_LIVE_AGENT_REF=<branch-or-main> \
 
 # Multi-trial live scorecard across model/control variants:
 make vm-live-agent-suite VM_LIVE_AGENT_REF=<branch-or-main> \
-  LIVE_AGENT_MODELS=anthropic-keystroke,anthropic-dig-first \
-  LIVE_AGENT_TRIALS=2 LIVE_AGENT_MAX_STEPS=4
+  LIVE_AGENT_MODELS=anthropic-dig-first,anthropic-fortress-plan \
+  LIVE_AGENT_TRIALS=2 LIVE_AGENT_MAX_STEPS=6
 ```
 
 The suite scorecard includes both total score and target-room work metrics from
-`hook/work_metrics.lua`: work score, completion score, designation progress,
-completion progress, dig-designation delta, opened floor/wall delta, active dig
-jobs, hidden/z-level diagnostics, and tick-only/no-mining blockers. Structured
-DFHack `DIG` actions also run `hook/complete_dig_rect.lua` by default so live
-traces can prove completed tile changes; set `FORT_GYM_DFHACK_COMPLETE_DIG=0`
-to measure designation-only behavior.
+`hook/work_metrics.lua`: work score, completion score, utility score,
+production score, complexity score, designation progress, completion progress,
+dig-designation delta, opened floor/wall delta, active dig jobs, two-room
+fortress complexity progress, hidden/z-level diagnostics, and tick-only/no-mining
+blockers. Structured DFHack `DIG` actions also run `hook/complete_dig_rect.lua`
+by default so live traces can prove completed tile changes; set
+`FORT_GYM_DFHACK_COMPLETE_DIG=0` to measure designation-only behavior.
 3. **Merge**: once tested, merge to `main` (PR merge preferred).
 4. **VM deploy**: deploy the exact git ref to production and restart the API:
 ```bash

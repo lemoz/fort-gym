@@ -51,6 +51,58 @@ local sx = region.x_count_block
 local sy = region.y_count_block
 local block_count = #region.map_blocks
 
+local function scan_rect(ax1, ay1, az, ax2, ay2)
+  local rect = {
+    tiles = 0,
+    dig_designations = 0,
+    floor_tiles = 0,
+    wall_tiles = 0,
+    hidden_tiles = 0,
+    visible_tiles = 0,
+    missing_blocks = 0,
+  }
+
+  for tx = ax1, ax2 do
+    for ty = ay1, ay2 do
+      rect.tiles = rect.tiles + 1
+      local bx = math.floor(tx / 16)
+      local by = math.floor(ty / 16)
+      local index = bx + by * sx + az * sx * sy
+      local block = nil
+      if bx >= 0 and by >= 0 and bx < sx and by < sy and index >= 0 and index < block_count then
+        block = region.map_blocks[index]
+      end
+      if block then
+        local dx = tx % 16
+        local dy = ty % 16
+        local designation = block.designation[dx][dy]
+        if designation and designation.dig ~= no_dig then
+          rect.dig_designations = rect.dig_designations + 1
+        end
+        if designation and designation.hidden then
+          rect.hidden_tiles = rect.hidden_tiles + 1
+        elseif designation then
+          rect.visible_tiles = rect.visible_tiles + 1
+        end
+
+        local tiletype = block.tiletype[dx][dy]
+        local attr = attrs[tiletype]
+        if attr then
+          if attr.shape == floor_shape then
+            rect.floor_tiles = rect.floor_tiles + 1
+          elseif attr.shape == wall_shape then
+            rect.wall_tiles = rect.wall_tiles + 1
+          end
+        end
+      else
+        rect.missing_blocks = rect.missing_blocks + 1
+      end
+    end
+  end
+
+  return rect
+end
+
 for tx = rx1, rx2 do
   for ty = ry1, ry2 do
     target_tiles = target_tiles + 1
@@ -87,6 +139,39 @@ for tx = rx1, rx2 do
       target_missing_blocks = target_missing_blocks + 1
     end
   end
+end
+
+local connector_x1 = rx2 + 1
+local connector_y1 = ry1 + 2
+local connector_x2 = rx2 + 3
+local connector_y2 = connector_y1
+local workshop_room_x1 = rx2 + 4
+local workshop_room_y1 = ry1
+local workshop_room_x2 = rx2 + 8
+local workshop_room_y2 = ry2
+local fortress_connector = scan_rect(connector_x1, connector_y1, rz, connector_x2, connector_y2)
+local fortress_workshop_room = scan_rect(
+  workshop_room_x1,
+  workshop_room_y1,
+  rz,
+  workshop_room_x2,
+  workshop_room_y2
+)
+
+local function is_completed_space(rect)
+  return rect.tiles > 0
+      and rect.missing_blocks == 0
+      and rect.floor_tiles >= rect.tiles
+      and rect.wall_tiles == 0
+      and rect.hidden_tiles == 0
+end
+
+local fortress_complexity_spaces_completed = 0
+if is_completed_space(fortress_connector) then
+  fortress_complexity_spaces_completed = fortress_complexity_spaces_completed + 1
+end
+if is_completed_space(fortress_workshop_room) then
+  fortress_complexity_spaces_completed = fortress_complexity_spaces_completed + 1
 end
 
 local active_jobs = 0
@@ -181,6 +266,25 @@ print(json.encode({
   target_hidden_tiles = target_hidden_tiles,
   target_visible_tiles = target_visible_tiles,
   target_missing_blocks = target_missing_blocks,
+  fortress_plan_name = 'two_room_workshop',
+  fortress_connector_rect = { connector_x1, connector_y1, rz, connector_x2, connector_y2, rz },
+  fortress_workshop_room_rect = { workshop_room_x1, workshop_room_y1, rz, workshop_room_x2, workshop_room_y2, rz },
+  fortress_connector_tiles = fortress_connector.tiles,
+  fortress_connector_floor_tiles = fortress_connector.floor_tiles,
+  fortress_connector_wall_tiles = fortress_connector.wall_tiles,
+  fortress_connector_hidden_tiles = fortress_connector.hidden_tiles,
+  fortress_connector_missing_blocks = fortress_connector.missing_blocks,
+  fortress_workshop_room_tiles = fortress_workshop_room.tiles,
+  fortress_workshop_room_floor_tiles = fortress_workshop_room.floor_tiles,
+  fortress_workshop_room_wall_tiles = fortress_workshop_room.wall_tiles,
+  fortress_workshop_room_hidden_tiles = fortress_workshop_room.hidden_tiles,
+  fortress_workshop_room_missing_blocks = fortress_workshop_room.missing_blocks,
+  fortress_complexity_tiles = fortress_connector.tiles + fortress_workshop_room.tiles,
+  fortress_complexity_floor_tiles = fortress_connector.floor_tiles + fortress_workshop_room.floor_tiles,
+  fortress_complexity_wall_tiles = fortress_connector.wall_tiles + fortress_workshop_room.wall_tiles,
+  fortress_complexity_hidden_tiles = fortress_connector.hidden_tiles + fortress_workshop_room.hidden_tiles,
+  fortress_complexity_missing_blocks = fortress_connector.missing_blocks + fortress_workshop_room.missing_blocks,
+  fortress_complexity_spaces_completed = fortress_complexity_spaces_completed,
   active_jobs = active_jobs,
   active_dig_jobs = active_dig_jobs,
   manager_orders_count = manager_orders_count,

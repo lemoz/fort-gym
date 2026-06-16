@@ -117,11 +117,15 @@ def test_summarize_tracks_work_progress(tmp_path) -> None:
                 "completion_progress": 0,
                 "utility_progress": 0,
                 "production_progress": 0,
+                "complexity_progress": 0,
                 "target_dig_designations_delta": 10,
                 "target_floor_tiles_delta": 0,
                 "target_wall_tiles_delta": 0,
                 "active_dig_jobs_delta": 1,
                 "utility_action_progress": 0,
+                "complexity_floor_tiles_delta": 0,
+                "complexity_wall_tiles_delta": 0,
+                "complexity_spaces_delta": 0,
                 "manager_orders_delta": 0,
                 "manager_order_quantity_delta": 0,
                 "carpenter_workshops_delta": 0,
@@ -133,6 +137,12 @@ def test_summarize_tracks_work_progress(tmp_path) -> None:
                     "citizens_on_target_z": 0,
                     "target_z": 0,
                     "window_z": 177,
+                    "fortress_plan_name": "two_room_workshop",
+                    "fortress_connector_floor_tiles": 0,
+                    "fortress_workshop_room_floor_tiles": 0,
+                    "fortress_complexity_floor_tiles": 0,
+                    "fortress_complexity_wall_tiles": 28,
+                    "fortress_complexity_spaces_completed": 0,
                     "manager_orders_count": 0,
                     "manager_orders_amount_left": 0,
                     "carpenter_workshops": 0,
@@ -158,11 +168,15 @@ def test_summarize_tracks_work_progress(tmp_path) -> None:
                 "completion_progress": 8,
                 "utility_progress": 5,
                 "production_progress": 5,
+                "complexity_progress": 38,
                 "target_dig_designations_delta": 25,
                 "target_floor_tiles_delta": 8,
                 "target_wall_tiles_delta": 8,
                 "active_dig_jobs_delta": 1,
                 "utility_action_progress": 5,
+                "complexity_floor_tiles_delta": 28,
+                "complexity_wall_tiles_delta": 28,
+                "complexity_spaces_delta": 2,
                 "manager_orders_delta": 1,
                 "manager_order_quantity_delta": 5,
                 "carpenter_workshops_delta": 1,
@@ -174,6 +188,12 @@ def test_summarize_tracks_work_progress(tmp_path) -> None:
                     "citizens_on_target_z": 0,
                     "target_z": 0,
                     "window_z": 177,
+                    "fortress_plan_name": "two_room_workshop",
+                    "fortress_connector_floor_tiles": 3,
+                    "fortress_workshop_room_floor_tiles": 25,
+                    "fortress_complexity_floor_tiles": 28,
+                    "fortress_complexity_wall_tiles": 0,
+                    "fortress_complexity_spaces_completed": 2,
                     "manager_orders_count": 1,
                     "manager_orders_amount_left": 5,
                     "carpenter_workshops": 1,
@@ -198,11 +218,16 @@ def test_summarize_tracks_work_progress(tmp_path) -> None:
     assert summary.utility_score == 10.0
     assert summary.production_progress == 5
     assert summary.production_score == 10.0
+    assert summary.complexity_progress == 38
+    assert summary.complexity_score == 15.0
     assert summary.target_dig_designations_delta == 25
     assert summary.target_floor_tiles_delta == 8
     assert summary.target_wall_tiles_delta == 8
     assert summary.active_dig_jobs_delta == 1
     assert summary.utility_action_progress == 5
+    assert summary.complexity_floor_tiles_delta == 28
+    assert summary.complexity_wall_tiles_delta == 28
+    assert summary.complexity_spaces_delta == 2
     assert summary.manager_orders_delta == 1
     assert summary.manager_order_quantity_delta == 5
     assert summary.carpenter_workshops_delta == 1
@@ -216,3 +241,9 @@ def test_summarize_tracks_work_progress(tmp_path) -> None:
     assert summary.citizens_on_target_z == 0
     assert summary.target_z == 0
     assert summary.window_z == 177
+    assert summary.fortress_plan_name == "two_room_workshop"
+    assert summary.fortress_connector_floor_tiles == 3
+    assert summary.fortress_workshop_room_floor_tiles == 25
+    assert summary.fortress_complexity_floor_tiles == 28
+    assert summary.fortress_complexity_wall_tiles == 0
+    assert summary.fortress_complexity_spaces_completed == 2

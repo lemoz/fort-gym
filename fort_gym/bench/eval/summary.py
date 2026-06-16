@@ -17,9 +17,11 @@ from .scoring import (
     TARGET_UTILITY_PROGRESS,
     TARGET_WORK_PROGRESS,
     TARGET_PRODUCTION_PROGRESS,
+    TARGET_COMPLEXITY_PROGRESS,
     UTILITY_WEIGHT,
     WORK_WEIGHT,
     PRODUCTION_WEIGHT,
+    COMPLEXITY_WEIGHT,
     composite_score,
 )
 
@@ -40,16 +42,21 @@ class RunSummary(BaseModel):
     completion_score: float = 0.0
     utility_score: float = 0.0
     production_score: float = 0.0
+    complexity_score: float = 0.0
     work_progress: int = 0
     designation_progress: int = 0
     completion_progress: int = 0
     utility_progress: int = 0
     production_progress: int = 0
+    complexity_progress: int = 0
     target_dig_designations_delta: int = 0
     target_floor_tiles_delta: int = 0
     target_wall_tiles_delta: int = 0
     active_dig_jobs_delta: int = 0
     utility_action_progress: int = 0
+    complexity_floor_tiles_delta: int = 0
+    complexity_wall_tiles_delta: int = 0
+    complexity_spaces_delta: int = 0
     manager_orders_delta: int = 0
     manager_order_quantity_delta: int = 0
     carpenter_workshops_delta: int = 0
@@ -63,6 +70,12 @@ class RunSummary(BaseModel):
     citizens_on_target_z: int = 0
     target_z: int = 0
     window_z: int = 0
+    fortress_plan_name: Optional[str] = None
+    fortress_connector_floor_tiles: int = 0
+    fortress_workshop_room_floor_tiles: int = 0
+    fortress_complexity_floor_tiles: int = 0
+    fortress_complexity_wall_tiles: int = 0
+    fortress_complexity_spaces_completed: int = 0
     total_score: float = 0.0
     milestones: List[Dict[str, Any]] = Field(default_factory=list)
     scenario_assertions: List[Dict[str, Any]] = Field(default_factory=list)
@@ -110,11 +123,15 @@ def summarize(trace_path: Path) -> RunSummary:
     completion_progress = 0
     utility_progress = 0
     production_progress = 0
+    complexity_progress = 0
     target_dig_designations_delta = 0
     target_floor_tiles_delta = 0
     target_wall_tiles_delta = 0
     active_dig_jobs_delta = 0
     utility_action_progress = 0
+    complexity_floor_tiles_delta = 0
+    complexity_wall_tiles_delta = 0
+    complexity_spaces_delta = 0
     manager_orders_delta = 0
     manager_order_quantity_delta = 0
     carpenter_workshops_delta = 0
@@ -128,6 +145,12 @@ def summarize(trace_path: Path) -> RunSummary:
     citizens_on_target_z = 0
     target_z = 0
     window_z = 0
+    fortress_plan_name: Optional[str] = None
+    fortress_connector_floor_tiles = 0
+    fortress_workshop_room_floor_tiles = 0
+    fortress_complexity_floor_tiles = 0
+    fortress_complexity_wall_tiles = 0
+    fortress_complexity_spaces_completed = 0
 
     with trace_path.open("r", encoding="utf-8") as handle:
         for line in handle:
@@ -172,6 +195,10 @@ def summarize(trace_path: Path) -> RunSummary:
                 production_progress,
                 _to_int(metrics_snapshot.get("production_progress")),
             )
+            complexity_progress = max(
+                complexity_progress,
+                _to_int(metrics_snapshot.get("complexity_progress")),
+            )
             target_dig_designations_delta = max(
                 target_dig_designations_delta,
                 _to_int(metrics_snapshot.get("target_dig_designations_delta")),
@@ -191,6 +218,18 @@ def summarize(trace_path: Path) -> RunSummary:
             utility_action_progress = max(
                 utility_action_progress,
                 _to_int(metrics_snapshot.get("utility_action_progress")),
+            )
+            complexity_floor_tiles_delta = max(
+                complexity_floor_tiles_delta,
+                _to_int(metrics_snapshot.get("complexity_floor_tiles_delta")),
+            )
+            complexity_wall_tiles_delta = max(
+                complexity_wall_tiles_delta,
+                _to_int(metrics_snapshot.get("complexity_wall_tiles_delta")),
+            )
+            complexity_spaces_delta = max(
+                complexity_spaces_delta,
+                _to_int(metrics_snapshot.get("complexity_spaces_delta")),
             )
             manager_orders_delta = max(
                 manager_orders_delta,
@@ -233,6 +272,28 @@ def summarize(trace_path: Path) -> RunSummary:
                 carpenter_workshops = max(
                     carpenter_workshops,
                     _to_int(work_snapshot.get("carpenter_workshops")),
+                )
+                if work_snapshot.get("fortress_plan_name"):
+                    fortress_plan_name = str(work_snapshot.get("fortress_plan_name"))
+                fortress_connector_floor_tiles = max(
+                    fortress_connector_floor_tiles,
+                    _to_int(work_snapshot.get("fortress_connector_floor_tiles")),
+                )
+                fortress_workshop_room_floor_tiles = max(
+                    fortress_workshop_room_floor_tiles,
+                    _to_int(work_snapshot.get("fortress_workshop_room_floor_tiles")),
+                )
+                fortress_complexity_floor_tiles = max(
+                    fortress_complexity_floor_tiles,
+                    _to_int(work_snapshot.get("fortress_complexity_floor_tiles")),
+                )
+                fortress_complexity_wall_tiles = _to_int(
+                    work_snapshot.get("fortress_complexity_wall_tiles"),
+                    fortress_complexity_wall_tiles,
+                )
+                fortress_complexity_spaces_completed = max(
+                    fortress_complexity_spaces_completed,
+                    _to_int(work_snapshot.get("fortress_complexity_spaces_completed")),
                 )
 
             tick_advance = record.get("tick_advance") or {}
@@ -302,6 +363,7 @@ def summarize(trace_path: Path) -> RunSummary:
         "completion_progress": completion_progress,
         "utility_progress": utility_progress,
         "production_progress": production_progress,
+        "complexity_progress": complexity_progress,
         "casualty_spike": casualty_spike,
         "hostiles_present": hostiles_present,
     }
@@ -318,6 +380,9 @@ def summarize(trace_path: Path) -> RunSummary:
     production_score = (
         min(production_progress, TARGET_PRODUCTION_PROGRESS) / TARGET_PRODUCTION_PROGRESS
     ) * PRODUCTION_WEIGHT
+    complexity_score = (
+        min(complexity_progress, TARGET_COMPLEXITY_PROGRESS) / TARGET_COMPLEXITY_PROGRESS
+    ) * COMPLEXITY_WEIGHT
     total_score = composite_score(summary_payload)
 
     summary = RunSummary(
@@ -333,16 +398,21 @@ def summarize(trace_path: Path) -> RunSummary:
         completion_score=round(completion_score, 2),
         utility_score=round(utility_score, 2),
         production_score=round(production_score, 2),
+        complexity_score=round(complexity_score, 2),
         work_progress=work_progress,
         designation_progress=designation_progress,
         completion_progress=completion_progress,
         utility_progress=utility_progress,
         production_progress=production_progress,
+        complexity_progress=complexity_progress,
         target_dig_designations_delta=target_dig_designations_delta,
         target_floor_tiles_delta=target_floor_tiles_delta,
         target_wall_tiles_delta=target_wall_tiles_delta,
         active_dig_jobs_delta=active_dig_jobs_delta,
         utility_action_progress=utility_action_progress,
+        complexity_floor_tiles_delta=complexity_floor_tiles_delta,
+        complexity_wall_tiles_delta=complexity_wall_tiles_delta,
+        complexity_spaces_delta=complexity_spaces_delta,
         manager_orders_delta=manager_orders_delta,
         manager_order_quantity_delta=manager_order_quantity_delta,
         carpenter_workshops_delta=carpenter_workshops_delta,
@@ -356,6 +426,12 @@ def summarize(trace_path: Path) -> RunSummary:
         citizens_on_target_z=citizens_on_target_z,
         target_z=target_z,
         window_z=window_z,
+        fortress_plan_name=fortress_plan_name,
+        fortress_connector_floor_tiles=fortress_connector_floor_tiles,
+        fortress_workshop_room_floor_tiles=fortress_workshop_room_floor_tiles,
+        fortress_complexity_floor_tiles=fortress_complexity_floor_tiles,
+        fortress_complexity_wall_tiles=fortress_complexity_wall_tiles,
+        fortress_complexity_spaces_completed=fortress_complexity_spaces_completed,
         total_score=total_score,
         milestones=milestones,
     )
