@@ -52,6 +52,18 @@ def test_utility_progress_delta_counts_orders_and_workshops() -> None:
     }
 
 
+def test_production_progress_delta_counts_workshop_placements() -> None:
+    baseline = {"carpenter_workshops": 0}
+    current = {"carpenter_workshops": 1}
+
+    delta = metrics.production_progress_delta(current, baseline)
+
+    assert delta == {
+        "production_workshops_delta": 1,
+        "production_progress": 5,
+    }
+
+
 def test_utility_action_progress_counts_accepted_safe_actions() -> None:
     order_progress = metrics.utility_action_progress(
         {"type": "ORDER", "params": {"job": "bed", "quantity": 5}},
@@ -140,3 +152,25 @@ def test_composite_score_includes_bounded_utility_component() -> None:
     )
 
     assert with_utility - without_utility == scoring.UTILITY_WEIGHT
+
+
+def test_composite_score_includes_bounded_production_component() -> None:
+    without_production = scoring.composite_score(
+        {
+            "duration_ticks": 0,
+            "peak_pop": 0,
+            "drink_availability": 0,
+            "created_wealth": 0,
+        }
+    )
+    with_production = scoring.composite_score(
+        {
+            "duration_ticks": 0,
+            "peak_pop": 0,
+            "drink_availability": 0,
+            "created_wealth": 0,
+            "production_progress": scoring.TARGET_PRODUCTION_PROGRESS,
+        }
+    )
+
+    assert with_production - without_production == scoring.PRODUCTION_WEIGHT

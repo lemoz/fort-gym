@@ -108,7 +108,8 @@ def test_dig_first_prompt_uses_structured_control() -> None:
     assert "target_floor_tiles >= 25 or target_wall_tiles == 0 means the starter room is complete" in DIG_FIRST_SYSTEM_PROMPT
     assert '"type":"ORDER"' in DIG_FIRST_SYSTEM_PROMPT
     assert '"job":"bed","quantity":5' in DIG_FIRST_SYSTEM_PROMPT
-    assert "Do not BUILD in this live proof path" in DIG_FIRST_SYSTEM_PROMPT
+    assert '"type":"BUILD"' in DIG_FIRST_SYSTEM_PROMPT
+    assert '"kind":"CarpenterWorkshop","x":51,"y":36,"z":0' in DIG_FIRST_SYSTEM_PROMPT
     assert "Do not drive the Dwarf Fortress UI with keystrokes" in DIG_FIRST_SYSTEM_PROMPT
 
 

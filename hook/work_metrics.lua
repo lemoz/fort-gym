@@ -135,11 +135,11 @@ if buildings then
 
       if is_workshop then
         workshop_count = workshop_count + 1
-        local ok_subtype, subtype = pcall(function() return building.subtype end)
-        local subtype_name = ok_subtype and tostring(subtype) or ''
-        if (ok_subtype and carpenter_type and subtype == carpenter_type)
-            or subtype_name == 'Carpenters'
-            or subtype_name == 'Carpenter' then
+        local ok_workshop_type, workshop_type = pcall(function() return building.type end)
+        local workshop_type_name = ok_workshop_type and tostring(workshop_type) or ''
+        if (ok_workshop_type and carpenter_type and workshop_type == carpenter_type)
+            or workshop_type_name == 'Carpenters'
+            or workshop_type_name == 'Carpenter' then
           carpenter_workshops = carpenter_workshops + 1
         end
       end
