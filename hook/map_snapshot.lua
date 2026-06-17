@@ -39,9 +39,13 @@ local attrs = df.tiletype.attrs
 local floor_shape = df.tiletype_shape.FLOOR
 local wall_shape = df.tiletype_shape.WALL
 local no_dig = df.tile_dig_designation.No
-local sx = region.x_count_block
-local sy = region.y_count_block
-local block_count = #region.map_blocks
+
+local function get_tile_block(tx, ty, tz)
+  if tx < 0 or ty < 0 or tz < 0 then
+    return nil
+  end
+  return dfhack.maps.getTileBlock(tx, ty, tz)
+end
 
 local function tile_key(tx, ty)
   return tostring(tx) .. ',' .. tostring(ty)
@@ -112,13 +116,7 @@ for ty = ry1, ry2 do
       dig = 'No',
     }
 
-    local bx = math.floor(tx / 16)
-    local by = math.floor(ty / 16)
-    local index = bx + by * sx + rz * sx * sy
-    local block = nil
-    if bx >= 0 and by >= 0 and bx < sx and by < sy and index >= 0 and index < block_count then
-      block = region.map_blocks[index]
-    end
+    local block = get_tile_block(tx, ty, rz)
 
     if block then
       local dx = tx % 16

@@ -18,7 +18,7 @@ from ..env.executor import Executor
 from ..env.mock_env import MockEnvironment
 from ..env.scenarios import evaluate_scenario_assertions, get_mock_scenario
 from ..env.state_reader import StateReader
-from ..dfhack_backend import read_map_snapshot, read_work_metrics
+from ..dfhack_backend import prepare_keystroke_target, read_map_snapshot, read_work_metrics
 from ..eval import metrics, milestones, scoring
 from ..eval.summary import RunSummary, summarize
 from .storage import RUN_REGISTRY, RunRegistry
@@ -222,6 +222,7 @@ def run_once(
     # Detect keystroke mode from model name
     # Models that need screen capture: *-keystroke, *-research
     is_keystroke_mode = model.endswith("-keystroke") or model.endswith("-research")
+    keystroke_ui_target: Optional[Dict[str, Any]] = None
 
     def get_screen_text() -> str:
         """Get screen text for keystroke mode, empty string otherwise."""
@@ -269,6 +270,8 @@ def run_once(
                 )
             raise
         executor = Executor(dfhack_client=dfhack_client)
+        if is_keystroke_mode:
+            keystroke_ui_target = prepare_keystroke_target()
 
         def pause_env() -> None:
             dfhack_client.pause()
@@ -355,8 +358,17 @@ def run_once(
                         )
                     break
                 if backend_name == "dfhack" and is_keystroke_mode:
+                    if keystroke_ui_target is not None:
+                        state_before["ui_target_setup"] = keystroke_ui_target
                     if ui_work_rect is None:
-                        ui_work_rect = _ui_work_rect_from_state(state_before)
+                        prepared_rect = None
+                        if keystroke_ui_target and keystroke_ui_target.get("ok"):
+                            prepared_rect = _normalize_rect(keystroke_ui_target.get("target_rect"))
+                        ui_work_rect = (
+                            prepared_rect
+                            if prepared_rect is not None and prepared_rect[2] == prepared_rect[5]
+                            else _ui_work_rect_from_state(state_before)
+                        )
                     if ui_work_rect is not None:
                         ui_work_before = read_work_metrics(ui_work_rect)
                         state_before["ui_work"] = ui_work_before
@@ -507,6 +519,8 @@ def run_once(
                 if backend_name == "dfhack" and is_keystroke_mode and ui_work_rect is not None:
                     ui_work_after = read_work_metrics(ui_work_rect)
                     advance_state["ui_work"] = ui_work_after
+                    if keystroke_ui_target is not None:
+                        advance_state["ui_target_setup"] = keystroke_ui_target
                 # Game stays paused - agent controls time
                 try:
                     elapsed_ticks_total += max(0, int(tick_info_state.get("ticks_advanced") or 0))

@@ -207,6 +207,15 @@ def read_map_snapshot(rect: tuple[int, int, int, int, int, int]) -> Dict[str, ob
         return {"ok": False, "error": str(exc)}
 
 
+def prepare_keystroke_target() -> Dict[str, object]:
+    """Center the live UI on a visible, mineable wall pocket for keystroke runs."""
+
+    try:
+        return run_lua_file(_hook_path("prepare_keystroke_target.lua"), timeout=10.0)
+    except (DFHackError, OSError) as exc:
+        return {"ok": False, "error": str(exc)}
+
+
 def _safe_read_pause_state() -> bool | None:
     try:
         return read_pause_state()
@@ -367,6 +376,7 @@ __all__ = [
     "complete_dig_rect",
     "read_work_metrics",
     "read_map_snapshot",
+    "prepare_keystroke_target",
     "advance_ticks_exact_external",
     "advance_ticks_exact",
     "execute_keystroke_action",

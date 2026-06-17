@@ -82,6 +82,11 @@ def encode_observation(
     pause_state = clean_state.get("pause_state", None)
     work = clean_state.get("work") if isinstance(clean_state.get("work"), dict) else {}
     ui_work = clean_state.get("ui_work") if isinstance(clean_state.get("ui_work"), dict) else {}
+    ui_target_setup = (
+        clean_state.get("ui_target_setup")
+        if isinstance(clean_state.get("ui_target_setup"), dict)
+        else {}
+    )
 
     # Build status section
     status_lines = []
@@ -172,6 +177,17 @@ def encode_observation(
             f"floors={ui_work.get('target_floor_tiles', 0)}, "
             f"walls={ui_work.get('target_wall_tiles', 0)}"
         )
+    if ui_target_setup.get("ok"):
+        status_lines.append(
+            "Live UI setup: "
+            f"selection_rect={ui_target_setup.get('selection_rect')}, "
+            f"designatable_tiles={ui_target_setup.get('designatable_tiles', 0)}"
+        )
+        recommended_keys = ui_target_setup.get("recommended_keys")
+        if isinstance(recommended_keys, list) and recommended_keys:
+            status_lines.append(
+                "Recommended first keys: " + ", ".join(str(key) for key in recommended_keys)
+            )
 
     if risks:
         status_lines.append("Risks: " + ", ".join(risks))
