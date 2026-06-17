@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fort_gym.bench.run.runner import _zero_assisted_dfhack_progress
+from fort_gym.bench.run.runner import _ui_work_rect_from_state, _zero_assisted_dfhack_progress
 
 
 def test_zero_assisted_dfhack_progress_preserves_audit_values() -> None:
@@ -10,6 +10,9 @@ def test_zero_assisted_dfhack_progress_preserves_audit_values() -> None:
         "utility_progress": 10,
         "production_progress": 5,
         "complexity_progress": 38,
+        "ui_work_progress": 9,
+        "ui_designation_progress": 9,
+        "ui_target_dig_designations_delta": 9,
         "target_floor_tiles_delta": 25,
         "target_wall_tiles_delta": 25,
         "run_elapsed_ticks": 500,
@@ -22,6 +25,9 @@ def test_zero_assisted_dfhack_progress_preserves_audit_values() -> None:
     assert metrics["utility_progress"] == 0
     assert metrics["production_progress"] == 0
     assert metrics["complexity_progress"] == 0
+    assert metrics["ui_work_progress"] == 0
+    assert metrics["ui_designation_progress"] == 0
+    assert metrics["ui_target_dig_designations_delta"] == 0
     assert metrics["target_floor_tiles_delta"] == 0
     assert metrics["target_wall_tiles_delta"] == 0
     assert metrics["run_elapsed_ticks"] == 500
@@ -36,4 +42,37 @@ def test_zero_assisted_dfhack_progress_preserves_audit_values() -> None:
         "utility_progress": 10,
         "production_progress": 5,
         "complexity_progress": 38,
+        "ui_target_dig_designations_delta": 9,
+        "ui_designation_progress": 9,
+        "ui_work_progress": 9,
     }
+
+
+def test_ui_work_rect_prefers_live_cursor_plane() -> None:
+    state = {
+        "work": {
+            "cursor_x": 107,
+            "cursor_y": 108,
+            "cursor_z": 177,
+            "window_x": 94,
+            "window_y": 95,
+            "window_z": 177,
+        }
+    }
+
+    assert _ui_work_rect_from_state(state) == (100, 101, 177, 114, 115, 177)
+
+
+def test_ui_work_rect_falls_back_to_window_when_cursor_invalid() -> None:
+    state = {
+        "work": {
+            "cursor_x": -30000,
+            "cursor_y": -30000,
+            "cursor_z": -30000,
+            "window_x": 94,
+            "window_y": 95,
+            "window_z": 177,
+        }
+    }
+
+    assert _ui_work_rect_from_state(state) == (94, 95, 177, 108, 109, 177)

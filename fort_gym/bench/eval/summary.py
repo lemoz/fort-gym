@@ -49,6 +49,12 @@ class RunSummary(BaseModel):
     utility_progress: int = 0
     production_progress: int = 0
     complexity_progress: int = 0
+    ui_work_progress: int = 0
+    ui_designation_progress: int = 0
+    ui_completion_progress: int = 0
+    ui_target_dig_designations_delta: int = 0
+    ui_target_floor_tiles_delta: int = 0
+    ui_target_wall_tiles_delta: int = 0
     target_dig_designations_delta: int = 0
     target_floor_tiles_delta: int = 0
     target_wall_tiles_delta: int = 0
@@ -125,6 +131,12 @@ def summarize(trace_path: Path) -> RunSummary:
     utility_progress = 0
     production_progress = 0
     complexity_progress = 0
+    ui_work_progress = 0
+    ui_designation_progress = 0
+    ui_completion_progress = 0
+    ui_target_dig_designations_delta = 0
+    ui_target_floor_tiles_delta = 0
+    ui_target_wall_tiles_delta = 0
     target_dig_designations_delta = 0
     target_floor_tiles_delta = 0
     target_wall_tiles_delta = 0
@@ -168,8 +180,8 @@ def summarize(trace_path: Path) -> RunSummary:
                 steps_seen = step
 
             metrics_snapshot = record.get("metrics") or {}
-            if metrics_snapshot.get("score_duration_blocked") is True:
-                score_duration_blocked = True
+            if "score_duration_blocked" in metrics_snapshot:
+                score_duration_blocked = metrics_snapshot.get("score_duration_blocked") is True
             time_tick = metrics_snapshot.get("time") or metrics_snapshot.get("time_tick")
             if time_tick is not None:
                 time_value = _to_int(time_tick, default=last_time_tick or 0)
@@ -201,6 +213,30 @@ def summarize(trace_path: Path) -> RunSummary:
             complexity_progress = max(
                 complexity_progress,
                 _to_int(metrics_snapshot.get("complexity_progress")),
+            )
+            ui_work_progress = max(
+                ui_work_progress,
+                _to_int(metrics_snapshot.get("ui_work_progress")),
+            )
+            ui_designation_progress = max(
+                ui_designation_progress,
+                _to_int(metrics_snapshot.get("ui_designation_progress")),
+            )
+            ui_completion_progress = max(
+                ui_completion_progress,
+                _to_int(metrics_snapshot.get("ui_completion_progress")),
+            )
+            ui_target_dig_designations_delta = max(
+                ui_target_dig_designations_delta,
+                _to_int(metrics_snapshot.get("ui_target_dig_designations_delta")),
+            )
+            ui_target_floor_tiles_delta = max(
+                ui_target_floor_tiles_delta,
+                _to_int(metrics_snapshot.get("ui_target_floor_tiles_delta")),
+            )
+            ui_target_wall_tiles_delta = max(
+                ui_target_wall_tiles_delta,
+                _to_int(metrics_snapshot.get("ui_target_wall_tiles_delta")),
             )
             target_dig_designations_delta = max(
                 target_dig_designations_delta,
@@ -410,6 +446,12 @@ def summarize(trace_path: Path) -> RunSummary:
         utility_progress=utility_progress,
         production_progress=production_progress,
         complexity_progress=complexity_progress,
+        ui_work_progress=ui_work_progress,
+        ui_designation_progress=ui_designation_progress,
+        ui_completion_progress=ui_completion_progress,
+        ui_target_dig_designations_delta=ui_target_dig_designations_delta,
+        ui_target_floor_tiles_delta=ui_target_floor_tiles_delta,
+        ui_target_wall_tiles_delta=ui_target_wall_tiles_delta,
         target_dig_designations_delta=target_dig_designations_delta,
         target_floor_tiles_delta=target_floor_tiles_delta,
         target_wall_tiles_delta=target_wall_tiles_delta,

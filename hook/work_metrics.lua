@@ -15,6 +15,12 @@ local z1 = to_int(args[3], 0)
 local x2 = to_int(args[4], 54)
 local y2 = to_int(args[5], 39)
 local z2 = to_int(args[6], z1)
+local window_x = df.global.window_x or 0
+local window_y = df.global.window_y or 0
+local window_z = df.global.window_z or 0
+local cursor_x = df.global.cursor and df.global.cursor.x or -30000
+local cursor_y = df.global.cursor and df.global.cursor.y or -30000
+local cursor_z = df.global.cursor and df.global.cursor.z or -30000
 
 if z1 ~= z2 then
   print(json.encode({ ok = false, error = 'z_span_not_supported' }))
@@ -258,7 +264,12 @@ print(json.encode({
   ok = true,
   target_rect = { rx1, ry1, rz, rx2, ry2, rz },
   target_z = rz,
-  window_z = df.global.window_z or 0,
+  window_x = window_x,
+  window_y = window_y,
+  window_z = window_z,
+  cursor_x = cursor_x,
+  cursor_y = cursor_y,
+  cursor_z = cursor_z,
   target_tiles = target_tiles,
   target_dig_designations = target_dig_designations,
   target_floor_tiles = target_floor_tiles,

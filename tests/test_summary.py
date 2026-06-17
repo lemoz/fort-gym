@@ -136,6 +136,73 @@ def test_summarize_blocks_assisted_duration_score(tmp_path) -> None:
     assert summary.total_score == 23.5
 
 
+def test_summarize_unblocks_duration_after_real_keystroke_progress(tmp_path) -> None:
+    trace_path = Path(tmp_path) / "trace.jsonl"
+    records = [
+        {
+            "run_id": "run-keystroke",
+            "step": 0,
+            "metrics": {
+                "time": 16801,
+                "run_elapsed_ticks": 0,
+                "observed_run_elapsed_ticks": 200,
+                "score_duration_blocked": True,
+                "pop": 7,
+                "drink": 60,
+                "food": 45,
+                "wealth": 9,
+                "dead": 0,
+                "hostiles": False,
+                "work_progress": 0,
+                "completion_progress": 0,
+                "utility_progress": 0,
+                "production_progress": 0,
+                "complexity_progress": 0,
+            },
+            "tick_advance": {"ticks_advanced": 200},
+            "events": [],
+        },
+        {
+            "run_id": "run-keystroke",
+            "step": 1,
+            "metrics": {
+                "time": 17001,
+                "run_elapsed_ticks": 400,
+                "score_duration_blocked": False,
+                "pop": 7,
+                "drink": 60,
+                "food": 45,
+                "wealth": 9,
+                "dead": 0,
+                "hostiles": False,
+                "work_progress": 9,
+                "designation_progress": 9,
+                "completion_progress": 0,
+                "utility_progress": 0,
+                "production_progress": 0,
+                "complexity_progress": 0,
+                "ui_work_progress": 9,
+                "ui_designation_progress": 9,
+                "ui_target_dig_designations_delta": 9,
+            },
+            "tick_advance": {"ticks_advanced": 200},
+            "events": [],
+        },
+    ]
+    with trace_path.open("w", encoding="utf-8") as handle:
+        for record in records:
+            handle.write(json.dumps(record) + "\n")
+
+    summary = summarize(trace_path)
+
+    assert summary.duration_ticks == 400
+    assert summary.survival_score == 5.0
+    assert summary.work_progress == 9
+    assert summary.ui_work_progress == 9
+    assert summary.ui_designation_progress == 9
+    assert summary.ui_target_dig_designations_delta == 9
+
+
 def test_summarize_tracks_work_progress(tmp_path) -> None:
     trace_path = Path(tmp_path) / "trace.jsonl"
     records = [

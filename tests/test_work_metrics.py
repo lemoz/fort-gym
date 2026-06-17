@@ -30,6 +30,48 @@ def test_work_progress_delta_counts_target_room_progress() -> None:
     }
 
 
+def test_ui_work_progress_delta_counts_fixed_rect_progress() -> None:
+    baseline = {
+        "target_rect": [100, 100, 177, 114, 114, 177],
+        "target_dig_designations": 0,
+        "target_floor_tiles": 0,
+        "target_wall_tiles": 225,
+    }
+    current = {
+        "target_rect": [100, 100, 177, 114, 114, 177],
+        "target_dig_designations": 9,
+        "target_floor_tiles": 4,
+        "target_wall_tiles": 221,
+    }
+
+    delta = metrics.ui_work_progress_delta(current, baseline)
+
+    assert delta == {
+        "ui_target_dig_designations_delta": 9,
+        "ui_target_floor_tiles_delta": 4,
+        "ui_target_wall_tiles_delta": 4,
+        "ui_designation_progress": 9,
+        "ui_completion_progress": 4,
+        "ui_work_progress": 9,
+    }
+
+
+def test_ui_work_progress_delta_rejects_changed_rect() -> None:
+    baseline = {
+        "target_rect": [100, 100, 177, 114, 114, 177],
+        "target_dig_designations": 0,
+    }
+    current = {
+        "target_rect": [101, 100, 177, 115, 114, 177],
+        "target_dig_designations": 9,
+    }
+
+    delta = metrics.ui_work_progress_delta(current, baseline)
+
+    assert delta["ui_work_progress"] == 0
+    assert delta["ui_target_dig_designations_delta"] == 0
+
+
 def test_utility_progress_delta_counts_orders_and_workshops() -> None:
     baseline = {
         "manager_orders_count": 1,

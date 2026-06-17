@@ -18,7 +18,7 @@ from ..env.executor import Executor
 from ..env.mock_env import MockEnvironment
 from ..env.scenarios import evaluate_scenario_assertions, get_mock_scenario
 from ..env.state_reader import StateReader
-from ..dfhack_backend import read_map_snapshot
+from ..dfhack_backend import read_map_snapshot, read_work_metrics
 from ..eval import metrics, milestones, scoring
 from ..eval.summary import RunSummary, summarize
 from .storage import RUN_REGISTRY, RunRegistry
@@ -44,7 +44,15 @@ ASSISTED_PROGRESS_FIELDS = (
     "complexity_wall_tiles_delta",
     "complexity_spaces_delta",
     "complexity_progress",
+    "ui_target_dig_designations_delta",
+    "ui_target_floor_tiles_delta",
+    "ui_target_wall_tiles_delta",
+    "ui_designation_progress",
+    "ui_completion_progress",
+    "ui_work_progress",
 )
+UI_WORK_RADIUS = 7
+INVALID_DF_CURSOR = -30000
 
 
 def _artifacts_root() -> Path:
@@ -92,6 +100,55 @@ def _map_snapshot_rect_from_state(state: Dict[str, Any], margin: int = 1) -> tup
         z,
         max(rect[3] for rect in rects) + margin,
         max(rect[4] for rect in rects) + margin,
+        z,
+    )
+
+
+def _int_or_none(value: Any) -> int | None:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _ui_work_rect_from_state(
+    state: Dict[str, Any],
+    radius: int = UI_WORK_RADIUS,
+) -> tuple[int, int, int, int, int, int] | None:
+    """Choose a fixed live UI work rectangle around the starting cursor."""
+
+    work = state.get("work")
+    if not isinstance(work, dict):
+        return None
+
+    cursor_x = _int_or_none(work.get("cursor_x"))
+    cursor_y = _int_or_none(work.get("cursor_y"))
+    cursor_z = _int_or_none(work.get("cursor_z"))
+    if (
+        cursor_x is not None
+        and cursor_y is not None
+        and cursor_z is not None
+        and cursor_x > INVALID_DF_CURSOR
+        and cursor_y > INVALID_DF_CURSOR
+        and cursor_z > INVALID_DF_CURSOR
+    ):
+        center_x, center_y, z = cursor_x, cursor_y, cursor_z
+    else:
+        window_x = _int_or_none(work.get("window_x"))
+        window_y = _int_or_none(work.get("window_y"))
+        window_z = _int_or_none(work.get("window_z"))
+        if window_x is None or window_y is None or window_z is None:
+            return None
+        center_x = window_x + radius
+        center_y = window_y + radius
+        z = window_z
+
+    return (
+        max(0, center_x - radius),
+        max(0, center_y - radius),
+        z,
+        max(0, center_x + radius),
+        max(0, center_y + radius),
         z,
     )
 
@@ -248,6 +305,9 @@ def run_once(
     last_action_result: Optional[Dict[str, Any]] = None  # Track previous action result for feedback
     previous_screen = None  # Track previous screen for diff feedback (no type annotation for nonlocal)
     assisted_dfhack_action_seen = False
+    ui_work_rect: tuple[int, int, int, int, int, int] | None = None
+    baseline_ui_work: Optional[Dict[str, Any]] = None
+    keystroke_gameplay_progress_seen = False
 
     def publish_event(step: int, event_type: str, payload: Dict[str, Any], events: List[Dict[str, Any]]) -> None:
         data = {"run_id": run_identifier, "step": step, **payload}
@@ -294,6 +354,14 @@ def run_once(
                             ended_at=datetime.utcnow(),
                         )
                     break
+                if backend_name == "dfhack" and is_keystroke_mode:
+                    if ui_work_rect is None:
+                        ui_work_rect = _ui_work_rect_from_state(state_before)
+                    if ui_work_rect is not None:
+                        ui_work_before = read_work_metrics(ui_work_rect)
+                        state_before["ui_work"] = ui_work_before
+                        if baseline_ui_work is None and ui_work_before.get("ok"):
+                            baseline_ui_work = dict(ui_work_before)
                 if baseline_work is None:
                     work_snapshot = state_before.get("work")
                     baseline_work = dict(work_snapshot) if isinstance(work_snapshot, dict) else {}
@@ -436,6 +504,9 @@ def run_once(
                             ended_at=datetime.utcnow(),
                         )
                     break
+                if backend_name == "dfhack" and is_keystroke_mode and ui_work_rect is not None:
+                    ui_work_after = read_work_metrics(ui_work_rect)
+                    advance_state["ui_work"] = ui_work_after
                 # Game stays paused - agent controls time
                 try:
                     elapsed_ticks_total += max(0, int(tick_info_state.get("ticks_advanced") or 0))
@@ -474,6 +545,28 @@ def run_once(
                         baseline_work,
                     )
                 )
+                current_ui_work = advance_state.get("ui_work")
+                ui_delta = {}
+                if is_keystroke_mode and isinstance(current_ui_work, dict) and baseline_ui_work:
+                    ui_delta = metrics.ui_work_progress_delta(current_ui_work, baseline_ui_work)
+                    metrics_snapshot.update(ui_delta)
+                    if int(ui_delta.get("ui_work_progress") or 0) > 0:
+                        metrics_snapshot["score_provenance"] = "keystroke_ui_work_rect"
+                        metrics_snapshot["gameplay_progress_eligible"] = True
+                        metrics_snapshot["ui_work_rect"] = current_ui_work.get("target_rect")
+                        metrics_snapshot["designation_progress"] = max(
+                            int(metrics_snapshot.get("designation_progress") or 0),
+                            int(ui_delta.get("ui_designation_progress") or 0),
+                        )
+                        metrics_snapshot["completion_progress"] = max(
+                            int(metrics_snapshot.get("completion_progress") or 0),
+                            int(ui_delta.get("ui_completion_progress") or 0),
+                        )
+                        metrics_snapshot["work_progress"] = max(
+                            int(metrics_snapshot.get("work_progress") or 0),
+                            int(ui_delta.get("ui_work_progress") or 0),
+                        )
+                        keystroke_gameplay_progress_seen = True
                 utility_action = metrics.utility_action_progress(action, execute_result)
                 metrics_snapshot.update(utility_action)
                 metrics_snapshot["utility_progress"] = max(
@@ -486,6 +579,13 @@ def run_once(
                     metrics_snapshot["observed_run_elapsed_ticks"] = elapsed_ticks_total
                     metrics_snapshot["score_duration_blocked"] = True
                     score_elapsed_ticks = 0
+                elif is_keystroke_mode and not keystroke_gameplay_progress_seen:
+                    metrics_snapshot["observed_run_elapsed_ticks"] = elapsed_ticks_total
+                    metrics_snapshot["score_duration_blocked"] = True
+                    metrics_snapshot["score_provenance"] = "keystroke_no_gameplay_progress_yet"
+                    score_elapsed_ticks = 0
+                elif is_keystroke_mode:
+                    metrics_snapshot["score_duration_blocked"] = False
                 metrics_snapshot["run_elapsed_ticks"] = score_elapsed_ticks
                 publish_event(step, "metrics", {"metrics": metrics_snapshot}, events)
 
@@ -511,7 +611,11 @@ def run_once(
 
                 map_snapshot = None
                 if backend_name == "dfhack":
-                    snapshot_rect = _map_snapshot_rect_from_state(advance_state)
+                    snapshot_rect = (
+                        ui_work_rect
+                        if is_keystroke_mode and ui_work_rect is not None
+                        else _map_snapshot_rect_from_state(advance_state)
+                    )
                     if snapshot_rect:
                         map_snapshot = read_map_snapshot(snapshot_rect)
                         publish_event(step, "map_snapshot", {"map_snapshot": map_snapshot}, events)

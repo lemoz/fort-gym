@@ -58,6 +58,55 @@ def work_progress_delta(
     }
 
 
+def ui_work_progress_delta(
+    current_work: Dict[str, Any] | None,
+    baseline_work: Dict[str, Any] | None,
+) -> Dict[str, int]:
+    """Compute progress inside a fixed live UI rectangle.
+
+    The caller is responsible for passing snapshots from the same rectangle. If
+    the rectangle changes, return zero progress to avoid scoring camera motion.
+    """
+
+    current = current_work or {}
+    baseline = baseline_work or {}
+    target_rect = current.get("target_rect")
+    if target_rect is None or target_rect != baseline.get("target_rect"):
+        return {
+            "ui_target_dig_designations_delta": 0,
+            "ui_target_floor_tiles_delta": 0,
+            "ui_target_wall_tiles_delta": 0,
+            "ui_designation_progress": 0,
+            "ui_completion_progress": 0,
+            "ui_work_progress": 0,
+        }
+
+    designations_delta = max(
+        0,
+        _to_int(current.get("target_dig_designations"))
+        - _to_int(baseline.get("target_dig_designations")),
+    )
+    floor_delta = max(
+        0,
+        _to_int(current.get("target_floor_tiles"))
+        - _to_int(baseline.get("target_floor_tiles")),
+    )
+    wall_delta = max(
+        0,
+        _to_int(baseline.get("target_wall_tiles"))
+        - _to_int(current.get("target_wall_tiles")),
+    )
+    completion_progress = max(floor_delta, wall_delta)
+    return {
+        "ui_target_dig_designations_delta": designations_delta,
+        "ui_target_floor_tiles_delta": floor_delta,
+        "ui_target_wall_tiles_delta": wall_delta,
+        "ui_designation_progress": designations_delta,
+        "ui_completion_progress": completion_progress,
+        "ui_work_progress": max(designations_delta, completion_progress),
+    }
+
+
 def utility_progress_delta(
     current_work: Dict[str, Any] | None,
     baseline_work: Dict[str, Any] | None,
@@ -198,7 +247,12 @@ def step_snapshot(state: Dict[str, Any]) -> Dict[str, Any]:
             "target_rect": work.get("target_rect"),
             "target_tiles": _to_int(work.get("target_tiles")),
             "target_z": _to_int(work.get("target_z")),
+            "window_x": _to_int(work.get("window_x")),
+            "window_y": _to_int(work.get("window_y")),
             "window_z": _to_int(work.get("window_z")),
+            "cursor_x": _to_int(work.get("cursor_x")),
+            "cursor_y": _to_int(work.get("cursor_y")),
+            "cursor_z": _to_int(work.get("cursor_z")),
             "target_dig_designations": _to_int(work.get("target_dig_designations")),
             "target_floor_tiles": _to_int(work.get("target_floor_tiles")),
             "target_wall_tiles": _to_int(work.get("target_wall_tiles")),
@@ -237,6 +291,20 @@ def step_snapshot(state: Dict[str, Any]) -> Dict[str, Any]:
                 work.get("fortress_complexity_spaces_completed")
             ),
         }
+    ui_work = state.get("ui_work")
+    if isinstance(ui_work, dict):
+        snapshot["ui_work"] = {
+            "ok": bool(ui_work.get("ok", False)),
+            "target_rect": ui_work.get("target_rect"),
+            "target_tiles": _to_int(ui_work.get("target_tiles")),
+            "target_z": _to_int(ui_work.get("target_z")),
+            "target_dig_designations": _to_int(ui_work.get("target_dig_designations")),
+            "target_floor_tiles": _to_int(ui_work.get("target_floor_tiles")),
+            "target_wall_tiles": _to_int(ui_work.get("target_wall_tiles")),
+            "target_hidden_tiles": _to_int(ui_work.get("target_hidden_tiles")),
+            "target_visible_tiles": _to_int(ui_work.get("target_visible_tiles")),
+            "target_missing_blocks": _to_int(ui_work.get("target_missing_blocks")),
+        }
     return snapshot
 
 
@@ -244,6 +312,7 @@ __all__ = [
     "step_snapshot",
     "complexity_progress_delta",
     "production_progress_delta",
+    "ui_work_progress_delta",
     "utility_action_progress",
     "utility_progress_delta",
     "work_progress_delta",

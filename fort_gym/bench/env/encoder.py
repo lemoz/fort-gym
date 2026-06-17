@@ -81,6 +81,7 @@ def encode_observation(
     reminders = clean_state.get("reminders", [])
     pause_state = clean_state.get("pause_state", None)
     work = clean_state.get("work") if isinstance(clean_state.get("work"), dict) else {}
+    ui_work = clean_state.get("ui_work") if isinstance(clean_state.get("ui_work"), dict) else {}
 
     # Build status section
     status_lines = []
@@ -140,6 +141,14 @@ def encode_observation(
             f"walls={work.get('target_wall_tiles', 0)}, "
             f"designations={work.get('target_dig_designations', 0)}"
         )
+        if work.get("cursor_z") is not None or work.get("window_z") is not None:
+            status_lines.append(
+                "Live view: "
+                f"cursor=({work.get('cursor_x', '?')},{work.get('cursor_y', '?')},"
+                f"{work.get('cursor_z', '?')}), "
+                f"window=({work.get('window_x', '?')},{work.get('window_y', '?')},"
+                f"{work.get('window_z', '?')})"
+            )
         status_lines.append(
             "Utility work: "
             f"manager_orders={work.get('manager_orders_count', 0)}, "
@@ -155,6 +164,14 @@ def encode_observation(
                 f"{work.get('fortress_workshop_room_tiles', 0)}, "
                 f"completed_spaces={work.get('fortress_complexity_spaces_completed', 0)}/2"
             )
+    if ui_work:
+        status_lines.append(
+            "Live UI target: "
+            f"z={ui_work.get('target_z', '?')}, "
+            f"designations={ui_work.get('target_dig_designations', 0)}, "
+            f"floors={ui_work.get('target_floor_tiles', 0)}, "
+            f"walls={ui_work.get('target_wall_tiles', 0)}"
+        )
 
     if risks:
         status_lines.append("Risks: " + ", ".join(risks))
