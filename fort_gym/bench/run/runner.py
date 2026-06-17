@@ -480,13 +480,17 @@ def run_once(
                     int(metrics_snapshot.get("utility_progress") or 0),
                     int(utility_action.get("utility_action_progress") or 0),
                 )
+                score_elapsed_ticks = elapsed_ticks_total
                 if assisted_dfhack_action_seen:
                     _zero_assisted_dfhack_progress(metrics_snapshot)
-                metrics_snapshot["run_elapsed_ticks"] = elapsed_ticks_total
+                    metrics_snapshot["observed_run_elapsed_ticks"] = elapsed_ticks_total
+                    metrics_snapshot["score_duration_blocked"] = True
+                    score_elapsed_ticks = 0
+                metrics_snapshot["run_elapsed_ticks"] = score_elapsed_ticks
                 publish_event(step, "metrics", {"metrics": metrics_snapshot}, events)
 
                 score_metrics = dict(metrics_snapshot)
-                score_metrics["time"] = elapsed_ticks_total
+                score_metrics["time"] = score_elapsed_ticks
                 score_value = scoring.composite_score(score_metrics)
                 milestone_notes = (
                     milestones.detect(previous_state or state_before, advance_state)

@@ -108,6 +108,7 @@ def summarize(trace_path: Path) -> RunSummary:
     duration = 0
     duration_from_tick_advance = 0
     saw_tick_advance = False
+    score_duration_blocked = False
     max_elapsed_ticks = 0
     first_time_tick: Optional[int] = None
     last_time_tick: Optional[int] = None
@@ -167,6 +168,8 @@ def summarize(trace_path: Path) -> RunSummary:
                 steps_seen = step
 
             metrics_snapshot = record.get("metrics") or {}
+            if metrics_snapshot.get("score_duration_blocked") is True:
+                score_duration_blocked = True
             time_tick = metrics_snapshot.get("time") or metrics_snapshot.get("time_tick")
             if time_tick is not None:
                 time_value = _to_int(time_tick, default=last_time_tick or 0)
@@ -344,7 +347,9 @@ def summarize(trace_path: Path) -> RunSummary:
                     else:
                         milestones.append({"k": str(item), "ts": data.get("step")})
 
-    if max_elapsed_ticks > 0:
+    if score_duration_blocked:
+        duration = 0
+    elif max_elapsed_ticks > 0:
         duration = max_elapsed_ticks
     elif saw_tick_advance:
         duration = duration_from_tick_advance

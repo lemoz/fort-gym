@@ -97,6 +97,45 @@ def test_summarize_prefers_run_elapsed_ticks(tmp_path) -> None:
     assert summary.total_score < 53.5
 
 
+def test_summarize_blocks_assisted_duration_score(tmp_path) -> None:
+    trace_path = Path(tmp_path) / "trace.jsonl"
+    records = [
+        {
+            "run_id": "run-assisted",
+            "step": 0,
+            "metrics": {
+                "time": 16801,
+                "run_elapsed_ticks": 0,
+                "observed_run_elapsed_ticks": 500,
+                "score_duration_blocked": True,
+                "pop": 7,
+                "drink": 60,
+                "food": 45,
+                "wealth": 9,
+                "dead": 0,
+                "hostiles": False,
+                "work_progress": 0,
+                "completion_progress": 0,
+                "utility_progress": 0,
+                "production_progress": 0,
+                "complexity_progress": 0,
+            },
+            "tick_advance": {"ticks_advanced": 500},
+            "events": [],
+        }
+    ]
+    with trace_path.open("w", encoding="utf-8") as handle:
+        for record in records:
+            handle.write(json.dumps(record) + "\n")
+
+    summary = summarize(trace_path)
+
+    assert summary.duration_ticks == 0
+    assert summary.survival_score == 0.0
+    assert summary.work_progress == 0
+    assert summary.total_score == 23.5
+
+
 def test_summarize_tracks_work_progress(tmp_path) -> None:
     trace_path = Path(tmp_path) / "trace.jsonl"
     records = [
