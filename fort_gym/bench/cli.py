@@ -630,6 +630,16 @@ def _summarize_actions(records: list[dict[str, object]]) -> list[dict[str, objec
     return actions
 
 
+def _score_provenances(records: list[dict[str, object]]) -> list[str]:
+    provenances: set[str] = set()
+    for record in records:
+        metrics = record.get("metrics") if isinstance(record.get("metrics"), dict) else {}
+        provenance = metrics.get("score_provenance")
+        if provenance:
+            provenances.add(str(provenance))
+    return sorted(provenances)
+
+
 def _as_float(value: object, default: float = 0.0) -> float:
     try:
         if value is None:
@@ -717,6 +727,7 @@ def _diagnose_actions(
     if _as_int(summary.get("duration_ticks")) > 0 and designation_attempts == 0:
         blockers.append("score_from_survival_without_work")
     work_progress = _as_int(summary.get("work_progress"))
+    ui_work_progress = _as_int(summary.get("ui_work_progress"))
     completion_progress = _as_int(summary.get("completion_progress"))
     utility_progress = _as_int(summary.get("utility_progress"))
     production_progress = _as_int(summary.get("production_progress"))
@@ -762,6 +773,7 @@ def _diagnose_actions(
         "production_score": _as_float(summary.get("production_score")),
         "complexity_score": _as_float(summary.get("complexity_score")),
         "work_progress": work_progress,
+        "ui_work_progress": ui_work_progress,
         "designation_progress": _as_int(summary.get("designation_progress")),
         "completion_progress": completion_progress,
         "utility_progress": utility_progress,
@@ -846,6 +858,7 @@ def _run_api_agent(
     records, trace_path = _load_trace_records(run_id, server_artifacts_dir)
     summary, summary_path = _load_summary(run_id, server_artifacts_dir)
     actions = _summarize_actions(records)
+    score_provenances = _score_provenances(records)
     score = latest.get("score")
     if score is None:
         score = summary.get("total_score")
@@ -865,6 +878,9 @@ def _run_api_agent(
         "production_score": summary.get("production_score"),
         "complexity_score": summary.get("complexity_score"),
         "work_progress": summary.get("work_progress"),
+        "ui_work_progress": summary.get("ui_work_progress"),
+        "ui_score_provenance_seen": "keystroke_ui_work_rect" in score_provenances,
+        "score_provenances": score_provenances,
         "designation_progress": summary.get("designation_progress"),
         "completion_progress": summary.get("completion_progress"),
         "utility_progress": summary.get("utility_progress"),
@@ -1017,6 +1033,7 @@ def _merge_diagnostics(runs: list[dict[str, object]]) -> dict[str, object]:
         "complexity_attempts": 0,
         "status_menu_actions": 0,
         "work_progress": 0,
+        "ui_work_progress": 0,
         "designation_progress": 0,
         "completion_progress": 0,
         "utility_progress": 0,
@@ -1087,6 +1104,12 @@ def _variant_scorecard(
     scores = _score_values(runs)
     work_scores = [_as_float(run.get("work_score")) for run in runs if run.get("work_score") is not None]
     work_progress = [_as_float(run.get("work_progress")) for run in runs if run.get("work_progress") is not None]
+    ui_work_progress = [
+        _as_float(run.get("ui_work_progress"))
+        for run in runs
+        if run.get("ui_work_progress") is not None
+    ]
+    ui_score_provenance_runs = sum(1 for run in runs if run.get("ui_score_provenance_seen"))
     completion_scores = [
         _as_float(run.get("completion_score")) for run in runs if run.get("completion_score") is not None
     ]
@@ -1131,6 +1154,9 @@ def _variant_scorecard(
         "median_work_score": _median(work_scores),
         "work_progress": work_progress,
         "median_work_progress": _median(work_progress),
+        "ui_work_progress": ui_work_progress,
+        "median_ui_work_progress": _median(ui_work_progress),
+        "ui_score_provenance_runs": ui_score_provenance_runs,
         "completion_scores": completion_scores,
         "median_completion_score": _median(completion_scores),
         "completion_progress": completion_progress,
@@ -1165,6 +1191,14 @@ def _build_suite_comparison(
     baseline_work_progress = [
         _as_float(run.get("work_progress")) for run in baseline_runs if run.get("work_progress") is not None
     ]
+    baseline_ui_work_progress = [
+        _as_float(run.get("ui_work_progress"))
+        for run in baseline_runs
+        if run.get("ui_work_progress") is not None
+    ]
+    baseline_ui_score_provenance_runs = sum(
+        1 for run in baseline_runs if run.get("ui_score_provenance_seen")
+    )
     baseline_completion_scores = [
         _as_float(run.get("completion_score"))
         for run in baseline_runs
@@ -1233,6 +1267,9 @@ def _build_suite_comparison(
             "median_work_score": _median(baseline_work_scores),
             "work_progress": baseline_work_progress,
             "median_work_progress": _median(baseline_work_progress),
+            "ui_work_progress": baseline_ui_work_progress,
+            "median_ui_work_progress": _median(baseline_ui_work_progress),
+            "ui_score_provenance_runs": baseline_ui_score_provenance_runs,
             "completion_scores": baseline_completion_scores,
             "median_completion_score": _median(baseline_completion_scores),
             "completion_progress": baseline_completion_progress,
@@ -1303,6 +1340,39 @@ def _suite_progress_gate(comparison: dict[str, object]) -> dict[str, object]:
     }
 
 
+def _suite_ui_work_gate(comparison: dict[str, object]) -> dict[str, object]:
+    variants = comparison.get("variants") if isinstance(comparison.get("variants"), list) else []
+    passing_models: list[str] = []
+    model_progress: list[dict[str, object]] = []
+    for variant in variants:
+        if not isinstance(variant, dict):
+            continue
+        model = str(variant.get("model") or "")
+        ui_work_progress = _as_float(variant.get("median_ui_work_progress"))
+        provenance_runs = _as_int(variant.get("ui_score_provenance_runs"))
+        passes = ui_work_progress > 0 and provenance_runs > 0
+        if passes and model:
+            passing_models.append(model)
+        model_progress.append(
+            {
+                "model": model,
+                "ui_work_progress": ui_work_progress,
+                "ui_score_provenance_runs": provenance_runs,
+                "ok": passes,
+            }
+        )
+    return {
+        "ok": bool(passing_models),
+        "required": {
+            "median_ui_work_progress": "> 0",
+            "ui_score_provenance_runs": "> 0",
+            "score_provenance": "keystroke_ui_work_rect",
+        },
+        "passing_models": passing_models,
+        "models": model_progress,
+    }
+
+
 def _write_live_agent_suite_artifacts(
     *,
     report: dict[str, object],
@@ -1330,6 +1400,7 @@ def _write_live_agent_suite_artifacts(
     baseline = comparison.get("baseline") if isinstance(comparison.get("baseline"), dict) else {}
     variants = comparison.get("variants") if isinstance(comparison.get("variants"), list) else []
     progress_gate = report.get("progress_gate") if isinstance(report.get("progress_gate"), dict) else {}
+    ui_work_gate = report.get("ui_work_gate") if isinstance(report.get("ui_work_gate"), dict) else {}
 
     lines = [
         "# fort-gym live agent suite",
@@ -1339,6 +1410,8 @@ def _write_live_agent_suite_artifacts(
         f"Status: {'PASS' if report.get('ok') else 'FAIL'}",
         f"Progress gate: {'PASS' if progress_gate.get('ok') else 'FAIL'}",
         f"Passing progress models: `{progress_gate.get('passing_models')}`",
+        f"UI work gate: {'PASS' if ui_work_gate.get('ok') else 'FAIL'}",
+        f"Passing UI work models: `{ui_work_gate.get('passing_models')}`",
         f"Result: `{comparison.get('result')}`",
         f"Best model: `{comparison.get('best_model')}`",
         f"Best median delta: `{comparison.get('best_median_delta')}`",
@@ -1350,6 +1423,7 @@ def _write_live_agent_suite_artifacts(
         f"- Median: `{baseline.get('median_score')}`",
         f"- Work scores: `{baseline.get('work_scores')}`",
         f"- Median work progress: `{baseline.get('median_work_progress')}`",
+        f"- Median UI work progress: `{baseline.get('median_ui_work_progress')}`",
         f"- Completion scores: `{baseline.get('completion_scores')}`",
         f"- Median completion progress: `{baseline.get('median_completion_progress')}`",
         f"- Utility scores: `{baseline.get('utility_scores')}`",
@@ -1377,6 +1451,8 @@ def _write_live_agent_suite_artifacts(
                 f"- Median delta vs baseline: `{variant.get('median_delta_vs_baseline')}`",
                 f"- Work scores: `{variant.get('work_scores')}`",
                 f"- Median work progress: `{variant.get('median_work_progress')}`",
+                f"- Median UI work progress: `{variant.get('median_ui_work_progress')}`",
+                f"- UI score provenance runs: `{variant.get('ui_score_provenance_runs')}`",
                 f"- Completion scores: `{variant.get('completion_scores')}`",
                 f"- Median completion progress: `{variant.get('median_completion_progress')}`",
                 f"- Utility scores: `{variant.get('utility_scores')}`",
@@ -1588,6 +1664,7 @@ def live_agent_suite(
         variant_runs=variant_runs,
     )
     progress_gate = _suite_progress_gate(comparison)
+    ui_work_gate = _suite_ui_work_gate(comparison)
     all_runs = baseline_runs + [
         run
         for runs_for_model in variant_runs.values()
@@ -1596,7 +1673,7 @@ def live_agent_suite(
     all_completed = all(run.get("status") == "completed" for run in all_runs)
     suite_id = f"live-agent-suite-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}"
     report = {
-        "ok": all_completed and bool(progress_gate.get("ok")),
+        "ok": all_completed and (bool(progress_gate.get("ok")) or bool(ui_work_gate.get("ok"))),
         "suite_id": suite_id,
         "trials": trials,
         "backend": backend,
@@ -1606,6 +1683,7 @@ def live_agent_suite(
         "models": model_names,
         "all_runs_completed": all_completed,
         "progress_gate": progress_gate,
+        "ui_work_gate": ui_work_gate,
         "comparison": comparison,
         "runs": {
             "baseline": baseline_runs,

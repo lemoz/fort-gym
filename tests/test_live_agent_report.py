@@ -432,3 +432,40 @@ def test_suite_progress_gate_requires_complexity_progress():
     assert gate["ok"] is False
     assert gate["passing_models"] == []
     assert gate["required"]["median_complexity_progress"] == "> 0"
+
+
+def test_suite_ui_work_gate_requires_ui_progress_and_provenance():
+    comparison = {
+        "variants": [
+            {
+                "model": "anthropic-keystroke",
+                "median_ui_work_progress": 8,
+                "ui_score_provenance_runs": 1,
+            },
+            {
+                "model": "anthropic-other",
+                "median_ui_work_progress": 8,
+                "ui_score_provenance_runs": 0,
+            },
+        ]
+    }
+
+    gate = cli._suite_ui_work_gate(comparison)
+
+    assert gate["ok"] is True
+    assert gate["passing_models"] == ["anthropic-keystroke"]
+    assert gate["models"] == [
+        {
+            "model": "anthropic-keystroke",
+            "ui_work_progress": 8.0,
+            "ui_score_provenance_runs": 1,
+            "ok": True,
+        },
+        {
+            "model": "anthropic-other",
+            "ui_work_progress": 8.0,
+            "ui_score_provenance_runs": 0,
+            "ok": False,
+        },
+    ]
+    assert gate["required"]["score_provenance"] == "keystroke_ui_work_rect"
