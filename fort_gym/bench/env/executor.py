@@ -69,7 +69,7 @@ class Executor:
                 y2 = y1 + max(1, height) - 1
                 z2 = z + max(1, depth) - 1
                 result = safe_designate_rect("dig", x1, y1, z, x2, y2, z2)
-                if result.get("ok") and os.getenv("FORT_GYM_DFHACK_COMPLETE_DIG", "1") != "0":
+                if result.get("ok") and os.getenv("FORT_GYM_DFHACK_COMPLETE_DIG", "0") == "1":
                     completion = safe_complete_dig_rect(x1, y1, z, x2, y2, z2)
                     result = {**result, "completion": completion}
                 return {

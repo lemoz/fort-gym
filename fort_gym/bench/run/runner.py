@@ -24,6 +24,28 @@ from ..eval.summary import RunSummary, summarize
 from .storage import RUN_REGISTRY, RunRegistry
 from .seed_reset import maybe_reset_dfhack_seed
 
+ASSISTED_DFHACK_ACTIONS = {"DIG", "BUILD", "ORDER"}
+ASSISTED_PROGRESS_FIELDS = (
+    "target_dig_designations_delta",
+    "target_floor_tiles_delta",
+    "target_wall_tiles_delta",
+    "active_dig_jobs_delta",
+    "designation_progress",
+    "completion_progress",
+    "work_progress",
+    "manager_orders_delta",
+    "manager_order_quantity_delta",
+    "carpenter_workshops_delta",
+    "utility_action_progress",
+    "utility_progress",
+    "production_workshops_delta",
+    "production_progress",
+    "complexity_floor_tiles_delta",
+    "complexity_wall_tiles_delta",
+    "complexity_spaces_delta",
+    "complexity_progress",
+)
+
 
 def _artifacts_root() -> Path:
     settings = get_settings()
@@ -72,6 +94,21 @@ def _map_snapshot_rect_from_state(state: Dict[str, Any], margin: int = 1) -> tup
         max(rect[4] for rect in rects) + margin,
         z,
     )
+
+
+def _zero_assisted_dfhack_progress(metrics_snapshot: Dict[str, Any]) -> None:
+    assisted_values: Dict[str, Any] = {}
+    for field in ASSISTED_PROGRESS_FIELDS:
+        value = metrics_snapshot.get(field)
+        if value not in (None, 0, 0.0):
+            assisted_values[field] = value
+        metrics_snapshot[field] = 0
+
+    metrics_snapshot["dfhack_assisted_progress"] = True
+    metrics_snapshot["gameplay_progress_eligible"] = False
+    metrics_snapshot["score_provenance"] = "gameplay_only_assisted_progress_zeroed"
+    if assisted_values:
+        metrics_snapshot["assisted_dfhack_progress"] = assisted_values
 
 
 def run_once(
@@ -210,6 +247,7 @@ def run_once(
     action_history: List[Dict[str, Any]] = []  # Track recent actions for keystroke mode memory
     last_action_result: Optional[Dict[str, Any]] = None  # Track previous action result for feedback
     previous_screen = None  # Track previous screen for diff feedback (no type annotation for nonlocal)
+    assisted_dfhack_action_seen = False
 
     def publish_event(step: int, event_type: str, payload: Dict[str, Any], events: List[Dict[str, Any]]) -> None:
         data = {"run_id": run_identifier, "step": step, **payload}
@@ -360,6 +398,14 @@ def run_once(
                             ended_at=datetime.utcnow(),
                         )
                     break
+                if backend_name == "dfhack" and action.get("type") in ASSISTED_DFHACK_ACTIONS:
+                    execute_result = {
+                        **execute_result,
+                        "provenance": "dfhack_assisted",
+                        "gameplay_progress_eligible": False,
+                    }
+                    if execute_result.get("accepted", False):
+                        assisted_dfhack_action_seen = True
                 publish_event(step, "execute", {"result": execute_result}, events)
                 state_after_apply = execute_result.get("state") or state_before
 
@@ -434,6 +480,8 @@ def run_once(
                     int(metrics_snapshot.get("utility_progress") or 0),
                     int(utility_action.get("utility_action_progress") or 0),
                 )
+                if assisted_dfhack_action_seen:
+                    _zero_assisted_dfhack_progress(metrics_snapshot)
                 metrics_snapshot["run_elapsed_ticks"] = elapsed_ticks_total
                 publish_event(step, "metrics", {"metrics": metrics_snapshot}, events)
 

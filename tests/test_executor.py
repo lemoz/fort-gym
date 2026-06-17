@@ -37,3 +37,51 @@ def test_dfhack_build_action_uses_bounded_workshop_hook(monkeypatch) -> None:
     assert result["accepted"] is True
     assert result["result"]["kind"] == "CarpenterWorkshop"
     assert calls == [("CarpenterWorkshop", 51, 36, 0)]
+
+
+def test_dfhack_dig_does_not_complete_by_default(monkeypatch) -> None:
+    complete_calls: list[tuple[int, int, int, int, int, int]] = []
+
+    def fake_designate_rect(kind: str, x1: int, y1: int, z1: int, x2: int, y2: int, z2: int):
+        return {"ok": True, "kind": kind, "rect": [x1, y1, z1, x2, y2, z2]}
+
+    def fake_complete_dig_rect(x1: int, y1: int, z1: int, x2: int, y2: int, z2: int):
+        complete_calls.append((x1, y1, z1, x2, y2, z2))
+        return {"ok": True}
+
+    monkeypatch.delenv("FORT_GYM_DFHACK_COMPLETE_DIG", raising=False)
+    monkeypatch.setattr("fort_gym.bench.env.executor.safe_designate_rect", fake_designate_rect)
+    monkeypatch.setattr("fort_gym.bench.env.executor.safe_complete_dig_rect", fake_complete_dig_rect)
+
+    result = Executor(dfhack_client=_ConnectedDFHackClient()).apply(
+        {"type": "DIG", "params": {"area": [50, 35, 0], "size": [5, 5, 1]}},
+        backend="dfhack",
+    )
+
+    assert result["accepted"] is True
+    assert "completion" not in result["result"]
+    assert complete_calls == []
+
+
+def test_dfhack_dig_completion_requires_explicit_opt_in(monkeypatch) -> None:
+    complete_calls: list[tuple[int, int, int, int, int, int]] = []
+
+    def fake_designate_rect(kind: str, x1: int, y1: int, z1: int, x2: int, y2: int, z2: int):
+        return {"ok": True, "kind": kind, "rect": [x1, y1, z1, x2, y2, z2]}
+
+    def fake_complete_dig_rect(x1: int, y1: int, z1: int, x2: int, y2: int, z2: int):
+        complete_calls.append((x1, y1, z1, x2, y2, z2))
+        return {"ok": True, "changed": 25}
+
+    monkeypatch.setenv("FORT_GYM_DFHACK_COMPLETE_DIG", "1")
+    monkeypatch.setattr("fort_gym.bench.env.executor.safe_designate_rect", fake_designate_rect)
+    monkeypatch.setattr("fort_gym.bench.env.executor.safe_complete_dig_rect", fake_complete_dig_rect)
+
+    result = Executor(dfhack_client=_ConnectedDFHackClient()).apply(
+        {"type": "DIG", "params": {"area": [50, 35, 0], "size": [5, 5, 1]}},
+        backend="dfhack",
+    )
+
+    assert result["accepted"] is True
+    assert result["result"]["completion"] == {"ok": True, "changed": 25}
+    assert complete_calls == [(50, 35, 0, 54, 39, 0)]
