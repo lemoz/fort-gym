@@ -769,7 +769,8 @@
         complexityProgress: toNumber(metrics.complexity_progress),
         productionProgress: toNumber(metrics.production_progress),
         carpenterWorkshops: toNumber(work.carpenter_workshops),
-        buildAction
+        buildAction,
+        mapSnapshot: record.map_snapshot?.ok ? record.map_snapshot : null
       };
     }
 
@@ -794,12 +795,167 @@
       };
     }
 
+    function mapSnapshotBounds(mapSnapshot) {
+      const rect = normalizeRect(mapSnapshot?.rect);
+      if (rect) {
+        return { x1: rect[0], y1: rect[1], x2: rect[3], y2: rect[4] };
+      }
+      const tiles = Array.isArray(mapSnapshot?.tiles) ? mapSnapshot.tiles : [];
+      if (!tiles.length) return null;
+      return {
+        x1: Math.min(...tiles.map(tile => toNumber(tile.x))),
+        y1: Math.min(...tiles.map(tile => toNumber(tile.y))),
+        x2: Math.max(...tiles.map(tile => toNumber(tile.x))),
+        y2: Math.max(...tiles.map(tile => toNumber(tile.y)))
+      };
+    }
+
     function drawReplayText(text, x, y, options = {}) {
       gameCtx.fillStyle = options.color || '#dbe6ff';
       gameCtx.font = `${options.weight || 500} ${options.size || 14}px 'Segoe UI', Arial, sans-serif`;
       gameCtx.textAlign = options.align || 'left';
       gameCtx.textBaseline = options.baseline || 'top';
       gameCtx.fillText(text, x, y);
+    }
+
+    function mapTileColor(tile) {
+      switch (tile?.category) {
+        case 'building':
+          return '#f5c542';
+        case 'floor':
+          return '#2e8a5b';
+        case 'wall':
+          return '#3f5167';
+        case 'dig':
+          return '#557dff';
+        case 'hidden':
+          return '#101827';
+        case 'other':
+          return '#68758b';
+        default:
+          return '#05070d';
+      }
+    }
+
+    function drawMapRectOutline(rect, scale, color, label) {
+      if (!rect) return;
+      const x = scale.left + (rect[0] - scale.x1) * scale.tile;
+      const y = scale.top + (rect[1] - scale.y1) * scale.tile;
+      const width = (rect[3] - rect[0] + 1) * scale.tile;
+      const height = (rect[4] - rect[1] + 1) * scale.tile;
+      gameCtx.save();
+      gameCtx.strokeStyle = color;
+      gameCtx.lineWidth = 2;
+      gameCtx.strokeRect(x, y, width, height);
+      drawReplayText(label, x + 4, y + 4, {
+        color,
+        size: Math.max(9, Math.min(12, scale.tile * 0.32)),
+        weight: 800
+      });
+      gameCtx.restore();
+    }
+
+    function drawCapturedMapSnapshot(snapshot, canvasW, canvasH) {
+      const mapSnapshot = snapshot.mapSnapshot;
+      const bounds = mapSnapshotBounds(mapSnapshot);
+      if (!bounds) {
+        showPlaceholder('Captured map snapshot has no tiles');
+        return;
+      }
+
+      gameCtx.fillStyle = '#070a10';
+      gameCtx.fillRect(0, 0, canvasW, canvasH);
+      gameCtx.fillStyle = '#0f1521';
+      gameCtx.fillRect(28, 28, 620, 424);
+      gameCtx.strokeStyle = 'rgba(255,255,255,0.08)';
+      gameCtx.strokeRect(28, 28, 620, 424);
+
+      const mapCols = bounds.x2 - bounds.x1 + 1;
+      const mapRows = bounds.y2 - bounds.y1 + 1;
+      const tile = Math.max(8, Math.min(36, Math.floor(Math.min(560 / mapCols, 350 / mapRows))));
+      const scale = {
+        x1: bounds.x1,
+        y1: bounds.y1,
+        tile,
+        left: 28 + Math.floor((620 - mapCols * tile) / 2),
+        top: 76 + Math.floor((320 - mapRows * tile) / 2)
+      };
+
+      drawReplayText('CAPTURED DFHACK MAP', 52, 46, { color: '#9fd7b2', size: 13, weight: 800 });
+
+      gameCtx.strokeStyle = 'rgba(159,177,214,0.07)';
+      gameCtx.lineWidth = 1;
+      for (let col = 0; col <= mapCols; col++) {
+        const x = scale.left + col * tile;
+        gameCtx.beginPath();
+        gameCtx.moveTo(x, scale.top);
+        gameCtx.lineTo(x, scale.top + mapRows * tile);
+        gameCtx.stroke();
+      }
+      for (let row = 0; row <= mapRows; row++) {
+        const y = scale.top + row * tile;
+        gameCtx.beginPath();
+        gameCtx.moveTo(scale.left, y);
+        gameCtx.lineTo(scale.left + mapCols * tile, y);
+        gameCtx.stroke();
+      }
+
+      const tiles = Array.isArray(mapSnapshot.tiles) ? mapSnapshot.tiles : [];
+      gameCtx.textAlign = 'center';
+      gameCtx.textBaseline = 'middle';
+      for (const tileData of tiles) {
+        const tx = toNumber(tileData.x);
+        const ty = toNumber(tileData.y);
+        if (tx < bounds.x1 || tx > bounds.x2 || ty < bounds.y1 || ty > bounds.y2) continue;
+        const px = scale.left + (tx - bounds.x1) * tile;
+        const py = scale.top + (ty - bounds.y1) * tile;
+        gameCtx.fillStyle = mapTileColor(tileData);
+        gameCtx.fillRect(px + 1, py + 1, Math.max(1, tile - 2), Math.max(1, tile - 2));
+        if (tile >= 14 && tileData.char && tileData.char !== ' ') {
+          gameCtx.fillStyle = tileData.category === 'building' ? '#111827' : '#dbe6ff';
+          gameCtx.font = `700 ${Math.max(10, Math.floor(tile * 0.45))}px 'Segoe UI', Arial, sans-serif`;
+          gameCtx.fillText(String(tileData.char).slice(0, 1), px + tile / 2, py + tile / 2);
+        }
+      }
+
+      drawMapRectOutline(snapshot.targetRect, scale, '#4f7cff', 'START');
+      drawMapRectOutline(snapshot.connectorRect, scale, '#43c6ac', 'HALL');
+      drawMapRectOutline(snapshot.workshopRoomRect, scale, '#78d66d', 'WORK');
+
+      gameCtx.fillStyle = '#101827';
+      gameCtx.fillRect(680, 28, 252, 424);
+      gameCtx.strokeStyle = 'rgba(255,255,255,0.08)';
+      gameCtx.strokeRect(680, 28, 252, 424);
+      drawReplayText(`Step ${snapshot.record.step ?? snapshot.index}`, 704, 52, {
+        color: '#f5f7fb',
+        size: 22,
+        weight: 800
+      });
+      drawReplayText('DFHack map scan', 704, 84, { color: '#9fd7b2', size: 14, weight: 800 });
+      const scoreValue = typeof snapshot.score.value === 'number' ? snapshot.score.value.toFixed(1) : '--';
+      drawReplayText(`Score ${scoreValue}`, 704, 112, { color: '#ffd966', size: 16, weight: 800 });
+      let nextY = wrapReplayText(snapshot.action.intent || 'Captured from live DF map memory after this step', 704, 146, 204, 17);
+      nextY += 12;
+      drawReplayText(`Rect: ${bounds.x1},${bounds.y1} to ${bounds.x2},${bounds.y2}`, 704, nextY);
+      drawReplayText(`Z: ${mapSnapshot.z ?? '--'} / window ${mapSnapshot.window_z ?? '--'}`, 704, nextY + 26);
+      drawReplayText(`Floors: ${mapSnapshot.floor_tiles ?? '--'}`, 704, nextY + 52);
+      drawReplayText(`Walls: ${mapSnapshot.wall_tiles ?? '--'}`, 704, nextY + 78);
+      drawReplayText(`Buildings: ${mapSnapshot.building_tiles ?? '--'}`, 704, nextY + 104);
+      drawReplayText('Source: df.global.world.map', 704, nextY + 138, {
+        color: '#9fd7b2',
+        size: 13,
+        weight: 700
+      });
+    }
+
+    function updateReplayControls(snapshot, statusText) {
+      replayStepSlider.max = Math.max(0, replayRecords.length - 1);
+      replayStepSlider.value = replayStepIndex;
+      replayStepLabel.textContent = `Step ${snapshot.record.step ?? replayStepIndex}/${replayRecords.length - 1}`;
+      replayPrev.disabled = replayStepIndex <= 0;
+      replayNext.disabled = replayStepIndex >= replayRecords.length - 1;
+      gameStatus.textContent = statusText;
+      updateReplayStats(snapshot);
     }
 
     function wrapReplayText(text, x, y, maxWidth, lineHeight, color = '#9fb1d6') {
@@ -918,12 +1074,6 @@
 
       replayStepIndex = Math.max(0, Math.min(index, replayRecords.length - 1));
       const snapshot = buildReplaySnapshot(replayStepIndex);
-      const bounds = replayBounds(snapshot);
-      if (!bounds) {
-        showPlaceholder('No fortress geometry in trace');
-        return;
-      }
-
       const canvasW = 960;
       const canvasH = 480;
       if (gameCanvas.width !== canvasW || gameCanvas.height !== canvasH) {
@@ -931,6 +1081,23 @@
         gameCanvas.height = canvasH;
       }
       showCanvas();
+
+      if (snapshot.mapSnapshot) {
+        gameTitle.textContent = 'Captured DFHack Map';
+        drawCapturedMapSnapshot(snapshot, canvasW, canvasH);
+        updateReplayControls(
+          snapshot,
+          `Captured DFHack map: step ${snapshot.record.step ?? replayStepIndex} of ${replayRecords.length - 1}`
+        );
+        return;
+      }
+
+      const bounds = replayBounds(snapshot);
+      if (!bounds) {
+        showPlaceholder('No fortress geometry in trace');
+        return;
+      }
+      gameTitle.textContent = 'Derived Trace Replay';
 
       gameCtx.fillStyle = '#070a10';
       gameCtx.fillRect(0, 0, canvasW, canvasH);
@@ -1023,13 +1190,10 @@
         weight: 700
       });
 
-      replayStepSlider.max = Math.max(0, replayRecords.length - 1);
-      replayStepSlider.value = replayStepIndex;
-      replayStepLabel.textContent = `Step ${snapshot.record.step ?? replayStepIndex}/${replayRecords.length - 1}`;
-      replayPrev.disabled = replayStepIndex <= 0;
-      replayNext.disabled = replayStepIndex >= replayRecords.length - 1;
-      gameStatus.textContent = `Saved replay: step ${snapshot.record.step ?? replayStepIndex} of ${replayRecords.length - 1}`;
-      updateReplayStats(snapshot);
+      updateReplayControls(
+        snapshot,
+        `Derived trace replay: step ${snapshot.record.step ?? replayStepIndex} of ${replayRecords.length - 1}`
+      );
     }
 
     function setReplayRecords(records) {

@@ -18,6 +18,7 @@ from ..env.executor import Executor
 from ..env.mock_env import MockEnvironment
 from ..env.scenarios import evaluate_scenario_assertions, get_mock_scenario
 from ..env.state_reader import StateReader
+from ..dfhack_backend import read_map_snapshot
 from ..eval import metrics, milestones, scoring
 from ..eval.summary import RunSummary, summarize
 from .storage import RUN_REGISTRY, RunRegistry
@@ -27,6 +28,50 @@ from .seed_reset import maybe_reset_dfhack_seed
 def _artifacts_root() -> Path:
     settings = get_settings()
     return Path(settings.ARTIFACTS_DIR).resolve()
+
+
+def _normalize_rect(value: Any) -> tuple[int, int, int, int, int, int] | None:
+    if not isinstance(value, (list, tuple)) or len(value) < 6:
+        return None
+    try:
+        x1, y1, z1, x2, y2, z2 = [int(v) for v in value[:6]]
+    except (TypeError, ValueError):
+        return None
+    return (
+        min(x1, x2),
+        min(y1, y2),
+        min(z1, z2),
+        max(x1, x2),
+        max(y1, y2),
+        max(z1, z2),
+    )
+
+
+def _map_snapshot_rect_from_state(state: Dict[str, Any], margin: int = 1) -> tuple[int, int, int, int, int, int] | None:
+    work = state.get("work")
+    if not isinstance(work, dict):
+        return None
+
+    rects = [
+        rect
+        for key in ("target_rect", "fortress_connector_rect", "fortress_workshop_room_rect")
+        if (rect := _normalize_rect(work.get(key))) is not None and rect[2] == rect[5]
+    ]
+    if not rects:
+        return None
+
+    z_values = {rect[2] for rect in rects}
+    if len(z_values) != 1:
+        return None
+    z = z_values.pop()
+    return (
+        min(rect[0] for rect in rects) - margin,
+        min(rect[1] for rect in rects) - margin,
+        z,
+        max(rect[3] for rect in rects) + margin,
+        max(rect[4] for rect in rects) + margin,
+        z,
+    )
 
 
 def run_once(
@@ -412,6 +457,13 @@ def run_once(
 
                 previous_state = advance_state
 
+                map_snapshot = None
+                if backend_name == "dfhack":
+                    snapshot_rect = _map_snapshot_rect_from_state(advance_state)
+                    if snapshot_rect:
+                        map_snapshot = read_map_snapshot(snapshot_rect)
+                        publish_event(step, "map_snapshot", {"map_snapshot": map_snapshot}, events)
+
                 record_line = {
                     "run_id": run_identifier,
                     "step": step,
@@ -430,6 +482,8 @@ def run_once(
                     "events": events,
                     "tick_advance": tick_info_state,
                 }
+                if map_snapshot is not None:
+                    record_line["map_snapshot"] = map_snapshot
                 fh.write(json.dumps(record_line) + "\n")
 
                 if registry:

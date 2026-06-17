@@ -19,6 +19,8 @@ ALLOWED_WORKSHOPS = {"CarpenterWorkshop"}
 MAX_QTY = 5
 MAX_RECT_W = 30
 MAX_RECT_H = 30
+MAX_SNAPSHOT_W = 64
+MAX_SNAPSHOT_H = 64
 VALID_KINDS: Iterable[str] = ("dig", "channel", "chop")
 DEFAULT_WORK_RECT = (50, 35, 0, 54, 39, 0)
 
@@ -180,6 +182,31 @@ def read_work_metrics(rect: tuple[int, int, int, int, int, int] | None = None) -
         return {"ok": False, "error": str(exc)}
 
 
+def read_map_snapshot(rect: tuple[int, int, int, int, int, int]) -> Dict[str, object]:
+    """Capture a bounded live DFHack map tile snapshot for replay proof."""
+
+    x1, y1, z1, x2, y2, z2 = rect
+    width = abs(int(x2) - int(x1)) + 1
+    height = abs(int(y2) - int(y1)) + 1
+    if int(z1) != int(z2):
+        return {"ok": False, "error": "z_span_not_supported"}
+    if width > MAX_SNAPSHOT_W or height > MAX_SNAPSHOT_H:
+        return {"ok": False, "error": "rect_too_large"}
+
+    try:
+        return run_lua_file(
+            _hook_path("map_snapshot.lua"),
+            str(int(x1)),
+            str(int(y1)),
+            str(int(z1)),
+            str(int(x2)),
+            str(int(y2)),
+            str(int(z2)),
+        )
+    except (DFHackError, OSError) as exc:
+        return {"ok": False, "error": str(exc)}
+
+
 def _safe_read_pause_state() -> bool | None:
     try:
         return read_pause_state()
@@ -332,11 +359,14 @@ __all__ = [
     "MAX_QTY",
     "MAX_RECT_W",
     "MAX_RECT_H",
+    "MAX_SNAPSHOT_W",
+    "MAX_SNAPSHOT_H",
     "queue_manager_order",
     "build_workshop",
     "designate_rect",
     "complete_dig_rect",
     "read_work_metrics",
+    "read_map_snapshot",
     "advance_ticks_exact_external",
     "advance_ticks_exact",
     "execute_keystroke_action",
