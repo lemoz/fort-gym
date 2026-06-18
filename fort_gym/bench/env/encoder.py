@@ -87,6 +87,11 @@ def encode_observation(
         if isinstance(clean_state.get("ui_target_setup"), dict)
         else {}
     )
+    ui_work_feedback = (
+        clean_state.get("ui_work_feedback")
+        if isinstance(clean_state.get("ui_work_feedback"), dict)
+        else {}
+    )
 
     # Build status section
     status_lines = []
@@ -177,16 +182,50 @@ def encode_observation(
             f"floors={ui_work.get('target_floor_tiles', 0)}, "
             f"walls={ui_work.get('target_wall_tiles', 0)}"
         )
+    if ui_work_feedback:
+        if ui_work_feedback.get("target_refreshed"):
+            status_lines.append(
+                "Live UI feedback: target refreshed after repeated no-progress actions; "
+                "use the fresh recommended keys once."
+            )
+        elif ui_work_feedback.get("target_refresh_failed"):
+            status_lines.append(
+                "Live UI feedback: target refresh failed; avoid repeating the same stale keys."
+            )
+        else:
+            progress_delta = ui_work_feedback.get("last_ui_work_progress_delta", 0)
+            excavation_delta = ui_work_feedback.get("last_ui_excavation_delta", 0)
+            no_progress_streak = ui_work_feedback.get("no_progress_streak", 0)
+            status_lines.append(
+                "Live UI feedback: "
+                f"last_action_work_delta={progress_delta}, "
+                f"last_action_excavation_delta={excavation_delta}, "
+                f"no_progress_streak={no_progress_streak}"
+            )
+            if progress_delta:
+                status_lines.append("Live UI feedback: the last action dug real tiles.")
+            elif no_progress_streak:
+                status_lines.append(
+                    "Live UI feedback: the last action changed no tracked tiles; "
+                    "do not repeat the same key sequence unless a fresh target is shown."
+                )
     if ui_target_setup.get("ok"):
         status_lines.append(
             "Live UI setup: "
+            f"generation={ui_target_setup.get('target_generation', '?')}, "
+            f"attempts={ui_target_setup.get('target_attempts', 0)}, "
             f"selection_rect={ui_target_setup.get('selection_rect')}, "
             f"designatable_tiles={ui_target_setup.get('designatable_tiles', 0)}"
         )
         recommended_keys = ui_target_setup.get("recommended_keys")
-        if isinstance(recommended_keys, list) and recommended_keys:
+        show_recommended = bool(ui_target_setup.get("show_recommended_keys", True))
+        if show_recommended and isinstance(recommended_keys, list) and recommended_keys:
             status_lines.append(
-                "Recommended first keys: " + ", ".join(str(key) for key in recommended_keys)
+                "Fresh target recommended keys: " + ", ".join(str(key) for key in recommended_keys)
+            )
+        elif ui_target_setup.get("recommended_keys_suppressed"):
+            status_lines.append(
+                "Fresh target recommended keys: hidden because this target was already attempted."
             )
 
     if risks:

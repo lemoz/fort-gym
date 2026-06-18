@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from fort_gym.bench.run.runner import _ui_work_rect_from_state, _zero_assisted_dfhack_progress
+from fort_gym.bench.run.runner import (
+    _ui_target_setup_for_observation,
+    _ui_work_rect_from_state,
+    _zero_assisted_dfhack_progress,
+)
 
 
 def test_zero_assisted_dfhack_progress_preserves_audit_values() -> None:
@@ -85,3 +89,29 @@ def test_ui_work_rect_falls_back_to_window_when_cursor_invalid() -> None:
     }
 
     assert _ui_work_rect_from_state(state) == (94, 95, 177, 108, 109, 177)
+
+
+def test_ui_target_setup_hides_recommended_keys_after_attempt() -> None:
+    target = {
+        "ok": True,
+        "recommended_keys": ["D_DESIGNATE", "DESIGNATE_STAIR_DOWN"],
+    }
+
+    fresh = _ui_target_setup_for_observation(
+        target,
+        generation=1,
+        attempts=0,
+        no_progress_streak=0,
+    )
+    attempted = _ui_target_setup_for_observation(
+        target,
+        generation=1,
+        attempts=1,
+        no_progress_streak=1,
+    )
+
+    assert fresh["recommended_keys"] == ["D_DESIGNATE", "DESIGNATE_STAIR_DOWN"]
+    assert fresh["show_recommended_keys"] is True
+    assert attempted["recommended_keys"] == []
+    assert attempted["show_recommended_keys"] is False
+    assert attempted["recommended_keys_suppressed"] is True

@@ -91,10 +91,15 @@ IMPORTANT: The main menu (showing options like "d: Designations", "b: Building")
 
 If you're unsure what to do, **ALWAYS dig**. Designate a small 3x3 mining area - it's always useful.
 
-**FIRST ACTION RULE:** If status shows `Live UI target` with `designations=0` and `Live UI setup`
-includes `Recommended first keys`, your first action must copy those keys exactly. This harness
-starts the camera on a reachable dig target near your dwarves and the recommended sequence
-marks that target through the normal Dwarf Fortress designation UI.
+**FRESH TARGET RULE:** If status includes `Fresh target recommended keys`, copy those keys
+exactly once for that fresh target. This harness starts the camera on a reachable dig target
+near your dwarves and the recommended sequence marks that target through the normal Dwarf
+Fortress designation UI.
+
+If status says the recommended keys are hidden, that target was already attempted. Do not
+repeat the same key sequence. If `Live UI feedback` says `last_action_work_delta=0` or the
+no-progress streak is rising, choose a different useful action or wait only if dwarves still
+have active work.
 
 Default recommended first action:
 {

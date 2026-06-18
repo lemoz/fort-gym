@@ -55,6 +55,7 @@ ASSISTED_PROGRESS_FIELDS = (
 )
 UI_WORK_RADIUS = 7
 INVALID_DF_CURSOR = -30000
+UI_TARGET_REFRESH_NO_PROGRESS_STEPS = 2
 
 
 def _artifacts_root() -> Path:
@@ -155,6 +156,27 @@ def _ui_work_rect_from_state(
     )
 
 
+def _ui_target_setup_for_observation(
+    target: Dict[str, Any],
+    *,
+    generation: int,
+    attempts: int,
+    no_progress_streak: int,
+) -> Dict[str, Any]:
+    setup = dict(target)
+    fresh = attempts == 0
+    setup["target_generation"] = generation
+    setup["target_attempts"] = attempts
+    setup["no_progress_streak"] = no_progress_streak
+    setup["show_recommended_keys"] = fresh
+    if fresh:
+        setup["recommended_keys_suppressed"] = False
+    else:
+        setup["recommended_keys"] = []
+        setup["recommended_keys_suppressed"] = True
+    return setup
+
+
 def _zero_assisted_dfhack_progress(metrics_snapshot: Dict[str, Any]) -> None:
     assisted_values: Dict[str, Any] = {}
     for field in ASSISTED_PROGRESS_FIELDS:
@@ -227,6 +249,8 @@ def run_once(
     # Models that need screen capture: *-keystroke, *-research
     is_keystroke_mode = model.endswith("-keystroke") or model.endswith("-research")
     keystroke_ui_target: Optional[Dict[str, Any]] = None
+    ui_target_generation = 0
+    ui_target_attempts = 0
 
     def get_screen_text() -> str:
         """Get screen text for keystroke mode, empty string otherwise."""
@@ -277,6 +301,8 @@ def run_once(
         executor = Executor(dfhack_client=dfhack_client)
         if is_keystroke_mode:
             keystroke_ui_target = prepare_keystroke_target()
+            if keystroke_ui_target.get("ok"):
+                ui_target_generation = 1
 
         def pause_env() -> None:
             dfhack_client.pause()
@@ -316,6 +342,10 @@ def run_once(
     ui_work_rect: tuple[int, int, int, int, int, int] | None = None
     baseline_ui_work: Optional[Dict[str, Any]] = None
     keystroke_gameplay_progress_seen = False
+    ui_no_progress_streak = 0
+    ui_last_work_progress = 0
+    ui_last_excavation_progress = 0
+    ui_work_feedback: Dict[str, Any] = {}
 
     def publish_event(step: int, event_type: str, payload: Dict[str, Any], events: List[Dict[str, Any]]) -> None:
         data = {"run_id": run_identifier, "step": step, **payload}
@@ -338,6 +368,32 @@ def run_once(
                 tick_info_state = {}
 
                 pause_env()
+                if (
+                    backend_name == "dfhack"
+                    and is_keystroke_mode
+                    and ui_no_progress_streak >= UI_TARGET_REFRESH_NO_PROGRESS_STEPS
+                ):
+                    refreshed_target = prepare_keystroke_target()
+                    if refreshed_target.get("ok"):
+                        keystroke_ui_target = refreshed_target
+                        ui_target_generation += 1
+                        ui_target_attempts = 0
+                        ui_work_rect = None
+                        baseline_ui_work = None
+                        ui_last_work_progress = 0
+                        ui_last_excavation_progress = 0
+                        ui_no_progress_streak = 0
+                        ui_work_feedback = {
+                            "target_refreshed": True,
+                            "reason": "previous target produced no new UI work",
+                            "refresh_after_no_progress_steps": UI_TARGET_REFRESH_NO_PROGRESS_STEPS,
+                        }
+                    else:
+                        ui_work_feedback = {
+                            "target_refresh_failed": True,
+                            "error": refreshed_target.get("error", "unknown"),
+                            "no_progress_streak": ui_no_progress_streak,
+                        }
 
                 def call_with_retry(label: str, func):
                     if backend_name != "dfhack":
@@ -364,7 +420,12 @@ def run_once(
                     break
                 if backend_name == "dfhack" and is_keystroke_mode:
                     if keystroke_ui_target is not None:
-                        state_before["ui_target_setup"] = keystroke_ui_target
+                        state_before["ui_target_setup"] = _ui_target_setup_for_observation(
+                            keystroke_ui_target,
+                            generation=ui_target_generation,
+                            attempts=ui_target_attempts,
+                            no_progress_streak=ui_no_progress_streak,
+                        )
                     if ui_work_rect is None:
                         prepared_rect = None
                         if keystroke_ui_target and keystroke_ui_target.get("ok"):
@@ -379,6 +440,8 @@ def run_once(
                         state_before["ui_work"] = ui_work_before
                         if baseline_ui_work is None and ui_work_before.get("ok"):
                             baseline_ui_work = dict(ui_work_before)
+                    if ui_work_feedback:
+                        state_before["ui_work_feedback"] = dict(ui_work_feedback)
                 if baseline_work is None:
                     work_snapshot = state_before.get("work")
                     baseline_work = dict(work_snapshot) if isinstance(work_snapshot, dict) else {}
@@ -496,6 +559,12 @@ def run_once(
 
                 # Track action result for next step's feedback
                 last_action_result = execute_result
+                if (
+                    is_keystroke_mode
+                    and action.get("type") == "KEYSTROKE"
+                    and execute_result.get("accepted", False)
+                ):
+                    ui_target_attempts += 1
 
                 # Track action for history (keystroke mode memory)
                 if is_keystroke_mode:
@@ -525,7 +594,12 @@ def run_once(
                     ui_work_after = read_work_metrics(ui_work_rect)
                     advance_state["ui_work"] = ui_work_after
                     if keystroke_ui_target is not None:
-                        advance_state["ui_target_setup"] = keystroke_ui_target
+                        advance_state["ui_target_setup"] = _ui_target_setup_for_observation(
+                            keystroke_ui_target,
+                            generation=ui_target_generation,
+                            attempts=ui_target_attempts,
+                            no_progress_streak=ui_no_progress_streak,
+                        )
                 # Game stays paused - agent controls time
                 try:
                     elapsed_ticks_total += max(0, int(tick_info_state.get("ticks_advanced") or 0))
@@ -566,9 +640,25 @@ def run_once(
                 )
                 current_ui_work = advance_state.get("ui_work")
                 ui_delta = {}
+                ui_step_work_progress = 0
+                ui_step_excavation_progress = 0
                 if is_keystroke_mode and isinstance(current_ui_work, dict) and baseline_ui_work:
                     ui_delta = metrics.ui_work_progress_delta(current_ui_work, baseline_ui_work)
                     metrics_snapshot.update(ui_delta)
+                    ui_total_work_progress = int(ui_delta.get("ui_work_progress") or 0)
+                    ui_total_excavation_progress = int(ui_delta.get("ui_excavation_progress") or 0)
+                    ui_step_work_progress = max(0, ui_total_work_progress - ui_last_work_progress)
+                    ui_step_excavation_progress = max(
+                        0,
+                        ui_total_excavation_progress - ui_last_excavation_progress,
+                    )
+                    ui_last_work_progress = max(ui_last_work_progress, ui_total_work_progress)
+                    ui_last_excavation_progress = max(
+                        ui_last_excavation_progress,
+                        ui_total_excavation_progress,
+                    )
+                    metrics_snapshot["ui_step_work_progress"] = ui_step_work_progress
+                    metrics_snapshot["ui_step_excavation_progress"] = ui_step_excavation_progress
                     if int(ui_delta.get("ui_work_progress") or 0) > 0:
                         metrics_snapshot["score_provenance"] = "keystroke_ui_work_rect"
                         metrics_snapshot["gameplay_progress_eligible"] = True
@@ -586,6 +676,36 @@ def run_once(
                             int(ui_delta.get("ui_work_progress") or 0),
                         )
                         keystroke_gameplay_progress_seen = True
+                if is_keystroke_mode:
+                    advanced_ticks = int(tick_info_state.get("ticks_advanced") or 0)
+                    action_accepted = bool(execute_result.get("accepted", False))
+                    if action.get("type") == "KEYSTROKE" and action_accepted:
+                        if ui_step_work_progress > 0:
+                            ui_no_progress_streak = 0
+                            ui_work_feedback = {
+                                "last_ui_work_progress_delta": ui_step_work_progress,
+                                "last_ui_excavation_delta": ui_step_excavation_progress,
+                                "no_progress_streak": ui_no_progress_streak,
+                                "message": "last UI action changed real map tiles",
+                            }
+                        elif advanced_ticks > 0:
+                            ui_no_progress_streak += 1
+                            ui_work_feedback = {
+                                "last_ui_work_progress_delta": 0,
+                                "last_ui_excavation_delta": 0,
+                                "no_progress_streak": ui_no_progress_streak,
+                                "message": "last UI action advanced time but changed no tracked tiles",
+                            }
+                        else:
+                            ui_work_feedback = {
+                                "last_ui_work_progress_delta": 0,
+                                "last_ui_excavation_delta": 0,
+                                "no_progress_streak": ui_no_progress_streak,
+                                "message": "last UI action did not advance time",
+                            }
+                    metrics_snapshot["ui_no_progress_streak"] = ui_no_progress_streak
+                    metrics_snapshot["ui_target_generation"] = ui_target_generation
+                    metrics_snapshot["ui_target_attempts"] = ui_target_attempts
                 utility_action = metrics.utility_action_progress(action, execute_result)
                 metrics_snapshot.update(utility_action)
                 metrics_snapshot["utility_progress"] = max(
