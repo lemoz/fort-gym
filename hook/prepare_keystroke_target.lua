@@ -25,7 +25,8 @@ local function valid_wall_tile(tx, ty, tz)
   end
 
   local attr = df.tiletype.attrs[block.tiletype[dx][dy]]
-  return attr and attr.shape == df.tiletype_shape.WALL
+  local caption = attr and tostring(attr.caption or '') or ''
+  return attr and attr.shape == df.tiletype_shape.WALL and not caption:find('trunk')
 end
 
 local function count_designatable(x1, y1, z)
