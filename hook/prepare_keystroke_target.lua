@@ -7,6 +7,8 @@ local SELECT_OFFSET_Y1 = 9
 local SELECT_WIDTH = 4
 local SELECT_HEIGHT = 2
 local MIN_DESIGNATABLE_TILES = 4
+local MIN_CITIZEN_NEAR_TILES = 1
+local CITIZEN_SEARCH_RADIUS = 25
 local Z_SEARCH_RADIUS = 6
 
 local function valid_wall_tile(tx, ty, tz)
@@ -38,7 +40,7 @@ local function count_designatable(x1, y1, z)
   return count
 end
 
-local function candidate_payload(x1, y1, z, count)
+local function candidate_payload(x1, y1, z, count, source)
   local window_x = math.max(0, x1 - SELECT_OFFSET_X1)
   local window_y = math.max(0, y1 - SELECT_OFFSET_Y1)
   df.global.window_x = window_x
@@ -50,7 +52,7 @@ local function candidate_payload(x1, y1, z, count)
 
   return {
     ok = true,
-    source = 'visible_mineable_wall',
+    source = source or 'visible_mineable_wall',
     target_rect = { window_x, window_y, z, window_x + 14, window_y + 14, z },
     selection_rect = { x1, y1, z, x1 + SELECT_WIDTH - 1, y1 + SELECT_HEIGHT - 1, z },
     designatable_tiles = count,
@@ -73,18 +75,51 @@ local function candidate_payload(x1, y1, z, count)
       'CURSOR_RIGHT',
       'CURSOR_DOWN',
       'SELECT',
+      'LEAVESCREEN',
     },
   }
 end
 
-local function try_candidate(x1, y1, z)
+local function try_candidate(x1, y1, z, min_tiles, source)
   if x1 < 0 or y1 < 0 or z < 0 then
     return nil
   end
   local count = count_designatable(x1, y1, z)
-  if count >= MIN_DESIGNATABLE_TILES then
-    return candidate_payload(x1, y1, z, count)
+  if count >= (min_tiles or MIN_DESIGNATABLE_TILES) then
+    return candidate_payload(x1, y1, z, count, source)
   end
+  return nil
+end
+
+local function search_near_citizens()
+  if not df.global.world.units or not df.global.world.units.active then
+    return nil
+  end
+
+  for _, unit in ipairs(df.global.world.units.active) do
+    if dfhack.units.isCitizen(unit) and not dfhack.units.isDead(unit) and unit.pos then
+      local z = unit.pos.z
+      for radius = 1, CITIZEN_SEARCH_RADIUS do
+        for x1 = math.max(0, unit.pos.x - radius), unit.pos.x + radius do
+          for y1 = math.max(0, unit.pos.y - radius), unit.pos.y + radius do
+            local payload = try_candidate(
+              x1,
+              y1,
+              z,
+              MIN_CITIZEN_NEAR_TILES,
+              'citizen_near_visible_mineable_wall'
+            )
+            if payload then
+              payload.nearest_citizen = { unit.pos.x, unit.pos.y, unit.pos.z }
+              payload.nearest_citizen_radius = radius
+              return payload
+            end
+          end
+        end
+      end
+    end
+  end
+
   return nil
 end
 
@@ -96,7 +131,7 @@ local function search_near_window()
     local z = window_z + dz
     for x1 = math.max(0, window_x - 80), window_x + 120 do
       for y1 = math.max(0, window_y - 80), window_y + 120 do
-        local payload = try_candidate(x1, y1, z)
+        local payload = try_candidate(x1, y1, z, MIN_DESIGNATABLE_TILES, 'window_visible_mineable_wall')
         if payload then
           return payload
         end
@@ -120,7 +155,7 @@ local function search_loaded_map()
         for dy = 0, 15 do
           local x1 = block.map_pos.x + dx
           local y1 = block.map_pos.y + dy
-          local payload = try_candidate(x1, y1, z)
+          local payload = try_candidate(x1, y1, z, MIN_DESIGNATABLE_TILES, 'loaded_map_visible_mineable_wall')
           if payload then
             return payload
           end
@@ -132,7 +167,7 @@ local function search_loaded_map()
   return nil
 end
 
-local payload = search_near_window() or search_loaded_map()
+local payload = search_near_citizens() or search_near_window() or search_loaded_map()
 if payload then
   print(json.encode(payload))
 else

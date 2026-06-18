@@ -99,7 +99,7 @@ wall pocket through the normal Dwarf Fortress designation UI.
 Default recommended first action:
 {
   "type": "KEYSTROKE",
-  "params": {"keys": ["D_DESIGNATE", "DESIGNATE_DIG", "CURSOR_LEFT", "CURSOR_LEFT", "CURSOR_LEFT", "CURSOR_LEFT", "CURSOR_UP", "CURSOR_UP", "SELECT", "CURSOR_RIGHT", "CURSOR_RIGHT", "CURSOR_RIGHT", "CURSOR_DOWN", "SELECT"]},
+  "params": {"keys": ["D_DESIGNATE", "DESIGNATE_DIG", "CURSOR_LEFT", "CURSOR_LEFT", "CURSOR_LEFT", "CURSOR_LEFT", "CURSOR_UP", "CURSOR_UP", "SELECT", "CURSOR_RIGHT", "CURSOR_RIGHT", "CURSOR_RIGHT", "CURSOR_DOWN", "SELECT", "LEAVESCREEN"]},
   "intent": "designate the visible starter wall pocket for mining through the DF UI",
   "advance_ticks": 200
 }
