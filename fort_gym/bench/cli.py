@@ -821,6 +821,7 @@ def _run_api_agent(
     server_artifacts_dir: str | None,
     poll_interval: float,
     timeout_seconds: int,
+    preserve_save: bool = False,
 ) -> dict[str, object]:
     created = _json_request(
         method="POST",
@@ -831,6 +832,7 @@ def _run_api_agent(
             "model": model,
             "max_steps": max_steps,
             "ticks_per_step": ticks_per_step,
+            "preserve_save": preserve_save,
         },
         admin_user=admin_user,
         admin_password=admin_password,
@@ -868,6 +870,7 @@ def _run_api_agent(
         "run_id": run_id,
         "model": model,
         "backend": backend,
+        "preserve_save": preserve_save,
         "status": latest.get("status"),
         "score": score,
         "summary_total_score": summary.get("total_score"),
@@ -1528,6 +1531,7 @@ def live_agent_report(
     timeout_seconds: int = 600,
     poll_interval: float = 5.0,
     packet_path: str | None = None,
+    preserve_save: bool = False,
 ) -> None:
     """Run a baseline and real model through the public API, then compare scores."""
 
@@ -1549,6 +1553,7 @@ def live_agent_report(
         server_artifacts_dir=server_artifacts_dir,
         poll_interval=poll_interval,
         timeout_seconds=timeout_seconds,
+        preserve_save=preserve_save,
     )
     model_result = _run_api_agent(
         api_base_url=api_base_url,
@@ -1562,6 +1567,7 @@ def live_agent_report(
         server_artifacts_dir=server_artifacts_dir,
         poll_interval=poll_interval,
         timeout_seconds=timeout_seconds,
+        preserve_save=preserve_save,
     )
 
     baseline_score = float(baseline.get("score") or 0.0)
@@ -1608,6 +1614,7 @@ def live_agent_suite(
     timeout_seconds: int = 600,
     poll_interval: float = 5.0,
     packet_path: str | None = None,
+    preserve_save: bool = False,
 ) -> None:
     """Run a multi-trial live-agent scorecard through the public API."""
 
@@ -1641,6 +1648,7 @@ def live_agent_suite(
             server_artifacts_dir=server_artifacts_dir,
             poll_interval=poll_interval,
             timeout_seconds=timeout_seconds,
+            preserve_save=preserve_save,
         )
         baseline["trial"] = trial
         baseline_runs.append(baseline)
@@ -1659,6 +1667,7 @@ def live_agent_suite(
                 server_artifacts_dir=server_artifacts_dir,
                 poll_interval=poll_interval,
                 timeout_seconds=timeout_seconds,
+                preserve_save=preserve_save,
             )
             result["trial"] = trial
             variant_runs[model].append(result)
@@ -1683,6 +1692,7 @@ def live_agent_suite(
         "backend": backend,
         "max_steps": max_steps,
         "ticks_per_step": ticks_per_step,
+        "preserve_save": preserve_save,
         "baseline_model": baseline_model,
         "models": model_names,
         "all_runs_completed": all_completed,

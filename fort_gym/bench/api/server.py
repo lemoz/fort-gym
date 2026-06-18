@@ -231,6 +231,7 @@ async def create_run(payload: RunCreateRequest, _: None = Depends(require_admin)
             run_id=record.run_id,
             registry=RUN_REGISTRY,
             loop=loop,
+            preserve_save=payload.preserve_save,
         )
 
     thread = threading.Thread(target=_target, name=f"run-{record.run_id}", daemon=True)

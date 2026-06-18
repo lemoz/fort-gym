@@ -47,6 +47,7 @@ class RunCreateRequest(BaseModel):
     ticks_per_step: int = Field(default=100, ge=1)
     model: ModelType = "random"
     safe: Optional[bool] = True
+    preserve_save: bool = False
 
 
 class JobInfo(BaseModel):

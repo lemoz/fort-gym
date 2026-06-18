@@ -3,6 +3,39 @@ from __future__ import annotations
 from fort_gym.bench import cli
 
 
+def test_run_api_agent_sends_preserve_save(monkeypatch):
+    calls = []
+
+    def fake_json_request(**kwargs):
+        calls.append(kwargs)
+        if kwargs["method"] == "POST":
+            return {"id": "run-preserve", "status": "running"}
+        return {"id": "run-preserve", "status": "completed", "score": 42.0}
+
+    monkeypatch.setattr(cli, "_json_request", fake_json_request)
+    monkeypatch.setattr(cli, "_find_public_run", lambda _base_url, _run_id: {"token": "tok"})
+    monkeypatch.setattr(cli, "_load_trace_records", lambda _run_id, _dir: ([], "/tmp/trace.jsonl"))
+    monkeypatch.setattr(cli, "_load_summary", lambda _run_id, _dir: ({}, "/tmp/summary.json"))
+
+    result = cli._run_api_agent(
+        api_base_url="http://api.test",
+        public_base_url="http://public.test",
+        admin_user="admin",
+        admin_password="pw",
+        model="anthropic-keystroke",
+        backend="dfhack",
+        max_steps=2,
+        ticks_per_step=500,
+        server_artifacts_dir="/tmp/artifacts",
+        poll_interval=0,
+        timeout_seconds=1,
+        preserve_save=True,
+    )
+
+    assert calls[0]["payload"]["preserve_save"] is True
+    assert result["preserve_save"] is True
+
+
 def test_write_live_agent_packet(tmp_path):
     report = {
         "ok": True,
