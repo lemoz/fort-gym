@@ -98,7 +98,7 @@ def test_anthropic_agent_records_usage_event(monkeypatch) -> None:
 def test_keystroke_prompt_is_action_first() -> None:
     assert "FIRST ACTION RULE" in KEYSTROKE_SYSTEM_PROMPT
     assert "D_DESIGNATE" in KEYSTROKE_SYSTEM_PROMPT
-    assert "advance_ticks\": 200" in KEYSTROKE_SYSTEM_PROMPT
+    assert "advance_ticks\": 500" in KEYSTROKE_SYSTEM_PROMPT
 
 
 def test_dig_first_prompt_uses_structured_control() -> None:

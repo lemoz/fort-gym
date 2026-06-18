@@ -49,10 +49,40 @@ def test_ui_work_progress_delta_counts_fixed_rect_progress() -> None:
     assert delta == {
         "ui_target_dig_designations_delta": 9,
         "ui_target_floor_tiles_delta": 4,
+        "ui_target_floor_removed_delta": 0,
         "ui_target_wall_tiles_delta": 4,
         "ui_designation_progress": 9,
         "ui_completion_progress": 4,
+        "ui_excavation_progress": 4,
         "ui_work_progress": 9,
+    }
+
+
+def test_ui_work_progress_delta_counts_floor_excavation() -> None:
+    baseline = {
+        "target_rect": [88, 83, 177, 102, 97, 177],
+        "target_dig_designations": 8,
+        "target_floor_tiles": 176,
+        "target_wall_tiles": 8,
+    }
+    current = {
+        "target_rect": [88, 83, 177, 102, 97, 177],
+        "target_dig_designations": 0,
+        "target_floor_tiles": 170,
+        "target_wall_tiles": 8,
+    }
+
+    delta = metrics.ui_work_progress_delta(current, baseline)
+
+    assert delta == {
+        "ui_target_dig_designations_delta": 0,
+        "ui_target_floor_tiles_delta": 0,
+        "ui_target_floor_removed_delta": 6,
+        "ui_target_wall_tiles_delta": 0,
+        "ui_designation_progress": 0,
+        "ui_completion_progress": 6,
+        "ui_excavation_progress": 6,
+        "ui_work_progress": 6,
     }
 
 

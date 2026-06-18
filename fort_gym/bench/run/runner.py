@@ -46,9 +46,11 @@ ASSISTED_PROGRESS_FIELDS = (
     "complexity_progress",
     "ui_target_dig_designations_delta",
     "ui_target_floor_tiles_delta",
+    "ui_target_floor_removed_delta",
     "ui_target_wall_tiles_delta",
     "ui_designation_progress",
     "ui_completion_progress",
+    "ui_excavation_progress",
     "ui_work_progress",
 )
 UI_WORK_RADIUS = 7

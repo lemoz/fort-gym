@@ -75,9 +75,11 @@ def ui_work_progress_delta(
         return {
             "ui_target_dig_designations_delta": 0,
             "ui_target_floor_tiles_delta": 0,
+            "ui_target_floor_removed_delta": 0,
             "ui_target_wall_tiles_delta": 0,
             "ui_designation_progress": 0,
             "ui_completion_progress": 0,
+            "ui_excavation_progress": 0,
             "ui_work_progress": 0,
         }
 
@@ -96,13 +98,21 @@ def ui_work_progress_delta(
         _to_int(baseline.get("target_wall_tiles"))
         - _to_int(current.get("target_wall_tiles")),
     )
-    completion_progress = max(floor_delta, wall_delta)
+    floor_removed_delta = max(
+        0,
+        _to_int(baseline.get("target_floor_tiles"))
+        - _to_int(current.get("target_floor_tiles")),
+    )
+    excavation_progress = max(wall_delta, floor_removed_delta)
+    completion_progress = max(floor_delta, excavation_progress)
     return {
         "ui_target_dig_designations_delta": designations_delta,
         "ui_target_floor_tiles_delta": floor_delta,
+        "ui_target_floor_removed_delta": floor_removed_delta,
         "ui_target_wall_tiles_delta": wall_delta,
         "ui_designation_progress": designations_delta,
         "ui_completion_progress": completion_progress,
+        "ui_excavation_progress": excavation_progress,
         "ui_work_progress": max(designations_delta, completion_progress),
     }
 

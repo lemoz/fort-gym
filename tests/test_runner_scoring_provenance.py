@@ -12,7 +12,10 @@ def test_zero_assisted_dfhack_progress_preserves_audit_values() -> None:
         "complexity_progress": 38,
         "ui_work_progress": 9,
         "ui_designation_progress": 9,
+        "ui_completion_progress": 6,
+        "ui_excavation_progress": 6,
         "ui_target_dig_designations_delta": 9,
+        "ui_target_floor_removed_delta": 6,
         "target_floor_tiles_delta": 25,
         "target_wall_tiles_delta": 25,
         "run_elapsed_ticks": 500,
@@ -27,7 +30,10 @@ def test_zero_assisted_dfhack_progress_preserves_audit_values() -> None:
     assert metrics["complexity_progress"] == 0
     assert metrics["ui_work_progress"] == 0
     assert metrics["ui_designation_progress"] == 0
+    assert metrics["ui_completion_progress"] == 0
+    assert metrics["ui_excavation_progress"] == 0
     assert metrics["ui_target_dig_designations_delta"] == 0
+    assert metrics["ui_target_floor_removed_delta"] == 0
     assert metrics["target_floor_tiles_delta"] == 0
     assert metrics["target_wall_tiles_delta"] == 0
     assert metrics["run_elapsed_ticks"] == 500
@@ -43,7 +49,10 @@ def test_zero_assisted_dfhack_progress_preserves_audit_values() -> None:
         "production_progress": 5,
         "complexity_progress": 38,
         "ui_target_dig_designations_delta": 9,
+        "ui_target_floor_removed_delta": 6,
         "ui_designation_progress": 9,
+        "ui_completion_progress": 6,
+        "ui_excavation_progress": 6,
         "ui_work_progress": 9,
     }
 

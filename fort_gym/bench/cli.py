@@ -728,6 +728,7 @@ def _diagnose_actions(
         blockers.append("score_from_survival_without_work")
     work_progress = _as_int(summary.get("work_progress"))
     ui_work_progress = _as_int(summary.get("ui_work_progress"))
+    ui_excavation_progress = _as_int(summary.get("ui_excavation_progress"))
     completion_progress = _as_int(summary.get("completion_progress"))
     utility_progress = _as_int(summary.get("utility_progress"))
     production_progress = _as_int(summary.get("production_progress"))
@@ -774,6 +775,7 @@ def _diagnose_actions(
         "complexity_score": _as_float(summary.get("complexity_score")),
         "work_progress": work_progress,
         "ui_work_progress": ui_work_progress,
+        "ui_excavation_progress": ui_excavation_progress,
         "designation_progress": _as_int(summary.get("designation_progress")),
         "completion_progress": completion_progress,
         "utility_progress": utility_progress,
@@ -879,6 +881,7 @@ def _run_api_agent(
         "complexity_score": summary.get("complexity_score"),
         "work_progress": summary.get("work_progress"),
         "ui_work_progress": summary.get("ui_work_progress"),
+        "ui_excavation_progress": summary.get("ui_excavation_progress"),
         "ui_score_provenance_seen": "keystroke_ui_work_rect" in score_provenances,
         "score_provenances": score_provenances,
         "designation_progress": summary.get("designation_progress"),
@@ -887,6 +890,7 @@ def _run_api_agent(
         "production_progress": summary.get("production_progress"),
         "complexity_progress": summary.get("complexity_progress"),
         "target_dig_designations_delta": summary.get("target_dig_designations_delta"),
+        "ui_target_floor_removed_delta": summary.get("ui_target_floor_removed_delta"),
         "target_floor_tiles_delta": summary.get("target_floor_tiles_delta"),
         "target_wall_tiles_delta": summary.get("target_wall_tiles_delta"),
         "active_dig_jobs_delta": summary.get("active_dig_jobs_delta"),

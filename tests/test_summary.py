@@ -183,7 +183,10 @@ def test_summarize_unblocks_duration_after_real_keystroke_progress(tmp_path) -> 
                 "complexity_progress": 0,
                 "ui_work_progress": 9,
                 "ui_designation_progress": 9,
+                "ui_completion_progress": 6,
+                "ui_excavation_progress": 6,
                 "ui_target_dig_designations_delta": 9,
+                "ui_target_floor_removed_delta": 6,
             },
             "tick_advance": {"ticks_advanced": 200},
             "events": [],
@@ -200,7 +203,10 @@ def test_summarize_unblocks_duration_after_real_keystroke_progress(tmp_path) -> 
     assert summary.work_progress == 9
     assert summary.ui_work_progress == 9
     assert summary.ui_designation_progress == 9
+    assert summary.ui_completion_progress == 6
+    assert summary.ui_excavation_progress == 6
     assert summary.ui_target_dig_designations_delta == 9
+    assert summary.ui_target_floor_removed_delta == 6
 
 
 def test_summarize_tracks_work_progress(tmp_path) -> None:

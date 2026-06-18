@@ -52,8 +52,10 @@ class RunSummary(BaseModel):
     ui_work_progress: int = 0
     ui_designation_progress: int = 0
     ui_completion_progress: int = 0
+    ui_excavation_progress: int = 0
     ui_target_dig_designations_delta: int = 0
     ui_target_floor_tiles_delta: int = 0
+    ui_target_floor_removed_delta: int = 0
     ui_target_wall_tiles_delta: int = 0
     target_dig_designations_delta: int = 0
     target_floor_tiles_delta: int = 0
@@ -134,8 +136,10 @@ def summarize(trace_path: Path) -> RunSummary:
     ui_work_progress = 0
     ui_designation_progress = 0
     ui_completion_progress = 0
+    ui_excavation_progress = 0
     ui_target_dig_designations_delta = 0
     ui_target_floor_tiles_delta = 0
+    ui_target_floor_removed_delta = 0
     ui_target_wall_tiles_delta = 0
     target_dig_designations_delta = 0
     target_floor_tiles_delta = 0
@@ -226,6 +230,10 @@ def summarize(trace_path: Path) -> RunSummary:
                 ui_completion_progress,
                 _to_int(metrics_snapshot.get("ui_completion_progress")),
             )
+            ui_excavation_progress = max(
+                ui_excavation_progress,
+                _to_int(metrics_snapshot.get("ui_excavation_progress")),
+            )
             ui_target_dig_designations_delta = max(
                 ui_target_dig_designations_delta,
                 _to_int(metrics_snapshot.get("ui_target_dig_designations_delta")),
@@ -233,6 +241,10 @@ def summarize(trace_path: Path) -> RunSummary:
             ui_target_floor_tiles_delta = max(
                 ui_target_floor_tiles_delta,
                 _to_int(metrics_snapshot.get("ui_target_floor_tiles_delta")),
+            )
+            ui_target_floor_removed_delta = max(
+                ui_target_floor_removed_delta,
+                _to_int(metrics_snapshot.get("ui_target_floor_removed_delta")),
             )
             ui_target_wall_tiles_delta = max(
                 ui_target_wall_tiles_delta,
@@ -449,8 +461,10 @@ def summarize(trace_path: Path) -> RunSummary:
         ui_work_progress=ui_work_progress,
         ui_designation_progress=ui_designation_progress,
         ui_completion_progress=ui_completion_progress,
+        ui_excavation_progress=ui_excavation_progress,
         ui_target_dig_designations_delta=ui_target_dig_designations_delta,
         ui_target_floor_tiles_delta=ui_target_floor_tiles_delta,
+        ui_target_floor_removed_delta=ui_target_floor_removed_delta,
         ui_target_wall_tiles_delta=ui_target_wall_tiles_delta,
         target_dig_designations_delta=target_dig_designations_delta,
         target_floor_tiles_delta=target_floor_tiles_delta,

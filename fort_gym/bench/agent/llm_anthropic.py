@@ -93,15 +93,15 @@ If you're unsure what to do, **ALWAYS dig**. Designate a small 3x3 mining area -
 
 **FIRST ACTION RULE:** If status shows `Live UI target` with `designations=0` and `Live UI setup`
 includes `Recommended first keys`, your first action must copy those keys exactly. This harness
-starts the camera on a visible mineable wall pocket and the recommended sequence marks that
-wall pocket through the normal Dwarf Fortress designation UI.
+starts the camera on a reachable dig target near your dwarves and the recommended sequence
+marks that target through the normal Dwarf Fortress designation UI.
 
 Default recommended first action:
 {
   "type": "KEYSTROKE",
-  "params": {"keys": ["D_DESIGNATE", "DESIGNATE_DIG", "CURSOR_LEFT", "CURSOR_LEFT", "CURSOR_LEFT", "CURSOR_LEFT", "CURSOR_UP", "CURSOR_UP", "SELECT", "CURSOR_RIGHT", "CURSOR_RIGHT", "CURSOR_RIGHT", "CURSOR_DOWN", "SELECT", "LEAVESCREEN"]},
-  "intent": "designate the visible starter wall pocket for mining through the DF UI",
-  "advance_ticks": 200
+  "params": {"keys": ["D_DESIGNATE", "DESIGNATE_STAIR_DOWN", "CURSOR_LEFT", "CURSOR_LEFT", "CURSOR_LEFT", "CURSOR_LEFT", "CURSOR_UP", "CURSOR_UP", "SELECT", "CURSOR_RIGHT", "CURSOR_RIGHT", "CURSOR_RIGHT", "CURSOR_DOWN", "SELECT", "LEAVESCREEN"]},
+  "intent": "designate a reachable starter stair dig through the DF UI",
+  "advance_ticks": 500
 }
 
 Use LEAVESCREEN only to exit SUB-menus (like after designating an area).
