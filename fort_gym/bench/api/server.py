@@ -121,6 +121,7 @@ def _serialize(record: RegistryRunInfo) -> RunInfo:
         git_sha=getattr(record, "git_sha", None),
         seed_save=getattr(record, "seed_save", None),
         runtime_save=getattr(record, "runtime_save", None),
+        preserve_save=getattr(record, "preserve_save", False),
         status=record.status,
         step=record.step,
         max_steps=record.max_steps,
@@ -145,6 +146,7 @@ def _serialize_public(record: RegistryRunInfo, share: ShareToken) -> RunInfoPubl
         ticks_per_step=record.ticks_per_step,
         seed_save=getattr(record, "seed_save", None),
         runtime_save=getattr(record, "runtime_save", None),
+        preserve_save=getattr(record, "preserve_save", False),
         started_at=record.started_at,
         finished_at=record.ended_at,
         score=summary.get("total_score") or metadata.get("last_score"),
@@ -212,6 +214,7 @@ async def create_run(payload: RunCreateRequest, _: None = Depends(require_admin)
         model=payload.model,
         max_steps=payload.max_steps,
         ticks_per_step=payload.ticks_per_step,
+        preserve_save=payload.preserve_save,
         loop=loop,
     )
 

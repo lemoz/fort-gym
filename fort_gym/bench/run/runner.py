@@ -206,6 +206,7 @@ def run_once(
                 ticks_per_step=ticks,
                 loop=loop,
                 run_id=run_identifier,
+                preserve_save=preserve_save,
             )
         elif loop is not None:
             registry.bind_loop(run_identifier, loop)

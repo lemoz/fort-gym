@@ -18,3 +18,22 @@ def test_run_create_request_accepts_preserve_save() -> None:
     )
 
     assert request.preserve_save is True
+
+
+def test_run_registry_persists_preserve_save(tmp_path) -> None:
+    from fort_gym.bench.run.storage import RunRegistry
+
+    registry = RunRegistry(db_path=tmp_path / "runs.sqlite3")
+
+    created = registry.create(
+        backend="dfhack",
+        model="anthropic-keystroke",
+        max_steps=2,
+        ticks_per_step=500,
+        preserve_save=True,
+    )
+    loaded = registry.get(created.run_id)
+
+    assert created.preserve_save is True
+    assert loaded is not None
+    assert loaded.preserve_save is True
