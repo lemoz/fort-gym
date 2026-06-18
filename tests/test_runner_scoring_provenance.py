@@ -91,7 +91,7 @@ def test_ui_work_rect_falls_back_to_window_when_cursor_invalid() -> None:
     assert _ui_work_rect_from_state(state) == (94, 95, 177, 108, 109, 177)
 
 
-def test_ui_target_setup_hides_recommended_keys_after_attempt() -> None:
+def test_ui_target_setup_retries_recommended_keys_after_failed_attempt() -> None:
     target = {
         "ok": True,
         "recommended_keys": ["D_DESIGNATE", "DESIGNATE_STAIR_DOWN"],
@@ -102,16 +102,49 @@ def test_ui_target_setup_hides_recommended_keys_after_attempt() -> None:
         generation=1,
         attempts=0,
         no_progress_streak=0,
+        target_progress_seen=False,
     )
     attempted = _ui_target_setup_for_observation(
         target,
         generation=1,
         attempts=1,
         no_progress_streak=1,
+        target_progress_seen=False,
     )
 
     assert fresh["recommended_keys"] == ["D_DESIGNATE", "DESIGNATE_STAIR_DOWN"]
     assert fresh["show_recommended_keys"] is True
-    assert attempted["recommended_keys"] == []
-    assert attempted["show_recommended_keys"] is False
-    assert attempted["recommended_keys_suppressed"] is True
+    assert fresh["recommended_keys_retry"] is False
+    assert attempted["recommended_keys"] == ["D_DESIGNATE", "DESIGNATE_STAIR_DOWN"]
+    assert attempted["show_recommended_keys"] is True
+    assert attempted["recommended_keys_retry"] is True
+    assert attempted["recommended_keys_suppressed"] is False
+
+
+def test_ui_target_setup_hides_recommended_keys_after_progress_or_retry_cap() -> None:
+    target = {
+        "ok": True,
+        "recommended_keys": ["D_DESIGNATE", "DESIGNATE_STAIR_DOWN"],
+    }
+
+    progressed = _ui_target_setup_for_observation(
+        target,
+        generation=1,
+        attempts=1,
+        no_progress_streak=0,
+        target_progress_seen=True,
+    )
+    exhausted = _ui_target_setup_for_observation(
+        target,
+        generation=1,
+        attempts=2,
+        no_progress_streak=2,
+        target_progress_seen=False,
+    )
+
+    assert progressed["recommended_keys"] == []
+    assert progressed["show_recommended_keys"] is False
+    assert progressed["recommended_keys_suppressed"] is True
+    assert exhausted["recommended_keys"] == []
+    assert exhausted["show_recommended_keys"] is False
+    assert exhausted["recommended_keys_suppressed"] is True

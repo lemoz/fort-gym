@@ -91,15 +91,17 @@ IMPORTANT: The main menu (showing options like "d: Designations", "b: Building")
 
 If you're unsure what to do, **ALWAYS dig**. Designate a small 3x3 mining area - it's always useful.
 
-**FRESH TARGET RULE:** If status includes `Fresh target recommended keys`, copy those keys
-exactly once for that fresh target. This harness starts the camera on a reachable dig target
-near your dwarves and the recommended sequence marks that target through the normal Dwarf
-Fortress designation UI.
+**FRESH TARGET RULE:** If status includes `Fresh target recommended keys` or
+`Retry fresh target recommended keys`, copy those keys exactly. This harness starts the
+camera and cursor on a reachable dig target near your dwarves, and the recommended
+sequence marks that target through the normal Dwarf Fortress designation UI. Retry keys
+are shown only after a failed first attempt and only for a bounded retry.
 
-If status says the recommended keys are hidden, that target was already attempted. Do not
-repeat the same key sequence. If `Live UI feedback` says `last_action_work_delta=0` or the
-no-progress streak is rising, choose a different useful action or wait only if dwarves still
-have active work.
+If status says the recommended keys are hidden, stop using that target's old sequence.
+Do not repeat the same key sequence for that target.
+If `Live UI feedback` says `last_action_work_delta=0` or the no-progress streak is rising,
+use shown retry/fresh keys if present; otherwise choose a different useful action or wait
+only if dwarves still have active work.
 
 Default recommended first action:
 {

@@ -19,6 +19,7 @@ def test_encoder_hides_recommended_keys_after_target_attempt() -> None:
                 "ok": True,
                 "target_generation": 1,
                 "target_attempts": 1,
+                "target_progress_seen": True,
                 "selection_rect": [1, 2, 3, 4, 5, 6],
                 "designatable_tiles": 6,
                 "show_recommended_keys": False,
@@ -35,6 +36,7 @@ def test_encoder_hides_recommended_keys_after_target_attempt() -> None:
     )
 
     assert "Fresh target recommended keys: hidden" in text
+    assert "already produced real tile progress" in text
     assert "D_DESIGNATE, DESIGNATE_STAIR_DOWN" not in text
     assert "last_action_work_delta=0" in text
     assert "do not repeat the same key sequence" in text
@@ -50,6 +52,7 @@ def test_encoder_shows_recommended_keys_for_fresh_target() -> None:
                 "ok": True,
                 "target_generation": 2,
                 "target_attempts": 0,
+                "target_progress_seen": False,
                 "selection_rect": [1, 2, 3, 4, 5, 6],
                 "designatable_tiles": 6,
                 "show_recommended_keys": True,
@@ -64,3 +67,33 @@ def test_encoder_shows_recommended_keys_for_fresh_target() -> None:
 
     assert "target refreshed after repeated no-progress actions" in text
     assert "Fresh target recommended keys: D_DESIGNATE, DESIGNATE_STAIR_DOWN" in text
+
+
+def test_encoder_shows_retry_recommended_keys_after_failed_attempt() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60},
+            "ui_target_setup": {
+                "ok": True,
+                "target_generation": 2,
+                "target_attempts": 1,
+                "target_progress_seen": False,
+                "selection_rect": [1, 2, 3, 4, 5, 6],
+                "designatable_tiles": 6,
+                "show_recommended_keys": True,
+                "recommended_keys_retry": True,
+                "recommended_keys": ["D_DESIGNATE", "DESIGNATE_STAIR_DOWN"],
+            },
+            "ui_work_feedback": {
+                "last_ui_work_progress_delta": 0,
+                "last_ui_excavation_delta": 0,
+                "no_progress_streak": 1,
+            },
+        },
+        screen_text="screen",
+    )
+
+    assert "Retry fresh target recommended keys: D_DESIGNATE, DESIGNATE_STAIR_DOWN" in text
+    assert "last_action_work_delta=0" in text

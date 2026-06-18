@@ -56,6 +56,7 @@ ASSISTED_PROGRESS_FIELDS = (
 UI_WORK_RADIUS = 7
 INVALID_DF_CURSOR = -30000
 UI_TARGET_REFRESH_NO_PROGRESS_STEPS = 2
+UI_TARGET_RECOMMENDED_KEY_RETRY_LIMIT = 2
 
 
 def _artifacts_root() -> Path:
@@ -162,18 +163,29 @@ def _ui_target_setup_for_observation(
     generation: int,
     attempts: int,
     no_progress_streak: int,
+    target_progress_seen: bool,
 ) -> Dict[str, Any]:
     setup = dict(target)
-    fresh = attempts == 0
+    show_recommended = (
+        attempts == 0
+        or (
+            not target_progress_seen
+            and attempts < UI_TARGET_RECOMMENDED_KEY_RETRY_LIMIT
+        )
+    )
     setup["target_generation"] = generation
     setup["target_attempts"] = attempts
     setup["no_progress_streak"] = no_progress_streak
-    setup["show_recommended_keys"] = fresh
-    if fresh:
+    setup["target_progress_seen"] = target_progress_seen
+    setup["recommended_key_retry_limit"] = UI_TARGET_RECOMMENDED_KEY_RETRY_LIMIT
+    setup["show_recommended_keys"] = show_recommended
+    if show_recommended:
         setup["recommended_keys_suppressed"] = False
+        setup["recommended_keys_retry"] = attempts > 0
     else:
         setup["recommended_keys"] = []
         setup["recommended_keys_suppressed"] = True
+        setup["recommended_keys_retry"] = False
     return setup
 
 
@@ -345,6 +357,7 @@ def run_once(
     ui_no_progress_streak = 0
     ui_last_work_progress = 0
     ui_last_excavation_progress = 0
+    ui_target_progress_seen = False
     ui_work_feedback: Dict[str, Any] = {}
 
     def publish_event(step: int, event_type: str, payload: Dict[str, Any], events: List[Dict[str, Any]]) -> None:
@@ -382,6 +395,7 @@ def run_once(
                         baseline_ui_work = None
                         ui_last_work_progress = 0
                         ui_last_excavation_progress = 0
+                        ui_target_progress_seen = False
                         ui_no_progress_streak = 0
                         ui_work_feedback = {
                             "target_refreshed": True,
@@ -425,6 +439,7 @@ def run_once(
                             generation=ui_target_generation,
                             attempts=ui_target_attempts,
                             no_progress_streak=ui_no_progress_streak,
+                            target_progress_seen=ui_target_progress_seen,
                         )
                     if ui_work_rect is None:
                         prepared_rect = None
@@ -599,6 +614,7 @@ def run_once(
                             generation=ui_target_generation,
                             attempts=ui_target_attempts,
                             no_progress_streak=ui_no_progress_streak,
+                            target_progress_seen=ui_target_progress_seen,
                         )
                 # Game stays paused - agent controls time
                 try:
@@ -681,6 +697,7 @@ def run_once(
                     action_accepted = bool(execute_result.get("accepted", False))
                     if action.get("type") == "KEYSTROKE" and action_accepted:
                         if ui_step_work_progress > 0:
+                            ui_target_progress_seen = True
                             ui_no_progress_streak = 0
                             ui_work_feedback = {
                                 "last_ui_work_progress_delta": ui_step_work_progress,
@@ -706,6 +723,7 @@ def run_once(
                     metrics_snapshot["ui_no_progress_streak"] = ui_no_progress_streak
                     metrics_snapshot["ui_target_generation"] = ui_target_generation
                     metrics_snapshot["ui_target_attempts"] = ui_target_attempts
+                    metrics_snapshot["ui_target_progress_seen"] = ui_target_progress_seen
                 utility_action = metrics.utility_action_progress(action, execute_result)
                 metrics_snapshot.update(utility_action)
                 metrics_snapshot["utility_progress"] = max(

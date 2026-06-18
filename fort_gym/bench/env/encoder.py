@@ -220,12 +220,26 @@ def encode_observation(
         recommended_keys = ui_target_setup.get("recommended_keys")
         show_recommended = bool(ui_target_setup.get("show_recommended_keys", True))
         if show_recommended and isinstance(recommended_keys, list) and recommended_keys:
+            prefix = (
+                "Retry fresh target recommended keys: "
+                if ui_target_setup.get("recommended_keys_retry")
+                else "Fresh target recommended keys: "
+            )
             status_lines.append(
-                "Fresh target recommended keys: " + ", ".join(str(key) for key in recommended_keys)
+                prefix + ", ".join(str(key) for key in recommended_keys)
             )
         elif ui_target_setup.get("recommended_keys_suppressed"):
+            if ui_target_setup.get("target_progress_seen"):
+                reason = "this target already produced real tile progress."
+            elif ui_target_setup.get("target_attempts", 0) >= ui_target_setup.get(
+                "recommended_key_retry_limit",
+                0,
+            ):
+                reason = "the bounded retry limit was reached."
+            else:
+                reason = "this target was already attempted."
             status_lines.append(
-                "Fresh target recommended keys: hidden because this target was already attempted."
+                "Fresh target recommended keys: hidden because " + reason
             )
 
     if risks:

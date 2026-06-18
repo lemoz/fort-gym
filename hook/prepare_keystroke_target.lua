@@ -69,9 +69,9 @@ local function candidate_payload(x1, y1, z, count, source, designation_key)
   df.global.window_x = window_x
   df.global.window_y = window_y
   df.global.window_z = z
-  df.global.cursor.x = -30000
-  df.global.cursor.y = -30000
-  df.global.cursor.z = -30000
+  df.global.cursor.x = window_x + 11
+  df.global.cursor.y = window_y + 11
+  df.global.cursor.z = z
 
   return {
     ok = true,
