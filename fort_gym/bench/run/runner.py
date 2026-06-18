@@ -358,6 +358,9 @@ def run_once(
     ui_last_work_progress = 0
     ui_last_excavation_progress = 0
     ui_target_progress_seen = False
+    ui_run_work_progress = 0
+    ui_run_excavation_progress = 0
+    ui_successful_targets = 0
     ui_work_feedback: Dict[str, Any] = {}
 
     def publish_event(step: int, event_type: str, payload: Dict[str, Any], events: List[Dict[str, Any]]) -> None:
@@ -457,6 +460,11 @@ def run_once(
                             baseline_ui_work = dict(ui_work_before)
                     if ui_work_feedback:
                         state_before["ui_work_feedback"] = dict(ui_work_feedback)
+                    state_before["ui_run_progress"] = {
+                        "total_work_delta": ui_run_work_progress,
+                        "total_excavation_delta": ui_run_excavation_progress,
+                        "successful_targets": ui_successful_targets,
+                    }
                 if baseline_work is None:
                     work_snapshot = state_before.get("work")
                     baseline_work = dict(work_snapshot) if isinstance(work_snapshot, dict) else {}
@@ -697,7 +705,11 @@ def run_once(
                     action_accepted = bool(execute_result.get("accepted", False))
                     if action.get("type") == "KEYSTROKE" and action_accepted:
                         if ui_step_work_progress > 0:
+                            if not ui_target_progress_seen:
+                                ui_successful_targets += 1
                             ui_target_progress_seen = True
+                            ui_run_work_progress += ui_step_work_progress
+                            ui_run_excavation_progress += ui_step_excavation_progress
                             ui_no_progress_streak = 0
                             ui_work_feedback = {
                                 "last_ui_work_progress_delta": ui_step_work_progress,
@@ -724,6 +736,9 @@ def run_once(
                     metrics_snapshot["ui_target_generation"] = ui_target_generation
                     metrics_snapshot["ui_target_attempts"] = ui_target_attempts
                     metrics_snapshot["ui_target_progress_seen"] = ui_target_progress_seen
+                    metrics_snapshot["ui_run_work_progress"] = ui_run_work_progress
+                    metrics_snapshot["ui_run_excavation_progress"] = ui_run_excavation_progress
+                    metrics_snapshot["ui_successful_targets"] = ui_successful_targets
                 utility_action = metrics.utility_action_progress(action, execute_result)
                 metrics_snapshot.update(utility_action)
                 metrics_snapshot["utility_progress"] = max(

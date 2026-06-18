@@ -97,3 +97,23 @@ def test_encoder_shows_retry_recommended_keys_after_failed_attempt() -> None:
 
     assert "Retry fresh target recommended keys: D_DESIGNATE, DESIGNATE_STAIR_DOWN" in text
     assert "last_action_work_delta=0" in text
+
+
+def test_encoder_shows_build_phase_after_enough_ui_excavation() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60},
+            "ui_run_progress": {
+                "total_work_delta": 12,
+                "total_excavation_delta": 10,
+                "successful_targets": 2,
+            },
+        },
+        screen_text="screen",
+    )
+
+    assert "Live UI run progress: total_work_delta=12" in text
+    assert "Live UI phase: enough starter digging exists" in text
+    assert "Try D_BUILDING" in text

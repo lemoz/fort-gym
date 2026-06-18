@@ -92,6 +92,11 @@ def encode_observation(
         if isinstance(clean_state.get("ui_work_feedback"), dict)
         else {}
     )
+    ui_run_progress = (
+        clean_state.get("ui_run_progress")
+        if isinstance(clean_state.get("ui_run_progress"), dict)
+        else {}
+    )
 
     # Build status section
     status_lines = []
@@ -209,6 +214,22 @@ def encode_observation(
                     "Live UI feedback: the last action changed no tracked tiles; "
                     "do not repeat the same key sequence unless a fresh target is shown."
                 )
+    if ui_run_progress:
+        total_work_delta = int(ui_run_progress.get("total_work_delta") or 0)
+        total_excavation_delta = int(ui_run_progress.get("total_excavation_delta") or 0)
+        successful_targets = int(ui_run_progress.get("successful_targets") or 0)
+        status_lines.append(
+            "Live UI run progress: "
+            f"total_work_delta={total_work_delta}, "
+            f"total_excavation_delta={total_excavation_delta}, "
+            f"successful_targets={successful_targets}"
+        )
+        if total_excavation_delta >= 10 or successful_targets >= 2:
+            status_lines.append(
+                "Live UI phase: enough starter digging exists; stop using only dig "
+                "actions. Try D_BUILDING for construction, or acquire material first "
+                "if the build screen says material is missing."
+            )
     if ui_target_setup.get("ok"):
         status_lines.append(
             "Live UI setup: "
