@@ -84,12 +84,14 @@ IMPORTANT: The main menu (showing options like "d: Designations", "b: Building")
 
 **DO SOMETHING CONSTRUCTIVE EACH TURN:**
 1. **Dig more space**: D_DESIGNATE → DESIGNATE_DIG → select area with CURSOR + SELECT
-2. **Build workshops/furniture**: D_BUILDJOB → select building type
+2. **Build workshops/furniture**: D_BUILDING → select building type
 3. **Create stockpiles**: D_STOCKPILES → define storage area
 
 **DON'T waste turns just looking around.** The observation already includes status, food, drink, population, and the current screen. Do NOT press z/status/announcements/reports in the opening turns.
 
 If you're unsure what to do, **ALWAYS dig**. Designate a small 3x3 mining area - it's always useful.
+If a construction screen says `Needs building material`, acquire material first; do not
+retry the same build placement until wood or stone is available.
 
 **FRESH TARGET RULE:** If status includes `Fresh target recommended keys` or
 `Retry fresh target recommended keys`, copy those keys exactly. This harness starts the
@@ -154,7 +156,8 @@ Example: If you see "a - Finish conversation", send STRING_A097 to press 'a'.
 
 ### Main Menus (press from main view)
 - D_DESIGNATE - Open designate menu (d key)
-- D_BUILDJOB - Open build menu (b key)
+- D_BUILDING - Open building construction menu (b key)
+- D_BUILDJOB - Inspect/manage a nearby existing building; this is NOT the construction menu
 - D_STOCKPILES - Open stockpiles menu (p key)
 - D_ZONES - Open zones menu (i key)
 - D_ORDERS - Open standing orders (o key)
@@ -166,6 +169,11 @@ Example: If you see "a - Finish conversation", send STRING_A097 to press 'a'.
 - DESIGNATE_STAIR_UP - Upward staircase (u key)
 - DESIGNATE_RAMP - Ramp (r key)
 - DESIGNATE_CHOP - Chop trees (t key)
+
+### Building Construction (after D_BUILDING)
+- HOTKEY_BUILDING_WORKSHOP - Workshop category
+- HOTKEY_BUILDING_WORKSHOP_CARPENTER - Carpenter's workshop
+- Example carpenter workshop path: D_BUILDING, HOTKEY_BUILDING_WORKSHOP, HOTKEY_BUILDING_WORKSHOP_CARPENTER, SELECT
 
 ## How to Dig
 1. Press D_DESIGNATE to open designate menu

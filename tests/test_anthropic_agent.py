@@ -119,6 +119,8 @@ def test_anthropic_agent_records_usage_event(monkeypatch) -> None:
 def test_keystroke_prompt_is_action_first() -> None:
     assert "FRESH TARGET RULE" in KEYSTROKE_SYSTEM_PROMPT
     assert "D_DESIGNATE" in KEYSTROKE_SYSTEM_PROMPT
+    assert "D_BUILDING" in KEYSTROKE_SYSTEM_PROMPT
+    assert "HOTKEY_BUILDING_WORKSHOP_CARPENTER" in KEYSTROKE_SYSTEM_PROMPT
     assert "advance_ticks\": 500" in KEYSTROKE_SYSTEM_PROMPT
     assert "Do not" in KEYSTROKE_SYSTEM_PROMPT
     assert "repeat the same key sequence" in KEYSTROKE_SYSTEM_PROMPT

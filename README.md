@@ -137,7 +137,7 @@ curl -s -X POST http://127.0.0.1:8000/runs \
 Common interface keys include:
 - **Navigation**: `CURSOR_UP`, `CURSOR_DOWN`, `CURSOR_LEFT`, `CURSOR_RIGHT`, `CURSOR_UP_Z`, `CURSOR_DOWN_Z`
 - **Selection**: `SELECT`, `DESELECT`, `LEAVESCREEN`
-- **Main Menus**: `D_DESIGNATE`, `D_BUILDJOB`, `D_STOCKPILES`, `D_ZONES`, `D_ORDERS`
+- **Main Menus**: `D_DESIGNATE`, `D_BUILDING`, `D_BUILDJOB`, `D_STOCKPILES`, `D_ZONES`, `D_ORDERS`
 - **Designate**: `DESIGNATE_DIG`, `DESIGNATE_CHANNEL`, `DESIGNATE_STAIR_DOWN`, `DESIGNATE_CHOP`
 
 Full list of 1600+ keys available via: `dfhack-run lua "@df.interface_key"`
