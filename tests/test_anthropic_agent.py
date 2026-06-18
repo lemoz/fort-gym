@@ -7,6 +7,7 @@ from fort_gym.bench.agent.llm_anthropic import (
     AnthropicActionAgent,
     AnthropicDigFirstAgent,
     AnthropicFortressPlanAgent,
+    AnthropicKeystrokeAgent,
     DIG_FIRST_SYSTEM_PROMPT,
     FORTRESS_PLAN_SYSTEM_PROMPT,
     KEYSTROKE_SYSTEM_PROMPT,
@@ -45,6 +46,26 @@ class _FakeAnthropicClient:
         self.api_key = api_key
         self.messages = _FakeMessages()
         _FakeAnthropicClient.last_instance = self
+
+
+class _SequencedMessages:
+    def __init__(self, responses: list[Any]) -> None:
+        self.requests: list[dict[str, Any]] = []
+        self._responses = responses
+
+    def create(self, **kwargs: Any) -> Any:
+        self.requests.append(kwargs)
+        return self._responses.pop(0)
+
+
+class _SequencedAnthropicClient:
+    last_instance: "_SequencedAnthropicClient | None" = None
+    responses: list[Any] = []
+
+    def __init__(self, api_key: str) -> None:
+        self.api_key = api_key
+        self.messages = _SequencedMessages(list(self.responses))
+        _SequencedAnthropicClient.last_instance = self
 
 
 def test_anthropic_default_model_tracks_current_sonnet(monkeypatch) -> None:
@@ -99,6 +120,78 @@ def test_keystroke_prompt_is_action_first() -> None:
     assert "FIRST ACTION RULE" in KEYSTROKE_SYSTEM_PROMPT
     assert "D_DESIGNATE" in KEYSTROKE_SYSTEM_PROMPT
     assert "advance_ticks\": 500" in KEYSTROKE_SYSTEM_PROMPT
+
+
+def test_keystroke_retry_pairs_invalid_tool_use_with_tool_result(monkeypatch) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.delenv("ANTHROPIC_MODEL", raising=False)
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    _SequencedAnthropicClient.responses = [
+        SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="submit_action",
+                    id="toolu_bad",
+                    input={
+                        "type": "WAIT",
+                        "params": {},
+                        "intent": "invalid wait",
+                        "advance_ticks": 0,
+                    },
+                )
+            ],
+            usage=SimpleNamespace(input_tokens=10, output_tokens=2),
+        ),
+        SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="submit_action",
+                    id="toolu_good",
+                    input={
+                        "type": "KEYSTROKE",
+                        "params": {"keys": ["LEAVESCREEN"]},
+                        "intent": "recover",
+                        "advance_ticks": 0,
+                    },
+                )
+            ],
+            usage=SimpleNamespace(input_tokens=12, output_tokens=3),
+        ),
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "anthropic"
+        return SimpleNamespace(Anthropic=_SequencedAnthropicClient)
+
+    monkeypatch.setattr(
+        "fort_gym.bench.agent.llm_anthropic.import_module",
+        fake_import_module,
+    )
+
+    try:
+        agent = AnthropicKeystrokeAgent()
+        action = agent.decide("mock screen", {})
+    finally:
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["type"] == "KEYSTROKE"
+    assert _SequencedAnthropicClient.last_instance is not None
+    requests = _SequencedAnthropicClient.last_instance.messages.requests
+    assert len(requests) == 2
+    retry_messages = requests[1]["messages"]
+    assert retry_messages[1]["role"] == "assistant"
+    assert retry_messages[2] == {
+        "role": "user",
+        "content": [
+            {
+                "type": "tool_result",
+                "tool_use_id": "toolu_bad",
+                "content": "You must return a KEYSTROKE action.",
+            }
+        ],
+    }
 
 
 def test_dig_first_prompt_uses_structured_control() -> None:

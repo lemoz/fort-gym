@@ -464,6 +464,45 @@ class AnthropicKeystrokeAgent(Agent):
         ]
         tools = [KEYSTROKE_ANTHROPIC_TOOL, *self._tool_manager.tool_specs()]
 
+        def append_tool_retry(response_content: Any, tool_results: List[Dict[str, Any]]) -> None:
+            messages.append({"role": "assistant", "content": response_content})
+            messages.append({"role": "user", "content": tool_results})
+
+        def tool_result(tool_use: Any, content: str) -> Dict[str, Any]:
+            return {
+                "type": "tool_result",
+                "tool_use_id": tool_use.id,
+                "content": content,
+            }
+
+        def tool_results_for_retry(tool_uses: List[Any], submit_error: str) -> List[Dict[str, Any]]:
+            results = []
+            for tool_use in tool_uses:
+                if tool_use.name == "submit_action":
+                    results.append(tool_result(tool_use, submit_error))
+                    continue
+                tool_input = tool_use.input or {}
+                question = tool_input.get("question", "")
+                if not isinstance(question, str):
+                    question = str(question)
+                result = self._tool_manager.query(tool_use.name, question)
+                self._tool_events.append(
+                    {
+                        "tool": tool_use.name,
+                        "input": tool_input,
+                        "output": result,
+                    }
+                )
+                results.append(tool_result(tool_use, result))
+            if not results:
+                results.append(
+                    {
+                        "type": "text",
+                        "text": submit_error,
+                    }
+                )
+            return results
+
         for _ in range(5):
             self._rate_limit()
             client = self._client_instance()
@@ -487,10 +526,9 @@ class AnthropicKeystrokeAgent(Agent):
             tool_uses = []
             for item in response.content:
                 if item.type == "tool_use":
+                    tool_uses.append(item)
                     if item.name == "submit_action":
                         tool_payload = item.input
-                    else:
-                        tool_uses.append(item)
 
             if tool_payload is not None:
                 # Validate it's a KEYSTROKE action
@@ -498,12 +536,9 @@ class AnthropicKeystrokeAgent(Agent):
                     last_error = ValueError(
                         f"Expected KEYSTROKE action, got {tool_payload.get('type')}"
                     )
-                    messages.append({"role": "assistant", "content": response.content})
-                    messages.append(
-                        {
-                            "role": "user",
-                            "content": [{"type": "text", "text": "You must return a KEYSTROKE action."}],
-                        }
+                    append_tool_retry(
+                        response.content,
+                        tool_results_for_retry(tool_uses, "You must return a KEYSTROKE action."),
                     )
                     continue
 
@@ -511,17 +546,12 @@ class AnthropicKeystrokeAgent(Agent):
                 keys = params.get("keys", [])
                 if not keys or not isinstance(keys, list):
                     last_error = ValueError("KEYSTROKE action must have non-empty keys list")
-                    messages.append({"role": "assistant", "content": response.content})
-                    messages.append(
-                        {
-                            "role": "user",
-                            "content": [
-                                {
-                                    "type": "text",
-                                    "text": "KEYSTROKE action requires a non-empty keys list.",
-                                }
-                            ],
-                        }
+                    append_tool_retry(
+                        response.content,
+                        tool_results_for_retry(
+                            tool_uses,
+                            "KEYSTROKE action requires a non-empty keys list.",
+                        ),
                     )
                     continue
 
@@ -529,17 +559,12 @@ class AnthropicKeystrokeAgent(Agent):
                     action = parse_action(tool_payload)
                 except ValueError as exc:
                     last_error = exc
-                    messages.append({"role": "assistant", "content": response.content})
-                    messages.append(
-                        {
-                            "role": "user",
-                            "content": [
-                                {
-                                    "type": "text",
-                                    "text": f"Previous response invalid ({exc}). Provide valid KEYSTROKE action.",
-                                }
-                            ],
-                        }
+                    append_tool_retry(
+                        response.content,
+                        tool_results_for_retry(
+                            tool_uses,
+                            f"Previous response invalid ({exc}). Provide valid KEYSTROKE action.",
+                        ),
                     )
                     continue
 
@@ -548,30 +573,13 @@ class AnthropicKeystrokeAgent(Agent):
                 return action
 
             if tool_uses:
-                messages.append({"role": "assistant", "content": response.content})
-                tool_results = []
-                for tool_use in tool_uses:
-                    tool_input = tool_use.input or {}
-                    question = tool_input.get("question", "")
-                    if not isinstance(question, str):
-                        question = str(question)
-                    result = self._tool_manager.query(tool_use.name, question)
-                    self._tool_events.append(
-                        {
-                            "tool": tool_use.name,
-                            "input": tool_input,
-                            "output": result,
-                        }
-                    )
-                    tool_results.append(
-                        {
-                            "type": "tool_result",
-                            "tool_use_id": tool_use.id,
-                            "content": result,
-                        }
-                    )
-
-                messages.append({"role": "user", "content": tool_results})
+                append_tool_retry(
+                    response.content,
+                    tool_results_for_retry(
+                        tool_uses,
+                        "Use submit_action with a KEYSTROKE action.",
+                    ),
+                )
                 continue
 
             last_error = ValueError("Model did not return an action")
