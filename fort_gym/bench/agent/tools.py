@@ -6,6 +6,8 @@ import re
 from dataclasses import dataclass
 from typing import Any, Dict, List, Sequence
 
+from .memory import MemoryManager
+
 
 _WORD_RE = re.compile(r"[a-z0-9]+")
 _SENTENCE_RE = re.compile(r"(?<=[.!?])\s+")
@@ -103,6 +105,88 @@ DF_WIKI_TOOL_SPEC: Dict[str, Any] = {
     },
 }
 
+REMEMBER_POI_TOOL_SPEC: Dict[str, Any] = {
+    "name": "remember_poi",
+    "description": (
+        "Remember a Dwarf Fortress point of interest that you discovered, such as "
+        "a building, dwarf cluster, resource patch, stair, room, or blocked area."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "label": {"type": "string", "description": "Short human-readable name."},
+            "kind": {
+                "type": "string",
+                "description": "POI category, e.g. building, unit, resource, room, blocked_tile.",
+            },
+            "x": {"type": "integer", "description": "Map x coordinate, if known."},
+            "y": {"type": "integer", "description": "Map y coordinate, if known."},
+            "z": {"type": "integer", "description": "Map z coordinate, if known."},
+            "status": {
+                "type": "string",
+                "description": "Current known status, e.g. built, queued, blocked, visible.",
+            },
+            "evidence": {
+                "type": "string",
+                "description": "Brief evidence from screen or read-only state.",
+            },
+        },
+        "required": ["label"],
+    },
+}
+
+REMEMBER_FAILED_ATTEMPT_TOOL_SPEC: Dict[str, Any] = {
+    "name": "remember_failed_attempt",
+    "description": (
+        "Remember an attempted placement/navigation/menu action that did not change "
+        "tracked DF state so you can avoid repeating it."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "label": {"type": "string", "description": "Short name for the failed attempt."},
+            "reason": {"type": "string", "description": "Why this attempt appears unproductive."},
+            "x": {"type": "integer", "description": "Map x coordinate, if known."},
+            "y": {"type": "integer", "description": "Map y coordinate, if known."},
+            "z": {"type": "integer", "description": "Map z coordinate, if known."},
+            "evidence": {"type": "string", "description": "Brief evidence from screen or state."},
+        },
+        "required": ["label"],
+    },
+}
+
+QUERY_MEMORY_TOOL_SPEC: Dict[str, Any] = {
+    "name": "query_memory",
+    "description": (
+        "Search your remembered POIs and failed attempts before retrying navigation, "
+        "placement, or inspection work."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "query": {"type": "string", "description": "Search text."},
+            "kind": {"type": "string", "description": "Optional POI category filter."},
+            "near": {
+                "type": "array",
+                "description": "Optional [x, y, z] coordinate to search near.",
+                "items": {"type": "integer"},
+                "minItems": 3,
+                "maxItems": 3,
+            },
+            "include_failed": {
+                "type": "boolean",
+                "description": "Whether to include failed attempts in the result.",
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum entries to return.",
+                "minimum": 1,
+                "maximum": 10,
+            },
+        },
+    },
+}
+
 
 class DFWikiTool:
     """Search embedded DF wiki excerpts for gameplay guidance."""
@@ -146,15 +230,23 @@ class DFWikiTool:
 class ToolManager:
     """Load and query agent tools."""
 
-    def __init__(self, enabled_tools: Sequence[str]) -> None:
+    def __init__(
+        self,
+        enabled_tools: Sequence[str],
+        *,
+        memory: MemoryManager | None = None,
+    ) -> None:
         self._enabled_tools = list(enabled_tools)
+        self._memory = memory
         self.tools = self._load_tools(self._enabled_tools)
 
-    def _load_tools(self, enabled_tools: Sequence[str]) -> Dict[str, DFWikiTool]:
-        tools: Dict[str, DFWikiTool] = {}
+    def _load_tools(self, enabled_tools: Sequence[str]) -> Dict[str, DFWikiTool | None]:
+        tools: Dict[str, DFWikiTool | None] = {}
         for name in enabled_tools:
             if name == DFWikiTool.name:
                 tools[name] = DFWikiTool()
+            elif name in {"remember_poi", "remember_failed_attempt", "query_memory"}:
+                tools[name] = None
             else:
                 raise ValueError(f"Unknown tool: {name}")
         return tools
@@ -162,10 +254,61 @@ class ToolManager:
     def tool_specs(self) -> List[Dict[str, Any]]:
         specs: List[Dict[str, Any]] = []
         for name in self._enabled_tools:
-            tool = self.tools.get(name)
-            if tool:
-                specs.append(tool.tool_spec)
+            if name == "remember_poi":
+                specs.append(REMEMBER_POI_TOOL_SPEC)
+            elif name == "remember_failed_attempt":
+                specs.append(REMEMBER_FAILED_ATTEMPT_TOOL_SPEC)
+            elif name == "query_memory":
+                specs.append(QUERY_MEMORY_TOOL_SPEC)
+            else:
+                tool = self.tools.get(name)
+                if tool:
+                    specs.append(tool.tool_spec)
         return specs
+
+    def handle(self, tool_name: str, tool_input: Dict[str, Any]) -> str:
+        if tool_name == "remember_poi":
+            if self._memory is None:
+                return "Memory tool unavailable."
+            return self._memory.remember_poi(
+                label=str(tool_input.get("label", "")),
+                kind=str(tool_input.get("kind", "")),
+                x=tool_input.get("x"),
+                y=tool_input.get("y"),
+                z=tool_input.get("z"),
+                status=str(tool_input.get("status", "")),
+                evidence=str(tool_input.get("evidence", "")),
+            )
+        if tool_name == "remember_failed_attempt":
+            if self._memory is None:
+                return "Memory tool unavailable."
+            return self._memory.remember_failed_attempt(
+                label=str(tool_input.get("label", "")),
+                reason=str(tool_input.get("reason", "")),
+                x=tool_input.get("x"),
+                y=tool_input.get("y"),
+                z=tool_input.get("z"),
+                evidence=str(tool_input.get("evidence", "")),
+            )
+        if tool_name == "query_memory":
+            if self._memory is None:
+                return "Memory tool unavailable."
+            near = tool_input.get("near")
+            return self._memory.query_memory(
+                query=str(tool_input.get("query", "")),
+                kind=str(tool_input.get("kind", "")),
+                near=near if isinstance(near, list) else None,
+                include_failed=bool(tool_input.get("include_failed", True)),
+                limit=int(tool_input.get("limit") or 5),
+            )
+
+        tool = self.tools.get(tool_name)
+        if tool is None:
+            return f"Unknown tool: {tool_name}"
+        question = tool_input.get("question", "")
+        if not isinstance(question, str):
+            question = str(question)
+        return tool.query(question)
 
     def query(self, tool_name: str, query: str) -> str:
         tool = self.tools.get(tool_name)
@@ -174,4 +317,12 @@ class ToolManager:
         return tool.query(query)
 
 
-__all__ = ["DFWikiTool", "ToolManager", "WikiDoc", "DF_WIKI_TOOL_SPEC"]
+__all__ = [
+    "DFWikiTool",
+    "ToolManager",
+    "WikiDoc",
+    "DF_WIKI_TOOL_SPEC",
+    "QUERY_MEMORY_TOOL_SPEC",
+    "REMEMBER_FAILED_ATTEMPT_TOOL_SPEC",
+    "REMEMBER_POI_TOOL_SPEC",
+]

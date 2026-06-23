@@ -54,6 +54,47 @@ def _compute_screen_diff(prev: str, curr: str) -> Dict[str, Any]:
     }
 
 
+def _format_key_preview(keys: Any, limit: int = 5) -> str:
+    if not isinstance(keys, list):
+        return ""
+    preview = keys[:limit]
+    keys_str = ", ".join(str(key) for key in preview)
+    if len(keys) > limit:
+        keys_str += f"... (+{len(keys) - limit} more)"
+    return keys_str
+
+
+def _format_action_history_entry(action_entry: Dict[str, Any]) -> str:
+    step_num = action_entry.get("step", "?")
+    intent = action_entry.get("intent", "no intent")
+    keys_str = _format_key_preview(action_entry.get("keys", []))
+    requested_ticks = action_entry.get(
+        "requested_ticks",
+        action_entry.get("advance_ticks", 0),
+    )
+    actual_ticks = action_entry.get("actual_ticks")
+    accepted = action_entry.get("accepted")
+    outcome = action_entry.get("outcome")
+    changed = action_entry.get("changed")
+    reasons = action_entry.get("productive_reasons")
+
+    details = [f"requested={requested_ticks}t"]
+    if actual_ticks is not None:
+        details.append(f"actual={actual_ticks}t")
+    if accepted is not None:
+        details.append("accepted=yes" if accepted else "accepted=no")
+    if outcome:
+        details.append(f"outcome={outcome}")
+    if isinstance(reasons, list) and reasons:
+        details.append("reasons=" + ",".join(str(reason) for reason in reasons[:4]))
+    if isinstance(changed, list):
+        details.append(
+            "changed=" + (", ".join(str(item) for item in changed[:6]) if changed else "none")
+        )
+
+    return f"  Step {step_num}: {intent} -> [{keys_str}] ({'; '.join(details)})"
+
+
 def encode_observation(
     state: Dict[str, Any],
     screen_text: Optional[str] = None,
@@ -331,18 +372,8 @@ def encode_observation(
         if action_history:
             history_lines = []
             for a in action_history:
-                step_num = a.get("step", "?")
-                intent = a.get("intent", "no intent")
-                keys = a.get("keys", [])
-                ticks_advanced = a.get("advance_ticks", 0)
-                # Show first few keys to keep it concise
-                keys_preview = keys[:5] if len(keys) > 5 else keys
-                keys_str = ", ".join(keys_preview)
-                if len(keys) > 5:
-                    keys_str += f"... (+{len(keys) - 5} more)"
-                time_str = f"+{ticks_advanced}t" if ticks_advanced > 0 else "paused"
-                history_lines.append(f"  Step {step_num}: {intent} → [{keys_str}] ({time_str})")
-            summary_text += f"\n\n== RECENT ACTIONS ==\n" + "\n".join(history_lines)
+                history_lines.append(_format_action_history_entry(a))
+            summary_text += f"\n\n== RECENT ACTION OUTCOMES ==\n" + "\n".join(history_lines)
     else:
         # Original format for toolbox mode
         bullets = [f"- {line}" for line in status_lines]

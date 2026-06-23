@@ -127,6 +127,137 @@ def _available_building_materials(state: Dict[str, Any]) -> int:
     return max(0, wood) + max(0, stone)
 
 
+def _dict_delta(before: Dict[str, Any], after: Dict[str, Any], key: str) -> int:
+    before_value = _int_or_none(before.get(key)) or 0
+    after_value = _int_or_none(after.get(key)) or 0
+    return after_value - before_value
+
+
+def _format_delta(name: str, delta: int) -> str:
+    sign = "+" if delta > 0 else ""
+    return f"{name}:{sign}{delta}"
+
+
+def _append_delta(
+    changed: List[str],
+    productive_reasons: List[str],
+    *,
+    name: str,
+    delta: int,
+    positive_reason: str | None = None,
+) -> None:
+    if delta == 0:
+        return
+    changed.append(_format_delta(name, delta))
+    if delta > 0 and positive_reason:
+        productive_reasons.append(positive_reason)
+
+
+def _keystroke_action_history_entry(
+    *,
+    step: int,
+    action: Dict[str, Any],
+    requested_ticks: Any,
+    tick_info: Dict[str, Any],
+    execute_result: Dict[str, Any],
+    state_before: Dict[str, Any],
+    advance_state: Dict[str, Any],
+    metrics_snapshot: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Build a compact factual outcome row for the next model observation."""
+
+    before_work = state_before.get("work") if isinstance(state_before.get("work"), dict) else {}
+    after_work = advance_state.get("work") if isinstance(advance_state.get("work"), dict) else {}
+    before_stocks = (
+        state_before.get("stocks") if isinstance(state_before.get("stocks"), dict) else {}
+    )
+    after_stocks = (
+        advance_state.get("stocks") if isinstance(advance_state.get("stocks"), dict) else {}
+    )
+
+    changed: List[str] = []
+    productive_reasons: List[str] = []
+
+    ui_step_work = int(metrics_snapshot.get("ui_step_work_progress") or 0)
+    ui_step_excavation = int(metrics_snapshot.get("ui_step_excavation_progress") or 0)
+    ui_step_material = int(metrics_snapshot.get("ui_step_material_progress") or 0)
+    _append_delta(
+        changed,
+        productive_reasons,
+        name="ui_work",
+        delta=ui_step_work,
+        positive_reason="map_tiles_changed",
+    )
+    if ui_step_excavation > 0:
+        productive_reasons.append("excavation_progress")
+    _append_delta(
+        changed,
+        productive_reasons,
+        name="building_materials",
+        delta=ui_step_material,
+        positive_reason="material_acquired",
+    )
+
+    for key, reason in (
+        ("wood", "wood_stock_changed"),
+        ("stone", "stone_stock_changed"),
+    ):
+        _append_delta(
+            changed,
+            productive_reasons,
+            name=key,
+            delta=_dict_delta(before_stocks, after_stocks, key),
+            positive_reason=reason,
+        )
+
+    for key, reason in (
+        ("target_dig_designations", "dig_designated"),
+        ("target_floor_tiles", "target_tiles_dug"),
+        ("fortress_connector_floor_tiles", "connector_advanced"),
+        ("fortress_workshop_room_floor_tiles", "workshop_room_advanced"),
+        ("fortress_complexity_spaces_completed", "planned_space_completed"),
+        ("manager_orders_count", "manager_order_created"),
+        ("manager_orders_amount_left", "manager_order_quantity_added"),
+        ("carpenter_workshops", "carpenter_workshop_created"),
+        ("workshop_count", "workshop_created_or_queued"),
+        ("active_jobs", "jobs_started"),
+        ("active_dig_jobs", "dig_jobs_started"),
+    ):
+        _append_delta(
+            changed,
+            productive_reasons,
+            name=key,
+            delta=_dict_delta(before_work, after_work, key),
+            positive_reason=reason,
+        )
+
+    # Keep first occurrence of each reason while preserving order.
+    productive_reasons = list(dict.fromkeys(productive_reasons))
+    actual_ticks = int(tick_info.get("ticks_advanced") or 0)
+    accepted = bool(execute_result.get("accepted", execute_result.get("ok", False)))
+    if not accepted:
+        outcome = "rejected"
+    elif productive_reasons:
+        outcome = "gameplay_state_changed"
+    elif actual_ticks > 0:
+        outcome = "advanced_ticks_without_tracked_state_change"
+    else:
+        outcome = "keys_sent_without_tracked_state_change"
+
+    return {
+        "step": step,
+        "keys": action.get("params", {}).get("keys", []),
+        "intent": action.get("intent", ""),
+        "advance_ticks": action.get("advance_ticks", requested_ticks),
+        "requested_ticks": requested_ticks,
+        "actual_ticks": actual_ticks,
+        "accepted": accepted,
+        "outcome": outcome,
+        "productive_reasons": productive_reasons,
+        "changed": changed,
+    }
+
+
 def _desired_keystroke_target_mode(
     state: Dict[str, Any],
     *,
@@ -397,6 +528,7 @@ def run_once(
     previous_state: Optional[Dict[str, Any]] = None
     baseline_work: Optional[Dict[str, Any]] = None
     action_history: List[Dict[str, Any]] = []  # Track recent actions for keystroke mode memory
+    action_history_limit = max(0, int(settings.KEYSTROKE_ACTION_HISTORY_LIMIT))
     last_action_result: Optional[Dict[str, Any]] = None  # Track previous action result for feedback
     previous_screen = None  # Track previous screen for diff feedback (no type annotation for nonlocal)
     assisted_dfhack_action_seen = False
@@ -701,18 +833,6 @@ def run_once(
                 ):
                     ui_target_attempts += 1
 
-                # Track action for history (keystroke mode memory)
-                if is_keystroke_mode:
-                    action_history.append({
-                        "step": step,
-                        "keys": action.get("params", {}).get("keys", []),
-                        "intent": action.get("intent", ""),
-                        "advance_ticks": action.get("advance_ticks", ticks),
-                    })
-                    # Keep only last 5 actions
-                    if len(action_history) > 5:
-                        action_history.pop(0)
-
                 # Use agent-requested ticks, falling back to default if not specified
                 requested_ticks = action.get("advance_ticks", ticks)
                 try:
@@ -873,6 +993,21 @@ def run_once(
                     int(metrics_snapshot.get("utility_progress") or 0),
                     int(utility_action.get("utility_action_progress") or 0),
                 )
+                if is_keystroke_mode and action_history_limit > 0:
+                    action_history.append(
+                        _keystroke_action_history_entry(
+                            step=step,
+                            action=action,
+                            requested_ticks=requested_ticks,
+                            tick_info=tick_info_state,
+                            execute_result=execute_result,
+                            state_before=state_before,
+                            advance_state=advance_state,
+                            metrics_snapshot=metrics_snapshot,
+                        )
+                    )
+                    if len(action_history) > action_history_limit:
+                        del action_history[:-action_history_limit]
                 score_elapsed_ticks = elapsed_ticks_total
                 if assisted_dfhack_action_seen:
                     _zero_assisted_dfhack_progress(metrics_snapshot)

@@ -236,3 +236,46 @@ def test_encoder_surfaces_build_material_blocker() -> None:
 
     assert "visible build screen says material is missing" in text
     assert "acquire logs or stone" in text
+
+
+def test_encoder_renders_recent_action_outcomes() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 3, "stone": 0},
+        },
+        screen_text="screen",
+        action_history=[
+            {
+                "step": 12,
+                "intent": "place workshop",
+                "keys": ["STRING_A099", "SELECT"],
+                "requested_ticks": 200,
+                "actual_ticks": 206,
+                "accepted": True,
+                "outcome": "gameplay_state_changed",
+                "productive_reasons": ["carpenter_workshop_created"],
+                "changed": ["carpenter_workshops:+1", "wood:-1"],
+            },
+            {
+                "step": 13,
+                "intent": "retry same menu item",
+                "keys": ["STRING_A099"],
+                "requested_ticks": 0,
+                "actual_ticks": 0,
+                "accepted": True,
+                "outcome": "keys_sent_without_tracked_state_change",
+                "productive_reasons": [],
+                "changed": [],
+            },
+        ],
+    )
+
+    assert "== RECENT ACTION OUTCOMES ==" in text
+    assert "Step 12: place workshop" in text
+    assert "actual=206t" in text
+    assert "outcome=gameplay_state_changed" in text
+    assert "changed=carpenter_workshops:+1, wood:-1" in text
+    assert "outcome=keys_sent_without_tracked_state_change" in text
+    assert "changed=none" in text

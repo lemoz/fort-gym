@@ -94,6 +94,13 @@ If a construction screen says `Needs building material`, the live UI overrides t
 stock counter. Acquire new usable material first; do not retry the same build
 placement just because Wood or Stone is greater than 0.
 
+**MAINTAIN YOUR OWN MAP MEMORY:** You have memory tools. Use them to remember
+locations of workshops, dwarf clusters, resources, stairs, rooms, and blocked
+placement attempts. Before retrying a placement or navigation plan, query memory
+and avoid repeating attempts that previously produced no tracked DF state change.
+Memory is a notebook, not an action; you still need to submit a KEYSTROKE action
+each turn.
+
 **FRESH TARGET RULE:** If status includes `Fresh target recommended keys` or
 `Retry fresh target recommended keys`, copy those keys exactly. This harness starts the
 camera and cursor on a reachable native-UI target near your dwarves. If the setup mode
@@ -432,7 +439,10 @@ class AnthropicKeystrokeAgent(Agent):
         self._memory = MemoryManager(window_size=self._resolve_memory_window())
         self._pending_observation: Optional[str] = None
         self._pending_action: Optional[Dict[str, Any]] = None
-        self._tool_manager = ToolManager(["df_wiki"])
+        self._tool_manager = ToolManager(
+            ["df_wiki", "remember_poi", "remember_failed_attempt", "query_memory"],
+            memory=self._memory,
+        )
         self._tool_events: List[Dict[str, Any]] = []
 
     def _resolve_memory_window(self) -> int:
@@ -482,6 +492,7 @@ class AnthropicKeystrokeAgent(Agent):
             {"role": "user", "content": [{"type": "text", "text": content}]}
         ]
         tools = [KEYSTROKE_ANTHROPIC_TOOL, *self._tool_manager.tool_specs()]
+        tool_result_cache: Dict[str, str] = {}
 
         def append_tool_retry(response_content: Any, tool_results: List[Dict[str, Any]]) -> None:
             messages.append({"role": "assistant", "content": response_content})
@@ -501,17 +512,22 @@ class AnthropicKeystrokeAgent(Agent):
                     results.append(tool_result(tool_use, submit_error))
                     continue
                 tool_input = tool_use.input or {}
-                question = tool_input.get("question", "")
-                if not isinstance(question, str):
-                    question = str(question)
-                result = self._tool_manager.query(tool_use.name, question)
-                self._tool_events.append(
-                    {
-                        "tool": tool_use.name,
-                        "input": tool_input,
-                        "output": result,
-                    }
-                )
+                if not isinstance(tool_input, dict):
+                    tool_input = {"input": tool_input}
+                cache_key = getattr(tool_use, "id", "")
+                if cache_key and cache_key in tool_result_cache:
+                    result = tool_result_cache[cache_key]
+                else:
+                    result = self._tool_manager.handle(tool_use.name, tool_input)
+                    if cache_key:
+                        tool_result_cache[cache_key] = result
+                    self._tool_events.append(
+                        {
+                            "tool": tool_use.name,
+                            "input": tool_input,
+                            "output": result,
+                        }
+                    )
                 results.append(tool_result(tool_use, result))
             if not results:
                 results.append(
@@ -523,6 +539,7 @@ class AnthropicKeystrokeAgent(Agent):
             return results
 
         for _ in range(5):
+            tool_result_cache.clear()
             self._rate_limit()
             client = self._client_instance()
             response = client.messages.create(
@@ -548,6 +565,24 @@ class AnthropicKeystrokeAgent(Agent):
                     tool_uses.append(item)
                     if item.name == "submit_action":
                         tool_payload = item.input
+
+            for tool_use in tool_uses:
+                if tool_use.name == "submit_action":
+                    continue
+                tool_input = tool_use.input or {}
+                if not isinstance(tool_input, dict):
+                    tool_input = {"input": tool_input}
+                result = self._tool_manager.handle(tool_use.name, tool_input)
+                cache_key = getattr(tool_use, "id", "")
+                if cache_key:
+                    tool_result_cache[cache_key] = result
+                self._tool_events.append(
+                    {
+                        "tool": tool_use.name,
+                        "input": tool_input,
+                        "output": result,
+                    }
+                )
 
             if tool_payload is not None:
                 # Validate it's a KEYSTROKE action

@@ -54,3 +54,46 @@ def test_summary_keeps_latest_overflow() -> None:
     memory.add_step("obs three", {"type": "KEYSTROKE", "params": {"keys": ["C"]}}, "res three")
 
     assert "Step 2" in memory.summary
+
+
+def test_memory_records_and_queries_pois() -> None:
+    memory = MemoryManager(window_size=2)
+
+    result = memory.remember_poi(
+        label="carpenter workshop",
+        kind="building",
+        x=99,
+        y=96,
+        z=177,
+        status="built",
+        evidence="carpenter_workshops increased",
+    )
+
+    assert "Remembered POI" in result
+    context = memory.get_context()
+    assert "Known POIs:" in context
+    assert "carpenter workshop" in context
+    assert "coords=(99,96,177)" in context
+
+    query = memory.query_memory(query="carpenter", kind="building", near=[100, 96, 177])
+    assert "carpenter workshop" in query
+    assert "status=built" in query
+
+
+def test_memory_records_failed_attempts() -> None:
+    memory = MemoryManager(window_size=2)
+
+    result = memory.remember_failed_attempt(
+        label="craftsdwarf placement",
+        reason="no building or job appeared",
+        x=101,
+        y=100,
+        z=177,
+        evidence="actual_ticks=0 and changed=none",
+    )
+
+    assert "Remembered failed attempt" in result
+    query = memory.query_memory(query="craftsdwarf")
+    assert "Failed attempts:" in query
+    assert "craftsdwarf placement" in query
+    assert "no building or job appeared" in query

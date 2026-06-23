@@ -118,6 +118,7 @@ def test_anthropic_agent_records_usage_event(monkeypatch) -> None:
 
 def test_keystroke_prompt_is_action_first() -> None:
     assert "FRESH TARGET RULE" in KEYSTROKE_SYSTEM_PROMPT
+    assert "MAINTAIN YOUR OWN MAP MEMORY" in KEYSTROKE_SYSTEM_PROMPT
     assert "D_DESIGNATE" in KEYSTROKE_SYSTEM_PROMPT
     assert "D_BUILDING" in KEYSTROKE_SYSTEM_PROMPT
     assert "HOTKEY_BUILDING_WORKSHOP_CARPENTER" in KEYSTROKE_SYSTEM_PROMPT
@@ -196,6 +197,64 @@ def test_keystroke_retry_pairs_invalid_tool_use_with_tool_result(monkeypatch) ->
             }
         ],
     }
+
+
+def test_keystroke_agent_records_memory_tool_before_returning_action(monkeypatch) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.delenv("ANTHROPIC_MODEL", raising=False)
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    _SequencedAnthropicClient.responses = [
+        SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="remember_poi",
+                    id="toolu_memory",
+                    input={
+                        "label": "carpenter workshop",
+                        "kind": "building",
+                        "x": 99,
+                        "y": 96,
+                        "z": 177,
+                        "status": "built",
+                        "evidence": "carpenter_workshops increased",
+                    },
+                ),
+                SimpleNamespace(
+                    type="tool_use",
+                    name="submit_action",
+                    id="toolu_action",
+                    input={
+                        "type": "KEYSTROKE",
+                        "params": {"keys": ["LEAVESCREEN"]},
+                        "intent": "return to map",
+                        "advance_ticks": 0,
+                    },
+                ),
+            ],
+            usage=SimpleNamespace(input_tokens=20, output_tokens=5),
+        )
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "anthropic"
+        return SimpleNamespace(Anthropic=_SequencedAnthropicClient)
+
+    monkeypatch.setattr(
+        "fort_gym.bench.agent.llm_anthropic.import_module",
+        fake_import_module,
+    )
+
+    try:
+        agent = AnthropicKeystrokeAgent()
+        action = agent.decide("mock screen", {})
+        events = agent.pop_tool_events()
+    finally:
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["type"] == "KEYSTROKE"
+    assert any(event.get("tool") == "remember_poi" for event in events)
+    assert "carpenter workshop" in agent._memory.get_context()
 
 
 def test_dig_first_prompt_uses_structured_control() -> None:
