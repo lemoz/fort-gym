@@ -270,7 +270,7 @@
         const runCount = (s.points || []).length;
         const token = best && best.token ? best.token : null;
 
-        const watchLink = token ? `/replay/${encodeURIComponent(token)}` : '#';
+        const watchLink = token ? `/r/${encodeURIComponent(token)}` : '#';
         const traceLink = token ? `/public/runs/${encodeURIComponent(token)}/export/trace` : '#';
         const replayLink = token ? `/public/runs/${encodeURIComponent(token)}/events/replay` : '#';
 

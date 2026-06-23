@@ -101,6 +101,12 @@ async def serve_visual_replay(token: str):
     return _html_file_response("index.html")
 
 
+@app.get("/r/{token}", response_class=FileResponse)
+async def serve_short_visual_replay(token: str):
+    """Serve the public spectator UI at the short shared-run URL."""
+    return _html_file_response("index.html")
+
+
 @app.get("/admin", response_class=FileResponse)
 async def serve_admin(_: None = Depends(require_admin)):
     """Serve the admin panel."""

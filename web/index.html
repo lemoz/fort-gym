@@ -506,7 +506,7 @@
     function tokenFromLocation() {
       const queryToken = new URLSearchParams(window.location.search).get('token');
       if (queryToken) return queryToken;
-      const match = window.location.pathname.match(/^\/replay\/([^/?#]+)$/);
+      const match = window.location.pathname.match(/^\/(?:r|replay)\/([^/?#]+)$/);
       return match ? decodeURIComponent(match[1]) : null;
     }
 
@@ -571,7 +571,7 @@
       }
       const encoded = encodeURIComponent(token);
       runLinks.innerHTML = `
-        <a href="/replay/${encoded}" title="Open visual replay page">Run</a>
+        <a href="/r/${encoded}" title="Open visual replay page">Run</a>
         <a href="/public/runs/${encoded}/events/replay?speed=4" title="Replay saved SSE events">Replay</a>
         <a href="/public/runs/${encoded}/export/trace" title="Open NDJSON trace export">Trace</a>
       `;

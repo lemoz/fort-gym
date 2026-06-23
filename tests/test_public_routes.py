@@ -9,6 +9,7 @@ def test_public_routes_exist() -> None:
     from fort_gym.bench.api.server import app
 
     paths = {route.path for route in app.routes if hasattr(route, "path")}
+    assert "/r/{token}" in paths
     assert "/replay/{token}" in paths
     assert "/public/runs" in paths
     assert "/public/leaderboard" in paths
@@ -22,7 +23,7 @@ def test_public_html_entrypoints_are_not_cached() -> None:
 
     client = TestClient(app)
 
-    for path in ("/", "/replay/example-token", "/leaderboard"):
+    for path in ("/", "/r/example-token", "/replay/example-token", "/leaderboard"):
         response = client.get(path)
 
         assert response.status_code == 200
