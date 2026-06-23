@@ -13,6 +13,7 @@ local MIN_DESIGNATABLE_TILES = 4
 local MIN_MATERIAL_TILES = 1
 local MIN_CITIZEN_NEAR_TILES = 1
 local CITIZEN_SEARCH_RADIUS = 25
+local MATERIAL_SEARCH_RADIUS = 12
 local Z_SEARCH_RADIUS = 6
 local STONE_MATERIALS = {
   [2] = true, -- stone wall
@@ -255,23 +256,38 @@ local function search_loaded_map(valid_fn, source, designation_key, min_tiles, t
 end
 
 local function material_payload()
-  local payload = search_near_citizens(
-    valid_material_wall_tile,
-    'citizen_near_visible_stone_material_wall',
-    'DESIGNATE_DIG',
-    MIN_MATERIAL_TILES,
-    'material'
-  ) or search_near_window(
-    valid_material_wall_tile,
-    'window_visible_stone_material_wall',
-    'DESIGNATE_DIG',
-    MIN_MATERIAL_TILES,
-    'material'
-  )
-  if payload then
-    payload.material_goal = 'mine visible stone/vein wall through the native designation UI'
+  if not df.global.world.units or not df.global.world.units.active then
+    return nil
   end
-  return payload
+
+  for _, unit in ipairs(df.global.world.units.active) do
+    if dfhack.units.isCitizen(unit) and not dfhack.units.isDead(unit) and unit.pos then
+      local z = unit.pos.z
+      for radius = 1, MATERIAL_SEARCH_RADIUS do
+        for tx = math.max(0, unit.pos.x - radius), unit.pos.x + radius do
+          for ty = math.max(0, unit.pos.y - radius), unit.pos.y + radius do
+            if valid_material_wall_tile(tx, ty, z) then
+              local payload = candidate_payload(
+                tx,
+                ty,
+                z,
+                MIN_MATERIAL_TILES,
+                'citizen_near_visible_stone_material_wall',
+                'DESIGNATE_DIG',
+                'material'
+              )
+              payload.nearest_citizen = { unit.pos.x, unit.pos.y, unit.pos.z }
+              payload.nearest_citizen_radius = radius
+              payload.material_goal = 'mine visible stone/vein wall through the native designation UI'
+              return payload
+            end
+          end
+        end
+      end
+    end
+  end
+
+  return nil
 end
 
 local function starter_payload()
