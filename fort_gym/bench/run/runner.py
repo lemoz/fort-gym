@@ -57,6 +57,7 @@ UI_WORK_RADIUS = 7
 INVALID_DF_CURSOR = -30000
 UI_TARGET_REFRESH_NO_PROGRESS_STEPS = 2
 UI_TARGET_RECOMMENDED_KEY_RETRY_LIMIT = 2
+UI_MATERIAL_TARGET_MIN_EXCAVATION_PROGRESS = 6
 
 
 def _artifacts_root() -> Path:
@@ -113,6 +114,31 @@ def _int_or_none(value: Any) -> int | None:
         return int(value)
     except (TypeError, ValueError):
         return None
+
+
+def _available_building_materials(state: Dict[str, Any]) -> int:
+    stocks = state.get("stocks")
+    if not isinstance(stocks, dict):
+        return 0
+    wood = _int_or_none(stocks.get("wood")) or 0
+    stone = _int_or_none(stocks.get("stone")) or 0
+    return max(0, wood) + max(0, stone)
+
+
+def _desired_keystroke_target_mode(
+    state: Dict[str, Any],
+    *,
+    ui_run_excavation_progress: int,
+    ui_successful_targets: int,
+) -> str:
+    if _available_building_materials(state) > 0:
+        return "starter"
+    if (
+        ui_run_excavation_progress >= UI_MATERIAL_TARGET_MIN_EXCAVATION_PROGRESS
+        or ui_successful_targets >= 2
+    ):
+        return "material"
+    return "starter"
 
 
 def _ui_work_rect_from_state(
@@ -261,6 +287,7 @@ def run_once(
     # Models that need screen capture: *-keystroke, *-research
     is_keystroke_mode = model.endswith("-keystroke") or model.endswith("-research")
     keystroke_ui_target: Optional[Dict[str, Any]] = None
+    ui_target_mode = "starter"
     ui_target_generation = 0
     ui_target_attempts = 0
 
@@ -312,7 +339,7 @@ def run_once(
             raise
         executor = Executor(dfhack_client=dfhack_client)
         if is_keystroke_mode:
-            keystroke_ui_target = prepare_keystroke_target()
+            keystroke_ui_target = prepare_keystroke_target(ui_target_mode)
             if keystroke_ui_target.get("ok"):
                 ui_target_generation = 1
 
@@ -389,7 +416,7 @@ def run_once(
                     and is_keystroke_mode
                     and ui_no_progress_streak >= UI_TARGET_REFRESH_NO_PROGRESS_STEPS
                 ):
-                    refreshed_target = prepare_keystroke_target()
+                    refreshed_target = prepare_keystroke_target(ui_target_mode)
                     if refreshed_target.get("ok"):
                         keystroke_ui_target = refreshed_target
                         ui_target_generation += 1
@@ -402,6 +429,7 @@ def run_once(
                         ui_no_progress_streak = 0
                         ui_work_feedback = {
                             "target_refreshed": True,
+                            "target_mode": ui_target_mode,
                             "reason": "previous target produced no new UI work",
                             "refresh_after_no_progress_steps": UI_TARGET_REFRESH_NO_PROGRESS_STEPS,
                         }
@@ -409,6 +437,7 @@ def run_once(
                         ui_work_feedback = {
                             "target_refresh_failed": True,
                             "error": refreshed_target.get("error", "unknown"),
+                            "target_mode": ui_target_mode,
                             "no_progress_streak": ui_no_progress_streak,
                         }
 
@@ -436,6 +465,35 @@ def run_once(
                         )
                     break
                 if backend_name == "dfhack" and is_keystroke_mode:
+                    desired_target_mode = _desired_keystroke_target_mode(
+                        state_before,
+                        ui_run_excavation_progress=ui_run_excavation_progress,
+                        ui_successful_targets=ui_successful_targets,
+                    )
+                    if desired_target_mode != ui_target_mode:
+                        refreshed_target = prepare_keystroke_target(desired_target_mode)
+                        if refreshed_target.get("ok"):
+                            ui_target_mode = desired_target_mode
+                            keystroke_ui_target = refreshed_target
+                            ui_target_generation += 1
+                            ui_target_attempts = 0
+                            ui_work_rect = None
+                            baseline_ui_work = None
+                            ui_last_work_progress = 0
+                            ui_last_excavation_progress = 0
+                            ui_target_progress_seen = False
+                            ui_no_progress_streak = 0
+                            ui_work_feedback = {
+                                "target_refreshed": True,
+                                "target_mode": ui_target_mode,
+                                "reason": "switching to material acquisition target",
+                            }
+                        else:
+                            ui_work_feedback = {
+                                "target_refresh_failed": True,
+                                "target_mode": desired_target_mode,
+                                "error": refreshed_target.get("error", "unknown"),
+                            }
                     if keystroke_ui_target is not None:
                         state_before["ui_target_setup"] = _ui_target_setup_for_observation(
                             keystroke_ui_target,

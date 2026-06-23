@@ -207,11 +207,16 @@ def read_map_snapshot(rect: tuple[int, int, int, int, int, int]) -> Dict[str, ob
         return {"ok": False, "error": str(exc)}
 
 
-def prepare_keystroke_target() -> Dict[str, object]:
+def prepare_keystroke_target(mode: str = "starter") -> Dict[str, object]:
     """Center the live UI on a visible, mineable wall pocket for keystroke runs."""
 
     try:
-        return run_lua_file(_hook_path("prepare_keystroke_target.lua"), timeout=10.0)
+        safe_mode = mode if mode in {"starter", "material"} else "starter"
+        return run_lua_file(
+            _hook_path("prepare_keystroke_target.lua"),
+            safe_mode,
+            timeout=10.0,
+        )
     except (DFHackError, OSError) as exc:
         return {"ok": False, "error": str(exc)}
 

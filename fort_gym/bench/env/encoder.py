@@ -147,7 +147,10 @@ def encode_observation(
     status_lines.extend([
         f"Time: tick {time_tick}",
         f"Population: {population} dwarves",
-        f"Food: {stocks.get('food', 0)}, Drink: {stocks.get('drink', 0)}",
+        (
+            f"Food: {stocks.get('food', 0)}, Drink: {stocks.get('drink', 0)}, "
+            f"Wood: {stocks.get('wood', 0)}, Stone: {stocks.get('stone', 0)}"
+        ),
     ])
     if work:
         status_lines.append(
@@ -225,19 +228,33 @@ def encode_observation(
             f"successful_targets={successful_targets}"
         )
         if total_excavation_delta >= 10 or successful_targets >= 2:
-            status_lines.append(
-                "Live UI phase: enough starter digging exists; stop using only dig "
-                "actions. Try D_BUILDING for construction, or acquire material first "
-                "if the build screen says material is missing."
-            )
+            available_materials = int(stocks.get("wood") or 0) + int(stocks.get("stone") or 0)
+            if available_materials <= 0:
+                status_lines.append(
+                    "Live UI phase: starter digging exists but building material is "
+                    "missing. Use material target recommended keys to mine visible "
+                    "stone/vein wall through the normal designation UI before retrying "
+                    "D_BUILDING."
+                )
+            else:
+                status_lines.append(
+                    "Live UI phase: enough starter digging and building material exist; "
+                    "stop using only dig actions and try D_BUILDING for construction."
+                )
     if ui_target_setup.get("ok"):
         status_lines.append(
             "Live UI setup: "
+            f"mode={ui_target_setup.get('target_mode', 'starter')}, "
             f"generation={ui_target_setup.get('target_generation', '?')}, "
             f"attempts={ui_target_setup.get('target_attempts', 0)}, "
             f"selection_rect={ui_target_setup.get('selection_rect')}, "
             f"designatable_tiles={ui_target_setup.get('designatable_tiles', 0)}"
         )
+        if ui_target_setup.get("target_mode") == "material":
+            status_lines.append(
+                "Live UI material target: mine this shown stone/vein wall target to "
+                "create usable workshop building material."
+            )
         recommended_keys = ui_target_setup.get("recommended_keys")
         show_recommended = bool(ui_target_setup.get("show_recommended_keys", True))
         if show_recommended and isinstance(recommended_keys, list) and recommended_keys:
