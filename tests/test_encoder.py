@@ -119,6 +119,30 @@ def test_encoder_shows_material_phase_after_enough_ui_excavation_without_materia
     assert "material target recommended keys" in text
 
 
+def test_encoder_material_blocker_overrides_available_stock_build_phase() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 3, "stone": 0},
+            "ui_run_progress": {
+                "total_work_delta": 12,
+                "total_excavation_delta": 10,
+                "total_material_delta": 0,
+                "successful_targets": 2,
+            },
+            "ui_build_feedback": {
+                "material_blocked": True,
+                "visible": True,
+            },
+        },
+        screen_text="Needs building material",
+    )
+
+    assert "building material is missing or unusable" in text
+    assert "try D_BUILDING" not in text
+
+
 def test_encoder_shows_build_phase_after_material_exists() -> None:
     text, _ = encode_observation(
         {
@@ -160,6 +184,41 @@ def test_encoder_labels_material_target_setup() -> None:
 
     assert "Live UI setup: mode=material" in text
     assert "Live UI material target" in text
+
+
+def test_encoder_shows_material_recovery_prefix() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 3, "stone": 0},
+            "ui_target_setup": {
+                "ok": True,
+                "target_mode": "material",
+                "target_generation": 3,
+                "target_attempts": 1,
+                "selection_rect": [10, 20, 177, 13, 21, 177],
+                "designatable_tiles": 1,
+                "show_recommended_keys": True,
+                "recommended_keys_retry": True,
+                "recommended_key_prefix": ["LEAVESCREEN", "LEAVESCREEN"],
+                "recommended_keys": [
+                    "LEAVESCREEN",
+                    "LEAVESCREEN",
+                    "D_DESIGNATE",
+                    "DESIGNATE_CHOP",
+                ],
+            },
+        },
+        screen_text="Needs building material",
+    )
+
+    assert "Live UI material recovery" in text
+    assert "LEAVESCREEN, LEAVESCREEN" in text
+    assert (
+        "Retry fresh target recommended keys: LEAVESCREEN, LEAVESCREEN, "
+        "D_DESIGNATE, DESIGNATE_CHOP"
+    ) in text
 
 
 def test_encoder_surfaces_build_material_blocker() -> None:

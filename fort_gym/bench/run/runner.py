@@ -57,6 +57,8 @@ UI_WORK_RADIUS = 7
 INVALID_DF_CURSOR = -30000
 UI_TARGET_REFRESH_NO_PROGRESS_STEPS = 2
 UI_TARGET_RECOMMENDED_KEY_RETRY_LIMIT = 2
+UI_MATERIAL_TARGET_RECOMMENDED_KEY_RETRY_LIMIT = 8
+UI_MATERIAL_BLOCKER_ESCAPE_KEYS = ("LEAVESCREEN", "LEAVESCREEN")
 UI_MATERIAL_TARGET_MIN_EXCAVATION_PROGRESS = 6
 
 
@@ -193,28 +195,45 @@ def _ui_target_setup_for_observation(
     attempts: int,
     no_progress_streak: int,
     target_progress_seen: bool,
+    recommended_key_prefix: List[str] | None = None,
+    force_show_recommended: bool = False,
 ) -> Dict[str, Any]:
     setup = dict(target)
+    target_mode = str(setup.get("target_mode") or "starter")
+    retry_limit = (
+        UI_MATERIAL_TARGET_RECOMMENDED_KEY_RETRY_LIMIT
+        if target_mode == "material"
+        else UI_TARGET_RECOMMENDED_KEY_RETRY_LIMIT
+    )
     show_recommended = (
-        attempts == 0
+        force_show_recommended
+        or attempts == 0
         or (
             not target_progress_seen
-            and attempts < UI_TARGET_RECOMMENDED_KEY_RETRY_LIMIT
+            and attempts < retry_limit
         )
     )
     setup["target_generation"] = generation
     setup["target_attempts"] = attempts
     setup["no_progress_streak"] = no_progress_streak
     setup["target_progress_seen"] = target_progress_seen
-    setup["recommended_key_retry_limit"] = UI_TARGET_RECOMMENDED_KEY_RETRY_LIMIT
+    setup["recommended_key_retry_limit"] = retry_limit
     setup["show_recommended_keys"] = show_recommended
     if show_recommended:
+        original_keys = setup.get("recommended_keys")
+        if isinstance(original_keys, list):
+            prefix = list(recommended_key_prefix or [])
+            setup["recommended_keys"] = prefix + list(original_keys)
+            setup["recommended_key_prefix"] = prefix
         setup["recommended_keys_suppressed"] = False
         setup["recommended_keys_retry"] = attempts > 0
+        setup["recommended_keys_force_shown"] = force_show_recommended
     else:
         setup["recommended_keys"] = []
+        setup["recommended_key_prefix"] = []
         setup["recommended_keys_suppressed"] = True
         setup["recommended_keys_retry"] = False
+        setup["recommended_keys_force_shown"] = False
     return setup
 
 
@@ -390,6 +409,7 @@ def run_once(
     ui_target_progress_seen = False
     ui_run_work_progress = 0
     ui_run_excavation_progress = 0
+    ui_run_material_progress = 0
     ui_successful_targets = 0
     ui_work_feedback: Dict[str, Any] = {}
     ui_build_material_blocked = False
@@ -468,6 +488,14 @@ def run_once(
                             ended_at=datetime.utcnow(),
                         )
                     break
+                screen_text = get_screen_text() if is_keystroke_mode else None
+                screen_has_material_blocker = bool(
+                    is_keystroke_mode
+                    and screen_text
+                    and "Needs building material" in screen_text
+                )
+                if screen_has_material_blocker:
+                    ui_build_material_blocked = True
                 if backend_name == "dfhack" and is_keystroke_mode:
                     desired_target_mode = _desired_keystroke_target_mode(
                         state_before,
@@ -500,12 +528,19 @@ def run_once(
                                 "error": refreshed_target.get("error", "unknown"),
                             }
                     if keystroke_ui_target is not None:
+                        recovery_prefix = (
+                            list(UI_MATERIAL_BLOCKER_ESCAPE_KEYS)
+                            if ui_target_mode == "material" and screen_has_material_blocker
+                            else []
+                        )
                         state_before["ui_target_setup"] = _ui_target_setup_for_observation(
                             keystroke_ui_target,
                             generation=ui_target_generation,
                             attempts=ui_target_attempts,
                             no_progress_streak=ui_no_progress_streak,
                             target_progress_seen=ui_target_progress_seen,
+                            recommended_key_prefix=recovery_prefix,
+                            force_show_recommended=bool(recovery_prefix),
                         )
                     if ui_work_rect is None:
                         prepared_rect = None
@@ -526,25 +561,28 @@ def run_once(
                     if ui_build_material_blocked:
                         state_before["ui_build_feedback"] = {
                             "material_blocked": True,
-                            "message": "previous build screen required material; acquire/chop/mine material before retrying construction",
+                            "visible": screen_has_material_blocker,
+                            "menu_escape_keys": (
+                                list(UI_MATERIAL_BLOCKER_ESCAPE_KEYS)
+                                if screen_has_material_blocker
+                                else []
+                            ),
+                            "message": (
+                                "visible build screen requires material; exit build menus and acquire/chop/mine material before retrying construction"
+                                if screen_has_material_blocker
+                                else "previous build screen required material; acquire/chop/mine material before retrying construction"
+                            ),
                         }
                     state_before["ui_run_progress"] = {
                         "total_work_delta": ui_run_work_progress,
                         "total_excavation_delta": ui_run_excavation_progress,
+                        "total_material_delta": ui_run_material_progress,
                         "successful_targets": ui_successful_targets,
                     }
                 if baseline_work is None:
                     work_snapshot = state_before.get("work")
                     baseline_work = dict(work_snapshot) if isinstance(work_snapshot, dict) else {}
 
-                # Get screen text for keystroke mode
-                screen_text = get_screen_text() if is_keystroke_mode else None
-                if is_keystroke_mode and screen_text and "Needs building material" in screen_text:
-                    ui_build_material_blocked = True
-                    state_before["ui_build_feedback"] = {
-                        "material_blocked": True,
-                        "message": "visible build screen requires material; acquire/chop/mine material before retrying construction",
-                    }
                 obs_text, obs_json = encode_observation(
                     state_before,
                     screen_text=screen_text,
@@ -740,6 +778,14 @@ def run_once(
                 ui_delta = {}
                 ui_step_work_progress = 0
                 ui_step_excavation_progress = 0
+                ui_step_material_progress = 0
+                if is_keystroke_mode:
+                    ui_step_material_progress = max(
+                        0,
+                        _available_building_materials(advance_state)
+                        - _available_building_materials(state_before),
+                    )
+                    metrics_snapshot["ui_step_material_progress"] = ui_step_material_progress
                 if is_keystroke_mode and isinstance(current_ui_work, dict) and baseline_ui_work:
                     ui_delta = metrics.ui_work_progress_delta(current_ui_work, baseline_ui_work)
                     metrics_snapshot.update(ui_delta)
@@ -778,31 +824,38 @@ def run_once(
                     advanced_ticks = int(tick_info_state.get("ticks_advanced") or 0)
                     action_accepted = bool(execute_result.get("accepted", False))
                     if action.get("type") == "KEYSTROKE" and action_accepted:
-                        if ui_step_work_progress > 0:
+                        requested_ticks_int = _int_or_none(requested_ticks) or 0
+                        if ui_step_work_progress > 0 or ui_step_material_progress > 0:
                             if not ui_target_progress_seen:
                                 ui_successful_targets += 1
                             ui_target_progress_seen = True
                             ui_run_work_progress += ui_step_work_progress
                             ui_run_excavation_progress += ui_step_excavation_progress
+                            ui_run_material_progress += ui_step_material_progress
+                            if ui_step_material_progress > 0:
+                                ui_build_material_blocked = False
                             ui_no_progress_streak = 0
                             ui_work_feedback = {
                                 "last_ui_work_progress_delta": ui_step_work_progress,
                                 "last_ui_excavation_delta": ui_step_excavation_progress,
+                                "last_ui_material_delta": ui_step_material_progress,
                                 "no_progress_streak": ui_no_progress_streak,
-                                "message": "last UI action changed real map tiles",
+                                "message": "last UI action changed real map tiles or material stocks",
                             }
-                        elif advanced_ticks > 0:
+                        elif advanced_ticks > 0 or requested_ticks_int > 0:
                             ui_no_progress_streak += 1
                             ui_work_feedback = {
                                 "last_ui_work_progress_delta": 0,
                                 "last_ui_excavation_delta": 0,
+                                "last_ui_material_delta": 0,
                                 "no_progress_streak": ui_no_progress_streak,
-                                "message": "last UI action advanced time but changed no tracked tiles",
+                                "message": "last UI action requested time but changed no tracked tiles or material stocks",
                             }
                         else:
                             ui_work_feedback = {
                                 "last_ui_work_progress_delta": 0,
                                 "last_ui_excavation_delta": 0,
+                                "last_ui_material_delta": 0,
                                 "no_progress_streak": ui_no_progress_streak,
                                 "message": "last UI action did not advance time",
                             }
@@ -812,6 +865,7 @@ def run_once(
                     metrics_snapshot["ui_target_progress_seen"] = ui_target_progress_seen
                     metrics_snapshot["ui_run_work_progress"] = ui_run_work_progress
                     metrics_snapshot["ui_run_excavation_progress"] = ui_run_excavation_progress
+                    metrics_snapshot["ui_run_material_progress"] = ui_run_material_progress
                     metrics_snapshot["ui_successful_targets"] = ui_successful_targets
                 utility_action = metrics.utility_action_progress(action, execute_result)
                 metrics_snapshot.update(utility_action)

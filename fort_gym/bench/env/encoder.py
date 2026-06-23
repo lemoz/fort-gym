@@ -208,43 +208,59 @@ def encode_observation(
         else:
             progress_delta = ui_work_feedback.get("last_ui_work_progress_delta", 0)
             excavation_delta = ui_work_feedback.get("last_ui_excavation_delta", 0)
+            material_delta = ui_work_feedback.get("last_ui_material_delta", 0)
             no_progress_streak = ui_work_feedback.get("no_progress_streak", 0)
             status_lines.append(
                 "Live UI feedback: "
                 f"last_action_work_delta={progress_delta}, "
                 f"last_action_excavation_delta={excavation_delta}, "
+                f"last_action_material_delta={material_delta}, "
                 f"no_progress_streak={no_progress_streak}"
             )
-            if progress_delta:
-                status_lines.append("Live UI feedback: the last action dug real tiles.")
+            if progress_delta or material_delta:
+                if material_delta:
+                    status_lines.append(
+                        "Live UI feedback: the last action changed real material stocks."
+                    )
+                else:
+                    status_lines.append("Live UI feedback: the last action dug real tiles.")
             elif no_progress_streak:
                 status_lines.append(
                     "Live UI feedback: the last action changed no tracked tiles; "
                     "do not repeat the same key sequence unless a fresh target is shown."
                 )
     if ui_build_feedback.get("material_blocked"):
-        status_lines.append(
-            "Live UI build feedback: the visible build screen says material is "
-            "missing; acquire logs or stone before retrying workshop placement."
-        )
+        if ui_build_feedback.get("visible", True):
+            status_lines.append(
+                "Live UI build feedback: the visible build screen says material is "
+                "missing; exit build menus and acquire logs or stone before retrying "
+                "workshop placement."
+            )
+        else:
+            status_lines.append(
+                "Live UI build feedback: a previous build screen said material was "
+                "missing; acquire logs or stone before retrying workshop placement."
+            )
     if ui_run_progress:
         total_work_delta = int(ui_run_progress.get("total_work_delta") or 0)
         total_excavation_delta = int(ui_run_progress.get("total_excavation_delta") or 0)
+        total_material_delta = int(ui_run_progress.get("total_material_delta") or 0)
         successful_targets = int(ui_run_progress.get("successful_targets") or 0)
         status_lines.append(
             "Live UI run progress: "
             f"total_work_delta={total_work_delta}, "
             f"total_excavation_delta={total_excavation_delta}, "
+            f"total_material_delta={total_material_delta}, "
             f"successful_targets={successful_targets}"
         )
         if total_excavation_delta >= 10 or successful_targets >= 2:
             available_materials = int(stocks.get("wood") or 0) + int(stocks.get("stone") or 0)
-            if available_materials <= 0:
+            if available_materials <= 0 or ui_build_feedback.get("material_blocked"):
                 status_lines.append(
                     "Live UI phase: starter digging exists but building material is "
-                    "missing. Use material target recommended keys to mine visible "
-                    "stone/vein wall through the normal designation UI before retrying "
-                    "D_BUILDING."
+                    "missing or unusable. Use material target recommended keys to chop "
+                    "a visible tree or mine visible stone/vein wall through the normal "
+                    "designation UI before retrying D_BUILDING."
                 )
             else:
                 status_lines.append(
@@ -265,6 +281,14 @@ def encode_observation(
                 "Live UI material target: use this shown target to create usable "
                 "workshop building material through native designations."
             )
+            key_prefix = ui_target_setup.get("recommended_key_prefix")
+            if isinstance(key_prefix, list) and key_prefix:
+                status_lines.append(
+                    "Live UI material recovery: copy the full recommended sequence; "
+                    "it first exits build menus with "
+                    + ", ".join(str(key) for key in key_prefix)
+                    + " and then designates the material target."
+                )
         recommended_keys = ui_target_setup.get("recommended_keys")
         show_recommended = bool(ui_target_setup.get("show_recommended_keys", True))
         if show_recommended and isinstance(recommended_keys, list) and recommended_keys:

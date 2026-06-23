@@ -90,15 +90,18 @@ IMPORTANT: The main menu (showing options like "d: Designations", "b: Building")
 **DON'T waste turns just looking around.** The observation already includes status, food, drink, population, and the current screen. Do NOT press z/status/announcements/reports in the opening turns.
 
 If you're unsure what to do, **ALWAYS dig**. Designate a small 3x3 mining area - it's always useful.
-If a construction screen says `Needs building material`, acquire material first; do not
-retry the same build placement until Wood or Stone is greater than 0.
+If a construction screen says `Needs building material`, the live UI overrides the
+stock counter. Acquire new usable material first; do not retry the same build
+placement just because Wood or Stone is greater than 0.
 
 **FRESH TARGET RULE:** If status includes `Fresh target recommended keys` or
 `Retry fresh target recommended keys`, copy those keys exactly. This harness starts the
 camera and cursor on a reachable native-UI target near your dwarves. If the setup mode
 is `material`, those keys either chop a visible tree for logs or mine visible
-stone/vein wall so the fortress has real workshop building material. Retry keys are
-shown only after a failed first attempt and only for a bounded retry.
+stone/vein wall so the fortress has real workshop building material. If status says
+`Live UI material recovery`, copy the full recommended sequence exactly: the leading
+LEAVESCREEN keys are there to exit build/material menus before the chop/mine target.
+Retry keys are shown after failed attempts for a bounded retry.
 
 If status says the recommended keys are hidden, stop using that target's old sequence.
 Do not repeat the same key sequence for that target.
