@@ -17,7 +17,14 @@ def test_live_index_uses_saved_replay_for_completed_runs() -> None:
     html = Path("web/index.html").read_text(encoding="utf-8")
 
     assert "Saved Run Replay" in html
+    assert "DF Screen Replay" in html
+    assert "Recorded CopyScreen" in html
+    assert "Source: DF CopyScreen text" in html
+    assert "extractScreenText(record)" in html
+    assert "drawDfScreenFrame" in html
+    assert "snapshot.screenText" in html
     assert "Captured DFHack Map" in html
+    assert "Captured DFHack Map Analysis" in html
     assert "Derived Trace Replay" in html
     assert "map_snapshot?.ok" in html
     assert "drawCapturedMapSnapshot" in html

@@ -731,6 +731,25 @@
       return null;
     }
 
+    function extractScreenText(record) {
+      if (!record) return '';
+      const direct = record.screen_text || record.screenText || record.observation?.screen_text;
+      if (typeof direct === 'string' && direct.trim()) {
+        return direct.replace(/\r/g, '');
+      }
+      const observationText = typeof record.observation_text === 'string' ? record.observation_text : '';
+      const screenMarker = '== SCREEN ==';
+      const statusMarker = '== STATUS ==';
+      const screenStart = observationText.indexOf(screenMarker);
+      if (screenStart === -1) return '';
+      const contentStart = screenStart + screenMarker.length;
+      const statusStart = observationText.indexOf(statusMarker, contentStart);
+      const screen = statusStart === -1
+        ? observationText.slice(contentStart)
+        : observationText.slice(contentStart, statusStart);
+      return screen.replace(/\r/g, '').replace(/^\n+|\n+$/g, '');
+    }
+
     function buildReplaySnapshot(index) {
       const boundedIndex = Math.max(0, Math.min(index, replayRecords.length - 1));
       const record = replayRecords[boundedIndex] || {};
@@ -770,6 +789,7 @@
         productionProgress: toNumber(metrics.production_progress),
         carpenterWorkshops: toNumber(work.carpenter_workshops),
         buildAction,
+        screenText: extractScreenText(record),
         mapSnapshot: record.map_snapshot?.ok ? record.map_snapshot : null
       };
     }
@@ -948,6 +968,111 @@
       });
     }
 
+    function dfGlyphColor(char, lineText) {
+      if (!char || char === ' ') return '#d8dee9';
+      if (lineText.includes('Needs building material')) return '#ffd966';
+      if (lineText.includes("Carpenter's Workshop")) return '#f5c542';
+      if (char === 'X') return '#6ea8ff';
+      if (char === '@' || char === 'd' || char === 'c') return '#9fd7b2';
+      if (char === 'o' || char === 'n' || char === 'Y') return '#78d66d';
+      if (char === '#' || char === '|' || char === '-' || char === '+') return '#8c98ad';
+      if (char === '>' || char === '<' || char === ']') return '#f5f7fb';
+      if (char === '*' || char === '^' || char === 'v') return '#67c56a';
+      if (char === '?' || char === '"' || char === "'" || char === '`' || char === ',' || char === '.') return '#c9d4e8';
+      if (/[0-9]/.test(char)) return '#ffd966';
+      if (/[A-Za-z]/.test(char)) return '#dbe6ff';
+      return '#c9d4e8';
+    }
+
+    function drawDfScreenFrame(snapshot, canvasW, canvasH) {
+      const rawScreen = String(snapshot.screenText || '');
+      const lines = rawScreen.split('\n');
+      if (!lines.length || !rawScreen.trim()) {
+        showPlaceholder('Recorded DF screen unavailable for this step');
+        return;
+      }
+
+      gameCtx.fillStyle = '#05070d';
+      gameCtx.fillRect(0, 0, canvasW, canvasH);
+
+      const terminal = { x: 22, y: 24, w: 648, h: 432 };
+      const panel = { x: 690, y: 24, w: 248, h: 432 };
+      gameCtx.fillStyle = '#000';
+      gameCtx.fillRect(terminal.x, terminal.y, terminal.w, terminal.h);
+      gameCtx.strokeStyle = 'rgba(159,177,214,0.24)';
+      gameCtx.lineWidth = 1;
+      gameCtx.strokeRect(terminal.x, terminal.y, terminal.w, terminal.h);
+
+      const maxCols = Math.max(80, ...lines.map(line => line.length));
+      const charW = Math.min(8, Math.floor((terminal.w - 24) / maxCols * 10) / 10);
+      const lineH = Math.min(16, Math.floor((terminal.h - 28) / Math.max(25, lines.length)));
+      const fontSize = Math.max(11, Math.min(14, lineH - 2));
+      gameCtx.font = `700 ${fontSize}px 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace`;
+      gameCtx.textAlign = 'left';
+      gameCtx.textBaseline = 'top';
+
+      const textX = terminal.x + 12;
+      const textY = terminal.y + 12;
+      for (let row = 0; row < lines.length && row < 28; row++) {
+        const line = lines[row] || '';
+        const y = textY + row * lineH;
+        if (line.includes('Needs building material') || line.includes("Carpenter's Workshop")) {
+          gameCtx.fillStyle = line.includes('Needs building material')
+            ? 'rgba(255,217,102,0.09)'
+            : 'rgba(245,197,66,0.08)';
+          gameCtx.fillRect(terminal.x + 1, y - 1, terminal.w - 2, lineH + 1);
+        }
+        for (let col = 0; col < line.length; col++) {
+          const char = line[col];
+          if (char === ' ') continue;
+          if (char === 'X') {
+            gameCtx.fillStyle = 'rgba(79,124,255,0.8)';
+            gameCtx.fillRect(textX + col * charW - 1, y - 1, charW + 2, lineH);
+          }
+          gameCtx.fillStyle = dfGlyphColor(char, line);
+          gameCtx.fillText(char, textX + col * charW, y);
+        }
+      }
+
+      gameCtx.fillStyle = '#101827';
+      gameCtx.fillRect(panel.x, panel.y, panel.w, panel.h);
+      gameCtx.strokeStyle = 'rgba(255,255,255,0.08)';
+      gameCtx.strokeRect(panel.x, panel.y, panel.w, panel.h);
+
+      drawReplayText(`Step ${snapshot.record.step ?? snapshot.index}`, panel.x + 22, panel.y + 24, {
+        color: '#f5f7fb',
+        size: 22,
+        weight: 800
+      });
+      drawReplayText('Recorded CopyScreen', panel.x + 22, panel.y + 56, {
+        color: '#9fd7b2',
+        size: 14,
+        weight: 800
+      });
+      const scoreValue = typeof snapshot.score.value === 'number' ? snapshot.score.value.toFixed(1) : '--';
+      drawReplayText(`Score ${scoreValue}`, panel.x + 22, panel.y + 84, {
+        color: '#ffd966',
+        size: 17,
+        weight: 800
+      });
+
+      let nextY = wrapReplayText(snapshot.action.intent || 'Saved DF screen frame', panel.x + 22, panel.y + 122, 200, 17);
+      nextY += 10;
+      const metrics = snapshot.metrics || {};
+      const stocks = snapshot.record?.state_after_advance?.stocks || snapshot.record?.observation?.stocks || {};
+      const work = getRecordWork(snapshot.record);
+      drawReplayText(`Keys: ${(snapshot.action.params?.keys || []).slice(0, 4).join(', ') || '--'}`, panel.x + 22, nextY);
+      drawReplayText(`Ticks: ${snapshot.record.tick_advance?.ticks_advanced ?? '--'}`, panel.x + 22, nextY + 26);
+      drawReplayText(`Wood: ${stocks.wood ?? '--'}  Stone: ${stocks.stone ?? '--'}`, panel.x + 22, nextY + 52);
+      drawReplayText(`Workshops: ${work.carpenter_workshops ?? 0}`, panel.x + 22, nextY + 78);
+      drawReplayText(`Production: ${metrics.production_progress ?? 0}`, panel.x + 22, nextY + 104);
+      drawReplayText('Source: DF CopyScreen text', panel.x + 22, panel.y + panel.h - 42, {
+        color: '#9fd7b2',
+        size: 13,
+        weight: 700
+      });
+    }
+
     function updateReplayControls(snapshot, statusText) {
       replayStepSlider.max = Math.max(0, replayRecords.length - 1);
       replayStepSlider.value = replayStepIndex;
@@ -1082,12 +1207,22 @@
       }
       showCanvas();
 
+      if (snapshot.screenText) {
+        gameTitle.textContent = 'DF Screen Replay';
+        drawDfScreenFrame(snapshot, canvasW, canvasH);
+        updateReplayControls(
+          snapshot,
+          `Recorded DF screen: step ${snapshot.record.step ?? replayStepIndex} of ${replayRecords.length - 1}`
+        );
+        return;
+      }
+
       if (snapshot.mapSnapshot) {
-        gameTitle.textContent = 'Captured DFHack Map';
+        gameTitle.textContent = 'Captured DFHack Map Analysis';
         drawCapturedMapSnapshot(snapshot, canvasW, canvasH);
         updateReplayControls(
           snapshot,
-          `Captured DFHack map: step ${snapshot.record.step ?? replayStepIndex} of ${replayRecords.length - 1}`
+          `Captured DFHack map analysis: step ${snapshot.record.step ?? replayStepIndex} of ${replayRecords.length - 1}`
         );
         return;
       }
