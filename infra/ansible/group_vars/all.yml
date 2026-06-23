@@ -33,8 +33,12 @@ allow_tcp_ports:
   - 443
 
 # Public HTTPS reverse proxy (Caddy)
-fortgym_tls_mode: "internal"  # set to "acme" and configure fortgym_domain for real certs
-fortgym_domain: ""
+fortgym_tls_mode: "acme"
+fortgym_domain: "fortgym.live"
+fortgym_domain_aliases:
+  - "www.fortgym.live"
+fortgym_public_http_hosts:
+  - "34.41.155.134"
 
 # Base packages required by fort-gym + DFHack
 base_packages:

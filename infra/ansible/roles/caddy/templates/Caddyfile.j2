@@ -1,7 +1,13 @@
 {% if fortgym_tls_mode | default('internal') == 'acme' and (fortgym_domain | default('')) | length > 0 %}
-{{ fortgym_domain }} {
+{{ ([fortgym_domain] + (fortgym_domain_aliases | default([]))) | join(', ') }} {
   reverse_proxy 127.0.0.1:{{ fortgym_service_port }}
 }
+
+{% for host in fortgym_public_http_hosts | default([]) %}
+http://{{ host }} {
+  reverse_proxy 127.0.0.1:{{ fortgym_service_port }}
+}
+{% endfor %}
 {% else %}
 :80 {
   redir https://{host}{uri} permanent
@@ -12,4 +18,3 @@
   reverse_proxy 127.0.0.1:{{ fortgym_service_port }}
 }
 {% endif %}
-
