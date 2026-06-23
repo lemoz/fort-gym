@@ -267,12 +267,6 @@ local function material_payload()
     'DESIGNATE_DIG',
     MIN_MATERIAL_TILES,
     'material'
-  ) or search_loaded_map(
-    valid_material_wall_tile,
-    'loaded_map_visible_stone_material_wall',
-    'DESIGNATE_DIG',
-    MIN_MATERIAL_TILES,
-    'material'
   )
   if payload then
     payload.material_goal = 'mine visible stone/vein wall through the native designation UI'
