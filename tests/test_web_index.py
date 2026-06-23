@@ -8,6 +8,9 @@ def test_live_index_exposes_completed_run_inspection_links() -> None:
 
     assert "formatRunLabel(run)" in html
     assert "updateRunLinks(token)" in html
+    assert "tokenFromLocation()" in html
+    assert "window.location.pathname.match" in html
+    assert 'href="/replay/${encoded}"' in html
     assert "Replay saved SSE events" in html
     assert "Open NDJSON trace export" in html
     assert "runSelector.value = currentToken" in html

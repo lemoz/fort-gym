@@ -503,7 +503,14 @@
     let viewMode = 'empty';
     let replayRecords = [];
     let replayStepIndex = 0;
-    const presetToken = new URLSearchParams(window.location.search).get('token');
+    function tokenFromLocation() {
+      const queryToken = new URLSearchParams(window.location.search).get('token');
+      if (queryToken) return queryToken;
+      const match = window.location.pathname.match(/^\/replay\/([^/?#]+)$/);
+      return match ? decodeURIComponent(match[1]) : null;
+    }
+
+    const presetToken = tokenFromLocation();
     if (presetToken) {
       currentToken = presetToken;
     }
@@ -564,7 +571,7 @@
       }
       const encoded = encodeURIComponent(token);
       runLinks.innerHTML = `
-        <a href="/?token=${encoded}" title="Open this run page">Run</a>
+        <a href="/replay/${encoded}" title="Open visual replay page">Run</a>
         <a href="/public/runs/${encoded}/events/replay?speed=4" title="Replay saved SSE events">Replay</a>
         <a href="/public/runs/${encoded}/export/trace" title="Open NDJSON trace export">Trace</a>
       `;
