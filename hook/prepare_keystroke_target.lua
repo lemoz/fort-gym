@@ -70,6 +70,24 @@ local function valid_material_wall_tile(tx, ty, tz)
   return STONE_MATERIALS[material] or caption:find('stone wall') or caption:find('vein wall')
 end
 
+local function valid_tree_tile(tx, ty, tz)
+  local block = dfhack.maps.getTileBlock(tx, ty, tz)
+  if not block then
+    return false
+  end
+
+  local dx = tx % 16
+  local dy = ty % 16
+  local designation = block.designation[dx][dy]
+  if not designation or designation.hidden or designation.dig ~= df.tile_dig_designation.No then
+    return false
+  end
+
+  local attr = df.tiletype.attrs[block.tiletype[dx][dy]]
+  local caption = string.lower(tostring(attr and attr.caption or ''))
+  return caption:find('trunk') ~= nil
+end
+
 local function valid_floor_tile(tx, ty, tz)
   local block = dfhack.maps.getTileBlock(tx, ty, tz)
   if not block then
@@ -256,38 +274,61 @@ local function search_loaded_map(valid_fn, source, designation_key, min_tiles, t
 end
 
 local function material_payload()
-  if not df.global.world.units or not df.global.world.units.active then
-    return nil
-  end
+  local function scan_near_citizens(valid_fn, source, designation_key, material_goal)
+    if not df.global.world.units or not df.global.world.units.active then
+      return nil
+    end
 
-  for _, unit in ipairs(df.global.world.units.active) do
-    if dfhack.units.isCitizen(unit) and not dfhack.units.isDead(unit) and unit.pos then
-      local z = unit.pos.z
-      for radius = 1, MATERIAL_SEARCH_RADIUS do
-        for tx = math.max(0, unit.pos.x - radius), unit.pos.x + radius do
-          for ty = math.max(0, unit.pos.y - radius), unit.pos.y + radius do
-            if valid_material_wall_tile(tx, ty, z) then
-              local payload = candidate_payload(
-                tx,
-                ty,
-                z,
-                MIN_MATERIAL_TILES,
-                'citizen_near_visible_stone_material_wall',
-                'DESIGNATE_DIG',
-                'material'
-              )
-              payload.nearest_citizen = { unit.pos.x, unit.pos.y, unit.pos.z }
-              payload.nearest_citizen_radius = radius
-              payload.material_goal = 'mine visible stone/vein wall through the native designation UI'
-              return payload
+    for _, unit in ipairs(df.global.world.units.active) do
+      if dfhack.units.isCitizen(unit) and not dfhack.units.isDead(unit) and unit.pos then
+        local z = unit.pos.z
+        for radius = 1, MATERIAL_SEARCH_RADIUS do
+          for tx = math.max(0, unit.pos.x - radius), unit.pos.x + radius do
+            for ty = math.max(0, unit.pos.y - radius), unit.pos.y + radius do
+              if valid_fn(tx, ty, z) then
+                local payload = candidate_payload(
+                  tx,
+                  ty,
+                  z,
+                  MIN_MATERIAL_TILES,
+                  source,
+                  designation_key,
+                  'material'
+                )
+                payload.nearest_citizen = { unit.pos.x, unit.pos.y, unit.pos.z }
+                payload.nearest_citizen_radius = radius
+                payload.material_goal = material_goal
+                return payload
+              end
             end
           end
         end
       end
     end
+
+    return nil
   end
 
-  return nil
+  local tree_payload = scan_near_citizens(
+    valid_tree_tile,
+    'citizen_near_visible_tree_trunk',
+    'DESIGNATE_CHOP',
+    'chop visible tree through the native designation UI to create logs'
+  )
+  if tree_payload then
+    return tree_payload
+  end
+
+  if not df.global.world.units or not df.global.world.units.active then
+    return nil
+  end
+
+  return scan_near_citizens(
+    valid_material_wall_tile,
+    'citizen_near_visible_stone_material_wall',
+    'DESIGNATE_DIG',
+    'mine visible stone/vein wall through the native designation UI'
+  )
 end
 
 local function starter_payload()

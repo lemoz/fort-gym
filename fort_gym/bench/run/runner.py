@@ -130,7 +130,10 @@ def _desired_keystroke_target_mode(
     *,
     ui_run_excavation_progress: int,
     ui_successful_targets: int,
+    build_material_blocked: bool = False,
 ) -> str:
+    if build_material_blocked:
+        return "material"
     if _available_building_materials(state) > 0:
         return "starter"
     if (
@@ -389,6 +392,7 @@ def run_once(
     ui_run_excavation_progress = 0
     ui_successful_targets = 0
     ui_work_feedback: Dict[str, Any] = {}
+    ui_build_material_blocked = False
 
     def publish_event(step: int, event_type: str, payload: Dict[str, Any], events: List[Dict[str, Any]]) -> None:
         data = {"run_id": run_identifier, "step": step, **payload}
@@ -469,6 +473,7 @@ def run_once(
                         state_before,
                         ui_run_excavation_progress=ui_run_excavation_progress,
                         ui_successful_targets=ui_successful_targets,
+                        build_material_blocked=ui_build_material_blocked,
                     )
                     if desired_target_mode != ui_target_mode:
                         refreshed_target = prepare_keystroke_target(desired_target_mode)
@@ -518,6 +523,11 @@ def run_once(
                             baseline_ui_work = dict(ui_work_before)
                     if ui_work_feedback:
                         state_before["ui_work_feedback"] = dict(ui_work_feedback)
+                    if ui_build_material_blocked:
+                        state_before["ui_build_feedback"] = {
+                            "material_blocked": True,
+                            "message": "previous build screen required material; acquire/chop/mine material before retrying construction",
+                        }
                     state_before["ui_run_progress"] = {
                         "total_work_delta": ui_run_work_progress,
                         "total_excavation_delta": ui_run_excavation_progress,
@@ -529,6 +539,12 @@ def run_once(
 
                 # Get screen text for keystroke mode
                 screen_text = get_screen_text() if is_keystroke_mode else None
+                if is_keystroke_mode and screen_text and "Needs building material" in screen_text:
+                    ui_build_material_blocked = True
+                    state_before["ui_build_feedback"] = {
+                        "material_blocked": True,
+                        "message": "visible build screen requires material; acquire/chop/mine material before retrying construction",
+                    }
                 obs_text, obs_json = encode_observation(
                     state_before,
                     screen_text=screen_text,

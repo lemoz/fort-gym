@@ -97,6 +97,11 @@ def encode_observation(
         if isinstance(clean_state.get("ui_run_progress"), dict)
         else {}
     )
+    ui_build_feedback = (
+        clean_state.get("ui_build_feedback")
+        if isinstance(clean_state.get("ui_build_feedback"), dict)
+        else {}
+    )
 
     # Build status section
     status_lines = []
@@ -217,6 +222,11 @@ def encode_observation(
                     "Live UI feedback: the last action changed no tracked tiles; "
                     "do not repeat the same key sequence unless a fresh target is shown."
                 )
+    if ui_build_feedback.get("material_blocked"):
+        status_lines.append(
+            "Live UI build feedback: the visible build screen says material is "
+            "missing; acquire logs or stone before retrying workshop placement."
+        )
     if ui_run_progress:
         total_work_delta = int(ui_run_progress.get("total_work_delta") or 0)
         total_excavation_delta = int(ui_run_progress.get("total_excavation_delta") or 0)
@@ -252,8 +262,8 @@ def encode_observation(
         )
         if ui_target_setup.get("target_mode") == "material":
             status_lines.append(
-                "Live UI material target: mine this shown stone/vein wall target to "
-                "create usable workshop building material."
+                "Live UI material target: use this shown target to create usable "
+                "workshop building material through native designations."
             )
         recommended_keys = ui_target_setup.get("recommended_keys")
         show_recommended = bool(ui_target_setup.get("show_recommended_keys", True))

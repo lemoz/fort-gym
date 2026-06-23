@@ -160,3 +160,20 @@ def test_encoder_labels_material_target_setup() -> None:
 
     assert "Live UI setup: mode=material" in text
     assert "Live UI material target" in text
+
+
+def test_encoder_surfaces_build_material_blocker() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 3, "stone": 0},
+            "ui_build_feedback": {
+                "material_blocked": True,
+            },
+        },
+        screen_text="screen",
+    )
+
+    assert "visible build screen says material is missing" in text
+    assert "acquire logs or stone" in text

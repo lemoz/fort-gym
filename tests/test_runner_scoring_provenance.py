@@ -128,6 +128,20 @@ def test_desired_keystroke_target_mode_returns_to_starter_when_material_exists()
     )
 
 
+def test_desired_keystroke_target_mode_trusts_visible_material_blocker() -> None:
+    state = {"stocks": {"wood": 3, "stone": 0}}
+
+    assert (
+        _desired_keystroke_target_mode(
+            state,
+            ui_run_excavation_progress=6,
+            ui_successful_targets=2,
+            build_material_blocked=True,
+        )
+        == "material"
+    )
+
+
 def test_ui_target_setup_retries_recommended_keys_after_failed_attempt() -> None:
     target = {
         "ok": True,

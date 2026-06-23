@@ -96,9 +96,9 @@ retry the same build placement until Wood or Stone is greater than 0.
 **FRESH TARGET RULE:** If status includes `Fresh target recommended keys` or
 `Retry fresh target recommended keys`, copy those keys exactly. This harness starts the
 camera and cursor on a reachable native-UI target near your dwarves. If the setup mode
-is `material`, those keys mine visible stone/vein wall so the fortress has real
-workshop building material. Retry keys are shown only after a failed first attempt and
-only for a bounded retry.
+is `material`, those keys either chop a visible tree for logs or mine visible
+stone/vein wall so the fortress has real workshop building material. Retry keys are
+shown only after a failed first attempt and only for a bounded retry.
 
 If status says the recommended keys are hidden, stop using that target's old sequence.
 Do not repeat the same key sequence for that target.
