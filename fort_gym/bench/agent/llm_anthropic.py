@@ -596,6 +596,7 @@ class AnthropicKeystrokeAgent(Agent):
         self._require_plan_review = require_plan_review
         self._plan_review_interval = max(1, int(plan_review_interval))
         self._completed_actions = 0
+        self._reviewed_plan_milestones: set[str] = set()
         self._memory = MemoryManager(window_size=self._resolve_memory_window())
         self._pending_observation: Optional[str] = None
         self._pending_action: Optional[Dict[str, Any]] = None
@@ -704,7 +705,12 @@ class AnthropicKeystrokeAgent(Agent):
             self._completed_actions % self._plan_review_interval == 0
         )
         due_by_stall = self._needs_failed_attempt_memory(obs_text)
-        due_by_milestone = self._needs_plan_milestone_review(obs_text)
+        milestone_key = self._plan_milestone_key(obs_text)
+        due_by_milestone = (
+            milestone_key is not None and milestone_key not in self._reviewed_plan_milestones
+        )
+        if "review_gameplay_plan" in tool_names and milestone_key is not None:
+            self._reviewed_plan_milestones.add(milestone_key)
         if due_by_cadence or due_by_stall or due_by_milestone:
             if "review_gameplay_plan" not in tool_names:
                 reasons = []
@@ -721,17 +727,15 @@ class AnthropicKeystrokeAgent(Agent):
         return None
 
     @staticmethod
-    def _needs_plan_milestone_review(obs_text: str) -> bool:
+    def _plan_milestone_key(obs_text: str) -> Optional[str]:
         text = obs_text.lower()
-        if "carpenter_workshops=1" in text or "carpenter_workshops=2" in text:
-            return True
         if "live ui phase: enough starter digging and building material exist" in text:
-            return True
-        if "last ui action changed real map tiles" in text:
-            return True
+            return "construction_ready"
         if "last action changed real material stocks" in text:
-            return True
-        return False
+            return "material_acquired"
+        if re.search(r"carpenter_workshops=[1-9]", text):
+            return "workshop_built"
+        return None
 
     @staticmethod
     def _needs_failed_attempt_memory(obs_text: str) -> bool:
@@ -818,6 +822,7 @@ class AnthropicKeystrokeAgent(Agent):
         tool_result_cache: Dict[str, str] = {}
         last_gate_blocked_action: Optional[Dict[str, Any]] = None
         last_gate_blocked_error: Optional[str] = None
+        saw_tool_only_response = False
 
         def append_tool_retry(response_content: Any, tool_results: List[Dict[str, Any]]) -> None:
             messages.append({"role": "assistant", "content": response_content})
@@ -989,6 +994,9 @@ class AnthropicKeystrokeAgent(Agent):
                             "output": "Allowed action after bounded memory-review retries.",
                         }
                     )
+                    milestone_key = self._plan_milestone_key(obs_text)
+                    if milestone_key is not None:
+                        self._reviewed_plan_milestones.add(milestone_key)
 
                 self._pending_observation = obs_text
                 self._pending_action = action
@@ -996,6 +1004,8 @@ class AnthropicKeystrokeAgent(Agent):
                 return action
 
             if tool_uses:
+                saw_tool_only_response = True
+                last_error = ValueError("Model used tools but did not submit an action")
                 append_tool_retry(
                     response.content,
                     tool_results_for_retry(
@@ -1039,6 +1049,36 @@ class AnthropicKeystrokeAgent(Agent):
             self._pending_action = last_gate_blocked_action
             self._completed_actions += 1
             return last_gate_blocked_action
+
+        if saw_tool_only_response:
+            fallback_action = parse_action(
+                {
+                    "type": "KEYSTROKE",
+                    "params": {"keys": ["LEAVESCREEN"]},
+                    "intent": (
+                        "fallback: exit one menu after the model used notebook tools "
+                        "but did not submit an action"
+                    ),
+                    "objective": "recover from missing submit_action",
+                    "expected_visible_result": "one menu closes or main view remains visible",
+                    "expected_simulation_result": "none; no game ticks advance",
+                    "memory_update": "model made tool-only responses without submit_action",
+                    "plan_step": "recover from missing submit_action",
+                    "plan_review": "bounded retry fallback; no model action was submitted",
+                    "advance_ticks": 0,
+                }
+            )
+            self._tool_events.append(
+                {
+                    "tool": "submit_action_fallback",
+                    "input": {"last_error": str(last_error)},
+                    "output": "Submitted LEAVESCREEN after bounded tool-only retries.",
+                }
+            )
+            self._pending_observation = obs_text
+            self._pending_action = fallback_action
+            self._completed_actions += 1
+            return fallback_action
 
         raise RuntimeError(f"Anthropic keystroke agent failed: {last_error}")
 

@@ -893,6 +893,49 @@ def test_plan_review_agent_falls_back_if_model_stops_submitting_after_gate(monke
     assert len(requests) == 5
 
 
+def test_keystroke_agent_falls_back_after_tool_only_responses(monkeypatch) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.delenv("ANTHROPIC_MODEL", raising=False)
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    _SequencedAnthropicClient.responses = [
+        SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="query_memory",
+                    id=f"toolu_query_{index}",
+                    input={"query": "stockpile menu", "limit": 3},
+                )
+            ],
+            usage=SimpleNamespace(input_tokens=10 + index, output_tokens=2),
+        )
+        for index in range(5)
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "anthropic"
+        return SimpleNamespace(Anthropic=_SequencedAnthropicClient)
+
+    monkeypatch.setattr(
+        "fort_gym.bench.agent.llm_anthropic.import_module",
+        fake_import_module,
+    )
+
+    try:
+        agent = AnthropicKeystrokeAgent()
+        action = agent.decide("mock screen", {})
+        events = agent.pop_tool_events()
+    finally:
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["type"] == "KEYSTROKE"
+    assert action["params"]["keys"] == ["LEAVESCREEN"]
+    assert action["intent"].startswith("fallback:")
+    assert any(event.get("tool") == "submit_action_fallback" for event in events)
+    assert _SequencedAnthropicClient.last_instance is not None
+    assert len(_SequencedAnthropicClient.last_instance.messages.requests) == 5
+
+
 def test_dig_first_prompt_uses_structured_control() -> None:
     assert "structured action API" in DIG_FIRST_SYSTEM_PROMPT
     assert '"type":"DIG"' in DIG_FIRST_SYSTEM_PROMPT
