@@ -108,6 +108,7 @@ def test_encoder_shows_material_phase_after_enough_ui_excavation_without_materia
             "ui_run_progress": {
                 "total_work_delta": 12,
                 "total_excavation_delta": 10,
+                "total_material_delta": 1,
                 "successful_targets": 2,
             },
         },
@@ -139,7 +140,7 @@ def test_encoder_material_blocker_overrides_available_stock_build_phase() -> Non
         screen_text="Needs building material",
     )
 
-    assert "building material is missing or unusable" in text
+    assert "building material is missing, unusable, or not yet proven" in text
     assert "try D_BUILDING" not in text
 
 
@@ -152,6 +153,7 @@ def test_encoder_shows_build_phase_after_material_exists() -> None:
             "ui_run_progress": {
                 "total_work_delta": 12,
                 "total_excavation_delta": 10,
+                "total_material_delta": 1,
                 "successful_targets": 2,
             },
         },
@@ -160,6 +162,26 @@ def test_encoder_shows_build_phase_after_material_exists() -> None:
 
     assert "enough starter digging and building material exist" in text
     assert "try D_BUILDING" in text
+
+
+def test_encoder_does_not_trust_stock_only_material_for_build_phase() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 3, "stone": 0},
+            "ui_run_progress": {
+                "total_work_delta": 12,
+                "total_excavation_delta": 10,
+                "total_material_delta": 0,
+                "successful_targets": 2,
+            },
+        },
+        screen_text="screen",
+    )
+
+    assert "building material is missing, unusable, or not yet proven" in text
+    assert "try D_BUILDING" not in text
 
 
 def test_encoder_labels_material_target_setup() -> None:

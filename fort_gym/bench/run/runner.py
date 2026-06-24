@@ -270,9 +270,12 @@ def _desired_keystroke_target_mode(
     state: Dict[str, Any],
     *,
     ui_run_excavation_progress: int,
+    ui_run_material_progress: int = 0,
     ui_successful_targets: int,
     build_material_blocked: bool = False,
 ) -> str:
+    if _carpenter_workshops(state) > 0:
+        return "starter"
     if build_material_blocked:
         return "material"
     enough_starter_space = (
@@ -281,11 +284,12 @@ def _desired_keystroke_target_mode(
     )
     if (
         _available_building_materials(state) > 0
+        and ui_run_material_progress > 0
         and _carpenter_workshops(state) <= 0
         and enough_starter_space
     ):
         return "workshop"
-    if _available_building_materials(state) > 0:
+    if _available_building_materials(state) > 0 and not enough_starter_space:
         return "starter"
     if enough_starter_space:
         return "material"
@@ -647,6 +651,7 @@ def run_once(
                     desired_target_mode = _desired_keystroke_target_mode(
                         state_before,
                         ui_run_excavation_progress=ui_run_excavation_progress,
+                        ui_run_material_progress=ui_run_material_progress,
                         ui_successful_targets=ui_successful_targets,
                         build_material_blocked=ui_build_material_blocked,
                     )

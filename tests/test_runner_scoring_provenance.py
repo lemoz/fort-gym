@@ -124,9 +124,24 @@ def test_desired_keystroke_target_mode_switches_to_workshop_when_material_exists
         _desired_keystroke_target_mode(
             state,
             ui_run_excavation_progress=6,
+            ui_run_material_progress=1,
             ui_successful_targets=2,
         )
         == "workshop"
+    )
+
+
+def test_desired_keystroke_target_mode_does_not_trust_stock_only_material() -> None:
+    state = {"stocks": {"wood": 3, "stone": 0}, "work": {"carpenter_workshops": 0}}
+
+    assert (
+        _desired_keystroke_target_mode(
+            state,
+            ui_run_excavation_progress=6,
+            ui_run_material_progress=0,
+            ui_successful_targets=2,
+        )
+        == "material"
     )
 
 
@@ -138,6 +153,7 @@ def test_desired_keystroke_target_mode_returns_to_starter_after_workshop_exists(
         _desired_keystroke_target_mode(
             state,
             ui_run_excavation_progress=6,
+            ui_run_material_progress=1,
             ui_successful_targets=2,
         )
         == "starter"

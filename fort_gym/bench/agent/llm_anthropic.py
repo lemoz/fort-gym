@@ -94,6 +94,9 @@ If you're unsure what to do, **ALWAYS dig**. Designate a small 3x3 mining area -
 If a construction screen says `Needs building material`, the live UI overrides the
 stock counter. Acquire new usable material first; do not retry the same build
 placement just because Wood or Stone is greater than 0.
+The starting stock counter can include material that DF will not accept for a
+new workshop. Treat `Live UI run progress: total_material_delta > 0` as the
+stronger signal that this run has created usable building material.
 
 **MAINTAIN YOUR OWN MAP MEMORY:** You have memory tools. Use them to remember
 locations of workshops, dwarf clusters, resources, stairs, rooms, and blocked

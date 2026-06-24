@@ -296,10 +296,14 @@ def encode_observation(
         )
         if total_excavation_delta >= 10 or successful_targets >= 2:
             available_materials = int(stocks.get("wood") or 0) + int(stocks.get("stone") or 0)
-            if available_materials <= 0 or ui_build_feedback.get("material_blocked"):
+            if (
+                available_materials <= 0
+                or total_material_delta <= 0
+                or ui_build_feedback.get("material_blocked")
+            ):
                 status_lines.append(
                     "Live UI phase: starter digging exists but building material is "
-                    "missing or unusable. Use material target recommended keys to chop "
+                    "missing, unusable, or not yet proven by this run. Use material target recommended keys to chop "
                     "a visible tree or mine visible stone/vein wall through the normal "
                     "designation UI before retrying D_BUILDING."
                 )
