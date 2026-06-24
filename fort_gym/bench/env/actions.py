@@ -59,6 +59,22 @@ class BaseAction(BaseModel):
     type: str
     params: Dict[str, Any] = Field(default_factory=dict)
     intent: Optional[str] = Field(default=None, description="Optional short rationale provided by the agent.")
+    objective: Optional[str] = Field(
+        default=None,
+        description="Current gameplay objective this action is meant to advance.",
+    )
+    expected_visible_result: Optional[str] = Field(
+        default=None,
+        description="Expected immediate screen, menu, cursor, or map result after the keys are sent.",
+    )
+    expected_simulation_result: Optional[str] = Field(
+        default=None,
+        description="Expected dwarf/world result after advancing ticks, if any.",
+    )
+    memory_update: Optional[str] = Field(
+        default=None,
+        description="Memory or POI update the agent made or will make around this action.",
+    )
     advance_ticks: int = Field(
         default=0,
         ge=0,
@@ -242,6 +258,10 @@ ACTION_TOOL_SPEC = {
             },
             "params": {"type": "object"},
             "intent": {"type": "string"},
+            "objective": {"type": "string"},
+            "expected_visible_result": {"type": "string"},
+            "expected_simulation_result": {"type": "string"},
+            "memory_update": {"type": "string"},
             "advance_ticks": {
                 "type": "integer",
                 "minimum": 0,

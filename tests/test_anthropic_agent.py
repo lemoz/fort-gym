@@ -11,6 +11,7 @@ from fort_gym.bench.agent.llm_anthropic import (
     DIG_FIRST_SYSTEM_PROMPT,
     FORTRESS_PLAN_SYSTEM_PROMPT,
     KEYSTROKE_SYSTEM_PROMPT,
+    KEYSTROKE_POI_REVIEW_SYSTEM_PROMPT,
 )
 from fort_gym.bench.api.schemas import RunCreateRequest
 from fort_gym.bench.config import get_settings
@@ -125,6 +126,15 @@ def test_keystroke_prompt_is_action_first() -> None:
     assert "advance_ticks\": 500" in KEYSTROKE_SYSTEM_PROMPT
     assert "Do not" in KEYSTROKE_SYSTEM_PROMPT
     assert "repeat the same key sequence" in KEYSTROKE_SYSTEM_PROMPT
+    assert "expected_visible_result" in KEYSTROKE_SYSTEM_PROMPT
+    assert "expected_simulation_result" in KEYSTROKE_SYSTEM_PROMPT
+
+
+def test_poi_review_prompt_requires_memory_review() -> None:
+    assert "Mandatory POI/Task Review Variant" in KEYSTROKE_POI_REVIEW_SYSTEM_PROMPT
+    assert "Before EVERY submit_action" in KEYSTROKE_POI_REVIEW_SYSTEM_PROMPT
+    assert "query_memory" in KEYSTROKE_POI_REVIEW_SYSTEM_PROMPT
+    assert "remember_failed_attempt" in KEYSTROKE_POI_REVIEW_SYSTEM_PROMPT
 
 
 def test_keystroke_retry_pairs_invalid_tool_use_with_tool_result(monkeypatch) -> None:
@@ -255,6 +265,174 @@ def test_keystroke_agent_records_memory_tool_before_returning_action(monkeypatch
     assert action["type"] == "KEYSTROKE"
     assert any(event.get("tool") == "remember_poi" for event in events)
     assert "carpenter workshop" in agent._memory.get_context()
+
+
+def test_poi_review_agent_retries_without_query_memory(monkeypatch) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.delenv("ANTHROPIC_MODEL", raising=False)
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    _SequencedAnthropicClient.responses = [
+        SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="submit_action",
+                    id="toolu_no_review",
+                    input={
+                        "type": "KEYSTROKE",
+                        "params": {"keys": ["LEAVESCREEN"]},
+                        "intent": "escape",
+                        "advance_ticks": 0,
+                    },
+                )
+            ],
+            usage=SimpleNamespace(input_tokens=10, output_tokens=2),
+        ),
+        SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="query_memory",
+                    id="toolu_query",
+                    input={"query": "current objective", "limit": 3},
+                ),
+                SimpleNamespace(
+                    type="tool_use",
+                    name="submit_action",
+                    id="toolu_action",
+                    input={
+                        "type": "KEYSTROKE",
+                        "params": {"keys": ["LEAVESCREEN"]},
+                        "intent": "escape after memory review",
+                        "objective": "recover to main map",
+                        "expected_visible_result": "main map visible",
+                        "expected_simulation_result": "none; UI-only paused planning action",
+                        "memory_update": "queried current objective memory",
+                        "advance_ticks": 0,
+                    },
+                ),
+            ],
+            usage=SimpleNamespace(input_tokens=12, output_tokens=3),
+        ),
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "anthropic"
+        return SimpleNamespace(Anthropic=_SequencedAnthropicClient)
+
+    monkeypatch.setattr(
+        "fort_gym.bench.agent.llm_anthropic.import_module",
+        fake_import_module,
+    )
+
+    try:
+        agent = AnthropicKeystrokeAgent(
+            system_prompt=KEYSTROKE_POI_REVIEW_SYSTEM_PROMPT,
+            require_memory_review=True,
+        )
+        action = agent.decide("mock screen", {})
+    finally:
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["type"] == "KEYSTROKE"
+    assert action["objective"] == "recover to main map"
+    assert _SequencedAnthropicClient.last_instance is not None
+    requests = _SequencedAnthropicClient.last_instance.messages.requests
+    assert len(requests) == 2
+    retry = requests[1]["messages"][2]["content"][0]
+    assert retry["tool_use_id"] == "toolu_no_review"
+    assert "Mandatory pre-action review missing" in retry["content"]
+
+
+def test_poi_review_agent_requires_failed_attempt_memory_after_no_progress(monkeypatch) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.delenv("ANTHROPIC_MODEL", raising=False)
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    _SequencedAnthropicClient.responses = [
+        SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="query_memory",
+                    id="toolu_query_1",
+                    input={"query": "blocked workshop placement", "limit": 3},
+                ),
+                SimpleNamespace(
+                    type="tool_use",
+                    name="submit_action",
+                    id="toolu_no_failure",
+                    input={
+                        "type": "KEYSTROKE",
+                        "params": {"keys": ["D_BUILDING"]},
+                        "intent": "retry workshop placement",
+                        "advance_ticks": 0,
+                    },
+                ),
+            ],
+            usage=SimpleNamespace(input_tokens=10, output_tokens=2),
+        ),
+        SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="query_memory",
+                    id="toolu_query_2",
+                    input={"query": "blocked workshop placement", "limit": 3},
+                ),
+                SimpleNamespace(
+                    type="tool_use",
+                    name="remember_failed_attempt",
+                    id="toolu_failed",
+                    input={
+                        "label": "blocked workshop placement",
+                        "reason": "no_progress_streak reached 2",
+                        "evidence": "last action changed no tracked tiles",
+                    },
+                ),
+                SimpleNamespace(
+                    type="tool_use",
+                    name="submit_action",
+                    id="toolu_action",
+                    input={
+                        "type": "KEYSTROKE",
+                        "params": {"keys": ["D_DESIGNATE", "DESIGNATE_DIG"]},
+                        "intent": "switch to digging after failed placement",
+                        "objective": "make productive progress",
+                        "expected_visible_result": "dig designation menu opens",
+                        "expected_simulation_result": "none until area is selected",
+                        "memory_update": "recorded failed workshop placement",
+                        "advance_ticks": 0,
+                    },
+                ),
+            ],
+            usage=SimpleNamespace(input_tokens=12, output_tokens=3),
+        ),
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "anthropic"
+        return SimpleNamespace(Anthropic=_SequencedAnthropicClient)
+
+    monkeypatch.setattr(
+        "fort_gym.bench.agent.llm_anthropic.import_module",
+        fake_import_module,
+    )
+
+    try:
+        agent = AnthropicKeystrokeAgent(
+            system_prompt=KEYSTROKE_POI_REVIEW_SYSTEM_PROMPT,
+            require_memory_review=True,
+        )
+        action = agent.decide(
+            "== STATUS ==\nLive UI feedback: last_action_work_delta=0, no_progress_streak=2\n",
+            {},
+        )
+        events = agent.pop_tool_events()
+    finally:
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["intent"] == "switch to digging after failed placement"
+    assert any(event.get("tool") == "remember_failed_attempt" for event in events)
 
 
 def test_dig_first_prompt_uses_structured_control() -> None:

@@ -436,9 +436,8 @@ def run_once(
     tick_info_state: Dict[str, Any] = {}
     elapsed_ticks_total = 0
 
-    # Detect keystroke mode from model name
-    # Models that need screen capture: *-keystroke, *-research
-    is_keystroke_mode = model.endswith("-keystroke") or model.endswith("-research")
+    # Detect models that need screen capture and native UI keystroke scaffolding.
+    is_keystroke_mode = "keystroke" in model or model.endswith("-research")
     keystroke_ui_target: Optional[Dict[str, Any]] = None
     ui_target_mode = "starter"
     ui_target_generation = 0

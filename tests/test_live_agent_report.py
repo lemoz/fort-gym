@@ -199,6 +199,136 @@ def test_diagnose_actions_flags_completed_room_without_utility():
     assert diagnostics["production_score"] == 0.0
 
 
+def _trace_record(
+    step: int,
+    *,
+    intent: str,
+    keys: list[str],
+    metrics: dict[str, object],
+    tools: list[str] | None = None,
+    score: float = 0.0,
+) -> dict[str, object]:
+    return {
+        "step": step,
+        "action": {
+            "type": "KEYSTROKE",
+            "params": {"keys": keys},
+            "intent": intent,
+            "advance_ticks": 0,
+        },
+        "metrics": metrics,
+        "score": {"value": score},
+        "state_after_advance": {
+            "stocks": {"wood": metrics.get("wood", 3), "stone": metrics.get("stone", 0)}
+        },
+        "events": [
+            {
+                "type": "tool_call",
+                "data": {"tool": tool, "input": {}, "output": "ok"},
+            }
+            for tool in (tools or [])
+        ],
+        "observation_text": "Leather Works placement menu",
+        "tick_advance": {"ticks_advanced": metrics.get("ticks", 0)},
+    }
+
+
+def test_real_gameplay_trace_analysis_counts_loops_and_memory() -> None:
+    records = [
+        _trace_record(
+            0,
+            intent="Use fresh target keys to designate stairs",
+            keys=["D_DESIGNATE", "DESIGNATE_STAIR_DOWN"],
+            metrics={"ui_step_work_progress": 5, "ui_run_excavation_progress": 5, "ticks": 500},
+            tools=["query_memory"],
+            score=33.0,
+        ),
+        _trace_record(
+            1,
+            intent="Select Craftsdwarf's Workshop (r) from menu",
+            keys=["D_BUILDING", "HOTKEY_BUILDING_WORKSHOP", "STRING_A114"],
+            metrics={"production_progress": 0},
+            tools=["query_memory"],
+            score=33.0,
+        ),
+        _trace_record(
+            2,
+            intent="Select Craftsdwarf's Workshop (r) from menu again",
+            keys=["D_BUILDING", "HOTKEY_BUILDING_WORKSHOP", "STRING_A114"],
+            metrics={"production_progress": 0},
+            tools=["query_memory", "remember_failed_attempt"],
+            score=33.0,
+        ),
+        _trace_record(
+            3,
+            intent="Select Craftsdwarf's Workshop but got Leather Works",
+            keys=["STRING_A114"],
+            metrics={"production_progress": 0},
+            tools=["query_memory"],
+            score=33.0,
+        ),
+        _trace_record(
+            4,
+            intent="Chop trees for material",
+            keys=["D_DESIGNATE", "DESIGNATE_CHOP"],
+            metrics={
+                "ui_step_material_progress": 3,
+                "ui_run_material_progress": 3,
+                "wood": 6,
+                "ticks": 500,
+            },
+            tools=["query_memory", "remember_poi"],
+            score=40.0,
+        ),
+    ]
+
+    analysis = cli._analyze_real_gameplay_trace(records, {})
+
+    assert analysis["steps"] == 5
+    assert analysis["productive_steps"] == 2
+    assert analysis["no_progress_steps"] == 3
+    assert analysis["workshop_no_progress_steps"] == 3
+    assert analysis["menu_confusion_steps"] == 3
+    assert analysis["tool_counts"]["query_memory"] == 5
+    assert analysis["failed_attempt_writes"] == 1
+    assert analysis["poi_writes"] == 1
+    assert analysis["chain"]["dug_or_designated"] is True
+    assert analysis["chain"]["material_acquired"] is True
+    assert "workshop_placement_loop" in analysis["blockers"]
+    assert "menu_key_confusion" in analysis["blockers"]
+
+
+def test_real_gameplay_comparison_prefers_chain_and_loop_progress() -> None:
+    baseline = {
+        "score": 79.9,
+        "real_gameplay": {
+            "chain_stage_count": 3,
+            "productive_steps": 20,
+            "no_progress_steps": 80,
+            "workshop_no_progress_steps": 40,
+            "max_no_progress_streak": 15,
+            "blockers": ["workshop_placement_loop"],
+        },
+    }
+    variant = {
+        "score": 78.0,
+        "real_gameplay": {
+            "chain_stage_count": 4,
+            "productive_steps": 25,
+            "no_progress_steps": 70,
+            "workshop_no_progress_steps": 20,
+            "max_no_progress_streak": 8,
+            "blockers": [],
+        },
+    }
+
+    comparison = cli._build_real_gameplay_comparison(baseline, variant)
+
+    assert comparison["result"] == "variant_real_gameplay_higher"
+    assert comparison["score_delta"] == -1.9
+    assert comparison["chain_stage_delta"] == 1
+
+
 def test_write_live_agent_suite_artifacts(tmp_path):
     baseline_runs = [
             {

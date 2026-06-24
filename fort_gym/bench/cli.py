@@ -604,6 +604,48 @@ def _load_summary(run_id: str, server_artifacts_dir: str | None) -> tuple[dict[s
     return json.loads(summary_path.read_text(encoding="utf-8")), str(summary_path)
 
 
+def _load_public_trace_records(public_base_url: str, token: str) -> tuple[list[dict[str, object]], str]:
+    trace_url = f"{public_base_url.rstrip('/')}/public/runs/{token}/export/trace"
+    with urlopen(Request(trace_url, headers={"User-Agent": "fort-gym-real-gameplay/1.0"}), timeout=90) as response:
+        body = response.read().decode("utf-8")
+    records = [json.loads(line) for line in body.splitlines() if line.strip()]
+    return records, trace_url
+
+
+def _public_run_result(
+    *,
+    public_base_url: str,
+    token: str,
+    records: list[dict[str, object]],
+    run_payload: dict[str, object],
+) -> dict[str, object]:
+    actions = _summarize_actions(records)
+    real_gameplay = _analyze_real_gameplay_trace(records, {})
+    run_id = str(run_payload.get("run_id") or "")
+    score = run_payload.get("score")
+    if score is None:
+        score = real_gameplay.get("final_trace_score")
+    return {
+        "run_id": run_id,
+        "model": run_payload.get("model"),
+        "backend": run_payload.get("backend"),
+        "status": run_payload.get("status"),
+        "score": score,
+        "max_steps": run_payload.get("max_steps"),
+        "step": run_payload.get("step"),
+        "git_sha": run_payload.get("git_sha"),
+        "public_token": token,
+        "public_run_url": f"{public_base_url.rstrip('/')}/public/runs/{token}",
+        "public_replay_url": f"{public_base_url.rstrip('/')}/public/runs/{token}/events/replay",
+        "public_trace_url": f"{public_base_url.rstrip('/')}/public/runs/{token}/export/trace",
+        "trace": f"{public_base_url.rstrip('/')}/public/runs/{token}/export/trace",
+        "trace_steps": len(records),
+        "actions": actions,
+        "diagnostics": _diagnose_actions(actions, {}),
+        "real_gameplay": real_gameplay,
+    }
+
+
 def _summarize_actions(records: list[dict[str, object]]) -> list[dict[str, object]]:
     actions = []
     for record in records:
@@ -638,6 +680,354 @@ def _score_provenances(records: list[dict[str, object]]) -> list[str]:
         if provenance:
             provenances.add(str(provenance))
     return sorted(provenances)
+
+
+PRODUCTIVE_STEP_FIELDS = (
+    "ui_step_work_progress",
+    "ui_step_excavation_progress",
+    "ui_step_material_progress",
+    "utility_action_progress",
+)
+
+CUMULATIVE_PROGRESS_FIELDS = (
+    "completion_progress",
+    "utility_progress",
+    "production_progress",
+    "complexity_progress",
+    "ui_run_excavation_progress",
+    "ui_run_material_progress",
+    "ui_successful_targets",
+    "manager_orders_count",
+    "manager_orders_amount_left",
+    "carpenter_workshops",
+    "workshop_count",
+)
+
+SUMMARY_PROGRESS_DELTA_FIELDS = (
+    "target_dig_designations_delta",
+    "target_floor_tiles_delta",
+    "target_wall_tiles_delta",
+    "active_dig_jobs_delta",
+    "manager_orders_delta",
+    "manager_order_quantity_delta",
+    "carpenter_workshops_delta",
+    "production_workshops_delta",
+    "complexity_floor_tiles_delta",
+    "complexity_wall_tiles_delta",
+    "complexity_spaces_delta",
+)
+
+
+def _record_tool_counts(records: list[dict[str, object]]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for record in records:
+        events = record.get("events") if isinstance(record.get("events"), list) else []
+        for event in events:
+            if not isinstance(event, dict) or event.get("type") != "tool_call":
+                continue
+            data = event.get("data") if isinstance(event.get("data"), dict) else {}
+            tool = str(data.get("tool") or "")
+            if tool:
+                counts[tool] = counts.get(tool, 0) + 1
+    return counts
+
+
+def _last_metrics(records: list[dict[str, object]]) -> dict[str, object]:
+    for record in reversed(records):
+        metrics = record.get("metrics")
+        if isinstance(metrics, dict):
+            return metrics
+    return {}
+
+
+def _metric_max(records: list[dict[str, object]], field: str) -> int:
+    value = 0
+    for record in records:
+        metrics = record.get("metrics") if isinstance(record.get("metrics"), dict) else {}
+        value = max(value, _as_int(metrics.get(field)))
+    return value
+
+
+def _metric_sum(records: list[dict[str, object]], field: str) -> int:
+    total = 0
+    for record in records:
+        metrics = record.get("metrics") if isinstance(record.get("metrics"), dict) else {}
+        total += _as_int(metrics.get(field))
+    return total
+
+
+def _nested_metric_max(records: list[dict[str, object]], parent: str, field: str) -> int:
+    value = 0
+    for record in records:
+        metrics = record.get("metrics") if isinstance(record.get("metrics"), dict) else {}
+        nested = metrics.get(parent)
+        if isinstance(nested, dict):
+            value = max(value, _as_int(nested.get(field)))
+    return value
+
+
+def _state_work_max(records: list[dict[str, object]], field: str) -> int:
+    value = 0
+    for record in records:
+        for state_key in ("observation", "state_after_apply", "state_after_advance"):
+            state = record.get(state_key)
+            if not isinstance(state, dict):
+                continue
+            work = state.get("work")
+            if isinstance(work, dict):
+                value = max(value, _as_int(work.get(field)))
+            ui_work = state.get("ui_work")
+            if isinstance(ui_work, dict):
+                value = max(value, _as_int(ui_work.get(field)))
+    return value
+
+
+def _final_stock(records: list[dict[str, object]], name: str) -> int:
+    for record in reversed(records):
+        state = record.get("state_after_advance")
+        if isinstance(state, dict):
+            stocks = state.get("stocks")
+            if isinstance(stocks, dict) and name in stocks:
+                return _as_int(stocks.get(name))
+        metrics = record.get("metrics") if isinstance(record.get("metrics"), dict) else {}
+        if name in metrics:
+            return _as_int(metrics.get(name))
+    return 0
+
+
+def _record_action(record: dict[str, object]) -> dict[str, object]:
+    action = record.get("action") if isinstance(record.get("action"), dict) else record.get("raw_action")
+    return action if isinstance(action, dict) else {}
+
+
+def _record_keys(record: dict[str, object]) -> set[str]:
+    return _action_keys(_record_action(record))
+
+
+def _record_intent(record: dict[str, object]) -> str:
+    action = _record_action(record)
+    intent = action.get("intent")
+    return str(intent or "")
+
+
+def _record_is_productive(
+    record: dict[str, object],
+    previous_metrics: dict[str, object] | None = None,
+) -> bool:
+    metrics = record.get("metrics") if isinstance(record.get("metrics"), dict) else {}
+    if any(_as_int(metrics.get(field)) > 0 for field in PRODUCTIVE_STEP_FIELDS):
+        return True
+    previous_metrics = previous_metrics or {}
+    for field in CUMULATIVE_PROGRESS_FIELDS:
+        current = _as_int(metrics.get(field))
+        previous = _as_int(previous_metrics.get(field))
+        if current > previous:
+            return True
+    return False
+
+
+def _record_is_workshop_attempt(record: dict[str, object]) -> bool:
+    intent = _record_intent(record).lower()
+    keys = _record_keys(record)
+    return (
+        "workshop" in intent
+        or "leather works" in intent
+        or "mason" in intent
+        or "craftsdwarf" in intent
+        or "carpenter" in intent
+        or bool(keys.intersection({"HOTKEY_BUILDING_WORKSHOP", "HOTKEY_BUILDING_WORKSHOP_CARPENTER"}))
+    )
+
+
+def _record_is_menu_confused(record: dict[str, object]) -> bool:
+    intent = _record_intent(record).lower()
+    if "leather works" in intent and any(
+        word in intent for word in ("craftsdwarf", "mason", "carpenter")
+    ):
+        return True
+    if "craftsdwarf" in intent and "STRING_A114" in _record_keys(record):
+        return True
+    text = str(record.get("observation_text") or "").lower()
+    return "leather works" in text and any(
+        word in intent for word in ("craftsdwarf", "mason", "carpenter")
+    )
+
+
+def _longest_true_streak(values: list[bool]) -> int:
+    longest = 0
+    current = 0
+    for value in values:
+        if value:
+            current += 1
+            longest = max(longest, current)
+        else:
+            current = 0
+    return longest
+
+
+def _analyze_real_gameplay_trace(
+    records: list[dict[str, object]],
+    summary: dict[str, object] | None = None,
+) -> dict[str, object]:
+    summary = summary or {}
+    total_steps = len(records)
+    productive_flags = []
+    previous_metrics: dict[str, object] = {}
+    for record in records:
+        productive_flags.append(_record_is_productive(record, previous_metrics))
+        metrics = record.get("metrics")
+        previous_metrics = metrics if isinstance(metrics, dict) else {}
+    workshop_flags = [_record_is_workshop_attempt(record) for record in records]
+    no_progress_flags = [not productive for productive in productive_flags]
+    workshop_no_progress_flags = [
+        workshop and no_progress
+        for workshop, no_progress in zip(workshop_flags, no_progress_flags)
+    ]
+    tool_counts = _record_tool_counts(records)
+    final_metrics = _last_metrics(records)
+    final_score = None
+    for record in reversed(records):
+        score = record.get("score")
+        if isinstance(score, dict) and score.get("value") is not None:
+            final_score = _as_float(score.get("value"))
+            break
+    if final_score is None:
+        final_score = _as_float(summary.get("total_score"), default=0.0)
+
+    positive_tick_steps = 0
+    zero_tick_steps = 0
+    ticks_advanced = 0
+    for record in records:
+        tick_advance = record.get("tick_advance")
+        if isinstance(tick_advance, dict):
+            ticks = _as_int(tick_advance.get("ticks_advanced"))
+        else:
+            action = _record_action(record)
+            ticks = _as_int(action.get("advance_ticks"))
+        ticks_advanced += ticks
+        if ticks > 0:
+            positive_tick_steps += 1
+        else:
+            zero_tick_steps += 1
+
+    final_carpenter_workshops = max(
+        _as_int(summary.get("carpenter_workshops")),
+        _as_int(final_metrics.get("carpenter_workshops")),
+        _metric_max(records, "carpenter_workshops"),
+        _nested_metric_max(records, "work", "carpenter_workshops"),
+        _nested_metric_max(records, "ui_work", "carpenter_workshops"),
+        _state_work_max(records, "carpenter_workshops"),
+    )
+    final_completed_spaces = max(
+        _as_int(summary.get("fortress_complexity_spaces_completed")),
+        _as_int(final_metrics.get("fortress_complexity_spaces_completed")),
+        _metric_max(records, "fortress_complexity_spaces_completed"),
+        _nested_metric_max(records, "work", "fortress_complexity_spaces_completed"),
+    )
+    final_wood = max(_final_stock(records, "wood"), _as_int(summary.get("wood")))
+    final_stone = max(_final_stock(records, "stone"), _as_int(summary.get("stone")))
+    ui_material_progress = max(
+        _as_int(summary.get("ui_material_progress")),
+        _metric_max(records, "ui_run_material_progress"),
+        _metric_sum(records, "ui_step_material_progress"),
+    )
+    ui_excavation_progress = max(
+        _as_int(summary.get("ui_excavation_progress")),
+        _metric_max(records, "ui_run_excavation_progress"),
+        _metric_sum(records, "ui_step_excavation_progress"),
+    )
+    utility_progress = max(
+        _as_int(summary.get("utility_progress")),
+        _metric_max(records, "utility_progress"),
+        _metric_sum(records, "utility_action_progress"),
+    )
+    production_progress = max(
+        _as_int(summary.get("production_progress")),
+        _metric_max(records, "production_progress"),
+        _metric_sum(records, "production_workshops_delta"),
+        _metric_sum(records, "carpenter_workshops_delta"),
+    )
+    completion_progress = max(
+        _as_int(summary.get("completion_progress")),
+        _metric_max(records, "completion_progress"),
+        _metric_sum(records, "ui_step_work_progress"),
+    )
+    complexity_progress = max(
+        _as_int(summary.get("complexity_progress")),
+        _metric_max(records, "complexity_progress"),
+        _metric_sum(records, "complexity_spaces_delta"),
+    )
+    chain = {
+        "dug_or_designated": ui_excavation_progress > 0 or completion_progress > 0,
+        "material_acquired": ui_material_progress > 0 or final_wood > 3 or final_stone > 0,
+        "workshop_built": final_carpenter_workshops > 0 or production_progress > 0,
+        "utility_created": utility_progress > 0,
+        "fortress_space_completed": final_completed_spaces > 0 or complexity_progress > 0,
+    }
+    chain_stage_count = sum(1 for ok in chain.values() if ok)
+
+    blockers: list[str] = []
+    max_no_progress_streak = _longest_true_streak(no_progress_flags)
+    max_workshop_loop_streak = _longest_true_streak(workshop_no_progress_flags)
+    workshop_no_progress_steps = sum(1 for value in workshop_no_progress_flags if value)
+    menu_confusion_steps = sum(1 for record in records if _record_is_menu_confused(record))
+    failed_attempt_writes = _as_int(tool_counts.get("remember_failed_attempt"))
+    if max_no_progress_streak >= 5:
+        blockers.append("repeated_no_progress_loop")
+    if max_workshop_loop_streak >= 3 or workshop_no_progress_steps >= 5:
+        blockers.append("workshop_placement_loop")
+    if menu_confusion_steps:
+        blockers.append("menu_key_confusion")
+    if failed_attempt_writes == 0 and max_no_progress_streak >= 3:
+        blockers.append("no_failed_attempt_memory")
+    if not chain["material_acquired"]:
+        blockers.append("no_material_acquired")
+    if not chain["workshop_built"]:
+        blockers.append("no_workshop_built")
+    if not chain["fortress_space_completed"]:
+        blockers.append("no_fortress_space_completed")
+
+    productive_steps = sum(1 for value in productive_flags if value)
+    return {
+        "steps": total_steps,
+        "final_trace_score": final_score,
+        "productive_steps": productive_steps,
+        "productive_action_rate": round(productive_steps / total_steps, 3) if total_steps else 0.0,
+        "no_progress_steps": sum(1 for value in no_progress_flags if value),
+        "max_no_progress_streak": max_no_progress_streak,
+        "workshop_attempt_steps": sum(1 for value in workshop_flags if value),
+        "workshop_no_progress_steps": workshop_no_progress_steps,
+        "max_workshop_loop_streak": max_workshop_loop_streak,
+        "menu_confusion_steps": menu_confusion_steps,
+        "positive_tick_steps": positive_tick_steps,
+        "zero_tick_steps": zero_tick_steps,
+        "ticks_advanced": ticks_advanced,
+        "tool_counts": tool_counts,
+        "memory_review_calls": _as_int(tool_counts.get("query_memory")),
+        "memory_review_rate": (
+            round(_as_int(tool_counts.get("query_memory")) / total_steps, 3)
+            if total_steps
+            else 0.0
+        ),
+        "poi_writes": _as_int(tool_counts.get("remember_poi")),
+        "failed_attempt_writes": failed_attempt_writes,
+        "df_wiki_calls": _as_int(tool_counts.get("df_wiki")),
+        "chain": chain,
+        "chain_stage_count": chain_stage_count,
+        "final_state": {
+            "wood": final_wood,
+            "stone": final_stone,
+            "carpenter_workshops": final_carpenter_workshops,
+            "completed_spaces": final_completed_spaces,
+            "completion_progress": completion_progress,
+            "utility_progress": utility_progress,
+            "production_progress": production_progress,
+            "complexity_progress": complexity_progress,
+            "ui_excavation_progress": ui_excavation_progress,
+            "ui_material_progress": ui_material_progress,
+        },
+        "blockers": blockers,
+    }
 
 
 def _as_float(value: object, default: float = 0.0) -> float:
@@ -863,6 +1253,7 @@ def _run_api_agent(
     summary, summary_path = _load_summary(run_id, server_artifacts_dir)
     actions = _summarize_actions(records)
     score_provenances = _score_provenances(records)
+    real_gameplay = _analyze_real_gameplay_trace(records, summary)
     score = latest.get("score")
     if score is None:
         score = summary.get("total_score")
@@ -929,6 +1320,7 @@ def _run_api_agent(
         "trace_steps": len(records),
         "actions": actions,
         "diagnostics": _diagnose_actions(actions, summary),
+        "real_gameplay": real_gameplay,
     }
 
 
@@ -1006,6 +1398,121 @@ def _write_live_agent_packet(
     )
     target_path.write_text("\n".join(lines), encoding="utf-8")
     return target_path
+
+
+def _real_gameplay_metrics(run: dict[str, object]) -> dict[str, object]:
+    value = run.get("real_gameplay")
+    return value if isinstance(value, dict) else {}
+
+
+def _build_real_gameplay_comparison(
+    baseline: dict[str, object],
+    variant: dict[str, object],
+) -> dict[str, object]:
+    base = _real_gameplay_metrics(baseline)
+    new = _real_gameplay_metrics(variant)
+    score_delta = round(_as_float(variant.get("score")) - _as_float(baseline.get("score")), 2)
+    chain_delta = _as_int(new.get("chain_stage_count")) - _as_int(base.get("chain_stage_count"))
+    productive_delta = _as_int(new.get("productive_steps")) - _as_int(base.get("productive_steps"))
+    no_progress_delta = _as_int(new.get("no_progress_steps")) - _as_int(base.get("no_progress_steps"))
+    workshop_loop_delta = _as_int(new.get("workshop_no_progress_steps")) - _as_int(
+        base.get("workshop_no_progress_steps")
+    )
+    max_loop_delta = _as_int(new.get("max_no_progress_streak")) - _as_int(
+        base.get("max_no_progress_streak")
+    )
+    improved = (
+        chain_delta > 0
+        or (
+            chain_delta == 0
+            and productive_delta > 0
+            and no_progress_delta <= 0
+            and workshop_loop_delta <= 0
+        )
+    )
+    return {
+        "baseline_score": _as_float(baseline.get("score")),
+        "variant_score": _as_float(variant.get("score")),
+        "score_delta": score_delta,
+        "baseline_chain_stage_count": _as_int(base.get("chain_stage_count")),
+        "variant_chain_stage_count": _as_int(new.get("chain_stage_count")),
+        "chain_stage_delta": chain_delta,
+        "productive_steps_delta": productive_delta,
+        "no_progress_steps_delta": no_progress_delta,
+        "workshop_no_progress_steps_delta": workshop_loop_delta,
+        "max_no_progress_streak_delta": max_loop_delta,
+        "baseline_blockers": base.get("blockers", []),
+        "variant_blockers": new.get("blockers", []),
+        "result": "variant_real_gameplay_higher" if improved else "needs_more_hardening",
+    }
+
+
+def _write_real_gameplay_experiment_artifacts(
+    *,
+    report: dict[str, object],
+    packet_path: str | None,
+    server_artifacts_dir: str | None,
+) -> tuple[Path, Path]:
+    runs = report.get("runs") if isinstance(report.get("runs"), dict) else {}
+    variant = runs.get("variant") if isinstance(runs.get("variant"), dict) else {}
+    run_id = str(variant.get("run_id") or "real-gameplay-experiment")
+    if packet_path:
+        markdown_path = Path(packet_path).expanduser().resolve()
+        target_dir = markdown_path.parent
+    elif server_artifacts_dir:
+        target_dir = Path(server_artifacts_dir).expanduser().resolve() / str(run_id)
+        markdown_path = target_dir / "real_gameplay_experiment.md"
+    else:
+        target_dir = Path.cwd() / str(run_id)
+        markdown_path = target_dir / "real_gameplay_experiment.md"
+    target_dir.mkdir(parents=True, exist_ok=True)
+    json_path = target_dir / "real_gameplay_experiment.json"
+    report["packet"] = str(markdown_path)
+    report["json"] = str(json_path)
+
+    generated_at = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    comparison = report.get("comparison") if isinstance(report.get("comparison"), dict) else {}
+    baseline = runs.get("baseline") if isinstance(runs.get("baseline"), dict) else {}
+    baseline_gameplay = _real_gameplay_metrics(baseline)
+    variant_gameplay = _real_gameplay_metrics(variant)
+    lines = [
+        "# fort-gym real gameplay experiment",
+        "",
+        f"Generated: {generated_at}",
+        f"Status: {'PASS' if report.get('ok') else 'FAIL'}",
+        f"Result: `{comparison.get('result')}`",
+        f"Score delta: `{comparison.get('score_delta')}`",
+        f"Chain stage delta: `{comparison.get('chain_stage_delta')}`",
+        f"Productive steps delta: `{comparison.get('productive_steps_delta')}`",
+        f"No-progress steps delta: `{comparison.get('no_progress_steps_delta')}`",
+        f"Workshop no-progress delta: `{comparison.get('workshop_no_progress_steps_delta')}`",
+        "",
+        "## Baseline",
+        "",
+        f"- Run: `{baseline.get('run_id')}`",
+        f"- Model: `{baseline.get('model')}`",
+        f"- Score: `{baseline.get('score')}`",
+        f"- Replay: {baseline.get('public_replay_url')}",
+        f"- Real gameplay: `{baseline_gameplay}`",
+        "",
+        "## Variant",
+        "",
+        f"- Run: `{variant.get('run_id')}`",
+        f"- Model: `{variant.get('model')}`",
+        f"- Score: `{variant.get('score')}`",
+        f"- Replay: {variant.get('public_replay_url')}",
+        f"- Real gameplay: `{variant_gameplay}`",
+        "",
+        "## JSON",
+        "",
+        "```json",
+        json.dumps(report, indent=2, sort_keys=True),
+        "```",
+        "",
+    ]
+    json_path.write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
+    markdown_path.write_text("\n".join(lines), encoding="utf-8")
+    return markdown_path, json_path
 
 
 def _score_values(runs: list[dict[str, object]]) -> list[float]:
@@ -1102,6 +1609,50 @@ def _merge_diagnostics(runs: list[dict[str, object]]) -> dict[str, object]:
     }
 
 
+def _merge_real_gameplay(runs: list[dict[str, object]]) -> dict[str, object]:
+    analyses = [
+        run.get("real_gameplay")
+        for run in runs
+        if isinstance(run.get("real_gameplay"), dict)
+    ]
+    if not analyses:
+        return {}
+    tool_counts: dict[str, int] = {}
+    blockers: dict[str, int] = {}
+    for analysis in analyses:
+        counts = analysis.get("tool_counts") if isinstance(analysis.get("tool_counts"), dict) else {}
+        for tool, count in counts.items():
+            tool_counts[str(tool)] = tool_counts.get(str(tool), 0) + _as_int(count)
+        for blocker in analysis.get("blockers", []) if isinstance(analysis.get("blockers"), list) else []:
+            name = str(blocker)
+            blockers[name] = blockers.get(name, 0) + 1
+    return {
+        "runs": len(analyses),
+        "median_productive_action_rate": _median(
+            [_as_float(analysis.get("productive_action_rate")) for analysis in analyses]
+        ),
+        "median_productive_steps": _median(
+            [_as_float(analysis.get("productive_steps")) for analysis in analyses]
+        ),
+        "median_no_progress_steps": _median(
+            [_as_float(analysis.get("no_progress_steps")) for analysis in analyses]
+        ),
+        "max_no_progress_streak": max(_as_int(analysis.get("max_no_progress_streak")) for analysis in analyses),
+        "workshop_no_progress_steps": sum(_as_int(analysis.get("workshop_no_progress_steps")) for analysis in analyses),
+        "menu_confusion_steps": sum(_as_int(analysis.get("menu_confusion_steps")) for analysis in analyses),
+        "median_memory_review_rate": _median(
+            [_as_float(analysis.get("memory_review_rate")) for analysis in analyses]
+        ),
+        "poi_writes": sum(_as_int(analysis.get("poi_writes")) for analysis in analyses),
+        "failed_attempt_writes": sum(
+            _as_int(analysis.get("failed_attempt_writes")) for analysis in analyses
+        ),
+        "best_chain_stage_count": max(_as_int(analysis.get("chain_stage_count")) for analysis in analyses),
+        "tool_counts": tool_counts,
+        "blockers": blockers,
+    }
+
+
 def _variant_scorecard(
     *,
     model: str,
@@ -1183,6 +1734,7 @@ def _variant_scorecard(
         "best_run_url": _public_url_for_extreme(runs, reverse=True),
         "worst_run_url": _public_url_for_extreme(runs, reverse=False),
         "diagnostics": _merge_diagnostics(runs),
+        "real_gameplay": _merge_real_gameplay(runs),
     }
 
 
@@ -1296,6 +1848,7 @@ def _build_suite_comparison(
             "best_run_url": _public_url_for_extreme(baseline_runs, reverse=True),
             "worst_run_url": _public_url_for_extreme(baseline_runs, reverse=False),
             "diagnostics": _merge_diagnostics(baseline_runs),
+            "real_gameplay": _merge_real_gameplay(baseline_runs),
         },
         "variants": variants,
         "best_model": best_variant.get("model") if best_variant else None,
@@ -1442,6 +1995,7 @@ def _write_live_agent_suite_artifacts(
         f"- Best run: {baseline.get('best_run_url')}",
         f"- Worst run: {baseline.get('worst_run_url')}",
         f"- Diagnostics: `{baseline.get('diagnostics')}`",
+        f"- Real gameplay: `{baseline.get('real_gameplay')}`",
         "",
         "## Variants",
         "",
@@ -1471,6 +2025,7 @@ def _write_live_agent_suite_artifacts(
                 f"- Best run: {variant.get('best_run_url')}",
                 f"- Worst run: {variant.get('worst_run_url')}",
                 f"- Diagnostics: `{variant.get('diagnostics')}`",
+                f"- Real gameplay: `{variant.get('real_gameplay')}`",
                 "",
             ]
         )
@@ -1514,6 +2069,88 @@ def _write_live_agent_suite_artifacts(
     json_path.write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
     markdown_path.write_text("\n".join(lines), encoding="utf-8")
     return markdown_path, json_path
+
+
+@app.command("real-gameplay-experiment")
+def real_gameplay_experiment(
+    baseline_token: str,
+    model: str = "anthropic-keystroke-poi-review",
+    backend: str = "dfhack",
+    max_steps: int = 100,
+    ticks_per_step: int = 10,
+    api_base_url: str = "http://127.0.0.1:8000",
+    public_base_url: str = "https://fortgym.live",
+    admin_user: str | None = None,
+    admin_password: str | None = None,
+    server_artifacts_dir: str | None = "/opt/fort-gym/fort_gym/artifacts",
+    timeout_seconds: int = 7200,
+    poll_interval: float = 10.0,
+    packet_path: str | None = None,
+    preserve_save: bool = False,
+) -> None:
+    """Run a no-cheat keystroke variant and compare it to a public baseline trace."""
+
+    resolved_user = admin_user or os.getenv("FORT_GYM_ADMIN_USER", "admin")
+    resolved_password = admin_password or os.getenv("FORT_GYM_ADMIN_PASSWORD")
+    if not resolved_password:
+        typer.echo("FORT_GYM_ADMIN_PASSWORD or --admin-password is required.")
+        raise typer.Exit(1)
+
+    typer.echo(f"Loading baseline public run token {baseline_token}", err=True)
+    baseline_payload = _json_request(
+        method="GET",
+        base_url=public_base_url,
+        path=f"/public/runs/{baseline_token}",
+    )
+    if not isinstance(baseline_payload, dict):
+        typer.echo("Could not load baseline public run.")
+        raise typer.Exit(1)
+    baseline_records, _ = _load_public_trace_records(public_base_url, baseline_token)
+    baseline = _public_run_result(
+        public_base_url=public_base_url,
+        token=baseline_token,
+        records=baseline_records,
+        run_payload=baseline_payload,
+    )
+
+    typer.echo(f"Starting variant run: {model}", err=True)
+    variant = _run_api_agent(
+        api_base_url=api_base_url,
+        public_base_url=public_base_url,
+        admin_user=resolved_user,
+        admin_password=resolved_password,
+        model=model,
+        backend=backend,
+        max_steps=max_steps,
+        ticks_per_step=ticks_per_step,
+        server_artifacts_dir=server_artifacts_dir,
+        poll_interval=poll_interval,
+        timeout_seconds=timeout_seconds,
+        preserve_save=preserve_save,
+    )
+    comparison = _build_real_gameplay_comparison(baseline, variant)
+    report = {
+        "ok": variant.get("status") == "completed",
+        "baseline_token": baseline_token,
+        "model": model,
+        "backend": backend,
+        "max_steps": max_steps,
+        "ticks_per_step": ticks_per_step,
+        "preserve_save": preserve_save,
+        "comparison": comparison,
+        "runs": {
+            "baseline": baseline,
+            "variant": variant,
+        },
+    }
+    _write_real_gameplay_experiment_artifacts(
+        report=report,
+        packet_path=packet_path,
+        server_artifacts_dir=server_artifacts_dir,
+    )
+    typer.echo(json.dumps(report, indent=2, sort_keys=True))
+    if not report["ok"]:
+        raise typer.Exit(1)
 
 
 @app.command("live-agent-report")

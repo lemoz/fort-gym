@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import time
 from importlib import import_module
 from typing import Any, Dict, List, Optional
@@ -136,6 +137,9 @@ You see the current game screen as text (80 columns x 25 rows). The screen shows
 
 ## Actions
 Return a KEYSTROKE action with a list of key names to press in sequence.
+Include objective, expected_visible_result, expected_simulation_result, and
+memory_update fields so the trace can compare what you expected against what
+actually happened.
 
 ## Tools
 You can call the df_wiki tool to look up gameplay rules and commands. Use it when you
@@ -201,6 +205,10 @@ Always return exactly one action:
   "type": "KEYSTROKE",
   "params": {"keys": ["KEY1", "KEY2", ...]},
   "intent": "Brief description of what you're trying to do",
+  "objective": "Current gameplay task",
+  "expected_visible_result": "Immediate screen/menu/cursor/map result",
+  "expected_simulation_result": "World result after ticks, or none for UI-only actions",
+  "memory_update": "POI/failure review or update made before acting",
   "advance_ticks": 200
 }
 
@@ -233,6 +241,41 @@ Some popups say "Press Enter to close" but SELECT doesn't always work. If SELECT
 - **IMPORTANT**: If an action doesn't work after 2-3 tries, try a DIFFERENT key or approach. Don't repeat the same action endlessly."""
 
 
+KEYSTROKE_POI_REVIEW_APPENDIX = """
+
+## Mandatory POI/Task Review Variant
+You are running in an experiment that measures whether memory review improves
+real Dwarf Fortress gameplay through native keystrokes. The game is usually
+paused during planning/UI work, which is fine: menus, cursor movement,
+designation, building placement, and inspection all work while paused. Dwarves
+only dig, chop, haul, build, or produce after you choose advance_ticks > 0.
+
+Before EVERY submit_action:
+1. Call query_memory for the current objective, current menu/building target,
+   or nearby coordinates. Treat this as your pre-action notebook review.
+2. Read RECENT ACTION OUTCOMES. If the same placement/menu/cursor plan recently
+   produced no tracked state change, do not repeat it.
+3. If the observation says repeated no-progress, target refreshed after
+   no-progress, or no_progress_streak >= 2, call remember_failed_attempt before
+   submitting the next action.
+4. If you discover or create a stable POI such as a workshop, staircase,
+   stockpile, resource patch, dwarf cluster, or blocked placement area, call
+   remember_poi before submitting the next action.
+5. In submit_action include objective, expected_visible_result,
+   expected_simulation_result, and memory_update.
+
+Do not spend more than two consecutive actions trying to place the same workshop
+or selecting the same workshop key. If placement is unclear, return to the main
+view, query memory, record the failed attempt, and choose a different productive
+branch such as designating fresh dig/chop work or making a stockpile.
+"""
+
+
+KEYSTROKE_POI_REVIEW_SYSTEM_PROMPT = (
+    KEYSTROKE_SYSTEM_PROMPT + KEYSTROKE_POI_REVIEW_APPENDIX
+)
+
+
 KEYSTROKE_TOOL_SPEC = {
     "name": "submit_action",
     "description": "Submit a keystroke sequence to control Dwarf Fortress",
@@ -257,6 +300,22 @@ KEYSTROKE_TOOL_SPEC = {
             "intent": {
                 "type": "string",
                 "description": "Brief description of what this action accomplishes",
+            },
+            "objective": {
+                "type": "string",
+                "description": "Current gameplay task this action advances",
+            },
+            "expected_visible_result": {
+                "type": "string",
+                "description": "Immediate screen/menu/cursor/map result expected after the keys are sent",
+            },
+            "expected_simulation_result": {
+                "type": "string",
+                "description": "Dwarf/world result expected after advancing ticks, or none for UI-only actions",
+            },
+            "memory_update": {
+                "type": "string",
+                "description": "POI/failure memory reviewed or updated before acting",
             },
             "advance_ticks": {
                 "type": "integer",
@@ -430,12 +489,19 @@ register_agent("anthropic-fortress-plan", lambda: AnthropicFortressPlanAgent())
 class AnthropicKeystrokeAgent(Agent):
     """Anthropic agent for keystroke-based game control."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        *,
+        system_prompt: str = KEYSTROKE_SYSTEM_PROMPT,
+        require_memory_review: bool = False,
+    ) -> None:
         self._settings = get_settings()
         if not self._settings.ANTHROPIC_API_KEY:
             raise RuntimeError("ANTHROPIC_API_KEY not configured")
         self._client = None
         self._last_call = 0.0
+        self._system_prompt = system_prompt
+        self._require_memory_review = require_memory_review
         self._memory = MemoryManager(window_size=self._resolve_memory_window())
         self._pending_observation: Optional[str] = None
         self._pending_action: Optional[Dict[str, Any]] = None
@@ -473,6 +539,34 @@ class AnthropicKeystrokeAgent(Agent):
                 raise RuntimeError("anthropic.Anthropic client not available")
             self._client = client_cls(api_key=self._settings.ANTHROPIC_API_KEY)
         return self._client
+
+    def _required_memory_review_error(self, tool_uses: List[Any], obs_text: str) -> Optional[str]:
+        if not self._require_memory_review:
+            return None
+        tool_names = {str(getattr(tool_use, "name", "")) for tool_use in tool_uses}
+        if "query_memory" not in tool_names:
+            return (
+                "Mandatory pre-action review missing: call query_memory for the "
+                "current objective/menu/POI before submit_action."
+            )
+        if self._needs_failed_attempt_memory(obs_text) and "remember_failed_attempt" not in tool_names:
+            return (
+                "Mandatory failed-attempt update missing: the observation shows "
+                "repeated or recent no-progress behavior. Call remember_failed_attempt "
+                "before submit_action and choose a different plan."
+            )
+        return None
+
+    @staticmethod
+    def _needs_failed_attempt_memory(obs_text: str) -> bool:
+        if "target refreshed after repeated no-progress" in obs_text:
+            return True
+        if "the last action changed no tracked tiles" in obs_text:
+            return True
+        if "do not repeat the same key sequence" in obs_text:
+            return True
+        match = re.search(r"no_progress_streak=(\d+)", obs_text)
+        return bool(match and int(match.group(1)) >= 2)
 
     def decide(self, obs_text: str, obs_json: Dict[str, Any]) -> Dict[str, Any]:
         """Decide on a keystroke action based on screen observation."""
@@ -546,7 +640,7 @@ class AnthropicKeystrokeAgent(Agent):
                 model=self._settings.ANTHROPIC_MODEL,
                 max_tokens=self._settings.LLM_MAX_TOKENS,
                 temperature=self._settings.LLM_TEMP,
-                system=KEYSTROKE_SYSTEM_PROMPT,
+                system=self._system_prompt,
                 tools=tools,
                 messages=messages,
             )
@@ -585,6 +679,15 @@ class AnthropicKeystrokeAgent(Agent):
                 )
 
             if tool_payload is not None:
+                required_review_error = self._required_memory_review_error(tool_uses, obs_text)
+                if required_review_error:
+                    last_error = ValueError(required_review_error)
+                    append_tool_retry(
+                        response.content,
+                        tool_results_for_retry(tool_uses, required_review_error),
+                    )
+                    continue
+
                 # Validate it's a KEYSTROKE action
                 if tool_payload.get("type") != "KEYSTROKE":
                     last_error = ValueError(
@@ -656,6 +759,13 @@ class AnthropicKeystrokeAgent(Agent):
 
 
 register_agent("anthropic-keystroke", lambda: AnthropicKeystrokeAgent())
+register_agent(
+    "anthropic-keystroke-poi-review",
+    lambda: AnthropicKeystrokeAgent(
+        system_prompt=KEYSTROKE_POI_REVIEW_SYSTEM_PROMPT,
+        require_memory_review=True,
+    ),
+)
 
 
 __all__ = [
@@ -666,4 +776,5 @@ __all__ = [
     "DIG_FIRST_SYSTEM_PROMPT",
     "FORTRESS_PLAN_SYSTEM_PROMPT",
     "KEYSTROKE_SYSTEM_PROMPT",
+    "KEYSTROKE_POI_REVIEW_SYSTEM_PROMPT",
 ]
