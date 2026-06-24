@@ -433,6 +433,17 @@ def _append_usage_event(
     )
 
 
+def _is_rate_limit_error(exc: Exception) -> bool:
+    if exc.__class__.__name__ == "RateLimitError":
+        return True
+    status_code = getattr(exc, "status_code", None)
+    return status_code == 429
+
+
+def _rate_limit_backoff_seconds(attempt: int) -> float:
+    return min(60.0, 5.0 * (2**attempt))
+
+
 class AnthropicActionAgent(Agent):
     """Calls Anthropic Messages API with tool-use for submit_action."""
 
@@ -468,6 +479,28 @@ class AnthropicActionAgent(Agent):
             self._client = client_cls(api_key=self._settings.ANTHROPIC_API_KEY)
         return self._client
 
+    def _create_message_with_retries(self, client: Any, **kwargs: Any) -> Any:
+        last_error: Exception | None = None
+        for attempt in range(6):
+            try:
+                return client.messages.create(**kwargs)
+            except Exception as exc:
+                if not _is_rate_limit_error(exc):
+                    raise
+                last_error = exc
+                wait_seconds = _rate_limit_backoff_seconds(attempt)
+                self._tool_events.append(
+                    {
+                        "tool": "anthropic.rate_limit_retry",
+                        "input": {"attempt": attempt + 1, "wait_seconds": wait_seconds},
+                        "output": str(exc),
+                    }
+                )
+                time.sleep(wait_seconds)
+        if last_error is not None:
+            raise last_error
+        raise RuntimeError("Anthropic request failed without an exception")
+
     def decide(self, obs_text: str, obs_json: Dict[str, Any]) -> Dict[str, Any]:
         content = f"{obs_text}\n\nState JSON:\n{json.dumps(obs_json)}"
         last_error: Optional[Exception] = None
@@ -475,7 +508,8 @@ class AnthropicActionAgent(Agent):
         for _ in range(3):
             self._rate_limit()
             client = self._client_instance()
-            response = client.messages.create(
+            response = self._create_message_with_retries(
+                client,
                 model=self._settings.ANTHROPIC_MODEL,
                 max_tokens=self._settings.LLM_MAX_TOKENS,
                 temperature=self._settings.LLM_TEMP,
@@ -599,6 +633,28 @@ class AnthropicKeystrokeAgent(Agent):
                 raise RuntimeError("anthropic.Anthropic client not available")
             self._client = client_cls(api_key=self._settings.ANTHROPIC_API_KEY)
         return self._client
+
+    def _create_message_with_retries(self, client: Any, **kwargs: Any) -> Any:
+        last_error: Exception | None = None
+        for attempt in range(6):
+            try:
+                return client.messages.create(**kwargs)
+            except Exception as exc:
+                if not _is_rate_limit_error(exc):
+                    raise
+                last_error = exc
+                wait_seconds = _rate_limit_backoff_seconds(attempt)
+                self._tool_events.append(
+                    {
+                        "tool": "anthropic.rate_limit_retry",
+                        "input": {"attempt": attempt + 1, "wait_seconds": wait_seconds},
+                        "output": str(exc),
+                    }
+                )
+                time.sleep(wait_seconds)
+        if last_error is not None:
+            raise last_error
+        raise RuntimeError("Anthropic request failed without an exception")
 
     def _required_memory_review_error(
         self,
@@ -811,7 +867,8 @@ class AnthropicKeystrokeAgent(Agent):
             tool_result_cache.clear()
             self._rate_limit()
             client = self._client_instance()
-            response = client.messages.create(
+            response = self._create_message_with_retries(
+                client,
                 model=self._settings.ANTHROPIC_MODEL,
                 max_tokens=self._settings.LLM_MAX_TOKENS,
                 temperature=self._settings.LLM_TEMP,

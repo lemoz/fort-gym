@@ -70,6 +70,45 @@ class _SequencedAnthropicClient:
         _SequencedAnthropicClient.last_instance = self
 
 
+class _FakeRateLimitError(Exception):
+    status_code = 429
+
+
+class _RateLimitOnceMessages:
+    def __init__(self) -> None:
+        self.requests: list[dict[str, Any]] = []
+
+    def create(self, **kwargs: Any) -> Any:
+        self.requests.append(kwargs)
+        if len(self.requests) == 1:
+            raise _FakeRateLimitError("rate limited")
+        return SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="submit_action",
+                    id="toolu_action",
+                    input={
+                        "type": "KEYSTROKE",
+                        "params": {"keys": ["LEAVESCREEN"]},
+                        "intent": "recover after rate limit",
+                        "advance_ticks": 0,
+                    },
+                )
+            ],
+            usage=SimpleNamespace(input_tokens=10, output_tokens=2),
+        )
+
+
+class _RateLimitOnceAnthropicClient:
+    last_instance: "_RateLimitOnceAnthropicClient | None" = None
+
+    def __init__(self, api_key: str) -> None:
+        self.api_key = api_key
+        self.messages = _RateLimitOnceMessages()
+        _RateLimitOnceAnthropicClient.last_instance = self
+
+
 def test_anthropic_default_model_tracks_current_sonnet(monkeypatch) -> None:
     monkeypatch.delenv("ANTHROPIC_MODEL", raising=False)
     get_settings.cache_clear()  # type: ignore[attr-defined]
@@ -275,6 +314,34 @@ def test_keystroke_agent_records_memory_tool_before_returning_action(monkeypatch
     assert action["type"] == "KEYSTROKE"
     assert any(event.get("tool") == "remember_poi" for event in events)
     assert "carpenter workshop" in agent._memory.get_context()
+
+
+def test_keystroke_agent_retries_rate_limit(monkeypatch) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.delenv("ANTHROPIC_MODEL", raising=False)
+    monkeypatch.setattr("fort_gym.bench.agent.llm_anthropic.time.sleep", lambda _: None)
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "anthropic"
+        return SimpleNamespace(Anthropic=_RateLimitOnceAnthropicClient)
+
+    monkeypatch.setattr(
+        "fort_gym.bench.agent.llm_anthropic.import_module",
+        fake_import_module,
+    )
+
+    try:
+        agent = AnthropicKeystrokeAgent()
+        action = agent.decide("mock screen", {})
+        events = agent.pop_tool_events()
+    finally:
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["intent"] == "recover after rate limit"
+    assert any(event.get("tool") == "anthropic.rate_limit_retry" for event in events)
+    assert _RateLimitOnceAnthropicClient.last_instance is not None
+    assert len(_RateLimitOnceAnthropicClient.last_instance.messages.requests) == 2
 
 
 def test_poi_review_agent_retries_without_query_memory(monkeypatch) -> None:
