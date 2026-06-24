@@ -760,6 +760,8 @@ class AnthropicKeystrokeAgent(Agent):
         ]
         tools = [KEYSTROKE_ANTHROPIC_TOOL, *self._tool_manager.tool_specs()]
         tool_result_cache: Dict[str, str] = {}
+        last_gate_blocked_action: Optional[Dict[str, Any]] = None
+        last_gate_blocked_error: Optional[str] = None
 
         def append_tool_retry(response_content: Any, tool_results: List[Dict[str, Any]]) -> None:
             messages.append({"role": "assistant", "content": response_content})
@@ -852,44 +854,10 @@ class AnthropicKeystrokeAgent(Agent):
                 )
 
             if tool_payload is not None:
-                required_errors = [
-                    error
-                    for error in (
-                        self._required_memory_review_error(
-                            tool_uses,
-                            obs_text,
-                            tool_payload,
-                        ),
-                        self._required_plan_review_error(tool_uses, obs_text),
-                    )
-                    if error
-                ]
-                required_review_error = "\n".join(required_errors) if required_errors else None
-                if required_review_error and attempt_index < 3:
-                    last_error = ValueError(required_review_error)
-                    append_tool_retry(
-                        response.content,
-                        tool_results_for_retry(tool_uses, required_review_error),
-                    )
-                    continue
-                if required_review_error:
-                    warning_tool = (
-                        "plan_review_gate_warning"
-                        if "plan" in required_review_error.lower()
-                        else "memory_review_gate_warning"
-                    )
-                    self._tool_events.append(
-                        {
-                            "tool": warning_tool,
-                            "input": {
-                                "attempt": attempt_index + 1,
-                                "required_review_error": required_review_error,
-                            },
-                            "output": "Allowed action after bounded memory-review retries.",
-                        }
-                    )
-
-                # Validate it's a KEYSTROKE action
+                # Validate it's a KEYSTROKE action before applying planning gates.
+                # If the model spends retries on notebook tools but never resubmits,
+                # we can still fall back to this last valid candidate without
+                # crashing the live run.
                 if tool_payload.get("type") != "KEYSTROKE":
                     last_error = ValueError(
                         f"Expected KEYSTROKE action, got {tool_payload.get('type')}"
@@ -926,6 +894,45 @@ class AnthropicKeystrokeAgent(Agent):
                     )
                     continue
 
+                required_errors = [
+                    error
+                    for error in (
+                        self._required_memory_review_error(
+                            tool_uses,
+                            obs_text,
+                            tool_payload,
+                        ),
+                        self._required_plan_review_error(tool_uses, obs_text),
+                    )
+                    if error
+                ]
+                required_review_error = "\n".join(required_errors) if required_errors else None
+                if required_review_error and attempt_index < 3:
+                    last_gate_blocked_action = action
+                    last_gate_blocked_error = required_review_error
+                    last_error = ValueError(required_review_error)
+                    append_tool_retry(
+                        response.content,
+                        tool_results_for_retry(tool_uses, required_review_error),
+                    )
+                    continue
+                if required_review_error:
+                    warning_tool = (
+                        "plan_review_gate_warning"
+                        if "plan" in required_review_error.lower()
+                        else "memory_review_gate_warning"
+                    )
+                    self._tool_events.append(
+                        {
+                            "tool": warning_tool,
+                            "input": {
+                                "attempt": attempt_index + 1,
+                                "required_review_error": required_review_error,
+                            },
+                            "output": "Allowed action after bounded memory-review retries.",
+                        }
+                    )
+
                 self._pending_observation = obs_text
                 self._pending_action = action
                 self._completed_actions += 1
@@ -951,6 +958,30 @@ class AnthropicKeystrokeAgent(Agent):
                     ],
                 }
             )
+
+        if last_gate_blocked_action is not None:
+            warning_tool = (
+                "plan_review_gate_warning"
+                if "plan" in str(last_gate_blocked_error).lower()
+                else "memory_review_gate_warning"
+            )
+            self._tool_events.append(
+                {
+                    "tool": warning_tool,
+                    "input": {
+                        "attempt": "fallback",
+                        "required_review_error": last_gate_blocked_error,
+                    },
+                    "output": (
+                        "Allowed last valid action after bounded review retries because "
+                        "the model stopped submitting actions."
+                    ),
+                }
+            )
+            self._pending_observation = obs_text
+            self._pending_action = last_gate_blocked_action
+            self._completed_actions += 1
+            return last_gate_blocked_action
 
         raise RuntimeError(f"Anthropic keystroke agent failed: {last_error}")
 

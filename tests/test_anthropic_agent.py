@@ -761,6 +761,71 @@ def test_plan_review_agent_requires_checkpoint_review(monkeypatch) -> None:
     assert "Mandatory gameplay plan review missing" in retry["content"]
 
 
+def test_plan_review_agent_falls_back_if_model_stops_submitting_after_gate(monkeypatch) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.delenv("ANTHROPIC_MODEL", raising=False)
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    _SequencedAnthropicClient.responses = [
+        SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="submit_action",
+                    id="toolu_candidate",
+                    input={
+                        "type": "KEYSTROKE",
+                        "params": {"keys": ["LEAVESCREEN"]},
+                        "intent": "candidate action missing reviews",
+                        "objective": "recover",
+                        "advance_ticks": 0,
+                    },
+                )
+            ],
+            usage=SimpleNamespace(input_tokens=10, output_tokens=2),
+        ),
+        *[
+            SimpleNamespace(
+                content=[
+                    SimpleNamespace(
+                        type="tool_use",
+                        name="query_memory",
+                        id=f"toolu_query_{index}",
+                        input={"query": "recover", "limit": 3},
+                    )
+                ],
+                usage=SimpleNamespace(input_tokens=11 + index, output_tokens=2),
+            )
+            for index in range(4)
+        ],
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "anthropic"
+        return SimpleNamespace(Anthropic=_SequencedAnthropicClient)
+
+    monkeypatch.setattr(
+        "fort_gym.bench.agent.llm_anthropic.import_module",
+        fake_import_module,
+    )
+
+    try:
+        agent = AnthropicKeystrokeAgent(
+            system_prompt=KEYSTROKE_PLAN_REVIEW_SYSTEM_PROMPT,
+            require_memory_review=True,
+            require_plan_review=True,
+        )
+        action = agent.decide("mock screen", {})
+        events = agent.pop_tool_events()
+    finally:
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["intent"] == "candidate action missing reviews"
+    assert any(event.get("tool") == "plan_review_gate_warning" for event in events)
+    assert _SequencedAnthropicClient.last_instance is not None
+    requests = _SequencedAnthropicClient.last_instance.messages.requests
+    assert len(requests) == 5
+
+
 def test_dig_first_prompt_uses_structured_control() -> None:
     assert "structured action API" in DIG_FIRST_SYSTEM_PROMPT
     assert '"type":"DIG"' in DIG_FIRST_SYSTEM_PROMPT
