@@ -15,6 +15,27 @@ def test_run_api_agent_sends_preserve_save(monkeypatch):
     monkeypatch.setattr(cli, "_json_request", fake_json_request)
     monkeypatch.setattr(cli, "_find_public_run", lambda _base_url, _run_id: {"token": "tok"})
     monkeypatch.setattr(cli, "_load_trace_records", lambda _run_id, _dir: ([], "/tmp/trace.jsonl"))
+    public_records = [
+        {
+            "step": 0,
+            "action": {"type": "KEYSTROKE", "intent": "dig", "advance_ticks": 10},
+            "validation": {"valid": True},
+            "execute": {"accepted": True},
+            "tick_advance": {"ticks_advanced": 10},
+            "score": {"value": 42.0},
+            "metrics": {
+                "ui_step_work_progress": 1,
+                "ui_run_work_progress": 1,
+                "score_provenance": "keystroke_ui_work_rect",
+            },
+            "state_after_advance": {"ui_work": {"carpenter_workshops": 0}},
+        }
+    ]
+    monkeypatch.setattr(
+        cli,
+        "_load_public_trace_records",
+        lambda _base_url, _token: (public_records, "http://public.test/public/runs/tok/export/trace"),
+    )
     monkeypatch.setattr(cli, "_load_summary", lambda _run_id, _dir: ({}, "/tmp/summary.json"))
 
     result = cli._run_api_agent(
@@ -34,6 +55,9 @@ def test_run_api_agent_sends_preserve_save(monkeypatch):
 
     assert calls[0]["payload"]["preserve_save"] is True
     assert result["preserve_save"] is True
+    assert result["trace_steps"] == 1
+    assert result["trace"] == "http://public.test/public/runs/tok/export/trace"
+    assert result["ui_score_provenance_seen"] is True
 
 
 def test_write_live_agent_packet(tmp_path):

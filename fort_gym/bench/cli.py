@@ -1258,6 +1258,8 @@ def _run_api_agent(
     public_run = _find_public_run(public_base_url, run_id) or {}
     token = public_run.get("token")
     records, trace_path = _load_trace_records(run_id, server_artifacts_dir)
+    if not records and token:
+        records, trace_path = _load_public_trace_records(public_base_url, str(token))
     summary, summary_path = _load_summary(run_id, server_artifacts_dir)
     actions = _summarize_actions(records)
     score_provenances = _score_provenances(records)
