@@ -330,6 +330,12 @@ def encode_observation(
                     + ", ".join(str(key) for key in key_prefix)
                     + " and then designates the material target."
                 )
+        elif ui_target_setup.get("target_mode") == "workshop":
+            status_lines.append(
+                "Live UI workshop target: the cursor is on a confirmed empty 3x3 "
+                "floor footprint. Copy the recommended keys exactly to place a "
+                "carpenter workshop there; do not move the placement cursor first."
+            )
         recommended_keys = ui_target_setup.get("recommended_keys")
         show_recommended = bool(ui_target_setup.get("show_recommended_keys", True))
         if show_recommended and isinstance(recommended_keys, list) and recommended_keys:

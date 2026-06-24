@@ -14,7 +14,9 @@ local MIN_MATERIAL_TILES = 1
 local MIN_CITIZEN_NEAR_TILES = 1
 local CITIZEN_SEARCH_RADIUS = 25
 local MATERIAL_SEARCH_RADIUS = 12
+local WORKSHOP_SEARCH_RADIUS = 35
 local Z_SEARCH_RADIUS = 6
+local WORKSHOP_SIZE = 3
 local STONE_MATERIALS = {
   [2] = true, -- stone wall
   [3] = true, -- feature stone wall
@@ -109,6 +111,29 @@ local function valid_floor_tile(tx, ty, tz)
   return attr and attr.shape == df.tiletype_shape.FLOOR
 end
 
+local function valid_workshop_footprint(x1, y1, z)
+  if x1 < 0 or y1 < 0 or z < 0 then
+    return false
+  end
+
+  for tx = x1, x1 + WORKSHOP_SIZE - 1 do
+    for ty = y1, y1 + WORKSHOP_SIZE - 1 do
+      if not valid_floor_tile(tx, ty, z) then
+        return false
+      end
+      local block = dfhack.maps.getTileBlock(tx, ty, z)
+      local dx = tx % 16
+      local dy = ty % 16
+      local occupancy = block and block.occupancy[dx][dy]
+      if occupancy and occupancy.unit then
+        return false
+      end
+    end
+  end
+
+  return true
+end
+
 local function count_designatable(x1, y1, z, valid_fn)
   local count = 0
   for tx = x1, x1 + SELECT_WIDTH - 1 do
@@ -161,6 +186,40 @@ local function candidate_payload(x1, y1, z, count, source, designation_key, targ
       'CURSOR_DOWN',
       'SELECT',
       'LEAVESCREEN',
+    },
+  }
+end
+
+local function workshop_candidate_payload(x1, y1, z, source)
+  local window_x = math.max(0, x1 - SELECT_OFFSET_X1)
+  local window_y = math.max(0, y1 - SELECT_OFFSET_Y1)
+  df.global.window_x = window_x
+  df.global.window_y = window_y
+  df.global.window_z = z
+  df.global.cursor.x = x1
+  df.global.cursor.y = y1
+  df.global.cursor.z = z
+
+  return {
+    ok = true,
+    source = source or 'visible_empty_floor_workshop_footprint',
+    target_mode = 'workshop',
+    designation_key = 'BUILD_CARPENTER_WORKSHOP',
+    target_rect = { x1, y1, z, x1 + WORKSHOP_SIZE - 1, y1 + WORKSHOP_SIZE - 1, z },
+    selection_rect = { x1, y1, z, x1 + WORKSHOP_SIZE - 1, y1 + WORKSHOP_SIZE - 1, z },
+    placement_rect = { x1, y1, z, x1 + WORKSHOP_SIZE - 1, y1 + WORKSHOP_SIZE - 1, z },
+    designatable_tiles = WORKSHOP_SIZE * WORKSHOP_SIZE,
+    window_x = window_x,
+    window_y = window_y,
+    window_z = z,
+    expected_cursor_after_designate = { x1, y1, z },
+    recommended_keys = {
+      'LEAVESCREEN',
+      'LEAVESCREEN',
+      'D_BUILDING',
+      'HOTKEY_BUILDING_WORKSHOP',
+      'HOTKEY_BUILDING_WORKSHOP_CARPENTER',
+      'SELECT',
     },
   }
 end
@@ -331,6 +390,60 @@ local function material_payload()
   )
 end
 
+local function workshop_payload()
+  local function scan_window_for_footprint()
+    local window_x = df.global.window_x or 0
+    local window_y = df.global.window_y or 0
+    local window_z = df.global.window_z or 0
+    for dz = -Z_SEARCH_RADIUS, Z_SEARCH_RADIUS do
+      local z = window_z + dz
+      for x1 = math.max(0, window_x - 80), window_x + 120 do
+        for y1 = math.max(0, window_y - 80), window_y + 120 do
+          if valid_workshop_footprint(x1, y1, z) then
+            return workshop_candidate_payload(
+              x1,
+              y1,
+              z,
+              'window_near_empty_floor_workshop_footprint'
+            )
+          end
+        end
+      end
+    end
+    return nil
+  end
+
+  if not df.global.world.units or not df.global.world.units.active then
+    return scan_window_for_footprint()
+  end
+
+  for _, unit in ipairs(df.global.world.units.active) do
+    if dfhack.units.isCitizen(unit) and not dfhack.units.isDead(unit) and unit.pos then
+      local z = unit.pos.z
+      for radius = 1, WORKSHOP_SEARCH_RADIUS do
+        for x1 = math.max(0, unit.pos.x - radius), unit.pos.x + radius do
+          for y1 = math.max(0, unit.pos.y - radius), unit.pos.y + radius do
+            if valid_workshop_footprint(x1, y1, z) then
+              local payload = workshop_candidate_payload(
+                x1,
+                y1,
+                z,
+                'citizen_near_empty_floor_workshop_footprint'
+              )
+              payload.nearest_citizen = { unit.pos.x, unit.pos.y, unit.pos.z }
+              payload.nearest_citizen_radius = radius
+              payload.workshop_goal = 'place a carpenter workshop through the native build menu on this confirmed empty 3x3 floor'
+              return payload
+            end
+          end
+        end
+      end
+    end
+  end
+
+  return scan_window_for_footprint()
+end
+
 local function starter_payload()
   return search_near_citizens(
     valid_floor_tile,
@@ -362,6 +475,8 @@ end
 local payload = nil
 if MODE == 'material' then
   payload = material_payload()
+elseif MODE == 'workshop' then
+  payload = workshop_payload()
 else
   payload = starter_payload()
 end

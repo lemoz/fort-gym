@@ -211,7 +211,7 @@ def prepare_keystroke_target(mode: str = "starter") -> Dict[str, object]:
     """Center the live UI on a visible, mineable wall pocket for keystroke runs."""
 
     try:
-        safe_mode = mode if mode in {"starter", "material"} else "starter"
+        safe_mode = mode if mode in {"starter", "material", "workshop"} else "starter"
         return run_lua_file(
             _hook_path("prepare_keystroke_target.lua"),
             safe_mode,

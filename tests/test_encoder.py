@@ -186,6 +186,39 @@ def test_encoder_labels_material_target_setup() -> None:
     assert "Live UI material target" in text
 
 
+def test_encoder_labels_workshop_target_setup() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 3, "stone": 0},
+            "ui_target_setup": {
+                "ok": True,
+                "target_mode": "workshop",
+                "target_generation": 4,
+                "target_attempts": 0,
+                "selection_rect": [10, 20, 177, 12, 22, 177],
+                "designatable_tiles": 9,
+                "show_recommended_keys": True,
+                "recommended_keys": [
+                    "LEAVESCREEN",
+                    "LEAVESCREEN",
+                    "D_BUILDING",
+                    "HOTKEY_BUILDING_WORKSHOP",
+                    "HOTKEY_BUILDING_WORKSHOP_CARPENTER",
+                    "SELECT",
+                ],
+            },
+        },
+        screen_text="screen",
+    )
+
+    assert "Live UI setup: mode=workshop" in text
+    assert "Live UI workshop target" in text
+    assert "do not move the placement cursor first" in text
+    assert "D_BUILDING, HOTKEY_BUILDING_WORKSHOP" in text
+
+
 def test_encoder_shows_material_recovery_prefix() -> None:
     text, _ = encode_observation(
         {

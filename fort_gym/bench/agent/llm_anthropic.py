@@ -109,6 +109,9 @@ is `material`, those keys either chop a visible tree for logs or mine visible
 stone/vein wall so the fortress has real workshop building material. If status says
 `Live UI material recovery`, copy the full recommended sequence exactly: the leading
 LEAVESCREEN keys are there to exit build/material menus before the chop/mine target.
+If the setup mode is `workshop`, the cursor is already on a confirmed empty 3x3
+floor footprint. Copy the recommended carpenter-workshop keys exactly and do not
+move the placement cursor before SELECT.
 Retry keys are shown after failed attempts for a bounded retry.
 
 If status says the recommended keys are hidden, stop using that target's old sequence.

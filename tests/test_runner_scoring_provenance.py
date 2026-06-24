@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from fort_gym.bench.run.runner import (
     _available_building_materials,
+    _carpenter_workshops,
     _desired_keystroke_target_mode,
     _ui_target_setup_for_observation,
     _ui_work_rect_from_state,
@@ -114,10 +115,25 @@ def test_desired_keystroke_target_mode_switches_to_material_after_starter_diggin
     )
 
 
-def test_desired_keystroke_target_mode_returns_to_starter_when_material_exists() -> None:
-    state = {"stocks": {"wood": 0, "stone": 1}}
+def test_desired_keystroke_target_mode_switches_to_workshop_when_material_exists() -> None:
+    state = {"stocks": {"wood": 0, "stone": 1}, "work": {"carpenter_workshops": 0}}
 
     assert _available_building_materials(state) == 1
+    assert _carpenter_workshops(state) == 0
+    assert (
+        _desired_keystroke_target_mode(
+            state,
+            ui_run_excavation_progress=6,
+            ui_successful_targets=2,
+        )
+        == "workshop"
+    )
+
+
+def test_desired_keystroke_target_mode_returns_to_starter_after_workshop_exists() -> None:
+    state = {"stocks": {"wood": 3, "stone": 0}, "work": {"carpenter_workshops": 1}}
+
+    assert _carpenter_workshops(state) == 1
     assert (
         _desired_keystroke_target_mode(
             state,
@@ -249,3 +265,31 @@ def test_material_target_setup_can_prefix_build_menu_recovery_keys() -> None:
     assert setup["recommended_key_prefix"] == ["LEAVESCREEN", "LEAVESCREEN"]
     assert setup["show_recommended_keys"] is True
     assert setup["recommended_keys_force_shown"] is True
+
+
+def test_workshop_target_setup_keeps_exact_placement_keys_visible() -> None:
+    target = {
+        "ok": True,
+        "target_mode": "workshop",
+        "recommended_keys": [
+            "LEAVESCREEN",
+            "LEAVESCREEN",
+            "D_BUILDING",
+            "HOTKEY_BUILDING_WORKSHOP",
+            "HOTKEY_BUILDING_WORKSHOP_CARPENTER",
+            "SELECT",
+        ],
+    }
+
+    setup = _ui_target_setup_for_observation(
+        target,
+        generation=4,
+        attempts=3,
+        no_progress_streak=1,
+        target_progress_seen=False,
+    )
+
+    assert setup["recommended_keys"] == target["recommended_keys"]
+    assert setup["show_recommended_keys"] is True
+    assert setup["recommended_keys_retry"] is True
+    assert setup["recommended_key_retry_limit"] > 3

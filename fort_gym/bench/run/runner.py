@@ -58,6 +58,7 @@ INVALID_DF_CURSOR = -30000
 UI_TARGET_REFRESH_NO_PROGRESS_STEPS = 2
 UI_TARGET_RECOMMENDED_KEY_RETRY_LIMIT = 2
 UI_MATERIAL_TARGET_RECOMMENDED_KEY_RETRY_LIMIT = 8
+UI_WORKSHOP_TARGET_RECOMMENDED_KEY_RETRY_LIMIT = 6
 UI_MATERIAL_BLOCKER_ESCAPE_KEYS = ("LEAVESCREEN", "LEAVESCREEN")
 UI_MATERIAL_TARGET_MIN_EXCAVATION_PROGRESS = 6
 
@@ -125,6 +126,13 @@ def _available_building_materials(state: Dict[str, Any]) -> int:
     wood = _int_or_none(stocks.get("wood")) or 0
     stone = _int_or_none(stocks.get("stone")) or 0
     return max(0, wood) + max(0, stone)
+
+
+def _carpenter_workshops(state: Dict[str, Any]) -> int:
+    work = state.get("work")
+    if isinstance(work, dict):
+        return max(0, _int_or_none(work.get("carpenter_workshops")) or 0)
+    return max(0, _int_or_none(state.get("carpenter_workshops")) or 0)
 
 
 def _dict_delta(before: Dict[str, Any], after: Dict[str, Any], key: str) -> int:
@@ -267,12 +275,19 @@ def _desired_keystroke_target_mode(
 ) -> str:
     if build_material_blocked:
         return "material"
-    if _available_building_materials(state) > 0:
-        return "starter"
-    if (
+    enough_starter_space = (
         ui_run_excavation_progress >= UI_MATERIAL_TARGET_MIN_EXCAVATION_PROGRESS
         or ui_successful_targets >= 2
+    )
+    if (
+        _available_building_materials(state) > 0
+        and _carpenter_workshops(state) <= 0
+        and enough_starter_space
     ):
+        return "workshop"
+    if _available_building_materials(state) > 0:
+        return "starter"
+    if enough_starter_space:
         return "material"
     return "starter"
 
@@ -331,11 +346,12 @@ def _ui_target_setup_for_observation(
 ) -> Dict[str, Any]:
     setup = dict(target)
     target_mode = str(setup.get("target_mode") or "starter")
-    retry_limit = (
-        UI_MATERIAL_TARGET_RECOMMENDED_KEY_RETRY_LIMIT
-        if target_mode == "material"
-        else UI_TARGET_RECOMMENDED_KEY_RETRY_LIMIT
-    )
+    if target_mode == "material":
+        retry_limit = UI_MATERIAL_TARGET_RECOMMENDED_KEY_RETRY_LIMIT
+    elif target_mode == "workshop":
+        retry_limit = UI_WORKSHOP_TARGET_RECOMMENDED_KEY_RETRY_LIMIT
+    else:
+        retry_limit = UI_TARGET_RECOMMENDED_KEY_RETRY_LIMIT
     show_recommended = (
         force_show_recommended
         or attempts == 0
@@ -647,10 +663,16 @@ def run_once(
                             ui_last_excavation_progress = 0
                             ui_target_progress_seen = False
                             ui_no_progress_streak = 0
+                            if ui_target_mode == "material":
+                                refresh_reason = "switching to material acquisition target"
+                            elif ui_target_mode == "workshop":
+                                refresh_reason = "switching to workshop placement target"
+                            else:
+                                refresh_reason = "switching to starter excavation target"
                             ui_work_feedback = {
                                 "target_refreshed": True,
                                 "target_mode": ui_target_mode,
-                                "reason": "switching to material acquisition target",
+                                "reason": refresh_reason,
                             }
                         else:
                             ui_work_feedback = {
