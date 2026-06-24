@@ -17,6 +17,7 @@ ModelType = Literal[
     "anthropic-dig-first",
     "anthropic-fortress-plan",
     "anthropic-keystroke",
+    "anthropic-keystroke-poi-review",
     "anthropic-research",
 ]
 
