@@ -334,7 +334,7 @@ def encode_observation(
             status_lines.append(
                 "Live UI workshop target: the cursor is on a confirmed empty 3x3 "
                 "floor footprint. Copy the recommended keys exactly to place a "
-                "carpenter workshop there; do not move the placement cursor first."
+                "carpenter workshop there; do not move the placement cursor."
             )
         recommended_keys = ui_target_setup.get("recommended_keys")
         show_recommended = bool(ui_target_setup.get("show_recommended_keys", True))

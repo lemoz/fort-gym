@@ -205,8 +205,7 @@ def test_encoder_labels_workshop_target_setup() -> None:
                     "LEAVESCREEN",
                     "D_BUILDING",
                     "HOTKEY_BUILDING_WORKSHOP",
-                    "HOTKEY_BUILDING_WORKSHOP_CARPENTER",
-                    "SELECT",
+                    "STRING_A099",
                 ],
             },
         },
@@ -215,7 +214,7 @@ def test_encoder_labels_workshop_target_setup() -> None:
 
     assert "Live UI setup: mode=workshop" in text
     assert "Live UI workshop target" in text
-    assert "do not move the placement cursor first" in text
+    assert "do not move the placement cursor" in text
     assert "D_BUILDING, HOTKEY_BUILDING_WORKSHOP" in text
 
 

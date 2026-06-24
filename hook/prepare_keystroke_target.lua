@@ -218,8 +218,7 @@ local function workshop_candidate_payload(x1, y1, z, source)
       'LEAVESCREEN',
       'D_BUILDING',
       'HOTKEY_BUILDING_WORKSHOP',
-      'HOTKEY_BUILDING_WORKSHOP_CARPENTER',
-      'SELECT',
+      'STRING_A099',
     },
   }
 end

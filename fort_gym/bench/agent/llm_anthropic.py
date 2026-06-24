@@ -111,7 +111,7 @@ stone/vein wall so the fortress has real workshop building material. If status s
 LEAVESCREEN keys are there to exit build/material menus before the chop/mine target.
 If the setup mode is `workshop`, the cursor is already on a confirmed empty 3x3
 floor footprint. Copy the recommended carpenter-workshop keys exactly and do not
-move the placement cursor before SELECT.
+move the placement cursor.
 Retry keys are shown after failed attempts for a bounded retry.
 
 If status says the recommended keys are hidden, stop using that target's old sequence.
