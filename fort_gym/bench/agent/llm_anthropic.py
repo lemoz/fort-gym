@@ -632,7 +632,7 @@ class AnthropicKeystrokeAgent(Agent):
                 )
             return results
 
-        for _ in range(5):
+        for attempt_index in range(5):
             tool_result_cache.clear()
             self._rate_limit()
             client = self._client_instance()
@@ -680,13 +680,24 @@ class AnthropicKeystrokeAgent(Agent):
 
             if tool_payload is not None:
                 required_review_error = self._required_memory_review_error(tool_uses, obs_text)
-                if required_review_error:
+                if required_review_error and attempt_index < 2:
                     last_error = ValueError(required_review_error)
                     append_tool_retry(
                         response.content,
                         tool_results_for_retry(tool_uses, required_review_error),
                     )
                     continue
+                if required_review_error:
+                    self._tool_events.append(
+                        {
+                            "tool": "memory_review_gate_warning",
+                            "input": {
+                                "attempt": attempt_index + 1,
+                                "required_review_error": required_review_error,
+                            },
+                            "output": "Allowed action after bounded memory-review retries.",
+                        }
+                    )
 
                 # Validate it's a KEYSTROKE action
                 if tool_payload.get("type") != "KEYSTROKE":
