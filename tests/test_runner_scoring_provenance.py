@@ -292,7 +292,9 @@ def test_workshop_target_setup_keeps_exact_placement_keys_visible() -> None:
             "LEAVESCREEN",
             "D_BUILDING",
             "HOTKEY_BUILDING_WORKSHOP",
-            "STRING_A099",
+            "HOTKEY_BUILDING_WORKSHOP_CARPENTER",
+            "SELECT",
+            "SELECT",
         ],
     }
 
