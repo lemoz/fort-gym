@@ -435,6 +435,103 @@ def test_poi_review_agent_requires_failed_attempt_memory_after_no_progress(monke
     assert any(event.get("tool") == "remember_failed_attempt" for event in events)
 
 
+def test_poi_review_agent_rejects_repeated_workshop_placement(monkeypatch) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.delenv("ANTHROPIC_MODEL", raising=False)
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    _SequencedAnthropicClient.responses = [
+        SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="query_memory",
+                    id="toolu_query_1",
+                    input={"query": "workshop placement", "limit": 5},
+                ),
+                SimpleNamespace(
+                    type="tool_use",
+                    name="submit_action",
+                    id="toolu_workshop",
+                    input={
+                        "type": "KEYSTROKE",
+                        "params": {
+                            "keys": [
+                                "D_BUILDING",
+                                "HOTKEY_BUILDING_WORKSHOP",
+                                "HOTKEY_BUILDING_WORKSHOP_CARPENTER",
+                                "SELECT",
+                            ]
+                        },
+                        "intent": "retry carpenter workshop placement",
+                        "advance_ticks": 0,
+                    },
+                ),
+            ],
+            usage=SimpleNamespace(input_tokens=10, output_tokens=2),
+        ),
+        SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="query_memory",
+                    id="toolu_query_2",
+                    input={"query": "fresh target", "limit": 5},
+                ),
+                SimpleNamespace(
+                    type="tool_use",
+                    name="submit_action",
+                    id="toolu_action",
+                    input={
+                        "type": "KEYSTROKE",
+                        "params": {"keys": ["D_DESIGNATE", "DESIGNATE_DIG"]},
+                        "intent": "switch away from failed workshop placement",
+                        "objective": "make productive digging progress",
+                        "expected_visible_result": "designation menu opens",
+                        "expected_simulation_result": "none until area selected",
+                        "memory_update": "reviewed failed workshop placement and switched strategy",
+                        "advance_ticks": 0,
+                    },
+                ),
+            ],
+            usage=SimpleNamespace(input_tokens=12, output_tokens=3),
+        ),
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "anthropic"
+        return SimpleNamespace(Anthropic=_SequencedAnthropicClient)
+
+    monkeypatch.setattr(
+        "fort_gym.bench.agent.llm_anthropic.import_module",
+        fake_import_module,
+    )
+
+    obs = (
+        "== MEMORY ==\n"
+        "Recent Failed Attempts:\n"
+        "- failed workshop placement: blocked cursor, no tracked state change\n"
+        "== RECENT ACTION OUTCOMES ==\n"
+        "Step 13: Carpenter workshop placement outcome=keys_sent_without_tracked_state_change; changed=none\n"
+        "Step 14: Carpenter workshop placement outcome=keys_sent_without_tracked_state_change; changed=none\n"
+    )
+    try:
+        agent = AnthropicKeystrokeAgent(
+            system_prompt=KEYSTROKE_POI_REVIEW_SYSTEM_PROMPT,
+            require_memory_review=True,
+        )
+        action = agent.decide(obs, {})
+    finally:
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["intent"] == "switch away from failed workshop placement"
+    assert _SequencedAnthropicClient.last_instance is not None
+    requests = _SequencedAnthropicClient.last_instance.messages.requests
+    assert len(requests) == 2
+    retry = requests[1]["messages"][2]["content"][1]
+    assert retry["tool_use_id"] == "toolu_workshop"
+    assert "Workshop placement loop detected" in retry["content"]
+
+
 def test_dig_first_prompt_uses_structured_control() -> None:
     assert "structured action API" in DIG_FIRST_SYSTEM_PROMPT
     assert '"type":"DIG"' in DIG_FIRST_SYSTEM_PROMPT

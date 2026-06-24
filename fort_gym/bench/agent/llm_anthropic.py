@@ -268,6 +268,12 @@ Do not spend more than two consecutive actions trying to place the same workshop
 or selecting the same workshop key. If placement is unclear, return to the main
 view, query memory, record the failed attempt, and choose a different productive
 branch such as designating fresh dig/chop work or making a stockpile.
+
+If workshop placement has already failed twice, do not move the placement cursor
+around looking for a tile. Switch strategy: exit the build menu, use any fresh
+target recommended keys exactly, create a stockpile, or designate new dig/chop
+work. If the cursor is off-map (for example x=-30000), do not try k/u/status
+menus to recenter; exit submenus and choose a productive main-menu action.
 """
 
 
@@ -540,7 +546,12 @@ class AnthropicKeystrokeAgent(Agent):
             self._client = client_cls(api_key=self._settings.ANTHROPIC_API_KEY)
         return self._client
 
-    def _required_memory_review_error(self, tool_uses: List[Any], obs_text: str) -> Optional[str]:
+    def _required_memory_review_error(
+        self,
+        tool_uses: List[Any],
+        obs_text: str,
+        tool_payload: Dict[str, Any] | None,
+    ) -> Optional[str]:
         if not self._require_memory_review:
             return None
         tool_names = {str(getattr(tool_use, "name", "")) for tool_use in tool_uses}
@@ -555,6 +566,13 @@ class AnthropicKeystrokeAgent(Agent):
                 "repeated or recent no-progress behavior. Call remember_failed_attempt "
                 "before submit_action and choose a different plan."
             )
+        if self._needs_workshop_strategy_switch(obs_text, tool_payload):
+            return (
+                "Workshop placement loop detected: do not attempt another workshop "
+                "placement or placement-cursor navigation. Record/consult memory and "
+                "submit a different productive branch such as exact fresh target keys, "
+                "dig/chop designation, or stockpile creation."
+            )
         return None
 
     @staticmethod
@@ -567,6 +585,59 @@ class AnthropicKeystrokeAgent(Agent):
             return True
         match = re.search(r"no_progress_streak=(\d+)", obs_text)
         return bool(match and int(match.group(1)) >= 2)
+
+    @staticmethod
+    def _needs_workshop_strategy_switch(
+        obs_text: str,
+        tool_payload: Dict[str, Any] | None,
+    ) -> bool:
+        if not isinstance(tool_payload, dict):
+            return False
+        params = tool_payload.get("params") if isinstance(tool_payload.get("params"), dict) else {}
+        keys = params.get("keys") if isinstance(params, dict) else []
+        action_focus = {
+            "keys": keys if isinstance(keys, list) else [],
+            "intent": tool_payload.get("intent"),
+            "objective": tool_payload.get("objective"),
+            "expected_visible_result": tool_payload.get("expected_visible_result"),
+        }
+        payload_text = json.dumps(action_focus, ensure_ascii=True).lower()
+        key_text = json.dumps(action_focus["keys"], ensure_ascii=True).lower()
+        workshop_key_requested = "hotkey_building_workshop" in key_text
+        text_requests_workshop = any(
+            marker in payload_text
+            for marker in (
+                "workshop",
+                "carpenter",
+                "mason",
+                "craftsdwarf",
+                "leather works",
+                "hotkey_building_workshop",
+            )
+        ) and any(verb in payload_text for verb in ("place", "placement", "build", "select"))
+        recovery_text = "switch away" in payload_text or "avoid" in payload_text
+        workshop_requested = workshop_key_requested or (text_requests_workshop and not recovery_text)
+        if not workshop_requested:
+            return False
+        text = obs_text.lower()
+        failed_workshop_mentions = text.count("failed") + text.count("no tracked state")
+        has_workshop_failure_memory = (
+            "recent failed attempts:" in text
+            and any(marker in text for marker in ("workshop", "placement", "blocked"))
+        )
+        repeated_workshop_outcomes = (
+            text.count("workshop") >= 3
+            and (
+                text.count("changed=none") >= 2
+                or text.count("keys_sent_without_tracked_state_change") >= 2
+            )
+        )
+        off_map_cursor = "cursor=(-30000" in text or '"cursor_x": -30000' in text
+        return (
+            has_workshop_failure_memory
+            or repeated_workshop_outcomes
+            or (off_map_cursor and failed_workshop_mentions >= 2)
+        )
 
     def decide(self, obs_text: str, obs_json: Dict[str, Any]) -> Dict[str, Any]:
         """Decide on a keystroke action based on screen observation."""
@@ -679,7 +750,11 @@ class AnthropicKeystrokeAgent(Agent):
                 )
 
             if tool_payload is not None:
-                required_review_error = self._required_memory_review_error(tool_uses, obs_text)
+                required_review_error = self._required_memory_review_error(
+                    tool_uses,
+                    obs_text,
+                    tool_payload,
+                )
                 if required_review_error and attempt_index < 2:
                     last_error = ValueError(required_review_error)
                     append_tool_retry(
