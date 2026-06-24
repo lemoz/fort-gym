@@ -240,7 +240,7 @@ def test_real_gameplay_trace_analysis_counts_loops_and_memory() -> None:
             intent="Use fresh target keys to designate stairs",
             keys=["D_DESIGNATE", "DESIGNATE_STAIR_DOWN"],
             metrics={"ui_step_work_progress": 5, "ui_run_excavation_progress": 5, "ticks": 500},
-            tools=["query_memory"],
+            tools=["query_memory", "write_gameplay_plan"],
             score=33.0,
         ),
         _trace_record(
@@ -277,7 +277,7 @@ def test_real_gameplay_trace_analysis_counts_loops_and_memory() -> None:
                 "wood": 6,
                 "ticks": 500,
             },
-            tools=["query_memory", "remember_poi"],
+            tools=["query_memory", "remember_poi", "review_gameplay_plan"],
             score=40.0,
         ),
     ]
@@ -290,6 +290,9 @@ def test_real_gameplay_trace_analysis_counts_loops_and_memory() -> None:
     assert analysis["workshop_no_progress_steps"] == 3
     assert analysis["menu_confusion_steps"] == 3
     assert analysis["tool_counts"]["query_memory"] == 5
+    assert analysis["plan_writes"] == 1
+    assert analysis["plan_reviews"] == 1
+    assert analysis["plan_review_rate"] == 0.2
     assert analysis["failed_attempt_writes"] == 1
     assert analysis["poi_writes"] == 1
     assert analysis["chain"]["dug_or_designated"] is True

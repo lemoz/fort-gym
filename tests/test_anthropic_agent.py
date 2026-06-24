@@ -10,6 +10,7 @@ from fort_gym.bench.agent.llm_anthropic import (
     AnthropicKeystrokeAgent,
     DIG_FIRST_SYSTEM_PROMPT,
     FORTRESS_PLAN_SYSTEM_PROMPT,
+    KEYSTROKE_PLAN_REVIEW_SYSTEM_PROMPT,
     KEYSTROKE_SYSTEM_PROMPT,
     KEYSTROKE_POI_REVIEW_SYSTEM_PROMPT,
 )
@@ -135,6 +136,15 @@ def test_poi_review_prompt_requires_memory_review() -> None:
     assert "Before EVERY submit_action" in KEYSTROKE_POI_REVIEW_SYSTEM_PROMPT
     assert "query_memory" in KEYSTROKE_POI_REVIEW_SYSTEM_PROMPT
     assert "remember_failed_attempt" in KEYSTROKE_POI_REVIEW_SYSTEM_PROMPT
+
+
+def test_plan_review_prompt_requires_periodic_plan_reviews() -> None:
+    assert "Periodic Gameplay Plan Review Variant" in KEYSTROKE_PLAN_REVIEW_SYSTEM_PROMPT
+    assert "write_gameplay_plan" in KEYSTROKE_PLAN_REVIEW_SYSTEM_PROMPT
+    assert "review_gameplay_plan" in KEYSTROKE_PLAN_REVIEW_SYSTEM_PROMPT
+    assert "every five submitted actions" in KEYSTROKE_PLAN_REVIEW_SYSTEM_PROMPT
+    assert "plan_step" in KEYSTROKE_PLAN_REVIEW_SYSTEM_PROMPT
+    assert "post-workshop branch" in KEYSTROKE_PLAN_REVIEW_SYSTEM_PROMPT
 
 
 def test_keystroke_retry_pairs_invalid_tool_use_with_tool_result(monkeypatch) -> None:
@@ -530,6 +540,225 @@ def test_poi_review_agent_rejects_repeated_workshop_placement(monkeypatch) -> No
     retry = requests[1]["messages"][2]["content"][1]
     assert retry["tool_use_id"] == "toolu_workshop"
     assert "Workshop placement loop detected" in retry["content"]
+
+
+def test_plan_review_agent_requires_initial_plan(monkeypatch) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.delenv("ANTHROPIC_MODEL", raising=False)
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    _SequencedAnthropicClient.responses = [
+        SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="query_memory",
+                    id="toolu_query_1",
+                    input={"query": "current objective", "limit": 3},
+                ),
+                SimpleNamespace(
+                    type="tool_use",
+                    name="submit_action",
+                    id="toolu_no_plan",
+                    input={
+                        "type": "KEYSTROKE",
+                        "params": {"keys": ["D_DESIGNATE"]},
+                        "intent": "start digging without plan",
+                        "objective": "dig",
+                        "advance_ticks": 0,
+                    },
+                ),
+            ],
+            usage=SimpleNamespace(input_tokens=10, output_tokens=2),
+        ),
+        SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="query_memory",
+                    id="toolu_query_2",
+                    input={"query": "current objective", "limit": 3},
+                ),
+                SimpleNamespace(
+                    type="tool_use",
+                    name="write_gameplay_plan",
+                    id="toolu_plan",
+                    input={
+                        "objective": "complete useful fortress space",
+                        "phase": "starter excavation",
+                        "steps": [
+                            "dig reachable starter access",
+                            "acquire usable building material",
+                            "place one carpenter workshop",
+                            "finish planned room or stockpile",
+                        ],
+                        "current_step": "dig reachable starter access",
+                        "reason": "initial hill-climbing plan",
+                        "evidence": "first observation",
+                    },
+                ),
+                SimpleNamespace(
+                    type="tool_use",
+                    name="submit_action",
+                    id="toolu_action",
+                    input={
+                        "type": "KEYSTROKE",
+                        "params": {"keys": ["D_DESIGNATE"]},
+                        "intent": "start planned digging",
+                        "objective": "dig reachable starter access",
+                        "expected_visible_result": "designation menu opens",
+                        "expected_simulation_result": "none until area selected",
+                        "memory_update": "queried current objective",
+                        "plan_step": "dig reachable starter access",
+                        "plan_review": "initial plan written",
+                        "advance_ticks": 0,
+                    },
+                ),
+            ],
+            usage=SimpleNamespace(input_tokens=12, output_tokens=3),
+        ),
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "anthropic"
+        return SimpleNamespace(Anthropic=_SequencedAnthropicClient)
+
+    monkeypatch.setattr(
+        "fort_gym.bench.agent.llm_anthropic.import_module",
+        fake_import_module,
+    )
+
+    try:
+        agent = AnthropicKeystrokeAgent(
+            system_prompt=KEYSTROKE_PLAN_REVIEW_SYSTEM_PROMPT,
+            require_memory_review=True,
+            require_plan_review=True,
+        )
+        action = agent.decide("mock screen", {})
+        events = agent.pop_tool_events()
+    finally:
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["plan_step"] == "dig reachable starter access"
+    assert any(event.get("tool") == "write_gameplay_plan" for event in events)
+    assert _SequencedAnthropicClient.last_instance is not None
+    requests = _SequencedAnthropicClient.last_instance.messages.requests
+    assert len(requests) == 2
+    retry = requests[1]["messages"][2]["content"][1]
+    assert retry["tool_use_id"] == "toolu_no_plan"
+    assert "Mandatory gameplay plan missing" in retry["content"]
+
+
+def test_plan_review_agent_requires_checkpoint_review(monkeypatch) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.delenv("ANTHROPIC_MODEL", raising=False)
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    _SequencedAnthropicClient.responses = [
+        SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="query_memory",
+                    id="toolu_query_1",
+                    input={"query": "plan checkpoint", "limit": 3},
+                ),
+                SimpleNamespace(
+                    type="tool_use",
+                    name="submit_action",
+                    id="toolu_no_review",
+                    input={
+                        "type": "KEYSTROKE",
+                        "params": {"keys": ["LEAVESCREEN"]},
+                        "intent": "continue without plan review",
+                        "objective": "recover",
+                        "advance_ticks": 0,
+                    },
+                ),
+            ],
+            usage=SimpleNamespace(input_tokens=10, output_tokens=2),
+        ),
+        SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="query_memory",
+                    id="toolu_query_2",
+                    input={"query": "plan checkpoint", "limit": 3},
+                ),
+                SimpleNamespace(
+                    type="tool_use",
+                    name="review_gameplay_plan",
+                    id="toolu_review",
+                    input={
+                        "status": "needs_revision",
+                        "evidence": "checkpoint after five submitted actions",
+                        "completed_steps": ["place one carpenter workshop"],
+                        "blockers": ["workshop loop risk"],
+                        "next_step": "complete planned room space",
+                        "revised_steps": [
+                            "exit build menu",
+                            "designate room completion target",
+                            "advance ticks",
+                        ],
+                        "reason": "post-workshop phase should not place more workshops",
+                    },
+                ),
+                SimpleNamespace(
+                    type="tool_use",
+                    name="submit_action",
+                    id="toolu_action",
+                    input={
+                        "type": "KEYSTROKE",
+                        "params": {"keys": ["LEAVESCREEN"]},
+                        "intent": "exit build menu before room work",
+                        "objective": "complete planned room space",
+                        "expected_visible_result": "main view visible",
+                        "expected_simulation_result": "none; UI-only recovery",
+                        "memory_update": "queried checkpoint memory",
+                        "plan_step": "complete planned room space",
+                        "plan_review": "checkpoint review revised post-workshop branch",
+                        "advance_ticks": 0,
+                    },
+                ),
+            ],
+            usage=SimpleNamespace(input_tokens=12, output_tokens=3),
+        ),
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "anthropic"
+        return SimpleNamespace(Anthropic=_SequencedAnthropicClient)
+
+    monkeypatch.setattr(
+        "fort_gym.bench.agent.llm_anthropic.import_module",
+        fake_import_module,
+    )
+
+    try:
+        agent = AnthropicKeystrokeAgent(
+            system_prompt=KEYSTROKE_PLAN_REVIEW_SYSTEM_PROMPT,
+            require_memory_review=True,
+            require_plan_review=True,
+            plan_review_interval=5,
+        )
+        agent._memory.write_gameplay_plan(
+            objective="complete useful fortress space",
+            steps=["place one carpenter workshop", "complete planned room space"],
+            current_step="complete planned room space",
+        )
+        agent._completed_actions = 5
+        action = agent.decide("mock screen", {})
+        events = agent.pop_tool_events()
+    finally:
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["plan_review"] == "checkpoint review revised post-workshop branch"
+    assert any(event.get("tool") == "review_gameplay_plan" for event in events)
+    assert _SequencedAnthropicClient.last_instance is not None
+    requests = _SequencedAnthropicClient.last_instance.messages.requests
+    assert len(requests) == 2
+    retry = requests[1]["messages"][2]["content"][1]
+    assert retry["tool_use_id"] == "toolu_no_review"
+    assert "Mandatory gameplay plan review missing" in retry["content"]
 
 
 def test_dig_first_prompt_uses_structured_control() -> None:

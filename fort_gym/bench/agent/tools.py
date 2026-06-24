@@ -187,6 +187,79 @@ QUERY_MEMORY_TOOL_SPEC: Dict[str, Any] = {
     },
 }
 
+WRITE_GAMEPLAY_PLAN_TOOL_SPEC: Dict[str, Any] = {
+    "name": "write_gameplay_plan",
+    "description": (
+        "Write or revise your current multi-step Dwarf Fortress gameplay plan. "
+        "This is only notebook memory; it does not act in the game."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "objective": {"type": "string", "description": "Overall fortress objective."},
+            "phase": {
+                "type": "string",
+                "description": "Current plan phase, e.g. access, excavation, material, workshop, room completion.",
+            },
+            "steps": {
+                "type": "array",
+                "description": "Ordered short plan steps.",
+                "items": {"type": "string"},
+                "maxItems": 8,
+            },
+            "current_step": {"type": "string", "description": "The step to pursue next."},
+            "reason": {"type": "string", "description": "Why this plan is appropriate now."},
+            "evidence": {
+                "type": "string",
+                "description": "Evidence from the current screen/state/recent outcomes.",
+            },
+        },
+        "required": ["objective", "steps"],
+    },
+}
+
+REVIEW_GAMEPLAY_PLAN_TOOL_SPEC: Dict[str, Any] = {
+    "name": "review_gameplay_plan",
+    "description": (
+        "Review the stored gameplay plan against visible state and recent outcomes. "
+        "Use this before continuing after stalls or at periodic checkpoints."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "status": {
+                "type": "string",
+                "description": "Plan status, e.g. on_track, stalled, needs_revision, milestone_complete.",
+            },
+            "evidence": {
+                "type": "string",
+                "description": "Concrete evidence from screen/state/recent action outcomes.",
+            },
+            "completed_steps": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Plan steps that now appear complete.",
+                "maxItems": 6,
+            },
+            "blockers": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Observed blockers or uncertainty.",
+                "maxItems": 6,
+            },
+            "next_step": {"type": "string", "description": "Next step to execute after the review."},
+            "revised_steps": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Optional replacement plan steps if the plan needs revision.",
+                "maxItems": 8,
+            },
+            "reason": {"type": "string", "description": "Why the plan should continue or change."},
+        },
+        "required": ["status", "evidence", "next_step"],
+    },
+}
+
 
 class DFWikiTool:
     """Search embedded DF wiki excerpts for gameplay guidance."""
@@ -245,7 +318,13 @@ class ToolManager:
         for name in enabled_tools:
             if name == DFWikiTool.name:
                 tools[name] = DFWikiTool()
-            elif name in {"remember_poi", "remember_failed_attempt", "query_memory"}:
+            elif name in {
+                "remember_poi",
+                "remember_failed_attempt",
+                "query_memory",
+                "write_gameplay_plan",
+                "review_gameplay_plan",
+            }:
                 tools[name] = None
             else:
                 raise ValueError(f"Unknown tool: {name}")
@@ -260,6 +339,10 @@ class ToolManager:
                 specs.append(REMEMBER_FAILED_ATTEMPT_TOOL_SPEC)
             elif name == "query_memory":
                 specs.append(QUERY_MEMORY_TOOL_SPEC)
+            elif name == "write_gameplay_plan":
+                specs.append(WRITE_GAMEPLAY_PLAN_TOOL_SPEC)
+            elif name == "review_gameplay_plan":
+                specs.append(REVIEW_GAMEPLAY_PLAN_TOOL_SPEC)
             else:
                 tool = self.tools.get(name)
                 if tool:
@@ -301,6 +384,33 @@ class ToolManager:
                 include_failed=bool(tool_input.get("include_failed", True)),
                 limit=int(tool_input.get("limit") or 5),
             )
+        if tool_name == "write_gameplay_plan":
+            if self._memory is None:
+                return "Memory tool unavailable."
+            steps = tool_input.get("steps")
+            return self._memory.write_gameplay_plan(
+                objective=str(tool_input.get("objective", "")),
+                phase=str(tool_input.get("phase", "")),
+                steps=steps if isinstance(steps, list) else [],
+                current_step=str(tool_input.get("current_step", "")),
+                reason=str(tool_input.get("reason", "")),
+                evidence=str(tool_input.get("evidence", "")),
+            )
+        if tool_name == "review_gameplay_plan":
+            if self._memory is None:
+                return "Memory tool unavailable."
+            completed_steps = tool_input.get("completed_steps")
+            blockers = tool_input.get("blockers")
+            revised_steps = tool_input.get("revised_steps")
+            return self._memory.review_gameplay_plan(
+                status=str(tool_input.get("status", "")),
+                evidence=str(tool_input.get("evidence", "")),
+                completed_steps=completed_steps if isinstance(completed_steps, list) else [],
+                blockers=blockers if isinstance(blockers, list) else [],
+                next_step=str(tool_input.get("next_step", "")),
+                revised_steps=revised_steps if isinstance(revised_steps, list) else [],
+                reason=str(tool_input.get("reason", "")),
+            )
 
         tool = self.tools.get(tool_name)
         if tool is None:
@@ -325,4 +435,6 @@ __all__ = [
     "QUERY_MEMORY_TOOL_SPEC",
     "REMEMBER_FAILED_ATTEMPT_TOOL_SPEC",
     "REMEMBER_POI_TOOL_SPEC",
+    "REVIEW_GAMEPLAY_PLAN_TOOL_SPEC",
+    "WRITE_GAMEPLAY_PLAN_TOOL_SPEC",
 ]

@@ -199,6 +199,7 @@ OPTIONAL_AGENT_MODULES = {
     "anthropic-fortress-plan": "fort_gym.bench.agent.llm_anthropic",
     "anthropic-keystroke": "fort_gym.bench.agent.llm_anthropic",
     "anthropic-keystroke-poi-review": "fort_gym.bench.agent.llm_anthropic",
+    "anthropic-keystroke-plan-review": "fort_gym.bench.agent.llm_anthropic",
     "anthropic-research": "fort_gym.bench.agent.llm_anthropic_research",
 }
 

@@ -288,6 +288,41 @@ KEYSTROKE_POI_REVIEW_SYSTEM_PROMPT = (
 )
 
 
+KEYSTROKE_PLAN_REVIEW_APPENDIX = """
+
+## Periodic Gameplay Plan Review Variant
+You are running in a hill-climbing experiment. Your job is not only to press
+keys; it is to maintain and periodically critique your own plan against the
+real visible game state.
+
+Use the plan tools as a private notebook:
+- Before your first submit_action, call write_gameplay_plan with a concrete
+  multi-step plan. The plan should include: reachable excavation, material
+  acquisition if needed, workshop placement, and then a post-workshop branch
+  that completes useful fortress space rather than looping on workshop menus.
+- At least every five submitted actions, call review_gameplay_plan before
+  submit_action. Also call it immediately when recent outcomes show
+  no_progress_streak >= 2, repeated no state change, or a completed milestone.
+- A review must compare the stored plan to evidence from the screen/status and
+  recent action outcomes. If the current step is done or blocked, revise the
+  next step instead of repeating the same key sequence.
+- If a carpenter workshop already exists, stop trying to place more workshops
+  unless the screen/state proves the next workshop is necessary. Shift to
+  completing planned rooms, stockpiles, or useful orders through native UI.
+- Include plan_step and plan_review in submit_action so the trace can audit
+  whether the action follows the reviewed plan.
+
+The plan is not scoring and does not change Dwarf Fortress. The only way to
+score is still real gameplay through keystrokes, visible map/material changes,
+and ticks that let dwarves act.
+"""
+
+
+KEYSTROKE_PLAN_REVIEW_SYSTEM_PROMPT = (
+    KEYSTROKE_POI_REVIEW_SYSTEM_PROMPT + KEYSTROKE_PLAN_REVIEW_APPENDIX
+)
+
+
 KEYSTROKE_TOOL_SPEC = {
     "name": "submit_action",
     "description": "Submit a keystroke sequence to control Dwarf Fortress",
@@ -328,6 +363,14 @@ KEYSTROKE_TOOL_SPEC = {
             "memory_update": {
                 "type": "string",
                 "description": "POI/failure memory reviewed or updated before acting",
+            },
+            "plan_step": {
+                "type": "string",
+                "description": "Current agent-maintained plan step this action advances",
+            },
+            "plan_review": {
+                "type": "string",
+                "description": "Brief summary of the latest plan review used before acting",
             },
             "advance_ticks": {
                 "type": "integer",
@@ -506,6 +549,8 @@ class AnthropicKeystrokeAgent(Agent):
         *,
         system_prompt: str = KEYSTROKE_SYSTEM_PROMPT,
         require_memory_review: bool = False,
+        require_plan_review: bool = False,
+        plan_review_interval: int = 5,
     ) -> None:
         self._settings = get_settings()
         if not self._settings.ANTHROPIC_API_KEY:
@@ -514,13 +559,16 @@ class AnthropicKeystrokeAgent(Agent):
         self._last_call = 0.0
         self._system_prompt = system_prompt
         self._require_memory_review = require_memory_review
+        self._require_plan_review = require_plan_review
+        self._plan_review_interval = max(1, int(plan_review_interval))
+        self._completed_actions = 0
         self._memory = MemoryManager(window_size=self._resolve_memory_window())
         self._pending_observation: Optional[str] = None
         self._pending_action: Optional[Dict[str, Any]] = None
-        self._tool_manager = ToolManager(
-            ["df_wiki", "remember_poi", "remember_failed_attempt", "query_memory"],
-            memory=self._memory,
-        )
+        enabled_tools = ["df_wiki", "remember_poi", "remember_failed_attempt", "query_memory"]
+        if require_plan_review:
+            enabled_tools.extend(["write_gameplay_plan", "review_gameplay_plan"])
+        self._tool_manager = ToolManager(enabled_tools, memory=self._memory)
         self._tool_events: List[Dict[str, Any]] = []
 
     def _resolve_memory_window(self) -> int:
@@ -580,6 +628,54 @@ class AnthropicKeystrokeAgent(Agent):
                 "dig/chop designation, or stockpile creation."
             )
         return None
+
+    def _required_plan_review_error(
+        self,
+        tool_uses: List[Any],
+        obs_text: str,
+    ) -> Optional[str]:
+        if not self._require_plan_review:
+            return None
+        tool_names = {str(getattr(tool_use, "name", "")) for tool_use in tool_uses}
+        if self._completed_actions == 0 or not self._memory.gameplay_plan:
+            if "write_gameplay_plan" not in tool_names:
+                return (
+                    "Mandatory gameplay plan missing: before the first action, call "
+                    "write_gameplay_plan with concrete steps for excavation, material, "
+                    "workshop, and post-workshop fortress-space completion."
+                )
+        due_by_cadence = self._completed_actions > 0 and (
+            self._completed_actions % self._plan_review_interval == 0
+        )
+        due_by_stall = self._needs_failed_attempt_memory(obs_text)
+        due_by_milestone = self._needs_plan_milestone_review(obs_text)
+        if due_by_cadence or due_by_stall or due_by_milestone:
+            if "review_gameplay_plan" not in tool_names:
+                reasons = []
+                if due_by_cadence:
+                    reasons.append(f"{self._plan_review_interval}-action checkpoint")
+                if due_by_stall:
+                    reasons.append("stalled/no-progress evidence")
+                if due_by_milestone:
+                    reasons.append("milestone/phase transition evidence")
+                return (
+                    "Mandatory gameplay plan review missing: call review_gameplay_plan "
+                    "before submit_action because " + ", ".join(reasons) + "."
+                )
+        return None
+
+    @staticmethod
+    def _needs_plan_milestone_review(obs_text: str) -> bool:
+        text = obs_text.lower()
+        if "carpenter_workshops=1" in text or "carpenter_workshops=2" in text:
+            return True
+        if "live ui phase: enough starter digging and building material exist" in text:
+            return True
+        if "last ui action changed real map tiles" in text:
+            return True
+        if "last action changed real material stocks" in text:
+            return True
+        return False
 
     @staticmethod
     def _needs_failed_attempt_memory(obs_text: str) -> bool:
@@ -756,12 +852,20 @@ class AnthropicKeystrokeAgent(Agent):
                 )
 
             if tool_payload is not None:
-                required_review_error = self._required_memory_review_error(
-                    tool_uses,
-                    obs_text,
-                    tool_payload,
-                )
-                if required_review_error and attempt_index < 2:
+                required_errors = [
+                    error
+                    for error in (
+                        self._required_memory_review_error(
+                            tool_uses,
+                            obs_text,
+                            tool_payload,
+                        ),
+                        self._required_plan_review_error(tool_uses, obs_text),
+                    )
+                    if error
+                ]
+                required_review_error = "\n".join(required_errors) if required_errors else None
+                if required_review_error and attempt_index < 3:
                     last_error = ValueError(required_review_error)
                     append_tool_retry(
                         response.content,
@@ -769,9 +873,14 @@ class AnthropicKeystrokeAgent(Agent):
                     )
                     continue
                 if required_review_error:
+                    warning_tool = (
+                        "plan_review_gate_warning"
+                        if "plan" in required_review_error.lower()
+                        else "memory_review_gate_warning"
+                    )
                     self._tool_events.append(
                         {
-                            "tool": "memory_review_gate_warning",
+                            "tool": warning_tool,
                             "input": {
                                 "attempt": attempt_index + 1,
                                 "required_review_error": required_review_error,
@@ -819,6 +928,7 @@ class AnthropicKeystrokeAgent(Agent):
 
                 self._pending_observation = obs_text
                 self._pending_action = action
+                self._completed_actions += 1
                 return action
 
             if tool_uses:
@@ -858,6 +968,15 @@ register_agent(
         require_memory_review=True,
     ),
 )
+register_agent(
+    "anthropic-keystroke-plan-review",
+    lambda: AnthropicKeystrokeAgent(
+        system_prompt=KEYSTROKE_PLAN_REVIEW_SYSTEM_PROMPT,
+        require_memory_review=True,
+        require_plan_review=True,
+        plan_review_interval=5,
+    ),
+)
 
 
 __all__ = [
@@ -869,4 +988,5 @@ __all__ = [
     "FORTRESS_PLAN_SYSTEM_PROMPT",
     "KEYSTROKE_SYSTEM_PROMPT",
     "KEYSTROKE_POI_REVIEW_SYSTEM_PROMPT",
+    "KEYSTROKE_PLAN_REVIEW_SYSTEM_PROMPT",
 ]

@@ -33,6 +33,19 @@ def test_run_create_request_accepts_poi_review_keystroke_model() -> None:
     assert request.model == "anthropic-keystroke-poi-review"
 
 
+def test_run_create_request_accepts_plan_review_keystroke_model() -> None:
+    from fort_gym.bench.api.schemas import RunCreateRequest
+
+    request = RunCreateRequest(
+        backend="dfhack",
+        model="anthropic-keystroke-plan-review",
+        max_steps=100,
+        ticks_per_step=10,
+    )
+
+    assert request.model == "anthropic-keystroke-plan-review"
+
+
 def test_run_registry_persists_preserve_save(tmp_path) -> None:
     from fort_gym.bench.run.storage import RunRegistry
 

@@ -75,6 +75,14 @@ class BaseAction(BaseModel):
         default=None,
         description="Memory or POI update the agent made or will make around this action.",
     )
+    plan_step: Optional[str] = Field(
+        default=None,
+        description="Current agent-maintained plan step this action is meant to advance.",
+    )
+    plan_review: Optional[str] = Field(
+        default=None,
+        description="Brief summary of the latest plan review used before this action.",
+    )
     advance_ticks: int = Field(
         default=0,
         ge=0,

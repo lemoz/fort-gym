@@ -78,6 +78,8 @@ class MemoryManager:
         self.recent_steps: List[StepRecord] = []
         self.pois: List[Dict[str, Any]] = []
         self.failed_attempts: List[Dict[str, Any]] = []
+        self.gameplay_plan: Dict[str, Any] = {}
+        self.plan_reviews: List[Dict[str, Any]] = []
         self.summary = ""
         self._step_counter = 0
         self._summarizer = summarizer or self._default_summarizer
@@ -98,7 +100,14 @@ class MemoryManager:
     def get_context(self) -> str:
         if not self._enabled:
             return ""
-        if not self.summary and not self.recent_steps and not self.pois and not self.failed_attempts:
+        if (
+            not self.summary
+            and not self.recent_steps
+            and not self.pois
+            and not self.failed_attempts
+            and not self.gameplay_plan
+            and not self.plan_reviews
+        ):
             return ""
         lines = ["== MEMORY =="]
         if self.summary:
@@ -109,6 +118,12 @@ class MemoryManager:
         if self.failed_attempts:
             lines.append("Recent Failed Attempts:")
             lines.extend(self._format_failed_attempt_line(item) for item in self.failed_attempts[-10:])
+        if self.gameplay_plan:
+            lines.append("Gameplay Plan:")
+            lines.append(self._format_gameplay_plan(self.gameplay_plan))
+        if self.plan_reviews:
+            lines.append("Recent Plan Reviews:")
+            lines.extend(self._format_plan_review_line(item) for item in self.plan_reviews[-5:])
         if self.recent_steps:
             lines.append("Recent Steps:")
             lines.extend(step.to_line(self.step_max_chars) for step in self.recent_steps)
@@ -183,6 +198,108 @@ class MemoryManager:
         if self.max_failed_attempts and len(self.failed_attempts) > self.max_failed_attempts:
             self.failed_attempts = self.failed_attempts[-self.max_failed_attempts :]
         return "Remembered failed attempt: " + self._format_failed_attempt_line(item)
+
+    def write_gameplay_plan(
+        self,
+        *,
+        objective: str,
+        phase: str = "",
+        steps: Sequence[Any] | None = None,
+        current_step: str = "",
+        reason: str = "",
+        evidence: str = "",
+    ) -> str:
+        """Store the agent's current multi-step gameplay plan."""
+
+        if not self._enabled:
+            return "Memory is disabled."
+        clean_objective = _normalize_text(str(objective)).strip()
+        if not clean_objective:
+            return "Gameplay plan objective is required."
+        clean_steps = [
+            _truncate_head(_normalize_text(str(step)).strip(), 140)
+            for step in (steps or [])
+            if _normalize_text(str(step)).strip()
+        ]
+        self.gameplay_plan = {
+            "objective": _truncate_head(clean_objective, 160),
+            "phase": _truncate_head(_normalize_text(str(phase)).strip(), 80),
+            "steps": clean_steps[:8],
+            "current_step": _truncate_head(_normalize_text(str(current_step)).strip(), 120),
+            "reason": _truncate_head(_normalize_text(str(reason)).strip(), 160),
+            "evidence": _truncate_head(_normalize_text(str(evidence)).strip(), 180),
+            "revision": int(self.gameplay_plan.get("revision") or 0) + 1,
+        }
+        return "Gameplay plan written: " + self._format_gameplay_plan(self.gameplay_plan)
+
+    def review_gameplay_plan(
+        self,
+        *,
+        status: str,
+        evidence: str = "",
+        completed_steps: Sequence[Any] | None = None,
+        blockers: Sequence[Any] | None = None,
+        next_step: str = "",
+        revised_steps: Sequence[Any] | None = None,
+        reason: str = "",
+    ) -> str:
+        """Record a plan review and optionally revise the stored plan steps."""
+
+        if not self._enabled:
+            return "Memory is disabled."
+        if not self.gameplay_plan:
+            return "No gameplay plan exists. Call write_gameplay_plan first."
+        clean_status = _normalize_text(str(status)).strip()
+        if not clean_status:
+            return "Plan review status is required."
+        completed = [
+            _truncate_head(_normalize_text(str(step)).strip(), 120)
+            for step in (completed_steps or [])
+            if _normalize_text(str(step)).strip()
+        ]
+        blocker_items = [
+            _truncate_head(_normalize_text(str(blocker)).strip(), 120)
+            for blocker in (blockers or [])
+            if _normalize_text(str(blocker)).strip()
+        ]
+        clean_revised_steps = [
+            _truncate_head(_normalize_text(str(step)).strip(), 140)
+            for step in (revised_steps or [])
+            if _normalize_text(str(step)).strip()
+        ]
+        clean_next_step = _truncate_head(_normalize_text(str(next_step)).strip(), 120)
+        review = {
+            "status": _truncate_head(clean_status, 60),
+            "evidence": _truncate_head(_normalize_text(str(evidence)).strip(), 180),
+            "completed_steps": completed[:6],
+            "blockers": blocker_items[:6],
+            "next_step": clean_next_step,
+            "reason": _truncate_head(_normalize_text(str(reason)).strip(), 160),
+        }
+        self.plan_reviews.append(review)
+        if len(self.plan_reviews) > 20:
+            self.plan_reviews = self.plan_reviews[-20:]
+        if clean_revised_steps:
+            self.gameplay_plan = {
+                **self.gameplay_plan,
+                "steps": clean_revised_steps[:8],
+                "current_step": clean_next_step,
+                "reason": review["reason"],
+                "evidence": review["evidence"],
+                "revision": int(self.gameplay_plan.get("revision") or 0) + 1,
+            }
+        elif clean_next_step:
+            self.gameplay_plan = {
+                **self.gameplay_plan,
+                "current_step": clean_next_step,
+                "evidence": review["evidence"],
+            }
+        return (
+            "Reviewed gameplay plan: "
+            + self._format_plan_review_line(review)
+            + "\nCurrent plan: "
+            + self._format_gameplay_plan(self.gameplay_plan)
+        )
 
     def query_memory(
         self,
@@ -317,6 +434,40 @@ class MemoryManager:
             parts.append(f"reason={item['reason']}")
         if item.get("evidence"):
             parts.append(f"evidence={item['evidence']}")
+        return "; ".join(parts)
+
+    @staticmethod
+    def _format_gameplay_plan(plan: Dict[str, Any]) -> str:
+        parts = [
+            f"- objective={plan.get('objective', '?')}",
+            f"phase={plan.get('phase') or '?'}",
+            f"current={plan.get('current_step') or '?'}",
+            f"revision={plan.get('revision') or 0}",
+        ]
+        steps = plan.get("steps")
+        if isinstance(steps, list) and steps:
+            parts.append("steps=" + " | ".join(str(step) for step in steps[:6]))
+        if plan.get("reason"):
+            parts.append(f"reason={plan['reason']}")
+        if plan.get("evidence"):
+            parts.append(f"evidence={plan['evidence']}")
+        return "; ".join(parts)
+
+    @staticmethod
+    def _format_plan_review_line(review: Dict[str, Any]) -> str:
+        parts = [f"- status={review.get('status', '?')}"]
+        if review.get("next_step"):
+            parts.append(f"next={review['next_step']}")
+        blockers = review.get("blockers")
+        if isinstance(blockers, list) and blockers:
+            parts.append("blockers=" + ", ".join(str(item) for item in blockers[:4]))
+        completed = review.get("completed_steps")
+        if isinstance(completed, list) and completed:
+            parts.append("completed=" + ", ".join(str(item) for item in completed[:4]))
+        if review.get("evidence"):
+            parts.append(f"evidence={review['evidence']}")
+        if review.get("reason"):
+            parts.append(f"reason={review['reason']}")
         return "; ".join(parts)
 
 

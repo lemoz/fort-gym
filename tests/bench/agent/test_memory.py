@@ -97,3 +97,38 @@ def test_memory_records_failed_attempts() -> None:
     assert "Failed attempts:" in query
     assert "craftsdwarf placement" in query
     assert "no building or job appeared" in query
+
+
+def test_memory_tracks_gameplay_plan_and_reviews() -> None:
+    memory = MemoryManager(window_size=2)
+
+    plan_result = memory.write_gameplay_plan(
+        objective="complete useful fortress space",
+        phase="post-workshop",
+        steps=["confirm workshop exists", "finish planned room", "create stockpile"],
+        current_step="finish planned room",
+        reason="workshop loop has already succeeded",
+        evidence="carpenter_workshops=1",
+    )
+
+    assert "Gameplay plan written" in plan_result
+    context = memory.get_context()
+    assert "Gameplay Plan:" in context
+    assert "complete useful fortress space" in context
+    assert "finish planned room" in context
+
+    review_result = memory.review_gameplay_plan(
+        status="needs_revision",
+        evidence="no_progress_streak=2",
+        completed_steps=["confirm workshop exists"],
+        blockers=["repeating workshop placement"],
+        next_step="designate a new room area",
+        revised_steps=["exit build menu", "designate a new room area"],
+        reason="shift away from workshop loop",
+    )
+
+    assert "Reviewed gameplay plan" in review_result
+    context = memory.get_context()
+    assert "Recent Plan Reviews:" in context
+    assert "repeating workshop placement" in context
+    assert "designate a new room area" in context

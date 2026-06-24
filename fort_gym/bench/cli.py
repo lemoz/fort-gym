@@ -1009,6 +1009,14 @@ def _analyze_real_gameplay_trace(
             if total_steps
             else 0.0
         ),
+        "plan_writes": _as_int(tool_counts.get("write_gameplay_plan")),
+        "plan_reviews": _as_int(tool_counts.get("review_gameplay_plan")),
+        "plan_review_rate": (
+            round(_as_int(tool_counts.get("review_gameplay_plan")) / total_steps, 3)
+            if total_steps
+            else 0.0
+        ),
+        "plan_gate_warnings": _as_int(tool_counts.get("plan_review_gate_warning")),
         "poi_writes": _as_int(tool_counts.get("remember_poi")),
         "failed_attempt_writes": failed_attempt_writes,
         "df_wiki_calls": _as_int(tool_counts.get("df_wiki")),
