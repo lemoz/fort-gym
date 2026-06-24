@@ -476,7 +476,10 @@ class AnthropicActionAgent(Agent):
             client_cls = getattr(anthropic_mod, "Anthropic", None)
             if client_cls is None:
                 raise RuntimeError("anthropic.Anthropic client not available")
-            self._client = client_cls(api_key=self._settings.ANTHROPIC_API_KEY)
+            self._client = client_cls(
+                api_key=self._settings.ANTHROPIC_API_KEY,
+                timeout=self._settings.ANTHROPIC_TIMEOUT_SECONDS,
+            )
         return self._client
 
     def _create_message_with_retries(self, client: Any, **kwargs: Any) -> Any:
@@ -632,7 +635,10 @@ class AnthropicKeystrokeAgent(Agent):
             client_cls = getattr(anthropic_mod, "Anthropic", None)
             if client_cls is None:
                 raise RuntimeError("anthropic.Anthropic client not available")
-            self._client = client_cls(api_key=self._settings.ANTHROPIC_API_KEY)
+            self._client = client_cls(
+                api_key=self._settings.ANTHROPIC_API_KEY,
+                timeout=self._settings.ANTHROPIC_TIMEOUT_SECONDS,
+            )
         return self._client
 
     def _create_message_with_retries(self, client: Any, **kwargs: Any) -> Any:

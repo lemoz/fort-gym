@@ -44,8 +44,9 @@ class _FakeMessages:
 class _FakeAnthropicClient:
     last_instance: "_FakeAnthropicClient | None" = None
 
-    def __init__(self, api_key: str) -> None:
+    def __init__(self, api_key: str, timeout: float | None = None) -> None:
         self.api_key = api_key
+        self.timeout = timeout
         self.messages = _FakeMessages()
         _FakeAnthropicClient.last_instance = self
 
@@ -64,8 +65,9 @@ class _SequencedAnthropicClient:
     last_instance: "_SequencedAnthropicClient | None" = None
     responses: list[Any] = []
 
-    def __init__(self, api_key: str) -> None:
+    def __init__(self, api_key: str, timeout: float | None = None) -> None:
         self.api_key = api_key
+        self.timeout = timeout
         self.messages = _SequencedMessages(list(self.responses))
         _SequencedAnthropicClient.last_instance = self
 
@@ -103,8 +105,9 @@ class _RateLimitOnceMessages:
 class _RateLimitOnceAnthropicClient:
     last_instance: "_RateLimitOnceAnthropicClient | None" = None
 
-    def __init__(self, api_key: str) -> None:
+    def __init__(self, api_key: str, timeout: float | None = None) -> None:
         self.api_key = api_key
+        self.timeout = timeout
         self.messages = _RateLimitOnceMessages()
         _RateLimitOnceAnthropicClient.last_instance = self
 
@@ -121,6 +124,7 @@ def test_anthropic_default_model_tracks_current_sonnet(monkeypatch) -> None:
 def test_anthropic_agent_records_usage_event(monkeypatch) -> None:
     monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
     monkeypatch.delenv("ANTHROPIC_MODEL", raising=False)
+    monkeypatch.setenv("ANTHROPIC_TIMEOUT_SECONDS", "17.5")
     get_settings.cache_clear()  # type: ignore[attr-defined]
 
     def fake_import_module(name: str) -> Any:
@@ -153,6 +157,7 @@ def test_anthropic_agent_records_usage_event(monkeypatch) -> None:
     ]
     assert _FakeAnthropicClient.last_instance is not None
     assert _FakeAnthropicClient.last_instance.api_key == "test-key"
+    assert _FakeAnthropicClient.last_instance.timeout == 17.5
     request = _FakeAnthropicClient.last_instance.messages.requests[0]
     assert request["model"] == "claude-sonnet-4-6"
 
