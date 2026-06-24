@@ -56,7 +56,8 @@ class Settings(BaseModel):
     OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
     ANTHROPIC_API_KEY: Optional[str] = os.getenv("ANTHROPIC_API_KEY")
     ANTHROPIC_MODEL: str = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-6")
-    ANTHROPIC_TIMEOUT_SECONDS: float = float(os.getenv("ANTHROPIC_TIMEOUT_SECONDS", "60"))
+    ANTHROPIC_TIMEOUT_SECONDS: float = float(os.getenv("ANTHROPIC_TIMEOUT_SECONDS", "30"))
+    ANTHROPIC_MAX_ATTEMPTS: int = int(os.getenv("ANTHROPIC_MAX_ATTEMPTS", "3"))
     LLM_MAX_TOKENS: int = int(os.getenv("LLM_MAX_TOKENS", "512"))
     LLM_TEMP: float = float(os.getenv("LLM_TEMP", "0.1"))
     LLM_RATE_LIMIT_TPS: float = float(os.getenv("LLM_RATE_LIMIT_TPS", "1.0"))
@@ -84,7 +85,8 @@ def get_settings() -> Settings:
         OPENAI_MODEL=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
         ANTHROPIC_API_KEY=os.getenv("ANTHROPIC_API_KEY"),
         ANTHROPIC_MODEL=os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-6"),
-        ANTHROPIC_TIMEOUT_SECONDS=float(os.getenv("ANTHROPIC_TIMEOUT_SECONDS", "60")),
+        ANTHROPIC_TIMEOUT_SECONDS=float(os.getenv("ANTHROPIC_TIMEOUT_SECONDS", "30")),
+        ANTHROPIC_MAX_ATTEMPTS=int(os.getenv("ANTHROPIC_MAX_ATTEMPTS", "3")),
         LLM_MAX_TOKENS=int(os.getenv("LLM_MAX_TOKENS", "512")),
         LLM_TEMP=float(os.getenv("LLM_TEMP", "0.1")),
         LLM_RATE_LIMIT_TPS=float(os.getenv("LLM_RATE_LIMIT_TPS", "1.0")),

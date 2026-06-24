@@ -440,6 +440,16 @@ def _is_rate_limit_error(exc: Exception) -> bool:
     return status_code == 429
 
 
+def _is_retryable_anthropic_error(exc: Exception) -> bool:
+    if _is_rate_limit_error(exc):
+        return True
+    class_name = exc.__class__.__name__
+    if "Timeout" in class_name or class_name == "APIConnectionError":
+        return True
+    status_code = getattr(exc, "status_code", None)
+    return status_code in {408, 409, 425, 500, 502, 503, 504, 529}
+
+
 def _rate_limit_backoff_seconds(attempt: int) -> float:
     return min(60.0, 5.0 * (2**attempt))
 
@@ -484,17 +494,23 @@ class AnthropicActionAgent(Agent):
 
     def _create_message_with_retries(self, client: Any, **kwargs: Any) -> Any:
         last_error: Exception | None = None
-        for attempt in range(6):
+        max_attempts = max(1, self._settings.ANTHROPIC_MAX_ATTEMPTS)
+        for attempt in range(max_attempts):
             try:
                 return client.messages.create(**kwargs)
             except Exception as exc:
-                if not _is_rate_limit_error(exc):
+                if not _is_retryable_anthropic_error(exc) or attempt + 1 >= max_attempts:
                     raise
                 last_error = exc
                 wait_seconds = _rate_limit_backoff_seconds(attempt)
+                tool_name = (
+                    "anthropic.rate_limit_retry"
+                    if _is_rate_limit_error(exc)
+                    else "anthropic.request_retry"
+                )
                 self._tool_events.append(
                     {
-                        "tool": "anthropic.rate_limit_retry",
+                        "tool": tool_name,
                         "input": {"attempt": attempt + 1, "wait_seconds": wait_seconds},
                         "output": str(exc),
                     }
@@ -643,17 +659,23 @@ class AnthropicKeystrokeAgent(Agent):
 
     def _create_message_with_retries(self, client: Any, **kwargs: Any) -> Any:
         last_error: Exception | None = None
-        for attempt in range(6):
+        max_attempts = max(1, self._settings.ANTHROPIC_MAX_ATTEMPTS)
+        for attempt in range(max_attempts):
             try:
                 return client.messages.create(**kwargs)
             except Exception as exc:
-                if not _is_rate_limit_error(exc):
+                if not _is_retryable_anthropic_error(exc) or attempt + 1 >= max_attempts:
                     raise
                 last_error = exc
                 wait_seconds = _rate_limit_backoff_seconds(attempt)
+                tool_name = (
+                    "anthropic.rate_limit_retry"
+                    if _is_rate_limit_error(exc)
+                    else "anthropic.request_retry"
+                )
                 self._tool_events.append(
                     {
-                        "tool": "anthropic.rate_limit_retry",
+                        "tool": tool_name,
                         "input": {"attempt": attempt + 1, "wait_seconds": wait_seconds},
                         "output": str(exc),
                     }
