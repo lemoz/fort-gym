@@ -278,10 +278,10 @@ def _desired_keystroke_target_mode(
     ui_successful_targets: int,
     build_material_blocked: bool = False,
 ) -> str:
-    if _carpenter_workshops(state) > 0:
-        return "starter"
     if build_material_blocked:
         return "material"
+    if _carpenter_workshops(state) > 0:
+        return "starter"
     enough_starter_space = (
         ui_run_excavation_progress >= UI_MATERIAL_TARGET_MIN_EXCAVATION_PROGRESS
         or ui_successful_targets >= 2

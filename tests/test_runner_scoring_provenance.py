@@ -166,7 +166,7 @@ def test_desired_keystroke_target_mode_returns_to_starter_after_workshop_exists(
 
 
 def test_desired_keystroke_target_mode_trusts_visible_material_blocker() -> None:
-    state = {"stocks": {"wood": 3, "stone": 0}}
+    state = {"stocks": {"wood": 3, "stone": 0}, "work": {"carpenter_workshops": 1}}
 
     assert (
         _desired_keystroke_target_mode(

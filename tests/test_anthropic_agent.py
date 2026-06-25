@@ -245,6 +245,8 @@ def test_keystroke_prompt_is_action_first() -> None:
     assert "do not use\nCURSOR_DOWN/CURSOR_UP" in KEYSTROKE_SYSTEM_PROMPT
     assert "Live UI z-level mismatch" in KEYSTROKE_SYSTEM_PROMPT
     assert "do not copy target designation or placement keys" in KEYSTROKE_SYSTEM_PROMPT
+    assert "intentionally explore another z-level" in KEYSTROKE_SYSTEM_PROMPT
+    assert "ignore the stale target keys" in KEYSTROKE_SYSTEM_PROMPT
     assert "do not call it a bed" in KEYSTROKE_SYSTEM_PROMPT
     assert "If `carpenter_workshops=1` and `manager_orders=0`" in KEYSTROKE_SYSTEM_PROMPT
     assert "D_JOBLIST -> UNITJOB_MANAGER ->" in KEYSTROKE_SYSTEM_PROMPT

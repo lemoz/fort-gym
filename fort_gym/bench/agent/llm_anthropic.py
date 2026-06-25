@@ -116,8 +116,11 @@ camera and cursor on a reachable native-UI target near your dwarves. If the setu
 is `material`, those keys either chop a visible tree for logs or mine visible
 stone/vein wall so the fortress has real workshop building material. If status says
 `Live UI z-level mismatch`, do not copy target designation or placement keys from
-the wrong z-level. Use only z-level navigation to return toward the target, with
-advance_ticks 0, then wait for the next observation before acting on target keys.
+the wrong z-level. If you want to use the shown target, use z-level navigation
+to return toward it, with advance_ticks 0, then wait for the next observation
+before acting on target keys. If you intentionally explore another z-level for
+rock, resources, or a better route, ignore the stale target keys there and first
+verify the current visible DF cursor/menu with screen_read before designating.
 If status says
 `Live UI material recovery`, follow that line literally. If it says to copy only
 escape keys this turn, send only those LEAVESCREEN keys with advance_ticks 0;

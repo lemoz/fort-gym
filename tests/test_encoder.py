@@ -413,6 +413,8 @@ def test_encoder_surfaces_target_z_mismatch() -> None:
     assert "Do not send target designation or placement keys" in text
     assert "CURSOR_UP_Z" in text
     assert "wait for the next observation" in text
+    assert "intentionally exploring this z-level" in text
+    assert "ignore the stale target keys" in text
 
 
 def test_encoder_labels_material_recovery_as_exit_only() -> None:

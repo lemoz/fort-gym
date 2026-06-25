@@ -458,10 +458,14 @@ def encode_observation(
             status_lines.append(
                 "Live UI z-level mismatch: "
                 f"current view z={view_z}, target z={target_z}. Do not send "
-                "target designation or placement keys from this z-level. Use "
-                f"only z-level navigation such as {z_key} to return toward the "
-                "target, then wait for the next observation before acting on "
-                "target keys."
+                "target designation or placement keys from this z-level. If "
+                "you want to use the shown target, use z-level navigation such "
+                f"as {z_key} to return toward it, then wait for the next "
+                "observation before acting on target keys. If you are "
+                "intentionally exploring this z-level for new rock or "
+                "resources, ignore the stale target keys and first verify the "
+                "current visible DF cursor/menu with screen_read before "
+                "designating."
             )
         status_lines.append(
             "Live UI target note: selection_rect and window are observation "
