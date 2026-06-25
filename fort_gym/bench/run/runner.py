@@ -351,6 +351,7 @@ def _ui_target_setup_for_observation(
     target_progress_seen: bool,
     recommended_key_prefix: List[str] | None = None,
     force_show_recommended: bool = False,
+    recommended_keys_exit_only: bool = False,
 ) -> Dict[str, Any]:
     setup = dict(target)
     target_mode = str(setup.get("target_mode") or "starter")
@@ -378,14 +379,21 @@ def _ui_target_setup_for_observation(
         original_keys = setup.get("recommended_keys")
         if isinstance(original_keys, list):
             prefix = list(recommended_key_prefix or [])
-            setup["recommended_keys"] = prefix + list(original_keys)
+            if recommended_keys_exit_only and prefix:
+                setup["recommended_keys"] = prefix
+            else:
+                setup["recommended_keys"] = prefix + list(original_keys)
             setup["recommended_key_prefix"] = prefix
+            setup["recommended_keys_exit_only"] = bool(
+                recommended_keys_exit_only and prefix
+            )
         setup["recommended_keys_suppressed"] = False
         setup["recommended_keys_retry"] = attempts > 0
         setup["recommended_keys_force_shown"] = force_show_recommended
     else:
         setup["recommended_keys"] = []
         setup["recommended_key_prefix"] = []
+        setup["recommended_keys_exit_only"] = False
         setup["recommended_keys_suppressed"] = True
         setup["recommended_keys_retry"] = False
         setup["recommended_keys_force_shown"] = False
@@ -715,6 +723,7 @@ def run_once(
                             target_progress_seen=ui_target_progress_seen,
                             recommended_key_prefix=recovery_prefix,
                             force_show_recommended=bool(recovery_prefix),
+                            recommended_keys_exit_only=bool(recovery_prefix),
                         )
                     if ui_work_rect is None:
                         prepared_rect = None

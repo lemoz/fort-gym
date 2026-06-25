@@ -271,6 +271,34 @@ def test_encoder_labels_material_target_setup() -> None:
     assert "Live UI material target" in text
 
 
+def test_encoder_labels_material_recovery_as_exit_only() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 0, "stone": 0},
+            "ui_target_setup": {
+                "ok": True,
+                "target_mode": "material",
+                "target_generation": 3,
+                "target_attempts": 2,
+                "selection_rect": [10, 20, 177, 13, 21, 177],
+                "designatable_tiles": 4,
+                "show_recommended_keys": True,
+                "recommended_keys": ["LEAVESCREEN", "LEAVESCREEN"],
+                "recommended_key_prefix": ["LEAVESCREEN", "LEAVESCREEN"],
+                "recommended_keys_exit_only": True,
+            },
+        },
+        screen_text="Needs building material",
+    )
+
+    assert "copy only the listed escape keys this turn" in text
+    assert "Do not chain a new designation or build command" in text
+    assert "Fresh target recommended keys: LEAVESCREEN, LEAVESCREEN" in text
+    assert "D_DESIGNATE" not in text
+
+
 def test_encoder_labels_workshop_target_setup() -> None:
     text, _ = encode_observation(
         {

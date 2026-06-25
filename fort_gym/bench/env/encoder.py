@@ -398,12 +398,22 @@ def encode_observation(
             )
             key_prefix = ui_target_setup.get("recommended_key_prefix")
             if isinstance(key_prefix, list) and key_prefix:
-                status_lines.append(
-                    "Live UI material recovery: copy the full recommended sequence; "
-                    "it first exits build menus with "
-                    + ", ".join(str(key) for key in key_prefix)
-                    + " and then designates the material target."
-                )
+                if ui_target_setup.get("recommended_keys_exit_only"):
+                    status_lines.append(
+                        "Live UI material recovery: copy only the listed escape "
+                        "keys this turn ("
+                        + ", ".join(str(key) for key in key_prefix)
+                        + "). Do not chain a new designation or build command "
+                        "after the escape keys; wait for the next observation "
+                        "from the main map before acquiring material."
+                    )
+                else:
+                    status_lines.append(
+                        "Live UI material recovery: the recommended sequence first "
+                        "exits build menus with "
+                        + ", ".join(str(key) for key in key_prefix)
+                        + " and then designates the material target."
+                    )
         elif ui_target_setup.get("target_mode") == "workshop":
             if screen_shows_blocked_placement:
                 status_lines.append(

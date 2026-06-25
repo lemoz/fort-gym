@@ -282,6 +282,32 @@ def test_material_target_setup_can_prefix_build_menu_recovery_keys() -> None:
     assert setup["recommended_key_prefix"] == ["LEAVESCREEN", "LEAVESCREEN"]
     assert setup["show_recommended_keys"] is True
     assert setup["recommended_keys_force_shown"] is True
+    assert setup["recommended_keys_exit_only"] is False
+
+
+def test_material_target_setup_can_show_exit_only_recovery_keys() -> None:
+    target = {
+        "ok": True,
+        "target_mode": "material",
+        "recommended_keys": ["D_DESIGNATE", "DESIGNATE_CHOP"],
+    }
+
+    setup = _ui_target_setup_for_observation(
+        target,
+        generation=3,
+        attempts=9,
+        no_progress_streak=2,
+        target_progress_seen=False,
+        recommended_key_prefix=["LEAVESCREEN", "LEAVESCREEN"],
+        force_show_recommended=True,
+        recommended_keys_exit_only=True,
+    )
+
+    assert setup["recommended_keys"] == ["LEAVESCREEN", "LEAVESCREEN"]
+    assert setup["recommended_key_prefix"] == ["LEAVESCREEN", "LEAVESCREEN"]
+    assert setup["show_recommended_keys"] is True
+    assert setup["recommended_keys_force_shown"] is True
+    assert setup["recommended_keys_exit_only"] is True
 
 
 def test_material_target_requires_material_delta_for_success() -> None:

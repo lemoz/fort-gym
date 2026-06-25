@@ -112,8 +112,10 @@ each turn.
 camera and cursor on a reachable native-UI target near your dwarves. If the setup mode
 is `material`, those keys either chop a visible tree for logs or mine visible
 stone/vein wall so the fortress has real workshop building material. If status says
-`Live UI material recovery`, copy the full recommended sequence exactly: the leading
-LEAVESCREEN keys are there to exit build/material menus before the chop/mine target.
+`Live UI material recovery`, follow that line literally. If it says to copy only
+escape keys this turn, send only those LEAVESCREEN keys with advance_ticks 0;
+do not chain a new designation/build/menu command after escaping. Use the next
+observation from the main map before acquiring material.
 If the setup mode is `workshop`, the target is a candidate 3x3 floor footprint.
 Copy the recommended carpenter-workshop keys to open native placement mode, then
 read the visible placement screen before confirming. Do not press SELECT to place
