@@ -166,9 +166,15 @@ retrying stockpiles or blind dig boxes. If a stockpile or dig path has already
 produced no tracked state change after the workshop exists, record it and return
 to production.
 If `carpenter_workshops=1`, `manager_orders>0`, and `order_qty_left>0`, a real
-production order is already queued. Do not open new stockpile/build/order setup
-menus. Leave any current menu, then from the main map submit a KEYSTROKE action
-with no extra menu keys and `advance_ticks` at least 1000 so dwarves can work.
+production order is already queued. In the normal case, do not open new
+stockpile/build/order setup menus; leave any current menu, then from the main map
+submit a KEYSTROKE action with no extra menu keys and `advance_ticks` at least
+1000 so dwarves can work. But if one large advance leaves `order_qty_left`
+unchanged or the visible screen says the work was cancelled/needs something,
+stop blind waiting. Inspect the relevant carpenter workshop, task list, or
+cancellation reason before changing objectives. Do not switch to unrelated
+digging, fresh stockpiles, or new manager searches until your screen_read names
+the production blocker that made the current bed task impossible.
 In the manager New Order search dialog, if your screen_read says a single useful
 result is visible and the footer says Select, press SELECT to queue it unless
 you explicitly reject that job as not useful or not buildable. Do not leave the
@@ -465,6 +471,11 @@ Use the plan tools as a private notebook:
   failed-attempt memory before typing it. If the term is already remembered as a
   wrong menu/no-result/corrupted-search path, revise the plan to a different
   native branch or a clean-dialog search you have not already disproved.
+- When a queued production order has already reduced `order_qty_left` and then
+  stalls, treat the current production chain as the active plan. Before switching
+  to unrelated dig, stockpile, or exploration work, review the plan against the
+  visible workshop/task/cancellation evidence and name the specific blocker you
+  are trying to fix.
 - Include plan_step and plan_review in submit_action so the trace can audit
   whether the action follows the reviewed plan.
 
@@ -534,6 +545,12 @@ If the previous action tried a parenthesized workshop task letter and the same a
 If your proposed action uses manual cursor movement, your screen_read evidence
 must identify the visible active cursor or active selection on the current
 screen. `selection_rect` and `window` alone do not satisfy that evidence.
+If the previous action advanced time for a queued production order and
+`order_qty_left` did not decrease, mark worked=false unless another concrete
+production change occurred. If the visible screen contains a cancellation or
+Needs message, do not retry blind time advancement and do not jump to unrelated
+dig/stockpile work. First inspect the relevant workshop/task list or visible
+cancellation evidence, then choose a native UI fix for that blocker.
 
 These fields are your cognition trail. They do not change Dwarf Fortress and
 they are not scoring. Real score still only comes from native keystrokes,

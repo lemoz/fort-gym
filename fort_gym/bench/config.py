@@ -54,6 +54,11 @@ class Settings(BaseModel):
     ARTIFACTS_DIR: str = os.getenv("ARTIFACTS_DIR", "fort_gym/artifacts")
     OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY")
     OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+    OPENROUTER_API_KEY: Optional[str] = os.getenv("OPENROUTER_API_KEY")
+    OPENROUTER_MODEL: str = os.getenv("OPENROUTER_MODEL", "z-ai/glm-5.2")
+    OPENROUTER_BASE_URL: str = os.getenv(
+        "OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"
+    )
     ANTHROPIC_API_KEY: Optional[str] = os.getenv("ANTHROPIC_API_KEY")
     ANTHROPIC_MODEL: str = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-6")
     ANTHROPIC_OPUS_MODEL: str = os.getenv("ANTHROPIC_OPUS_MODEL", "claude-opus-4-8")
@@ -84,6 +89,11 @@ def get_settings() -> Settings:
         ARTIFACTS_DIR=os.getenv("ARTIFACTS_DIR", "fort_gym/artifacts"),
         OPENAI_API_KEY=os.getenv("OPENAI_API_KEY"),
         OPENAI_MODEL=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
+        OPENROUTER_API_KEY=os.getenv("OPENROUTER_API_KEY"),
+        OPENROUTER_MODEL=os.getenv("OPENROUTER_MODEL", "z-ai/glm-5.2"),
+        OPENROUTER_BASE_URL=os.getenv(
+            "OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"
+        ),
         ANTHROPIC_API_KEY=os.getenv("ANTHROPIC_API_KEY"),
         ANTHROPIC_MODEL=os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-6"),
         ANTHROPIC_OPUS_MODEL=os.getenv("ANTHROPIC_OPUS_MODEL", "claude-opus-4-8"),
@@ -103,6 +113,10 @@ def have_openai() -> bool:
     return bool(get_settings().OPENAI_API_KEY)
 
 
+def have_openrouter() -> bool:
+    return bool(get_settings().OPENROUTER_API_KEY)
+
+
 def have_anthropic() -> bool:
     return bool(get_settings().ANTHROPIC_API_KEY)
 
@@ -111,6 +125,7 @@ __all__ = [
     "Settings",
     "get_settings",
     "have_openai",
+    "have_openrouter",
     "have_anthropic",
     "DFROOT",
     "DFHACK_RUN",

@@ -215,6 +215,17 @@ def encode_observation(
         screen_shows_ready_workshop_placement
         or screen_shows_workshop_material_selection
     )
+    screen_lower = screen_text.lower() if screen_text else ""
+    screen_shows_manager_required = "manager is required" in screen_lower
+    screen_shows_production_cancellation = bool(
+        "cancels" in screen_lower
+        and (
+            "construct bed" in screen_lower
+            or "bed" in screen_lower
+            or "needs" in screen_lower
+            or "nee[" in screen_lower
+        )
+    )
     active_material_blocked = bool(
         ui_build_feedback.get("material_blocked")
         and not screen_shows_workshop_select_state
@@ -313,13 +324,31 @@ def encode_observation(
             and int(work.get("manager_orders_amount_left") or 0) > 0
             and int(work.get("carpenter_workshops") or 0) > 0
         ):
-            status_lines.append(
+            production_note = (
                 "Live UI production phase: a real manager order is queued and "
-                "a carpenter workshop exists. Stop opening new setup menus. If "
-                "you are in a menu, use LEAVESCREEN to return to the main map; "
-                "from the main map, advance_ticks >= 1000 so dwarves can work "
-                "the order."
+                "a carpenter workshop exists."
             )
+            if screen_shows_manager_required:
+                production_note += (
+                    " The visible screen says a manager is required; appoint a "
+                    "manager before relying on time advancement."
+                )
+            elif screen_shows_production_cancellation:
+                production_note += (
+                    " A visible production cancellation/Needs message is present; "
+                    "do not blindly wait or switch to unrelated dig/stockpile work. "
+                    "Inspect the carpenter workshop/task list or cancellation "
+                    "reason, then fix the shown production blocker."
+                )
+            else:
+                production_note += (
+                    " If you are in a menu, use LEAVESCREEN to return to the main "
+                    "map; from the main map, advance_ticks >= 1000 so dwarves can "
+                    "work the order. If a large advance leaves order_qty_left "
+                    "unchanged, inspect the workshop/task/cancellation path before "
+                    "changing objectives."
+                )
+            status_lines.append(production_note)
         if work.get("fortress_plan_name"):
             status_lines.append(
                 "Fortress plan: "

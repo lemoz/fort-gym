@@ -57,7 +57,7 @@ PUBLIC_REHEARSAL_PATHS = (
     "/public/leaderboard/best-over-time",
 )
 TERMINAL_RUN_STATUSES = {"completed", "failed", "stopped"}
-DEFAULT_LIVE_AGENT_MODELS = "anthropic-dig-first,anthropic-fortress-plan"
+DEFAULT_LIVE_AGENT_MODELS = "openrouter-keystroke-perception-review,openrouter-glm-5.2"
 STATUS_MENU_KEYS = {"D_STATUS", "D_ANNOUNCE", "D_REPORTS", "STRING_A122"}
 DESIGNATION_KEYS = {"D_DESIGNATE", "DESIGNATE_DIG"}
 
@@ -2098,7 +2098,7 @@ def _write_live_agent_suite_artifacts(
 @app.command("real-gameplay-experiment")
 def real_gameplay_experiment(
     baseline_token: str,
-    model: str = "anthropic-keystroke-poi-review",
+    model: str = "openrouter-keystroke-perception-review",
     backend: str = "dfhack",
     max_steps: int = 100,
     ticks_per_step: int = 10,
@@ -2179,7 +2179,7 @@ def real_gameplay_experiment(
 
 @app.command("live-agent-report")
 def live_agent_report(
-    model: str = "anthropic-keystroke",
+    model: str = "openrouter-keystroke-perception-review",
     baseline_model: str = "fake",
     backend: str = "dfhack",
     max_steps: int = 4,

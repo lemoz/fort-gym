@@ -289,7 +289,10 @@ def test_keystroke_prompt_is_action_first() -> None:
     assert "material row and" in KEYSTROKE_SYSTEM_PROMPT
     assert "D_BUILDING is premature" in KEYSTROKE_SYSTEM_PROMPT
     assert "order_qty_left>0" in KEYSTROKE_SYSTEM_PROMPT
-    assert "advance_ticks` at least 1000" in KEYSTROKE_SYSTEM_PROMPT
+    assert "`advance_ticks` at least\n1000" in KEYSTROKE_SYSTEM_PROMPT
+    assert "one large advance leaves `order_qty_left`\nunchanged" in KEYSTROKE_SYSTEM_PROMPT
+    assert "Inspect the relevant carpenter workshop" in KEYSTROKE_SYSTEM_PROMPT
+    assert "Do not switch to unrelated\ndigging" in KEYSTROKE_SYSTEM_PROMPT
     assert "use `STRING_A032`; do not" in KEYSTROKE_SYSTEM_PROMPT
     assert "use `PAUSE`" in KEYSTROKE_SYSTEM_PROMPT
     assert "complete a work designation" in KEYSTROKE_SYSTEM_PROMPT
@@ -331,6 +334,12 @@ def test_plan_review_prompt_requires_periodic_plan_reviews() -> None:
     )
     assert "manager/work-order search term" in KEYSTROKE_PLAN_REVIEW_SYSTEM_PROMPT
     assert "wrong menu/no-result/corrupted-search path" in KEYSTROKE_PLAN_REVIEW_SYSTEM_PROMPT
+    assert "stalls, treat the current production chain" in (
+        KEYSTROKE_PLAN_REVIEW_SYSTEM_PROMPT
+    )
+    assert "visible workshop/task/cancellation evidence" in (
+        KEYSTROKE_PLAN_REVIEW_SYSTEM_PROMPT
+    )
 
 
 def test_perception_review_prompt_requires_agent_owned_verification() -> None:
@@ -362,6 +371,15 @@ def test_perception_review_prompt_requires_agent_owned_verification() -> None:
         KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
     )
     assert "dirty search field as the failed\npath" in (
+        KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
+    )
+    assert "advanced time for a queued production order" in (
+        KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
+    )
+    assert "visible screen contains a cancellation" in (
+        KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
+    )
+    assert "First inspect the relevant workshop/task list" in (
         KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
     )
 

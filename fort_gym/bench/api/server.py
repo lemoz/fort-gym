@@ -194,6 +194,9 @@ async def list_runs(_: None = Depends(require_admin)) -> List[RunInfo]:
 OPTIONAL_AGENT_MODULES = {
     "fake": "fort_gym.bench.agent.fake_llm",
     "openai": "fort_gym.bench.agent.llm_openai",
+    "openrouter-keystroke": "fort_gym.bench.agent.llm_openrouter",
+    "openrouter-keystroke-perception-review": "fort_gym.bench.agent.llm_openrouter",
+    "openrouter-glm-5.2": "fort_gym.bench.agent.llm_openrouter",
     "anthropic": "fort_gym.bench.agent.llm_anthropic",
     "anthropic-dig-first": "fort_gym.bench.agent.llm_anthropic",
     "anthropic-fortress-plan": "fort_gym.bench.agent.llm_anthropic",
@@ -206,7 +209,19 @@ OPTIONAL_AGENT_MODULES = {
 }
 
 
+def _anthropic_enabled() -> bool:
+    return os.getenv("FORT_GYM_ENABLE_ANTHROPIC", "0").lower() in {"1", "true", "yes"}
+
+
 def _get_agent_factory(model: str) -> Callable[[], Agent]:
+    if model.startswith("anthropic") and not _anthropic_enabled():
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Anthropic models are disabled for this deployment. Use "
+                "openrouter-keystroke-perception-review or openrouter-glm-5.2."
+            ),
+        )
     factory = AGENT_FACTORIES.get(model)
     if factory:
         return factory

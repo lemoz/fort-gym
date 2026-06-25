@@ -13,7 +13,7 @@ def test_run_create_request_accepts_preserve_save() -> None:
 
     request = RunCreateRequest(
         backend="dfhack",
-        model="anthropic-keystroke",
+        model="openrouter-keystroke-perception-review",
         preserve_save=True,
     )
 
@@ -31,6 +31,26 @@ def test_run_create_request_accepts_poi_review_keystroke_model() -> None:
     )
 
     assert request.model == "anthropic-keystroke-poi-review"
+
+
+def test_run_create_request_accepts_openrouter_keystroke_models() -> None:
+    from fort_gym.bench.api.schemas import RunCreateRequest
+
+    request = RunCreateRequest(
+        backend="dfhack",
+        model="openrouter-keystroke-perception-review",
+        max_steps=100,
+        ticks_per_step=10,
+    )
+    glm_request = RunCreateRequest(
+        backend="dfhack",
+        model="openrouter-glm-5.2",
+        max_steps=100,
+        ticks_per_step=10,
+    )
+
+    assert request.model == "openrouter-keystroke-perception-review"
+    assert glm_request.model == "openrouter-glm-5.2"
 
 
 def test_run_create_request_accepts_plan_review_keystroke_model() -> None:
@@ -73,7 +93,7 @@ def test_run_registry_persists_preserve_save(tmp_path) -> None:
 
     created = registry.create(
         backend="dfhack",
-        model="anthropic-keystroke",
+        model="openrouter-keystroke-perception-review",
         max_steps=2,
         ticks_per_step=500,
         preserve_save=True,

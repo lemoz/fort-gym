@@ -118,8 +118,7 @@ The SSE endpoint emits `state`, `action`, `validation`, `execute`, `advance`, `m
 
 ## Keystroke Control Mode (Claude Plays Like a Human)
 
-The `anthropic-keystroke` model enables Claude to control Dwarf Fortress via raw keystrokes, seeing the game screen and sending key commands just like a human player would.
-For stricter no-cheat gameplay experiments, use `anthropic-keystroke-perception-review`; it requires the agent to submit its own `screen_read` and `last_action_review` before each keystroke action. `anthropic-keystroke-perception-review-opus` runs the same loop with the configured Opus model.
+The `openrouter-keystroke-perception-review` model controls Dwarf Fortress via raw keystrokes through OpenRouter-compatible chat completions. It requires the agent to submit its own `screen_read` and `last_action_review` before each keystroke action. By default it uses `OPENROUTER_MODEL=z-ai/glm-5.2`; `openrouter-glm-5.2` pins that model explicitly.
 
 ### How It Works
 1. **Screen Observation**: The game screen is captured via DFHack's CopyScreen RPC and converted to an 80x25 text representation
@@ -131,7 +130,7 @@ For stricter no-cheat gameplay experiments, use `anthropic-keystroke-perception-
 ```bash
 curl -s -X POST http://127.0.0.1:8000/runs \
   -H 'Content-Type: application/json' \
-  -d '{"backend":"dfhack","model":"anthropic-keystroke","max_steps":10,"ticks_per_step":200}'
+  -d '{"backend":"dfhack","model":"openrouter-keystroke-perception-review","max_steps":10,"ticks_per_step":200}'
 ```
 
 ### Available Keys
