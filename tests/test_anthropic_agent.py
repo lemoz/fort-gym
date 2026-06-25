@@ -235,6 +235,8 @@ def test_keystroke_prompt_is_action_first() -> None:
     assert "future cursor movement" in KEYSTROKE_SYSTEM_PROMPT
     assert "subtracting `selection_rect` from `window`" in KEYSTROKE_SYSTEM_PROMPT
     assert "not a manual cursor-navigation recipe" in KEYSTROKE_SYSTEM_PROMPT
+    assert "use `STRING_A032`; do not" in KEYSTROKE_SYSTEM_PROMPT
+    assert "use `PAUSE`" in KEYSTROKE_SYSTEM_PROMPT
     assert "advance_ticks\": 500" in KEYSTROKE_SYSTEM_PROMPT
     assert "Do not" in KEYSTROKE_SYSTEM_PROMPT
     assert "repeat the same key sequence" in KEYSTROKE_SYSTEM_PROMPT
@@ -1263,6 +1265,117 @@ def test_keystroke_perception_review_forces_submit_after_tool_only_action_phase(
     assert {tool["name"] for tool in requests[-1]["tools"]} == {"submit_action"}
     assert len(requests[-1]["messages"]) == 1
     assert "ACTION-ONLY RECOVERY" in _messages_text(requests[-1]["messages"])
+    assert any(event.get("tool") == "submit_action_forced_after_tools" for event in events)
+
+
+def test_keystroke_perception_force_submit_warns_on_unmet_memory_gate(
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.delenv("ANTHROPIC_MODEL", raising=False)
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    _SequencedAnthropicClient.responses = [
+        SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="record_screen_read",
+                    id="toolu_screen",
+                    input={
+                        "mode": "main_map",
+                        "evidence": ["main map terrain visible"],
+                        "cursor_or_selection": "cursor_inactive",
+                        "confidence": "high",
+                    },
+                )
+            ],
+            usage=SimpleNamespace(input_tokens=10, output_tokens=2),
+        ),
+        SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="review_last_action",
+                    id="toolu_review",
+                    input={
+                        "worked": False,
+                        "evidence": ["last action changed no tracked tiles"],
+                        "mismatch_reason": "no_progress_streak reached 2",
+                        "should_retry_same_path": False,
+                    },
+                )
+            ],
+            usage=SimpleNamespace(input_tokens=11, output_tokens=2),
+        ),
+        *[
+            SimpleNamespace(
+                content=[
+                    SimpleNamespace(
+                        type="tool_use",
+                        name="query_memory",
+                        id=f"toolu_query_{index}",
+                        input={"query": "no-progress recovery", "limit": 3},
+                    )
+                ],
+                usage=SimpleNamespace(input_tokens=12 + index, output_tokens=2),
+            )
+            for index in range(5)
+        ],
+        SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="submit_action",
+                    id="toolu_action",
+                    input={
+                        "type": "KEYSTROKE",
+                        "params": {"keys": ["STRING_A032"]},
+                        "intent": "advance time after tool-only recovery",
+                        "objective": "let existing work proceed",
+                        "expected_visible_result": "game resumes",
+                        "expected_simulation_result": "dwarves work on queued jobs",
+                        "advance_ticks": 500,
+                    },
+                )
+            ],
+            usage=SimpleNamespace(input_tokens=20, output_tokens=3),
+        ),
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "anthropic"
+        return SimpleNamespace(Anthropic=_SequencedAnthropicClient)
+
+    monkeypatch.setattr(
+        "fort_gym.bench.agent.llm_anthropic.import_module",
+        fake_import_module,
+    )
+
+    try:
+        agent = AnthropicKeystrokeAgent(
+            system_prompt=KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT,
+            require_perception_review=True,
+            require_memory_review=True,
+        )
+        action = agent.decide(
+            "== STATUS ==\nLive UI feedback: last_action_work_delta=0, no_progress_streak=2\n",
+            {},
+        )
+        events = agent.pop_tool_events()
+    finally:
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["params"]["keys"] == ["STRING_A032"]
+    assert action["screen_read"]["mode"] == "main_map"
+    assert action["last_action_review"]["worked"] is False
+    assert _SequencedAnthropicClient.last_instance is not None
+    requests = _SequencedAnthropicClient.last_instance.messages.requests
+    assert len(requests) == 8
+    assert {tool["name"] for tool in requests[-1]["tools"]} == {"submit_action"}
+    assert any(
+        event.get("tool") == "memory_review_gate_forced_warning"
+        for event in events
+    )
     assert any(event.get("tool") == "submit_action_forced_after_tools" for event in events)
 
 

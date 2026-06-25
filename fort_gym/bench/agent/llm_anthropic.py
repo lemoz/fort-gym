@@ -249,6 +249,8 @@ YOU control time. The game is PAUSED until you request time to pass.
 - Viewport scroll keys like STANDARDSCROLL_PAGEDOWN do not advance simulation
   time. If your intent says wait, advance time, or let dwarves work, set
   advance_ticks to a positive value.
+- To press the visible Space pause/resume command, use `STRING_A032`; do not
+  use `PAUSE` for live gameplay recovery.
 
 **Strategy:**
 1. Navigate menus with advance_ticks: 0 (instant, no time wasted)
@@ -1070,6 +1072,21 @@ class AnthropicKeystrokeAgent(Agent):
         return bool(match and int(match.group(1)) >= 2)
 
     @staticmethod
+    def _review_gate_warning_tool(
+        required_review_error: str | None,
+        *,
+        forced: bool = False,
+    ) -> str:
+        text = str(required_review_error or "").lower()
+        gate = (
+            "plan_review"
+            if "mandatory gameplay plan" in text
+            else "memory_review"
+        )
+        suffix = "_forced_warning" if forced else "_warning"
+        return f"{gate}_gate{suffix}"
+
+    @staticmethod
     def _needs_workshop_strategy_switch(
         obs_text: str,
         tool_payload: Dict[str, Any] | None,
@@ -1484,12 +1501,27 @@ class AnthropicKeystrokeAgent(Agent):
                         "\n".join(required_errors) if required_errors else None
                     )
                     if required_review_error:
-                        last_force_error = ValueError(required_review_error)
-                        append_force_retry(
-                            response.content,
-                            tool_results_for_retry(tool_uses, required_review_error),
+                        warning_tool = self._review_gate_warning_tool(
+                            required_review_error,
+                            forced=True,
                         )
-                        continue
+                        self._tool_events.append(
+                            {
+                                "tool": warning_tool,
+                                "input": {
+                                    "attempt": forced_attempt + 1,
+                                    "required_review_error": required_review_error,
+                                    "prior_tool_names": sorted(action_phase_tool_names),
+                                },
+                                "output": (
+                                    "Allowed action-only recovery despite unmet "
+                                    "review gate; recovery can only call submit_action."
+                                ),
+                            }
+                        )
+                        milestone_key = self._plan_milestone_key(obs_text)
+                        if milestone_key is not None:
+                            self._reviewed_plan_milestones.add(milestone_key)
 
                     self._tool_events.append(
                         {
@@ -1696,10 +1728,8 @@ class AnthropicKeystrokeAgent(Agent):
                     )
                     continue
                 if required_review_error:
-                    warning_tool = (
-                        "plan_review_gate_warning"
-                        if "plan" in required_review_error.lower()
-                        else "memory_review_gate_warning"
+                    warning_tool = self._review_gate_warning_tool(
+                        required_review_error,
                     )
                     self._tool_events.append(
                         {
@@ -1749,10 +1779,8 @@ class AnthropicKeystrokeAgent(Agent):
             raise RuntimeError(f"Anthropic keystroke perception contract failed: {last_error}")
 
         if last_gate_blocked_action is not None:
-            warning_tool = (
-                "plan_review_gate_warning"
-                if "plan" in str(last_gate_blocked_error).lower()
-                else "memory_review_gate_warning"
+            warning_tool = self._review_gate_warning_tool(
+                last_gate_blocked_error,
             )
             self._tool_events.append(
                 {
