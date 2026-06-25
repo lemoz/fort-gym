@@ -307,6 +307,7 @@ def _screen_shows_ready_workshop_placement(screen_text: str | None) -> bool:
         and "Placement" in screen_text
         and "Enter: Place" in screen_text
         and "Blocked" not in screen_text
+        and "Building present" not in screen_text
         and "Needs building material" not in screen_text
     )
 

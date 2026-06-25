@@ -507,6 +507,28 @@ def test_encoder_lets_visible_blocked_workshop_screen_override_target_metadata()
     assert "do not press SELECT" in text
     assert "trust the visible screen" in text
 
+    building_present_text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 3, "stone": 0},
+            "ui_target_setup": {
+                "ok": True,
+                "target_mode": "workshop",
+                "target_generation": 4,
+                "target_attempts": 1,
+                "selection_rect": [10, 20, 177, 12, 22, 177],
+                "designatable_tiles": 9,
+                "show_recommended_keys": True,
+                "recommended_keys": ["SELECT"],
+            },
+        },
+        screen_text="Carpenter's Workshop\nPlacement\nBuilding present\nEnter: Place",
+    )
+
+    assert "visible DF placement screen currently says placement is blocked" in building_present_text
+    assert "valid carpenter workshop placement screen" not in building_present_text
+
 
 def test_encoder_shows_material_recovery_prefix() -> None:
     text, _ = encode_observation(

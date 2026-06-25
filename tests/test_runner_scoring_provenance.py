@@ -189,6 +189,9 @@ def test_ready_workshop_placement_screen_gets_select_target() -> None:
     assert not _screen_shows_ready_workshop_placement(
         "Carpenter's Workshop\nPlacement\nBlocked\nESC: Cancel"
     )
+    assert not _screen_shows_ready_workshop_placement(
+        "Carpenter's Workshop\nPlacement\nBuilding present\nEnter: Place"
+    )
 
     target = _workshop_placement_confirm_target(
         {

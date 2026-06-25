@@ -191,6 +191,7 @@ def encode_observation(
         screen_text
         and (
             "Blocked" in screen_text
+            or "Building present" in screen_text
             or "Needs building material" in screen_text
         )
     )
