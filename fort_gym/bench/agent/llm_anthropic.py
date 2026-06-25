@@ -1093,6 +1093,13 @@ class AnthropicKeystrokeAgent(Agent):
         params = tool_payload.get("params") if isinstance(tool_payload.get("params"), dict) else {}
         keys = params.get("keys") if isinstance(params, dict) else []
         keys = keys if isinstance(keys, list) else []
+        if any(str(key) == "STRING_A032" for key in keys):
+            return (
+                "Action contract mismatch: STRING_A032 with advance_ticks 0 "
+                "does not advance simulation time in this runner. If you need "
+                "dwarves to work, set advance_ticks to a positive value such "
+                "as 500, 1000, or 2000; for UI-only actions, remove STRING_A032."
+            )
         action_text = " ".join(
             str(tool_payload.get(field) or "")
             for field in (
