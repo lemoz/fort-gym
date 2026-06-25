@@ -194,9 +194,22 @@ def encode_observation(
         and "Enter: Place" in screen_text
         and not screen_shows_blocked_placement
     )
+    screen_shows_workshop_material_selection = bool(
+        screen_text
+        and "Carpenter's Workshop" in screen_text
+        and "Item" in screen_text
+        and "Dist" in screen_text
+        and "Num" in screen_text
+        and "Enter: Select" in screen_text
+        and "Needs building material" not in screen_text
+    )
+    screen_shows_workshop_select_state = bool(
+        screen_shows_ready_workshop_placement
+        or screen_shows_workshop_material_selection
+    )
     active_material_blocked = bool(
         ui_build_feedback.get("material_blocked")
-        and not screen_shows_ready_workshop_placement
+        and not screen_shows_workshop_select_state
     )
 
     # Build status section
@@ -344,7 +357,14 @@ def encode_observation(
                     "Live UI feedback: the last action changed no tracked tiles; "
                     "do not repeat the same key sequence unless a fresh target is shown."
                 )
-    if screen_shows_ready_workshop_placement:
+    if screen_shows_workshop_material_selection:
+        status_lines.append(
+            "Live UI build feedback: the current visible workshop material "
+            "selection screen lists material rows and says Enter: Select; "
+            "press SELECT to choose the highlighted material instead of "
+            "exiting, unless the visible screen says Needs building material."
+        )
+    elif screen_shows_ready_workshop_placement:
         status_lines.append(
             "Live UI build feedback: the current visible workshop placement "
             "screen says Enter: Place and does not show Blocked or Needs "
@@ -447,6 +467,14 @@ def encode_observation(
                     "carpenter workshop placement screen. If your screen_read "
                     "also sees Enter: Place and no Blocked or Needs building "
                     "material warning, press SELECT to place it now."
+                )
+            elif screen_shows_workshop_material_selection:
+                status_lines.append(
+                    "Live UI workshop target: current DF screen is the "
+                    "carpenter workshop material-selection list. If your "
+                    "screen_read sees a material row and Enter: Select, press "
+                    "SELECT to choose the highlighted material; do not leave "
+                    "the menu just because construction has not finished yet."
                 )
             else:
                 status_lines.append(

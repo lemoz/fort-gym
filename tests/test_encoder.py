@@ -246,6 +246,49 @@ def test_encoder_ready_workshop_placement_overrides_stale_material_warning() -> 
     assert "building material is missing, unusable, or not yet proven" not in text
 
 
+def test_encoder_workshop_material_selection_recommends_select() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 6, "stone": 0},
+            "ui_run_progress": {
+                "total_work_delta": 12,
+                "total_excavation_delta": 10,
+                "total_material_delta": 3,
+                "successful_targets": 2,
+            },
+            "ui_build_feedback": {
+                "material_blocked": True,
+                "visible": False,
+            },
+            "ui_target_setup": {
+                "ok": True,
+                "target_mode": "workshop",
+                "target_generation": 5,
+                "target_attempts": 0,
+                "selection_rect": [92, 100, 177, 94, 102, 177],
+                "designatable_tiles": 9,
+                "show_recommended_keys": True,
+                "recommended_keys": ["SELECT"],
+            },
+        },
+        screen_text=(
+            "Carpenter's Workshop\n"
+            "Item              Dist Num\n"
+            "ginkgo wood logs  1    0/3\n"
+            "Enter: Select"
+        ),
+    )
+
+    assert "current visible workshop material selection screen" in text
+    assert "press SELECT to choose the highlighted material" in text
+    assert "carpenter workshop material-selection list" in text
+    assert "Fresh target recommended keys: SELECT" in text
+    assert "previous build screen said material was missing" not in text
+    assert "building material is missing, unusable, or not yet proven" not in text
+
+
 def test_encoder_shows_build_phase_after_material_exists() -> None:
     text, _ = encode_observation(
         {

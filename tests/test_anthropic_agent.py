@@ -253,6 +253,7 @@ def test_keystroke_prompt_is_action_first() -> None:
     assert "copy only" in KEYSTROKE_SYSTEM_PROMPT
     assert "do not chain a new designation/build/menu command" in KEYSTROKE_SYSTEM_PROMPT
     assert "older material warnings as" in KEYSTROKE_SYSTEM_PROMPT
+    assert "material row and" in KEYSTROKE_SYSTEM_PROMPT
     assert "use `STRING_A032`; do not" in KEYSTROKE_SYSTEM_PROMPT
     assert "use `PAUSE`" in KEYSTROKE_SYSTEM_PROMPT
     assert "complete a work designation" in KEYSTROKE_SYSTEM_PROMPT

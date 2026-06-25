@@ -125,6 +125,9 @@ the workshop unless your screen_read verifies the placement UI does not say
 If the current visible workshop placement screen says `Enter: Place` and does
 not say `Blocked` or `Needs building material`, treat older material warnings as
 stale and press SELECT to place the workshop.
+If the current visible carpenter-workshop material list shows a material row and
+`Enter: Select`, press SELECT to choose the highlighted material; do not exit the
+menu just because the workshop has not been created yet.
 Retry keys are shown after failed attempts for a bounded retry.
 
 If status says the recommended keys are hidden, stop using that target's old sequence.

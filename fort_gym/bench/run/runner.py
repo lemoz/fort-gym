@@ -311,7 +311,23 @@ def _screen_shows_ready_workshop_placement(screen_text: str | None) -> bool:
     )
 
 
-def _workshop_placement_confirm_target(state: Dict[str, Any]) -> Dict[str, Any]:
+def _screen_shows_workshop_material_selection(screen_text: str | None) -> bool:
+    return bool(
+        screen_text
+        and "Carpenter's Workshop" in screen_text
+        and "Item" in screen_text
+        and "Dist" in screen_text
+        and "Num" in screen_text
+        and "Enter: Select" in screen_text
+        and "Needs building material" not in screen_text
+    )
+
+
+def _workshop_current_screen_select_target(
+    state: Dict[str, Any],
+    *,
+    source: str,
+) -> Dict[str, Any]:
     work = state.get("work") if isinstance(state.get("work"), dict) else {}
     cursor_x = int(work.get("cursor_x") or 0)
     cursor_y = int(work.get("cursor_y") or 0)
@@ -329,12 +345,19 @@ def _workshop_placement_confirm_target(state: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "ok": True,
         "target_mode": "workshop",
-        "source": "visible_workshop_placement",
+        "source": source,
         "selection_rect": selection_rect,
         "target_rect": selection_rect,
         "designatable_tiles": 9,
         "recommended_keys": ["SELECT"],
     }
+
+
+def _workshop_placement_confirm_target(state: Dict[str, Any]) -> Dict[str, Any]:
+    return _workshop_current_screen_select_target(
+        state,
+        source="visible_workshop_placement",
+    )
 
 
 def _ui_work_rect_from_state(
@@ -709,14 +732,27 @@ def run_once(
                 screen_has_ready_workshop_placement = _screen_shows_ready_workshop_placement(
                     screen_text if is_keystroke_mode else None
                 )
+                screen_has_workshop_material_selection = (
+                    _screen_shows_workshop_material_selection(
+                        screen_text if is_keystroke_mode else None
+                    )
+                )
                 if screen_has_material_blocker:
                     ui_build_material_blocked = True
-                elif screen_has_ready_workshop_placement:
+                elif screen_has_ready_workshop_placement or screen_has_workshop_material_selection:
                     ui_build_material_blocked = False
                 if backend_name == "dfhack" and is_keystroke_mode:
-                    if screen_has_ready_workshop_placement:
+                    if screen_has_ready_workshop_placement or screen_has_workshop_material_selection:
                         ui_target_mode = "workshop"
-                        keystroke_ui_target = _workshop_placement_confirm_target(state_before)
+                        source = (
+                            "visible_workshop_material_selection"
+                            if screen_has_workshop_material_selection
+                            else "visible_workshop_placement"
+                        )
+                        keystroke_ui_target = _workshop_current_screen_select_target(
+                            state_before,
+                            source=source,
+                        )
                         ui_target_attempts = 0
                         ui_work_rect = None
                         baseline_ui_work = None

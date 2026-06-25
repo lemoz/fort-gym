@@ -5,9 +5,11 @@ from fort_gym.bench.run.runner import (
     _carpenter_workshops,
     _desired_keystroke_target_mode,
     _screen_shows_ready_workshop_placement,
+    _screen_shows_workshop_material_selection,
     _ui_target_setup_for_observation,
     _ui_target_step_succeeded,
     _ui_work_rect_from_state,
+    _workshop_current_screen_select_target,
     _workshop_placement_confirm_target,
     _zero_assisted_dfhack_progress,
 )
@@ -202,6 +204,32 @@ def test_ready_workshop_placement_screen_gets_select_target() -> None:
     assert target["source"] == "visible_workshop_placement"
     assert target["recommended_keys"] == ["SELECT"]
     assert target["selection_rect"] == [94, 100, 177, 96, 102, 177]
+
+
+def test_workshop_material_selection_screen_gets_select_target() -> None:
+    assert _screen_shows_workshop_material_selection(
+        "Carpenter's Workshop\nItem              Dist Num\n"
+        "ginkgo wood logs  1    0/3\nEnter: Select"
+    )
+    assert not _screen_shows_workshop_material_selection(
+        "Carpenter's Workshop\nNeeds building material\nEnter: Select"
+    )
+
+    target = _workshop_current_screen_select_target(
+        {
+            "work": {
+                "cursor_x": 92,
+                "cursor_y": 100,
+                "cursor_z": 177,
+            },
+        },
+        source="visible_workshop_material_selection",
+    )
+
+    assert target["target_mode"] == "workshop"
+    assert target["source"] == "visible_workshop_material_selection"
+    assert target["recommended_keys"] == ["SELECT"]
+    assert target["selection_rect"] == [92, 100, 177, 94, 102, 177]
 
 
 def test_ui_target_setup_retries_recommended_keys_after_failed_attempt() -> None:
