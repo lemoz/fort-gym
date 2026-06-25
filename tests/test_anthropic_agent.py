@@ -237,8 +237,8 @@ def test_keystroke_prompt_is_action_first() -> None:
     assert "use BUILDJOB_ADD, not raw STRING_A097" in KEYSTROKE_SYSTEM_PROMPT
     assert "Opening the add-task UI is not production by itself" in KEYSTROKE_SYSTEM_PROMPT
     assert "SELECT chooses the currently highlighted row" in KEYSTROKE_SYSTEM_PROMPT
-    assert "eleven CURSOR_DOWN keys followed by SELECT" in KEYSTROKE_SYSTEM_PROMPT
-    assert "Prefer CURSOR_DOWN over" in KEYSTROKE_SYSTEM_PROMPT
+    assert "eleven STANDARDSCROLL_DOWN keys followed by SELECT" in KEYSTROKE_SYSTEM_PROMPT
+    assert "do not use\nCURSOR_DOWN/CURSOR_UP" in KEYSTROKE_SYSTEM_PROMPT
     assert "do not call it a bed" in KEYSTROKE_SYSTEM_PROMPT
     assert "If `carpenter_workshops=1` and `manager_orders=0`" in KEYSTROKE_SYSTEM_PROMPT
     assert "D_JOBLIST -> UNITJOB_MANAGER ->" in KEYSTROKE_SYSTEM_PROMPT

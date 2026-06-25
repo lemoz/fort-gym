@@ -167,11 +167,13 @@ with scroll/navigation keys first, then SELECT. If you accidentally queue a
 different job such as `Make wooden shield`, report that exact job and either let
 it run as useful production or reopen the add-task list to choose the intended
 job; do not call it a bed.
-For visible add-task lists, prefer CURSOR_DOWN/CURSOR_UP for row selection.
+For visible add-task lists with a `+-*/: Scroll` footer, do not use
+CURSOR_DOWN/CURSOR_UP for row selection; those keys can move the map/building
+cursor off the workshop and produce `No Buildings Nearby`.
 Count visible rows from the current top/highlighted row to the desired task and
 then press SELECT. Example: if `Construct Bed (b)` is visible 11 rows below the
-top item, send eleven CURSOR_DOWN keys followed by SELECT; do not test the raw
-`STRING_A098` letter first.
+top item, send eleven STANDARDSCROLL_DOWN keys followed by SELECT; do not test
+the raw `STRING_A098` letter first.
 If `SCREEN VISUAL HINTS` appears, use it as raw CopyScreen highlight evidence.
 For example, a hinted row in an add-task list is the row DF currently appears to
 highlight; scroll or navigate until the desired visible task is highlighted
@@ -284,11 +286,12 @@ STOCKPILE_WOOD, not STRING_A119.
 - In the workshop add-task list, SELECT picks the highlighted row. Parenthesized
   letters like `Construct Bed (b)` are visible labels, but raw STRING_A### may
   not select them in this menu. If a desired row is visible lower in the list,
-  count the visible rows and use repeated CURSOR_DOWN/CURSOR_UP before SELECT.
-  Example: from the top row, use eleven CURSOR_DOWN keys then SELECT for a
-  visible `Construct Bed (b)` eleven rows down. Prefer CURSOR_DOWN over
-  STANDARDSCROLL/SECONDSCROLL for row selection, and verify the actual queued
-  job on the next screen.
+  count the visible rows and use repeated STANDARDSCROLL_DOWN/STANDARDSCROLL_UP
+  before SELECT. Example: from the top row, use eleven STANDARDSCROLL_DOWN keys
+  then SELECT for a visible `Construct Bed (b)` eleven rows down. Do not use
+  CURSOR_DOWN/CURSOR_UP in add-task lists with `+-*/: Scroll`; those keys can
+  move the map/building cursor off the workshop. Verify the actual queued job
+  on the next screen.
 
 ## How to Dig
 1. Press D_DESIGNATE to open designate menu

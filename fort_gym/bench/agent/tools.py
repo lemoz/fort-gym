@@ -30,9 +30,10 @@ def _excerpt(text: str, query_tokens: set[str], limit: int) -> str:
     if not cleaned:
         return ""
     sentences = _SENTENCE_RE.split(cleaned)
-    for sentence in sentences:
+    for index, sentence in enumerate(sentences):
         if query_tokens & _tokenize(sentence):
-            return _truncate(sentence, limit)
+            context = " ".join(sentences[index:])
+            return _truncate(context, limit)
     return _truncate(sentences[0], limit)
 
 
@@ -69,15 +70,17 @@ DEFAULT_DF_WIKI_DOCS: List[WikiDoc] = [
     WikiDoc(
         title="Buildings and workshops",
         body=(
-            "The build menu b lets you place workshops, furnaces, and furniture; "
-            "D_BUILDJOB opens an existing selected workshop and BUILDJOB_ADD opens "
-            "that workshop's native task list, where SELECT picks the highlighted "
-            "row, and CURSOR_DOWN/CURSOR_UP move row selection more reliably than "
-            "STANDARDSCROLL/SECONDSCROLL; count rows, move, then SELECT. "
+            "D_BUILDJOB opens an existing selected workshop; BUILDJOB_ADD opens "
+            "that workshop's native task list; SELECT picks the highlighted "
+            "row. If the add-task list footer says '+-*/: Scroll', use "
+            "STANDARDSCROLL_DOWN/STANDARDSCROLL_UP to move row selection; "
+            "CURSOR_DOWN/CURSOR_UP can move the map cursor off the workshop. "
             "Parenthesized letters may be visible labels rather than "
             "reliable raw STRING_A hotkeys. In visible add-task lists, count rows "
             "from the top/highlighted item to the desired job, use repeated "
-            "CURSOR_DOWN or CURSOR_UP to move the selected row, then press SELECT. "
+            "STANDARDSCROLL_DOWN or STANDARDSCROLL_UP to move the selected row, "
+            "then press SELECT. "
+            "The build menu b lets you place workshops, furnaces, and furniture. "
             "Choose the category and place on clear floor tiles. Most workshops need "
             "materials nearby and a dwarf with the matching labor. Carpenters make "
             "beds and barrels, while masons make stone blocks and furniture. "
