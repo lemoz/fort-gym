@@ -978,28 +978,11 @@ def test_plan_review_agent_falls_back_if_model_stops_submitting_after_gate(monke
     assert len(requests) == 5
 
 
-def test_perception_review_agent_retries_missing_screen_read(monkeypatch) -> None:
+def test_perception_review_agent_collects_screen_read_before_action(monkeypatch) -> None:
     monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
     monkeypatch.delenv("ANTHROPIC_MODEL", raising=False)
     get_settings.cache_clear()  # type: ignore[attr-defined]
     _SequencedAnthropicClient.responses = [
-        SimpleNamespace(
-            content=[
-                SimpleNamespace(
-                    type="tool_use",
-                    name="submit_action",
-                    id="toolu_missing_perception",
-                    input={
-                        "type": "KEYSTROKE",
-                        "params": {"keys": ["D_DESIGNATE"]},
-                        "intent": "act without perception contract",
-                        "objective": "dig",
-                        "advance_ticks": 0,
-                    },
-                )
-            ],
-            usage=SimpleNamespace(input_tokens=10, output_tokens=2),
-        ),
         SimpleNamespace(
             content=[
                 SimpleNamespace(
@@ -1023,7 +1006,12 @@ def test_perception_review_agent_retries_missing_screen_read(monkeypatch) -> Non
                         "mismatch_reason": None,
                         "should_retry_same_path": False,
                     },
-                ),
+                )
+            ],
+            usage=SimpleNamespace(input_tokens=10, output_tokens=2),
+        ),
+        SimpleNamespace(
+            content=[
                 SimpleNamespace(
                     type="tool_use",
                     name="submit_action",
@@ -1066,14 +1054,15 @@ def test_perception_review_agent_retries_missing_screen_read(monkeypatch) -> Non
     assert _SequencedAnthropicClient.last_instance is not None
     requests = _SequencedAnthropicClient.last_instance.messages.requests
     assert len(requests) == 2
-    required_fields = requests[0]["tools"][0]["input_schema"]["required"]
+    assert {tool["name"] for tool in requests[0]["tools"]} == {
+        "record_screen_read",
+        "review_last_action",
+    }
+    required_fields = requests[1]["tools"][0]["input_schema"]["required"]
     assert "screen_read" in required_fields
     assert "last_action_review" in required_fields
-    tool_names = {tool["name"] for tool in requests[0]["tools"]}
+    tool_names = {tool["name"] for tool in requests[1]["tools"]}
     assert {"record_screen_read", "review_last_action"}.issubset(tool_names)
-    retry = requests[1]["messages"][2]["content"][0]
-    assert retry["tool_use_id"] == "toolu_missing_perception"
-    assert "Mandatory record_screen_read missing" in retry["content"]
 
 
 def test_keystroke_opus_model_omits_temperature(monkeypatch) -> None:
@@ -1105,7 +1094,12 @@ def test_keystroke_opus_model_omits_temperature(monkeypatch) -> None:
                         "mismatch_reason": None,
                         "should_retry_same_path": False,
                     },
-                ),
+                )
+            ],
+            usage=SimpleNamespace(input_tokens=10, output_tokens=2),
+        ),
+        SimpleNamespace(
+            content=[
                 SimpleNamespace(
                     type="tool_use",
                     name="submit_action",
@@ -1119,7 +1113,7 @@ def test_keystroke_opus_model_omits_temperature(monkeypatch) -> None:
                     },
                 )
             ],
-            usage=SimpleNamespace(input_tokens=10, output_tokens=2),
+            usage=SimpleNamespace(input_tokens=12, output_tokens=3),
         )
     ]
 

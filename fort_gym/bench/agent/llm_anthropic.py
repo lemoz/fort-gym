@@ -1113,6 +1113,109 @@ class AnthropicKeystrokeAgent(Agent):
                 )
             return results
 
+        def perception_tool_specs() -> List[Dict[str, Any]]:
+            return [
+                spec
+                for spec in self._tool_manager.tool_specs()
+                if spec.get("name") in {"record_screen_read", "review_last_action"}
+            ]
+
+        def collect_perception_inputs(tool_uses: List[Any]) -> Dict[str, Dict[str, Any]]:
+            inputs: Dict[str, Dict[str, Any]] = {}
+            for tool_use in tool_uses:
+                tool_input = tool_use.input if isinstance(tool_use.input, dict) else {}
+                if tool_use.name == "record_screen_read":
+                    inputs["screen_read"] = dict(tool_input)
+                elif tool_use.name == "review_last_action":
+                    inputs["last_action_review"] = dict(tool_input)
+            return inputs
+
+        def perception_inputs_error(inputs: Dict[str, Dict[str, Any]]) -> Optional[str]:
+            screen_read = inputs.get("screen_read")
+            if not isinstance(screen_read, dict):
+                return "Call record_screen_read before choosing keys."
+            screen_error = self._validate_screen_read(screen_read)
+            if screen_error:
+                return "record_screen_read incomplete: " + screen_error
+            review = inputs.get("last_action_review")
+            if not isinstance(review, dict):
+                return "Call review_last_action before choosing keys."
+            review_error = self._validate_last_action_review(review)
+            if review_error:
+                return "review_last_action incomplete: " + review_error
+            return None
+
+        def run_perception_prelude() -> Dict[str, Dict[str, Any]]:
+            if not self._require_perception_review:
+                return {}
+            prelude_prompt = {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": (
+                            "Mandatory perception phase: call record_screen_read and "
+                            "review_last_action now. Do not submit gameplay keys yet."
+                        ),
+                    }
+                ],
+            }
+            messages.append(prelude_prompt)
+            prelude_tools = perception_tool_specs()
+            last_prelude_error: Optional[str] = None
+            for _ in range(3):
+                self._rate_limit()
+                client = self._client_instance()
+                request_kwargs: Dict[str, Any] = {
+                    "model": model,
+                    "max_tokens": self._settings.LLM_MAX_TOKENS,
+                    "system": self._system_prompt,
+                    "tools": prelude_tools,
+                    "messages": messages,
+                }
+                if temperature is not None:
+                    request_kwargs["temperature"] = temperature
+                response = self._create_message_with_retries(client, **request_kwargs)
+                _append_usage_event(
+                    self._tool_events,
+                    response,
+                    model=model,
+                    max_tokens=self._settings.LLM_MAX_TOKENS,
+                    temperature=temperature,
+                )
+                tool_uses = [
+                    item for item in response.content if getattr(item, "type", None) == "tool_use"
+                ]
+                results = []
+                for tool_use in tool_uses:
+                    tool_input = tool_use.input if isinstance(tool_use.input, dict) else {}
+                    result = self._tool_manager.handle(tool_use.name, tool_input)
+                    self._tool_events.append(
+                        {
+                            "tool": tool_use.name,
+                            "input": tool_input,
+                            "output": result,
+                        }
+                    )
+                    results.append(tool_result(tool_use, result))
+                inputs = collect_perception_inputs(tool_uses)
+                last_prelude_error = perception_inputs_error(inputs)
+                messages.append({"role": "assistant", "content": response.content})
+                if last_prelude_error is None:
+                    messages.append({"role": "user", "content": results})
+                    return inputs
+                if not results:
+                    results.append({"type": "text", "text": last_prelude_error})
+                else:
+                    results.append({"type": "text", "text": last_prelude_error})
+                messages.append({"role": "user", "content": results})
+            raise RuntimeError(
+                "Anthropic keystroke perception prelude failed: "
+                + str(last_prelude_error)
+            )
+
+        prelude_perception_inputs = run_perception_prelude()
+
         for attempt_index in range(5):
             tool_result_cache.clear()
             self._rate_limit()
@@ -1171,9 +1274,15 @@ class AnthropicKeystrokeAgent(Agent):
                 )
 
             if tool_payload is not None:
-                if isinstance(tool_payload, dict) and perception_inputs:
+                if isinstance(tool_payload, dict) and (
+                    prelude_perception_inputs or perception_inputs
+                ):
                     tool_payload = dict(tool_payload)
-                    for field, value in perception_inputs.items():
+                    combined_perception_inputs = {
+                        **prelude_perception_inputs,
+                        **perception_inputs,
+                    }
+                    for field, value in combined_perception_inputs.items():
                         tool_payload.setdefault(field, value)
 
                 # Validate it's a KEYSTROKE action before applying planning gates.
