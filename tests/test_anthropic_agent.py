@@ -236,6 +236,8 @@ def test_keystroke_prompt_is_action_first() -> None:
     assert "D_BUILDJOB acts on the building under the current cursor" in KEYSTROKE_SYSTEM_PROMPT
     assert "use BUILDJOB_ADD, not raw STRING_A097" in KEYSTROKE_SYSTEM_PROMPT
     assert "Opening the add-task UI is not production by itself" in KEYSTROKE_SYSTEM_PROMPT
+    assert "SELECT chooses the currently highlighted row" in KEYSTROKE_SYSTEM_PROMPT
+    assert "do not call it a bed" in KEYSTROKE_SYSTEM_PROMPT
     assert "If `carpenter_workshops=1` and `manager_orders=0`" in KEYSTROKE_SYSTEM_PROMPT
     assert "D_JOBLIST -> UNITJOB_MANAGER ->" in KEYSTROKE_SYSTEM_PROMPT
     assert "not STRING_A119" in KEYSTROKE_SYSTEM_PROMPT
@@ -251,6 +253,7 @@ def test_keystroke_prompt_is_action_first() -> None:
     assert "complete a work designation" in KEYSTROKE_SYSTEM_PROMPT
     assert "advance_ticks to 500+" in KEYSTROKE_SYSTEM_PROMPT
     assert "concrete task row/job choice" in KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
+    assert "same add-task list is still visible" in KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
     assert "advance_ticks\": 500" in KEYSTROKE_SYSTEM_PROMPT
     assert "Do not" in KEYSTROKE_SYSTEM_PROMPT
     assert "repeat the same key sequence" in KEYSTROKE_SYSTEM_PROMPT

@@ -145,6 +145,13 @@ If a carpenter workshop screen is selected, use BUILDJOB_ADD to open its native
 task list. Opening the add-task UI is not production by itself: read the next
 screen, select a concrete task such as a wooden bed/barrel/bin, then advance
 time only after a real task is queued or visible workshop work has changed.
+In the workshop add-task list, SELECT chooses the currently highlighted row.
+Do not assume parenthesized letters such as `(b)` work through raw STRING_A###
+hotkeys; if the desired task is visible but not highlighted, move the selection
+with scroll/navigation keys first, then SELECT. If you accidentally queue a
+different job such as `Make wooden shield`, report that exact job and either let
+it run as useful production or reopen the add-task list to choose the intended
+job; do not call it a bed.
 
 Default recommended first action:
 {
@@ -246,6 +253,11 @@ STOCKPILE_WOOD, not STRING_A119.
   to add a native workshop task. Then read the task-selection screen and select a
   concrete useful job. Do not count the add-task menu opening as success unless
   a job row/task appears or later ticks show workshop work/material progress.
+- In the workshop add-task list, SELECT picks the highlighted row. Parenthesized
+  letters like `Construct Bed (b)` are visible labels, but raw STRING_A### may
+  not select them in this menu. If a desired row is visible lower in the list,
+  move the highlighted selection with STANDARDSCROLL_DOWN/CURSOR_DOWN-style
+  navigation before SELECT, and verify the actual queued job on the next screen.
 
 ## How to Dig
 1. Press D_DESIGNATE to open designate menu
@@ -426,6 +438,7 @@ different productive branch, a clean exit to main view, or time advancement only
 when dwarves have active work to complete.
 If the previous action only opened or stayed on a carpenter workshop task menu,
 mark it worked=false for production unless the current screen shows a concrete task row/job choice or the recent outcome row shows real workshop/material work.
+If the previous action tried a parenthesized workshop task letter and the same add-task list is still visible, mark it worked=false and switch to scroll/select navigation or a different production path instead of retrying the raw letter.
 If your proposed action uses manual cursor movement, your screen_read evidence
 must identify the visible active cursor or active selection on the current
 screen. `selection_rect` and `window` alone do not satisfy that evidence.

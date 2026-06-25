@@ -71,7 +71,9 @@ DEFAULT_DF_WIKI_DOCS: List[WikiDoc] = [
         body=(
             "The build menu b lets you place workshops, furnaces, and furniture; "
             "D_BUILDJOB opens an existing selected workshop and BUILDJOB_ADD opens "
-            "that workshop's native task list. "
+            "that workshop's native task list, where SELECT picks the highlighted "
+            "row and parenthesized letters may be visible labels rather than "
+            "reliable raw STRING_A hotkeys. "
             "Choose the category and place on clear floor tiles. Most workshops need "
             "materials nearby and a dwarf with the matching labor. Carpenters make "
             "beds and barrels, while masons make stone blocks and furniture. "

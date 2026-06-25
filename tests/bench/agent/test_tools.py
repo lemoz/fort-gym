@@ -29,6 +29,8 @@ def test_df_wiki_tool_answers_direct_workshop_tasks() -> None:
     assert first_title == "Title: Buildings and workshops"
     assert "D_BUILDJOB" in response
     assert "BUILDJOB_ADD" in response
+    assert "SELECT picks" in response
+    assert "highlighted row" in response
 
 
 def test_tool_manager_exposes_df_wiki_spec() -> None:
