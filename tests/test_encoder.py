@@ -310,6 +310,27 @@ def test_encoder_shows_build_phase_after_material_exists() -> None:
     assert "try D_BUILDING" in text
 
 
+def test_encoder_shows_production_phase_after_order_exists() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 13, "stone": 0},
+            "work": {
+                "manager_orders_count": 1,
+                "manager_orders_amount_left": 5,
+                "carpenter_workshops": 1,
+            },
+        },
+        screen_text="A manager is required to coordinate work orders.\nReady: Construct Bed 5/5",
+    )
+
+    assert "Live UI production phase" in text
+    assert "a real manager order is queued" in text
+    assert "Stop opening new setup menus" in text
+    assert "advance_ticks >= 1000" in text
+
+
 def test_encoder_does_not_trust_stock_only_material_for_build_phase() -> None:
     text, _ = encode_observation(
         {

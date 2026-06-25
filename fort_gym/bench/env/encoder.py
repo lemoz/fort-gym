@@ -300,6 +300,18 @@ def encode_observation(
             f"order_qty_left={work.get('manager_orders_amount_left', 0)}, "
             f"carpenter_workshops={work.get('carpenter_workshops', 0)}"
         )
+        if (
+            int(work.get("manager_orders_count") or 0) > 0
+            and int(work.get("manager_orders_amount_left") or 0) > 0
+            and int(work.get("carpenter_workshops") or 0) > 0
+        ):
+            status_lines.append(
+                "Live UI production phase: a real manager order is queued and "
+                "a carpenter workshop exists. Stop opening new setup menus. If "
+                "you are in a menu, use LEAVESCREEN to return to the main map; "
+                "from the main map, advance_ticks >= 1000 so dwarves can work "
+                "the order."
+            )
         if work.get("fortress_plan_name"):
             status_lines.append(
                 "Fortress plan: "

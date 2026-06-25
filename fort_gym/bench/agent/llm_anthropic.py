@@ -152,6 +152,10 @@ MANAGER_NEW_ORDER or a visibly selected carpenter workshop job menu before
 retrying stockpiles or blind dig boxes. If a stockpile or dig path has already
 produced no tracked state change after the workshop exists, record it and return
 to production.
+If `carpenter_workshops=1`, `manager_orders>0`, and `order_qty_left>0`, a real
+production order is already queued. Do not open new stockpile/build/order setup
+menus. Leave any current menu, then from the main map submit a KEYSTROKE action
+with no extra menu keys and `advance_ticks` at least 1000 so dwarves can work.
 If a carpenter workshop screen is selected, use BUILDJOB_ADD to open its native
 task list. Opening the add-task UI is not production by itself: read the next
 screen, select a concrete task such as a wooden bed/barrel/bin, then advance
