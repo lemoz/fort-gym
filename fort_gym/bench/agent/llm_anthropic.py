@@ -225,8 +225,9 @@ STOCKPILE_WOOD, not STRING_A119.
 ### Manager / Work Orders
 - D_ORDERS opens standing orders only. If you are trying to queue production
   such as beds, doors, tables, chairs, barrels, or bins, do not use D_ORDERS.
-- Use D_JOBLIST to reach the jobs/work-order area, then use visible manager
-  menu options or MANAGER_NEW_ORDER if the manager screen is visible.
+- Use D_JOBLIST to reach the jobs/work-order area. If the footer shows
+  `m: Manager`, use UNITJOB_MANAGER, not STRING_A109. Once the manager screen
+  is visible, use MANAGER_NEW_ORDER to add a production order.
 - D_BUILDJOB acts on the building under the current cursor. If it opens a
   stockpile or some other building, it did not target your remembered workshop;
   exit, query memory, and re-establish a visible cursor on the workshop before

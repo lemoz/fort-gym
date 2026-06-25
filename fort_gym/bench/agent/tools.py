@@ -80,10 +80,11 @@ DEFAULT_DF_WIKI_DOCS: List[WikiDoc] = [
     WikiDoc(
         title="Manager orders and standing orders",
         body=(
-            "Manager orders (j then m) let you queue jobs like bed, door, table, "
-            "chair, barrel, or bin in bulk. Assign a manager noble, open the "
-            "manager screen, add a new order, choose the job, and set a quantity "
-            "or repeat. "
+            "Manager orders use D_JOBLIST then UNITJOB_MANAGER, followed by "
+            "MANAGER_NEW_ORDER on the manager screen, to queue jobs like bed, "
+            "door, table, chair, barrel, or bin in bulk. Assign a manager noble "
+            "if the manager screen is unavailable, then choose the job and set a "
+            "quantity or repeat. "
             "Standing orders (o) toggle hauling, refuse, and "
             "auto collect. If jobs do not start, check labor assignments and materials."
         ),
@@ -94,6 +95,10 @@ DEFAULT_DF_WIKI_DOCS: List[WikiDoc] = [
             "work",
             "workorder",
             "workorders",
+            "unitjob",
+            "unitjob_manager",
+            "manager_new_order",
+            "d_joblist",
             "jobs",
             "standing",
             "labor",

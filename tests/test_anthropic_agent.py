@@ -231,6 +231,8 @@ def test_keystroke_prompt_is_action_first() -> None:
     assert "STOCKPILE_WOOD" in KEYSTROKE_SYSTEM_PROMPT
     assert "D_ORDERS opens standing orders only" in KEYSTROKE_SYSTEM_PROMPT
     assert "D_JOBLIST to reach the jobs/work-order area" in KEYSTROKE_SYSTEM_PROMPT
+    assert "UNITJOB_MANAGER, not STRING_A109" in KEYSTROKE_SYSTEM_PROMPT
+    assert "MANAGER_NEW_ORDER" in KEYSTROKE_SYSTEM_PROMPT
     assert "D_BUILDJOB acts on the building under the current cursor" in KEYSTROKE_SYSTEM_PROMPT
     assert "not STRING_A119" in KEYSTROKE_SYSTEM_PROMPT
     assert "cursor_inactive=(-30000,...)" in KEYSTROKE_SYSTEM_PROMPT

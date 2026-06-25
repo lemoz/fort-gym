@@ -16,7 +16,9 @@ def test_df_wiki_tool_prioritizes_manager_work_orders() -> None:
     )
     first_title = response.splitlines()[0]
     assert first_title == "Title: Manager orders and standing orders"
-    assert "j then m" in response
+    assert "D_JOBLIST" in response
+    assert "UNITJOB_MANAGER" in response
+    assert "MANAGER_NEW_ORDER" in response
     assert "bed" in response
 
 
