@@ -1303,26 +1303,35 @@ class AnthropicKeystrokeAgent(Agent):
             return inputs
 
         def force_submit_action_after_tools() -> Dict[str, Any]:
-            messages.append(
+            force_prompt = (
+                f"{content}\n\n"
+                "== MODEL-WRITTEN PERCEPTION FOR THIS STEP ==\n"
+                f"{json.dumps(prelude_perception_inputs, ensure_ascii=True)}\n\n"
+                "== ACTION-ONLY RECOVERY ==\n"
+                "You already completed screen reading, last-action review, and any "
+                "notebook/tool lookups for this decision step. Now call submit_action "
+                "with one KEYSTROKE action. Do not call memory, wiki, planning, or "
+                "perception tools. Choose the keys yourself from the current Dwarf "
+                "Fortress screen and your recorded review. If your intent is to wait, "
+                "advance time, or let dwarves work, set advance_ticks to a positive "
+                "value such as 500, 1000, or 2000."
+            )
+            force_messages: List[Dict[str, Any]] = [
                 {
                     "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": (
-                                "Action-only recovery phase: you have already completed "
-                                "screen reading, last-action review, and any notebook/tool "
-                                "lookups. Now call submit_action with one KEYSTROKE action. "
-                                "Do not call memory, wiki, planning, or perception tools. "
-                                "Choose the keys yourself from the current Dwarf Fortress "
-                                "screen and your recorded review."
-                            ),
-                        }
-                    ],
+                    "content": [{"type": "text", "text": force_prompt}],
                 }
-            )
+            ]
+
+            def append_force_retry(
+                response_content: Any,
+                tool_results: List[Dict[str, Any]],
+            ) -> None:
+                force_messages.append({"role": "assistant", "content": response_content})
+                force_messages.append({"role": "user", "content": tool_results})
+
             last_force_error: Exception | None = None
-            for forced_attempt in range(3):
+            for forced_attempt in range(5):
                 tool_result_cache.clear()
                 self._rate_limit()
                 client = self._client_instance()
@@ -1331,7 +1340,7 @@ class AnthropicKeystrokeAgent(Agent):
                     "max_tokens": self._settings.LLM_MAX_TOKENS,
                     "system": self._system_prompt,
                     "tools": [self._keystroke_tool],
-                    "messages": messages,
+                    "messages": force_messages,
                 }
                 if temperature is not None:
                     request_kwargs["temperature"] = temperature
@@ -1361,7 +1370,7 @@ class AnthropicKeystrokeAgent(Agent):
                         last_force_error = ValueError(
                             "submit_action payload must be an object"
                         )
-                        append_tool_retry(
+                        append_force_retry(
                             response.content,
                             tool_results_for_retry(
                                 tool_uses,
@@ -1379,7 +1388,7 @@ class AnthropicKeystrokeAgent(Agent):
                         last_force_error = ValueError(
                             f"Expected KEYSTROKE action, got {tool_payload.get('type')}"
                         )
-                        append_tool_retry(
+                        append_force_retry(
                             response.content,
                             tool_results_for_retry(
                                 tool_uses,
@@ -1394,7 +1403,7 @@ class AnthropicKeystrokeAgent(Agent):
                         last_force_error = ValueError(
                             "KEYSTROKE action must have non-empty keys list"
                         )
-                        append_tool_retry(
+                        append_force_retry(
                             response.content,
                             tool_results_for_retry(
                                 tool_uses,
@@ -1406,7 +1415,7 @@ class AnthropicKeystrokeAgent(Agent):
                     contract_error = self._advance_ticks_contract_error(tool_payload)
                     if contract_error:
                         last_force_error = ValueError(contract_error)
-                        append_tool_retry(
+                        append_force_retry(
                             response.content,
                             tool_results_for_retry(tool_uses, contract_error),
                         )
@@ -1416,7 +1425,7 @@ class AnthropicKeystrokeAgent(Agent):
                         action = parse_action(tool_payload)
                     except ValueError as exc:
                         last_force_error = exc
-                        append_tool_retry(
+                        append_force_retry(
                             response.content,
                             tool_results_for_retry(
                                 tool_uses,
@@ -1431,7 +1440,7 @@ class AnthropicKeystrokeAgent(Agent):
                     )
                     if perception_error:
                         last_force_error = ValueError(perception_error)
-                        append_tool_retry(
+                        append_force_retry(
                             response.content,
                             tool_results_for_retry(tool_uses, perception_error),
                         )
@@ -1457,7 +1466,7 @@ class AnthropicKeystrokeAgent(Agent):
                     )
                     if required_review_error:
                         last_force_error = ValueError(required_review_error)
-                        append_tool_retry(
+                        append_force_retry(
                             response.content,
                             tool_results_for_retry(tool_uses, required_review_error),
                         )
@@ -1482,7 +1491,7 @@ class AnthropicKeystrokeAgent(Agent):
                     "Model did not use submit_action in action-only recovery"
                 )
                 if tool_uses:
-                    append_tool_retry(
+                    append_force_retry(
                         response.content,
                         tool_results_for_retry(
                             tool_uses,
@@ -1491,8 +1500,8 @@ class AnthropicKeystrokeAgent(Agent):
                     )
                     continue
 
-                messages.append({"role": "assistant", "content": response.content})
-                messages.append(
+                force_messages.append({"role": "assistant", "content": response.content})
+                force_messages.append(
                     {
                         "role": "user",
                         "content": [

@@ -1190,6 +1190,8 @@ def test_keystroke_perception_review_forces_submit_after_tool_only_action_phase(
     requests = _SequencedAnthropicClient.last_instance.messages.requests
     assert len(requests) == 8
     assert {tool["name"] for tool in requests[-1]["tools"]} == {"submit_action"}
+    assert len(requests[-1]["messages"]) == 1
+    assert "ACTION-ONLY RECOVERY" in _messages_text(requests[-1]["messages"])
     assert any(event.get("tool") == "submit_action_forced_after_tools" for event in events)
 
 
