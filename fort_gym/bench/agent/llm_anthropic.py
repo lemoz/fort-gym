@@ -488,9 +488,9 @@ Before EVERY submit_action:
 3. Then call submit_action. You may also include screen_read and
    last_action_review in submit_action, but the mandatory tools above are the
    source of truth for this experiment.
-4. In submit_action, intent, objective, expected_visible_result,
-   expected_simulation_result, and memory_update must be non-empty. If there is
-   no new memory fact, write that explicitly instead of omitting the field.
+4. In submit_action, intent, objective, and expected_visible_result must be
+   non-empty. Also include expected_simulation_result and memory_update whenever
+   you can; if there is no new memory fact, write that explicitly.
 
 If last_action_review says the previous path did not work, do not press the same
 menu/key path again unless your evidence names a changed condition. Prefer a
@@ -640,8 +640,6 @@ def _keystroke_anthropic_tool(*, require_perception_review: bool = False) -> Dic
             "advance_ticks",
             "objective",
             "expected_visible_result",
-            "expected_simulation_result",
-            "memory_update",
         ):
             if field not in required:
                 required.append(field)
@@ -1085,8 +1083,6 @@ class AnthropicKeystrokeAgent(Agent):
                 "intent",
                 "objective",
                 "expected_visible_result",
-                "expected_simulation_result",
-                "memory_update",
             )
             if not str(tool_payload.get(field) or "").strip()
         ]
@@ -1095,7 +1091,7 @@ class AnthropicKeystrokeAgent(Agent):
                 "Mandatory action cognition incomplete: submit_action must include "
                 "non-empty "
                 + ", ".join(missing_action_fields)
-                + ". If no memory changed, set memory_update to a brief explicit note."
+                + "."
             )
 
         screen_read = tool_payload.get("screen_read")

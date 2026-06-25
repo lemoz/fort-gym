@@ -314,7 +314,9 @@ def test_perception_review_prompt_requires_agent_owned_verification() -> None:
         KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
     )
     assert "should_retry_same_path" in KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
-    assert "memory_update must be non-empty" in KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
+    assert "intent, objective, and expected_visible_result must be" in (
+        KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
+    )
 
 
 def test_perception_review_rejects_missing_action_cognition_fields() -> None:
@@ -328,8 +330,6 @@ def test_perception_review_rejects_missing_action_cognition_fields() -> None:
             "intent": None,
             "objective": None,
             "expected_visible_result": None,
-            "expected_simulation_result": None,
-            "memory_update": None,
             "screen_read": {
                 "mode": "material_selection",
                 "evidence": ["single Construct Bed result is visible"],
@@ -350,7 +350,7 @@ def test_perception_review_rejects_missing_action_cognition_fields() -> None:
     assert "Mandatory action cognition incomplete" in error
     assert "intent" in error
     assert "objective" in error
-    assert "memory_update" in error
+    assert "expected_visible_result" in error
 
 
 def test_keystroke_retry_pairs_invalid_tool_use_with_tool_result(monkeypatch) -> None:
