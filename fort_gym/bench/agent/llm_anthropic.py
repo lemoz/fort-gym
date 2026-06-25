@@ -1566,15 +1566,18 @@ class AnthropicKeystrokeAgent(Agent):
                     )
                     continue
 
+                review_tool_uses = [
+                    SimpleNamespace(name=name) for name in sorted(action_phase_tool_names)
+                ]
                 required_errors = [
                     error
                     for error in (
                         self._required_memory_review_error(
-                            tool_uses,
+                            review_tool_uses,
                             obs_text,
                             tool_payload,
                         ),
-                        self._required_plan_review_error(tool_uses, obs_text),
+                        self._required_plan_review_error(review_tool_uses, obs_text),
                     )
                     if error
                 ]
