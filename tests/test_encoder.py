@@ -204,6 +204,7 @@ def test_encoder_material_blocker_overrides_available_stock_build_phase() -> Non
     )
 
     assert "building material is missing, unusable, or not yet proven" in text
+    assert "D_BUILDING is premature on this turn" in text
     assert "try D_BUILDING" not in text
 
 

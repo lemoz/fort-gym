@@ -99,6 +99,9 @@ placement just because Wood or Stone is greater than 0.
 The starting stock counter can include material that DF will not accept for a
 new workshop. Treat `Live UI run progress: total_material_delta > 0` as the
 stronger signal that this run has created usable building material.
+If the observation says building material is missing, unusable, not yet proven,
+or that `D_BUILDING is premature on this turn`, do not open D_BUILDING; acquire
+or select material from the current visible UI first.
 
 **MAINTAIN YOUR OWN MAP MEMORY:** You have memory tools. Use them to remember
 locations of workshops, dwarf clusters, resources, stairs, rooms, and blocked
