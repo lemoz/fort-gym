@@ -541,7 +541,7 @@ def run_once(
             def get_screen_text() -> str:
                 """Get screen text for keystroke mode."""
                 try:
-                    return dfhack_client.get_screen_text()
+                    return dfhack_client.get_screen_text(include_visual_hints=True)
                 except Exception:
                     return "(screen capture failed)"
 

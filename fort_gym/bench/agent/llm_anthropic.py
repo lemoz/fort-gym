@@ -152,6 +152,11 @@ with scroll/navigation keys first, then SELECT. If you accidentally queue a
 different job such as `Make wooden shield`, report that exact job and either let
 it run as useful production or reopen the add-task list to choose the intended
 job; do not call it a bed.
+If `SCREEN VISUAL HINTS` appears, use it as raw CopyScreen highlight evidence.
+For example, a hinted row in an add-task list is the row DF currently appears to
+highlight; scroll or navigate until the desired visible task is highlighted
+before pressing SELECT. The visual hints are not recommended actions and do not
+replace your own screen_read verification.
 
 Default recommended first action:
 {
@@ -170,6 +175,9 @@ Tips:
 
 ## Screen
 You see the current game screen as text (80 columns x 25 rows). The screen shows the DF interface including menus, the map view, and status information.
+When present, `SCREEN VISUAL HINTS` preserves raw CopyScreen foreground/background
+highlight information that the plain text grid cannot show. Use it to identify
+the currently highlighted menu row or cursor-like screen element.
 
 ## Actions
 Return a KEYSTROKE action with a list of key names to press in sequence.
