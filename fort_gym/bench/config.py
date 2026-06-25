@@ -58,7 +58,7 @@ class Settings(BaseModel):
     ANTHROPIC_MODEL: str = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-6")
     ANTHROPIC_OPUS_MODEL: str = os.getenv("ANTHROPIC_OPUS_MODEL", "claude-opus-4-8")
     ANTHROPIC_TIMEOUT_SECONDS: float = float(os.getenv("ANTHROPIC_TIMEOUT_SECONDS", "30"))
-    ANTHROPIC_MAX_ATTEMPTS: int = int(os.getenv("ANTHROPIC_MAX_ATTEMPTS", "3"))
+    ANTHROPIC_MAX_ATTEMPTS: int = int(os.getenv("ANTHROPIC_MAX_ATTEMPTS", "6"))
     LLM_MAX_TOKENS: int = int(os.getenv("LLM_MAX_TOKENS", "512"))
     LLM_TEMP: float = float(os.getenv("LLM_TEMP", "0.1"))
     LLM_RATE_LIMIT_TPS: float = float(os.getenv("LLM_RATE_LIMIT_TPS", "1.0"))
@@ -88,7 +88,7 @@ def get_settings() -> Settings:
         ANTHROPIC_MODEL=os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-6"),
         ANTHROPIC_OPUS_MODEL=os.getenv("ANTHROPIC_OPUS_MODEL", "claude-opus-4-8"),
         ANTHROPIC_TIMEOUT_SECONDS=float(os.getenv("ANTHROPIC_TIMEOUT_SECONDS", "30")),
-        ANTHROPIC_MAX_ATTEMPTS=int(os.getenv("ANTHROPIC_MAX_ATTEMPTS", "3")),
+        ANTHROPIC_MAX_ATTEMPTS=int(os.getenv("ANTHROPIC_MAX_ATTEMPTS", "6")),
         LLM_MAX_TOKENS=int(os.getenv("LLM_MAX_TOKENS", "512")),
         LLM_TEMP=float(os.getenv("LLM_TEMP", "0.1")),
         LLM_RATE_LIMIT_TPS=float(os.getenv("LLM_RATE_LIMIT_TPS", "1.0")),

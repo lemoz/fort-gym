@@ -606,8 +606,10 @@ def _is_retryable_anthropic_error(exc: Exception) -> bool:
     return status_code in {408, 409, 425, 500, 502, 503, 504, 529}
 
 
-def _rate_limit_backoff_seconds(attempt: int) -> float:
-    return min(60.0, 5.0 * (2**attempt))
+def _retry_backoff_seconds(attempt: int, *, rate_limited: bool) -> float:
+    base_seconds = 15.0 if rate_limited else 5.0
+    max_seconds = 120.0 if rate_limited else 60.0
+    return min(max_seconds, base_seconds * (2**attempt))
 
 
 class AnthropicActionAgent(Agent):
@@ -658,10 +660,14 @@ class AnthropicActionAgent(Agent):
                 if not _is_retryable_anthropic_error(exc) or attempt + 1 >= max_attempts:
                     raise
                 last_error = exc
-                wait_seconds = _rate_limit_backoff_seconds(attempt)
+                rate_limited = _is_rate_limit_error(exc)
+                wait_seconds = _retry_backoff_seconds(
+                    attempt,
+                    rate_limited=rate_limited,
+                )
                 tool_name = (
                     "anthropic.rate_limit_retry"
-                    if _is_rate_limit_error(exc)
+                    if rate_limited
                     else "anthropic.request_retry"
                 )
                 self._tool_events.append(
@@ -838,10 +844,14 @@ class AnthropicKeystrokeAgent(Agent):
                 if not _is_retryable_anthropic_error(exc) or attempt + 1 >= max_attempts:
                     raise
                 last_error = exc
-                wait_seconds = _rate_limit_backoff_seconds(attempt)
+                rate_limited = _is_rate_limit_error(exc)
+                wait_seconds = _retry_backoff_seconds(
+                    attempt,
+                    rate_limited=rate_limited,
+                )
                 tool_name = (
                     "anthropic.rate_limit_retry"
-                    if _is_rate_limit_error(exc)
+                    if rate_limited
                     else "anthropic.request_retry"
                 )
                 self._tool_events.append(
