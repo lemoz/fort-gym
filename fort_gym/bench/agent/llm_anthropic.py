@@ -251,6 +251,9 @@ YOU control time. The game is PAUSED until you request time to pass.
   advance_ticks to a positive value.
 - To press the visible Space pause/resume command, use `STRING_A032`; do not
   use `PAUSE` for live gameplay recovery.
+- If your keys complete a work designation such as dig/chop/stairs with two
+  SELECT corners and LEAVESCREEN, set advance_ticks to 500+ so dwarves can act
+  on the new job before your next decision.
 
 **Strategy:**
 1. Navigate menus with advance_ticks: 0 (instant, no time wasted)
@@ -1024,6 +1027,28 @@ class AnthropicKeystrokeAgent(Agent):
                 "dwarves work, but advance_ticks is 0. Set advance_ticks to a "
                 "positive value such as 200, 500, 1000, or 2000; viewport scroll "
                 "keys do not advance simulation time."
+            )
+        designation_keys = {
+            "DESIGNATE_DIG",
+            "DESIGNATE_CHOP",
+            "DESIGNATE_CHANNEL",
+            "DESIGNATE_STAIR_DOWN",
+            "DESIGNATE_STAIR_UP",
+            "DESIGNATE_STAIR_UPDOWN",
+            "DESIGNATE_RAMP",
+            "DESIGNATE_PLANTS",
+        }
+        completed_work_designation = (
+            any(str(key) in designation_keys for key in keys)
+            and sum(1 for key in keys if str(key) == "SELECT") >= 2
+            and any(str(key) == "LEAVESCREEN" for key in keys)
+        )
+        if completed_work_designation:
+            return (
+                "Action contract mismatch: this key sequence completes a dig/chop/stair "
+                "designation while the game is paused, but advance_ticks is 0. Set "
+                "advance_ticks to 500+ so dwarves can act on the new designation before "
+                "your next decision."
             )
         return None
 
