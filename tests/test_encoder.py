@@ -375,6 +375,46 @@ def test_encoder_labels_material_target_setup() -> None:
     assert "Live UI material target" in text
 
 
+def test_encoder_surfaces_target_z_mismatch() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 0, "stone": 0},
+            "work": {
+                "cursor_x": -30000,
+                "cursor_y": 92,
+                "cursor_z": 176,
+                "window_x": 87,
+                "window_y": 82,
+                "window_z": 176,
+            },
+            "ui_work": {
+                "target_z": 177,
+                "target_dig_designations": 0,
+                "target_floor_tiles": 12,
+                "target_wall_tiles": 4,
+            },
+            "ui_target_setup": {
+                "ok": True,
+                "target_mode": "material",
+                "target_generation": 3,
+                "target_attempts": 1,
+                "selection_rect": [10, 20, 177, 13, 21, 177],
+                "designatable_tiles": 4,
+                "show_recommended_keys": True,
+                "recommended_keys": ["D_DESIGNATE", "DESIGNATE_DIG"],
+            },
+        },
+        screen_text="screen",
+    )
+
+    assert "Live UI z-level mismatch: current view z=176, target z=177" in text
+    assert "Do not send target designation or placement keys" in text
+    assert "CURSOR_UP_Z" in text
+    assert "wait for the next observation" in text
+
+
 def test_encoder_labels_material_recovery_as_exit_only() -> None:
     text, _ = encode_observation(
         {

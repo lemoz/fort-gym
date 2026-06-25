@@ -291,26 +291,36 @@ def test_ui_target_setup_hides_recommended_keys_after_progress_or_retry_cap() ->
     assert exhausted["recommended_keys_suppressed"] is True
 
 
-def test_material_target_setup_keeps_keys_visible_past_starter_retry_cap() -> None:
+def test_material_target_setup_hides_keys_after_bounded_retry_cap() -> None:
     target = {
         "ok": True,
         "target_mode": "material",
         "recommended_keys": ["D_DESIGNATE", "DESIGNATE_CHOP"],
     }
 
-    setup = _ui_target_setup_for_observation(
+    attempted = _ui_target_setup_for_observation(
         target,
         generation=3,
-        attempts=4,
+        attempts=1,
+        no_progress_streak=1,
+        target_progress_seen=False,
+    )
+    exhausted = _ui_target_setup_for_observation(
+        target,
+        generation=3,
+        attempts=2,
         no_progress_streak=2,
         target_progress_seen=False,
     )
 
-    assert setup["recommended_keys"] == ["D_DESIGNATE", "DESIGNATE_CHOP"]
-    assert setup["show_recommended_keys"] is True
-    assert setup["recommended_keys_retry"] is True
-    assert setup["recommended_keys_suppressed"] is False
-    assert setup["recommended_key_retry_limit"] > 4
+    assert attempted["recommended_keys"] == ["D_DESIGNATE", "DESIGNATE_CHOP"]
+    assert attempted["show_recommended_keys"] is True
+    assert attempted["recommended_keys_retry"] is True
+    assert attempted["recommended_keys_suppressed"] is False
+    assert exhausted["recommended_keys"] == []
+    assert exhausted["show_recommended_keys"] is False
+    assert exhausted["recommended_keys_suppressed"] is True
+    assert exhausted["recommended_key_retry_limit"] == 2
 
 
 def test_material_target_setup_can_prefix_build_menu_recovery_keys() -> None:

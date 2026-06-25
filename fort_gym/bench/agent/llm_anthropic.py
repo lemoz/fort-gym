@@ -115,6 +115,10 @@ each turn.
 camera and cursor on a reachable native-UI target near your dwarves. If the setup mode
 is `material`, those keys either chop a visible tree for logs or mine visible
 stone/vein wall so the fortress has real workshop building material. If status says
+`Live UI z-level mismatch`, do not copy target designation or placement keys from
+the wrong z-level. Use only z-level navigation to return toward the target, with
+advance_ticks 0, then wait for the next observation before acting on target keys.
+If status says
 `Live UI material recovery`, follow that line literally. If it says to copy only
 escape keys this turn, send only those LEAVESCREEN keys with advance_ticks 0;
 do not chain a new designation/build/menu command after escaping. Use the next

@@ -19,6 +19,13 @@ def _is_inactive_df_cursor(value: Any) -> bool:
         return False
 
 
+def _int_or_none(value: Any) -> int | None:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
 def _compute_screen_diff(prev: str, curr: str) -> Dict[str, Any]:
     """Compare two screen captures and return diff info."""
     if not prev or not curr:
@@ -435,6 +442,26 @@ def encode_observation(
             f"selection_rect={ui_target_setup.get('selection_rect')}, "
             f"designatable_tiles={ui_target_setup.get('designatable_tiles', 0)}"
         )
+        target_z = _int_or_none(ui_work.get("target_z"))
+        if target_z is None:
+            target_rect = ui_target_setup.get("target_rect") or ui_target_setup.get(
+                "selection_rect"
+            )
+            if isinstance(target_rect, list) and len(target_rect) >= 3:
+                target_z = _int_or_none(target_rect[2])
+        view_z = _int_or_none(work.get("window_z"))
+        if view_z is None:
+            view_z = _int_or_none(work.get("cursor_z"))
+        if target_z is not None and view_z is not None and target_z != view_z:
+            z_key = "CURSOR_UP_Z" if target_z > view_z else "CURSOR_DOWN_Z"
+            status_lines.append(
+                "Live UI z-level mismatch: "
+                f"current view z={view_z}, target z={target_z}. Do not send "
+                "target designation or placement keys from this z-level. Use "
+                f"only z-level navigation such as {z_key} to return toward the "
+                "target, then wait for the next observation before acting on "
+                "target keys."
+            )
         status_lines.append(
             "Live UI target note: selection_rect and window are observation "
             "metadata, not a manual cursor route. Use recommended keys when "
