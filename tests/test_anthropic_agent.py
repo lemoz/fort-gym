@@ -1791,6 +1791,72 @@ def test_keystroke_agent_rejects_simulation_production_intent_with_zero_ticks(
     assert "Action contract mismatch" in retry_messages
 
 
+def test_keystroke_agent_rejects_resume_time_labor_intent_with_zero_ticks(
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.delenv("ANTHROPIC_MODEL", raising=False)
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    _SequencedAnthropicClient.responses = [
+        SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="submit_action",
+                    id="toolu_bad_labor_wait",
+                    input={
+                        "type": "KEYSTROKE",
+                        "params": {"keys": ["STRING_A032"]},
+                        "objective": "Acquire wood material for carpenter workshop",
+                        "intent": "Resume time and let woodcutters fulfill already-placed chop designations, producing logs",
+                        "advance_ticks": 0,
+                    },
+                )
+            ],
+            usage=SimpleNamespace(input_tokens=10, output_tokens=2),
+        ),
+        SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="submit_action",
+                    id="toolu_good_labor_wait",
+                    input={
+                        "type": "KEYSTROKE",
+                        "params": {"keys": ["STRING_A032"]},
+                        "objective": "Acquire wood material for carpenter workshop",
+                        "intent": "Resume time and let woodcutters fulfill already-placed chop designations, producing logs",
+                        "advance_ticks": 1000,
+                    },
+                )
+            ],
+            usage=SimpleNamespace(input_tokens=11, output_tokens=2),
+        ),
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "anthropic"
+        return SimpleNamespace(Anthropic=_SequencedAnthropicClient)
+
+    monkeypatch.setattr(
+        "fort_gym.bench.agent.llm_anthropic.import_module",
+        fake_import_module,
+    )
+
+    try:
+        agent = AnthropicKeystrokeAgent()
+        action = agent.decide("mock screen", {})
+    finally:
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["advance_ticks"] == 1000
+    assert _SequencedAnthropicClient.last_instance is not None
+    requests = _SequencedAnthropicClient.last_instance.messages.requests
+    assert len(requests) == 2
+    retry_messages = _messages_text(requests[1]["messages"])
+    assert "Action contract mismatch" in retry_messages
+
+
 def test_keystroke_agent_rejects_completed_designation_with_zero_ticks(
     monkeypatch,
 ) -> None:
