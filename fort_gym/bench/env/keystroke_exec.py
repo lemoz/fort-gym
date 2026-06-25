@@ -131,6 +131,14 @@ for i in range(128):
     VALID_KEYS.add(f"STRING_A{i:03d}")
 
 
+KEY_ALIASES: Dict[str, str] = {
+    "KEYBOARD_CURSOR_UP": "CURSOR_UP",
+    "KEYBOARD_CURSOR_DOWN": "CURSOR_DOWN",
+    "KEYBOARD_CURSOR_LEFT": "CURSOR_LEFT",
+    "KEYBOARD_CURSOR_RIGHT": "CURSOR_RIGHT",
+}
+
+
 class KeystrokeError(Exception):
     """Error during keystroke execution."""
     pass
@@ -156,6 +164,7 @@ def _get_viewscreen_type() -> str | None:
 
 def _translate_key(key: str, screen_type: str | None) -> str:
     """Translate raw keys into DF interface keys based on current screen."""
+    key = KEY_ALIASES.get(key, key)
     if screen_type == "viewscreen_choose_start_sitest":
         # Embark site selection uses SETUP_EMBARK, not raw 'e'
         if key in {"STRING_A101", "CUSTOM_E"}:

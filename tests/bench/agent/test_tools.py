@@ -31,6 +31,9 @@ def test_df_wiki_tool_answers_direct_workshop_tasks() -> None:
     assert "BUILDJOB_ADD" in response
     assert "SELECT picks" in response
     assert "highlighted row" in response
+    assert "CURSOR_DOWN" in response
+    assert "CURSOR_DOWN/CURSOR_UP" in response
+    assert "STANDARDSCROLL/SECONDSCROLL" in response
 
 
 def test_tool_manager_exposes_df_wiki_spec() -> None:
