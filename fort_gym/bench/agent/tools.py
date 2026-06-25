@@ -192,12 +192,16 @@ REMEMBER_FAILED_ATTEMPT_TOOL_SPEC: Dict[str, Any] = {
     "name": "remember_failed_attempt",
     "description": (
         "Remember an attempted placement/navigation/menu action that did not change "
-        "tracked DF state so you can avoid repeating it."
+        "tracked DF state, including failed native menu search terms, so you can "
+        "avoid repeating it."
     ),
     "input_schema": {
         "type": "object",
         "properties": {
-            "label": {"type": "string", "description": "Short name for the failed attempt."},
+            "label": {
+                "type": "string",
+                "description": "Short name for the failed attempt; include menu and exact search term when relevant.",
+            },
             "reason": {"type": "string", "description": "Why this attempt appears unproductive."},
             "x": {"type": "integer", "description": "Map x coordinate, if known."},
             "y": {"type": "integer", "description": "Map y coordinate, if known."},
@@ -212,7 +216,7 @@ QUERY_MEMORY_TOOL_SPEC: Dict[str, Any] = {
     "name": "query_memory",
     "description": (
         "Search your remembered POIs and failed attempts before retrying navigation, "
-        "placement, or inspection work."
+        "placement, inspection work, or native menu search terms."
     ),
     "input_schema": {
         "type": "object",

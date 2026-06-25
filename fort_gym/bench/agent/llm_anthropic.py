@@ -173,6 +173,12 @@ In the manager New Order search dialog, if your screen_read says a single useful
 result is visible and the footer says Select, press SELECT to queue it unless
 you explicitly reject that job as not useful or not buildable. Do not leave the
 dialog when your own screen_read says SELECT will queue the intended job.
+If a manager New Order search returns only wrong-category jobs, metal-only jobs,
+no useful result, or a corrupted combined search string, record that search term
+as a failed attempt in memory and avoid trying that exact term again in this run
+unless you can name new visible evidence that the search context changed. If
+backspace did not visibly clear the search field, exit to a clean menu before
+typing another term; do not keep appending new letters to the stale query.
 If a carpenter workshop screen is selected, use BUILDJOB_ADD to open its native
 task list. Opening the add-task UI is not production by itself: read the next
 screen, select a concrete task such as a wooden bed/barrel/bin, then advance
@@ -398,6 +404,15 @@ Before EVERY submit_action:
 5. In submit_action include objective, expected_visible_result,
    expected_simulation_result, and memory_update.
 
+When using a searchable native menu such as Manager New Order, treat the typed
+search string as part of the action path. Query memory for failed searches before
+typing a term. If a term produced only wrong-category rows, metal-only rows, no
+useful row, or a corrupted concatenated query, call remember_failed_attempt with
+a label that includes the menu and exact term. Do not try that same term again
+later in the run unless your review names new visible evidence that makes it
+different. If the visible search text did not clear after backspace, exit and
+reopen a clean dialog before entering a new term.
+
 Do not spend more than two consecutive actions trying to place the same workshop
 or selecting the same workshop key. If placement is unclear, return to the main
 view, query memory, record the failed attempt, and choose a different productive
@@ -446,6 +461,10 @@ Use the plan tools as a private notebook:
   unless the screen/state proves the next workshop is necessary. Shift to
   direct workshop tasks or useful orders through native UI before stockpile or
   room refinement.
+- When a plan branch depends on a manager/work-order search term, check the
+  failed-attempt memory before typing it. If the term is already remembered as a
+  wrong menu/no-result/corrupted-search path, revise the plan to a different
+  native branch or a clean-dialog search you have not already disproved.
 - Include plan_step and plan_review in submit_action so the trace can audit
   whether the action follows the reviewed plan.
 
@@ -496,6 +515,13 @@ If last_action_review says the previous path did not work, do not press the same
 menu/key path again unless your evidence names a changed condition. Prefer a
 different productive branch, a clean exit to main view, or time advancement only
 when dwarves have active work to complete.
+If last_action_review says a manager New Order search showed the wrong category,
+metal-only rows, no useful rows, or a corrupted combined query, first store that
+exact menu/search term with remember_failed_attempt, then revise away from that
+term. A different future action is not enough if you later retype the same
+failed term without citing a changed screen/context. If the query field still
+contains old letters after backspace, treat the dirty search field as the failed
+path and reopen a clean dialog before another search.
 Opening a setup menu is not the same as completing the gameplay action. If the
 objective is to place a stockpile, designate chopping/digging, or create a room,
 worked=true requires evidence that the rectangle/designation was committed or

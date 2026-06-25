@@ -301,6 +301,9 @@ def test_keystroke_prompt_is_action_first() -> None:
     assert "repeat the same key sequence" in KEYSTROKE_SYSTEM_PROMPT
     assert "single useful" in KEYSTROKE_SYSTEM_PROMPT
     assert "SELECT will queue the intended job" in KEYSTROKE_SYSTEM_PROMPT
+    assert "manager New Order search returns only wrong-category jobs" in KEYSTROKE_SYSTEM_PROMPT
+    assert "record that search term\nas a failed attempt" in KEYSTROKE_SYSTEM_PROMPT
+    assert "backspace did not visibly clear the search field" in KEYSTROKE_SYSTEM_PROMPT
     assert "D_BUILDING/furniture selector lists" in KEYSTROKE_SYSTEM_PROMPT
     assert "highlighted row as" in KEYSTROKE_SYSTEM_PROMPT
     assert "expected_visible_result" in KEYSTROKE_SYSTEM_PROMPT
@@ -312,6 +315,8 @@ def test_poi_review_prompt_requires_memory_review() -> None:
     assert "Before EVERY submit_action" in KEYSTROKE_POI_REVIEW_SYSTEM_PROMPT
     assert "query_memory" in KEYSTROKE_POI_REVIEW_SYSTEM_PROMPT
     assert "remember_failed_attempt" in KEYSTROKE_POI_REVIEW_SYSTEM_PROMPT
+    assert "typed\nsearch string as part of the action path" in KEYSTROKE_POI_REVIEW_SYSTEM_PROMPT
+    assert "label that includes the menu and exact term" in KEYSTROKE_POI_REVIEW_SYSTEM_PROMPT
 
 
 def test_plan_review_prompt_requires_periodic_plan_reviews() -> None:
@@ -324,6 +329,8 @@ def test_plan_review_prompt_requires_periodic_plan_reviews() -> None:
     assert "If `manager_orders=0`, prefer production orders" in (
         KEYSTROKE_PLAN_REVIEW_SYSTEM_PROMPT
     )
+    assert "manager/work-order search term" in KEYSTROKE_PLAN_REVIEW_SYSTEM_PROMPT
+    assert "wrong menu/no-result/corrupted-search path" in KEYSTROKE_PLAN_REVIEW_SYSTEM_PROMPT
 
 
 def test_perception_review_prompt_requires_agent_owned_verification() -> None:
@@ -346,6 +353,15 @@ def test_perception_review_prompt_requires_agent_owned_verification() -> None:
     )
     assert "should_retry_same_path" in KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
     assert "intent and objective must be" in (
+        KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
+    )
+    assert "manager New Order search showed the wrong category" in (
+        KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
+    )
+    assert "store that\nexact menu/search term" in (
+        KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
+    )
+    assert "dirty search field as the failed\npath" in (
         KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
     )
 

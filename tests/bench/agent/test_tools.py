@@ -44,6 +44,18 @@ def test_tool_manager_exposes_df_wiki_spec() -> None:
     assert any(spec.get("name") == "df_wiki" for spec in specs)
 
 
+def test_tool_manager_exposes_failed_search_memory_contract() -> None:
+    manager = ToolManager(["remember_failed_attempt", "query_memory"])
+    specs = manager.tool_specs()
+    by_name = {str(spec.get("name")): spec for spec in specs}
+
+    remember = by_name["remember_failed_attempt"]
+    query = by_name["query_memory"]
+    assert "failed native menu search terms" in str(remember.get("description"))
+    assert "menu and exact search term" in str(remember["input_schema"])
+    assert "native menu search terms" in str(query.get("description"))
+
+
 def test_tool_manager_exposes_perception_review_specs() -> None:
     manager = ToolManager(["record_screen_read", "review_last_action"])
     specs = manager.tool_specs()
