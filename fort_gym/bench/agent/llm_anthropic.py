@@ -1101,16 +1101,24 @@ class AnthropicKeystrokeAgent(Agent):
                 "expected_simulation_result",
                 "plan_step",
                 "plan_review",
+                "memory_update",
             )
         ).lower()
         says_time_should_pass = any(
             phrase in action_text
             for phrase in (
                 "advance time",
+                "advance simulation",
                 "advance ticks",
+                "simulation time",
+                "time passes",
                 "let dwarves",
+                "let production",
                 "give dwarves time",
                 "dwarves work",
+                "produce beds",
+                "production happen",
+                "works the queued",
                 "execute existing",
             )
         )
