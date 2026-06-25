@@ -313,6 +313,12 @@ def test_perception_review_prompt_requires_agent_owned_verification() -> None:
     assert "`selection_rect` and `window` alone do not satisfy" in (
         KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
     )
+    assert "Opening a setup menu is not the same as completing" in (
+        KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
+    )
+    assert "still only a type list or submenu" in (
+        KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
+    )
     assert "should_retry_same_path" in KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
     assert "intent and objective must be" in (
         KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
@@ -378,6 +384,24 @@ def test_perception_review_allows_missing_optional_expected_visible_result() -> 
     )
 
     assert error is None
+
+
+def test_zero_tick_contract_rejects_significant_time_advance() -> None:
+    error = AnthropicKeystrokeAgent._advance_ticks_contract_error(
+        {
+            "type": "KEYSTROKE",
+            "params": {"keys": ["LEAVESCREEN"]},
+            "objective": "Expand fortress by excavating designated stairs",
+            "intent": (
+                "Stay on main map and advance significant time so miners "
+                "excavate the freshly designated tiles."
+            ),
+            "advance_ticks": 0,
+        }
+    )
+
+    assert error is not None
+    assert "advance time or let" in error
 
 
 def test_keystroke_retry_pairs_invalid_tool_use_with_tool_result(monkeypatch) -> None:

@@ -496,6 +496,12 @@ If last_action_review says the previous path did not work, do not press the same
 menu/key path again unless your evidence names a changed condition. Prefer a
 different productive branch, a clean exit to main view, or time advancement only
 when dwarves have active work to complete.
+Opening a setup menu is not the same as completing the gameplay action. If the
+objective is to place a stockpile, designate chopping/digging, or create a room,
+worked=true requires evidence that the rectangle/designation was committed or
+that the later outcome row shows real map/material/work progress. If the screen
+is still only a type list or submenu, mark worked=false for placement and finish
+the cursor/rectangle selection or choose a different branch.
 If the previous action only opened or stayed on a carpenter workshop task menu,
 mark it worked=false for production unless the current screen shows a concrete task row/job choice or the recent outcome row shows real workshop/material work.
 If the previous action tried a parenthesized workshop task letter and the same add-task list is still visible, mark it worked=false and switch to scroll/select navigation or a different production path instead of retrying the raw letter.
@@ -1129,6 +1135,21 @@ class AnthropicKeystrokeAgent(Agent):
                 "memory_update",
             )
         ).lower()
+        if "advance" in action_text and any(
+            marker in action_text
+            for marker in (
+                "time",
+                "tick",
+                "large block",
+                "significant",
+                "dwarf",
+                "miner",
+                "carpenter",
+                "woodcutter",
+                "work",
+            )
+        ):
+            return True
         return any(
             phrase in action_text
             for phrase in (
