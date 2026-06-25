@@ -450,6 +450,68 @@ def test_keystroke_agent_retries_timeout(monkeypatch) -> None:
     assert len(_TimeoutOnceAnthropicClient.last_instance.messages.requests) == 2
 
 
+def test_keystroke_agent_retries_malformed_params(monkeypatch) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.delenv("ANTHROPIC_MODEL", raising=False)
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    _SequencedAnthropicClient.responses = [
+        SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="submit_action",
+                    id="toolu_bad_params",
+                    input={
+                        "type": "KEYSTROKE",
+                        "params": "LEAVESCREEN",
+                        "intent": "malformed params should be retried",
+                        "advance_ticks": 0,
+                    },
+                )
+            ],
+            usage=SimpleNamespace(input_tokens=10, output_tokens=2),
+        ),
+        SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="submit_action",
+                    id="toolu_good_params",
+                    input={
+                        "type": "KEYSTROKE",
+                        "params": {"keys": ["LEAVESCREEN"]},
+                        "intent": "recover with valid params",
+                        "advance_ticks": 0,
+                    },
+                )
+            ],
+            usage=SimpleNamespace(input_tokens=11, output_tokens=2),
+        ),
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "anthropic"
+        return SimpleNamespace(Anthropic=_SequencedAnthropicClient)
+
+    monkeypatch.setattr(
+        "fort_gym.bench.agent.llm_anthropic.import_module",
+        fake_import_module,
+    )
+
+    try:
+        agent = AnthropicKeystrokeAgent()
+        action = agent.decide("mock screen", {})
+    finally:
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["params"]["keys"] == ["LEAVESCREEN"]
+    assert _SequencedAnthropicClient.last_instance is not None
+    requests = _SequencedAnthropicClient.last_instance.messages.requests
+    assert len(requests) == 2
+    retry_messages = _messages_text(requests[1]["messages"])
+    assert "KEYSTROKE action requires a non-empty keys list" in retry_messages
+
+
 def test_poi_review_agent_retries_without_query_memory(monkeypatch) -> None:
     monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
     monkeypatch.delenv("ANTHROPIC_MODEL", raising=False)

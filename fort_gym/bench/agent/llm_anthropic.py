@@ -1605,7 +1605,7 @@ class AnthropicKeystrokeAgent(Agent):
                     continue
 
                 params = tool_payload.get("params", {})
-                keys = params.get("keys", [])
+                keys = params.get("keys", []) if isinstance(params, dict) else []
                 if not keys or not isinstance(keys, list):
                     last_error = ValueError("KEYSTROKE action must have non-empty keys list")
                     append_tool_retry(
