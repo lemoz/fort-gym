@@ -1117,24 +1117,7 @@ class AnthropicKeystrokeAgent(Agent):
         return None
 
     @staticmethod
-    def _advance_ticks_contract_error(tool_payload: Dict[str, Any]) -> Optional[str]:
-        try:
-            advance_ticks = int(tool_payload.get("advance_ticks", 0))
-        except (TypeError, ValueError):
-            return None
-        if advance_ticks > 0:
-            return None
-
-        params = tool_payload.get("params") if isinstance(tool_payload.get("params"), dict) else {}
-        keys = params.get("keys") if isinstance(params, dict) else []
-        keys = keys if isinstance(keys, list) else []
-        if any(str(key) == "STRING_A032" for key in keys):
-            return (
-                "Action contract mismatch: STRING_A032 with advance_ticks 0 "
-                "does not advance simulation time in this runner. If you need "
-                "dwarves to work, set advance_ticks to a positive value such "
-                "as 500, 1000, or 2000; for UI-only actions, remove STRING_A032."
-            )
+    def _zero_tick_action_says_time_should_pass(tool_payload: Dict[str, Any]) -> bool:
         action_text = " ".join(
             str(tool_payload.get(field) or "")
             for field in (
@@ -1146,7 +1129,7 @@ class AnthropicKeystrokeAgent(Agent):
                 "memory_update",
             )
         ).lower()
-        says_time_should_pass = any(
+        return any(
             phrase in action_text
             for phrase in (
                 "advance time",
@@ -1168,6 +1151,53 @@ class AnthropicKeystrokeAgent(Agent):
                 "execute existing",
             )
         )
+
+    @classmethod
+    def _advance_ticks_repair_for_action_only(
+        cls,
+        tool_payload: Dict[str, Any],
+        contract_error: str,
+    ) -> Optional[int]:
+        if "completes a dig/chop/stair designation" in contract_error:
+            return 500
+        if cls._zero_tick_action_says_time_should_pass(tool_payload):
+            return 500
+        return None
+
+    @classmethod
+    def _advance_ticks_contract_error(
+        cls,
+        tool_payload: Dict[str, Any],
+    ) -> Optional[str]:
+        try:
+            advance_ticks = int(tool_payload.get("advance_ticks", 0))
+        except (TypeError, ValueError):
+            return None
+        if advance_ticks > 0:
+            return None
+
+        params = tool_payload.get("params") if isinstance(tool_payload.get("params"), dict) else {}
+        keys = params.get("keys") if isinstance(params, dict) else []
+        keys = keys if isinstance(keys, list) else []
+        if any(str(key) == "STRING_A032" for key in keys):
+            return (
+                "Action contract mismatch: STRING_A032 with advance_ticks 0 "
+                "does not advance simulation time in this runner. If you need "
+                "dwarves to work, set advance_ticks to a positive value such "
+                "as 500, 1000, or 2000; for UI-only actions, remove STRING_A032."
+            )
+        says_time_should_pass = cls._zero_tick_action_says_time_should_pass(tool_payload)
+        action_text = " ".join(
+            str(tool_payload.get(field) or "")
+            for field in (
+                "intent",
+                "objective",
+                "expected_simulation_result",
+                "plan_step",
+                "plan_review",
+                "memory_update",
+            )
+        ).lower()
         scroll_only = bool(keys) and all(str(key).startswith("STANDARDSCROLL") for key in keys)
         if says_time_should_pass or (scroll_only and "advance" in action_text):
             return (
@@ -1656,9 +1686,15 @@ class AnthropicKeystrokeAgent(Agent):
 
                     contract_error = self._advance_ticks_contract_error(tool_payload)
                     if contract_error:
-                        if "completes a dig/chop/stair designation" in contract_error:
+                        repaired_advance_ticks = (
+                            self._advance_ticks_repair_for_action_only(
+                                tool_payload,
+                                contract_error,
+                            )
+                        )
+                        if repaired_advance_ticks is not None:
                             tool_payload = dict(tool_payload)
-                            tool_payload["advance_ticks"] = 500
+                            tool_payload["advance_ticks"] = repaired_advance_ticks
                             self._tool_events.append(
                                 {
                                     "tool": "advance_ticks_contract_repaired",
@@ -1667,8 +1703,10 @@ class AnthropicKeystrokeAgent(Agent):
                                         "contract_error": contract_error,
                                     },
                                     "output": (
-                                        "Set advance_ticks=500 for completed "
-                                        "designation during action-only recovery."
+                                        "Set advance_ticks="
+                                        f"{repaired_advance_ticks} during "
+                                        "action-only recovery to match the "
+                                        "model's stated turn intent."
                                     ),
                                 }
                             )

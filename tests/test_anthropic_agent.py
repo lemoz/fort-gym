@@ -1621,6 +1621,111 @@ def test_keystroke_force_submit_repairs_completed_designation_ticks(
     )
 
 
+def test_keystroke_force_submit_repairs_time_wait_ticks(
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.delenv("ANTHROPIC_MODEL", raising=False)
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    _SequencedAnthropicClient.responses = [
+        SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="record_screen_read",
+                    id="toolu_screen",
+                    input={
+                        "mode": "main_map",
+                        "evidence": ["main map terrain visible"],
+                        "cursor_or_selection": "cursor_inactive",
+                        "confidence": "high",
+                    },
+                )
+            ],
+            usage=SimpleNamespace(input_tokens=10, output_tokens=2),
+        ),
+        SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="review_last_action",
+                    id="toolu_review",
+                    input={
+                        "worked": False,
+                        "evidence": ["wood stock did not increase after chop box"],
+                        "mismatch_reason": "no material progress yet",
+                        "should_retry_same_path": False,
+                    },
+                )
+            ],
+            usage=SimpleNamespace(input_tokens=11, output_tokens=2),
+        ),
+        *[
+            SimpleNamespace(
+                content=[
+                    SimpleNamespace(
+                        type="tool_use",
+                        name="query_memory",
+                        id=f"toolu_query_{index}",
+                        input={"query": "woodcutting wait recovery", "limit": 3},
+                    )
+                ],
+                usage=SimpleNamespace(input_tokens=12 + index, output_tokens=2),
+            )
+            for index in range(5)
+        ],
+        SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="submit_action",
+                    id="toolu_action",
+                    input={
+                        "type": "KEYSTROKE",
+                        "params": {"keys": ["STANDARDSCROLL_PAGEDOWN"]},
+                        "intent": (
+                            "Let woodcutters work on the existing chop "
+                            "designations and see if wood appears"
+                        ),
+                        "objective": "give dwarves time to produce logs",
+                        "expected_visible_result": "map may scroll while work continues",
+                        "expected_simulation_result": "dwarves work on queued jobs",
+                        "memory_update": "checking whether the previous chop path worked",
+                        "advance_ticks": 0,
+                    },
+                )
+            ],
+            usage=SimpleNamespace(input_tokens=20, output_tokens=3),
+        ),
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "anthropic"
+        return SimpleNamespace(Anthropic=_SequencedAnthropicClient)
+
+    monkeypatch.setattr(
+        "fort_gym.bench.agent.llm_anthropic.import_module",
+        fake_import_module,
+    )
+
+    try:
+        agent = AnthropicKeystrokeAgent(
+            system_prompt=KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT,
+            require_perception_review=True,
+        )
+        action = agent.decide("mock screen", {})
+        events = agent.pop_tool_events()
+    finally:
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["params"]["keys"] == ["STANDARDSCROLL_PAGEDOWN"]
+    assert action["advance_ticks"] == 500
+    assert any(
+        event.get("tool") == "advance_ticks_contract_repaired"
+        for event in events
+    )
+
+
 def test_keystroke_review_gates_count_prior_tools_in_same_decision(monkeypatch) -> None:
     monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
     monkeypatch.delenv("ANTHROPIC_MODEL", raising=False)
