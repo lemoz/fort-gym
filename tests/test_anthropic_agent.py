@@ -45,9 +45,15 @@ class _FakeMessages:
 class _FakeAnthropicClient:
     last_instance: "_FakeAnthropicClient | None" = None
 
-    def __init__(self, api_key: str, timeout: float | None = None) -> None:
+    def __init__(
+        self,
+        api_key: str,
+        timeout: float | None = None,
+        max_retries: int = 2,
+    ) -> None:
         self.api_key = api_key
         self.timeout = timeout
+        self.max_retries = max_retries
         self.messages = _FakeMessages()
         _FakeAnthropicClient.last_instance = self
 
@@ -66,9 +72,15 @@ class _SequencedAnthropicClient:
     last_instance: "_SequencedAnthropicClient | None" = None
     responses: list[Any] = []
 
-    def __init__(self, api_key: str, timeout: float | None = None) -> None:
+    def __init__(
+        self,
+        api_key: str,
+        timeout: float | None = None,
+        max_retries: int = 2,
+    ) -> None:
         self.api_key = api_key
         self.timeout = timeout
+        self.max_retries = max_retries
         self.messages = _SequencedMessages(list(self.responses))
         _SequencedAnthropicClient.last_instance = self
 
@@ -129,9 +141,15 @@ class _RateLimitOnceMessages:
 class _RateLimitOnceAnthropicClient:
     last_instance: "_RateLimitOnceAnthropicClient | None" = None
 
-    def __init__(self, api_key: str, timeout: float | None = None) -> None:
+    def __init__(
+        self,
+        api_key: str,
+        timeout: float | None = None,
+        max_retries: int = 2,
+    ) -> None:
         self.api_key = api_key
         self.timeout = timeout
+        self.max_retries = max_retries
         self.messages = _RateLimitOnceMessages()
         _RateLimitOnceAnthropicClient.last_instance = self
 
@@ -165,9 +183,15 @@ class _TimeoutOnceMessages:
 class _TimeoutOnceAnthropicClient:
     last_instance: "_TimeoutOnceAnthropicClient | None" = None
 
-    def __init__(self, api_key: str, timeout: float | None = None) -> None:
+    def __init__(
+        self,
+        api_key: str,
+        timeout: float | None = None,
+        max_retries: int = 2,
+    ) -> None:
         self.api_key = api_key
         self.timeout = timeout
+        self.max_retries = max_retries
         self.messages = _TimeoutOnceMessages()
         _TimeoutOnceAnthropicClient.last_instance = self
 
@@ -218,6 +242,7 @@ def test_anthropic_agent_records_usage_event(monkeypatch) -> None:
     assert _FakeAnthropicClient.last_instance is not None
     assert _FakeAnthropicClient.last_instance.api_key == "test-key"
     assert _FakeAnthropicClient.last_instance.timeout == 17.5
+    assert _FakeAnthropicClient.last_instance.max_retries == 0
     request = _FakeAnthropicClient.last_instance.messages.requests[0]
     assert request["model"] == "claude-sonnet-4-6"
 
@@ -559,6 +584,7 @@ def test_keystroke_agent_retries_rate_limit(monkeypatch) -> None:
     assert action["intent"] == "recover after rate limit"
     assert any(event.get("tool") == "anthropic.rate_limit_retry" for event in events)
     assert _RateLimitOnceAnthropicClient.last_instance is not None
+    assert _RateLimitOnceAnthropicClient.last_instance.max_retries == 0
     assert len(_RateLimitOnceAnthropicClient.last_instance.messages.requests) == 2
 
 
@@ -587,6 +613,7 @@ def test_keystroke_agent_retries_timeout(monkeypatch) -> None:
     assert action["intent"] == "recover after timeout"
     assert any(event.get("tool") == "anthropic.request_retry" for event in events)
     assert _TimeoutOnceAnthropicClient.last_instance is not None
+    assert _TimeoutOnceAnthropicClient.last_instance.max_retries == 0
     assert len(_TimeoutOnceAnthropicClient.last_instance.messages.requests) == 2
 
 

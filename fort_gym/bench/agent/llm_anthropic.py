@@ -769,6 +769,7 @@ class AnthropicActionAgent(Agent):
             self._client = client_cls(
                 api_key=self._settings.ANTHROPIC_API_KEY,
                 timeout=self._settings.ANTHROPIC_TIMEOUT_SECONDS,
+                max_retries=0,
             )
         return self._client
 
@@ -953,6 +954,7 @@ class AnthropicKeystrokeAgent(Agent):
             self._client = client_cls(
                 api_key=self._settings.ANTHROPIC_API_KEY,
                 timeout=self._settings.ANTHROPIC_TIMEOUT_SECONDS,
+                max_retries=0,
             )
         return self._client
 
