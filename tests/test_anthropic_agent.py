@@ -228,6 +228,8 @@ def test_keystroke_prompt_is_action_first() -> None:
     assert "D_DESIGNATE" in KEYSTROKE_SYSTEM_PROMPT
     assert "D_BUILDING" in KEYSTROKE_SYSTEM_PROMPT
     assert "HOTKEY_BUILDING_WORKSHOP_CARPENTER" in KEYSTROKE_SYSTEM_PROMPT
+    assert "STOCKPILE_WOOD" in KEYSTROKE_SYSTEM_PROMPT
+    assert "not STRING_A119" in KEYSTROKE_SYSTEM_PROMPT
     assert "advance_ticks\": 500" in KEYSTROKE_SYSTEM_PROMPT
     assert "Do not" in KEYSTROKE_SYSTEM_PROMPT
     assert "repeat the same key sequence" in KEYSTROKE_SYSTEM_PROMPT

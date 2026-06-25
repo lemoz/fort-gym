@@ -88,7 +88,7 @@ IMPORTANT: The main menu (showing options like "d: Designations", "b: Building")
 **DO SOMETHING CONSTRUCTIVE EACH TURN:**
 1. **Dig more space**: D_DESIGNATE → DESIGNATE_DIG → select area with CURSOR + SELECT
 2. **Build workshops/furniture**: D_BUILDING → select building type
-3. **Create stockpiles**: D_STOCKPILES → define storage area
+3. **Create stockpiles**: D_STOCKPILES → STOCKPILE_WOOD/STONE/etc. → define storage area
 
 **DON'T waste turns just looking around.** The observation already includes status, food, drink, population, and the current screen. Do NOT press z/status/announcements/reports in the opening turns.
 
@@ -165,8 +165,9 @@ are unsure about designations, buildings, orders, stockpiles, or other mechanics
 - LEAVESCREEN - Cancel/Escape
 - DESELECT - Clear selection
 
-### Typing Letters (IMPORTANT!)
-Many DF menus show options like "a - Do something". To select these, you must TYPE THE LETTER using STRING_A### format where ### is the ASCII code:
+### Typing Letters
+Many DF menus show options like "a - Do something". If no named interface key
+exists below, type the letter using STRING_A### format where ### is the ASCII code:
 - STRING_A097 = 'a', STRING_A098 = 'b', STRING_A099 = 'c', STRING_A100 = 'd'
 - STRING_A101 = 'e', STRING_A102 = 'f', STRING_A103 = 'g', STRING_A104 = 'h'
 - STRING_A105 = 'i', STRING_A106 = 'j', STRING_A107 = 'k', STRING_A108 = 'l'
@@ -176,6 +177,9 @@ Many DF menus show options like "a - Do something". To select these, you must TY
 - STRING_A121 = 'y', STRING_A122 = 'z'
 
 Example: If you see "a - Finish conversation", send STRING_A097 to press 'a'.
+Do not use STRING_A### when the key reference lists a named menu key; named
+interface keys are more reliable. Example: in the stockpile menu use
+STOCKPILE_WOOD, not STRING_A119.
 
 ### Main Menus (press from main view)
 - D_DESIGNATE - Open designate menu (d key)
@@ -197,6 +201,14 @@ Example: If you see "a - Finish conversation", send STRING_A097 to press 'a'.
 - HOTKEY_BUILDING_WORKSHOP - Workshop category
 - HOTKEY_BUILDING_WORKSHOP_CARPENTER - Carpenter's workshop
 - Example carpenter workshop path: D_BUILDING, HOTKEY_BUILDING_WORKSHOP, HOTKEY_BUILDING_WORKSHOP_CARPENTER, SELECT
+
+### Stockpile Menu (after D_STOCKPILES)
+- STOCKPILE_WOOD - Choose Wood stockpile type
+- STOCKPILE_STONE - Choose Stone stockpile type
+- STOCKPILE_FOOD - Choose Food stockpile type
+- STOCKPILE_BAR - Choose Bar/Block stockpile type
+- After selecting a stockpile type, use CURSOR keys and SELECT twice to define
+  the rectangle, then LEAVESCREEN to exit.
 
 ## How to Dig
 1. Press D_DESIGNATE to open designate menu
