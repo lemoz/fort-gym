@@ -1054,6 +1054,9 @@ def test_perception_review_agent_retries_missing_screen_read(monkeypatch) -> Non
     assert _SequencedAnthropicClient.last_instance is not None
     requests = _SequencedAnthropicClient.last_instance.messages.requests
     assert len(requests) == 2
+    required_fields = requests[0]["tools"][0]["input_schema"]["required"]
+    assert "screen_read" in required_fields
+    assert "last_action_review" in required_fields
     retry = requests[1]["messages"][2]["content"][0]
     assert retry["tool_use_id"] == "toolu_missing_perception"
     assert "Mandatory screen_read missing" in retry["content"]

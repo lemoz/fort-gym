@@ -6,6 +6,7 @@ import json
 import os
 import re
 import time
+from copy import deepcopy
 from importlib import import_module
 from typing import Any, Dict, List, Optional
 
@@ -479,6 +480,21 @@ KEYSTROKE_ANTHROPIC_TOOL = {
 }
 
 
+def _keystroke_anthropic_tool(*, require_perception_review: bool = False) -> Dict[str, Any]:
+    tool_spec = deepcopy(KEYSTROKE_TOOL_SPEC)
+    if require_perception_review:
+        required = list(tool_spec["parameters"].get("required", []))
+        for field in ("screen_read", "last_action_review"):
+            if field not in required:
+                required.append(field)
+        tool_spec["parameters"]["required"] = required
+    return {
+        "name": tool_spec["name"],
+        "description": tool_spec["description"],
+        "input_schema": tool_spec["parameters"],
+    }
+
+
 def _usage_payload(response: Any) -> Dict[str, int]:
     usage = getattr(response, "usage", None)
     if usage is None:
@@ -729,6 +745,9 @@ class AnthropicKeystrokeAgent(Agent):
         self._memory = MemoryManager(window_size=self._resolve_memory_window())
         self._pending_observation: Optional[str] = None
         self._pending_action: Optional[Dict[str, Any]] = None
+        self._keystroke_tool = _keystroke_anthropic_tool(
+            require_perception_review=require_perception_review,
+        )
         enabled_tools = ["df_wiki", "remember_poi", "remember_failed_attempt", "query_memory"]
         if require_plan_review:
             enabled_tools.extend(["write_gameplay_plan", "review_gameplay_plan"])
@@ -1020,7 +1039,7 @@ class AnthropicKeystrokeAgent(Agent):
         messages: List[Dict[str, Any]] = [
             {"role": "user", "content": [{"type": "text", "text": content}]}
         ]
-        tools = [KEYSTROKE_ANTHROPIC_TOOL, *self._tool_manager.tool_specs()]
+        tools = [self._keystroke_tool, *self._tool_manager.tool_specs()]
         tool_result_cache: Dict[str, str] = {}
         last_gate_blocked_action: Optional[Dict[str, Any]] = None
         last_gate_blocked_error: Optional[str] = None
