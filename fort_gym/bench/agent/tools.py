@@ -106,8 +106,10 @@ DEFAULT_DF_WIKI_DOCS: List[WikiDoc] = [
             "Manager orders use D_JOBLIST then UNITJOB_MANAGER, followed by "
             "MANAGER_NEW_ORDER on the manager screen, to queue jobs like bed, "
             "door, table, chair, barrel, or bin in bulk. Assign a manager noble "
-            "if the manager screen is unavailable, then choose the job and set a "
-            "quantity or repeat. "
+            "if the manager screen is unavailable: use D_NOBLES, not raw "
+            "STRING_A110, to open Nobles and Administrators. If dwarves do not "
+            "take a workshop job, use D_UNITLIST, not UNIT_LIST, to inspect units "
+            "and labors. Then choose the job and set a quantity or repeat. "
             "Standing orders (o) toggle hauling, refuse, and "
             "auto collect. If jobs do not start, check labor assignments and materials."
         ),
@@ -121,6 +123,9 @@ DEFAULT_DF_WIKI_DOCS: List[WikiDoc] = [
             "unitjob",
             "unitjob_manager",
             "manager_new_order",
+            "d_nobles",
+            "d_unitlist",
+            "nobles",
             "d_joblist",
             "jobs",
             "standing",

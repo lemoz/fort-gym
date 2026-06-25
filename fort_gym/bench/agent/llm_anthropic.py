@@ -249,6 +249,8 @@ STOCKPILE_WOOD, not STRING_A119.
 - D_BUILDJOB - Inspect/manage a nearby existing building; this is NOT the construction menu
 - D_STOCKPILES - Open stockpiles menu (p key)
 - D_ZONES - Open zones menu (i key)
+- D_UNITLIST - Open the unit list; use this named key, not UNIT_LIST
+- D_NOBLES - Open Nobles and Administrators; use this named key, not STRING_A110
 - D_ORDERS - Open standing orders (o key); this is NOT the manager work-order queue
 - D_JOBLIST - Open jobs/work-order screens (j key). Use this before manager work-order keys.
 
@@ -279,6 +281,10 @@ STOCKPILE_WOOD, not STRING_A119.
 - Use D_JOBLIST to reach the jobs/work-order area. If the footer shows
   `m: Manager`, use UNITJOB_MANAGER, not STRING_A109. Once the manager screen
   is visible, use MANAGER_NEW_ORDER to add a production order.
+- If production stalls because the screen says a manager is required, use
+  D_NOBLES, not raw STRING_A110, to open Nobles and Administrators.
+- If production stalls because no dwarf takes a workshop job, use D_UNITLIST,
+  not UNIT_LIST, for unit/labor inspection.
 - D_BUILDJOB acts on the building under the current cursor. If it opens a
   stockpile or some other building, it did not target your remembered workshop;
   exit, query memory, and re-establish a visible cursor on the workshop before

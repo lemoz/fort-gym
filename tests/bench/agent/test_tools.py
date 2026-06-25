@@ -19,6 +19,8 @@ def test_df_wiki_tool_prioritizes_manager_work_orders() -> None:
     assert "D_JOBLIST" in response
     assert "UNITJOB_MANAGER" in response
     assert "MANAGER_NEW_ORDER" in response
+    assert "D_NOBLES" in response
+    assert "D_UNITLIST" in response
     assert "bed" in response
 
 
