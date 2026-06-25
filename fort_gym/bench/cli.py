@@ -971,6 +971,14 @@ def _analyze_real_gameplay_trace(
     max_workshop_loop_streak = _longest_true_streak(workshop_no_progress_flags)
     workshop_no_progress_steps = sum(1 for value in workshop_no_progress_flags if value)
     menu_confusion_steps = sum(1 for record in records if _record_is_menu_confused(record))
+    screen_read_steps = sum(
+        1 for record in records if isinstance(_record_action(record).get("screen_read"), dict)
+    )
+    last_action_review_steps = sum(
+        1
+        for record in records
+        if isinstance(_record_action(record).get("last_action_review"), dict)
+    )
     failed_attempt_writes = _as_int(tool_counts.get("remember_failed_attempt"))
     if max_no_progress_streak >= 5:
         blockers.append("repeated_no_progress_loop")
@@ -1017,6 +1025,12 @@ def _analyze_real_gameplay_trace(
             else 0.0
         ),
         "plan_gate_warnings": _as_int(tool_counts.get("plan_review_gate_warning")),
+        "screen_read_steps": screen_read_steps,
+        "screen_read_rate": round(screen_read_steps / total_steps, 3) if total_steps else 0.0,
+        "last_action_review_steps": last_action_review_steps,
+        "last_action_review_rate": (
+            round(last_action_review_steps / total_steps, 3) if total_steps else 0.0
+        ),
         "poi_writes": _as_int(tool_counts.get("remember_poi")),
         "failed_attempt_writes": failed_attempt_writes,
         "df_wiki_calls": _as_int(tool_counts.get("df_wiki")),

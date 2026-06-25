@@ -323,6 +323,46 @@ KEYSTROKE_PLAN_REVIEW_SYSTEM_PROMPT = (
 )
 
 
+KEYSTROKE_PERCEPTION_REVIEW_APPENDIX = """
+
+## Agent-Owned Perception and Verification Contract
+You are running in the strict no-cheat perception experiment. The harness only
+supplies raw DF observations and enforces that you write down your own
+interpretation before acting. It does not classify menus, pick keys, or decide
+strategy for you.
+
+Before EVERY submit_action, fill these fields:
+1. screen_read: your own reading of the current screen.
+   - mode: one of main_map, designation_menu, building_menu,
+     workshop_placement, stockpile_menu, orders_menu, job_list,
+     announcement_screen, material_selection, unknown.
+   - evidence: one to three short facts from visible screen text/tiles/status.
+   - cursor_or_selection: what you believe the cursor or active selection is.
+   - confidence: high, medium, or low. If unsure, use unknown and low.
+2. last_action_review: your own verification of the previous submitted action.
+   - worked: true, false, or null for the first action.
+   - evidence: one to three facts comparing the previous expected result to the
+     current screen/status/recent outcome row.
+   - mismatch_reason: why it did not work, or empty/null when it worked.
+   - should_retry_same_path: true only if you have new evidence that retrying
+     the same path is appropriate.
+
+If last_action_review says the previous path did not work, do not press the same
+menu/key path again unless your evidence names a changed condition. Prefer a
+different productive branch, a clean exit to main view, or time advancement only
+when dwarves have active work to complete.
+
+These fields are your cognition trail. They do not change Dwarf Fortress and
+they are not scoring. Real score still only comes from native keystrokes,
+visible map/material/building changes, and ticks that let dwarves act.
+"""
+
+
+KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT = (
+    KEYSTROKE_PLAN_REVIEW_SYSTEM_PROMPT + KEYSTROKE_PERCEPTION_REVIEW_APPENDIX
+)
+
+
 KEYSTROKE_TOOL_SPEC = {
     "name": "submit_action",
     "description": "Submit a keystroke sequence to control Dwarf Fortress",
@@ -359,6 +399,54 @@ KEYSTROKE_TOOL_SPEC = {
             "expected_simulation_result": {
                 "type": "string",
                 "description": "Dwarf/world result expected after advancing ticks, or none for UI-only actions",
+            },
+            "screen_read": {
+                "type": "object",
+                "description": "Your own reading of the current DF screen before acting.",
+                "properties": {
+                    "mode": {
+                        "type": "string",
+                        "description": "Current screen/menu mode as you infer it from visible evidence.",
+                    },
+                    "evidence": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Visible screen/status facts supporting your mode read.",
+                    },
+                    "cursor_or_selection": {
+                        "type": "string",
+                        "description": "What cursor, highlighted item, or active selection appears to be current.",
+                    },
+                    "confidence": {
+                        "type": "string",
+                        "enum": ["high", "medium", "low"],
+                    },
+                },
+                "required": ["mode", "evidence", "confidence"],
+            },
+            "last_action_review": {
+                "type": "object",
+                "description": "Your own verification of the previous action against the current observation.",
+                "properties": {
+                    "worked": {
+                        "type": ["boolean", "null"],
+                        "description": "Whether the previous action appears to have worked; null for the first action.",
+                    },
+                    "evidence": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Facts comparing the previous expectation to the current screen/status/outcome.",
+                    },
+                    "mismatch_reason": {
+                        "type": ["string", "null"],
+                        "description": "Why the previous action failed or diverged, if it did.",
+                    },
+                    "should_retry_same_path": {
+                        "type": "boolean",
+                        "description": "Whether retrying the same menu/key path is justified by new evidence.",
+                    },
+                },
+                "required": ["worked", "evidence", "should_retry_same_path"],
             },
             "memory_update": {
                 "type": "string",
@@ -415,22 +503,34 @@ def _append_usage_event(
     *,
     model: str,
     max_tokens: int,
-    temperature: float,
+    temperature: float | None,
 ) -> None:
     usage = _usage_payload(response)
     if not usage:
         return
+    request_input: Dict[str, Any] = {
+        "model": model,
+        "max_tokens": max_tokens,
+    }
+    if temperature is not None:
+        request_input["temperature"] = temperature
     events.append(
         {
             "tool": "anthropic.messages.create",
-            "input": {
-                "model": model,
-                "max_tokens": max_tokens,
-                "temperature": temperature,
-            },
+            "input": request_input,
             "output": {"usage": usage},
         }
     )
+
+
+def _model_rejects_sampling_params(model: str) -> bool:
+    return model.startswith(("claude-opus-4-7", "claude-opus-4-8"))
+
+
+def _request_temperature(model: str, configured_temperature: float) -> float | None:
+    if _model_rejects_sampling_params(model):
+        return None
+    return configured_temperature
 
 
 def _is_rate_limit_error(exc: Exception) -> bool:
@@ -527,26 +627,32 @@ class AnthropicActionAgent(Agent):
         for _ in range(3):
             self._rate_limit()
             client = self._client_instance()
-            response = self._create_message_with_retries(
-                client,
-                model=self._settings.ANTHROPIC_MODEL,
-                max_tokens=self._settings.LLM_MAX_TOKENS,
-                temperature=self._settings.LLM_TEMP,
-                system=self._system_prompt,
-                tools=[ANTHROPIC_TOOL],
-                messages=[
+            model = self._settings.ANTHROPIC_MODEL
+            temperature = _request_temperature(model, self._settings.LLM_TEMP)
+            request_kwargs: Dict[str, Any] = {
+                "model": model,
+                "max_tokens": self._settings.LLM_MAX_TOKENS,
+                "system": self._system_prompt,
+                "tools": [ANTHROPIC_TOOL],
+                "messages": [
                     {
                         "role": "user",
                         "content": [{"type": "text", "text": content}],
                     }
                 ],
+            }
+            if temperature is not None:
+                request_kwargs["temperature"] = temperature
+            response = self._create_message_with_retries(
+                client,
+                **request_kwargs,
             )
             _append_usage_event(
                 self._tool_events,
                 response,
-                model=self._settings.ANTHROPIC_MODEL,
+                model=model,
                 max_tokens=self._settings.LLM_MAX_TOKENS,
-                temperature=self._settings.LLM_TEMP,
+                temperature=temperature,
             )
 
             tool_payload = None
@@ -603,7 +709,9 @@ class AnthropicKeystrokeAgent(Agent):
         system_prompt: str = KEYSTROKE_SYSTEM_PROMPT,
         require_memory_review: bool = False,
         require_plan_review: bool = False,
+        require_perception_review: bool = False,
         plan_review_interval: int = 5,
+        model_override: str | None = None,
     ) -> None:
         self._settings = get_settings()
         if not self._settings.ANTHROPIC_API_KEY:
@@ -613,7 +721,9 @@ class AnthropicKeystrokeAgent(Agent):
         self._system_prompt = system_prompt
         self._require_memory_review = require_memory_review
         self._require_plan_review = require_plan_review
+        self._require_perception_review = require_perception_review
         self._plan_review_interval = max(1, int(plan_review_interval))
+        self._anthropic_model = model_override or self._settings.ANTHROPIC_MODEL
         self._completed_actions = 0
         self._reviewed_plan_milestones: set[str] = set()
         self._memory = MemoryManager(window_size=self._resolve_memory_window())
@@ -754,6 +864,70 @@ class AnthropicKeystrokeAgent(Agent):
                 )
         return None
 
+    def _required_perception_review_error(
+        self,
+        tool_payload: Dict[str, Any] | None,
+    ) -> Optional[str]:
+        if not self._require_perception_review:
+            return None
+        if not isinstance(tool_payload, dict):
+            return "Mandatory perception review missing: submit_action payload is not an object."
+
+        screen_read = tool_payload.get("screen_read")
+        if not isinstance(screen_read, dict):
+            return (
+                "Mandatory screen_read missing: before submit_action, write your own "
+                "current screen/menu read with mode, evidence, cursor_or_selection, "
+                "and confidence."
+            )
+        screen_error = self._validate_screen_read(screen_read)
+        if screen_error:
+            return "Mandatory screen_read incomplete: " + screen_error
+
+        last_action_review = tool_payload.get("last_action_review")
+        if not isinstance(last_action_review, dict):
+            return (
+                "Mandatory last_action_review missing: before submit_action, compare "
+                "the previous action expectation to the current observation. For the "
+                "first action set worked to null and evidence to no previous action."
+            )
+        review_error = self._validate_last_action_review(last_action_review)
+        if review_error:
+            return "Mandatory last_action_review incomplete: " + review_error
+        return None
+
+    @staticmethod
+    def _validate_screen_read(screen_read: Dict[str, Any]) -> Optional[str]:
+        mode = str(screen_read.get("mode") or "").strip()
+        if not mode:
+            return "mode is required."
+        confidence = str(screen_read.get("confidence") or "").strip().lower()
+        if confidence not in {"high", "medium", "low"}:
+            return "confidence must be high, medium, or low."
+        evidence = screen_read.get("evidence")
+        if isinstance(evidence, list):
+            if not any(str(item).strip() for item in evidence):
+                return "evidence must include at least one visible fact."
+        elif not str(evidence or "").strip():
+            return "evidence must include at least one visible fact."
+        return None
+
+    @staticmethod
+    def _validate_last_action_review(last_action_review: Dict[str, Any]) -> Optional[str]:
+        if "worked" not in last_action_review:
+            return "worked is required; use null for the first action."
+        if "should_retry_same_path" not in last_action_review:
+            return "should_retry_same_path is required."
+        if not isinstance(last_action_review.get("should_retry_same_path"), bool):
+            return "should_retry_same_path must be true or false."
+        evidence = last_action_review.get("evidence")
+        if isinstance(evidence, list):
+            if not any(str(item).strip() for item in evidence):
+                return "evidence must include at least one verification fact."
+        elif not str(evidence or "").strip():
+            return "evidence must include at least one verification fact."
+        return None
+
     @staticmethod
     def _plan_milestone_key(obs_text: str) -> Optional[str]:
         text = obs_text.lower()
@@ -851,6 +1025,8 @@ class AnthropicKeystrokeAgent(Agent):
         last_gate_blocked_action: Optional[Dict[str, Any]] = None
         last_gate_blocked_error: Optional[str] = None
         saw_tool_only_response = False
+        model = self._anthropic_model
+        temperature = _request_temperature(model, self._settings.LLM_TEMP)
 
         def append_tool_retry(response_content: Any, tool_results: List[Dict[str, Any]]) -> None:
             messages.append({"role": "assistant", "content": response_content})
@@ -900,21 +1076,25 @@ class AnthropicKeystrokeAgent(Agent):
             tool_result_cache.clear()
             self._rate_limit()
             client = self._client_instance()
+            request_kwargs: Dict[str, Any] = {
+                "model": model,
+                "max_tokens": self._settings.LLM_MAX_TOKENS,
+                "system": self._system_prompt,
+                "tools": tools,
+                "messages": messages,
+            }
+            if temperature is not None:
+                request_kwargs["temperature"] = temperature
             response = self._create_message_with_retries(
                 client,
-                model=self._settings.ANTHROPIC_MODEL,
-                max_tokens=self._settings.LLM_MAX_TOKENS,
-                temperature=self._settings.LLM_TEMP,
-                system=self._system_prompt,
-                tools=tools,
-                messages=messages,
+                **request_kwargs,
             )
             _append_usage_event(
                 self._tool_events,
                 response,
-                model=self._settings.ANTHROPIC_MODEL,
+                model=model,
                 max_tokens=self._settings.LLM_MAX_TOKENS,
-                temperature=self._settings.LLM_TEMP,
+                temperature=temperature,
             )
 
             tool_payload = None
@@ -981,6 +1161,15 @@ class AnthropicKeystrokeAgent(Agent):
                             tool_uses,
                             f"Previous response invalid ({exc}). Provide valid KEYSTROKE action.",
                         ),
+                    )
+                    continue
+
+                perception_error = self._required_perception_review_error(tool_payload)
+                if perception_error:
+                    last_error = ValueError(perception_error)
+                    append_tool_retry(
+                        response.content,
+                        tool_results_for_retry(tool_uses, perception_error),
                     )
                     continue
 
@@ -1053,6 +1242,9 @@ class AnthropicKeystrokeAgent(Agent):
                     ],
                 }
             )
+
+        if self._require_perception_review:
+            raise RuntimeError(f"Anthropic keystroke perception contract failed: {last_error}")
 
         if last_gate_blocked_action is not None:
             warning_tool = (
@@ -1133,6 +1325,27 @@ register_agent(
         plan_review_interval=5,
     ),
 )
+register_agent(
+    "anthropic-keystroke-perception-review",
+    lambda: AnthropicKeystrokeAgent(
+        system_prompt=KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT,
+        require_memory_review=True,
+        require_plan_review=True,
+        require_perception_review=True,
+        plan_review_interval=5,
+    ),
+)
+register_agent(
+    "anthropic-keystroke-perception-review-opus",
+    lambda: AnthropicKeystrokeAgent(
+        system_prompt=KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT,
+        require_memory_review=True,
+        require_plan_review=True,
+        require_perception_review=True,
+        plan_review_interval=5,
+        model_override=get_settings().ANTHROPIC_OPUS_MODEL,
+    ),
+)
 
 
 __all__ = [
@@ -1142,6 +1355,7 @@ __all__ = [
     "AnthropicKeystrokeAgent",
     "DIG_FIRST_SYSTEM_PROMPT",
     "FORTRESS_PLAN_SYSTEM_PROMPT",
+    "KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT",
     "KEYSTROKE_SYSTEM_PROMPT",
     "KEYSTROKE_POI_REVIEW_SYSTEM_PROMPT",
     "KEYSTROKE_PLAN_REVIEW_SYSTEM_PROMPT",

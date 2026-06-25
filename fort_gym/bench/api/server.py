@@ -200,6 +200,8 @@ OPTIONAL_AGENT_MODULES = {
     "anthropic-keystroke": "fort_gym.bench.agent.llm_anthropic",
     "anthropic-keystroke-poi-review": "fort_gym.bench.agent.llm_anthropic",
     "anthropic-keystroke-plan-review": "fort_gym.bench.agent.llm_anthropic",
+    "anthropic-keystroke-perception-review": "fort_gym.bench.agent.llm_anthropic",
+    "anthropic-keystroke-perception-review-opus": "fort_gym.bench.agent.llm_anthropic",
     "anthropic-research": "fort_gym.bench.agent.llm_anthropic_research",
 }
 

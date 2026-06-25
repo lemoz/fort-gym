@@ -10,6 +10,7 @@ from fort_gym.bench.agent.llm_anthropic import (
     AnthropicKeystrokeAgent,
     DIG_FIRST_SYSTEM_PROMPT,
     FORTRESS_PLAN_SYSTEM_PROMPT,
+    KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT,
     KEYSTROKE_PLAN_REVIEW_SYSTEM_PROMPT,
     KEYSTROKE_SYSTEM_PROMPT,
     KEYSTROKE_POI_REVIEW_SYSTEM_PROMPT,
@@ -229,6 +230,15 @@ def test_plan_review_prompt_requires_periodic_plan_reviews() -> None:
     assert "every five submitted actions" in KEYSTROKE_PLAN_REVIEW_SYSTEM_PROMPT
     assert "plan_step" in KEYSTROKE_PLAN_REVIEW_SYSTEM_PROMPT
     assert "post-workshop branch" in KEYSTROKE_PLAN_REVIEW_SYSTEM_PROMPT
+
+
+def test_perception_review_prompt_requires_agent_owned_verification() -> None:
+    assert "Agent-Owned Perception and Verification Contract" in KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
+    assert "screen_read" in KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
+    assert "last_action_review" in KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
+    assert "The harness only" in KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
+    assert "does not classify menus" in KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
+    assert "should_retry_same_path" in KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
 
 
 def test_keystroke_retry_pairs_invalid_tool_use_with_tool_result(monkeypatch) -> None:
@@ -964,6 +974,157 @@ def test_plan_review_agent_falls_back_if_model_stops_submitting_after_gate(monke
     assert _SequencedAnthropicClient.last_instance is not None
     requests = _SequencedAnthropicClient.last_instance.messages.requests
     assert len(requests) == 5
+
+
+def test_perception_review_agent_retries_missing_screen_read(monkeypatch) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.delenv("ANTHROPIC_MODEL", raising=False)
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    _SequencedAnthropicClient.responses = [
+        SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="submit_action",
+                    id="toolu_missing_perception",
+                    input={
+                        "type": "KEYSTROKE",
+                        "params": {"keys": ["D_DESIGNATE"]},
+                        "intent": "act without perception contract",
+                        "objective": "dig",
+                        "advance_ticks": 0,
+                    },
+                )
+            ],
+            usage=SimpleNamespace(input_tokens=10, output_tokens=2),
+        ),
+        SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="submit_action",
+                    id="toolu_action",
+                    input={
+                        "type": "KEYSTROKE",
+                        "params": {"keys": ["D_DESIGNATE"]},
+                        "intent": "open designations after reading the screen",
+                        "objective": "dig reachable starter space",
+                        "screen_read": {
+                            "mode": "main_map",
+                            "evidence": ["main game view visible"],
+                            "cursor_or_selection": "map cursor visible",
+                            "confidence": "medium",
+                        },
+                        "last_action_review": {
+                            "worked": None,
+                            "evidence": ["first action; no previous submitted action"],
+                            "mismatch_reason": None,
+                            "should_retry_same_path": False,
+                        },
+                        "expected_visible_result": "designation menu opens",
+                        "expected_simulation_result": "none until an area is selected",
+                        "advance_ticks": 0,
+                    },
+                )
+            ],
+            usage=SimpleNamespace(input_tokens=12, output_tokens=3),
+        ),
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "anthropic"
+        return SimpleNamespace(Anthropic=_SequencedAnthropicClient)
+
+    monkeypatch.setattr(
+        "fort_gym.bench.agent.llm_anthropic.import_module",
+        fake_import_module,
+    )
+
+    try:
+        agent = AnthropicKeystrokeAgent(
+            system_prompt=KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT,
+            require_perception_review=True,
+        )
+        action = agent.decide("mock screen", {})
+    finally:
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["screen_read"]["mode"] == "main_map"
+    assert action["last_action_review"]["worked"] is None
+    assert _SequencedAnthropicClient.last_instance is not None
+    requests = _SequencedAnthropicClient.last_instance.messages.requests
+    assert len(requests) == 2
+    retry = requests[1]["messages"][2]["content"][0]
+    assert retry["tool_use_id"] == "toolu_missing_perception"
+    assert "Mandatory screen_read missing" in retry["content"]
+
+
+def test_keystroke_opus_model_omits_temperature(monkeypatch) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.setenv("ANTHROPIC_OPUS_MODEL", "claude-opus-4-8")
+    monkeypatch.delenv("ANTHROPIC_MODEL", raising=False)
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    _SequencedAnthropicClient.responses = [
+        SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="submit_action",
+                    id="toolu_action",
+                    input={
+                        "type": "KEYSTROKE",
+                        "params": {"keys": ["LEAVESCREEN"]},
+                        "intent": "recover after screen review",
+                        "objective": "return to main map",
+                        "screen_read": {
+                            "mode": "unknown",
+                            "evidence": ["mock screen has no visible detail"],
+                            "cursor_or_selection": "unknown",
+                            "confidence": "low",
+                        },
+                        "last_action_review": {
+                            "worked": None,
+                            "evidence": ["first action; no previous submitted action"],
+                            "mismatch_reason": None,
+                            "should_retry_same_path": False,
+                        },
+                        "advance_ticks": 0,
+                    },
+                )
+            ],
+            usage=SimpleNamespace(input_tokens=10, output_tokens=2),
+        )
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "anthropic"
+        return SimpleNamespace(Anthropic=_SequencedAnthropicClient)
+
+    monkeypatch.setattr(
+        "fort_gym.bench.agent.llm_anthropic.import_module",
+        fake_import_module,
+    )
+
+    try:
+        agent = AnthropicKeystrokeAgent(
+            system_prompt=KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT,
+            require_perception_review=True,
+            model_override=get_settings().ANTHROPIC_OPUS_MODEL,
+        )
+        action = agent.decide("mock screen", {})
+        events = agent.pop_tool_events()
+    finally:
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["params"]["keys"] == ["LEAVESCREEN"]
+    assert _SequencedAnthropicClient.last_instance is not None
+    request = _SequencedAnthropicClient.last_instance.messages.requests[0]
+    assert request["model"] == "claude-opus-4-8"
+    assert "temperature" not in request
+    assert events[0]["input"] == {
+        "model": "claude-opus-4-8",
+        "max_tokens": 512,
+    }
 
 
 def test_keystroke_agent_falls_back_after_tool_only_responses(monkeypatch) -> None:

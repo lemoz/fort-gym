@@ -19,6 +19,8 @@ ModelType = Literal[
     "anthropic-keystroke",
     "anthropic-keystroke-poi-review",
     "anthropic-keystroke-plan-review",
+    "anthropic-keystroke-perception-review",
+    "anthropic-keystroke-perception-review-opus",
     "anthropic-research",
 ]
 

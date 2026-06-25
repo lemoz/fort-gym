@@ -71,6 +71,20 @@ class BaseAction(BaseModel):
         default=None,
         description="Expected dwarf/world result after advancing ticks, if any.",
     )
+    screen_read: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description=(
+            "Agent's own interpretation of the current DF screen before acting. "
+            "This is perception/debug metadata, not gameplay execution."
+        ),
+    )
+    last_action_review: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description=(
+            "Agent's own comparison of the previous action intent against the current "
+            "screen/state before acting. This is verification metadata, not gameplay execution."
+        ),
+    )
     memory_update: Optional[str] = Field(
         default=None,
         description="Memory or POI update the agent made or will make around this action.",
@@ -269,6 +283,8 @@ ACTION_TOOL_SPEC = {
             "objective": {"type": "string"},
             "expected_visible_result": {"type": "string"},
             "expected_simulation_result": {"type": "string"},
+            "screen_read": {"type": "object"},
+            "last_action_review": {"type": "object"},
             "memory_update": {"type": "string"},
             "advance_ticks": {
                 "type": "integer",

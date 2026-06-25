@@ -77,6 +77,16 @@ def _format_action_history_entry(action_entry: Dict[str, Any]) -> str:
     outcome = action_entry.get("outcome")
     changed = action_entry.get("changed")
     reasons = action_entry.get("productive_reasons")
+    screen_read = (
+        action_entry.get("screen_read")
+        if isinstance(action_entry.get("screen_read"), dict)
+        else {}
+    )
+    last_action_review = (
+        action_entry.get("last_action_review")
+        if isinstance(action_entry.get("last_action_review"), dict)
+        else {}
+    )
 
     details = [f"requested={requested_ticks}t"]
     if actual_ticks is not None:
@@ -91,6 +101,24 @@ def _format_action_history_entry(action_entry: Dict[str, Any]) -> str:
         details.append(
             "changed=" + (", ".join(str(item) for item in changed[:6]) if changed else "none")
         )
+    if screen_read:
+        mode = str(screen_read.get("mode") or "").strip()
+        confidence = str(screen_read.get("confidence") or "").strip()
+        if mode:
+            details.append(
+                "agent_screen="
+                + mode
+                + (f"/{confidence}" if confidence else "")
+            )
+    if last_action_review:
+        worked = last_action_review.get("worked")
+        if worked is not None:
+            details.append(f"agent_prev_worked={worked}")
+        if last_action_review.get("should_retry_same_path") is not None:
+            details.append(
+                "agent_retry_same_path="
+                + str(last_action_review.get("should_retry_same_path")).lower()
+            )
 
     return f"  Step {step_num}: {intent} -> [{keys_str}] ({'; '.join(details)})"
 
