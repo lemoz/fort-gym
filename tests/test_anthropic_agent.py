@@ -229,6 +229,9 @@ def test_keystroke_prompt_is_action_first() -> None:
     assert "D_BUILDING" in KEYSTROKE_SYSTEM_PROMPT
     assert "HOTKEY_BUILDING_WORKSHOP_CARPENTER" in KEYSTROKE_SYSTEM_PROMPT
     assert "STOCKPILE_WOOD" in KEYSTROKE_SYSTEM_PROMPT
+    assert "D_ORDERS opens standing orders only" in KEYSTROKE_SYSTEM_PROMPT
+    assert "D_JOBLIST to reach the jobs/work-order area" in KEYSTROKE_SYSTEM_PROMPT
+    assert "D_BUILDJOB acts on the building under the current cursor" in KEYSTROKE_SYSTEM_PROMPT
     assert "not STRING_A119" in KEYSTROKE_SYSTEM_PROMPT
     assert "cursor_inactive=(-30000,...)" in KEYSTROKE_SYSTEM_PROMPT
     assert "not proof" in KEYSTROKE_SYSTEM_PROMPT
@@ -790,6 +793,26 @@ def test_poi_review_agent_rejects_repeated_workshop_placement(monkeypatch) -> No
     retry = requests[1]["messages"][2]["content"][1]
     assert retry["tool_use_id"] == "toolu_workshop"
     assert "Workshop placement loop detected" in retry["content"]
+
+
+def test_workshop_strategy_switch_rejects_redundant_workshop_after_one_exists() -> None:
+    payload = {
+        "type": "KEYSTROKE",
+        "params": {
+            "keys": [
+                "D_BUILDING",
+                "HOTKEY_BUILDING_WORKSHOP",
+                "HOTKEY_BUILDING_WORKSHOP_CARPENTER",
+            ]
+        },
+        "intent": "place a second carpenter workshop",
+        "expected_visible_result": "carpenter workshop placement opens",
+    }
+
+    assert AnthropicKeystrokeAgent._needs_workshop_strategy_switch(
+        "Utility work: manager_orders=0, order_qty_left=0, carpenter_workshops=1\n",
+        payload,
+    )
 
 
 def test_plan_review_agent_requires_initial_plan(monkeypatch) -> None:

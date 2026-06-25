@@ -9,6 +9,17 @@ def test_df_wiki_tool_answers_designations() -> None:
     assert "Designations" in response or "designations" in response
 
 
+def test_df_wiki_tool_prioritizes_manager_work_orders() -> None:
+    tool = DFWikiTool()
+    response = tool.query(
+        "How do I create a manager work order for wooden furniture like a bed or table?"
+    )
+    first_title = response.splitlines()[0]
+    assert first_title == "Title: Manager orders and standing orders"
+    assert "j then m" in response
+    assert "bed" in response
+
+
 def test_tool_manager_exposes_df_wiki_spec() -> None:
     manager = ToolManager(["df_wiki"])
     specs = manager.tool_specs()

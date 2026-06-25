@@ -80,12 +80,32 @@ DEFAULT_DF_WIKI_DOCS: List[WikiDoc] = [
     WikiDoc(
         title="Manager orders and standing orders",
         body=(
-            "Manager orders let you queue jobs in bulk. Assign a manager noble, open "
-            "the manager screen (j then m), add a new order, choose a job, and set a "
-            "quantity or repeat. Standing orders (o) toggle hauling, refuse, and "
+            "Manager orders (j then m) let you queue jobs like bed, door, table, "
+            "chair, barrel, or bin in bulk. Assign a manager noble, open the "
+            "manager screen, add a new order, choose the job, and set a quantity "
+            "or repeat. "
+            "Standing orders (o) toggle hauling, refuse, and "
             "auto collect. If jobs do not start, check labor assignments and materials."
         ),
-        keywords=("manager", "orders", "order", "jobs", "standing", "labor", "materials"),
+        keywords=(
+            "manager",
+            "orders",
+            "order",
+            "work",
+            "workorder",
+            "workorders",
+            "jobs",
+            "standing",
+            "labor",
+            "materials",
+            "furniture",
+            "bed",
+            "door",
+            "table",
+            "chair",
+            "barrel",
+            "bin",
+        ),
     ),
 ]
 

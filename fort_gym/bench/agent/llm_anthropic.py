@@ -198,7 +198,8 @@ STOCKPILE_WOOD, not STRING_A119.
 - D_BUILDJOB - Inspect/manage a nearby existing building; this is NOT the construction menu
 - D_STOCKPILES - Open stockpiles menu (p key)
 - D_ZONES - Open zones menu (i key)
-- D_ORDERS - Open standing orders (o key)
+- D_ORDERS - Open standing orders (o key); this is NOT the manager work-order queue
+- D_JOBLIST - Open jobs/work-order screens (j key). Use this before manager work-order keys.
 
 ### Designate Submenu (after D_DESIGNATE)
 - DESIGNATE_DIG - Mine/dig mode (d key)
@@ -220,6 +221,16 @@ STOCKPILE_WOOD, not STRING_A119.
 - STOCKPILE_BAR - Choose Bar/Block stockpile type
 - After selecting a stockpile type, use CURSOR keys and SELECT twice to define
   the rectangle, then LEAVESCREEN to exit.
+
+### Manager / Work Orders
+- D_ORDERS opens standing orders only. If you are trying to queue production
+  such as beds, doors, tables, chairs, barrels, or bins, do not use D_ORDERS.
+- Use D_JOBLIST to reach the jobs/work-order area, then use visible manager
+  menu options or MANAGER_NEW_ORDER if the manager screen is visible.
+- D_BUILDJOB acts on the building under the current cursor. If it opens a
+  stockpile or some other building, it did not target your remembered workshop;
+  exit, query memory, and re-establish a visible cursor on the workshop before
+  trying building-job commands again.
 
 ## How to Dig
 1. Press D_DESIGNATE to open designate menu
@@ -896,8 +907,8 @@ class AnthropicKeystrokeAgent(Agent):
             return (
                 "Workshop placement loop detected: do not attempt another workshop "
                 "placement or placement-cursor navigation. Record/consult memory and "
-                "submit a different productive branch such as exact fresh target keys, "
-                "dig/chop designation, or stockpile creation."
+                "submit a different productive branch such as manager/job production, "
+                "exact fresh target keys, dig/chop designation, or stockpile creation."
             )
         return None
 
@@ -1158,6 +1169,12 @@ class AnthropicKeystrokeAgent(Agent):
         if not workshop_requested:
             return False
         text = obs_text.lower()
+        workshop_already_exists = bool(
+            re.search(r"carpenter_workshops=([1-9]\d*)", text)
+            or re.search(r"workshop_count=([1-9]\d*)", text)
+        )
+        if workshop_already_exists:
+            return True
         failed_workshop_mentions = text.count("failed") + text.count("no tracked state")
         has_workshop_failure_memory = (
             "recent failed attempts:" in text
