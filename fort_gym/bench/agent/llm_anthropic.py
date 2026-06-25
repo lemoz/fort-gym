@@ -122,6 +122,9 @@ read the visible placement screen before confirming. Do not press SELECT to plac
 the workshop unless your screen_read verifies the placement UI does not say
 `Blocked` or `Needs building material`. The visible DF screen overrides
 `selection_rect`, `placement_rect`, and target metadata.
+If the current visible workshop placement screen says `Enter: Place` and does
+not say `Blocked` or `Needs building material`, treat older material warnings as
+stale and press SELECT to place the workshop.
 Retry keys are shown after failed attempts for a bounded retry.
 
 If status says the recommended keys are hidden, stop using that target's old sequence.

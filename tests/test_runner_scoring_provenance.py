@@ -4,9 +4,11 @@ from fort_gym.bench.run.runner import (
     _available_building_materials,
     _carpenter_workshops,
     _desired_keystroke_target_mode,
+    _screen_shows_ready_workshop_placement,
     _ui_target_setup_for_observation,
     _ui_target_step_succeeded,
     _ui_work_rect_from_state,
+    _workshop_placement_confirm_target,
     _zero_assisted_dfhack_progress,
 )
 
@@ -173,6 +175,33 @@ def test_desired_keystroke_target_mode_trusts_visible_material_blocker() -> None
         )
         == "material"
     )
+
+
+def test_ready_workshop_placement_screen_gets_select_target() -> None:
+    assert _screen_shows_ready_workshop_placement(
+        "Carpenter's Workshop\nPlacement\nEnter: Place\nESC: Cancel"
+    )
+    assert not _screen_shows_ready_workshop_placement(
+        "Carpenter's Workshop\nPlacement\nNeeds building material\nESC: Cancel"
+    )
+    assert not _screen_shows_ready_workshop_placement(
+        "Carpenter's Workshop\nPlacement\nBlocked\nESC: Cancel"
+    )
+
+    target = _workshop_placement_confirm_target(
+        {
+            "work": {
+                "cursor_x": 94,
+                "cursor_y": 100,
+                "cursor_z": 177,
+            },
+        }
+    )
+
+    assert target["target_mode"] == "workshop"
+    assert target["source"] == "visible_workshop_placement"
+    assert target["recommended_keys"] == ["SELECT"]
+    assert target["selection_rect"] == [94, 100, 177, 96, 102, 177]
 
 
 def test_ui_target_setup_retries_recommended_keys_after_failed_attempt() -> None:

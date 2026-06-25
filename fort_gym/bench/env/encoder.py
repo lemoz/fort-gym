@@ -187,6 +187,17 @@ def encode_observation(
             or "Needs building material" in screen_text
         )
     )
+    screen_shows_ready_workshop_placement = bool(
+        screen_text
+        and "Carpenter's Workshop" in screen_text
+        and "Placement" in screen_text
+        and "Enter: Place" in screen_text
+        and not screen_shows_blocked_placement
+    )
+    active_material_blocked = bool(
+        ui_build_feedback.get("material_blocked")
+        and not screen_shows_ready_workshop_placement
+    )
 
     # Build status section
     status_lines = []
@@ -333,7 +344,14 @@ def encode_observation(
                     "Live UI feedback: the last action changed no tracked tiles; "
                     "do not repeat the same key sequence unless a fresh target is shown."
                 )
-    if ui_build_feedback.get("material_blocked"):
+    if screen_shows_ready_workshop_placement:
+        status_lines.append(
+            "Live UI build feedback: the current visible workshop placement "
+            "screen says Enter: Place and does not show Blocked or Needs "
+            "building material; treat older material warnings as stale for "
+            "this screen."
+        )
+    elif ui_build_feedback.get("material_blocked"):
         if ui_build_feedback.get("visible", True):
             status_lines.append(
                 "Live UI build feedback: the visible build screen says material is "
@@ -362,7 +380,7 @@ def encode_observation(
             if (
                 available_materials <= 0
                 or total_material_delta <= 0
-                or ui_build_feedback.get("material_blocked")
+                or active_material_blocked
             ):
                 status_lines.append(
                     "Live UI phase: starter digging exists but building material is "
@@ -422,6 +440,13 @@ def encode_observation(
                     "says placement is blocked or missing material, so do not "
                     "press SELECT to confirm; trust the visible screen over "
                     "target metadata."
+                )
+            elif screen_shows_ready_workshop_placement:
+                status_lines.append(
+                    "Live UI workshop target: current DF screen is a valid "
+                    "carpenter workshop placement screen. If your screen_read "
+                    "also sees Enter: Place and no Blocked or Needs building "
+                    "material warning, press SELECT to place it now."
                 )
             else:
                 status_lines.append(

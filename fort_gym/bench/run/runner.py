@@ -300,6 +300,43 @@ def _desired_keystroke_target_mode(
     return "starter"
 
 
+def _screen_shows_ready_workshop_placement(screen_text: str | None) -> bool:
+    return bool(
+        screen_text
+        and "Carpenter's Workshop" in screen_text
+        and "Placement" in screen_text
+        and "Enter: Place" in screen_text
+        and "Blocked" not in screen_text
+        and "Needs building material" not in screen_text
+    )
+
+
+def _workshop_placement_confirm_target(state: Dict[str, Any]) -> Dict[str, Any]:
+    work = state.get("work") if isinstance(state.get("work"), dict) else {}
+    cursor_x = int(work.get("cursor_x") or 0)
+    cursor_y = int(work.get("cursor_y") or 0)
+    cursor_z = int(work.get("cursor_z") or 0)
+    if cursor_x <= -10000:
+        cursor_x = int(work.get("window_x") or 0)
+    selection_rect = [
+        cursor_x,
+        cursor_y,
+        cursor_z,
+        cursor_x + 2,
+        cursor_y + 2,
+        cursor_z,
+    ]
+    return {
+        "ok": True,
+        "target_mode": "workshop",
+        "source": "visible_workshop_placement",
+        "selection_rect": selection_rect,
+        "target_rect": selection_rect,
+        "designatable_tiles": 9,
+        "recommended_keys": ["SELECT"],
+    }
+
+
 def _ui_work_rect_from_state(
     state: Dict[str, Any],
     radius: int = UI_WORK_RADIUS,
@@ -669,46 +706,60 @@ def run_once(
                     and screen_text
                     and "Needs building material" in screen_text
                 )
+                screen_has_ready_workshop_placement = _screen_shows_ready_workshop_placement(
+                    screen_text if is_keystroke_mode else None
+                )
                 if screen_has_material_blocker:
                     ui_build_material_blocked = True
+                elif screen_has_ready_workshop_placement:
+                    ui_build_material_blocked = False
                 if backend_name == "dfhack" and is_keystroke_mode:
-                    desired_target_mode = _desired_keystroke_target_mode(
-                        state_before,
-                        ui_run_excavation_progress=ui_run_excavation_progress,
-                        ui_run_material_progress=ui_run_material_progress,
-                        ui_successful_targets=ui_successful_targets,
-                        build_material_blocked=ui_build_material_blocked,
-                    )
-                    if desired_target_mode != ui_target_mode:
-                        refreshed_target = prepare_keystroke_target(desired_target_mode)
-                        if refreshed_target.get("ok"):
-                            ui_target_mode = desired_target_mode
-                            keystroke_ui_target = refreshed_target
-                            ui_target_generation += 1
-                            ui_target_attempts = 0
-                            ui_work_rect = None
-                            baseline_ui_work = None
-                            ui_last_work_progress = 0
-                            ui_last_excavation_progress = 0
-                            ui_target_progress_seen = False
-                            ui_no_progress_streak = 0
-                            if ui_target_mode == "material":
-                                refresh_reason = "switching to material acquisition target"
-                            elif ui_target_mode == "workshop":
-                                refresh_reason = "switching to workshop placement target"
+                    if screen_has_ready_workshop_placement:
+                        ui_target_mode = "workshop"
+                        keystroke_ui_target = _workshop_placement_confirm_target(state_before)
+                        ui_target_attempts = 0
+                        ui_work_rect = None
+                        baseline_ui_work = None
+                        ui_target_progress_seen = False
+                        ui_no_progress_streak = 0
+                    else:
+                        desired_target_mode = _desired_keystroke_target_mode(
+                            state_before,
+                            ui_run_excavation_progress=ui_run_excavation_progress,
+                            ui_run_material_progress=ui_run_material_progress,
+                            ui_successful_targets=ui_successful_targets,
+                            build_material_blocked=ui_build_material_blocked,
+                        )
+                        if desired_target_mode != ui_target_mode:
+                            refreshed_target = prepare_keystroke_target(desired_target_mode)
+                            if refreshed_target.get("ok"):
+                                ui_target_mode = desired_target_mode
+                                keystroke_ui_target = refreshed_target
+                                ui_target_generation += 1
+                                ui_target_attempts = 0
+                                ui_work_rect = None
+                                baseline_ui_work = None
+                                ui_last_work_progress = 0
+                                ui_last_excavation_progress = 0
+                                ui_target_progress_seen = False
+                                ui_no_progress_streak = 0
+                                if ui_target_mode == "material":
+                                    refresh_reason = "switching to material acquisition target"
+                                elif ui_target_mode == "workshop":
+                                    refresh_reason = "switching to workshop placement target"
+                                else:
+                                    refresh_reason = "switching to starter excavation target"
+                                ui_work_feedback = {
+                                    "target_refreshed": True,
+                                    "target_mode": ui_target_mode,
+                                    "reason": refresh_reason,
+                                }
                             else:
-                                refresh_reason = "switching to starter excavation target"
-                            ui_work_feedback = {
-                                "target_refreshed": True,
-                                "target_mode": ui_target_mode,
-                                "reason": refresh_reason,
-                            }
-                        else:
-                            ui_work_feedback = {
-                                "target_refresh_failed": True,
-                                "target_mode": desired_target_mode,
-                                "error": refreshed_target.get("error", "unknown"),
-                            }
+                                ui_work_feedback = {
+                                    "target_refresh_failed": True,
+                                    "target_mode": desired_target_mode,
+                                    "error": refreshed_target.get("error", "unknown"),
+                                }
                     if keystroke_ui_target is not None:
                         recovery_prefix = (
                             list(UI_MATERIAL_BLOCKER_ESCAPE_KEYS)
