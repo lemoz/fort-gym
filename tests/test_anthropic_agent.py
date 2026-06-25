@@ -230,6 +230,9 @@ def test_keystroke_prompt_is_action_first() -> None:
     assert "HOTKEY_BUILDING_WORKSHOP_CARPENTER" in KEYSTROKE_SYSTEM_PROMPT
     assert "STOCKPILE_WOOD" in KEYSTROKE_SYSTEM_PROMPT
     assert "not STRING_A119" in KEYSTROKE_SYSTEM_PROMPT
+    assert "cursor_inactive=(-30000,...)" in KEYSTROKE_SYSTEM_PROMPT
+    assert "not proof" in KEYSTROKE_SYSTEM_PROMPT
+    assert "future cursor movement" in KEYSTROKE_SYSTEM_PROMPT
     assert "advance_ticks\": 500" in KEYSTROKE_SYSTEM_PROMPT
     assert "Do not" in KEYSTROKE_SYSTEM_PROMPT
     assert "repeat the same key sequence" in KEYSTROKE_SYSTEM_PROMPT
@@ -261,6 +264,7 @@ def test_perception_review_prompt_requires_agent_owned_verification() -> None:
     assert "review_last_action" in KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
     assert "The harness only" in KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
     assert "does not classify menus" in KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
+    assert "Distinguish a visible X cursor" in KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
     assert "should_retry_same_path" in KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
 
 

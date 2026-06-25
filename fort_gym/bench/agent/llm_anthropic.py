@@ -124,6 +124,10 @@ Do not repeat the same key sequence for that target.
 If `Live UI feedback` says `last_action_work_delta=0` or the no-progress streak is rising,
 use shown retry/fresh keys if present; otherwise choose a different useful action or wait
 only if dwarves still have active work.
+If `Live view` says `cursor_inactive=(-30000,...)`, that is DF's sentinel for
+"no active cursor on this screen," not proof that all future cursor movement is
+broken. Open a cursor-owning mode such as D_DESIGNATE, D_STOCKPILES, or
+D_BUILDING, then judge the visible cursor/menu from the next screen.
 
 Default recommended first action:
 {
@@ -295,8 +299,10 @@ branch such as designating fresh dig/chop work or making a stockpile.
 If workshop placement has already failed twice, do not move the placement cursor
 around looking for a tile. Switch strategy: exit the build menu, use any fresh
 target recommended keys exactly, create a stockpile, or designate new dig/chop
-work. If the cursor is off-map (for example x=-30000), do not try k/u/status
-menus to recenter; exit submenus and choose a productive main-menu action.
+work. If `Live view` reports `cursor_inactive=(-30000,...)`, distinguish that
+inactive sentinel from a visible off-map cursor. In main_map it usually means no
+cursor-owning mode is open yet; in a cursor placement menu without a visible X,
+exit once and choose a productive named menu action or fresh target.
 """
 
 
@@ -355,6 +361,8 @@ Before EVERY submit_action:
      announcement_screen, material_selection, unknown.
    - evidence: one to three short facts from visible screen text/tiles/status.
    - cursor_or_selection: what you believe the cursor or active selection is.
+     Distinguish a visible X cursor from `cursor_inactive=(-30000,...)`, which
+     only means the current screen has no active DF cursor exposed.
    - confidence: high, medium, or low. If unsure, use unknown and low.
 2. Call review_last_action with your own verification of the previous submitted action.
    - worked: true, false, or null for the first action.

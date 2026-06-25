@@ -99,6 +99,29 @@ def test_encoder_shows_retry_recommended_keys_after_failed_attempt() -> None:
     assert "last_action_work_delta=0" in text
 
 
+def test_encoder_explains_inactive_df_cursor_sentinel() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60},
+            "work": {
+                "cursor_x": -30000,
+                "cursor_y": 92,
+                "cursor_z": 177,
+                "window_x": 87,
+                "window_y": 82,
+                "window_z": 177,
+            },
+        },
+        screen_text="screen",
+    )
+
+    assert "cursor_inactive=(-30000,92,177)" in text
+    assert "no active DF cursor" in text
+    assert "opening a designation, stockpile, or building-placement mode" in text
+
+
 def test_encoder_shows_material_phase_after_enough_ui_excavation_without_materials() -> None:
     text, _ = encode_observation(
         {

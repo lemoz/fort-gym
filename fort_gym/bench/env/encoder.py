@@ -4,10 +4,19 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Tuple
 
+INVALID_DF_CURSOR = -30000
+
 
 def redact_noise(state: Dict[str, Any]) -> Dict[str, Any]:
     """Placeholder hook to strip non-deterministic noise from raw state."""
     return state
+
+
+def _is_inactive_df_cursor(value: Any) -> bool:
+    try:
+        return int(value) <= INVALID_DF_CURSOR
+    except (TypeError, ValueError):
+        return False
 
 
 def _compute_screen_diff(prev: str, curr: str) -> Dict[str, Any]:
@@ -234,13 +243,26 @@ def encode_observation(
             f"designations={work.get('target_dig_designations', 0)}"
         )
         if work.get("cursor_z") is not None or work.get("window_z") is not None:
+            cursor_x = work.get("cursor_x")
+            cursor_label = (
+                "inactive"
+                if _is_inactive_df_cursor(cursor_x)
+                else "active"
+            )
             status_lines.append(
                 "Live view: "
-                f"cursor=({work.get('cursor_x', '?')},{work.get('cursor_y', '?')},"
+                f"cursor_{cursor_label}=({work.get('cursor_x', '?')},{work.get('cursor_y', '?')},"
                 f"{work.get('cursor_z', '?')}), "
                 f"window=({work.get('window_x', '?')},{work.get('window_y', '?')},"
                 f"{work.get('window_z', '?')})"
             )
+            if cursor_label == "inactive":
+                status_lines.append(
+                    "Live view note: cursor -30000 means no active DF cursor is "
+                    "currently exposed on this screen; opening a designation, "
+                    "stockpile, or building-placement mode can create a normal "
+                    "cursor again."
+                )
         status_lines.append(
             "Utility work: "
             f"manager_orders={work.get('manager_orders_count', 0)}, "
