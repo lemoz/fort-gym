@@ -126,36 +126,45 @@ def screen_selection_hints(
     for row_index, (raw_line, attrs) in enumerate(rows):
         if not raw_line.strip():
             continue
-        highlighted_cols = [
-            col
-            for col, (ch, (_fg, bg)) in enumerate(zip(raw_line, attrs))
-            if bg not in (None, 0) and (ch != " " or col > 0)
-        ]
-        if len(highlighted_cols) < 2:
-            continue
-        start = min(highlighted_cols)
-        end = max(highlighted_cols)
-        highlighted_text = raw_line[start : end + 1].strip()
         line_text = raw_line.rstrip()
-        hint_text = highlighted_text or line_text.strip()
-        if sum(1 for ch in hint_text if ch.isalpha()) < 2:
+        if row_index == 0 and ("PAUSED" in line_text or "Dwarf Fortress" in line_text):
             continue
 
-        attr_counts: Dict[Tuple[Optional[int], Optional[int]], int] = {}
-        for col in highlighted_cols:
-            attr = attrs[col]
-            attr_counts[attr] = attr_counts.get(attr, 0) + 1
-        fg, bg = max(attr_counts.items(), key=lambda item: item[1])[0]
-        hints.append(
-            {
-                "row": row_index,
-                "cols": [start, end],
-                "text": hint_text,
-                "line": line_text.strip(),
-                "fg": fg,
-                "bg": bg,
-            }
-        )
+        run_start: Optional[int] = None
+        run_attr: Tuple[Optional[int], Optional[int]] | None = None
+        runs: List[Tuple[int, int, Tuple[Optional[int], Optional[int]]]] = []
+        for col, (_ch, attr) in enumerate(zip(raw_line, attrs)):
+            bg = attr[1]
+            is_highlighted = bg not in (None, 0)
+            if is_highlighted and run_start is None:
+                run_start = col
+                run_attr = attr
+            elif (not is_highlighted or attr != run_attr) and run_start is not None:
+                runs.append((run_start, col - 1, run_attr or (None, None)))
+                run_start = col if is_highlighted else None
+                run_attr = attr if is_highlighted else None
+        if run_start is not None:
+            runs.append((run_start, len(raw_line) - 1, run_attr or (None, None)))
+
+        for start, end, (fg, bg) in runs:
+            if end - start + 1 < 2:
+                continue
+            highlighted_text = raw_line[start : end + 1].strip()
+            hint_text = highlighted_text or line_text.strip()
+            if sum(1 for ch in hint_text if ch.isalpha()) < 2:
+                continue
+            hints.append(
+                {
+                    "row": row_index,
+                    "cols": [start, end],
+                    "text": hint_text,
+                    "line": line_text.strip(),
+                    "fg": fg,
+                    "bg": bg,
+                }
+            )
+            if len(hints) >= max_rows:
+                break
         if len(hints) >= max_rows:
             break
     return hints
