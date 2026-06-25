@@ -332,21 +332,24 @@ supplies raw DF observations and enforces that you write down your own
 interpretation before acting. It does not classify menus, pick keys, or decide
 strategy for you.
 
-Before EVERY submit_action, fill these fields:
-1. screen_read: your own reading of the current screen.
+Before EVERY submit_action:
+1. Call record_screen_read with your own reading of the current screen.
    - mode: one of main_map, designation_menu, building_menu,
      workshop_placement, stockpile_menu, orders_menu, job_list,
      announcement_screen, material_selection, unknown.
    - evidence: one to three short facts from visible screen text/tiles/status.
    - cursor_or_selection: what you believe the cursor or active selection is.
    - confidence: high, medium, or low. If unsure, use unknown and low.
-2. last_action_review: your own verification of the previous submitted action.
+2. Call review_last_action with your own verification of the previous submitted action.
    - worked: true, false, or null for the first action.
    - evidence: one to three facts comparing the previous expected result to the
      current screen/status/recent outcome row.
    - mismatch_reason: why it did not work, or empty/null when it worked.
    - should_retry_same_path: true only if you have new evidence that retrying
      the same path is appropriate.
+3. Then call submit_action. You may also include screen_read and
+   last_action_review in submit_action, but the mandatory tools above are the
+   source of truth for this experiment.
 
 If last_action_review says the previous path did not work, do not press the same
 menu/key path again unless your evidence names a changed condition. Prefer a
@@ -751,6 +754,8 @@ class AnthropicKeystrokeAgent(Agent):
         enabled_tools = ["df_wiki", "remember_poi", "remember_failed_attempt", "query_memory"]
         if require_plan_review:
             enabled_tools.extend(["write_gameplay_plan", "review_gameplay_plan"])
+        if require_perception_review:
+            enabled_tools.extend(["record_screen_read", "review_last_action"])
         self._tool_manager = ToolManager(enabled_tools, memory=self._memory)
         self._tool_events: List[Dict[str, Any]] = []
 
@@ -886,9 +891,26 @@ class AnthropicKeystrokeAgent(Agent):
     def _required_perception_review_error(
         self,
         tool_payload: Dict[str, Any] | None,
+        tool_names: set[str] | None = None,
     ) -> Optional[str]:
         if not self._require_perception_review:
             return None
+        tool_names = tool_names or set()
+        if "record_screen_read" not in tool_names and not (
+            isinstance(tool_payload, dict) and isinstance(tool_payload.get("screen_read"), dict)
+        ):
+            return (
+                "Mandatory record_screen_read missing: call record_screen_read with "
+                "your own current screen/menu read before submit_action."
+            )
+        if "review_last_action" not in tool_names and not (
+            isinstance(tool_payload, dict)
+            and isinstance(tool_payload.get("last_action_review"), dict)
+        ):
+            return (
+                "Mandatory review_last_action missing: call review_last_action with "
+                "your own previous-action verification before submit_action."
+            )
         if not isinstance(tool_payload, dict):
             return "Mandatory perception review missing: submit_action payload is not an object."
 
@@ -1118,9 +1140,15 @@ class AnthropicKeystrokeAgent(Agent):
 
             tool_payload = None
             tool_uses = []
+            perception_inputs: Dict[str, Dict[str, Any]] = {}
             for item in response.content:
                 if item.type == "tool_use":
                     tool_uses.append(item)
+                    tool_input = item.input if isinstance(item.input, dict) else {}
+                    if item.name == "record_screen_read":
+                        perception_inputs["screen_read"] = dict(tool_input)
+                    elif item.name == "review_last_action":
+                        perception_inputs["last_action_review"] = dict(tool_input)
                     if item.name == "submit_action":
                         tool_payload = item.input
 
@@ -1143,6 +1171,11 @@ class AnthropicKeystrokeAgent(Agent):
                 )
 
             if tool_payload is not None:
+                if isinstance(tool_payload, dict) and perception_inputs:
+                    tool_payload = dict(tool_payload)
+                    for field, value in perception_inputs.items():
+                        tool_payload.setdefault(field, value)
+
                 # Validate it's a KEYSTROKE action before applying planning gates.
                 # If the model spends retries on notebook tools but never resubmits,
                 # we can still fall back to this last valid candidate without
@@ -1183,7 +1216,10 @@ class AnthropicKeystrokeAgent(Agent):
                     )
                     continue
 
-                perception_error = self._required_perception_review_error(tool_payload)
+                perception_error = self._required_perception_review_error(
+                    tool_payload,
+                    {str(getattr(tool_use, "name", "")) for tool_use in tool_uses},
+                )
                 if perception_error:
                     last_error = ValueError(perception_error)
                     append_tool_retry(

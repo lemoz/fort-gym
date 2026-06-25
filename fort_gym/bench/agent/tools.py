@@ -261,6 +261,75 @@ REVIEW_GAMEPLAY_PLAN_TOOL_SPEC: Dict[str, Any] = {
 }
 
 
+RECORD_SCREEN_READ_TOOL_SPEC: Dict[str, Any] = {
+    "name": "record_screen_read",
+    "description": (
+        "Record your own interpretation of the current Dwarf Fortress screen before "
+        "submitting keystrokes. This is notebook perception only; it does not act in the game."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "mode": {
+                "type": "string",
+                "description": (
+                    "Current screen or menu mode, e.g. main_map, designation_menu, "
+                    "building_menu, workshop_placement, stockpile_menu, unknown."
+                ),
+            },
+            "evidence": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Visible screen/status facts supporting this read.",
+                "maxItems": 4,
+            },
+            "cursor_or_selection": {
+                "type": "string",
+                "description": "What cursor, highlighted item, or active selection appears current.",
+            },
+            "confidence": {
+                "type": "string",
+                "enum": ["high", "medium", "low"],
+            },
+        },
+        "required": ["mode", "evidence", "confidence"],
+    },
+}
+
+
+REVIEW_LAST_ACTION_TOOL_SPEC: Dict[str, Any] = {
+    "name": "review_last_action",
+    "description": (
+        "Review whether your previous submitted keystroke action did what you expected. "
+        "This is notebook verification only; it does not act in the game."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "worked": {
+                "type": ["boolean", "null"],
+                "description": "Whether the previous action appears to have worked; null for the first action.",
+            },
+            "evidence": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Facts comparing the previous expectation to current screen/status/outcome.",
+                "maxItems": 4,
+            },
+            "mismatch_reason": {
+                "type": ["string", "null"],
+                "description": "Why the previous action failed or diverged, if it did.",
+            },
+            "should_retry_same_path": {
+                "type": "boolean",
+                "description": "Whether retrying the same menu/key path is justified by new evidence.",
+            },
+        },
+        "required": ["worked", "evidence", "should_retry_same_path"],
+    },
+}
+
+
 class DFWikiTool:
     """Search embedded DF wiki excerpts for gameplay guidance."""
 
@@ -324,6 +393,8 @@ class ToolManager:
                 "query_memory",
                 "write_gameplay_plan",
                 "review_gameplay_plan",
+                "record_screen_read",
+                "review_last_action",
             }:
                 tools[name] = None
             else:
@@ -343,6 +414,10 @@ class ToolManager:
                 specs.append(WRITE_GAMEPLAY_PLAN_TOOL_SPEC)
             elif name == "review_gameplay_plan":
                 specs.append(REVIEW_GAMEPLAY_PLAN_TOOL_SPEC)
+            elif name == "record_screen_read":
+                specs.append(RECORD_SCREEN_READ_TOOL_SPEC)
+            elif name == "review_last_action":
+                specs.append(REVIEW_LAST_ACTION_TOOL_SPEC)
             else:
                 tool = self.tools.get(name)
                 if tool:
@@ -411,6 +486,17 @@ class ToolManager:
                 revised_steps=revised_steps if isinstance(revised_steps, list) else [],
                 reason=str(tool_input.get("reason", "")),
             )
+        if tool_name == "record_screen_read":
+            mode = str(tool_input.get("mode", "")).strip() or "unknown"
+            confidence = str(tool_input.get("confidence", "")).strip() or "low"
+            return f"Recorded screen read: mode={mode}, confidence={confidence}."
+        if tool_name == "review_last_action":
+            worked = tool_input.get("worked")
+            retry = tool_input.get("should_retry_same_path")
+            return (
+                "Recorded last-action review: "
+                f"worked={worked}, should_retry_same_path={retry}."
+            )
 
         tool = self.tools.get(tool_name)
         if tool is None:
@@ -433,8 +519,10 @@ __all__ = [
     "WikiDoc",
     "DF_WIKI_TOOL_SPEC",
     "QUERY_MEMORY_TOOL_SPEC",
+    "RECORD_SCREEN_READ_TOOL_SPEC",
     "REMEMBER_FAILED_ATTEMPT_TOOL_SPEC",
     "REMEMBER_POI_TOOL_SPEC",
     "REVIEW_GAMEPLAY_PLAN_TOOL_SPEC",
+    "REVIEW_LAST_ACTION_TOOL_SPEC",
     "WRITE_GAMEPLAY_PLAN_TOOL_SPEC",
 ]

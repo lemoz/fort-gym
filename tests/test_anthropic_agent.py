@@ -236,6 +236,8 @@ def test_perception_review_prompt_requires_agent_owned_verification() -> None:
     assert "Agent-Owned Perception and Verification Contract" in KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
     assert "screen_read" in KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
     assert "last_action_review" in KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
+    assert "record_screen_read" in KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
+    assert "review_last_action" in KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
     assert "The harness only" in KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
     assert "does not classify menus" in KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
     assert "should_retry_same_path" in KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
@@ -1002,6 +1004,28 @@ def test_perception_review_agent_retries_missing_screen_read(monkeypatch) -> Non
             content=[
                 SimpleNamespace(
                     type="tool_use",
+                    name="record_screen_read",
+                    id="toolu_screen",
+                    input={
+                        "mode": "main_map",
+                        "evidence": ["main game view visible"],
+                        "cursor_or_selection": "map cursor visible",
+                        "confidence": "medium",
+                    },
+                ),
+                SimpleNamespace(
+                    type="tool_use",
+                    name="review_last_action",
+                    id="toolu_review",
+                    input={
+                        "worked": None,
+                        "evidence": ["first action; no previous submitted action"],
+                        "mismatch_reason": None,
+                        "should_retry_same_path": False,
+                    },
+                ),
+                SimpleNamespace(
+                    type="tool_use",
                     name="submit_action",
                     id="toolu_action",
                     input={
@@ -1009,18 +1033,6 @@ def test_perception_review_agent_retries_missing_screen_read(monkeypatch) -> Non
                         "params": {"keys": ["D_DESIGNATE"]},
                         "intent": "open designations after reading the screen",
                         "objective": "dig reachable starter space",
-                        "screen_read": {
-                            "mode": "main_map",
-                            "evidence": ["main game view visible"],
-                            "cursor_or_selection": "map cursor visible",
-                            "confidence": "medium",
-                        },
-                        "last_action_review": {
-                            "worked": None,
-                            "evidence": ["first action; no previous submitted action"],
-                            "mismatch_reason": None,
-                            "should_retry_same_path": False,
-                        },
                         "expected_visible_result": "designation menu opens",
                         "expected_simulation_result": "none until an area is selected",
                         "advance_ticks": 0,
@@ -1057,9 +1069,11 @@ def test_perception_review_agent_retries_missing_screen_read(monkeypatch) -> Non
     required_fields = requests[0]["tools"][0]["input_schema"]["required"]
     assert "screen_read" in required_fields
     assert "last_action_review" in required_fields
+    tool_names = {tool["name"] for tool in requests[0]["tools"]}
+    assert {"record_screen_read", "review_last_action"}.issubset(tool_names)
     retry = requests[1]["messages"][2]["content"][0]
     assert retry["tool_use_id"] == "toolu_missing_perception"
-    assert "Mandatory screen_read missing" in retry["content"]
+    assert "Mandatory record_screen_read missing" in retry["content"]
 
 
 def test_keystroke_opus_model_omits_temperature(monkeypatch) -> None:
@@ -1072,6 +1086,28 @@ def test_keystroke_opus_model_omits_temperature(monkeypatch) -> None:
             content=[
                 SimpleNamespace(
                     type="tool_use",
+                    name="record_screen_read",
+                    id="toolu_screen",
+                    input={
+                        "mode": "unknown",
+                        "evidence": ["mock screen has no visible detail"],
+                        "cursor_or_selection": "unknown",
+                        "confidence": "low",
+                    },
+                ),
+                SimpleNamespace(
+                    type="tool_use",
+                    name="review_last_action",
+                    id="toolu_review",
+                    input={
+                        "worked": None,
+                        "evidence": ["first action; no previous submitted action"],
+                        "mismatch_reason": None,
+                        "should_retry_same_path": False,
+                    },
+                ),
+                SimpleNamespace(
+                    type="tool_use",
                     name="submit_action",
                     id="toolu_action",
                     input={
@@ -1079,18 +1115,6 @@ def test_keystroke_opus_model_omits_temperature(monkeypatch) -> None:
                         "params": {"keys": ["LEAVESCREEN"]},
                         "intent": "recover after screen review",
                         "objective": "return to main map",
-                        "screen_read": {
-                            "mode": "unknown",
-                            "evidence": ["mock screen has no visible detail"],
-                            "cursor_or_selection": "unknown",
-                            "confidence": "low",
-                        },
-                        "last_action_review": {
-                            "worked": None,
-                            "evidence": ["first action; no previous submitted action"],
-                            "mismatch_reason": None,
-                            "should_retry_same_path": False,
-                        },
                         "advance_ticks": 0,
                     },
                 )
