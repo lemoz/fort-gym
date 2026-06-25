@@ -1485,12 +1485,29 @@ class AnthropicKeystrokeAgent(Agent):
 
                     contract_error = self._advance_ticks_contract_error(tool_payload)
                     if contract_error:
-                        last_force_error = ValueError(contract_error)
-                        append_force_retry(
-                            response.content,
-                            tool_results_for_retry(tool_uses, contract_error),
-                        )
-                        continue
+                        if "completes a dig/chop/stair designation" in contract_error:
+                            tool_payload = dict(tool_payload)
+                            tool_payload["advance_ticks"] = 500
+                            self._tool_events.append(
+                                {
+                                    "tool": "advance_ticks_contract_repaired",
+                                    "input": {
+                                        "attempt": forced_attempt + 1,
+                                        "contract_error": contract_error,
+                                    },
+                                    "output": (
+                                        "Set advance_ticks=500 for completed "
+                                        "designation during action-only recovery."
+                                    ),
+                                }
+                            )
+                        else:
+                            last_force_error = ValueError(contract_error)
+                            append_force_retry(
+                                response.content,
+                                tool_results_for_retry(tool_uses, contract_error),
+                            )
+                            continue
 
                     try:
                         action = parse_action(tool_payload)
