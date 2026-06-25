@@ -1068,6 +1068,109 @@ def test_perception_review_agent_collects_screen_read_before_action(monkeypatch)
     assert {"record_screen_read", "review_last_action"}.issubset(tool_names)
 
 
+def test_keystroke_perception_review_forces_submit_after_tool_only_action_phase(
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.delenv("ANTHROPIC_MODEL", raising=False)
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    _SequencedAnthropicClient.responses = [
+        SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="record_screen_read",
+                    id="toolu_screen",
+                    input={
+                        "mode": "main_map",
+                        "evidence": ["main map terrain visible"],
+                        "cursor_or_selection": "cursor near embark",
+                        "confidence": "medium",
+                    },
+                )
+            ],
+            usage=SimpleNamespace(input_tokens=10, output_tokens=2),
+        ),
+        SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="review_last_action",
+                    id="toolu_review",
+                    input={
+                        "worked": None,
+                        "evidence": ["first action; no previous submitted action"],
+                        "mismatch_reason": None,
+                        "should_retry_same_path": False,
+                    },
+                )
+            ],
+            usage=SimpleNamespace(input_tokens=11, output_tokens=2),
+        ),
+        *[
+            SimpleNamespace(
+                content=[
+                    SimpleNamespace(
+                        type="tool_use",
+                        name="query_memory",
+                        id=f"toolu_query_{index}",
+                        input={"query": "dig designation menu", "limit": 3},
+                    )
+                ],
+                usage=SimpleNamespace(input_tokens=12 + index, output_tokens=2),
+            )
+            for index in range(5)
+        ],
+        SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="submit_action",
+                    id="toolu_action",
+                    input={
+                        "type": "KEYSTROKE",
+                        "params": {"keys": ["D_DESIGNATE"]},
+                        "intent": "open designations after tool review",
+                        "objective": "dig reachable starter space",
+                        "expected_visible_result": "designation menu opens",
+                        "expected_simulation_result": "none until area selection",
+                        "advance_ticks": 0,
+                    },
+                )
+            ],
+            usage=SimpleNamespace(input_tokens=20, output_tokens=3),
+        ),
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "anthropic"
+        return SimpleNamespace(Anthropic=_SequencedAnthropicClient)
+
+    monkeypatch.setattr(
+        "fort_gym.bench.agent.llm_anthropic.import_module",
+        fake_import_module,
+    )
+
+    try:
+        agent = AnthropicKeystrokeAgent(
+            system_prompt=KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT,
+            require_perception_review=True,
+        )
+        action = agent.decide("mock screen", {})
+        events = agent.pop_tool_events()
+    finally:
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["params"]["keys"] == ["D_DESIGNATE"]
+    assert action["screen_read"]["mode"] == "main_map"
+    assert action["last_action_review"]["worked"] is None
+    assert _SequencedAnthropicClient.last_instance is not None
+    requests = _SequencedAnthropicClient.last_instance.messages.requests
+    assert len(requests) == 8
+    assert {tool["name"] for tool in requests[-1]["tools"]} == {"submit_action"}
+    assert any(event.get("tool") == "submit_action_forced_after_tools" for event in events)
+
+
 def test_keystroke_opus_model_omits_temperature(monkeypatch) -> None:
     monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
     monkeypatch.setenv("ANTHROPIC_OPUS_MODEL", "claude-opus-4-8")

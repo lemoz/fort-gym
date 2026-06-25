@@ -8,6 +8,7 @@ import re
 import time
 from copy import deepcopy
 from importlib import import_module
+from types import SimpleNamespace
 from typing import Any, Dict, List, Optional
 
 from .base import Agent, register_agent
@@ -1066,6 +1067,7 @@ class AnthropicKeystrokeAgent(Agent):
         last_gate_blocked_action: Optional[Dict[str, Any]] = None
         last_gate_blocked_error: Optional[str] = None
         saw_tool_only_response = False
+        action_phase_tool_names: set[str] = set()
         model = self._anthropic_model
         temperature = _request_temperature(model, self._settings.LLM_TEMP)
 
@@ -1242,6 +1244,204 @@ class AnthropicKeystrokeAgent(Agent):
             )
             return inputs
 
+        def force_submit_action_after_tools() -> Dict[str, Any]:
+            messages.append(
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": (
+                                "Action-only recovery phase: you have already completed "
+                                "screen reading, last-action review, and any notebook/tool "
+                                "lookups. Now call submit_action with one KEYSTROKE action. "
+                                "Do not call memory, wiki, planning, or perception tools. "
+                                "Choose the keys yourself from the current Dwarf Fortress "
+                                "screen and your recorded review."
+                            ),
+                        }
+                    ],
+                }
+            )
+            last_force_error: Exception | None = None
+            for forced_attempt in range(3):
+                tool_result_cache.clear()
+                self._rate_limit()
+                client = self._client_instance()
+                request_kwargs: Dict[str, Any] = {
+                    "model": model,
+                    "max_tokens": self._settings.LLM_MAX_TOKENS,
+                    "system": self._system_prompt,
+                    "tools": [self._keystroke_tool],
+                    "messages": messages,
+                }
+                if temperature is not None:
+                    request_kwargs["temperature"] = temperature
+                response = self._create_message_with_retries(
+                    client,
+                    **request_kwargs,
+                )
+                _append_usage_event(
+                    self._tool_events,
+                    response,
+                    model=model,
+                    max_tokens=self._settings.LLM_MAX_TOKENS,
+                    temperature=temperature,
+                )
+
+                tool_payload = None
+                tool_uses = []
+                for item in response.content:
+                    if item.type == "tool_use":
+                        tool_uses.append(item)
+                        action_phase_tool_names.add(str(item.name))
+                        if item.name == "submit_action":
+                            tool_payload = item.input
+
+                if tool_payload is not None:
+                    if not isinstance(tool_payload, dict):
+                        last_force_error = ValueError(
+                            "submit_action payload must be an object"
+                        )
+                        append_tool_retry(
+                            response.content,
+                            tool_results_for_retry(
+                                tool_uses,
+                                "submit_action payload must be an object.",
+                            ),
+                        )
+                        continue
+
+                    if prelude_perception_inputs:
+                        tool_payload = dict(tool_payload)
+                        for field, value in prelude_perception_inputs.items():
+                            tool_payload.setdefault(field, value)
+
+                    if tool_payload.get("type") != "KEYSTROKE":
+                        last_force_error = ValueError(
+                            f"Expected KEYSTROKE action, got {tool_payload.get('type')}"
+                        )
+                        append_tool_retry(
+                            response.content,
+                            tool_results_for_retry(
+                                tool_uses,
+                                "You must return a KEYSTROKE action.",
+                            ),
+                        )
+                        continue
+
+                    params = tool_payload.get("params", {})
+                    keys = params.get("keys", []) if isinstance(params, dict) else []
+                    if not keys or not isinstance(keys, list):
+                        last_force_error = ValueError(
+                            "KEYSTROKE action must have non-empty keys list"
+                        )
+                        append_tool_retry(
+                            response.content,
+                            tool_results_for_retry(
+                                tool_uses,
+                                "KEYSTROKE action requires a non-empty keys list.",
+                            ),
+                        )
+                        continue
+
+                    try:
+                        action = parse_action(tool_payload)
+                    except ValueError as exc:
+                        last_force_error = exc
+                        append_tool_retry(
+                            response.content,
+                            tool_results_for_retry(
+                                tool_uses,
+                                f"Previous response invalid ({exc}). Provide valid KEYSTROKE action.",
+                            ),
+                        )
+                        continue
+
+                    perception_error = self._required_perception_review_error(
+                        tool_payload,
+                        action_phase_tool_names,
+                    )
+                    if perception_error:
+                        last_force_error = ValueError(perception_error)
+                        append_tool_retry(
+                            response.content,
+                            tool_results_for_retry(tool_uses, perception_error),
+                        )
+                        continue
+
+                    review_tool_uses = [
+                        SimpleNamespace(name=name) for name in sorted(action_phase_tool_names)
+                    ]
+                    required_errors = [
+                        error
+                        for error in (
+                            self._required_memory_review_error(
+                                review_tool_uses,
+                                obs_text,
+                                tool_payload,
+                            ),
+                            self._required_plan_review_error(review_tool_uses, obs_text),
+                        )
+                        if error
+                    ]
+                    required_review_error = (
+                        "\n".join(required_errors) if required_errors else None
+                    )
+                    if required_review_error:
+                        last_force_error = ValueError(required_review_error)
+                        append_tool_retry(
+                            response.content,
+                            tool_results_for_retry(tool_uses, required_review_error),
+                        )
+                        continue
+
+                    self._tool_events.append(
+                        {
+                            "tool": "submit_action_forced_after_tools",
+                            "input": {
+                                "attempt": forced_attempt + 1,
+                                "prior_tool_names": sorted(action_phase_tool_names),
+                            },
+                            "output": "Accepted model submit_action after action-only recovery.",
+                        }
+                    )
+                    self._pending_observation = obs_text
+                    self._pending_action = action
+                    self._completed_actions += 1
+                    return action
+
+                last_force_error = ValueError(
+                    "Model did not use submit_action in action-only recovery"
+                )
+                if tool_uses:
+                    append_tool_retry(
+                        response.content,
+                        tool_results_for_retry(
+                            tool_uses,
+                            "Only submit_action is available now; send one KEYSTROKE action.",
+                        ),
+                    )
+                    continue
+
+                messages.append({"role": "assistant", "content": response.content})
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": "Use submit_action now with one KEYSTROKE action.",
+                            }
+                        ],
+                    }
+                )
+
+            raise RuntimeError(
+                "Anthropic keystroke action-only recovery failed: "
+                + str(last_force_error)
+            )
+
         prelude_perception_inputs = run_perception_prelude()
 
         for attempt_index in range(5):
@@ -1275,6 +1475,7 @@ class AnthropicKeystrokeAgent(Agent):
             for item in response.content:
                 if item.type == "tool_use":
                     tool_uses.append(item)
+                    action_phase_tool_names.add(str(item.name))
                     tool_input = item.input if isinstance(item.input, dict) else {}
                     if item.name == "record_screen_read":
                         perception_inputs["screen_read"] = dict(tool_input)
@@ -1436,6 +1637,8 @@ class AnthropicKeystrokeAgent(Agent):
             )
 
         if self._require_perception_review:
+            if saw_tool_only_response:
+                return force_submit_action_after_tools()
             raise RuntimeError(f"Anthropic keystroke perception contract failed: {last_error}")
 
         if last_gate_blocked_action is not None:
