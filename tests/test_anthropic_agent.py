@@ -276,6 +276,8 @@ def test_keystroke_prompt_is_action_first() -> None:
     assert "repeat the same key sequence" in KEYSTROKE_SYSTEM_PROMPT
     assert "single useful" in KEYSTROKE_SYSTEM_PROMPT
     assert "SELECT will queue the intended job" in KEYSTROKE_SYSTEM_PROMPT
+    assert "D_BUILDING/furniture selector lists" in KEYSTROKE_SYSTEM_PROMPT
+    assert "highlighted row as" in KEYSTROKE_SYSTEM_PROMPT
     assert "expected_visible_result" in KEYSTROKE_SYSTEM_PROMPT
     assert "expected_simulation_result" in KEYSTROKE_SYSTEM_PROMPT
 

@@ -138,6 +138,12 @@ stale and press SELECT to place the workshop.
 If the current visible carpenter-workshop material list shows a material row and
 `Enter: Select`, press SELECT to choose the highlighted material; do not exit the
 menu just because the workshop has not been created yet.
+In D_BUILDING/furniture selector lists with a `+-*/: Select` footer, SELECT
+chooses the currently highlighted row, not the parenthesized letter you want.
+Before pressing SELECT, your screen_read must identify the highlighted row as
+the intended item. If you want Bed but the highlight is on Armor Stand, move the
+highlight first with list-navigation keys; do not press SELECT or raw STRING_A###
+until the desired row is visibly highlighted.
 Retry keys are shown after failed attempts for a bounded retry.
 
 If status says the recommended keys are hidden, stop using that target's old sequence.
