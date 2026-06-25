@@ -266,8 +266,39 @@ def test_encoder_labels_workshop_target_setup() -> None:
 
     assert "Live UI setup: mode=workshop" in text
     assert "Live UI workshop target" in text
-    assert "do not move the placement cursor" in text
+    assert "candidate 3x3 floor target" in text
+    assert "Only press SELECT" in text
     assert "D_BUILDING, HOTKEY_BUILDING_WORKSHOP" in text
+
+
+def test_encoder_lets_visible_blocked_workshop_screen_override_target_metadata() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 3, "stone": 0},
+            "ui_target_setup": {
+                "ok": True,
+                "target_mode": "workshop",
+                "target_generation": 4,
+                "target_attempts": 1,
+                "selection_rect": [10, 20, 177, 12, 22, 177],
+                "designatable_tiles": 9,
+                "show_recommended_keys": True,
+                "recommended_keys": [
+                    "D_BUILDING",
+                    "HOTKEY_BUILDING_WORKSHOP",
+                    "HOTKEY_BUILDING_WORKSHOP_CARPENTER",
+                ],
+            },
+        },
+        screen_text="Carpenter's Workshop\nPlacement\nBlocked",
+    )
+
+    assert "this is only a candidate 3x3 floor target" in text
+    assert "visible DF placement screen currently says placement is blocked" in text
+    assert "do not press SELECT" in text
+    assert "trust the visible screen" in text
 
 
 def test_encoder_shows_material_recovery_prefix() -> None:

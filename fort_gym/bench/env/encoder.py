@@ -180,6 +180,13 @@ def encode_observation(
         if isinstance(clean_state.get("ui_build_feedback"), dict)
         else {}
     )
+    screen_shows_blocked_placement = bool(
+        screen_text
+        and (
+            "Blocked" in screen_text
+            or "Needs building material" in screen_text
+        )
+    )
 
     # Build status section
     status_lines = []
@@ -392,11 +399,22 @@ def encode_observation(
                     + " and then designates the material target."
                 )
         elif ui_target_setup.get("target_mode") == "workshop":
-            status_lines.append(
-                "Live UI workshop target: the cursor is on a confirmed empty 3x3 "
-                "floor footprint. Copy the recommended keys exactly to place a "
-                "carpenter workshop there; do not move the placement cursor."
-            )
+            if screen_shows_blocked_placement:
+                status_lines.append(
+                    "Live UI workshop target: this is only a candidate 3x3 "
+                    "floor target. The visible DF placement screen currently "
+                    "says placement is blocked or missing material, so do not "
+                    "press SELECT to confirm; trust the visible screen over "
+                    "target metadata."
+                )
+            else:
+                status_lines.append(
+                    "Live UI workshop target: this is a candidate 3x3 floor "
+                    "target. Use the recommended keys to open native carpenter "
+                    "workshop placement, then read the visible placement screen "
+                    "before confirming. Only press SELECT if the visible screen "
+                    "does not say Blocked or Needs building material."
+                )
         recommended_keys = ui_target_setup.get("recommended_keys")
         show_recommended = bool(ui_target_setup.get("show_recommended_keys", True))
         if show_recommended and isinstance(recommended_keys, list) and recommended_keys:

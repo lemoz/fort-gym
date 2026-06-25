@@ -219,8 +219,6 @@ local function workshop_candidate_payload(x1, y1, z, source)
       'D_BUILDING',
       'HOTKEY_BUILDING_WORKSHOP',
       'HOTKEY_BUILDING_WORKSHOP_CARPENTER',
-      'SELECT',
-      'SELECT',
     },
   }
 end
@@ -433,7 +431,7 @@ local function workshop_payload()
               )
               payload.nearest_citizen = { unit.pos.x, unit.pos.y, unit.pos.z }
               payload.nearest_citizen_radius = radius
-              payload.workshop_goal = 'place a carpenter workshop through the native build menu on this confirmed empty 3x3 floor'
+              payload.workshop_goal = 'open native carpenter workshop placement on this candidate 3x3 floor and confirm only if the visible placement screen is not blocked'
               return payload
             end
           end
