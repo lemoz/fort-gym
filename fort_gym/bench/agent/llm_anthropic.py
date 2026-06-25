@@ -1102,7 +1102,24 @@ class AnthropicKeystrokeAgent(Agent):
             "DESIGNATE_PLANTS",
         }
         completed_work_designation = (
-            any(str(key) in designation_keys for key in keys)
+            (
+                any(str(key) in designation_keys for key in keys)
+                or (
+                    any(
+                        phrase in action_text
+                        for phrase in (
+                            "designate",
+                            "dig room",
+                            "dig area",
+                            "chop",
+                            "stair",
+                            "mine",
+                            "mining",
+                        )
+                    )
+                    and len(keys) >= 3
+                )
+            )
             and sum(1 for key in keys if str(key) == "SELECT") >= 2
             and any(str(key) == "LEAVESCREEN" for key in keys)
         )

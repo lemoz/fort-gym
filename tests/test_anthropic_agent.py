@@ -1787,6 +1787,84 @@ def test_keystroke_agent_rejects_completed_designation_with_zero_ticks(
     assert "completes a dig/chop/stair designation" in retry_messages
 
 
+def test_keystroke_agent_rejects_split_designation_completion_with_zero_ticks(
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.delenv("ANTHROPIC_MODEL", raising=False)
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    split_designation_keys = [
+        "SELECT",
+        "CURSOR_RIGHT",
+        "CURSOR_RIGHT",
+        "CURSOR_DOWN",
+        "SELECT",
+        "LEAVESCREEN",
+    ]
+    _SequencedAnthropicClient.responses = [
+        SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="submit_action",
+                    id="toolu_bad_split_designation",
+                    input={
+                        "type": "KEYSTROKE",
+                        "params": {"keys": split_designation_keys},
+                        "intent": "designate a 4x4 dig room after opening dig mode",
+                        "objective": "create workshop floor space",
+                        "expected_visible_result": "room rectangle is designated",
+                        "expected_simulation_result": "miners dig the room",
+                        "advance_ticks": 0,
+                    },
+                )
+            ],
+            usage=SimpleNamespace(input_tokens=10, output_tokens=2),
+        ),
+        SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="submit_action",
+                    id="toolu_good_split_designation",
+                    input={
+                        "type": "KEYSTROKE",
+                        "params": {"keys": split_designation_keys},
+                        "intent": "designate a 4x4 dig room after opening dig mode",
+                        "objective": "create workshop floor space",
+                        "expected_visible_result": "room rectangle is designated",
+                        "expected_simulation_result": "miners dig the room",
+                        "advance_ticks": 500,
+                    },
+                )
+            ],
+            usage=SimpleNamespace(input_tokens=11, output_tokens=2),
+        ),
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "anthropic"
+        return SimpleNamespace(Anthropic=_SequencedAnthropicClient)
+
+    monkeypatch.setattr(
+        "fort_gym.bench.agent.llm_anthropic.import_module",
+        fake_import_module,
+    )
+
+    try:
+        agent = AnthropicKeystrokeAgent()
+        action = agent.decide("mock screen", {})
+    finally:
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["advance_ticks"] == 500
+    assert _SequencedAnthropicClient.last_instance is not None
+    requests = _SequencedAnthropicClient.last_instance.messages.requests
+    assert len(requests) == 2
+    retry_messages = _messages_text(requests[1]["messages"])
+    assert "completes a dig/chop/stair designation" in retry_messages
+
+
 def test_keystroke_opus_model_omits_temperature(monkeypatch) -> None:
     monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
     monkeypatch.setenv("ANTHROPIC_OPUS_MODEL", "claude-opus-4-8")
