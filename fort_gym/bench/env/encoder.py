@@ -320,6 +320,12 @@ def encode_observation(
                     status_lines.append(
                         "Live UI feedback: the last action changed real material stocks."
                     )
+                elif ui_work_feedback.get("target_step_succeeded") is False:
+                    status_lines.append(
+                        "Live UI feedback: the last action changed tracked tiles, "
+                        "but the current material target did not acquire usable "
+                        "wood or stone yet."
+                    )
                 else:
                     status_lines.append("Live UI feedback: the last action dug real tiles.")
             elif no_progress_streak:

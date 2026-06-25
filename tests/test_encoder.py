@@ -104,6 +104,41 @@ def test_encoder_shows_retry_recommended_keys_after_failed_attempt() -> None:
     assert "last_action_work_delta=0" in text
 
 
+def test_encoder_material_target_tile_change_is_not_material_success() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 3, "stone": 0},
+            "ui_target_setup": {
+                "ok": True,
+                "target_mode": "material",
+                "target_generation": 2,
+                "target_attempts": 1,
+                "target_progress_seen": False,
+                "selection_rect": [1, 2, 3, 4, 5, 6],
+                "designatable_tiles": 1,
+                "show_recommended_keys": True,
+                "recommended_keys_retry": True,
+                "recommended_keys": ["D_DESIGNATE", "DESIGNATE_CHOP"],
+            },
+            "ui_work_feedback": {
+                "last_ui_work_progress_delta": 2,
+                "last_ui_excavation_delta": 0,
+                "last_ui_material_delta": 0,
+                "target_step_succeeded": False,
+                "no_progress_streak": 1,
+            },
+        },
+        screen_text="screen",
+    )
+
+    assert "last_action_work_delta=2" in text
+    assert "did not acquire usable wood or stone yet" in text
+    assert "last action dug real tiles" not in text
+    assert "Retry fresh target recommended keys: D_DESIGNATE, DESIGNATE_CHOP" in text
+
+
 def test_encoder_explains_inactive_df_cursor_sentinel() -> None:
     text, _ = encode_observation(
         {

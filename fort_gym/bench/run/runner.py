@@ -392,6 +392,18 @@ def _ui_target_setup_for_observation(
     return setup
 
 
+def _ui_target_step_succeeded(
+    target_mode: str,
+    *,
+    ui_step_work_progress: int,
+    ui_step_material_progress: int,
+) -> bool:
+    """Return whether the current UI target actually achieved its phase goal."""
+    if target_mode == "material":
+        return ui_step_material_progress > 0
+    return ui_step_work_progress > 0 or ui_step_material_progress > 0
+
+
 def _zero_assisted_dfhack_progress(metrics_snapshot: Dict[str, Any]) -> None:
     assisted_values: Dict[str, Any] = {}
     for field in ASSISTED_PROGRESS_FIELDS:
@@ -975,22 +987,39 @@ def run_once(
                     action_accepted = bool(execute_result.get("accepted", False))
                     if action.get("type") == "KEYSTROKE" and action_accepted:
                         requested_ticks_int = _int_or_none(requested_ticks) or 0
-                        if ui_step_work_progress > 0 or ui_step_material_progress > 0:
-                            if not ui_target_progress_seen:
+                        made_tracked_progress = (
+                            ui_step_work_progress > 0 or ui_step_material_progress > 0
+                        )
+                        target_step_succeeded = _ui_target_step_succeeded(
+                            ui_target_mode,
+                            ui_step_work_progress=ui_step_work_progress,
+                            ui_step_material_progress=ui_step_material_progress,
+                        )
+                        if made_tracked_progress:
+                            if target_step_succeeded and not ui_target_progress_seen:
                                 ui_successful_targets += 1
-                            ui_target_progress_seen = True
+                            if target_step_succeeded:
+                                ui_target_progress_seen = True
                             ui_run_work_progress += ui_step_work_progress
                             ui_run_excavation_progress += ui_step_excavation_progress
                             ui_run_material_progress += ui_step_material_progress
                             if ui_step_material_progress > 0:
                                 ui_build_material_blocked = False
-                            ui_no_progress_streak = 0
+                            if target_step_succeeded:
+                                ui_no_progress_streak = 0
+                            elif ui_target_mode == "material":
+                                ui_no_progress_streak += 1
                             ui_work_feedback = {
                                 "last_ui_work_progress_delta": ui_step_work_progress,
                                 "last_ui_excavation_delta": ui_step_excavation_progress,
                                 "last_ui_material_delta": ui_step_material_progress,
                                 "no_progress_streak": ui_no_progress_streak,
-                                "message": "last UI action changed real map tiles or material stocks",
+                                "target_step_succeeded": target_step_succeeded,
+                                "message": (
+                                    "last UI action changed tracked tiles but did not acquire usable material"
+                                    if ui_target_mode == "material" and not target_step_succeeded
+                                    else "last UI action changed real map tiles or material stocks"
+                                ),
                             }
                         elif advanced_ticks > 0 or requested_ticks_int > 0:
                             ui_no_progress_streak += 1

@@ -5,6 +5,7 @@ from fort_gym.bench.run.runner import (
     _carpenter_workshops,
     _desired_keystroke_target_mode,
     _ui_target_setup_for_observation,
+    _ui_target_step_succeeded,
     _ui_work_rect_from_state,
     _zero_assisted_dfhack_progress,
 )
@@ -281,6 +282,24 @@ def test_material_target_setup_can_prefix_build_menu_recovery_keys() -> None:
     assert setup["recommended_key_prefix"] == ["LEAVESCREEN", "LEAVESCREEN"]
     assert setup["show_recommended_keys"] is True
     assert setup["recommended_keys_force_shown"] is True
+
+
+def test_material_target_requires_material_delta_for_success() -> None:
+    assert _ui_target_step_succeeded(
+        "material",
+        ui_step_work_progress=3,
+        ui_step_material_progress=0,
+    ) is False
+    assert _ui_target_step_succeeded(
+        "material",
+        ui_step_work_progress=0,
+        ui_step_material_progress=1,
+    ) is True
+    assert _ui_target_step_succeeded(
+        "starter",
+        ui_step_work_progress=3,
+        ui_step_material_progress=0,
+    ) is True
 
 
 def test_workshop_target_setup_keeps_exact_placement_keys_visible() -> None:
