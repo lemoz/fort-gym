@@ -274,6 +274,8 @@ def test_keystroke_prompt_is_action_first() -> None:
     assert "advance_ticks\": 500" in KEYSTROKE_SYSTEM_PROMPT
     assert "Do not" in KEYSTROKE_SYSTEM_PROMPT
     assert "repeat the same key sequence" in KEYSTROKE_SYSTEM_PROMPT
+    assert "single useful" in KEYSTROKE_SYSTEM_PROMPT
+    assert "SELECT will queue the intended job" in KEYSTROKE_SYSTEM_PROMPT
     assert "expected_visible_result" in KEYSTROKE_SYSTEM_PROMPT
     assert "expected_simulation_result" in KEYSTROKE_SYSTEM_PROMPT
 
@@ -310,6 +312,43 @@ def test_perception_review_prompt_requires_agent_owned_verification() -> None:
         KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
     )
     assert "should_retry_same_path" in KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
+    assert "memory_update must be non-empty" in KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
+
+
+def test_perception_review_rejects_missing_action_cognition_fields() -> None:
+    agent = object.__new__(AnthropicKeystrokeAgent)
+    agent._require_perception_review = True
+
+    error = agent._required_perception_review_error(
+        {
+            "type": "KEYSTROKE",
+            "params": {"keys": ["LEAVESCREEN", "MANAGER_NEW_ORDER"]},
+            "intent": None,
+            "objective": None,
+            "expected_visible_result": None,
+            "expected_simulation_result": None,
+            "memory_update": None,
+            "screen_read": {
+                "mode": "material_selection",
+                "evidence": ["single Construct Bed result is visible"],
+                "cursor_or_selection": "single result selected",
+                "confidence": "high",
+            },
+            "last_action_review": {
+                "worked": True,
+                "evidence": ["search result is visible"],
+                "mismatch_reason": None,
+                "should_retry_same_path": False,
+            },
+        },
+        {"record_screen_read", "review_last_action"},
+    )
+
+    assert error is not None
+    assert "Mandatory action cognition incomplete" in error
+    assert "intent" in error
+    assert "objective" in error
+    assert "memory_update" in error
 
 
 def test_keystroke_retry_pairs_invalid_tool_use_with_tool_result(monkeypatch) -> None:
@@ -1179,6 +1218,7 @@ def test_perception_review_agent_collects_screen_read_before_action(monkeypatch)
                         "objective": "dig reachable starter space",
                         "expected_visible_result": "designation menu opens",
                         "expected_simulation_result": "none until an area is selected",
+                        "memory_update": "screen reviewed before opening designations",
                         "advance_ticks": 0,
                     },
                 )
@@ -1286,6 +1326,7 @@ def test_keystroke_perception_review_forces_submit_after_tool_only_action_phase(
                         "objective": "dig reachable starter space",
                         "expected_visible_result": "designation menu opens",
                         "expected_simulation_result": "none until area selection",
+                        "memory_update": "tool review completed before opening designations",
                         "advance_ticks": 0,
                     },
                 )
@@ -1391,6 +1432,7 @@ def test_keystroke_perception_force_submit_warns_on_unmet_memory_gate(
                         "objective": "let existing work proceed",
                         "expected_visible_result": "game resumes",
                         "expected_simulation_result": "dwarves work on queued jobs",
+                        "memory_update": "tool-only recovery reviewed no-progress state",
                         "advance_ticks": 500,
                     },
                 )
@@ -1510,6 +1552,7 @@ def test_keystroke_force_submit_repairs_completed_designation_ticks(
                         "objective": "create woodcutting work",
                         "expected_visible_result": "tree tiles are marked for chopping",
                         "expected_simulation_result": "dwarves chop trees for logs",
+                        "memory_update": "designation recovery reviewed before chopping",
                         "advance_ticks": 0,
                     },
                 )
@@ -1623,6 +1666,7 @@ def test_keystroke_review_gates_count_prior_tools_in_same_decision(monkeypatch) 
                         "objective": "dig reachable starter space",
                         "expected_visible_result": "designation menu opens",
                         "expected_simulation_result": "none until area selection",
+                        "memory_update": "memory and plan reviewed before opening designations",
                         "advance_ticks": 0,
                     },
                 )
@@ -2124,6 +2168,9 @@ def test_keystroke_opus_model_omits_temperature(monkeypatch) -> None:
                         "params": {"keys": ["LEAVESCREEN"]},
                         "intent": "recover after screen review",
                         "objective": "return to main map",
+                        "expected_visible_result": "one menu closes or main map remains visible",
+                        "expected_simulation_result": "none; UI-only recovery",
+                        "memory_update": "screen reviewed before recovery",
                         "advance_ticks": 0,
                     },
                 )

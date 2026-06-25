@@ -163,6 +163,10 @@ If `carpenter_workshops=1`, `manager_orders>0`, and `order_qty_left>0`, a real
 production order is already queued. Do not open new stockpile/build/order setup
 menus. Leave any current menu, then from the main map submit a KEYSTROKE action
 with no extra menu keys and `advance_ticks` at least 1000 so dwarves can work.
+In the manager New Order search dialog, if your screen_read says a single useful
+result is visible and the footer says Select, press SELECT to queue it unless
+you explicitly reject that job as not useful or not buildable. Do not leave the
+dialog when your own screen_read says SELECT will queue the intended job.
 If a carpenter workshop screen is selected, use BUILDJOB_ADD to open its native
 task list. Opening the add-task UI is not production by itself: read the next
 screen, select a concrete task such as a wooden bed/barrel/bin, then advance
@@ -478,6 +482,9 @@ Before EVERY submit_action:
 3. Then call submit_action. You may also include screen_read and
    last_action_review in submit_action, but the mandatory tools above are the
    source of truth for this experiment.
+4. In submit_action, intent, objective, expected_visible_result,
+   expected_simulation_result, and memory_update must be non-empty. If there is
+   no new memory fact, write that explicitly instead of omitting the field.
 
 If last_action_review says the previous path did not work, do not press the same
 menu/key path again unless your evidence names a changed condition. Prefer a
@@ -621,7 +628,15 @@ def _keystroke_anthropic_tool(*, require_perception_review: bool = False) -> Dic
     tool_spec = deepcopy(KEYSTROKE_TOOL_SPEC)
     if require_perception_review:
         required = list(tool_spec["parameters"].get("required", []))
-        for field in ("screen_read", "last_action_review", "advance_ticks"):
+        for field in (
+            "screen_read",
+            "last_action_review",
+            "advance_ticks",
+            "objective",
+            "expected_visible_result",
+            "expected_simulation_result",
+            "memory_update",
+        ):
             if field not in required:
                 required.append(field)
         tool_spec["parameters"]["required"] = required
@@ -1057,6 +1072,25 @@ class AnthropicKeystrokeAgent(Agent):
             )
         if not isinstance(tool_payload, dict):
             return "Mandatory perception review missing: submit_action payload is not an object."
+
+        missing_action_fields = [
+            field
+            for field in (
+                "intent",
+                "objective",
+                "expected_visible_result",
+                "expected_simulation_result",
+                "memory_update",
+            )
+            if not str(tool_payload.get(field) or "").strip()
+        ]
+        if missing_action_fields:
+            return (
+                "Mandatory action cognition incomplete: submit_action must include "
+                "non-empty "
+                + ", ".join(missing_action_fields)
+                + ". If no memory changed, set memory_update to a brief explicit note."
+            )
 
         screen_read = tool_payload.get("screen_read")
         if not isinstance(screen_read, dict):
