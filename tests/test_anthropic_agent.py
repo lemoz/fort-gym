@@ -73,6 +73,25 @@ class _SequencedAnthropicClient:
         _SequencedAnthropicClient.last_instance = self
 
 
+def _messages_text(messages: Any) -> str:
+    parts: list[str] = []
+
+    def walk(value: Any) -> None:
+        if isinstance(value, str):
+            parts.append(value)
+            return
+        if isinstance(value, dict):
+            for nested in value.values():
+                walk(nested)
+            return
+        if isinstance(value, list):
+            for nested in value:
+                walk(nested)
+
+    walk(messages)
+    return "\n".join(parts)
+
+
 class _FakeRateLimitError(Exception):
     status_code = 429
 
@@ -1064,6 +1083,7 @@ def test_perception_review_agent_collects_screen_read_before_action(monkeypatch)
     required_fields = requests[2]["tools"][0]["input_schema"]["required"]
     assert "screen_read" in required_fields
     assert "last_action_review" in required_fields
+    assert "advance_ticks" in required_fields
     tool_names = {tool["name"] for tool in requests[2]["tools"]}
     assert {"record_screen_read", "review_last_action"}.issubset(tool_names)
 
@@ -1281,6 +1301,69 @@ def test_keystroke_review_gates_count_prior_tools_in_same_decision(monkeypatch) 
     requests = _SequencedAnthropicClient.last_instance.messages.requests
     assert len(requests) == 4
     assert not any("gate_warning" in event.get("tool", "") for event in events)
+
+
+def test_keystroke_agent_rejects_advance_intent_with_zero_ticks(monkeypatch) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.delenv("ANTHROPIC_MODEL", raising=False)
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    _SequencedAnthropicClient.responses = [
+        SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="submit_action",
+                    id="toolu_bad_wait",
+                    input={
+                        "type": "KEYSTROKE",
+                        "params": {"keys": ["STANDARDSCROLL_PAGEDOWN"]},
+                        "intent": "Advance time to let dwarves work on existing designations",
+                        "objective": "let dwarves work",
+                    },
+                )
+            ],
+            usage=SimpleNamespace(input_tokens=10, output_tokens=2),
+        ),
+        SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="submit_action",
+                    id="toolu_good_wait",
+                    input={
+                        "type": "KEYSTROKE",
+                        "params": {"keys": ["STANDARDSCROLL_PAGEDOWN"]},
+                        "intent": "Advance time to let dwarves work on existing designations",
+                        "objective": "let dwarves work",
+                        "advance_ticks": 500,
+                    },
+                )
+            ],
+            usage=SimpleNamespace(input_tokens=11, output_tokens=2),
+        ),
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "anthropic"
+        return SimpleNamespace(Anthropic=_SequencedAnthropicClient)
+
+    monkeypatch.setattr(
+        "fort_gym.bench.agent.llm_anthropic.import_module",
+        fake_import_module,
+    )
+
+    try:
+        agent = AnthropicKeystrokeAgent()
+        action = agent.decide("mock screen", {})
+    finally:
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["advance_ticks"] == 500
+    assert _SequencedAnthropicClient.last_instance is not None
+    requests = _SequencedAnthropicClient.last_instance.messages.requests
+    assert len(requests) == 2
+    retry_messages = _messages_text(requests[1]["messages"])
+    assert "Action contract mismatch" in retry_messages
 
 
 def test_keystroke_opus_model_omits_temperature(monkeypatch) -> None:

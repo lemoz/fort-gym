@@ -226,6 +226,9 @@ YOU control time. The game is PAUSED until you request time to pass.
 - **advance_ticks: 0** - No time passes. Use for menu navigation, looking around.
 - **advance_ticks: 100-200** - Let dwarves work briefly. Good after giving orders.
 - **advance_ticks: 500+** - Watch significant progress. Use after designating dig areas.
+- Viewport scroll keys like STANDARDSCROLL_PAGEDOWN do not advance simulation
+  time. If your intent says wait, advance time, or let dwarves work, set
+  advance_ticks to a positive value.
 
 **Strategy:**
 1. Navigate menus with advance_ticks: 0 (instant, no time wasted)
@@ -488,7 +491,7 @@ def _keystroke_anthropic_tool(*, require_perception_review: bool = False) -> Dic
     tool_spec = deepcopy(KEYSTROKE_TOOL_SPEC)
     if require_perception_review:
         required = list(tool_spec["parameters"].get("required", []))
-        for field in ("screen_read", "last_action_review"):
+        for field in ("screen_read", "last_action_review", "advance_ticks"):
             if field not in required:
                 required.append(field)
         tool_spec["parameters"]["required"] = required
@@ -939,6 +942,49 @@ class AnthropicKeystrokeAgent(Agent):
         return None
 
     @staticmethod
+    def _advance_ticks_contract_error(tool_payload: Dict[str, Any]) -> Optional[str]:
+        try:
+            advance_ticks = int(tool_payload.get("advance_ticks", 0))
+        except (TypeError, ValueError):
+            return None
+        if advance_ticks > 0:
+            return None
+
+        params = tool_payload.get("params") if isinstance(tool_payload.get("params"), dict) else {}
+        keys = params.get("keys") if isinstance(params, dict) else []
+        keys = keys if isinstance(keys, list) else []
+        action_text = " ".join(
+            str(tool_payload.get(field) or "")
+            for field in (
+                "intent",
+                "objective",
+                "expected_simulation_result",
+                "plan_step",
+                "plan_review",
+            )
+        ).lower()
+        says_time_should_pass = any(
+            phrase in action_text
+            for phrase in (
+                "advance time",
+                "advance ticks",
+                "let dwarves",
+                "give dwarves time",
+                "dwarves work",
+                "execute existing",
+            )
+        )
+        scroll_only = bool(keys) and all(str(key).startswith("STANDARDSCROLL") for key in keys)
+        if says_time_should_pass or (scroll_only and "advance" in action_text):
+            return (
+                "Action contract mismatch: the action says to advance time or let "
+                "dwarves work, but advance_ticks is 0. Set advance_ticks to a "
+                "positive value such as 200, 500, 1000, or 2000; viewport scroll "
+                "keys do not advance simulation time."
+            )
+        return None
+
+    @staticmethod
     def _validate_screen_read(screen_read: Dict[str, Any]) -> Optional[str]:
         mode = str(screen_read.get("mode") or "").strip()
         if not mode:
@@ -1345,6 +1391,15 @@ class AnthropicKeystrokeAgent(Agent):
                         )
                         continue
 
+                    contract_error = self._advance_ticks_contract_error(tool_payload)
+                    if contract_error:
+                        last_force_error = ValueError(contract_error)
+                        append_tool_retry(
+                            response.content,
+                            tool_results_for_retry(tool_uses, contract_error),
+                        )
+                        continue
+
                     try:
                         action = parse_action(tool_payload)
                     except ValueError as exc:
@@ -1538,6 +1593,15 @@ class AnthropicKeystrokeAgent(Agent):
                             tool_uses,
                             "KEYSTROKE action requires a non-empty keys list.",
                         ),
+                    )
+                    continue
+
+                contract_error = self._advance_ticks_contract_error(tool_payload)
+                if contract_error:
+                    last_error = ValueError(contract_error)
+                    append_tool_retry(
+                        response.content,
+                        tool_results_for_retry(tool_uses, contract_error),
                     )
                     continue
 
