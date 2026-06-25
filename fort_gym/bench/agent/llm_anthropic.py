@@ -488,9 +488,9 @@ Before EVERY submit_action:
 3. Then call submit_action. You may also include screen_read and
    last_action_review in submit_action, but the mandatory tools above are the
    source of truth for this experiment.
-4. In submit_action, intent, objective, and expected_visible_result must be
-   non-empty. Also include expected_simulation_result and memory_update whenever
-   you can; if there is no new memory fact, write that explicitly.
+4. In submit_action, intent and objective must be non-empty. Also include
+   expected_visible_result, expected_simulation_result, and memory_update
+   whenever you can; if there is no new memory fact, write that explicitly.
 
 If last_action_review says the previous path did not work, do not press the same
 menu/key path again unless your evidence names a changed condition. Prefer a
@@ -1082,7 +1082,6 @@ class AnthropicKeystrokeAgent(Agent):
             for field in (
                 "intent",
                 "objective",
-                "expected_visible_result",
             )
             if not str(tool_payload.get(field) or "").strip()
         ]
