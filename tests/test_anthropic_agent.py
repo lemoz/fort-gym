@@ -996,6 +996,11 @@ def test_perception_review_agent_collects_screen_read_before_action(monkeypatch)
                         "confidence": "medium",
                     },
                 ),
+            ],
+            usage=SimpleNamespace(input_tokens=10, output_tokens=2),
+        ),
+        SimpleNamespace(
+            content=[
                 SimpleNamespace(
                     type="tool_use",
                     name="review_last_action",
@@ -1008,7 +1013,7 @@ def test_perception_review_agent_collects_screen_read_before_action(monkeypatch)
                     },
                 )
             ],
-            usage=SimpleNamespace(input_tokens=10, output_tokens=2),
+            usage=SimpleNamespace(input_tokens=11, output_tokens=2),
         ),
         SimpleNamespace(
             content=[
@@ -1053,15 +1058,13 @@ def test_perception_review_agent_collects_screen_read_before_action(monkeypatch)
     assert action["last_action_review"]["worked"] is None
     assert _SequencedAnthropicClient.last_instance is not None
     requests = _SequencedAnthropicClient.last_instance.messages.requests
-    assert len(requests) == 2
-    assert {tool["name"] for tool in requests[0]["tools"]} == {
-        "record_screen_read",
-        "review_last_action",
-    }
-    required_fields = requests[1]["tools"][0]["input_schema"]["required"]
+    assert len(requests) == 3
+    assert {tool["name"] for tool in requests[0]["tools"]} == {"record_screen_read"}
+    assert {tool["name"] for tool in requests[1]["tools"]} == {"review_last_action"}
+    required_fields = requests[2]["tools"][0]["input_schema"]["required"]
     assert "screen_read" in required_fields
     assert "last_action_review" in required_fields
-    tool_names = {tool["name"] for tool in requests[1]["tools"]}
+    tool_names = {tool["name"] for tool in requests[2]["tools"]}
     assert {"record_screen_read", "review_last_action"}.issubset(tool_names)
 
 
@@ -1084,6 +1087,11 @@ def test_keystroke_opus_model_omits_temperature(monkeypatch) -> None:
                         "confidence": "low",
                     },
                 ),
+            ],
+            usage=SimpleNamespace(input_tokens=10, output_tokens=2),
+        ),
+        SimpleNamespace(
+            content=[
                 SimpleNamespace(
                     type="tool_use",
                     name="review_last_action",
@@ -1096,7 +1104,7 @@ def test_keystroke_opus_model_omits_temperature(monkeypatch) -> None:
                     },
                 )
             ],
-            usage=SimpleNamespace(input_tokens=10, output_tokens=2),
+            usage=SimpleNamespace(input_tokens=11, output_tokens=2),
         ),
         SimpleNamespace(
             content=[

@@ -1113,12 +1113,11 @@ class AnthropicKeystrokeAgent(Agent):
                 )
             return results
 
-        def perception_tool_specs() -> List[Dict[str, Any]]:
-            return [
-                spec
-                for spec in self._tool_manager.tool_specs()
-                if spec.get("name") in {"record_screen_read", "review_last_action"}
-            ]
+        def perception_tool_spec(name: str) -> Dict[str, Any]:
+            for spec in self._tool_manager.tool_specs():
+                if spec.get("name") == name:
+                    return spec
+            raise RuntimeError(f"Perception tool not configured: {name}")
 
         def collect_perception_inputs(tool_uses: List[Any]) -> Dict[str, Dict[str, Any]]:
             inputs: Dict[str, Dict[str, Any]] = {}
@@ -1130,38 +1129,28 @@ class AnthropicKeystrokeAgent(Agent):
                     inputs["last_action_review"] = dict(tool_input)
             return inputs
 
-        def perception_inputs_error(inputs: Dict[str, Dict[str, Any]]) -> Optional[str]:
-            screen_read = inputs.get("screen_read")
-            if not isinstance(screen_read, dict):
-                return "Call record_screen_read before choosing keys."
-            screen_error = self._validate_screen_read(screen_read)
-            if screen_error:
-                return "record_screen_read incomplete: " + screen_error
-            review = inputs.get("last_action_review")
-            if not isinstance(review, dict):
-                return "Call review_last_action before choosing keys."
-            review_error = self._validate_last_action_review(review)
-            if review_error:
-                return "review_last_action incomplete: " + review_error
-            return None
+        def single_perception_error(
+            tool_name: str,
+            tool_input: Dict[str, Any],
+        ) -> Optional[str]:
+            if tool_name == "record_screen_read":
+                return self._validate_screen_read(tool_input)
+            if tool_name == "review_last_action":
+                return self._validate_last_action_review(tool_input)
+            return f"Unknown perception tool: {tool_name}"
 
-        def run_perception_prelude() -> Dict[str, Dict[str, Any]]:
-            if not self._require_perception_review:
-                return {}
-            prelude_prompt = {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": (
-                            "Mandatory perception phase: call record_screen_read and "
-                            "review_last_action now. Do not submit gameplay keys yet."
-                        ),
-                    }
-                ],
-            }
-            messages.append(prelude_prompt)
-            prelude_tools = perception_tool_specs()
+        def run_single_perception_tool(
+            *,
+            tool_name: str,
+            result_field: str,
+            prompt: str,
+        ) -> Dict[str, Dict[str, Any]]:
+            messages.append(
+                {
+                    "role": "user",
+                    "content": [{"type": "text", "text": prompt}],
+                }
+            )
             last_prelude_error: Optional[str] = None
             for _ in range(3):
                 self._rate_limit()
@@ -1170,7 +1159,7 @@ class AnthropicKeystrokeAgent(Agent):
                     "model": model,
                     "max_tokens": self._settings.LLM_MAX_TOKENS,
                     "system": self._system_prompt,
-                    "tools": prelude_tools,
+                    "tools": [perception_tool_spec(tool_name)],
                     "messages": messages,
                 }
                 if temperature is not None:
@@ -1183,36 +1172,75 @@ class AnthropicKeystrokeAgent(Agent):
                     max_tokens=self._settings.LLM_MAX_TOKENS,
                     temperature=temperature,
                 )
-                tool_uses = [
-                    item for item in response.content if getattr(item, "type", None) == "tool_use"
-                ]
-                results = []
-                for tool_use in tool_uses:
-                    tool_input = tool_use.input if isinstance(tool_use.input, dict) else {}
-                    result = self._tool_manager.handle(tool_use.name, tool_input)
-                    self._tool_events.append(
+                matching_tool_use = None
+                for item in response.content:
+                    if getattr(item, "type", None) == "tool_use" and item.name == tool_name:
+                        matching_tool_use = item
+                        break
+
+                messages.append({"role": "assistant", "content": response.content})
+                if matching_tool_use is None:
+                    last_prelude_error = f"Call {tool_name} before choosing keys."
+                    messages.append(
                         {
-                            "tool": tool_use.name,
-                            "input": tool_input,
-                            "output": result,
+                            "role": "user",
+                            "content": [{"type": "text", "text": last_prelude_error}],
                         }
                     )
-                    results.append(tool_result(tool_use, result))
-                inputs = collect_perception_inputs(tool_uses)
-                last_prelude_error = perception_inputs_error(inputs)
-                messages.append({"role": "assistant", "content": response.content})
-                if last_prelude_error is None:
+                    continue
+
+                tool_input = (
+                    matching_tool_use.input if isinstance(matching_tool_use.input, dict) else {}
+                )
+                result = self._tool_manager.handle(tool_name, tool_input)
+                self._tool_events.append(
+                    {
+                        "tool": tool_name,
+                        "input": tool_input,
+                        "output": result,
+                    }
+                )
+                error = single_perception_error(tool_name, tool_input)
+                results = [tool_result(matching_tool_use, result)]
+                if error is None:
                     messages.append({"role": "user", "content": results})
-                    return inputs
-                if not results:
-                    results.append({"type": "text", "text": last_prelude_error})
-                else:
-                    results.append({"type": "text", "text": last_prelude_error})
+                    return {result_field: dict(tool_input)}
+                last_prelude_error = f"{tool_name} incomplete: {error}"
+                results.append({"type": "text", "text": last_prelude_error})
                 messages.append({"role": "user", "content": results})
             raise RuntimeError(
                 "Anthropic keystroke perception prelude failed: "
                 + str(last_prelude_error)
             )
+
+        def run_perception_prelude() -> Dict[str, Dict[str, Any]]:
+            if not self._require_perception_review:
+                return {}
+            inputs: Dict[str, Dict[str, Any]] = {}
+            inputs.update(
+                run_single_perception_tool(
+                    tool_name="record_screen_read",
+                    result_field="screen_read",
+                    prompt=(
+                        "Mandatory screen-read phase: call record_screen_read now "
+                        "with your current screen/menu interpretation. Do not submit "
+                        "gameplay keys yet."
+                    ),
+                )
+            )
+            inputs.update(
+                run_single_perception_tool(
+                    tool_name="review_last_action",
+                    result_field="last_action_review",
+                    prompt=(
+                        "Mandatory verification phase: call review_last_action now "
+                        "to compare your previous action expectation to the current "
+                        "observation. Use worked=null for the first action. Do not "
+                        "submit gameplay keys yet."
+                    ),
+                )
+            )
+            return inputs
 
         prelude_perception_inputs = run_perception_prelude()
 
