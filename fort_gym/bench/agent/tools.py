@@ -69,13 +69,27 @@ DEFAULT_DF_WIKI_DOCS: List[WikiDoc] = [
     WikiDoc(
         title="Buildings and workshops",
         body=(
-            "The build menu b lets you place workshops, furnaces, and furniture. "
+            "The build menu b lets you place workshops, furnaces, and furniture; "
+            "D_BUILDJOB opens an existing selected workshop and BUILDJOB_ADD opens "
+            "that workshop's native task list. "
             "Choose the category and place on clear floor tiles. Most workshops need "
             "materials nearby and a dwarf with the matching labor. Carpenters make "
             "beds and barrels, while masons make stone blocks and furniture. "
-            "If placement is blocked, check for walls, ramps, or items on the tile."
+            "If placement is blocked, check for walls, ramps, or items on the tile. "
+            "Only a concrete selected task plus elapsed ticks can produce items."
         ),
-        keywords=("build", "building", "workshop", "furnace", "furniture", "carpenter", "mason"),
+        keywords=(
+            "build",
+            "building",
+            "workshop",
+            "furnace",
+            "furniture",
+            "carpenter",
+            "mason",
+            "buildjob",
+            "buildjob_add",
+            "task",
+        ),
     ),
     WikiDoc(
         title="Manager orders and standing orders",

@@ -141,6 +141,10 @@ MANAGER_NEW_ORDER or a visibly selected carpenter workshop job menu before
 retrying stockpiles or blind dig boxes. If a stockpile or dig path has already
 produced no tracked state change after the workshop exists, record it and return
 to production.
+If a carpenter workshop screen is selected, use BUILDJOB_ADD to open its native
+task list. Opening the add-task UI is not production by itself: read the next
+screen, select a concrete task such as a wooden bed/barrel/bin, then advance
+time only after a real task is queued or visible workshop work has changed.
 
 Default recommended first action:
 {
@@ -238,6 +242,10 @@ STOCKPILE_WOOD, not STRING_A119.
   stockpile or some other building, it did not target your remembered workshop;
   exit, query memory, and re-establish a visible cursor on the workshop before
   trying building-job commands again.
+- On a selected carpenter workshop screen, use BUILDJOB_ADD, not raw STRING_A097,
+  to add a native workshop task. Then read the task-selection screen and select a
+  concrete useful job. Do not count the add-task menu opening as success unless
+  a job row/task appears or later ticks show workshop work/material progress.
 
 ## How to Dig
 1. Press D_DESIGNATE to open designate menu
@@ -367,7 +375,8 @@ Use the plan tools as a private notebook:
   next step instead of repeating the same key sequence.
 - If a carpenter workshop already exists, stop trying to place more workshops
   unless the screen/state proves the next workshop is necessary. Shift to
-  completing planned rooms, stockpiles, or useful orders through native UI.
+  direct workshop tasks or useful orders through native UI before stockpile or
+  room refinement.
 - Include plan_step and plan_review in submit_action so the trace can audit
   whether the action follows the reviewed plan.
 
@@ -415,6 +424,8 @@ If last_action_review says the previous path did not work, do not press the same
 menu/key path again unless your evidence names a changed condition. Prefer a
 different productive branch, a clean exit to main view, or time advancement only
 when dwarves have active work to complete.
+If the previous action only opened or stayed on a carpenter workshop task menu,
+mark it worked=false for production unless the current screen shows a concrete task row/job choice or the recent outcome row shows real workshop/material work.
 If your proposed action uses manual cursor movement, your screen_read evidence
 must identify the visible active cursor or active selection on the current
 screen. `selection_rect` and `window` alone do not satisfy that evidence.

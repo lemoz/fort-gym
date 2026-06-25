@@ -22,6 +22,15 @@ def test_df_wiki_tool_prioritizes_manager_work_orders() -> None:
     assert "bed" in response
 
 
+def test_df_wiki_tool_answers_direct_workshop_tasks() -> None:
+    tool = DFWikiTool()
+    response = tool.query("How do I add a carpenter workshop task directly?")
+    first_title = response.splitlines()[0]
+    assert first_title == "Title: Buildings and workshops"
+    assert "D_BUILDJOB" in response
+    assert "BUILDJOB_ADD" in response
+
+
 def test_tool_manager_exposes_df_wiki_spec() -> None:
     manager = ToolManager(["df_wiki"])
     specs = manager.tool_specs()

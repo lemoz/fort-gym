@@ -13,3 +13,10 @@ def test_valid_keys_include_native_manager_path() -> None:
     assert "D_JOBLIST" in VALID_KEYS
     assert "UNITJOB_MANAGER" in VALID_KEYS
     assert "MANAGER_NEW_ORDER" in VALID_KEYS
+
+
+def test_valid_keys_include_native_workshop_task_path() -> None:
+    assert "D_BUILDJOB" in VALID_KEYS
+    assert "BUILDJOB_ADD" in VALID_KEYS
+    assert "BUILDJOB_REPEAT" in VALID_KEYS
+    assert "BUILDJOB_NOW" in VALID_KEYS
