@@ -121,6 +121,10 @@ Retry keys are shown after failed attempts for a bounded retry.
 
 If status says the recommended keys are hidden, stop using that target's old sequence.
 Do not repeat the same key sequence for that target.
+Do not derive a long key path by subtracting `selection_rect` from `window`;
+those fields are observation metadata, not a manual cursor-navigation recipe.
+Only navigate manually by cursor if the current screen visibly shows an active
+X cursor in a cursor-owning DF mode and your screen_read can verify it.
 If `Live UI feedback` says `last_action_work_delta=0` or the no-progress streak is rising,
 use shown retry/fresh keys if present; otherwise choose a different useful action or wait
 only if dwarves still have active work.
@@ -303,6 +307,10 @@ work. If `Live view` reports `cursor_inactive=(-30000,...)`, distinguish that
 inactive sentinel from a visible off-map cursor. In main_map it usually means no
 cursor-owning mode is open yet; in a cursor placement menu without a visible X,
 exit once and choose a productive named menu action or fresh target.
+If fresh target keys are hidden, treat `selection_rect` and `window` as notes
+about the observed target, not a route. Do not record or submit coordinate-offset
+plans unless your current screen_read identifies a visible active cursor in the
+right DF mode.
 """
 
 
@@ -379,6 +387,9 @@ If last_action_review says the previous path did not work, do not press the same
 menu/key path again unless your evidence names a changed condition. Prefer a
 different productive branch, a clean exit to main view, or time advancement only
 when dwarves have active work to complete.
+If your proposed action uses manual cursor movement, your screen_read evidence
+must identify the visible active cursor or active selection on the current
+screen. `selection_rect` and `window` alone do not satisfy that evidence.
 
 These fields are your cognition trail. They do not change Dwarf Fortress and
 they are not scoring. Real score still only comes from native keystrokes,

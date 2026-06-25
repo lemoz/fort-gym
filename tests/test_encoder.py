@@ -40,6 +40,10 @@ def test_encoder_hides_recommended_keys_after_target_attempt() -> None:
     assert "D_DESIGNATE, DESIGNATE_STAIR_DOWN" not in text
     assert "last_action_work_delta=0" in text
     assert "do not repeat the same key sequence" in text
+    assert "selection_rect and window are observation metadata" in text
+    assert "not a manual cursor route" in text
+    assert "Fresh target route: unavailable" in text
+    assert "do not invent CURSOR offsets" in text
 
 
 def test_encoder_shows_recommended_keys_for_fresh_target() -> None:
@@ -66,6 +70,7 @@ def test_encoder_shows_recommended_keys_for_fresh_target() -> None:
     )
 
     assert "target refreshed after repeated no-progress actions" in text
+    assert "selection_rect and window are observation metadata" in text
     assert "Fresh target recommended keys: D_DESIGNATE, DESIGNATE_STAIR_DOWN" in text
 
 

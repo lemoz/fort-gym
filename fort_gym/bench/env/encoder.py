@@ -371,6 +371,13 @@ def encode_observation(
             f"selection_rect={ui_target_setup.get('selection_rect')}, "
             f"designatable_tiles={ui_target_setup.get('designatable_tiles', 0)}"
         )
+        status_lines.append(
+            "Live UI target note: selection_rect and window are observation "
+            "metadata, not a manual cursor route. Use recommended keys when "
+            "shown; if they are hidden, do not invent CURSOR offsets from "
+            "selection_rect/window unless the screen visibly shows an active "
+            "cursor in a cursor-owning DF mode."
+        )
         if ui_target_setup.get("target_mode") == "material":
             status_lines.append(
                 "Live UI material target: use this shown target to create usable "
@@ -413,6 +420,12 @@ def encode_observation(
                 reason = "this target was already attempted."
             status_lines.append(
                 "Fresh target recommended keys: hidden because " + reason
+            )
+            status_lines.append(
+                "Fresh target route: unavailable. Treat the target coordinates "
+                "as evidence about the world, not a key sequence; choose a "
+                "different productive branch, wait for active work, or first "
+                "open and verify a visible DF cursor before manual navigation."
             )
 
     if risks:
