@@ -135,6 +135,12 @@ If `Live view` says `cursor_inactive=(-30000,...)`, that is DF's sentinel for
 "no active cursor on this screen," not proof that all future cursor movement is
 broken. Open a cursor-owning mode such as D_DESIGNATE, D_STOCKPILES, or
 D_BUILDING, then judge the visible cursor/menu from the next screen.
+If `carpenter_workshops=1` and `manager_orders=0`, your next major objective is
+production, not another workshop. Prefer D_JOBLIST -> UNITJOB_MANAGER ->
+MANAGER_NEW_ORDER or a visibly selected carpenter workshop job menu before
+retrying stockpiles or blind dig boxes. If a stockpile or dig path has already
+produced no tracked state change after the workshop exists, record it and return
+to production.
 
 Default recommended first action:
 {
@@ -350,7 +356,9 @@ Use the plan tools as a private notebook:
 - Before your first submit_action, call write_gameplay_plan with a concrete
   multi-step plan. The plan should include: reachable excavation, material
   acquisition if needed, workshop placement, and then a post-workshop branch
-  that completes useful fortress space rather than looping on workshop menus.
+  that creates production work before stockpile refinement or more room digging.
+  If `manager_orders=0`, prefer production orders or a visible
+  carpenter-workshop job menu before stockpile refinement or room completion.
 - At least every five submitted actions, call review_gameplay_plan before
   submit_action. Also call it immediately when recent outcomes show
   no_progress_streak >= 2, repeated no state change, or a completed milestone.

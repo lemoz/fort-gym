@@ -234,6 +234,8 @@ def test_keystroke_prompt_is_action_first() -> None:
     assert "UNITJOB_MANAGER, not STRING_A109" in KEYSTROKE_SYSTEM_PROMPT
     assert "MANAGER_NEW_ORDER" in KEYSTROKE_SYSTEM_PROMPT
     assert "D_BUILDJOB acts on the building under the current cursor" in KEYSTROKE_SYSTEM_PROMPT
+    assert "If `carpenter_workshops=1` and `manager_orders=0`" in KEYSTROKE_SYSTEM_PROMPT
+    assert "D_JOBLIST -> UNITJOB_MANAGER ->" in KEYSTROKE_SYSTEM_PROMPT
     assert "not STRING_A119" in KEYSTROKE_SYSTEM_PROMPT
     assert "cursor_inactive=(-30000,...)" in KEYSTROKE_SYSTEM_PROMPT
     assert "not proof" in KEYSTROKE_SYSTEM_PROMPT
@@ -267,6 +269,9 @@ def test_plan_review_prompt_requires_periodic_plan_reviews() -> None:
     assert "every five submitted actions" in KEYSTROKE_PLAN_REVIEW_SYSTEM_PROMPT
     assert "plan_step" in KEYSTROKE_PLAN_REVIEW_SYSTEM_PROMPT
     assert "post-workshop branch" in KEYSTROKE_PLAN_REVIEW_SYSTEM_PROMPT
+    assert "If `manager_orders=0`, prefer production orders" in (
+        KEYSTROKE_PLAN_REVIEW_SYSTEM_PROMPT
+    )
 
 
 def test_perception_review_prompt_requires_agent_owned_verification() -> None:
