@@ -35,6 +35,29 @@ class ToolLoggingAgent(Agent):
         return events
 
 
+class FailingDecisionAgent(Agent):
+    def __init__(self) -> None:
+        self._events: List[Dict[str, Any]] = []
+
+    def decide(self, obs_text: str, obs_json: Dict[str, Any]) -> Dict[str, Any]:
+        self._events.append(
+            {
+                "tool": "openrouter.chat.completions.create",
+                "input": {"model": "z-ai/glm-5.2"},
+                "output": {
+                    "usage": {"input_tokens": 10, "output_tokens": 1, "total_tokens": 11},
+                    "message": "model did not call a tool",
+                },
+            }
+        )
+        raise RuntimeError("OpenRouter keystroke agent failed after 4 tool rounds")
+
+    def pop_tool_events(self) -> List[Dict[str, Any]]:
+        events = list(self._events)
+        self._events.clear()
+        return events
+
+
 def test_trace_records_tool_calls(tmp_path, monkeypatch) -> None:
     monkeypatch.setenv("ARTIFACTS_DIR", str(tmp_path))
     get_settings.cache_clear()  # type: ignore[attr-defined]
@@ -58,4 +81,29 @@ def test_trace_records_tool_calls(tmp_path, monkeypatch) -> None:
     payload = tool_events[0]["data"]
     assert payload["tool"] == "df_wiki"
     assert payload["input"]["question"] == "how to dig"
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+
+
+def test_trace_records_agent_decision_failures(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("ARTIFACTS_DIR", str(tmp_path))
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    get_settings()
+
+    run_id = run_once(FailingDecisionAgent(), env="mock", max_steps=1, ticks_per_step=0)
+    trace_path = Path(tmp_path) / run_id / "trace.jsonl"
+    assert trace_path.is_file()
+
+    records = [json.loads(line) for line in trace_path.read_text().splitlines() if line.strip()]
+    assert len(records) == 1
+    assert records[0]["error"]["stage"] == "agent_decide"
+    assert records[0]["error"]["type"] == "RuntimeError"
+
+    tool_events = [
+        event
+        for record in records
+        for event in record.get("events", [])
+        if event.get("type") == "tool_call"
+    ]
+    assert tool_events
+    assert tool_events[0]["data"]["tool"] == "openrouter.chat.completions.create"
     get_settings.cache_clear()  # type: ignore[attr-defined]

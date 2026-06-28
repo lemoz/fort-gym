@@ -845,6 +845,8 @@ def run_once(
     def _handle_dfhack_failure(step_index: int, message: str, events: List[Dict[str, Any]]) -> None:
         publish_event(step_index, "stderr", {"message": message}, events)
 
+    run_failed = False
+
     try:
         with trace_path.open("w", encoding="utf-8") as fh:
             for step in range(max_steps):
@@ -1049,7 +1051,65 @@ def run_once(
                     previous_screen = screen_text
                 publish_event(step, "state", {"state": obs_json, "text": obs_text}, events)
 
-                raw_action = agent.decide(obs_text, obs_json)
+                try:
+                    raw_action = agent.decide(obs_text, obs_json)
+                except Exception as exc:
+                    tool_events = []
+                    pop_tool_events = getattr(agent, "pop_tool_events", None)
+                    if callable(pop_tool_events):
+                        try:
+                            tool_events = pop_tool_events()
+                        except Exception as pop_exc:  # pragma: no cover - defensive logging
+                            tool_events = [
+                                {
+                                    "tool": "agent.pop_tool_events",
+                                    "input": {},
+                                    "output": {
+                                        "error": type(pop_exc).__name__,
+                                        "message": str(pop_exc),
+                                    },
+                                }
+                            ]
+                    for tool_event in tool_events:
+                        publish_event(
+                            step,
+                            "tool_call",
+                            {
+                                "tool": tool_event.get("tool"),
+                                "input": tool_event.get("input"),
+                                "output": tool_event.get("output"),
+                            },
+                            events,
+                        )
+                    error_payload = {
+                        "stage": "agent_decide",
+                        "type": type(exc).__name__,
+                        "message": str(exc),
+                    }
+                    publish_event(step, "error", error_payload, events)
+                    fh.write(
+                        json.dumps(
+                            {
+                                "run_id": run_identifier,
+                                "step": step,
+                                "observation": obs_json,
+                                "observation_text": obs_text,
+                                "error": error_payload,
+                                "events": events,
+                            }
+                        )
+                        + "\n"
+                    )
+                    run_failed = True
+                    if registry:
+                        registry.set_status(
+                            run_identifier,
+                            status="failed",
+                            step=step,
+                            ended_at=datetime.utcnow(),
+                        )
+                    break
+
                 tool_events = agent.pop_tool_events()
                 for tool_event in tool_events:
                     publish_event(
@@ -1128,6 +1188,7 @@ def run_once(
                 try:
                     execute_result = call_with_retry("apply", lambda: apply_action(action, obs_json))
                 except DFHackError:
+                    run_failed = True
                     if registry:
                         registry.set_status(
                             run_identifier,
@@ -1160,6 +1221,7 @@ def run_once(
                 try:
                     advance_state = call_with_retry("advance", lambda: advance_env(requested_ticks))
                 except DFHackError:
+                    run_failed = True
                     if registry:
                         registry.set_status(
                             run_identifier,
@@ -1439,7 +1501,7 @@ def run_once(
                 if registry:
                     registry.set_status(run_identifier, step=step)
 
-        if registry:
+        if registry and not run_failed:
             registry.set_status(
                 run_identifier,
                 status="completed",

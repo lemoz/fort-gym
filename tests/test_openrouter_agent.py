@@ -4,6 +4,7 @@ import json
 from types import SimpleNamespace
 from typing import Any
 
+import pytest
 from fastapi import HTTPException
 
 from fort_gym.bench.agent.llm_openrouter import OpenRouterKeystrokeAgent
@@ -267,6 +268,36 @@ def test_openrouter_content_action_repairs_zero_tick_wait(monkeypatch) -> None:
     assert action["params"]["keys"] == ["STANDARDSCROLL_PAGEDOWN"]
     assert action["advance_ticks"] == 500
     assert any(event["tool"] == "advance_ticks_contract_repaired" for event in events)
+
+
+def test_openrouter_agent_logs_no_tool_responses(monkeypatch) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
+    monkeypatch.setenv("OPENROUTER_MAX_TOOL_ROUNDS", "1")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    _FakeOpenRouterClient.content = "I need to inspect the map before acting."
+    _FakeOpenRouterClient.tool_calls = []
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "openai"
+        return SimpleNamespace(OpenAI=_FakeOpenRouterClient)
+
+    monkeypatch.setattr("fort_gym.bench.agent.llm_openrouter.import_module", fake_import_module)
+
+    try:
+        agent = OpenRouterKeystrokeAgent()
+        with pytest.raises(RuntimeError, match="model did not call a tool"):
+            agent.decide("mock observation", {"pause_state": True})
+        events = agent.pop_tool_events()
+    finally:
+        _FakeOpenRouterClient.content = None
+        _FakeOpenRouterClient.tool_calls = None
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    no_tool_events = [
+        event for event in events if event["tool"] == "openrouter.no_tool_response"
+    ]
+    assert no_tool_events
+    assert no_tool_events[0]["output"]["content"] == "I need to inspect the map before acting."
 
 
 def test_anthropic_models_are_disabled_by_default(monkeypatch) -> None:

@@ -442,7 +442,8 @@ class OpenRouterKeystrokeAgent(Agent):
             message = response.choices[0].message
             tool_calls = list(getattr(message, "tool_calls", None) or [])
             if not tool_calls:
-                content_payload = self._json_payload_from_text(getattr(message, "content", None))
+                message_content = getattr(message, "content", None)
+                content_payload = self._json_payload_from_text(message_content)
                 if content_payload is not None:
                     contract_error = self._advance_ticks_contract_error(content_payload)
                     if contract_error:
@@ -475,6 +476,21 @@ class OpenRouterKeystrokeAgent(Agent):
                         self._completed_actions += 1
                         return action
                 else:
+                    content_snippet = (
+                        message_content[:2000]
+                        if isinstance(message_content, str)
+                        else message_content
+                    )
+                    self._tool_events.append(
+                        {
+                            "tool": "openrouter.no_tool_response",
+                            "input": {"model": self._model},
+                            "output": {
+                                "content": content_snippet,
+                                "content_type": type(message_content).__name__,
+                            },
+                        }
+                    )
                     last_error = "model did not call a tool"
                 messages.append(
                     {
