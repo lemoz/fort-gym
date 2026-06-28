@@ -195,6 +195,80 @@ def test_openrouter_agent_uses_content_fallback_for_empty_submit_args(monkeypatc
     assert action["params"]["keys"] == ["SELECT"]
 
 
+def test_openrouter_action_only_repairs_zero_tick_space_wait(monkeypatch) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    _FakeOpenRouterClient.tool_calls = [
+        SimpleNamespace(
+            id="call_submit",
+            function=SimpleNamespace(
+                name="submit_action",
+                arguments=json.dumps(
+                    {
+                        "type": "KEYSTROKE",
+                        "params": {"keys": ["STRING_A032"]},
+                        "intent": "Unpause the game and let dwarves work on existing dig designations",
+                        "objective": "Let miners complete the starter excavation",
+                        "advance_ticks": 0,
+                    }
+                ),
+            ),
+        )
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "openai"
+        return SimpleNamespace(OpenAI=_FakeOpenRouterClient)
+
+    monkeypatch.setattr("fort_gym.bench.agent.llm_openrouter.import_module", fake_import_module)
+
+    try:
+        agent = OpenRouterKeystrokeAgent()
+        action = agent.decide("mock observation", {"pause_state": True})
+        events = agent.pop_tool_events()
+    finally:
+        _FakeOpenRouterClient.tool_calls = None
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["params"]["keys"] == ["STRING_A032"]
+    assert action["advance_ticks"] == 500
+    assert any(event["tool"] == "advance_ticks_contract_repaired" for event in events)
+
+
+def test_openrouter_content_action_repairs_zero_tick_wait(monkeypatch) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    _FakeOpenRouterClient.content = json.dumps(
+        {
+            "type": "KEYSTROKE",
+            "params": {"keys": ["STANDARDSCROLL_PAGEDOWN"]},
+            "intent": "Advance time to let dwarves work on existing designations",
+            "objective": "Wait for mining jobs to complete",
+            "advance_ticks": 0,
+        }
+    )
+    _FakeOpenRouterClient.tool_calls = []
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "openai"
+        return SimpleNamespace(OpenAI=_FakeOpenRouterClient)
+
+    monkeypatch.setattr("fort_gym.bench.agent.llm_openrouter.import_module", fake_import_module)
+
+    try:
+        agent = OpenRouterKeystrokeAgent()
+        action = agent.decide("mock observation", {"pause_state": True})
+        events = agent.pop_tool_events()
+    finally:
+        _FakeOpenRouterClient.content = None
+        _FakeOpenRouterClient.tool_calls = None
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["params"]["keys"] == ["STANDARDSCROLL_PAGEDOWN"]
+    assert action["advance_ticks"] == 500
+    assert any(event["tool"] == "advance_ticks_contract_repaired" for event in events)
+
+
 def test_anthropic_models_are_disabled_by_default(monkeypatch) -> None:
     monkeypatch.delenv("FORT_GYM_ENABLE_ANTHROPIC", raising=False)
 

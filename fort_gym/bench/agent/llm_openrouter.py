@@ -245,6 +245,180 @@ class OpenRouterKeystrokeAgent(Agent):
                 return parsed
         return None
 
+    @staticmethod
+    def _zero_tick_action_says_time_should_pass(tool_payload: Dict[str, Any]) -> bool:
+        action_text = " ".join(
+            str(tool_payload.get(field) or "")
+            for field in (
+                "intent",
+                "objective",
+                "expected_simulation_result",
+                "plan_step",
+                "plan_review",
+                "memory_update",
+            )
+        ).lower()
+        if "advance" in action_text and any(
+            marker in action_text
+            for marker in (
+                "time",
+                "tick",
+                "large block",
+                "significant",
+                "dwarf",
+                "miner",
+                "carpenter",
+                "woodcutter",
+                "work",
+            )
+        ):
+            return True
+        return any(
+            phrase in action_text
+            for phrase in (
+                "advance time",
+                "advance simulation",
+                "advance ticks",
+                "resume time",
+                "simulation time",
+                "time passes",
+                "let dwarves",
+                "let woodcutters",
+                "let miners",
+                "let carpenter",
+                "let production",
+                "give dwarves time",
+                "dwarves work",
+                "produce beds",
+                "production happen",
+                "works the queued",
+                "execute existing",
+            )
+        )
+
+    @classmethod
+    def _advance_ticks_repair_for_action_only(
+        cls,
+        tool_payload: Dict[str, Any],
+        contract_error: str,
+    ) -> int | None:
+        if "completes a dig/chop/stair designation" in contract_error:
+            return 500
+        if cls._zero_tick_action_says_time_should_pass(tool_payload):
+            return 500
+        return None
+
+    @classmethod
+    def _advance_ticks_contract_error(cls, tool_payload: Dict[str, Any]) -> str | None:
+        try:
+            advance_ticks = int(tool_payload.get("advance_ticks", 0))
+        except (TypeError, ValueError):
+            return None
+        if advance_ticks > 0:
+            return None
+
+        params = tool_payload.get("params") if isinstance(tool_payload.get("params"), dict) else {}
+        keys = params.get("keys") if isinstance(params, dict) else []
+        keys = keys if isinstance(keys, list) else []
+        if any(str(key) == "STRING_A032" for key in keys):
+            return (
+                "Action contract mismatch: STRING_A032 with advance_ticks 0 "
+                "does not advance simulation time in this runner. If you need "
+                "dwarves to work, set advance_ticks to a positive value such "
+                "as 500, 1000, or 2000; for UI-only actions, remove STRING_A032."
+            )
+
+        action_text = " ".join(
+            str(tool_payload.get(field) or "")
+            for field in (
+                "intent",
+                "objective",
+                "expected_simulation_result",
+                "plan_step",
+                "plan_review",
+                "memory_update",
+            )
+        ).lower()
+        scroll_only = bool(keys) and all(str(key).startswith("STANDARDSCROLL") for key in keys)
+        if cls._zero_tick_action_says_time_should_pass(tool_payload) or (
+            scroll_only and "advance" in action_text
+        ):
+            return (
+                "Action contract mismatch: the action says to advance time or let "
+                "dwarves work, but advance_ticks is 0. Set advance_ticks to a "
+                "positive value such as 200, 500, 1000, or 2000; viewport scroll "
+                "keys do not advance simulation time."
+            )
+
+        designation_keys = {
+            "DESIGNATE_DIG",
+            "DESIGNATE_CHOP",
+            "DESIGNATE_CHANNEL",
+            "DESIGNATE_STAIR_DOWN",
+            "DESIGNATE_STAIR_UP",
+            "DESIGNATE_STAIR_UPDOWN",
+            "DESIGNATE_RAMP",
+            "DESIGNATE_PLANTS",
+        }
+        completed_work_designation = (
+            (
+                any(str(key) in designation_keys for key in keys)
+                or (
+                    any(
+                        phrase in action_text
+                        for phrase in (
+                            "designate",
+                            "dig room",
+                            "dig area",
+                            "chop",
+                            "stair",
+                            "mine",
+                            "mining",
+                        )
+                    )
+                    and len(keys) >= 3
+                )
+            )
+            and sum(1 for key in keys if str(key) == "SELECT") >= 2
+            and any(str(key) == "LEAVESCREEN" for key in keys)
+        )
+        if completed_work_designation:
+            return (
+                "Action contract mismatch: this key sequence completes a dig/chop/stair "
+                "designation while the game is paused, but advance_ticks is 0. Set "
+                "advance_ticks to 500+ so dwarves can act on the new designation before "
+                "your next decision."
+            )
+        return None
+
+    def _repair_action_only_contract(
+        self,
+        tool_payload: Dict[str, Any],
+        contract_error: str,
+    ) -> Dict[str, Any] | None:
+        if not self._submit_action_only:
+            return None
+        repaired_advance_ticks = self._advance_ticks_repair_for_action_only(
+            tool_payload,
+            contract_error,
+        )
+        if repaired_advance_ticks is None:
+            return None
+        repaired = dict(tool_payload)
+        repaired["advance_ticks"] = repaired_advance_ticks
+        self._tool_events.append(
+            {
+                "tool": "advance_ticks_contract_repaired",
+                "input": {"contract_error": contract_error},
+                "output": (
+                    "Set advance_ticks="
+                    f"{repaired_advance_ticks} during action-only OpenRouter "
+                    "recovery to match the model's stated turn intent."
+                ),
+            }
+        )
+        return repaired
+
     def decide(self, obs_text: str, obs_json: Dict[str, Any]) -> Dict[str, Any]:
         messages = self._messages(obs_text, obs_json)
         called_tool_names: set[str] = set()
@@ -270,6 +444,22 @@ class OpenRouterKeystrokeAgent(Agent):
             if not tool_calls:
                 content_payload = self._json_payload_from_text(getattr(message, "content", None))
                 if content_payload is not None:
+                    contract_error = self._advance_ticks_contract_error(content_payload)
+                    if contract_error:
+                        repaired = self._repair_action_only_contract(
+                            content_payload,
+                            contract_error,
+                        )
+                        if repaired is None:
+                            last_error = ValueError(contract_error)
+                            messages.append(
+                                {
+                                    "role": "user",
+                                    "content": contract_error,
+                                }
+                            )
+                            continue
+                        content_payload = repaired
                     try:
                         action = parse_action(content_payload)
                     except ValueError as exc:
@@ -354,6 +544,23 @@ class OpenRouterKeystrokeAgent(Agent):
                         }
                     )
                     continue
+                contract_error = self._advance_ticks_contract_error(tool_input)
+                if contract_error:
+                    repaired = self._repair_action_only_contract(
+                        tool_input,
+                        contract_error,
+                    )
+                    if repaired is None:
+                        last_error = ValueError(contract_error)
+                        messages.append(
+                            {
+                                "role": "tool",
+                                "tool_call_id": call.id,
+                                "content": contract_error,
+                            }
+                        )
+                        continue
+                    tool_input = repaired
                 try:
                     action = parse_action(tool_input)
                 except ValueError as exc:
