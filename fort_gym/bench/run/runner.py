@@ -448,6 +448,14 @@ def _keystroke_action_history_entry(
         "outcome": outcome,
         "productive_reasons": productive_reasons,
         "changed": changed,
+        "manager_orders_before": _int_or_none(before_work.get("manager_orders_count")) or 0,
+        "manager_orders_after": _int_or_none(after_work.get("manager_orders_count")) or 0,
+        "order_qty_left_before": _int_or_none(before_work.get("manager_orders_amount_left")) or 0,
+        "order_qty_left_after": _int_or_none(after_work.get("manager_orders_amount_left")) or 0,
+        "carpenter_workshops_before": _int_or_none(before_work.get("carpenter_workshops")) or 0,
+        "carpenter_workshops_after": _int_or_none(after_work.get("carpenter_workshops")) or 0,
+        "active_jobs_before": _int_or_none(before_work.get("active_jobs")) or 0,
+        "active_jobs_after": _int_or_none(after_work.get("active_jobs")) or 0,
     }
 
 

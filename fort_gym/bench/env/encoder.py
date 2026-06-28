@@ -117,6 +117,10 @@ def _format_action_history_entry(action_entry: Dict[str, Any]) -> str:
         details.append(
             "changed=" + (", ".join(str(item) for item in changed[:6]) if changed else "none")
         )
+    before_order_qty = action_entry.get("order_qty_left_before")
+    after_order_qty = action_entry.get("order_qty_left_after")
+    if before_order_qty is not None and after_order_qty is not None:
+        details.append(f"order_qty_left={before_order_qty}->{after_order_qty}")
     if screen_read:
         mode = str(screen_read.get("mode") or "").strip()
         confidence = str(screen_read.get("confidence") or "").strip()
@@ -137,6 +141,82 @@ def _format_action_history_entry(action_entry: Dict[str, Any]) -> str:
             )
 
     return f"  Step {step_num}: {intent} -> [{keys_str}] ({'; '.join(details)})"
+
+
+def _to_int(value: Any, default: int = 0) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _recent_progress_summary(
+    action_history: Optional[List[Dict[str, Any]]],
+    work: Dict[str, Any],
+) -> Dict[str, Any]:
+    if not action_history:
+        return {}
+
+    last_productive_step = None
+    last_progress_kind = None
+    for entry in reversed(action_history):
+        reasons = entry.get("productive_reasons")
+        if isinstance(reasons, list) and reasons:
+            last_productive_step = entry.get("step")
+            last_progress_kind = str(reasons[0])
+            break
+
+    no_progress_streak = 0
+    tick_no_progress_streak = 0
+    for entry in reversed(action_history):
+        reasons = entry.get("productive_reasons")
+        productive = isinstance(reasons, list) and bool(reasons)
+        if productive:
+            break
+        no_progress_streak += 1
+        if _to_int(entry.get("actual_ticks")) > 0:
+            tick_no_progress_streak += 1
+
+    manager_orders = _to_int(work.get("manager_orders_count"))
+    order_qty_left = _to_int(work.get("manager_orders_amount_left"))
+    carpenter_workshops = _to_int(work.get("carpenter_workshops"))
+    unchanged_order_wait_ticks = 0
+    current_order_qty = order_qty_left
+    if manager_orders > 0 and order_qty_left > 0 and carpenter_workshops > 0:
+        for entry in reversed(action_history):
+            actual_ticks = _to_int(entry.get("actual_ticks"))
+            before_qty = entry.get("order_qty_left_before")
+            after_qty = entry.get("order_qty_left_after")
+            if (
+                actual_ticks > 0
+                and before_qty is not None
+                and after_qty is not None
+                and _to_int(before_qty) == current_order_qty
+                and _to_int(after_qty) == current_order_qty
+            ):
+                unchanged_order_wait_ticks += actual_ticks
+                continue
+            if unchanged_order_wait_ticks:
+                break
+
+    queued_order_stuck = (
+        manager_orders > 0
+        and order_qty_left > 0
+        and carpenter_workshops > 0
+        and unchanged_order_wait_ticks >= 1000
+    )
+    do_not_repeat_wait = bool(
+        queued_order_stuck or (tick_no_progress_streak >= 2 and no_progress_streak >= 3)
+    )
+    return {
+        "last_productive_step": last_productive_step,
+        "no_progress_streak": no_progress_streak,
+        "tick_no_progress_streak": tick_no_progress_streak,
+        "last_progress_kind": last_progress_kind,
+        "queued_order_stuck": queued_order_stuck,
+        "manager_order_qty_unchanged_after_ticks": unchanged_order_wait_ticks,
+        "do_not_repeat_wait": do_not_repeat_wait,
+    }
 
 
 def encode_observation(
@@ -166,6 +246,9 @@ def encode_observation(
     reminders = clean_state.get("reminders", [])
     pause_state = clean_state.get("pause_state", None)
     work = clean_state.get("work") if isinstance(clean_state.get("work"), dict) else {}
+    recent_progress_summary = _recent_progress_summary(action_history, work)
+    if recent_progress_summary:
+        clean_state["recent_progress_summary"] = recent_progress_summary
     ui_work = clean_state.get("ui_work") if isinstance(clean_state.get("ui_work"), dict) else {}
     ui_target_setup = (
         clean_state.get("ui_target_setup")
@@ -406,6 +489,24 @@ def encode_observation(
                     "Live UI feedback: the last action changed no tracked tiles; "
                     "do not repeat the same key sequence unless a fresh target is shown."
                 )
+    if recent_progress_summary:
+        status_lines.append(
+            "Recent progress summary: "
+            f"last_productive_step={recent_progress_summary.get('last_productive_step')}, "
+            f"no_progress_streak={recent_progress_summary.get('no_progress_streak')}, "
+            f"tick_no_progress_streak={recent_progress_summary.get('tick_no_progress_streak')}, "
+            f"last_progress_kind={recent_progress_summary.get('last_progress_kind')}, "
+            f"queued_order_stuck={str(recent_progress_summary.get('queued_order_stuck')).lower()}, "
+            "manager_order_qty_unchanged_after_ticks="
+            f"{recent_progress_summary.get('manager_order_qty_unchanged_after_ticks')}, "
+            f"do_not_repeat_wait={str(recent_progress_summary.get('do_not_repeat_wait')).lower()}"
+        )
+        if recent_progress_summary.get("do_not_repeat_wait"):
+            status_lines.append(
+                "Recent progress instruction: do not press STRING_A032 or wait again "
+                "until you inspect and fix the visible manager/workshop/order blocker "
+                "through real UI evidence."
+            )
     if screen_shows_workshop_material_selection:
         status_lines.append(
             "Live UI build feedback: the current visible workshop material "

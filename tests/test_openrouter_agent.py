@@ -301,6 +301,48 @@ def test_openrouter_agent_logs_no_tool_responses(monkeypatch) -> None:
     assert no_tool_events[0]["output"]["content"] == "I need to inspect the map before acting."
 
 
+def test_openrouter_agent_repairs_missing_keystroke_type(monkeypatch) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    _FakeOpenRouterClient.tool_calls = [
+        SimpleNamespace(
+            id="call_submit",
+            function=SimpleNamespace(
+                name="submit_action",
+                arguments=json.dumps(
+                    {
+                        "params": {"keys": ["STRING_A032"]},
+                        "intent": "Advance time so dwarves can work the queued bed order",
+                        "objective": "Let dwarves work the queued bed production order",
+                        "expected_visible_result": "Main map view with time advanced",
+                        "expected_simulation_result": "order_qty_left should decrease",
+                        "advance_ticks": 1000,
+                    }
+                ),
+            ),
+        )
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "openai"
+        return SimpleNamespace(OpenAI=_FakeOpenRouterClient)
+
+    monkeypatch.setattr("fort_gym.bench.agent.llm_openrouter.import_module", fake_import_module)
+
+    try:
+        agent = OpenRouterKeystrokeAgent()
+        action = agent.decide("mock observation", {"pause_state": True})
+        events = agent.pop_tool_events()
+    finally:
+        _FakeOpenRouterClient.tool_calls = None
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["type"] == "KEYSTROKE"
+    assert action["params"]["keys"] == ["STRING_A032"]
+    assert action["advance_ticks"] == 1000
+    assert any(event["tool"] == "action_contract_repaired" for event in events)
+
+
 def test_anthropic_models_are_disabled_by_default(monkeypatch) -> None:
     monkeypatch.delenv("FORT_GYM_ENABLE_ANTHROPIC", raising=False)
 

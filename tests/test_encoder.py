@@ -666,3 +666,64 @@ def test_encoder_renders_recent_action_outcomes() -> None:
     assert "changed=carpenter_workshops:+1, wood:-1" in text
     assert "outcome=keys_sent_without_tracked_state_change" in text
     assert "changed=none" in text
+
+
+def test_encoder_summarizes_stuck_queued_order_waits() -> None:
+    text, state = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 3, "stone": 0},
+            "work": {
+                "manager_orders_count": 1,
+                "manager_orders_amount_left": 1,
+                "carpenter_workshops": 1,
+            },
+        },
+        screen_text="main map",
+        action_history=[
+            {
+                "step": 27,
+                "intent": "wait for bed order",
+                "keys": ["STRING_A032"],
+                "requested_ticks": 500,
+                "actual_ticks": 500,
+                "accepted": True,
+                "outcome": "advanced_ticks_without_tracked_state_change",
+                "productive_reasons": [],
+                "changed": [],
+                "manager_orders_before": 1,
+                "manager_orders_after": 1,
+                "order_qty_left_before": 1,
+                "order_qty_left_after": 1,
+                "carpenter_workshops_before": 1,
+                "carpenter_workshops_after": 1,
+            },
+            {
+                "step": 28,
+                "intent": "wait again for bed order",
+                "keys": ["STRING_A032"],
+                "requested_ticks": 1000,
+                "actual_ticks": 1001,
+                "accepted": True,
+                "outcome": "advanced_ticks_without_tracked_state_change",
+                "productive_reasons": [],
+                "changed": [],
+                "manager_orders_before": 1,
+                "manager_orders_after": 1,
+                "order_qty_left_before": 1,
+                "order_qty_left_after": 1,
+                "carpenter_workshops_before": 1,
+                "carpenter_workshops_after": 1,
+            },
+        ],
+    )
+
+    summary = state["recent_progress_summary"]
+    assert summary["queued_order_stuck"] is True
+    assert summary["manager_order_qty_unchanged_after_ticks"] == 1501
+    assert summary["do_not_repeat_wait"] is True
+    assert "queued_order_stuck=true" in text
+    assert "manager_order_qty_unchanged_after_ticks=1501" in text
+    assert "do_not_repeat_wait=true" in text
+    assert "do not press STRING_A032 or wait again" in text

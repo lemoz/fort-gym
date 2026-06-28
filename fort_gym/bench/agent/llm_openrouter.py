@@ -397,6 +397,34 @@ class OpenRouterKeystrokeAgent(Agent):
             )
         return None
 
+    def _repair_missing_keystroke_type(
+        self,
+        tool_payload: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        if tool_payload.get("type") is not None:
+            return tool_payload
+        params = tool_payload.get("params")
+        keys = params.get("keys") if isinstance(params, dict) else None
+        if not isinstance(keys, list) or not keys:
+            return tool_payload
+        repaired = dict(tool_payload)
+        repaired["type"] = "KEYSTROKE"
+        self._tool_events.append(
+            {
+                "tool": "action_contract_repaired",
+                "input": {
+                    "missing": "type",
+                    "inferred_type": "KEYSTROKE",
+                    "keys": keys[:10],
+                },
+                "output": (
+                    "Inserted type=KEYSTROKE because the payload contained "
+                    "params.keys and otherwise matched the keystroke action contract."
+                ),
+            }
+        )
+        return repaired
+
     def _repair_action_only_contract(
         self,
         tool_payload: Dict[str, Any],
@@ -451,6 +479,7 @@ class OpenRouterKeystrokeAgent(Agent):
                 message_content = getattr(message, "content", None)
                 content_payload = self._json_payload_from_text(message_content)
                 if content_payload is not None:
+                    content_payload = self._repair_missing_keystroke_type(content_payload)
                     contract_error = self._advance_ticks_contract_error(content_payload)
                     if contract_error:
                         repaired = self._repair_action_only_contract(
@@ -555,6 +584,7 @@ class OpenRouterKeystrokeAgent(Agent):
                     )
                     if fallback_payload is not None:
                         tool_input = fallback_payload
+                tool_input = self._repair_missing_keystroke_type(tool_input)
                 gate_error = self._gate_error(called_tool_names)
                 if gate_error:
                     last_error = gate_error
