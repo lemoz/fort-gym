@@ -122,6 +122,7 @@ def test_openrouter_keystroke_agent_uses_openrouter_client(monkeypatch) -> None:
     request = _FakeOpenRouterClient.last_instance.chat.completions.requests[0]
     assert request["model"] == "z-ai/glm-5.2"
     assert request["tools"][0]["function"]["name"] == "submit_action"
+    assert request["extra_body"] == {"reasoning": {"enabled": False, "exclude": True}}
     assert events[0] == {
         "tool": "openrouter.chat.completions.create",
         "input": {"model": "z-ai/glm-5.2", "max_tokens": 512, "temperature": 0.1},

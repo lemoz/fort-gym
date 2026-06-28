@@ -138,6 +138,11 @@ class OpenRouterKeystrokeAgent(Agent):
     def _create_completion(self, messages: List[Dict[str, Any]]) -> Any:
         max_attempts = max(1, self._settings.OPENROUTER_MAX_ATTEMPTS)
         last_exc: Exception | None = None
+        request_kwargs: Dict[str, Any] = {}
+        if self._settings.OPENROUTER_DISABLE_REASONING:
+            request_kwargs["extra_body"] = {
+                "reasoning": {"enabled": False, "exclude": True}
+            }
         for attempt in range(max_attempts):
             try:
                 return self._client_instance().chat.completions.create(
@@ -151,6 +156,7 @@ class OpenRouterKeystrokeAgent(Agent):
                     ),
                     temperature=self._settings.LLM_TEMP,
                     max_tokens=self._settings.LLM_MAX_TOKENS,
+                    **request_kwargs,
                 )
             except Exception as exc:
                 last_exc = exc

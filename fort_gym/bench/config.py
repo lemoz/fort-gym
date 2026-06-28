@@ -62,6 +62,9 @@ class Settings(BaseModel):
     OPENROUTER_TIMEOUT_SECONDS: float = float(os.getenv("OPENROUTER_TIMEOUT_SECONDS", "30"))
     OPENROUTER_MAX_ATTEMPTS: int = int(os.getenv("OPENROUTER_MAX_ATTEMPTS", "1"))
     OPENROUTER_MAX_TOOL_ROUNDS: int = int(os.getenv("OPENROUTER_MAX_TOOL_ROUNDS", "4"))
+    OPENROUTER_DISABLE_REASONING: bool = bool(
+        int(os.getenv("OPENROUTER_DISABLE_REASONING", "1"))
+    )
     ANTHROPIC_API_KEY: Optional[str] = os.getenv("ANTHROPIC_API_KEY")
     ANTHROPIC_MODEL: str = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-6")
     ANTHROPIC_OPUS_MODEL: str = os.getenv("ANTHROPIC_OPUS_MODEL", "claude-opus-4-8")
@@ -100,6 +103,9 @@ def get_settings() -> Settings:
         OPENROUTER_TIMEOUT_SECONDS=float(os.getenv("OPENROUTER_TIMEOUT_SECONDS", "30")),
         OPENROUTER_MAX_ATTEMPTS=int(os.getenv("OPENROUTER_MAX_ATTEMPTS", "1")),
         OPENROUTER_MAX_TOOL_ROUNDS=int(os.getenv("OPENROUTER_MAX_TOOL_ROUNDS", "4")),
+        OPENROUTER_DISABLE_REASONING=bool(
+            int(os.getenv("OPENROUTER_DISABLE_REASONING", "1"))
+        ),
         ANTHROPIC_API_KEY=os.getenv("ANTHROPIC_API_KEY"),
         ANTHROPIC_MODEL=os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-6"),
         ANTHROPIC_OPUS_MODEL=os.getenv("ANTHROPIC_OPUS_MODEL", "claude-opus-4-8"),
