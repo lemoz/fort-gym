@@ -141,6 +141,187 @@ def _dict_delta(before: Dict[str, Any], after: Dict[str, Any], key: str) -> int:
     return after_value - before_value
 
 
+def _snapshot_tile_key(tile: Dict[str, Any]) -> tuple[int, int, int] | None:
+    x = _int_or_none(tile.get("x"))
+    y = _int_or_none(tile.get("y"))
+    z = _int_or_none(tile.get("z"))
+    if x is None or y is None or z is None:
+        return None
+    return (x, y, z)
+
+
+def _snapshot_tile_signature(tile: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "category": tile.get("category"),
+        "char": tile.get("char"),
+        "dig": tile.get("dig"),
+        "hidden": bool(tile.get("hidden", False)),
+        "building": tile.get("building"),
+        "building_kind": tile.get("building_kind"),
+        "tiletype_name": tile.get("tiletype_name"),
+    }
+
+
+def _snapshot_tile_changes(
+    before_snapshot: Dict[str, Any] | None,
+    after_snapshot: Dict[str, Any] | None,
+    *,
+    limit: int = 20,
+) -> Dict[str, Any]:
+    """Return compact proof of map-tile changes between two DF snapshots."""
+
+    if not (
+        isinstance(before_snapshot, dict)
+        and isinstance(after_snapshot, dict)
+        and before_snapshot.get("ok")
+        and after_snapshot.get("ok")
+    ):
+        return {
+            "ok": False,
+            "changed_tile_count": 0,
+            "changed_tiles": [],
+            "truncated": False,
+            "reason": "snapshot_unavailable",
+        }
+    if before_snapshot.get("rect") != after_snapshot.get("rect"):
+        return {
+            "ok": False,
+            "changed_tile_count": 0,
+            "changed_tiles": [],
+            "truncated": False,
+            "reason": "snapshot_rect_changed",
+            "before_rect": before_snapshot.get("rect"),
+            "after_rect": after_snapshot.get("rect"),
+        }
+
+    before_tiles = {
+        key: _snapshot_tile_signature(tile)
+        for tile in before_snapshot.get("tiles", [])
+        if isinstance(tile, dict) and (key := _snapshot_tile_key(tile)) is not None
+    }
+    after_tiles = {
+        key: _snapshot_tile_signature(tile)
+        for tile in after_snapshot.get("tiles", [])
+        if isinstance(tile, dict) and (key := _snapshot_tile_key(tile)) is not None
+    }
+    changed_tiles: List[Dict[str, Any]] = []
+    for x, y, z in sorted(set(before_tiles) | set(after_tiles)):
+        before = before_tiles.get((x, y, z))
+        after = after_tiles.get((x, y, z))
+        if before == after:
+            continue
+        changed_tiles.append(
+            {
+                "x": x,
+                "y": y,
+                "z": z,
+                "before": before,
+                "after": after,
+            }
+        )
+
+    changed_count = len(changed_tiles)
+    count_fields = (
+        "dig_designations",
+        "floor_tiles",
+        "wall_tiles",
+        "hidden_tiles",
+        "building_tiles",
+    )
+    counts = {
+        f"{field}_delta": _dict_delta(before_snapshot, after_snapshot, field)
+        for field in count_fields
+    }
+    return {
+        "ok": True,
+        "rect": after_snapshot.get("rect"),
+        "changed_tile_count": changed_count,
+        "changed_tiles": changed_tiles[:limit],
+        "truncated": changed_count > limit,
+        "snapshot_counts": counts,
+    }
+
+
+def _gameplay_proof(
+    *,
+    action: Dict[str, Any],
+    metrics_snapshot: Dict[str, Any],
+    before_map_snapshot: Dict[str, Any] | None,
+    after_map_snapshot: Dict[str, Any] | None,
+    state_before: Dict[str, Any],
+    advance_state: Dict[str, Any],
+    tick_info: Dict[str, Any],
+    score_value: float,
+) -> Dict[str, Any]:
+    before_work = state_before.get("work") if isinstance(state_before.get("work"), dict) else {}
+    after_work = advance_state.get("work") if isinstance(advance_state.get("work"), dict) else {}
+    before_stocks = (
+        state_before.get("stocks") if isinstance(state_before.get("stocks"), dict) else {}
+    )
+    after_stocks = (
+        advance_state.get("stocks") if isinstance(advance_state.get("stocks"), dict) else {}
+    )
+    tile_changes = _snapshot_tile_changes(before_map_snapshot, after_map_snapshot)
+    state_deltas = {
+        "wood": _dict_delta(before_stocks, after_stocks, "wood"),
+        "stone": _dict_delta(before_stocks, after_stocks, "stone"),
+        "target_dig_designations": _dict_delta(
+            before_work,
+            after_work,
+            "target_dig_designations",
+        ),
+        "target_floor_tiles": _dict_delta(before_work, after_work, "target_floor_tiles"),
+        "target_wall_tiles": _dict_delta(before_work, after_work, "target_wall_tiles"),
+        "active_dig_jobs": _dict_delta(before_work, after_work, "active_dig_jobs"),
+        "carpenter_workshops": _dict_delta(before_work, after_work, "carpenter_workshops"),
+        "manager_orders_count": _dict_delta(before_work, after_work, "manager_orders_count"),
+        "manager_orders_amount_left": _dict_delta(
+            before_work,
+            after_work,
+            "manager_orders_amount_left",
+        ),
+    }
+    positive_state_deltas = {
+        key: value for key, value in state_deltas.items() if value not in (0, None)
+    }
+    proof_ok = bool(
+        metrics_snapshot.get("gameplay_progress_eligible")
+        or tile_changes.get("changed_tile_count")
+        or positive_state_deltas
+    )
+    return {
+        "ok": proof_ok,
+        "source": "dfhack-map-and-state",
+        "action_type": action.get("type"),
+        "keys": action.get("params", {}).get("keys", []),
+        "score": score_value,
+        "score_provenance": metrics_snapshot.get("score_provenance"),
+        "gameplay_progress_eligible": bool(
+            metrics_snapshot.get("gameplay_progress_eligible", False)
+        ),
+        "score_duration_blocked": bool(metrics_snapshot.get("score_duration_blocked", False)),
+        "tick_advance": {
+            "requested": action.get("advance_ticks"),
+            "actual": int(tick_info.get("ticks_advanced") or 0),
+        },
+        "progress": {
+            "work": int(metrics_snapshot.get("work_progress") or 0),
+            "designation": int(metrics_snapshot.get("designation_progress") or 0),
+            "completion": int(metrics_snapshot.get("completion_progress") or 0),
+            "utility": int(metrics_snapshot.get("utility_progress") or 0),
+            "production": int(metrics_snapshot.get("production_progress") or 0),
+            "complexity": int(metrics_snapshot.get("complexity_progress") or 0),
+            "ui_work": int(metrics_snapshot.get("ui_work_progress") or 0),
+            "ui_excavation": int(metrics_snapshot.get("ui_excavation_progress") or 0),
+        },
+        "state_deltas": positive_state_deltas,
+        "tile_changes": tile_changes,
+        "changed_tile_count": int(tile_changes.get("changed_tile_count") or 0),
+        "changed_tiles": tile_changes.get("changed_tiles", []),
+        "truncated_changed_tiles": bool(tile_changes.get("truncated", False)),
+    }
+
+
 def _format_delta(name: str, delta: int) -> str:
     sign = "+" if delta > 0 else ""
     return f"{name}:{sign}{delta}"
@@ -669,6 +850,7 @@ def run_once(
             for step in range(max_steps):
                 events: List[Dict[str, Any]] = []
                 tick_info_state = {}
+                map_snapshot_before = None
 
                 pause_env()
                 if (
@@ -825,6 +1007,7 @@ def run_once(
                     if ui_work_rect is not None:
                         ui_work_before = read_work_metrics(ui_work_rect)
                         state_before["ui_work"] = ui_work_before
+                        map_snapshot_before = read_map_snapshot(ui_work_rect)
                         if baseline_ui_work is None and ui_work_before.get("ok"):
                             baseline_ui_work = dict(ui_work_before)
                     if ui_work_feedback:
@@ -1201,6 +1384,7 @@ def run_once(
                 previous_state = advance_state
 
                 map_snapshot = None
+                gameplay_proof = None
                 if backend_name == "dfhack":
                     snapshot_rect = (
                         ui_work_rect
@@ -1210,6 +1394,23 @@ def run_once(
                     if snapshot_rect:
                         map_snapshot = read_map_snapshot(snapshot_rect)
                         publish_event(step, "map_snapshot", {"map_snapshot": map_snapshot}, events)
+                    if is_keystroke_mode:
+                        gameplay_proof = _gameplay_proof(
+                            action=action,
+                            metrics_snapshot=metrics_snapshot,
+                            before_map_snapshot=map_snapshot_before,
+                            after_map_snapshot=map_snapshot,
+                            state_before=state_before,
+                            advance_state=advance_state,
+                            tick_info=tick_info_state,
+                            score_value=score_value,
+                        )
+                        publish_event(
+                            step,
+                            "gameplay_proof",
+                            {"gameplay_proof": gameplay_proof},
+                            events,
+                        )
 
                 record_line = {
                     "run_id": run_identifier,
@@ -1231,6 +1432,8 @@ def run_once(
                 }
                 if map_snapshot is not None:
                     record_line["map_snapshot"] = map_snapshot
+                if gameplay_proof is not None:
+                    record_line["gameplay_proof"] = gameplay_proof
                 fh.write(json.dumps(record_line) + "\n")
 
                 if registry:

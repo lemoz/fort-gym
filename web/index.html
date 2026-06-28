@@ -757,6 +757,21 @@
       return screen.replace(/\r/g, '').replace(/^\n+|\n+$/g, '');
     }
 
+    function extractGameplayProof(record) {
+      if (!record) return null;
+      if (record.gameplay_proof) return record.gameplay_proof;
+      const events = Array.isArray(record.events) ? record.events : [];
+      const proofEvent = events.find(event => event.type === 'gameplay_proof' || event.t === 'gameplay_proof');
+      if (!proofEvent) return null;
+      return proofEvent.data?.gameplay_proof || proofEvent.data || null;
+    }
+
+    function changedTileTransition(change) {
+      const before = change?.before?.category || 'none';
+      const after = change?.after?.category || 'none';
+      return `${before}->${after}`;
+    }
+
     function buildReplaySnapshot(index) {
       const boundedIndex = Math.max(0, Math.min(index, replayRecords.length - 1));
       const record = replayRecords[boundedIndex] || {};
@@ -797,7 +812,8 @@
         carpenterWorkshops: toNumber(work.carpenter_workshops),
         buildAction,
         screenText: extractScreenText(record),
-        mapSnapshot: record.map_snapshot?.ok ? record.map_snapshot : null
+        mapSnapshot: record.map_snapshot?.ok ? record.map_snapshot : null,
+        gameplayProof: extractGameplayProof(record)
       };
     }
 
@@ -882,6 +898,24 @@
       gameCtx.restore();
     }
 
+    function drawChangedTileHighlights(changes, scale, bounds) {
+      if (!Array.isArray(changes) || changes.length === 0) return;
+      gameCtx.save();
+      for (const change of changes) {
+        const tx = toNumber(change.x);
+        const ty = toNumber(change.y);
+        if (tx < bounds.x1 || tx > bounds.x2 || ty < bounds.y1 || ty > bounds.y2) continue;
+        const px = scale.left + (tx - bounds.x1) * scale.tile;
+        const py = scale.top + (ty - bounds.y1) * scale.tile;
+        gameCtx.fillStyle = 'rgba(255, 217, 102, 0.28)';
+        gameCtx.fillRect(px + 2, py + 2, Math.max(1, scale.tile - 4), Math.max(1, scale.tile - 4));
+        gameCtx.strokeStyle = '#ffd966';
+        gameCtx.lineWidth = 2;
+        gameCtx.strokeRect(px + 1, py + 1, Math.max(1, scale.tile - 2), Math.max(1, scale.tile - 2));
+      }
+      gameCtx.restore();
+    }
+
     function drawCapturedMapSnapshot(snapshot, canvasW, canvasH) {
       const mapSnapshot = snapshot.mapSnapshot;
       const bounds = mapSnapshotBounds(mapSnapshot);
@@ -945,6 +979,7 @@
         }
       }
 
+      drawChangedTileHighlights(snapshot.gameplayProof?.changed_tiles || [], scale, bounds);
       drawMapRectOutline(snapshot.targetRect, scale, '#4f7cff', 'START');
       drawMapRectOutline(snapshot.connectorRect, scale, '#43c6ac', 'HALL');
       drawMapRectOutline(snapshot.workshopRoomRect, scale, '#78d66d', 'WORK');
@@ -968,7 +1003,26 @@
       drawReplayText(`Floors: ${mapSnapshot.floor_tiles ?? '--'}`, 704, nextY + 52);
       drawReplayText(`Walls: ${mapSnapshot.wall_tiles ?? '--'}`, 704, nextY + 78);
       drawReplayText(`Buildings: ${mapSnapshot.building_tiles ?? '--'}`, 704, nextY + 104);
-      drawReplayText('Source: df.global.world.map', 704, nextY + 138, {
+      const proof = snapshot.gameplayProof || {};
+      const proofY = Math.min(nextY + 138, 356);
+      const firstChange = Array.isArray(proof.changed_tiles) && proof.changed_tiles.length
+        ? proof.changed_tiles[0]
+        : null;
+      drawReplayText(`Proof: ${proof.changed_tile_count ?? 0} changed tiles`, 704, proofY, {
+        color: proof.gameplay_progress_eligible ? '#9fd7b2' : '#ffd966',
+        size: 13,
+        weight: 800
+      });
+      drawReplayText(`Scored by real play: ${proof.gameplay_progress_eligible ? 'yes' : 'no'}`, 704, proofY + 24);
+      if (firstChange) {
+        drawReplayText(
+          `First diff: ${changedTileTransition(firstChange)} @ ${firstChange.x},${firstChange.y},${firstChange.z}`,
+          704,
+          proofY + 48,
+          { color: '#9fb1d6', size: 12 }
+        );
+      }
+      drawReplayText('Source: df.global.world.map', 704, 428, {
         color: '#9fd7b2',
         size: 13,
         weight: 700
@@ -1073,6 +1127,21 @@
       drawReplayText(`Wood: ${stocks.wood ?? '--'}  Stone: ${stocks.stone ?? '--'}`, panel.x + 22, nextY + 52);
       drawReplayText(`Workshops: ${work.carpenter_workshops ?? 0}`, panel.x + 22, nextY + 78);
       drawReplayText(`Production: ${metrics.production_progress ?? 0}`, panel.x + 22, nextY + 104);
+      const proof = snapshot.gameplayProof || {};
+      const proofY = Math.min(nextY + 134, panel.y + panel.h - 116);
+      drawReplayText(`Proof: ${proof.changed_tile_count ?? 0} changed tiles`, panel.x + 22, proofY, {
+        color: proof.gameplay_progress_eligible ? '#9fd7b2' : '#ffd966',
+        size: 13,
+        weight: 800
+      });
+      drawReplayText(`Score source: ${proof.score_provenance || '--'}`, panel.x + 22, proofY + 24, {
+        color: '#9fb1d6',
+        size: 12
+      });
+      drawReplayText(`Real play scored: ${proof.gameplay_progress_eligible ? 'yes' : 'no'}`, panel.x + 22, proofY + 48, {
+        color: '#9fb1d6',
+        size: 12
+      });
       drawReplayText('Source: DF CopyScreen text', panel.x + 22, panel.y + panel.h - 42, {
         color: '#9fd7b2',
         size: 13,

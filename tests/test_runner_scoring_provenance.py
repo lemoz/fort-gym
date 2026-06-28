@@ -4,8 +4,10 @@ from fort_gym.bench.run.runner import (
     _available_building_materials,
     _carpenter_workshops,
     _desired_keystroke_target_mode,
+    _gameplay_proof,
     _screen_shows_ready_workshop_placement,
     _screen_shows_workshop_material_selection,
+    _snapshot_tile_changes,
     _ui_target_setup_for_observation,
     _ui_target_step_succeeded,
     _ui_work_rect_from_state,
@@ -67,6 +69,104 @@ def test_zero_assisted_dfhack_progress_preserves_audit_values() -> None:
         "ui_excavation_progress": 6,
         "ui_work_progress": 9,
     }
+
+
+def test_snapshot_tile_changes_compares_real_map_tiles() -> None:
+    before = {
+        "ok": True,
+        "rect": [10, 20, 0, 11, 20, 0],
+        "dig_designations": 0,
+        "floor_tiles": 0,
+        "wall_tiles": 2,
+        "hidden_tiles": 0,
+        "building_tiles": 0,
+        "tiles": [
+            {"x": 10, "y": 20, "z": 0, "category": "wall", "char": "#", "dig": "No"},
+            {"x": 11, "y": 20, "z": 0, "category": "wall", "char": "#", "dig": "No"},
+        ],
+    }
+    after = {
+        "ok": True,
+        "rect": [10, 20, 0, 11, 20, 0],
+        "dig_designations": 1,
+        "floor_tiles": 1,
+        "wall_tiles": 1,
+        "hidden_tiles": 0,
+        "building_tiles": 0,
+        "tiles": [
+            {"x": 10, "y": 20, "z": 0, "category": "dig", "char": "x", "dig": "Default"},
+            {"x": 11, "y": 20, "z": 0, "category": "floor", "char": ".", "dig": "No"},
+        ],
+    }
+
+    proof = _snapshot_tile_changes(before, after)
+
+    assert proof["ok"] is True
+    assert proof["changed_tile_count"] == 2
+    assert proof["snapshot_counts"] == {
+        "dig_designations_delta": 1,
+        "floor_tiles_delta": 1,
+        "wall_tiles_delta": -1,
+        "hidden_tiles_delta": 0,
+        "building_tiles_delta": 0,
+    }
+    assert proof["changed_tiles"][0]["before"]["category"] == "wall"
+    assert proof["changed_tiles"][0]["after"]["category"] == "dig"
+
+
+def test_gameplay_proof_marks_keystroke_progress_as_evidence_backed() -> None:
+    before_snapshot = {
+        "ok": True,
+        "rect": [10, 20, 0, 10, 20, 0],
+        "dig_designations": 0,
+        "floor_tiles": 0,
+        "wall_tiles": 1,
+        "hidden_tiles": 0,
+        "building_tiles": 0,
+        "tiles": [
+            {"x": 10, "y": 20, "z": 0, "category": "wall", "char": "#", "dig": "No"},
+        ],
+    }
+    after_snapshot = {
+        "ok": True,
+        "rect": [10, 20, 0, 10, 20, 0],
+        "dig_designations": 1,
+        "floor_tiles": 0,
+        "wall_tiles": 1,
+        "hidden_tiles": 0,
+        "building_tiles": 0,
+        "tiles": [
+            {"x": 10, "y": 20, "z": 0, "category": "dig", "char": "x", "dig": "Default"},
+        ],
+    }
+
+    proof = _gameplay_proof(
+        action={
+            "type": "KEYSTROKE",
+            "params": {"keys": ["D_DESIGNATE", "DESIGNATE_DIG"]},
+            "advance_ticks": 200,
+        },
+        metrics_snapshot={
+            "gameplay_progress_eligible": True,
+            "score_provenance": "keystroke_ui_work_rect",
+            "work_progress": 1,
+            "designation_progress": 1,
+            "ui_work_progress": 1,
+        },
+        before_map_snapshot=before_snapshot,
+        after_map_snapshot=after_snapshot,
+        state_before={"stocks": {"wood": 0, "stone": 0}, "work": {"target_dig_designations": 0}},
+        advance_state={"stocks": {"wood": 0, "stone": 0}, "work": {"target_dig_designations": 1}},
+        tick_info={"ticks_advanced": 200},
+        score_value=24.1,
+    )
+
+    assert proof["ok"] is True
+    assert proof["gameplay_progress_eligible"] is True
+    assert proof["score_provenance"] == "keystroke_ui_work_rect"
+    assert proof["changed_tile_count"] == 1
+    assert proof["state_deltas"] == {"target_dig_designations": 1}
+    assert proof["progress"]["work"] == 1
 
 
 def test_ui_work_rect_prefers_live_cursor_plane() -> None:

@@ -33,6 +33,11 @@ def test_live_index_uses_saved_replay_for_completed_runs() -> None:
     assert "map_snapshot?.ok" in html
     assert "drawCapturedMapSnapshot" in html
     assert "df.global.world.map" in html
+    assert "extractGameplayProof(record)" in html
+    assert "gameplayProof: extractGameplayProof(record)" in html
+    assert "drawChangedTileHighlights" in html
+    assert "Proof: ${proof.changed_tile_count ?? 0} changed tiles" in html
+    assert "Scored by real play" in html
     assert "Current VM Screen" in html
     assert "renderSavedRunReplay" in html
     assert "setReplayRecords(records)" in html
