@@ -89,7 +89,7 @@ vm-test:
 	$(VM_SSH) 'cd $(VM_TEST_DIR) && git fetch origin && git checkout $(SHA) && source $(VM_VENV_DIR)/bin/activate && DFHACK_LIVE=$(LIVE) pytest -q'
 
 vm-deploy:
-	$(VM_SSH) 'set -e; sudo systemctl stop fort-gym-api || true; cd $(VM_PROD_DIR); git fetch origin; git reset --hard $(SHA); sudo systemctl start fort-gym-api; sudo systemctl status fort-gym-api --no-pager | head -n 8'
+	$(VM_SSH) 'set -e; sudo systemctl stop fort-gym-api || true; cd $(VM_PROD_DIR); git fetch origin; git reset --hard $(SHA); $(VM_VENV_DIR)/bin/pip install -e ".[dev,agent]"; sudo systemctl start fort-gym-api; sudo systemctl status fort-gym-api --no-pager | head -n 8'
 
 vm-live-smoke:
 	$(VM_GCLOUD_SSH) 'set -euo pipefail; RUN_DIR=$$(mktemp -d /home/$(VM_USER)/fort-gym-live-smoke.XXXXXX); echo "RUN_DIR=$$RUN_DIR"; git clone --depth 1 --branch $(VM_LIVE_SMOKE_REF) https://github.com/lemoz/fort-gym.git "$$RUN_DIR" >/dev/null; cd "$$RUN_DIR"; $(VM_VENV_DIR)/bin/python -m pip install -q grpcio-tools; set -a; . /etc/fort-gym.env; set +a; export PYTHONPATH="$$RUN_DIR"; export ARTIFACTS_DIR="$$RUN_DIR/artifacts-live"; export FORT_GYM_DB_PATH="$$RUN_DIR/artifacts-live/fort_gym.sqlite3"; unset GOOGLE_API_KEY; $(VM_VENV_DIR)/bin/python -c "from fort_gym.bench.cli import app; app()" live-smoke --run-id live-dfhack-smoke'

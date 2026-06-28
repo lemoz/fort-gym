@@ -52,7 +52,7 @@
   command: "{{ fortgym_venv_dir }}/bin/pip install --upgrade pip"
 
 - name: Install fort-gym package
-  command: "{{ fortgym_venv_dir }}/bin/pip install -e {{ fortgym_install_dir }}[dev]"
+  command: "{{ fortgym_venv_dir }}/bin/pip install -e {{ fortgym_install_dir }}[dev,agent]"
 
 - name: Ensure admin password is set for production
   fail:
