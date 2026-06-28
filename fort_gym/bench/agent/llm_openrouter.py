@@ -215,7 +215,8 @@ class OpenRouterKeystrokeAgent(Agent):
         called_tool_names: set[str] = set()
         last_error: Exception | str | None = None
 
-        for _ in range(10):
+        max_tool_rounds = max(1, self._settings.OPENROUTER_MAX_TOOL_ROUNDS)
+        for _ in range(max_tool_rounds):
             self._rate_limit()
             response = self._create_completion(messages)
             self._tool_events.append(
@@ -310,7 +311,9 @@ class OpenRouterKeystrokeAgent(Agent):
                 self._completed_actions += 1
                 return action
 
-        raise RuntimeError(f"OpenRouter keystroke agent failed: {last_error}")
+        raise RuntimeError(
+            f"OpenRouter keystroke agent failed after {max_tool_rounds} tool rounds: {last_error}"
+        )
 
     def pop_tool_events(self) -> List[Dict[str, Any]]:
         events = list(self._tool_events)
