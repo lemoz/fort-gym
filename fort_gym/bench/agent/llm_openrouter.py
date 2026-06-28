@@ -84,6 +84,9 @@ class OpenRouterKeystrokeAgent(Agent):
         self._require_memory_review = require_memory_review
         self._require_plan_review = require_plan_review
         self._require_perception_review = require_perception_review
+        self._submit_action_only = not (
+            require_memory_review or require_plan_review or require_perception_review
+        )
         self._completed_actions = 0
         self._client = None
         self._last_call = 0.0
@@ -125,10 +128,12 @@ class OpenRouterKeystrokeAgent(Agent):
         self._last_call = time.monotonic()
 
     def _tools(self) -> List[Dict[str, Any]]:
-        return [
-            _submit_action_tool(require_perception_review=self._require_perception_review),
-            *[_openai_tool(spec) for spec in self._tool_manager.tool_specs()],
-        ]
+        submit_tool = _submit_action_tool(
+            require_perception_review=self._require_perception_review
+        )
+        if self._submit_action_only:
+            return [submit_tool]
+        return [submit_tool, *[_openai_tool(spec) for spec in self._tool_manager.tool_specs()]]
 
     def _create_completion(self, messages: List[Dict[str, Any]]) -> Any:
         max_attempts = max(1, self._settings.OPENROUTER_MAX_ATTEMPTS)
@@ -139,7 +144,11 @@ class OpenRouterKeystrokeAgent(Agent):
                     model=self._model,
                     messages=messages,
                     tools=self._tools(),
-                    tool_choice="auto",
+                    tool_choice=(
+                        {"type": "function", "function": {"name": "submit_action"}}
+                        if self._submit_action_only
+                        else "auto"
+                    ),
                     temperature=self._settings.LLM_TEMP,
                     max_tokens=self._settings.LLM_MAX_TOKENS,
                 )
