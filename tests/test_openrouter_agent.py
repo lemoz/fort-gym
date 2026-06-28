@@ -63,10 +63,12 @@ class _FakeOpenRouterClient:
         api_key: str,
         base_url: str,
         max_retries: int = 2,
+        timeout: float | None = None,
     ) -> None:
         self.api_key = api_key
         self.base_url = base_url
         self.max_retries = max_retries
+        self.timeout = timeout
         self.chat = _FakeOpenRouterChat()
         _FakeOpenRouterClient.last_instance = self
 
@@ -84,6 +86,7 @@ def test_openrouter_keystroke_agent_uses_openrouter_client(monkeypatch) -> None:
     monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
     monkeypatch.setenv("OPENROUTER_MODEL", "z-ai/glm-5.2")
     monkeypatch.setenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
+    monkeypatch.setenv("OPENROUTER_TIMEOUT_SECONDS", "12.5")
     get_settings.cache_clear()  # type: ignore[attr-defined]
 
     def fake_import_module(name: str) -> Any:
@@ -104,6 +107,7 @@ def test_openrouter_keystroke_agent_uses_openrouter_client(monkeypatch) -> None:
     assert _FakeOpenRouterClient.last_instance.api_key == "or-test-key"
     assert _FakeOpenRouterClient.last_instance.base_url == "https://openrouter.ai/api/v1"
     assert _FakeOpenRouterClient.last_instance.max_retries == 0
+    assert _FakeOpenRouterClient.last_instance.timeout == 12.5
     request = _FakeOpenRouterClient.last_instance.chat.completions.requests[0]
     assert request["model"] == "z-ai/glm-5.2"
     assert request["tools"][0]["function"]["name"] == "submit_action"

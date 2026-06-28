@@ -59,6 +59,8 @@ class Settings(BaseModel):
     OPENROUTER_BASE_URL: str = os.getenv(
         "OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"
     )
+    OPENROUTER_TIMEOUT_SECONDS: float = float(os.getenv("OPENROUTER_TIMEOUT_SECONDS", "45"))
+    OPENROUTER_MAX_ATTEMPTS: int = int(os.getenv("OPENROUTER_MAX_ATTEMPTS", "2"))
     ANTHROPIC_API_KEY: Optional[str] = os.getenv("ANTHROPIC_API_KEY")
     ANTHROPIC_MODEL: str = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-6")
     ANTHROPIC_OPUS_MODEL: str = os.getenv("ANTHROPIC_OPUS_MODEL", "claude-opus-4-8")
@@ -94,6 +96,8 @@ def get_settings() -> Settings:
         OPENROUTER_BASE_URL=os.getenv(
             "OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"
         ),
+        OPENROUTER_TIMEOUT_SECONDS=float(os.getenv("OPENROUTER_TIMEOUT_SECONDS", "45")),
+        OPENROUTER_MAX_ATTEMPTS=int(os.getenv("OPENROUTER_MAX_ATTEMPTS", "2")),
         ANTHROPIC_API_KEY=os.getenv("ANTHROPIC_API_KEY"),
         ANTHROPIC_MODEL=os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-6"),
         ANTHROPIC_OPUS_MODEL=os.getenv("ANTHROPIC_OPUS_MODEL", "claude-opus-4-8"),

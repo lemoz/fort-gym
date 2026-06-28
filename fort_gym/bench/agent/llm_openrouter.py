@@ -109,6 +109,7 @@ class OpenRouterKeystrokeAgent(Agent):
                 api_key=self._settings.OPENROUTER_API_KEY,
                 base_url=self._settings.OPENROUTER_BASE_URL,
                 max_retries=0,
+                timeout=self._settings.OPENROUTER_TIMEOUT_SECONDS,
             )
         return self._client
 
@@ -128,6 +129,42 @@ class OpenRouterKeystrokeAgent(Agent):
             _submit_action_tool(require_perception_review=self._require_perception_review),
             *[_openai_tool(spec) for spec in self._tool_manager.tool_specs()],
         ]
+
+    def _create_completion(self, messages: List[Dict[str, Any]]) -> Any:
+        max_attempts = max(1, self._settings.OPENROUTER_MAX_ATTEMPTS)
+        last_exc: Exception | None = None
+        for attempt in range(max_attempts):
+            try:
+                return self._client_instance().chat.completions.create(
+                    model=self._model,
+                    messages=messages,
+                    tools=self._tools(),
+                    tool_choice="auto",
+                    temperature=self._settings.LLM_TEMP,
+                    max_tokens=self._settings.LLM_MAX_TOKENS,
+                )
+            except Exception as exc:
+                last_exc = exc
+                will_retry = attempt + 1 < max_attempts
+                self._tool_events.append(
+                    {
+                        "tool": "openrouter.chat.completions.create",
+                        "input": {
+                            "model": self._model,
+                            "attempt": attempt + 1,
+                            "max_attempts": max_attempts,
+                            "timeout_seconds": self._settings.OPENROUTER_TIMEOUT_SECONDS,
+                        },
+                        "output": {
+                            "error": type(exc).__name__,
+                            "message": str(exc),
+                            "retrying": will_retry,
+                        },
+                    }
+                )
+                if will_retry:
+                    time.sleep(min(2.0 * (attempt + 1), 5.0))
+        raise RuntimeError(f"OpenRouter request failed after {max_attempts} attempts") from last_exc
 
     def _gate_error(self, called_tool_names: set[str]) -> str | None:
         if self._require_memory_review and "query_memory" not in called_tool_names:
@@ -180,14 +217,7 @@ class OpenRouterKeystrokeAgent(Agent):
 
         for _ in range(10):
             self._rate_limit()
-            response = self._client_instance().chat.completions.create(
-                model=self._model,
-                messages=messages,
-                tools=self._tools(),
-                tool_choice="auto",
-                temperature=self._settings.LLM_TEMP,
-                max_tokens=self._settings.LLM_MAX_TOKENS,
-            )
+            response = self._create_completion(messages)
             self._tool_events.append(
                 {
                     "tool": "openrouter.chat.completions.create",
