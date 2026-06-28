@@ -210,6 +210,32 @@ class OpenRouterKeystrokeAgent(Agent):
             return {}
         return parsed if isinstance(parsed, dict) else {}
 
+    @staticmethod
+    def _json_payload_from_text(content: Any) -> Dict[str, Any] | None:
+        if not isinstance(content, str) or not content.strip():
+            return None
+        text = content.strip()
+        if text.startswith("```"):
+            lines = text.splitlines()
+            if len(lines) >= 3 and lines[-1].strip() == "```":
+                text = "\n".join(lines[1:-1]).strip()
+        decoder = json.JSONDecoder()
+        candidates = [text]
+        for idx, char in enumerate(text):
+            if char == "{":
+                candidates.append(text[idx:])
+        for candidate in candidates:
+            try:
+                parsed, _ = decoder.raw_decode(candidate)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(parsed, dict):
+                action = parsed.get("action")
+                if isinstance(action, dict):
+                    return action
+                return parsed
+        return None
+
     def decide(self, obs_text: str, obs_json: Dict[str, Any]) -> Dict[str, Any]:
         messages = self._messages(obs_text, obs_json)
         called_tool_names: set[str] = set()
@@ -233,11 +259,31 @@ class OpenRouterKeystrokeAgent(Agent):
             message = response.choices[0].message
             tool_calls = list(getattr(message, "tool_calls", None) or [])
             if not tool_calls:
-                last_error = "model did not call a tool"
+                content_payload = self._json_payload_from_text(getattr(message, "content", None))
+                if content_payload is not None:
+                    try:
+                        action = parse_action(content_payload)
+                    except ValueError as exc:
+                        last_error = exc
+                    else:
+                        self._tool_events.append(
+                            {
+                                "tool": "openrouter.content_action",
+                                "input": content_payload,
+                                "output": "accepted",
+                            }
+                        )
+                        self._completed_actions += 1
+                        return action
+                else:
+                    last_error = "model did not call a tool"
                 messages.append(
                     {
                         "role": "user",
-                        "content": "Call the provided tools. End with submit_action.",
+                        "content": (
+                            "Call submit_action with a valid KEYSTROKE payload. "
+                            "If tool calling fails, reply with only the JSON action object."
+                        ),
                     }
                 )
                 continue
@@ -282,6 +328,12 @@ class OpenRouterKeystrokeAgent(Agent):
 
             for call, tool_input in submit_calls:
                 called_tool_names.add("submit_action")
+                if not tool_input:
+                    fallback_payload = self._json_payload_from_text(
+                        getattr(message, "content", None)
+                    )
+                    if fallback_payload is not None:
+                        tool_input = fallback_payload
                 gate_error = self._gate_error(called_tool_names)
                 if gate_error:
                     last_error = gate_error

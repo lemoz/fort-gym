@@ -12,32 +12,37 @@ from fort_gym.bench.config import get_settings
 
 
 class _FakeOpenRouterCompletions:
-    def __init__(self) -> None:
+    def __init__(self, *, content: str | None = None, tool_calls: list[Any] | None = None) -> None:
         self.requests: list[dict[str, Any]] = []
+        self.content = content
+        self.tool_calls = tool_calls
 
     def create(self, **kwargs: Any) -> Any:
         self.requests.append(kwargs)
+        tool_calls = self.tool_calls
+        if tool_calls is None and self.content is None:
+            tool_calls = [
+                SimpleNamespace(
+                    id="call_submit",
+                    function=SimpleNamespace(
+                        name="submit_action",
+                        arguments=json.dumps(
+                            {
+                                "type": "KEYSTROKE",
+                                "params": {"keys": ["LEAVESCREEN"]},
+                                "intent": "exit one menu",
+                                "advance_ticks": 0,
+                            }
+                        ),
+                    ),
+                )
+            ]
         return SimpleNamespace(
             choices=[
                 SimpleNamespace(
                     message=SimpleNamespace(
-                        content=None,
-                        tool_calls=[
-                            SimpleNamespace(
-                                id="call_submit",
-                                function=SimpleNamespace(
-                                    name="submit_action",
-                                    arguments=json.dumps(
-                                        {
-                                            "type": "KEYSTROKE",
-                                            "params": {"keys": ["LEAVESCREEN"]},
-                                            "intent": "exit one menu",
-                                            "advance_ticks": 0,
-                                        }
-                                    ),
-                                ),
-                            )
-                        ],
+                        content=self.content,
+                        tool_calls=tool_calls,
                     )
                 )
             ],
@@ -50,12 +55,17 @@ class _FakeOpenRouterCompletions:
 
 
 class _FakeOpenRouterChat:
-    def __init__(self) -> None:
-        self.completions = _FakeOpenRouterCompletions()
+    def __init__(self, *, content: str | None = None, tool_calls: list[Any] | None = None) -> None:
+        self.completions = _FakeOpenRouterCompletions(
+            content=content,
+            tool_calls=tool_calls,
+        )
 
 
 class _FakeOpenRouterClient:
     last_instance: "_FakeOpenRouterClient | None" = None
+    content: str | None = None
+    tool_calls: list[Any] | None = None
 
     def __init__(
         self,
@@ -69,7 +79,7 @@ class _FakeOpenRouterClient:
         self.base_url = base_url
         self.max_retries = max_retries
         self.timeout = timeout
-        self.chat = _FakeOpenRouterChat()
+        self.chat = _FakeOpenRouterChat(content=self.content, tool_calls=self.tool_calls)
         _FakeOpenRouterClient.last_instance = self
 
 
@@ -116,6 +126,73 @@ def test_openrouter_keystroke_agent_uses_openrouter_client(monkeypatch) -> None:
         "input": {"model": "z-ai/glm-5.2", "max_tokens": 512, "temperature": 0.1},
         "output": {"usage": {"input_tokens": 100, "output_tokens": 20, "total_tokens": 120}},
     }
+
+
+def test_openrouter_agent_accepts_json_content_when_tool_call_missing(monkeypatch) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
+    monkeypatch.setenv("OPENROUTER_MODEL", "z-ai/glm-5.2")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    _FakeOpenRouterClient.content = (
+        "```json\n"
+        "{\"type\":\"KEYSTROKE\",\"params\":{\"keys\":[\"LEAVESCREEN\"]},"
+        "\"intent\":\"exit menu\",\"advance_ticks\":0}"
+        "\n```"
+    )
+    _FakeOpenRouterClient.tool_calls = []
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "openai"
+        return SimpleNamespace(OpenAI=_FakeOpenRouterClient)
+
+    monkeypatch.setattr("fort_gym.bench.agent.llm_openrouter.import_module", fake_import_module)
+
+    try:
+        agent = OpenRouterKeystrokeAgent()
+        action = agent.decide("mock observation", {"pause_state": True})
+        events = agent.pop_tool_events()
+    finally:
+        _FakeOpenRouterClient.content = None
+        _FakeOpenRouterClient.tool_calls = None
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["type"] == "KEYSTROKE"
+    assert action["params"]["keys"] == ["LEAVESCREEN"]
+    assert events[-1]["tool"] == "openrouter.content_action"
+
+
+def test_openrouter_agent_uses_content_fallback_for_empty_submit_args(monkeypatch) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    _FakeOpenRouterClient.content = json.dumps(
+        {
+            "type": "KEYSTROKE",
+            "params": {"keys": ["SELECT"]},
+            "intent": "confirm visible menu",
+            "advance_ticks": 0,
+        }
+    )
+    _FakeOpenRouterClient.tool_calls = [
+        SimpleNamespace(
+            id="call_submit",
+            function=SimpleNamespace(name="submit_action", arguments="{}"),
+        )
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "openai"
+        return SimpleNamespace(OpenAI=_FakeOpenRouterClient)
+
+    monkeypatch.setattr("fort_gym.bench.agent.llm_openrouter.import_module", fake_import_module)
+
+    try:
+        agent = OpenRouterKeystrokeAgent()
+        action = agent.decide("mock observation", {"pause_state": True})
+    finally:
+        _FakeOpenRouterClient.content = None
+        _FakeOpenRouterClient.tool_calls = None
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["params"]["keys"] == ["SELECT"]
 
 
 def test_anthropic_models_are_disabled_by_default(monkeypatch) -> None:
