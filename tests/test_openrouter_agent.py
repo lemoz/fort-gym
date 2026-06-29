@@ -772,7 +772,7 @@ def test_openrouter_agent_repairs_string_review_metadata(monkeypatch) -> None:
         _submit_action_call(
             {
                 "type": "KEYSTROKE",
-                "params": {"keys": ["LEAVESCREEN", "LEAVESCREEN", "D_NOBLES"]},
+                "params": {"keys": ["D_NOBLES"]},
                 "intent": "Exit manager orders and open Nobles to appoint a manager",
                 "screen_read": "The screen says a manager is required.",
                 "last_action_review": (
@@ -808,7 +808,7 @@ def test_openrouter_agent_repairs_string_review_metadata(monkeypatch) -> None:
         _FakeOpenRouterClient.tool_calls = None
         get_settings.cache_clear()  # type: ignore[attr-defined]
 
-    assert action["params"]["keys"] == ["LEAVESCREEN", "LEAVESCREEN", "D_NOBLES"]
+    assert action["params"]["keys"] == ["D_NOBLES"]
     assert action["screen_read"]["mode"] == "manager_required"
     assert action["last_action_review"]["evidence"] == [
         "UNITJOB_MANAGER worked as navigation but exposed a missing manager blocker."
@@ -820,6 +820,83 @@ def test_openrouter_agent_repairs_string_review_metadata(monkeypatch) -> None:
             "last_action_review": "str",
         }
         for event in events
+    )
+
+
+def test_openrouter_agent_rejects_escape_then_action_from_production_screen(
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    bad_payload = {
+        "type": "KEYSTROKE",
+        "params": {"keys": ["LEAVESCREEN", "D_NOBLES"]},
+        "intent": "Exit the manager-required screen and open Nobles",
+        "objective": "appoint a manager",
+        "expected_visible_result": "Nobles screen opens",
+        "screen_read": {
+            "mode": "manager_required",
+            "evidence": ["visible text says a manager is required"],
+            "confidence": "high",
+        },
+        "last_action_review": {
+            "worked": True,
+            "evidence": ["UNITJOB_MANAGER exposed manager-required screen"],
+            "should_retry_same_path": False,
+        },
+        "advance_ticks": 0,
+    }
+    recovery_payload = {
+        "type": "KEYSTROKE",
+        "params": {"keys": ["LEAVESCREEN"]},
+        "intent": "Exit the manager-required screen and wait for the next observation",
+        "objective": "return to a known screen before choosing the next menu",
+        "expected_visible_result": "previous screen or main map is visible",
+        "screen_read": {
+            "mode": "manager_required",
+            "evidence": ["visible text says a manager is required"],
+            "confidence": "high",
+        },
+        "last_action_review": {
+            "worked": False,
+            "evidence": ["compound escape plus D_NOBLES was rejected"],
+            "should_retry_same_path": False,
+        },
+        "advance_ticks": 0,
+    }
+    _FakeOpenRouterClient.responses = [
+        {"tool_calls": [_submit_action_call(bad_payload, "call_bad_compound")]},
+        {"tool_calls": [_submit_action_call(recovery_payload, "call_escape_only")]},
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "openai"
+        return SimpleNamespace(OpenAI=_FakeOpenRouterClient)
+
+    monkeypatch.setattr("fort_gym.bench.agent.llm_openrouter.import_module", fake_import_module)
+
+    try:
+        agent = OpenRouterKeystrokeAgent()
+        action = agent.decide(
+            "mock observation",
+            {
+                "pause_state": True,
+                "screen_state": {
+                    "mode": "manager_required",
+                    "confidence": "high",
+                    "evidence": ["visible text says a manager is required"],
+                },
+            },
+        )
+        events = agent.pop_tool_events()
+    finally:
+        _FakeOpenRouterClient.responses = None
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["params"]["keys"] == ["LEAVESCREEN"]
+    assert action["advance_ticks"] == 0
+    assert any(
+        event["tool"] == "compound_menu_escape_contract_rejected" for event in events
     )
 
 

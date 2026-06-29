@@ -63,6 +63,17 @@ PRODUCTION_SCREEN_COMPATIBLE_MODES = {
     },
 }
 
+ESCAPE_THEN_ACT_MENU_MODES = {
+    "job_list",
+    "manager_required",
+    "manager_orders",
+    "manager_new_order_search",
+    "nobles_administrators",
+    "workshop_placement",
+    "workshop_material_selection",
+    "workshop_add_task_list",
+}
+
 
 def _openai_tool(spec: Dict[str, Any]) -> Dict[str, Any]:
     return {
@@ -864,6 +875,61 @@ class OpenRouterKeystrokeAgent(Agent):
             }
         )
 
+    @classmethod
+    def _compound_menu_escape_contract_error(
+        cls,
+        tool_payload: Dict[str, Any],
+        obs_json: Dict[str, Any],
+    ) -> str | None:
+        screen_state = obs_json.get("screen_state")
+        if not isinstance(screen_state, dict):
+            return None
+        expected_mode = str(screen_state.get("mode") or "").strip().lower()
+        if (
+            not expected_mode
+            or expected_mode not in ESCAPE_THEN_ACT_MENU_MODES
+            or str(screen_state.get("confidence") or "") != "high"
+        ):
+            return None
+
+        keys = [str(key) for key in cls._keystroke_keys(tool_payload)]
+        if not keys:
+            return None
+
+        saw_escape = False
+        for key in keys:
+            if key == "LEAVESCREEN":
+                saw_escape = True
+                continue
+            if saw_escape:
+                return (
+                    "Compound menu escape contract mismatch: observation classified "
+                    f"the visible screen as {expected_mode}. From a high-confidence "
+                    "production/menu screen, do not combine LEAVESCREEN with a "
+                    "later non-escape command in one turn. First submit only "
+                    "LEAVESCREEN keys with advance_ticks=0, then wait for the next "
+                    "observation to confirm the screen before pressing D_NOBLES, "
+                    "D_JOBLIST, D_BUILDJOB, D_BUILDING, cursor keys, or SELECT."
+                )
+        return None
+
+    def _log_compound_menu_escape_contract_error(
+        self,
+        tool_payload: Dict[str, Any],
+        obs_json: Dict[str, Any],
+        error: str,
+    ) -> None:
+        self._tool_events.append(
+            {
+                "tool": "compound_menu_escape_contract_rejected",
+                "input": {
+                    "screen_state": obs_json.get("screen_state"),
+                    "submitted_keys": self._keystroke_keys(tool_payload),
+                },
+                "output": error,
+            }
+        )
+
     @staticmethod
     def _nobles_evidence_names_manager_row(text: Any) -> bool:
         normalized = str(text or "").strip().lower()
@@ -1223,6 +1289,18 @@ class OpenRouterKeystrokeAgent(Agent):
         if screen_read_error:
             self._log_screen_read_contract_error(payload, obs_json, screen_read_error)
             return screen_read_error
+
+        compound_escape_error = self._compound_menu_escape_contract_error(
+            payload,
+            obs_json,
+        )
+        if compound_escape_error:
+            self._log_compound_menu_escape_contract_error(
+                payload,
+                obs_json,
+                compound_escape_error,
+            )
+            return compound_escape_error
 
         nobles_navigation_error = self._nobles_navigation_contract_error(payload, obs_json)
         if nobles_navigation_error:

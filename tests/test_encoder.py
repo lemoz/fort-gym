@@ -389,6 +389,7 @@ def test_encoder_classifies_manager_required_screen() -> None:
 
     assert "Screen state: mode=manager_required" in text
     assert "Do not advance time for production yet" in text
+    assert "do not combine LEAVESCREEN with a later menu/action key" in text
     assert state["screen_state"]["mode"] == "manager_required"
     assert state["screen_state"]["confidence"] == "high"
 
@@ -515,6 +516,7 @@ def test_encoder_classifies_jobs_screen_manager_footer() -> None:
 
     assert "Screen state: mode=job_list" in text
     assert "UNITJOB_MANAGER" in text
+    assert "do not combine LEAVESCREEN with a later menu/action key" in text
     assert state["screen_state"]["mode"] == "job_list"
     assert state["screen_state"]["confidence"] == "high"
 

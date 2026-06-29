@@ -5,6 +5,11 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional, Tuple
 
 INVALID_DF_CURSOR = -30000
+MENU_ESCAPE_OBSERVATION_RULE = (
+    "If escaping this screen, submit only LEAVESCREEN keys with advance_ticks=0; "
+    "do not combine LEAVESCREEN with a later menu/action key until the next "
+    "observation confirms the screen."
+)
 
 
 def redact_noise(state: Dict[str, Any]) -> Dict[str, Any]:
@@ -84,7 +89,8 @@ def _classify_screen_state(screen_text: Optional[str]) -> Dict[str, Any]:
             confidence="high",
             instruction=(
                 "Do not advance time for production yet. Use visible evidence to "
-                "appoint a manager or choose a direct workshop-task path."
+                "appoint a manager or choose a direct workshop-task path. "
+                f"{MENU_ESCAPE_OBSERVATION_RULE}"
             ),
             extra_evidence=["visible text says a manager is required"],
         )
@@ -106,7 +112,8 @@ def _classify_screen_state(screen_text: Optional[str]) -> Dict[str, Any]:
             instruction=(
                 "Use visible row/highlight evidence before selecting a noble. "
                 "Do not use STANDARDSCROLL keys here. Do not use fixed row "
-                "counts unless the target row is visible and highlighted."
+                "counts unless the target row is visible and highlighted. "
+                f"{MENU_ESCAPE_OBSERVATION_RULE}"
             ),
             extra_evidence=["visible Nobles/Administrators screen"],
         )
@@ -117,7 +124,8 @@ def _classify_screen_state(screen_text: Optional[str]) -> Dict[str, Any]:
             confidence="high",
             instruction=(
                 "Visible jobs screen. If production orders are needed, use "
-                "UNITJOB_MANAGER from this screen before manager-order keys."
+                "UNITJOB_MANAGER from this screen before manager-order keys. "
+                f"{MENU_ESCAPE_OBSERVATION_RULE}"
             ),
             extra_evidence=["visible jobs screen footer includes m: Manager"],
         )
@@ -146,7 +154,8 @@ def _classify_screen_state(screen_text: Optional[str]) -> Dict[str, Any]:
             instruction=(
                 "If exactly one useful highlighted result is visible, SELECT can "
                 "queue it. If the search result is wrong or stale, record the "
-                "search as failed and reopen a clean dialog before another term."
+                "search as failed and reopen a clean dialog before another term. "
+                f"{MENU_ESCAPE_OBSERVATION_RULE}"
             ),
             extra_evidence=useful_rows[:3] or ["visible manager new-order search"],
         )
@@ -160,7 +169,8 @@ def _classify_screen_state(screen_text: Optional[str]) -> Dict[str, Any]:
             confidence="medium",
             instruction=(
                 "Use MANAGER_NEW_ORDER only when this screen is the manager/work "
-                "orders screen; otherwise exit and re-enter through D_JOBLIST."
+                "orders screen; otherwise exit and re-enter through D_JOBLIST. "
+                f"{MENU_ESCAPE_OBSERVATION_RULE}"
             ),
             extra_evidence=["visible manager/order text"],
         )
@@ -173,7 +183,8 @@ def _classify_screen_state(screen_text: Optional[str]) -> Dict[str, Any]:
             confidence="high",
             instruction=(
                 "SELECT chooses the highlighted material row if no Needs building "
-                "material warning is visible."
+                "material warning is visible. "
+                f"{MENU_ESCAPE_OBSERVATION_RULE}"
             ),
             extra_evidence=["visible carpenter workshop material list"],
         )
@@ -188,9 +199,13 @@ def _classify_screen_state(screen_text: Optional[str]) -> Dict[str, Any]:
             "workshop_placement",
             confidence="high",
             instruction=(
-                "Do not SELECT while placement is blocked or missing material."
+                "Do not SELECT while placement is blocked or missing material. "
+                f"{MENU_ESCAPE_OBSERVATION_RULE}"
                 if blocked
-                else "SELECT can place the workshop if your screen_read confirms Enter: Place."
+                else (
+                    "SELECT can place the workshop if your screen_read confirms "
+                    f"Enter: Place. {MENU_ESCAPE_OBSERVATION_RULE}"
+                )
             ),
             extra_evidence=[
                 "visible blocked workshop placement"
@@ -225,7 +240,7 @@ def _classify_screen_state(screen_text: Optional[str]) -> Dict[str, Any]:
             instruction=(
                 "SELECT chooses the highlighted task row. Use STANDARDSCROLL "
                 "keys, not CURSOR_DOWN/CURSOR_UP, to change highlighted rows in "
-                "a '+-*/: Scroll' list."
+                f"a '+-*/: Scroll' list. {MENU_ESCAPE_OBSERVATION_RULE}"
             ),
             extra_evidence=task_rows[:3] or ["visible carpenter workshop task list"],
         )
