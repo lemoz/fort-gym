@@ -468,6 +468,37 @@ def test_encoder_classifies_manager_new_order_search() -> None:
     assert state["screen_state"]["mode"] == "manager_new_order_search"
 
 
+def test_encoder_classifies_jobs_screen_manager_footer() -> None:
+    screen_text = (
+        "###############################  Dwarf Fortress  ###############################\n"
+        "# Fish                        Kogan At?kustuth, Fisherdwrf                     #\n"
+        "# Construct Building          Inactive                      Carpenter's Wrkshp #\n"
+        "# No Job                      Uvash Inethshedim, Miner                         #\n"
+        "# v: View Unit z: Go to Unit    b: Go to Bld   m: Manager     x: Remove Worker #\n"
+        "# r: Set Job Repeat             j: View Job    s: Suspend Job c: Cancel Job    #\n"
+        "# q: Search                     n: Do job now!                                 #\n"
+        "################################################################################"
+    )
+    text, state = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 13, "stone": 0},
+            "work": {
+                "manager_orders_count": 0,
+                "manager_orders_amount_left": 0,
+                "carpenter_workshops": 1,
+            },
+        },
+        screen_text=screen_text,
+    )
+
+    assert "Screen state: mode=job_list" in text
+    assert "UNITJOB_MANAGER" in text
+    assert state["screen_state"]["mode"] == "job_list"
+    assert state["screen_state"]["confidence"] == "high"
+
+
 def test_encoder_does_not_trust_stock_only_material_for_build_phase() -> None:
     text, _ = encode_observation(
         {

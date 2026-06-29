@@ -21,6 +21,48 @@ from ..env.actions import parse_action
 
 _DEFAULT_TOOLS = object()
 
+PRODUCTION_SCREEN_COMPATIBLE_MODES = {
+    "job_list": {
+        "job_list",
+        "jobs",
+        "jobs_screen",
+    },
+    "manager_required": {
+        "manager_required",
+        "manager_orders",
+        "orders_menu",
+        "job_list",
+    },
+    "nobles_administrators": {
+        "nobles_administrators",
+        "nobles",
+        "nobles_menu",
+    },
+    "manager_orders": {
+        "manager_orders",
+        "orders_menu",
+        "job_list",
+    },
+    "manager_new_order_search": {
+        "manager_new_order_search",
+        "manager_orders",
+        "orders_menu",
+    },
+    "workshop_placement": {
+        "workshop_placement",
+        "building_menu",
+    },
+    "workshop_material_selection": {
+        "workshop_material_selection",
+        "material_selection",
+    },
+    "workshop_add_task_list": {
+        "workshop_add_task_list",
+        "workshop_task_menu",
+        "workshop_menu",
+    },
+}
+
 
 def _openai_tool(spec: Dict[str, Any]) -> Dict[str, Any]:
     return {
@@ -664,43 +706,7 @@ class OpenRouterKeystrokeAgent(Agent):
         if not expected_mode or str(screen_state.get("confidence") or "") != "high":
             return None
 
-        compatible_modes = {
-            "manager_required": {
-                "manager_required",
-                "manager_orders",
-                "orders_menu",
-                "job_list",
-            },
-            "nobles_administrators": {
-                "nobles_administrators",
-                "nobles",
-                "nobles_menu",
-            },
-            "manager_orders": {
-                "manager_orders",
-                "orders_menu",
-                "job_list",
-            },
-            "manager_new_order_search": {
-                "manager_new_order_search",
-                "manager_orders",
-                "orders_menu",
-            },
-            "workshop_placement": {
-                "workshop_placement",
-                "building_menu",
-            },
-            "workshop_material_selection": {
-                "workshop_material_selection",
-                "material_selection",
-            },
-            "workshop_add_task_list": {
-                "workshop_add_task_list",
-                "workshop_task_menu",
-                "workshop_menu",
-            },
-        }
-        allowed = compatible_modes.get(expected_mode)
+        allowed = PRODUCTION_SCREEN_COMPATIBLE_MODES.get(expected_mode)
         if not allowed:
             return None
 
@@ -726,6 +732,65 @@ class OpenRouterKeystrokeAgent(Agent):
             "disagree with the classifier, explain the stronger visible evidence "
             "in screen_read.evidence."
         )
+
+    def _repair_missing_screen_read_from_classifier(
+        self,
+        tool_payload: Dict[str, Any],
+        obs_json: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        screen_state = obs_json.get("screen_state")
+        if not isinstance(screen_state, dict):
+            return tool_payload
+
+        expected_mode = str(screen_state.get("mode") or "").strip().lower()
+        if (
+            not expected_mode
+            or str(screen_state.get("confidence") or "") != "high"
+            or expected_mode not in PRODUCTION_SCREEN_COMPATIBLE_MODES
+        ):
+            return tool_payload
+
+        keys = self._keystroke_keys(tool_payload)
+        if keys and all(str(key) == "LEAVESCREEN" for key in keys):
+            return tool_payload
+
+        existing_screen_read = tool_payload.get("screen_read")
+        if isinstance(existing_screen_read, dict) and str(
+            existing_screen_read.get("mode") or ""
+        ).strip():
+            return tool_payload
+
+        repaired_screen_read = (
+            dict(existing_screen_read) if isinstance(existing_screen_read, dict) else {}
+        )
+        repaired_screen_read["mode"] = expected_mode
+        repaired_screen_read.setdefault("confidence", "high")
+        evidence = screen_state.get("evidence")
+        if isinstance(evidence, list) and evidence and not repaired_screen_read.get(
+            "evidence"
+        ):
+            repaired_screen_read["evidence"] = [str(item) for item in evidence[:5]]
+        highlighted = screen_state.get("highlighted")
+        if highlighted and not repaired_screen_read.get("cursor_or_selection"):
+            repaired_screen_read["cursor_or_selection"] = str(highlighted)
+
+        repaired = dict(tool_payload)
+        repaired["screen_read"] = repaired_screen_read
+        self._tool_events.append(
+            {
+                "tool": "screen_read_contract_repaired",
+                "input": {
+                    "screen_state": screen_state,
+                    "submitted_keys": self._keystroke_keys(tool_payload),
+                },
+                "output": (
+                    "Inserted missing submit_action.screen_read from the "
+                    "high-confidence observation classifier; keystroke keys were "
+                    "left unchanged."
+                ),
+            }
+        )
+        return repaired
 
     def _log_screen_read_contract_error(
         self,
@@ -888,6 +953,7 @@ class OpenRouterKeystrokeAgent(Agent):
 
         payload = self._repair_missing_keystroke_type(payload)
         payload = self._repair_menu_loop_recovery_action(payload, obs_json)
+        payload = self._repair_missing_screen_read_from_classifier(payload, obs_json)
 
         blocked_menu_error = self._blocked_menu_path_error(payload, obs_json)
         if blocked_menu_error:

@@ -110,6 +110,17 @@ def _classify_screen_state(screen_text: Optional[str]) -> Dict[str, Any]:
             extra_evidence=["visible Nobles/Administrators screen"],
         )
 
+    if "m: manager" in lower and ("view job" in lower or "set job repeat" in lower):
+        return result(
+            "job_list",
+            confidence="high",
+            instruction=(
+                "Visible jobs screen. If production orders are needed, use "
+                "UNITJOB_MANAGER from this screen before manager-order keys."
+            ),
+            extra_evidence=["visible jobs screen footer includes m: Manager"],
+        )
+
     if "new order" in lower and (
         "enter: select" in lower or "search" in lower or "work order" in lower
     ):
