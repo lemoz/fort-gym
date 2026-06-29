@@ -900,6 +900,91 @@ def test_openrouter_agent_rejects_escape_then_action_from_production_screen(
     )
 
 
+def test_openrouter_agent_rejects_wait_from_selected_workshop_without_task(
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    bad_payload = {
+        "type": "KEYSTROKE",
+        "params": {"keys": ["LEAVESCREEN", "STRING_A032"]},
+        "intent": "Exit the workshop and wait for construction",
+        "objective": "let dwarves build the carpenter workshop",
+        "expected_visible_result": "dwarves construct the workshop",
+        "screen_read": {
+            "mode": "carpenter_workshop_selected",
+            "evidence": ["Carpenter's Workshop", "Needs Carpentry"],
+            "confidence": "high",
+        },
+        "last_action_review": {
+            "worked": True,
+            "evidence": ["D_BUILDJOB selected the carpenter workshop"],
+            "should_retry_same_path": False,
+        },
+        "advance_ticks": 1000,
+    }
+    recovery_payload = {
+        "type": "KEYSTROKE",
+        "params": {"keys": ["BUILDJOB_ADD"]},
+        "intent": "Open the selected carpenter workshop add-task list",
+        "objective": "queue a concrete visible workshop production task",
+        "expected_visible_result": "native workshop add-task list opens",
+        "expected_simulation_result": "No simulation time passes; this opens a task menu.",
+        "screen_read": {
+            "mode": "carpenter_workshop_selected",
+            "evidence": ["Carpenter's Workshop", "x: Remove Building", "ESC: Done"],
+            "confidence": "high",
+        },
+        "last_action_review": {
+            "worked": False,
+            "evidence": ["leaving and waiting was rejected because no task was queued"],
+            "should_retry_same_path": False,
+        },
+        "advance_ticks": 0,
+    }
+    _FakeOpenRouterClient.responses = [
+        {"tool_calls": [_submit_action_call(bad_payload, "call_bad_wait")]},
+        {"tool_calls": [_submit_action_call(recovery_payload, "call_add_task")]},
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "openai"
+        return SimpleNamespace(OpenAI=_FakeOpenRouterClient)
+
+    monkeypatch.setattr("fort_gym.bench.agent.llm_openrouter.import_module", fake_import_module)
+
+    try:
+        agent = OpenRouterKeystrokeAgent()
+        action = agent.decide(
+            "mock observation",
+            {
+                "pause_state": True,
+                "screen_state": {
+                    "mode": "carpenter_workshop_selected",
+                    "confidence": "high",
+                    "evidence": ["visible selected Carpenter's Workshop screen"],
+                },
+                "work": {
+                    "carpenter_workshops": 1,
+                    "manager_orders_count": 0,
+                    "manager_orders_amount_left": 0,
+                    "active_jobs": 0,
+                },
+            },
+        )
+        events = agent.pop_tool_events()
+    finally:
+        _FakeOpenRouterClient.responses = None
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["params"]["keys"] == ["BUILDJOB_ADD"]
+    assert action["advance_ticks"] == 0
+    assert any(
+        event["tool"] == "selected_workshop_wait_contract_rejected"
+        for event in events
+    )
+
+
 def test_openrouter_agent_rejects_ignoring_fresh_material_target(monkeypatch) -> None:
     monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
     get_settings.cache_clear()  # type: ignore[attr-defined]

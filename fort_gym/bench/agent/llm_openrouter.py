@@ -48,6 +48,11 @@ PRODUCTION_SCREEN_COMPATIBLE_MODES = {
         "manager_orders",
         "orders_menu",
     },
+    "carpenter_workshop_selected": {
+        "carpenter_workshop_selected",
+        "workshop_menu",
+        "workshop_task_menu",
+    },
     "workshop_placement": {
         "workshop_placement",
         "building_menu",
@@ -69,6 +74,7 @@ ESCAPE_THEN_ACT_MENU_MODES = {
     "manager_orders",
     "manager_new_order_search",
     "nobles_administrators",
+    "carpenter_workshop_selected",
     "workshop_placement",
     "workshop_material_selection",
     "workshop_add_task_list",
@@ -931,6 +937,80 @@ class OpenRouterKeystrokeAgent(Agent):
         )
 
     @staticmethod
+    def _int_value(value: Any) -> int:
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return 0
+
+    @classmethod
+    def _selected_workshop_wait_contract_error(
+        cls,
+        tool_payload: Dict[str, Any],
+        obs_json: Dict[str, Any],
+    ) -> str | None:
+        screen_state = obs_json.get("screen_state")
+        if not isinstance(screen_state, dict):
+            return None
+        mode = str(screen_state.get("mode") or "").strip().lower()
+        if mode != "carpenter_workshop_selected":
+            return None
+        if str(screen_state.get("confidence") or "") != "high":
+            return None
+
+        keys = [str(key) for key in cls._keystroke_keys(tool_payload)]
+        if "BUILDJOB_ADD" in keys:
+            return None
+
+        try:
+            advance_ticks = int(tool_payload.get("advance_ticks") or 0)
+        except (TypeError, ValueError):
+            advance_ticks = 0
+        waits = advance_ticks > 0 or any(key == "STRING_A032" for key in keys)
+        if not waits:
+            return None
+
+        work = obs_json.get("work") if isinstance(obs_json.get("work"), dict) else {}
+        has_queued_or_active_work = any(
+            cls._int_value(work.get(field)) > 0
+            for field in (
+                "manager_orders_count",
+                "manager_orders_amount_left",
+                "active_jobs",
+            )
+        )
+        if has_queued_or_active_work:
+            return None
+
+        return (
+            "Selected-workshop contract mismatch: the visible screen is an "
+            "existing Carpenter's Workshop, but no manager order, workshop job, "
+            "or active job is queued. Do not leave the workshop and wait. From "
+            "this screen, use BUILDJOB_ADD with advance_ticks=0 to open the "
+            "native add-task list, then select a concrete visible task before "
+            "advancing time."
+        )
+
+    def _log_selected_workshop_wait_contract_error(
+        self,
+        tool_payload: Dict[str, Any],
+        obs_json: Dict[str, Any],
+        error: str,
+    ) -> None:
+        self._tool_events.append(
+            {
+                "tool": "selected_workshop_wait_contract_rejected",
+                "input": {
+                    "screen_state": obs_json.get("screen_state"),
+                    "work": obs_json.get("work"),
+                    "submitted_keys": self._keystroke_keys(tool_payload),
+                    "advance_ticks": tool_payload.get("advance_ticks"),
+                },
+                "output": error,
+            }
+        )
+
+    @staticmethod
     def _nobles_evidence_names_manager_row(text: Any) -> bool:
         normalized = str(text or "").strip().lower()
         if not normalized:
@@ -1289,6 +1369,18 @@ class OpenRouterKeystrokeAgent(Agent):
         if screen_read_error:
             self._log_screen_read_contract_error(payload, obs_json, screen_read_error)
             return screen_read_error
+
+        selected_workshop_wait_error = self._selected_workshop_wait_contract_error(
+            payload,
+            obs_json,
+        )
+        if selected_workshop_wait_error:
+            self._log_selected_workshop_wait_contract_error(
+                payload,
+                obs_json,
+                selected_workshop_wait_error,
+            )
+            return selected_workshop_wait_error
 
         compound_escape_error = self._compound_menu_escape_contract_error(
             payload,

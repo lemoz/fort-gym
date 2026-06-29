@@ -176,6 +176,26 @@ def _classify_screen_state(screen_text: Optional[str]) -> Dict[str, Any]:
         )
 
     if "carpenter's workshop" in lower and (
+        "x: remove building" in lower
+        or "ctrl+n: give name" in lower
+        or "esc: done" in lower
+    ):
+        return result(
+            "carpenter_workshop_selected",
+            confidence="high",
+            instruction=(
+                "Visible selected Carpenter's Workshop screen. If no task, "
+                "manager order, or active job is queued, do not leave and wait; "
+                "use BUILDJOB_ADD to open the native add-task list. Status text "
+                "such as Waiting for construction, Needs Carpentry, or "
+                "Construction inactive means production is not queued yet; it is "
+                "not a reason to place another workshop. "
+                f"{MENU_ESCAPE_OBSERVATION_RULE}"
+            ),
+            extra_evidence=["visible selected Carpenter's Workshop screen"],
+        )
+
+    if "carpenter's workshop" in lower and (
         "enter: select" in lower and "item" in lower and "dist" in lower and "num" in lower
     ):
         return result(
