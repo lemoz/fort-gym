@@ -167,6 +167,54 @@ def test_gameplay_proof_marks_keystroke_progress_as_evidence_backed() -> None:
     assert proof["changed_tile_count"] == 1
     assert proof["state_deltas"] == {"target_dig_designations": 1}
     assert proof["progress"]["work"] == 1
+    assert proof["progress"]["ui_work"] == 0
+    assert proof["progress"]["cumulative_ui_work"] == 1
+
+
+def test_gameplay_proof_requires_current_step_progress() -> None:
+    snapshot = {
+        "ok": True,
+        "rect": [10, 20, 0, 10, 20, 0],
+        "dig_designations": 0,
+        "floor_tiles": 1,
+        "wall_tiles": 0,
+        "hidden_tiles": 0,
+        "building_tiles": 0,
+        "tiles": [
+            {"x": 10, "y": 20, "z": 0, "category": "floor", "char": ".", "dig": "No"},
+        ],
+    }
+
+    proof = _gameplay_proof(
+        action={
+            "type": "KEYSTROKE",
+            "params": {"keys": ["LEAVESCREEN"]},
+            "advance_ticks": 0,
+        },
+        metrics_snapshot={
+            "gameplay_progress_eligible": True,
+            "score_provenance": "keystroke_ui_work_rect",
+            "work_progress": 7,
+            "ui_work_progress": 7,
+            "ui_excavation_progress": 7,
+            "ui_step_work_progress": 0,
+            "ui_step_excavation_progress": 0,
+            "ui_step_material_progress": 0,
+        },
+        before_map_snapshot=snapshot,
+        after_map_snapshot=snapshot,
+        state_before={"stocks": {"wood": 3, "stone": 0}, "work": {"carpenter_workshops": 1}},
+        advance_state={"stocks": {"wood": 3, "stone": 0}, "work": {"carpenter_workshops": 1}},
+        tick_info={"ticks_advanced": 0},
+        score_value=74.3,
+    )
+
+    assert proof["ok"] is False
+    assert proof["gameplay_progress_eligible"] is False
+    assert proof["changed_tile_count"] == 0
+    assert proof["state_deltas"] == {}
+    assert proof["progress"]["ui_work"] == 0
+    assert proof["progress"]["cumulative_ui_work"] == 7
 
 
 def test_ui_work_rect_prefers_live_cursor_plane() -> None:

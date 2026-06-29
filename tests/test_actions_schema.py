@@ -1,6 +1,11 @@
 from __future__ import annotations
 
-from fort_gym.bench.env.actions import ACTION_TOOL_SPEC, parse_action, system_prompt_v1
+from fort_gym.bench.env.actions import (
+    ACTION_TOOL_SPEC,
+    parse_action,
+    system_prompt_v1,
+    validate_action,
+)
 
 
 def test_action_tool_spec_structure() -> None:
@@ -35,6 +40,38 @@ def test_keystroke_action_preserves_agent_perception_metadata() -> None:
 
     assert action["screen_read"]["mode"] == "building_menu"
     assert action["last_action_review"]["worked"] is False
+
+
+def test_keystroke_validation_rejects_empty_key_name() -> None:
+    action = parse_action(
+        {
+            "type": "KEYSTROKE",
+            "params": {"keys": ["D_DESIGNATE", ""]},
+            "intent": "malformed key sequence",
+            "advance_ticks": 0,
+        }
+    )
+
+    valid, reason = validate_action({}, action)
+
+    assert valid is False
+    assert reason == "KEYSTROKE keys must be non-empty strings"
+
+
+def test_keystroke_validation_rejects_z_level_spam() -> None:
+    action = parse_action(
+        {
+            "type": "KEYSTROKE",
+            "params": {"keys": ["CURSOR_UP_Z"] * 11},
+            "intent": "overshoot z-level navigation",
+            "advance_ticks": 0,
+        }
+    )
+
+    valid, reason = validate_action({}, action)
+
+    assert valid is False
+    assert reason == "KEYSTROKE z-level navigation too long (max 10 per action)"
 
 
 def test_system_prompt_mentions_single_action() -> None:

@@ -238,8 +238,14 @@ def validate_action(state: Dict[str, Any], action: Dict[str, Any]) -> tuple[bool
             return False, "KEYSTROKE action requires non-empty keys list"
         if not isinstance(keys, list):
             return False, "KEYSTROKE keys must be a list"
+        if any(not isinstance(key, str) or not key.strip() for key in keys):
+            return False, "KEYSTROKE keys must be non-empty strings"
         if len(keys) > 100:
             return False, "KEYSTROKE keys list too long (max 100)"
+        z_level_keys = {"CURSOR_UP_Z", "CURSOR_DOWN_Z"}
+        z_level_count = sum(1 for key in keys if str(key) in z_level_keys)
+        if z_level_count > 10:
+            return False, "KEYSTROKE z-level navigation too long (max 10 per action)"
 
     map_bounds = state.get("map_bounds")
     location = params.get("location")

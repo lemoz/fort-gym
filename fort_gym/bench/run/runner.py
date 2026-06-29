@@ -284,10 +284,22 @@ def _gameplay_proof(
     positive_state_deltas = {
         key: value for key, value in state_deltas.items() if value not in (0, None)
     }
-    proof_ok = bool(
-        metrics_snapshot.get("gameplay_progress_eligible")
+    ui_step_work_progress = int(metrics_snapshot.get("ui_step_work_progress") or 0)
+    ui_step_excavation_progress = int(
+        metrics_snapshot.get("ui_step_excavation_progress") or 0
+    )
+    ui_step_material_progress = int(
+        metrics_snapshot.get("ui_step_material_progress") or 0
+    )
+    step_gameplay_progress = bool(
+        ui_step_work_progress
+        or ui_step_excavation_progress
+        or ui_step_material_progress
         or tile_changes.get("changed_tile_count")
         or positive_state_deltas
+    )
+    proof_ok = bool(
+        step_gameplay_progress
     )
     return {
         "ok": proof_ok,
@@ -296,9 +308,7 @@ def _gameplay_proof(
         "keys": action.get("params", {}).get("keys", []),
         "score": score_value,
         "score_provenance": metrics_snapshot.get("score_provenance"),
-        "gameplay_progress_eligible": bool(
-            metrics_snapshot.get("gameplay_progress_eligible", False)
-        ),
+        "gameplay_progress_eligible": step_gameplay_progress,
         "score_duration_blocked": bool(metrics_snapshot.get("score_duration_blocked", False)),
         "tick_advance": {
             "requested": action.get("advance_ticks"),
@@ -311,8 +321,13 @@ def _gameplay_proof(
             "utility": int(metrics_snapshot.get("utility_progress") or 0),
             "production": int(metrics_snapshot.get("production_progress") or 0),
             "complexity": int(metrics_snapshot.get("complexity_progress") or 0),
-            "ui_work": int(metrics_snapshot.get("ui_work_progress") or 0),
-            "ui_excavation": int(metrics_snapshot.get("ui_excavation_progress") or 0),
+            "ui_work": ui_step_work_progress,
+            "ui_excavation": ui_step_excavation_progress,
+            "ui_material": ui_step_material_progress,
+            "cumulative_ui_work": int(metrics_snapshot.get("ui_work_progress") or 0),
+            "cumulative_ui_excavation": int(
+                metrics_snapshot.get("ui_excavation_progress") or 0
+            ),
         },
         "state_deltas": positive_state_deltas,
         "tile_changes": tile_changes,

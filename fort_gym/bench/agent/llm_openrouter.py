@@ -308,6 +308,8 @@ class OpenRouterKeystrokeAgent(Agent):
         tool_payload: Dict[str, Any],
         contract_error: str,
     ) -> int | None:
+        if "pure LEAVESCREEN" in contract_error:
+            return 0
         if "completes a dig/chop/stair designation" in contract_error:
             return 500
         if cls._zero_tick_action_says_time_should_pass(tool_payload):
@@ -320,12 +322,20 @@ class OpenRouterKeystrokeAgent(Agent):
             advance_ticks = int(tool_payload.get("advance_ticks", 0))
         except (TypeError, ValueError):
             return None
-        if advance_ticks > 0:
-            return None
 
         params = tool_payload.get("params") if isinstance(tool_payload.get("params"), dict) else {}
         keys = params.get("keys") if isinstance(params, dict) else []
         keys = keys if isinstance(keys, list) else []
+        if keys and all(str(key) == "LEAVESCREEN" for key in keys):
+            if advance_ticks > 0:
+                return (
+                    "Action contract mismatch: pure LEAVESCREEN menu recovery "
+                    "must use advance_ticks 0. Escaping screens is UI navigation, "
+                    "not simulation time."
+                )
+            return None
+        if advance_ticks > 0:
+            return None
         if any(str(key) == "STRING_A032" for key in keys):
             return (
                 "Action contract mismatch: STRING_A032 with advance_ticks 0 "

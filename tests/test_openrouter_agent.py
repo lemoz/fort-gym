@@ -306,6 +306,40 @@ def test_openrouter_content_action_repairs_zero_tick_wait(monkeypatch) -> None:
     assert any(event["tool"] == "advance_ticks_contract_repaired" for event in events)
 
 
+def test_openrouter_action_only_repairs_escape_tick_advance(monkeypatch) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    _FakeOpenRouterClient.tool_calls = [
+        _submit_action_call(
+            {
+                "type": "KEYSTROKE",
+                "params": {"keys": ["LEAVESCREEN", "LEAVESCREEN"]},
+                "intent": "Escape from the repeated blocked menu path",
+                "objective": "Return to the main map before choosing another route",
+                "advance_ticks": 500,
+            }
+        )
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "openai"
+        return SimpleNamespace(OpenAI=_FakeOpenRouterClient)
+
+    monkeypatch.setattr("fort_gym.bench.agent.llm_openrouter.import_module", fake_import_module)
+
+    try:
+        agent = OpenRouterKeystrokeAgent()
+        action = agent.decide("mock observation", {"pause_state": True})
+        events = agent.pop_tool_events()
+    finally:
+        _FakeOpenRouterClient.tool_calls = None
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["params"]["keys"] == ["LEAVESCREEN", "LEAVESCREEN"]
+    assert action["advance_ticks"] == 0
+    assert any(event["tool"] == "advance_ticks_contract_repaired" for event in events)
+
+
 def test_openrouter_agent_logs_no_tool_responses(monkeypatch) -> None:
     monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
     monkeypatch.setenv("OPENROUTER_MAX_TOOL_ROUNDS", "1")
