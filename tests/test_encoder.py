@@ -520,6 +520,32 @@ def test_encoder_classifies_selected_carpenter_workshop_screen() -> None:
     assert state["screen_state"]["confidence"] == "high"
 
 
+def test_encoder_keeps_carpenter_placement_screen_distinct_from_selected_workshop() -> None:
+    text, state = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 3, "stone": 0},
+            "work": {
+                "manager_orders_count": 0,
+                "manager_orders_amount_left": 0,
+                "carpenter_workshops": 0,
+                "active_jobs": 0,
+            },
+        },
+        screen_text=(
+            "Carpenter's Workshop\n"
+            "Placement\n"
+            "Needs building material\n"
+            "x: Remove Building\n"
+            "ESC: Done"
+        ),
+    )
+
+    assert "Screen state: mode=workshop_placement" in text
+    assert state["screen_state"]["mode"] == "workshop_placement"
+
+
 def test_encoder_classifies_jobs_screen_manager_footer() -> None:
     screen_text = (
         "###############################  Dwarf Fortress  ###############################\n"
