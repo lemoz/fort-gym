@@ -26,6 +26,206 @@ def _int_or_none(value: Any) -> int | None:
         return None
 
 
+def _screen_text_lines(screen_text: str) -> List[str]:
+    return [
+        line.strip()
+        for line in screen_text.splitlines()
+        if line.strip() and not line.startswith("== SCREEN VISUAL HINTS ==")
+    ]
+
+
+def _screen_visual_hint_texts(screen_text: str) -> List[str]:
+    hints: List[str] = []
+    in_hints = False
+    for line in screen_text.splitlines():
+        stripped = line.strip()
+        if stripped == "== SCREEN VISUAL HINTS ==":
+            in_hints = True
+            continue
+        if not in_hints or not stripped.startswith("- row "):
+            continue
+        _, _, text = stripped.partition(": ")
+        if text:
+            hints.append(text.strip())
+    return hints
+
+
+def _classify_screen_state(screen_text: Optional[str]) -> Dict[str, Any]:
+    if not screen_text:
+        return {}
+
+    lower = screen_text.lower()
+    lines = _screen_text_lines(screen_text)
+    visual_hints = _screen_visual_hint_texts(screen_text)
+    highlighted = visual_hints[0] if visual_hints else None
+    evidence: List[str] = []
+
+    def result(
+        mode: str,
+        *,
+        confidence: str = "medium",
+        instruction: str | None = None,
+        extra_evidence: List[str] | None = None,
+    ) -> Dict[str, Any]:
+        facts = list(extra_evidence or evidence)
+        if highlighted:
+            facts.append(f"highlighted={highlighted}")
+        return {
+            "mode": mode,
+            "confidence": confidence,
+            "highlighted": highlighted,
+            "evidence": facts[:5],
+            "instruction": instruction,
+        }
+
+    if "manager is required" in lower:
+        return result(
+            "manager_required",
+            confidence="high",
+            instruction=(
+                "Do not advance time for production yet. Use visible evidence to "
+                "appoint a manager or choose a direct workshop-task path."
+            ),
+            extra_evidence=["visible text says a manager is required"],
+        )
+
+    if "nobles and administrators" in lower or (
+        "administrator" in lower and "manager" in lower and "appoint" in lower
+    ):
+        return result(
+            "nobles_administrators",
+            confidence="high",
+            instruction=(
+                "Use visible row/highlight evidence before selecting a noble. "
+                "Do not use fixed row counts unless the target row is visible."
+            ),
+            extra_evidence=["visible Nobles/Administrators screen"],
+        )
+
+    if "new order" in lower and (
+        "enter: select" in lower or "search" in lower or "work order" in lower
+    ):
+        useful_rows = [
+            line
+            for line in lines
+            if any(
+                item in line.lower()
+                for item in (
+                    "construct bed",
+                    "construct door",
+                    "construct table",
+                    "construct chair",
+                    "make wooden barrel",
+                    "make wooden bin",
+                )
+            )
+        ]
+        return result(
+            "manager_new_order_search",
+            confidence="high",
+            instruction=(
+                "If exactly one useful highlighted result is visible, SELECT can "
+                "queue it. If the search result is wrong or stale, record the "
+                "search as failed and reopen a clean dialog before another term."
+            ),
+            extra_evidence=useful_rows[:3] or ["visible manager new-order search"],
+        )
+
+    if (
+        "manager" in lower
+        and ("work order" in lower or "new order" in lower or "orders" in lower)
+    ):
+        return result(
+            "manager_orders",
+            confidence="medium",
+            instruction=(
+                "Use MANAGER_NEW_ORDER only when this screen is the manager/work "
+                "orders screen; otherwise exit and re-enter through D_JOBLIST."
+            ),
+            extra_evidence=["visible manager/order text"],
+        )
+
+    if "carpenter's workshop" in lower and (
+        "enter: select" in lower and "item" in lower and "dist" in lower and "num" in lower
+    ):
+        return result(
+            "workshop_material_selection",
+            confidence="high",
+            instruction=(
+                "SELECT chooses the highlighted material row if no Needs building "
+                "material warning is visible."
+            ),
+            extra_evidence=["visible carpenter workshop material list"],
+        )
+
+    if "carpenter's workshop" in lower and "placement" in lower:
+        blocked = (
+            "blocked" in lower
+            or "building present" in lower
+            or "needs building material" in lower
+        )
+        return result(
+            "workshop_placement",
+            confidence="high",
+            instruction=(
+                "Do not SELECT while placement is blocked or missing material."
+                if blocked
+                else "SELECT can place the workshop if your screen_read confirms Enter: Place."
+            ),
+            extra_evidence=[
+                "visible blocked workshop placement"
+                if blocked
+                else "visible workshop placement screen"
+            ],
+        )
+
+    if "carpenter's workshop" in lower and (
+        "+-*/: scroll" in lower
+        or "add new task" in lower
+        or "construct bed" in lower
+        or "make wooden" in lower
+    ):
+        task_rows = [
+            line
+            for line in lines
+            if any(
+                item in line.lower()
+                for item in (
+                    "construct bed",
+                    "make wooden",
+                    "construct door",
+                    "construct table",
+                    "construct chair",
+                )
+            )
+        ]
+        return result(
+            "workshop_add_task_list",
+            confidence="high",
+            instruction=(
+                "SELECT chooses the highlighted task row. Use STANDARDSCROLL "
+                "keys, not CURSOR_DOWN/CURSOR_UP, to change highlighted rows in "
+                "a '+-*/: Scroll' list."
+            ),
+            extra_evidence=task_rows[:3] or ["visible carpenter workshop task list"],
+        )
+
+    if "d: designations" in lower and "b: building" in lower:
+        return result(
+            "main_map",
+            confidence="medium",
+            instruction="Main map/menu view; choose a productive action directly.",
+            extra_evidence=["visible main map command menu"],
+        )
+
+    return result(
+        "unknown",
+        confidence="low",
+        instruction="Use screen_read evidence before manual cursor/menu actions.",
+        extra_evidence=lines[:2],
+    )
+
+
 def _compute_screen_diff(prev: str, curr: str) -> Dict[str, Any]:
     """Compare two screen captures and return diff info."""
     if not prev or not curr:
@@ -487,6 +687,9 @@ def encode_observation(
             or "nee[" in screen_lower
         )
     )
+    screen_state = _classify_screen_state(screen_text)
+    if screen_state:
+        clean_state["screen_state"] = screen_state
     active_material_blocked = bool(
         ui_build_feedback.get("material_blocked")
         and not screen_shows_workshop_select_state
@@ -494,6 +697,23 @@ def encode_observation(
 
     # Build status section
     status_lines = []
+
+    if screen_state:
+        screen_line = (
+            "Screen state: "
+            f"mode={screen_state.get('mode')}, "
+            f"confidence={screen_state.get('confidence')}"
+        )
+        highlighted = screen_state.get("highlighted")
+        if highlighted:
+            screen_line += f", highlighted={highlighted}"
+        evidence = screen_state.get("evidence")
+        if isinstance(evidence, list) and evidence:
+            screen_line += "; evidence=" + " | ".join(str(item) for item in evidence[:3])
+        status_lines.append(screen_line)
+        instruction = screen_state.get("instruction")
+        if instruction:
+            status_lines.append(f"Screen instruction: {instruction}")
 
     # Game state feedback (critical for agent to know if game is running)
     if pause_state is True:
@@ -937,7 +1157,7 @@ def encode_observation(
             history_lines = []
             for a in action_history:
                 history_lines.append(_format_action_history_entry(a))
-            summary_text += f"\n\n== RECENT ACTION OUTCOMES ==\n" + "\n".join(history_lines)
+            summary_text += "\n\n== RECENT ACTION OUTCOMES ==\n" + "\n".join(history_lines)
     else:
         # Original format for toolbox mode
         bullets = [f"- {line}" for line in status_lines]

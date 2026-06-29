@@ -119,6 +119,16 @@ def _submit_action_call(payload: dict[str, Any], call_id: str = "call_submit") -
     )
 
 
+def _tool_call(name: str, payload: dict[str, Any], call_id: str) -> Any:
+    return SimpleNamespace(
+        id=call_id,
+        function=SimpleNamespace(
+            name=name,
+            arguments=json.dumps(payload),
+        ),
+    )
+
+
 def test_openrouter_defaults_to_glm_5_2(monkeypatch) -> None:
     monkeypatch.delenv("OPENROUTER_MODEL", raising=False)
     get_settings.cache_clear()  # type: ignore[attr-defined]
@@ -634,6 +644,109 @@ def test_openrouter_agent_falls_back_when_blocked_menu_family_repeats(monkeypatc
 
     assert action["params"]["keys"] == ["LEAVESCREEN", "LEAVESCREEN", "LEAVESCREEN"]
     assert any(event["tool"] == "blocked_menu_path_fallback" for event in events)
+
+
+def test_openrouter_agent_rejects_production_screen_read_mismatch(monkeypatch) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    bad_payload = {
+        "type": "KEYSTROKE",
+        "params": {"keys": ["SELECT"]},
+        "intent": "select the visible workshop task",
+        "objective": "queue a carpenter workshop task",
+        "expected_visible_result": "task is queued",
+        "screen_read": {
+            "mode": "main_map",
+            "evidence": ["I think the main map is visible"],
+            "confidence": "low",
+        },
+        "last_action_review": {
+            "worked": None,
+            "evidence": ["first action"],
+            "should_retry_same_path": False,
+        },
+        "advance_ticks": 0,
+    }
+    good_payload = {
+        **bad_payload,
+        "screen_read": {
+            "mode": "workshop_add_task_list",
+            "evidence": ["Carpenter's Workshop", "highlighted Construct Bed (b)"],
+            "cursor_or_selection": "Construct Bed (b)",
+            "confidence": "high",
+        },
+    }
+    _FakeOpenRouterClient.responses = [
+        {
+            "tool_calls": [
+                _tool_call(
+                    "query_memory",
+                    {"query": "workshop task", "include_failed": True},
+                    "call_memory",
+                ),
+                _tool_call(
+                    "write_gameplay_plan",
+                    {
+                        "objective": "create production",
+                        "steps": ["queue a workshop task"],
+                    },
+                    "call_plan",
+                ),
+                _tool_call(
+                    "record_screen_read",
+                    {
+                        "mode": "main_map",
+                        "evidence": ["incorrectly read as map"],
+                        "confidence": "low",
+                    },
+                    "call_read",
+                ),
+                _tool_call(
+                    "review_last_action",
+                    {
+                        "worked": None,
+                        "evidence": ["first action"],
+                        "should_retry_same_path": False,
+                    },
+                    "call_review",
+                ),
+                _submit_action_call(bad_payload),
+            ]
+        },
+        {"tool_calls": [_submit_action_call(good_payload, call_id="call_submit_2")]},
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "openai"
+        return SimpleNamespace(OpenAI=_FakeOpenRouterClient)
+
+    monkeypatch.setattr("fort_gym.bench.agent.llm_openrouter.import_module", fake_import_module)
+
+    try:
+        agent = OpenRouterKeystrokeAgent(
+            require_memory_review=True,
+            require_plan_review=True,
+            require_perception_review=True,
+        )
+        action = agent.decide(
+            "mock observation",
+            {
+                "pause_state": True,
+                "screen_state": {
+                    "mode": "workshop_add_task_list",
+                    "confidence": "high",
+                    "highlighted": "Construct Bed (b)",
+                },
+            },
+        )
+        events = agent.pop_tool_events()
+    finally:
+        _FakeOpenRouterClient.responses = None
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["params"]["keys"] == ["SELECT"]
+    assert action["screen_read"]["mode"] == "workshop_add_task_list"
+    assert any(event["tool"] == "screen_read_contract_rejected" for event in events)
 
 
 def test_anthropic_models_are_disabled_by_default(monkeypatch) -> None:

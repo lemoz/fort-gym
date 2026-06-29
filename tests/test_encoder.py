@@ -372,6 +372,80 @@ def test_encoder_production_phase_prioritizes_cancellation_inspection() -> None:
     assert "advance_ticks >= 1000" not in text
 
 
+def test_encoder_classifies_manager_required_screen() -> None:
+    text, state = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 13, "stone": 0},
+            "work": {
+                "manager_orders_count": 1,
+                "manager_orders_amount_left": 5,
+                "carpenter_workshops": 1,
+            },
+        },
+        screen_text="A manager is required to coordinate work orders.\nReady: Construct Bed 5/5",
+    )
+
+    assert "Screen state: mode=manager_required" in text
+    assert "Do not advance time for production yet" in text
+    assert state["screen_state"]["mode"] == "manager_required"
+    assert state["screen_state"]["confidence"] == "high"
+
+
+def test_encoder_classifies_workshop_add_task_list_with_highlight() -> None:
+    screen_text = (
+        "Carpenter's Workshop\n"
+        "Make wooden shield\n"
+        "Construct Bed (b)\n"
+        "+-*/: Scroll\n\n"
+        "== SCREEN VISUAL HINTS ==\n"
+        "Rows below have non-default CopyScreen background colors.\n"
+        "- row 2 cols 0-16 fg=0 bg=7: Construct Bed (b)"
+    )
+    text, state = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 13, "stone": 0},
+            "work": {
+                "manager_orders_count": 0,
+                "manager_orders_amount_left": 0,
+                "carpenter_workshops": 1,
+            },
+        },
+        screen_text=screen_text,
+    )
+
+    assert "Screen state: mode=workshop_add_task_list" in text
+    assert "highlighted=Construct Bed (b)" in text
+    assert "SELECT chooses the highlighted task row" in text
+    assert "STANDARDSCROLL keys, not CURSOR_DOWN/CURSOR_UP" in text
+    assert state["screen_state"]["mode"] == "workshop_add_task_list"
+    assert state["screen_state"]["highlighted"] == "Construct Bed (b)"
+
+
+def test_encoder_classifies_manager_new_order_search() -> None:
+    text, state = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 13, "stone": 0},
+            "work": {
+                "manager_orders_count": 0,
+                "manager_orders_amount_left": 0,
+                "carpenter_workshops": 1,
+            },
+        },
+        screen_text="Manager\nNew Order\nSearch: bed\nConstruct Bed\nEnter: Select",
+    )
+
+    assert "Screen state: mode=manager_new_order_search" in text
+    assert "SELECT can queue it" in text
+    assert "Construct Bed" in state["screen_state"]["evidence"]
+    assert state["screen_state"]["mode"] == "manager_new_order_search"
+
+
 def test_encoder_does_not_trust_stock_only_material_for_build_phase() -> None:
     text, _ = encode_observation(
         {

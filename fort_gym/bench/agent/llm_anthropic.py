@@ -208,6 +208,11 @@ For example, a hinted row in an add-task list is the row DF currently appears to
 highlight; scroll or navigate until the desired visible task is highlighted
 before pressing SELECT. The visual hints are not recommended actions and do not
 replace your own screen_read verification.
+If STATUS includes `Screen state: mode=...`, treat it as read-only CopyScreen
+landmark evidence. Your record_screen_read mode should match that mode unless
+you can cite stronger visible text that proves the classifier is wrong. The
+screen state does not choose keys for you; it only helps you avoid acting from
+the wrong menu.
 
 Default recommended first action:
 {
@@ -501,8 +506,10 @@ strategy for you.
 Before EVERY submit_action:
 1. Call record_screen_read with your own reading of the current screen.
    - mode: one of main_map, designation_menu, building_menu,
-     workshop_placement, stockpile_menu, orders_menu, job_list,
-     announcement_screen, material_selection, unknown.
+     workshop_placement, workshop_material_selection,
+     workshop_add_task_list, stockpile_menu, orders_menu,
+     manager_orders, manager_new_order_search, manager_required,
+     nobles_administrators, job_list, announcement_screen, unknown.
    - evidence: one to three short facts from visible screen text/tiles/status.
    - cursor_or_selection: what you believe the cursor or active selection is.
      Distinguish a visible X cursor from `cursor_inactive=(-30000,...)`, which

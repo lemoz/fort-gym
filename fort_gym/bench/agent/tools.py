@@ -331,7 +331,10 @@ RECORD_SCREEN_READ_TOOL_SPEC: Dict[str, Any] = {
                 "type": "string",
                 "description": (
                     "Current screen or menu mode, e.g. main_map, designation_menu, "
-                    "building_menu, workshop_placement, stockpile_menu, unknown."
+                    "building_menu, workshop_placement, workshop_add_task_list, "
+                    "workshop_material_selection, manager_orders, "
+                    "manager_new_order_search, manager_required, "
+                    "nobles_administrators, stockpile_menu, unknown."
                 ),
             },
             "evidence": {

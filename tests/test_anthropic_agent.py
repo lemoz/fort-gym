@@ -311,6 +311,11 @@ def test_keystroke_prompt_is_action_first() -> None:
     assert "highlighted row as" in KEYSTROKE_SYSTEM_PROMPT
     assert "expected_visible_result" in KEYSTROKE_SYSTEM_PROMPT
     assert "expected_simulation_result" in KEYSTROKE_SYSTEM_PROMPT
+    assert "Screen state: mode=..." in KEYSTROKE_SYSTEM_PROMPT
+    assert "read-only CopyScreen\nlandmark evidence" in KEYSTROKE_SYSTEM_PROMPT
+    assert "workshop_add_task_list" in KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
+    assert "manager_new_order_search" in KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
+    assert "nobles_administrators" in KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
 
 
 def test_poi_review_prompt_requires_memory_review() -> None:

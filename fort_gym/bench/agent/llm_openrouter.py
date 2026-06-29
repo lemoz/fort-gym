@@ -592,6 +592,106 @@ class OpenRouterKeystrokeAgent(Agent):
         return keys if isinstance(keys, list) else []
 
     @classmethod
+    def _screen_read_contract_error(
+        cls,
+        tool_payload: Dict[str, Any],
+        obs_json: Dict[str, Any],
+    ) -> str | None:
+        screen_state = obs_json.get("screen_state")
+        if not isinstance(screen_state, dict):
+            return None
+        expected_mode = str(screen_state.get("mode") or "").strip().lower()
+        if not expected_mode or str(screen_state.get("confidence") or "") != "high":
+            return None
+
+        compatible_modes = {
+            "manager_required": {
+                "manager_required",
+                "manager_orders",
+                "orders_menu",
+                "job_list",
+            },
+            "nobles_administrators": {
+                "nobles_administrators",
+                "nobles",
+                "nobles_menu",
+            },
+            "manager_orders": {
+                "manager_orders",
+                "orders_menu",
+                "job_list",
+            },
+            "manager_new_order_search": {
+                "manager_new_order_search",
+                "manager_orders",
+                "orders_menu",
+            },
+            "workshop_placement": {
+                "workshop_placement",
+                "building_menu",
+            },
+            "workshop_material_selection": {
+                "workshop_material_selection",
+                "material_selection",
+            },
+            "workshop_add_task_list": {
+                "workshop_add_task_list",
+                "workshop_task_menu",
+                "workshop_menu",
+            },
+        }
+        allowed = compatible_modes.get(expected_mode)
+        if not allowed:
+            return None
+
+        keys = cls._keystroke_keys(tool_payload)
+        if keys and all(str(key) == "LEAVESCREEN" for key in keys):
+            return None
+
+        screen_read = (
+            tool_payload.get("screen_read")
+            if isinstance(tool_payload.get("screen_read"), dict)
+            else {}
+        )
+        submitted_mode = str(screen_read.get("mode") or "").strip().lower()
+        if submitted_mode in allowed:
+            return None
+
+        return (
+            "Screen-read contract mismatch: observation classified the visible "
+            f"screen as {expected_mode}, but submit_action.screen_read.mode was "
+            f"{submitted_mode or 'missing'}. Before sending non-escape keys from "
+            "manager/workshop production screens, set screen_read.mode to the "
+            "visible screen you are acting from and cite screen evidence. If you "
+            "disagree with the classifier, explain the stronger visible evidence "
+            "in screen_read.evidence."
+        )
+
+    def _log_screen_read_contract_error(
+        self,
+        tool_payload: Dict[str, Any],
+        obs_json: Dict[str, Any],
+        error: str,
+    ) -> None:
+        screen_state = obs_json.get("screen_state")
+        screen_read = (
+            tool_payload.get("screen_read")
+            if isinstance(tool_payload.get("screen_read"), dict)
+            else {}
+        )
+        self._tool_events.append(
+            {
+                "tool": "screen_read_contract_rejected",
+                "input": {
+                    "screen_state": screen_state,
+                    "screen_read_mode": screen_read.get("mode"),
+                    "submitted_keys": self._keystroke_keys(tool_payload),
+                },
+                "output": error,
+            }
+        )
+
+    @classmethod
     def _submitted_action_family(cls, tool_payload: Dict[str, Any]) -> str:
         keys = cls._keystroke_keys(tool_payload)
         key_values = [str(key) for key in keys]
@@ -767,6 +867,24 @@ class OpenRouterKeystrokeAgent(Agent):
                             }
                         )
                         continue
+                    screen_read_error = self._screen_read_contract_error(
+                        content_payload,
+                        obs_json,
+                    )
+                    if screen_read_error:
+                        self._log_screen_read_contract_error(
+                            content_payload,
+                            obs_json,
+                            screen_read_error,
+                        )
+                        last_error = ValueError(screen_read_error)
+                        messages.append(
+                            {
+                                "role": "user",
+                                "content": screen_read_error,
+                            }
+                        )
+                        continue
                     contract_error = self._advance_ticks_contract_error(content_payload)
                     if contract_error:
                         repaired = self._repair_action_only_contract(
@@ -898,6 +1016,22 @@ class OpenRouterKeystrokeAgent(Agent):
                             "role": "tool",
                             "tool_call_id": call.id,
                             "content": gate_error,
+                        }
+                    )
+                    continue
+                screen_read_error = self._screen_read_contract_error(tool_input, obs_json)
+                if screen_read_error:
+                    self._log_screen_read_contract_error(
+                        tool_input,
+                        obs_json,
+                        screen_read_error,
+                    )
+                    last_error = ValueError(screen_read_error)
+                    messages.append(
+                        {
+                            "role": "tool",
+                            "tool_call_id": call.id,
+                            "content": screen_read_error,
                         }
                     )
                     continue
