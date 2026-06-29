@@ -367,25 +367,25 @@ local function material_payload()
     return nil
   end
 
-  local tree_payload = scan_near_citizens(
-    valid_tree_tile,
-    'citizen_near_visible_tree_trunk',
-    'DESIGNATE_CHOP',
-    'chop visible tree through the native designation UI to create logs'
-  )
-  if tree_payload then
-    return tree_payload
-  end
-
   if not df.global.world.units or not df.global.world.units.active then
     return nil
   end
 
-  return scan_near_citizens(
+  local stone_payload = scan_near_citizens(
     valid_material_wall_tile,
     'citizen_near_visible_stone_material_wall',
     'DESIGNATE_DIG',
     'mine visible stone/vein wall through the native designation UI'
+  )
+  if stone_payload then
+    return stone_payload
+  end
+
+  return scan_near_citizens(
+    valid_tree_tile,
+    'citizen_near_visible_tree_trunk',
+    'DESIGNATE_CHOP',
+    'chop visible tree through the native designation UI to create logs'
   )
 end
 
