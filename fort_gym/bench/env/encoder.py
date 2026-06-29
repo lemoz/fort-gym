@@ -651,6 +651,17 @@ def encode_observation(
                     "with D_NOBLES, D_BUILDJOB, D_JOBLIST, cursor movement, or SELECT "
                     "until the next observation confirms the screen."
                 )
+            else:
+                status_lines.append(
+                    "Recent progress instruction: a clean LEAVESCREEN recovery has "
+                    "already happened, so do not reopen the blocked menu family on "
+                    "this turn. For building/workshop loops, do not press D_BUILDING, "
+                    "HOTKEY_BUILDING_WORKSHOP, HOTKEY_BUILDING_WORKSHOP_CARPENTER, "
+                    "D_BUILDJOB, or BUILDJOB_ADD until a later observation proves a "
+                    "new cursor location and a valid visible placement/task screen. "
+                    "Choose a different evidence route instead of retrying the same "
+                    "workshop/build path."
+                )
     if screen_shows_workshop_material_selection:
         status_lines.append(
             "Live UI build feedback: the current visible workshop material "

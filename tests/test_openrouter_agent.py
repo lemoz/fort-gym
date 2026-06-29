@@ -13,15 +13,28 @@ from fort_gym.bench.config import get_settings
 
 
 class _FakeOpenRouterCompletions:
-    def __init__(self, *, content: str | None = None, tool_calls: list[Any] | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        content: str | None = None,
+        tool_calls: list[Any] | None = None,
+        responses: list[dict[str, Any]] | None = None,
+    ) -> None:
         self.requests: list[dict[str, Any]] = []
         self.content = content
         self.tool_calls = tool_calls
+        self.responses = list(responses or [])
 
     def create(self, **kwargs: Any) -> Any:
         self.requests.append(kwargs)
-        tool_calls = self.tool_calls
-        if tool_calls is None and self.content is None:
+        if self.responses:
+            response = self.responses.pop(0)
+            tool_calls = response.get("tool_calls", self.tool_calls)
+            content = response.get("content", self.content)
+        else:
+            tool_calls = self.tool_calls
+            content = self.content
+        if tool_calls is None and content is None:
             tool_calls = [
                 SimpleNamespace(
                     id="call_submit",
@@ -42,7 +55,7 @@ class _FakeOpenRouterCompletions:
             choices=[
                 SimpleNamespace(
                     message=SimpleNamespace(
-                        content=self.content,
+                        content=content,
                         tool_calls=tool_calls,
                     )
                 )
@@ -56,10 +69,17 @@ class _FakeOpenRouterCompletions:
 
 
 class _FakeOpenRouterChat:
-    def __init__(self, *, content: str | None = None, tool_calls: list[Any] | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        content: str | None = None,
+        tool_calls: list[Any] | None = None,
+        responses: list[dict[str, Any]] | None = None,
+    ) -> None:
         self.completions = _FakeOpenRouterCompletions(
             content=content,
             tool_calls=tool_calls,
+            responses=responses,
         )
 
 
@@ -67,6 +87,7 @@ class _FakeOpenRouterClient:
     last_instance: "_FakeOpenRouterClient | None" = None
     content: str | None = None
     tool_calls: list[Any] | None = None
+    responses: list[dict[str, Any]] | None = None
 
     def __init__(
         self,
@@ -80,8 +101,22 @@ class _FakeOpenRouterClient:
         self.base_url = base_url
         self.max_retries = max_retries
         self.timeout = timeout
-        self.chat = _FakeOpenRouterChat(content=self.content, tool_calls=self.tool_calls)
+        self.chat = _FakeOpenRouterChat(
+            content=self.content,
+            tool_calls=self.tool_calls,
+            responses=self.responses,
+        )
         _FakeOpenRouterClient.last_instance = self
+
+
+def _submit_action_call(payload: dict[str, Any], call_id: str = "call_submit") -> Any:
+    return SimpleNamespace(
+        id=call_id,
+        function=SimpleNamespace(
+            name="submit_action",
+            arguments=json.dumps(payload),
+        ),
+    )
 
 
 def test_openrouter_defaults_to_glm_5_2(monkeypatch) -> None:
@@ -448,6 +483,123 @@ def test_openrouter_agent_repairs_compound_action_after_menu_loop(monkeypatch) -
     assert action["params"]["keys"] == ["LEAVESCREEN", "LEAVESCREEN", "LEAVESCREEN"]
     assert action["intent"].startswith("Recover from repeated no-progress menu loop")
     assert any(event["tool"] == "menu_loop_recovery_repaired" for event in events)
+
+
+def test_openrouter_agent_rejects_blocked_menu_family_after_escape(monkeypatch) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    blocked_workshop_retry = {
+        "type": "KEYSTROKE",
+        "params": {
+            "keys": [
+                "LEAVESCREEN",
+                "D_BUILDING",
+                "HOTKEY_BUILDING_WORKSHOP",
+                "HOTKEY_BUILDING_WORKSHOP_CARPENTER",
+            ]
+        },
+        "intent": "Reopen carpenter workshop placement after escaping",
+        "advance_ticks": 0,
+    }
+    alternate_designation = {
+        "type": "KEYSTROKE",
+        "params": {
+            "keys": [
+                "D_DESIGNATE",
+                "DESIGNATE_CHOP",
+                "SELECT",
+                "CURSOR_RIGHT",
+                "SELECT",
+                "LEAVESCREEN",
+            ]
+        },
+        "intent": "Use a different branch by acquiring more wood before retrying workshop placement",
+        "advance_ticks": 500,
+    }
+    _FakeOpenRouterClient.responses = [
+        {"tool_calls": [_submit_action_call(blocked_workshop_retry, "call_blocked")]},
+        {"tool_calls": [_submit_action_call(alternate_designation, "call_alt")]},
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "openai"
+        return SimpleNamespace(OpenAI=_FakeOpenRouterClient)
+
+    monkeypatch.setattr("fort_gym.bench.agent.llm_openrouter.import_module", fake_import_module)
+
+    try:
+        agent = OpenRouterKeystrokeAgent()
+        action = agent.decide(
+            "mock observation",
+            {
+                "pause_state": True,
+                "recent_progress_summary": {
+                    "do_not_repeat_menu_path": True,
+                    "escape_recovery_attempted": True,
+                    "repeated_menu_family": "workshop_task_menu",
+                    "repeated_key_fingerprint": "D_BUILDJOB BUILDJOB_ADD SELECT",
+                },
+            },
+        )
+        events = agent.pop_tool_events()
+    finally:
+        _FakeOpenRouterClient.responses = None
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["type"] == "KEYSTROKE"
+    assert action["params"]["keys"][0] == "D_DESIGNATE"
+    assert any(event["tool"] == "blocked_menu_path_rejected" for event in events)
+
+
+def test_openrouter_agent_falls_back_when_blocked_menu_family_repeats(monkeypatch) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
+    monkeypatch.setenv("OPENROUTER_MAX_TOOL_ROUNDS", "1")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    _FakeOpenRouterClient.tool_calls = [
+        _submit_action_call(
+            {
+                "type": "KEYSTROKE",
+                "params": {
+                    "keys": [
+                        "LEAVESCREEN",
+                        "D_BUILDING",
+                        "HOTKEY_BUILDING_WORKSHOP",
+                        "HOTKEY_BUILDING_WORKSHOP_CARPENTER",
+                    ]
+                },
+                "intent": "Reopen carpenter workshop placement after escaping",
+                "advance_ticks": 0,
+            }
+        )
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "openai"
+        return SimpleNamespace(OpenAI=_FakeOpenRouterClient)
+
+    monkeypatch.setattr("fort_gym.bench.agent.llm_openrouter.import_module", fake_import_module)
+
+    try:
+        agent = OpenRouterKeystrokeAgent()
+        action = agent.decide(
+            "mock observation",
+            {
+                "pause_state": True,
+                "recent_progress_summary": {
+                    "do_not_repeat_menu_path": True,
+                    "escape_recovery_attempted": True,
+                    "repeated_menu_family": "building_placement_menu",
+                    "repeated_key_fingerprint": "D_BUILDING HOTKEY_BUILDING_WORKSHOP",
+                },
+            },
+        )
+        events = agent.pop_tool_events()
+    finally:
+        _FakeOpenRouterClient.tool_calls = None
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["params"]["keys"] == ["LEAVESCREEN", "LEAVESCREEN", "LEAVESCREEN"]
+    assert any(event["tool"] == "blocked_menu_path_fallback" for event in events)
 
 
 def test_anthropic_models_are_disabled_by_default(monkeypatch) -> None:

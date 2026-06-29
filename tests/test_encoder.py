@@ -813,3 +813,61 @@ def test_encoder_does_not_classify_workshop_intent_designation_as_menu_loop() ->
     summary = state["recent_progress_summary"]
     assert summary["menu_no_progress_streak"] == 0
     assert summary["do_not_repeat_menu_path"] is False
+
+
+def test_encoder_warns_not_to_reopen_blocked_menu_after_escape() -> None:
+    action_history = []
+    for step in range(5):
+        action_history.append(
+            {
+                "step": step,
+                "intent": "Reopen carpenter workshop placement after a blocked attempt",
+                "keys": [
+                    "LEAVESCREEN",
+                    "D_BUILDING",
+                    "HOTKEY_BUILDING_WORKSHOP",
+                    "HOTKEY_BUILDING_WORKSHOP_CARPENTER",
+                ],
+                "requested_ticks": 0,
+                "actual_ticks": 0,
+                "accepted": True,
+                "outcome": "keys_sent_without_tracked_state_change",
+                "productive_reasons": [],
+                "changed": [],
+            }
+        )
+    action_history.append(
+        {
+            "step": 5,
+            "intent": "Escape the blocked workshop placement path",
+            "keys": ["LEAVESCREEN", "LEAVESCREEN"],
+            "requested_ticks": 0,
+            "actual_ticks": 0,
+            "accepted": True,
+            "outcome": "keys_sent_without_tracked_state_change",
+            "productive_reasons": [],
+            "changed": [],
+        }
+    )
+
+    text, state = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 3, "stone": 0},
+            "work": {
+                "manager_orders_count": 0,
+                "manager_orders_amount_left": 0,
+                "carpenter_workshops": 0,
+            },
+        },
+        screen_text="main map",
+        action_history=action_history,
+    )
+
+    summary = state["recent_progress_summary"]
+    assert summary["do_not_repeat_menu_path"] is True
+    assert summary["escape_recovery_attempted"] is True
+    assert "a clean LEAVESCREEN recovery has already happened" in text
+    assert "do not reopen the blocked menu family" in text
+    assert "do not press D_BUILDING" in text

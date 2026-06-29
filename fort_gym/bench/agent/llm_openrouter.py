@@ -571,10 +571,146 @@ class OpenRouterKeystrokeAgent(Agent):
         )
         return repaired
 
+    @staticmethod
+    def _keystroke_keys(tool_payload: Dict[str, Any]) -> List[Any]:
+        params = (
+            tool_payload.get("params")
+            if isinstance(tool_payload.get("params"), dict)
+            else {}
+        )
+        keys = params.get("keys") if isinstance(params, dict) else []
+        return keys if isinstance(keys, list) else []
+
+    @classmethod
+    def _submitted_action_family(cls, tool_payload: Dict[str, Any]) -> str:
+        keys = cls._keystroke_keys(tool_payload)
+        key_values = [str(key) for key in keys]
+        key_set = set(key_values)
+        intent = str(tool_payload.get("intent") or "").lower()
+
+        if "D_DESIGNATE" in key_set:
+            return "designation"
+        if "D_BUILDING" in key_set:
+            return "building_placement_menu"
+        if "D_JOBLIST" in key_set or "UNITJOB_MANAGER" in key_set:
+            return "job_manager_menu"
+        if "D_NOBLES" in key_set or "nobles" in intent or "manager" in intent:
+            return "manager_nobles_menu"
+        if (
+            "D_BUILDJOB" in key_set
+            or "BUILDJOB_ADD" in key_set
+            or "workshop task" in intent
+            or "carpenter workshop" in intent
+        ):
+            return "workshop_task_menu"
+        if any(key == "STRING_A032" for key in key_values):
+            return "wait"
+        navigation_keys = {
+            "LEAVESCREEN",
+            "SELECT",
+            "CURSOR_UP",
+            "CURSOR_DOWN",
+            "CURSOR_LEFT",
+            "CURSOR_RIGHT",
+            "SECONDSCROLL_UP",
+            "SECONDSCROLL_DOWN",
+            "STANDARDSCROLL_UP",
+            "STANDARDSCROLL_DOWN",
+            "STANDARDSCROLL_PAGEUP",
+            "STANDARDSCROLL_PAGEDOWN",
+        }
+        if key_values and all(key in navigation_keys for key in key_values):
+            return "menu_navigation"
+        return key_values[0] if key_values else "none"
+
+    @staticmethod
+    def _blocked_menu_group(family: Any) -> str:
+        if family in {"building_placement_menu", "workshop_task_menu"}:
+            return "workshop_build_menus"
+        if family in {"manager_nobles_menu", "job_manager_menu"}:
+            return "manager_menus"
+        return str(family or "none")
+
+    @classmethod
+    def _blocked_menu_path_error(
+        cls,
+        tool_payload: Dict[str, Any],
+        obs_json: Dict[str, Any],
+    ) -> str | None:
+        recent = obs_json.get("recent_progress_summary")
+        if not isinstance(recent, dict) or not recent.get("do_not_repeat_menu_path"):
+            return None
+
+        keys = cls._keystroke_keys(tool_payload)
+        if keys and all(str(key) == "LEAVESCREEN" for key in keys):
+            return None
+
+        repeated_family = recent.get("repeated_menu_family")
+        submitted_family = cls._submitted_action_family(tool_payload)
+        if submitted_family in {"none", "designation", "wait"}:
+            return None
+        if cls._blocked_menu_group(repeated_family) != cls._blocked_menu_group(
+            submitted_family
+        ):
+            return None
+
+        return (
+            "Blocked repeated menu action: recent_progress_summary."
+            "do_not_repeat_menu_path is true for "
+            f"{repeated_family}, and this action is another {submitted_family} "
+            "route in the same failed menu group. Do not reopen that menu path "
+            "after an escape. Choose a different route using current visible "
+            "screen evidence, such as a new designation/material-acquisition "
+            "branch, a verified main-map inspection, or a different non-menu "
+            "plan step."
+        )
+
+    def _log_blocked_menu_path(
+        self,
+        tool_payload: Dict[str, Any],
+        obs_json: Dict[str, Any],
+        error: str,
+    ) -> None:
+        recent = obs_json.get("recent_progress_summary")
+        repeated_family = (
+            recent.get("repeated_menu_family") if isinstance(recent, dict) else None
+        )
+        self._tool_events.append(
+            {
+                "tool": "blocked_menu_path_rejected",
+                "input": {
+                    "repeated_menu_family": repeated_family,
+                    "submitted_family": self._submitted_action_family(tool_payload),
+                    "submitted_keys": self._keystroke_keys(tool_payload),
+                },
+                "output": error,
+            }
+        )
+
+    def _fallback_blocked_menu_escape(self, error: str) -> Dict[str, Any]:
+        fallback = {
+            "type": "KEYSTROKE",
+            "params": {"keys": ["LEAVESCREEN", "LEAVESCREEN", "LEAVESCREEN"]},
+            "intent": (
+                "Escape from a repeated blocked menu path after the model did "
+                "not choose a valid alternate route."
+            ),
+            "advance_ticks": 0,
+        }
+        self._tool_events.append(
+            {
+                "tool": "blocked_menu_path_fallback",
+                "input": {"error": error},
+                "output": "Submitted LEAVESCREEN-only recovery instead of repeating the blocked menu path.",
+            }
+        )
+        return parse_action(fallback)
+
     def decide(self, obs_text: str, obs_json: Dict[str, Any]) -> Dict[str, Any]:
         messages = self._messages(obs_text, obs_json)
         called_tool_names: set[str] = set()
         last_error: Exception | str | None = None
+        last_blocked_menu_error: str | None = None
 
         max_tool_rounds = max(1, self._settings.OPENROUTER_MAX_TOOL_ROUNDS)
         for _ in range(max_tool_rounds):
@@ -602,6 +738,25 @@ class OpenRouterKeystrokeAgent(Agent):
                         content_payload,
                         obs_json,
                     )
+                    blocked_menu_error = self._blocked_menu_path_error(
+                        content_payload,
+                        obs_json,
+                    )
+                    if blocked_menu_error:
+                        self._log_blocked_menu_path(
+                            content_payload,
+                            obs_json,
+                            blocked_menu_error,
+                        )
+                        last_error = ValueError(blocked_menu_error)
+                        last_blocked_menu_error = blocked_menu_error
+                        messages.append(
+                            {
+                                "role": "user",
+                                "content": blocked_menu_error,
+                            }
+                        )
+                        continue
                     contract_error = self._advance_ticks_contract_error(content_payload)
                     if contract_error:
                         repaired = self._repair_action_only_contract(
@@ -708,6 +863,23 @@ class OpenRouterKeystrokeAgent(Agent):
                         tool_input = fallback_payload
                 tool_input = self._repair_missing_keystroke_type(tool_input)
                 tool_input = self._repair_menu_loop_recovery_action(tool_input, obs_json)
+                blocked_menu_error = self._blocked_menu_path_error(tool_input, obs_json)
+                if blocked_menu_error:
+                    self._log_blocked_menu_path(
+                        tool_input,
+                        obs_json,
+                        blocked_menu_error,
+                    )
+                    last_error = ValueError(blocked_menu_error)
+                    last_blocked_menu_error = blocked_menu_error
+                    messages.append(
+                        {
+                            "role": "tool",
+                            "tool_call_id": call.id,
+                            "content": blocked_menu_error,
+                        }
+                    )
+                    continue
                 gate_error = self._gate_error(called_tool_names)
                 if gate_error:
                     last_error = gate_error
@@ -753,6 +925,10 @@ class OpenRouterKeystrokeAgent(Agent):
                 )
                 self._completed_actions += 1
                 return action
+
+        if last_blocked_menu_error is not None:
+            self._completed_actions += 1
+            return self._fallback_blocked_menu_escape(last_blocked_menu_error)
 
         raise RuntimeError(
             f"OpenRouter keystroke agent failed after {max_tool_rounds} tool rounds: {last_error}"
