@@ -182,7 +182,7 @@ def test_utility_action_progress_counts_accepted_safe_actions() -> None:
     assert rejected_progress == {"utility_action_progress": 0}
 
 
-def test_composite_score_includes_bounded_work_component() -> None:
+def test_composite_score_includes_scaled_work_component() -> None:
     without_work = scoring.composite_score(
         {
             "duration_ticks": 0,
@@ -204,7 +204,7 @@ def test_composite_score_includes_bounded_work_component() -> None:
     assert with_work - without_work == scoring.WORK_WEIGHT
 
 
-def test_composite_score_includes_bounded_completion_component() -> None:
+def test_composite_score_includes_scaled_completion_component() -> None:
     without_completion = scoring.composite_score(
         {
             "duration_ticks": 0,
@@ -226,7 +226,7 @@ def test_composite_score_includes_bounded_completion_component() -> None:
     assert with_completion - without_completion == scoring.COMPLETION_WEIGHT
 
 
-def test_composite_score_includes_bounded_utility_component() -> None:
+def test_composite_score_includes_scaled_utility_component() -> None:
     without_utility = scoring.composite_score(
         {
             "duration_ticks": 0,
@@ -248,7 +248,7 @@ def test_composite_score_includes_bounded_utility_component() -> None:
     assert with_utility - without_utility == scoring.UTILITY_WEIGHT
 
 
-def test_composite_score_includes_bounded_production_component() -> None:
+def test_composite_score_includes_scaled_production_component() -> None:
     without_production = scoring.composite_score(
         {
             "duration_ticks": 0,
@@ -270,7 +270,7 @@ def test_composite_score_includes_bounded_production_component() -> None:
     assert with_production - without_production == scoring.PRODUCTION_WEIGHT
 
 
-def test_composite_score_includes_bounded_complexity_component() -> None:
+def test_composite_score_includes_scaled_complexity_component() -> None:
     without_complexity = scoring.composite_score(
         {
             "duration_ticks": 0,
@@ -290,3 +290,35 @@ def test_composite_score_includes_bounded_complexity_component() -> None:
     )
 
     assert with_complexity - without_complexity == scoring.COMPLEXITY_WEIGHT
+
+
+def test_composite_score_continues_past_previous_caps() -> None:
+    target_score = scoring.composite_score(
+        {
+            "time": scoring.TARGET_SURVIVAL_TICKS,
+            "pop": scoring.POP_CAP,
+            "drink": scoring.DRINK_THRESHOLD,
+            "wealth": scoring.WEALTH_TARGET,
+            "work_progress": scoring.TARGET_WORK_PROGRESS,
+            "completion_progress": scoring.TARGET_COMPLETION_PROGRESS,
+            "utility_progress": scoring.TARGET_UTILITY_PROGRESS,
+            "production_progress": scoring.TARGET_PRODUCTION_PROGRESS,
+            "complexity_progress": scoring.TARGET_COMPLEXITY_PROGRESS,
+        }
+    )
+    doubled_score = scoring.composite_score(
+        {
+            "time": scoring.TARGET_SURVIVAL_TICKS * 2,
+            "pop": scoring.POP_CAP * 2,
+            "drink": scoring.DRINK_THRESHOLD * 2,
+            "wealth": scoring.WEALTH_TARGET * 2,
+            "work_progress": scoring.TARGET_WORK_PROGRESS * 2,
+            "completion_progress": scoring.TARGET_COMPLETION_PROGRESS * 2,
+            "utility_progress": scoring.TARGET_UTILITY_PROGRESS * 2,
+            "production_progress": scoring.TARGET_PRODUCTION_PROGRESS * 2,
+            "complexity_progress": scoring.TARGET_COMPLEXITY_PROGRESS * 2,
+        }
+    )
+
+    assert target_score == 145.0
+    assert doubled_score == 215.0

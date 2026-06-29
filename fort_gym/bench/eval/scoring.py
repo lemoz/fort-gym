@@ -21,6 +21,7 @@ TARGET_COMPLETION_PROGRESS = 25
 TARGET_UTILITY_PROGRESS = 5
 TARGET_PRODUCTION_PROGRESS = 5
 TARGET_COMPLEXITY_PROGRESS = 38
+WEALTH_TARGET = 100000.0
 DRINK_THRESHOLD = 20
 CASUALTY_PENALTY = 10.0
 HOSTILES_PENALTY = 10.0
@@ -35,25 +36,41 @@ def _to_float(value: Optional[float]) -> float:
         return 0.0
 
 
-def composite_score(summary: Dict[str, float]) -> float:
-    """Compute a heuristic composite score from summary aggregates.
+def _nonnegative(value: float) -> float:
+    return max(0.0, value)
 
-    Accepts both summary format (duration_ticks, peak_pop, drink_availability, created_wealth)
-    and metrics format (time, pop, drink, wealth).
+
+def _scaled_component(value: float, target: float, weight: float) -> float:
+    if target <= 0:
+        return 0.0
+    return (_nonnegative(value) / target) * weight
+
+
+def _bounded_scaled_component(value: float, target: float, weight: float) -> float:
+    if target <= 0:
+        return 0.0
+    return (min(_nonnegative(value), target) / target) * weight
+
+
+def score_components(summary: Dict[str, float]) -> Dict[str, float]:
+    """Compute score components from observed fortress state.
+
+    Health checks stay bounded so waiting and starting stockpiles do not dominate
+    the score. Fort-growth components are open-ended: progress beyond a target
+    keeps adding score as the fort digs, produces, grows, and creates wealth.
     """
 
-    # Accept both field name formats
     duration = _to_float(summary.get("duration_ticks") or summary.get("time"))
     peak_pop = _to_float(summary.get("peak_pop") or summary.get("pop"))
 
-    # drink_availability is a fraction (0-1), drink is absolute count
     drink_avail = summary.get("drink_availability")
     if drink_avail is not None:
         drink_fraction = max(0.0, min(1.0, _to_float(drink_avail)))
     else:
-        # Convert absolute drink count to availability (>= 20 = good)
         drink_count = _to_float(summary.get("drink"))
-        drink_fraction = min(1.0, drink_count / DRINK_THRESHOLD) if drink_count > 0 else 0.0
+        drink_fraction = (
+            min(1.0, _nonnegative(drink_count) / DRINK_THRESHOLD) if drink_count > 0 else 0.0
+        )
 
     wealth_value = _to_float(summary.get("created_wealth") or summary.get("wealth"))
     work_progress = _to_float(summary.get("work_progress"))
@@ -62,42 +79,44 @@ def composite_score(summary: Dict[str, float]) -> float:
     production_progress = _to_float(summary.get("production_progress"))
     complexity_progress = _to_float(summary.get("complexity_progress"))
 
-    survival_component = (min(duration, TARGET_SURVIVAL_TICKS) / TARGET_SURVIVAL_TICKS) * SURVIVAL_WEIGHT
-    pop_component = (min(peak_pop, POP_CAP) / POP_CAP) * POP_WEIGHT
-    availability_component = drink_fraction * AVAIL_WEIGHT
-    wealth_component = (min(wealth_value, 100000.0) / 100000.0) * WEALTH_WEIGHT
-    work_component = (min(work_progress, TARGET_WORK_PROGRESS) / TARGET_WORK_PROGRESS) * WORK_WEIGHT
-    completion_component = (
-        min(completion_progress, TARGET_COMPLETION_PROGRESS) / TARGET_COMPLETION_PROGRESS
-    ) * COMPLETION_WEIGHT
-    utility_component = (
-        min(utility_progress, TARGET_UTILITY_PROGRESS) / TARGET_UTILITY_PROGRESS
-    ) * UTILITY_WEIGHT
-    production_component = (
-        min(production_progress, TARGET_PRODUCTION_PROGRESS) / TARGET_PRODUCTION_PROGRESS
-    ) * PRODUCTION_WEIGHT
-    complexity_component = (
-        min(complexity_progress, TARGET_COMPLEXITY_PROGRESS) / TARGET_COMPLEXITY_PROGRESS
-    ) * COMPLEXITY_WEIGHT
+    return {
+        "survival_score": _bounded_scaled_component(
+            duration, TARGET_SURVIVAL_TICKS, SURVIVAL_WEIGHT
+        ),
+        "population_score": _bounded_scaled_component(peak_pop, POP_CAP, POP_WEIGHT),
+        "availability_score": _nonnegative(drink_fraction) * AVAIL_WEIGHT,
+        "wealth_score": _scaled_component(wealth_value, WEALTH_TARGET, WEALTH_WEIGHT),
+        "work_score": _scaled_component(work_progress, TARGET_WORK_PROGRESS, WORK_WEIGHT),
+        "completion_score": _scaled_component(
+            completion_progress, TARGET_COMPLETION_PROGRESS, COMPLETION_WEIGHT
+        ),
+        "utility_score": _scaled_component(
+            utility_progress, TARGET_UTILITY_PROGRESS, UTILITY_WEIGHT
+        ),
+        "production_score": _scaled_component(
+            production_progress, TARGET_PRODUCTION_PROGRESS, PRODUCTION_WEIGHT
+        ),
+        "complexity_score": _scaled_component(
+            complexity_progress, TARGET_COMPLEXITY_PROGRESS, COMPLEXITY_WEIGHT
+        ),
+    }
 
+
+def composite_score(summary: Dict[str, float]) -> float:
+    """Compute a heuristic composite score from summary aggregates.
+
+    Accepts both summary format (duration_ticks, peak_pop, drink_availability, created_wealth)
+    and metrics format (time, pop, drink, wealth).
+    """
+
+    components = score_components(summary)
     penalties = 0.0
     if summary.get("casualty_spike"):
         penalties += CASUALTY_PENALTY
     if summary.get("hostiles_present"):
         penalties += HOSTILES_PENALTY
 
-    total = (
-        survival_component
-        + pop_component
-        + availability_component
-        + wealth_component
-        + work_component
-        + completion_component
-        + utility_component
-        + production_component
-        + complexity_component
-        - penalties
-    )
+    total = sum(components.values()) - penalties
     return round(total, 2)
 
 
@@ -106,6 +125,7 @@ __all__ = [
     "TARGET_SURVIVAL_TICKS",
     "POP_CAP",
     "DRINK_THRESHOLD",
+    "WEALTH_TARGET",
     "SURVIVAL_WEIGHT",
     "AVAIL_WEIGHT",
     "WEALTH_WEIGHT",
@@ -119,4 +139,5 @@ __all__ = [
     "TARGET_UTILITY_PROGRESS",
     "TARGET_PRODUCTION_PROGRESS",
     "TARGET_COMPLEXITY_PROGRESS",
+    "score_components",
 ]

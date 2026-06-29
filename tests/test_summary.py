@@ -322,6 +322,8 @@ def test_summarize_tracks_work_progress(tmp_path) -> None:
     summary = summarize(trace_path)
 
     assert summary.work_progress == 25
+    assert summary.population_score == 3.5
+    assert summary.wealth_score == 0.0
     assert summary.work_score == 10.0
     assert summary.designation_progress == 25
     assert summary.completion_progress == 8

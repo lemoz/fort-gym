@@ -114,7 +114,7 @@ head -n 3 fort_gym/artifacts/<run_id>/trace.jsonl
 cat fort_gym/artifacts/<run_id>/summary.json | jq .
 ```
 > Note: the interactive `/step` flow is validated against the single-action schema used by the `fake` agent. Manager orders issued by the exploratory `random` agent remain experimental and may be rejected until DFHack execution coverage improves.
-The SSE endpoint emits `state`, `action`, `validation`, `execute`, `advance`, `metrics`, and `score` events. `summary.json` accumulates aggregate metrics, including live DFHack work, completion, bounded utility, bounded production, and visible two-room fortress complexity progress when target-room metrics are available.
+The SSE endpoint emits `state`, `action`, `validation`, `execute`, `advance`, `metrics`, and `score` events. `summary.json` accumulates aggregate metrics, including live DFHack work, completion, utility, production, wealth, and visible fortress complexity progress when target-room metrics are available. Basic survival, population, and drink availability remain bounded health checks; fort-growth components are intentionally open-ended, so longer real-gameplay runs can keep gaining points as the fort digs, builds, produces, and creates wealth.
 
 ## Keystroke Control Mode (Claude Plays Like a Human)
 

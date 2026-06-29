@@ -8,22 +8,7 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
-from .scoring import (
-    AVAIL_WEIGHT,
-    COMPLETION_WEIGHT,
-    SURVIVAL_WEIGHT,
-    TARGET_COMPLETION_PROGRESS,
-    TARGET_SURVIVAL_TICKS,
-    TARGET_UTILITY_PROGRESS,
-    TARGET_WORK_PROGRESS,
-    TARGET_PRODUCTION_PROGRESS,
-    TARGET_COMPLEXITY_PROGRESS,
-    UTILITY_WEIGHT,
-    WORK_WEIGHT,
-    PRODUCTION_WEIGHT,
-    COMPLEXITY_WEIGHT,
-    composite_score,
-)
+from .scoring import composite_score, score_components
 
 
 class RunSummary(BaseModel):
@@ -37,7 +22,9 @@ class RunSummary(BaseModel):
     end_pop: int = 0
     created_wealth: Optional[int] = None
     survival_score: float = 0.0
+    population_score: float = 0.0
     availability_score: float = 0.0
+    wealth_score: float = 0.0
     work_score: float = 0.0
     completion_score: float = 0.0
     utility_score: float = 0.0
@@ -421,21 +408,7 @@ def summarize(trace_path: Path) -> RunSummary:
         "hostiles_present": hostiles_present,
     }
 
-    survival_score = (min(duration, TARGET_SURVIVAL_TICKS) / TARGET_SURVIVAL_TICKS) * SURVIVAL_WEIGHT
-    availability_score = drink_availability * AVAIL_WEIGHT
-    work_score = (min(work_progress, TARGET_WORK_PROGRESS) / TARGET_WORK_PROGRESS) * WORK_WEIGHT
-    completion_score = (
-        min(completion_progress, TARGET_COMPLETION_PROGRESS) / TARGET_COMPLETION_PROGRESS
-    ) * COMPLETION_WEIGHT
-    utility_score = (
-        min(utility_progress, TARGET_UTILITY_PROGRESS) / TARGET_UTILITY_PROGRESS
-    ) * UTILITY_WEIGHT
-    production_score = (
-        min(production_progress, TARGET_PRODUCTION_PROGRESS) / TARGET_PRODUCTION_PROGRESS
-    ) * PRODUCTION_WEIGHT
-    complexity_score = (
-        min(complexity_progress, TARGET_COMPLEXITY_PROGRESS) / TARGET_COMPLEXITY_PROGRESS
-    ) * COMPLEXITY_WEIGHT
+    components = score_components(summary_payload)
     total_score = composite_score(summary_payload)
 
     summary = RunSummary(
@@ -445,13 +418,15 @@ def summarize(trace_path: Path) -> RunSummary:
         peak_pop=peak_pop,
         end_pop=end_pop,
         created_wealth=wealth,
-        survival_score=round(survival_score, 2),
-        availability_score=round(availability_score, 2),
-        work_score=round(work_score, 2),
-        completion_score=round(completion_score, 2),
-        utility_score=round(utility_score, 2),
-        production_score=round(production_score, 2),
-        complexity_score=round(complexity_score, 2),
+        survival_score=round(components["survival_score"], 2),
+        population_score=round(components["population_score"], 2),
+        availability_score=round(components["availability_score"], 2),
+        wealth_score=round(components["wealth_score"], 2),
+        work_score=round(components["work_score"], 2),
+        completion_score=round(components["completion_score"], 2),
+        utility_score=round(components["utility_score"], 2),
+        production_score=round(components["production_score"], 2),
+        complexity_score=round(components["complexity_score"], 2),
         work_progress=work_progress,
         designation_progress=designation_progress,
         completion_progress=completion_progress,
