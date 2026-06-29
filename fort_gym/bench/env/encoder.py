@@ -89,6 +89,14 @@ def _classify_screen_state(screen_text: Optional[str]) -> Dict[str, Any]:
             extra_evidence=["visible text says a manager is required"],
         )
 
+    if "d: designations" in lower and "b: building" in lower:
+        return result(
+            "main_map",
+            confidence="medium",
+            instruction="Main map/menu view; choose a productive action directly.",
+            extra_evidence=["visible main map command menu"],
+        )
+
     if "nobles and administrators" in lower or (
         "administrator" in lower and "manager" in lower and "appoint" in lower
     ):
@@ -208,14 +216,6 @@ def _classify_screen_state(screen_text: Optional[str]) -> Dict[str, Any]:
                 "a '+-*/: Scroll' list."
             ),
             extra_evidence=task_rows[:3] or ["visible carpenter workshop task list"],
-        )
-
-    if "d: designations" in lower and "b: building" in lower:
-        return result(
-            "main_map",
-            confidence="medium",
-            instruction="Main map/menu view; choose a productive action directly.",
-            extra_evidence=["visible main map command menu"],
         )
 
     return result(

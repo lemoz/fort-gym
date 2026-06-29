@@ -393,6 +393,28 @@ def test_encoder_classifies_manager_required_screen() -> None:
     assert state["screen_state"]["confidence"] == "high"
 
 
+def test_encoder_classifies_main_map_before_nobles_menu_option() -> None:
+    screen_text = (
+        "#*PAUSED*######################  Dwarf Fortress\n"
+        "a: View Announcements\n"
+        "b: Building     r: Reports\n"
+        "d: Designations o: Set Order\n"
+        "n: Nobles and Administrators\n"
+        "Space: Resume .: One-Step"
+    )
+    text, state = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 3, "stone": 0},
+        },
+        screen_text=screen_text,
+    )
+
+    assert "Screen state: mode=main_map" in text
+    assert state["screen_state"]["mode"] == "main_map"
+
+
 def test_encoder_classifies_workshop_add_task_list_with_highlight() -> None:
     screen_text = (
         "Carpenter's Workshop\n"
