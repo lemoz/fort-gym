@@ -776,10 +776,13 @@ def test_encoder_flags_repeated_manager_menu_loop() -> None:
     assert summary["menu_no_progress_streak"] == 6
     assert summary["repeated_menu_family"] == "manager_nobles_menu"
     assert summary["repeated_menu_family_count"] == 6
+    assert summary["last_action_family"] == "manager_nobles_menu"
+    assert summary["escape_recovery_attempted"] is False
     assert summary["agent_marked_bad_menu_path"] is True
     assert summary["do_not_repeat_menu_path"] is True
     assert "do_not_repeat_menu_path=true" in text
     assert "you are repeating a no-progress manager_nobles_menu path" in text
+    assert "your next action must be only LEAVESCREEN keys" in text
     assert "do not use fixed CURSOR_DOWN counts" in text
 
 

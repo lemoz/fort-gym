@@ -528,6 +528,49 @@ class OpenRouterKeystrokeAgent(Agent):
         )
         return repaired
 
+    def _repair_menu_loop_recovery_action(
+        self,
+        tool_payload: Dict[str, Any],
+        obs_json: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        recent = obs_json.get("recent_progress_summary")
+        if not isinstance(recent, dict):
+            return tool_payload
+        if not recent.get("do_not_repeat_menu_path"):
+            return tool_payload
+        if recent.get("escape_recovery_attempted"):
+            return tool_payload
+
+        params = tool_payload.get("params") if isinstance(tool_payload.get("params"), dict) else {}
+        keys = params.get("keys") if isinstance(params, dict) else []
+        if isinstance(keys, list) and keys and all(str(key) == "LEAVESCREEN" for key in keys):
+            return tool_payload
+
+        repaired = dict(tool_payload)
+        repaired["type"] = "KEYSTROKE"
+        repaired["params"] = {"keys": ["LEAVESCREEN", "LEAVESCREEN", "LEAVESCREEN"]}
+        repaired["advance_ticks"] = 0
+        repaired["intent"] = (
+            "Recover from repeated no-progress menu loop by escaping to a "
+            "verified main-map screen before choosing another route."
+        )
+        self._tool_events.append(
+            {
+                "tool": "menu_loop_recovery_repaired",
+                "input": {
+                    "repeated_menu_family": recent.get("repeated_menu_family"),
+                    "repeated_key_fingerprint": recent.get("repeated_key_fingerprint"),
+                    "submitted_keys": keys,
+                },
+                "output": (
+                    "Replaced compound menu action with LEAVESCREEN-only recovery "
+                    "because do_not_repeat_menu_path was true and no clean escape "
+                    "observation had happened yet."
+                ),
+            }
+        )
+        return repaired
+
     def decide(self, obs_text: str, obs_json: Dict[str, Any]) -> Dict[str, Any]:
         messages = self._messages(obs_text, obs_json)
         called_tool_names: set[str] = set()
@@ -555,6 +598,10 @@ class OpenRouterKeystrokeAgent(Agent):
                 content_payload = self._json_payload_from_text(message_content)
                 if content_payload is not None:
                     content_payload = self._repair_missing_keystroke_type(content_payload)
+                    content_payload = self._repair_menu_loop_recovery_action(
+                        content_payload,
+                        obs_json,
+                    )
                     contract_error = self._advance_ticks_contract_error(content_payload)
                     if contract_error:
                         repaired = self._repair_action_only_contract(
@@ -660,6 +707,7 @@ class OpenRouterKeystrokeAgent(Agent):
                     if fallback_payload is not None:
                         tool_input = fallback_payload
                 tool_input = self._repair_missing_keystroke_type(tool_input)
+                tool_input = self._repair_menu_loop_recovery_action(tool_input, obs_json)
                 gate_error = self._gate_error(called_tool_names)
                 if gate_error:
                     last_error = gate_error

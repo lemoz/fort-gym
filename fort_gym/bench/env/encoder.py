@@ -263,6 +263,15 @@ def _recent_progress_summary(
             fingerprint_counts.items(),
             key=lambda item: item[1],
         )
+    last_entry = action_history[-1]
+    last_key_fingerprint = _key_fingerprint(last_entry.get("keys"))
+    last_action_family = _action_family(last_entry)
+    last_keys = last_entry.get("keys")
+    last_was_escape_only = bool(
+        isinstance(last_keys, list)
+        and last_keys
+        and all(str(key) == "LEAVESCREEN" for key in last_keys)
+    )
 
     manager_orders = _to_int(work.get("manager_orders_count"))
     order_qty_left = _to_int(work.get("manager_orders_amount_left"))
@@ -316,6 +325,9 @@ def _recent_progress_summary(
         "repeated_menu_family_count": repeated_menu_family_count,
         "repeated_key_fingerprint": repeated_key_fingerprint,
         "repeated_key_fingerprint_count": repeated_key_fingerprint_count,
+        "last_action_family": last_action_family,
+        "last_key_fingerprint": last_key_fingerprint,
+        "escape_recovery_attempted": last_was_escape_only,
         "agent_marked_bad_menu_path": agent_marked_bad_path,
         "do_not_repeat_menu_path": do_not_repeat_menu_path,
     }
@@ -608,6 +620,10 @@ def encode_observation(
             f"{recent_progress_summary.get('repeated_menu_family_count')}, "
             "repeated_key_fingerprint="
             f"{recent_progress_summary.get('repeated_key_fingerprint')}, "
+            "last_action_family="
+            f"{recent_progress_summary.get('last_action_family')}, "
+            "escape_recovery_attempted="
+            f"{str(recent_progress_summary.get('escape_recovery_attempted')).lower()}, "
             "do_not_repeat_menu_path="
             f"{str(recent_progress_summary.get('do_not_repeat_menu_path')).lower()}"
         )
@@ -628,6 +644,13 @@ def encode_observation(
                 "text. For manager/nobles loops, do not use fixed CURSOR_DOWN counts "
                 "unless the Nobles list and target row are visibly confirmed."
             )
+            if not recent_progress_summary.get("escape_recovery_attempted"):
+                status_lines.append(
+                    "Recent progress instruction: your next action must be only "
+                    "LEAVESCREEN keys with advance_ticks=0. Do not combine escape "
+                    "with D_NOBLES, D_BUILDJOB, D_JOBLIST, cursor movement, or SELECT "
+                    "until the next observation confirms the screen."
+                )
     if screen_shows_workshop_material_selection:
         status_lines.append(
             "Live UI build feedback: the current visible workshop material "
