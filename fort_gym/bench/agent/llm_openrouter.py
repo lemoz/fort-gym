@@ -683,6 +683,37 @@ class OpenRouterKeystrokeAgent(Agent):
         )
         return repaired
 
+    def _repair_metadata_dict_fields(
+        self,
+        tool_payload: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        repaired: Dict[str, Any] | None = None
+        repaired_fields: Dict[str, str] = {}
+        for field in ("screen_read", "last_action_review"):
+            value = tool_payload.get(field)
+            if value is None or isinstance(value, dict):
+                continue
+            if repaired is None:
+                repaired = dict(tool_payload)
+            repaired[field] = {"evidence": [str(value)]}
+            repaired_fields[field] = type(value).__name__
+
+        if repaired is None:
+            return tool_payload
+
+        self._tool_events.append(
+            {
+                "tool": "action_contract_repaired",
+                "input": {"metadata_fields": repaired_fields},
+                "output": (
+                    "Converted non-dict perception/review metadata into evidence "
+                    "dictionaries so malformed debug metadata does not discard "
+                    "an otherwise valid keystroke action."
+                ),
+            }
+        )
+        return repaired
+
     @staticmethod
     def _keystroke_keys(tool_payload: Dict[str, Any]) -> List[Any]:
         params = (
@@ -953,6 +984,7 @@ class OpenRouterKeystrokeAgent(Agent):
 
         payload = self._repair_missing_keystroke_type(payload)
         payload = self._repair_menu_loop_recovery_action(payload, obs_json)
+        payload = self._repair_metadata_dict_fields(payload)
         payload = self._repair_missing_screen_read_from_classifier(payload, obs_json)
 
         blocked_menu_error = self._blocked_menu_path_error(payload, obs_json)
@@ -1039,6 +1071,13 @@ class OpenRouterKeystrokeAgent(Agent):
                     }
                 )
                 return parsed
+            self._tool_events.append(
+                {
+                    "tool": "openrouter.plain_json_action",
+                    "input": payload,
+                    "output": {"rejected": str(parsed)},
+                }
+            )
             force_messages.append(
                 {
                     "role": "user",

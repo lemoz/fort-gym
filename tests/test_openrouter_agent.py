@@ -765,6 +765,64 @@ def test_openrouter_agent_repairs_missing_screen_read_from_classifier(monkeypatc
     assert any(event["tool"] == "screen_read_contract_repaired" for event in events)
 
 
+def test_openrouter_agent_repairs_string_review_metadata(monkeypatch) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    _FakeOpenRouterClient.tool_calls = [
+        _submit_action_call(
+            {
+                "type": "KEYSTROKE",
+                "params": {"keys": ["LEAVESCREEN", "LEAVESCREEN", "D_NOBLES"]},
+                "intent": "Exit manager orders and open Nobles to appoint a manager",
+                "screen_read": "The screen says a manager is required.",
+                "last_action_review": (
+                    "UNITJOB_MANAGER worked as navigation but exposed a missing "
+                    "manager blocker."
+                ),
+                "advance_ticks": 0,
+            }
+        )
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "openai"
+        return SimpleNamespace(OpenAI=_FakeOpenRouterClient)
+
+    monkeypatch.setattr("fort_gym.bench.agent.llm_openrouter.import_module", fake_import_module)
+
+    try:
+        agent = OpenRouterKeystrokeAgent()
+        action = agent.decide(
+            "mock observation",
+            {
+                "pause_state": True,
+                "screen_state": {
+                    "mode": "manager_required",
+                    "confidence": "high",
+                    "evidence": ["visible text says a manager is required"],
+                },
+            },
+        )
+        events = agent.pop_tool_events()
+    finally:
+        _FakeOpenRouterClient.tool_calls = None
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["params"]["keys"] == ["LEAVESCREEN", "LEAVESCREEN", "D_NOBLES"]
+    assert action["screen_read"]["mode"] == "manager_required"
+    assert action["last_action_review"]["evidence"] == [
+        "UNITJOB_MANAGER worked as navigation but exposed a missing manager blocker."
+    ]
+    assert any(
+        event["tool"] == "action_contract_repaired"
+        and event["input"]["metadata_fields"] == {
+            "screen_read": "str",
+            "last_action_review": "str",
+        }
+        for event in events
+    )
+
+
 def test_openrouter_agent_rejects_production_screen_read_mismatch(monkeypatch) -> None:
     monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
     get_settings.cache_clear()  # type: ignore[attr-defined]
