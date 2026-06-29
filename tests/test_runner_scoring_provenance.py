@@ -5,6 +5,7 @@ from fort_gym.bench.run.runner import (
     _carpenter_workshops,
     _desired_keystroke_target_mode,
     _gameplay_proof,
+    _is_keystroke_model,
     _screen_shows_ready_workshop_placement,
     _screen_shows_workshop_material_selection,
     _snapshot_tile_changes,
@@ -15,6 +16,13 @@ from fort_gym.bench.run.runner import (
     _workshop_placement_confirm_target,
     _zero_assisted_dfhack_progress,
 )
+
+
+def test_openrouter_glm_alias_uses_keystroke_mode() -> None:
+    assert _is_keystroke_model("openrouter-glm-5.2") is True
+    assert _is_keystroke_model("openrouter-keystroke-perception-review") is True
+    assert _is_keystroke_model("anthropic-research") is True
+    assert _is_keystroke_model("fake") is False
 
 
 def test_zero_assisted_dfhack_progress_preserves_audit_values() -> None:

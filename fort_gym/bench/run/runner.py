@@ -21,7 +21,7 @@ from ..env.state_reader import StateReader
 from ..dfhack_backend import prepare_keystroke_target, read_map_snapshot, read_work_metrics
 from ..eval import metrics, milestones, scoring
 from ..eval.summary import RunSummary, summarize
-from .storage import RUN_REGISTRY, RunRegistry
+from .storage import RunRegistry
 from .seed_reset import maybe_reset_dfhack_seed
 
 ASSISTED_DFHACK_ACTIONS = {"DIG", "BUILD", "ORDER"}
@@ -61,6 +61,18 @@ UI_MATERIAL_TARGET_RECOMMENDED_KEY_RETRY_LIMIT = 2
 UI_WORKSHOP_TARGET_RECOMMENDED_KEY_RETRY_LIMIT = 6
 UI_MATERIAL_BLOCKER_ESCAPE_KEYS = ("LEAVESCREEN", "LEAVESCREEN")
 UI_MATERIAL_TARGET_MIN_EXCAVATION_PROGRESS = 6
+KEYSTROKE_MODEL_NAMES = {
+    "openrouter-glm-5.2",
+}
+
+
+def _is_keystroke_model(model: str) -> bool:
+    normalized = str(model or "").lower()
+    return (
+        "keystroke" in normalized
+        or normalized.endswith("-research")
+        or normalized in KEYSTROKE_MODEL_NAMES
+    )
 
 
 def _artifacts_root() -> Path:
@@ -797,7 +809,7 @@ def run_once(
     elapsed_ticks_total = 0
 
     # Detect models that need screen capture and native UI keystroke scaffolding.
-    is_keystroke_mode = "keystroke" in model or model.endswith("-research")
+    is_keystroke_mode = _is_keystroke_model(model)
     keystroke_ui_target: Optional[Dict[str, Any]] = None
     ui_target_mode = "starter"
     ui_target_generation = 0
@@ -841,7 +853,7 @@ def run_once(
         dfhack_client = DFHackClient(host=settings.DFHACK_HOST, port=settings.DFHACK_PORT)
         try:
             dfhack_client.connect()
-        except DFHackUnavailableError as exc:  # pragma: no cover - environment guard
+        except DFHackUnavailableError:  # pragma: no cover - environment guard
             if registry:
                 registry.set_status(
                     run_identifier,
