@@ -966,6 +966,48 @@ def test_openrouter_agent_rejects_short_tree_chop_tick_advance(monkeypatch) -> N
     )
 
 
+def test_openrouter_agent_allows_ui_only_buildjob_with_zero_ticks(monkeypatch) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    _FakeOpenRouterClient.tool_calls = [
+        _submit_action_call(
+            {
+                "type": "KEYSTROKE",
+                "params": {"keys": ["D_BUILDJOB"]},
+                "intent": "Open building task interface for the carpenter workshop",
+                "objective": "Start direct workshop production by opening the UI",
+                "expected_visible_result": "Building task interface opens",
+                "expected_simulation_result": (
+                    "No simulation time passes; this is a UI mode change."
+                ),
+                "advance_ticks": 0,
+            }
+        )
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "openai"
+        return SimpleNamespace(OpenAI=_FakeOpenRouterClient)
+
+    monkeypatch.setattr("fort_gym.bench.agent.llm_openrouter.import_module", fake_import_module)
+
+    try:
+        agent = OpenRouterKeystrokeAgent()
+        action = agent.decide(
+            "mock observation",
+            {
+                "pause_state": True,
+                "screen_state": {"mode": "main_map", "confidence": "medium"},
+            },
+        )
+    finally:
+        _FakeOpenRouterClient.tool_calls = None
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["params"]["keys"] == ["D_BUILDJOB"]
+    assert action["advance_ticks"] == 0
+
+
 def test_openrouter_agent_rejects_production_screen_read_mismatch(monkeypatch) -> None:
     monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
     get_settings.cache_clear()  # type: ignore[attr-defined]

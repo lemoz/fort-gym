@@ -458,8 +458,24 @@ class OpenRouterKeystrokeAgent(Agent):
             )
         ).lower()
         scroll_only = bool(keys) and all(str(key).startswith("STANDARDSCROLL") for key in keys)
-        if cls._zero_tick_action_says_time_should_pass(tool_payload) or (
-            scroll_only and "advance" in action_text
+        expected_simulation_text = str(
+            tool_payload.get("expected_simulation_result") or ""
+        ).lower()
+        explicitly_ui_only = any(
+            phrase in expected_simulation_text
+            for phrase in (
+                "no simulation",
+                "no simulation time",
+                "no time passes",
+                "ui navigation",
+                "ui mode",
+                "menu navigation",
+                "mode change",
+            )
+        )
+        if not explicitly_ui_only and (
+            cls._zero_tick_action_says_time_should_pass(tool_payload)
+            or (scroll_only and "advance" in action_text)
         ):
             return (
                 "Action contract mismatch: the action says to advance time or let "
