@@ -966,6 +966,93 @@ def test_openrouter_agent_rejects_short_tree_chop_tick_advance(monkeypatch) -> N
     )
 
 
+def test_openrouter_agent_recovery_retries_material_tick_contract(monkeypatch) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
+    monkeypatch.setenv("OPENROUTER_MAX_TOOL_ROUNDS", "4")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    keys = [
+        "D_DESIGNATE",
+        "DESIGNATE_CHOP",
+        "CURSOR_LEFT",
+        "SELECT",
+        "CURSOR_RIGHT",
+        "SELECT",
+        "LEAVESCREEN",
+    ]
+    _FakeOpenRouterClient.responses = [
+        {"tool_calls": [_tool_call("query_memory", {"query": "material"}, "call_mem_1")]},
+        {"tool_calls": [_tool_call("query_memory", {"query": "tree"}, "call_mem_2")]},
+        {"tool_calls": [_tool_call("query_memory", {"query": "logs"}, "call_mem_3")]},
+        {"tool_calls": [_tool_call("query_memory", {"query": "chop"}, "call_mem_4")]},
+        {
+            "content": json.dumps(
+                {
+                    "type": "KEYSTROKE",
+                    "params": {"keys": ["D_DESIGNATE", "DESIGNATE_CHOP", "CURSOR_UP_Z"]},
+                    "intent": "Navigate to the tree z-level before chopping",
+                    "advance_ticks": 0,
+                }
+            )
+        },
+        {
+            "content": json.dumps(
+                {
+                    "type": "KEYSTROKE",
+                    "params": {"keys": keys},
+                    "intent": "Copy the fresh material target keys",
+                    "advance_ticks": 500,
+                }
+            )
+        },
+        {
+            "content": json.dumps(
+                {
+                    "type": "KEYSTROKE",
+                    "params": {"keys": keys},
+                    "intent": "Copy the fresh material target keys and wait for logs",
+                    "advance_ticks": 1000,
+                }
+            )
+        },
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "openai"
+        return SimpleNamespace(OpenAI=_FakeOpenRouterClient)
+
+    monkeypatch.setattr("fort_gym.bench.agent.llm_openrouter.import_module", fake_import_module)
+
+    try:
+        agent = OpenRouterKeystrokeAgent()
+        action = agent.decide(
+            "mock observation",
+            {
+                "pause_state": True,
+                "ui_run_progress": {"total_material_delta": 0},
+                "ui_target_setup": {
+                    "target_mode": "material",
+                    "show_recommended_keys": True,
+                    "recommended_keys": keys,
+                },
+            },
+        )
+        events = agent.pop_tool_events()
+        requests = _FakeOpenRouterClient.last_instance.chat.completions.requests
+    finally:
+        _FakeOpenRouterClient.responses = None
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["params"]["keys"] == keys
+    assert action["advance_ticks"] == 1000
+    assert sum(event["tool"] == "openrouter.plain_json_action" for event in events) == 3
+    assert any(
+        "advance_ticks to at least 1000" in message.get("content", "")
+        for request in requests
+        for message in request.get("messages", [])
+        if isinstance(message, dict)
+    )
+
+
 def test_openrouter_agent_allows_ui_only_buildjob_with_zero_ticks(monkeypatch) -> None:
     monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
     get_settings.cache_clear()  # type: ignore[attr-defined]

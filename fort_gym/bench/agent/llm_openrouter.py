@@ -142,6 +142,7 @@ class OpenRouterKeystrokeAgent(Agent):
             enabled_tools.extend(["record_screen_read", "review_last_action"])
         self._tool_manager = ToolManager(enabled_tools, memory=self._memory)
         self._tool_events: List[Dict[str, Any]] = []
+        self._last_plain_json_error: str | None = None
 
     def _client_instance(self):
         if self._client is None:
@@ -938,6 +939,39 @@ class OpenRouterKeystrokeAgent(Agent):
             }
         )
 
+    @staticmethod
+    def _material_target_recovery_hint(obs_json: Dict[str, Any]) -> str:
+        target_setup = obs_json.get("ui_target_setup")
+        if not isinstance(target_setup, dict):
+            return ""
+        if str(target_setup.get("target_mode") or "") != "material":
+            return ""
+        if not target_setup.get("show_recommended_keys"):
+            return ""
+
+        run_progress = obs_json.get("ui_run_progress")
+        if (
+            isinstance(run_progress, dict)
+            and int(run_progress.get("total_material_delta") or 0) > 0
+        ):
+            return ""
+
+        recommended_keys_raw = target_setup.get("recommended_keys")
+        if not isinstance(recommended_keys_raw, list) or not recommended_keys_raw:
+            return ""
+        recommended_keys = [str(key) for key in recommended_keys_raw]
+        hint = (
+            "Fresh material target is visible. Use exactly these keys in "
+            f"params.keys, with no inserted navigation: {json.dumps(recommended_keys)}."
+        )
+        if "DESIGNATE_CHOP" in recommended_keys:
+            hint += (
+                " Because this is DESIGNATE_CHOP, set advance_ticks to at least "
+                "1000, such as 1500, so woodcutters can produce logs before the "
+                "next decision."
+            )
+        return hint
+
     @classmethod
     def _submitted_action_family(cls, tool_payload: Dict[str, Any]) -> str:
         keys = cls._keystroke_keys(tool_payload)
@@ -1116,6 +1150,9 @@ class OpenRouterKeystrokeAgent(Agent):
         last_error: Exception | str | None,
     ) -> Dict[str, Any] | None:
         force_messages = list(messages)
+        self._last_plain_json_error = None
+        material_hint = self._material_target_recovery_hint(obs_json)
+        recovery_error = last_error or "tool rounds ended without an accepted action"
         force_messages.append(
             {
                 "role": "user",
@@ -1125,11 +1162,12 @@ class OpenRouterKeystrokeAgent(Agent):
                     "Do not include an action wrapper. Required shape: "
                     '{"type":"KEYSTROKE","params":{"keys":["..."]},'
                     '"intent":"...","advance_ticks":0}. '
-                    f"Previous error: {last_error}"
+                    f"{material_hint} "
+                    f"Previous error: {recovery_error}"
                 ),
             }
         )
-        for _ in range(2):
+        for _ in range(3):
             self._rate_limit()
             response = self._create_completion(
                 force_messages,
@@ -1151,6 +1189,7 @@ class OpenRouterKeystrokeAgent(Agent):
             message = response.choices[0].message
             payload = self._json_payload_from_text(getattr(message, "content", None))
             if payload is None:
+                self._last_plain_json_error = "plain JSON recovery returned no JSON action"
                 force_messages.append(
                     {
                         "role": "user",
@@ -1178,11 +1217,12 @@ class OpenRouterKeystrokeAgent(Agent):
                     "output": {"rejected": str(parsed)},
                 }
             )
+            self._last_plain_json_error = str(parsed)
             force_messages.append(
                 {
                     "role": "user",
                     "content": (
-                        f"{parsed} Reply only with one valid top-level "
+                        f"{parsed} {material_hint} Reply only with one valid top-level "
                         "KEYSTROKE JSON object."
                     ),
                 }
@@ -1347,10 +1387,16 @@ class OpenRouterKeystrokeAgent(Agent):
             self._completed_actions += 1
             return self._fallback_blocked_menu_escape(last_blocked_menu_error)
 
+        last_error = last_error or "tool rounds ended without an accepted action"
         action = self._force_plain_json_action(messages, obs_json, last_error)
         if action is not None:
             self._completed_actions += 1
             return action
+        if self._last_plain_json_error:
+            last_error = (
+                f"{last_error}; plain JSON recovery failed: "
+                f"{self._last_plain_json_error}"
+            )
 
         raise RuntimeError(
             f"OpenRouter keystroke agent failed after {max_tool_rounds} tool rounds: {last_error}"
