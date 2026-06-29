@@ -415,6 +415,26 @@ def test_encoder_classifies_main_map_before_nobles_menu_option() -> None:
     assert state["screen_state"]["mode"] == "main_map"
 
 
+def test_encoder_warns_nobles_screen_requires_visible_manager_row() -> None:
+    text, state = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 8, "stone": 0},
+        },
+        screen_text=(
+            "The Nobles and Administrators of Niralrakust\n"
+            "Expedition Leader: Urist\n"
+            "Manager: None\n"
+        ),
+    )
+
+    assert "Screen state: mode=nobles_administrators" in text
+    assert "Do not use STANDARDSCROLL keys here" in text
+    assert "target row is visible and highlighted" in text
+    assert state["screen_state"]["mode"] == "nobles_administrators"
+
+
 def test_encoder_classifies_workshop_add_task_list_with_highlight() -> None:
     screen_text = (
         "Carpenter's Workshop\n"

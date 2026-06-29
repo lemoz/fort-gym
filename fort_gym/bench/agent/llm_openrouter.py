@@ -864,6 +864,108 @@ class OpenRouterKeystrokeAgent(Agent):
             }
         )
 
+    @staticmethod
+    def _nobles_evidence_names_manager_row(text: Any) -> bool:
+        normalized = str(text or "").strip().lower()
+        if not normalized:
+            return False
+        if "manager is required" in normalized:
+            return False
+        if "nobles and administrators" in normalized:
+            return False
+        return "manager" in normalized
+
+    @classmethod
+    def _nobles_navigation_contract_error(
+        cls,
+        tool_payload: Dict[str, Any],
+        obs_json: Dict[str, Any],
+    ) -> str | None:
+        screen_state = obs_json.get("screen_state")
+        if not isinstance(screen_state, dict):
+            return None
+        if str(screen_state.get("mode") or "").strip().lower() != "nobles_administrators":
+            return None
+        if str(screen_state.get("confidence") or "") != "high":
+            return None
+
+        keys = [str(key) for key in cls._keystroke_keys(tool_payload)]
+        if not keys or all(key == "LEAVESCREEN" for key in keys):
+            return None
+
+        uses_standard_scroll = any(key.startswith("STANDARDSCROLL") for key in keys)
+        selects = "SELECT" in keys
+        fixed_cursor_select = (
+            selects
+            and (
+                sum(1 for key in keys if key == "CURSOR_DOWN") >= 2
+                or sum(1 for key in keys if key == "CURSOR_UP") >= 2
+            )
+        )
+
+        screen_read = (
+            tool_payload.get("screen_read")
+            if isinstance(tool_payload.get("screen_read"), dict)
+            else {}
+        )
+        evidence_values: List[Any] = [
+            screen_state.get("highlighted"),
+            screen_state.get("cursor_or_selection"),
+            screen_read.get("cursor_or_selection"),
+        ]
+        for source in (screen_state.get("evidence"), screen_read.get("evidence")):
+            if isinstance(source, list):
+                evidence_values.extend(source)
+            elif source:
+                evidence_values.append(source)
+        manager_row_visible = any(
+            cls._nobles_evidence_names_manager_row(value) for value in evidence_values
+        )
+        highlighted = str(screen_state.get("highlighted") or "").strip().lower()
+        highlighted_is_title = "nobles and administrators" in highlighted
+
+        if uses_standard_scroll:
+            return (
+                "Nobles navigation contract mismatch: STANDARDSCROLL keys are not "
+                "accepted on the Nobles and Administrators screen in this runner. "
+                "They caused live DFHack timeouts in trace evidence. Use only "
+                "visible highlighted-row evidence, or LEAVESCREEN with advance_ticks=0 "
+                "to return to the map and choose another production route."
+            )
+        if selects and highlighted_is_title and not manager_row_visible:
+            return (
+                "Nobles navigation contract mismatch: the visible Nobles screen has "
+                "only the title highlighted, not a selectable Manager row. Do not "
+                "press SELECT from a title highlight or use fixed row counts. First "
+                "produce screen evidence that the Manager row itself is highlighted, "
+                "or escape with LEAVESCREEN and choose another real gameplay route."
+            )
+        if fixed_cursor_select and not manager_row_visible:
+            return (
+                "Nobles navigation contract mismatch: fixed CURSOR_UP/CURSOR_DOWN "
+                "counts followed by SELECT are not allowed unless screen_read "
+                "cites the visible Manager row as the current highlight. Use visible "
+                "row evidence instead of counting from memory."
+            )
+        return None
+
+    def _log_nobles_navigation_contract_error(
+        self,
+        tool_payload: Dict[str, Any],
+        obs_json: Dict[str, Any],
+        error: str,
+    ) -> None:
+        self._tool_events.append(
+            {
+                "tool": "nobles_navigation_contract_rejected",
+                "input": {
+                    "screen_state": obs_json.get("screen_state"),
+                    "submitted_keys": self._keystroke_keys(tool_payload),
+                },
+                "output": error,
+            }
+        )
+
     @classmethod
     def _material_target_contract_error(
         cls,
@@ -1121,6 +1223,15 @@ class OpenRouterKeystrokeAgent(Agent):
         if screen_read_error:
             self._log_screen_read_contract_error(payload, obs_json, screen_read_error)
             return screen_read_error
+
+        nobles_navigation_error = self._nobles_navigation_contract_error(payload, obs_json)
+        if nobles_navigation_error:
+            self._log_nobles_navigation_contract_error(
+                payload,
+                obs_json,
+                nobles_navigation_error,
+            )
+            return nobles_navigation_error
 
         material_target_error = self._material_target_contract_error(payload, obs_json)
         if material_target_error:

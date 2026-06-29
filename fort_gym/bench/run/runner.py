@@ -131,6 +131,107 @@ def _int_or_none(value: Any) -> int | None:
         return None
 
 
+def _stock_total(state: Dict[str, Any]) -> int:
+    stocks = state.get("stocks") if isinstance(state.get("stocks"), dict) else {}
+    total = 0
+    for key in ("food", "drink", "wood", "stone", "wealth"):
+        value = _int_or_none(stocks.get(key))
+        if value is not None:
+            total += max(0, value)
+    return total
+
+
+def _work_read_failed(work: Any) -> bool:
+    if not isinstance(work, dict):
+        return False
+    if work.get("ok") is not False:
+        return False
+    error = str(work.get("error") or "").lower()
+    return any(marker in error for marker in ("timeout", "failed", "error"))
+
+
+def _read_state_has_live_values(state: Dict[str, Any]) -> bool:
+    return (_int_or_none(state.get("population")) or 0) > 0 or _stock_total(state) > 0
+
+
+def _preserve_state_after_degraded_read(
+    state: Dict[str, Any],
+    fallback_state: Dict[str, Any],
+) -> tuple[Dict[str, Any], Dict[str, Any] | None]:
+    """Keep a transient DFHack read failure from erasing real prior state."""
+
+    if not isinstance(state, dict) or not isinstance(fallback_state, dict):
+        return state, None
+    if not _read_state_has_live_values(fallback_state):
+        return state, None
+
+    state_work = state.get("work")
+    fallback_work = fallback_state.get("work")
+    work_failed = _work_read_failed(state_work)
+    top_level_zeroed = not _read_state_has_live_values(state)
+    fallback_work_ok = isinstance(fallback_work, dict) and fallback_work.get("ok") is not False
+
+    if not top_level_zeroed and not (work_failed and fallback_work_ok):
+        return state, None
+
+    preserved = dict(state)
+    preserved_fields: List[str] = []
+    if top_level_zeroed:
+        for key in (
+            "population",
+            "stocks",
+            "risks",
+            "reminders",
+            "recent_events",
+            "hostiles",
+            "dead",
+            "map_bounds",
+            "workshops",
+        ):
+            if key in fallback_state:
+                preserved[key] = fallback_state[key]
+                preserved_fields.append(key)
+
+    if work_failed and fallback_work_ok:
+        preserved["work"] = fallback_work
+        preserved_fields.append("work")
+
+    if not preserved_fields:
+        return state, None
+
+    metadata = {
+        "reason": "dfhack_state_read_degraded",
+        "preserved_fields": list(dict.fromkeys(preserved_fields)),
+        "raw_population": state.get("population"),
+        "fallback_population": fallback_state.get("population"),
+        "raw_stock_total": _stock_total(state),
+        "fallback_stock_total": _stock_total(fallback_state),
+    }
+    if isinstance(state_work, dict) and state_work.get("error"):
+        metadata["work_error"] = state_work.get("error")
+    preserved["state_read_preservation"] = metadata
+    return preserved, metadata
+
+
+def _preserve_work_after_degraded_read(
+    work: Dict[str, Any],
+    fallback_work: Any,
+) -> tuple[Dict[str, Any], Dict[str, Any] | None]:
+    if not _work_read_failed(work):
+        return work, None
+    if not isinstance(fallback_work, dict) or fallback_work.get("ok") is False:
+        return work, None
+
+    preserved = dict(fallback_work)
+    metadata = {
+        "reason": "dfhack_work_read_degraded",
+        "raw_error": work.get("error"),
+        "preserved_fields": ["ui_work"],
+    }
+    preserved["state_read_preservation"] = metadata
+    return preserved, metadata
+
+
 def _available_building_materials(state: Dict[str, Any]) -> int:
     stocks = state.get("stocks")
     if not isinstance(stocks, dict):
@@ -1351,9 +1452,27 @@ def run_once(
                             ended_at=datetime.utcnow(),
                         )
                     break
+                state_preservation = None
+                if backend_name == "dfhack" and is_keystroke_mode:
+                    advance_state, state_preservation = _preserve_state_after_degraded_read(
+                        advance_state,
+                        state_after_apply,
+                    )
                 if backend_name == "dfhack" and is_keystroke_mode and ui_work_rect is not None:
                     ui_work_after = read_work_metrics(ui_work_rect)
+                    ui_work_preservation = None
+                    fallback_ui_work = (
+                        state_after_apply.get("ui_work")
+                        if isinstance(state_after_apply, dict)
+                        else None
+                    )
+                    ui_work_after, ui_work_preservation = _preserve_work_after_degraded_read(
+                        ui_work_after,
+                        fallback_ui_work,
+                    )
                     advance_state["ui_work"] = ui_work_after
+                    if ui_work_preservation is not None:
+                        advance_state["ui_work_read_preservation"] = ui_work_preservation
                     if keystroke_ui_target is not None:
                         advance_state["ui_target_setup"] = _ui_target_setup_for_observation(
                             keystroke_ui_target,
@@ -1373,6 +1492,28 @@ def run_once(
                     {"state": advance_state, "tick_advance": tick_info_state},
                     events,
                 )
+                if state_preservation is not None:
+                    publish_event(
+                        step,
+                        "state_read_preservation",
+                        {"state_read_preservation": state_preservation},
+                        events,
+                    )
+                if (
+                    backend_name == "dfhack"
+                    and is_keystroke_mode
+                    and isinstance(advance_state.get("ui_work_read_preservation"), dict)
+                ):
+                    publish_event(
+                        step,
+                        "ui_work_read_preservation",
+                        {
+                            "ui_work_read_preservation": advance_state.get(
+                                "ui_work_read_preservation"
+                            )
+                        },
+                        events,
+                    )
 
                 metrics_snapshot = metrics.step_snapshot(advance_state)
                 current_work = advance_state.get("work")

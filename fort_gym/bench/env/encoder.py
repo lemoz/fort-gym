@@ -105,7 +105,8 @@ def _classify_screen_state(screen_text: Optional[str]) -> Dict[str, Any]:
             confidence="high",
             instruction=(
                 "Use visible row/highlight evidence before selecting a noble. "
-                "Do not use fixed row counts unless the target row is visible."
+                "Do not use STANDARDSCROLL keys here. Do not use fixed row "
+                "counts unless the target row is visible and highlighted."
             ),
             extra_evidence=["visible Nobles/Administrators screen"],
         )

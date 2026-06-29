@@ -7,6 +7,8 @@ from fort_gym.bench.run.runner import (
     _gameplay_proof,
     _is_exit_only_recovery_action,
     _is_keystroke_model,
+    _preserve_state_after_degraded_read,
+    _preserve_work_after_degraded_read,
     _screen_shows_building_type_menu,
     _screen_shows_ready_workshop_placement,
     _screen_shows_workshop_material_selection,
@@ -225,6 +227,56 @@ def test_gameplay_proof_requires_current_step_progress() -> None:
     assert proof["state_deltas"] == {}
     assert proof["progress"]["ui_work"] == 0
     assert proof["progress"]["cumulative_ui_work"] == 7
+
+
+def test_preserve_state_after_degraded_dfhack_read_keeps_last_good_state() -> None:
+    degraded = {
+        "time": 0,
+        "population": 0,
+        "stocks": {"food": 0, "drink": 0, "wood": 0, "stone": 0, "wealth": 0},
+        "work": {"ok": False, "error": "timeout: work_metrics.lua"},
+    }
+    last_good = {
+        "time": 250,
+        "population": 7,
+        "stocks": {"food": 45, "drink": 60, "wood": 8, "stone": 0, "wealth": 30},
+        "work": {
+            "ok": True,
+            "carpenter_workshops": 1,
+            "manager_orders_count": 0,
+            "manager_orders_amount_left": 0,
+        },
+        "workshops": {"CarpenterWorkshop": 1},
+    }
+
+    preserved, metadata = _preserve_state_after_degraded_read(degraded, last_good)
+
+    assert metadata is not None
+    assert metadata["reason"] == "dfhack_state_read_degraded"
+    assert "population" in metadata["preserved_fields"]
+    assert "work" in metadata["preserved_fields"]
+    assert preserved["population"] == 7
+    assert preserved["stocks"]["wood"] == 8
+    assert preserved["work"]["carpenter_workshops"] == 1
+    assert preserved["state_read_preservation"] == metadata
+
+
+def test_preserve_work_after_degraded_read_uses_previous_ui_work() -> None:
+    degraded = {"ok": False, "error": "timeout: map/work metrics"}
+    last_good = {
+        "ok": True,
+        "target_rect": [1, 2, 0, 3, 4, 0],
+        "target_dig_designations": 2,
+        "target_floor_tiles": 5,
+    }
+
+    preserved, metadata = _preserve_work_after_degraded_read(degraded, last_good)
+
+    assert metadata is not None
+    assert metadata["reason"] == "dfhack_work_read_degraded"
+    assert preserved["ok"] is True
+    assert preserved["target_floor_tiles"] == 5
+    assert preserved["state_read_preservation"] == metadata
 
 
 def test_ui_work_rect_prefers_live_cursor_plane() -> None:

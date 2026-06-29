@@ -259,9 +259,10 @@ def test_keystroke_prompt_is_action_first() -> None:
     assert "UNITJOB_MANAGER, not STRING_A109" in KEYSTROKE_SYSTEM_PROMPT
     assert "MANAGER_NEW_ORDER" in KEYSTROKE_SYSTEM_PROMPT
     assert "D_NOBLES - Open Nobles and Administrators" in KEYSTROKE_SYSTEM_PROMPT
-    assert "D_UNITLIST - Open the unit list" in KEYSTROKE_SYSTEM_PROMPT
     assert "D_NOBLES, not raw STRING_A110" in KEYSTROKE_SYSTEM_PROMPT
-    assert "D_UNITLIST,\n  not UNIT_LIST" in KEYSTROKE_SYSTEM_PROMPT
+    assert "do not use STANDARDSCROLL keys" in KEYSTROKE_SYSTEM_PROMPT
+    assert "visible Manager row as" in KEYSTROKE_SYSTEM_PROMPT
+    assert "Do not\n  switch into unsupported unit/labor menus" in KEYSTROKE_SYSTEM_PROMPT
     assert "D_BUILDJOB acts on the building under the current cursor" in KEYSTROKE_SYSTEM_PROMPT
     assert "use BUILDJOB_ADD, not raw STRING_A097" in KEYSTROKE_SYSTEM_PROMPT
     assert "Opening the add-task UI is not production by itself" in KEYSTROKE_SYSTEM_PROMPT

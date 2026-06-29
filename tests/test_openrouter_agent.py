@@ -1198,6 +1198,89 @@ def test_openrouter_agent_rejects_production_screen_read_mismatch(monkeypatch) -
     assert any(event["tool"] == "screen_read_contract_rejected" for event in events)
 
 
+def test_openrouter_agent_rejects_blind_nobles_title_scroll(monkeypatch) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    bad_payload = {
+        "type": "KEYSTROKE",
+        "params": {
+            "keys": [
+                "STANDARDSCROLL_DOWN",
+                "STANDARDSCROLL_DOWN",
+                "STANDARDSCROLL_DOWN",
+                "STANDARDSCROLL_DOWN",
+                "SELECT",
+            ]
+        },
+        "intent": "Scroll to Manager on Nobles and select it",
+        "objective": "appoint a manager",
+        "expected_visible_result": "manager row selected",
+        "screen_read": {
+            "mode": "nobles_administrators",
+            "evidence": ["The Nobles and Administrators of Niralrakust"],
+            "cursor_or_selection": "The Nobles and Administrators of Niralrakust",
+            "confidence": "high",
+        },
+        "last_action_review": {
+            "worked": False,
+            "evidence": ["still no manager row evidence"],
+            "should_retry_same_path": False,
+        },
+        "advance_ticks": 0,
+    }
+    recovery_payload = {
+        "type": "KEYSTROKE",
+        "params": {"keys": ["LEAVESCREEN", "LEAVESCREEN"]},
+        "intent": "Escape Nobles after title-only highlight and choose another route",
+        "objective": "recover to main map",
+        "expected_visible_result": "main map or previous screen returns",
+        "screen_read": {
+            "mode": "nobles_administrators",
+            "evidence": ["title is highlighted, not Manager row"],
+            "cursor_or_selection": "The Nobles and Administrators of Niralrakust",
+            "confidence": "high",
+        },
+        "last_action_review": {
+            "worked": False,
+            "evidence": ["blind scroll/select was rejected"],
+            "should_retry_same_path": False,
+        },
+        "advance_ticks": 0,
+    }
+    _FakeOpenRouterClient.responses = [
+        {"tool_calls": [_submit_action_call(bad_payload, "call_bad_nobles")]},
+        {"tool_calls": [_submit_action_call(recovery_payload, "call_recover_nobles")]},
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "openai"
+        return SimpleNamespace(OpenAI=_FakeOpenRouterClient)
+
+    monkeypatch.setattr("fort_gym.bench.agent.llm_openrouter.import_module", fake_import_module)
+
+    try:
+        agent = OpenRouterKeystrokeAgent()
+        action = agent.decide(
+            "mock observation",
+            {
+                "pause_state": True,
+                "screen_state": {
+                    "mode": "nobles_administrators",
+                    "confidence": "high",
+                    "highlighted": "The Nobles and Administrators of Niralrakust",
+                    "evidence": ["The Nobles and Administrators of Niralrakust"],
+                },
+            },
+        )
+        events = agent.pop_tool_events()
+    finally:
+        _FakeOpenRouterClient.responses = None
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["params"]["keys"] == ["LEAVESCREEN", "LEAVESCREEN"]
+    assert any(event["tool"] == "nobles_navigation_contract_rejected" for event in events)
+
+
 def test_anthropic_models_are_disabled_by_default(monkeypatch) -> None:
     monkeypatch.delenv("FORT_GYM_ENABLE_ANTHROPIC", raising=False)
 
