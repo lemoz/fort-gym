@@ -489,7 +489,7 @@ def test_encoder_classifies_manager_new_order_search() -> None:
     assert state["screen_state"]["mode"] == "manager_new_order_search"
 
 
-def test_encoder_classifies_selected_carpenter_workshop_screen() -> None:
+def test_encoder_classifies_pending_carpenter_workshop_construction_screen() -> None:
     text, state = encode_observation(
         {
             "time": 100,
@@ -499,6 +499,9 @@ def test_encoder_classifies_selected_carpenter_workshop_screen() -> None:
                 "manager_orders_count": 0,
                 "manager_orders_amount_left": 0,
                 "carpenter_workshops": 1,
+                "carpenter_workshops_planned": 1,
+                "carpenter_workshops_usable": 0,
+                "carpenter_workshops_unproven": 1,
                 "active_jobs": 0,
             },
         },
@@ -508,6 +511,37 @@ def test_encoder_classifies_selected_carpenter_workshop_screen() -> None:
             "Waiting for construction...\n"
             "Needs Carpentry\n"
             "Construction inactive.\n"
+            "x: Remove Building\n"
+            "ESC: Done"
+        ),
+    )
+
+    assert "Screen state: mode=carpenter_workshop_construction_pending" in text
+    assert "BUILDJOB_ADD will not queue production" in text
+    assert "no usable workshop or task job is proven yet" in text
+    assert "BUILDJOB_ADD is not a valid production action" in text
+    assert state["screen_state"]["mode"] == "carpenter_workshop_construction_pending"
+    assert state["screen_state"]["confidence"] == "high"
+
+
+def test_encoder_classifies_selected_usable_carpenter_workshop_screen() -> None:
+    text, state = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 6, "stone": 0},
+            "work": {
+                "manager_orders_count": 0,
+                "manager_orders_amount_left": 0,
+                "carpenter_workshops": 1,
+                "carpenter_workshops_planned": 1,
+                "carpenter_workshops_usable": 1,
+                "active_jobs": 0,
+            },
+        },
+        screen_text=(
+            "Ctrl+n: Give name\n"
+            "Carpenter's Workshop\n"
             "x: Remove Building\n"
             "ESC: Done"
         ),

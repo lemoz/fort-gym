@@ -244,6 +244,9 @@ def _available_building_materials(state: Dict[str, Any]) -> int:
 def _carpenter_workshops(state: Dict[str, Any]) -> int:
     work = state.get("work")
     if isinstance(work, dict):
+        planned = _int_or_none(work.get("carpenter_workshops_planned"))
+        if planned is not None:
+            return max(0, planned)
         return max(0, _int_or_none(work.get("carpenter_workshops")) or 0)
     return max(0, _int_or_none(state.get("carpenter_workshops")) or 0)
 
@@ -387,6 +390,26 @@ def _gameplay_proof(
         "target_wall_tiles": _dict_delta(before_work, after_work, "target_wall_tiles"),
         "active_dig_jobs": _dict_delta(before_work, after_work, "active_dig_jobs"),
         "carpenter_workshops": _dict_delta(before_work, after_work, "carpenter_workshops"),
+        "carpenter_workshops_planned": _dict_delta(
+            before_work,
+            after_work,
+            "carpenter_workshops_planned",
+        ),
+        "carpenter_workshops_usable": _dict_delta(
+            before_work,
+            after_work,
+            "carpenter_workshops_usable",
+        ),
+        "carpenter_workshop_task_jobs": _dict_delta(
+            before_work,
+            after_work,
+            "carpenter_workshop_task_jobs",
+        ),
+        "carpenter_workshop_construction_jobs": _dict_delta(
+            before_work,
+            after_work,
+            "carpenter_workshop_construction_jobs",
+        ),
         "manager_orders_count": _dict_delta(before_work, after_work, "manager_orders_count"),
         "manager_orders_amount_left": _dict_delta(
             before_work,
@@ -582,8 +605,6 @@ def _keystroke_action_history_entry(
         ("fortress_complexity_spaces_completed", "planned_space_completed"),
         ("manager_orders_count", "manager_order_created"),
         ("manager_orders_amount_left", "manager_order_quantity_added"),
-        ("carpenter_workshops", "carpenter_workshop_created"),
-        ("workshop_count", "workshop_created_or_queued"),
         ("active_jobs", "jobs_started"),
         ("active_dig_jobs", "dig_jobs_started"),
     ):
@@ -594,6 +615,40 @@ def _keystroke_action_history_entry(
             delta=_dict_delta(before_work, after_work, key),
             positive_reason=reason,
         )
+
+    has_workshop_proof_fields = (
+        "carpenter_workshops_planned" in before_work
+        or "carpenter_workshops_planned" in after_work
+        or "carpenter_workshops_usable" in before_work
+        or "carpenter_workshops_usable" in after_work
+    )
+    if has_workshop_proof_fields:
+        for key, reason in (
+            ("carpenter_workshops_planned", "carpenter_workshop_placed_unproven"),
+            ("carpenter_workshops_usable", "carpenter_workshop_usable_proven"),
+            ("carpenter_workshop_task_jobs", "workshop_task_job_created"),
+            ("carpenter_workshop_construction_jobs", "workshop_construction_job_created"),
+            ("workshop_count", "workshop_created_or_queued"),
+        ):
+            _append_delta(
+                changed,
+                productive_reasons,
+                name=key,
+                delta=_dict_delta(before_work, after_work, key),
+                positive_reason=reason,
+            )
+    else:
+        for key, reason in (
+            ("carpenter_workshops", "carpenter_workshop_created"),
+            ("workshop_count", "workshop_created_or_queued"),
+        ):
+            _append_delta(
+                changed,
+                productive_reasons,
+                name=key,
+                delta=_dict_delta(before_work, after_work, key),
+                positive_reason=reason,
+            )
 
     # Keep first occurrence of each reason while preserving order.
     productive_reasons = list(dict.fromkeys(productive_reasons))

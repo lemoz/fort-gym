@@ -274,8 +274,9 @@ def test_keystroke_prompt_is_action_first() -> None:
     assert "intentionally explore another z-level" in KEYSTROKE_SYSTEM_PROMPT
     assert "ignore the stale target keys" in KEYSTROKE_SYSTEM_PROMPT
     assert "do not call it a bed" in KEYSTROKE_SYSTEM_PROMPT
-    assert "If `carpenter_workshops=1` and `manager_orders=0`" in KEYSTROKE_SYSTEM_PROMPT
-    assert "D_JOBLIST -> UNITJOB_MANAGER ->" in KEYSTROKE_SYSTEM_PROMPT
+    assert "If `carpenter_workshops=1` but `usable_workshops=0`" in KEYSTROKE_SYSTEM_PROMPT
+    assert "do not use BUILDJOB_ADD" in KEYSTROKE_SYSTEM_PROMPT
+    assert "D_JOBLIST ->\nUNITJOB_MANAGER ->" in KEYSTROKE_SYSTEM_PROMPT
     assert "not STRING_A119" in KEYSTROKE_SYSTEM_PROMPT
     assert "cursor_inactive=(-30000,...)" in KEYSTROKE_SYSTEM_PROMPT
     assert "not proof" in KEYSTROKE_SYSTEM_PROMPT
@@ -290,11 +291,11 @@ def test_keystroke_prompt_is_action_first() -> None:
     assert "material row and" in KEYSTROKE_SYSTEM_PROMPT
     assert "D_BUILDING is premature" in KEYSTROKE_SYSTEM_PROMPT
     assert "order_qty_left>0" in KEYSTROKE_SYSTEM_PROMPT
-    assert "`advance_ticks` at least\n1000" in KEYSTROKE_SYSTEM_PROMPT
+    assert "`advance_ticks` at least 1000" in KEYSTROKE_SYSTEM_PROMPT
     assert "`params.keys` may be [] only when\n  `advance_ticks > 0`" in KEYSTROKE_SYSTEM_PROMPT
-    assert "one large advance leaves `order_qty_left`\nunchanged" in KEYSTROKE_SYSTEM_PROMPT
-    assert "Inspect the relevant carpenter workshop" in KEYSTROKE_SYSTEM_PROMPT
-    assert "Do not switch to unrelated\ndigging" in KEYSTROKE_SYSTEM_PROMPT
+    assert "one large advance\nleaves `order_qty_left` unchanged" in KEYSTROKE_SYSTEM_PROMPT
+    assert "Inspect the relevant carpenter\nworkshop" in KEYSTROKE_SYSTEM_PROMPT
+    assert "switch to unrelated digging" in KEYSTROKE_SYSTEM_PROMPT
     assert "use `STRING_A032`; do not" in KEYSTROKE_SYSTEM_PROMPT
     assert "use `PAUSE`" in KEYSTROKE_SYSTEM_PROMPT
     assert "complete a work designation" in KEYSTROKE_SYSTEM_PROMPT
@@ -316,6 +317,7 @@ def test_keystroke_prompt_is_action_first() -> None:
     assert "Screen state: mode=..." in KEYSTROKE_SYSTEM_PROMPT
     assert "read-only CopyScreen\nlandmark evidence" in KEYSTROKE_SYSTEM_PROMPT
     assert "workshop_add_task_list" in KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
+    assert "carpenter_workshop_construction_pending" in KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
     assert "manager_new_order_search" in KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
     assert "nobles_administrators" in KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
 
@@ -1000,7 +1002,10 @@ def test_workshop_strategy_switch_rejects_redundant_workshop_after_one_exists() 
     }
 
     assert AnthropicKeystrokeAgent._needs_workshop_strategy_switch(
-        "Utility work: manager_orders=0, order_qty_left=0, carpenter_workshops=1\n",
+        (
+            "Utility work: manager_orders=0, order_qty_left=0, "
+            "carpenter_workshops=1, planned_workshops=1, usable_workshops=0\n"
+        ),
         payload,
     )
 

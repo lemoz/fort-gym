@@ -159,22 +159,29 @@ If `Live view` says `cursor_inactive=(-30000,...)`, that is DF's sentinel for
 "no active cursor on this screen," not proof that all future cursor movement is
 broken. Open a cursor-owning mode such as D_DESIGNATE, D_STOCKPILES, or
 D_BUILDING, then judge the visible cursor/menu from the next screen.
-If `carpenter_workshops=1` and `manager_orders=0`, your next major objective is
-production, not another workshop. Prefer D_JOBLIST -> UNITJOB_MANAGER ->
-MANAGER_NEW_ORDER or a visibly selected carpenter workshop job menu before
-retrying stockpiles or blind dig boxes. If a stockpile or dig path has already
-produced no tracked state change after the workshop exists, record it and return
-to production.
-If `carpenter_workshops=1`, `manager_orders>0`, and `order_qty_left>0`, a real
-production order is already queued. In the normal case, do not open new
-stockpile/build/order setup menus; leave any current menu, then from the main map
-submit a KEYSTROKE action with no extra menu keys and `advance_ticks` at least
-1000 so dwarves can work. But if one large advance leaves `order_qty_left`
-unchanged or the visible screen says the work was cancelled/needs something,
-stop blind waiting. Inspect the relevant carpenter workshop, task list, or
-cancellation reason before changing objectives. Do not switch to unrelated
-digging, fresh stockpiles, or new manager searches until your screen_read names
-the production blocker that made the current bed task impossible.
+If `carpenter_workshops=1` but `usable_workshops=0` or
+`carpenter_workshops_usable=0`, a workshop object is only placed/planned. It is
+not production yet and should not be scored or treated as ready. If the selected
+workshop says Waiting for construction, Needs Carpentry, Construction inactive,
+or s: Suspend Construction, do not use BUILDJOB_ADD; solve or record the
+construction blocker before claiming production.
+If a usable/task-proven carpenter workshop exists and `manager_orders=0`, your
+next major objective is production, not another workshop. Prefer D_JOBLIST ->
+UNITJOB_MANAGER -> MANAGER_NEW_ORDER or a visibly selected usable carpenter
+workshop job menu before retrying stockpiles or blind dig boxes. If a stockpile
+or dig path has already produced no tracked state change after the workshop
+exists, record it and return to production.
+If a usable/task-proven carpenter workshop exists, `manager_orders>0`, and
+`order_qty_left>0`, a real production order is already queued. In the normal
+case, do not open new stockpile/build/order setup menus; leave any current menu,
+then from the main map submit a KEYSTROKE action with no extra menu keys and
+`advance_ticks` at least 1000 so dwarves can work. But if one large advance
+leaves `order_qty_left` unchanged or the visible screen says the work was
+cancelled/needs something, stop blind waiting. Inspect the relevant carpenter
+workshop, task list, or cancellation reason before changing objectives. Do not
+switch to unrelated digging, fresh stockpiles, or new manager searches until
+your screen_read names the production blocker that made the current bed task
+impossible.
 In the manager New Order search dialog, if your screen_read says a single useful
 result is visible and the footer says Select, press SELECT to queue it unless
 you explicitly reject that job as not useful or not buildable. Do not leave the
@@ -328,6 +335,10 @@ STOCKPILE_WOOD, not STRING_A119.
   to add a native workshop task. Then read the task-selection screen and select a
   concrete useful job. Do not count the add-task menu opening as success unless
   a job row/task appears or later ticks show workshop work/material progress.
+- On a construction-pending carpenter workshop screen, do not use BUILDJOB_ADD.
+  That screen is not the task menu. If no construction job or usable proof
+  exists after ticks, record the blocker and choose a different evidence-backed
+  route instead of looping.
 - In the workshop add-task list, SELECT picks the highlighted row. Parenthesized
   letters like `Construct Bed (b)` are visible labels, but raw STRING_A### may
   not select them in this menu. If a desired row is visible lower in the list,
@@ -515,7 +526,8 @@ Before EVERY submit_action:
 1. Call record_screen_read with your own reading of the current screen.
    - mode: one of main_map, designation_menu, building_menu,
      workshop_placement, workshop_material_selection,
-     workshop_add_task_list, stockpile_menu, orders_menu,
+     workshop_add_task_list, carpenter_workshop_construction_pending,
+     stockpile_menu, orders_menu,
      manager_orders, manager_new_order_search, manager_required,
      nobles_administrators, job_list, announcement_screen, unknown.
    - evidence: one to three short facts from visible screen text/tiles/status.
@@ -1367,8 +1379,16 @@ class AnthropicKeystrokeAgent(Agent):
             return "construction_ready"
         if "last action changed real material stocks" in text:
             return "material_acquired"
-        if re.search(r"carpenter_workshops=[1-9]", text):
+        if re.search(r"usable_workshops=([1-9]\d*)", text) or re.search(
+            r"carpenter_workshops_usable=([1-9]\d*)",
+            text,
+        ):
             return "workshop_built"
+        if re.search(r"planned_workshops=([1-9]\d*)", text) or re.search(
+            r"carpenter_workshops=([1-9]\d*)",
+            text,
+        ):
+            return "workshop_placed_unproven"
         return None
 
     @staticmethod

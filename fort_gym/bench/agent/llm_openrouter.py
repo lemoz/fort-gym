@@ -53,6 +53,11 @@ PRODUCTION_SCREEN_COMPATIBLE_MODES = {
         "workshop_menu",
         "workshop_task_menu",
     },
+    "carpenter_workshop_construction_pending": {
+        "carpenter_workshop_construction_pending",
+        "workshop_construction_pending",
+        "workshop_menu",
+    },
     "workshop_placement": {
         "workshop_placement",
         "building_menu",
@@ -75,6 +80,7 @@ ESCAPE_THEN_ACT_MENU_MODES = {
     "manager_new_order_search",
     "nobles_administrators",
     "carpenter_workshop_selected",
+    "carpenter_workshop_construction_pending",
     "workshop_placement",
     "workshop_material_selection",
     "workshop_add_task_list",
@@ -1010,6 +1016,75 @@ class OpenRouterKeystrokeAgent(Agent):
             }
         )
 
+    @classmethod
+    def _pending_workshop_construction_contract_error(
+        cls,
+        tool_payload: Dict[str, Any],
+        obs_json: Dict[str, Any],
+    ) -> str | None:
+        screen_state = obs_json.get("screen_state")
+        if not isinstance(screen_state, dict):
+            return None
+        mode = str(screen_state.get("mode") or "").strip().lower()
+        if mode != "carpenter_workshop_construction_pending":
+            return None
+        if str(screen_state.get("confidence") or "") != "high":
+            return None
+
+        keys = [str(key) for key in cls._keystroke_keys(tool_payload)]
+        if "BUILDJOB_ADD" in keys:
+            return (
+                "Pending-workshop construction contract mismatch: the visible "
+                "Carpenter's Workshop screen says construction is still pending. "
+                "BUILDJOB_ADD only works on a usable workshop task menu; it will "
+                "not queue production from a Waiting for construction / Needs "
+                "Carpentry screen. First solve or record the construction blocker "
+                "using visible evidence, or exit with LEAVESCREEN before choosing "
+                "another route."
+            )
+
+        try:
+            advance_ticks = int(tool_payload.get("advance_ticks") or 0)
+        except (TypeError, ValueError):
+            advance_ticks = 0
+        waits = advance_ticks > 0 or any(key == "STRING_A032" for key in keys)
+        if not waits:
+            return None
+
+        work = obs_json.get("work") if isinstance(obs_json.get("work"), dict) else {}
+        construction_jobs = cls._int_value(work.get("carpenter_workshop_construction_jobs"))
+        active_construct_jobs = cls._int_value(work.get("active_construct_building_jobs"))
+        active_jobs = cls._int_value(work.get("active_jobs"))
+        if construction_jobs > 0 or active_construct_jobs > 0 or active_jobs > 0:
+            return None
+
+        return (
+            "Pending-workshop construction contract mismatch: this screen is "
+            "waiting for construction, but work metrics show no construction job "
+            "or active job to wait on. Do not blindly advance time from here; "
+            "record the blocker, inspect jobs/labors if visible, or exit to a "
+            "verified main-map screen and choose another productive route."
+        )
+
+    def _log_pending_workshop_construction_contract_error(
+        self,
+        tool_payload: Dict[str, Any],
+        obs_json: Dict[str, Any],
+        error: str,
+    ) -> None:
+        self._tool_events.append(
+            {
+                "tool": "pending_workshop_construction_contract_rejected",
+                "input": {
+                    "screen_state": obs_json.get("screen_state"),
+                    "work": obs_json.get("work"),
+                    "submitted_keys": self._keystroke_keys(tool_payload),
+                    "advance_ticks": tool_payload.get("advance_ticks"),
+                },
+                "output": error,
+            }
+        )
+
     @staticmethod
     def _nobles_evidence_names_manager_row(text: Any) -> bool:
         normalized = str(text or "").strip().lower()
@@ -1381,6 +1456,18 @@ class OpenRouterKeystrokeAgent(Agent):
                 selected_workshop_wait_error,
             )
             return selected_workshop_wait_error
+
+        pending_workshop_error = self._pending_workshop_construction_contract_error(
+            payload,
+            obs_json,
+        )
+        if pending_workshop_error:
+            self._log_pending_workshop_construction_contract_error(
+                payload,
+                obs_json,
+                pending_workshop_error,
+            )
+            return pending_workshop_error
 
         compound_escape_error = self._compound_menu_escape_contract_error(
             payload,

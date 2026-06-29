@@ -985,6 +985,92 @@ def test_openrouter_agent_rejects_wait_from_selected_workshop_without_task(
     )
 
 
+def test_openrouter_agent_rejects_buildjob_add_from_pending_workshop_construction(
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    bad_payload = {
+        "type": "KEYSTROKE",
+        "params": {"keys": ["BUILDJOB_ADD"]},
+        "intent": "Open the workshop task list",
+        "objective": "queue production at the carpenter workshop",
+        "expected_visible_result": "task list opens",
+        "screen_read": {
+            "mode": "carpenter_workshop_construction_pending",
+            "evidence": ["Waiting for construction", "Needs Carpentry"],
+            "confidence": "high",
+        },
+        "last_action_review": {
+            "worked": False,
+            "evidence": ["the visible screen says construction is still pending"],
+            "should_retry_same_path": False,
+        },
+        "advance_ticks": 0,
+    }
+    recovery_payload = {
+        "type": "KEYSTROKE",
+        "params": {"keys": ["LEAVESCREEN"]},
+        "intent": "Exit the construction-pending workshop screen",
+        "objective": "return to a known screen before choosing another route",
+        "expected_visible_result": "previous screen or main map is visible",
+        "screen_read": {
+            "mode": "carpenter_workshop_construction_pending",
+            "evidence": ["Waiting for construction", "Construction inactive"],
+            "confidence": "high",
+        },
+        "last_action_review": {
+            "worked": False,
+            "evidence": ["BUILDJOB_ADD is invalid before the workshop is usable"],
+            "should_retry_same_path": False,
+        },
+        "advance_ticks": 0,
+    }
+    _FakeOpenRouterClient.responses = [
+        {"tool_calls": [_submit_action_call(bad_payload, "call_bad_buildjob")]},
+        {"tool_calls": [_submit_action_call(recovery_payload, "call_recover")]},
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "openai"
+        return SimpleNamespace(OpenAI=_FakeOpenRouterClient)
+
+    monkeypatch.setattr("fort_gym.bench.agent.llm_openrouter.import_module", fake_import_module)
+
+    try:
+        agent = OpenRouterKeystrokeAgent()
+        action = agent.decide(
+            "mock observation",
+            {
+                "pause_state": True,
+                "screen_state": {
+                    "mode": "carpenter_workshop_construction_pending",
+                    "confidence": "high",
+                    "evidence": ["visible workshop says construction is pending"],
+                },
+                "work": {
+                    "carpenter_workshops": 1,
+                    "carpenter_workshops_planned": 1,
+                    "carpenter_workshops_usable": 0,
+                    "carpenter_workshop_construction_jobs": 0,
+                    "active_construct_building_jobs": 0,
+                    "active_jobs": 0,
+                },
+            },
+        )
+        events = agent.pop_tool_events()
+    finally:
+        _FakeOpenRouterClient.responses = None
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["params"]["keys"] == ["LEAVESCREEN"]
+    assert action["advance_ticks"] == 0
+    assert any(
+        event["tool"] == "pending_workshop_construction_contract_rejected"
+        for event in events
+    )
+
+
 def test_openrouter_agent_rejects_ignoring_fresh_material_target(monkeypatch) -> None:
     monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
     get_settings.cache_clear()  # type: ignore[attr-defined]

@@ -102,16 +102,18 @@ def test_ui_work_progress_delta_rejects_changed_rect() -> None:
     assert delta["ui_target_dig_designations_delta"] == 0
 
 
-def test_utility_progress_delta_counts_orders_and_workshops() -> None:
+def test_utility_progress_delta_counts_orders_and_usable_workshops() -> None:
     baseline = {
         "manager_orders_count": 1,
         "manager_orders_amount_left": 1,
-        "carpenter_workshops": 0,
+        "carpenter_workshops_planned": 0,
+        "carpenter_workshops_usable": 0,
     }
     current = {
         "manager_orders_count": 2,
         "manager_orders_amount_left": 6,
-        "carpenter_workshops": 1,
+        "carpenter_workshops_planned": 1,
+        "carpenter_workshops_usable": 1,
     }
 
     delta = metrics.utility_progress_delta(current, baseline)
@@ -119,21 +121,56 @@ def test_utility_progress_delta_counts_orders_and_workshops() -> None:
     assert delta == {
         "manager_orders_delta": 1,
         "manager_order_quantity_delta": 5,
+        "carpenter_workshops_planned_delta": 1,
+        "carpenter_workshops_usable_delta": 1,
+        "carpenter_workshop_task_jobs_delta": 0,
         "carpenter_workshops_delta": 1,
         "utility_progress": 10,
     }
 
 
-def test_production_progress_delta_counts_workshop_placements() -> None:
-    baseline = {"carpenter_workshops": 0}
-    current = {"carpenter_workshops": 1}
+def test_production_progress_delta_counts_usable_workshops() -> None:
+    baseline = {"carpenter_workshops_planned": 0, "carpenter_workshops_usable": 0}
+    current = {"carpenter_workshops_planned": 1, "carpenter_workshops_usable": 1}
 
     delta = metrics.production_progress_delta(current, baseline)
 
     assert delta == {
+        "production_workshops_planned_delta": 1,
         "production_workshops_delta": 1,
+        "production_task_jobs_delta": 0,
         "production_progress": 5,
     }
+
+
+def test_planned_workshop_without_usable_proof_does_not_score_production() -> None:
+    baseline = {"carpenter_workshops_planned": 0, "carpenter_workshops_usable": 0}
+    current = {"carpenter_workshops_planned": 1, "carpenter_workshops_usable": 0}
+
+    utility_delta = metrics.utility_progress_delta(current, baseline)
+    production_delta = metrics.production_progress_delta(current, baseline)
+
+    assert utility_delta["carpenter_workshops_planned_delta"] == 1
+    assert utility_delta["carpenter_workshops_delta"] == 0
+    assert utility_delta["utility_progress"] == 0
+    assert production_delta["production_workshops_planned_delta"] == 1
+    assert production_delta["production_workshops_delta"] == 0
+    assert production_delta["production_progress"] == 0
+
+
+def test_workshop_task_job_counts_as_usable_production_proof() -> None:
+    baseline = {"carpenter_workshop_task_jobs": 0}
+    current = {"carpenter_workshop_task_jobs": 1}
+
+    utility_delta = metrics.utility_progress_delta(current, baseline)
+    production_delta = metrics.production_progress_delta(current, baseline)
+
+    assert utility_delta["carpenter_workshop_task_jobs_delta"] == 1
+    assert utility_delta["carpenter_workshops_delta"] == 1
+    assert utility_delta["utility_progress"] == 5
+    assert production_delta["production_task_jobs_delta"] == 1
+    assert production_delta["production_workshops_delta"] == 1
+    assert production_delta["production_progress"] == 5
 
 
 def test_complexity_progress_delta_counts_second_room_shape() -> None:

@@ -18,6 +18,35 @@ def _to_int(value: Any, default: int = 0) -> int:
         return default
 
 
+def _work_value(work: Dict[str, Any], key: str, *, fallback_key: str | None = None) -> int:
+    if key in work:
+        return _to_int(work.get(key))
+    if fallback_key is not None:
+        return _to_int(work.get(fallback_key))
+    return 0
+
+
+def _workshop_counts(work: Dict[str, Any]) -> Dict[str, int]:
+    planned = _work_value(
+        work,
+        "carpenter_workshops_planned",
+        fallback_key="carpenter_workshops",
+    )
+    usable = _work_value(
+        work,
+        "carpenter_workshops_usable",
+        fallback_key="carpenter_workshops",
+    )
+    task_jobs = _to_int(work.get("carpenter_workshop_task_jobs"))
+    construction_jobs = _to_int(work.get("carpenter_workshop_construction_jobs"))
+    return {
+        "planned": planned,
+        "usable": usable,
+        "task_jobs": task_jobs,
+        "construction_jobs": construction_jobs,
+    }
+
+
 def work_progress_delta(
     current_work: Dict[str, Any] | None,
     baseline_work: Dict[str, Any] | None,
@@ -135,16 +164,32 @@ def utility_progress_delta(
         _to_int(current.get("manager_orders_amount_left"))
         - _to_int(baseline.get("manager_orders_amount_left")),
     )
-    carpenter_workshops_delta = max(
+    current_workshops = _workshop_counts(current)
+    baseline_workshops = _workshop_counts(baseline)
+    carpenter_workshops_planned_delta = max(
         0,
-        _to_int(current.get("carpenter_workshops"))
-        - _to_int(baseline.get("carpenter_workshops")),
+        current_workshops["planned"] - baseline_workshops["planned"],
+    )
+    carpenter_workshops_usable_delta = max(
+        0,
+        current_workshops["usable"] - baseline_workshops["usable"],
+    )
+    carpenter_workshop_task_jobs_delta = max(
+        0,
+        current_workshops["task_jobs"] - baseline_workshops["task_jobs"],
+    )
+    carpenter_workshops_delta = max(
+        carpenter_workshops_usable_delta,
+        carpenter_workshop_task_jobs_delta,
     )
     order_progress = max(manager_orders_delta, manager_order_quantity_delta)
     workshop_progress = carpenter_workshops_delta * UTILITY_WORKSHOP_PROGRESS
     return {
         "manager_orders_delta": manager_orders_delta,
         "manager_order_quantity_delta": manager_order_quantity_delta,
+        "carpenter_workshops_planned_delta": carpenter_workshops_planned_delta,
+        "carpenter_workshops_usable_delta": carpenter_workshops_usable_delta,
+        "carpenter_workshop_task_jobs_delta": carpenter_workshop_task_jobs_delta,
         "carpenter_workshops_delta": carpenter_workshops_delta,
         "utility_progress": order_progress + workshop_progress,
     }
@@ -158,14 +203,29 @@ def production_progress_delta(
 
     current = current_work or {}
     baseline = baseline_work or {}
-    carpenter_workshops_delta = max(
+    current_workshops = _workshop_counts(current)
+    baseline_workshops = _workshop_counts(baseline)
+    carpenter_workshops_planned_delta = max(
         0,
-        _to_int(current.get("carpenter_workshops"))
-        - _to_int(baseline.get("carpenter_workshops")),
+        current_workshops["planned"] - baseline_workshops["planned"],
+    )
+    carpenter_workshops_usable_delta = max(
+        0,
+        current_workshops["usable"] - baseline_workshops["usable"],
+    )
+    carpenter_workshop_task_jobs_delta = max(
+        0,
+        current_workshops["task_jobs"] - baseline_workshops["task_jobs"],
+    )
+    production_workshops_delta = max(
+        carpenter_workshops_usable_delta,
+        carpenter_workshop_task_jobs_delta,
     )
     return {
-        "production_workshops_delta": carpenter_workshops_delta,
-        "production_progress": carpenter_workshops_delta * PRODUCTION_WORKSHOP_PROGRESS,
+        "production_workshops_planned_delta": carpenter_workshops_planned_delta,
+        "production_workshops_delta": production_workshops_delta,
+        "production_task_jobs_delta": carpenter_workshop_task_jobs_delta,
+        "production_progress": production_workshops_delta * PRODUCTION_WORKSHOP_PROGRESS,
     }
 
 
@@ -271,12 +331,36 @@ def step_snapshot(state: Dict[str, Any]) -> Dict[str, Any]:
             "target_missing_blocks": _to_int(work.get("target_missing_blocks")),
             "active_jobs": _to_int(work.get("active_jobs")),
             "active_dig_jobs": _to_int(work.get("active_dig_jobs")),
+            "active_construct_building_jobs": _to_int(
+                work.get("active_construct_building_jobs")
+            ),
+            "active_carpenter_jobs": _to_int(work.get("active_carpenter_jobs")),
             "citizens_total": _to_int(work.get("citizens_total")),
             "miners_total": _to_int(work.get("miners_total")),
+            "carpenter_labors_enabled": _to_int(work.get("carpenter_labors_enabled")),
             "citizens_on_target_z": _to_int(work.get("citizens_on_target_z")),
             "manager_orders_count": _to_int(work.get("manager_orders_count")),
             "manager_orders_amount_left": _to_int(work.get("manager_orders_amount_left")),
             "carpenter_workshops": _to_int(work.get("carpenter_workshops")),
+            "carpenter_workshops_planned": _work_value(
+                work,
+                "carpenter_workshops_planned",
+                fallback_key="carpenter_workshops",
+            ),
+            "carpenter_workshops_usable": _work_value(
+                work,
+                "carpenter_workshops_usable",
+                fallback_key="carpenter_workshops",
+            ),
+            "carpenter_workshops_unproven": _to_int(
+                work.get("carpenter_workshops_unproven")
+            ),
+            "carpenter_workshop_task_jobs": _to_int(
+                work.get("carpenter_workshop_task_jobs")
+            ),
+            "carpenter_workshop_construction_jobs": _to_int(
+                work.get("carpenter_workshop_construction_jobs")
+            ),
             "fortress_plan_name": work.get("fortress_plan_name"),
             "fortress_connector_floor_tiles": _to_int(
                 work.get("fortress_connector_floor_tiles")

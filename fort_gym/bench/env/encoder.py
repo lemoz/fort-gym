@@ -31,6 +31,17 @@ def _int_or_none(value: Any) -> int | None:
         return None
 
 
+def _work_int(work: Dict[str, Any], key: str, default: int = 0) -> int:
+    value = _int_or_none(work.get(key))
+    return default if value is None else value
+
+
+def _proven_carpenter_workshops(work: Dict[str, Any]) -> int:
+    if "carpenter_workshops_usable" in work:
+        return _work_int(work, "carpenter_workshops_usable")
+    return _work_int(work, "carpenter_workshops")
+
+
 def _screen_text_lines(screen_text: str) -> List[str]:
     return [
         line.strip()
@@ -212,6 +223,25 @@ def _classify_screen_state(screen_text: Optional[str]) -> Dict[str, Any]:
                 if blocked
                 else "visible workshop placement screen"
             ],
+        )
+
+    if "carpenter's workshop" in lower and (
+        "waiting for construction" in lower
+        or "construction inactive" in lower
+        or "s: suspend construction" in lower
+    ):
+        return result(
+            "carpenter_workshop_construction_pending",
+            confidence="high",
+            instruction=(
+                "Visible Carpenter's Workshop construction-pending screen. This "
+                "is not the usable task menu and BUILDJOB_ADD will not queue "
+                "production from here. Treat carpenter_workshops/planned as "
+                "placement only until usable/task proof appears; inspect or fix "
+                "the construction blocker before claiming production. "
+                f"{MENU_ESCAPE_OBSERVATION_RULE}"
+            ),
+            extra_evidence=["visible workshop says construction is pending"],
         )
 
     if "carpenter's workshop" in lower and (
@@ -570,7 +600,7 @@ def _recent_progress_summary(
 
     manager_orders = _to_int(work.get("manager_orders_count"))
     order_qty_left = _to_int(work.get("manager_orders_amount_left"))
-    carpenter_workshops = _to_int(work.get("carpenter_workshops"))
+    carpenter_workshops = _proven_carpenter_workshops(work)
     unchanged_order_wait_ticks = 0
     current_order_qty = order_qty_left
     if manager_orders > 0 and order_qty_left > 0 and carpenter_workshops > 0:
@@ -734,6 +764,14 @@ def encode_observation(
             or "nee[" in screen_lower
         )
     )
+    screen_shows_pending_workshop_construction = bool(
+        "carpenter's workshop" in screen_lower
+        and (
+            "waiting for construction" in screen_lower
+            or "construction inactive" in screen_lower
+            or "s: suspend construction" in screen_lower
+        )
+    )
     screen_state = _classify_screen_state(screen_text)
     if screen_state:
         clean_state["screen_state"] = screen_state
@@ -841,20 +879,44 @@ def encode_observation(
                     "stockpile, or building-placement mode can create a normal "
                     "cursor again."
                 )
+        planned_workshops = _work_int(
+            work,
+            "carpenter_workshops_planned",
+            default=_work_int(work, "carpenter_workshops"),
+        )
+        usable_workshops = _proven_carpenter_workshops(work)
+        unproven_workshops = _work_int(
+            work,
+            "carpenter_workshops_unproven",
+            default=max(0, planned_workshops - usable_workshops),
+        )
         status_lines.append(
             "Utility work: "
             f"manager_orders={work.get('manager_orders_count', 0)}, "
             f"order_qty_left={work.get('manager_orders_amount_left', 0)}, "
-            f"carpenter_workshops={work.get('carpenter_workshops', 0)}"
+            f"carpenter_workshops={work.get('carpenter_workshops', 0)}, "
+            f"planned_workshops={planned_workshops}, "
+            f"usable_workshops={usable_workshops}, "
+            f"unproven_workshops={unproven_workshops}, "
+            f"workshop_task_jobs={work.get('carpenter_workshop_task_jobs', 0)}, "
+            "workshop_construction_jobs="
+            f"{work.get('carpenter_workshop_construction_jobs', 0)}, "
+            f"carpenter_labors={work.get('carpenter_labors_enabled', 0)}"
         )
+        if planned_workshops > 0 and usable_workshops <= 0:
+            status_lines.append(
+                "Workshop proof: a carpenter workshop object is placed/planned, "
+                "but no usable workshop or task job is proven yet. Do not treat "
+                "carpenter_workshops/planned_workshops as production progress."
+            )
         if (
             int(work.get("manager_orders_count") or 0) > 0
             and int(work.get("manager_orders_amount_left") or 0) > 0
-            and int(work.get("carpenter_workshops") or 0) > 0
+            and usable_workshops > 0
         ):
             production_note = (
                 "Live UI production phase: a real manager order is queued and "
-                "a carpenter workshop exists."
+                "a usable/task-proven carpenter workshop exists."
             )
             if screen_shows_manager_required:
                 production_note += (
@@ -877,6 +939,18 @@ def encode_observation(
                     "changing objectives."
                 )
             status_lines.append(production_note)
+        elif (
+            int(work.get("manager_orders_count") or 0) > 0
+            and int(work.get("manager_orders_amount_left") or 0) > 0
+            and planned_workshops > 0
+            and usable_workshops <= 0
+        ):
+            status_lines.append(
+                "Live UI production blocker: a production order may exist and a "
+                "workshop object is placed, but the workshop is not usable/task-"
+                "proven. Solve the construction or task-menu blocker before "
+                "waiting for production."
+            )
         if work.get("fortress_plan_name"):
             status_lines.append(
                 "Fortress plan: "
@@ -1010,6 +1084,14 @@ def encode_observation(
             "press SELECT to choose the highlighted material instead of "
             "exiting, unless the visible screen says Needs building material."
         )
+    elif screen_shows_pending_workshop_construction:
+        status_lines.append(
+            "Live UI build feedback: the selected Carpenter's Workshop is still "
+            "construction-pending. BUILDJOB_ADD is not a valid production action "
+            "until the workshop becomes usable; use visible construction evidence "
+            "and work metrics to decide whether to wait, inspect jobs, or abandon "
+            "this route."
+        )
     elif screen_shows_ready_workshop_placement:
         status_lines.append(
             "Live UI build feedback: the current visible workshop placement "
@@ -1056,10 +1138,23 @@ def encode_observation(
                     "premature on this turn."
                 )
             else:
-                status_lines.append(
-                    "Live UI phase: enough starter digging and building material exist; "
-                    "stop using only dig actions and try D_BUILDING for construction."
+                planned_for_phase = _work_int(
+                    work,
+                    "carpenter_workshops_planned",
+                    default=_work_int(work, "carpenter_workshops"),
                 )
+                if planned_for_phase > 0 and _proven_carpenter_workshops(work) <= 0:
+                    status_lines.append(
+                        "Live UI phase: a workshop object is already placed, but "
+                        "usable/task proof is still missing. Do not place another "
+                        "workshop just to chase score; resolve the existing "
+                        "construction or task-menu blocker."
+                    )
+                else:
+                    status_lines.append(
+                        "Live UI phase: enough starter digging and building material exist; "
+                        "stop using only dig actions and try D_BUILDING for construction."
+                    )
     if ui_target_setup.get("ok"):
         status_lines.append(
             "Live UI setup: "

@@ -810,6 +810,8 @@
         complexityProgress: toNumber(metrics.complexity_progress),
         productionProgress: toNumber(metrics.production_progress),
         carpenterWorkshops: toNumber(work.carpenter_workshops),
+        plannedWorkshops: toNumber(work.carpenter_workshops_planned, work.carpenter_workshops),
+        usableWorkshops: toNumber(work.carpenter_workshops_usable, work.carpenter_workshops),
         buildAction,
         screenText: extractScreenText(record),
         mapSnapshot: record.map_snapshot?.ok ? record.map_snapshot : null,
@@ -1125,7 +1127,9 @@
       drawReplayText(`Keys: ${(snapshot.action.params?.keys || []).slice(0, 4).join(', ') || '--'}`, panel.x + 22, nextY);
       drawReplayText(`Ticks: ${snapshot.record.tick_advance?.ticks_advanced ?? '--'}`, panel.x + 22, nextY + 26);
       drawReplayText(`Wood: ${stocks.wood ?? '--'}  Stone: ${stocks.stone ?? '--'}`, panel.x + 22, nextY + 52);
-      drawReplayText(`Workshops: ${work.carpenter_workshops ?? 0}`, panel.x + 22, nextY + 78);
+      const plannedWorkshops = work.carpenter_workshops_planned ?? work.carpenter_workshops ?? 0;
+      const usableWorkshops = work.carpenter_workshops_usable ?? work.carpenter_workshops ?? 0;
+      drawReplayText(`Workshops: ${usableWorkshops} usable / ${plannedWorkshops} placed`, panel.x + 22, nextY + 78);
       drawReplayText(`Production: ${metrics.production_progress ?? 0}`, panel.x + 22, nextY + 104);
       const proof = snapshot.gameplayProof || {};
       const proofY = Math.min(nextY + 134, panel.y + panel.h - 116);

@@ -174,11 +174,32 @@ end
 
 local active_jobs = 0
 local active_dig_jobs = 0
+local active_construct_building_jobs = 0
+local active_carpenter_jobs = 0
+
+local function job_type_name(job)
+  local ok, name = pcall(function() return tostring(job.job_type) end)
+  if ok and name then return name end
+  return ''
+end
+
 if df.global.world.jobs and df.global.world.jobs.list then
   for _, job in ipairs(df.global.world.jobs.list) do
     active_jobs = active_jobs + 1
     if job.job_type == df.job_type.Dig then
       active_dig_jobs = active_dig_jobs + 1
+    end
+    local name = job_type_name(job)
+    if job.job_type == df.job_type.ConstructBuilding or name == 'ConstructBuilding' then
+      active_construct_building_jobs = active_construct_building_jobs + 1
+    end
+    if string.find(name:lower(), 'carpenter', 1, true)
+        or string.find(name:lower(), 'wood', 1, true)
+        or name == 'ConstructBed'
+        or name == 'ConstructDoor'
+        or name == 'ConstructTable'
+        or name == 'ConstructChair' then
+      active_carpenter_jobs = active_carpenter_jobs + 1
     end
   end
 end
@@ -196,6 +217,9 @@ end
 
 local workshop_count = 0
 local carpenter_workshops = 0
+local carpenter_workshops_usable = 0
+local carpenter_workshop_task_jobs = 0
+local carpenter_workshop_construction_jobs = 0
 local buildings = df.global.world.buildings and df.global.world.buildings.all
 if buildings then
   pcall(function()
@@ -224,6 +248,27 @@ if buildings then
             or workshop_type_name == 'Carpenters'
             or workshop_type_name == 'Carpenter' then
           carpenter_workshops = carpenter_workshops + 1
+          local building_task_jobs = 0
+          local building_construction_jobs = 0
+          local ok_jobs = pcall(function()
+            if building.jobs then
+              for _, job in ipairs(building.jobs) do
+                local name = job_type_name(job)
+                if job.job_type == df.job_type.ConstructBuilding or name == 'ConstructBuilding' then
+                  building_construction_jobs = building_construction_jobs + 1
+                else
+                  building_task_jobs = building_task_jobs + 1
+                end
+              end
+            end
+          end)
+          if ok_jobs then
+            carpenter_workshop_task_jobs = carpenter_workshop_task_jobs + building_task_jobs
+            carpenter_workshop_construction_jobs = carpenter_workshop_construction_jobs + building_construction_jobs
+            if building_task_jobs > 0 then
+              carpenter_workshops_usable = carpenter_workshops_usable + 1
+            end
+          end
         end
       end
     end
@@ -232,6 +277,7 @@ end
 
 local citizens_total = 0
 local miners_total = 0
+local carpenter_labors_enabled = 0
 local citizens_on_target_z = 0
 if df.global.world.units and df.global.world.units.active then
   for _, unit in ipairs(df.global.world.units.active) do
@@ -241,12 +287,20 @@ if df.global.world.units and df.global.world.units.active then
         citizens_on_target_z = citizens_on_target_z + 1
       end
       if unit.status and unit.status.labors then
+        local is_miner = false
+        local is_carpenter = false
         for labor, enabled in pairs(unit.status.labors) do
-          if enabled and tostring(labor) == 'MINE' then
-            miners_total = miners_total + 1
-            break
+          if enabled then
+            local labor_name = tostring(labor)
+            if labor_name == 'MINE' then
+              is_miner = true
+            elseif labor_name == 'CARPENTER' then
+              is_carpenter = true
+            end
           end
         end
+        if is_miner then miners_total = miners_total + 1 end
+        if is_carpenter then carpenter_labors_enabled = carpenter_labors_enabled + 1 end
       end
     end
   end
@@ -290,12 +344,20 @@ print(json.encode({
   fortress_complexity_spaces_completed = fortress_complexity_spaces_completed,
   active_jobs = active_jobs,
   active_dig_jobs = active_dig_jobs,
+  active_construct_building_jobs = active_construct_building_jobs,
+  active_carpenter_jobs = active_carpenter_jobs,
   manager_orders_count = manager_orders_count,
   manager_orders_amount_left = manager_orders_amount_left,
   manager_orders_amount_total = manager_orders_amount_total,
   workshop_count = workshop_count,
   carpenter_workshops = carpenter_workshops,
+  carpenter_workshops_planned = carpenter_workshops,
+  carpenter_workshops_usable = carpenter_workshops_usable,
+  carpenter_workshops_unproven = math.max(0, carpenter_workshops - carpenter_workshops_usable),
+  carpenter_workshop_task_jobs = carpenter_workshop_task_jobs,
+  carpenter_workshop_construction_jobs = carpenter_workshop_construction_jobs,
   citizens_total = citizens_total,
   miners_total = miners_total,
+  carpenter_labors_enabled = carpenter_labors_enabled,
   citizens_on_target_z = citizens_on_target_z,
 }))
