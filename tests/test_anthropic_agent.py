@@ -291,6 +291,7 @@ def test_keystroke_prompt_is_action_first() -> None:
     assert "D_BUILDING is premature" in KEYSTROKE_SYSTEM_PROMPT
     assert "order_qty_left>0" in KEYSTROKE_SYSTEM_PROMPT
     assert "`advance_ticks` at least\n1000" in KEYSTROKE_SYSTEM_PROMPT
+    assert "`params.keys` may be [] only when\n  `advance_ticks > 0`" in KEYSTROKE_SYSTEM_PROMPT
     assert "one large advance leaves `order_qty_left`\nunchanged" in KEYSTROKE_SYSTEM_PROMPT
     assert "Inspect the relevant carpenter workshop" in KEYSTROKE_SYSTEM_PROMPT
     assert "Do not switch to unrelated\ndigging" in KEYSTROKE_SYSTEM_PROMPT

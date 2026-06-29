@@ -111,7 +111,15 @@ class Executor:
             if action_type == "KEYSTROKE":
                 keys = params.get("keys", [])
                 if not keys:
-                    return {"accepted": False, "why": "Empty keys list"}
+                    return {
+                        "accepted": True,
+                        "state": current_state,
+                        "result": {
+                            "ok": True,
+                            "keys_sent": 0,
+                            "advance_only": True,
+                        },
+                    }
                 result = execute_keystroke_action(keys)
                 return {
                     "accepted": bool(result.get("ok")),

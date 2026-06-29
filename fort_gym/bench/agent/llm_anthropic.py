@@ -369,6 +369,9 @@ YOU control time. The game is PAUSED until you request time to pass.
 - Viewport scroll keys like STANDARDSCROLL_PAGEDOWN do not advance simulation
   time. If your intent says wait, advance time, or let dwarves work, set
   advance_ticks to a positive value.
+- From a clean main-map screen, `params.keys` may be [] only when
+  `advance_ticks > 0`; this means send no UI keys and let the runner advance
+  real simulation ticks. Do not use empty keys for menu navigation.
 - To press the visible Space pause/resume command, use `STRING_A032`; do not
   use `PAUSE` for live gameplay recovery.
 - If your keys complete a work designation such as dig/chop/stairs with two

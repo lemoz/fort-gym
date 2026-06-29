@@ -234,10 +234,17 @@ def validate_action(state: Dict[str, Any], action: Dict[str, Any]) -> tuple[bool
             return False, "ORDER action requires job and quantity"
     if action_type == "KEYSTROKE":
         keys = params.get("keys")
-        if not keys:
-            return False, "KEYSTROKE action requires non-empty keys list"
         if not isinstance(keys, list):
             return False, "KEYSTROKE keys must be a list"
+        if not keys:
+            advance_ticks = action.get("advance_ticks") or 0
+            try:
+                advance_ticks_int = int(advance_ticks)
+            except (TypeError, ValueError):
+                advance_ticks_int = 0
+            if advance_ticks_int <= 0:
+                return False, "KEYSTROKE action requires keys unless advance_ticks > 0"
+            return True, None
         if any(not isinstance(key, str) or not key.strip() for key in keys):
             return False, "KEYSTROKE keys must be non-empty strings"
         if len(keys) > 100:

@@ -58,6 +58,38 @@ def test_keystroke_validation_rejects_empty_key_name() -> None:
     assert reason == "KEYSTROKE keys must be non-empty strings"
 
 
+def test_keystroke_validation_allows_empty_keys_with_positive_ticks() -> None:
+    action = parse_action(
+        {
+            "type": "KEYSTROKE",
+            "params": {"keys": []},
+            "intent": "let dwarves work without pressing another UI key",
+            "advance_ticks": 1500,
+        }
+    )
+
+    valid, reason = validate_action({}, action)
+
+    assert valid is True
+    assert reason is None
+
+
+def test_keystroke_validation_rejects_empty_keys_without_ticks() -> None:
+    action = parse_action(
+        {
+            "type": "KEYSTROKE",
+            "params": {"keys": []},
+            "intent": "empty UI action",
+            "advance_ticks": 0,
+        }
+    )
+
+    valid, reason = validate_action({}, action)
+
+    assert valid is False
+    assert reason == "KEYSTROKE action requires keys unless advance_ticks > 0"
+
+
 def test_keystroke_validation_rejects_z_level_spam() -> None:
     action = parse_action(
         {

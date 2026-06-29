@@ -85,3 +85,26 @@ def test_dfhack_dig_completion_requires_explicit_opt_in(monkeypatch) -> None:
     assert result["accepted"] is True
     assert result["result"]["completion"] == {"ok": True, "changed": 25}
     assert complete_calls == [(50, 35, 0, 54, 39, 0)]
+
+
+def test_dfhack_keystroke_allows_advance_only_empty_keys(monkeypatch) -> None:
+    def fail_execute_keystroke_action(_keys):
+        raise AssertionError("advance-only empty keys should not send keystrokes")
+
+    monkeypatch.setattr(
+        "fort_gym.bench.env.executor.execute_keystroke_action",
+        fail_execute_keystroke_action,
+    )
+
+    result = Executor(dfhack_client=_ConnectedDFHackClient()).apply(
+        {
+            "type": "KEYSTROKE",
+            "params": {"keys": []},
+            "intent": "let dwarves work without another UI key",
+            "advance_ticks": 1500,
+        },
+        backend="dfhack",
+    )
+
+    assert result["accepted"] is True
+    assert result["result"] == {"ok": True, "keys_sent": 0, "advance_only": True}
