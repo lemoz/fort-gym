@@ -343,6 +343,60 @@ def test_openrouter_agent_repairs_missing_keystroke_type(monkeypatch) -> None:
     assert any(event["tool"] == "action_contract_repaired" for event in events)
 
 
+def test_openrouter_agent_repairs_review_only_escape_action(monkeypatch) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    _FakeOpenRouterClient.tool_calls = [
+        SimpleNamespace(
+            id="call_submit",
+            function=SimpleNamespace(
+                name="submit_action",
+                arguments=json.dumps(
+                    {
+                        "intent": (
+                            "Exit the current unit info screen and return to the main map. "
+                            "I have been stuck in the Nobles screen loop."
+                        ),
+                        "expected_visible_result": "Should see the main map again",
+                        "expected_simulation_result": "none - UI navigation only",
+                        "last_action_review": {
+                            "worked": False,
+                            "should_retry_same_path": False,
+                            "mismatch_reason": (
+                                "The current screen is a unit info screen, not the Nobles list."
+                            ),
+                        },
+                        "advance_ticks": 0,
+                    }
+                ),
+            ),
+        )
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "openai"
+        return SimpleNamespace(OpenAI=_FakeOpenRouterClient)
+
+    monkeypatch.setattr("fort_gym.bench.agent.llm_openrouter.import_module", fake_import_module)
+
+    try:
+        agent = OpenRouterKeystrokeAgent()
+        action = agent.decide("mock observation", {"pause_state": True})
+        events = agent.pop_tool_events()
+    finally:
+        _FakeOpenRouterClient.tool_calls = None
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["type"] == "KEYSTROKE"
+    assert action["params"]["keys"] == ["LEAVESCREEN", "LEAVESCREEN", "LEAVESCREEN"]
+    assert action["advance_ticks"] == 0
+    assert any(
+        event["tool"] == "action_contract_repaired"
+        and event["input"]["missing"] == "type_and_keys"
+        for event in events
+    )
+
+
 def test_anthropic_models_are_disabled_by_default(monkeypatch) -> None:
     monkeypatch.delenv("FORT_GYM_ENABLE_ANTHROPIC", raising=False)
 

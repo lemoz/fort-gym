@@ -150,6 +150,54 @@ def _to_int(value: Any, default: int = 0) -> int:
         return default
 
 
+def _key_fingerprint(keys: Any) -> str:
+    if not isinstance(keys, list) or not keys:
+        return "none"
+    return " ".join(str(key) for key in keys[:12])
+
+
+def _action_family(entry: Dict[str, Any]) -> str:
+    keys = entry.get("keys")
+    key_values = [str(key) for key in keys] if isinstance(keys, list) else []
+    key_set = set(key_values)
+    intent = str(entry.get("intent") or "").lower()
+
+    if "D_NOBLES" in key_set or "nobles" in intent or "manager" in intent:
+        return "manager_nobles_menu"
+    if (
+        "D_BUILDJOB" in key_set
+        or "BUILDJOB_ADD" in key_set
+        or "workshop task" in intent
+        or "carpenter workshop" in intent
+    ):
+        return "workshop_task_menu"
+    if "D_JOBLIST" in key_set or "UNITJOB_MANAGER" in key_set:
+        return "job_manager_menu"
+    if "D_BUILDING" in key_set:
+        return "building_placement_menu"
+    if "D_DESIGNATE" in key_set:
+        return "designation"
+    if any(key == "STRING_A032" for key in key_values):
+        return "wait"
+    navigation_keys = {
+        "LEAVESCREEN",
+        "SELECT",
+        "CURSOR_UP",
+        "CURSOR_DOWN",
+        "CURSOR_LEFT",
+        "CURSOR_RIGHT",
+        "SECONDSCROLL_UP",
+        "SECONDSCROLL_DOWN",
+        "STANDARDSCROLL_UP",
+        "STANDARDSCROLL_DOWN",
+        "STANDARDSCROLL_PAGEUP",
+        "STANDARDSCROLL_PAGEDOWN",
+    }
+    if key_values and all(key in navigation_keys for key in key_values):
+        return "menu_navigation"
+    return key_values[0] if key_values else "none"
+
+
 def _recent_progress_summary(
     action_history: Optional[List[Dict[str, Any]]],
     work: Dict[str, Any],
@@ -176,6 +224,45 @@ def _recent_progress_summary(
         no_progress_streak += 1
         if _to_int(entry.get("actual_ticks")) > 0:
             tick_no_progress_streak += 1
+
+    menu_no_progress_entries: List[Dict[str, Any]] = []
+    for entry in reversed(action_history):
+        reasons = entry.get("productive_reasons")
+        if isinstance(reasons, list) and reasons:
+            break
+        family = _action_family(entry)
+        if family in {"designation", "wait"}:
+            break
+        if family != "none":
+            menu_no_progress_entries.append(entry)
+
+    menu_no_progress_streak = len(menu_no_progress_entries)
+    family_counts: Dict[str, int] = {}
+    fingerprint_counts: Dict[str, int] = {}
+    agent_marked_bad_path = False
+    for entry in menu_no_progress_entries:
+        family = _action_family(entry)
+        family_counts[family] = family_counts.get(family, 0) + 1
+        fingerprint = _key_fingerprint(entry.get("keys"))
+        fingerprint_counts[fingerprint] = fingerprint_counts.get(fingerprint, 0) + 1
+        review = entry.get("last_action_review")
+        if isinstance(review, dict) and review.get("should_retry_same_path") is False:
+            agent_marked_bad_path = True
+
+    repeated_menu_family = None
+    repeated_menu_family_count = 0
+    if family_counts:
+        repeated_menu_family, repeated_menu_family_count = max(
+            family_counts.items(),
+            key=lambda item: item[1],
+        )
+    repeated_key_fingerprint = None
+    repeated_key_fingerprint_count = 0
+    if fingerprint_counts:
+        repeated_key_fingerprint, repeated_key_fingerprint_count = max(
+            fingerprint_counts.items(),
+            key=lambda item: item[1],
+        )
 
     manager_orders = _to_int(work.get("manager_orders_count"))
     order_qty_left = _to_int(work.get("manager_orders_amount_left"))
@@ -208,6 +295,14 @@ def _recent_progress_summary(
     do_not_repeat_wait = bool(
         queued_order_stuck or (tick_no_progress_streak >= 2 and no_progress_streak >= 3)
     )
+    do_not_repeat_menu_path = bool(
+        menu_no_progress_streak >= 6
+        and (
+            repeated_menu_family_count >= 3
+            or repeated_key_fingerprint_count >= 3
+            or agent_marked_bad_path
+        )
+    )
     return {
         "last_productive_step": last_productive_step,
         "no_progress_streak": no_progress_streak,
@@ -216,6 +311,13 @@ def _recent_progress_summary(
         "queued_order_stuck": queued_order_stuck,
         "manager_order_qty_unchanged_after_ticks": unchanged_order_wait_ticks,
         "do_not_repeat_wait": do_not_repeat_wait,
+        "menu_no_progress_streak": menu_no_progress_streak,
+        "repeated_menu_family": repeated_menu_family,
+        "repeated_menu_family_count": repeated_menu_family_count,
+        "repeated_key_fingerprint": repeated_key_fingerprint,
+        "repeated_key_fingerprint_count": repeated_key_fingerprint_count,
+        "agent_marked_bad_menu_path": agent_marked_bad_path,
+        "do_not_repeat_menu_path": do_not_repeat_menu_path,
     }
 
 
@@ -499,13 +601,32 @@ def encode_observation(
             f"queued_order_stuck={str(recent_progress_summary.get('queued_order_stuck')).lower()}, "
             "manager_order_qty_unchanged_after_ticks="
             f"{recent_progress_summary.get('manager_order_qty_unchanged_after_ticks')}, "
-            f"do_not_repeat_wait={str(recent_progress_summary.get('do_not_repeat_wait')).lower()}"
+            f"do_not_repeat_wait={str(recent_progress_summary.get('do_not_repeat_wait')).lower()}, "
+            f"menu_no_progress_streak={recent_progress_summary.get('menu_no_progress_streak')}, "
+            f"repeated_menu_family={recent_progress_summary.get('repeated_menu_family')}, "
+            "repeated_menu_family_count="
+            f"{recent_progress_summary.get('repeated_menu_family_count')}, "
+            "repeated_key_fingerprint="
+            f"{recent_progress_summary.get('repeated_key_fingerprint')}, "
+            "do_not_repeat_menu_path="
+            f"{str(recent_progress_summary.get('do_not_repeat_menu_path')).lower()}"
         )
         if recent_progress_summary.get("do_not_repeat_wait"):
             status_lines.append(
                 "Recent progress instruction: do not press STRING_A032 or wait again "
                 "until you inspect and fix the visible manager/workshop/order blocker "
                 "through real UI evidence."
+            )
+        if recent_progress_summary.get("do_not_repeat_menu_path"):
+            repeated_family = recent_progress_summary.get("repeated_menu_family")
+            repeated_keys = recent_progress_summary.get("repeated_key_fingerprint")
+            status_lines.append(
+                "Recent progress instruction: you are repeating a no-progress "
+                f"{repeated_family} path. Do not press the same menu sequence again "
+                f"({repeated_keys}). First escape to a verified main-map screen with "
+                "LEAVESCREEN, then choose a different route based on visible screen "
+                "text. For manager/nobles loops, do not use fixed CURSOR_DOWN counts "
+                "unless the Nobles list and target row are visibly confirmed."
             )
     if screen_shows_workshop_material_selection:
         status_lines.append(

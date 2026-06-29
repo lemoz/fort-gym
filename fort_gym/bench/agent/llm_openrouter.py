@@ -405,10 +405,17 @@ class OpenRouterKeystrokeAgent(Agent):
             return tool_payload
         params = tool_payload.get("params")
         keys = params.get("keys") if isinstance(params, dict) else None
+        if keys is None and isinstance(tool_payload.get("keys"), list):
+            keys = tool_payload.get("keys")
         if not isinstance(keys, list) or not keys:
-            return tool_payload
+            repaired_escape = self._repair_review_only_escape_action(tool_payload)
+            if repaired_escape is None:
+                return tool_payload
+            return repaired_escape
         repaired = dict(tool_payload)
+        repaired.pop("keys", None)
         repaired["type"] = "KEYSTROKE"
+        repaired["params"] = {"keys": keys}
         self._tool_events.append(
             {
                 "tool": "action_contract_repaired",
@@ -420,6 +427,74 @@ class OpenRouterKeystrokeAgent(Agent):
                 "output": (
                     "Inserted type=KEYSTROKE because the payload contained "
                     "params.keys and otherwise matched the keystroke action contract."
+                ),
+            }
+        )
+        return repaired
+
+    def _repair_review_only_escape_action(
+        self,
+        tool_payload: Dict[str, Any],
+    ) -> Dict[str, Any] | None:
+        """Recover when a model submits a review but omits executable keys.
+
+        GLM sometimes correctly diagnoses that it is stuck in a menu, then
+        returns only review fields instead of the required KEYSTROKE action.
+        If the stated intent is a conservative screen escape back to the main
+        map, we can safely turn it into LEAVESCREEN presses instead of ending
+        the run.
+        """
+
+        intent_text = " ".join(
+            str(tool_payload.get(field) or "")
+            for field in (
+                "intent",
+                "objective",
+                "expected_visible_result",
+                "expected_simulation_result",
+                "memory_update",
+            )
+        ).lower()
+        review = tool_payload.get("last_action_review")
+        if isinstance(review, dict):
+            intent_text += " " + " ".join(
+                str(review.get(field) or "")
+                for field in ("mismatch_reason", "worked", "should_retry_same_path")
+            ).lower()
+            evidence = review.get("evidence")
+            if isinstance(evidence, list):
+                intent_text += " " + " ".join(str(item) for item in evidence).lower()
+
+        wants_escape = any(
+            phrase in intent_text
+            for phrase in (
+                "exit the current",
+                "exit current",
+                "return to the main map",
+                "get back to the main map",
+                "back to main map",
+                "leave the unit info",
+                "unit info screen",
+            )
+        )
+        if not wants_escape:
+            return None
+
+        repaired = dict(tool_payload)
+        repaired["type"] = "KEYSTROKE"
+        repaired["params"] = {"keys": ["LEAVESCREEN", "LEAVESCREEN", "LEAVESCREEN"]}
+        repaired["advance_ticks"] = 0
+        self._tool_events.append(
+            {
+                "tool": "action_contract_repaired",
+                "input": {
+                    "missing": "type_and_keys",
+                    "intent": tool_payload.get("intent"),
+                },
+                "output": (
+                    "Inserted a conservative LEAVESCREEN recovery action because "
+                    "the payload diagnosed a stuck menu/unit-info screen but "
+                    "omitted executable keystroke keys."
                 ),
             }
         )

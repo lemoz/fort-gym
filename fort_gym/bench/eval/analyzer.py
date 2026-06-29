@@ -230,23 +230,27 @@ class AnalysisReport:
 class TraceAnalyzer:
     """LLM-based trace analyzer using Gemini API via raw HTTP."""
 
-    # Gemini API endpoint
-    API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+    DEFAULT_MODEL = "gemini-2.5-flash"
 
-    def __init__(self, api_key: str | None = None):
+    def __init__(self, api_key: str | None = None, model: str | None = None):
         """
         Initialize the analyzer.
 
         Args:
             api_key: Google API key. If not provided, uses GOOGLE_API_KEY env var.
+            model: Gemini model id. If not provided, uses GEMINI_ANALYZER_MODEL.
         """
         self.api_key = api_key or os.environ.get("GOOGLE_API_KEY")
         if not self.api_key:
             raise ValueError("GOOGLE_API_KEY environment variable not set")
+        self.model = model or os.environ.get("GEMINI_ANALYZER_MODEL", self.DEFAULT_MODEL)
 
     def _call_gemini_api(self, prompt: str) -> str:
         """Call Gemini API via raw HTTP request."""
-        url = f"{self.API_URL}?key={self.api_key}"
+        url = (
+            "https://generativelanguage.googleapis.com/v1beta/models/"
+            f"{self.model}:generateContent?key={self.api_key}"
+        )
 
         payload = {
             "contents": [

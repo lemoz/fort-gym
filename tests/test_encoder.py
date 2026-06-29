@@ -727,3 +727,57 @@ def test_encoder_summarizes_stuck_queued_order_waits() -> None:
     assert "manager_order_qty_unchanged_after_ticks=1501" in text
     assert "do_not_repeat_wait=true" in text
     assert "do not press STRING_A032 or wait again" in text
+
+
+def test_encoder_flags_repeated_manager_menu_loop() -> None:
+    action_history = []
+    for step in range(6):
+        if step % 2 == 0:
+            keys = ["LEAVESCREEN", "LEAVESCREEN", "D_NOBLES"]
+            intent = "Open Nobles screen to assign manager"
+        else:
+            keys = ["CURSOR_DOWN", "CURSOR_DOWN", "CURSOR_DOWN", "CURSOR_DOWN", "SELECT"]
+            intent = "Navigate to Manager row and select a candidate"
+        action_history.append(
+            {
+                "step": step,
+                "intent": intent,
+                "keys": keys,
+                "requested_ticks": 0,
+                "actual_ticks": 0,
+                "accepted": True,
+                "outcome": "keys_sent_without_tracked_state_change",
+                "productive_reasons": [],
+                "changed": [],
+                "last_action_review": {
+                    "worked": False,
+                    "should_retry_same_path": False,
+                    "mismatch_reason": "Still on unit info screen, not the Nobles list",
+                },
+            }
+        )
+
+    text, state = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 3, "stone": 0},
+            "work": {
+                "manager_orders_count": 1,
+                "manager_orders_amount_left": 1,
+                "carpenter_workshops": 1,
+            },
+        },
+        screen_text="unit info screen",
+        action_history=action_history,
+    )
+
+    summary = state["recent_progress_summary"]
+    assert summary["menu_no_progress_streak"] == 6
+    assert summary["repeated_menu_family"] == "manager_nobles_menu"
+    assert summary["repeated_menu_family_count"] == 6
+    assert summary["agent_marked_bad_menu_path"] is True
+    assert summary["do_not_repeat_menu_path"] is True
+    assert "do_not_repeat_menu_path=true" in text
+    assert "you are repeating a no-progress manager_nobles_menu path" in text
+    assert "do not use fixed CURSOR_DOWN counts" in text

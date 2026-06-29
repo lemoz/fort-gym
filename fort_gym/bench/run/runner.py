@@ -342,6 +342,53 @@ def _append_delta(
         productive_reasons.append(positive_reason)
 
 
+def _keystroke_key_fingerprint(keys: Any) -> str:
+    if not isinstance(keys, list) or not keys:
+        return "none"
+    return " ".join(str(key) for key in keys[:12])
+
+
+def _keystroke_action_family(action: Dict[str, Any]) -> str:
+    keys = action.get("params", {}).get("keys", [])
+    key_values = [str(key) for key in keys] if isinstance(keys, list) else []
+    key_set = set(key_values)
+    intent = str(action.get("intent") or "").lower()
+    if "D_NOBLES" in key_set or "nobles" in intent or "manager" in intent:
+        return "manager_nobles_menu"
+    if (
+        "D_BUILDJOB" in key_set
+        or "BUILDJOB_ADD" in key_set
+        or "workshop task" in intent
+        or "carpenter workshop" in intent
+    ):
+        return "workshop_task_menu"
+    if "D_JOBLIST" in key_set or "UNITJOB_MANAGER" in key_set:
+        return "job_manager_menu"
+    if "D_BUILDING" in key_set:
+        return "building_placement_menu"
+    if "D_DESIGNATE" in key_set:
+        return "designation"
+    if "STRING_A032" in key_set:
+        return "wait"
+    navigation_keys = {
+        "LEAVESCREEN",
+        "SELECT",
+        "CURSOR_UP",
+        "CURSOR_DOWN",
+        "CURSOR_LEFT",
+        "CURSOR_RIGHT",
+        "SECONDSCROLL_UP",
+        "SECONDSCROLL_DOWN",
+        "STANDARDSCROLL_UP",
+        "STANDARDSCROLL_DOWN",
+        "STANDARDSCROLL_PAGEUP",
+        "STANDARDSCROLL_PAGEDOWN",
+    }
+    if key_values and all(key in navigation_keys for key in key_values):
+        return "menu_navigation"
+    return key_values[0] if key_values else "none"
+
+
 def _keystroke_action_history_entry(
     *,
     step: int,
@@ -436,6 +483,10 @@ def _keystroke_action_history_entry(
     return {
         "step": step,
         "keys": action.get("params", {}).get("keys", []),
+        "key_fingerprint": _keystroke_key_fingerprint(
+            action.get("params", {}).get("keys", [])
+        ),
+        "action_family": _keystroke_action_family(action),
         "intent": action.get("intent", ""),
         "expected_visible_result": action.get("expected_visible_result"),
         "expected_simulation_result": action.get("expected_simulation_result"),
