@@ -823,6 +823,149 @@ def test_openrouter_agent_repairs_string_review_metadata(monkeypatch) -> None:
     )
 
 
+def test_openrouter_agent_rejects_ignoring_fresh_material_target(monkeypatch) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    recommended_payload = {
+        "type": "KEYSTROKE",
+        "params": {
+            "keys": [
+                "D_DESIGNATE",
+                "DESIGNATE_CHOP",
+                "SELECT",
+                "CURSOR_RIGHT",
+                "SELECT",
+                "LEAVESCREEN",
+            ]
+        },
+        "intent": "Copy the fresh material target keys to acquire logs",
+        "advance_ticks": 1000,
+    }
+    _FakeOpenRouterClient.responses = [
+        {
+            "tool_calls": [
+                _submit_action_call(
+                    {
+                        "type": "KEYSTROKE",
+                        "params": {
+                            "keys": [
+                                "D_BUILDING",
+                                "HOTKEY_BUILDING_WORKSHOP",
+                                "HOTKEY_BUILDING_WORKSHOP_CARPENTER",
+                            ]
+                        },
+                        "intent": "Try workshop placement with starter wood",
+                        "advance_ticks": 0,
+                    },
+                    "call_bad",
+                )
+            ]
+        },
+        {"tool_calls": [_submit_action_call(recommended_payload, "call_good")]},
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "openai"
+        return SimpleNamespace(OpenAI=_FakeOpenRouterClient)
+
+    monkeypatch.setattr("fort_gym.bench.agent.llm_openrouter.import_module", fake_import_module)
+
+    try:
+        agent = OpenRouterKeystrokeAgent()
+        action = agent.decide(
+            "mock observation",
+            {
+                "pause_state": True,
+                "ui_run_progress": {"total_material_delta": 0},
+                "ui_target_setup": {
+                    "target_mode": "material",
+                    "show_recommended_keys": True,
+                    "recommended_keys": recommended_payload["params"]["keys"],
+                },
+            },
+        )
+        events = agent.pop_tool_events()
+    finally:
+        _FakeOpenRouterClient.responses = None
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["params"]["keys"] == recommended_payload["params"]["keys"]
+    assert any(event["tool"] == "material_target_contract_rejected" for event in events)
+
+
+def test_openrouter_agent_rejects_short_tree_chop_tick_advance(monkeypatch) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    keys = [
+        "D_DESIGNATE",
+        "DESIGNATE_CHOP",
+        "SELECT",
+        "CURSOR_RIGHT",
+        "SELECT",
+        "LEAVESCREEN",
+    ]
+    _FakeOpenRouterClient.responses = [
+        {
+            "tool_calls": [
+                _submit_action_call(
+                    {
+                        "type": "KEYSTROKE",
+                        "params": {"keys": keys},
+                        "intent": "Copy the fresh material target keys to acquire logs",
+                        "advance_ticks": 500,
+                    },
+                    "call_short",
+                )
+            ]
+        },
+        {
+            "tool_calls": [
+                _submit_action_call(
+                    {
+                        "type": "KEYSTROKE",
+                        "params": {"keys": keys},
+                        "intent": "Copy the fresh material target keys and wait longer",
+                        "advance_ticks": 1000,
+                    },
+                    "call_long",
+                )
+            ]
+        },
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "openai"
+        return SimpleNamespace(OpenAI=_FakeOpenRouterClient)
+
+    monkeypatch.setattr("fort_gym.bench.agent.llm_openrouter.import_module", fake_import_module)
+
+    try:
+        agent = OpenRouterKeystrokeAgent()
+        action = agent.decide(
+            "mock observation",
+            {
+                "pause_state": True,
+                "ui_run_progress": {"total_material_delta": 0},
+                "ui_target_setup": {
+                    "target_mode": "material",
+                    "show_recommended_keys": True,
+                    "recommended_keys": keys,
+                },
+            },
+        )
+        events = agent.pop_tool_events()
+    finally:
+        _FakeOpenRouterClient.responses = None
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["advance_ticks"] == 1000
+    assert any(
+        event["tool"] == "material_target_contract_rejected"
+        and "advance_ticks must be at least 1000" in event["output"]
+        for event in events
+    )
+
+
 def test_openrouter_agent_rejects_production_screen_read_mismatch(monkeypatch) -> None:
     monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
     get_settings.cache_clear()  # type: ignore[attr-defined]

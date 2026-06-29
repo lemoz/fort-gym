@@ -848,6 +848,81 @@ class OpenRouterKeystrokeAgent(Agent):
         )
 
     @classmethod
+    def _material_target_contract_error(
+        cls,
+        tool_payload: Dict[str, Any],
+        obs_json: Dict[str, Any],
+    ) -> str | None:
+        target_setup = obs_json.get("ui_target_setup")
+        if not isinstance(target_setup, dict):
+            return None
+        if str(target_setup.get("target_mode") or "") != "material":
+            return None
+        if not target_setup.get("show_recommended_keys"):
+            return None
+
+        run_progress = obs_json.get("ui_run_progress")
+        if isinstance(run_progress, dict) and int(run_progress.get("total_material_delta") or 0) > 0:
+            return None
+
+        recommended_keys_raw = target_setup.get("recommended_keys")
+        if not isinstance(recommended_keys_raw, list) or not recommended_keys_raw:
+            return None
+        recommended_keys = [str(key) for key in recommended_keys_raw]
+        submitted_keys = [str(key) for key in cls._keystroke_keys(tool_payload)]
+
+        if submitted_keys == recommended_keys:
+            try:
+                advance_ticks = int(tool_payload.get("advance_ticks") or 0)
+            except (TypeError, ValueError):
+                advance_ticks = 0
+            if "DESIGNATE_CHOP" in recommended_keys and advance_ticks < 1000:
+                return (
+                    "Material target contract mismatch: the fresh material target "
+                    "is a tree-chop designation. Copying the target keys is correct, "
+                    "but advance_ticks must be at least 1000 so woodcutters have "
+                    "time to produce logs before the next decision."
+                )
+            return None
+
+        return (
+            "Material target contract mismatch: no usable material has been "
+            "proven yet and fresh material recommended_keys are visible. Copy "
+            "those recommended_keys exactly for this turn instead of opening "
+            "building/unit/job/nobles menus or inventing manual z-level mining. "
+            "If the visible screen is a blocked build/material menu, use only "
+            "the visible escape keys supplied in recommended_keys."
+        )
+
+    def _log_material_target_contract_error(
+        self,
+        tool_payload: Dict[str, Any],
+        obs_json: Dict[str, Any],
+        error: str,
+    ) -> None:
+        target_setup = obs_json.get("ui_target_setup")
+        self._tool_events.append(
+            {
+                "tool": "material_target_contract_rejected",
+                "input": {
+                    "target_mode": (
+                        target_setup.get("target_mode")
+                        if isinstance(target_setup, dict)
+                        else None
+                    ),
+                    "recommended_keys": (
+                        target_setup.get("recommended_keys")
+                        if isinstance(target_setup, dict)
+                        else None
+                    ),
+                    "submitted_keys": self._keystroke_keys(tool_payload),
+                    "advance_ticks": tool_payload.get("advance_ticks"),
+                },
+                "output": error,
+            }
+        )
+
+    @classmethod
     def _submitted_action_family(cls, tool_payload: Dict[str, Any]) -> str:
         keys = cls._keystroke_keys(tool_payload)
         key_values = [str(key) for key in keys]
@@ -996,6 +1071,15 @@ class OpenRouterKeystrokeAgent(Agent):
         if screen_read_error:
             self._log_screen_read_contract_error(payload, obs_json, screen_read_error)
             return screen_read_error
+
+        material_target_error = self._material_target_contract_error(payload, obs_json)
+        if material_target_error:
+            self._log_material_target_contract_error(
+                payload,
+                obs_json,
+                material_target_error,
+            )
+            return material_target_error
 
         contract_error = self._advance_ticks_contract_error(payload)
         if contract_error:
