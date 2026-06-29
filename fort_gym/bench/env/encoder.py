@@ -198,6 +198,24 @@ def _action_family(entry: Dict[str, Any]) -> str:
     return key_values[0] if key_values else "none"
 
 
+def _is_escape_only_action(entry: Dict[str, Any]) -> bool:
+    keys = entry.get("keys")
+    return bool(
+        isinstance(keys, list)
+        and keys
+        and all(str(key) == "LEAVESCREEN" for key in keys)
+    )
+
+
+def _is_blockable_menu_family(family: str) -> bool:
+    return family in {
+        "building_placement_menu",
+        "workshop_task_menu",
+        "job_manager_menu",
+        "manager_nobles_menu",
+    }
+
+
 def _recent_progress_summary(
     action_history: Optional[List[Dict[str, Any]]],
     work: Dict[str, Any],
@@ -216,11 +234,13 @@ def _recent_progress_summary(
 
     no_progress_streak = 0
     tick_no_progress_streak = 0
+    no_progress_entries: List[Dict[str, Any]] = []
     for entry in reversed(action_history):
         reasons = entry.get("productive_reasons")
         productive = isinstance(reasons, list) and bool(reasons)
         if productive:
             break
+        no_progress_entries.append(entry)
         no_progress_streak += 1
         if _to_int(entry.get("actual_ticks")) > 0:
             tick_no_progress_streak += 1
@@ -263,14 +283,42 @@ def _recent_progress_summary(
             fingerprint_counts.items(),
             key=lambda item: item[1],
         )
+
+    sticky_family_counts: Dict[str, int] = {}
+    sticky_fingerprint_counts: Dict[str, int] = {}
+    sticky_agent_marked_bad_path = False
+    for entry in no_progress_entries:
+        family = _action_family(entry)
+        if not _is_blockable_menu_family(family):
+            continue
+        sticky_family_counts[family] = sticky_family_counts.get(family, 0) + 1
+        fingerprint = _key_fingerprint(entry.get("keys"))
+        sticky_fingerprint_counts[fingerprint] = (
+            sticky_fingerprint_counts.get(fingerprint, 0) + 1
+        )
+        review = entry.get("last_action_review")
+        if isinstance(review, dict) and review.get("should_retry_same_path") is False:
+            sticky_agent_marked_bad_path = True
+
+    sticky_repeated_menu_family = None
+    sticky_repeated_menu_family_count = 0
+    if sticky_family_counts:
+        sticky_repeated_menu_family, sticky_repeated_menu_family_count = max(
+            sticky_family_counts.items(),
+            key=lambda item: item[1],
+        )
+    sticky_repeated_key_fingerprint = None
+    sticky_repeated_key_fingerprint_count = 0
+    if sticky_fingerprint_counts:
+        sticky_repeated_key_fingerprint, sticky_repeated_key_fingerprint_count = max(
+            sticky_fingerprint_counts.items(),
+            key=lambda item: item[1],
+        )
     last_entry = action_history[-1]
     last_key_fingerprint = _key_fingerprint(last_entry.get("keys"))
     last_action_family = _action_family(last_entry)
-    last_keys = last_entry.get("keys")
-    last_was_escape_only = bool(
-        isinstance(last_keys, list)
-        and last_keys
-        and all(str(key) == "LEAVESCREEN" for key in last_keys)
+    escape_recovery_attempted = any(
+        _is_escape_only_action(entry) for entry in no_progress_entries
     )
 
     manager_orders = _to_int(work.get("manager_orders_count"))
@@ -312,6 +360,21 @@ def _recent_progress_summary(
             or agent_marked_bad_path
         )
     )
+    sticky_blocked_menu_path = bool(
+        no_progress_streak >= 6
+        and (
+            sticky_repeated_menu_family_count >= 4
+            or sticky_repeated_key_fingerprint_count >= 4
+            or sticky_agent_marked_bad_path
+        )
+    )
+    if sticky_blocked_menu_path and not do_not_repeat_menu_path:
+        repeated_menu_family = sticky_repeated_menu_family
+        repeated_menu_family_count = sticky_repeated_menu_family_count
+        repeated_key_fingerprint = sticky_repeated_key_fingerprint
+        repeated_key_fingerprint_count = sticky_repeated_key_fingerprint_count
+        agent_marked_bad_path = sticky_agent_marked_bad_path
+        do_not_repeat_menu_path = True
     return {
         "last_productive_step": last_productive_step,
         "no_progress_streak": no_progress_streak,
@@ -327,8 +390,9 @@ def _recent_progress_summary(
         "repeated_key_fingerprint_count": repeated_key_fingerprint_count,
         "last_action_family": last_action_family,
         "last_key_fingerprint": last_key_fingerprint,
-        "escape_recovery_attempted": last_was_escape_only,
+        "escape_recovery_attempted": escape_recovery_attempted,
         "agent_marked_bad_menu_path": agent_marked_bad_path,
+        "sticky_blocked_menu_path": sticky_blocked_menu_path,
         "do_not_repeat_menu_path": do_not_repeat_menu_path,
     }
 
@@ -624,6 +688,8 @@ def encode_observation(
             f"{recent_progress_summary.get('last_action_family')}, "
             "escape_recovery_attempted="
             f"{str(recent_progress_summary.get('escape_recovery_attempted')).lower()}, "
+            "sticky_blocked_menu_path="
+            f"{str(recent_progress_summary.get('sticky_blocked_menu_path')).lower()}, "
             "do_not_repeat_menu_path="
             f"{str(recent_progress_summary.get('do_not_repeat_menu_path')).lower()}"
         )
@@ -644,6 +710,14 @@ def encode_observation(
                 "text. For manager/nobles loops, do not use fixed CURSOR_DOWN counts "
                 "unless the Nobles list and target row are visibly confirmed."
             )
+            if recent_progress_summary.get("sticky_blocked_menu_path"):
+                status_lines.append(
+                    "Recent progress instruction: this blocked menu family remains "
+                    "forbidden until a later action produces real tile, material, "
+                    "job, order, or workshop progress. A no-progress designation, "
+                    "cursor move, or screen escape does not make the same blocked "
+                    "menu path safe to retry."
+                )
             if not recent_progress_summary.get("escape_recovery_attempted"):
                 status_lines.append(
                     "Recent progress instruction: your next action must be only "
