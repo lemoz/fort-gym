@@ -59,7 +59,7 @@ UI_TARGET_REFRESH_NO_PROGRESS_STEPS = 2
 UI_TARGET_RECOMMENDED_KEY_RETRY_LIMIT = 2
 UI_MATERIAL_TARGET_RECOMMENDED_KEY_RETRY_LIMIT = 2
 UI_WORKSHOP_TARGET_RECOMMENDED_KEY_RETRY_LIMIT = 6
-UI_MATERIAL_BLOCKER_ESCAPE_KEYS = ("LEAVESCREEN", "LEAVESCREEN")
+UI_MATERIAL_BLOCKER_ESCAPE_KEYS = ("LEAVESCREEN", "LEAVESCREEN", "LEAVESCREEN")
 UI_MATERIAL_TARGET_MIN_EXCAVATION_PROGRESS = 6
 KEYSTROKE_MODEL_NAMES = {
     "openrouter-glm-5.2",
@@ -591,6 +591,16 @@ def _screen_shows_workshop_material_selection(screen_text: str | None) -> bool:
     )
 
 
+def _screen_shows_building_type_menu(screen_text: str | None) -> bool:
+    return bool(
+        screen_text
+        and "+-*/: Select" in screen_text
+        and "Armor Stand" in screen_text
+        and "Bed" in screen_text
+        and "Seat" in screen_text
+    )
+
+
 def _workshop_current_screen_select_target(
     state: Dict[str, Any],
     *,
@@ -726,6 +736,17 @@ def _ui_target_setup_for_observation(
         setup["recommended_keys_retry"] = False
         setup["recommended_keys_force_shown"] = False
     return setup
+
+
+def _is_exit_only_recovery_action(action: Dict[str, Any]) -> bool:
+    keys = action.get("params", {}).get("keys", [])
+    return bool(
+        action.get("type") == "KEYSTROKE"
+        and isinstance(keys, list)
+        and keys
+        and all(str(key) == "LEAVESCREEN" for key in keys)
+        and int(action.get("advance_ticks") or 0) == 0
+    )
 
 
 def _ui_target_step_succeeded(
@@ -1008,6 +1029,9 @@ def run_once(
                         screen_text if is_keystroke_mode else None
                     )
                 )
+                screen_has_building_type_menu = _screen_shows_building_type_menu(
+                    screen_text if is_keystroke_mode else None
+                )
                 if screen_has_material_blocker:
                     ui_build_material_blocked = True
                 elif screen_has_ready_workshop_placement or screen_has_workshop_material_selection:
@@ -1068,9 +1092,13 @@ def run_once(
                                     "error": refreshed_target.get("error", "unknown"),
                                 }
                     if keystroke_ui_target is not None:
+                        material_needs_menu_escape = (
+                            ui_target_mode == "material"
+                            and (screen_has_material_blocker or screen_has_building_type_menu)
+                        )
                         recovery_prefix = (
                             list(UI_MATERIAL_BLOCKER_ESCAPE_KEYS)
-                            if ui_target_mode == "material" and screen_has_material_blocker
+                            if material_needs_menu_escape
                             else []
                         )
                         state_before["ui_target_setup"] = _ui_target_setup_for_observation(
@@ -1300,7 +1328,15 @@ def run_once(
                     and action.get("type") == "KEYSTROKE"
                     and execute_result.get("accepted", False)
                 ):
-                    ui_target_attempts += 1
+                    target_setup = state_before.get("ui_target_setup")
+                    target_setup_exit_only = (
+                        isinstance(target_setup, dict)
+                        and bool(target_setup.get("recommended_keys_exit_only"))
+                    )
+                    if not (
+                        target_setup_exit_only and _is_exit_only_recovery_action(action)
+                    ):
+                        ui_target_attempts += 1
 
                 # Use agent-requested ticks, falling back to default if not specified
                 requested_ticks = action.get("advance_ticks", ticks)

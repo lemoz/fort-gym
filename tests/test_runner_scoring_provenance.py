@@ -5,7 +5,9 @@ from fort_gym.bench.run.runner import (
     _carpenter_workshops,
     _desired_keystroke_target_mode,
     _gameplay_proof,
+    _is_exit_only_recovery_action,
     _is_keystroke_model,
+    _screen_shows_building_type_menu,
     _screen_shows_ready_workshop_placement,
     _screen_shows_workshop_material_selection,
     _snapshot_tile_changes,
@@ -391,6 +393,18 @@ def test_workshop_material_selection_screen_gets_select_target() -> None:
     assert target["selection_rect"] == [92, 100, 177, 94, 102, 177]
 
 
+def test_building_type_menu_screen_is_detected() -> None:
+    assert _screen_shows_building_type_menu(
+        "Armor Stand              (a)\n"
+        "Bed                      (b)\n"
+        "Seat                     (c)\n"
+        "+-*/: Select"
+    )
+    assert not _screen_shows_building_type_menu(
+        "Carpenter's Workshop\nNeeds building material non-economic item"
+    )
+
+
 def test_ui_target_setup_retries_recommended_keys_after_failed_attempt() -> None:
     target = {
         "ok": True,
@@ -534,6 +548,30 @@ def test_material_target_setup_can_show_exit_only_recovery_keys() -> None:
     assert setup["show_recommended_keys"] is True
     assert setup["recommended_keys_force_shown"] is True
     assert setup["recommended_keys_exit_only"] is True
+
+
+def test_exit_only_recovery_action_is_not_a_target_attempt() -> None:
+    assert _is_exit_only_recovery_action(
+        {
+            "type": "KEYSTROKE",
+            "params": {"keys": ["LEAVESCREEN", "LEAVESCREEN", "LEAVESCREEN"]},
+            "advance_ticks": 0,
+        }
+    )
+    assert not _is_exit_only_recovery_action(
+        {
+            "type": "KEYSTROKE",
+            "params": {"keys": ["LEAVESCREEN", "D_DESIGNATE"]},
+            "advance_ticks": 0,
+        }
+    )
+    assert not _is_exit_only_recovery_action(
+        {
+            "type": "KEYSTROKE",
+            "params": {"keys": ["LEAVESCREEN"]},
+            "advance_ticks": 100,
+        }
+    )
 
 
 def test_material_target_requires_material_delta_for_success() -> None:
