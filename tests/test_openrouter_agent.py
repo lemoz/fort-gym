@@ -242,6 +242,79 @@ def test_openrouter_agent_uses_content_fallback_for_empty_submit_args(monkeypatc
     assert action["params"]["keys"] == ["SELECT"]
 
 
+def test_openrouter_agent_unwraps_nested_action_tool_payload(monkeypatch) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    _FakeOpenRouterClient.tool_calls = [
+        _submit_action_call(
+            {
+                "action": {
+                    "type": "KEYSTROKE",
+                    "params": {"keys": ["SELECT"]},
+                    "intent": "confirm visible menu",
+                    "advance_ticks": 0,
+                }
+            }
+        )
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "openai"
+        return SimpleNamespace(OpenAI=_FakeOpenRouterClient)
+
+    monkeypatch.setattr("fort_gym.bench.agent.llm_openrouter.import_module", fake_import_module)
+
+    try:
+        agent = OpenRouterKeystrokeAgent()
+        action = agent.decide("mock observation", {"pause_state": True})
+        events = agent.pop_tool_events()
+    finally:
+        _FakeOpenRouterClient.tool_calls = None
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["params"]["keys"] == ["SELECT"]
+    assert any(event["tool"] == "action_contract_repaired" for event in events)
+
+
+def test_openrouter_agent_recovers_empty_nested_action_with_plain_json(monkeypatch) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
+    monkeypatch.setenv("OPENROUTER_MAX_TOOL_ROUNDS", "1")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    _FakeOpenRouterClient.responses = [
+        {"tool_calls": [_submit_action_call({"action": {}})]},
+        {
+            "tool_calls": [],
+            "content": json.dumps(
+                {
+                    "type": "KEYSTROKE",
+                    "params": {"keys": ["LEAVESCREEN"]},
+                    "intent": "recover from malformed tool call",
+                    "advance_ticks": 0,
+                }
+            ),
+        },
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "openai"
+        return SimpleNamespace(OpenAI=_FakeOpenRouterClient)
+
+    monkeypatch.setattr("fort_gym.bench.agent.llm_openrouter.import_module", fake_import_module)
+
+    try:
+        agent = OpenRouterKeystrokeAgent()
+        action = agent.decide("mock observation", {"pause_state": True})
+        events = agent.pop_tool_events()
+        requests = _FakeOpenRouterClient.last_instance.chat.completions.requests
+    finally:
+        _FakeOpenRouterClient.responses = None
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["params"]["keys"] == ["LEAVESCREEN"]
+    assert "tools" not in requests[-1]
+    assert any(event["tool"] == "openrouter.plain_json_action" for event in events)
+
+
 def test_openrouter_action_only_repairs_zero_tick_space_wait(monkeypatch) -> None:
     monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
     get_settings.cache_clear()  # type: ignore[attr-defined]

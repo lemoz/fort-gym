@@ -19,6 +19,8 @@ from .tools import ToolManager
 from ..config import get_settings
 from ..env.actions import parse_action
 
+_DEFAULT_TOOLS = object()
+
 
 def _openai_tool(spec: Dict[str, Any]) -> Dict[str, Any]:
     return {
@@ -135,7 +137,13 @@ class OpenRouterKeystrokeAgent(Agent):
             return [submit_tool]
         return [submit_tool, *[_openai_tool(spec) for spec in self._tool_manager.tool_specs()]]
 
-    def _create_completion(self, messages: List[Dict[str, Any]]) -> Any:
+    def _create_completion(
+        self,
+        messages: List[Dict[str, Any]],
+        *,
+        tools: List[Dict[str, Any]] | None | object = _DEFAULT_TOOLS,
+        tool_choice: Any = _DEFAULT_TOOLS,
+    ) -> Any:
         max_attempts = max(1, self._settings.OPENROUTER_MAX_ATTEMPTS)
         last_exc: Exception | None = None
         request_kwargs: Dict[str, Any] = {}
@@ -143,17 +151,23 @@ class OpenRouterKeystrokeAgent(Agent):
             request_kwargs["extra_body"] = {
                 "reasoning": {"enabled": False, "exclude": True}
             }
+        if tools is _DEFAULT_TOOLS:
+            request_kwargs["tools"] = self._tools()
+        elif tools is not None:
+            request_kwargs["tools"] = tools
+        if tool_choice is _DEFAULT_TOOLS:
+            request_kwargs["tool_choice"] = (
+                {"type": "function", "function": {"name": "submit_action"}}
+                if self._submit_action_only
+                else "auto"
+            )
+        elif tool_choice is not None:
+            request_kwargs["tool_choice"] = tool_choice
         for attempt in range(max_attempts):
             try:
                 return self._client_instance().chat.completions.create(
                     model=self._model,
                     messages=messages,
-                    tools=self._tools(),
-                    tool_choice=(
-                        {"type": "function", "function": {"name": "submit_action"}}
-                        if self._submit_action_only
-                        else "auto"
-                    ),
                     temperature=self._settings.LLM_TEMP,
                     max_tokens=self._settings.LLM_MAX_TOKENS,
                     **request_kwargs,
@@ -224,6 +238,52 @@ class OpenRouterKeystrokeAgent(Agent):
         except json.JSONDecodeError:
             return {}
         return parsed if isinstance(parsed, dict) else {}
+
+    def _normalize_action_payload(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        nested = payload.get("action")
+        if not isinstance(nested, dict):
+            return payload
+        if not nested:
+            return payload
+
+        normalized = dict(nested)
+        for field in (
+            "intent",
+            "objective",
+            "expected_visible_result",
+            "expected_simulation_result",
+            "screen_read",
+            "last_action_review",
+            "memory_update",
+            "plan_step",
+            "plan_review",
+            "advance_ticks",
+        ):
+            if field in payload and field not in normalized:
+                normalized[field] = payload[field]
+        self._tool_events.append(
+            {
+                "tool": "action_contract_repaired",
+                "input": {"wrapped": "action", "keys": sorted(payload.keys())},
+                "output": (
+                    "Unwrapped nested submit_action.action into the top-level "
+                    "KEYSTROKE action payload expected by fort-gym."
+                ),
+            }
+        )
+        return normalized
+
+    @staticmethod
+    def _empty_nested_action_error(payload: Dict[str, Any]) -> str | None:
+        nested = payload.get("action")
+        if isinstance(nested, dict) and not nested:
+            return (
+                "Invalid submit_action payload: action was an empty object. "
+                "Do not wrap the action. Submit a top-level KEYSTROKE payload like "
+                '{"type":"KEYSTROKE","params":{"keys":["LEAVESCREEN"]},'
+                '"intent":"...","advance_ticks":0}.'
+            )
+        return None
 
     @staticmethod
     def _json_payload_from_text(content: Any) -> Dict[str, Any] | None:
@@ -816,6 +876,114 @@ class OpenRouterKeystrokeAgent(Agent):
         )
         return parse_action(fallback)
 
+    def _parse_candidate_payload(
+        self,
+        payload: Dict[str, Any],
+        obs_json: Dict[str, Any],
+    ) -> Dict[str, Any] | str:
+        payload = self._normalize_action_payload(payload)
+        empty_action_error = self._empty_nested_action_error(payload)
+        if empty_action_error:
+            return empty_action_error
+
+        payload = self._repair_missing_keystroke_type(payload)
+        payload = self._repair_menu_loop_recovery_action(payload, obs_json)
+
+        blocked_menu_error = self._blocked_menu_path_error(payload, obs_json)
+        if blocked_menu_error:
+            self._log_blocked_menu_path(payload, obs_json, blocked_menu_error)
+            return blocked_menu_error
+
+        screen_read_error = self._screen_read_contract_error(payload, obs_json)
+        if screen_read_error:
+            self._log_screen_read_contract_error(payload, obs_json, screen_read_error)
+            return screen_read_error
+
+        contract_error = self._advance_ticks_contract_error(payload)
+        if contract_error:
+            repaired = self._repair_action_only_contract(payload, contract_error)
+            if repaired is None:
+                return contract_error
+            payload = repaired
+
+        try:
+            return parse_action(payload)
+        except ValueError as exc:
+            return f"Invalid submit_action payload: {exc}"
+
+    def _force_plain_json_action(
+        self,
+        messages: List[Dict[str, Any]],
+        obs_json: Dict[str, Any],
+        last_error: Exception | str | None,
+    ) -> Dict[str, Any] | None:
+        force_messages = list(messages)
+        force_messages.append(
+            {
+                "role": "user",
+                "content": (
+                    "Tool calling produced an invalid action. Do not call any tools. "
+                    "Reply with only one JSON object for a top-level KEYSTROKE action. "
+                    "Do not include an action wrapper. Required shape: "
+                    '{"type":"KEYSTROKE","params":{"keys":["..."]},'
+                    '"intent":"...","advance_ticks":0}. '
+                    f"Previous error: {last_error}"
+                ),
+            }
+        )
+        for _ in range(2):
+            self._rate_limit()
+            response = self._create_completion(
+                force_messages,
+                tools=None,
+                tool_choice=None,
+            )
+            self._tool_events.append(
+                {
+                    "tool": "openrouter.chat.completions.create",
+                    "input": {
+                        "model": self._model,
+                        "mode": "plain_json_action_recovery",
+                        "max_tokens": self._settings.LLM_MAX_TOKENS,
+                        "temperature": self._settings.LLM_TEMP,
+                    },
+                    "output": {"usage": _usage_payload(response)},
+                }
+            )
+            message = response.choices[0].message
+            payload = self._json_payload_from_text(getattr(message, "content", None))
+            if payload is None:
+                force_messages.append(
+                    {
+                        "role": "user",
+                        "content": (
+                            "Reply only with the JSON action object. No prose, "
+                            "no markdown, no tool call, and no action wrapper."
+                        ),
+                    }
+                )
+                continue
+            parsed = self._parse_candidate_payload(payload, obs_json)
+            if isinstance(parsed, dict):
+                self._tool_events.append(
+                    {
+                        "tool": "openrouter.plain_json_action",
+                        "input": payload,
+                        "output": "accepted",
+                    }
+                )
+                return parsed
+            force_messages.append(
+                {
+                    "role": "user",
+                    "content": (
+                        f"{parsed} Reply only with one valid top-level "
+                        "KEYSTROKE JSON object."
+                    ),
+                }
+            )
+        return None
+
     def decide(self, obs_text: str, obs_json: Dict[str, Any]) -> Dict[str, Any]:
         messages = self._messages(obs_text, obs_json)
         called_tool_names: set[str] = set()
@@ -843,69 +1011,8 @@ class OpenRouterKeystrokeAgent(Agent):
                 message_content = getattr(message, "content", None)
                 content_payload = self._json_payload_from_text(message_content)
                 if content_payload is not None:
-                    content_payload = self._repair_missing_keystroke_type(content_payload)
-                    content_payload = self._repair_menu_loop_recovery_action(
-                        content_payload,
-                        obs_json,
-                    )
-                    blocked_menu_error = self._blocked_menu_path_error(
-                        content_payload,
-                        obs_json,
-                    )
-                    if blocked_menu_error:
-                        self._log_blocked_menu_path(
-                            content_payload,
-                            obs_json,
-                            blocked_menu_error,
-                        )
-                        last_error = ValueError(blocked_menu_error)
-                        last_blocked_menu_error = blocked_menu_error
-                        messages.append(
-                            {
-                                "role": "user",
-                                "content": blocked_menu_error,
-                            }
-                        )
-                        continue
-                    screen_read_error = self._screen_read_contract_error(
-                        content_payload,
-                        obs_json,
-                    )
-                    if screen_read_error:
-                        self._log_screen_read_contract_error(
-                            content_payload,
-                            obs_json,
-                            screen_read_error,
-                        )
-                        last_error = ValueError(screen_read_error)
-                        messages.append(
-                            {
-                                "role": "user",
-                                "content": screen_read_error,
-                            }
-                        )
-                        continue
-                    contract_error = self._advance_ticks_contract_error(content_payload)
-                    if contract_error:
-                        repaired = self._repair_action_only_contract(
-                            content_payload,
-                            contract_error,
-                        )
-                        if repaired is None:
-                            last_error = ValueError(contract_error)
-                            messages.append(
-                                {
-                                    "role": "user",
-                                    "content": contract_error,
-                                }
-                            )
-                            continue
-                        content_payload = repaired
-                    try:
-                        action = parse_action(content_payload)
-                    except ValueError as exc:
-                        last_error = exc
-                    else:
+                    parsed = self._parse_candidate_payload(content_payload, obs_json)
+                    if isinstance(parsed, dict):
                         self._tool_events.append(
                             {
                                 "tool": "openrouter.content_action",
@@ -914,7 +1021,18 @@ class OpenRouterKeystrokeAgent(Agent):
                             }
                         )
                         self._completed_actions += 1
-                        return action
+                        return parsed
+
+                    last_error = ValueError(parsed)
+                    if parsed.startswith("Blocked repeated menu action:"):
+                        last_blocked_menu_error = parsed
+                        messages.append(
+                            {
+                                "role": "user",
+                                "content": parsed,
+                            }
+                        )
+                        continue
                 else:
                     content_snippet = (
                         message_content[:2000]
@@ -983,31 +1101,12 @@ class OpenRouterKeystrokeAgent(Agent):
 
             for call, tool_input in submit_calls:
                 called_tool_names.add("submit_action")
-                if not tool_input:
+                if not tool_input or self._empty_nested_action_error(tool_input):
                     fallback_payload = self._json_payload_from_text(
                         getattr(message, "content", None)
                     )
                     if fallback_payload is not None:
                         tool_input = fallback_payload
-                tool_input = self._repair_missing_keystroke_type(tool_input)
-                tool_input = self._repair_menu_loop_recovery_action(tool_input, obs_json)
-                blocked_menu_error = self._blocked_menu_path_error(tool_input, obs_json)
-                if blocked_menu_error:
-                    self._log_blocked_menu_path(
-                        tool_input,
-                        obs_json,
-                        blocked_menu_error,
-                    )
-                    last_error = ValueError(blocked_menu_error)
-                    last_blocked_menu_error = blocked_menu_error
-                    messages.append(
-                        {
-                            "role": "tool",
-                            "tool_call_id": call.id,
-                            "content": blocked_menu_error,
-                        }
-                    )
-                    continue
                 gate_error = self._gate_error(called_tool_names)
                 if gate_error:
                     last_error = gate_error
@@ -1019,48 +1118,17 @@ class OpenRouterKeystrokeAgent(Agent):
                         }
                     )
                     continue
-                screen_read_error = self._screen_read_contract_error(tool_input, obs_json)
-                if screen_read_error:
-                    self._log_screen_read_contract_error(
-                        tool_input,
-                        obs_json,
-                        screen_read_error,
-                    )
-                    last_error = ValueError(screen_read_error)
+
+                parsed = self._parse_candidate_payload(tool_input, obs_json)
+                if not isinstance(parsed, dict):
+                    last_error = ValueError(parsed)
+                    if parsed.startswith("Blocked repeated menu action:"):
+                        last_blocked_menu_error = parsed
                     messages.append(
                         {
                             "role": "tool",
                             "tool_call_id": call.id,
-                            "content": screen_read_error,
-                        }
-                    )
-                    continue
-                contract_error = self._advance_ticks_contract_error(tool_input)
-                if contract_error:
-                    repaired = self._repair_action_only_contract(
-                        tool_input,
-                        contract_error,
-                    )
-                    if repaired is None:
-                        last_error = ValueError(contract_error)
-                        messages.append(
-                            {
-                                "role": "tool",
-                                "tool_call_id": call.id,
-                                "content": contract_error,
-                            }
-                        )
-                        continue
-                    tool_input = repaired
-                try:
-                    action = parse_action(tool_input)
-                except ValueError as exc:
-                    last_error = exc
-                    messages.append(
-                        {
-                            "role": "tool",
-                            "tool_call_id": call.id,
-                            "content": f"Invalid submit_action payload: {exc}",
+                            "content": parsed,
                         }
                     )
                     continue
@@ -1068,11 +1136,16 @@ class OpenRouterKeystrokeAgent(Agent):
                     {"tool": "submit_action", "input": tool_input, "output": "accepted"}
                 )
                 self._completed_actions += 1
-                return action
+                return parsed
 
         if last_blocked_menu_error is not None:
             self._completed_actions += 1
             return self._fallback_blocked_menu_escape(last_blocked_menu_error)
+
+        action = self._force_plain_json_action(messages, obs_json, last_error)
+        if action is not None:
+            self._completed_actions += 1
+            return action
 
         raise RuntimeError(
             f"OpenRouter keystroke agent failed after {max_tool_rounds} tool rounds: {last_error}"
