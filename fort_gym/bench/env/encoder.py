@@ -162,6 +162,12 @@ def _action_family(entry: Dict[str, Any]) -> str:
     key_set = set(key_values)
     intent = str(entry.get("intent") or "").lower()
 
+    if "D_DESIGNATE" in key_set:
+        return "designation"
+    if "D_BUILDING" in key_set:
+        return "building_placement_menu"
+    if "D_JOBLIST" in key_set or "UNITJOB_MANAGER" in key_set:
+        return "job_manager_menu"
     if "D_NOBLES" in key_set or "nobles" in intent or "manager" in intent:
         return "manager_nobles_menu"
     if (
@@ -171,12 +177,6 @@ def _action_family(entry: Dict[str, Any]) -> str:
         or "carpenter workshop" in intent
     ):
         return "workshop_task_menu"
-    if "D_JOBLIST" in key_set or "UNITJOB_MANAGER" in key_set:
-        return "job_manager_menu"
-    if "D_BUILDING" in key_set:
-        return "building_placement_menu"
-    if "D_DESIGNATE" in key_set:
-        return "designation"
     if any(key == "STRING_A032" for key in key_values):
         return "wait"
     navigation_keys = {

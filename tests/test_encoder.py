@@ -781,3 +781,32 @@ def test_encoder_flags_repeated_manager_menu_loop() -> None:
     assert "do_not_repeat_menu_path=true" in text
     assert "you are repeating a no-progress manager_nobles_menu path" in text
     assert "do not use fixed CURSOR_DOWN counts" in text
+
+
+def test_encoder_does_not_classify_workshop_intent_designation_as_menu_loop() -> None:
+    _, state = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 3, "stone": 0},
+            "work": {},
+        },
+        screen_text="main map",
+        action_history=[
+            {
+                "step": 1,
+                "intent": "Chop trees to get logs for carpenter workshop construction",
+                "keys": ["D_DESIGNATE", "DESIGNATE_CHOP", "SELECT", "SELECT"],
+                "requested_ticks": 500,
+                "actual_ticks": 500,
+                "accepted": True,
+                "outcome": "advanced_ticks_without_tracked_state_change",
+                "productive_reasons": [],
+                "changed": [],
+            }
+        ],
+    )
+
+    summary = state["recent_progress_summary"]
+    assert summary["menu_no_progress_streak"] == 0
+    assert summary["do_not_repeat_menu_path"] is False

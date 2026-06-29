@@ -353,6 +353,12 @@ def _keystroke_action_family(action: Dict[str, Any]) -> str:
     key_values = [str(key) for key in keys] if isinstance(keys, list) else []
     key_set = set(key_values)
     intent = str(action.get("intent") or "").lower()
+    if "D_DESIGNATE" in key_set:
+        return "designation"
+    if "D_BUILDING" in key_set:
+        return "building_placement_menu"
+    if "D_JOBLIST" in key_set or "UNITJOB_MANAGER" in key_set:
+        return "job_manager_menu"
     if "D_NOBLES" in key_set or "nobles" in intent or "manager" in intent:
         return "manager_nobles_menu"
     if (
@@ -362,12 +368,6 @@ def _keystroke_action_family(action: Dict[str, Any]) -> str:
         or "carpenter workshop" in intent
     ):
         return "workshop_task_menu"
-    if "D_JOBLIST" in key_set or "UNITJOB_MANAGER" in key_set:
-        return "job_manager_menu"
-    if "D_BUILDING" in key_set:
-        return "building_placement_menu"
-    if "D_DESIGNATE" in key_set:
-        return "designation"
     if "STRING_A032" in key_set:
         return "wait"
     navigation_keys = {
