@@ -1066,9 +1066,24 @@ class OpenRouterKeystrokeAgent(Agent):
         if str(screen_state.get("confidence") or "") != "high":
             return None
 
+        target_setup = obs_json.get("ui_target_setup")
+        recommended_keys = []
+        if isinstance(target_setup, dict):
+            raw_recommended = target_setup.get("recommended_keys")
+            if isinstance(raw_recommended, list):
+                recommended_keys = [str(key) for key in raw_recommended]
+        should_force_select = recommended_keys == ["SELECT"]
+
         keys = [str(key) for key in cls._keystroke_keys(tool_payload)]
         if keys != ["SELECT"]:
-            return None
+            if not should_force_select:
+                return None
+            return (
+                "Workshop select transition contract mismatch: the visible "
+                f"screen is {mode} and the current workshop target recommends "
+                "SELECT. Do not leave this ready placement/material screen or "
+                "open another menu. Submit SELECT with advance_ticks=0."
+            )
         try:
             advance_ticks = int(tool_payload.get("advance_ticks") or 0)
         except (TypeError, ValueError):
