@@ -114,6 +114,7 @@ class RunRegistry:
         self._init_lock = threading.Lock()
         self._queues: Dict[str, asyncio.Queue[EventPayload]] = {}
         self._loops: Dict[str, asyncio.AbstractEventLoop] = {}
+        self._stop_events: Dict[str, threading.Event] = {}
 
     # ------------------------------------------------------------------
     # SQLite wiring
@@ -277,6 +278,7 @@ class RunRegistry:
             conn.commit()
 
             self._queues[identifier] = queue
+            self._stop_events[identifier] = threading.Event()
             if loop is not None:
                 self._loops[identifier] = loop
 
@@ -348,6 +350,32 @@ class RunRegistry:
     def bind_loop(self, run_id: str, loop: asyncio.AbstractEventLoop) -> None:
         with self._db_lock:
             self._loops[run_id] = loop
+
+    def request_stop(self, run_id: str) -> bool:
+        with self._db_lock:
+            event = self._stop_events.get(run_id)
+            if event is None:
+                row = self._ensure_conn().execute(
+                    "SELECT 1 FROM runs WHERE run_id = ?",
+                    (run_id,),
+                ).fetchone()
+                if row is None:
+                    return False
+                event = threading.Event()
+                self._stop_events[run_id] = event
+            event.set()
+        return True
+
+    def stop_requested(self, run_id: str) -> bool:
+        with self._db_lock:
+            event = self._stop_events.get(run_id)
+        return bool(event and event.is_set())
+
+    def clear_stop(self, run_id: str) -> None:
+        with self._db_lock:
+            event = self._stop_events.get(run_id)
+            if event is not None:
+                event.clear()
 
     def get_queue(self, run_id: str) -> Optional[asyncio.Queue[EventPayload]]:
         with self._db_lock:
@@ -803,6 +831,7 @@ class RunRegistry:
             conn.commit()
             self._queues.clear()
             self._loops.clear()
+            self._stop_events.clear()
 
 
 RUN_REGISTRY = RunRegistry()

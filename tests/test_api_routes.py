@@ -103,3 +103,24 @@ def test_run_registry_persists_preserve_save(tmp_path) -> None:
     assert created.preserve_save is True
     assert loaded is not None
     assert loaded.preserve_save is True
+
+
+def test_run_registry_stop_flag_lifecycle(tmp_path) -> None:
+    from fort_gym.bench.run.storage import RunRegistry
+
+    registry = RunRegistry(db_path=tmp_path / "runs.sqlite3")
+    created = registry.create(
+        backend="dfhack",
+        model="openrouter-glm-5.2",
+        max_steps=200,
+        ticks_per_step=10,
+    )
+
+    assert registry.stop_requested(created.run_id) is False
+    assert registry.request_stop(created.run_id) is True
+    assert registry.stop_requested(created.run_id) is True
+
+    registry.clear_stop(created.run_id)
+
+    assert registry.stop_requested(created.run_id) is False
+    assert registry.request_stop("missing-run") is False

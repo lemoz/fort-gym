@@ -13,6 +13,7 @@ from fort_gym.bench.run.runner import (
     _screen_shows_building_type_menu,
     _screen_shows_ready_workshop_placement,
     _screen_shows_workshop_material_selection,
+    _same_target_rect,
     _snapshot_tile_changes,
     _ui_target_setup_for_observation,
     _ui_target_step_succeeded,
@@ -464,6 +465,16 @@ def test_desired_keystroke_target_mode_trusts_visible_material_blocker() -> None
         )
         == "material"
     )
+
+
+def test_same_target_rect_matches_normalized_target_or_selection_rect() -> None:
+    target = {"target_rect": [10, 20, 0, 12, 22, 0]}
+    same_reversed = {"selection_rect": [12, 22, 0, 10, 20, 0]}
+    different = {"target_rect": [10, 21, 0, 12, 23, 0]}
+
+    assert _same_target_rect(target, same_reversed) is True
+    assert _same_target_rect(target, different) is False
+    assert _same_target_rect(target, {"target_rect": ["bad"]}) is False
 
 
 def test_ready_workshop_placement_screen_gets_select_target() -> None:

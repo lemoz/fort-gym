@@ -313,6 +313,7 @@ async def resume_run(run_id: str, _: None = Depends(require_admin)) -> JSONRespo
 async def stop_run(run_id: str, _: None = Depends(require_admin)) -> JSONResponse:
     if RUN_REGISTRY.get(run_id) is None:
         raise HTTPException(status_code=404, detail="Run not found")
+    RUN_REGISTRY.request_stop(run_id)
     RUN_REGISTRY.set_status(run_id, status="stopped", ended_at=datetime.utcnow())
     return JSONResponse({"status": "stopped", "run_id": run_id})
 

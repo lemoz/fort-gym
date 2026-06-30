@@ -98,6 +98,17 @@ def _normalize_rect(value: Any) -> tuple[int, int, int, int, int, int] | None:
     )
 
 
+def _same_target_rect(
+    first: Dict[str, Any] | None,
+    second: Dict[str, Any] | None,
+) -> bool:
+    if not isinstance(first, dict) or not isinstance(second, dict):
+        return False
+    first_rect = _normalize_rect(first.get("target_rect") or first.get("selection_rect"))
+    second_rect = _normalize_rect(second.get("target_rect") or second.get("selection_rect"))
+    return first_rect is not None and first_rect == second_rect
+
+
 def _map_snapshot_rect_from_state(state: Dict[str, Any], margin: int = 1) -> tuple[int, int, int, int, int, int] | None:
     work = state.get("work")
     if not isinstance(work, dict):
@@ -1149,6 +1160,7 @@ def run_once(
     ui_successful_targets = 0
     ui_work_feedback: Dict[str, Any] = {}
     ui_build_material_blocked = False
+    ui_material_target_exhausted = False
     carpenter_workshop_usable_seen = 0
 
     def publish_event(step: int, event_type: str, payload: Dict[str, Any], events: List[Dict[str, Any]]) -> None:
@@ -1166,6 +1178,7 @@ def run_once(
         publish_event(step_index, "stderr", {"message": message}, events)
 
     run_failed = False
+    run_stopped = False
 
     try:
         with trace_path.open("w", encoding="utf-8") as fh:
@@ -1173,6 +1186,28 @@ def run_once(
                 events: List[Dict[str, Any]] = []
                 tick_info_state = {}
                 map_snapshot_before = None
+
+                if registry and registry.stop_requested(run_identifier):
+                    run_stopped = True
+                    publish_event(step, "stopped", {"reason": "stop_requested"}, events)
+                    fh.write(
+                        json.dumps(
+                            {
+                                "run_id": run_identifier,
+                                "step": step,
+                                "stopped": {"reason": "stop_requested"},
+                                "events": events,
+                            }
+                        )
+                        + "\n"
+                    )
+                    registry.set_status(
+                        run_identifier,
+                        status="stopped",
+                        step=step,
+                        ended_at=datetime.utcnow(),
+                    )
+                    break
 
                 pause_env()
                 if (
@@ -1182,21 +1217,58 @@ def run_once(
                 ):
                     refreshed_target = prepare_keystroke_target(ui_target_mode)
                     if refreshed_target.get("ok"):
-                        keystroke_ui_target = refreshed_target
-                        ui_target_generation += 1
-                        ui_target_attempts = 0
-                        ui_work_rect = None
-                        baseline_ui_work = None
-                        ui_last_work_progress = 0
-                        ui_last_excavation_progress = 0
-                        ui_target_progress_seen = False
-                        ui_no_progress_streak = 0
-                        ui_work_feedback = {
-                            "target_refreshed": True,
-                            "target_mode": ui_target_mode,
-                            "reason": "previous target produced no new UI work",
-                            "refresh_after_no_progress_steps": UI_TARGET_REFRESH_NO_PROGRESS_STEPS,
-                        }
+                        if ui_target_mode == "material" and _same_target_rect(
+                            keystroke_ui_target,
+                            refreshed_target,
+                        ):
+                            starter_target = prepare_keystroke_target("starter")
+                            if starter_target.get("ok"):
+                                ui_material_target_exhausted = True
+                                ui_target_mode = "starter"
+                                keystroke_ui_target = starter_target
+                                ui_target_generation += 1
+                                ui_target_attempts = 0
+                                ui_work_rect = None
+                                baseline_ui_work = None
+                                ui_last_work_progress = 0
+                                ui_last_excavation_progress = 0
+                                ui_target_progress_seen = False
+                                ui_no_progress_streak = 0
+                                ui_work_feedback = {
+                                    "target_refreshed": True,
+                                    "target_mode": ui_target_mode,
+                                    "reason": (
+                                        "material target repeated with no usable "
+                                        "material; switching back to starter excavation"
+                                    ),
+                                    "material_target_exhausted": True,
+                                    "refresh_after_no_progress_steps": UI_TARGET_REFRESH_NO_PROGRESS_STEPS,
+                                }
+                            else:
+                                ui_work_feedback = {
+                                    "target_refresh_failed": True,
+                                    "error": starter_target.get("error", "unknown"),
+                                    "target_mode": "starter",
+                                    "previous_target_mode": ui_target_mode,
+                                    "material_target_exhausted": True,
+                                    "no_progress_streak": ui_no_progress_streak,
+                                }
+                        else:
+                            keystroke_ui_target = refreshed_target
+                            ui_target_generation += 1
+                            ui_target_attempts = 0
+                            ui_work_rect = None
+                            baseline_ui_work = None
+                            ui_last_work_progress = 0
+                            ui_last_excavation_progress = 0
+                            ui_target_progress_seen = False
+                            ui_no_progress_streak = 0
+                            ui_work_feedback = {
+                                "target_refreshed": True,
+                                "target_mode": ui_target_mode,
+                                "reason": "previous target produced no new UI work",
+                                "refresh_after_no_progress_steps": UI_TARGET_REFRESH_NO_PROGRESS_STEPS,
+                            }
                     else:
                         ui_work_feedback = {
                             "target_refresh_failed": True,
@@ -1279,6 +1351,11 @@ def run_once(
                             ui_successful_targets=ui_successful_targets,
                             build_material_blocked=ui_build_material_blocked,
                         )
+                        if (
+                            ui_material_target_exhausted
+                            and desired_target_mode == "material"
+                        ):
+                            desired_target_mode = "starter"
                         if desired_target_mode != ui_target_mode:
                             refreshed_target = prepare_keystroke_target(desired_target_mode)
                             if refreshed_target.get("ok"):
@@ -1385,6 +1462,37 @@ def run_once(
                     previous_screen = screen_text
                 publish_event(step, "state", {"state": obs_json, "text": obs_text}, events)
 
+                if registry and registry.stop_requested(run_identifier):
+                    run_stopped = True
+                    publish_event(
+                        step,
+                        "stopped",
+                        {"reason": "stop_requested_before_agent_decide"},
+                        events,
+                    )
+                    fh.write(
+                        json.dumps(
+                            {
+                                "run_id": run_identifier,
+                                "step": step,
+                                "observation": obs_json,
+                                "observation_text": obs_text,
+                                "stopped": {
+                                    "reason": "stop_requested_before_agent_decide"
+                                },
+                                "events": events,
+                            }
+                        )
+                        + "\n"
+                    )
+                    registry.set_status(
+                        run_identifier,
+                        status="stopped",
+                        step=step,
+                        ended_at=datetime.utcnow(),
+                    )
+                    break
+
                 try:
                     raw_action = agent.decide(obs_text, obs_json)
                 except Exception as exc:
@@ -1442,6 +1550,38 @@ def run_once(
                             step=step,
                             ended_at=datetime.utcnow(),
                         )
+                    break
+
+                if registry and registry.stop_requested(run_identifier):
+                    run_stopped = True
+                    publish_event(
+                        step,
+                        "stopped",
+                        {"reason": "stop_requested_after_agent_decide"},
+                        events,
+                    )
+                    fh.write(
+                        json.dumps(
+                            {
+                                "run_id": run_identifier,
+                                "step": step,
+                                "observation": obs_json,
+                                "observation_text": obs_text,
+                                "raw_action": raw_action,
+                                "stopped": {
+                                    "reason": "stop_requested_after_agent_decide"
+                                },
+                                "events": events,
+                            }
+                        )
+                        + "\n"
+                    )
+                    registry.set_status(
+                        run_identifier,
+                        status="stopped",
+                        step=step,
+                        ended_at=datetime.utcnow(),
+                    )
                     break
 
                 tool_events = agent.pop_tool_events()
@@ -1733,6 +1873,13 @@ def run_once(
                             ui_run_material_progress += ui_step_material_progress
                             if ui_step_material_progress > 0:
                                 ui_build_material_blocked = False
+                                ui_material_target_exhausted = False
+                            elif (
+                                ui_material_target_exhausted
+                                and ui_target_mode == "starter"
+                                and ui_step_excavation_progress > 0
+                            ):
+                                ui_material_target_exhausted = False
                             if target_step_succeeded:
                                 ui_no_progress_streak = 0
                             elif ui_target_mode == "material":
@@ -1887,7 +2034,13 @@ def run_once(
                 if registry:
                     registry.set_status(run_identifier, step=step)
 
-        if registry and not run_failed:
+        if registry and run_stopped:
+            registry.set_status(
+                run_identifier,
+                status="stopped",
+                ended_at=datetime.utcnow(),
+            )
+        elif registry and not run_failed:
             registry.set_status(
                 run_identifier,
                 status="completed",
