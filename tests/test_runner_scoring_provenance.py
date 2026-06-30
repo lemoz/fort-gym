@@ -825,6 +825,30 @@ def test_keystroke_step_score_progress_requires_current_progress() -> None:
         state_before={"stocks": {"wood": 3}, "work": {"carpenter_workshops_planned": 0}},
         advance_state={"stocks": {"wood": 3}, "work": {"carpenter_workshops_planned": 0}},
     )
+    assert not _keystroke_step_score_progress(
+        {
+            "ui_step_work_progress": 0,
+            "ui_step_excavation_progress": 0,
+            "ui_step_material_progress": 0,
+            "production_progress": 5,
+            "utility_progress": 5,
+            "utility_action_progress": 0,
+        },
+        state_before={
+            "stocks": {"wood": 30, "wealth": 96},
+            "work": {
+                "carpenter_workshop_task_jobs": 1,
+                "carpenter_workshops_usable": 1,
+            },
+        },
+        advance_state={
+            "stocks": {"wood": 30, "wealth": 96},
+            "work": {
+                "carpenter_workshop_task_jobs": 1,
+                "carpenter_workshops_usable": 1,
+            },
+        },
+    )
 
     assert _keystroke_step_score_progress(
         {"ui_step_work_progress": 0, "ui_step_material_progress": 1},

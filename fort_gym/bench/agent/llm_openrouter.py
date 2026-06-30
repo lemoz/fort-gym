@@ -1052,6 +1052,57 @@ class OpenRouterKeystrokeAgent(Agent):
         )
 
     @classmethod
+    def _workshop_select_transition_contract_error(
+        cls,
+        tool_payload: Dict[str, Any],
+        obs_json: Dict[str, Any],
+    ) -> str | None:
+        screen_state = obs_json.get("screen_state")
+        if not isinstance(screen_state, dict):
+            return None
+        mode = str(screen_state.get("mode") or "").strip().lower()
+        if mode not in {"workshop_placement", "workshop_material_selection"}:
+            return None
+        if str(screen_state.get("confidence") or "") != "high":
+            return None
+
+        keys = [str(key) for key in cls._keystroke_keys(tool_payload)]
+        if keys != ["SELECT"]:
+            return None
+        try:
+            advance_ticks = int(tool_payload.get("advance_ticks") or 0)
+        except (TypeError, ValueError):
+            advance_ticks = 0
+        if advance_ticks == 0:
+            return None
+
+        return (
+            "Workshop select transition contract mismatch: the visible screen "
+            f"is {mode}, where SELECT is still a paused UI/menu transition. "
+            "Submit SELECT with advance_ticks=0. Let time pass only after a "
+            "later observation proves a workshop construction job, usable "
+            "workshop, task job, manager order, or active job exists."
+        )
+
+    def _log_workshop_select_transition_contract_error(
+        self,
+        tool_payload: Dict[str, Any],
+        obs_json: Dict[str, Any],
+        error: str,
+    ) -> None:
+        self._tool_events.append(
+            {
+                "tool": "workshop_select_transition_contract_rejected",
+                "input": {
+                    "screen_state": obs_json.get("screen_state"),
+                    "submitted_keys": self._keystroke_keys(tool_payload),
+                    "advance_ticks": tool_payload.get("advance_ticks"),
+                },
+                "output": error,
+            }
+        )
+
+    @classmethod
     def _workshop_add_task_list_contract_error(
         cls,
         tool_payload: Dict[str, Any],
@@ -1646,6 +1697,17 @@ class OpenRouterKeystrokeAgent(Agent):
         if screen_read_error:
             self._log_screen_read_contract_error(payload, obs_json, screen_read_error)
             return screen_read_error
+
+        workshop_select_transition_error = (
+            self._workshop_select_transition_contract_error(payload, obs_json)
+        )
+        if workshop_select_transition_error:
+            self._log_workshop_select_transition_contract_error(
+                payload,
+                obs_json,
+                workshop_select_transition_error,
+            )
+            return workshop_select_transition_error
 
         selected_workshop_wait_error = self._selected_workshop_wait_contract_error(
             payload,

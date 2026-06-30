@@ -1083,7 +1083,6 @@ def _keystroke_step_score_progress(
         "ui_step_work_progress",
         "ui_step_excavation_progress",
         "ui_step_material_progress",
-        "production_progress",
         "utility_action_progress",
     ):
         if int(metrics_snapshot.get(field) or 0) > 0:

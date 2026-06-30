@@ -1402,6 +1402,73 @@ def test_openrouter_agent_recovery_retries_material_tick_contract(monkeypatch) -
     )
 
 
+@pytest.mark.parametrize(
+    "mode",
+    ["workshop_placement", "workshop_material_selection"],
+)
+def test_openrouter_agent_rejects_ticks_on_workshop_select_transition(
+    monkeypatch,
+    mode: str,
+) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    _FakeOpenRouterClient.responses = [
+        {
+            "tool_calls": [
+                _submit_action_call(
+                    {
+                        "type": "KEYSTROKE",
+                        "params": {"keys": ["SELECT"]},
+                        "intent": "Confirm the visible workshop screen",
+                        "advance_ticks": 200,
+                    },
+                    "call_bad",
+                )
+            ]
+        },
+        {
+            "tool_calls": [
+                _submit_action_call(
+                    {
+                        "type": "KEYSTROKE",
+                        "params": {"keys": ["SELECT"]},
+                        "intent": "Confirm the visible workshop screen without advancing time",
+                        "advance_ticks": 0,
+                    },
+                    "call_good",
+                )
+            ]
+        },
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "openai"
+        return SimpleNamespace(OpenAI=_FakeOpenRouterClient)
+
+    monkeypatch.setattr("fort_gym.bench.agent.llm_openrouter.import_module", fake_import_module)
+
+    try:
+        agent = OpenRouterKeystrokeAgent()
+        action = agent.decide(
+            "mock observation",
+            {
+                "pause_state": True,
+                "screen_state": {"mode": mode, "confidence": "high"},
+            },
+        )
+        events = agent.pop_tool_events()
+    finally:
+        _FakeOpenRouterClient.responses = None
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["params"]["keys"] == ["SELECT"]
+    assert action["advance_ticks"] == 0
+    assert any(
+        event["tool"] == "workshop_select_transition_contract_rejected"
+        for event in events
+    )
+
+
 def test_openrouter_agent_allows_ui_only_buildjob_with_zero_ticks(monkeypatch) -> None:
     monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
     get_settings.cache_clear()  # type: ignore[attr-defined]

@@ -241,7 +241,7 @@ def test_encoder_ready_workshop_placement_overrides_stale_material_warning() -> 
     assert "current visible workshop placement screen says Enter: Place" in text
     assert "older material warnings as stale" in text
     assert "valid carpenter workshop placement screen" in text
-    assert "press SELECT to place it now" in text
+    assert "press SELECT with advance_ticks=0" in text
     assert "Fresh target recommended keys: SELECT" in text
     assert "previous build screen said material was missing" not in text
     assert "building material is missing, unusable, or not yet proven" not in text
@@ -283,7 +283,7 @@ def test_encoder_workshop_material_selection_recommends_select() -> None:
     )
 
     assert "current visible workshop material selection screen" in text
-    assert "press SELECT to choose the highlighted material" in text
+    assert "press SELECT with advance_ticks=0 to choose the highlighted material" in text
     assert "carpenter workshop material-selection list" in text
     assert "Fresh target recommended keys: SELECT" in text
     assert "previous build screen said material was missing" not in text

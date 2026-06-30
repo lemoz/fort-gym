@@ -1153,8 +1153,9 @@ def encode_observation(
         status_lines.append(
             "Live UI build feedback: the current visible workshop material "
             "selection screen lists material rows and says Enter: Select; "
-            "press SELECT to choose the highlighted material instead of "
-            "exiting, unless the visible screen says Needs building material."
+            "press SELECT with advance_ticks=0 to choose the highlighted "
+            "material instead of exiting, unless the visible screen says Needs "
+            "building material."
         )
     elif screen_shows_pending_workshop_construction:
         status_lines.append(
@@ -1324,15 +1325,17 @@ def encode_observation(
                     "Live UI workshop target: current DF screen is a valid "
                     "carpenter workshop placement screen. If your screen_read "
                     "also sees Enter: Place and no Blocked or Needs building "
-                    "material warning, press SELECT to place it now."
+                    "material warning, press SELECT with advance_ticks=0 to "
+                    "move to material selection."
                 )
             elif screen_shows_workshop_material_selection:
                 status_lines.append(
                     "Live UI workshop target: current DF screen is the "
                     "carpenter workshop material-selection list. If your "
                     "screen_read sees a material row and Enter: Select, press "
-                    "SELECT to choose the highlighted material; do not leave "
-                    "the menu just because construction has not finished yet."
+                    "SELECT with advance_ticks=0 to choose the highlighted "
+                    "material; do not leave the menu just because construction "
+                    "has not finished yet."
                 )
             else:
                 status_lines.append(

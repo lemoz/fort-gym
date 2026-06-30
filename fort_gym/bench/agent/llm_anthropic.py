@@ -134,10 +134,12 @@ the workshop unless your screen_read verifies the placement UI does not say
 `selection_rect`, `placement_rect`, and target metadata.
 If the current visible workshop placement screen says `Enter: Place` and does
 not say `Blocked` or `Needs building material`, treat older material warnings as
-stale and press SELECT to place the workshop.
+stale and press SELECT with advance_ticks 0 to move to the next DF build screen.
 If the current visible carpenter-workshop material list shows a material row and
-`Enter: Select`, press SELECT to choose the highlighted material; do not exit the
-menu just because the workshop has not been created yet.
+`Enter: Select`, press SELECT with advance_ticks 0 to choose the highlighted
+material; do not exit the menu just because the workshop has not been created
+yet. After the workshop/job delta appears, use the next observation to escape
+menus or advance time.
 In D_BUILDING/furniture selector lists with a `+-*/: Select` footer, SELECT
 chooses the currently highlighted row, not the parenthesized letter you want.
 Before pressing SELECT, your screen_read must identify the highlighted row as
