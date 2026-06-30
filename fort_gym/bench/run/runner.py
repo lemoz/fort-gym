@@ -60,6 +60,7 @@ UI_TARGET_RECOMMENDED_KEY_RETRY_LIMIT = 2
 UI_MATERIAL_TARGET_RECOMMENDED_KEY_RETRY_LIMIT = 2
 UI_WORKSHOP_TARGET_RECOMMENDED_KEY_RETRY_LIMIT = 6
 UI_EXISTING_WORKSHOP_TARGET_RECOMMENDED_KEY_RETRY_LIMIT = 3
+UI_WORKSHOP_BLOCKED_FALLBACK_TARGETS = 3
 UI_MATERIAL_BLOCKER_ESCAPE_KEYS = ("LEAVESCREEN", "LEAVESCREEN", "LEAVESCREEN")
 UI_MATERIAL_TARGET_MIN_EXCAVATION_PROGRESS = 6
 KEYSTROKE_MODEL_NAMES = {
@@ -839,6 +840,18 @@ def _material_exhausted_fallback_target_mode(
     return "starter"
 
 
+def _workshop_blocked_fallback_active(
+    blocked_target_count: int,
+    blocked_at_work_progress: int | None,
+    current_work_progress: int,
+) -> bool:
+    return bool(
+        blocked_target_count >= UI_WORKSHOP_BLOCKED_FALLBACK_TARGETS
+        and blocked_at_work_progress is not None
+        and current_work_progress <= blocked_at_work_progress
+    )
+
+
 def _screen_shows_ready_workshop_placement(screen_text: str | None) -> bool:
     return bool(
         screen_text
@@ -1328,6 +1341,7 @@ def run_once(
     ui_work_feedback: Dict[str, Any] = {}
     ui_build_material_blocked = False
     ui_workshop_target_blocked = False
+    ui_workshop_blocked_at_work_progress: int | None = None
     ui_material_target_exhausted = False
     carpenter_workshop_usable_seen = 0
     scoreable_elapsed_ticks = 0
@@ -1385,52 +1399,18 @@ def run_once(
                     and is_keystroke_mode
                     and ui_no_progress_streak >= UI_TARGET_REFRESH_NO_PROGRESS_STEPS
                 ):
-                    refreshed_target = prepare_keystroke_target(
-                        ui_target_mode,
-                        blocked_workshop_targets=tuple(ui_blocked_workshop_targets),
-                    )
-                    if refreshed_target.get("ok"):
-                        if ui_target_mode == "material" and _same_target_route(
-                            keystroke_ui_target,
-                            refreshed_target,
-                        ):
-                            starter_target = prepare_keystroke_target(
-                                "starter",
-                                blocked_workshop_targets=tuple(ui_blocked_workshop_targets),
-                            )
-                            if starter_target.get("ok"):
-                                ui_material_target_exhausted = True
-                                ui_target_mode = "starter"
-                                keystroke_ui_target = starter_target
-                                ui_target_generation += 1
-                                ui_target_attempts = 0
-                                ui_work_rect = None
-                                baseline_ui_work = None
-                                ui_last_work_progress = 0
-                                ui_last_excavation_progress = 0
-                                ui_target_progress_seen = False
-                                ui_no_progress_streak = 0
-                                ui_work_feedback = {
-                                    "target_refreshed": True,
-                                    "target_mode": ui_target_mode,
-                                    "reason": (
-                                        "material target repeated with no usable "
-                                        "material; switching back to starter excavation"
-                                    ),
-                                    "material_target_exhausted": True,
-                                    "refresh_after_no_progress_steps": UI_TARGET_REFRESH_NO_PROGRESS_STEPS,
-                                }
-                            else:
-                                ui_work_feedback = {
-                                    "target_refresh_failed": True,
-                                    "error": starter_target.get("error", "unknown"),
-                                    "target_mode": "starter",
-                                    "previous_target_mode": ui_target_mode,
-                                    "material_target_exhausted": True,
-                                    "no_progress_streak": ui_no_progress_streak,
-                                }
-                        else:
-                            keystroke_ui_target = refreshed_target
+                    if _workshop_blocked_fallback_active(
+                        len(ui_blocked_workshop_targets),
+                        ui_workshop_blocked_at_work_progress,
+                        ui_run_work_progress,
+                    ):
+                        starter_target = prepare_keystroke_target(
+                            "starter",
+                            blocked_workshop_targets=tuple(ui_blocked_workshop_targets),
+                        )
+                        if starter_target.get("ok"):
+                            ui_target_mode = "starter"
+                            keystroke_ui_target = starter_target
                             ui_target_generation += 1
                             ui_target_attempts = 0
                             ui_work_rect = None
@@ -1439,21 +1419,100 @@ def run_once(
                             ui_last_excavation_progress = 0
                             ui_target_progress_seen = False
                             ui_no_progress_streak = 0
-                            if ui_target_mode == "workshop":
-                                ui_workshop_target_blocked = False
+                            ui_workshop_target_blocked = False
                             ui_work_feedback = {
                                 "target_refreshed": True,
                                 "target_mode": ui_target_mode,
-                                "reason": "previous target produced no new UI work",
+                                "reason": (
+                                    "multiple workshop footprints were blocked; "
+                                    "expanding starter floor before retrying placement"
+                                ),
+                                "blocked_workshop_target_count": len(
+                                    ui_blocked_workshop_targets
+                                ),
                                 "refresh_after_no_progress_steps": UI_TARGET_REFRESH_NO_PROGRESS_STEPS,
                             }
+                        else:
+                            ui_work_feedback = {
+                                "target_refresh_failed": True,
+                                "error": starter_target.get("error", "unknown"),
+                                "target_mode": "starter",
+                                "previous_target_mode": ui_target_mode,
+                                "blocked_workshop_target_count": len(
+                                    ui_blocked_workshop_targets
+                                ),
+                                "no_progress_streak": ui_no_progress_streak,
+                            }
                     else:
-                        ui_work_feedback = {
-                            "target_refresh_failed": True,
-                            "error": refreshed_target.get("error", "unknown"),
-                            "target_mode": ui_target_mode,
-                            "no_progress_streak": ui_no_progress_streak,
-                        }
+                        refreshed_target = prepare_keystroke_target(
+                            ui_target_mode,
+                            blocked_workshop_targets=tuple(ui_blocked_workshop_targets),
+                        )
+                        if refreshed_target.get("ok"):
+                            if ui_target_mode == "material" and _same_target_route(
+                                keystroke_ui_target,
+                                refreshed_target,
+                            ):
+                                starter_target = prepare_keystroke_target(
+                                    "starter",
+                                    blocked_workshop_targets=tuple(ui_blocked_workshop_targets),
+                                )
+                                if starter_target.get("ok"):
+                                    ui_material_target_exhausted = True
+                                    ui_target_mode = "starter"
+                                    keystroke_ui_target = starter_target
+                                    ui_target_generation += 1
+                                    ui_target_attempts = 0
+                                    ui_work_rect = None
+                                    baseline_ui_work = None
+                                    ui_last_work_progress = 0
+                                    ui_last_excavation_progress = 0
+                                    ui_target_progress_seen = False
+                                    ui_no_progress_streak = 0
+                                    ui_work_feedback = {
+                                        "target_refreshed": True,
+                                        "target_mode": ui_target_mode,
+                                        "reason": (
+                                            "material target repeated with no usable "
+                                            "material; switching back to starter excavation"
+                                        ),
+                                        "material_target_exhausted": True,
+                                        "refresh_after_no_progress_steps": UI_TARGET_REFRESH_NO_PROGRESS_STEPS,
+                                    }
+                                else:
+                                    ui_work_feedback = {
+                                        "target_refresh_failed": True,
+                                        "error": starter_target.get("error", "unknown"),
+                                        "target_mode": "starter",
+                                        "previous_target_mode": ui_target_mode,
+                                        "material_target_exhausted": True,
+                                        "no_progress_streak": ui_no_progress_streak,
+                                    }
+                            else:
+                                keystroke_ui_target = refreshed_target
+                                ui_target_generation += 1
+                                ui_target_attempts = 0
+                                ui_work_rect = None
+                                baseline_ui_work = None
+                                ui_last_work_progress = 0
+                                ui_last_excavation_progress = 0
+                                ui_target_progress_seen = False
+                                ui_no_progress_streak = 0
+                                if ui_target_mode == "workshop":
+                                    ui_workshop_target_blocked = False
+                                ui_work_feedback = {
+                                    "target_refreshed": True,
+                                    "target_mode": ui_target_mode,
+                                    "reason": "previous target produced no new UI work",
+                                    "refresh_after_no_progress_steps": UI_TARGET_REFRESH_NO_PROGRESS_STEPS,
+                                }
+                        else:
+                            ui_work_feedback = {
+                                "target_refresh_failed": True,
+                                "error": refreshed_target.get("error", "unknown"),
+                                "target_mode": ui_target_mode,
+                                "no_progress_streak": ui_no_progress_streak,
+                            }
 
                 def call_with_retry(label: str, func):
                     if backend_name != "dfhack":
@@ -1511,6 +1570,12 @@ def run_once(
                     blocked_key = _workshop_target_key(keystroke_ui_target)
                     if blocked_key is not None:
                         ui_blocked_workshop_targets.add(blocked_key)
+                    if (
+                        len(ui_blocked_workshop_targets)
+                        >= UI_WORKSHOP_BLOCKED_FALLBACK_TARGETS
+                        and ui_workshop_blocked_at_work_progress is None
+                    ):
+                        ui_workshop_blocked_at_work_progress = ui_run_work_progress
                     ui_workshop_target_blocked = True
                     ui_no_progress_streak = max(
                         ui_no_progress_streak,
@@ -1554,6 +1619,15 @@ def run_once(
                                 ui_successful_targets=ui_successful_targets,
                                 build_material_blocked=ui_build_material_blocked,
                             )
+                        if (
+                            desired_target_mode == "workshop"
+                            and _workshop_blocked_fallback_active(
+                                len(ui_blocked_workshop_targets),
+                                ui_workshop_blocked_at_work_progress,
+                                ui_run_work_progress,
+                            )
+                        ):
+                            desired_target_mode = "starter"
                         if desired_target_mode != ui_target_mode:
                             refreshed_target = prepare_keystroke_target(
                                 desired_target_mode,
@@ -2104,6 +2178,14 @@ def run_once(
                             if ui_step_material_progress > 0:
                                 ui_build_material_blocked = False
                                 ui_material_target_exhausted = False
+                            if (
+                                ui_target_mode == "starter"
+                                and ui_step_work_progress > 0
+                                and ui_workshop_blocked_at_work_progress is not None
+                                and ui_run_work_progress > ui_workshop_blocked_at_work_progress
+                            ):
+                                ui_workshop_blocked_at_work_progress = None
+                                ui_workshop_target_blocked = False
                             if target_step_succeeded:
                                 ui_no_progress_streak = 0
                             elif ui_target_mode == "material":

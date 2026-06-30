@@ -24,6 +24,7 @@ from fort_gym.bench.run.runner import (
     _ui_target_step_succeeded,
     _ui_work_rect_from_state,
     _workshop_current_screen_select_target,
+    _workshop_blocked_fallback_active,
     _workshop_placement_confirm_target,
     _zero_assisted_dfhack_progress,
 )
@@ -640,6 +641,14 @@ def test_blocked_workshop_placement_screen_is_distinct_from_ready_select() -> No
     assert _screen_shows_blocked_workshop_placement(occupied)
     assert not _screen_shows_blocked_workshop_placement(needs_material)
     assert not _screen_shows_blocked_workshop_placement(ready)
+
+
+def test_workshop_blocked_fallback_requires_new_floor_progress() -> None:
+    assert _workshop_blocked_fallback_active(3, 10, 10)
+    assert _workshop_blocked_fallback_active(4, 10, 9)
+    assert not _workshop_blocked_fallback_active(2, 10, 10)
+    assert not _workshop_blocked_fallback_active(3, None, 10)
+    assert not _workshop_blocked_fallback_active(3, 10, 11)
 
 
 def test_workshop_material_selection_screen_gets_select_target() -> None:
