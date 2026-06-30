@@ -1300,11 +1300,7 @@ class OpenRouterKeystrokeAgent(Agent):
             keys
             and all(key == "LEAVESCREEN" for key in keys)
             and advance_ticks == 0
-            and mode not in {
-                "main_map",
-                "carpenter_workshop_selected",
-                "workshop_add_task_list",
-            }
+            and mode != "main_map"
         ):
             return None
         if not keys and advance_ticks >= 1000:
@@ -1383,11 +1379,7 @@ class OpenRouterKeystrokeAgent(Agent):
             keys
             and all(key == "LEAVESCREEN" for key in keys)
             and advance_ticks == 0
-            and mode not in {
-                "main_map",
-                "carpenter_workshop_selected",
-                "workshop_add_task_list",
-            }
+            and mode != "main_map"
         ):
             return None
         if mode == "main_map" and not keys and advance_ticks == 0:
