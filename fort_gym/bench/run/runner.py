@@ -473,57 +473,8 @@ def _gameplay_proof(
     tick_info: Dict[str, Any],
     score_value: float,
 ) -> Dict[str, Any]:
-    before_work = state_before.get("work") if isinstance(state_before.get("work"), dict) else {}
-    after_work = advance_state.get("work") if isinstance(advance_state.get("work"), dict) else {}
-    before_stocks = (
-        state_before.get("stocks") if isinstance(state_before.get("stocks"), dict) else {}
-    )
-    after_stocks = (
-        advance_state.get("stocks") if isinstance(advance_state.get("stocks"), dict) else {}
-    )
     tile_changes = _snapshot_tile_changes(before_map_snapshot, after_map_snapshot)
-    state_deltas = {
-        "wood": _dict_delta(before_stocks, after_stocks, "wood"),
-        "stone": _dict_delta(before_stocks, after_stocks, "stone"),
-        "target_dig_designations": _dict_delta(
-            before_work,
-            after_work,
-            "target_dig_designations",
-        ),
-        "target_floor_tiles": _dict_delta(before_work, after_work, "target_floor_tiles"),
-        "target_wall_tiles": _dict_delta(before_work, after_work, "target_wall_tiles"),
-        "active_dig_jobs": _dict_delta(before_work, after_work, "active_dig_jobs"),
-        "carpenter_workshops": _dict_delta(before_work, after_work, "carpenter_workshops"),
-        "carpenter_workshops_planned": _dict_delta(
-            before_work,
-            after_work,
-            "carpenter_workshops_planned",
-        ),
-        "carpenter_workshops_usable": _dict_delta(
-            before_work,
-            after_work,
-            "carpenter_workshops_usable",
-        ),
-        "carpenter_workshop_task_jobs": _dict_delta(
-            before_work,
-            after_work,
-            "carpenter_workshop_task_jobs",
-        ),
-        "carpenter_workshop_construction_jobs": _dict_delta(
-            before_work,
-            after_work,
-            "carpenter_workshop_construction_jobs",
-        ),
-        "manager_orders_count": _dict_delta(before_work, after_work, "manager_orders_count"),
-        "manager_orders_amount_left": _dict_delta(
-            before_work,
-            after_work,
-            "manager_orders_amount_left",
-        ),
-    }
-    positive_state_deltas = {
-        key: value for key, value in state_deltas.items() if value not in (0, None)
-    }
+    state_deltas = _keystroke_productive_state_deltas(state_before, advance_state)
     ui_step_work_progress = int(metrics_snapshot.get("ui_step_work_progress") or 0)
     ui_step_excavation_progress = int(
         metrics_snapshot.get("ui_step_excavation_progress") or 0
@@ -536,7 +487,7 @@ def _gameplay_proof(
         or ui_step_excavation_progress
         or ui_step_material_progress
         or tile_changes.get("changed_tile_count")
-        or positive_state_deltas
+        or state_deltas
     )
     proof_ok = bool(
         step_gameplay_progress
@@ -569,7 +520,7 @@ def _gameplay_proof(
                 metrics_snapshot.get("ui_excavation_progress") or 0
             ),
         },
-        "state_deltas": positive_state_deltas,
+        "state_deltas": state_deltas,
         "tile_changes": tile_changes,
         "changed_tile_count": int(tile_changes.get("changed_tile_count") or 0),
         "changed_tiles": tile_changes.get("changed_tiles", []),
@@ -1105,6 +1056,21 @@ def _keystroke_real_state_deltas(
     return {key: value for key, value in deltas.items() if value not in (0, None)}
 
 
+def _keystroke_productive_state_deltas(
+    state_before: Dict[str, Any],
+    advance_state: Dict[str, Any],
+) -> Dict[str, int]:
+    """Return real state deltas that should count as current-turn progress."""
+
+    deltas = _keystroke_real_state_deltas(state_before, advance_state)
+    productive: Dict[str, int] = {}
+    for key, value in deltas.items():
+        if value <= 0:
+            continue
+        productive[key] = value
+    return productive
+
+
 def _keystroke_step_score_progress(
     metrics_snapshot: Dict[str, Any],
     *,
@@ -1123,7 +1089,7 @@ def _keystroke_step_score_progress(
         if int(metrics_snapshot.get(field) or 0) > 0:
             return True
     if state_before is not None and advance_state is not None:
-        return bool(_keystroke_real_state_deltas(state_before, advance_state))
+        return bool(_keystroke_productive_state_deltas(state_before, advance_state))
     return False
 
 

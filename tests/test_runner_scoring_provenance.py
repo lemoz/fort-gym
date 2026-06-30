@@ -8,6 +8,7 @@ from fort_gym.bench.run.runner import (
     _gameplay_proof,
     _is_exit_only_recovery_action,
     _is_keystroke_model,
+    _keystroke_productive_state_deltas,
     _keystroke_step_score_progress,
     _material_exhausted_fallback_target_mode,
     _preserve_state_after_degraded_read,
@@ -182,7 +183,7 @@ def test_gameplay_proof_marks_keystroke_progress_as_evidence_backed() -> None:
     assert proof["gameplay_progress_eligible"] is True
     assert proof["score_provenance"] == "keystroke_ui_work_rect"
     assert proof["changed_tile_count"] == 1
-    assert proof["state_deltas"] == {"target_dig_designations": 1}
+    assert proof["state_deltas"] == {}
     assert proof["progress"]["work"] == 1
     assert proof["progress"]["ui_work"] == 0
     assert proof["progress"]["cumulative_ui_work"] == 1
@@ -847,6 +848,34 @@ def test_keystroke_step_score_progress_counts_real_workshop_state() -> None:
             "stocks": {"wood": 3, "wealth": 9},
             "work": {"carpenter_workshop_task_jobs": 1},
         },
+    )
+
+
+def test_keystroke_state_progress_ignores_negative_construction_job_delta() -> None:
+    state_before = {
+        "stocks": {"wood": 29, "wealth": 9},
+        "work": {
+            "carpenter_workshop_construction_jobs": 1,
+            "carpenter_workshops_usable": 0,
+        },
+    }
+    advance_state = {
+        "stocks": {"wood": 29, "wealth": 9},
+        "work": {
+            "carpenter_workshop_construction_jobs": 0,
+            "carpenter_workshops_usable": 0,
+        },
+    }
+
+    assert _keystroke_productive_state_deltas(state_before, advance_state) == {}
+    assert not _keystroke_step_score_progress(
+        {
+            "ui_step_work_progress": 0,
+            "ui_step_excavation_progress": 0,
+            "ui_step_material_progress": 0,
+        },
+        state_before=state_before,
+        advance_state=advance_state,
     )
 
 

@@ -266,26 +266,21 @@ def _classify_screen_state(screen_text: Optional[str]) -> Dict[str, Any]:
             extra_evidence=["visible building workshop-type menu"],
         )
 
-    if "carpenter's workshop" in lower and (
-        "+-*/: scroll" in lower
-        or "add new task" in lower
-        or "construct bed" in lower
-        or "make wooden" in lower
-    ):
-        task_rows = [
-            line
-            for line in lines
-            if any(
-                item in line.lower()
-                for item in (
-                    "construct bed",
-                    "make wooden",
-                    "construct door",
-                    "construct table",
-                    "construct chair",
-                )
+    task_rows = [
+        line
+        for line in lines
+        if any(
+            item in line.lower()
+            for item in (
+                "construct bed",
+                "make wooden",
+                "construct door",
+                "construct table",
+                "construct chair",
             )
-        ]
+        )
+    ]
+    if "carpenter's workshop" in lower and task_rows:
         return result(
             "workshop_add_task_list",
             confidence="high",

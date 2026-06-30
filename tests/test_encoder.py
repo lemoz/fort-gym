@@ -533,6 +533,35 @@ def test_encoder_classifies_workshop_add_task_list_with_highlight() -> None:
     assert state["screen_state"]["highlighted"] == "Construct Bed (b)"
 
 
+def test_encoder_does_not_treat_add_new_task_prompt_as_task_list() -> None:
+    screen_text = (
+        "Ctrl+n: Give name\n"
+        "Carpenter's Workshop\n"
+        "a: Add new task +-/*: Select\n"
+        "c: Cancel task  d: Details\n"
+        "x: Remove Building\n"
+        "ESC: Done\n"
+    )
+    text, state = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 29, "stone": 0},
+            "work": {
+                "manager_orders_count": 0,
+                "manager_orders_amount_left": 0,
+                "carpenter_workshops": 1,
+                "carpenter_workshop_task_jobs": 0,
+            },
+        },
+        screen_text=screen_text,
+    )
+
+    assert "Screen state: mode=carpenter_workshop_selected" in text
+    assert "use BUILDJOB_ADD to open the native add-task list" in text
+    assert state["screen_state"]["mode"] == "carpenter_workshop_selected"
+
+
 def test_encoder_classifies_manager_new_order_search() -> None:
     text, state = encode_observation(
         {
