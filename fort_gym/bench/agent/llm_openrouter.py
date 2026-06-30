@@ -1402,15 +1402,16 @@ class OpenRouterKeystrokeAgent(Agent):
             return None
         if mode == "main_map" and not keys and advance_ticks >= 1000:
             return None
-        if mode == "main_map" and keys == ["D_JOBLIST"] and advance_ticks == 0:
-            if repeated_job_list_inspection:
+        if mode == "main_map" and keys == ["D_JOBLIST"] and advance_ticks < 1000:
+            if repeated_job_list_inspection or recent.get("do_not_repeat_menu_path"):
                 return (
                     "Blocked repeated menu action: a real carpenter workshop task "
-                    "is already queued, and the recent job-list inspection path "
-                    "made no progress. Do not reopen D_JOBLIST for the same "
-                    "unchanged queued task. From the main map, use params.keys=[] "
-                    "with advance_ticks >= 1000 so dwarves can work, or choose a "
-                    "genuinely different fortress-building branch."
+                    "is already queued, and the recent menu/job-list path made no "
+                    "progress. Do not reopen D_JOBLIST for the same unchanged "
+                    "queued task after an escape or blocked menu recovery. From "
+                    "the main map, use params.keys=[] with advance_ticks >= 1000 "
+                    "so dwarves can work, or choose a genuinely different "
+                    "fortress-building branch."
                 )
             return None
         if (
