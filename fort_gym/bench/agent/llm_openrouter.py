@@ -1374,6 +1374,22 @@ class OpenRouterKeystrokeAgent(Agent):
             else {}
         )
         target_mode = str(target_setup.get("target_mode") or "").strip().lower()
+        recent = (
+            obs_json.get("recent_progress_summary")
+            if isinstance(obs_json.get("recent_progress_summary"), dict)
+            else {}
+        )
+        repeated_family = str(recent.get("repeated_menu_family") or "").strip().lower()
+        repeated_fingerprint = str(
+            recent.get("repeated_key_fingerprint") or ""
+        ).upper()
+        repeated_job_list_inspection = bool(
+            recent.get("do_not_repeat_menu_path")
+            and (
+                repeated_family in {"job_manager_menu", "job_list", "jobs_screen"}
+                or "D_JOBLIST" in repeated_fingerprint
+            )
+        )
 
         if (
             keys
@@ -1387,6 +1403,15 @@ class OpenRouterKeystrokeAgent(Agent):
         if mode == "main_map" and not keys and advance_ticks >= 1000:
             return None
         if mode == "main_map" and keys == ["D_JOBLIST"] and advance_ticks == 0:
+            if repeated_job_list_inspection:
+                return (
+                    "Blocked repeated menu action: a real carpenter workshop task "
+                    "is already queued, and the recent job-list inspection path "
+                    "made no progress. Do not reopen D_JOBLIST for the same "
+                    "unchanged queued task. From the main map, use params.keys=[] "
+                    "with advance_ticks >= 1000 so dwarves can work, or choose a "
+                    "genuinely different fortress-building branch."
+                )
             return None
         if (
             mode == "main_map"
@@ -1398,6 +1423,15 @@ class OpenRouterKeystrokeAgent(Agent):
             return None
         if mode == "job_list" and not keys and advance_ticks == 0:
             return None
+        if mode == "job_list" and repeated_job_list_inspection and not all(
+            key == "LEAVESCREEN" for key in keys
+        ):
+            return (
+                "Blocked repeated menu action: a queued carpenter workshop task "
+                "is still unchanged after job-list inspection. Leave the job list "
+                "or switch to a genuinely different plan; do not keep moving the "
+                "job-list cursor or pressing Do job now for the same stalled task."
+            )
         job_list_priority_keys = {
             "CURSOR_UP",
             "CURSOR_DOWN",
