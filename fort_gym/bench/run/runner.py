@@ -1048,6 +1048,85 @@ def _ui_target_step_succeeded(
     return ui_step_work_progress > 0 or ui_step_material_progress > 0
 
 
+def _keystroke_real_state_deltas(
+    state_before: Dict[str, Any],
+    advance_state: Dict[str, Any],
+) -> Dict[str, int]:
+    """Return state deltas that represent real game progress, not target movement."""
+
+    before_work = state_before.get("work") if isinstance(state_before.get("work"), dict) else {}
+    after_work = advance_state.get("work") if isinstance(advance_state.get("work"), dict) else {}
+    before_stocks = (
+        state_before.get("stocks") if isinstance(state_before.get("stocks"), dict) else {}
+    )
+    after_stocks = (
+        advance_state.get("stocks") if isinstance(advance_state.get("stocks"), dict) else {}
+    )
+    deltas = {
+        "wood": _dict_delta(before_stocks, after_stocks, "wood"),
+        "stone": _dict_delta(before_stocks, after_stocks, "stone"),
+        "wealth": _dict_delta(before_stocks, after_stocks, "wealth"),
+        "active_dig_jobs": _dict_delta(before_work, after_work, "active_dig_jobs"),
+        "active_construct_building_jobs": _dict_delta(
+            before_work,
+            after_work,
+            "active_construct_building_jobs",
+        ),
+        "active_carpenter_jobs": _dict_delta(before_work, after_work, "active_carpenter_jobs"),
+        "active_jobs": _dict_delta(before_work, after_work, "active_jobs"),
+        "carpenter_workshops": _dict_delta(before_work, after_work, "carpenter_workshops"),
+        "carpenter_workshops_planned": _dict_delta(
+            before_work,
+            after_work,
+            "carpenter_workshops_planned",
+        ),
+        "carpenter_workshops_usable": _dict_delta(
+            before_work,
+            after_work,
+            "carpenter_workshops_usable",
+        ),
+        "carpenter_workshop_task_jobs": _dict_delta(
+            before_work,
+            after_work,
+            "carpenter_workshop_task_jobs",
+        ),
+        "carpenter_workshop_construction_jobs": _dict_delta(
+            before_work,
+            after_work,
+            "carpenter_workshop_construction_jobs",
+        ),
+        "manager_orders_count": _dict_delta(before_work, after_work, "manager_orders_count"),
+        "manager_orders_amount_left": _dict_delta(
+            before_work,
+            after_work,
+            "manager_orders_amount_left",
+        ),
+    }
+    return {key: value for key, value in deltas.items() if value not in (0, None)}
+
+
+def _keystroke_step_score_progress(
+    metrics_snapshot: Dict[str, Any],
+    *,
+    state_before: Dict[str, Any] | None = None,
+    advance_state: Dict[str, Any] | None = None,
+) -> bool:
+    """Return whether the current keystroke turn should be allowed to score time."""
+
+    for field in (
+        "ui_step_work_progress",
+        "ui_step_excavation_progress",
+        "ui_step_material_progress",
+        "production_progress",
+        "utility_action_progress",
+    ):
+        if int(metrics_snapshot.get(field) or 0) > 0:
+            return True
+    if state_before is not None and advance_state is not None:
+        return bool(_keystroke_real_state_deltas(state_before, advance_state))
+    return False
+
+
 def _zero_assisted_dfhack_progress(metrics_snapshot: Dict[str, Any]) -> None:
     assisted_values: Dict[str, Any] = {}
     for field in ASSISTED_PROGRESS_FIELDS:
@@ -1226,6 +1305,8 @@ def run_once(
     ui_build_material_blocked = False
     ui_material_target_exhausted = False
     carpenter_workshop_usable_seen = 0
+    scoreable_elapsed_ticks = 0
+    last_keystroke_score_value: float | None = None
 
     def publish_event(step: int, event_type: str, payload: Dict[str, Any], events: List[Dict[str, Any]]) -> None:
         data = {"run_id": run_identifier, "step": step, **payload}
@@ -2005,6 +2086,17 @@ def run_once(
                     )
                     if len(action_history) > action_history_limit:
                         del action_history[:-action_history_limit]
+                keystroke_step_score_progress = False
+                if is_keystroke_mode:
+                    keystroke_step_score_progress = _keystroke_step_score_progress(
+                        metrics_snapshot,
+                        state_before=state_before,
+                        advance_state=advance_state,
+                    )
+                    metrics_snapshot[
+                        "keystroke_step_score_progress"
+                    ] = keystroke_step_score_progress
+
                 score_elapsed_ticks = elapsed_ticks_total
                 if assisted_dfhack_action_seen:
                     _zero_assisted_dfhack_progress(metrics_snapshot)
@@ -2017,13 +2109,36 @@ def run_once(
                     metrics_snapshot["score_provenance"] = "keystroke_no_gameplay_progress_yet"
                     score_elapsed_ticks = 0
                 elif is_keystroke_mode:
-                    metrics_snapshot["score_duration_blocked"] = False
+                    if keystroke_step_score_progress:
+                        scoreable_elapsed_ticks = elapsed_ticks_total
+                        metrics_snapshot["score_duration_blocked"] = False
+                    else:
+                        metrics_snapshot["observed_run_elapsed_ticks"] = elapsed_ticks_total
+                        metrics_snapshot["score_duration_blocked"] = True
+                        metrics_snapshot["score_provenance"] = (
+                            "keystroke_no_current_gameplay_progress"
+                        )
+                    score_elapsed_ticks = scoreable_elapsed_ticks
                 metrics_snapshot["run_elapsed_ticks"] = score_elapsed_ticks
                 publish_event(step, "metrics", {"metrics": metrics_snapshot}, events)
 
                 score_metrics = dict(metrics_snapshot)
                 score_metrics["time"] = score_elapsed_ticks
                 score_value = scoring.composite_score(score_metrics)
+                if (
+                    is_keystroke_mode
+                    and not assisted_dfhack_action_seen
+                    and not keystroke_step_score_progress
+                    and last_keystroke_score_value is not None
+                ):
+                    score_value = min(score_value, last_keystroke_score_value)
+                if is_keystroke_mode and not assisted_dfhack_action_seen:
+                    if (
+                        keystroke_step_score_progress
+                        or last_keystroke_score_value is None
+                        or score_value < last_keystroke_score_value
+                    ):
+                        last_keystroke_score_value = score_value
                 milestone_notes = (
                     milestones.detect(previous_state or state_before, advance_state)
                     if previous_state is not None

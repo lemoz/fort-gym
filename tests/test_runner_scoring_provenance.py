@@ -8,6 +8,7 @@ from fort_gym.bench.run.runner import (
     _gameplay_proof,
     _is_exit_only_recovery_action,
     _is_keystroke_model,
+    _keystroke_step_score_progress,
     _material_exhausted_fallback_target_mode,
     _preserve_state_after_degraded_read,
     _preserve_work_after_degraded_read,
@@ -807,6 +808,46 @@ def test_material_target_requires_material_delta_for_success() -> None:
         ui_step_work_progress=3,
         ui_step_material_progress=0,
     ) is True
+
+
+def test_keystroke_step_score_progress_requires_current_progress() -> None:
+    assert not _keystroke_step_score_progress(
+        {
+            "ui_work_progress": 7,
+            "ui_excavation_progress": 7,
+            "ui_step_work_progress": 0,
+            "ui_step_excavation_progress": 0,
+            "ui_step_material_progress": 0,
+            "production_progress": 0,
+            "utility_action_progress": 0,
+        },
+        state_before={"stocks": {"wood": 3}, "work": {"carpenter_workshops_planned": 0}},
+        advance_state={"stocks": {"wood": 3}, "work": {"carpenter_workshops_planned": 0}},
+    )
+
+    assert _keystroke_step_score_progress(
+        {"ui_step_work_progress": 0, "ui_step_material_progress": 1},
+        state_before={"stocks": {"wood": 3}, "work": {}},
+        advance_state={"stocks": {"wood": 4}, "work": {}},
+    )
+
+
+def test_keystroke_step_score_progress_counts_real_workshop_state() -> None:
+    assert _keystroke_step_score_progress(
+        {
+            "ui_step_work_progress": 0,
+            "ui_step_excavation_progress": 0,
+            "ui_step_material_progress": 0,
+        },
+        state_before={
+            "stocks": {"wood": 3, "wealth": 9},
+            "work": {"carpenter_workshop_task_jobs": 0},
+        },
+        advance_state={
+            "stocks": {"wood": 3, "wealth": 9},
+            "work": {"carpenter_workshop_task_jobs": 1},
+        },
+    )
 
 
 def test_workshop_target_setup_keeps_exact_placement_keys_visible() -> None:
