@@ -329,6 +329,18 @@ def test_composite_score_includes_scaled_complexity_component() -> None:
     assert with_complexity - without_complexity == scoring.COMPLEXITY_WEIGHT
 
 
+def test_composite_score_makes_first_workshop_item_wealth_visible() -> None:
+    components = scoring.score_components({"wealth": 150})
+
+    assert components["wealth_score"] >= 2.0
+
+
+def test_composite_score_prefers_zero_created_wealth_over_absolute_wealth() -> None:
+    components = scoring.score_components({"created_wealth": 0, "wealth": 150})
+
+    assert components["wealth_score"] == 0.0
+
+
 def test_composite_score_continues_past_previous_caps() -> None:
     target_score = scoring.composite_score(
         {

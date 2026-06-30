@@ -273,6 +273,13 @@ def _available_building_materials(state: Dict[str, Any]) -> int:
     return max(0, wood) + max(0, stone)
 
 
+def _available_carpenter_materials(state: Dict[str, Any]) -> int:
+    stocks = state.get("stocks")
+    if not isinstance(stocks, dict):
+        return 0
+    return max(0, _int_or_none(stocks.get("wood")) or 0)
+
+
 def _carpenter_workshops(state: Dict[str, Any]) -> int:
     work = state.get("work")
     if isinstance(work, dict):
@@ -281,6 +288,13 @@ def _carpenter_workshops(state: Dict[str, Any]) -> int:
             return max(0, planned)
         return max(0, _int_or_none(work.get("carpenter_workshops")) or 0)
     return max(0, _int_or_none(state.get("carpenter_workshops")) or 0)
+
+
+def _usable_carpenter_workshops(state: Dict[str, Any]) -> int:
+    work = state.get("work")
+    if isinstance(work, dict):
+        return max(0, _int_or_none(work.get("carpenter_workshops_usable")) or 0)
+    return 0
 
 
 def _unproven_carpenter_workshop_needs_selection(state: Dict[str, Any]) -> bool:
@@ -770,6 +784,10 @@ def _desired_keystroke_target_mode(
     ui_successful_targets: int,
     build_material_blocked: bool = False,
 ) -> str:
+    enough_starter_space = (
+        ui_run_excavation_progress >= UI_MATERIAL_TARGET_MIN_EXCAVATION_PROGRESS
+        or ui_successful_targets >= 2
+    )
     if build_material_blocked:
         return "material"
     if _pending_carpenter_workshop_construction(state):
@@ -778,12 +796,14 @@ def _desired_keystroke_target_mode(
         return "existing_workshop"
     if _queued_carpenter_workshop_task_needs_resolution(state):
         return "existing_workshop"
+    if _usable_carpenter_workshops(state) > 0:
+        if _available_carpenter_materials(state) > 0:
+            return "existing_workshop"
+        if enough_starter_space:
+            return "material"
+        return "starter"
     if _carpenter_workshops(state) > 0:
         return "starter"
-    enough_starter_space = (
-        ui_run_excavation_progress >= UI_MATERIAL_TARGET_MIN_EXCAVATION_PROGRESS
-        or ui_successful_targets >= 2
-    )
     if (
         _available_building_materials(state) > 0
         and ui_run_material_progress > 0
@@ -1288,6 +1308,7 @@ def run_once(
 
     previous_state: Optional[Dict[str, Any]] = None
     baseline_work: Optional[Dict[str, Any]] = None
+    baseline_wealth: int | None = None
     action_history: List[Dict[str, Any]] = []  # Track recent actions for keystroke mode memory
     action_history_limit = max(0, int(settings.KEYSTROKE_ACTION_HISTORY_LIMIT))
     last_action_result: Optional[Dict[str, Any]] = None  # Track previous action result for feedback
@@ -1654,6 +1675,10 @@ def run_once(
                 if baseline_work is None:
                     work_snapshot = state_before.get("work")
                     baseline_work = dict(work_snapshot) if isinstance(work_snapshot, dict) else {}
+                if baseline_wealth is None:
+                    stocks_snapshot = state_before.get("stocks")
+                    if isinstance(stocks_snapshot, dict):
+                        baseline_wealth = _int_or_none(stocks_snapshot.get("wealth")) or 0
 
                 obs_text, obs_json = encode_observation(
                     state_before,
@@ -2179,6 +2204,13 @@ def run_once(
 
                 score_metrics = dict(metrics_snapshot)
                 score_metrics["time"] = score_elapsed_ticks
+                if baseline_wealth is not None:
+                    current_wealth = _int_or_none(score_metrics.get("wealth"))
+                    if current_wealth is not None:
+                        score_metrics["created_wealth"] = max(
+                            0,
+                            current_wealth - baseline_wealth,
+                        )
                 score_value = scoring.composite_score(score_metrics)
                 if (
                     is_keystroke_mode

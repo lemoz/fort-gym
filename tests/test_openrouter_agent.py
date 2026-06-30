@@ -1735,6 +1735,100 @@ def test_openrouter_agent_rejects_wrong_context_buildjob_with_queued_task(
     assert any(event["tool"] == "queued_workshop_task_route_rejected" for event in events)
 
 
+def test_openrouter_agent_rejects_starter_detour_with_ready_workshop(
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    bad_payload = {
+        "type": "KEYSTROKE",
+        "params": {
+            "keys": [
+                "D_DESIGNATE",
+                "DESIGNATE_DIG",
+                "SELECT",
+                "CURSOR_RIGHT",
+                "SELECT",
+                "LEAVESCREEN",
+            ]
+        },
+        "intent": "dig more starter space",
+        "objective": "make a better fortress",
+        "expected_visible_result": "starter area expands",
+        "screen_read": {
+            "mode": "main_map",
+            "evidence": ["main map visible"],
+            "confidence": "medium",
+        },
+        "last_action_review": {
+            "worked": True,
+            "evidence": ["workshop produced an item"],
+            "should_retry_same_path": False,
+        },
+        "advance_ticks": 500,
+    }
+    recovery_payload = {
+        "type": "KEYSTROKE",
+        "params": {"keys": ["D_BUILDJOB"]},
+        "intent": "select the existing carpenter workshop to add another task",
+        "objective": "chain real workshop production",
+        "expected_visible_result": "existing workshop task UI opens",
+        "screen_read": {
+            "mode": "main_map",
+            "evidence": ["main map visible"],
+            "confidence": "medium",
+        },
+        "last_action_review": {
+            "worked": False,
+            "evidence": ["starter detour was rejected by the live target contract"],
+            "should_retry_same_path": False,
+        },
+        "advance_ticks": 0,
+    }
+    _FakeOpenRouterClient.responses = [
+        {"tool_calls": [_submit_action_call(bad_payload, "call_bad_starter")]},
+        {"tool_calls": [_submit_action_call(recovery_payload, "call_recover_workshop")]},
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "openai"
+        return SimpleNamespace(OpenAI=_FakeOpenRouterClient)
+
+    monkeypatch.setattr("fort_gym.bench.agent.llm_openrouter.import_module", fake_import_module)
+
+    try:
+        agent = OpenRouterKeystrokeAgent()
+        action = agent.decide(
+            "mock observation",
+            {
+                "pause_state": True,
+                "screen_state": {"mode": "main_map", "confidence": "medium"},
+                "ui_target_setup": {"target_mode": "existing_workshop"},
+                "stocks": {"wood": 16, "stone": 0, "wealth": 162},
+                "work": {
+                    "carpenter_workshops_usable": 1,
+                    "carpenter_workshop_task_jobs": 0,
+                    "carpenter_workshop_construction_jobs": 0,
+                    "manager_orders_count": 0,
+                    "manager_orders_amount_left": 0,
+                    "active_carpenter_jobs": 0,
+                    "active_jobs": 0,
+                },
+            },
+        )
+        events = agent.pop_tool_events()
+    finally:
+        _FakeOpenRouterClient.responses = None
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["params"]["keys"] == ["D_BUILDJOB"]
+    assert action["advance_ticks"] == 0
+    assert any(
+        event["tool"] == "existing_workshop_production_route_rejected"
+        for event in events
+    )
+
+
 def test_openrouter_agent_rejects_production_screen_read_mismatch(monkeypatch) -> None:
     monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
     get_settings.cache_clear()  # type: ignore[attr-defined]

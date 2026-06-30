@@ -110,6 +110,8 @@ def summarize(trace_path: Path) -> RunSummary:
     peak_pop = 0
     end_pop = 0
     wealth: Optional[int] = None
+    baseline_wealth: Optional[int] = None
+    peak_wealth: Optional[int] = None
     drink_sufficient = 0
     casualty_spike = False
     hostiles_present = False
@@ -347,17 +349,33 @@ def summarize(trace_path: Path) -> RunSummary:
                 peak_pop = max(peak_pop, pop_val)
                 end_pop = pop_val
 
-            wealth_val = metrics_snapshot.get("wealth")
-            if wealth_val is None:
-                wealth_val = metrics_snapshot.get("created_wealth")
-            if wealth_val is not None:
+            if metrics_snapshot.get("wealth") is not None:
                 try:
-                    wealth = int(wealth_val)
+                    wealth_current = int(metrics_snapshot.get("wealth"))
                 except (TypeError, ValueError):
                     try:
-                        wealth = int(float(wealth_val))
+                        wealth_current = int(float(metrics_snapshot.get("wealth")))
                     except (TypeError, ValueError):
-                        pass
+                        wealth_current = None
+                if wealth_current is not None:
+                    if baseline_wealth is None:
+                        baseline_wealth = wealth_current
+                    peak_wealth = (
+                        wealth_current
+                        if peak_wealth is None
+                        else max(peak_wealth, wealth_current)
+                    )
+                    wealth = max(0, peak_wealth - baseline_wealth)
+            else:
+                wealth_val = metrics_snapshot.get("created_wealth")
+                if wealth_val is not None:
+                    try:
+                        wealth = max(wealth or 0, int(wealth_val))
+                    except (TypeError, ValueError):
+                        try:
+                            wealth = max(wealth or 0, int(float(wealth_val)))
+                        except (TypeError, ValueError):
+                            pass
 
             drink = metrics_snapshot.get("drink")
             if isinstance(drink, (int, float)) and drink >= 20:

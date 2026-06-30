@@ -448,7 +448,7 @@ def test_desired_keystroke_target_mode_stays_on_existing_workshop_during_constru
     )
 
 
-def test_desired_keystroke_target_mode_returns_to_starter_after_usable_workshop() -> None:
+def test_desired_keystroke_target_mode_keeps_usable_workshop_with_wood_productive() -> None:
     state = {
         "stocks": {"wood": 3, "stone": 0},
         "work": {
@@ -465,7 +465,28 @@ def test_desired_keystroke_target_mode_returns_to_starter_after_usable_workshop(
             ui_run_material_progress=1,
             ui_successful_targets=2,
         )
-        == "starter"
+        == "existing_workshop"
+    )
+
+
+def test_desired_keystroke_target_mode_usable_workshop_without_wood_gets_material() -> None:
+    state = {
+        "stocks": {"wood": 0, "stone": 0},
+        "work": {
+            "carpenter_workshops_planned": 1,
+            "carpenter_workshops_usable": 1,
+        },
+    }
+
+    assert _carpenter_workshops(state) == 1
+    assert (
+        _desired_keystroke_target_mode(
+            state,
+            ui_run_excavation_progress=6,
+            ui_run_material_progress=1,
+            ui_successful_targets=2,
+        )
+        == "material"
     )
 
 
@@ -533,7 +554,7 @@ def test_carry_forward_workshop_task_proof_after_task_disappears() -> None:
             ui_run_material_progress=1,
             ui_successful_targets=2,
         )
-        == "starter"
+        == "existing_workshop"
     )
 
 

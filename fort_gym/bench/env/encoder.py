@@ -1358,9 +1358,10 @@ def encode_observation(
                     "Live UI existing workshop target: this target points at the "
                     "already placed Carpenter's Workshop. From a verified main-map "
                     "screen, use the recommended D_BUILDJOB key to select that real "
-                    "workshop. Do not open D_NOBLES or manager orders until the "
-                    "workshop is visibly selected or its construction blocker is "
-                    "visible."
+                    "workshop. If wood is available and no carpenter task is "
+                    "queued, stay on this workshop route and add/select a visible "
+                    "wooden task before returning to starter digging, D_BUILDING, "
+                    "D_NOBLES, D_JOBLIST, or manager orders."
                 )
         elif ui_target_setup.get("target_mode") == "workshop":
             if screen_shows_blocked_placement:

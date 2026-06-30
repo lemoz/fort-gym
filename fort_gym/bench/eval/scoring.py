@@ -21,7 +21,9 @@ TARGET_COMPLETION_PROGRESS = 25
 TARGET_UTILITY_PROGRESS = 5
 TARGET_PRODUCTION_PROGRESS = 5
 TARGET_COMPLEXITY_PROGRESS = 38
-WEALTH_TARGET = 100000.0
+# Calibrated for short live-agent runs: a few real workshop products should be
+# visible in score, while wealth remains open-ended for longer fort growth.
+WEALTH_TARGET = 1000.0
 DRINK_THRESHOLD = 20
 CASUALTY_PENALTY = 10.0
 HOSTILES_PENALTY = 10.0
@@ -72,7 +74,10 @@ def score_components(summary: Dict[str, float]) -> Dict[str, float]:
             min(1.0, _nonnegative(drink_count) / DRINK_THRESHOLD) if drink_count > 0 else 0.0
         )
 
-    wealth_value = _to_float(summary.get("created_wealth") or summary.get("wealth"))
+    wealth_raw = summary.get("created_wealth")
+    if wealth_raw is None:
+        wealth_raw = summary.get("wealth")
+    wealth_value = _to_float(wealth_raw)
     work_progress = _to_float(summary.get("work_progress"))
     completion_progress = _to_float(summary.get("completion_progress"))
     utility_progress = _to_float(summary.get("utility_progress"))
