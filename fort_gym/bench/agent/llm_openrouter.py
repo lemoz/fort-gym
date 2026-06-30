@@ -728,6 +728,11 @@ class OpenRouterKeystrokeAgent(Agent):
 
         params = tool_payload.get("params") if isinstance(tool_payload.get("params"), dict) else {}
         keys = params.get("keys") if isinstance(params, dict) else []
+        if (
+            self._submitted_action_family(tool_payload) == "wait"
+            and self._screen_mode(obs_json) == "main_map"
+        ):
+            return tool_payload
         if isinstance(keys, list) and keys and all(str(key) == "LEAVESCREEN" for key in keys):
             return tool_payload
 
@@ -796,6 +801,13 @@ class OpenRouterKeystrokeAgent(Agent):
         )
         keys = params.get("keys") if isinstance(params, dict) else []
         return keys if isinstance(keys, list) else []
+
+    @staticmethod
+    def _screen_mode(obs_json: Dict[str, Any]) -> str:
+        screen_state = obs_json.get("screen_state")
+        if not isinstance(screen_state, dict):
+            return ""
+        return str(screen_state.get("mode") or "").strip()
 
     @classmethod
     def _screen_read_contract_error(
@@ -1777,6 +1789,10 @@ class OpenRouterKeystrokeAgent(Agent):
         key_values = [str(key) for key in keys]
         key_set = set(key_values)
         intent = str(tool_payload.get("intent") or "").lower()
+        try:
+            advance_ticks = int(tool_payload.get("advance_ticks") or 0)
+        except (TypeError, ValueError):
+            advance_ticks = 0
 
         if "D_DESIGNATE" in key_set:
             return "designation"
@@ -1786,6 +1802,10 @@ class OpenRouterKeystrokeAgent(Agent):
             return "job_manager_menu"
         if "D_NOBLES" in key_set or "nobles" in intent or "manager" in intent:
             return "manager_nobles_menu"
+        if (not key_values and advance_ticks > 0) or any(
+            key == "STRING_A032" for key in key_values
+        ):
+            return "wait"
         if (
             "D_BUILDJOB" in key_set
             or "BUILDJOB_ADD" in key_set
@@ -1793,8 +1813,6 @@ class OpenRouterKeystrokeAgent(Agent):
             or "carpenter workshop" in intent
         ):
             return "workshop_task_menu"
-        if any(key == "STRING_A032" for key in key_values):
-            return "wait"
         navigation_keys = {
             "LEAVESCREEN",
             "SELECT",

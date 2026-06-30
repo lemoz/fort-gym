@@ -774,6 +774,57 @@ def test_openrouter_agent_rejects_blocked_menu_family_after_escape(monkeypatch) 
     assert any(event["tool"] == "blocked_menu_path_rejected" for event in events)
 
 
+def test_openrouter_agent_allows_main_map_wait_after_blocked_workshop_menu(
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    _FakeOpenRouterClient.tool_calls = [
+        _submit_action_call(
+            {
+                "type": "KEYSTROKE",
+                "params": {"keys": []},
+                "intent": (
+                    "Advance time from the main map so the queued carpenter workshop "
+                    "task can complete."
+                ),
+                "advance_ticks": 1500,
+            }
+        )
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "openai"
+        return SimpleNamespace(OpenAI=_FakeOpenRouterClient)
+
+    monkeypatch.setattr("fort_gym.bench.agent.llm_openrouter.import_module", fake_import_module)
+
+    try:
+        agent = OpenRouterKeystrokeAgent()
+        action = agent.decide(
+            "mock observation",
+            {
+                "pause_state": True,
+                "screen_state": {"mode": "main_map", "confidence": "high"},
+                "recent_progress_summary": {
+                    "do_not_repeat_menu_path": True,
+                    "escape_recovery_attempted": False,
+                    "repeated_menu_family": "workshop_task_menu",
+                    "repeated_key_fingerprint": "D_BUILDJOB BUILDJOB_ADD SELECT",
+                },
+            },
+        )
+        events = agent.pop_tool_events()
+    finally:
+        _FakeOpenRouterClient.tool_calls = None
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["params"]["keys"] == []
+    assert action["advance_ticks"] == 1500
+    assert not any(event["tool"] == "blocked_menu_path_rejected" for event in events)
+    assert not any(event["tool"] == "menu_loop_recovery_repaired" for event in events)
+
+
 def test_openrouter_agent_falls_back_when_blocked_menu_family_repeats(monkeypatch) -> None:
     monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
     monkeypatch.setenv("OPENROUTER_MAX_TOOL_ROUNDS", "1")

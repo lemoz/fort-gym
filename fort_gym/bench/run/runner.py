@@ -1135,6 +1135,23 @@ def _keystroke_productive_state_deltas(
         if value <= 0:
             continue
         productive[key] = value
+    before_work = state_before.get("work") if isinstance(state_before.get("work"), dict) else {}
+    after_work = advance_state.get("work") if isinstance(advance_state.get("work"), dict) else {}
+    before_stocks = (
+        state_before.get("stocks") if isinstance(state_before.get("stocks"), dict) else {}
+    )
+    after_stocks = (
+        advance_state.get("stocks") if isinstance(advance_state.get("stocks"), dict) else {}
+    )
+    task_delta = _dict_delta(
+        before_work,
+        after_work,
+        "carpenter_workshop_task_jobs",
+    )
+    wood_delta = _dict_delta(before_stocks, after_stocks, "wood")
+    if task_delta is not None and task_delta < 0 and wood_delta is not None and wood_delta < 0:
+        productive["carpenter_workshop_completed_tasks"] = abs(task_delta)
+        productive["wood_consumed_by_workshop"] = abs(wood_delta)
     return productive
 
 
@@ -1337,6 +1354,7 @@ def run_once(
     ui_run_work_progress = 0
     ui_run_excavation_progress = 0
     ui_run_material_progress = 0
+    ui_run_completed_workshop_tasks = 0
     ui_successful_targets = 0
     ui_work_feedback: Dict[str, Any] = {}
     ui_build_material_blocked = False
@@ -2113,7 +2131,35 @@ def run_once(
                 ui_step_work_progress = 0
                 ui_step_excavation_progress = 0
                 ui_step_material_progress = 0
+                keystroke_productive_deltas: Dict[str, int] = {}
                 if is_keystroke_mode:
+                    keystroke_productive_deltas = _keystroke_productive_state_deltas(
+                        state_before,
+                        advance_state,
+                    )
+                    completed_workshop_tasks = int(
+                        keystroke_productive_deltas.get(
+                            "carpenter_workshop_completed_tasks",
+                            0,
+                        )
+                    )
+                    if completed_workshop_tasks > 0:
+                        ui_run_completed_workshop_tasks += completed_workshop_tasks
+                    if ui_run_completed_workshop_tasks > 0:
+                        production_unit = int(
+                            getattr(metrics, "PRODUCTION_WORKSHOP_PROGRESS", 5)
+                        )
+                        metrics_snapshot[
+                            "production_completed_tasks"
+                        ] = ui_run_completed_workshop_tasks
+                        metrics_snapshot[
+                            "production_completed_tasks_delta"
+                        ] = completed_workshop_tasks
+                        metrics_snapshot["production_progress"] = max(
+                            int(metrics_snapshot.get("production_progress") or 0),
+                            int(metrics_snapshot.get("production_progress") or 0)
+                            + ui_run_completed_workshop_tasks * production_unit,
+                        )
                     ui_step_material_progress = max(
                         0,
                         _available_building_materials(advance_state)
@@ -2159,14 +2205,16 @@ def run_once(
                     action_accepted = bool(execute_result.get("accepted", False))
                     if action.get("type") == "KEYSTROKE" and action_accepted:
                         requested_ticks_int = _int_or_none(requested_ticks) or 0
+                        made_state_progress = bool(keystroke_productive_deltas)
                         made_tracked_progress = (
                             ui_step_work_progress > 0 or ui_step_material_progress > 0
+                            or made_state_progress
                         )
                         target_step_succeeded = _ui_target_step_succeeded(
                             ui_target_mode,
                             ui_step_work_progress=ui_step_work_progress,
                             ui_step_material_progress=ui_step_material_progress,
-                        )
+                        ) or made_state_progress
                         if made_tracked_progress:
                             if target_step_succeeded and not ui_target_progress_seen:
                                 ui_successful_targets += 1
@@ -2194,12 +2242,17 @@ def run_once(
                                 "last_ui_work_progress_delta": ui_step_work_progress,
                                 "last_ui_excavation_delta": ui_step_excavation_progress,
                                 "last_ui_material_delta": ui_step_material_progress,
+                                "last_state_progress_delta": keystroke_productive_deltas,
                                 "no_progress_streak": ui_no_progress_streak,
                                 "target_step_succeeded": target_step_succeeded,
                                 "message": (
                                     "last UI action changed tracked tiles but did not acquire usable material"
                                     if ui_target_mode == "material" and not target_step_succeeded
-                                    else "last UI action changed real map tiles or material stocks"
+                                    else (
+                                        "last action changed real workshop state or consumed production material"
+                                        if made_state_progress
+                                        else "last UI action changed real map tiles or material stocks"
+                                    )
                                 ),
                             }
                         elif advanced_ticks > 0 or requested_ticks_int > 0:
@@ -2226,6 +2279,9 @@ def run_once(
                     metrics_snapshot["ui_run_work_progress"] = ui_run_work_progress
                     metrics_snapshot["ui_run_excavation_progress"] = ui_run_excavation_progress
                     metrics_snapshot["ui_run_material_progress"] = ui_run_material_progress
+                    metrics_snapshot[
+                        "ui_run_completed_workshop_tasks"
+                    ] = ui_run_completed_workshop_tasks
                     metrics_snapshot["ui_successful_targets"] = ui_successful_targets
                 utility_action = metrics.utility_action_progress(action, execute_result)
                 metrics_snapshot.update(utility_action)

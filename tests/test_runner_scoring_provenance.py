@@ -968,6 +968,37 @@ def test_keystroke_state_progress_ignores_negative_construction_job_delta() -> N
     )
 
 
+def test_keystroke_state_progress_counts_completed_workshop_task_with_consumed_wood() -> None:
+    state_before = {
+        "stocks": {"wood": 8, "wealth": 9},
+        "work": {
+            "carpenter_workshop_task_jobs": 1,
+            "carpenter_workshops_usable": 1,
+        },
+    }
+    advance_state = {
+        "stocks": {"wood": 7, "wealth": 9},
+        "work": {
+            "carpenter_workshop_task_jobs": 0,
+            "carpenter_workshops_usable": 1,
+        },
+    }
+
+    assert _keystroke_productive_state_deltas(state_before, advance_state) == {
+        "carpenter_workshop_completed_tasks": 1,
+        "wood_consumed_by_workshop": 1,
+    }
+    assert _keystroke_step_score_progress(
+        {
+            "ui_step_work_progress": 0,
+            "ui_step_excavation_progress": 0,
+            "ui_step_material_progress": 0,
+        },
+        state_before=state_before,
+        advance_state=advance_state,
+    )
+
+
 def test_workshop_target_setup_keeps_exact_placement_keys_visible() -> None:
     target = {
         "ok": True,
