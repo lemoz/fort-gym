@@ -1656,6 +1656,85 @@ def test_openrouter_agent_allows_ui_only_buildjob_with_zero_ticks(monkeypatch) -
     assert action["advance_ticks"] == 0
 
 
+def test_openrouter_agent_rejects_wrong_context_buildjob_with_queued_task(
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    bad_payload = {
+        "type": "KEYSTROKE",
+        "params": {"keys": ["D_BUILDJOB"]},
+        "intent": "try to inspect workshop jobs",
+        "objective": "make queued workshop production happen",
+        "expected_visible_result": "workshop job UI opens",
+        "screen_read": {
+            "mode": "main_map",
+            "evidence": ["main map visible"],
+            "confidence": "medium",
+        },
+        "last_action_review": {
+            "worked": False,
+            "evidence": ["last wait left the queued task unchanged"],
+            "should_retry_same_path": False,
+        },
+        "advance_ticks": 0,
+    }
+    recovery_payload = {
+        "type": "KEYSTROKE",
+        "params": {"keys": ["D_JOBLIST"]},
+        "intent": "inspect live jobs after the queued workshop task did not start",
+        "objective": "make queued workshop production happen",
+        "expected_visible_result": "jobs screen opens for live cancellation/job evidence",
+        "screen_read": {
+            "mode": "main_map",
+            "evidence": ["main map visible"],
+            "confidence": "medium",
+        },
+        "last_action_review": {
+            "worked": False,
+            "evidence": ["wrong-context D_BUILDJOB was rejected"],
+            "should_retry_same_path": False,
+        },
+        "advance_ticks": 0,
+    }
+    _FakeOpenRouterClient.responses = [
+        {"tool_calls": [_submit_action_call(bad_payload, "call_bad_buildjob")]},
+        {"tool_calls": [_submit_action_call(recovery_payload, "call_wait")]},
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "openai"
+        return SimpleNamespace(OpenAI=_FakeOpenRouterClient)
+
+    monkeypatch.setattr("fort_gym.bench.agent.llm_openrouter.import_module", fake_import_module)
+
+    try:
+        agent = OpenRouterKeystrokeAgent()
+        action = agent.decide(
+            "mock observation",
+            {
+                "pause_state": True,
+                "screen_state": {"mode": "main_map", "confidence": "medium"},
+                "ui_target_setup": {"target_mode": "starter"},
+                "work": {
+                    "carpenter_workshops_usable": 1,
+                    "carpenter_workshop_task_jobs": 1,
+                    "manager_orders_count": 0,
+                    "active_carpenter_jobs": 0,
+                    "active_jobs": 0,
+                },
+            },
+        )
+        events = agent.pop_tool_events()
+    finally:
+        _FakeOpenRouterClient.responses = None
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["params"]["keys"] == ["D_JOBLIST"]
+    assert action["advance_ticks"] in {0, 500}
+    assert any(event["tool"] == "queued_workshop_task_route_rejected" for event in events)
+
+
 def test_openrouter_agent_rejects_production_screen_read_mismatch(monkeypatch) -> None:
     monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
     get_settings.cache_clear()  # type: ignore[attr-defined]

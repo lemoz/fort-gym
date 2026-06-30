@@ -1325,6 +1325,106 @@ class OpenRouterKeystrokeAgent(Agent):
             }
         )
 
+    @classmethod
+    def _queued_workshop_task_route_error(
+        cls,
+        tool_payload: Dict[str, Any],
+        obs_json: Dict[str, Any],
+    ) -> str | None:
+        work = obs_json.get("work") if isinstance(obs_json.get("work"), dict) else {}
+        task_jobs = cls._int_value(work.get("carpenter_workshop_task_jobs"))
+        usable = cls._int_value(work.get("carpenter_workshops_usable"))
+        manager_orders = cls._int_value(work.get("manager_orders_count"))
+        if task_jobs <= 0 or usable <= 0 or manager_orders > 0:
+            return None
+
+        keys = [str(key) for key in cls._keystroke_keys(tool_payload)]
+        key_set = set(keys)
+        try:
+            advance_ticks = int(tool_payload.get("advance_ticks") or 0)
+        except (TypeError, ValueError):
+            advance_ticks = 0
+        screen_state = obs_json.get("screen_state")
+        mode = (
+            str(screen_state.get("mode") or "").strip().lower()
+            if isinstance(screen_state, dict)
+            else ""
+        )
+        target_setup = (
+            obs_json.get("ui_target_setup")
+            if isinstance(obs_json.get("ui_target_setup"), dict)
+            else {}
+        )
+        target_mode = str(target_setup.get("target_mode") or "").strip().lower()
+
+        if keys and all(key == "LEAVESCREEN" for key in keys) and advance_ticks == 0:
+            return None
+        if mode == "main_map" and not keys and advance_ticks == 0:
+            return None
+        if mode == "main_map" and not keys and advance_ticks >= 1000:
+            return None
+        if mode == "main_map" and keys == ["D_JOBLIST"] and advance_ticks == 0:
+            return None
+        if (
+            mode == "main_map"
+            and "D_BUILDJOB" in key_set
+            and target_mode == "existing_workshop"
+            and advance_ticks == 0
+            and key_set.issubset({"D_BUILDJOB"})
+        ):
+            return None
+        if mode == "job_list" and not keys and advance_ticks == 0:
+            return None
+
+        unrelated_keys = {
+            "D_DESIGNATE",
+            "DESIGNATE_DIG",
+            "DESIGNATE_CHOP",
+            "D_BUILDING",
+            "HOTKEY_BUILDING_WORKSHOP",
+            "HOTKEY_BUILDING_WORKSHOP_CARPENTER",
+            "D_NOBLES",
+            "UNITJOB_MANAGER",
+            "MANAGER_NEW_ORDER",
+            "D_STOCKPILES",
+            "D_CIVZONE",
+        }
+        duplicate_task_keys = {"BUILDJOB_ADD", "SELECT"}
+        if key_set.intersection(unrelated_keys | duplicate_task_keys) or advance_ticks < 1000:
+            return (
+                "Queued-workshop-task route mismatch: a real carpenter workshop "
+                "task is already queued on a usable workshop, but no produced item "
+                "or active carpenter job has been proven yet. Keep the run anchored "
+                "to the existing workshop/task state. From the main map, either use "
+                "params.keys=[] with advance_ticks >= 1000 to let dwarves work, use "
+                "D_JOBLIST to inspect job/cancellation evidence, or use D_BUILDJOB "
+                "only when ui_target_setup.target_mode is existing_workshop. Do not "
+                "dig/chop, open D_BUILDING, D_NOBLES, manager orders, BUILDJOB_ADD, "
+                "or SELECT another task until this queued task starts, completes, "
+                "or shows a visible blocker."
+            )
+        return None
+
+    def _log_queued_workshop_task_route_error(
+        self,
+        tool_payload: Dict[str, Any],
+        obs_json: Dict[str, Any],
+        error: str,
+    ) -> None:
+        self._tool_events.append(
+            {
+                "tool": "queued_workshop_task_route_rejected",
+                "input": {
+                    "screen_state": obs_json.get("screen_state"),
+                    "ui_target_setup": obs_json.get("ui_target_setup"),
+                    "work": obs_json.get("work"),
+                    "submitted_keys": self._keystroke_keys(tool_payload),
+                    "advance_ticks": tool_payload.get("advance_ticks"),
+                },
+                "output": error,
+            }
+        )
+
     def _log_pending_workshop_construction_contract_error(
         self,
         tool_payload: Dict[str, Any],
@@ -1756,6 +1856,18 @@ class OpenRouterKeystrokeAgent(Agent):
                 queued_workshop_construction_error,
             )
             return queued_workshop_construction_error
+
+        queued_workshop_task_error = self._queued_workshop_task_route_error(
+            payload,
+            obs_json,
+        )
+        if queued_workshop_task_error:
+            self._log_queued_workshop_task_route_error(
+                payload,
+                obs_json,
+                queued_workshop_task_error,
+            )
+            return queued_workshop_task_error
 
         add_task_list_error = self._workshop_add_task_list_contract_error(
             payload,

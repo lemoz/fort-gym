@@ -924,8 +924,22 @@ def encode_observation(
             f"workshop_task_jobs={work.get('carpenter_workshop_task_jobs', 0)}, "
             "workshop_construction_jobs="
             f"{work.get('carpenter_workshop_construction_jobs', 0)}, "
+            f"active_jobs={work.get('active_jobs', 0)}, "
+            f"active_carpenter_jobs={work.get('active_carpenter_jobs', 0)}, "
             f"carpenter_labors={work.get('carpenter_labors_enabled', 0)}"
         )
+        task_job_names = work.get("carpenter_workshop_task_job_type_names")
+        if isinstance(task_job_names, list) and task_job_names:
+            status_lines.append(
+                "Workshop queued tasks: "
+                + ", ".join(str(name) for name in task_job_names[:8])
+            )
+        active_job_names = work.get("active_job_type_names")
+        if isinstance(active_job_names, list) and active_job_names:
+            status_lines.append(
+                "Active jobs: "
+                + ", ".join(str(name) for name in active_job_names[:8])
+            )
         workshop_rect_values = [
             _int_or_none(work.get(key))
             for key in (
@@ -1016,6 +1030,26 @@ def encode_observation(
                     "changing objectives."
                 )
             status_lines.append(production_note)
+        elif (
+            int(work.get("carpenter_workshop_task_jobs") or 0) > 0
+            and usable_workshops > 0
+            and int(work.get("manager_orders_count") or 0) <= 0
+        ):
+            task_note = (
+                "Live UI workshop task phase: a real carpenter workshop task is "
+                "queued on a usable workshop. Keep the existing_workshop target "
+                "anchored to the placed workshop; do not switch to starter "
+                "digging, fresh D_BUILDING placement, D_NOBLES, or manager orders "
+                "until this queued task either starts, completes, or shows a "
+                "visible cancellation/blocker."
+            )
+            if int(work.get("active_carpenter_jobs") or 0) <= 0:
+                task_note += (
+                    " No active carpenter job is currently proven, so from the "
+                    "main map prefer a larger empty-key time advance or inspect "
+                    "D_JOBLIST/cancellation evidence before adding more tasks."
+                )
+            status_lines.append(task_note)
         elif (
             int(work.get("manager_orders_count") or 0) > 0
             and int(work.get("manager_orders_amount_left") or 0) > 0

@@ -176,6 +176,13 @@ local active_jobs = 0
 local active_dig_jobs = 0
 local active_construct_building_jobs = 0
 local active_carpenter_jobs = 0
+local active_job_type_names = {}
+
+local function append_limited(list, value, limit)
+  if not value or value == '' then return end
+  if #list >= limit then return end
+  table.insert(list, value)
+end
 
 local function job_type_name(job)
   local ok, name = pcall(function() return tostring(job.job_type) end)
@@ -190,6 +197,7 @@ if df.global.world.jobs and df.global.world.jobs.list then
       active_dig_jobs = active_dig_jobs + 1
     end
     local name = job_type_name(job)
+    append_limited(active_job_type_names, name, 12)
     if job.job_type == df.job_type.ConstructBuilding or name == 'ConstructBuilding' then
       active_construct_building_jobs = active_construct_building_jobs + 1
     end
@@ -220,6 +228,8 @@ local carpenter_workshops = 0
 local carpenter_workshops_usable = 0
 local carpenter_workshop_task_jobs = 0
 local carpenter_workshop_construction_jobs = 0
+local carpenter_workshop_task_job_type_names = {}
+local carpenter_workshop_construction_job_type_names = {}
 local carpenter_workshop_x1 = nil
 local carpenter_workshop_y1 = nil
 local carpenter_workshop_x2 = nil
@@ -270,8 +280,10 @@ if buildings then
                 local name = job_type_name(job)
                 if job.job_type == df.job_type.ConstructBuilding or name == 'ConstructBuilding' then
                   building_construction_jobs = building_construction_jobs + 1
+                  append_limited(carpenter_workshop_construction_job_type_names, name, 12)
                 else
                   building_task_jobs = building_task_jobs + 1
+                  append_limited(carpenter_workshop_task_job_type_names, name, 12)
                 end
               end
             end
@@ -360,6 +372,7 @@ print(json.encode({
   active_dig_jobs = active_dig_jobs,
   active_construct_building_jobs = active_construct_building_jobs,
   active_carpenter_jobs = active_carpenter_jobs,
+  active_job_type_names = active_job_type_names,
   manager_orders_count = manager_orders_count,
   manager_orders_amount_left = manager_orders_amount_left,
   manager_orders_amount_total = manager_orders_amount_total,
@@ -370,6 +383,8 @@ print(json.encode({
   carpenter_workshops_unproven = math.max(0, carpenter_workshops - carpenter_workshops_usable),
   carpenter_workshop_task_jobs = carpenter_workshop_task_jobs,
   carpenter_workshop_construction_jobs = carpenter_workshop_construction_jobs,
+  carpenter_workshop_task_job_type_names = carpenter_workshop_task_job_type_names,
+  carpenter_workshop_construction_job_type_names = carpenter_workshop_construction_job_type_names,
   carpenter_workshop_x1 = carpenter_workshop_x1,
   carpenter_workshop_y1 = carpenter_workshop_y1,
   carpenter_workshop_x2 = carpenter_workshop_x2,

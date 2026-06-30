@@ -469,6 +469,28 @@ def test_desired_keystroke_target_mode_returns_to_starter_after_usable_workshop(
     )
 
 
+def test_desired_keystroke_target_mode_stays_on_existing_workshop_for_queued_task() -> None:
+    state = {
+        "stocks": {"wood": 30, "stone": 0},
+        "work": {
+            "carpenter_workshops_planned": 1,
+            "carpenter_workshops_usable": 1,
+            "carpenter_workshop_task_jobs": 1,
+            "active_carpenter_jobs": 0,
+        },
+    }
+
+    assert (
+        _desired_keystroke_target_mode(
+            state,
+            ui_run_excavation_progress=6,
+            ui_run_material_progress=27,
+            ui_successful_targets=4,
+        )
+        == "existing_workshop"
+    )
+
+
 def test_carry_forward_workshop_task_proof_after_task_disappears() -> None:
     seen = 0
     task_state = {

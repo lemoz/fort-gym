@@ -326,6 +326,20 @@ def _pending_carpenter_workshop_construction(state: Dict[str, Any]) -> bool:
     )
 
 
+def _queued_carpenter_workshop_task_needs_resolution(state: Dict[str, Any]) -> bool:
+    work = state.get("work")
+    if not isinstance(work, dict):
+        return False
+
+    planned = _int_or_none(work.get("carpenter_workshops_planned"))
+    if planned is None:
+        planned = _int_or_none(work.get("carpenter_workshops"))
+    usable = _int_or_none(work.get("carpenter_workshops_usable")) or 0
+    task_jobs = _int_or_none(work.get("carpenter_workshop_task_jobs")) or 0
+
+    return bool((planned or 0) > 0 and usable > 0 and task_jobs > 0)
+
+
 def _carry_forward_carpenter_workshop_proof(
     state: Dict[str, Any],
     usable_seen: int,
@@ -761,6 +775,8 @@ def _desired_keystroke_target_mode(
     if _pending_carpenter_workshop_construction(state):
         return "existing_workshop"
     if _unproven_carpenter_workshop_needs_selection(state):
+        return "existing_workshop"
+    if _queued_carpenter_workshop_task_needs_resolution(state):
         return "existing_workshop"
     if _carpenter_workshops(state) > 0:
         return "starter"

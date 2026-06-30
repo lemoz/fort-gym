@@ -355,6 +355,44 @@ def test_encoder_explains_carried_forward_workshop_proof() -> None:
     assert "Do not reopen the same workshop just to prove usability again" in text
 
 
+def test_encoder_anchors_queued_workshop_task_phase() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 30, "stone": 0},
+            "work": {
+                "manager_orders_count": 0,
+                "manager_orders_amount_left": 0,
+                "carpenter_workshops": 1,
+                "carpenter_workshops_planned": 1,
+                "carpenter_workshops_usable": 1,
+                "carpenter_workshop_task_jobs": 1,
+                "active_jobs": 0,
+                "active_carpenter_jobs": 0,
+                "carpenter_labors_enabled": 1,
+                "carpenter_workshop_task_job_type_names": ["ConstructShield"],
+            },
+            "ui_target_setup": {
+                "ok": True,
+                "target_mode": "existing_workshop",
+                "target_generation": 7,
+                "target_attempts": 0,
+                "selection_rect": [97, 93, 177, 99, 95, 177],
+                "show_recommended_keys": True,
+                "recommended_keys": ["D_BUILDJOB"],
+            },
+        },
+        screen_text="D: Designations\nB: Building\nmain map",
+    )
+
+    assert "active_jobs=0, active_carpenter_jobs=0" in text
+    assert "Workshop queued tasks: ConstructShield" in text
+    assert "real carpenter workshop task is queued on a usable workshop" in text
+    assert "Keep the existing_workshop target anchored" in text
+    assert "prefer a larger empty-key time advance or inspect D_JOBLIST" in text
+
+
 def test_encoder_shows_build_phase_after_material_exists() -> None:
     text, _ = encode_observation(
         {
