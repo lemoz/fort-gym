@@ -997,6 +997,123 @@ def test_openrouter_agent_main_map_blocked_menu_fallback_selects_existing_worksh
     assert any(event["tool"] == "blocked_menu_path_fallback" for event in events)
 
 
+def test_openrouter_agent_allows_unproven_workshop_inspection_after_menu_block(
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    _FakeOpenRouterClient.tool_calls = [
+        _submit_action_call(
+            {
+                "type": "KEYSTROKE",
+                "params": {"keys": ["D_BUILDJOB"]},
+                "intent": "Inspect the placed but still unproven Carpenter's Workshop.",
+                "advance_ticks": 0,
+            }
+        )
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "openai"
+        return SimpleNamespace(OpenAI=_FakeOpenRouterClient)
+
+    monkeypatch.setattr("fort_gym.bench.agent.llm_openrouter.import_module", fake_import_module)
+
+    try:
+        agent = OpenRouterKeystrokeAgent()
+        action = agent.decide(
+            "mock observation",
+            {
+                "pause_state": True,
+                "screen_state": {"mode": "main_map", "confidence": "high"},
+                "ui_target_setup": {"target_mode": "existing_workshop"},
+                "work": {
+                    "carpenter_workshops": 1,
+                    "carpenter_workshops_unproven": 1,
+                    "carpenter_workshops_usable": 0,
+                    "carpenter_workshop_task_jobs": 0,
+                    "active_carpenter_jobs": 0,
+                    "active_jobs": 0,
+                    "carpenter_workshop_construction_jobs": 0,
+                    "manager_orders_count": 0,
+                    "manager_orders_amount_left": 0,
+                },
+                "recent_progress_summary": {
+                    "do_not_repeat_menu_path": True,
+                    "escape_recovery_attempted": True,
+                    "repeated_menu_family": "workshop_task_menu",
+                    "repeated_key_fingerprint": "LEAVESCREEN",
+                },
+            },
+        )
+        events = agent.pop_tool_events()
+    finally:
+        _FakeOpenRouterClient.tool_calls = None
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["params"]["keys"] == ["D_BUILDJOB"]
+    assert not any(event["tool"] == "blocked_menu_path_rejected" for event in events)
+
+
+def test_openrouter_agent_fallback_inspects_unproven_workshop_from_main_map(
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
+    monkeypatch.setenv("OPENROUTER_MAX_TOOL_ROUNDS", "1")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    blocked_retry = {
+        "type": "KEYSTROKE",
+        "params": {"keys": ["D_BUILDING", "HOTKEY_BUILDING_WORKSHOP"]},
+        "intent": "Open another workshop build route.",
+        "advance_ticks": 0,
+    }
+    _FakeOpenRouterClient.tool_calls = [
+        _submit_action_call(blocked_retry, "call_blocked_retry")
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "openai"
+        return SimpleNamespace(OpenAI=_FakeOpenRouterClient)
+
+    monkeypatch.setattr("fort_gym.bench.agent.llm_openrouter.import_module", fake_import_module)
+
+    try:
+        agent = OpenRouterKeystrokeAgent()
+        action = agent.decide(
+            "mock observation",
+            {
+                "pause_state": True,
+                "screen_state": {"mode": "main_map", "confidence": "high"},
+                "ui_target_setup": {"target_mode": "existing_workshop"},
+                "work": {
+                    "carpenter_workshops": 1,
+                    "carpenter_workshops_unproven": 1,
+                    "carpenter_workshops_usable": 0,
+                    "carpenter_workshop_task_jobs": 0,
+                    "active_carpenter_jobs": 0,
+                    "active_jobs": 0,
+                    "carpenter_workshop_construction_jobs": 0,
+                    "manager_orders_count": 0,
+                    "manager_orders_amount_left": 0,
+                },
+                "recent_progress_summary": {
+                    "do_not_repeat_menu_path": True,
+                    "escape_recovery_attempted": True,
+                    "repeated_menu_family": "building_placement_menu",
+                    "repeated_key_fingerprint": "D_BUILDING HOTKEY_BUILDING_WORKSHOP",
+                },
+            },
+        )
+        events = agent.pop_tool_events()
+    finally:
+        _FakeOpenRouterClient.tool_calls = None
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["params"]["keys"] == ["D_BUILDJOB"]
+    assert action["advance_ticks"] == 0
+    assert any(event["tool"] == "blocked_menu_path_fallback" for event in events)
+
+
 def test_openrouter_agent_repairs_missing_screen_read_from_classifier(monkeypatch) -> None:
     monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
     get_settings.cache_clear()  # type: ignore[attr-defined]

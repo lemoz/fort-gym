@@ -1871,7 +1871,26 @@ class OpenRouterKeystrokeAgent(Agent):
         if target_mode != "existing_workshop":
             return False
 
+        keys = [str(key) for key in cls._keystroke_keys(tool_payload)]
+        try:
+            advance_ticks = int(tool_payload.get("advance_ticks") or 0)
+        except (TypeError, ValueError):
+            advance_ticks = 0
+        screen_state = obs_json.get("screen_state")
+        mode = (
+            str(screen_state.get("mode") or "").strip().lower()
+            if isinstance(screen_state, dict)
+            else ""
+        )
         work = obs_json.get("work") if isinstance(obs_json.get("work"), dict) else {}
+        if (
+            mode == "main_map"
+            and keys == ["D_BUILDJOB"]
+            and advance_ticks in {0, 500}
+            and cls._int_value(work.get("carpenter_workshops")) > 0
+        ):
+            return True
+
         stocks = obs_json.get("stocks") if isinstance(obs_json.get("stocks"), dict) else {}
         if cls._int_value(work.get("carpenter_workshops_usable")) <= 0:
             return False
@@ -1889,18 +1908,6 @@ class OpenRouterKeystrokeAgent(Agent):
             )
         ):
             return False
-
-        keys = [str(key) for key in cls._keystroke_keys(tool_payload)]
-        try:
-            advance_ticks = int(tool_payload.get("advance_ticks") or 0)
-        except (TypeError, ValueError):
-            advance_ticks = 0
-        screen_state = obs_json.get("screen_state")
-        mode = (
-            str(screen_state.get("mode") or "").strip().lower()
-            if isinstance(screen_state, dict)
-            else ""
-        )
 
         return (
             (mode == "main_map" and keys == ["D_BUILDJOB"] and advance_ticks == 0)
@@ -2005,7 +2012,26 @@ class OpenRouterKeystrokeAgent(Agent):
                 self._int_value(work.get("manager_orders_amount_left")),
             )
             wood = self._int_value(stocks.get("wood"))
-            if usable > 0 and task_jobs <= 0 and active_jobs <= 0 and wood > 0:
+            placed = self._int_value(work.get("carpenter_workshops"))
+            unproven = self._int_value(work.get("carpenter_workshops_unproven"))
+            if (
+                mode == "main_map"
+                and placed > 0
+                and usable <= 0
+                and task_jobs <= 0
+                and active_jobs <= 0
+                and unproven > 0
+            ):
+                fallback = {
+                    "type": "KEYSTROKE",
+                    "params": {"keys": ["D_BUILDJOB"]},
+                    "intent": (
+                        "Recover from a rejected route by inspecting the placed "
+                        "but unproven Carpenter's Workshop from the main map."
+                    ),
+                    "advance_ticks": 0,
+                }
+            elif usable > 0 and task_jobs <= 0 and active_jobs <= 0 and wood > 0:
                 if mode == "main_map":
                     fallback = {
                         "type": "KEYSTROKE",
@@ -2055,8 +2081,8 @@ class OpenRouterKeystrokeAgent(Agent):
                     "input": {"error": error},
                     "output": (
                         "Submitted a state-productive recovery action instead of "
-                        "LEAVESCREEN because the current screen was already usable "
-                        "for workshop progress."
+                        "LEAVESCREEN because the current state had a concrete "
+                        "workshop route to inspect or advance."
                     ),
                 }
             )
