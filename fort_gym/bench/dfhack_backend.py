@@ -26,10 +26,13 @@ DEFAULT_WORK_RECT = (50, 35, 0, 54, 39, 0)
 
 
 def _hook_path(name: str) -> str:
+    repo_path = REPO_HOOK_ROOT / name
+    if repo_path.exists():
+        return str(repo_path)
     installed_path = HOOK_ROOT / name
     if installed_path.exists():
         return str(installed_path)
-    return str(REPO_HOOK_ROOT / name)
+    return str(repo_path)
 
 
 def _work_rect_from_env() -> tuple[int, int, int, int, int, int]:
