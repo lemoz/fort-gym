@@ -1289,8 +1289,14 @@ class OpenRouterKeystrokeAgent(Agent):
         if has_workshop_route:
             return None
 
+        ui_work = (
+            obs_json.get("ui_work") if isinstance(obs_json.get("ui_work"), dict) else {}
+        )
         target_hidden = cls._int_value(work.get("target_hidden_tiles"))
-        target_floor = cls._int_value(work.get("target_floor_tiles"))
+        target_floor = max(
+            cls._int_value(work.get("target_floor_tiles")),
+            cls._int_value(ui_work.get("target_floor_tiles")),
+        )
         if target_hidden <= 0 or target_floor > 0:
             return None
 
