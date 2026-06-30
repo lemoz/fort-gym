@@ -992,6 +992,26 @@ def test_encoder_surfaces_build_material_blocker() -> None:
     assert "acquire logs or stone" in text
 
 
+def test_encoder_surfaces_blocked_workshop_footprint_feedback() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 8, "stone": 0},
+            "ui_workshop_feedback": {
+                "placement_blocked": True,
+                "blocked_targets": [[97, 93, 177]],
+                "menu_escape_keys": ["LEAVESCREEN"],
+            },
+        },
+        screen_text="Carpenter's Workshop\nPlacement\nBlocked",
+    )
+
+    assert "native DF rejected the current carpenter workshop footprint as blocked" in text
+    assert "do not retry that exact footprint" in text
+    assert "submit only LEAVESCREEN keys with advance_ticks=0" in text
+
+
 def test_encoder_renders_recent_action_outcomes() -> None:
     text, _ = encode_observation(
         {

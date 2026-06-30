@@ -4,6 +4,7 @@ local json = require('json')
 local args = {...}
 
 local MODE = args[1] or 'starter'
+local BLOCKED_WORKSHOP_TARGETS_ARG = args[2] or ''
 
 local SELECT_OFFSET_X1 = 7
 local SELECT_OFFSET_Y1 = 9
@@ -24,6 +25,18 @@ local STONE_MATERIALS = {
   [3] = true, -- feature stone wall
   [5] = true, -- mineral/vein wall
 }
+
+local blocked_workshop_targets = {}
+for token in string.gmatch(BLOCKED_WORKSHOP_TARGETS_ARG, '([^;]+)') do
+  local x, y, z = string.match(token, '^(-?%d+),(-?%d+),(-?%d+)$')
+  if x and y and z then
+    blocked_workshop_targets[x .. ',' .. y .. ',' .. z] = true
+  end
+end
+
+local function workshop_target_key(x1, y1, z)
+  return tostring(x1) .. ',' .. tostring(y1) .. ',' .. tostring(z)
+end
 
 local function valid_wall_tile(tx, ty, tz)
   local block = dfhack.maps.getTileBlock(tx, ty, tz)
@@ -115,6 +128,9 @@ end
 
 local function valid_workshop_footprint(x1, y1, z)
   if x1 < 0 or y1 < 0 or z < 0 then
+    return false
+  end
+  if blocked_workshop_targets[workshop_target_key(x1, y1, z)] then
     return false
   end
 

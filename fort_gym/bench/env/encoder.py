@@ -743,6 +743,11 @@ def encode_observation(
         if isinstance(clean_state.get("ui_build_feedback"), dict)
         else {}
     )
+    ui_workshop_feedback = (
+        clean_state.get("ui_workshop_feedback")
+        if isinstance(clean_state.get("ui_workshop_feedback"), dict)
+        else {}
+    )
     screen_shows_blocked_placement = bool(
         screen_text
         and (
@@ -1183,6 +1188,18 @@ def encode_observation(
             status_lines.append(
                 "Live UI build feedback: a previous build screen said material was "
                 "missing; acquire logs or stone before retrying workshop placement."
+            )
+    if ui_workshop_feedback.get("placement_blocked"):
+        status_lines.append(
+            "Live UI workshop feedback: native DF rejected the current carpenter "
+            "workshop footprint as blocked; do not retry that exact footprint. "
+            "Exit build menus first, then use a fresh workshop target or return "
+            "to excavation."
+        )
+        if ui_workshop_feedback.get("menu_escape_keys"):
+            status_lines.append(
+                "Live UI workshop feedback: while still in the blocked build menus, "
+                "submit only LEAVESCREEN keys with advance_ticks=0."
             )
     if ui_run_progress:
         total_work_delta = int(ui_run_progress.get("total_work_delta") or 0)

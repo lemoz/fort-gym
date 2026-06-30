@@ -39,11 +39,33 @@ def test_prepare_keystroke_workshop_target_moves_cursor_before_confirm() -> None
 
     assert "local function append_cursor_moves" in hook_text
     assert "placement_cursor_before_moves" in hook_text
+    assert "blocked_workshop_targets" in hook_text
+    assert "blocked_workshop_targets[workshop_target_key(x1, y1, z)]" in hook_text
     assert (
         "append_cursor_moves(recommended_keys, placement_cursor_x, placement_cursor_y, x1, y1)"
         in hook_text
     )
     assert "'HOTKEY_BUILDING_WORKSHOP_CARPENTER',\n  }\n  append_cursor_moves" in hook_text
+
+
+def test_prepare_keystroke_target_passes_blocked_workshop_targets(monkeypatch) -> None:
+    captured = {}
+
+    def fake_run_lua_file(path, *args, **kwargs):
+        captured["path"] = path
+        captured["args"] = args
+        captured["kwargs"] = kwargs
+        return {"ok": True}
+
+    monkeypatch.setattr(dfhack_backend, "run_lua_file", fake_run_lua_file)
+
+    assert dfhack_backend.prepare_keystroke_target(
+        "workshop",
+        blocked_workshop_targets=[(97, 93, 177), (88, 98, 177)],
+    ) == {"ok": True}
+
+    assert captured["args"] == ("workshop", "97,93,177;88,98,177")
+    assert captured["kwargs"]["timeout"] == 10.0
 
 
 def test_prepare_keystroke_tree_material_target_uses_broad_selection() -> None:

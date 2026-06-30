@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 import time
 from pathlib import Path
-from typing import Dict, Iterable
+from typing import Dict, Iterable, Sequence
 
 from .config import DFROOT
 from .dfhack_exec import DFHackError, read_pause_state, run_dfhack, run_lua_file, set_paused, tick_read
@@ -210,7 +210,28 @@ def read_map_snapshot(rect: tuple[int, int, int, int, int, int]) -> Dict[str, ob
         return {"ok": False, "error": str(exc)}
 
 
-def prepare_keystroke_target(mode: str = "starter") -> Dict[str, object]:
+def _format_blocked_workshop_targets(
+    blocked_workshop_targets: Sequence[Sequence[int]] | None,
+) -> str:
+    if not blocked_workshop_targets:
+        return ""
+    tokens: list[str] = []
+    for target in blocked_workshop_targets:
+        if len(target) < 3:
+            continue
+        try:
+            x, y, z = int(target[0]), int(target[1]), int(target[2])
+        except (TypeError, ValueError):
+            continue
+        tokens.append(f"{x},{y},{z}")
+    return ";".join(tokens)
+
+
+def prepare_keystroke_target(
+    mode: str = "starter",
+    *,
+    blocked_workshop_targets: Sequence[Sequence[int]] | None = None,
+) -> Dict[str, object]:
     """Center the live UI on a visible, mineable wall pocket for keystroke runs."""
 
     try:
@@ -222,6 +243,7 @@ def prepare_keystroke_target(mode: str = "starter") -> Dict[str, object]:
         return run_lua_file(
             _hook_path("prepare_keystroke_target.lua"),
             safe_mode,
+            _format_blocked_workshop_targets(blocked_workshop_targets),
             timeout=10.0,
         )
     except (DFHackError, OSError) as exc:

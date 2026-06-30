@@ -815,6 +815,15 @@ def _screen_shows_ready_workshop_placement(screen_text: str | None) -> bool:
     )
 
 
+def _screen_shows_blocked_workshop_placement(screen_text: str | None) -> bool:
+    return bool(
+        screen_text
+        and "Carpenter's Workshop" in screen_text
+        and "Placement" in screen_text
+        and ("Blocked" in screen_text or "Building present" in screen_text)
+    )
+
+
 def _screen_shows_workshop_material_selection(screen_text: str | None) -> bool:
     return bool(
         screen_text
@@ -872,6 +881,15 @@ def _workshop_placement_confirm_target(state: Dict[str, Any]) -> Dict[str, Any]:
         state,
         source="visible_workshop_placement",
     )
+
+
+def _workshop_target_key(target: Dict[str, Any] | None) -> tuple[int, int, int] | None:
+    if not isinstance(target, dict):
+        return None
+    rect = _normalize_rect(target.get("target_rect") or target.get("selection_rect"))
+    if rect is None:
+        return None
+    return (rect[0], rect[1], rect[2])
 
 
 def _ui_work_rect_from_state(
@@ -1166,6 +1184,7 @@ def run_once(
     ui_target_mode = "starter"
     ui_target_generation = 0
     ui_target_attempts = 0
+    ui_blocked_workshop_targets: set[tuple[int, int, int]] = set()
 
     def get_screen_text() -> str:
         """Get screen text for keystroke mode, empty string otherwise."""
@@ -1215,7 +1234,10 @@ def run_once(
             raise
         executor = Executor(dfhack_client=dfhack_client)
         if is_keystroke_mode:
-            keystroke_ui_target = prepare_keystroke_target(ui_target_mode)
+            keystroke_ui_target = prepare_keystroke_target(
+                ui_target_mode,
+                blocked_workshop_targets=tuple(ui_blocked_workshop_targets),
+            )
             if keystroke_ui_target.get("ok"):
                 ui_target_generation = 1
 
@@ -1268,6 +1290,7 @@ def run_once(
     ui_successful_targets = 0
     ui_work_feedback: Dict[str, Any] = {}
     ui_build_material_blocked = False
+    ui_workshop_target_blocked = False
     ui_material_target_exhausted = False
     carpenter_workshop_usable_seen = 0
     scoreable_elapsed_ticks = 0
@@ -1325,13 +1348,19 @@ def run_once(
                     and is_keystroke_mode
                     and ui_no_progress_streak >= UI_TARGET_REFRESH_NO_PROGRESS_STEPS
                 ):
-                    refreshed_target = prepare_keystroke_target(ui_target_mode)
+                    refreshed_target = prepare_keystroke_target(
+                        ui_target_mode,
+                        blocked_workshop_targets=tuple(ui_blocked_workshop_targets),
+                    )
                     if refreshed_target.get("ok"):
                         if ui_target_mode == "material" and _same_target_route(
                             keystroke_ui_target,
                             refreshed_target,
                         ):
-                            starter_target = prepare_keystroke_target("starter")
+                            starter_target = prepare_keystroke_target(
+                                "starter",
+                                blocked_workshop_targets=tuple(ui_blocked_workshop_targets),
+                            )
                             if starter_target.get("ok"):
                                 ui_material_target_exhausted = True
                                 ui_target_mode = "starter"
@@ -1373,6 +1402,8 @@ def run_once(
                             ui_last_excavation_progress = 0
                             ui_target_progress_seen = False
                             ui_no_progress_streak = 0
+                            if ui_target_mode == "workshop":
+                                ui_workshop_target_blocked = False
                             ui_work_feedback = {
                                 "target_refreshed": True,
                                 "target_mode": ui_target_mode,
@@ -1429,16 +1460,31 @@ def run_once(
                         screen_text if is_keystroke_mode else None
                     )
                 )
+                screen_has_blocked_workshop_placement = (
+                    _screen_shows_blocked_workshop_placement(
+                        screen_text if is_keystroke_mode else None
+                    )
+                )
                 screen_has_building_type_menu = _screen_shows_building_type_menu(
                     screen_text if is_keystroke_mode else None
                 )
                 if screen_has_material_blocker:
                     ui_build_material_blocked = True
+                if screen_has_blocked_workshop_placement:
+                    blocked_key = _workshop_target_key(keystroke_ui_target)
+                    if blocked_key is not None:
+                        ui_blocked_workshop_targets.add(blocked_key)
+                    ui_workshop_target_blocked = True
+                    ui_no_progress_streak = max(
+                        ui_no_progress_streak,
+                        UI_TARGET_REFRESH_NO_PROGRESS_STEPS,
+                    )
                 elif screen_has_ready_workshop_placement or screen_has_workshop_material_selection:
                     ui_build_material_blocked = False
                 if backend_name == "dfhack" and is_keystroke_mode:
                     if screen_has_ready_workshop_placement or screen_has_workshop_material_selection:
                         ui_target_mode = "workshop"
+                        ui_workshop_target_blocked = False
                         source = (
                             "visible_workshop_material_selection"
                             if screen_has_workshop_material_selection
@@ -1472,7 +1518,10 @@ def run_once(
                                 build_material_blocked=ui_build_material_blocked,
                             )
                         if desired_target_mode != ui_target_mode:
-                            refreshed_target = prepare_keystroke_target(desired_target_mode)
+                            refreshed_target = prepare_keystroke_target(
+                                desired_target_mode,
+                                blocked_workshop_targets=tuple(ui_blocked_workshop_targets),
+                            )
                             if refreshed_target.get("ok"):
                                 ui_target_mode = desired_target_mode
                                 keystroke_ui_target = refreshed_target
@@ -1484,6 +1533,8 @@ def run_once(
                                 ui_last_excavation_progress = 0
                                 ui_target_progress_seen = False
                                 ui_no_progress_streak = 0
+                                if desired_target_mode == "workshop":
+                                    ui_workshop_target_blocked = False
                                 if ui_target_mode == "material":
                                     refresh_reason = "switching to material acquisition target"
                                 elif ui_target_mode == "existing_workshop":
@@ -1508,9 +1559,16 @@ def run_once(
                             ui_target_mode == "material"
                             and (screen_has_material_blocker or screen_has_building_type_menu)
                         )
+                        workshop_blocked_menu_escape = (
+                            ui_target_mode == "workshop"
+                            and (
+                                screen_has_blocked_workshop_placement
+                                or (ui_workshop_target_blocked and screen_has_building_type_menu)
+                            )
+                        )
                         recovery_prefix = (
                             list(UI_MATERIAL_BLOCKER_ESCAPE_KEYS)
-                            if material_needs_menu_escape
+                            if material_needs_menu_escape or workshop_blocked_menu_escape
                             else []
                         )
                         state_before["ui_target_setup"] = _ui_target_setup_for_observation(
@@ -1553,6 +1611,22 @@ def run_once(
                                 "visible build screen requires material; exit build menus and acquire/chop/mine material before retrying construction"
                                 if screen_has_material_blocker
                                 else "previous build screen required material; acquire/chop/mine material before retrying construction"
+                            ),
+                        }
+                    if ui_workshop_target_blocked:
+                        state_before["ui_workshop_feedback"] = {
+                            "placement_blocked": True,
+                            "blocked_target_count": len(ui_blocked_workshop_targets),
+                            "blocked_targets": [
+                                [x, y, z] for x, y, z in sorted(ui_blocked_workshop_targets)
+                            ],
+                            "menu_escape_keys": (
+                                list(UI_MATERIAL_BLOCKER_ESCAPE_KEYS)
+                                if screen_has_blocked_workshop_placement or screen_has_building_type_menu
+                                else []
+                            ),
+                            "message": (
+                                "native DF rejected this carpenter workshop footprint as blocked; exit build menus, use a fresh workshop target that skips blocked footprints, or return to excavation"
                             ),
                         }
                     state_before["ui_run_progress"] = {

@@ -13,6 +13,7 @@ from fort_gym.bench.run.runner import (
     _material_exhausted_fallback_target_mode,
     _preserve_state_after_degraded_read,
     _preserve_work_after_degraded_read,
+    _screen_shows_blocked_workshop_placement,
     _screen_shows_building_type_menu,
     _screen_shows_ready_workshop_placement,
     _screen_shows_workshop_material_selection,
@@ -584,6 +585,18 @@ def test_ready_workshop_placement_screen_gets_select_target() -> None:
     assert target["source"] == "visible_workshop_placement"
     assert target["recommended_keys"] == ["SELECT"]
     assert target["selection_rect"] == [94, 100, 177, 96, 102, 177]
+
+
+def test_blocked_workshop_placement_screen_is_distinct_from_ready_select() -> None:
+    blocked = "Carpenter's Workshop\nPlacement\nBlocked\nESC: Cancel"
+    occupied = "Carpenter's Workshop\nPlacement\nBuilding present\nEnter: Place"
+    needs_material = "Carpenter's Workshop\nPlacement\nNeeds building material\nESC: Cancel"
+    ready = "Carpenter's Workshop\nPlacement\nEnter: Place\nESC: Cancel"
+
+    assert _screen_shows_blocked_workshop_placement(blocked)
+    assert _screen_shows_blocked_workshop_placement(occupied)
+    assert not _screen_shows_blocked_workshop_placement(needs_material)
+    assert not _screen_shows_blocked_workshop_placement(ready)
 
 
 def test_workshop_material_selection_screen_gets_select_target() -> None:
