@@ -1052,6 +1052,90 @@ class OpenRouterKeystrokeAgent(Agent):
         )
 
     @classmethod
+    def _workshop_add_task_list_contract_error(
+        cls,
+        tool_payload: Dict[str, Any],
+        obs_json: Dict[str, Any],
+    ) -> str | None:
+        screen_state = obs_json.get("screen_state")
+        if not isinstance(screen_state, dict):
+            return None
+        mode = str(screen_state.get("mode") or "").strip().lower()
+        if mode != "workshop_add_task_list":
+            return None
+        if str(screen_state.get("confidence") or "") != "high":
+            return None
+
+        work = obs_json.get("work") if isinstance(obs_json.get("work"), dict) else {}
+        has_queued_or_active_work = any(
+            cls._int_value(work.get(field)) > 0
+            for field in (
+                "carpenter_workshop_task_jobs",
+                "manager_orders_count",
+                "manager_orders_amount_left",
+                "active_carpenter_jobs",
+                "active_jobs",
+            )
+        )
+        if has_queued_or_active_work:
+            return None
+
+        keys = [str(key) for key in cls._keystroke_keys(tool_payload)]
+        key_set = set(keys)
+        try:
+            advance_ticks = int(tool_payload.get("advance_ticks") or 0)
+        except (TypeError, ValueError):
+            advance_ticks = 0
+
+        blocked_keys = {
+            "BUILDJOB_ADD",
+            "D_BUILDJOB",
+            "D_BUILDING",
+            "D_JOBLIST",
+            "D_NOBLES",
+            "UNITJOB_MANAGER",
+            "MANAGER_NEW_ORDER",
+            "LEAVESCREEN",
+            "STRING_A097",
+        }
+        if (
+            advance_ticks == 0
+            and "SELECT" in key_set
+            and not key_set.intersection(blocked_keys)
+        ):
+            return None
+
+        return (
+            "Workshop add-task-list contract mismatch: the visible screen is "
+            "the Carpenter's Workshop task list and no workshop task, manager "
+            "order, or active job is queued yet. Do not press BUILDJOB_ADD, raw "
+            "letter keys such as STRING_A097, job/manager routes, LEAVESCREEN, "
+            "or wait from this screen. Submit SELECT with advance_ticks=0 to "
+            "choose the highlighted visible task row; use only STANDARDSCROLL "
+            "keys before SELECT if the current screen_read evidence names a "
+            "different highlighted row you need."
+        )
+
+    def _log_workshop_add_task_list_contract_error(
+        self,
+        tool_payload: Dict[str, Any],
+        obs_json: Dict[str, Any],
+        error: str,
+    ) -> None:
+        self._tool_events.append(
+            {
+                "tool": "workshop_add_task_list_contract_rejected",
+                "input": {
+                    "screen_state": obs_json.get("screen_state"),
+                    "work": obs_json.get("work"),
+                    "submitted_keys": self._keystroke_keys(tool_payload),
+                    "advance_ticks": tool_payload.get("advance_ticks"),
+                },
+                "output": error,
+            }
+        )
+
+    @classmethod
     def _pending_workshop_construction_contract_error(
         cls,
         tool_payload: Dict[str, Any],
@@ -1597,6 +1681,18 @@ class OpenRouterKeystrokeAgent(Agent):
                 queued_workshop_construction_error,
             )
             return queued_workshop_construction_error
+
+        add_task_list_error = self._workshop_add_task_list_contract_error(
+            payload,
+            obs_json,
+        )
+        if add_task_list_error:
+            self._log_workshop_add_task_list_contract_error(
+                payload,
+                obs_json,
+                add_task_list_error,
+            )
+            return add_task_list_error
 
         compound_escape_error = self._compound_menu_escape_contract_error(
             payload,

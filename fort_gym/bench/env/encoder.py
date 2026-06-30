@@ -292,7 +292,8 @@ def _classify_screen_state(screen_text: Optional[str]) -> Dict[str, Any]:
             instruction=(
                 "SELECT chooses the highlighted task row. Use STANDARDSCROLL "
                 "keys, not CURSOR_DOWN/CURSOR_UP, to change highlighted rows in "
-                f"a '+-*/: Scroll' list. {MENU_ESCAPE_OBSERVATION_RULE}"
+                "a '+-*/: Scroll' list. Do not use BUILDJOB_ADD or raw letter "
+                f"keys from this list. {MENU_ESCAPE_OBSERVATION_RULE}"
             ),
             extra_evidence=task_rows[:3] or ["visible carpenter workshop task list"],
         )

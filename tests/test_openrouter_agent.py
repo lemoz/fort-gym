@@ -1547,6 +1547,91 @@ def test_openrouter_agent_rejects_production_screen_read_mismatch(monkeypatch) -
     assert any(event["tool"] == "screen_read_contract_rejected" for event in events)
 
 
+def test_openrouter_agent_selects_visible_workshop_add_task_row(monkeypatch) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    bad_payload = {
+        "type": "KEYSTROKE",
+        "params": {"keys": ["BUILDJOB_ADD"]},
+        "intent": "open the add-task menu again",
+        "objective": "queue a carpenter workshop production task",
+        "expected_visible_result": "task list remains visible",
+        "screen_read": {
+            "mode": "workshop_add_task_list",
+            "evidence": ["Carpenter's Workshop", "+-*/: Scroll", "Construct Bed (b)"],
+            "cursor_or_selection": "Construct Bed (b)",
+            "confidence": "high",
+        },
+        "last_action_review": {
+            "worked": True,
+            "evidence": ["BUILDJOB_ADD opened the task list"],
+            "should_retry_same_path": False,
+        },
+        "advance_ticks": 0,
+    }
+    recovery_payload = {
+        "type": "KEYSTROKE",
+        "params": {"keys": ["SELECT"]},
+        "intent": "select the highlighted workshop task row",
+        "objective": "queue a concrete carpenter workshop task",
+        "expected_visible_result": "the highlighted task is added to the workshop queue",
+        "screen_read": {
+            "mode": "workshop_add_task_list",
+            "evidence": ["Carpenter's Workshop", "Construct Bed (b) is highlighted"],
+            "cursor_or_selection": "Construct Bed (b)",
+            "confidence": "high",
+        },
+        "last_action_review": {
+            "worked": False,
+            "evidence": ["the previous action repeated BUILDJOB_ADD from inside the list"],
+            "should_retry_same_path": False,
+        },
+        "advance_ticks": 0,
+    }
+    _FakeOpenRouterClient.responses = [
+        {"tool_calls": [_submit_action_call(bad_payload, "call_bad_add_task")]},
+        {"tool_calls": [_submit_action_call(recovery_payload, "call_select_task")]},
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "openai"
+        return SimpleNamespace(OpenAI=_FakeOpenRouterClient)
+
+    monkeypatch.setattr("fort_gym.bench.agent.llm_openrouter.import_module", fake_import_module)
+
+    try:
+        agent = OpenRouterKeystrokeAgent()
+        action = agent.decide(
+            "mock observation",
+            {
+                "pause_state": True,
+                "screen_state": {
+                    "mode": "workshop_add_task_list",
+                    "confidence": "high",
+                    "highlighted": "Construct Bed (b)",
+                },
+                "work": {
+                    "carpenter_workshop_task_jobs": 0,
+                    "manager_orders_count": 0,
+                    "manager_orders_amount_left": 0,
+                    "active_carpenter_jobs": 0,
+                    "active_jobs": 0,
+                },
+            },
+        )
+        events = agent.pop_tool_events()
+    finally:
+        _FakeOpenRouterClient.responses = None
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["params"]["keys"] == ["SELECT"]
+    assert action["advance_ticks"] == 0
+    assert any(
+        event["tool"] == "workshop_add_task_list_contract_rejected"
+        for event in events
+    )
+
+
 def test_openrouter_agent_rejects_blind_nobles_title_scroll(monkeypatch) -> None:
     monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
     get_settings.cache_clear()  # type: ignore[attr-defined]
