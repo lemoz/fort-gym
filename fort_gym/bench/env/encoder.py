@@ -903,12 +903,43 @@ def encode_observation(
             f"{work.get('carpenter_workshop_construction_jobs', 0)}, "
             f"carpenter_labors={work.get('carpenter_labors_enabled', 0)}"
         )
+        workshop_rect_values = [
+            _int_or_none(work.get(key))
+            for key in (
+                "carpenter_workshop_x1",
+                "carpenter_workshop_y1",
+                "carpenter_workshop_z",
+                "carpenter_workshop_x2",
+                "carpenter_workshop_y2",
+            )
+        ]
+        if all(value is not None for value in workshop_rect_values):
+            x1, y1, z, x2, y2 = workshop_rect_values
+            status_lines.append(
+                "Existing workshop: "
+                f"rect=({x1},{y1},{z})-({x2},{y2},{z}); use this as "
+                "world-state evidence for reselecting the placed workshop, "
+                "not as score proof."
+            )
         if planned_workshops > 0 and usable_workshops <= 0:
             status_lines.append(
                 "Workshop proof: a carpenter workshop object is placed/planned, "
                 "but no usable workshop or task job is proven yet. Do not treat "
                 "carpenter_workshops/planned_workshops as production progress."
             )
+            if (
+                _work_int(work, "carpenter_workshop_construction_jobs") <= 0
+                and _work_int(work, "active_construct_building_jobs") <= 0
+                and _work_int(work, "carpenter_workshop_task_jobs") <= 0
+            ):
+                status_lines.append(
+                    "Workshop proof route: before using manager/nobles or waiting, "
+                    "return to a verified main-map screen and reselect the existing "
+                    "workshop with the existing_workshop target. If the selected "
+                    "workshop screen is usable, open BUILDJOB_ADD; if it still says "
+                    "Waiting for construction or Needs Carpentry, diagnose that "
+                    "visible blocker instead of placing another workshop."
+                )
         if (
             int(work.get("manager_orders_count") or 0) > 0
             and int(work.get("manager_orders_amount_left") or 0) > 0
@@ -1218,6 +1249,15 @@ def encode_observation(
                         + ", ".join(str(key) for key in key_prefix)
                         + " and then designates the material target."
                     )
+        elif ui_target_setup.get("target_mode") == "existing_workshop":
+            status_lines.append(
+                "Live UI existing workshop target: this target points at the "
+                "already placed Carpenter's Workshop. From a verified main-map "
+                "screen, use the recommended D_BUILDJOB key to select that real "
+                "workshop. Do not open D_NOBLES or manager orders until the "
+                "workshop is visibly selected or its construction blocker is "
+                "visible."
+            )
         elif ui_target_setup.get("target_mode") == "workshop":
             if screen_shows_blocked_placement:
                 status_lines.append(

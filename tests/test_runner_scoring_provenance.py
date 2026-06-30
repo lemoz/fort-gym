@@ -360,8 +360,38 @@ def test_desired_keystroke_target_mode_does_not_trust_stock_only_material() -> N
     )
 
 
-def test_desired_keystroke_target_mode_returns_to_starter_after_workshop_exists() -> None:
-    state = {"stocks": {"wood": 3, "stone": 0}, "work": {"carpenter_workshops": 1}}
+def test_desired_keystroke_target_mode_inspects_unproven_workshop() -> None:
+    state = {
+        "stocks": {"wood": 3, "stone": 0},
+        "work": {
+            "carpenter_workshops_planned": 1,
+            "carpenter_workshops_usable": 0,
+            "carpenter_workshop_task_jobs": 0,
+            "carpenter_workshop_construction_jobs": 0,
+            "active_construct_building_jobs": 0,
+        },
+    }
+
+    assert _carpenter_workshops(state) == 1
+    assert (
+        _desired_keystroke_target_mode(
+            state,
+            ui_run_excavation_progress=6,
+            ui_run_material_progress=1,
+            ui_successful_targets=2,
+        )
+        == "existing_workshop"
+    )
+
+
+def test_desired_keystroke_target_mode_returns_to_starter_after_usable_workshop() -> None:
+    state = {
+        "stocks": {"wood": 3, "stone": 0},
+        "work": {
+            "carpenter_workshops_planned": 1,
+            "carpenter_workshops_usable": 1,
+        },
+    }
 
     assert _carpenter_workshops(state) == 1
     assert (

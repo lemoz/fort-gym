@@ -290,6 +290,47 @@ def test_encoder_workshop_material_selection_recommends_select() -> None:
     assert "building material is missing, unusable, or not yet proven" not in text
 
 
+def test_encoder_existing_workshop_target_prioritizes_reselection() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 6, "stone": 0},
+            "work": {
+                "manager_orders_count": 0,
+                "manager_orders_amount_left": 0,
+                "carpenter_workshops": 1,
+                "carpenter_workshops_planned": 1,
+                "carpenter_workshops_usable": 0,
+                "carpenter_workshop_task_jobs": 0,
+                "carpenter_workshop_construction_jobs": 0,
+                "active_construct_building_jobs": 0,
+                "carpenter_workshop_x1": 97,
+                "carpenter_workshop_y1": 93,
+                "carpenter_workshop_z": 177,
+                "carpenter_workshop_x2": 99,
+                "carpenter_workshop_y2": 95,
+            },
+            "ui_target_setup": {
+                "ok": True,
+                "target_mode": "existing_workshop",
+                "target_generation": 6,
+                "target_attempts": 0,
+                "selection_rect": [97, 93, 177, 99, 95, 177],
+                "designatable_tiles": 0,
+                "show_recommended_keys": True,
+                "recommended_keys": ["D_BUILDJOB"],
+            },
+        },
+        screen_text="D: Designations\nB: Building\nmain map",
+    )
+
+    assert "Existing workshop: rect=(97,93,177)-(99,95,177)" in text
+    assert "Workshop proof route: before using manager/nobles" in text
+    assert "Live UI existing workshop target" in text
+    assert "Fresh target recommended keys: D_BUILDJOB" in text
+
+
 def test_encoder_shows_build_phase_after_material_exists() -> None:
     text, _ = encode_observation(
         {

@@ -59,6 +59,7 @@ UI_TARGET_REFRESH_NO_PROGRESS_STEPS = 2
 UI_TARGET_RECOMMENDED_KEY_RETRY_LIMIT = 2
 UI_MATERIAL_TARGET_RECOMMENDED_KEY_RETRY_LIMIT = 2
 UI_WORKSHOP_TARGET_RECOMMENDED_KEY_RETRY_LIMIT = 6
+UI_EXISTING_WORKSHOP_TARGET_RECOMMENDED_KEY_RETRY_LIMIT = 3
 UI_MATERIAL_BLOCKER_ESCAPE_KEYS = ("LEAVESCREEN", "LEAVESCREEN", "LEAVESCREEN")
 UI_MATERIAL_TARGET_MIN_EXCAVATION_PROGRESS = 6
 KEYSTROKE_MODEL_NAMES = {
@@ -249,6 +250,28 @@ def _carpenter_workshops(state: Dict[str, Any]) -> int:
             return max(0, planned)
         return max(0, _int_or_none(work.get("carpenter_workshops")) or 0)
     return max(0, _int_or_none(state.get("carpenter_workshops")) or 0)
+
+
+def _unproven_carpenter_workshop_needs_selection(state: Dict[str, Any]) -> bool:
+    work = state.get("work")
+    if not isinstance(work, dict):
+        return False
+
+    planned = _int_or_none(work.get("carpenter_workshops_planned"))
+    if planned is None:
+        planned = _int_or_none(work.get("carpenter_workshops"))
+    usable = _int_or_none(work.get("carpenter_workshops_usable")) or 0
+    task_jobs = _int_or_none(work.get("carpenter_workshop_task_jobs")) or 0
+    construction_jobs = _int_or_none(work.get("carpenter_workshop_construction_jobs")) or 0
+    active_construct_jobs = _int_or_none(work.get("active_construct_building_jobs")) or 0
+
+    return bool(
+        (planned or 0) > 0
+        and usable <= 0
+        and task_jobs <= 0
+        and construction_jobs <= 0
+        and active_construct_jobs <= 0
+    )
 
 
 def _dict_delta(before: Dict[str, Any], after: Dict[str, Any], key: str) -> int:
@@ -703,6 +726,8 @@ def _desired_keystroke_target_mode(
 ) -> str:
     if build_material_blocked:
         return "material"
+    if _unproven_carpenter_workshop_needs_selection(state):
+        return "existing_workshop"
     if _carpenter_workshops(state) > 0:
         return "starter"
     enough_starter_space = (
@@ -853,6 +878,8 @@ def _ui_target_setup_for_observation(
         retry_limit = UI_MATERIAL_TARGET_RECOMMENDED_KEY_RETRY_LIMIT
     elif target_mode == "workshop":
         retry_limit = UI_WORKSHOP_TARGET_RECOMMENDED_KEY_RETRY_LIMIT
+    elif target_mode == "existing_workshop":
+        retry_limit = UI_EXISTING_WORKSHOP_TARGET_RECOMMENDED_KEY_RETRY_LIMIT
     else:
         retry_limit = UI_TARGET_RECOMMENDED_KEY_RETRY_LIMIT
     show_recommended = (
@@ -1232,6 +1259,8 @@ def run_once(
                                 ui_no_progress_streak = 0
                                 if ui_target_mode == "material":
                                     refresh_reason = "switching to material acquisition target"
+                                elif ui_target_mode == "existing_workshop":
+                                    refresh_reason = "switching to existing workshop inspection target"
                                 elif ui_target_mode == "workshop":
                                     refresh_reason = "switching to workshop placement target"
                                 else:

@@ -220,6 +220,11 @@ local carpenter_workshops = 0
 local carpenter_workshops_usable = 0
 local carpenter_workshop_task_jobs = 0
 local carpenter_workshop_construction_jobs = 0
+local carpenter_workshop_x1 = nil
+local carpenter_workshop_y1 = nil
+local carpenter_workshop_x2 = nil
+local carpenter_workshop_y2 = nil
+local carpenter_workshop_z = nil
 local buildings = df.global.world.buildings and df.global.world.buildings.all
 if buildings then
   pcall(function()
@@ -248,6 +253,15 @@ if buildings then
             or workshop_type_name == 'Carpenters'
             or workshop_type_name == 'Carpenter' then
           carpenter_workshops = carpenter_workshops + 1
+          if carpenter_workshop_x1 == nil then
+            pcall(function()
+              carpenter_workshop_x1 = building.x1
+              carpenter_workshop_y1 = building.y1
+              carpenter_workshop_x2 = building.x2
+              carpenter_workshop_y2 = building.y2
+              carpenter_workshop_z = building.z
+            end)
+          end
           local building_task_jobs = 0
           local building_construction_jobs = 0
           local ok_jobs = pcall(function()
@@ -356,6 +370,11 @@ print(json.encode({
   carpenter_workshops_unproven = math.max(0, carpenter_workshops - carpenter_workshops_usable),
   carpenter_workshop_task_jobs = carpenter_workshop_task_jobs,
   carpenter_workshop_construction_jobs = carpenter_workshop_construction_jobs,
+  carpenter_workshop_x1 = carpenter_workshop_x1,
+  carpenter_workshop_y1 = carpenter_workshop_y1,
+  carpenter_workshop_x2 = carpenter_workshop_x2,
+  carpenter_workshop_y2 = carpenter_workshop_y2,
+  carpenter_workshop_z = carpenter_workshop_z,
   citizens_total = citizens_total,
   miners_total = miners_total,
   carpenter_labors_enabled = carpenter_labors_enabled,

@@ -1401,13 +1401,20 @@ class OpenRouterKeystrokeAgent(Agent):
             }
         )
 
+    @staticmethod
+    def _is_menu_escape_fallback_error(error: Any) -> bool:
+        message = str(error or "")
+        return message.startswith("Blocked repeated menu action:") or message.startswith(
+            "Nobles navigation contract mismatch:"
+        )
+
     def _fallback_blocked_menu_escape(self, error: str) -> Dict[str, Any]:
         fallback = {
             "type": "KEYSTROKE",
             "params": {"keys": ["LEAVESCREEN", "LEAVESCREEN", "LEAVESCREEN"]},
             "intent": (
-                "Escape from a repeated blocked menu path after the model did "
-                "not choose a valid alternate route."
+                "Escape from a blocked or unsafe menu path after the model did "
+                "not choose a valid evidence-backed alternate route."
             ),
             "advance_ticks": 0,
         }
@@ -1586,6 +1593,8 @@ class OpenRouterKeystrokeAgent(Agent):
                 }
             )
             self._last_plain_json_error = str(parsed)
+            if self._is_menu_escape_fallback_error(parsed):
+                return self._fallback_blocked_menu_escape(str(parsed))
             force_messages.append(
                 {
                     "role": "user",
@@ -1637,7 +1646,7 @@ class OpenRouterKeystrokeAgent(Agent):
                         return parsed
 
                     last_error = ValueError(parsed)
-                    if parsed.startswith("Blocked repeated menu action:"):
+                    if self._is_menu_escape_fallback_error(parsed):
                         last_blocked_menu_error = parsed
                         messages.append(
                             {
@@ -1735,7 +1744,7 @@ class OpenRouterKeystrokeAgent(Agent):
                 parsed = self._parse_candidate_payload(tool_input, obs_json)
                 if not isinstance(parsed, dict):
                     last_error = ValueError(parsed)
-                    if parsed.startswith("Blocked repeated menu action:"):
+                    if self._is_menu_escape_fallback_error(parsed):
                         last_blocked_menu_error = parsed
                     messages.append(
                         {

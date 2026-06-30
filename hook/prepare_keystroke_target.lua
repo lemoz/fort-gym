@@ -134,6 +134,33 @@ local function valid_workshop_footprint(x1, y1, z)
   return true
 end
 
+local function is_carpenter_workshop_building(building)
+  local is_workshop = false
+  local ok_type, building_type = pcall(function() return building:getType() end)
+  if ok_type and building_type == df.building_type.Workshop then
+    is_workshop = true
+  end
+  local ok_instance, is_instance = pcall(function()
+    return df.building_workshopst and df.building_workshopst:is_instance(building)
+  end)
+  if ok_instance and is_instance then
+    is_workshop = true
+  end
+  if not is_workshop then
+    return false
+  end
+
+  local carpenter_type = nil
+  if df.workshop_type then
+    carpenter_type = df.workshop_type.Carpenters or df.workshop_type.Carpenter
+  end
+  local ok_workshop_type, workshop_type = pcall(function() return building.type end)
+  local workshop_type_name = ok_workshop_type and tostring(workshop_type) or ''
+  return (ok_workshop_type and carpenter_type and workshop_type == carpenter_type)
+      or workshop_type_name == 'Carpenters'
+      or workshop_type_name == 'Carpenter'
+end
+
 local function count_designatable(x1, y1, z, valid_fn)
   local count = 0
   for tx = x1, x1 + SELECT_WIDTH - 1 do
@@ -219,6 +246,49 @@ local function workshop_candidate_payload(x1, y1, z, source)
       'D_BUILDING',
       'HOTKEY_BUILDING_WORKSHOP',
       'HOTKEY_BUILDING_WORKSHOP_CARPENTER',
+    },
+  }
+end
+
+local function existing_workshop_candidate_payload(building, source)
+  local ok_coords, x1, y1, x2, y2, z = pcall(function()
+    return building.x1, building.y1, building.x2, building.y2, building.z
+  end)
+  if not ok_coords then
+    return nil
+  end
+  x1 = tonumber(x1)
+  y1 = tonumber(y1)
+  x2 = tonumber(x2)
+  y2 = tonumber(y2)
+  z = tonumber(z)
+  if not x1 or not y1 or not x2 or not y2 or not z then
+    return nil
+  end
+
+  local window_x = math.max(0, x1 - SELECT_OFFSET_X1)
+  local window_y = math.max(0, y1 - SELECT_OFFSET_Y1)
+  df.global.window_x = window_x
+  df.global.window_y = window_y
+  df.global.window_z = z
+  df.global.cursor.x = x1
+  df.global.cursor.y = y1
+  df.global.cursor.z = z
+
+  return {
+    ok = true,
+    source = source or 'existing_carpenter_workshop',
+    target_mode = 'existing_workshop',
+    target_rect = { x1, y1, z, x2, y2, z },
+    selection_rect = { x1, y1, z, x2, y2, z },
+    designatable_tiles = 0,
+    window_x = window_x,
+    window_y = window_y,
+    window_z = z,
+    expected_cursor_after_designate = { x1, y1, z },
+    workshop_goal = 'select the existing Carpenter workshop under the cursor through the native D_BUILDJOB UI, then use visible task-menu evidence before queueing production',
+    recommended_keys = {
+      'D_BUILDJOB',
     },
   }
 end
@@ -443,6 +513,27 @@ local function workshop_payload()
   return scan_window_for_footprint()
 end
 
+local function existing_workshop_payload()
+  local buildings = df.global.world.buildings and df.global.world.buildings.all
+  if not buildings then
+    return nil
+  end
+
+  for _, building in ipairs(buildings) do
+    if is_carpenter_workshop_building(building) then
+      local payload = existing_workshop_candidate_payload(
+        building,
+        'existing_carpenter_workshop'
+      )
+      if payload then
+        return payload
+      end
+    end
+  end
+
+  return nil
+end
+
 local function starter_payload()
   return search_near_citizens(
     valid_floor_tile,
@@ -474,6 +565,8 @@ end
 local payload = nil
 if MODE == 'material' then
   payload = material_payload()
+elseif MODE == 'existing_workshop' then
+  payload = existing_workshop_payload()
 elseif MODE == 'workshop' then
   payload = workshop_payload()
 else
