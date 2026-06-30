@@ -27,3 +27,20 @@ def test_hook_path_prefers_repo_hook_over_installed_copy(tmp_path, monkeypatch) 
     monkeypatch.setattr(dfhack_backend, "HOOK_ROOT", installed_hook)
 
     assert Path(dfhack_backend._hook_path("work_metrics.lua")) == repo_hook / "work_metrics.lua"
+
+
+def test_prepare_keystroke_workshop_target_moves_cursor_before_confirm() -> None:
+    hook_path = (
+        Path(__file__).resolve().parents[1]
+        / "hook"
+        / "prepare_keystroke_target.lua"
+    )
+    hook_text = hook_path.read_text(encoding="utf-8")
+
+    assert "local function append_cursor_moves" in hook_text
+    assert "placement_cursor_before_moves" in hook_text
+    assert (
+        "append_cursor_moves(recommended_keys, placement_cursor_x, placement_cursor_y, x1, y1)"
+        in hook_text
+    )
+    assert "'HOTKEY_BUILDING_WORKSHOP_CARPENTER',\n  }\n  append_cursor_moves" in hook_text

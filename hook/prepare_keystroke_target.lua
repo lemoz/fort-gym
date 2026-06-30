@@ -173,6 +173,19 @@ local function count_designatable(x1, y1, z, valid_fn)
   return count
 end
 
+local function append_cursor_moves(keys, from_x, from_y, to_x, to_y)
+  local dx = to_x - from_x
+  local dy = to_y - from_y
+  local x_key = dx < 0 and 'CURSOR_LEFT' or 'CURSOR_RIGHT'
+  for _ = 1, math.abs(dx) do
+    table.insert(keys, x_key)
+  end
+  local y_key = dy < 0 and 'CURSOR_UP' or 'CURSOR_DOWN'
+  for _ = 1, math.abs(dy) do
+    table.insert(keys, y_key)
+  end
+end
+
 local function candidate_payload(x1, y1, z, count, source, designation_key, target_mode)
   designation_key = designation_key or 'DESIGNATE_DIG'
   target_mode = target_mode or MODE
@@ -220,12 +233,23 @@ end
 local function workshop_candidate_payload(x1, y1, z, source)
   local window_x = math.max(0, x1 - SELECT_OFFSET_X1)
   local window_y = math.max(0, y1 - SELECT_OFFSET_Y1)
+  local placement_cursor_x = window_x + 11
+  local placement_cursor_y = window_y + 11
   df.global.window_x = window_x
   df.global.window_y = window_y
   df.global.window_z = z
   df.global.cursor.x = x1
   df.global.cursor.y = y1
   df.global.cursor.z = z
+
+  local recommended_keys = {
+    'LEAVESCREEN',
+    'LEAVESCREEN',
+    'D_BUILDING',
+    'HOTKEY_BUILDING_WORKSHOP',
+    'HOTKEY_BUILDING_WORKSHOP_CARPENTER',
+  }
+  append_cursor_moves(recommended_keys, placement_cursor_x, placement_cursor_y, x1, y1)
 
   return {
     ok = true,
@@ -240,13 +264,8 @@ local function workshop_candidate_payload(x1, y1, z, source)
     window_y = window_y,
     window_z = z,
     expected_cursor_after_designate = { x1, y1, z },
-    recommended_keys = {
-      'LEAVESCREEN',
-      'LEAVESCREEN',
-      'D_BUILDING',
-      'HOTKEY_BUILDING_WORKSHOP',
-      'HOTKEY_BUILDING_WORKSHOP_CARPENTER',
-    },
+    placement_cursor_before_moves = { placement_cursor_x, placement_cursor_y, z },
+    recommended_keys = recommended_keys,
   }
 end
 
