@@ -1387,6 +1387,20 @@ class OpenRouterKeystrokeAgent(Agent):
             return None
         if mode == "job_list" and not keys and advance_ticks == 0:
             return None
+        job_list_priority_keys = {
+            "CURSOR_UP",
+            "CURSOR_DOWN",
+            "STANDARDSCROLL_UP",
+            "STANDARDSCROLL_DOWN",
+            "STRING_A110",
+        }
+        if (
+            mode == "job_list"
+            and "STRING_A110" in key_set
+            and key_set.issubset(job_list_priority_keys)
+            and advance_ticks == 0
+        ):
+            return None
 
         unrelated_keys = {
             "D_DESIGNATE",
