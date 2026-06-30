@@ -9,6 +9,8 @@ local SELECT_OFFSET_X1 = 7
 local SELECT_OFFSET_Y1 = 9
 local SELECT_WIDTH = 4
 local SELECT_HEIGHT = 2
+local TREE_SELECT_WIDTH = 7
+local TREE_SELECT_HEIGHT = 3
 local MIN_DESIGNATABLE_TILES = 4
 local MIN_MATERIAL_TILES = 1
 local MIN_CITIZEN_NEAR_TILES = 1
@@ -161,16 +163,20 @@ local function is_carpenter_workshop_building(building)
       or workshop_type_name == 'Carpenter'
 end
 
-local function count_designatable(x1, y1, z, valid_fn)
+local function count_designatable_rect(x1, y1, z, width, height, valid_fn)
   local count = 0
-  for tx = x1, x1 + SELECT_WIDTH - 1 do
-    for ty = y1, y1 + SELECT_HEIGHT - 1 do
+  for tx = x1, x1 + width - 1 do
+    for ty = y1, y1 + height - 1 do
       if valid_fn(tx, ty, z) then
         count = count + 1
       end
     end
   end
   return count
+end
+
+local function count_designatable(x1, y1, z, valid_fn)
+  return count_designatable_rect(x1, y1, z, SELECT_WIDTH, SELECT_HEIGHT, valid_fn)
 end
 
 local function append_cursor_moves(keys, from_x, from_y, to_x, to_y)
@@ -186,17 +192,29 @@ local function append_cursor_moves(keys, from_x, from_y, to_x, to_y)
   end
 end
 
-local function candidate_payload(x1, y1, z, count, source, designation_key, target_mode)
+local function selection_payload(x1, y1, z, width, height, count, source, designation_key, target_mode)
   designation_key = designation_key or 'DESIGNATE_DIG'
   target_mode = target_mode or MODE
   local window_x = math.max(0, x1 - SELECT_OFFSET_X1)
   local window_y = math.max(0, y1 - SELECT_OFFSET_Y1)
+  local cursor_x = window_x + 11
+  local cursor_y = window_y + 11
   df.global.window_x = window_x
   df.global.window_y = window_y
   df.global.window_z = z
-  df.global.cursor.x = window_x + 11
-  df.global.cursor.y = window_y + 11
+  df.global.cursor.x = cursor_x
+  df.global.cursor.y = cursor_y
   df.global.cursor.z = z
+
+  local recommended_keys = {
+    'D_DESIGNATE',
+    designation_key,
+  }
+  append_cursor_moves(recommended_keys, cursor_x, cursor_y, x1, y1)
+  table.insert(recommended_keys, 'SELECT')
+  append_cursor_moves(recommended_keys, x1, y1, x1 + width - 1, y1 + height - 1)
+  table.insert(recommended_keys, 'SELECT')
+  table.insert(recommended_keys, 'LEAVESCREEN')
 
   return {
     ok = true,
@@ -204,30 +222,28 @@ local function candidate_payload(x1, y1, z, count, source, designation_key, targ
     target_mode = target_mode,
     designation_key = designation_key,
     target_rect = { window_x, window_y, z, window_x + 14, window_y + 14, z },
-    selection_rect = { x1, y1, z, x1 + SELECT_WIDTH - 1, y1 + SELECT_HEIGHT - 1, z },
+    selection_rect = { x1, y1, z, x1 + width - 1, y1 + height - 1, z },
     designatable_tiles = count,
     window_x = window_x,
     window_y = window_y,
     window_z = z,
-    expected_cursor_after_designate = { window_x + 11, window_y + 11, z },
-    recommended_keys = {
-      'D_DESIGNATE',
-      designation_key,
-      'CURSOR_LEFT',
-      'CURSOR_LEFT',
-      'CURSOR_LEFT',
-      'CURSOR_LEFT',
-      'CURSOR_UP',
-      'CURSOR_UP',
-      'SELECT',
-      'CURSOR_RIGHT',
-      'CURSOR_RIGHT',
-      'CURSOR_RIGHT',
-      'CURSOR_DOWN',
-      'SELECT',
-      'LEAVESCREEN',
-    },
+    expected_cursor_after_designate = { cursor_x, cursor_y, z },
+    recommended_keys = recommended_keys,
   }
+end
+
+local function candidate_payload(x1, y1, z, count, source, designation_key, target_mode)
+  return selection_payload(
+    x1,
+    y1,
+    z,
+    SELECT_WIDTH,
+    SELECT_HEIGHT,
+    count,
+    source,
+    designation_key,
+    target_mode
+  )
 end
 
 local function workshop_candidate_payload(x1, y1, z, source)
@@ -421,7 +437,7 @@ local function search_loaded_map(valid_fn, source, designation_key, min_tiles, t
 end
 
 local function material_payload()
-  local function scan_near_citizens(valid_fn, source, designation_key, material_goal)
+  local function scan_near_citizens(valid_fn, source, designation_key, material_goal, selection_width, selection_height)
     if not df.global.world.units or not df.global.world.units.active then
       return nil
     end
@@ -433,19 +449,48 @@ local function material_payload()
           for tx = math.max(0, unit.pos.x - radius), unit.pos.x + radius do
             for ty = math.max(0, unit.pos.y - radius), unit.pos.y + radius do
               if valid_fn(tx, ty, z) then
-                local payload = candidate_payload(
-                  tx,
-                  ty,
-                  z,
-                  MIN_MATERIAL_TILES,
-                  source,
-                  designation_key,
-                  'material'
-                )
-                payload.nearest_citizen = { unit.pos.x, unit.pos.y, unit.pos.z }
-                payload.nearest_citizen_radius = radius
-                payload.material_goal = material_goal
-                return payload
+                local payload = nil
+                if selection_width and selection_height then
+                  local x1 = math.max(0, tx - math.floor((selection_width - 1) / 2))
+                  local y1 = math.max(0, ty - math.floor((selection_height - 1) / 2))
+                  local count = count_designatable_rect(
+                    x1,
+                    y1,
+                    z,
+                    selection_width,
+                    selection_height,
+                    valid_fn
+                  )
+                  if count >= MIN_MATERIAL_TILES then
+                    payload = selection_payload(
+                      x1,
+                      y1,
+                      z,
+                      selection_width,
+                      selection_height,
+                      count,
+                      source,
+                      designation_key,
+                      'material'
+                    )
+                  end
+                else
+                  payload = candidate_payload(
+                    tx,
+                    ty,
+                    z,
+                    MIN_MATERIAL_TILES,
+                    source,
+                    designation_key,
+                    'material'
+                  )
+                end
+                if payload then
+                  payload.nearest_citizen = { unit.pos.x, unit.pos.y, unit.pos.z }
+                  payload.nearest_citizen_radius = radius
+                  payload.material_goal = material_goal
+                  return payload
+                end
               end
             end
           end
@@ -474,7 +519,9 @@ local function material_payload()
     valid_tree_tile,
     'citizen_near_visible_tree_trunk',
     'DESIGNATE_CHOP',
-    'chop visible tree through the native designation UI to create logs'
+    'chop a broad visible tree area through the native designation UI to create logs',
+    TREE_SELECT_WIDTH,
+    TREE_SELECT_HEIGHT
   )
 end
 

@@ -44,3 +44,18 @@ def test_prepare_keystroke_workshop_target_moves_cursor_before_confirm() -> None
         in hook_text
     )
     assert "'HOTKEY_BUILDING_WORKSHOP_CARPENTER',\n  }\n  append_cursor_moves" in hook_text
+
+
+def test_prepare_keystroke_tree_material_target_uses_broad_selection() -> None:
+    hook_path = (
+        Path(__file__).resolve().parents[1]
+        / "hook"
+        / "prepare_keystroke_target.lua"
+    )
+    hook_text = hook_path.read_text(encoding="utf-8")
+
+    assert "local TREE_SELECT_WIDTH = 7" in hook_text
+    assert "local TREE_SELECT_HEIGHT = 3" in hook_text
+    assert "count_designatable_rect" in hook_text
+    assert "selection_payload(" in hook_text
+    assert "chop a broad visible tree area" in hook_text
