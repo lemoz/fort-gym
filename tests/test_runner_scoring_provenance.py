@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from fort_gym.bench.run.runner import (
     _available_building_materials,
+    _carry_forward_carpenter_workshop_proof,
     _carpenter_workshops,
     _desired_keystroke_target_mode,
     _gameplay_proof,
@@ -397,6 +398,52 @@ def test_desired_keystroke_target_mode_returns_to_starter_after_usable_workshop(
     assert (
         _desired_keystroke_target_mode(
             state,
+            ui_run_excavation_progress=6,
+            ui_run_material_progress=1,
+            ui_successful_targets=2,
+        )
+        == "starter"
+    )
+
+
+def test_carry_forward_workshop_task_proof_after_task_disappears() -> None:
+    seen = 0
+    task_state = {
+        "work": {
+            "carpenter_workshops_planned": 1,
+            "carpenter_workshops_usable": 0,
+            "carpenter_workshop_task_jobs": 1,
+            "carpenter_workshops_unproven": 1,
+        }
+    }
+
+    seen = _carry_forward_carpenter_workshop_proof(task_state, seen)
+
+    assert seen == 1
+    assert task_state["work"]["carpenter_workshops_usable"] == 1
+    assert task_state["work"]["carpenter_workshops_unproven"] == 0
+
+    later_state = {
+        "stocks": {"wood": 3, "stone": 0},
+        "work": {
+            "carpenter_workshops_planned": 1,
+            "carpenter_workshops_usable": 0,
+            "carpenter_workshop_task_jobs": 0,
+            "carpenter_workshop_construction_jobs": 0,
+            "active_construct_building_jobs": 0,
+            "carpenter_workshops_unproven": 1,
+        },
+    }
+
+    seen = _carry_forward_carpenter_workshop_proof(later_state, seen)
+
+    assert seen == 1
+    assert later_state["work"]["carpenter_workshops_usable"] == 1
+    assert later_state["work"]["carpenter_workshops_unproven"] == 0
+    assert later_state["work"]["carpenter_workshops_usable_carried_forward"] is True
+    assert (
+        _desired_keystroke_target_mode(
+            later_state,
             ui_run_excavation_progress=6,
             ui_run_material_progress=1,
             ui_successful_targets=2,

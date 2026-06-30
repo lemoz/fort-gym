@@ -331,6 +331,30 @@ def test_encoder_existing_workshop_target_prioritizes_reselection() -> None:
     assert "Fresh target recommended keys: D_BUILDJOB" in text
 
 
+def test_encoder_explains_carried_forward_workshop_proof() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 6, "stone": 0},
+            "work": {
+                "manager_orders_count": 0,
+                "manager_orders_amount_left": 0,
+                "carpenter_workshops": 1,
+                "carpenter_workshops_planned": 1,
+                "carpenter_workshops_usable": 1,
+                "carpenter_workshops_usable_carried_forward": True,
+                "carpenter_workshop_task_jobs": 0,
+                "carpenter_workshop_construction_jobs": 0,
+            },
+        },
+        screen_text="D: Designations\nB: Building\nmain map",
+    )
+
+    assert "already proven usable by earlier real task-menu evidence" in text
+    assert "Do not reopen the same workshop just to prove usability again" in text
+
+
 def test_encoder_shows_build_phase_after_material_exists() -> None:
     text, _ = encode_observation(
         {

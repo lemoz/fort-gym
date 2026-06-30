@@ -940,6 +940,14 @@ def encode_observation(
                     "Waiting for construction or Needs Carpentry, diagnose that "
                     "visible blocker instead of placing another workshop."
                 )
+        elif work.get("carpenter_workshops_usable_carried_forward"):
+            status_lines.append(
+                "Workshop proof: this workshop was already proven usable by "
+                "earlier real task-menu evidence in this run. Do not reopen the "
+                "same workshop just to prove usability again; either let queued "
+                "work run, inspect visible cancellation text, or choose a new "
+                "productive branch."
+            )
         if (
             int(work.get("manager_orders_count") or 0) > 0
             and int(work.get("manager_orders_amount_left") or 0) > 0

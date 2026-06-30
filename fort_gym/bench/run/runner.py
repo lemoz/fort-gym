@@ -274,6 +274,35 @@ def _unproven_carpenter_workshop_needs_selection(state: Dict[str, Any]) -> bool:
     )
 
 
+def _carry_forward_carpenter_workshop_proof(
+    state: Dict[str, Any],
+    usable_seen: int,
+) -> int:
+    work = state.get("work")
+    if not isinstance(work, dict):
+        return usable_seen
+
+    planned = _int_or_none(work.get("carpenter_workshops_planned"))
+    if planned is None:
+        planned = _int_or_none(work.get("carpenter_workshops"))
+    planned = max(0, planned or 0)
+    current_usable = max(0, _int_or_none(work.get("carpenter_workshops_usable")) or 0)
+    current_task_jobs = max(0, _int_or_none(work.get("carpenter_workshop_task_jobs")) or 0)
+
+    proof_now = current_usable
+    if current_task_jobs > 0:
+        proof_now = max(proof_now, planned, 1)
+    usable_seen = max(0, usable_seen, proof_now)
+    if usable_seen <= current_usable:
+        return usable_seen
+
+    work["carpenter_workshops_usable"] = usable_seen
+    if planned > 0:
+        work["carpenter_workshops_unproven"] = max(0, planned - usable_seen)
+    work["carpenter_workshops_usable_carried_forward"] = True
+    return usable_seen
+
+
 def _dict_delta(before: Dict[str, Any], after: Dict[str, Any], key: str) -> int:
     before_value = _int_or_none(before.get(key)) or 0
     after_value = _int_or_none(after.get(key)) or 0
@@ -1120,6 +1149,7 @@ def run_once(
     ui_successful_targets = 0
     ui_work_feedback: Dict[str, Any] = {}
     ui_build_material_blocked = False
+    carpenter_workshop_usable_seen = 0
 
     def publish_event(step: int, event_type: str, payload: Dict[str, Any], events: List[Dict[str, Any]]) -> None:
         data = {"run_id": run_identifier, "step": step, **payload}
@@ -1198,6 +1228,11 @@ def run_once(
                             ended_at=datetime.utcnow(),
                         )
                     break
+                if is_keystroke_mode:
+                    carpenter_workshop_usable_seen = _carry_forward_carpenter_workshop_proof(
+                        state_before,
+                        carpenter_workshop_usable_seen,
+                    )
                 screen_text = get_screen_text() if is_keystroke_mode else None
                 screen_has_material_blocker = bool(
                     is_keystroke_mode
@@ -1541,6 +1576,10 @@ def run_once(
                     advance_state, state_preservation = _preserve_state_after_degraded_read(
                         advance_state,
                         state_after_apply,
+                    )
+                    carpenter_workshop_usable_seen = _carry_forward_carpenter_workshop_proof(
+                        advance_state,
+                        carpenter_workshop_usable_seen,
                     )
                 if backend_name == "dfhack" and is_keystroke_mode and ui_work_rect is not None:
                     ui_work_after = read_work_metrics(ui_work_rect)
