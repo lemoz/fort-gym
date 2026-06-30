@@ -1284,6 +1284,7 @@ class OpenRouterKeystrokeAgent(Agent):
             return None
 
         keys = [str(key) for key in cls._keystroke_keys(tool_payload)]
+        key_set = set(keys)
         try:
             advance_ticks = int(tool_payload.get("advance_ticks") or 0)
         except (TypeError, ValueError):
@@ -1295,7 +1296,16 @@ class OpenRouterKeystrokeAgent(Agent):
             else ""
         )
 
-        if keys and all(key == "LEAVESCREEN" for key in keys) and advance_ticks == 0:
+        if (
+            keys
+            and all(key == "LEAVESCREEN" for key in keys)
+            and advance_ticks == 0
+            and mode not in {
+                "main_map",
+                "carpenter_workshop_selected",
+                "workshop_add_task_list",
+            }
+        ):
             return None
         if not keys and advance_ticks >= 1000:
             return None
@@ -1369,7 +1379,16 @@ class OpenRouterKeystrokeAgent(Agent):
         )
         target_mode = str(target_setup.get("target_mode") or "").strip().lower()
 
-        if keys and all(key == "LEAVESCREEN" for key in keys) and advance_ticks == 0:
+        if (
+            keys
+            and all(key == "LEAVESCREEN" for key in keys)
+            and advance_ticks == 0
+            and mode not in {
+                "main_map",
+                "carpenter_workshop_selected",
+                "workshop_add_task_list",
+            }
+        ):
             return None
         if mode == "main_map" and not keys and advance_ticks == 0:
             return None
@@ -1500,7 +1519,16 @@ class OpenRouterKeystrokeAgent(Agent):
             else ""
         )
 
-        if keys and all(key == "LEAVESCREEN" for key in keys) and advance_ticks == 0:
+        if (
+            keys
+            and all(key == "LEAVESCREEN" for key in keys)
+            and advance_ticks == 0
+            and mode not in {
+                "main_map",
+                "carpenter_workshop_selected",
+                "workshop_add_task_list",
+            }
+        ):
             return None
         if (
             mode == "main_map"
@@ -1517,35 +1545,18 @@ class OpenRouterKeystrokeAgent(Agent):
         if mode == "workshop_add_task_list":
             return None
 
-        unrelated_keys = {
-            "D_DESIGNATE",
-            "DESIGNATE_DIG",
-            "DESIGNATE_STAIR_DOWN",
-            "DESIGNATE_CHOP",
-            "D_BUILDING",
-            "HOTKEY_BUILDING_WORKSHOP",
-            "HOTKEY_BUILDING_WORKSHOP_CARPENTER",
-            "D_JOBLIST",
-            "D_NOBLES",
-            "UNITJOB_MANAGER",
-            "MANAGER_NEW_ORDER",
-            "D_STOCKPILES",
-            "D_CIVZONE",
-        }
-        if key_set.intersection(unrelated_keys) or advance_ticks > 0:
-            return (
-                "Existing-workshop production route mismatch: a usable "
-                "Carpenter's Workshop exists, wood is available, and no "
-                "workshop task or active job is currently queued. Keep the "
-                "run anchored to the existing_workshop target. From the main "
-                "map, use D_BUILDJOB with advance_ticks=0; from the selected "
-                "workshop, use BUILDJOB_ADD with advance_ticks=0; from the "
-                "add-task list, select a concrete visible wooden task. Do not "
-                "dig/chop, open D_BUILDING, D_JOBLIST, D_NOBLES, manager "
-                "orders, stockpiles, or wait with positive ticks until a real "
-                "task exists."
-            )
-        return None
+        return (
+            "Existing-workshop production route mismatch: a usable "
+            "Carpenter's Workshop exists, wood is available, and no "
+            "workshop task or active job is currently queued. Keep the "
+            "run anchored to the existing_workshop target. From the main "
+            "map, use D_BUILDJOB with advance_ticks=0; from the selected "
+            "workshop, use BUILDJOB_ADD with advance_ticks=0; from the "
+            "add-task list, select a concrete visible wooden task. Do not "
+            "dig/chop, open D_BUILDING, D_JOBLIST, D_NOBLES, manager "
+            "orders, stockpiles, LEAVESCREEN from an already-useful screen, "
+            "or wait with positive ticks until a real task exists."
+        )
 
     def _log_existing_workshop_production_route_error(
         self,
@@ -1854,6 +1865,66 @@ class OpenRouterKeystrokeAgent(Agent):
         return str(family or "none")
 
     @classmethod
+    def _existing_workshop_productive_action_allowed(
+        cls,
+        tool_payload: Dict[str, Any],
+        obs_json: Dict[str, Any],
+    ) -> bool:
+        target_setup = (
+            obs_json.get("ui_target_setup")
+            if isinstance(obs_json.get("ui_target_setup"), dict)
+            else {}
+        )
+        target_mode = str(target_setup.get("target_mode") or "").strip().lower()
+        if target_mode != "existing_workshop":
+            return False
+
+        work = obs_json.get("work") if isinstance(obs_json.get("work"), dict) else {}
+        stocks = obs_json.get("stocks") if isinstance(obs_json.get("stocks"), dict) else {}
+        if cls._int_value(work.get("carpenter_workshops_usable")) <= 0:
+            return False
+        if cls._int_value(stocks.get("wood")) <= 0:
+            return False
+        if any(
+            cls._int_value(work.get(field)) > 0
+            for field in (
+                "carpenter_workshop_task_jobs",
+                "active_carpenter_jobs",
+                "active_jobs",
+                "carpenter_workshop_construction_jobs",
+                "manager_orders_count",
+                "manager_orders_amount_left",
+            )
+        ):
+            return False
+
+        keys = [str(key) for key in cls._keystroke_keys(tool_payload)]
+        try:
+            advance_ticks = int(tool_payload.get("advance_ticks") or 0)
+        except (TypeError, ValueError):
+            advance_ticks = 0
+        screen_state = obs_json.get("screen_state")
+        mode = (
+            str(screen_state.get("mode") or "").strip().lower()
+            if isinstance(screen_state, dict)
+            else ""
+        )
+
+        return (
+            (mode == "main_map" and keys == ["D_BUILDJOB"] and advance_ticks == 0)
+            or (
+                mode == "carpenter_workshop_selected"
+                and keys == ["BUILDJOB_ADD"]
+                and advance_ticks == 0
+            )
+            or (
+                mode == "workshop_add_task_list"
+                and "SELECT" in keys
+                and advance_ticks == 0
+            )
+        )
+
+    @classmethod
     def _blocked_menu_path_error(
         cls,
         tool_payload: Dict[str, Any],
@@ -1869,6 +1940,8 @@ class OpenRouterKeystrokeAgent(Agent):
 
         repeated_family = recent.get("repeated_menu_family")
         submitted_family = cls._submitted_action_family(tool_payload)
+        if cls._existing_workshop_productive_action_allowed(tool_payload, obs_json):
+            return None
         if submitted_family in {"none", "designation", "wait"}:
             return None
         if cls._blocked_menu_group(repeated_family) != cls._blocked_menu_group(
@@ -1916,7 +1989,87 @@ class OpenRouterKeystrokeAgent(Agent):
             "Nobles navigation contract mismatch:"
         )
 
-    def _fallback_blocked_menu_escape(self, error: str) -> Dict[str, Any]:
+    def _fallback_blocked_menu_escape(
+        self,
+        error: str,
+        obs_json: Dict[str, Any] | None = None,
+    ) -> Dict[str, Any]:
+        fallback: Dict[str, Any] | None = None
+        if isinstance(obs_json, dict):
+            screen_state = obs_json.get("screen_state")
+            mode = (
+                str(screen_state.get("mode") or "").strip().lower()
+                if isinstance(screen_state, dict)
+                else ""
+            )
+            work = obs_json.get("work") if isinstance(obs_json.get("work"), dict) else {}
+            stocks = obs_json.get("stocks") if isinstance(obs_json.get("stocks"), dict) else {}
+            usable = self._int_value(work.get("carpenter_workshops_usable"))
+            task_jobs = self._int_value(work.get("carpenter_workshop_task_jobs"))
+            active_jobs = max(
+                self._int_value(work.get("active_jobs")),
+                self._int_value(work.get("active_carpenter_jobs")),
+                self._int_value(work.get("manager_orders_count")),
+                self._int_value(work.get("manager_orders_amount_left")),
+            )
+            wood = self._int_value(stocks.get("wood"))
+            if usable > 0 and task_jobs <= 0 and active_jobs <= 0 and wood > 0:
+                if mode == "main_map":
+                    fallback = {
+                        "type": "KEYSTROKE",
+                        "params": {"keys": ["D_BUILDJOB"]},
+                        "intent": (
+                            "Recover from a rejected menu route by selecting the "
+                            "existing usable Carpenter's Workshop from the main map."
+                        ),
+                        "advance_ticks": 0,
+                    }
+                elif mode == "carpenter_workshop_selected":
+                    fallback = {
+                        "type": "KEYSTROKE",
+                        "params": {"keys": ["BUILDJOB_ADD"]},
+                        "intent": (
+                            "Recover from a rejected menu route by opening the "
+                            "selected usable Carpenter's Workshop add-task list."
+                        ),
+                        "advance_ticks": 0,
+                    }
+                elif mode == "workshop_add_task_list":
+                    fallback = {
+                        "type": "KEYSTROKE",
+                        "params": {"keys": ["SELECT"]},
+                        "intent": (
+                            "Recover from a rejected menu route by selecting the "
+                            "visible Carpenter's Workshop task row."
+                        ),
+                        "advance_ticks": 0,
+                    }
+            elif usable > 0 and task_jobs > 0 and mode == "main_map":
+                fallback = {
+                    "type": "KEYSTROKE",
+                    "params": {"keys": []},
+                    "intent": (
+                        "Recover from a rejected menu route by advancing time from "
+                        "the main map so the queued Carpenter's Workshop task can "
+                        "start or complete."
+                    ),
+                    "advance_ticks": 1500,
+                }
+
+        if fallback is not None:
+            self._tool_events.append(
+                {
+                    "tool": "blocked_menu_path_fallback",
+                    "input": {"error": error},
+                    "output": (
+                        "Submitted a state-productive recovery action instead of "
+                        "LEAVESCREEN because the current screen was already usable "
+                        "for workshop progress."
+                    ),
+                }
+            )
+            return parse_action(fallback)
+
         fallback = {
             "type": "KEYSTROKE",
             "params": {"keys": ["LEAVESCREEN", "LEAVESCREEN", "LEAVESCREEN"]},
@@ -2159,7 +2312,7 @@ class OpenRouterKeystrokeAgent(Agent):
             )
             self._last_plain_json_error = str(parsed)
             if self._is_menu_escape_fallback_error(parsed):
-                return self._fallback_blocked_menu_escape(str(parsed))
+                return self._fallback_blocked_menu_escape(str(parsed), obs_json)
             force_messages.append(
                 {
                     "role": "user",
@@ -2327,7 +2480,7 @@ class OpenRouterKeystrokeAgent(Agent):
 
         if last_blocked_menu_error is not None:
             self._completed_actions += 1
-            return self._fallback_blocked_menu_escape(last_blocked_menu_error)
+            return self._fallback_blocked_menu_escape(last_blocked_menu_error, obs_json)
 
         last_error = last_error or "tool rounds ended without an accepted action"
         action = self._force_plain_json_action(messages, obs_json, last_error)
