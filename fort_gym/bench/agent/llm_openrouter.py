@@ -1423,15 +1423,6 @@ class OpenRouterKeystrokeAgent(Agent):
             return None
         if mode == "job_list" and not keys and advance_ticks == 0:
             return None
-        if mode == "job_list" and repeated_job_list_inspection and not all(
-            key == "LEAVESCREEN" for key in keys
-        ):
-            return (
-                "Blocked repeated menu action: a queued carpenter workshop task "
-                "is still unchanged after job-list inspection. Leave the job list "
-                "or switch to a genuinely different plan; do not keep moving the "
-                "job-list cursor or pressing Do job now for the same stalled task."
-            )
         job_list_priority_keys = {
             "CURSOR_UP",
             "CURSOR_DOWN",
@@ -1443,9 +1434,19 @@ class OpenRouterKeystrokeAgent(Agent):
             mode == "job_list"
             and "STRING_A110" in key_set
             and key_set.issubset(job_list_priority_keys)
+            and not repeated_job_list_inspection
             and advance_ticks == 0
         ):
             return None
+        if mode == "job_list" and keys:
+            return (
+                "Blocked repeated menu action: a real carpenter workshop task is "
+                "already queued and the current screen is the job list. From the "
+                "job list, submit only LEAVESCREEN keys with advance_ticks=0 so "
+                "the next observation can return to the main map; do not combine "
+                "cursor movement with D_BUILDJOB, View Job, manager keys, Do job "
+                "now, or any other inspection path for this unchanged queued task."
+            )
 
         unrelated_keys = {
             "D_DESIGNATE",
