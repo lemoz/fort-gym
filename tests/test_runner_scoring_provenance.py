@@ -8,6 +8,7 @@ from fort_gym.bench.run.runner import (
     _gameplay_proof,
     _is_exit_only_recovery_action,
     _is_keystroke_model,
+    _material_exhausted_fallback_target_mode,
     _preserve_state_after_degraded_read,
     _preserve_work_after_degraded_read,
     _screen_shows_building_type_menu,
@@ -360,6 +361,40 @@ def test_desired_keystroke_target_mode_does_not_trust_stock_only_material() -> N
             ui_successful_targets=2,
         )
         == "material"
+    )
+
+
+def test_material_exhaustion_falls_forward_to_workshop_with_stock() -> None:
+    state = {"stocks": {"wood": 3, "stone": 0}, "work": {"carpenter_workshops": 0}}
+
+    assert (
+        _material_exhausted_fallback_target_mode(
+            state,
+            ui_run_excavation_progress=6,
+            ui_successful_targets=1,
+        )
+        == "workshop"
+    )
+
+
+def test_material_exhaustion_returns_to_starter_without_usable_build_signal() -> None:
+    assert (
+        _material_exhausted_fallback_target_mode(
+            {"stocks": {"wood": 3, "stone": 0}, "work": {"carpenter_workshops": 0}},
+            ui_run_excavation_progress=6,
+            ui_successful_targets=1,
+            build_material_blocked=True,
+        )
+        == "starter"
+    )
+
+    assert (
+        _material_exhausted_fallback_target_mode(
+            {"stocks": {"wood": 0, "stone": 0}, "work": {"carpenter_workshops": 0}},
+            ui_run_excavation_progress=6,
+            ui_successful_targets=1,
+        )
+        == "starter"
     )
 
 

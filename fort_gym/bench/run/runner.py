@@ -831,6 +831,27 @@ def _desired_keystroke_target_mode(
     return "starter"
 
 
+def _material_exhausted_fallback_target_mode(
+    state: Dict[str, Any],
+    *,
+    ui_run_excavation_progress: int,
+    ui_successful_targets: int,
+    build_material_blocked: bool = False,
+) -> str:
+    enough_starter_space = (
+        ui_run_excavation_progress >= UI_MATERIAL_TARGET_MIN_EXCAVATION_PROGRESS
+        or ui_successful_targets >= 2
+    )
+    if (
+        not build_material_blocked
+        and enough_starter_space
+        and _available_building_materials(state) > 0
+        and _carpenter_workshops(state) <= 0
+    ):
+        return "workshop"
+    return "starter"
+
+
 def _screen_shows_ready_workshop_placement(screen_text: str | None) -> bool:
     return bool(
         screen_text
@@ -1398,7 +1419,12 @@ def run_once(
                             ui_material_target_exhausted
                             and desired_target_mode == "material"
                         ):
-                            desired_target_mode = "starter"
+                            desired_target_mode = _material_exhausted_fallback_target_mode(
+                                state_before,
+                                ui_run_excavation_progress=ui_run_excavation_progress,
+                                ui_successful_targets=ui_successful_targets,
+                                build_material_blocked=ui_build_material_blocked,
+                            )
                         if desired_target_mode != ui_target_mode:
                             refreshed_target = prepare_keystroke_target(desired_target_mode)
                             if refreshed_target.get("ok"):
@@ -1916,12 +1942,6 @@ def run_once(
                             ui_run_material_progress += ui_step_material_progress
                             if ui_step_material_progress > 0:
                                 ui_build_material_blocked = False
-                                ui_material_target_exhausted = False
-                            elif (
-                                ui_material_target_exhausted
-                                and ui_target_mode == "starter"
-                                and ui_step_excavation_progress > 0
-                            ):
                                 ui_material_target_exhausted = False
                             if target_step_succeeded:
                                 ui_no_progress_streak = 0
