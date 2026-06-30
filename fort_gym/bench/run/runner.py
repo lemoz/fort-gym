@@ -109,6 +109,26 @@ def _same_target_rect(
     return first_rect is not None and first_rect == second_rect
 
 
+def _recommended_key_route(target: Dict[str, Any] | None) -> tuple[str, ...]:
+    if not isinstance(target, dict):
+        return ()
+    keys = target.get("recommended_keys")
+    if not isinstance(keys, list):
+        return ()
+    return tuple(str(key) for key in keys)
+
+
+def _same_target_route(
+    first: Dict[str, Any] | None,
+    second: Dict[str, Any] | None,
+) -> bool:
+    if _same_target_rect(first, second):
+        return True
+    first_keys = _recommended_key_route(first)
+    second_keys = _recommended_key_route(second)
+    return bool(first_keys and first_keys == second_keys)
+
+
 def _map_snapshot_rect_from_state(state: Dict[str, Any], margin: int = 1) -> tuple[int, int, int, int, int, int] | None:
     work = state.get("work")
     if not isinstance(work, dict):
@@ -1217,7 +1237,7 @@ def run_once(
                 ):
                     refreshed_target = prepare_keystroke_target(ui_target_mode)
                     if refreshed_target.get("ok"):
-                        if ui_target_mode == "material" and _same_target_rect(
+                        if ui_target_mode == "material" and _same_target_route(
                             keystroke_ui_target,
                             refreshed_target,
                         ):

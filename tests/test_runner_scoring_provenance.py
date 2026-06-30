@@ -14,6 +14,7 @@ from fort_gym.bench.run.runner import (
     _screen_shows_ready_workshop_placement,
     _screen_shows_workshop_material_selection,
     _same_target_rect,
+    _same_target_route,
     _snapshot_tile_changes,
     _ui_target_setup_for_observation,
     _ui_target_step_succeeded,
@@ -475,6 +476,24 @@ def test_same_target_rect_matches_normalized_target_or_selection_rect() -> None:
     assert _same_target_rect(target, same_reversed) is True
     assert _same_target_rect(target, different) is False
     assert _same_target_rect(target, {"target_rect": ["bad"]}) is False
+
+
+def test_same_target_route_matches_repeated_recommended_keys() -> None:
+    first = {
+        "target_rect": [92, 79, 177, 106, 93, 177],
+        "recommended_keys": ["D_DESIGNATE", "DESIGNATE_CHOP", "CURSOR_LEFT"],
+    }
+    second_same_keys = {
+        "target_rect": [81, 80, 177, 95, 94, 177],
+        "recommended_keys": ["D_DESIGNATE", "DESIGNATE_CHOP", "CURSOR_LEFT"],
+    }
+    second_different_keys = {
+        "target_rect": [81, 80, 177, 95, 94, 177],
+        "recommended_keys": ["D_DESIGNATE", "DESIGNATE_CHOP", "CURSOR_RIGHT"],
+    }
+
+    assert _same_target_route(first, second_same_keys) is True
+    assert _same_target_route(first, second_different_keys) is False
 
 
 def test_ready_workshop_placement_screen_gets_select_target() -> None:
