@@ -692,8 +692,6 @@ class OpenRouterKeystrokeAgent(Agent):
         tool_payload: Dict[str, Any],
         contract_error: str,
     ) -> Dict[str, Any] | None:
-        if not self._submit_action_only:
-            return None
         repaired_advance_ticks = self._advance_ticks_repair_for_action_only(
             tool_payload,
             contract_error,
@@ -708,7 +706,7 @@ class OpenRouterKeystrokeAgent(Agent):
                 "input": {"contract_error": contract_error},
                 "output": (
                     "Set advance_ticks="
-                    f"{repaired_advance_ticks} during action-only OpenRouter "
+                    f"{repaired_advance_ticks} during OpenRouter "
                     "recovery to match the model's stated turn intent."
                 ),
             }
