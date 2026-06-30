@@ -244,6 +244,28 @@ def _classify_screen_state(screen_text: Optional[str]) -> Dict[str, Any]:
             extra_evidence=["visible workshop says construction is pending"],
         )
 
+    if (
+        "carpenter's workshop" in lower
+        and (
+            "leather works" in lower
+            or "mason's workshop" in lower
+            or "bowyer's workshop" in lower
+            or "metalsmith's forge" in lower
+        )
+    ):
+        return result(
+            "building_workshop_type_menu",
+            confidence="high",
+            instruction=(
+                "Visible building workshop-type menu. If a workshop is already "
+                "placed or construction is queued, do not select another "
+                "workshop type here. Use only LEAVESCREEN with advance_ticks=0, "
+                "then wait for the next observation before advancing time or "
+                "inspecting the placed workshop."
+            ),
+            extra_evidence=["visible building workshop-type menu"],
+        )
+
     if "carpenter's workshop" in lower and (
         "+-*/: scroll" in lower
         or "add new task" in lower
@@ -928,6 +950,21 @@ def encode_observation(
                 "carpenter_workshops/planned_workshops as production progress."
             )
             if (
+                _work_int(work, "carpenter_workshop_construction_jobs") > 0
+                or _work_int(work, "active_construct_building_jobs") > 0
+            ):
+                status_lines.append(
+                    "Workshop construction route: a construction job is already "
+                    "queued for the placed workshop. Do not start a new starter, "
+                    "material, D_BUILDING, D_NOBLES, or manager route. If a menu "
+                    "is visible, first submit only LEAVESCREEN with "
+                    "advance_ticks=0. Once the main map is visible, submit an "
+                    "empty-key KEYSTROKE with advance_ticks >= 1000 so the "
+                    "carpenter can build it. If that still leaves usable_workshops=0, "
+                    "inspect the existing workshop or jobs screen with visible "
+                    "evidence instead of placing another workshop."
+                )
+            if (
                 _work_int(work, "carpenter_workshop_construction_jobs") <= 0
                 and _work_int(work, "active_construct_building_jobs") <= 0
                 and _work_int(work, "carpenter_workshop_task_jobs") <= 0
@@ -1258,14 +1295,25 @@ def encode_observation(
                         + " and then designates the material target."
                     )
         elif ui_target_setup.get("target_mode") == "existing_workshop":
-            status_lines.append(
-                "Live UI existing workshop target: this target points at the "
-                "already placed Carpenter's Workshop. From a verified main-map "
-                "screen, use the recommended D_BUILDJOB key to select that real "
-                "workshop. Do not open D_NOBLES or manager orders until the "
-                "workshop is visibly selected or its construction blocker is "
-                "visible."
-            )
+            if _work_int(work, "carpenter_workshop_construction_jobs") > 0:
+                status_lines.append(
+                    "Live UI existing workshop target: this target points at a "
+                    "placed Carpenter's Workshop with a queued construction job. "
+                    "If you are in a menu, escape only. If the main map is "
+                    "visible, advancing time with empty keys is allowed so the "
+                    "construction job can complete. Use D_BUILDJOB only to "
+                    "inspect the placed workshop if time advancement fails to "
+                    "produce usable workshop proof."
+                )
+            else:
+                status_lines.append(
+                    "Live UI existing workshop target: this target points at the "
+                    "already placed Carpenter's Workshop. From a verified main-map "
+                    "screen, use the recommended D_BUILDJOB key to select that real "
+                    "workshop. Do not open D_NOBLES or manager orders until the "
+                    "workshop is visibly selected or its construction blocker is "
+                    "visible."
+                )
         elif ui_target_setup.get("target_mode") == "workshop":
             if screen_shows_blocked_placement:
                 status_lines.append(

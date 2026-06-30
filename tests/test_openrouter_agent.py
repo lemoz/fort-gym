@@ -93,7 +93,7 @@ class _FakeOpenRouterClient:
         self,
         *,
         api_key: str,
-        base_url: str,
+        base_url: str | None = None,
         max_retries: int = 2,
         timeout: float | None = None,
     ) -> None:
@@ -173,6 +173,32 @@ def test_openrouter_keystroke_agent_uses_openrouter_client(monkeypatch) -> None:
         "input": {"model": "z-ai/glm-5.2", "max_tokens": 512, "temperature": 0.1},
         "output": {"usage": {"input_tokens": 100, "output_tokens": 20, "total_tokens": 120}},
     }
+
+
+def test_openai_keystroke_agent_uses_openai_client_without_base_url(monkeypatch) -> None:
+    monkeypatch.setenv("OPENAI_API_KEY", "oa-test-key")
+    monkeypatch.setenv("OPENAI_MODEL", "gpt-test-keystroke")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "openai"
+        return SimpleNamespace(OpenAI=_FakeOpenRouterClient)
+
+    monkeypatch.setattr("fort_gym.bench.agent.llm_openrouter.import_module", fake_import_module)
+
+    try:
+        from fort_gym.bench.agent.llm_openai import _openai_keystroke_perception_review
+
+        agent = _openai_keystroke_perception_review()
+        client = agent._client_instance()
+    finally:
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert client is _FakeOpenRouterClient.last_instance
+    assert _FakeOpenRouterClient.last_instance is not None
+    assert _FakeOpenRouterClient.last_instance.api_key == "oa-test-key"
+    assert _FakeOpenRouterClient.last_instance.base_url is None
+    assert agent._model == "gpt-test-keystroke"
 
 
 def test_openrouter_agent_accepts_json_content_when_tool_call_missing(monkeypatch) -> None:
@@ -1067,6 +1093,81 @@ def test_openrouter_agent_rejects_buildjob_add_from_pending_workshop_constructio
     assert action["advance_ticks"] == 0
     assert any(
         event["tool"] == "pending_workshop_construction_contract_rejected"
+        for event in events
+    )
+
+
+def test_openrouter_agent_rejects_unrelated_route_while_workshop_construction_queued(
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    bad_payload = {
+        "type": "KEYSTROKE",
+        "params": {
+            "keys": [
+                "D_DESIGNATE",
+                "DESIGNATE_STAIR_DOWN",
+                "SELECT",
+                "CURSOR_RIGHT",
+                "SELECT",
+                "LEAVESCREEN",
+            ]
+        },
+        "intent": "Dig another starter target while workshop construction is queued",
+        "screen_read": {"mode": "main_map", "evidence": ["main map"], "confidence": "medium"},
+        "last_action_review": {"worked": False, "evidence": [], "should_retry_same_path": False},
+        "advance_ticks": 500,
+    }
+    recovery_payload = {
+        "type": "KEYSTROKE",
+        "params": {"keys": []},
+        "intent": "Let the queued workshop construction job run",
+        "screen_read": {"mode": "main_map", "evidence": ["main map"], "confidence": "medium"},
+        "last_action_review": {
+            "worked": False,
+            "evidence": ["construction job was already queued"],
+            "should_retry_same_path": False,
+        },
+        "advance_ticks": 1500,
+    }
+    _FakeOpenRouterClient.responses = [
+        {"tool_calls": [_submit_action_call(bad_payload, "call_bad_route")]},
+        {"tool_calls": [_submit_action_call(recovery_payload, "call_wait")]},
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "openai"
+        return SimpleNamespace(OpenAI=_FakeOpenRouterClient)
+
+    monkeypatch.setattr("fort_gym.bench.agent.llm_openrouter.import_module", fake_import_module)
+
+    try:
+        agent = OpenRouterKeystrokeAgent()
+        action = agent.decide(
+            "mock observation",
+            {
+                "pause_state": True,
+                "screen_state": {"mode": "main_map", "confidence": "medium"},
+                "work": {
+                    "carpenter_workshops": 1,
+                    "carpenter_workshops_planned": 1,
+                    "carpenter_workshops_usable": 0,
+                    "carpenter_workshop_task_jobs": 0,
+                    "carpenter_workshop_construction_jobs": 1,
+                    "active_construct_building_jobs": 0,
+                },
+            },
+        )
+        events = agent.pop_tool_events()
+    finally:
+        _FakeOpenRouterClient.responses = None
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["params"]["keys"] == []
+    assert action["advance_ticks"] == 1500
+    assert any(
+        event["tool"] == "queued_workshop_construction_route_rejected"
         for event in events
     )
 

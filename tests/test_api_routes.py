@@ -53,6 +53,19 @@ def test_run_create_request_accepts_openrouter_keystroke_models() -> None:
     assert glm_request.model == "openrouter-glm-5.2"
 
 
+def test_run_create_request_accepts_openai_keystroke_model() -> None:
+    from fort_gym.bench.api.schemas import RunCreateRequest
+
+    request = RunCreateRequest(
+        backend="dfhack",
+        model="openai-keystroke-perception-review",
+        max_steps=100,
+        ticks_per_step=10,
+    )
+
+    assert request.model == "openai-keystroke-perception-review"
+
+
 def test_run_create_request_accepts_plan_review_keystroke_model() -> None:
     from fort_gym.bench.api.schemas import RunCreateRequest
 

@@ -589,6 +589,39 @@ def test_encoder_classifies_pending_carpenter_workshop_construction_screen() -> 
     assert state["screen_state"]["confidence"] == "high"
 
 
+def test_encoder_classifies_building_workshop_type_menu_after_workshop_placed() -> None:
+    text, state = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 3, "stone": 0},
+            "work": {
+                "manager_orders_count": 0,
+                "manager_orders_amount_left": 0,
+                "carpenter_workshops": 1,
+                "carpenter_workshops_planned": 1,
+                "carpenter_workshops_usable": 0,
+                "carpenter_workshops_unproven": 1,
+                "carpenter_workshop_construction_jobs": 1,
+                "active_construct_building_jobs": 0,
+            },
+        },
+        screen_text=(
+            "Leather Works            (e)\n"
+            "Quern                    (q)\n"
+            "Bowyer's Workshop        (b)\n"
+            "Carpenter's Workshop     (c)\n"
+            "Mason's Workshop         (m)"
+        ),
+    )
+
+    assert "Screen state: mode=building_workshop_type_menu" in text
+    assert "construction job is already queued" in text
+    assert "submit only LEAVESCREEN" in text
+    assert state["screen_state"]["mode"] == "building_workshop_type_menu"
+    assert state["screen_state"]["confidence"] == "high"
+
+
 def test_encoder_classifies_selected_usable_carpenter_workshop_screen() -> None:
     text, state = encode_observation(
         {

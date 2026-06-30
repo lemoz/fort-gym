@@ -20,6 +20,7 @@ from ..config import get_settings
 from ..env.actions import parse_action
 
 _DEFAULT_TOOLS = object()
+_DEFAULT_BASE_URL = object()
 
 PRODUCTION_SCREEN_COMPATIBLE_MODES = {
     "job_list": {
@@ -71,6 +72,10 @@ PRODUCTION_SCREEN_COMPATIBLE_MODES = {
         "workshop_task_menu",
         "workshop_menu",
     },
+    "building_workshop_type_menu": {
+        "building_workshop_type_menu",
+        "building_menu",
+    },
 }
 
 ESCAPE_THEN_ACT_MENU_MODES = {
@@ -84,6 +89,7 @@ ESCAPE_THEN_ACT_MENU_MODES = {
     "workshop_placement",
     "workshop_material_selection",
     "workshop_add_task_list",
+    "building_workshop_type_menu",
 }
 
 
@@ -142,10 +148,35 @@ class OpenRouterKeystrokeAgent(Agent):
         require_plan_review: bool = False,
         require_perception_review: bool = False,
         model_override: str | None = None,
+        api_key: str | None = None,
+        api_key_name: str = "OPENROUTER_API_KEY",
+        base_url: str | None | object = _DEFAULT_BASE_URL,
+        timeout_seconds: float | None = None,
+        max_attempts: int | None = None,
+        disable_reasoning: bool | None = None,
+        provider_label: str = "openrouter",
     ) -> None:
         self._settings = get_settings()
-        if not self._settings.OPENROUTER_API_KEY:
-            raise RuntimeError("OPENROUTER_API_KEY not configured")
+        self._api_key = api_key if api_key is not None else self._settings.OPENROUTER_API_KEY
+        if not self._api_key:
+            raise RuntimeError(f"{api_key_name} not configured")
+        self._base_url = (
+            self._settings.OPENROUTER_BASE_URL if base_url is _DEFAULT_BASE_URL else base_url
+        )
+        self._timeout_seconds = (
+            self._settings.OPENROUTER_TIMEOUT_SECONDS
+            if timeout_seconds is None
+            else timeout_seconds
+        )
+        self._max_attempts = (
+            self._settings.OPENROUTER_MAX_ATTEMPTS if max_attempts is None else max_attempts
+        )
+        self._disable_reasoning = (
+            self._settings.OPENROUTER_DISABLE_REASONING
+            if disable_reasoning is None
+            else disable_reasoning
+        )
+        self._provider_label = provider_label
         self._system_prompt = system_prompt
         self._model = model_override or self._settings.OPENROUTER_MODEL
         self._require_memory_review = require_memory_review
@@ -176,12 +207,14 @@ class OpenRouterKeystrokeAgent(Agent):
             client_cls = getattr(openai_mod, "OpenAI", None)
             if client_cls is None:
                 raise RuntimeError("openai.OpenAI client not available")
-            self._client = client_cls(
-                api_key=self._settings.OPENROUTER_API_KEY,
-                base_url=self._settings.OPENROUTER_BASE_URL,
-                max_retries=0,
-                timeout=self._settings.OPENROUTER_TIMEOUT_SECONDS,
-            )
+            client_kwargs: Dict[str, Any] = {
+                "api_key": self._api_key,
+                "max_retries": 0,
+                "timeout": self._timeout_seconds,
+            }
+            if self._base_url is not None:
+                client_kwargs["base_url"] = self._base_url
+            self._client = client_cls(**client_kwargs)
         return self._client
 
     def _rate_limit(self) -> None:
@@ -210,10 +243,10 @@ class OpenRouterKeystrokeAgent(Agent):
         tools: List[Dict[str, Any]] | None | object = _DEFAULT_TOOLS,
         tool_choice: Any = _DEFAULT_TOOLS,
     ) -> Any:
-        max_attempts = max(1, self._settings.OPENROUTER_MAX_ATTEMPTS)
+        max_attempts = max(1, self._max_attempts)
         last_exc: Exception | None = None
         request_kwargs: Dict[str, Any] = {}
-        if self._settings.OPENROUTER_DISABLE_REASONING:
+        if self._disable_reasoning:
             request_kwargs["extra_body"] = {
                 "reasoning": {"enabled": False, "exclude": True}
             }
@@ -248,7 +281,7 @@ class OpenRouterKeystrokeAgent(Agent):
                             "model": self._model,
                             "attempt": attempt + 1,
                             "max_attempts": max_attempts,
-                            "timeout_seconds": self._settings.OPENROUTER_TIMEOUT_SECONDS,
+                            "timeout_seconds": self._timeout_seconds,
                         },
                         "output": {
                             "error": type(exc).__name__,
@@ -259,7 +292,9 @@ class OpenRouterKeystrokeAgent(Agent):
                 )
                 if will_retry:
                     time.sleep(min(2.0 * (attempt + 1), 5.0))
-        raise RuntimeError(f"OpenRouter request failed after {max_attempts} attempts") from last_exc
+        raise RuntimeError(
+            f"{self._provider_label} request failed after {max_attempts} attempts"
+        ) from last_exc
 
     def _gate_error(self, called_tool_names: set[str]) -> str | None:
         if self._require_memory_review and "query_memory" not in called_tool_names:
@@ -1066,6 +1101,82 @@ class OpenRouterKeystrokeAgent(Agent):
             "verified main-map screen and choose another productive route."
         )
 
+    @classmethod
+    def _queued_workshop_construction_route_error(
+        cls,
+        tool_payload: Dict[str, Any],
+        obs_json: Dict[str, Any],
+    ) -> str | None:
+        work = obs_json.get("work") if isinstance(obs_json.get("work"), dict) else {}
+        planned = cls._int_value(work.get("carpenter_workshops_planned"))
+        if planned <= 0:
+            planned = cls._int_value(work.get("carpenter_workshops"))
+        usable = cls._int_value(work.get("carpenter_workshops_usable"))
+        task_jobs = cls._int_value(work.get("carpenter_workshop_task_jobs"))
+        construction_jobs = cls._int_value(work.get("carpenter_workshop_construction_jobs"))
+        active_construct_jobs = cls._int_value(work.get("active_construct_building_jobs"))
+        if (
+            planned <= 0
+            or usable > 0
+            or task_jobs > 0
+            or (construction_jobs <= 0 and active_construct_jobs <= 0)
+        ):
+            return None
+
+        keys = [str(key) for key in cls._keystroke_keys(tool_payload)]
+        try:
+            advance_ticks = int(tool_payload.get("advance_ticks") or 0)
+        except (TypeError, ValueError):
+            advance_ticks = 0
+        screen_state = obs_json.get("screen_state")
+        mode = (
+            str(screen_state.get("mode") or "").strip().lower()
+            if isinstance(screen_state, dict)
+            else ""
+        )
+
+        if keys and all(key == "LEAVESCREEN" for key in keys) and advance_ticks == 0:
+            return None
+        if not keys and advance_ticks >= 1000:
+            return None
+        if "D_BUILDJOB" in keys:
+            return None
+        if mode in ESCAPE_THEN_ACT_MENU_MODES:
+            return (
+                "Queued-workshop construction route mismatch: a Carpenter's "
+                "Workshop construction job is already queued, and the visible "
+                f"screen is {mode}. Do not combine this menu with another route. "
+                "Submit only LEAVESCREEN with advance_ticks=0, then wait for "
+                "the next observation."
+            )
+        return (
+            "Queued-workshop construction route mismatch: a Carpenter's Workshop "
+            "construction job is already queued. Do not dig, chop, open D_BUILDING, "
+            "D_NOBLES, manager orders, or place another workshop. From the main "
+            "map, use a KEYSTROKE action with params.keys=[] and advance_ticks "
+            ">= 1000 so the carpenter can build it; use D_BUILDJOB only if you "
+            "are explicitly inspecting the placed workshop after time fails."
+        )
+
+    def _log_queued_workshop_construction_route_error(
+        self,
+        tool_payload: Dict[str, Any],
+        obs_json: Dict[str, Any],
+        error: str,
+    ) -> None:
+        self._tool_events.append(
+            {
+                "tool": "queued_workshop_construction_route_rejected",
+                "input": {
+                    "screen_state": obs_json.get("screen_state"),
+                    "work": obs_json.get("work"),
+                    "submitted_keys": self._keystroke_keys(tool_payload),
+                    "advance_ticks": tool_payload.get("advance_ticks"),
+                },
+                "output": error,
+            }
+        )
+
     def _log_pending_workshop_construction_contract_error(
         self,
         tool_payload: Dict[str, Any],
@@ -1475,6 +1586,17 @@ class OpenRouterKeystrokeAgent(Agent):
                 pending_workshop_error,
             )
             return pending_workshop_error
+
+        queued_workshop_construction_error = (
+            self._queued_workshop_construction_route_error(payload, obs_json)
+        )
+        if queued_workshop_construction_error:
+            self._log_queued_workshop_construction_route_error(
+                payload,
+                obs_json,
+                queued_workshop_construction_error,
+            )
+            return queued_workshop_construction_error
 
         compound_escape_error = self._compound_menu_escape_contract_error(
             payload,

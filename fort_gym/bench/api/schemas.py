@@ -13,6 +13,7 @@ ModelType = Literal[
     "random",
     "fake",
     "openai",
+    "openai-keystroke-perception-review",
     "openrouter-keystroke",
     "openrouter-keystroke-perception-review",
     "openrouter-glm-5.2",
