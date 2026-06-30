@@ -1262,6 +1262,103 @@ class OpenRouterKeystrokeAgent(Agent):
         )
 
     @classmethod
+    def _pre_workshop_hidden_target_route_error(
+        cls,
+        tool_payload: Dict[str, Any],
+        obs_json: Dict[str, Any],
+    ) -> str | None:
+        work = obs_json.get("work") if isinstance(obs_json.get("work"), dict) else {}
+        target_setup = (
+            obs_json.get("ui_target_setup")
+            if isinstance(obs_json.get("ui_target_setup"), dict)
+            else {}
+        )
+        target_mode = str(target_setup.get("target_mode") or "").strip().lower()
+        if target_mode not in {"starter", "workshop"}:
+            return None
+
+        has_workshop_route = any(
+            cls._int_value(work.get(field)) > 0
+            for field in (
+                "carpenter_workshops",
+                "carpenter_workshops_planned",
+                "carpenter_workshop_construction_jobs",
+                "carpenter_workshops_usable",
+            )
+        )
+        if has_workshop_route:
+            return None
+
+        target_hidden = cls._int_value(work.get("target_hidden_tiles"))
+        target_floor = cls._int_value(work.get("target_floor_tiles"))
+        if target_hidden <= 0 or target_floor > 0:
+            return None
+
+        keys = [str(key) for key in cls._keystroke_keys(tool_payload)]
+        key_set = set(keys)
+        recent = (
+            obs_json.get("recent_progress_summary")
+            if isinstance(obs_json.get("recent_progress_summary"), dict)
+            else {}
+        )
+        no_progress_streak = cls._int_value(recent.get("no_progress_streak"))
+
+        if key_set.intersection(
+            {
+                "D_BUILDING",
+                "HOTKEY_BUILDING_WORKSHOP",
+                "HOTKEY_BUILDING_WORKSHOP_CARPENTER",
+            }
+        ):
+            return (
+                "Pre-workshop room route mismatch: no Carpenter's Workshop exists, "
+                "no construction job is queued, and the target room is still hidden. "
+                "Do not retry D_BUILDING or workshop placement on hidden tiles. "
+                "From the main map, use D_DESIGNATE then DESIGNATE_DIG over the "
+                "room rectangle, include two SELECT keys and LEAVESCREEN, and set "
+                "advance_ticks >= 1000 so miners can create floor before placement."
+            )
+
+        if (
+            key_set.intersection(
+                {
+                    "DESIGNATE_STAIR_DOWN",
+                    "DESIGNATE_STAIR_UP",
+                    "DESIGNATE_STAIR_UPDOWN",
+                }
+            )
+            and no_progress_streak > 0
+        ):
+            return (
+                "Pre-workshop room route mismatch: repeated stair designation has "
+                "not created workshop floor, dig jobs, or workshop placement "
+                "progress. Use DESIGNATE_DIG for the hidden room rectangle instead "
+                "of DESIGNATE_STAIR_* recovery, and advance time so miners dig it."
+            )
+        return None
+
+    def _log_pre_workshop_hidden_target_route_error(
+        self,
+        tool_payload: Dict[str, Any],
+        obs_json: Dict[str, Any],
+        error: str,
+    ) -> None:
+        self._tool_events.append(
+            {
+                "tool": "pre_workshop_hidden_target_route_rejected",
+                "input": {
+                    "screen_state": obs_json.get("screen_state"),
+                    "ui_target_setup": obs_json.get("ui_target_setup"),
+                    "work": obs_json.get("work"),
+                    "recent_progress_summary": obs_json.get("recent_progress_summary"),
+                    "submitted_keys": self._keystroke_keys(tool_payload),
+                    "advance_ticks": tool_payload.get("advance_ticks"),
+                },
+                "output": error,
+            }
+        )
+
+    @classmethod
     def _queued_workshop_construction_route_error(
         cls,
         tool_payload: Dict[str, Any],
@@ -2201,6 +2298,17 @@ class OpenRouterKeystrokeAgent(Agent):
                 pending_workshop_error,
             )
             return pending_workshop_error
+
+        pre_workshop_hidden_target_error = (
+            self._pre_workshop_hidden_target_route_error(payload, obs_json)
+        )
+        if pre_workshop_hidden_target_error:
+            self._log_pre_workshop_hidden_target_route_error(
+                payload,
+                obs_json,
+                pre_workshop_hidden_target_error,
+            )
+            return pre_workshop_hidden_target_error
 
         queued_workshop_construction_error = (
             self._queued_workshop_construction_route_error(payload, obs_json)

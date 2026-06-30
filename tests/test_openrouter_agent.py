@@ -774,6 +774,208 @@ def test_openrouter_agent_rejects_blocked_menu_family_after_escape(monkeypatch) 
     assert any(event["tool"] == "blocked_menu_path_rejected" for event in events)
 
 
+def test_openrouter_agent_rejects_workshop_placement_on_hidden_target(
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    bad_payload = {
+        "type": "KEYSTROKE",
+        "params": {
+            "keys": [
+                "D_BUILDING",
+                "HOTKEY_BUILDING_WORKSHOP",
+                "HOTKEY_BUILDING_WORKSHOP_CARPENTER",
+            ]
+        },
+        "intent": "Try carpenter workshop placement on the target.",
+        "objective": "place first workshop",
+        "expected_visible_result": "workshop placement opens",
+        "screen_read": {
+            "mode": "main_map",
+            "evidence": ["main map visible"],
+            "confidence": "high",
+        },
+        "last_action_review": {
+            "worked": False,
+            "evidence": ["previous placement was blocked"],
+            "should_retry_same_path": False,
+        },
+        "advance_ticks": 0,
+    }
+    recovery_payload = {
+        "type": "KEYSTROKE",
+        "params": {
+            "keys": [
+                "D_DESIGNATE",
+                "DESIGNATE_DIG",
+                "SELECT",
+                "CURSOR_RIGHT",
+                "CURSOR_RIGHT",
+                "SELECT",
+                "LEAVESCREEN",
+            ]
+        },
+        "intent": "Dig the hidden room before trying workshop placement again.",
+        "objective": "create floor for first workshop",
+        "expected_visible_result": "dig designations are placed",
+        "screen_read": {
+            "mode": "main_map",
+            "evidence": ["main map visible"],
+            "confidence": "high",
+        },
+        "last_action_review": {
+            "worked": False,
+            "evidence": ["hidden target placement was rejected"],
+            "should_retry_same_path": False,
+        },
+        "advance_ticks": 1500,
+    }
+    _FakeOpenRouterClient.responses = [
+        {"tool_calls": [_submit_action_call(bad_payload, "call_bad_place")]},
+        {"tool_calls": [_submit_action_call(recovery_payload, "call_dig")]},
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "openai"
+        return SimpleNamespace(OpenAI=_FakeOpenRouterClient)
+
+    monkeypatch.setattr("fort_gym.bench.agent.llm_openrouter.import_module", fake_import_module)
+
+    try:
+        agent = OpenRouterKeystrokeAgent()
+        action = agent.decide(
+            "mock observation",
+            {
+                "pause_state": True,
+                "screen_state": {"mode": "main_map", "confidence": "high"},
+                "ui_target_setup": {"target_mode": "workshop"},
+                "work": {
+                    "target_hidden_tiles": 25,
+                    "target_floor_tiles": 0,
+                    "carpenter_workshops": 0,
+                    "carpenter_workshops_planned": 0,
+                    "carpenter_workshop_construction_jobs": 0,
+                    "carpenter_workshops_usable": 0,
+                },
+            },
+        )
+        events = agent.pop_tool_events()
+    finally:
+        _FakeOpenRouterClient.responses = None
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert "DESIGNATE_DIG" in action["params"]["keys"]
+    assert action["advance_ticks"] == 1500
+    assert any(
+        event["tool"] == "pre_workshop_hidden_target_route_rejected"
+        for event in events
+    )
+
+
+def test_openrouter_agent_rejects_repeated_stairs_on_hidden_workshop_target(
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    bad_payload = {
+        "type": "KEYSTROKE",
+        "params": {
+            "keys": [
+                "D_DESIGNATE",
+                "DESIGNATE_STAIR_DOWN",
+                "SELECT",
+                "CURSOR_RIGHT",
+                "SELECT",
+                "LEAVESCREEN",
+            ]
+        },
+        "intent": "Designate another stair to recover from blocked placement.",
+        "objective": "create room for first workshop",
+        "expected_visible_result": "stair designation appears",
+        "screen_read": {
+            "mode": "main_map",
+            "evidence": ["main map visible"],
+            "confidence": "high",
+        },
+        "last_action_review": {
+            "worked": False,
+            "evidence": ["prior stair recovery made no floor progress"],
+            "should_retry_same_path": False,
+        },
+        "advance_ticks": 700,
+    }
+    recovery_payload = {
+        "type": "KEYSTROKE",
+        "params": {
+            "keys": [
+                "D_DESIGNATE",
+                "DESIGNATE_DIG",
+                "SELECT",
+                "CURSOR_RIGHT",
+                "CURSOR_RIGHT",
+                "SELECT",
+                "LEAVESCREEN",
+            ]
+        },
+        "intent": "Dig the hidden room rectangle instead of repeating stairs.",
+        "objective": "create floor for first workshop",
+        "expected_visible_result": "dig designations are placed",
+        "screen_read": {
+            "mode": "main_map",
+            "evidence": ["main map visible"],
+            "confidence": "high",
+        },
+        "last_action_review": {
+            "worked": False,
+            "evidence": ["stair recovery was rejected"],
+            "should_retry_same_path": False,
+        },
+        "advance_ticks": 1500,
+    }
+    _FakeOpenRouterClient.responses = [
+        {"tool_calls": [_submit_action_call(bad_payload, "call_bad_stair")]},
+        {"tool_calls": [_submit_action_call(recovery_payload, "call_dig")]},
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "openai"
+        return SimpleNamespace(OpenAI=_FakeOpenRouterClient)
+
+    monkeypatch.setattr("fort_gym.bench.agent.llm_openrouter.import_module", fake_import_module)
+
+    try:
+        agent = OpenRouterKeystrokeAgent()
+        action = agent.decide(
+            "mock observation",
+            {
+                "pause_state": True,
+                "screen_state": {"mode": "main_map", "confidence": "high"},
+                "ui_target_setup": {"target_mode": "starter"},
+                "recent_progress_summary": {"no_progress_streak": 2},
+                "work": {
+                    "target_hidden_tiles": 25,
+                    "target_floor_tiles": 0,
+                    "carpenter_workshops": 0,
+                    "carpenter_workshops_planned": 0,
+                    "carpenter_workshop_construction_jobs": 0,
+                    "carpenter_workshops_usable": 0,
+                },
+            },
+        )
+        events = agent.pop_tool_events()
+    finally:
+        _FakeOpenRouterClient.responses = None
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert "DESIGNATE_DIG" in action["params"]["keys"]
+    assert action["advance_ticks"] == 1500
+    assert any(
+        event["tool"] == "pre_workshop_hidden_target_route_rejected"
+        for event in events
+    )
+
+
 def test_openrouter_agent_allows_main_map_wait_after_blocked_workshop_menu(
     monkeypatch,
 ) -> None:
