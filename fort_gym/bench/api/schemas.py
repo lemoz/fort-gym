@@ -13,6 +13,7 @@ ModelType = Literal[
     "random",
     "fake",
     "dfhack-governed-scripted",
+    "dfhack-governed-llm",
     "openai",
     "openai-keystroke-perception-review",
     "openrouter-keystroke",

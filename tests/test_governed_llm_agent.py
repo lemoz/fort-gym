@@ -5,8 +5,11 @@ from types import SimpleNamespace
 from typing import Any
 
 import fort_gym.bench.agent.governed_llm  # noqa: F401 - registration side effect
+from typing import get_args
+
 from fort_gym.bench.agent.base import AGENT_FACTORIES
 from fort_gym.bench.agent.governed_llm import DFHackGovernedLLMAgent
+from fort_gym.bench.api.schemas import ModelType
 from fort_gym.bench.api.server import OPTIONAL_AGENT_MODULES
 from fort_gym.bench.run.runner import (
     GOVERNED_DFHACK_MODELS,
@@ -65,6 +68,7 @@ def test_governed_llm_is_registered_and_model_gated() -> None:
     assert "dfhack-governed-llm" in AGENT_FACTORIES
     assert "dfhack-governed-llm" in GOVERNED_DFHACK_MODELS
     assert OPTIONAL_AGENT_MODULES["dfhack-governed-llm"] == "fort_gym.bench.agent.governed_llm"
+    assert "dfhack-governed-llm" in get_args(ModelType)
     assert _is_governed_dfhack_model("dfhack-governed-llm") is True
     assert _is_keystroke_model("dfhack-governed-llm") is False
 
