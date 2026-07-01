@@ -30,6 +30,19 @@ if not job_type then
   return
 end
 
+local function record_manager_order(job_type, qty)
+  local manager_orders = df.global.world.manager_orders
+  if not manager_orders then
+    return false
+  end
+  local wo = df.manager_order:new()
+  wo.job_type = job_type
+  wo.amount_total = qty
+  wo.amount_left = qty
+  manager_orders:insert('#', wo)
+  return true
+end
+
 local function is_carpenter_workshop(building)
   if not building then return false end
   local is_workshop = false
@@ -117,6 +130,7 @@ if workshop then
       local job = create_workshop_job(workshop, entry)
       table.insert(created_jobs, job.id)
     end
+    local manager_recorded = record_manager_order(job_type, qty)
     print(json.encode({
       ok = true,
       item = item,
@@ -124,22 +138,16 @@ if workshop then
       mode = 'workshop_job',
       workshop_id = workshop.id,
       created_job_ids = created_jobs,
+      manager_recorded = manager_recorded,
     }))
     return
   end
 end
 
-local manager_orders = df.global.world.manager_orders
-if not manager_orders then
+if not record_manager_order(job_type, qty) then
   print(json.encode({ ok = false, error = 'manager_orders_unavailable' }))
   return
 end
-
-local wo = df.manager_order:new()
-wo.job_type = job_type
-wo.amount_total = qty
-wo.amount_left = qty
-manager_orders:insert('#', wo)
 
 local processed_ok, processed_error = pcall(function()
   dfhack.run_script('orders', 'process-new')

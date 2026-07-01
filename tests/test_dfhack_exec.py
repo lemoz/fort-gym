@@ -117,6 +117,7 @@ def test_order_make_hook_prefers_direct_workshop_jobs() -> None:
     assert "require('dfhack.workshops')" in hook_text
     assert "mode = 'workshop_job'" in hook_text
     assert "dfhack.job.linkIntoWorld(job, true)" in hook_text
+    assert "manager_recorded = manager_recorded" in hook_text
     assert "manager_orders:insert('#', wo)" in hook_text
 
 
