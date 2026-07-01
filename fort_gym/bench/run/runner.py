@@ -33,6 +33,7 @@ from .seed_reset import maybe_reset_dfhack_seed
 ASSISTED_DFHACK_ACTIONS = {"DIG", "BUILD", "ORDER"}
 GOVERNED_DFHACK_MODELS = {
     "dfhack-governed-scripted",
+    "dfhack-governed-llm",
 }
 GOVERNED_DFHACK_ACTIONS = {"DIG", "BUILD", "ORDER", "WAIT"}
 ASSISTED_PROGRESS_FIELDS = (
