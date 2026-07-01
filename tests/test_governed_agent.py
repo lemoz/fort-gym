@@ -109,6 +109,38 @@ def test_governed_agent_builds_on_observed_site_when_annex_is_imperfect() -> Non
     assert action["params"]["z"] == 177
 
 
+def test_governed_agent_orders_after_workshop_exists_despite_rough_annex() -> None:
+    env = MockEnvironment()
+    state = env.observe()
+    work = state["work"]
+    work.update(
+        {
+            "target_floor_tiles": 7,
+            "target_wall_tiles": 0,
+            "target_hidden_tiles": 0,
+            "target_missing_blocks": 0,
+            "fortress_connector_floor_tiles": 3,
+            "fortress_connector_wall_tiles": 0,
+            "fortress_connector_hidden_tiles": 0,
+            "fortress_connector_missing_blocks": 0,
+            "fortress_workshop_room_tiles": 25,
+            "fortress_workshop_room_floor_tiles": 17,
+            "fortress_workshop_room_wall_tiles": 3,
+            "fortress_workshop_room_hidden_tiles": 0,
+            "fortress_workshop_room_missing_blocks": 0,
+            "carpenter_workshops": 1,
+            "carpenter_workshops_usable": 0,
+            "manager_orders_count": 0,
+            "active_jobs": 0,
+        }
+    )
+
+    action = DFHackGovernedScriptedAgent().decide("", state)
+
+    assert action["type"] == "ORDER"
+    assert action["params"]["job"] == "bed"
+
+
 def test_governed_agent_reaches_broader_mock_fort(tmp_path, monkeypatch) -> None:
     monkeypatch.setenv("ARTIFACTS_DIR", str(tmp_path))
     get_settings.cache_clear()

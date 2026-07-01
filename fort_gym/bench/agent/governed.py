@@ -150,7 +150,7 @@ class DFHackGovernedScriptedAgent(Agent):
                 )
             return self._wait("connector mining is pending or metrics are not ready")
 
-        if not workshop_room_complete:
+        if not workshop_room_complete and carpenter_workshops <= 0:
             if (
                 observed_build_site is not None
                 and active_dig_jobs <= 0
