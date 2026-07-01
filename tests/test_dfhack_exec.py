@@ -110,6 +110,16 @@ def test_build_workshop_hook_uses_existing_material_item() -> None:
     assert "no_building_material" in hook_text
 
 
+def test_order_make_hook_prefers_direct_workshop_jobs() -> None:
+    hook_path = Path(__file__).resolve().parents[1] / "hook" / "order_make.lua"
+    hook_text = hook_path.read_text(encoding="utf-8")
+
+    assert "require('dfhack.workshops')" in hook_text
+    assert "mode = 'workshop_job'" in hook_text
+    assert "dfhack.job.linkIntoWorld(job, true)" in hook_text
+    assert "manager_orders:insert('#', wo)" in hook_text
+
+
 def test_prepare_keystroke_tree_material_target_uses_broad_selection() -> None:
     hook_path = (
         Path(__file__).resolve().parents[1]
