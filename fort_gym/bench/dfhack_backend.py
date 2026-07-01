@@ -223,6 +223,35 @@ def read_map_snapshot(rect: tuple[int, int, int, int, int, int]) -> Dict[str, ob
         return {"ok": False, "error": str(exc)}
 
 
+def read_view_state() -> Dict[str, object]:
+    """Read the current DF viewport and cursor without changing game state."""
+
+    try:
+        return run_lua_file(_hook_path("view_state.lua"))
+    except (DFHackError, OSError) as exc:
+        return {"ok": False, "error": str(exc)}
+
+
+def restore_view_state(view_state: Dict[str, object] | None) -> Dict[str, object]:
+    """Best-effort restore for the live DF viewport/cursor."""
+
+    if not view_state or not view_state.get("ok"):
+        return {"ok": False, "error": "missing_view_state"}
+
+    try:
+        return run_lua_file(
+            _hook_path("restore_view_state.lua"),
+            str(int(view_state.get("window_x", 0) or 0)),
+            str(int(view_state.get("window_y", 0) or 0)),
+            str(int(view_state.get("window_z", 0) or 0)),
+            str(int(view_state.get("cursor_x", -30000) or -30000)),
+            str(int(view_state.get("cursor_y", -30000) or -30000)),
+            str(int(view_state.get("cursor_z", -30000) or -30000)),
+        )
+    except (DFHackError, OSError, TypeError, ValueError) as exc:
+        return {"ok": False, "error": str(exc)}
+
+
 def _format_blocked_workshop_targets(
     blocked_workshop_targets: Sequence[Sequence[int]] | None,
 ) -> str:
@@ -424,6 +453,8 @@ __all__ = [
     "read_work_metrics",
     "read_map_snapshot",
     "prepare_keystroke_target",
+    "read_view_state",
+    "restore_view_state",
     "advance_ticks_exact_external",
     "advance_ticks_exact",
     "execute_keystroke_action",

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from fort_gym.bench.run.runner import (
     _add_governed_build_site,
     _available_building_materials,
@@ -43,6 +45,23 @@ def test_openrouter_glm_alias_uses_keystroke_mode() -> None:
 def test_governed_dfhack_model_is_not_keystroke_mode() -> None:
     assert _is_governed_dfhack_model("dfhack-governed-scripted") is True
     assert _is_keystroke_model("dfhack-governed-scripted") is False
+
+
+def test_governed_runner_preserves_view_and_records_copy_screen_text() -> None:
+    runner_text = (
+        Path(__file__).resolve().parents[1]
+        / "fort_gym"
+        / "bench"
+        / "run"
+        / "runner.py"
+    ).read_text(encoding="utf-8")
+
+    assert "def prepare_governed_target" in runner_text
+    assert "view_before = read_view_state()" in runner_text
+    assert "restore_result = restore_view_state(view_before)" in runner_text
+    assert "target[\"view_preserved\"]" in runner_text
+    assert "if is_keystroke_mode or is_governed_dfhack_mode" in runner_text
+    assert "record_line[\"screen_text\"] = screen_text" in runner_text
 
 
 def test_prepared_target_work_rect_prefers_selection_rect() -> None:

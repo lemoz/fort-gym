@@ -139,6 +139,34 @@
       font-size: 0.85rem;
       font-weight: 600;
     }
+    .replay-view-toggle {
+      display: inline-flex;
+      gap: 0.25rem;
+      padding: 0.15rem;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.04);
+    }
+    .replay-view-toggle button {
+      width: auto;
+      height: 1.7rem;
+      border: none;
+      border-radius: 4px;
+      padding: 0.25rem 0.55rem;
+      color: #9fb1d6;
+      background: transparent;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+    .replay-view-toggle button[data-active="true"] {
+      color: #f5f7fb;
+      background: rgba(79,124,255,0.35);
+    }
+    .replay-view-toggle button:disabled {
+      color: #566278;
+      cursor: not-allowed;
+      background: transparent;
+    }
     .replay-legend {
       display: flex;
       gap: 0.55rem;
@@ -398,6 +426,10 @@
         <input id="replay-step-slider" type="range" min="0" max="0" value="0" aria-label="Replay step">
         <button id="replay-next" type="button" title="Next step" aria-label="Next step">&#9654;</button>
         <span id="replay-step-label" class="replay-step-label">Step --</span>
+        <div id="replay-view-toggle" class="replay-view-toggle" aria-label="Replay evidence view">
+          <button id="replay-view-screen" type="button" data-active="true">DF Screen</button>
+          <button id="replay-view-map" type="button" data-active="false">Map Inspect</button>
+        </div>
         <div class="replay-legend" aria-label="Replay legend">
           <span class="legend-item"><span class="legend-swatch legend-starter"></span>Starter</span>
           <span class="legend-item"><span class="legend-swatch legend-connector"></span>Connector</span>
@@ -503,6 +535,7 @@
     let viewMode = 'empty';
     let replayRecords = [];
     let replayStepIndex = 0;
+    let replayEvidenceView = 'screen';
     function tokenFromLocation() {
       const queryToken = new URLSearchParams(window.location.search).get('token');
       if (queryToken) return queryToken;
@@ -531,6 +564,8 @@
     const replayNext = document.getElementById('replay-next');
     const replayStepSlider = document.getElementById('replay-step-slider');
     const replayStepLabel = document.getElementById('replay-step-label');
+    const replayViewScreen = document.getElementById('replay-view-screen');
+    const replayViewMap = document.getElementById('replay-view-map');
     const statPop = document.getElementById('stat-pop');
     const statFood = document.getElementById('stat-food');
     const statDrink = document.getElementById('stat-drink');
@@ -944,7 +979,12 @@
         top: 76 + Math.floor((320 - mapRows * tile) / 2)
       };
 
-      drawReplayText('CAPTURED DFHACK MAP', 52, 46, { color: '#9fd7b2', size: 13, weight: 800 });
+      drawReplayText('DERIVED DFHACK MAP INSPECTION', 52, 46, { color: '#ffd966', size: 13, weight: 800 });
+      drawReplayText('Not a DF screen / not gameplay proof', 52, 64, {
+        color: '#9fb1d6',
+        size: 12,
+        weight: 700
+      });
 
       gameCtx.strokeStyle = 'rgba(159,177,214,0.07)';
       gameCtx.lineWidth = 1;
@@ -995,7 +1035,7 @@
         size: 22,
         weight: 800
       });
-      drawReplayText('DFHack map scan', 704, 84, { color: '#9fd7b2', size: 14, weight: 800 });
+      drawReplayText('Derived map scan', 704, 84, { color: '#ffd966', size: 14, weight: 800 });
       const scoreValue = typeof snapshot.score.value === 'number' ? snapshot.score.value.toFixed(1) : '--';
       drawReplayText(`Score ${scoreValue}`, 704, 112, { color: '#ffd966', size: 16, weight: 800 });
       let nextY = wrapReplayText(snapshot.action.intent || 'Captured from live DF map memory after this step', 704, 146, 204, 17);
@@ -1024,9 +1064,9 @@
           { color: '#9fb1d6', size: 12 }
         );
       }
-      drawReplayText('Source: df.global.world.map', 704, 428, {
+      drawReplayText('Source: df.global.world.map + trace overlays', 704, 428, {
         color: '#9fd7b2',
-        size: 13,
+        size: 11,
         weight: 700
       });
     }
@@ -1153,12 +1193,114 @@
       });
     }
 
+    function drawMissingDfScreenFrame(snapshot, canvasW, canvasH) {
+      gameCtx.fillStyle = '#05070d';
+      gameCtx.fillRect(0, 0, canvasW, canvasH);
+
+      const terminal = { x: 22, y: 24, w: 648, h: 432 };
+      const panel = { x: 690, y: 24, w: 248, h: 432 };
+      gameCtx.fillStyle = '#070a10';
+      gameCtx.fillRect(terminal.x, terminal.y, terminal.w, terminal.h);
+      gameCtx.strokeStyle = 'rgba(255,217,102,0.42)';
+      gameCtx.lineWidth = 1;
+      gameCtx.strokeRect(terminal.x, terminal.y, terminal.w, terminal.h);
+
+      drawReplayText('No Recorded DF Screen Frame', terminal.x + 28, terminal.y + 34, {
+        color: '#ffd966',
+        size: 22,
+        weight: 800
+      });
+      let y = terminal.y + 82;
+      y = wrapReplayText(
+        'This trace step does not include CopyScreen text, so the replay will not substitute the derived DFHack map as gameplay footage.',
+        terminal.x + 28,
+        y,
+        terminal.w - 64,
+        20,
+        '#dbe6ff'
+      );
+      y += 18;
+      y = wrapReplayText(
+        snapshot.mapSnapshot
+          ? 'A derived map snapshot is available in Map Inspect mode for debugging, but it is a secondary analysis layer.'
+          : 'No derived map snapshot is available for this step either.',
+        terminal.x + 28,
+        y,
+        terminal.w - 64,
+        20,
+        '#9fb1d6'
+      );
+      y += 22;
+      drawReplayText(`Action: ${snapshot.action.type || 'STATE'}`, terminal.x + 28, y, {
+        color: '#9ab3ff',
+        size: 15,
+        weight: 800
+      });
+      const execute = snapshot.record.execute || {};
+      drawReplayText(`Execute: ${execute.ok === false ? 'failed' : execute.ok === true ? 'ok' : '--'}`, terminal.x + 28, y + 30, {
+        color: execute.ok === false ? '#ff7b7b' : '#9fd7b2',
+        size: 14,
+        weight: 700
+      });
+      drawReplayText(`Ticks: ${snapshot.record.tick_advance?.ticks_advanced ?? '--'}`, terminal.x + 28, y + 58, {
+        color: '#9fb1d6',
+        size: 14,
+        weight: 700
+      });
+
+      gameCtx.fillStyle = '#101827';
+      gameCtx.fillRect(panel.x, panel.y, panel.w, panel.h);
+      gameCtx.strokeStyle = 'rgba(255,255,255,0.08)';
+      gameCtx.strokeRect(panel.x, panel.y, panel.w, panel.h);
+      drawReplayText(`Step ${snapshot.record.step ?? snapshot.index}`, panel.x + 22, panel.y + 24, {
+        color: '#f5f7fb',
+        size: 22,
+        weight: 800
+      });
+      drawReplayText('Evidence gap', panel.x + 22, panel.y + 56, {
+        color: '#ffd966',
+        size: 14,
+        weight: 800
+      });
+      const scoreValue = typeof snapshot.score.value === 'number' ? snapshot.score.value.toFixed(1) : '--';
+      drawReplayText(`Score ${scoreValue}`, panel.x + 22, panel.y + 84, {
+        color: '#ffd966',
+        size: 17,
+        weight: 800
+      });
+      let nextY = wrapReplayText(snapshot.action.intent || 'Saved run state', panel.x + 22, panel.y + 122, 200, 17);
+      nextY += 10;
+      const metrics = snapshot.metrics || {};
+      const work = getRecordWork(snapshot.record);
+      drawReplayText(`Production: ${metrics.production_progress ?? 0}`, panel.x + 22, nextY);
+      drawReplayText(`Complexity: ${metrics.complexity_progress ?? 0}`, panel.x + 22, nextY + 26);
+      drawReplayText(`Workshops: ${work.carpenter_workshops ?? 0}`, panel.x + 22, nextY + 52);
+      drawReplayText('CopyScreen: missing', panel.x + 22, nextY + 88, {
+        color: '#ffd966',
+        size: 13,
+        weight: 800
+      });
+      drawReplayText(`Map snapshot: ${snapshot.mapSnapshot ? 'available' : 'missing'}`, panel.x + 22, nextY + 114, {
+        color: '#9fb1d6',
+        size: 13,
+        weight: 700
+      });
+      drawReplayText('Source: trace metadata only', panel.x + 22, panel.y + panel.h - 42, {
+        color: '#9fb1d6',
+        size: 13,
+        weight: 700
+      });
+    }
+
     function updateReplayControls(snapshot, statusText) {
       replayStepSlider.max = Math.max(0, replayRecords.length - 1);
       replayStepSlider.value = replayStepIndex;
       replayStepLabel.textContent = `Step ${snapshot.record.step ?? replayStepIndex}/${replayRecords.length - 1}`;
       replayPrev.disabled = replayStepIndex <= 0;
       replayNext.disabled = replayStepIndex >= replayRecords.length - 1;
+      replayViewScreen.dataset.active = replayEvidenceView === 'screen' ? 'true' : 'false';
+      replayViewMap.dataset.active = replayEvidenceView === 'map' ? 'true' : 'false';
+      replayViewMap.disabled = !snapshot.mapSnapshot;
       gameStatus.textContent = statusText;
       updateReplayStats(snapshot);
     }
@@ -1287,6 +1429,19 @@
       }
       showCanvas();
 
+      if (replayEvidenceView === 'map') {
+        if (snapshot.mapSnapshot) {
+          gameTitle.textContent = 'Derived DFHack Map Inspection';
+          drawCapturedMapSnapshot(snapshot, canvasW, canvasH);
+          updateReplayControls(
+            snapshot,
+            `Derived map inspection, not gameplay footage: step ${snapshot.record.step ?? replayStepIndex} of ${replayRecords.length - 1}`
+          );
+          return;
+        }
+        replayEvidenceView = 'screen';
+      }
+
       if (snapshot.screenText) {
         gameTitle.textContent = 'DF Screen Replay';
         drawDfScreenFrame(snapshot, canvasW, canvasH);
@@ -1298,11 +1453,11 @@
       }
 
       if (snapshot.mapSnapshot) {
-        gameTitle.textContent = 'Captured DFHack Map Analysis';
-        drawCapturedMapSnapshot(snapshot, canvasW, canvasH);
+        gameTitle.textContent = 'DF Screen Replay';
+        drawMissingDfScreenFrame(snapshot, canvasW, canvasH);
         updateReplayControls(
           snapshot,
-          `Captured DFHack map analysis: step ${snapshot.record.step ?? replayStepIndex} of ${replayRecords.length - 1}`
+          `Recorded DF screen missing; derived map inspection is available for step ${snapshot.record.step ?? replayStepIndex}`
         );
         return;
       }
@@ -1418,6 +1573,13 @@
       replayStepSlider.max = Math.max(0, records.length - 1);
       replayStepSlider.value = replayStepIndex;
       renderSavedRunReplay(replayStepIndex);
+    }
+
+    function setReplayEvidenceView(mode) {
+      replayEvidenceView = mode === 'map' ? 'map' : 'screen';
+      if (viewMode === 'replay' && replayRecords.length > 0) {
+        renderSavedRunReplay(replayStepIndex);
+      }
     }
 
 
@@ -1883,6 +2045,14 @@
 
     replayStepSlider.addEventListener('input', (e) => {
       renderSavedRunReplay(Number(e.target.value));
+    });
+
+    replayViewScreen.addEventListener('click', () => {
+      setReplayEvidenceView('screen');
+    });
+
+    replayViewMap.addEventListener('click', () => {
+      setReplayEvidenceView('map');
     });
   </script>
 </body>

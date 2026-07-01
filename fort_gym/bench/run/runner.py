@@ -18,7 +18,13 @@ from ..env.executor import Executor
 from ..env.mock_env import MockEnvironment
 from ..env.scenarios import evaluate_scenario_assertions, get_mock_scenario
 from ..env.state_reader import StateReader
-from ..dfhack_backend import prepare_keystroke_target, read_map_snapshot, read_work_metrics
+from ..dfhack_backend import (
+    prepare_keystroke_target,
+    read_map_snapshot,
+    read_view_state,
+    read_work_metrics,
+    restore_view_state,
+)
 from ..eval import metrics, milestones, scoring
 from ..eval.summary import RunSummary, summarize
 from .storage import RunRegistry
@@ -1293,7 +1299,7 @@ def run_once(
     ui_blocked_workshop_targets: set[tuple[int, int, int]] = set()
 
     def get_screen_text() -> str:
-        """Get screen text for keystroke mode, empty string otherwise."""
+        """Get screen text when CopyScreen is available."""
         return ""
 
     if backend_name == "mock":
@@ -1346,8 +1352,18 @@ def run_once(
             )
             if keystroke_ui_target.get("ok"):
                 ui_target_generation = 1
+        def prepare_governed_target(mode: str) -> Dict[str, object]:
+            view_before = read_view_state()
+            target = prepare_keystroke_target(mode)
+            restore_result = restore_view_state(view_before)
+            if target.get("ok"):
+                target["view_preserved"] = bool(restore_result.get("ok"))
+                if not restore_result.get("ok"):
+                    target["view_preservation_error"] = restore_result.get("error")
+            return target
+
         if is_governed_dfhack_mode:
-            governed_target = prepare_keystroke_target("starter")
+            governed_target = prepare_governed_target("starter")
             governed_rect = _prepared_target_work_rect(governed_target)
             if governed_rect is not None:
                 dfhack_client.set_work_rect(governed_rect)
@@ -1364,7 +1380,7 @@ def run_once(
             if int(work.get("fortress_workshop_room_floor_tiles") or 0) < 9:
                 return state
             if not governed_workshop_target or not governed_workshop_target.get("ok"):
-                governed_workshop_target = prepare_keystroke_target("workshop")
+                governed_workshop_target = prepare_governed_target("workshop")
             return _add_governed_build_site(state, governed_workshop_target)
 
         def pause_env() -> None:
@@ -1385,9 +1401,9 @@ def run_once(
             tick_info_state = dict(dfhack_client.last_tick_info or {})
             return state
 
-        if is_keystroke_mode:
+        if is_keystroke_mode or is_governed_dfhack_mode:
             def get_screen_text() -> str:
-                """Get screen text for keystroke mode."""
+                """Get screen text for replay evidence."""
                 try:
                     return dfhack_client.get_screen_text(include_visual_hints=True)
                 except Exception:
@@ -1620,7 +1636,11 @@ def run_once(
                         state_before,
                         carpenter_workshop_usable_seen,
                     )
-                screen_text = get_screen_text() if is_keystroke_mode else None
+                screen_text = (
+                    get_screen_text()
+                    if is_keystroke_mode or is_governed_dfhack_mode
+                    else None
+                )
                 screen_has_material_blocker = bool(
                     is_keystroke_mode
                     and screen_text
@@ -2506,6 +2526,8 @@ def run_once(
                     record_line["map_snapshot"] = map_snapshot
                 if gameplay_proof is not None:
                     record_line["gameplay_proof"] = gameplay_proof
+                if screen_text:
+                    record_line["screen_text"] = screen_text
                 fh.write(json.dumps(record_line) + "\n")
 
                 if registry:

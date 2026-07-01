@@ -68,6 +68,33 @@ def test_prepare_keystroke_target_passes_blocked_workshop_targets(monkeypatch) -
     assert captured["kwargs"]["timeout"] == 10.0
 
 
+def test_view_state_helpers_use_dedicated_hooks(monkeypatch) -> None:
+    calls = []
+
+    def fake_run_lua_file(path, *args, **kwargs):
+        calls.append((Path(path).name, args, kwargs))
+        return {"ok": True, "window_x": 12}
+
+    monkeypatch.setattr(dfhack_backend, "run_lua_file", fake_run_lua_file)
+
+    assert dfhack_backend.read_view_state()["ok"] is True
+    assert dfhack_backend.restore_view_state(
+        {
+            "ok": True,
+            "window_x": 12,
+            "window_y": 34,
+            "window_z": 5,
+            "cursor_x": -30000,
+            "cursor_y": -30000,
+            "cursor_z": -30000,
+        }
+    )["ok"] is True
+
+    assert calls[0][0] == "view_state.lua"
+    assert calls[1][0] == "restore_view_state.lua"
+    assert calls[1][1] == ("12", "34", "5", "-30000", "-30000", "-30000")
+
+
 def test_fortress_workshop_rect_expands_short_live_targets_for_workshop_footprint() -> None:
     assert dfhack_backend._fortress_workshop_rect((94, 91, 177, 97, 92, 177)) == (
         101,
