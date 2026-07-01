@@ -83,7 +83,21 @@ Every governed step records into `trace.jsonl`:
   "DF Screen" mode). This is the recorded gameplay evidence.
 - `map_snapshot` — a derived DFHack tile read, shown only under the explicit
   "Map Inspect" label ("not gameplay proof").
+- `gameplay_proof` — a per-step evidence object (evidence only, never feeds
+  scoring): before/after map-tile diffs over the plan rects, productive state
+  deltas, and bounded-helper facts (`newly_designated`, `created_job_ids`,
+  workshop count deltas). `ok` is true only when the step changed real DF
+  state — a re-designation of already-designated tiles is visibly a no-op.
 - `execute.provenance` / `metrics.score_provenance` — the legality tags above.
+
+The governed LLM agent also persists its memory (POIs, failed attempts, plan,
+summary — not step records) across runs to
+`$ARTIFACTS_DIR/governed_llm_memory.json`; override with
+`FORT_GYM_GOVERNED_MEMORY_PATH` (set to `off` to disable). Memory is only
+meaningful while the seed save stays the same — delete the file when changing
+seeds.
+
+Success gates for this whole effort live in `docs/WDSLL.md`.
 
 Governed target discovery wraps helper probes with
 `hook/view_state.lua` / `hook/restore_view_state.lua` so the live DF

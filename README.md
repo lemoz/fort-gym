@@ -256,6 +256,8 @@ These systems are implemented (not roadmap):
 
 The next research step is improving the governed LLM policy (`dfhack-governed-llm`) — the loop and the model should solve gameplay; helper heuristics stay out of the policy.
 
+**Success definition and gate ladder: [docs/WDSLL.md](docs/WDSLL.md)** — every claim of "the agent plays" must pass a gate there on public, replayable evidence.
+
 ## Troubleshooting
 - **DFHack service won't start**: check `/var/log/syslog` and `journalctl -u dfhack-headless`. Verify `dfhack_archive_url` points to a Linux build.
 - **Remote not listening**: ensure the remote plugin is enabled; run `ss -lntp | grep 5000`.
