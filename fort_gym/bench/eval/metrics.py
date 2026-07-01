@@ -362,17 +362,35 @@ def step_snapshot(state: Dict[str, Any]) -> Dict[str, Any]:
                 work.get("carpenter_workshop_construction_jobs")
             ),
             "fortress_plan_name": work.get("fortress_plan_name"),
+            "fortress_connector_rect": work.get("fortress_connector_rect"),
+            "fortress_connector_tiles": _to_int(work.get("fortress_connector_tiles")),
             "fortress_connector_floor_tiles": _to_int(
                 work.get("fortress_connector_floor_tiles")
             ),
             "fortress_connector_wall_tiles": _to_int(
                 work.get("fortress_connector_wall_tiles")
             ),
+            "fortress_connector_hidden_tiles": _to_int(
+                work.get("fortress_connector_hidden_tiles")
+            ),
+            "fortress_connector_missing_blocks": _to_int(
+                work.get("fortress_connector_missing_blocks")
+            ),
+            "fortress_workshop_room_rect": work.get("fortress_workshop_room_rect"),
+            "fortress_workshop_room_tiles": _to_int(
+                work.get("fortress_workshop_room_tiles")
+            ),
             "fortress_workshop_room_floor_tiles": _to_int(
                 work.get("fortress_workshop_room_floor_tiles")
             ),
             "fortress_workshop_room_wall_tiles": _to_int(
                 work.get("fortress_workshop_room_wall_tiles")
+            ),
+            "fortress_workshop_room_hidden_tiles": _to_int(
+                work.get("fortress_workshop_room_hidden_tiles")
+            ),
+            "fortress_workshop_room_missing_blocks": _to_int(
+                work.get("fortress_workshop_room_missing_blocks")
             ),
             "fortress_complexity_tiles": _to_int(work.get("fortress_complexity_tiles")),
             "fortress_complexity_floor_tiles": _to_int(

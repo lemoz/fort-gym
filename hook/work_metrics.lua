@@ -139,6 +139,7 @@ for tx = rx1, rx2 do
   end
 end
 
+local plan_ry2 = math.max(ry2, ry1 + 4)
 local connector_x1 = rx2 + 1
 local connector_y1 = ry1 + 2
 local connector_x2 = rx2 + 3
@@ -146,7 +147,7 @@ local connector_y2 = connector_y1
 local workshop_room_x1 = rx2 + 4
 local workshop_room_y1 = ry1
 local workshop_room_x2 = rx2 + 8
-local workshop_room_y2 = ry2
+local workshop_room_y2 = plan_ry2
 local fortress_connector = scan_rect(connector_x1, connector_y1, rz, connector_x2, connector_y2)
 local fortress_workshop_room = scan_rect(
   workshop_room_x1,

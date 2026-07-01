@@ -42,6 +42,26 @@ def _rect_action_params(rect: Any) -> Dict[str, Any] | None:
     }
 
 
+def _space_complete(
+    work: Dict[str, Any],
+    *,
+    tiles_key: str,
+    floor_key: str,
+    wall_key: str,
+    hidden_key: str,
+    missing_key: str,
+    default_tiles: int,
+) -> bool:
+    tiles = max(1, _work_int(work, tiles_key, default_tiles))
+    floor_tiles = _work_int(work, floor_key)
+    wall_tiles = _work_int(work, wall_key)
+    hidden_tiles = _work_int(work, hidden_key)
+    missing_blocks = _work_int(work, missing_key)
+    if wall_tiles <= 0 and hidden_tiles <= 0 and missing_blocks <= 0 and floor_tiles > 0:
+        return True
+    return floor_tiles >= tiles
+
+
 class DFHackGovernedScriptedAgent(Agent):
     """Pursue the starter two-room workshop plan through structured actions."""
 
@@ -51,20 +71,42 @@ class DFHackGovernedScriptedAgent(Agent):
         connector_rect = work.get("fortress_connector_rect")
         workshop_room_rect = work.get("fortress_workshop_room_rect")
 
-        target_tiles = max(1, _work_int(work, "target_tiles", 25))
-        target_floor_tiles = _work_int(work, "target_floor_tiles")
         target_dig_designations = _work_int(work, "target_dig_designations")
         active_dig_jobs = _work_int(work, "active_dig_jobs")
-        connector_tiles = max(1, _work_int(work, "fortress_connector_tiles", 3))
-        connector_floor_tiles = _work_int(work, "fortress_connector_floor_tiles")
-        workshop_room_tiles = max(1, _work_int(work, "fortress_workshop_room_tiles", 25))
-        workshop_room_floor_tiles = _work_int(work, "fortress_workshop_room_floor_tiles")
         carpenter_workshops = _work_int(work, "carpenter_workshops")
         usable_workshops = _work_int(work, "carpenter_workshops_usable")
         manager_orders_count = _work_int(work, "manager_orders_count")
         active_jobs = _work_int(work, "active_jobs")
 
-        if target_floor_tiles < target_tiles:
+        starter_complete = _space_complete(
+            work,
+            tiles_key="target_tiles",
+            floor_key="target_floor_tiles",
+            wall_key="target_wall_tiles",
+            hidden_key="target_hidden_tiles",
+            missing_key="target_missing_blocks",
+            default_tiles=25,
+        )
+        connector_complete = _space_complete(
+            work,
+            tiles_key="fortress_connector_tiles",
+            floor_key="fortress_connector_floor_tiles",
+            wall_key="fortress_connector_wall_tiles",
+            hidden_key="fortress_connector_hidden_tiles",
+            missing_key="fortress_connector_missing_blocks",
+            default_tiles=3,
+        )
+        workshop_room_complete = _space_complete(
+            work,
+            tiles_key="fortress_workshop_room_tiles",
+            floor_key="fortress_workshop_room_floor_tiles",
+            wall_key="fortress_workshop_room_wall_tiles",
+            hidden_key="fortress_workshop_room_hidden_tiles",
+            missing_key="fortress_workshop_room_missing_blocks",
+            default_tiles=25,
+        )
+
+        if not starter_complete:
             if target_dig_designations <= 0 and active_dig_jobs <= 0:
                 params = _rect_action_params(target_rect) or {
                     "area": [50, 35, 0],
@@ -82,7 +124,7 @@ class DFHackGovernedScriptedAgent(Agent):
                 )
             return self._wait("starter room is already designated; let miners work")
 
-        if connector_floor_tiles < connector_tiles:
+        if not connector_complete:
             params = _rect_action_params(connector_rect)
             if params is not None and target_dig_designations <= 0 and active_dig_jobs <= 0:
                 return parse_action(
@@ -97,7 +139,7 @@ class DFHackGovernedScriptedAgent(Agent):
                 )
             return self._wait("connector mining is pending or metrics are not ready")
 
-        if workshop_room_floor_tiles < workshop_room_tiles:
+        if not workshop_room_complete:
             params = _rect_action_params(workshop_room_rect)
             if params is not None and target_dig_designations <= 0 and active_dig_jobs <= 0:
                 return parse_action(

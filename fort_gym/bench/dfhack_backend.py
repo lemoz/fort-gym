@@ -52,7 +52,8 @@ def _fortress_workshop_rect(
     work_rect: tuple[int, int, int, int, int, int],
 ) -> tuple[int, int, int, int, int, int]:
     rx1, ry1, rz1, rx2, ry2, rz2 = work_rect
-    return (rx2 + 4, ry1, rz1, rx2 + 8, ry2, rz2)
+    plan_y2 = max(ry2, ry1 + 4)
+    return (rx2 + 4, ry1, rz1, rx2 + 8, plan_y2, rz2)
 
 
 def _footprint_in_rect(

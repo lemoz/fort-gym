@@ -45,6 +45,36 @@ def test_governed_agent_builds_at_observed_workshop_room() -> None:
     assert action["params"]["z"] == 177
 
 
+def test_governed_agent_advances_when_live_starter_has_no_walls() -> None:
+    env = MockEnvironment()
+    state = env.observe()
+    work = state["work"]
+    work.update(
+        {
+            "target_rect": [94, 91, 177, 97, 92, 177],
+            "target_tiles": 8,
+            "target_floor_tiles": 7,
+            "target_wall_tiles": 0,
+            "target_hidden_tiles": 0,
+            "target_missing_blocks": 0,
+            "target_dig_designations": 0,
+            "active_dig_jobs": 0,
+            "fortress_connector_rect": [98, 93, 177, 100, 93, 177],
+            "fortress_connector_tiles": 3,
+            "fortress_connector_floor_tiles": 0,
+            "fortress_connector_wall_tiles": 3,
+            "fortress_connector_hidden_tiles": 0,
+            "fortress_connector_missing_blocks": 0,
+        }
+    )
+
+    action = DFHackGovernedScriptedAgent().decide("", state)
+
+    assert action["type"] == "DIG"
+    assert action["intent"] == "dig the east connector toward the workshop room"
+    assert action["params"] == {"area": [98, 93, 177], "size": [3, 1, 1]}
+
+
 def test_governed_agent_reaches_broader_mock_fort(tmp_path, monkeypatch) -> None:
     monkeypatch.setenv("ARTIFACTS_DIR", str(tmp_path))
     get_settings.cache_clear()

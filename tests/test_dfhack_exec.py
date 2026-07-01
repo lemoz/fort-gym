@@ -68,6 +68,17 @@ def test_prepare_keystroke_target_passes_blocked_workshop_targets(monkeypatch) -
     assert captured["kwargs"]["timeout"] == 10.0
 
 
+def test_fortress_workshop_rect_expands_short_live_targets_for_workshop_footprint() -> None:
+    assert dfhack_backend._fortress_workshop_rect((94, 91, 177, 97, 92, 177)) == (
+        101,
+        91,
+        177,
+        105,
+        95,
+        177,
+    )
+
+
 def test_prepare_keystroke_tree_material_target_uses_broad_selection() -> None:
     hook_path = (
         Path(__file__).resolve().parents[1]
