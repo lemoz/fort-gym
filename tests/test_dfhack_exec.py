@@ -148,6 +148,17 @@ def test_order_make_hook_prefers_direct_workshop_jobs() -> None:
     assert "manager_orders:insert('#', wo)" in hook_text
 
 
+def test_designate_rect_reports_designation_counts() -> None:
+    hook_path = Path(__file__).resolve().parents[1] / "hook" / "designate_rect.lua"
+    hook_text = hook_path.read_text(encoding="utf-8")
+
+    assert "newly_designated" in hook_text
+    assert "already_designated" in hook_text
+    assert "non_wall_tiles" in hook_text
+    assert "missing_tiles" in hook_text
+    assert "autochop" in hook_text
+
+
 def test_prepare_keystroke_tree_material_target_uses_broad_selection() -> None:
     hook_path = (
         Path(__file__).resolve().parents[1]

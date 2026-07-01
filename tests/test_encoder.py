@@ -1368,3 +1368,83 @@ def test_encoder_keeps_blocked_menu_sticky_after_no_progress_detour() -> None:
     assert summary["repeated_menu_family"] == "building_placement_menu"
     assert "sticky_blocked_menu_path=true" in text
     assert "remains forbidden until a later action produces real" in text
+
+
+def test_encoder_surfaces_plan_rects_and_legal_build_site() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 6, "stone": 0},
+            "work": {
+                "target_rect": [90, 90, 177, 96, 96, 177],
+                "fortress_connector_rect": [96, 92, 177, 98, 94, 177],
+                "fortress_workshop_room_rect": [98, 90, 177, 104, 96, 177],
+                "carpenter_build_site": [99, 93, 177],
+            },
+        },
+        screen_text="main map",
+    )
+
+    assert (
+        "Plan rects (x1,y1,z1,x2,y2,z2): starter=[90,90,177,96,96,177], "
+        "connector=[96,92,177,98,94,177], workshop_room=[98,90,177,104,96,177]" in text
+    )
+    assert "Legal BUILD site observed: carpenter_build_site=(99,93,177)" in text
+    assert "a BUILD there fits the allowed rects." in text
+
+
+def test_encoder_reports_no_legal_build_site_without_carpenter_build_site() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 6, "stone": 0},
+            "work": {
+                "target_rect": [90, 90, 177, 96, 96, 177],
+            },
+        },
+        screen_text="main map",
+    )
+
+    assert "No legal BUILD site observed yet." in text
+    assert (
+        "BUILD must fit a full 3x3 footprint on open floor inside the starter "
+        "or workshop_room rects; complete more floor first." in text
+    )
+
+
+def test_encoder_echoes_bounded_helper_result_counts() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 6, "stone": 0},
+        },
+        screen_text="main map",
+        last_action_result={
+            "accepted": True,
+            "result": {"newly_designated": 0, "already_designated": 25},
+        },
+    )
+
+    assert "Last Action detail:" in text
+    assert "newly_designated=0" in text
+    assert "already_designated=25" in text
+
+
+def test_encoder_ignores_malformed_plan_rects_without_crashing() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 6, "stone": 0},
+            "work": {
+                "target_rect": "junk",
+            },
+        },
+        screen_text="main map",
+    )
+
+    assert "Plan rects" not in text
+    assert "No legal BUILD site observed yet." in text
