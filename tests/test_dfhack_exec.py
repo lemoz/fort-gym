@@ -101,6 +101,15 @@ def test_build_workshop_allows_observed_extra_build_site(monkeypatch) -> None:
     assert captured["args"] == ("CarpenterWorkshop", "88", "96", "177")
 
 
+def test_build_workshop_hook_uses_existing_material_item() -> None:
+    hook_path = Path(__file__).resolve().parents[1] / "hook" / "build_workshop.lua"
+    hook_text = hook_path.read_text(encoding="utf-8")
+
+    assert "find_nearest_building_material" in hook_text
+    assert "items = { material_item }" in hook_text
+    assert "no_building_material" in hook_text
+
+
 def test_prepare_keystroke_tree_material_target_uses_broad_selection() -> None:
     hook_path = (
         Path(__file__).resolve().parents[1]

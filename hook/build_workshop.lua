@@ -24,6 +24,78 @@ local function count_carpenter_workshops()
   return count
 end
 
+local BUILDING_MATERIAL_ITEM_TYPES = {
+  [df.item_type.BAR] = true,
+  [df.item_type.BLOCKS] = true,
+  [df.item_type.BOULDER] = true,
+  [df.item_type.WOOD] = true,
+}
+
+local function item_type_name(item)
+  local ok, item_type = pcall(function() return item:getType() end)
+  if not ok then return '' end
+  return tostring(item_type)
+end
+
+local function valid_building_material_item(item)
+  if not item or not item.flags then
+    return false
+  end
+  if item.flags.garbage_collect
+      or item.flags.in_job
+      or item.flags.forbid
+      or item.flags.hidden
+      or item.flags.construction
+      or item.flags.artifact then
+    return false
+  end
+  if not item.pos or item.pos.x < 0 or item.pos.y < 0 or item.pos.z < 0 then
+    return false
+  end
+
+  local ok_type, item_type = pcall(function() return item:getType() end)
+  if not ok_type or not BUILDING_MATERIAL_ITEM_TYPES[item_type] then
+    return false
+  end
+
+  local block = dfhack.maps.getTileBlock(item.pos.x, item.pos.y, item.pos.z)
+  if not block then
+    return false
+  end
+  local designation = block.designation[item.pos.x % 16][item.pos.y % 16]
+  if not designation or designation.hidden then
+    return false
+  end
+  return true
+end
+
+local function distance_sq(item, x, y, z)
+  local dx = item.pos.x - x
+  local dy = item.pos.y - y
+  local dz = item.pos.z - z
+  return dx * dx + dy * dy + dz * dz * 100
+end
+
+local function find_nearest_building_material(x, y, z)
+  local items = df.global.world.items and df.global.world.items.all
+  if not items then
+    return nil
+  end
+
+  local best = nil
+  local best_distance = nil
+  for _, item in ipairs(items) do
+    if valid_building_material_item(item) then
+      local dist = distance_sq(item, x, y, z)
+      if not best_distance or dist < best_distance then
+        best = item
+        best_distance = dist
+      end
+    end
+  end
+  return best
+end
+
 if kind ~= 'CarpenterWorkshop' then
   print(json.encode({ ok = false, error = 'invalid_kind' }))
   return
@@ -36,6 +108,12 @@ end
 
 local before_buildings = df.global.world.buildings and #df.global.world.buildings.all or 0
 local before_carpenter_workshops = count_carpenter_workshops()
+local material_item = find_nearest_building_material(x, y, z)
+
+if not material_item then
+  print(json.encode({ ok = false, error = 'no_building_material' }))
+  return
+end
 
 local ok, result = pcall(function()
   return buildings.constructBuilding{
@@ -47,6 +125,7 @@ local ok, result = pcall(function()
     width = 3,
     height = 3,
     full_rectangle = true,
+    items = { material_item },
   }
 end)
 
@@ -78,4 +157,6 @@ print(json.encode({
   after_buildings = after_buildings,
   before_carpenter_workshops = before_carpenter_workshops,
   after_carpenter_workshops = after_carpenter_workshops,
+  material_item_id = material_item.id,
+  material_item_type = item_type_name(material_item),
 }))
