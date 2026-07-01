@@ -118,6 +118,14 @@ def _same_target_rect(
     return first_rect is not None and first_rect == second_rect
 
 
+def _prepared_target_work_rect(target: Dict[str, Any] | None) -> tuple[int, int, int, int, int, int] | None:
+    if not isinstance(target, dict):
+        return None
+    return _normalize_rect(target.get("selection_rect")) or _normalize_rect(
+        target.get("target_rect")
+    )
+
+
 def _recommended_key_route(target: Dict[str, Any] | None) -> tuple[str, ...]:
     if not isinstance(target, dict):
         return ()
@@ -1317,11 +1325,7 @@ def run_once(
                 ui_target_generation = 1
         if is_governed_dfhack_mode:
             governed_target = prepare_keystroke_target("starter")
-            governed_rect = (
-                _normalize_rect(governed_target.get("target_rect"))
-                if governed_target.get("ok")
-                else None
-            )
+            governed_rect = _prepared_target_work_rect(governed_target)
             if governed_rect is not None:
                 dfhack_client.set_work_rect(governed_rect)
 

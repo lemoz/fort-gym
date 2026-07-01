@@ -14,6 +14,7 @@ from fort_gym.bench.run.runner import (
     _material_exhausted_fallback_target_mode,
     _preserve_state_after_degraded_read,
     _preserve_work_after_degraded_read,
+    _prepared_target_work_rect,
     _screen_shows_blocked_workshop_placement,
     _screen_shows_building_type_menu,
     _screen_shows_ready_workshop_placement,
@@ -41,6 +42,15 @@ def test_openrouter_glm_alias_uses_keystroke_mode() -> None:
 def test_governed_dfhack_model_is_not_keystroke_mode() -> None:
     assert _is_governed_dfhack_model("dfhack-governed-scripted") is True
     assert _is_keystroke_model("dfhack-governed-scripted") is False
+
+
+def test_prepared_target_work_rect_prefers_selection_rect() -> None:
+    target = {
+        "target_rect": [87, 82, 177, 101, 96, 177],
+        "selection_rect": [94, 90, 177, 97, 91, 177],
+    }
+
+    assert _prepared_target_work_rect(target) == (94, 90, 177, 97, 91, 177)
 
 
 def test_zero_assisted_dfhack_progress_preserves_audit_values() -> None:
