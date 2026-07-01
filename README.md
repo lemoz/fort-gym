@@ -52,13 +52,16 @@ fort-gym scenario-run drink-scarcity
 The scenario starts the mock fortress below the safe drink threshold and writes
 assertion results into `summary.json` under `scenario_assertions`.
 
-To run Claude on the mock backend, install the optional agent dependencies:
+To run an LLM agent on the mock backend, install the optional agent dependencies:
 ```bash
 python -m pip install -e '.[agent]'
 ```
 
-Then see `examples/claude-sonnet-4-6-mock/` for a committed Sonnet 4.6 trace,
-the exact one-step run command, and request cost estimate.
+The default LLM provider is OpenRouter (`OPENROUTER_API_KEY`, model
+`z-ai/glm-5.2`). Legacy Anthropic agents still exist in the codebase but are
+disabled by the API server unless `FORT_GYM_ENABLE_ANTHROPIC=1` is set;
+`examples/claude-sonnet-4-6-mock/` is a historical committed trace from that
+era, kept for reference.
 
 ## Mac Local Development with DFHack
 
@@ -116,23 +119,40 @@ cat fort_gym/artifacts/<run_id>/summary.json | jq .
 > Note: the interactive `/step` flow is validated against the single-action schema used by the `fake` agent. Manager orders issued by the exploratory `random` agent remain experimental and may be rejected until DFHack execution coverage improves.
 The SSE endpoint emits `state`, `action`, `validation`, `execute`, `advance`, `metrics`, and `score` events. `summary.json` accumulates aggregate metrics, including live DFHack work, completion, utility, production, wealth, and visible fortress complexity progress when target-room metrics are available. Basic survival, population, and drink availability remain bounded health checks; fort-growth components are intentionally open-ended, so longer real-gameplay runs can keep gaining points as the fort digs, builds, produces, and creates wealth.
 
-For legal DFHack-command gameplay, use the governed model:
+For legal DFHack-command gameplay, use a governed model:
 ```bash
+# Deterministic reference agent (validates the action substrate)
 curl -s -X POST http://127.0.0.1:8000/runs \
   -H 'Content-Type: application/json' \
   -d '{"backend":"dfhack","model":"dfhack-governed-scripted","max_steps":30,"ticks_per_step":1000}'
+
+# LLM policy on the same governed action surface (OpenRouter, default z-ai/glm-5.2)
+curl -s -X POST http://127.0.0.1:8000/runs \
+  -H 'Content-Type: application/json' \
+  -d '{"backend":"dfhack","model":"dfhack-governed-llm","max_steps":30,"ticks_per_step":1000}'
 ```
-This path tags actions as `dfhack_governed` and judges the run with both the
-numeric score and the `summary.json` rubric. Older structured DFHack helper
-agents still have assisted progress zeroed for scoring.
+Governed runs treat DFHack as a bounded, audited command transport — the agent
+issues overseer commands (`DIG`, `BUILD`, `ORDER`, `WAIT`) a human could issue
+through the UI, then the simulation must advance and produce observable state
+changes. Each accepted governed action is tagged `execute.provenance =
+"dfhack_governed"`, per-step metrics carry `score_provenance =
+"dfhack_governed_observed_state"`, and every step records a real `screen_text`
+CopyScreen frame for replay evidence. Governed target discovery preserves and
+restores the live DF camera/cursor so helper probes never disturb the visible
+game. Non-governed models that emit structured `DIG`/`BUILD`/`ORDER` are tagged
+`dfhack_assisted`: their progress metrics are zeroed and — once one assisted
+action is accepted — the run's scoreable elapsed time is blocked for the rest
+of the run. `summary.json` additionally includes a deterministic `rubric`
+(8 dimensions over the last 100 trace rows) with explicit blockers such as
+`illegal_or_assisted_progress_seen` and `repetitive_policy`.
 
-## Keystroke Control Mode (Claude Plays Like a Human)
+## Keystroke Control Mode (LLM Plays Through the Raw UI)
 
-The `openrouter-keystroke-perception-review` model controls Dwarf Fortress via raw keystrokes through OpenRouter-compatible chat completions. It requires the agent to submit its own `screen_read` and `last_action_review` before each keystroke action. By default it uses `OPENROUTER_MODEL=z-ai/glm-5.2`; `openrouter-glm-5.2` pins that model explicitly.
+The `openrouter-keystroke-perception-review` model controls Dwarf Fortress via raw keystrokes through OpenRouter-compatible chat completions. It requires the agent to submit its own `screen_read` and `last_action_review` before each keystroke action. By default it uses `OPENROUTER_MODEL=z-ai/glm-5.2`; `openrouter-glm-5.2` pins that model explicitly. (The older `anthropic-keystroke*` variants use the same machinery but are disabled unless `FORT_GYM_ENABLE_ANTHROPIC=1`.)
 
 ### How It Works
 1. **Screen Observation**: The game screen is captured via DFHack's CopyScreen RPC and converted to an 80x25 text representation
-2. **Claude Decides**: Claude sees the screen text and decides what keystrokes to send
+2. **Model Decides**: The LLM sees the screen text and decides what keystrokes to send
 3. **Keystroke Execution**: Keys are sent via DFHack's `devel/send-key` command
 4. **Game Responds**: The game processes the input and advances
 
@@ -173,7 +193,9 @@ Copy the example env and fill it in:
 ```bash
 cp .env.example .env
 ```
-- `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` required for those agents.
+- `OPENROUTER_API_KEY` is the primary LLM key (`OPENROUTER_MODEL` defaults to `z-ai/glm-5.2`).
+- `OPENAI_API_KEY` is optional for the OpenAI agents.
+- `ANTHROPIC_API_KEY` alone is not enough for Anthropic agents — the API server rejects `anthropic*` models with HTTP 400 unless `FORT_GYM_ENABLE_ANTHROPIC=1` is also set. They are legacy and off by default.
 - DFHack backend runs on Linux; macOS typically uses the mock backend or targets the Linux VM.
 
 ## Variables Reference (Ansible)
@@ -193,14 +215,30 @@ cp .env.example .env
 
 ## Web UI
 
-The web interface at `https://<host>/` (or local dev at `http://127.0.0.1:8000/`) provides:
+The web interface at `https://fortgym.live/` (or local dev at `http://127.0.0.1:8000/`) provides:
 
-- **Live Game View**: Real-time rendering of the DF screen using the public run token screenshot endpoint (`/public/runs/{token}/screenshot`). Click "Start Live View" to begin streaming. Uses [pcface](https://github.com/susam/pcface) for pixel-perfect CP437 bitmap font rendering.
+- **Live Game View** (running runs only): polls the public screenshot endpoint (`/public/runs/{token}/screenshot`, scope `live`) every 500ms and renders the DF screen with [pcface](https://github.com/susam/pcface) CP437 bitmap fonts. This is a genuinely live CopyScreen RPC read of the DF process the server is attached to — it is *not* per-run isolated, so it is only meaningful while that run is the one executing.
+- **Replay View** (finished runs, `/r/{token}`): loads the recorded `trace.jsonl` and steps through it. See "Replay Evidence Boundaries" below for exactly what each replay mode does and does not prove.
 - **Leaderboard**: Best score over time per backend/model/version (`/leaderboard`).
-- **Live/Replay Streams**: SSE event streams for watching runs in real-time or replaying traces.
+- **Live/Replay Streams**: SSE event streams (`/public/runs/{token}/events/stream` and `/events/replay`).
 - **Admin Panel** (`/admin`): Create runs, manage jobs, generate share tokens (basic auth required; disabled if `FORT_GYM_ADMIN_PASSWORD` is empty).
 
-The Live Game View captures the screen via RemoteFortressReader's `CopyScreen` RPC (tiles are returned in column-major order) and renders them on an HTML canvas with proper DF color palette.
+## Replay Evidence Boundaries
+
+fort-gym separates what is gameplay proof from what is merely helpful. The five surfaces:
+
+| Surface | What it is | Gameplay proof? |
+|---|---|---|
+| Live screenshot (`/public/runs/{token}/screenshot`) | Live CopyScreen RPC of the currently attached DF process, while a run executes | Live view only — not recorded, not per-run isolated |
+| Replay **DF Screen** frames | `screen_text` recorded into `trace.jsonl` each step (keystroke and governed runs) — real CopyScreen text at that moment of play | **Yes** — recorded evidence of the actual game screen |
+| Replay **Map Inspect** | `map_snapshot` — a derived DFHack tile read (≤64×64 rect) recorded per step. Labeled on-canvas "DERIVED DFHACK MAP INSPECTION / not gameplay proof" | No — analysis/debugging layer only |
+| **No Recorded DF Screen Frame** | Shown for old traces recorded before `screen_text` capture existed. The replay refuses to pass off derived data as a screen | Honest evidence gap — these runs cannot retroactively prove screen state |
+| Score + rubric | `composite_score` over observed DF state deltas, provenance-gated; deterministic 8-dimension rubric over the last 100 trace rows with blockers | Scoring judgment over real state — reported alongside, never instead of, the evidence above |
+
+Rules the harness enforces:
+- `screen_text` is captured only in keystroke and governed modes. Old traces and toolbox-agent traces have none and display the evidence-gap panel — this is by design, not a bug.
+- Structured `DIG`/`BUILD`/`ORDER` from non-governed models is `dfhack_assisted`: progress zeroed, scoreable duration blocked for the rest of the run.
+- The debug helper `hook/complete_dig_rect.lua` (instantly converts designated walls to floors) is never gameplay and never scores.
 
 ## Security Notes
 - Set a non-empty `FORT_GYM_ADMIN_PASSWORD` before exposing the service.
@@ -208,17 +246,15 @@ The Live Game View captures the screen via RemoteFortressReader's `CopyScreen` R
 - Serve the API behind HTTPS (Caddy/Nginx) and restrict inbound traffic (GCE firewall/UFW).
 - Rotate API keys regularly; never commit `.env` with secrets.
 
-## Roadmap
+## Agent Memory & Experimentation
 
-### Agent Memory & Experimentation System (Planned)
+These systems are implemented (not roadmap):
 
-Currently each agent step is stateless. Planned improvements:
+1. **Memory** (`fort_gym/bench/agent/memory.py`): `MemoryManager` with a rolling step window, compressed summary of older steps, POIs (points of interest), failed-attempt records, and a gameplay plan with plan reviews. In-process per run; used by the keystroke agents and the governed LLM agent. Cross-run persistence does not exist yet.
+2. **Tools** (`fort_gym/bench/agent/tools.py`): `ToolManager` with memory/plan/perception tools wired into the review-mode agents.
+3. **Experimentation** (`fort_gym/bench/experiment/`): YAML config → `ExperimentRunner` → run with experiment metadata.
 
-1. **Hybrid Memory**: Last N steps as full conversation + summary of older history
-2. **Agent Tools**: Web search and DF Wiki lookup during decision-making
-3. **Experimentation Framework**: YAML-based configs to test different memory strategies, prompts, and tools
-
-See `CLAUDE.md` for detailed design.
+The next research step is improving the governed LLM policy (`dfhack-governed-llm`) — the loop and the model should solve gameplay; helper heuristics stay out of the policy.
 
 ## Troubleshooting
 - **DFHack service won't start**: check `/var/log/syslog` and `journalctl -u dfhack-headless`. Verify `dfhack_archive_url` points to a Linux build.
