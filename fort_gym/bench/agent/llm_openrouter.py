@@ -2123,8 +2123,10 @@ class OpenRouterKeystrokeAgent(Agent):
     @staticmethod
     def _is_menu_escape_fallback_error(error: Any) -> bool:
         message = str(error or "")
-        return message.startswith("Blocked repeated menu action:") or message.startswith(
-            "Nobles navigation contract mismatch:"
+        return (
+            message.startswith("Blocked repeated menu action:")
+            or message.startswith("Nobles navigation contract mismatch:")
+            or message.startswith("Queued-workshop-task route mismatch:")
         )
 
     def _fallback_blocked_menu_escape(
@@ -2201,17 +2203,28 @@ class OpenRouterKeystrokeAgent(Agent):
                         ),
                         "advance_ticks": 0,
                     }
-            elif usable > 0 and task_jobs > 0 and mode == "main_map":
-                fallback = {
-                    "type": "KEYSTROKE",
-                    "params": {"keys": []},
-                    "intent": (
-                        "Recover from a rejected menu route by advancing time from "
-                        "the main map so the queued Carpenter's Workshop task can "
-                        "start or complete."
-                    ),
-                    "advance_ticks": 1500,
-                }
+            elif usable > 0 and task_jobs > 0:
+                if mode == "main_map":
+                    fallback = {
+                        "type": "KEYSTROKE",
+                        "params": {"keys": []},
+                        "intent": (
+                            "Recover from a rejected menu route by advancing time from "
+                            "the main map so the queued Carpenter's Workshop task can "
+                            "start or complete."
+                        ),
+                        "advance_ticks": 1500,
+                    }
+                elif mode == "workshop_add_task_list":
+                    fallback = {
+                        "type": "KEYSTROKE",
+                        "params": {"keys": ["LEAVESCREEN"]},
+                        "intent": (
+                            "Recover from a rejected duplicate task route by leaving "
+                            "the Carpenter's Workshop task list before advancing time."
+                        ),
+                        "advance_ticks": 0,
+                    }
 
         if fallback is not None:
             self._tool_events.append(

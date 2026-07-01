@@ -2743,6 +2743,73 @@ def test_openrouter_agent_allows_escaping_add_task_list_after_task_is_queued(
     )
 
 
+def test_openrouter_agent_falls_back_from_duplicate_add_task_after_task_is_queued(
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-test-key")
+    monkeypatch.setenv("OPENROUTER_MAX_TOOL_ROUNDS", "1")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    _FakeOpenRouterClient.tool_calls = [
+        _submit_action_call(
+            {
+                "type": "KEYSTROKE",
+                "params": {"keys": ["SELECT"]},
+                "intent": "Select another visible workshop task even though one is queued.",
+                "objective": "keep production going",
+                "expected_visible_result": "another workshop task is queued",
+                "screen_read": {
+                    "mode": "workshop_add_task_list",
+                    "evidence": ["Make wooden shield is listed"],
+                    "confidence": "high",
+                },
+                "last_action_review": {
+                    "worked": False,
+                    "evidence": ["the queued task has not completed yet"],
+                    "should_retry_same_path": False,
+                },
+                "advance_ticks": 0,
+            }
+        )
+    ]
+
+    def fake_import_module(name: str) -> Any:
+        assert name == "openai"
+        return SimpleNamespace(OpenAI=_FakeOpenRouterClient)
+
+    monkeypatch.setattr("fort_gym.bench.agent.llm_openrouter.import_module", fake_import_module)
+
+    try:
+        agent = OpenRouterKeystrokeAgent()
+        action = agent.decide(
+            "mock observation",
+            {
+                "pause_state": True,
+                "screen_state": {
+                    "mode": "workshop_add_task_list",
+                    "confidence": "high",
+                    "evidence": ["Make wooden shield is listed"],
+                },
+                "ui_target_setup": {"target_mode": "existing_workshop"},
+                "work": {
+                    "carpenter_workshops_usable": 1,
+                    "carpenter_workshop_task_jobs": 1,
+                    "manager_orders_count": 0,
+                    "active_carpenter_jobs": 0,
+                    "active_jobs": 0,
+                },
+            },
+        )
+        events = agent.pop_tool_events()
+    finally:
+        _FakeOpenRouterClient.tool_calls = None
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert action["params"]["keys"] == ["LEAVESCREEN"]
+    assert action["advance_ticks"] == 0
+    assert any(event["tool"] == "queued_workshop_task_route_rejected" for event in events)
+    assert any(event["tool"] == "blocked_menu_path_fallback" for event in events)
+
+
 def test_openrouter_agent_rejects_starter_detour_with_ready_workshop(
     monkeypatch,
 ) -> None:
