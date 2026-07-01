@@ -1315,6 +1315,15 @@ def run_once(
             )
             if keystroke_ui_target.get("ok"):
                 ui_target_generation = 1
+        if is_governed_dfhack_mode:
+            governed_target = prepare_keystroke_target("starter")
+            governed_rect = (
+                _normalize_rect(governed_target.get("target_rect"))
+                if governed_target.get("ok")
+                else None
+            )
+            if governed_rect is not None:
+                dfhack_client.set_work_rect(governed_rect)
 
         def pause_env() -> None:
             dfhack_client.pause()

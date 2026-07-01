@@ -85,7 +85,14 @@ def queue_manager_order(item: str, qty: int) -> Dict[str, object]:
         return {"ok": False, "error": str(exc)}
 
 
-def build_workshop(kind: str, x: int, y: int, z: int) -> Dict[str, object]:
+def build_workshop(
+    kind: str,
+    x: int,
+    y: int,
+    z: int,
+    *,
+    work_rect: tuple[int, int, int, int, int, int] | None = None,
+) -> Dict[str, object]:
     """Place a bounded safe workshop in the configured target work rectangle."""
 
     if kind not in ALLOWED_WORKSHOPS:
@@ -94,8 +101,8 @@ def build_workshop(kind: str, x: int, y: int, z: int) -> Dict[str, object]:
     x_val = int(x)
     y_val = int(y)
     z_val = int(z)
-    work_rect = _work_rect_from_env()
-    allowed_rects = (work_rect, _fortress_workshop_rect(work_rect))
+    resolved_work_rect = work_rect or _work_rect_from_env()
+    allowed_rects = (resolved_work_rect, _fortress_workshop_rect(resolved_work_rect))
     if not any(_footprint_in_rect(x_val, y_val, z_val, rect) for rect in allowed_rects):
         return {"ok": False, "error": "outside_work_rect"}
 

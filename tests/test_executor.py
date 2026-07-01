@@ -23,9 +23,16 @@ class _ConnectedDFHackClient:
 def test_dfhack_build_action_uses_bounded_workshop_hook(monkeypatch) -> None:
     calls: list[tuple[str, int, int, int]] = []
 
-    def fake_build_workshop(kind: str, x: int, y: int, z: int) -> Dict[str, Any]:
+    def fake_build_workshop(
+        kind: str,
+        x: int,
+        y: int,
+        z: int,
+        *,
+        work_rect=None,
+    ) -> Dict[str, Any]:
         calls.append((kind, x, y, z))
-        return {"ok": True, "kind": kind, "x": x, "y": y, "z": z}
+        return {"ok": True, "kind": kind, "x": x, "y": y, "z": z, "work_rect": work_rect}
 
     monkeypatch.setattr("fort_gym.bench.env.executor.safe_build_workshop", fake_build_workshop)
 
@@ -36,7 +43,40 @@ def test_dfhack_build_action_uses_bounded_workshop_hook(monkeypatch) -> None:
 
     assert result["accepted"] is True
     assert result["result"]["kind"] == "CarpenterWorkshop"
+    assert result["result"]["work_rect"] is None
     assert calls == [("CarpenterWorkshop", 51, 36, 0)]
+
+
+def test_dfhack_build_action_uses_state_work_rect(monkeypatch) -> None:
+    seen: list[tuple[int, int, int, int, int, int] | None] = []
+
+    def fake_build_workshop(
+        kind: str,
+        x: int,
+        y: int,
+        z: int,
+        *,
+        work_rect=None,
+    ) -> Dict[str, Any]:
+        seen.append(work_rect)
+        return {"ok": True, "kind": kind, "x": x, "y": y, "z": z}
+
+    monkeypatch.setattr("fort_gym.bench.env.executor.safe_build_workshop", fake_build_workshop)
+
+    result = Executor(dfhack_client=_ConnectedDFHackClient()).apply(
+        {"type": "BUILD", "params": {"kind": "CarpenterWorkshop", "x": 106, "y": 97, "z": 177}},
+        backend="dfhack",
+        state={
+            "time": 0,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wealth": 9},
+            "map_bounds": (200, 200, 200),
+            "work": {"target_rect": [98, 97, 177, 102, 101, 177]},
+        },
+    )
+
+    assert result["accepted"] is True
+    assert seen == [(98, 97, 177, 102, 101, 177)]
 
 
 def test_dfhack_dig_does_not_complete_by_default(monkeypatch) -> None:

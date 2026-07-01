@@ -16,6 +16,23 @@ from .mock_env import MockEnvironment
 from .state_reader import StateReader
 
 
+def _normalize_rect(value: Any) -> tuple[int, int, int, int, int, int] | None:
+    if not isinstance(value, (list, tuple)) or len(value) < 6:
+        return None
+    try:
+        x1, y1, z1, x2, y2, z2 = [int(v) for v in value[:6]]
+    except (TypeError, ValueError):
+        return None
+    return (
+        min(x1, x2),
+        min(y1, y2),
+        min(z1, z2),
+        max(x1, x2),
+        max(y1, y2),
+        max(z1, z2),
+    )
+
+
 class Executor:
     """Apply actions to the configured backend while enforcing validation."""
 
@@ -101,7 +118,13 @@ class Executor:
                     z = int(params.get("z", 0))
                 except (KeyError, TypeError, ValueError) as exc:
                     return {"accepted": False, "why": f"Invalid coordinates: {exc}"}
-                result = safe_build_workshop(kind, x, y, z)
+                work = current_state.get("work") if isinstance(current_state, dict) else {}
+                work_rect = (
+                    _normalize_rect(work.get("target_rect"))
+                    if isinstance(work, dict)
+                    else None
+                )
+                result = safe_build_workshop(kind, x, y, z, work_rect=work_rect)
                 return {
                     "accepted": bool(result.get("ok")),
                     "why": None if result.get("ok") else result.get("error"),

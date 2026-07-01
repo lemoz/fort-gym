@@ -267,6 +267,12 @@ class DFHackClient:
         self._method_cache: dict[Tuple[str, str, str, str], int] = {}
         self._capture_text: Optional[List[str]] = None
         self._last_tick_info: Dict[str, Any] = {}
+        self._work_rect: tuple[int, int, int, int, int, int] | None = None
+
+    def set_work_rect(self, rect: tuple[int, int, int, int, int, int] | None) -> None:
+        """Set the bounded work rectangle used for live work metrics."""
+
+        self._work_rect = rect
 
     # ------------------------------------------------------------------
     # Connection orchestration
@@ -378,7 +384,7 @@ class DFHackClient:
         data.setdefault("risks", [])
         data.setdefault("reminders", [])
         data.setdefault("map_bounds", (0, 0, 0))
-        data["work"] = read_work_metrics()
+        data["work"] = read_work_metrics(self._work_rect)
         return data
 
     def get_screen(self) -> Dict[str, Any]:
