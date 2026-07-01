@@ -42,6 +42,16 @@ def _rect_action_params(rect: Any) -> Dict[str, Any] | None:
     }
 
 
+def _build_site(value: Any) -> tuple[int, int, int] | None:
+    if not isinstance(value, (list, tuple)) or len(value) < 3:
+        return None
+    try:
+        x, y, z = [int(part) for part in value[:3]]
+    except (TypeError, ValueError):
+        return None
+    return x, y, z
+
+
 def _space_complete(
     work: Dict[str, Any],
     *,
@@ -105,6 +115,7 @@ class DFHackGovernedScriptedAgent(Agent):
             missing_key="fortress_workshop_room_missing_blocks",
             default_tiles=25,
         )
+        observed_build_site = _build_site(work.get("carpenter_build_site"))
 
         if not starter_complete:
             if target_dig_designations <= 0 and active_dig_jobs <= 0:
@@ -140,6 +151,22 @@ class DFHackGovernedScriptedAgent(Agent):
             return self._wait("connector mining is pending or metrics are not ready")
 
         if not workshop_room_complete:
+            if (
+                observed_build_site is not None
+                and active_dig_jobs <= 0
+                and _work_int(work, "fortress_workshop_room_floor_tiles") >= 9
+            ):
+                wx, wy, wz = observed_build_site
+                return parse_action(
+                    {
+                        "type": "BUILD",
+                        "params": {"kind": "CarpenterWorkshop", "x": wx, "y": wy, "z": wz},
+                        "intent": "place a carpenter workshop on an observed legal 3x3 floor site",
+                        "objective": "Start production once enough usable floor exists, even if the annex still has rough edges.",
+                        "expected_simulation_result": "A construct-building job appears, then a usable workshop.",
+                        "advance_ticks": 1000,
+                    }
+                )
             params = _rect_action_params(workshop_room_rect)
             if params is not None and target_dig_designations <= 0 and active_dig_jobs <= 0:
                 return parse_action(
@@ -155,11 +182,14 @@ class DFHackGovernedScriptedAgent(Agent):
             return self._wait("workshop room mining is pending or metrics are not ready")
 
         if carpenter_workshops <= 0:
-            workshop_room_params = _rect_action_params(workshop_room_rect)
-            if workshop_room_params is not None:
-                wx, wy, wz = workshop_room_params["area"]
+            if observed_build_site is not None:
+                wx, wy, wz = observed_build_site
             else:
-                wx, wy, wz = 58, 35, 0
+                workshop_room_params = _rect_action_params(workshop_room_rect)
+                if workshop_room_params is not None:
+                    wx, wy, wz = workshop_room_params["area"]
+                else:
+                    wx, wy, wz = 58, 35, 0
             return parse_action(
                 {
                     "type": "BUILD",

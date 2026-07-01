@@ -124,7 +124,23 @@ class Executor:
                     if isinstance(work, dict)
                     else None
                 )
-                result = safe_build_workshop(kind, x, y, z, work_rect=work_rect)
+                extra_allowed_rects = []
+                if isinstance(work, dict):
+                    for key in (
+                        "carpenter_build_site_rect",
+                        "carpenter_build_placement_rect",
+                    ):
+                        rect = _normalize_rect(work.get(key))
+                        if rect is not None:
+                            extra_allowed_rects.append(rect)
+                result = safe_build_workshop(
+                    kind,
+                    x,
+                    y,
+                    z,
+                    work_rect=work_rect,
+                    extra_allowed_rects=extra_allowed_rects,
+                )
                 return {
                     "accepted": bool(result.get("ok")),
                     "why": None if result.get("ok") else result.get("error"),

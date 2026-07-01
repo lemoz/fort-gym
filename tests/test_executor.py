@@ -30,6 +30,7 @@ def test_dfhack_build_action_uses_bounded_workshop_hook(monkeypatch) -> None:
         z: int,
         *,
         work_rect=None,
+        extra_allowed_rects=None,
     ) -> Dict[str, Any]:
         calls.append((kind, x, y, z))
         return {"ok": True, "kind": kind, "x": x, "y": y, "z": z, "work_rect": work_rect}
@@ -57,6 +58,7 @@ def test_dfhack_build_action_uses_state_work_rect(monkeypatch) -> None:
         z: int,
         *,
         work_rect=None,
+        extra_allowed_rects=None,
     ) -> Dict[str, Any]:
         seen.append(work_rect)
         return {"ok": True, "kind": kind, "x": x, "y": y, "z": z}

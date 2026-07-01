@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fort_gym.bench.run.runner import (
+    _add_governed_build_site,
     _available_building_materials,
     _carry_forward_carpenter_workshop_proof,
     _carpenter_workshops,
@@ -51,6 +52,25 @@ def test_prepared_target_work_rect_prefers_selection_rect() -> None:
     }
 
     assert _prepared_target_work_rect(target) == (94, 90, 177, 97, 91, 177)
+
+
+def test_add_governed_build_site_adds_observed_placement_rect() -> None:
+    state = {"work": {"target_rect": [94, 91, 177, 97, 92, 177]}}
+    target = {
+        "ok": True,
+        "source": "citizen_near_empty_floor_workshop_footprint",
+        "placement_rect": [88, 96, 177, 90, 98, 177],
+    }
+
+    updated = _add_governed_build_site(state, target)
+
+    assert updated["work"]["carpenter_build_site"] == [88, 96, 177]
+    assert updated["work"]["carpenter_build_site_rect"] == [88, 96, 177, 90, 98, 177]
+    assert (
+        updated["work"]["carpenter_build_site_source"]
+        == "citizen_near_empty_floor_workshop_footprint"
+    )
+    assert "carpenter_build_site" not in state["work"]
 
 
 def test_zero_assisted_dfhack_progress_preserves_audit_values() -> None:

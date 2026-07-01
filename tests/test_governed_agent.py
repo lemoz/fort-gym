@@ -75,6 +75,40 @@ def test_governed_agent_advances_when_live_starter_has_no_walls() -> None:
     assert action["params"] == {"area": [98, 93, 177], "size": [3, 1, 1]}
 
 
+def test_governed_agent_builds_on_observed_site_when_annex_is_imperfect() -> None:
+    env = MockEnvironment()
+    state = env.observe()
+    work = state["work"]
+    work.update(
+        {
+            "target_floor_tiles": 7,
+            "target_wall_tiles": 0,
+            "target_hidden_tiles": 0,
+            "target_missing_blocks": 0,
+            "fortress_connector_floor_tiles": 3,
+            "fortress_connector_wall_tiles": 0,
+            "fortress_connector_hidden_tiles": 0,
+            "fortress_connector_missing_blocks": 0,
+            "fortress_workshop_room_tiles": 25,
+            "fortress_workshop_room_floor_tiles": 17,
+            "fortress_workshop_room_wall_tiles": 3,
+            "fortress_workshop_room_hidden_tiles": 0,
+            "fortress_workshop_room_missing_blocks": 0,
+            "carpenter_build_site": [88, 96, 177],
+            "carpenter_workshops": 0,
+            "active_dig_jobs": 0,
+        }
+    )
+
+    action = DFHackGovernedScriptedAgent().decide("", state)
+
+    assert action["type"] == "BUILD"
+    assert action["params"]["kind"] == "CarpenterWorkshop"
+    assert action["params"]["x"] == 88
+    assert action["params"]["y"] == 96
+    assert action["params"]["z"] == 177
+
+
 def test_governed_agent_reaches_broader_mock_fort(tmp_path, monkeypatch) -> None:
     monkeypatch.setenv("ARTIFACTS_DIR", str(tmp_path))
     get_settings.cache_clear()

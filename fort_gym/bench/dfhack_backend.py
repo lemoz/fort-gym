@@ -93,6 +93,7 @@ def build_workshop(
     z: int,
     *,
     work_rect: tuple[int, int, int, int, int, int] | None = None,
+    extra_allowed_rects: Sequence[tuple[int, int, int, int, int, int]] | None = None,
 ) -> Dict[str, object]:
     """Place a bounded safe workshop in the configured target work rectangle."""
 
@@ -103,7 +104,11 @@ def build_workshop(
     y_val = int(y)
     z_val = int(z)
     resolved_work_rect = work_rect or _work_rect_from_env()
-    allowed_rects = (resolved_work_rect, _fortress_workshop_rect(resolved_work_rect))
+    allowed_rects = (
+        resolved_work_rect,
+        _fortress_workshop_rect(resolved_work_rect),
+        *(extra_allowed_rects or ()),
+    )
     if not any(_footprint_in_rect(x_val, y_val, z_val, rect) for rect in allowed_rects):
         return {"ok": False, "error": "outside_work_rect"}
 

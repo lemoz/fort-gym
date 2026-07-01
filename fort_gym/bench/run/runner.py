@@ -126,6 +126,28 @@ def _prepared_target_work_rect(target: Dict[str, Any] | None) -> tuple[int, int,
     )
 
 
+def _add_governed_build_site(
+    state: Dict[str, Any],
+    target: Dict[str, Any] | None,
+) -> Dict[str, Any]:
+    if not isinstance(target, dict) or not target.get("ok"):
+        return state
+    rect = _normalize_rect(target.get("placement_rect") or target.get("selection_rect"))
+    if rect is None:
+        return state
+    work = state.get("work")
+    if not isinstance(work, dict):
+        return state
+    state = dict(state)
+    work = dict(work)
+    work["carpenter_build_site"] = [rect[0], rect[1], rect[2]]
+    work["carpenter_build_site_rect"] = [*rect]
+    work["carpenter_build_site_source"] = target.get("source")
+    work["carpenter_build_site_floor_tiles"] = 9
+    state["work"] = work
+    return state
+
+
 def _recommended_key_route(target: Dict[str, Any] | None) -> tuple[str, ...]:
     if not isinstance(target, dict):
         return ()
@@ -1264,6 +1286,7 @@ def run_once(
     is_keystroke_mode = _is_keystroke_model(model)
     is_governed_dfhack_mode = _is_governed_dfhack_model(model)
     keystroke_ui_target: Optional[Dict[str, Any]] = None
+    governed_workshop_target: Optional[Dict[str, Any]] = None
     ui_target_mode = "starter"
     ui_target_generation = 0
     ui_target_attempts = 0
@@ -1329,11 +1352,26 @@ def run_once(
             if governed_rect is not None:
                 dfhack_client.set_work_rect(governed_rect)
 
+        def attach_governed_build_site(state: Dict[str, Any]) -> Dict[str, Any]:
+            nonlocal governed_workshop_target
+            if not is_governed_dfhack_mode:
+                return state
+            work = state.get("work")
+            if not isinstance(work, dict):
+                return state
+            if int(work.get("carpenter_workshops") or 0) > 0:
+                return state
+            if int(work.get("fortress_workshop_room_floor_tiles") or 0) < 9:
+                return state
+            if not governed_workshop_target or not governed_workshop_target.get("ok"):
+                governed_workshop_target = prepare_keystroke_target("workshop")
+            return _add_governed_build_site(state, governed_workshop_target)
+
         def pause_env() -> None:
             dfhack_client.pause()
 
         def observe() -> Dict[str, Any]:
-            return StateReader.from_dfhack(dfhack_client)
+            return attach_governed_build_site(StateReader.from_dfhack(dfhack_client))
 
         def apply_action(action_dict: Dict[str, Any], state: Dict[str, Any]) -> Dict[str, Any]:
             return executor.apply(action_dict, backend="dfhack", state=state)
@@ -1343,7 +1381,7 @@ def run_once(
             if num_ticks <= 0:
                 tick_info_state = {"ok": True, "ticks_advanced": 0, "skipped": True}
                 return StateReader.from_dfhack(dfhack_client)
-            state = dfhack_client.advance(num_ticks)
+            state = attach_governed_build_site(dfhack_client.advance(num_ticks))
             tick_info_state = dict(dfhack_client.last_tick_info or {})
             return state
 

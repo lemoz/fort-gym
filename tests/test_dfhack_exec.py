@@ -79,6 +79,28 @@ def test_fortress_workshop_rect_expands_short_live_targets_for_workshop_footprin
     )
 
 
+def test_build_workshop_allows_observed_extra_build_site(monkeypatch) -> None:
+    captured = {}
+
+    def fake_run_lua_file(path, *args, **kwargs):
+        captured["args"] = args
+        return {"ok": True}
+
+    monkeypatch.setattr(dfhack_backend, "run_lua_file", fake_run_lua_file)
+
+    result = dfhack_backend.build_workshop(
+        "CarpenterWorkshop",
+        88,
+        96,
+        177,
+        work_rect=(94, 91, 177, 97, 92, 177),
+        extra_allowed_rects=[(88, 96, 177, 90, 98, 177)],
+    )
+
+    assert result == {"ok": True}
+    assert captured["args"] == ("CarpenterWorkshop", "88", "96", "177")
+
+
 def test_prepare_keystroke_tree_material_target_uses_broad_selection() -> None:
     hook_path = (
         Path(__file__).resolve().parents[1]

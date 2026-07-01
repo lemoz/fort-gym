@@ -361,6 +361,9 @@ def step_snapshot(state: Dict[str, Any]) -> Dict[str, Any]:
             "carpenter_workshop_construction_jobs": _to_int(
                 work.get("carpenter_workshop_construction_jobs")
             ),
+            "carpenter_build_site": work.get("carpenter_build_site"),
+            "carpenter_build_site_rect": work.get("carpenter_build_site_rect"),
+            "carpenter_build_site_source": work.get("carpenter_build_site_source"),
             "fortress_plan_name": work.get("fortress_plan_name"),
             "fortress_connector_rect": work.get("fortress_connector_rect"),
             "fortress_connector_tiles": _to_int(work.get("fortress_connector_tiles")),
