@@ -59,7 +59,7 @@ class _FakeClient:
 
 
 def _agent(responses: list[Any] | None = None, error: Exception | None = None) -> DFHackGovernedLLMAgent:
-    agent = DFHackGovernedLLMAgent(api_key="test-key", max_attempts=1)
+    agent = DFHackGovernedLLMAgent(api_key="test-key", max_attempts=1, memory_path=None)
     agent._client = _FakeClient(responses, error)
     return agent
 
@@ -192,3 +192,32 @@ def test_memory_update_with_coordinates_becomes_poi() -> None:
     poi = agent._memory.pois[-1]
     assert poi["label"] == "workshop site"
     assert (poi["x"], poi["y"], poi["z"]) == (58, 35, 0)
+
+
+def test_memory_persists_across_agent_instances(tmp_path: Any) -> None:
+    memory_file = tmp_path / "governed_llm_memory.json"
+
+    agent_a = DFHackGovernedLLMAgent(
+        api_key="test-key", max_attempts=1, memory_path=str(memory_file)
+    )
+    agent_a._client = _FakeClient(
+        [
+            _submit_action_response(
+                {
+                    "type": "BUILD",
+                    "params": {"kind": "CarpenterWorkshop", "x": 1, "y": 2, "z": 3},
+                    "intent": "place workshop",
+                    "memory_update": "site @ 1,2,3: good floor",
+                    "advance_ticks": 1000,
+                }
+            )
+        ]
+    )
+    agent_a.decide("obs", {})
+    assert memory_file.is_file()
+
+    agent_b = DFHackGovernedLLMAgent(
+        api_key="test-key", max_attempts=1, memory_path=str(memory_file)
+    )
+    context = agent_b._memory.get_context()
+    assert "site" in context

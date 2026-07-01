@@ -13,9 +13,11 @@ step degrades to "let the simulation run" instead of crashing the run.
 from __future__ import annotations
 
 import json
+import os
 import re
 import time
 from importlib import import_module
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from ..config import get_settings
@@ -25,6 +27,9 @@ from .memory import MemoryManager
 
 GOVERNED_ACTION_TYPES = ("DIG", "BUILD", "ORDER", "WAIT")
 DEFAULT_ADVANCE_TICKS = 1000
+
+_MEMORY_PATH_ENV_VAR = "FORT_GYM_GOVERNED_MEMORY_PATH"
+_MEMORY_PATH_DISABLE_VALUES = {"off", "0"}
 
 GOVERNED_SYSTEM_PROMPT = """You are the overseer of a live Dwarf Fortress fortress. You play by issuing \
 exactly one bounded, legal overseer command per step, then the real simulation runs and you observe \
@@ -98,7 +103,15 @@ _MEMORY_UPDATE_POI = re.compile(
 
 
 class DFHackGovernedLLMAgent(Agent):
-    """OpenRouter-backed policy for governed DIG/BUILD/ORDER/WAIT gameplay."""
+    """OpenRouter-backed policy for governed DIG/BUILD/ORDER/WAIT gameplay.
+
+    ``memory_path`` controls disk persistence of POIs, failed attempts, plan,
+    and summary across runs (runs on the same seed save share the same map,
+    so this state stays valid run to run). ``"auto"`` (the default) resolves
+    a path from ``FORT_GYM_GOVERNED_MEMORY_PATH`` (set to ``"off"``/``"0"``
+    to disable) or falls back to ``<ARTIFACTS_DIR>/governed_llm_memory.json``.
+    Pass ``None`` to disable persistence entirely, or an explicit path string.
+    """
 
     def __init__(
         self,
@@ -106,6 +119,7 @@ class DFHackGovernedLLMAgent(Agent):
         model_override: str | None = None,
         api_key: str | None = None,
         max_attempts: int | None = None,
+        memory_path: str | None = "auto",
     ) -> None:
         self._settings = get_settings()
         self._api_key = api_key if api_key is not None else self._settings.OPENROUTER_API_KEY
@@ -120,6 +134,56 @@ class DFHackGovernedLLMAgent(Agent):
         self._memory = MemoryManager(window_size=self._settings.MEMORY_WINDOW)
         self._tool_events: List[Dict[str, Any]] = []
         self._pending: Optional[Dict[str, Any]] = None
+        self._memory_path = self._resolve_memory_path(memory_path)
+        self._load_memory()
+
+    # -- memory persistence ------------------------------------------------
+
+    def _resolve_memory_path(self, memory_path: str | None) -> Path | None:
+        if memory_path is None:
+            return None
+        if memory_path != "auto":
+            return Path(memory_path)
+        env_value = os.getenv(_MEMORY_PATH_ENV_VAR)
+        if env_value is not None and env_value.strip():
+            if env_value.strip().lower() in _MEMORY_PATH_DISABLE_VALUES:
+                return None
+            return Path(env_value.strip())
+        return Path(self._settings.ARTIFACTS_DIR) / "governed_llm_memory.json"
+
+    def _load_memory(self) -> None:
+        if self._memory_path is None:
+            return
+        try:
+            if not self._memory_path.is_file():
+                return
+            data = json.loads(self._memory_path.read_text(encoding="utf-8"))
+            self._memory.load_dict(data if isinstance(data, dict) else {})
+        except Exception as exc:
+            self._tool_events.append(
+                {
+                    "tool": "governed_llm.load_memory",
+                    "input": {"path": str(self._memory_path)},
+                    "output": {"error": type(exc).__name__, "message": str(exc)},
+                }
+            )
+
+    def _save_memory(self) -> None:
+        if self._memory_path is None:
+            return
+        try:
+            self._memory_path.parent.mkdir(parents=True, exist_ok=True)
+            tmp_path = self._memory_path.with_name(self._memory_path.name + ".tmp")
+            tmp_path.write_text(json.dumps(self._memory.to_dict()), encoding="utf-8")
+            os.replace(tmp_path, self._memory_path)
+        except Exception as exc:
+            self._tool_events.append(
+                {
+                    "tool": "governed_llm.save_memory",
+                    "input": {"path": str(self._memory_path)},
+                    "output": {"error": type(exc).__name__, "message": str(exc)},
+                }
+            )
 
     # -- transport -------------------------------------------------------
 
@@ -304,6 +368,7 @@ class DFHackGovernedLLMAgent(Agent):
             "observation_digest": " | ".join(line for line in digest[:3] if line),
             "action": action,
         }
+        self._save_memory()
         return action
 
     def _extract_tool_payload(self, response: Any) -> Optional[Dict[str, Any]]:

@@ -132,3 +132,56 @@ def test_memory_tracks_gameplay_plan_and_reviews() -> None:
     assert "Recent Plan Reviews:" in context
     assert "repeating workshop placement" in context
     assert "designate a new room area" in context
+
+
+def test_to_dict_load_dict_round_trip() -> None:
+    memory = MemoryManager(window_size=2)
+    memory.remember_poi(
+        label="carpenter workshop",
+        kind="building",
+        x=99,
+        y=96,
+        z=177,
+        status="built",
+        evidence="carpenter_workshops increased",
+    )
+    memory.remember_failed_attempt(
+        label="craftsdwarf placement",
+        reason="no building or job appeared",
+        x=101,
+        y=100,
+        z=177,
+        evidence="actual_ticks=0 and changed=none",
+    )
+    memory.write_gameplay_plan(
+        objective="complete useful fortress space",
+        phase="post-workshop",
+        steps=["confirm workshop exists", "finish planned room"],
+        current_step="finish planned room",
+    )
+    memory.add_step("obs one", {"type": "KEYSTROKE", "params": {"keys": ["A"]}}, "res one")
+    memory.add_step("obs two", {"type": "KEYSTROKE", "params": {"keys": ["B"]}}, "res two")
+    memory.add_step("obs three", {"type": "KEYSTROKE", "params": {"keys": ["C"]}}, "res three")
+
+    data = memory.to_dict()
+    assert "recent_steps" not in data
+
+    restored = MemoryManager(window_size=2)
+    restored.load_dict(data)
+
+    context = restored.get_context()
+    assert "carpenter workshop" in context
+    assert "complete useful fortress space" in context
+    assert "Recent Steps:" not in context
+    assert restored.recent_steps == []
+    assert restored._step_counter == memory._step_counter
+
+
+def test_load_dict_ignores_malformed_input() -> None:
+    memory = MemoryManager(window_size=2)
+
+    memory.load_dict({"pois": "junk", "gameplay_plan": 7})
+
+    assert memory.pois == []
+    assert memory.gameplay_plan == {}
+    assert memory.get_context() == ""
