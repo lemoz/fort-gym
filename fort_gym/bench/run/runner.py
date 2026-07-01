@@ -602,6 +602,80 @@ def _gameplay_proof(
     }
 
 
+def _governed_gameplay_proof(
+    *,
+    action: Dict[str, Any],
+    execute_result: Dict[str, Any],
+    metrics_snapshot: Dict[str, Any],
+    before_map_snapshot: Dict[str, Any] | None,
+    after_map_snapshot: Dict[str, Any] | None,
+    state_before: Dict[str, Any],
+    advance_state: Dict[str, Any],
+    tick_info: Dict[str, Any],
+    score_value: float,
+) -> Dict[str, Any]:
+    """Per-step evidence that a governed action changed real DF state.
+
+    Evidence only — this object never feeds scoring. ``ok`` is true only when
+    the current step shows real change: map tiles differ, productive state
+    deltas exist, or the bounded helper reported concrete new game objects
+    (new designations, created jobs, a new workshop).
+    """
+
+    tile_changes = _snapshot_tile_changes(before_map_snapshot, after_map_snapshot)
+    state_deltas = _keystroke_productive_state_deltas(state_before, advance_state)
+    result = (
+        execute_result.get("result")
+        if isinstance(execute_result.get("result"), dict)
+        else {}
+    )
+    helper_evidence: Dict[str, Any] = {
+        key: result[key]
+        for key in (
+            "newly_designated",
+            "already_designated",
+            "non_wall_tiles",
+            "created_job_ids",
+            "building_id",
+            "before_carpenter_workshops",
+            "after_carpenter_workshops",
+            "manager_recorded",
+        )
+        if key in result
+    }
+    workshops_added = int(result.get("after_carpenter_workshops") or 0) - int(
+        result.get("before_carpenter_workshops") or 0
+    )
+    created_jobs = result.get("created_job_ids")
+    step_gameplay_progress = bool(
+        int(tile_changes.get("changed_tile_count") or 0)
+        or state_deltas
+        or (isinstance(created_jobs, list) and created_jobs)
+        or workshops_added > 0
+        or int(result.get("newly_designated") or 0) > 0
+    )
+    return {
+        "ok": step_gameplay_progress,
+        "source": "dfhack-map-and-state",
+        "provenance": "dfhack_governed",
+        "action_type": action.get("type"),
+        "accepted": bool(execute_result.get("accepted")),
+        "score": score_value,
+        "score_provenance": metrics_snapshot.get("score_provenance"),
+        "gameplay_progress_eligible": step_gameplay_progress,
+        "tick_advance": {
+            "requested": action.get("advance_ticks"),
+            "actual": int(tick_info.get("ticks_advanced") or 0),
+        },
+        "helper_evidence": helper_evidence,
+        "state_deltas": state_deltas,
+        "tile_changes": tile_changes,
+        "changed_tile_count": int(tile_changes.get("changed_tile_count") or 0),
+        "changed_tiles": tile_changes.get("changed_tiles", []),
+        "truncated_changed_tiles": bool(tile_changes.get("truncated", False)),
+    }
+
+
 def _format_delta(name: str, delta: int) -> str:
     sign = "+" if delta > 0 else ""
     return f"{name}:{sign}{delta}"
@@ -1845,6 +1919,12 @@ def run_once(
                         "total_material_delta": ui_run_material_progress,
                         "successful_targets": ui_successful_targets,
                     }
+                governed_snapshot_rect = None
+                if backend_name == "dfhack" and is_governed_dfhack_mode:
+                    governed_snapshot_rect = _map_snapshot_rect_from_state(state_before)
+                    if governed_snapshot_rect:
+                        map_snapshot_before = read_map_snapshot(governed_snapshot_rect)
+
                 if baseline_work is None:
                     work_snapshot = state_before.get("work")
                     baseline_work = dict(work_snapshot) if isinstance(work_snapshot, dict) else {}
@@ -2479,17 +2559,36 @@ def run_once(
                 map_snapshot = None
                 gameplay_proof = None
                 if backend_name == "dfhack":
-                    snapshot_rect = (
-                        ui_work_rect
-                        if is_keystroke_mode and ui_work_rect is not None
-                        else _map_snapshot_rect_from_state(advance_state)
-                    )
+                    if is_keystroke_mode and ui_work_rect is not None:
+                        snapshot_rect = ui_work_rect
+                    elif is_governed_dfhack_mode and governed_snapshot_rect is not None:
+                        snapshot_rect = governed_snapshot_rect
+                    else:
+                        snapshot_rect = _map_snapshot_rect_from_state(advance_state)
                     if snapshot_rect:
                         map_snapshot = read_map_snapshot(snapshot_rect)
                         publish_event(step, "map_snapshot", {"map_snapshot": map_snapshot}, events)
                     if is_keystroke_mode:
                         gameplay_proof = _gameplay_proof(
                             action=action,
+                            metrics_snapshot=metrics_snapshot,
+                            before_map_snapshot=map_snapshot_before,
+                            after_map_snapshot=map_snapshot,
+                            state_before=state_before,
+                            advance_state=advance_state,
+                            tick_info=tick_info_state,
+                            score_value=score_value,
+                        )
+                        publish_event(
+                            step,
+                            "gameplay_proof",
+                            {"gameplay_proof": gameplay_proof},
+                            events,
+                        )
+                    elif is_governed_dfhack_mode:
+                        gameplay_proof = _governed_gameplay_proof(
+                            action=action,
+                            execute_result=execute_result,
                             metrics_snapshot=metrics_snapshot,
                             before_map_snapshot=map_snapshot_before,
                             after_map_snapshot=map_snapshot,

@@ -9,6 +9,7 @@ from fort_gym.bench.run.runner import (
     _carpenter_workshops,
     _desired_keystroke_target_mode,
     _gameplay_proof,
+    _governed_gameplay_proof,
     _is_exit_only_recovery_action,
     _is_governed_dfhack_model,
     _is_keystroke_model,
@@ -1081,3 +1082,87 @@ def test_workshop_target_setup_keeps_exact_placement_keys_visible() -> None:
     assert setup["show_recommended_keys"] is True
     assert setup["recommended_keys_retry"] is True
     assert setup["recommended_key_retry_limit"] > 3
+
+
+def _governed_proof_kwargs(**overrides):
+    kwargs = {
+        "action": {"type": "DIG", "params": {"area": [50, 35, 0], "size": [5, 5, 1]}, "advance_ticks": 1000},
+        "execute_result": {"accepted": True, "result": {}},
+        "metrics_snapshot": {"score_provenance": "dfhack_governed_observed_state"},
+        "before_map_snapshot": None,
+        "after_map_snapshot": None,
+        "state_before": {},
+        "advance_state": {},
+        "tick_info": {"ticks_advanced": 1000},
+        "score_value": 10.0,
+    }
+    kwargs.update(overrides)
+    return kwargs
+
+
+def test_governed_gameplay_proof_rejects_noop_redesignation() -> None:
+    proof = _governed_gameplay_proof(
+        **_governed_proof_kwargs(
+            execute_result={
+                "accepted": True,
+                "result": {"newly_designated": 0, "already_designated": 25, "non_wall_tiles": 0},
+            }
+        )
+    )
+    assert proof["ok"] is False
+    assert proof["provenance"] == "dfhack_governed"
+    assert proof["gameplay_progress_eligible"] is False
+    assert proof["helper_evidence"]["already_designated"] == 25
+    assert proof["score_provenance"] == "dfhack_governed_observed_state"
+
+
+def test_governed_gameplay_proof_accepts_new_designations_and_jobs() -> None:
+    proof = _governed_gameplay_proof(
+        **_governed_proof_kwargs(
+            execute_result={"accepted": True, "result": {"newly_designated": 25}}
+        )
+    )
+    assert proof["ok"] is True
+
+    proof = _governed_gameplay_proof(
+        **_governed_proof_kwargs(
+            action={"type": "ORDER", "params": {"job": "bed", "quantity": 2}, "advance_ticks": 1000},
+            execute_result={"accepted": True, "result": {"created_job_ids": [5, 7]}},
+        )
+    )
+    assert proof["ok"] is True
+    assert proof["helper_evidence"]["created_job_ids"] == [5, 7]
+
+    proof = _governed_gameplay_proof(
+        **_governed_proof_kwargs(
+            action={"type": "BUILD", "params": {"kind": "CarpenterWorkshop"}, "advance_ticks": 1000},
+            execute_result={
+                "accepted": True,
+                "result": {"before_carpenter_workshops": 0, "after_carpenter_workshops": 1},
+            },
+        )
+    )
+    assert proof["ok"] is True
+
+
+def test_governed_gameplay_proof_accepts_real_tile_changes_during_wait() -> None:
+    rect = [49, 34, 0, 55, 40, 0]
+    before = {
+        "ok": True,
+        "rect": rect,
+        "tiles": [{"x": 50, "y": 35, "z": 0, "category": "wall", "dig": 1, "hidden": False}],
+    }
+    after = {
+        "ok": True,
+        "rect": rect,
+        "tiles": [{"x": 50, "y": 35, "z": 0, "category": "floor", "dig": 0, "hidden": False}],
+    }
+    proof = _governed_gameplay_proof(
+        **_governed_proof_kwargs(
+            action={"type": "WAIT", "params": {}, "advance_ticks": 1000},
+            before_map_snapshot=before,
+            after_map_snapshot=after,
+        )
+    )
+    assert proof["ok"] is True
+    assert proof["changed_tile_count"] == 1
