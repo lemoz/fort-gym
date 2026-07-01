@@ -25,6 +25,18 @@ class MockEnvironment:
     target_floor_tiles: int = 0
     target_wall_tiles: int = 25
     active_dig_jobs: int = 0
+    connector_dig_designations: int = 0
+    connector_floor_tiles: int = 0
+    connector_wall_tiles: int = 3
+    workshop_room_dig_designations: int = 0
+    workshop_room_floor_tiles: int = 0
+    workshop_room_wall_tiles: int = 25
+    carpenter_workshops: int = 0
+    carpenter_workshops_usable: int = 0
+    carpenter_workshop_task_jobs: int = 0
+    active_construct_building_jobs: int = 0
+    manager_orders_count: int = 0
+    manager_orders_amount_left: int = 0
     rng: random.Random = field(init=False)
 
     def __post_init__(self) -> None:
@@ -48,6 +60,18 @@ class MockEnvironment:
         self.target_floor_tiles = 0
         self.target_wall_tiles = 25
         self.active_dig_jobs = 0
+        self.connector_dig_designations = 0
+        self.connector_floor_tiles = 0
+        self.connector_wall_tiles = 3
+        self.workshop_room_dig_designations = 0
+        self.workshop_room_floor_tiles = 0
+        self.workshop_room_wall_tiles = 25
+        self.carpenter_workshops = 0
+        self.carpenter_workshops_usable = 0
+        self.carpenter_workshop_task_jobs = 0
+        self.active_construct_building_jobs = 0
+        self.manager_orders_count = 0
+        self.manager_orders_amount_left = 0
         if self.scenario_name:
             self._apply_scenario(get_mock_scenario(self.scenario_name))
 
@@ -85,6 +109,8 @@ class MockEnvironment:
             "work": {
                 "ok": True,
                 "target_rect": [50, 35, 0, 54, 39, 0],
+                "fortress_connector_rect": [55, 37, 0, 57, 37, 0],
+                "fortress_workshop_room_rect": [58, 35, 0, 62, 39, 0],
                 "target_z": 0,
                 "window_z": 0,
                 "target_tiles": 25,
@@ -96,6 +122,38 @@ class MockEnvironment:
                 "target_missing_blocks": 0,
                 "active_jobs": self.active_dig_jobs,
                 "active_dig_jobs": self.active_dig_jobs,
+                "fortress_plan_name": "two_room_workshop",
+                "fortress_connector_tiles": 3,
+                "fortress_connector_floor_tiles": self.connector_floor_tiles,
+                "fortress_connector_wall_tiles": self.connector_wall_tiles,
+                "fortress_connector_hidden_tiles": 0,
+                "fortress_connector_missing_blocks": 0,
+                "fortress_workshop_room_tiles": 25,
+                "fortress_workshop_room_floor_tiles": self.workshop_room_floor_tiles,
+                "fortress_workshop_room_wall_tiles": self.workshop_room_wall_tiles,
+                "fortress_workshop_room_hidden_tiles": 0,
+                "fortress_workshop_room_missing_blocks": 0,
+                "fortress_complexity_tiles": 28,
+                "fortress_complexity_floor_tiles": self.connector_floor_tiles + self.workshop_room_floor_tiles,
+                "fortress_complexity_wall_tiles": self.connector_wall_tiles + self.workshop_room_wall_tiles,
+                "fortress_complexity_hidden_tiles": 0,
+                "fortress_complexity_missing_blocks": 0,
+                "fortress_complexity_spaces_completed": int(self.connector_floor_tiles >= 3)
+                + int(self.workshop_room_floor_tiles >= 25),
+                "active_construct_building_jobs": self.active_construct_building_jobs,
+                "manager_orders_count": self.manager_orders_count,
+                "manager_orders_amount_left": self.manager_orders_amount_left,
+                "manager_orders_amount_total": self.manager_orders_amount_left,
+                "workshop_count": self.carpenter_workshops,
+                "carpenter_workshops": self.carpenter_workshops,
+                "carpenter_workshops_planned": self.carpenter_workshops,
+                "carpenter_workshops_usable": self.carpenter_workshops_usable,
+                "carpenter_workshops_unproven": max(
+                    0,
+                    self.carpenter_workshops - self.carpenter_workshops_usable,
+                ),
+                "carpenter_workshop_task_jobs": self.carpenter_workshop_task_jobs,
+                "carpenter_workshop_construction_jobs": self.active_construct_building_jobs,
                 "citizens_total": self.population,
                 "miners_total": 1,
                 "citizens_on_target_z": self.population,
@@ -117,10 +175,22 @@ class MockEnvironment:
             if list(area)[:3] == [50, 35, 0]:
                 self.target_dig_designations = min(25, int(size[0]) * int(size[1]))
                 self.active_dig_jobs = 1
+            elif list(area)[:3] == [55, 37, 0]:
+                self.connector_dig_designations = min(3, int(size[0]) * int(size[1]))
+                self.active_dig_jobs = 1
+            elif list(area)[:3] == [58, 35, 0]:
+                self.workshop_room_dig_designations = min(25, int(size[0]) * int(size[1]))
+                self.active_dig_jobs = 1
         elif action_type == "BUILD":
             self.stocks["drink"] = max(0, self.stocks["drink"] - 1)
+            self.carpenter_workshops = 1
+            self.active_construct_building_jobs = 1
         elif action_type == "ORDER":
             quantity = params.get("quantity", 0)
+            self.manager_orders_count += 1
+            self.manager_orders_amount_left += int(quantity)
+            if self.carpenter_workshops_usable > 0:
+                self.carpenter_workshop_task_jobs += 1
             self.reminders.append(f"Order queued: {params.get('job', 'unknown')} x{quantity}")
         elif action_type == "ALERT":
             self.risks.append(params.get("message", "alert raised"))
@@ -142,8 +212,25 @@ class MockEnvironment:
             self.target_dig_designations -= mined
             self.target_floor_tiles = min(25, self.target_floor_tiles + mined)
             self.target_wall_tiles = max(0, self.target_wall_tiles - mined)
-            if self.target_dig_designations == 0:
-                self.active_dig_jobs = 0
+        elif self.connector_dig_designations and ticks > 0:
+            mined = min(self.connector_dig_designations, max(1, ticks // 200))
+            self.connector_dig_designations -= mined
+            self.connector_floor_tiles = min(3, self.connector_floor_tiles + mined)
+            self.connector_wall_tiles = max(0, self.connector_wall_tiles - mined)
+        elif self.workshop_room_dig_designations and ticks > 0:
+            mined = min(self.workshop_room_dig_designations, max(1, ticks // 200))
+            self.workshop_room_dig_designations -= mined
+            self.workshop_room_floor_tiles = min(25, self.workshop_room_floor_tiles + mined)
+            self.workshop_room_wall_tiles = max(0, self.workshop_room_wall_tiles - mined)
+        if not (
+            self.target_dig_designations
+            or self.connector_dig_designations
+            or self.workshop_room_dig_designations
+        ):
+            self.active_dig_jobs = 0
+        if self.active_construct_building_jobs and ticks > 0:
+            self.active_construct_building_jobs = 0
+            self.carpenter_workshops_usable = self.carpenter_workshops
 
         # Deterministic population changes for demonstration
         if self.time and self.time % 1000 == 0:

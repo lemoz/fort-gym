@@ -53,6 +53,19 @@ def test_run_create_request_accepts_openrouter_keystroke_models() -> None:
     assert glm_request.model == "openrouter-glm-5.2"
 
 
+def test_run_create_request_accepts_governed_dfhack_model() -> None:
+    from fort_gym.bench.api.schemas import RunCreateRequest
+
+    request = RunCreateRequest(
+        backend="dfhack",
+        model="dfhack-governed-scripted",
+        max_steps=100,
+        ticks_per_step=1000,
+    )
+
+    assert request.model == "dfhack-governed-scripted"
+
+
 def test_run_create_request_accepts_openai_keystroke_model() -> None:
     from fort_gym.bench.api.schemas import RunCreateRequest
 

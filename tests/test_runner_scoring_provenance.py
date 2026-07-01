@@ -7,6 +7,7 @@ from fort_gym.bench.run.runner import (
     _desired_keystroke_target_mode,
     _gameplay_proof,
     _is_exit_only_recovery_action,
+    _is_governed_dfhack_model,
     _is_keystroke_model,
     _keystroke_productive_state_deltas,
     _keystroke_step_score_progress,
@@ -35,6 +36,11 @@ def test_openrouter_glm_alias_uses_keystroke_mode() -> None:
     assert _is_keystroke_model("openrouter-keystroke-perception-review") is True
     assert _is_keystroke_model("anthropic-research") is True
     assert _is_keystroke_model("fake") is False
+
+
+def test_governed_dfhack_model_is_not_keystroke_mode() -> None:
+    assert _is_governed_dfhack_model("dfhack-governed-scripted") is True
+    assert _is_keystroke_model("dfhack-governed-scripted") is False
 
 
 def test_zero_assisted_dfhack_progress_preserves_audit_values() -> None:

@@ -12,6 +12,7 @@ BackendType = Literal["mock", "dfhack"]
 ModelType = Literal[
     "random",
     "fake",
+    "dfhack-governed-scripted",
     "openai",
     "openai-keystroke-perception-review",
     "openrouter-keystroke",

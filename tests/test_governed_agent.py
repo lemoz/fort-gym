@@ -1,0 +1,91 @@
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+from fort_gym.bench.agent.governed import DFHackGovernedScriptedAgent
+from fort_gym.bench.config import get_settings
+from fort_gym.bench.env.mock_env import MockEnvironment
+from fort_gym.bench.eval.summary import summarize
+from fort_gym.bench.run.runner import run_once
+
+
+def test_governed_agent_starts_with_starter_room_dig() -> None:
+    env = MockEnvironment()
+    action = DFHackGovernedScriptedAgent().decide("", env.observe())
+
+    assert action["type"] == "DIG"
+    assert action["params"] == {"area": [50, 35, 0], "size": [5, 5, 1]}
+    assert action["advance_ticks"] == 1000
+    assert action["objective"]
+
+
+def test_governed_agent_reaches_broader_mock_fort(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("ARTIFACTS_DIR", str(tmp_path))
+    get_settings.cache_clear()
+
+    run_id = run_once(
+        DFHackGovernedScriptedAgent(),
+        backend="mock",
+        model="dfhack-governed-scripted",
+        max_steps=20,
+        ticks_per_step=1000,
+    )
+    summary_path = Path(tmp_path) / run_id / "summary.json"
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+
+    assert summary["completion_progress"] > 0
+    assert summary["complexity_progress"] > 0
+    assert summary["production_progress"] > 0
+    assert summary["utility_progress"] > 0
+    assert summary["rubric"]["rubric_score"] > 50
+    assert "no_broader_fort_layout" not in summary["rubric"]["blockers"]
+
+
+def test_summary_rubric_flags_repetitive_score_only_run(tmp_path) -> None:
+    trace_path = Path(tmp_path) / "trace.jsonl"
+    records = []
+    for step in range(8):
+        records.append(
+            {
+                "run_id": "repetitive",
+                "step": step,
+                "action": {
+                    "type": "ORDER",
+                    "params": {"job": "bed", "quantity": 1},
+                    "intent": "repeat same order",
+                },
+                "execute": {
+                    "accepted": True,
+                    "provenance": "dfhack_assisted",
+                    "result": {"ok": True},
+                },
+                "metrics": {
+                    "time": step * 100,
+                    "run_elapsed_ticks": step * 100,
+                    "pop": 7,
+                    "food": 45,
+                    "drink": 60,
+                    "wealth": 9 + step,
+                    "dead": 0,
+                    "hostiles": False,
+                    "work_progress": 0,
+                    "completion_progress": 0,
+                    "utility_progress": 0,
+                    "production_progress": 0,
+                    "complexity_progress": 0,
+                    "score_provenance": "gameplay_only_assisted_progress_zeroed",
+                },
+                "tick_advance": {"ticks_advanced": 100},
+                "events": [],
+            }
+        )
+    with trace_path.open("w", encoding="utf-8") as handle:
+        for record in records:
+            handle.write(json.dumps(record) + "\n")
+
+    summary = summarize(trace_path)
+
+    assert summary.rubric["rubric_score"] < 50
+    assert "repetitive_policy" in summary.rubric["blockers"]
+    assert "illegal_or_assisted_progress_seen" in summary.rubric["blockers"]

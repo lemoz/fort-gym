@@ -193,6 +193,7 @@ async def list_runs(_: None = Depends(require_admin)) -> List[RunInfo]:
 
 OPTIONAL_AGENT_MODULES = {
     "fake": "fort_gym.bench.agent.fake_llm",
+    "dfhack-governed-scripted": "fort_gym.bench.agent.governed",
     "openai": "fort_gym.bench.agent.llm_openai",
     "openai-keystroke-perception-review": "fort_gym.bench.agent.llm_openai",
     "openrouter-keystroke": "fort_gym.bench.agent.llm_openrouter",

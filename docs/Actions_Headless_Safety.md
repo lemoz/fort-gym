@@ -23,6 +23,8 @@ fort-gym executes DFHack actions exclusively through curated Lua helpers stored 
 - Structured DFHack `DIG` actions designate tiles only by default. Set `FORT_GYM_DFHACK_COMPLETE_DIG=1` only for explicit harness-assisted debugging; completion from this path is not dwarf labor and is excluded from gameplay progress scoring.
 - Structured DFHack `BUILD` actions currently allow only `CarpenterWorkshop` within the configured starter room or planned workshop annex. These placements are DFHack-assisted state changes, not native gameplay proof, and are excluded from gameplay progress scoring.
 - Gameplay progress scoring is reserved for unassisted state changes, such as future `KEYSTROKE` runs that operate through the visible game surface and then observe resulting DF state.
+- The explicit `dfhack-governed-scripted` model is the exception to the older assisted-progress rule. Its bounded `DIG`, `BUILD`, `ORDER`, and `WAIT` actions are tagged `dfhack_governed` and may score only through observed live metrics. This path treats DFHack as a legal command transport, not as direct state mutation.
+- `summary.json` includes a separate `rubric` section that judges legal evidence, repetition, production, layout breadth, and plan coherence over recent trace history. A high scalar score without broad legal progress should show rubric blockers.
 - All scripts run from `/opt/dwarf-fortress`, ensuring relative includes resolve and dfhack resources remain available.
 
 ## Tick Advancement

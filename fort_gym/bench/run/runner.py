@@ -25,6 +25,10 @@ from .storage import RunRegistry
 from .seed_reset import maybe_reset_dfhack_seed
 
 ASSISTED_DFHACK_ACTIONS = {"DIG", "BUILD", "ORDER"}
+GOVERNED_DFHACK_MODELS = {
+    "dfhack-governed-scripted",
+}
+GOVERNED_DFHACK_ACTIONS = {"DIG", "BUILD", "ORDER", "WAIT"}
 ASSISTED_PROGRESS_FIELDS = (
     "target_dig_designations_delta",
     "target_floor_tiles_delta",
@@ -75,6 +79,10 @@ def _is_keystroke_model(model: str) -> bool:
         or normalized.endswith("-research")
         or normalized in KEYSTROKE_MODEL_NAMES
     )
+
+
+def _is_governed_dfhack_model(model: str) -> bool:
+    return str(model or "").lower() in GOVERNED_DFHACK_MODELS
 
 
 def _artifacts_root() -> Path:
@@ -1246,6 +1254,7 @@ def run_once(
 
     # Detect models that need screen capture and native UI keystroke scaffolding.
     is_keystroke_mode = _is_keystroke_model(model)
+    is_governed_dfhack_mode = _is_governed_dfhack_model(model)
     keystroke_ui_target: Optional[Dict[str, Any]] = None
     ui_target_mode = "starter"
     ui_target_generation = 0
@@ -1992,7 +2001,17 @@ def run_once(
                             ended_at=datetime.utcnow(),
                         )
                     break
-                if backend_name == "dfhack" and action.get("type") in ASSISTED_DFHACK_ACTIONS:
+                if (
+                    backend_name == "dfhack"
+                    and is_governed_dfhack_mode
+                    and action.get("type") in GOVERNED_DFHACK_ACTIONS
+                ):
+                    execute_result = {
+                        **execute_result,
+                        "provenance": "dfhack_governed",
+                        "gameplay_progress_eligible": True,
+                    }
+                elif backend_name == "dfhack" and action.get("type") in ASSISTED_DFHACK_ACTIONS:
                     execute_result = {
                         **execute_result,
                         "provenance": "dfhack_assisted",
@@ -2289,6 +2308,10 @@ def run_once(
                     int(metrics_snapshot.get("utility_progress") or 0),
                     int(utility_action.get("utility_action_progress") or 0),
                 )
+                if is_governed_dfhack_mode:
+                    metrics_snapshot["score_provenance"] = "dfhack_governed_observed_state"
+                    metrics_snapshot["gameplay_progress_eligible"] = True
+                    metrics_snapshot["governed_dfhack_progress"] = True
                 if is_keystroke_mode and action_history_limit > 0:
                     action_history.append(
                         _keystroke_action_history_entry(

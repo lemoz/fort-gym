@@ -1278,6 +1278,7 @@ def _run_api_agent(
     actions = _summarize_actions(records)
     score_provenances = _score_provenances(records)
     real_gameplay = _analyze_real_gameplay_trace(records, summary)
+    rubric = summary.get("rubric") if isinstance(summary.get("rubric"), dict) else {}
     score = latest.get("score")
     if score is None:
         score = summary.get("total_score")
@@ -1289,6 +1290,9 @@ def _run_api_agent(
         "status": latest.get("status"),
         "score": score,
         "summary_total_score": summary.get("total_score"),
+        "rubric_score": rubric.get("rubric_score"),
+        "rubric_blockers": rubric.get("blockers", []),
+        "rubric_critique": rubric.get("critique"),
         "summary_steps": summary.get("steps"),
         "duration_ticks": summary.get("duration_ticks"),
         "survival_score": summary.get("survival_score"),
@@ -1684,6 +1688,11 @@ def _variant_scorecard(
     baseline_median: float,
 ) -> dict[str, object]:
     scores = _score_values(runs)
+    rubric_scores = [
+        _as_float(run.get("rubric_score"))
+        for run in runs
+        if run.get("rubric_score") is not None
+    ]
     work_scores = [_as_float(run.get("work_score")) for run in runs if run.get("work_score") is not None]
     work_progress = [_as_float(run.get("work_progress")) for run in runs if run.get("work_progress") is not None]
     ui_work_progress = [
@@ -1731,6 +1740,8 @@ def _variant_scorecard(
         "completed_runs": _completed_runs(runs),
         "scores": scores,
         "median_score": median_score,
+        "rubric_scores": rubric_scores,
+        "median_rubric_score": _median(rubric_scores),
         "median_delta_vs_baseline": round(median_score - baseline_median, 2),
         "work_scores": work_scores,
         "median_work_score": _median(work_scores),
@@ -1768,6 +1779,11 @@ def _build_suite_comparison(
     variant_runs: dict[str, list[dict[str, object]]],
 ) -> dict[str, object]:
     baseline_scores = _score_values(baseline_runs)
+    baseline_rubric_scores = [
+        _as_float(run.get("rubric_score"))
+        for run in baseline_runs
+        if run.get("rubric_score") is not None
+    ]
     baseline_work_scores = [
         _as_float(run.get("work_score")) for run in baseline_runs if run.get("work_score") is not None
     ]
@@ -1846,6 +1862,8 @@ def _build_suite_comparison(
             "completed_runs": _completed_runs(baseline_runs),
             "scores": baseline_scores,
             "median_score": baseline_median,
+            "rubric_scores": baseline_rubric_scores,
+            "median_rubric_score": _median(baseline_rubric_scores),
             "work_scores": baseline_work_scores,
             "median_work_score": _median(baseline_work_scores),
             "work_progress": baseline_work_progress,
@@ -2005,6 +2023,8 @@ def _write_live_agent_suite_artifacts(
         f"- Model: `{baseline.get('model')}`",
         f"- Scores: `{baseline.get('scores')}`",
         f"- Median: `{baseline.get('median_score')}`",
+        f"- Rubric scores: `{baseline.get('rubric_scores')}`",
+        f"- Median rubric: `{baseline.get('median_rubric_score')}`",
         f"- Work scores: `{baseline.get('work_scores')}`",
         f"- Median work progress: `{baseline.get('median_work_progress')}`",
         f"- Median UI work progress: `{baseline.get('median_ui_work_progress')}`",
@@ -2033,6 +2053,8 @@ def _write_live_agent_suite_artifacts(
                 "",
                 f"- Scores: `{variant.get('scores')}`",
                 f"- Median: `{variant.get('median_score')}`",
+                f"- Rubric scores: `{variant.get('rubric_scores')}`",
+                f"- Median rubric: `{variant.get('median_rubric_score')}`",
                 f"- Median delta vs baseline: `{variant.get('median_delta_vs_baseline')}`",
                 f"- Work scores: `{variant.get('work_scores')}`",
                 f"- Median work progress: `{variant.get('median_work_progress')}`",

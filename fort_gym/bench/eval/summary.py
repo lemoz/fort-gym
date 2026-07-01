@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
+from .rubric import evaluate_trace_records
 from .scoring import composite_score, score_components
 
 
@@ -72,6 +73,7 @@ class RunSummary(BaseModel):
     fortress_complexity_wall_tiles: int = 0
     fortress_complexity_spaces_completed: int = 0
     total_score: float = 0.0
+    rubric: Dict[str, Any] = Field(default_factory=dict)
     milestones: List[Dict[str, Any]] = Field(default_factory=list)
     scenario_assertions: List[Dict[str, Any]] = Field(default_factory=list)
 
@@ -157,6 +159,7 @@ def summarize(trace_path: Path) -> RunSummary:
     fortress_complexity_floor_tiles = 0
     fortress_complexity_wall_tiles = 0
     fortress_complexity_spaces_completed = 0
+    trace_records: List[Dict[str, Any]] = []
 
     with trace_path.open("r", encoding="utf-8") as handle:
         for line in handle:
@@ -166,6 +169,7 @@ def summarize(trace_path: Path) -> RunSummary:
                 record = json.loads(line)
             except json.JSONDecodeError:
                 continue
+            trace_records.append(record)
 
             run_id = record.get("run_id", run_id)
             step = record.get("step")
@@ -487,6 +491,7 @@ def summarize(trace_path: Path) -> RunSummary:
         fortress_complexity_wall_tiles=fortress_complexity_wall_tiles,
         fortress_complexity_spaces_completed=fortress_complexity_spaces_completed,
         total_score=total_score,
+        rubric=evaluate_trace_records(trace_records),
         milestones=milestones,
     )
 
