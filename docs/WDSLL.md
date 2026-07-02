@@ -73,10 +73,15 @@ observation-surface or prompt fixes (no heuristics, no scripted plans), the
 plays. Do not rescue the gate by softening it.
 
 ### G3 — Production proof (finished goods, not queues)
-A public run where a queued order **completes**: `gameplay_proof` /
-state deltas show the workshop consumed material and produced an item
-(e.g. wood stock down, bed exists), plus wealth delta > 0. Queued-but-never-
-built (today's failure mode) explicitly does not pass.
+A public run where a queued order **completes**:
+- ≥1 step whose `gameplay_proof` state deltas show workshop consumption
+  (`carpenter_workshop_completed_tasks` / `wood_consumed_by_workshop`), and
+- at least one of (operator-selected OR-form, 2026-07-02): (a)
+  `created_wealth > 0`, or (b) the in-play item count of a good type the run
+  actually ordered (`created_job_ids`) increases from the run's first
+  observation to its last (`crew.goods` deltas).
+
+Queued-but-never-built (the pre-chop failure mode) explicitly does not pass.
 
 ### G4 — Horizon (a fortress, not a demo)
 One public run, ≥50,000 ticks: population ≥ starting 7 with zero casualties
@@ -145,6 +150,15 @@ gate. Each entry states what changed and the evidence that forced it.
   proof-backed step with a real tile change of any governed kind". Both
   changes were approved by the operator before any re-run; the prior 0/5
   results stand as recorded.
+
+- **2026-07-02 — G3 wealth clause made an OR with item-count evidence
+  (operator-selected).** DF's `ui.tasks.wealth` counters never recalculate on
+  this headless build: live inspection showed `furniture = 0` and
+  `total = 9` while 19 agent-produced beds existed in the world. The operator
+  chose the OR-form (wealth or item deltas) over replacing the clause,
+  keeping the wealth path alive if an engine-side recalculation trigger is
+  ever found. Item counts come from the read-only `crew.goods` observability
+  added at commit `4c72e8da1`.
 
 ## Reporting format (every gate attempt)
 
