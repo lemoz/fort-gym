@@ -152,18 +152,22 @@ if x1 and y1 and z1 and x2 and y2 and z2 and z1 == z2 then
   local rx1, ry1, rz = math.min(x1, x2), math.min(y1, y2), z1
   local rx2, ry2 = math.max(x1, x2), math.max(y1, y2)
   if (rx2 - rx1 + 1) <= MAX_RECT_W and (ry2 - ry1 + 1) <= MAX_RECT_H then
-    local counts = { wall = 0, floor = 0, shrub_or_other = 0, designated = 0 }
+    local counts = { wall = 0, tree = 0, floor = 0, shrub_or_other = 0, designated = 0 }
     local shapes = df.tiletype.attrs
     for x = rx1, rx2 do
       for y = ry1, ry2 do
         local block = dfhack.maps.getTileBlock(x, y, rz)
         if block then
           local dx, dy = x % 16, y % 16
-          local ok, shape = pcall(function()
-            return df.tiletype_shape[shapes[block.tiletype[dx][dy]].shape]
+          local ok, shape, is_tree = pcall(function()
+            local attr = shapes[block.tiletype[dx][dy]]
+            return df.tiletype_shape[attr.shape],
+              attr.material == df.tiletype_material.TREE
           end)
           local shape_name = ok and tostring(shape) or '?'
-          if shape_name == 'WALL' then
+          if shape_name == 'WALL' and ok and is_tree then
+            counts.tree = counts.tree + 1
+          elseif shape_name == 'WALL' then
             counts.wall = counts.wall + 1
           elseif shape_name == 'FLOOR' then
             counts.floor = counts.floor + 1
@@ -182,6 +186,7 @@ if x1 and y1 and z1 and x2 and y2 and z2 and z1 == z2 then
     out.rect_tiles = {
       rect = { rx1, ry1, rz, rx2, ry2, rz },
       wall = counts.wall,
+      tree = counts.tree,
       floor = counts.floor,
       shrub_or_other = counts.shrub_or_other,
       designated = counts.designated,

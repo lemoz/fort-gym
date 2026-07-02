@@ -156,7 +156,18 @@ def test_designate_rect_reports_designation_counts() -> None:
     assert "already_designated" in hook_text
     assert "non_wall_tiles" in hook_text
     assert "missing_tiles" in hook_text
-    assert "autochop" in hook_text
+
+
+def test_designate_rect_chop_is_bounded_tree_designation() -> None:
+    hook_path = Path(__file__).resolve().parents[1] / "hook" / "designate_rect.lua"
+    hook_text = hook_path.read_text(encoding="utf-8")
+
+    # chop designates tree trunks inside the rect, like a player's d-t
+    assert "trees_designated" in hook_text
+    assert "non_tree_tiles" in hook_text
+    assert "df.tiletype_material.TREE" in hook_text
+    # the old global autochop pulse (broken on this DFHack: no such script) is gone
+    assert "autochop" not in hook_text
 
 
 def test_prepare_keystroke_tree_material_target_uses_broad_selection() -> None:

@@ -1246,6 +1246,7 @@ def encode_observation(
         rect_tiles = crew.get("rect_tiles")
         if isinstance(rect_tiles, dict) and rect_tiles:
             wall = _int_or_none(rect_tiles.get("wall"))
+            tree = _int_or_none(rect_tiles.get("tree"))
             floor = _int_or_none(rect_tiles.get("floor"))
             shrub_or_other = _int_or_none(rect_tiles.get("shrub_or_other"))
             designated = _int_or_none(rect_tiles.get("designated"))
@@ -1253,8 +1254,14 @@ def encode_observation(
                 value is not None
                 for value in (wall, floor, shrub_or_other, designated)
             ):
+                tree_part = (
+                    f"tree_trunks={tree} (fell with DIG kind=chop for logs), "
+                    if tree is not None
+                    else ""
+                )
                 status_lines.append(
-                    f"Plan-area tiles: wall={wall} (diggable), floor={floor}, "
+                    f"Plan-area tiles: wall={wall} (diggable), {tree_part}"
+                    f"floor={floor}, "
                     f"shrub/other={shrub_or_other} (not diggable — DIG designations "
                     "on non-wall tiles are silently dropped by DF), "
                     f"designated={designated}"

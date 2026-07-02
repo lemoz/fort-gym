@@ -36,16 +36,56 @@ if (rx2 - rx1 + 1) > 30 or (ry2 - ry1 + 1) > 30 then
   return
 end
 
-if kind == 'chop' then
-  dfhack.run_script('autochop', 'now')
-  print(json.encode({ ok = true, kind = kind }))
-  return
-end
-
 local block_w, block_h = 16, 16
 
 local attrs = df.tiletype.attrs
 local wall_shape = df.tiletype_shape.WALL
+local tree_material = df.tiletype_material.TREE
+
+-- Bounded tree-fell designation: mark tree-trunk tiles inside the rect for
+-- chopping (the same designation a player sets with d-t). Woodcutters with an
+-- axe then fell them over real time, producing logs.
+if kind == 'chop' then
+  local trees_designated = 0
+  local already_designated = 0
+  local non_tree_tiles = 0
+  for tx = rx1, rx2 do
+    for ty = ry1, ry2 do
+      local block = dfhack.maps.getTileBlock(tx, ty, rz)
+      if block then
+        local dx, dy = tx % block_w, ty % block_h
+        local is_trunk = false
+        pcall(function()
+          local attr = attrs[block.tiletype[dx][dy]]
+          is_trunk = attr ~= nil
+            and attr.material == tree_material
+            and attr.shape == wall_shape
+        end)
+        if is_trunk then
+          local designation = block.designation[dx][dy]
+          if designation.dig == df.tile_dig_designation.Default then
+            already_designated = already_designated + 1
+          else
+            designation.dig = df.tile_dig_designation.Default
+            block.flags.designated = true
+            trees_designated = trees_designated + 1
+          end
+        else
+          non_tree_tiles = non_tree_tiles + 1
+        end
+      end
+    end
+  end
+  print(json.encode({
+    ok = true,
+    kind = kind,
+    rect = { rx1, ry1, rz, rx2, ry2, rz },
+    trees_designated = trees_designated,
+    already_designated = already_designated,
+    non_tree_tiles = non_tree_tiles,
+  }))
+  return
+end
 
 local function target_designation(mode)
   if mode == 'dig' then
