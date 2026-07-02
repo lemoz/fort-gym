@@ -45,8 +45,9 @@ evidence recorded. Evidence: run `8a9b07cc610f4b61bdd579e688db58dd`
 
 ### G2 — Parity with the scripted ceiling
 On ≥3 of 5 public runs (same seed, ≤30 steps, ≤2000 ticks/step):
-- ≥3 steps with `gameplay_proof.ok = true`, at least one of them a DIG whose
-  tile diff shows real wall→floor change,
+- ≥3 steps with `gameplay_proof.ok = true`, at least one of them showing a
+  real tile change (`changed_tile_count > 0`) — the mechanism (dig, chop,
+  build, or dwarf labor resolving during a wait) is not prescribed,
 - a BUILT carpenter workshop exists (construction stage complete — from the
   crew/workshops evidence or `carpenter_workshops_usable ≥ 1`),
 - ≥1 order created (`created_job_ids` in a governed step),
@@ -118,6 +119,22 @@ gate. Each entry states what changed and the evidence that forced it.
   same diagnosis found the `carpenter_workshops_usable` metric is rect-scoped
   and missed a fully built workshop at (98,96,177) — the workshop criterion
   now accepts global built-workshop evidence.
+
+- **2026-07-02 — G2 measurement corrected (operator-approved) after the
+  third series.** Final series scored 204.7–206.7 vs the 121.5 ceiling with
+  30/30 proof-backed steps per run, yet failed 0/5 on two criteria. (a) The
+  `repetitive_policy` blocker fired on 22/30 WAIT steps even though every one
+  showed real state change (wood accumulating, workshop tasks completing) —
+  the rubric's own critique text defines the failure as repetition "without
+  state change", but the implementation never checked state change. The
+  rubric now counts only no-progress steps toward the repetition ratio
+  (`_step_progress_flags` in `eval/rubric.py`); identical no-op spam still
+  fires the blocker (locked by test). (b) The G2 criterion "a DIG whose tile
+  diff shows wall→floor change" over-prescribed the mechanism on a surface
+  embark where the fort thrives without mining; corrected to "at least one
+  proof-backed step with a real tile change of any governed kind". Both
+  changes were approved by the operator before any re-run; the prior 0/5
+  results stand as recorded.
 
 ## Reporting format (every gate attempt)
 
