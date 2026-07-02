@@ -8,7 +8,7 @@ import fort_gym.bench.agent.governed_llm  # noqa: F401 - registration side effec
 from typing import get_args
 
 from fort_gym.bench.agent.base import AGENT_FACTORIES
-from fort_gym.bench.agent.governed_llm import DFHackGovernedLLMAgent
+from fort_gym.bench.agent.governed_llm import GOVERNED_SYSTEM_PROMPT, DFHackGovernedLLMAgent
 from fort_gym.bench.api.schemas import ModelType
 from fort_gym.bench.api.server import OPTIONAL_AGENT_MODULES
 from fort_gym.bench.run.runner import (
@@ -62,6 +62,11 @@ def _agent(responses: list[Any] | None = None, error: Exception | None = None) -
     agent = DFHackGovernedLLMAgent(api_key="test-key", max_attempts=1, memory_path=None)
     agent._client = _FakeClient(responses, error)
     return agent
+
+
+def test_governed_system_prompt_teaches_wall_construction() -> None:
+    assert "Wall" in GOVERNED_SYSTEM_PROMPT
+    assert "x2" in GOVERNED_SYSTEM_PROMPT
 
 
 def test_governed_llm_is_registered_and_model_gated() -> None:

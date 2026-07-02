@@ -236,3 +236,18 @@ def test_job_metrics_reports_placed_furniture() -> None:
     ).read_text(encoding="utf-8")
     assert "placed_furniture" in script
     assert "df.building_type.Bed" in script
+
+
+def test_build_construction_hook_enforces_locality_and_uses_existing_material() -> None:
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "build_construction.lua"
+    ).read_text(encoding="utf-8")
+    for needle in (
+        "too_far_from_fort",
+        "df.construction_type.Wall",
+        "no_building_material",
+        "constructBuilding",
+    ):
+        assert needle in script
+    # legality: never creates items, only uses existing material items
+    assert "createItem" not in script

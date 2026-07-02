@@ -41,6 +41,8 @@ class BuildParams(BaseModel):
     x: Optional[int] = None
     y: Optional[int] = None
     z: int = 0
+    x2: Optional[int] = None
+    y2: Optional[int] = None
 
 
 class OrderParams(BaseModel):

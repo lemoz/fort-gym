@@ -227,3 +227,55 @@ def test_dfhack_build_rejects_unknown_kind() -> None:
     )
     assert result["accepted"] is False
     assert "Unsupported BUILD kind" in result["why"]
+
+
+def test_dfhack_build_wall_routes_to_build_construction_without_work_rect(monkeypatch) -> None:
+    calls: list[tuple] = []
+
+    def fake_build_construction(kind, x, y, z, x2, y2):
+        calls.append((kind, x, y, z, x2, y2))
+        return {"ok": True, "kind": kind, "placed_count": 4}
+
+    def fake_place_furniture(*args, **kwargs):
+        raise AssertionError("constructions must not route to the furniture hook")
+
+    def fake_build_workshop(*args, **kwargs):
+        raise AssertionError("constructions must not route to the workshop hook")
+
+    monkeypatch.setattr(
+        "fort_gym.bench.env.executor.safe_build_construction", fake_build_construction
+    )
+    monkeypatch.setattr("fort_gym.bench.env.executor.safe_place_furniture", fake_place_furniture)
+    monkeypatch.setattr("fort_gym.bench.env.executor.safe_build_workshop", fake_build_workshop)
+
+    result = Executor(dfhack_client=_ConnectedDFHackClient()).apply(
+        {
+            "type": "BUILD",
+            "params": {"kind": "Wall", "x": 10, "y": 20, "z": 0, "x2": 12, "y2": 20},
+        },
+        backend="dfhack",
+        state={"work": {"target_rect": [90, 90, 177, 99, 99, 177]}},
+    )
+
+    assert result["accepted"] is True
+    assert calls == [("Wall", 10, 20, 0, 12, 20)]
+
+
+def test_dfhack_build_floor_defaults_x2_y2_to_xy(monkeypatch) -> None:
+    calls: list[tuple] = []
+
+    def fake_build_construction(kind, x, y, z, x2, y2):
+        calls.append((kind, x, y, z, x2, y2))
+        return {"ok": True, "kind": kind, "placed_count": 1}
+
+    monkeypatch.setattr(
+        "fort_gym.bench.env.executor.safe_build_construction", fake_build_construction
+    )
+
+    result = Executor(dfhack_client=_ConnectedDFHackClient()).apply(
+        {"type": "BUILD", "params": {"kind": "Floor", "x": 30, "y": 40, "z": 2}},
+        backend="dfhack",
+    )
+
+    assert result["accepted"] is True
+    assert calls == [("Floor", 30, 40, 2, 30, 40)]

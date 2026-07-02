@@ -72,6 +72,9 @@ class RunSummary(BaseModel):
     fortress_complexity_floor_tiles: int = 0
     fortress_complexity_wall_tiles: int = 0
     fortress_complexity_spaces_completed: int = 0
+    fort_enclosed_spaces: int = 0
+    fort_functional_rooms: int = 0
+    fort_constructions: int = 0
     total_score: float = 0.0
     rubric: Dict[str, Any] = Field(default_factory=dict)
     milestones: List[Dict[str, Any]] = Field(default_factory=list)
@@ -159,6 +162,9 @@ def summarize(trace_path: Path) -> RunSummary:
     fortress_complexity_floor_tiles = 0
     fortress_complexity_wall_tiles = 0
     fortress_complexity_spaces_completed = 0
+    fort_enclosed_spaces = 0
+    fort_functional_rooms = 0
+    fort_constructions = 0
     trace_records: List[Dict[str, Any]] = []
 
     with trace_path.open("r", encoding="utf-8") as handle:
@@ -340,6 +346,16 @@ def summarize(trace_path: Path) -> RunSummary:
                     _to_int(work_snapshot.get("fortress_complexity_spaces_completed")),
                 )
 
+            fort_enclosed_spaces = max(
+                fort_enclosed_spaces, _to_int(metrics_snapshot.get("fort_enclosed_spaces"))
+            )
+            fort_functional_rooms = max(
+                fort_functional_rooms, _to_int(metrics_snapshot.get("fort_functional_rooms"))
+            )
+            fort_constructions = max(
+                fort_constructions, _to_int(metrics_snapshot.get("fort_constructions"))
+            )
+
             tick_advance = record.get("tick_advance") or {}
             if isinstance(tick_advance, dict) and "ticks_advanced" in tick_advance:
                 saw_tick_advance = True
@@ -490,6 +506,9 @@ def summarize(trace_path: Path) -> RunSummary:
         fortress_complexity_floor_tiles=fortress_complexity_floor_tiles,
         fortress_complexity_wall_tiles=fortress_complexity_wall_tiles,
         fortress_complexity_spaces_completed=fortress_complexity_spaces_completed,
+        fort_enclosed_spaces=fort_enclosed_spaces,
+        fort_functional_rooms=fort_functional_rooms,
+        fort_constructions=fort_constructions,
         total_score=total_score,
         rubric=evaluate_trace_records(trace_records),
         milestones=milestones,

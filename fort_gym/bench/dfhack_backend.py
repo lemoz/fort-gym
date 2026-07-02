@@ -17,6 +17,7 @@ REPO_HOOK_ROOT = Path(__file__).resolve().parents[2] / "hook"
 ALLOWED_ITEMS = {"bed", "door", "table", "chair", "barrel", "bin"}
 ALLOWED_WORKSHOPS = {"CarpenterWorkshop"}
 ALLOWED_FURNITURE = {"Bed", "Door", "Table", "Chair"}
+ALLOWED_CONSTRUCTIONS = {"Wall", "Floor"}
 MAX_QTY = 5
 MAX_RECT_W = 30
 MAX_RECT_H = 30
@@ -171,6 +172,50 @@ def place_furniture(
         return {"ok": False, "error": str(exc)}
 
 
+def build_construction(
+    kind: str,
+    x1: int,
+    y1: int,
+    z: int,
+    x2: int | None = None,
+    y2: int | None = None,
+) -> Dict[str, object]:
+    """Place bounded wall/floor constructions with a plan-agnostic locality bound.
+
+    Unlike workshop/furniture placement, constructions are not checked against
+    a plan rect — the hook itself rejects tiles far from the existing fort
+    (buildings and citizens). This helper only enforces the shared 10-tile cap.
+    """
+
+    if kind not in ALLOWED_CONSTRUCTIONS:
+        return {"ok": False, "error": "invalid_kind"}
+
+    x1_val = int(x1)
+    y1_val = int(y1)
+    z_val = int(z)
+    x2_val = int(x2) if x2 is not None else x1_val
+    y2_val = int(y2) if y2 is not None else y1_val
+
+    width = abs(x2_val - x1_val) + 1
+    height = abs(y2_val - y1_val) + 1
+    if width * height > 10:
+        return {"ok": False, "error": "too_many_tiles"}
+
+    try:
+        return run_lua_file(
+            _hook_path("build_construction.lua"),
+            kind,
+            str(x1_val),
+            str(y1_val),
+            str(z_val),
+            str(x2_val),
+            str(y2_val),
+            timeout=10.0,
+        )
+    except (DFHackError, OSError) as exc:
+        return {"ok": False, "error": str(exc)}
+
+
 def designate_rect(kind: str, x1: int, y1: int, z1: int, x2: int, y2: int, z2: int) -> Dict[str, object]:
     kind_lower = kind.lower()
     if kind_lower not in VALID_KINDS:
@@ -293,6 +338,21 @@ def read_map_snapshot(rect: tuple[int, int, int, int, int, int]) -> Dict[str, ob
             str(int(y2)),
             str(int(z2)),
         )
+    except (DFHackError, OSError) as exc:
+        return {"ok": False, "error": str(exc)}
+
+
+
+def read_fort_metrics() -> Dict[str, object]:
+    """Read plan-agnostic fortress structure metrics (read-only).
+
+    Flood-fills enclosed spaces from player buildings, classifies them
+    functionally, and counts player constructions. Anchored on what the
+    player actually built — no plan rectangles; works on any seed.
+    """
+
+    try:
+        return run_lua_file(_hook_path("fort_metrics.lua"), timeout=10.0)
     except (DFHackError, OSError) as exc:
         return {"ok": False, "error": str(exc)}
 
@@ -523,10 +583,12 @@ __all__ = [
     "queue_manager_order",
     "build_workshop",
     "place_furniture",
+    "build_construction",
     "designate_rect",
     "complete_dig_rect",
     "read_work_metrics",
     "read_job_metrics",
+    "read_fort_metrics",
     "read_map_snapshot",
     "prepare_keystroke_target",
     "read_view_state",

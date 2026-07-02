@@ -44,12 +44,18 @@ and work over time. kind "chop" designates the tree trunks inside the rect for f
 observation's plan-area line reports tree_trunk counts); a dwarf with the woodcutting labor fells \
 them over time and the logs appear in the Wood stock. Carpentry production consumes wood — \
 without logs, workshop orders cancel.
-- BUILD: params {"kind": "CarpenterWorkshop"|"Bed"|"Door"|"Table"|"Chair", "x": X, "y": Y, "z": Z}. \
+- BUILD: params {"kind": "CarpenterWorkshop"|"Bed"|"Door"|"Table"|"Chair"|"Wall"|"Floor", "x": X, \
+"y": Y, "z": Z, "x2": X2, "y2": Y2 (optional)}. \
 CarpenterWorkshop places a 3x3 workshop on open floor inside your work area (the work metrics \
 include a `carpenter_build_site` when a legal spot is visible); a dwarf must then construct it. \
 Furniture kinds install an already-produced item of that type as a 1x1 building inside the plan \
 rects — a dwarf hauls and installs it over time. Installing furniture requires a finished item in \
-stock (see "Finished goods in play"); installed beds/doors/tables/chairs make rooms functional.
+stock (see "Finished goods in play"); installed beds/doors/tables/chairs make rooms functional. \
+Wall and Floor kinds place construction segments: a single tile at (x, y, z), or a line up to 10 \
+tiles when optional x2/y2 are given, within 24 tiles of your fort. Each tile consumes one log, \
+boulder, or block from stock, and a dwarf builds it over time. Enclosed rooms — spaces bounded by \
+walls, buildings, or doors — are what make bedrooms and production rooms count; the observation's \
+"Fort structure" line reports enclosed_spaces and functional_rooms.
 - ORDER: params {"job": <item>, "quantity": 1-5}. Queues production to any BUILT carpenter workshop \
 (construction stage complete), wherever it stands. Items: bed, door, table, chair, barrel, bin. \
 Dwarves then do the work.

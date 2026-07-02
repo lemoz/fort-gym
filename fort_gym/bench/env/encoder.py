@@ -1292,6 +1292,41 @@ def encode_observation(
                     f"designated={designated}"
                 )
 
+    fort = clean_state.get("fort")
+    if isinstance(fort, dict) and fort.get("ok"):
+        enclosed_spaces = _int_or_none(fort.get("enclosed_spaces"))
+        functional_rooms = _int_or_none(fort.get("functional_rooms"))
+        constructions = _int_or_none(fort.get("constructions"))
+        if None not in (enclosed_spaces, functional_rooms, constructions):
+            status_lines.append(
+                "Fort structure (plan-agnostic): "
+                f"enclosed_spaces={enclosed_spaces}, "
+                f"functional_rooms={functional_rooms}, "
+                f"constructions={constructions}"
+            )
+
+        spaces = fort.get("spaces")
+        if isinstance(spaces, list) and spaces:
+            room_parts = []
+            for space in spaces[:6]:
+                if not isinstance(space, dict):
+                    continue
+                kind = space.get("kind")
+                tiles = _int_or_none(space.get("tiles"))
+                z = _int_or_none(space.get("z"))
+                if not kind or tiles is None or z is None:
+                    continue
+                room_parts.append(f"{kind}({tiles} tiles, z{z})")
+            if room_parts:
+                status_lines.append("Rooms: " + ", ".join(room_parts))
+
+        if enclosed_spaces == 0:
+            status_lines.append(
+                "No enclosed rooms yet — spaces count as rooms only when fully "
+                "bounded by walls, buildings, or doors. BUILD kind=Wall can "
+                "enclose them."
+            )
+
     if ui_work:
         status_lines.append(
             "Live UI target: "

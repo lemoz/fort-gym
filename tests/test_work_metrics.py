@@ -427,3 +427,54 @@ def test_place_furniture_enforces_kind_and_rect_bounds(monkeypatch) -> None:
     )
     assert inside == {"ok": True}
     assert calls[-1][1] == ("Bed", "51", "36", "0")
+
+
+def test_build_construction_invalid_kind(monkeypatch) -> None:
+    from fort_gym.bench import dfhack_backend
+
+    calls: list[tuple] = []
+
+    def fake_run_lua_file(path, *args, **kwargs):
+        calls.append((path, args))
+        return {"ok": True}
+
+    monkeypatch.setattr(dfhack_backend, "run_lua_file", fake_run_lua_file)
+
+    assert dfhack_backend.build_construction("Throne", 1, 1, 0) == {
+        "ok": False,
+        "error": "invalid_kind",
+    }
+    assert not calls
+
+
+def test_build_construction_rejects_too_many_tiles(monkeypatch) -> None:
+    from fort_gym.bench import dfhack_backend
+
+    calls: list[tuple] = []
+
+    def fake_run_lua_file(path, *args, **kwargs):
+        calls.append((path, args))
+        return {"ok": True}
+
+    monkeypatch.setattr(dfhack_backend, "run_lua_file", fake_run_lua_file)
+
+    too_many = dfhack_backend.build_construction("Wall", 0, 0, 0, x2=10, y2=0)
+    assert too_many == {"ok": False, "error": "too_many_tiles"}
+    assert not calls
+
+
+def test_build_construction_passes_through_valid_line(monkeypatch) -> None:
+    from fort_gym.bench import dfhack_backend
+
+    calls: list[tuple] = []
+
+    def fake_run_lua_file(path, *args, **kwargs):
+        calls.append((path, args, kwargs))
+        return {"ok": True}
+
+    monkeypatch.setattr(dfhack_backend, "run_lua_file", fake_run_lua_file)
+
+    result = dfhack_backend.build_construction("Floor", 5, 5, 1, x2=9, y2=5)
+    assert result == {"ok": True}
+    assert calls[-1][1] == ("Floor", "5", "5", "1", "9", "5")
+    assert calls[-1][2] == {"timeout": 10.0}

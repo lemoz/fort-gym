@@ -1647,3 +1647,73 @@ def test_encoder_surfaces_placed_furniture_buildings() -> None:
     obs_text, _ = encode_observation(state)
 
     assert "Placed furniture buildings: beds=2, doors=0, tables=1, chairs=0" in obs_text
+
+
+def test_encoder_surfaces_full_fort_block() -> None:
+    state = {
+        "time": 100,
+        "population": 7,
+        "stocks": {"food": 45, "drink": 60, "wood": 6, "stone": 0},
+        "fort": {
+            "ok": True,
+            "enclosed_spaces": 1,
+            "functional_rooms": 1,
+            "constructions": 26,
+            "player_buildings": 8,
+            "spaces": [
+                {
+                    "z": 177,
+                    "tiles": 6,
+                    "kind": "production",
+                    "contents": {"bed": 0, "table": 0, "chair": 0, "door": 0, "workshop": 1},
+                }
+            ],
+        },
+    }
+
+    text, _ = encode_observation(state, screen_text="main map")
+
+    assert (
+        "Fort structure (plan-agnostic): enclosed_spaces=1, functional_rooms=1, "
+        "constructions=26" in text
+    )
+    assert "Rooms: production(6 tiles, z177)" in text
+    assert "No enclosed rooms yet" not in text
+
+
+def test_encoder_flags_zero_enclosed_spaces() -> None:
+    state = {
+        "time": 100,
+        "population": 7,
+        "stocks": {"food": 45, "drink": 60, "wood": 6, "stone": 0},
+        "fort": {
+            "ok": True,
+            "enclosed_spaces": 0,
+            "functional_rooms": 0,
+            "constructions": 4,
+            "player_buildings": 1,
+            "spaces": [],
+        },
+    }
+
+    text, _ = encode_observation(state, screen_text="main map")
+
+    assert "Fort structure (plan-agnostic): enclosed_spaces=0" in text
+    assert (
+        "No enclosed rooms yet — spaces count as rooms only when fully bounded "
+        "by walls, buildings, or doors. BUILD kind=Wall can enclose them." in text
+    )
+    assert "Rooms:" not in text
+
+
+def test_encoder_ignores_malformed_fort_without_crashing() -> None:
+    state = {
+        "time": 100,
+        "population": 7,
+        "stocks": {"food": 45, "drink": 60, "wood": 6, "stone": 0},
+        "fort": "junk",
+    }
+
+    text, _ = encode_observation(state, screen_text="main map")
+
+    assert "Fort structure" not in text

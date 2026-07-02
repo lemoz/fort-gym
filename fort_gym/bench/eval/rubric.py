@@ -184,6 +184,10 @@ def evaluate_trace_records(records: List[Dict[str, Any]], *, window: int = RUBRI
         _metric_max(recent, "fortress_complexity_spaces_completed"),
         _nested_work_max(recent, "fortress_complexity_spaces_completed"),
     )
+    # plan-agnostic fort structure (from fort_metrics.lua via the runner)
+    fort_enclosed_spaces = _metric_max(recent, "fort_enclosed_spaces")
+    fort_functional_rooms = _metric_max(recent, "fort_functional_rooms")
+    fort_constructions = _metric_max(recent, "fort_constructions")
     final_pop = 0
     final_food = 0
     final_drink = 0
@@ -216,9 +220,22 @@ def evaluate_trace_records(records: List[Dict[str, Any]], *, window: int = RUBRI
             "Fort health is good when population survives and basic stocks remain available.",
         ),
         "shelter_layout": _dimension(
-            min(10.0, completion_progress / 2.5 + completed_spaces * 2.0),
-            [f"completion_progress={completion_progress}", f"completed_spaces={completed_spaces}"],
-            "Shelter credit requires real tile completion, not only elapsed time.",
+            min(
+                10.0,
+                fort_functional_rooms * 3.0
+                + fort_enclosed_spaces * 1.5
+                + min(2.0, fort_constructions / 10.0)
+                + completion_progress / 5.0
+                + completed_spaces * 1.0,
+            ),
+            [
+                f"fort_functional_rooms={fort_functional_rooms}",
+                f"fort_enclosed_spaces={fort_enclosed_spaces}",
+                f"fort_constructions={fort_constructions}",
+                f"completion_progress={completion_progress}",
+            ],
+            "Shelter credit requires real enclosed structure the player built — "
+            "functional rooms bounded by walls/buildings/doors — not elapsed time.",
         ),
         "production_economy": _dimension(
             min(10.0, production_progress + utility_progress / 2.0 + carpenter_workshops * 2.0 + manager_orders),
@@ -266,8 +283,13 @@ def evaluate_trace_records(records: List[Dict[str, Any]], *, window: int = RUBRI
         2,
     )
     blockers: List[str] = []
-    if completion_progress <= 0 and work_progress <= 0:
-        blockers.append("no_real_layout_progress")
+    if (
+        fort_enclosed_spaces <= 0
+        and fort_constructions <= 0
+        and completion_progress <= 0
+        and work_progress <= 0
+    ):
+        blockers.append("no_fort_structure")
     if carpenter_workshops <= 0 and production_progress <= 0:
         blockers.append("no_production_surface")
     if complexity_progress <= 0 and completed_spaces <= 0:
