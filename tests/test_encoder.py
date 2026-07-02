@@ -1448,3 +1448,154 @@ def test_encoder_ignores_malformed_plan_rects_without_crashing() -> None:
 
     assert "Plan rects" not in text
     assert "No legal BUILD site observed yet." in text
+
+
+def test_encoder_surfaces_full_crew_block() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 6, "stone": 0},
+            "crew": {
+                "ok": True,
+                "citizens": {
+                    "total": 7,
+                    "idle": 6,
+                    "mining_labor": 1,
+                    "carpentry_labor": 2,
+                    "woodcutting_labor": 1,
+                    "masonry_labor": 0,
+                    "herbalism_labor": 0,
+                },
+                "jobs": {
+                    "total": 1,
+                    "dig": 0,
+                    "construct_building": 0,
+                    "workshop_task": 0,
+                    "suspended": 0,
+                    "entries": [
+                        {
+                            "type": "Fish",
+                            "pos": [165, 132, 177],
+                            "suspended": False,
+                            "has_worker": True,
+                        }
+                    ],
+                },
+                "workshops": [
+                    {
+                        "id": 1,
+                        "subtype": "Carpenters",
+                        "pos": [98, 96, 177],
+                        "built": True,
+                        "stage": 3,
+                        "max_stage": 3,
+                        "queued_jobs": 0,
+                    }
+                ],
+                "rect_tiles": {
+                    "rect": [100, 90, 177, 106, 96, 177],
+                    "wall": 3,
+                    "floor": 20,
+                    "shrub_or_other": 9,
+                    "designated": 0,
+                },
+            },
+        },
+        screen_text="main map",
+    )
+
+    assert (
+        "Crew: 7 citizens, 6 idle; labors: mining=1, carpentry=2, woodcutting=1, "
+        "masonry=0, herbalism=0" in text
+    )
+    assert (
+        "Jobs: total=1 (dig=0, construct_building=0, workshop_tasks=0, suspended=0); "
+        "sample: Fish@(165,132,177)" in text
+    )
+    assert (
+        "Workshop id=1 Carpenters at (98,96,177): construction COMPLETE "
+        "(stage 3/3), queued_jobs=0" in text
+    )
+    assert "ORDER can queue jobs to any built carpenter workshop." in text
+    assert (
+        "Plan-area tiles: wall=3 (diggable), floor=20, shrub/other=9 "
+        "(not diggable — DIG designations on non-wall tiles are silently dropped "
+        "by DF), designated=0" in text
+    )
+
+
+def test_encoder_flags_stalled_workshop_construction() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 6, "stone": 0},
+            "crew": {
+                "ok": True,
+                "jobs": {
+                    "total": 0,
+                    "dig": 0,
+                    "construct_building": 0,
+                    "workshop_task": 0,
+                    "suspended": 0,
+                },
+                "workshops": [
+                    {
+                        "id": 2,
+                        "subtype": "Carpenters",
+                        "pos": [98, 96, 177],
+                        "built": False,
+                        "stage": 1,
+                        "max_stage": 3,
+                        "queued_jobs": 0,
+                    }
+                ],
+            },
+        },
+        screen_text="main map",
+    )
+
+    assert (
+        "Workshop id=2 Carpenters at (98,96,177): UNDER CONSTRUCTION "
+        "(stage 1/3), queued_jobs=0" in text
+    )
+    assert "no construct job exists; construction is stalled" in text
+
+
+def test_encoder_ignores_malformed_or_disabled_crew_without_crashing() -> None:
+    text_disabled, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 6, "stone": 0},
+            "crew": {"ok": False},
+        },
+        screen_text="main map",
+    )
+    assert "Crew:" not in text_disabled
+
+    text_junk, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 6, "stone": 0},
+            "crew": "junk",
+        },
+        screen_text="main map",
+    )
+    assert "Crew:" not in text_junk
+
+    text_missing_subkeys, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 6, "stone": 0},
+            "crew": {"ok": True},
+        },
+        screen_text="main map",
+    )
+    assert "Crew:" not in text_missing_subkeys
+    assert "Jobs:" not in text_missing_subkeys
+    assert "Workshop id=" not in text_missing_subkeys
+    assert "Plan-area tiles:" not in text_missing_subkeys

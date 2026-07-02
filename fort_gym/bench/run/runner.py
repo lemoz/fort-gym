@@ -20,6 +20,7 @@ from ..env.scenarios import evaluate_scenario_assertions, get_mock_scenario
 from ..env.state_reader import StateReader
 from ..dfhack_backend import (
     prepare_keystroke_target,
+    read_job_metrics,
     read_map_snapshot,
     read_view_state,
     read_work_metrics,
@@ -1461,8 +1462,21 @@ def run_once(
         def pause_env() -> None:
             dfhack_client.pause()
 
+        def attach_crew_metrics(state: Dict[str, Any]) -> Dict[str, Any]:
+            """Attach read-only crew/job/workshop observability for governed runs."""
+
+            if not is_governed_dfhack_mode:
+                return state
+            crew = read_job_metrics(_map_snapshot_rect_from_state(state))
+            if isinstance(crew, dict) and crew.get("ok"):
+                state = dict(state)
+                state["crew"] = crew
+            return state
+
         def observe() -> Dict[str, Any]:
-            return attach_governed_build_site(StateReader.from_dfhack(dfhack_client))
+            return attach_crew_metrics(
+                attach_governed_build_site(StateReader.from_dfhack(dfhack_client))
+            )
 
         def apply_action(action_dict: Dict[str, Any], state: Dict[str, Any]) -> Dict[str, Any]:
             return executor.apply(action_dict, backend="dfhack", state=state)

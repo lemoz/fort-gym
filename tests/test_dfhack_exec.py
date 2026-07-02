@@ -172,3 +172,24 @@ def test_prepare_keystroke_tree_material_target_uses_broad_selection() -> None:
     assert "count_designatable_rect" in hook_text
     assert "selection_payload(" in hook_text
     assert "chop a broad visible tree area" in hook_text
+
+
+def test_job_metrics_is_read_only_and_reports_crew() -> None:
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua"
+    ).read_text(encoding="utf-8")
+    for needle in (
+        "mining_labor",
+        "carpentry_labor",
+        "woodcutting_labor",
+        "construct_building",
+        "getBuildStage",
+        "shrub_or_other",
+        "has_worker",
+    ):
+        assert needle in script
+    # read-only: must never write designations or tiletypes
+    assert "designation[dx][dy].dig ~=" in script
+    assert "= df.tile_dig_designation.Default" not in script
+    assert "block.tiletype[dx][dy] =" not in script
+    assert "flags.designated = true" not in script

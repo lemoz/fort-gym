@@ -1166,3 +1166,17 @@ def test_governed_gameplay_proof_accepts_real_tile_changes_during_wait() -> None
     )
     assert proof["ok"] is True
     assert proof["changed_tile_count"] == 1
+
+
+def test_governed_runner_attaches_crew_observability() -> None:
+    runner_text = (
+        Path(__file__).resolve().parents[1]
+        / "fort_gym"
+        / "bench"
+        / "run"
+        / "runner.py"
+    ).read_text(encoding="utf-8")
+
+    assert "def attach_crew_metrics" in runner_text
+    assert "read_job_metrics(_map_snapshot_rect_from_state(state))" in runner_text
+    assert 'state["crew"] = crew' in runner_text
