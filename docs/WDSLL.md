@@ -43,7 +43,17 @@ evidence recorded. Evidence: run `8a9b07cc610f4b61bdd579e688db58dd`
 47.25 **with blockers** `repetitive_policy`, `no_real_layout_progress`,
 `no_production_surface`. G1 proves plumbing, not play.
 
-### G2 — Parity with the scripted ceiling
+### G2 — Parity with the scripted ceiling (PASSED 2026-07-02, 5/5)
+Evidence: runs `8a909aa1`, `35fbdee6`, `56c5ac38`, `e043c0fc`, `821a03e4` at
+commit `13db60d7d` — scores 195.5–204.7 vs the 121.5 ceiling, rubric
+84.8–85.7 vs the ceiling run's 74.1, 28–30/30 proof-backed steps and 30/30
+recorded screen frames per run, blockers within the allowed set (run
+`e043c0fc`: zero blockers). Policy: build workshop → order → detect wood
+starvation → chop trunks → sustain production; dwarves completed workshop
+tasks consuming felled logs. Passed under the 2026-07-02 measurement
+corrections (see log below), which were operator-approved before the series
+ran; the agent itself was unchanged from the failed third series.
+
 On ≥3 of 5 public runs (same seed, ≤30 steps, ≤2000 ticks/step):
 - ≥3 steps with `gameplay_proof.ok = true`, at least one of them showing a
   real tile change (`changed_tile_count > 0`) — the mechanism (dig, chop,
