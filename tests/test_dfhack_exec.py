@@ -204,3 +204,11 @@ def test_job_metrics_is_read_only_and_reports_crew() -> None:
     assert "= df.tile_dig_designation.Default" not in script
     assert "block.tiletype[dx][dy] =" not in script
     assert "flags.designated = true" not in script
+
+
+def test_job_metrics_reports_finished_goods_counts() -> None:
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua"
+    ).read_text(encoding="utf-8")
+    for needle in ("GOODS_ITEM_TYPES", "'BED'", "'BARREL'", "'WOOD'", "out.goods"):
+        assert needle in script

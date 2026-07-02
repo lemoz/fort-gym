@@ -1599,3 +1599,35 @@ def test_encoder_ignores_malformed_or_disabled_crew_without_crashing() -> None:
     assert "Jobs:" not in text_missing_subkeys
     assert "Workshop id=" not in text_missing_subkeys
     assert "Plan-area tiles:" not in text_missing_subkeys
+
+
+def test_encoder_surfaces_finished_goods_counts() -> None:
+    state = {
+        "time": 100,
+        "population": 7,
+        "stocks": {"food": 40, "drink": 50},
+        "crew": {
+            "ok": True,
+            "goods": {"bed": 3, "door": 0, "table": 1, "chair": 0, "barrel": 12, "bin": 0, "wood": 250},
+        },
+    }
+
+    obs_text, _ = encode_observation(state)
+
+    assert "Finished goods in play: " in obs_text
+    assert "beds=3" in obs_text
+    assert "tables=1" in obs_text
+    assert "wood_logs=250" in obs_text
+
+
+def test_encoder_ignores_malformed_goods() -> None:
+    state = {
+        "time": 100,
+        "population": 7,
+        "stocks": {},
+        "crew": {"ok": True, "goods": {"bed": "junk"}},
+    }
+
+    obs_text, _ = encode_observation(state)
+
+    assert "Finished goods in play" not in obs_text

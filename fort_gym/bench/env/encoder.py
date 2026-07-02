@@ -1243,6 +1243,19 @@ def encode_observation(
                         )
                 status_lines.append(workshop_line)
 
+        goods = crew.get("goods")
+        if isinstance(goods, dict) and goods:
+            goods_parts = []
+            for key in ("bed", "door", "table", "chair", "barrel", "bin", "wood"):
+                value = _int_or_none(goods.get(key))
+                if value is not None:
+                    label = "wood_logs" if key == "wood" else f"{key}s"
+                    goods_parts.append(f"{label}={value}")
+            if goods_parts:
+                status_lines.append(
+                    "Finished goods in play: " + ", ".join(goods_parts)
+                )
+
         rect_tiles = crew.get("rect_tiles")
         if isinstance(rect_tiles, dict) and rect_tiles:
             wall = _int_or_none(rect_tiles.get("wall"))

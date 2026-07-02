@@ -115,6 +115,22 @@ while link do
   link = link.next
 end
 
+-- finished goods and logs currently in play (read-only counts)
+local GOODS_ITEM_TYPES = { 'BED', 'DOOR', 'TABLE', 'CHAIR', 'BARREL', 'BIN', 'WOOD' }
+do
+  local counts = {}
+  for _, item in ipairs(df.global.world.items.other.IN_PLAY) do
+    local ok, name = pcall(function() return df.item_type[item:getType()] end)
+    if ok and name then
+      counts[name] = (counts[name] or 0) + 1
+    end
+  end
+  out.goods = {}
+  for _, key in ipairs(GOODS_ITEM_TYPES) do
+    out.goods[string.lower(key)] = counts[key] or 0
+  end
+end
+
 -- workshops with construction stage and queued jobs
 for _, bld in ipairs(df.global.world.buildings.all) do
   local ok, is_workshop = pcall(function()
