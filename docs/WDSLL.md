@@ -45,11 +45,15 @@ evidence recorded. Evidence: run `8a9b07cc610f4b61bdd579e688db58dd`
 
 ### G2 — Parity with the scripted ceiling
 On ≥3 of 5 public runs (same seed, ≤30 steps, ≤2000 ticks/step):
-- `completion_progress > 0` (real dug floor, not designations),
-- `carpenter_workshops_usable ≥ 1`,
-- ≥1 manager/workshop order created (`created_job_ids` in a governed step),
+- ≥3 steps with `gameplay_proof.ok = true`, at least one of them a DIG whose
+  tile diff shows real wall→floor change,
+- a BUILT carpenter workshop exists (construction stage complete — from the
+  crew/workshops evidence or `carpenter_workshops_usable ≥ 1`),
+- ≥1 order created (`created_job_ids` in a governed step),
 - `total_score ≥ 121.5` (the scripted reference on this seed),
-- rubric blockers empty.
+- no rubric blockers beyond the ceiling run's own set (currently exactly
+  `{no_real_layout_progress}`) — `repetitive_policy`, `no_production_surface`,
+  and `illegal_or_assisted_progress_seen` must be absent.
 
 **Kill/iterate rule**: if 0 of 5 pass after two iterations of
 observation-surface or prompt fixes (no heuristics, no scripted plans), the
@@ -96,6 +100,24 @@ has never seen, reaching G2-level milestones. This is the gate that separates
 Gaps to close as gates need them: order-completion milestone facts for G3
 (milestones.py currently only has POP_10/DRINK_50/HOSTILES), plan-agnostic
 metrics for G6.
+
+## Spec corrections log
+
+Corrections fix measurement against verified reality; they never soften a
+gate. Each entry states what changed and the evidence that forced it.
+
+- **2026-07-01 — G2 criteria corrected after live-state diagnosis.** Original
+  G2 required `completion_progress > 0` and "rubric blockers empty". Read-only
+  inspection of the live save showed (a) the plan rects sit on **surface
+  terrain** — mostly open floor and shrub tiles, ~3 diggable walls — so the
+  hardcoded room-completion metric cannot move there, and (b) the scripted
+  ceiling run itself scores `completion_progress = 0` and carries the
+  `no_real_layout_progress` blocker. A parity gate the reference run fails as
+  written is a measurement bug. Replaced with: real DIG-driven tile change in
+  `gameplay_proof`, and "no blockers beyond the ceiling run's own set". The
+  same diagnosis found the `carpenter_workshops_usable` metric is rect-scoped
+  and missed a fully built workshop at (98,96,177) — the workshop criterion
+  now accepts global built-workshop evidence.
 
 ## Reporting format (every gate attempt)
 
