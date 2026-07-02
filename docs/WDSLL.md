@@ -72,7 +72,14 @@ observation-surface or prompt fixes (no heuristics, no scripted plans), the
 `OPENROUTER_MODEL` and rerun, or accept the finding and stop claiming an LLM
 plays. Do not rescue the gate by softening it.
 
-### G3 — Production proof (finished goods, not queues)
+### G3 — Production proof (finished goods, not queues) (PASSED 2026-07-02)
+Evidence: run `e25f90eedb7d4a3cb7a36ce863d3ed5e` at commit `4c72e8da1`
+(https://fortgym.live/r/LEI7BPnbzyDNMtNHR5D3ei-NuzThm3js) — bed count 0 → 19
+within one run (seed reset gives a clean zero baseline), all from the run's
+own accepted orders; workshop-consumption state deltas on 2 steps; score
+197.48, rubric 86.5, zero blockers, 30/30 recorded frames. Passed on the
+item-delta branch of the OR (created_wealth = 0, engine-stale as documented).
+
 A public run where a queued order **completes**:
 - ≥1 step whose `gameplay_proof` state deltas show workshop consumption
   (`carpenter_workshop_completed_tasks` / `wood_consumed_by_workshop`), and
