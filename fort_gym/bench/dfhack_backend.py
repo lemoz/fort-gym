@@ -16,6 +16,7 @@ REPO_HOOK_ROOT = Path(__file__).resolve().parents[2] / "hook"
 
 ALLOWED_ITEMS = {"bed", "door", "table", "chair", "barrel", "bin"}
 ALLOWED_WORKSHOPS = {"CarpenterWorkshop"}
+ALLOWED_FURNITURE = {"Bed", "Door", "Table", "Chair"}
 MAX_QTY = 5
 MAX_RECT_W = 30
 MAX_RECT_H = 30
@@ -115,6 +116,52 @@ def build_workshop(
     try:
         return run_lua_file(
             _hook_path("build_workshop.lua"),
+            kind,
+            str(x_val),
+            str(y_val),
+            str(z_val),
+        )
+    except (DFHackError, OSError) as exc:
+        return {"ok": False, "error": str(exc)}
+
+
+
+def place_furniture(
+    kind: str,
+    x: int,
+    y: int,
+    z: int,
+    *,
+    work_rect: tuple[int, int, int, int, int, int] | None = None,
+    extra_allowed_rects: Sequence[tuple[int, int, int, int, int, int]] | None = None,
+) -> Dict[str, object]:
+    """Install a finished furniture item as a bounded 1x1 building.
+
+    Uses an existing produced item and creates a normal install job that a
+    dwarf completes over real time — the player's b-menu placement.
+    """
+
+    if kind not in ALLOWED_FURNITURE:
+        return {"ok": False, "error": "invalid_kind"}
+
+    x_val = int(x)
+    y_val = int(y)
+    z_val = int(z)
+    resolved_work_rect = work_rect or _work_rect_from_env()
+    allowed_rects = (
+        resolved_work_rect,
+        _fortress_workshop_rect(resolved_work_rect),
+        *(extra_allowed_rects or ()),
+    )
+    if not any(
+        _footprint_in_rect(x_val, y_val, z_val, rect, width=1, height=1)
+        for rect in allowed_rects
+    ):
+        return {"ok": False, "error": "outside_work_rect"}
+
+    try:
+        return run_lua_file(
+            _hook_path("place_furniture.lua"),
             kind,
             str(x_val),
             str(y_val),
@@ -475,6 +522,7 @@ __all__ = [
     "MAX_SNAPSHOT_H",
     "queue_manager_order",
     "build_workshop",
+    "place_furniture",
     "designate_rect",
     "complete_dig_rect",
     "read_work_metrics",

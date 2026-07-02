@@ -44,10 +44,12 @@ and work over time. kind "chop" designates the tree trunks inside the rect for f
 observation's plan-area line reports tree_trunk counts); a dwarf with the woodcutting labor fells \
 them over time and the logs appear in the Wood stock. Carpentry production consumes wood — \
 without logs, workshop orders cancel.
-- BUILD: params {"kind": "CarpenterWorkshop", "x": X, "y": Y, "z": Z}. Places a 3x3 carpenter \
-workshop whose footprint must fit fully on open floor inside your work area. The observation's work \
-metrics include a `carpenter_build_site` when a legal spot is visible. After placement a dwarf must \
-construct it (watch the workshop's construction stage in the crew/jobs section).
+- BUILD: params {"kind": "CarpenterWorkshop"|"Bed"|"Door"|"Table"|"Chair", "x": X, "y": Y, "z": Z}. \
+CarpenterWorkshop places a 3x3 workshop on open floor inside your work area (the work metrics \
+include a `carpenter_build_site` when a legal spot is visible); a dwarf must then construct it. \
+Furniture kinds install an already-produced item of that type as a 1x1 building inside the plan \
+rects — a dwarf hauls and installs it over time. Installing furniture requires a finished item in \
+stock (see "Finished goods in play"); installed beds/doors/tables/chairs make rooms functional.
 - ORDER: params {"job": <item>, "quantity": 1-5}. Queues production to any BUILT carpenter workshop \
 (construction stage complete), wherever it stands. Items: bed, door, table, chair, barrel, bin. \
 Dwarves then do the work.

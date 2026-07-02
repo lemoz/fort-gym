@@ -1631,3 +1631,19 @@ def test_encoder_ignores_malformed_goods() -> None:
     obs_text, _ = encode_observation(state)
 
     assert "Finished goods in play" not in obs_text
+
+
+def test_encoder_surfaces_placed_furniture_buildings() -> None:
+    state = {
+        "time": 100,
+        "population": 7,
+        "stocks": {},
+        "crew": {
+            "ok": True,
+            "placed_furniture": {"bed": 2, "door": 0, "table": 1, "chair": 0},
+        },
+    }
+
+    obs_text, _ = encode_observation(state)
+
+    assert "Placed furniture buildings: beds=2, doors=0, tables=1, chairs=0" in obs_text

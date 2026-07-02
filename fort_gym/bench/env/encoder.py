@@ -1243,6 +1243,18 @@ def encode_observation(
                         )
                 status_lines.append(workshop_line)
 
+        placed = crew.get("placed_furniture")
+        if isinstance(placed, dict) and placed:
+            placed_parts = []
+            for key in ("bed", "door", "table", "chair"):
+                value = _int_or_none(placed.get(key))
+                if value is not None:
+                    placed_parts.append(f"{key}s={value}")
+            if placed_parts:
+                status_lines.append(
+                    "Placed furniture buildings: " + ", ".join(placed_parts)
+                )
+
         goods = crew.get("goods")
         if isinstance(goods, dict) and goods:
             goods_parts = []

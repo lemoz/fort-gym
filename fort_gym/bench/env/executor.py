@@ -10,6 +10,7 @@ from .dfhack_client import DFHackClient, DFHackUnavailableError
 from ..dfhack_backend import build_workshop as safe_build_workshop
 from ..dfhack_backend import complete_dig_rect as safe_complete_dig_rect
 from ..dfhack_backend import designate_rect as safe_designate_rect
+from ..dfhack_backend import place_furniture as safe_place_furniture
 from ..dfhack_backend import queue_manager_order as safe_queue_manager_order
 from .keystroke_exec import execute_keystroke_action
 from .mock_env import MockEnvironment
@@ -112,10 +113,13 @@ class Executor:
 
             if action_type == "BUILD":
                 kind = params.get("kind")
-                if kind != "CarpenterWorkshop":
+                if kind not in {"CarpenterWorkshop", "Bed", "Door", "Table", "Chair"}:
                     return {
                         "accepted": False,
-                        "why": "Only CarpenterWorkshop supported in beta",
+                        "why": (
+                            "Unsupported BUILD kind: expected CarpenterWorkshop "
+                            "or furniture (Bed/Door/Table/Chair)"
+                        ),
                     }
                 try:
                     x = int(params["x"])
@@ -138,14 +142,24 @@ class Executor:
                         rect = _normalize_rect(work.get(key))
                         if rect is not None:
                             extra_allowed_rects.append(rect)
-                result = safe_build_workshop(
-                    kind,
-                    x,
-                    y,
-                    z,
-                    work_rect=work_rect,
-                    extra_allowed_rects=extra_allowed_rects,
-                )
+                if kind == "CarpenterWorkshop":
+                    result = safe_build_workshop(
+                        kind,
+                        x,
+                        y,
+                        z,
+                        work_rect=work_rect,
+                        extra_allowed_rects=extra_allowed_rects,
+                    )
+                else:
+                    result = safe_place_furniture(
+                        kind,
+                        x,
+                        y,
+                        z,
+                        work_rect=work_rect,
+                        extra_allowed_rects=extra_allowed_rects,
+                    )
                 return {
                     "accepted": bool(result.get("ok")),
                     "why": None if result.get("ok") else result.get("error"),
