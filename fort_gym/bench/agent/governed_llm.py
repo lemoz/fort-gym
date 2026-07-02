@@ -37,9 +37,12 @@ what actually changed. Your score comes only from real observed fortress state: 
 workshops, production, wealth, and dwarves staying alive.
 
 Legal actions (the only four types accepted):
-- DIG: params {"area": [x, y, z], "size": [w, h, 1]}. Designates a dig rectangle (max 30x30, one \
-z-level). Only WALL tiles can be dug; DF silently drops designations on floor/shrub/other tiles. \
-Miners with the mining labor must then reach the walls and dig them out over time.
+- DIG: params {"area": [x, y, z], "size": [w, h, 1], "kind": "dig"|"channel"|"chop"}. \
+kind dig/channel designates the rectangle (max 30x30, one z-level); only WALL tiles can be dug — \
+DF silently drops designations on floor/shrub/other tiles, and miners must then reach the walls \
+and work over time. kind "chop" designates map trees for felling (not rect-bounded); a dwarf with \
+the woodcutting labor fells them over time and the logs appear in the Wood stock. Carpentry \
+production consumes wood — without logs, workshop orders cancel.
 - BUILD: params {"kind": "CarpenterWorkshop", "x": X, "y": Y, "z": Z}. Places a 3x3 carpenter \
 workshop whose footprint must fit fully on open floor inside your work area. The observation's work \
 metrics include a `carpenter_build_site` when a legal spot is visible. After placement a dwarf must \
