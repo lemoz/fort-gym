@@ -48,6 +48,16 @@ local function building_at(x, y, z)
   return ok and occupied or false
 end
 
+-- furniture a dwarf can stand on/next to belongs to the room's interior; a
+-- fully furnished bedroom must not stop being a room. Doors, workshops, and
+-- anything else seal the boundary.
+local INTERIOR_FURNITURE = { bed = true, table = true, chair = true }
+local furniture_tiles = {}
+
+local function interior_furniture_at(x, y, z)
+  return furniture_tiles[x .. ',' .. y .. ',' .. z] == true
+end
+
 -- collect player buildings with their footprints, grouped for classification
 local buildings = {}
 for _, bld in ipairs(df.global.world.buildings.all) do
@@ -67,7 +77,16 @@ for _, bld in ipairs(df.global.world.buildings.all) do
       cx = bld.centerx, cy = bld.centery,
     }
   end)
-  if ok and entry then table.insert(buildings, entry) end
+  if ok and entry then
+    table.insert(buildings, entry)
+    if INTERIOR_FURNITURE[entry.kind] then
+      for fx = entry.x1, entry.x2 do
+        for fy = entry.y1, entry.y2 do
+          furniture_tiles[fx .. ',' .. fy .. ',' .. entry.z] = true
+        end
+      end
+    end
+  end
 end
 
 local constructions = 0
@@ -89,8 +108,22 @@ local function flood(seed_x, seed_y, seed_z)
     local shape, hidden = tile_shape(x, y, seed_z)
     if shape == nil then
       enclosed = false
+    elseif interior_furniture_at(x, y, seed_z) then
+      -- beds/tables/chairs are part of the room they furnish
+      table.insert(tiles, { x, y })
+      if #tiles > MAX_COMPONENT_TILES then
+        enclosed = false
+        break
+      end
+      for _, d in ipairs({ { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }) do
+        local nx, ny = x + d[1], y + d[2]
+        if not visited[key(nx, ny)] then
+          visited[key(nx, ny)] = true
+          table.insert(queue, { nx, ny })
+        end
+      end
     elseif building_at(x, y, seed_z) then
-      -- buildings (incl. doors) close the boundary; not part of the space
+      -- other buildings (incl. doors and workshops) close the boundary
     elseif shape == WALL_SHAPE then
       -- walls (and tree trunks) close the boundary
     elseif INTERIOR_SHAPES[shape] and not hidden then
@@ -130,7 +163,9 @@ for _, bld in ipairs(buildings) do
       if not inside_fp and not seen_seed[seed_key] and #spaces < MAX_SPACES then
         seen_seed[seed_key] = true
         local shape, hidden = tile_shape(sx, sy, bld.z)
-        if INTERIOR_SHAPES[shape] and not hidden and not building_at(sx, sy, bld.z) then
+        local seedable = interior_furniture_at(sx, sy, bld.z)
+          or (INTERIOR_SHAPES[shape] and not hidden and not building_at(sx, sy, bld.z))
+        if seedable then
           local tiles, enclosed = flood(sx, sy, bld.z)
           if enclosed and #tiles > 0 then
             local lookup = {}

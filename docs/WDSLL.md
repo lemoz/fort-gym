@@ -199,6 +199,17 @@ gate. Each entry states what changed and the evidence that forced it.
   passes it. A construction action (BUILD kind=Wall/Floor) was added so the
   requirement is achievable through legal play.
 
+- **2026-07-02 — fort_metrics detector fix after G4 attempt #1 (run
+  `b8e07f4a`, FAIL 5/6).** The agent autonomously built a wall ring (steps
+  20–23), and furnished the enclosed room so completely (door, two beds, a
+  table in a 2×2 interior) that no free floor remained — and the flood-fill
+  defined rooms by free floor, so the room vanished from detection at step
+  32. Detector corrected: bed/table/chair tiles count as room interior and
+  valid flood seeds; walls, doors, and workshops still seal. Validated
+  against the live save: the agent's furnished bedroom reads as 1 functional
+  room. Gate criteria unchanged — the attempt still fails honestly at 1
+  functional room vs the required 2.
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,
