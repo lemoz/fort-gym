@@ -107,7 +107,17 @@ Note: this bar is deliberately higher than anything achieved to date — the
 record 60-step probe (236.68) fails it with zero enclosed rooms. Passing G4
 requires the agent to actually build shelter with the construction surface.
 
-### G5 — Memory pays rent (remembers and improves)
+### G5 — Memory pays rent (remembers and improves) (ATTEMPTED 2026-07-03: FAILED, inverted result)
+Evidence: 5-run memory-ON series (`3f3cdfdf`…`fca3f6c2`) vs 5-run memory-OFF
+control (`69d45ae8`…`1644cce7`), identical config, fresh slate each arm.
+Memory-ON rubric declined 90.4 → 82.6 (required: non-decreasing, +15);
+the control outperformed it — 3/5 fresh-slate runs built a functional room
+while memory-ON runs degenerated into unfocused wall-spam (66–94
+constructions, zero enclosures). Verdict: memory as currently implemented
+(failure tallies + persistent plan) is actively counterproductive for this
+policy. The gate stands unmodified — it did its job by isolating the effect;
+passing it requires a redesigned memory (e.g. causal lessons and successes,
+not failure counts), not a softer criterion.
 With persistent memory ON (`governed_llm_memory.json`) and the same seed:
 a 5-run series, identical config and prompts, where run-over-run rubric score
 is non-decreasing and the 5th run beats the 1st by ≥15 rubric points or
