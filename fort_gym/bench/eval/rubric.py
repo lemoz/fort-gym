@@ -88,6 +88,45 @@ def _nested_work_max(records: Iterable[Dict[str, Any]], field: str) -> int:
     return value
 
 
+_PROGRESS_FIELDS = (
+    "work_progress",
+    "completion_progress",
+    "utility_progress",
+    "production_progress",
+    "complexity_progress",
+    "ui_work_progress",
+)
+
+
+def _step_progress_flags(records: List[Dict[str, Any]]) -> List[bool]:
+    """Per record: did this step show real progress?
+
+    A step counts as progress-backed when its recorded ``gameplay_proof``
+    shows real state change, when a tracked progress metric advanced versus
+    the previous step, or when per-step UI work progress was observed.
+    """
+
+    flags: List[bool] = []
+    previous_metrics: Dict[str, Any] = {}
+    for record in records:
+        metrics = _metrics(record)
+        proof = record.get("gameplay_proof")
+        proof_ok = isinstance(proof, dict) and bool(proof.get("ok"))
+        productive = any(
+            _to_int(metrics.get(field)) > _to_int(previous_metrics.get(field))
+            for field in _PROGRESS_FIELDS
+        )
+        flags.append(
+            bool(
+                proof_ok
+                or productive
+                or _to_int(metrics.get("ui_step_work_progress")) > 0
+            )
+        )
+        previous_metrics = metrics
+    return flags
+
+
 def _dimension(score: float, evidence: List[str], critique: str) -> Dict[str, Any]:
     return {
         "score": round(max(0.0, min(10.0, score)), 2),
@@ -109,7 +148,19 @@ def evaluate_trace_records(records: List[Dict[str, Any]], *, window: int = RUBRI
     tick_steps = sum(1 for record in recent if _to_int(_tick_advance(record).get("ticks_advanced")) > 0)
     ticks_advanced = sum(_to_int(_tick_advance(record).get("ticks_advanced")) for record in recent)
     unique_action_types = len({item for item in action_types if item != "unknown"})
-    most_common_count = fingerprints.most_common(1)[0][1] if fingerprints else 0
+    # Repetition is a failure only when the repeated steps produced no real
+    # state change (the dimension's own critique text). Steps whose recorded
+    # gameplay_proof shows real change, or whose metrics advanced, do not
+    # count toward the repetition tally.
+    progress_flags = _step_progress_flags(recent)
+    stale_fingerprints = Counter(
+        _action_fingerprint(action)
+        for action, progressed in zip(actions, progress_flags)
+        if not progressed
+    )
+    most_common_count = (
+        stale_fingerprints.most_common(1)[0][1] if stale_fingerprints else 0
+    )
     repetition_ratio = most_common_count / total_steps if total_steps else 0.0
 
     completion_progress = _metric_max(recent, "completion_progress")
@@ -144,24 +195,7 @@ def evaluate_trace_records(records: List[Dict[str, Any]], *, window: int = RUBRI
         if final_pop or final_food or final_drink:
             break
 
-    no_progress_steps = 0
-    previous_metrics: Dict[str, Any] = {}
-    for record in recent:
-        metrics = _metrics(record)
-        productive = any(
-            _to_int(metrics.get(field)) > _to_int(previous_metrics.get(field))
-            for field in (
-                "work_progress",
-                "completion_progress",
-                "utility_progress",
-                "production_progress",
-                "complexity_progress",
-                "ui_work_progress",
-            )
-        )
-        if not productive and _to_int(metrics.get("ui_step_work_progress")) <= 0:
-            no_progress_steps += 1
-        previous_metrics = metrics
+    no_progress_steps = sum(1 for progressed in progress_flags if not progressed)
 
     illegal_markers: List[str] = []
     for record in recent:
@@ -217,7 +251,7 @@ def evaluate_trace_records(records: List[Dict[str, Any]], *, window: int = RUBRI
         ),
         "anti_repetition": _dimension(
             max(0.0, 10.0 - repetition_ratio * 10.0 - max(0, no_progress_steps - 3) * 0.25),
-            [f"top_fingerprint_ratio={repetition_ratio:.2f}", f"no_progress_steps={no_progress_steps}"],
+            [f"stale_fingerprint_ratio={repetition_ratio:.2f}", f"no_progress_steps={no_progress_steps}"],
             "Repeated identical actions without state change are a failure even if the scalar score rises.",
         ),
         "legal_evidence": _dimension(

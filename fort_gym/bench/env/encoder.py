@@ -1136,6 +1136,150 @@ def encode_observation(
                 f"{work.get('fortress_workshop_room_tiles', 0)}, "
                 f"completed_spaces={work.get('fortress_complexity_spaces_completed', 0)}/2"
             )
+
+    crew = clean_state.get("crew")
+    if isinstance(crew, dict) and crew.get("ok"):
+        citizens = crew.get("citizens") if isinstance(crew.get("citizens"), dict) else {}
+        if isinstance(citizens, dict) and citizens:
+            total = _int_or_none(citizens.get("total"))
+            idle = _int_or_none(citizens.get("idle"))
+            if total is not None and idle is not None:
+                labor_parts = []
+                for label, key in (
+                    ("mining", "mining_labor"),
+                    ("carpentry", "carpentry_labor"),
+                    ("woodcutting", "woodcutting_labor"),
+                    ("masonry", "masonry_labor"),
+                    ("herbalism", "herbalism_labor"),
+                ):
+                    labor_value = _int_or_none(citizens.get(key))
+                    if labor_value is not None:
+                        labor_parts.append(f"{label}={labor_value}")
+                crew_line = f"Crew: {total} citizens, {idle} idle"
+                if labor_parts:
+                    crew_line += "; labors: " + ", ".join(labor_parts)
+                status_lines.append(crew_line)
+
+        jobs = crew.get("jobs") if isinstance(crew.get("jobs"), dict) else {}
+        jobs_construct_building = None
+        if isinstance(jobs, dict) and jobs:
+            jobs_total = _int_or_none(jobs.get("total"))
+            jobs_dig = _int_or_none(jobs.get("dig"))
+            jobs_construct_building = _int_or_none(jobs.get("construct_building"))
+            jobs_workshop_task = _int_or_none(jobs.get("workshop_task"))
+            jobs_suspended = _int_or_none(jobs.get("suspended"))
+            if all(
+                value is not None
+                for value in (
+                    jobs_total,
+                    jobs_dig,
+                    jobs_construct_building,
+                    jobs_workshop_task,
+                    jobs_suspended,
+                )
+            ):
+                jobs_line = (
+                    f"Jobs: total={jobs_total} (dig={jobs_dig}, "
+                    f"construct_building={jobs_construct_building}, "
+                    f"workshop_tasks={jobs_workshop_task}, suspended={jobs_suspended})"
+                )
+                entries = jobs.get("entries")
+                if isinstance(entries, list) and entries:
+                    sample_parts = []
+                    for entry in entries[:3]:
+                        if not isinstance(entry, dict):
+                            continue
+                        entry_pos = _int_list_or_none(entry.get("pos"), 3)
+                        if entry_pos is None:
+                            continue
+                        entry_type = entry.get("type", "?")
+                        x, y, z = entry_pos
+                        sample = f"{entry_type}@({x},{y},{z})"
+                        if entry.get("suspended"):
+                            sample += "[suspended]"
+                        if entry.get("has_worker") is False:
+                            sample += "[unassigned]"
+                        sample_parts.append(sample)
+                    if sample_parts:
+                        jobs_line += "; sample: " + ", ".join(sample_parts)
+                status_lines.append(jobs_line)
+
+        workshops = crew.get("workshops")
+        if isinstance(workshops, list) and workshops:
+            for workshop in workshops[:5]:
+                if not isinstance(workshop, dict):
+                    continue
+                workshop_pos = _int_list_or_none(workshop.get("pos"), 3)
+                if workshop_pos is None:
+                    continue
+                workshop_id = _int_or_none(workshop.get("id"))
+                stage = _int_or_none(workshop.get("stage"))
+                max_stage = _int_or_none(workshop.get("max_stage"))
+                queued_jobs = _int_or_none(workshop.get("queued_jobs"))
+                if None in (workshop_id, stage, max_stage, queued_jobs):
+                    continue
+                subtype = workshop.get("subtype", "?")
+                x, y, z = workshop_pos
+                built = bool(workshop.get("built")) or stage >= max_stage
+                if built:
+                    workshop_line = (
+                        f"Workshop id={workshop_id} {subtype} at ({x},{y},{z}): "
+                        f"construction COMPLETE (stage {stage}/{max_stage}), "
+                        f"queued_jobs={queued_jobs}"
+                    )
+                    if subtype == "Carpenters":
+                        workshop_line += (
+                            " — ORDER can queue jobs to any built carpenter workshop."
+                        )
+                else:
+                    workshop_line = (
+                        f"Workshop id={workshop_id} {subtype} at ({x},{y},{z}): "
+                        f"UNDER CONSTRUCTION (stage {stage}/{max_stage}), "
+                        f"queued_jobs={queued_jobs}"
+                    )
+                    if jobs_construct_building == 0:
+                        workshop_line += (
+                            " — no construct job exists; construction is stalled"
+                        )
+                status_lines.append(workshop_line)
+
+        goods = crew.get("goods")
+        if isinstance(goods, dict) and goods:
+            goods_parts = []
+            for key in ("bed", "door", "table", "chair", "barrel", "bin", "wood"):
+                value = _int_or_none(goods.get(key))
+                if value is not None:
+                    label = "wood_logs" if key == "wood" else f"{key}s"
+                    goods_parts.append(f"{label}={value}")
+            if goods_parts:
+                status_lines.append(
+                    "Finished goods in play: " + ", ".join(goods_parts)
+                )
+
+        rect_tiles = crew.get("rect_tiles")
+        if isinstance(rect_tiles, dict) and rect_tiles:
+            wall = _int_or_none(rect_tiles.get("wall"))
+            tree = _int_or_none(rect_tiles.get("tree"))
+            floor = _int_or_none(rect_tiles.get("floor"))
+            shrub_or_other = _int_or_none(rect_tiles.get("shrub_or_other"))
+            designated = _int_or_none(rect_tiles.get("designated"))
+            if all(
+                value is not None
+                for value in (wall, floor, shrub_or_other, designated)
+            ):
+                tree_part = (
+                    f"tree_trunks={tree} (fell with DIG kind=chop for logs), "
+                    if tree is not None
+                    else ""
+                )
+                status_lines.append(
+                    f"Plan-area tiles: wall={wall} (diggable), {tree_part}"
+                    f"floor={floor}, "
+                    f"shrub/other={shrub_or_other} (not diggable — DIG designations "
+                    "on non-wall tiles are silently dropped by DF), "
+                    f"designated={designated}"
+                )
+
     if ui_work:
         status_lines.append(
             "Live UI target: "

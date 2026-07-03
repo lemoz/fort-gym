@@ -361,3 +361,47 @@ def test_summarize_tracks_work_progress(tmp_path) -> None:
     assert summary.fortress_complexity_floor_tiles == 28
     assert summary.fortress_complexity_wall_tiles == 0
     assert summary.fortress_complexity_spaces_completed == 2
+
+
+def test_rubric_does_not_flag_progress_backed_waits() -> None:
+    from fort_gym.bench.eval.rubric import evaluate_trace_records
+
+    records = []
+    for step in range(10):
+        records.append(
+            {
+                "step": step,
+                "action": {"type": "WAIT", "params": {}},
+                "execute": {"accepted": True, "provenance": "dfhack_governed"},
+                "metrics": {"pop": 7, "food": 40, "drink": 50},
+                "gameplay_proof": {"ok": True, "changed_tile_count": 4},
+                "tick_advance": {"ticks_advanced": 1000},
+            }
+        )
+
+    rubric = evaluate_trace_records(records)
+
+    assert "repetitive_policy" not in rubric["blockers"]
+    assert rubric["dimensions"]["anti_repetition"]["score"] == 10.0
+
+
+def test_rubric_still_flags_repetition_without_state_change() -> None:
+    from fort_gym.bench.eval.rubric import evaluate_trace_records
+
+    records = []
+    for step in range(10):
+        records.append(
+            {
+                "step": step,
+                "action": {"type": "WAIT", "params": {}},
+                "execute": {"accepted": True, "provenance": "dfhack_governed"},
+                "metrics": {"pop": 7, "food": 40, "drink": 50},
+                "gameplay_proof": {"ok": False, "changed_tile_count": 0},
+                "tick_advance": {"ticks_advanced": 1000},
+            }
+        )
+
+    rubric = evaluate_trace_records(records)
+
+    assert "repetitive_policy" in rubric["blockers"]
+    assert rubric["dimensions"]["anti_repetition"]["score"] < 5.0

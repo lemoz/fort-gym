@@ -43,13 +43,28 @@ evidence recorded. Evidence: run `8a9b07cc610f4b61bdd579e688db58dd`
 47.25 **with blockers** `repetitive_policy`, `no_real_layout_progress`,
 `no_production_surface`. G1 proves plumbing, not play.
 
-### G2 — Parity with the scripted ceiling
+### G2 — Parity with the scripted ceiling (PASSED 2026-07-02, 5/5)
+Evidence: runs `8a909aa1`, `35fbdee6`, `56c5ac38`, `e043c0fc`, `821a03e4` at
+commit `13db60d7d` — scores 195.5–204.7 vs the 121.5 ceiling, rubric
+84.8–85.7 vs the ceiling run's 74.1, 28–30/30 proof-backed steps and 30/30
+recorded screen frames per run, blockers within the allowed set (run
+`e043c0fc`: zero blockers). Policy: build workshop → order → detect wood
+starvation → chop trunks → sustain production; dwarves completed workshop
+tasks consuming felled logs. Passed under the 2026-07-02 measurement
+corrections (see log below), which were operator-approved before the series
+ran; the agent itself was unchanged from the failed third series.
+
 On ≥3 of 5 public runs (same seed, ≤30 steps, ≤2000 ticks/step):
-- `completion_progress > 0` (real dug floor, not designations),
-- `carpenter_workshops_usable ≥ 1`,
-- ≥1 manager/workshop order created (`created_job_ids` in a governed step),
+- ≥3 steps with `gameplay_proof.ok = true`, at least one of them showing a
+  real tile change (`changed_tile_count > 0`) — the mechanism (dig, chop,
+  build, or dwarf labor resolving during a wait) is not prescribed,
+- a BUILT carpenter workshop exists (construction stage complete — from the
+  crew/workshops evidence or `carpenter_workshops_usable ≥ 1`),
+- ≥1 order created (`created_job_ids` in a governed step),
 - `total_score ≥ 121.5` (the scripted reference on this seed),
-- rubric blockers empty.
+- no rubric blockers beyond the ceiling run's own set (currently exactly
+  `{no_real_layout_progress}`) — `repetitive_policy`, `no_production_surface`,
+  and `illegal_or_assisted_progress_seen` must be absent.
 
 **Kill/iterate rule**: if 0 of 5 pass after two iterations of
 observation-surface or prompt fixes (no heuristics, no scripted plans), the
@@ -57,11 +72,23 @@ observation-surface or prompt fixes (no heuristics, no scripted plans), the
 `OPENROUTER_MODEL` and rerun, or accept the finding and stop claiming an LLM
 plays. Do not rescue the gate by softening it.
 
-### G3 — Production proof (finished goods, not queues)
-A public run where a queued order **completes**: `gameplay_proof` /
-state deltas show the workshop consumed material and produced an item
-(e.g. wood stock down, bed exists), plus wealth delta > 0. Queued-but-never-
-built (today's failure mode) explicitly does not pass.
+### G3 — Production proof (finished goods, not queues) (PASSED 2026-07-02)
+Evidence: run `e25f90eedb7d4a3cb7a36ce863d3ed5e` at commit `4c72e8da1`
+(https://fortgym.live/r/LEI7BPnbzyDNMtNHR5D3ei-NuzThm3js) — bed count 0 → 19
+within one run (seed reset gives a clean zero baseline), all from the run's
+own accepted orders; workshop-consumption state deltas on 2 steps; score
+197.48, rubric 86.5, zero blockers, 30/30 recorded frames. Passed on the
+item-delta branch of the OR (created_wealth = 0, engine-stale as documented).
+
+A public run where a queued order **completes**:
+- ≥1 step whose `gameplay_proof` state deltas show workshop consumption
+  (`carpenter_workshop_completed_tasks` / `wood_consumed_by_workshop`), and
+- at least one of (operator-selected OR-form, 2026-07-02): (a)
+  `created_wealth > 0`, or (b) the in-play item count of a good type the run
+  actually ordered (`created_job_ids`) increases from the run's first
+  observation to its last (`crew.goods` deltas).
+
+Queued-but-never-built (the pre-chop failure mode) explicitly does not pass.
 
 ### G4 — Horizon (a fortress, not a demo)
 One public run, ≥50,000 ticks: population ≥ starting 7 with zero casualties
@@ -96,6 +123,49 @@ has never seen, reaching G2-level milestones. This is the gate that separates
 Gaps to close as gates need them: order-completion milestone facts for G3
 (milestones.py currently only has POP_10/DRINK_50/HOSTILES), plan-agnostic
 metrics for G6.
+
+## Spec corrections log
+
+Corrections fix measurement against verified reality; they never soften a
+gate. Each entry states what changed and the evidence that forced it.
+
+- **2026-07-01 — G2 criteria corrected after live-state diagnosis.** Original
+  G2 required `completion_progress > 0` and "rubric blockers empty". Read-only
+  inspection of the live save showed (a) the plan rects sit on **surface
+  terrain** — mostly open floor and shrub tiles, ~3 diggable walls — so the
+  hardcoded room-completion metric cannot move there, and (b) the scripted
+  ceiling run itself scores `completion_progress = 0` and carries the
+  `no_real_layout_progress` blocker. A parity gate the reference run fails as
+  written is a measurement bug. Replaced with: real DIG-driven tile change in
+  `gameplay_proof`, and "no blockers beyond the ceiling run's own set". The
+  same diagnosis found the `carpenter_workshops_usable` metric is rect-scoped
+  and missed a fully built workshop at (98,96,177) — the workshop criterion
+  now accepts global built-workshop evidence.
+
+- **2026-07-02 — G2 measurement corrected (operator-approved) after the
+  third series.** Final series scored 204.7–206.7 vs the 121.5 ceiling with
+  30/30 proof-backed steps per run, yet failed 0/5 on two criteria. (a) The
+  `repetitive_policy` blocker fired on 22/30 WAIT steps even though every one
+  showed real state change (wood accumulating, workshop tasks completing) —
+  the rubric's own critique text defines the failure as repetition "without
+  state change", but the implementation never checked state change. The
+  rubric now counts only no-progress steps toward the repetition ratio
+  (`_step_progress_flags` in `eval/rubric.py`); identical no-op spam still
+  fires the blocker (locked by test). (b) The G2 criterion "a DIG whose tile
+  diff shows wall→floor change" over-prescribed the mechanism on a surface
+  embark where the fort thrives without mining; corrected to "at least one
+  proof-backed step with a real tile change of any governed kind". Both
+  changes were approved by the operator before any re-run; the prior 0/5
+  results stand as recorded.
+
+- **2026-07-02 — G3 wealth clause made an OR with item-count evidence
+  (operator-selected).** DF's `ui.tasks.wealth` counters never recalculate on
+  this headless build: live inspection showed `furniture = 0` and
+  `total = 9` while 19 agent-produced beds existed in the world. The operator
+  chose the OR-form (wealth or item deltas) over replacing the clause,
+  keeping the wealth path alive if an engine-side recalculation trigger is
+  ever found. Item counts come from the read-only `crew.goods` observability
+  added at commit `4c72e8da1`.
 
 ## Reporting format (every gate attempt)
 

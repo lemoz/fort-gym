@@ -156,7 +156,18 @@ def test_designate_rect_reports_designation_counts() -> None:
     assert "already_designated" in hook_text
     assert "non_wall_tiles" in hook_text
     assert "missing_tiles" in hook_text
-    assert "autochop" in hook_text
+
+
+def test_designate_rect_chop_is_bounded_tree_designation() -> None:
+    hook_path = Path(__file__).resolve().parents[1] / "hook" / "designate_rect.lua"
+    hook_text = hook_path.read_text(encoding="utf-8")
+
+    # chop designates tree trunks inside the rect, like a player's d-t
+    assert "trees_designated" in hook_text
+    assert "non_tree_tiles" in hook_text
+    assert "df.tiletype_material.TREE" in hook_text
+    # the old global autochop pulse (broken on this DFHack: no such script) is gone
+    assert "autochop" not in hook_text
 
 
 def test_prepare_keystroke_tree_material_target_uses_broad_selection() -> None:
@@ -172,3 +183,32 @@ def test_prepare_keystroke_tree_material_target_uses_broad_selection() -> None:
     assert "count_designatable_rect" in hook_text
     assert "selection_payload(" in hook_text
     assert "chop a broad visible tree area" in hook_text
+
+
+def test_job_metrics_is_read_only_and_reports_crew() -> None:
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua"
+    ).read_text(encoding="utf-8")
+    for needle in (
+        "mining_labor",
+        "carpentry_labor",
+        "woodcutting_labor",
+        "construct_building",
+        "getBuildStage",
+        "shrub_or_other",
+        "has_worker",
+    ):
+        assert needle in script
+    # read-only: must never write designations or tiletypes
+    assert "designation[dx][dy].dig ~=" in script
+    assert "= df.tile_dig_designation.Default" not in script
+    assert "block.tiletype[dx][dy] =" not in script
+    assert "flags.designated = true" not in script
+
+
+def test_job_metrics_reports_finished_goods_counts() -> None:
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua"
+    ).read_text(encoding="utf-8")
+    for needle in ("GOODS_ITEM_TYPES", "'BED'", "'BARREL'", "'WOOD'", "out.goods"):
+        assert needle in script

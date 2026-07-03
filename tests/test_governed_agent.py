@@ -15,7 +15,7 @@ def test_governed_agent_starts_with_starter_room_dig() -> None:
     action = DFHackGovernedScriptedAgent().decide("", env.observe())
 
     assert action["type"] == "DIG"
-    assert action["params"] == {"area": [50, 35, 0], "size": [5, 5, 1]}
+    assert action["params"] == {"area": [50, 35, 0], "size": [5, 5, 1], "kind": "dig"}
     assert action["advance_ticks"] == 1000
     assert action["objective"]
 
@@ -72,7 +72,7 @@ def test_governed_agent_advances_when_live_starter_has_no_walls() -> None:
 
     assert action["type"] == "DIG"
     assert action["intent"] == "dig the east connector toward the workshop room"
-    assert action["params"] == {"area": [98, 93, 177], "size": [3, 1, 1]}
+    assert action["params"] == {"area": [98, 93, 177], "size": [3, 1, 1], "kind": "dig"}
 
 
 def test_governed_agent_builds_on_observed_site_when_annex_is_imperfect() -> None:

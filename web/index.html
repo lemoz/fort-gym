@@ -755,6 +755,17 @@
         || {};
     }
 
+    function formatReplayTicks(record) {
+      // ticks_advanced is the per-step delta (~1000 each step), which read as
+      // a broken up-and-down counter when shown bare. Show the delta labeled
+      // as such plus the monotonic in-run total when the trace has it.
+      const stepTicks = record?.tick_advance?.ticks_advanced;
+      const elapsed = record?.metrics?.run_elapsed_ticks;
+      const stepPart = stepTicks == null ? '--' : `+${Number(stepTicks).toLocaleString()}`;
+      if (elapsed == null) return `Ticks: ${stepPart} this step`;
+      return `Ticks: ${stepPart} this step (total ${Number(elapsed).toLocaleString()})`;
+    }
+
     function findActionRect(records, predicate) {
       for (const record of records) {
         const action = record.action || {};
@@ -1165,7 +1176,7 @@
       const stocks = snapshot.record?.state_after_advance?.stocks || snapshot.record?.observation?.stocks || {};
       const work = getRecordWork(snapshot.record);
       drawReplayText(`Keys: ${(snapshot.action.params?.keys || []).slice(0, 4).join(', ') || '--'}`, panel.x + 22, nextY);
-      drawReplayText(`Ticks: ${snapshot.record.tick_advance?.ticks_advanced ?? '--'}`, panel.x + 22, nextY + 26);
+      drawReplayText(formatReplayTicks(snapshot.record), panel.x + 22, nextY + 26);
       drawReplayText(`Wood: ${stocks.wood ?? '--'}  Stone: ${stocks.stone ?? '--'}`, panel.x + 22, nextY + 52);
       const plannedWorkshops = work.carpenter_workshops_planned ?? work.carpenter_workshops ?? 0;
       const usableWorkshops = work.carpenter_workshops_usable ?? work.carpenter_workshops ?? 0;
@@ -1242,7 +1253,7 @@
         size: 14,
         weight: 700
       });
-      drawReplayText(`Ticks: ${snapshot.record.tick_advance?.ticks_advanced ?? '--'}`, terminal.x + 28, y + 58, {
+      drawReplayText(formatReplayTicks(snapshot.record), terminal.x + 28, y + 58, {
         color: '#9fb1d6',
         size: 14,
         weight: 700

@@ -37,13 +37,20 @@ what actually changed. Your score comes only from real observed fortress state: 
 workshops, production, wealth, and dwarves staying alive.
 
 Legal actions (the only four types accepted):
-- DIG: params {"area": [x, y, z], "size": [w, h, 1]}. Designates a dig rectangle (max 30x30, one \
-z-level). Miners must then reach it and dig it out over time; designation alone is not progress.
+- DIG: params {"area": [x, y, z], "size": [w, h, 1], "kind": "dig"|"channel"|"chop"}. \
+kind dig/channel designates the rectangle (max 30x30, one z-level); only WALL tiles can be dug — \
+DF silently drops designations on floor/shrub/other tiles, and miners must then reach the walls \
+and work over time. kind "chop" designates the tree trunks inside the rect for felling (the \
+observation's plan-area line reports tree_trunk counts); a dwarf with the woodcutting labor fells \
+them over time and the logs appear in the Wood stock. Carpentry production consumes wood — \
+without logs, workshop orders cancel.
 - BUILD: params {"kind": "CarpenterWorkshop", "x": X, "y": Y, "z": Z}. Places a 3x3 carpenter \
 workshop whose footprint must fit fully on open floor inside your work area. The observation's work \
-metrics include a `carpenter_build_site` when a legal spot is visible.
-- ORDER: params {"job": <item>, "quantity": 1-5}. Queues production. Items: bed, door, table, \
-chair, barrel, bin. Needs a usable carpenter workshop; dwarves then do the work.
+metrics include a `carpenter_build_site` when a legal spot is visible. After placement a dwarf must \
+construct it (watch the workshop's construction stage in the crew/jobs section).
+- ORDER: params {"job": <item>, "quantity": 1-5}. Queues production to any BUILT carpenter workshop \
+(construction stage complete), wherever it stands. Items: bed, door, table, chair, barrel, bin. \
+Dwarves then do the work.
 - WAIT: params {}. Issues nothing and lets the simulation run.
 
 Every action must include "advance_ticks" (how many game ticks to run after the command, up to \

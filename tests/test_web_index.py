@@ -50,3 +50,15 @@ def test_live_index_uses_saved_replay_for_completed_runs() -> None:
     assert "state_after_advance?.work" in html
     assert "if (isRunning)" in html
     assert "if (!isRunning)" in html
+
+
+def test_replay_ticks_show_labeled_delta_and_monotonic_total() -> None:
+    html = Path("web/index.html").read_text(encoding="utf-8")
+
+    # per-step tick deltas must be labeled as deltas and paired with the
+    # monotonic in-run total, never shown as a bare oscillating number
+    assert "function formatReplayTicks(record)" in html
+    assert "run_elapsed_ticks" in html
+    assert "this step (total " in html
+    assert html.count("formatReplayTicks(snapshot.record)") == 2
+    assert "`Ticks: ${snapshot.record.tick_advance?.ticks_advanced" not in html

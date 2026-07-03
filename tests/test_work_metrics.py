@@ -371,3 +371,31 @@ def test_composite_score_continues_past_previous_caps() -> None:
 
     assert target_score == 145.0
     assert doubled_score == 215.0
+
+
+def test_read_job_metrics_enforces_rect_bounds(monkeypatch) -> None:
+    from fort_gym.bench import dfhack_backend
+
+    calls: list[tuple] = []
+
+    def fake_run_lua_file(path, *args, **kwargs):
+        calls.append((path, args))
+        return {"ok": True}
+
+    monkeypatch.setattr(dfhack_backend, "run_lua_file", fake_run_lua_file)
+
+    assert dfhack_backend.read_job_metrics((0, 0, 0, 40, 0, 0)) == {
+        "ok": False,
+        "error": "rect_too_large",
+    }
+    assert dfhack_backend.read_job_metrics((0, 0, 0, 5, 5, 1)) == {
+        "ok": False,
+        "error": "z_span_not_supported",
+    }
+    assert not calls
+
+    assert dfhack_backend.read_job_metrics() == {"ok": True}
+    assert calls[-1][1] == ()
+
+    assert dfhack_backend.read_job_metrics((0, 0, 7, 5, 5, 7)) == {"ok": True}
+    assert calls[-1][1] == ("0", "0", "7", "5", "5", "7")

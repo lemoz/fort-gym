@@ -198,6 +198,33 @@ def read_work_metrics(rect: tuple[int, int, int, int, int, int] | None = None) -
         return {"ok": False, "error": str(exc)}
 
 
+
+def read_job_metrics(
+    rect: tuple[int, int, int, int, int, int] | None = None,
+) -> Dict[str, object]:
+    """Read bounded, read-only crew/job/workshop observability metrics.
+
+    ``rect`` optionally adds a tile-composition report for that area (same
+    30x30 single-z bounds as the other helpers). Never mutates game state.
+    """
+
+    args: list[str] = []
+    if rect is not None:
+        x1, y1, z1, x2, y2, z2 = rect
+        width = abs(int(x2) - int(x1)) + 1
+        height = abs(int(y2) - int(y1)) + 1
+        if int(z1) != int(z2):
+            return {"ok": False, "error": "z_span_not_supported"}
+        if width > MAX_RECT_W or height > MAX_RECT_H:
+            return {"ok": False, "error": "rect_too_large"}
+        args = [str(int(v)) for v in (x1, y1, z1, x2, y2, z2)]
+
+    try:
+        return run_lua_file(_hook_path("job_metrics.lua"), *args, timeout=5.0)
+    except (DFHackError, OSError) as exc:
+        return {"ok": False, "error": str(exc)}
+
+
 def read_map_snapshot(rect: tuple[int, int, int, int, int, int]) -> Dict[str, object]:
     """Capture a bounded live DFHack map tile snapshot for replay proof."""
 
@@ -451,6 +478,7 @@ __all__ = [
     "designate_rect",
     "complete_dig_rect",
     "read_work_metrics",
+    "read_job_metrics",
     "read_map_snapshot",
     "prepare_keystroke_target",
     "read_view_state",
