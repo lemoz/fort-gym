@@ -118,6 +118,20 @@ treated as the binding criterion; this attempt failed the rooms criterion
 regardless. Closed-loop wall geometry remains the frontier across every
 model and configuration tested.
 
+Minimap attempt (2026-07-03, run `96d5e024`, GLM 5.2, memory-off, 100
+steps, commit `cba50525`): FAIL — the observation now renders an ASCII
+minimap of the fort with coordinate rulers and the explicit hollow-ring
+rule, and the agent still built a solid 3×4 wall block with the interior
+filled (30 constructions, zero enclosures, 29 wall actions including
+repeated retries on its own already-walled tiles). Combined with the nine
+prior attempts across three models, two score versions, and both memory
+configs, the evidence supports a strong claim: **maintaining a
+hollow-ring spatial invariant during incremental construction is beyond
+the reliable capability of the text-only models tested, even with
+rendered 2D views** — GPT-5.5 achieved it exactly once (attempt #1). G4
+stands as an honest open frontier; the remaining untested cheap lever is
+the minimap on GPT-5.5, the only model with a demonstrated ring.
+
 ### G5 — Memory pays rent (remembers and improves) (ATTEMPTED 2026-07-03: FAILED, inverted result)
 Evidence: 5-run memory-ON series (`3f3cdfdf`…`fca3f6c2`) vs 5-run memory-OFF
 control (`69d45ae8`…`1644cce7`), identical config, fresh slate each arm.
