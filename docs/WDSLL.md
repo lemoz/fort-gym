@@ -107,6 +107,17 @@ Note: this bar is deliberately higher than anything achieved to date — the
 record 60-step probe (236.68) fails it with zero enclosed rooms. Passing G4
 requires the agent to actually build shelter with the construction surface.
 
+First score-v2 attempt (2026-07-03, run `08135b67`, GLM 5.2 pinned,
+memory-off, 100 steps, honest-incentive prompt): FAIL — 36 constructions,
+zero enclosures, score 123.54 (v2 scale), rubric 67.05. Two notes: the
+truthful prompt shifted effort visibly toward walls and away from production
+(6 goods vs 30+ under v1 incentives), and v2's utility deflation lowers the
+rubric's production_economy inputs — the rubric ≥70 threshold was calibrated
+on v1-scale inputs and should be reviewed (operator decision) before it is
+treated as the binding criterion; this attempt failed the rooms criterion
+regardless. Closed-loop wall geometry remains the frontier across every
+model and configuration tested.
+
 ### G5 — Memory pays rent (remembers and improves) (ATTEMPTED 2026-07-03: FAILED, inverted result)
 Evidence: 5-run memory-ON series (`3f3cdfdf`…`fca3f6c2`) vs 5-run memory-OFF
 control (`69d45ae8`…`1644cce7`), identical config, fresh slate each arm.
