@@ -10,6 +10,10 @@ fort-gym is a Dwarf Fortress agent benchmark with two backends:
 
 Agents issue exactly one action per step. The harness records every observation/state/action to JSONL, streams live updates over SSE, and exposes admin/public web UIs plus 10-run job orchestration with summaries and leaderboards.
 
+**Core doctrine**: no fake scoring, no simulated-only proof, no passing off derived visualizations as gameplay. DFHack is a legal command transport only when bounded/audited (the "governed" path); score and progress must come from real DF state changes with replayable evidence. See "Evidence Boundaries & Scoring Provenance" below.
+
+**Model policy**: OpenRouter is the primary LLM provider (`OPENROUTER_MODEL`, default `z-ai/glm-5.2`). Anthropic agents are legacy and disabled by the API server unless `FORT_GYM_ENABLE_ANTHROPIC=1` — do not use Anthropic models for new work.
+
 ## Common Commands
 
 ### Development
@@ -226,39 +230,69 @@ Copy/paste this into a fresh Codex CLI session (max model config) as the entire 
 
 ### Agents
 
-Agents must implement `Agent.decide(obs_text: str, obs_json: dict) -> dict` returning exactly one action dictionary. Available agents:
-- `RandomAgent` (always available)
-- `FakeAgent` (deterministic responses, requires `fort_gym.bench.agent.fake_llm`)
-- OpenAI agents (requires `OPENAI_API_KEY`)
-- Anthropic agents (requires `ANTHROPIC_API_KEY`):
-  - `anthropic` - Toolbox mode with predefined actions (DIG, BUILD, ORDER)
-  - `anthropic-dig-first` - Toolbox mode tuned to start with a direct DFHack DIG action
-  - `anthropic-fortress-plan` - Toolbox mode tuned to carve a connector plus workshop annex before placing production
-  - `anthropic-keystroke` - Pure keystroke control, Claude sees screen and sends key commands
+Agents must implement `Agent.decide(obs_text: str, obs_json: dict) -> dict` returning exactly one action dictionary. Register new agents via `register_agent()` in `agent/base.py`; the API server lazily imports agent modules via `OPTIONAL_AGENT_MODULES` in `api/server.py`, so new model names must be added there too.
 
-Register new agents via `AGENT_FACTORIES` in `agent/base.py`.
+Registered models by category:
+
+**Governed (legal DFHack gameplay — the main research path):**
+- `dfhack-governed-scripted` (`agent/governed.py`) — deterministic Python state machine that validates the governed action substrate. No LLM.
+- `dfhack-governed-llm` (`agent/governed_llm.py`) — LLM policy (OpenRouter, default `z-ai/glm-5.2`) on the same governed action surface: DIG/BUILD/ORDER/WAIT with `MemoryManager` plan/POI memory.
+- Governed mode is gated by model name: the model must be in `GOVERNED_DFHACK_MODELS` in `run/runner.py`. A governed model name must NOT contain "keystroke" or end with "-research" (that would also match `_is_keystroke_model`).
+
+**Keystroke (raw UI control via CopyScreen + send-key):**
+- `openrouter-keystroke`, `openrouter-keystroke-perception-review`, `openrouter-glm-5.2` (`agent/llm_openrouter.py`) — default path, GLM 5.2 via OpenRouter.
+- `openai-keystroke-perception-review` (`agent/llm_openai.py`) — same machinery via OpenAI directly.
+- `anthropic-keystroke`, `-poi-review`, `-plan-review`, `-perception-review`, `-perception-review-opus`, `anthropic-research` (`agent/llm_anthropic.py`, `llm_anthropic_research.py`) — **legacy, disabled unless `FORT_GYM_ENABLE_ANTHROPIC=1`**.
+
+**Toolbox (structured actions, dfhack_assisted — does not earn gameplay score on dfhack):**
+- `anthropic`, `anthropic-dig-first`, `anthropic-fortress-plan` (legacy, gated), `openai`.
+
+**Utility:** `random` (always available), `fake` (deterministic, CI).
+
+### Evidence Boundaries & Scoring Provenance
+
+Five distinct surfaces — never conflate them:
+
+1. **Live screenshot** — `GET /public/runs/{token}/screenshot` (scope `live`): a live CopyScreen RPC of whatever DF process the server is attached to right now. Not recorded, not per-run isolated (single global `DFHackClient` in `api/server.py`); only meaningful while that run is executing.
+2. **Saved replay DF Screen frames** — `screen_text` recorded per step into `trace.jsonl` (runner captures it when `is_keystroke_mode or is_governed_dfhack_mode`). This is the recorded gameplay evidence the replay UI renders as "DF Screen".
+3. **Derived map inspection** — `map_snapshot` per step (dfhack backend, ≤64×64 rect via `hook/map_snapshot.lua`). The replay UI labels it "DERIVED DFHACK MAP INSPECTION / not gameplay proof". Analysis layer only.
+4. **Old traces without `screen_text`** — replay shows a "No Recorded DF Screen Frame" evidence-gap panel instead of pretending. Toolbox-agent traces also never have screen frames.
+5. **Score/rubric** — `eval/scoring.py` `composite_score` over observed state aggregates; `eval/rubric.py` deterministic 8-dimension rubric over the last 100 trace rows with blockers (`illegal_or_assisted_progress_seen`, `repetitive_policy`, ...). Judgment over real state, reported alongside evidence.
+
+Provenance rules (`run/runner.py`):
+- Governed model + action in `GOVERNED_DFHACK_ACTIONS` ({DIG, BUILD, ORDER, WAIT}) → `execute.provenance = "dfhack_governed"`, `gameplay_progress_eligible = true`, `metrics.score_provenance = "dfhack_governed_observed_state"`.
+- Any other dfhack model + structured DIG/BUILD/ORDER → `execute.provenance = "dfhack_assisted"`; `_zero_assisted_dfhack_progress()` zeroes all progress fields AND one accepted assisted action permanently blocks scoreable elapsed time for the rest of the run (`score_provenance = "gameplay_only_assisted_progress_zeroed"`).
+- Keystroke mode scores only steps with observed current-step progress (`keystroke_ui_work_rect` vs `keystroke_no_*_progress` provenance), with per-step `gameplay_proof` tile-diff evidence.
+- `hook/complete_dig_rect.lua` (`FORT_GYM_DFHACK_COMPLETE_DIG=1`) instantly forges dig outcomes — debug only, never scores, and the rubric flags it (`debug_complete_dig`).
+- Governed target discovery wraps `prepare_keystroke_target` with `read_view_state`/`restore_view_state` (`hook/view_state.lua`, `hook/restore_view_state.lua`) so probes preserve the live camera/cursor.
+
+When adding features: never add a metric to the score matrix just because the agent did it — score only observed DF state changes, and tag provenance.
 
 ### Keystroke Mode
 
-The `anthropic-keystroke` agent enables Claude to control DF via raw keystrokes:
+The keystroke agents (default: `openrouter-keystroke-perception-review`, GLM 5.2) control DF via raw keystrokes:
 - Screen captured via CopyScreen RPC, converted to 80x25 text
-- Claude decides what keys to press based on screen content
+- The model decides what keys to press based on screen content
 - Keys sent via `devel/send-key` command
 - Key module: `fort_gym/bench/env/keystroke_exec.py`
-- **Action history**: Last 5 actions shown in observation for context/memory
+- **Action history**: recent actions shown in observation for context/memory
 - **Pause on end**: Game is paused when run completes to prevent state drift
 
-The system prompt encourages Claude to take action (dig, build, create stockpiles) rather than just exploring menus. Key behaviors:
+The system prompt encourages the model to take action (dig, build, create stockpiles) rather than just exploring menus. Key behaviors:
 - Recognizes main menu is NOT an overlay to dismiss
 - Uses STRING_A### keys for typing letters (e.g., STRING_A097 = 'a')
 - Tries alternative keys (STANDARDSCROLL_PAGEDOWN, Space) when SELECT doesn't close popups
 - On embark site selection (`viewscreen_choose_start_sitest`), the `e` hotkey maps to interface key `SETUP_EMBARK`. fort-gym auto-translates `STRING_A101`/`CUSTOM_E` to `SETUP_EMBARK` so keystroke/admin control can embark reliably.
 
+Note: the keystroke prompts in `llm_anthropic.py` are imported by the OpenRouter/OpenAI keystroke agents — prompt text lives there for historical reasons even though Anthropic models are disabled by default.
+
 ## Environment Variables
 
 Copy `.env.example` to `.env` and configure:
-- `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` - Required for LLM agents
-- `FORT_GYM_ADMIN_PASSWORD` - Required for `/admin` and all admin APIs (`/runs`, `/jobs`, `/step`, `/screenshot`, `/admin/keys`)
+- `OPENROUTER_API_KEY` - Primary LLM key. `OPENROUTER_MODEL` (default `z-ai/glm-5.2`), `OPENROUTER_BASE_URL`, `OPENROUTER_TIMEOUT_SECONDS`, `OPENROUTER_MAX_ATTEMPTS`, `OPENROUTER_MAX_TOOL_ROUNDS`, `OPENROUTER_DISABLE_REASONING`
+- `OPENAI_API_KEY` - Optional, for OpenAI agents
+- `FORT_GYM_ENABLE_ANTHROPIC` - Must be `1` for any `anthropic*` model; the API server returns HTTP 400 for them otherwise. `ANTHROPIC_API_KEY` alone is not sufficient. Legacy — leave off.
+- `FORT_GYM_ADMIN_PASSWORD` - Required for `/admin` and all admin APIs (`/runs`, `/jobs`, `/step`, `/screenshot`, `/admin/keys`, `/runs/{id}/pause|resume|stop|share`, `/runs/{id}/export/trace`)
 - `FORT_GYM_ADMIN_USER` - Basic auth user (default `admin`)
 - `FORT_GYM_INSECURE_ADMIN=1` - Dev-only escape hatch to enable admin endpoints without a password
 - `DFHACK_ENABLED` - Set to 1 to enable DFHack backend
@@ -281,14 +315,15 @@ See `fort_gym/bench/config.py` for full list.
 
 ### Current VM
 - **GCP project/zone**: `scrolller-307201` / `us-central1-a`
-- **IP**: 34.41.155.134
-- **Web UI**: http://34.41.155.134/ (spectator), http://34.41.155.134/admin (admin)
-- **Leaderboard**: http://34.41.155.134/leaderboard
+- **IP**: 34.41.155.134, **domain**: fortgym.live (A record → this VM)
+- **Web UI**: https://fortgym.live/ (spectator), https://fortgym.live/admin (admin)
+- **Leaderboard**: https://fortgym.live/leaderboard
+- **Public replay links**: https://fortgym.live/r/{token}
 - **DFHack RPC**: port 5000 (loopback)
 - **DFHack version**: v0.47.05
 - **Save loaded**: `region1` (reset from seed before runs)
- 
-HTTPS is not currently configured on this VM; Caddy serves the API on port 80.
+
+Caddy serves HTTPS for fortgym.live and proxies to the API on loopback.
 
 ### Seed Save Workflow (VM)
 We keep a read-only pristine seed save and reset the runtime save from it before every DFHack run.
@@ -330,12 +365,12 @@ ssh cdossman@34.41.155.134 'systemctl status dfhack-headless fort-gym-api'
 3. **Test the system**:
 ```bash
 # Check API responds
-curl -s http://34.41.155.134/health
+curl -s https://fortgym.live/health
 
 # Start a test run (auto-creates share token for spectator view)
-curl -s -u admin:'<password>' -X POST http://34.41.155.134/runs \
+curl -s -u admin:'<password>' -X POST https://fortgym.live/runs \
   -H "Content-Type: application/json" \
-  -d '{"backend": "dfhack", "model": "anthropic-keystroke", "max_steps": 5}'
+  -d '{"backend": "dfhack", "model": "dfhack-governed-scripted", "max_steps": 5, "ticks_per_step": 1000}'
 ```
 
 ### Systemd Services
@@ -396,11 +431,11 @@ make vm-live-demo VM_LIVE_DEMO_REF=<branch-or-main>
 # Real-model public API run plus baseline comparison packet:
 make vm-deploy SHA=origin/<branch-or-main>
 make vm-live-agent VM_LIVE_AGENT_REF=<branch-or-main> \
-  LIVE_AGENT_MODEL=anthropic-keystroke LIVE_AGENT_MAX_STEPS=4
+  LIVE_AGENT_MODEL=openrouter-keystroke-perception-review LIVE_AGENT_MAX_STEPS=4
 
 # Multi-trial live scorecard across model/control variants:
 make vm-live-agent-suite VM_LIVE_AGENT_REF=<branch-or-main> \
-  LIVE_AGENT_MODELS=anthropic-dig-first,anthropic-fortress-plan \
+  LIVE_AGENT_MODELS=openrouter-keystroke-perception-review,openrouter-glm-5.2 \
   LIVE_AGENT_TRIALS=2 LIVE_AGENT_MAX_STEPS=6
 ```
 
@@ -466,7 +501,7 @@ DFHack output includes ANSI color codes (`\x1b[0m`) that must be stripped before
 ### Prefer LLMs Over Heuristics
 For analysis, pattern detection, and anomaly detection tasks, **always use LLM-based approaches** instead of hardcoded heuristics. Heuristics are biased toward known patterns and cannot discover new failure modes.
 
-**Trace Analysis**: Use Gemini 3.0 Pro Preview (1M token context) for analyzing run traces:
+**Trace Analysis**: Use Gemini (`eval/analyzer.py`, default `gemini-2.5-flash`, override with `GEMINI_ANALYZER_MODEL`) for analyzing run traces:
 - For traces < 1M tokens: Single LLM call with full trace
 - For traces > 1M tokens: Chunk at 500k tokens, carry forward key insights to next chunk
 - Let the LLM identify patterns, anomalies, and generate hypotheses without predefined rules
@@ -479,7 +514,8 @@ For analysis, pattern detection, and anomaly detection tasks, **always use LLM-b
 - Tests live in `tests/` mirroring `fort_gym/bench/` structure
 - Use pytest fixtures from existing test files
 - Tests writing artifacts should use pytest tmp_path fixtures
-- Mock backend tests are fast; DFHack tests require DFHACK_ENABLED=1
+- Run with the project venv: `./.venv/bin/python -m pytest -q` (system python has incompatible pydantic/fastapi)
+- Mock/offline tests cover everything by default; the 4 live-DFHack integration tests are gated by `DFHACK_LIVE=1` (not `DFHACK_ENABLED`)
 
 ## Commit Style
 
@@ -521,17 +557,21 @@ wo.amount_left = qty
 df.global.world.manager_orders:insert("#", wo)
 ```
 
-## Roadmap: Agent Memory & Experimentation System
+## Agent Memory, Tools & Experimentation (Implemented)
 
-The following features are planned to improve agent performance through memory, tools, and systematic experimentation.
+### Memory (`fort_gym/bench/agent/memory.py`)
+`MemoryManager` provides: a rolling window of recent steps (`FORT_GYM_MEMORY_WINDOW`), a compressed summary of older steps, POIs (max 40, with coordinates), failed-attempt records, a gameplay plan with `write_gameplay_plan`/`review_gameplay_plan`, and `query_memory`. It is in-process per run — nothing persists across runs or process restarts (known gap).
 
-### Current Limitation
-Each step is currently **stateless** - the agent makes a fresh LLM call with no memory of previous steps. Keystroke mode has minimal context: last 5 actions shown in observation text, but no conversation history or goal tracking.
+Used by: the keystroke review agents (`llm_anthropic.py`, `llm_openrouter.py`) via `ToolManager`, and the governed LLM agent (`governed_llm.py`) via prompt context.
 
-### Implemented Features
+### Tools (`fort_gym/bench/agent/tools.py`)
+`ToolManager` wires memory/plan/perception tools (`remember_poi`, `record_failed_attempt`, `write_gameplay_plan`, `review_gameplay_plan`, `query_memory`, `record_screen_read`, `review_last_action`) into the review-mode agents.
 
-#### Trace Analysis (LLM-based)
-Automated post-run analysis using Gemini 3.0 Pro Preview to identify failure patterns and generate improvement hypotheses.
+### Experimentation (`fort_gym/bench/experiment/`)
+YAML config (`config.py`) → `ExperimentRunner` (`runner.py`) → run with experiment metadata saved alongside artifacts.
+
+### Trace Analysis (LLM-based)
+Automated post-run analysis using Gemini (default `gemini-2.5-flash`, `GEMINI_ANALYZER_MODEL` to override) to identify failure patterns and generate improvement hypotheses. Diagnostic only — analyzer output never feeds the score or rubric.
 
 **Usage**:
 ```bash
@@ -561,58 +601,14 @@ Population: 7 dwarves
 - `pause_state: true/false` - Whether game is paused
 - Previous action result is tracked and passed to encoder
 
-### Planned Features
-
-#### 1. Agent Memory (Hybrid Strategy)
-- **Last N steps**: Keep full conversation history for recent steps (configurable window, default 10)
-- **Summary of older steps**: Compress older history into a running summary
-- **Implementation**: New `MemoryManager` class in `fort_gym/bench/agent/memory.py`
-
-#### 2. Agent Tools
-- **Web search**: Agent can look up Dwarf Fortress information during decision-making
-- **DF Wiki tool**: Query embedded DF documentation
-- **Implementation**: New `ToolManager` class in `fort_gym/bench/agent/tools.py`
-
-#### 3. Experimentation Framework
-YAML-based configuration system to test different agent variants:
-
-```yaml
-# Example: experiments/with_memory.yaml
-name: hybrid-memory-10
-agent_type: anthropic-keystroke
-memory_strategy: hybrid
-memory_window: 10
-tools_enabled: [df_wiki]
-max_steps: 50
-```
-
-**Experiment types**:
-- Different memory strategies (none, conversation, summary, hybrid)
-- Different system prompts
-- Different tools enabled/disabled
-- A/B testing between agent variants
-
-**New files**:
-- `fort_gym/bench/experiment/config.py` - Config dataclasses
-- `fort_gym/bench/experiment/runner.py` - Experiment execution
-- `fort_gym/bench/experiment/analysis.py` - Comparison utilities
-- `fort_gym/bench/agent/experimental.py` - Configurable agent
-
-**New API endpoints**:
-- `POST /experiments` - Launch experiment from config
-- `GET /experiments` - List all experiment runs
-- `GET /experiments/compare?ids=run1,run2` - Compare results
-
-### Implementation Order
-1. **Action Feedback** - Add pause_state and action results to observation (quick win, high impact)
-2. Memory Manager - Core memory abstraction
-3. Experimental Agent - Agent that uses memory
-4. Config System - Load experiments from YAML
-5. Tool Manager - Web search / wiki tools
-6. API Endpoints - Launch/compare experiments
-7. Analysis Tools - Compare results across runs
+### Remaining gaps (real, verified against code)
+- Memory is in-process only — no persistence across runs/restarts, no serialization on `MemoryManager`.
+- The governed helper surface is narrow: `ALLOWED_WORKSHOPS = {CarpenterWorkshop}`, 6 orderable items, `work_metrics.lua` hardcodes the `two_room_workshop` plan — an agent cannot yet earn derived completion signal for any other layout.
+- Governed mode has no per-step `gameplay_proof` tile-diff object (keystroke mode has one); governed evidence is `screen_text` + metrics deltas.
+- No `/experiments` API endpoints (experiment runner is CLI/Python-level only).
 
 ## Known Issues
 
-### Action Type "WAIT" Not in Schema
-The `FakeLLMAgent` emits `WAIT` actions but `WAIT` is not in `ALLOWED_TYPES`. Either add `WaitAction` to `actions.py` or change `FakeLLMAgent` to emit a valid action type.
+- The `/step` interactive endpoint (`api/routes_step.py`) is a separate code path from `run_once()` — it records no `screen_text`, `map_snapshot`, provenance tags, or assisted-progress zeroing. Do not use `/step` traces as gameplay proof or scoring evidence.
+- The public screenshot endpoint uses one global DFHack connection: with multiple concurrent dfhack runs it can show a different run's screen. Only one live dfhack run at a time is supported in practice.
+- Share-token `expires_at` is stored but not enforced at read time.

@@ -29,29 +29,87 @@ Illegal actions:
 `hook/complete_dig_rect.lua` stays available only for explicit harness debugging.
 It must not be treated as legal fortress gameplay.
 
-## First Agent
+## Governed Models
 
-`dfhack-governed-scripted` is the first governed model. It is intentionally
-scripted so the runner and evaluator can prove the command substrate before an
-LLM policy uses the same action surface.
+Governed mode is gated by model name: `GOVERNED_DFHACK_MODELS` in
+`fort_gym/bench/run/runner.py`. The runner marks a governed model's structured
+`DIG`, `BUILD`, `ORDER`, and `WAIT` actions as `execute.provenance =
+"dfhack_governed"` with `gameplay_progress_eligible = true`, and per-step
+metrics carry `score_provenance = "dfhack_governed_observed_state"`. Older
+structured DFHack agents still get `dfhack_assisted` progress zeroed for scalar
+scoring (and one accepted assisted action blocks scoreable elapsed time for the
+rest of that run).
 
-The current plan is:
+### `dfhack-governed-scripted` (substrate validation)
+
+The first governed model. It is intentionally scripted (a Python state machine
+over the `work` metrics, no LLM) so the runner and evaluator could prove the
+command substrate before an LLM policy used the same action surface. Its plan:
 
 1. Dig the starter room.
 2. Dig the connector east of the starter room.
 3. Dig the workshop room.
 4. Place a carpenter workshop in the completed workshop room.
-5. Queue a small bed order.
+5. Queue small manager orders (bed, door, table, chair, barrel, bin).
 6. Wait while dwarves resolve queued jobs.
 
-The runner marks this model's structured `DIG`, `BUILD`, `ORDER`, and `WAIT`
-actions as `dfhack_governed`, while older structured DFHack agents still get
-`dfhack_assisted` progress zeroed for scalar scoring.
+The substrate is validated: live runs show workshop placement with a real
+material item, real created job IDs, tick advancement, and in-game date
+progression, all recorded with per-step CopyScreen frames.
+
+### `dfhack-governed-llm` (LLM policy)
+
+The LLM policy on the same legal action surface (`agent/governed_llm.py`).
+It uses OpenRouter chat completions (default `z-ai/glm-5.2`, override with
+`OPENROUTER_MODEL`) with a single `submit_action` tool restricted to
+`DIG`/`BUILD`/`ORDER`/`WAIT`. Per step it receives:
+
+- the encoded observation (including the recorded CopyScreen text and the
+  bounded `work` metrics),
+- its own memory context from `MemoryManager` (recent steps, summary, POIs,
+  failed attempts, current gameplay plan).
+
+The agent maintains its plan and POIs across steps via the action's
+`plan_step`/`memory_update` fields and the executed-result feedback loop. It
+holds no gameplay heuristics — the model plus the loop must solve gameplay.
+Invalid or failed LLM output degrades to a safe `WAIT` (time still advances;
+the failure is recorded in the trace).
+
+## Replay Evidence
+
+Every governed step records into `trace.jsonl`:
+
+- `screen_text` — a real CopyScreen frame at that step (the replay UI's
+  "DF Screen" mode). This is the recorded gameplay evidence.
+- `map_snapshot` — a derived DFHack tile read, shown only under the explicit
+  "Map Inspect" label ("not gameplay proof").
+- `gameplay_proof` — a per-step evidence object (evidence only, never feeds
+  scoring): before/after map-tile diffs over the plan rects, productive state
+  deltas, and bounded-helper facts (`newly_designated`, `created_job_ids`,
+  workshop count deltas). `ok` is true only when the step changed real DF
+  state — a re-designation of already-designated tiles is visibly a no-op.
+- `execute.provenance` / `metrics.score_provenance` — the legality tags above.
+
+The governed LLM agent also persists its memory (POIs, failed attempts, plan,
+summary — not step records) across runs to
+`$ARTIFACTS_DIR/governed_llm_memory.json`; override with
+`FORT_GYM_GOVERNED_MEMORY_PATH` (set to `off` to disable). Memory is only
+meaningful while the seed save stays the same — delete the file when changing
+seeds.
+
+Success gates for this whole effort live in `docs/WDSLL.md`.
+
+Governed target discovery wraps helper probes with
+`hook/view_state.lua` / `hook/restore_view_state.lua` so the live DF
+camera/cursor is preserved — probes never disturb the visible game. Traces
+recorded before screen capture existed show "No Recorded DF Screen Frame" in
+replay instead of pretending a derived view is gameplay.
 
 ## Rubric Evaluation
 
 The scalar score remains useful telemetry, but it is not enough. `summary.json`
-now includes a `rubric` object over the last 100 trace rows with dimensions for:
+includes a deterministic (non-LLM) `rubric` object computed over the last 100
+trace rows with dimensions for:
 
 - survival management
 - shelter layout
@@ -66,7 +124,17 @@ The rubric returns a 0-100 score, per-dimension evidence, blockers, and a short
 critique. It is designed to flag exactly the failure mode where score rises while
 the fort stays narrow, repetitive, or non-legal.
 
-## Next Helpers
+## Known Limits and Next Steps
+
+Current structural limits of the governed surface:
+
+- `ALLOWED_WORKSHOPS = {CarpenterWorkshop}` and a 6-item order whitelist —
+  no mason/smith/farm/still support yet.
+- `hook/work_metrics.lua` hardcodes the `two_room_workshop` plan; completion
+  signal exists only for that layout.
+- Memory (`MemoryManager`) is in-process per run — nothing persists across runs.
+- Governed mode records `screen_text` + metrics deltas but has no per-step
+  `gameplay_proof` tile-diff object like keystroke mode.
 
 The next action helpers should be added only after their legal semantics are
 clear:

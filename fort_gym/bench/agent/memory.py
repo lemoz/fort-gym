@@ -353,6 +353,66 @@ class MemoryManager:
             return "No matching memory entries."
         return "\n".join(lines)
 
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize the cross-run-relevant parts of memory to a plain dict.
+
+        Deliberately EXCLUDES ``recent_steps``: step records are scoped to a
+        single run's observation/action/result history and are not meaningful
+        replayed against a different run, even on the same seed save.
+        """
+
+        return {
+            "summary": self.summary,
+            "pois": [dict(poi) for poi in self.pois],
+            "failed_attempts": [dict(item) for item in self.failed_attempts],
+            "gameplay_plan": dict(self.gameplay_plan),
+            "plan_reviews": [dict(item) for item in self.plan_reviews],
+            "_step_counter": self._step_counter,
+        }
+
+    def load_dict(self, data: Dict[str, Any]) -> None:
+        """Restore memory fields from a dict produced by ``to_dict``.
+
+        Defensive by design: malformed or wrong-typed values are ignored in
+        favor of the current defaults rather than raising, and list fields
+        are clamped to the configured ``max_pois``/``max_failed_attempts``
+        caps. ``recent_steps`` is never touched.
+        """
+
+        if not isinstance(data, dict):
+            return
+
+        summary = data.get("summary")
+        if isinstance(summary, str):
+            self.summary = summary
+
+        pois = data.get("pois")
+        if isinstance(pois, list):
+            clean_pois = [item for item in pois if isinstance(item, dict)]
+            if self.max_pois:
+                clean_pois = clean_pois[-self.max_pois :]
+            self.pois = clean_pois
+
+        failed_attempts = data.get("failed_attempts")
+        if isinstance(failed_attempts, list):
+            clean_failed = [item for item in failed_attempts if isinstance(item, dict)]
+            if self.max_failed_attempts:
+                clean_failed = clean_failed[-self.max_failed_attempts :]
+            self.failed_attempts = clean_failed
+
+        gameplay_plan = data.get("gameplay_plan")
+        if isinstance(gameplay_plan, dict):
+            self.gameplay_plan = dict(gameplay_plan)
+
+        plan_reviews = data.get("plan_reviews")
+        if isinstance(plan_reviews, list):
+            clean_reviews = [item for item in plan_reviews if isinstance(item, dict)]
+            self.plan_reviews = clean_reviews[-20:]
+
+        step_counter = data.get("_step_counter")
+        if isinstance(step_counter, int) and not isinstance(step_counter, bool):
+            self._step_counter = step_counter
+
     def compress_old_steps(self) -> None:
         if not self._enabled:
             return

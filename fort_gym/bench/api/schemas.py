@@ -13,6 +13,7 @@ ModelType = Literal[
     "random",
     "fake",
     "dfhack-governed-scripted",
+    "dfhack-governed-llm",
     "openai",
     "openai-keystroke-perception-review",
     "openrouter-keystroke",
@@ -58,14 +59,6 @@ class RunCreateRequest(BaseModel):
     model: ModelType = "random"
     safe: Optional[bool] = True
     preserve_save: bool = False
-
-
-class JobInfo(BaseModel):
-    """Metadata for batch execution jobs driving multiple runs."""
-
-    id: str
-    run_ids: List[str] = Field(default_factory=list)
-    status: Literal["queued", "running", "completed", "failed"] = "queued"
 
 
 class ActionRecord(BaseModel):

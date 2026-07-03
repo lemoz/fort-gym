@@ -86,6 +86,28 @@ make vm-live-agent-suite VM_LIVE_AGENT_REF=main \
   LIVE_AGENT_TRIALS=2 LIVE_AGENT_MAX_STEPS=6
 ```
 
+To rehearse the governed legal-gameplay proof run (the strongest demo of real
+play — DFHack as bounded command transport, score from observed DF state,
+per-step recorded CopyScreen frames):
+
+```bash
+curl -s -u admin:"$FORT_GYM_ADMIN_PASSWORD" -X POST https://fortgym.live/runs \
+  -H 'Content-Type: application/json' \
+  -d '{"backend":"dfhack","model":"dfhack-governed-llm","max_steps":8,"ticks_per_step":1000}'
+# then open https://fortgym.live/r/<token> and step through the replay
+```
+
+Replay evidence talking points:
+
+- "DF Screen" frames are recorded CopyScreen text captured during play — real
+  gameplay evidence.
+- "Map Inspect" is a derived DFHack tile read and is labeled "not gameplay
+  proof" — it exists for analysis.
+- Old traces without recorded frames show "No Recorded DF Screen Frame"
+  instead of pretending.
+- Score provenance is tagged per step (`dfhack_governed` vs `dfhack_assisted`
+  vs keystroke); assisted progress is zeroed, never scored.
+
 The suite writes a Markdown packet and `scorecard.json` with median scores,
 work scores, completion scores, utility scores, production scores, complexity
 scores, target-room designation/completion/utility/production/complexity

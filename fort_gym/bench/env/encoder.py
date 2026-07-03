@@ -36,6 +36,22 @@ def _work_int(work: Dict[str, Any], key: str, default: int = 0) -> int:
     return default if value is None else value
 
 
+def _int_list_or_none(value: Any, length: int) -> List[int] | None:
+    if not isinstance(value, list) or len(value) < length:
+        return None
+    ints: List[int] = []
+    for item in value[:length]:
+        parsed = _int_or_none(item)
+        if parsed is None:
+            return None
+        ints.append(parsed)
+    return ints
+
+
+def _render_int_list(values: List[int]) -> str:
+    return "[" + ",".join(str(value) for value in values) + "]"
+
+
 def _proven_carpenter_workshops(work: Dict[str, Any]) -> int:
     if "carpenter_workshops_usable" in work:
         return _work_int(work, "carpenter_workshops_usable")
@@ -837,6 +853,32 @@ def encode_observation(
         else:
             reason = last_action_result.get("reason", last_action_result.get("error", "unknown"))
             status_lines.append(f"Last Action: REJECTED - {reason}")
+        action_result = last_action_result.get("result")
+        if isinstance(action_result, dict):
+            detail_parts = []
+            for key in (
+                "newly_designated",
+                "already_designated",
+                "non_wall_tiles",
+                "created_job_ids",
+                "building_id",
+            ):
+                if key not in action_result:
+                    continue
+                value = action_result[key]
+                if isinstance(value, list):
+                    int_list = _int_list_or_none(value, len(value))
+                    if not int_list:
+                        continue
+                    detail_parts.append(f"{key}={_render_int_list(int_list)}")
+                else:
+                    parsed = _int_or_none(value)
+                    if parsed is None:
+                        continue
+                    detail_parts.append(f"{key}={parsed}")
+            if detail_parts:
+                detail_line = "Last Action detail: " + ", ".join(detail_parts)
+                status_lines.append(detail_line[:120])
 
     # Screen change feedback - critical for agent to know if actions had effect
     if screen_text and previous_screen:
@@ -881,6 +923,29 @@ def encode_observation(
             f"walls={work.get('target_wall_tiles', 0)}, "
             f"designations={work.get('target_dig_designations', 0)}"
         )
+        starter_rect = _int_list_or_none(work.get("target_rect"), 6)
+        if starter_rect is not None:
+            rect_line = f"Plan rects (x1,y1,z1,x2,y2,z2): starter={_render_int_list(starter_rect)}"
+            connector_rect = _int_list_or_none(work.get("fortress_connector_rect"), 6)
+            if connector_rect is not None:
+                rect_line += f", connector={_render_int_list(connector_rect)}"
+            workshop_room_rect = _int_list_or_none(work.get("fortress_workshop_room_rect"), 6)
+            if workshop_room_rect is not None:
+                rect_line += f", workshop_room={_render_int_list(workshop_room_rect)}"
+            status_lines.append(rect_line)
+        build_site = _int_list_or_none(work.get("carpenter_build_site"), 3)
+        if build_site is not None:
+            x, y, z = build_site
+            status_lines.append(
+                f"Legal BUILD site observed: carpenter_build_site=({x},{y},{z}) — a "
+                "BUILD there fits the allowed rects."
+            )
+        else:
+            status_lines.append(
+                "No legal BUILD site observed yet. BUILD must fit a full 3x3 "
+                "footprint on open floor inside the starter or workshop_room "
+                "rects; complete more floor first."
+            )
         if work.get("cursor_z") is not None or work.get("window_z") is not None:
             cursor_x = work.get("cursor_x")
             cursor_label = (
