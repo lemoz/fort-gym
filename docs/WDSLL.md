@@ -253,6 +253,20 @@ gate. Each entry states what changed and the evidence that forced it.
   change and per the non-negotiables requires operator approval before any
   gate re-run under changed scoring.
 
+- **2026-07-03 — SCORE-V2 BOUNDARY (operator-approved).** In response to the
+  order-spam exploit: `utility_progress` now pays only completed production
+  (in-play item-count deltas of orderable goods) plus workshops that became
+  usable; order/queue deltas remain recorded but earn nothing. The rubric's
+  repetition exemption no longer accepts queue-only proofs (created_job_ids
+  without tile changes, state deltas, designations, or new buildings) as
+  world change — the 10×-identical-order trace now trips `repetitive_policy`
+  (locked by test). `summary.json` carries `score_version: 2`; every run
+  before commit `967d9e688` is score-v1 and scores are not comparable
+  across the boundary. Also operator-approved: the system prompt now
+  truthfully discloses the three evaluation surfaces (scalar score, rubric
+  including enclosed-room shelter, long-horizon room goals) — replacing a
+  factually wrong claim that the score paid for "dug rooms".
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,
