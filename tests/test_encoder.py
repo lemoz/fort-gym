@@ -1701,7 +1701,7 @@ def test_encoder_flags_zero_enclosed_spaces() -> None:
     assert "Fort structure (plan-agnostic): enclosed_spaces=0" in text
     assert (
         "No enclosed rooms yet — spaces count as rooms only when fully bounded "
-        "by walls, buildings, or doors. BUILD kind=Wall can enclose them." in text
+        "by walls, buildings, or doors. BUILD kind=Wall can enclose them" in text
     )
     assert "Rooms:" not in text
 
@@ -1735,3 +1735,29 @@ def test_encoder_surfaces_executor_why_as_rejection_reason() -> None:
     )
 
     assert "Last Action: REJECTED - no_building_material" in obs_text
+
+
+def test_encoder_renders_wall_layout_with_run_compression() -> None:
+    state = {
+        "time": 100,
+        "population": 7,
+        "stocks": {},
+        "fort": {
+            "ok": True,
+            "enclosed_spaces": 0,
+            "functional_rooms": 0,
+            "constructions": 11,
+            "construction_tiles": [
+                [94, 90, 177], [95, 90, 177], [96, 90, 177], [97, 90, 177],
+                [94, 93, 177], [95, 93, 177], [96, 93, 177], [97, 93, 177],
+                [98, 91, 177], [98, 92, 177], [98, 93, 177],
+            ],
+        },
+    }
+
+    obs_text, _ = encode_observation(state)
+
+    assert "Wall/floor layout: " in obs_text
+    assert "z177 y90: x94-97" in obs_text
+    assert "z177 y93: x94-98" in obs_text
+    assert "check the Wall/floor layout line for gaps" in obs_text

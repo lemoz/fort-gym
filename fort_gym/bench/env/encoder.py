@@ -1329,11 +1329,45 @@ def encode_observation(
             if room_parts:
                 status_lines.append("Rooms: " + ", ".join(room_parts))
 
+        construction_tiles = fort.get("construction_tiles")
+        if isinstance(construction_tiles, list) and construction_tiles:
+            by_row: Dict[tuple, List[int]] = {}
+            for tile in construction_tiles:
+                if not isinstance(tile, (list, tuple)) or len(tile) < 3:
+                    continue
+                x = _int_or_none(tile[0])
+                y = _int_or_none(tile[1])
+                z = _int_or_none(tile[2])
+                if x is None or y is None or z is None:
+                    continue
+                by_row.setdefault((z, y), []).append(x)
+            row_parts = []
+            for (z, y), xs in sorted(by_row.items()):
+                xs = sorted(set(xs))
+                runs = []
+                start = prev = xs[0]
+                for value in xs[1:]:
+                    if value == prev + 1:
+                        prev = value
+                        continue
+                    runs.append((start, prev))
+                    start = prev = value
+                runs.append((start, prev))
+                run_text = ",".join(
+                    f"x{a}" if a == b else f"x{a}-{b}" for a, b in runs
+                )
+                row_parts.append(f"z{z} y{y}: {run_text}")
+                if len(row_parts) >= 12:
+                    break
+            if row_parts:
+                status_lines.append("Wall/floor layout: " + "; ".join(row_parts))
+
         if enclosed_spaces == 0:
             status_lines.append(
                 "No enclosed rooms yet — spaces count as rooms only when fully "
                 "bounded by walls, buildings, or doors. BUILD kind=Wall can "
-                "enclose them."
+                "enclose them; check the Wall/floor layout line for gaps in "
+                "your own walls."
             )
 
     if ui_work:

@@ -90,7 +90,22 @@ for _, bld in ipairs(df.global.world.buildings.all) do
 end
 
 local constructions = 0
-pcall(function() constructions = #df.global.world.constructions end)
+local construction_tiles = {}
+pcall(function()
+  constructions = #df.global.world.constructions
+  -- surface the layout so the agent can see gaps in its own walls; cap the
+  -- list and skip the mirrored above-z entries built walls create
+  local seen_z = {}
+  for _, bld in ipairs(df.global.world.buildings.all) do
+    pcall(function() seen_z[bld.z] = true end)
+  end
+  for _, c in ipairs(df.global.world.constructions) do
+    if #construction_tiles >= 80 then break end
+    if next(seen_z) == nil or seen_z[c.pos.z] then
+      table.insert(construction_tiles, { c.pos.x, c.pos.y, c.pos.z })
+    end
+  end
+end)
 
 -- flood fill open floor from seeds; doors and buildings are boundaries that
 -- still close a room; open floor beyond MAX_COMPONENT_TILES means "leaky"
@@ -218,5 +233,6 @@ print(json.encode({
   functional_rooms = functional,
   spaces = spaces,
   constructions = constructions,
+  construction_tiles = construction_tiles,
   player_buildings = #buildings,
 }))
