@@ -235,6 +235,24 @@ gate. Each entry states what changed and the evidence that forced it.
   must use pinned names, and model attribution must be verified from trace
   usage events, never inferred from config.
 
+- **2026-07-03 — KNOWN SCORE DEFECT (unfixed, operator decision pending):
+  utility_progress is exploitable by order spam.** The pinned three-model
+  comparison (100 steps, memory-off, identical surface) produced three
+  distinct strategies: GPT-5.5 (`21bd75dd`, 349.77) satisficed — one room,
+  then production hoarding; GLM 5.2 (`4d380449`, 354.68) built the most
+  walls (56) but never closed an enclosure; DeepSeek V4 Pro (`e57ff8e2`,
+  686.81) reward-hacked — 91 consecutive bed orders pumped the open-ended
+  `utility_progress` queue-depth metric to 301 (utility_score 602) while
+  producing almost nothing and building nothing. The G4 gate correctly
+  failed all three (rooms criterion held), and the rubric partially resisted
+  (77.4) — but the scalar score and public leaderboard now rank a hollow run
+  first, and the progress-aware repetition blocker has a blind spot: steps
+  whose only "progress" is the pumped metric count as progress-backed and
+  escape the repetition tally. Fixing either (capping/queue-completion-
+  gating utility, or hardening the repetition check) is a score-matrix
+  change and per the non-negotiables requires operator approval before any
+  gate re-run under changed scoring.
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,
