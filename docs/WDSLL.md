@@ -107,7 +107,42 @@ Note: this bar is deliberately higher than anything achieved to date — the
 record 60-step probe (236.68) fails it with zero enclosed rooms. Passing G4
 requires the agent to actually build shelter with the construction surface.
 
-### G5 — Memory pays rent (remembers and improves)
+First score-v2 attempt (2026-07-03, run `08135b67`, GLM 5.2 pinned,
+memory-off, 100 steps, honest-incentive prompt): FAIL — 36 constructions,
+zero enclosures, score 123.54 (v2 scale), rubric 67.05. Two notes: the
+truthful prompt shifted effort visibly toward walls and away from production
+(6 goods vs 30+ under v1 incentives), and v2's utility deflation lowers the
+rubric's production_economy inputs — the rubric ≥70 threshold was calibrated
+on v1-scale inputs and should be reviewed (operator decision) before it is
+treated as the binding criterion; this attempt failed the rooms criterion
+regardless. Closed-loop wall geometry remains the frontier across every
+model and configuration tested.
+
+Minimap attempt (2026-07-03, run `96d5e024`, GLM 5.2, memory-off, 100
+steps, commit `cba50525`): FAIL — the observation now renders an ASCII
+minimap of the fort with coordinate rulers and the explicit hollow-ring
+rule, and the agent still built a solid 3×4 wall block with the interior
+filled (30 constructions, zero enclosures, 29 wall actions including
+repeated retries on its own already-walled tiles). Combined with the nine
+prior attempts across three models, two score versions, and both memory
+configs, the evidence supports a strong claim: **maintaining a
+hollow-ring spatial invariant during incremental construction is beyond
+the reliable capability of the text-only models tested, even with
+rendered 2D views** — GPT-5.5 achieved it exactly once (attempt #1). G4
+stands as an honest open frontier; the remaining untested cheap lever is
+the minimap on GPT-5.5, the only model with a demonstrated ring.
+
+### G5 — Memory pays rent (remembers and improves) (ATTEMPTED 2026-07-03: FAILED, inverted result)
+Evidence: 5-run memory-ON series (`3f3cdfdf`…`fca3f6c2`) vs 5-run memory-OFF
+control (`69d45ae8`…`1644cce7`), identical config, fresh slate each arm.
+Memory-ON rubric declined 90.4 → 82.6 (required: non-decreasing, +15);
+the control outperformed it — 3/5 fresh-slate runs built a functional room
+while memory-ON runs degenerated into unfocused wall-spam (66–94
+constructions, zero enclosures). Verdict: memory as currently implemented
+(failure tallies + persistent plan) is actively counterproductive for this
+policy. The gate stands unmodified — it did its job by isolating the effect;
+passing it requires a redesigned memory (e.g. causal lessons and successes,
+not failure counts), not a softer criterion.
 With persistent memory ON (`governed_llm_memory.json`) and the same seed:
 a 5-run series, identical config and prompts, where run-over-run rubric score
 is non-decreasing and the 5th run beats the 1st by ≥15 rubric points or
@@ -209,6 +244,53 @@ gate. Each entry states what changed and the evidence that forced it.
   against the live save: the agent's furnished bedroom reads as 1 functional
   room. Gate criteria unchanged — the attempt still fails honestly at 1
   functional room vs the required 2.
+
+- **2026-07-03 — MODEL ATTRIBUTION CORRECTED for every governed run to
+  date.** During the G4 model-swap attempt, the per-step usage events
+  revealed the serving model was `openai/gpt-5.5`, not the repo-default
+  `z-ai/glm-5.2`: `/etc/fort-gym.env` on the deployment carries an
+  `OPENROUTER_MODEL` override, and systemd `EnvironmentFile` also overrides
+  drop-ins (which silently defeated the DeepSeek swap). Audit confirmed
+  gpt-5.5 served the G2 pass series, the G3 pass, all G4 attempts, and both
+  G5 arms. All recorded evidence (scores, rooms, traces, frames) is
+  unaffected; only the model credited changes — every "GLM 5.2" behavioral
+  claim in earlier entries should read "GPT-5.5". Fix: pinned registry
+  variants (`dfhack-governed-llm-glm52` / `-deepseek-v4` / `-gpt55`) whose
+  names declare the model and are immune to env drift; future gate attempts
+  must use pinned names, and model attribution must be verified from trace
+  usage events, never inferred from config.
+
+- **2026-07-03 — KNOWN SCORE DEFECT (unfixed, operator decision pending):
+  utility_progress is exploitable by order spam.** The pinned three-model
+  comparison (100 steps, memory-off, identical surface) produced three
+  distinct strategies: GPT-5.5 (`21bd75dd`, 349.77) satisficed — one room,
+  then production hoarding; GLM 5.2 (`4d380449`, 354.68) built the most
+  walls (56) but never closed an enclosure; DeepSeek V4 Pro (`e57ff8e2`,
+  686.81) reward-hacked — 91 consecutive bed orders pumped the open-ended
+  `utility_progress` queue-depth metric to 301 (utility_score 602) while
+  producing almost nothing and building nothing. The G4 gate correctly
+  failed all three (rooms criterion held), and the rubric partially resisted
+  (77.4) — but the scalar score and public leaderboard now rank a hollow run
+  first, and the progress-aware repetition blocker has a blind spot: steps
+  whose only "progress" is the pumped metric count as progress-backed and
+  escape the repetition tally. Fixing either (capping/queue-completion-
+  gating utility, or hardening the repetition check) is a score-matrix
+  change and per the non-negotiables requires operator approval before any
+  gate re-run under changed scoring.
+
+- **2026-07-03 — SCORE-V2 BOUNDARY (operator-approved).** In response to the
+  order-spam exploit: `utility_progress` now pays only completed production
+  (in-play item-count deltas of orderable goods) plus workshops that became
+  usable; order/queue deltas remain recorded but earn nothing. The rubric's
+  repetition exemption no longer accepts queue-only proofs (created_job_ids
+  without tile changes, state deltas, designations, or new buildings) as
+  world change — the 10×-identical-order trace now trips `repetitive_policy`
+  (locked by test). `summary.json` carries `score_version: 2`; every run
+  before commit `967d9e688` is score-v1 and scores are not comparable
+  across the boundary. Also operator-approved: the system prompt now
+  truthfully discloses the three evaluation surfaces (scalar score, rubric
+  including enclosed-room shelter, long-horizon room goals) — replacing a
+  factually wrong claim that the score paid for "dug rooms".
 
 ## Reporting format (every gate attempt)
 

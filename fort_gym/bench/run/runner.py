@@ -36,6 +36,9 @@ ASSISTED_DFHACK_ACTIONS = {"DIG", "BUILD", "ORDER"}
 GOVERNED_DFHACK_MODELS = {
     "dfhack-governed-scripted",
     "dfhack-governed-llm",
+    "dfhack-governed-llm-glm52",
+    "dfhack-governed-llm-deepseek-v4",
+    "dfhack-governed-llm-gpt55",
 }
 GOVERNED_DFHACK_ACTIONS = {"DIG", "BUILD", "ORDER", "WAIT"}
 ASSISTED_PROGRESS_FIELDS = (
@@ -1517,6 +1520,7 @@ def run_once(
 
     previous_state: Optional[Dict[str, Any]] = None
     baseline_work: Optional[Dict[str, Any]] = None
+    baseline_goods: Optional[Dict[str, Any]] = None
     baseline_wealth: int | None = None
     action_history: List[Dict[str, Any]] = []  # Track recent actions for keystroke mode memory
     action_history_limit = max(0, int(settings.KEYSTROKE_ACTION_HISTORY_LIMIT))
@@ -1956,6 +1960,15 @@ def run_once(
                 if baseline_work is None:
                     work_snapshot = state_before.get("work")
                     baseline_work = dict(work_snapshot) if isinstance(work_snapshot, dict) else {}
+                crew_snapshot = state_before.get("crew")
+                current_goods = (
+                    dict(crew_snapshot.get("goods"))
+                    if isinstance(crew_snapshot, dict)
+                    and isinstance(crew_snapshot.get("goods"), dict)
+                    else None
+                )
+                if baseline_goods is None and current_goods is not None:
+                    baseline_goods = dict(current_goods)
                 if baseline_wealth is None:
                     stocks_snapshot = state_before.get("stocks")
                     if isinstance(stocks_snapshot, dict):
@@ -2311,6 +2324,8 @@ def run_once(
                     metrics.utility_progress_delta(
                         current_work if isinstance(current_work, dict) else {},
                         baseline_work,
+                        current_goods=current_goods,
+                        baseline_goods=baseline_goods,
                     )
                 )
                 metrics_snapshot.update(

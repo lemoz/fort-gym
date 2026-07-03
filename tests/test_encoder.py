@@ -1799,3 +1799,40 @@ def test_encoder_surfaces_furniture_positions_and_failed_tiles() -> None:
     assert "construction cannot be placed on occupied tiles" in obs_text
     assert "Failed tiles: (94,91): tile_occupied_by_building" in obs_text
     assert "Last Action: REJECTED - no_tiles_placed" in obs_text
+
+
+def test_encoder_renders_fort_minimap_with_rulers() -> None:
+    state = {
+        "time": 100,
+        "population": 7,
+        "stocks": {},
+        "fort": {
+            "ok": True,
+            "enclosed_spaces": 0,
+            "functional_rooms": 0,
+            "constructions": 8,
+            "map_origin": [90, 87, 177],
+            "map_rows": ["..WWW..", "..W.W..", "..WWW.."],
+        },
+    }
+
+    obs_text, _ = encode_observation(state)
+
+    assert "Fort minimap (z=177; top-left tile is x=90,y=87" in obs_text
+    assert "      0123456" in obs_text
+    assert "y= 87|..WWW.." in obs_text
+    assert "y= 89|..WWW.." in obs_text
+    assert "trace the ring on the minimap" in obs_text
+
+
+def test_encoder_skips_minimap_when_malformed() -> None:
+    state = {
+        "time": 100,
+        "population": 7,
+        "stocks": {},
+        "fort": {"ok": True, "map_origin": "junk", "map_rows": ["..."]},
+    }
+
+    obs_text, _ = encode_observation(state)
+
+    assert "Fort minimap" not in obs_text

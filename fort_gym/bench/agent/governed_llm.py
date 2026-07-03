@@ -33,8 +33,12 @@ _MEMORY_PATH_DISABLE_VALUES = {"off", "0"}
 
 GOVERNED_SYSTEM_PROMPT = """You are the overseer of a live Dwarf Fortress fortress. You play by issuing \
 exactly one bounded, legal overseer command per step, then the real simulation runs and you observe \
-what actually changed. Your score comes only from real observed fortress state: dug rooms, working \
-workshops, production, wealth, and dwarves staying alive.
+what actually changed. You are evaluated only on real observed fortress state, three ways: a scalar \
+score paying survival, drink supply, goods actually produced, usable workshops, and created wealth \
+(queued orders earn nothing until the goods exist); a rubric judging shelter — enclosed functional \
+rooms such as bedrooms and production rooms, fully bounded by walls, buildings, or doors — plus \
+production economy, breadth, plan coherence, and non-repetition; and long-horizon goals that value \
+building MULTIPLE enclosed functional rooms while keeping every dwarf alive.
 
 Legal actions (the only four types accepted):
 - DIG: params {"area": [x, y, z], "size": [w, h, 1], "kind": "dig"|"channel"|"chop"}. \
@@ -64,8 +68,11 @@ Dwarves then do the work.
 Every action must include "advance_ticks" (how many game ticks to run after the command, up to \
 2000; around 1000 is a typical step). Nothing in the fortress changes unless time advances.
 
-The observation gives you the recorded game screen text plus derived work metrics (the `work` \
-fields): target/connector/workshop-room rectangles, wall vs floor tile counts, dig designations, \
+The observation includes a Fort minimap — a top-down character grid of your fort area with a \
+coordinate ruler (W=your walls, b/t/c/d=furniture, w=workshop, .=open floor). It is the \
+authoritative view for wall geometry: an enclosure must form a complete hollow ring with floor \
+inside; trace it on the minimap and wall the gaps. It also gives the recorded game screen text \
+plus derived work metrics (the `work` fields): target/connector/workshop-room rectangles, wall vs floor tile counts, dig designations, \
 active jobs, workshop counts and usability, and manager order counts. Read them to see whether \
 your previous command actually worked before issuing the next one. A == MEMORY == section carries \
 your own plan, POIs, and failed attempts from earlier steps.
@@ -433,6 +440,22 @@ class DFHackGovernedLLMAgent(Agent):
 
 
 register_agent("dfhack-governed-llm", lambda: DFHackGovernedLLMAgent())
+# Pinned variants: the registry name itself declares the serving model, immune
+# to environment drift (OPENROUTER_MODEL in a deployment env file overrides
+# the repo default AND systemd drop-ins — discovered 2026-07-03 when every
+# governed run to date turned out to be served by an env-file override).
+register_agent(
+    "dfhack-governed-llm-glm52",
+    lambda: DFHackGovernedLLMAgent(model_override="z-ai/glm-5.2"),
+)
+register_agent(
+    "dfhack-governed-llm-deepseek-v4",
+    lambda: DFHackGovernedLLMAgent(model_override="deepseek/deepseek-v4-pro"),
+)
+register_agent(
+    "dfhack-governed-llm-gpt55",
+    lambda: DFHackGovernedLLMAgent(model_override="openai/gpt-5.5"),
+)
 
 
 __all__ = ["DFHackGovernedLLMAgent", "GOVERNED_ACTION_TYPES", "GOVERNED_SYSTEM_PROMPT"]

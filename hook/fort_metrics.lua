@@ -227,6 +227,102 @@ for _, space in ipairs(spaces) do
   if space.kind ~= 'enclosed_space' then functional = functional + 1 end
 end
 
+-- ASCII minimap of the fort area so the agent can see wall geometry and gaps
+-- spatially instead of as coordinate lists. Read-only; bounded to 34x34.
+local map_origin = nil
+local map_rows = {}
+do
+  local construction_set = {}
+  pcall(function()
+    for _, c in ipairs(df.global.world.constructions) do
+      construction_set[c.pos.x .. ',' .. c.pos.y .. ',' .. c.pos.z] = true
+    end
+  end)
+
+  local BUILDING_CHARS = {
+    bed = 'b', table = 't', chair = 'c', door = 'd', workshop = 'w',
+  }
+  local building_tile_kind = {}
+  local anchor_z_counts = {}
+  for _, bld in ipairs(buildings) do
+    anchor_z_counts[bld.z] = (anchor_z_counts[bld.z] or 0) + 1
+    for fx = bld.x1, bld.x2 do
+      for fy = bld.y1, bld.y2 do
+        building_tile_kind[fx .. ',' .. fy .. ',' .. bld.z] = bld.kind
+      end
+    end
+  end
+  local anchor_z, best = nil, 0
+  for z, count in pairs(anchor_z_counts) do
+    if count > best then anchor_z, best = z, count end
+  end
+
+  if anchor_z ~= nil then
+    local min_x, min_y = math.huge, math.huge
+    local max_x, max_y = -math.huge, -math.huge
+    for _, bld in ipairs(buildings) do
+      if bld.z == anchor_z then
+        min_x = math.min(min_x, bld.x1)
+        min_y = math.min(min_y, bld.y1)
+        max_x = math.max(max_x, bld.x2)
+        max_y = math.max(max_y, bld.y2)
+      end
+    end
+    for key in pairs(construction_set) do
+      local cx, cy, cz = key:match('(-?%d+),(-?%d+),(-?%d+)')
+      if tonumber(cz) == anchor_z then
+        min_x = math.min(min_x, tonumber(cx))
+        min_y = math.min(min_y, tonumber(cy))
+        max_x = math.max(max_x, tonumber(cx))
+        max_y = math.max(max_y, tonumber(cy))
+      end
+    end
+    min_x, min_y = min_x - 4, min_y - 4
+    max_x, max_y = max_x + 4, max_y + 4
+    if max_x - min_x + 1 > 34 then max_x = min_x + 33 end
+    if max_y - min_y + 1 > 34 then max_y = min_y + 33 end
+
+    map_origin = { min_x, min_y, anchor_z }
+    for y = min_y, max_y do
+      local row = {}
+      for x = min_x, max_x do
+        local ch = ' '
+        local kind = building_tile_kind[x .. ',' .. y .. ',' .. anchor_z]
+        if kind then
+          ch = BUILDING_CHARS[kind] or '?'
+        else
+          local shape, hidden = tile_shape(x, y, anchor_z)
+          if shape == nil or hidden then
+            ch = ' '
+          elseif shape == WALL_SHAPE then
+            local is_tree = false
+            pcall(function()
+              local block = dfhack.maps.getTileBlock(x, y, anchor_z)
+              local attr = attrs[block.tiletype[x % 16][y % 16]]
+              is_tree = attr ~= nil and attr.material == tree_material
+            end)
+            if construction_set[x .. ',' .. y .. ',' .. anchor_z] then
+              ch = 'W'
+            elseif is_tree then
+              ch = 'T'
+            else
+              ch = '#'
+            end
+          elseif shape == FLOOR_SHAPE then
+            ch = '.'
+          elseif INTERIOR_SHAPES[shape] then
+            ch = ','
+          else
+            ch = '~'
+          end
+        end
+        table.insert(row, ch)
+      end
+      table.insert(map_rows, table.concat(row))
+    end
+  end
+end
+
 print(json.encode({
   ok = true,
   enclosed_spaces = #spaces,
@@ -235,4 +331,6 @@ print(json.encode({
   constructions = constructions,
   construction_tiles = construction_tiles,
   player_buildings = #buildings,
+  map_origin = map_origin,
+  map_rows = map_rows,
 }))

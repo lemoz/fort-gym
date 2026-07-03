@@ -146,11 +146,22 @@ def ui_work_progress_delta(
     }
 
 
+ORDERABLE_GOODS = ("bed", "door", "table", "chair", "barrel", "bin")
+
+
 def utility_progress_delta(
     current_work: Dict[str, Any] | None,
     baseline_work: Dict[str, Any] | None,
+    current_goods: Dict[str, Any] | None = None,
+    baseline_goods: Dict[str, Any] | None = None,
 ) -> Dict[str, int]:
-    """Compute bounded useful-work deltas from live work snapshots."""
+    """Compute bounded useful-work deltas from live work snapshots.
+
+    Score-v2 (2026-07-03): utility pays only for COMPLETED production —
+    in-play item-count deltas of orderable goods — plus workshops that became
+    usable. Order/queue depth deltas remain in the output for observability
+    but earn nothing: queueing 91 orders is a menu action, not utility.
+    """
 
     current = current_work or {}
     baseline = baseline_work or {}
@@ -182,8 +193,13 @@ def utility_progress_delta(
         carpenter_workshops_usable_delta,
         carpenter_workshop_task_jobs_delta,
     )
-    order_progress = max(manager_orders_delta, manager_order_quantity_delta)
-    workshop_progress = carpenter_workshops_delta * UTILITY_WORKSHOP_PROGRESS
+    produced_goods_delta = 0
+    if isinstance(current_goods, dict) and isinstance(baseline_goods, dict):
+        for good in ORDERABLE_GOODS:
+            produced_goods_delta += max(
+                0, _to_int(current_goods.get(good)) - _to_int(baseline_goods.get(good))
+            )
+    workshop_progress = carpenter_workshops_usable_delta * UTILITY_WORKSHOP_PROGRESS
     return {
         "manager_orders_delta": manager_orders_delta,
         "manager_order_quantity_delta": manager_order_quantity_delta,
@@ -191,7 +207,8 @@ def utility_progress_delta(
         "carpenter_workshops_usable_delta": carpenter_workshops_usable_delta,
         "carpenter_workshop_task_jobs_delta": carpenter_workshop_task_jobs_delta,
         "carpenter_workshops_delta": carpenter_workshops_delta,
-        "utility_progress": order_progress + workshop_progress,
+        "produced_goods_delta": produced_goods_delta,
+        "utility_progress": produced_goods_delta + workshop_progress,
     }
 
 

@@ -116,8 +116,15 @@ def test_utility_progress_delta_counts_orders_and_usable_workshops() -> None:
         "carpenter_workshops_usable": 1,
     }
 
-    delta = metrics.utility_progress_delta(current, baseline)
+    delta = metrics.utility_progress_delta(
+        current,
+        baseline,
+        current_goods={"bed": 3, "door": 1},
+        baseline_goods={"bed": 1, "door": 1},
+    )
 
+    # score-v2: queue deltas are observability only; utility pays produced
+    # goods (2 new beds) plus workshops that became usable (5)
     assert delta == {
         "manager_orders_delta": 1,
         "manager_order_quantity_delta": 5,
@@ -125,7 +132,8 @@ def test_utility_progress_delta_counts_orders_and_usable_workshops() -> None:
         "carpenter_workshops_usable_delta": 1,
         "carpenter_workshop_task_jobs_delta": 0,
         "carpenter_workshops_delta": 1,
-        "utility_progress": 10,
+        "produced_goods_delta": 2,
+        "utility_progress": 7,
     }
 
 
@@ -167,7 +175,9 @@ def test_workshop_task_job_counts_as_usable_production_proof() -> None:
 
     assert utility_delta["carpenter_workshop_task_jobs_delta"] == 1
     assert utility_delta["carpenter_workshops_delta"] == 1
-    assert utility_delta["utility_progress"] == 5
+    # score-v2: a queued task job alone is not utility — nothing was produced
+    # and no workshop became usable
+    assert utility_delta["utility_progress"] == 0
     assert production_delta["production_task_jobs_delta"] == 1
     assert production_delta["production_workshops_delta"] == 1
     assert production_delta["production_progress"] == 5
@@ -478,3 +488,39 @@ def test_build_construction_passes_through_valid_line(monkeypatch) -> None:
     assert result == {"ok": True}
     assert calls[-1][1] == ("Floor", "5", "5", "1", "9", "5")
     assert calls[-1][2] == {"timeout": 10.0}
+
+
+
+def test_utility_progress_ignores_order_spam_without_production() -> None:
+    """Regression for the DeepSeek exploit: 91 queued orders, ~nothing made."""
+    baseline = {
+        "manager_orders_count": 0,
+        "manager_orders_amount_left": 0,
+        "carpenter_workshops_usable": 1,
+    }
+    current = {
+        "manager_orders_count": 91,
+        "manager_orders_amount_left": 180,
+        "carpenter_workshops_usable": 1,
+    }
+
+    delta = metrics.utility_progress_delta(
+        current,
+        baseline,
+        current_goods={"bed": 2},
+        baseline_goods={"bed": 0},
+    )
+
+    assert delta["manager_orders_delta"] == 91
+    assert delta["produced_goods_delta"] == 2
+    assert delta["utility_progress"] == 2
+
+
+def test_utility_progress_without_goods_data_pays_usable_workshops_only() -> None:
+    delta = metrics.utility_progress_delta(
+        {"manager_orders_count": 10, "carpenter_workshops_usable": 1},
+        {"manager_orders_count": 0, "carpenter_workshops_usable": 0},
+    )
+
+    assert delta["produced_goods_delta"] == 0
+    assert delta["utility_progress"] == 5

@@ -1398,6 +1398,37 @@ def encode_observation(
             if row_parts:
                 status_lines.append("Wall/floor layout: " + "; ".join(row_parts))
 
+        map_rows = fort.get("map_rows")
+        map_origin = fort.get("map_origin")
+        if (
+            isinstance(map_rows, list)
+            and map_rows
+            and isinstance(map_origin, (list, tuple))
+            and len(map_origin) >= 3
+        ):
+            ox = _int_or_none(map_origin[0])
+            oy = _int_or_none(map_origin[1])
+            oz = _int_or_none(map_origin[2])
+            if ox is not None and oy is not None and oz is not None:
+                rows = [str(row) for row in map_rows[:34]]
+                width = max((len(row) for row in rows), default=0)
+                status_lines.append(
+                    f"Fort minimap (z={oz}; top-left tile is x={ox},y={oy}; "
+                    "x increases rightward, y increases downward). Legend: "
+                    "W=your wall, #=natural wall, T=tree trunk, b=bed, "
+                    "t=table, c=chair, d=door, w=workshop, .=floor, "
+                    ",=shrub/boulder, ~=impassable:"
+                )
+                ruler = "".join(str((ox + i) % 10) for i in range(width))
+                status_lines.append(f"      {ruler}")
+                for index, row in enumerate(rows):
+                    status_lines.append(f"y={oy + index:>3}|{row}")
+                status_lines.append(
+                    "A room is enclosed only if every tile of its border is "
+                    "W/#/T/w/d — trace the ring on the minimap and wall any "
+                    "'.' or ',' gaps."
+                )
+
         if enclosed_spaces == 0:
             status_lines.append(
                 "No enclosed rooms yet — spaces count as rooms only when fully "
