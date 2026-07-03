@@ -1761,3 +1761,41 @@ def test_encoder_renders_wall_layout_with_run_compression() -> None:
     assert "z177 y90: x94-97" in obs_text
     assert "z177 y93: x94-98" in obs_text
     assert "check the Wall/floor layout line for gaps" in obs_text
+
+
+def test_encoder_surfaces_furniture_positions_and_failed_tiles() -> None:
+    state = {
+        "time": 100,
+        "population": 7,
+        "stocks": {},
+        "crew": {
+            "ok": True,
+            "placed_furniture": {"bed": 2, "door": 1, "table": 0, "chair": 0},
+            "placed_furniture_positions": {
+                "bed": [[96, 91, 177], [95, 91, 177]],
+                "door": [[94, 91, 177]],
+                "table": [],
+                "chair": [],
+            },
+        },
+    }
+
+    obs_text, _ = encode_observation(
+        state,
+        last_action_result={
+            "accepted": False,
+            "why": "no_tiles_placed",
+            "result": {
+                "ok": False,
+                "failed": [
+                    {"x": 94, "y": 91, "error": "tile_occupied_by_building"},
+                    {"x": 95, "y": 91, "error": "tile_occupied_by_building"},
+                ],
+            },
+        },
+    )
+
+    assert "Furniture positions: beds at (96,91),(95,91); doors at (94,91)" in obs_text
+    assert "construction cannot be placed on occupied tiles" in obs_text
+    assert "Failed tiles: (94,91): tile_occupied_by_building" in obs_text
+    assert "Last Action: REJECTED - no_tiles_placed" in obs_text

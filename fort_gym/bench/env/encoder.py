@@ -864,6 +864,21 @@ def encode_observation(
             status_lines.append(f"Last Action: REJECTED - {reason}")
         action_result = last_action_result.get("result")
         if isinstance(action_result, dict):
+            failed_tiles = action_result.get("failed")
+            if isinstance(failed_tiles, list) and failed_tiles:
+                tile_parts = []
+                for entry in failed_tiles[:4]:
+                    if not isinstance(entry, dict):
+                        continue
+                    fx = _int_or_none(entry.get("x"))
+                    fy = _int_or_none(entry.get("y"))
+                    err = entry.get("error")
+                    if fx is not None and fy is not None and err:
+                        tile_parts.append(f"({fx},{fy}): {err}")
+                if tile_parts:
+                    status_lines.append(
+                        "Failed tiles: " + "; ".join(tile_parts)
+                    )
             detail_parts = []
             for key in (
                 "newly_designated",
@@ -1263,6 +1278,27 @@ def encode_observation(
                 status_lines.append(
                     "Placed furniture buildings: " + ", ".join(placed_parts)
                 )
+            positions = crew.get("placed_furniture_positions")
+            if isinstance(positions, dict) and positions:
+                position_parts = []
+                for key in ("bed", "door", "table", "chair"):
+                    coords = positions.get(key)
+                    if not isinstance(coords, list) or not coords:
+                        continue
+                    rendered = []
+                    for coord in coords[:8]:
+                        if isinstance(coord, (list, tuple)) and len(coord) >= 2:
+                            cx = _int_or_none(coord[0])
+                            cy = _int_or_none(coord[1])
+                            if cx is not None and cy is not None:
+                                rendered.append(f"({cx},{cy})")
+                    if rendered:
+                        position_parts.append(f"{key}s at " + ",".join(rendered))
+                if position_parts:
+                    status_lines.append(
+                        "Furniture positions: " + "; ".join(position_parts)
+                        + " — construction cannot be placed on occupied tiles."
+                    )
 
         goods = crew.get("goods")
         if isinstance(goods, dict) and goods:

@@ -139,8 +139,10 @@ class Executor:
                     return {"accepted": False, "why": f"Invalid coordinates: {exc}"}
                 if kind in {"Wall", "Floor"}:
                     try:
-                        x2 = int(params.get("x2", x))
-                        y2 = int(params.get("y2", y))
+                        raw_x2 = params.get("x2")
+                        raw_y2 = params.get("y2")
+                        x2 = x if raw_x2 is None else int(raw_x2)
+                        y2 = y if raw_y2 is None else int(raw_y2)
                     except (TypeError, ValueError) as exc:
                         return {"accepted": False, "why": f"Invalid coordinates: {exc}"}
                     result = safe_build_construction(kind, x, y, z, x2, y2)

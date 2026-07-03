@@ -251,3 +251,18 @@ def test_build_construction_hook_enforces_locality_and_uses_existing_material() 
         assert needle in script
     # legality: never creates items, only uses existing material items
     assert "createItem" not in script
+
+
+def test_build_construction_reports_occupied_and_wall_tiles() -> None:
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "build_construction.lua"
+    ).read_text(encoding="utf-8")
+    assert "tile_occupied_by_building" in script
+    assert "already_wall" in script
+
+
+def test_job_metrics_reports_furniture_positions() -> None:
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua"
+    ).read_text(encoding="utf-8")
+    assert "placed_furniture_positions" in script

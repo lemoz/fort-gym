@@ -279,3 +279,26 @@ def test_dfhack_build_floor_defaults_x2_y2_to_xy(monkeypatch) -> None:
 
     assert result["accepted"] is True
     assert calls == [("Floor", 30, 40, 2, 30, 40)]
+
+
+def test_dfhack_build_wall_normalizes_explicit_null_coords(monkeypatch) -> None:
+    calls: list[tuple] = []
+
+    def fake_build_construction(kind, x, y, z, x2, y2):
+        calls.append((kind, x, y, z, x2, y2))
+        return {"ok": True, "placed_count": 1}
+
+    monkeypatch.setattr(
+        "fort_gym.bench.env.executor.safe_build_construction", fake_build_construction
+    )
+
+    result = Executor(dfhack_client=_ConnectedDFHackClient()).apply(
+        {
+            "type": "BUILD",
+            "params": {"kind": "Wall", "x": 94, "y": 91, "z": 177, "x2": None, "y2": None},
+        },
+        backend="dfhack",
+    )
+
+    assert result["accepted"] is True
+    assert calls == [("Wall", 94, 91, 177, 94, 91)]

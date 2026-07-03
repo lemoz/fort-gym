@@ -134,8 +134,23 @@ local placed = {}
 local failed = {}
 for tx = rx1, rx2 do
   for ty = ry1, ry2 do
+    local tile_block = dfhack.maps.getTileBlock(tx, ty, z1)
+    local occupied_by_building = false
+    local already_wall = false
+    if tile_block then
+      local bdx, bdy = tx % 16, ty % 16
+      pcall(function()
+        occupied_by_building = tile_block.occupancy[bdx][bdy].building ~= 0
+        local attr = df.tiletype.attrs[tile_block.tiletype[bdx][bdy]]
+        already_wall = attr ~= nil and attr.shape == df.tiletype_shape.WALL
+      end)
+    end
     if not near_fort(tx, ty) then
       table.insert(failed, { x = tx, y = ty, error = 'too_far_from_fort' })
+    elseif occupied_by_building then
+      table.insert(failed, { x = tx, y = ty, error = 'tile_occupied_by_building' })
+    elseif already_wall then
+      table.insert(failed, { x = tx, y = ty, error = 'already_wall' })
     else
       local material = find_material(tx, ty, z1)
       if not material then

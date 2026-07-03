@@ -139,6 +139,7 @@ local FURNITURE_BUILDING_KEYS = {
   [df.building_type.Chair] = 'chair',
 }
 out.placed_furniture = { bed = 0, door = 0, table = 0, chair = 0 }
+out.placed_furniture_positions = { bed = {}, door = {}, table = {}, chair = {} }
 
 -- workshops with construction stage and queued jobs
 for _, bld in ipairs(df.global.world.buildings.all) do
@@ -146,6 +147,14 @@ for _, bld in ipairs(df.global.world.buildings.all) do
   if ok_type and FURNITURE_BUILDING_KEYS[bld_type] then
     local key = FURNITURE_BUILDING_KEYS[bld_type]
     out.placed_furniture[key] = out.placed_furniture[key] + 1
+    if #out.placed_furniture_positions[key] < 8 then
+      pcall(function()
+        table.insert(
+          out.placed_furniture_positions[key],
+          { bld.centerx, bld.centery, bld.z }
+        )
+      end)
+    end
   end
   local ok, is_workshop = pcall(function()
     return bld:getType() == df.building_type.Workshop
