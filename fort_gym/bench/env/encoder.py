@@ -851,7 +851,16 @@ def encode_observation(
         if accepted:
             status_lines.append("Last Action: ACCEPTED")
         else:
-            reason = last_action_result.get("reason", last_action_result.get("error", "unknown"))
+            result_error = None
+            if isinstance(last_action_result.get("result"), dict):
+                result_error = last_action_result["result"].get("error")
+            reason = (
+                last_action_result.get("reason")
+                or last_action_result.get("why")
+                or last_action_result.get("error")
+                or result_error
+                or "unknown"
+            )
             status_lines.append(f"Last Action: REJECTED - {reason}")
         action_result = last_action_result.get("result")
         if isinstance(action_result, dict):

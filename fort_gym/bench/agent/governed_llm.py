@@ -282,8 +282,18 @@ class DFHackGovernedLLMAgent(Agent):
         )
         if result and "REJECTED" in result.upper():
             action = self._pending.get("action", {})
+            params = action.get("params") if isinstance(action.get("params"), dict) else {}
+            label_parts = [str(action.get("type", "unknown"))]
+            kind = params.get("kind") or params.get("job")
+            if kind:
+                label_parts.append(str(kind))
+            if params.get("x") is not None and params.get("y") is not None:
+                label_parts.append(f"at ({params.get('x')},{params.get('y')})")
+            elif isinstance(params.get("area"), (list, tuple)):
+                area = params.get("area")
+                label_parts.append(f"at ({area[0]},{area[1]})")
             self._memory.remember_failed_attempt(
-                label=f"{action.get('type', 'unknown')} rejected",
+                label=" ".join(label_parts) + " rejected",
                 reason=result,
             )
         self._pending = None

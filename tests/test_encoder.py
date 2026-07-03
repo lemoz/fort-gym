@@ -1717,3 +1717,21 @@ def test_encoder_ignores_malformed_fort_without_crashing() -> None:
     text, _ = encode_observation(state, screen_text="main map")
 
     assert "Fort structure" not in text
+
+
+def test_encoder_surfaces_executor_why_as_rejection_reason() -> None:
+    state = {"time": 100, "population": 7, "stocks": {}}
+
+    obs_text, _ = encode_observation(
+        state,
+        last_action_result={"accepted": False, "why": "outside_work_rect"},
+    )
+
+    assert "Last Action: REJECTED - outside_work_rect" in obs_text
+
+    obs_text, _ = encode_observation(
+        state,
+        last_action_result={"accepted": False, "result": {"ok": False, "error": "no_building_material"}},
+    )
+
+    assert "Last Action: REJECTED - no_building_material" in obs_text

@@ -226,3 +226,25 @@ def test_memory_persists_across_agent_instances(tmp_path: Any) -> None:
     )
     context = agent_b._memory.get_context()
     assert "site" in context
+
+
+def test_failed_attempt_labels_carry_kind_and_position() -> None:
+    agent = _agent(
+        [
+            _submit_action_response(
+                {
+                    "type": "BUILD",
+                    "params": {"kind": "Wall", "x": 94, "y": 91, "z": 177},
+                    "intent": "wall the bedroom",
+                    "advance_ticks": 1000,
+                }
+            ),
+            _submit_action_response(
+                {"type": "WAIT", "params": {}, "intent": "wait", "advance_ticks": 1000}
+            ),
+        ]
+    )
+    agent.decide("Time: tick 100", {})
+    agent.decide("Last Action: REJECTED - too_far_from_fort\nTime: tick 1100", {})
+    labels = [item["label"] for item in agent._memory.failed_attempts]
+    assert any("BUILD Wall at (94,91) rejected" == label for label in labels)
