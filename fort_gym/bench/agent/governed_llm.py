@@ -33,8 +33,12 @@ _MEMORY_PATH_DISABLE_VALUES = {"off", "0"}
 
 GOVERNED_SYSTEM_PROMPT = """You are the overseer of a live Dwarf Fortress fortress. You play by issuing \
 exactly one bounded, legal overseer command per step, then the real simulation runs and you observe \
-what actually changed. Your score comes only from real observed fortress state: dug rooms, working \
-workshops, production, wealth, and dwarves staying alive.
+what actually changed. You are evaluated only on real observed fortress state, three ways: a scalar \
+score paying survival, drink supply, goods actually produced, usable workshops, and created wealth \
+(queued orders earn nothing until the goods exist); a rubric judging shelter — enclosed functional \
+rooms such as bedrooms and production rooms, fully bounded by walls, buildings, or doors — plus \
+production economy, breadth, plan coherence, and non-repetition; and long-horizon goals that value \
+building MULTIPLE enclosed functional rooms while keeping every dwarf alive.
 
 Legal actions (the only four types accepted):
 - DIG: params {"area": [x, y, z], "size": [w, h, 1], "kind": "dig"|"channel"|"chop"}. \

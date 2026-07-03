@@ -458,3 +458,30 @@ def test_rubric_flags_missing_fort_structure() -> None:
 
     assert "no_fort_structure" in rubric["blockers"]
     assert rubric["dimensions"]["shelter_layout"]["score"] <= 2.0
+
+
+def test_rubric_flags_order_spam_as_repetitive() -> None:
+    """Regression for the DeepSeek exploit: queue-only proofs must not
+    exempt repeated identical orders from the repetition blocker."""
+    from fort_gym.bench.eval.rubric import evaluate_trace_records
+
+    records = [
+        {
+            "step": step,
+            "action": {"type": "ORDER", "params": {"job": "bed", "quantity": 5}},
+            "execute": {"accepted": True, "provenance": "dfhack_governed"},
+            "metrics": {"pop": 7, "food": 40, "drink": 50},
+            "gameplay_proof": {
+                "ok": True,
+                "changed_tile_count": 0,
+                "state_deltas": {},
+                "helper_evidence": {"created_job_ids": [step * 2 + 5], "manager_recorded": True},
+            },
+            "tick_advance": {"ticks_advanced": 1000},
+        }
+        for step in range(10)
+    ]
+
+    rubric = evaluate_trace_records(records)
+
+    assert "repetitive_policy" in rubric["blockers"]

@@ -98,6 +98,43 @@ _PROGRESS_FIELDS = (
 )
 
 
+
+_QUEUE_ONLY_EVIDENCE_KEYS = {
+    "created_job_ids",
+    "manager_recorded",
+    "already_designated",
+    "non_wall_tiles",
+}
+
+
+def _proof_shows_world_change(proof: Dict[str, Any]) -> bool:
+    """Queueing jobs is real but is not world change for repetition purposes.
+
+    A proof exempts a step from the repetition tally only when it shows the
+    world actually changed: tile diffs, productive state deltas, new
+    designations, or new buildings — not merely another queued job (the
+    order-spam exploit registers proof.ok via created_job_ids alone).
+    """
+
+    if int(proof.get("changed_tile_count") or 0) > 0:
+        return True
+    state_deltas = proof.get("state_deltas")
+    if isinstance(state_deltas, dict) and state_deltas:
+        return True
+    evidence = proof.get("helper_evidence")
+    if not isinstance(evidence, dict):
+        # keystroke-mode proofs have no helper_evidence; ok already implies
+        # observed step progress there
+        return True
+    if int(evidence.get("newly_designated") or 0) > 0:
+        return True
+    before_ws = int(evidence.get("before_carpenter_workshops") or 0)
+    after_ws = int(evidence.get("after_carpenter_workshops") or 0)
+    if after_ws > before_ws or evidence.get("building_id") is not None:
+        return True
+    meaningful = {k for k, v in evidence.items() if v not in (None, 0, False, [], "")}
+    return not meaningful <= _QUEUE_ONLY_EVIDENCE_KEYS
+
 def _step_progress_flags(records: List[Dict[str, Any]]) -> List[bool]:
     """Per record: did this step show real progress?
 
@@ -111,7 +148,11 @@ def _step_progress_flags(records: List[Dict[str, Any]]) -> List[bool]:
     for record in records:
         metrics = _metrics(record)
         proof = record.get("gameplay_proof")
-        proof_ok = isinstance(proof, dict) and bool(proof.get("ok"))
+        proof_ok = (
+            isinstance(proof, dict)
+            and bool(proof.get("ok"))
+            and _proof_shows_world_change(proof)
+        )
         productive = any(
             _to_int(metrics.get(field)) > _to_int(previous_metrics.get(field))
             for field in _PROGRESS_FIELDS

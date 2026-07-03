@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 
 from .rubric import evaluate_trace_records
-from .scoring import composite_score, score_components
+from .scoring import SCORE_VERSION, composite_score, score_components
 
 
 class RunSummary(BaseModel):
@@ -76,6 +76,7 @@ class RunSummary(BaseModel):
     fort_functional_rooms: int = 0
     fort_constructions: int = 0
     total_score: float = 0.0
+    score_version: int = 1
     rubric: Dict[str, Any] = Field(default_factory=dict)
     milestones: List[Dict[str, Any]] = Field(default_factory=list)
     scenario_assertions: List[Dict[str, Any]] = Field(default_factory=list)
@@ -510,6 +511,7 @@ def summarize(trace_path: Path) -> RunSummary:
         fort_functional_rooms=fort_functional_rooms,
         fort_constructions=fort_constructions,
         total_score=total_score,
+        score_version=SCORE_VERSION,
         rubric=evaluate_trace_records(trace_records),
         milestones=milestones,
     )

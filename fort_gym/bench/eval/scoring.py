@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from typing import Dict, Optional
 
+# v2 2026-07-03: utility pays completed goods, not order-queue depth
+SCORE_VERSION = 2
+
 
 TARGET_SURVIVAL_TICKS = 2400
 POP_CAP = 50
