@@ -36,6 +36,9 @@ ASSISTED_DFHACK_ACTIONS = {"DIG", "BUILD", "ORDER"}
 GOVERNED_DFHACK_MODELS = {
     "dfhack-governed-scripted",
     "dfhack-governed-llm",
+    "dfhack-governed-llm-glm52",
+    "dfhack-governed-llm-deepseek-v4",
+    "dfhack-governed-llm-gpt55",
 }
 GOVERNED_DFHACK_ACTIONS = {"DIG", "BUILD", "ORDER", "WAIT"}
 ASSISTED_PROGRESS_FIELDS = (

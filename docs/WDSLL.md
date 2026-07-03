@@ -220,6 +220,21 @@ gate. Each entry states what changed and the evidence that forced it.
   room. Gate criteria unchanged — the attempt still fails honestly at 1
   functional room vs the required 2.
 
+- **2026-07-03 — MODEL ATTRIBUTION CORRECTED for every governed run to
+  date.** During the G4 model-swap attempt, the per-step usage events
+  revealed the serving model was `openai/gpt-5.5`, not the repo-default
+  `z-ai/glm-5.2`: `/etc/fort-gym.env` on the deployment carries an
+  `OPENROUTER_MODEL` override, and systemd `EnvironmentFile` also overrides
+  drop-ins (which silently defeated the DeepSeek swap). Audit confirmed
+  gpt-5.5 served the G2 pass series, the G3 pass, all G4 attempts, and both
+  G5 arms. All recorded evidence (scores, rooms, traces, frames) is
+  unaffected; only the model credited changes — every "GLM 5.2" behavioral
+  claim in earlier entries should read "GPT-5.5". Fix: pinned registry
+  variants (`dfhack-governed-llm-glm52` / `-deepseek-v4` / `-gpt55`) whose
+  names declare the model and are immune to env drift; future gate attempts
+  must use pinned names, and model attribution must be verified from trace
+  usage events, never inferred from config.
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,

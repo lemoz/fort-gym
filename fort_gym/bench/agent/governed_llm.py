@@ -433,6 +433,22 @@ class DFHackGovernedLLMAgent(Agent):
 
 
 register_agent("dfhack-governed-llm", lambda: DFHackGovernedLLMAgent())
+# Pinned variants: the registry name itself declares the serving model, immune
+# to environment drift (OPENROUTER_MODEL in a deployment env file overrides
+# the repo default AND systemd drop-ins — discovered 2026-07-03 when every
+# governed run to date turned out to be served by an env-file override).
+register_agent(
+    "dfhack-governed-llm-glm52",
+    lambda: DFHackGovernedLLMAgent(model_override="z-ai/glm-5.2"),
+)
+register_agent(
+    "dfhack-governed-llm-deepseek-v4",
+    lambda: DFHackGovernedLLMAgent(model_override="deepseek/deepseek-v4-pro"),
+)
+register_agent(
+    "dfhack-governed-llm-gpt55",
+    lambda: DFHackGovernedLLMAgent(model_override="openai/gpt-5.5"),
+)
 
 
 __all__ = ["DFHackGovernedLLMAgent", "GOVERNED_ACTION_TYPES", "GOVERNED_SYSTEM_PROMPT"]
