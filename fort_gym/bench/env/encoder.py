@@ -851,10 +851,34 @@ def encode_observation(
         if accepted:
             status_lines.append("Last Action: ACCEPTED")
         else:
-            reason = last_action_result.get("reason", last_action_result.get("error", "unknown"))
+            result_error = None
+            if isinstance(last_action_result.get("result"), dict):
+                result_error = last_action_result["result"].get("error")
+            reason = (
+                last_action_result.get("reason")
+                or last_action_result.get("why")
+                or last_action_result.get("error")
+                or result_error
+                or "unknown"
+            )
             status_lines.append(f"Last Action: REJECTED - {reason}")
         action_result = last_action_result.get("result")
         if isinstance(action_result, dict):
+            failed_tiles = action_result.get("failed")
+            if isinstance(failed_tiles, list) and failed_tiles:
+                tile_parts = []
+                for entry in failed_tiles[:4]:
+                    if not isinstance(entry, dict):
+                        continue
+                    fx = _int_or_none(entry.get("x"))
+                    fy = _int_or_none(entry.get("y"))
+                    err = entry.get("error")
+                    if fx is not None and fy is not None and err:
+                        tile_parts.append(f"({fx},{fy}): {err}")
+                if tile_parts:
+                    status_lines.append(
+                        "Failed tiles: " + "; ".join(tile_parts)
+                    )
             detail_parts = []
             for key in (
                 "newly_designated",
@@ -1243,6 +1267,39 @@ def encode_observation(
                         )
                 status_lines.append(workshop_line)
 
+        placed = crew.get("placed_furniture")
+        if isinstance(placed, dict) and placed:
+            placed_parts = []
+            for key in ("bed", "door", "table", "chair"):
+                value = _int_or_none(placed.get(key))
+                if value is not None:
+                    placed_parts.append(f"{key}s={value}")
+            if placed_parts:
+                status_lines.append(
+                    "Placed furniture buildings: " + ", ".join(placed_parts)
+                )
+            positions = crew.get("placed_furniture_positions")
+            if isinstance(positions, dict) and positions:
+                position_parts = []
+                for key in ("bed", "door", "table", "chair"):
+                    coords = positions.get(key)
+                    if not isinstance(coords, list) or not coords:
+                        continue
+                    rendered = []
+                    for coord in coords[:8]:
+                        if isinstance(coord, (list, tuple)) and len(coord) >= 2:
+                            cx = _int_or_none(coord[0])
+                            cy = _int_or_none(coord[1])
+                            if cx is not None and cy is not None:
+                                rendered.append(f"({cx},{cy})")
+                    if rendered:
+                        position_parts.append(f"{key}s at " + ",".join(rendered))
+                if position_parts:
+                    status_lines.append(
+                        "Furniture positions: " + "; ".join(position_parts)
+                        + " — construction cannot be placed on occupied tiles."
+                    )
+
         goods = crew.get("goods")
         if isinstance(goods, dict) and goods:
             goods_parts = []
@@ -1279,6 +1336,75 @@ def encode_observation(
                     "on non-wall tiles are silently dropped by DF), "
                     f"designated={designated}"
                 )
+
+    fort = clean_state.get("fort")
+    if isinstance(fort, dict) and fort.get("ok"):
+        enclosed_spaces = _int_or_none(fort.get("enclosed_spaces"))
+        functional_rooms = _int_or_none(fort.get("functional_rooms"))
+        constructions = _int_or_none(fort.get("constructions"))
+        if None not in (enclosed_spaces, functional_rooms, constructions):
+            status_lines.append(
+                "Fort structure (plan-agnostic): "
+                f"enclosed_spaces={enclosed_spaces}, "
+                f"functional_rooms={functional_rooms}, "
+                f"constructions={constructions}"
+            )
+
+        spaces = fort.get("spaces")
+        if isinstance(spaces, list) and spaces:
+            room_parts = []
+            for space in spaces[:6]:
+                if not isinstance(space, dict):
+                    continue
+                kind = space.get("kind")
+                tiles = _int_or_none(space.get("tiles"))
+                z = _int_or_none(space.get("z"))
+                if not kind or tiles is None or z is None:
+                    continue
+                room_parts.append(f"{kind}({tiles} tiles, z{z})")
+            if room_parts:
+                status_lines.append("Rooms: " + ", ".join(room_parts))
+
+        construction_tiles = fort.get("construction_tiles")
+        if isinstance(construction_tiles, list) and construction_tiles:
+            by_row: Dict[tuple, List[int]] = {}
+            for tile in construction_tiles:
+                if not isinstance(tile, (list, tuple)) or len(tile) < 3:
+                    continue
+                x = _int_or_none(tile[0])
+                y = _int_or_none(tile[1])
+                z = _int_or_none(tile[2])
+                if x is None or y is None or z is None:
+                    continue
+                by_row.setdefault((z, y), []).append(x)
+            row_parts = []
+            for (z, y), xs in sorted(by_row.items()):
+                xs = sorted(set(xs))
+                runs = []
+                start = prev = xs[0]
+                for value in xs[1:]:
+                    if value == prev + 1:
+                        prev = value
+                        continue
+                    runs.append((start, prev))
+                    start = prev = value
+                runs.append((start, prev))
+                run_text = ",".join(
+                    f"x{a}" if a == b else f"x{a}-{b}" for a, b in runs
+                )
+                row_parts.append(f"z{z} y{y}: {run_text}")
+                if len(row_parts) >= 12:
+                    break
+            if row_parts:
+                status_lines.append("Wall/floor layout: " + "; ".join(row_parts))
+
+        if enclosed_spaces == 0:
+            status_lines.append(
+                "No enclosed rooms yet — spaces count as rooms only when fully "
+                "bounded by walls, buildings, or doors. BUILD kind=Wall can "
+                "enclose them; check the Wall/floor layout line for gaps in "
+                "your own walls."
+            )
 
     if ui_work:
         status_lines.append(

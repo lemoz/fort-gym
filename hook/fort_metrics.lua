@@ -1,0 +1,238 @@
+-- fort_metrics.lua: plan-agnostic fortress structure detection (read-only).
+--
+-- Measures what the player actually built, from map state alone — no
+-- predefined plan rectangles. Flood-fills open floor outward from every
+-- player building to find ENCLOSED spaces (regions fully bounded by walls,
+-- buildings, or doors), classifies them functionally by contents, and counts
+-- player constructions. Works on any seed/embark.
+
+local json = require('json')
+
+local MAX_COMPONENT_TILES = 400
+local MAX_SPACES = 12
+local Z_NEIGHBORS = false -- single-z spaces for v1
+
+local attrs = df.tiletype.attrs
+local FLOOR_SHAPE = df.tiletype_shape.FLOOR
+local WALL_SHAPE = df.tiletype_shape.WALL
+
+-- standable ground that counts as room interior (vegetation and loose rock
+-- on a floor do not connect a room to the wild)
+local INTERIOR_SHAPES = {
+  [df.tiletype_shape.FLOOR] = true,
+  [df.tiletype_shape.SHRUB] = true,
+  [df.tiletype_shape.SAPLING] = true,
+  [df.tiletype_shape.BOULDER] = true,
+  [df.tiletype_shape.PEBBLES] = true,
+}
+
+local function tile_shape(x, y, z)
+  local block = dfhack.maps.getTileBlock(x, y, z)
+  if not block then return nil, nil end
+  local dx, dy = x % 16, y % 16
+  local ok, shape, hidden = pcall(function()
+    local attr = attrs[block.tiletype[dx][dy]]
+    return attr and attr.shape or nil, block.designation[dx][dy].hidden
+  end)
+  if not ok then return nil, nil end
+  return shape, hidden
+end
+
+local function building_at(x, y, z)
+  local block = dfhack.maps.getTileBlock(x, y, z)
+  if not block then return false end
+  local dx, dy = x % 16, y % 16
+  local ok, occupied = pcall(function()
+    return block.occupancy[dx][dy].building ~= 0
+  end)
+  return ok and occupied or false
+end
+
+-- furniture a dwarf can stand on/next to belongs to the room's interior; a
+-- fully furnished bedroom must not stop being a room. Doors, workshops, and
+-- anything else seal the boundary.
+local INTERIOR_FURNITURE = { bed = true, table = true, chair = true }
+local furniture_tiles = {}
+
+local function interior_furniture_at(x, y, z)
+  return furniture_tiles[x .. ',' .. y .. ',' .. z] == true
+end
+
+-- collect player buildings with their footprints, grouped for classification
+local buildings = {}
+for _, bld in ipairs(df.global.world.buildings.all) do
+  local ok, entry = pcall(function()
+    local t = bld:getType()
+    local kind = nil
+    if t == df.building_type.Bed then kind = 'bed'
+    elseif t == df.building_type.Table then kind = 'table'
+    elseif t == df.building_type.Chair then kind = 'chair'
+    elseif t == df.building_type.Door then kind = 'door'
+    elseif t == df.building_type.Workshop then kind = 'workshop'
+    end
+    if not kind then return nil end
+    return {
+      kind = kind,
+      x1 = bld.x1, y1 = bld.y1, x2 = bld.x2, y2 = bld.y2, z = bld.z,
+      cx = bld.centerx, cy = bld.centery,
+    }
+  end)
+  if ok and entry then
+    table.insert(buildings, entry)
+    if INTERIOR_FURNITURE[entry.kind] then
+      for fx = entry.x1, entry.x2 do
+        for fy = entry.y1, entry.y2 do
+          furniture_tiles[fx .. ',' .. fy .. ',' .. entry.z] = true
+        end
+      end
+    end
+  end
+end
+
+local constructions = 0
+local construction_tiles = {}
+pcall(function()
+  constructions = #df.global.world.constructions
+  -- surface the layout so the agent can see gaps in its own walls; cap the
+  -- list and skip the mirrored above-z entries built walls create
+  local seen_z = {}
+  for _, bld in ipairs(df.global.world.buildings.all) do
+    pcall(function() seen_z[bld.z] = true end)
+  end
+  for _, c in ipairs(df.global.world.constructions) do
+    if #construction_tiles >= 80 then break end
+    if next(seen_z) == nil or seen_z[c.pos.z] then
+      table.insert(construction_tiles, { c.pos.x, c.pos.y, c.pos.z })
+    end
+  end
+end)
+
+-- flood fill open floor from seeds; doors and buildings are boundaries that
+-- still close a room; open floor beyond MAX_COMPONENT_TILES means "leaky"
+-- (connected to the open map) and therefore not enclosed.
+local function flood(seed_x, seed_y, seed_z)
+  local visited = {}
+  local queue = { { seed_x, seed_y } }
+  local tiles = {}
+  local enclosed = true
+  local function key(x, y) return x .. ',' .. y end
+  visited[key(seed_x, seed_y)] = true
+  while #queue > 0 do
+    local cell = table.remove(queue)
+    local x, y = cell[1], cell[2]
+    local shape, hidden = tile_shape(x, y, seed_z)
+    if shape == nil then
+      enclosed = false
+    elseif interior_furniture_at(x, y, seed_z) then
+      -- beds/tables/chairs are part of the room they furnish
+      table.insert(tiles, { x, y })
+      if #tiles > MAX_COMPONENT_TILES then
+        enclosed = false
+        break
+      end
+      for _, d in ipairs({ { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }) do
+        local nx, ny = x + d[1], y + d[2]
+        if not visited[key(nx, ny)] then
+          visited[key(nx, ny)] = true
+          table.insert(queue, { nx, ny })
+        end
+      end
+    elseif building_at(x, y, seed_z) then
+      -- other buildings (incl. doors and workshops) close the boundary
+    elseif shape == WALL_SHAPE then
+      -- walls (and tree trunks) close the boundary
+    elseif INTERIOR_SHAPES[shape] and not hidden then
+      table.insert(tiles, { x, y })
+      if #tiles > MAX_COMPONENT_TILES then
+        enclosed = false
+        break
+      end
+      for _, d in ipairs({ { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }) do
+        local nx, ny = x + d[1], y + d[2]
+        if not visited[key(nx, ny)] then
+          visited[key(nx, ny)] = true
+          table.insert(queue, { nx, ny })
+        end
+      end
+    else
+      -- ramps, stairs, open sky, brooks: leaks to the wild
+      enclosed = false
+    end
+  end
+  return tiles, enclosed
+end
+
+local function point_in_component(component_lookup, x, y)
+  return component_lookup[x .. ',' .. y] == true
+end
+
+local spaces = {}
+local seen_seed = {}
+for _, bld in ipairs(buildings) do
+  if #spaces >= MAX_SPACES then break end
+  -- seed from tiles adjacent to the building footprint
+  for sx = bld.x1 - 1, bld.x2 + 1 do
+    for sy = bld.y1 - 1, bld.y2 + 1 do
+      local inside_fp = sx >= bld.x1 and sx <= bld.x2 and sy >= bld.y1 and sy <= bld.y2
+      local seed_key = sx .. ',' .. sy .. ',' .. bld.z
+      if not inside_fp and not seen_seed[seed_key] and #spaces < MAX_SPACES then
+        seen_seed[seed_key] = true
+        local shape, hidden = tile_shape(sx, sy, bld.z)
+        local seedable = interior_furniture_at(sx, sy, bld.z)
+          or (INTERIOR_SHAPES[shape] and not hidden and not building_at(sx, sy, bld.z))
+        if seedable then
+          local tiles, enclosed = flood(sx, sy, bld.z)
+          if enclosed and #tiles > 0 then
+            local lookup = {}
+            for _, t in ipairs(tiles) do
+              lookup[t[1] .. ',' .. t[2]] = true
+              seen_seed[t[1] .. ',' .. t[2] .. ',' .. bld.z] = true
+            end
+            local contents = { bed = 0, table = 0, chair = 0, door = 0, workshop = 0 }
+            for _, other in ipairs(buildings) do
+              if other.z == bld.z then
+                -- a building belongs to the space when its footprint touches it
+                local touches = false
+                for ox = other.x1 - 1, other.x2 + 1 do
+                  for oy = other.y1 - 1, other.y2 + 1 do
+                    if point_in_component(lookup, ox, oy) then touches = true end
+                  end
+                end
+                if touches then
+                  contents[other.kind] = contents[other.kind] + 1
+                end
+              end
+            end
+            local function classify()
+              if contents.bed > 0 then return 'bedroom' end
+              if contents.workshop > 0 then return 'production' end
+              if contents.table > 0 and contents.chair > 0 then return 'dining' end
+              return 'enclosed_space'
+            end
+            table.insert(spaces, {
+              z = bld.z,
+              tiles = #tiles,
+              kind = classify(),
+              contents = contents,
+            })
+          end
+        end
+      end
+    end
+  end
+end
+
+local functional = 0
+for _, space in ipairs(spaces) do
+  if space.kind ~= 'enclosed_space' then functional = functional + 1 end
+end
+
+print(json.encode({
+  ok = true,
+  enclosed_spaces = #spaces,
+  functional_rooms = functional,
+  spaces = spaces,
+  constructions = constructions,
+  construction_tiles = construction_tiles,
+  player_buildings = #buildings,
+}))

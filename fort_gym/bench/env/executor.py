@@ -7,9 +7,11 @@ from typing import Any, Dict, Optional
 
 from .actions import validate_action
 from .dfhack_client import DFHackClient, DFHackUnavailableError
+from ..dfhack_backend import build_construction as safe_build_construction
 from ..dfhack_backend import build_workshop as safe_build_workshop
 from ..dfhack_backend import complete_dig_rect as safe_complete_dig_rect
 from ..dfhack_backend import designate_rect as safe_designate_rect
+from ..dfhack_backend import place_furniture as safe_place_furniture
 from ..dfhack_backend import queue_manager_order as safe_queue_manager_order
 from .keystroke_exec import execute_keystroke_action
 from .mock_env import MockEnvironment
@@ -112,10 +114,22 @@ class Executor:
 
             if action_type == "BUILD":
                 kind = params.get("kind")
-                if kind != "CarpenterWorkshop":
+                if kind not in {
+                    "CarpenterWorkshop",
+                    "Bed",
+                    "Door",
+                    "Table",
+                    "Chair",
+                    "Wall",
+                    "Floor",
+                }:
                     return {
                         "accepted": False,
-                        "why": "Only CarpenterWorkshop supported in beta",
+                        "why": (
+                            "Unsupported BUILD kind: expected CarpenterWorkshop, "
+                            "furniture (Bed/Door/Table/Chair), or construction "
+                            "(Wall/Floor)"
+                        ),
                     }
                 try:
                     x = int(params["x"])
@@ -123,6 +137,20 @@ class Executor:
                     z = int(params.get("z", 0))
                 except (KeyError, TypeError, ValueError) as exc:
                     return {"accepted": False, "why": f"Invalid coordinates: {exc}"}
+                if kind in {"Wall", "Floor"}:
+                    try:
+                        raw_x2 = params.get("x2")
+                        raw_y2 = params.get("y2")
+                        x2 = x if raw_x2 is None else int(raw_x2)
+                        y2 = y if raw_y2 is None else int(raw_y2)
+                    except (TypeError, ValueError) as exc:
+                        return {"accepted": False, "why": f"Invalid coordinates: {exc}"}
+                    result = safe_build_construction(kind, x, y, z, x2, y2)
+                    return {
+                        "accepted": bool(result.get("ok")),
+                        "why": None if result.get("ok") else result.get("error"),
+                        "result": result,
+                    }
                 work = current_state.get("work") if isinstance(current_state, dict) else {}
                 work_rect = (
                     _normalize_rect(work.get("target_rect"))
@@ -138,14 +166,24 @@ class Executor:
                         rect = _normalize_rect(work.get(key))
                         if rect is not None:
                             extra_allowed_rects.append(rect)
-                result = safe_build_workshop(
-                    kind,
-                    x,
-                    y,
-                    z,
-                    work_rect=work_rect,
-                    extra_allowed_rects=extra_allowed_rects,
-                )
+                if kind == "CarpenterWorkshop":
+                    result = safe_build_workshop(
+                        kind,
+                        x,
+                        y,
+                        z,
+                        work_rect=work_rect,
+                        extra_allowed_rects=extra_allowed_rects,
+                    )
+                else:
+                    result = safe_place_furniture(
+                        kind,
+                        x,
+                        y,
+                        z,
+                        work_rect=work_rect,
+                        extra_allowed_rects=extra_allowed_rects,
+                    )
                 return {
                     "accepted": bool(result.get("ok")),
                     "why": None if result.get("ok") else result.get("error"),

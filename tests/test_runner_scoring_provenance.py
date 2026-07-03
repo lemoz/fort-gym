@@ -1180,3 +1180,17 @@ def test_governed_runner_attaches_crew_observability() -> None:
     assert "def attach_crew_metrics" in runner_text
     assert "read_job_metrics(_map_snapshot_rect_from_state(state))" in runner_text
     assert 'state["crew"] = crew' in runner_text
+
+
+def test_governed_runner_attaches_fort_observability() -> None:
+    runner_text = (
+        Path(__file__).resolve().parents[1]
+        / "fort_gym"
+        / "bench"
+        / "run"
+        / "runner.py"
+    ).read_text(encoding="utf-8")
+
+    assert "def attach_fort_metrics" in runner_text
+    assert 'state["fort"] = fort' in runner_text
+    assert "fort_enclosed_spaces" in runner_text

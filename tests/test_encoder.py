@@ -1631,3 +1631,171 @@ def test_encoder_ignores_malformed_goods() -> None:
     obs_text, _ = encode_observation(state)
 
     assert "Finished goods in play" not in obs_text
+
+
+def test_encoder_surfaces_placed_furniture_buildings() -> None:
+    state = {
+        "time": 100,
+        "population": 7,
+        "stocks": {},
+        "crew": {
+            "ok": True,
+            "placed_furniture": {"bed": 2, "door": 0, "table": 1, "chair": 0},
+        },
+    }
+
+    obs_text, _ = encode_observation(state)
+
+    assert "Placed furniture buildings: beds=2, doors=0, tables=1, chairs=0" in obs_text
+
+
+def test_encoder_surfaces_full_fort_block() -> None:
+    state = {
+        "time": 100,
+        "population": 7,
+        "stocks": {"food": 45, "drink": 60, "wood": 6, "stone": 0},
+        "fort": {
+            "ok": True,
+            "enclosed_spaces": 1,
+            "functional_rooms": 1,
+            "constructions": 26,
+            "player_buildings": 8,
+            "spaces": [
+                {
+                    "z": 177,
+                    "tiles": 6,
+                    "kind": "production",
+                    "contents": {"bed": 0, "table": 0, "chair": 0, "door": 0, "workshop": 1},
+                }
+            ],
+        },
+    }
+
+    text, _ = encode_observation(state, screen_text="main map")
+
+    assert (
+        "Fort structure (plan-agnostic): enclosed_spaces=1, functional_rooms=1, "
+        "constructions=26" in text
+    )
+    assert "Rooms: production(6 tiles, z177)" in text
+    assert "No enclosed rooms yet" not in text
+
+
+def test_encoder_flags_zero_enclosed_spaces() -> None:
+    state = {
+        "time": 100,
+        "population": 7,
+        "stocks": {"food": 45, "drink": 60, "wood": 6, "stone": 0},
+        "fort": {
+            "ok": True,
+            "enclosed_spaces": 0,
+            "functional_rooms": 0,
+            "constructions": 4,
+            "player_buildings": 1,
+            "spaces": [],
+        },
+    }
+
+    text, _ = encode_observation(state, screen_text="main map")
+
+    assert "Fort structure (plan-agnostic): enclosed_spaces=0" in text
+    assert (
+        "No enclosed rooms yet — spaces count as rooms only when fully bounded "
+        "by walls, buildings, or doors. BUILD kind=Wall can enclose them" in text
+    )
+    assert "Rooms:" not in text
+
+
+def test_encoder_ignores_malformed_fort_without_crashing() -> None:
+    state = {
+        "time": 100,
+        "population": 7,
+        "stocks": {"food": 45, "drink": 60, "wood": 6, "stone": 0},
+        "fort": "junk",
+    }
+
+    text, _ = encode_observation(state, screen_text="main map")
+
+    assert "Fort structure" not in text
+
+
+def test_encoder_surfaces_executor_why_as_rejection_reason() -> None:
+    state = {"time": 100, "population": 7, "stocks": {}}
+
+    obs_text, _ = encode_observation(
+        state,
+        last_action_result={"accepted": False, "why": "outside_work_rect"},
+    )
+
+    assert "Last Action: REJECTED - outside_work_rect" in obs_text
+
+    obs_text, _ = encode_observation(
+        state,
+        last_action_result={"accepted": False, "result": {"ok": False, "error": "no_building_material"}},
+    )
+
+    assert "Last Action: REJECTED - no_building_material" in obs_text
+
+
+def test_encoder_renders_wall_layout_with_run_compression() -> None:
+    state = {
+        "time": 100,
+        "population": 7,
+        "stocks": {},
+        "fort": {
+            "ok": True,
+            "enclosed_spaces": 0,
+            "functional_rooms": 0,
+            "constructions": 11,
+            "construction_tiles": [
+                [94, 90, 177], [95, 90, 177], [96, 90, 177], [97, 90, 177],
+                [94, 93, 177], [95, 93, 177], [96, 93, 177], [97, 93, 177],
+                [98, 91, 177], [98, 92, 177], [98, 93, 177],
+            ],
+        },
+    }
+
+    obs_text, _ = encode_observation(state)
+
+    assert "Wall/floor layout: " in obs_text
+    assert "z177 y90: x94-97" in obs_text
+    assert "z177 y93: x94-98" in obs_text
+    assert "check the Wall/floor layout line for gaps" in obs_text
+
+
+def test_encoder_surfaces_furniture_positions_and_failed_tiles() -> None:
+    state = {
+        "time": 100,
+        "population": 7,
+        "stocks": {},
+        "crew": {
+            "ok": True,
+            "placed_furniture": {"bed": 2, "door": 1, "table": 0, "chair": 0},
+            "placed_furniture_positions": {
+                "bed": [[96, 91, 177], [95, 91, 177]],
+                "door": [[94, 91, 177]],
+                "table": [],
+                "chair": [],
+            },
+        },
+    }
+
+    obs_text, _ = encode_observation(
+        state,
+        last_action_result={
+            "accepted": False,
+            "why": "no_tiles_placed",
+            "result": {
+                "ok": False,
+                "failed": [
+                    {"x": 94, "y": 91, "error": "tile_occupied_by_building"},
+                    {"x": 95, "y": 91, "error": "tile_occupied_by_building"},
+                ],
+            },
+        },
+    )
+
+    assert "Furniture positions: beds at (96,91),(95,91); doors at (94,91)" in obs_text
+    assert "construction cannot be placed on occupied tiles" in obs_text
+    assert "Failed tiles: (94,91): tile_occupied_by_building" in obs_text
+    assert "Last Action: REJECTED - no_tiles_placed" in obs_text

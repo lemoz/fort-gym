@@ -212,3 +212,57 @@ def test_job_metrics_reports_finished_goods_counts() -> None:
     ).read_text(encoding="utf-8")
     for needle in ("GOODS_ITEM_TYPES", "'BED'", "'BARREL'", "'WOOD'", "out.goods"):
         assert needle in script
+
+
+def test_place_furniture_hook_installs_existing_items_only() -> None:
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "place_furniture.lua"
+    ).read_text(encoding="utf-8")
+    for needle in (
+        "df.item_type.BED",
+        "df.building_type.Bed",
+        "no_finished_item_available",
+        "constructBuilding",
+        "jobs_count",
+    ):
+        assert needle in script
+    # legality: never creates items, only installs existing produced ones
+    assert "createItem" not in script
+
+
+def test_job_metrics_reports_placed_furniture() -> None:
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua"
+    ).read_text(encoding="utf-8")
+    assert "placed_furniture" in script
+    assert "df.building_type.Bed" in script
+
+
+def test_build_construction_hook_enforces_locality_and_uses_existing_material() -> None:
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "build_construction.lua"
+    ).read_text(encoding="utf-8")
+    for needle in (
+        "too_far_from_fort",
+        "df.construction_type.Wall",
+        "no_building_material",
+        "constructBuilding",
+    ):
+        assert needle in script
+    # legality: never creates items, only uses existing material items
+    assert "createItem" not in script
+
+
+def test_build_construction_reports_occupied_and_wall_tiles() -> None:
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "build_construction.lua"
+    ).read_text(encoding="utf-8")
+    assert "tile_occupied_by_building" in script
+    assert "already_wall" in script
+
+
+def test_job_metrics_reports_furniture_positions() -> None:
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua"
+    ).read_text(encoding="utf-8")
+    assert "placed_furniture_positions" in script

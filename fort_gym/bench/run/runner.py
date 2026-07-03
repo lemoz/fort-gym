@@ -20,6 +20,7 @@ from ..env.scenarios import evaluate_scenario_assertions, get_mock_scenario
 from ..env.state_reader import StateReader
 from ..dfhack_backend import (
     prepare_keystroke_target,
+    read_fort_metrics,
     read_job_metrics,
     read_map_snapshot,
     read_view_state,
@@ -1473,9 +1474,22 @@ def run_once(
                 state["crew"] = crew
             return state
 
+        def attach_fort_metrics(state: Dict[str, Any]) -> Dict[str, Any]:
+            """Attach read-only plan-agnostic fort structure observability for governed runs."""
+
+            if not is_governed_dfhack_mode:
+                return state
+            fort = read_fort_metrics()
+            if isinstance(fort, dict) and fort.get("ok"):
+                state = dict(state)
+                state["fort"] = fort
+            return state
+
         def observe() -> Dict[str, Any]:
-            return attach_crew_metrics(
-                attach_governed_build_site(StateReader.from_dfhack(dfhack_client))
+            return attach_fort_metrics(
+                attach_crew_metrics(
+                    attach_governed_build_site(StateReader.from_dfhack(dfhack_client))
+                )
             )
 
         def apply_action(action_dict: Dict[str, Any], state: Dict[str, Any]) -> Dict[str, Any]:
@@ -2478,6 +2492,17 @@ def run_once(
                     metrics_snapshot["score_provenance"] = "dfhack_governed_observed_state"
                     metrics_snapshot["gameplay_progress_eligible"] = True
                     metrics_snapshot["governed_dfhack_progress"] = True
+                    fort_before = state_before.get("fort")
+                    if isinstance(fort_before, dict):
+                        metrics_snapshot["fort_enclosed_spaces"] = int(
+                            fort_before.get("enclosed_spaces") or 0
+                        )
+                        metrics_snapshot["fort_functional_rooms"] = int(
+                            fort_before.get("functional_rooms") or 0
+                        )
+                        metrics_snapshot["fort_constructions"] = int(
+                            fort_before.get("constructions") or 0
+                        )
                 if is_keystroke_mode and action_history_limit > 0:
                     action_history.append(
                         _keystroke_action_history_entry(

@@ -91,10 +91,21 @@ A public run where a queued order **completes**:
 Queued-but-never-built (the pre-chop failure mode) explicitly does not pass.
 
 ### G4 — Horizon (a fortress, not a demo)
-One public run, ≥50,000 ticks: population ≥ starting 7 with zero casualties
-spike, ≥2 distinct completed spaces, ≥2 workshop orders completed, rubric
-≥ 70 with zero blockers, and score strictly greater than any ≤10-step run on
-the same seed (long play must beat short play, or time isn't being used).
+One public run, ≥50,000 ticks:
+- population ≥ starting 7 with zero casualty spike,
+- ≥2 workshop orders completed (finished-goods deltas, per G3 evidence),
+- **≥2 enclosed functional rooms detected plan-agnostically**
+  (`fort_functional_rooms ≥ 2` — e.g. a bedroom and a production room, each
+  fully bounded by walls, buildings, or doors; measured by `fort_metrics.lua`
+  from map state, no plan rectangles),
+- rubric ≥ 70 with no `no_fort_structure`, `repetitive_policy`,
+  `no_production_surface`, or legality blockers,
+- score strictly greater than any ≤10-step run on the same seed (long play
+  must beat short play, or time isn't being used).
+
+Note: this bar is deliberately higher than anything achieved to date — the
+record 60-step probe (236.68) fails it with zero enclosed rooms. Passing G4
+requires the agent to actually build shelter with the construction surface.
 
 ### G5 — Memory pays rent (remembers and improves)
 With persistent memory ON (`governed_llm_memory.json`) and the same seed:
@@ -104,10 +115,14 @@ reaches G2 when run 1 did not. Control: the same 5-run series with memory OFF
 shows no such trend. This isolates memory as the cause.
 
 ### G6 — Generalization (no hardcoded plan)
-Prerequisite: plan-agnostic work metrics (today `work_metrics.lua` hardcodes
-`two_room_workshop` — a known ceiling). Then: a fresh seed/embark the agent
-has never seen, reaching G2-level milestones. This is the gate that separates
-"solved one map" from "plays Dwarf Fortress."
+Prerequisite RESOLVED 2026-07-02: `fort_metrics.lua` provides plan-agnostic
+structure detection (enclosed spaces, functional rooms, constructions) that
+works on any seed; G4's criteria run entirely on it. Remaining plan-scoped
+surfaces (the `work_metrics.lua` target rects that anchor governed target
+discovery and some score components) still assume the default embark — those
+must be generalized or made optional before G6. Then: a fresh seed/embark the
+agent has never seen, reaching G4-level structure. This is the gate that
+separates "solved one map" from "plays Dwarf Fortress."
 
 ## Measurement mechanics (all already exist unless noted)
 
@@ -166,6 +181,34 @@ gate. Each entry states what changed and the evidence that forced it.
   keeping the wealth path alive if an engine-side recalculation trigger is
   ever found. Item counts come from the read-only `crew.goods` observability
   added at commit `4c72e8da1`.
+
+- **2026-07-02 — G4 rebuilt on plan-agnostic structure (operator-directed
+  Option B: "hardcoded plans aren't the way").** The 60-step probe
+  (`d09ae07d`, score 236.68) showed G4-as-written failed only on criteria
+  bound to the hardcoded `two_room_workshop` plan: "zero blockers"
+  (`no_real_layout_progress` fires structurally on this surface seed, ceiling
+  run included) and "≥2 completed spaces" (the plan metric cannot complete on
+  shrub-contaminated surface rects). Rather than correct within the plan-
+  scoped metrics, the operator chose to replace them: `fort_metrics.lua` now
+  detects enclosed spaces and functional rooms by flood-fill from player
+  buildings on any seed (validated live: open-plain fort honestly reads 0;
+  a legally wall-constructed room reads 1 production room). The rubric's
+  shelter dimension and blocker (`no_fort_structure`, replacing
+  `no_real_layout_progress`) run on the new facts; scalar score components
+  are unchanged this cycle. G4's bar is RAISED, not lowered — no run to date
+  passes it. A construction action (BUILD kind=Wall/Floor) was added so the
+  requirement is achievable through legal play.
+
+- **2026-07-02 — fort_metrics detector fix after G4 attempt #1 (run
+  `b8e07f4a`, FAIL 5/6).** The agent autonomously built a wall ring (steps
+  20–23), and furnished the enclosed room so completely (door, two beds, a
+  table in a 2×2 interior) that no free floor remained — and the flood-fill
+  defined rooms by free floor, so the room vanished from detection at step
+  32. Detector corrected: bed/table/chair tiles count as room interior and
+  valid flood seeds; walls, doors, and workshops still seal. Validated
+  against the live save: the agent's furnished bedroom reads as 1 functional
+  room. Gate criteria unchanged — the attempt still fails honestly at 1
+  functional room vs the required 2.
 
 ## Reporting format (every gate attempt)
 
