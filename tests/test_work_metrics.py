@@ -30,16 +30,90 @@ def test_work_progress_delta_counts_target_room_progress() -> None:
     }
 
 
-def test_utility_progress_delta_counts_orders_and_workshops() -> None:
+def test_ui_work_progress_delta_counts_fixed_rect_progress() -> None:
+    baseline = {
+        "target_rect": [100, 100, 177, 114, 114, 177],
+        "target_dig_designations": 0,
+        "target_floor_tiles": 0,
+        "target_wall_tiles": 225,
+    }
+    current = {
+        "target_rect": [100, 100, 177, 114, 114, 177],
+        "target_dig_designations": 9,
+        "target_floor_tiles": 4,
+        "target_wall_tiles": 221,
+    }
+
+    delta = metrics.ui_work_progress_delta(current, baseline)
+
+    assert delta == {
+        "ui_target_dig_designations_delta": 9,
+        "ui_target_floor_tiles_delta": 4,
+        "ui_target_floor_removed_delta": 0,
+        "ui_target_wall_tiles_delta": 4,
+        "ui_designation_progress": 9,
+        "ui_completion_progress": 4,
+        "ui_excavation_progress": 4,
+        "ui_work_progress": 9,
+    }
+
+
+def test_ui_work_progress_delta_counts_floor_excavation() -> None:
+    baseline = {
+        "target_rect": [88, 83, 177, 102, 97, 177],
+        "target_dig_designations": 8,
+        "target_floor_tiles": 176,
+        "target_wall_tiles": 8,
+    }
+    current = {
+        "target_rect": [88, 83, 177, 102, 97, 177],
+        "target_dig_designations": 0,
+        "target_floor_tiles": 170,
+        "target_wall_tiles": 8,
+    }
+
+    delta = metrics.ui_work_progress_delta(current, baseline)
+
+    assert delta == {
+        "ui_target_dig_designations_delta": 0,
+        "ui_target_floor_tiles_delta": 0,
+        "ui_target_floor_removed_delta": 6,
+        "ui_target_wall_tiles_delta": 0,
+        "ui_designation_progress": 0,
+        "ui_completion_progress": 6,
+        "ui_excavation_progress": 6,
+        "ui_work_progress": 6,
+    }
+
+
+def test_ui_work_progress_delta_rejects_changed_rect() -> None:
+    baseline = {
+        "target_rect": [100, 100, 177, 114, 114, 177],
+        "target_dig_designations": 0,
+    }
+    current = {
+        "target_rect": [101, 100, 177, 115, 114, 177],
+        "target_dig_designations": 9,
+    }
+
+    delta = metrics.ui_work_progress_delta(current, baseline)
+
+    assert delta["ui_work_progress"] == 0
+    assert delta["ui_target_dig_designations_delta"] == 0
+
+
+def test_utility_progress_delta_counts_orders_and_usable_workshops() -> None:
     baseline = {
         "manager_orders_count": 1,
         "manager_orders_amount_left": 1,
-        "carpenter_workshops": 0,
+        "carpenter_workshops_planned": 0,
+        "carpenter_workshops_usable": 0,
     }
     current = {
         "manager_orders_count": 2,
         "manager_orders_amount_left": 6,
-        "carpenter_workshops": 1,
+        "carpenter_workshops_planned": 1,
+        "carpenter_workshops_usable": 1,
     }
 
     delta = metrics.utility_progress_delta(current, baseline)
@@ -47,21 +121,56 @@ def test_utility_progress_delta_counts_orders_and_workshops() -> None:
     assert delta == {
         "manager_orders_delta": 1,
         "manager_order_quantity_delta": 5,
+        "carpenter_workshops_planned_delta": 1,
+        "carpenter_workshops_usable_delta": 1,
+        "carpenter_workshop_task_jobs_delta": 0,
         "carpenter_workshops_delta": 1,
         "utility_progress": 10,
     }
 
 
-def test_production_progress_delta_counts_workshop_placements() -> None:
-    baseline = {"carpenter_workshops": 0}
-    current = {"carpenter_workshops": 1}
+def test_production_progress_delta_counts_usable_workshops() -> None:
+    baseline = {"carpenter_workshops_planned": 0, "carpenter_workshops_usable": 0}
+    current = {"carpenter_workshops_planned": 1, "carpenter_workshops_usable": 1}
 
     delta = metrics.production_progress_delta(current, baseline)
 
     assert delta == {
+        "production_workshops_planned_delta": 1,
         "production_workshops_delta": 1,
+        "production_task_jobs_delta": 0,
         "production_progress": 5,
     }
+
+
+def test_planned_workshop_without_usable_proof_does_not_score_production() -> None:
+    baseline = {"carpenter_workshops_planned": 0, "carpenter_workshops_usable": 0}
+    current = {"carpenter_workshops_planned": 1, "carpenter_workshops_usable": 0}
+
+    utility_delta = metrics.utility_progress_delta(current, baseline)
+    production_delta = metrics.production_progress_delta(current, baseline)
+
+    assert utility_delta["carpenter_workshops_planned_delta"] == 1
+    assert utility_delta["carpenter_workshops_delta"] == 0
+    assert utility_delta["utility_progress"] == 0
+    assert production_delta["production_workshops_planned_delta"] == 1
+    assert production_delta["production_workshops_delta"] == 0
+    assert production_delta["production_progress"] == 0
+
+
+def test_workshop_task_job_counts_as_usable_production_proof() -> None:
+    baseline = {"carpenter_workshop_task_jobs": 0}
+    current = {"carpenter_workshop_task_jobs": 1}
+
+    utility_delta = metrics.utility_progress_delta(current, baseline)
+    production_delta = metrics.production_progress_delta(current, baseline)
+
+    assert utility_delta["carpenter_workshop_task_jobs_delta"] == 1
+    assert utility_delta["carpenter_workshops_delta"] == 1
+    assert utility_delta["utility_progress"] == 5
+    assert production_delta["production_task_jobs_delta"] == 1
+    assert production_delta["production_workshops_delta"] == 1
+    assert production_delta["production_progress"] == 5
 
 
 def test_complexity_progress_delta_counts_second_room_shape() -> None:
@@ -110,7 +219,7 @@ def test_utility_action_progress_counts_accepted_safe_actions() -> None:
     assert rejected_progress == {"utility_action_progress": 0}
 
 
-def test_composite_score_includes_bounded_work_component() -> None:
+def test_composite_score_includes_scaled_work_component() -> None:
     without_work = scoring.composite_score(
         {
             "duration_ticks": 0,
@@ -132,7 +241,7 @@ def test_composite_score_includes_bounded_work_component() -> None:
     assert with_work - without_work == scoring.WORK_WEIGHT
 
 
-def test_composite_score_includes_bounded_completion_component() -> None:
+def test_composite_score_includes_scaled_completion_component() -> None:
     without_completion = scoring.composite_score(
         {
             "duration_ticks": 0,
@@ -154,7 +263,7 @@ def test_composite_score_includes_bounded_completion_component() -> None:
     assert with_completion - without_completion == scoring.COMPLETION_WEIGHT
 
 
-def test_composite_score_includes_bounded_utility_component() -> None:
+def test_composite_score_includes_scaled_utility_component() -> None:
     without_utility = scoring.composite_score(
         {
             "duration_ticks": 0,
@@ -176,7 +285,7 @@ def test_composite_score_includes_bounded_utility_component() -> None:
     assert with_utility - without_utility == scoring.UTILITY_WEIGHT
 
 
-def test_composite_score_includes_bounded_production_component() -> None:
+def test_composite_score_includes_scaled_production_component() -> None:
     without_production = scoring.composite_score(
         {
             "duration_ticks": 0,
@@ -198,7 +307,7 @@ def test_composite_score_includes_bounded_production_component() -> None:
     assert with_production - without_production == scoring.PRODUCTION_WEIGHT
 
 
-def test_composite_score_includes_bounded_complexity_component() -> None:
+def test_composite_score_includes_scaled_complexity_component() -> None:
     without_complexity = scoring.composite_score(
         {
             "duration_ticks": 0,
@@ -218,3 +327,47 @@ def test_composite_score_includes_bounded_complexity_component() -> None:
     )
 
     assert with_complexity - without_complexity == scoring.COMPLEXITY_WEIGHT
+
+
+def test_composite_score_makes_first_workshop_item_wealth_visible() -> None:
+    components = scoring.score_components({"wealth": 150})
+
+    assert components["wealth_score"] >= 2.0
+
+
+def test_composite_score_prefers_zero_created_wealth_over_absolute_wealth() -> None:
+    components = scoring.score_components({"created_wealth": 0, "wealth": 150})
+
+    assert components["wealth_score"] == 0.0
+
+
+def test_composite_score_continues_past_previous_caps() -> None:
+    target_score = scoring.composite_score(
+        {
+            "time": scoring.TARGET_SURVIVAL_TICKS,
+            "pop": scoring.POP_CAP,
+            "drink": scoring.DRINK_THRESHOLD,
+            "wealth": scoring.WEALTH_TARGET,
+            "work_progress": scoring.TARGET_WORK_PROGRESS,
+            "completion_progress": scoring.TARGET_COMPLETION_PROGRESS,
+            "utility_progress": scoring.TARGET_UTILITY_PROGRESS,
+            "production_progress": scoring.TARGET_PRODUCTION_PROGRESS,
+            "complexity_progress": scoring.TARGET_COMPLEXITY_PROGRESS,
+        }
+    )
+    doubled_score = scoring.composite_score(
+        {
+            "time": scoring.TARGET_SURVIVAL_TICKS * 2,
+            "pop": scoring.POP_CAP * 2,
+            "drink": scoring.DRINK_THRESHOLD * 2,
+            "wealth": scoring.WEALTH_TARGET * 2,
+            "work_progress": scoring.TARGET_WORK_PROGRESS * 2,
+            "completion_progress": scoring.TARGET_COMPLETION_PROGRESS * 2,
+            "utility_progress": scoring.TARGET_UTILITY_PROGRESS * 2,
+            "production_progress": scoring.TARGET_PRODUCTION_PROGRESS * 2,
+            "complexity_progress": scoring.TARGET_COMPLEXITY_PROGRESS * 2,
+        }
+    )
+
+    assert target_score == 145.0
+    assert doubled_score == 215.0

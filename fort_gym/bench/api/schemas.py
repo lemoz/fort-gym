@@ -12,11 +12,20 @@ BackendType = Literal["mock", "dfhack"]
 ModelType = Literal[
     "random",
     "fake",
+    "dfhack-governed-scripted",
     "openai",
+    "openai-keystroke-perception-review",
+    "openrouter-keystroke",
+    "openrouter-keystroke-perception-review",
+    "openrouter-glm-5.2",
     "anthropic",
     "anthropic-dig-first",
     "anthropic-fortress-plan",
     "anthropic-keystroke",
+    "anthropic-keystroke-poi-review",
+    "anthropic-keystroke-plan-review",
+    "anthropic-keystroke-perception-review",
+    "anthropic-keystroke-perception-review-opus",
     "anthropic-research",
 ]
 
@@ -33,6 +42,7 @@ class RunInfo(BaseModel):
     git_sha: Optional[str] = None
     seed_save: Optional[str] = None
     runtime_save: Optional[str] = None
+    preserve_save: bool = False
     max_steps: int = 0
     ticks_per_step: int = 0
     step: int = 0
@@ -47,6 +57,7 @@ class RunCreateRequest(BaseModel):
     ticks_per_step: int = Field(default=100, ge=1)
     model: ModelType = "random"
     safe: Optional[bool] = True
+    preserve_save: bool = False
 
 
 class JobInfo(BaseModel):
@@ -97,6 +108,7 @@ class RunInfoPublic(BaseModel):
     ticks_per_step: int = 0
     seed_save: Optional[str] = None
     runtime_save: Optional[str] = None
+    preserve_save: bool = False
     started_at: Optional[datetime] = None
     finished_at: Optional[datetime] = None
     score: Optional[float] = None

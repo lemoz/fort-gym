@@ -95,6 +95,18 @@ async def serve_index():
     return _html_file_response("index.html")
 
 
+@app.get("/replay/{token}", response_class=FileResponse)
+async def serve_visual_replay(token: str):
+    """Serve the public spectator UI for a specific shared run token."""
+    return _html_file_response("index.html")
+
+
+@app.get("/r/{token}", response_class=FileResponse)
+async def serve_short_visual_replay(token: str):
+    """Serve the public spectator UI at the short shared-run URL."""
+    return _html_file_response("index.html")
+
+
 @app.get("/admin", response_class=FileResponse)
 async def serve_admin(_: None = Depends(require_admin)):
     """Serve the admin panel."""
@@ -121,6 +133,7 @@ def _serialize(record: RegistryRunInfo) -> RunInfo:
         git_sha=getattr(record, "git_sha", None),
         seed_save=getattr(record, "seed_save", None),
         runtime_save=getattr(record, "runtime_save", None),
+        preserve_save=getattr(record, "preserve_save", False),
         status=record.status,
         step=record.step,
         max_steps=record.max_steps,
@@ -145,6 +158,7 @@ def _serialize_public(record: RegistryRunInfo, share: ShareToken) -> RunInfoPubl
         ticks_per_step=record.ticks_per_step,
         seed_save=getattr(record, "seed_save", None),
         runtime_save=getattr(record, "runtime_save", None),
+        preserve_save=getattr(record, "preserve_save", False),
         started_at=record.started_at,
         finished_at=record.ended_at,
         score=summary.get("total_score") or metadata.get("last_score"),
@@ -179,16 +193,37 @@ async def list_runs(_: None = Depends(require_admin)) -> List[RunInfo]:
 
 OPTIONAL_AGENT_MODULES = {
     "fake": "fort_gym.bench.agent.fake_llm",
+    "dfhack-governed-scripted": "fort_gym.bench.agent.governed",
     "openai": "fort_gym.bench.agent.llm_openai",
+    "openai-keystroke-perception-review": "fort_gym.bench.agent.llm_openai",
+    "openrouter-keystroke": "fort_gym.bench.agent.llm_openrouter",
+    "openrouter-keystroke-perception-review": "fort_gym.bench.agent.llm_openrouter",
+    "openrouter-glm-5.2": "fort_gym.bench.agent.llm_openrouter",
     "anthropic": "fort_gym.bench.agent.llm_anthropic",
     "anthropic-dig-first": "fort_gym.bench.agent.llm_anthropic",
     "anthropic-fortress-plan": "fort_gym.bench.agent.llm_anthropic",
     "anthropic-keystroke": "fort_gym.bench.agent.llm_anthropic",
+    "anthropic-keystroke-poi-review": "fort_gym.bench.agent.llm_anthropic",
+    "anthropic-keystroke-plan-review": "fort_gym.bench.agent.llm_anthropic",
+    "anthropic-keystroke-perception-review": "fort_gym.bench.agent.llm_anthropic",
+    "anthropic-keystroke-perception-review-opus": "fort_gym.bench.agent.llm_anthropic",
     "anthropic-research": "fort_gym.bench.agent.llm_anthropic_research",
 }
 
 
+def _anthropic_enabled() -> bool:
+    return os.getenv("FORT_GYM_ENABLE_ANTHROPIC", "0").lower() in {"1", "true", "yes"}
+
+
 def _get_agent_factory(model: str) -> Callable[[], Agent]:
+    if model.startswith("anthropic") and not _anthropic_enabled():
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Anthropic models are disabled for this deployment. Use "
+                "openrouter-keystroke-perception-review or openrouter-glm-5.2."
+            ),
+        )
     factory = AGENT_FACTORIES.get(model)
     if factory:
         return factory
@@ -212,6 +247,7 @@ async def create_run(payload: RunCreateRequest, _: None = Depends(require_admin)
         model=payload.model,
         max_steps=payload.max_steps,
         ticks_per_step=payload.ticks_per_step,
+        preserve_save=payload.preserve_save,
         loop=loop,
     )
 
@@ -231,6 +267,7 @@ async def create_run(payload: RunCreateRequest, _: None = Depends(require_admin)
             run_id=record.run_id,
             registry=RUN_REGISTRY,
             loop=loop,
+            preserve_save=payload.preserve_save,
         )
 
     thread = threading.Thread(target=_target, name=f"run-{record.run_id}", daemon=True)
@@ -278,6 +315,7 @@ async def resume_run(run_id: str, _: None = Depends(require_admin)) -> JSONRespo
 async def stop_run(run_id: str, _: None = Depends(require_admin)) -> JSONResponse:
     if RUN_REGISTRY.get(run_id) is None:
         raise HTTPException(status_code=404, detail="Run not found")
+    RUN_REGISTRY.request_stop(run_id)
     RUN_REGISTRY.set_status(run_id, status="stopped", ended_at=datetime.utcnow())
     return JSONResponse({"status": "stopped", "run_id": run_id})
 

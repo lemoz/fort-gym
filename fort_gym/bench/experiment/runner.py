@@ -236,9 +236,9 @@ def _make_agent(name: str) -> Agent:
 
 
 def _ensure_agent_factories() -> None:
-    from ..agent import fake_llm, llm_anthropic, llm_anthropic_research, llm_openai
+    from ..agent import fake_llm, llm_anthropic, llm_anthropic_research, llm_openai, llm_openrouter
 
-    _ = (fake_llm, llm_anthropic, llm_anthropic_research, llm_openai)
+    _ = (fake_llm, llm_anthropic, llm_anthropic_research, llm_openai, llm_openrouter)
 
 
 __all__ = [

@@ -86,6 +86,7 @@ class RunInfo:
     git_sha: Optional[str] = None
     seed_save: Optional[str] = None
     runtime_save: Optional[str] = None
+    preserve_save: bool = False
     artifacts_dir: Optional[str] = None
     trace_path: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict, repr=False)
@@ -113,6 +114,7 @@ class RunRegistry:
         self._init_lock = threading.Lock()
         self._queues: Dict[str, asyncio.Queue[EventPayload]] = {}
         self._loops: Dict[str, asyncio.AbstractEventLoop] = {}
+        self._stop_events: Dict[str, threading.Event] = {}
 
     # ------------------------------------------------------------------
     # SQLite wiring
@@ -164,6 +166,7 @@ class RunRegistry:
               git_sha TEXT,
               seed_save TEXT,
               runtime_save TEXT,
+              preserve_save INTEGER NOT NULL DEFAULT 0,
               artifacts_dir TEXT,
               trace_path TEXT,
               last_score REAL,
@@ -173,6 +176,12 @@ class RunRegistry:
               summary_json TEXT
             )
             """
+        )
+        RunRegistry._ensure_column(
+            conn,
+            table="runs",
+            column="preserve_save",
+            definition="INTEGER NOT NULL DEFAULT 0",
         )
         conn.execute(
             """
@@ -189,6 +198,12 @@ class RunRegistry:
         conn.execute("CREATE INDEX IF NOT EXISTS idx_runs_model_sha ON runs(model, git_sha)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_runs_end ON runs(ended_at)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_shares_run ON shares(run_id)")
+
+    @staticmethod
+    def _ensure_column(conn: sqlite3.Connection, *, table: str, column: str, definition: str) -> None:
+        columns = {str(row[1]) for row in conn.execute(f"PRAGMA table_info({table})")}
+        if column not in columns:
+            conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
 
     @staticmethod
     def _mark_interrupted_runs(conn: sqlite3.Connection) -> None:
@@ -214,6 +229,7 @@ class RunRegistry:
         ticks_per_step: int,
         loop: Optional[asyncio.AbstractEventLoop] = None,
         run_id: Optional[str] = None,
+        preserve_save: bool = False,
     ) -> RunInfo:
         """Register a new run and return its record."""
 
@@ -241,8 +257,8 @@ class RunRegistry:
                 INSERT INTO runs (
                   run_id, backend, model, max_steps, ticks_per_step,
                   status, step, created_at, git_sha, seed_save, runtime_save,
-                  artifacts_dir, trace_path
-                ) VALUES (?, ?, ?, ?, ?, 'pending', 0, ?, ?, ?, ?, ?, ?)
+                  preserve_save, artifacts_dir, trace_path
+                ) VALUES (?, ?, ?, ?, ?, 'pending', 0, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     identifier,
@@ -254,6 +270,7 @@ class RunRegistry:
                     git_sha,
                     seed_save,
                     runtime_save,
+                    1 if preserve_save else 0,
                     str(artifacts_dir),
                     str(trace_path),
                 ),
@@ -261,6 +278,7 @@ class RunRegistry:
             conn.commit()
 
             self._queues[identifier] = queue
+            self._stop_events[identifier] = threading.Event()
             if loop is not None:
                 self._loops[identifier] = loop
 
@@ -275,6 +293,7 @@ class RunRegistry:
             git_sha=git_sha,
             seed_save=seed_save,
             runtime_save=runtime_save,
+            preserve_save=preserve_save,
             artifacts_dir=str(artifacts_dir),
             trace_path=str(trace_path),
         )
@@ -331,6 +350,32 @@ class RunRegistry:
     def bind_loop(self, run_id: str, loop: asyncio.AbstractEventLoop) -> None:
         with self._db_lock:
             self._loops[run_id] = loop
+
+    def request_stop(self, run_id: str) -> bool:
+        with self._db_lock:
+            event = self._stop_events.get(run_id)
+            if event is None:
+                row = self._ensure_conn().execute(
+                    "SELECT 1 FROM runs WHERE run_id = ?",
+                    (run_id,),
+                ).fetchone()
+                if row is None:
+                    return False
+                event = threading.Event()
+                self._stop_events[run_id] = event
+            event.set()
+        return True
+
+    def stop_requested(self, run_id: str) -> bool:
+        with self._db_lock:
+            event = self._stop_events.get(run_id)
+        return bool(event and event.is_set())
+
+    def clear_stop(self, run_id: str) -> None:
+        with self._db_lock:
+            event = self._stop_events.get(run_id)
+            if event is not None:
+                event.clear()
 
     def get_queue(self, run_id: str) -> Optional[asyncio.Queue[EventPayload]]:
         with self._db_lock:
@@ -752,6 +797,7 @@ class RunRegistry:
             git_sha=row["git_sha"],
             seed_save=row["seed_save"],
             runtime_save=row["runtime_save"],
+            preserve_save=bool(row["preserve_save"]),
             artifacts_dir=row["artifacts_dir"],
             trace_path=row["trace_path"],
             metadata=metadata,
@@ -785,6 +831,7 @@ class RunRegistry:
             conn.commit()
             self._queues.clear()
             self._loops.clear()
+            self._stop_events.clear()
 
 
 RUN_REGISTRY = RunRegistry()

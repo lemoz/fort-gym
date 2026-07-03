@@ -6,3 +6,147 @@ def test_routes_import() -> None:
 
     paths = sorted(route.path for route in app.routes if hasattr(route, "path"))
     assert "/runs" in "".join(paths)
+
+
+def test_run_create_request_accepts_preserve_save() -> None:
+    from fort_gym.bench.api.schemas import RunCreateRequest
+
+    request = RunCreateRequest(
+        backend="dfhack",
+        model="openrouter-keystroke-perception-review",
+        preserve_save=True,
+    )
+
+    assert request.preserve_save is True
+
+
+def test_run_create_request_accepts_poi_review_keystroke_model() -> None:
+    from fort_gym.bench.api.schemas import RunCreateRequest
+
+    request = RunCreateRequest(
+        backend="dfhack",
+        model="anthropic-keystroke-poi-review",
+        max_steps=100,
+        ticks_per_step=10,
+    )
+
+    assert request.model == "anthropic-keystroke-poi-review"
+
+
+def test_run_create_request_accepts_openrouter_keystroke_models() -> None:
+    from fort_gym.bench.api.schemas import RunCreateRequest
+
+    request = RunCreateRequest(
+        backend="dfhack",
+        model="openrouter-keystroke-perception-review",
+        max_steps=100,
+        ticks_per_step=10,
+    )
+    glm_request = RunCreateRequest(
+        backend="dfhack",
+        model="openrouter-glm-5.2",
+        max_steps=100,
+        ticks_per_step=10,
+    )
+
+    assert request.model == "openrouter-keystroke-perception-review"
+    assert glm_request.model == "openrouter-glm-5.2"
+
+
+def test_run_create_request_accepts_governed_dfhack_model() -> None:
+    from fort_gym.bench.api.schemas import RunCreateRequest
+
+    request = RunCreateRequest(
+        backend="dfhack",
+        model="dfhack-governed-scripted",
+        max_steps=100,
+        ticks_per_step=1000,
+    )
+
+    assert request.model == "dfhack-governed-scripted"
+
+
+def test_run_create_request_accepts_openai_keystroke_model() -> None:
+    from fort_gym.bench.api.schemas import RunCreateRequest
+
+    request = RunCreateRequest(
+        backend="dfhack",
+        model="openai-keystroke-perception-review",
+        max_steps=100,
+        ticks_per_step=10,
+    )
+
+    assert request.model == "openai-keystroke-perception-review"
+
+
+def test_run_create_request_accepts_plan_review_keystroke_model() -> None:
+    from fort_gym.bench.api.schemas import RunCreateRequest
+
+    request = RunCreateRequest(
+        backend="dfhack",
+        model="anthropic-keystroke-plan-review",
+        max_steps=100,
+        ticks_per_step=10,
+    )
+
+    assert request.model == "anthropic-keystroke-plan-review"
+
+
+def test_run_create_request_accepts_perception_review_keystroke_models() -> None:
+    from fort_gym.bench.api.schemas import RunCreateRequest
+
+    request = RunCreateRequest(
+        backend="dfhack",
+        model="anthropic-keystroke-perception-review",
+        max_steps=100,
+        ticks_per_step=10,
+    )
+    opus_request = RunCreateRequest(
+        backend="dfhack",
+        model="anthropic-keystroke-perception-review-opus",
+        max_steps=100,
+        ticks_per_step=10,
+    )
+
+    assert request.model == "anthropic-keystroke-perception-review"
+    assert opus_request.model == "anthropic-keystroke-perception-review-opus"
+
+
+def test_run_registry_persists_preserve_save(tmp_path) -> None:
+    from fort_gym.bench.run.storage import RunRegistry
+
+    registry = RunRegistry(db_path=tmp_path / "runs.sqlite3")
+
+    created = registry.create(
+        backend="dfhack",
+        model="openrouter-keystroke-perception-review",
+        max_steps=2,
+        ticks_per_step=500,
+        preserve_save=True,
+    )
+    loaded = registry.get(created.run_id)
+
+    assert created.preserve_save is True
+    assert loaded is not None
+    assert loaded.preserve_save is True
+
+
+def test_run_registry_stop_flag_lifecycle(tmp_path) -> None:
+    from fort_gym.bench.run.storage import RunRegistry
+
+    registry = RunRegistry(db_path=tmp_path / "runs.sqlite3")
+    created = registry.create(
+        backend="dfhack",
+        model="openrouter-glm-5.2",
+        max_steps=200,
+        ticks_per_step=10,
+    )
+
+    assert registry.stop_requested(created.run_id) is False
+    assert registry.request_stop(created.run_id) is True
+    assert registry.stop_requested(created.run_id) is True
+
+    registry.clear_stop(created.run_id)
+
+    assert registry.stop_requested(created.run_id) is False
+    assert registry.request_stop("missing-run") is False

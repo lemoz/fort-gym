@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import time
+from copy import deepcopy
 from importlib import import_module
+from types import SimpleNamespace
 from typing import Any, Dict, List, Optional
 
 from .base import Agent, register_agent
@@ -84,19 +87,148 @@ IMPORTANT: The main menu (showing options like "d: Designations", "b: Building")
 
 **DO SOMETHING CONSTRUCTIVE EACH TURN:**
 1. **Dig more space**: D_DESIGNATE → DESIGNATE_DIG → select area with CURSOR + SELECT
-2. **Build workshops/furniture**: D_BUILDJOB → select building type
-3. **Create stockpiles**: D_STOCKPILES → define storage area
+2. **Build workshops/furniture**: D_BUILDING → select building type
+3. **Create stockpiles**: D_STOCKPILES → STOCKPILE_WOOD/STONE/etc. → define storage area
 
 **DON'T waste turns just looking around.** The observation already includes status, food, drink, population, and the current screen. Do NOT press z/status/announcements/reports in the opening turns.
 
 If you're unsure what to do, **ALWAYS dig**. Designate a small 3x3 mining area - it's always useful.
+If a construction screen says `Needs building material`, the live UI overrides the
+stock counter. Acquire new usable material first; do not retry the same build
+placement just because Wood or Stone is greater than 0.
+The starting stock counter can include material that DF will not accept for a
+new workshop. Treat `Live UI run progress: total_material_delta > 0` as the
+stronger signal that this run has created usable building material.
+If the observation says building material is missing, unusable, not yet proven,
+or that `D_BUILDING is premature on this turn`, do not open D_BUILDING; acquire
+or select material from the current visible UI first.
 
-**FIRST ACTION RULE:** If the screen is the default fortress view with the Designations menu available, your first action must be a complete dig attempt, not a status check:
+**MAINTAIN YOUR OWN MAP MEMORY:** You have memory tools. Use them to remember
+locations of workshops, dwarf clusters, resources, stairs, rooms, and blocked
+placement attempts. Before retrying a placement or navigation plan, query memory
+and avoid repeating attempts that previously produced no tracked DF state change.
+Memory is a notebook, not an action; you still need to submit a KEYSTROKE action
+each turn.
+
+**FRESH TARGET RULE:** If status includes `Fresh target recommended keys` or
+`Retry fresh target recommended keys`, copy those keys exactly. This harness starts the
+camera and cursor on a reachable native-UI target near your dwarves. If the setup mode
+is `material`, those keys either chop a visible tree for logs or mine visible
+stone/vein wall so the fortress has real workshop building material. If status says
+`Live UI z-level mismatch`, do not copy target designation or placement keys from
+the wrong z-level. If you want to use the shown target, use z-level navigation
+to return toward it, with advance_ticks 0, then wait for the next observation
+before acting on target keys. If you intentionally explore another z-level for
+rock, resources, or a better route, ignore the stale target keys there and first
+verify the current visible DF cursor/menu with screen_read before designating.
+If status says
+`Live UI material recovery`, follow that line literally. If it says to copy only
+escape keys this turn, send only those LEAVESCREEN keys with advance_ticks 0;
+do not chain a new designation/build/menu command after escaping. Use the next
+observation from the main map before acquiring material.
+If the setup mode is `workshop`, the target is a candidate 3x3 floor footprint.
+Copy the recommended carpenter-workshop keys to open native placement mode, then
+read the visible placement screen before confirming. Do not press SELECT to place
+the workshop unless your screen_read verifies the placement UI does not say
+`Blocked` or `Needs building material`. The visible DF screen overrides
+`selection_rect`, `placement_rect`, and target metadata.
+If the current visible workshop placement screen says `Enter: Place` and does
+not say `Blocked` or `Needs building material`, treat older material warnings as
+stale and press SELECT with advance_ticks 0 to move to the next DF build screen.
+If the current visible carpenter-workshop material list shows a material row and
+`Enter: Select`, press SELECT with advance_ticks 0 to choose the highlighted
+material; do not exit the menu just because the workshop has not been created
+yet. After the workshop/job delta appears, use the next observation to escape
+menus or advance time.
+In D_BUILDING/furniture selector lists with a `+-*/: Select` footer, SELECT
+chooses the currently highlighted row, not the parenthesized letter you want.
+Before pressing SELECT, your screen_read must identify the highlighted row as
+the intended item. If you want Bed but the highlight is on Armor Stand, move the
+highlight first with list-navigation keys; do not press SELECT or raw STRING_A###
+until the desired row is visibly highlighted.
+Retry keys are shown after failed attempts for a bounded retry.
+
+If status says the recommended keys are hidden, stop using that target's old sequence.
+Do not repeat the same key sequence for that target.
+Do not derive a long key path by subtracting `selection_rect` from `window`;
+those fields are observation metadata, not a manual cursor-navigation recipe.
+Only navigate manually by cursor if the current screen visibly shows an active
+X cursor in a cursor-owning DF mode and your screen_read can verify it.
+If `Live UI feedback` says `last_action_work_delta=0` or the no-progress streak is rising,
+use shown retry/fresh keys if present; otherwise choose a different useful action or wait
+only if dwarves still have active work.
+If `Live view` says `cursor_inactive=(-30000,...)`, that is DF's sentinel for
+"no active cursor on this screen," not proof that all future cursor movement is
+broken. Open a cursor-owning mode such as D_DESIGNATE, D_STOCKPILES, or
+D_BUILDING, then judge the visible cursor/menu from the next screen.
+If `carpenter_workshops=1` but `usable_workshops=0` or
+`carpenter_workshops_usable=0`, a workshop object is only placed/planned. It is
+not production yet and should not be scored or treated as ready. If the selected
+workshop says Waiting for construction, Needs Carpentry, Construction inactive,
+or s: Suspend Construction, do not use BUILDJOB_ADD; solve or record the
+construction blocker before claiming production.
+If a usable/task-proven carpenter workshop exists and `manager_orders=0`, your
+next major objective is production, not another workshop. Prefer D_JOBLIST ->
+UNITJOB_MANAGER -> MANAGER_NEW_ORDER or a visibly selected usable carpenter
+workshop job menu before retrying stockpiles or blind dig boxes. If a stockpile
+or dig path has already produced no tracked state change after the workshop
+exists, record it and return to production.
+If a usable/task-proven carpenter workshop exists, `manager_orders>0`, and
+`order_qty_left>0`, a real production order is already queued. In the normal
+case, do not open new stockpile/build/order setup menus; leave any current menu,
+then from the main map submit a KEYSTROKE action with no extra menu keys and
+`advance_ticks` at least 1000 so dwarves can work. But if one large advance
+leaves `order_qty_left` unchanged or the visible screen says the work was
+cancelled/needs something, stop blind waiting. Inspect the relevant carpenter
+workshop, task list, or cancellation reason before changing objectives. Do not
+switch to unrelated digging, fresh stockpiles, or new manager searches until
+your screen_read names the production blocker that made the current bed task
+impossible.
+In the manager New Order search dialog, if your screen_read says a single useful
+result is visible and the footer says Select, press SELECT to queue it unless
+you explicitly reject that job as not useful or not buildable. Do not leave the
+dialog when your own screen_read says SELECT will queue the intended job.
+If a manager New Order search returns only wrong-category jobs, metal-only jobs,
+no useful result, or a corrupted combined search string, record that search term
+as a failed attempt in memory and avoid trying that exact term again in this run
+unless you can name new visible evidence that the search context changed. If
+backspace did not visibly clear the search field, exit to a clean menu before
+typing another term; do not keep appending new letters to the stale query.
+If a carpenter workshop screen is selected, use BUILDJOB_ADD to open its native
+task list. Opening the add-task UI is not production by itself: read the next
+screen, select a concrete task such as a wooden bed/barrel/bin, then advance
+time only after a real task is queued or visible workshop work has changed.
+In the workshop add-task list, SELECT chooses the currently highlighted row.
+Do not assume parenthesized letters such as `(b)` work through raw STRING_A###
+hotkeys; if the desired task is visible but not highlighted, move the selection
+with scroll/navigation keys first, then SELECT. If you accidentally queue a
+different job such as `Make wooden shield`, report that exact job and either let
+it run as useful production or reopen the add-task list to choose the intended
+job; do not call it a bed.
+For visible add-task lists with a `+-*/: Scroll` footer, do not use
+CURSOR_DOWN/CURSOR_UP for row selection; those keys can move the map/building
+cursor off the workshop and produce `No Buildings Nearby`.
+Count visible rows from the current top/highlighted row to the desired task and
+then press SELECT. Example: if `Construct Bed (b)` is visible 11 rows below the
+top item, send eleven STANDARDSCROLL_DOWN keys followed by SELECT; do not test
+the raw `STRING_A098` letter first.
+If `SCREEN VISUAL HINTS` appears, use it as raw CopyScreen highlight evidence.
+For example, a hinted row in an add-task list is the row DF currently appears to
+highlight; scroll or navigate until the desired visible task is highlighted
+before pressing SELECT. The visual hints are not recommended actions and do not
+replace your own screen_read verification.
+If STATUS includes `Screen state: mode=...`, treat it as read-only CopyScreen
+landmark evidence. Your record_screen_read mode should match that mode unless
+you can cite stronger visible text that proves the classifier is wrong. The
+screen state does not choose keys for you; it only helps you avoid acting from
+the wrong menu.
+
+Default recommended first action:
 {
   "type": "KEYSTROKE",
-  "params": {"keys": ["D_DESIGNATE", "DESIGNATE_DIG", "SELECT", "CURSOR_RIGHT", "CURSOR_DOWN", "SELECT", "LEAVESCREEN"]},
-  "intent": "designate a small starter dig and let dwarves begin work",
-  "advance_ticks": 200
+  "params": {"keys": ["D_DESIGNATE", "DESIGNATE_STAIR_DOWN", "CURSOR_LEFT", "CURSOR_LEFT", "CURSOR_LEFT", "CURSOR_LEFT", "CURSOR_UP", "CURSOR_UP", "SELECT", "CURSOR_RIGHT", "CURSOR_RIGHT", "CURSOR_RIGHT", "CURSOR_DOWN", "SELECT", "LEAVESCREEN"]},
+  "intent": "designate a reachable starter stair dig through the DF UI",
+  "advance_ticks": 500
 }
 
 Use LEAVESCREEN only to exit SUB-menus (like after designating an area).
@@ -108,9 +240,15 @@ Tips:
 
 ## Screen
 You see the current game screen as text (80 columns x 25 rows). The screen shows the DF interface including menus, the map view, and status information.
+When present, `SCREEN VISUAL HINTS` preserves raw CopyScreen foreground/background
+highlight information that the plain text grid cannot show. Use it to identify
+the currently highlighted menu row or cursor-like screen element.
 
 ## Actions
 Return a KEYSTROKE action with a list of key names to press in sequence.
+Include objective, expected_visible_result, expected_simulation_result, and
+memory_update fields so the trace can compare what you expected against what
+actually happened.
 
 ## Tools
 You can call the df_wiki tool to look up gameplay rules and commands. Use it when you
@@ -128,8 +266,9 @@ are unsure about designations, buildings, orders, stockpiles, or other mechanics
 - LEAVESCREEN - Cancel/Escape
 - DESELECT - Clear selection
 
-### Typing Letters (IMPORTANT!)
-Many DF menus show options like "a - Do something". To select these, you must TYPE THE LETTER using STRING_A### format where ### is the ASCII code:
+### Typing Letters
+Many DF menus show options like "a - Do something". If no named interface key
+exists below, type the letter using STRING_A### format where ### is the ASCII code:
 - STRING_A097 = 'a', STRING_A098 = 'b', STRING_A099 = 'c', STRING_A100 = 'd'
 - STRING_A101 = 'e', STRING_A102 = 'f', STRING_A103 = 'g', STRING_A104 = 'h'
 - STRING_A105 = 'i', STRING_A106 = 'j', STRING_A107 = 'k', STRING_A108 = 'l'
@@ -139,13 +278,19 @@ Many DF menus show options like "a - Do something". To select these, you must TY
 - STRING_A121 = 'y', STRING_A122 = 'z'
 
 Example: If you see "a - Finish conversation", send STRING_A097 to press 'a'.
+Do not use STRING_A### when the key reference lists a named menu key; named
+interface keys are more reliable. Example: in the stockpile menu use
+STOCKPILE_WOOD, not STRING_A119.
 
 ### Main Menus (press from main view)
 - D_DESIGNATE - Open designate menu (d key)
-- D_BUILDJOB - Open build menu (b key)
+- D_BUILDING - Open building construction menu (b key)
+- D_BUILDJOB - Inspect/manage a nearby existing building; this is NOT the construction menu
 - D_STOCKPILES - Open stockpiles menu (p key)
 - D_ZONES - Open zones menu (i key)
-- D_ORDERS - Open standing orders (o key)
+- D_NOBLES - Open Nobles and Administrators; use this named key, not STRING_A110
+- D_ORDERS - Open standing orders (o key); this is NOT the manager work-order queue
+- D_JOBLIST - Open jobs/work-order screens (j key). Use this before manager work-order keys.
 
 ### Designate Submenu (after D_DESIGNATE)
 - DESIGNATE_DIG - Mine/dig mode (d key)
@@ -154,6 +299,57 @@ Example: If you see "a - Finish conversation", send STRING_A097 to press 'a'.
 - DESIGNATE_STAIR_UP - Upward staircase (u key)
 - DESIGNATE_RAMP - Ramp (r key)
 - DESIGNATE_CHOP - Chop trees (t key)
+
+### Building Construction (after D_BUILDING)
+- HOTKEY_BUILDING_WORKSHOP - Workshop category
+- HOTKEY_BUILDING_WORKSHOP_CARPENTER - Carpenter's workshop
+- Example carpenter workshop path: D_BUILDING, HOTKEY_BUILDING_WORKSHOP, HOTKEY_BUILDING_WORKSHOP_CARPENTER, SELECT
+
+### Stockpile Menu (after D_STOCKPILES)
+- STOCKPILE_WOOD - Choose Wood stockpile type
+- STOCKPILE_STONE - Choose Stone stockpile type
+- STOCKPILE_FOOD - Choose Food stockpile type
+- STOCKPILE_BAR - Choose Bar/Block stockpile type
+- After selecting a stockpile type, use CURSOR keys and SELECT twice to define
+  the rectangle, then LEAVESCREEN to exit.
+
+### Manager / Work Orders
+- D_ORDERS opens standing orders only. If you are trying to queue production
+  such as beds, doors, tables, chairs, barrels, or bins, do not use D_ORDERS.
+- Use D_JOBLIST to reach the jobs/work-order area. If the footer shows
+  `m: Manager`, use UNITJOB_MANAGER, not STRING_A109. Once the manager screen
+  is visible, use MANAGER_NEW_ORDER to add a production order.
+- If production stalls because the screen says a manager is required, use
+  D_NOBLES, not raw STRING_A110, to open Nobles and Administrators.
+- On the Nobles and Administrators screen, do not use STANDARDSCROLL keys.
+  Before pressing SELECT, your screen_read must cite the visible Manager row as
+  the current highlight/selection. If only the title is highlighted, do not count
+  fixed rows from memory; escape or gather clearer visible row evidence.
+- If production stalls because no dwarf takes a workshop job, first verify the
+  visible workshop task, materials, cancellation text, and elapsed ticks. Do not
+  switch into unsupported unit/labor menus unless the current screen explicitly
+  exposes a supported labor control and your screen_read names it.
+- D_BUILDJOB acts on the building under the current cursor. If it opens a
+  stockpile or some other building, it did not target your remembered workshop;
+  exit, query memory, and re-establish a visible cursor on the workshop before
+  trying building-job commands again.
+- On a selected carpenter workshop screen, use BUILDJOB_ADD, not raw STRING_A097,
+  to add a native workshop task. Then read the task-selection screen and select a
+  concrete useful job. Do not count the add-task menu opening as success unless
+  a job row/task appears or later ticks show workshop work/material progress.
+- On a construction-pending carpenter workshop screen, do not use BUILDJOB_ADD.
+  That screen is not the task menu. If no construction job or usable proof
+  exists after ticks, record the blocker and choose a different evidence-backed
+  route instead of looping.
+- In the workshop add-task list, SELECT picks the highlighted row. Parenthesized
+  letters like `Construct Bed (b)` are visible labels, but raw STRING_A### may
+  not select them in this menu. If a desired row is visible lower in the list,
+  count the visible rows and use repeated STANDARDSCROLL_DOWN/STANDARDSCROLL_UP
+  before SELECT. Example: from the top row, use eleven STANDARDSCROLL_DOWN keys
+  then SELECT for a visible `Construct Bed (b)` eleven rows down. Do not use
+  CURSOR_DOWN/CURSOR_UP in add-task lists with `+-*/: Scroll`; those keys can
+  move the map/building cursor off the workshop. Verify the actual queued job
+  on the next screen.
 
 ## How to Dig
 1. Press D_DESIGNATE to open designate menu
@@ -170,6 +366,10 @@ Always return exactly one action:
   "type": "KEYSTROKE",
   "params": {"keys": ["KEY1", "KEY2", ...]},
   "intent": "Brief description of what you're trying to do",
+  "objective": "Current gameplay task",
+  "expected_visible_result": "Immediate screen/menu/cursor/map result",
+  "expected_simulation_result": "World result after ticks, or none for UI-only actions",
+  "memory_update": "POI/failure review or update made before acting",
   "advance_ticks": 200
 }
 
@@ -179,6 +379,17 @@ YOU control time. The game is PAUSED until you request time to pass.
 - **advance_ticks: 0** - No time passes. Use for menu navigation, looking around.
 - **advance_ticks: 100-200** - Let dwarves work briefly. Good after giving orders.
 - **advance_ticks: 500+** - Watch significant progress. Use after designating dig areas.
+- Viewport scroll keys like STANDARDSCROLL_PAGEDOWN do not advance simulation
+  time. If your intent says wait, advance time, or let dwarves work, set
+  advance_ticks to a positive value.
+- From a clean main-map screen, `params.keys` may be [] only when
+  `advance_ticks > 0`; this means send no UI keys and let the runner advance
+  real simulation ticks. Do not use empty keys for menu navigation.
+- To press the visible Space pause/resume command, use `STRING_A032`; do not
+  use `PAUSE` for live gameplay recovery.
+- If your keys complete a work designation such as dig/chop/stairs with two
+  SELECT corners and LEAVESCREEN, set advance_ticks to 500+ so dwarves can act
+  on the new job before your next decision.
 
 **Strategy:**
 1. Navigate menus with advance_ticks: 0 (instant, no time wasted)
@@ -200,6 +411,185 @@ Some popups say "Press Enter to close" but SELECT doesn't always work. If SELECT
 - Start with simple actions like exploring or designating a small dig area
 - Watch the screen feedback to see results of your actions
 - **IMPORTANT**: If an action doesn't work after 2-3 tries, try a DIFFERENT key or approach. Don't repeat the same action endlessly."""
+
+
+KEYSTROKE_POI_REVIEW_APPENDIX = """
+
+## Mandatory POI/Task Review Variant
+You are running in an experiment that measures whether memory review improves
+real Dwarf Fortress gameplay through native keystrokes. The game is usually
+paused during planning/UI work, which is fine: menus, cursor movement,
+designation, building placement, and inspection all work while paused. Dwarves
+only dig, chop, haul, build, or produce after you choose advance_ticks > 0.
+
+Before EVERY submit_action:
+1. Call query_memory for the current objective, current menu/building target,
+   or nearby coordinates. Treat this as your pre-action notebook review.
+2. Read RECENT ACTION OUTCOMES. If the same placement/menu/cursor plan recently
+   produced no tracked state change, do not repeat it.
+3. If the observation says repeated no-progress, target refreshed after
+   no-progress, or no_progress_streak >= 2, call remember_failed_attempt before
+   submitting the next action.
+4. If you discover or create a stable POI such as a workshop, staircase,
+   stockpile, resource patch, dwarf cluster, or blocked placement area, call
+   remember_poi before submitting the next action.
+5. In submit_action include objective, expected_visible_result,
+   expected_simulation_result, and memory_update.
+
+When using a searchable native menu such as Manager New Order, treat the typed
+search string as part of the action path. Query memory for failed searches before
+typing a term. If a term produced only wrong-category rows, metal-only rows, no
+useful row, or a corrupted concatenated query, call remember_failed_attempt with
+a label that includes the menu and exact term. Do not try that same term again
+later in the run unless your review names new visible evidence that makes it
+different. If the visible search text did not clear after backspace, exit and
+reopen a clean dialog before entering a new term.
+
+Do not spend more than two consecutive actions trying to place the same workshop
+or selecting the same workshop key. If placement is unclear, return to the main
+view, query memory, record the failed attempt, and choose a different productive
+branch such as designating fresh dig/chop work or making a stockpile.
+
+If workshop placement has already failed twice, do not move the placement cursor
+around looking for a tile. Switch strategy: exit the build menu, use any fresh
+target recommended keys exactly, create a stockpile, or designate new dig/chop
+work. If `Live view` reports `cursor_inactive=(-30000,...)`, distinguish that
+inactive sentinel from a visible off-map cursor. In main_map it usually means no
+cursor-owning mode is open yet; in a cursor placement menu without a visible X,
+exit once and choose a productive named menu action or fresh target.
+If fresh target keys are hidden, treat `selection_rect` and `window` as notes
+about the observed target, not a route. Do not record or submit coordinate-offset
+plans unless your current screen_read identifies a visible active cursor in the
+right DF mode.
+"""
+
+
+KEYSTROKE_POI_REVIEW_SYSTEM_PROMPT = (
+    KEYSTROKE_SYSTEM_PROMPT + KEYSTROKE_POI_REVIEW_APPENDIX
+)
+
+
+KEYSTROKE_PLAN_REVIEW_APPENDIX = """
+
+## Periodic Gameplay Plan Review Variant
+You are running in a hill-climbing experiment. Your job is not only to press
+keys; it is to maintain and periodically critique your own plan against the
+real visible game state.
+
+Use the plan tools as a private notebook:
+- Before your first submit_action, call write_gameplay_plan with a concrete
+  multi-step plan. The plan should include: reachable excavation, material
+  acquisition if needed, workshop placement, and then a post-workshop branch
+  that creates production work before stockpile refinement or more room digging.
+  If `manager_orders=0`, prefer production orders or a visible
+  carpenter-workshop job menu before stockpile refinement or room completion.
+- At least every five submitted actions, call review_gameplay_plan before
+  submit_action. Also call it immediately when recent outcomes show
+  no_progress_streak >= 2, repeated no state change, or a completed milestone.
+- A review must compare the stored plan to evidence from the screen/status and
+  recent action outcomes. If the current step is done or blocked, revise the
+  next step instead of repeating the same key sequence.
+- If a carpenter workshop already exists, stop trying to place more workshops
+  unless the screen/state proves the next workshop is necessary. Shift to
+  direct workshop tasks or useful orders through native UI before stockpile or
+  room refinement.
+- When a plan branch depends on a manager/work-order search term, check the
+  failed-attempt memory before typing it. If the term is already remembered as a
+  wrong menu/no-result/corrupted-search path, revise the plan to a different
+  native branch or a clean-dialog search you have not already disproved.
+- When a queued production order has already reduced `order_qty_left` and then
+  stalls, treat the current production chain as the active plan. Before switching
+  to unrelated dig, stockpile, or exploration work, review the plan against the
+  visible workshop/task/cancellation evidence and name the specific blocker you
+  are trying to fix.
+- Include plan_step and plan_review in submit_action so the trace can audit
+  whether the action follows the reviewed plan.
+
+The plan is not scoring and does not change Dwarf Fortress. The only way to
+score is still real gameplay through keystrokes, visible map/material changes,
+and ticks that let dwarves act.
+"""
+
+
+KEYSTROKE_PLAN_REVIEW_SYSTEM_PROMPT = (
+    KEYSTROKE_POI_REVIEW_SYSTEM_PROMPT + KEYSTROKE_PLAN_REVIEW_APPENDIX
+)
+
+
+KEYSTROKE_PERCEPTION_REVIEW_APPENDIX = """
+
+## Agent-Owned Perception and Verification Contract
+You are running in the strict no-cheat perception experiment. The harness only
+supplies raw DF observations and enforces that you write down your own
+interpretation before acting. It does not classify menus, pick keys, or decide
+strategy for you.
+
+Before EVERY submit_action:
+1. Call record_screen_read with your own reading of the current screen.
+   - mode: one of main_map, designation_menu, building_menu,
+     workshop_placement, workshop_material_selection,
+     workshop_add_task_list, carpenter_workshop_construction_pending,
+     stockpile_menu, orders_menu,
+     manager_orders, manager_new_order_search, manager_required,
+     nobles_administrators, job_list, announcement_screen, unknown.
+   - evidence: one to three short facts from visible screen text/tiles/status.
+   - cursor_or_selection: what you believe the cursor or active selection is.
+     Distinguish a visible X cursor from `cursor_inactive=(-30000,...)`, which
+     only means the current screen has no active DF cursor exposed.
+   - confidence: high, medium, or low. If unsure, use unknown and low.
+2. Call review_last_action with your own verification of the previous submitted action.
+   - worked: true, false, or null for the first action.
+   - evidence: one to three facts comparing the previous expected result to the
+     current screen/status/recent outcome row.
+   - mismatch_reason: why it did not work, or empty/null when it worked.
+   - should_retry_same_path: true only if you have new evidence that retrying
+     the same path is appropriate.
+3. Then call submit_action. You may also include screen_read and
+   last_action_review in submit_action, but the mandatory tools above are the
+   source of truth for this experiment.
+4. In submit_action, intent and objective must be non-empty. Also include
+   expected_visible_result, expected_simulation_result, and memory_update
+   whenever you can; if there is no new memory fact, write that explicitly.
+
+If last_action_review says the previous path did not work, do not press the same
+menu/key path again unless your evidence names a changed condition. Prefer a
+different productive branch, a clean exit to main view, or time advancement only
+when dwarves have active work to complete.
+If last_action_review says a manager New Order search showed the wrong category,
+metal-only rows, no useful rows, or a corrupted combined query, first store that
+exact menu/search term with remember_failed_attempt, then revise away from that
+term. A different future action is not enough if you later retype the same
+failed term without citing a changed screen/context. If the query field still
+contains old letters after backspace, treat the dirty search field as the failed
+path and reopen a clean dialog before another search.
+Opening a setup menu is not the same as completing the gameplay action. If the
+objective is to place a stockpile, designate chopping/digging, or create a room,
+worked=true requires evidence that the rectangle/designation was committed or
+that the later outcome row shows real map/material/work progress. If the screen
+is still only a type list or submenu, mark worked=false for placement and finish
+the cursor/rectangle selection or choose a different branch.
+If the previous action only opened or stayed on a carpenter workshop task menu,
+mark it worked=false for production unless the current screen shows a concrete task row/job choice or the recent outcome row shows real workshop/material work.
+If the previous action tried a parenthesized workshop task letter and the same add-task list is still visible, mark it worked=false and switch to scroll/select navigation or a different production path instead of retrying the raw letter.
+If your proposed action uses manual cursor movement, your screen_read evidence
+must identify the visible active cursor or active selection on the current
+screen. `selection_rect` and `window` alone do not satisfy that evidence.
+If the previous action advanced time for a queued production order and
+`order_qty_left` did not decrease, mark worked=false unless another concrete
+production change occurred. If the visible screen contains a cancellation or
+Needs message, do not retry blind time advancement and do not jump to unrelated
+dig/stockpile work. First inspect the relevant workshop/task list or visible
+cancellation evidence, then choose a native UI fix for that blocker.
+
+These fields are your cognition trail. They do not change Dwarf Fortress and
+they are not scoring. Real score still only comes from native keystrokes,
+visible map/material/building changes, and ticks that let dwarves act.
+"""
+
+
+KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT = (
+    KEYSTROKE_PLAN_REVIEW_SYSTEM_PROMPT + KEYSTROKE_PERCEPTION_REVIEW_APPENDIX
+)
 
 
 KEYSTROKE_TOOL_SPEC = {
@@ -227,6 +617,78 @@ KEYSTROKE_TOOL_SPEC = {
                 "type": "string",
                 "description": "Brief description of what this action accomplishes",
             },
+            "objective": {
+                "type": "string",
+                "description": "Current gameplay task this action advances",
+            },
+            "expected_visible_result": {
+                "type": "string",
+                "description": "Immediate screen/menu/cursor/map result expected after the keys are sent",
+            },
+            "expected_simulation_result": {
+                "type": "string",
+                "description": "Dwarf/world result expected after advancing ticks, or none for UI-only actions",
+            },
+            "screen_read": {
+                "type": "object",
+                "description": "Your own reading of the current DF screen before acting.",
+                "properties": {
+                    "mode": {
+                        "type": "string",
+                        "description": "Current screen/menu mode as you infer it from visible evidence.",
+                    },
+                    "evidence": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Visible screen/status facts supporting your mode read.",
+                    },
+                    "cursor_or_selection": {
+                        "type": "string",
+                        "description": "What cursor, highlighted item, or active selection appears to be current.",
+                    },
+                    "confidence": {
+                        "type": "string",
+                        "enum": ["high", "medium", "low"],
+                    },
+                },
+                "required": ["mode", "evidence", "confidence"],
+            },
+            "last_action_review": {
+                "type": "object",
+                "description": "Your own verification of the previous action against the current observation.",
+                "properties": {
+                    "worked": {
+                        "type": ["boolean", "null"],
+                        "description": "Whether the previous action appears to have worked; null for the first action.",
+                    },
+                    "evidence": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Facts comparing the previous expectation to the current screen/status/outcome.",
+                    },
+                    "mismatch_reason": {
+                        "type": ["string", "null"],
+                        "description": "Why the previous action failed or diverged, if it did.",
+                    },
+                    "should_retry_same_path": {
+                        "type": "boolean",
+                        "description": "Whether retrying the same menu/key path is justified by new evidence.",
+                    },
+                },
+                "required": ["worked", "evidence", "should_retry_same_path"],
+            },
+            "memory_update": {
+                "type": "string",
+                "description": "POI/failure memory reviewed or updated before acting",
+            },
+            "plan_step": {
+                "type": "string",
+                "description": "Current agent-maintained plan step this action advances",
+            },
+            "plan_review": {
+                "type": "string",
+                "description": "Brief summary of the latest plan review used before acting",
+            },
             "advance_ticks": {
                 "type": "integer",
                 "minimum": 0,
@@ -244,6 +706,27 @@ KEYSTROKE_ANTHROPIC_TOOL = {
     "description": KEYSTROKE_TOOL_SPEC["description"],
     "input_schema": KEYSTROKE_TOOL_SPEC["parameters"],
 }
+
+
+def _keystroke_anthropic_tool(*, require_perception_review: bool = False) -> Dict[str, Any]:
+    tool_spec = deepcopy(KEYSTROKE_TOOL_SPEC)
+    if require_perception_review:
+        required = list(tool_spec["parameters"].get("required", []))
+        for field in (
+            "screen_read",
+            "last_action_review",
+            "advance_ticks",
+            "objective",
+            "expected_visible_result",
+        ):
+            if field not in required:
+                required.append(field)
+        tool_spec["parameters"]["required"] = required
+    return {
+        "name": tool_spec["name"],
+        "description": tool_spec["description"],
+        "input_schema": tool_spec["parameters"],
+    }
 
 
 def _usage_payload(response: Any) -> Dict[str, int]:
@@ -270,22 +753,57 @@ def _append_usage_event(
     *,
     model: str,
     max_tokens: int,
-    temperature: float,
+    temperature: float | None,
 ) -> None:
     usage = _usage_payload(response)
     if not usage:
         return
+    request_input: Dict[str, Any] = {
+        "model": model,
+        "max_tokens": max_tokens,
+    }
+    if temperature is not None:
+        request_input["temperature"] = temperature
     events.append(
         {
             "tool": "anthropic.messages.create",
-            "input": {
-                "model": model,
-                "max_tokens": max_tokens,
-                "temperature": temperature,
-            },
+            "input": request_input,
             "output": {"usage": usage},
         }
     )
+
+
+def _model_rejects_sampling_params(model: str) -> bool:
+    return model.startswith(("claude-opus-4-7", "claude-opus-4-8"))
+
+
+def _request_temperature(model: str, configured_temperature: float) -> float | None:
+    if _model_rejects_sampling_params(model):
+        return None
+    return configured_temperature
+
+
+def _is_rate_limit_error(exc: Exception) -> bool:
+    if exc.__class__.__name__ == "RateLimitError":
+        return True
+    status_code = getattr(exc, "status_code", None)
+    return status_code == 429
+
+
+def _is_retryable_anthropic_error(exc: Exception) -> bool:
+    if _is_rate_limit_error(exc):
+        return True
+    class_name = exc.__class__.__name__
+    if "Timeout" in class_name or class_name == "APIConnectionError":
+        return True
+    status_code = getattr(exc, "status_code", None)
+    return status_code in {408, 409, 425, 500, 502, 503, 504, 529}
+
+
+def _retry_backoff_seconds(attempt: int, *, rate_limited: bool) -> float:
+    base_seconds = 15.0 if rate_limited else 5.0
+    max_seconds = 120.0 if rate_limited else 60.0
+    return min(max_seconds, base_seconds * (2**attempt))
 
 
 class AnthropicActionAgent(Agent):
@@ -320,8 +838,44 @@ class AnthropicActionAgent(Agent):
             client_cls = getattr(anthropic_mod, "Anthropic", None)
             if client_cls is None:
                 raise RuntimeError("anthropic.Anthropic client not available")
-            self._client = client_cls(api_key=self._settings.ANTHROPIC_API_KEY)
+            self._client = client_cls(
+                api_key=self._settings.ANTHROPIC_API_KEY,
+                timeout=self._settings.ANTHROPIC_TIMEOUT_SECONDS,
+                max_retries=0,
+            )
         return self._client
+
+    def _create_message_with_retries(self, client: Any, **kwargs: Any) -> Any:
+        last_error: Exception | None = None
+        max_attempts = max(1, self._settings.ANTHROPIC_MAX_ATTEMPTS)
+        for attempt in range(max_attempts):
+            try:
+                return client.messages.create(**kwargs)
+            except Exception as exc:
+                if not _is_retryable_anthropic_error(exc) or attempt + 1 >= max_attempts:
+                    raise
+                last_error = exc
+                rate_limited = _is_rate_limit_error(exc)
+                wait_seconds = _retry_backoff_seconds(
+                    attempt,
+                    rate_limited=rate_limited,
+                )
+                tool_name = (
+                    "anthropic.rate_limit_retry"
+                    if rate_limited
+                    else "anthropic.request_retry"
+                )
+                self._tool_events.append(
+                    {
+                        "tool": tool_name,
+                        "input": {"attempt": attempt + 1, "wait_seconds": wait_seconds},
+                        "output": str(exc),
+                    }
+                )
+                time.sleep(wait_seconds)
+        if last_error is not None:
+            raise last_error
+        raise RuntimeError("Anthropic request failed without an exception")
 
     def decide(self, obs_text: str, obs_json: Dict[str, Any]) -> Dict[str, Any]:
         content = f"{obs_text}\n\nState JSON:\n{json.dumps(obs_json)}"
@@ -330,25 +884,32 @@ class AnthropicActionAgent(Agent):
         for _ in range(3):
             self._rate_limit()
             client = self._client_instance()
-            response = client.messages.create(
-                model=self._settings.ANTHROPIC_MODEL,
-                max_tokens=self._settings.LLM_MAX_TOKENS,
-                temperature=self._settings.LLM_TEMP,
-                system=self._system_prompt,
-                tools=[ANTHROPIC_TOOL],
-                messages=[
+            model = self._settings.ANTHROPIC_MODEL
+            temperature = _request_temperature(model, self._settings.LLM_TEMP)
+            request_kwargs: Dict[str, Any] = {
+                "model": model,
+                "max_tokens": self._settings.LLM_MAX_TOKENS,
+                "system": self._system_prompt,
+                "tools": [ANTHROPIC_TOOL],
+                "messages": [
                     {
                         "role": "user",
                         "content": [{"type": "text", "text": content}],
                     }
                 ],
+            }
+            if temperature is not None:
+                request_kwargs["temperature"] = temperature
+            response = self._create_message_with_retries(
+                client,
+                **request_kwargs,
             )
             _append_usage_event(
                 self._tool_events,
                 response,
-                model=self._settings.ANTHROPIC_MODEL,
+                model=model,
                 max_tokens=self._settings.LLM_MAX_TOKENS,
-                temperature=self._settings.LLM_TEMP,
+                temperature=temperature,
             )
 
             tool_payload = None
@@ -399,16 +960,41 @@ register_agent("anthropic-fortress-plan", lambda: AnthropicFortressPlanAgent())
 class AnthropicKeystrokeAgent(Agent):
     """Anthropic agent for keystroke-based game control."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        *,
+        system_prompt: str = KEYSTROKE_SYSTEM_PROMPT,
+        require_memory_review: bool = False,
+        require_plan_review: bool = False,
+        require_perception_review: bool = False,
+        plan_review_interval: int = 5,
+        model_override: str | None = None,
+    ) -> None:
         self._settings = get_settings()
         if not self._settings.ANTHROPIC_API_KEY:
             raise RuntimeError("ANTHROPIC_API_KEY not configured")
         self._client = None
         self._last_call = 0.0
+        self._system_prompt = system_prompt
+        self._require_memory_review = require_memory_review
+        self._require_plan_review = require_plan_review
+        self._require_perception_review = require_perception_review
+        self._plan_review_interval = max(1, int(plan_review_interval))
+        self._anthropic_model = model_override or self._settings.ANTHROPIC_MODEL
+        self._completed_actions = 0
+        self._reviewed_plan_milestones: set[str] = set()
         self._memory = MemoryManager(window_size=self._resolve_memory_window())
         self._pending_observation: Optional[str] = None
         self._pending_action: Optional[Dict[str, Any]] = None
-        self._tool_manager = ToolManager(["df_wiki"])
+        self._keystroke_tool = _keystroke_anthropic_tool(
+            require_perception_review=require_perception_review,
+        )
+        enabled_tools = ["df_wiki", "remember_poi", "remember_failed_attempt", "query_memory"]
+        if require_plan_review:
+            enabled_tools.extend(["write_gameplay_plan", "review_gameplay_plan"])
+        if require_perception_review:
+            enabled_tools.extend(["record_screen_read", "review_last_action"])
+        self._tool_manager = ToolManager(enabled_tools, memory=self._memory)
         self._tool_events: List[Dict[str, Any]] = []
 
     def _resolve_memory_window(self) -> int:
@@ -437,8 +1023,460 @@ class AnthropicKeystrokeAgent(Agent):
             client_cls = getattr(anthropic_mod, "Anthropic", None)
             if client_cls is None:
                 raise RuntimeError("anthropic.Anthropic client not available")
-            self._client = client_cls(api_key=self._settings.ANTHROPIC_API_KEY)
+            self._client = client_cls(
+                api_key=self._settings.ANTHROPIC_API_KEY,
+                timeout=self._settings.ANTHROPIC_TIMEOUT_SECONDS,
+                max_retries=0,
+            )
         return self._client
+
+    def _create_message_with_retries(self, client: Any, **kwargs: Any) -> Any:
+        last_error: Exception | None = None
+        max_attempts = max(1, self._settings.ANTHROPIC_MAX_ATTEMPTS)
+        for attempt in range(max_attempts):
+            try:
+                return client.messages.create(**kwargs)
+            except Exception as exc:
+                if not _is_retryable_anthropic_error(exc) or attempt + 1 >= max_attempts:
+                    raise
+                last_error = exc
+                rate_limited = _is_rate_limit_error(exc)
+                wait_seconds = _retry_backoff_seconds(
+                    attempt,
+                    rate_limited=rate_limited,
+                )
+                tool_name = (
+                    "anthropic.rate_limit_retry"
+                    if rate_limited
+                    else "anthropic.request_retry"
+                )
+                self._tool_events.append(
+                    {
+                        "tool": tool_name,
+                        "input": {"attempt": attempt + 1, "wait_seconds": wait_seconds},
+                        "output": str(exc),
+                    }
+                )
+                time.sleep(wait_seconds)
+        if last_error is not None:
+            raise last_error
+        raise RuntimeError("Anthropic request failed without an exception")
+
+    def _required_memory_review_error(
+        self,
+        tool_uses: List[Any],
+        obs_text: str,
+        tool_payload: Dict[str, Any] | None,
+    ) -> Optional[str]:
+        if not self._require_memory_review:
+            return None
+        tool_names = {str(getattr(tool_use, "name", "")) for tool_use in tool_uses}
+        if "query_memory" not in tool_names:
+            return (
+                "Mandatory pre-action review missing: call query_memory for the "
+                "current objective/menu/POI before submit_action."
+            )
+        if self._needs_failed_attempt_memory(obs_text) and "remember_failed_attempt" not in tool_names:
+            return (
+                "Mandatory failed-attempt update missing: the observation shows "
+                "repeated or recent no-progress behavior. Call remember_failed_attempt "
+                "before submit_action and choose a different plan."
+            )
+        if self._needs_workshop_strategy_switch(obs_text, tool_payload):
+            return (
+                "Workshop placement loop detected: do not attempt another workshop "
+                "placement or placement-cursor navigation. Record/consult memory and "
+                "submit a different productive branch such as manager/job production, "
+                "exact fresh target keys, dig/chop designation, or stockpile creation."
+            )
+        return None
+
+    def _required_plan_review_error(
+        self,
+        tool_uses: List[Any],
+        obs_text: str,
+    ) -> Optional[str]:
+        if not self._require_plan_review:
+            return None
+        tool_names = {str(getattr(tool_use, "name", "")) for tool_use in tool_uses}
+        if self._completed_actions == 0 or not self._memory.gameplay_plan:
+            if "write_gameplay_plan" not in tool_names:
+                return (
+                    "Mandatory gameplay plan missing: before the first action, call "
+                    "write_gameplay_plan with concrete steps for excavation, material, "
+                    "workshop, and post-workshop fortress-space completion."
+                )
+        due_by_cadence = self._completed_actions > 0 and (
+            self._completed_actions % self._plan_review_interval == 0
+        )
+        due_by_stall = self._needs_failed_attempt_memory(obs_text)
+        milestone_key = self._plan_milestone_key(obs_text)
+        due_by_milestone = (
+            milestone_key is not None and milestone_key not in self._reviewed_plan_milestones
+        )
+        if "review_gameplay_plan" in tool_names and milestone_key is not None:
+            self._reviewed_plan_milestones.add(milestone_key)
+        if due_by_cadence or due_by_stall or due_by_milestone:
+            if "review_gameplay_plan" not in tool_names:
+                reasons = []
+                if due_by_cadence:
+                    reasons.append(f"{self._plan_review_interval}-action checkpoint")
+                if due_by_stall:
+                    reasons.append("stalled/no-progress evidence")
+                if due_by_milestone:
+                    reasons.append("milestone/phase transition evidence")
+                return (
+                    "Mandatory gameplay plan review missing: call review_gameplay_plan "
+                    "before submit_action because " + ", ".join(reasons) + "."
+                )
+        return None
+
+    def _required_perception_review_error(
+        self,
+        tool_payload: Dict[str, Any] | None,
+        tool_names: set[str] | None = None,
+    ) -> Optional[str]:
+        if not self._require_perception_review:
+            return None
+        tool_names = tool_names or set()
+        if "record_screen_read" not in tool_names and not (
+            isinstance(tool_payload, dict) and isinstance(tool_payload.get("screen_read"), dict)
+        ):
+            return (
+                "Mandatory record_screen_read missing: call record_screen_read with "
+                "your own current screen/menu read before submit_action."
+            )
+        if "review_last_action" not in tool_names and not (
+            isinstance(tool_payload, dict)
+            and isinstance(tool_payload.get("last_action_review"), dict)
+        ):
+            return (
+                "Mandatory review_last_action missing: call review_last_action with "
+                "your own previous-action verification before submit_action."
+            )
+        if not isinstance(tool_payload, dict):
+            return "Mandatory perception review missing: submit_action payload is not an object."
+
+        missing_action_fields = [
+            field
+            for field in (
+                "intent",
+                "objective",
+            )
+            if not str(tool_payload.get(field) or "").strip()
+        ]
+        if missing_action_fields:
+            return (
+                "Mandatory action cognition incomplete: submit_action must include "
+                "non-empty "
+                + ", ".join(missing_action_fields)
+                + "."
+            )
+
+        screen_read = tool_payload.get("screen_read")
+        if not isinstance(screen_read, dict):
+            return (
+                "Mandatory screen_read missing: before submit_action, write your own "
+                "current screen/menu read with mode, evidence, cursor_or_selection, "
+                "and confidence."
+            )
+        screen_error = self._validate_screen_read(screen_read)
+        if screen_error:
+            return "Mandatory screen_read incomplete: " + screen_error
+
+        last_action_review = tool_payload.get("last_action_review")
+        if not isinstance(last_action_review, dict):
+            return (
+                "Mandatory last_action_review missing: before submit_action, compare "
+                "the previous action expectation to the current observation. For the "
+                "first action set worked to null and evidence to no previous action."
+            )
+        review_error = self._validate_last_action_review(last_action_review)
+        if review_error:
+            return "Mandatory last_action_review incomplete: " + review_error
+        return None
+
+    @staticmethod
+    def _zero_tick_action_says_time_should_pass(tool_payload: Dict[str, Any]) -> bool:
+        action_text = " ".join(
+            str(tool_payload.get(field) or "")
+            for field in (
+                "intent",
+                "objective",
+                "expected_simulation_result",
+                "plan_step",
+                "plan_review",
+                "memory_update",
+            )
+        ).lower()
+        if "advance" in action_text and any(
+            marker in action_text
+            for marker in (
+                "time",
+                "tick",
+                "large block",
+                "significant",
+                "dwarf",
+                "miner",
+                "carpenter",
+                "woodcutter",
+                "work",
+            )
+        ):
+            return True
+        return any(
+            phrase in action_text
+            for phrase in (
+                "advance time",
+                "advance simulation",
+                "advance ticks",
+                "resume time",
+                "simulation time",
+                "time passes",
+                "let dwarves",
+                "let woodcutters",
+                "let miners",
+                "let carpenter",
+                "let production",
+                "give dwarves time",
+                "dwarves work",
+                "produce beds",
+                "production happen",
+                "works the queued",
+                "execute existing",
+            )
+        )
+
+    @classmethod
+    def _advance_ticks_repair_for_action_only(
+        cls,
+        tool_payload: Dict[str, Any],
+        contract_error: str,
+    ) -> Optional[int]:
+        if "completes a dig/chop/stair designation" in contract_error:
+            return 500
+        if cls._zero_tick_action_says_time_should_pass(tool_payload):
+            return 500
+        return None
+
+    @classmethod
+    def _advance_ticks_contract_error(
+        cls,
+        tool_payload: Dict[str, Any],
+    ) -> Optional[str]:
+        try:
+            advance_ticks = int(tool_payload.get("advance_ticks", 0))
+        except (TypeError, ValueError):
+            return None
+        if advance_ticks > 0:
+            return None
+
+        params = tool_payload.get("params") if isinstance(tool_payload.get("params"), dict) else {}
+        keys = params.get("keys") if isinstance(params, dict) else []
+        keys = keys if isinstance(keys, list) else []
+        if any(str(key) == "STRING_A032" for key in keys):
+            return (
+                "Action contract mismatch: STRING_A032 with advance_ticks 0 "
+                "does not advance simulation time in this runner. If you need "
+                "dwarves to work, set advance_ticks to a positive value such "
+                "as 500, 1000, or 2000; for UI-only actions, remove STRING_A032."
+            )
+        says_time_should_pass = cls._zero_tick_action_says_time_should_pass(tool_payload)
+        action_text = " ".join(
+            str(tool_payload.get(field) or "")
+            for field in (
+                "intent",
+                "objective",
+                "expected_simulation_result",
+                "plan_step",
+                "plan_review",
+                "memory_update",
+            )
+        ).lower()
+        scroll_only = bool(keys) and all(str(key).startswith("STANDARDSCROLL") for key in keys)
+        if says_time_should_pass or (scroll_only and "advance" in action_text):
+            return (
+                "Action contract mismatch: the action says to advance time or let "
+                "dwarves work, but advance_ticks is 0. Set advance_ticks to a "
+                "positive value such as 200, 500, 1000, or 2000; viewport scroll "
+                "keys do not advance simulation time."
+            )
+        designation_keys = {
+            "DESIGNATE_DIG",
+            "DESIGNATE_CHOP",
+            "DESIGNATE_CHANNEL",
+            "DESIGNATE_STAIR_DOWN",
+            "DESIGNATE_STAIR_UP",
+            "DESIGNATE_STAIR_UPDOWN",
+            "DESIGNATE_RAMP",
+            "DESIGNATE_PLANTS",
+        }
+        completed_work_designation = (
+            (
+                any(str(key) in designation_keys for key in keys)
+                or (
+                    any(
+                        phrase in action_text
+                        for phrase in (
+                            "designate",
+                            "dig room",
+                            "dig area",
+                            "chop",
+                            "stair",
+                            "mine",
+                            "mining",
+                        )
+                    )
+                    and len(keys) >= 3
+                )
+            )
+            and sum(1 for key in keys if str(key) == "SELECT") >= 2
+            and any(str(key) == "LEAVESCREEN" for key in keys)
+        )
+        if completed_work_designation:
+            return (
+                "Action contract mismatch: this key sequence completes a dig/chop/stair "
+                "designation while the game is paused, but advance_ticks is 0. Set "
+                "advance_ticks to 500+ so dwarves can act on the new designation before "
+                "your next decision."
+            )
+        return None
+
+    @staticmethod
+    def _validate_screen_read(screen_read: Dict[str, Any]) -> Optional[str]:
+        mode = str(screen_read.get("mode") or "").strip()
+        if not mode:
+            return "mode is required."
+        confidence = str(screen_read.get("confidence") or "").strip().lower()
+        if confidence not in {"high", "medium", "low"}:
+            return "confidence must be high, medium, or low."
+        evidence = screen_read.get("evidence")
+        if isinstance(evidence, list):
+            if not any(str(item).strip() for item in evidence):
+                return "evidence must include at least one visible fact."
+        elif not str(evidence or "").strip():
+            return "evidence must include at least one visible fact."
+        return None
+
+    @staticmethod
+    def _validate_last_action_review(last_action_review: Dict[str, Any]) -> Optional[str]:
+        if "worked" not in last_action_review:
+            return "worked is required; use null for the first action."
+        if "should_retry_same_path" not in last_action_review:
+            return "should_retry_same_path is required."
+        if not isinstance(last_action_review.get("should_retry_same_path"), bool):
+            return "should_retry_same_path must be true or false."
+        evidence = last_action_review.get("evidence")
+        if isinstance(evidence, list):
+            if not any(str(item).strip() for item in evidence):
+                return "evidence must include at least one verification fact."
+        elif not str(evidence or "").strip():
+            return "evidence must include at least one verification fact."
+        return None
+
+    @staticmethod
+    def _plan_milestone_key(obs_text: str) -> Optional[str]:
+        text = obs_text.lower()
+        if "live ui phase: enough starter digging and building material exist" in text:
+            return "construction_ready"
+        if "last action changed real material stocks" in text:
+            return "material_acquired"
+        if re.search(r"usable_workshops=([1-9]\d*)", text) or re.search(
+            r"carpenter_workshops_usable=([1-9]\d*)",
+            text,
+        ):
+            return "workshop_built"
+        if re.search(r"planned_workshops=([1-9]\d*)", text) or re.search(
+            r"carpenter_workshops=([1-9]\d*)",
+            text,
+        ):
+            return "workshop_placed_unproven"
+        return None
+
+    @staticmethod
+    def _needs_failed_attempt_memory(obs_text: str) -> bool:
+        if "target refreshed after repeated no-progress" in obs_text:
+            return True
+        if "the last action changed no tracked tiles" in obs_text:
+            return True
+        if "do not repeat the same key sequence" in obs_text:
+            return True
+        match = re.search(r"no_progress_streak=(\d+)", obs_text)
+        return bool(match and int(match.group(1)) >= 2)
+
+    @staticmethod
+    def _review_gate_warning_tool(
+        required_review_error: str | None,
+        *,
+        forced: bool = False,
+    ) -> str:
+        text = str(required_review_error or "").lower()
+        gate = (
+            "plan_review"
+            if "mandatory gameplay plan" in text
+            else "memory_review"
+        )
+        suffix = "_forced_warning" if forced else "_warning"
+        return f"{gate}_gate{suffix}"
+
+    @staticmethod
+    def _needs_workshop_strategy_switch(
+        obs_text: str,
+        tool_payload: Dict[str, Any] | None,
+    ) -> bool:
+        if not isinstance(tool_payload, dict):
+            return False
+        params = tool_payload.get("params") if isinstance(tool_payload.get("params"), dict) else {}
+        keys = params.get("keys") if isinstance(params, dict) else []
+        action_focus = {
+            "keys": keys if isinstance(keys, list) else [],
+            "intent": tool_payload.get("intent"),
+            "objective": tool_payload.get("objective"),
+            "expected_visible_result": tool_payload.get("expected_visible_result"),
+        }
+        payload_text = json.dumps(action_focus, ensure_ascii=True).lower()
+        key_text = json.dumps(action_focus["keys"], ensure_ascii=True).lower()
+        workshop_key_requested = "hotkey_building_workshop" in key_text
+        text_requests_workshop = any(
+            marker in payload_text
+            for marker in (
+                "workshop",
+                "carpenter",
+                "mason",
+                "craftsdwarf",
+                "leather works",
+                "hotkey_building_workshop",
+            )
+        ) and any(verb in payload_text for verb in ("place", "placement", "build", "select"))
+        recovery_text = "switch away" in payload_text or "avoid" in payload_text
+        workshop_requested = workshop_key_requested or (text_requests_workshop and not recovery_text)
+        if not workshop_requested:
+            return False
+        text = obs_text.lower()
+        workshop_already_exists = bool(
+            re.search(r"carpenter_workshops=([1-9]\d*)", text)
+            or re.search(r"workshop_count=([1-9]\d*)", text)
+        )
+        if workshop_already_exists:
+            return True
+        failed_workshop_mentions = text.count("failed") + text.count("no tracked state")
+        has_workshop_failure_memory = (
+            "recent failed attempts:" in text
+            and any(marker in text for marker in ("workshop", "placement", "blocked"))
+        )
+        repeated_workshop_outcomes = (
+            text.count("workshop") >= 3
+            and (
+                text.count("changed=none") >= 2
+                or text.count("keys_sent_without_tracked_state_change") >= 2
+            )
+        )
+        off_map_cursor = "cursor=(-30000" in text or '"cursor_x": -30000' in text
+        return (
+            has_workshop_failure_memory
+            or repeated_workshop_outcomes
+            or (off_map_cursor and failed_workshop_mentions >= 2)
+        )
 
     def decide(self, obs_text: str, obs_json: Dict[str, Any]) -> Dict[str, Any]:
         """Decide on a keystroke action based on screen observation."""
@@ -457,100 +1495,42 @@ class AnthropicKeystrokeAgent(Agent):
         messages: List[Dict[str, Any]] = [
             {"role": "user", "content": [{"type": "text", "text": content}]}
         ]
-        tools = [KEYSTROKE_ANTHROPIC_TOOL, *self._tool_manager.tool_specs()]
+        tools = [self._keystroke_tool, *self._tool_manager.tool_specs()]
+        tool_result_cache: Dict[str, str] = {}
+        last_gate_blocked_action: Optional[Dict[str, Any]] = None
+        last_gate_blocked_error: Optional[str] = None
+        saw_tool_only_response = False
+        action_phase_tool_names: set[str] = set()
+        model = self._anthropic_model
+        temperature = _request_temperature(model, self._settings.LLM_TEMP)
 
-        for _ in range(5):
-            self._rate_limit()
-            client = self._client_instance()
-            response = client.messages.create(
-                model=self._settings.ANTHROPIC_MODEL,
-                max_tokens=self._settings.LLM_MAX_TOKENS,
-                temperature=self._settings.LLM_TEMP,
-                system=KEYSTROKE_SYSTEM_PROMPT,
-                tools=tools,
-                messages=messages,
-            )
-            _append_usage_event(
-                self._tool_events,
-                response,
-                model=self._settings.ANTHROPIC_MODEL,
-                max_tokens=self._settings.LLM_MAX_TOKENS,
-                temperature=self._settings.LLM_TEMP,
-            )
+        def append_tool_retry(response_content: Any, tool_results: List[Dict[str, Any]]) -> None:
+            messages.append({"role": "assistant", "content": response_content})
+            messages.append({"role": "user", "content": tool_results})
 
-            tool_payload = None
-            tool_uses = []
-            for item in response.content:
-                if item.type == "tool_use":
-                    if item.name == "submit_action":
-                        tool_payload = item.input
-                    else:
-                        tool_uses.append(item)
+        def tool_result(tool_use: Any, content: str) -> Dict[str, Any]:
+            return {
+                "type": "tool_result",
+                "tool_use_id": tool_use.id,
+                "content": content,
+            }
 
-            if tool_payload is not None:
-                # Validate it's a KEYSTROKE action
-                if tool_payload.get("type") != "KEYSTROKE":
-                    last_error = ValueError(
-                        f"Expected KEYSTROKE action, got {tool_payload.get('type')}"
-                    )
-                    messages.append({"role": "assistant", "content": response.content})
-                    messages.append(
-                        {
-                            "role": "user",
-                            "content": [{"type": "text", "text": "You must return a KEYSTROKE action."}],
-                        }
-                    )
+        def tool_results_for_retry(tool_uses: List[Any], submit_error: str) -> List[Dict[str, Any]]:
+            results = []
+            for tool_use in tool_uses:
+                if tool_use.name == "submit_action":
+                    results.append(tool_result(tool_use, submit_error))
                     continue
-
-                params = tool_payload.get("params", {})
-                keys = params.get("keys", [])
-                if not keys or not isinstance(keys, list):
-                    last_error = ValueError("KEYSTROKE action must have non-empty keys list")
-                    messages.append({"role": "assistant", "content": response.content})
-                    messages.append(
-                        {
-                            "role": "user",
-                            "content": [
-                                {
-                                    "type": "text",
-                                    "text": "KEYSTROKE action requires a non-empty keys list.",
-                                }
-                            ],
-                        }
-                    )
-                    continue
-
-                try:
-                    action = parse_action(tool_payload)
-                except ValueError as exc:
-                    last_error = exc
-                    messages.append({"role": "assistant", "content": response.content})
-                    messages.append(
-                        {
-                            "role": "user",
-                            "content": [
-                                {
-                                    "type": "text",
-                                    "text": f"Previous response invalid ({exc}). Provide valid KEYSTROKE action.",
-                                }
-                            ],
-                        }
-                    )
-                    continue
-
-                self._pending_observation = obs_text
-                self._pending_action = action
-                return action
-
-            if tool_uses:
-                messages.append({"role": "assistant", "content": response.content})
-                tool_results = []
-                for tool_use in tool_uses:
-                    tool_input = tool_use.input or {}
-                    question = tool_input.get("question", "")
-                    if not isinstance(question, str):
-                        question = str(question)
-                    result = self._tool_manager.query(tool_use.name, question)
+                tool_input = tool_use.input or {}
+                if not isinstance(tool_input, dict):
+                    tool_input = {"input": tool_input}
+                cache_key = getattr(tool_use, "id", "")
+                if cache_key and cache_key in tool_result_cache:
+                    result = tool_result_cache[cache_key]
+                else:
+                    result = self._tool_manager.handle(tool_use.name, tool_input)
+                    if cache_key:
+                        tool_result_cache[cache_key] = result
                     self._tool_events.append(
                         {
                             "tool": tool_use.name,
@@ -558,15 +1538,592 @@ class AnthropicKeystrokeAgent(Agent):
                             "output": result,
                         }
                     )
-                    tool_results.append(
+                results.append(tool_result(tool_use, result))
+            if not results:
+                results.append(
+                    {
+                        "type": "text",
+                        "text": submit_error,
+                    }
+                )
+            return results
+
+        def perception_tool_spec(name: str) -> Dict[str, Any]:
+            for spec in self._tool_manager.tool_specs():
+                if spec.get("name") == name:
+                    return spec
+            raise RuntimeError(f"Perception tool not configured: {name}")
+
+        def collect_perception_inputs(tool_uses: List[Any]) -> Dict[str, Dict[str, Any]]:
+            inputs: Dict[str, Dict[str, Any]] = {}
+            for tool_use in tool_uses:
+                tool_input = tool_use.input if isinstance(tool_use.input, dict) else {}
+                if tool_use.name == "record_screen_read":
+                    inputs["screen_read"] = dict(tool_input)
+                elif tool_use.name == "review_last_action":
+                    inputs["last_action_review"] = dict(tool_input)
+            return inputs
+
+        def single_perception_error(
+            tool_name: str,
+            tool_input: Dict[str, Any],
+        ) -> Optional[str]:
+            if tool_name == "record_screen_read":
+                return self._validate_screen_read(tool_input)
+            if tool_name == "review_last_action":
+                return self._validate_last_action_review(tool_input)
+            return f"Unknown perception tool: {tool_name}"
+
+        def run_single_perception_tool(
+            *,
+            tool_name: str,
+            result_field: str,
+            prompt: str,
+        ) -> Dict[str, Dict[str, Any]]:
+            messages.append(
+                {
+                    "role": "user",
+                    "content": [{"type": "text", "text": prompt}],
+                }
+            )
+            last_prelude_error: Optional[str] = None
+            for _ in range(3):
+                self._rate_limit()
+                client = self._client_instance()
+                request_kwargs: Dict[str, Any] = {
+                    "model": model,
+                    "max_tokens": self._settings.LLM_MAX_TOKENS,
+                    "system": self._system_prompt,
+                    "tools": [perception_tool_spec(tool_name)],
+                    "messages": messages,
+                }
+                if temperature is not None:
+                    request_kwargs["temperature"] = temperature
+                response = self._create_message_with_retries(client, **request_kwargs)
+                _append_usage_event(
+                    self._tool_events,
+                    response,
+                    model=model,
+                    max_tokens=self._settings.LLM_MAX_TOKENS,
+                    temperature=temperature,
+                )
+                matching_tool_use = None
+                for item in response.content:
+                    if getattr(item, "type", None) == "tool_use" and item.name == tool_name:
+                        matching_tool_use = item
+                        break
+
+                messages.append({"role": "assistant", "content": response.content})
+                if matching_tool_use is None:
+                    last_prelude_error = f"Call {tool_name} before choosing keys."
+                    messages.append(
                         {
-                            "type": "tool_result",
-                            "tool_use_id": tool_use.id,
-                            "content": result,
+                            "role": "user",
+                            "content": [{"type": "text", "text": last_prelude_error}],
                         }
                     )
+                    continue
 
-                messages.append({"role": "user", "content": tool_results})
+                tool_input = (
+                    matching_tool_use.input if isinstance(matching_tool_use.input, dict) else {}
+                )
+                result = self._tool_manager.handle(tool_name, tool_input)
+                self._tool_events.append(
+                    {
+                        "tool": tool_name,
+                        "input": tool_input,
+                        "output": result,
+                    }
+                )
+                error = single_perception_error(tool_name, tool_input)
+                results = [tool_result(matching_tool_use, result)]
+                if error is None:
+                    messages.append({"role": "user", "content": results})
+                    return {result_field: dict(tool_input)}
+                last_prelude_error = f"{tool_name} incomplete: {error}"
+                results.append({"type": "text", "text": last_prelude_error})
+                messages.append({"role": "user", "content": results})
+            raise RuntimeError(
+                "Anthropic keystroke perception prelude failed: "
+                + str(last_prelude_error)
+            )
+
+        def run_perception_prelude() -> Dict[str, Dict[str, Any]]:
+            if not self._require_perception_review:
+                return {}
+            inputs: Dict[str, Dict[str, Any]] = {}
+            inputs.update(
+                run_single_perception_tool(
+                    tool_name="record_screen_read",
+                    result_field="screen_read",
+                    prompt=(
+                        "Mandatory screen-read phase: call record_screen_read now "
+                        "with your current screen/menu interpretation. Do not submit "
+                        "gameplay keys yet."
+                    ),
+                )
+            )
+            inputs.update(
+                run_single_perception_tool(
+                    tool_name="review_last_action",
+                    result_field="last_action_review",
+                    prompt=(
+                        "Mandatory verification phase: call review_last_action now "
+                        "to compare your previous action expectation to the current "
+                        "observation. Use worked=null for the first action. Do not "
+                        "submit gameplay keys yet."
+                    ),
+                )
+            )
+            return inputs
+
+        def force_submit_action_after_tools() -> Dict[str, Any]:
+            force_prompt = (
+                f"{content}\n\n"
+                "== MODEL-WRITTEN PERCEPTION FOR THIS STEP ==\n"
+                f"{json.dumps(prelude_perception_inputs, ensure_ascii=True)}\n\n"
+                "== ACTION-ONLY RECOVERY ==\n"
+                "You already completed screen reading, last-action review, and any "
+                "notebook/tool lookups for this decision step. Now call submit_action "
+                "with one KEYSTROKE action. Do not call memory, wiki, planning, or "
+                "perception tools. Choose the keys yourself from the current Dwarf "
+                "Fortress screen and your recorded review. If your intent is to wait, "
+                "advance time, or let dwarves work, set advance_ticks to a positive "
+                "value such as 500, 1000, or 2000."
+            )
+            force_messages: List[Dict[str, Any]] = [
+                {
+                    "role": "user",
+                    "content": [{"type": "text", "text": force_prompt}],
+                }
+            ]
+
+            def append_force_retry(
+                response_content: Any,
+                tool_results: List[Dict[str, Any]],
+            ) -> None:
+                force_messages.append({"role": "assistant", "content": response_content})
+                force_messages.append({"role": "user", "content": tool_results})
+
+            last_force_error: Exception | None = None
+            for forced_attempt in range(5):
+                tool_result_cache.clear()
+                self._rate_limit()
+                client = self._client_instance()
+                request_kwargs: Dict[str, Any] = {
+                    "model": model,
+                    "max_tokens": self._settings.LLM_MAX_TOKENS,
+                    "system": self._system_prompt,
+                    "tools": [self._keystroke_tool],
+                    "messages": force_messages,
+                }
+                if temperature is not None:
+                    request_kwargs["temperature"] = temperature
+                response = self._create_message_with_retries(
+                    client,
+                    **request_kwargs,
+                )
+                _append_usage_event(
+                    self._tool_events,
+                    response,
+                    model=model,
+                    max_tokens=self._settings.LLM_MAX_TOKENS,
+                    temperature=temperature,
+                )
+
+                tool_payload = None
+                tool_uses = []
+                for item in response.content:
+                    if item.type == "tool_use":
+                        tool_uses.append(item)
+                        action_phase_tool_names.add(str(item.name))
+                        if item.name == "submit_action":
+                            tool_payload = item.input
+
+                if tool_payload is not None:
+                    if not isinstance(tool_payload, dict):
+                        last_force_error = ValueError(
+                            "submit_action payload must be an object"
+                        )
+                        append_force_retry(
+                            response.content,
+                            tool_results_for_retry(
+                                tool_uses,
+                                "submit_action payload must be an object.",
+                            ),
+                        )
+                        continue
+
+                    if prelude_perception_inputs:
+                        tool_payload = dict(tool_payload)
+                        for field, value in prelude_perception_inputs.items():
+                            tool_payload.setdefault(field, value)
+
+                    if tool_payload.get("type") != "KEYSTROKE":
+                        last_force_error = ValueError(
+                            f"Expected KEYSTROKE action, got {tool_payload.get('type')}"
+                        )
+                        append_force_retry(
+                            response.content,
+                            tool_results_for_retry(
+                                tool_uses,
+                                "You must return a KEYSTROKE action.",
+                            ),
+                        )
+                        continue
+
+                    params = tool_payload.get("params", {})
+                    keys = params.get("keys", []) if isinstance(params, dict) else []
+                    if not keys or not isinstance(keys, list):
+                        last_force_error = ValueError(
+                            "KEYSTROKE action must have non-empty keys list"
+                        )
+                        append_force_retry(
+                            response.content,
+                            tool_results_for_retry(
+                                tool_uses,
+                                "KEYSTROKE action requires a non-empty keys list.",
+                            ),
+                        )
+                        continue
+
+                    contract_error = self._advance_ticks_contract_error(tool_payload)
+                    if contract_error:
+                        repaired_advance_ticks = (
+                            self._advance_ticks_repair_for_action_only(
+                                tool_payload,
+                                contract_error,
+                            )
+                        )
+                        if repaired_advance_ticks is not None:
+                            tool_payload = dict(tool_payload)
+                            tool_payload["advance_ticks"] = repaired_advance_ticks
+                            self._tool_events.append(
+                                {
+                                    "tool": "advance_ticks_contract_repaired",
+                                    "input": {
+                                        "attempt": forced_attempt + 1,
+                                        "contract_error": contract_error,
+                                    },
+                                    "output": (
+                                        "Set advance_ticks="
+                                        f"{repaired_advance_ticks} during "
+                                        "action-only recovery to match the "
+                                        "model's stated turn intent."
+                                    ),
+                                }
+                            )
+                        else:
+                            last_force_error = ValueError(contract_error)
+                            append_force_retry(
+                                response.content,
+                                tool_results_for_retry(tool_uses, contract_error),
+                            )
+                            continue
+
+                    try:
+                        action = parse_action(tool_payload)
+                    except ValueError as exc:
+                        last_force_error = exc
+                        append_force_retry(
+                            response.content,
+                            tool_results_for_retry(
+                                tool_uses,
+                                f"Previous response invalid ({exc}). Provide valid KEYSTROKE action.",
+                            ),
+                        )
+                        continue
+
+                    perception_error = self._required_perception_review_error(
+                        tool_payload,
+                        action_phase_tool_names,
+                    )
+                    if perception_error:
+                        last_force_error = ValueError(perception_error)
+                        append_force_retry(
+                            response.content,
+                            tool_results_for_retry(tool_uses, perception_error),
+                        )
+                        continue
+
+                    review_tool_uses = [
+                        SimpleNamespace(name=name) for name in sorted(action_phase_tool_names)
+                    ]
+                    required_errors = [
+                        error
+                        for error in (
+                            self._required_memory_review_error(
+                                review_tool_uses,
+                                obs_text,
+                                tool_payload,
+                            ),
+                            self._required_plan_review_error(review_tool_uses, obs_text),
+                        )
+                        if error
+                    ]
+                    required_review_error = (
+                        "\n".join(required_errors) if required_errors else None
+                    )
+                    if required_review_error:
+                        warning_tool = self._review_gate_warning_tool(
+                            required_review_error,
+                            forced=True,
+                        )
+                        self._tool_events.append(
+                            {
+                                "tool": warning_tool,
+                                "input": {
+                                    "attempt": forced_attempt + 1,
+                                    "required_review_error": required_review_error,
+                                    "prior_tool_names": sorted(action_phase_tool_names),
+                                },
+                                "output": (
+                                    "Allowed action-only recovery despite unmet "
+                                    "review gate; recovery can only call submit_action."
+                                ),
+                            }
+                        )
+                        milestone_key = self._plan_milestone_key(obs_text)
+                        if milestone_key is not None:
+                            self._reviewed_plan_milestones.add(milestone_key)
+
+                    self._tool_events.append(
+                        {
+                            "tool": "submit_action_forced_after_tools",
+                            "input": {
+                                "attempt": forced_attempt + 1,
+                                "prior_tool_names": sorted(action_phase_tool_names),
+                            },
+                            "output": "Accepted model submit_action after action-only recovery.",
+                        }
+                    )
+                    self._pending_observation = obs_text
+                    self._pending_action = action
+                    self._completed_actions += 1
+                    return action
+
+                last_force_error = ValueError(
+                    "Model did not use submit_action in action-only recovery"
+                )
+                if tool_uses:
+                    append_force_retry(
+                        response.content,
+                        tool_results_for_retry(
+                            tool_uses,
+                            "Only submit_action is available now; send one KEYSTROKE action.",
+                        ),
+                    )
+                    continue
+
+                force_messages.append({"role": "assistant", "content": response.content})
+                force_messages.append(
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": "Use submit_action now with one KEYSTROKE action.",
+                            }
+                        ],
+                    }
+                )
+
+            raise RuntimeError(
+                "Anthropic keystroke action-only recovery failed: "
+                + str(last_force_error)
+            )
+
+        prelude_perception_inputs = run_perception_prelude()
+
+        for attempt_index in range(5):
+            tool_result_cache.clear()
+            self._rate_limit()
+            client = self._client_instance()
+            request_kwargs: Dict[str, Any] = {
+                "model": model,
+                "max_tokens": self._settings.LLM_MAX_TOKENS,
+                "system": self._system_prompt,
+                "tools": tools,
+                "messages": messages,
+            }
+            if temperature is not None:
+                request_kwargs["temperature"] = temperature
+            response = self._create_message_with_retries(
+                client,
+                **request_kwargs,
+            )
+            _append_usage_event(
+                self._tool_events,
+                response,
+                model=model,
+                max_tokens=self._settings.LLM_MAX_TOKENS,
+                temperature=temperature,
+            )
+
+            tool_payload = None
+            tool_uses = []
+            perception_inputs: Dict[str, Dict[str, Any]] = {}
+            for item in response.content:
+                if item.type == "tool_use":
+                    tool_uses.append(item)
+                    action_phase_tool_names.add(str(item.name))
+                    tool_input = item.input if isinstance(item.input, dict) else {}
+                    if item.name == "record_screen_read":
+                        perception_inputs["screen_read"] = dict(tool_input)
+                    elif item.name == "review_last_action":
+                        perception_inputs["last_action_review"] = dict(tool_input)
+                    if item.name == "submit_action":
+                        tool_payload = item.input
+
+            for tool_use in tool_uses:
+                if tool_use.name == "submit_action":
+                    continue
+                tool_input = tool_use.input or {}
+                if not isinstance(tool_input, dict):
+                    tool_input = {"input": tool_input}
+                result = self._tool_manager.handle(tool_use.name, tool_input)
+                cache_key = getattr(tool_use, "id", "")
+                if cache_key:
+                    tool_result_cache[cache_key] = result
+                self._tool_events.append(
+                    {
+                        "tool": tool_use.name,
+                        "input": tool_input,
+                        "output": result,
+                    }
+                )
+
+            if tool_payload is not None:
+                if isinstance(tool_payload, dict) and (
+                    prelude_perception_inputs or perception_inputs
+                ):
+                    tool_payload = dict(tool_payload)
+                    combined_perception_inputs = {
+                        **prelude_perception_inputs,
+                        **perception_inputs,
+                    }
+                    for field, value in combined_perception_inputs.items():
+                        tool_payload.setdefault(field, value)
+
+                # Validate it's a KEYSTROKE action before applying planning gates.
+                # If the model spends retries on notebook tools but never resubmits,
+                # we can still fall back to this last valid candidate without
+                # crashing the live run.
+                if tool_payload.get("type") != "KEYSTROKE":
+                    last_error = ValueError(
+                        f"Expected KEYSTROKE action, got {tool_payload.get('type')}"
+                    )
+                    append_tool_retry(
+                        response.content,
+                        tool_results_for_retry(tool_uses, "You must return a KEYSTROKE action."),
+                    )
+                    continue
+
+                params = tool_payload.get("params", {})
+                keys = params.get("keys", []) if isinstance(params, dict) else []
+                if not keys or not isinstance(keys, list):
+                    last_error = ValueError("KEYSTROKE action must have non-empty keys list")
+                    append_tool_retry(
+                        response.content,
+                        tool_results_for_retry(
+                            tool_uses,
+                            "KEYSTROKE action requires a non-empty keys list.",
+                        ),
+                    )
+                    continue
+
+                contract_error = self._advance_ticks_contract_error(tool_payload)
+                if contract_error:
+                    last_error = ValueError(contract_error)
+                    append_tool_retry(
+                        response.content,
+                        tool_results_for_retry(tool_uses, contract_error),
+                    )
+                    continue
+
+                try:
+                    action = parse_action(tool_payload)
+                except ValueError as exc:
+                    last_error = exc
+                    append_tool_retry(
+                        response.content,
+                        tool_results_for_retry(
+                            tool_uses,
+                            f"Previous response invalid ({exc}). Provide valid KEYSTROKE action.",
+                        ),
+                    )
+                    continue
+
+                perception_error = self._required_perception_review_error(
+                    tool_payload,
+                    {str(getattr(tool_use, "name", "")) for tool_use in tool_uses},
+                )
+                if perception_error:
+                    last_error = ValueError(perception_error)
+                    append_tool_retry(
+                        response.content,
+                        tool_results_for_retry(tool_uses, perception_error),
+                    )
+                    continue
+
+                review_tool_uses = [
+                    SimpleNamespace(name=name) for name in sorted(action_phase_tool_names)
+                ]
+                required_errors = [
+                    error
+                    for error in (
+                        self._required_memory_review_error(
+                            review_tool_uses,
+                            obs_text,
+                            tool_payload,
+                        ),
+                        self._required_plan_review_error(review_tool_uses, obs_text),
+                    )
+                    if error
+                ]
+                required_review_error = "\n".join(required_errors) if required_errors else None
+                if required_review_error and attempt_index < 3:
+                    last_gate_blocked_action = action
+                    last_gate_blocked_error = required_review_error
+                    last_error = ValueError(required_review_error)
+                    append_tool_retry(
+                        response.content,
+                        tool_results_for_retry(tool_uses, required_review_error),
+                    )
+                    continue
+                if required_review_error:
+                    warning_tool = self._review_gate_warning_tool(
+                        required_review_error,
+                    )
+                    self._tool_events.append(
+                        {
+                            "tool": warning_tool,
+                            "input": {
+                                "attempt": attempt_index + 1,
+                                "required_review_error": required_review_error,
+                            },
+                            "output": "Allowed action after bounded memory-review retries.",
+                        }
+                    )
+                    milestone_key = self._plan_milestone_key(obs_text)
+                    if milestone_key is not None:
+                        self._reviewed_plan_milestones.add(milestone_key)
+
+                self._pending_observation = obs_text
+                self._pending_action = action
+                self._completed_actions += 1
+                return action
+
+            if tool_uses:
+                saw_tool_only_response = True
+                last_error = ValueError("Model used tools but did not submit an action")
+                append_tool_retry(
+                    response.content,
+                    tool_results_for_retry(
+                        tool_uses,
+                        "Use submit_action with a KEYSTROKE action.",
+                    ),
+                )
                 continue
 
             last_error = ValueError("Model did not return an action")
@@ -580,6 +2137,63 @@ class AnthropicKeystrokeAgent(Agent):
                 }
             )
 
+        if self._require_perception_review:
+            if saw_tool_only_response:
+                return force_submit_action_after_tools()
+            raise RuntimeError(f"Anthropic keystroke perception contract failed: {last_error}")
+
+        if last_gate_blocked_action is not None:
+            warning_tool = self._review_gate_warning_tool(
+                last_gate_blocked_error,
+            )
+            self._tool_events.append(
+                {
+                    "tool": warning_tool,
+                    "input": {
+                        "attempt": "fallback",
+                        "required_review_error": last_gate_blocked_error,
+                    },
+                    "output": (
+                        "Allowed last valid action after bounded review retries because "
+                        "the model stopped submitting actions."
+                    ),
+                }
+            )
+            self._pending_observation = obs_text
+            self._pending_action = last_gate_blocked_action
+            self._completed_actions += 1
+            return last_gate_blocked_action
+
+        if saw_tool_only_response:
+            fallback_action = parse_action(
+                {
+                    "type": "KEYSTROKE",
+                    "params": {"keys": ["LEAVESCREEN"]},
+                    "intent": (
+                        "fallback: exit one menu after the model used notebook tools "
+                        "but did not submit an action"
+                    ),
+                    "objective": "recover from missing submit_action",
+                    "expected_visible_result": "one menu closes or main view remains visible",
+                    "expected_simulation_result": "none; no game ticks advance",
+                    "memory_update": "model made tool-only responses without submit_action",
+                    "plan_step": "recover from missing submit_action",
+                    "plan_review": "bounded retry fallback; no model action was submitted",
+                    "advance_ticks": 0,
+                }
+            )
+            self._tool_events.append(
+                {
+                    "tool": "submit_action_fallback",
+                    "input": {"last_error": str(last_error)},
+                    "output": "Submitted LEAVESCREEN after bounded tool-only retries.",
+                }
+            )
+            self._pending_observation = obs_text
+            self._pending_action = fallback_action
+            self._completed_actions += 1
+            return fallback_action
+
         raise RuntimeError(f"Anthropic keystroke agent failed: {last_error}")
 
     def pop_tool_events(self) -> List[Dict[str, Any]]:
@@ -589,6 +2203,43 @@ class AnthropicKeystrokeAgent(Agent):
 
 
 register_agent("anthropic-keystroke", lambda: AnthropicKeystrokeAgent())
+register_agent(
+    "anthropic-keystroke-poi-review",
+    lambda: AnthropicKeystrokeAgent(
+        system_prompt=KEYSTROKE_POI_REVIEW_SYSTEM_PROMPT,
+        require_memory_review=True,
+    ),
+)
+register_agent(
+    "anthropic-keystroke-plan-review",
+    lambda: AnthropicKeystrokeAgent(
+        system_prompt=KEYSTROKE_PLAN_REVIEW_SYSTEM_PROMPT,
+        require_memory_review=True,
+        require_plan_review=True,
+        plan_review_interval=5,
+    ),
+)
+register_agent(
+    "anthropic-keystroke-perception-review",
+    lambda: AnthropicKeystrokeAgent(
+        system_prompt=KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT,
+        require_memory_review=True,
+        require_plan_review=True,
+        require_perception_review=True,
+        plan_review_interval=5,
+    ),
+)
+register_agent(
+    "anthropic-keystroke-perception-review-opus",
+    lambda: AnthropicKeystrokeAgent(
+        system_prompt=KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT,
+        require_memory_review=True,
+        require_plan_review=True,
+        require_perception_review=True,
+        plan_review_interval=5,
+        model_override=get_settings().ANTHROPIC_OPUS_MODEL,
+    ),
+)
 
 
 __all__ = [
@@ -598,5 +2249,8 @@ __all__ = [
     "AnthropicKeystrokeAgent",
     "DIG_FIRST_SYSTEM_PROMPT",
     "FORTRESS_PLAN_SYSTEM_PROMPT",
+    "KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT",
     "KEYSTROKE_SYSTEM_PROMPT",
+    "KEYSTROKE_POI_REVIEW_SYSTEM_PROMPT",
+    "KEYSTROKE_PLAN_REVIEW_SYSTEM_PROMPT",
 ]

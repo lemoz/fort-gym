@@ -8,6 +8,8 @@ from importlib import import_module
 from typing import Any, Dict, Optional
 
 from .base import Agent, register_agent
+from .llm_anthropic import KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT
+from .llm_openrouter import OpenRouterKeystrokeAgent
 from ..config import get_settings
 from ..env.actions import ACTION_TOOL_SPEC, parse_action, system_prompt_v1
 
@@ -89,6 +91,28 @@ class OpenAIActionAgent(Agent):
 
 
 register_agent("openai", lambda: OpenAIActionAgent())
+
+
+def _openai_keystroke_perception_review() -> OpenRouterKeystrokeAgent:
+    settings = get_settings()
+    return OpenRouterKeystrokeAgent(
+        system_prompt=KEYSTROKE_PERCEPTION_REVIEW_SYSTEM_PROMPT,
+        require_memory_review=True,
+        require_plan_review=True,
+        require_perception_review=True,
+        model_override=settings.OPENAI_MODEL,
+        api_key=settings.OPENAI_API_KEY,
+        api_key_name="OPENAI_API_KEY",
+        base_url=None,
+        disable_reasoning=False,
+        provider_label="openai",
+    )
+
+
+register_agent(
+    "openai-keystroke-perception-review",
+    _openai_keystroke_perception_review,
+)
 
 
 __all__ = ["OpenAIActionAgent"]

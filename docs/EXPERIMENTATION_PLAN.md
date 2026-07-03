@@ -38,6 +38,21 @@ This document describes the planned system for adding memory, tools, and experim
 - YAML-based experiment configs
 - A/B testing between agent variants
 
+### Governed DFHack Direction
+
+The keystroke UI path remains valuable for replay and inspection, but the main
+gameplay-control research path is now DFHack-governed actions: bounded legal
+overseer commands sent through DFHack, followed by observed simulation progress.
+The first model is `dfhack-governed-scripted`; LLM policies should use the same
+action surface rather than direct UI key macros once the helpers are hardened.
+
+### Rubric Scoring
+
+Scalar score is telemetry, not the final judge. Each summary includes a rubric
+over the recent trace window that checks survival, layout, production, breadth,
+responsiveness, plan coherence, repetition, and legal evidence. Experiment
+reports should compare rubric blockers alongside score deltas.
+
 ---
 
 ## Architecture

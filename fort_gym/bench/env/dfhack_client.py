@@ -39,6 +39,158 @@ class DFHackUnavailableError(DFHackError):
     """Raised when the remote DFHack interface is not reachable."""
 
 
+def _tile_to_char(tile: List[int]) -> str:
+    char_code = tile[0]
+    # Convert to printable ASCII, use space for non-printables
+    if 32 <= char_code < 127:
+        return chr(char_code)
+    if char_code == 0:
+        return " "
+
+    # CP437 extended chars - map common ones, otherwise use placeholder.
+    # Common DF characters: walls, floors, dwarves, cursor markers, etc.
+    cp437_map = {
+        176: "#",  # Light shade (wall)
+        177: "#",  # Medium shade
+        178: "#",  # Dark shade
+        219: "#",  # Full block
+        220: "_",  # Lower half block
+        223: "-",  # Upper half block
+        249: ".",  # Bullet (floor)
+        250: ".",  # Interpunct
+        254: "*",  # Square
+        # Box drawing
+        179: "|", 180: "+", 191: "+", 192: "+",
+        193: "+", 194: "+", 195: "+", 196: "-",
+        197: "+", 217: "+", 218: "+",
+        # Arrows
+        24: "^", 25: "v", 26: ">", 27: "<",
+        # Other common
+        1: "@",    # Smiley (dwarf)
+        2: "@",    # Inverse smiley
+        3: "<3",   # Heart
+        4: "<>",   # Diamond
+        5: "*",    # Club
+        6: "*",    # Spade
+        7: "o",    # Bullet
+        15: "*",   # Sun
+        30: "^",   # Up triangle
+        31: "v",   # Down triangle
+    }
+    return cp437_map.get(char_code, "?")
+
+
+def _tile_attr(tile: List[int]) -> Tuple[Optional[int], Optional[int]]:
+    fg = tile[1] if len(tile) > 1 else None
+    bg = tile[2] if len(tile) > 2 else None
+    return fg, bg
+
+
+def _screen_rows(screen: Dict[str, Any]) -> List[Tuple[str, List[Tuple[Optional[int], Optional[int]]]]]:
+    width = screen.get("width", 80)
+    height = screen.get("height", 25)
+    tiles = screen.get("tiles", [])
+
+    rows: List[Tuple[str, List[Tuple[Optional[int], Optional[int]]]]] = []
+    for row in range(height):
+        line_chars = []
+        attrs: List[Tuple[Optional[int], Optional[int]]] = []
+        for col in range(width):
+            # Column-major: index = col * height + row
+            idx = col * height + row
+            if idx < len(tiles):
+                tile = tiles[idx]
+                line_chars.append(_tile_to_char(tile))
+                attrs.append(_tile_attr(tile))
+            else:
+                line_chars.append(" ")
+                attrs.append((None, None))
+        rows.append(("".join(line_chars), attrs))
+    return rows
+
+
+def screen_selection_hints(
+    screen: Dict[str, Any],
+    *,
+    max_rows: int = 8,
+) -> List[Dict[str, Any]]:
+    """Return rows with visible CopyScreen background highlighting.
+
+    CopyScreen exposes each tile as [character, foreground, background], but the
+    plain text view necessarily discards color. DF uses background color for
+    menu highlights and cursors, so these rows preserve raw visible information
+    that would otherwise be lost before the agent sees the screen.
+    """
+    rows = _screen_rows(screen)
+    hints: List[Dict[str, Any]] = []
+    for row_index, (raw_line, attrs) in enumerate(rows):
+        if not raw_line.strip():
+            continue
+        line_text = raw_line.rstrip()
+        if row_index == 0 and ("PAUSED" in line_text or "Dwarf Fortress" in line_text):
+            continue
+
+        run_start: Optional[int] = None
+        run_attr: Tuple[Optional[int], Optional[int]] | None = None
+        runs: List[Tuple[int, int, Tuple[Optional[int], Optional[int]]]] = []
+        for col, (_ch, attr) in enumerate(zip(raw_line, attrs)):
+            bg = attr[1]
+            is_highlighted = bg not in (None, 0)
+            if is_highlighted and run_start is None:
+                run_start = col
+                run_attr = attr
+            elif (not is_highlighted or attr != run_attr) and run_start is not None:
+                runs.append((run_start, col - 1, run_attr or (None, None)))
+                run_start = col if is_highlighted else None
+                run_attr = attr if is_highlighted else None
+        if run_start is not None:
+            runs.append((run_start, len(raw_line) - 1, run_attr or (None, None)))
+
+        for start, end, (fg, bg) in runs:
+            if end - start + 1 < 2:
+                continue
+            highlighted_text = raw_line[start : end + 1].strip()
+            hint_text = highlighted_text or line_text.strip()
+            if sum(1 for ch in hint_text if ch.isalpha()) < 2:
+                continue
+            hints.append(
+                {
+                    "row": row_index,
+                    "cols": [start, end],
+                    "text": hint_text,
+                    "line": line_text.strip(),
+                    "fg": fg,
+                    "bg": bg,
+                }
+            )
+            if len(hints) >= max_rows:
+                break
+        if len(hints) >= max_rows:
+            break
+    return hints
+
+
+def screen_visual_hints_text(screen: Dict[str, Any]) -> str:
+    hints = screen_selection_hints(screen)
+    if not hints:
+        return ""
+    lines = [
+        "== SCREEN VISUAL HINTS ==",
+        (
+            "Rows below have non-default CopyScreen background colors. "
+            "Treat them as visible highlight/cursor/menu-selection clues, "
+            "not as recommended actions."
+        ),
+    ]
+    for hint in hints:
+        start, end = hint["cols"]
+        lines.append(
+            f"- row {hint['row']} cols {start}-{end} "
+            f"fg={hint['fg']} bg={hint['bg']}: {hint['text']}"
+        )
+    return "\n".join(lines)
+
+
 def screen_to_text(screen: Dict[str, Any]) -> str:
     """Convert CopyScreen response to plain text string.
 
@@ -53,65 +205,25 @@ def screen_to_text(screen: Dict[str, Any]) -> str:
     """
     width = screen.get("width", 80)
     height = screen.get("height", 25)
-    tiles = screen.get("tiles", [])
-
-    if not tiles:
+    if not screen.get("tiles"):
         return "(empty screen)"
 
-    lines = []
-    for row in range(height):
-        line_chars = []
-        for col in range(width):
-            # Column-major: index = col * height + row
-            idx = col * height + row
-            if idx < len(tiles):
-                char_code = tiles[idx][0]
-                # Convert to printable ASCII, use space for non-printables
-                if 32 <= char_code < 127:
-                    line_chars.append(chr(char_code))
-                elif char_code == 0:
-                    line_chars.append(' ')
-                else:
-                    # CP437 extended chars - map common ones, otherwise use placeholder
-                    # Common DF characters: walls, floors, etc.
-                    cp437_map = {
-                        176: '#',  # Light shade (wall)
-                        177: '#',  # Medium shade
-                        178: '#',  # Dark shade
-                        219: '#',  # Full block
-                        220: '_',  # Lower half block
-                        223: '-',  # Upper half block
-                        249: '.',  # Bullet (floor)
-                        250: '.',  # Interpunct
-                        254: '*',  # Square
-                        # Box drawing
-                        179: '|', 180: '+', 191: '+', 192: '+',
-                        193: '+', 194: '+', 195: '+', 196: '-',
-                        197: '+', 217: '+', 218: '+',
-                        # Arrows
-                        24: '^', 25: 'v', 26: '>', 27: '<',
-                        # Other common
-                        1: '@',    # Smiley (dwarf)
-                        2: '@',    # Inverse smiley
-                        3: '<3',   # Heart
-                        4: '<>',   # Diamond
-                        5: '*',    # Club
-                        6: '*',    # Spade
-                        7: 'o',    # Bullet
-                        15: '*',   # Sun
-                        30: '^',   # Up triangle
-                        31: 'v',   # Down triangle
-                    }
-                    line_chars.append(cp437_map.get(char_code, '?'))
-            else:
-                line_chars.append(' ')
-        lines.append(''.join(line_chars).rstrip())
+    lines = [line.rstrip() for line, _attrs in _screen_rows(screen)[:height]]
 
     # Remove trailing empty lines
     while lines and not lines[-1]:
         lines.pop()
 
     return '\n'.join(lines)
+
+
+def screen_to_text_with_visual_hints(screen: Dict[str, Any]) -> str:
+    """Convert CopyScreen response to text plus raw visual highlight metadata."""
+    text = screen_to_text(screen)
+    visual_hints = screen_visual_hints_text(screen)
+    if not visual_hints:
+        return text
+    return f"{text}\n\n{visual_hints}"
 
 
 @dataclass
@@ -155,6 +267,12 @@ class DFHackClient:
         self._method_cache: dict[Tuple[str, str, str, str], int] = {}
         self._capture_text: Optional[List[str]] = None
         self._last_tick_info: Dict[str, Any] = {}
+        self._work_rect: tuple[int, int, int, int, int, int] | None = None
+
+    def set_work_rect(self, rect: tuple[int, int, int, int, int, int] | None) -> None:
+        """Set the bounded work rectangle used for live work metrics."""
+
+        self._work_rect = rect
 
     # ------------------------------------------------------------------
     # Connection orchestration
@@ -266,7 +384,7 @@ class DFHackClient:
         data.setdefault("risks", [])
         data.setdefault("reminders", [])
         data.setdefault("map_bounds", (0, 0, 0))
-        data["work"] = read_work_metrics()
+        data["work"] = read_work_metrics(self._work_rect)
         return data
 
     def get_screen(self) -> Dict[str, Any]:
@@ -293,13 +411,15 @@ class DFHackClient:
             "tiles": tiles,
         }
 
-    def get_screen_text(self) -> str:
+    def get_screen_text(self, *, include_visual_hints: bool = False) -> str:
         """Capture current DF screen and return as plain text string.
 
         Returns an 80x25 (or actual dimensions) text representation of the screen,
         suitable for passing to an LLM agent.
         """
         screen = self.get_screen()
+        if include_visual_hints:
+            return screen_to_text_with_visual_hints(screen)
         return screen_to_text(screen)
 
     def designate_rect(self, x1: int, y1: int, z1: int, x2: int, y2: int, z2: int) -> Tuple[bool, Optional[str]]:
@@ -484,5 +604,8 @@ __all__ = [
     "DFHackClient",
     "DFHackError",
     "DFHackUnavailableError",
+    "screen_selection_hints",
     "screen_to_text",
+    "screen_to_text_with_visual_hints",
+    "screen_visual_hints_text",
 ]

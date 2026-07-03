@@ -139,6 +139,34 @@
       font-size: 0.85rem;
       font-weight: 600;
     }
+    .replay-view-toggle {
+      display: inline-flex;
+      gap: 0.25rem;
+      padding: 0.15rem;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.04);
+    }
+    .replay-view-toggle button {
+      width: auto;
+      height: 1.7rem;
+      border: none;
+      border-radius: 4px;
+      padding: 0.25rem 0.55rem;
+      color: #9fb1d6;
+      background: transparent;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+    .replay-view-toggle button[data-active="true"] {
+      color: #f5f7fb;
+      background: rgba(79,124,255,0.35);
+    }
+    .replay-view-toggle button:disabled {
+      color: #566278;
+      cursor: not-allowed;
+      background: transparent;
+    }
     .replay-legend {
       display: flex;
       gap: 0.55rem;
@@ -398,6 +426,10 @@
         <input id="replay-step-slider" type="range" min="0" max="0" value="0" aria-label="Replay step">
         <button id="replay-next" type="button" title="Next step" aria-label="Next step">&#9654;</button>
         <span id="replay-step-label" class="replay-step-label">Step --</span>
+        <div id="replay-view-toggle" class="replay-view-toggle" aria-label="Replay evidence view">
+          <button id="replay-view-screen" type="button" data-active="true">DF Screen</button>
+          <button id="replay-view-map" type="button" data-active="false">Map Inspect</button>
+        </div>
         <div class="replay-legend" aria-label="Replay legend">
           <span class="legend-item"><span class="legend-swatch legend-starter"></span>Starter</span>
           <span class="legend-item"><span class="legend-swatch legend-connector"></span>Connector</span>
@@ -503,7 +535,15 @@
     let viewMode = 'empty';
     let replayRecords = [];
     let replayStepIndex = 0;
-    const presetToken = new URLSearchParams(window.location.search).get('token');
+    let replayEvidenceView = 'screen';
+    function tokenFromLocation() {
+      const queryToken = new URLSearchParams(window.location.search).get('token');
+      if (queryToken) return queryToken;
+      const match = window.location.pathname.match(/^\/(?:r|replay)\/([^/?#]+)$/);
+      return match ? decodeURIComponent(match[1]) : null;
+    }
+
+    const presetToken = tokenFromLocation();
     if (presetToken) {
       currentToken = presetToken;
     }
@@ -524,6 +564,8 @@
     const replayNext = document.getElementById('replay-next');
     const replayStepSlider = document.getElementById('replay-step-slider');
     const replayStepLabel = document.getElementById('replay-step-label');
+    const replayViewScreen = document.getElementById('replay-view-screen');
+    const replayViewMap = document.getElementById('replay-view-map');
     const statPop = document.getElementById('stat-pop');
     const statFood = document.getElementById('stat-food');
     const statDrink = document.getElementById('stat-drink');
@@ -564,7 +606,7 @@
       }
       const encoded = encodeURIComponent(token);
       runLinks.innerHTML = `
-        <a href="/?token=${encoded}" title="Open this run page">Run</a>
+        <a href="/r/${encoded}" title="Open visual replay page">Run</a>
         <a href="/public/runs/${encoded}/events/replay?speed=4" title="Replay saved SSE events">Replay</a>
         <a href="/public/runs/${encoded}/export/trace" title="Open NDJSON trace export">Trace</a>
       `;
@@ -731,6 +773,40 @@
       return null;
     }
 
+    function extractScreenText(record) {
+      if (!record) return '';
+      const direct = record.screen_text || record.screenText || record.observation?.screen_text;
+      if (typeof direct === 'string' && direct.trim()) {
+        return direct.replace(/\r/g, '');
+      }
+      const observationText = typeof record.observation_text === 'string' ? record.observation_text : '';
+      const screenMarker = '== SCREEN ==';
+      const statusMarker = '== STATUS ==';
+      const screenStart = observationText.indexOf(screenMarker);
+      if (screenStart === -1) return '';
+      const contentStart = screenStart + screenMarker.length;
+      const statusStart = observationText.indexOf(statusMarker, contentStart);
+      const screen = statusStart === -1
+        ? observationText.slice(contentStart)
+        : observationText.slice(contentStart, statusStart);
+      return screen.replace(/\r/g, '').replace(/^\n+|\n+$/g, '');
+    }
+
+    function extractGameplayProof(record) {
+      if (!record) return null;
+      if (record.gameplay_proof) return record.gameplay_proof;
+      const events = Array.isArray(record.events) ? record.events : [];
+      const proofEvent = events.find(event => event.type === 'gameplay_proof' || event.t === 'gameplay_proof');
+      if (!proofEvent) return null;
+      return proofEvent.data?.gameplay_proof || proofEvent.data || null;
+    }
+
+    function changedTileTransition(change) {
+      const before = change?.before?.category || 'none';
+      const after = change?.after?.category || 'none';
+      return `${before}->${after}`;
+    }
+
     function buildReplaySnapshot(index) {
       const boundedIndex = Math.max(0, Math.min(index, replayRecords.length - 1));
       const record = replayRecords[boundedIndex] || {};
@@ -769,7 +845,12 @@
         complexityProgress: toNumber(metrics.complexity_progress),
         productionProgress: toNumber(metrics.production_progress),
         carpenterWorkshops: toNumber(work.carpenter_workshops),
-        buildAction
+        plannedWorkshops: toNumber(work.carpenter_workshops_planned, work.carpenter_workshops),
+        usableWorkshops: toNumber(work.carpenter_workshops_usable, work.carpenter_workshops),
+        buildAction,
+        screenText: extractScreenText(record),
+        mapSnapshot: record.map_snapshot?.ok ? record.map_snapshot : null,
+        gameplayProof: extractGameplayProof(record)
       };
     }
 
@@ -794,12 +875,434 @@
       };
     }
 
+    function mapSnapshotBounds(mapSnapshot) {
+      const rect = normalizeRect(mapSnapshot?.rect);
+      if (rect) {
+        return { x1: rect[0], y1: rect[1], x2: rect[3], y2: rect[4] };
+      }
+      const tiles = Array.isArray(mapSnapshot?.tiles) ? mapSnapshot.tiles : [];
+      if (!tiles.length) return null;
+      return {
+        x1: Math.min(...tiles.map(tile => toNumber(tile.x))),
+        y1: Math.min(...tiles.map(tile => toNumber(tile.y))),
+        x2: Math.max(...tiles.map(tile => toNumber(tile.x))),
+        y2: Math.max(...tiles.map(tile => toNumber(tile.y)))
+      };
+    }
+
     function drawReplayText(text, x, y, options = {}) {
       gameCtx.fillStyle = options.color || '#dbe6ff';
       gameCtx.font = `${options.weight || 500} ${options.size || 14}px 'Segoe UI', Arial, sans-serif`;
       gameCtx.textAlign = options.align || 'left';
       gameCtx.textBaseline = options.baseline || 'top';
       gameCtx.fillText(text, x, y);
+    }
+
+    function mapTileColor(tile) {
+      switch (tile?.category) {
+        case 'building':
+          return '#f5c542';
+        case 'floor':
+          return '#2e8a5b';
+        case 'wall':
+          return '#3f5167';
+        case 'dig':
+          return '#557dff';
+        case 'hidden':
+          return '#101827';
+        case 'other':
+          return '#68758b';
+        default:
+          return '#05070d';
+      }
+    }
+
+    function drawMapRectOutline(rect, scale, color, label) {
+      if (!rect) return;
+      const x = scale.left + (rect[0] - scale.x1) * scale.tile;
+      const y = scale.top + (rect[1] - scale.y1) * scale.tile;
+      const width = (rect[3] - rect[0] + 1) * scale.tile;
+      const height = (rect[4] - rect[1] + 1) * scale.tile;
+      gameCtx.save();
+      gameCtx.strokeStyle = color;
+      gameCtx.lineWidth = 2;
+      gameCtx.strokeRect(x, y, width, height);
+      drawReplayText(label, x + 4, y + 4, {
+        color,
+        size: Math.max(9, Math.min(12, scale.tile * 0.32)),
+        weight: 800
+      });
+      gameCtx.restore();
+    }
+
+    function drawChangedTileHighlights(changes, scale, bounds) {
+      if (!Array.isArray(changes) || changes.length === 0) return;
+      gameCtx.save();
+      for (const change of changes) {
+        const tx = toNumber(change.x);
+        const ty = toNumber(change.y);
+        if (tx < bounds.x1 || tx > bounds.x2 || ty < bounds.y1 || ty > bounds.y2) continue;
+        const px = scale.left + (tx - bounds.x1) * scale.tile;
+        const py = scale.top + (ty - bounds.y1) * scale.tile;
+        gameCtx.fillStyle = 'rgba(255, 217, 102, 0.28)';
+        gameCtx.fillRect(px + 2, py + 2, Math.max(1, scale.tile - 4), Math.max(1, scale.tile - 4));
+        gameCtx.strokeStyle = '#ffd966';
+        gameCtx.lineWidth = 2;
+        gameCtx.strokeRect(px + 1, py + 1, Math.max(1, scale.tile - 2), Math.max(1, scale.tile - 2));
+      }
+      gameCtx.restore();
+    }
+
+    function drawCapturedMapSnapshot(snapshot, canvasW, canvasH) {
+      const mapSnapshot = snapshot.mapSnapshot;
+      const bounds = mapSnapshotBounds(mapSnapshot);
+      if (!bounds) {
+        showPlaceholder('Captured map snapshot has no tiles');
+        return;
+      }
+
+      gameCtx.fillStyle = '#070a10';
+      gameCtx.fillRect(0, 0, canvasW, canvasH);
+      gameCtx.fillStyle = '#0f1521';
+      gameCtx.fillRect(28, 28, 620, 424);
+      gameCtx.strokeStyle = 'rgba(255,255,255,0.08)';
+      gameCtx.strokeRect(28, 28, 620, 424);
+
+      const mapCols = bounds.x2 - bounds.x1 + 1;
+      const mapRows = bounds.y2 - bounds.y1 + 1;
+      const tile = Math.max(8, Math.min(36, Math.floor(Math.min(560 / mapCols, 350 / mapRows))));
+      const scale = {
+        x1: bounds.x1,
+        y1: bounds.y1,
+        tile,
+        left: 28 + Math.floor((620 - mapCols * tile) / 2),
+        top: 76 + Math.floor((320 - mapRows * tile) / 2)
+      };
+
+      drawReplayText('DERIVED DFHACK MAP INSPECTION', 52, 46, { color: '#ffd966', size: 13, weight: 800 });
+      drawReplayText('Not a DF screen / not gameplay proof', 52, 64, {
+        color: '#9fb1d6',
+        size: 12,
+        weight: 700
+      });
+
+      gameCtx.strokeStyle = 'rgba(159,177,214,0.07)';
+      gameCtx.lineWidth = 1;
+      for (let col = 0; col <= mapCols; col++) {
+        const x = scale.left + col * tile;
+        gameCtx.beginPath();
+        gameCtx.moveTo(x, scale.top);
+        gameCtx.lineTo(x, scale.top + mapRows * tile);
+        gameCtx.stroke();
+      }
+      for (let row = 0; row <= mapRows; row++) {
+        const y = scale.top + row * tile;
+        gameCtx.beginPath();
+        gameCtx.moveTo(scale.left, y);
+        gameCtx.lineTo(scale.left + mapCols * tile, y);
+        gameCtx.stroke();
+      }
+
+      const tiles = Array.isArray(mapSnapshot.tiles) ? mapSnapshot.tiles : [];
+      gameCtx.textAlign = 'center';
+      gameCtx.textBaseline = 'middle';
+      for (const tileData of tiles) {
+        const tx = toNumber(tileData.x);
+        const ty = toNumber(tileData.y);
+        if (tx < bounds.x1 || tx > bounds.x2 || ty < bounds.y1 || ty > bounds.y2) continue;
+        const px = scale.left + (tx - bounds.x1) * tile;
+        const py = scale.top + (ty - bounds.y1) * tile;
+        gameCtx.fillStyle = mapTileColor(tileData);
+        gameCtx.fillRect(px + 1, py + 1, Math.max(1, tile - 2), Math.max(1, tile - 2));
+        if (tile >= 14 && tileData.char && tileData.char !== ' ') {
+          gameCtx.fillStyle = tileData.category === 'building' ? '#111827' : '#dbe6ff';
+          gameCtx.font = `700 ${Math.max(10, Math.floor(tile * 0.45))}px 'Segoe UI', Arial, sans-serif`;
+          gameCtx.fillText(String(tileData.char).slice(0, 1), px + tile / 2, py + tile / 2);
+        }
+      }
+
+      drawChangedTileHighlights(snapshot.gameplayProof?.changed_tiles || [], scale, bounds);
+      drawMapRectOutline(snapshot.targetRect, scale, '#4f7cff', 'START');
+      drawMapRectOutline(snapshot.connectorRect, scale, '#43c6ac', 'HALL');
+      drawMapRectOutline(snapshot.workshopRoomRect, scale, '#78d66d', 'WORK');
+
+      gameCtx.fillStyle = '#101827';
+      gameCtx.fillRect(680, 28, 252, 424);
+      gameCtx.strokeStyle = 'rgba(255,255,255,0.08)';
+      gameCtx.strokeRect(680, 28, 252, 424);
+      drawReplayText(`Step ${snapshot.record.step ?? snapshot.index}`, 704, 52, {
+        color: '#f5f7fb',
+        size: 22,
+        weight: 800
+      });
+      drawReplayText('Derived map scan', 704, 84, { color: '#ffd966', size: 14, weight: 800 });
+      const scoreValue = typeof snapshot.score.value === 'number' ? snapshot.score.value.toFixed(1) : '--';
+      drawReplayText(`Score ${scoreValue}`, 704, 112, { color: '#ffd966', size: 16, weight: 800 });
+      let nextY = wrapReplayText(snapshot.action.intent || 'Captured from live DF map memory after this step', 704, 146, 204, 17);
+      nextY += 12;
+      drawReplayText(`Rect: ${bounds.x1},${bounds.y1} to ${bounds.x2},${bounds.y2}`, 704, nextY);
+      drawReplayText(`Z: ${mapSnapshot.z ?? '--'} / window ${mapSnapshot.window_z ?? '--'}`, 704, nextY + 26);
+      drawReplayText(`Floors: ${mapSnapshot.floor_tiles ?? '--'}`, 704, nextY + 52);
+      drawReplayText(`Walls: ${mapSnapshot.wall_tiles ?? '--'}`, 704, nextY + 78);
+      drawReplayText(`Buildings: ${mapSnapshot.building_tiles ?? '--'}`, 704, nextY + 104);
+      const proof = snapshot.gameplayProof || {};
+      const proofY = Math.min(nextY + 138, 356);
+      const firstChange = Array.isArray(proof.changed_tiles) && proof.changed_tiles.length
+        ? proof.changed_tiles[0]
+        : null;
+      drawReplayText(`Proof: ${proof.changed_tile_count ?? 0} changed tiles`, 704, proofY, {
+        color: proof.gameplay_progress_eligible ? '#9fd7b2' : '#ffd966',
+        size: 13,
+        weight: 800
+      });
+      drawReplayText(`Scored by real play: ${proof.gameplay_progress_eligible ? 'yes' : 'no'}`, 704, proofY + 24);
+      if (firstChange) {
+        drawReplayText(
+          `First diff: ${changedTileTransition(firstChange)} @ ${firstChange.x},${firstChange.y},${firstChange.z}`,
+          704,
+          proofY + 48,
+          { color: '#9fb1d6', size: 12 }
+        );
+      }
+      drawReplayText('Source: df.global.world.map + trace overlays', 704, 428, {
+        color: '#9fd7b2',
+        size: 11,
+        weight: 700
+      });
+    }
+
+    function dfGlyphColor(char, lineText) {
+      if (!char || char === ' ') return '#d8dee9';
+      if (lineText.includes('Needs building material')) return '#ffd966';
+      if (lineText.includes("Carpenter's Workshop")) return '#f5c542';
+      if (char === 'X') return '#6ea8ff';
+      if (char === '@' || char === 'd' || char === 'c') return '#9fd7b2';
+      if (char === 'o' || char === 'n' || char === 'Y') return '#78d66d';
+      if (char === '#' || char === '|' || char === '-' || char === '+') return '#8c98ad';
+      if (char === '>' || char === '<' || char === ']') return '#f5f7fb';
+      if (char === '*' || char === '^' || char === 'v') return '#67c56a';
+      if (char === '?' || char === '"' || char === "'" || char === '`' || char === ',' || char === '.') return '#c9d4e8';
+      if (/[0-9]/.test(char)) return '#ffd966';
+      if (/[A-Za-z]/.test(char)) return '#dbe6ff';
+      return '#c9d4e8';
+    }
+
+    function drawDfScreenFrame(snapshot, canvasW, canvasH) {
+      const rawScreen = String(snapshot.screenText || '');
+      const lines = rawScreen.split('\n');
+      if (!lines.length || !rawScreen.trim()) {
+        showPlaceholder('Recorded DF screen unavailable for this step');
+        return;
+      }
+
+      gameCtx.fillStyle = '#05070d';
+      gameCtx.fillRect(0, 0, canvasW, canvasH);
+
+      const terminal = { x: 22, y: 24, w: 648, h: 432 };
+      const panel = { x: 690, y: 24, w: 248, h: 432 };
+      gameCtx.fillStyle = '#000';
+      gameCtx.fillRect(terminal.x, terminal.y, terminal.w, terminal.h);
+      gameCtx.strokeStyle = 'rgba(159,177,214,0.24)';
+      gameCtx.lineWidth = 1;
+      gameCtx.strokeRect(terminal.x, terminal.y, terminal.w, terminal.h);
+
+      const maxCols = Math.max(80, ...lines.map(line => line.length));
+      const charW = Math.min(8, Math.floor((terminal.w - 24) / maxCols * 10) / 10);
+      const lineH = Math.min(16, Math.floor((terminal.h - 28) / Math.max(25, lines.length)));
+      const fontSize = Math.max(11, Math.min(14, lineH - 2));
+      gameCtx.font = `700 ${fontSize}px 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace`;
+      gameCtx.textAlign = 'left';
+      gameCtx.textBaseline = 'top';
+
+      const textX = terminal.x + 12;
+      const textY = terminal.y + 12;
+      for (let row = 0; row < lines.length && row < 28; row++) {
+        const line = lines[row] || '';
+        const y = textY + row * lineH;
+        if (line.includes('Needs building material') || line.includes("Carpenter's Workshop")) {
+          gameCtx.fillStyle = line.includes('Needs building material')
+            ? 'rgba(255,217,102,0.09)'
+            : 'rgba(245,197,66,0.08)';
+          gameCtx.fillRect(terminal.x + 1, y - 1, terminal.w - 2, lineH + 1);
+        }
+        for (let col = 0; col < line.length; col++) {
+          const char = line[col];
+          if (char === ' ') continue;
+          if (char === 'X') {
+            gameCtx.fillStyle = 'rgba(79,124,255,0.8)';
+            gameCtx.fillRect(textX + col * charW - 1, y - 1, charW + 2, lineH);
+          }
+          gameCtx.fillStyle = dfGlyphColor(char, line);
+          gameCtx.fillText(char, textX + col * charW, y);
+        }
+      }
+
+      gameCtx.fillStyle = '#101827';
+      gameCtx.fillRect(panel.x, panel.y, panel.w, panel.h);
+      gameCtx.strokeStyle = 'rgba(255,255,255,0.08)';
+      gameCtx.strokeRect(panel.x, panel.y, panel.w, panel.h);
+
+      drawReplayText(`Step ${snapshot.record.step ?? snapshot.index}`, panel.x + 22, panel.y + 24, {
+        color: '#f5f7fb',
+        size: 22,
+        weight: 800
+      });
+      drawReplayText('Recorded CopyScreen', panel.x + 22, panel.y + 56, {
+        color: '#9fd7b2',
+        size: 14,
+        weight: 800
+      });
+      const scoreValue = typeof snapshot.score.value === 'number' ? snapshot.score.value.toFixed(1) : '--';
+      drawReplayText(`Score ${scoreValue}`, panel.x + 22, panel.y + 84, {
+        color: '#ffd966',
+        size: 17,
+        weight: 800
+      });
+
+      let nextY = wrapReplayText(snapshot.action.intent || 'Saved DF screen frame', panel.x + 22, panel.y + 122, 200, 17);
+      nextY += 10;
+      const metrics = snapshot.metrics || {};
+      const stocks = snapshot.record?.state_after_advance?.stocks || snapshot.record?.observation?.stocks || {};
+      const work = getRecordWork(snapshot.record);
+      drawReplayText(`Keys: ${(snapshot.action.params?.keys || []).slice(0, 4).join(', ') || '--'}`, panel.x + 22, nextY);
+      drawReplayText(`Ticks: ${snapshot.record.tick_advance?.ticks_advanced ?? '--'}`, panel.x + 22, nextY + 26);
+      drawReplayText(`Wood: ${stocks.wood ?? '--'}  Stone: ${stocks.stone ?? '--'}`, panel.x + 22, nextY + 52);
+      const plannedWorkshops = work.carpenter_workshops_planned ?? work.carpenter_workshops ?? 0;
+      const usableWorkshops = work.carpenter_workshops_usable ?? work.carpenter_workshops ?? 0;
+      drawReplayText(`Workshops: ${usableWorkshops} usable / ${plannedWorkshops} placed`, panel.x + 22, nextY + 78);
+      drawReplayText(`Production: ${metrics.production_progress ?? 0}`, panel.x + 22, nextY + 104);
+      const proof = snapshot.gameplayProof || {};
+      const proofY = Math.min(nextY + 134, panel.y + panel.h - 116);
+      drawReplayText(`Proof: ${proof.changed_tile_count ?? 0} changed tiles`, panel.x + 22, proofY, {
+        color: proof.gameplay_progress_eligible ? '#9fd7b2' : '#ffd966',
+        size: 13,
+        weight: 800
+      });
+      drawReplayText(`Score source: ${proof.score_provenance || '--'}`, panel.x + 22, proofY + 24, {
+        color: '#9fb1d6',
+        size: 12
+      });
+      drawReplayText(`Real play scored: ${proof.gameplay_progress_eligible ? 'yes' : 'no'}`, panel.x + 22, proofY + 48, {
+        color: '#9fb1d6',
+        size: 12
+      });
+      drawReplayText('Source: DF CopyScreen text', panel.x + 22, panel.y + panel.h - 42, {
+        color: '#9fd7b2',
+        size: 13,
+        weight: 700
+      });
+    }
+
+    function drawMissingDfScreenFrame(snapshot, canvasW, canvasH) {
+      gameCtx.fillStyle = '#05070d';
+      gameCtx.fillRect(0, 0, canvasW, canvasH);
+
+      const terminal = { x: 22, y: 24, w: 648, h: 432 };
+      const panel = { x: 690, y: 24, w: 248, h: 432 };
+      gameCtx.fillStyle = '#070a10';
+      gameCtx.fillRect(terminal.x, terminal.y, terminal.w, terminal.h);
+      gameCtx.strokeStyle = 'rgba(255,217,102,0.42)';
+      gameCtx.lineWidth = 1;
+      gameCtx.strokeRect(terminal.x, terminal.y, terminal.w, terminal.h);
+
+      drawReplayText('No Recorded DF Screen Frame', terminal.x + 28, terminal.y + 34, {
+        color: '#ffd966',
+        size: 22,
+        weight: 800
+      });
+      let y = terminal.y + 82;
+      y = wrapReplayText(
+        'This trace step does not include CopyScreen text, so the replay will not substitute the derived DFHack map as gameplay footage.',
+        terminal.x + 28,
+        y,
+        terminal.w - 64,
+        20,
+        '#dbe6ff'
+      );
+      y += 18;
+      y = wrapReplayText(
+        snapshot.mapSnapshot
+          ? 'A derived map snapshot is available in Map Inspect mode for debugging, but it is a secondary analysis layer.'
+          : 'No derived map snapshot is available for this step either.',
+        terminal.x + 28,
+        y,
+        terminal.w - 64,
+        20,
+        '#9fb1d6'
+      );
+      y += 22;
+      drawReplayText(`Action: ${snapshot.action.type || 'STATE'}`, terminal.x + 28, y, {
+        color: '#9ab3ff',
+        size: 15,
+        weight: 800
+      });
+      const execute = snapshot.record.execute || {};
+      drawReplayText(`Execute: ${execute.ok === false ? 'failed' : execute.ok === true ? 'ok' : '--'}`, terminal.x + 28, y + 30, {
+        color: execute.ok === false ? '#ff7b7b' : '#9fd7b2',
+        size: 14,
+        weight: 700
+      });
+      drawReplayText(`Ticks: ${snapshot.record.tick_advance?.ticks_advanced ?? '--'}`, terminal.x + 28, y + 58, {
+        color: '#9fb1d6',
+        size: 14,
+        weight: 700
+      });
+
+      gameCtx.fillStyle = '#101827';
+      gameCtx.fillRect(panel.x, panel.y, panel.w, panel.h);
+      gameCtx.strokeStyle = 'rgba(255,255,255,0.08)';
+      gameCtx.strokeRect(panel.x, panel.y, panel.w, panel.h);
+      drawReplayText(`Step ${snapshot.record.step ?? snapshot.index}`, panel.x + 22, panel.y + 24, {
+        color: '#f5f7fb',
+        size: 22,
+        weight: 800
+      });
+      drawReplayText('Evidence gap', panel.x + 22, panel.y + 56, {
+        color: '#ffd966',
+        size: 14,
+        weight: 800
+      });
+      const scoreValue = typeof snapshot.score.value === 'number' ? snapshot.score.value.toFixed(1) : '--';
+      drawReplayText(`Score ${scoreValue}`, panel.x + 22, panel.y + 84, {
+        color: '#ffd966',
+        size: 17,
+        weight: 800
+      });
+      let nextY = wrapReplayText(snapshot.action.intent || 'Saved run state', panel.x + 22, panel.y + 122, 200, 17);
+      nextY += 10;
+      const metrics = snapshot.metrics || {};
+      const work = getRecordWork(snapshot.record);
+      drawReplayText(`Production: ${metrics.production_progress ?? 0}`, panel.x + 22, nextY);
+      drawReplayText(`Complexity: ${metrics.complexity_progress ?? 0}`, panel.x + 22, nextY + 26);
+      drawReplayText(`Workshops: ${work.carpenter_workshops ?? 0}`, panel.x + 22, nextY + 52);
+      drawReplayText('CopyScreen: missing', panel.x + 22, nextY + 88, {
+        color: '#ffd966',
+        size: 13,
+        weight: 800
+      });
+      drawReplayText(`Map snapshot: ${snapshot.mapSnapshot ? 'available' : 'missing'}`, panel.x + 22, nextY + 114, {
+        color: '#9fb1d6',
+        size: 13,
+        weight: 700
+      });
+      drawReplayText('Source: trace metadata only', panel.x + 22, panel.y + panel.h - 42, {
+        color: '#9fb1d6',
+        size: 13,
+        weight: 700
+      });
+    }
+
+    function updateReplayControls(snapshot, statusText) {
+      replayStepSlider.max = Math.max(0, replayRecords.length - 1);
+      replayStepSlider.value = replayStepIndex;
+      replayStepLabel.textContent = `Step ${snapshot.record.step ?? replayStepIndex}/${replayRecords.length - 1}`;
+      replayPrev.disabled = replayStepIndex <= 0;
+      replayNext.disabled = replayStepIndex >= replayRecords.length - 1;
+      replayViewScreen.dataset.active = replayEvidenceView === 'screen' ? 'true' : 'false';
+      replayViewMap.dataset.active = replayEvidenceView === 'map' ? 'true' : 'false';
+      replayViewMap.disabled = !snapshot.mapSnapshot;
+      gameStatus.textContent = statusText;
+      updateReplayStats(snapshot);
     }
 
     function wrapReplayText(text, x, y, maxWidth, lineHeight, color = '#9fb1d6') {
@@ -918,12 +1421,6 @@
 
       replayStepIndex = Math.max(0, Math.min(index, replayRecords.length - 1));
       const snapshot = buildReplaySnapshot(replayStepIndex);
-      const bounds = replayBounds(snapshot);
-      if (!bounds) {
-        showPlaceholder('No fortress geometry in trace');
-        return;
-      }
-
       const canvasW = 960;
       const canvasH = 480;
       if (gameCanvas.width !== canvasW || gameCanvas.height !== canvasH) {
@@ -931,6 +1428,46 @@
         gameCanvas.height = canvasH;
       }
       showCanvas();
+
+      if (replayEvidenceView === 'map') {
+        if (snapshot.mapSnapshot) {
+          gameTitle.textContent = 'Derived DFHack Map Inspection';
+          drawCapturedMapSnapshot(snapshot, canvasW, canvasH);
+          updateReplayControls(
+            snapshot,
+            `Derived map inspection, not gameplay footage: step ${snapshot.record.step ?? replayStepIndex} of ${replayRecords.length - 1}`
+          );
+          return;
+        }
+        replayEvidenceView = 'screen';
+      }
+
+      if (snapshot.screenText) {
+        gameTitle.textContent = 'DF Screen Replay';
+        drawDfScreenFrame(snapshot, canvasW, canvasH);
+        updateReplayControls(
+          snapshot,
+          `Recorded DF screen: step ${snapshot.record.step ?? replayStepIndex} of ${replayRecords.length - 1}`
+        );
+        return;
+      }
+
+      if (snapshot.mapSnapshot) {
+        gameTitle.textContent = 'DF Screen Replay';
+        drawMissingDfScreenFrame(snapshot, canvasW, canvasH);
+        updateReplayControls(
+          snapshot,
+          `Recorded DF screen missing; derived map inspection is available for step ${snapshot.record.step ?? replayStepIndex}`
+        );
+        return;
+      }
+
+      const bounds = replayBounds(snapshot);
+      if (!bounds) {
+        showPlaceholder('No fortress geometry in trace');
+        return;
+      }
+      gameTitle.textContent = 'Derived Trace Replay';
 
       gameCtx.fillStyle = '#070a10';
       gameCtx.fillRect(0, 0, canvasW, canvasH);
@@ -1023,13 +1560,10 @@
         weight: 700
       });
 
-      replayStepSlider.max = Math.max(0, replayRecords.length - 1);
-      replayStepSlider.value = replayStepIndex;
-      replayStepLabel.textContent = `Step ${snapshot.record.step ?? replayStepIndex}/${replayRecords.length - 1}`;
-      replayPrev.disabled = replayStepIndex <= 0;
-      replayNext.disabled = replayStepIndex >= replayRecords.length - 1;
-      gameStatus.textContent = `Saved replay: step ${snapshot.record.step ?? replayStepIndex} of ${replayRecords.length - 1}`;
-      updateReplayStats(snapshot);
+      updateReplayControls(
+        snapshot,
+        `Derived trace replay: step ${snapshot.record.step ?? replayStepIndex} of ${replayRecords.length - 1}`
+      );
     }
 
     function setReplayRecords(records) {
@@ -1039,6 +1573,13 @@
       replayStepSlider.max = Math.max(0, records.length - 1);
       replayStepSlider.value = replayStepIndex;
       renderSavedRunReplay(replayStepIndex);
+    }
+
+    function setReplayEvidenceView(mode) {
+      replayEvidenceView = mode === 'map' ? 'map' : 'screen';
+      if (viewMode === 'replay' && replayRecords.length > 0) {
+        renderSavedRunReplay(replayStepIndex);
+      }
     }
 
 
@@ -1504,6 +2045,14 @@
 
     replayStepSlider.addEventListener('input', (e) => {
       renderSavedRunReplay(Number(e.target.value));
+    });
+
+    replayViewScreen.addEventListener('click', () => {
+      setReplayEvidenceView('screen');
+    });
+
+    replayViewMap.addEventListener('click', () => {
+      setReplayEvidenceView('map');
     });
   </script>
 </body>

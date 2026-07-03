@@ -54,3 +54,81 @@ def test_summary_keeps_latest_overflow() -> None:
     memory.add_step("obs three", {"type": "KEYSTROKE", "params": {"keys": ["C"]}}, "res three")
 
     assert "Step 2" in memory.summary
+
+
+def test_memory_records_and_queries_pois() -> None:
+    memory = MemoryManager(window_size=2)
+
+    result = memory.remember_poi(
+        label="carpenter workshop",
+        kind="building",
+        x=99,
+        y=96,
+        z=177,
+        status="built",
+        evidence="carpenter_workshops increased",
+    )
+
+    assert "Remembered POI" in result
+    context = memory.get_context()
+    assert "Known POIs:" in context
+    assert "carpenter workshop" in context
+    assert "coords=(99,96,177)" in context
+
+    query = memory.query_memory(query="carpenter", kind="building", near=[100, 96, 177])
+    assert "carpenter workshop" in query
+    assert "status=built" in query
+
+
+def test_memory_records_failed_attempts() -> None:
+    memory = MemoryManager(window_size=2)
+
+    result = memory.remember_failed_attempt(
+        label="craftsdwarf placement",
+        reason="no building or job appeared",
+        x=101,
+        y=100,
+        z=177,
+        evidence="actual_ticks=0 and changed=none",
+    )
+
+    assert "Remembered failed attempt" in result
+    query = memory.query_memory(query="craftsdwarf")
+    assert "Failed attempts:" in query
+    assert "craftsdwarf placement" in query
+    assert "no building or job appeared" in query
+
+
+def test_memory_tracks_gameplay_plan_and_reviews() -> None:
+    memory = MemoryManager(window_size=2)
+
+    plan_result = memory.write_gameplay_plan(
+        objective="complete useful fortress space",
+        phase="post-workshop",
+        steps=["confirm workshop exists", "finish planned room", "create stockpile"],
+        current_step="finish planned room",
+        reason="workshop loop has already succeeded",
+        evidence="carpenter_workshops=1",
+    )
+
+    assert "Gameplay plan written" in plan_result
+    context = memory.get_context()
+    assert "Gameplay Plan:" in context
+    assert "complete useful fortress space" in context
+    assert "finish planned room" in context
+
+    review_result = memory.review_gameplay_plan(
+        status="needs_revision",
+        evidence="no_progress_streak=2",
+        completed_steps=["confirm workshop exists"],
+        blockers=["repeating workshop placement"],
+        next_step="designate a new room area",
+        revised_steps=["exit build menu", "designate a new room area"],
+        reason="shift away from workshop loop",
+    )
+
+    assert "Reviewed gameplay plan" in review_result
+    context = memory.get_context()
+    assert "Recent Plan Reviews:" in context
+    assert "repeating workshop placement" in context
+    assert "designate a new room area" in context

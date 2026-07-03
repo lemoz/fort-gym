@@ -130,7 +130,8 @@ Menu options like "a - Do something" need STRING_A### format:
 
 ### Main Menus
 - D_DESIGNATE - Designations menu (d key)
-- D_BUILDJOB - Build menu (b key)
+- D_BUILDING - Building construction menu (b key)
+- D_BUILDJOB - Existing building jobs/tasks; not the construction menu
 - D_STOCKPILES - Stockpiles menu (p key)
 - STRING_A107 - Look mode (k key)
 

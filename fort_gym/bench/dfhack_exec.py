@@ -170,7 +170,27 @@ local food_count = (food_stats.meat or 0) + (food_stats.fish or 0) + (food_stats
 local drink_count = food_stats.drink or 0
 local wealth = df.global.ui.tasks.wealth.total or 0
 
-state.stocks = {food=food_count, drink=drink_count, wood=0, stone=0, wealth=wealth}
+local wood_count = 0
+local stone_count = 0
+local item_lists = df.global.world.items and df.global.world.items.other
+local in_play = item_lists and item_lists.IN_PLAY or {}
+local wood_type = df.item_type and df.item_type.WOOD
+local boulder_type = df.item_type and df.item_type.BOULDER
+local blocks_type = df.item_type and df.item_type.BLOCKS
+
+for _, item in ipairs(in_play) do
+    local ok_type, item_type = pcall(function() return item:getType() end)
+    if ok_type then
+        if wood_type and item_type == wood_type then
+            wood_count = wood_count + 1
+        elseif (boulder_type and item_type == boulder_type)
+            or (blocks_type and item_type == blocks_type) then
+            stone_count = stone_count + 1
+        end
+    end
+end
+
+state.stocks = {food=food_count, drink=drink_count, wood=wood_count, stone=stone_count, wealth=wealth}
 state.hostiles = false
 state.dead = 0
 state.recent_events = {}

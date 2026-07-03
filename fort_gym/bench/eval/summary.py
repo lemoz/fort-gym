@@ -8,22 +8,8 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
-from .scoring import (
-    AVAIL_WEIGHT,
-    COMPLETION_WEIGHT,
-    SURVIVAL_WEIGHT,
-    TARGET_COMPLETION_PROGRESS,
-    TARGET_SURVIVAL_TICKS,
-    TARGET_UTILITY_PROGRESS,
-    TARGET_WORK_PROGRESS,
-    TARGET_PRODUCTION_PROGRESS,
-    TARGET_COMPLEXITY_PROGRESS,
-    UTILITY_WEIGHT,
-    WORK_WEIGHT,
-    PRODUCTION_WEIGHT,
-    COMPLEXITY_WEIGHT,
-    composite_score,
-)
+from .rubric import evaluate_trace_records
+from .scoring import composite_score, score_components
 
 
 class RunSummary(BaseModel):
@@ -37,7 +23,9 @@ class RunSummary(BaseModel):
     end_pop: int = 0
     created_wealth: Optional[int] = None
     survival_score: float = 0.0
+    population_score: float = 0.0
     availability_score: float = 0.0
+    wealth_score: float = 0.0
     work_score: float = 0.0
     completion_score: float = 0.0
     utility_score: float = 0.0
@@ -49,6 +37,14 @@ class RunSummary(BaseModel):
     utility_progress: int = 0
     production_progress: int = 0
     complexity_progress: int = 0
+    ui_work_progress: int = 0
+    ui_designation_progress: int = 0
+    ui_completion_progress: int = 0
+    ui_excavation_progress: int = 0
+    ui_target_dig_designations_delta: int = 0
+    ui_target_floor_tiles_delta: int = 0
+    ui_target_floor_removed_delta: int = 0
+    ui_target_wall_tiles_delta: int = 0
     target_dig_designations_delta: int = 0
     target_floor_tiles_delta: int = 0
     target_wall_tiles_delta: int = 0
@@ -77,6 +73,7 @@ class RunSummary(BaseModel):
     fortress_complexity_wall_tiles: int = 0
     fortress_complexity_spaces_completed: int = 0
     total_score: float = 0.0
+    rubric: Dict[str, Any] = Field(default_factory=dict)
     milestones: List[Dict[str, Any]] = Field(default_factory=list)
     scenario_assertions: List[Dict[str, Any]] = Field(default_factory=list)
 
@@ -108,12 +105,15 @@ def summarize(trace_path: Path) -> RunSummary:
     duration = 0
     duration_from_tick_advance = 0
     saw_tick_advance = False
+    score_duration_blocked = False
     max_elapsed_ticks = 0
     first_time_tick: Optional[int] = None
     last_time_tick: Optional[int] = None
     peak_pop = 0
     end_pop = 0
     wealth: Optional[int] = None
+    baseline_wealth: Optional[int] = None
+    peak_wealth: Optional[int] = None
     drink_sufficient = 0
     casualty_spike = False
     hostiles_present = False
@@ -124,6 +124,14 @@ def summarize(trace_path: Path) -> RunSummary:
     utility_progress = 0
     production_progress = 0
     complexity_progress = 0
+    ui_work_progress = 0
+    ui_designation_progress = 0
+    ui_completion_progress = 0
+    ui_excavation_progress = 0
+    ui_target_dig_designations_delta = 0
+    ui_target_floor_tiles_delta = 0
+    ui_target_floor_removed_delta = 0
+    ui_target_wall_tiles_delta = 0
     target_dig_designations_delta = 0
     target_floor_tiles_delta = 0
     target_wall_tiles_delta = 0
@@ -151,6 +159,7 @@ def summarize(trace_path: Path) -> RunSummary:
     fortress_complexity_floor_tiles = 0
     fortress_complexity_wall_tiles = 0
     fortress_complexity_spaces_completed = 0
+    trace_records: List[Dict[str, Any]] = []
 
     with trace_path.open("r", encoding="utf-8") as handle:
         for line in handle:
@@ -160,6 +169,7 @@ def summarize(trace_path: Path) -> RunSummary:
                 record = json.loads(line)
             except json.JSONDecodeError:
                 continue
+            trace_records.append(record)
 
             run_id = record.get("run_id", run_id)
             step = record.get("step")
@@ -167,6 +177,8 @@ def summarize(trace_path: Path) -> RunSummary:
                 steps_seen = step
 
             metrics_snapshot = record.get("metrics") or {}
+            if "score_duration_blocked" in metrics_snapshot:
+                score_duration_blocked = metrics_snapshot.get("score_duration_blocked") is True
             time_tick = metrics_snapshot.get("time") or metrics_snapshot.get("time_tick")
             if time_tick is not None:
                 time_value = _to_int(time_tick, default=last_time_tick or 0)
@@ -198,6 +210,38 @@ def summarize(trace_path: Path) -> RunSummary:
             complexity_progress = max(
                 complexity_progress,
                 _to_int(metrics_snapshot.get("complexity_progress")),
+            )
+            ui_work_progress = max(
+                ui_work_progress,
+                _to_int(metrics_snapshot.get("ui_work_progress")),
+            )
+            ui_designation_progress = max(
+                ui_designation_progress,
+                _to_int(metrics_snapshot.get("ui_designation_progress")),
+            )
+            ui_completion_progress = max(
+                ui_completion_progress,
+                _to_int(metrics_snapshot.get("ui_completion_progress")),
+            )
+            ui_excavation_progress = max(
+                ui_excavation_progress,
+                _to_int(metrics_snapshot.get("ui_excavation_progress")),
+            )
+            ui_target_dig_designations_delta = max(
+                ui_target_dig_designations_delta,
+                _to_int(metrics_snapshot.get("ui_target_dig_designations_delta")),
+            )
+            ui_target_floor_tiles_delta = max(
+                ui_target_floor_tiles_delta,
+                _to_int(metrics_snapshot.get("ui_target_floor_tiles_delta")),
+            )
+            ui_target_floor_removed_delta = max(
+                ui_target_floor_removed_delta,
+                _to_int(metrics_snapshot.get("ui_target_floor_removed_delta")),
+            )
+            ui_target_wall_tiles_delta = max(
+                ui_target_wall_tiles_delta,
+                _to_int(metrics_snapshot.get("ui_target_wall_tiles_delta")),
             )
             target_dig_designations_delta = max(
                 target_dig_designations_delta,
@@ -309,17 +353,33 @@ def summarize(trace_path: Path) -> RunSummary:
                 peak_pop = max(peak_pop, pop_val)
                 end_pop = pop_val
 
-            wealth_val = metrics_snapshot.get("wealth")
-            if wealth_val is None:
-                wealth_val = metrics_snapshot.get("created_wealth")
-            if wealth_val is not None:
+            if metrics_snapshot.get("wealth") is not None:
                 try:
-                    wealth = int(wealth_val)
+                    wealth_current = int(metrics_snapshot.get("wealth"))
                 except (TypeError, ValueError):
                     try:
-                        wealth = int(float(wealth_val))
+                        wealth_current = int(float(metrics_snapshot.get("wealth")))
                     except (TypeError, ValueError):
-                        pass
+                        wealth_current = None
+                if wealth_current is not None:
+                    if baseline_wealth is None:
+                        baseline_wealth = wealth_current
+                    peak_wealth = (
+                        wealth_current
+                        if peak_wealth is None
+                        else max(peak_wealth, wealth_current)
+                    )
+                    wealth = max(0, peak_wealth - baseline_wealth)
+            else:
+                wealth_val = metrics_snapshot.get("created_wealth")
+                if wealth_val is not None:
+                    try:
+                        wealth = max(wealth or 0, int(wealth_val))
+                    except (TypeError, ValueError):
+                        try:
+                            wealth = max(wealth or 0, int(float(wealth_val)))
+                        except (TypeError, ValueError):
+                            pass
 
             drink = metrics_snapshot.get("drink")
             if isinstance(drink, (int, float)) and drink >= 20:
@@ -344,7 +404,9 @@ def summarize(trace_path: Path) -> RunSummary:
                     else:
                         milestones.append({"k": str(item), "ts": data.get("step")})
 
-    if max_elapsed_ticks > 0:
+    if score_duration_blocked:
+        duration = 0
+    elif max_elapsed_ticks > 0:
         duration = max_elapsed_ticks
     elif saw_tick_advance:
         duration = duration_from_tick_advance
@@ -368,21 +430,7 @@ def summarize(trace_path: Path) -> RunSummary:
         "hostiles_present": hostiles_present,
     }
 
-    survival_score = (min(duration, TARGET_SURVIVAL_TICKS) / TARGET_SURVIVAL_TICKS) * SURVIVAL_WEIGHT
-    availability_score = drink_availability * AVAIL_WEIGHT
-    work_score = (min(work_progress, TARGET_WORK_PROGRESS) / TARGET_WORK_PROGRESS) * WORK_WEIGHT
-    completion_score = (
-        min(completion_progress, TARGET_COMPLETION_PROGRESS) / TARGET_COMPLETION_PROGRESS
-    ) * COMPLETION_WEIGHT
-    utility_score = (
-        min(utility_progress, TARGET_UTILITY_PROGRESS) / TARGET_UTILITY_PROGRESS
-    ) * UTILITY_WEIGHT
-    production_score = (
-        min(production_progress, TARGET_PRODUCTION_PROGRESS) / TARGET_PRODUCTION_PROGRESS
-    ) * PRODUCTION_WEIGHT
-    complexity_score = (
-        min(complexity_progress, TARGET_COMPLEXITY_PROGRESS) / TARGET_COMPLEXITY_PROGRESS
-    ) * COMPLEXITY_WEIGHT
+    components = score_components(summary_payload)
     total_score = composite_score(summary_payload)
 
     summary = RunSummary(
@@ -392,19 +440,29 @@ def summarize(trace_path: Path) -> RunSummary:
         peak_pop=peak_pop,
         end_pop=end_pop,
         created_wealth=wealth,
-        survival_score=round(survival_score, 2),
-        availability_score=round(availability_score, 2),
-        work_score=round(work_score, 2),
-        completion_score=round(completion_score, 2),
-        utility_score=round(utility_score, 2),
-        production_score=round(production_score, 2),
-        complexity_score=round(complexity_score, 2),
+        survival_score=round(components["survival_score"], 2),
+        population_score=round(components["population_score"], 2),
+        availability_score=round(components["availability_score"], 2),
+        wealth_score=round(components["wealth_score"], 2),
+        work_score=round(components["work_score"], 2),
+        completion_score=round(components["completion_score"], 2),
+        utility_score=round(components["utility_score"], 2),
+        production_score=round(components["production_score"], 2),
+        complexity_score=round(components["complexity_score"], 2),
         work_progress=work_progress,
         designation_progress=designation_progress,
         completion_progress=completion_progress,
         utility_progress=utility_progress,
         production_progress=production_progress,
         complexity_progress=complexity_progress,
+        ui_work_progress=ui_work_progress,
+        ui_designation_progress=ui_designation_progress,
+        ui_completion_progress=ui_completion_progress,
+        ui_excavation_progress=ui_excavation_progress,
+        ui_target_dig_designations_delta=ui_target_dig_designations_delta,
+        ui_target_floor_tiles_delta=ui_target_floor_tiles_delta,
+        ui_target_floor_removed_delta=ui_target_floor_removed_delta,
+        ui_target_wall_tiles_delta=ui_target_wall_tiles_delta,
         target_dig_designations_delta=target_dig_designations_delta,
         target_floor_tiles_delta=target_floor_tiles_delta,
         target_wall_tiles_delta=target_wall_tiles_delta,
@@ -433,6 +491,7 @@ def summarize(trace_path: Path) -> RunSummary:
         fortress_complexity_wall_tiles=fortress_complexity_wall_tiles,
         fortress_complexity_spaces_completed=fortress_complexity_spaces_completed,
         total_score=total_score,
+        rubric=evaluate_trace_records(trace_records),
         milestones=milestones,
     )
 

@@ -1,0 +1,661 @@
+-- prepare_keystroke_target.lua: center the UI on a reachable target for native UI play.
+
+local json = require('json')
+local args = {...}
+
+local MODE = args[1] or 'starter'
+local BLOCKED_WORKSHOP_TARGETS_ARG = args[2] or ''
+
+local SELECT_OFFSET_X1 = 7
+local SELECT_OFFSET_Y1 = 9
+local SELECT_WIDTH = 4
+local SELECT_HEIGHT = 2
+local TREE_SELECT_WIDTH = 7
+local TREE_SELECT_HEIGHT = 3
+local MIN_DESIGNATABLE_TILES = 4
+local MIN_MATERIAL_TILES = 1
+local MIN_CITIZEN_NEAR_TILES = 1
+local CITIZEN_SEARCH_RADIUS = 25
+local MATERIAL_SEARCH_RADIUS = 12
+local WORKSHOP_SEARCH_RADIUS = 35
+local Z_SEARCH_RADIUS = 6
+local WORKSHOP_SIZE = 3
+local STONE_MATERIALS = {
+  [2] = true, -- stone wall
+  [3] = true, -- feature stone wall
+  [5] = true, -- mineral/vein wall
+}
+
+local blocked_workshop_targets = {}
+for token in string.gmatch(BLOCKED_WORKSHOP_TARGETS_ARG, '([^;]+)') do
+  local x, y, z = string.match(token, '^(-?%d+),(-?%d+),(-?%d+)$')
+  if x and y and z then
+    blocked_workshop_targets[x .. ',' .. y .. ',' .. z] = true
+  end
+end
+
+local function workshop_target_key(x1, y1, z)
+  return tostring(x1) .. ',' .. tostring(y1) .. ',' .. tostring(z)
+end
+
+local function valid_wall_tile(tx, ty, tz)
+  local block = dfhack.maps.getTileBlock(tx, ty, tz)
+  if not block then
+    return false
+  end
+
+  local dx = tx % 16
+  local dy = ty % 16
+  local designation = block.designation[dx][dy]
+  if not designation or designation.hidden or designation.dig ~= df.tile_dig_designation.No then
+    return false
+  end
+
+  local attr = df.tiletype.attrs[block.tiletype[dx][dy]]
+  local caption = attr and tostring(attr.caption or '') or ''
+  return attr and attr.shape == df.tiletype_shape.WALL and not caption:find('trunk')
+end
+
+local function valid_material_wall_tile(tx, ty, tz)
+  local block = dfhack.maps.getTileBlock(tx, ty, tz)
+  if not block then
+    return false
+  end
+
+  local dx = tx % 16
+  local dy = ty % 16
+  local designation = block.designation[dx][dy]
+  local occupancy = block.occupancy[dx][dy]
+  if not designation or designation.hidden or designation.dig ~= df.tile_dig_designation.No then
+    return false
+  end
+  if occupancy and occupancy.building ~= 0 then
+    return false
+  end
+
+  local attr = df.tiletype.attrs[block.tiletype[dx][dy]]
+  if not attr or attr.shape ~= df.tiletype_shape.WALL then
+    return false
+  end
+
+  local caption = string.lower(tostring(attr.caption or ''))
+  if caption:find('trunk') or caption:find('root') or caption:find('cap ') then
+    return false
+  end
+
+  local material = tonumber(attr.material)
+  return STONE_MATERIALS[material] or caption:find('stone wall') or caption:find('vein wall')
+end
+
+local function valid_tree_tile(tx, ty, tz)
+  local block = dfhack.maps.getTileBlock(tx, ty, tz)
+  if not block then
+    return false
+  end
+
+  local dx = tx % 16
+  local dy = ty % 16
+  local designation = block.designation[dx][dy]
+  if not designation or designation.hidden or designation.dig ~= df.tile_dig_designation.No then
+    return false
+  end
+
+  local attr = df.tiletype.attrs[block.tiletype[dx][dy]]
+  local caption = string.lower(tostring(attr and attr.caption or ''))
+  return caption:find('trunk') ~= nil
+end
+
+local function valid_floor_tile(tx, ty, tz)
+  local block = dfhack.maps.getTileBlock(tx, ty, tz)
+  if not block then
+    return false
+  end
+
+  local dx = tx % 16
+  local dy = ty % 16
+  local designation = block.designation[dx][dy]
+  local occupancy = block.occupancy[dx][dy]
+  if not designation or designation.hidden or designation.dig ~= df.tile_dig_designation.No then
+    return false
+  end
+  if occupancy and occupancy.building ~= 0 then
+    return false
+  end
+
+  local attr = df.tiletype.attrs[block.tiletype[dx][dy]]
+  return attr and attr.shape == df.tiletype_shape.FLOOR
+end
+
+local function valid_workshop_footprint(x1, y1, z)
+  if x1 < 0 or y1 < 0 or z < 0 then
+    return false
+  end
+  if blocked_workshop_targets[workshop_target_key(x1, y1, z)] then
+    return false
+  end
+
+  for tx = x1, x1 + WORKSHOP_SIZE - 1 do
+    for ty = y1, y1 + WORKSHOP_SIZE - 1 do
+      if not valid_floor_tile(tx, ty, z) then
+        return false
+      end
+      local block = dfhack.maps.getTileBlock(tx, ty, z)
+      local dx = tx % 16
+      local dy = ty % 16
+      local occupancy = block and block.occupancy[dx][dy]
+      if occupancy and occupancy.unit then
+        return false
+      end
+    end
+  end
+
+  return true
+end
+
+local function is_carpenter_workshop_building(building)
+  local is_workshop = false
+  local ok_type, building_type = pcall(function() return building:getType() end)
+  if ok_type and building_type == df.building_type.Workshop then
+    is_workshop = true
+  end
+  local ok_instance, is_instance = pcall(function()
+    return df.building_workshopst and df.building_workshopst:is_instance(building)
+  end)
+  if ok_instance and is_instance then
+    is_workshop = true
+  end
+  if not is_workshop then
+    return false
+  end
+
+  local carpenter_type = nil
+  if df.workshop_type then
+    carpenter_type = df.workshop_type.Carpenters or df.workshop_type.Carpenter
+  end
+  local ok_workshop_type, workshop_type = pcall(function() return building.type end)
+  local workshop_type_name = ok_workshop_type and tostring(workshop_type) or ''
+  return (ok_workshop_type and carpenter_type and workshop_type == carpenter_type)
+      or workshop_type_name == 'Carpenters'
+      or workshop_type_name == 'Carpenter'
+end
+
+local function count_designatable_rect(x1, y1, z, width, height, valid_fn)
+  local count = 0
+  for tx = x1, x1 + width - 1 do
+    for ty = y1, y1 + height - 1 do
+      if valid_fn(tx, ty, z) then
+        count = count + 1
+      end
+    end
+  end
+  return count
+end
+
+local function count_designatable(x1, y1, z, valid_fn)
+  return count_designatable_rect(x1, y1, z, SELECT_WIDTH, SELECT_HEIGHT, valid_fn)
+end
+
+local function append_cursor_moves(keys, from_x, from_y, to_x, to_y)
+  local dx = to_x - from_x
+  local dy = to_y - from_y
+  local x_key = dx < 0 and 'CURSOR_LEFT' or 'CURSOR_RIGHT'
+  for _ = 1, math.abs(dx) do
+    table.insert(keys, x_key)
+  end
+  local y_key = dy < 0 and 'CURSOR_UP' or 'CURSOR_DOWN'
+  for _ = 1, math.abs(dy) do
+    table.insert(keys, y_key)
+  end
+end
+
+local function selection_payload(x1, y1, z, width, height, count, source, designation_key, target_mode)
+  designation_key = designation_key or 'DESIGNATE_DIG'
+  target_mode = target_mode or MODE
+  local window_x = math.max(0, x1 - SELECT_OFFSET_X1)
+  local window_y = math.max(0, y1 - SELECT_OFFSET_Y1)
+  local cursor_x = window_x + 11
+  local cursor_y = window_y + 11
+  df.global.window_x = window_x
+  df.global.window_y = window_y
+  df.global.window_z = z
+  df.global.cursor.x = cursor_x
+  df.global.cursor.y = cursor_y
+  df.global.cursor.z = z
+
+  local recommended_keys = {
+    'D_DESIGNATE',
+    designation_key,
+  }
+  append_cursor_moves(recommended_keys, cursor_x, cursor_y, x1, y1)
+  table.insert(recommended_keys, 'SELECT')
+  append_cursor_moves(recommended_keys, x1, y1, x1 + width - 1, y1 + height - 1)
+  table.insert(recommended_keys, 'SELECT')
+  table.insert(recommended_keys, 'LEAVESCREEN')
+
+  return {
+    ok = true,
+    source = source or 'visible_mineable_wall',
+    target_mode = target_mode,
+    designation_key = designation_key,
+    target_rect = { window_x, window_y, z, window_x + 14, window_y + 14, z },
+    selection_rect = { x1, y1, z, x1 + width - 1, y1 + height - 1, z },
+    designatable_tiles = count,
+    window_x = window_x,
+    window_y = window_y,
+    window_z = z,
+    expected_cursor_after_designate = { cursor_x, cursor_y, z },
+    recommended_keys = recommended_keys,
+  }
+end
+
+local function candidate_payload(x1, y1, z, count, source, designation_key, target_mode)
+  return selection_payload(
+    x1,
+    y1,
+    z,
+    SELECT_WIDTH,
+    SELECT_HEIGHT,
+    count,
+    source,
+    designation_key,
+    target_mode
+  )
+end
+
+local function workshop_candidate_payload(x1, y1, z, source)
+  local window_x = math.max(0, x1 - SELECT_OFFSET_X1)
+  local window_y = math.max(0, y1 - SELECT_OFFSET_Y1)
+  local placement_cursor_x = window_x + 11
+  local placement_cursor_y = window_y + 11
+  df.global.window_x = window_x
+  df.global.window_y = window_y
+  df.global.window_z = z
+  df.global.cursor.x = x1
+  df.global.cursor.y = y1
+  df.global.cursor.z = z
+
+  local recommended_keys = {
+    'LEAVESCREEN',
+    'LEAVESCREEN',
+    'D_BUILDING',
+    'HOTKEY_BUILDING_WORKSHOP',
+    'HOTKEY_BUILDING_WORKSHOP_CARPENTER',
+  }
+  append_cursor_moves(recommended_keys, placement_cursor_x, placement_cursor_y, x1, y1)
+
+  return {
+    ok = true,
+    source = source or 'visible_empty_floor_workshop_footprint',
+    target_mode = 'workshop',
+    designation_key = 'BUILD_CARPENTER_WORKSHOP',
+    target_rect = { x1, y1, z, x1 + WORKSHOP_SIZE - 1, y1 + WORKSHOP_SIZE - 1, z },
+    selection_rect = { x1, y1, z, x1 + WORKSHOP_SIZE - 1, y1 + WORKSHOP_SIZE - 1, z },
+    placement_rect = { x1, y1, z, x1 + WORKSHOP_SIZE - 1, y1 + WORKSHOP_SIZE - 1, z },
+    designatable_tiles = WORKSHOP_SIZE * WORKSHOP_SIZE,
+    window_x = window_x,
+    window_y = window_y,
+    window_z = z,
+    expected_cursor_after_designate = { x1, y1, z },
+    placement_cursor_before_moves = { placement_cursor_x, placement_cursor_y, z },
+    recommended_keys = recommended_keys,
+  }
+end
+
+local function existing_workshop_candidate_payload(building, source)
+  local ok_coords, x1, y1, x2, y2, z = pcall(function()
+    return building.x1, building.y1, building.x2, building.y2, building.z
+  end)
+  if not ok_coords then
+    return nil
+  end
+  x1 = tonumber(x1)
+  y1 = tonumber(y1)
+  x2 = tonumber(x2)
+  y2 = tonumber(y2)
+  z = tonumber(z)
+  if not x1 or not y1 or not x2 or not y2 or not z then
+    return nil
+  end
+
+  local window_x = math.max(0, x1 - SELECT_OFFSET_X1)
+  local window_y = math.max(0, y1 - SELECT_OFFSET_Y1)
+  df.global.window_x = window_x
+  df.global.window_y = window_y
+  df.global.window_z = z
+  df.global.cursor.x = x1
+  df.global.cursor.y = y1
+  df.global.cursor.z = z
+
+  return {
+    ok = true,
+    source = source or 'existing_carpenter_workshop',
+    target_mode = 'existing_workshop',
+    target_rect = { x1, y1, z, x2, y2, z },
+    selection_rect = { x1, y1, z, x2, y2, z },
+    designatable_tiles = 0,
+    window_x = window_x,
+    window_y = window_y,
+    window_z = z,
+    expected_cursor_after_designate = { x1, y1, z },
+    workshop_goal = 'select the existing Carpenter workshop under the cursor through the native D_BUILDJOB UI, then use visible task-menu evidence before queueing production',
+    recommended_keys = {
+      'D_BUILDJOB',
+    },
+  }
+end
+
+local function try_candidate(x1, y1, z, min_tiles, source, valid_fn, designation_key, target_mode)
+  if x1 < 0 or y1 < 0 or z < 0 then
+    return nil
+  end
+  local count = count_designatable(x1, y1, z, valid_fn or valid_wall_tile)
+  if count >= (min_tiles or MIN_DESIGNATABLE_TILES) then
+    return candidate_payload(x1, y1, z, count, source, designation_key, target_mode)
+  end
+  return nil
+end
+
+local function search_near_citizens(valid_fn, source, designation_key, min_tiles, target_mode)
+  if not df.global.world.units or not df.global.world.units.active then
+    return nil
+  end
+
+  for _, unit in ipairs(df.global.world.units.active) do
+    if dfhack.units.isCitizen(unit) and not dfhack.units.isDead(unit) and unit.pos then
+      local z = unit.pos.z
+      for radius = 1, CITIZEN_SEARCH_RADIUS do
+        for x1 = math.max(0, unit.pos.x - radius), unit.pos.x + radius do
+          for y1 = math.max(0, unit.pos.y - radius), unit.pos.y + radius do
+            local payload = try_candidate(
+              x1,
+              y1,
+              z,
+              min_tiles or MIN_CITIZEN_NEAR_TILES,
+              source,
+              valid_fn,
+              designation_key,
+              target_mode
+            )
+            if payload then
+              payload.nearest_citizen = { unit.pos.x, unit.pos.y, unit.pos.z }
+              payload.nearest_citizen_radius = radius
+              return payload
+            end
+          end
+        end
+      end
+    end
+  end
+
+  return nil
+end
+
+local function search_near_window(valid_fn, source, designation_key, min_tiles, target_mode)
+  local window_x = df.global.window_x or 0
+  local window_y = df.global.window_y or 0
+  local window_z = df.global.window_z or 0
+  for dz = -Z_SEARCH_RADIUS, Z_SEARCH_RADIUS do
+    local z = window_z + dz
+    for x1 = math.max(0, window_x - 80), window_x + 120 do
+      for y1 = math.max(0, window_y - 80), window_y + 120 do
+        local payload = try_candidate(
+          x1,
+          y1,
+          z,
+          min_tiles or MIN_DESIGNATABLE_TILES,
+          source or 'window_visible_mineable_wall',
+          valid_fn or valid_wall_tile,
+          designation_key or 'DESIGNATE_DIG',
+          target_mode
+        )
+        if payload then
+          return payload
+        end
+      end
+    end
+  end
+  return nil
+end
+
+local function search_loaded_map(valid_fn, source, designation_key, min_tiles, target_mode)
+  local map = df.global.world.map
+  if not map or not map.map_blocks then
+    return nil
+  end
+
+  local window_z = df.global.window_z or 0
+  for _, block in ipairs(map.map_blocks) do
+    local z = block.map_pos.z
+    if math.abs(z - window_z) <= Z_SEARCH_RADIUS then
+      for dx = 0, 15 do
+        for dy = 0, 15 do
+          local x1 = block.map_pos.x + dx
+          local y1 = block.map_pos.y + dy
+          local payload = try_candidate(
+            x1,
+            y1,
+            z,
+            min_tiles or MIN_DESIGNATABLE_TILES,
+            source or 'loaded_map_visible_mineable_wall',
+            valid_fn or valid_wall_tile,
+            designation_key or 'DESIGNATE_DIG',
+            target_mode
+          )
+          if payload then
+            return payload
+          end
+        end
+      end
+    end
+  end
+
+  return nil
+end
+
+local function material_payload()
+  local function scan_near_citizens(valid_fn, source, designation_key, material_goal, selection_width, selection_height)
+    if not df.global.world.units or not df.global.world.units.active then
+      return nil
+    end
+
+    for _, unit in ipairs(df.global.world.units.active) do
+      if dfhack.units.isCitizen(unit) and not dfhack.units.isDead(unit) and unit.pos then
+        local z = unit.pos.z
+        for radius = 1, MATERIAL_SEARCH_RADIUS do
+          for tx = math.max(0, unit.pos.x - radius), unit.pos.x + radius do
+            for ty = math.max(0, unit.pos.y - radius), unit.pos.y + radius do
+              if valid_fn(tx, ty, z) then
+                local payload = nil
+                if selection_width and selection_height then
+                  local x1 = math.max(0, tx - math.floor((selection_width - 1) / 2))
+                  local y1 = math.max(0, ty - math.floor((selection_height - 1) / 2))
+                  local count = count_designatable_rect(
+                    x1,
+                    y1,
+                    z,
+                    selection_width,
+                    selection_height,
+                    valid_fn
+                  )
+                  if count >= MIN_MATERIAL_TILES then
+                    payload = selection_payload(
+                      x1,
+                      y1,
+                      z,
+                      selection_width,
+                      selection_height,
+                      count,
+                      source,
+                      designation_key,
+                      'material'
+                    )
+                  end
+                else
+                  payload = candidate_payload(
+                    tx,
+                    ty,
+                    z,
+                    MIN_MATERIAL_TILES,
+                    source,
+                    designation_key,
+                    'material'
+                  )
+                end
+                if payload then
+                  payload.nearest_citizen = { unit.pos.x, unit.pos.y, unit.pos.z }
+                  payload.nearest_citizen_radius = radius
+                  payload.material_goal = material_goal
+                  return payload
+                end
+              end
+            end
+          end
+        end
+      end
+    end
+
+    return nil
+  end
+
+  if not df.global.world.units or not df.global.world.units.active then
+    return nil
+  end
+
+  local stone_payload = scan_near_citizens(
+    valid_material_wall_tile,
+    'citizen_near_visible_stone_material_wall',
+    'DESIGNATE_DIG',
+    'mine visible stone/vein wall through the native designation UI'
+  )
+  if stone_payload then
+    return stone_payload
+  end
+
+  return scan_near_citizens(
+    valid_tree_tile,
+    'citizen_near_visible_tree_trunk',
+    'DESIGNATE_CHOP',
+    'chop a broad visible tree area through the native designation UI to create logs',
+    TREE_SELECT_WIDTH,
+    TREE_SELECT_HEIGHT
+  )
+end
+
+local function workshop_payload()
+  local function scan_window_for_footprint()
+    local window_x = df.global.window_x or 0
+    local window_y = df.global.window_y or 0
+    local window_z = df.global.window_z or 0
+    for dz = -Z_SEARCH_RADIUS, Z_SEARCH_RADIUS do
+      local z = window_z + dz
+      for x1 = math.max(0, window_x - 80), window_x + 120 do
+        for y1 = math.max(0, window_y - 80), window_y + 120 do
+          if valid_workshop_footprint(x1, y1, z) then
+            return workshop_candidate_payload(
+              x1,
+              y1,
+              z,
+              'window_near_empty_floor_workshop_footprint'
+            )
+          end
+        end
+      end
+    end
+    return nil
+  end
+
+  if not df.global.world.units or not df.global.world.units.active then
+    return scan_window_for_footprint()
+  end
+
+  for _, unit in ipairs(df.global.world.units.active) do
+    if dfhack.units.isCitizen(unit) and not dfhack.units.isDead(unit) and unit.pos then
+      local z = unit.pos.z
+      for radius = 1, WORKSHOP_SEARCH_RADIUS do
+        for x1 = math.max(0, unit.pos.x - radius), unit.pos.x + radius do
+          for y1 = math.max(0, unit.pos.y - radius), unit.pos.y + radius do
+            if valid_workshop_footprint(x1, y1, z) then
+              local payload = workshop_candidate_payload(
+                x1,
+                y1,
+                z,
+                'citizen_near_empty_floor_workshop_footprint'
+              )
+              payload.nearest_citizen = { unit.pos.x, unit.pos.y, unit.pos.z }
+              payload.nearest_citizen_radius = radius
+              payload.workshop_goal = 'open native carpenter workshop placement on this candidate 3x3 floor and confirm only if the visible placement screen is not blocked'
+              return payload
+            end
+          end
+        end
+      end
+    end
+  end
+
+  return scan_window_for_footprint()
+end
+
+local function existing_workshop_payload()
+  local buildings = df.global.world.buildings and df.global.world.buildings.all
+  if not buildings then
+    return nil
+  end
+
+  for _, building in ipairs(buildings) do
+    if is_carpenter_workshop_building(building) then
+      local payload = existing_workshop_candidate_payload(
+        building,
+        'existing_carpenter_workshop'
+      )
+      if payload then
+        return payload
+      end
+    end
+  end
+
+  return nil
+end
+
+local function starter_payload()
+  return search_near_citizens(
+    valid_floor_tile,
+    'citizen_near_visible_floor_stair_down',
+    'DESIGNATE_STAIR_DOWN',
+    MIN_DESIGNATABLE_TILES,
+    'starter'
+  ) or search_near_citizens(
+    valid_wall_tile,
+    'citizen_near_visible_mineable_wall',
+    'DESIGNATE_DIG',
+    MIN_CITIZEN_NEAR_TILES,
+    'starter'
+  ) or search_near_window(
+    valid_wall_tile,
+    'window_visible_mineable_wall',
+    'DESIGNATE_DIG',
+    MIN_DESIGNATABLE_TILES,
+    'starter'
+  ) or search_loaded_map(
+    valid_wall_tile,
+    'loaded_map_visible_mineable_wall',
+    'DESIGNATE_DIG',
+    MIN_DESIGNATABLE_TILES,
+    'starter'
+  )
+end
+
+local payload = nil
+if MODE == 'material' then
+  payload = material_payload()
+elseif MODE == 'existing_workshop' then
+  payload = existing_workshop_payload()
+elseif MODE == 'workshop' then
+  payload = workshop_payload()
+else
+  payload = starter_payload()
+end
+if payload then
+  print(json.encode(payload))
+else
+  print(json.encode({ ok = false, mode = MODE, error = 'no_visible_target' }))
+end

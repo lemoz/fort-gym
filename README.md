@@ -114,11 +114,21 @@ head -n 3 fort_gym/artifacts/<run_id>/trace.jsonl
 cat fort_gym/artifacts/<run_id>/summary.json | jq .
 ```
 > Note: the interactive `/step` flow is validated against the single-action schema used by the `fake` agent. Manager orders issued by the exploratory `random` agent remain experimental and may be rejected until DFHack execution coverage improves.
-The SSE endpoint emits `state`, `action`, `validation`, `execute`, `advance`, `metrics`, and `score` events. `summary.json` accumulates aggregate metrics, including live DFHack work, completion, bounded utility, bounded production, and visible two-room fortress complexity progress when target-room metrics are available.
+The SSE endpoint emits `state`, `action`, `validation`, `execute`, `advance`, `metrics`, and `score` events. `summary.json` accumulates aggregate metrics, including live DFHack work, completion, utility, production, wealth, and visible fortress complexity progress when target-room metrics are available. Basic survival, population, and drink availability remain bounded health checks; fort-growth components are intentionally open-ended, so longer real-gameplay runs can keep gaining points as the fort digs, builds, produces, and creates wealth.
+
+For legal DFHack-command gameplay, use the governed model:
+```bash
+curl -s -X POST http://127.0.0.1:8000/runs \
+  -H 'Content-Type: application/json' \
+  -d '{"backend":"dfhack","model":"dfhack-governed-scripted","max_steps":30,"ticks_per_step":1000}'
+```
+This path tags actions as `dfhack_governed` and judges the run with both the
+numeric score and the `summary.json` rubric. Older structured DFHack helper
+agents still have assisted progress zeroed for scoring.
 
 ## Keystroke Control Mode (Claude Plays Like a Human)
 
-The `anthropic-keystroke` model enables Claude to control Dwarf Fortress via raw keystrokes, seeing the game screen and sending key commands just like a human player would.
+The `openrouter-keystroke-perception-review` model controls Dwarf Fortress via raw keystrokes through OpenRouter-compatible chat completions. It requires the agent to submit its own `screen_read` and `last_action_review` before each keystroke action. By default it uses `OPENROUTER_MODEL=z-ai/glm-5.2`; `openrouter-glm-5.2` pins that model explicitly.
 
 ### How It Works
 1. **Screen Observation**: The game screen is captured via DFHack's CopyScreen RPC and converted to an 80x25 text representation
@@ -130,14 +140,14 @@ The `anthropic-keystroke` model enables Claude to control Dwarf Fortress via raw
 ```bash
 curl -s -X POST http://127.0.0.1:8000/runs \
   -H 'Content-Type: application/json' \
-  -d '{"backend":"dfhack","model":"anthropic-keystroke","max_steps":10,"ticks_per_step":200}'
+  -d '{"backend":"dfhack","model":"openrouter-keystroke-perception-review","max_steps":10,"ticks_per_step":200}'
 ```
 
 ### Available Keys
 Common interface keys include:
 - **Navigation**: `CURSOR_UP`, `CURSOR_DOWN`, `CURSOR_LEFT`, `CURSOR_RIGHT`, `CURSOR_UP_Z`, `CURSOR_DOWN_Z`
 - **Selection**: `SELECT`, `DESELECT`, `LEAVESCREEN`
-- **Main Menus**: `D_DESIGNATE`, `D_BUILDJOB`, `D_STOCKPILES`, `D_ZONES`, `D_ORDERS`
+- **Main Menus**: `D_DESIGNATE`, `D_BUILDING`, `D_BUILDJOB`, `D_STOCKPILES`, `D_ZONES`, `D_ORDERS`
 - **Designate**: `DESIGNATE_DIG`, `DESIGNATE_CHANNEL`, `DESIGNATE_STAIR_DOWN`, `DESIGNATE_CHOP`
 
 Full list of 1600+ keys available via: `dfhack-run lua "@df.interface_key"`

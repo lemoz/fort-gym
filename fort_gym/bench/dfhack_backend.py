@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 import time
 from pathlib import Path
-from typing import Dict, Iterable
+from typing import Dict, Iterable, Sequence
 
 from .config import DFROOT
 from .dfhack_exec import DFHackError, read_pause_state, run_dfhack, run_lua_file, set_paused, tick_read
@@ -19,15 +19,20 @@ ALLOWED_WORKSHOPS = {"CarpenterWorkshop"}
 MAX_QTY = 5
 MAX_RECT_W = 30
 MAX_RECT_H = 30
+MAX_SNAPSHOT_W = 64
+MAX_SNAPSHOT_H = 64
 VALID_KINDS: Iterable[str] = ("dig", "channel", "chop")
 DEFAULT_WORK_RECT = (50, 35, 0, 54, 39, 0)
 
 
 def _hook_path(name: str) -> str:
+    repo_path = REPO_HOOK_ROOT / name
+    if repo_path.exists():
+        return str(repo_path)
     installed_path = HOOK_ROOT / name
     if installed_path.exists():
         return str(installed_path)
-    return str(REPO_HOOK_ROOT / name)
+    return str(repo_path)
 
 
 def _work_rect_from_env() -> tuple[int, int, int, int, int, int]:
@@ -47,7 +52,8 @@ def _fortress_workshop_rect(
     work_rect: tuple[int, int, int, int, int, int],
 ) -> tuple[int, int, int, int, int, int]:
     rx1, ry1, rz1, rx2, ry2, rz2 = work_rect
-    return (rx2 + 4, ry1, rz1, rx2 + 8, ry2, rz2)
+    plan_y2 = max(ry2, ry1 + 4)
+    return (rx2 + 4, ry1, rz1, rx2 + 8, plan_y2, rz2)
 
 
 def _footprint_in_rect(
@@ -80,7 +86,15 @@ def queue_manager_order(item: str, qty: int) -> Dict[str, object]:
         return {"ok": False, "error": str(exc)}
 
 
-def build_workshop(kind: str, x: int, y: int, z: int) -> Dict[str, object]:
+def build_workshop(
+    kind: str,
+    x: int,
+    y: int,
+    z: int,
+    *,
+    work_rect: tuple[int, int, int, int, int, int] | None = None,
+    extra_allowed_rects: Sequence[tuple[int, int, int, int, int, int]] | None = None,
+) -> Dict[str, object]:
     """Place a bounded safe workshop in the configured target work rectangle."""
 
     if kind not in ALLOWED_WORKSHOPS:
@@ -89,8 +103,12 @@ def build_workshop(kind: str, x: int, y: int, z: int) -> Dict[str, object]:
     x_val = int(x)
     y_val = int(y)
     z_val = int(z)
-    work_rect = _work_rect_from_env()
-    allowed_rects = (work_rect, _fortress_workshop_rect(work_rect))
+    resolved_work_rect = work_rect or _work_rect_from_env()
+    allowed_rects = (
+        resolved_work_rect,
+        _fortress_workshop_rect(resolved_work_rect),
+        *(extra_allowed_rects or ()),
+    )
     if not any(_footprint_in_rect(x_val, y_val, z_val, rect) for rect in allowed_rects):
         return {"ok": False, "error": "outside_work_rect"}
 
@@ -177,6 +195,100 @@ def read_work_metrics(rect: tuple[int, int, int, int, int, int] | None = None) -
             str(int(z2)),
         )
     except DFHackError as exc:
+        return {"ok": False, "error": str(exc)}
+
+
+def read_map_snapshot(rect: tuple[int, int, int, int, int, int]) -> Dict[str, object]:
+    """Capture a bounded live DFHack map tile snapshot for replay proof."""
+
+    x1, y1, z1, x2, y2, z2 = rect
+    width = abs(int(x2) - int(x1)) + 1
+    height = abs(int(y2) - int(y1)) + 1
+    if int(z1) != int(z2):
+        return {"ok": False, "error": "z_span_not_supported"}
+    if width > MAX_SNAPSHOT_W or height > MAX_SNAPSHOT_H:
+        return {"ok": False, "error": "rect_too_large"}
+
+    try:
+        return run_lua_file(
+            _hook_path("map_snapshot.lua"),
+            str(int(x1)),
+            str(int(y1)),
+            str(int(z1)),
+            str(int(x2)),
+            str(int(y2)),
+            str(int(z2)),
+        )
+    except (DFHackError, OSError) as exc:
+        return {"ok": False, "error": str(exc)}
+
+
+def read_view_state() -> Dict[str, object]:
+    """Read the current DF viewport and cursor without changing game state."""
+
+    try:
+        return run_lua_file(_hook_path("view_state.lua"))
+    except (DFHackError, OSError) as exc:
+        return {"ok": False, "error": str(exc)}
+
+
+def restore_view_state(view_state: Dict[str, object] | None) -> Dict[str, object]:
+    """Best-effort restore for the live DF viewport/cursor."""
+
+    if not view_state or not view_state.get("ok"):
+        return {"ok": False, "error": "missing_view_state"}
+
+    try:
+        return run_lua_file(
+            _hook_path("restore_view_state.lua"),
+            str(int(view_state.get("window_x", 0) or 0)),
+            str(int(view_state.get("window_y", 0) or 0)),
+            str(int(view_state.get("window_z", 0) or 0)),
+            str(int(view_state.get("cursor_x", -30000) or -30000)),
+            str(int(view_state.get("cursor_y", -30000) or -30000)),
+            str(int(view_state.get("cursor_z", -30000) or -30000)),
+        )
+    except (DFHackError, OSError, TypeError, ValueError) as exc:
+        return {"ok": False, "error": str(exc)}
+
+
+def _format_blocked_workshop_targets(
+    blocked_workshop_targets: Sequence[Sequence[int]] | None,
+) -> str:
+    if not blocked_workshop_targets:
+        return ""
+    tokens: list[str] = []
+    for target in blocked_workshop_targets:
+        if len(target) < 3:
+            continue
+        try:
+            x, y, z = int(target[0]), int(target[1]), int(target[2])
+        except (TypeError, ValueError):
+            continue
+        tokens.append(f"{x},{y},{z}")
+    return ";".join(tokens)
+
+
+def prepare_keystroke_target(
+    mode: str = "starter",
+    *,
+    blocked_workshop_targets: Sequence[Sequence[int]] | None = None,
+) -> Dict[str, object]:
+    """Center the live UI on a visible, mineable wall pocket for keystroke runs."""
+
+    try:
+        safe_mode = (
+            mode
+            if mode in {"starter", "material", "workshop", "existing_workshop"}
+            else "starter"
+        )
+        return run_lua_file(
+            _hook_path("prepare_keystroke_target.lua"),
+            safe_mode,
+            _format_blocked_workshop_targets(blocked_workshop_targets),
+            timeout=10.0,
+        )
+    except (DFHackError, OSError) as exc:
         return {"ok": False, "error": str(exc)}
 
 
@@ -332,11 +444,17 @@ __all__ = [
     "MAX_QTY",
     "MAX_RECT_W",
     "MAX_RECT_H",
+    "MAX_SNAPSHOT_W",
+    "MAX_SNAPSHOT_H",
     "queue_manager_order",
     "build_workshop",
     "designate_rect",
     "complete_dig_rect",
     "read_work_metrics",
+    "read_map_snapshot",
+    "prepare_keystroke_target",
+    "read_view_state",
+    "restore_view_state",
     "advance_ticks_exact_external",
     "advance_ticks_exact",
     "execute_keystroke_action",

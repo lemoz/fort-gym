@@ -15,6 +15,12 @@ local z1 = to_int(args[3], 0)
 local x2 = to_int(args[4], 54)
 local y2 = to_int(args[5], 39)
 local z2 = to_int(args[6], z1)
+local window_x = df.global.window_x or 0
+local window_y = df.global.window_y or 0
+local window_z = df.global.window_z or 0
+local cursor_x = df.global.cursor and df.global.cursor.x or -30000
+local cursor_y = df.global.cursor and df.global.cursor.y or -30000
+local cursor_z = df.global.cursor and df.global.cursor.z or -30000
 
 if z1 ~= z2 then
   print(json.encode({ ok = false, error = 'z_span_not_supported' }))
@@ -47,9 +53,13 @@ local target_wall_tiles = 0
 local target_hidden_tiles = 0
 local target_visible_tiles = 0
 local target_missing_blocks = 0
-local sx = region.x_count_block
-local sy = region.y_count_block
-local block_count = #region.map_blocks
+
+local function get_tile_block(tx, ty, tz)
+  if tx < 0 or ty < 0 or tz < 0 then
+    return nil
+  end
+  return dfhack.maps.getTileBlock(tx, ty, tz)
+end
 
 local function scan_rect(ax1, ay1, az, ax2, ay2)
   local rect = {
@@ -65,13 +75,7 @@ local function scan_rect(ax1, ay1, az, ax2, ay2)
   for tx = ax1, ax2 do
     for ty = ay1, ay2 do
       rect.tiles = rect.tiles + 1
-      local bx = math.floor(tx / 16)
-      local by = math.floor(ty / 16)
-      local index = bx + by * sx + az * sx * sy
-      local block = nil
-      if bx >= 0 and by >= 0 and bx < sx and by < sy and index >= 0 and index < block_count then
-        block = region.map_blocks[index]
-      end
+      local block = get_tile_block(tx, ty, az)
       if block then
         local dx = tx % 16
         local dy = ty % 16
@@ -106,13 +110,7 @@ end
 for tx = rx1, rx2 do
   for ty = ry1, ry2 do
     target_tiles = target_tiles + 1
-    local bx = math.floor(tx / 16)
-    local by = math.floor(ty / 16)
-    local index = bx + by * sx + rz * sx * sy
-    local block = nil
-    if bx >= 0 and by >= 0 and bx < sx and by < sy and index >= 0 and index < block_count then
-      block = region.map_blocks[index]
-    end
+    local block = get_tile_block(tx, ty, rz)
     if block then
       local dx = tx % 16
       local dy = ty % 16
@@ -141,6 +139,7 @@ for tx = rx1, rx2 do
   end
 end
 
+local plan_ry2 = math.max(ry2, ry1 + 4)
 local connector_x1 = rx2 + 1
 local connector_y1 = ry1 + 2
 local connector_x2 = rx2 + 3
@@ -148,7 +147,7 @@ local connector_y2 = connector_y1
 local workshop_room_x1 = rx2 + 4
 local workshop_room_y1 = ry1
 local workshop_room_x2 = rx2 + 8
-local workshop_room_y2 = ry2
+local workshop_room_y2 = plan_ry2
 local fortress_connector = scan_rect(connector_x1, connector_y1, rz, connector_x2, connector_y2)
 local fortress_workshop_room = scan_rect(
   workshop_room_x1,
@@ -176,11 +175,40 @@ end
 
 local active_jobs = 0
 local active_dig_jobs = 0
+local active_construct_building_jobs = 0
+local active_carpenter_jobs = 0
+local active_job_type_names = {}
+
+local function append_limited(list, value, limit)
+  if not value or value == '' then return end
+  if #list >= limit then return end
+  table.insert(list, value)
+end
+
+local function job_type_name(job)
+  local ok, name = pcall(function() return tostring(job.job_type) end)
+  if ok and name then return name end
+  return ''
+end
+
 if df.global.world.jobs and df.global.world.jobs.list then
   for _, job in ipairs(df.global.world.jobs.list) do
     active_jobs = active_jobs + 1
     if job.job_type == df.job_type.Dig then
       active_dig_jobs = active_dig_jobs + 1
+    end
+    local name = job_type_name(job)
+    append_limited(active_job_type_names, name, 12)
+    if job.job_type == df.job_type.ConstructBuilding or name == 'ConstructBuilding' then
+      active_construct_building_jobs = active_construct_building_jobs + 1
+    end
+    if string.find(name:lower(), 'carpenter', 1, true)
+        or string.find(name:lower(), 'wood', 1, true)
+        or name == 'ConstructBed'
+        or name == 'ConstructDoor'
+        or name == 'ConstructTable'
+        or name == 'ConstructChair' then
+      active_carpenter_jobs = active_carpenter_jobs + 1
     end
   end
 end
@@ -198,6 +226,16 @@ end
 
 local workshop_count = 0
 local carpenter_workshops = 0
+local carpenter_workshops_usable = 0
+local carpenter_workshop_task_jobs = 0
+local carpenter_workshop_construction_jobs = 0
+local carpenter_workshop_task_job_type_names = {}
+local carpenter_workshop_construction_job_type_names = {}
+local carpenter_workshop_x1 = nil
+local carpenter_workshop_y1 = nil
+local carpenter_workshop_x2 = nil
+local carpenter_workshop_y2 = nil
+local carpenter_workshop_z = nil
 local buildings = df.global.world.buildings and df.global.world.buildings.all
 if buildings then
   pcall(function()
@@ -226,6 +264,38 @@ if buildings then
             or workshop_type_name == 'Carpenters'
             or workshop_type_name == 'Carpenter' then
           carpenter_workshops = carpenter_workshops + 1
+          if carpenter_workshop_x1 == nil then
+            pcall(function()
+              carpenter_workshop_x1 = building.x1
+              carpenter_workshop_y1 = building.y1
+              carpenter_workshop_x2 = building.x2
+              carpenter_workshop_y2 = building.y2
+              carpenter_workshop_z = building.z
+            end)
+          end
+          local building_task_jobs = 0
+          local building_construction_jobs = 0
+          local ok_jobs = pcall(function()
+            if building.jobs then
+              for _, job in ipairs(building.jobs) do
+                local name = job_type_name(job)
+                if job.job_type == df.job_type.ConstructBuilding or name == 'ConstructBuilding' then
+                  building_construction_jobs = building_construction_jobs + 1
+                  append_limited(carpenter_workshop_construction_job_type_names, name, 12)
+                else
+                  building_task_jobs = building_task_jobs + 1
+                  append_limited(carpenter_workshop_task_job_type_names, name, 12)
+                end
+              end
+            end
+          end)
+          if ok_jobs then
+            carpenter_workshop_task_jobs = carpenter_workshop_task_jobs + building_task_jobs
+            carpenter_workshop_construction_jobs = carpenter_workshop_construction_jobs + building_construction_jobs
+            if building_task_jobs > 0 then
+              carpenter_workshops_usable = carpenter_workshops_usable + 1
+            end
+          end
         end
       end
     end
@@ -234,6 +304,7 @@ end
 
 local citizens_total = 0
 local miners_total = 0
+local carpenter_labors_enabled = 0
 local citizens_on_target_z = 0
 if df.global.world.units and df.global.world.units.active then
   for _, unit in ipairs(df.global.world.units.active) do
@@ -243,12 +314,20 @@ if df.global.world.units and df.global.world.units.active then
         citizens_on_target_z = citizens_on_target_z + 1
       end
       if unit.status and unit.status.labors then
+        local is_miner = false
+        local is_carpenter = false
         for labor, enabled in pairs(unit.status.labors) do
-          if enabled and tostring(labor) == 'MINE' then
-            miners_total = miners_total + 1
-            break
+          if enabled then
+            local labor_name = tostring(labor)
+            if labor_name == 'MINE' then
+              is_miner = true
+            elseif labor_name == 'CARPENTER' then
+              is_carpenter = true
+            end
           end
         end
+        if is_miner then miners_total = miners_total + 1 end
+        if is_carpenter then carpenter_labors_enabled = carpenter_labors_enabled + 1 end
       end
     end
   end
@@ -258,7 +337,12 @@ print(json.encode({
   ok = true,
   target_rect = { rx1, ry1, rz, rx2, ry2, rz },
   target_z = rz,
-  window_z = df.global.window_z or 0,
+  window_x = window_x,
+  window_y = window_y,
+  window_z = window_z,
+  cursor_x = cursor_x,
+  cursor_y = cursor_y,
+  cursor_z = cursor_z,
   target_tiles = target_tiles,
   target_dig_designations = target_dig_designations,
   target_floor_tiles = target_floor_tiles,
@@ -287,12 +371,28 @@ print(json.encode({
   fortress_complexity_spaces_completed = fortress_complexity_spaces_completed,
   active_jobs = active_jobs,
   active_dig_jobs = active_dig_jobs,
+  active_construct_building_jobs = active_construct_building_jobs,
+  active_carpenter_jobs = active_carpenter_jobs,
+  active_job_type_names = active_job_type_names,
   manager_orders_count = manager_orders_count,
   manager_orders_amount_left = manager_orders_amount_left,
   manager_orders_amount_total = manager_orders_amount_total,
   workshop_count = workshop_count,
   carpenter_workshops = carpenter_workshops,
+  carpenter_workshops_planned = carpenter_workshops,
+  carpenter_workshops_usable = carpenter_workshops_usable,
+  carpenter_workshops_unproven = math.max(0, carpenter_workshops - carpenter_workshops_usable),
+  carpenter_workshop_task_jobs = carpenter_workshop_task_jobs,
+  carpenter_workshop_construction_jobs = carpenter_workshop_construction_jobs,
+  carpenter_workshop_task_job_type_names = carpenter_workshop_task_job_type_names,
+  carpenter_workshop_construction_job_type_names = carpenter_workshop_construction_job_type_names,
+  carpenter_workshop_x1 = carpenter_workshop_x1,
+  carpenter_workshop_y1 = carpenter_workshop_y1,
+  carpenter_workshop_x2 = carpenter_workshop_x2,
+  carpenter_workshop_y2 = carpenter_workshop_y2,
+  carpenter_workshop_z = carpenter_workshop_z,
   citizens_total = citizens_total,
   miners_total = miners_total,
+  carpenter_labors_enabled = carpenter_labors_enabled,
   citizens_on_target_z = citizens_on_target_z,
 }))

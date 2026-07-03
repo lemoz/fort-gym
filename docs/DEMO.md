@@ -54,7 +54,7 @@ deterministic baseline:
 
 ```bash
 make vm-deploy SHA=origin/main
-make vm-live-agent VM_LIVE_AGENT_REF=main LIVE_AGENT_MODEL=anthropic-keystroke LIVE_AGENT_MAX_STEPS=4
+make vm-live-agent VM_LIVE_AGENT_REF=main LIVE_AGENT_MODEL=openrouter-keystroke-perception-review LIVE_AGENT_MAX_STEPS=4
 ```
 
 Expected output shape:
@@ -82,7 +82,7 @@ suite command:
 ```bash
 make vm-deploy SHA=origin/main
 make vm-live-agent-suite VM_LIVE_AGENT_REF=main \
-  LIVE_AGENT_MODELS=anthropic-dig-first,anthropic-fortress-plan \
+  LIVE_AGENT_MODELS=openrouter-keystroke-perception-review,openrouter-glm-5.2 \
   LIVE_AGENT_TRIALS=2 LIVE_AGENT_MAX_STEPS=6
 ```
 

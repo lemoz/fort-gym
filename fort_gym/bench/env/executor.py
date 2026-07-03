@@ -16,6 +16,23 @@ from .mock_env import MockEnvironment
 from .state_reader import StateReader
 
 
+def _normalize_rect(value: Any) -> tuple[int, int, int, int, int, int] | None:
+    if not isinstance(value, (list, tuple)) or len(value) < 6:
+        return None
+    try:
+        x1, y1, z1, x2, y2, z2 = [int(v) for v in value[:6]]
+    except (TypeError, ValueError):
+        return None
+    return (
+        min(x1, x2),
+        min(y1, y2),
+        min(z1, z2),
+        max(x1, x2),
+        max(y1, y2),
+        max(z1, z2),
+    )
+
+
 class Executor:
     """Apply actions to the configured backend while enforcing validation."""
 
@@ -69,7 +86,7 @@ class Executor:
                 y2 = y1 + max(1, height) - 1
                 z2 = z + max(1, depth) - 1
                 result = safe_designate_rect("dig", x1, y1, z, x2, y2, z2)
-                if result.get("ok") and os.getenv("FORT_GYM_DFHACK_COMPLETE_DIG", "1") != "0":
+                if result.get("ok") and os.getenv("FORT_GYM_DFHACK_COMPLETE_DIG", "0") == "1":
                     completion = safe_complete_dig_rect(x1, y1, z, x2, y2, z2)
                     result = {**result, "completion": completion}
                 return {
@@ -101,7 +118,29 @@ class Executor:
                     z = int(params.get("z", 0))
                 except (KeyError, TypeError, ValueError) as exc:
                     return {"accepted": False, "why": f"Invalid coordinates: {exc}"}
-                result = safe_build_workshop(kind, x, y, z)
+                work = current_state.get("work") if isinstance(current_state, dict) else {}
+                work_rect = (
+                    _normalize_rect(work.get("target_rect"))
+                    if isinstance(work, dict)
+                    else None
+                )
+                extra_allowed_rects = []
+                if isinstance(work, dict):
+                    for key in (
+                        "carpenter_build_site_rect",
+                        "carpenter_build_placement_rect",
+                    ):
+                        rect = _normalize_rect(work.get(key))
+                        if rect is not None:
+                            extra_allowed_rects.append(rect)
+                result = safe_build_workshop(
+                    kind,
+                    x,
+                    y,
+                    z,
+                    work_rect=work_rect,
+                    extra_allowed_rects=extra_allowed_rects,
+                )
                 return {
                     "accepted": bool(result.get("ok")),
                     "why": None if result.get("ok") else result.get("error"),
@@ -111,7 +150,15 @@ class Executor:
             if action_type == "KEYSTROKE":
                 keys = params.get("keys", [])
                 if not keys:
-                    return {"accepted": False, "why": "Empty keys list"}
+                    return {
+                        "accepted": True,
+                        "state": current_state,
+                        "result": {
+                            "ok": True,
+                            "keys_sent": 0,
+                            "advance_only": True,
+                        },
+                    }
                 result = execute_keystroke_action(keys)
                 return {
                     "accepted": bool(result.get("ok")),

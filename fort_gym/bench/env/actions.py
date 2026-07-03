@@ -59,6 +59,44 @@ class BaseAction(BaseModel):
     type: str
     params: Dict[str, Any] = Field(default_factory=dict)
     intent: Optional[str] = Field(default=None, description="Optional short rationale provided by the agent.")
+    objective: Optional[str] = Field(
+        default=None,
+        description="Current gameplay objective this action is meant to advance.",
+    )
+    expected_visible_result: Optional[str] = Field(
+        default=None,
+        description="Expected immediate screen, menu, cursor, or map result after the keys are sent.",
+    )
+    expected_simulation_result: Optional[str] = Field(
+        default=None,
+        description="Expected dwarf/world result after advancing ticks, if any.",
+    )
+    screen_read: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description=(
+            "Agent's own interpretation of the current DF screen before acting. "
+            "This is perception/debug metadata, not gameplay execution."
+        ),
+    )
+    last_action_review: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description=(
+            "Agent's own comparison of the previous action intent against the current "
+            "screen/state before acting. This is verification metadata, not gameplay execution."
+        ),
+    )
+    memory_update: Optional[str] = Field(
+        default=None,
+        description="Memory or POI update the agent made or will make around this action.",
+    )
+    plan_step: Optional[str] = Field(
+        default=None,
+        description="Current agent-maintained plan step this action is meant to advance.",
+    )
+    plan_review: Optional[str] = Field(
+        default=None,
+        description="Brief summary of the latest plan review used before this action.",
+    )
     advance_ticks: int = Field(
         default=0,
         ge=0,
@@ -196,12 +234,25 @@ def validate_action(state: Dict[str, Any], action: Dict[str, Any]) -> tuple[bool
             return False, "ORDER action requires job and quantity"
     if action_type == "KEYSTROKE":
         keys = params.get("keys")
-        if not keys:
-            return False, "KEYSTROKE action requires non-empty keys list"
         if not isinstance(keys, list):
             return False, "KEYSTROKE keys must be a list"
+        if not keys:
+            advance_ticks = action.get("advance_ticks") or 0
+            try:
+                advance_ticks_int = int(advance_ticks)
+            except (TypeError, ValueError):
+                advance_ticks_int = 0
+            if advance_ticks_int <= 0:
+                return False, "KEYSTROKE action requires keys unless advance_ticks > 0"
+            return True, None
+        if any(not isinstance(key, str) or not key.strip() for key in keys):
+            return False, "KEYSTROKE keys must be non-empty strings"
         if len(keys) > 100:
             return False, "KEYSTROKE keys list too long (max 100)"
+        z_level_keys = {"CURSOR_UP_Z", "CURSOR_DOWN_Z"}
+        z_level_count = sum(1 for key in keys if str(key) in z_level_keys)
+        if z_level_count > 10:
+            return False, "KEYSTROKE z-level navigation too long (max 10 per action)"
 
     map_bounds = state.get("map_bounds")
     location = params.get("location")
@@ -242,6 +293,12 @@ ACTION_TOOL_SPEC = {
             },
             "params": {"type": "object"},
             "intent": {"type": "string"},
+            "objective": {"type": "string"},
+            "expected_visible_result": {"type": "string"},
+            "expected_simulation_result": {"type": "string"},
+            "screen_read": {"type": "object"},
+            "last_action_review": {"type": "object"},
+            "memory_update": {"type": "string"},
             "advance_ticks": {
                 "type": "integer",
                 "minimum": 0,
