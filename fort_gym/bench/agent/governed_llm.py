@@ -68,8 +68,11 @@ Dwarves then do the work.
 Every action must include "advance_ticks" (how many game ticks to run after the command, up to \
 2000; around 1000 is a typical step). Nothing in the fortress changes unless time advances.
 
-The observation gives you the recorded game screen text plus derived work metrics (the `work` \
-fields): target/connector/workshop-room rectangles, wall vs floor tile counts, dig designations, \
+The observation includes a Fort minimap — a top-down character grid of your fort area with a \
+coordinate ruler (W=your walls, b/t/c/d=furniture, w=workshop, .=open floor). It is the \
+authoritative view for wall geometry: an enclosure must form a complete hollow ring with floor \
+inside; trace it on the minimap and wall the gaps. It also gives the recorded game screen text \
+plus derived work metrics (the `work` fields): target/connector/workshop-room rectangles, wall vs floor tile counts, dig designations, \
 active jobs, workshop counts and usability, and manager order counts. Read them to see whether \
 your previous command actually worked before issuing the next one. A == MEMORY == section carries \
 your own plan, POIs, and failed attempts from earlier steps.

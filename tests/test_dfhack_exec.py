@@ -266,3 +266,11 @@ def test_job_metrics_reports_furniture_positions() -> None:
         Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua"
     ).read_text(encoding="utf-8")
     assert "placed_furniture_positions" in script
+
+
+def test_fort_metrics_renders_minimap_grid() -> None:
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "fort_metrics.lua"
+    ).read_text(encoding="utf-8")
+    for needle in ("map_rows", "map_origin", "BUILDING_CHARS", "construction_set"):
+        assert needle in script
