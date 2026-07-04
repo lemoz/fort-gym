@@ -29,12 +29,13 @@ TILE_STYLES: Dict[str, tuple] = {
     "c": ((60, 150, 170), "c"),     # chair
     "d": ((120, 90, 50), "d"),      # door
     "w": ((40, 70, 160), "w"),      # workshop
+    "@": ((250, 250, 250), "@"),    # dwarf
     "?": ((200, 40, 40), "?"),
 }
 
 LEGEND_TEXT = (
     "W=your wall  #=natural wall  T=tree  b=bed t=table c=chair d=door "
-    "w=workshop  .=floor  ,=shrub"
+    "w=workshop  @=dwarf  .=floor  ,=shrub"
 )
 
 
@@ -75,7 +76,8 @@ def render_minimap_png(
                 outline=(40, 40, 40),
             )
             if letter:
-                draw.text((x0 + CELL // 3, y0 + CELL // 5), letter, fill=(255, 255, 255))
+                text_fill = (20, 20, 20) if char == "@" else (255, 255, 255)
+                draw.text((x0 + CELL // 3, y0 + CELL // 5), letter, fill=text_fill)
 
     # coordinate rulers every 2 cells, full coordinates for anchor rows/cols
     for col_index in range(0, width, 2):

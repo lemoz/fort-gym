@@ -274,3 +274,12 @@ def test_fort_metrics_renders_minimap_grid() -> None:
     ).read_text(encoding="utf-8")
     for needle in ("map_rows", "map_origin", "BUILDING_CHARS", "construction_set"):
         assert needle in script
+
+
+def test_fort_metrics_anchors_on_citizens_and_marks_dwarves() -> None:
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "fort_metrics.lua"
+    ).read_text(encoding="utf-8")
+    assert "citizen_positions" in script
+    assert "citizen_lookup" in script
+    assert "'@'" in script

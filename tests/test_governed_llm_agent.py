@@ -282,3 +282,32 @@ def test_vision_variants_registered_in_all_gates() -> None:
         assert name in get_args(ModelType)
         assert OPTIONAL_AGENT_MODULES[name] == "fort_gym.bench.agent.governed_llm"
         assert _is_keystroke_model(name) is False
+
+
+def test_tool_choice_degrades_to_auto_on_provider_rejection() -> None:
+    class _PickyCompletions:
+        def __init__(self) -> None:
+            self.requests: list[dict[str, Any]] = []
+
+        def create(self, **kwargs: Any) -> Any:
+            self.requests.append(kwargs)
+            if kwargs.get("tool_choice") != "auto":
+                raise RuntimeError(
+                    "Error code: 400 - {'error': {'message': 'Tool choice must be auto'}}"
+                )
+            return _submit_action_response(
+                {"type": "WAIT", "params": {}, "intent": "ok", "advance_ticks": 1000}
+            )
+
+    agent = DFHackGovernedLLMAgent(api_key="test-key", max_attempts=1, memory_path=None)
+    picky = _PickyCompletions()
+    agent._client = SimpleNamespace(chat=SimpleNamespace(completions=picky))
+
+    action = agent.decide("obs", {})
+
+    assert action["type"] == "WAIT"
+    assert action["intent"] == "ok"  # real model response, not a fallback
+    assert picky.requests[0]["tool_choice"] != "auto"
+    assert picky.requests[1]["tool_choice"] == "auto"
+    events = agent.pop_tool_events()
+    assert any(e["tool"] == "governed_llm.tool_choice_degraded" for e in events)

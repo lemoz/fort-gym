@@ -252,6 +252,18 @@ do
       end
     end
   end
+  -- citizens anchor the map before any building exists (and are drawn as @)
+  local citizen_positions = {}
+  pcall(function()
+    for _, unit in ipairs(df.global.world.units.active) do
+      local ok_c, is_c = pcall(function() return dfhack.units.isCitizen(unit) end)
+      if ok_c and is_c and unit.pos then
+        table.insert(citizen_positions, { x = unit.pos.x, y = unit.pos.y, z = unit.pos.z })
+        anchor_z_counts[unit.pos.z] = (anchor_z_counts[unit.pos.z] or 0) + 0.1
+      end
+    end
+  end)
+
   local anchor_z, best = nil, 0
   for z, count in pairs(anchor_z_counts) do
     if count > best then anchor_z, best = z, count end
@@ -268,6 +280,19 @@ do
         max_y = math.max(max_y, bld.y2)
       end
     end
+    if min_x == math.huge then
+      for _, cpos in ipairs(citizen_positions) do
+        if cpos.z == anchor_z then
+          min_x = math.min(min_x, cpos.x)
+          min_y = math.min(min_y, cpos.y)
+          max_x = math.max(max_x, cpos.x)
+          max_y = math.max(max_y, cpos.y)
+        end
+      end
+    end
+    if min_x == math.huge then
+      map_origin = nil
+    end
     for key in pairs(construction_set) do
       local cx, cy, cz = key:match('(-?%d+),(-?%d+),(-?%d+)')
       if tonumber(cz) == anchor_z then
@@ -282,13 +307,22 @@ do
     if max_x - min_x + 1 > 34 then max_x = min_x + 33 end
     if max_y - min_y + 1 > 34 then max_y = min_y + 33 end
 
+    local citizen_lookup = {}
+    for _, cpos in ipairs(citizen_positions) do
+      if cpos.z == anchor_z then
+        citizen_lookup[cpos.x .. ',' .. cpos.y] = true
+      end
+    end
     map_origin = { min_x, min_y, anchor_z }
     for y = min_y, max_y do
       local row = {}
       for x = min_x, max_x do
         local ch = ' '
         local kind = building_tile_kind[x .. ',' .. y .. ',' .. anchor_z]
-        if kind then
+        if citizen_lookup[x .. ',' .. y] then
+          ch = '@'
+          kind = nil
+        elseif kind then
           ch = BUILDING_CHARS[kind] or '?'
         else
           local shape, hidden = tile_shape(x, y, anchor_z)
