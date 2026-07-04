@@ -316,3 +316,31 @@ def test_tool_choice_degrades_to_auto_on_provider_rejection() -> None:
     assert picky.requests[1]["tool_choice"] == "auto"
     events = agent.pop_tool_events()
     assert any(e["tool"] == "governed_llm.tool_choice_degraded" for e in events)
+
+
+def test_reasoning_disable_degrades_when_provider_requires_reasoning() -> None:
+    class _ReasoningCompletions:
+        def __init__(self) -> None:
+            self.requests: list[dict[str, Any]] = []
+
+        def create(self, **kwargs: Any) -> Any:
+            self.requests.append(kwargs)
+            if "extra_body" in kwargs:
+                raise RuntimeError(
+                    "Error code: 400 - Reasoning is mandatory for this endpoint"
+                )
+            return _submit_action_response(
+                {"type": "WAIT", "params": {}, "intent": "ok", "advance_ticks": 1000}
+            )
+
+    agent = DFHackGovernedLLMAgent(api_key="test-key", max_attempts=1, memory_path=None)
+    picky = _ReasoningCompletions()
+    agent._client = SimpleNamespace(chat=SimpleNamespace(completions=picky))
+
+    action = agent.decide("obs", {})
+
+    assert action["intent"] == "ok"
+    assert "extra_body" in picky.requests[0]
+    assert "extra_body" not in picky.requests[1]
+    events = agent.pop_tool_events()
+    assert any(e["tool"] == "governed_llm.reasoning_enabled_degraded" for e in events)
