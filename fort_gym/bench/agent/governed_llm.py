@@ -260,6 +260,31 @@ class DFHackGovernedLLMAgent(Agent):
                     **request_kwargs,
                 )
             except Exception as exc:
+                # some providers (e.g. Z.AI vision endpoints) reject forced
+                # tool_choice; degrade to auto once and retry immediately
+                if (
+                    "tool choice" in str(exc).lower()
+                    and request_kwargs.get("tool_choice") != "auto"
+                ):
+                    request_kwargs["tool_choice"] = "auto"
+                    self._tool_events.append(
+                        {
+                            "tool": "governed_llm.tool_choice_degraded",
+                            "input": {"model": self._model},
+                            "output": {"tool_choice": "auto"},
+                        }
+                    )
+                    try:
+                        self._rate_limit()
+                        return self._client_instance().chat.completions.create(
+                            model=self._model,
+                            messages=messages,
+                            temperature=self._settings.LLM_TEMP,
+                            max_tokens=self._settings.LLM_MAX_TOKENS,
+                            **request_kwargs,
+                        )
+                    except Exception as retry_exc:
+                        exc = retry_exc
                 last_exc = exc
                 will_retry = attempt + 1 < max_attempts
                 self._tool_events.append(

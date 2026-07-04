@@ -1417,7 +1417,7 @@ def encode_observation(
                     "x increases rightward, y increases downward). Legend: "
                     "W=your wall, #=natural wall, T=tree trunk, b=bed, "
                     "t=table, c=chair, d=door, w=workshop, .=floor, "
-                    ",=shrub/boulder, ~=impassable:"
+                    ",=shrub/boulder, @=dwarf, ~=impassable:"
                 )
                 ruler = "".join(str((ox + i) % 10) for i in range(width))
                 status_lines.append(f"      {ruler}")
