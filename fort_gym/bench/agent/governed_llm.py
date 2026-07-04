@@ -260,6 +260,31 @@ class DFHackGovernedLLMAgent(Agent):
                     **request_kwargs,
                 )
             except Exception as exc:
+                # some providers (e.g. Kimi K2.7) refuse to run with reasoning
+                # disabled; drop the disable flag once and retry immediately
+                if (
+                    "reasoning is mandatory" in str(exc).lower()
+                    and "extra_body" in request_kwargs
+                ):
+                    request_kwargs.pop("extra_body", None)
+                    self._tool_events.append(
+                        {
+                            "tool": "governed_llm.reasoning_enabled_degraded",
+                            "input": {"model": self._model},
+                            "output": {"reasoning_disable_dropped": True},
+                        }
+                    )
+                    try:
+                        self._rate_limit()
+                        return self._client_instance().chat.completions.create(
+                            model=self._model,
+                            messages=messages,
+                            temperature=self._settings.LLM_TEMP,
+                            max_tokens=self._settings.LLM_MAX_TOKENS,
+                            **request_kwargs,
+                        )
+                    except Exception as retry_exc:
+                        exc = retry_exc
                 # some providers (e.g. Z.AI vision endpoints) reject forced
                 # tool_choice; degrade to auto once and retry immediately
                 if (
