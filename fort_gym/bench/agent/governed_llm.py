@@ -24,6 +24,7 @@ from ..config import get_settings
 from ..env.actions import parse_action
 from .base import Agent, register_agent
 from .memory import MemoryManager
+from .minimap_render import minimap_data_url
 
 GOVERNED_ACTION_TYPES = ("DIG", "BUILD", "ORDER", "WAIT")
 DEFAULT_ADVANCE_TICKS = 1000
@@ -68,7 +69,8 @@ Dwarves then do the work.
 Every action must include "advance_ticks" (how many game ticks to run after the command, up to \
 2000; around 1000 is a typical step). Nothing in the fortress changes unless time advances.
 
-The observation includes a Fort minimap — a top-down character grid of your fort area with a \
+The observation includes a Fort minimap — a top-down character grid (and, when attached, the \
+same grid rendered as a color image) of your fort area with a \
 coordinate ruler (W=your walls, b/t/c/d=furniture, w=workshop, .=open floor). It is the \
 authoritative view for wall geometry: an enclosure must form a complete hollow ring with floor \
 inside; trace it on the minimap and wall the gaps. It also gives the recorded game screen text \
@@ -142,7 +144,9 @@ class DFHackGovernedLLMAgent(Agent):
         api_key: str | None = None,
         max_attempts: int | None = None,
         memory_path: str | None = "auto",
+        vision: bool = False,
     ) -> None:
+        self._vision = vision
         self._settings = get_settings()
         self._api_key = api_key if api_key is not None else self._settings.OPENROUTER_API_KEY
         if not self._api_key:
@@ -362,9 +366,26 @@ class DFHackGovernedLLMAgent(Agent):
 
         memory_context = self._memory.get_context()
         user_content = obs_text if not memory_context else f"{memory_context}\n\n{obs_text}"
+        message_content: Any = user_content
+        if self._vision and isinstance(obs_json, dict):
+            fort = obs_json.get("fort")
+            if isinstance(fort, dict):
+                data_url = minimap_data_url(fort)
+                if data_url:
+                    message_content = [
+                        {"type": "text", "text": user_content},
+                        {"type": "image_url", "image_url": {"url": data_url}},
+                    ]
+                    self._tool_events.append(
+                        {
+                            "tool": "governed_llm.vision_minimap",
+                            "input": {"rows": len(fort.get("map_rows") or [])},
+                            "output": {"attached": True},
+                        }
+                    )
         messages = [
             {"role": "system", "content": GOVERNED_SYSTEM_PROMPT},
-            {"role": "user", "content": user_content},
+            {"role": "user", "content": message_content},
         ]
 
         try:
@@ -455,6 +476,16 @@ register_agent(
 register_agent(
     "dfhack-governed-llm-gpt55",
     lambda: DFHackGovernedLLMAgent(model_override="openai/gpt-5.5"),
+)
+# Vision variants: the same governed surface, with the fort minimap attached
+# as a rendered PNG (same grid, different modality).
+register_agent(
+    "dfhack-governed-llm-glm5v",
+    lambda: DFHackGovernedLLMAgent(model_override="z-ai/glm-5v-turbo", vision=True),
+)
+register_agent(
+    "dfhack-governed-llm-gpt55-vision",
+    lambda: DFHackGovernedLLMAgent(model_override="openai/gpt-5.5", vision=True),
 )
 
 

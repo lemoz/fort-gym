@@ -25,7 +25,8 @@ dependencies = [
 [project.optional-dependencies]
 agent = [
   "openai",
-  "anthropic"
+  "anthropic",
+  "pillow"
 ]
 proto = [
   "grpcio-tools"
