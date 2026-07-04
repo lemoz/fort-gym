@@ -502,6 +502,45 @@ class DFHackGovernedLLMAgent(Agent):
             except json.JSONDecodeError:
                 return None
             return arguments if isinstance(arguments, dict) else None
+        # some providers (e.g. Kimi with mandatory reasoning) answer with the
+        # action as JSON in the text body instead of a tool call
+        payload = self._json_payload_from_text(getattr(message, "content", None))
+        if payload is not None:
+            self._tool_events.append(
+                {
+                    "tool": "governed_llm.text_payload_fallback",
+                    "input": {"model": self._model},
+                    "output": {"parsed": True},
+                }
+            )
+        return payload
+
+    @staticmethod
+    def _json_payload_from_text(content: Any) -> Optional[Dict[str, Any]]:
+        """Extract an action-shaped JSON object from plain response text."""
+
+        if isinstance(content, list):
+            content = " ".join(
+                str(part.get("text", ""))
+                for part in content
+                if isinstance(part, dict)
+            )
+        if not isinstance(content, str) or "{" not in content:
+            return None
+        decoder = json.JSONDecoder()
+        index = content.find("{")
+        while index != -1:
+            try:
+                candidate, _ = decoder.raw_decode(content, index)
+            except json.JSONDecodeError:
+                index = content.find("{", index + 1)
+                continue
+            if (
+                isinstance(candidate, dict)
+                and str(candidate.get("type", "")).upper() in GOVERNED_ACTION_TYPES
+            ):
+                return candidate
+            index = content.find("{", index + 1)
         return None
 
     def pop_tool_events(self) -> List[Dict[str, Any]]:
