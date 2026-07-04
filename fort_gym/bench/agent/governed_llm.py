@@ -145,8 +145,10 @@ class DFHackGovernedLLMAgent(Agent):
         max_attempts: int | None = None,
         memory_path: str | None = "auto",
         vision: bool = False,
+        max_tokens: int | None = None,
     ) -> None:
         self._vision = vision
+        self._max_tokens = max_tokens
         self._settings = get_settings()
         self._api_key = api_key if api_key is not None else self._settings.OPENROUTER_API_KEY
         if not self._api_key:
@@ -256,7 +258,7 @@ class DFHackGovernedLLMAgent(Agent):
                     model=self._model,
                     messages=messages,
                     temperature=self._settings.LLM_TEMP,
-                    max_tokens=self._settings.LLM_MAX_TOKENS,
+                    max_tokens=self._max_tokens or self._settings.LLM_MAX_TOKENS,
                     **request_kwargs,
                 )
             except Exception as exc:
@@ -280,7 +282,7 @@ class DFHackGovernedLLMAgent(Agent):
                             model=self._model,
                             messages=messages,
                             temperature=self._settings.LLM_TEMP,
-                            max_tokens=self._settings.LLM_MAX_TOKENS,
+                            max_tokens=self._max_tokens or self._settings.LLM_MAX_TOKENS,
                             **request_kwargs,
                         )
                     except Exception as retry_exc:
@@ -305,7 +307,7 @@ class DFHackGovernedLLMAgent(Agent):
                             model=self._model,
                             messages=messages,
                             temperature=self._settings.LLM_TEMP,
-                            max_tokens=self._settings.LLM_MAX_TOKENS,
+                            max_tokens=self._max_tokens or self._settings.LLM_MAX_TOKENS,
                             **request_kwargs,
                         )
                     except Exception as retry_exc:
@@ -578,7 +580,11 @@ register_agent(
 )
 register_agent(
     "dfhack-governed-llm-kimi-vision",
-    lambda: DFHackGovernedLLMAgent(model_override="moonshotai/kimi-k2.7-code", vision=True),
+    # mandatory reasoning consumes the default 512-token budget on real-sized
+    # observations before the tool call is emitted; give it headroom
+    lambda: DFHackGovernedLLMAgent(
+        model_override="moonshotai/kimi-k2.7-code", vision=True, max_tokens=4096
+    ),
 )
 register_agent(
     "dfhack-governed-llm-minimax-vision",

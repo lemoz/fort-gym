@@ -370,3 +370,20 @@ def test_action_parsed_from_text_when_no_tool_call() -> None:
     assert action["params"]["quantity"] == 3
     events = agent.pop_tool_events()
     assert any(e["tool"] == "governed_llm.text_payload_fallback" for e in events)
+
+
+def test_max_tokens_override_reaches_the_request() -> None:
+    agent = DFHackGovernedLLMAgent(
+        api_key="test-key", max_attempts=1, memory_path=None, max_tokens=4096
+    )
+    agent._client = _FakeClient(
+        [
+            _submit_action_response(
+                {"type": "WAIT", "params": {}, "intent": "ok", "advance_ticks": 1000}
+            )
+        ]
+    )
+
+    agent.decide("obs", {})
+
+    assert agent._client.chat.completions.requests[0]["max_tokens"] == 4096
