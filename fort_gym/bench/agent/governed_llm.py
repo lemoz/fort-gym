@@ -512,6 +512,14 @@ register_agent(
     "dfhack-governed-llm-gpt55-vision",
     lambda: DFHackGovernedLLMAgent(model_override="openai/gpt-5.5", vision=True),
 )
+register_agent(
+    "dfhack-governed-llm-kimi-vision",
+    lambda: DFHackGovernedLLMAgent(model_override="moonshotai/kimi-k2.7-code", vision=True),
+)
+register_agent(
+    "dfhack-governed-llm-minimax-vision",
+    lambda: DFHackGovernedLLMAgent(model_override="minimax/minimax-m3", vision=True),
+)
 
 
 __all__ = ["DFHackGovernedLLMAgent", "GOVERNED_ACTION_TYPES", "GOVERNED_SYSTEM_PROMPT"]

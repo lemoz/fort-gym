@@ -276,7 +276,12 @@ def test_vision_agent_attaches_minimap_image() -> None:
 
 
 def test_vision_variants_registered_in_all_gates() -> None:
-    for name in ("dfhack-governed-llm-glm5v", "dfhack-governed-llm-gpt55-vision"):
+    for name in (
+        "dfhack-governed-llm-glm5v",
+        "dfhack-governed-llm-gpt55-vision",
+        "dfhack-governed-llm-kimi-vision",
+        "dfhack-governed-llm-minimax-vision",
+    ):
         assert name in AGENT_FACTORIES
         assert name in GOVERNED_DFHACK_MODELS
         assert name in get_args(ModelType)

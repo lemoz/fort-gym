@@ -119,6 +119,16 @@ async def serve_leaderboard():
     return _html_file_response("leaderboard.html")
 
 
+# Bundled static assets (e.g. the CC BY 4.0 Oddball tileset used by the
+# replay UI's Graphical glyph mode). check_dir=False so the API still boots
+# if a checkout is missing the directory.
+app.mount(
+    "/static",
+    StaticFiles(directory=str(WEB_ROOT / "static"), check_dir=False),
+    name="static",
+)
+
+
 def _artifacts_path(run_id: str) -> Path:
     return ARTIFACTS_ROOT / run_id / "trace.jsonl"
 
@@ -200,6 +210,8 @@ OPTIONAL_AGENT_MODULES = {
     "dfhack-governed-llm-gpt55": "fort_gym.bench.agent.governed_llm",
     "dfhack-governed-llm-glm5v": "fort_gym.bench.agent.governed_llm",
     "dfhack-governed-llm-gpt55-vision": "fort_gym.bench.agent.governed_llm",
+    "dfhack-governed-llm-kimi-vision": "fort_gym.bench.agent.governed_llm",
+    "dfhack-governed-llm-minimax-vision": "fort_gym.bench.agent.governed_llm",
     "openai": "fort_gym.bench.agent.llm_openai",
     "openai-keystroke-perception-review": "fort_gym.bench.agent.llm_openai",
     "openrouter-keystroke": "fort_gym.bench.agent.llm_openrouter",

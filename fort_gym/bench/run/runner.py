@@ -41,6 +41,8 @@ GOVERNED_DFHACK_MODELS = {
     "dfhack-governed-llm-gpt55",
     "dfhack-governed-llm-glm5v",
     "dfhack-governed-llm-gpt55-vision",
+    "dfhack-governed-llm-kimi-vision",
+    "dfhack-governed-llm-minimax-vision",
 }
 GOVERNED_DFHACK_ACTIONS = {"DIG", "BUILD", "ORDER", "WAIT"}
 ASSISTED_PROGRESS_FIELDS = (
