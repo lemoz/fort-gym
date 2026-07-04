@@ -292,6 +292,22 @@ gate. Each entry states what changed and the evidence that forced it.
   including enclosed-room shelter, long-horizon room goals) — replacing a
   factually wrong claim that the score paid for "dug rooms".
 
+- **2026-07-04 — VISION EXPERIMENT (operator-directed): the hollow-ring
+  failure is primarily a modality problem.** The fort minimap is now also
+  rendered as a PNG and attached for vision models (PR #27/#28/#29/#31–#33;
+  three provider quirks — forced tool_choice, mandatory reasoning, token
+  starvation, prose-JSON answers — handled with trace-attributed
+  degradations; three Kimi runs voided as call failures, not results).
+  Results (100 steps, memory-off, score-v2): GLM-5V-turbo (`0cffcd6d`,
+  131.19) built **1 enclosed functional room** — first ring in the GLM
+  family after ~10 text attempts; Kimi K2.7-code (`91928e29`, 69.01) also
+  closed **1 ring** but never started its economy; MiniMax-M3 (`83ff5d61`,
+  63.95, valid calls) managed neither — the control showing vision doesn't
+  create capability. Two of three vision arms achieved what one text run in
+  ~15 ever did. G4 still unpassed (nobody has economy + two rooms at once);
+  the strongest untested candidate is GPT-5.5-vision — best text economy on
+  record, now with eyes.
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,
