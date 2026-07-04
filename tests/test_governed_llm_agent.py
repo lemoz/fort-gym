@@ -344,3 +344,29 @@ def test_reasoning_disable_degrades_when_provider_requires_reasoning() -> None:
     assert "extra_body" not in picky.requests[1]
     events = agent.pop_tool_events()
     assert any(e["tool"] == "governed_llm.reasoning_enabled_degraded" for e in events)
+
+
+def test_action_parsed_from_text_when_no_tool_call() -> None:
+    response = SimpleNamespace(
+        choices=[
+            SimpleNamespace(
+                message=SimpleNamespace(
+                    content=(
+                        "Let me reason about this... The workshop needs beds.\n"
+                        '{"type": "ORDER", "params": {"job": "bed", "quantity": 3},'
+                        ' "intent": "queue beds", "advance_ticks": 1000}'
+                    ),
+                    tool_calls=None,
+                )
+            )
+        ],
+        usage=SimpleNamespace(prompt_tokens=10, completion_tokens=5, total_tokens=15),
+    )
+    agent = _agent([response])
+
+    action = agent.decide("obs", {})
+
+    assert action["type"] == "ORDER"
+    assert action["params"]["quantity"] == 3
+    events = agent.pop_tool_events()
+    assert any(e["tool"] == "governed_llm.text_payload_fallback" for e in events)
