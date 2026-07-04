@@ -198,6 +198,8 @@ OPTIONAL_AGENT_MODULES = {
     "dfhack-governed-llm-glm52": "fort_gym.bench.agent.governed_llm",
     "dfhack-governed-llm-deepseek-v4": "fort_gym.bench.agent.governed_llm",
     "dfhack-governed-llm-gpt55": "fort_gym.bench.agent.governed_llm",
+    "dfhack-governed-llm-glm5v": "fort_gym.bench.agent.governed_llm",
+    "dfhack-governed-llm-gpt55-vision": "fort_gym.bench.agent.governed_llm",
     "openai": "fort_gym.bench.agent.llm_openai",
     "openai-keystroke-perception-review": "fort_gym.bench.agent.llm_openai",
     "openrouter-keystroke": "fort_gym.bench.agent.llm_openrouter",

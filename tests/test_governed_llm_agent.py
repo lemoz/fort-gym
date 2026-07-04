@@ -248,3 +248,37 @@ def test_failed_attempt_labels_carry_kind_and_position() -> None:
     agent.decide("Last Action: REJECTED - too_far_from_fort\nTime: tick 1100", {})
     labels = [item["label"] for item in agent._memory.failed_attempts]
     assert any("BUILD Wall at (94,91) rejected" == label for label in labels)
+
+
+def test_vision_agent_attaches_minimap_image() -> None:
+    agent = DFHackGovernedLLMAgent(
+        api_key="test-key", max_attempts=1, memory_path=None, vision=True
+    )
+    agent._client = _FakeClient(
+        [
+            _submit_action_response(
+                {"type": "WAIT", "params": {}, "intent": "look around", "advance_ticks": 1000}
+            )
+        ]
+    )
+
+    agent.decide(
+        "obs",
+        {"fort": {"map_rows": ["..WWW..", "..W.W.."], "map_origin": [90, 87, 177]}},
+    )
+
+    request = agent._client.chat.completions.requests[0]
+    content = request["messages"][1]["content"]
+    assert isinstance(content, list)
+    kinds = [part.get("type") for part in content]
+    assert kinds == ["text", "image_url"]
+    assert content[1]["image_url"]["url"].startswith("data:image/png;base64,")
+
+
+def test_vision_variants_registered_in_all_gates() -> None:
+    for name in ("dfhack-governed-llm-glm5v", "dfhack-governed-llm-gpt55-vision"):
+        assert name in AGENT_FACTORIES
+        assert name in GOVERNED_DFHACK_MODELS
+        assert name in get_args(ModelType)
+        assert OPTIONAL_AGENT_MODULES[name] == "fort_gym.bench.agent.governed_llm"
+        assert _is_keystroke_model(name) is False

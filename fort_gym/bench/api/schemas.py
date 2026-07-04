@@ -17,6 +17,8 @@ ModelType = Literal[
     "dfhack-governed-llm-glm52",
     "dfhack-governed-llm-deepseek-v4",
     "dfhack-governed-llm-gpt55",
+    "dfhack-governed-llm-glm5v",
+    "dfhack-governed-llm-gpt55-vision",
     "openai",
     "openai-keystroke-perception-review",
     "openrouter-keystroke",
