@@ -101,6 +101,11 @@ Replay evidence talking points:
 
 - "DF Screen" frames are recorded CopyScreen text captured during play — real
   gameplay evidence.
+- The replay defaults to a "Graphical" glyph mode that re-skins the recorded
+  characters through a bundled DF tileset (Oddball 16x16 by HexaBlu, CC BY
+  4.0). It is a pure presentation re-skin — same recorded text, different
+  glyphs — and the "ASCII" toggle shows the exact recorded characters for
+  purists.
 - "Map Inspect" is a derived DFHack tile read and is labeled "not gameplay
   proof" — it exists for analysis.
 - Old traces without recorded frames show "No Recorded DF Screen Frame"

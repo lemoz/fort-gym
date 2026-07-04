@@ -430,6 +430,10 @@
           <button id="replay-view-screen" type="button" data-active="true">DF Screen</button>
           <button id="replay-view-map" type="button" data-active="false">Map Inspect</button>
         </div>
+        <div id="replay-glyph-toggle" class="replay-view-toggle" aria-label="Replay glyph style">
+          <button id="replay-glyph-graphical" type="button" data-active="true" title="Re-skin the recorded characters with a graphical DF tileset (same evidence, different glyphs)">Graphical</button>
+          <button id="replay-glyph-ascii" type="button" data-active="false" title="Raw recorded CopyScreen characters, for ASCII purists">ASCII</button>
+        </div>
         <div class="replay-legend" aria-label="Replay legend">
           <span class="legend-item"><span class="legend-swatch legend-starter"></span>Starter</span>
           <span class="legend-item"><span class="legend-swatch legend-connector"></span>Connector</span>
@@ -536,6 +540,13 @@
     let replayRecords = [];
     let replayStepIndex = 0;
     let replayEvidenceView = 'screen';
+    // Glyph style for recorded DF screen frames: 'graphical' re-skins the
+    // recorded characters through a DF tileset sprite sheet; 'ascii' shows
+    // the raw recorded characters. Defaults to graphical.
+    let replayGlyphMode = 'graphical';
+    try {
+      if (localStorage.getItem('fortgym-replay-glyphs') === 'ascii') replayGlyphMode = 'ascii';
+    } catch (err) { /* storage unavailable; keep default */ }
     function tokenFromLocation() {
       const queryToken = new URLSearchParams(window.location.search).get('token');
       if (queryToken) return queryToken;
@@ -566,6 +577,8 @@
     const replayStepLabel = document.getElementById('replay-step-label');
     const replayViewScreen = document.getElementById('replay-view-screen');
     const replayViewMap = document.getElementById('replay-view-map');
+    const replayGlyphGraphical = document.getElementById('replay-glyph-graphical');
+    const replayGlyphAscii = document.getElementById('replay-glyph-ascii');
     const statPop = document.getElementById('stat-pop');
     const statFood = document.getElementById('stat-food');
     const statDrink = document.getElementById('stat-drink');
@@ -631,6 +644,7 @@
         gameCanvas.width = canvasW;
         gameCanvas.height = canvasH;
       }
+      gameCtx.setTransform(1, 0, 0, 1, 0, 0);
 
       gameCtx.fillStyle = '#000';
       gameCtx.fillRect(0, 0, canvasW, canvasH);
@@ -652,6 +666,96 @@
           }
         }
       }
+    }
+
+    // ===============================
+    // Graphical tileset for recorded replay frames
+    // ===============================
+    // Oddball 16x16 by HexaBlu (https://github.com/HexabluDEV/Oddball-16),
+    // CC BY 4.0 — bundled at web/static/tilesets/. A CP437 sprite sheet:
+    // recorded CopyScreen characters are mapped to tile indices and drawn as
+    // sprites. Pure presentation re-skin: same recorded text as ASCII mode.
+    const REPLAY_TILESET = {
+      url: '/static/tilesets/oddball-16x16.png',
+      credit: 'Oddball 16x16 tileset by HexaBlu (CC BY 4.0)',
+      tile: 16,
+      sheet: null,
+      ready: false,
+      failed: false,
+      tinted: new Map()
+    };
+
+    // _tile_to_char in dfhack_client.py collapses CP437 codes to printable
+    // ASCII before frames are recorded, so every printable character maps to
+    // its own CP437 tile, plus canonical tiles for the recorder's collapsed
+    // map glyphs. Codes the recorder could not map were recorded as '?'.
+    const GRAPHICAL_CHAR_TILES = {
+      '@': 1,    // CP437 1/2 smiley — citizens and creatures
+      '#': 177,  // CP437 176/177/178/219 shade blocks — walls and borders
+      '_': 220   // CP437 220 lower half block
+    };
+
+    function cp437CodeForChar(char) {
+      const remapped = GRAPHICAL_CHAR_TILES[char];
+      if (remapped !== undefined) return remapped;
+      const code = char.charCodeAt(0);
+      return code >= 32 && code < 127 ? code : 63;
+    }
+
+    function rerenderReplayIfVisible() {
+      if (viewMode === 'replay' && replayRecords.length > 0) {
+        renderSavedRunReplay(replayStepIndex);
+      }
+    }
+
+    function loadReplayTileset() {
+      const image = new Image();
+      image.onload = () => {
+        const sheet = document.createElement('canvas');
+        sheet.width = image.width;
+        sheet.height = image.height;
+        const ctx = sheet.getContext('2d', { willReadFrequently: true });
+        ctx.drawImage(image, 0, 0);
+        const data = ctx.getImageData(0, 0, sheet.width, sheet.height);
+        const px = data.data;
+        for (let i = 0; i < px.length; i += 4) {
+          // Key out the DF-style magenta background.
+          if (px[i] > 200 && px[i + 1] < 80 && px[i + 2] > 200) px[i + 3] = 0;
+        }
+        ctx.putImageData(data, 0, 0);
+        REPLAY_TILESET.sheet = sheet;
+        REPLAY_TILESET.ready = true;
+        rerenderReplayIfVisible();
+      };
+      image.onerror = () => {
+        REPLAY_TILESET.failed = true;
+        rerenderReplayIfVisible();
+      };
+      image.src = REPLAY_TILESET.url;
+    }
+    loadReplayTileset();
+
+    function tintedGlyph(code, color) {
+      const key = `${code}|${color}`;
+      const cached = REPLAY_TILESET.tinted.get(key);
+      if (cached) return cached;
+      const size = REPLAY_TILESET.tile;
+      const sx = (code % 16) * size;
+      const sy = Math.floor(code / 16) * size;
+      const glyph = document.createElement('canvas');
+      glyph.width = size;
+      glyph.height = size;
+      const ctx = glyph.getContext('2d');
+      ctx.drawImage(REPLAY_TILESET.sheet, sx, sy, size, size, 0, 0, size, size);
+      // Tint the greyscale sprite with the same heuristic palette the ASCII
+      // view uses, preserving the sprite's own shading and alpha.
+      ctx.globalCompositeOperation = 'multiply';
+      ctx.fillStyle = color;
+      ctx.fillRect(0, 0, size, size);
+      ctx.globalCompositeOperation = 'destination-in';
+      ctx.drawImage(REPLAY_TILESET.sheet, sx, sy, size, size, 0, 0, size, size);
+      REPLAY_TILESET.tinted.set(key, glyph);
+      return glyph;
     }
 
     function stopLiveScreen() {
@@ -1098,6 +1202,49 @@
       return '#c9d4e8';
     }
 
+    function drawDfScreenTiles(rawScreen, terminal) {
+      // The encoder may append a "== SCREEN VISUAL HINTS ==" metadata block
+      // after the CopyScreen text; it is derived commentary, not screen
+      // content, so the tile grid renders only the screen portion.
+      const screenBody = rawScreen.split('== SCREEN VISUAL HINTS ==')[0].replace(/\s+$/, '');
+      const lines = screenBody.split('\n');
+      const rowCount = Math.min(lines.length, 28);
+      const maxCols = Math.max(80, ...lines.slice(0, rowCount).map(line => line.length));
+      const tile = Math.max(3, Math.min(8,
+        Math.floor((terminal.w - 8) / maxCols),
+        Math.floor((terminal.h - 40) / Math.max(1, rowCount))));
+      const originX = terminal.x + Math.floor((terminal.w - maxCols * tile) / 2);
+      const originY = terminal.y + Math.floor((terminal.h - 24 - rowCount * tile) / 2);
+      const prevSmoothing = gameCtx.imageSmoothingEnabled;
+      gameCtx.imageSmoothingEnabled = false;
+      for (let row = 0; row < rowCount; row++) {
+        const line = lines[row] || '';
+        const y = originY + row * tile;
+        if (line.includes('Needs building material') || line.includes("Carpenter's Workshop")) {
+          gameCtx.fillStyle = line.includes('Needs building material')
+            ? 'rgba(255,217,102,0.09)'
+            : 'rgba(245,197,66,0.08)';
+          gameCtx.fillRect(terminal.x + 1, y - 1, terminal.w - 2, tile + 2);
+        }
+        for (let col = 0; col < line.length; col++) {
+          const char = line[col];
+          if (char === ' ') continue;
+          const x = originX + col * tile;
+          if (char === 'X') {
+            gameCtx.fillStyle = 'rgba(79,124,255,0.8)';
+            gameCtx.fillRect(x - 1, y - 1, tile + 2, tile + 2);
+          }
+          gameCtx.drawImage(tintedGlyph(cp437CodeForChar(char), dfGlyphColor(char, line)), x, y, tile, tile);
+        }
+      }
+      gameCtx.imageSmoothingEnabled = prevSmoothing;
+      drawReplayText(`${REPLAY_TILESET.credit} — same recorded text, re-skinned`, terminal.x + 12, terminal.y + terminal.h - 22, {
+        color: '#9fb1d6',
+        size: 11,
+        weight: 600
+      });
+    }
+
     function drawDfScreenFrame(snapshot, canvasW, canvasH) {
       const rawScreen = String(snapshot.screenText || '');
       const lines = rawScreen.split('\n');
@@ -1117,34 +1264,45 @@
       gameCtx.lineWidth = 1;
       gameCtx.strokeRect(terminal.x, terminal.y, terminal.w, terminal.h);
 
-      const maxCols = Math.max(80, ...lines.map(line => line.length));
-      const charW = Math.min(8, Math.floor((terminal.w - 24) / maxCols * 10) / 10);
-      const lineH = Math.min(16, Math.floor((terminal.h - 28) / Math.max(25, lines.length)));
-      const fontSize = Math.max(11, Math.min(14, lineH - 2));
-      gameCtx.font = `700 ${fontSize}px 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace`;
-      gameCtx.textAlign = 'left';
-      gameCtx.textBaseline = 'top';
+      if (replayGlyphMode === 'graphical' && REPLAY_TILESET.ready) {
+        drawDfScreenTiles(rawScreen, terminal);
+      } else {
+        const maxCols = Math.max(80, ...lines.map(line => line.length));
+        const charW = Math.min(8, Math.floor((terminal.w - 24) / maxCols * 10) / 10);
+        const lineH = Math.min(16, Math.floor((terminal.h - 28) / Math.max(25, lines.length)));
+        const fontSize = Math.max(11, Math.min(14, lineH - 2));
+        gameCtx.font = `700 ${fontSize}px 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace`;
+        gameCtx.textAlign = 'left';
+        gameCtx.textBaseline = 'top';
 
-      const textX = terminal.x + 12;
-      const textY = terminal.y + 12;
-      for (let row = 0; row < lines.length && row < 28; row++) {
-        const line = lines[row] || '';
-        const y = textY + row * lineH;
-        if (line.includes('Needs building material') || line.includes("Carpenter's Workshop")) {
-          gameCtx.fillStyle = line.includes('Needs building material')
-            ? 'rgba(255,217,102,0.09)'
-            : 'rgba(245,197,66,0.08)';
-          gameCtx.fillRect(terminal.x + 1, y - 1, terminal.w - 2, lineH + 1);
-        }
-        for (let col = 0; col < line.length; col++) {
-          const char = line[col];
-          if (char === ' ') continue;
-          if (char === 'X') {
-            gameCtx.fillStyle = 'rgba(79,124,255,0.8)';
-            gameCtx.fillRect(textX + col * charW - 1, y - 1, charW + 2, lineH);
+        const textX = terminal.x + 12;
+        const textY = terminal.y + 12;
+        for (let row = 0; row < lines.length && row < 28; row++) {
+          const line = lines[row] || '';
+          const y = textY + row * lineH;
+          if (line.includes('Needs building material') || line.includes("Carpenter's Workshop")) {
+            gameCtx.fillStyle = line.includes('Needs building material')
+              ? 'rgba(255,217,102,0.09)'
+              : 'rgba(245,197,66,0.08)';
+            gameCtx.fillRect(terminal.x + 1, y - 1, terminal.w - 2, lineH + 1);
           }
-          gameCtx.fillStyle = dfGlyphColor(char, line);
-          gameCtx.fillText(char, textX + col * charW, y);
+          for (let col = 0; col < line.length; col++) {
+            const char = line[col];
+            if (char === ' ') continue;
+            if (char === 'X') {
+              gameCtx.fillStyle = 'rgba(79,124,255,0.8)';
+              gameCtx.fillRect(textX + col * charW - 1, y - 1, charW + 2, lineH);
+            }
+            gameCtx.fillStyle = dfGlyphColor(char, line);
+            gameCtx.fillText(char, textX + col * charW, y);
+          }
+        }
+        if (replayGlyphMode === 'graphical' && REPLAY_TILESET.failed) {
+          drawReplayText('Graphical tileset unavailable — showing recorded ASCII', terminal.x + 12, terminal.y + terminal.h - 22, {
+            color: '#ffd966',
+            size: 11,
+            weight: 600
+          });
         }
       }
 
@@ -1312,6 +1470,8 @@
       replayViewScreen.dataset.active = replayEvidenceView === 'screen' ? 'true' : 'false';
       replayViewMap.dataset.active = replayEvidenceView === 'map' ? 'true' : 'false';
       replayViewMap.disabled = !snapshot.mapSnapshot;
+      replayGlyphGraphical.dataset.active = replayGlyphMode === 'graphical' ? 'true' : 'false';
+      replayGlyphAscii.dataset.active = replayGlyphMode === 'ascii' ? 'true' : 'false';
       gameStatus.textContent = statusText;
       updateReplayStats(snapshot);
     }
@@ -1434,10 +1594,13 @@
       const snapshot = buildReplaySnapshot(replayStepIndex);
       const canvasW = 960;
       const canvasH = 480;
-      if (gameCanvas.width !== canvasW || gameCanvas.height !== canvasH) {
-        gameCanvas.width = canvasW;
-        gameCanvas.height = canvasH;
+      // Render at 2x internal resolution (CSS keeps the display size) so
+      // tileset sprites and text stay sharp on high-DPI screens.
+      if (gameCanvas.width !== canvasW * 2 || gameCanvas.height !== canvasH * 2) {
+        gameCanvas.width = canvasW * 2;
+        gameCanvas.height = canvasH * 2;
       }
+      gameCtx.setTransform(2, 0, 0, 2, 0, 0);
       showCanvas();
 
       if (replayEvidenceView === 'map') {
@@ -1591,6 +1754,14 @@
       if (viewMode === 'replay' && replayRecords.length > 0) {
         renderSavedRunReplay(replayStepIndex);
       }
+    }
+
+    function setReplayGlyphMode(mode) {
+      replayGlyphMode = mode === 'ascii' ? 'ascii' : 'graphical';
+      try {
+        localStorage.setItem('fortgym-replay-glyphs', replayGlyphMode);
+      } catch (err) { /* storage unavailable */ }
+      rerenderReplayIfVisible();
     }
 
 
@@ -2064,6 +2235,14 @@
 
     replayViewMap.addEventListener('click', () => {
       setReplayEvidenceView('map');
+    });
+
+    replayGlyphGraphical.addEventListener('click', () => {
+      setReplayGlyphMode('graphical');
+    });
+
+    replayGlyphAscii.addEventListener('click', () => {
+      setReplayGlyphMode('ascii');
     });
   </script>
 </body>
