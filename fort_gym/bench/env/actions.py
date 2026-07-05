@@ -53,6 +53,13 @@ class OrderParams(BaseModel):
     at: Optional[str] = None
 
 
+class UnsuspendParams(BaseModel):
+    """Parameters for UNSUSPEND actions targeting a bounded rect."""
+
+    area: tuple[int, int, int] = Field(..., description="(x, y, z) coordinates for the rect start.")
+    size: tuple[int, int, int] = Field(..., description="(width, height, 1) of the rect, one z-level, max 10x10.")
+
+
 class KeystrokeParams(BaseModel):
     """Parameters for KEYSTROKE actions - raw keyboard input."""
 
@@ -135,6 +142,11 @@ class OrderAction(BaseAction):
     params: OrderParams
 
 
+class UnsuspendAction(BaseAction):
+    type: Literal["UNSUSPEND"]
+    params: UnsuspendParams
+
+
 class ZoneAction(BaseAction):
     type: Literal["ZONE"]
 
@@ -172,6 +184,7 @@ ActionUnion = Annotated[
         ZoneAction,
         StockpileAction,
         OrderAction,
+        UnsuspendAction,
         AssignAction,
         AlertAction,
         NoteAction,
@@ -192,6 +205,7 @@ ALLOWED_TYPES = {
     "ZONE",
     "STOCKPILE",
     "ORDER",
+    "UNSUSPEND",
     "ASSIGN",
     "ALERT",
     "NOTE",
@@ -241,6 +255,9 @@ def validate_action(state: Dict[str, Any], action: Dict[str, Any]) -> tuple[bool
     if action_type == "ORDER":
         if "job" not in params or "quantity" not in params:
             return False, "ORDER action requires job and quantity"
+    if action_type == "UNSUSPEND":
+        if "area" not in params or "size" not in params:
+            return False, "UNSUSPEND action requires area and size"
     if action_type == "KEYSTROKE":
         keys = params.get("keys")
         if not isinstance(keys, list):
@@ -294,6 +311,7 @@ ACTION_TOOL_SPEC = {
                     "ZONE",
                     "STOCKPILE",
                     "ORDER",
+                    "UNSUSPEND",
                     "ASSIGN",
                     "ALERT",
                     "NOTE",

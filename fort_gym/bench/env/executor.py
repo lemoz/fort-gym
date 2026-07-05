@@ -13,6 +13,7 @@ from ..dfhack_backend import complete_dig_rect as safe_complete_dig_rect
 from ..dfhack_backend import designate_rect as safe_designate_rect
 from ..dfhack_backend import place_furniture as safe_place_furniture
 from ..dfhack_backend import queue_manager_order as safe_queue_manager_order
+from ..dfhack_backend import unsuspend_jobs as safe_unsuspend_jobs
 from .keystroke_exec import execute_keystroke_action
 from .mock_env import MockEnvironment
 from .state_reader import StateReader
@@ -89,6 +90,20 @@ class Executor:
                 job = (params.get("job") or "").lower()
                 qty = int(params.get("quantity", 1))
                 result = safe_queue_manager_order(job, qty)
+                return {
+                    "accepted": bool(result.get("ok")),
+                    "why": None if result.get("ok") else result.get("error"),
+                    "result": result,
+                }
+
+            if action_type == "UNSUSPEND":
+                area = params.get("area", (0, 0, 0))
+                size = params.get("size", (1, 1, 1))
+                x1, y1, z = map(int, area)
+                width, height, _depth = map(int, size)
+                x2 = x1 + max(1, width) - 1
+                y2 = y1 + max(1, height) - 1
+                result = safe_unsuspend_jobs(x1, y1, z, x2, y2, z)
                 return {
                     "accepted": bool(result.get("ok")),
                     "why": None if result.get("ok") else result.get("error"),
