@@ -19,6 +19,7 @@ LEGEND_HEIGHT = 30
 TILE_STYLES: Dict[str, tuple] = {
     "#": ((90, 84, 74), None),      # natural wall — dark earth
     "W": ((214, 106, 40), None),    # player-built wall — orange
+    "x": ((240, 178, 122), "x"),    # queued wall/floor — pale orange
     "T": ((34, 102, 48), "T"),      # tree trunk — deep green
     ".": ((222, 210, 180), None),   # open floor — light tan
     ",": ((176, 200, 150), None),   # shrub/boulder — pale green
@@ -34,8 +35,8 @@ TILE_STYLES: Dict[str, tuple] = {
 }
 
 LEGEND_TEXT = (
-    "W=your wall  #=natural wall  T=tree  b=bed t=table c=chair d=door "
-    "w=workshop  @=dwarf  .=floor  ,=shrub"
+    "W=your wall  x=queued wall (building)  #=natural wall  T=tree  "
+    "b=bed t=table c=chair d=door w=workshop  @=dwarf  .=floor  ,=shrub"
 )
 
 

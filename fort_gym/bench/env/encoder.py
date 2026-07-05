@@ -1317,12 +1317,18 @@ def encode_observation(
         functional_rooms = _int_or_none(fort.get("functional_rooms"))
         constructions = _int_or_none(fort.get("constructions"))
         if None not in (enclosed_spaces, functional_rooms, constructions):
-            status_lines.append(
+            structure_line = (
                 "Fort structure (plan-agnostic): "
                 f"enclosed_spaces={enclosed_spaces}, "
                 f"functional_rooms={functional_rooms}, "
                 f"constructions={constructions}"
             )
+            pending = _int_or_none(fort.get("pending_constructions"))
+            if pending is not None:
+                structure_line += (
+                    f", queued_constructions={pending} (ordered, not built yet)"
+                )
+            status_lines.append(structure_line)
 
         spaces = fort.get("spaces")
         if isinstance(spaces, list) and spaces:
@@ -1389,8 +1395,9 @@ def encode_observation(
                 status_lines.append(
                     f"Fort minimap (z={oz}; top-left tile is x={ox},y={oy}; "
                     "x increases rightward, y increases downward). Legend: "
-                    "W=your wall, #=natural wall, T=tree trunk, b=bed, "
-                    "t=table, c=chair, d=door, w=workshop, .=floor, "
+                    "W=your wall, x=your QUEUED wall/floor (ordered, a dwarf "
+                    "is still building it), #=natural wall, T=tree trunk, "
+                    "b=bed, t=table, c=chair, d=door, w=workshop, .=floor, "
                     ",=shrub/boulder, @=dwarf, ~=impassable:"
                 )
                 ruler = "".join(str((ox + i) % 10) for i in range(width))
@@ -1400,7 +1407,8 @@ def encode_observation(
                 status_lines.append(
                     "A room is enclosed only if every tile of its border is "
                     "W/#/T/w/d — trace the ring on the minimap and wall any "
-                    "'.' or ',' gaps."
+                    "'.' or ',' gaps. An 'x' is already ordered: do NOT "
+                    "re-place a wall there — advance time and it becomes W."
                 )
 
         if enclosed_spaces == 0:
