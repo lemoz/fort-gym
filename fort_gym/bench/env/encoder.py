@@ -886,6 +886,8 @@ def encode_observation(
                 "non_wall_tiles",
                 "created_job_ids",
                 "building_id",
+                "unsuspended",
+                "suspended_found",
             ):
                 if key not in action_result:
                     continue

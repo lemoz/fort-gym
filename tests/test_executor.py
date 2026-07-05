@@ -167,6 +167,58 @@ def test_dfhack_dig_chop_kind_routes_to_chop_and_skips_completion(monkeypatch) -
     assert calls == [("chop", 50, 35, 0, 52, 37, 0)]
 
 
+def test_dfhack_unsuspend_routes_to_backend_wrapper_with_plain_args(monkeypatch) -> None:
+    calls: list[tuple] = []
+
+    def fake_unsuspend_jobs(x1: int, y1: int, z1: int, x2: int, y2: int, z2: int):
+        calls.append((x1, y1, z1, x2, y2, z2))
+        return {"ok": True, "unsuspended": 1, "suspended_found": 1}
+
+    monkeypatch.setattr("fort_gym.bench.env.executor.safe_unsuspend_jobs", fake_unsuspend_jobs)
+
+    result = Executor(dfhack_client=_ConnectedDFHackClient()).apply(
+        {"type": "UNSUSPEND", "params": {"area": [101, 98, 177], "size": [1, 1, 1]}},
+        backend="dfhack",
+    )
+
+    assert result["accepted"] is True
+    assert result["result"] == {"ok": True, "unsuspended": 1, "suspended_found": 1}
+    assert calls == [(101, 98, 177, 101, 98, 177)]
+
+
+def test_dfhack_unsuspend_expands_rect_from_area_and_size(monkeypatch) -> None:
+    calls: list[tuple] = []
+
+    def fake_unsuspend_jobs(x1: int, y1: int, z1: int, x2: int, y2: int, z2: int):
+        calls.append((x1, y1, z1, x2, y2, z2))
+        return {"ok": True, "unsuspended": 0, "suspended_found": 0}
+
+    monkeypatch.setattr("fort_gym.bench.env.executor.safe_unsuspend_jobs", fake_unsuspend_jobs)
+
+    result = Executor(dfhack_client=_ConnectedDFHackClient()).apply(
+        {"type": "UNSUSPEND", "params": {"area": [98, 95, 177], "size": [5, 5, 1]}},
+        backend="dfhack",
+    )
+
+    assert result["accepted"] is True
+    assert calls == [(98, 95, 177, 102, 99, 177)]
+
+
+def test_dfhack_unsuspend_reports_rejection_when_hook_errors(monkeypatch) -> None:
+    def fake_unsuspend_jobs(*args):
+        return {"ok": False, "error": "rect_too_large"}
+
+    monkeypatch.setattr("fort_gym.bench.env.executor.safe_unsuspend_jobs", fake_unsuspend_jobs)
+
+    result = Executor(dfhack_client=_ConnectedDFHackClient()).apply(
+        {"type": "UNSUSPEND", "params": {"area": [0, 0, 0], "size": [11, 11, 1]}},
+        backend="dfhack",
+    )
+
+    assert result["accepted"] is False
+    assert result["why"] == "rect_too_large"
+
+
 def test_parse_action_defaults_dig_kind_to_dig() -> None:
     from fort_gym.bench.env.actions import parse_action
 

@@ -108,3 +108,31 @@ def test_keystroke_validation_rejects_z_level_spam() -> None:
 
 def test_system_prompt_mentions_single_action() -> None:
     assert "one action per step" in system_prompt_v1.lower()
+
+
+def test_action_tool_spec_includes_unsuspend_type() -> None:
+    assert "UNSUSPEND" in ACTION_TOOL_SPEC["parameters"]["properties"]["type"]["enum"]
+
+
+def test_parse_action_accepts_unsuspend_area_and_size() -> None:
+    action = parse_action(
+        {
+            "type": "UNSUSPEND",
+            "params": {"area": [101, 98, 177], "size": [1, 1, 1]},
+            "intent": "clear the suspended ConstructBuilding job",
+            "advance_ticks": 500,
+        }
+    )
+
+    assert action["type"] == "UNSUSPEND"
+    assert action["params"]["area"] == [101, 98, 177]
+    assert action["params"]["size"] == [1, 1, 1]
+
+
+def test_validate_action_rejects_unsuspend_missing_area_or_size() -> None:
+    valid, reason = validate_action(
+        {}, {"type": "UNSUSPEND", "params": {"area": [101, 98, 177]}}
+    )
+
+    assert valid is False
+    assert reason == "UNSUSPEND action requires area and size"

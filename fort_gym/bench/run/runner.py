@@ -32,7 +32,7 @@ from ..eval.summary import RunSummary, summarize
 from .storage import RunRegistry
 from .seed_reset import maybe_reset_dfhack_seed
 
-ASSISTED_DFHACK_ACTIONS = {"DIG", "BUILD", "ORDER"}
+ASSISTED_DFHACK_ACTIONS = {"DIG", "BUILD", "ORDER", "UNSUSPEND"}
 GOVERNED_DFHACK_MODELS = {
     "dfhack-governed-scripted",
     "dfhack-governed-llm",
@@ -44,7 +44,7 @@ GOVERNED_DFHACK_MODELS = {
     "dfhack-governed-llm-kimi-vision",
     "dfhack-governed-llm-minimax-vision",
 }
-GOVERNED_DFHACK_ACTIONS = {"DIG", "BUILD", "ORDER", "WAIT"}
+GOVERNED_DFHACK_ACTIONS = {"DIG", "BUILD", "ORDER", "UNSUSPEND", "WAIT"}
 ASSISTED_PROGRESS_FIELDS = (
     "target_dig_designations_delta",
     "target_floor_tiles_delta",
@@ -649,6 +649,8 @@ def _governed_gameplay_proof(
             "before_carpenter_workshops",
             "after_carpenter_workshops",
             "manager_recorded",
+            "unsuspended",
+            "suspended_found",
         )
         if key in result
     }
@@ -662,6 +664,7 @@ def _governed_gameplay_proof(
         or (isinstance(created_jobs, list) and created_jobs)
         or workshops_added > 0
         or int(result.get("newly_designated") or 0) > 0
+        or int(result.get("unsuspended") or 0) > 0
     )
     return {
         "ok": step_gameplay_progress,
