@@ -384,6 +384,27 @@ gate. Each entry states what changed and the evidence that forced it.
   only); an UNSUSPEND action is a legal-surface widening awaiting operator
   decision.
 
+- **2026-07-05 — G4 vision series run 3: FAIL 4/6, and the suspended-job
+  wedge is confirmed as the frontier.** Run `5a406c21` (GLM-5V pinned, 100
+  steps, memory-off, post-PR-#40,
+  `fortgym.live/r/ujtHjQhGMkmpRt_z1ooTRoVJS_Us18US`): score 112.45 (<=121.5
+  FAIL), rubric 73.55 zero blockers PASS, ticks 100,351 PASS, population 7/7
+  PASS, 4 beds + 3 doors PASS, 1 functional room (FAIL rooms>=2). The run
+  ended with the SECOND room one wall from enclosure: steps 92-99 the agent
+  waited on "the final queued wall at (100,97)", correctly named the
+  suspended ConstructBuilding job blocking it, attempted the only legal
+  workaround (re-placing — rejected, tile occupied), and ran out of steps.
+  Suspended jobs were visible in 84/100 steps. Series verdict (3 runs,
+  post-decoupling): 3/6, 5/6, 4/6 — two runs reached exactly one-room-short,
+  and both were blocked by suspended construction jobs the agent can
+  diagnose but not legally clear. PR #40's per-tile furniture reasons
+  worked as intended (tile_not_open_floor/tile_occupied_by_building now
+  visible). The prepared correction: UNSUSPEND, a bounded player-parity
+  primitive (q-menu equivalent: flips job.flags.suspend in a <=10x10 rect,
+  dwarves still perform the work, provenance-gated in both governed and
+  assisted sets, proof via unsuspended/suspended_found counts) — draft PR
+  #41, a legal-action-surface widening held for operator merge.
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,
