@@ -364,6 +364,26 @@ gate. Each entry states what changed and the evidence that forced it.
   merged in the window (PR #36): `POST /jobs` parallelism clamps to 1 for
   the dfhack backend — concurrent workers were racing the single live save.
 
+- **2026-07-05 — G4 vision series run 2: FAIL 5/6 — the best G4 result to
+  date, and the queued-wall correction validated live.** Run `0a1be1c5`
+  (GLM-5V pinned, 100 steps, memory-off, post-PR-#38,
+  `fortgym.live/r/VCjkMbEg91DAbbk6pFZUTP94GvX3qClH`): score 125.24 > 121.5
+  PASS, rubric 75.74 with zero blockers PASS, ticks 99,868 PASS, population
+  7/7 PASS, produced goods 4 beds + 4 doors + 4 tables (richest GLM economy
+  recorded) PASS — fails ONLY functional_rooms >= 2, with 1 enclosed
+  functional room. The `x` glyph rendered from step 14; room #1 closed at
+  step 16 (vs step 40 in the best prior run; run 1 never closed one), and
+  post-room wall placements wasted on phantom gaps fell from 58 to 4 — the
+  invisible-pending-walls hypothesis is confirmed by before/after behavior.
+  The newly exposed frontier: the agent tried to furnish a second space for
+  the rest of the run and 40 furniture installs failed with a bare
+  `construct_failed`; it correctly diagnosed a suspended ConstructBuilding
+  job wedged at (101,98,177) from the jobs observability but has no legal
+  action to unsuspend it (a player would use the q-menu). Corrections
+  queued: per-tile furniture placement reasons (PR #40, error-visibility
+  only); an UNSUSPEND action is a legal-surface widening awaiting operator
+  decision.
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,
