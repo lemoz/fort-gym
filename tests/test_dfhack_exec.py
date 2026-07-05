@@ -119,6 +119,21 @@ def test_placement_hooks_enforce_fort_locality() -> None:
         assert "collect_locality_anchors" in hook_text
 
 
+def test_place_furniture_hook_reports_tile_state_on_failure() -> None:
+    hook_text = (
+        Path(__file__).resolve().parents[1] / "hook" / "place_furniture.lua"
+    ).read_text(encoding="utf-8")
+    # run 0a1be1c5 burned 40 actions on bare construct_failed: the tile is
+    # classified before placement so the rejection names the visible cause
+    for needle in (
+        "tile_occupied_by_building",
+        "tile_not_open_floor",
+        "tile_hidden_unexplored",
+        "tile_placement_error",
+    ):
+        assert needle in hook_text
+
+
 def test_build_workshop_hook_uses_existing_material_item() -> None:
     hook_path = Path(__file__).resolve().parents[1] / "hook" / "build_workshop.lua"
     hook_text = hook_path.read_text(encoding="utf-8")

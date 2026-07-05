@@ -120,6 +120,31 @@ local function find_nearest_furniture_item()
   return best
 end
 
+-- Classify the target tile BEFORE attempting placement so a failure carries
+-- the reason a player would see on screen instead of a bare construct_failed.
+local function tile_placement_error()
+  local block = dfhack.maps.getTileBlock(x, y, z)
+  if not block then return 'tile_out_of_bounds' end
+  local dx, dy = x % 16, y % 16
+  local occupied, is_floor, hidden = false, false, false
+  pcall(function()
+    occupied = block.occupancy[dx][dy].building ~= 0
+    local attr = df.tiletype.attrs[block.tiletype[dx][dy]]
+    is_floor = attr ~= nil and attr.shape == df.tiletype_shape.FLOOR
+    hidden = block.designation[dx][dy].hidden
+  end)
+  if occupied then return 'tile_occupied_by_building' end
+  if hidden then return 'tile_hidden_unexplored' end
+  if not is_floor then return 'tile_not_open_floor' end
+  return nil
+end
+
+local tile_error = tile_placement_error()
+if tile_error then
+  print(json.encode({ ok = false, error = tile_error }))
+  return
+end
+
 local item = find_nearest_furniture_item()
 if not item then
   print(json.encode({ ok = false, error = 'no_finished_item_available' }))
