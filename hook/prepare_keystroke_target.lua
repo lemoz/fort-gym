@@ -17,7 +17,9 @@ local MIN_MATERIAL_TILES = 1
 local MIN_CITIZEN_NEAR_TILES = 1
 local CITIZEN_SEARCH_RADIUS = 25
 local MATERIAL_SEARCH_RADIUS = 12
-local WORKSHOP_SEARCH_RADIUS = 35
+-- Kept <= MAX_LOCALITY (24) in build_workshop.lua/place_furniture.lua so a
+-- citizen-anchored candidate is always inside the placement locality gate.
+local WORKSHOP_SEARCH_RADIUS = 24
 local Z_SEARCH_RADIUS = 6
 local WORKSHOP_SIZE = 3
 local STONE_MATERIALS = {

@@ -1386,8 +1386,8 @@ def test_encoder_surfaces_legal_build_site_without_plan_lines() -> None:
         screen_text="main map",
     )
 
-    assert "Legal BUILD site observed: carpenter_build_site=(99,93,177)" in text
-    assert "a 3x3 CarpenterWorkshop fits there." in text
+    assert "Workshop site candidate observed: carpenter_build_site=(99,93,177)" in text
+    assert "3x3 open floor there." in text
     # Legacy plan-completion framing must stay out of the governed observation:
     # it reads as an objective and misdirects agents after their first room.
     assert "Plan rects" not in text

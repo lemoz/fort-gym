@@ -327,7 +327,19 @@ gate. Each entry states what changed and the evidence that forced it.
   tiles of any existing player building or citizen (`too_far_from_fort`,
   enforced in the hooks). Gates, scoring, and rubric are untouched; this
   changes only what the agent is told and what the bounded primitives
-  legally reach. Prompt wording updated to match.
+  legally reach. Prompt wording updated to match. An adversarial review of
+  the diff caught one bug before it shipped: the workshop-site discovery
+  radius (35) exceeded the new locality gate (24), so the observation could
+  have called a site legal that the hook would reject — radius capped at 24
+  and the observation line now says "candidate", claiming only what is
+  verified (open 3x3 floor). Known remaining plan-shaped surfaces, left
+  deliberately: `work_metrics.lua` still computes the legacy-rect fields
+  (consumed by the scripted reference agent, which is a plan-walker by
+  design, and by hint discovery — non-binding); and the rubric's
+  `fortress_breadth`/`plan_coherence` dimensions still pay
+  `complexity_progress`/`completed_spaces` from the legacy rects, which now
+  under-credits plan-agnostic building — fixing that is a scoring-matrix
+  change and awaits operator approval.
 
 ## Reporting format (every gate attempt)
 

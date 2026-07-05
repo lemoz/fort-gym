@@ -945,8 +945,8 @@ def encode_observation(
         if build_site is not None:
             x, y, z = build_site
             status_lines.append(
-                f"Legal BUILD site observed: carpenter_build_site=({x},{y},{z}) — a "
-                "3x3 CarpenterWorkshop fits there."
+                f"Workshop site candidate observed: carpenter_build_site=({x},{y},{z}) "
+                "— 3x3 open floor there."
             )
         else:
             status_lines.append(

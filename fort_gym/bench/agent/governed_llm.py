@@ -52,7 +52,7 @@ without logs, workshop orders cancel.
 - BUILD: params {"kind": "CarpenterWorkshop"|"Bed"|"Door"|"Table"|"Chair"|"Wall"|"Floor", "x": X, \
 "y": Y, "z": Z, "x2": X2, "y2": Y2 (optional)}. \
 CarpenterWorkshop places a 3x3 workshop on open floor within 24 tiles of your fort — near any \
-existing building or citizen (the work metrics include a `carpenter_build_site` when a legal \
+existing building or citizen (the work metrics include a `carpenter_build_site` when a candidate \
 spot is visible); a dwarf must then construct it. \
 Furniture kinds install an already-produced item of that type as a 1x1 building, anywhere within \
 24 tiles of your fort — a dwarf hauls and installs it over time; furnishing an enclosed space is \
