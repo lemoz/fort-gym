@@ -31,12 +31,16 @@ class JobRegistry:
         self._lock = threading.Lock()
 
     def create(self, model: str, backend: str, n: int, parallelism: int) -> JobInfo:
+        # There is one live DF instance: parallel dfhack workers would race
+        # the same save and interleave actions on the same fortress.
+        # Serialize dfhack jobs until a multi-instance pool exists.
+        effective_parallelism = 1 if backend == "dfhack" else max(1, parallelism)
         job = JobInfo(
             job_id=uuid.uuid4().hex,
             model=model,
             backend=backend,
             n=n,
-            parallelism=max(1, parallelism),
+            parallelism=effective_parallelism,
         )
         with self._lock:
             self._jobs[job.job_id] = job
