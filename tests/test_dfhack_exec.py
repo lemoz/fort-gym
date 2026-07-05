@@ -95,18 +95,7 @@ def test_view_state_helpers_use_dedicated_hooks(monkeypatch) -> None:
     assert calls[1][1] == ("12", "34", "5", "-30000", "-30000", "-30000")
 
 
-def test_fortress_workshop_rect_expands_short_live_targets_for_workshop_footprint() -> None:
-    assert dfhack_backend._fortress_workshop_rect((94, 91, 177, 97, 92, 177)) == (
-        101,
-        91,
-        177,
-        105,
-        95,
-        177,
-    )
-
-
-def test_build_workshop_allows_observed_extra_build_site(monkeypatch) -> None:
+def test_build_workshop_passes_site_through_to_locality_hook(monkeypatch) -> None:
     captured = {}
 
     def fake_run_lua_file(path, *args, **kwargs):
@@ -115,17 +104,19 @@ def test_build_workshop_allows_observed_extra_build_site(monkeypatch) -> None:
 
     monkeypatch.setattr(dfhack_backend, "run_lua_file", fake_run_lua_file)
 
-    result = dfhack_backend.build_workshop(
-        "CarpenterWorkshop",
-        88,
-        96,
-        177,
-        work_rect=(94, 91, 177, 97, 92, 177),
-        extra_allowed_rects=[(88, 96, 177, 90, 98, 177)],
-    )
+    result = dfhack_backend.build_workshop("CarpenterWorkshop", 88, 96, 177)
 
     assert result == {"ok": True}
     assert captured["args"] == ("CarpenterWorkshop", "88", "96", "177")
+
+
+def test_placement_hooks_enforce_fort_locality() -> None:
+    for hook_name in ("build_workshop.lua", "place_furniture.lua"):
+        hook_path = Path(__file__).resolve().parents[1] / "hook" / hook_name
+        hook_text = hook_path.read_text(encoding="utf-8")
+        assert "MAX_LOCALITY = 24" in hook_text
+        assert "too_far_from_fort" in hook_text
+        assert "collect_locality_anchors" in hook_text
 
 
 def test_build_workshop_hook_uses_existing_material_item() -> None:

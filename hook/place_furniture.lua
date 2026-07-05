@@ -1,6 +1,8 @@
 -- place_furniture.lua: install a finished furniture item as a building.
 -- Mirrors the player's b-menu placement: uses an existing produced item and
 -- creates a normal install job that a dwarf completes over real time.
+-- Plan-agnostic: the tile is only rejected if it is farther than MAX_LOCALITY
+-- tiles (Chebyshev) from every existing player building and every citizen.
 
 local json = require('json')
 local buildings = require('dfhack.buildings')
@@ -26,6 +28,52 @@ end
 
 if not (x and y and z) then
   print(json.encode({ ok = false, error = 'invalid_coordinates' }))
+  return
+end
+
+local MAX_LOCALITY = 24
+
+local function collect_locality_anchors()
+  local anchors = {}
+  local ok_buildings = pcall(function()
+    for _, bld in ipairs(df.global.world.buildings.all) do
+      table.insert(anchors, { x = bld.centerx, y = bld.centery })
+    end
+  end)
+  if not ok_buildings then
+    anchors = {}
+  end
+  local ok_units = pcall(function()
+    for _, unit in ipairs(df.global.world.units.active) do
+      local ok_citizen, is_citizen = pcall(function()
+        return dfhack.units.isCitizen(unit)
+      end)
+      if ok_citizen and is_citizen and unit.pos then
+        table.insert(anchors, { x = unit.pos.x, y = unit.pos.y })
+      end
+    end
+  end)
+  if not ok_units then
+    -- keep whatever building anchors were already collected
+  end
+  return anchors
+end
+
+local function near_fort(tx, ty)
+  local anchors = collect_locality_anchors()
+  if #anchors == 0 then return false end
+  for _, anchor in ipairs(anchors) do
+    local dx = math.abs(anchor.x - tx)
+    local dy = math.abs(anchor.y - ty)
+    if math.max(dx, dy) <= MAX_LOCALITY then
+      return true
+    end
+  end
+  return false
+end
+
+if not near_fort(x, y) then
+  print(json.encode({ ok = false, error = 'too_far_from_fort' }))
   return
 end
 

@@ -87,12 +87,20 @@ def test_build_workshop_rejects_invalid_kind_without_live_dfhack():
     assert result.get("error") == "invalid_kind"
 
 
-def test_build_workshop_rejects_outside_target_room_without_live_dfhack():
-    from fort_gym.bench.dfhack_backend import build_workshop
+def test_build_workshop_passes_far_coordinates_to_locality_hook(monkeypatch):
+    from fort_gym.bench import dfhack_backend
 
-    result = build_workshop("CarpenterWorkshop", 0, 0, 0)
-    assert result.get("ok") is False
-    assert result.get("error") == "outside_work_rect"
+    calls = []
+
+    def fake_run_lua_file(path, *args, **kwargs):
+        calls.append((path, args))
+        return {"ok": False, "error": "too_far_from_fort"}
+
+    monkeypatch.setattr(dfhack_backend, "run_lua_file", fake_run_lua_file)
+
+    result = dfhack_backend.build_workshop("CarpenterWorkshop", 0, 0, 0)
+    assert result == {"ok": False, "error": "too_far_from_fort"}
+    assert calls and calls[-1][1] == ("CarpenterWorkshop", "0", "0", "0")
 
 
 def test_build_workshop_allows_planned_annex_without_live_dfhack(monkeypatch):

@@ -1370,7 +1370,7 @@ def test_encoder_keeps_blocked_menu_sticky_after_no_progress_detour() -> None:
     assert "remains forbidden until a later action produces real" in text
 
 
-def test_encoder_surfaces_plan_rects_and_legal_build_site() -> None:
+def test_encoder_surfaces_legal_build_site_without_plan_lines() -> None:
     text, _ = encode_observation(
         {
             "time": 100,
@@ -1386,12 +1386,13 @@ def test_encoder_surfaces_plan_rects_and_legal_build_site() -> None:
         screen_text="main map",
     )
 
-    assert (
-        "Plan rects (x1,y1,z1,x2,y2,z2): starter=[90,90,177,96,96,177], "
-        "connector=[96,92,177,98,94,177], workshop_room=[98,90,177,104,96,177]" in text
-    )
     assert "Legal BUILD site observed: carpenter_build_site=(99,93,177)" in text
-    assert "a BUILD there fits the allowed rects." in text
+    assert "a 3x3 CarpenterWorkshop fits there." in text
+    # Legacy plan-completion framing must stay out of the governed observation:
+    # it reads as an objective and misdirects agents after their first room.
+    assert "Plan rects" not in text
+    assert "Target room:" not in text
+    assert "workshop_room" not in text
 
 
 def test_encoder_reports_no_legal_build_site_without_carpenter_build_site() -> None:
@@ -1407,10 +1408,10 @@ def test_encoder_reports_no_legal_build_site_without_carpenter_build_site() -> N
         screen_text="main map",
     )
 
-    assert "No legal BUILD site observed yet." in text
+    assert "No 3x3 workshop site observed yet." in text
     assert (
-        "BUILD must fit a full 3x3 footprint on open floor inside the starter "
-        "or workshop_room rects; complete more floor first." in text
+        "CarpenterWorkshop needs a full 3x3 footprint of open floor near "
+        "your fort; dig out or clear more contiguous floor space first." in text
     )
 
 
@@ -1447,7 +1448,31 @@ def test_encoder_ignores_malformed_plan_rects_without_crashing() -> None:
     )
 
     assert "Plan rects" not in text
-    assert "No legal BUILD site observed yet." in text
+    assert "No 3x3 workshop site observed yet." in text
+
+
+def test_encoder_omits_legacy_plan_progress_lines() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 6, "stone": 0},
+            "work": {
+                "fortress_plan_name": "two_room_workshop",
+                "target_rect": [90, 90, 177, 96, 96, 177],
+                "target_floor_tiles": 22,
+                "target_tiles": 25,
+                "fortress_workshop_room_floor_tiles": 22,
+                "fortress_workshop_room_tiles": 25,
+                "fortress_complexity_spaces_completed": 1,
+            },
+        },
+        screen_text="main map",
+    )
+
+    assert "Fortress plan:" not in text
+    assert "Target room:" not in text
+    assert "22/25" not in text
 
 
 def test_encoder_surfaces_full_crew_block() -> None:
@@ -1519,7 +1544,7 @@ def test_encoder_surfaces_full_crew_block() -> None:
     )
     assert "ORDER can queue jobs to any built carpenter workshop." in text
     assert (
-        "Plan-area tiles: wall=3 (diggable), floor=20, shrub/other=9 "
+        "Fort-area tiles: wall=3 (diggable), floor=20, shrub/other=9 "
         "(not diggable — DIG designations on non-wall tiles are silently dropped "
         "by DF), designated=0" in text
     )
@@ -1598,7 +1623,7 @@ def test_encoder_ignores_malformed_or_disabled_crew_without_crashing() -> None:
     assert "Crew:" not in text_missing_subkeys
     assert "Jobs:" not in text_missing_subkeys
     assert "Workshop id=" not in text_missing_subkeys
-    assert "Plan-area tiles:" not in text_missing_subkeys
+    assert "Fort-area tiles:" not in text_missing_subkeys
 
 
 def test_encoder_surfaces_finished_goods_counts() -> None:

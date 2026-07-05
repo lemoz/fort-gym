@@ -411,7 +411,7 @@ def test_read_job_metrics_enforces_rect_bounds(monkeypatch) -> None:
     assert calls[-1][1] == ("0", "0", "7", "5", "5", "7")
 
 
-def test_place_furniture_enforces_kind_and_rect_bounds(monkeypatch) -> None:
+def test_place_furniture_enforces_kind_and_delegates_locality_to_hook(monkeypatch) -> None:
     from fort_gym.bench import dfhack_backend
 
     calls: list[tuple] = []
@@ -426,16 +426,10 @@ def test_place_furniture_enforces_kind_and_rect_bounds(monkeypatch) -> None:
         "ok": False,
         "error": "invalid_kind",
     }
-    outside = dfhack_backend.place_furniture(
-        "Bed", 5, 5, 0, work_rect=(50, 35, 0, 54, 39, 0)
-    )
-    assert outside == {"ok": False, "error": "outside_work_rect"}
     assert not calls
 
-    inside = dfhack_backend.place_furniture(
-        "Bed", 51, 36, 0, work_rect=(50, 35, 0, 54, 39, 0)
-    )
-    assert inside == {"ok": True}
+    placed = dfhack_backend.place_furniture("Bed", 51, 36, 0)
+    assert placed == {"ok": True}
     assert calls[-1][1] == ("Bed", "51", "36", "0")
 
 

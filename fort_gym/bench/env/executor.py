@@ -18,23 +18,6 @@ from .mock_env import MockEnvironment
 from .state_reader import StateReader
 
 
-def _normalize_rect(value: Any) -> tuple[int, int, int, int, int, int] | None:
-    if not isinstance(value, (list, tuple)) or len(value) < 6:
-        return None
-    try:
-        x1, y1, z1, x2, y2, z2 = [int(v) for v in value[:6]]
-    except (TypeError, ValueError):
-        return None
-    return (
-        min(x1, x2),
-        min(y1, y2),
-        min(z1, z2),
-        max(x1, x2),
-        max(y1, y2),
-        max(z1, z2),
-    )
-
-
 class Executor:
     """Apply actions to the configured backend while enforcing validation."""
 
@@ -151,39 +134,10 @@ class Executor:
                         "why": None if result.get("ok") else result.get("error"),
                         "result": result,
                     }
-                work = current_state.get("work") if isinstance(current_state, dict) else {}
-                work_rect = (
-                    _normalize_rect(work.get("target_rect"))
-                    if isinstance(work, dict)
-                    else None
-                )
-                extra_allowed_rects = []
-                if isinstance(work, dict):
-                    for key in (
-                        "carpenter_build_site_rect",
-                        "carpenter_build_placement_rect",
-                    ):
-                        rect = _normalize_rect(work.get(key))
-                        if rect is not None:
-                            extra_allowed_rects.append(rect)
                 if kind == "CarpenterWorkshop":
-                    result = safe_build_workshop(
-                        kind,
-                        x,
-                        y,
-                        z,
-                        work_rect=work_rect,
-                        extra_allowed_rects=extra_allowed_rects,
-                    )
+                    result = safe_build_workshop(kind, x, y, z)
                 else:
-                    result = safe_place_furniture(
-                        kind,
-                        x,
-                        y,
-                        z,
-                        work_rect=work_rect,
-                        extra_allowed_rects=extra_allowed_rects,
-                    )
+                    result = safe_place_furniture(kind, x, y, z)
                 return {
                     "accepted": bool(result.get("ok")),
                     "why": None if result.get("ok") else result.get("error"),
