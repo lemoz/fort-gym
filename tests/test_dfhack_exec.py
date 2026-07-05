@@ -274,3 +274,18 @@ def test_fort_metrics_anchors_on_citizens_and_marks_dwarves() -> None:
     assert "citizen_positions" in script
     assert "citizen_lookup" in script
     assert "'@'" in script
+
+
+def test_fort_metrics_marks_queued_constructions_without_sealing_rooms() -> None:
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "fort_metrics.lua"
+    ).read_text(encoding="utf-8")
+    # queued (unbuilt) constructions render as 'x' on the minimap...
+    assert "pending_construction_tiles" in script
+    assert "ch = 'x'" in script
+    assert "pending_constructions = pending_constructions" in script
+    # ...but must never enter the enclosure flood-fill boundary set: the
+    # detector's construction_set reads world.constructions (built only).
+    boundary_block = script[script.index("local construction_set"):]
+    boundary_block = boundary_block[: boundary_block.index("BUILDING_CHARS")]
+    assert "pending" not in boundary_block
