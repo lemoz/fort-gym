@@ -289,13 +289,21 @@ def evaluate_trace_records(records: List[Dict[str, Any]], *, window: int = RUBRI
             "Production credit requires buildings, orders, jobs, or produced goods.",
         ),
         "fortress_breadth": _dimension(
-            min(10.0, unique_action_types * 1.5 + bool(work_progress) * 2.0 + bool(complexity_progress) * 3.0),
+            min(
+                10.0,
+                unique_action_types * 1.5
+                + bool(work_progress) * 2.0
+                + bool(fort_constructions > 0 or fort_enclosed_spaces > 0) * 3.0,
+            ),
             [
                 f"unique_action_types={unique_action_types}",
                 f"work_progress={work_progress}",
-                f"complexity_progress={complexity_progress}",
+                f"fort_constructions={fort_constructions}",
+                f"fort_enclosed_spaces={fort_enclosed_spaces}",
             ],
-            "Breadth rewards a fort that moves through layout, production, and expansion stages.",
+            "Breadth rewards a fort that moves through layout, production, and expansion stages — "
+            "the expansion signal is plan-agnostic structure (any enclosed space or construction), "
+            "not progress against the retired fixed two_room_workshop plan.",
         ),
         "responsiveness": _dimension(
             min(10.0, accepted_steps / max(1, total_steps) * 5.0 + tick_steps / max(1, total_steps) * 5.0),
@@ -303,9 +311,21 @@ def evaluate_trace_records(records: List[Dict[str, Any]], *, window: int = RUBRI
             "The agent should issue valid commands and advance simulation when work is pending.",
         ),
         "plan_coherence": _dimension(
-            min(10.0, sum(1 for action in actions if action.get("objective")) / max(1, total_steps) * 4.0 + min(6.0, completed_spaces * 2.0 + carpenter_workshops * 2.0 + manager_orders)),
-            [f"objective_steps={sum(1 for action in actions if action.get('objective'))}", f"chain={completed_spaces}/{carpenter_workshops}/{manager_orders}"],
-            "Plan coherence means actions state a goal and the trace advances along that goal.",
+            min(
+                10.0,
+                sum(1 for action in actions if action.get("objective")) / max(1, total_steps) * 4.0
+                + min(
+                    6.0,
+                    min(fort_functional_rooms, 2) * 2.0 + carpenter_workshops * 2.0 + manager_orders,
+                ),
+            ),
+            [
+                f"objective_steps={sum(1 for action in actions if action.get('objective'))}",
+                f"chain={fort_functional_rooms}/{carpenter_workshops}/{manager_orders}",
+            ],
+            "Plan coherence means actions state a goal and the trace advances along that goal — "
+            "room completion credit comes from plan-agnostic flood-fill functional rooms, not the "
+            "retired fixed two_room_workshop plan's space-completion count.",
         ),
         "anti_repetition": _dimension(
             max(0.0, 10.0 - repetition_ratio * 10.0 - max(0, no_progress_steps - 3) * 0.25),
