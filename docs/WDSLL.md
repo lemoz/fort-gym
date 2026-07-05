@@ -347,7 +347,7 @@ gate. Each entry states what changed and the evidence that forced it.
   ZERO blockers, 100/100 screen frames,
   `fortgym.live/r/T37FoZzcriyNd6OHH-0CTo-1G6giqMt3`): ticks 100,404 PASS,
   population 7/7 PASS, produced goods (2 beds + 3 doors) PASS; rooms 0/2
-  FAIL, rubric&lt;70 FAIL, score&lt;=121.5 FAIL. The plan-decoupling worked — no
+  FAIL, rubric<70 FAIL, score<=121.5 FAIL. The plan-decoupling worked — no
   floor-spam, no plan-chasing — and the agent spent the whole run trying to
   close its perimeter, but 58 of 81 wall actions failed: 41 tiles
   `already_wall`, 18 `tile_occupied_by_building` — its OWN queued walls.
