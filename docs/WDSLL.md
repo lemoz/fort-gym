@@ -308,6 +308,39 @@ gate. Each entry states what changed and the evidence that forced it.
   the strongest untested candidate is GPT-5.5-vision — best text economy on
   record, now with eyes.
 
+- **2026-07-04 — LEGACY PLAN DECOUPLED from the governed observation and
+  action surface (operator-directed follow-through on Option B).** Forensics
+  on the GLM-5V run (`0cffcd6d`) showed the model finished its room by step
+  40, then spent 52 of its remaining 60 actions on single-tile BUILD:Floor
+  with intents like "continuing workshop room floor completion (22/25
+  done)" — chasing the retired `two_room_workshop` plan, whose progress
+  counters ("Target room: floors=X/25", "Fortress plan:
+  workshop_room_floors=X/25, completed_spaces=X/2", "Plan rects") the
+  observation still displayed. Under score-v2 those tiles pay nothing and
+  no gate asks for them: the observation was stating a false objective.
+  Removed. Second leftover: CarpenterWorkshop/furniture placement was
+  still hard-rejected outside the legacy plan rects (`outside_work_rect`),
+  meaning a second enclosed room built outside them could never be
+  furnished into a *functional* room — an invisible wall directly against
+  the plan-agnostic G4 rooms criterion. Placement legality now uses the
+  same rule Wall/Floor constructions already had: within 24 Chebyshev
+  tiles of any existing player building or citizen (`too_far_from_fort`,
+  enforced in the hooks). Gates, scoring, and rubric are untouched; this
+  changes only what the agent is told and what the bounded primitives
+  legally reach. Prompt wording updated to match. An adversarial review of
+  the diff caught one bug before it shipped: the workshop-site discovery
+  radius (35) exceeded the new locality gate (24), so the observation could
+  have called a site legal that the hook would reject — radius capped at 24
+  and the observation line now says "candidate", claiming only what is
+  verified (open 3x3 floor). Known remaining plan-shaped surfaces, left
+  deliberately: `work_metrics.lua` still computes the legacy-rect fields
+  (consumed by the scripted reference agent, which is a plan-walker by
+  design, and by hint discovery — non-binding); and the rubric's
+  `fortress_breadth`/`plan_coherence` dimensions still pay
+  `complexity_progress`/`completed_spaces` from the legacy rects, which now
+  under-credits plan-agnostic building — fixing that is a scoring-matrix
+  change and awaits operator approval.
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,

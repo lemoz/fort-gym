@@ -48,19 +48,11 @@ def test_dfhack_build_action_uses_bounded_workshop_hook(monkeypatch) -> None:
     assert calls == [("CarpenterWorkshop", 51, 36, 0)]
 
 
-def test_dfhack_build_action_uses_state_work_rect(monkeypatch) -> None:
-    seen: list[tuple[int, int, int, int, int, int] | None] = []
+def test_dfhack_build_action_does_not_thread_state_work_rect(monkeypatch) -> None:
+    seen: list[tuple] = []
 
-    def fake_build_workshop(
-        kind: str,
-        x: int,
-        y: int,
-        z: int,
-        *,
-        work_rect=None,
-        extra_allowed_rects=None,
-    ) -> Dict[str, Any]:
-        seen.append(work_rect)
+    def fake_build_workshop(kind: str, x: int, y: int, z: int) -> Dict[str, Any]:
+        seen.append((kind, x, y, z))
         return {"ok": True, "kind": kind, "x": x, "y": y, "z": z}
 
     monkeypatch.setattr("fort_gym.bench.env.executor.safe_build_workshop", fake_build_workshop)
@@ -78,7 +70,7 @@ def test_dfhack_build_action_uses_state_work_rect(monkeypatch) -> None:
     )
 
     assert result["accepted"] is True
-    assert seen == [(98, 97, 177, 102, 101, 177)]
+    assert seen == [("CarpenterWorkshop", 106, 97, 177)]
 
 
 def test_dfhack_dig_does_not_complete_by_default(monkeypatch) -> None:
@@ -200,8 +192,8 @@ def test_parse_action_defaults_dig_kind_to_dig() -> None:
 def test_dfhack_build_furniture_routes_to_place_furniture(monkeypatch) -> None:
     calls: list[tuple] = []
 
-    def fake_place_furniture(kind, x, y, z, *, work_rect=None, extra_allowed_rects=None):
-        calls.append((kind, x, y, z, work_rect))
+    def fake_place_furniture(kind, x, y, z):
+        calls.append((kind, x, y, z))
         return {"ok": True, "kind": kind, "building_id": 7}
 
     def fake_build_workshop(*args, **kwargs):
@@ -217,7 +209,7 @@ def test_dfhack_build_furniture_routes_to_place_furniture(monkeypatch) -> None:
     )
 
     assert result["accepted"] is True
-    assert calls == [("Bed", 96, 96, 177, (90, 90, 177, 99, 99, 177))]
+    assert calls == [("Bed", 96, 96, 177)]
 
 
 def test_dfhack_build_rejects_unknown_kind() -> None:

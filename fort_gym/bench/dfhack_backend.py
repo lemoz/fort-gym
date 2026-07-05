@@ -50,34 +50,6 @@ def _work_rect_from_env() -> tuple[int, int, int, int, int, int]:
         return DEFAULT_WORK_RECT
 
 
-def _fortress_workshop_rect(
-    work_rect: tuple[int, int, int, int, int, int],
-) -> tuple[int, int, int, int, int, int]:
-    rx1, ry1, rz1, rx2, ry2, rz2 = work_rect
-    plan_y2 = max(ry2, ry1 + 4)
-    return (rx2 + 4, ry1, rz1, rx2 + 8, plan_y2, rz2)
-
-
-def _footprint_in_rect(
-    x: int,
-    y: int,
-    z: int,
-    rect: tuple[int, int, int, int, int, int],
-    *,
-    width: int = 3,
-    height: int = 3,
-) -> bool:
-    rx1, ry1, rz1, rx2, ry2, rz2 = rect
-    return (
-        rz1 == rz2
-        and z == rz1
-        and x >= rx1
-        and y >= ry1
-        and x + width - 1 <= rx2
-        and y + height - 1 <= ry2
-    )
-
-
 def queue_manager_order(item: str, qty: int) -> Dict[str, object]:
     if item not in ALLOWED_ITEMS:
         return {"ok": False, "error": "invalid_item"}
@@ -93,11 +65,13 @@ def build_workshop(
     x: int,
     y: int,
     z: int,
-    *,
-    work_rect: tuple[int, int, int, int, int, int] | None = None,
-    extra_allowed_rects: Sequence[tuple[int, int, int, int, int, int]] | None = None,
 ) -> Dict[str, object]:
-    """Place a bounded safe workshop in the configured target work rectangle."""
+    """Place a bounded safe workshop near the fort.
+
+    Plan-agnostic: the hook rejects placements farther than 24 tiles
+    (Chebyshev) from every existing player building and citizen with
+    ``too_far_from_fort``.
+    """
 
     if kind not in ALLOWED_WORKSHOPS:
         return {"ok": False, "error": "invalid_kind"}
@@ -105,14 +79,6 @@ def build_workshop(
     x_val = int(x)
     y_val = int(y)
     z_val = int(z)
-    resolved_work_rect = work_rect or _work_rect_from_env()
-    allowed_rects = (
-        resolved_work_rect,
-        _fortress_workshop_rect(resolved_work_rect),
-        *(extra_allowed_rects or ()),
-    )
-    if not any(_footprint_in_rect(x_val, y_val, z_val, rect) for rect in allowed_rects):
-        return {"ok": False, "error": "outside_work_rect"}
 
     try:
         return run_lua_file(
@@ -132,14 +98,13 @@ def place_furniture(
     x: int,
     y: int,
     z: int,
-    *,
-    work_rect: tuple[int, int, int, int, int, int] | None = None,
-    extra_allowed_rects: Sequence[tuple[int, int, int, int, int, int]] | None = None,
 ) -> Dict[str, object]:
     """Install a finished furniture item as a bounded 1x1 building.
 
     Uses an existing produced item and creates a normal install job that a
     dwarf completes over real time — the player's b-menu placement.
+    Plan-agnostic: the hook rejects tiles farther than 24 tiles (Chebyshev)
+    from every existing player building and citizen with ``too_far_from_fort``.
     """
 
     if kind not in ALLOWED_FURNITURE:
@@ -148,17 +113,6 @@ def place_furniture(
     x_val = int(x)
     y_val = int(y)
     z_val = int(z)
-    resolved_work_rect = work_rect or _work_rect_from_env()
-    allowed_rects = (
-        resolved_work_rect,
-        _fortress_workshop_rect(resolved_work_rect),
-        *(extra_allowed_rects or ()),
-    )
-    if not any(
-        _footprint_in_rect(x_val, y_val, z_val, rect, width=1, height=1)
-        for rect in allowed_rects
-    ):
-        return {"ok": False, "error": "outside_work_rect"}
 
     try:
         return run_lua_file(

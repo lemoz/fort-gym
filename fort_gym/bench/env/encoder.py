@@ -941,34 +941,18 @@ def encode_observation(
         ),
     ])
     if work:
-        status_lines.append(
-            "Target room: "
-            f"floors={work.get('target_floor_tiles', 0)}/{work.get('target_tiles', 0)}, "
-            f"walls={work.get('target_wall_tiles', 0)}, "
-            f"designations={work.get('target_dig_designations', 0)}"
-        )
-        starter_rect = _int_list_or_none(work.get("target_rect"), 6)
-        if starter_rect is not None:
-            rect_line = f"Plan rects (x1,y1,z1,x2,y2,z2): starter={_render_int_list(starter_rect)}"
-            connector_rect = _int_list_or_none(work.get("fortress_connector_rect"), 6)
-            if connector_rect is not None:
-                rect_line += f", connector={_render_int_list(connector_rect)}"
-            workshop_room_rect = _int_list_or_none(work.get("fortress_workshop_room_rect"), 6)
-            if workshop_room_rect is not None:
-                rect_line += f", workshop_room={_render_int_list(workshop_room_rect)}"
-            status_lines.append(rect_line)
         build_site = _int_list_or_none(work.get("carpenter_build_site"), 3)
         if build_site is not None:
             x, y, z = build_site
             status_lines.append(
-                f"Legal BUILD site observed: carpenter_build_site=({x},{y},{z}) — a "
-                "BUILD there fits the allowed rects."
+                f"Workshop site candidate observed: carpenter_build_site=({x},{y},{z}) "
+                "— 3x3 open floor there."
             )
         else:
             status_lines.append(
-                "No legal BUILD site observed yet. BUILD must fit a full 3x3 "
-                "footprint on open floor inside the starter or workshop_room "
-                "rects; complete more floor first."
+                "No 3x3 workshop site observed yet. CarpenterWorkshop needs a "
+                "full 3x3 footprint of open floor near your fort; dig out or "
+                "clear more contiguous floor space first."
             )
         if work.get("cursor_z") is not None or work.get("window_z") is not None:
             cursor_x = work.get("cursor_x")
@@ -1151,16 +1135,6 @@ def encode_observation(
                 "proven. Solve the construction or task-menu blocker before "
                 "waiting for production."
             )
-        if work.get("fortress_plan_name"):
-            status_lines.append(
-                "Fortress plan: "
-                f"connector_floors={work.get('fortress_connector_floor_tiles', 0)}/"
-                f"{work.get('fortress_connector_tiles', 0)}, "
-                f"workshop_room_floors={work.get('fortress_workshop_room_floor_tiles', 0)}/"
-                f"{work.get('fortress_workshop_room_tiles', 0)}, "
-                f"completed_spaces={work.get('fortress_complexity_spaces_completed', 0)}/2"
-            )
-
     crew = clean_state.get("crew")
     if isinstance(crew, dict) and crew.get("ok"):
         citizens = crew.get("citizens") if isinstance(crew.get("citizens"), dict) else {}
@@ -1330,7 +1304,7 @@ def encode_observation(
                     else ""
                 )
                 status_lines.append(
-                    f"Plan-area tiles: wall={wall} (diggable), {tree_part}"
+                    f"Fort-area tiles: wall={wall} (diggable), {tree_part}"
                     f"floor={floor}, "
                     f"shrub/other={shrub_or_other} (not diggable — DIG designations "
                     "on non-wall tiles are silently dropped by DF), "

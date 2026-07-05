@@ -46,15 +46,17 @@ Legal actions (the only four types accepted):
 kind dig/channel designates the rectangle (max 30x30, one z-level); only WALL tiles can be dug — \
 DF silently drops designations on floor/shrub/other tiles, and miners must then reach the walls \
 and work over time. kind "chop" designates the tree trunks inside the rect for felling (the \
-observation's plan-area line reports tree_trunk counts); a dwarf with the woodcutting labor fells \
+observation's Fort-area tiles line reports tree_trunk counts); a dwarf with the woodcutting labor fells \
 them over time and the logs appear in the Wood stock. Carpentry production consumes wood — \
 without logs, workshop orders cancel.
 - BUILD: params {"kind": "CarpenterWorkshop"|"Bed"|"Door"|"Table"|"Chair"|"Wall"|"Floor", "x": X, \
 "y": Y, "z": Z, "x2": X2, "y2": Y2 (optional)}. \
-CarpenterWorkshop places a 3x3 workshop on open floor inside your work area (the work metrics \
-include a `carpenter_build_site` when a legal spot is visible); a dwarf must then construct it. \
-Furniture kinds install an already-produced item of that type as a 1x1 building inside the plan \
-rects — a dwarf hauls and installs it over time. Installing furniture requires a finished item in \
+CarpenterWorkshop places a 3x3 workshop on open floor within 24 tiles of your fort — near any \
+existing building or citizen (the work metrics include a `carpenter_build_site` when a candidate \
+spot is visible); a dwarf must then construct it. \
+Furniture kinds install an already-produced item of that type as a 1x1 building, anywhere within \
+24 tiles of your fort — a dwarf hauls and installs it over time; furnishing an enclosed space is \
+what turns it into a functional room. Installing furniture requires a finished item in \
 stock (see "Finished goods in play"); installed beds/doors/tables/chairs make rooms functional. \
 Wall and Floor kinds place construction segments: a single tile at (x, y, z), or a line up to 10 \
 tiles when optional x2/y2 are given, within 24 tiles of your fort. Each tile consumes one log, \
@@ -74,7 +76,7 @@ same grid rendered as a color image) of your fort area with a \
 coordinate ruler (W=your walls, b/t/c/d=furniture, w=workshop, .=open floor). It is the \
 authoritative view for wall geometry: an enclosure must form a complete hollow ring with floor \
 inside; trace it on the minimap and wall the gaps. It also gives the recorded game screen text \
-plus derived work metrics (the `work` fields): target/connector/workshop-room rectangles, wall vs floor tile counts, dig designations, \
+plus derived work metrics (the `work` fields): wall vs floor tile counts, dig designations, \
 active jobs, workshop counts and usability, and manager order counts. Read them to see whether \
 your previous command actually worked before issuing the next one. A == MEMORY == section carries \
 your own plan, POIs, and failed attempts from earlier steps.
