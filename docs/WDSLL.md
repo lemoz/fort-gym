@@ -341,6 +341,29 @@ gate. Each entry states what changed and the evidence that forced it.
   under-credits plan-agnostic building — fixing that is a scoring-matrix
   change and awaits operator approval.
 
+- **2026-07-05 — G4 vision series run 1 (post-decoupling): FAIL 3/6, and it
+  exposed the next invisible fact.** Run `24042365` (GLM-5V pinned, 100
+  steps, memory-off, commit `cc0a33ec1`, score-v2 112.87, rubric 68.74 with
+  ZERO blockers, 100/100 screen frames,
+  `fortgym.live/r/T37FoZzcriyNd6OHH-0CTo-1G6giqMt3`): ticks 100,404 PASS,
+  population 7/7 PASS, produced goods (2 beds + 3 doors) PASS; rooms 0/2
+  FAIL, rubric&lt;70 FAIL, score&lt;=121.5 FAIL. The plan-decoupling worked — no
+  floor-spam, no plan-chasing — and the agent spent the whole run trying to
+  close its perimeter, but 58 of 81 wall actions failed: 41 tiles
+  `already_wall`, 18 `tile_occupied_by_building` — its OWN queued walls.
+  Root cause: a queued wall is a Construction-type *building* until a dwarf
+  builds it, and the minimap only drew `world.constructions` (built), so
+  pending walls rendered as open floor. The agent re-placed walls it had
+  already ordered and could not tell phantom gaps from real ones. Wood was
+  never the constraint (80 logs throughout). Correction (operator-approved,
+  PR #38): pending constructions render as `x` on the minimap (text and
+  PNG), legends and prompt explain "already ordered — do not re-place,
+  advance time", and the Fort structure line counts
+  `queued_constructions`. Display only: an unbuilt wall never seals a room,
+  so the enclosure flood-fill boundary is untouched (locked by test). Also
+  merged in the window (PR #36): `POST /jobs` parallelism clamps to 1 for
+  the dfhack backend — concurrent workers were racing the single live save.
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,
