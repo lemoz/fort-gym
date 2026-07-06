@@ -405,6 +405,27 @@ gate. Each entry states what changed and the evidence that forced it.
   assisted sets, proof via unsuspended/suspended_found counts) — draft PR
   #41, a legal-action-surface widening held for operator merge.
 
+- **2026-07-06 — PRE-DECLARED PROTOCOL: G4 repeatability series + 250-step
+  endurance probe (operator-approved before launch).** (a) Repeatability:
+  four additional runs (#5-#8 of the lineage), GLM-5V pinned, 100 steps,
+  memory-off, score-v2, config unchanged from the passing run `2f58fd37`;
+  all four run to completion regardless of outcome; the reported number is
+  the pass rate over the five-run lineage. Honest footnote: runs #5-#8
+  execute on post-PR-#44/#46 code where the proof window follows the fort,
+  so proof-backed step counts (and via the repetition check, possibly
+  rubric) are not strictly comparable to run #4's 46/100 — the change was
+  operator-approved measurement truth (walls built off-window now count as
+  evidence) and is disclosed here in advance. (b) Endurance probe: ONE run,
+  same config, 250 steps x 1000 ticks. A probe, not a gate. Pre-declared
+  questions, each answered from the run's own trace at step 100 vs step
+  250: functional_rooms strictly greater at 250 than at 100 (structure
+  compounds); produced-goods diversity >= 4 types by 250; no
+  repetitive_policy or no_production_surface blocker at end; final score
+  >= 1.25x the step-100 score (the extra horizon is used, not idled).
+  Purpose: measure whether the policy compounds or satisfices past
+  passing-level structure — either answer is a finding and gets reported
+  with the same prominence.
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,
