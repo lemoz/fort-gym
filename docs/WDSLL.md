@@ -426,6 +426,31 @@ gate. Each entry states what changed and the evidence that forced it.
   passing-level structure — either answer is a finding and gets reported
   with the same prominence.
 
+- **2026-07-06 — RESULTS: repeatability 2/5, and the endurance probe found
+  the next incentive gap.** Repeatability series (runs #5-#8, 100 steps,
+  config identical to the pass): run #5 `01a57454` **PASSED 6/6** (second
+  pass in history); #6 `d06cc571`, #7 `7f268bcc`, #8 `71ffc569` failed.
+  **Lineage pass rate: 2/5 (40%)** — G4 is real but unreliable; the
+  bottleneck remains second-room completion variance. Endurance probe run
+  #9 `ad70df06` (250 steps, 198,042 ticks, score 515.44, rubric 68.61 zero
+  blockers, pop 7->13 with ALL migrants surviving, 250/250 frames, 500/500
+  events `z-ai/glm-5v-turbo`,
+  `fortgym.live/r/8ACitgQEErsR8fdjTRMb59CrTm4D6k1q`). Pre-declared
+  answers: (a) structure compounds — **NO**: 1 functional room at step 98,
+  still 1 at step 249; (b) goods diversity >= 4 — YES (5 types); (c) no
+  degeneration blockers — YES; (d) score >= 1.25x step-100 — YES, 5.35x
+  (93.59 -> 500.8). Verdict: **the policy satisfices structurally and
+  compounds economically in a degenerate direction** — after closing room
+  1 it spent ~150 steps as a chair factory (111 BUILD:Chair actions, 10
+  chair orders, 26 chairs produced for 13 dwarves). Not an illegal-progress
+  exploit (every good is real, produced world-change) but
+  Goodhart-by-monoculture: score-v2 pays real production linearly with no
+  diminishing returns, so the optimal long-horizon policy is to mass-produce
+  the cheapest item rather than build. Evidence for the pending score-v3
+  decision (plan-agnostic complexity + per-type diminishing returns are now
+  both on the table, one operator-approved boundary). The rubric held
+  partial ground: 68.61 stays under the 70 gate bar.
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,
