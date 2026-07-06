@@ -19,6 +19,8 @@ from ..env.mock_env import MockEnvironment
 from ..env.scenarios import evaluate_scenario_assertions, get_mock_scenario
 from ..env.state_reader import StateReader
 from ..dfhack_backend import (
+    MAX_SNAPSHOT_H,
+    MAX_SNAPSHOT_W,
     prepare_keystroke_target,
     read_fort_metrics,
     read_job_metrics,
@@ -185,6 +187,44 @@ def _same_target_route(
 
 
 def _map_snapshot_rect_from_state(state: Dict[str, Any], margin: int = 1) -> tuple[int, int, int, int, int, int] | None:
+    # Prefer the plan-agnostic fort minimap window (fort_metrics.lua): a
+    # citizen/building/construction-anchored bbox, so the snapshot — and the
+    # tile-change proof diffed from it — follows wherever the fort is actually
+    # built. The legacy plan-rect bbox below remains only as a fallback: a
+    # fixed window that plan-agnostic forts outgrow (run 2f58fd37 built its
+    # second room outside it, leaving walls unproven and the replay frozen).
+    fort = state.get("fort")
+    if isinstance(fort, dict) and fort.get("ok"):
+        origin = fort.get("map_origin")
+        rows = fort.get("map_rows")
+        if (
+            isinstance(origin, (list, tuple))
+            and len(origin) == 3
+            and isinstance(rows, list)
+            and rows
+            and all(isinstance(row, str) for row in rows)
+        ):
+            try:
+                origin_x, origin_y, origin_z = (int(v) for v in origin)
+            except (TypeError, ValueError):
+                origin_x = None
+            if origin_x is not None:
+                width = max(len(row) for row in rows)
+                height = len(rows)
+                if width > 0 and height > 0:
+                    width = min(width + 2 * margin, MAX_SNAPSHOT_W)
+                    height = min(height + 2 * margin, MAX_SNAPSHOT_H)
+                    x1 = max(0, origin_x - margin)
+                    y1 = max(0, origin_y - margin)
+                    return (
+                        x1,
+                        y1,
+                        origin_z,
+                        x1 + width - 1,
+                        y1 + height - 1,
+                        origin_z,
+                    )
+
     work = state.get("work")
     if not isinstance(work, dict):
         return None
@@ -1496,8 +1536,10 @@ def run_once(
             return state
 
         def observe() -> Dict[str, Any]:
-            return attach_fort_metrics(
-                attach_crew_metrics(
+            # fort metrics attach before crew: the crew tile-survey rect
+            # follows the fort minimap window when it is available.
+            return attach_crew_metrics(
+                attach_fort_metrics(
                     attach_governed_build_site(StateReader.from_dfhack(dfhack_client))
                 )
             )
