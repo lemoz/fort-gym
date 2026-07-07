@@ -159,6 +159,44 @@ must be generalized or made optional before G6. Then: a fresh seed/embark the
 agent has never seen, reaching G4-level structure. This is the gate that
 separates "solved one map" from "plays Dwarf Fortress."
 
+### G7 — The fort lives: a self-sufficient year (PROPOSED 2026-07-06, not yet ratified)
+Status: operator direction approved; gate NOT active until (a) score-v3 is
+ratified and landed (docs/score_v3_proposal.md), (b) G6 has been attempted,
+and (c) the survival primitives exist — each a bounded, player-parity,
+operator-approved action-surface addition in the tradition of furniture,
+Wall/Floor, and UNSUSPEND: farm-plot placement, plant-gathering
+designation, a Still workshop with brew orders, and (optional, decide at
+implementation) kitchen/meal orders.
+
+Rationale: every gate to date ran inside DF's benign opening — starting
+stocks, no threats, nothing that punishes idleness. The endurance probe
+showed the wall: food drained 45->31 with nothing replenishing it; every
+fort ever built here eventually dies of thirst with no enemy required.
+G7 is the first gate where the game itself pushes back, and it is
+monoculture-proof by construction: survival is a portfolio problem.
+
+Criteria (one run, plan-agnostic, score-v3, memory per standing config):
+- **Duration**: >= 403,200 elapsed ticks (one full in-game year).
+- **The loop closes**: food AND drink produced in-run (from the run's own
+  farms/brewing, evidenced by production deltas — same evidence class as
+  G3's beds) each exceed the run's consumption of that resource; embark
+  stock cannot carry the year.
+- **Nobody dies of neglect** (kill rule): zero deaths from starvation,
+  dehydration, or tantrum spiral. One such death fails the run outright —
+  no partial credit.
+- **A settlement, not a camp**: population >= 15 at year end (migrant
+  waves survived), >= 3 functional rooms, installed beds >= population/3.
+- **No degeneracy**: rubric clean of repetitive_policy /
+  no_production_surface / no_fort_structure / legality blockers; scalar
+  bar to be set from the score-v3 calibration table before the first
+  attempt (pre-declared, like every gate).
+
+Evidence: unchanged — recorded frames, per-step gameplay_proof, provenance
+gating, public replay. Beyond G7 the ladder continues to G8 — depth
+(multi-z fortress: stairs, underground rooms — the next spatial-reasoning
+escalation past the hollow ring), and the open-source flywheel: a standing
+public leaderboard where any model attempts the ladder.
+
 ## Measurement mechanics (all already exist unless noted)
 
 | Fact | Where it lives |
