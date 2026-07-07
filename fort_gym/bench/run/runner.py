@@ -1599,6 +1599,7 @@ def run_once(
 
     previous_state: Optional[Dict[str, Any]] = None
     baseline_work: Optional[Dict[str, Any]] = None
+    baseline_fort: Optional[Dict[str, Any]] = None
     baseline_goods: Optional[Dict[str, Any]] = None
     baseline_wealth: int | None = None
     action_history: List[Dict[str, Any]] = []  # Track recent actions for keystroke mode memory
@@ -2039,6 +2040,9 @@ def run_once(
                 if baseline_work is None:
                     work_snapshot = state_before.get("work")
                     baseline_work = dict(work_snapshot) if isinstance(work_snapshot, dict) else {}
+                if baseline_fort is None:
+                    fort_snapshot = state_before.get("fort")
+                    baseline_fort = dict(fort_snapshot) if isinstance(fort_snapshot, dict) else {}
                 crew_snapshot = state_before.get("crew")
                 current_goods = (
                     dict(crew_snapshot.get("goods"))
@@ -2405,6 +2409,7 @@ def run_once(
                         baseline_work,
                         current_goods=current_goods,
                         baseline_goods=baseline_goods,
+                        population=advance_state.get("population"),
                     )
                 )
                 metrics_snapshot.update(
@@ -2417,6 +2422,17 @@ def run_once(
                     metrics.complexity_progress_delta(
                         current_work if isinstance(current_work, dict) else {},
                         baseline_work,
+                        # NOTE: fort structure is only attached to state_before
+                        # (via attach_fort_metrics() inside observe()) — the
+                        # dfhack "advance" call (advance_state) never carries a
+                        # "fort" key (see StateReader.from_dfhack / advance_env
+                        # above), so advance_state.get("fort") would always be
+                        # None and this branch would never activate. Read the
+                        # freshest fort snapshot the same way the existing
+                        # governed_dfhack_mode block below does (`fort_before =
+                        # state_before.get("fort")`).
+                        current_fort=state_before.get("fort"),
+                        baseline_fort=baseline_fort,
                     )
                 )
                 current_ui_work = advance_state.get("ui_work")
@@ -2578,8 +2594,11 @@ def run_once(
                     metrics_snapshot["ui_successful_targets"] = ui_successful_targets
                 utility_action = metrics.utility_action_progress(action, execute_result)
                 metrics_snapshot.update(utility_action)
+                # score-v3: utility_progress can now be a float (demand-capped
+                # production pays a 0.2 surplus rate) — do not int()-truncate
+                # it away here, that would silently discard the surplus pay.
                 metrics_snapshot["utility_progress"] = max(
-                    int(metrics_snapshot.get("utility_progress") or 0),
+                    metrics_snapshot.get("utility_progress") or 0,
                     int(utility_action.get("utility_action_progress") or 0),
                 )
                 if is_governed_dfhack_mode:
