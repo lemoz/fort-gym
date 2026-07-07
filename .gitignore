@@ -16,3 +16,4 @@ fort_gym/bench/env/remote_proto/gen/
 artifacts/
 fort_gym/artifacts/
 tmp_*
+.worktrees/
