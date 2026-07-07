@@ -159,6 +159,44 @@ must be generalized or made optional before G6. Then: a fresh seed/embark the
 agent has never seen, reaching G4-level structure. This is the gate that
 separates "solved one map" from "plays Dwarf Fortress."
 
+### G7 — The fort lives: a self-sufficient year (PROPOSED 2026-07-06, not yet ratified)
+Status: operator direction approved; gate NOT active until (a) score-v3 is
+ratified and landed (docs/score_v3_proposal.md), (b) G6 has been attempted,
+and (c) the survival primitives exist — each a bounded, player-parity,
+operator-approved action-surface addition in the tradition of furniture,
+Wall/Floor, and UNSUSPEND: farm-plot placement, plant-gathering
+designation, a Still workshop with brew orders, and (optional, decide at
+implementation) kitchen/meal orders.
+
+Rationale: every gate to date ran inside DF's benign opening — starting
+stocks, no threats, nothing that punishes idleness. The endurance probe
+showed the wall: food drained 45->31 with nothing replenishing it; every
+fort ever built here eventually dies of thirst with no enemy required.
+G7 is the first gate where the game itself pushes back, and it is
+monoculture-proof by construction: survival is a portfolio problem.
+
+Criteria (one run, plan-agnostic, score-v3, memory per standing config):
+- **Duration**: >= 403,200 elapsed ticks (one full in-game year).
+- **The loop closes**: food AND drink produced in-run (from the run's own
+  farms/brewing, evidenced by production deltas — same evidence class as
+  G3's beds) each exceed the run's consumption of that resource; embark
+  stock cannot carry the year.
+- **Nobody dies of neglect** (kill rule): zero deaths from starvation,
+  dehydration, or tantrum spiral. One such death fails the run outright —
+  no partial credit.
+- **A settlement, not a camp**: population >= 15 at year end (migrant
+  waves survived), >= 3 functional rooms, installed beds >= population/3.
+- **No degeneracy**: rubric clean of repetitive_policy /
+  no_production_surface / no_fort_structure / legality blockers; scalar
+  bar to be set from the score-v3 calibration table before the first
+  attempt (pre-declared, like every gate).
+
+Evidence: unchanged — recorded frames, per-step gameplay_proof, provenance
+gating, public replay. Beyond G7 the ladder continues to G8 — depth
+(multi-z fortress: stairs, underground rooms — the next spatial-reasoning
+escalation past the hollow ring), and the open-source flywheel: a standing
+public leaderboard where any model attempts the ladder.
+
 ## Measurement mechanics (all already exist unless noted)
 
 | Fact | Where it lives |
@@ -405,6 +443,7 @@ gate. Each entry states what changed and the evidence that forced it.
   assisted sets, proof via unsuspended/suspended_found counts) — draft PR
   #41, a legal-action-surface widening held for operator merge.
 
+<<<<<<< HEAD
 - **2026-07-05 — G4 PASSED. First pass in project history, 6/6 criteria.**
   Run `2f58fd37` (GLM-5V pinned `dfhack-governed-llm-glm5v`, 100 steps,
   memory-off, commit `893394920`, score-v2,
@@ -427,6 +466,60 @@ gate. Each entry states what changed and the evidence that forced it.
   existence, not reliability: the G4 ladder rung is cleared, and the
   natural follow-ups are a repeatability series on this seed and G6
   generalization (a `seed_region2_fresh` save already exists on the VM).
+=======
+- **2026-07-07 — SCORE-V3 RATIFIED AND IMPLEMENTED (operator-approved).**
+  Per `docs/score_v3_proposal.md`: demand-capped production
+  (`utility_progress` pays full rate per orderable-good type up to fort
+  demand/population, 20% surplus beyond it — `produced_goods_delta` keeps
+  paying the raw uncapped count for gameplay-proof consumers), plan-agnostic
+  complexity (`complexity_progress` pays from flood-fill
+  functional_rooms/enclosed_spaces/constructions when fort data is present,
+  falling back to the exact legacy tile/space computation on old traces or
+  the mock backend), and the rubric-half `fortress_breadth`/`plan_coherence`
+  dims from `feat/rubric-plan-agnostic` (already CI-green on main) — all
+  landed together as one version boundary, `score_version: 3`. Boundary
+  discipline: every prior run stays v1/v2 and is not comparable across this
+  boundary. Calibration table: `docs/score_v3_calibration.md` (also in the
+  PR body for branch `feat/score-v3`) — validation gate passes exactly
+  (|Δv2| = 0.0) on all 9 score_version>=2 runs checked, confirming the
+  reconstruction is faithful, but the ratified acceptance check (chair
+  factory + DeepSeek exploit must both score below both G4-passing runs
+  under v3) **FAILS for the chair-factory run** (`ad70df06`: v3 = 508.06,
+  both G4-passing runs score 180.33/207.58) because of `production_score`
+  (paying uncapped for `production_workshops_delta`), a component neither
+  v3 change touches — the same pattern independently shows up on a second
+  sampled run (`7f268bcc`, production_score 420.0). This is reported, not
+  silently tuned around: the PR is held for operator review of the
+  calibration table before any merge or gate re-run under v3.
+
+- **2026-07-07 — SCORE-V3 PRODUCTION AMENDMENT (operator-ratified, second
+  calibration round).** In response to round 1's finding, the operator
+  ratified amending production within the v3 boundary:
+  `production_workshops_delta` now pays usable-workshop deltas ONLY —
+  task-jobs queue depth drops out of the payment entirely (v2's
+  "queueing is a menu action" doctrine, now applied to production) though
+  it stays recorded for observability — and `production_score` is bounded
+  at its 10-point weight (proven capacity, not an open-ended queue-depth
+  meter). Round-2 calibration (`docs/score_v3_calibration.md`, commit
+  `77adc8720`): validation gate again passes exactly (|Δv2| = 0.0 on all
+  9 score_version-2 runs, now with true-v2 production formulas frozen
+  inline in the rescorer); the queue-churn runs deflate correctly
+  (`7f268bcc` 497.56 -> 104.54; `ad70df06` production_score 320 -> 10).
+  Acceptance verdict: the DeepSeek arm passes (78.81, below both G4
+  passes), but **the chair-factory arm still fails by 10.48 points**
+  (`ad70df06` v3 = 198.06 vs the better G4 pass at 187.58) — no longer
+  from any exploit vector, but from honest diversified production volume
+  over its 2.5x step horizon (250 vs 100 steps; per-type demand caps
+  across six good types leave ~78 full-rate units reachable) plus
+  open-ended utility/wealth scaling. Per the ratified stop-and-report
+  rule, no further coefficient was touched: whether to accept the gap
+  (the comparability clause already forbids cross-horizon score
+  comparisons for gates), cap utility volume, bound wealth, or normalize
+  by steps is an operator decision. Every audited adjacent path
+  (`utility_action_progress`, keystroke completed-task crediting) was
+  found bounded or completion-gated — not the same bug — and left
+  untouched. PR remains HELD; prior runs stay v1/v2, not comparable.
+>>>>>>> origin/main
 
 ## Reporting format (every gate attempt)
 

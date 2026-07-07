@@ -922,6 +922,21 @@
       return `${before}->${after}`;
     }
 
+    function extractFortMap(record) {
+      // Governed runs attach a read-only, plan-agnostic "fort" block to each
+      // step's observation (fort_gym/bench/run/runner.py: attach_fort_metrics).
+      // It carries a per-step minimap (map_rows/map_origin) plus structure
+      // counts. Older traces predate this and simply lack the key.
+      const fort = record?.observation?.fort;
+      if (!fort || typeof fort !== 'object') return null;
+      const mapRows = fort.map_rows;
+      const mapOrigin = fort.map_origin;
+      if (!Array.isArray(mapRows) || !mapRows.length) return null;
+      if (!Array.isArray(mapOrigin) || mapOrigin.length < 3) return null;
+      if (!mapOrigin.every(value => typeof value === 'number' && Number.isFinite(value))) return null;
+      return fort;
+    }
+
     function buildReplaySnapshot(index) {
       const boundedIndex = Math.max(0, Math.min(index, replayRecords.length - 1));
       const record = replayRecords[boundedIndex] || {};
@@ -965,6 +980,7 @@
         buildAction,
         screenText: extractScreenText(record),
         mapSnapshot: record.map_snapshot?.ok ? record.map_snapshot : null,
+        fortMap: extractFortMap(record),
         gameplayProof: extractGameplayProof(record)
       };
     }
@@ -1032,24 +1048,6 @@
       }
     }
 
-    function drawMapRectOutline(rect, scale, color, label) {
-      if (!rect) return;
-      const x = scale.left + (rect[0] - scale.x1) * scale.tile;
-      const y = scale.top + (rect[1] - scale.y1) * scale.tile;
-      const width = (rect[3] - rect[0] + 1) * scale.tile;
-      const height = (rect[4] - rect[1] + 1) * scale.tile;
-      gameCtx.save();
-      gameCtx.strokeStyle = color;
-      gameCtx.lineWidth = 2;
-      gameCtx.strokeRect(x, y, width, height);
-      drawReplayText(label, x + 4, y + 4, {
-        color,
-        size: Math.max(9, Math.min(12, scale.tile * 0.32)),
-        weight: 800
-      });
-      gameCtx.restore();
-    }
-
     function drawChangedTileHighlights(changes, scale, bounds) {
       if (!Array.isArray(changes) || changes.length === 0) return;
       gameCtx.save();
@@ -1066,6 +1064,194 @@
         gameCtx.strokeRect(px + 1, py + 1, Math.max(1, scale.tile - 2), Math.max(1, scale.tile - 2));
       }
       gameCtx.restore();
+    }
+
+    // Mirrors fort_gym/bench/agent/minimap_render.py TILE_STYLES so the replay
+    // viewer's colors match what the agent itself was shown while playing.
+    const FORT_TILE_STYLES = {
+      '#': { fill: '#5a5449', glyph: null },   // natural wall — dark earth
+      'W': { fill: '#d66a28', glyph: null },   // player-built wall — orange
+      'x': { fill: '#f0b27a', glyph: 'x' },    // queued wall/floor — pale orange
+      'T': { fill: '#226630', glyph: 'T' },    // tree trunk — deep green
+      '.': { fill: '#ded2b4', glyph: null },   // open floor — light tan
+      ',': { fill: '#b0c896', glyph: null },   // shrub/boulder — pale green
+      '~': { fill: '#6e82a0', glyph: null },   // impassable — blue-gray
+      ' ': { fill: '#141414', glyph: null },   // unknown/out of range — near-black
+      'b': { fill: '#963c8c', glyph: 'b' },    // bed
+      't': { fill: '#3c6eaa', glyph: 't' },    // table
+      'c': { fill: '#3c96aa', glyph: 'c' },    // chair
+      'd': { fill: '#785a32', glyph: 'd' },    // door
+      'w': { fill: '#2846a0', glyph: 'w' },    // workshop
+      '@': { fill: '#fafafa', glyph: '@' }     // dwarf
+    };
+    const FORT_TILE_DEFAULT = { fill: '#c82828', glyph: '?' };
+    const FORT_MINIMAP_LEGEND =
+      'W=your wall  x=queued wall  #=natural  T=tree  b/t/c/d=furniture  w=workshop  @=dwarf  .=floor  ,=shrub';
+
+    function fortMapBounds(fortMap) {
+      const rows = Array.isArray(fortMap?.map_rows) ? fortMap.map_rows : [];
+      const origin = Array.isArray(fortMap?.map_origin) ? fortMap.map_origin : null;
+      if (!rows.length || !origin) return null;
+      const ox = toNumber(origin[0]);
+      const oy = toNumber(origin[1]);
+      const height = rows.length;
+      const width = Math.max(...rows.map(row => String(row).length));
+      if (width === 0 || height === 0) return null;
+      return { x1: ox, y1: oy, x2: ox + width - 1, y2: oy + height - 1, width, height };
+    }
+
+    function drawFortMinimap(snapshot, canvasW, canvasH) {
+      const fortMap = snapshot.fortMap;
+      const bounds = fortMapBounds(fortMap);
+      if (!bounds) {
+        showPlaceholder('Fort minimap has no tiles for this step');
+        return;
+      }
+      const rows = fortMap.map_rows;
+      const origin = fortMap.map_origin;
+      const z = origin[2];
+
+      gameCtx.fillStyle = '#070a10';
+      gameCtx.fillRect(0, 0, canvasW, canvasH);
+      gameCtx.fillStyle = '#0f1521';
+      gameCtx.fillRect(28, 28, 620, 424);
+      gameCtx.strokeStyle = 'rgba(255,255,255,0.08)';
+      gameCtx.strokeRect(28, 28, 620, 424);
+
+      const mapCols = bounds.width;
+      const mapRows = bounds.height;
+      const tile = Math.max(6, Math.min(20, Math.floor(Math.min(560 / mapCols, 300 / mapRows))));
+      const scale = {
+        x1: bounds.x1,
+        y1: bounds.y1,
+        tile,
+        left: 28 + Math.floor((620 - mapCols * tile) / 2),
+        top: 84 + Math.floor((288 - mapRows * tile) / 2)
+      };
+
+      drawReplayText('DERIVED DFHACK MAP INSPECTION', 52, 46, { color: '#ffd966', size: 13, weight: 800 });
+      drawReplayText('Not a DF screen / not gameplay proof', 52, 64, {
+        color: '#9fb1d6',
+        size: 12,
+        weight: 700
+      });
+      drawReplayText('per-step fort minimap — the derived grid the agent observed', 52, 80, {
+        color: '#6b7c99',
+        size: 11,
+        weight: 600
+      });
+
+      // Coordinate rulers along the top and left edges, real map x/y so the
+      // viewer can correlate a step's minimap against the intent text.
+      gameCtx.textAlign = 'center';
+      gameCtx.textBaseline = 'middle';
+      for (let col = 0; col < mapCols; col += 2) {
+        drawReplayText(String((bounds.x1 + col) % 100), scale.left + col * tile + tile / 2, scale.top - 10, {
+          color: '#6b7c99',
+          size: 9,
+          weight: 600,
+          align: 'center'
+        });
+      }
+      for (let row = 0; row < mapRows; row += 2) {
+        drawReplayText(String((bounds.y1 + row) % 100), scale.left - 12, scale.top + row * tile + tile / 2, {
+          color: '#6b7c99',
+          size: 9,
+          weight: 600,
+          align: 'center'
+        });
+      }
+
+      gameCtx.strokeStyle = 'rgba(159,177,214,0.07)';
+      gameCtx.lineWidth = 1;
+      for (let col = 0; col <= mapCols; col++) {
+        const x = scale.left + col * tile;
+        gameCtx.beginPath();
+        gameCtx.moveTo(x, scale.top);
+        gameCtx.lineTo(x, scale.top + mapRows * tile);
+        gameCtx.stroke();
+      }
+      for (let row = 0; row <= mapRows; row++) {
+        const y = scale.top + row * tile;
+        gameCtx.beginPath();
+        gameCtx.moveTo(scale.left, y);
+        gameCtx.lineTo(scale.left + mapCols * tile, y);
+        gameCtx.stroke();
+      }
+
+      gameCtx.textAlign = 'center';
+      gameCtx.textBaseline = 'middle';
+      for (let row = 0; row < rows.length; row++) {
+        const line = String(rows[row]);
+        for (let col = 0; col < line.length; col++) {
+          const char = line[col];
+          const style = FORT_TILE_STYLES[char] || FORT_TILE_DEFAULT;
+          const px = scale.left + col * tile;
+          const py = scale.top + row * tile;
+          gameCtx.fillStyle = style.fill;
+          gameCtx.fillRect(px + 1, py + 1, Math.max(1, tile - 2), Math.max(1, tile - 2));
+          if (tile >= 12 && style.glyph) {
+            gameCtx.fillStyle = char === '@' ? '#111827' : '#ffffff';
+            gameCtx.font = `700 ${Math.max(8, Math.floor(tile * 0.6))}px 'Segoe UI', Arial, sans-serif`;
+            gameCtx.fillText(style.glyph, px + tile / 2, py + tile / 2);
+          }
+        }
+      }
+
+      drawReplayText(FORT_MINIMAP_LEGEND, 52, scale.top + mapRows * tile + 16, {
+        color: '#9fd7b2',
+        size: 10,
+        weight: 600
+      });
+
+      gameCtx.fillStyle = '#101827';
+      gameCtx.fillRect(680, 28, 252, 424);
+      gameCtx.strokeStyle = 'rgba(255,255,255,0.08)';
+      gameCtx.strokeRect(680, 28, 252, 424);
+      drawReplayText(`Step ${snapshot.record.step ?? snapshot.index}`, 704, 52, {
+        color: '#f5f7fb',
+        size: 22,
+        weight: 800
+      });
+      drawReplayText('Derived map scan', 704, 84, { color: '#ffd966', size: 14, weight: 800 });
+      const scoreValue = typeof snapshot.score.value === 'number' ? snapshot.score.value.toFixed(1) : '--';
+      drawReplayText(`Score ${scoreValue}`, 704, 112, { color: '#ffd966', size: 16, weight: 800 });
+      let nextY = wrapReplayText(snapshot.action.intent || 'Derived from live DF map memory after this step', 704, 146, 204, 17);
+      nextY += 12;
+      drawReplayText(`Rect: ${bounds.x1},${bounds.y1} to ${bounds.x2},${bounds.y2}`, 704, nextY);
+      drawReplayText(`Z: ${z ?? '--'}`, 704, nextY + 26);
+      const functionalRooms = fortMap.functional_rooms;
+      const enclosedSpaces = fortMap.enclosed_spaces;
+      const pendingConstructions = fortMap.pending_constructions;
+      drawReplayText(
+        `Rooms: ${functionalRooms ?? '--'} functional / ${enclosedSpaces ?? '--'} enclosed, queued: ${pendingConstructions ?? 0}`,
+        704,
+        nextY + 52
+      );
+      const proof = snapshot.gameplayProof || {};
+      const proofY = nextY + 90;
+      const firstChange = Array.isArray(proof.changed_tiles) && proof.changed_tiles.length
+        ? proof.changed_tiles[0]
+        : null;
+      drawReplayText(`Proof: ${proof.changed_tile_count ?? 0} changed tiles`, 704, proofY, {
+        color: proof.gameplay_progress_eligible ? '#9fd7b2' : '#ffd966',
+        size: 13,
+        weight: 800
+      });
+      drawReplayText(`Scored by real play: ${proof.gameplay_progress_eligible ? 'yes' : 'no'}`, 704, proofY + 24);
+      if (firstChange) {
+        drawReplayText(
+          `First diff: ${changedTileTransition(firstChange)} @ ${firstChange.x},${firstChange.y},${firstChange.z}`,
+          704,
+          proofY + 48,
+          { color: '#9fb1d6', size: 12 }
+        );
+      }
+      drawReplayText('Source: df.global.world.map (per-step fort minimap)', 704, 428, {
+        color: '#9fd7b2',
+        size: 11,
+        weight: 700
+      });
     }
 
     function drawCapturedMapSnapshot(snapshot, canvasW, canvasH) {
@@ -1099,6 +1285,11 @@
         color: '#9fb1d6',
         size: 12,
         weight: 700
+      });
+      drawReplayText('legacy captured-tile snapshot — older trace without a per-step fort minimap', 52, 80, {
+        color: '#6b7c99',
+        size: 11,
+        weight: 600
       });
 
       gameCtx.strokeStyle = 'rgba(159,177,214,0.07)';
@@ -1137,9 +1328,6 @@
       }
 
       drawChangedTileHighlights(snapshot.gameplayProof?.changed_tiles || [], scale, bounds);
-      drawMapRectOutline(snapshot.targetRect, scale, '#4f7cff', 'START');
-      drawMapRectOutline(snapshot.connectorRect, scale, '#43c6ac', 'HALL');
-      drawMapRectOutline(snapshot.workshopRoomRect, scale, '#78d66d', 'WORK');
 
       gameCtx.fillStyle = '#101827';
       gameCtx.fillRect(680, 28, 252, 424);
@@ -1398,7 +1586,7 @@
       );
       y += 18;
       y = wrapReplayText(
-        snapshot.mapSnapshot
+        (snapshot.fortMap || snapshot.mapSnapshot)
           ? 'A derived map snapshot is available in Map Inspect mode for debugging, but it is a secondary analysis layer.'
           : 'No derived map snapshot is available for this step either.',
         terminal.x + 28,
@@ -1457,7 +1645,8 @@
         size: 13,
         weight: 800
       });
-      drawReplayText(`Map snapshot: ${snapshot.mapSnapshot ? 'available' : 'missing'}`, panel.x + 22, nextY + 114, {
+      const mapEvidenceStatus = snapshot.fortMap ? 'fort minimap available' : snapshot.mapSnapshot ? 'legacy snapshot available' : 'missing';
+      drawReplayText(`Map snapshot: ${mapEvidenceStatus}`, panel.x + 22, nextY + 114, {
         color: '#9fb1d6',
         size: 13,
         weight: 700
@@ -1477,7 +1666,7 @@
       replayNext.disabled = replayStepIndex >= replayRecords.length - 1;
       replayViewScreen.dataset.active = replayEvidenceView === 'screen' ? 'true' : 'false';
       replayViewMap.dataset.active = replayEvidenceView === 'map' ? 'true' : 'false';
-      replayViewMap.disabled = !snapshot.mapSnapshot;
+      replayViewMap.disabled = !snapshot.fortMap && !snapshot.mapSnapshot;
       replayGlyphGraphical.dataset.active = replayGlyphMode === 'graphical' ? 'true' : 'false';
       replayGlyphAscii.dataset.active = replayGlyphMode === 'ascii' ? 'true' : 'false';
       gameStatus.textContent = statusText;
@@ -1617,6 +1806,16 @@
       showCanvas();
 
       if (replayEvidenceView === 'map') {
+        if (snapshot.fortMap) {
+          gameTitle.textContent = 'Derived DFHack Map Inspection';
+          gameCtx.setTransform(3, 0, 0, 3, 0, 0);
+          drawFortMinimap(snapshot, legacyW, legacyH);
+          updateReplayControls(
+            snapshot,
+            `Derived map inspection, not gameplay footage: step ${snapshot.record.step ?? replayStepIndex} of ${replayRecords.length - 1}`
+          );
+          return;
+        }
         if (snapshot.mapSnapshot) {
           gameTitle.textContent = 'Derived DFHack Map Inspection';
           gameCtx.setTransform(3, 0, 0, 3, 0, 0);
