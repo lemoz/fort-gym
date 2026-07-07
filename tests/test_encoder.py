@@ -1887,3 +1887,32 @@ def test_encoder_skips_minimap_when_malformed() -> None:
     obs_text, _ = encode_observation(state)
 
     assert "Fort minimap" not in obs_text
+
+
+def test_encoder_surfaces_nearby_tree_clusters() -> None:
+    base = {
+        "time": 100,
+        "population": 7,
+        "stocks": {"food": 45, "drink": 60, "wood": 3, "stone": 0},
+        "fort": {
+            "ok": True,
+            "enclosed_spaces": 0,
+            "functional_rooms": 0,
+            "constructions": 0,
+            "spaces": [],
+            "nearby_trees": {
+                "total": 58,
+                "clusters": [
+                    {"x": 66, "y": 70, "z": 161, "count": 31},
+                    {"x": 95, "y": 120, "z": 161, "count": 27},
+                ],
+            },
+        },
+    }
+    text, _ = encode_observation(base, screen_text="main map")
+    assert "Nearby trees (within 40 tiles" in text
+    assert "31 trunks near (66,70,161)" in text
+
+    base["fort"]["nearby_trees"] = {"total": 0, "clusters": []}
+    text, _ = encode_observation(base, screen_text="main map")
+    assert "Nearby trees: none within 40 tiles" in text

@@ -192,7 +192,24 @@ end
 
 state.stocks = {food=food_count, drink=drink_count, wood=wood_count, stone=stone_count, wealth=wealth}
 state.hostiles = false
-state.dead = 0
+-- Count our civ's dead dwarves for real. This was hardcoded 0 until G6
+-- attempt 1 (run 769f5034): a citizen drowned, population dropped 7->6,
+-- and the dead metric never moved -- the casualty check read a constant.
+local dead_count = 0
+pcall(function()
+    local civ_id = df.global.ui.civ_id
+    for _, unit in ipairs(df.global.world.units.all) do
+        local ok_dead, is_dead = pcall(function()
+            return unit.civ_id == civ_id
+                and dfhack.units.isDwarf(unit)
+                and dfhack.units.isDead(unit)
+        end)
+        if ok_dead and is_dead then
+            dead_count = dead_count + 1
+        end
+    end
+end)
+state.dead = dead_count
 state.recent_events = {}
 print(json.encode(state))
 """

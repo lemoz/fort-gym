@@ -1347,6 +1347,34 @@ def encode_observation(
             if room_parts:
                 status_lines.append("Rooms: " + ", ".join(room_parts))
 
+        nearby_trees = fort.get("nearby_trees")
+        if isinstance(nearby_trees, dict):
+            tree_total = _int_or_none(nearby_trees.get("total"))
+            clusters = nearby_trees.get("clusters")
+            if tree_total is not None:
+                if tree_total > 0 and isinstance(clusters, list) and clusters:
+                    parts = []
+                    for cluster in clusters[:3]:
+                        if not isinstance(cluster, dict):
+                            continue
+                        count = _int_or_none(cluster.get("count"))
+                        cl_x = _int_or_none(cluster.get("x"))
+                        cl_y = _int_or_none(cluster.get("y"))
+                        cl_z = _int_or_none(cluster.get("z"))
+                        if None in (count, cl_x, cl_y, cl_z):
+                            continue
+                        parts.append(f"{count} trunks near ({cl_x},{cl_y},{cl_z})")
+                    if parts:
+                        status_lines.append(
+                            "Nearby trees (within 40 tiles of the citizens, "
+                            "possibly beyond the minimap): " + "; ".join(parts)
+                        )
+                else:
+                    status_lines.append(
+                        "Nearby trees: none within 40 tiles of the citizens — "
+                        "wood must come from farther away."
+                    )
+
         construction_tiles = fort.get("construction_tiles")
         if isinstance(construction_tiles, list) and construction_tiles:
             by_row: Dict[tuple, List[int]] = {}
