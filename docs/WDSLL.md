@@ -565,6 +565,26 @@ gate. Each entry states what changed and the evidence that forced it.
   both on the table, one operator-approved boundary). The rubric held
   partial ground: 68.61 stays under the 70 gate bar.
 
+- **2026-07-07 — PRE-DECLARED PROTOCOL: G6 generalization attempt
+  (operator-ratified before launch).** One public run per attempt on
+  `seed_region3_fresh` — an embark no agent has ever seen — GLM-5V pinned,
+  100 steps x 1000 ticks, memory-off (region1 memories would be false on
+  region3 regardless), score-v3, seed targeted per-run via the new
+  `seed_save`/`runtime_save` request fields (PR #51). PASS = G4-level
+  structure on the unseen map: >=50,000 elapsed ticks; population >=7 held
+  with zero casualty spike; >=2 workshop orders completed
+  (finished-goods deltas); `fort_functional_rooms >= 2` (flood-fill);
+  rubric >= 70 with no `no_fort_structure` / `repetitive_policy` /
+  `no_production_surface` / legality blockers. **Ratified adaptation: the
+  G4 score-vs-ceiling clause does not port** — region1's 121.5 ceiling
+  comes from a scripted reference agent hardcoded to region1 coordinates,
+  and porting a plan-walker to set a region3 ceiling would rebuild
+  exactly the hardcoded-plan machinery this project removed; the scalar
+  is recorded for the run but carries no pass/fail weight at G6. Failures
+  get the standing forensics -> surface-correction -> retry discipline
+  (corrections operator-approved as always), up to three attempts before
+  an escalation decision. Every attempt reported at full prominence.
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,
