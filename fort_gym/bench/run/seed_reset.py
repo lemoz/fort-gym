@@ -22,21 +22,29 @@ def _validate_save_name(name: str, *, label: str) -> None:
         raise SeedResetError(f"Invalid {label} save name: {name!r}")
 
 
-def maybe_reset_dfhack_seed(settings: Settings) -> None:
+def maybe_reset_dfhack_seed(
+    settings: Settings,
+    *,
+    seed_save: str | None = None,
+    runtime_save: str | None = None,
+) -> None:
     """Reset the DFHack save to a pristine seed if configured.
 
-    When ``FORT_GYM_SEED_SAVE`` is set, this copies that save directory to
-    the configured runtime save (defaults to ``current``) and restarts the
-    ``dfhack-headless`` service so the new save is loaded.
+    ``seed_save``/``runtime_save`` are per-run overrides (G6 generalization:
+    a run may target a different embark than the deployment default). When
+    omitted, ``FORT_GYM_SEED_SAVE`` is copied to the configured runtime save
+    (defaults to ``current``) and the ``dfhack-headless`` service restarts so
+    the new save is loaded.
     """
 
-    seed_name = settings.FORT_GYM_SEED_SAVE
+    seed_name = seed_save or settings.FORT_GYM_SEED_SAVE
     if not seed_name:
         return
+    runtime_name = runtime_save or settings.FORT_GYM_RUNTIME_SAVE
 
     reset_save_from_seed(
         seed_name,
-        runtime_name=settings.FORT_GYM_RUNTIME_SAVE,
+        runtime_name=runtime_name,
         dfroot=DFROOT,
         restart_service=True,
         host=settings.DFHACK_HOST,

@@ -1405,6 +1405,8 @@ def run_once(
     loop: Optional[asyncio.AbstractEventLoop] = None,
     scenario: Optional[str] = None,
     preserve_save: bool = False,
+    seed_save: Optional[str] = None,
+    runtime_save: Optional[str] = None,
 ) -> str:
     """Execute a run and persist a JSONL trace while streaming events."""
 
@@ -1488,7 +1490,11 @@ def run_once(
 
         # If configured, reset the save from a pristine seed before connecting.
         if not preserve_save:
-            maybe_reset_dfhack_seed(settings)
+            maybe_reset_dfhack_seed(
+                settings,
+                seed_save=seed_save,
+                runtime_save=runtime_save,
+            )
 
         dfhack_client = DFHackClient(host=settings.DFHACK_HOST, port=settings.DFHACK_PORT)
         try:

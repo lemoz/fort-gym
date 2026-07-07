@@ -266,6 +266,8 @@ async def create_run(payload: RunCreateRequest, _: None = Depends(require_admin)
         max_steps=payload.max_steps,
         ticks_per_step=payload.ticks_per_step,
         preserve_save=payload.preserve_save,
+        seed_save=payload.seed_save,
+        runtime_save=payload.runtime_save,
         loop=loop,
     )
 
@@ -286,6 +288,8 @@ async def create_run(payload: RunCreateRequest, _: None = Depends(require_admin)
             registry=RUN_REGISTRY,
             loop=loop,
             preserve_save=payload.preserve_save,
+            seed_save=payload.seed_save,
+            runtime_save=payload.runtime_save,
         )
 
     thread = threading.Thread(target=_target, name=f"run-{record.run_id}", daemon=True)
