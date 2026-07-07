@@ -165,26 +165,44 @@ def _goods(observation: Dict[str, Any]) -> Optional[Dict[str, Any]]:
 
 def reconstruct_inputs(records: List[Dict[str, Any]]) -> Dict[str, Any]:
     """Pull the baseline (first row) work/crew.goods/fort snapshot, plus the
-    full per-step sequence of work/crew.goods/fort/population snapshots,
-    straight from each trace record's ``observation`` -- ``encode_observation``
-    passes the raw state through unfiltered (see ``redact_noise`` in
-    fort_gym/bench/env/encoder.py), so ``record["observation"]`` is exactly
-    the ``state_before`` the live runner fed to ``metrics.py`` at that step.
+    full per-step sequence of work/crew.goods/fort/population snapshots.
 
-    NOTE: this recomputes a *running max* across every step, not just a
-    first-vs-last endpoint diff. That matters because the runner's own
-    ``summary.py`` aggregation is itself a running max of each step's
-    delta-from-baseline (`utility_progress = max(utility_progress,
-    metrics_snapshot["utility_progress"])`, ditto complexity_progress) --
-    and those per-step deltas are not always monotonic (e.g. legacy
+    NOTE 1 -- running max, not an endpoint diff: this replays every step and
+    takes the running max, exactly mirroring how summary.py aggregates the
+    live per-step metrics (`utility_progress = max(utility_progress,
+    metrics_snapshot["utility_progress"])`, ditto complexity_progress). Those
+    per-step deltas are not always monotonic (e.g. legacy
     `fortress_complexity_wall_tiles` can rise and fall as walls get dug
-    through/replaced across a long run). A first-vs-last diff can land
+    through/replaced across a long run), so a first-vs-last diff can land
     below a peak reached mid-run and understate the recorded metric --
     empirically, on real dfhack-governed runs, endpoint-only reconstruction
-    missed the recorded complexity_progress on 6 of 9 v2-era runs checked
-    during this rescorer's own validation. Replaying every step and taking
-    the running max, exactly mirroring summary.py's own aggregation, closes
-    that gap.
+    missed the recorded complexity_progress on 6 of 9 v2-era calibration
+    runs. Replaying every step closes that gap.
+
+    NOTE 2 -- work vs. observation timing: the live runner
+    (fort_gym/bench/run/runner.py) does NOT feed metrics.py a single
+    consistent per-step snapshot. It calls
+    ``metrics.utility_progress_delta(current_work, baseline_work,
+    current_goods=current_goods, ..., population=advance_state.get(...))``
+    where ``current_work``/``population`` come from ``advance_state`` (the
+    state *after* that step's action + tick advance), while
+    ``current_goods`` comes from ``state_before.get("crew")`` (captured at
+    the *start* of that same step, before the action ran) -- crew/fort are
+    only refreshed once per step via the (expensive) observe() call, not
+    re-read after advancing. ``complexity_progress_delta``'s current_fort
+    also reads from state_before (this branch's own fix -- advance_state
+    never carries a "fort" key at all, see the comment at that call site in
+    runner.py). Trace records store both: ``record["observation"]`` is
+    exactly that step's ``state_before`` (``encode_observation`` passes the
+    raw state through unfiltered -- see ``redact_noise`` in
+    fort_gym/bench/env/encoder.py), and ``record["state_after_advance"]`` is
+    that step's ``advance_state``. Reproducing the recorded utility_progress
+    exactly requires pairing ``state_after_advance["work"]``/["population"]
+    with ``observation["crew"]["goods"]``/["fort"] from the *same* record --
+    mixing both from ``observation`` alone reproduced complexity_progress
+    exactly but silently undercounted utility_progress by up to a few raw
+    units on some runs (confirmed empirically against 4 of 9 v2-era
+    calibration runs before this fix).
     """
 
     baseline_obs = records[0].get("observation") or {}
@@ -194,12 +212,17 @@ def reconstruct_inputs(records: List[Dict[str, Any]]) -> Dict[str, Any]:
     steps = []
     for record in records:
         obs = record.get("observation") or {}
+        after_advance = record.get("state_after_advance") or {}
         steps.append(
             {
-                "work": obs.get("work") if isinstance(obs.get("work"), dict) else {},
+                "work": (
+                    after_advance.get("work")
+                    if isinstance(after_advance.get("work"), dict)
+                    else {}
+                ),
                 "goods": _goods(obs),
                 "fort": obs.get("fort") if isinstance(obs.get("fort"), dict) else None,
-                "population": obs.get("population"),
+                "population": after_advance.get("population", obs.get("population")),
             }
         )
     return {
