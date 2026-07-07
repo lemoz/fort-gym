@@ -565,6 +565,30 @@ gate. Each entry states what changed and the evidence that forced it.
   both on the table, one operator-approved boundary). The rubric held
   partial ground: 68.61 stays under the 70 gate bar.
 
+- **2026-07-07 — G6 SEED: region2 condemned, region3 created and validated
+  (reproducible procedure).** The Dec-2025 `seed_region2_fresh` save is
+  corrupt in a hazardous way: merely PRESENT in `data/save/`, it SIGABRTs
+  DF 0.47.05 during the boot-time world scan (before DFHack initializes) —
+  it caused a full platform outage on 2026-07-07 when staged for
+  validation (an unattended package upgrade was the initial suspect;
+  the DF binary links none of the upgraded packages — quarantining the
+  save restored boot immediately). It now lives OUTSIDE the save dir at
+  `data/save-quarantine/region2`; never copy it back. Replacement:
+  `seed_region3_fresh`, created via a fully documented, reproducible
+  procedure — headless worldgen `-gen 3 20260707 "POCKET REGION"` (fixed
+  seed; run under a pty — the ncurses build aborts without one), embark
+  driven through the same DFHack keystroke transport the benchmark uses,
+  site selected by instrument survey (Heavily forested, thick vegetation,
+  brook, NO aquifer; 166 tree trunks across six 30x30 sample rects;
+  diggable rock; 7 citizens at z=161 vs region1's z=177), immediate
+  DFHack `quicksave`, then frozen read-only in `seed_saves/`. Boot
+  validation passed with region3 present — the exact check region2
+  fails. All benchmark instruments (fort_metrics flood-fill, crew survey,
+  minimap) ran unmodified on the new embark with honest zeros. Runs can
+  now target it per-run: `POST /runs` accepts `seed_save`/`runtime_save`
+  (name-validated), recorded in run provenance — no deployment-config
+  change needed to attempt G6.
+
 - **2026-07-07 — PRE-DECLARED PROTOCOL: G6 generalization attempt
   (operator-ratified before launch).** One public run per attempt on
   `seed_region3_fresh` — an embark no agent has ever seen — GLM-5V pinned,
