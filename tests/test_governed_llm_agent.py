@@ -76,6 +76,17 @@ def test_governed_system_prompt_teaches_wall_construction() -> None:
     assert "x2" in GOVERNED_SYSTEM_PROMPT
 
 
+def test_governed_system_prompt_describes_still_and_brew_mechanic_only() -> None:
+    # Still rides the existing BUILD action type, brew rides ORDER -- no new
+    # governed type for either.
+    assert '"CarpenterWorkshop"|"Still"' in GOVERNED_SYSTEM_PROMPT
+    assert "BrewDrink orders need gatherable plants and empty barrels" in GOVERNED_SYSTEM_PROMPT
+    assert "drink is what dwarves actually consume" in GOVERNED_SYSTEM_PROMPT
+    assert "brew (BrewDrink) needs a built Still" in GOVERNED_SYSTEM_PROMPT
+    # no new governed action type was introduced for Still/brew
+    assert GOVERNED_ACTION_TYPES == ("DIG", "BUILD", "ORDER", "UNSUSPEND", "WAIT")
+
+
 def test_governed_action_types_include_unsuspend() -> None:
     assert GOVERNED_ACTION_TYPES == ("DIG", "BUILD", "ORDER", "UNSUSPEND", "WAIT")
     assert "UNSUSPEND" in _submit_action_tool()["function"]["parameters"]["properties"]["type"]["enum"]

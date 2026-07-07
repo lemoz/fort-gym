@@ -888,6 +888,8 @@ def encode_observation(
                 "building_id",
                 "unsuspended",
                 "suspended_found",
+                "before_workshops_of_kind",
+                "after_workshops_of_kind",
             ):
                 if key not in action_result:
                     continue
@@ -1230,6 +1232,10 @@ def encode_observation(
                     if subtype == "Carpenters":
                         workshop_line += (
                             " — ORDER can queue jobs to any built carpenter workshop."
+                        )
+                    elif subtype == "Still":
+                        workshop_line += (
+                            " — ORDER job=brew can queue BrewDrink jobs to any built Still."
                         )
                 else:
                     workshop_line = (

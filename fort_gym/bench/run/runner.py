@@ -718,14 +718,23 @@ def _governed_gameplay_proof(
             "building_id",
             "before_carpenter_workshops",
             "after_carpenter_workshops",
+            "before_workshops_of_kind",
+            "after_workshops_of_kind",
             "manager_recorded",
             "unsuspended",
             "suspended_found",
         )
         if key in result
     }
-    workshops_added = int(result.get("after_carpenter_workshops") or 0) - int(
-        result.get("before_carpenter_workshops") or 0
+    # before/after_carpenter_workshops is carpenter-specific (kept for
+    # backward compatibility); before/after_workshops_of_kind is the
+    # generalized equivalent build_workshop.lua now emits for every kind it
+    # supports (e.g. Still), so a built Still counts as progress too.
+    workshops_added = max(
+        int(result.get("after_carpenter_workshops") or 0)
+        - int(result.get("before_carpenter_workshops") or 0),
+        int(result.get("after_workshops_of_kind") or 0)
+        - int(result.get("before_workshops_of_kind") or 0),
     )
     created_jobs = result.get("created_job_ids")
     step_gameplay_progress = bool(

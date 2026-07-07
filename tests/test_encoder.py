@@ -1550,6 +1550,56 @@ def test_encoder_surfaces_full_crew_block() -> None:
     )
 
 
+def test_encoder_surfaces_built_still_workshop_with_brew_hint() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {},
+            "crew": {
+                "ok": True,
+                "workshops": [
+                    {
+                        "id": 2,
+                        "subtype": "Still",
+                        "pos": [88, 96, 177],
+                        "built": True,
+                        "stage": 3,
+                        "max_stage": 3,
+                        "queued_jobs": 0,
+                    }
+                ],
+            },
+        },
+        screen_text="main map",
+    )
+
+    assert (
+        "Workshop id=2 Still at (88,96,177): construction COMPLETE "
+        "(stage 3/3), queued_jobs=0" in text
+    )
+    assert "ORDER job=brew can queue BrewDrink jobs to any built Still." in text
+
+
+def test_encoder_echoes_still_workshop_of_kind_result_counts() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 6, "stone": 0},
+        },
+        screen_text="main map",
+        last_action_result={
+            "accepted": True,
+            "result": {"before_workshops_of_kind": 0, "after_workshops_of_kind": 1},
+        },
+    )
+
+    assert "Last Action detail:" in text
+    assert "before_workshops_of_kind=0" in text
+    assert "after_workshops_of_kind=1" in text
+
+
 def test_encoder_flags_stalled_workshop_construction() -> None:
     text, _ = encode_observation(
         {

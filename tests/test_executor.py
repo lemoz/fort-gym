@@ -48,6 +48,34 @@ def test_dfhack_build_action_uses_bounded_workshop_hook(monkeypatch) -> None:
     assert calls == [("CarpenterWorkshop", 51, 36, 0)]
 
 
+def test_dfhack_build_still_routes_to_build_workshop_hook(monkeypatch) -> None:
+    calls: list[tuple] = []
+
+    def fake_build_workshop(kind: str, x: int, y: int, z: int) -> Dict[str, Any]:
+        calls.append((kind, x, y, z))
+        return {
+            "ok": True,
+            "kind": kind,
+            "before_workshops_of_kind": 0,
+            "after_workshops_of_kind": 1,
+        }
+
+    def fake_place_furniture(*args, **kwargs):
+        raise AssertionError("Still must not route to place_furniture")
+
+    monkeypatch.setattr("fort_gym.bench.env.executor.safe_build_workshop", fake_build_workshop)
+    monkeypatch.setattr("fort_gym.bench.env.executor.safe_place_furniture", fake_place_furniture)
+
+    result = Executor(dfhack_client=_ConnectedDFHackClient()).apply(
+        {"type": "BUILD", "params": {"kind": "Still", "x": 88, "y": 96, "z": 177}},
+        backend="dfhack",
+    )
+
+    assert result["accepted"] is True
+    assert calls == [("Still", 88, 96, 177)]
+    assert result["result"]["after_workshops_of_kind"] == 1
+
+
 def test_dfhack_build_action_does_not_thread_state_work_rect(monkeypatch) -> None:
     seen: list[tuple] = []
 
@@ -217,6 +245,26 @@ def test_dfhack_unsuspend_reports_rejection_when_hook_errors(monkeypatch) -> Non
 
     assert result["accepted"] is False
     assert result["why"] == "rect_too_large"
+
+
+def test_dfhack_order_brew_routes_to_backend_wrapper(monkeypatch) -> None:
+    calls: list[tuple] = []
+
+    def fake_queue_manager_order(job: str, qty: int):
+        calls.append((job, qty))
+        return {"ok": True, "item": job, "qty": qty, "mode": "workshop_job", "workshop_id": 3}
+
+    monkeypatch.setattr(
+        "fort_gym.bench.env.executor.safe_queue_manager_order", fake_queue_manager_order
+    )
+
+    result = Executor(dfhack_client=_ConnectedDFHackClient()).apply(
+        {"type": "ORDER", "params": {"job": "brew", "quantity": 2}},
+        backend="dfhack",
+    )
+
+    assert result["accepted"] is True
+    assert calls == [("brew", 2)]
 
 
 def test_parse_action_defaults_dig_kind_to_dig() -> None:

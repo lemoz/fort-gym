@@ -7,20 +7,25 @@ local args = {...}
 local item = tostring(args[1] or '')
 local qty = tonumber(args[2]) or 1
 
-local whitelist = {
-  bed = 'ConstructBed',
-  door = 'ConstructDoor',
-  table = 'ConstructTable',
-  chair = 'ConstructThrone',
-  barrel = 'MakeBarrel',
-  bin = 'ConstructBin',
+-- Each item maps to a DF job type AND the workshop subtype that job runs at
+-- (a player queues bed/door/table/chair/barrel/bin at a Carpenter's
+-- Workshop; brew -- BrewDrink -- runs at a Still).
+local ITEM_JOBS = {
+  bed = { job = 'ConstructBed', workshop = 'Carpenters' },
+  door = { job = 'ConstructDoor', workshop = 'Carpenters' },
+  table = { job = 'ConstructTable', workshop = 'Carpenters' },
+  chair = { job = 'ConstructThrone', workshop = 'Carpenters' },
+  barrel = { job = 'MakeBarrel', workshop = 'Carpenters' },
+  bin = { job = 'ConstructBin', workshop = 'Carpenters' },
+  brew = { job = 'BrewDrink', workshop = 'Still' },
 }
 
-local jobname = whitelist[item]
-if not jobname then
+local spec = ITEM_JOBS[item]
+if not spec then
   print(json.encode({ ok = false, error = 'invalid_item' }))
   return
 end
+local jobname = spec.job
 
 if qty < 1 or qty > 5 then qty = 1 end
 
@@ -43,7 +48,10 @@ local function record_manager_order(job_type, qty)
   return true
 end
 
-local function is_carpenter_workshop(building)
+-- subtype_name is the DF workshop_type name string (e.g. "Carpenters",
+-- "Still") -- the same convention used for the Carpenters/Carpenter naming
+-- quirk this already defended against.
+local function is_workshop_of_subtype(building, subtype_name)
   if not building then return false end
   local is_workshop = false
   local ok_type, building_type = pcall(function() return building:getType() end)
@@ -58,22 +66,20 @@ local function is_carpenter_workshop(building)
   end
   if not is_workshop then return false end
 
-  local carpenter_type = nil
-  if df.workshop_type then
-    carpenter_type = df.workshop_type.Carpenters or df.workshop_type.Carpenter
-  end
+  local target_type = df.workshop_type and df.workshop_type[subtype_name] or nil
   local ok_workshop_type, workshop_type = pcall(function() return building.type end)
   local workshop_type_name = ok_workshop_type and tostring(workshop_type) or ''
-  return (ok_workshop_type and carpenter_type and workshop_type == carpenter_type)
-      or workshop_type_name == 'Carpenters'
-      or workshop_type_name == 'Carpenter'
+  return (ok_workshop_type and target_type ~= nil and workshop_type == target_type)
+      or workshop_type_name == subtype_name
+      -- Carpenters/Carpenter naming quirk, preserved for the carpenter path
+      or (subtype_name == 'Carpenters' and workshop_type_name == 'Carpenter')
 end
 
-local function first_carpenter_workshop()
+local function first_workshop_of_subtype(subtype_name)
   local buildings = df.global.world.buildings and df.global.world.buildings.all
   if not buildings then return nil end
   for _, building in ipairs(buildings) do
-    if is_carpenter_workshop(building) then
+    if is_workshop_of_subtype(building, subtype_name) then
       return building
     end
   end
@@ -121,7 +127,7 @@ local function create_workshop_job(building, entry)
   return job
 end
 
-local workshop = first_carpenter_workshop()
+local workshop = first_workshop_of_subtype(spec.workshop)
 if workshop then
   local entry = job_definition_for(workshop, job_type)
   if entry then

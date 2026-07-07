@@ -143,6 +143,43 @@ def test_build_workshop_hook_uses_existing_material_item() -> None:
     assert "no_building_material" in hook_text
 
 
+def test_build_workshop_hook_supports_still_subtype() -> None:
+    hook_path = Path(__file__).resolve().parents[1] / "hook" / "build_workshop.lua"
+    hook_text = hook_path.read_text(encoding="utf-8")
+
+    # Still extends the same bounded workshop placement as CarpenterWorkshop
+    assert "Still = df.workshop_type.Still" in hook_text
+    assert "CarpenterWorkshop = df.workshop_type.Carpenters" in hook_text
+    assert "local subtype = SUBTYPES[kind]" in hook_text
+    # generalized before/after counts work for any kind, not just carpenter
+    assert "before_workshops_of_kind" in hook_text
+    assert "after_workshops_of_kind" in hook_text
+    # backward-compatible carpenter-specific fields are still emitted
+    assert "before_carpenter_workshops" in hook_text
+    assert "after_carpenter_workshops" in hook_text
+
+
+def test_build_workshop_passes_still_kind_through_to_backend(monkeypatch) -> None:
+    captured = {}
+
+    def fake_run_lua_file(path, *args, **kwargs):
+        captured["args"] = args
+        return {"ok": True, "kind": "Still"}
+
+    monkeypatch.setattr(dfhack_backend, "run_lua_file", fake_run_lua_file)
+
+    result = dfhack_backend.build_workshop("Still", 88, 96, 177)
+
+    assert result == {"ok": True, "kind": "Still"}
+    assert captured["args"] == ("Still", "88", "96", "177")
+
+
+def test_build_workshop_allowed_workshops_include_still() -> None:
+    # Still must be routed through ALLOWED_WORKSHOPS same as CarpenterWorkshop
+    assert "Still" in dfhack_backend.ALLOWED_WORKSHOPS
+    assert "CarpenterWorkshop" in dfhack_backend.ALLOWED_WORKSHOPS
+
+
 def test_order_make_hook_prefers_direct_workshop_jobs() -> None:
     hook_path = Path(__file__).resolve().parents[1] / "hook" / "order_make.lua"
     hook_text = hook_path.read_text(encoding="utf-8")
@@ -152,6 +189,29 @@ def test_order_make_hook_prefers_direct_workshop_jobs() -> None:
     assert "dfhack.job.linkIntoWorld(job, true)" in hook_text
     assert "manager_recorded = manager_recorded" in hook_text
     assert "manager_orders:insert('#', wo)" in hook_text
+
+
+def test_order_make_hook_supports_brew_item_at_still() -> None:
+    hook_path = Path(__file__).resolve().parents[1] / "hook" / "order_make.lua"
+    hook_text = hook_path.read_text(encoding="utf-8")
+
+    assert "brew = { job = 'BrewDrink', workshop = 'Still' }" in hook_text
+    assert "first_workshop_of_subtype(spec.workshop)" in hook_text
+    # existing carpenter-scoped items still route to Carpenters
+    assert "bed = { job = 'ConstructBed', workshop = 'Carpenters' }" in hook_text
+
+
+def test_order_make_brew_item_is_allowlisted() -> None:
+    assert "brew" in dfhack_backend.ALLOWED_ITEMS
+    assert dfhack_backend.ALLOWED_ITEMS >= {
+        "bed",
+        "door",
+        "table",
+        "chair",
+        "barrel",
+        "bin",
+        "brew",
+    }
 
 
 def test_designate_rect_reports_designation_counts() -> None:

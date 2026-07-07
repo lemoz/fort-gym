@@ -49,11 +49,14 @@ and work over time. kind "chop" designates the tree trunks inside the rect for f
 observation's Fort-area tiles line reports tree_trunk counts); a dwarf with the woodcutting labor fells \
 them over time and the logs appear in the Wood stock. Carpentry production consumes wood — \
 without logs, workshop orders cancel.
-- BUILD: params {"kind": "CarpenterWorkshop"|"Bed"|"Door"|"Table"|"Chair"|"Wall"|"Floor", "x": X, \
-"y": Y, "z": Z, "x2": X2, "y2": Y2 (optional)}. \
+- BUILD: params {"kind": "CarpenterWorkshop"|"Still"|"Bed"|"Door"|"Table"|"Chair"|"Wall"|"Floor", \
+"x": X, "y": Y, "z": Z, "x2": X2, "y2": Y2 (optional)}. \
 CarpenterWorkshop places a 3x3 workshop on open floor within 24 tiles of your fort — near any \
 existing building or citizen (the work metrics include a `carpenter_build_site` when a candidate \
 spot is visible); a dwarf must then construct it. \
+Still places a 3x3 workshop the same way; a dwarf must then construct it. A built Still brews \
+plants into drink via ORDER job "brew" — BrewDrink orders need gatherable plants and empty barrels \
+in stock; drink is what dwarves actually consume. \
 Furniture kinds install an already-produced item of that type as a 1x1 building, anywhere within \
 24 tiles of your fort — a dwarf hauls and installs it over time; furnishing an enclosed space is \
 what turns it into a functional room. Installing furniture requires a finished item in \
@@ -63,9 +66,10 @@ tiles when optional x2/y2 are given, within 24 tiles of your fort. Each tile con
 boulder, or block from stock, and a dwarf builds it over time. Enclosed rooms — spaces bounded by \
 walls, buildings, or doors — are what make bedrooms and production rooms count; the observation's \
 "Fort structure" line reports enclosed_spaces and functional_rooms.
-- ORDER: params {"job": <item>, "quantity": 1-5}. Queues production to any BUILT carpenter workshop \
-(construction stage complete), wherever it stands. Items: bed, door, table, chair, barrel, bin. \
-Dwarves then do the work.
+- ORDER: params {"job": <item>, "quantity": 1-5}. Queues production to any BUILT workshop of the \
+right kind (construction stage complete), wherever it stands: bed, door, table, chair, barrel, and \
+bin need a built Carpenter's Workshop; brew (BrewDrink) needs a built Still. Dwarves then do the \
+work.
 - UNSUSPEND: params {"area": [x, y, z], "size": [w, h, 1]} (max 10x10, one z-level). Clears the \
 suspended flag on construction/build jobs whose position falls inside the rect. A job suspends \
 when a dwarf cannot currently path to or reach the job site or the placement is blocked; the jobs \

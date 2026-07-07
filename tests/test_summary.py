@@ -572,3 +572,40 @@ def test_rubric_flags_order_spam_as_repetitive() -> None:
     rubric = evaluate_trace_records(records)
 
     assert "repetitive_policy" in rubric["blockers"]
+
+
+def test_proof_shows_world_change_recognizes_still_workshop_construction() -> None:
+    """A real Still built is world change (exempt from the repetition
+    tally), same treatment as before/after carpenter workshops -- via the
+    generalized before/after_workshops_of_kind fields build_workshop.lua
+    now emits for every kind it supports."""
+    from fort_gym.bench.eval.rubric import _proof_shows_world_change
+
+    real_still = {
+        "changed_tile_count": 0,
+        "helper_evidence": {"before_workshops_of_kind": 0, "after_workshops_of_kind": 1},
+    }
+    assert _proof_shows_world_change(real_still) is True
+
+    no_change = {
+        "changed_tile_count": 0,
+        "helper_evidence": {"before_workshops_of_kind": 1, "after_workshops_of_kind": 1},
+    }
+    assert _proof_shows_world_change(no_change) is False
+
+
+def test_action_fingerprint_distinguishes_still_and_brew() -> None:
+    """Fingerprints must not collide Still with CarpenterWorkshop, or brew
+    with the carpenter-scoped items -- each is its own repetition bucket."""
+    from fort_gym.bench.eval.rubric import _action_fingerprint
+
+    still_build = {"type": "BUILD", "params": {"kind": "Still", "x": 88, "y": 96, "z": 177}}
+    carpenter_build = {
+        "type": "BUILD",
+        "params": {"kind": "CarpenterWorkshop", "x": 88, "y": 96, "z": 177},
+    }
+    assert _action_fingerprint(still_build) != _action_fingerprint(carpenter_build)
+
+    brew_order = {"type": "ORDER", "params": {"job": "brew", "quantity": 3}}
+    bed_order = {"type": "ORDER", "params": {"job": "bed", "quantity": 3}}
+    assert _action_fingerprint(brew_order) != _action_fingerprint(bed_order)
