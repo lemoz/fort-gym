@@ -8,10 +8,17 @@ import fort_gym.bench.agent.governed_llm  # noqa: F401 - registration side effec
 from typing import get_args
 
 from fort_gym.bench.agent.base import AGENT_FACTORIES
-from fort_gym.bench.agent.governed_llm import GOVERNED_SYSTEM_PROMPT, DFHackGovernedLLMAgent
+from fort_gym.bench.agent.governed_llm import (
+    GOVERNED_ACTION_TYPES,
+    GOVERNED_SYSTEM_PROMPT,
+    DFHackGovernedLLMAgent,
+    _submit_action_tool,
+)
 from fort_gym.bench.api.schemas import ModelType
 from fort_gym.bench.api.server import OPTIONAL_AGENT_MODULES
 from fort_gym.bench.run.runner import (
+    ASSISTED_DFHACK_ACTIONS,
+    GOVERNED_DFHACK_ACTIONS,
     GOVERNED_DFHACK_MODELS,
     _is_governed_dfhack_model,
     _is_keystroke_model,
@@ -67,6 +74,26 @@ def _agent(responses: list[Any] | None = None, error: Exception | None = None) -
 def test_governed_system_prompt_teaches_wall_construction() -> None:
     assert "Wall" in GOVERNED_SYSTEM_PROMPT
     assert "x2" in GOVERNED_SYSTEM_PROMPT
+
+
+def test_governed_action_types_include_unsuspend() -> None:
+    assert GOVERNED_ACTION_TYPES == ("DIG", "BUILD", "ORDER", "UNSUSPEND", "WAIT")
+    assert "UNSUSPEND" in _submit_action_tool()["function"]["parameters"]["properties"]["type"]["enum"]
+
+
+def test_governed_system_prompt_describes_unsuspend_mechanic_only() -> None:
+    assert "UNSUSPEND" in GOVERNED_SYSTEM_PROMPT
+    assert "suspended" in GOVERNED_SYSTEM_PROMPT
+    # factual mechanic description only, no gameplay-strategy advice
+    assert "does not complete the job" in GOVERNED_SYSTEM_PROMPT
+
+
+def test_unsuspend_wired_into_provenance_gates() -> None:
+    # UNSUSPEND must earn governed credit for the governed model...
+    assert "UNSUSPEND" in GOVERNED_DFHACK_ACTIONS
+    # ...and be zeroed/blocked like DIG/BUILD/ORDER when a non-governed
+    # dfhack model emits it (never silently uncredited AND unblocked).
+    assert "UNSUSPEND" in ASSISTED_DFHACK_ACTIONS
 
 
 def test_governed_llm_is_registered_and_model_gated() -> None:

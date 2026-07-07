@@ -107,6 +107,29 @@ pcall(function()
   end
 end)
 
+-- Queued wall/floor constructions: Construction-type buildings a dwarf has
+-- not finished yet (once built they leave buildings.all and become tiletype
+-- walls/floors). Rendered on the minimap as 'x' so the agent can tell "wall
+-- already queued here" from a real gap. Display only — NEVER counted as a
+-- boundary for enclosure detection: an unbuilt wall does not seal a room.
+local pending_constructions = 0
+local pending_construction_tiles = {}
+pcall(function()
+  for _, bld in ipairs(df.global.world.buildings.all) do
+    local ok_t, is_pending = pcall(function()
+      return bld:getType() == df.building_type.Construction
+    end)
+    if ok_t and is_pending then
+      pending_constructions = pending_constructions + 1
+      for fx = bld.x1, bld.x2 do
+        for fy = bld.y1, bld.y2 do
+          pending_construction_tiles[fx .. ',' .. fy .. ',' .. bld.z] = true
+        end
+      end
+    end
+  end
+end)
+
 -- flood fill open floor from seeds; doors and buildings are boundaries that
 -- still close a room; open floor beyond MAX_COMPONENT_TILES means "leaky"
 -- (connected to the open map) and therefore not enclosed.
@@ -302,6 +325,15 @@ do
         max_y = math.max(max_y, tonumber(cy))
       end
     end
+    for key in pairs(pending_construction_tiles) do
+      local cx, cy, cz = key:match('(-?%d+),(-?%d+),(-?%d+)')
+      if tonumber(cz) == anchor_z then
+        min_x = math.min(min_x, tonumber(cx))
+        min_y = math.min(min_y, tonumber(cy))
+        max_x = math.max(max_x, tonumber(cx))
+        max_y = math.max(max_y, tonumber(cy))
+      end
+    end
     min_x, min_y = min_x - 4, min_y - 4
     max_x, max_y = max_x + 4, max_y + 4
     if max_x - min_x + 1 > 34 then max_x = min_x + 33 end
@@ -324,6 +356,8 @@ do
           kind = nil
         elseif kind then
           ch = BUILDING_CHARS[kind] or '?'
+        elseif pending_construction_tiles[x .. ',' .. y .. ',' .. anchor_z] then
+          ch = 'x'
         else
           local shape, hidden = tile_shape(x, y, anchor_z)
           if shape == nil or hidden then
@@ -364,6 +398,7 @@ print(json.encode({
   spaces = spaces,
   constructions = constructions,
   construction_tiles = construction_tiles,
+  pending_constructions = pending_constructions,
   player_buildings = #buildings,
   map_origin = map_origin,
   map_rows = map_rows,

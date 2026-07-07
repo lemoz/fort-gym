@@ -195,6 +195,36 @@ def designate_rect(kind: str, x1: int, y1: int, z1: int, x2: int, y2: int, z2: i
         return {"ok": False, "error": str(exc)}
 
 
+def unsuspend_jobs(x1: int, y1: int, z1: int, x2: int, y2: int, z2: int) -> Dict[str, object]:
+    """Clear the suspended flag on construction/build jobs inside a bounded rect.
+
+    Mirrors a player's q-menu unsuspend action. Does not complete any work —
+    a dwarf must still path to and perform the job over real time. Bounded to
+    a single z-level, 10x10 tiles max (same cap as build_construction).
+    """
+
+    if int(z1) != int(z2):
+        return {"ok": False, "error": "z_span_not_supported"}
+
+    width = abs(int(x2) - int(x1)) + 1
+    height = abs(int(y2) - int(y1)) + 1
+    if width > 10 or height > 10:
+        return {"ok": False, "error": "rect_too_large"}
+
+    try:
+        return run_lua_file(
+            _hook_path("unsuspend_jobs.lua"),
+            str(int(x1)),
+            str(int(y1)),
+            str(int(z1)),
+            str(int(x2)),
+            str(int(y2)),
+            str(int(z2)),
+        )
+    except (DFHackError, OSError) as exc:
+        return {"ok": False, "error": str(exc)}
+
+
 def complete_dig_rect(x1: int, y1: int, z1: int, x2: int, y2: int, z2: int) -> Dict[str, object]:
     """Complete bounded DFHack dig designations by converting wall tiles to floors."""
 
@@ -539,6 +569,7 @@ __all__ = [
     "place_furniture",
     "build_construction",
     "designate_rect",
+    "unsuspend_jobs",
     "complete_dig_rect",
     "read_work_metrics",
     "read_job_metrics",

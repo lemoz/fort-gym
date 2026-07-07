@@ -38,3 +38,15 @@ def test_job_registry_parallel_execution() -> None:
     assert info.status == "completed"
     assert len(info.run_ids) == 3
     assert tracker["max"] <= job.parallelism
+
+
+def test_job_registry_serializes_dfhack_jobs() -> None:
+    registry = JobRegistry()
+
+    # dfhack drives the single live DF instance: requested parallelism must
+    # clamp to 1 so concurrent workers cannot race the same save.
+    dfhack_job = registry.create(model="random", backend="dfhack", n=3, parallelism=4)
+    assert dfhack_job.parallelism == 1
+
+    mock_job = registry.create(model="random", backend="mock", n=3, parallelism=4)
+    assert mock_job.parallelism == 4

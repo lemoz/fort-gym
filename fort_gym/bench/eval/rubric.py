@@ -67,6 +67,8 @@ def _action_fingerprint(action: Dict[str, Any]) -> str:
         return f"BUILD:{params.get('kind')}:{params.get('x')}:{params.get('y')}:{params.get('z')}"
     if action_type == "ORDER":
         return f"ORDER:{params.get('job')}:{params.get('quantity')}"
+    if action_type == "UNSUSPEND":
+        return f"UNSUSPEND:{params.get('area')}:{params.get('size')}"
     return action_type
 
 
@@ -127,6 +129,8 @@ def _proof_shows_world_change(proof: Dict[str, Any]) -> bool:
         # observed step progress there
         return True
     if int(evidence.get("newly_designated") or 0) > 0:
+        return True
+    if int(evidence.get("unsuspended") or 0) > 0:
         return True
     before_ws = int(evidence.get("before_carpenter_workshops") or 0)
     after_ws = int(evidence.get("after_carpenter_workshops") or 0)

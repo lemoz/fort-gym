@@ -19,6 +19,10 @@ from ..env.mock_env import MockEnvironment
 from ..env.scenarios import evaluate_scenario_assertions, get_mock_scenario
 from ..env.state_reader import StateReader
 from ..dfhack_backend import (
+    MAX_RECT_H,
+    MAX_RECT_W,
+    MAX_SNAPSHOT_H,
+    MAX_SNAPSHOT_W,
     prepare_keystroke_target,
     read_fort_metrics,
     read_job_metrics,
@@ -32,7 +36,7 @@ from ..eval.summary import RunSummary, summarize
 from .storage import RunRegistry
 from .seed_reset import maybe_reset_dfhack_seed
 
-ASSISTED_DFHACK_ACTIONS = {"DIG", "BUILD", "ORDER"}
+ASSISTED_DFHACK_ACTIONS = {"DIG", "BUILD", "ORDER", "UNSUSPEND"}
 GOVERNED_DFHACK_MODELS = {
     "dfhack-governed-scripted",
     "dfhack-governed-llm",
@@ -44,7 +48,7 @@ GOVERNED_DFHACK_MODELS = {
     "dfhack-governed-llm-kimi-vision",
     "dfhack-governed-llm-minimax-vision",
 }
-GOVERNED_DFHACK_ACTIONS = {"DIG", "BUILD", "ORDER", "WAIT"}
+GOVERNED_DFHACK_ACTIONS = {"DIG", "BUILD", "ORDER", "UNSUSPEND", "WAIT"}
 ASSISTED_PROGRESS_FIELDS = (
     "target_dig_designations_delta",
     "target_floor_tiles_delta",
@@ -185,6 +189,44 @@ def _same_target_route(
 
 
 def _map_snapshot_rect_from_state(state: Dict[str, Any], margin: int = 1) -> tuple[int, int, int, int, int, int] | None:
+    # Prefer the plan-agnostic fort minimap window (fort_metrics.lua): a
+    # citizen/building/construction-anchored bbox, so the snapshot — and the
+    # tile-change proof diffed from it — follows wherever the fort is actually
+    # built. The legacy plan-rect bbox below remains only as a fallback: a
+    # fixed window that plan-agnostic forts outgrow (run 2f58fd37 built its
+    # second room outside it, leaving walls unproven and the replay frozen).
+    fort = state.get("fort")
+    if isinstance(fort, dict) and fort.get("ok"):
+        origin = fort.get("map_origin")
+        rows = fort.get("map_rows")
+        if (
+            isinstance(origin, (list, tuple))
+            and len(origin) == 3
+            and isinstance(rows, list)
+            and rows
+            and all(isinstance(row, str) for row in rows)
+        ):
+            try:
+                origin_x, origin_y, origin_z = (int(v) for v in origin)
+            except (TypeError, ValueError):
+                origin_x = None
+            if origin_x is not None:
+                width = max(len(row) for row in rows)
+                height = len(rows)
+                if width > 0 and height > 0:
+                    width = min(width + 2 * margin, MAX_SNAPSHOT_W)
+                    height = min(height + 2 * margin, MAX_SNAPSHOT_H)
+                    x1 = max(0, origin_x - margin)
+                    y1 = max(0, origin_y - margin)
+                    return (
+                        x1,
+                        y1,
+                        origin_z,
+                        x1 + width - 1,
+                        y1 + height - 1,
+                        origin_z,
+                    )
+
     work = state.get("work")
     if not isinstance(work, dict):
         return None
@@ -208,6 +250,34 @@ def _map_snapshot_rect_from_state(state: Dict[str, Any], margin: int = 1) -> tup
         max(rect[3] for rect in rects) + margin,
         max(rect[4] for rect in rects) + margin,
         z,
+    )
+
+
+def _job_metrics_survey_rect(
+    state: Dict[str, Any], margin: int = 1
+) -> tuple[int, int, int, int, int, int] | None:
+    """Bound the fort/legacy snapshot rect to job_metrics' tighter tile survey.
+
+    The snapshot rect follows the fort minimap window (up to ~34 tiles + margin,
+    clamped to MAX_SNAPSHOT_W/H = 64). ``read_job_metrics`` rejects any rect over
+    MAX_RECT_W/H (30) outright, which would drop the *entire* crew read — not just
+    the optional tile survey. Shrink the survey rect to the job-metrics bound so
+    crew observability always attaches; the snapshot/proof rect stays full-size.
+    """
+
+    rect = _map_snapshot_rect_from_state(state, margin=margin)
+    if rect is None:
+        return None
+    x1, y1, z1, x2, y2, z2 = rect
+    if (x2 - x1 + 1) <= MAX_RECT_W and (y2 - y1 + 1) <= MAX_RECT_H:
+        return rect
+    return (
+        x1,
+        y1,
+        z1,
+        x1 + min(x2 - x1 + 1, MAX_RECT_W) - 1,
+        y1 + min(y2 - y1 + 1, MAX_RECT_H) - 1,
+        z2,
     )
 
 
@@ -649,6 +719,8 @@ def _governed_gameplay_proof(
             "before_carpenter_workshops",
             "after_carpenter_workshops",
             "manager_recorded",
+            "unsuspended",
+            "suspended_found",
         )
         if key in result
     }
@@ -662,6 +734,7 @@ def _governed_gameplay_proof(
         or (isinstance(created_jobs, list) and created_jobs)
         or workshops_added > 0
         or int(result.get("newly_designated") or 0) > 0
+        or int(result.get("unsuspended") or 0) > 0
     )
     return {
         "ok": step_gameplay_progress,
@@ -1475,7 +1548,7 @@ def run_once(
 
             if not is_governed_dfhack_mode:
                 return state
-            crew = read_job_metrics(_map_snapshot_rect_from_state(state))
+            crew = read_job_metrics(_job_metrics_survey_rect(state))
             if isinstance(crew, dict) and crew.get("ok"):
                 state = dict(state)
                 state["crew"] = crew
@@ -1493,8 +1566,10 @@ def run_once(
             return state
 
         def observe() -> Dict[str, Any]:
-            return attach_fort_metrics(
-                attach_crew_metrics(
+            # fort metrics attach before crew: the crew tile-survey rect
+            # follows the fort minimap window when it is available.
+            return attach_crew_metrics(
+                attach_fort_metrics(
                     attach_governed_build_site(StateReader.from_dfhack(dfhack_client))
                 )
             )

@@ -119,6 +119,21 @@ def test_placement_hooks_enforce_fort_locality() -> None:
         assert "collect_locality_anchors" in hook_text
 
 
+def test_place_furniture_hook_reports_tile_state_on_failure() -> None:
+    hook_text = (
+        Path(__file__).resolve().parents[1] / "hook" / "place_furniture.lua"
+    ).read_text(encoding="utf-8")
+    # run 0a1be1c5 burned 40 actions on bare construct_failed: the tile is
+    # classified before placement so the rejection names the visible cause
+    for needle in (
+        "tile_occupied_by_building",
+        "tile_not_open_floor",
+        "tile_hidden_unexplored",
+        "tile_placement_error",
+    ):
+        assert needle in hook_text
+
+
 def test_build_workshop_hook_uses_existing_material_item() -> None:
     hook_path = Path(__file__).resolve().parents[1] / "hook" / "build_workshop.lua"
     hook_text = hook_path.read_text(encoding="utf-8")
@@ -159,6 +174,63 @@ def test_designate_rect_chop_is_bounded_tree_designation() -> None:
     assert "df.tiletype_material.TREE" in hook_text
     # the old global autochop pulse (broken on this DFHack: no such script) is gone
     assert "autochop" not in hook_text
+
+
+def test_unsuspend_jobs_hook_is_bounded_and_reports_counts() -> None:
+    hook_path = Path(__file__).resolve().parents[1] / "hook" / "unsuspend_jobs.lua"
+    hook_text = hook_path.read_text(encoding="utf-8")
+
+    # bounded rect: rejects bad/missing coords and mismatched z-levels
+    assert "bad_rect" in hook_text
+    assert "rect_too_large" in hook_text
+    # walks the live jobs list (same pattern as job_metrics.lua)
+    assert "df.global.world.jobs.list.next" in hook_text
+    assert "job.flags.suspend" in hook_text
+    # reports honest counts, ok=true even when nothing was unsuspended
+    assert "unsuspended" in hook_text
+    assert "suspended_found" in hook_text
+    assert "ok = true" in hook_text
+
+
+def test_unsuspend_jobs_hook_only_flips_suspend_flag() -> None:
+    hook_path = Path(__file__).resolve().parents[1] / "hook" / "unsuspend_jobs.lua"
+    hook_text = hook_path.read_text(encoding="utf-8")
+
+    # mirrors the player's q-menu unsuspend: never completes the job itself,
+    # never mutates tile designations or building/block flags
+    assert "does NOT complete any work" in hook_text
+    assert "job.flags.suspend = false" in hook_text
+    assert "designation.dig =" not in hook_text
+    assert "block.flags.designated" not in hook_text
+
+
+def test_unsuspend_jobs_wraps_bounded_lua_hook(monkeypatch) -> None:
+    captured: dict = {}
+
+    def fake_run_lua_file(path, *args, **kwargs):
+        captured["path"] = path
+        captured["args"] = args
+        return {"ok": True, "unsuspended": 1, "suspended_found": 1}
+
+    monkeypatch.setattr(dfhack_backend, "run_lua_file", fake_run_lua_file)
+
+    result = dfhack_backend.unsuspend_jobs(98, 95, 177, 102, 99, 177)
+
+    assert result == {"ok": True, "unsuspended": 1, "suspended_found": 1}
+    assert captured["args"] == ("98", "95", "177", "102", "99", "177")
+    assert Path(captured["path"]).name == "unsuspend_jobs.lua"
+
+
+def test_unsuspend_jobs_rejects_oversized_rect() -> None:
+    result = dfhack_backend.unsuspend_jobs(0, 0, 0, 11, 0, 0)
+
+    assert result == {"ok": False, "error": "rect_too_large"}
+
+
+def test_unsuspend_jobs_rejects_multi_z_rect() -> None:
+    result = dfhack_backend.unsuspend_jobs(0, 0, 0, 2, 2, 1)
+
+    assert result == {"ok": False, "error": "z_span_not_supported"}
 
 
 def test_prepare_keystroke_tree_material_target_uses_broad_selection() -> None:
@@ -274,3 +346,18 @@ def test_fort_metrics_anchors_on_citizens_and_marks_dwarves() -> None:
     assert "citizen_positions" in script
     assert "citizen_lookup" in script
     assert "'@'" in script
+
+
+def test_fort_metrics_marks_queued_constructions_without_sealing_rooms() -> None:
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "fort_metrics.lua"
+    ).read_text(encoding="utf-8")
+    # queued (unbuilt) constructions render as 'x' on the minimap...
+    assert "pending_construction_tiles" in script
+    assert "ch = 'x'" in script
+    assert "pending_constructions = pending_constructions" in script
+    # ...but must never enter the enclosure flood-fill boundary set: the
+    # detector's construction_set reads world.constructions (built only).
+    boundary_block = script[script.index("local construction_set"):]
+    boundary_block = boundary_block[: boundary_block.index("BUILDING_CHARS")]
+    assert "pending" not in boundary_block

@@ -1706,6 +1706,32 @@ def test_encoder_surfaces_full_fort_block() -> None:
     assert "No enclosed rooms yet" not in text
 
 
+def test_encoder_surfaces_queued_constructions_count() -> None:
+    state = {
+        "time": 100,
+        "population": 7,
+        "stocks": {"food": 45, "drink": 60, "wood": 6, "stone": 0},
+        "fort": {
+            "ok": True,
+            "enclosed_spaces": 0,
+            "functional_rooms": 0,
+            "constructions": 12,
+            "pending_constructions": 5,
+            "player_buildings": 1,
+            "spaces": [],
+            "map_origin": [90, 90, 177],
+            "map_rows": ["Wx.", "x.x", ".xW"],
+        },
+    }
+
+    text, _ = encode_observation(state, screen_text="main map")
+
+    assert "queued_constructions=5 (ordered, not built yet)" in text
+    # the minimap legend explains 'x' and forbids re-placing on it
+    assert "x=your QUEUED wall/floor" in text
+    assert "An 'x' is already ordered: do NOT" in text
+
+
 def test_encoder_flags_zero_enclosed_spaces() -> None:
     state = {
         "time": 100,

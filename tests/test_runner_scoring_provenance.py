@@ -1178,7 +1178,9 @@ def test_governed_runner_attaches_crew_observability() -> None:
     ).read_text(encoding="utf-8")
 
     assert "def attach_crew_metrics" in runner_text
-    assert "read_job_metrics(_map_snapshot_rect_from_state(state))" in runner_text
+    # The crew tile survey rect follows the fort/legacy snapshot window, bounded
+    # to job_metrics' tighter tile limit so crew observability never drops.
+    assert "read_job_metrics(_job_metrics_survey_rect(state))" in runner_text
     assert 'state["crew"] = crew' in runner_text
 
 

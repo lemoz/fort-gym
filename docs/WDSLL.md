@@ -341,6 +341,70 @@ gate. Each entry states what changed and the evidence that forced it.
   under-credits plan-agnostic building — fixing that is a scoring-matrix
   change and awaits operator approval.
 
+- **2026-07-05 — G4 vision series run 1 (post-decoupling): FAIL 3/6, and it
+  exposed the next invisible fact.** Run `24042365` (GLM-5V pinned, 100
+  steps, memory-off, commit `cc0a33ec1`, score-v2 112.87, rubric 68.74 with
+  ZERO blockers, 100/100 screen frames,
+  `fortgym.live/r/T37FoZzcriyNd6OHH-0CTo-1G6giqMt3`): ticks 100,404 PASS,
+  population 7/7 PASS, produced goods (2 beds + 3 doors) PASS; rooms 0/2
+  FAIL, rubric<70 FAIL, score<=121.5 FAIL. The plan-decoupling worked — no
+  floor-spam, no plan-chasing — and the agent spent the whole run trying to
+  close its perimeter, but 58 of 81 wall actions failed: 41 tiles
+  `already_wall`, 18 `tile_occupied_by_building` — its OWN queued walls.
+  Root cause: a queued wall is a Construction-type *building* until a dwarf
+  builds it, and the minimap only drew `world.constructions` (built), so
+  pending walls rendered as open floor. The agent re-placed walls it had
+  already ordered and could not tell phantom gaps from real ones. Wood was
+  never the constraint (80 logs throughout). Correction (operator-approved,
+  PR #38): pending constructions render as `x` on the minimap (text and
+  PNG), legends and prompt explain "already ordered — do not re-place,
+  advance time", and the Fort structure line counts
+  `queued_constructions`. Display only: an unbuilt wall never seals a room,
+  so the enclosure flood-fill boundary is untouched (locked by test). Also
+  merged in the window (PR #36): `POST /jobs` parallelism clamps to 1 for
+  the dfhack backend — concurrent workers were racing the single live save.
+
+- **2026-07-05 — G4 vision series run 2: FAIL 5/6 — the best G4 result to
+  date, and the queued-wall correction validated live.** Run `0a1be1c5`
+  (GLM-5V pinned, 100 steps, memory-off, post-PR-#38,
+  `fortgym.live/r/VCjkMbEg91DAbbk6pFZUTP94GvX3qClH`): score 125.24 > 121.5
+  PASS, rubric 75.74 with zero blockers PASS, ticks 99,868 PASS, population
+  7/7 PASS, produced goods 4 beds + 4 doors + 4 tables (richest GLM economy
+  recorded) PASS — fails ONLY functional_rooms >= 2, with 1 enclosed
+  functional room. The `x` glyph rendered from step 14; room #1 closed at
+  step 16 (vs step 40 in the best prior run; run 1 never closed one), and
+  post-room wall placements wasted on phantom gaps fell from 58 to 4 — the
+  invisible-pending-walls hypothesis is confirmed by before/after behavior.
+  The newly exposed frontier: the agent tried to furnish a second space for
+  the rest of the run and 40 furniture installs failed with a bare
+  `construct_failed`; it correctly diagnosed a suspended ConstructBuilding
+  job wedged at (101,98,177) from the jobs observability but has no legal
+  action to unsuspend it (a player would use the q-menu). Corrections
+  queued: per-tile furniture placement reasons (PR #40, error-visibility
+  only); an UNSUSPEND action is a legal-surface widening awaiting operator
+  decision.
+
+- **2026-07-05 — G4 vision series run 3: FAIL 4/6, and the suspended-job
+  wedge is confirmed as the frontier.** Run `5a406c21` (GLM-5V pinned, 100
+  steps, memory-off, post-PR-#40,
+  `fortgym.live/r/ujtHjQhGMkmpRt_z1ooTRoVJS_Us18US`): score 112.45 (<=121.5
+  FAIL), rubric 73.55 zero blockers PASS, ticks 100,351 PASS, population 7/7
+  PASS, 4 beds + 3 doors PASS, 1 functional room (FAIL rooms>=2). The run
+  ended with the SECOND room one wall from enclosure: steps 92-99 the agent
+  waited on "the final queued wall at (100,97)", correctly named the
+  suspended ConstructBuilding job blocking it, attempted the only legal
+  workaround (re-placing — rejected, tile occupied), and ran out of steps.
+  Suspended jobs were visible in 84/100 steps. Series verdict (3 runs,
+  post-decoupling): 3/6, 5/6, 4/6 — two runs reached exactly one-room-short,
+  and both were blocked by suspended construction jobs the agent can
+  diagnose but not legally clear. PR #40's per-tile furniture reasons
+  worked as intended (tile_not_open_floor/tile_occupied_by_building now
+  visible). The prepared correction: UNSUSPEND, a bounded player-parity
+  primitive (q-menu equivalent: flips job.flags.suspend in a <=10x10 rect,
+  dwarves still perform the work, provenance-gated in both governed and
+  assisted sets, proof via unsuspended/suspended_found counts) — draft PR
+  #41, a legal-action-surface widening held for operator merge.
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,
