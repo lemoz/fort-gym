@@ -1145,6 +1145,33 @@ def test_governed_gameplay_proof_accepts_new_designations_and_jobs() -> None:
     assert proof["ok"] is True
 
 
+def test_governed_gameplay_proof_accepts_new_farm_plot() -> None:
+    proof = _governed_gameplay_proof(
+        **_governed_proof_kwargs(
+            action={"type": "BUILD", "params": {"kind": "FarmPlot", "x": 90, "y": 95, "z": 177}, "advance_ticks": 1000},
+            execute_result={
+                "accepted": True,
+                "result": {"before_farm_plots": 0, "after_farm_plots": 1, "building_id": 42},
+            },
+        )
+    )
+    assert proof["ok"] is True
+    assert proof["helper_evidence"]["after_farm_plots"] == 1
+
+
+def test_governed_gameplay_proof_rejects_failed_farm_plot_placement() -> None:
+    proof = _governed_gameplay_proof(
+        **_governed_proof_kwargs(
+            action={"type": "BUILD", "params": {"kind": "FarmPlot", "x": 90, "y": 95, "z": 177}, "advance_ticks": 1000},
+            execute_result={
+                "accepted": False,
+                "result": {"error": "tile_not_placeable"},
+            },
+        )
+    )
+    assert proof["ok"] is False
+
+
 def test_governed_gameplay_proof_accepts_real_tile_changes_during_wait() -> None:
     rect = [49, 34, 0, 55, 40, 0]
     before = {

@@ -572,3 +572,21 @@ def test_rubric_flags_order_spam_as_repetitive() -> None:
     rubric = evaluate_trace_records(records)
 
     assert "repetitive_policy" in rubric["blockers"]
+
+
+def test_proof_shows_world_change_recognizes_farm_plot_construction() -> None:
+    """A real farm plot placement is world change (exempt from the
+    repetition tally), same treatment as before/after carpenter workshops."""
+    from fort_gym.bench.eval.rubric import _proof_shows_world_change
+
+    real_farm_plot = {
+        "changed_tile_count": 0,
+        "helper_evidence": {"before_farm_plots": 0, "after_farm_plots": 1},
+    }
+    assert _proof_shows_world_change(real_farm_plot) is True
+
+    no_change = {
+        "changed_tile_count": 0,
+        "helper_evidence": {"before_farm_plots": 1, "after_farm_plots": 1},
+    }
+    assert _proof_shows_world_change(no_change) is False
