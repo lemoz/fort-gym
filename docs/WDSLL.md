@@ -443,30 +443,6 @@ gate. Each entry states what changed and the evidence that forced it.
   assisted sets, proof via unsuspended/suspended_found counts) — draft PR
   #41, a legal-action-surface widening held for operator merge.
 
-<<<<<<< HEAD
-- **2026-07-05 — G4 PASSED. First pass in project history, 6/6 criteria.**
-  Run `2f58fd37` (GLM-5V pinned `dfhack-governed-llm-glm5v`, 100 steps,
-  memory-off, commit `893394920`, score-v2,
-  `fortgym.live/r/qw8S-Wmf53DYLESSrgCWGvLPvY2n0IuH`): score 158.68 > 121.5;
-  rubric 78.42 with zero blockers; 100,466 ticks; population 7/7 held; 10
-  beds + 3 doors produced from the run's own orders; **2 enclosed spaces, 2
-  functional rooms** (flood-fill detected, room 1 at step 30, room 2 at
-  step 63), 75 constructions — record construction volume with record
-  precision. Evidence: 100/100 recorded screen frames, 46/100 proof-backed
-  steps, 100/100 steps `dfhack_governed` provenance. Attribution: 200/200
-  tool_call events record `z-ai/glm-5v-turbo` as the requested model via
-  the pinned variant; this trace format carries no provider usage-token
-  fields, so attribution rests on request-side event evidence (noted per
-  the attribution rule). Honest causal note: UNSUSPEND (merged that
-  morning, PR #41) was used twice, late, and found nothing to unsuspend —
-  the suspended-job wedge simply did not recur this run. The pass is
-  attributable to the accumulated observation-truth corrections (legacy
-  plan decoupled #35, queued walls visible #38, per-tile placement reasons
-  #40) plus the vision modality, not to the new primitive. One pass is
-  existence, not reliability: the G4 ladder rung is cleared, and the
-  natural follow-ups are a repeatability series on this seed and G6
-  generalization (a `seed_region2_fresh` save already exists on the VM).
-=======
 - **2026-07-07 — SCORE-V3 RATIFIED AND IMPLEMENTED (operator-approved).**
   Per `docs/score_v3_proposal.md`: demand-capped production
   (`utility_progress` pays full rate per orderable-good type up to fort
@@ -519,7 +495,6 @@ gate. Each entry states what changed and the evidence that forced it.
   (`utility_action_progress`, keystroke completed-task crediting) was
   found bounded or completion-gated — not the same bug — and left
   untouched. PR remains HELD; prior runs stay v1/v2, not comparable.
->>>>>>> origin/main
 
 ## Reporting format (every gate attempt)
 
