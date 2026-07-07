@@ -230,8 +230,15 @@ class RunRegistry:
         loop: Optional[asyncio.AbstractEventLoop] = None,
         run_id: Optional[str] = None,
         preserve_save: bool = False,
+        seed_save: Optional[str] = None,
+        runtime_save: Optional[str] = None,
     ) -> RunInfo:
-        """Register a new run and return its record."""
+        """Register a new run and return its record.
+
+        ``seed_save``/``runtime_save`` record a per-run seed override so run
+        provenance shows the embark the run ACTUALLY used, not the
+        deployment default.
+        """
 
         conn = self._ensure_conn()
 
@@ -245,8 +252,8 @@ class RunRegistry:
         trace_path = artifacts_dir / "trace.jsonl"
 
         git_sha = _git_sha()
-        seed_save = settings.FORT_GYM_SEED_SAVE
-        runtime_save = getattr(settings, "FORT_GYM_RUNTIME_SAVE", None)
+        seed_save = seed_save or settings.FORT_GYM_SEED_SAVE
+        runtime_save = runtime_save or getattr(settings, "FORT_GYM_RUNTIME_SAVE", None)
 
         with self._db_lock:
             row = conn.execute("SELECT 1 FROM runs WHERE run_id = ?", (identifier,)).fetchone()

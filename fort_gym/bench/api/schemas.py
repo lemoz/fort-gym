@@ -66,6 +66,12 @@ class RunCreateRequest(BaseModel):
     model: ModelType = "random"
     safe: Optional[bool] = True
     preserve_save: bool = False
+    # Per-run seed selection (G6 generalization): a bare save-folder name
+    # under data/seed_saves to reset from, and the runtime save name to reset
+    # into. None keeps the deployment defaults
+    # (FORT_GYM_SEED_SAVE / FORT_GYM_RUNTIME_SAVE).
+    seed_save: Optional[str] = Field(default=None, pattern=r"^[A-Za-z0-9_-]+$")
+    runtime_save: Optional[str] = Field(default=None, pattern=r"^[A-Za-z0-9_-]+$")
 
 
 class ActionRecord(BaseModel):
