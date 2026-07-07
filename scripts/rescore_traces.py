@@ -2,11 +2,13 @@
 """Offline v2-vs-v3 rescorer for recorded fort-gym runs.
 
 Given an artifacts directory of recorded runs (each ``<run_id>/trace.jsonl``
-+ ``<run_id>/summary.json``), this script reconstructs the baseline/final
-inputs to ``utility_progress``/``complexity_progress`` straight from the
-trace's per-step ``observation`` snapshots (``work``, ``crew.goods``,
-``fort``, ``population``), then recomputes the scalar composite score two
-ways:
++ ``<run_id>/summary.json``), this script reconstructs the baseline
+(first-row) work/crew.goods/fort snapshot, replays every step's
+``observation`` (``work``, ``crew.goods``, ``fort``, ``population``)
+against that fixed baseline, and takes the running max across the whole
+run -- exactly mirroring how ``summary.py`` aggregates the live per-step
+metrics (``utility_progress = max(utility_progress, ...)`` each step). It
+then recomputes the scalar composite score two ways:
 
 * **v2** — calls the *same* ``fort_gym.bench.eval.metrics`` functions this
   branch ships, but with the v3 kwargs omitted (``population=None``, no
@@ -162,66 +164,118 @@ def _goods(observation: Dict[str, Any]) -> Optional[Dict[str, Any]]:
 
 
 def reconstruct_inputs(records: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """Pull baseline (first row) / final (last row) work, crew.goods, fort,
-    and population straight from each trace record's ``observation``
-    snapshot -- ``encode_observation`` passes the raw state through
-    unfiltered (see ``redact_noise`` in fort_gym/bench/env/encoder.py), so
-    this is the same data the live runner fed to ``metrics.py`` at the time.
+    """Pull the baseline (first row) work/crew.goods/fort snapshot, plus the
+    full per-step sequence of work/crew.goods/fort/population snapshots,
+    straight from each trace record's ``observation`` -- ``encode_observation``
+    passes the raw state through unfiltered (see ``redact_noise`` in
+    fort_gym/bench/env/encoder.py), so ``record["observation"]`` is exactly
+    the ``state_before`` the live runner fed to ``metrics.py`` at that step.
+
+    NOTE: this recomputes a *running max* across every step, not just a
+    first-vs-last endpoint diff. That matters because the runner's own
+    ``summary.py`` aggregation is itself a running max of each step's
+    delta-from-baseline (`utility_progress = max(utility_progress,
+    metrics_snapshot["utility_progress"])`, ditto complexity_progress) --
+    and those per-step deltas are not always monotonic (e.g. legacy
+    `fortress_complexity_wall_tiles` can rise and fall as walls get dug
+    through/replaced across a long run). A first-vs-last diff can land
+    below a peak reached mid-run and understate the recorded metric --
+    empirically, on real dfhack-governed runs, endpoint-only reconstruction
+    missed the recorded complexity_progress on 6 of 9 v2-era runs checked
+    during this rescorer's own validation. Replaying every step and taking
+    the running max, exactly mirroring summary.py's own aggregation, closes
+    that gap.
     """
 
-    first_obs = records[0].get("observation") or {}
-    last_obs = records[-1].get("observation") or {}
-    baseline_work = first_obs.get("work") if isinstance(first_obs.get("work"), dict) else {}
-    final_work = last_obs.get("work") if isinstance(last_obs.get("work"), dict) else {}
-    baseline_fort = first_obs.get("fort")
-    final_fort = last_obs.get("fort")
+    baseline_obs = records[0].get("observation") or {}
+    baseline_work = baseline_obs.get("work") if isinstance(baseline_obs.get("work"), dict) else {}
+    baseline_goods = _goods(baseline_obs)
+    baseline_fort = baseline_obs.get("fort")
+    steps = []
+    for record in records:
+        obs = record.get("observation") or {}
+        steps.append(
+            {
+                "work": obs.get("work") if isinstance(obs.get("work"), dict) else {},
+                "goods": _goods(obs),
+                "fort": obs.get("fort") if isinstance(obs.get("fort"), dict) else None,
+                "population": obs.get("population"),
+            }
+        )
     return {
         "baseline_work": baseline_work,
-        "final_work": final_work,
-        "baseline_goods": _goods(first_obs),
-        "final_goods": _goods(last_obs),
+        "baseline_goods": baseline_goods,
         "baseline_fort": baseline_fort if isinstance(baseline_fort, dict) else None,
-        "final_fort": final_fort if isinstance(final_fort, dict) else None,
-        "population": last_obs.get("population"),
+        "steps": steps,
     }
 
 
 def recompute_progress(inputs: Dict[str, Any]) -> Dict[str, float]:
     """Recompute utility_progress/complexity_progress under v2 (legacy,
-    population/fort kwargs omitted) and v3 (kwargs supplied) semantics,
-    reusing the exact same metrics.py functions this branch ships."""
+    population/fort kwargs omitted) and v3 (kwargs supplied) semantics, by
+    replaying every trace step against the fixed run baseline and taking
+    the running max -- exactly mirroring how summary.py aggregates the live
+    per-step metrics. Reuses the same metrics.py functions this branch
+    ships for both versions; v2 is simply v3's functions called without the
+    new kwargs, which is the documented backward-compatible fallback (see
+    tests/test_score_v3.py)."""
 
-    utility_v2 = metrics.utility_progress_delta(
-        inputs["final_work"],
-        inputs["baseline_work"],
-        current_goods=inputs["final_goods"],
-        baseline_goods=inputs["baseline_goods"],
-    )
-    utility_v3 = metrics.utility_progress_delta(
-        inputs["final_work"],
-        inputs["baseline_work"],
-        current_goods=inputs["final_goods"],
-        baseline_goods=inputs["baseline_goods"],
-        population=inputs["population"],
-    )
-    complexity_v2 = metrics.complexity_progress_delta(
-        inputs["final_work"],
-        inputs["baseline_work"],
-    )
-    complexity_v3 = metrics.complexity_progress_delta(
-        inputs["final_work"],
-        inputs["baseline_work"],
-        current_fort=inputs["final_fort"],
-        baseline_fort=inputs["baseline_fort"],
-    )
+    utility_progress_v2 = 0.0
+    utility_progress_v3 = 0.0
+    complexity_progress_v2 = 0.0
+    complexity_progress_v3 = 0.0
+    produced_goods_delta = 0
+    demand_capped_production_v3 = 0.0
+    fort_available = False
+
+    baseline_work = inputs["baseline_work"]
+    baseline_goods = inputs["baseline_goods"]
+    baseline_fort = inputs["baseline_fort"]
+
+    for step in inputs["steps"]:
+        utility_v2 = metrics.utility_progress_delta(
+            step["work"],
+            baseline_work,
+            current_goods=step["goods"],
+            baseline_goods=baseline_goods,
+        )
+        utility_v3 = metrics.utility_progress_delta(
+            step["work"],
+            baseline_work,
+            current_goods=step["goods"],
+            baseline_goods=baseline_goods,
+            population=step["population"],
+        )
+        complexity_v2 = metrics.complexity_progress_delta(step["work"], baseline_work)
+        complexity_v3 = metrics.complexity_progress_delta(
+            step["work"],
+            baseline_work,
+            current_fort=step["fort"],
+            baseline_fort=baseline_fort,
+        )
+
+        utility_progress_v2 = max(utility_progress_v2, _to_float(utility_v2["utility_progress"]))
+        utility_progress_v3 = max(utility_progress_v3, _to_float(utility_v3["utility_progress"]))
+        complexity_progress_v2 = max(
+            complexity_progress_v2, _to_float(complexity_v2["complexity_progress"])
+        )
+        complexity_progress_v3 = max(
+            complexity_progress_v3, _to_float(complexity_v3["complexity_progress"])
+        )
+        produced_goods_delta = max(produced_goods_delta, utility_v2["produced_goods_delta"])
+        demand_capped_production_v3 = max(
+            demand_capped_production_v3, _to_float(utility_v3.get("demand_capped_production"))
+        )
+        fort_available = fort_available or "complexity_rooms_delta" in complexity_v3
+
     return {
-        "utility_progress_v2": _to_float(utility_v2["utility_progress"]),
-        "utility_progress_v3": _to_float(utility_v3["utility_progress"]),
-        "complexity_progress_v2": _to_float(complexity_v2["complexity_progress"]),
-        "complexity_progress_v3": _to_float(complexity_v3["complexity_progress"]),
-        "produced_goods_delta": utility_v2["produced_goods_delta"],
-        "demand_capped_production_v3": utility_v3.get("demand_capped_production"),
-        "fort_available": "complexity_rooms_delta" in complexity_v3,
+        "utility_progress_v2": utility_progress_v2,
+        "utility_progress_v3": utility_progress_v3,
+        "complexity_progress_v2": complexity_progress_v2,
+        "complexity_progress_v3": complexity_progress_v3,
+        "produced_goods_delta": produced_goods_delta,
+        "demand_capped_production_v3": demand_capped_production_v3,
+        "fort_available": fort_available,
     }
 
 
