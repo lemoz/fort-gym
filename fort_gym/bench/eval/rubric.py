@@ -106,6 +106,7 @@ _QUEUE_ONLY_EVIDENCE_KEYS = {
     "manager_recorded",
     "already_designated",
     "non_wall_tiles",
+    "non_shrub_tiles",
 }
 
 
@@ -131,6 +132,8 @@ def _proof_shows_world_change(proof: Dict[str, Any]) -> bool:
     if int(evidence.get("newly_designated") or 0) > 0:
         return True
     if int(evidence.get("unsuspended") or 0) > 0:
+        return True
+    if int(evidence.get("shrubs_designated") or 0) > 0:
         return True
     before_ws = int(evidence.get("before_carpenter_workshops") or 0)
     after_ws = int(evidence.get("after_carpenter_workshops") or 0)

@@ -721,6 +721,8 @@ def _governed_gameplay_proof(
             "manager_recorded",
             "unsuspended",
             "suspended_found",
+            "shrubs_designated",
+            "non_shrub_tiles",
         )
         if key in result
     }
@@ -735,6 +737,7 @@ def _governed_gameplay_proof(
         or workshops_added > 0
         or int(result.get("newly_designated") or 0) > 0
         or int(result.get("unsuspended") or 0) > 0
+        or int(result.get("shrubs_designated") or 0) > 0
     )
     return {
         "ok": step_gameplay_progress,

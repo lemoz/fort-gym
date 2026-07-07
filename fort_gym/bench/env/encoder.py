@@ -888,6 +888,8 @@ def encode_observation(
                 "building_id",
                 "unsuspended",
                 "suspended_found",
+                "shrubs_designated",
+                "non_shrub_tiles",
             ):
                 if key not in action_result:
                     continue
@@ -1308,8 +1310,9 @@ def encode_observation(
                 status_lines.append(
                     f"Fort-area tiles: wall={wall} (diggable), {tree_part}"
                     f"floor={floor}, "
-                    f"shrub/other={shrub_or_other} (not diggable — DIG designations "
-                    "on non-wall tiles are silently dropped by DF), "
+                    f"shrub/other={shrub_or_other} (shrub tiles here can be designated "
+                    "with DIG kind=gather for plants; dig/channel designations on "
+                    "non-wall tiles are still silently dropped by DF), "
                     f"designated={designated}"
                 )
 

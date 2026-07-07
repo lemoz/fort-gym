@@ -1,10 +1,11 @@
--- designate_rect.lua: safely designate dig/channel rectangles or trigger chop.
+-- designate_rect.lua: safely designate dig/channel rectangles or trigger
+-- chop/gather.
 
 local json = require('json')
 local args = {...}
 
 local kind = tostring(args[1] or '')
-local valid = { dig = true, channel = true, chop = true }
+local valid = { dig = true, channel = true, chop = true, gather = true }
 if not valid[kind] then
   print(json.encode({ ok = false, error = 'invalid_kind' }))
   return
@@ -83,6 +84,54 @@ if kind == 'chop' then
     trees_designated = trees_designated,
     already_designated = already_designated,
     non_tree_tiles = non_tree_tiles,
+  }))
+  return
+end
+
+local shrub_shape = df.tiletype_shape.SHRUB
+
+-- Bounded gather-plants designation: mark shrub tiles inside the rect for
+-- gathering (the same designation a player sets with d-p). This writes the
+-- same tile_dig_designation field dig/chop use — DF's engine reads the
+-- underlying tile's shape to decide the outcome (WALL mines, a tree-shaped
+-- WALL fells, SHRUB gathers) so no separate "gather" flag exists. A dwarf
+-- with the herbalism labor collects the plant over time.
+if kind == 'gather' then
+  local shrubs_designated = 0
+  local already_designated = 0
+  local non_shrub_tiles = 0
+  for tx = rx1, rx2 do
+    for ty = ry1, ry2 do
+      local block = dfhack.maps.getTileBlock(tx, ty, rz)
+      if block then
+        local dx, dy = tx % block_w, ty % block_h
+        local is_shrub = false
+        pcall(function()
+          local attr = attrs[block.tiletype[dx][dy]]
+          is_shrub = attr ~= nil and attr.shape == shrub_shape
+        end)
+        if is_shrub then
+          local designation = block.designation[dx][dy]
+          if designation.dig == df.tile_dig_designation.Default then
+            already_designated = already_designated + 1
+          else
+            designation.dig = df.tile_dig_designation.Default
+            block.flags.designated = true
+            shrubs_designated = shrubs_designated + 1
+          end
+        else
+          non_shrub_tiles = non_shrub_tiles + 1
+        end
+      end
+    end
+  end
+  print(json.encode({
+    ok = true,
+    kind = kind,
+    rect = { rx1, ry1, rz, rx2, ry2, rz },
+    shrubs_designated = shrubs_designated,
+    already_designated = already_designated,
+    non_shrub_tiles = non_shrub_tiles,
   }))
   return
 end

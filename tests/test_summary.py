@@ -572,3 +572,26 @@ def test_rubric_flags_order_spam_as_repetitive() -> None:
     rubric = evaluate_trace_records(records)
 
     assert "repetitive_policy" in rubric["blockers"]
+
+
+def test_proof_shows_world_change_recognizes_gather_designations() -> None:
+    """A real shrub gather designation is world change (exempt from the
+    repetition tally); a no-op re-designation over already-gathered shrubs is
+    not (same treatment as newly_designated/unsuspended)."""
+    from fort_gym.bench.eval.rubric import _proof_shows_world_change
+
+    real_gather = {
+        "changed_tile_count": 0,
+        "helper_evidence": {"shrubs_designated": 4, "non_shrub_tiles": 21},
+    }
+    assert _proof_shows_world_change(real_gather) is True
+
+    noop_gather = {
+        "changed_tile_count": 0,
+        "helper_evidence": {
+            "shrubs_designated": 0,
+            "already_designated": 9,
+            "non_shrub_tiles": 16,
+        },
+    }
+    assert _proof_shows_world_change(noop_gather) is False

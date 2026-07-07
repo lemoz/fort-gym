@@ -176,6 +176,38 @@ def test_designate_rect_chop_is_bounded_tree_designation() -> None:
     assert "autochop" not in hook_text
 
 
+def test_designate_rect_gather_is_bounded_shrub_designation() -> None:
+    hook_path = Path(__file__).resolve().parents[1] / "hook" / "designate_rect.lua"
+    hook_text = hook_path.read_text(encoding="utf-8")
+
+    # gather designates shrub tiles inside the rect, like a player's d-p
+    assert "gather = true" in hook_text
+    assert "df.tiletype_shape.SHRUB" in hook_text
+    assert "shrubs_designated" in hook_text
+    assert "already_designated" in hook_text
+    assert "non_shrub_tiles" in hook_text
+    # shares the bounded rect (30x30, one z-level) with dig/channel/chop
+    assert "rect_too_large" in hook_text
+    assert "bad_rect" in hook_text
+
+
+def test_designate_rect_gather_wraps_bounded_lua_hook(monkeypatch) -> None:
+    captured: dict = {}
+
+    def fake_run_lua_file(path, *args, **kwargs):
+        captured["path"] = path
+        captured["args"] = args
+        return {"ok": True, "kind": "gather", "shrubs_designated": 4}
+
+    monkeypatch.setattr(dfhack_backend, "run_lua_file", fake_run_lua_file)
+
+    result = dfhack_backend.designate_rect("gather", 50, 35, 0, 52, 37, 0)
+
+    assert result == {"ok": True, "kind": "gather", "shrubs_designated": 4}
+    assert captured["args"] == ("gather", "50", "35", "0", "52", "37", "0")
+    assert Path(captured["path"]).name == "designate_rect.lua"
+
+
 def test_unsuspend_jobs_hook_is_bounded_and_reports_counts() -> None:
     hook_path = Path(__file__).resolve().parents[1] / "hook" / "unsuspend_jobs.lua"
     hook_text = hook_path.read_text(encoding="utf-8")
