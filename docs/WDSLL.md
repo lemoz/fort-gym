@@ -405,6 +405,31 @@ gate. Each entry states what changed and the evidence that forced it.
   assisted sets, proof via unsuspended/suspended_found counts) — draft PR
   #41, a legal-action-surface widening held for operator merge.
 
+- **2026-07-07 — SCORE-V3 RATIFIED AND IMPLEMENTED (operator-approved).**
+  Per `docs/score_v3_proposal.md`: demand-capped production
+  (`utility_progress` pays full rate per orderable-good type up to fort
+  demand/population, 20% surplus beyond it — `produced_goods_delta` keeps
+  paying the raw uncapped count for gameplay-proof consumers), plan-agnostic
+  complexity (`complexity_progress` pays from flood-fill
+  functional_rooms/enclosed_spaces/constructions when fort data is present,
+  falling back to the exact legacy tile/space computation on old traces or
+  the mock backend), and the rubric-half `fortress_breadth`/`plan_coherence`
+  dims from `feat/rubric-plan-agnostic` (already CI-green on main) — all
+  landed together as one version boundary, `score_version: 3`. Boundary
+  discipline: every prior run stays v1/v2 and is not comparable across this
+  boundary. Calibration table: `docs/score_v3_calibration.md` (also in the
+  PR body for branch `feat/score-v3`) — validation gate passes exactly
+  (|Δv2| = 0.0) on all 9 score_version>=2 runs checked, confirming the
+  reconstruction is faithful, but the ratified acceptance check (chair
+  factory + DeepSeek exploit must both score below both G4-passing runs
+  under v3) **FAILS for the chair-factory run** (`ad70df06`: v3 = 508.06,
+  both G4-passing runs score 180.33/207.58) because of `production_score`
+  (paying uncapped for `production_workshops_delta`), a component neither
+  v3 change touches — the same pattern independently shows up on a second
+  sampled run (`7f268bcc`, production_score 420.0). This is reported, not
+  silently tuned around: the PR is held for operator review of the
+  calibration table before any merge or gate re-run under v3.
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,
