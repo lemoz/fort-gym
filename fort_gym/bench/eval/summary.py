@@ -34,9 +34,9 @@ class RunSummary(BaseModel):
     work_progress: int = 0
     designation_progress: int = 0
     completion_progress: int = 0
-    utility_progress: int = 0
+    utility_progress: float = 0.0
     production_progress: int = 0
-    complexity_progress: int = 0
+    complexity_progress: float = 0.0
     ui_work_progress: int = 0
     ui_designation_progress: int = 0
     ui_completion_progress: int = 0
@@ -50,9 +50,13 @@ class RunSummary(BaseModel):
     target_wall_tiles_delta: int = 0
     active_dig_jobs_delta: int = 0
     utility_action_progress: int = 0
+    demand_capped_production: float = 0.0
     complexity_floor_tiles_delta: int = 0
     complexity_wall_tiles_delta: int = 0
     complexity_spaces_delta: int = 0
+    complexity_rooms_delta: int = 0
+    complexity_fort_spaces_delta: int = 0
+    complexity_constructions_delta: int = 0
     manager_orders_delta: int = 0
     manager_order_quantity_delta: int = 0
     carpenter_workshops_delta: int = 0
@@ -98,6 +102,15 @@ def _to_int(value: Any, default: int = 0) -> int:
             return default
 
 
+def _to_float(value: Any, default: float = 0.0) -> float:
+    try:
+        if value is None:
+            return default
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
 def summarize(trace_path: Path) -> RunSummary:
     """Produce a run summary from a trace JSONL file."""
 
@@ -125,9 +138,9 @@ def summarize(trace_path: Path) -> RunSummary:
     work_progress = 0
     designation_progress = 0
     completion_progress = 0
-    utility_progress = 0
+    utility_progress = 0.0
     production_progress = 0
-    complexity_progress = 0
+    complexity_progress = 0.0
     ui_work_progress = 0
     ui_designation_progress = 0
     ui_completion_progress = 0
@@ -141,9 +154,13 @@ def summarize(trace_path: Path) -> RunSummary:
     target_wall_tiles_delta = 0
     active_dig_jobs_delta = 0
     utility_action_progress = 0
+    demand_capped_production = 0.0
     complexity_floor_tiles_delta = 0
     complexity_wall_tiles_delta = 0
     complexity_spaces_delta = 0
+    complexity_rooms_delta = 0
+    complexity_fort_spaces_delta = 0
+    complexity_constructions_delta = 0
     manager_orders_delta = 0
     manager_order_quantity_delta = 0
     carpenter_workshops_delta = 0
@@ -208,7 +225,10 @@ def summarize(trace_path: Path) -> RunSummary:
             )
             utility_progress = max(
                 utility_progress,
-                _to_int(metrics_snapshot.get("utility_progress")),
+                # score-v3: utility_progress can be a float (demand-capped
+                # production's 0.2 surplus rate) — _to_int here would
+                # silently truncate away the surplus pay.
+                _to_float(metrics_snapshot.get("utility_progress")),
             )
             production_progress = max(
                 production_progress,
@@ -216,7 +236,9 @@ def summarize(trace_path: Path) -> RunSummary:
             )
             complexity_progress = max(
                 complexity_progress,
-                _to_int(metrics_snapshot.get("complexity_progress")),
+                # score-v3: complexity_progress can be a float (the
+                # constructions_delta * 0.5 term) — same rationale as above.
+                _to_float(metrics_snapshot.get("complexity_progress")),
             )
             ui_work_progress = max(
                 ui_work_progress,
@@ -270,6 +292,10 @@ def summarize(trace_path: Path) -> RunSummary:
                 utility_action_progress,
                 _to_int(metrics_snapshot.get("utility_action_progress")),
             )
+            demand_capped_production = max(
+                demand_capped_production,
+                _to_float(metrics_snapshot.get("demand_capped_production")),
+            )
             complexity_floor_tiles_delta = max(
                 complexity_floor_tiles_delta,
                 _to_int(metrics_snapshot.get("complexity_floor_tiles_delta")),
@@ -281,6 +307,18 @@ def summarize(trace_path: Path) -> RunSummary:
             complexity_spaces_delta = max(
                 complexity_spaces_delta,
                 _to_int(metrics_snapshot.get("complexity_spaces_delta")),
+            )
+            complexity_rooms_delta = max(
+                complexity_rooms_delta,
+                _to_int(metrics_snapshot.get("complexity_rooms_delta")),
+            )
+            complexity_fort_spaces_delta = max(
+                complexity_fort_spaces_delta,
+                _to_int(metrics_snapshot.get("complexity_fort_spaces_delta")),
+            )
+            complexity_constructions_delta = max(
+                complexity_constructions_delta,
+                _to_int(metrics_snapshot.get("complexity_constructions_delta")),
             )
             manager_orders_delta = max(
                 manager_orders_delta,
@@ -485,9 +523,13 @@ def summarize(trace_path: Path) -> RunSummary:
         target_wall_tiles_delta=target_wall_tiles_delta,
         active_dig_jobs_delta=active_dig_jobs_delta,
         utility_action_progress=utility_action_progress,
+        demand_capped_production=demand_capped_production,
         complexity_floor_tiles_delta=complexity_floor_tiles_delta,
         complexity_wall_tiles_delta=complexity_wall_tiles_delta,
         complexity_spaces_delta=complexity_spaces_delta,
+        complexity_rooms_delta=complexity_rooms_delta,
+        complexity_fort_spaces_delta=complexity_fort_spaces_delta,
+        complexity_constructions_delta=complexity_constructions_delta,
         manager_orders_delta=manager_orders_delta,
         manager_order_quantity_delta=manager_order_quantity_delta,
         carpenter_workshops_delta=carpenter_workshops_delta,

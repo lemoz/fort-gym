@@ -5,7 +5,20 @@ from __future__ import annotations
 from typing import Dict, Optional
 
 # v2 2026-07-03: utility pays completed goods, not order-queue depth
-SCORE_VERSION = 2
+# v3 2026-07-07: demand-capped production utility + plan-agnostic complexity.
+# Forced by two adversarial findings: (1) legacy-rect complexity payments —
+# complexity_score and the fortress_breadth/plan_coherence rubric dims paid
+# from the retired two_room_workshop plan's fixed rectangles, so an agent
+# building real rooms anywhere else on the map earned zero (adversarial
+# review 2026-07-05); (2) Goodhart-by-monoculture — endurance probe
+# ad70df06 (250 steps) finished one room at step 98 then produced 26 chairs
+# for 13 dwarves over ~150 steps and scored 5.35x its step-100 mark, because
+# v2 paid real production linearly, making mass-producing the cheapest item
+# the optimal long-horizon policy instead of building. v3 is a scoring lens
+# change only — evidence boundaries, provenance gating, gameplay-proof
+# rules, and every recorded v1/v2 score are unaffected and not comparable
+# across this version boundary. Operator-ratified per docs/score_v3_proposal.md.
+SCORE_VERSION = 3
 
 
 TARGET_SURVIVAL_TICKS = 2400

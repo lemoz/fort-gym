@@ -133,7 +133,8 @@ def test_utility_progress_delta_counts_orders_and_usable_workshops() -> None:
         "carpenter_workshop_task_jobs_delta": 0,
         "carpenter_workshops_delta": 1,
         "produced_goods_delta": 2,
-        "utility_progress": 7,
+        "demand_capped_production": 2.0,
+        "utility_progress": 7.0,
     }
 
 

@@ -154,13 +154,29 @@ def utility_progress_delta(
     baseline_work: Dict[str, Any] | None,
     current_goods: Dict[str, Any] | None = None,
     baseline_goods: Dict[str, Any] | None = None,
-) -> Dict[str, int]:
+    population: int | None = None,
+) -> Dict[str, Any]:
     """Compute bounded useful-work deltas from live work snapshots.
 
     Score-v2 (2026-07-03): utility pays only for COMPLETED production —
     in-play item-count deltas of orderable goods — plus workshops that became
     usable. Order/queue depth deltas remain in the output for observability
     but earn nothing: queueing 91 orders is a menu action, not utility.
+
+    Score-v3 (2026-07-07): linear per-item payment let the optimal
+    long-horizon policy degenerate into mass-producing the cheapest item
+    instead of building a fortress — endurance probe ad70df06 finished one
+    room at step 98 then produced 26 chairs for 13 dwarves over ~150 steps
+    and scored 5.35x its step-100 mark even though every chair was real,
+    proof-backed production (v2's fake-progress defenses held; the exploit
+    was Goodhart-by-monoculture, not fabricated state). v3 caps payment at
+    fort demand (current population): each orderable good type pays full
+    rate up to `population` items produced this run, and 20% surplus rate
+    beyond that, so mass production of one item stops dominating the score.
+    `produced_goods_delta` keeps paying the full raw count for legacy
+    callers/observability; `demand_capped_production` is the new paid
+    quantity that feeds `utility_progress`. Passing `population=None`
+    preserves the exact v2 behavior (paid == raw) for legacy callers.
     """
 
     current = current_work or {}
@@ -194,11 +210,20 @@ def utility_progress_delta(
         carpenter_workshop_task_jobs_delta,
     )
     produced_goods_delta = 0
+    demand_capped_production = 0.0
+    demand = max(int(population), 0) if population is not None else None
     if isinstance(current_goods, dict) and isinstance(baseline_goods, dict):
         for good in ORDERABLE_GOODS:
-            produced_goods_delta += max(
+            raw_t = max(
                 0, _to_int(current_goods.get(good)) - _to_int(baseline_goods.get(good))
             )
+            produced_goods_delta += raw_t
+            if demand is None:
+                paid_t: float = raw_t
+            else:
+                paid_t = min(raw_t, demand) + 0.2 * max(0, raw_t - demand)
+            demand_capped_production += paid_t
+    demand_capped_production = round(demand_capped_production, 2)
     workshop_progress = carpenter_workshops_usable_delta * UTILITY_WORKSHOP_PROGRESS
     return {
         "manager_orders_delta": manager_orders_delta,
@@ -208,7 +233,8 @@ def utility_progress_delta(
         "carpenter_workshop_task_jobs_delta": carpenter_workshop_task_jobs_delta,
         "carpenter_workshops_delta": carpenter_workshops_delta,
         "produced_goods_delta": produced_goods_delta,
-        "utility_progress": produced_goods_delta + workshop_progress,
+        "demand_capped_production": demand_capped_production,
+        "utility_progress": demand_capped_production + workshop_progress,
     }
 
 
@@ -249,8 +275,28 @@ def production_progress_delta(
 def complexity_progress_delta(
     current_work: Dict[str, Any] | None,
     baseline_work: Dict[str, Any] | None,
-) -> Dict[str, int]:
-    """Compute visible fortress-layout complexity from the planned second space."""
+    current_fort: Dict[str, Any] | None = None,
+    baseline_fort: Dict[str, Any] | None = None,
+) -> Dict[str, Any]:
+    """Compute visible fortress-layout complexity.
+
+    Score-v2 and earlier paid from `fortress_complexity_*` — floor/wall tile
+    deltas and a "second space completed" flag lifted straight from the
+    retired `two_room_workshop` fixed plan. An agent building real rooms
+    anywhere else on the map earned zero here, which silently punished the
+    plan-agnostic play the gates now require (confirmed by adversarial
+    review 2026-07-05, forcing finding #1 behind score-v3).
+
+    Score-v3 (2026-07-07): when plan-agnostic fort structure facts are
+    available (`current_fort`/`baseline_fort`, from fort_metrics.lua via the
+    runner, both `ok`), complexity instead pays from flood-fill facts:
+    completed functional rooms, enclosed spaces, and constructions, anywhere
+    on the map. The legacy tile/space fields are still computed and returned
+    for observability but no longer feed `complexity_progress` once fort
+    data is present. When fort data is absent (old traces, mock backend),
+    this falls back to the exact legacy computation so historical replay is
+    unaffected.
+    """
 
     current = current_work or {}
     baseline = baseline_work or {}
@@ -270,11 +316,54 @@ def complexity_progress_delta(
         - _to_int(baseline.get("fortress_complexity_spaces_completed")),
     )
     complexity_tiles_delta = max(floor_delta, wall_delta)
+
+    fort_available = (
+        isinstance(current_fort, dict)
+        and current_fort.get("ok")
+        and isinstance(baseline_fort, dict)
+        and baseline_fort.get("ok")
+    )
+    if not fort_available:
+        # Legacy fallback: exact v2 computation, unchanged output shape.
+        return {
+            "complexity_floor_tiles_delta": floor_delta,
+            "complexity_wall_tiles_delta": wall_delta,
+            "complexity_spaces_delta": spaces_delta,
+            "complexity_progress": complexity_tiles_delta
+            + spaces_delta * COMPLEXITY_SPACE_PROGRESS,
+        }
+
+    rooms_delta = max(
+        0,
+        _to_int(current_fort.get("functional_rooms"))
+        - _to_int(baseline_fort.get("functional_rooms")),
+    )
+    fort_spaces_delta = max(
+        0,
+        _to_int(current_fort.get("enclosed_spaces"))
+        - _to_int(baseline_fort.get("enclosed_spaces")),
+    )
+    constructions_delta = max(
+        0,
+        _to_int(current_fort.get("constructions"))
+        - _to_int(baseline_fort.get("constructions")),
+    )
+    complexity_progress = (
+        rooms_delta * 15 + fort_spaces_delta * 5 + min(constructions_delta, 60) * 0.5
+    )
     return {
+        # Legacy keys: still computed from `work` as today, for observability
+        # only — they no longer feed complexity_progress once fort data is
+        # present.
         "complexity_floor_tiles_delta": floor_delta,
         "complexity_wall_tiles_delta": wall_delta,
         "complexity_spaces_delta": spaces_delta,
-        "complexity_progress": complexity_tiles_delta + spaces_delta * COMPLEXITY_SPACE_PROGRESS,
+        # Plan-agnostic v3 keys, distinctly named so they never collide with
+        # (or silently overwrite) the legacy observability fields above.
+        "complexity_rooms_delta": rooms_delta,
+        "complexity_fort_spaces_delta": fort_spaces_delta,
+        "complexity_constructions_delta": constructions_delta,
+        "complexity_progress": complexity_progress,
     }
 
 
