@@ -167,7 +167,14 @@ def test_planned_workshop_without_usable_proof_does_not_score_production() -> No
     assert production_delta["production_progress"] == 0
 
 
-def test_workshop_task_job_counts_as_usable_production_proof() -> None:
+def test_workshop_task_job_is_observability_only_not_production() -> None:
+    """score-v3 amendment: a queued workshop task job alone pays NOTHING —
+    not utility (v2 rule) and not production either. Through v2,
+    production_workshops_delta = max(usable_delta, task_jobs_delta) let
+    queue depth masquerade as production capacity — the vector behind
+    ad70df06's production_score 320 and 7f268bcc's 420. Task-jobs deltas
+    stay in the output for observability but earn zero."""
+
     baseline = {"carpenter_workshop_task_jobs": 0}
     current = {"carpenter_workshop_task_jobs": 1}
 
@@ -180,8 +187,8 @@ def test_workshop_task_job_counts_as_usable_production_proof() -> None:
     # and no workshop became usable
     assert utility_delta["utility_progress"] == 0
     assert production_delta["production_task_jobs_delta"] == 1
-    assert production_delta["production_workshops_delta"] == 1
-    assert production_delta["production_progress"] == 5
+    assert production_delta["production_workshops_delta"] == 0
+    assert production_delta["production_progress"] == 0
 
 
 def test_complexity_progress_delta_counts_second_room_shape() -> None:
@@ -381,7 +388,10 @@ def test_composite_score_continues_past_previous_caps() -> None:
     )
 
     assert target_score == 145.0
-    assert doubled_score == 215.0
+    # v3 amendment: production_score is bounded at its 10-point weight
+    # (proven capacity, not open-ended queue depth), so doubling
+    # production_progress past its target adds nothing — 205, not 215.
+    assert doubled_score == 205.0
 
 
 def test_read_job_metrics_enforces_rect_bounds(monkeypatch) -> None:

@@ -207,3 +207,123 @@ def test_complexity_progress_legacy_fallback_when_fort_not_ok() -> None:
 
     assert "complexity_rooms_delta" not in delta
     assert delta["complexity_progress"] == 28
+
+
+# --- v3 amendment (2026-07-07, operator-ratified): production reform -------
+# First calibration round showed production_score was the dominant
+# unreformed Goodhart vector: task-jobs queue churn paid as production
+# capacity, uncapped (ad70df06: 320 points; 7f268bcc: 420 points, vs 30-50
+# for both G4-passing runs). Amendment: production pays USABLE-workshop
+# deltas only, and production_score is bounded at its 10-point weight.
+
+
+def test_queue_depth_pays_zero_production() -> None:
+    """Stacking workshop task jobs (queue depth) earns zero production —
+    queueing is a menu action, not production. The delta stays in the
+    output for observability only."""
+
+    baseline = {"carpenter_workshops_usable": 1, "carpenter_workshop_task_jobs": 0}
+    current = {"carpenter_workshops_usable": 1, "carpenter_workshop_task_jobs": 32}
+
+    delta = metrics.production_progress_delta(current, baseline)
+
+    assert delta["production_task_jobs_delta"] == 32
+    assert delta["production_workshops_delta"] == 0
+    assert delta["production_progress"] == 0
+
+
+def test_usable_workshops_pay_bounded_production() -> None:
+    """Usable-workshop deltas pay production, but production_score caps at
+    its 10-point weight — proven capacity, not an open-ended meter."""
+
+    delta = metrics.production_progress_delta(
+        {"carpenter_workshops_usable": 2},
+        {"carpenter_workshops_usable": 0},
+    )
+    assert delta["production_workshops_delta"] == 2
+    assert delta["production_progress"] == 10
+
+    at_target = scoring.score_components(
+        {"production_progress": scoring.TARGET_PRODUCTION_PROGRESS}
+    )
+    far_past_target = scoring.score_components({"production_progress": 160})
+
+    assert at_target["production_score"] == scoring.PRODUCTION_WEIGHT
+    # 160 was ad70df06's recorded production_progress (score 320.0 under
+    # v2's unbounded scaling); bounded, it pays exactly the weight.
+    assert far_past_target["production_score"] == scoring.PRODUCTION_WEIGHT
+
+
+def test_chair_factory_shape_ranks_below_pass_shape() -> None:
+    """Matched fixed conditions and matched item volume: a chair-factory
+    profile (single-type monoculture beyond demand + task-jobs queue churn
+    + minimal structure) must rank below a pass profile (multi-type
+    production within demand + real multi-room structure). This locks the
+    combined effect of all three v3 levers: demand cap, plan-agnostic
+    complexity, and the production amendment."""
+
+    fixed = {
+        "duration_ticks": 100000,
+        "peak_pop": 7,
+        "drink_availability": 1.0,
+        "created_wealth": 1000,
+    }
+
+    chair_factory_utility = metrics.utility_progress_delta(
+        {"carpenter_workshops_usable": 1, "carpenter_workshop_task_jobs": 32},
+        {"carpenter_workshops_usable": 0, "carpenter_workshop_task_jobs": 0},
+        current_goods={"chair": 26},
+        baseline_goods={"chair": 0},
+        population=7,
+    )
+    chair_factory_production = metrics.production_progress_delta(
+        {"carpenter_workshops_usable": 1, "carpenter_workshop_task_jobs": 32},
+        {"carpenter_workshops_usable": 0, "carpenter_workshop_task_jobs": 0},
+    )
+    chair_factory_complexity = metrics.complexity_progress_delta(
+        {},
+        {},
+        current_fort={"ok": True, "functional_rooms": 1, "enclosed_spaces": 1, "constructions": 30},
+        baseline_fort={"ok": True, "functional_rooms": 0, "enclosed_spaces": 0, "constructions": 0},
+    )
+
+    pass_utility = metrics.utility_progress_delta(
+        {"carpenter_workshops_usable": 1},
+        {"carpenter_workshops_usable": 0},
+        current_goods={"bed": 7, "door": 7, "table": 7, "barrel": 5},
+        baseline_goods={"bed": 0, "door": 0, "table": 0, "barrel": 0},
+        population=7,
+    )
+    pass_production = metrics.production_progress_delta(
+        {"carpenter_workshops_usable": 1},
+        {"carpenter_workshops_usable": 0},
+    )
+    pass_complexity = metrics.complexity_progress_delta(
+        {},
+        {},
+        current_fort={"ok": True, "functional_rooms": 2, "enclosed_spaces": 2, "constructions": 20},
+        baseline_fort={"ok": True, "functional_rooms": 0, "enclosed_spaces": 0, "constructions": 0},
+    )
+
+    # Same raw item volume either way — the shapes differ, not the effort.
+    assert chair_factory_utility["produced_goods_delta"] == 26
+    assert pass_utility["produced_goods_delta"] == 26
+
+    chair_factory_total = scoring.composite_score(
+        {
+            **fixed,
+            "utility_progress": chair_factory_utility["utility_progress"],
+            "production_progress": chair_factory_production["production_progress"],
+            "complexity_progress": chair_factory_complexity["complexity_progress"],
+        }
+    )
+    pass_total = scoring.composite_score(
+        {
+            **fixed,
+            "utility_progress": pass_utility["utility_progress"],
+            "production_progress": pass_production["production_progress"],
+            "complexity_progress": pass_complexity["complexity_progress"],
+        }
+    )
+
+    assert chair_factory_total < pass_total

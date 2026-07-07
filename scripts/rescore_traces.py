@@ -10,15 +10,19 @@ run -- exactly mirroring how ``summary.py`` aggregates the live per-step
 metrics (``utility_progress = max(utility_progress, ...)`` each step). It
 then recomputes the scalar composite score two ways:
 
-* **v2** — calls the *same* ``fort_gym.bench.eval.metrics`` functions this
-  branch ships, but with the v3 kwargs omitted (``population=None``, no
-  ``current_fort``/``baseline_fort``). Those functions are built to fall
+* **v2** — for utility/complexity, calls the *same*
+  ``fort_gym.bench.eval.metrics`` functions this branch ships, but with the
+  v3 kwargs omitted (``population=None``, no
+  ``current_fort``/``baseline_fort``); those functions are built to fall
   back to the exact legacy (v2) computation in that case — see
-  ``tests/test_score_v3.py`` for the tests that pin that contract — so this
-  reuses one code path instead of hand-duplicating the v2 formulas.
-* **v3** — calls the same functions with ``population`` and the fort dicts
+  ``tests/test_score_v3.py`` for the tests that pin that contract. For
+  production, the 2026-07-07 amendment changed the live function itself
+  (usable-only payment, bounded scoring), so the TRUE v2 formulas are
+  frozen inline (``_production_progress_v2`` / ``_production_score_v2``)
+  and used for the validation column.
+* **v3** — calls the live functions with ``population`` and the fort dicts
   supplied, exercising the demand-capped-production / plan-agnostic-
-  complexity formulas.
+  complexity formulas, plus the amended usable-only bounded production.
 
 Design note on "other summary aggregates": ``RunSummary`` (see
 ``fort_gym/bench/eval/summary.py``) does NOT persist ``drink_availability``,
@@ -28,10 +32,10 @@ payload, never written to ``summary.json``. That makes it impossible to
 recompute ``availability_score`` (or the casualty/hostiles penalty) from
 scratch from a recorded summary alone. Instead of guessing those inputs,
 this script reuses the *already-recorded, already-correct* component scores
-for everything utility/complexity do not touch (survival, population,
-availability, wealth, work, completion, production) straight from
-summary.json, and only recomputes ``utility_score``/``complexity_score``
-fresh via ``scoring.score_components``. The casualty/hostiles penalty
+for everything v3 does not touch (survival, population, availability,
+wealth, work, completion) straight from summary.json, and recomputes
+``utility_score``/``complexity_score``/``production_score`` fresh per
+version. The casualty/hostiles penalty
 amount is recovered exactly as the remainder:
 ``penalties = sum(recorded components) - recorded total_score`` (composite_score's
 own definition), so no raw penalty inputs need to be reconstructed either.
@@ -82,6 +86,9 @@ VALIDATION_TOLERANCE = 1.0
 # history comment for the 2026-07-03 v2 cutover).
 MIN_VALIDATABLE_SCORE_VERSION = 2
 
+# Components neither score-v3 change (nor the 2026-07-07 production
+# amendment) touches: reused straight from the recorded summary for BOTH
+# columns. utility/complexity/production are recomputed per version.
 RECORDED_COMPONENT_KEYS = (
     "survival_score",
     "population_score",
@@ -89,8 +96,69 @@ RECORDED_COMPONENT_KEYS = (
     "wealth_score",
     "work_score",
     "completion_score",
-    "production_score",
 )
+
+# All recorded score components, used only to recover the casualty/hostiles
+# penalty as the remainder vs the recorded total.
+ALL_RECORDED_COMPONENT_KEYS = RECORDED_COMPONENT_KEYS + (
+    "utility_score",
+    "production_score",
+    "complexity_score",
+)
+
+PRODUCTION_WORKSHOP_PROGRESS_V2 = 5
+
+
+def _production_progress_v2(
+    current_work: Dict[str, Any], baseline_work: Dict[str, Any]
+) -> int:
+    """TRUE score-v2 production formula, reimplemented inline.
+
+    The v3 amendment (2026-07-07, operator-ratified) changed
+    ``metrics.production_progress_delta`` to pay usable-workshop deltas
+    only, so the live function no longer computes the v2 quantity. The
+    validation column of this rescorer must reproduce recorded v2 scores
+    with TRUE v2 formulas, so v2 production is frozen here exactly as it
+    stood on origin/main before the amendment:
+    ``max(usable_delta, task_jobs_delta) * 5`` — the very
+    task-jobs-as-capacity payment the amendment removed (forcing evidence:
+    ad70df06 production_score 320.0, 7f268bcc 420.0).
+    """
+
+    def _count(work: Dict[str, Any], key: str, fallback: str | None = None) -> int:
+        value = work.get(key, work.get(fallback) if fallback else None)
+        try:
+            return int(value or 0)
+        except (TypeError, ValueError):
+            return 0
+
+    usable_delta = max(
+        0,
+        _count(current_work, "carpenter_workshops_usable", "carpenter_workshops")
+        - _count(baseline_work, "carpenter_workshops_usable", "carpenter_workshops"),
+    )
+    task_jobs_delta = max(
+        0,
+        _count(current_work, "carpenter_workshop_task_jobs")
+        - _count(baseline_work, "carpenter_workshop_task_jobs"),
+    )
+    return max(usable_delta, task_jobs_delta) * PRODUCTION_WORKSHOP_PROGRESS_V2
+
+
+def _production_score_v2(production_progress: float) -> float:
+    """TRUE score-v2 production scoring: open-ended _scaled_component.
+
+    scoring.py now bounds production_score at its weight (the amendment),
+    so the v2 scaling is frozen inline for the validation column.
+    """
+
+    if scoring.TARGET_PRODUCTION_PROGRESS <= 0:
+        return 0.0
+    return (
+        max(0.0, production_progress)
+        / scoring.TARGET_PRODUCTION_PROGRESS
+        * scoring.PRODUCTION_WEIGHT
+    )
 
 
 def _to_float(value: Any, default: float = 0.0) -> float:
@@ -234,19 +302,26 @@ def reconstruct_inputs(records: List[Dict[str, Any]]) -> Dict[str, Any]:
 
 
 def recompute_progress(inputs: Dict[str, Any]) -> Dict[str, float]:
-    """Recompute utility_progress/complexity_progress under v2 (legacy,
-    population/fort kwargs omitted) and v3 (kwargs supplied) semantics, by
-    replaying every trace step against the fixed run baseline and taking
-    the running max -- exactly mirroring how summary.py aggregates the live
-    per-step metrics. Reuses the same metrics.py functions this branch
-    ships for both versions; v2 is simply v3's functions called without the
-    new kwargs, which is the documented backward-compatible fallback (see
-    tests/test_score_v3.py)."""
+    """Recompute utility/complexity/production progress under v2 and v3
+    semantics, by replaying every trace step against the fixed run baseline
+    and taking the running max -- exactly mirroring how summary.py
+    aggregates the live per-step metrics.
+
+    Version paths: utility/complexity v2 reuse the same metrics.py
+    functions this branch ships, called without the new kwargs (the
+    documented backward-compatible fallback, see tests/test_score_v3.py).
+    Production v2 CANNOT reuse the live function -- the 2026-07-07
+    amendment changed it to usable-only payment -- so the TRUE v2 formula
+    is frozen inline in `_production_progress_v2` above; production v3 uses
+    the amended `metrics.production_progress_delta`.
+    """
 
     utility_progress_v2 = 0.0
     utility_progress_v3 = 0.0
     complexity_progress_v2 = 0.0
     complexity_progress_v3 = 0.0
+    production_progress_v2 = 0.0
+    production_progress_v3 = 0.0
     produced_goods_delta = 0
     demand_capped_production_v3 = 0.0
     fort_available = False
@@ -276,6 +351,8 @@ def recompute_progress(inputs: Dict[str, Any]) -> Dict[str, float]:
             current_fort=step["fort"],
             baseline_fort=baseline_fort,
         )
+        production_v2 = _production_progress_v2(step["work"], baseline_work)
+        production_v3 = metrics.production_progress_delta(step["work"], baseline_work)
 
         utility_progress_v2 = max(utility_progress_v2, _to_float(utility_v2["utility_progress"]))
         utility_progress_v3 = max(utility_progress_v3, _to_float(utility_v3["utility_progress"]))
@@ -284,6 +361,10 @@ def recompute_progress(inputs: Dict[str, Any]) -> Dict[str, float]:
         )
         complexity_progress_v3 = max(
             complexity_progress_v3, _to_float(complexity_v3["complexity_progress"])
+        )
+        production_progress_v2 = max(production_progress_v2, float(production_v2))
+        production_progress_v3 = max(
+            production_progress_v3, _to_float(production_v3["production_progress"])
         )
         produced_goods_delta = max(produced_goods_delta, utility_v2["produced_goods_delta"])
         demand_capped_production_v3 = max(
@@ -296,6 +377,8 @@ def recompute_progress(inputs: Dict[str, Any]) -> Dict[str, float]:
         "utility_progress_v3": utility_progress_v3,
         "complexity_progress_v2": complexity_progress_v2,
         "complexity_progress_v3": complexity_progress_v3,
+        "production_progress_v2": production_progress_v2,
+        "production_progress_v3": production_progress_v3,
         "produced_goods_delta": produced_goods_delta,
         "demand_capped_production_v3": demand_capped_production_v3,
         "fort_available": fort_available,
@@ -306,24 +389,46 @@ def recompute_total(
     recorded_summary: Dict[str, Any],
     utility_progress: float,
     complexity_progress: float,
+    production_progress: float,
     penalties: float,
-) -> Tuple[float, float, float]:
-    """Recompute the composite total using recorded (unaffected) components
-    plus freshly computed utility_score/complexity_score. Returns
-    (total, utility_score, complexity_score)."""
+    *,
+    version: int,
+) -> Tuple[float, float, float, float]:
+    """Recompute the composite total: recorded (unaffected) components plus
+    freshly computed utility/complexity/production scores. Returns
+    (total, utility_score, complexity_score, production_score).
+
+    version=2 scores production with the TRUE v2 open-ended scaling
+    (`_production_score_v2`); version=3 uses the live amended scoring
+    (bounded at the weight) via scoring.score_components.
+    """
 
     fresh = scoring.score_components(
-        {"utility_progress": utility_progress, "complexity_progress": complexity_progress}
+        {
+            "utility_progress": utility_progress,
+            "complexity_progress": complexity_progress,
+            "production_progress": production_progress,
+        }
     )
     utility_score = fresh["utility_score"]
     complexity_score = fresh["complexity_score"]
+    if version == 2:
+        production_score = _production_score_v2(production_progress)
+    else:
+        production_score = fresh["production_score"]
     total = (
         sum(_to_float(recorded_summary.get(key)) for key in RECORDED_COMPONENT_KEYS)
         + utility_score
         + complexity_score
+        + production_score
         - penalties
     )
-    return round(total, 2), round(utility_score, 2), round(complexity_score, 2)
+    return (
+        round(total, 2),
+        round(utility_score, 2),
+        round(complexity_score, 2),
+        round(production_score, 2),
+    )
 
 
 def score_run(run_id: str, label: str, run_dir: Path) -> Dict[str, Any]:
@@ -340,18 +445,28 @@ def score_run(run_id: str, label: str, run_dir: Path) -> Dict[str, Any]:
 
     recorded_total = _to_float(summary.get("total_score"))
     recorded_components_sum = sum(
-        _to_float(summary.get(key)) for key in RECORDED_COMPONENT_KEYS
-    ) + _to_float(summary.get("utility_score")) + _to_float(summary.get("complexity_score"))
+        _to_float(summary.get(key)) for key in ALL_RECORDED_COMPONENT_KEYS
+    )
     penalties = recorded_components_sum - recorded_total
 
     inputs = reconstruct_inputs(records)
     progress = recompute_progress(inputs)
 
-    total_v2, utility_score_v2, complexity_score_v2 = recompute_total(
-        summary, progress["utility_progress_v2"], progress["complexity_progress_v2"], penalties
+    total_v2, utility_score_v2, complexity_score_v2, production_score_v2 = recompute_total(
+        summary,
+        progress["utility_progress_v2"],
+        progress["complexity_progress_v2"],
+        progress["production_progress_v2"],
+        penalties,
+        version=2,
     )
-    total_v3, utility_score_v3, complexity_score_v3 = recompute_total(
-        summary, progress["utility_progress_v3"], progress["complexity_progress_v3"], penalties
+    total_v3, utility_score_v3, complexity_score_v3, production_score_v3 = recompute_total(
+        summary,
+        progress["utility_progress_v3"],
+        progress["complexity_progress_v3"],
+        progress["production_progress_v3"],
+        penalties,
+        version=3,
     )
 
     score_version = summary.get("score_version")
@@ -373,13 +488,17 @@ def score_run(run_id: str, label: str, run_dir: Path) -> Dict[str, Any]:
             "utility_progress_v3": progress["utility_progress_v3"],
             "complexity_progress_v2": progress["complexity_progress_v2"],
             "complexity_progress_v3": progress["complexity_progress_v3"],
+            "production_progress_v2": progress["production_progress_v2"],
+            "production_progress_v3": progress["production_progress_v3"],
             "produced_goods_delta": progress["produced_goods_delta"],
             "demand_capped_production_v3": progress["demand_capped_production_v3"],
             "fort_available": progress["fort_available"],
             "utility_score_v2": utility_score_v2,
             "complexity_score_v2": complexity_score_v2,
+            "production_score_v2": production_score_v2,
             "utility_score_v3": utility_score_v3,
             "complexity_score_v3": complexity_score_v3,
+            "production_score_v3": production_score_v3,
         }
     )
     return row
@@ -450,8 +569,13 @@ def render_markdown(rows: List[Dict[str, Any]]) -> str:
             f"v3={row['complexity_progress_v3']} (fort data available: {row['fort_available']})"
         )
         lines.append(
+            f"- production_progress: v2={row['production_progress_v2']}, "
+            f"v3={row['production_progress_v3']} (amendment: usable-only, bounded)"
+        )
+        lines.append(
             f"- utility_score: v2={row['utility_score_v2']}, v3={row['utility_score_v3']}; "
-            f"complexity_score: v2={row['complexity_score_v2']}, v3={row['complexity_score_v3']}"
+            f"complexity_score: v2={row['complexity_score_v2']}, v3={row['complexity_score_v3']}; "
+            f"production_score: v2={row['production_score_v2']}, v3={row['production_score_v3']}"
         )
         lines.append("")
 

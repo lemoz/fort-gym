@@ -114,7 +114,11 @@ def score_components(summary: Dict[str, float]) -> Dict[str, float]:
         "utility_score": _scaled_component(
             utility_progress, TARGET_UTILITY_PROGRESS, UTILITY_WEIGHT
         ),
-        "production_score": _scaled_component(
+        # v3 amendment (2026-07-07, operator-ratified): proven capacity,
+        # bounded — not open-ended queue depth. Unbounded scaling let
+        # task-jobs churn pay production_score 320.0 (ad70df06) and 420.0
+        # (7f268bcc); production now caps at its 10-point weight.
+        "production_score": _bounded_scaled_component(
             production_progress, TARGET_PRODUCTION_PROGRESS, PRODUCTION_WEIGHT
         ),
         "complexity_score": _scaled_component(

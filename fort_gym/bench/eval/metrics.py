@@ -242,7 +242,22 @@ def production_progress_delta(
     current_work: Dict[str, Any] | None,
     baseline_work: Dict[str, Any] | None,
 ) -> Dict[str, int]:
-    """Compute bounded production/build deltas from live work snapshots."""
+    """Compute bounded production/build deltas from live work snapshots.
+
+    Score-v3 amendment (2026-07-07, operator-ratified): production pays
+    USABLE-workshop deltas only. Through v2, `production_workshops_delta`
+    was `max(usable_delta, task_jobs_delta)` — queued workshop task jobs
+    counted as production capacity, and since task-job depth rises with
+    every ORDER an agent stacks, the open-ended production_score became a
+    queue-depth meter. The first score-v3 calibration round exposed it as
+    the dominant unreformed Goodhart vector: run ad70df06 (chair factory)
+    recorded production_score 320.0 and run 7f268bcc recorded 420.0 — an
+    order of magnitude above every honest component — from task-jobs churn,
+    while both G4-passing runs sat at 30-50. Queueing is a menu action, not
+    production (the same doctrine score-v2 applied to utility's
+    order-queue deltas). `production_task_jobs_delta` stays in the output
+    for observability but earns nothing.
+    """
 
     current = current_work or {}
     baseline = baseline_work or {}
@@ -260,10 +275,7 @@ def production_progress_delta(
         0,
         current_workshops["task_jobs"] - baseline_workshops["task_jobs"],
     )
-    production_workshops_delta = max(
-        carpenter_workshops_usable_delta,
-        carpenter_workshop_task_jobs_delta,
-    )
+    production_workshops_delta = carpenter_workshops_usable_delta
     return {
         "production_workshops_planned_delta": carpenter_workshops_planned_delta,
         "production_workshops_delta": production_workshops_delta,
