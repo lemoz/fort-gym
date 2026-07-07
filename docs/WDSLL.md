@@ -405,6 +405,59 @@ gate. Each entry states what changed and the evidence that forced it.
   assisted sets, proof via unsuspended/suspended_found counts) — draft PR
   #41, a legal-action-surface widening held for operator merge.
 
+- **2026-07-07 — SCORE-V3 RATIFIED AND IMPLEMENTED (operator-approved).**
+  Per `docs/score_v3_proposal.md`: demand-capped production
+  (`utility_progress` pays full rate per orderable-good type up to fort
+  demand/population, 20% surplus beyond it — `produced_goods_delta` keeps
+  paying the raw uncapped count for gameplay-proof consumers), plan-agnostic
+  complexity (`complexity_progress` pays from flood-fill
+  functional_rooms/enclosed_spaces/constructions when fort data is present,
+  falling back to the exact legacy tile/space computation on old traces or
+  the mock backend), and the rubric-half `fortress_breadth`/`plan_coherence`
+  dims from `feat/rubric-plan-agnostic` (already CI-green on main) — all
+  landed together as one version boundary, `score_version: 3`. Boundary
+  discipline: every prior run stays v1/v2 and is not comparable across this
+  boundary. Calibration table: `docs/score_v3_calibration.md` (also in the
+  PR body for branch `feat/score-v3`) — validation gate passes exactly
+  (|Δv2| = 0.0) on all 9 score_version>=2 runs checked, confirming the
+  reconstruction is faithful, but the ratified acceptance check (chair
+  factory + DeepSeek exploit must both score below both G4-passing runs
+  under v3) **FAILS for the chair-factory run** (`ad70df06`: v3 = 508.06,
+  both G4-passing runs score 180.33/207.58) because of `production_score`
+  (paying uncapped for `production_workshops_delta`), a component neither
+  v3 change touches — the same pattern independently shows up on a second
+  sampled run (`7f268bcc`, production_score 420.0). This is reported, not
+  silently tuned around: the PR is held for operator review of the
+  calibration table before any merge or gate re-run under v3.
+
+- **2026-07-07 — SCORE-V3 PRODUCTION AMENDMENT (operator-ratified, second
+  calibration round).** In response to round 1's finding, the operator
+  ratified amending production within the v3 boundary:
+  `production_workshops_delta` now pays usable-workshop deltas ONLY —
+  task-jobs queue depth drops out of the payment entirely (v2's
+  "queueing is a menu action" doctrine, now applied to production) though
+  it stays recorded for observability — and `production_score` is bounded
+  at its 10-point weight (proven capacity, not an open-ended queue-depth
+  meter). Round-2 calibration (`docs/score_v3_calibration.md`, commit
+  `77adc8720`): validation gate again passes exactly (|Δv2| = 0.0 on all
+  9 score_version-2 runs, now with true-v2 production formulas frozen
+  inline in the rescorer); the queue-churn runs deflate correctly
+  (`7f268bcc` 497.56 -> 104.54; `ad70df06` production_score 320 -> 10).
+  Acceptance verdict: the DeepSeek arm passes (78.81, below both G4
+  passes), but **the chair-factory arm still fails by 10.48 points**
+  (`ad70df06` v3 = 198.06 vs the better G4 pass at 187.58) — no longer
+  from any exploit vector, but from honest diversified production volume
+  over its 2.5x step horizon (250 vs 100 steps; per-type demand caps
+  across six good types leave ~78 full-rate units reachable) plus
+  open-ended utility/wealth scaling. Per the ratified stop-and-report
+  rule, no further coefficient was touched: whether to accept the gap
+  (the comparability clause already forbids cross-horizon score
+  comparisons for gates), cap utility volume, bound wealth, or normalize
+  by steps is an operator decision. Every audited adjacent path
+  (`utility_action_progress`, keystroke completed-task crediting) was
+  found bounded or completion-gated — not the same bug — and left
+  untouched. PR remains HELD; prior runs stay v1/v2, not comparable.
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,

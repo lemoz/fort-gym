@@ -460,6 +460,93 @@ def test_rubric_flags_missing_fort_structure() -> None:
     assert rubric["dimensions"]["shelter_layout"]["score"] <= 2.0
 
 
+def test_rubric_breadth_and_coherence_credit_off_plan_structure() -> None:
+    """Rooms built anywhere (not just the retired two_room_workshop rects)
+    must earn fortress_breadth and plan_coherence credit via the
+    plan-agnostic flood-fill facts (fort_enclosed_spaces / fort_constructions /
+    fort_functional_rooms), matching the pattern already used by
+    shelter_layout."""
+    from fort_gym.bench.eval.rubric import evaluate_trace_records
+
+    records = [
+        {
+            "step": step,
+            "action": {"type": "DIG", "params": {"area": [10, 10, 5], "size": [3, 3, 1]}, "objective": "expand fort"},
+            "execute": {"accepted": True, "provenance": "dfhack_governed"},
+            "metrics": {
+                "pop": 7,
+                "food": 40,
+                "drink": 50,
+                "work_progress": 10,
+                # legacy fixed-plan fields intentionally absent/zero: this
+                # room was not built inside the retired two_room_workshop rects
+                "fortress_complexity_floor_tiles": 0,
+                "fortress_complexity_wall_tiles": 0,
+                "fortress_complexity_spaces_completed": 0,
+                "complexity_progress": 0,
+                # plan-agnostic facts from hook/fort_metrics.lua
+                "fort_enclosed_spaces": 1,
+                "fort_functional_rooms": 1,
+                "fort_constructions": 12,
+            },
+            "gameplay_proof": {"ok": True, "changed_tile_count": 1},
+            "tick_advance": {"ticks_advanced": 1000},
+        }
+        for step in range(6)
+    ]
+
+    rubric = evaluate_trace_records(records)
+
+    breadth = rubric["dimensions"]["fortress_breadth"]
+    coherence = rubric["dimensions"]["plan_coherence"]
+
+    assert breadth["score"] > 0.0
+    assert any("fort_constructions=12" in item for item in breadth["evidence"])
+    assert any("fort_enclosed_spaces=1" in item for item in breadth["evidence"])
+    assert not any("complexity_progress" in item for item in breadth["evidence"])
+
+    assert coherence["score"] > 0.0
+    assert any("chain=1/" in item for item in coherence["evidence"])
+
+
+def test_rubric_breadth_and_coherence_ignore_legacy_complexity_fields() -> None:
+    """A run that only ever produced legacy fortress_complexity_* signal
+    (the retired hardcoded plan) and no plan-agnostic fort_* structure must
+    NOT receive fortress_breadth/plan_coherence credit for that legacy
+    signal — those two dimensions are now plan-agnostic."""
+    from fort_gym.bench.eval.rubric import evaluate_trace_records
+
+    records = [
+        {
+            "step": step,
+            "action": {"type": "ORDER", "params": {"job": "bed", "quantity": 2}},
+            "execute": {"accepted": True, "provenance": "dfhack_governed"},
+            "metrics": {
+                "pop": 7,
+                "food": 40,
+                "drink": 50,
+                # legacy plan signal only, no fort_* plan-agnostic facts at all
+                "fortress_complexity_floor_tiles": 28,
+                "fortress_complexity_wall_tiles": 0,
+                "fortress_complexity_spaces_completed": 2,
+                "complexity_progress": 38,
+            },
+            "gameplay_proof": {"ok": True, "changed_tile_count": 1},
+            "tick_advance": {"ticks_advanced": 1000},
+        }
+        for step in range(6)
+    ]
+
+    rubric = evaluate_trace_records(records)
+
+    breadth = rubric["dimensions"]["fortress_breadth"]
+    coherence = rubric["dimensions"]["plan_coherence"]
+
+    assert any("fort_constructions=0" in item for item in breadth["evidence"])
+    assert any("fort_enclosed_spaces=0" in item for item in breadth["evidence"])
+    assert any("chain=0/" in item for item in coherence["evidence"])
+
+
 def test_rubric_flags_order_spam_as_repetitive() -> None:
     """Regression for the DeepSeek exploit: queue-only proofs must not
     exempt repeated identical orders from the repetition blocker."""
