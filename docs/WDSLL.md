@@ -519,6 +519,52 @@ gate. Each entry states what changed and the evidence that forced it.
   natural follow-ups are a repeatability series on this seed and G6
   generalization (a `seed_region2_fresh` save already exists on the VM).
 
+- **2026-07-06 — PRE-DECLARED PROTOCOL: G4 repeatability series + 250-step
+  endurance probe (operator-approved before launch).** (a) Repeatability:
+  four additional runs (#5-#8 of the lineage), GLM-5V pinned, 100 steps,
+  memory-off, score-v2, config unchanged from the passing run `2f58fd37`;
+  all four run to completion regardless of outcome; the reported number is
+  the pass rate over the five-run lineage. Honest footnote: runs #5-#8
+  execute on post-PR-#44/#46 code where the proof window follows the fort,
+  so proof-backed step counts (and via the repetition check, possibly
+  rubric) are not strictly comparable to run #4's 46/100 — the change was
+  operator-approved measurement truth (walls built off-window now count as
+  evidence) and is disclosed here in advance. (b) Endurance probe: ONE run,
+  same config, 250 steps x 1000 ticks. A probe, not a gate. Pre-declared
+  questions, each answered from the run's own trace at step 100 vs step
+  250: functional_rooms strictly greater at 250 than at 100 (structure
+  compounds); produced-goods diversity >= 4 types by 250; no
+  repetitive_policy or no_production_surface blocker at end; final score
+  >= 1.25x the step-100 score (the extra horizon is used, not idled).
+  Purpose: measure whether the policy compounds or satisfices past
+  passing-level structure — either answer is a finding and gets reported
+  with the same prominence.
+
+- **2026-07-06 — RESULTS: repeatability 2/5, and the endurance probe found
+  the next incentive gap.** Repeatability series (runs #5-#8, 100 steps,
+  config identical to the pass): run #5 `01a57454` **PASSED 6/6** (second
+  pass in history); #6 `d06cc571`, #7 `7f268bcc`, #8 `71ffc569` failed.
+  **Lineage pass rate: 2/5 (40%)** — G4 is real but unreliable; the
+  bottleneck remains second-room completion variance. Endurance probe run
+  #9 `ad70df06` (250 steps, 198,042 ticks, score 515.44, rubric 68.61 zero
+  blockers, pop 7->13 with ALL migrants surviving, 250/250 frames, 500/500
+  events `z-ai/glm-5v-turbo`,
+  `fortgym.live/r/8ACitgQEErsR8fdjTRMb59CrTm4D6k1q`). Pre-declared
+  answers: (a) structure compounds — **NO**: 1 functional room at step 98,
+  still 1 at step 249; (b) goods diversity >= 4 — YES (5 types); (c) no
+  degeneration blockers — YES; (d) score >= 1.25x step-100 — YES, 5.35x
+  (93.59 -> 500.8). Verdict: **the policy satisfices structurally and
+  compounds economically in a degenerate direction** — after closing room
+  1 it spent ~150 steps as a chair factory (111 BUILD:Chair actions, 10
+  chair orders, 26 chairs produced for 13 dwarves). Not an illegal-progress
+  exploit (every good is real, produced world-change) but
+  Goodhart-by-monoculture: score-v2 pays real production linearly with no
+  diminishing returns, so the optimal long-horizon policy is to mass-produce
+  the cheapest item rather than build. Evidence for the pending score-v3
+  decision (plan-agnostic complexity + per-type diminishing returns are now
+  both on the table, one operator-approved boundary). The rubric held
+  partial ground: 68.61 stays under the 70 gate bar.
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,
