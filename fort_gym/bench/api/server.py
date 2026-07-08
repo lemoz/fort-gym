@@ -90,8 +90,14 @@ def _html_file_response(filename: str) -> FileResponse:
 
 
 @app.get("/", response_class=FileResponse)
+async def serve_landing():
+    """Serve the environment-lab landing page."""
+    return _html_file_response("landing.html")
+
+
+@app.get("/live", response_class=FileResponse)
 async def serve_index():
-    """Serve the public spectator UI."""
+    """Serve the public spectator UI (live viewer)."""
     return _html_file_response("index.html")
 
 
@@ -272,7 +278,10 @@ async def create_run(payload: RunCreateRequest, _: None = Depends(require_admin)
     )
 
     # Auto-create share token so run appears in public spectator view
-    RUN_REGISTRY.create_share(record.run_id, scope=["live", "replay", "export"])
+    # Benchmark runs are public evidence: their share links must never rot.
+    RUN_REGISTRY.create_share(
+        record.run_id, scope=["live", "replay", "export"], ttl_seconds=None
+    )
 
     def _target() -> None:
         agent = agent_factory()
