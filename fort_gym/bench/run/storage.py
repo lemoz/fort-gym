@@ -39,6 +39,20 @@ def _dt_from_iso(value: Optional[str]) -> Optional[datetime]:
         return None
 
 
+def _normalize_score_version(value: object) -> int:
+    """Coerce a summary's ``score_version`` to an int, defaulting to 1.
+
+    Runs recorded before ``score_version`` existed (the pre-v2 era) carry no
+    such field in their ``summary.json`` — WDSLL treats those as version 1,
+    same as an explicit ``score_version: 1``.
+    """
+
+    try:
+        return int(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return 1
+
+
 _GIT_SHA_UNSET: object = object()
 _GIT_SHA_CACHE: object = _GIT_SHA_UNSET
 
@@ -597,12 +611,24 @@ class RunRegistry:
         return preferred or fallback
 
     def public_leaderboard(self, limit: int = 50) -> list[Dict[str, Any]]:
+        """Return per-(model, score_version, seed_save) aggregates.
+
+        WDSLL's non-negotiables hold scores comparable only on the same seed
+        and (per the score-v2/v3 boundary entries) the same ``score_version``.
+        Mixing eras/seeds into a single ``mean_score`` is a display-truth bug,
+        so every row here is scoped to one (model, score_version, seed_save)
+        bucket. Runs with no recorded ``score_version`` predate the field and
+        are bucketed as version 1.
+        """
+
         conn = self._ensure_conn()
         now = datetime.utcnow().isoformat()
         with self._db_lock:
             rows = conn.execute(
                 """
-                SELECT r.model, r.summary_json
+                SELECT r.run_id, r.model, r.summary_json, r.seed_save,
+                       s.token AS share_token, s.scope_json AS share_scope_json,
+                       s.expires_at AS share_expires_at, s.created_at AS share_created_at
                   FROM runs r
                   JOIN shares s ON s.run_id = r.run_id
                  WHERE (s.expires_at IS NULL OR s.expires_at > ?)
@@ -613,20 +639,58 @@ class RunRegistry:
                 (now, int(limit)),
             ).fetchall()
 
-        aggregates: Dict[str, Dict[str, Any]] = {}
+        # A run may carry more than one live share token; dedupe to one row
+        # per run_id and collect all its shares for `_select_share`.
+        run_rows: Dict[str, sqlite3.Row] = {}
+        shares_by_run: Dict[str, list[ShareToken]] = {}
         for row in rows:
+            run_id = str(row["run_id"])
+            run_rows.setdefault(run_id, row)
+            try:
+                scopes = set(json.loads(row["share_scope_json"]))
+            except Exception:
+                scopes = set()
+            shares_by_run.setdefault(run_id, []).append(
+                ShareToken(
+                    token=str(row["share_token"]),
+                    run_id=run_id,
+                    scope=scopes,
+                    expires_at=_dt_from_iso(row["share_expires_at"]),
+                    created_at=_dt_from_iso(row["share_created_at"]) or datetime.utcnow(),
+                )
+            )
+
+        aggregates: Dict[Tuple[str, int, str], Dict[str, Any]] = {}
+        for run_id, row in run_rows.items():
             model = str(row["model"])
             try:
                 summary = json.loads(row["summary_json"])
             except Exception:
                 continue
+            score_version = _normalize_score_version(summary.get("score_version"))
+            seed_save = str(row["seed_save"]) if row["seed_save"] else "unspecified"
+            key = (model, score_version, seed_save)
             stats = aggregates.setdefault(
-                model,
-                {"model": model, "runs": 0, "total_score": 0.0, "survival_total": 0.0},
+                key,
+                {
+                    "model": model,
+                    "score_version": score_version,
+                    "seed_save": seed_save,
+                    "runs": 0,
+                    "total_score": 0.0,
+                    "survival_total": 0.0,
+                    "best_score": None,
+                    "best_token": None,
+                },
             )
+            score = float(summary.get("total_score", 0.0))
             stats["runs"] += 1
-            stats["total_score"] += float(summary.get("total_score", 0.0))
+            stats["total_score"] += score
             stats["survival_total"] += float(summary.get("survival_score", 0.0))
+            if stats["best_score"] is None or score >= stats["best_score"]:
+                stats["best_score"] = score
+                share = self._select_share(shares_by_run.get(run_id, []))
+                stats["best_token"] = share.token if share else None
 
         leaderboard: list[Dict[str, Any]] = []
         for stats in aggregates.values():
@@ -634,12 +698,16 @@ class RunRegistry:
             leaderboard.append(
                 {
                     "model": stats["model"],
+                    "score_version": stats["score_version"],
+                    "seed_save": stats["seed_save"],
                     "runs": stats["runs"],
                     "mean_score": round(stats["total_score"] / runs, 2),
                     "survival_mean": round(stats["survival_total"] / runs, 2),
+                    "best_score": round(stats["best_score"], 2) if stats["best_score"] is not None else None,
+                    "best_token": stats["best_token"],
                 }
             )
-        leaderboard.sort(key=lambda item: item["mean_score"], reverse=True)
+        leaderboard.sort(key=lambda item: (item["score_version"], item["mean_score"]), reverse=True)
         return leaderboard
 
     def best_scores_over_time(
@@ -651,7 +719,13 @@ class RunRegistry:
         max_steps: Optional[int] = None,
         limit_per_series: int = 500,
     ) -> list[Dict[str, Any]]:
-        """Return best-score time series per (model, git_sha, backend)."""
+        """Return best-score time series per (model, git_sha, backend, score_version, seed_save).
+
+        Same comparability rule as `public_leaderboard`: a "best score so far"
+        line must not silently splice together runs from different scoring
+        eras or seeds, so the series key includes `score_version`/`seed_save`
+        alongside the existing `model`/`git_sha`/`backend` grouping.
+        """
 
         conn = self._ensure_conn()
         now_dt = datetime.utcnow()
@@ -680,7 +754,7 @@ class RunRegistry:
         query = f"""
             SELECT
               r.run_id, r.backend, r.model, r.git_sha, r.max_steps, r.ticks_per_step,
-              r.ended_at, r.total_score,
+              r.ended_at, r.total_score, r.summary_json, r.seed_save,
               s.token AS share_token, s.scope_json AS share_scope_json,
               s.expires_at AS share_expires_at, s.created_at AS share_created_at
             FROM runs r
@@ -711,7 +785,7 @@ class RunRegistry:
                 )
             )
 
-        grouped: Dict[Tuple[str, str, str], list[Dict[str, Any]]] = {}
+        grouped: Dict[Tuple[str, str, str, int, str], list[Dict[str, Any]]] = {}
         for run_id, run_row in runs.items():
             share = self._select_share(shares_by_run.get(run_id, []))
             if not share:
@@ -721,7 +795,16 @@ class RunRegistry:
                 continue
             score = float(run_row["total_score"])
             git_sha = str(run_row["git_sha"] or "unknown")
-            key = (str(run_row["model"]), git_sha, str(run_row["backend"]))
+            score_version = 1
+            if run_row["summary_json"]:
+                try:
+                    score_version = _normalize_score_version(
+                        json.loads(run_row["summary_json"]).get("score_version")
+                    )
+                except Exception:
+                    score_version = 1
+            seed_save = str(run_row["seed_save"]) if run_row["seed_save"] else "unspecified"
+            key = (str(run_row["model"]), git_sha, str(run_row["backend"]), score_version, seed_save)
             grouped.setdefault(key, []).append(
                 {
                     "t": ended_at.isoformat(),
@@ -734,7 +817,7 @@ class RunRegistry:
             )
 
         series: list[Dict[str, Any]] = []
-        for (model_name, git_sha, backend_name), points in grouped.items():
+        for (model_name, git_sha, backend_name, score_version, seed_save), points in grouped.items():
             points.sort(key=lambda item: item["t"])
             best = float("-inf")
             best_point: Optional[Dict[str, Any]] = None
@@ -750,6 +833,8 @@ class RunRegistry:
                     "model": model_name,
                     "git_sha": git_sha,
                     "backend": backend_name,
+                    "score_version": score_version,
+                    "seed_save": seed_save,
                     "points": points,
                     "best": best_point,
                 }
