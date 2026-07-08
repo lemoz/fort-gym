@@ -1434,6 +1434,25 @@ def test_encoder_echoes_bounded_helper_result_counts() -> None:
     assert "already_designated=25" in text
 
 
+def test_encoder_echoes_gather_result_counts() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 6, "stone": 0},
+        },
+        screen_text="main map",
+        last_action_result={
+            "accepted": True,
+            "result": {"shrubs_designated": 4, "non_shrub_tiles": 21},
+        },
+    )
+
+    assert "Last Action detail:" in text
+    assert "shrubs_designated=4" in text
+    assert "non_shrub_tiles=21" in text
+
+
 def test_encoder_ignores_malformed_plan_rects_without_crashing() -> None:
     text, _ = encode_observation(
         {
@@ -1545,8 +1564,48 @@ def test_encoder_surfaces_full_crew_block() -> None:
     assert "ORDER can queue jobs to any built carpenter workshop." in text
     assert (
         "Fort-area tiles: wall=3 (diggable), floor=20, shrub/other=9 "
-        "(not diggable — DIG designations on non-wall tiles are silently dropped "
-        "by DF), designated=0" in text
+        "(this harness only designates WALL tiles for dig/channel; other tiles "
+        "in the rect are left untouched), designated=0" in text
+    )
+
+
+def test_encoder_reports_true_shrub_count_separately_from_other_tiles() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 6, "stone": 0},
+            "crew": {
+                "ok": True,
+                "citizens": {
+                    "total": 7,
+                    "idle": 6,
+                    "mining_labor": 1,
+                    "carpentry_labor": 2,
+                    "woodcutting_labor": 1,
+                    "masonry_labor": 0,
+                    "herbalism_labor": 0,
+                },
+                "rect_tiles": {
+                    "rect": [100, 90, 177, 106, 96, 177],
+                    "wall": 3,
+                    "floor": 20,
+                    "shrub": 5,
+                    "shrub_or_other": 9,
+                    "designated": 0,
+                },
+            },
+        },
+        screen_text="main map",
+    )
+
+    # 9 shrub_or_other with 5 true shrubs leaves 4 unrelated "other" tiles
+    # (boulders/pebbles/fortifications/ramps) that are not actually gatherable.
+    assert (
+        "Fort-area tiles: wall=3 (diggable), floor=20, shrubs=5 (gatherable "
+        "with DIG kind=gather), other=4 (this harness only designates WALL "
+        "tiles for dig/channel; other tiles in the rect are left untouched), "
+        "designated=0" in text
     )
 
 

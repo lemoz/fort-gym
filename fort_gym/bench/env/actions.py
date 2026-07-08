@@ -22,11 +22,13 @@ class DigParams(BaseModel):
 
     area: tuple[int, int, int] = Field(..., description="(x, y, z) coordinates for the dig start.")
     size: tuple[int, int, int] = Field(..., description="(width, height, depth) of the designation.")
-    kind: Literal["dig", "channel", "chop"] = Field(
+    kind: Literal["dig", "channel", "chop", "gather"] = Field(
         default="dig",
         description=(
             "Designation kind: 'dig'/'channel' designate the rect; 'chop' designates map "
-            "trees for felling (not rect-bounded) so woodcutters produce logs over time."
+            "trees for felling (not rect-bounded) so woodcutters produce logs over time; "
+            "'gather' designates shrub tiles inside the rect for plant gathering so a "
+            "dwarf with the herbalism labor collects plants over time."
         ),
     )
 
