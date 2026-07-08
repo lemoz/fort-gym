@@ -203,7 +203,7 @@ if x1 and y1 and z1 and x2 and y2 and z2 and z1 == z2 then
   local rx1, ry1, rz = math.min(x1, x2), math.min(y1, y2), z1
   local rx2, ry2 = math.max(x1, x2), math.max(y1, y2)
   if (rx2 - rx1 + 1) <= MAX_RECT_W and (ry2 - ry1 + 1) <= MAX_RECT_H then
-    local counts = { wall = 0, tree = 0, floor = 0, shrub_or_other = 0, designated = 0 }
+    local counts = { wall = 0, tree = 0, floor = 0, shrub = 0, shrub_or_other = 0, designated = 0 }
     local shapes = df.tiletype.attrs
     for x = rx1, rx2 do
       for y = ry1, ry2 do
@@ -222,6 +222,9 @@ if x1 and y1 and z1 and x2 and y2 and z2 and z1 == z2 then
             counts.wall = counts.wall + 1
           elseif shape_name == 'FLOOR' then
             counts.floor = counts.floor + 1
+          elseif shape_name == 'SHRUB' then
+            counts.shrub = counts.shrub + 1
+            counts.shrub_or_other = counts.shrub_or_other + 1
           else
             counts.shrub_or_other = counts.shrub_or_other + 1
           end
@@ -239,6 +242,7 @@ if x1 and y1 and z1 and x2 and y2 and z2 and z1 == z2 then
       wall = counts.wall,
       tree = counts.tree,
       floor = counts.floor,
+      shrub = counts.shrub,
       shrub_or_other = counts.shrub_or_other,
       designated = counts.designated,
     }

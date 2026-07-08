@@ -106,6 +106,16 @@ def test_unsuspend_wired_into_provenance_gates() -> None:
     assert "UNSUSPEND" in ASSISTED_DFHACK_ACTIONS
 
 
+def test_governed_system_prompt_describes_gather_mechanic_only() -> None:
+    # gather rides the existing DIG action type (no new governed type) —
+    # it must appear in the DIG kind enum and be taught as a mechanic only.
+    assert '"dig"|"channel"|"chop"|"gather"' in GOVERNED_SYSTEM_PROMPT
+    assert "herbalism" in GOVERNED_SYSTEM_PROMPT
+    assert "brewable" in GOVERNED_SYSTEM_PROMPT
+    # no new governed action type was introduced for gather
+    assert GOVERNED_ACTION_TYPES == ("DIG", "BUILD", "ORDER", "UNSUSPEND", "WAIT")
+
+
 def test_governed_llm_is_registered_and_model_gated() -> None:
     assert "dfhack-governed-llm" in AGENT_FACTORIES
     assert "dfhack-governed-llm" in GOVERNED_DFHACK_MODELS

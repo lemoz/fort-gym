@@ -249,6 +249,17 @@ def test_designate_rect_reports_designation_counts() -> None:
     assert "missing_tiles" in hook_text
 
 
+def test_designate_rect_dig_channel_never_writes_non_wall_tiles() -> None:
+    # dig/channel must only ever write a real designation onto WALL tiles.
+    # Writing it unconditionally on a non-wall tile (e.g. a SHRUB) would
+    # silently create a real Gather-Plants designation the harness never
+    # reports and the agent was never told would happen.
+    hook_path = Path(__file__).resolve().parents[1] / "hook" / "designate_rect.lua"
+    hook_text = hook_path.read_text(encoding="utf-8")
+
+    assert "if status ~= 'non_wall_tiles' then" in hook_text
+
+
 def test_designate_rect_chop_is_bounded_tree_designation() -> None:
     hook_path = Path(__file__).resolve().parents[1] / "hook" / "designate_rect.lua"
     hook_text = hook_path.read_text(encoding="utf-8")
@@ -259,6 +270,38 @@ def test_designate_rect_chop_is_bounded_tree_designation() -> None:
     assert "df.tiletype_material.TREE" in hook_text
     # the old global autochop pulse (broken on this DFHack: no such script) is gone
     assert "autochop" not in hook_text
+
+
+def test_designate_rect_gather_is_bounded_shrub_designation() -> None:
+    hook_path = Path(__file__).resolve().parents[1] / "hook" / "designate_rect.lua"
+    hook_text = hook_path.read_text(encoding="utf-8")
+
+    # gather designates shrub tiles inside the rect, like a player's d-p
+    assert "gather = true" in hook_text
+    assert "df.tiletype_shape.SHRUB" in hook_text
+    assert "shrubs_designated" in hook_text
+    assert "already_designated" in hook_text
+    assert "non_shrub_tiles" in hook_text
+    # shares the bounded rect (30x30, one z-level) with dig/channel/chop
+    assert "rect_too_large" in hook_text
+    assert "bad_rect" in hook_text
+
+
+def test_designate_rect_gather_wraps_bounded_lua_hook(monkeypatch) -> None:
+    captured: dict = {}
+
+    def fake_run_lua_file(path, *args, **kwargs):
+        captured["path"] = path
+        captured["args"] = args
+        return {"ok": True, "kind": "gather", "shrubs_designated": 4}
+
+    monkeypatch.setattr(dfhack_backend, "run_lua_file", fake_run_lua_file)
+
+    result = dfhack_backend.designate_rect("gather", 50, 35, 0, 52, 37, 0)
+
+    assert result == {"ok": True, "kind": "gather", "shrubs_designated": 4}
+    assert captured["args"] == ("gather", "50", "35", "0", "52", "37", "0")
+    assert Path(captured["path"]).name == "designate_rect.lua"
 
 
 def test_unsuspend_jobs_hook_is_bounded_and_reports_counts() -> None:
@@ -362,6 +405,19 @@ def test_job_metrics_reports_farm_plots_count() -> None:
     assert "out.farm_plot_positions" in script
     assert "df.building_type.FarmPlot" in script
     assert "flags.designated = true" not in script
+
+
+def test_job_metrics_splits_true_shrub_count_from_other_tiles() -> None:
+    # shrub_or_other lumps true SHRUB-shape tiles together with unrelated
+    # terrain (boulders, pebbles, fortifications, ramps). A separate `shrub`
+    # count lets callers report how many of those tiles are actually
+    # gatherable rather than attaching gather-ability to the combined count.
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua"
+    ).read_text(encoding="utf-8")
+    assert "counts.shrub = counts.shrub + 1" in script
+    assert "shape_name == 'SHRUB'" in script
+    assert "shrub = counts.shrub," in script
 
 
 def test_job_metrics_reports_finished_goods_counts() -> None:

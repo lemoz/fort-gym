@@ -25,7 +25,7 @@ MAX_SNAPSHOT_W = 64
 MAX_SNAPSHOT_H = 64
 MAX_FARM_PLOT_W = 5
 MAX_FARM_PLOT_H = 5
-VALID_KINDS: Iterable[str] = ("dig", "channel", "chop")
+VALID_KINDS: Iterable[str] = ("dig", "channel", "chop", "gather")
 DEFAULT_WORK_RECT = (50, 35, 0, 54, 39, 0)
 
 

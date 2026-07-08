@@ -42,14 +42,18 @@ production economy, breadth, plan coherence, and non-repetition; and long-horizo
 building MULTIPLE enclosed functional rooms while keeping every dwarf alive.
 
 Legal actions (the only five types accepted):
-- DIG: params {"area": [x, y, z], "size": [w, h, 1], "kind": "dig"|"channel"|"chop"}. \
-kind dig/channel designates the rectangle (max 30x30, one z-level); only WALL tiles can be dug — \
-DF silently drops designations on floor/shrub/other tiles, and miners must then reach the walls \
-and work over time. kind "chop" designates the tree trunks inside the rect for felling (the \
-observation's Fort-area tiles line reports tree_trunk counts, and the Nearby-trees line reports \
-tree clusters up to 40 tiles from the citizens, possibly beyond the minimap); a dwarf with the \
-woodcutting labor fells them over time and the logs appear in the Wood stock. Carpentry \
-production consumes wood — without logs, workshop orders cancel.
+- DIG: params {"area": [x, y, z], "size": [w, h, 1], "kind": "dig"|"channel"|"chop"|"gather"}. \
+kind dig/channel designates the rectangle (max 30x30, one z-level); this harness only designates \
+WALL tiles for dig/channel — floor/shrub/other tiles in the rect are left untouched (use \
+kind=gather for shrubs), and miners must then reach the walls and work over time. kind "chop" \
+designates the tree trunks inside the rect for felling (the observation's Fort-area tiles line \
+reports tree_trunk counts, and the Nearby-trees line reports tree clusters up to 40 tiles from \
+the citizens, possibly beyond the minimap); a dwarf with the woodcutting labor fells them over \
+time and the logs appear in the Wood stock. Carpentry production consumes wood — without logs, \
+workshop orders cancel. kind "gather" designates shrub tiles inside the rect for plant gathering \
+(only SHRUB-shaped tiles are marked; other tiles in the rect are left untouched and reported as \
+non_shrub_tiles); a dwarf with the herbalism labor collects the plant over time and it appears in \
+the plant stock — gathered plants are brewable.
 - BUILD: params {"kind": "CarpenterWorkshop"|"FarmPlot"|"Bed"|"Door"|"Table"|"Chair"|"Wall"|"Floor", \
 "x": X, "y": Y, "z": Z, "x2": X2, "y2": Y2 (optional)}. \
 CarpenterWorkshop places a 3x3 workshop on open floor within 24 tiles of your fort — near any \

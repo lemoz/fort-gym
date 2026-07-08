@@ -687,6 +687,45 @@ gate. Each entry states what changed and the evidence that forced it.
   GLM-5V run on region3, both under the standing G6 criteria, after the
   usable-stocks pipeline completion (PR #59) deployed.
 
+- **2026-07-08 — G6 ESCALATION (operator-selected hybrid): both runs FAIL,
+  and both build the first enclosed rooms ever seen on the unseen map.**
+  (a) Corrected-instrument GLM-5V, run `c8e46054`
+  (`fortgym.live/r/CHt5-Grk_uBqX7kj23MyGU3vh512qEh3`): FAIL 3/5 — but
+  **1 enclosed functional room** (rooms on region3 across five GLM runs:
+  0, 0, 0, then 1 with the full correction stack finally end-to-end),
+  rubric 77.51 clean, best GLM region3 economy (5 beds + 2 doors, 25
+  constructions); failed rooms>=2 and population 6/7 (another drowning —
+  the brook's fourth victim). (b) GPT-5.5-vision, run `36f9f78f`
+  (`fortgym.live/r/ayENDjV5v5K35Mblffz3I53mEGsA3sOW`): **FAIL 4/5,
+  missing ONLY rooms>=2** — the strongest region3 run recorded: rubric
+  83.44 clean, population 7/7 held, 74 constructions, 5 goods types, 1
+  functional room. Interpretation: the escalation question is answered —
+  region3 is NOT impassable; with a truthful instrument both models now
+  close rings on unseen terrain, and the frontier is the same
+  "second room" wall that G4 had on region1 before it fell. The
+  environment is genuinely harder (drownings, logistics) but tractable.
+  GPT-5.5-vision's 4/5-missing-only-rooms exactly matches the profile
+  that preceded the G4 pass. Next escalation decision to the operator;
+  no further runs until chosen.
+
+- **2026-07-08 — G6 escalation round 2 (operator-selected): GPT-5.5-vision
+  FAIL 3/5 — and the time-budget hypothesis is refuted.** Run `3f4c99eb`
+  (`fortgym.live/r/aeWp5OHHyhrjJA2b5BUZSJ33eNo5MJq3`): rubric 77.94
+  clean, 55 constructions, 1 functional room, population 6/7 (a fifth
+  brook drowning), weaker economy than round 1 — a regression on the
+  rooms-adjacent profile. Decisive timing fact: with the corrected
+  instrument, room #1 now lands at steps 13-27 on region3 (gpt55v r1:
+  13, glm5v att4: 23, gpt55v r2: 27) — as fast as region1's best — so
+  the models have 70+ remaining steps and still never build a second
+  room. The frontier is not time budget or logistics: it is
+  second-room construction on unseen terrain, plus water safety (5
+  drownings in 7 region3 runs; region1 had zero accessible water).
+  Campaign totals: 7 region3 runs, 2 models, 5 instrument corrections,
+  rooms column 0,0,0,1,1,1,1. G6 stands unpassed and precisely mapped;
+  further attempts remain open at future windows (cheaper under
+  multi-instance, or with new models). The ladder proceeds to the G7
+  primitives window.
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,

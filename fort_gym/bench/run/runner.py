@@ -723,6 +723,8 @@ def _governed_gameplay_proof(
             "suspended_found",
             "before_farm_plots",
             "after_farm_plots",
+            "shrubs_designated",
+            "non_shrub_tiles",
         )
         if key in result
     }
@@ -741,6 +743,7 @@ def _governed_gameplay_proof(
         or farm_plots_added > 0
         or int(result.get("newly_designated") or 0) > 0
         or int(result.get("unsuspended") or 0) > 0
+        or int(result.get("shrubs_designated") or 0) > 0
     )
     return {
         "ok": step_gameplay_progress,
