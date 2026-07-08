@@ -657,6 +657,34 @@ gate. Each entry states what changed and the evidence that forced it.
   instrument, and stands as a genuine G6 finding-in-progress: on wood-rich
   region1 logistics was free; on region3 it is the game.
 
+- **2026-07-08 — G6 attempt 3: FAIL 3/5. CAMPAIGN CONCLUDES 0/3 — recorded
+  at full prominence, with the correction ladder's effect measured.** Run
+  `19f692b8` (`fortgym.live/r/OnonN6SkMid42X4NRAHYBnzYFYwhh5-g`): ticks
+  PASS; orders completed PASS; **rubric 70.88 clean PASS — the first
+  region3 run over the bar** (trajectory across attempts: 69.06 -> 69.56
+  -> 70.88); rooms 0/2 FAIL; population 5/7 FAIL (two more drownings —
+  the brook has now killed three dwarves in three runs; region1 never had
+  an accessible water hazard). The wood economy is SOLVED: one chop at a
+  Nearby-trees cluster produced 112 logs by step 25 (attempt 1 peaked at
+  6) — the attempt-1 correction alone cracked logistics. Honest defect
+  disclosure: the attempt-2 usable-stocks correction NEVER REACHED the
+  agent in attempt 3 — the StateReader field whitelist silently dropped
+  `wood_usable`/`stone_usable` between the state script and the encoder
+  (verified: `usable: None` in every step's observation). The correction
+  was approved, shipped, tested at both ends, and lost in the pipe; the
+  completion fix is a one-line whitelist addition with an end-to-end
+  test, held for the next window. G6 verdict: **the frontier on unseen
+  terrain is not geometry alone — it is logistics (solved by factual
+  observation), environmental hazard (drownings, unsolved: no legal
+  action addresses water safety short of walls), and ring-closing under
+  those pressures (0 enclosures in 3 runs at up to 112 logs available).**
+  Escalation options to the operator per protocol: (a) GPT-5.5-vision on
+  region3 (~$10) — separates policy strength from environment difficulty;
+  (b) amended protocol: complete the usable-stocks pipeline + further
+  GLM-5V attempts; (c) accept-and-document G6 as the open frontier and
+  proceed to the G7 primitives window. No attempt runs until the
+  operator chooses.
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,
