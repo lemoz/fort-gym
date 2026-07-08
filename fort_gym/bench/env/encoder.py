@@ -1306,6 +1306,7 @@ def encode_observation(
             wall = _int_or_none(rect_tiles.get("wall"))
             tree = _int_or_none(rect_tiles.get("tree"))
             floor = _int_or_none(rect_tiles.get("floor"))
+            shrub = _int_or_none(rect_tiles.get("shrub"))
             shrub_or_other = _int_or_none(rect_tiles.get("shrub_or_other"))
             designated = _int_or_none(rect_tiles.get("designated"))
             if all(
@@ -1317,12 +1318,16 @@ def encode_observation(
                     if tree is not None
                     else ""
                 )
+                if shrub is not None:
+                    other = shrub_or_other - shrub
+                    shrub_part = f"shrubs={shrub} (gatherable with DIG kind=gather), other={other}"
+                else:
+                    shrub_part = f"shrub/other={shrub_or_other}"
                 status_lines.append(
                     f"Fort-area tiles: wall={wall} (diggable), {tree_part}"
                     f"floor={floor}, "
-                    f"shrub/other={shrub_or_other} (shrub tiles here can be designated "
-                    "with DIG kind=gather for plants; dig/channel designations on "
-                    "non-wall tiles are still silently dropped by DF), "
+                    f"{shrub_part} (this harness only designates WALL tiles for "
+                    "dig/channel; other tiles in the rect are left untouched), "
                     f"designated={designated}"
                 )
 

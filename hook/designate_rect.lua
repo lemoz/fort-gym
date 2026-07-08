@@ -184,8 +184,16 @@ local function set_tile(x, y, z, mode)
     end
   end
 
-  designation.dig = target
-  block.flags.designated = true
+  -- Only wall tiles actually get the designation written. DF's engine reads
+  -- the underlying tile's shape to decide a dig-designation's outcome (WALL
+  -- mines, a tree-shaped WALL fells, SHRUB gathers) so writing this on a
+  -- non-wall tile would silently create a real designation (e.g. a Gather
+  -- Plants job on a shrub) that dig/channel never intended and that no
+  -- evidence/rubric tracking would see. Use kind=gather for shrubs instead.
+  if status ~= 'non_wall_tiles' then
+    designation.dig = target
+    block.flags.designated = true
+  end
   return status
 end
 

@@ -164,6 +164,17 @@ def test_designate_rect_reports_designation_counts() -> None:
     assert "missing_tiles" in hook_text
 
 
+def test_designate_rect_dig_channel_never_writes_non_wall_tiles() -> None:
+    # dig/channel must only ever write a real designation onto WALL tiles.
+    # Writing it unconditionally on a non-wall tile (e.g. a SHRUB) would
+    # silently create a real Gather-Plants designation the harness never
+    # reports and the agent was never told would happen.
+    hook_path = Path(__file__).resolve().parents[1] / "hook" / "designate_rect.lua"
+    hook_text = hook_path.read_text(encoding="utf-8")
+
+    assert "if status ~= 'non_wall_tiles' then" in hook_text
+
+
 def test_designate_rect_chop_is_bounded_tree_designation() -> None:
     hook_path = Path(__file__).resolve().parents[1] / "hook" / "designate_rect.lua"
     hook_text = hook_path.read_text(encoding="utf-8")
@@ -299,6 +310,19 @@ def test_job_metrics_is_read_only_and_reports_crew() -> None:
     assert "= df.tile_dig_designation.Default" not in script
     assert "block.tiletype[dx][dy] =" not in script
     assert "flags.designated = true" not in script
+
+
+def test_job_metrics_splits_true_shrub_count_from_other_tiles() -> None:
+    # shrub_or_other lumps true SHRUB-shape tiles together with unrelated
+    # terrain (boulders, pebbles, fortifications, ramps). A separate `shrub`
+    # count lets callers report how many of those tiles are actually
+    # gatherable rather than attaching gather-ability to the combined count.
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua"
+    ).read_text(encoding="utf-8")
+    assert "counts.shrub = counts.shrub + 1" in script
+    assert "shape_name == 'SHRUB'" in script
+    assert "shrub = counts.shrub," in script
 
 
 def test_job_metrics_reports_finished_goods_counts() -> None:
