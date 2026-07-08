@@ -158,6 +158,23 @@ def test_build_farm_plot_hook_is_bounded_and_reports_counts() -> None:
     assert "tile_placement_error" in hook_text
 
 
+def test_build_farm_plot_hook_checks_locality_at_all_four_corners() -> None:
+    # A single-corner near_fort check can pass while the opposite corner of
+    # an up-to-5x5 footprint sits past the 24-tile locality bound. Unlike
+    # build_workshop.lua/place_furniture.lua (single-tile placements, where
+    # one check is correct), build_farm_plot.lua's footprint is a rect, so
+    # it must check all four corners like build_construction.lua's per-tile
+    # near_fort loop.
+    hook_path = Path(__file__).resolve().parents[1] / "hook" / "build_farm_plot.lua"
+    hook_text = hook_path.read_text(encoding="utf-8")
+
+    assert "{ rx1, ry1 }" in hook_text
+    assert "{ rx1, ry2 }" in hook_text
+    assert "{ rx2, ry1 }" in hook_text
+    assert "{ rx2, ry2 }" in hook_text
+    assert "for _, corner in ipairs(corners) do" in hook_text
+
+
 def test_build_farm_plot_hook_requires_no_material_item() -> None:
     hook_path = Path(__file__).resolve().parents[1] / "hook" / "build_farm_plot.lua"
     hook_text = hook_path.read_text(encoding="utf-8")

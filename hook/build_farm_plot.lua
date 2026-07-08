@@ -85,9 +85,22 @@ local function near_fort(tx, ty)
   return false
 end
 
-if not near_fort(rx1, ry1) then
-  print(json.encode({ ok = false, error = 'too_far_from_fort' }))
-  return
+-- Check all four corners of the footprint, not just one -- for a rect up to
+-- 5x5, a single-corner check can pass while the opposite corner sits past
+-- the 24-tile locality bound (build_construction.lua, the actual structural
+-- sibling for a bounded rect placement, checks near_fort per-tile for
+-- exactly this reason).
+local corners = {
+  { rx1, ry1 },
+  { rx1, ry2 },
+  { rx2, ry1 },
+  { rx2, ry2 },
+}
+for _, corner in ipairs(corners) do
+  if not near_fort(corner[1], corner[2]) then
+    print(json.encode({ ok = false, error = 'too_far_from_fort' }))
+    return
+  end
 end
 
 -- Classify every tile in the footprint before attempting placement -- same
