@@ -138,6 +138,23 @@ def test_utility_progress_delta_counts_orders_and_usable_workshops() -> None:
     }
 
 
+def test_utility_progress_delta_pays_brewed_drink_like_other_goods() -> None:
+    """Drink is orderable (operator call 2026-07-08): brew output pays per
+    stack, demand-capped at population like every other good type."""
+    delta = metrics.utility_progress_delta(
+        {},
+        {},
+        current_goods={"drink": 9},
+        baseline_goods={"drink": 2},
+        population=5,
+    )
+
+    # 7 new drink stacks: 5 at full rate + 2 at 0.2x surplus = 5.4
+    assert delta["produced_goods_delta"] == 7
+    assert delta["demand_capped_production"] == 5.4
+    assert delta["utility_progress"] == 5.4
+
+
 def test_production_progress_delta_counts_usable_workshops() -> None:
     baseline = {"carpenter_workshops_planned": 0, "carpenter_workshops_usable": 0}
     current = {"carpenter_workshops_planned": 1, "carpenter_workshops_usable": 1}
@@ -226,6 +243,10 @@ def test_utility_action_progress_counts_accepted_safe_actions() -> None:
         {"type": "BUILD", "params": {"kind": "CarpenterWorkshop"}},
         {"accepted": True},
     )
+    still_build_progress = metrics.utility_action_progress(
+        {"type": "BUILD", "params": {"kind": "Still"}},
+        {"accepted": True},
+    )
     rejected_progress = metrics.utility_action_progress(
         {"type": "ORDER", "params": {"job": "bed", "quantity": 5}},
         {"accepted": False},
@@ -234,6 +255,12 @@ def test_utility_action_progress_counts_accepted_safe_actions() -> None:
     assert order_progress == {"utility_action_progress": 5}
     assert oversized_order_progress == {"utility_action_progress": 5}
     assert build_progress == {"utility_action_progress": 5}
+    # Still is an equally legal BUILD workshop kind (dfhack_backend's
+    # ALLOWED_WORKSHOPS, executor.py's kind-routing set, build_workshop.lua's
+    # SUBTYPES table all already treat CarpenterWorkshop/Still symmetrically)
+    # so it must earn the same instant utility credit, not score strictly
+    # worse than building a redundant second Carpenter's Workshop.
+    assert still_build_progress == {"utility_action_progress": 5}
     assert rejected_progress == {"utility_action_progress": 0}
 
 

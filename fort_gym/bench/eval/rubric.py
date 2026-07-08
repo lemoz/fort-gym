@@ -112,8 +112,12 @@ _QUEUE_ONLY_EVIDENCE_KEYS = {
     "manager_recorded",
     "already_designated",
     "non_wall_tiles",
-    # before/after counts are only meaningful via the explicit delta check
-    # above; their bare (non-changing) presence is not itself world change
+    # before/after counts are only meaningful via the explicit delta checks
+    # below; their bare (non-changing) presence is not itself world change
+    "before_carpenter_workshops",
+    "after_carpenter_workshops",
+    "before_workshops_of_kind",
+    "after_workshops_of_kind",
     "before_farm_plots",
     "after_farm_plots",
     "non_shrub_tiles",
@@ -147,9 +151,16 @@ def _proof_shows_world_change(proof: Dict[str, Any]) -> bool:
         return True
     before_ws = int(evidence.get("before_carpenter_workshops") or 0)
     after_ws = int(evidence.get("after_carpenter_workshops") or 0)
+    before_ws_kind = int(evidence.get("before_workshops_of_kind") or 0)
+    after_ws_kind = int(evidence.get("after_workshops_of_kind") or 0)
     before_fp = int(evidence.get("before_farm_plots") or 0)
     after_fp = int(evidence.get("after_farm_plots") or 0)
-    if after_ws > before_ws or after_fp > before_fp or evidence.get("building_id") is not None:
+    if (
+        after_ws > before_ws
+        or after_ws_kind > before_ws_kind
+        or after_fp > before_fp
+        or evidence.get("building_id") is not None
+    ):
         return True
     meaningful = {k for k, v in evidence.items() if v not in (None, 0, False, [], "")}
     return not meaningful <= _QUEUE_ONLY_EVIDENCE_KEYS

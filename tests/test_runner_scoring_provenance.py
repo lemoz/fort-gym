@@ -1209,6 +1209,49 @@ def test_governed_gameplay_proof_rejects_failed_farm_plot_placement() -> None:
     assert proof["ok"] is False
 
 
+def test_governed_gameplay_proof_accepts_new_still_workshop() -> None:
+    proof = _governed_gameplay_proof(
+        **_governed_proof_kwargs(
+            action={"type": "BUILD", "params": {"kind": "Still", "x": 88, "y": 96, "z": 177}, "advance_ticks": 1000},
+            execute_result={
+                "accepted": True,
+                "result": {"before_workshops_of_kind": 0, "after_workshops_of_kind": 1},
+            },
+        )
+    )
+    assert proof["ok"] is True
+    assert proof["helper_evidence"]["after_workshops_of_kind"] == 1
+
+
+def test_governed_gameplay_proof_rejects_noop_still_workshop_evidence() -> None:
+    # a result with matching before/after counts (e.g. a failed placement
+    # that still echoes the pre-existing count) must not read as progress
+    proof = _governed_gameplay_proof(
+        **_governed_proof_kwargs(
+            action={"type": "BUILD", "params": {"kind": "Still", "x": 88, "y": 96, "z": 177}, "advance_ticks": 1000},
+            execute_result={
+                "accepted": False,
+                "result": {"before_workshops_of_kind": 1, "after_workshops_of_kind": 1},
+            },
+        )
+    )
+    assert proof["ok"] is False
+
+
+def test_governed_gameplay_proof_accepts_brew_order_job() -> None:
+    proof = _governed_gameplay_proof(
+        **_governed_proof_kwargs(
+            action={"type": "ORDER", "params": {"job": "brew", "quantity": 3}, "advance_ticks": 1000},
+            execute_result={
+                "accepted": True,
+                "result": {"created_job_ids": [11, 12, 13], "workshop_id": 3},
+            },
+        )
+    )
+    assert proof["ok"] is True
+    assert proof["helper_evidence"]["created_job_ids"] == [11, 12, 13]
+
+
 def test_governed_gameplay_proof_accepts_real_tile_changes_during_wait() -> None:
     rect = [49, 34, 0, 55, 40, 0]
     before = {

@@ -116,7 +116,7 @@ while link do
 end
 
 -- finished goods and logs currently in play (read-only counts)
-local GOODS_ITEM_TYPES = { 'BED', 'DOOR', 'TABLE', 'CHAIR', 'BARREL', 'BIN', 'WOOD' }
+local GOODS_ITEM_TYPES = { 'BED', 'DOOR', 'TABLE', 'CHAIR', 'BARREL', 'BIN', 'WOOD', 'DRINK' }
 do
   local counts = {}
   for _, item in ipairs(df.global.world.items.other.IN_PLAY) do

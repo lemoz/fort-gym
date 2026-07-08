@@ -1,7 +1,9 @@
 -- build_workshop.lua: place a bounded safe workshop through DFHack.
 -- Plan-agnostic: the placement is only rejected if it is farther than
 -- MAX_LOCALITY tiles (Chebyshev) from every existing player building and
--- every citizen.
+-- every citizen. Supports every workshop kind in SUBTYPES below (both are
+-- a 3x3 footprint like the vanilla player placement); each new kind here
+-- is a bounded, player-parity action-surface addition, not a shortcut.
 
 local json = require('json')
 local buildings = require('dfhack.buildings')
@@ -12,7 +14,12 @@ local x = tonumber(args[2])
 local y = tonumber(args[3])
 local z = tonumber(args[4]) or 0
 
-local function count_carpenter_workshops()
+local SUBTYPES = {
+  CarpenterWorkshop = df.workshop_type.Carpenters,
+  Still = df.workshop_type.Still,
+}
+
+local function count_workshops_of_subtype(subtype)
   local count = 0
   local all_buildings = df.global.world.buildings and df.global.world.buildings.all
   if not all_buildings then return 0 end
@@ -20,7 +27,7 @@ local function count_carpenter_workshops()
     local ok, is_workshop = pcall(function()
       return df.building_workshopst and df.building_workshopst:is_instance(building)
     end)
-    if ok and is_workshop and building.type == df.workshop_type.Carpenters then
+    if ok and is_workshop and building.type == subtype then
       count = count + 1
     end
   end
@@ -99,7 +106,8 @@ local function find_nearest_building_material(x, y, z)
   return best
 end
 
-if kind ~= 'CarpenterWorkshop' then
+local subtype = SUBTYPES[kind]
+if not subtype then
   print(json.encode({ ok = false, error = 'invalid_kind' }))
   return
 end
@@ -156,7 +164,13 @@ if not near_fort(x, y) then
 end
 
 local before_buildings = df.global.world.buildings and #df.global.world.buildings.all or 0
-local before_carpenter_workshops = count_carpenter_workshops()
+-- before_carpenter_workshops/after_carpenter_workshops are kept as their own
+-- fields (unchanged meaning/values from before this file supported more than
+-- one kind) for backward compatibility with existing evidence consumers;
+-- before_workshops_of_kind/after_workshops_of_kind are the generalized
+-- equivalent that works for any kind in SUBTYPES, including Still.
+local before_carpenter_workshops = count_workshops_of_subtype(df.workshop_type.Carpenters)
+local before_workshops_of_kind = count_workshops_of_subtype(subtype)
 local material_item = find_nearest_building_material(x, y, z)
 
 if not material_item then
@@ -167,7 +181,7 @@ end
 local ok, result = pcall(function()
   return buildings.constructBuilding{
     type = df.building_type.Workshop,
-    subtype = df.workshop_type.Carpenters,
+    subtype = subtype,
     x = x,
     y = y,
     z = z,
@@ -189,7 +203,8 @@ if not result then
 end
 
 local after_buildings = df.global.world.buildings and #df.global.world.buildings.all or before_buildings
-local after_carpenter_workshops = count_carpenter_workshops()
+local after_carpenter_workshops = count_workshops_of_subtype(df.workshop_type.Carpenters)
+local after_workshops_of_kind = count_workshops_of_subtype(subtype)
 
 print(json.encode({
   ok = true,
@@ -206,6 +221,8 @@ print(json.encode({
   after_buildings = after_buildings,
   before_carpenter_workshops = before_carpenter_workshops,
   after_carpenter_workshops = after_carpenter_workshops,
+  before_workshops_of_kind = before_workshops_of_kind,
+  after_workshops_of_kind = after_workshops_of_kind,
   material_item_id = material_item.id,
   material_item_type = item_type_name(material_item),
 }))

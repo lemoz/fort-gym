@@ -115,6 +115,7 @@ class Executor:
                 kind = params.get("kind")
                 if kind not in {
                     "CarpenterWorkshop",
+                    "Still",
                     "FarmPlot",
                     "Bed",
                     "Door",
@@ -127,7 +128,7 @@ class Executor:
                         "accepted": False,
                         "why": (
                             "Unsupported BUILD kind: expected CarpenterWorkshop, "
-                            "FarmPlot, furniture (Bed/Door/Table/Chair), or "
+                            "Still, FarmPlot, furniture (Bed/Door/Table/Chair), or "
                             "construction (Wall/Floor)"
                         ),
                     }
@@ -154,7 +155,7 @@ class Executor:
                         "why": None if result.get("ok") else result.get("error"),
                         "result": result,
                     }
-                if kind == "CarpenterWorkshop":
+                if kind in {"CarpenterWorkshop", "Still"}:
                     result = safe_build_workshop(kind, x, y, z)
                 else:
                     result = safe_place_furniture(kind, x, y, z)

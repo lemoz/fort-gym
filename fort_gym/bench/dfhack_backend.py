@@ -14,8 +14,8 @@ from .env.keystroke_exec import execute_keystroke_action
 HOOK_ROOT = DFROOT / "hook"
 REPO_HOOK_ROOT = Path(__file__).resolve().parents[2] / "hook"
 
-ALLOWED_ITEMS = {"bed", "door", "table", "chair", "barrel", "bin"}
-ALLOWED_WORKSHOPS = {"CarpenterWorkshop"}
+ALLOWED_ITEMS = {"bed", "door", "table", "chair", "barrel", "bin", "brew"}
+ALLOWED_WORKSHOPS = {"CarpenterWorkshop", "Still"}
 ALLOWED_FURNITURE = {"Bed", "Door", "Table", "Chair"}
 ALLOWED_CONSTRUCTIONS = {"Wall", "Floor"}
 MAX_QTY = 5
