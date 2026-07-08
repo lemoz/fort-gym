@@ -172,27 +172,64 @@ local wealth = df.global.ui.tasks.wealth.total or 0
 
 local wood_count = 0
 local stone_count = 0
+local wood_usable = 0
+local stone_usable = 0
 local item_lists = df.global.world.items and df.global.world.items.other
 local in_play = item_lists and item_lists.IN_PLAY or {}
 local wood_type = df.item_type and df.item_type.WOOD
 local boulder_type = df.item_type and df.item_type.BOULDER
 local blocks_type = df.item_type and df.item_type.BLOCKS
 
+-- "usable" mirrors the material filter the build hooks apply: an item that
+-- is claimed by a job, locked inside a (pending) building/construction, or
+-- forbidden/hidden cannot be consumed by a new BUILD. G6 attempt 2 (run
+-- 55c39cdd): 10 pending walls claimed 10 of 11 logs at step 8 and the raw
+-- count kept reading 11 for 90 futile steps.
+local function item_usable(item)
+    local ok, usable = pcall(function()
+        return not (item.flags.in_job or item.flags.forbid or item.flags.hidden
+            or item.flags.in_building or item.flags.construction
+            or item.flags.garbage_collect or item.flags.artifact)
+            and item.pos ~= nil and item.pos.x >= 0
+    end)
+    return ok and usable or false
+end
+
 for _, item in ipairs(in_play) do
     local ok_type, item_type = pcall(function() return item:getType() end)
     if ok_type then
         if wood_type and item_type == wood_type then
             wood_count = wood_count + 1
+            if item_usable(item) then wood_usable = wood_usable + 1 end
         elseif (boulder_type and item_type == boulder_type)
             or (blocks_type and item_type == blocks_type) then
             stone_count = stone_count + 1
+            if item_usable(item) then stone_usable = stone_usable + 1 end
         end
     end
 end
 
-state.stocks = {food=food_count, drink=drink_count, wood=wood_count, stone=stone_count, wealth=wealth}
+state.stocks = {food=food_count, drink=drink_count, wood=wood_count, stone=stone_count,
+    wood_usable=wood_usable, stone_usable=stone_usable, wealth=wealth}
 state.hostiles = false
-state.dead = 0
+-- Count our civ's dead dwarves for real. This was hardcoded 0 until G6
+-- attempt 1 (run 769f5034): a citizen drowned, population dropped 7->6,
+-- and the dead metric never moved -- the casualty check read a constant.
+local dead_count = 0
+pcall(function()
+    local civ_id = df.global.ui.civ_id
+    for _, unit in ipairs(df.global.world.units.all) do
+        local ok_dead, is_dead = pcall(function()
+            return unit.civ_id == civ_id
+                and dfhack.units.isDwarf(unit)
+                and dfhack.units.isDead(unit)
+        end)
+        if ok_dead and is_dead then
+            dead_count = dead_count + 1
+        end
+    end
+end)
+state.dead = dead_count
 state.recent_events = {}
 print(json.encode(state))
 """

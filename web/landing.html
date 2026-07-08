@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fort-Gym — an environment lab for measurable agent capabilities</title>
+<meta name="description" content="Fort-Gym builds testable environments that measure specific agent capabilities — spatial reasoning, long-horizon planning, incentive robustness — with evidence-gated scoring and public, replayable proof.">
+<style>
+  :root {
+    --ink: #0b0e14;
+    --ink-2: #11151f;
+    --ink-3: #1a2030;
+    --paper: #e8e4da;
+    --paper-dim: #9aa0ad;
+    --accent: #d66a28;        /* the player-wall orange from the instrument itself */
+    --accent-soft: #f0b27a;   /* the queued-wall tint */
+    --ok: #5da668;
+    --rule: #232a3a;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--ink);
+    color: var(--paper);
+    font-family: var(--sans);
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent-soft); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---------- header ---------- */
+  header {
+    border-bottom: 1px solid var(--rule);
+    position: sticky; top: 0; z-index: 10;
+    background: color-mix(in srgb, var(--ink) 88%, transparent);
+    backdrop-filter: blur(8px);
+  }
+  .nav { display: flex; align-items: baseline; gap: 28px; padding: 18px 0; }
+  .brand { font-family: var(--mono); font-size: 15px; letter-spacing: 0.08em; color: var(--paper); }
+  .brand b { color: var(--accent); }
+  .nav-links { margin-left: auto; display: flex; gap: 22px; font-size: 14px; }
+  .nav-links a { color: var(--paper-dim); }
+  .nav-links a:hover { color: var(--paper); text-decoration: none; }
+
+  /* ---------- hero ---------- */
+  .hero { padding: 96px 0 72px; position: relative; overflow: hidden; }
+  .hero h1 {
+    font-size: clamp(34px, 5.2vw, 58px);
+    line-height: 1.08;
+    font-weight: 650;
+    letter-spacing: -0.015em;
+    max-width: 17ch;
+    text-wrap: balance;
+  }
+  .hero h1 em { font-style: normal; color: var(--accent); }
+  .hero p.lede {
+    margin-top: 26px; max-width: 58ch; font-size: 19px; color: var(--paper-dim);
+  }
+  .hero .cta { margin-top: 38px; display: flex; gap: 14px; flex-wrap: wrap; }
+  .btn {
+    display: inline-block; padding: 12px 22px; border-radius: 4px;
+    font-family: var(--mono); font-size: 14px; letter-spacing: 0.02em;
+    border: 1px solid var(--rule); color: var(--paper);
+  }
+  .btn:hover { text-decoration: none; border-color: var(--paper-dim); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #14100b; font-weight: 600; }
+  .btn.primary:hover { background: var(--accent-soft); border-color: var(--accent-soft); }
+
+  /* the instrument motif: a fort minimap fragment, rendered in CSS */
+  .tiles {
+    position: absolute; right: -20px; top: 60px; opacity: 0.5;
+    display: grid; grid-template-columns: repeat(9, 26px); gap: 3px;
+    pointer-events: none;
+  }
+  .tiles span { width: 26px; height: 26px; border-radius: 2px; background: var(--ink-3); }
+  .tiles .W { background: var(--accent); }
+  .tiles .x { background: var(--accent-soft); opacity: .55; }
+  .tiles .f { background: #2a3145; }
+  .tiles .d { background: #6b5030; }
+  @media (max-width: 900px) { .tiles { display: none; } }
+
+  /* ---------- live strip ---------- */
+  .strip {
+    border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+    background: var(--ink-2);
+  }
+  .strip .wrap {
+    display: flex; gap: 40px; padding: 16px 24px; flex-wrap: wrap;
+    font-family: var(--mono); font-size: 13px; color: var(--paper-dim);
+  }
+  .strip b { color: var(--paper); font-weight: 600; }
+  .strip .dot { color: var(--ok); }
+
+  /* ---------- sections ---------- */
+  section { padding: 84px 0; border-bottom: 1px solid var(--rule); }
+  .eyebrow {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--accent);
+  }
+  h2 { font-size: 30px; font-weight: 650; letter-spacing: -0.01em; margin: 14px 0 18px; text-wrap: balance; }
+  .section-lede { max-width: 62ch; color: var(--paper-dim); }
+  .section-lede b, .cap p b, blockquote b { color: var(--paper); font-weight: 600; }
+
+  blockquote {
+    margin: 34px 0 0; padding: 22px 26px; border-left: 3px solid var(--accent);
+    background: var(--ink-2); max-width: 70ch; font-size: 18px; color: var(--paper);
+  }
+  blockquote footer { margin-top: 10px; font-family: var(--mono); font-size: 12.5px; color: var(--paper-dim); }
+
+  /* capabilities grid */
+  .caps { margin-top: 44px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+  .cap { background: var(--ink); padding: 26px 24px; }
+  .cap h3 { font-size: 17px; font-weight: 650; margin-bottom: 8px; }
+  .cap .tag { font-family: var(--mono); font-size: 11.5px; color: var(--accent); letter-spacing: 0.06em; }
+  .cap p { font-size: 15px; color: var(--paper-dim); margin-top: 8px; }
+  .cap a.evidence { display: inline-block; margin-top: 12px; font-family: var(--mono); font-size: 12.5px; }
+
+  /* method list */
+  .method { margin-top: 40px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 32px 44px; }
+  .method h3 { font-size: 16px; font-weight: 650; }
+  .method h3::before { content: "— "; color: var(--accent); }
+  .method p { font-size: 15px; color: var(--paper-dim); margin-top: 6px; }
+
+  /* ladder table */
+  .ladder { margin-top: 40px; width: 100%; border-collapse: collapse; font-size: 15px; }
+  .ladder th {
+    text-align: left; font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--paper-dim); padding: 0 14px 10px 0; border-bottom: 1px solid var(--rule);
+  }
+  .ladder td { padding: 13px 14px 13px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  .ladder td.g { font-family: var(--mono); color: var(--paper); white-space: nowrap; }
+  .ladder td.q { color: var(--paper-dim); max-width: 46ch; }
+  .status { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; }
+  .status.pass { color: var(--ok); }
+  .status.open { color: var(--accent); }
+  .status.answered { color: var(--paper-dim); }
+  .ladder-scroll { overflow-x: auto; }
+
+  /* footer */
+  footer.site { padding: 56px 0 80px; color: var(--paper-dim); font-size: 14px; }
+  footer.site .wrap { display: flex; gap: 40px; flex-wrap: wrap; justify-content: space-between; }
+  footer.site .fine { font-family: var(--mono); font-size: 12px; max-width: 60ch; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .hero h1, .hero .lede, .hero .cta { animation: rise .6s ease-out both; }
+    .hero .lede { animation-delay: .08s; } .hero .cta { animation-delay: .16s; }
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <span class="brand">FORT<b>·</b>GYM <span style="color:var(--paper-dim)">/ environment lab</span></span>
+    <nav class="nav-links">
+      <a href="#capabilities">Capabilities</a>
+      <a href="#method">Method</a>
+      <a href="#ladder">The Ladder</a>
+      <a href="/live">Watch live</a>
+      <a href="https://github.com/lemoz/fort-gym">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="wrap">
+    <div class="tiles" aria-hidden="true">
+      <span class="f"></span><span class="W"></span><span class="W"></span><span class="W"></span><span class="W"></span><span class="W"></span><span></span><span></span><span></span>
+      <span class="f"></span><span class="W"></span><span></span><span></span><span class="d"></span><span class="W"></span><span></span><span class="x"></span><span class="x"></span>
+      <span class="f"></span><span class="W"></span><span></span><span></span><span></span><span class="W"></span><span class="x"></span><span></span><span class="x"></span>
+      <span class="f"></span><span class="W"></span><span class="W"></span><span class="W"></span><span class="W"></span><span class="W"></span><span class="x"></span><span class="x"></span><span class="x"></span>
+    </div>
+    <h1>Agent capabilities are claims.<br>We build the <em>instruments</em> that test them.</h1>
+    <p class="lede">Fort-Gym is an environment lab. We construct bounded, auditable environments
+    where an agent's abilities — spatial reasoning, long-horizon planning, incentive
+    robustness — are measured against falsifiable gates, and every result ships with
+    public, replayable evidence.</p>
+    <div class="cta">
+      <a class="btn primary" href="/live">Watch an agent play, live →</a>
+      <a class="btn" href="https://github.com/lemoz/fort-gym/blob/main/docs/WDSLL.md">Read the gate ladder</a>
+    </div>
+  </div>
+</div>
+
+<div class="strip">
+  <div class="wrap" id="livestrip">
+    <span><span class="dot">●</span> <b id="ls-env">Dwarf Fortress</b> — flagship environment</span>
+    <span><b id="ls-runs">—</b> public runs recorded</span>
+    <span><b id="ls-gates">4 of 7</b> gates passed</span>
+    <span><b id="ls-frames">every step</b> screen-frame evidenced</span>
+  </div>
+</div>
+
+<section id="why">
+  <div class="wrap">
+    <div class="eyebrow">Why environments</div>
+    <h2>Benchmarks that pay for intent get gamed.<br>Environments that pay for verified world-change don't.</h2>
+    <p class="section-lede">Frontier models don't fail benchmarks — they find the seams. In our own
+    environment, a frontier model discovered it could top the leaderboard with <b>91 consecutive
+    production orders</b> that built nothing; a later model industrialized <b>26 chairs for 13
+    dwarves</b> the moment linear payments made it optimal. We found both because the environment
+    refuses to score anything but observed state change — and we closed both with version-stamped
+    scoring corrections, in public.</p>
+    <blockquote>
+      A benchmark that pays for intent rather than verified world-change gets gamed by exactly
+      the models strong enough to matter.
+      <footer>— Fort-Gym findings, docs/WDSLL.md corrections log</footer>
+    </blockquote>
+  </div>
+</section>
+
+<section id="capabilities">
+  <div class="wrap">
+    <div class="eyebrow">What the instrument measures</div>
+    <h2>One environment, specific capabilities, each with a verdict.</h2>
+    <p class="section-lede">Dwarf Fortress is deep, partially observable, and unforgiving — and our
+    agents play the real game through four audited primitives. Each capability below is a gate
+    with pre-declared criteria, and each verdict links to the runs that earned it.</p>
+    <div class="caps">
+      <div class="cap">
+        <span class="tag">SPATIAL REASONING</span>
+        <h3>Holding a 2-D invariant while building it</h3>
+        <p>Enclosing a room — a closed wall ring built tile by tile — exceeded every text-only
+        frontier model we tested (~1 success in 15 attempts). Two of three vision models closed a
+        ring on their first valid run. <b>It's a modality gap, not a scale gap.</b></p>
+        <a class="evidence" href="/r/qw8S-Wmf53DYLESSrgCWGvLPvY2n0IuH">replay: the first two-room pass →</a>
+      </div>
+      <div class="cap">
+        <span class="tag">LONG-HORIZON PLANNING</span>
+        <h3>Compounding vs. satisficing</h3>
+        <p>Given 2.5× more time, does the agent build more — or settle? Our 250-step probe answered:
+        structure plateaued at one room by step 98 while production compounded into monoculture.
+        <b>Horizon exposes the objective an agent is really optimizing.</b></p>
+        <a class="evidence" href="/r/8ACitgQEErsR8fdjTRMb59CrTm4D6k1q">replay: the chair factory →</a>
+      </div>
+      <div class="cap">
+        <span class="tag">INCENTIVE ROBUSTNESS</span>
+        <h3>Does the agent play the game or the score?</h3>
+        <p>Two generations of reward hacking found and closed: queue-spam that produced nothing,
+        then real-but-pointless overproduction. Scoring is version-stamped; exploits become
+        findings, not leaderboard entries. <b>The anti-Goodhart backstop is the product.</b></p>
+        <a class="evidence" href="https://github.com/lemoz/fort-gym/blob/main/docs/score_v3_calibration.md">calibration: v2 → v3 →</a>
+      </div>
+      <div class="cap">
+        <span class="tag">MEMORY UTILITY</span>
+        <h3>Does remembering help?</h3>
+        <p>A controlled 5-vs-5 ablation: agents with naive failure-memory got <b>worse</b> —
+        remembered failures suppressed the retry-with-variation that succeeds. The memory-free
+        control built more. A capability everyone assumes, measured and inverted.</p>
+        <a class="evidence" href="https://github.com/lemoz/fort-gym/blob/main/docs/WDSLL.md">gate G5, corrections log →</a>
+      </div>
+      <div class="cap">
+        <span class="tag">GENERALIZATION</span>
+        <h3>One map, or the game?</h3>
+        <p>The same policy on an embark it has never seen. Attempt one exposed two hidden
+        measurement assumptions in a single run — which is precisely the point.
+        <b>Unseen terrain audits the instrument as hard as the agent.</b></p>
+        <a class="evidence" href="/r/cQKTXD8xnEUNV9COJIvXR9zB7Mg3F59M">replay: first unseen-map run →</a>
+      </div>
+      <div class="cap">
+        <span class="tag">RELIABILITY</span>
+        <h3>Rates, not highlight reels</h3>
+        <p>One pass is existence, not capability. Our flagship result is reported as a rate — a
+        40% pass rate over a pre-declared five-run series — with the failures published at the
+        same prominence as the passes.</p>
+        <a class="evidence" href="/leaderboard">the leaderboard →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="method">
+  <div class="wrap">
+    <div class="eyebrow">Method</div>
+    <h2>Instrument-grade discipline, applied to agents.</h2>
+    <div class="method">
+      <div>
+        <h3>Bounded action surfaces</h3>
+        <p>Agents act only through audited, player-parity primitives — every command bounded,
+        validated, and provenance-tagged. One illegal action disqualifies a run.</p>
+      </div>
+      <div>
+        <h3>Evidence-gated scoring</h3>
+        <p>Every step carries a recorded game-screen frame and a proof object of real state change.
+        Derived views are labeled as such. A claim without its evidence row does not count.</p>
+      </div>
+      <div>
+        <h3>Pre-declared gates</h3>
+        <p>Success criteria are written and committed before a run launches. Kill rules included.
+        Nothing being measured gets to grade itself.</p>
+      </div>
+      <div>
+        <h3>Corrections in public</h3>
+        <p>Every measurement change is operator-approved, logged with the evidence that forced it,
+        and never softens a gate. Prior results stand as recorded.</p>
+      </div>
+      <div>
+        <h3>Version-stamped scoring</h3>
+        <p>When an exploit forces a scoring change, the score version increments and eras are
+        never compared across the boundary.</p>
+      </div>
+      <div>
+        <h3>Replayable by anyone</h3>
+        <p>Every run has a public URL: the recorded screens, the per-step proofs, the full trace
+        export. The replays are the demo; the repo is the paper.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="ladder">
+  <div class="wrap">
+    <div class="eyebrow">The gate ladder</div>
+    <h2>WDSLL — “What does success look like?”</h2>
+    <p class="section-lede">Every capability claim climbs a ladder of falsifiable gates. A gate
+    passes only on recorded facts in public runs — never on narrative or score alone.</p>
+    <div class="ladder-scroll">
+    <table class="ladder">
+      <thead><tr><th>Gate</th><th>Question</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td class="g">G0–G1</td><td class="q">Does the audited substrate and LLM plumbing work honestly?</td><td><span class="status pass">PASSED</span></td></tr>
+        <tr><td class="g">G2</td><td class="q">Can an LLM match a scripted reference player?</td><td><span class="status pass">PASSED 5/5</span></td></tr>
+        <tr><td class="g">G3</td><td class="q">Can it run a real production economy — finished goods, not queues?</td><td><span class="status pass">PASSED</span></td></tr>
+        <tr><td class="g">G4</td><td class="q">Can it build a fortress — economy plus enclosed rooms — over 50,000 ticks?</td><td><span class="status pass">PASSED · 40% rate</span></td></tr>
+        <tr><td class="g">G5</td><td class="q">Does persistent memory improve play?</td><td><span class="status answered">ANSWERED: NO</span></td></tr>
+        <tr><td class="g">G6</td><td class="q">Does any of it generalize to a map the agent has never seen?</td><td><span class="status open">IN PROGRESS</span></td></tr>
+        <tr><td class="g">G7</td><td class="q">Can a fort live — a full year of food, drink, and migrants, zero neglect deaths?</td><td><span class="status open">PROPOSED</span></td></tr>
+        <tr><td class="g">G8</td><td class="q">Depth: can an agent take the fortress underground, across z-levels?</td><td><span class="status open">HORIZON</span></td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+</section>
+
+<section id="next" style="border-bottom:none">
+  <div class="wrap">
+    <div class="eyebrow">What's next</div>
+    <h2>A standing proving ground for anyone's agent.</h2>
+    <p class="section-lede">The ladder keeps rising — survival economies, multi-level construction,
+    fresh worlds on demand — and the endgame is a public leaderboard where any model attempts the
+    same gates under the same instruments, with the same unforgiving evidence trail.
+    <b>Built in the open</b>, at <a href="https://github.com/lemoz/fort-gym">github.com/lemoz/fort-gym</a>.</p>
+  </div>
+</section>
+
+<footer class="site">
+  <div class="wrap">
+    <span class="fine">FORT·GYM — an environment lab. Every number on this page is backed by a
+    public run or a committed document; if you find one that isn't, that's a bug in the lab,
+    and we'd like to know.</span>
+    <span class="fine">
+      <a href="/live">live viewer</a> · <a href="/leaderboard">leaderboard</a> ·
+      <a href="https://github.com/lemoz/fort-gym">source</a> ·
+      <a href="https://github.com/lemoz/fort-gym/blob/main/docs/WDSLL.md">WDSLL</a>
+    </span>
+  </div>
+</footer>
+
+<script>
+  // live stats strip: real numbers when the API answers, graceful text when not
+  (async function () {
+    try {
+      const res = await fetch("/public/runs");
+      if (!res.ok) return;
+      const runs = await res.json();
+      if (Array.isArray(runs) && runs.length) {
+        document.getElementById("ls-runs").textContent = String(runs.length);
+        const live = runs.find(r => r.status === "running");
+        if (live) {
+          document.getElementById("ls-env").textContent =
+            "LIVE: step " + (live.step ?? "?") + "/" + (live.max_steps ?? "?");
+        }
+      }
+    } catch (e) { /* strip keeps its static text */ }
+  })();
+</script>
+</body>
+</html>

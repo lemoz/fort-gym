@@ -250,6 +250,66 @@ for _, space in ipairs(spaces) do
   if space.kind ~= 'enclosed_space' then functional = functional + 1 end
 end
 
+-- Nearby tree clusters beyond the minimap window. On clearing spawns the
+-- fort window can hold zero trunks while forests stand 20 tiles away (G6
+-- attempt 1, run 769f5034: the agent chopped blind and wood-starved all
+-- run). Bounded read-only scan around the citizens; factual observation
+-- content only.
+local nearby_trees = { total = 0, clusters = {} }
+pcall(function()
+  local cx, cy, cz, n = 0, 0, nil, 0
+  for _, unit in ipairs(df.global.world.units.active) do
+    local ok_c, is_c = pcall(function() return dfhack.units.isCitizen(unit) end)
+    if ok_c and is_c and unit.pos then
+      cx = cx + unit.pos.x
+      cy = cy + unit.pos.y
+      cz = unit.pos.z
+      n = n + 1
+    end
+  end
+  if n == 0 then return end
+  cx, cy = math.floor(cx / n), math.floor(cy / n)
+  local RADIUS = 40
+  local BUCKET = 16
+  local tree_material = df.tiletype_material.TREE
+  local buckets = {}
+  for x = math.max(0, cx - RADIUS), cx + RADIUS do
+    for y = math.max(0, cy - RADIUS), cy + RADIUS do
+      local block = dfhack.maps.getTileBlock(x, y, cz)
+      if block then
+        local dx, dy = x % 16, y % 16
+        local ok_t, is_trunk = pcall(function()
+          local attr = attrs[block.tiletype[dx][dy]]
+          return attr ~= nil and attr.shape == WALL_SHAPE
+            and attr.material == tree_material
+        end)
+        if ok_t and is_trunk then
+          nearby_trees.total = nearby_trees.total + 1
+          local key = math.floor(x / BUCKET) .. ',' .. math.floor(y / BUCKET)
+          local b = buckets[key] or { x = 0, y = 0, count = 0 }
+          b.x = b.x + x
+          b.y = b.y + y
+          b.count = b.count + 1
+          buckets[key] = b
+        end
+      end
+    end
+  end
+  local list = {}
+  for _, b in pairs(buckets) do
+    table.insert(list, {
+      x = math.floor(b.x / b.count),
+      y = math.floor(b.y / b.count),
+      z = cz,
+      count = b.count,
+    })
+  end
+  table.sort(list, function(a, b2) return a.count > b2.count end)
+  for i = 1, math.min(3, #list) do
+    table.insert(nearby_trees.clusters, list[i])
+  end
+end)
+
 -- ASCII minimap of the fort area so the agent can see wall geometry and gaps
 -- spatially instead of as coordinate lists. Read-only; bounded to 34x34.
 local map_origin = nil
@@ -399,6 +459,7 @@ print(json.encode({
   constructions = constructions,
   construction_tiles = construction_tiles,
   pending_constructions = pending_constructions,
+  nearby_trees = nearby_trees,
   player_buildings = #buildings,
   map_origin = map_origin,
   map_rows = map_rows,

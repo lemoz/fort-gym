@@ -1937,3 +1937,66 @@ def test_encoder_skips_minimap_when_malformed() -> None:
     obs_text, _ = encode_observation(state)
 
     assert "Fort minimap" not in obs_text
+
+
+def test_encoder_surfaces_nearby_tree_clusters() -> None:
+    base = {
+        "time": 100,
+        "population": 7,
+        "stocks": {"food": 45, "drink": 60, "wood": 3, "stone": 0},
+        "fort": {
+            "ok": True,
+            "enclosed_spaces": 0,
+            "functional_rooms": 0,
+            "constructions": 0,
+            "spaces": [],
+            "nearby_trees": {
+                "total": 58,
+                "clusters": [
+                    {"x": 66, "y": 70, "z": 161, "count": 31},
+                    {"x": 95, "y": 120, "z": 161, "count": 27},
+                ],
+            },
+        },
+    }
+    text, _ = encode_observation(base, screen_text="main map")
+    assert "Nearby trees (within 40 tiles" in text
+    assert "31 trunks near (66,70,161)" in text
+
+    base["fort"]["nearby_trees"] = {"total": 0, "clusters": []}
+    text, _ = encode_observation(base, screen_text="main map")
+    assert "Nearby trees: none within 40 tiles" in text
+
+
+def test_encoder_distinguishes_usable_from_locked_stock() -> None:
+    """G6 attempt 2 (run 55c39cdd): 10 pending walls claimed 10 of 11 logs
+    and the stocks line kept reading 'Wood: 11' for 90 futile steps. Usable
+    counts are shown whenever they differ from the raw total."""
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {
+                "food": 45,
+                "drink": 60,
+                "wood": 11,
+                "wood_usable": 1,
+                "stone": 4,
+                "stone_usable": 4,
+            },
+        },
+        screen_text="main map",
+    )
+    assert "Wood: 11 (1 usable, rest locked in jobs/buildings)" in text
+    assert "Stone: 4," in text or "Stone: 4" in text
+    assert "Stone: 4 (" not in text  # equal counts stay terse
+
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 3, "stone": 0},
+        },
+        screen_text="main map",
+    )
+    assert "Wood: 3," in text  # no usable field -> legacy rendering

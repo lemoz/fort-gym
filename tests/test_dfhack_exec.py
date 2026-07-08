@@ -421,3 +421,43 @@ def test_fort_metrics_marks_queued_constructions_without_sealing_rooms() -> None
     boundary_block = script[script.index("local construction_set"):]
     boundary_block = boundary_block[: boundary_block.index("BUILDING_CHARS")]
     assert "pending" not in boundary_block
+
+
+def test_read_game_state_counts_dead_citizens_for_real() -> None:
+    """G6 attempt 1 (run 769f5034): a citizen drowned, pop dropped 7->6, and
+    the dead metric never moved — state.dead was hardcoded 0. The state
+    script must actually count our civ's dead dwarves."""
+    import inspect
+
+    from fort_gym.bench import dfhack_exec
+
+    source = inspect.getsource(dfhack_exec.read_game_state)
+    assert "state.dead = 0" not in source
+    assert "dfhack.units.isDead(unit)" in source
+    assert "state.dead = dead_count" in source
+
+
+def test_fort_metrics_reports_nearby_tree_clusters() -> None:
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "fort_metrics.lua"
+    ).read_text(encoding="utf-8")
+    # clearing spawns: the fort window can hold zero trunks while forests
+    # stand 20 tiles away — the scan is factual content, bounded, read-only
+    assert "nearby_trees" in script
+    assert "local RADIUS = 40" in script
+    assert "table.sort(list" in script
+
+
+def test_read_game_state_reports_usable_stock_counts() -> None:
+    """The build hooks can only consume unclaimed items; the state script
+    must report usable counts with the same filter (in_job / in_building /
+    construction / forbid / hidden all lock an item)."""
+    import inspect
+
+    from fort_gym.bench import dfhack_exec
+
+    source = inspect.getsource(dfhack_exec.read_game_state)
+    assert "wood_usable" in source
+    assert "stone_usable" in source
+    assert "item.flags.in_job" in source
+    assert "item.flags.in_building" in source
