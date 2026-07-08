@@ -24,6 +24,11 @@ class StateReader:
                 "drink": stocks.get("drink", 0),
                 "wood": stocks.get("wood", 0),
                 "stone": stocks.get("stone", 0),
+                # usable = not claimed by jobs / locked in (pending) buildings;
+                # this whitelist silently dropped the fields when they shipped,
+                # so G6 attempt 3 ran without them (WDSLL 2026-07-08)
+                "wood_usable": stocks.get("wood_usable"),
+                "stone_usable": stocks.get("stone_usable"),
                 "wealth": stocks.get("wealth", raw.get("wealth")),
             },
             "risks": raw.get("risks", []),

@@ -609,6 +609,84 @@ gate. Each entry states what changed and the evidence that forced it.
   (corrections operator-approved as always), up to three attempts before
   an escalation decision. Every attempt reported at full prominence.
 
+- **2026-07-07 — G6 attempt 1: FAIL 2/5, and the unseen map exposed two
+  measurement lies in one run.** Run `769f5034` (GLM-5V, 100 steps,
+  memory-off, score-v3, seed_region3_fresh via per-run selection —
+  provenance recorded correctly on first production use;
+  `fortgym.live/r/cQKTXD8xnEUNV9COJIvXR9zB7Mg3F59M`): ticks 100,384 PASS;
+  orders completed (7 beds) PASS; population 6/7 FAIL; rooms 0/2 FAIL;
+  rubric 69.06 (just under 70) with zero blockers FAIL. Forensics: (a)
+  **wood blindness** — region3's spawn is a clearing; zero tree trunks
+  were visible anywhere in the agent's observation window all run
+  (region1's spawn happened to have trees in-frame, masking this for the
+  entire campaign). The agent chopped blind near its base (3 attempts),
+  wood peaked at 6, walls died `no_building_material` x13, and 25 bed
+  installs failed with nothing produced to install. Correction: a bounded
+  read-only Nearby-trees scan (40 tiles around the citizens, top-3
+  clusters with coordinates) joins the observation — factual content, no
+  strategy. (b) **the dead metric was a hardcoded constant** — gamelog
+  records "kut, Jeweler has been found dead, drowned" (the brook), the
+  population criterion caught it honestly (6<7), but `state.dead = 0` was
+  literal in the state reader since day one; the casualty-spike check has
+  never measured anything. Correction: count the civ's dead dwarves for
+  real (isDwarf + isDead). Both corrections held for the operator window;
+  attempt 2 of 3 follows per the pre-declared protocol.
+
+- **2026-07-08 — G6 attempt 2: FAIL 3/5, and the third invisible fact of
+  the campaign surfaced.** Run `55c39cdd` (config per protocol, post
+  attempt-1 corrections;
+  `fortgym.live/r/twSeylYz5Z6Mb5Mh11pIR20DpW5Yxrtg`): ticks PASS,
+  population 7/7 PASS (no deaths — the new dead metric live), orders
+  completed PASS (2 beds), rooms 0/2 FAIL, rubric 69.56 FAIL (second
+  consecutive just-under-70; the parked v2/v3 rubric-bar review now bites
+  G6 directly). The attempt-1 corrections verifiably worked: the
+  Nearby-trees line reported real clusters and early chops raised wood
+  3->11 by step 10. Then the instrument lied by omission again: at step 8
+  the agent placed 10 wall segments at once and **each pending
+  construction immediately claimed a log — 10 of 11 logs locked — while
+  the stocks line kept reading "Wood: 11" for the remaining 90 steps.**
+  22 further wall attempts failed no_building_material against
+  apparently-full stock; end-state item flags confirm the mechanism
+  (constructions consume their claimed logs on completion). Correction
+  (operator window): stocks now report USABLE counts — items not claimed
+  by jobs or locked in (pending) buildings, the same filter the build
+  hooks apply — rendered as "Wood: 11 (1 usable, rest locked in
+  jobs/buildings)", with the claim mechanic stated factually in the
+  prompt. Residual honest note: the agent also under-harvested (3 chops,
+  never at the reported far clusters) — that part is policy, not
+  instrument, and stands as a genuine G6 finding-in-progress: on wood-rich
+  region1 logistics was free; on region3 it is the game.
+
+- **2026-07-08 — G6 attempt 3: FAIL 3/5. CAMPAIGN CONCLUDES 0/3 — recorded
+  at full prominence, with the correction ladder's effect measured.** Run
+  `19f692b8` (`fortgym.live/r/OnonN6SkMid42X4NRAHYBnzYFYwhh5-g`): ticks
+  PASS; orders completed PASS; **rubric 70.88 clean PASS — the first
+  region3 run over the bar** (trajectory across attempts: 69.06 -> 69.56
+  -> 70.88); rooms 0/2 FAIL; population 5/7 FAIL (two more drownings —
+  the brook has now killed three dwarves in three runs; region1 never had
+  an accessible water hazard). The wood economy is SOLVED: one chop at a
+  Nearby-trees cluster produced 112 logs by step 25 (attempt 1 peaked at
+  6) — the attempt-1 correction alone cracked logistics. Honest defect
+  disclosure: the attempt-2 usable-stocks correction NEVER REACHED the
+  agent in attempt 3 — the StateReader field whitelist silently dropped
+  `wood_usable`/`stone_usable` between the state script and the encoder
+  (verified: `usable: None` in every step's observation). The correction
+  was approved, shipped, tested at both ends, and lost in the pipe; the
+  completion fix is a one-line whitelist addition with an end-to-end
+  test, held for the next window. G6 verdict: **the frontier on unseen
+  terrain is not geometry alone — it is logistics (solved by factual
+  observation), environmental hazard (drownings, unsolved: no legal
+  action addresses water safety short of walls), and ring-closing under
+  those pressures (0 enclosures in 3 runs at up to 112 logs available).**
+  Escalation options to the operator per protocol: (a) GPT-5.5-vision on
+  region3 (~$10) — separates policy strength from environment difficulty;
+  (b) amended protocol: complete the usable-stocks pipeline + further
+  GLM-5V attempts; (c) accept-and-document G6 as the open frontier and
+  proceed to the G7 primitives window. **Operator selected (2026-07-08): a
+  hybrid of (a)+(b)** — one GPT-5.5-vision run and one corrected-instrument
+  GLM-5V run on region3, both under the standing G6 criteria, after the
+  usable-stocks pipeline completion (PR #59) deployed.
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,

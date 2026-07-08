@@ -43,15 +43,17 @@ building MULTIPLE enclosed functional rooms while keeping every dwarf alive.
 
 Legal actions (the only five types accepted):
 - DIG: params {"area": [x, y, z], "size": [w, h, 1], "kind": "dig"|"channel"|"chop"|"gather"}. \
-kind dig/channel designates the rectangle (max 30x30, one z-level); only WALL tiles can be dug — \
-DF silently drops designations on floor/shrub/other tiles, and miners must then reach the walls \
-and work over time. kind "chop" designates the tree trunks inside the rect for felling (the \
-observation's Fort-area tiles line reports tree_trunk counts); a dwarf with the woodcutting labor fells \
-them over time and the logs appear in the Wood stock. Carpentry production consumes wood — \
-without logs, workshop orders cancel. kind "gather" designates shrub tiles inside the rect for plant \
-gathering (only SHRUB-shaped tiles are marked; other tiles in the rect are left untouched and \
-reported as non_shrub_tiles); a dwarf with the herbalism labor collects the plant over time and it \
-appears in the plant stock — gathered plants are brewable.
+kind dig/channel designates the rectangle (max 30x30, one z-level); this harness only designates \
+WALL tiles for dig/channel — floor/shrub/other tiles in the rect are left untouched (use \
+kind=gather for shrubs), and miners must then reach the walls and work over time. kind "chop" \
+designates the tree trunks inside the rect for felling (the observation's Fort-area tiles line \
+reports tree_trunk counts, and the Nearby-trees line reports tree clusters up to 40 tiles from \
+the citizens, possibly beyond the minimap); a dwarf with the woodcutting labor fells them over \
+time and the logs appear in the Wood stock. Carpentry production consumes wood — without logs, \
+workshop orders cancel. kind "gather" designates shrub tiles inside the rect for plant gathering \
+(only SHRUB-shaped tiles are marked; other tiles in the rect are left untouched and reported as \
+non_shrub_tiles); a dwarf with the herbalism labor collects the plant over time and it appears in \
+the plant stock — gathered plants are brewable.
 - BUILD: params {"kind": "CarpenterWorkshop"|"Bed"|"Door"|"Table"|"Chair"|"Wall"|"Floor", "x": X, \
 "y": Y, "z": Z, "x2": X2, "y2": Y2 (optional)}. \
 CarpenterWorkshop places a 3x3 workshop on open floor within 24 tiles of your fort — near any \
@@ -63,7 +65,9 @@ what turns it into a functional room. Installing furniture requires a finished i
 stock (see "Finished goods in play"); installed beds/doors/tables/chairs make rooms functional. \
 Wall and Floor kinds place construction segments: a single tile at (x, y, z), or a line up to 10 \
 tiles when optional x2/y2 are given, within 24 tiles of your fort. Each tile consumes one log, \
-boulder, or block from stock, and a dwarf builds it over time. Enclosed rooms — spaces bounded by \
+boulder, or block from stock — and each PENDING construction claims its material immediately, so \
+the stocks line's "usable" count is what further BUILDs can actually draw on (locked items free \
+up when their job completes or is removed). Enclosed rooms — spaces bounded by \
 walls, buildings, or doors — are what make bedrooms and production rooms count; the observation's \
 "Fort structure" line reports enclosed_spaces and functional_rooms.
 - ORDER: params {"job": <item>, "quantity": 1-5}. Queues production to any BUILT carpenter workshop \
