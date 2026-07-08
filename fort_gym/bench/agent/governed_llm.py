@@ -46,9 +46,10 @@ Legal actions (the only five types accepted):
 kind dig/channel designates the rectangle (max 30x30, one z-level); only WALL tiles can be dug — \
 DF silently drops designations on floor/shrub/other tiles, and miners must then reach the walls \
 and work over time. kind "chop" designates the tree trunks inside the rect for felling (the \
-observation's Fort-area tiles line reports tree_trunk counts); a dwarf with the woodcutting labor fells \
-them over time and the logs appear in the Wood stock. Carpentry production consumes wood — \
-without logs, workshop orders cancel.
+observation's Fort-area tiles line reports tree_trunk counts, and the Nearby-trees line reports \
+tree clusters up to 40 tiles from the citizens, possibly beyond the minimap); a dwarf with the \
+woodcutting labor fells them over time and the logs appear in the Wood stock. Carpentry \
+production consumes wood — without logs, workshop orders cancel.
 - BUILD: params {"kind": "CarpenterWorkshop"|"Bed"|"Door"|"Table"|"Chair"|"Wall"|"Floor", "x": X, \
 "y": Y, "z": Z, "x2": X2, "y2": Y2 (optional)}. \
 CarpenterWorkshop places a 3x3 workshop on open floor within 24 tiles of your fort — near any \

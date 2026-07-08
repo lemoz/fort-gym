@@ -609,6 +609,29 @@ gate. Each entry states what changed and the evidence that forced it.
   (corrections operator-approved as always), up to three attempts before
   an escalation decision. Every attempt reported at full prominence.
 
+- **2026-07-07 — G6 attempt 1: FAIL 2/5, and the unseen map exposed two
+  measurement lies in one run.** Run `769f5034` (GLM-5V, 100 steps,
+  memory-off, score-v3, seed_region3_fresh via per-run selection —
+  provenance recorded correctly on first production use;
+  `fortgym.live/r/cQKTXD8xnEUNV9COJIvXR9zB7Mg3F59M`): ticks 100,384 PASS;
+  orders completed (7 beds) PASS; population 6/7 FAIL; rooms 0/2 FAIL;
+  rubric 69.06 (just under 70) with zero blockers FAIL. Forensics: (a)
+  **wood blindness** — region3's spawn is a clearing; zero tree trunks
+  were visible anywhere in the agent's observation window all run
+  (region1's spawn happened to have trees in-frame, masking this for the
+  entire campaign). The agent chopped blind near its base (3 attempts),
+  wood peaked at 6, walls died `no_building_material` x13, and 25 bed
+  installs failed with nothing produced to install. Correction: a bounded
+  read-only Nearby-trees scan (40 tiles around the citizens, top-3
+  clusters with coordinates) joins the observation — factual content, no
+  strategy. (b) **the dead metric was a hardcoded constant** — gamelog
+  records "kut, Jeweler has been found dead, drowned" (the brook), the
+  population criterion caught it honestly (6<7), but `state.dead = 0` was
+  literal in the state reader since day one; the casualty-spike check has
+  never measured anything. Correction: count the civ's dead dwarves for
+  real (isDwarf + isDead). Both corrections held for the operator window;
+  attempt 2 of 3 follows per the pre-declared protocol.
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,
