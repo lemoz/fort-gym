@@ -632,6 +632,31 @@ gate. Each entry states what changed and the evidence that forced it.
   real (isDwarf + isDead). Both corrections held for the operator window;
   attempt 2 of 3 follows per the pre-declared protocol.
 
+- **2026-07-08 — G6 attempt 2: FAIL 3/5, and the third invisible fact of
+  the campaign surfaced.** Run `55c39cdd` (config per protocol, post
+  attempt-1 corrections;
+  `fortgym.live/r/twSeylYz5Z6Mb5Mh11pIR20DpW5Yxrtg`): ticks PASS,
+  population 7/7 PASS (no deaths — the new dead metric live), orders
+  completed PASS (2 beds), rooms 0/2 FAIL, rubric 69.56 FAIL (second
+  consecutive just-under-70; the parked v2/v3 rubric-bar review now bites
+  G6 directly). The attempt-1 corrections verifiably worked: the
+  Nearby-trees line reported real clusters and early chops raised wood
+  3->11 by step 10. Then the instrument lied by omission again: at step 8
+  the agent placed 10 wall segments at once and **each pending
+  construction immediately claimed a log — 10 of 11 logs locked — while
+  the stocks line kept reading "Wood: 11" for the remaining 90 steps.**
+  22 further wall attempts failed no_building_material against
+  apparently-full stock; end-state item flags confirm the mechanism
+  (constructions consume their claimed logs on completion). Correction
+  (operator window): stocks now report USABLE counts — items not claimed
+  by jobs or locked in (pending) buildings, the same filter the build
+  hooks apply — rendered as "Wood: 11 (1 usable, rest locked in
+  jobs/buildings)", with the claim mechanic stated factually in the
+  prompt. Residual honest note: the agent also under-harvested (3 chops,
+  never at the reported far clusters) — that part is policy, not
+  instrument, and stands as a genuine G6 finding-in-progress: on wood-rich
+  region1 logistics was free; on region3 it is the game.
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,
