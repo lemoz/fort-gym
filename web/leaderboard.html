@@ -5,13 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Fort-Gym Leaderboard</title>
   <style>
+    :root {
+      --ink: #0b0e14;
+      --ink-2: #11151f;
+      --ink-3: #1a2030;
+      --paper: #e8e4da;
+      --paper-dim: #9aa0ad;
+      --accent: #d66a28;
+      --accent-soft: #f0b27a;
+      --ok: #5da668;
+      --rule: #232a3a;
+      --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+      --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    }
     * { box-sizing: border-box; }
     body {
-      font-family: 'Segoe UI', Arial, sans-serif;
+      font-family: var(--sans);
       margin: 0;
       padding: 0;
-      background: #0b0d12;
-      color: #f5f7fb;
+      background: var(--ink);
+      color: var(--paper);
       min-height: 100vh;
     }
     .header-bar {
@@ -19,8 +32,8 @@
       align-items: center;
       justify-content: space-between;
       padding: 0.75rem 1.5rem;
-      background: linear-gradient(180deg, #1a2233, #0f1520);
-      border-bottom: 1px solid rgba(255,255,255,0.1);
+      background: var(--ink-2);
+      border-bottom: 1px solid var(--rule);
     }
     .header-bar h1 {
       font-size: 1.1rem;
@@ -28,26 +41,65 @@
       display: flex;
       align-items: center;
       gap: 0.6rem;
+      font-family: var(--mono);
+      letter-spacing: 0.02em;
     }
     .header-bar a {
-      color: #9ab3ff;
+      color: var(--accent-soft);
       text-decoration: none;
       font-size: 0.9rem;
     }
     .header-bar a:hover { text-decoration: underline; }
 
     .main {
-      padding: 1rem 1.5rem;
+      padding: 1rem 1.5rem 2.5rem;
       display: flex;
       flex-direction: column;
       gap: 1rem;
+      max-width: 1100px;
+      margin: 0 auto;
     }
 
     .panel {
-      background: rgba(0,0,0,0.4);
-      border-radius: 12px;
+      background: var(--ink-2);
+      border-radius: 8px;
       padding: 1rem;
-      border: 1px solid rgba(255,255,255,0.1);
+      border: 1px solid var(--rule);
+    }
+
+    .panel h2 {
+      margin: 0 0 0.4rem 0;
+      font-size: 1rem;
+      color: var(--paper);
+      font-weight: 650;
+    }
+
+    .comparability-note {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--accent-soft);
+      margin: 0 0 1rem 0;
+      padding: 0.6rem 0.8rem;
+      background: rgba(214, 106, 40, 0.08);
+      border-left: 3px solid var(--accent);
+      border-radius: 2px;
+    }
+
+    .section-heading {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      letter-spacing: 0.06em;
+      color: var(--accent-soft);
+      text-transform: uppercase;
+      margin: 1.4rem 0 0.5rem 0;
+      padding-bottom: 0.35rem;
+      border-bottom: 1px solid var(--rule);
+    }
+    .section-heading:first-of-type { margin-top: 0; }
+    .section-heading .seed-tag {
+      color: var(--paper-dim);
+      text-transform: none;
+      letter-spacing: 0;
     }
 
     .controls {
@@ -62,7 +114,7 @@
       flex-direction: column;
       gap: 0.35rem;
       font-size: 0.8rem;
-      color: #9fb1d6;
+      color: var(--paper-dim);
       letter-spacing: 0.06em;
       text-transform: uppercase;
       min-width: 160px;
@@ -70,26 +122,29 @@
 
     input, select {
       padding: 0.6rem;
-      border-radius: 8px;
-      border: 1px solid rgba(255,255,255,0.12);
-      background: rgba(12,18,30,0.9);
-      color: #fff;
+      border-radius: 4px;
+      border: 1px solid var(--rule);
+      background: var(--ink);
+      color: var(--paper);
       font-size: 0.95rem;
+      font-family: var(--mono);
     }
 
     button {
       padding: 0.65rem 1.1rem;
-      border-radius: 999px;
-      border: none;
+      border-radius: 4px;
+      border: 1px solid var(--accent);
       cursor: pointer;
-      background: #4f7cff;
-      color: #fff;
-      font-weight: 700;
+      background: var(--accent);
+      color: #14100b;
+      font-weight: 650;
+      font-family: var(--mono);
     }
+    button:hover { background: var(--accent-soft); border-color: var(--accent-soft); }
 
     .note {
-      font-size: 0.9rem;
-      color: #8aa0c7;
+      font-size: 0.85rem;
+      color: var(--paper-dim);
       margin-top: 0.5rem;
     }
 
@@ -105,40 +160,50 @@
       font-size: 0.9rem;
     }
     th, td {
-      padding: 0.7rem 0.9rem;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding: 0.6rem 0.9rem;
+      border-bottom: 1px solid var(--rule);
       text-align: left;
       vertical-align: middle;
     }
     th {
       text-transform: uppercase;
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       letter-spacing: 0.08em;
-      color: #9fb1d6;
+      font-family: var(--mono);
+      color: var(--paper-dim);
     }
+    td.num, th.num { text-align: right; font-family: var(--mono); }
     .tag {
       display: inline-flex;
       align-items: center;
       gap: 0.4rem;
       padding: 0.25rem 0.55rem;
-      background: rgba(79,124,255,0.18);
-      border-radius: 999px;
-      color: #9ab3ff;
+      background: var(--ink-3);
+      border-radius: 4px;
+      color: var(--paper);
+      font-family: var(--mono);
       font-size: 0.8rem;
       white-space: nowrap;
     }
+    .score {
+      font-family: var(--mono);
+      font-weight: 700;
+      color: var(--accent-soft);
+    }
     .actions a {
-      color: #9ab3ff;
+      color: var(--accent-soft);
       text-decoration: none;
       margin-right: 0.75rem;
       white-space: nowrap;
+      font-family: var(--mono);
+      font-size: 0.85rem;
     }
     .actions a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
   <div class="header-bar">
-    <h1>&#x1F3C6; Fort-Gym Leaderboard</h1>
+    <h1>FORT&middot;GYM <span style="color:var(--paper-dim); font-weight:400;">/ leaderboard</span></h1>
     <div style="display:flex; gap:1rem; align-items:center;">
       <a href="/">Live View</a>
       <a href="/admin">Admin</a>
@@ -147,6 +212,17 @@
   </div>
 
   <div class="main">
+    <div class="panel">
+      <h2>Leaderboard</h2>
+      <p class="comparability-note">
+        Scores are comparable only within a section — the scoring matrix and seed
+        differ across sections. Never compare a mean_score across sections.
+      </p>
+      <div id="leaderboard-sections">
+        <p class="note">Loading…</p>
+      </div>
+    </div>
+
     <div class="panel">
       <div class="controls">
         <label>Days
@@ -167,31 +243,32 @@
         </label>
         <button id="refresh">Refresh</button>
       </div>
-      <div class="note">Shows the best score so far over time, grouped by <span class="tag">model@git_sha</span>.</div>
+      <div class="note">Shows the best score so far over time, grouped by <span class="tag">model@git_sha</span> within a single score-version/seed section — series never splice across sections.</div>
     </div>
 
     <div class="panel">
-      <h2 style="margin:0 0 0.75rem 0; font-size:1rem; color:#9fb1d6;">Best Score Over Time</h2>
+      <h2 style="font-size:1rem;">Best Score Over Time</h2>
       <div class="chart-container">
         <canvas id="chart"></canvas>
       </div>
     </div>
 
     <div class="panel">
-      <h2 style="margin:0 0 0.75rem 0; font-size:1rem; color:#9fb1d6;">Top Series (Best Run Links)</h2>
+      <h2 style="font-size:1rem;">Top Series (Best Run Links)</h2>
       <table>
         <thead>
           <tr>
             <th>Series</th>
+            <th>Section</th>
             <th>Backend</th>
-            <th>Runs</th>
-            <th>Best Score</th>
+            <th class="num">Runs</th>
+            <th class="num">Best Score</th>
             <th>Best At</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody id="rows">
-          <tr><td colspan="6" style="color:#8aa0c7;">Loading…</td></tr>
+          <tr><td colspan="7" style="color:var(--paper-dim);">Loading…</td></tr>
         </tbody>
       </table>
     </div>
@@ -209,6 +286,20 @@
 
     function seriesLabel(s) {
       return `${s.model}@${shortSha(s.git_sha)}`;
+    }
+
+    function regionLabel(seedSave) {
+      if (!seedSave || seedSave === 'unspecified') return 'unspecified seed';
+      return seedSave.replace(/^seed_/, '').replace(/_fresh$/, '');
+    }
+
+    function sectionLabel(scoreVersion, seedSave) {
+      if (scoreVersion === 1) {
+        return seedSave && seedSave !== 'unspecified'
+          ? `v1 era · ${regionLabel(seedSave)}`
+          : 'v1 era';
+      }
+      return `score-v${scoreVersion} · ${regionLabel(seedSave)}`;
     }
 
     function toEpochMs(iso) {
@@ -231,21 +322,21 @@
             x: {
               type: 'linear',
               ticks: {
-                color: '#9fb1d6',
+                color: '#9aa0ad',
                 callback: (value) => {
                   const d = new Date(value);
                   return isNaN(d.getTime()) ? '' : d.toLocaleDateString();
                 }
               },
-              grid: { color: 'rgba(255,255,255,0.06)' }
+              grid: { color: 'rgba(232,228,218,0.06)' }
             },
             y: {
-              ticks: { color: '#9fb1d6' },
-              grid: { color: 'rgba(255,255,255,0.06)' }
+              ticks: { color: '#9aa0ad' },
+              grid: { color: 'rgba(232,228,218,0.06)' }
             }
           },
           plugins: {
-            legend: { labels: { color: '#e5ecff' } },
+            legend: { labels: { color: '#e8e4da' } },
             tooltip: {
               callbacks: {
                 label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}`,
@@ -256,10 +347,79 @@
       });
     }
 
+    function renderLeaderboard(rows) {
+      const container = document.getElementById('leaderboard-sections');
+      if (!rows || rows.length === 0) {
+        container.innerHTML = '<p class="note">No public runs yet.</p>';
+        return;
+      }
+
+      // Rows arrive pre-sorted by score_version desc, then mean_score desc.
+      // Group into sections while preserving that order (stable partition).
+      const sections = [];
+      const sectionIndex = new Map();
+      for (const row of rows) {
+        const key = `${row.score_version}|${row.seed_save}`;
+        if (!sectionIndex.has(key)) {
+          sectionIndex.set(key, sections.length);
+          sections.push({ score_version: row.score_version, seed_save: row.seed_save, rows: [] });
+        }
+        sections[sectionIndex.get(key)].rows.push(row);
+      }
+
+      container.innerHTML = sections.map(section => {
+        const tableRows = section.rows.map(row => {
+          const watchLink = row.best_token ? `/r/${encodeURIComponent(row.best_token)}` : null;
+          return `
+            <tr>
+              <td><span class="tag">${row.model}</span></td>
+              <td class="num">${row.runs}</td>
+              <td class="num score">${row.mean_score.toFixed(2)}</td>
+              <td class="num">${row.best_score != null ? row.best_score.toFixed(2) : '--'}</td>
+              <td class="actions">${watchLink ? `<a href="${watchLink}">Watch best run</a>` : '--'}</td>
+            </tr>
+          `;
+        }).join('');
+
+        return `
+          <div class="section-heading">${sectionLabel(section.score_version, section.seed_save)}
+            <span class="seed-tag">(${section.rows.reduce((n, r) => n + r.runs, 0)} runs)</span>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th class="num">Runs</th>
+                <th class="num">Mean Score</th>
+                <th class="num">Best Score</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>${tableRows}</tbody>
+          </table>
+        `;
+      }).join('');
+    }
+
+    async function refreshLeaderboard() {
+      const container = document.getElementById('leaderboard-sections');
+      try {
+        const res = await fetch('/public/leaderboard');
+        if (!res.ok) {
+          container.innerHTML = `<p class="note" style="color:#ff6b6b;">Error: ${res.status}</p>`;
+          return;
+        }
+        const rows = await res.json();
+        renderLeaderboard(rows);
+      } catch (err) {
+        container.innerHTML = `<p class="note" style="color:#ff6b6b;">Error loading leaderboard.</p>`;
+      }
+    }
+
     function renderTable(series) {
       const tbody = document.getElementById('rows');
       if (!series || series.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="color:#8aa0c7;">No runs found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="color:var(--paper-dim);">No runs found.</td></tr>';
         return;
       }
 
@@ -277,9 +437,10 @@
         return `
           <tr>
             <td><span class="tag">${seriesLabel(s)}</span></td>
+            <td>${sectionLabel(s.score_version, s.seed_save)}</td>
             <td>${s.backend}</td>
-            <td>${runCount}</td>
-            <td style="font-weight:700; color:#ffd966;">${bestScore}</td>
+            <td class="num">${runCount}</td>
+            <td class="num score">${bestScore}</td>
             <td>${bestAt}</td>
             <td class="actions">
               <a href="${watchLink}">Watch</a>
@@ -295,12 +456,12 @@
 
     function renderChart(series) {
       if (!chart) return;
-      const palette = ['#4f7cff', '#6fdf9f', '#ffd966', '#ff6b6b', '#c77dff', '#4dd0e1', '#f48fb1'];
+      const palette = ['#d66a28', '#5da668', '#f0b27a', '#4dd0e1', '#c77dff', '#ffd966', '#ff6b6b'];
 
       const datasets = series.slice(0, 7).map((s, idx) => {
         const points = (s.points || []).map(p => ({ x: toEpochMs(p.t), y: p.best }));
         return {
-          label: `${seriesLabel(s)} (${s.backend})`,
+          label: `${seriesLabel(s)} · ${sectionLabel(s.score_version, s.seed_save)}`,
           data: points,
           borderColor: palette[idx % palette.length],
           backgroundColor: palette[idx % palette.length],
@@ -330,7 +491,7 @@
       const url = `/public/leaderboard/best-over-time?${params.toString()}`;
       const res = await fetch(url);
       if (!res.ok) {
-        document.getElementById('rows').innerHTML = `<tr><td colspan="6" style="color:#ff6b6b;">Error: ${res.status}</td></tr>`;
+        document.getElementById('rows').innerHTML = `<tr><td colspan="7" style="color:#ff6b6b;">Error: ${res.status}</td></tr>`;
         return;
       }
 
@@ -341,6 +502,7 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       initChart();
+      refreshLeaderboard();
       refresh();
       document.getElementById('refresh').addEventListener('click', refresh);
     });
