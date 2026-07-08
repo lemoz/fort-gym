@@ -226,6 +226,10 @@ def test_utility_action_progress_counts_accepted_safe_actions() -> None:
         {"type": "BUILD", "params": {"kind": "CarpenterWorkshop"}},
         {"accepted": True},
     )
+    still_build_progress = metrics.utility_action_progress(
+        {"type": "BUILD", "params": {"kind": "Still"}},
+        {"accepted": True},
+    )
     rejected_progress = metrics.utility_action_progress(
         {"type": "ORDER", "params": {"job": "bed", "quantity": 5}},
         {"accepted": False},
@@ -234,6 +238,12 @@ def test_utility_action_progress_counts_accepted_safe_actions() -> None:
     assert order_progress == {"utility_action_progress": 5}
     assert oversized_order_progress == {"utility_action_progress": 5}
     assert build_progress == {"utility_action_progress": 5}
+    # Still is an equally legal BUILD workshop kind (dfhack_backend's
+    # ALLOWED_WORKSHOPS, executor.py's kind-routing set, build_workshop.lua's
+    # SUBTYPES table all already treat CarpenterWorkshop/Still symmetrically)
+    # so it must earn the same instant utility credit, not score strictly
+    # worse than building a redundant second Carpenter's Workshop.
+    assert still_build_progress == {"utility_action_progress": 5}
     assert rejected_progress == {"utility_action_progress": 0}
 
 
