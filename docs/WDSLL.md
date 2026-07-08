@@ -682,8 +682,10 @@ gate. Each entry states what changed and the evidence that forced it.
   region3 (~$10) — separates policy strength from environment difficulty;
   (b) amended protocol: complete the usable-stocks pipeline + further
   GLM-5V attempts; (c) accept-and-document G6 as the open frontier and
-  proceed to the G7 primitives window. No attempt runs until the
-  operator chooses.
+  proceed to the G7 primitives window. **Operator selected (2026-07-08): a
+  hybrid of (a)+(b)** — one GPT-5.5-vision run and one corrected-instrument
+  GLM-5V run on region3, both under the standing G6 criteria, after the
+  usable-stocks pipeline completion (PR #59) deployed.
 
 ## Reporting format (every gate attempt)
 
