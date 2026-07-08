@@ -1637,7 +1637,7 @@ def test_encoder_surfaces_built_still_workshop_with_brew_hint() -> None:
         "Workshop id=2 Still at (88,96,177): construction COMPLETE "
         "(stage 3/3), queued_jobs=0" in text
     )
-    assert "ORDER job=brew can queue BrewDrink jobs to any built Still." in text
+    assert "ORDER job=brew can queue brewing jobs at any built Still." in text
 
 
 def test_encoder_echoes_still_workshop_of_kind_result_counts() -> None:

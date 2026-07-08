@@ -80,9 +80,9 @@ def test_governed_system_prompt_describes_still_and_brew_mechanic_only() -> None
     # Still rides the existing BUILD action type, brew rides ORDER -- no new
     # governed type for either.
     assert '"CarpenterWorkshop"|"Still"' in GOVERNED_SYSTEM_PROMPT
-    assert "BrewDrink orders need gatherable plants and empty barrels" in GOVERNED_SYSTEM_PROMPT
+    assert "brew orders need gatherable plants and empty barrels" in GOVERNED_SYSTEM_PROMPT
     assert "drink is what dwarves actually consume" in GOVERNED_SYSTEM_PROMPT
-    assert "brew (BrewDrink) needs a built Still" in GOVERNED_SYSTEM_PROMPT
+    assert "brew (the brewing reaction) needs a built Still" in GOVERNED_SYSTEM_PROMPT
     # no new governed action type was introduced for Still/brew
 
 def test_governed_system_prompt_describes_farm_plot_mechanic_only() -> None:
