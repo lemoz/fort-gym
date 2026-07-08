@@ -1733,6 +1733,55 @@ def test_encoder_surfaces_placed_furniture_buildings() -> None:
     assert "Placed furniture buildings: beds=2, doors=0, tables=1, chairs=0" in obs_text
 
 
+def test_encoder_surfaces_farm_plots_count() -> None:
+    state = {
+        "time": 100,
+        "population": 7,
+        "stocks": {},
+        "crew": {
+            "ok": True,
+            "farm_plots": 2,
+            "farm_plot_positions": [[90, 95, 177], [93, 95, 177]],
+        },
+    }
+
+    obs_text, _ = encode_observation(state)
+
+    assert "Farm plots built: 2 at (90,95),(93,95)" in obs_text
+
+
+def test_encoder_surfaces_zero_farm_plots() -> None:
+    state = {
+        "time": 100,
+        "population": 7,
+        "stocks": {},
+        "crew": {"ok": True, "farm_plots": 0, "farm_plot_positions": []},
+    }
+
+    obs_text, _ = encode_observation(state)
+
+    assert "Farm plots built: 0" in obs_text
+
+
+def test_encoder_echoes_farm_plot_result_counts() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 6, "stone": 0},
+        },
+        screen_text="main map",
+        last_action_result={
+            "accepted": True,
+            "result": {"before_farm_plots": 0, "after_farm_plots": 1, "building_id": 42},
+        },
+    )
+
+    assert "Last Action detail:" in text
+    assert "before_farm_plots=0" in text
+    assert "after_farm_plots=1" in text
+
+
 def test_encoder_surfaces_full_fort_block() -> None:
     state = {
         "time": 100,

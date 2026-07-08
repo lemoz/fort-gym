@@ -111,7 +111,7 @@ def test_build_workshop_passes_site_through_to_locality_hook(monkeypatch) -> Non
 
 
 def test_placement_hooks_enforce_fort_locality() -> None:
-    for hook_name in ("build_workshop.lua", "place_furniture.lua"):
+    for hook_name in ("build_workshop.lua", "place_furniture.lua", "build_farm_plot.lua"):
         hook_path = Path(__file__).resolve().parents[1] / "hook" / hook_name
         hook_text = hook_path.read_text(encoding="utf-8")
         assert "MAX_LOCALITY = 24" in hook_text
@@ -141,6 +141,91 @@ def test_build_workshop_hook_uses_existing_material_item() -> None:
     assert "find_nearest_building_material" in hook_text
     assert "items = { material_item }" in hook_text
     assert "no_building_material" in hook_text
+
+
+def test_build_farm_plot_hook_is_bounded_and_reports_counts() -> None:
+    hook_path = Path(__file__).resolve().parents[1] / "hook" / "build_farm_plot.lua"
+    hook_text = hook_path.read_text(encoding="utf-8")
+
+    assert "rect_too_large" in hook_text
+    assert "df.building_type.FarmPlot" in hook_text
+    assert "before_farm_plots" in hook_text
+    assert "after_farm_plots" in hook_text
+    # obvious per-tile placement problems reuse place_furniture's checks
+    assert "tile_occupied_by_building" in hook_text
+    assert "tile_hidden_unexplored" in hook_text
+    assert "tile_not_open_floor" in hook_text
+    assert "tile_placement_error" in hook_text
+
+
+def test_build_farm_plot_hook_checks_locality_at_all_four_corners() -> None:
+    # A single-corner near_fort check can pass while the opposite corner of
+    # an up-to-5x5 footprint sits past the 24-tile locality bound. Unlike
+    # build_workshop.lua/place_furniture.lua (single-tile placements, where
+    # one check is correct), build_farm_plot.lua's footprint is a rect, so
+    # it must check all four corners like build_construction.lua's per-tile
+    # near_fort loop.
+    hook_path = Path(__file__).resolve().parents[1] / "hook" / "build_farm_plot.lua"
+    hook_text = hook_path.read_text(encoding="utf-8")
+
+    assert "{ rx1, ry1 }" in hook_text
+    assert "{ rx1, ry2 }" in hook_text
+    assert "{ rx2, ry1 }" in hook_text
+    assert "{ rx2, ry2 }" in hook_text
+    assert "for _, corner in ipairs(corners) do" in hook_text
+
+
+def test_build_farm_plot_hook_requires_no_material_item() -> None:
+    hook_path = Path(__file__).resolve().parents[1] / "hook" / "build_farm_plot.lua"
+    hook_text = hook_path.read_text(encoding="utf-8")
+
+    # farm plots consume no material item, unlike build_workshop.lua's
+    # items = { material_item } -- the constructBuilding call omits `items`
+    assert "consumes no material item" in hook_text
+    assert "items = { material_item }" not in hook_text
+    assert "find_nearest_building_material" not in hook_text
+
+
+def test_build_farm_plot_wraps_bounded_lua_hook(monkeypatch) -> None:
+    captured: dict = {}
+
+    def fake_run_lua_file(path, *args, **kwargs):
+        captured["path"] = path
+        captured["args"] = args
+        return {"ok": True, "kind": "FarmPlot", "before_farm_plots": 0, "after_farm_plots": 1}
+
+    monkeypatch.setattr(dfhack_backend, "run_lua_file", fake_run_lua_file)
+
+    result = dfhack_backend.build_farm_plot(90, 95, 177, 92, 97)
+
+    assert result == {
+        "ok": True,
+        "kind": "FarmPlot",
+        "before_farm_plots": 0,
+        "after_farm_plots": 1,
+    }
+    assert captured["args"] == ("90", "95", "177", "92", "97")
+    assert Path(captured["path"]).name == "build_farm_plot.lua"
+
+
+def test_build_farm_plot_defaults_x2_y2_to_single_tile(monkeypatch) -> None:
+    captured: dict = {}
+
+    def fake_run_lua_file(path, *args, **kwargs):
+        captured["args"] = args
+        return {"ok": True}
+
+    monkeypatch.setattr(dfhack_backend, "run_lua_file", fake_run_lua_file)
+
+    dfhack_backend.build_farm_plot(90, 95, 177)
+
+    assert captured["args"] == ("90", "95", "177", "90", "95")
+
+
+def test_build_farm_plot_rejects_oversized_rect() -> None:
+    result = dfhack_backend.build_farm_plot(0, 0, 0, 6, 0)
+
+    assert result == {"ok": False, "error": "rect_too_large"}
 
 
 def test_order_make_hook_prefers_direct_workshop_jobs() -> None:
@@ -309,6 +394,16 @@ def test_job_metrics_is_read_only_and_reports_crew() -> None:
     assert "designation[dx][dy].dig ~=" in script
     assert "= df.tile_dig_designation.Default" not in script
     assert "block.tiletype[dx][dy] =" not in script
+
+
+def test_job_metrics_reports_farm_plots_count() -> None:
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua"
+    ).read_text(encoding="utf-8")
+
+    assert "out.farm_plots" in script
+    assert "out.farm_plot_positions" in script
+    assert "df.building_type.FarmPlot" in script
     assert "flags.designated = true" not in script
 
 

@@ -76,6 +76,16 @@ def test_governed_system_prompt_teaches_wall_construction() -> None:
     assert "x2" in GOVERNED_SYSTEM_PROMPT
 
 
+def test_governed_system_prompt_describes_farm_plot_mechanic_only() -> None:
+    # FarmPlot rides the existing BUILD action type (no new governed type)
+    assert '"CarpenterWorkshop"|"FarmPlot"' in GOVERNED_SYSTEM_PROMPT
+    assert "farming labor" in GOVERNED_SYSTEM_PROMPT
+    assert "brewable/cookable" in GOVERNED_SYSTEM_PROMPT
+    assert "consumes no material item" in GOVERNED_SYSTEM_PROMPT
+    # no new governed action type was introduced for FarmPlot
+    assert GOVERNED_ACTION_TYPES == ("DIG", "BUILD", "ORDER", "UNSUSPEND", "WAIT")
+
+
 def test_governed_action_types_include_unsuspend() -> None:
     assert GOVERNED_ACTION_TYPES == ("DIG", "BUILD", "ORDER", "UNSUSPEND", "WAIT")
     assert "UNSUSPEND" in _submit_action_tool()["function"]["parameters"]["properties"]["type"]["enum"]

@@ -888,6 +888,8 @@ def encode_observation(
                 "building_id",
                 "unsuspended",
                 "suspended_found",
+                "before_farm_plots",
+                "after_farm_plots",
                 "shrubs_designated",
                 "non_shrub_tiles",
             ):
@@ -1287,6 +1289,22 @@ def encode_observation(
                         "Furniture positions: " + "; ".join(position_parts)
                         + " — construction cannot be placed on occupied tiles."
                     )
+
+        farm_plots = _int_or_none(crew.get("farm_plots"))
+        if farm_plots is not None:
+            farm_plots_line = f"Farm plots built: {farm_plots}"
+            farm_plot_positions = crew.get("farm_plot_positions")
+            if isinstance(farm_plot_positions, list) and farm_plot_positions:
+                rendered = []
+                for coord in farm_plot_positions[:8]:
+                    if isinstance(coord, (list, tuple)) and len(coord) >= 2:
+                        cx = _int_or_none(coord[0])
+                        cy = _int_or_none(coord[1])
+                        if cx is not None and cy is not None:
+                            rendered.append(f"({cx},{cy})")
+                if rendered:
+                    farm_plots_line += " at " + ",".join(rendered)
+            status_lines.append(farm_plots_line)
 
         goods = crew.get("goods")
         if isinstance(goods, dict) and goods:

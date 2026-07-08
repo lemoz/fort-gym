@@ -358,6 +358,60 @@ def test_dfhack_build_floor_defaults_x2_y2_to_xy(monkeypatch) -> None:
     assert calls == [("Floor", 30, 40, 2, 30, 40)]
 
 
+def test_dfhack_build_farm_plot_routes_to_backend_wrapper_with_rect_corner(monkeypatch) -> None:
+    calls: list[tuple] = []
+
+    def fake_build_farm_plot(x1, y1, z, x2, y2):
+        calls.append((x1, y1, z, x2, y2))
+        return {"ok": True, "kind": "FarmPlot", "before_farm_plots": 0, "after_farm_plots": 1}
+
+    def fake_build_construction(*args, **kwargs):
+        raise AssertionError("FarmPlot must not route to build_construction")
+
+    def fake_place_furniture(*args, **kwargs):
+        raise AssertionError("FarmPlot must not route to place_furniture")
+
+    monkeypatch.setattr(
+        "fort_gym.bench.env.executor.safe_build_farm_plot", fake_build_farm_plot
+    )
+    monkeypatch.setattr(
+        "fort_gym.bench.env.executor.safe_build_construction", fake_build_construction
+    )
+    monkeypatch.setattr("fort_gym.bench.env.executor.safe_place_furniture", fake_place_furniture)
+
+    result = Executor(dfhack_client=_ConnectedDFHackClient()).apply(
+        {
+            "type": "BUILD",
+            "params": {"kind": "FarmPlot", "x": 90, "y": 95, "z": 177, "x2": 92, "y2": 97},
+        },
+        backend="dfhack",
+    )
+
+    assert result["accepted"] is True
+    assert calls == [(90, 95, 177, 92, 97)]
+    assert result["result"]["after_farm_plots"] == 1
+
+
+def test_dfhack_build_farm_plot_defaults_x2_y2_to_xy(monkeypatch) -> None:
+    calls: list[tuple] = []
+
+    def fake_build_farm_plot(x1, y1, z, x2, y2):
+        calls.append((x1, y1, z, x2, y2))
+        return {"ok": True, "kind": "FarmPlot"}
+
+    monkeypatch.setattr(
+        "fort_gym.bench.env.executor.safe_build_farm_plot", fake_build_farm_plot
+    )
+
+    result = Executor(dfhack_client=_ConnectedDFHackClient()).apply(
+        {"type": "BUILD", "params": {"kind": "FarmPlot", "x": 30, "y": 40, "z": 2}},
+        backend="dfhack",
+    )
+
+    assert result["accepted"] is True
+    assert calls == [(30, 40, 2, 30, 40)]
+
+
 def test_dfhack_build_wall_normalizes_explicit_null_coords(monkeypatch) -> None:
     calls: list[tuple] = []
 

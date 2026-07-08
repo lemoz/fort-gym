@@ -141,6 +141,10 @@ local FURNITURE_BUILDING_KEYS = {
 out.placed_furniture = { bed = 0, door = 0, table = 0, chair = 0 }
 out.placed_furniture_positions = { bed = {}, door = {}, table = {}, chair = {} }
 
+-- farm plots placed (G7 survival primitive: see build_farm_plot.lua)
+out.farm_plots = 0
+out.farm_plot_positions = {}
+
 -- workshops with construction stage and queued jobs
 for _, bld in ipairs(df.global.world.buildings.all) do
   local ok_type, bld_type = pcall(function() return bld:getType() end)
@@ -153,6 +157,14 @@ for _, bld in ipairs(df.global.world.buildings.all) do
           out.placed_furniture_positions[key],
           { bld.centerx, bld.centery, bld.z }
         )
+      end)
+    end
+  end
+  if ok_type and bld_type == df.building_type.FarmPlot then
+    out.farm_plots = out.farm_plots + 1
+    if #out.farm_plot_positions < 8 then
+      pcall(function()
+        table.insert(out.farm_plot_positions, { bld.centerx, bld.centery, bld.z })
       end)
     end
   end
