@@ -386,3 +386,18 @@ def test_fort_metrics_reports_nearby_tree_clusters() -> None:
     assert "nearby_trees" in script
     assert "local RADIUS = 40" in script
     assert "table.sort(list" in script
+
+
+def test_read_game_state_reports_usable_stock_counts() -> None:
+    """The build hooks can only consume unclaimed items; the state script
+    must report usable counts with the same filter (in_job / in_building /
+    construction / forbid / hidden all lock an item)."""
+    import inspect
+
+    from fort_gym.bench import dfhack_exec
+
+    source = inspect.getsource(dfhack_exec.read_game_state)
+    assert "wood_usable" in source
+    assert "stone_usable" in source
+    assert "item.flags.in_job" in source
+    assert "item.flags.in_building" in source

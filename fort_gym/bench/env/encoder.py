@@ -934,12 +934,22 @@ def encode_observation(
                     if direction:
                         status_lines.append(f"Cursor moved: {', '.join(direction)} tiles")
 
+    def _stock_with_usable(label: str, total_key: str, usable_key: str) -> str:
+        total = stocks.get(total_key, 0)
+        usable = stocks.get(usable_key)
+        if usable is None or usable == total:
+            return f"{label}: {total}"
+        # locked = claimed by queued jobs or already inside (pending)
+        # buildings/constructions — a new BUILD cannot consume those items
+        return f"{label}: {total} ({usable} usable, rest locked in jobs/buildings)"
+
     status_lines.extend([
         f"Time: tick {time_tick}",
         f"Population: {population} dwarves",
         (
             f"Food: {stocks.get('food', 0)}, Drink: {stocks.get('drink', 0)}, "
-            f"Wood: {stocks.get('wood', 0)}, Stone: {stocks.get('stone', 0)}"
+            f"{_stock_with_usable('Wood', 'wood', 'wood_usable')}, "
+            f"{_stock_with_usable('Stone', 'stone', 'stone_usable')}"
         ),
     ])
     if work:

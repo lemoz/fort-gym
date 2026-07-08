@@ -61,7 +61,9 @@ what turns it into a functional room. Installing furniture requires a finished i
 stock (see "Finished goods in play"); installed beds/doors/tables/chairs make rooms functional. \
 Wall and Floor kinds place construction segments: a single tile at (x, y, z), or a line up to 10 \
 tiles when optional x2/y2 are given, within 24 tiles of your fort. Each tile consumes one log, \
-boulder, or block from stock, and a dwarf builds it over time. Enclosed rooms — spaces bounded by \
+boulder, or block from stock — and each PENDING construction claims its material immediately, so \
+the stocks line's "usable" count is what further BUILDs can actually draw on (locked items free \
+up when their job completes or is removed). Enclosed rooms — spaces bounded by \
 walls, buildings, or doors — are what make bedrooms and production rooms count; the observation's \
 "Fort structure" line reports enclosed_spaces and functional_rooms.
 - ORDER: params {"job": <item>, "quantity": 1-5}. Queues production to any BUILT carpenter workshop \
