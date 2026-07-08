@@ -723,6 +723,10 @@ def _governed_gameplay_proof(
             "manager_recorded",
             "unsuspended",
             "suspended_found",
+            "before_farm_plots",
+            "after_farm_plots",
+            "shrubs_designated",
+            "non_shrub_tiles",
         )
         if key in result
     }
@@ -736,14 +740,19 @@ def _governed_gameplay_proof(
         int(result.get("after_workshops_of_kind") or 0)
         - int(result.get("before_workshops_of_kind") or 0),
     )
+    farm_plots_added = int(result.get("after_farm_plots") or 0) - int(
+        result.get("before_farm_plots") or 0
+    )
     created_jobs = result.get("created_job_ids")
     step_gameplay_progress = bool(
         int(tile_changes.get("changed_tile_count") or 0)
         or state_deltas
         or (isinstance(created_jobs, list) and created_jobs)
         or workshops_added > 0
+        or farm_plots_added > 0
         or int(result.get("newly_designated") or 0) > 0
         or int(result.get("unsuspended") or 0) > 0
+        or int(result.get("shrubs_designated") or 0) > 0
     )
     return {
         "ok": step_gameplay_progress,

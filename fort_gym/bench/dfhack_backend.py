@@ -23,7 +23,9 @@ MAX_RECT_W = 30
 MAX_RECT_H = 30
 MAX_SNAPSHOT_W = 64
 MAX_SNAPSHOT_H = 64
-VALID_KINDS: Iterable[str] = ("dig", "channel", "chop")
+MAX_FARM_PLOT_W = 5
+MAX_FARM_PLOT_H = 5
+VALID_KINDS: Iterable[str] = ("dig", "channel", "chop", "gather")
 DEFAULT_WORK_RECT = (50, 35, 0, 54, 39, 0)
 
 
@@ -159,6 +161,47 @@ def build_construction(
         return run_lua_file(
             _hook_path("build_construction.lua"),
             kind,
+            str(x1_val),
+            str(y1_val),
+            str(z_val),
+            str(x2_val),
+            str(y2_val),
+            timeout=10.0,
+        )
+    except (DFHackError, OSError) as exc:
+        return {"ok": False, "error": str(exc)}
+
+
+def build_farm_plot(
+    x1: int,
+    y1: int,
+    z: int,
+    x2: int | None = None,
+    y2: int | None = None,
+) -> Dict[str, object]:
+    """Place a bounded farm plot near the fort (no material item required).
+
+    Rect corner semantics like build_construction's Wall/Floor: a single
+    tile at (x1, y1, z) when x2/y2 are omitted, or a rectangle up to 5x5
+    when given. Plan-agnostic: the hook rejects placements farther than 24
+    tiles (Chebyshev) from every existing player building and citizen, same
+    as build_workshop/build_construction/place_furniture.
+    """
+
+    x1_val = int(x1)
+    y1_val = int(y1)
+    z_val = int(z)
+    x2_val = int(x2) if x2 is not None else x1_val
+    y2_val = int(y2) if y2 is not None else y1_val
+
+    width = abs(x2_val - x1_val) + 1
+    height = abs(y2_val - y1_val) + 1
+    if width > MAX_FARM_PLOT_W or height > MAX_FARM_PLOT_H:
+        return {"ok": False, "error": "rect_too_large"}
+
+    try:
+        return run_lua_file(
+            _hook_path("build_farm_plot.lua"),
             str(x1_val),
             str(y1_val),
             str(z_val),
@@ -564,10 +607,13 @@ __all__ = [
     "MAX_RECT_H",
     "MAX_SNAPSHOT_W",
     "MAX_SNAPSHOT_H",
+    "MAX_FARM_PLOT_W",
+    "MAX_FARM_PLOT_H",
     "queue_manager_order",
     "build_workshop",
     "place_furniture",
     "build_construction",
+    "build_farm_plot",
     "designate_rect",
     "unsuspend_jobs",
     "complete_dig_rect",

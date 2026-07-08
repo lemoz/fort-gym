@@ -8,6 +8,7 @@ from typing import Any, Dict, Optional
 from .actions import validate_action
 from .dfhack_client import DFHackClient, DFHackUnavailableError
 from ..dfhack_backend import build_construction as safe_build_construction
+from ..dfhack_backend import build_farm_plot as safe_build_farm_plot
 from ..dfhack_backend import build_workshop as safe_build_workshop
 from ..dfhack_backend import complete_dig_rect as safe_complete_dig_rect
 from ..dfhack_backend import designate_rect as safe_designate_rect
@@ -115,6 +116,7 @@ class Executor:
                 if kind not in {
                     "CarpenterWorkshop",
                     "Still",
+                    "FarmPlot",
                     "Bed",
                     "Door",
                     "Table",
@@ -126,7 +128,7 @@ class Executor:
                         "accepted": False,
                         "why": (
                             "Unsupported BUILD kind: expected CarpenterWorkshop, "
-                            "Still, furniture (Bed/Door/Table/Chair), or "
+                            "Still, FarmPlot, furniture (Bed/Door/Table/Chair), or "
                             "construction (Wall/Floor)"
                         ),
                     }
@@ -136,7 +138,7 @@ class Executor:
                     z = int(params.get("z", 0))
                 except (KeyError, TypeError, ValueError) as exc:
                     return {"accepted": False, "why": f"Invalid coordinates: {exc}"}
-                if kind in {"Wall", "Floor"}:
+                if kind in {"Wall", "Floor", "FarmPlot"}:
                     try:
                         raw_x2 = params.get("x2")
                         raw_y2 = params.get("y2")
@@ -144,7 +146,10 @@ class Executor:
                         y2 = y if raw_y2 is None else int(raw_y2)
                     except (TypeError, ValueError) as exc:
                         return {"accepted": False, "why": f"Invalid coordinates: {exc}"}
-                    result = safe_build_construction(kind, x, y, z, x2, y2)
+                    if kind == "FarmPlot":
+                        result = safe_build_farm_plot(x, y, z, x2, y2)
+                    else:
+                        result = safe_build_construction(kind, x, y, z, x2, y2)
                     return {
                         "accepted": bool(result.get("ok")),
                         "why": None if result.get("ok") else result.get("error"),

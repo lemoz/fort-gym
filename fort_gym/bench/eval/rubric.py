@@ -62,9 +62,15 @@ def _action_fingerprint(action: Dict[str, Any]) -> str:
         if isinstance(keys, list):
             return f"{action_type}:{','.join(str(key) for key in keys[:8])}"
     if action_type == "DIG":
-        return f"DIG:{params.get('area')}:{params.get('size')}"
+        kind = params.get("kind") or "dig"
+        return f"DIG:{kind}:{params.get('area')}:{params.get('size')}"
     if action_type == "BUILD":
-        return f"BUILD:{params.get('kind')}:{params.get('x')}:{params.get('y')}:{params.get('z')}"
+        fingerprint = f"BUILD:{params.get('kind')}:{params.get('x')}:{params.get('y')}:{params.get('z')}"
+        x2 = params.get("x2")
+        y2 = params.get("y2")
+        if x2 is not None or y2 is not None:
+            fingerprint = f"{fingerprint}:{x2}:{y2}"
+        return fingerprint
     if action_type == "ORDER":
         return f"ORDER:{params.get('job')}:{params.get('quantity')}"
     if action_type == "UNSUSPEND":
@@ -112,6 +118,9 @@ _QUEUE_ONLY_EVIDENCE_KEYS = {
     "after_carpenter_workshops",
     "before_workshops_of_kind",
     "after_workshops_of_kind",
+    "before_farm_plots",
+    "after_farm_plots",
+    "non_shrub_tiles",
 }
 
 
@@ -138,13 +147,18 @@ def _proof_shows_world_change(proof: Dict[str, Any]) -> bool:
         return True
     if int(evidence.get("unsuspended") or 0) > 0:
         return True
+    if int(evidence.get("shrubs_designated") or 0) > 0:
+        return True
     before_ws = int(evidence.get("before_carpenter_workshops") or 0)
     after_ws = int(evidence.get("after_carpenter_workshops") or 0)
     before_ws_kind = int(evidence.get("before_workshops_of_kind") or 0)
     after_ws_kind = int(evidence.get("after_workshops_of_kind") or 0)
+    before_fp = int(evidence.get("before_farm_plots") or 0)
+    after_fp = int(evidence.get("after_farm_plots") or 0)
     if (
         after_ws > before_ws
         or after_ws_kind > before_ws_kind
+        or after_fp > before_fp
         or evidence.get("building_id") is not None
     ):
         return True

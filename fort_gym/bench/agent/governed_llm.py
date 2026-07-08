@@ -42,15 +42,19 @@ production economy, breadth, plan coherence, and non-repetition; and long-horizo
 building MULTIPLE enclosed functional rooms while keeping every dwarf alive.
 
 Legal actions (the only five types accepted):
-- DIG: params {"area": [x, y, z], "size": [w, h, 1], "kind": "dig"|"channel"|"chop"}. \
-kind dig/channel designates the rectangle (max 30x30, one z-level); only WALL tiles can be dug — \
-DF silently drops designations on floor/shrub/other tiles, and miners must then reach the walls \
-and work over time. kind "chop" designates the tree trunks inside the rect for felling (the \
-observation's Fort-area tiles line reports tree_trunk counts, and the Nearby-trees line reports \
-tree clusters up to 40 tiles from the citizens, possibly beyond the minimap); a dwarf with the \
-woodcutting labor fells them over time and the logs appear in the Wood stock. Carpentry \
-production consumes wood — without logs, workshop orders cancel.
-- BUILD: params {"kind": "CarpenterWorkshop"|"Still"|"Bed"|"Door"|"Table"|"Chair"|"Wall"|"Floor", \
+- DIG: params {"area": [x, y, z], "size": [w, h, 1], "kind": "dig"|"channel"|"chop"|"gather"}. \
+kind dig/channel designates the rectangle (max 30x30, one z-level); this harness only designates \
+WALL tiles for dig/channel — floor/shrub/other tiles in the rect are left untouched (use \
+kind=gather for shrubs), and miners must then reach the walls and work over time. kind "chop" \
+designates the tree trunks inside the rect for felling (the observation's Fort-area tiles line \
+reports tree_trunk counts, and the Nearby-trees line reports tree clusters up to 40 tiles from \
+the citizens, possibly beyond the minimap); a dwarf with the woodcutting labor fells them over \
+time and the logs appear in the Wood stock. Carpentry production consumes wood — without logs, \
+workshop orders cancel. kind "gather" designates shrub tiles inside the rect for plant gathering \
+(only SHRUB-shaped tiles are marked; other tiles in the rect are left untouched and reported as \
+non_shrub_tiles); a dwarf with the herbalism labor collects the plant over time and it appears in \
+the plant stock — gathered plants are brewable.
+- BUILD: params {"kind": "CarpenterWorkshop"|"Still"|"FarmPlot"|"Bed"|"Door"|"Table"|"Chair"|"Wall"|"Floor", \
 "x": X, "y": Y, "z": Z, "x2": X2, "y2": Y2 (optional)}. \
 CarpenterWorkshop places a 3x3 workshop on open floor within 24 tiles of your fort — near any \
 existing building or citizen (the work metrics include a `carpenter_build_site` when a candidate \
@@ -58,6 +62,11 @@ spot is visible); a dwarf must then construct it. \
 Still places a 3x3 workshop the same way; a dwarf must then construct it. A built Still brews \
 plants into drink via ORDER job "brew" — BrewDrink orders need gatherable plants and empty barrels \
 in stock; drink is what dwarves actually consume. \
+FarmPlot places a farm plot on open ground: a single tile at (x, y, z), or a rectangle up to 5x5 \
+when optional x2/y2 are given, within 24 tiles of your fort; unlike a workshop it consumes no \
+material item. Dwarves with the farming labor plant seasonal crops on it IF seeds are available \
+(the embark carries plump helmet spawn); the harvested crops become brewable/cookable plants. The \
+observation's crew section reports a farm_plots count. \
 Furniture kinds install an already-produced item of that type as a 1x1 building, anywhere within \
 24 tiles of your fort — a dwarf hauls and installs it over time; furnishing an enclosed space is \
 what turns it into a functional room. Installing furniture requires a finished item in \

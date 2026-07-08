@@ -138,6 +138,23 @@ def test_utility_progress_delta_counts_orders_and_usable_workshops() -> None:
     }
 
 
+def test_utility_progress_delta_pays_brewed_drink_like_other_goods() -> None:
+    """Drink is orderable (operator call 2026-07-08): brew output pays per
+    stack, demand-capped at population like every other good type."""
+    delta = metrics.utility_progress_delta(
+        {},
+        {},
+        current_goods={"drink": 9},
+        baseline_goods={"drink": 2},
+        population=5,
+    )
+
+    # 7 new drink stacks: 5 at full rate + 2 at 0.2x surplus = 5.4
+    assert delta["produced_goods_delta"] == 7
+    assert delta["demand_capped_production"] == 5.4
+    assert delta["utility_progress"] == 5.4
+
+
 def test_production_progress_delta_counts_usable_workshops() -> None:
     baseline = {"carpenter_workshops_planned": 0, "carpenter_workshops_usable": 0}
     current = {"carpenter_workshops_planned": 1, "carpenter_workshops_usable": 1}

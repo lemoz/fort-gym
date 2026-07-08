@@ -162,7 +162,9 @@ def ui_work_progress_delta(
     }
 
 
-ORDERABLE_GOODS = ("bed", "door", "table", "chair", "barrel", "bin")
+# drink added 2026-07-08 (operator call): brew output pays like other goods,
+# demand-capped; DF counts drink as stacks, so one brew job = one item delta
+ORDERABLE_GOODS = ("bed", "door", "table", "chair", "barrel", "bin", "drink")
 
 
 def utility_progress_delta(

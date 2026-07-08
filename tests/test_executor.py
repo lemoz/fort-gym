@@ -195,6 +195,30 @@ def test_dfhack_dig_chop_kind_routes_to_chop_and_skips_completion(monkeypatch) -
     assert calls == [("chop", 50, 35, 0, 52, 37, 0)]
 
 
+def test_dfhack_dig_gather_kind_routes_to_gather_and_skips_completion(monkeypatch) -> None:
+    calls: list[tuple] = []
+
+    def fake_designate_rect(kind: str, x1: int, y1: int, z1: int, x2: int, y2: int, z2: int):
+        calls.append((kind, x1, y1, z1, x2, y2, z2))
+        return {"ok": True, "kind": kind, "shrubs_designated": 3}
+
+    def fake_complete_dig_rect(*args):
+        raise AssertionError("gather must never trigger dig completion")
+
+    monkeypatch.setenv("FORT_GYM_DFHACK_COMPLETE_DIG", "1")
+    monkeypatch.setattr("fort_gym.bench.env.executor.safe_designate_rect", fake_designate_rect)
+    monkeypatch.setattr("fort_gym.bench.env.executor.safe_complete_dig_rect", fake_complete_dig_rect)
+
+    result = Executor(dfhack_client=_ConnectedDFHackClient()).apply(
+        {"type": "DIG", "params": {"area": [50, 35, 0], "size": [3, 3, 1], "kind": "gather"}},
+        backend="dfhack",
+    )
+
+    assert result["accepted"] is True
+    assert calls == [("gather", 50, 35, 0, 52, 37, 0)]
+    assert result["result"]["shrubs_designated"] == 3
+
+
 def test_dfhack_unsuspend_routes_to_backend_wrapper_with_plain_args(monkeypatch) -> None:
     calls: list[tuple] = []
 
@@ -288,6 +312,15 @@ def test_parse_action_defaults_dig_kind_to_dig() -> None:
     )
     assert chop["params"]["kind"] == "chop"
 
+    gather = parse_action(
+        {
+            "type": "DIG",
+            "params": {"area": [50, 35, 0], "size": [3, 3, 1], "kind": "gather"},
+            "intent": "gather shrubs",
+        }
+    )
+    assert gather["params"]["kind"] == "gather"
+
 
 def test_dfhack_build_furniture_routes_to_place_furniture(monkeypatch) -> None:
     calls: list[tuple] = []
@@ -371,6 +404,60 @@ def test_dfhack_build_floor_defaults_x2_y2_to_xy(monkeypatch) -> None:
 
     assert result["accepted"] is True
     assert calls == [("Floor", 30, 40, 2, 30, 40)]
+
+
+def test_dfhack_build_farm_plot_routes_to_backend_wrapper_with_rect_corner(monkeypatch) -> None:
+    calls: list[tuple] = []
+
+    def fake_build_farm_plot(x1, y1, z, x2, y2):
+        calls.append((x1, y1, z, x2, y2))
+        return {"ok": True, "kind": "FarmPlot", "before_farm_plots": 0, "after_farm_plots": 1}
+
+    def fake_build_construction(*args, **kwargs):
+        raise AssertionError("FarmPlot must not route to build_construction")
+
+    def fake_place_furniture(*args, **kwargs):
+        raise AssertionError("FarmPlot must not route to place_furniture")
+
+    monkeypatch.setattr(
+        "fort_gym.bench.env.executor.safe_build_farm_plot", fake_build_farm_plot
+    )
+    monkeypatch.setattr(
+        "fort_gym.bench.env.executor.safe_build_construction", fake_build_construction
+    )
+    monkeypatch.setattr("fort_gym.bench.env.executor.safe_place_furniture", fake_place_furniture)
+
+    result = Executor(dfhack_client=_ConnectedDFHackClient()).apply(
+        {
+            "type": "BUILD",
+            "params": {"kind": "FarmPlot", "x": 90, "y": 95, "z": 177, "x2": 92, "y2": 97},
+        },
+        backend="dfhack",
+    )
+
+    assert result["accepted"] is True
+    assert calls == [(90, 95, 177, 92, 97)]
+    assert result["result"]["after_farm_plots"] == 1
+
+
+def test_dfhack_build_farm_plot_defaults_x2_y2_to_xy(monkeypatch) -> None:
+    calls: list[tuple] = []
+
+    def fake_build_farm_plot(x1, y1, z, x2, y2):
+        calls.append((x1, y1, z, x2, y2))
+        return {"ok": True, "kind": "FarmPlot"}
+
+    monkeypatch.setattr(
+        "fort_gym.bench.env.executor.safe_build_farm_plot", fake_build_farm_plot
+    )
+
+    result = Executor(dfhack_client=_ConnectedDFHackClient()).apply(
+        {"type": "BUILD", "params": {"kind": "FarmPlot", "x": 30, "y": 40, "z": 2}},
+        backend="dfhack",
+    )
+
+    assert result["accepted"] is True
+    assert calls == [(30, 40, 2, 30, 40)]
 
 
 def test_dfhack_build_wall_normalizes_explicit_null_coords(monkeypatch) -> None:

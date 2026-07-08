@@ -116,7 +116,7 @@ while link do
 end
 
 -- finished goods and logs currently in play (read-only counts)
-local GOODS_ITEM_TYPES = { 'BED', 'DOOR', 'TABLE', 'CHAIR', 'BARREL', 'BIN', 'WOOD' }
+local GOODS_ITEM_TYPES = { 'BED', 'DOOR', 'TABLE', 'CHAIR', 'BARREL', 'BIN', 'WOOD', 'DRINK' }
 do
   local counts = {}
   for _, item in ipairs(df.global.world.items.other.IN_PLAY) do
@@ -141,6 +141,10 @@ local FURNITURE_BUILDING_KEYS = {
 out.placed_furniture = { bed = 0, door = 0, table = 0, chair = 0 }
 out.placed_furniture_positions = { bed = {}, door = {}, table = {}, chair = {} }
 
+-- farm plots placed (G7 survival primitive: see build_farm_plot.lua)
+out.farm_plots = 0
+out.farm_plot_positions = {}
+
 -- workshops with construction stage and queued jobs
 for _, bld in ipairs(df.global.world.buildings.all) do
   local ok_type, bld_type = pcall(function() return bld:getType() end)
@@ -153,6 +157,14 @@ for _, bld in ipairs(df.global.world.buildings.all) do
           out.placed_furniture_positions[key],
           { bld.centerx, bld.centery, bld.z }
         )
+      end)
+    end
+  end
+  if ok_type and bld_type == df.building_type.FarmPlot then
+    out.farm_plots = out.farm_plots + 1
+    if #out.farm_plot_positions < 8 then
+      pcall(function()
+        table.insert(out.farm_plot_positions, { bld.centerx, bld.centery, bld.z })
       end)
     end
   end
@@ -191,7 +203,7 @@ if x1 and y1 and z1 and x2 and y2 and z2 and z1 == z2 then
   local rx1, ry1, rz = math.min(x1, x2), math.min(y1, y2), z1
   local rx2, ry2 = math.max(x1, x2), math.max(y1, y2)
   if (rx2 - rx1 + 1) <= MAX_RECT_W and (ry2 - ry1 + 1) <= MAX_RECT_H then
-    local counts = { wall = 0, tree = 0, floor = 0, shrub_or_other = 0, designated = 0 }
+    local counts = { wall = 0, tree = 0, floor = 0, shrub = 0, shrub_or_other = 0, designated = 0 }
     local shapes = df.tiletype.attrs
     for x = rx1, rx2 do
       for y = ry1, ry2 do
@@ -210,6 +222,9 @@ if x1 and y1 and z1 and x2 and y2 and z2 and z1 == z2 then
             counts.wall = counts.wall + 1
           elseif shape_name == 'FLOOR' then
             counts.floor = counts.floor + 1
+          elseif shape_name == 'SHRUB' then
+            counts.shrub = counts.shrub + 1
+            counts.shrub_or_other = counts.shrub_or_other + 1
           else
             counts.shrub_or_other = counts.shrub_or_other + 1
           end
@@ -227,6 +242,7 @@ if x1 and y1 and z1 and x2 and y2 and z2 and z1 == z2 then
       wall = counts.wall,
       tree = counts.tree,
       floor = counts.floor,
+      shrub = counts.shrub,
       shrub_or_other = counts.shrub_or_other,
       designated = counts.designated,
     }

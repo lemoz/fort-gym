@@ -1116,6 +1116,43 @@ def test_governed_gameplay_proof_rejects_noop_redesignation() -> None:
     assert proof["score_provenance"] == "dfhack_governed_observed_state"
 
 
+def test_governed_gameplay_proof_rejects_noop_gather_redesignation() -> None:
+    proof = _governed_gameplay_proof(
+        **_governed_proof_kwargs(
+            action={
+                "type": "DIG",
+                "params": {"area": [50, 35, 0], "size": [5, 5, 1], "kind": "gather"},
+                "advance_ticks": 1000,
+            },
+            execute_result={
+                "accepted": True,
+                "result": {"shrubs_designated": 0, "already_designated": 9, "non_shrub_tiles": 16},
+            },
+        )
+    )
+    assert proof["ok"] is False
+    assert proof["gameplay_progress_eligible"] is False
+    assert proof["helper_evidence"]["already_designated"] == 9
+
+
+def test_governed_gameplay_proof_accepts_new_gather_designations() -> None:
+    proof = _governed_gameplay_proof(
+        **_governed_proof_kwargs(
+            action={
+                "type": "DIG",
+                "params": {"area": [50, 35, 0], "size": [5, 5, 1], "kind": "gather"},
+                "advance_ticks": 1000,
+            },
+            execute_result={
+                "accepted": True,
+                "result": {"shrubs_designated": 4, "already_designated": 0, "non_shrub_tiles": 21},
+            },
+        )
+    )
+    assert proof["ok"] is True
+    assert proof["helper_evidence"]["shrubs_designated"] == 4
+
+
 def test_governed_gameplay_proof_accepts_new_designations_and_jobs() -> None:
     proof = _governed_gameplay_proof(
         **_governed_proof_kwargs(
@@ -1143,6 +1180,33 @@ def test_governed_gameplay_proof_accepts_new_designations_and_jobs() -> None:
         )
     )
     assert proof["ok"] is True
+
+
+def test_governed_gameplay_proof_accepts_new_farm_plot() -> None:
+    proof = _governed_gameplay_proof(
+        **_governed_proof_kwargs(
+            action={"type": "BUILD", "params": {"kind": "FarmPlot", "x": 90, "y": 95, "z": 177}, "advance_ticks": 1000},
+            execute_result={
+                "accepted": True,
+                "result": {"before_farm_plots": 0, "after_farm_plots": 1, "building_id": 42},
+            },
+        )
+    )
+    assert proof["ok"] is True
+    assert proof["helper_evidence"]["after_farm_plots"] == 1
+
+
+def test_governed_gameplay_proof_rejects_failed_farm_plot_placement() -> None:
+    proof = _governed_gameplay_proof(
+        **_governed_proof_kwargs(
+            action={"type": "BUILD", "params": {"kind": "FarmPlot", "x": 90, "y": 95, "z": 177}, "advance_ticks": 1000},
+            execute_result={
+                "accepted": False,
+                "result": {"error": "tile_not_placeable"},
+            },
+        )
+    )
+    assert proof["ok"] is False
 
 
 def test_governed_gameplay_proof_accepts_new_still_workshop() -> None:

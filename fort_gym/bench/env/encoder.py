@@ -890,6 +890,10 @@ def encode_observation(
                 "suspended_found",
                 "before_workshops_of_kind",
                 "after_workshops_of_kind",
+                "before_farm_plots",
+                "after_farm_plots",
+                "shrubs_designated",
+                "non_shrub_tiles",
             ):
                 if key not in action_result:
                     continue
@@ -1292,6 +1296,22 @@ def encode_observation(
                         + " — construction cannot be placed on occupied tiles."
                     )
 
+        farm_plots = _int_or_none(crew.get("farm_plots"))
+        if farm_plots is not None:
+            farm_plots_line = f"Farm plots built: {farm_plots}"
+            farm_plot_positions = crew.get("farm_plot_positions")
+            if isinstance(farm_plot_positions, list) and farm_plot_positions:
+                rendered = []
+                for coord in farm_plot_positions[:8]:
+                    if isinstance(coord, (list, tuple)) and len(coord) >= 2:
+                        cx = _int_or_none(coord[0])
+                        cy = _int_or_none(coord[1])
+                        if cx is not None and cy is not None:
+                            rendered.append(f"({cx},{cy})")
+                if rendered:
+                    farm_plots_line += " at " + ",".join(rendered)
+            status_lines.append(farm_plots_line)
+
         goods = crew.get("goods")
         if isinstance(goods, dict) and goods:
             goods_parts = []
@@ -1310,6 +1330,7 @@ def encode_observation(
             wall = _int_or_none(rect_tiles.get("wall"))
             tree = _int_or_none(rect_tiles.get("tree"))
             floor = _int_or_none(rect_tiles.get("floor"))
+            shrub = _int_or_none(rect_tiles.get("shrub"))
             shrub_or_other = _int_or_none(rect_tiles.get("shrub_or_other"))
             designated = _int_or_none(rect_tiles.get("designated"))
             if all(
@@ -1321,11 +1342,16 @@ def encode_observation(
                     if tree is not None
                     else ""
                 )
+                if shrub is not None:
+                    other = shrub_or_other - shrub
+                    shrub_part = f"shrubs={shrub} (gatherable with DIG kind=gather), other={other}"
+                else:
+                    shrub_part = f"shrub/other={shrub_or_other}"
                 status_lines.append(
                     f"Fort-area tiles: wall={wall} (diggable), {tree_part}"
                     f"floor={floor}, "
-                    f"shrub/other={shrub_or_other} (not diggable — DIG designations "
-                    "on non-wall tiles are silently dropped by DF), "
+                    f"{shrub_part} (this harness only designates WALL tiles for "
+                    "dig/channel; other tiles in the rect are left untouched), "
                     f"designated={designated}"
                 )
 
