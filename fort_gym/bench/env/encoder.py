@@ -894,6 +894,10 @@ def encode_observation(
                 "after_farm_plots",
                 "shrubs_designated",
                 "non_shrub_tiles",
+                "seasons_changed",
+                "seeds_on_hand",
+                "before_plant_id",
+                "after_plant_id",
             ):
                 if key not in action_result:
                     continue
@@ -1311,6 +1315,66 @@ def encode_observation(
                 if rendered:
                     farm_plots_line += " at " + ",".join(rendered)
             status_lines.append(farm_plots_line)
+
+        farm_plot_details = crew.get("farm_plot_details")
+        if isinstance(farm_plot_details, list) and farm_plot_details:
+            season_labels = ("spring", "summer", "autumn", "winter")
+            for detail in farm_plot_details[:8]:
+                if not isinstance(detail, dict):
+                    continue
+                plot_id = _int_or_none(detail.get("id"))
+                if plot_id is None:
+                    continue
+                rect = detail.get("rect")
+                loc = ""
+                if isinstance(rect, (list, tuple)) and len(rect) >= 5:
+                    coords = [_int_or_none(v) for v in rect[:5]]
+                    if all(v is not None for v in coords):
+                        x1, y1, x2, y2, zz = coords
+                        loc = f" ({x1},{y1}..{x2},{y2} z{zz}"
+                        if detail.get("built"):
+                            loc += ", built)"
+                        else:
+                            stage = _int_or_none(detail.get("stage")) or 0
+                            max_stage = _int_or_none(detail.get("max_stage")) or 0
+                            loc += f", stage {stage}/{max_stage})"
+                crops = detail.get("crops")
+                crop_parts = []
+                if isinstance(crops, list):
+                    for idx, label in enumerate(season_labels):
+                        value = crops[idx] if idx < len(crops) else None
+                        token = value if isinstance(value, str) and value else "-"
+                        crop_parts.append(f"{label}={token}")
+                line = f"Farm plot #{plot_id}{loc}"
+                if crop_parts:
+                    line += " crops " + " ".join(crop_parts)
+                status_lines.append(line)
+
+        seeds = crew.get("seeds")
+        if isinstance(seeds, list) and seeds:
+            seed_parts = []
+            for entry in seeds[:12]:
+                if not isinstance(entry, dict):
+                    continue
+                token = entry.get("token")
+                count = _int_or_none(entry.get("count"))
+                if not isinstance(token, str) or not token or count is None:
+                    continue
+                where = "surface" if entry.get("surface") else "subterranean"
+                seasons = entry.get("seasons")
+                if isinstance(seasons, list) and seasons:
+                    season_str = "all" if len(seasons) >= 4 else "/".join(
+                        str(s) for s in seasons
+                    )
+                else:
+                    season_str = "none"
+                seed_parts.append(f"{token} x{count} ({where}, {season_str})")
+            if seed_parts:
+                status_lines.append("Seeds on hand: " + ", ".join(seed_parts))
+
+        current_season = crew.get("current_season")
+        if isinstance(current_season, str) and current_season:
+            status_lines.append(f"Season: {current_season}")
 
         goods = crew.get("goods")
         if isinstance(goods, dict) and goods:

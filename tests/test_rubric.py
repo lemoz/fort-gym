@@ -47,6 +47,27 @@ def test_build_fingerprint_stable_without_x2_y2() -> None:
     assert _action_fingerprint(action) == "BUILD:Wall:5:5:1"
 
 
+def test_farm_fingerprint_distinguishes_target_crop_and_seasons() -> None:
+    # Distinct plot, crop, or season set => distinct repetition buckets.
+    base = {"type": "FARM", "params": {"building_id": 34, "crop": "RADISH", "seasons": ["summer"]}}
+    other_plot = {"type": "FARM", "params": {"building_id": 35, "crop": "RADISH", "seasons": ["summer"]}}
+    other_crop = {"type": "FARM", "params": {"building_id": 34, "crop": "POTATO", "seasons": ["summer"]}}
+    other_seasons = {"type": "FARM", "params": {"building_id": 34, "crop": "RADISH", "seasons": ["spring"]}}
+    fingerprints = {
+        _action_fingerprint(base),
+        _action_fingerprint(other_plot),
+        _action_fingerprint(other_crop),
+        _action_fingerprint(other_seasons),
+    }
+    assert len(fingerprints) == 4
+
+
+def test_farm_fingerprint_is_season_order_invariant() -> None:
+    a = {"type": "FARM", "params": {"building_id": 34, "crop": "RADISH", "seasons": ["summer", "spring"]}}
+    b = {"type": "FARM", "params": {"building_id": 34, "crop": "RADISH", "seasons": ["spring", "summer"]}}
+    assert _action_fingerprint(a) == _action_fingerprint(b)
+
+
 def test_rubric_does_not_flag_repetition_across_distinct_dig_kinds() -> None:
     # A no-op dig/gather/channel alternation at the same rect must be treated
     # as three distinct actions (per the dimension's own "repeated identical

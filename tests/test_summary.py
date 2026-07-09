@@ -648,3 +648,37 @@ def test_proof_shows_world_change_recognizes_gather_designations() -> None:
         },
     }
     assert _proof_shows_world_change(noop_gather) is False
+
+
+def test_proof_shows_world_change_recognizes_farm_crop_flip() -> None:
+    """Setting a farm plot's crop that actually flips a season slot is world
+    change (exempt from the repetition tally); re-setting a slot to the crop
+    it already holds (seasons_changed=0) is not, even though the informational
+    evidence keys (crop token, seasons_set, seeds_on_hand) are present."""
+    from fort_gym.bench.eval.rubric import _proof_shows_world_change
+
+    real_farm = {
+        "changed_tile_count": 0,
+        "helper_evidence": {
+            "farm_building_id": 34,
+            "crop": "RADISH",
+            "seasons_set": ["spring", "summer"],
+            "seasons_skipped": [],
+            "seasons_changed": 2,
+            "seeds_on_hand": 1,
+        },
+    }
+    assert _proof_shows_world_change(real_farm) is True
+
+    noop_farm = {
+        "changed_tile_count": 0,
+        "helper_evidence": {
+            "farm_building_id": 34,
+            "crop": "RADISH",
+            "seasons_set": ["spring", "summer"],
+            "seasons_skipped": [],
+            "seasons_changed": 0,
+            "seeds_on_hand": 1,
+        },
+    }
+    assert _proof_shows_world_change(noop_farm) is False

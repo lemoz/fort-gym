@@ -26,7 +26,7 @@ from .base import Agent, register_agent
 from .memory import MemoryManager
 from .minimap_render import minimap_data_url
 
-GOVERNED_ACTION_TYPES = ("DIG", "BUILD", "ORDER", "UNSUSPEND", "WAIT")
+GOVERNED_ACTION_TYPES = ("DIG", "BUILD", "ORDER", "UNSUSPEND", "FARM", "WAIT")
 DEFAULT_ADVANCE_TICKS = 1000
 
 _MEMORY_PATH_ENV_VAR = "FORT_GYM_GOVERNED_MEMORY_PATH"
@@ -41,7 +41,7 @@ rooms such as bedrooms and production rooms, fully bounded by walls, buildings, 
 production economy, breadth, plan coherence, and non-repetition; and long-horizon goals that value \
 building MULTIPLE enclosed functional rooms while keeping every dwarf alive.
 
-Legal actions (the only five types accepted):
+Legal actions (the only six types accepted):
 - DIG: params {"area": [x, y, z], "size": [w, h, 1], "kind": "dig"|"channel"|"chop"|"gather"}. \
 kind dig/channel designates the rectangle (max 30x30, one z-level); this harness only designates \
 WALL tiles for dig/channel — floor/shrub/other tiles in the rect are left untouched (use \
@@ -89,6 +89,18 @@ when a dwarf cannot currently path to or reach the job site or the placement is 
 observability reports suspended job counts and their positions so you can target the rect precisely. \
 This does not complete the job or move any dwarf — it only re-arms the job so a dwarf will \
 reattempt it as the simulation continues to run.
+- FARM: params {"building_id": <id>, "crop": "<PLANT_TOKEN>"|"clear", "seasons": ["spring","summer","autumn","winter"]}. \
+Sets which crop a farm plot grows in each season — the same choice the q-menu crop picker writes. \
+A farm plot has four independent season slots (spring, summer, autumn, winter); each holds one \
+crop or nothing. crop is a plant raw token (the observation's "Seeds on hand" line lists the \
+tokens you hold seeds for, e.g. RADISH); "clear" empties the selected seasons. seasons is optional \
+— omit it to set all four at once. Engine facts: a crop only grows in the seasons its raw allows, \
+so a requested season the crop lacks is skipped (season_not_growable); a subterranean crop only \
+grows on an underground plot and a surface crop only on an outside plot (crop_not_growable_here). \
+Setting a crop does not plant it — a dwarf with the farming labor plants a matching seed from \
+stock over real time, and only if a seed exists (seeds are consumed by planting; growth then takes \
+further time before harvest). The observation reports each plot's per-season crop tokens, your \
+seeds on hand, and the current season. Setting a slot to a crop it already holds changes nothing.
 - WAIT: params {}. Issues nothing and lets the simulation run.
 
 Every action must include "advance_ticks" (how many game ticks to run after the command, up to \

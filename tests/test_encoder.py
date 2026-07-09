@@ -1569,6 +1569,66 @@ def test_encoder_surfaces_full_crew_block() -> None:
     )
 
 
+def test_encoder_renders_farm_crops_seeds_and_season() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 6, "stone": 0},
+            "crew": {
+                "ok": True,
+                "farm_plots": 1,
+                "farm_plot_details": [
+                    {
+                        "id": 34,
+                        "rect": [77, 91, 78, 92, 161],
+                        "stage": 0,
+                        "max_stage": 0,
+                        "built": True,
+                        "crops": [False, "RADISH", False, False],
+                    }
+                ],
+                "seeds": [
+                    {"token": "RADISH", "count": 1, "surface": True, "seasons": ["sp", "su", "au", "wi"]},
+                    {"token": "MUSHROOM_HELMET_PLUMP", "count": 11, "surface": False, "seasons": ["sp", "su", "au", "wi"]},
+                ],
+                "current_season": "summer",
+            },
+        },
+        screen_text="main map",
+    )
+
+    assert (
+        "Farm plot #34 (77,91..78,92 z161, built) crops "
+        "spring=- summer=RADISH autumn=- winter=-" in text
+    )
+    assert (
+        "Seeds on hand: RADISH x1 (surface, all), "
+        "MUSHROOM_HELMET_PLUMP x11 (subterranean, all)" in text
+    )
+    assert "Season: summer" in text
+
+
+def test_encoder_renders_partial_season_seed_list() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 6, "stone": 0},
+            "crew": {
+                "ok": True,
+                "seeds": [
+                    {"token": "RADISH", "count": 2, "surface": True, "seasons": ["sp", "su"]},
+                ],
+                "current_season": "spring",
+            },
+        },
+        screen_text="main map",
+    )
+
+    assert "Seeds on hand: RADISH x2 (surface, sp/su)" in text
+
+
 def test_encoder_reports_true_shrub_count_separately_from_other_tiles() -> None:
     text, _ = encode_observation(
         {

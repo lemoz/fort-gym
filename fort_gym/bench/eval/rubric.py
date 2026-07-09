@@ -75,6 +75,10 @@ def _action_fingerprint(action: Dict[str, Any]) -> str:
         return f"ORDER:{params.get('job')}:{params.get('quantity')}"
     if action_type == "UNSUSPEND":
         return f"UNSUSPEND:{params.get('area')}:{params.get('size')}"
+    if action_type == "FARM":
+        seasons = params.get("seasons")
+        seasons_key = sorted(seasons) if isinstance(seasons, list) else seasons
+        return f"FARM:{params.get('building_id')}:{params.get('crop')}:{seasons_key}"
     return action_type
 
 
@@ -121,6 +125,15 @@ _QUEUE_ONLY_EVIDENCE_KEYS = {
     "before_farm_plots",
     "after_farm_plots",
     "non_shrub_tiles",
+    # FARM crop-selection informational evidence: world change is signalled
+    # only by seasons_changed (a plant_id slot actually flipped). These keys
+    # are present on every FARM step including a no-op re-set, so their bare
+    # presence must not by itself count as world change.
+    "farm_building_id",
+    "crop",
+    "seasons_set",
+    "seasons_skipped",
+    "seeds_on_hand",
 }
 
 
@@ -148,6 +161,8 @@ def _proof_shows_world_change(proof: Dict[str, Any]) -> bool:
     if int(evidence.get("unsuspended") or 0) > 0:
         return True
     if int(evidence.get("shrubs_designated") or 0) > 0:
+        return True
+    if int(evidence.get("seasons_changed") or 0) > 0:
         return True
     before_ws = int(evidence.get("before_carpenter_workshops") or 0)
     after_ws = int(evidence.get("after_carpenter_workshops") or 0)

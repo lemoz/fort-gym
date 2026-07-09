@@ -62,6 +62,22 @@ class UnsuspendParams(BaseModel):
     size: tuple[int, int, int] = Field(..., description="(width, height, 1) of the rect, one z-level, max 10x10.")
 
 
+class FarmParams(BaseModel):
+    """Parameters for FARM actions setting a farm plot's seasonal crop.
+
+    ``crop`` is a plant raw token (e.g. "RADISH") or the literal "clear" to
+    reset the selected seasons to no crop. ``seasons`` is optional; omitted
+    means all four seasons.
+    """
+
+    building_id: int = Field(..., description="Farm plot building id to set crops on.")
+    crop: str = Field(..., description="Plant raw token or 'clear'.")
+    seasons: Optional[list[Literal["spring", "summer", "autumn", "winter"]]] = Field(
+        default=None,
+        description="Seasons to set; omitted means all four.",
+    )
+
+
 class KeystrokeParams(BaseModel):
     """Parameters for KEYSTROKE actions - raw keyboard input."""
 
@@ -149,6 +165,11 @@ class UnsuspendAction(BaseAction):
     params: UnsuspendParams
 
 
+class FarmAction(BaseAction):
+    type: Literal["FARM"]
+    params: FarmParams
+
+
 class ZoneAction(BaseAction):
     type: Literal["ZONE"]
 
@@ -187,6 +208,7 @@ ActionUnion = Annotated[
         StockpileAction,
         OrderAction,
         UnsuspendAction,
+        FarmAction,
         AssignAction,
         AlertAction,
         NoteAction,
@@ -208,6 +230,7 @@ ALLOWED_TYPES = {
     "STOCKPILE",
     "ORDER",
     "UNSUSPEND",
+    "FARM",
     "ASSIGN",
     "ALERT",
     "NOTE",
@@ -260,6 +283,15 @@ def validate_action(state: Dict[str, Any], action: Dict[str, Any]) -> tuple[bool
     if action_type == "UNSUSPEND":
         if "area" not in params or "size" not in params:
             return False, "UNSUSPEND action requires area and size"
+    if action_type == "FARM":
+        if "building_id" not in params or "crop" not in params:
+            return False, "FARM action requires building_id and crop"
+        seasons = params.get("seasons")
+        if seasons is not None:
+            if not isinstance(seasons, list) or any(
+                season not in {"spring", "summer", "autumn", "winter"} for season in seasons
+            ):
+                return False, "FARM seasons must be a list of season names"
     if action_type == "KEYSTROKE":
         keys = params.get("keys")
         if not isinstance(keys, list):
@@ -314,6 +346,7 @@ ACTION_TOOL_SPEC = {
                     "STOCKPILE",
                     "ORDER",
                     "UNSUSPEND",
+                    "FARM",
                     "ASSIGN",
                     "ALERT",
                     "NOTE",

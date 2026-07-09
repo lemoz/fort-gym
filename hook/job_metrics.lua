@@ -16,6 +16,22 @@ local function to_int(v)
   return math.floor(n)
 end
 
+local function sanitize(text)
+  return tostring(text or ''):gsub('[^%w %p]', '?')
+end
+
+local SEASON_NAMES = { 'spring', 'summer', 'autumn', 'winter' }
+
+-- Resolve a plant raw index to its token (df.global.world.raws.plants.all[i].id).
+-- Returns nil for an empty slot (-1) or an unreadable index.
+local _plant_raws = df.global.world.raws.plants.all
+local function plant_token(idx)
+  if idx == nil or idx < 0 then return nil end
+  local ok, tok = pcall(function() return _plant_raws[idx].id end)
+  if ok and tok and tok ~= '' then return sanitize(tok) end
+  return nil
+end
+
 local function labor_enabled(unit, labor_name)
   local ok, enabled = pcall(function()
     local labor = df.unit_labor[labor_name]
@@ -144,6 +160,32 @@ out.placed_furniture_positions = { bed = {}, door = {}, table = {}, chair = {} }
 -- farm plots placed (G7 survival primitive: see build_farm_plot.lua)
 out.farm_plots = 0
 out.farm_plot_positions = {}
+-- per-plot crop selection detail (id, rect, stage, seasonal crop tokens).
+-- Each crops entry is a 4-slot array [spring,summer,autumn,winter]; an empty
+-- slot is emitted as false so the array stays dense (json-safe).
+out.farm_plot_details = {}
+
+local function farm_plot_detail(bld)
+  local stage, max_stage = 0, 0
+  pcall(function()
+    stage = bld:getBuildStage()
+    max_stage = bld:getMaxBuildStage()
+  end)
+  local crops = { false, false, false, false }
+  pcall(function()
+    for s = 0, 3 do
+      crops[s + 1] = plant_token(bld.plant_id[s]) or false
+    end
+  end)
+  return {
+    id = bld.id,
+    rect = { bld.x1, bld.y1, bld.x2, bld.y2, bld.z },
+    stage = stage,
+    max_stage = max_stage,
+    built = stage >= max_stage,
+    crops = crops,
+  }
+end
 
 -- workshops with construction stage and queued jobs
 for _, bld in ipairs(df.global.world.buildings.all) do
@@ -165,6 +207,11 @@ for _, bld in ipairs(df.global.world.buildings.all) do
     if #out.farm_plot_positions < 8 then
       pcall(function()
         table.insert(out.farm_plot_positions, { bld.centerx, bld.centery, bld.z })
+      end)
+    end
+    if #out.farm_plot_details < 8 then
+      pcall(function()
+        table.insert(out.farm_plot_details, farm_plot_detail(bld))
       end)
     end
   end
@@ -246,6 +293,51 @@ if x1 and y1 and z1 and x2 and y2 and z2 and z1 == z2 then
       shrub_or_other = counts.shrub_or_other,
       designated = counts.designated,
     }
+  end
+end
+
+-- Seeds on hand summarised per plant token (informational planting evidence):
+-- token -> {count, surface bool, seasons abbrevs}. Capped at 12 tokens.
+out.seeds = {}
+out.current_season = SEASON_NAMES[(df.global.cur_season or 0) + 1] or 'unknown'
+do
+  local summary = {}
+  local order = {}
+  pcall(function()
+    local seeds = df.global.world.items.other.SEEDS
+    if not seeds then return end
+    for _, item in ipairs(seeds) do
+      local mi = item.mat_index
+      local tok = plant_token(mi)
+      if tok then
+        local entry = summary[tok]
+        if not entry and #order < 12 then
+          local subterranean = false
+          local seasons = {}
+          pcall(function()
+            local pf = _plant_raws[mi].flags
+            subterranean = pf.BIOME_SUBTERRANEAN_WATER and true or false
+            if pf.SPRING then table.insert(seasons, 'sp') end
+            if pf.SUMMER then table.insert(seasons, 'su') end
+            if pf.AUTUMN then table.insert(seasons, 'au') end
+            if pf.WINTER then table.insert(seasons, 'wi') end
+          end)
+          entry = { count = 0, surface = not subterranean, seasons = seasons }
+          summary[tok] = entry
+          table.insert(order, tok)
+        end
+        if entry then entry.count = entry.count + 1 end
+      end
+    end
+  end)
+  for _, tok in ipairs(order) do
+    local e = summary[tok]
+    table.insert(out.seeds, {
+      token = tok,
+      count = e.count,
+      surface = e.surface,
+      seasons = e.seasons,
+    })
   end
 end
 
