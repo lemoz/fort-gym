@@ -11,11 +11,14 @@
 --
 -- Engine-constraint gating mirrors what the q-menu itself offers (NOT a
 -- gameplay heuristic — the UI simply does not present these choices):
---   * a subterranean crop cannot be selected on an outside (surface) plot,
---     and a surface crop cannot be selected on an underground plot ->
---     crop_not_growable_here (the flag values are reported).
 --   * a crop is only offered in the seasons whose grow-flag is set; a
 --     requested season the crop lacks is skipped with season_not_growable.
+-- We do NOT gate on surface-vs-subterranean here. DF farm-plot crop
+-- eligibility is governed by a plant's full biome/environment token set
+-- against the plot, not a single biome flag; approximating that from one
+-- unverified flag risked wrongly rejecting a legal crop selection with a
+-- dishonest not-growable-here reason. Surface/subterranean eligibility
+-- is therefore left to the engine, and no such rejection is emitted.
 -- There is NO seed-availability gating (the player can select a crop with
 -- zero seeds; planting simply waits) — seeds_on_hand is reported as evidence
 -- only.
@@ -127,48 +130,11 @@ if not CLEAR then
   end
 end
 
--- Read the plot's surface-ness from the "outside" designation bit at its
--- center tile. NEEDS-LIVE-VALIDATION: the outside bit as a farmability
--- surface indicator has not been probed against a live save.
-local plot_outside = nil
-pcall(function()
-  local block = dfhack.maps.getTileBlock(plot.centerx, plot.centery, plot.z)
-  if block then
-    local dx, dy = plot.centerx % 16, plot.centery % 16
-    plot_outside = block.designation[dx][dy].outside and true or false
-  end
-end)
-
--- Crop/plot surface gating mirrors the q-menu: a subterranean crop is not
--- offered on an outside plot, and a surface crop is not offered on an
--- underground plot. Only enforced when we could read the plot's outside bit
--- and the crop is a real plant (clearing is always legal).
-local crop_subterranean = nil
-if not CLEAR then
-  crop_subterranean = crop_flags.BIOME_SUBTERRANEAN_WATER and true or false
-  if plot_outside ~= nil then
-    if crop_subterranean and plot_outside then
-      print(json.encode({
-        ok = false,
-        error = 'crop_not_growable_here',
-        crop = sanitize(crop_token),
-        crop_subterranean = true,
-        plot_outside = true,
-      }))
-      return
-    end
-    if (not crop_subterranean) and (not plot_outside) then
-      print(json.encode({
-        ok = false,
-        error = 'crop_not_growable_here',
-        crop = sanitize(crop_token),
-        crop_subterranean = false,
-        plot_outside = false,
-      }))
-      return
-    end
-  end
-end
+-- Surface-vs-subterranean eligibility is intentionally NOT gated here. DF
+-- decides a plot's offered crop list from the plant's full biome/environment
+-- token set, not a single biome flag; approximating it from one unverified
+-- flag would risk a dishonest not-growable-here rejection of a legal
+-- crop. We leave that constraint to the engine and never reject on it.
 
 -- Snapshot the plant_id array before mutating so world-change can be diffed.
 local before_plant_id = {}
@@ -238,8 +204,6 @@ print(json.encode({
   farm_building_id = building_id,
   crop = CLEAR and 'clear' or sanitize(crop_token),
   crop_raw_index = crop_index,
-  crop_subterranean = crop_subterranean,
-  plot_outside = plot_outside,
   before_plant_id = before_plant_id,
   after_plant_id = after_plant_id,
   seasons_set = seasons_set,

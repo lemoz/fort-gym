@@ -1,7 +1,7 @@
 """LLM policy on the DFHack-governed legal action surface.
 
 One OpenRouter chat-completion call per step (default ``z-ai/glm-5.2``), forced
-through a single ``submit_action`` tool restricted to DIG/BUILD/ORDER/UNSUSPEND/WAIT.
+through a single ``submit_action`` tool restricted to DIG/BUILD/ORDER/UNSUSPEND/FARM/WAIT.
 ``MemoryManager`` carries the plan, POIs, and failed attempts across steps.
 
 This module intentionally contains no gameplay heuristics: the model plus the
@@ -95,8 +95,8 @@ A farm plot has four independent season slots (spring, summer, autumn, winter); 
 crop or nothing. crop is a plant raw token (the observation's "Seeds on hand" line lists the \
 tokens you hold seeds for, e.g. RADISH); "clear" empties the selected seasons. seasons is optional \
 — omit it to set all four at once. Engine facts: a crop only grows in the seasons its raw allows, \
-so a requested season the crop lacks is skipped (season_not_growable); a subterranean crop only \
-grows on an underground plot and a surface crop only on an outside plot (crop_not_growable_here). \
+so a requested season the crop lacks is skipped (season_not_growable). Whether a crop can grow on a \
+given plot (surface vs. underground) is decided by the engine, not this command. \
 Setting a crop does not plant it — a dwarf with the farming labor plants a matching seed from \
 stock over real time, and only if a seed exists (seeds are consumed by planting; growth then takes \
 further time before harvest). The observation reports each plot's per-season crop tokens, your \
@@ -165,7 +165,7 @@ _MEMORY_UPDATE_POI = re.compile(
 
 
 class DFHackGovernedLLMAgent(Agent):
-    """OpenRouter-backed policy for governed DIG/BUILD/ORDER/UNSUSPEND/WAIT gameplay.
+    """OpenRouter-backed policy for governed DIG/BUILD/ORDER/UNSUSPEND/FARM/WAIT gameplay.
 
     ``memory_path`` controls disk persistence of POIs, failed attempts, plan,
     and summary across runs (runs on the same seed save share the same map,

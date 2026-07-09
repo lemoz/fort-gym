@@ -110,11 +110,12 @@ def test_governed_system_prompt_describes_farm_crop_mechanic_only() -> None:
     # factual engine mechanics only, no strategy advice
     assert "FARM: params" in GOVERNED_SYSTEM_PROMPT
     assert "season_not_growable" in GOVERNED_SYSTEM_PROMPT
-    assert "crop_not_growable_here" in GOVERNED_SYSTEM_PROMPT
     assert "farming labor plants a matching seed" in GOVERNED_SYSTEM_PROMPT
-    # crops only grow in listed seasons; subterranean vs surface stated
+    # crops only grow in listed seasons; surface/underground eligibility is
+    # left to the engine, not gated by this command
     assert "only grows in the seasons its raw allows" in GOVERNED_SYSTEM_PROMPT
-    assert "subterranean crop only" in GOVERNED_SYSTEM_PROMPT
+    assert "decided by the engine" in GOVERNED_SYSTEM_PROMPT
+    assert "crop_not_growable_here" not in GOVERNED_SYSTEM_PROMPT
 
 
 def test_farm_wired_into_provenance_gates() -> None:

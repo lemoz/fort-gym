@@ -276,9 +276,11 @@ def test_set_farm_crop_hook_writes_plant_id_and_reports_before_after() -> None:
     assert "before_plant_id" in hook_text
     assert "after_plant_id" in hook_text
     assert "seasons_changed" in hook_text
-    # engine-constraint gating mirrors the q-menu (not a heuristic)
-    assert "crop_not_growable_here" in hook_text
+    # engine-constraint gating mirrors the q-menu (not a heuristic): only the
+    # season grow-flag is gated. Surface/subterranean eligibility is left to
+    # the engine, so no crop_not_growable_here rejection is emitted.
     assert "season_not_growable" in hook_text
+    assert "crop_not_growable_here" not in hook_text
     # NO seed gating, but seeds_on_hand reported as evidence
     assert "seeds_on_hand" in hook_text
     # CP437 safety and single json.encode print discipline

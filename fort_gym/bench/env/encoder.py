@@ -52,6 +52,19 @@ def _render_int_list(values: List[int]) -> str:
     return "[" + ",".join(str(value) for value in values) + "]"
 
 
+def _sanitize_token(value: str, limit: int = 32) -> str:
+    """Keep short evidence tokens (season names, skip reasons) printable.
+
+    Values arrive from a lua hook that already CP437-sanitizes, but keep a
+    conservative whitelist here so a stray character cannot corrupt the
+    single-line observation. Non-whitelisted characters are dropped.
+    """
+    cleaned = "".join(
+        ch for ch in value if ch.isalnum() or ch in {"_", "-", " "}
+    ).strip()
+    return cleaned[:limit]
+
+
 def _proven_carpenter_workshops(work: Dict[str, Any]) -> int:
     if "carpenter_workshops_usable" in work:
         return _work_int(work, "carpenter_workshops_usable")
@@ -915,6 +928,42 @@ def encode_observation(
             if detail_parts:
                 detail_line = "Last Action detail: " + ", ".join(detail_parts)
                 status_lines.append(detail_line[:120])
+
+            # FARM outcome: seasons_set (list of season names) and
+            # seasons_skipped (list of {season, reason}) are string/dict shaped,
+            # so the int-only whitelist above cannot render them. Surface them
+            # explicitly so a partially-skipped crop selection tells the agent
+            # which seasons took and which were skipped, and why.
+            seasons_set = action_result.get("seasons_set")
+            if isinstance(seasons_set, list) and seasons_set:
+                set_names = [
+                    _sanitize_token(name)
+                    for name in seasons_set
+                    if isinstance(name, str) and name
+                ]
+                set_names = [n for n in set_names if n]
+                if set_names:
+                    status_lines.append(
+                        "FARM crops set: " + ",".join(set_names[:4])
+                    )
+            seasons_skipped = action_result.get("seasons_skipped")
+            if isinstance(seasons_skipped, list) and seasons_skipped:
+                skip_parts = []
+                for entry in seasons_skipped[:4]:
+                    if not isinstance(entry, dict):
+                        continue
+                    season = entry.get("season")
+                    reason = entry.get("reason")
+                    if isinstance(season, str) and season:
+                        label = _sanitize_token(season)
+                        if isinstance(reason, str) and reason:
+                            label += f" ({_sanitize_token(reason)})"
+                        if label:
+                            skip_parts.append(label)
+                if skip_parts:
+                    status_lines.append(
+                        "FARM seasons skipped: " + "; ".join(skip_parts)
+                    )
 
     # Screen change feedback - critical for agent to know if actions had effect
     if screen_text and previous_screen:

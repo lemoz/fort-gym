@@ -2006,6 +2006,34 @@ def test_encoder_surfaces_executor_why_as_rejection_reason() -> None:
     assert "Last Action: REJECTED - no_building_material" in obs_text
 
 
+def test_encoder_surfaces_farm_seasons_set_and_skipped() -> None:
+    # A partially-skipped FARM must tell the agent which seasons took and which
+    # were skipped (and why); those keys are string/dict shaped so the int-only
+    # detail whitelist cannot render them.
+    state = {"time": 100, "population": 7, "stocks": {}}
+
+    obs_text, _ = encode_observation(
+        state,
+        last_action_result={
+            "accepted": True,
+            "result": {
+                "ok": True,
+                "crop": "RADISH",
+                "seasons_changed": 2,
+                "seasons_set": ["spring", "summer"],
+                "seasons_skipped": [
+                    {"season": "autumn", "reason": "season_not_growable"},
+                    {"season": "winter", "reason": "season_not_growable"},
+                ],
+            },
+        },
+    )
+
+    assert "FARM crops set: spring,summer" in obs_text
+    assert "FARM seasons skipped: autumn (season_not_growable)" in obs_text
+    assert "winter (season_not_growable)" in obs_text
+
+
 def test_encoder_renders_wall_layout_with_run_compression() -> None:
     state = {
         "time": 100,
