@@ -160,8 +160,9 @@ agent has never seen, reaching G4-level structure. This is the gate that
 separates "solved one map" from "plays Dwarf Fortress."
 
 ### G7 — The fort lives: a self-sufficient year (RATIFIED 2026-07-09)
-Status: RATIFIED at the 2026-07-09 operator window; attempt 1 FAILED on
-2026-07-09 and is recorded below. The criteria remain unchanged. All three
+Status: RATIFIED at the 2026-07-09 operator window; attempt 1 FAILED and
+attempt 2 ended in an infrastructure-aborted FAIL on 2026-07-09. Both are
+recorded below. The criteria remain unchanged. All three
 activation preconditions hold: (a) score-v3 ratified and landed; (b) G6 attempted
 (7 runs, 2 models — frontier documented in the escalation log); (c) the
 survival primitives exist, adversarially reviewed and live-validated:
@@ -915,6 +916,49 @@ gate. Each entry states what changed and the evidence that forced it.
   candidate runtime compatibility, not deployment. Attempt 2 remains
   prohibited until the candidate is committed, deployed in an explicit
   operator window, and the deployed smoke passes.
+
+- **2026-07-09 — G7 attempt 2: INFRASTRUCTURE ABORT / FAIL; no policy
+  verdict.** Run `c7d1ec905bc14d59a2d320da8f6169a1`
+  ([replay](https://fortgym.live/r/tAoONBlHKNhYTS_4mjUJ8deS7-b5ypGc)),
+  commit `311f82963`, trace-attributed model `z-ai/glm-5v-turbo`, fresh
+  `seed_region3_fresh`, memory off, score-v3. The seed copy initially remained
+  at DF's title screen because `runtime_save=current` is a staging alias and DF
+  canonicalized the copied world back to `region3`; the operator loaded that
+  exact copied save as a disclosed setup correction before any model call or
+  game tick.
+
+  Deployment verification before launch confirmed the exact merged tree and
+  healthy public/API services, re-verified the earlier positive liaison trace
+  with the deployed verifier, and proved a live main-map `INTERACT` attempt was
+  rejected before sending a key. The liaison had already been dismissed, so a
+  second positive live input was not fabricated merely to make the smoke green.
+
+  The policy then completed 11 governed rows and 11,042 real trace ticks. It
+  built a Carpenter workshop, produced two beds, placed and planted a FarmPlot,
+  built a Still, queued brewing, and designated plant gathering. Population
+  remained 7 and stocks remained food 45 / drink 60; rubric was 79.92 with
+  `no_fort_structure`, scalar score 73.68. Eleven OpenRouter calls used 58,686
+  prompt and 3,928 completion tokens. This early gameplay is evidence, but not
+  a G7 success.
+
+  At step 8 the first gathered non-farm plant exposed a ledger return-contract
+  bug: `item_on_completed_farm_plot()` returned one boolean while its caller
+  unpacked `(classification_succeeded, on_farm)`. The ledger therefore set
+  `flow_evidence_complete=false` permanently, making a truthful G7 pass
+  impossible. The operator stopped at step 10; the final row durably records
+  `stop_requested_after_advance`, and callbacks detached. G7 fails independently
+  on duration and rooms, while food/drink evidence is UNKNOWN. This is an
+  infrastructure failure, not a favorable policy reinterpretation.
+
+  Follow-up candidate fixes now return both farm-classification values and
+  resolve DF's canonical save folder by matching the copied seed's `world.sav`,
+  failing closed on no or multiple matches. The complete suite passes (`613
+  passed, 4 skipped`). Isolated live
+  proof on the stopped disposable runtime observed one gathered plant with
+  `nonfarm_plants_created_in_run=1`, complete flow evidence, and zero errors;
+  a second live reset loaded the fresh region3 fortress through the `current`
+  alias without manual intervention. Attempt 3 is prohibited until this
+  follow-up is reviewed, merged, deployed, and re-smoked.
 
 ## Reporting format (every gate attempt)
 

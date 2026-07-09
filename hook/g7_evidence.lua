@@ -185,7 +185,7 @@ local function item_on_completed_farm_plot(item)
     end
     return false
   end)
-  return ok and result or false
+  return ok, ok and result or false
 end
 
 local function record_created_item(ledger, item_id)

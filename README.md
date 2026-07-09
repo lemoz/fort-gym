@@ -256,13 +256,14 @@ These systems are implemented (not roadmap):
 2. **Tools** (`fort_gym/bench/agent/tools.py`): `ToolManager` with memory/plan/perception tools wired into the review-mode agents.
 3. **Experimentation** (`fort_gym/bench/experiment/`): YAML config → `ExperimentRunner` → run with experiment metadata.
 
-The active research step is G7 attempt 2. The run-integrity candidate now gives
+The active research step is G7 attempt 3. The run-integrity release now gives
 the governed policy a narrow player-parity way to handle paused dialogs, fails
 closed when requested time cannot advance, and records the factual evidence
 needed to evaluate the one-year predicates. It has passed local tests and an
-isolated live modal smoke; production deployment still requires an operator
-window. The loop and the model must solve gameplay; helper heuristics stay out
-of the policy.
+isolated live modal smoke. Attempt 2 ended early when real gathering invalidated
+the new flow ledger; the follow-up fixes the evidence contract and canonical
+save loading before another run. The loop and the model must solve gameplay;
+helper heuristics stay out of the policy.
 
 **Success definition and gate ladder: [docs/WDSLL.md](docs/WDSLL.md)** — every claim of "the agent plays" must pass a gate there on public, replayable evidence.
 

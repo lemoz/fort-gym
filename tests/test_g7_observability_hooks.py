@@ -11,8 +11,11 @@ G7_EVIDENCE_SOURCE = (Path(__file__).resolve().parents[1] / "hook" / "g7_evidenc
 
 
 def test_g7_citizen_filter_returns_one_boolean_value() -> None:
-    assert "return ok and result or false" in G7_EVIDENCE_SOURCE
-    assert "return ok, ok and result or false" not in G7_EVIDENCE_SOURCE
+    citizen_filter = G7_EVIDENCE_SOURCE.split("local function civ_dwarf", 1)[1].split(
+        "local function unit_is_dead", 1
+    )[0]
+    assert "return ok and result or false" in citizen_filter
+    assert "return ok, ok and result or false" not in citizen_filter
 
 
 def test_job_metrics_separates_completed_furniture_from_all_placed_furniture() -> None:

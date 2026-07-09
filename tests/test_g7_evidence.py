@@ -43,6 +43,10 @@ def test_g7_food_production_is_farm_output_not_any_created_food_item() -> None:
     assert "bld:getType() == df.building_type.FarmPlot" in HOOK_SOURCE
     assert "bld:getBuildStage() >= bld:getMaxBuildStage()" in HOOK_SOURCE
     assert "farm_check_ok, on_completed_farm = item_on_completed_farm_plot(item)" in HOOK_SOURCE
+    farm_classifier = HOOK_SOURCE.split("local function item_on_completed_farm_plot", 1)[1].split(
+        "local function record_created_item", 1
+    )[0]
+    assert "return ok, ok and result or false" in farm_classifier
     assert "farm_output_classification_failed" in HOOK_SOURCE
     assert "nonfarm_plants_created_in_run" in HOOK_SOURCE
 
