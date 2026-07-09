@@ -1153,6 +1153,59 @@ def test_governed_gameplay_proof_accepts_new_gather_designations() -> None:
     assert proof["helper_evidence"]["shrubs_designated"] == 4
 
 
+def test_governed_gameplay_proof_accepts_farm_crop_flip() -> None:
+    proof = _governed_gameplay_proof(
+        **_governed_proof_kwargs(
+            action={
+                "type": "FARM",
+                "params": {"building_id": 34, "crop": "RADISH", "seasons": ["summer"]},
+                "advance_ticks": 1000,
+            },
+            execute_result={
+                "accepted": True,
+                "result": {
+                    "farm_building_id": 34,
+                    "crop": "RADISH",
+                    "seasons_set": ["summer"],
+                    "seasons_skipped": [],
+                    "seasons_changed": 1,
+                    "seeds_on_hand": 1,
+                },
+            },
+        )
+    )
+    assert proof["ok"] is True
+    assert proof["helper_evidence"]["seasons_changed"] == 1
+    assert proof["helper_evidence"]["crop"] == "RADISH"
+    # building_id (new-building signal) must NOT leak in for a crop set
+    assert "building_id" not in proof["helper_evidence"]
+
+
+def test_governed_gameplay_proof_rejects_noop_farm_reset() -> None:
+    proof = _governed_gameplay_proof(
+        **_governed_proof_kwargs(
+            action={
+                "type": "FARM",
+                "params": {"building_id": 34, "crop": "RADISH", "seasons": ["summer"]},
+                "advance_ticks": 1000,
+            },
+            execute_result={
+                "accepted": True,
+                "result": {
+                    "farm_building_id": 34,
+                    "crop": "RADISH",
+                    "seasons_set": ["summer"],
+                    "seasons_skipped": [],
+                    "seasons_changed": 0,
+                    "seeds_on_hand": 1,
+                },
+            },
+        )
+    )
+    assert proof["ok"] is False
+    assert proof["gameplay_progress_eligible"] is False
+
+
 def test_governed_gameplay_proof_accepts_new_designations_and_jobs() -> None:
     proof = _governed_gameplay_proof(
         **_governed_proof_kwargs(

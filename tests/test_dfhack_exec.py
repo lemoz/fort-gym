@@ -264,6 +264,74 @@ def test_build_farm_plot_rejects_oversized_rect() -> None:
     assert result == {"ok": False, "error": "rect_too_large"}
 
 
+def test_set_farm_crop_hook_writes_plant_id_and_reports_before_after() -> None:
+    hook_path = Path(__file__).resolve().parents[1] / "hook" / "set_farm_crop.lua"
+    hook_text = hook_path.read_text(encoding="utf-8")
+
+    # writes the plant raw index into the seasonal plant_id slot (the q-menu op)
+    assert "plot.plant_id[idx] = crop_index" in hook_text
+    assert "plot.plant_id[idx] = -1" in hook_text
+    assert "df.building_farmplotst:is_instance" in hook_text
+    # before/after arrays + world-change signal
+    assert "before_plant_id" in hook_text
+    assert "after_plant_id" in hook_text
+    assert "seasons_changed" in hook_text
+    # engine-constraint gating mirrors the q-menu (not a heuristic): only the
+    # season grow-flag is gated. Surface/subterranean eligibility is left to
+    # the engine, so no crop_not_growable_here rejection is emitted.
+    assert "season_not_growable" in hook_text
+    assert "crop_not_growable_here" not in hook_text
+    # NO seed gating, but seeds_on_hand reported as evidence
+    assert "seeds_on_hand" in hook_text
+    # CP437 safety and single json.encode print discipline
+    assert "gsub('[^%w %p]', '?')" in hook_text
+    assert hook_text.count("print(json.encode(") >= 1
+
+
+def test_set_farm_crop_wraps_bounded_lua_hook(monkeypatch) -> None:
+    captured: dict = {}
+
+    def fake_run_lua_file(path, *args, **kwargs):
+        captured["path"] = path
+        captured["args"] = args
+        return {"ok": True, "farm_building_id": 34, "seasons_changed": 2}
+
+    monkeypatch.setattr(dfhack_backend, "run_lua_file", fake_run_lua_file)
+
+    result = dfhack_backend.set_farm_crop(34, "RADISH", ["spring", "summer"])
+
+    assert result["ok"] is True
+    assert captured["args"] == ("34", "RADISH", "spring,summer")
+    assert Path(captured["path"]).name == "set_farm_crop.lua"
+
+
+def test_set_farm_crop_defaults_to_all_seasons_when_omitted(monkeypatch) -> None:
+    captured: dict = {}
+
+    def fake_run_lua_file(path, *args, **kwargs):
+        captured["args"] = args
+        return {"ok": True}
+
+    monkeypatch.setattr(dfhack_backend, "run_lua_file", fake_run_lua_file)
+
+    dfhack_backend.set_farm_crop(34, "RADISH")
+
+    # empty CSV => the hook applies all four seasons
+    assert captured["args"] == ("34", "RADISH", "")
+
+
+def test_set_farm_crop_rejects_unknown_season() -> None:
+    result = dfhack_backend.set_farm_crop(34, "RADISH", ["harvest"])
+
+    assert result == {"ok": False, "error": "invalid_season"}
+
+
+def test_set_farm_crop_rejects_empty_crop() -> None:
+    result = dfhack_backend.set_farm_crop(34, "   ")
+
+    assert result == {"ok": False, "error": "invalid_crop"}
+
+
 def test_order_make_hook_prefers_direct_workshop_jobs() -> None:
     hook_path = Path(__file__).resolve().parents[1] / "hook" / "order_make.lua"
     hook_text = hook_path.read_text(encoding="utf-8")

@@ -25,6 +25,8 @@ MAX_SNAPSHOT_W = 64
 MAX_SNAPSHOT_H = 64
 MAX_FARM_PLOT_W = 5
 MAX_FARM_PLOT_H = 5
+FARM_SEASONS = ("spring", "summer", "autumn", "winter")
+MAX_CROP_TOKEN_LEN = 64
 VALID_KINDS: Iterable[str] = ("dig", "channel", "chop", "gather")
 DEFAULT_WORK_RECT = (50, 35, 0, 54, 39, 0)
 
@@ -207,6 +209,55 @@ def build_farm_plot(
             str(z_val),
             str(x2_val),
             str(y2_val),
+            timeout=10.0,
+        )
+    except (DFHackError, OSError) as exc:
+        return {"ok": False, "error": str(exc)}
+
+
+def set_farm_crop(
+    building_id: int,
+    crop: str,
+    seasons: Sequence[str] | None = None,
+) -> Dict[str, object]:
+    """Set (or clear) the seasonal crop selection on an existing farm plot.
+
+    Mirrors the player's q-menu crop picker: writes a plant raw index into
+    ``df.building_farmplotst.plant_id[season]`` (``crop='clear'`` writes -1).
+    The hook never plants a seed or advances any job — a dwarf with the
+    farming labor plants a matching seed over real time. Bounded params:
+    seasons are whitelisted to the four names; the crop token is length-bound
+    and resolved to a raw index inside the hook (unknown tokens are rejected
+    there as ``crop_not_found``).
+    """
+
+    try:
+        building_id_val = int(building_id)
+    except (TypeError, ValueError):
+        return {"ok": False, "error": "invalid_building_id"}
+
+    crop_token = str(crop or "").strip()
+    if not crop_token or len(crop_token) > MAX_CROP_TOKEN_LEN:
+        return {"ok": False, "error": "invalid_crop"}
+
+    if seasons is None:
+        season_list: list[str] = []
+    else:
+        season_list = [str(s).strip().lower() for s in seasons]
+        for season in season_list:
+            if season not in FARM_SEASONS:
+                return {"ok": False, "error": "invalid_season"}
+        if not season_list:
+            return {"ok": False, "error": "invalid_season"}
+
+    seasons_csv = ",".join(season_list)
+
+    try:
+        return run_lua_file(
+            _hook_path("set_farm_crop.lua"),
+            str(building_id_val),
+            crop_token,
+            seasons_csv,
             timeout=10.0,
         )
     except (DFHackError, OSError) as exc:
@@ -609,11 +660,13 @@ __all__ = [
     "MAX_SNAPSHOT_H",
     "MAX_FARM_PLOT_W",
     "MAX_FARM_PLOT_H",
+    "FARM_SEASONS",
     "queue_manager_order",
     "build_workshop",
     "place_furniture",
     "build_construction",
     "build_farm_plot",
+    "set_farm_crop",
     "designate_rect",
     "unsuspend_jobs",
     "complete_dig_rect",
