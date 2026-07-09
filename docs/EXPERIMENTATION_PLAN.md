@@ -77,8 +77,9 @@ counts (see `docs/Actions_Headless_Safety.md`).
 
 ## Open Experiment Questions
 
-1. **G7 run integrity**: can the policy navigate ordinary paused dialogs while
-   the runner terminates genuine tick stalls before another paid model call?
+1. **G7 run integrity**: after attempt 2's infrastructure abort, can the policy
+   navigate ordinary paused dialogs while the runner terminates genuine tick
+   stalls and the survival ledger remains complete under real farm/gather flow?
 2. **G7 survival**: on `seed_region3_fresh`, can one governed run close food
    and drink loops, survive a year, house migrants, and build three functional
    rooms under the ratified WDSLL predicates?
@@ -92,17 +93,19 @@ counts (see `docs/Actions_Headless_Safety.md`).
 
 ## Prerequisites / Blockers
 
-- The G7 run-integrity candidate is implemented, review-hardened, and not
-  production-deployed. The complete suite passes (607 passed, 4 skipped). It
-  requires a reviewed commit and an explicit operator deployment window before
-  attempt 2.
+- The first G7 run-integrity release is deployed. Attempt 2 was stopped after
+  11 rows because a farm-classifier return-contract bug permanently invalidated
+  flow evidence; its public infrastructure-abort record is in `docs/WDSLL.md`.
+- A follow-up candidate fixes that ledger contract and the `current` save-alias
+  loader. The complete suite passes (613 passed, 4 skipped), as do isolated live
+  gather/reset smokes. It requires review, merge, deployment, and deployed smoke
+  before attempt 3.
 - The dedicated `INTERACT` action is strict zero-tick, governed-only, paused,
   viewscreen-allowlisted, and bounded to eight operations per modal episode
   (three unchanged screens terminate earlier). An isolated live liaison smoke
   passed; the same smoke must pass from the deployed commit.
-- Tick stalls and cancellation now fail closed with durable terminal reasons;
-  local regression passes and deployed-runtime verification remains the release
-  gate.
+- Tick stalls and cancellation fail closed with durable terminal reasons;
+  attempt 2's final row records `stop_requested_after_advance`.
 - Completed furniture, raw death causes, and a run-scoped event/eat-history
   food/drink ledger now reach the trace. The ledger's citizen filter and run
   scope passed an isolated live start/read/stop smoke. `scripts/evaluate_g7.py`

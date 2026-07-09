@@ -370,22 +370,22 @@ caught by a failing public run and closed on the record.
   and most of the G6 campaign; GPT-5.5 served the earlier G2/G3 passes.
   Cross-model generality is thin — two GPT-5.5-vision escalation runs are the
   only cross-family data points on the unseen map.
-- **G6 is unpassed; G7 attempt 1 failed.** Score-v3 is active, but the
+- **G6 is unpassed; G7 attempts 1 and 2 failed.** Attempt 2 was an early
+  infrastructure abort, not a policy verdict. Score-v3 is active, but the
   chair-factory calibration gap (§2.4) remains part of its historical record.
   Attempt 1 demonstrated why the scalar is telemetry rather than the verdict:
   score 209.44 passed its bar while the fort failed survival and structure.
 
 ## 4. What's next
 
-- **Deploy G7 run integrity, then attempt 2**: the dedicated dialog action,
-  fail-closed tick/cancellation lifecycle, completed-furniture facts, survival
-  ledger, atomic run claim, and trace-derived deterministic evaluator are
-  implemented. The complete local suite passes (607 passed, 4 skipped), as do
-  isolated live liaison and survival-ledger smokes. A reviewed commit, explicit
-  operator deploy window, and deployed smoke are required before the next
-  450-step run.
+- **Repair attempt 2's infrastructure abort, then attempt 3**: the dialog and
+  fail-closed lifecycle release is deployed, but real gathering exposed a
+  two-value farm-classifier contract bug and the save reset exposed DF's
+  `current -> region3` canonicalization. Both follow-up fixes pass the complete
+  suite (613 passed, 4 skipped) and isolated-live checks. Review, merge,
+  deployment, and deployed smoke are required before the next 450-step run.
 - **G6 remains open**: the best unseen-map run reached 4/5 and missed only its
-  second functional room. G7 attempt 2 runs on the same unseen seed, so a strong
+  second functional room. G7 attempt 3 runs on the same unseen seed, so a strong
   endurance result can add evidence without a separate blind retry campaign.
 - **G8 — depth**: a multi-z fortress (stairs, underground rooms), the next
   spatial-reasoning escalation past the hollow ring.

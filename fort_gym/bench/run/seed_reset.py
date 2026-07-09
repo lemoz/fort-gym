@@ -78,7 +78,12 @@ def reset_save_from_seed(
 
     if restart_service and host in {"127.0.0.1", "localhost"}:
         _restart_dfhack_headless(host, port, timeout_s=timeout_s)
-        _load_runtime_save(runtime_name, timeout_s=max(timeout_s, 180.0))
+        loadable_name = _resolve_loadable_save_name(
+            seed_dir,
+            saves_dir=saves_dir,
+            runtime_name=runtime_name,
+        )
+        _load_runtime_save(loadable_name, timeout_s=max(timeout_s, 180.0))
         _wait_for_map_loaded(timeout_s=max(timeout_s, 180.0))
 
 
@@ -152,6 +157,107 @@ def _load_runtime_save(runtime_name: str, *, timeout_s: float) -> None:
         run_dfhack(dfhack_cmd("load-save", runtime_name), timeout=timeout_s, cwd=str(DFROOT))
     except DFHackError as exc:
         raise SeedResetError(f"Failed to load DF save {runtime_name!r}: {exc}") from exc
+
+
+def _path_is_file(path: Path) -> bool:
+    try:
+        return path.is_file()
+    except OSError:
+        result = subprocess.run(
+            ["sudo", "-n", "test", "-f", str(path)],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+        return result.returncode == 0
+
+
+def _world_save_paths(saves_dir: Path) -> list[Path]:
+    try:
+        return [
+            candidate / "world.sav"
+            for candidate in saves_dir.iterdir()
+            if candidate.is_dir() and (candidate / "world.sav").is_file()
+        ]
+    except OSError:
+        try:
+            output = subprocess.check_output(
+                [
+                    "sudo",
+                    "-n",
+                    "find",
+                    str(saves_dir),
+                    "-mindepth",
+                    "2",
+                    "-maxdepth",
+                    "2",
+                    "-type",
+                    "f",
+                    "-name",
+                    "world.sav",
+                    "-print0",
+                ]
+            )
+        except (OSError, subprocess.CalledProcessError) as exc:
+            raise SeedResetError(f"Cannot inspect save directory {saves_dir}: {exc}") from exc
+        return [Path(value.decode()) for value in output.split(b"\0") if value]
+
+
+def _files_equal(first: Path, second: Path) -> bool:
+    try:
+        if first.stat().st_size != second.stat().st_size:
+            return False
+        with first.open("rb") as first_handle, second.open("rb") as second_handle:
+            while True:
+                first_chunk = first_handle.read(1024 * 1024)
+                second_chunk = second_handle.read(1024 * 1024)
+                if first_chunk != second_chunk:
+                    return False
+                if not first_chunk:
+                    return True
+    except OSError:
+        result = subprocess.run(
+            ["sudo", "-n", "cmp", "-s", "--", str(first), str(second)],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+        return result.returncode == 0
+
+
+def _resolve_loadable_save_name(
+    seed_dir: Path,
+    *,
+    saves_dir: Path,
+    runtime_name: str,
+) -> str:
+    """Resolve DF's canonical save folder after startup consumes a staging alias."""
+
+    runtime_world = saves_dir / runtime_name / "world.sav"
+    if _path_is_file(runtime_world):
+        return runtime_name
+
+    seed_world = seed_dir / "world.sav"
+    if not _path_is_file(seed_world):
+        raise SeedResetError(f"Seed save lacks world.sav: {seed_world}")
+
+    matches: list[str] = []
+    for candidate_world in _world_save_paths(saves_dir):
+        candidate = candidate_world.parent
+        try:
+            _validate_save_name(candidate.name, label="canonical runtime")
+        except SeedResetError:
+            continue
+        if _files_equal(seed_world, candidate_world):
+            matches.append(candidate.name)
+
+    if len(matches) == 1:
+        return matches[0]
+    if not matches:
+        raise SeedResetError(
+            f"DF did not expose a loadable copy of seed {seed_dir.name!r} after restart"
+        )
+    raise SeedResetError(f"Ambiguous canonical save for seed {seed_dir.name!r}: {sorted(matches)}")
 
 
 def _wait_for_map_loaded(*, timeout_s: float) -> None:
