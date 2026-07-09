@@ -76,7 +76,12 @@ def _action_fingerprint(action: Dict[str, Any]) -> str:
     if action_type == "UNSUSPEND":
         return f"UNSUSPEND:{params.get('area')}:{params.get('size')}"
     if action_type == "LABOR":
-        return f"LABOR:{params.get('unit_id')}:{params.get('labor')}:{params.get('enable')}"
+        # enable direction is deliberately excluded from the identity: toggling
+        # one dwarf's labor back and forth is the same repeated fiddling, so an
+        # enable/disable oscillation on the same (unit, labor) must collapse into
+        # one stale-fingerprint bucket rather than split ~50/50 across True/False
+        # buckets and slip under the repetitive_policy threshold.
+        return f"LABOR:{params.get('unit_id')}:{params.get('labor')}"
     return action_type
 
 
@@ -128,16 +133,28 @@ _QUEUE_ONLY_EVIDENCE_KEYS = {
     # flip is caught explicitly by the labor_changed check below.
     "labor_before",
     "labor_after",
+    # labor_changed itself is queue-only for the fallthrough test: a real flip is
+    # credited explicitly (count_labor=True path), and the repetition tally reads
+    # it with count_labor=False so a bare flip does not exempt a repeated toggle
+    # of an already-credited (unit, labor) target from the stale-fingerprint tally.
+    "labor_changed",
 }
 
 
-def _proof_shows_world_change(proof: Dict[str, Any]) -> bool:
+def _proof_shows_world_change(proof: Dict[str, Any], *, count_labor: bool = True) -> bool:
     """Queueing jobs is real but is not world change for repetition purposes.
 
     A proof exempts a step from the repetition tally only when it shows the
     world actually changed: tile diffs, productive state deltas, new
     designations, or new buildings — not merely another queued job (the
     order-spam exploit registers proof.ok via created_job_ids alone).
+
+    ``count_labor`` controls whether a bare labor flip (``labor_changed``) is on
+    its own world change. It is True by default (a single real flip is a genuine
+    state change); the repetition tally passes False so that per-target labor
+    crediting is decided by ``_step_progress_flags`` instead — otherwise an
+    enable/disable oscillation on one (unit, labor) would flip for real every
+    step and permanently escape the stale-fingerprint tally.
     """
 
     if int(proof.get("changed_tile_count") or 0) > 0:
@@ -158,8 +175,10 @@ def _proof_shows_world_change(proof: Dict[str, Any]) -> bool:
         return True
     # A real labor flip (before != after) is a genuine state change; a no-op
     # flip (labor_changed False) is not, and falls through to the queue-only
-    # whitelist so it never exempts a step from the repetition tally.
-    if evidence.get("labor_changed") is True:
+    # whitelist so it never exempts a step from the repetition tally. When
+    # count_labor is False the tally suppresses this exemption entirely and lets
+    # _step_progress_flags credit only the first flip per (unit, labor) target.
+    if count_labor and evidence.get("labor_changed") is True:
         return True
     before_ws = int(evidence.get("before_carpenter_workshops") or 0)
     after_ws = int(evidence.get("after_carpenter_workshops") or 0)
@@ -177,6 +196,37 @@ def _proof_shows_world_change(proof: Dict[str, Any]) -> bool:
     meaningful = {k for k, v in evidence.items() if v not in (None, 0, False, [], "")}
     return not meaningful <= _QUEUE_ONLY_EVIDENCE_KEYS
 
+def _labor_flip_credits_progress(
+    record: Dict[str, Any],
+    proof: Any,
+    credited_targets: set,
+) -> bool:
+    """First real flip of a (unit_id, labor) target is progress; repeats are not.
+
+    Both enabling and disabling a labor genuinely flip real state, so an agent
+    could alternate enable/disable on one dwarf's labor to emit a real flip every
+    step. Crediting every flip would let that churn farm anti_repetition and dodge
+    the repetitive_policy blocker forever. Only the first flip of a given target
+    within the window earns credit; later toggles of the same pair fall through to
+    the stale-fingerprint tally like any other non-progressing repeat.
+    """
+
+    if not isinstance(proof, dict) or not bool(proof.get("ok")):
+        return False
+    action = _record_action(record)
+    if str(action.get("type") or "") != "LABOR":
+        return False
+    evidence = proof.get("helper_evidence")
+    if not isinstance(evidence, dict) or evidence.get("labor_changed") is not True:
+        return False
+    params = action.get("params") if isinstance(action.get("params"), dict) else {}
+    target = (params.get("unit_id"), params.get("labor"))
+    if target in credited_targets:
+        return False
+    credited_targets.add(target)
+    return True
+
+
 def _step_progress_flags(records: List[Dict[str, Any]]) -> List[bool]:
     """Per record: did this step show real progress?
 
@@ -187,13 +237,20 @@ def _step_progress_flags(records: List[Dict[str, Any]]) -> List[bool]:
 
     flags: List[bool] = []
     previous_metrics: Dict[str, Any] = {}
+    credited_labor_targets: set = set()
     for record in records:
         metrics = _metrics(record)
         proof = record.get("gameplay_proof")
+        # count_labor=False: a bare labor flip is not world change here; the
+        # first flip per (unit, labor) target is credited via the labor helper,
+        # so repeated enable/disable churn on one target is not exempted.
         proof_ok = (
             isinstance(proof, dict)
             and bool(proof.get("ok"))
-            and _proof_shows_world_change(proof)
+            and _proof_shows_world_change(proof, count_labor=False)
+        )
+        labor_progress = _labor_flip_credits_progress(
+            record, proof, credited_labor_targets
         )
         productive = any(
             _to_int(metrics.get(field)) > _to_int(previous_metrics.get(field))
@@ -202,6 +259,7 @@ def _step_progress_flags(records: List[Dict[str, Any]]) -> List[bool]:
         flags.append(
             bool(
                 proof_ok
+                or labor_progress
                 or productive
                 or _to_int(metrics.get("ui_step_work_progress")) > 0
             )

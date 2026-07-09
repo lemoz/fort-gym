@@ -164,7 +164,7 @@ _MEMORY_UPDATE_POI = re.compile(
 
 
 class DFHackGovernedLLMAgent(Agent):
-    """OpenRouter-backed policy for governed DIG/BUILD/ORDER/UNSUSPEND/WAIT gameplay.
+    """OpenRouter-backed policy for governed DIG/BUILD/ORDER/UNSUSPEND/LABOR/WAIT gameplay.
 
     ``memory_path`` controls disk persistence of POIs, failed attempts, plan,
     and summary across runs (runs on the same seed save share the same map,
