@@ -2,15 +2,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fort_gym.bench import dfhack_backend
-from fort_gym.bench import dfhack_exec
+from fort_gym.bench import dfhack_backend, dfhack_exec
 
 
 def test_run_lua_file_parses_last_json_line(monkeypatch) -> None:
     monkeypatch.setattr(
         dfhack_exec,
         "run_dfhack",
-        lambda *args, **kwargs: "notice from dfhack\n\x1b[0m{\"ok\": true, \"value\": 3}\x1b[0m",
+        lambda *args, **kwargs: 'notice from dfhack\n\x1b[0m{"ok": true, "value": 3}\x1b[0m',
     )
 
     assert dfhack_exec.run_lua_file("/tmp/hook.lua") == {"ok": True, "value": 3}
@@ -30,11 +29,7 @@ def test_hook_path_prefers_repo_hook_over_installed_copy(tmp_path, monkeypatch) 
 
 
 def test_prepare_keystroke_workshop_target_moves_cursor_before_confirm() -> None:
-    hook_path = (
-        Path(__file__).resolve().parents[1]
-        / "hook"
-        / "prepare_keystroke_target.lua"
-    )
+    hook_path = Path(__file__).resolve().parents[1] / "hook" / "prepare_keystroke_target.lua"
     hook_text = hook_path.read_text(encoding="utf-8")
 
     assert "local function append_cursor_moves" in hook_text
@@ -78,17 +73,20 @@ def test_view_state_helpers_use_dedicated_hooks(monkeypatch) -> None:
     monkeypatch.setattr(dfhack_backend, "run_lua_file", fake_run_lua_file)
 
     assert dfhack_backend.read_view_state()["ok"] is True
-    assert dfhack_backend.restore_view_state(
-        {
-            "ok": True,
-            "window_x": 12,
-            "window_y": 34,
-            "window_z": 5,
-            "cursor_x": -30000,
-            "cursor_y": -30000,
-            "cursor_z": -30000,
-        }
-    )["ok"] is True
+    assert (
+        dfhack_backend.restore_view_state(
+            {
+                "ok": True,
+                "window_x": 12,
+                "window_y": 34,
+                "window_z": 5,
+                "cursor_x": -30000,
+                "cursor_y": -30000,
+                "cursor_z": -30000,
+            }
+        )["ok"]
+        is True
+    )
 
     assert calls[0][0] == "view_state.lua"
     assert calls[1][0] == "restore_view_state.lua"
@@ -120,9 +118,9 @@ def test_placement_hooks_enforce_fort_locality() -> None:
 
 
 def test_place_furniture_hook_reports_tile_state_on_failure() -> None:
-    hook_text = (
-        Path(__file__).resolve().parents[1] / "hook" / "place_furniture.lua"
-    ).read_text(encoding="utf-8")
+    hook_text = (Path(__file__).resolve().parents[1] / "hook" / "place_furniture.lua").read_text(
+        encoding="utf-8"
+    )
     # run 0a1be1c5 burned 40 actions on bare construct_failed: the tile is
     # classified before placement so the rejection names the visible cause
     for needle in (
@@ -178,6 +176,7 @@ def test_build_workshop_allowed_workshops_include_still() -> None:
     # Still must be routed through ALLOWED_WORKSHOPS same as CarpenterWorkshop
     assert "Still" in dfhack_backend.ALLOWED_WORKSHOPS
     assert "CarpenterWorkshop" in dfhack_backend.ALLOWED_WORKSHOPS
+
 
 def test_build_farm_plot_hook_is_bounded_and_reports_counts() -> None:
     hook_path = Path(__file__).resolve().parents[1] / "hook" / "build_farm_plot.lua"
@@ -576,11 +575,7 @@ def test_job_metrics_hook_emits_per_citizen_list() -> None:
 
 
 def test_prepare_keystroke_tree_material_target_uses_broad_selection() -> None:
-    hook_path = (
-        Path(__file__).resolve().parents[1]
-        / "hook"
-        / "prepare_keystroke_target.lua"
-    )
+    hook_path = Path(__file__).resolve().parents[1] / "hook" / "prepare_keystroke_target.lua"
     hook_text = hook_path.read_text(encoding="utf-8")
 
     assert "local TREE_SELECT_WIDTH = 7" in hook_text
@@ -591,9 +586,9 @@ def test_prepare_keystroke_tree_material_target_uses_broad_selection() -> None:
 
 
 def test_job_metrics_is_read_only_and_reports_crew() -> None:
-    script = (
-        Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua"
-    ).read_text(encoding="utf-8")
+    script = (Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua").read_text(
+        encoding="utf-8"
+    )
     for needle in (
         "mining_labor",
         "carpentry_labor",
@@ -611,9 +606,9 @@ def test_job_metrics_is_read_only_and_reports_crew() -> None:
 
 
 def test_job_metrics_reports_farm_plots_count() -> None:
-    script = (
-        Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua"
-    ).read_text(encoding="utf-8")
+    script = (Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua").read_text(
+        encoding="utf-8"
+    )
 
     assert "out.farm_plots" in script
     assert "out.farm_plot_positions" in script
@@ -626,26 +621,26 @@ def test_job_metrics_splits_true_shrub_count_from_other_tiles() -> None:
     # terrain (boulders, pebbles, fortifications, ramps). A separate `shrub`
     # count lets callers report how many of those tiles are actually
     # gatherable rather than attaching gather-ability to the combined count.
-    script = (
-        Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua"
-    ).read_text(encoding="utf-8")
+    script = (Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua").read_text(
+        encoding="utf-8"
+    )
     assert "counts.shrub = counts.shrub + 1" in script
     assert "shape_name == 'SHRUB'" in script
     assert "shrub = counts.shrub," in script
 
 
 def test_job_metrics_reports_finished_goods_counts() -> None:
-    script = (
-        Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua"
-    ).read_text(encoding="utf-8")
+    script = (Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua").read_text(
+        encoding="utf-8"
+    )
     for needle in ("GOODS_ITEM_TYPES", "'BED'", "'BARREL'", "'WOOD'", "out.goods"):
         assert needle in script
 
 
 def test_place_furniture_hook_installs_existing_items_only() -> None:
-    script = (
-        Path(__file__).resolve().parents[1] / "hook" / "place_furniture.lua"
-    ).read_text(encoding="utf-8")
+    script = (Path(__file__).resolve().parents[1] / "hook" / "place_furniture.lua").read_text(
+        encoding="utf-8"
+    )
     for needle in (
         "df.item_type.BED",
         "df.building_type.Bed",
@@ -659,17 +654,17 @@ def test_place_furniture_hook_installs_existing_items_only() -> None:
 
 
 def test_job_metrics_reports_placed_furniture() -> None:
-    script = (
-        Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua"
-    ).read_text(encoding="utf-8")
+    script = (Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua").read_text(
+        encoding="utf-8"
+    )
     assert "placed_furniture" in script
     assert "df.building_type.Bed" in script
 
 
 def test_build_construction_hook_enforces_locality_and_uses_existing_material() -> None:
-    script = (
-        Path(__file__).resolve().parents[1] / "hook" / "build_construction.lua"
-    ).read_text(encoding="utf-8")
+    script = (Path(__file__).resolve().parents[1] / "hook" / "build_construction.lua").read_text(
+        encoding="utf-8"
+    )
     for needle in (
         "too_far_from_fort",
         "df.construction_type.Wall",
@@ -682,48 +677,48 @@ def test_build_construction_hook_enforces_locality_and_uses_existing_material() 
 
 
 def test_build_construction_reports_occupied_and_wall_tiles() -> None:
-    script = (
-        Path(__file__).resolve().parents[1] / "hook" / "build_construction.lua"
-    ).read_text(encoding="utf-8")
+    script = (Path(__file__).resolve().parents[1] / "hook" / "build_construction.lua").read_text(
+        encoding="utf-8"
+    )
     assert "tile_occupied_by_building" in script
     assert "already_wall" in script
 
 
 def test_job_metrics_reports_furniture_positions() -> None:
-    script = (
-        Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua"
-    ).read_text(encoding="utf-8")
+    script = (Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua").read_text(
+        encoding="utf-8"
+    )
     assert "placed_furniture_positions" in script
 
 
 def test_fort_metrics_renders_minimap_grid() -> None:
-    script = (
-        Path(__file__).resolve().parents[1] / "hook" / "fort_metrics.lua"
-    ).read_text(encoding="utf-8")
+    script = (Path(__file__).resolve().parents[1] / "hook" / "fort_metrics.lua").read_text(
+        encoding="utf-8"
+    )
     for needle in ("map_rows", "map_origin", "BUILDING_CHARS", "construction_set"):
         assert needle in script
 
 
 def test_fort_metrics_anchors_on_citizens_and_marks_dwarves() -> None:
-    script = (
-        Path(__file__).resolve().parents[1] / "hook" / "fort_metrics.lua"
-    ).read_text(encoding="utf-8")
+    script = (Path(__file__).resolve().parents[1] / "hook" / "fort_metrics.lua").read_text(
+        encoding="utf-8"
+    )
     assert "citizen_positions" in script
     assert "citizen_lookup" in script
     assert "'@'" in script
 
 
 def test_fort_metrics_marks_queued_constructions_without_sealing_rooms() -> None:
-    script = (
-        Path(__file__).resolve().parents[1] / "hook" / "fort_metrics.lua"
-    ).read_text(encoding="utf-8")
+    script = (Path(__file__).resolve().parents[1] / "hook" / "fort_metrics.lua").read_text(
+        encoding="utf-8"
+    )
     # queued (unbuilt) constructions render as 'x' on the minimap...
     assert "pending_construction_tiles" in script
     assert "ch = 'x'" in script
     assert "pending_constructions = pending_constructions" in script
     # ...but must never enter the enclosure flood-fill boundary set: the
     # detector's construction_set reads world.constructions (built only).
-    boundary_block = script[script.index("local construction_set"):]
+    boundary_block = script[script.index("local construction_set") :]
     boundary_block = boundary_block[: boundary_block.index("BUILDING_CHARS")]
     assert "pending" not in boundary_block
 
@@ -742,10 +737,21 @@ def test_read_game_state_counts_dead_citizens_for_real() -> None:
     assert "state.dead = dead_count" in source
 
 
+def test_read_game_state_reports_concrete_viewscreen_type() -> None:
+    import inspect
+
+    from fort_gym.bench import dfhack_exec
+
+    source = inspect.getsource(dfhack_exec.read_game_state)
+    assert "dfhack.gui.getCurViewscreen()" in source
+    assert 'state.viewscreen_type = "unknown"' in source
+    assert 'rendered:match("<type: ([^>]+)>")' in source
+
+
 def test_fort_metrics_reports_nearby_tree_clusters() -> None:
-    script = (
-        Path(__file__).resolve().parents[1] / "hook" / "fort_metrics.lua"
-    ).read_text(encoding="utf-8")
+    script = (Path(__file__).resolve().parents[1] / "hook" / "fort_metrics.lua").read_text(
+        encoding="utf-8"
+    )
     # clearing spawns: the fort window can hold zero trunks while forests
     # stand 20 tiles away — the scan is factual content, bounded, read-only
     assert "nearby_trees" in script

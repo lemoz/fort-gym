@@ -160,8 +160,9 @@ agent has never seen, reaching G4-level structure. This is the gate that
 separates "solved one map" from "plays Dwarf Fortress."
 
 ### G7 — The fort lives: a self-sufficient year (RATIFIED 2026-07-09)
-Status: RATIFIED at the 2026-07-09 operator window. All three activation
-preconditions hold: (a) score-v3 ratified and landed; (b) G6 attempted
+Status: RATIFIED at the 2026-07-09 operator window; attempt 1 FAILED on
+2026-07-09 and is recorded below. The criteria remain unchanged. All three
+activation preconditions hold: (a) score-v3 ratified and landed; (b) G6 attempted
 (7 runs, 2 models — frontier documented in the escalation log); (c) the
 survival primitives exist, adversarially reviewed and live-validated:
 gather (DIG kind), FarmPlot (BUILD kind), Still + brew ORDER
@@ -172,9 +173,9 @@ Pre-declared scalar bar for attempt 1 (set before launch, per the gate
 protocol): score-v3 >= 150 — the best corrected 100k-tick region3 run
 scored 152.39, and a fort that lives a full year must at least match the
 best quarter-year camp — and rubric >= 70 with zero blockers (the
-standing clean bar). Attempt 1 launches at this window: GLM-5V,
-max_steps 450, ticks_per_step 1000, seed_region3_fresh (the unseen-map
-frontier, water hazard and all).
+standing clean bar). Attempt 1 ran as GLM-5V, max_steps 450,
+ticks_per_step 1000, seed_region3_fresh (the unseen-map frontier, water
+hazard and all); its public failure record is below.
 
 Rationale: every gate to date ran inside DF's benign opening — starting
 stocks, no threats, nothing that punishes idleness. The endurance probe
@@ -825,6 +826,95 @@ gate. Each entry states what changed and the evidence that forced it.
     live fort. Open risk carried into the gate honestly: labor contention
     (observed brew starvation) is now agent-solvable via LABOR; water
     safety remains unmitigated (6 environmental drownings on region3).
+
+- **2026-07-09 — G7 attempt 1: FAIL. The run proved the seven-action
+  surface can compose real work, then exposed a missing dialog action and
+  a fail-open runner.** Run `f6a87f6afb6241c082a6a015c361d755`
+  ([replay](https://fortgym.live/r/GbccbSS-d6bADihKEosLgx6788yhoaqx)),
+  commit `4804ee00c`, trace-attributed model `z-ai/glm-5v-turbo`,
+  `seed_region3_fresh`, score-v3. The operator stopped it after the game
+  became trapped on the Mountainhomes liaison meeting; terminal status is
+  `stopped`, with 274 governed gameplay rows plus one terminal row.
+  Evidence is complete for the gameplay rows: 274/274 `screen_text`,
+  274/274 `gameplay_proof`, 274/274 `dfhack_governed` provenance; 125
+  proof rows report real progress. The run made 273 model calls using
+  2,013,504 tokens.
+
+  Predicate verdict: duration **FAIL** (199,691/403,200 ticks); food/drink
+  loop **FAIL** (food 45->19, drink 60->0, no food-production proof, no
+  sustained brewing); neglect-death rule **UNKNOWN and therefore cannot
+  pass** (one death is observed at step 27, but the trace has no cause);
+  population **PASS** (15); functional rooms **FAIL** (0/3); installed-bed
+  rule **UNKNOWN** (14 bed buildings are observed, but the current field
+  includes both installed and still-being-installed furniture; required 5);
+  scalar **PASS** (209.44 >= 150); rubric **FAIL** (63.79 < 70, blockers
+  empty). Overall G7 is an unambiguous **FAIL** independently on duration,
+  survival loop, and rooms.
+
+  What happened in-game: the policy used all seven action types, produced
+  real furniture and goods, survived a migrant wave, built one farm plot,
+  and placed two Stills. Neither Still reached construction stage 1; the
+  farm selected plump helmets for all seasons and recorded no food
+  production; the fort ended with 26 constructions and zero enclosures.
+  At step 198 the liaison dialog opened after 915 of the requested 1000
+  ticks. The next 75 steps advanced zero ticks at `217225` while the model
+  continued issuing actions (mostly BUILD/UNSUSPEND/WAIT) against an
+  unchanged screen.
+
+  Failure split: (a) **substrate** — governed play has no bounded legal
+  confirm/cancel/dialog action, though a human player would answer the
+  meeting while paused; (b) **runtime** — zero-tick timeouts did not stop
+  future model calls and cooperative cancellation took additional rows to
+  become durable; (c) **policy** — late brewing response, an incompatible
+  crop choice, repeated failed construction recovery, and no enclosed
+  rooms. The next attempt is prohibited until the substrate and runtime
+  failures are corrected and live-validated. Policy failures stand; they
+  are not repaired with gameplay heuristics. The evaluator must also gain
+  completed-stage furniture evidence before it can clear the installed-bed
+  predicate.
+
+- **2026-07-09 — G7 attempt 2 run-integrity candidate implemented and
+  isolated-live-validated; not yet production-deployed.** The governed surface
+  now has eight actions. `INTERACT` accepts one semantic operation
+  (`confirm/cancel/up/down/left/right`), requires an explicit strict integer
+  `advance_ticks: 0`, and dispatches exactly one fixed DF interface key only
+  when the game is paused on an allowlisted interactive viewscreen. It carries
+  governed provenance but never earns gameplay-progress credit. One modal
+  episode is capped at eight operations; three unchanged screens terminate it,
+  while modal exit or positive ticks reset the episode.
+
+  The runner now terminates a zero-progress timeout before another policy call,
+  records partial tick advancement as degraded rather than lost, checks
+  cancellation after pause/decision/execute/advance, and durably writes a
+  terminal trace reason before the registry status. A run-scoped DFHack ledger
+  records food/drink item creation, per-citizen eat/drink history, and immediate
+  death facts; `job_metrics.lua` separately reports completed-stage furniture.
+  `scripts/evaluate_g7.py` deterministically evaluates all ratified G7
+  predicates and returns UNKNOWN when evidence is incomplete.
+
+  Review hardening made four evidence/lifecycle boundaries explicit: the Lua
+  citizen predicate returns one boolean (so animals, visitors, and enemies
+  cannot enter the ledger); elapsed duration is summed from trace
+  `ticks_advanced` and must agree with any positive summary value; zero deaths
+  pass only with complete evidence from the same run; and a transactional
+  `pending -> running` claim must succeed before a worker can touch the trace or
+  global ledger. Regression coverage includes forged summaries, stale and
+  incomplete death ledgers, and duplicate workers attempting the same run id.
+
+  Isolated live smoke `live-g7-interact-smoke2` ran the candidate from `/tmp`
+  against the actual stopped liaison screen, outside the production registry.
+  One `confirm` sent exactly one `SELECT`, advanced 0 ticks, stayed paused,
+  changed the CopyScreen hash, and exited `viewscreen_textviewerst` to
+  `viewscreen_dwarfmodest`; validation, governed provenance, and no-progress
+  credit checks all passed. Candidate ledger smoke `g7-candidate-live-smoke`
+  then passed start/read/stop validation on deployed DF `0.47.05-r8` at game
+  tick `217225`, with complete flags, the expected run id, zero errors, and no
+  tick advancement. The complete local suite passes (`607 passed, 4 skipped`),
+  and the stricter evaluator reproduces attempt 1's failure from its permanent
+  trace (including exact 199,691-tick trace/summary agreement). These prove
+  candidate runtime compatibility, not deployment. Attempt 2 remains
+  prohibited until the candidate is committed, deployed in an explicit
+  operator window, and the deployed smoke passes.
 
 ## Reporting format (every gate attempt)
 

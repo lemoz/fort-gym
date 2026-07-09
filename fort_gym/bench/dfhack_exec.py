@@ -10,7 +10,7 @@ import sys
 from shutil import which
 from typing import Dict, List
 
-from .config import DFROOT, DFHACK_RUN, dfhack_cmd
+from .config import DFHACK_RUN, DFROOT, dfhack_cmd
 
 
 class DFHackError(RuntimeError):
@@ -64,12 +64,12 @@ def run_dfhack(args: List[str], *, timeout: float = 2.5, cwd: str = str(DFROOT))
 
 
 # ANSI escape sequence pattern
-_ANSI_ESCAPE = re.compile(r'\x1b\[[0-9;]*m')
+_ANSI_ESCAPE = re.compile(r"\x1b\[[0-9;]*m")
 
 
 def _strip_ansi(text: str) -> str:
     """Remove ANSI escape codes from text."""
-    return _ANSI_ESCAPE.sub('', text)
+    return _ANSI_ESCAPE.sub("", text)
 
 
 def run_lua_file(path: str, *args: str, timeout: float = 2.5) -> Dict[str, object]:
@@ -154,6 +154,17 @@ state.time = df.global.cur_year_tick or 0
 
 -- Pause state - critical for agent to know if game is running
 state.pause_state = df.global.pause_state and true or false
+
+-- Factual UI context for bounded paused-dialog interaction. Keep this as the
+-- concrete DF viewscreen type; policy and safety checks live in the runner.
+state.viewscreen_type = "unknown"
+pcall(function()
+    local view = dfhack.gui.getCurViewscreen()
+    if view and view._type then
+        local rendered = tostring(view._type)
+        state.viewscreen_type = rendered:match("<type: ([^>]+)>") or rendered
+    end
+end)
 
 -- Count only citizen dwarves
 local dwarf_count = 0

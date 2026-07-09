@@ -289,8 +289,9 @@
       </div>
       <div>
         <h3>Evidence-gated scoring</h3>
-        <p>Every step carries a recorded game-screen frame and a proof object of real state change.
-        Derived views are labeled as such. A claim without its evidence row does not count.</p>
+        <p>Every gameplay step carries a recorded game-screen frame and a proof object that reports
+        whether real state changed. Derived views are labeled as such. A claim without its evidence
+        row does not count.</p>
       </div>
       <div>
         <h3>Pre-declared gates</h3>
@@ -331,8 +332,8 @@
         <tr><td class="g">G3</td><td class="q">Can it run a real production economy — finished goods, not queues?</td><td><span class="status pass">PASSED</span></td></tr>
         <tr><td class="g">G4</td><td class="q">Can it build a fortress — economy plus enclosed rooms — over 50,000 ticks?</td><td><span class="status pass">PASSED · 40% rate</span></td></tr>
         <tr><td class="g">G5</td><td class="q">Does persistent memory improve play?</td><td><span class="status answered">ANSWERED: NO</span></td></tr>
-        <tr><td class="g">G6</td><td class="q">Does any of it generalize to a map the agent has never seen?</td><td><span class="status open">IN PROGRESS</span></td></tr>
-        <tr><td class="g">G7</td><td class="q">Can a fort live — a full year of food, drink, and migrants, zero neglect deaths?</td><td><span class="status open">PROPOSED</span></td></tr>
+        <tr><td class="g">G6</td><td class="q">Does any of it generalize to a map the agent has never seen?</td><td><span class="status open">UNPASSED · 0/7</span></td></tr>
+        <tr><td class="g">G7</td><td class="q">Can a fort live — a full year of food, drink, and migrants, zero neglect deaths?</td><td><span class="status open">ATTEMPT 1 FAILED</span></td></tr>
         <tr><td class="g">G8</td><td class="q">Depth: can an agent take the fortress underground, across z-levels?</td><td><span class="status open">HORIZON</span></td></tr>
       </tbody>
     </table>
@@ -344,9 +345,10 @@
   <div class="wrap">
     <div class="eyebrow">What's next</div>
     <h2>A standing proving ground for anyone's agent.</h2>
-    <p class="section-lede">The ladder keeps rising — survival economies, multi-level construction,
-    fresh worlds on demand — and the endgame is a public leaderboard where any model attempts the
-    same gates under the same instruments, with the same unforgiving evidence trail.
+    <p class="section-lede">Next: deploy the dialog-capable, fail-closed run-integrity candidate,
+    verify it on the live runtime, then run the second one-year survival attempt. Beyond that: multi-level construction, fresh
+    worlds on demand, and a public leaderboard where any model attempts the same gates under the
+    same instruments, with the same unforgiving evidence trail.
     <b>Built in the open</b>, at <a href="https://github.com/lemoz/fort-gym">github.com/lemoz/fort-gym</a>.</p>
   </div>
 </section>

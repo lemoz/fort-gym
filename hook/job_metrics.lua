@@ -205,7 +205,17 @@ local FURNITURE_BUILDING_KEYS = {
   [df.building_type.Chair] = 'chair',
 }
 out.placed_furniture = { bed = 0, door = 0, table = 0, chair = 0 }
+-- Keep placed_furniture's existing "present or being installed" meaning, but
+-- expose a separate count for furniture whose construction stage is complete.
+out.placed_furniture_completed = { bed = 0, door = 0, table = 0, chair = 0 }
 out.placed_furniture_positions = { bed = {}, door = {}, table = {}, chair = {} }
+
+local function building_is_complete(bld)
+  local ok, complete = pcall(function()
+    return bld:getBuildStage() >= bld:getMaxBuildStage()
+  end)
+  return ok and complete or false
+end
 
 -- farm plots placed (G7 survival primitive: see build_farm_plot.lua)
 out.farm_plots = 0
@@ -243,6 +253,9 @@ for _, bld in ipairs(df.global.world.buildings.all) do
   if ok_type and FURNITURE_BUILDING_KEYS[bld_type] then
     local key = FURNITURE_BUILDING_KEYS[bld_type]
     out.placed_furniture[key] = out.placed_furniture[key] + 1
+    if building_is_complete(bld) then
+      out.placed_furniture_completed[key] = out.placed_furniture_completed[key] + 1
+    end
     if #out.placed_furniture_positions[key] < 8 then
       pcall(function()
         table.insert(
@@ -292,6 +305,88 @@ for _, bld in ipairs(df.global.world.buildings.all) do
     })
   end
 end
+
+-- Dead citizens remain in world.units.all after death. Read only the raw
+-- DF 0.47.05 fields here; each lookup is pcall-guarded for adjacent layouts.
+-- No cause is inferred from hunger, thirst, or stress counters.
+out.dead_citizen_count = 0
+out.dead_citizen_records = {}
+local all_causes_known = true
+
+local function dead_value(unit, field_table, field)
+  local ok, value = pcall(function()
+    local values = unit[field_table]
+    return values and values[field] or nil
+  end)
+  if ok and value ~= nil then return value end
+  return false
+end
+
+local function dead_flag(unit, field_table, field)
+  local ok, value = pcall(function()
+    local flags = unit[field_table]
+    return flags and flags[field] and true or false
+  end)
+  return ok and value or false
+end
+
+local function dead_citizen_record(unit)
+  local ok_id, unit_id = pcall(function() return unit.id end)
+  if not ok_id or unit_id == nil then return nil, false end
+
+  local cause_enum, cause_name, cause_known = false, false, false
+  local ok_cause, cause_value = pcall(function() return unit.counters.death_cause end)
+  local cause_number = ok_cause and tonumber(cause_value) or nil
+  if cause_number and cause_number >= 0 then
+    cause_enum = cause_number
+    local ok_name, name = pcall(function() return df.death_type[cause_number] end)
+    if ok_name and name and tostring(name) ~= 'NONE' then
+      cause_name = sanitize(name)
+      cause_known = true
+    end
+  end
+
+  return {
+    unit_id = unit_id,
+    cause_enum = cause_enum,
+    cause_name = cause_name,
+    cause_known = cause_known,
+    incident_id = dead_value(unit, 'counters', 'death_id'),
+    hunger_timer = dead_value(unit, 'counters2', 'hunger_timer'),
+    thirst_timer = dead_value(unit, 'counters2', 'thirst_timer'),
+    stored_fat = dead_value(unit, 'counters2', 'stored_fat'),
+    stomach_food = dead_value(unit, 'counters2', 'stomach_food'),
+    drowning = dead_flag(unit, 'flags1', 'drowning'),
+    suffocation = dead_value(unit, 'counters', 'suffocation'),
+    emotionally_overloaded = dead_flag(unit, 'flags3', 'emotionally_overloaded'),
+  }, cause_known
+end
+
+local dead_scan_ok = pcall(function()
+  local civ_id = df.global.ui.civ_id
+  for _, unit in ipairs(df.global.world.units.all) do
+    local ok_dead, is_dead_citizen = pcall(function()
+      return unit.civ_id == civ_id
+        and dfhack.units.isDwarf(unit)
+        and dfhack.units.isDead(unit)
+    end)
+    if ok_dead and is_dead_citizen then
+      out.dead_citizen_count = out.dead_citizen_count + 1
+      local record, cause_known = dead_citizen_record(unit)
+      if record then
+        table.insert(out.dead_citizen_records, record)
+        if not cause_known then all_causes_known = false end
+      else
+        all_causes_known = false
+      end
+    end
+  end
+end)
+
+-- A failed record must fail closed: unknown evidence is not a known-safe cause.
+out.death_evidence_complete = dead_scan_ok
+  and #out.dead_citizen_records == out.dead_citizen_count
+out.death_causes_known = out.death_evidence_complete and all_causes_known
 
 -- optional bounded rect tile composition
 local x1, y1, z1 = to_int(args[1]), to_int(args[2]), to_int(args[3])

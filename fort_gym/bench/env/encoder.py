@@ -59,9 +59,7 @@ def _sanitize_token(value: str, limit: int = 32) -> str:
     conservative whitelist here so a stray character cannot corrupt the
     single-line observation. Non-whitelisted characters are dropped.
     """
-    cleaned = "".join(
-        ch for ch in value if ch.isalnum() or ch in {"_", "-", " "}
-    ).strip()
+    cleaned = "".join(ch for ch in value if ch.isalnum() or ch in {"_", "-", " "}).strip()
     return cleaned[:limit]
 
 
@@ -200,10 +198,7 @@ def _classify_screen_state(screen_text: Optional[str]) -> Dict[str, Any]:
             extra_evidence=useful_rows[:3] or ["visible manager new-order search"],
         )
 
-    if (
-        "manager" in lower
-        and ("work order" in lower or "new order" in lower or "orders" in lower)
-    ):
+    if "manager" in lower and ("work order" in lower or "new order" in lower or "orders" in lower):
         return result(
             "manager_orders",
             confidence="medium",
@@ -231,9 +226,7 @@ def _classify_screen_state(screen_text: Optional[str]) -> Dict[str, Any]:
 
     if "carpenter's workshop" in lower and "placement" in lower:
         blocked = (
-            "blocked" in lower
-            or "building present" in lower
-            or "needs building material" in lower
+            "blocked" in lower or "building present" in lower or "needs building material" in lower
         )
         return result(
             "workshop_placement",
@@ -273,14 +266,11 @@ def _classify_screen_state(screen_text: Optional[str]) -> Dict[str, Any]:
             extra_evidence=["visible workshop says construction is pending"],
         )
 
-    if (
-        "carpenter's workshop" in lower
-        and (
-            "leather works" in lower
-            or "mason's workshop" in lower
-            or "bowyer's workshop" in lower
-            or "metalsmith's forge" in lower
-        )
+    if "carpenter's workshop" in lower and (
+        "leather works" in lower
+        or "mason's workshop" in lower
+        or "bowyer's workshop" in lower
+        or "metalsmith's forge" in lower
     ):
         return result(
             "building_workshop_type_menu",
@@ -323,9 +313,7 @@ def _classify_screen_state(screen_text: Optional[str]) -> Dict[str, Any]:
         )
 
     if "carpenter's workshop" in lower and (
-        "x: remove building" in lower
-        or "ctrl+n: give name" in lower
-        or "esc: done" in lower
+        "x: remove building" in lower or "ctrl+n: give name" in lower or "esc: done" in lower
     ):
         return result(
             "carpenter_workshop_selected",
@@ -418,9 +406,7 @@ def _format_action_history_entry(action_entry: Dict[str, Any]) -> str:
     changed = action_entry.get("changed")
     reasons = action_entry.get("productive_reasons")
     screen_read = (
-        action_entry.get("screen_read")
-        if isinstance(action_entry.get("screen_read"), dict)
-        else {}
+        action_entry.get("screen_read") if isinstance(action_entry.get("screen_read"), dict) else {}
     )
     last_action_review = (
         action_entry.get("last_action_review")
@@ -449,11 +435,7 @@ def _format_action_history_entry(action_entry: Dict[str, Any]) -> str:
         mode = str(screen_read.get("mode") or "").strip()
         confidence = str(screen_read.get("confidence") or "").strip()
         if mode:
-            details.append(
-                "agent_screen="
-                + mode
-                + (f"/{confidence}" if confidence else "")
-            )
+            details.append("agent_screen=" + mode + (f"/{confidence}" if confidence else ""))
     if last_action_review:
         worked = last_action_review.get("worked")
         if worked is not None:
@@ -524,11 +506,7 @@ def _action_family(entry: Dict[str, Any]) -> str:
 
 def _is_escape_only_action(entry: Dict[str, Any]) -> bool:
     keys = entry.get("keys")
-    return bool(
-        isinstance(keys, list)
-        and keys
-        and all(str(key) == "LEAVESCREEN" for key in keys)
-    )
+    return bool(isinstance(keys, list) and keys and all(str(key) == "LEAVESCREEN" for key in keys))
 
 
 def _is_blockable_menu_family(family: str) -> bool:
@@ -617,9 +595,7 @@ def _recent_progress_summary(
             continue
         sticky_family_counts[family] = sticky_family_counts.get(family, 0) + 1
         fingerprint = _key_fingerprint(entry.get("keys"))
-        sticky_fingerprint_counts[fingerprint] = (
-            sticky_fingerprint_counts.get(fingerprint, 0) + 1
-        )
+        sticky_fingerprint_counts[fingerprint] = sticky_fingerprint_counts.get(fingerprint, 0) + 1
         review = entry.get("last_action_review")
         if isinstance(review, dict) and review.get("should_retry_same_path") is False:
             sticky_agent_marked_bad_path = True
@@ -641,9 +617,7 @@ def _recent_progress_summary(
     last_entry = action_history[-1]
     last_key_fingerprint = _key_fingerprint(last_entry.get("keys"))
     last_action_family = _action_family(last_entry)
-    escape_recovery_attempted = any(
-        _is_escape_only_action(entry) for entry in no_progress_entries
-    )
+    escape_recovery_attempted = any(_is_escape_only_action(entry) for entry in no_progress_entries)
 
     manager_orders = _to_int(work.get("manager_orders_count"))
     order_qty_left = _to_int(work.get("manager_orders_amount_left"))
@@ -747,6 +721,8 @@ def encode_observation(
     risks = clean_state.get("risks", [])
     reminders = clean_state.get("reminders", [])
     pause_state = clean_state.get("pause_state", None)
+    viewscreen_type = clean_state.get("viewscreen_type")
+    survival = clean_state.get("survival") if isinstance(clean_state.get("survival"), dict) else {}
     work = clean_state.get("work") if isinstance(clean_state.get("work"), dict) else {}
     recent_progress_summary = _recent_progress_summary(action_history, work)
     if recent_progress_summary:
@@ -802,8 +778,7 @@ def encode_observation(
         and "Needs building material" not in screen_text
     )
     screen_shows_workshop_select_state = bool(
-        screen_shows_ready_workshop_placement
-        or screen_shows_workshop_material_selection
+        screen_shows_ready_workshop_placement or screen_shows_workshop_material_selection
     )
     screen_lower = screen_text.lower() if screen_text else ""
     screen_shows_manager_required = "manager is required" in screen_lower
@@ -828,8 +803,7 @@ def encode_observation(
     if screen_state:
         clean_state["screen_state"] = screen_state
     active_material_blocked = bool(
-        ui_build_feedback.get("material_blocked")
-        and not screen_shows_workshop_select_state
+        ui_build_feedback.get("material_blocked") and not screen_shows_workshop_select_state
     )
 
     # Build status section
@@ -857,6 +831,24 @@ def encode_observation(
         status_lines.append("Game Status: PAUSED (press SPACE to unpause)")
     elif pause_state is False:
         status_lines.append("Game Status: RUNNING")
+    if isinstance(viewscreen_type, str) and viewscreen_type:
+        status_lines.append(f"DF Viewscreen: {viewscreen_type}")
+    if survival:
+        status_lines.append(
+            "Run resource flow: "
+            f"food produced={survival.get('food_produced_in_run')}, "
+            f"consumed={survival.get('food_consumed_in_run')}; "
+            f"drink produced={survival.get('drink_produced_in_run')}, "
+            f"consumed={survival.get('drink_consumed_in_run')}; "
+            f"evidence_complete={survival.get('flow_evidence_complete')}"
+        )
+        death_records = survival.get("death_records")
+        status_lines.append(
+            "Run death evidence: "
+            f"records={len(death_records) if isinstance(death_records, list) else 'unknown'}, "
+            f"causes_known={survival.get('death_causes_known')}, "
+            f"neglect_deaths={survival.get('neglect_deaths')}"
+        )
 
     # Last action result feedback
     if last_action_result is not None:
@@ -889,9 +881,7 @@ def encode_observation(
                     if fx is not None and fy is not None and err:
                         tile_parts.append(f"({fx},{fy}): {err}")
                 if tile_parts:
-                    status_lines.append(
-                        "Failed tiles: " + "; ".join(tile_parts)
-                    )
+                    status_lines.append("Failed tiles: " + "; ".join(tile_parts))
             detail_parts = []
             for key in (
                 "newly_designated",
@@ -951,15 +941,11 @@ def encode_observation(
             seasons_set = action_result.get("seasons_set")
             if isinstance(seasons_set, list) and seasons_set:
                 set_names = [
-                    _sanitize_token(name)
-                    for name in seasons_set
-                    if isinstance(name, str) and name
+                    _sanitize_token(name) for name in seasons_set if isinstance(name, str) and name
                 ]
                 set_names = [n for n in set_names if n]
                 if set_names:
-                    status_lines.append(
-                        "FARM crops set: " + ",".join(set_names[:4])
-                    )
+                    status_lines.append("FARM crops set: " + ",".join(set_names[:4]))
             seasons_skipped = action_result.get("seasons_skipped")
             if isinstance(seasons_skipped, list) and seasons_skipped:
                 skip_parts = []
@@ -975,16 +961,16 @@ def encode_observation(
                         if label:
                             skip_parts.append(label)
                 if skip_parts:
-                    status_lines.append(
-                        "FARM seasons skipped: " + "; ".join(skip_parts)
-                    )
+                    status_lines.append("FARM seasons skipped: " + "; ".join(skip_parts))
 
     # Screen change feedback - critical for agent to know if actions had effect
     if screen_text and previous_screen:
         diff = _compute_screen_diff(previous_screen, screen_text)
         if diff.get("has_prev"):
             if diff.get("screen_identical"):
-                status_lines.append("⚠️ WARNING: Screen UNCHANGED - your action may have had NO EFFECT!")
+                status_lines.append(
+                    "⚠️ WARNING: Screen UNCHANGED - your action may have had NO EFFECT!"
+                )
                 status_lines.append("   Try a DIFFERENT approach or key sequence.")
             elif not diff.get("cursor_moved") and diff.get("change_pct", 100) < 10:
                 status_lines.append("⚠️ NOTICE: Cursor did NOT move. Screen barely changed.")
@@ -1016,15 +1002,17 @@ def encode_observation(
         # buildings/constructions — a new BUILD cannot consume those items
         return f"{label}: {total} ({usable} usable, rest locked in jobs/buildings)"
 
-    status_lines.extend([
-        f"Time: tick {time_tick}",
-        f"Population: {population} dwarves",
-        (
-            f"Food: {stocks.get('food', 0)}, Drink: {stocks.get('drink', 0)}, "
-            f"{_stock_with_usable('Wood', 'wood', 'wood_usable')}, "
-            f"{_stock_with_usable('Stone', 'stone', 'stone_usable')}"
-        ),
-    ])
+    status_lines.extend(
+        [
+            f"Time: tick {time_tick}",
+            f"Population: {population} dwarves",
+            (
+                f"Food: {stocks.get('food', 0)}, Drink: {stocks.get('drink', 0)}, "
+                f"{_stock_with_usable('Wood', 'wood', 'wood_usable')}, "
+                f"{_stock_with_usable('Stone', 'stone', 'stone_usable')}"
+            ),
+        ]
+    )
     if work:
         build_site = _int_list_or_none(work.get("carpenter_build_site"), 3)
         if build_site is not None:
@@ -1041,11 +1029,7 @@ def encode_observation(
             )
         if work.get("cursor_z") is not None or work.get("window_z") is not None:
             cursor_x = work.get("cursor_x")
-            cursor_label = (
-                "inactive"
-                if _is_inactive_df_cursor(cursor_x)
-                else "active"
-            )
+            cursor_label = "inactive" if _is_inactive_df_cursor(cursor_x) else "active"
             status_lines.append(
                 "Live view: "
                 f"cursor_{cursor_label}=({work.get('cursor_x', '?')},{work.get('cursor_y', '?')},"
@@ -1089,14 +1073,12 @@ def encode_observation(
         task_job_names = work.get("carpenter_workshop_task_job_type_names")
         if isinstance(task_job_names, list) and task_job_names:
             status_lines.append(
-                "Workshop queued tasks: "
-                + ", ".join(str(name) for name in task_job_names[:8])
+                "Workshop queued tasks: " + ", ".join(str(name) for name in task_job_names[:8])
             )
         active_job_names = work.get("active_job_type_names")
         if isinstance(active_job_names, list) and active_job_names:
             status_lines.append(
-                "Active jobs: "
-                + ", ".join(str(name) for name in active_job_names[:8])
+                "Active jobs: " + ", ".join(str(name) for name in active_job_names[:8])
             )
         workshop_rect_values = [
             _int_or_none(work.get(key))
@@ -1258,9 +1240,7 @@ def encode_observation(
                         continue
                     labors = entry.get("labors")
                     if isinstance(labors, list):
-                        labor_names = [
-                            str(name) for name in labors if isinstance(name, str)
-                        ]
+                        labor_names = [str(name) for name in labors if isinstance(name, str)]
                     else:
                         labor_names = []
                     labor_str = ",".join(labor_names) if labor_names else "-"
@@ -1338,9 +1318,7 @@ def encode_observation(
                         f"queued_jobs={queued_jobs}"
                     )
                     if subtype == "Carpenters":
-                        workshop_line += (
-                            " — ORDER can queue jobs to any built carpenter workshop."
-                        )
+                        workshop_line += " — ORDER can queue jobs to any built carpenter workshop."
                     elif subtype == "Still":
                         workshop_line += (
                             " — ORDER job=brew can queue brewing jobs at any built Still."
@@ -1352,9 +1330,7 @@ def encode_observation(
                         f"queued_jobs={queued_jobs}"
                     )
                     if jobs_construct_building == 0:
-                        workshop_line += (
-                            " — no construct job exists; construction is stalled"
-                        )
+                        workshop_line += " — no construct job exists; construction is stalled"
                 status_lines.append(workshop_line)
 
         placed = crew.get("placed_furniture")
@@ -1365,9 +1341,7 @@ def encode_observation(
                 if value is not None:
                     placed_parts.append(f"{key}s={value}")
             if placed_parts:
-                status_lines.append(
-                    "Placed furniture buildings: " + ", ".join(placed_parts)
-                )
+                status_lines.append("Placed furniture buildings: " + ", ".join(placed_parts))
             positions = crew.get("placed_furniture_positions")
             if isinstance(positions, dict) and positions:
                 position_parts = []
@@ -1386,7 +1360,8 @@ def encode_observation(
                         position_parts.append(f"{key}s at " + ",".join(rendered))
                 if position_parts:
                     status_lines.append(
-                        "Furniture positions: " + "; ".join(position_parts)
+                        "Furniture positions: "
+                        + "; ".join(position_parts)
                         + " — construction cannot be placed on occupied tiles."
                     )
 
@@ -1453,9 +1428,7 @@ def encode_observation(
                 where = "surface" if entry.get("surface") else "subterranean"
                 seasons = entry.get("seasons")
                 if isinstance(seasons, list) and seasons:
-                    season_str = "all" if len(seasons) >= 4 else "/".join(
-                        str(s) for s in seasons
-                    )
+                    season_str = "all" if len(seasons) >= 4 else "/".join(str(s) for s in seasons)
                 else:
                     season_str = "none"
                 seed_parts.append(f"{token} x{count} ({where}, {season_str})")
@@ -1475,9 +1448,7 @@ def encode_observation(
                     label = "wood_logs" if key == "wood" else f"{key}s"
                     goods_parts.append(f"{label}={value}")
             if goods_parts:
-                status_lines.append(
-                    "Finished goods in play: " + ", ".join(goods_parts)
-                )
+                status_lines.append("Finished goods in play: " + ", ".join(goods_parts))
 
         rect_tiles = crew.get("rect_tiles")
         if isinstance(rect_tiles, dict) and rect_tiles:
@@ -1487,10 +1458,7 @@ def encode_observation(
             shrub = _int_or_none(rect_tiles.get("shrub"))
             shrub_or_other = _int_or_none(rect_tiles.get("shrub_or_other"))
             designated = _int_or_none(rect_tiles.get("designated"))
-            if all(
-                value is not None
-                for value in (wall, floor, shrub_or_other, designated)
-            ):
+            if all(value is not None for value in (wall, floor, shrub_or_other, designated)):
                 tree_part = (
                     f"tree_trunks={tree} (fell with DIG kind=chop for logs), "
                     if tree is not None
@@ -1523,9 +1491,7 @@ def encode_observation(
             )
             pending = _int_or_none(fort.get("pending_constructions"))
             if pending is not None:
-                structure_line += (
-                    f", queued_constructions={pending} (ordered, not built yet)"
-                )
+                structure_line += f", queued_constructions={pending} (ordered, not built yet)"
             status_lines.append(structure_line)
 
         spaces = fort.get("spaces")
@@ -1595,9 +1561,7 @@ def encode_observation(
                     runs.append((start, prev))
                     start = prev = value
                 runs.append((start, prev))
-                run_text = ",".join(
-                    f"x{a}" if a == b else f"x{a}-{b}" for a, b in runs
-                )
+                run_text = ",".join(f"x{a}" if a == b else f"x{a}-{b}" for a, b in runs)
                 row_parts.append(f"z{z} y{y}: {run_text}")
                 if len(row_parts) >= 12:
                     break
@@ -1823,11 +1787,7 @@ def encode_observation(
         )
         if total_excavation_delta >= 10 or successful_targets >= 2:
             available_materials = int(stocks.get("wood") or 0) + int(stocks.get("stone") or 0)
-            if (
-                available_materials <= 0
-                or total_material_delta <= 0
-                or active_material_blocked
-            ):
+            if available_materials <= 0 or total_material_delta <= 0 or active_material_blocked:
                 status_lines.append(
                     "Live UI phase: starter digging exists but building material is "
                     "missing, unusable, or not yet proven by this run. Use material target recommended keys to chop "
@@ -1979,9 +1939,7 @@ def encode_observation(
                 if ui_target_setup.get("recommended_keys_retry")
                 else "Fresh target recommended keys: "
             )
-            status_lines.append(
-                prefix + ", ".join(str(key) for key in recommended_keys)
-            )
+            status_lines.append(prefix + ", ".join(str(key) for key in recommended_keys))
         elif ui_target_setup.get("recommended_keys_suppressed"):
             if ui_target_setup.get("target_progress_seen"):
                 reason = "this target already produced real tile progress."
@@ -1992,9 +1950,7 @@ def encode_observation(
                 reason = "the bounded retry limit was reached."
             else:
                 reason = "this target was already attempted."
-            status_lines.append(
-                "Fresh target recommended keys: hidden because " + reason
-            )
+            status_lines.append("Fresh target recommended keys: hidden because " + reason)
             status_lines.append(
                 "Fresh target route: unavailable. Treat the target coordinates "
                 "as evidence about the world, not a key sequence; choose a "

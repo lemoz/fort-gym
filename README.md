@@ -132,14 +132,16 @@ curl -s -X POST http://127.0.0.1:8000/runs \
   -d '{"backend":"dfhack","model":"dfhack-governed-llm","max_steps":30,"ticks_per_step":1000}'
 ```
 Governed runs treat DFHack as a bounded, audited command transport — the agent
-issues overseer commands (`DIG`, `BUILD`, `ORDER`, `WAIT`) a human could issue
+issues overseer commands (`DIG`, `BUILD`, `ORDER`, `UNSUSPEND`, `FARM`, `LABOR`,
+`WAIT`, `INTERACT`) a human could issue
 through the UI, then the simulation must advance and produce observable state
 changes. Each accepted governed action is tagged `execute.provenance =
 "dfhack_governed"`, per-step metrics carry `score_provenance =
 "dfhack_governed_observed_state"`, and every step records a real `screen_text`
 CopyScreen frame for replay evidence. Governed target discovery preserves and
 restores the live DF camera/cursor so helper probes never disturb the visible
-game. Non-governed models that emit structured `DIG`/`BUILD`/`ORDER` are tagged
+game. `INTERACT` is a zero-tick, paused-dialog action and is never score-progress
+eligible by itself. Non-governed models that emit structured governed actions are tagged
 `dfhack_assisted`: their progress metrics are zeroed and — once one assisted
 action is accepted — the run's scoreable elapsed time is blocked for the rest
 of the run. `summary.json` additionally includes a deterministic `rubric`
@@ -250,11 +252,17 @@ Rules the harness enforces:
 
 These systems are implemented (not roadmap):
 
-1. **Memory** (`fort_gym/bench/agent/memory.py`): `MemoryManager` with a rolling step window, compressed summary of older steps, POIs (points of interest), failed-attempt records, and a gameplay plan with plan reviews. In-process per run; used by the keystroke agents and the governed LLM agent. Cross-run persistence does not exist yet.
+1. **Memory** (`fort_gym/bench/agent/memory.py`): `MemoryManager` with a rolling step window, compressed summary of older steps, POIs (points of interest), failed-attempt records, and a gameplay plan with plan reviews. The governed agent can serialize this state through `FORT_GYM_GOVERNED_MEMORY_PATH`; production runs currently disable it because the G5 ablation found the present design counterproductive.
 2. **Tools** (`fort_gym/bench/agent/tools.py`): `ToolManager` with memory/plan/perception tools wired into the review-mode agents.
 3. **Experimentation** (`fort_gym/bench/experiment/`): YAML config → `ExperimentRunner` → run with experiment metadata.
 
-The next research step is improving the governed LLM policy (`dfhack-governed-llm`) — the loop and the model should solve gameplay; helper heuristics stay out of the policy.
+The active research step is G7 attempt 2. The run-integrity candidate now gives
+the governed policy a narrow player-parity way to handle paused dialogs, fails
+closed when requested time cannot advance, and records the factual evidence
+needed to evaluate the one-year predicates. It has passed local tests and an
+isolated live modal smoke; production deployment still requires an operator
+window. The loop and the model must solve gameplay; helper heuristics stay out
+of the policy.
 
 **Success definition and gate ladder: [docs/WDSLL.md](docs/WDSLL.md)** — every claim of "the agent plays" must pass a gate there on public, replayable evidence.
 

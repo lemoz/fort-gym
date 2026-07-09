@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections import Counter
 from typing import Any, Dict, Iterable, List
 
-
 RUBRIC_WINDOW = 100
 DIMENSION_NAMES = (
     "survival_management",
@@ -61,11 +60,15 @@ def _action_fingerprint(action: Dict[str, Any]) -> str:
         keys = params.get("keys") if isinstance(params, dict) else []
         if isinstance(keys, list):
             return f"{action_type}:{','.join(str(key) for key in keys[:8])}"
+    if action_type == "INTERACT":
+        return f"INTERACT:{params.get('operation')}"
     if action_type == "DIG":
         kind = params.get("kind") or "dig"
         return f"DIG:{kind}:{params.get('area')}:{params.get('size')}"
     if action_type == "BUILD":
-        fingerprint = f"BUILD:{params.get('kind')}:{params.get('x')}:{params.get('y')}:{params.get('z')}"
+        fingerprint = (
+            f"BUILD:{params.get('kind')}:{params.get('x')}:{params.get('y')}:{params.get('z')}"
+        )
         x2 = params.get("x2")
         y2 = params.get("y2")
         if x2 is not None or y2 is not None:
@@ -117,7 +120,6 @@ _PROGRESS_FIELDS = (
 )
 
 
-
 _QUEUE_ONLY_EVIDENCE_KEYS = {
     "created_job_ids",
     "manager_recorded",
@@ -151,6 +153,11 @@ _QUEUE_ONLY_EVIDENCE_KEYS = {
     "seasons_set",
     "seasons_skipped",
     "seeds_on_hand",
+    # INTERACT audit evidence confirms a bounded paused-interface input only.
+    # It must never be treated as a world-state change or progress exemption.
+    "operation",
+    "interface_key",
+    "keys_sent",
 }
 
 
@@ -211,6 +218,7 @@ def _proof_shows_world_change(proof: Dict[str, Any], *, count_labor: bool = True
     meaningful = {k for k, v in evidence.items() if v not in (None, 0, False, [], "")}
     return not meaningful <= _QUEUE_ONLY_EVIDENCE_KEYS
 
+
 def _labor_flip_credits_progress(
     record: Dict[str, Any],
     proof: Any,
@@ -256,6 +264,11 @@ def _step_progress_flags(records: List[Dict[str, Any]]) -> List[bool]:
     for record in records:
         metrics = _metrics(record)
         proof = record.get("gameplay_proof")
+        action = _record_action(record)
+        if str(action.get("type") or "") == "INTERACT":
+            flags.append(False)
+            previous_metrics = metrics
+            continue
         # count_labor=False: a bare labor flip is not world change here; the
         # first flip per (unit, labor) target is credited via the labor helper,
         # so repeated enable/disable churn on one target is not exempted.
@@ -264,9 +277,7 @@ def _step_progress_flags(records: List[Dict[str, Any]]) -> List[bool]:
             and bool(proof.get("ok"))
             and _proof_shows_world_change(proof, count_labor=False)
         )
-        labor_progress = _labor_flip_credits_progress(
-            record, proof, credited_labor_targets
-        )
+        labor_progress = _labor_flip_credits_progress(record, proof, credited_labor_targets)
         productive = any(
             _to_int(metrics.get(field)) > _to_int(previous_metrics.get(field))
             for field in _PROGRESS_FIELDS
@@ -291,7 +302,9 @@ def _dimension(score: float, evidence: List[str], critique: str) -> Dict[str, An
     }
 
 
-def evaluate_trace_records(records: List[Dict[str, Any]], *, window: int = RUBRIC_WINDOW) -> Dict[str, Any]:
+def evaluate_trace_records(
+    records: List[Dict[str, Any]], *, window: int = RUBRIC_WINDOW
+) -> Dict[str, Any]:
     """Return a deterministic 0-100 rubric over the recent fortress history."""
 
     recent = records[-window:] if window > 0 else list(records)
@@ -301,7 +314,9 @@ def evaluate_trace_records(records: List[Dict[str, Any]], *, window: int = RUBRI
     action_counts = Counter(action_types)
     fingerprints = Counter(_action_fingerprint(action) for action in actions)
     accepted_steps = sum(1 for record in recent if _execute(record).get("accepted") is True)
-    tick_steps = sum(1 for record in recent if _to_int(_tick_advance(record).get("ticks_advanced")) > 0)
+    tick_steps = sum(
+        1 for record in recent if _to_int(_tick_advance(record).get("ticks_advanced")) > 0
+    )
     ticks_advanced = sum(_to_int(_tick_advance(record).get("ticks_advanced")) for record in recent)
     unique_action_types = len({item for item in action_types if item != "unknown"})
     # Repetition is a failure only when the repeated steps produced no real
@@ -314,9 +329,7 @@ def evaluate_trace_records(records: List[Dict[str, Any]], *, window: int = RUBRI
         for action, progressed in zip(actions, progress_flags)
         if not progressed
     )
-    most_common_count = (
-        stale_fingerprints.most_common(1)[0][1] if stale_fingerprints else 0
-    )
+    most_common_count = stale_fingerprints.most_common(1)[0][1] if stale_fingerprints else 0
     repetition_ratio = most_common_count / total_steps if total_steps else 0.0
 
     completion_progress = _metric_max(recent, "completion_progress")
@@ -371,8 +384,18 @@ def evaluate_trace_records(records: List[Dict[str, Any]], *, window: int = RUBRI
 
     dimensions = {
         "survival_management": _dimension(
-            min(10.0, (2.0 if final_pop > 0 else 0.0) + min(4.0, final_food / 25.0) + min(4.0, final_drink / 20.0)),
-            [f"pop={final_pop}", f"food={final_food}", f"drink={final_drink}", f"ticks={ticks_advanced}"],
+            min(
+                10.0,
+                (2.0 if final_pop > 0 else 0.0)
+                + min(4.0, final_food / 25.0)
+                + min(4.0, final_drink / 20.0),
+            ),
+            [
+                f"pop={final_pop}",
+                f"food={final_food}",
+                f"drink={final_drink}",
+                f"ticks={ticks_advanced}",
+            ],
             "Fort health is good when population survives and basic stocks remain available.",
         ),
         "shelter_layout": _dimension(
@@ -394,7 +417,13 @@ def evaluate_trace_records(records: List[Dict[str, Any]], *, window: int = RUBRI
             "functional rooms bounded by walls/buildings/doors — not elapsed time.",
         ),
         "production_economy": _dimension(
-            min(10.0, production_progress + utility_progress / 2.0 + carpenter_workshops * 2.0 + manager_orders),
+            min(
+                10.0,
+                production_progress
+                + utility_progress / 2.0
+                + carpenter_workshops * 2.0
+                + manager_orders,
+            ),
             [
                 f"production_progress={production_progress}",
                 f"utility_progress={utility_progress}",
@@ -421,8 +450,14 @@ def evaluate_trace_records(records: List[Dict[str, Any]], *, window: int = RUBRI
             "not progress against the retired fixed two_room_workshop plan.",
         ),
         "responsiveness": _dimension(
-            min(10.0, accepted_steps / max(1, total_steps) * 5.0 + tick_steps / max(1, total_steps) * 5.0),
-            [f"accepted_steps={accepted_steps}/{total_steps}", f"tick_steps={tick_steps}/{total_steps}"],
+            min(
+                10.0,
+                accepted_steps / max(1, total_steps) * 5.0 + tick_steps / max(1, total_steps) * 5.0,
+            ),
+            [
+                f"accepted_steps={accepted_steps}/{total_steps}",
+                f"tick_steps={tick_steps}/{total_steps}",
+            ],
             "The agent should issue valid commands and advance simulation when work is pending.",
         ),
         "plan_coherence": _dimension(
@@ -431,7 +466,9 @@ def evaluate_trace_records(records: List[Dict[str, Any]], *, window: int = RUBRI
                 sum(1 for action in actions if action.get("objective")) / max(1, total_steps) * 4.0
                 + min(
                     6.0,
-                    min(fort_functional_rooms, 2) * 2.0 + carpenter_workshops * 2.0 + manager_orders,
+                    min(fort_functional_rooms, 2) * 2.0
+                    + carpenter_workshops * 2.0
+                    + manager_orders,
                 ),
             ),
             [
@@ -444,12 +481,19 @@ def evaluate_trace_records(records: List[Dict[str, Any]], *, window: int = RUBRI
         ),
         "anti_repetition": _dimension(
             max(0.0, 10.0 - repetition_ratio * 10.0 - max(0, no_progress_steps - 3) * 0.25),
-            [f"stale_fingerprint_ratio={repetition_ratio:.2f}", f"no_progress_steps={no_progress_steps}"],
+            [
+                f"stale_fingerprint_ratio={repetition_ratio:.2f}",
+                f"no_progress_steps={no_progress_steps}",
+            ],
             "Repeated identical actions without state change are a failure even if the scalar score rises.",
         ),
         "legal_evidence": _dimension(
             10.0 if not illegal_markers else max(0.0, 10.0 - len(set(illegal_markers)) * 4.0),
-            [f"illegal_markers={sorted(set(illegal_markers))}", f"designation_progress={designation_progress}", f"ui_work_progress={ui_work_progress}"],
+            [
+                f"illegal_markers={sorted(set(illegal_markers))}",
+                f"designation_progress={designation_progress}",
+                f"ui_work_progress={ui_work_progress}",
+            ],
             "Legal evidence excludes debug completion and non-governed assisted progress from rubric credit.",
         ),
     }
@@ -482,8 +526,7 @@ def evaluate_trace_records(records: List[Dict[str, Any]], *, window: int = RUBRI
         "dimensions": dimensions,
         "action_counts": dict(sorted(action_counts.items())),
         "top_action_fingerprints": [
-            {"fingerprint": key, "count": count}
-            for key, count in fingerprints.most_common(5)
+            {"fingerprint": key, "count": count} for key, count in fingerprints.most_common(5)
         ],
         "blockers": blockers,
         "critique": _critique(rubric_score, blockers, dimensions),
@@ -497,20 +540,20 @@ def _critique(
 ) -> str:
     if blockers:
         return (
-            "The run still fails the fortress-quality rubric because "
-            + ", ".join(blockers)
-            + "."
+            "The run still fails the fortress-quality rubric because " + ", ".join(blockers) + "."
         )
     weak = [
-        name
-        for name, payload in dimensions.items()
-        if float(payload.get("score") or 0.0) < 5.0
+        name for name, payload in dimensions.items() if float(payload.get("score") or 0.0) < 5.0
     ]
     if weak:
         return "The run is playable but weak on " + ", ".join(weak) + "."
     if rubric_score >= 75:
-        return "The run shows broad, legal fortress progress across layout, production, and survival."
-    return "The run shows partial legal fortress progress but needs broader long-horizon development."
+        return (
+            "The run shows broad, legal fortress progress across layout, production, and survival."
+        )
+    return (
+        "The run shows partial legal fortress progress but needs broader long-horizon development."
+    )
 
 
 __all__ = ["DIMENSION_NAMES", "RUBRIC_WINDOW", "evaluate_trace_records"]

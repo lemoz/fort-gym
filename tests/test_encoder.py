@@ -3,6 +3,47 @@ from __future__ import annotations
 from fort_gym.bench.env.encoder import encode_observation
 
 
+def test_encoder_surfaces_pause_and_concrete_viewscreen_type() -> None:
+    text, state = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60},
+            "pause_state": True,
+            "viewscreen_type": "viewscreen_textviewerst",
+        }
+    )
+
+    assert "Game Status: PAUSED" in text
+    assert "DF Viewscreen: viewscreen_textviewerst" in text
+    assert state["viewscreen_type"] == "viewscreen_textviewerst"
+
+
+def test_encoder_surfaces_factual_run_scoped_survival_evidence() -> None:
+    text, state = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60},
+            "survival": {
+                "food_produced_in_run": 5,
+                "food_consumed_in_run": 2,
+                "drink_produced_in_run": 10,
+                "drink_consumed_in_run": 3,
+                "flow_evidence_complete": True,
+                "death_records": [],
+                "death_causes_known": True,
+                "neglect_deaths": 0,
+            },
+        }
+    )
+
+    assert "Run resource flow: food produced=5, consumed=2" in text
+    assert "drink produced=10, consumed=3; evidence_complete=True" in text
+    assert "Run death evidence: records=0, causes_known=True, neglect_deaths=0" in text
+    assert state["survival"]["drink_produced_in_run"] == 10
+
+
 def test_encoder_hides_recommended_keys_after_target_attempt() -> None:
     text, _ = encode_observation(
         {
@@ -705,10 +746,7 @@ def test_encoder_classifies_selected_usable_carpenter_workshop_screen() -> None:
             },
         },
         screen_text=(
-            "Ctrl+n: Give name\n"
-            "Carpenter's Workshop\n"
-            "x: Remove Building\n"
-            "ESC: Done"
+            "Ctrl+n: Give name\n" "Carpenter's Workshop\n" "x: Remove Building\n" "ESC: Done"
         ),
     )
 
@@ -974,7 +1012,9 @@ def test_encoder_lets_visible_blocked_workshop_screen_override_target_metadata()
         screen_text="Carpenter's Workshop\nPlacement\nBuilding present\nEnter: Place",
     )
 
-    assert "visible DF placement screen currently says placement is blocked" in building_present_text
+    assert (
+        "visible DF placement screen currently says placement is blocked" in building_present_text
+    )
     assert "valid carpenter workshop placement screen" not in building_present_text
 
 
@@ -1669,8 +1709,18 @@ def test_encoder_renders_farm_crops_seeds_and_season() -> None:
                     }
                 ],
                 "seeds": [
-                    {"token": "RADISH", "count": 1, "surface": True, "seasons": ["sp", "su", "au", "wi"]},
-                    {"token": "MUSHROOM_HELMET_PLUMP", "count": 11, "surface": False, "seasons": ["sp", "su", "au", "wi"]},
+                    {
+                        "token": "RADISH",
+                        "count": 1,
+                        "surface": True,
+                        "seasons": ["sp", "su", "au", "wi"],
+                    },
+                    {
+                        "token": "MUSHROOM_HELMET_PLUMP",
+                        "count": 11,
+                        "surface": False,
+                        "seasons": ["sp", "su", "au", "wi"],
+                    },
                 ],
                 "current_season": "summer",
             },
@@ -1882,7 +1932,15 @@ def test_encoder_surfaces_finished_goods_counts() -> None:
         "stocks": {"food": 40, "drink": 50},
         "crew": {
             "ok": True,
-            "goods": {"bed": 3, "door": 0, "table": 1, "chair": 0, "barrel": 12, "bin": 0, "wood": 250},
+            "goods": {
+                "bed": 3,
+                "door": 0,
+                "table": 1,
+                "chair": 0,
+                "barrel": 12,
+                "bin": 0,
+                "wood": 250,
+            },
         },
     }
 
@@ -2080,7 +2138,10 @@ def test_encoder_surfaces_executor_why_as_rejection_reason() -> None:
 
     obs_text, _ = encode_observation(
         state,
-        last_action_result={"accepted": False, "result": {"ok": False, "error": "no_building_material"}},
+        last_action_result={
+            "accepted": False,
+            "result": {"ok": False, "error": "no_building_material"},
+        },
     )
 
     assert "Last Action: REJECTED - no_building_material" in obs_text
@@ -2125,9 +2186,17 @@ def test_encoder_renders_wall_layout_with_run_compression() -> None:
             "functional_rooms": 0,
             "constructions": 11,
             "construction_tiles": [
-                [94, 90, 177], [95, 90, 177], [96, 90, 177], [97, 90, 177],
-                [94, 93, 177], [95, 93, 177], [96, 93, 177], [97, 93, 177],
-                [98, 91, 177], [98, 92, 177], [98, 93, 177],
+                [94, 90, 177],
+                [95, 90, 177],
+                [96, 90, 177],
+                [97, 90, 177],
+                [94, 93, 177],
+                [95, 93, 177],
+                [96, 93, 177],
+                [97, 93, 177],
+                [98, 91, 177],
+                [98, 92, 177],
+                [98, 93, 177],
             ],
         },
     }

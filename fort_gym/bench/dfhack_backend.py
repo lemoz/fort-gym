@@ -8,7 +8,14 @@ from pathlib import Path
 from typing import Dict, Iterable, Sequence
 
 from .config import DFROOT
-from .dfhack_exec import DFHackError, read_pause_state, run_dfhack, run_lua_file, set_paused, tick_read
+from .dfhack_exec import (
+    DFHackError,
+    read_pause_state,
+    run_dfhack,
+    run_lua_file,
+    set_paused,
+    tick_read,
+)
 from .env.keystroke_exec import execute_keystroke_action
 
 HOOK_ROOT = DFROOT / "hook"
@@ -111,7 +118,6 @@ def build_workshop(
         )
     except (DFHackError, OSError) as exc:
         return {"ok": False, "error": str(exc)}
-
 
 
 def place_furniture(
@@ -281,7 +287,9 @@ def set_farm_crop(
         return {"ok": False, "error": str(exc)}
 
 
-def designate_rect(kind: str, x1: int, y1: int, z1: int, x2: int, y2: int, z2: int) -> Dict[str, object]:
+def designate_rect(
+    kind: str, x1: int, y1: int, z1: int, x2: int, y2: int, z2: int
+) -> Dict[str, object]:
     kind_lower = kind.lower()
     if kind_lower not in VALID_KINDS:
         return {"ok": False, "error": "invalid_kind"}
@@ -414,7 +422,6 @@ def read_work_metrics(rect: tuple[int, int, int, int, int, int] | None = None) -
         return {"ok": False, "error": str(exc)}
 
 
-
 def read_job_metrics(
     rect: tuple[int, int, int, int, int, int] | None = None,
 ) -> Dict[str, object]:
@@ -441,6 +448,33 @@ def read_job_metrics(
         return {"ok": False, "error": str(exc)}
 
 
+def start_g7_evidence(run_id: str) -> Dict[str, object]:
+    """Start a run-scoped, read-only survival evidence ledger in DFHack."""
+
+    try:
+        return run_lua_file(_hook_path("g7_evidence.lua"), "start", str(run_id), timeout=5.0)
+    except (DFHackError, OSError) as exc:
+        return {"ok": False, "active": False, "error": str(exc)}
+
+
+def read_g7_evidence() -> Dict[str, object]:
+    """Read cumulative G7 production, consumption, and death evidence."""
+
+    try:
+        return run_lua_file(_hook_path("g7_evidence.lua"), "read", timeout=5.0)
+    except (DFHackError, OSError) as exc:
+        return {"ok": False, "active": False, "error": str(exc)}
+
+
+def stop_g7_evidence() -> Dict[str, object]:
+    """Detach G7 evidence callbacks and return their final snapshot."""
+
+    try:
+        return run_lua_file(_hook_path("g7_evidence.lua"), "stop", timeout=5.0)
+    except (DFHackError, OSError) as exc:
+        return {"ok": False, "active": False, "error": str(exc)}
+
+
 def read_map_snapshot(rect: tuple[int, int, int, int, int, int]) -> Dict[str, object]:
     """Capture a bounded live DFHack map tile snapshot for replay proof."""
 
@@ -464,7 +498,6 @@ def read_map_snapshot(rect: tuple[int, int, int, int, int, int]) -> Dict[str, ob
         )
     except (DFHackError, OSError) as exc:
         return {"ok": False, "error": str(exc)}
-
 
 
 def read_fort_metrics() -> Dict[str, object]:
@@ -536,9 +569,7 @@ def prepare_keystroke_target(
 
     try:
         safe_mode = (
-            mode
-            if mode in {"starter", "material", "workshop", "existing_workshop"}
-            else "starter"
+            mode if mode in {"starter", "material", "workshop", "existing_workshop"} else "starter"
         )
         return run_lua_file(
             _hook_path("prepare_keystroke_target.lua"),
@@ -627,7 +658,9 @@ def advance_ticks_exact_external(ticks: int, repause: bool = True) -> Dict[str, 
             except Exception as exc:  # pragma: no cover - defensive runtime guard
                 resume_fallback = f"STRING_A032_failed:{exc}"
             else:
-                resume_fallback = "STRING_A032" if fallback_result.get("ok") else str(fallback_result)
+                resume_fallback = (
+                    "STRING_A032" if fallback_result.get("ok") else str(fallback_result)
+                )
             time.sleep(0.1)
             try:
                 current_tick = tick_read()
@@ -720,6 +753,9 @@ __all__ = [
     "complete_dig_rect",
     "read_work_metrics",
     "read_job_metrics",
+    "start_g7_evidence",
+    "read_g7_evidence",
+    "stop_g7_evidence",
     "read_fort_metrics",
     "read_map_snapshot",
     "prepare_keystroke_target",
