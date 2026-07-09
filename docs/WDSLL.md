@@ -159,14 +159,22 @@ must be generalized or made optional before G6. Then: a fresh seed/embark the
 agent has never seen, reaching G4-level structure. This is the gate that
 separates "solved one map" from "plays Dwarf Fortress."
 
-### G7 — The fort lives: a self-sufficient year (PROPOSED 2026-07-06, not yet ratified)
-Status: operator direction approved; gate NOT active until (a) score-v3 is
-ratified and landed (docs/score_v3_proposal.md), (b) G6 has been attempted,
-and (c) the survival primitives exist — each a bounded, player-parity,
-operator-approved action-surface addition in the tradition of furniture,
-Wall/Floor, and UNSUSPEND: farm-plot placement, plant-gathering
-designation, a Still workshop with brew orders, and (optional, decide at
-implementation) kitchen/meal orders.
+### G7 — The fort lives: a self-sufficient year (RATIFIED 2026-07-09)
+Status: RATIFIED at the 2026-07-09 operator window. All three activation
+preconditions hold: (a) score-v3 ratified and landed; (b) G6 attempted
+(7 runs, 2 models — frontier documented in the escalation log); (c) the
+survival primitives exist, adversarially reviewed and live-validated:
+gather (DIG kind), FarmPlot (BUILD kind), Still + brew ORDER
+(CustomReaction fix #63), FARM crop selection (#64, agent-controlled per
+operator directive), and LABOR assignment (#65). Kitchen/meal orders were
+deferred (optional in the proposal; not required for the drink/food loop).
+Pre-declared scalar bar for attempt 1 (set before launch, per the gate
+protocol): score-v3 >= 150 — the best corrected 100k-tick region3 run
+scored 152.39, and a fort that lives a full year must at least match the
+best quarter-year camp — and rubric >= 70 with zero blockers (the
+standing clean bar). Attempt 1 launches at this window: GLM-5V,
+max_steps 450, ticks_per_step 1000, seed_region3_fresh (the unseen-map
+frontier, water hazard and all).
 
 Rationale: every gate to date ran inside DF's benign opening — starting
 stocks, no threats, nothing that punishes idleness. The endurance probe
