@@ -24,7 +24,7 @@ local LABOR_WHITELIST = {
   { name = 'herbalism', enum = 'HERBALIST' },
   { name = 'brewing', enum = 'BREWER' },
   { name = 'fishing', enum = 'FISH' },
-  { name = 'construction', enum = 'BUILD_BUILDING' },
+  { name = 'construction', enum = 'BUILD_CONSTRUCTION' },
   { name = 'cooking', enum = 'COOK' },
 }
 

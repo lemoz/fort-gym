@@ -21,7 +21,7 @@ local LABOR_WHITELIST = {
   herbalism = 'HERBALIST',
   brewing = 'BREWER',
   fishing = 'FISH',
-  construction = 'BUILD_BUILDING',
+  construction = 'BUILD_CONSTRUCTION',
   cooking = 'COOK',
 }
 

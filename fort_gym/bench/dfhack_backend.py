@@ -40,7 +40,7 @@ LABOR_WHITELIST: Dict[str, str] = {
     "herbalism": "HERBALIST",
     "brewing": "BREWER",
     "fishing": "FISH",
-    "construction": "BUILD_BUILDING",
+    "construction": "BUILD_CONSTRUCTION",
     "cooking": "COOK",
 }
 DEFAULT_WORK_RECT = (50, 35, 0, 54, 39, 0)
