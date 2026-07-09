@@ -136,3 +136,32 @@ def test_validate_action_rejects_unsuspend_missing_area_or_size() -> None:
 
     assert valid is False
     assert reason == "UNSUSPEND action requires area and size"
+
+
+def test_action_tool_spec_includes_labor_type() -> None:
+    assert "LABOR" in ACTION_TOOL_SPEC["parameters"]["properties"]["type"]["enum"]
+
+
+def test_parse_action_accepts_labor_unit_labor_enable() -> None:
+    action = parse_action(
+        {
+            "type": "LABOR",
+            "params": {"unit_id": 243, "labor": "brewing", "enable": True},
+            "intent": "enable brewing so the starved brew job gets taken",
+            "advance_ticks": 2000,
+        }
+    )
+
+    assert action["type"] == "LABOR"
+    assert action["params"]["unit_id"] == 243
+    assert action["params"]["labor"] == "brewing"
+    assert action["params"]["enable"] is True
+
+
+def test_validate_action_rejects_labor_missing_fields() -> None:
+    valid, reason = validate_action(
+        {}, {"type": "LABOR", "params": {"unit_id": 243, "labor": "brewing"}}
+    )
+
+    assert valid is False
+    assert reason == "LABOR action requires unit_id, labor, and enable"

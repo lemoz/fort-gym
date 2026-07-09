@@ -912,6 +912,21 @@ def encode_observation(
                 detail_line = "Last Action detail: " + ", ".join(detail_parts)
                 status_lines.append(detail_line[:120])
 
+            # LABOR result carries boolean before/after enabled state; render it
+            # explicitly (a no-op flip shows before==after, changed=False).
+            if "labor_changed" in action_result:
+                labor_unit = _int_or_none(action_result.get("unit_id"))
+                labor_name = action_result.get("labor")
+                before = action_result.get("labor_before")
+                after = action_result.get("labor_after")
+                if labor_unit is not None and isinstance(labor_name, str):
+                    labor_detail = (
+                        f"Last Action LABOR: #{labor_unit} {labor_name} "
+                        f"before={bool(before)} after={bool(after)} "
+                        f"changed={bool(action_result.get('labor_changed'))}"
+                    )
+                    status_lines.append(labor_detail[:120])
+
     # Screen change feedback - critical for agent to know if actions had effect
     if screen_text and previous_screen:
         diff = _compute_screen_diff(previous_screen, screen_text)
@@ -1175,6 +1190,33 @@ def encode_observation(
                 if labor_parts:
                     crew_line += "; labors: " + ", ".join(labor_parts)
                 status_lines.append(crew_line)
+
+            # Per-citizen detail: id -> enabled whitelist labors + current job.
+            # The LABOR action targets a unit by id, so the agent needs this
+            # mapping to choose whom to reassign (e.g. flip brewing on an idle
+            # citizen so a starved brew job gets taken).
+            citizen_list = citizens.get("list")
+            if isinstance(citizen_list, list) and citizen_list:
+                citizen_parts = []
+                for entry in citizen_list[:20]:
+                    if not isinstance(entry, dict):
+                        continue
+                    cid = _int_or_none(entry.get("id"))
+                    if cid is None:
+                        continue
+                    labors = entry.get("labors")
+                    if isinstance(labors, list):
+                        labor_names = [
+                            str(name) for name in labors if isinstance(name, str)
+                        ]
+                    else:
+                        labor_names = []
+                    labor_str = ",".join(labor_names) if labor_names else "-"
+                    job = entry.get("current_job_type")
+                    job_str = str(job) if isinstance(job, str) and job else "idle"
+                    citizen_parts.append(f"#{cid} [{labor_str}] {job_str}")
+                if citizen_parts:
+                    status_lines.append("Citizens: " + "; ".join(citizen_parts))
 
         jobs = crew.get("jobs") if isinstance(crew.get("jobs"), dict) else {}
         jobs_construct_building = None

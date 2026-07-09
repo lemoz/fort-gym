@@ -62,6 +62,14 @@ class UnsuspendParams(BaseModel):
     size: tuple[int, int, int] = Field(..., description="(width, height, 1) of the rect, one z-level, max 10x10.")
 
 
+class LaborParams(BaseModel):
+    """Parameters for LABOR actions: flip one labor on one citizen."""
+
+    unit_id: int = Field(..., description="id of the citizen whose labor to flip.")
+    labor: str = Field(..., description="Whitelisted labor name, e.g. 'brewing', 'mine'.")
+    enable: bool = Field(..., description="True enables the labor, False disables it.")
+
+
 class KeystrokeParams(BaseModel):
     """Parameters for KEYSTROKE actions - raw keyboard input."""
 
@@ -149,6 +157,11 @@ class UnsuspendAction(BaseAction):
     params: UnsuspendParams
 
 
+class LaborAction(BaseAction):
+    type: Literal["LABOR"]
+    params: LaborParams
+
+
 class ZoneAction(BaseAction):
     type: Literal["ZONE"]
 
@@ -187,6 +200,7 @@ ActionUnion = Annotated[
         StockpileAction,
         OrderAction,
         UnsuspendAction,
+        LaborAction,
         AssignAction,
         AlertAction,
         NoteAction,
@@ -208,6 +222,7 @@ ALLOWED_TYPES = {
     "STOCKPILE",
     "ORDER",
     "UNSUSPEND",
+    "LABOR",
     "ASSIGN",
     "ALERT",
     "NOTE",
@@ -260,6 +275,9 @@ def validate_action(state: Dict[str, Any], action: Dict[str, Any]) -> tuple[bool
     if action_type == "UNSUSPEND":
         if "area" not in params or "size" not in params:
             return False, "UNSUSPEND action requires area and size"
+    if action_type == "LABOR":
+        if "unit_id" not in params or "labor" not in params or "enable" not in params:
+            return False, "LABOR action requires unit_id, labor, and enable"
     if action_type == "KEYSTROKE":
         keys = params.get("keys")
         if not isinstance(keys, list):
@@ -314,6 +332,7 @@ ACTION_TOOL_SPEC = {
                     "STOCKPILE",
                     "ORDER",
                     "UNSUSPEND",
+                    "LABOR",
                     "ASSIGN",
                     "ALERT",
                     "NOTE",

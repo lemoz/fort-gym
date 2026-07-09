@@ -8,12 +8,38 @@ local args = {...}
 
 local MAX_JOB_ENTRIES = 12
 local MAX_WORKSHOPS = 10
+local MAX_CITIZEN_ENTRIES = 20
 local MAX_RECT_W, MAX_RECT_H = 30, 30
+
+-- Friendly labor name -> df.unit_labor enum name. Mirrors LABOR_WHITELIST in
+-- hook/set_labor.lua and dfhack_backend.py so the per-citizen observation lists
+-- exactly the labors the LABOR action can flip. Each enum is pcall-guarded so a
+-- name absent on this DF build is simply skipped, never a crash.
+local LABOR_WHITELIST = {
+  { name = 'mine', enum = 'MINE' },
+  { name = 'woodcutting', enum = 'CUTWOOD' },
+  { name = 'carpentry', enum = 'CARPENTER' },
+  { name = 'masonry', enum = 'MASON' },
+  { name = 'farming', enum = 'PLANT' },
+  { name = 'herbalism', enum = 'HERBALIST' },
+  { name = 'brewing', enum = 'BREWER' },
+  { name = 'fishing', enum = 'FISH' },
+  { name = 'construction', enum = 'BUILD_BUILDING' },
+  { name = 'cooking', enum = 'COOK' },
+}
 
 local function to_int(v)
   local n = tonumber(v)
   if not n then return nil end
   return math.floor(n)
+end
+
+local function sanitize(text)
+  local ok, cleaned = pcall(function()
+    return tostring(text):gsub('[^%w %p]', '?')
+  end)
+  if ok then return cleaned end
+  return '?'
 end
 
 local function labor_enabled(unit, labor_name)
@@ -24,6 +50,17 @@ local function labor_enabled(unit, labor_name)
   end)
   if not ok then return false end
   return enabled and true or false
+end
+
+-- Enabled whitelist labors (friendly names) for one citizen.
+local function citizen_enabled_labors(unit)
+  local names = {}
+  for _, entry in ipairs(LABOR_WHITELIST) do
+    if labor_enabled(unit, entry.enum) then
+      table.insert(names, entry.name)
+    end
+  end
+  return names
 end
 
 local function job_type_name(job_type)
@@ -52,6 +89,10 @@ local out = {
     woodcutting_labor = 0,
     masonry_labor = 0,
     herbalism_labor = 0,
+    -- per-citizen detail (cap MAX_CITIZEN_ENTRIES): id, enabled whitelist
+    -- labors, and current job type. The LABOR action targets a unit by id, so
+    -- the agent needs the id -> labors mapping to choose whom to reassign.
+    list = {},
   },
   jobs = {
     total = 0,
@@ -85,6 +126,19 @@ for _, unit in ipairs(df.global.world.units.active) do
     end
     if labor_enabled(unit, 'HERBALIST') then
       out.citizens.herbalism_labor = out.citizens.herbalism_labor + 1
+    end
+    if #out.citizens.list < MAX_CITIZEN_ENTRIES then
+      local current_job_type = nil
+      if has_job then
+        pcall(function()
+          current_job_type = sanitize(df.job_type[unit.job.current_job.job_type])
+        end)
+      end
+      table.insert(out.citizens.list, {
+        id = unit.id,
+        labors = citizen_enabled_labors(unit),
+        current_job_type = current_job_type,
+      })
     end
   end
 end

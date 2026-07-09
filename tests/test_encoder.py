@@ -1453,6 +1453,86 @@ def test_encoder_echoes_gather_result_counts() -> None:
     assert "non_shrub_tiles=21" in text
 
 
+def test_encoder_echoes_labor_result_state() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 6, "stone": 0},
+        },
+        screen_text="main map",
+        last_action_result={
+            "accepted": True,
+            "result": {
+                "ok": True,
+                "unit_id": 243,
+                "labor": "brewing",
+                "labor_before": False,
+                "labor_after": True,
+                "labor_changed": True,
+            },
+        },
+    )
+
+    assert "Last Action LABOR: #243 brewing before=False after=True changed=True" in text
+
+
+def test_encoder_surfaces_per_citizen_labor_list() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 6, "stone": 0},
+            "crew": {
+                "ok": True,
+                "citizens": {
+                    "total": 2,
+                    "idle": 1,
+                    "mining_labor": 1,
+                    "carpentry_labor": 0,
+                    "woodcutting_labor": 0,
+                    "masonry_labor": 1,
+                    "herbalism_labor": 1,
+                    "list": [
+                        {"id": 243, "labors": ["mine", "masonry"], "current_job_type": None},
+                        {
+                            "id": 248,
+                            "labors": ["herbalism", "brewing"],
+                            "current_job_type": "GatherPlants",
+                        },
+                    ],
+                },
+            },
+        },
+        screen_text="main map",
+    )
+
+    assert "Citizens: #243 [mine,masonry] idle; #248 [herbalism,brewing] GatherPlants" in text
+
+
+def test_encoder_renders_citizen_with_no_enabled_labors() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 6, "stone": 0},
+            "crew": {
+                "ok": True,
+                "citizens": {
+                    "total": 1,
+                    "idle": 1,
+                    "list": [
+                        {"id": 300, "labors": [], "current_job_type": None},
+                    ],
+                },
+            },
+        },
+        screen_text="main map",
+    )
+
+    assert "Citizens: #300 [-] idle" in text
+
+
 def test_encoder_ignores_malformed_plan_rects_without_crashing() -> None:
     text, _ = encode_observation(
         {

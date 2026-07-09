@@ -426,6 +426,87 @@ def test_unsuspend_jobs_rejects_multi_z_rect() -> None:
     assert result == {"ok": False, "error": "z_span_not_supported"}
 
 
+def test_set_labor_hook_validates_citizen_and_reports_before_after() -> None:
+    hook_path = Path(__file__).resolve().parents[1] / "hook" / "set_labor.lua"
+    hook_text = hook_path.read_text(encoding="utf-8")
+
+    # citizenship gate: not-found and non-citizen reasons, mirroring live facts
+    assert "dfhack.units.isCitizen" in hook_text
+    assert "unit_not_found" in hook_text
+    assert "not_a_citizen" in hook_text
+    # evidence-honest before/after enabled state + no-op visibility
+    assert "labor_before" in hook_text
+    assert "labor_after" in hook_text
+    assert "labor_changed" in hook_text
+    # flips exactly the labor flag, the v-p-l mechanic
+    assert "status.labors[labor_enum] = enable" in hook_text
+    # enum guarded on this DF build, reported honestly rather than crashing
+    assert "unsupported_labor" in hook_text
+    assert "df.unit_labor[enum_name]" in hook_text
+    # CP437 safety on any DF-sourced text
+    assert "gsub('[^%w %p]', '?')" in hook_text
+
+
+def test_set_labor_hook_whitelists_exact_labor_enums() -> None:
+    hook_path = Path(__file__).resolve().parents[1] / "hook" / "set_labor.lua"
+    hook_text = hook_path.read_text(encoding="utf-8")
+
+    # whitelist mirrors dfhack_backend.LABOR_WHITELIST enum names exactly
+    for enum_name in dfhack_backend.LABOR_WHITELIST.values():
+        assert enum_name in hook_text
+
+
+def test_set_labor_wraps_bounded_lua_hook(monkeypatch) -> None:
+    captured: dict = {}
+
+    def fake_run_lua_file(path, *args, **kwargs):
+        captured["path"] = path
+        captured["args"] = args
+        return {"ok": True, "unit_id": 243, "labor": "brewing", "labor_changed": True}
+
+    monkeypatch.setattr(dfhack_backend, "run_lua_file", fake_run_lua_file)
+
+    result = dfhack_backend.set_labor(243, "brewing", True)
+
+    assert result["labor_changed"] is True
+    assert captured["args"] == ("243", "brewing", "1")
+    assert Path(captured["path"]).name == "set_labor.lua"
+
+
+def test_set_labor_passes_enable_false_as_zero(monkeypatch) -> None:
+    captured: dict = {}
+
+    def fake_run_lua_file(path, *args, **kwargs):
+        captured["args"] = args
+        return {"ok": True}
+
+    monkeypatch.setattr(dfhack_backend, "run_lua_file", fake_run_lua_file)
+
+    dfhack_backend.set_labor(248, "mine", False)
+
+    assert captured["args"] == ("248", "mine", "0")
+
+
+def test_set_labor_rejects_non_whitelisted_labor() -> None:
+    result = dfhack_backend.set_labor(243, "engraving", True)
+
+    assert result == {"ok": False, "error": "unsupported_labor", "labor": "engraving"}
+
+
+def test_job_metrics_hook_emits_per_citizen_list() -> None:
+    hook_path = Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua"
+    hook_text = hook_path.read_text(encoding="utf-8")
+
+    # per-citizen detail (id + enabled whitelist labors + current job), capped
+    assert "MAX_CITIZEN_ENTRIES = 20" in hook_text
+    assert "citizen_enabled_labors" in hook_text
+    assert "current_job_type" in hook_text
+    assert "list = {}" in hook_text
+    # aggregate counts kept for backward compatibility
+    assert "mining_labor = 0" in hook_text
+    assert "carpentry_labor = 0" in hook_text
+
+
 def test_prepare_keystroke_tree_material_target_uses_broad_selection() -> None:
     hook_path = (
         Path(__file__).resolve().parents[1]

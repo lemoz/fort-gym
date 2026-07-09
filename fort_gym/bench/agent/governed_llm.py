@@ -1,7 +1,7 @@
 """LLM policy on the DFHack-governed legal action surface.
 
 One OpenRouter chat-completion call per step (default ``z-ai/glm-5.2``), forced
-through a single ``submit_action`` tool restricted to DIG/BUILD/ORDER/UNSUSPEND/WAIT.
+through a single ``submit_action`` tool restricted to DIG/BUILD/ORDER/UNSUSPEND/LABOR/WAIT.
 ``MemoryManager`` carries the plan, POIs, and failed attempts across steps.
 
 This module intentionally contains no gameplay heuristics: the model plus the
@@ -26,7 +26,7 @@ from .base import Agent, register_agent
 from .memory import MemoryManager
 from .minimap_render import minimap_data_url
 
-GOVERNED_ACTION_TYPES = ("DIG", "BUILD", "ORDER", "UNSUSPEND", "WAIT")
+GOVERNED_ACTION_TYPES = ("DIG", "BUILD", "ORDER", "UNSUSPEND", "LABOR", "WAIT")
 DEFAULT_ADVANCE_TICKS = 1000
 
 _MEMORY_PATH_ENV_VAR = "FORT_GYM_GOVERNED_MEMORY_PATH"
@@ -41,7 +41,7 @@ rooms such as bedrooms and production rooms, fully bounded by walls, buildings, 
 production economy, breadth, plan coherence, and non-repetition; and long-horizon goals that value \
 building MULTIPLE enclosed functional rooms while keeping every dwarf alive.
 
-Legal actions (the only five types accepted):
+Legal actions (the only six types accepted):
 - DIG: params {"area": [x, y, z], "size": [w, h, 1], "kind": "dig"|"channel"|"chop"|"gather"}. \
 kind dig/channel designates the rectangle (max 30x30, one z-level); this harness only designates \
 WALL tiles for dig/channel — floor/shrub/other tiles in the rect are left untouched (use \
@@ -89,6 +89,17 @@ when a dwarf cannot currently path to or reach the job site or the placement is 
 observability reports suspended job counts and their positions so you can target the rect precisely. \
 This does not complete the job or move any dwarf — it only re-arms the job so a dwarf will \
 reattempt it as the simulation continues to run.
+- LABOR: params {"unit_id": <citizen id>, "labor": <name>, "enable": true|false}. Toggles one \
+labor on one citizen, exactly like the player's unit-labors screen. A queued job is only ever \
+taken by a citizen who has the matching labor enabled: brew jobs need a citizen with brewing, \
+farm work needs farming, plant gathering needs herbalism, felling needs woodcutting, mining needs \
+mine, wall/floor/workshop construction needs construction, hauling/installing furniture and \
+building workshops needs construction, carpentry/masonry/cooking/fishing likewise. Whitelisted \
+labor names: mine, woodcutting, carpentry, masonry, farming, herbalism, brewing, fishing, \
+construction, cooking. Enabling a labor lets that citizen pick up a matching starved job; it \
+completes no work itself and moves no dwarf — a dwarf must still path to and perform the job over \
+time. The observation's Citizens line lists each citizen id with its currently-enabled labors and \
+current job, so you can see who lacks the labor a stalled job needs and flip exactly that one.
 - WAIT: params {}. Issues nothing and lets the simulation run.
 
 Every action must include "advance_ticks" (how many game ticks to run after the command, up to \

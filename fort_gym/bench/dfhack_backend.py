@@ -26,6 +26,23 @@ MAX_SNAPSHOT_H = 64
 MAX_FARM_PLOT_W = 5
 MAX_FARM_PLOT_H = 5
 VALID_KINDS: Iterable[str] = ("dig", "channel", "chop", "gather")
+# Friendly labor name -> df.unit_labor enum name. Whitelist is mirrored in
+# hook/set_labor.lua (which independently pcall-guards each enum on the live DF
+# build). Flipping u.status.labors[df.unit_labor.X] is exactly the player's
+# v-p-l toggle: it lets a matching queued job be taken by that citizen but
+# completes no work itself.
+LABOR_WHITELIST: Dict[str, str] = {
+    "mine": "MINE",
+    "woodcutting": "CUTWOOD",
+    "carpentry": "CARPENTER",
+    "masonry": "MASON",
+    "farming": "PLANT",
+    "herbalism": "HERBALIST",
+    "brewing": "BREWER",
+    "fishing": "FISH",
+    "construction": "BUILD_BUILDING",
+    "cooking": "COOK",
+}
 DEFAULT_WORK_RECT = (50, 35, 0, 54, 39, 0)
 
 
@@ -263,6 +280,35 @@ def unsuspend_jobs(x1: int, y1: int, z1: int, x2: int, y2: int, z2: int) -> Dict
             str(int(x2)),
             str(int(y2)),
             str(int(z2)),
+        )
+    except (DFHackError, OSError) as exc:
+        return {"ok": False, "error": str(exc)}
+
+
+def set_labor(unit_id: int, labor: str, enable: bool) -> Dict[str, object]:
+    """Flip one whitelisted labor on one citizen (player's v-p-l toggle).
+
+    Mirrors ``u.status.labors[df.unit_labor.X] = enable`` — it lets a matching
+    queued job be taken by that citizen but completes no work itself; a dwarf
+    must still path to and perform the job over real time. ``labor`` must be a
+    whitelisted friendly name; the hook independently guards the enum on the
+    live DF build and reports ``unsupported_labor`` if it is absent. Never
+    mutates tiles, buildings, or any other unit field.
+    """
+
+    if labor not in LABOR_WHITELIST:
+        return {"ok": False, "error": "unsupported_labor", "labor": labor}
+    try:
+        unit_id_int = int(unit_id)
+    except (TypeError, ValueError):
+        return {"ok": False, "error": "bad_unit_id"}
+
+    try:
+        return run_lua_file(
+            _hook_path("set_labor.lua"),
+            str(unit_id_int),
+            str(labor),
+            "1" if enable else "0",
         )
     except (DFHackError, OSError) as exc:
         return {"ok": False, "error": str(exc)}
@@ -616,6 +662,8 @@ __all__ = [
     "build_farm_plot",
     "designate_rect",
     "unsuspend_jobs",
+    "set_labor",
+    "LABOR_WHITELIST",
     "complete_dig_rect",
     "read_work_metrics",
     "read_job_metrics",

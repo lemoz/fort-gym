@@ -75,6 +75,8 @@ def _action_fingerprint(action: Dict[str, Any]) -> str:
         return f"ORDER:{params.get('job')}:{params.get('quantity')}"
     if action_type == "UNSUSPEND":
         return f"UNSUSPEND:{params.get('area')}:{params.get('size')}"
+    if action_type == "LABOR":
+        return f"LABOR:{params.get('unit_id')}:{params.get('labor')}:{params.get('enable')}"
     return action_type
 
 
@@ -121,6 +123,11 @@ _QUEUE_ONLY_EVIDENCE_KEYS = {
     "before_farm_plots",
     "after_farm_plots",
     "non_shrub_tiles",
+    # LABOR before/after enabled state: a no-op flip (labor_changed False) leaves
+    # these two as the only truthy evidence, and it is NOT world change. A real
+    # flip is caught explicitly by the labor_changed check below.
+    "labor_before",
+    "labor_after",
 }
 
 
@@ -148,6 +155,11 @@ def _proof_shows_world_change(proof: Dict[str, Any]) -> bool:
     if int(evidence.get("unsuspended") or 0) > 0:
         return True
     if int(evidence.get("shrubs_designated") or 0) > 0:
+        return True
+    # A real labor flip (before != after) is a genuine state change; a no-op
+    # flip (labor_changed False) is not, and falls through to the queue-only
+    # whitelist so it never exempts a step from the repetition tally.
+    if evidence.get("labor_changed") is True:
         return True
     before_ws = int(evidence.get("before_carpenter_workshops") or 0)
     after_ws = int(evidence.get("after_carpenter_workshops") or 0)
