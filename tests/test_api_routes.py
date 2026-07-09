@@ -149,7 +149,138 @@ def test_run_registry_stop_flag_lifecycle(tmp_path) -> None:
     registry.clear_stop(created.run_id)
 
     assert registry.stop_requested(created.run_id) is False
+    registry.set_status(created.run_id, status="completed")
+    assert registry.request_stop(created.run_id) is False
     assert registry.request_stop("missing-run") is False
+
+
+def test_success_finalization_serializes_with_stop_acceptance(tmp_path) -> None:
+    from datetime import datetime
+
+    from fort_gym.bench.run.storage import RunRegistry
+
+    registry = RunRegistry(db_path=tmp_path / "runs.sqlite3")
+    stop_first = registry.create(backend="mock", model="fake", max_steps=1, ticks_per_step=1)
+    assert registry.claim_pending_run(stop_first.run_id, started_at=datetime.utcnow()) is True
+    assert registry.request_stop(stop_first.run_id) is True
+    registry.record_cleanup_completed(stop_first.run_id, completed_at=datetime.utcnow())
+    registry.set_summary(stop_first.run_id, {"total_score": 0.0})
+    assert (
+        registry.finalize_success_after_cleanup(
+            stop_first.run_id,
+            step=0,
+            ended_at=datetime.utcnow(),
+        )
+        == "stopped"
+    )
+
+    finish_first = registry.create(backend="mock", model="fake", max_steps=1, ticks_per_step=1)
+    assert registry.claim_pending_run(finish_first.run_id, started_at=datetime.utcnow()) is True
+    registry.record_cleanup_completed(finish_first.run_id, completed_at=datetime.utcnow())
+    registry.set_summary(finish_first.run_id, {"total_score": 0.0})
+    assert (
+        registry.finalize_success_after_cleanup(
+            finish_first.run_id,
+            step=0,
+            ended_at=datetime.utcnow(),
+        )
+        == "completed"
+    )
+    assert registry.request_stop(finish_first.run_id) is False
+
+
+def test_restart_preserves_stop_only_after_cleanup_completed(tmp_path) -> None:
+    from datetime import datetime
+
+    from fort_gym.bench.run.storage import RunRegistry
+
+    stopped_db = tmp_path / "stopped.sqlite3"
+    stopped_registry = RunRegistry(db_path=stopped_db)
+    stopped = stopped_registry.create(backend="dfhack", model="fake", max_steps=1, ticks_per_step=1)
+    assert stopped_registry.claim_pending_run(stopped.run_id, started_at=datetime.utcnow())
+    assert stopped_registry.request_stop(stopped.run_id)
+    stopped_registry.record_cleanup_completed(stopped.run_id, completed_at=datetime.utcnow())
+    stopped_registry.set_summary(stopped.run_id, {"total_score": 0.0})
+
+    recovered_stopped = RunRegistry(db_path=stopped_db).get(stopped.run_id)
+    assert recovered_stopped is not None
+    assert recovered_stopped.status == "stopped"
+
+    interrupted_db = tmp_path / "interrupted.sqlite3"
+    interrupted_registry = RunRegistry(db_path=interrupted_db)
+    interrupted = interrupted_registry.create(
+        backend="dfhack", model="fake", max_steps=1, ticks_per_step=1
+    )
+    assert interrupted_registry.claim_pending_run(interrupted.run_id, started_at=datetime.utcnow())
+    assert interrupted_registry.request_stop(interrupted.run_id)
+
+    recovered_interrupted = RunRegistry(db_path=interrupted_db).get(interrupted.run_id)
+    assert recovered_interrupted is not None
+    assert recovered_interrupted.status == "failed"
+
+    missing_summary_db = tmp_path / "missing-summary.sqlite3"
+    missing_summary_registry = RunRegistry(db_path=missing_summary_db)
+    missing_summary = missing_summary_registry.create(
+        backend="dfhack", model="fake", max_steps=1, ticks_per_step=1
+    )
+    assert missing_summary_registry.claim_pending_run(
+        missing_summary.run_id, started_at=datetime.utcnow()
+    )
+    assert missing_summary_registry.request_stop(missing_summary.run_id)
+    missing_summary_registry.record_cleanup_completed(
+        missing_summary.run_id, completed_at=datetime.utcnow()
+    )
+
+    recovered_missing_summary = RunRegistry(db_path=missing_summary_db).get(missing_summary.run_id)
+    assert recovered_missing_summary is not None
+    assert recovered_missing_summary.status == "failed"
+
+
+def test_stop_endpoint_defers_terminal_status_to_worker(monkeypatch) -> None:
+    from datetime import datetime
+
+    from fastapi.testclient import TestClient
+
+    from fort_gym.bench.api import server
+
+    monkeypatch.setenv("FORT_GYM_INSECURE_ADMIN", "1")
+    server.RUN_REGISTRY.reset_for_tests()
+    try:
+        created = server.RUN_REGISTRY.create(
+            backend="dfhack",
+            model="dfhack-governed-scripted",
+            max_steps=10,
+            ticks_per_step=1000,
+        )
+        assert (
+            server.RUN_REGISTRY.claim_pending_run(
+                created.run_id,
+                started_at=datetime.utcnow(),
+            )
+            is True
+        )
+
+        response = TestClient(server.app).post(f"/runs/{created.run_id}/stop")
+
+        assert response.status_code == 200
+        assert response.json() == {
+            "status": "stop_requested",
+            "run_id": created.run_id,
+        }
+        loaded = server.RUN_REGISTRY.get(created.run_id)
+        assert loaded is not None
+        assert loaded.status == "running"
+        assert server.RUN_REGISTRY.stop_requested(created.run_id) is True
+
+        server.RUN_REGISTRY.set_status(created.run_id, status="completed")
+        terminal_response = TestClient(server.app).post(f"/runs/{created.run_id}/stop")
+        assert terminal_response.status_code == 200
+        assert terminal_response.json() == {
+            "status": "completed",
+            "run_id": created.run_id,
+        }
+    finally:
+        server.RUN_REGISTRY.reset_for_tests()
 
 
 def test_run_registry_terminal_statuses_are_monotonic(tmp_path) -> None:
@@ -213,6 +344,36 @@ def test_late_terminal_failure_cannot_relabel_or_annotate_stopped_run(tmp_path) 
     assert loaded.status == "stopped"
     assert loaded.step == 1
     assert "terminal_reason" not in loaded.metadata
+
+
+def test_pending_terminal_reason_survives_interrupted_worker_recovery(tmp_path) -> None:
+    from datetime import datetime
+
+    from fort_gym.bench.run.storage import RunRegistry
+
+    db_path = tmp_path / "runs.sqlite3"
+    registry = RunRegistry(db_path=db_path)
+    created = registry.create(backend="dfhack", model="fake", max_steps=2, ticks_per_step=10)
+    assert registry.claim_pending_run(created.run_id, started_at=datetime.utcnow()) is True
+    reason = {"code": "tick_timeout_zero_progress", "ticks_advanced": 0}
+
+    registry.record_pending_terminal_failure(
+        created.run_id,
+        terminal_reason=reason,
+        step=1,
+    )
+
+    staged = registry.get(created.run_id)
+    assert staged is not None
+    assert staged.status == "running"
+    assert staged.step == 1
+    assert staged.metadata["terminal_reason"] == reason
+
+    recovered = RunRegistry(db_path=db_path).get(created.run_id)
+    assert recovered is not None
+    assert recovered.status == "failed"
+    assert recovered.step == 1
+    assert recovered.metadata["terminal_reason"] == reason
 
 
 def _make_scored_run(registry, *, model, seed_save, score_version, total_score, survival_score=1.0):

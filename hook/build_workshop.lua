@@ -55,6 +55,7 @@ local function valid_building_material_item(item)
       or item.flags.in_job
       or item.flags.forbid
       or item.flags.hidden
+      or item.flags.in_building
       or item.flags.construction
       or item.flags.artifact then
     return false

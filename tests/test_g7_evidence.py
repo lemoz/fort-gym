@@ -77,3 +77,15 @@ def test_g7_backend_helpers_dispatch_bounded_commands(monkeypatch) -> None:
     ]
     assert all(call[0].endswith("g7_evidence.lua") for call in calls)
     assert all(call[2] == 5.0 for call in calls)
+
+
+def test_g7_stop_error_does_not_claim_callbacks_are_inactive(monkeypatch) -> None:
+    def fail_run(path: str, *args: str, timeout: float):
+        raise OSError("dfhack unavailable")
+
+    monkeypatch.setattr(dfhack_backend, "run_lua_file", fail_run)
+
+    result = dfhack_backend.stop_g7_evidence()
+
+    assert result["ok"] is False
+    assert result["active"] is None

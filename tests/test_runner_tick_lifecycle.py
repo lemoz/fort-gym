@@ -143,6 +143,123 @@ def test_duplicate_worker_cannot_touch_an_already_claimed_trace(tmp_path, monkey
     get_settings.cache_clear()  # type: ignore[attr-defined]
 
 
+def test_governed_setup_failure_cleans_runtime_before_failed_status(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("ARTIFACTS_DIR", str(tmp_path))
+    monkeypatch.setenv("DFHACK_ENABLED", "1")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    lifecycle_events: list[str] = []
+
+    class FakeDFHackClient:
+        def __init__(self, **_: Any) -> None:
+            return None
+
+        def connect(self) -> None:
+            lifecycle_events.append("client_connected")
+
+        def pause(self) -> None:
+            lifecycle_events.append("client_paused")
+
+        def close(self) -> None:
+            lifecycle_events.append("client_closed")
+
+    monkeypatch.setattr("fort_gym.bench.run.runner.DFHackClient", FakeDFHackClient)
+    monkeypatch.setattr(
+        "fort_gym.bench.run.runner.start_g7_evidence",
+        lambda run_id: lifecycle_events.append("evidence_started")
+        or {"ok": True, "active": True, "run_id": run_id},
+    )
+    monkeypatch.setattr(
+        "fort_gym.bench.run.runner.stop_g7_evidence",
+        lambda: lifecycle_events.append("evidence_stopped") or {"ok": True, "active": False},
+    )
+    monkeypatch.setattr(
+        "fort_gym.bench.run.runner.read_view_state",
+        lambda: {"window": [0, 0, 0]},
+    )
+
+    def fail_target_setup(*args, **kwargs):
+        raise RuntimeError("target setup failed")
+
+    monkeypatch.setattr(
+        "fort_gym.bench.run.runner.prepare_keystroke_target",
+        fail_target_setup,
+    )
+    monkeypatch.setattr("subprocess.run", lambda *args, **kwargs: None)
+
+    registry = RunRegistry(db_path=tmp_path / "runs.sqlite3")
+    created = registry.create(
+        backend="dfhack",
+        model="dfhack-governed-scripted",
+        max_steps=1,
+        ticks_per_step=10,
+    )
+    original_set_status = registry.set_status
+
+    def tracked_set_status(run_id, **kwargs):
+        if kwargs.get("status") in {"stopped", "failed", "completed"}:
+            lifecycle_events.append(f"status_{kwargs['status']}")
+        return original_set_status(run_id, **kwargs)
+
+    monkeypatch.setattr(registry, "set_status", tracked_set_status)
+
+    with pytest.raises(RuntimeError, match="target setup failed"):
+        run_once(
+            CountingWaitAgent(10),
+            backend="dfhack",
+            model="dfhack-governed-scripted",
+            max_steps=1,
+            ticks_per_step=10,
+            run_id=created.run_id,
+            registry=registry,
+            preserve_save=True,
+        )
+
+    loaded = registry.get(created.run_id)
+    assert loaded is not None
+    assert loaded.status == "failed"
+    assert lifecycle_events == [
+        "client_connected",
+        "evidence_started",
+        "client_paused",
+        "evidence_stopped",
+        "client_closed",
+        "status_failed",
+    ]
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+
+
+def test_disabled_dfhack_setup_does_not_leave_claimed_run_running(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("ARTIFACTS_DIR", str(tmp_path))
+    monkeypatch.setenv("DFHACK_ENABLED", "0")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    registry = RunRegistry(db_path=tmp_path / "runs.sqlite3")
+    created = registry.create(
+        backend="dfhack",
+        model="dfhack-governed-scripted",
+        max_steps=1,
+        ticks_per_step=10,
+    )
+
+    with pytest.raises(RuntimeError, match="DFHack backend disabled"):
+        run_once(
+            CountingWaitAgent(10),
+            backend="dfhack",
+            model="dfhack-governed-scripted",
+            max_steps=1,
+            ticks_per_step=10,
+            run_id=created.run_id,
+            registry=registry,
+            preserve_save=True,
+        )
+
+    loaded = registry.get(created.run_id)
+    assert loaded is not None
+    assert loaded.status == "failed"
+    assert "cleanup_completed_at" in loaded.metadata
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+
+
 def _run_governed_interact_fixture(
     tmp_path: Path,
     monkeypatch,
@@ -151,6 +268,10 @@ def _run_governed_interact_fixture(
     max_steps: int = 20,
     agent_override: Agent | None = None,
     stale_evidence: bool = False,
+    lifecycle_events: list[str] | None = None,
+    stop_during_cleanup: bool = False,
+    observe_error: bool = False,
+    cleanup_error: bool = False,
 ) -> tuple[Agent, RunRegistry, str]:
     monkeypatch.setenv("ARTIFACTS_DIR", str(tmp_path))
     monkeypatch.setenv("DFHACK_ENABLED", "1")
@@ -176,6 +297,8 @@ def _run_governed_interact_fixture(
             raw_state["pause_state"] = True
 
         def get_state(self) -> Dict[str, Any]:
+            if observe_error:
+                raise RuntimeError("unexpected observation failure")
             return dict(raw_state)
 
         def advance(self, ticks: int) -> Dict[str, Any]:
@@ -188,6 +311,10 @@ def _run_governed_interact_fixture(
             return f"dialog screen {screen_version[0]}"
 
         def close(self) -> None:
+            if lifecycle_events is not None:
+                lifecycle_events.append("client_closed")
+            if stop_during_cleanup:
+                assert registry.request_stop(created.run_id) is True
             return None
 
     def fake_execute(keys: list[str]) -> Dict[str, Any]:
@@ -235,9 +362,17 @@ def _run_governed_interact_fixture(
             "run_id": "stale-run" if stale_evidence else evidence_run_id[0],
         },
     )
+
+    def fake_stop_g7() -> Dict[str, Any]:
+        if lifecycle_events is not None:
+            lifecycle_events.append("evidence_stopped")
+        if cleanup_error:
+            return {"ok": False, "active": True, "error": "callback detach failed"}
+        return {"ok": True, "active": False}
+
     monkeypatch.setattr(
         "fort_gym.bench.run.runner.stop_g7_evidence",
-        lambda: {"ok": True, "active": False},
+        fake_stop_g7,
     )
     monkeypatch.setattr(
         "fort_gym.bench.env.executor.execute_keystroke_action",
@@ -491,6 +626,241 @@ def test_governed_positive_advance_captures_final_survival_evidence(tmp_path, mo
         "active": True,
         "run_id": run_id,
     }
+
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+
+
+def test_dfhack_cleanup_precedes_terminal_status_and_optional_analysis(
+    tmp_path, monkeypatch
+) -> None:
+    from fort_gym.bench.eval.analyzer import AnalysisReport, TraceAnalyzer
+
+    lifecycle_events: list[str] = []
+    monkeypatch.setenv("GOOGLE_API_KEY", "configured-for-ordering-test")
+
+    original_set_status = RunRegistry.set_status
+    original_finalize = RunRegistry.finalize_success_after_cleanup
+    original_set_summary = RunRegistry.set_summary
+
+    def tracked_set_status(self, run_id, **kwargs):
+        status = kwargs.get("status")
+        if status in {"completed", "failed", "stopped"}:
+            lifecycle_events.append(f"status:{status}")
+        return original_set_status(self, run_id, **kwargs)
+
+    def fake_analyze(self, trace_path):
+        lifecycle_events.append("analysis_started")
+        return AnalysisReport(run_id=trace_path.parent.name, total_steps=1)
+
+    def tracked_finalize(self, run_id, **kwargs):
+        status = original_finalize(self, run_id, **kwargs)
+        lifecycle_events.append(f"status:{status}")
+        return status
+
+    def tracked_set_summary(self, run_id, summary):
+        result = original_set_summary(self, run_id, summary)
+        lifecycle_events.append("summary_persisted")
+        return result
+
+    monkeypatch.setattr(RunRegistry, "set_status", tracked_set_status)
+    monkeypatch.setattr(RunRegistry, "finalize_success_after_cleanup", tracked_finalize)
+    monkeypatch.setattr(RunRegistry, "set_summary", tracked_set_summary)
+    monkeypatch.setattr(TraceAnalyzer, "analyze", fake_analyze)
+
+    agent, registry, run_id = _run_governed_interact_fixture(
+        tmp_path,
+        monkeypatch,
+        screen_changes=False,
+        max_steps=1,
+        agent_override=CountingWaitAgent(10),
+        lifecycle_events=lifecycle_events,
+    )
+
+    assert agent.calls == 1
+    loaded = registry.get(run_id)
+    assert loaded is not None
+    assert loaded.status == "completed"
+    assert lifecycle_events.count("evidence_stopped") == 1
+    assert lifecycle_events.count("client_closed") == 1
+    assert lifecycle_events.index("evidence_stopped") < lifecycle_events.index("client_closed")
+    assert lifecycle_events.index("client_closed") < lifecycle_events.index("summary_persisted")
+    assert lifecycle_events.index("summary_persisted") < lifecycle_events.index("status:completed")
+    assert lifecycle_events.index("status:completed") < lifecycle_events.index("analysis_started")
+
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+
+
+def test_unverified_cleanup_cannot_publish_success_or_start_analysis(tmp_path, monkeypatch) -> None:
+    from fort_gym.bench.eval.analyzer import TraceAnalyzer
+
+    lifecycle_events: list[str] = []
+    monkeypatch.setenv("GOOGLE_API_KEY", "configured-for-ordering-test")
+    monkeypatch.setattr(
+        TraceAnalyzer,
+        "analyze",
+        lambda self, trace_path: lifecycle_events.append("analysis_started"),
+    )
+
+    _, registry, run_id = _run_governed_interact_fixture(
+        tmp_path,
+        monkeypatch,
+        screen_changes=False,
+        max_steps=1,
+        agent_override=CountingWaitAgent(10),
+        lifecycle_events=lifecycle_events,
+        cleanup_error=True,
+    )
+
+    loaded = registry.get(run_id)
+    assert loaded is not None
+    assert loaded.status == "failed"
+    assert loaded.metadata["terminal_reason"]["code"] == "dfhack_cleanup_unverified"
+    assert loaded.metadata["terminal_reason"]["cleanup"]["attempts"] == 2
+    assert "cleanup_completed_at" not in loaded.metadata
+    assert lifecycle_events.count("evidence_stopped") == 2
+    assert "analysis_started" not in lifecycle_events
+    assert loaded.latest_summary is not None
+
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+
+
+def test_stop_requested_during_cleanup_finalizes_stopped(tmp_path, monkeypatch) -> None:
+    lifecycle_events: list[str] = []
+    original_set_status = RunRegistry.set_status
+    original_finalize = RunRegistry.finalize_success_after_cleanup
+
+    def tracked_set_status(self, run_id, **kwargs):
+        status = kwargs.get("status")
+        if status in {"completed", "failed", "stopped"}:
+            lifecycle_events.append(f"status:{status}")
+        return original_set_status(self, run_id, **kwargs)
+
+    def tracked_finalize(self, run_id, **kwargs):
+        status = original_finalize(self, run_id, **kwargs)
+        lifecycle_events.append(f"status:{status}")
+        return status
+
+    monkeypatch.setattr(RunRegistry, "set_status", tracked_set_status)
+    monkeypatch.setattr(RunRegistry, "finalize_success_after_cleanup", tracked_finalize)
+
+    _, registry, run_id = _run_governed_interact_fixture(
+        tmp_path,
+        monkeypatch,
+        screen_changes=False,
+        max_steps=1,
+        agent_override=CountingWaitAgent(10),
+        lifecycle_events=lifecycle_events,
+        stop_during_cleanup=True,
+    )
+
+    loaded = registry.get(run_id)
+    assert loaded is not None
+    assert loaded.status == "stopped"
+    assert registry.stop_requested(run_id) is False
+    assert "status:completed" not in lifecycle_events
+    assert lifecycle_events.index("client_closed") < lifecycle_events.index("status:stopped")
+
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+
+
+def test_terminal_reason_is_staged_before_cleanup_and_finalized_after(
+    tmp_path, monkeypatch
+) -> None:
+    from fort_gym.bench.run import runner as runner_module
+
+    lifecycle_events: list[str] = []
+    original_pending = RunRegistry.record_pending_terminal_failure
+    original_final = RunRegistry.record_terminal_failure
+    original_cleanup = runner_module._cleanup_dfhack_runtime
+
+    def tracked_pending(self, run_id, **kwargs):
+        lifecycle_events.append("terminal_reason_staged")
+        return original_pending(self, run_id, **kwargs)
+
+    def tracked_cleanup(client, **kwargs):
+        lifecycle_events.append("cleanup_started")
+        return original_cleanup(client, **kwargs)
+
+    def tracked_final(self, run_id, **kwargs):
+        lifecycle_events.append("terminal_failure_finalized")
+        return original_final(self, run_id, **kwargs)
+
+    monkeypatch.setattr(RunRegistry, "record_pending_terminal_failure", tracked_pending)
+    monkeypatch.setattr(RunRegistry, "record_terminal_failure", tracked_final)
+    monkeypatch.setattr(runner_module, "_cleanup_dfhack_runtime", tracked_cleanup)
+
+    _, registry, run_id = _run_dfhack_tick_fixture(
+        tmp_path,
+        monkeypatch,
+        [{"ok": False, "timeout": True, "ticks_advanced": 0}],
+        max_steps=2,
+    )
+
+    loaded = registry.get(run_id)
+    assert loaded is not None
+    assert loaded.status == "failed"
+    assert loaded.metadata["terminal_reason"]["code"] == "tick_timeout_zero_progress"
+    assert lifecycle_events.index("terminal_reason_staged") < lifecycle_events.index(
+        "cleanup_started"
+    )
+    assert lifecycle_events.index("cleanup_started") < lifecycle_events.index(
+        "terminal_failure_finalized"
+    )
+
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+
+
+def test_terminal_reason_survives_sse_delivery_failure(tmp_path, monkeypatch) -> None:
+    original_append = RunRegistry.append_event
+
+    def fail_terminal_delivery(self, run_id, event):
+        if event.get("t") == "terminal":
+            raise RuntimeError("event loop closed")
+        return original_append(self, run_id, event)
+
+    monkeypatch.setattr(RunRegistry, "append_event", fail_terminal_delivery)
+
+    with pytest.raises(RuntimeError, match="event loop closed"):
+        _run_dfhack_tick_fixture(
+            tmp_path,
+            monkeypatch,
+            [{"ok": False, "timeout": True, "ticks_advanced": 0}],
+            max_steps=2,
+        )
+
+    recovered = RunRegistry(db_path=tmp_path / "runs.sqlite3").list()
+    assert len(recovered) == 1
+    assert recovered[0].status == "failed"
+    assert recovered[0].metadata["terminal_reason"]["code"] == "tick_timeout_zero_progress"
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+
+
+def test_unexpected_exception_cleans_df_before_failed_status(tmp_path, monkeypatch) -> None:
+    lifecycle_events: list[str] = []
+    original_set_status = RunRegistry.set_status
+
+    def tracked_set_status(self, run_id, **kwargs):
+        status = kwargs.get("status")
+        if status in {"completed", "failed", "stopped"}:
+            lifecycle_events.append(f"status:{status}")
+        return original_set_status(self, run_id, **kwargs)
+
+    monkeypatch.setattr(RunRegistry, "set_status", tracked_set_status)
+
+    with pytest.raises(RuntimeError, match="unexpected observation failure"):
+        _run_governed_interact_fixture(
+            tmp_path,
+            monkeypatch,
+            screen_changes=False,
+            max_steps=1,
+            agent_override=CountingWaitAgent(10),
+            lifecycle_events=lifecycle_events,
+            observe_error=True,
+        )
+
+    assert lifecycle_events.count("evidence_stopped") == 1
+    assert lifecycle_events.count("client_closed") == 1
+    assert lifecycle_events.index("client_closed") < lifecycle_events.index("status:failed")
 
     get_settings.cache_clear()  # type: ignore[attr-defined]
 

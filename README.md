@@ -256,14 +256,27 @@ These systems are implemented (not roadmap):
 2. **Tools** (`fort_gym/bench/agent/tools.py`): `ToolManager` with memory/plan/perception tools wired into the review-mode agents.
 3. **Experimentation** (`fort_gym/bench/experiment/`): YAML config → `ExperimentRunner` → run with experiment metadata.
 
-The active research step is G7 attempt 3. The run-integrity release now gives
+The active research step is G7 attempt 4. G7 attempt 3 was an
+infrastructure-aborted FAIL with no policy verdict: run
+`622dac1c396c454d90e070bb8b669905` reached two functional rooms and real production
+work, but at step 40 `build_workshop.lua` reused material item `765` already
+installed in the Carpenter workshop because it did not reject
+`item.flags.in_building`; a Still then reused that item and the Carpenter
+workshop disappeared without agent deconstruction. The permanent replay is
+<https://fortgym.live/r/i7wIFrZC_7xXlTJmQaXTRfWnWPMAxxeO> and the deployed SHA
+was `62030af8e3ed656e501f50e49c10968a932479a5`.
+
+The run-integrity release now gives
 the governed policy a narrow player-parity way to handle paused dialogs, fails
 closed when requested time cannot advance, and records the factual evidence
 needed to evaluate the one-year predicates. It has passed local tests and an
-isolated live modal smoke. Attempt 2 ended early when real gathering invalidated
-the new flow ledger; the follow-up fixes the evidence contract and canonical
-save loading before another run. The loop and the model must solve gameplay;
-helper heuristics stay out of the policy.
+isolated live modal smoke. Attempt 3's follow-up candidate adds the `in_building`
+guard and requires verified pause/evidence detach/client close plus a durable
+summary before terminal status or optional analysis is exposed. Stop intent and
+cleanup proof survive API restarts; unverified cleanup fails the run and skips
+analysis. It passes 626 tests with 4 skips and a live two-workshop material smoke;
+review, deployment, and deployed lifecycle proof remain before attempt 4. The
+loop and the model must solve gameplay; helper heuristics stay out of the policy.
 
 **Success definition and gate ladder: [docs/WDSLL.md](docs/WDSLL.md)** — every claim of "the agent plays" must pass a gate there on public, replayable evidence.
 
