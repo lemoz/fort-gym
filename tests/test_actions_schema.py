@@ -165,3 +165,39 @@ def test_validate_action_rejects_labor_missing_fields() -> None:
 
     assert valid is False
     assert reason == "LABOR action requires unit_id, labor, and enable"
+
+
+def test_action_tool_spec_includes_farm_type() -> None:
+    assert "FARM" in ACTION_TOOL_SPEC["parameters"]["properties"]["type"]["enum"]
+
+
+def test_parse_action_accepts_farm_with_seasons() -> None:
+    action = parse_action(
+        {
+            "type": "FARM",
+            "params": {"building_id": 34, "crop": "RADISH", "seasons": ["spring", "summer"]},
+            "intent": "grow radishes in the warm seasons",
+            "advance_ticks": 1000,
+        }
+    )
+
+    assert action["type"] == "FARM"
+    assert action["params"]["building_id"] == 34
+    assert action["params"]["crop"] == "RADISH"
+    assert action["params"]["seasons"] == ["spring", "summer"]
+
+
+def test_parse_action_accepts_farm_without_seasons() -> None:
+    action = parse_action(
+        {"type": "FARM", "params": {"building_id": 34, "crop": "clear"}, "advance_ticks": 0}
+    )
+
+    assert action["type"] == "FARM"
+    assert action["params"]["seasons"] is None
+
+
+def test_validate_action_rejects_farm_missing_crop() -> None:
+    valid, reason = validate_action({}, {"type": "FARM", "params": {"building_id": 34}})
+
+    assert valid is False
+    assert reason == "FARM action requires building_id and crop"

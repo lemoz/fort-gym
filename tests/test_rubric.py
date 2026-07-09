@@ -10,29 +10,6 @@ from fort_gym.bench.eval.rubric import (
 )
 
 
-def _labor_record(step: int, *, unit_id: int, labor: str, enable: bool) -> dict:
-    """A governed LABOR step whose flip genuinely changes real labor state."""
-    return {
-        "step": step,
-        "action": {
-            "type": "LABOR",
-            "params": {"unit_id": unit_id, "labor": labor, "enable": enable},
-        },
-        "execute": {"accepted": True, "provenance": "dfhack_governed"},
-        "metrics": {"pop": 7, "food": 40, "drink": 50},
-        "gameplay_proof": {
-            "ok": True,
-            "changed_tile_count": 0,
-            "helper_evidence": {
-                "labor_changed": True,
-                "labor_before": not enable,
-                "labor_after": enable,
-            },
-        },
-        "tick_advance": {"ticks_advanced": 1000},
-    }
-
-
 def test_dig_fingerprint_is_kind_aware() -> None:
     dig = {"type": "DIG", "params": {"kind": "dig", "area": [1, 2, 3], "size": [4, 4, 1]}}
     channel = {"type": "DIG", "params": {"kind": "channel", "area": [1, 2, 3], "size": [4, 4, 1]}}
@@ -73,6 +50,29 @@ def test_build_fingerprint_distinguishes_rect_extent() -> None:
 def test_build_fingerprint_stable_without_x2_y2() -> None:
     action = {"type": "BUILD", "params": {"kind": "Wall", "x": 5, "y": 5, "z": 1}}
     assert _action_fingerprint(action) == "BUILD:Wall:5:5:1"
+
+
+def _labor_record(step: int, *, unit_id: int, labor: str, enable: bool) -> dict:
+    """A governed LABOR step whose flip genuinely changes real labor state."""
+    return {
+        "step": step,
+        "action": {
+            "type": "LABOR",
+            "params": {"unit_id": unit_id, "labor": labor, "enable": enable},
+        },
+        "execute": {"accepted": True, "provenance": "dfhack_governed"},
+        "metrics": {"pop": 7, "food": 40, "drink": 50},
+        "gameplay_proof": {
+            "ok": True,
+            "changed_tile_count": 0,
+            "helper_evidence": {
+                "labor_changed": True,
+                "labor_before": not enable,
+                "labor_after": enable,
+            },
+        },
+        "tick_advance": {"ticks_advanced": 1000},
+    }
 
 
 def test_labor_fingerprint_distinguishes_unit_and_labor_not_enable() -> None:
@@ -160,6 +160,27 @@ def test_labor_alternating_churn_triggers_repetitive_policy_blocker() -> None:
     # 9/10 repeats share one collapsed LABOR fingerprint -> above the 0.6 blocker.
     assert "repetitive_policy" in rubric["blockers"]
     assert rubric["dimensions"]["anti_repetition"]["score"] < 5.0
+
+
+def test_farm_fingerprint_distinguishes_target_crop_and_seasons() -> None:
+    # Distinct plot, crop, or season set => distinct repetition buckets.
+    base = {"type": "FARM", "params": {"building_id": 34, "crop": "RADISH", "seasons": ["summer"]}}
+    other_plot = {"type": "FARM", "params": {"building_id": 35, "crop": "RADISH", "seasons": ["summer"]}}
+    other_crop = {"type": "FARM", "params": {"building_id": 34, "crop": "POTATO", "seasons": ["summer"]}}
+    other_seasons = {"type": "FARM", "params": {"building_id": 34, "crop": "RADISH", "seasons": ["spring"]}}
+    fingerprints = {
+        _action_fingerprint(base),
+        _action_fingerprint(other_plot),
+        _action_fingerprint(other_crop),
+        _action_fingerprint(other_seasons),
+    }
+    assert len(fingerprints) == 4
+
+
+def test_farm_fingerprint_is_season_order_invariant() -> None:
+    a = {"type": "FARM", "params": {"building_id": 34, "crop": "RADISH", "seasons": ["summer", "spring"]}}
+    b = {"type": "FARM", "params": {"building_id": 34, "crop": "RADISH", "seasons": ["spring", "summer"]}}
+    assert _action_fingerprint(a) == _action_fingerprint(b)
 
 
 def test_rubric_does_not_flag_repetition_across_distinct_dig_kinds() -> None:

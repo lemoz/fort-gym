@@ -1649,6 +1649,66 @@ def test_encoder_surfaces_full_crew_block() -> None:
     )
 
 
+def test_encoder_renders_farm_crops_seeds_and_season() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 6, "stone": 0},
+            "crew": {
+                "ok": True,
+                "farm_plots": 1,
+                "farm_plot_details": [
+                    {
+                        "id": 34,
+                        "rect": [77, 91, 78, 92, 161],
+                        "stage": 0,
+                        "max_stage": 0,
+                        "built": True,
+                        "crops": [False, "RADISH", False, False],
+                    }
+                ],
+                "seeds": [
+                    {"token": "RADISH", "count": 1, "surface": True, "seasons": ["sp", "su", "au", "wi"]},
+                    {"token": "MUSHROOM_HELMET_PLUMP", "count": 11, "surface": False, "seasons": ["sp", "su", "au", "wi"]},
+                ],
+                "current_season": "summer",
+            },
+        },
+        screen_text="main map",
+    )
+
+    assert (
+        "Farm plot #34 (77,91..78,92 z161, built) crops "
+        "spring=- summer=RADISH autumn=- winter=-" in text
+    )
+    assert (
+        "Seeds on hand: RADISH x1 (surface, all), "
+        "MUSHROOM_HELMET_PLUMP x11 (subterranean, all)" in text
+    )
+    assert "Season: summer" in text
+
+
+def test_encoder_renders_partial_season_seed_list() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 6, "stone": 0},
+            "crew": {
+                "ok": True,
+                "seeds": [
+                    {"token": "RADISH", "count": 2, "surface": True, "seasons": ["sp", "su"]},
+                ],
+                "current_season": "spring",
+            },
+        },
+        screen_text="main map",
+    )
+
+    assert "Seeds on hand: RADISH x2 (surface, sp/su)" in text
+
+
 def test_encoder_reports_true_shrub_count_separately_from_other_tiles() -> None:
     text, _ = encode_observation(
         {
@@ -2024,6 +2084,34 @@ def test_encoder_surfaces_executor_why_as_rejection_reason() -> None:
     )
 
     assert "Last Action: REJECTED - no_building_material" in obs_text
+
+
+def test_encoder_surfaces_farm_seasons_set_and_skipped() -> None:
+    # A partially-skipped FARM must tell the agent which seasons took and which
+    # were skipped (and why); those keys are string/dict shaped so the int-only
+    # detail whitelist cannot render them.
+    state = {"time": 100, "population": 7, "stocks": {}}
+
+    obs_text, _ = encode_observation(
+        state,
+        last_action_result={
+            "accepted": True,
+            "result": {
+                "ok": True,
+                "crop": "RADISH",
+                "seasons_changed": 2,
+                "seasons_set": ["spring", "summer"],
+                "seasons_skipped": [
+                    {"season": "autumn", "reason": "season_not_growable"},
+                    {"season": "winter", "reason": "season_not_growable"},
+                ],
+            },
+        },
+    )
+
+    assert "FARM crops set: spring,summer" in obs_text
+    assert "FARM seasons skipped: autumn (season_not_growable)" in obs_text
+    assert "winter (season_not_growable)" in obs_text
 
 
 def test_encoder_renders_wall_layout_with_run_compression() -> None:

@@ -91,14 +91,38 @@ def test_governed_system_prompt_describes_farm_plot_mechanic_only() -> None:
     assert "farming labor" in GOVERNED_SYSTEM_PROMPT
     assert "brewable/cookable" in GOVERNED_SYSTEM_PROMPT
     assert "consumes no material item" in GOVERNED_SYSTEM_PROMPT
-    # no new governed action type was introduced for FarmPlot (it rides BUILD)
-    assert "FARM" not in GOVERNED_ACTION_TYPES
-    assert "FARMPLOT" not in GOVERNED_ACTION_TYPES
+    # FarmPlot-as-BUILD predates the FARM crop-selection action; both now exist
+    assert GOVERNED_ACTION_TYPES == ("DIG", "BUILD", "ORDER", "UNSUSPEND", "FARM", "LABOR", "WAIT")
 
 
 def test_governed_action_types_include_unsuspend() -> None:
-    assert GOVERNED_ACTION_TYPES == ("DIG", "BUILD", "ORDER", "UNSUSPEND", "LABOR", "WAIT")
+    assert GOVERNED_ACTION_TYPES == ("DIG", "BUILD", "ORDER", "UNSUSPEND", "FARM", "LABOR", "WAIT")
     assert "UNSUSPEND" in _submit_action_tool()["function"]["parameters"]["properties"]["type"]["enum"]
+
+
+def test_governed_action_types_include_farm() -> None:
+    # FARM is its own governed action type (not a BUILD/DIG rider)
+    assert "FARM" in GOVERNED_ACTION_TYPES
+    assert "FARM" in _submit_action_tool()["function"]["parameters"]["properties"]["type"]["enum"]
+
+
+def test_governed_system_prompt_describes_farm_crop_mechanic_only() -> None:
+    # factual engine mechanics only, no strategy advice
+    assert "FARM: params" in GOVERNED_SYSTEM_PROMPT
+    assert "season_not_growable" in GOVERNED_SYSTEM_PROMPT
+    assert "farming labor plants a matching seed" in GOVERNED_SYSTEM_PROMPT
+    # crops only grow in listed seasons; surface/underground eligibility is
+    # left to the engine, not gated by this command
+    assert "only grows in the seasons its raw allows" in GOVERNED_SYSTEM_PROMPT
+    assert "decided by the engine" in GOVERNED_SYSTEM_PROMPT
+    assert "crop_not_growable_here" not in GOVERNED_SYSTEM_PROMPT
+
+
+def test_farm_wired_into_provenance_gates() -> None:
+    # FARM must earn governed credit for the governed model, and be
+    # zeroed/blocked like the others when a non-governed dfhack model emits it.
+    assert "FARM" in GOVERNED_DFHACK_ACTIONS
+    assert "FARM" in ASSISTED_DFHACK_ACTIONS
 
 
 def test_governed_system_prompt_describes_unsuspend_mechanic_only() -> None:
@@ -148,8 +172,8 @@ def test_governed_system_prompt_describes_gather_mechanic_only() -> None:
     assert '"dig"|"channel"|"chop"|"gather"' in GOVERNED_SYSTEM_PROMPT
     assert "herbalism" in GOVERNED_SYSTEM_PROMPT
     assert "brewable" in GOVERNED_SYSTEM_PROMPT
-    # no new governed action type was introduced for gather (it rides DIG)
-    assert "GATHER" not in GOVERNED_ACTION_TYPES
+    # no new governed action type was introduced for gather
+    assert GOVERNED_ACTION_TYPES == ("DIG", "BUILD", "ORDER", "UNSUSPEND", "FARM", "LABOR", "WAIT")
 
 
 def test_governed_llm_is_registered_and_model_gated() -> None:

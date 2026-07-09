@@ -82,6 +82,10 @@ def _action_fingerprint(action: Dict[str, Any]) -> str:
         # one stale-fingerprint bucket rather than split ~50/50 across True/False
         # buckets and slip under the repetitive_policy threshold.
         return f"LABOR:{params.get('unit_id')}:{params.get('labor')}"
+    if action_type == "FARM":
+        seasons = params.get("seasons")
+        seasons_key = sorted(seasons) if isinstance(seasons, list) else seasons
+        return f"FARM:{params.get('building_id')}:{params.get('crop')}:{seasons_key}"
     return action_type
 
 
@@ -138,6 +142,15 @@ _QUEUE_ONLY_EVIDENCE_KEYS = {
     # it with count_labor=False so a bare flip does not exempt a repeated toggle
     # of an already-credited (unit, labor) target from the stale-fingerprint tally.
     "labor_changed",
+    # FARM crop-selection informational evidence: world change is signalled
+    # only by seasons_changed (a plant_id slot actually flipped). These keys
+    # are present on every FARM step including a no-op re-set, so their bare
+    # presence must not by itself count as world change.
+    "farm_building_id",
+    "crop",
+    "seasons_set",
+    "seasons_skipped",
+    "seeds_on_hand",
 }
 
 
@@ -179,6 +192,8 @@ def _proof_shows_world_change(proof: Dict[str, Any], *, count_labor: bool = True
     # count_labor is False the tally suppresses this exemption entirely and lets
     # _step_progress_flags credit only the first flip per (unit, labor) target.
     if count_labor and evidence.get("labor_changed") is True:
+        return True
+    if int(evidence.get("seasons_changed") or 0) > 0:
         return True
     before_ws = int(evidence.get("before_carpenter_workshops") or 0)
     after_ws = int(evidence.get("after_carpenter_workshops") or 0)

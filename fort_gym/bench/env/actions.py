@@ -68,6 +68,20 @@ class LaborParams(BaseModel):
     unit_id: int = Field(..., description="id of the citizen whose labor to flip.")
     labor: str = Field(..., description="Whitelisted labor name, e.g. 'brewing', 'mine'.")
     enable: bool = Field(..., description="True enables the labor, False disables it.")
+class FarmParams(BaseModel):
+    """Parameters for FARM actions setting a farm plot's seasonal crop.
+
+    ``crop`` is a plant raw token (e.g. "RADISH") or the literal "clear" to
+    reset the selected seasons to no crop. ``seasons`` is optional; omitted
+    means all four seasons.
+    """
+
+    building_id: int = Field(..., description="Farm plot building id to set crops on.")
+    crop: str = Field(..., description="Plant raw token or 'clear'.")
+    seasons: Optional[list[Literal["spring", "summer", "autumn", "winter"]]] = Field(
+        default=None,
+        description="Seasons to set; omitted means all four.",
+    )
 
 
 class KeystrokeParams(BaseModel):
@@ -160,6 +174,9 @@ class UnsuspendAction(BaseAction):
 class LaborAction(BaseAction):
     type: Literal["LABOR"]
     params: LaborParams
+class FarmAction(BaseAction):
+    type: Literal["FARM"]
+    params: FarmParams
 
 
 class ZoneAction(BaseAction):
@@ -201,6 +218,7 @@ ActionUnion = Annotated[
         OrderAction,
         UnsuspendAction,
         LaborAction,
+        FarmAction,
         AssignAction,
         AlertAction,
         NoteAction,
@@ -223,6 +241,7 @@ ALLOWED_TYPES = {
     "ORDER",
     "UNSUSPEND",
     "LABOR",
+    "FARM",
     "ASSIGN",
     "ALERT",
     "NOTE",
@@ -278,6 +297,15 @@ def validate_action(state: Dict[str, Any], action: Dict[str, Any]) -> tuple[bool
     if action_type == "LABOR":
         if "unit_id" not in params or "labor" not in params or "enable" not in params:
             return False, "LABOR action requires unit_id, labor, and enable"
+    if action_type == "FARM":
+        if "building_id" not in params or "crop" not in params:
+            return False, "FARM action requires building_id and crop"
+        seasons = params.get("seasons")
+        if seasons is not None:
+            if not isinstance(seasons, list) or any(
+                season not in {"spring", "summer", "autumn", "winter"} for season in seasons
+            ):
+                return False, "FARM seasons must be a list of season names"
     if action_type == "KEYSTROKE":
         keys = params.get("keys")
         if not isinstance(keys, list):
@@ -333,6 +361,7 @@ ACTION_TOOL_SPEC = {
                     "ORDER",
                     "UNSUSPEND",
                     "LABOR",
+                    "FARM",
                     "ASSIGN",
                     "ALERT",
                     "NOTE",

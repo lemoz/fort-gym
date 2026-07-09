@@ -324,6 +324,60 @@ def test_dfhack_labor_reports_rejection_when_hook_errors(monkeypatch) -> None:
     assert result["why"] == "not_a_citizen"
 
 
+def test_dfhack_farm_routes_to_set_farm_crop_wrapper(monkeypatch) -> None:
+    calls: list[tuple] = []
+
+    def fake_set_farm_crop(building_id, crop, seasons):
+        calls.append((building_id, crop, seasons))
+        return {"ok": True, "farm_building_id": building_id, "seasons_changed": 1}
+
+    monkeypatch.setattr("fort_gym.bench.env.executor.safe_set_farm_crop", fake_set_farm_crop)
+
+    result = Executor(dfhack_client=_ConnectedDFHackClient()).apply(
+        {
+            "type": "FARM",
+            "params": {"building_id": 34, "crop": "RADISH", "seasons": ["summer"]},
+        },
+        backend="dfhack",
+    )
+
+    assert result["accepted"] is True
+    assert result["result"]["seasons_changed"] == 1
+    assert calls == [(34, "RADISH", ["summer"])]
+
+
+def test_dfhack_farm_passes_none_seasons_when_omitted(monkeypatch) -> None:
+    calls: list[tuple] = []
+
+    def fake_set_farm_crop(building_id, crop, seasons):
+        calls.append((building_id, crop, seasons))
+        return {"ok": True}
+
+    monkeypatch.setattr("fort_gym.bench.env.executor.safe_set_farm_crop", fake_set_farm_crop)
+
+    Executor(dfhack_client=_ConnectedDFHackClient()).apply(
+        {"type": "FARM", "params": {"building_id": 34, "crop": "clear"}},
+        backend="dfhack",
+    )
+
+    assert calls == [(34, "clear", None)]
+
+
+def test_dfhack_farm_reports_rejection_when_hook_errors(monkeypatch) -> None:
+    def fake_set_farm_crop(building_id, crop, seasons):
+        return {"ok": False, "error": "crop_not_found"}
+
+    monkeypatch.setattr("fort_gym.bench.env.executor.safe_set_farm_crop", fake_set_farm_crop)
+
+    result = Executor(dfhack_client=_ConnectedDFHackClient()).apply(
+        {"type": "FARM", "params": {"building_id": 34, "crop": "NONSUCH"}},
+        backend="dfhack",
+    )
+
+    assert result["accepted"] is False
+    assert result["why"] == "crop_not_found"
+
+
 def test_dfhack_order_brew_routes_to_backend_wrapper(monkeypatch) -> None:
     calls: list[tuple] = []
 

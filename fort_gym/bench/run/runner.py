@@ -36,7 +36,7 @@ from ..eval.summary import RunSummary, summarize
 from .storage import RunRegistry
 from .seed_reset import maybe_reset_dfhack_seed
 
-ASSISTED_DFHACK_ACTIONS = {"DIG", "BUILD", "ORDER", "UNSUSPEND", "LABOR"}
+ASSISTED_DFHACK_ACTIONS = {"DIG", "BUILD", "ORDER", "UNSUSPEND", "FARM", "LABOR"}
 GOVERNED_DFHACK_MODELS = {
     "dfhack-governed-scripted",
     "dfhack-governed-llm",
@@ -48,7 +48,7 @@ GOVERNED_DFHACK_MODELS = {
     "dfhack-governed-llm-kimi-vision",
     "dfhack-governed-llm-minimax-vision",
 }
-GOVERNED_DFHACK_ACTIONS = {"DIG", "BUILD", "ORDER", "UNSUSPEND", "LABOR", "WAIT"}
+GOVERNED_DFHACK_ACTIONS = {"DIG", "BUILD", "ORDER", "UNSUSPEND", "FARM", "LABOR", "WAIT"}
 ASSISTED_PROGRESS_FIELDS = (
     "target_dig_designations_delta",
     "target_floor_tiles_delta",
@@ -730,6 +730,15 @@ def _governed_gameplay_proof(
             "labor_changed",
             "labor_before",
             "labor_after",
+            # FARM crop-selection evidence: seasons_changed is the world-change
+            # signal (a plant_id slot actually flipped); the rest are
+            # informational and whitelisted as non-world-change in the rubric.
+            "farm_building_id",
+            "crop",
+            "seasons_changed",
+            "seasons_set",
+            "seasons_skipped",
+            "seeds_on_hand",
         )
         if key in result
     }
@@ -757,6 +766,7 @@ def _governed_gameplay_proof(
         or int(result.get("unsuspended") or 0) > 0
         or int(result.get("shrubs_designated") or 0) > 0
         or bool(result.get("labor_changed"))
+        or int(result.get("seasons_changed") or 0) > 0
     )
     return {
         "ok": step_gameplay_progress,
