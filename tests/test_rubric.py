@@ -52,6 +52,42 @@ def test_build_fingerprint_stable_without_x2_y2() -> None:
     assert _action_fingerprint(action) == "BUILD:Wall:5:5:1"
 
 
+def test_interact_fingerprint_is_operation_specific() -> None:
+    assert (
+        _action_fingerprint({"type": "INTERACT", "params": {"operation": "confirm"}})
+        == "INTERACT:confirm"
+    )
+    assert _action_fingerprint(
+        {"type": "INTERACT", "params": {"operation": "confirm"}}
+    ) != _action_fingerprint({"type": "INTERACT", "params": {"operation": "cancel"}})
+
+
+def test_interact_audit_evidence_is_not_world_change_or_progress() -> None:
+    records = [
+        {
+            "action": {"type": "INTERACT", "params": {"operation": "confirm"}},
+            "execute": {"accepted": True, "provenance": "dfhack_governed"},
+            "metrics": {"pop": 7, "food": 40, "drink": 50},
+            "gameplay_proof": {
+                "ok": True,
+                "changed_tile_count": 0,
+                "helper_evidence": {
+                    "operation": "confirm",
+                    "interface_key": "SELECT",
+                    "keys_sent": 1,
+                },
+            },
+            "tick_advance": {"ticks_advanced": 0},
+        }
+        for _ in range(10)
+    ]
+
+    proof = records[0]["gameplay_proof"]
+    assert _proof_shows_world_change(proof) is False
+    assert _step_progress_flags(records) == [False] * 10
+    assert "repetitive_policy" in evaluate_trace_records(records)["blockers"]
+
+
 def _labor_record(step: int, *, unit_id: int, labor: str, enable: bool) -> dict:
     """A governed LABOR step whose flip genuinely changes real labor state."""
     return {
@@ -86,7 +122,16 @@ def test_labor_fingerprint_distinguishes_unit_and_labor_not_enable() -> None:
     # fingerprint instead of splitting ~50/50 and slipping under the blocker.
     assert _action_fingerprint(base) == "LABOR:243:brewing"
     assert _action_fingerprint(base) == _action_fingerprint(disable)
-    assert len({_action_fingerprint(base), _action_fingerprint(other_unit), _action_fingerprint(other_labor)}) == 3
+    assert (
+        len(
+            {
+                _action_fingerprint(base),
+                _action_fingerprint(other_unit),
+                _action_fingerprint(other_labor),
+            }
+        )
+        == 3
+    )
 
 
 def test_labor_real_flip_is_world_change() -> None:
@@ -165,9 +210,18 @@ def test_labor_alternating_churn_triggers_repetitive_policy_blocker() -> None:
 def test_farm_fingerprint_distinguishes_target_crop_and_seasons() -> None:
     # Distinct plot, crop, or season set => distinct repetition buckets.
     base = {"type": "FARM", "params": {"building_id": 34, "crop": "RADISH", "seasons": ["summer"]}}
-    other_plot = {"type": "FARM", "params": {"building_id": 35, "crop": "RADISH", "seasons": ["summer"]}}
-    other_crop = {"type": "FARM", "params": {"building_id": 34, "crop": "POTATO", "seasons": ["summer"]}}
-    other_seasons = {"type": "FARM", "params": {"building_id": 34, "crop": "RADISH", "seasons": ["spring"]}}
+    other_plot = {
+        "type": "FARM",
+        "params": {"building_id": 35, "crop": "RADISH", "seasons": ["summer"]},
+    }
+    other_crop = {
+        "type": "FARM",
+        "params": {"building_id": 34, "crop": "POTATO", "seasons": ["summer"]},
+    }
+    other_seasons = {
+        "type": "FARM",
+        "params": {"building_id": 34, "crop": "RADISH", "seasons": ["spring"]},
+    }
     fingerprints = {
         _action_fingerprint(base),
         _action_fingerprint(other_plot),
@@ -178,8 +232,14 @@ def test_farm_fingerprint_distinguishes_target_crop_and_seasons() -> None:
 
 
 def test_farm_fingerprint_is_season_order_invariant() -> None:
-    a = {"type": "FARM", "params": {"building_id": 34, "crop": "RADISH", "seasons": ["summer", "spring"]}}
-    b = {"type": "FARM", "params": {"building_id": 34, "crop": "RADISH", "seasons": ["spring", "summer"]}}
+    a = {
+        "type": "FARM",
+        "params": {"building_id": 34, "crop": "RADISH", "seasons": ["summer", "spring"]},
+    }
+    b = {
+        "type": "FARM",
+        "params": {"building_id": 34, "crop": "RADISH", "seasons": ["spring", "summer"]},
+    }
     assert _action_fingerprint(a) == _action_fingerprint(b)
 
 

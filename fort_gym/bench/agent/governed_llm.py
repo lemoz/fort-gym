@@ -1,7 +1,7 @@
 """LLM policy on the DFHack-governed legal action surface.
 
 One OpenRouter chat-completion call per step (default ``z-ai/glm-5.2``), forced
-through a single ``submit_action`` tool restricted to DIG/BUILD/ORDER/UNSUSPEND/FARM/LABOR/WAIT.
+through a single ``submit_action`` tool restricted to DIG/BUILD/ORDER/UNSUSPEND/FARM/LABOR/WAIT/INTERACT.
 ``MemoryManager`` carries the plan, POIs, and failed attempts across steps.
 
 This module intentionally contains no gameplay heuristics: the model plus the
@@ -26,7 +26,7 @@ from .base import Agent, register_agent
 from .memory import MemoryManager
 from .minimap_render import minimap_data_url
 
-GOVERNED_ACTION_TYPES = ("DIG", "BUILD", "ORDER", "UNSUSPEND", "FARM", "LABOR", "WAIT")
+GOVERNED_ACTION_TYPES = ("DIG", "BUILD", "ORDER", "UNSUSPEND", "FARM", "LABOR", "WAIT", "INTERACT")
 DEFAULT_ADVANCE_TICKS = 1000
 
 _MEMORY_PATH_ENV_VAR = "FORT_GYM_GOVERNED_MEMORY_PATH"
@@ -41,7 +41,7 @@ rooms such as bedrooms and production rooms, fully bounded by walls, buildings, 
 production economy, breadth, plan coherence, and non-repetition; and long-horizon goals that value \
 building MULTIPLE enclosed functional rooms while keeping every dwarf alive.
 
-Legal actions (the only seven types accepted):
+Legal actions (the only eight types accepted):
 - DIG: params {"area": [x, y, z], "size": [w, h, 1], "kind": "dig"|"channel"|"chop"|"gather"}. \
 kind dig/channel designates the rectangle (max 30x30, one z-level); this harness only designates \
 WALL tiles for dig/channel — floor/shrub/other tiles in the rect are left untouched (use \
@@ -113,9 +113,14 @@ completes no work itself and moves no dwarf — a dwarf must still path to and p
 time. The observation's Citizens line lists each citizen id with its currently-enabled labors and \
 current job, so you can see who lacks the labor a stalled job needs and flip exactly that one.
 - WAIT: params {}. Issues nothing and lets the simulation run.
+- INTERACT: params {"operation": "confirm"|"cancel"|"up"|"down"|"left"|"right"}. Sends exactly one
+semantic input to a paused interface or dialog, then observes one screen after that input. It must
+use advance_ticks=0 and never advances simulation time. Use it only when the observation says the
+game is PAUSED and reports an interactive DF Viewscreen; the runner rejects all other contexts.
 
 Every action must include "advance_ticks" (how many game ticks to run after the command, up to \
-2000; around 1000 is a typical step). Nothing in the fortress changes unless time advances.
+2000; around 1000 is a typical step; INTERACT must use 0). Nothing in the fortress changes unless
+time advances.
 
 The observation includes a Fort minimap — a top-down character grid (and, when attached, the \
 same grid rendered as a color image) of your fort area with a \
@@ -127,6 +132,10 @@ plus derived work metrics (the `work` fields): wall vs floor tile counts, dig de
 active jobs, workshop counts and usability, and manager order counts. Read them to see whether \
 your previous command actually worked before issuing the next one. A == MEMORY == section carries \
 your own plan, POIs, and failed attempts from earlier steps.
+
+The Run resource flow lines are factual counters from DF item-creation events and each citizen's
+eat/drink history since this run began. Use them to verify that farming and brewing
+are out-producing consumption; current stock totals alone do not prove a sustainable loop.
 
 With each action also submit:
 - "intent": one sentence on what this command does.
@@ -176,7 +185,7 @@ _MEMORY_UPDATE_POI = re.compile(
 
 
 class DFHackGovernedLLMAgent(Agent):
-    """OpenRouter-backed policy for governed DIG/BUILD/ORDER/UNSUSPEND/FARM/LABOR/WAIT gameplay.
+    """OpenRouter policy for the eight-action governed DFHack gameplay surface.
 
     ``memory_path`` controls disk persistence of POIs, failed attempts, plan,
     and summary across runs (runs on the same seed save share the same map,
@@ -313,10 +322,7 @@ class DFHackGovernedLLMAgent(Agent):
             except Exception as exc:
                 # some providers (e.g. Kimi K2.7) refuse to run with reasoning
                 # disabled; drop the disable flag once and retry immediately
-                if (
-                    "reasoning is mandatory" in str(exc).lower()
-                    and "extra_body" in request_kwargs
-                ):
+                if "reasoning is mandatory" in str(exc).lower() and "extra_body" in request_kwargs:
                     request_kwargs.pop("extra_body", None)
                     self._tool_events.append(
                         {
@@ -376,9 +382,7 @@ class DFHackGovernedLLMAgent(Agent):
                 )
                 if will_retry:
                     time.sleep(min(2.0 * (attempt + 1), 5.0))
-        raise RuntimeError(
-            f"openrouter request failed after {max_attempts} attempts"
-        ) from last_exc
+        raise RuntimeError(f"openrouter request failed after {max_attempts} attempts") from last_exc
 
     # -- memory ----------------------------------------------------------
 
@@ -442,7 +446,7 @@ class DFHackGovernedLLMAgent(Agent):
             order = normalized["params"]
             if "quantity" not in order and "qty" in order:
                 order["quantity"] = order.pop("qty")
-        if "advance_ticks" not in normalized:
+        if "advance_ticks" not in normalized and normalized.get("type") != "INTERACT":
             normalized["advance_ticks"] = DEFAULT_ADVANCE_TICKS
         return normalized
 
@@ -572,9 +576,7 @@ class DFHackGovernedLLMAgent(Agent):
 
         if isinstance(content, list):
             content = " ".join(
-                str(part.get("text", ""))
-                for part in content
-                if isinstance(part, dict)
+                str(part.get("text", "")) for part in content if isinstance(part, dict)
             )
         if not isinstance(content, str) or "{" not in content:
             return None

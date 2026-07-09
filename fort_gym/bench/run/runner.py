@@ -3,21 +3,16 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import uuid
 from datetime import datetime
+from os import fsync
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from ..agent.base import Agent
 from ..config import get_settings
-from ..env.actions import parse_action, validate_action
-from ..env.dfhack_client import DFHackClient, DFHackError, DFHackUnavailableError
-from ..env.encoder import encode_observation
-from ..env.executor import Executor
-from ..env.mock_env import MockEnvironment
-from ..env.scenarios import evaluate_scenario_assertions, get_mock_scenario
-from ..env.state_reader import StateReader
 from ..dfhack_backend import (
     MAX_RECT_H,
     MAX_RECT_W,
@@ -25,18 +20,40 @@ from ..dfhack_backend import (
     MAX_SNAPSHOT_W,
     prepare_keystroke_target,
     read_fort_metrics,
+    read_g7_evidence,
     read_job_metrics,
     read_map_snapshot,
     read_view_state,
     read_work_metrics,
     restore_view_state,
+    start_g7_evidence,
+    stop_g7_evidence,
 )
+from ..env.actions import (
+    INTERACT_ALLOWED_VIEWSCREEN_TYPES,
+    parse_action,
+    validate_action,
+)
+from ..env.dfhack_client import DFHackClient, DFHackError, DFHackUnavailableError
+from ..env.encoder import encode_observation
+from ..env.executor import Executor
+from ..env.mock_env import MockEnvironment
+from ..env.scenarios import evaluate_scenario_assertions, get_mock_scenario
+from ..env.state_reader import StateReader
 from ..eval import metrics, milestones, scoring
 from ..eval.summary import RunSummary, summarize
-from .storage import RunRegistry
 from .seed_reset import maybe_reset_dfhack_seed
+from .storage import RunRegistry
 
-ASSISTED_DFHACK_ACTIONS = {"DIG", "BUILD", "ORDER", "UNSUSPEND", "FARM", "LABOR"}
+ASSISTED_DFHACK_ACTIONS = {
+    "DIG",
+    "BUILD",
+    "ORDER",
+    "UNSUSPEND",
+    "FARM",
+    "LABOR",
+    "INTERACT",
+}
 GOVERNED_DFHACK_MODELS = {
     "dfhack-governed-scripted",
     "dfhack-governed-llm",
@@ -48,7 +65,129 @@ GOVERNED_DFHACK_MODELS = {
     "dfhack-governed-llm-kimi-vision",
     "dfhack-governed-llm-minimax-vision",
 }
-GOVERNED_DFHACK_ACTIONS = {"DIG", "BUILD", "ORDER", "UNSUSPEND", "FARM", "LABOR", "WAIT"}
+GOVERNED_DFHACK_ACTIONS = {
+    "DIG",
+    "BUILD",
+    "ORDER",
+    "UNSUSPEND",
+    "FARM",
+    "LABOR",
+    "WAIT",
+    "INTERACT",
+}
+MAX_CONSECUTIVE_ZERO_TICKS = 3
+MAX_INTERACT_OPERATIONS_PER_MODAL = 8
+MAX_UNCHANGED_INTERACT_SCREENS = 3
+
+
+def _screen_sha256(screen_text: str | None) -> str:
+    return hashlib.sha256((screen_text or "").encode("utf-8")).hexdigest()
+
+
+def _write_durable_jsonl_record(fh: Any, record: Dict[str, Any]) -> None:
+    """Make a terminal trace row durable before publishing terminal status."""
+
+    fh.write(json.dumps(record) + "\n")
+    fh.flush()
+    fsync(fh.fileno())
+
+
+def _interact_context_reason(
+    *,
+    backend_name: str,
+    is_governed_dfhack_mode: bool,
+    state: Dict[str, Any],
+) -> str | None:
+    """Reject semantic UI input unless DF attests a paused interactive view."""
+
+    if backend_name != "dfhack" or not is_governed_dfhack_mode:
+        return "INTERACT is available only in governed DFHack mode"
+    if state.get("pause_state") is not True:
+        return "INTERACT requires an attested paused game state"
+    viewscreen_type = str(state.get("viewscreen_type") or "unknown")
+    if viewscreen_type not in INTERACT_ALLOWED_VIEWSCREEN_TYPES:
+        return f"INTERACT is not allowed on DF viewscreen {viewscreen_type!r}"
+    return None
+
+
+def _interaction_terminal_reason(
+    *,
+    action_type: str,
+    interaction_audit: Dict[str, Any] | None,
+    state_after: Dict[str, Any],
+    episode_count: int,
+    unchanged_screen_streak: int,
+) -> tuple[Dict[str, Any] | None, int, int]:
+    """Bound a zero-tick modal-recovery episode independently of tick stalls."""
+
+    if action_type != "INTERACT" or interaction_audit is None:
+        return None, episode_count, unchanged_screen_streak
+
+    next_count = episode_count + 1
+    viewscreen_after = str(state_after.get("viewscreen_type") or "unknown")
+    if viewscreen_after not in INTERACT_ALLOWED_VIEWSCREEN_TYPES:
+        return None, 0, 0
+
+    screen_changed = bool(interaction_audit.get("screen_changed"))
+    next_unchanged = 0 if screen_changed else unchanged_screen_streak + 1
+    base = {
+        "interaction_episode_count": next_count,
+        "interaction_episode_limit": MAX_INTERACT_OPERATIONS_PER_MODAL,
+        "unchanged_screen_streak": next_unchanged,
+        "unchanged_screen_limit": MAX_UNCHANGED_INTERACT_SCREENS,
+        "interaction": dict(interaction_audit),
+    }
+    if next_unchanged >= MAX_UNCHANGED_INTERACT_SCREENS:
+        return {"code": "interaction_unchanged_screen_loop", **base}, next_count, next_unchanged
+    if next_count >= MAX_INTERACT_OPERATIONS_PER_MODAL:
+        return {"code": "interaction_budget_exhausted", **base}, next_count, next_unchanged
+    return None, next_count, next_unchanged
+
+
+def _tick_terminal_reason(
+    requested_ticks: Any,
+    tick_info: Dict[str, Any],
+    consecutive_zero_tick_streak: int,
+) -> tuple[Optional[Dict[str, Any]], Optional[Dict[str, Any]], int]:
+    """Classify an advance result without treating paused UI actions as failures."""
+
+    requested_ticks_int = _int_or_none(requested_ticks) or 0
+    if requested_ticks_int <= 0:
+        return None, None, consecutive_zero_tick_streak
+
+    actual_ticks = _int_or_none(tick_info.get("ticks_advanced")) or 0
+    base = {
+        "requested_ticks": requested_ticks_int,
+        "ticks_advanced": actual_ticks,
+        "tick_info": dict(tick_info),
+    }
+    if actual_ticks > 0:
+        if tick_info.get("timeout") is True:
+            return None, {"code": "partial_tick_timeout", **base}, 0
+        if tick_info.get("ok") is False:
+            return None, {"code": "partial_tick_failed", **base}, 0
+        return None, None, 0
+
+    if tick_info.get("timeout") is True:
+        return {"code": "tick_timeout_zero_progress", **base}, None, 0
+    if tick_info.get("ok") is False:
+        return {"code": "tick_failed_zero_progress", **base}, None, 0
+
+    next_streak = consecutive_zero_tick_streak + 1
+    if next_streak >= MAX_CONSECUTIVE_ZERO_TICKS:
+        return (
+            {
+                "code": "consecutive_zero_ticks",
+                "consecutive_zero_tick_streak": next_streak,
+                "zero_tick_threshold": MAX_CONSECUTIVE_ZERO_TICKS,
+                **base,
+            },
+            None,
+            next_streak,
+        )
+    return None, None, next_streak
+
+
 ASSISTED_PROGRESS_FIELDS = (
     "target_dig_designations_delta",
     "target_floor_tiles_delta",
@@ -138,7 +277,9 @@ def _same_target_rect(
     return first_rect is not None and first_rect == second_rect
 
 
-def _prepared_target_work_rect(target: Dict[str, Any] | None) -> tuple[int, int, int, int, int, int] | None:
+def _prepared_target_work_rect(
+    target: Dict[str, Any] | None
+) -> tuple[int, int, int, int, int, int] | None:
     if not isinstance(target, dict):
         return None
     return _normalize_rect(target.get("selection_rect")) or _normalize_rect(
@@ -188,7 +329,9 @@ def _same_target_route(
     return bool(first_keys and first_keys == second_keys)
 
 
-def _map_snapshot_rect_from_state(state: Dict[str, Any], margin: int = 1) -> tuple[int, int, int, int, int, int] | None:
+def _map_snapshot_rect_from_state(
+    state: Dict[str, Any], margin: int = 1
+) -> tuple[int, int, int, int, int, int] | None:
     # Prefer the plan-agnostic fort minimap window (fort_metrics.lua): a
     # citizen/building/construction-anchored bbox, so the snapshot — and the
     # tile-change proof diffed from it — follows wherever the fort is actually
@@ -629,12 +772,8 @@ def _gameplay_proof(
     tile_changes = _snapshot_tile_changes(before_map_snapshot, after_map_snapshot)
     state_deltas = _keystroke_productive_state_deltas(state_before, advance_state)
     ui_step_work_progress = int(metrics_snapshot.get("ui_step_work_progress") or 0)
-    ui_step_excavation_progress = int(
-        metrics_snapshot.get("ui_step_excavation_progress") or 0
-    )
-    ui_step_material_progress = int(
-        metrics_snapshot.get("ui_step_material_progress") or 0
-    )
+    ui_step_excavation_progress = int(metrics_snapshot.get("ui_step_excavation_progress") or 0)
+    ui_step_material_progress = int(metrics_snapshot.get("ui_step_material_progress") or 0)
     step_gameplay_progress = bool(
         ui_step_work_progress
         or ui_step_excavation_progress
@@ -642,9 +781,7 @@ def _gameplay_proof(
         or tile_changes.get("changed_tile_count")
         or state_deltas
     )
-    proof_ok = bool(
-        step_gameplay_progress
-    )
+    proof_ok = bool(step_gameplay_progress)
     return {
         "ok": proof_ok,
         "source": "dfhack-map-and-state",
@@ -669,9 +806,7 @@ def _gameplay_proof(
             "ui_excavation": ui_step_excavation_progress,
             "ui_material": ui_step_material_progress,
             "cumulative_ui_work": int(metrics_snapshot.get("ui_work_progress") or 0),
-            "cumulative_ui_excavation": int(
-                metrics_snapshot.get("ui_excavation_progress") or 0
-            ),
+            "cumulative_ui_excavation": int(metrics_snapshot.get("ui_excavation_progress") or 0),
         },
         "state_deltas": state_deltas,
         "tile_changes": tile_changes,
@@ -703,11 +838,7 @@ def _governed_gameplay_proof(
 
     tile_changes = _snapshot_tile_changes(before_map_snapshot, after_map_snapshot)
     state_deltas = _keystroke_productive_state_deltas(state_before, advance_state)
-    result = (
-        execute_result.get("result")
-        if isinstance(execute_result.get("result"), dict)
-        else {}
-    )
+    result = execute_result.get("result") if isinstance(execute_result.get("result"), dict) else {}
     helper_evidence: Dict[str, Any] = {
         key: result[key]
         for key in (
@@ -739,6 +870,18 @@ def _governed_gameplay_proof(
             "seasons_set",
             "seasons_skipped",
             "seeds_on_hand",
+            # Paused interface attestation is audit evidence only. It is
+            # intentionally excluded from the progress expression below.
+            "operation",
+            "interface_key",
+            "keys_sent",
+            "viewscreen_before",
+            "viewscreen_after",
+            "pause_before",
+            "pause_after",
+            "screen_before_sha256",
+            "screen_after_sha256",
+            "screen_changed",
         )
         if key in result
     }
@@ -756,7 +899,7 @@ def _governed_gameplay_proof(
         result.get("before_farm_plots") or 0
     )
     created_jobs = result.get("created_job_ids")
-    step_gameplay_progress = bool(
+    step_gameplay_progress = action.get("type") != "INTERACT" and bool(
         int(tile_changes.get("changed_tile_count") or 0)
         or state_deltas
         or (isinstance(created_jobs, list) and created_jobs)
@@ -983,9 +1126,7 @@ def _keystroke_action_history_entry(
     return {
         "step": step,
         "keys": action.get("params", {}).get("keys", []),
-        "key_fingerprint": _keystroke_key_fingerprint(
-            action.get("params", {}).get("keys", [])
-        ),
+        "key_fingerprint": _keystroke_key_fingerprint(action.get("params", {}).get("keys", [])),
         "action_family": _keystroke_action_family(action),
         "intent": action.get("intent", ""),
         "expected_visible_result": action.get("expected_visible_result"),
@@ -1240,10 +1381,7 @@ def _ui_target_setup_for_observation(
     show_recommended = (
         force_show_recommended
         or attempts == 0
-        or (
-            not target_progress_seen
-            and attempts < retry_limit
-        )
+        or (not target_progress_seen and attempts < retry_limit)
     )
     setup["target_generation"] = generation
     setup["target_attempts"] = attempts
@@ -1260,9 +1398,7 @@ def _ui_target_setup_for_observation(
             else:
                 setup["recommended_keys"] = prefix + list(original_keys)
             setup["recommended_key_prefix"] = prefix
-            setup["recommended_keys_exit_only"] = bool(
-                recommended_keys_exit_only and prefix
-            )
+            setup["recommended_keys_exit_only"] = bool(recommended_keys_exit_only and prefix)
         setup["recommended_keys_suppressed"] = False
         setup["recommended_keys_retry"] = attempts > 0
         setup["recommended_keys_force_shown"] = force_show_recommended
@@ -1448,9 +1584,6 @@ def run_once(
         raise ValueError("Scenarios are currently supported only by the mock backend")
     ticks = ticks_per_step if ticks_per_step is not None else settings.TICKS_PER_STEP
     run_identifier = run_id or uuid.uuid4().hex
-    artifacts_dir = _artifacts_root() / run_identifier
-    artifacts_dir.mkdir(parents=True, exist_ok=True)
-    trace_path = artifacts_dir / "trace.jsonl"
 
     if registry:
         record = registry.get(run_identifier)
@@ -1464,17 +1597,27 @@ def run_once(
                 run_id=run_identifier,
                 preserve_save=preserve_save,
             )
-        elif loop is not None:
-            registry.bind_loop(run_identifier, loop)
-        registry.set_status(
+        if not registry.claim_pending_run(
             run_identifier,
-            status="running",
-            step=0,
             started_at=datetime.utcnow(),
-        )
+        ):
+            current = registry.get(run_identifier)
+            current_status = current.status if current is not None else "missing"
+            raise RuntimeError(
+                f"Run '{run_identifier}' cannot be claimed from status '{current_status}'"
+            )
+        if loop is not None:
+            registry.bind_loop(run_identifier, loop)
+
+    # A registered run must be claimed before its artifacts can be touched.
+    artifacts_dir = _artifacts_root() / run_identifier
+    artifacts_dir.mkdir(parents=True, exist_ok=True)
+    trace_path = artifacts_dir / "trace.jsonl"
 
     executor = Executor()
     dfhack_client: Optional[DFHackClient] = None
+    g7_evidence_attempted = False
+    g7_evidence_start: Dict[str, Any] | None = None
 
     tick_info_state: Dict[str, Any] = {}
     elapsed_ticks_total = 0
@@ -1540,6 +1683,9 @@ def run_once(
                 )
             raise
         executor = Executor(dfhack_client=dfhack_client)
+        if is_governed_dfhack_mode:
+            g7_evidence_attempted = True
+            g7_evidence_start = start_g7_evidence(run_identifier)
         if is_keystroke_mode:
             keystroke_ui_target = prepare_keystroke_target(
                 ui_target_mode,
@@ -1547,6 +1693,7 @@ def run_once(
             )
             if keystroke_ui_target.get("ok"):
                 ui_target_generation = 1
+
         def prepare_governed_target(mode: str) -> Dict[str, object]:
             view_before = read_view_state()
             target = prepare_keystroke_target(mode)
@@ -1603,28 +1750,70 @@ def run_once(
                 state["fort"] = fort
             return state
 
+        def attach_survival_evidence(state: Dict[str, Any]) -> Dict[str, Any]:
+            """Attach run-scoped production, consumption, and death facts."""
+
+            if not is_governed_dfhack_mode:
+                return state
+            evidence = read_g7_evidence()
+            evidence_valid = bool(
+                g7_evidence_start
+                and g7_evidence_start.get("ok") is True
+                and evidence.get("ok") is True
+                and evidence.get("active") is True
+                and evidence.get("run_id") == run_identifier
+            )
+            if not evidence_valid:
+                evidence = {
+                    **evidence,
+                    "ok": False,
+                    "active": False,
+                    "flow_evidence_complete": False,
+                    "death_evidence_complete": False,
+                    "error": "g7_evidence_run_scope_invalid",
+                    "expected_run_id": run_identifier,
+                    "start_result": g7_evidence_start,
+                }
+            state = dict(state)
+            state["survival"] = evidence
+            return state
+
         def observe() -> Dict[str, Any]:
             # fort metrics attach before crew: the crew tile-survey rect
             # follows the fort minimap window when it is available.
-            return attach_crew_metrics(
-                attach_fort_metrics(
-                    attach_governed_build_site(StateReader.from_dfhack(dfhack_client))
+            return attach_survival_evidence(
+                attach_crew_metrics(
+                    attach_fort_metrics(
+                        attach_governed_build_site(StateReader.from_dfhack(dfhack_client))
+                    )
                 )
             )
 
         def apply_action(action_dict: Dict[str, Any], state: Dict[str, Any]) -> Dict[str, Any]:
-            return executor.apply(action_dict, backend="dfhack", state=state)
+            return executor.apply(
+                action_dict,
+                backend="dfhack",
+                state=state,
+                allow_interact=is_governed_dfhack_mode,
+            )
 
         def advance_env(num_ticks: int) -> Dict[str, Any]:
             nonlocal tick_info_state
             if num_ticks <= 0:
                 tick_info_state = {"ok": True, "ticks_advanced": 0, "skipped": True}
-                return StateReader.from_dfhack(dfhack_client)
-            state = attach_governed_build_site(dfhack_client.advance(num_ticks))
+                return observe()
+            state = attach_survival_evidence(
+                attach_crew_metrics(
+                    attach_fort_metrics(
+                        attach_governed_build_site(dfhack_client.advance(num_ticks))
+                    )
+                )
+            )
             tick_info_state = dict(dfhack_client.last_tick_info or {})
             return state
 
         if is_keystroke_mode or is_governed_dfhack_mode:
+
             def get_screen_text() -> str:
                 """Get screen text for replay evidence."""
                 try:
@@ -1643,7 +1832,9 @@ def run_once(
     action_history: List[Dict[str, Any]] = []  # Track recent actions for keystroke mode memory
     action_history_limit = max(0, int(settings.KEYSTROKE_ACTION_HISTORY_LIMIT))
     last_action_result: Optional[Dict[str, Any]] = None  # Track previous action result for feedback
-    previous_screen = None  # Track previous screen for diff feedback (no type annotation for nonlocal)
+    previous_screen = (
+        None  # Track previous screen for diff feedback (no type annotation for nonlocal)
+    )
     assisted_dfhack_action_seen = False
     ui_work_rect: tuple[int, int, int, int, int, int] | None = None
     baseline_ui_work: Optional[Dict[str, Any]] = None
@@ -1666,7 +1857,9 @@ def run_once(
     scoreable_elapsed_ticks = 0
     last_keystroke_score_value: float | None = None
 
-    def publish_event(step: int, event_type: str, payload: Dict[str, Any], events: List[Dict[str, Any]]) -> None:
+    def publish_event(
+        step: int, event_type: str, payload: Dict[str, Any], events: List[Dict[str, Any]]
+    ) -> None:
         data = {"run_id": run_identifier, "step": step, **payload}
         events.append({"type": event_type, "data": data})
         if registry:
@@ -1682,6 +1875,9 @@ def run_once(
 
     run_failed = False
     run_stopped = False
+    consecutive_zero_tick_streak = 0
+    interaction_episode_count = 0
+    interaction_unchanged_screen_streak = 0
 
     try:
         with trace_path.open("w", encoding="utf-8") as fh:
@@ -1689,20 +1885,20 @@ def run_once(
                 events: List[Dict[str, Any]] = []
                 tick_info_state = {}
                 map_snapshot_before = None
+                interaction_audit: Dict[str, Any] | None = None
+                interaction_screen_after: str | None = None
 
                 if registry and registry.stop_requested(run_identifier):
                     run_stopped = True
                     publish_event(step, "stopped", {"reason": "stop_requested"}, events)
-                    fh.write(
-                        json.dumps(
-                            {
-                                "run_id": run_identifier,
-                                "step": step,
-                                "stopped": {"reason": "stop_requested"},
-                                "events": events,
-                            }
-                        )
-                        + "\n"
+                    _write_durable_jsonl_record(
+                        fh,
+                        {
+                            "run_id": run_identifier,
+                            "step": step,
+                            "stopped": {"reason": "stop_requested"},
+                            "events": events,
+                        },
                     )
                     registry.set_status(
                         run_identifier,
@@ -1713,6 +1909,30 @@ def run_once(
                     break
 
                 pause_env()
+                if registry and registry.stop_requested(run_identifier):
+                    run_stopped = True
+                    publish_event(
+                        step,
+                        "stopped",
+                        {"reason": "stop_requested_after_pause"},
+                        events,
+                    )
+                    _write_durable_jsonl_record(
+                        fh,
+                        {
+                            "run_id": run_identifier,
+                            "step": step,
+                            "stopped": {"reason": "stop_requested_after_pause"},
+                            "events": events,
+                        },
+                    )
+                    registry.set_status(
+                        run_identifier,
+                        status="stopped",
+                        step=step,
+                        ended_at=datetime.utcnow(),
+                    )
+                    break
                 if (
                     backend_name == "dfhack"
                     and is_keystroke_mode
@@ -1746,9 +1966,7 @@ def run_once(
                                     "multiple workshop footprints were blocked; "
                                     "expanding starter floor before retrying placement"
                                 ),
-                                "blocked_workshop_target_count": len(
-                                    ui_blocked_workshop_targets
-                                ),
+                                "blocked_workshop_target_count": len(ui_blocked_workshop_targets),
                                 "refresh_after_no_progress_steps": UI_TARGET_REFRESH_NO_PROGRESS_STEPS,
                             }
                         else:
@@ -1757,9 +1975,7 @@ def run_once(
                                 "error": starter_target.get("error", "unknown"),
                                 "target_mode": "starter",
                                 "previous_target_mode": ui_target_mode,
-                                "blocked_workshop_target_count": len(
-                                    ui_blocked_workshop_targets
-                                ),
+                                "blocked_workshop_target_count": len(ui_blocked_workshop_targets),
                                 "no_progress_streak": ui_no_progress_streak,
                             }
                     else:
@@ -1843,7 +2059,9 @@ def run_once(
                         try:
                             return func()
                         except DFHackError as final_exc:
-                            _handle_dfhack_failure(step, f"{label} failed again: {final_exc}", events)
+                            _handle_dfhack_failure(
+                                step, f"{label} failed again: {final_exc}", events
+                            )
                             raise
 
                 try:
@@ -1862,27 +2080,25 @@ def run_once(
                         carpenter_workshop_usable_seen,
                     )
                 screen_text = (
-                    get_screen_text()
-                    if is_keystroke_mode or is_governed_dfhack_mode
-                    else None
+                    get_screen_text() if is_keystroke_mode or is_governed_dfhack_mode else None
                 )
+                if (
+                    str(state_before.get("viewscreen_type") or "unknown")
+                    not in INTERACT_ALLOWED_VIEWSCREEN_TYPES
+                ):
+                    interaction_episode_count = 0
+                    interaction_unchanged_screen_streak = 0
                 screen_has_material_blocker = bool(
-                    is_keystroke_mode
-                    and screen_text
-                    and "Needs building material" in screen_text
+                    is_keystroke_mode and screen_text and "Needs building material" in screen_text
                 )
                 screen_has_ready_workshop_placement = _screen_shows_ready_workshop_placement(
                     screen_text if is_keystroke_mode else None
                 )
-                screen_has_workshop_material_selection = (
-                    _screen_shows_workshop_material_selection(
-                        screen_text if is_keystroke_mode else None
-                    )
+                screen_has_workshop_material_selection = _screen_shows_workshop_material_selection(
+                    screen_text if is_keystroke_mode else None
                 )
-                screen_has_blocked_workshop_placement = (
-                    _screen_shows_blocked_workshop_placement(
-                        screen_text if is_keystroke_mode else None
-                    )
+                screen_has_blocked_workshop_placement = _screen_shows_blocked_workshop_placement(
+                    screen_text if is_keystroke_mode else None
                 )
                 screen_has_building_type_menu = _screen_shows_building_type_menu(
                     screen_text if is_keystroke_mode else None
@@ -1894,8 +2110,7 @@ def run_once(
                     if blocked_key is not None:
                         ui_blocked_workshop_targets.add(blocked_key)
                     if (
-                        len(ui_blocked_workshop_targets)
-                        >= UI_WORKSHOP_BLOCKED_FALLBACK_TARGETS
+                        len(ui_blocked_workshop_targets) >= UI_WORKSHOP_BLOCKED_FALLBACK_TARGETS
                         and ui_workshop_blocked_at_work_progress is None
                     ):
                         ui_workshop_blocked_at_work_progress = ui_run_work_progress
@@ -1907,7 +2122,10 @@ def run_once(
                 elif screen_has_ready_workshop_placement or screen_has_workshop_material_selection:
                     ui_build_material_blocked = False
                 if backend_name == "dfhack" and is_keystroke_mode:
-                    if screen_has_ready_workshop_placement or screen_has_workshop_material_selection:
+                    if (
+                        screen_has_ready_workshop_placement
+                        or screen_has_workshop_material_selection
+                    ):
                         ui_target_mode = "workshop"
                         ui_workshop_target_blocked = False
                         source = (
@@ -1932,23 +2150,17 @@ def run_once(
                             ui_successful_targets=ui_successful_targets,
                             build_material_blocked=ui_build_material_blocked,
                         )
-                        if (
-                            ui_material_target_exhausted
-                            and desired_target_mode == "material"
-                        ):
+                        if ui_material_target_exhausted and desired_target_mode == "material":
                             desired_target_mode = _material_exhausted_fallback_target_mode(
                                 state_before,
                                 ui_run_excavation_progress=ui_run_excavation_progress,
                                 ui_successful_targets=ui_successful_targets,
                                 build_material_blocked=ui_build_material_blocked,
                             )
-                        if (
-                            desired_target_mode == "workshop"
-                            and _workshop_blocked_fallback_active(
-                                len(ui_blocked_workshop_targets),
-                                ui_workshop_blocked_at_work_progress,
-                                ui_run_work_progress,
-                            )
+                        if desired_target_mode == "workshop" and _workshop_blocked_fallback_active(
+                            len(ui_blocked_workshop_targets),
+                            ui_workshop_blocked_at_work_progress,
+                            ui_run_work_progress,
                         ):
                             desired_target_mode = "starter"
                         if desired_target_mode != ui_target_mode:
@@ -1972,7 +2184,9 @@ def run_once(
                                 if ui_target_mode == "material":
                                     refresh_reason = "switching to material acquisition target"
                                 elif ui_target_mode == "existing_workshop":
-                                    refresh_reason = "switching to existing workshop inspection target"
+                                    refresh_reason = (
+                                        "switching to existing workshop inspection target"
+                                    )
                                 elif ui_target_mode == "workshop":
                                     refresh_reason = "switching to workshop placement target"
                                 else:
@@ -1989,16 +2203,12 @@ def run_once(
                                     "error": refreshed_target.get("error", "unknown"),
                                 }
                     if keystroke_ui_target is not None:
-                        material_needs_menu_escape = (
-                            ui_target_mode == "material"
-                            and (screen_has_material_blocker or screen_has_building_type_menu)
+                        material_needs_menu_escape = ui_target_mode == "material" and (
+                            screen_has_material_blocker or screen_has_building_type_menu
                         )
-                        workshop_blocked_menu_escape = (
-                            ui_target_mode == "workshop"
-                            and (
-                                screen_has_blocked_workshop_placement
-                                or (ui_workshop_target_blocked and screen_has_building_type_menu)
-                            )
+                        workshop_blocked_menu_escape = ui_target_mode == "workshop" and (
+                            screen_has_blocked_workshop_placement
+                            or (ui_workshop_target_blocked and screen_has_building_type_menu)
                         )
                         recovery_prefix = (
                             list(UI_MATERIAL_BLOCKER_ESCAPE_KEYS)
@@ -2056,7 +2266,8 @@ def run_once(
                             ],
                             "menu_escape_keys": (
                                 list(UI_MATERIAL_BLOCKER_ESCAPE_KEYS)
-                                if screen_has_blocked_workshop_placement or screen_has_building_type_menu
+                                if screen_has_blocked_workshop_placement
+                                or screen_has_building_type_menu
                                 else []
                             ),
                             "message": (
@@ -2115,20 +2326,16 @@ def run_once(
                         {"reason": "stop_requested_before_agent_decide"},
                         events,
                     )
-                    fh.write(
-                        json.dumps(
-                            {
-                                "run_id": run_identifier,
-                                "step": step,
-                                "observation": obs_json,
-                                "observation_text": obs_text,
-                                "stopped": {
-                                    "reason": "stop_requested_before_agent_decide"
-                                },
-                                "events": events,
-                            }
-                        )
-                        + "\n"
+                    _write_durable_jsonl_record(
+                        fh,
+                        {
+                            "run_id": run_identifier,
+                            "step": step,
+                            "observation": obs_json,
+                            "observation_text": obs_text,
+                            "stopped": {"reason": "stop_requested_before_agent_decide"},
+                            "events": events,
+                        },
                     )
                     registry.set_status(
                         run_identifier,
@@ -2174,18 +2381,16 @@ def run_once(
                         "message": str(exc),
                     }
                     publish_event(step, "error", error_payload, events)
-                    fh.write(
-                        json.dumps(
-                            {
-                                "run_id": run_identifier,
-                                "step": step,
-                                "observation": obs_json,
-                                "observation_text": obs_text,
-                                "error": error_payload,
-                                "events": events,
-                            }
-                        )
-                        + "\n"
+                    _write_durable_jsonl_record(
+                        fh,
+                        {
+                            "run_id": run_identifier,
+                            "step": step,
+                            "observation": obs_json,
+                            "observation_text": obs_text,
+                            "error": error_payload,
+                            "events": events,
+                        },
                     )
                     run_failed = True
                     if registry:
@@ -2205,21 +2410,17 @@ def run_once(
                         {"reason": "stop_requested_after_agent_decide"},
                         events,
                     )
-                    fh.write(
-                        json.dumps(
-                            {
-                                "run_id": run_identifier,
-                                "step": step,
-                                "observation": obs_json,
-                                "observation_text": obs_text,
-                                "raw_action": raw_action,
-                                "stopped": {
-                                    "reason": "stop_requested_after_agent_decide"
-                                },
-                                "events": events,
-                            }
-                        )
-                        + "\n"
+                    _write_durable_jsonl_record(
+                        fh,
+                        {
+                            "run_id": run_identifier,
+                            "step": step,
+                            "observation": obs_json,
+                            "observation_text": obs_text,
+                            "raw_action": raw_action,
+                            "stopped": {"reason": "stop_requested_after_agent_decide"},
+                            "events": events,
+                        },
                     )
                     registry.set_status(
                         run_identifier,
@@ -2246,7 +2447,9 @@ def run_once(
                 if not isinstance(raw_action, dict):
                     raise TypeError("Agent must return a dictionary action")
 
-                if isinstance(raw_action, list) or any(k in raw_action for k in ("actions", "plan")):
+                if isinstance(raw_action, list) or any(
+                    k in raw_action for k in ("actions", "plan")
+                ):
                     reason = "Multiple actions are not supported"
                     validation = {"valid": False, "reason": reason}
                     publish_event(step, "validation", validation, events)
@@ -2286,6 +2489,13 @@ def run_once(
                     continue
 
                 valid, reason = validate_action(obs_json, action)
+                if valid and action.get("type") == "INTERACT":
+                    reason = _interact_context_reason(
+                        backend_name=backend_name,
+                        is_governed_dfhack_mode=is_governed_dfhack_mode,
+                        state=obs_json,
+                    )
+                    valid = reason is None
                 validation = {"valid": valid, "reason": reason}
                 publish_event(step, "validation", validation, events)
                 if not valid:
@@ -2305,7 +2515,9 @@ def run_once(
                     continue
 
                 try:
-                    execute_result = call_with_retry("apply", lambda: apply_action(action, obs_json))
+                    execute_result = call_with_retry(
+                        "apply", lambda: apply_action(action, obs_json)
+                    )
                 except DFHackError:
                     run_failed = True
                     if registry:
@@ -2315,6 +2527,20 @@ def run_once(
                             ended_at=datetime.utcnow(),
                         )
                     break
+                if action.get("type") == "INTERACT":
+                    interaction_result = (
+                        dict(execute_result.get("result"))
+                        if isinstance(execute_result.get("result"), dict)
+                        else {}
+                    )
+                    interaction_result.update(
+                        {
+                            "viewscreen_before": obs_json.get("viewscreen_type"),
+                            "pause_before": obs_json.get("pause_state"),
+                            "screen_before_sha256": _screen_sha256(screen_text),
+                        }
+                    )
+                    execute_result = {**execute_result, "result": interaction_result}
                 if (
                     backend_name == "dfhack"
                     and is_governed_dfhack_mode
@@ -2323,7 +2549,7 @@ def run_once(
                     execute_result = {
                         **execute_result,
                         "provenance": "dfhack_governed",
-                        "gameplay_progress_eligible": True,
+                        "gameplay_progress_eligible": action.get("type") != "INTERACT",
                     }
                 elif backend_name == "dfhack" and action.get("type") in ASSISTED_DFHACK_ACTIONS:
                     execute_result = {
@@ -2336,6 +2562,37 @@ def run_once(
                 publish_event(step, "execute", {"result": execute_result}, events)
                 state_after_apply = execute_result.get("state") or state_before
 
+                if registry and registry.stop_requested(run_identifier):
+                    run_stopped = True
+                    publish_event(
+                        step,
+                        "stopped",
+                        {"reason": "stop_requested_after_execute"},
+                        events,
+                    )
+                    _write_durable_jsonl_record(
+                        fh,
+                        {
+                            "run_id": run_identifier,
+                            "step": step,
+                            "observation": obs_json,
+                            "observation_text": obs_text,
+                            "action": action,
+                            "validation": validation,
+                            "execute": execute_result,
+                            "state_after_apply": state_after_apply,
+                            "stopped": {"reason": "stop_requested_after_execute"},
+                            "events": events,
+                        },
+                    )
+                    registry.set_status(
+                        run_identifier,
+                        status="stopped",
+                        step=step,
+                        ended_at=datetime.utcnow(),
+                    )
+                    break
+
                 # Track action result for next step's feedback
                 last_action_result = execute_result
                 if (
@@ -2344,13 +2601,10 @@ def run_once(
                     and execute_result.get("accepted", False)
                 ):
                     target_setup = state_before.get("ui_target_setup")
-                    target_setup_exit_only = (
-                        isinstance(target_setup, dict)
-                        and bool(target_setup.get("recommended_keys_exit_only"))
+                    target_setup_exit_only = isinstance(target_setup, dict) and bool(
+                        target_setup.get("recommended_keys_exit_only")
                     )
-                    if not (
-                        target_setup_exit_only and _is_exit_only_recovery_action(action)
-                    ):
+                    if not (target_setup_exit_only and _is_exit_only_recovery_action(action)):
                         ui_target_attempts += 1
 
                 # Use agent-requested ticks, falling back to default if not specified
@@ -2399,6 +2653,41 @@ def run_once(
                             no_progress_streak=ui_no_progress_streak,
                             target_progress_seen=ui_target_progress_seen,
                         )
+                if action.get("type") == "INTERACT":
+                    interaction_screen_after = get_screen_text()
+                    interaction_result = (
+                        dict(execute_result.get("result"))
+                        if isinstance(execute_result.get("result"), dict)
+                        else {}
+                    )
+                    viewscreen_before = str(obs_json.get("viewscreen_type") or "unknown")
+                    viewscreen_after = str(advance_state.get("viewscreen_type") or "unknown")
+                    screen_before_sha256 = _screen_sha256(screen_text)
+                    screen_after_sha256 = _screen_sha256(interaction_screen_after)
+                    interaction_audit = {
+                        "operation": interaction_result.get("operation"),
+                        "interface_key": interaction_result.get("interface_key"),
+                        "keys_sent": interaction_result.get("keys_sent"),
+                        "viewscreen_before": viewscreen_before,
+                        "viewscreen_after": viewscreen_after,
+                        "pause_before": obs_json.get("pause_state"),
+                        "pause_after": advance_state.get("pause_state"),
+                        "screen_before_sha256": screen_before_sha256,
+                        "screen_after_sha256": screen_after_sha256,
+                        "screen_changed": (
+                            screen_before_sha256 != screen_after_sha256
+                            or viewscreen_before != viewscreen_after
+                        ),
+                    }
+                    interaction_result.update(interaction_audit)
+                    execute_result = {**execute_result, "result": interaction_result}
+                    last_action_result = execute_result
+                    publish_event(
+                        step,
+                        "interaction",
+                        {"interaction": interaction_audit},
+                        events,
+                    )
                 # Game stays paused - agent controls time
                 try:
                     elapsed_ticks_total += max(0, int(tick_info_state.get("ticks_advanced") or 0))
@@ -2410,6 +2699,38 @@ def run_once(
                     {"state": advance_state, "tick_advance": tick_info_state},
                     events,
                 )
+                if registry and registry.stop_requested(run_identifier):
+                    run_stopped = True
+                    publish_event(
+                        step,
+                        "stopped",
+                        {"reason": "stop_requested_after_advance"},
+                        events,
+                    )
+                    _write_durable_jsonl_record(
+                        fh,
+                        {
+                            "run_id": run_identifier,
+                            "step": step,
+                            "observation": obs_json,
+                            "observation_text": obs_text,
+                            "action": action,
+                            "validation": validation,
+                            "execute": execute_result,
+                            "state_after_apply": state_after_apply,
+                            "state_after_advance": advance_state,
+                            "tick_advance": tick_info_state,
+                            "stopped": {"reason": "stop_requested_after_advance"},
+                            "events": events,
+                        },
+                    )
+                    registry.set_status(
+                        run_identifier,
+                        status="stopped",
+                        step=step,
+                        ended_at=datetime.utcnow(),
+                    )
+                    break
                 if state_preservation is not None:
                     publish_event(
                         step,
@@ -2435,6 +2756,13 @@ def run_once(
 
                 metrics_snapshot = metrics.step_snapshot(advance_state)
                 current_work = advance_state.get("work")
+                advance_crew = advance_state.get("crew")
+                current_goods_after = (
+                    advance_crew.get("goods")
+                    if isinstance(advance_crew, dict)
+                    and isinstance(advance_crew.get("goods"), dict)
+                    else current_goods
+                )
                 metrics_snapshot.update(
                     metrics.work_progress_delta(
                         current_work if isinstance(current_work, dict) else {},
@@ -2445,7 +2773,7 @@ def run_once(
                     metrics.utility_progress_delta(
                         current_work if isinstance(current_work, dict) else {},
                         baseline_work,
-                        current_goods=current_goods,
+                        current_goods=current_goods_after,
                         baseline_goods=baseline_goods,
                         population=advance_state.get("population"),
                     )
@@ -2460,16 +2788,7 @@ def run_once(
                     metrics.complexity_progress_delta(
                         current_work if isinstance(current_work, dict) else {},
                         baseline_work,
-                        # NOTE: fort structure is only attached to state_before
-                        # (via attach_fort_metrics() inside observe()) — the
-                        # dfhack "advance" call (advance_state) never carries a
-                        # "fort" key (see StateReader.from_dfhack / advance_env
-                        # above), so advance_state.get("fort") would always be
-                        # None and this branch would never activate. Read the
-                        # freshest fort snapshot the same way the existing
-                        # governed_dfhack_mode block below does (`fort_before =
-                        # state_before.get("fort")`).
-                        current_fort=state_before.get("fort"),
+                        current_fort=advance_state.get("fort") or state_before.get("fort"),
                         baseline_fort=baseline_fort,
                     )
                 )
@@ -2493,9 +2812,7 @@ def run_once(
                     if completed_workshop_tasks > 0:
                         ui_run_completed_workshop_tasks += completed_workshop_tasks
                     if ui_run_completed_workshop_tasks > 0:
-                        production_unit = int(
-                            getattr(metrics, "PRODUCTION_WORKSHOP_PROGRESS", 5)
-                        )
+                        production_unit = int(getattr(metrics, "PRODUCTION_WORKSHOP_PROGRESS", 5))
                         metrics_snapshot[
                             "production_completed_tasks"
                         ] = ui_run_completed_workshop_tasks
@@ -2554,14 +2871,18 @@ def run_once(
                         requested_ticks_int = _int_or_none(requested_ticks) or 0
                         made_state_progress = bool(keystroke_productive_deltas)
                         made_tracked_progress = (
-                            ui_step_work_progress > 0 or ui_step_material_progress > 0
+                            ui_step_work_progress > 0
+                            or ui_step_material_progress > 0
                             or made_state_progress
                         )
-                        target_step_succeeded = _ui_target_step_succeeded(
-                            ui_target_mode,
-                            ui_step_work_progress=ui_step_work_progress,
-                            ui_step_material_progress=ui_step_material_progress,
-                        ) or made_state_progress
+                        target_step_succeeded = (
+                            _ui_target_step_succeeded(
+                                ui_target_mode,
+                                ui_step_work_progress=ui_step_work_progress,
+                                ui_step_material_progress=ui_step_material_progress,
+                            )
+                            or made_state_progress
+                        )
                         if made_tracked_progress:
                             if target_step_succeeded and not ui_target_progress_seen:
                                 ui_successful_targets += 1
@@ -2640,19 +2961,24 @@ def run_once(
                     int(utility_action.get("utility_action_progress") or 0),
                 )
                 if is_governed_dfhack_mode:
-                    metrics_snapshot["score_provenance"] = "dfhack_governed_observed_state"
-                    metrics_snapshot["gameplay_progress_eligible"] = True
-                    metrics_snapshot["governed_dfhack_progress"] = True
-                    fort_before = state_before.get("fort")
-                    if isinstance(fort_before, dict):
+                    interaction_only = action.get("type") == "INTERACT"
+                    metrics_snapshot["score_provenance"] = (
+                        "dfhack_governed_interaction_only"
+                        if interaction_only
+                        else "dfhack_governed_observed_state"
+                    )
+                    metrics_snapshot["gameplay_progress_eligible"] = not interaction_only
+                    metrics_snapshot["governed_dfhack_progress"] = not interaction_only
+                    fort_after = advance_state.get("fort") or state_before.get("fort")
+                    if isinstance(fort_after, dict):
                         metrics_snapshot["fort_enclosed_spaces"] = int(
-                            fort_before.get("enclosed_spaces") or 0
+                            fort_after.get("enclosed_spaces") or 0
                         )
                         metrics_snapshot["fort_functional_rooms"] = int(
-                            fort_before.get("functional_rooms") or 0
+                            fort_after.get("functional_rooms") or 0
                         )
                         metrics_snapshot["fort_constructions"] = int(
-                            fort_before.get("constructions") or 0
+                            fort_after.get("constructions") or 0
                         )
                 if is_keystroke_mode and action_history_limit > 0:
                     action_history.append(
@@ -2698,9 +3024,9 @@ def run_once(
                     else:
                         metrics_snapshot["observed_run_elapsed_ticks"] = elapsed_ticks_total
                         metrics_snapshot["score_duration_blocked"] = True
-                        metrics_snapshot["score_provenance"] = (
-                            "keystroke_no_current_gameplay_progress"
-                        )
+                        metrics_snapshot[
+                            "score_provenance"
+                        ] = "keystroke_no_current_gameplay_progress"
                     score_elapsed_ticks = scoreable_elapsed_ticks
                 metrics_snapshot["run_elapsed_ticks"] = score_elapsed_ticks
                 publish_event(step, "metrics", {"metrics": metrics_snapshot}, events)
@@ -2794,6 +3120,50 @@ def run_once(
                             events,
                         )
 
+                (
+                    terminal_reason,
+                    degraded_tick,
+                    consecutive_zero_tick_streak,
+                ) = _tick_terminal_reason(
+                    requested_ticks,
+                    tick_info_state,
+                    consecutive_zero_tick_streak,
+                )
+                if int(tick_info_state.get("ticks_advanced") or 0) > 0:
+                    interaction_episode_count = 0
+                    interaction_unchanged_screen_streak = 0
+                interaction_terminal_reason = None
+                (
+                    interaction_terminal_reason,
+                    interaction_episode_count,
+                    interaction_unchanged_screen_streak,
+                ) = _interaction_terminal_reason(
+                    action_type=str(action.get("type") or ""),
+                    interaction_audit=interaction_audit,
+                    state_after=advance_state,
+                    episode_count=interaction_episode_count,
+                    unchanged_screen_streak=interaction_unchanged_screen_streak,
+                )
+                if terminal_reason is None:
+                    terminal_reason = interaction_terminal_reason
+                if degraded_tick is not None:
+                    publish_event(
+                        step,
+                        "tick_degraded",
+                        {"tick_degraded": degraded_tick},
+                        events,
+                    )
+                if terminal_reason is not None:
+                    terminal_event = {
+                        "type": "terminal",
+                        "data": {
+                            "run_id": run_identifier,
+                            "step": step,
+                            "terminal_reason": terminal_reason,
+                        },
+                    }
+                    events.append(terminal_event)
+
                 record_line = {
                     "run_id": run_identifier,
                     "step": step,
@@ -2818,7 +3188,33 @@ def run_once(
                     record_line["gameplay_proof"] = gameplay_proof
                 if screen_text:
                     record_line["screen_text"] = screen_text
+                if interaction_audit is not None:
+                    record_line["interaction"] = interaction_audit
+                if interaction_screen_after:
+                    record_line["screen_text_after_interaction"] = interaction_screen_after
+                if degraded_tick is not None:
+                    record_line["tick_degraded"] = degraded_tick
+                if terminal_reason is not None:
+                    record_line["terminal_reason"] = terminal_reason
                 fh.write(json.dumps(record_line) + "\n")
+
+                if terminal_reason is not None:
+                    # The terminal event and failed status follow a durable final record.
+                    fh.flush()
+                    fsync(fh.fileno())
+                    if registry:
+                        registry.append_event(
+                            run_identifier,
+                            {"t": "terminal", "data": terminal_event["data"]},
+                        )
+                        registry.record_terminal_failure(
+                            run_identifier,
+                            terminal_reason=terminal_reason,
+                            step=step,
+                            ended_at=datetime.utcnow(),
+                        )
+                    run_failed = True
+                    break
 
                 if registry:
                     registry.set_status(run_identifier, step=step)
@@ -2864,8 +3260,10 @@ def run_once(
 
         # Auto-analyze trace with LLM (optional - requires GOOGLE_API_KEY)
         try:
-            from ..eval.analyzer import TraceAnalyzer, save_analysis
             import os
+
+            from ..eval.analyzer import TraceAnalyzer, save_analysis
+
             if os.environ.get("GOOGLE_API_KEY"):
                 analyzer = TraceAnalyzer()
                 analysis = analyzer.analyze(trace_path)
@@ -2873,6 +3271,7 @@ def run_once(
         except Exception as e:
             # Analysis is optional - don't fail the run if it errors
             import logging
+
             logging.getLogger(__name__).warning(f"Auto-analysis skipped: {e}")
     except Exception:
         if registry:
@@ -2892,7 +3291,9 @@ def run_once(
             # Also try direct dfhack-run as fallback
             try:
                 import subprocess
+
                 from ..config import dfhack_cmd
+
                 subprocess.run(
                     dfhack_cmd("lua", "df.global.pause_state = true"),
                     timeout=5,
@@ -2900,6 +3301,8 @@ def run_once(
                 )
             except Exception:
                 pass  # Best effort
+            if g7_evidence_attempted:
+                stop_g7_evidence()
             dfhack_client.close()
 
     return run_identifier

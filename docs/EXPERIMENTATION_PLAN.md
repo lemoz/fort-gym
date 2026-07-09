@@ -27,7 +27,7 @@ Experiments should run on OpenRouter models.
 
 ### Memory — `fort_gym/bench/agent/memory.py`
 
-`MemoryManager` holds, per run (in-process):
+`MemoryManager` holds state in-process during a run:
 
 - `recent_steps`: rolling window of full step records (window from
   `FORT_GYM_MEMORY_WINDOW`, default in `config.py`)
@@ -37,8 +37,10 @@ Experiments should run on OpenRouter models.
 - gameplay plan: `write_gameplay_plan` / `review_gameplay_plan`
 - `query_memory` and `get_context()` for prompt assembly
 
-Known gap: memory does not persist across runs or process restarts (no
-serialization on `MemoryManager`).
+Governed-agent memory can persist across runs through
+`FORT_GYM_GOVERNED_MEMORY_PATH`. The G5 ablation found the current design
+counterproductive, so production experiments keep it disabled until a new
+memory design earns its own matched ablation.
 
 ### Tools — `fort_gym/bench/agent/tools.py`
 
@@ -67,7 +69,7 @@ Gemini-based post-run analyzer (default `gemini-2.5-flash`, override with
 Scalar score is telemetry, not the final judge. Each `summary.json` includes a
 deterministic rubric over the last 100 trace records: survival, layout,
 production, breadth, responsiveness, plan coherence, anti-repetition, and legal
-evidence, plus explicit blockers (`no_real_layout_progress`,
+evidence, plus explicit blockers (`no_fort_structure`,
 `no_production_surface`, `repetitive_policy`,
 `illegal_or_assisted_progress_seen`, ...). Experiment reports should compare
 rubric blockers alongside score deltas, and only provenance-eligible progress
@@ -75,23 +77,38 @@ counts (see `docs/Actions_Headless_Safety.md`).
 
 ## Open Experiment Questions
 
-1. **Governed LLM policy quality**: on the fixed seed save, how far can
-   `dfhack-governed-llm` progress vs the scripted ceiling? Compare score,
-   rubric blockers, and step efficiency.
-2. **Memory ablation**: same model with and without memory context — does the
-   plan/POI memory reduce repeated failed actions?
-3. **Model comparison**: GLM 5.2 vs other OpenRouter models on identical
-   governed runs (pin with `OPENROUTER_MODEL`).
-4. **Action-surface breadth**: as new bounded helpers land (stockpiles, zones,
-   more workshop types), does the policy use them productively without
-   heuristic prompting?
+1. **G7 run integrity**: can the policy navigate ordinary paused dialogs while
+   the runner terminates genuine tick stalls before another paid model call?
+2. **G7 survival**: on `seed_region3_fresh`, can one governed run close food
+   and drink loops, survive a year, house migrants, and build three functional
+   rooms under the ratified WDSLL predicates?
+3. **G6/G7 generalization reliability**: do matched runs repeat structure and
+   survival on unseen embarks, rather than producing one exceptional replay?
+4. **Memory redesign**: can a causally grounded memory beat the standing
+   memory-off control without repeating the G5 inversion?
+5. **Action-surface breadth**: when trace forensics prove a missing player
+   capability, does a bounded player-parity primitive remove the substrate gap
+   without embedding gameplay policy?
 
 ## Prerequisites / Blockers
 
-- Cross-run memory persistence (serialize `MemoryManager` state per
-  workspace/fortress) — needed before "improves the fortress across sessions"
-  experiments.
-- `work_metrics.lua` supports only the hardcoded `two_room_workshop` plan —
-  layout-diversity experiments need plan-agnostic completion metrics.
-- Governed runs lack a per-step `gameplay_proof` tile-diff (keystroke mode has
-  one) — add before making cross-mode evidence comparisons.
+- The G7 run-integrity candidate is implemented, review-hardened, and not
+  production-deployed. The complete suite passes (607 passed, 4 skipped). It
+  requires a reviewed commit and an explicit operator deployment window before
+  attempt 2.
+- The dedicated `INTERACT` action is strict zero-tick, governed-only, paused,
+  viewscreen-allowlisted, and bounded to eight operations per modal episode
+  (three unchanged screens terminate earlier). An isolated live liaison smoke
+  passed; the same smoke must pass from the deployed commit.
+- Tick stalls and cancellation now fail closed with durable terminal reasons;
+  local regression passes and deployed-runtime verification remains the release
+  gate.
+- Completed furniture, raw death causes, and a run-scoped event/eat-history
+  food/drink ledger now reach the trace. The ledger's citizen filter and run
+  scope passed an isolated live start/read/stop smoke. `scripts/evaluate_g7.py`
+  derives duration from trace ticks, reconciles the summary, and evaluates the
+  ratified predicates without filling missing facts by inference.
+- A non-hunger/thirst death still requires factual tantrum-chain evidence before
+  it can be cleared as non-neglect; zero deaths and direct hunger/thirst deaths
+  are unambiguous.
+- G8 has no ratified multi-z acceptance protocol or stair/depth action surface.

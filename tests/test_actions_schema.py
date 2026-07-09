@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from fort_gym.bench.env.actions import (
     ACTION_TOOL_SPEC,
     parse_action,
@@ -106,12 +108,70 @@ def test_keystroke_validation_rejects_z_level_spam() -> None:
     assert reason == "KEYSTROKE z-level navigation too long (max 10 per action)"
 
 
+def test_interact_schema_accepts_only_a_semantic_operation_with_zero_ticks() -> None:
+    action = parse_action(
+        {
+            "type": "INTERACT",
+            "params": {"operation": "confirm"},
+            "intent": "confirm the visible dialog",
+            "advance_ticks": 0,
+        }
+    )
+
+    assert action["params"] == {"operation": "confirm"}
+    assert validate_action({}, action) == (True, None)
+
+
+@pytest.mark.parametrize(
+    ("action", "reason"),
+    [
+        (
+            {"type": "INTERACT", "params": {"operation": "confirm"}, "advance_ticks": 1},
+            "INTERACT action requires advance_ticks == 0",
+        ),
+        (
+            {
+                "type": "INTERACT",
+                "params": {"operation": "confirm"},
+                "advance_ticks": False,
+            },
+            "INTERACT action requires advance_ticks == 0",
+        ),
+        (
+            {"type": "INTERACT", "params": {"operation": "confirm", "keys": ["SELECT"]}},
+            "INTERACT params must contain only operation",
+        ),
+    ],
+)
+def test_interact_validation_rejects_time_and_arbitrary_keys(action, reason) -> None:
+    assert validate_action({}, action) == (False, reason)
+
+
+def test_interact_schema_rejects_unknown_operation() -> None:
+    with pytest.raises(ValueError, match="operation"):
+        parse_action({"type": "INTERACT", "params": {"operation": "escape"}})
+
+
+@pytest.mark.parametrize("advance_ticks", [None, False, "0", 1])
+def test_interact_schema_requires_an_explicit_strict_integer_zero(advance_ticks) -> None:
+    payload = {"type": "INTERACT", "params": {"operation": "confirm"}}
+    if advance_ticks is not None:
+        payload["advance_ticks"] = advance_ticks
+
+    with pytest.raises(ValueError, match="advance_ticks"):
+        parse_action(payload)
+
+
 def test_system_prompt_mentions_single_action() -> None:
     assert "one action per step" in system_prompt_v1.lower()
 
 
 def test_action_tool_spec_includes_unsuspend_type() -> None:
     assert "UNSUSPEND" in ACTION_TOOL_SPEC["parameters"]["properties"]["type"]["enum"]
+
+
+def test_action_tool_spec_includes_interact_type() -> None:
+    assert "INTERACT" in ACTION_TOOL_SPEC["parameters"]["properties"]["type"]["enum"]
 
 
 def test_parse_action_accepts_unsuspend_area_and_size() -> None:
@@ -130,9 +190,7 @@ def test_parse_action_accepts_unsuspend_area_and_size() -> None:
 
 
 def test_validate_action_rejects_unsuspend_missing_area_or_size() -> None:
-    valid, reason = validate_action(
-        {}, {"type": "UNSUSPEND", "params": {"area": [101, 98, 177]}}
-    )
+    valid, reason = validate_action({}, {"type": "UNSUSPEND", "params": {"area": [101, 98, 177]}})
 
     assert valid is False
     assert reason == "UNSUSPEND action requires area and size"

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
+import pytest
+
 from fort_gym.bench.env.executor import Executor
 
 
@@ -113,7 +115,9 @@ def test_dfhack_dig_does_not_complete_by_default(monkeypatch) -> None:
 
     monkeypatch.delenv("FORT_GYM_DFHACK_COMPLETE_DIG", raising=False)
     monkeypatch.setattr("fort_gym.bench.env.executor.safe_designate_rect", fake_designate_rect)
-    monkeypatch.setattr("fort_gym.bench.env.executor.safe_complete_dig_rect", fake_complete_dig_rect)
+    monkeypatch.setattr(
+        "fort_gym.bench.env.executor.safe_complete_dig_rect", fake_complete_dig_rect
+    )
 
     result = Executor(dfhack_client=_ConnectedDFHackClient()).apply(
         {"type": "DIG", "params": {"area": [50, 35, 0], "size": [5, 5, 1]}},
@@ -137,7 +141,9 @@ def test_dfhack_dig_completion_requires_explicit_opt_in(monkeypatch) -> None:
 
     monkeypatch.setenv("FORT_GYM_DFHACK_COMPLETE_DIG", "1")
     monkeypatch.setattr("fort_gym.bench.env.executor.safe_designate_rect", fake_designate_rect)
-    monkeypatch.setattr("fort_gym.bench.env.executor.safe_complete_dig_rect", fake_complete_dig_rect)
+    monkeypatch.setattr(
+        "fort_gym.bench.env.executor.safe_complete_dig_rect", fake_complete_dig_rect
+    )
 
     result = Executor(dfhack_client=_ConnectedDFHackClient()).apply(
         {"type": "DIG", "params": {"area": [50, 35, 0], "size": [5, 5, 1]}},
@@ -172,6 +178,93 @@ def test_dfhack_keystroke_allows_advance_only_empty_keys(monkeypatch) -> None:
     assert result["result"] == {"ok": True, "keys_sent": 0, "advance_only": True}
 
 
+def test_dfhack_interact_maps_each_operation_to_one_bounded_interface_key(monkeypatch) -> None:
+    calls: list[list[str]] = []
+
+    def fake_execute_keystroke_action(keys: list[str]) -> Dict[str, object]:
+        calls.append(keys)
+        return {"ok": True, "keys_sent": len(keys)}
+
+    monkeypatch.setattr(
+        "fort_gym.bench.env.executor.execute_keystroke_action",
+        fake_execute_keystroke_action,
+    )
+    expected = {
+        "confirm": "SELECT",
+        "cancel": "LEAVESCREEN",
+        "up": "CURSOR_UP",
+        "down": "CURSOR_DOWN",
+        "left": "CURSOR_LEFT",
+        "right": "CURSOR_RIGHT",
+    }
+    executor = Executor(dfhack_client=_ConnectedDFHackClient())
+
+    for operation, interface_key in expected.items():
+        result = executor.apply(
+            {"type": "INTERACT", "params": {"operation": operation}, "advance_ticks": 0},
+            backend="dfhack",
+            state={
+                "pause_state": True,
+                "viewscreen_type": "viewscreen_textviewerst",
+            },
+            allow_interact=True,
+        )
+
+        assert result["accepted"] is True
+        assert result["result"] == {
+            "ok": True,
+            "keys_sent": 1,
+            "operation": operation,
+            "interface_key": interface_key,
+        }
+
+    assert calls == [[key] for key in expected.values()]
+
+
+def test_dfhack_interact_fails_closed_without_governed_capability(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "fort_gym.bench.env.executor.execute_keystroke_action",
+        lambda keys: pytest.fail(f"must not dispatch keys: {keys}"),
+    )
+    executor = Executor(dfhack_client=_ConnectedDFHackClient())
+
+    result = executor.apply(
+        {"type": "INTERACT", "params": {"operation": "confirm"}, "advance_ticks": 0},
+        backend="dfhack",
+        state={"pause_state": True, "viewscreen_type": "viewscreen_textviewerst"},
+    )
+
+    assert result == {
+        "accepted": False,
+        "why": "INTERACT capability was not enabled by the governed runner",
+    }
+
+
+@pytest.mark.parametrize(
+    "state",
+    [
+        {"pause_state": False, "viewscreen_type": "viewscreen_textviewerst"},
+        {"pause_state": True, "viewscreen_type": "viewscreen_dwarfmodest"},
+        {"pause_state": True, "viewscreen_type": "unknown"},
+    ],
+)
+def test_dfhack_interact_fails_closed_outside_paused_allowlisted_view(state, monkeypatch) -> None:
+    monkeypatch.setattr(
+        "fort_gym.bench.env.executor.execute_keystroke_action",
+        lambda keys: pytest.fail(f"must not dispatch keys: {keys}"),
+    )
+    executor = Executor(dfhack_client=_ConnectedDFHackClient())
+
+    result = executor.apply(
+        {"type": "INTERACT", "params": {"operation": "confirm"}, "advance_ticks": 0},
+        backend="dfhack",
+        state=state,
+        allow_interact=True,
+    )
+
+    assert result["accepted"] is False
+
+
 def test_dfhack_dig_chop_kind_routes_to_chop_and_skips_completion(monkeypatch) -> None:
     calls: list[tuple] = []
 
@@ -184,7 +277,9 @@ def test_dfhack_dig_chop_kind_routes_to_chop_and_skips_completion(monkeypatch) -
 
     monkeypatch.setenv("FORT_GYM_DFHACK_COMPLETE_DIG", "1")
     monkeypatch.setattr("fort_gym.bench.env.executor.safe_designate_rect", fake_designate_rect)
-    monkeypatch.setattr("fort_gym.bench.env.executor.safe_complete_dig_rect", fake_complete_dig_rect)
+    monkeypatch.setattr(
+        "fort_gym.bench.env.executor.safe_complete_dig_rect", fake_complete_dig_rect
+    )
 
     result = Executor(dfhack_client=_ConnectedDFHackClient()).apply(
         {"type": "DIG", "params": {"area": [50, 35, 0], "size": [3, 3, 1], "kind": "chop"}},
@@ -207,7 +302,9 @@ def test_dfhack_dig_gather_kind_routes_to_gather_and_skips_completion(monkeypatc
 
     monkeypatch.setenv("FORT_GYM_DFHACK_COMPLETE_DIG", "1")
     monkeypatch.setattr("fort_gym.bench.env.executor.safe_designate_rect", fake_designate_rect)
-    monkeypatch.setattr("fort_gym.bench.env.executor.safe_complete_dig_rect", fake_complete_dig_rect)
+    monkeypatch.setattr(
+        "fort_gym.bench.env.executor.safe_complete_dig_rect", fake_complete_dig_rect
+    )
 
     result = Executor(dfhack_client=_ConnectedDFHackClient()).apply(
         {"type": "DIG", "params": {"area": [50, 35, 0], "size": [3, 3, 1], "kind": "gather"}},
@@ -526,9 +623,7 @@ def test_dfhack_build_farm_plot_routes_to_backend_wrapper_with_rect_corner(monke
     def fake_place_furniture(*args, **kwargs):
         raise AssertionError("FarmPlot must not route to place_furniture")
 
-    monkeypatch.setattr(
-        "fort_gym.bench.env.executor.safe_build_farm_plot", fake_build_farm_plot
-    )
+    monkeypatch.setattr("fort_gym.bench.env.executor.safe_build_farm_plot", fake_build_farm_plot)
     monkeypatch.setattr(
         "fort_gym.bench.env.executor.safe_build_construction", fake_build_construction
     )
@@ -554,9 +649,7 @@ def test_dfhack_build_farm_plot_defaults_x2_y2_to_xy(monkeypatch) -> None:
         calls.append((x1, y1, z, x2, y2))
         return {"ok": True, "kind": "FarmPlot"}
 
-    monkeypatch.setattr(
-        "fort_gym.bench.env.executor.safe_build_farm_plot", fake_build_farm_plot
-    )
+    monkeypatch.setattr("fort_gym.bench.env.executor.safe_build_farm_plot", fake_build_farm_plot)
 
     result = Executor(dfhack_client=_ConnectedDFHackClient()).apply(
         {"type": "BUILD", "params": {"kind": "FarmPlot", "x": 30, "y": 40, "z": 2}},

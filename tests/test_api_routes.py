@@ -152,6 +152,69 @@ def test_run_registry_stop_flag_lifecycle(tmp_path) -> None:
     assert registry.request_stop("missing-run") is False
 
 
+def test_run_registry_terminal_statuses_are_monotonic(tmp_path) -> None:
+    from fort_gym.bench.run.storage import RunRegistry
+
+    registry = RunRegistry(db_path=tmp_path / "runs.sqlite3")
+    for terminal_status in ("stopped", "failed", "completed"):
+        created = registry.create(
+            backend="mock",
+            model="fake",
+            max_steps=2,
+            ticks_per_step=10,
+        )
+        registry.set_status(created.run_id, status=terminal_status)
+        registry.set_status(created.run_id, status="running", step=1)
+        registry.set_status(created.run_id, status="paused")
+        registry.set_status(created.run_id, status="completed", step=2)
+        registry.set_status(created.run_id, status="failed")
+        registry.set_status(created.run_id, status="stopped")
+
+        loaded = registry.get(created.run_id)
+        assert loaded is not None
+        assert loaded.status == terminal_status
+        assert loaded.step == 2
+
+
+def test_run_registry_pending_claim_is_atomic(tmp_path) -> None:
+    from datetime import datetime
+
+    from fort_gym.bench.run.storage import RunRegistry
+
+    registry = RunRegistry(db_path=tmp_path / "runs.sqlite3")
+    created = registry.create(backend="mock", model="fake", max_steps=2, ticks_per_step=10)
+
+    assert registry.claim_pending_run(created.run_id, started_at=datetime.utcnow()) is True
+    assert registry.claim_pending_run(created.run_id, started_at=datetime.utcnow()) is False
+
+    loaded = registry.get(created.run_id)
+    assert loaded is not None
+    assert loaded.status == "running"
+
+
+def test_late_terminal_failure_cannot_relabel_or_annotate_stopped_run(tmp_path) -> None:
+    from datetime import datetime
+
+    from fort_gym.bench.run.storage import RunRegistry
+
+    registry = RunRegistry(db_path=tmp_path / "runs.sqlite3")
+    created = registry.create(backend="mock", model="fake", max_steps=2, ticks_per_step=10)
+    registry.set_status(created.run_id, status="stopped", step=1, ended_at=datetime.utcnow())
+
+    registry.record_terminal_failure(
+        created.run_id,
+        terminal_reason={"code": "late_tick_failure"},
+        step=2,
+        ended_at=datetime.utcnow(),
+    )
+
+    loaded = registry.get(created.run_id)
+    assert loaded is not None
+    assert loaded.status == "stopped"
+    assert loaded.step == 1
+    assert "terminal_reason" not in loaded.metadata
+
+
 def _make_scored_run(registry, *, model, seed_save, score_version, total_score, survival_score=1.0):
     """Register a run + share + summary with a given score_version/seed_save.
 
@@ -257,7 +320,11 @@ def test_public_leaderboard_sorts_by_mean_score_within_same_version(tmp_path) ->
         registry, model="glm-5v", seed_save="seed_region3_fresh", score_version=3, total_score=70.0
     )
     _make_scored_run(
-        registry, model="gpt-5.5-vision", seed_save="seed_region3_fresh", score_version=3, total_score=90.0
+        registry,
+        model="gpt-5.5-vision",
+        seed_save="seed_region3_fresh",
+        score_version=3,
+        total_score=90.0,
     )
 
     leaderboard = registry.public_leaderboard()

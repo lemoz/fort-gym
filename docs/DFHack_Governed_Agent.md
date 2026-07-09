@@ -13,11 +13,13 @@ control surface for this path.
 Legal actions:
 
 - Designate bounded dig/channel work.
-- Place bounded buildings that create normal construction/jobs.
-- Queue bounded manager or workshop production orders.
-- Create stockpiles, zones, labor/admin assignments, and alerts once backed by
-  audited helpers.
+- Designate bounded tree-chopping and plant-gathering work.
+- Place bounded workshops, farm plots, furniture, walls, and floors that create
+  normal construction/jobs.
+- Queue bounded manager or workshop production orders and unsuspend jobs.
+- Select seasonal farm crops and toggle one whitelisted labor on one citizen.
 - Wait for a chosen number of ticks so dwarves can perform the work.
+- Send one semantic confirm/cancel/cursor input to an attested paused dialog.
 
 Illegal actions:
 
@@ -33,8 +35,11 @@ It must not be treated as legal fortress gameplay.
 
 Governed mode is gated by model name: `GOVERNED_DFHACK_MODELS` in
 `fort_gym/bench/run/runner.py`. The runner marks a governed model's structured
-`DIG`, `BUILD`, `ORDER`, and `WAIT` actions as `execute.provenance =
-"dfhack_governed"` with `gameplay_progress_eligible = true`, and per-step
+`DIG`, `BUILD`, `ORDER`, `UNSUSPEND`, `FARM`, `LABOR`, `WAIT`, and `INTERACT`
+actions as `execute.provenance = "dfhack_governed"`. World actions may carry
+`gameplay_progress_eligible = true` only through observed state; `INTERACT` is
+always false and uses `score_provenance = "dfhack_governed_interaction_only"`.
+Other governed per-step
 metrics carry `score_provenance = "dfhack_governed_observed_state"`. Older
 structured DFHack agents still get `dfhack_assisted` progress zeroed for scalar
 scoring (and one accepted assisted action blocks scoreable elapsed time for the
@@ -62,7 +67,7 @@ progression, all recorded with per-step CopyScreen frames.
 The LLM policy on the same legal action surface (`agent/governed_llm.py`).
 It uses OpenRouter chat completions (default `z-ai/glm-5.2`, override with
 `OPENROUTER_MODEL`) with a single `submit_action` tool restricted to
-`DIG`/`BUILD`/`ORDER`/`WAIT`. Per step it receives:
+`DIG`/`BUILD`/`ORDER`/`UNSUSPEND`/`FARM`/`LABOR`/`WAIT`/`INTERACT`. Per step it receives:
 
 - the encoded observation (including the recorded CopyScreen text and the
   bounded `work` metrics),
@@ -89,6 +94,11 @@ Every governed step records into `trace.jsonl`:
   workshop count deltas). `ok` is true only when the step changed real DF
   state — a re-designation of already-designated tiles is visibly a no-op.
 - `execute.provenance` / `metrics.score_provenance` — the legality tags above.
+- `interaction` — for `INTERACT`, the semantic operation, fixed key, pause and
+  viewscreen types, and before/after CopyScreen hashes. It is audit evidence,
+  never world-progress evidence.
+- `survival` — run-scoped item-created and eat/drink-history counters plus raw
+  death facts; missing or incomplete capture fails G7 evidence closed.
 
 The governed LLM agent also persists its memory (POIs, failed attempts, plan,
 summary — not step records) across runs to
@@ -128,21 +138,28 @@ the fort stays narrow, repetitive, or non-legal.
 
 Current structural limits of the governed surface:
 
-- `ALLOWED_WORKSHOPS = {CarpenterWorkshop}` and a 6-item order whitelist —
-  no mason/smith/farm/still support yet.
-- `hook/work_metrics.lua` hardcodes the `two_room_workshop` plan; completion
-  signal exists only for that layout.
-- Memory (`MemoryManager`) is in-process per run — nothing persists across runs.
-- Governed mode records `screen_text` + metrics deltas but has no per-step
-  `gameplay_proof` tile-diff object like keystroke mode.
+- No stockpile/zone/assignment/alert helpers are in the governed action tuple.
+- Dialog input is deliberately narrow: paused allowlisted viewscreens only,
+  eight operations per modal episode, and three unchanged screens terminate.
+- Multi-z stairs and depth are not yet exposed; G8 remains unimplemented.
+- Workshop placement is limited to Carpenter and Still; orders cover seven
+  whitelisted goods/reactions. Mason, smith, kitchen, trade, military, and
+  healthcare control are not exposed.
+- `hook/work_metrics.lua` still contains legacy `two_room_workshop` plan fields;
+  gate structure is measured separately by plan-agnostic `fort_metrics.lua`.
+- Memory can persist across runs, but production experiments currently disable
+  it because the G5 ablation found the current memory design counterproductive.
+- Governed `gameplay_proof` combines bounded tile diffs and observed state
+  deltas. It reports no progress for accepted actions that changed no world
+  state, including dialog-only `INTERACT`.
 
 The next action helpers should be added only after their legal semantics are
 clear:
 
 - bounded stockpile creation
 - bounded activity zone creation
-- labor/admin assignment through normal DF state
-- richer read-only metadata for messages, announcements, jobs, units, and POIs
+- broader administrative controls beyond the existing labor toggle
+- richer read-only metadata for messages, announcements, incidents, and POIs
 
 Each helper needs tests showing that it rejects unbounded or illegal state
 mutation, and live traces showing that progress came from simulation resolution.

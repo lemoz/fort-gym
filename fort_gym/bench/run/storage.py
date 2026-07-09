@@ -22,7 +22,6 @@ from typing import Any, Dict, Iterable, Optional, Set, Tuple
 
 from ..config import get_settings
 
-
 EventPayload = Dict[str, Any]
 
 
@@ -187,7 +186,8 @@ class RunRegistry:
               total_score REAL,
               survival_score REAL,
               milestones_json TEXT,
-              summary_json TEXT
+              summary_json TEXT,
+              terminal_reason_json TEXT
             )
             """
         )
@@ -196,6 +196,12 @@ class RunRegistry:
             table="runs",
             column="preserve_save",
             definition="INTEGER NOT NULL DEFAULT 0",
+        )
+        RunRegistry._ensure_column(
+            conn,
+            table="runs",
+            column="terminal_reason_json",
+            definition="TEXT",
         )
         conn.execute(
             """
@@ -214,7 +220,9 @@ class RunRegistry:
         conn.execute("CREATE INDEX IF NOT EXISTS idx_shares_run ON shares(run_id)")
 
     @staticmethod
-    def _ensure_column(conn: sqlite3.Connection, *, table: str, column: str, definition: str) -> None:
+    def _ensure_column(
+        conn: sqlite3.Connection, *, table: str, column: str, definition: str
+    ) -> None:
         columns = {str(row[1]) for row in conn.execute(f"PRAGMA table_info({table})")}
         if column not in columns:
             conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
@@ -335,7 +343,28 @@ class RunRegistry:
             rows = conn.execute("SELECT * FROM runs ORDER BY created_at DESC").fetchall()
             queues = dict(self._queues)
             loops = dict(self._loops)
-        return [self._row_to_runinfo(row, queue=queues.get(row["run_id"]), loop=loops.get(row["run_id"])) for row in rows]
+        return [
+            self._row_to_runinfo(
+                row, queue=queues.get(row["run_id"]), loop=loops.get(row["run_id"])
+            )
+            for row in rows
+        ]
+
+    def claim_pending_run(self, run_id: str, *, started_at: datetime) -> bool:
+        """Atomically claim a pending run for exactly one worker."""
+
+        conn = self._ensure_conn()
+        with self._db_lock:
+            cursor = conn.execute(
+                """
+                UPDATE runs
+                   SET status = 'running', step = 0, started_at = ?
+                 WHERE run_id = ? AND status = 'pending'
+                """,
+                (_dt_to_iso(started_at), run_id),
+            )
+            conn.commit()
+            return cursor.rowcount == 1
 
     def set_status(
         self,
@@ -350,7 +379,13 @@ class RunRegistry:
         updates: list[str] = []
         params: list[object] = []
         if status is not None:
-            updates.append("status = ?")
+            # Terminal states are immutable. A worker can only observe a
+            # transition after an in-flight call returns, so later lifecycle
+            # bookkeeping must not replace an already-terminal outcome.
+            updates.append(
+                "status = CASE WHEN status IN ('stopped', 'failed', 'completed') "
+                "THEN status ELSE ? END"
+            )
             params.append(status)
         if step is not None:
             updates.append("step = ?")
@@ -368,6 +403,43 @@ class RunRegistry:
             conn.execute(f"UPDATE runs SET {', '.join(updates)} WHERE run_id = ?", params)
             conn.commit()
 
+    def record_terminal_failure(
+        self,
+        run_id: str,
+        *,
+        terminal_reason: Dict[str, Any],
+        step: int,
+        ended_at: datetime,
+    ) -> None:
+        """Persist a terminal runner failure without replacing another terminal outcome."""
+
+        conn = self._ensure_conn()
+        with self._db_lock:
+            conn.execute(
+                """
+                UPDATE runs
+                   SET terminal_reason_json = CASE
+                           WHEN status IN ('stopped', 'failed', 'completed')
+                           THEN terminal_reason_json ELSE ? END,
+                       step = CASE
+                           WHEN status IN ('stopped', 'failed', 'completed')
+                           THEN step ELSE ? END,
+                       status = CASE
+                           WHEN status IN ('stopped', 'failed', 'completed') THEN status
+                           ELSE 'failed'
+                       END,
+                       ended_at = COALESCE(ended_at, ?)
+                 WHERE run_id = ?
+                """,
+                (
+                    json.dumps(terminal_reason),
+                    int(step),
+                    _dt_to_iso(ended_at),
+                    run_id,
+                ),
+            )
+            conn.commit()
+
     def bind_loop(self, run_id: str, loop: asyncio.AbstractEventLoop) -> None:
         with self._db_lock:
             self._loops[run_id] = loop
@@ -376,10 +448,14 @@ class RunRegistry:
         with self._db_lock:
             event = self._stop_events.get(run_id)
             if event is None:
-                row = self._ensure_conn().execute(
-                    "SELECT 1 FROM runs WHERE run_id = ?",
-                    (run_id,),
-                ).fetchone()
+                row = (
+                    self._ensure_conn()
+                    .execute(
+                        "SELECT 1 FROM runs WHERE run_id = ?",
+                        (run_id,),
+                    )
+                    .fetchone()
+                )
                 if row is None:
                     return False
                 event = threading.Event()
@@ -510,7 +586,11 @@ class RunRegistry:
         conn = self._ensure_conn()
         token = secrets.token_urlsafe(24)
         resolved_scope = {str(item) for item in (scope or {"live", "replay", "export"})}
-        expires_at = datetime.utcnow() + timedelta(seconds=int(ttl_seconds)) if ttl_seconds is not None else None
+        expires_at = (
+            datetime.utcnow() + timedelta(seconds=int(ttl_seconds))
+            if ttl_seconds is not None
+            else None
+        )
 
         with self._db_lock:
             exists = conn.execute("SELECT 1 FROM runs WHERE run_id = ?", (run_id,)).fetchone()
@@ -703,7 +783,9 @@ class RunRegistry:
                     "runs": stats["runs"],
                     "mean_score": round(stats["total_score"] / runs, 2),
                     "survival_mean": round(stats["survival_total"] / runs, 2),
-                    "best_score": round(stats["best_score"], 2) if stats["best_score"] is not None else None,
+                    "best_score": round(stats["best_score"], 2)
+                    if stats["best_score"] is not None
+                    else None,
                     "best_token": stats["best_token"],
                 }
             )
@@ -804,7 +886,13 @@ class RunRegistry:
                 except Exception:
                     score_version = 1
             seed_save = str(run_row["seed_save"]) if run_row["seed_save"] else "unspecified"
-            key = (str(run_row["model"]), git_sha, str(run_row["backend"]), score_version, seed_save)
+            key = (
+                str(run_row["model"]),
+                git_sha,
+                str(run_row["backend"]),
+                score_version,
+                seed_save,
+            )
             grouped.setdefault(key, []).append(
                 {
                     "t": ended_at.isoformat(),
@@ -817,7 +905,13 @@ class RunRegistry:
             )
 
         series: list[Dict[str, Any]] = []
-        for (model_name, git_sha, backend_name, score_version, seed_save), points in grouped.items():
+        for (
+            model_name,
+            git_sha,
+            backend_name,
+            score_version,
+            seed_save,
+        ), points in grouped.items():
             points.sort(key=lambda item: item["t"])
             best = float("-inf")
             best_point: Optional[Dict[str, Any]] = None
@@ -864,6 +958,11 @@ class RunRegistry:
         if row["survival_score"] is not None:
             try:
                 metadata["survived"] = float(row["survival_score"]) > 0
+            except Exception:
+                pass
+        if row["terminal_reason_json"]:
+            try:
+                metadata["terminal_reason"] = json.loads(row["terminal_reason_json"])
             except Exception:
                 pass
 

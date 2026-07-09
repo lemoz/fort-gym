@@ -5,8 +5,6 @@ from __future__ import annotations
 import os
 from typing import Any, Dict, Optional
 
-from .actions import validate_action
-from .dfhack_client import DFHackClient, DFHackUnavailableError
 from ..dfhack_backend import build_construction as safe_build_construction
 from ..dfhack_backend import build_farm_plot as safe_build_farm_plot
 from ..dfhack_backend import build_workshop as safe_build_workshop
@@ -14,12 +12,23 @@ from ..dfhack_backend import complete_dig_rect as safe_complete_dig_rect
 from ..dfhack_backend import designate_rect as safe_designate_rect
 from ..dfhack_backend import place_furniture as safe_place_furniture
 from ..dfhack_backend import queue_manager_order as safe_queue_manager_order
-from ..dfhack_backend import set_labor as safe_set_labor
 from ..dfhack_backend import set_farm_crop as safe_set_farm_crop
+from ..dfhack_backend import set_labor as safe_set_labor
 from ..dfhack_backend import unsuspend_jobs as safe_unsuspend_jobs
+from .actions import INTERACT_ALLOWED_VIEWSCREEN_TYPES, validate_action
+from .dfhack_client import DFHackClient, DFHackUnavailableError
 from .keystroke_exec import execute_keystroke_action
 from .mock_env import MockEnvironment
 from .state_reader import StateReader
+
+_INTERACT_INTERFACE_KEYS = {
+    "confirm": "SELECT",
+    "cancel": "LEAVESCREEN",
+    "up": "CURSOR_UP",
+    "down": "CURSOR_DOWN",
+    "left": "CURSOR_LEFT",
+    "right": "CURSOR_RIGHT",
+}
 
 
 class Executor:
@@ -39,6 +48,7 @@ class Executor:
         *,
         backend: str = "mock",
         state: Optional[Dict[str, Any]] = None,
+        allow_interact: bool = False,
     ) -> Dict[str, Any]:
         """Validate the action and forward to the selected backend."""
 
@@ -65,6 +75,38 @@ class Executor:
 
             if action_type == "WAIT":
                 return {"accepted": True, "state": current_state}
+
+            if action_type == "INTERACT":
+                if not allow_interact:
+                    return {
+                        "accepted": False,
+                        "why": "INTERACT capability was not enabled by the governed runner",
+                    }
+                if current_state.get("pause_state") is not True:
+                    return {
+                        "accepted": False,
+                        "why": "INTERACT requires an attested paused game state",
+                    }
+                viewscreen_type = str(current_state.get("viewscreen_type") or "unknown")
+                if viewscreen_type not in INTERACT_ALLOWED_VIEWSCREEN_TYPES:
+                    return {
+                        "accepted": False,
+                        "why": f"INTERACT is not allowed on DF viewscreen {viewscreen_type!r}",
+                    }
+                operation = params["operation"]
+                interface_key = _INTERACT_INTERFACE_KEYS[operation]
+                key_result = execute_keystroke_action([interface_key])
+                result = {
+                    **key_result,
+                    "operation": operation,
+                    "interface_key": interface_key,
+                    "keys_sent": key_result.get("keys_sent", 0),
+                }
+                return {
+                    "accepted": bool(result.get("ok")),
+                    "why": None if result.get("ok") else result.get("error"),
+                    "result": result,
+                }
 
             if action_type == "DIG":
                 area = params.get("area", (0, 0, 0))

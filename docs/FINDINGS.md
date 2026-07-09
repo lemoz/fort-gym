@@ -13,8 +13,8 @@ not, the run is cited by id.
 ## 1. What Fort-Gym is
 
 Fort-Gym is an environment lab's flagship: real Dwarf Fortress, played by an LLM
-policy that may issue only five bounded, audited primitives —
-`DIG`, `BUILD`, `ORDER`, `UNSUSPEND`, `WAIT`
+policy that may issue only eight bounded, audited primitives —
+`DIG`, `BUILD`, `ORDER`, `UNSUSPEND`, `FARM`, `LABOR`, `WAIT`, `INTERACT`
 (`fort_gym/bench/agent/governed_llm.py`). Each primitive is player-parity (it
 does only what a human at the q-menu could do), locality-bounded, and
 provenance-tagged. One `dfhack_assisted` action zeroes a run.
@@ -34,9 +34,9 @@ not queues) → G4 (a fortress, not a demo) → G5 (memory pays rent) → G6
 The success statement the whole ladder makes falsifiable: *an LLM policy,
 issuing only legal governed actions, takes a fixed embark from fresh seed to a
 producing fortress on public, replayable evidence, with zero rubric blockers.*
-G0–G4 have passed; G5 failed and stands; G6 is open — zero passes in five
-attempts on the unseen map, with the first enclosed rooms arriving only in the
-final two.
+G0–G4 have passed; G5 failed and stands; G6 is unpassed after seven attempts
+on the unseen map, with the first enclosed rooms arriving only after the factual
+observation corrections; G7 is ratified and its first attempt failed.
 
 ## 2. The findings
 
@@ -299,7 +299,37 @@ preceded the G4 pass. The environment is genuinely harder (drownings,
 logistics) but tractable. The next escalation decision sits with the operator;
 no further runs until it is chosen.
 
-### 2.7 The meta-finding: correction discipline is the product
+### 2.7 G7 attempt 1: a real half-year fort, and a missing part of play
+
+G7 attempt 1, run `f6a87f6afb6241c082a6a015c361d755`
+([replay](https://fortgym.live/r/GbccbSS-d6bADihKEosLgx6788yhoaqx)),
+is the clearest boundary yet between real gameplay and successful gameplay.
+The GLM-5V policy used all seven actions available in attempt 1, produced real goods, survived
+a migrant wave to population 15, placed 14 bed buildings, and reached score-v3
+209.44. It also built zero functional rooms, let drink fall 60->0, recorded no
+food-production loop, and scored rubric 63.79. The bed field does not yet
+distinguish completed installations from pending furniture, so that predicate
+is unknown in the attempt trace. A later read-only stage probe found all 14
+observed beds complete, but after-the-fact evidence does not rewrite a gate.
+The scalar bar passed; G7 failed.
+
+At tick 217225, after 199,691 elapsed run ticks, a Mountainhomes liaison meeting
+opened. A human player would answer it while the game remained paused. The
+governed action surface had no bounded confirm/cancel/dialog command, so the
+policy could see the meeting in every CopyScreen frame but could not legally
+act on it. Seventy-five subsequent steps advanced zero ticks while still making
+model calls. This is both a substrate finding and a runner-lifecycle finding:
+ordinary administrative dialogs are part of Dwarf Fortress play, and a stalled
+clock must not silently consume the rest of an experiment.
+
+The run also exposed an evidence gap in the ratified kill rule. One death is
+recorded, but no cause reaches the trace, so the run cannot prove zero deaths
+from starvation, dehydration, or tantrum. Attempt 2 therefore requires factual
+death-cause, completed-furniture, and food/drink-flow evidence, not a narrative
+inference from stock levels. Full predicate results and the
+substrate/policy/runtime split are in `docs/WDSLL.md`.
+
+### 2.8 The meta-finding: correction discipline is the product
 
 The most reusable result is not a score — it is the method. Across every finding
 above, the same discipline held:
@@ -329,34 +359,34 @@ caught by a failing public run and closed on the record.
 
 ## 3. Limitations
 
-- **A single embark family.** Every pass (G0–G4) is on `seed_region1_fresh`; G6
-  is the first move off it, and it stands at zero passes in five region3
-  attempts. "Plays Dwarf Fortress" is not yet demonstrated — "solved one map"
-  is.
+- **A single passing embark family.** Every pass (G0–G4) is on
+  `seed_region1_fresh`; G6 is the first move off it, and it stands at zero
+  passes in seven region3 attempts. "Plays Dwarf Fortress" is not yet
+  demonstrated — "solved one map" is.
 - **Small n.** The reliability claim rests on a five-run lineage; the endurance
-  result on one probe; the G6 verdict on five runs. These are findings, not
-  distributions.
+  result on one probe; the G6 verdict on seven runs; G7 on one stopped attempt.
+  These are findings, not distributions.
 - **One policy family for most results.** GLM-5V-turbo produced the G4 passes
   and most of the G6 campaign; GPT-5.5 served the earlier G2/G3 passes.
-  Cross-model generality is thin — GPT-5.5-vision's single escalation run is the
-  only cross-family data point on the unseen map.
-- **G6 and G7 are open.** The score-v3 chair-factory acceptance gap (§2.4)
-  stands as an open operator decision; G6 runs record v3 scores, but the scalar
-  carries no pass/fail weight there, so no gate outcome yet rests on a v3
-  score.
+  Cross-model generality is thin — two GPT-5.5-vision escalation runs are the
+  only cross-family data points on the unseen map.
+- **G6 is unpassed; G7 attempt 1 failed.** Score-v3 is active, but the
+  chair-factory calibration gap (§2.4) remains part of its historical record.
+  Attempt 1 demonstrated why the scalar is telemetry rather than the verdict:
+  score 209.44 passed its bar while the fort failed survival and structure.
 
 ## 4. What's next
 
-- **G6, at an operator decision point**: the hybrid escalation ran and both
-  arms closed their first rings on region3 while failing the gate; the next
-  move — further runs, a hazard-facing correction, or accept-and-document — is
-  the operator's, and no further runs launch until it is chosen.
-- **G7 — "the fort lives"** (proposed, not yet ratified): a self-sufficient
-  in-game year (≥ 403,200 ticks) where food *and* drink produced in-run each
-  exceed consumption, zero deaths from neglect, population ≥ 15, ≥ 3 functional
-  rooms. It requires new survival primitives (farm plots, plant gathering, a Still
-  with brew orders) and is monoculture-proof by construction — survival is a
-  portfolio problem, so no chair factory can pass it.
+- **Deploy G7 run integrity, then attempt 2**: the dedicated dialog action,
+  fail-closed tick/cancellation lifecycle, completed-furniture facts, survival
+  ledger, atomic run claim, and trace-derived deterministic evaluator are
+  implemented. The complete local suite passes (607 passed, 4 skipped), as do
+  isolated live liaison and survival-ledger smokes. A reviewed commit, explicit
+  operator deploy window, and deployed smoke are required before the next
+  450-step run.
+- **G6 remains open**: the best unseen-map run reached 4/5 and missed only its
+  second functional room. G7 attempt 2 runs on the same unseen seed, so a strong
+  endurance result can add evidence without a separate blind retry campaign.
 - **G8 — depth**: a multi-z fortress (stairs, underground rooms), the next
   spatial-reasoning escalation past the hollow ring.
 - **The open-source flywheel**: a standing public leaderboard where any model

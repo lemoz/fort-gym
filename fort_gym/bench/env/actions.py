@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import json
 from json import JSONDecodeError
-from typing import Any, Annotated, Dict, Literal, Optional, Union
+from typing import Annotated, Any, Dict, Literal, Optional, Union
 
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field, StrictInt, ValidationError, field_validator
 
 
 def _dump_model(model: BaseModel) -> Dict[str, Any]:
@@ -21,7 +21,9 @@ class DigParams(BaseModel):
     """Parameters for DIG actions targeting rectangular designations."""
 
     area: tuple[int, int, int] = Field(..., description="(x, y, z) coordinates for the dig start.")
-    size: tuple[int, int, int] = Field(..., description="(width, height, depth) of the designation.")
+    size: tuple[int, int, int] = Field(
+        ..., description="(width, height, depth) of the designation."
+    )
     kind: Literal["dig", "channel", "chop", "gather"] = Field(
         default="dig",
         description=(
@@ -59,7 +61,9 @@ class UnsuspendParams(BaseModel):
     """Parameters for UNSUSPEND actions targeting a bounded rect."""
 
     area: tuple[int, int, int] = Field(..., description="(x, y, z) coordinates for the rect start.")
-    size: tuple[int, int, int] = Field(..., description="(width, height, 1) of the rect, one z-level, max 10x10.")
+    size: tuple[int, int, int] = Field(
+        ..., description="(width, height, 1) of the rect, one z-level, max 10x10."
+    )
 
 
 class LaborParams(BaseModel):
@@ -68,6 +72,8 @@ class LaborParams(BaseModel):
     unit_id: int = Field(..., description="id of the citizen whose labor to flip.")
     labor: str = Field(..., description="Whitelisted labor name, e.g. 'brewing', 'mine'.")
     enable: bool = Field(..., description="True enables the labor, False disables it.")
+
+
 class FarmParams(BaseModel):
     """Parameters for FARM actions setting a farm plot's seasonal crop.
 
@@ -93,12 +99,22 @@ class KeystrokeParams(BaseModel):
         extra = "forbid"
 
 
+class InteractParams(BaseModel):
+    """Parameters for one bounded paused-interface interaction."""
+
+    operation: Literal["confirm", "cancel", "up", "down", "left", "right"]
+
+    model_config = {"extra": "forbid"}
+
+
 class BaseAction(BaseModel):
     """Base set of properties available across all actions."""
 
     type: str
     params: Dict[str, Any] = Field(default_factory=dict)
-    intent: Optional[str] = Field(default=None, description="Optional short rationale provided by the agent.")
+    intent: Optional[str] = Field(
+        default=None, description="Optional short rationale provided by the agent."
+    )
     objective: Optional[str] = Field(
         default=None,
         description="Current gameplay objective this action is meant to advance.",
@@ -174,6 +190,8 @@ class UnsuspendAction(BaseAction):
 class LaborAction(BaseAction):
     type: Literal["LABOR"]
     params: LaborParams
+
+
 class FarmAction(BaseAction):
     type: Literal["FARM"]
     params: FarmParams
@@ -205,8 +223,27 @@ class WaitAction(BaseAction):
 
 class KeystrokeAction(BaseAction):
     """Raw keystroke input action for direct game control."""
+
     type: Literal["KEYSTROKE"]
     params: KeystrokeParams
+
+
+class InteractAction(BaseAction):
+    """One semantic input for a paused interface or dialog."""
+
+    type: Literal["INTERACT"]
+    params: InteractParams
+    advance_ticks: StrictInt = Field(
+        ...,
+        description="INTERACT is paused interface input and must explicitly request zero ticks.",
+    )
+
+    @field_validator("advance_ticks")
+    @classmethod
+    def require_zero_ticks(cls, value: int) -> int:
+        if value != 0:
+            raise ValueError("INTERACT requires advance_ticks == 0")
+        return value
 
 
 ActionUnion = Annotated[
@@ -224,6 +261,7 @@ ActionUnion = Annotated[
         NoteAction,
         WaitAction,
         KeystrokeAction,
+        InteractAction,
     ],
     Field(discriminator="type"),
 ]
@@ -247,7 +285,19 @@ ALLOWED_TYPES = {
     "NOTE",
     "WAIT",
     "KEYSTROKE",
+    "INTERACT",
 }
+
+INTERACT_ALLOWED_VIEWSCREEN_TYPES = frozenset(
+    {
+        "viewscreen_textviewerst",
+        "viewscreen_meetingst",
+        "viewscreen_requestagreementst",
+        "viewscreen_topicmeeting_fill_land_holder_positionsst",
+        "viewscreen_topicmeeting_takerequestsst",
+        "viewscreen_topicmeetingst",
+    }
+)
 
 
 def parse_action(obj_or_str: Dict[str, Any] | str) -> Dict[str, Any]:
@@ -327,13 +377,25 @@ def validate_action(state: Dict[str, Any], action: Dict[str, Any]) -> tuple[bool
         z_level_count = sum(1 for key in keys if str(key) in z_level_keys)
         if z_level_count > 10:
             return False, "KEYSTROKE z-level navigation too long (max 10 per action)"
+    if action_type == "INTERACT":
+        if not isinstance(params, dict):
+            return False, "INTERACT params must be an object"
+        if set(params) != {"operation"}:
+            return False, "INTERACT params must contain only operation"
+        if params.get("operation") not in {"confirm", "cancel", "up", "down", "left", "right"}:
+            return False, "INTERACT operation must be confirm, cancel, up, down, left, or right"
+        advance_ticks = action.get("advance_ticks")
+        if type(advance_ticks) is not int or advance_ticks != 0:
+            return False, "INTERACT action requires advance_ticks == 0"
 
     map_bounds = state.get("map_bounds")
     location = params.get("location")
     if map_bounds and location:
         if any(coord < 0 for coord in location):
             return False, "Location coordinates must be non-negative"
-        if len(map_bounds) == 3 and any(coord >= bound for coord, bound in zip(location, map_bounds)):
+        if len(map_bounds) == 3 and any(
+            coord >= bound for coord, bound in zip(location, map_bounds)
+        ):
             return False, "Location outside map bounds"
 
     return True, None
@@ -366,6 +428,7 @@ ACTION_TOOL_SPEC = {
                     "ALERT",
                     "NOTE",
                     "WAIT",
+                    "INTERACT",
                 ],
             },
             "params": {"type": "object"},

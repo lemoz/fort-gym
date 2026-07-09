@@ -22,6 +22,8 @@ def test_normalization_preserves_usable_stock_counts(monkeypatch) -> None:
             "wealth": 9,
         },
         "dead": 0,
+        "pause_state": True,
+        "viewscreen_type": "viewscreen_textviewerst",
     }
 
     class _Client:
@@ -39,6 +41,8 @@ def test_normalization_preserves_usable_stock_counts(monkeypatch) -> None:
     assert normalized["stocks"]["wood"] == 11
     assert normalized["stocks"]["wood_usable"] == 1
     assert normalized["stocks"]["stone_usable"] == 4
+    assert normalized["pause_state"] is True
+    assert normalized["viewscreen_type"] == "viewscreen_textviewerst"
 
     # legacy raw payloads (no usable fields) keep working
     legacy = dict(raw, stocks={"food": 1, "drink": 2, "wood": 3, "stone": 0, "wealth": 0})

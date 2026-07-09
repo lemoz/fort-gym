@@ -1,10 +1,9 @@
-# Score-v3 proposal (OPERATOR REVIEW — not yet ratified)
+# Score-v3 proposal (HISTORICAL — ratified and implemented)
 
-Status: PROPOSED 2026-07-06. Nothing here is active. Per the WDSLL
-non-negotiables, score-matrix changes require operator approval before any
-gate attempt runs under them. On ratification this lands as one version
-boundary (`score_version: 3`), with a WDSLL corrections-log entry; every
-prior run stays v1/v2 and is not comparable across the boundary.
+Status: RATIFIED and implemented as `score_version: 3` on 2026-07-07. This
+file preserves the proposal and its acceptance history; it is not a pending
+operator request. Every prior run stays v1/v2 and is not comparable across
+the boundary. Current gate truth lives in `docs/WDSLL.md`.
 
 ## Evidence forcing the change
 

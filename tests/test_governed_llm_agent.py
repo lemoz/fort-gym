@@ -2,13 +2,12 @@ from __future__ import annotations
 
 import json
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, get_args
 
 import fort_gym.bench.agent.governed_llm  # noqa: F401 - registration side effect
-from typing import get_args
-
 from fort_gym.bench.agent.base import AGENT_FACTORIES
 from fort_gym.bench.agent.governed_llm import (
+    DEFAULT_ADVANCE_TICKS,
     GOVERNED_ACTION_TYPES,
     GOVERNED_SYSTEM_PROMPT,
     DFHackGovernedLLMAgent,
@@ -65,7 +64,9 @@ class _FakeClient:
         self.chat = SimpleNamespace(completions=_FakeCompletions(responses, error))
 
 
-def _agent(responses: list[Any] | None = None, error: Exception | None = None) -> DFHackGovernedLLMAgent:
+def _agent(
+    responses: list[Any] | None = None, error: Exception | None = None
+) -> DFHackGovernedLLMAgent:
     agent = DFHackGovernedLLMAgent(api_key="test-key", max_attempts=1, memory_path=None)
     agent._client = _FakeClient(responses, error)
     return agent
@@ -85,6 +86,7 @@ def test_governed_system_prompt_describes_still_and_brew_mechanic_only() -> None
     assert "brew (the brewing reaction) needs a built Still" in GOVERNED_SYSTEM_PROMPT
     # no new governed action type was introduced for Still/brew
 
+
 def test_governed_system_prompt_describes_farm_plot_mechanic_only() -> None:
     # FarmPlot rides the existing BUILD action type (no new governed type)
     assert '"Still"|"FarmPlot"' in GOVERNED_SYSTEM_PROMPT
@@ -92,12 +94,32 @@ def test_governed_system_prompt_describes_farm_plot_mechanic_only() -> None:
     assert "brewable/cookable" in GOVERNED_SYSTEM_PROMPT
     assert "consumes no material item" in GOVERNED_SYSTEM_PROMPT
     # FarmPlot-as-BUILD predates the FARM crop-selection action; both now exist
-    assert GOVERNED_ACTION_TYPES == ("DIG", "BUILD", "ORDER", "UNSUSPEND", "FARM", "LABOR", "WAIT")
+    assert GOVERNED_ACTION_TYPES == (
+        "DIG",
+        "BUILD",
+        "ORDER",
+        "UNSUSPEND",
+        "FARM",
+        "LABOR",
+        "WAIT",
+        "INTERACT",
+    )
 
 
 def test_governed_action_types_include_unsuspend() -> None:
-    assert GOVERNED_ACTION_TYPES == ("DIG", "BUILD", "ORDER", "UNSUSPEND", "FARM", "LABOR", "WAIT")
-    assert "UNSUSPEND" in _submit_action_tool()["function"]["parameters"]["properties"]["type"]["enum"]
+    assert GOVERNED_ACTION_TYPES == (
+        "DIG",
+        "BUILD",
+        "ORDER",
+        "UNSUSPEND",
+        "FARM",
+        "LABOR",
+        "WAIT",
+        "INTERACT",
+    )
+    assert (
+        "UNSUSPEND" in _submit_action_tool()["function"]["parameters"]["properties"]["type"]["enum"]
+    )
 
 
 def test_governed_action_types_include_farm() -> None:
@@ -173,7 +195,47 @@ def test_governed_system_prompt_describes_gather_mechanic_only() -> None:
     assert "herbalism" in GOVERNED_SYSTEM_PROMPT
     assert "brewable" in GOVERNED_SYSTEM_PROMPT
     # no new governed action type was introduced for gather
-    assert GOVERNED_ACTION_TYPES == ("DIG", "BUILD", "ORDER", "UNSUSPEND", "FARM", "LABOR", "WAIT")
+    assert GOVERNED_ACTION_TYPES == (
+        "DIG",
+        "BUILD",
+        "ORDER",
+        "UNSUSPEND",
+        "FARM",
+        "LABOR",
+        "WAIT",
+        "INTERACT",
+    )
+
+
+def test_governed_interact_tool_and_prompt_are_bounded_and_paused() -> None:
+    tool = _submit_action_tool()["function"]["parameters"]
+
+    assert GOVERNED_ACTION_TYPES[-1] == "INTERACT"
+    assert "INTERACT" in tool["properties"]["type"]["enum"]
+    assert '"confirm"|"cancel"|"up"|"down"|"left"|"right"' in GOVERNED_SYSTEM_PROMPT
+    assert "observes one screen after that input" in GOVERNED_SYSTEM_PROMPT
+    assert "paused interface or dialog" in GOVERNED_SYSTEM_PROMPT
+    assert "INTERACT must use 0" in GOVERNED_SYSTEM_PROMPT
+
+
+def test_governed_interact_rejects_omitted_ticks_instead_of_repairing_it() -> None:
+    agent = _agent(
+        [
+            _submit_action_response(
+                {
+                    "type": "INTERACT",
+                    "params": {"operation": "cancel"},
+                    "intent": "dismiss the current dialog",
+                }
+            )
+        ]
+    )
+
+    action = agent.decide("obs", {})
+
+    assert action["type"] == "WAIT"
+    assert action["advance_ticks"] == DEFAULT_ADVANCE_TICKS
+    assert "invalid action payload" in action["intent"]
 
 
 def test_governed_llm_is_registered_and_model_gated() -> None:
@@ -433,9 +495,7 @@ def test_reasoning_disable_degrades_when_provider_requires_reasoning() -> None:
         def create(self, **kwargs: Any) -> Any:
             self.requests.append(kwargs)
             if "extra_body" in kwargs:
-                raise RuntimeError(
-                    "Error code: 400 - Reasoning is mandatory for this endpoint"
-                )
+                raise RuntimeError("Error code: 400 - Reasoning is mandatory for this endpoint")
             return _submit_action_response(
                 {"type": "WAIT", "params": {}, "intent": "ok", "advance_ticks": 1000}
             )
