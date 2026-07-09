@@ -775,6 +775,49 @@ gate. Each entry states what changed and the evidence that forced it.
     arrived (population 6 → 9), confirming the runtime fort ticks
     normally under external advancement.
 
+- **2026-07-08 — FARM + LABOR primitives: built, adversarially reviewed,
+  live-validated; G7 proposed for final ratification.** Operator directives:
+  crop selection must be agent-controlled ("We should not bound it. Enable
+  the tool and agent control"), labors get observation AND a primitive now,
+  G7 ratification approved once the surface is complete.
+  - **Mechanism probed before code**: setting `plant_id[summer]=RADISH` on
+    the live plot made a dwarf haul and plant the seed within ~5k ticks.
+    The brew fix (#63) was verified through the deployed governed hook
+    (`created_job_ids` at the Still).
+  - **FARM** (`feat/farm-crop-control`): params building_id/crop/seasons;
+    per-season before/after plant_id evidence, season_not_growable skips,
+    seeds_on_hand informational. Review (3 lenses) found 4: stale
+    docstrings; FARM skip reasons never rendered to the agent (the
+    int-only Last-Action whitelist dropped them — same class as the
+    StateReader regression); and the surface/subterranean rejection gate
+    was built on one unverified biome flag — **removed entirely**: crop
+    eligibility stays with the engine, the primitive never fabricates a
+    rejection reason. 527 tests.
+  - **LABOR** (`feat/labor-primitive`): params unit_id/labor/enable over a
+    10-labor whitelist; per-citizen id+labors+current-job observation.
+    Review found a **major**: alternating enable/disable on one
+    (unit,labor) pair farmed world-change credit and permanently escaped
+    the repetition blocker. Fixed: only the first real flip per target
+    credits progress in the rubric window; repeat toggles fall to the
+    stale tally; fingerprint drops the direction so oscillation collapses
+    into one bucket; churn test proves repetitive_policy now fires. 530
+    tests.
+  - **Live battery (runtime fort)**: FARM set-all/single-season/no-op/
+    season-gate/bad-token/bad-building/clear all honest; LABOR enable/
+    disable/no-op/unit_not_found/not_a_citizen/unsupported_labor all
+    honest. **Live enum audit caught `BUILD_BUILDING` absent on 0.47.05**
+    (the implementer's flagged risk) — real name `BUILD_CONSTRUCTION`,
+    fixed and re-verified with a real flip. Seeds observation truthful:
+    RADISH/POTATO/BLUEBERRY surface, six cavern crops subterranean,
+    seasons per raw flags. Farm-plot crops line renders cleared seasons
+    as "-".
+  - **G7 "The fort lives" — proposed for final ratification at the next
+    window.** With #63 merged and FARM/LABOR held, the loop
+    gather → farm → brew → drink is closed with every link proven on the
+    live fort. Open risk carried into the gate honestly: labor contention
+    (observed brew starvation) is now agent-solvable via LABOR; water
+    safety remains unmitigated (6 environmental drownings on region3).
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,

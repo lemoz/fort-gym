@@ -62,6 +62,12 @@ class UnsuspendParams(BaseModel):
     size: tuple[int, int, int] = Field(..., description="(width, height, 1) of the rect, one z-level, max 10x10.")
 
 
+class LaborParams(BaseModel):
+    """Parameters for LABOR actions: flip one labor on one citizen."""
+
+    unit_id: int = Field(..., description="id of the citizen whose labor to flip.")
+    labor: str = Field(..., description="Whitelisted labor name, e.g. 'brewing', 'mine'.")
+    enable: bool = Field(..., description="True enables the labor, False disables it.")
 class FarmParams(BaseModel):
     """Parameters for FARM actions setting a farm plot's seasonal crop.
 
@@ -165,6 +171,9 @@ class UnsuspendAction(BaseAction):
     params: UnsuspendParams
 
 
+class LaborAction(BaseAction):
+    type: Literal["LABOR"]
+    params: LaborParams
 class FarmAction(BaseAction):
     type: Literal["FARM"]
     params: FarmParams
@@ -208,6 +217,7 @@ ActionUnion = Annotated[
         StockpileAction,
         OrderAction,
         UnsuspendAction,
+        LaborAction,
         FarmAction,
         AssignAction,
         AlertAction,
@@ -230,6 +240,7 @@ ALLOWED_TYPES = {
     "STOCKPILE",
     "ORDER",
     "UNSUSPEND",
+    "LABOR",
     "FARM",
     "ASSIGN",
     "ALERT",
@@ -283,6 +294,9 @@ def validate_action(state: Dict[str, Any], action: Dict[str, Any]) -> tuple[bool
     if action_type == "UNSUSPEND":
         if "area" not in params or "size" not in params:
             return False, "UNSUSPEND action requires area and size"
+    if action_type == "LABOR":
+        if "unit_id" not in params or "labor" not in params or "enable" not in params:
+            return False, "LABOR action requires unit_id, labor, and enable"
     if action_type == "FARM":
         if "building_id" not in params or "crop" not in params:
             return False, "FARM action requires building_id and crop"
@@ -346,6 +360,7 @@ ACTION_TOOL_SPEC = {
                     "STOCKPILE",
                     "ORDER",
                     "UNSUSPEND",
+                    "LABOR",
                     "FARM",
                     "ASSIGN",
                     "ALERT",

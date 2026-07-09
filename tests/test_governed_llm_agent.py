@@ -91,12 +91,12 @@ def test_governed_system_prompt_describes_farm_plot_mechanic_only() -> None:
     assert "farming labor" in GOVERNED_SYSTEM_PROMPT
     assert "brewable/cookable" in GOVERNED_SYSTEM_PROMPT
     assert "consumes no material item" in GOVERNED_SYSTEM_PROMPT
-    # no new governed action type was introduced for FarmPlot
-    assert GOVERNED_ACTION_TYPES == ("DIG", "BUILD", "ORDER", "UNSUSPEND", "FARM", "WAIT")
+    # FarmPlot-as-BUILD predates the FARM crop-selection action; both now exist
+    assert GOVERNED_ACTION_TYPES == ("DIG", "BUILD", "ORDER", "UNSUSPEND", "FARM", "LABOR", "WAIT")
 
 
 def test_governed_action_types_include_unsuspend() -> None:
-    assert GOVERNED_ACTION_TYPES == ("DIG", "BUILD", "ORDER", "UNSUSPEND", "FARM", "WAIT")
+    assert GOVERNED_ACTION_TYPES == ("DIG", "BUILD", "ORDER", "UNSUSPEND", "FARM", "LABOR", "WAIT")
     assert "UNSUSPEND" in _submit_action_tool()["function"]["parameters"]["properties"]["type"]["enum"]
 
 
@@ -140,6 +140,32 @@ def test_unsuspend_wired_into_provenance_gates() -> None:
     assert "UNSUSPEND" in ASSISTED_DFHACK_ACTIONS
 
 
+def test_governed_action_types_and_tool_include_labor() -> None:
+    assert "LABOR" in GOVERNED_ACTION_TYPES
+    assert "LABOR" in _submit_action_tool()["function"]["parameters"]["properties"]["type"]["enum"]
+
+
+def test_governed_system_prompt_describes_labor_mechanic_only() -> None:
+    assert "LABOR" in GOVERNED_SYSTEM_PROMPT
+    # factual mechanic: jobs are only taken by citizens with the matching labor
+    assert "matching labor enabled" in GOVERNED_SYSTEM_PROMPT
+    # flips one labor on one citizen and completes no work itself
+    assert "completes no work itself" in GOVERNED_SYSTEM_PROMPT
+    # the citizens observation lists ids and enabled labors
+    assert "Citizens line lists each citizen id" in GOVERNED_SYSTEM_PROMPT
+    # whitelist named factually
+    assert "brewing" in GOVERNED_SYSTEM_PROMPT
+    assert "herbalism" in GOVERNED_SYSTEM_PROMPT
+
+
+def test_labor_wired_into_provenance_gates() -> None:
+    # LABOR must earn governed credit for the governed model...
+    assert "LABOR" in GOVERNED_DFHACK_ACTIONS
+    # ...and be zeroed/blocked like the other dfhack actions for non-governed
+    # models emitting it (never silently uncredited AND unblocked).
+    assert "LABOR" in ASSISTED_DFHACK_ACTIONS
+
+
 def test_governed_system_prompt_describes_gather_mechanic_only() -> None:
     # gather rides the existing DIG action type (no new governed type) —
     # it must appear in the DIG kind enum and be taught as a mechanic only.
@@ -147,7 +173,7 @@ def test_governed_system_prompt_describes_gather_mechanic_only() -> None:
     assert "herbalism" in GOVERNED_SYSTEM_PROMPT
     assert "brewable" in GOVERNED_SYSTEM_PROMPT
     # no new governed action type was introduced for gather
-    assert GOVERNED_ACTION_TYPES == ("DIG", "BUILD", "ORDER", "UNSUSPEND", "FARM", "WAIT")
+    assert GOVERNED_ACTION_TYPES == ("DIG", "BUILD", "ORDER", "UNSUSPEND", "FARM", "LABOR", "WAIT")
 
 
 def test_governed_llm_is_registered_and_model_gated() -> None:

@@ -271,6 +271,59 @@ def test_dfhack_unsuspend_reports_rejection_when_hook_errors(monkeypatch) -> Non
     assert result["why"] == "rect_too_large"
 
 
+def test_dfhack_labor_routes_to_backend_wrapper(monkeypatch) -> None:
+    calls: list[tuple] = []
+
+    def fake_set_labor(unit_id: int, labor: str, enable: bool):
+        calls.append((unit_id, labor, enable))
+        return {"ok": True, "unit_id": unit_id, "labor": labor, "labor_changed": True}
+
+    monkeypatch.setattr("fort_gym.bench.env.executor.safe_set_labor", fake_set_labor)
+
+    result = Executor(dfhack_client=_ConnectedDFHackClient()).apply(
+        {"type": "LABOR", "params": {"unit_id": 243, "labor": "brewing", "enable": True}},
+        backend="dfhack",
+    )
+
+    assert result["accepted"] is True
+    assert result["result"]["labor_changed"] is True
+    assert calls == [(243, "brewing", True)]
+
+
+def test_dfhack_labor_lowercases_labor_and_coerces_enable(monkeypatch) -> None:
+    calls: list[tuple] = []
+
+    def fake_set_labor(unit_id: int, labor: str, enable: bool):
+        calls.append((unit_id, labor, enable))
+        return {"ok": True, "unit_id": unit_id, "labor": labor, "labor_changed": False}
+
+    monkeypatch.setattr("fort_gym.bench.env.executor.safe_set_labor", fake_set_labor)
+
+    result = Executor(dfhack_client=_ConnectedDFHackClient()).apply(
+        {"type": "LABOR", "params": {"unit_id": "248", "labor": "HERBALISM", "enable": False}},
+        backend="dfhack",
+    )
+
+    assert result["accepted"] is True
+    # unit_id coerced to int, labor lowercased, enable coerced to bool
+    assert calls == [(248, "herbalism", False)]
+
+
+def test_dfhack_labor_reports_rejection_when_hook_errors(monkeypatch) -> None:
+    def fake_set_labor(*args):
+        return {"ok": False, "error": "not_a_citizen"}
+
+    monkeypatch.setattr("fort_gym.bench.env.executor.safe_set_labor", fake_set_labor)
+
+    result = Executor(dfhack_client=_ConnectedDFHackClient()).apply(
+        {"type": "LABOR", "params": {"unit_id": 1, "labor": "mine", "enable": True}},
+        backend="dfhack",
+    )
+
+    assert result["accepted"] is False
+    assert result["why"] == "not_a_citizen"
+
+
 def test_dfhack_farm_routes_to_set_farm_crop_wrapper(monkeypatch) -> None:
     calls: list[tuple] = []
 

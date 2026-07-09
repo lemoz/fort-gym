@@ -1305,6 +1305,57 @@ def test_governed_gameplay_proof_accepts_brew_order_job() -> None:
     assert proof["helper_evidence"]["created_job_ids"] == [11, 12, 13]
 
 
+def test_governed_gameplay_proof_accepts_real_labor_flip() -> None:
+    proof = _governed_gameplay_proof(
+        **_governed_proof_kwargs(
+            action={
+                "type": "LABOR",
+                "params": {"unit_id": 243, "labor": "brewing", "enable": True},
+                "advance_ticks": 6000,
+            },
+            execute_result={
+                "accepted": True,
+                "result": {
+                    "ok": True,
+                    "unit_id": 243,
+                    "labor": "brewing",
+                    "labor_changed": True,
+                    "labor_before": False,
+                    "labor_after": True,
+                },
+            },
+        )
+    )
+    assert proof["ok"] is True
+    assert proof["helper_evidence"]["labor_changed"] is True
+
+
+def test_governed_gameplay_proof_rejects_noop_labor_flip() -> None:
+    proof = _governed_gameplay_proof(
+        **_governed_proof_kwargs(
+            action={
+                "type": "LABOR",
+                "params": {"unit_id": 243, "labor": "brewing", "enable": True},
+                "advance_ticks": 6000,
+            },
+            execute_result={
+                "accepted": True,
+                "result": {
+                    "ok": True,
+                    "unit_id": 243,
+                    "labor": "brewing",
+                    "labor_changed": False,
+                    "labor_before": True,
+                    "labor_after": True,
+                },
+            },
+        )
+    )
+    assert proof["ok"] is False
+    assert proof["gameplay_progress_eligible"] is False
+    assert proof["helper_evidence"]["labor_changed"] is False
+
+
 def test_governed_gameplay_proof_accepts_real_tile_changes_during_wait() -> None:
     rect = [49, 34, 0, 55, 40, 0]
     before = {

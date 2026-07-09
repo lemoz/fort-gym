@@ -14,6 +14,7 @@ from ..dfhack_backend import complete_dig_rect as safe_complete_dig_rect
 from ..dfhack_backend import designate_rect as safe_designate_rect
 from ..dfhack_backend import place_furniture as safe_place_furniture
 from ..dfhack_backend import queue_manager_order as safe_queue_manager_order
+from ..dfhack_backend import set_labor as safe_set_labor
 from ..dfhack_backend import set_farm_crop as safe_set_farm_crop
 from ..dfhack_backend import unsuspend_jobs as safe_unsuspend_jobs
 from .keystroke_exec import execute_keystroke_action
@@ -106,6 +107,20 @@ class Executor:
                 x2 = x1 + max(1, width) - 1
                 y2 = y1 + max(1, height) - 1
                 result = safe_unsuspend_jobs(x1, y1, z, x2, y2, z)
+                return {
+                    "accepted": bool(result.get("ok")),
+                    "why": None if result.get("ok") else result.get("error"),
+                    "result": result,
+                }
+
+            if action_type == "LABOR":
+                try:
+                    unit_id = int(params["unit_id"])
+                except (KeyError, TypeError, ValueError) as exc:
+                    return {"accepted": False, "why": f"Invalid unit_id: {exc}"}
+                labor = str(params.get("labor") or "").lower()
+                enable = bool(params.get("enable"))
+                result = safe_set_labor(unit_id, labor, enable)
                 return {
                     "accepted": bool(result.get("ok")),
                     "why": None if result.get("ok") else result.get("error"),
