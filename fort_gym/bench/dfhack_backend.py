@@ -472,7 +472,7 @@ def stop_g7_evidence() -> Dict[str, object]:
     try:
         return run_lua_file(_hook_path("g7_evidence.lua"), "stop", timeout=5.0)
     except (DFHackError, OSError) as exc:
-        return {"ok": False, "active": False, "error": str(exc)}
+        return {"ok": False, "active": None, "error": str(exc)}
 
 
 def read_map_snapshot(rect: tuple[int, int, int, int, int, int]) -> Dict[str, object]:

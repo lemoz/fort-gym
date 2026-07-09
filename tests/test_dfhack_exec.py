@@ -139,6 +139,7 @@ def test_build_workshop_hook_uses_existing_material_item() -> None:
     assert "find_nearest_building_material" in hook_text
     assert "items = { material_item }" in hook_text
     assert "no_building_material" in hook_text
+    assert "or item.flags.in_building" in hook_text
 
 
 def test_build_workshop_hook_supports_still_subtype() -> None:

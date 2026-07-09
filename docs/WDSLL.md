@@ -160,9 +160,9 @@ agent has never seen, reaching G4-level structure. This is the gate that
 separates "solved one map" from "plays Dwarf Fortress."
 
 ### G7 — The fort lives: a self-sufficient year (RATIFIED 2026-07-09)
-Status: RATIFIED at the 2026-07-09 operator window; attempt 1 FAILED and
-attempt 2 ended in an infrastructure-aborted FAIL on 2026-07-09. Both are
-recorded below. The criteria remain unchanged. All three
+Status: RATIFIED at the 2026-07-09 operator window; attempt 1 FAILED, while
+attempts 2 and 3 ended in infrastructure-aborted FAILs on 2026-07-09 with no
+policy verdict. All three are recorded below. The criteria remain unchanged. All three
 activation preconditions hold: (a) score-v3 ratified and landed; (b) G6 attempted
 (7 runs, 2 models — frontier documented in the escalation log); (c) the
 survival primitives exist, adversarially reviewed and live-validated:
@@ -957,8 +957,47 @@ gate. Each entry states what changed and the evidence that forced it.
   proof on the stopped disposable runtime observed one gathered plant with
   `nonfarm_plants_created_in_run=1`, complete flow evidence, and zero errors;
   a second live reset loaded the fresh region3 fortress through the `current`
-  alias without manual intervention. Attempt 3 is prohibited until this
+  alias without manual intervention. Attempt 3 was prohibited until this
   follow-up is reviewed, merged, deployed, and re-smoked.
+
+- **2026-07-09 — G7 attempt 3: INFRASTRUCTURE ABORT / FAIL; no policy
+  verdict.** Run `622dac1c396c454d90e070bb8b669905`
+  ([replay](https://fortgym.live/r/i7wIFrZC_7xXlTJmQaXTRfWnWPMAxxeO)), deployed
+  SHA `62030af8e3ed656e501f50e49c10968a932479a5`, trace-attributed model
+  `z-ai/glm-5v-turbo` via OpenRouter, Anthropic disabled, memory off. The run
+  produced 46 durable rows and 46,160 trace ticks; the summary reports 45,155
+  because it excludes the final stop row. Token use was 305,552 prompt and
+  15,421 completion. Actions were BUILD 33, DIG 1, FARM 1, ORDER 6, WAIT 5.
+
+  Real play included building a Carpenter workshop, producing and placing doors,
+  chopping trees, completing 18 construction tiles, reaching a peak of two
+  functional rooms and three enclosed spaces, building a Still, and
+  building a FarmPlot with a selected crop. Population was 7, food 45, drink 60,
+  and deaths were zero. At step 40, `build_workshop.lua` reused material item
+  `765` already installed in the Carpenter workshop because it did not reject
+  `item.flags.in_building`. The Still reused the same item, and the Carpenter
+  workshop disappeared without agent deconstruction. This violated player
+  parity and invalidated the run.
+
+  The operator requested stop at API step 44; the final durable row is step 45
+  and status is `stopped`. Ledger evidence remained complete, but its DF callback
+  remained active after terminal status because optional Gemini analysis ran
+  before outer `finally` cleanup. The operator detached the ledger callback and
+  restarted only the API to cancel the analyzer; the replay persisted. Summary
+  scalar 102.38 and rubric 92.54 with
+  `blockers=[]` are explicitly not a pass: the action primitive violated player
+  parity, and the run missed G7 duration, production, and rooms.
+
+  Follow-up candidate now rejects `item.flags.in_building`, durably stages a
+  terminal reason before cleanup, and publishes terminal status only after
+  verified pause/evidence detach/client close and durable summary persistence.
+  Stop intent and cleanup proof survive API restarts; unverified cleanup becomes
+  an infrastructure failure and skips optional analysis. The complete suite
+  passes (626 passed, 4 skipped). An isolated live smoke first failed closed on the
+  seed's in-building wagon material; after legal tree chopping, Carpenter used
+  item `776`, Still used item `771`, and both completed workshops remained in
+  the world. Review, deployment, and deployed lifecycle proof remain before
+  attempt 4.
 
 ## Reporting format (every gate attempt)
 

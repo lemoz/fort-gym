@@ -187,7 +187,9 @@ class RunRegistry:
               survival_score REAL,
               milestones_json TEXT,
               summary_json TEXT,
-              terminal_reason_json TEXT
+              terminal_reason_json TEXT,
+              stop_requested_at TEXT,
+              cleanup_completed_at TEXT
             )
             """
         )
@@ -201,6 +203,18 @@ class RunRegistry:
             conn,
             table="runs",
             column="terminal_reason_json",
+            definition="TEXT",
+        )
+        RunRegistry._ensure_column(
+            conn,
+            table="runs",
+            column="stop_requested_at",
+            definition="TEXT",
+        )
+        RunRegistry._ensure_column(
+            conn,
+            table="runs",
+            column="cleanup_completed_at",
             definition="TEXT",
         )
         conn.execute(
@@ -233,7 +247,13 @@ class RunRegistry:
         conn.execute(
             """
             UPDATE runs
-               SET status = 'failed', ended_at = COALESCE(ended_at, ?)
+               SET status = CASE
+                       WHEN stop_requested_at IS NOT NULL
+                        AND cleanup_completed_at IS NOT NULL
+                        AND summary_json IS NOT NULL THEN 'stopped'
+                       ELSE 'failed'
+                   END,
+                   ended_at = COALESCE(ended_at, ?)
              WHERE status = 'running' AND ended_at IS NULL
             """,
             (now,),
@@ -440,39 +460,154 @@ class RunRegistry:
             )
             conn.commit()
 
+    def record_pending_terminal_failure(
+        self,
+        run_id: str,
+        *,
+        terminal_reason: Dict[str, Any],
+        step: int,
+    ) -> None:
+        """Durably stage failure evidence while the worker still owns cleanup."""
+
+        conn = self._ensure_conn()
+        with self._db_lock:
+            conn.execute(
+                """
+                UPDATE runs
+                   SET terminal_reason_json = CASE
+                           WHEN status IN ('stopped', 'failed', 'completed')
+                           THEN terminal_reason_json ELSE ? END,
+                       step = CASE
+                           WHEN status IN ('stopped', 'failed', 'completed')
+                           THEN step ELSE ? END
+                 WHERE run_id = ?
+                """,
+                (
+                    json.dumps(terminal_reason),
+                    int(step),
+                    run_id,
+                ),
+            )
+            conn.commit()
+
     def bind_loop(self, run_id: str, loop: asyncio.AbstractEventLoop) -> None:
         with self._db_lock:
             self._loops[run_id] = loop
 
-    def request_stop(self, run_id: str) -> bool:
+    def record_cleanup_completed(self, run_id: str, *, completed_at: datetime) -> None:
+        """Durably prove runtime ownership was released before terminalization."""
+
+        conn = self._ensure_conn()
         with self._db_lock:
+            conn.execute(
+                """
+                UPDATE runs
+                   SET cleanup_completed_at = COALESCE(cleanup_completed_at, ?)
+                 WHERE run_id = ?
+                   AND status NOT IN ('stopped', 'failed', 'completed')
+                """,
+                (_dt_to_iso(completed_at), run_id),
+            )
+            conn.commit()
+
+    def finalize_success_after_cleanup(
+        self,
+        run_id: str,
+        *,
+        step: int,
+        ended_at: datetime,
+    ) -> str:
+        """Atomically choose completed or stopped after the worker releases DF."""
+
+        conn = self._ensure_conn()
+        with self._db_lock:
+            row = conn.execute(
+                """
+                SELECT status, stop_requested_at, cleanup_completed_at, summary_json
+                  FROM runs
+                 WHERE run_id = ?
+                """,
+                (run_id,),
+            ).fetchone()
+            if row is None:
+                raise KeyError(run_id)
+            current_status = str(row["status"])
+            event = self._stop_events.get(run_id)
+            if current_status in {"stopped", "failed", "completed"}:
+                if event is not None:
+                    event.clear()
+                return current_status
+            if row["cleanup_completed_at"] is None:
+                raise RuntimeError(f"Run '{run_id}' cannot finalize before cleanup completes")
+            if row["summary_json"] is None:
+                raise RuntimeError(f"Run '{run_id}' cannot finalize before summary persistence")
+            stop_requested = row["stop_requested_at"] is not None or bool(event and event.is_set())
+            final_status = "stopped" if stop_requested else "completed"
+            conn.execute(
+                """
+                UPDATE runs
+                   SET status = ?, step = ?, ended_at = ?, stop_requested_at = NULL
+                 WHERE run_id = ?
+                   AND status NOT IN ('stopped', 'failed', 'completed')
+                """,
+                (
+                    final_status,
+                    int(step),
+                    _dt_to_iso(ended_at),
+                    run_id,
+                ),
+            )
+            if event is not None:
+                event.clear()
+            conn.commit()
+            return final_status
+
+    def request_stop(self, run_id: str) -> bool:
+        conn = self._ensure_conn()
+        with self._db_lock:
+            row = conn.execute(
+                "SELECT status FROM runs WHERE run_id = ?",
+                (run_id,),
+            ).fetchone()
+            if row is None or str(row["status"]) in {"stopped", "failed", "completed"}:
+                return False
             event = self._stop_events.get(run_id)
             if event is None:
-                row = (
-                    self._ensure_conn()
-                    .execute(
-                        "SELECT 1 FROM runs WHERE run_id = ?",
-                        (run_id,),
-                    )
-                    .fetchone()
-                )
-                if row is None:
-                    return False
                 event = threading.Event()
                 self._stop_events[run_id] = event
+            conn.execute(
+                """
+                UPDATE runs
+                   SET stop_requested_at = COALESCE(stop_requested_at, ?)
+                 WHERE run_id = ?
+                """,
+                (datetime.utcnow().isoformat(), run_id),
+            )
+            conn.commit()
             event.set()
         return True
 
     def stop_requested(self, run_id: str) -> bool:
+        conn = self._ensure_conn()
         with self._db_lock:
             event = self._stop_events.get(run_id)
-        return bool(event and event.is_set())
+            row = conn.execute(
+                "SELECT stop_requested_at FROM runs WHERE run_id = ?",
+                (run_id,),
+            ).fetchone()
+        return bool((event and event.is_set()) or (row and row["stop_requested_at"]))
 
     def clear_stop(self, run_id: str) -> None:
+        conn = self._ensure_conn()
         with self._db_lock:
             event = self._stop_events.get(run_id)
             if event is not None:
                 event.clear()
+            conn.execute(
+                "UPDATE runs SET stop_requested_at = NULL WHERE run_id = ?",
+                (run_id,),
+            )
+            conn.commit()
 
     def get_queue(self, run_id: str) -> Optional[asyncio.Queue[EventPayload]]:
         with self._db_lock:
@@ -965,6 +1100,10 @@ class RunRegistry:
                 metadata["terminal_reason"] = json.loads(row["terminal_reason_json"])
             except Exception:
                 pass
+        if row["stop_requested_at"]:
+            metadata["stop_requested_at"] = str(row["stop_requested_at"])
+        if row["cleanup_completed_at"]:
+            metadata["cleanup_completed_at"] = str(row["cleanup_completed_at"])
 
         latest_summary: Optional[Dict[str, Any]] = None
         if row["summary_json"]:

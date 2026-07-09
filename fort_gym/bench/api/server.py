@@ -5,22 +5,23 @@ from __future__ import annotations
 import asyncio
 import os
 import threading
-from datetime import datetime
+from importlib import import_module
 from pathlib import Path
 from typing import AsyncGenerator, Callable, Dict, Iterable, List, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse, StreamingResponse, FileResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
-
-from importlib import import_module
 
 from ..agent.base import AGENT_FACTORIES, Agent, RandomAgent
 from ..config import get_settings
-from ..run.jobs import JOB_REGISTRY, JobInfo as RegistryJobInfo
-from ..run.runner import run_once
-from ..run.storage import RUN_REGISTRY, RunInfo as RegistryRunInfo, ShareToken
 from ..env.keystroke_exec import execute_keystroke_action
+from ..run.jobs import JOB_REGISTRY
+from ..run.jobs import JobInfo as RegistryJobInfo
+from ..run.runner import run_once
+from ..run.storage import RUN_REGISTRY
+from ..run.storage import RunInfo as RegistryRunInfo
+from ..run.storage import ShareToken
 from .auth import require_admin
 from .rate_limit import RateLimiter, get_rate_limit_client_id, get_rate_limit_config
 from .routes_step import router as step_router
@@ -61,7 +62,9 @@ async def _rate_limit_middleware(request: Request, call_next):  # type: ignore[n
         admin_rpm, runs_rpm = get_rate_limit_config()
         rpm = admin_rpm if bucket == "admin" else runs_rpm
         client_id = get_rate_limit_client_id(request)
-        ok, retry_after = _RATE_LIMITER.allow(bucket, client_id, capacity=rpm, refill_per_s=rpm / 60.0)
+        ok, retry_after = _RATE_LIMITER.allow(
+            bucket, client_id, capacity=rpm, refill_per_s=rpm / 60.0
+        )
         if not ok:
             return JSONResponse(
                 {"detail": "Rate limit exceeded", "retry_after": round(retry_after, 2)},
@@ -279,9 +282,7 @@ async def create_run(payload: RunCreateRequest, _: None = Depends(require_admin)
 
     # Auto-create share token so run appears in public spectator view
     # Benchmark runs are public evidence: their share links must never rot.
-    RUN_REGISTRY.create_share(
-        record.run_id, scope=["live", "replay", "export"], ttl_seconds=None
-    )
+    RUN_REGISTRY.create_share(record.run_id, scope=["live", "replay", "export"], ttl_seconds=None)
 
     def _target() -> None:
         agent = agent_factory()
@@ -344,11 +345,15 @@ async def resume_run(run_id: str, _: None = Depends(require_admin)) -> JSONRespo
 
 @app.post("/runs/{run_id}/stop")
 async def stop_run(run_id: str, _: None = Depends(require_admin)) -> JSONResponse:
-    if RUN_REGISTRY.get(run_id) is None:
+    record = RUN_REGISTRY.get(run_id)
+    if record is None:
         raise HTTPException(status_code=404, detail="Run not found")
-    RUN_REGISTRY.request_stop(run_id)
-    RUN_REGISTRY.set_status(run_id, status="stopped", ended_at=datetime.utcnow())
-    return JSONResponse({"status": "stopped", "run_id": run_id})
+    if not RUN_REGISTRY.request_stop(run_id):
+        latest = RUN_REGISTRY.get(run_id)
+        if latest is None:
+            raise HTTPException(status_code=404, detail="Run not found")
+        return JSONResponse({"status": latest.status, "run_id": run_id})
+    return JSONResponse({"status": "stop_requested", "run_id": run_id})
 
 
 @app.post("/runs/{run_id}/share")
@@ -484,7 +489,8 @@ def _get_screenshot_client():
     if _screenshot_client is not None:
         return _screenshot_client
     try:
-        from ..env.dfhack_client import DFHackClient, DFHackUnavailableError
+        from ..env.dfhack_client import DFHackClient
+
         client = DFHackClient()
         client.connect()
         _screenshot_client = client

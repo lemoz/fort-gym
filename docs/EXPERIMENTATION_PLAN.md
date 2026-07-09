@@ -77,9 +77,9 @@ counts (see `docs/Actions_Headless_Safety.md`).
 
 ## Open Experiment Questions
 
-1. **G7 run integrity**: after attempt 2's infrastructure abort, can the policy
-   navigate ordinary paused dialogs while the runner terminates genuine tick
-   stalls and the survival ledger remains complete under real farm/gather flow?
+1. **G7 run integrity**: after attempt 3's infrastructure abort, can the
+   workshop-material guard and terminal cleanup preserve player parity and a
+   complete survival ledger through real farm/gather flow?
 2. **G7 survival**: on `seed_region3_fresh`, can one governed run close food
    and drink loops, survive a year, house migrants, and build three functional
    rooms under the ratified WDSLL predicates?
@@ -93,19 +93,25 @@ counts (see `docs/Actions_Headless_Safety.md`).
 
 ## Prerequisites / Blockers
 
-- The first G7 run-integrity release is deployed. Attempt 2 was stopped after
-  11 rows because a farm-classifier return-contract bug permanently invalidated
-  flow evidence; its public infrastructure-abort record is in `docs/WDSLL.md`.
-- A follow-up candidate fixes that ledger contract and the `current` save-alias
-  loader. The complete suite passes (613 passed, 4 skipped), as do isolated live
-  gather/reset smokes. It requires review, merge, deployment, and deployed smoke
-  before attempt 3.
+- The first G7 run-integrity release is deployed. Attempt 3 was an
+  infrastructure-aborted FAIL with no policy verdict after `build_workshop.lua`
+  reused material item `765` already installed in the Carpenter workshop;
+  attempt 3's public record is in `docs/WDSLL.md`.
+- The follow-up candidate rejects `item.flags.in_building`, durably stages
+  terminal failure evidence, and requires verified DF cleanup plus summary
+  persistence before publishing any terminal status. Stop intent and cleanup
+  proof survive API restarts; unverified cleanup is an infrastructure failure and
+  cannot start optional analysis. The complete suite passes (626 passed, 4 skipped).
+  Isolated live proof first rejected the seed's in-building wagon material,
+  then used legally chopped logs `776` and `771` for coexisting Carpenter and
+  Still workshops. Review, deployment, and deployed lifecycle proof remain
+  before attempt 4.
 - The dedicated `INTERACT` action is strict zero-tick, governed-only, paused,
   viewscreen-allowlisted, and bounded to eight operations per modal episode
   (three unchanged screens terminate earlier). An isolated live liaison smoke
   passed; the same smoke must pass from the deployed commit.
 - Tick stalls and cancellation fail closed with durable terminal reasons;
-  attempt 2's final row records `stop_requested_after_advance`.
+  attempt 3 requested stop at API step 44 and its final durable row is step 45.
 - Completed furniture, raw death causes, and a run-scoped event/eat-history
   food/drink ledger now reach the trace. The ledger's citizen filter and run
   scope passed an isolated live start/read/stop smoke. `scripts/evaluate_g7.py`

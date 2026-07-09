@@ -36,7 +36,8 @@ issuing only legal governed actions, takes a fixed embark from fresh seed to a
 producing fortress on public, replayable evidence, with zero rubric blockers.*
 G0–G4 have passed; G5 failed and stands; G6 is unpassed after seven attempts
 on the unseen map, with the first enclosed rooms arriving only after the factual
-observation corrections; G7 is ratified and its first attempt failed.
+observation corrections; G7 is ratified and its first three attempts failed,
+with attempt 3 an infrastructure abort and no policy verdict.
 
 ## 2. The findings
 
@@ -329,7 +330,39 @@ death-cause, completed-furniture, and food/drink-flow evidence, not a narrative
 inference from stock levels. Full predicate results and the
 substrate/policy/runtime split are in `docs/WDSLL.md`.
 
-### 2.8 The meta-finding: correction discipline is the product
+### 2.8 G7 attempt 3: real construction, invalidated by an illegal material reuse
+
+G7 attempt 3, run `622dac1c396c454d90e070bb8b669905`
+([replay](https://fortgym.live/r/i7wIFrZC_7xXlTJmQaXTRfWnWPMAxxeO)), deployed
+SHA `62030af8e3ed656e501f50e49c10968a932479a5`, is an infrastructure-aborted
+FAIL with no policy verdict. The trace model was `z-ai/glm-5v-turbo` via
+OpenRouter; Anthropic was disabled and memory was off. The run produced 46
+durable rows and 46,160 trace ticks; the summary's 45,155 excludes the final
+stop row. Token use was 305,552 prompt and 15,421 completion tokens. Actions
+were BUILD 33, DIG 1, FARM 1, ORDER 6, and WAIT 5.
+
+The policy did real work: it built a Carpenter workshop, produced and placed
+doors, chopped trees, completed 18 construction tiles, reached a peak of two
+functional rooms and three enclosed spaces, built a Still, and built
+a FarmPlot with a selected crop. Population was 7, food 45, drink 60, and
+there were zero deaths. At step 40, however, `build_workshop.lua` reused
+material item `765` that was already installed in the Carpenter workshop
+because it did not reject `item.flags.in_building`. The Still reused the same
+item, and the Carpenter workshop disappeared without agent deconstruction.
+That violates player parity and invalidates the run.
+
+The operator requested stop at API step 44; the final durable row is step 45
+and status is `stopped`. The ledger evidence itself remained complete, but its
+DF callback remained active after terminal status because optional Gemini
+analysis ran before outer `finally` cleanup. The operator detached the ledger
+callback and restarted only the API to cancel the analyzer; the replay persisted.
+Summary scalar 102.38 and rubric
+92.54 with `blockers=[]` are explicitly not a pass: the primitive violated
+player parity, and the run missed the G7 duration, production, and rooms
+criteria. Follow-up: add the `in_building` guard and cleanup-before-terminal/
+analyzer ordering, pass full and live verification, then run attempt 4.
+
+### 2.9 The meta-finding: correction discipline is the product
 
 The most reusable result is not a score — it is the method. Across every finding
 above, the same discipline held:
@@ -364,28 +397,29 @@ caught by a failing public run and closed on the record.
   passes in seven region3 attempts. "Plays Dwarf Fortress" is not yet
   demonstrated — "solved one map" is.
 - **Small n.** The reliability claim rests on a five-run lineage; the endurance
-  result on one probe; the G6 verdict on seven runs; G7 on one stopped attempt.
+  result on one probe; the G6 verdict on seven runs; G7 on three failed attempts.
   These are findings, not distributions.
 - **One policy family for most results.** GLM-5V-turbo produced the G4 passes
   and most of the G6 campaign; GPT-5.5 served the earlier G2/G3 passes.
   Cross-model generality is thin — two GPT-5.5-vision escalation runs are the
   only cross-family data points on the unseen map.
-- **G6 is unpassed; G7 attempts 1 and 2 failed.** Attempt 2 was an early
-  infrastructure abort, not a policy verdict. Score-v3 is active, but the
+- **G6 is unpassed; G7 attempts 1, 2, and 3 failed.** Attempts 2 and 3 were
+  infrastructure aborts, not policy verdicts. Score-v3 is active, but the
   chair-factory calibration gap (§2.4) remains part of its historical record.
   Attempt 1 demonstrated why the scalar is telemetry rather than the verdict:
   score 209.44 passed its bar while the fort failed survival and structure.
 
 ## 4. What's next
 
-- **Repair attempt 2's infrastructure abort, then attempt 3**: the dialog and
-  fail-closed lifecycle release is deployed, but real gathering exposed a
-  two-value farm-classifier contract bug and the save reset exposed DF's
-  `current -> region3` canonicalization. Both follow-up fixes pass the complete
-  suite (613 passed, 4 skipped) and isolated-live checks. Review, merge,
-  deployment, and deployed smoke are required before the next 450-step run.
+- **Repair attempt 3's infrastructure abort, then attempt 4**: the follow-up
+  candidate adds the `item.flags.in_building` guard, durable terminal evidence,
+  verified cleanup and summary-before-terminal/analyzer ordering, and durable
+  stop recovery across API restarts. The full suite passes (626 passed, 4
+  skipped); live proof used distinct legally chopped logs for
+  coexisting Carpenter and Still workshops. Review, deployment, and deployed
+  lifecycle proof remain before the next 450-step run.
 - **G6 remains open**: the best unseen-map run reached 4/5 and missed only its
-  second functional room. G7 attempt 3 runs on the same unseen seed, so a strong
+  second functional room. G7 attempt 4 runs on the same unseen seed, so a strong
   endurance result can add evidence without a separate blind retry campaign.
 - **G8 — depth**: a multi-z fortress (stairs, underground rooms), the next
   spatial-reasoning escalation past the hollow ring.

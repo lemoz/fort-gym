@@ -34,7 +34,7 @@ from ..env.actions import (
     parse_action,
     validate_action,
 )
-from ..env.dfhack_client import DFHackClient, DFHackError, DFHackUnavailableError
+from ..env.dfhack_client import DFHackClient, DFHackError
 from ..env.encoder import encode_observation
 from ..env.executor import Executor
 from ..env.mock_env import MockEnvironment
@@ -1560,6 +1560,76 @@ def _zero_assisted_dfhack_progress(metrics_snapshot: Dict[str, Any]) -> None:
         metrics_snapshot["assisted_dfhack_progress"] = assisted_values
 
 
+def _cleanup_dfhack_runtime(
+    client: Optional[DFHackClient],
+    *,
+    evidence_attempted: bool,
+) -> Dict[str, Any]:
+    """Attempt one bounded runtime release and report whether it was verified."""
+
+    errors: list[Dict[str, str]] = []
+    pause_rpc_ok = client is None
+    pause_direct_ok = client is None
+    if client is not None:
+        try:
+            client.pause()
+            pause_rpc_ok = True
+        except Exception as exc:
+            errors.append({"stage": "pause_rpc", "error": str(exc)})
+        try:
+            import subprocess
+
+            from ..config import dfhack_cmd
+
+            result = subprocess.run(
+                dfhack_cmd("lua", "df.global.pause_state = true"),
+                timeout=5,
+                capture_output=True,
+            )
+            pause_direct_ok = int(getattr(result, "returncode", 0) or 0) == 0
+            if not pause_direct_ok:
+                errors.append(
+                    {
+                        "stage": "pause_direct",
+                        "error": f"exit_{getattr(result, 'returncode', 'unknown')}",
+                    }
+                )
+        except Exception as exc:
+            errors.append({"stage": "pause_direct", "error": str(exc)})
+        if pause_rpc_ok or pause_direct_ok:
+            errors = [error for error in errors if not error["stage"].startswith("pause_")]
+
+    evidence_result: Dict[str, Any] | None = None
+    if evidence_attempted:
+        try:
+            evidence_result = dict(stop_g7_evidence())
+        except Exception as exc:
+            evidence_result = {"ok": False, "active": None, "error": str(exc)}
+        if evidence_result.get("ok") is not True or evidence_result.get("active") is not False:
+            errors.append(
+                {
+                    "stage": "g7_evidence_stop",
+                    "error": str(evidence_result.get("error") or evidence_result),
+                }
+            )
+
+    client_closed = client is None
+    if client is not None:
+        try:
+            client.close()
+            client_closed = True
+        except Exception as exc:
+            errors.append({"stage": "client_close", "error": str(exc)})
+
+    return {
+        "ok": not errors,
+        "errors": errors,
+        "pause_verified": bool(pause_rpc_ok or pause_direct_ok),
+        "evidence_stop": evidence_result,
+        "client_closed": client_closed,
+    }
+
+
 def run_once(
     agent: Agent,
     *,
@@ -1618,6 +1688,67 @@ def run_once(
     dfhack_client: Optional[DFHackClient] = None
     g7_evidence_attempted = False
     g7_evidence_start: Dict[str, Any] | None = None
+    cleanup_attempts = 0
+    cleanup_outcome: Dict[str, Any] | None = None
+    cleanup_recorded = False
+
+    def cleanup_dfhack_runtime() -> Dict[str, Any]:
+        nonlocal cleanup_attempts, cleanup_outcome, cleanup_recorded
+        nonlocal dfhack_client, g7_evidence_attempted
+        while cleanup_attempts < 2 and not (cleanup_outcome or {}).get("ok"):
+            cleanup_attempts += 1
+            cleanup_outcome = _cleanup_dfhack_runtime(
+                dfhack_client,
+                evidence_attempted=g7_evidence_attempted,
+            )
+        if cleanup_outcome is None:
+            cleanup_outcome = {
+                "ok": False,
+                "errors": [{"stage": "cleanup", "error": "not_attempted"}],
+            }
+        cleanup_outcome["attempts"] = cleanup_attempts
+        if cleanup_outcome.get("ok"):
+            if registry and not cleanup_recorded:
+                registry.record_cleanup_completed(
+                    run_identifier,
+                    completed_at=datetime.utcnow(),
+                )
+                cleanup_recorded = True
+            dfhack_client = None
+            g7_evidence_attempted = False
+        return cleanup_outcome
+
+    def cleanup_terminal_reason(
+        outcome: Dict[str, Any],
+        *,
+        prior_reason: Dict[str, Any] | None = None,
+    ) -> Dict[str, Any]:
+        reason: Dict[str, Any] = {
+            "code": "dfhack_cleanup_unverified",
+            "cleanup": outcome,
+        }
+        if prior_reason is not None:
+            reason["prior_terminal_reason"] = prior_reason
+        return reason
+
+    def fail_setup_after_cleanup() -> None:
+        outcome = cleanup_dfhack_runtime()
+        if registry:
+            if outcome.get("ok"):
+                registry.set_status(
+                    run_identifier,
+                    status="failed",
+                    step=0,
+                    ended_at=datetime.utcnow(),
+                )
+            else:
+                registry.record_terminal_failure(
+                    run_identifier,
+                    terminal_reason=cleanup_terminal_reason(outcome),
+                    step=0,
+                    ended_at=datetime.utcnow(),
+                )
+            registry.clear_stop(run_identifier)
 
     tick_info_state: Dict[str, Any] = {}
     elapsed_ticks_total = 0
@@ -1661,38 +1792,38 @@ def run_once(
 
     elif backend_name == "dfhack":
         if not settings.DFHACK_ENABLED:
+            fail_setup_after_cleanup()
             raise RuntimeError("DFHack backend disabled. Set DFHACK_ENABLED=1 to use it.")
 
         # If configured, reset the save from a pristine seed before connecting.
         if not preserve_save:
-            maybe_reset_dfhack_seed(
-                settings,
-                seed_save=seed_save,
-                runtime_save=runtime_save,
-            )
-
-        dfhack_client = DFHackClient(host=settings.DFHACK_HOST, port=settings.DFHACK_PORT)
-        try:
-            dfhack_client.connect()
-        except DFHackUnavailableError:  # pragma: no cover - environment guard
-            if registry:
-                registry.set_status(
-                    run_identifier,
-                    status="failed",
-                    ended_at=datetime.utcnow(),
+            try:
+                maybe_reset_dfhack_seed(
+                    settings,
+                    seed_save=seed_save,
+                    runtime_save=runtime_save,
                 )
+            except Exception:
+                fail_setup_after_cleanup()
+                raise
+
+        try:
+            dfhack_client = DFHackClient(host=settings.DFHACK_HOST, port=settings.DFHACK_PORT)
+            dfhack_client.connect()
+            executor = Executor(dfhack_client=dfhack_client)
+            if is_governed_dfhack_mode:
+                g7_evidence_attempted = True
+                g7_evidence_start = start_g7_evidence(run_identifier)
+            if is_keystroke_mode:
+                keystroke_ui_target = prepare_keystroke_target(
+                    ui_target_mode,
+                    blocked_workshop_targets=tuple(ui_blocked_workshop_targets),
+                )
+                if keystroke_ui_target.get("ok"):
+                    ui_target_generation = 1
+        except Exception:
+            fail_setup_after_cleanup()
             raise
-        executor = Executor(dfhack_client=dfhack_client)
-        if is_governed_dfhack_mode:
-            g7_evidence_attempted = True
-            g7_evidence_start = start_g7_evidence(run_identifier)
-        if is_keystroke_mode:
-            keystroke_ui_target = prepare_keystroke_target(
-                ui_target_mode,
-                blocked_workshop_targets=tuple(ui_blocked_workshop_targets),
-            )
-            if keystroke_ui_target.get("ok"):
-                ui_target_generation = 1
 
         def prepare_governed_target(mode: str) -> Dict[str, object]:
             view_before = read_view_state()
@@ -1705,10 +1836,14 @@ def run_once(
             return target
 
         if is_governed_dfhack_mode:
-            governed_target = prepare_governed_target("starter")
-            governed_rect = _prepared_target_work_rect(governed_target)
-            if governed_rect is not None:
-                dfhack_client.set_work_rect(governed_rect)
+            try:
+                governed_target = prepare_governed_target("starter")
+                governed_rect = _prepared_target_work_rect(governed_target)
+                if governed_rect is not None:
+                    dfhack_client.set_work_rect(governed_rect)
+            except Exception:
+                fail_setup_after_cleanup()
+                raise
 
         def attach_governed_build_site(state: Dict[str, Any]) -> Dict[str, Any]:
             nonlocal governed_workshop_target
@@ -1822,6 +1957,7 @@ def run_once(
                     return "(screen capture failed)"
 
     else:
+        fail_setup_after_cleanup()
         raise ValueError(f"Unsupported backend: {backend_name}")
 
     previous_state: Optional[Dict[str, Any]] = None
@@ -1875,6 +2011,9 @@ def run_once(
 
     run_failed = False
     run_stopped = False
+    terminal_failure_reason: Dict[str, Any] | None = None
+    terminal_failure_step = 0
+    last_step = 0
     consecutive_zero_tick_streak = 0
     interaction_episode_count = 0
     interaction_unchanged_screen_streak = 0
@@ -1882,6 +2021,7 @@ def run_once(
     try:
         with trace_path.open("w", encoding="utf-8") as fh:
             for step in range(max_steps):
+                last_step = step
                 events: List[Dict[str, Any]] = []
                 tick_info_state = {}
                 map_snapshot_before = None
@@ -1899,12 +2039,6 @@ def run_once(
                             "stopped": {"reason": "stop_requested"},
                             "events": events,
                         },
-                    )
-                    registry.set_status(
-                        run_identifier,
-                        status="stopped",
-                        step=step,
-                        ended_at=datetime.utcnow(),
                     )
                     break
 
@@ -1925,12 +2059,6 @@ def run_once(
                             "stopped": {"reason": "stop_requested_after_pause"},
                             "events": events,
                         },
-                    )
-                    registry.set_status(
-                        run_identifier,
-                        status="stopped",
-                        step=step,
-                        ended_at=datetime.utcnow(),
                     )
                     break
                 if (
@@ -2067,12 +2195,7 @@ def run_once(
                 try:
                     state_before = call_with_retry("observe", observe)
                 except DFHackError:
-                    if registry:
-                        registry.set_status(
-                            run_identifier,
-                            status="failed",
-                            ended_at=datetime.utcnow(),
-                        )
+                    run_failed = True
                     break
                 if is_keystroke_mode:
                     carpenter_workshop_usable_seen = _carry_forward_carpenter_workshop_proof(
@@ -2337,12 +2460,6 @@ def run_once(
                             "events": events,
                         },
                     )
-                    registry.set_status(
-                        run_identifier,
-                        status="stopped",
-                        step=step,
-                        ended_at=datetime.utcnow(),
-                    )
                     break
 
                 try:
@@ -2393,13 +2510,6 @@ def run_once(
                         },
                     )
                     run_failed = True
-                    if registry:
-                        registry.set_status(
-                            run_identifier,
-                            status="failed",
-                            step=step,
-                            ended_at=datetime.utcnow(),
-                        )
                     break
 
                 if registry and registry.stop_requested(run_identifier):
@@ -2421,12 +2531,6 @@ def run_once(
                             "stopped": {"reason": "stop_requested_after_agent_decide"},
                             "events": events,
                         },
-                    )
-                    registry.set_status(
-                        run_identifier,
-                        status="stopped",
-                        step=step,
-                        ended_at=datetime.utcnow(),
                     )
                     break
 
@@ -2520,12 +2624,6 @@ def run_once(
                     )
                 except DFHackError:
                     run_failed = True
-                    if registry:
-                        registry.set_status(
-                            run_identifier,
-                            status="failed",
-                            ended_at=datetime.utcnow(),
-                        )
                     break
                 if action.get("type") == "INTERACT":
                     interaction_result = (
@@ -2585,12 +2683,6 @@ def run_once(
                             "events": events,
                         },
                     )
-                    registry.set_status(
-                        run_identifier,
-                        status="stopped",
-                        step=step,
-                        ended_at=datetime.utcnow(),
-                    )
                     break
 
                 # Track action result for next step's feedback
@@ -2613,12 +2705,6 @@ def run_once(
                     advance_state = call_with_retry("advance", lambda: advance_env(requested_ticks))
                 except DFHackError:
                     run_failed = True
-                    if registry:
-                        registry.set_status(
-                            run_identifier,
-                            status="failed",
-                            ended_at=datetime.utcnow(),
-                        )
                     break
                 state_preservation = None
                 if backend_name == "dfhack" and is_keystroke_mode:
@@ -2723,12 +2809,6 @@ def run_once(
                             "stopped": {"reason": "stop_requested_after_advance"},
                             "events": events,
                         },
-                    )
-                    registry.set_status(
-                        run_identifier,
-                        status="stopped",
-                        step=step,
-                        ended_at=datetime.utcnow(),
                     )
                     break
                 if state_preservation is not None:
@@ -3199,19 +3279,20 @@ def run_once(
                 fh.write(json.dumps(record_line) + "\n")
 
                 if terminal_reason is not None:
-                    # The terminal event and failed status follow a durable final record.
+                    # Persist the terminal event now; status waits for DF cleanup below.
                     fh.flush()
                     fsync(fh.fileno())
+                    terminal_failure_reason = terminal_reason
+                    terminal_failure_step = step
                     if registry:
-                        registry.append_event(
-                            run_identifier,
-                            {"t": "terminal", "data": terminal_event["data"]},
-                        )
-                        registry.record_terminal_failure(
+                        registry.record_pending_terminal_failure(
                             run_identifier,
                             terminal_reason=terminal_reason,
                             step=step,
-                            ended_at=datetime.utcnow(),
+                        )
+                        registry.append_event(
+                            run_identifier,
+                            {"t": "terminal", "data": terminal_event["data"]},
                         )
                     run_failed = True
                     break
@@ -3219,18 +3300,21 @@ def run_once(
                 if registry:
                     registry.set_status(run_identifier, step=step)
 
-        if registry and run_stopped:
-            registry.set_status(
-                run_identifier,
-                status="stopped",
-                ended_at=datetime.utcnow(),
+        cleanup_outcome = cleanup_dfhack_runtime()
+        if not cleanup_outcome.get("ok"):
+            terminal_failure_reason = cleanup_terminal_reason(
+                cleanup_outcome,
+                prior_reason=terminal_failure_reason,
             )
-        elif registry and not run_failed:
-            registry.set_status(
-                run_identifier,
-                status="completed",
-                ended_at=datetime.utcnow(),
-            )
+            terminal_failure_step = last_step
+            run_failed = True
+            if registry:
+                registry.record_pending_terminal_failure(
+                    run_identifier,
+                    terminal_reason=terminal_failure_reason,
+                    step=terminal_failure_step,
+                )
+
         summary = summarize(trace_path)
         summary.model = model
         summary.backend = backend_name
@@ -3258,13 +3342,44 @@ def run_once(
                 },
             )
 
+            if terminal_failure_reason is not None:
+                registry.record_terminal_failure(
+                    run_identifier,
+                    terminal_reason=terminal_failure_reason,
+                    step=terminal_failure_step,
+                    ended_at=datetime.utcnow(),
+                )
+                registry.clear_stop(run_identifier)
+            elif run_failed:
+                registry.set_status(
+                    run_identifier,
+                    status="failed",
+                    step=last_step,
+                    ended_at=datetime.utcnow(),
+                )
+                registry.clear_stop(run_identifier)
+            elif run_stopped:
+                registry.set_status(
+                    run_identifier,
+                    status="stopped",
+                    step=last_step,
+                    ended_at=datetime.utcnow(),
+                )
+                registry.clear_stop(run_identifier)
+            else:
+                registry.finalize_success_after_cleanup(
+                    run_identifier,
+                    step=last_step,
+                    ended_at=datetime.utcnow(),
+                )
+
         # Auto-analyze trace with LLM (optional - requires GOOGLE_API_KEY)
         try:
             import os
 
             from ..eval.analyzer import TraceAnalyzer, save_analysis
 
-            if os.environ.get("GOOGLE_API_KEY"):
+            if os.environ.get("GOOGLE_API_KEY") and (cleanup_outcome or {}).get("ok"):
                 analyzer = TraceAnalyzer()
                 analysis = analyzer.analyze(trace_path)
                 save_analysis(analysis, trace_path.parent)
@@ -3274,36 +3389,29 @@ def run_once(
 
             logging.getLogger(__name__).warning(f"Auto-analysis skipped: {e}")
     except Exception:
+        failed_cleanup = cleanup_dfhack_runtime()
         if registry:
-            registry.set_status(
-                run_identifier,
-                status="failed",
-                ended_at=datetime.utcnow(),
-            )
+            if failed_cleanup.get("ok"):
+                registry.set_status(
+                    run_identifier,
+                    status="failed",
+                    step=last_step,
+                    ended_at=datetime.utcnow(),
+                )
+            else:
+                registry.record_terminal_failure(
+                    run_identifier,
+                    terminal_reason=cleanup_terminal_reason(
+                        failed_cleanup,
+                        prior_reason=terminal_failure_reason,
+                    ),
+                    step=last_step,
+                    ended_at=datetime.utcnow(),
+                )
+            registry.clear_stop(run_identifier)
         raise
     finally:
-        if dfhack_client:
-            # Pause game before closing to prevent it from running between runs
-            try:
-                dfhack_client.pause()
-            except Exception:
-                pass  # Best effort via RPC
-            # Also try direct dfhack-run as fallback
-            try:
-                import subprocess
-
-                from ..config import dfhack_cmd
-
-                subprocess.run(
-                    dfhack_cmd("lua", "df.global.pause_state = true"),
-                    timeout=5,
-                    capture_output=True,
-                )
-            except Exception:
-                pass  # Best effort
-            if g7_evidence_attempted:
-                stop_g7_evidence()
-            dfhack_client.close()
+        cleanup_dfhack_runtime()
 
     return run_identifier
 

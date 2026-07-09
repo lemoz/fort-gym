@@ -352,7 +352,7 @@
         };
         actionsCell.appendChild(makeButton('Pause', () => mutate(`/runs/${run.id}/pause`, 'paused')));
         actionsCell.appendChild(makeButton('Resume', () => mutate(`/runs/${run.id}/resume`, 'running'), true));
-        actionsCell.appendChild(makeButton('Stop', () => mutate(`/runs/${run.id}/stop`, 'stopped'), true));
+        actionsCell.appendChild(makeButton('Stop', () => mutate(`/runs/${run.id}/stop`, 'stop requested'), true));
         actionsCell.appendChild(makeButton('Share', () => share(run.id)));
         runsBody.appendChild(tr);
       });
