@@ -1249,7 +1249,7 @@ def encode_observation(
                         )
                     elif subtype == "Still":
                         workshop_line += (
-                            " — ORDER job=brew can queue BrewDrink jobs to any built Still."
+                            " — ORDER job=brew can queue brewing jobs at any built Still."
                         )
                 else:
                     workshop_line = (

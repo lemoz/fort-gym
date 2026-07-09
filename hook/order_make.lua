@@ -9,7 +9,11 @@ local qty = tonumber(args[2]) or 1
 
 -- Each item maps to a DF job type AND the workshop subtype that job runs at
 -- (a player queues bed/door/table/chair/barrel/bin at a Carpenter's
--- Workshop; brew -- BrewDrink -- runs at a Still).
+-- Workshop). Brewing is NOT a discrete job type on 0.47.05 -- live
+-- validation 2026-07-08 showed df.job_type.BrewDrink does not exist; a
+-- Still's job list offers CustomReaction entries, and brewing is the
+-- BREW_DRINK_FROM_PLANT reaction. Reaction-backed items carry `reaction`
+-- and are matched on job_fields.reaction_name below.
 local ITEM_JOBS = {
   bed = { job = 'ConstructBed', workshop = 'Carpenters' },
   door = { job = 'ConstructDoor', workshop = 'Carpenters' },
@@ -17,7 +21,7 @@ local ITEM_JOBS = {
   chair = { job = 'ConstructThrone', workshop = 'Carpenters' },
   barrel = { job = 'MakeBarrel', workshop = 'Carpenters' },
   bin = { job = 'ConstructBin', workshop = 'Carpenters' },
-  brew = { job = 'BrewDrink', workshop = 'Still' },
+  brew = { job = 'CustomReaction', reaction = 'BREW_DRINK_FROM_PLANT', workshop = 'Still' },
 }
 
 local spec = ITEM_JOBS[item]
@@ -35,13 +39,16 @@ if not job_type then
   return
 end
 
-local function record_manager_order(job_type, qty)
+local function record_manager_order(job_type, qty, reaction)
   local manager_orders = df.global.world.manager_orders
   if not manager_orders then
     return false
   end
   local wo = df.manager_order:new()
   wo.job_type = job_type
+  if reaction then
+    wo.reaction_name = reaction
+  end
   wo.amount_total = qty
   wo.amount_left = qty
   manager_orders:insert('#', wo)
@@ -86,7 +93,7 @@ local function first_workshop_of_subtype(subtype_name)
   return nil
 end
 
-local function job_definition_for(building, wanted_job_type)
+local function job_definition_for(building, wanted_job_type, wanted_reaction)
   local defs = workshop_jobs.getJobs(
     building:getType(),
     building:getSubtype(),
@@ -94,7 +101,9 @@ local function job_definition_for(building, wanted_job_type)
   )
   if not defs then return nil end
   for _, entry in pairs(defs) do
-    if entry.job_fields and entry.job_fields.job_type == wanted_job_type then
+    if entry.job_fields and entry.job_fields.job_type == wanted_job_type
+        and (not wanted_reaction
+             or entry.job_fields.reaction_name == wanted_reaction) then
       return entry
     end
   end
@@ -129,14 +138,14 @@ end
 
 local workshop = first_workshop_of_subtype(spec.workshop)
 if workshop then
-  local entry = job_definition_for(workshop, job_type)
+  local entry = job_definition_for(workshop, job_type, spec.reaction)
   if entry then
     local created_jobs = {}
     for _ = 1, qty do
       local job = create_workshop_job(workshop, entry)
       table.insert(created_jobs, job.id)
     end
-    local manager_recorded = record_manager_order(job_type, qty)
+    local manager_recorded = record_manager_order(job_type, qty, spec.reaction)
     print(json.encode({
       ok = true,
       item = item,
@@ -150,7 +159,7 @@ if workshop then
   end
 end
 
-if not record_manager_order(job_type, qty) then
+if not record_manager_order(job_type, qty, spec.reaction) then
   print(json.encode({ ok = false, error = 'manager_orders_unavailable' }))
   return
 end

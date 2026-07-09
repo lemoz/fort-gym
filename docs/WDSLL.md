@@ -726,6 +726,55 @@ gate. Each entry states what changed and the evidence that forced it.
   multi-instance, or with new models). The ladder proceeds to the G7
   primitives window.
 
+- **2026-07-08 — G7 primitives LIVE-VALIDATED on the runtime fort; two
+  engine-mechanics corrections found and one fixed in this change.** After
+  the operator window merged the reviewed primitives (#53/#54/#56 + drink
+  scoring), all three were exercised on the live region3 runtime fort
+  (safe to mutate: runtime resets from the frozen seed at the next run).
+  What was proven end-to-end:
+  - **gather**: a 30x30 gather rect designated 74 shrubs (822 non-shrub
+    tiles honestly skipped); the job manager generated 73 GatherPlants
+    jobs; the herbalist collected continuously (plants in play 3 → 24+;
+    "Endok Oslankosh has become a Herbalist" in the game log). The rect
+    also surfaced 4 shrubs *already designated* plus ~40 inert dig flags
+    on floor tiles — the live footprint of the pre-#53 bug (unconditional
+    designation writes), left by earlier runs. New dig calls on the same
+    surface designate zero tiles.
+  - **FarmPlot**: constructed to stage 3/3 by a dwarf. **Confirmed gap:
+    `plant_id` stays [-1,-1,-1,-1] — constructBuilding never selects
+    crops, so an unamended farm plot will never be planted.** This was
+    the review's note-only question; it is now a measured fact. Crop
+    selection is a follow-up primitive amendment (operator decision:
+    default-crop-at-placement mirroring the player's b-p flow, vs. a
+    separate action).
+  - **Still + brew**: `df.workshop_type.Still` resolves and the Still was
+    dwarf-built to stage 3/3. **Correction (fixed here):
+    `df.job_type.BrewDrink` does not exist on 0.47.05** — ORDER job=brew
+    always returned `unsupported_job_type`; the Still's real job list
+    offers `CustomReaction` entries and brewing is the
+    `BREW_DRINK_FROM_PLANT` reaction. With the corrected job creation
+    (validated first via a probe using the hook's exact idiom), a brew
+    executed on the live fort: one gathered plant + one empty barrel →
+    a 19-unit drink stack, observed by the new drink counter (7 → 8).
+    `order_make.lua` now matches reaction-backed items on
+    `job_fields.reaction_name` and records `reaction_name` on the
+    manager-order fallback; prompt/encoder text updated to stop naming
+    the nonexistent job type.
+  - **Labor contention (observation, no code change)**: the brew job sat
+    unexecuted for 19k+ ticks because the only brewing-enabled dwarf was
+    also the herbalist, saturated by gather jobs. It executed within 6k
+    ticks of a validation probe enabling the brewing labor on an idle
+    dwarf (disclosed intervention, runtime fort only). Labor coverage is
+    outside the governed action surface; G7 runs can starve on it. Left
+    open for the G7 gate discussion.
+  - **Environmental note**: during validation — with zero agent actions —
+    the fort's fisherdwarf drowned in the brook ("Edem Lekkivish, Fish
+    Cleaner has been found dead, drowned"), the sixth drowning observed
+    on region3. The water hazard is environmental, not agent-induced,
+    strengthening the G6 water-safety finding. A migrant wave also
+    arrived (population 6 → 9), confirming the runtime fort ticks
+    normally under external advancement.
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,

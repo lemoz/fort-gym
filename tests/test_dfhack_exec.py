@@ -279,7 +279,13 @@ def test_order_make_hook_supports_brew_item_at_still() -> None:
     hook_path = Path(__file__).resolve().parents[1] / "hook" / "order_make.lua"
     hook_text = hook_path.read_text(encoding="utf-8")
 
-    assert "brew = { job = 'BrewDrink', workshop = 'Still' }" in hook_text
+    # live validation 2026-07-08: df.job_type.BrewDrink does not exist on
+    # 0.47.05 -- brewing is the BREW_DRINK_FROM_PLANT CustomReaction
+    assert (
+        "brew = { job = 'CustomReaction', "
+        "reaction = 'BREW_DRINK_FROM_PLANT', workshop = 'Still' }" in hook_text
+    )
+    assert "job_definition_for(workshop, job_type, spec.reaction)" in hook_text
     assert "first_workshop_of_subtype(spec.workshop)" in hook_text
     # existing carpenter-scoped items still route to Carpenters
     assert "bed = { job = 'ConstructBed', workshop = 'Carpenters' }" in hook_text
