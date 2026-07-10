@@ -2166,6 +2166,11 @@ def encode_observation(
                     "s=sapling, p=boulder/pebbles, "
                     "@=dwarf, ~=impassable:"
                 )
+                status_lines.append(
+                    f"      x-map: glyph index 0 is x={ox}; index {width - 1} is "
+                    f"x={ox + width - 1}; use x={ox}+index (visible range "
+                    f"{ox}..{ox + width - 1})."
+                )
                 ruler = "".join(str((ox + i) % 10) for i in range(width))
                 status_lines.append(f"      {ruler}")
                 for index, row in enumerate(rows):
@@ -2214,6 +2219,11 @@ def encode_observation(
                     f"Access-level minimap (z={oz}{source_text}; top-left tile is "
                     f"x={ox},y={oy}; blanks are hidden/unreadable). Legend matches the fort "
                     "minimap, including <=up stair, >=down stair, X=up/down stair, ^=ramp:"
+                )
+                status_lines.append(
+                    f"      x-map: glyph index 0 is x={ox}; index {width - 1} is "
+                    f"x={ox + width - 1}; use x={ox}+index (visible range "
+                    f"{ox}..{ox + width - 1})."
                 )
                 ruler = "".join(str((ox + i) % 10) for i in range(width))
                 status_lines.append(f"      {ruler}")

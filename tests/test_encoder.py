@@ -1779,6 +1779,42 @@ def test_encoder_echoes_gather_result_counts() -> None:
     assert "non_shrub_tiles=21" in text
 
 
+def test_encoder_surfaces_factual_tile_for_accepted_gather_noop() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 6, "stone": 0},
+        },
+        screen_text="main map",
+        last_action_result={
+            "accepted": True,
+            "result": {
+                "ok": True,
+                "shrubs_designated": 0,
+                "non_shrub_tiles": 1,
+                "failed_count": 1,
+                "failed": [
+                    {
+                        "x": 91,
+                        "y": 103,
+                        "z": 161,
+                        "error": "not_shrub",
+                        "tile_shape": "FLOOR",
+                        "tiletype": "GRASS_LIGHT",
+                    }
+                ],
+            },
+        },
+    )
+
+    assert "Last Action: ACCEPTED" in text
+    assert "Failed tiles: (91,103,161): not_shrub" in text
+    assert "tile_shape=FLOOR" in text
+    assert "tiletype=GRASS_LIGHT" in text
+    assert "failed_count=1" in text
+
+
 def test_encoder_echoes_labor_result_state() -> None:
     text, _ = encode_observation(
         {
@@ -2784,6 +2820,10 @@ def test_encoder_renders_fort_minimap_with_rulers() -> None:
     obs_text, _ = encode_observation(state)
 
     assert "Fort minimap (z=177; top-left tile is x=90,y=87" in obs_text
+    assert (
+        "x-map: glyph index 0 is x=90; index 6 is x=96; "
+        "use x=90+index (visible range 90..96)"
+    ) in obs_text
     assert "      0123456" in obs_text
     assert "y= 87|..WWW.." in obs_text
     assert "y= 89|..WWW.." in obs_text
@@ -2846,6 +2886,10 @@ def test_encoder_renders_model_channel_focus_and_lower_level_map() -> None:
     assert "local_step=True" in obs_text
     assert "<=up stair, >=down stair, X=up/down stair, ^=ramp" in obs_text
     assert "Access-level minimap (z=160 for model channel [95,97,161,95,97,161]" in obs_text
+    assert (
+        "x-map: glyph index 0 is x=94; index 2 is x=96; "
+        "use x=94+index (visible range 94..96)"
+    ) in obs_text
     assert "y= 97|#<#" in obs_text
     assert "blanks are hidden/unreadable" in obs_text
 

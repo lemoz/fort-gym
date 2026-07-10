@@ -30,7 +30,7 @@ class DigParams(BaseModel):
         default="dig",
         description=(
             "Designation kind: 'dig'/'channel' designate the rect; 'chop' designates map "
-            "trees for felling (not rect-bounded) so woodcutters produce logs over time; "
+            "trees inside the rect for felling so woodcutters produce logs over time; "
             "'gather' designates shrub tiles inside the rect for plant gathering so a "
             "dwarf with the herbalism labor collects plants over time."
         ),

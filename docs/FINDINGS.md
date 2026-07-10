@@ -1039,6 +1039,55 @@ because hidden buildings and markers could still influence the map origin. The
 revised hook visibility-gates anchors, citizen markers, constructions, and the
 renderer; re-review found the P1 closed and returned DEPLOY.
 
+### 2.30 Attempt 21 reached real underground farming, but only after survival was lost
+
+Attempt 21, run `eecdd0e5d0924f9a984c96d702f09d59`
+([replay](https://fortgym.live/r/JBVG-tn9pxYcd_MJMMICYhXr7WqTK0gx)),
+ran deployed PR #91 merge SHA
+`ae15fcfb282dbb084dc7574f1242ed97a7ec2051` on fresh
+`seed_region3_fresh` with OpenRouter `z-ai/glm-5v-turbo`, vision enabled,
+memory disabled, score-v5, and a 450-step budget. It retained 296 governed
+rows, 295 screen/proof records, 55 `gameplay_proof.ok=true` records, and 296
+governed-provenance rows. Four hundred five model calls used 7,992,508 total
+tokens.
+
+The stable minimap was enough for genuinely deeper play. The policy completed
+a Carpenter workshop, surface FarmPlot, two beds, one door, and 26
+constructions. After many failed surface DIG attempts it independently chose
+channel at step 169, completed a connected native ramp by step 196, and
+excavated 27 owned lower-level tiles. Its first lower FarmPlot was correctly
+reported light/outside. It then built subterranean FarmPlots `#21` and `#23`,
+selected native-offered `MUSHROOM_HELMET_PLUMP` for all seasons, completed
+Still `#22`, enabled additional farmers, and observed native planting and
+harvest. Run-scoped food production reached 3. This is the first scored G7
+artifact to demonstrate model-discovered vertical access, a real
+crop-configured subterranean farm, and a completed Still in one uninterrupted
+policy run.
+
+It was not sustainable play. The policy needed 235 steps to reach the first
+valid underground plot, repeatedly submitted accepted zero-target gather/chop
+actions, confused pending channels with completed access, mixed ramps and
+hidden cells into atomic dig rectangles, and spent materials on malformed room
+geometry. The first tiny harvests were eaten immediately. Population peaked at
+22, then final stocks reached food 0 and drink 0 while the death ledger rose to
+11 records with unknown causes. Final flow was food 3 produced/54 consumed and
+drink 0/60; no functional room was completed.
+
+Deterministic G7 is FAIL. Summary duration 318,470 disagrees with the final
+stop-after-advance trace at 319,673, both below 403,200. Population 15 passed;
+food/drink, three rooms, five beds, rubric 59.62 with
+`no_broader_fort_layout`, and score-v5 90.30 all failed. Neglect is UNKNOWN
+because causes were not captured for all deaths. The stop left 296 gameplay
+rows but only 295 screen/proof rows, so evidence failed closed too.
+
+The resulting candidate remains an agent-observation change, not an external
+planner. It makes minimap index-to-x conversion explicit, reinforces the native
+channel and underground-farm lifecycle already present in observations, and
+returns bounded factual non-target samples for chop/gather. Hidden samples
+never disclose tile shape/type. A stopped-save production-runtime probe proved
+one visible `not_tree` sample and one hidden-only `hidden_unexplored` sample
+with both tiles and the building count unchanged.
+
 ## 3. Limitations
 
 - **A single passing embark family.** Every pass (G0–G4) is on
@@ -1046,15 +1095,15 @@ renderer; re-review found the P1 closed and returned DEPLOY.
   passes in seven region3 attempts. "Plays Dwarf Fortress" is not yet
   demonstrated — "solved one map" is.
 - **Small n.** The reliability claim rests on a five-run lineage; the endurance
-  result on one probe; the G6 verdict on seven runs; G7 on 19 failed attempts
+  result on one probe; the G6 verdict on seven runs; G7 on 20 failed attempts
   plus one invalidated attempt.
   These are findings, not distributions.
 - **One policy family for most results.** GLM-5V-turbo produced the G4 passes
   and most of the G6 campaign; GPT-5.5 served the earlier G2/G3 passes.
   Cross-model generality is thin — two GPT-5.5-vision escalation runs are the
   only cross-family data points on the unseen map.
-- **G6 is unpassed; G7 attempts 1 through 18 and 20 failed, and attempt 19 is
-  invalid.**
+- **G6 is unpassed; G7 attempts 1 through 18, 20, and 21 failed, and attempt 19
+  is invalid.**
   Attempts 2 through 9 and
   12 through 16 were infrastructure aborts, although attempts 14 through 16
   contain policy-bearing gameplay rows; attempts 10, 11, 17, and 18 are policy
@@ -1063,7 +1112,10 @@ renderer; re-review found the P1 closed and returned DEPLOY.
   candidate-hook probe mutated its live save. Attempt 20 was deliberately
   stopped at the 24-row diagnostic boundary just after it completed a real
   Carpenter workshop; it is a valid short G7 FAIL, not a long-horizon policy
-  verdict. Score-v5 is deployed and active. The
+  verdict. Attempt 21 was stopped after 296 rows when its late farm recovery
+  could no longer reverse 11 deaths or cumulative food/drink deficits; it is a
+  long policy diagnostic with an incomplete final stop row. Score-v5 is
+  deployed and active. The
   chair-factory calibration gap (§2.4) remains part of score-v3's historical
   record.
   Attempt 1 demonstrated why the scalar is telemetry rather than the verdict:
@@ -1071,13 +1123,13 @@ renderer; re-review found the P1 closed and returned DEPLOY.
 
 ## 4. What's next
 
-- **Attempt 20 exposed a bounded-map observation blocker after score-v5 held.**
-  Exact FarmPlot and Carpenter ownership worked and the scalar stayed
-  fail-closed. The next candidate keeps all visible player buildings in the
-  minimap anchor set and returns the exact first invalid workshop-footprint tile. It
-  remains factual observation/control feedback, with no external planner or
-  runner-selected coordinate. Review, deployment, and a fresh long run are
-  next.
+- **Attempt 21 proved the controls can reach a real underground farm and Still,
+  but policy interpretation was too slow.** The next candidate makes minimap
+  index conversion and existing channel/farm lifecycle facts harder to misread,
+  and reports bounded factual non-target tiles for accepted chop/gather no-ops.
+  It remains factual observation/control feedback, with no external planner,
+  runner-selected coordinate, or score change. Review, deployment, and a fresh
+  long run are next.
 - **G6 remains open**: the best unseen-map run reached 4/5 and missed only its
   second functional room. G7 now tests whether stable spatial observation lets
   the corrected direct-action loop sustain production and structure for a year.

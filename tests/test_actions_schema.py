@@ -4,6 +4,7 @@ import pytest
 
 from fort_gym.bench.env.actions import (
     ACTION_TOOL_SPEC,
+    DigParams,
     parse_action,
     system_prompt_v1,
     validate_action,
@@ -16,6 +17,13 @@ def test_action_tool_spec_structure() -> None:
     assert params["type"] == "object"
     assert "type" in params["properties"]
     assert set(params["required"]) == {"type", "params"}
+
+
+def test_dig_schema_describes_chop_as_rect_bounded() -> None:
+    description = DigParams.model_json_schema()["properties"]["kind"]["description"]
+
+    assert "trees inside the rect" in description
+    assert "not rect-bounded" not in description
 
 
 def test_keystroke_action_preserves_agent_perception_metadata() -> None:
