@@ -260,27 +260,29 @@ These systems are implemented (not roadmap):
 2. **Tools** (`fort_gym/bench/agent/tools.py`): `ToolManager` with memory/plan/perception tools wired into the review-mode agents.
 3. **Experimentation** (`fort_gym/bench/experiment/`): YAML config → `ExperimentRunner` → run with experiment metadata.
 
-The latest scored G7 result is attempt 20, run
-`f8ebc607402f4756838df19aecb75cc7`
-([replay](https://fortgym.live/r/IKqmVcZUvy_n5kGowOSfNUcGQdNZrfVa)),
-from deployed PR #90 merge SHA
-`f2cc864c9f36f4d847223da50bd70d143b5a3a07`. It executed 24 real governed
-gameplay rows with complete screen, proof, ownership-provenance, and model-usage
-evidence; 4/24 proof records had `ok=true`. The policy felled a tree, gathered
-plants, completed a FarmPlot,
-completed exact owned Carpenter workshop `#2`, and queued five barrel jobs.
-Score-v5 paid only the exact completed workshop capacity; accepted commands and
-global changes remained uncredited.
+The latest scored G7 result is attempt 21, run
+`eecdd0e5d0924f9a984c96d702f09d59`
+([replay](https://fortgym.live/r/JBVG-tn9pxYcd_MJMMICYhXr7WqTK0gx)),
+from deployed PR #91 merge SHA
+`ae15fcfb282dbb084dc7574f1242ed97a7ec2051`. It executed 296 real governed
+gameplay rows; 295 carried screen/proof records and 55 proof records had
+`ok=true`. The policy completed a Carpenter workshop, two beds, a door, 26
+constructions, a connected channel ramp, 27 owned excavation tiles, a Still,
+and two crop-configured subterranean FarmPlots. Native dwarves planted and
+harvested plump helmets, producing three food units. Score-v5 remained
+action-owned and did not turn accepted commands or global changes into credit.
 
-The operator stopped the short diagnostic at 27,879 ticks, just after the
-workshop recovery. Deterministic G7 correctly failed on duration, sustainable
-food/drink, population, rooms, beds, rubric, and scalar score. The trace exposed
-a minimap-anchor bug: a distant fishing dwarf pulled the bounded current map
-away from the actual fort because the map ignored FarmPlots and other
-non-room-classified player buildings. The current candidate anchors to every
-visible player-building footprint and reports the exact first rejected
-workshop-footprint tile; it supplies no placement search, target coordinate,
-strategy, or score credit.
+The operator stopped the decisive collapse at 318,470 summary ticks (319,673
+trace ticks). Population peaked at 22 and ended at 15; final food and drink were
+zero, the run ledger recorded 11 unknown-cause deaths, food production versus
+consumption was 3/54, drink was 0/60, and functional rooms remained 0. The
+deterministic G7 verdict is FAIL; only population passed. The final in-flight
+stop row also leaves evidence and duration inconsistent, so neither is claimed
+as complete. The next candidate keeps all decisions in the agent: it clarifies
+channel/farm lifecycle mechanics and exact minimap indexing, and returns bounded
+visible non-target facts for accepted chop/gather no-ops while hidden tiles
+remain opaque. It supplies no placement search, target coordinate, strategy, or
+score credit.
 G7 remains open. Full findings and gate predicates are recorded in
 `docs/WDSLL.md`.
 

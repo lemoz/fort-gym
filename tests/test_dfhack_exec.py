@@ -568,6 +568,24 @@ def test_designate_rect_gather_is_bounded_shrub_designation() -> None:
     assert "bad_rect" in hook_text
 
 
+def test_designate_rect_reports_bounded_visible_non_target_facts() -> None:
+    hook_text = (
+        Path(__file__).resolve().parents[1] / "hook" / "designate_rect.lua"
+    ).read_text(encoding="utf-8")
+
+    assert "local MAX_NON_TARGET_SAMPLES = 12" in hook_text
+    assert "payload.failed = non_target_samples" in hook_text
+    assert "payload.failed_truncated = non_target_tiles > #non_target_samples" in hook_text
+    assert "non_target_error = 'hidden_unexplored'" in hook_text
+    assert "non_target_error = kind == 'chop' and 'not_tree' or 'not_shrub'" in hook_text
+    assert "df.tiletype_shape[attr.shape]" in hook_text
+    assert "df.tiletype[tiletype]" in hook_text
+
+    hidden_branch = hook_text.index("elseif designation.hidden then")
+    tiletype_read = hook_text.index("local tiletype = block.tiletype[dx][dy]")
+    assert hidden_branch < tiletype_read
+
+
 def test_designate_rect_gather_wraps_bounded_lua_hook(monkeypatch) -> None:
     captured: dict = {}
 

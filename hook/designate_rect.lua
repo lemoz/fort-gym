@@ -71,7 +71,25 @@ if kind == 'chop' or kind == 'gather' then
   local newly_designated = 0
   local already_designated = 0
   local non_target_tiles = 0
+  local non_target_samples = {}
+  local MAX_NON_TARGET_SAMPLES = 12
   local preflight_error = nil
+
+  local function add_non_target_sample(tx, ty, error_name, tile_shape, tiletype)
+    if #non_target_samples >= MAX_NON_TARGET_SAMPLES then return end
+    local sample = { x = tx, y = ty, z = rz, error = error_name }
+    if tile_shape then sample.tile_shape = tile_shape end
+    if tiletype then sample.tiletype = tiletype end
+    table.insert(non_target_samples, sample)
+  end
+
+  local function attach_non_target_evidence(payload)
+    if non_target_tiles <= 0 then return end
+    payload.failed_count = non_target_tiles
+    payload.failed = non_target_samples
+    payload.failed_truncated = non_target_tiles > #non_target_samples
+  end
+
   for tx = rx1, rx2 do
     for ty = ry1, ry2 do
       local block = dfhack.maps.getTileBlock(tx, ty, rz)
@@ -79,19 +97,32 @@ if kind == 'chop' or kind == 'gather' then
         local dx, dy = tx % block_w, ty % block_h
         local designation = block.designation[dx][dy]
         local is_target = false
+        local non_target_error = nil
+        local tile_shape_name = nil
+        local tiletype_name = nil
         if not designation then
           preflight_error = preflight_error or 'designation_unreadable'
+          non_target_error = 'designation_unreadable'
+        elseif designation.hidden then
+          non_target_error = 'hidden_unexplored'
         elseif not designation.hidden then
+          local tiletype = block.tiletype[dx][dy]
           local ok_attr, attr = pcall(function()
-            return attrs[block.tiletype[dx][dy]]
+            return attrs[tiletype]
           end)
           if not ok_attr or not attr then
             preflight_error = preflight_error or 'tiletype_unreadable'
+            non_target_error = 'tiletype_unreadable'
           else
+            tile_shape_name = tostring(df.tiletype_shape[attr.shape] or attr.shape)
+            tiletype_name = tostring(df.tiletype[tiletype] or tiletype)
             if kind == 'chop' then
               is_target = attr.material == tree_material and attr.shape == wall_shape
             else
               is_target = attr.shape == shrub_shape
+            end
+            if not is_target then
+              non_target_error = kind == 'chop' and 'not_tree' or 'not_shrub'
             end
           end
         end
@@ -111,10 +142,18 @@ if kind == 'chop' or kind == 'gather' then
           end
         else
           non_target_tiles = non_target_tiles + 1
+          add_non_target_sample(
+            tx,
+            ty,
+            non_target_error or (kind == 'chop' and 'not_tree' or 'not_shrub'),
+            tile_shape_name,
+            tiletype_name
+          )
         end
       else
         preflight_error = preflight_error or 'missing_block'
         non_target_tiles = non_target_tiles + 1
+        add_non_target_sample(tx, ty, 'missing_block', nil, nil)
       end
     end
   end
@@ -135,6 +174,7 @@ if kind == 'chop' or kind == 'gather' then
       failure.shrubs_designated = 0
       failure.non_shrub_tiles = non_target_tiles
     end
+    attach_non_target_evidence(failure)
     print(json.encode(failure))
     return
   end
@@ -191,6 +231,7 @@ if kind == 'chop' or kind == 'gather' then
       failure.shrubs_designated = 0
       failure.non_shrub_tiles = non_target_tiles
     end
+    attach_non_target_evidence(failure)
     print(json.encode(failure))
     return
   end
@@ -208,6 +249,7 @@ if kind == 'chop' or kind == 'gather' then
     success.shrubs_designated = newly_designated
     success.non_shrub_tiles = non_target_tiles
   end
+  attach_non_target_evidence(success)
   print(json.encode(success))
   return
 end

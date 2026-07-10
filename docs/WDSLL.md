@@ -1867,6 +1867,70 @@ gate. Each entry states what changed and the evidence that forced it.
   anchors, citizen markers, constructions, and rendering on tile visibility;
   the same reviewer found the P1 closed and returned DEPLOY.
 
+- **2026-07-10 UTC — PR #91 deployed; G7 attempt 21: OPERATOR-STOPPED
+  POLICY-DIAGNOSTIC FAIL after genuine vertical access, underground farming,
+  and a Still, followed by resource collapse.** Run
+  `eecdd0e5d0924f9a984c96d702f09d59`
+  ([replay](https://fortgym.live/r/JBVG-tn9pxYcd_MJMMICYhXr7WqTK0gx))
+  used exact deployed merge SHA
+  `ae15fcfb282dbb084dc7574f1242ed97a7ec2051`, fresh
+  `seed_region3_fresh`, OpenRouter `z-ai/glm-5v-turbo`, vision on, memory off,
+  score-v5, and a 450-step budget. PR #91 had already fixed the Attempt-20 map
+  drift by anchoring to every visible player building and returning the first
+  invalid workshop-footprint tile. The run retained 296 governed gameplay
+  rows; 295 had screen/proof records, 55 proof records had `ok=true`, and all
+  296 carried governed provenance. Four hundred five model calls used
+  7,685,918 prompt and 306,590 completion tokens.
+
+  The policy made substantial real DF changes. It completed owned Carpenter
+  workshop `#1`, a surface FarmPlot, two installed beds, one door, and 26 wall
+  constructions. Population first rose to 16 and eventually peaked at 22. At
+  step 169 the model independently discovered channeling. Successive native
+  DigChannel jobs opened a lower level, and step 196 proved completed
+  `RAMP_TOP`/`RAMP` geometry plus native walk connectivity. The policy then
+  excavated 27 owned tiles. FarmPlot `#20` at step 216 correctly read back as
+  light/outside and offered no underground crops. It recovered: FarmPlot `#21`
+  at step 235 was stage 3/3, `plot_subterranean=true`, and exposed complete
+  native crop options; step 236 set plump helmets for all four seasons. It
+  completed owned Still `#22` at step 244, added subterranean FarmPlot `#23` at
+  step 256, set the same crop, and used three legal LABOR actions to add
+  farmers. Native planting and harvest produced three food units. No drink was
+  brewed.
+
+  The recovery came too late. The stopped summary records 318,470 ticks while
+  the final stop-after-advance trace reaches 319,673, versus 403,200 required.
+  Population ended at 15 after peaking at 22; final food and drink were both 0.
+  Run-scoped flow was food 3 produced/54 consumed and drink 0/60. Eleven death
+  records lacked cause evidence, so neglect is UNKNOWN rather than falsely
+  cleared. Functional rooms were 0/3 and installed beds 2/5. Rubric 59.62 had
+  `no_broader_fort_layout`; score-v5 was 90.30/150. Deterministic gate-v2 is
+  FAIL: population alone passed. Evidence also failed closed because the
+  operator stop landed after the final tick advance, leaving 296 gameplay rows
+  versus 295 screen/proof rows and inconsistent summary/trace duration. The
+  terminal reason is `stop_requested_after_advance`.
+
+  Attempt 21 isolated policy-reading failures rather than a missing control.
+  It spent roughly 100 actions misreading absolute minimap columns and accepted
+  many zero-target chop/gather requests. Once channeling began, it sometimes
+  treated a pending channel as complete, mixed visible `#` walls with `^`
+  ramps and hidden blanks in atomic DIG rectangles, built its first lower plot
+  in the open channel row, and later called planted/growing plots stalled. The
+  next candidate stays inside the model loop: both minimaps state the exact
+  index-to-x mapping; the prompt explains pending/completed channel state,
+  atomic lower-map glyph eligibility, light/outside channel floors versus
+  roofed subterranean floors, material-free additional FarmPlots, and growing
+  crops with zero active PlantSeeds jobs. Chop/gather returns at most 12 factual
+  non-target samples from the submitted rectangle. Visible samples include
+  shape/type; hidden samples contain only requested coordinates and
+  `hidden_unexplored`. Accepted no-ops remain accepted, unscored no-ops. No
+  search, target coordinate, action choice, or strategy is supplied.
+
+  With no active run, the candidate Lua parsed under production DFHack 0.47.05.
+  A visible requested soil wall returned `not_tree`, `WALL`, and `SoilWall`; a
+  hidden requested tile returned only `hidden_unexplored`. Both exact tile
+  snapshots were unchanged, and player-building count remained 5 before and
+  after. This is candidate safety evidence, not a deployed-fix claim.
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,

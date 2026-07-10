@@ -52,7 +52,15 @@ Legal actions (the only eight types accepted):
 kind dig designates visible natural WALL tiles; kind channel designates visible natural WALL or \
 stable FLOOR tiles. Occupied, constructed, wet, frozen, hidden, tree, and other ineligible tiles \
 reject the entire rectangle without changing any tile. Miners must reach an accepted designation \
-and work over time. kind "chop" \
+and work over time. Channel is the legal vertical-access control: channel a visible stable floor \
+on the current z-level, then advance time until the native DigChannel job completes. Completion \
+opens that tile downward and the observation's Access-level minimap reports the newly visible \
+lower z-level and native connectivity. A normal dig aimed directly at a hidden lower z-level \
+fails with hidden_unexplored; do not target lower tiles until completed channel access reveals \
+them. On an Access-level minimap, only a visible `#` lower-level glyph is a candidate for kind \
+dig; `^` is a ramp and a blank is hidden/unreadable. Every tile in a DIG rectangle must qualify, \
+so mixing one candidate wall with any ramp or blank rejects the whole rectangle without mutation. \
+kind "chop" \
 designates the tree trunks inside the rect for felling (the observation's Fort-area tiles line \
 reports tree_trunk counts, and the Visible-nearby-trees line reports only the count of visible \
 trunks within 40 tiles; choose coordinates from visible map evidence); a dwarf with the \
@@ -71,8 +79,13 @@ plants into drink via ORDER job "brew" — brew orders need gatherable plants an
 in stock; drink is what dwarves actually consume. \
 FarmPlot places a farm plot on open ground: a single tile at (x, y, z), or a rectangle up to 5x5 \
 when optional x2/y2 are given, within 24 tiles of your fort; unlike a workshop it consumes no \
-material item. Dwarves with the farming labor plant seasonal crops on it IF seeds are available \
+material item. Additional FarmPlots also consume no material; acquiring logs does not enable their \
+placement. Dwarves with the farming labor plant seasonal crops on them IF seeds are available \
 (the embark carries plump helmet spawn); the harvested crops become brewable/cookable plants. The \
+z-level alone does not make a plot subterranean: floor directly below an open channel shaft can \
+remain light/outside, while excavated floor beneath intact overhead rock is the relevant candidate. \
+Only a completed plot's `plot_subterranean=true` and offered-crop readback confirm underground \
+farming; `plot_subterranean=false` with empty options cannot grow plump helmets. The \
 observation's crew section reports each plot's construction stage. FARM crop selection is durable \
 only after that plot reaches its maximum stage; an unfinished plot rejects FARM with \
 farm_plot_not_built, so advance real work and observe completion before setting crops. \
@@ -118,7 +131,9 @@ crop_not_offered and no slot changes. Surface crop options currently fail closed
 surface_crop_options_unverified instead of accepting a guessed biome match. \
 Setting a crop does not plant it — a dwarf with the farming labor plants a matching seed from \
 stock over real time, and only if a seed exists (seeds are consumed by planting; growth then takes \
-further time before harvest). The observation reports each plot's per-season crop tokens, your \
+further time before harvest). Once planting completes, zero active PlantSeeds jobs can mean the \
+crop is growing; it is not by itself evidence that the plot is stalled. The observation reports \
+each plot's per-season crop tokens, your \
 seeds on hand, and the current season. Setting a slot to a crop it already holds changes nothing.
 - LABOR: params {"unit_id": <citizen id>, "labor": <name>, "enable": true|false}. Toggles one \
 labor on one citizen, exactly like the player's unit-labors screen. A queued job is only ever \

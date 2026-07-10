@@ -259,6 +259,15 @@ def test_governed_submit_tool_requires_agent_review_contract() -> None:
     assert parameters["properties"]["plan_review"]["properties"]["objective"]["maxLength"] == 160
     assert "do not include changing counts" in GOVERNED_SYSTEM_PROMPT
     assert "REVIEW EVIDENCE CHOICES" in GOVERNED_SYSTEM_PROMPT
+    assert "Channel is the legal vertical-access control" in GOVERNED_SYSTEM_PROMPT
+    assert "normal dig aimed directly at a hidden lower z-level" in GOVERNED_SYSTEM_PROMPT
+    assert "completed channel access reveals" in GOVERNED_SYSTEM_PROMPT
+    assert "only a visible `#` lower-level glyph is a candidate" in GOVERNED_SYSTEM_PROMPT
+    assert "mixing one candidate wall with any ramp or blank rejects" in GOVERNED_SYSTEM_PROMPT
+    assert "floor directly below an open channel shaft" in GOVERNED_SYSTEM_PROMPT
+    assert "`plot_subterranean=true` and offered-crop readback" in GOVERNED_SYSTEM_PROMPT
+    assert "Additional FarmPlots also consume no material" in GOVERNED_SYSTEM_PROMPT
+    assert "zero active PlantSeeds jobs can mean the" in GOVERNED_SYSTEM_PROMPT
 
 
 def test_review_evidence_accepts_only_exact_catalog_ids() -> None:
