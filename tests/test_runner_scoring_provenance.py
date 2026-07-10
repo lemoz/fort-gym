@@ -1171,6 +1171,95 @@ def test_governed_action_history_preserves_partial_and_tile_postconditions() -> 
     assert entry["result_details"] == {"placed_count": 2, "failed_count": 1}
 
 
+def test_governed_action_history_uses_exact_owned_completion_proof() -> None:
+    entry = _action_history_entry(
+        step=3,
+        action={
+            "type": "DIG",
+            "params": {
+                "kind": "channel",
+                "area": [95, 100, 161],
+                "size": [1, 1, 1],
+            },
+            "advance_ticks": 1500,
+        },
+        requested_ticks=1500,
+        tick_info={"ticks_advanced": 1506},
+        execute_result={
+            "accepted": True,
+            "gameplay_progress_eligible": True,
+            "governed_current_action_effect_observed": True,
+            "result": {"ok": True, "newly_designated": 1},
+        },
+        state_before={"stocks": {}, "work": {}},
+        advance_state={"stocks": {}, "work": {}},
+        metrics_snapshot={},
+    )
+
+    assert entry["outcome"] == "action_effect_observed"
+
+
+def test_governed_action_history_does_not_credit_unrelated_owned_completion() -> None:
+    entry = _action_history_entry(
+        step=45,
+        action={
+            "type": "UNSUSPEND",
+            "params": {"area": [96, 100, 160], "size": [1, 1, 1]},
+            "advance_ticks": 1500,
+        },
+        requested_ticks=1500,
+        tick_info={"ticks_advanced": 1506},
+        execute_result={
+            "accepted": True,
+            "gameplay_progress_eligible": True,
+            "governed_current_action_effect_observed": False,
+            "result": {"ok": True, "suspended_found": 0, "unsuspended": 0},
+        },
+        state_before={"stocks": {}, "work": {}},
+        advance_state={"stocks": {}, "work": {}},
+        metrics_snapshot={},
+    )
+
+    assert entry["outcome"] == "advanced_ticks_without_tracked_state_change"
+
+
+def test_governed_designations_are_pending_feedback_without_completion_proof() -> None:
+    cases = (
+        ("dig", "newly_designated"),
+        ("channel", "newly_designated"),
+        ("chop", "trees_designated"),
+        ("gather", "shrubs_designated"),
+    )
+
+    for kind, result_key in cases:
+        action = {
+            "type": "DIG",
+            "params": {"kind": kind, "area": [92, 98, 161], "size": [1, 1, 1]},
+            "advance_ticks": 1500,
+        }
+        execute_result = {
+            "accepted": True,
+            "gameplay_progress_eligible": False,
+            "result": {"ok": True, result_key: 1},
+        }
+        entry = _action_history_entry(
+            step=14,
+            action=action,
+            requested_ticks=1500,
+            tick_info={"ticks_advanced": 1500},
+            execute_result=execute_result,
+            state_before={"stocks": {}, "work": {}},
+            advance_state={"stocks": {}, "work": {}},
+            metrics_snapshot={},
+        )
+        proof = _governed_gameplay_proof(
+            **_governed_proof_kwargs(action=action, execute_result=execute_result)
+        )
+
+        assert entry["outcome"] == "action_pending"
+        assert proof["gameplay_progress_eligible"] is False
+
+
 def test_governed_action_history_calls_helper_mutations_action_effects() -> None:
     entry = _action_history_entry(
         step=1,

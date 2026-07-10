@@ -1089,6 +1089,21 @@ def _governed_helper_progress(action: Dict[str, Any], result: Dict[str, Any]) ->
     )
 
 
+def _governed_helper_pending(action: Dict[str, Any], result: Dict[str, Any]) -> bool:
+    """Return true when a governed designation was accepted but may still be queued."""
+
+    if action.get("type") != "DIG":
+        return False
+    params = action.get("params") if isinstance(action.get("params"), dict) else {}
+    result_key = {
+        "dig": "newly_designated",
+        "channel": "newly_designated",
+        "chop": "trees_designated",
+        "gather": "shrubs_designated",
+    }.get(str(params.get("kind") or "dig"))
+    return bool(result_key and (_int_or_none(result.get(result_key)) or 0) > 0)
+
+
 _ORDER_GOODS_KEYS = {
     "bed": "bed",
     "door": "door",
@@ -1588,6 +1603,15 @@ def _action_history_entry(
     )
     governed_action = action.get("type") != "KEYSTROKE"
     helper_mutation = governed_action and _governed_helper_progress(action, action_result)
+    helper_pending = governed_action and _governed_helper_pending(action, action_result)
+    proven_governed_progress = bool(
+        governed_action
+        and execute_result.get("governed_current_action_effect_observed") is True
+    )
+    proven_wait_progress = bool(
+        action.get("type") == "WAIT"
+        and execute_result.get("governed_wait_effect_observed") is True
+    )
     state_mutation = bool(_keystroke_productive_state_deltas(state_before, advance_state))
     validation_rejected = bool(execute_result.get("validation_rejected"))
     if partial_mutation:
@@ -1613,6 +1637,14 @@ def _action_history_entry(
         outcome = "action_output_unattributed"
     elif isinstance(order_effect, dict) and order_effect.get("status") == "unobserved":
         outcome = "action_effect_unobserved"
+    elif proven_governed_progress:
+        # Exact owned completion proof is computed before history recording;
+        # preserve that truth even when the helper only reports designation.
+        outcome = "action_effect_observed"
+    elif proven_wait_progress:
+        outcome = "gameplay_state_changed"
+    elif helper_pending:
+        outcome = "action_pending"
     elif helper_mutation:
         outcome = "action_effect_observed"
     elif not governed_action and (state_mutation or productive_reasons):
@@ -4042,6 +4074,20 @@ def run_once(
                     execute_result = {
                         **execute_result,
                         "gameplay_progress_eligible": progress_eligible,
+                        "governed_current_action_effect_observed": bool(
+                            int(
+                                owned_delta.get("governed_step_completion_progress")
+                                or 0
+                            )
+                            > 0
+                        ),
+                        "governed_wait_effect_observed": bool(
+                            action.get("type") == "WAIT"
+                            and (
+                                owned_completion_evidence
+                                or owned_building_completion_evidence
+                            )
+                        ),
                     }
                     last_action_result = execute_result
                     metrics_snapshot["gameplay_progress_eligible"] = progress_eligible

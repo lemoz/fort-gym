@@ -115,9 +115,11 @@ class WorkshopThenWaitAgent(Agent):
 class DigThenWaitAgent(Agent):
     def __init__(self) -> None:
         self.calls = 0
+        self.observation_texts: list[str] = []
 
     def decide(self, obs_text: str, obs_json: Dict[str, Any]) -> Dict[str, Any]:
         self.calls += 1
+        self.observation_texts.append(obs_text)
         if self.calls == 1:
             return {
                 "type": "DIG",
@@ -964,18 +966,19 @@ def test_governed_runner_retains_owned_dig_through_job_assignment_and_off_camera
         return {"ok": True, "rect": list(rect), "tiles": tiles}
 
     monkeypatch.setattr("fort_gym.bench.env.executor.safe_designate_rect", fake_designate)
+    dig_agent = DigThenWaitAgent()
     _, _, run_id = _run_governed_interact_fixture(
         tmp_path,
         monkeypatch,
         screen_changes=False,
-        max_steps=2,
-        agent_override=DigThenWaitAgent(),
+        max_steps=3,
+        agent_override=dig_agent,
         fort_metrics_callback=fort_metrics,
         map_snapshot_callback=map_snapshot,
         advance_callback=advance,
     )
 
-    first, second = _trace_rows(tmp_path, run_id)
+    first, second, _third = _trace_rows(tmp_path, run_id)
     assert first["metrics"]["governed_owned_excavation_tiles"] == 1
     assert first["metrics"]["governed_owned_completion_progress"] == 0
     assert first["metrics"]["score_duration_blocked"] is True
@@ -986,9 +989,18 @@ def test_governed_runner_retains_owned_dig_through_job_assignment_and_off_camera
     assert second["metrics"]["score_duration_blocked"] is False
     assert second["gameplay_proof"]["ok"] is True
     assert second["gameplay_proof"]["owned_prior_action_effect_observed"] is True
+    assert second["execute"]["governed_wait_effect_observed"] is True
     assert second["gameplay_proof"]["owned_completion_observation"][
         "completed_tiles"
     ] == [{"coordinate": [10, 20, 5], "kind": "dig"}]
+    assert (
+        "step=0 outcome=action_pending expected_review_verdict=partial"
+        in dig_agent.observation_texts[1]
+    )
+    assert (
+        "step=1 outcome=gameplay_state_changed expected_review_verdict=progressed"
+        in dig_agent.observation_texts[2]
+    )
 
 
 def test_governed_runner_quarantines_unverified_rollback_before_advancing(
