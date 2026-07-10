@@ -260,46 +260,27 @@ These systems are implemented (not roadmap):
 2. **Tools** (`fort_gym/bench/agent/tools.py`): `ToolManager` with memory/plan/perception tools wired into the review-mode agents.
 3. **Experimentation** (`fort_gym/bench/experiment/`): YAML config → `ExperimentRunner` → run with experiment metadata.
 
-The latest G7 result is attempt 9, run
-`4d25c36795eb489faf3c51bec496ae34`
-([replay](https://fortgym.live/r/7Ov5ifRPfJ1l2s5mgUI666YmsOlVZYPN)),
-from deployed SHA `efea8c86dabf6bae81cd2a8c294c195d6fac1706`. It produced the
-strongest reviewed-plan opening so far: a completed Carpenter's Workshop, one
-installed bed, door, and table, and 20 construction tiles. It still had zero
-FarmPlots, Stills, enclosed spaces, functional rooms, or food/drink production.
-The run failed before gameplay at step 33 because complete model responses
-changed the objective while labeling the plan decision `continue`. It advanced
-33,135 ticks and is an infrastructure-aborted G7 FAIL with no long-horizon
-policy verdict. The correction context now states the submitted objective's
-identity relation and required decision without selecting either the objective
-or action for the model.
+The latest G7 result is attempt 11, run
+`beaf1a3f0c99478bb504bdd8f004e2ec`
+([replay](https://fortgym.live/r/SFFx5jWKPJxYYywMVIpXuw4d3vwRePna)),
+from deployed SHA `6e640757e880da17663d35c1522484c1da835b2f`. The operator stopped
+it after 51 gameplay rows and 51,200 ticks once the repeated failure was clear.
+It produced a real Carpenter's Workshop, Still, FarmPlot, beds, doors, gathered
+plants, brew jobs, and 50 constructions. Every gameplay row retained governed
+provenance, recorded screen text, and a proof record; 44/51 action proofs were
+productive and seven correctly recorded rejected BUILD attempts. It nevertheless
+produced zero food and drink, enclosed no spaces, installed no beds, and
+remained at population 7, so deterministic G7 correctly failed it.
 
-Attempt 5, run `680a938aabd84764953dd01c0ccf1c7f`
-([replay](https://fortgym.live/r/88uZqRulANyNG_e7t7c6KFlEOYRvHZdz)),
-remains the longest region3 attempt at 201,556 ticks. It failed on a bounded
-topic-dialog variant, with zero food/drink production, final drink 0, one
-functional room, score-v3 178.59, and deterministic G7 FAIL. Attempt 4, run
-`45659da07fb749f9b5ebe9c55dd1eb91`, is an infrastructure-aborted FAIL with no
-policy verdict ([replay](https://fortgym.live/r/4Gn9v9WaPf_i4qhGJFQs9bo9d8y_GSBo)).
-It completed 208 governed rows and 202,737 ticks before a bounded dialog guard
-failed it cleanly. The run made real furniture, a farm, and 40 construction
-tiles, but ended with zero drink production and zero functional rooms.
-
-Forensics found that all 36 pending construction jobs had reserved materials no
-citizen could reach, while four brew orders were falsely accepted without a
-completed Still or real brew jobs. PR #70's deployed correction selects only
-materials in a living citizen's current DF walk group, limits placement to a
-conservative dry/visible floor subset, fails closed on incomplete
-workshop/order postconditions, and exposes job walk-group connectivity to the
-model. It also adds a view-specific `finish_topic_meeting` operation using the
-live-verified `OPTION1` key. Its deployed fresh-seed boundary smoke passed before
-attempt 5 launched. PR #72 adds factual governed action history and PR #73
-grounds BUILD footprints. PR #74 adds visible letter-option dialog input and
-factual, model-authored action/plan reviews; it still leaves every
-gameplay objective and command to the model. Review evidence comes only from a
-runner-authored allowlist, repeated commands are bound to a stable type+params
-fingerprint, and governed history retains at least the six entries required for
-review continuity. Full findings and gate predicates are recorded in
+Attempt 11 isolated three factual control-loop defects: the embark Wagon's
+occupied footprint appeared as open floor in the agent minimap; a crop choice
+accepted while a FarmPlot was unfinished was erased when construction completed;
+and the prompt did not state clearly enough that a room needs a hollow boundary
+around passable interior rather than a solid block of walls. Corrections for
+those defects are being validated for attempt 12. They expose otherwise unknown
+occupied building tiles, reject premature crop assignment, and clarify the
+observed room and construction semantics without choosing objectives or actions
+for the model. Full findings and gate predicates are recorded in
 `docs/WDSLL.md`.
 
 **Success definition and gate ladder: [docs/WDSLL.md](docs/WDSLL.md)** — every claim of "the agent plays" must pass a gate there on public, replayable evidence.

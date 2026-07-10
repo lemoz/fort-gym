@@ -1085,11 +1085,12 @@
       'c': { fill: '#3c96aa', glyph: 'c' },    // chair
       'd': { fill: '#785a32', glyph: 'd' },    // door
       'w': { fill: '#2846a0', glyph: 'w' },    // workshop
+      'o': { fill: '#694b7d', glyph: 'o' },    // other occupied building
       '@': { fill: '#fafafa', glyph: '@' }     // dwarf
     };
     const FORT_TILE_DEFAULT = { fill: '#c82828', glyph: '?' };
     const FORT_MINIMAP_LEGEND =
-      'W=your wall  x=queued wall  #=natural  T=tree  b/t/c/d=furniture  w=workshop  @=dwarf  .=floor  i=ice  ,=shrub';
+      'W=your wall  x=queued wall  #=natural  T=tree  b/t/c/d=furniture  w=workshop  o=occupied  @=dwarf  .=floor  i=ice  ,=shrub';
 
     function fortMapBounds(fortMap) {
       const rows = Array.isArray(fortMap?.map_rows) ? fortMap.map_rows : [];

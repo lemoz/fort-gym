@@ -73,19 +73,26 @@ FarmPlot places a farm plot on open ground: a single tile at (x, y, z), or a rec
 when optional x2/y2 are given, within 24 tiles of your fort; unlike a workshop it consumes no \
 material item. Dwarves with the farming labor plant seasonal crops on it IF seeds are available \
 (the embark carries plump helmet spawn); the harvested crops become brewable/cookable plants. The \
-observation's crew section reports a farm_plots count. \
+observation's crew section reports each plot's construction stage. FARM crop selection is durable \
+only after that plot reaches its maximum stage; an unfinished plot rejects FARM with \
+farm_plot_not_built, so advance real work and observe completion before setting crops. \
 Furniture kinds install an already-produced item of that type as a 1x1 building on an unoccupied \
 open-floor tile within 24 tiles of your fort — a dwarf hauls and installs it over time; furnishing \
 an enclosed space is \
 what turns it into a functional room. Installing furniture requires a finished item in \
 stock (see "Finished goods in play"); installed beds/doors/tables/chairs make rooms functional. \
-Wall and Floor kinds place construction segments: a single tile at (x, y, z), or a line up to 10 \
-tiles when optional x2/y2 are given, within 24 tiles of your fort. Each tile consumes one log, \
+Wall and Floor kinds place construction segments: a single tile at (x, y, z), a horizontal or \
+vertical line, or a filled rectangle when optional x2/y2 are given, with at most 10 total tiles and \
+within 24 tiles of your fort. For a room border use separate one-tile-thick line segments; setting \
+both x2 and y2 to different coordinates fills the whole rectangle and does NOT make a room. Each tile consumes one log, \
 boulder, or block from stock — and each PENDING construction claims its material immediately, so \
 the stocks line's "usable" count is what further BUILDs can actually draw on (locked items free \
-up when their job completes or is removed). Enclosed rooms — spaces bounded by \
-walls, buildings, or doors — are what make bedrooms and production rooms count; the observation's \
-"Fort structure" line reports enclosed_spaces and functional_rooms.
+up when their job completes or is removed). A room boundary must be a hollow ring around at least \
+one untouched passable interior tile; a solid block of W tiles encloses no space. Use one-tile-thick \
+border segments and leave the intended interior `.` tiles unbuilt. Enclosed rooms — spaces bounded \
+by walls, buildings, or doors — are what make bedrooms and production rooms count; construction \
+count alone is not room progress. Only the observation's `enclosed_spaces` and `functional_rooms` \
+facts confirm success.
 - ORDER: params {"job": <item>, "quantity": 1-5}. Queues production to any BUILT workshop of the \
 right kind (construction stage complete), wherever it stands: bed, door, table, chair, barrel, and \
 bin need a built Carpenter's Workshop; brew (the brewing reaction) needs a built Still and a \
@@ -139,13 +146,13 @@ time advances.
 The observation includes a Fort minimap — a top-down character grid (and, when attached, the \
 same grid rendered as a color image) of your fort area with a \
 coordinate ruler (W=your walls, x=your queued wall/floor a dwarf is still building — never \
-re-place on an x tile, advance time instead, b/t/c/d=furniture, w=workshop, .=stable open floor, \
-i=frozen liquid that can thaw). It is the \
+re-place on an x tile, advance time instead, b/t/c/d=furniture, w=workshop, o=other occupied \
+building footprint, .=stable open floor, i=frozen liquid that can thaw). It is the \
 authoritative view for BUILD placement and wall geometry. Before submitting any BUILD, derive its \
 full target footprint and verify every target tile is `.` open floor in the current minimap, OR for \
 CarpenterWorkshop/Still use the exact runner-authored `carpenter_build_site_rect`, which is an \
 authoritative nine-tile stable-floor preflight even when it lies outside the cropped minimap. Never \
-target `b`, `t`, `c`, `d`, `w`, `x`, or `i`, a coordinate listed under Furniture positions, or a \
+target `b`, `t`, `c`, `d`, `w`, `o`, `x`, or `i`, a coordinate listed under Furniture positions, or a \
 coordinate just reported under Failed tiles. If the footprint is not provably open and unoccupied, \
 choose a different valid tile or a different productive action; WAIT only when advancing the \
 simulation can change the relevant world state, and name the change you expect. Do not retry a \

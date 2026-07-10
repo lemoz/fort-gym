@@ -31,13 +31,14 @@ TILE_STYLES: Dict[str, tuple] = {
     "c": ((60, 150, 170), "c"),     # chair
     "d": ((120, 90, 50), "d"),      # door
     "w": ((40, 70, 160), "w"),      # workshop
+    "o": ((105, 75, 125), "o"),     # other occupied building
     "@": ((250, 250, 250), "@"),    # dwarf
     "?": ((200, 40, 40), "?"),
 }
 
 LEGEND_TEXT = (
     "W=your wall  x=queued wall (building)  #=natural wall  T=tree  "
-    "b=bed t=table c=chair d=door w=workshop  @=dwarf  .=floor  "
+    "b=bed t=table c=chair d=door w=workshop o=occupied  @=dwarf  .=floor  "
     "i=frozen liquid  ,=shrub"
 )
 

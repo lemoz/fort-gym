@@ -1379,8 +1379,67 @@ gate. Each entry states what changed and the evidence that forced it.
   recovery. Final local verification is 704 passed, 5 live-only skipped, with
   the live fixture separately 1 passed; changed-file Ruff, Lua `loadfile`
   parsing on production DFHack, and `git diff --check` pass. Final Sol re-review
-  reports no deployment blockers. This remains candidate evidence until merge,
-  deploy, and a fresh-seed smoke complete.
+  reported no deployment blockers. PR #80 passed CI, merged, and deployed as
+  `6e640757e880da17663d35c1522484c1da835b2f`. A four-step fresh-seed smoke,
+  run `33167fcfa1aa4581ab529f3cab9473f3`
+  ([replay](https://fortgym.live/r/r8uxsOqPyh6rTydXWtS8Dq9rk1fAeFmU)),
+  completed with four governed proofs, 4,022 real ticks, score-v4, a stable
+  Carpenter site, and verified cleanup. It built a real Carpenter's Workshop
+  and Still; deterministic gate-v2 correctly remained FAIL at this smoke
+  boundary.
+
+- **2026-07-10 — G7 attempt 11: POLICY FAIL at the 50-step diagnostic
+  checkpoint; occupied-map, farm-stage, and room-geometry blockers exposed.**
+  Attempt 11 run `beaf1a3f0c99478bb504bdd8f004e2ec`
+  ([live replay](https://fortgym.live/r/SFFx5jWKPJxYYywMVIpXuw4d3vwRePna))
+  launched for 450 steps from fresh `seed_region3_fresh` on deployed PR #80,
+  pinned GLM-5V through OpenRouter, memory off, and Anthropic disabled. It was
+  operator-stopped after the public step-50 checkpoint once the failure mode
+  was persistent; one already-decided action left a stopped terminal row at
+  step 51. The 51 gameplay rows advanced 51,200 real ticks and all have screen
+  text, governed provenance, and proof records. Productive-change proof is
+  `gameplay_proof.ok=true` on 44/51 rows; the other seven truthfully record
+  rejected BUILDs. Model use was 55 calls, 703,542 prompt tokens, and 32,757
+  completion tokens (736,299 total).
+
+  This was real, materially better gameplay. The policy felled trees; completed
+  a Carpenter's Workshop and stable Still; produced three beds and three doors;
+  built a FarmPlot; configured it once; gathered 18 non-farm plants; created
+  five real brew jobs; and completed 50 construction records without a death.
+  It survived multiple due plan reviews and revised after rejected geometry
+  instead of aborting. The policy made 40 BUILD, two DIG, three ORDER, one FARM,
+  and six WAIT decisions. It did not install furniture, enclose any space, or
+  produce food or drink. Deterministic G7 is FAIL: duration 51,200/403,200,
+  food produced 0 versus 7 consumed, drink produced 0 versus 14 consumed,
+  population 7/15, rooms 0/3, installed beds 0/3, and scalar score-v4
+  94.58/150. Evidence, zero neglect deaths, and rubric 84.51 with zero blockers
+  pass. Cleanup completed before the stopped status was published.
+
+  Three concrete boundaries explain the failure. First, the embark Wagon
+  occupies `(94..96,96..98,161)`, but the agent minimap rendered its footprint
+  as stable `.` floor; legal BUILD correctly returned
+  `tile_occupied_by_building`, so the advertised BUILD authority contradicted
+  execution. Second, FARM accepted crop assignment while the new plot was at
+  construction stage 0/3; DF reset all four seasonal slots when construction
+  completed, leaving a built but unconfigured plot. Third, the prompt stated
+  that walls form a ring but did not explicitly distinguish a hollow boundary
+  from a solid wall mass. From steps 15-50 the policy called filled rows a room
+  boundary, accumulated 50 constructions, and never enclosed a single interior
+  tile. The score rose on real goods and construction, but G7 did not confuse
+  that with production or rooms.
+
+  The follow-up remains inside the observation/action/prompt loop. The agent
+  minimap now renders any otherwise-unclassified occupied building footprint as
+  `o` and forbids BUILD there; FARM fails closed with `farm_plot_not_built`
+  until `getBuildStage() >= getMaxBuildStage()`; and the factual room contract
+  says a boundary must be a one-tile-thick hollow ring around at least one
+  untouched passable interior tile, while a solid W block encloses nothing.
+  Candidate proof on the disposable production DFHack runtime exposed all nine
+  Wagon tiles as `o` and rejected crop selection on a freshly placed stage-0/3
+  FarmPlot. Focused verification is 232 passed and the full suite is 708 passed,
+  5 live-only skipped, with changed-file Ruff, compileall, Lua `loadfile`, and
+  `git diff --check` passing. Independent Sol review reports no deployment
+  blockers; production deployment remains candidate work.
 
 ## Reporting format (every gate attempt)
 

@@ -271,13 +271,23 @@ def test_review_evidence_accepts_only_exact_catalog_ids() -> None:
 def test_governed_system_prompt_requires_build_target_preflight() -> None:
     assert "unoccupied open-floor tile" in GOVERNED_SYSTEM_PROMPT
     assert "Before submitting any BUILD" in GOVERNED_SYSTEM_PROMPT
-    assert "`b`, `t`, `c`, `d`, `w`, `x`, or `i`" in GOVERNED_SYSTEM_PROMPT
+    assert "`b`, `t`, `c`, `d`, `w`, `o`, `x`, or `i`" in GOVERNED_SYSTEM_PROMPT
+    assert "o=other occupied" in GOVERNED_SYSTEM_PROMPT
     assert "i=frozen liquid that can thaw" in GOVERNED_SYSTEM_PROMPT
     assert "carpenter_build_site_rect" in GOVERNED_SYSTEM_PROMPT
     assert "even when it lies outside the cropped minimap" in GOVERNED_SYSTEM_PROMPT
     assert "Furniture positions" in GOVERNED_SYSTEM_PROMPT
     assert "Failed tiles" in GOVERNED_SYSTEM_PROMPT
     assert "Do not retry a rejected target" in GOVERNED_SYSTEM_PROMPT
+
+
+def test_governed_system_prompt_distinguishes_room_ring_from_wall_mass() -> None:
+    assert "hollow ring around at least one untouched passable interior tile" in GOVERNED_SYSTEM_PROMPT
+    assert "a solid block of W tiles encloses no space" in GOVERNED_SYSTEM_PROMPT
+    assert "construction count alone is not room progress" in GOVERNED_SYSTEM_PROMPT
+    assert "or a filled rectangle when optional x2/y2 are given" in GOVERNED_SYSTEM_PROMPT
+    assert "with at most 10 total tiles" in GOVERNED_SYSTEM_PROMPT
+    assert "setting both x2 and y2 to different coordinates fills the whole rectangle" in GOVERNED_SYSTEM_PROMPT
 
 
 def test_governed_system_prompt_describes_still_and_brew_mechanic_only() -> None:
@@ -340,6 +350,8 @@ def test_governed_system_prompt_describes_farm_crop_mechanic_only() -> None:
     # left to the engine, not gated by this command
     assert "only grows in the seasons its raw allows" in GOVERNED_SYSTEM_PROMPT
     assert "decided by the engine" in GOVERNED_SYSTEM_PROMPT
+    assert "farm_plot_not_built" in GOVERNED_SYSTEM_PROMPT
+    assert "only after that plot reaches its maximum stage" in GOVERNED_SYSTEM_PROMPT
     assert "crop_not_growable_here" not in GOVERNED_SYSTEM_PROMPT
 
 

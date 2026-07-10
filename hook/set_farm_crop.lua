@@ -106,6 +106,30 @@ if not is_farm then
   return
 end
 
+-- DF resets seasonal plant selections while an unfinished farm plot advances
+-- through construction stages. The native crop picker is only durable after
+-- the plot is complete, so fail closed instead of reporting a transient write
+-- as successful gameplay.
+local build_stage = nil
+local max_build_stage = nil
+local ok_stage = pcall(function()
+  build_stage = plot:getBuildStage()
+  max_build_stage = plot:getMaxBuildStage()
+end)
+if not ok_stage or build_stage == nil or max_build_stage == nil then
+  print(json.encode({ ok = false, error = 'farm_plot_stage_unreadable' }))
+  return
+end
+if build_stage < max_build_stage then
+  print(json.encode({
+    ok = false,
+    error = 'farm_plot_not_built',
+    build_stage = build_stage,
+    max_build_stage = max_build_stage,
+  }))
+  return
+end
+
 -- Resolve the crop token to a plant raw index (exact match on .id).
 local CLEAR = crop_token == 'clear'
 local crop_index = -1
@@ -202,6 +226,8 @@ end
 print(json.encode({
   ok = true,
   farm_building_id = building_id,
+  build_stage = build_stage,
+  max_build_stage = max_build_stage,
   crop = CLEAR and 'clear' or sanitize(crop_token),
   crop_raw_index = crop_index,
   before_plant_id = before_plant_id,

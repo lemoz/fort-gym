@@ -30,6 +30,16 @@ def test_render_minimap_distinguishes_frozen_liquid() -> None:
     assert png is not None and png[:8] == b"\x89PNG\r\n\x1a\n"
 
 
+def test_render_minimap_distinguishes_other_occupied_buildings() -> None:
+    from fort_gym.bench.agent.minimap_render import LEGEND_TEXT, TILE_STYLES
+
+    assert "o" in TILE_STYLES
+    assert "o=occupied" in LEGEND_TEXT
+    assert TILE_STYLES["o"] != TILE_STYLES["."]
+    png = render_minimap_png(["..ooo..", "..o.o..", "..ooo.."], [90, 87, 177])
+    assert png is not None and png[:8] == b"\x89PNG\r\n\x1a\n"
+
+
 def test_minimap_data_url_prefix_and_fallbacks() -> None:
     url = minimap_data_url(
         {"map_rows": ["..WWW..", "..W.W.."], "map_origin": [90, 87, 177]}

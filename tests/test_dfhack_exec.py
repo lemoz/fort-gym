@@ -332,6 +332,9 @@ def test_set_farm_crop_hook_writes_plant_id_and_reports_before_after() -> None:
     assert "plot.plant_id[idx] = crop_index" in hook_text
     assert "plot.plant_id[idx] = -1" in hook_text
     assert "df.building_farmplotst:is_instance" in hook_text
+    assert "plot:getBuildStage()" in hook_text
+    assert "plot:getMaxBuildStage()" in hook_text
+    assert "farm_plot_not_built" in hook_text
     # before/after arrays + world-change signal
     assert "before_plant_id" in hook_text
     assert "after_plant_id" in hook_text
@@ -863,6 +866,8 @@ def test_fort_metrics_renders_minimap_grid() -> None:
     )
     for needle in ("map_rows", "map_origin", "BUILDING_CHARS", "construction_set"):
         assert needle in script
+    assert "elseif building_at(x, y, anchor_z) then" in script
+    assert "ch = 'o'" in script
 
 
 def test_fort_metrics_anchors_on_citizens_and_marks_dwarves() -> None:

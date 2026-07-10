@@ -435,6 +435,10 @@ do
           ch = BUILDING_CHARS[kind] or '?'
         elseif pending_construction_tiles[x .. ',' .. y .. ',' .. anchor_z] then
           ch = 'x'
+        elseif building_at(x, y, anchor_z) then
+          -- Wagons, depots, stockpiles, and any other building footprint are
+          -- legal room boundaries but never open BUILD targets.
+          ch = 'o'
         else
           if shape == nil or hidden then
             ch = ' '
