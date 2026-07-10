@@ -1534,6 +1534,45 @@ gate. Each entry states what changed and the evidence that forced it.
   focused tests and 711 full-suite tests passed, 5 live-only skipped, with
   changed-file Ruff, compileall, and `git diff --check` passing.
 
+- **2026-07-10 — PR #84 deployed; G7 attempt 15: INFRASTRUCTURE-ABORTED FAIL
+  after 24 real gameplay rows; JSON was complete but review evidence remained
+  invalid.** PR #84 passed CI, merged, and deployed as
+  `b91867ea4886e9888e7e9c22fbb7b0affad65e86`. Attempt 15 run
+  `3a1c362b5d1e45dabf5fdee123ba21e5`
+  ([replay](https://fortgym.live/r/HR2tNr4QPUFquhPlh1WaoB0b5xS9QpeZ))
+  used fresh `seed_region3_fresh`, pinned OpenRouter GLM-5.2, memory off, and a
+  450-step budget. It executed 24 gameplay rows and 24,094 real ticks; all 24
+  rows have screen text, governed provenance, and DFHack proof. Those gameplay
+  rows used 28 model calls, 277,277 prompt tokens, and 10,357 completion tokens;
+  the three terminal calls brought the full trace total to 31 calls, 319,123
+  prompt tokens, and 11,617 completion tokens.
+
+  This was real but incomplete play. The model completed Carpenter and Still
+  workshops, produced three beds, five doors, two tables, and three chairs, made
+  18 constructions, and queued brew jobs. It adapted from a rejected brew order
+  by building the missing Still. It did not build a FarmPlot, install furniture,
+  produce food or drink, or grow past population 7. Three wall segments partly
+  collided with occupied tiles; the final observed fort had one functional
+  production space and no completed bed installations. Run flow was food 0/0
+  produced/consumed and drink 0/7. Deterministic gate-v2 is FAIL: evidence,
+  neglect-death, and rubric 90.93 with zero blockers pass; duration 24,094/
+  403,200, food/drink production, population 7/15, rooms 1/3, beds 0/3, and
+  score-v4 109.75/150 fail.
+
+  The 1,024-token transport fix held. At terminal step 24 all three responses
+  parsed as complete JSON at 366, 406, and 488 completion tokens. The first had
+  a wrong plan request id and invalid evidence; both corrections still omitted
+  valid `plan_review.evidence`. The retry errors called E-ids "excerpts" and the
+  correction did not repeat the factual allowlist. The attempt-16 candidate
+  keeps execution fail-closed, changes all retry terminology to E-ids, includes
+  exact allowed IDs and lines in every correction, and rejects duplicate IDs on
+  scheduled and unscheduled reviews. It never chooses or repairs evidence for
+  the model. A live no-execution probe of the exact terminal observation,
+  seeded with the same error shape, recovered on its first correction with
+  `E14` and `E20` in 276 completion tokens. Local verification is 63 focused
+  tests and 714 full-suite tests passed, 5 live-only skipped, with Ruff,
+  compileall, and `git diff --check` clean; CI follows the candidate commit.
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,
