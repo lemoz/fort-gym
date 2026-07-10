@@ -598,6 +598,38 @@ attempt-15 terminal-state no-execution probe, seeded with a deliberately invalid
 payload, recovered on the first live GLM correction with `E14` and `E20` in 276
 completion tokens.
 
+### 2.20 G7 attempt 16: evidence retry recovered; unfocused corrections later truncated
+
+PR #85 deployed the exact evidence catalog and consistent E-id terminology.
+Attempt 16, run `1b1218635a1647ba96d83189c1095bd4`
+([replay](https://fortgym.live/r/S9_rAjwEV9CtCZaC6z4R0yOHP_vuPiUb)),
+executed 32 governed gameplay rows and 32,127 ticks. All 32 gameplay rows have
+screen text, governed provenance, and DFHack proof. It crossed the previous
+step-24 terminal and recovered from a real step-25 review error on its first
+correction before executing gameplay.
+
+Policy quality still failed. The agent completed a Carpenter workshop, produced
+three beds, three doors, and two tables, and made 22 constructions, but enclosed
+no space and installed no furniture. It repeatedly designated the same shrub,
+called accepted designations progress despite zero changed tiles, then retried
+the blocked wall. It built no Still or FarmPlot and produced zero food and drink
+while seven drinks were consumed. Deterministic gate-v2 is FAIL: evidence,
+neglect-death, and rubric 82.75 with zero blockers pass; duration 32,127/403,200,
+population 7/15, rooms 0/3, beds 0/3, sustainable production, and score-v4
+92.04/150 fail.
+
+The terminal row exposed a different correction defect. Its initial 504-token
+JSON parsed but used `decision=revise` without changing the objective. Although
+that error did not involve evidence, the correction repeated the complete
+24-line evidence catalog; both correction responses then exhausted the
+1,024-token cap and became non-JSON. The candidate includes that catalog only
+when an evidence error is present and states the exact required decision repair.
+An exact terminal-state no-execution probe recovered at the unchanged cap in one
+257-token correction. Separately, the trace proved that submitted
+`advance_ticks=1500` was silently clamped to 1,000 by the external DFHack helper;
+the candidate aligns that helper with the action schema's existing 2,000-tick
+maximum so the model actually chooses its turn duration.
+
 ## 3. Limitations
 
 - **A single passing embark family.** Every pass (G0–G4) is on
@@ -605,15 +637,16 @@ completion tokens.
   passes in seven region3 attempts. "Plays Dwarf Fortress" is not yet
   demonstrated — "solved one map" is.
 - **Small n.** The reliability claim rests on a five-run lineage; the endurance
-  result on one probe; the G6 verdict on seven runs; G7 on 15 failed attempts.
+  result on one probe; the G6 verdict on seven runs; G7 on 16 failed attempts.
   These are findings, not distributions.
 - **One policy family for most results.** GLM-5V-turbo produced the G4 passes
   and most of the G6 campaign; GPT-5.5 served the earlier G2/G3 passes.
   Cross-model generality is thin — two GPT-5.5-vision escalation runs are the
   only cross-family data points on the unseen map.
-- **G6 is unpassed; G7 attempts 1 through 15 failed.** Attempts 2 through 9 and
-  12 through 15 were infrastructure aborts, although attempts 14 and 15 contain
-  policy-bearing gameplay rows; attempts 10 and 11 are policy diagnostics.
+- **G6 is unpassed; G7 attempts 1 through 16 failed.** Attempts 2 through 9 and
+  12 through 16 were infrastructure aborts, although attempts 14 through 16
+  contain policy-bearing gameplay rows; attempts 10 and 11 are policy
+  diagnostics.
   Score-v4 is active after the frozen-liquid correction, while the
   chair-factory calibration gap (§2.4) remains part of score-v3's historical
   record.
@@ -622,14 +655,14 @@ completion tokens.
 
 ## 4. What's next
 
-- **Attempt 15 proved output headroom but exposed an ambiguous evidence retry;
-  deploy the exact-catalog correction before attempt 16.** Keep strict review
-  identity, model-selected evidence, the existing correction limit, and
-  fail-closed execution. A fresh run must cross step 24, then convert real
-  workshops and goods into sustained production, installed furniture, and
-  multiple enclosed rooms.
+- **Attempt 16 proved the evidence fix and exposed unfocused decision retries;
+  deploy focused corrections and the truthful 2,000-tick ceiling before attempt
+  17.** Keep strict review identity, model-selected evidence, the existing
+  correction limit, and fail-closed execution. The next run must cross step 32,
+  then break the repeated gather/build loop and prioritize sustainable
+  production, installed furniture, and multiple enclosed rooms.
 - **G6 remains open**: the best unseen-map run reached 4/5 and missed only its
-  second functional room. G7 attempt 16 can test the corrected facts and
+  second functional room. G7 attempt 17 can test the corrected facts and
   GLM-5.2 transport without a separate blind retry campaign.
 - **G8 — depth**: a multi-z fortress (stairs, underground rooms), the next
   spatial-reasoning escalation after the hollow ring is actually demonstrated.

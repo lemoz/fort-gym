@@ -260,35 +260,33 @@ These systems are implemented (not roadmap):
 2. **Tools** (`fort_gym/bench/agent/tools.py`): `ToolManager` with memory/plan/perception tools wired into the review-mode agents.
 3. **Experimentation** (`fort_gym/bench/experiment/`): YAML config → `ExperimentRunner` → run with experiment metadata.
 
-The latest gameplay-bearing G7 result is attempt 15, run
-`3a1c362b5d1e45dabf5fdee123ba21e5`
-([replay](https://fortgym.live/r/HR2tNr4QPUFquhPlh1WaoB0b5xS9QpeZ)),
-from deployed SHA `b91867ea4886e9888e7e9c22fbb7b0affad65e86`. It executed 24
-governed gameplay rows and 24,094 ticks before a fail-closed review-contract
+The latest gameplay-bearing G7 result is attempt 16, run
+`1b1218635a1647ba96d83189c1095bd4`
+([replay](https://fortgym.live/r/S9_rAjwEV9CtCZaC6z4R0yOHP_vuPiUb)),
+from deployed SHA `ff9b7a6f59ad5c245fe75e9cf874bdb354112289`. It executed 32
+governed gameplay rows and 32,127 ticks before a fail-closed review-transport
 terminal. Every gameplay row retained screen text, governed provenance, and a
-DFHack proof record. The agent felled trees, completed Carpenter and Still
-workshops, produced beds, doors, tables, and chairs, made 18 constructions, and
-queued brew jobs. It still produced zero food and drink, installed no beds,
-remained at population 7, and confirmed only one functional production space,
-so deterministic G7 correctly failed it despite score-v4 109.75 and rubric
-90.93 with no blockers.
+DFHack proof record. The agent completed a Carpenter workshop, produced beds,
+doors, and tables, and made 22 constructions. It repeatedly retried a blocked
+room boundary, built no Still or FarmPlot, produced no food or drink, installed
+no beds, enclosed no space, and remained at population 7. Deterministic G7
+correctly failed it despite rubric 82.75 with no blockers; score-v4 was 92.04.
 
 PR #81 deployed the three factual corrections exposed by attempt 11: otherwise
 unknown occupied buildings render as `o`, premature FARM crop assignment fails
 closed, and the room contract distinguishes a hollow boundary from a filled
 wall rectangle. A deployed smoke and live completed-plot probe passed.
 
-Attempts 12 and 13 failed before gameplay while testing GLM-5.2 transport;
-JSON-object transport carried attempt 14 into real play, and 1,024-token output
-headroom removed its truncation failure in attempt 15. Attempt 15's three
-terminal responses were complete JSON but repeatedly violated
-`plan_review.evidence`; the retry path also called required E-ids "excerpts" and
-did not repeat the evidence allowlist. The current candidate addresses that
-ambiguity while keeping validation fail-closed, using consistent E-id
-terminology, and including the exact allowed factual catalog in correction
-prompts. An exact terminal-state no-execution probe recovered on its first
-correction. G7 remains open. Full findings and gate predicates are recorded in
-`docs/WDSLL.md`.
+Attempts 12 through 15 established reliable JSON transport and factual E-id
+corrections. Attempt 16 crossed the prior step-24 boundary and recovered from a
+live review error at step 25, then failed at step 32 when a decision-only retry
+unnecessarily repeated the full evidence catalog and two responses exhausted
+the 1,024-token cap. The current candidate includes the evidence catalog only
+for evidence errors and gives exact decision-field repairs. It also removes a
+backend-only 1,000-tick clamp that contradicted the governed action's legal
+0-2,000 `advance_ticks` range. An exact step-32 no-execution probe recovered in
+one 257-token correction at the unchanged cap. G7 remains open. Full findings
+and gate predicates are recorded in `docs/WDSLL.md`.
 
 **Success definition and gate ladder: [docs/WDSLL.md](docs/WDSLL.md)** — every claim of "the agent plays" must pass a gate there on public, replayable evidence.
 
