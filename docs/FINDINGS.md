@@ -441,7 +441,7 @@ caught by a failing public run and closed on the record.
 
 ## 4. What's next
 
-- **Repair attempt 4's command boundary, then attempt 5**: require one citizen
+- **Evaluate live attempt 5**: PR #70 now requires one citizen
   to share its current DF walk group with both build target and selected item;
   reject invalid materials plus targets outside the conservative dry/visible
   FLOOR subset; verify resulting jobs; report walk-group connectivity without
@@ -450,8 +450,11 @@ caught by a failing public run and closed on the record.
   operation. An isolated fresh-seed smoke proved one connected wall and one
   connected Still completed through dwarf labor, then proved brew created
   exactly the requested real jobs only after the Still was complete, without a
-  duplicate manager order. Review, merge, deployment, and deployed repetition
-  remain before the next 450-step run.
+  duplicate manager order. It merged and deployed as
+  `e012e704b7a45cd509034700c3524801217130ef`; the deployed repetition passed,
+  and the 450-step run has a
+  [live replay](https://fortgym.live/r/88uZqRulANyNG_e7t7c6KFlEOYRvHZdz). Its eventual
+  deterministic gate result, not its interim score, is the next verdict.
 - **G6 remains open**: the best unseen-map run reached 4/5 and missed only its
   second functional room. G7 attempt 5 runs on the same unseen seed, so a strong
   endurance result can add evidence without a separate blind retry campaign.

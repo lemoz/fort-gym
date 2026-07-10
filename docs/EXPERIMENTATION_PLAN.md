@@ -107,17 +107,18 @@ counts (see `docs/Actions_Headless_Safety.md`).
   conservative dry/visible FLOOR target and resulting job linkage, exposes the
   connectivity snapshot, and rejects ORDER unless a completed matching
   workshop receives concrete jobs. This does not assert that a dwarf has
-  accepted the haul. An isolated fresh-seed smoke proved a connected wall and
-  Still completed through dwarf labor, then linked exactly two concrete brew
-  jobs without inserting a duplicate manager order. Review, merge, deployment,
-  and deployed repetition remain before attempt 5.
+  accepted the haul. Fresh-seed candidate and deployed smokes proved a connected
+  wall and Still completed through dwarf labor, then linked exactly two concrete brew
+  jobs without inserting a duplicate manager order. PR #70 merged and deployed
+  as `e012e704b7a45cd509034700c3524801217130ef`; attempt 5 is now running from
+  that SHA with a [permanent replay](https://fortgym.live/r/88uZqRulANyNG_e7t7c6KFlEOYRvHZdz).
 - The dedicated `INTERACT` action is strict zero-tick, governed-only, paused,
   viewscreen-allowlisted, and bounded to eight operations per modal episode
   (three unchanged screens terminate earlier). Attempt 4 proved generic confirm
   is insufficient for `viewscreen_topicmeetingst`; a post-terminal live probe
   proved semantic `OPTION1` exits the visible one-option screen without advancing
-  a tick. The candidate exposes that key only as `finish_topic_meeting` on that
-  exact viewscreen.
+  a tick. The deployed path exposes that key only as `finish_topic_meeting` on
+  that exact viewscreen.
 - Tick stalls, modal loops, and cancellation fail closed with durable terminal
   reasons; attempt 4 terminated on its third unchanged topic-meeting interaction.
 - Completed furniture, raw death causes, and a run-scoped event/eat-history

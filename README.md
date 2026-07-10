@@ -256,7 +256,12 @@ These systems are implemented (not roadmap):
 2. **Tools** (`fort_gym/bench/agent/tools.py`): `ToolManager` with memory/plan/perception tools wired into the review-mode agents.
 3. **Experimentation** (`fort_gym/bench/experiment/`): YAML config → `ExperimentRunner` → run with experiment metadata.
 
-The active research step is the G7 attempt 5 candidate. Attempt 4, run
+The active research step is the live G7 attempt 5, run
+`680a938aabd84764953dd01c0ccf1c7f`
+([replay](https://fortgym.live/r/88uZqRulANyNG_e7t7c6KFlEOYRvHZdz)),
+launched for 450 steps from deployed merge SHA
+`e012e704b7a45cd509034700c3524801217130ef`. No policy verdict exists while it
+is running. Attempt 4, run
 `45659da07fb749f9b5ebe9c55dd1eb91`, is an infrastructure-aborted FAIL with no
 policy verdict ([replay](https://fortgym.live/r/4Gn9v9WaPf_i4qhGJFQs9bo9d8y_GSBo)).
 It completed 208 governed rows and 202,737 ticks before a bounded dialog guard
@@ -265,12 +270,13 @@ tiles, but ended with zero drink production and zero functional rooms.
 
 Forensics found that all 36 pending construction jobs had reserved materials no
 citizen could reach, while four brew orders were falsely accepted without a
-completed Still or real brew jobs. The follow-up candidate selects only
+completed Still or real brew jobs. PR #70's deployed correction selects only
 materials in a living citizen's current DF walk group, limits placement to a
 conservative dry/visible floor subset, fails closed on incomplete
 workshop/order postconditions, and exposes job walk-group connectivity to the
 model. It also adds a view-specific `finish_topic_meeting` operation using the
-live-verified `OPTION1` key. The loop and model still own gameplay strategy;
+live-verified `OPTION1` key. Its deployed fresh-seed boundary smoke passed before
+attempt 5 launched. The loop and model still own gameplay strategy;
 these changes repair command truth and observation, not policy. Full findings
 and gate predicates are recorded in `docs/WDSLL.md`.
 
