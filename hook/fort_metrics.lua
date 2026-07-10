@@ -379,9 +379,55 @@ do
     bed = 'b', table = 't', chair = 'c', door = 'd', workshop = 'w',
   }
   local building_tile_kind = {}
+  local map_anchor_buildings = {}
   local anchor_z_counts = {}
+
+  local function map_tile_visible(x, y, z)
+    local block = dfhack.maps.getTileBlock(x, y, z)
+    if not block then return false end
+    local ok, hidden = pcall(function()
+      return block.designation[x % 16][y % 16].hidden and true or false
+    end)
+    return ok and not hidden
+  end
+
+  local function visible_building_bounds(bld)
+    local min_x, min_y = math.huge, math.huge
+    local max_x, max_y = -math.huge, -math.huge
+    for bx = bld.x1, bld.x2 do
+      for by = bld.y1, bld.y2 do
+        if map_tile_visible(bx, by, bld.z) then
+          min_x = math.min(min_x, bx)
+          min_y = math.min(min_y, by)
+          max_x = math.max(max_x, bx)
+          max_y = math.max(max_y, by)
+        end
+      end
+    end
+    if min_x == math.huge then return nil end
+    return { x1 = min_x, y1 = min_y, x2 = max_x, y2 = max_y, z = bld.z }
+  end
+
+  -- The room classifier intentionally keeps only furniture and workshops in
+  -- `buildings`, but the minimap must follow the visible footprint of every
+  -- player building. A farm plot (or another occupied building type) is still
+  -- real fort geometry and must keep a distant citizen from pulling the
+  -- bounded map window away from the fort. Hidden footprint tiles never
+  -- influence the published origin or bounds.
+  pcall(function()
+    for _, bld in ipairs(df.global.world.buildings.all) do
+      local ok_anchor, anchor = pcall(function()
+        return visible_building_bounds(bld)
+      end)
+      if ok_anchor and anchor and anchor.x1 and anchor.y1
+          and anchor.x2 and anchor.y2 and anchor.z then
+        table.insert(map_anchor_buildings, anchor)
+        anchor_z_counts[anchor.z] = (anchor_z_counts[anchor.z] or 0) + 1
+      end
+    end
+  end)
+
   for _, bld in ipairs(buildings) do
-    anchor_z_counts[bld.z] = (anchor_z_counts[bld.z] or 0) + 1
     for fx = bld.x1, bld.x2 do
       for fy = bld.y1, bld.y2 do
         building_tile_kind[fx .. ',' .. fy .. ',' .. bld.z] = bld.kind
@@ -390,18 +436,26 @@ do
   end
   -- citizens anchor the map before any building exists (and are drawn as @)
   local citizen_positions = {}
+  local visible_citizen_positions = {}
   pcall(function()
     for _, unit in ipairs(df.global.world.units.active) do
       local ok_c, is_c = pcall(function() return dfhack.units.isCitizen(unit) end)
       if ok_c and is_c and unit.pos then
-        table.insert(citizen_positions, { x = unit.pos.x, y = unit.pos.y, z = unit.pos.z })
-        anchor_z_counts[unit.pos.z] = (anchor_z_counts[unit.pos.z] or 0) + 0.1
+        local cpos = { x = unit.pos.x, y = unit.pos.y, z = unit.pos.z }
+        table.insert(citizen_positions, cpos)
+        if map_tile_visible(cpos.x, cpos.y, cpos.z) then
+          table.insert(visible_citizen_positions, cpos)
+        end
+        if #map_anchor_buildings == 0
+            and map_tile_visible(cpos.x, cpos.y, cpos.z) then
+          anchor_z_counts[unit.pos.z] = (anchor_z_counts[unit.pos.z] or 0) + 1
+        end
       end
     end
   end)
 
   local citizen_tile_lookup = {}
-  for _, cpos in ipairs(citizen_positions) do
+  for _, cpos in ipairs(visible_citizen_positions) do
     citizen_tile_lookup[cpos.x .. ',' .. cpos.y .. ',' .. cpos.z] = true
   end
 
@@ -427,7 +481,9 @@ do
     local kind = building_tile_kind[key]
     local access_kind = access_kind_for_shape(shape)
     local ch = ' '
-    if citizen_tile_lookup[key] then
+    if shape == nil or hidden then
+      ch = ' '
+    elseif citizen_tile_lookup[key] then
       ch = '@'
       kind = nil
     elseif kind then
@@ -436,8 +492,6 @@ do
       ch = 'x'
     elseif building_at(x, y, z) then
       ch = 'o'
-    elseif shape == nil or hidden then
-      ch = ' '
     elseif material == FROZEN_LIQUID_MATERIAL then
       ch = 'i'
     elseif shape == STAIR_UP_SHAPE then
@@ -479,7 +533,7 @@ do
   if anchor_z ~= nil then
     local min_x, min_y = math.huge, math.huge
     local max_x, max_y = -math.huge, -math.huge
-    for _, bld in ipairs(buildings) do
+    for _, bld in ipairs(map_anchor_buildings) do
       if bld.z == anchor_z then
         min_x = math.min(min_x, bld.x1)
         min_y = math.min(min_y, bld.y1)
@@ -488,7 +542,7 @@ do
       end
     end
     if min_x == math.huge then
-      for _, cpos in ipairs(citizen_positions) do
+      for _, cpos in ipairs(visible_citizen_positions) do
         if cpos.z == anchor_z then
           min_x = math.min(min_x, cpos.x)
           min_y = math.min(min_y, cpos.y)
@@ -502,7 +556,8 @@ do
     end
     for key in pairs(construction_set) do
       local cx, cy, cz = key:match('(-?%d+),(-?%d+),(-?%d+)')
-      if tonumber(cz) == anchor_z then
+      if tonumber(cz) == anchor_z
+          and map_tile_visible(tonumber(cx), tonumber(cy), tonumber(cz)) then
         min_x = math.min(min_x, tonumber(cx))
         min_y = math.min(min_y, tonumber(cy))
         max_x = math.max(max_x, tonumber(cx))
@@ -511,7 +566,8 @@ do
     end
     for key in pairs(pending_construction_tiles) do
       local cx, cy, cz = key:match('(-?%d+),(-?%d+),(-?%d+)')
-      if tonumber(cz) == anchor_z then
+      if tonumber(cz) == anchor_z
+          and map_tile_visible(tonumber(cx), tonumber(cy), tonumber(cz)) then
         min_x = math.min(min_x, tonumber(cx))
         min_y = math.min(min_y, tonumber(cy))
         max_x = math.max(max_x, tonumber(cx))

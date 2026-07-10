@@ -99,6 +99,9 @@ by the runner.
 
 This is a measurement boundary, so v4 and v5 scores are not comparable. Public
 leaderboards already partition by score version and seed. Attempt 19 remains a
-v4 control. Production remains score-v4 while this candidate is reviewed; no
-local or public v5 artifact existed while the boundary was finalized. The first
-matched rerun after deployment will be score-v5.
+v4 control. PR #90 deployed score-v5 at merge SHA
+`f2cc864c9f36f4d847223da50bd70d143b5a3a07`. Attempt 20, run
+`f8ebc607402f4756838df19aecb75cc7`, is the first public v5 artifact. Its exact
+owned completed Carpenter workshop raised governed utility and production to 5
+each; designations, accepted order output, and unrelated global state remained
+uncredited. The run's deterministic G7 result is recorded in `WDSLL.md`.

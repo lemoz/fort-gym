@@ -985,9 +985,59 @@ clean. Candidate copies of all four changed Lua hooks parsed on production
 DFHack 0.47.05, and the read-only `job_metrics` hook executed with `ok=true` on
 the pristine save (farms 0, workshops 0). Sol Ultra re-reviewed only its four
 findings, independently reproduced 256 focused and 786 full-suite passes, found
-no remaining issue, and returned **DEPLOY**. Production remains score-v4 and the
-VM remains pristine; merge, exact-SHA deployment, and scored Attempt 20 are
-still pending.
+no remaining issue, and returned **DEPLOY**. PR #90 subsequently passed CI,
+merged, and deployed at exact SHA
+`f2cc864c9f36f4d847223da50bd70d143b5a3a07`. Production now runs score-v5 with
+the v2 ownership provenance. Section 2.29 records scored Attempt 20.
+
+### 2.29 Attempt 20 proved exact workshop ownership and exposed a drifting minimap
+
+Attempt 20, run `f8ebc607402f4756838df19aecb75cc7`
+([replay](https://fortgym.live/r/IKqmVcZUvy_n5kGowOSfNUcGQdNZrfVa)),
+ran the deployed PR #90 merge SHA on fresh `seed_region3_fresh` with OpenRouter
+`z-ai/glm-5v-turbo`, vision enabled, memory disabled, and a 450-step budget.
+The operator stopped it after the early trace appeared saturated; the stop
+raced with the runner, and the final rows showed that the policy had just
+recovered. The artifact therefore remains a valid short diagnostic but is not
+a full-horizon policy verdict.
+
+The policy performed real gameplay. It felled a tree, gathered three shrubs,
+completed one surface FarmPlot, then legally placed Carpenter workshop `#2` at
+`(89,98,161)`. Two ordinary UNSUSPEND turns allowed native construction to
+reach its final stage, after which the policy queued five barrel jobs. Score-v5
+correctly attributed only the exact completed owned Carpenter ID: utility and
+production became 5 each, while designation, the accepted ORDER, global goods,
+rooms, and constructions paid no governed credit.
+
+Deterministic G7 failed at 27,879/403,200 ticks with food production/consumption
+0/0, drink production/consumption 0/7, population 7, no installed beds, no
+functional rooms, score-v5 72.70, and rubric 58.25 with
+`no_fort_structure` and `no_broader_fort_layout`. Evidence passed: all 24
+executed gameplay rows carried screen text, gameplay proof, governed v2
+provenance, and one attributed OpenRouter model; 4/24 proof records had
+`ok=true`. No neglect deaths occurred. Thirty-six calls used 501,578 total
+tokens.
+
+The expensive early correction loop came from the observation, not missing
+DFHack control. The minimap's anchor list reused the room classifier, which
+only retained beds, tables, chairs, doors, and workshops. It therefore ignored
+the starting wagon, the new FarmPlot, and every other occupied building type.
+When the fishing dwarf moved to `(24,8)`, the citizen bbox pulled the bounded
+map to `(20,4)` and cropped the actual fort near `(92,97)` out of view. The
+policy alternated coordinates from that displaced map with prior fort
+coordinates, producing repeated `tile_not_open_floor` and
+`too_far_from_fort` rejections before it recovered.
+
+The narrow candidate keeps the solution inside the agent loop. The factual
+minimap now anchors to every visible player-building footprint and falls back
+to visible citizens only when no visible building exists. A rejected 3x3
+workshop reports the absolute first failing tile and categorical reason through
+the existing `Failed tiles` observation. Neither change searches for a
+placement, suggests a coordinate,
+chooses an action, or changes scoring. Terra review rejected the first draft
+because hidden buildings and markers could still influence the map origin. The
+revised hook visibility-gates anchors, citizen markers, constructions, and the
+renderer; re-review found the P1 closed and returned DEPLOY.
 
 ## 3. Limitations
 
@@ -996,21 +1046,24 @@ still pending.
   passes in seven region3 attempts. "Plays Dwarf Fortress" is not yet
   demonstrated — "solved one map" is.
 - **Small n.** The reliability claim rests on a five-run lineage; the endurance
-  result on one probe; the G6 verdict on seven runs; G7 on 18 failed attempts.
+  result on one probe; the G6 verdict on seven runs; G7 on 19 failed attempts
+  plus one invalidated attempt.
   These are findings, not distributions.
 - **One policy family for most results.** GLM-5V-turbo produced the G4 passes
   and most of the G6 campaign; GPT-5.5 served the earlier G2/G3 passes.
   Cross-model generality is thin — two GPT-5.5-vision escalation runs are the
   only cross-family data points on the unseen map.
-- **G6 is unpassed; G7 attempts 1 through 18 failed and attempt 19 is invalid.**
+- **G6 is unpassed; G7 attempts 1 through 18 and 20 failed, and attempt 19 is
+  invalid.**
   Attempts 2 through 9 and
   12 through 16 were infrastructure aborts, although attempts 14 through 16
   contain policy-bearing gameplay rows; attempts 10, 11, 17, and 18 are policy
   diagnostics. Attempts 17 and 18 were manually stopped after their loops were
   decisive. Attempt 19 was stopped and invalidated after an operator's
-  candidate-hook probe mutated its live save.
-  Score-v5 is implemented but not active or deployed; production remains on the
-  score-v4 frozen-liquid measurement boundary. The
+  candidate-hook probe mutated its live save. Attempt 20 was deliberately
+  stopped at the 24-row diagnostic boundary just after it completed a real
+  Carpenter workshop; it is a valid short G7 FAIL, not a long-horizon policy
+  verdict. Score-v5 is deployed and active. The
   chair-factory calibration gap (§2.4) remains part of score-v3's historical
   record.
   Attempt 1 demonstrated why the scalar is telemetry rather than the verdict:
@@ -1018,17 +1071,16 @@ still pending.
 
 ## 4. What's next
 
-- **Attempt 19 exposed control-truth blockers before it was invalidated.** A
-  surface plot accepted subterranean plump helmets, repeated brew orders had no
-  brewable inputs, and the candidate stair hook designated through a building.
-  The attempt-20 candidate now has disposable-save proof for native tile/crop
-  eligibility, building occupancy, completed vertical connectivity, immediate
-  ownership capture, and camera-independent completion. The governed runner no
-  longer supplies starter/workshop coordinates. Independent re-review and
-  deployment remain before the scored policy run.
+- **Attempt 20 exposed a bounded-map observation blocker after score-v5 held.**
+  Exact FarmPlot and Carpenter ownership worked and the scalar stayed
+  fail-closed. The next candidate keeps all visible player buildings in the
+  minimap anchor set and returns the exact first invalid workshop-footprint tile. It
+  remains factual observation/control feedback, with no external planner or
+  runner-selected coordinate. Review, deployment, and a fresh long run are
+  next.
 - **G6 remains open**: the best unseen-map run reached 4/5 and missed only its
-  second functional room. G7 attempt 19 tests whether the demonstrated vision
-  advantage transfers to the corrected direct-action loop.
+  second functional room. G7 now tests whether stable spatial observation lets
+  the corrected direct-action loop sustain production and structure for a year.
 - **G8 — depth**: a multi-z fortress (stairs, underground rooms), the next
   spatial-reasoning escalation after the hollow ring is actually demonstrated.
 - **The open-source flywheel**: a standing public leaderboard where any model

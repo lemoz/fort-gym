@@ -1768,8 +1768,8 @@ gate. Each entry states what changed and the evidence that forced it.
   The next fresh scored run tests whether the agent can discover and operate
   this proven surface without any runner-selected coordinate or plan.
 
-- **Attempt-20 pre-deploy review: four reviews found the control and
-  measurement gaps; the revised candidate remains undeployed.** Governed mode
+- **2026-07-10 UTC — PR #90 merged and deployed the Attempt-20 score-v5
+  boundary.** Four reviews found the control and measurement gaps. Governed mode
   now fails closed if assisted completion is configured, and `/step` rejects
   governed models before opening a second DFHack control/scoring path.
   Dig/channel, chop/gather, and crop
@@ -1792,8 +1792,9 @@ gate. Each entry states what changed and the evidence that forced it.
   matched to later native completed stages. Only completed owned Carpenter
   workshops feed governed utility/production capacity; global goods, output,
   workshops, rooms, constructions, furniture, and ORDER output are audit-only,
-  complexity fails closed to zero, and none can unlock duration. Crop-option completeness now requires
-  successful exhaustive scans and suppresses truncated/partial lists. The
+  complexity fails closed to zero, and none can unlock duration. Crop-option
+  completeness now requires successful exhaustive scans and suppresses
+  truncated/partial lists. The
   final review also forced native stage-read attestation (`stage_read_ok`,
   numeric stage/max, `max_stage > 0`), explicit and inferred rollback-failure
   quarantine, mandatory boolean duration gates during reaggregation, and an
@@ -1815,8 +1816,56 @@ gate. Each entry states what changed and the evidence that forced it.
   inactive. Candidate copies of the changed Lua hooks parsed on DFHack 0.47.05,
   and read-only `job_metrics` returned `ok=true` with farms/workshops 0. Sol
   Ultra independently reran 256 focused and 786 full-suite tests, found all four
-  findings closed, and returned DEPLOY. Merge/deploy and scored Attempt 20
-  remain pending.
+  findings closed, and returned DEPLOY. PR #90 passed CI, merged, and deployed
+  at exact merge SHA `f2cc864c9f36f4d847223da50bd70d143b5a3a07`.
+  Production health passed, the runtime resolved the deployed
+  `hook/job_metrics.lua`, score-v5 and
+  `dfhack_governed_action_owned_progress_v2` were active, and the scored run
+  began only after a fresh `seed_region3_fresh` reset.
+
+- **2026-07-10 UTC — G7 attempt 20: OPERATOR-STOPPED POLICY-DIAGNOSTIC FAIL
+  after a real FarmPlot and Carpenter workshop; the bounded minimap lost the
+  fort.** Run `f8ebc607402f4756838df19aecb75cc7`
+  ([replay](https://fortgym.live/r/IKqmVcZUvy_n5kGowOSfNUcGQdNZrfVa))
+  used the deployed PR #90 merge SHA, fresh `seed_region3_fresh`, OpenRouter
+  `z-ai/glm-5v-turbo`, vision on, memory off, and a 450-step budget. It retained
+  complete screen, proof, governed-provenance, and model-usage evidence for all
+  24 executed gameplay rows; 4/24 proof records had `ok=true` (steps 8, 20, 21,
+  and 22). Thirty-six model calls used 477,812 prompt and 23,766 completion
+  tokens.
+
+  The policy made real legal changes. It designated and felled a tree, gathered
+  three shrubs, completed owned FarmPlot `#1`, placed owned Carpenter workshop
+  `#2` at `(89,98,161)`, unsuspended and completed that exact workshop, and
+  queued five native barrel jobs. Score-v5 paid no designation or order-output
+  credit: the exact completed Carpenter ID alone raised governed utility and
+  production to 5 each. The stopped summary ended at 27,879 ticks, population
+  7, score 72.70, and rubric 58.25 with `no_fort_structure` and
+  `no_broader_fort_layout` blockers.
+
+  Deterministic gate-v2 is FAIL: duration 27,879/403,200; food production
+  0 versus consumption 0; drink production 0 versus consumption 7; population
+  7/15; functional rooms 0/3; installed beds 0/3; rubric 58.25 with two
+  blockers; score-v5 72.70/150. Evidence and zero-neglect-death predicates
+  passed. The terminal reason was `stop_requested_after_agent_decide`; this is
+  a short policy diagnostic, not a long-horizon verdict.
+
+  The trace exposed a factual observation defect. `fort_metrics.lua` used only
+  room-classified furniture/workshops as minimap anchors, omitting the wagon,
+  FarmPlot, and other real player buildings. When the fishing dwarf moved to
+  `(24,8)`, the citizen bbox shifted the 34x34 map to origin `(20,4)` and
+  excluded the fort near `(92,97)`. The model mixed that current displaced map
+  with fort coordinates and spent repeated attempts on invalid or distant
+  workshop footprints before recovering at step 20. The next candidate anchors
+  the minimap to every visible player-building footprint and uses visible
+  citizens only before any visible building exists. Workshop rejection also
+  reports the exact first failing footprint tile through the existing factual
+  `Failed tiles` observation. It
+  adds no target search, suggested coordinate, strategy, or score credit. Terra
+  review first rejected an all-building draft because hidden buildings and
+  markers could influence the published map origin. The revised hook gates
+  anchors, citizen markers, constructions, and rendering on tile visibility;
+  the same reviewer found the P1 closed and returned DEPLOY.
 
 ## Reporting format (every gate attempt)
 
