@@ -1112,7 +1112,11 @@ register_agent(
 # as a rendered PNG (same grid, different modality).
 register_agent(
     "dfhack-governed-llm-glm5v",
-    lambda: DFHackGovernedLLMAgent(model_override="z-ai/glm-5v-turbo", vision=True),
+    # Governed review payloads exceeded the default 512-token ceiling in G7
+    # attempt 8; the exact terminal observation completed validly in 830 tokens.
+    lambda: DFHackGovernedLLMAgent(
+        model_override="z-ai/glm-5v-turbo", vision=True, max_tokens=1024
+    ),
 )
 register_agent(
     "dfhack-governed-llm-gpt55-vision",

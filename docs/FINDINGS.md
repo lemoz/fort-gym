@@ -38,8 +38,8 @@ issuing only legal governed actions, takes a fixed embark from fresh seed to a
 producing fortress on public, replayable evidence, with zero rubric blockers.*
 G0–G4 have passed; G5 failed and stands; G6 is unpassed after seven attempts
 on the unseen map, with the first enclosed rooms arriving only after the factual
-observation corrections; G7 is ratified and its first seven attempts failed,
-with attempts 2 through 7 infrastructure aborts and no policy verdict.
+observation corrections; G7 is ratified and its first eight attempts failed,
+with attempts 2 through 8 infrastructure aborts and no policy verdict.
 
 ## 2. The findings
 
@@ -443,6 +443,26 @@ include authoritative factual control values, then revalidate the complete new
 action before execution. The run remains an infrastructure-aborted G7 FAIL, not
 a policy pass or long-horizon policy verdict.
 
+### 2.12 G7 attempt 8: the agent started building rooms, then hit its output ceiling
+
+Attempt 8, run `89c7ac68126541888140f6754a50f6f1`
+([replay](https://fortgym.live/r/cJWntNq83M0zo-n1NJT6vw7huU8OVur6)),
+showed the lossless correction path working under live load. The model recovered
+from rejected workshop placement, produced three beds and one door, completed a
+Carpenter's Workshop, and built 24 construction tiles. It also reacted to
+terrain facts rather than blindly repeating: gather a blocking shrub, abandon a
+pebble tile after repeated rejection, revise the objective, and produce doors
+as an alternate enclosure strategy. This is the first reviewed-plan run to move
+from production setup into substantial room construction on region3.
+
+It still ended with zero enclosed or functional rooms and no sustainable
+production loop. At step 22 all three bounded responses consumed exactly the
+512-token output ceiling; two emitted no tool call and the third emitted an
+incomplete review. The exact observation produced a valid legal action on the
+first no-execution shadow when given 1,024 tokens, consuming 830. The correction
+is model-output headroom, not gameplay steering: pin GLM-5V to 1,024 response
+tokens and leave the contract, retries, action surface, and gate unchanged.
+
 ## 3. Limitations
 
 - **A single passing embark family.** Every pass (G0–G4) is on
@@ -450,13 +470,13 @@ a policy pass or long-horizon policy verdict.
   passes in seven region3 attempts. "Plays Dwarf Fortress" is not yet
   demonstrated — "solved one map" is.
 - **Small n.** The reliability claim rests on a five-run lineage; the endurance
-  result on one probe; the G6 verdict on seven runs; G7 on seven failed attempts.
+  result on one probe; the G6 verdict on seven runs; G7 on eight failed attempts.
   These are findings, not distributions.
 - **One policy family for most results.** GLM-5V-turbo produced the G4 passes
   and most of the G6 campaign; GPT-5.5 served the earlier G2/G3 passes.
   Cross-model generality is thin — two GPT-5.5-vision escalation runs are the
   only cross-family data points on the unseen map.
-- **G6 is unpassed; G7 attempts 1 through 7 failed.** Attempts 2 through 7 were
+- **G6 is unpassed; G7 attempts 1 through 8 failed.** Attempts 2 through 8 were
   infrastructure aborts, not policy verdicts. Score-v3 is active, but the
   chair-factory calibration gap (§2.4) remains part of its historical record.
   Attempt 1 demonstrated why the scalar is telemetry rather than the verdict:
@@ -464,16 +484,14 @@ a policy pass or long-horizon policy verdict.
 
 ## 4. What's next
 
-- **Attempt 7 failed at the review boundary; deploy the lossless bounded
-  correction candidate before attempt 8.** Preserve the exact rejected payload,
-  report all detected contract violations plus authoritative control values,
-  and revalidate the whole corrected action before execution. Keep the existing
-  three-submission limit and fail closed. A fresh run must then prove the policy
-  can move beyond the now-demonstrated workshop/Still/drink chain into farms,
-  installed furniture, and multiple enclosed functional rooms.
+- **Attempt 8 exhausted GLM-5V's 512-token output ceiling; deploy the pinned
+  1,024-token budget before attempt 9.** Keep the existing three-submission
+  limit and fail closed. A fresh run must turn the now-demonstrated production
+  and construction behavior into farms, installed furniture, and multiple
+  enclosed functional rooms.
 - **G6 remains open**: the best unseen-map run reached 4/5 and missed only its
-  second functional room. G7 attempt 7 ran on the same unseen seed, so a strong
-  attempt 8 can add evidence without a separate blind retry campaign.
+  second functional room. G7 attempt 8 ran on the same unseen seed, so a strong
+  attempt 9 can add evidence without a separate blind retry campaign.
 - **G8 — depth**: a multi-z fortress (stairs, underground rooms), the next
   spatial-reasoning escalation past the hollow ring.
 - **The open-source flywheel**: a standing public leaderboard where any model
