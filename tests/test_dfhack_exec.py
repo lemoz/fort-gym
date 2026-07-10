@@ -870,6 +870,19 @@ def test_fort_metrics_renders_minimap_grid() -> None:
     assert "ch = 'o'" in script
 
 
+def test_fort_metrics_distinguishes_gatherable_shrubs_from_other_floor_features() -> None:
+    script = (Path(__file__).resolve().parents[1] / "hook" / "fort_metrics.lua").read_text(
+        encoding="utf-8"
+    )
+    assert "shape == df.tiletype_shape.SHRUB" in script
+    assert "shape == df.tiletype_shape.SAPLING" in script
+    assert "shape == df.tiletype_shape.BOULDER" in script
+    assert "shape == df.tiletype_shape.PEBBLES" in script
+    assert "ch = ','" in script
+    assert "ch = 's'" in script
+    assert "ch = 'p'" in script
+
+
 def test_fort_metrics_anchors_on_citizens_and_marks_dwarves() -> None:
     script = (Path(__file__).resolve().parents[1] / "hook" / "fort_metrics.lua").read_text(
         encoding="utf-8"

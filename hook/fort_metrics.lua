@@ -460,8 +460,15 @@ do
             end
           elseif shape == FLOOR_SHAPE then
             ch = '.'
-          elseif INTERIOR_SHAPES[shape] then
+          elseif shape == df.tiletype_shape.SHRUB then
             ch = ','
+          elseif shape == df.tiletype_shape.SAPLING then
+            ch = 's'
+          elseif shape == df.tiletype_shape.BOULDER
+            or shape == df.tiletype_shape.PEBBLES then
+            ch = 'p'
+          elseif INTERIOR_SHAPES[shape] then
+            ch = '~'
           else
             ch = '~'
           end

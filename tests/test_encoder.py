@@ -45,6 +45,36 @@ def test_encoder_surfaces_factual_run_scoped_survival_evidence() -> None:
     assert state["survival"]["drink_produced_in_run"] == 10
 
 
+def test_encoder_surfaces_bounded_direct_death_records() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 6,
+            "stocks": {"food": 45, "drink": 60},
+            "survival": {
+                "death_records": [
+                    {
+                        "unit_id": 244,
+                        "cause_name": False,
+                        "cause_known": False,
+                        "cause_source": False,
+                        "drowning": True,
+                        "hunger_timer": 0,
+                        "thirst_timer": 0,
+                        "observed_year": 250,
+                        "observed_tick": 43367,
+                    }
+                ],
+                "death_causes_known": True,
+            },
+        }
+    )
+
+    assert "Death records (direct DF fields; do not infer missing causes)" in text
+    assert "unit=244 cause=UNKNOWN cause_source=unavailable drowning=True" in text
+    assert "observed=250:43367" in text
+
+
 def test_encoder_hides_recommended_keys_after_target_attempt() -> None:
     text, _ = encode_observation(
         {
@@ -542,14 +572,15 @@ def test_governed_minimap_never_recommends_building_on_shrubs() -> None:
             "fort": {
                 "ok": True,
                 "map_origin": [87, 94, 161],
-                "map_rows": ["...", ".,.", "..."],
+                "map_rows": ["...,", ".s..", "..p."],
             },
         },
         governed=True,
     )
 
     assert "BUILD walls only on border '.' tiles" in text
-    assert "A ',' border tile is not buildable floor" in text
+    assert "A ',' border tile is a gatherable shrub but is not buildable floor" in text
+    assert "An 's' sapling or 'p' loose-rock tile is neither a gatherable shrub" in text
     assert "wall any '.' or ',' border gaps" not in text
 
 

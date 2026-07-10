@@ -675,6 +675,52 @@ tests passed, 5 live-only skipped, with Ruff, compileall, and `git diff --check`
 clean. Independent Terra review found and then verified fixes for two remaining
 shared-encoder leaks; its final review reported no concrete blocker.
 
+### 2.22 G7 attempt 18: parallel play produced drink; spatial perception still failed
+
+PR #87 deployed the governed-only observation correction as
+`4ab899dfa74b366f4d862626ae4cacdbaa6a374c`. Attempt 18, run
+`78dd47ecda9f451a87d64560b9c79adc`
+([replay](https://fortgym.live/r/t87w_HCV17O8bNaHl7GcN5uFuNhjmAF-)),
+used fresh `seed_region3_fresh`, OpenRouter `z-ai/glm-5.2`, memory off, and a
+450-step budget. It crossed every earlier transport and review terminal. The
+model used legal parallel work: Carpenter and Still jobs progressed alongside
+new commands, a completed FarmPlot was configured only after stage 3/3, and the
+agent abandoned several failed coordinates instead of waiting on one queue.
+
+This was the first G7 run with a real positive production loop. The Still
+produced 90 drinks while 19 were consumed. The agent also completed a Carpenter
+workshop, a Still, one FarmPlot, three beds, three doors, three tables, 18
+barrels, and at least 32 construction records. It issued 24 BUILD, 11 DIG, two
+FARM, two LABOR, ten ORDER, three UNSUSPEND, and 17 WAIT actions. The 97 model
+calls used 1,409,050 prompt and 46,280 completion tokens.
+
+The run was stopped after 69 action rows because its remaining failures were
+stable. Sixty-eight rows have complete screen/proof records; the interrupted
+last row and manual stop produce a duration mismatch (83,059 trace ticks versus
+81,857 summary ticks). Food production remained zero while six food were
+consumed, population fell to six after one drowning, and no furniture was
+installed. Despite 32 durable constructions, the agent enclosed zero spaces and
+created zero functional rooms. Score-v4 106.33 and rubric 84.13 with zero
+blockers are telemetry; deterministic G7 fails evidence, duration, food/drink,
+population, rooms, beds, and scalar score.
+
+The decisive policy error was spatial. The text model repeatedly called
+non-floor targets verified, confused a room border with its interior, and later
+filled complete interior rows while describing them as border rows. The
+observation also collapsed `SHRUB`, `SAPLING`, `BOULDER`, and `PEBBLES` into
+`,` even though only a true shrub can be gathered; five identical gather
+attempts targeted one blocked row. Finally, DF exposed the dead unit's direct
+`drowning=true` flag while leaving `death_cause=-1`, so both evidence hooks
+reported an unknown cause and the observation withheld the record details.
+
+The attempt-19 candidate changes factual perception, not strategy. It preserves
+the unknown cause when the authoritative enum is unset while exposing the raw
+drowning condition and bounded death-record details; the minimap separates
+gatherable shrubs from saplings and loose rock. The next fresh-seed run uses the
+existing `dfhack-governed-llm-glm5v` alias (OpenRouter
+`z-ai/glm-5v-turbo`), which receives a PNG of the same trace-recorded minimap.
+No planner, room template, coordinate, action, or score credit is added.
+
 ## 3. Limitations
 
 - **A single passing embark family.** Every pass (G0–G4) is on
@@ -682,16 +728,17 @@ shared-encoder leaks; its final review reported no concrete blocker.
   passes in seven region3 attempts. "Plays Dwarf Fortress" is not yet
   demonstrated — "solved one map" is.
 - **Small n.** The reliability claim rests on a five-run lineage; the endurance
-  result on one probe; the G6 verdict on seven runs; G7 on 17 failed attempts.
+  result on one probe; the G6 verdict on seven runs; G7 on 18 failed attempts.
   These are findings, not distributions.
 - **One policy family for most results.** GLM-5V-turbo produced the G4 passes
   and most of the G6 campaign; GPT-5.5 served the earlier G2/G3 passes.
   Cross-model generality is thin — two GPT-5.5-vision escalation runs are the
   only cross-family data points on the unseen map.
-- **G6 is unpassed; G7 attempts 1 through 17 failed.** Attempts 2 through 9 and
+- **G6 is unpassed; G7 attempts 1 through 18 failed.** Attempts 2 through 9 and
   12 through 16 were infrastructure aborts, although attempts 14 through 16
-  contain policy-bearing gameplay rows; attempts 10, 11, and 17 are policy
-  diagnostics. Attempt 17 was manually stopped after the loop was decisive.
+  contain policy-bearing gameplay rows; attempts 10, 11, 17, and 18 are policy
+  diagnostics. Attempts 17 and 18 were manually stopped after their loops were
+  decisive.
   Score-v4 is active after the frozen-liquid correction, while the
   chair-factory calibration gap (§2.4) remains part of score-v3's historical
   record.
@@ -700,16 +747,14 @@ shared-encoder leaks; its final review reported no concrete blocker.
 
 ## 4. What's next
 
-- **Attempt 17 proved focused corrections and truthful agent-selected tick
-  durations, then exposed legacy UI advice inside governed observations.**
-  Remove that contradiction before attempt 18 while keeping strict review
-  identity, model-selected evidence, the existing correction limit, and
-  fail-closed execution. The next run must use parallel labor capacity, abandon
-  stale coordinates, and prioritize sustainable production, installed
-  furniture, and multiple enclosed rooms from the model's own factual review.
+- **Attempt 18 proved governed parallelism and sustained brewing, then isolated
+  spatial perception as the dominant blocker.** Attempt 19 should retain the
+  same legal controls and review contract, expose exact terrain/death facts, and
+  test the existing OpenRouter GLM-5V policy on the same fresh seed. Its room,
+  food, population, furniture, and duration predicates remain fail-closed.
 - **G6 remains open**: the best unseen-map run reached 4/5 and missed only its
-  second functional room. G7 attempt 18 can test the direct-action observation
-  correction without a separate blind retry campaign.
+  second functional room. G7 attempt 19 tests whether the demonstrated vision
+  advantage transfers to the corrected direct-action loop.
 - **G8 — depth**: a multi-z fortress (stairs, underground rooms), the next
   spatial-reasoning escalation after the hollow ring is actually demonstrated.
 - **The open-source flywheel**: a standing public leaderboard where any model
