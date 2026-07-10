@@ -260,32 +260,35 @@ These systems are implemented (not roadmap):
 2. **Tools** (`fort_gym/bench/agent/tools.py`): `ToolManager` with memory/plan/perception tools wired into the review-mode agents.
 3. **Experimentation** (`fort_gym/bench/experiment/`): YAML config → `ExperimentRunner` → run with experiment metadata.
 
-The latest gameplay-bearing G7 result is attempt 11, run
-`beaf1a3f0c99478bb504bdd8f004e2ec`
-([replay](https://fortgym.live/r/SFFx5jWKPJxYYywMVIpXuw4d3vwRePna)),
-from deployed SHA `6e640757e880da17663d35c1522484c1da835b2f`. The operator stopped
-it after 51 gameplay rows and 51,200 ticks once the repeated failure was clear.
-It produced a real Carpenter's Workshop, Still, FarmPlot, beds, doors, gathered
-plants, brew jobs, and 50 constructions. Every gameplay row retained governed
-provenance, recorded screen text, and a proof record; 44/51 action proofs were
-productive and seven correctly recorded rejected BUILD attempts. It nevertheless
-produced zero food and drink, enclosed no spaces, installed no beds, and
-remained at population 7, so deterministic G7 correctly failed it.
+The latest gameplay-bearing G7 result is attempt 15, run
+`3a1c362b5d1e45dabf5fdee123ba21e5`
+([replay](https://fortgym.live/r/HR2tNr4QPUFquhPlh1WaoB0b5xS9QpeZ)),
+from deployed SHA `b91867ea4886e9888e7e9c22fbb7b0affad65e86`. It executed 24
+governed gameplay rows and 24,094 ticks before a fail-closed review-contract
+terminal. Every gameplay row retained screen text, governed provenance, and a
+DFHack proof record. The agent felled trees, completed Carpenter and Still
+workshops, produced beds, doors, tables, and chairs, made 18 constructions, and
+queued brew jobs. It still produced zero food and drink, installed no beds,
+remained at population 7, and confirmed only one functional production space,
+so deterministic G7 correctly failed it despite score-v4 109.75 and rubric
+90.93 with no blockers.
 
 PR #81 deployed the three factual corrections exposed by attempt 11: otherwise
 unknown occupied buildings render as `o`, premature FARM crop assignment fails
 closed, and the room contract distinguishes a hollow boundary from a filled
 wall rectangle. A deployed smoke and live completed-plot probe passed.
 
-Attempts 12 and 13 failed before gameplay while testing GLM-5.2 transport.
-JSON-object transport then carried attempt 14 through 25 real gameplay rows:
-trees were felled, a Carpenter's Workshop completed, three beds and doors were
-made, seven plants were gathered, and 14 constructions were recorded. It still
-made no Still, FarmPlot, drink, enclosed room, or furniture installation.
-Attempt 14 terminated when later correction responses exceeded the 512-token
-cap. The exact terminal state passed 3/3 at 1,024 tokens, which is the candidate
-for attempt 15; G7 remains open. Full findings and gate predicates are recorded
-in `docs/WDSLL.md`.
+Attempts 12 and 13 failed before gameplay while testing GLM-5.2 transport;
+JSON-object transport carried attempt 14 into real play, and 1,024-token output
+headroom removed its truncation failure in attempt 15. Attempt 15's three
+terminal responses were complete JSON but repeatedly violated
+`plan_review.evidence`; the retry path also called required E-ids "excerpts" and
+did not repeat the evidence allowlist. The current candidate addresses that
+ambiguity while keeping validation fail-closed, using consistent E-id
+terminology, and including the exact allowed factual catalog in correction
+prompts. An exact terminal-state no-execution probe recovered on its first
+correction. G7 remains open. Full findings and gate predicates are recorded in
+`docs/WDSLL.md`.
 
 **Success definition and gate ladder: [docs/WDSLL.md](docs/WDSLL.md)** — every claim of "the agent plays" must pass a gate there on public, replayable evidence.
 

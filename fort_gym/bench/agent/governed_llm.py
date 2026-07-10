@@ -678,12 +678,12 @@ class DFHackGovernedLLMAgent(Agent):
     @classmethod
     def _evidence_error(cls, value: Any, obs_text: str, field: str) -> str | None:
         if not isinstance(value, list) or not value:
-            return f"{field} must contain at least one observation-grounded excerpt"
+            return f"{field} must contain at least one allowed evidence id (E#)"
         for quote in value:
             if not isinstance(quote, str) or not quote.strip():
-                return f"{field} contains an empty or non-string excerpt"
+                return f"{field} contains an empty or non-string evidence id"
             if "\n" in quote or "\r" in quote:
-                return f"{field} excerpts must be single-line"
+                return f"{field} evidence ids must be single-line"
             if cls._matching_evidence_line(quote, obs_text) is None:
                 return f"{field} contains an unknown evidence id: {quote!r}"
         return None
@@ -881,8 +881,19 @@ class DFHackGovernedLLMAgent(Agent):
         if evidence_error:
             errors.append(evidence_error)
         if not isinstance(plan_evidence, list) or len(plan_evidence) < 2:
-            errors.append("plan_review requires at least two factual observation excerpts")
+            errors.append(
+                "plan_review.evidence requires at least two distinct allowed evidence ids (E#)"
+            )
         plan_evidence_ready = evidence_error is None and len(plan_evidence) >= 2
+
+        matched_lines: List[str] = []
+        if plan_evidence_ready:
+            matched_lines = [
+                self._matching_evidence_line(str(quote), evidence_text) or ""
+                for quote in plan_evidence
+            ]
+            if len(set(matched_lines)) != len(matched_lines):
+                errors.append("plan_review.evidence must cite distinct factual lines")
 
         review_due = bool(control.get("review_due"))
         if review_due and plan_evidence_ready:
@@ -893,12 +904,6 @@ class DFHackGovernedLLMAgent(Agent):
                 "Previous action attempt for review:",
                 "Review evidence rule:",
             )
-            matched_lines = [
-                self._matching_evidence_line(str(quote), evidence_text) or ""
-                for quote in plan_evidence
-            ]
-            if len(set(matched_lines)) != len(matched_lines):
-                errors.append("a due plan_review must cite two distinct factual lines")
             matched_contents = [
                 line.split(": ", 1)[-1] for line in matched_lines
             ]
@@ -1047,8 +1052,18 @@ class DFHackGovernedLLMAgent(Agent):
                     required_plan_decision = "not_due or continue"
                 else:
                     required_plan_decision = "revise"
+                allowed_evidence_lines = [
+                    line
+                    for line in review_control.get("allowed_evidence_lines", [])
+                    if isinstance(line, str) and re.fullmatch(r"E\d+: .+", line)
+                ]
+                allowed_evidence_ids = [
+                    line.split(": ", 1)[0] for line in allowed_evidence_lines
+                ]
                 expected_control = json.dumps(
                     {
+                        "allowed_evidence_ids": allowed_evidence_ids,
+                        "allowed_evidence_lines": allowed_evidence_lines,
                         "plan_request_id": review_control.get("request_id"),
                         "previous_step": review_control.get("previous_step"),
                         "previous_verdict": review_control.get("previous_verdict"),
@@ -1094,6 +1109,11 @@ class DFHackGovernedLLMAgent(Agent):
                             "Validation errors (all currently detected):\n"
                             f"{validation_feedback}\n"
                             f"Authoritative AGENT PLAN CONTROL values: {expected_control}\n"
+                            "Evidence fields must contain only E# identifiers, never copied "
+                            "observation text. Set last_action_review.evidence to a JSON array "
+                            "that includes required_previous_evidence_id. Set "
+                            "plan_review.evidence to a JSON array containing at least two distinct "
+                            "allowed_evidence_ids that factually support the plan review. "
                             "Re-read AGENT PLAN CONTROL and "
                             "return one corrected submit_action. No game ticks have advanced."
                         ),

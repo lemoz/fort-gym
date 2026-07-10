@@ -559,6 +559,55 @@ def test_glm52_json_transport_preserves_review_correction_feedback() -> None:
     assert second_request["response_format"] == {"type": "json_object"}
 
 
+def test_glm52_json_transport_repeats_distinct_evidence_contract_on_each_correction() -> None:
+    control = _plan_control(
+        review_due=False,
+        request_id="24:none",
+        prior_objective="Build durable shelter.",
+        previous_step=23,
+        previous_verdict="progressed",
+    )
+    control["allowed_evidence_lines"].extend(
+        f"E{index}: Terminal observation fact {index}" for index in range(4, 24)
+    )
+    first = _reviewed_action_payload(control=control)
+    first["plan_review"]["request_id"] = "wrong"
+    first["plan_review"]["evidence"] = []
+    second = _reviewed_action_payload(control=control)
+    second["plan_review"]["evidence"] = ["copied observation text"]
+    valid = _reviewed_action_payload(control=control)
+    agent = _agent(
+        [
+            _text_action_response(first),
+            _text_action_response(second),
+            _text_action_response(valid),
+        ],
+        model_override="z-ai/glm-5.2",
+    )
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["plan_review"]["evidence"] == ["E0", "E3"]
+    expected_ids = [f"E{index}" for index in range(24)]
+    for request in agent._client.chat.completions.requests[1:]:
+        correction = request["messages"][-2]["content"]
+        assert '"plan_request_id": "24:none"' in correction
+        assert (
+            f'"allowed_evidence_ids": {json.dumps(expected_ids)}'
+            in correction
+        )
+        assert (
+            f'"allowed_evidence_lines": '
+            f'{json.dumps(control["allowed_evidence_lines"])}'
+            in correction
+        )
+        assert "at least two distinct allowed_evidence_ids" in correction
+        assert "Transport requirement:" in request["messages"][-1]["content"]
+
+
 def test_review_contract_establishes_initial_agent_owned_plan() -> None:
     control = _plan_control()
     payload = _reviewed_action_payload(control=control)
@@ -612,6 +661,31 @@ def test_review_contract_correction_includes_exact_rejected_payload() -> None:
     assert json.dumps(invalid, ensure_ascii=True, sort_keys=True) in correction["content"]
     assert "plan_review.objective is required" in correction["content"]
     assert "No game ticks have advanced" in correction["content"]
+    assert '"allowed_evidence_ids": ["E0", "E1", "E2", "E3"]' in correction["content"]
+    assert '"allowed_evidence_lines": ["E0: AGENT PLAN CONTROL:' in correction["content"]
+    assert "Evidence fields must contain only E# identifiers" in correction["content"]
+
+
+def test_review_contract_correction_uses_evidence_id_terminology() -> None:
+    control = _plan_control()
+    invalid = _reviewed_action_payload(control=control)
+    invalid["plan_review"]["evidence"] = []
+    valid = _reviewed_action_payload(control=control)
+    agent = _agent([_submit_action_response(invalid), _submit_action_response(valid)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["type"] == "DIG"
+    correction = agent._client.chat.completions.requests[1]["messages"][-1]["content"]
+    assert "plan_review.evidence must contain at least one allowed evidence id (E#)" in correction
+    assert (
+        "plan_review.evidence requires at least two distinct allowed evidence ids (E#)"
+        in correction
+    )
+    assert "observation-grounded excerpt" not in correction
 
 
 def test_review_contract_corrects_overlong_objectives_locally() -> None:
@@ -795,9 +869,34 @@ def test_due_plan_review_requires_two_distinct_factual_lines() -> None:
         for event in agent.pop_tool_events()
         if event["tool"] == "governed_llm.review_contract_retry"
     )
-    assert retry["output"]["error"] == (
-        "a due plan_review must cite two distinct factual lines"
+    assert retry["output"]["error"] == "plan_review.evidence must cite distinct factual lines"
+
+
+def test_not_due_plan_review_requires_two_distinct_factual_lines() -> None:
+    control = _plan_control(
+        review_due=False,
+        request_id="24:none",
+        prior_objective="Build durable shelter.",
+        previous_step=23,
+        previous_verdict="progressed",
     )
+    invalid = _reviewed_action_payload(control=control)
+    invalid["plan_review"]["evidence"] = ["E3", "E3"]
+    valid = _reviewed_action_payload(control=control)
+    agent = _agent([_submit_action_response(invalid), _submit_action_response(valid)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["plan_review"]["decision"] == "not_due"
+    retry = next(
+        event
+        for event in agent.pop_tool_events()
+        if event["tool"] == "governed_llm.review_contract_retry"
+    )
+    assert retry["output"]["error"] == "plan_review.evidence must cite distinct factual lines"
 
 
 def test_review_contract_requires_last_action_evidence_to_cite_its_outcome() -> None:
