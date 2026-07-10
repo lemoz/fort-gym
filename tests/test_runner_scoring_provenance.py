@@ -1226,7 +1226,7 @@ def test_governed_action_history_preserves_partial_and_tile_postconditions() -> 
     assert entry["result_details"] == {"placed_count": 2, "failed_count": 1}
 
 
-def test_governed_action_history_calls_helper_mutations_gameplay_changes() -> None:
+def test_governed_action_history_calls_helper_mutations_action_effects() -> None:
     entry = _action_history_entry(
         step=1,
         action={
@@ -1250,7 +1250,7 @@ def test_governed_action_history_calls_helper_mutations_gameplay_changes() -> No
         metrics_snapshot={},
     )
 
-    assert entry["outcome"] == "gameplay_state_changed"
+    assert entry["outcome"] == "action_effect_observed"
 
 
 def test_governed_action_history_calls_full_placement_gameplay_change() -> None:
@@ -1288,10 +1288,297 @@ def test_governed_action_history_calls_full_placement_gameplay_change() -> None:
         )
     )
 
-    assert entry["outcome"] == "gameplay_state_changed"
+    assert entry["outcome"] == "action_effect_observed"
     assert entry["placed_targets"] == ["(88,101,161)"]
     assert proof["ok"] is True
     assert proof["helper_evidence"]["placed_count"] == 1
+
+
+def test_governed_order_ids_without_output_are_not_progress() -> None:
+    action = {
+        "type": "ORDER",
+        "params": {"job": "brew", "quantity": 3},
+        "intent": "queue brew jobs",
+        "advance_ticks": 1200,
+    }
+    execute_result = {
+        "accepted": True,
+        "result": {"ok": True, "created_job_ids": [223, 225, 227]},
+    }
+    state_before = {
+        "stocks": {},
+        "work": {"active_jobs": 1},
+        "crew": {"jobs": {"active_ids": []}},
+        "survival": {"drink_produced_in_run": 25},
+    }
+    advance_state = {
+        "stocks": {},
+        # An unrelated job starts during the tick window.
+        "work": {"active_jobs": 2},
+        "crew": {"jobs": {"active_ids": [999]}},
+        "survival": {"drink_produced_in_run": 25},
+    }
+
+    entry = _action_history_entry(
+        step=80,
+        action=action,
+        requested_ticks=1200,
+        tick_info={"ticks_advanced": 1205},
+        execute_result=execute_result,
+        state_before=state_before,
+        advance_state=advance_state,
+        metrics_snapshot={},
+    )
+    proof = _governed_gameplay_proof(
+        action=action,
+        execute_result=execute_result,
+        metrics_snapshot={},
+        before_map_snapshot=None,
+        after_map_snapshot=None,
+        state_before=state_before,
+        advance_state=advance_state,
+        tick_info={"ticks_advanced": 1205},
+        score_value=0.0,
+    )
+
+    assert entry["outcome"] == "concurrent_gameplay_state_changed"
+    assert entry["action_effect"] == {
+        "status": "no_progress",
+        "job": "brew",
+        "created_job_ids": [223, 225, 227],
+        "remaining_job_ids": [],
+        "completed_job_ids": [223, 225, 227],
+        "created_job_completion_observed": True,
+        "active_job_ids_complete": True,
+        "prior_matching_job_ids": [],
+        "prior_matching_jobs_complete": True,
+        "manager_orders_present": False,
+        "attribution_complete": True,
+        "output_observed": True,
+        "output_source": "survival.drink_produced_in_run",
+        "output_before": 25,
+        "output_after": 25,
+        "output_delta": 0,
+    }
+    assert proof["ok"] is False
+    assert proof["action_effect_observed"] is False
+    assert proof["concurrent_world_state_changed"] is True
+
+
+def test_governed_order_reports_pending_and_completed_lifecycle() -> None:
+    action = {
+        "type": "ORDER",
+        "params": {"job": "brew", "quantity": 3},
+        "intent": "queue brew jobs",
+        "advance_ticks": 1200,
+    }
+    execute_result = {
+        "accepted": True,
+        "result": {"ok": True, "created_job_ids": [301, 302, 303]},
+    }
+    state_before = {
+        "stocks": {},
+        "work": {},
+        "crew": {"jobs": {"active_ids": []}},
+        "survival": {"drink_produced_in_run": 25},
+    }
+    pending = _action_history_entry(
+        step=1,
+        action=action,
+        requested_ticks=1200,
+        tick_info={"ticks_advanced": 1200},
+        execute_result=execute_result,
+        state_before=state_before,
+        advance_state={
+            "stocks": {},
+            "work": {},
+            "crew": {"jobs": {"active_ids": [301, 302]}},
+            "survival": {"drink_produced_in_run": 25},
+        },
+        metrics_snapshot={},
+    )
+    completed = _action_history_entry(
+        step=2,
+        action=action,
+        requested_ticks=1200,
+        tick_info={"ticks_advanced": 1200},
+        execute_result=execute_result,
+        state_before=state_before,
+        advance_state={
+            "stocks": {},
+            "work": {},
+            "crew": {"jobs": {"active_ids": []}},
+            "survival": {"drink_produced_in_run": 50},
+        },
+        metrics_snapshot={},
+    )
+
+    assert pending["outcome"] == "action_pending"
+    assert pending["action_effect"]["remaining_job_ids"] == [301, 302]
+    assert completed["outcome"] == "action_effect_observed"
+    assert completed["action_effect"]["output_delta"] == 25
+
+
+def test_governed_order_does_not_claim_output_while_all_created_jobs_remain_active() -> None:
+    action = {
+        "type": "ORDER",
+        "params": {"job": "brew", "quantity": 3},
+        "intent": "queue brew jobs",
+        "advance_ticks": 1200,
+    }
+    execute_result = {
+        "accepted": True,
+        "result": {"ok": True, "created_job_ids": [311, 312, 313]},
+    }
+    state_before = {
+        "stocks": {},
+        "work": {},
+        "crew": {"jobs": {"active_ids": [], "order_jobs": []}},
+        "survival": {"drink_produced_in_run": 25},
+    }
+    advance_state = {
+        "stocks": {},
+        "work": {},
+        "crew": {
+            "jobs": {
+                "active_ids": [311, 312, 313],
+                "order_jobs": [
+                    {"id": 311, "item": "brew"},
+                    {"id": 312, "item": "brew"},
+                    {"id": 313, "item": "brew"},
+                ],
+            }
+        },
+        "survival": {"drink_produced_in_run": 50},
+    }
+
+    entry = _action_history_entry(
+        step=3,
+        action=action,
+        requested_ticks=1200,
+        tick_info={"ticks_advanced": 1200},
+        execute_result=execute_result,
+        state_before=state_before,
+        advance_state=advance_state,
+        metrics_snapshot={},
+    )
+    proof = _governed_gameplay_proof(
+        action=action,
+        execute_result=execute_result,
+        metrics_snapshot={},
+        before_map_snapshot=None,
+        after_map_snapshot=None,
+        state_before=state_before,
+        advance_state=advance_state,
+        tick_info={"ticks_advanced": 1200},
+        score_value=0.0,
+    )
+
+    assert entry["outcome"] == "action_output_unattributed"
+    assert entry["action_effect"]["status"] == "unattributed_output"
+    assert entry["action_effect"]["completed_job_ids"] == []
+    assert entry["action_effect"]["created_job_completion_observed"] is False
+    assert entry["action_effect"]["attribution_complete"] is False
+    assert proof["ok"] is False
+
+
+def test_governed_order_does_not_claim_output_from_older_matching_job() -> None:
+    action = {
+        "type": "ORDER",
+        "params": {"job": "brew", "quantity": 1},
+        "intent": "queue one brew job",
+        "advance_ticks": 1200,
+    }
+    execute_result = {
+        "accepted": True,
+        "result": {"ok": True, "created_job_ids": [301]},
+    }
+    state_before = {
+        "stocks": {},
+        "work": {},
+        "crew": {
+            "jobs": {
+                "active_ids": [200],
+                "order_jobs": [{"id": 200, "item": "brew"}],
+            }
+        },
+        "survival": {"drink_produced_in_run": 25},
+    }
+    advance_state = {
+        "stocks": {},
+        "work": {},
+        "crew": {"jobs": {"active_ids": [], "order_jobs": []}},
+        "survival": {"drink_produced_in_run": 50},
+    }
+
+    entry = _action_history_entry(
+        step=3,
+        action=action,
+        requested_ticks=1200,
+        tick_info={"ticks_advanced": 1200},
+        execute_result=execute_result,
+        state_before=state_before,
+        advance_state=advance_state,
+        metrics_snapshot={},
+    )
+    proof = _governed_gameplay_proof(
+        action=action,
+        execute_result=execute_result,
+        metrics_snapshot={},
+        before_map_snapshot=None,
+        after_map_snapshot=None,
+        state_before=state_before,
+        advance_state=advance_state,
+        tick_info={"ticks_advanced": 1200},
+        score_value=0.0,
+    )
+
+    assert entry["outcome"] == "action_output_unattributed"
+    assert entry["action_effect"]["status"] == "unattributed_output"
+    assert entry["action_effect"]["prior_matching_job_ids"] == [200]
+    assert entry["action_effect"]["attribution_complete"] is False
+    assert proof["ok"] is False
+
+
+def test_governed_order_fails_closed_to_unknown_when_job_ids_are_truncated() -> None:
+    entry = _action_history_entry(
+        step=4,
+        action={
+            "type": "ORDER",
+            "params": {"job": "bed", "quantity": 1},
+            "intent": "queue one bed",
+            "advance_ticks": 1200,
+        },
+        requested_ticks=1200,
+        tick_info={"ticks_advanced": 1200},
+        execute_result={
+            "accepted": True,
+            "result": {"ok": True, "created_job_ids": [401]},
+        },
+        state_before={
+            "stocks": {},
+            "work": {},
+            "crew": {"jobs": {"active_ids": [], "order_jobs": []}},
+        },
+        advance_state={
+            "stocks": {},
+            "work": {},
+            "crew": {
+                "goods": {"bed": 0},
+                "jobs": {
+                    "active_ids": [],
+                    "active_ids_truncated": True,
+                    "order_jobs": [],
+                    "order_jobs_truncated": True,
+                },
+            },
+        },
+        metrics_snapshot={},
+    )
+
+    assert entry["outcome"] == "action_effect_unobserved"
+    assert entry["action_effect"]["status"] == "unobserved"
+    assert entry["action_effect"]["active_job_ids_complete"] is False
 
 
 def test_governed_action_history_separates_interface_effects_from_gameplay() -> None:
@@ -1537,7 +1824,7 @@ def test_governed_gameplay_proof_rejects_noop_farm_reset() -> None:
     assert proof["gameplay_progress_eligible"] is False
 
 
-def test_governed_gameplay_proof_accepts_new_designations_and_jobs() -> None:
+def test_governed_gameplay_proof_accepts_designations_but_not_job_ids_alone() -> None:
     proof = _governed_gameplay_proof(
         **_governed_proof_kwargs(
             execute_result={"accepted": True, "result": {"newly_designated": 25}}
@@ -1564,8 +1851,9 @@ def test_governed_gameplay_proof_accepts_new_designations_and_jobs() -> None:
             execute_result={"accepted": True, "result": {"created_job_ids": [5, 7]}},
         )
     )
-    assert proof["ok"] is True
+    assert proof["ok"] is False
     assert proof["helper_evidence"]["created_job_ids"] == [5, 7]
+    assert proof["action_effect"]["status"] == "unobserved"
 
     proof = _governed_gameplay_proof(
         **_governed_proof_kwargs(
@@ -1635,7 +1923,7 @@ def test_governed_gameplay_proof_rejects_noop_still_workshop_evidence() -> None:
     assert proof["ok"] is False
 
 
-def test_governed_gameplay_proof_accepts_brew_order_job() -> None:
+def test_governed_gameplay_proof_accepts_observed_brew_output() -> None:
     proof = _governed_gameplay_proof(
         **_governed_proof_kwargs(
             action={"type": "ORDER", "params": {"job": "brew", "quantity": 3}, "advance_ticks": 1000},
@@ -1643,10 +1931,19 @@ def test_governed_gameplay_proof_accepts_brew_order_job() -> None:
                 "accepted": True,
                 "result": {"created_job_ids": [11, 12, 13], "workshop_id": 3},
             },
+            state_before={
+                "crew": {"jobs": {"active_ids": []}},
+                "survival": {"drink_produced_in_run": 25},
+            },
+            advance_state={
+                "crew": {"jobs": {"active_ids": []}},
+                "survival": {"drink_produced_in_run": 50},
+            },
         )
     )
     assert proof["ok"] is True
     assert proof["helper_evidence"]["created_job_ids"] == [11, 12, 13]
+    assert proof["action_effect"]["output_delta"] == 25
 
 
 def test_governed_gameplay_proof_accepts_real_labor_flip() -> None:

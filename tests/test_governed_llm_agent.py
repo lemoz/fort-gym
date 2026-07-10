@@ -284,7 +284,10 @@ def test_review_evidence_accepts_only_exact_catalog_ids() -> None:
 def test_governed_system_prompt_requires_build_target_preflight() -> None:
     assert "unoccupied open-floor tile" in GOVERNED_SYSTEM_PROMPT
     assert "Before submitting any BUILD" in GOVERNED_SYSTEM_PROMPT
-    assert "`W`, `#`, `T`, `b`, `t`, `c`, `d`, `w`, `o`, `x`, `i`, `,`, `@`, or `~`" in GOVERNED_SYSTEM_PROMPT
+    assert (
+        "`W`, `#`, `T`, `b`, `t`, `c`, `d`, `w`, `o`, `x`, `i`, `,`, `s`, `p`, `@`, or `~`"
+        in GOVERNED_SYSTEM_PROMPT
+    )
     assert "o=other occupied" in GOVERNED_SYSTEM_PROMPT
     assert "i=frozen liquid that can thaw" in GOVERNED_SYSTEM_PROMPT
     assert "carpenter_build_site_rect" in GOVERNED_SYSTEM_PROMPT
@@ -299,9 +302,13 @@ def test_governed_system_prompt_requires_parallel_and_stall_review() -> None:
     assert "Dwarves and jobs run in parallel" in GOVERNED_SYSTEM_PROMPT
     assert "unassigned queued job occupies nobody" in GOVERNED_SYSTEM_PROMPT
     assert "Any legal action with positive advance_ticks" in GOVERNED_SYSTEM_PROMPT
-    assert "lets existing jobs progress" in GOVERNED_SYSTEM_PROMPT
+    assert "lets all existing\njobs progress" in GOVERNED_SYSTEM_PROMPT
     assert "At every due plan review, compare all of the factual branches" in GOVERNED_SYSTEM_PROMPT
-    assert "do not let one tile monopolize the run" in GOVERNED_SYSTEM_PROMPT
+    assert "classify a coordinate or footprint as\nstalled" in GOVERNED_SYSTEM_PROMPT
+    assert "Command acceptance is\nnot action success" in GOVERNED_SYSTEM_PROMPT
+    assert "created job that vanished without matching output is no progress" in GOVERNED_SYSTEM_PROMPT
+    assert "Adding another copy creates a distinct job" in GOVERNED_SYSTEM_PROMPT
+    assert "Choose the next\nobjective and action yourself" in GOVERNED_SYSTEM_PROMPT
 
 
 def test_governed_system_prompt_distinguishes_room_ring_from_wall_mass() -> None:

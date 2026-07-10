@@ -234,6 +234,17 @@ governed scalar path carried the bug):
   unit inside a 10-point-capped dimension — bounded exposure, noted for
   completeness.
 
+### 2026-07-10 truth-semantics follow-up
+
+G7 attempt 19 proved that the bounded `utility_action_progress` exception and
+the live `carpenter_workshops_usable` hook still violated the documented
+completion doctrine. Accepted orders received immediate credit, and a
+Carpenter workshop was called usable when it had a task job rather than when
+its build stage was complete. Both channels are now removed: action acceptance
+always pays zero, and usability is derived from `getBuildStage() >=
+getMaxBuildStage()`. Queue depth remains observable but cannot raise utility or
+production. This is a truth correction, not a weight or threshold change.
+
 ## How to reproduce
 
 ```

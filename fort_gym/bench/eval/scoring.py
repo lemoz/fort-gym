@@ -22,7 +22,11 @@ from typing import Dict, Optional
 # counted as permanent floor by work/room metrics, creating transient score
 # credit before seasonal thaw. Coefficients are unchanged; the v3 threshold is
 # retained, making the corrected G7 scalar bar conservative rather than softer.
-SCORE_VERSION = 4
+# v5 2026-07-10: action-effect truth boundary. Accepted ORDER/BUILD commands no
+# longer receive instant utility credit, and carpenter-workshop usability now
+# requires a completed build stage instead of a queued task. Coefficients and
+# the G7 threshold remain unchanged; old v4 scores are not comparable.
+SCORE_VERSION = 5
 
 
 TARGET_SURVIVAL_TICKS = 2400

@@ -887,10 +887,8 @@ def _governed_helper_progress(action: Dict[str, Any], result: Dict[str, Any]) ->
     farm_plots_added = int(result.get("after_farm_plots") or 0) - int(
         result.get("before_farm_plots") or 0
     )
-    created_jobs = result.get("created_job_ids")
     return bool(
-        (isinstance(created_jobs, list) and created_jobs)
-        or workshops_added > 0
+        workshops_added > 0
         or farm_plots_added > 0
         or int(result.get("placed_count") or 0) > 0
         or int(result.get("trees_designated") or 0) > 0
@@ -901,6 +899,144 @@ def _governed_helper_progress(action: Dict[str, Any], result: Dict[str, Any]) ->
         or bool(result.get("labor_changed"))
         or int(result.get("seasons_changed") or 0) > 0
     )
+
+
+_ORDER_GOODS_KEYS = {
+    "bed": "bed",
+    "door": "door",
+    "table": "table",
+    "chair": "chair",
+    "barrel": "barrel",
+    "bin": "bin",
+}
+
+
+def _tracked_job_ids(state: Dict[str, Any]) -> tuple[set[int], bool]:
+    crew = state.get("crew") if isinstance(state.get("crew"), dict) else {}
+    jobs = crew.get("jobs") if isinstance(crew.get("jobs"), dict) else {}
+    values = jobs.get("active_ids")
+    if isinstance(values, list):
+        complete = not bool(jobs.get("active_ids_truncated"))
+    else:
+        values = [
+            entry.get("id")
+            for entry in jobs.get("entries", [])
+            if isinstance(entry, dict)
+        ]
+        total = _int_or_none(jobs.get("total"))
+        complete = total is not None and total <= len(values)
+    tracked: set[int] = set()
+    for value in values:
+        parsed = _int_or_none(value)
+        if parsed is not None:
+            tracked.add(parsed)
+    return tracked, complete
+
+
+def _matching_order_job_ids(state: Dict[str, Any], job: str) -> tuple[set[int], bool]:
+    crew = state.get("crew") if isinstance(state.get("crew"), dict) else {}
+    jobs = crew.get("jobs") if isinstance(crew.get("jobs"), dict) else {}
+    values = jobs.get("order_jobs")
+    if isinstance(values, list):
+        complete = not bool(jobs.get("order_jobs_truncated"))
+    else:
+        active_ids, active_complete = _tracked_job_ids(state)
+        if active_complete and not active_ids:
+            return set(), True
+        return set(), False
+    matching: set[int] = set()
+    for value in values:
+        if not isinstance(value, dict) or str(value.get("item") or "") != job:
+            continue
+        parsed = _int_or_none(value.get("id"))
+        if parsed is not None:
+            matching.add(parsed)
+    return matching, complete
+
+
+def _order_output_value(state: Dict[str, Any], job: str) -> tuple[str, int | None]:
+    if job == "brew":
+        survival = state.get("survival") if isinstance(state.get("survival"), dict) else {}
+        value = _int_or_none(survival.get("drink_produced_in_run"))
+        return "survival.drink_produced_in_run", value
+    goods_key = _ORDER_GOODS_KEYS.get(job)
+    if goods_key is None:
+        return "untracked", None
+    crew = state.get("crew") if isinstance(state.get("crew"), dict) else {}
+    goods = crew.get("goods") if isinstance(crew.get("goods"), dict) else {}
+    return f"crew.goods.{goods_key}", _int_or_none(goods.get(goods_key))
+
+
+def _governed_order_effect(
+    action: Dict[str, Any],
+    result: Dict[str, Any],
+    state_before: Dict[str, Any],
+    advance_state: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Report ORDER acceptance separately from durable post-tick effect."""
+
+    created = []
+    created_values = result.get("created_job_ids")
+    for value in created_values if isinstance(created_values, list) else []:
+        parsed = _int_or_none(value)
+        if parsed is not None:
+            created.append(parsed)
+    created = list(dict.fromkeys(created))
+    active_ids, active_ids_complete = _tracked_job_ids(advance_state)
+    remaining = [job_id for job_id in created if job_id in active_ids]
+    job = str((action.get("params") or {}).get("job") or "").strip().lower()
+    prior_matching_ids, prior_matching_complete = _matching_order_job_ids(state_before, job)
+    before_work = state_before.get("work") if isinstance(state_before.get("work"), dict) else {}
+    manager_orders_present = bool(
+        int(before_work.get("manager_orders_count") or 0)
+        or int(before_work.get("manager_orders_amount_left") or 0)
+    )
+    output_source, output_before = _order_output_value(state_before, job)
+    _, output_after = _order_output_value(advance_state, job)
+    output_delta = (
+        output_after - output_before
+        if output_before is not None and output_after is not None
+        else None
+    )
+    output_observed = output_before is not None and output_after is not None
+    completed = [job_id for job_id in created if job_id not in active_ids]
+    lifecycle_complete = active_ids_complete or all(job_id in active_ids for job_id in created)
+    created_job_completion_observed = bool(active_ids_complete and completed)
+    attribution_complete = bool(
+        created
+        and created_job_completion_observed
+        and prior_matching_complete
+        and not prior_matching_ids
+        and not manager_orders_present
+    )
+    if output_delta is not None and output_delta > 0 and attribution_complete:
+        status = "progressed"
+    elif output_delta is not None and output_delta > 0:
+        status = "unattributed_output"
+    elif remaining:
+        status = "pending"
+    elif created and (not lifecycle_complete or not output_observed):
+        status = "unobserved"
+    else:
+        status = "no_progress"
+    return {
+        "status": status,
+        "job": job,
+        "created_job_ids": created,
+        "remaining_job_ids": remaining,
+        "completed_job_ids": completed if active_ids_complete else [],
+        "created_job_completion_observed": created_job_completion_observed,
+        "active_job_ids_complete": active_ids_complete,
+        "prior_matching_job_ids": sorted(prior_matching_ids),
+        "prior_matching_jobs_complete": prior_matching_complete,
+        "manager_orders_present": manager_orders_present,
+        "attribution_complete": attribution_complete,
+        "output_observed": output_observed,
+        "output_source": output_source,
+        "output_before": output_before,
+        "output_after": output_after,
+        "output_delta": output_delta,
+    }
 
 
 def _governed_gameplay_proof(
@@ -917,10 +1053,9 @@ def _governed_gameplay_proof(
 ) -> Dict[str, Any]:
     """Per-step evidence that a governed action changed real DF state.
 
-    Evidence only — this object never feeds scoring. ``ok`` is true only when
-    the current step shows real change: map tiles differ, productive state
-    deltas exist, or the bounded helper reported concrete new game objects
-    (new designations, created jobs, a new workshop).
+    Evidence only — this object never feeds scoring. Command acceptance and
+    unrelated simulation changes are reported separately from a verified
+    action-specific effect.
     """
 
     tile_changes = _snapshot_tile_changes(before_map_snapshot, after_map_snapshot)
@@ -974,11 +1109,18 @@ def _governed_gameplay_proof(
         )
         if key in result
     }
-    step_gameplay_progress = action.get("type") != "INTERACT" and bool(
-        int(tile_changes.get("changed_tile_count") or 0)
-        or state_deltas
-        or _governed_helper_progress(action, result)
+    world_state_changed = bool(int(tile_changes.get("changed_tile_count") or 0) or state_deltas)
+    order_effect = (
+        _governed_order_effect(action, result, state_before, advance_state)
+        if action.get("type") == "ORDER"
+        else None
     )
+    action_effect_observed = bool(
+        _governed_helper_progress(action, result)
+        or (isinstance(order_effect, dict) and order_effect.get("status") == "progressed")
+        or (action.get("type") == "WAIT" and world_state_changed)
+    )
+    step_gameplay_progress = action.get("type") != "INTERACT" and action_effect_observed
     return {
         "ok": step_gameplay_progress,
         "source": "dfhack-map-and-state",
@@ -993,6 +1135,9 @@ def _governed_gameplay_proof(
             "actual": int(tick_info.get("ticks_advanced") or 0),
         },
         "helper_evidence": helper_evidence,
+        "action_effect": order_effect,
+        "action_effect_observed": action_effect_observed,
+        "concurrent_world_state_changed": world_state_changed and not action_effect_observed,
         "state_deltas": state_deltas,
         "tile_changes": tile_changes,
         "changed_tile_count": int(tile_changes.get("changed_tile_count") or 0),
@@ -1185,6 +1330,11 @@ def _action_history_entry(
     action_result = (
         execute_result.get("result") if isinstance(execute_result.get("result"), dict) else {}
     )
+    order_effect = (
+        _governed_order_effect(action, action_result, state_before, advance_state)
+        if action.get("type") == "ORDER"
+        else None
+    )
     result_error = (
         execute_result.get("reason")
         or execute_result.get("why")
@@ -1268,8 +1418,22 @@ def _action_history_entry(
             if interaction_changed
             else "interaction_accepted_without_tracked_state_change"
         )
-    elif helper_mutation or state_mutation or productive_reasons:
+    elif isinstance(order_effect, dict) and order_effect.get("status") == "progressed":
+        outcome = "action_effect_observed"
+    elif isinstance(order_effect, dict) and order_effect.get("status") == "pending":
+        outcome = "action_pending"
+    elif isinstance(order_effect, dict) and order_effect.get("status") == "unattributed_output":
+        outcome = "action_output_unattributed"
+    elif isinstance(order_effect, dict) and order_effect.get("status") == "unobserved":
+        outcome = "action_effect_unobserved"
+    elif helper_mutation:
+        outcome = "action_effect_observed"
+    elif not governed_action and (state_mutation or productive_reasons):
         outcome = "gameplay_state_changed"
+    elif action.get("type") == "WAIT" and (state_mutation or productive_reasons):
+        outcome = "gameplay_state_changed"
+    elif state_mutation or productive_reasons:
+        outcome = "concurrent_gameplay_state_changed"
     elif actual_ticks > 0:
         outcome = "advanced_ticks_without_tracked_state_change"
     elif governed_action:
@@ -1307,6 +1471,7 @@ def _action_history_entry(
         "failed_targets": failed_targets,
         "placed_targets": placed_targets,
         "result_details": result_details,
+        "action_effect": order_effect,
         "productive_reasons": productive_reasons,
         "changed": changed,
         "manager_orders_before": _int_or_none(before_work.get("manager_orders_count")) or 0,
@@ -2984,7 +3149,8 @@ def run_once(
                     execute_result = {
                         **execute_result,
                         "provenance": "dfhack_governed",
-                        "gameplay_progress_eligible": action.get("type") != "INTERACT",
+                        # Final eligibility is set only after post-tick proof.
+                        "gameplay_progress_eligible": False,
                     }
                 elif backend_name == "dfhack" and action.get("type") in ASSISTED_DFHACK_ACTIONS:
                     execute_result = {
@@ -3422,8 +3588,8 @@ def run_once(
                         if interaction_only
                         else "dfhack_governed_observed_state"
                     )
-                    metrics_snapshot["gameplay_progress_eligible"] = not interaction_only
-                    metrics_snapshot["governed_dfhack_progress"] = not interaction_only
+                    metrics_snapshot["gameplay_progress_eligible"] = False
+                    metrics_snapshot["governed_dfhack_progress"] = False
                     fort_after = advance_state.get("fort") or state_before.get("fort")
                     if isinstance(fort_after, dict):
                         metrics_snapshot["fort_enclosed_spaces"] = int(
@@ -3572,6 +3738,13 @@ def run_once(
                             tick_info=tick_info_state,
                             score_value=score_value,
                         )
+                        progress_eligible = bool(gameplay_proof.get("ok"))
+                        execute_result = {
+                            **execute_result,
+                            "gameplay_progress_eligible": progress_eligible,
+                        }
+                        metrics_snapshot["gameplay_progress_eligible"] = progress_eligible
+                        metrics_snapshot["governed_dfhack_progress"] = progress_eligible
                         publish_event(
                             step,
                             "gameplay_proof",

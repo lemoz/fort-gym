@@ -8,21 +8,9 @@ UTILITY_WORKSHOP_PROGRESS = 5
 PRODUCTION_WORKSHOP_PROGRESS = 5
 COMPLEXITY_SPACE_PROGRESS = 5
 
-# BUILD kinds that grant instant utility_action_progress credit for placing a
-# workshop. Still was added alongside CarpenterWorkshop as a legal BUILD kind
-# (dfhack_backend.ALLOWED_WORKSHOPS, executor.py's kind-routing set,
-# build_workshop.lua's SUBTYPES table all already treat them symmetrically)
-# so scoring must too -- otherwise building a Still (the whole point of the
-# still-workshop primitive) scores strictly worse per-action than building a
-# redundant second Carpenter's Workshop. Note: the *usable*-workshop delta
-# credit in utility_progress_delta()/production_progress_delta() above still
-# only counts via `_workshop_counts()`'s carpenter-labeled work-metrics
-# fields (work_metrics.lua only reports carpenter_* counts today) -- giving
-# Still usable-delta credit there needs a work_metrics.lua extension at
-# live-validation time, not speculative lua bolted on now. This set only
-# fixes the instant per-action BUILD credit, which is a pure Python/action
-# check with no lua dependency.
-WORKSHOP_KINDS = {"CarpenterWorkshop", "Still"}
+# Completed-workshop utility currently uses the carpenter-labeled fields from
+# work_metrics.lua. Still capacity is evaluated through drink production and
+# the G7 survival ledger; no BUILD kind receives instant action credit.
 
 
 def _to_int(value: Any, default: int = 0) -> int:
@@ -398,22 +386,13 @@ def complexity_progress_delta(
 
 
 def utility_action_progress(action: Dict[str, Any], execute_result: Dict[str, Any]) -> Dict[str, int]:
-    """Return useful-work progress proven by an accepted structured action."""
+    """Accepted commands alone never prove useful work.
 
-    if not execute_result.get("accepted", execute_result.get("ok", False)):
-        return {"utility_action_progress": 0}
+    Utility is derived from completed workshops and observed produced goods in
+    ``utility_progress_delta``. Keeping this field at zero preserves trace
+    compatibility without paying for queue or placement acceptance.
+    """
 
-    params = action.get("params") if isinstance(action.get("params"), dict) else {}
-    action_type = action.get("type")
-    if action_type == "ORDER":
-        return {
-            "utility_action_progress": min(
-                UTILITY_WORKSHOP_PROGRESS,
-                max(1, _to_int(params.get("quantity"), default=1)),
-            ),
-        }
-    if action_type == "BUILD" and params.get("kind") in WORKSHOP_KINDS:
-        return {"utility_action_progress": UTILITY_WORKSHOP_PROGRESS}
     return {"utility_action_progress": 0}
 
 

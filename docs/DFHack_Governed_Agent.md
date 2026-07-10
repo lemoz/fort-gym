@@ -82,15 +82,19 @@ candidate review contract also carries `last_action_review` and structured
 `plan_review` in bounded run-local history, so memory-persistence-off runs can
 audit objective continuity. Initial, five-action, two-no-progress, and partial-
 mutation checkpoints are factual review triggers only: the model establishes,
-continues, or revises its own objective and selects observation evidence. Review
-metadata earns no score and never selects or vetoes a gameplay action. The
+continues, or revises its own objective and selects observation evidence. A
+voluntary `continue` when no checkpoint is due does not reset the five-action
+cadence. Pending order jobs trigger a partial review, while two action-specific
+no-progress outcomes trigger a stall review. Review metadata earns no score and
+never selects or vetoes a gameplay action. The
 evidence validator accepts only immutable `E#` references to a runner-authored
 factual allowlist; model-authored history cannot manufacture a new evidence
 line. Plan reviews select two IDs backed by distinct lines. A stable type+params
 fingerprint makes `retry_same_action` factual, and governed mode retains at
 least six action outcomes even if the display-history limit is configured lower.
 When no checkpoint is due, the model may submit a minimal `not_due` review or a
-voluntary `continue`; only substantive reviews require a reason.
+voluntary `continue`; only a due `continue`, an establishment, or a revision is
+a substantive review.
 
 The agent holds no gameplay heuristics — the model plus the loop must solve
 gameplay. Legacy direct callers still degrade malformed model output to a
@@ -108,10 +112,18 @@ Every governed step records into `trace.jsonl`:
 - `map_snapshot` — a derived DFHack tile read, shown only under the explicit
   "Map Inspect" label ("not gameplay proof").
 - `gameplay_proof` — a per-step evidence object (evidence only, never feeds
-  scoring): before/after map-tile diffs over the plan rects, productive state
-  deltas, and bounded-helper facts (`newly_designated`, `created_job_ids`,
-  workshop count deltas). `ok` is true only when the step changed real DF
-  state — a re-designation of already-designated tiles is visibly a no-op.
+  scoring): before/after map-tile diffs, productive state deltas, and bounded
+  helper facts. It separates command acceptance, concurrent world changes, and
+  action-specific effects. `created_job_ids` prove only that DF accepted an
+  order. An order is `pending` while one of those IDs remains in the live job
+  list, `progressed` only when its matching output counter moves, and
+  `no_progress` when the IDs vanish without output. Output is action-attributed
+  only when the pre-action job inventory is complete and contains no older
+  matching job; otherwise it is recorded as `unattributed_output`. Truncated
+  job-ID evidence produces an unobserved verdict instead of a false failure.
+  An unrelated wall or stock change cannot ratify that order. Final
+  `gameplay_progress_eligible` fields are set from this post-tick proof, never
+  from action type alone.
 - `execute.provenance` / `metrics.score_provenance` — the legality tags above.
 - `interaction` — for `INTERACT`, the semantic operation, fixed key, pause and
   viewscreen types, and before/after CopyScreen hashes. It is audit evidence,
@@ -164,6 +176,10 @@ trace rows with dimensions for:
 The rubric returns a 0-100 score, per-dimension evidence, blockers, and a short
 critique. It is designed to flag exactly the failure mode where score rises while
 the fort stays narrow, repetitive, or non-legal.
+Queue depth and incomplete workshops remain visible in rubric evidence but earn
+no production/coherence points and cannot clear `no_production_surface`.
+Responsiveness likewise requires an observed action-specific effect; accepted
+commands and elapsed ticks remain evidence but earn no points by themselves.
 
 ## Known Limits and Next Steps
 
@@ -183,8 +199,10 @@ Current structural limits of the governed surface:
 - Memory can persist across runs, but production experiments currently disable
   it because the G5 ablation found the current memory design counterproductive.
 - Governed `gameplay_proof` combines bounded tile diffs and observed state
-  deltas. It reports no progress for accepted actions that changed no world
-  state, including dialog-only `INTERACT`.
+  deltas, but reports them separately from action-specific effect. It reports
+  no progress for accepted actions whose intended effect is unobserved,
+  including an order whose jobs vanish without output and dialog-only
+  `INTERACT`.
 
 The next action helpers should be added only after their legal semantics are
 clear:

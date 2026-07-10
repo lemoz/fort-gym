@@ -164,9 +164,11 @@ Status: RATIFIED at the 2026-07-09 operator window; attempt 1 FAILED, while
 attempts 2 through 6 ended in infrastructure-aborted FAILs with no full-year
 policy verdict. All attempts are recorded below. The gameplay criteria remain
 unchanged; post-Attempt-10 runs use the score-v4 stable-floor measurement
+boundary, and post-Attempt-19 runs use the score-v5 action-effect truth
 boundary. All three activation preconditions hold: (a) score-v3 ratified and
-landed, with score-v4 retaining its coefficients and threshold while removing
-false frozen-floor credit; (b) G6 attempted
+landed, with score-v4 removing false frozen-floor credit and score-v5 removing
+command-acceptance/task-presence credit while both retain the coefficients and
+threshold; (b) G6 attempted
 (7 runs, 2 models — frontier documented in the escalation log); (c) the
 survival primitives exist, adversarially reviewed and live-validated:
 gather (DIG kind), FarmPlot (BUILD kind), Still + brew ORDER
@@ -176,8 +178,9 @@ deferred (optional in the proposal; not required for the drink/food loop).
 Pre-declared scalar bar for attempt 1 (set before launch, per the gate
 protocol): score-v3 >= 150 — the best corrected 100k-tick region3 run
 scored 152.39, and a fort that lives a full year must at least match the
-best quarter-year camp. Score-v4 keeps the same >=150 bar without transient
-ice credit — and rubric >= 70 with zero blockers (the standing clean bar).
+best quarter-year camp. Score-v5 keeps the same >=150 bar without transient
+ice or accepted-command credit — and rubric >= 70 with zero blockers (the
+standing clean bar).
 Attempt 1 ran as GLM-5V, max_steps 450,
 ticks_per_step 1000, seed_region3_fresh (the unseen-map frontier, water
 hazard and all); its public failure record is below.
@@ -202,8 +205,8 @@ Criteria (one run, plan-agnostic, current score version, memory per standing con
   waves survived), >= 3 functional rooms, installed beds >= population/3.
 - **No degeneracy**: rubric clean of repetitive_policy /
   no_production_surface / no_fort_structure / legality blockers; scalar
-  bar remains the pre-declared 150 under score-v4; version 4 is a conservative
-  measurement correction, not a coefficient or threshold change.
+  bar remains the pre-declared 150 under score-v5; versions 4 and 5 are
+  conservative measurement corrections, not coefficient or threshold changes.
 
 Evidence: unchanged — recorded frames, per-step gameplay_proof, provenance
 gating, public replay. Beyond G7 the ladder continues to G8 — depth
@@ -508,7 +511,9 @@ gate. Each entry states what changed and the evidence that forced it.
   by steps is an operator decision. Every audited adjacent path
   (`utility_action_progress`, keystroke completed-task crediting) was
   found bounded or completion-gated — not the same bug — and left
-  untouched. PR remains HELD; prior runs stay v1/v2, not comparable.
+  untouched in that calibration round. G7 attempt 19 later proved the bounded
+  action credit still violated completion truth and removed it at the score-v5
+  boundary. PR remains HELD; prior runs stay v1/v2, not comparable.
 
 - **2026-07-05 — G4 PASSED. First pass in project history, 6/6 criteria.**
   Run `2f58fd37` (GLM-5V pinned `dfhack-governed-llm-glm5v`, 100 steps,

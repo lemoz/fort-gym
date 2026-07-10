@@ -253,9 +253,8 @@ def _labor_flip_credits_progress(
 def _step_progress_flags(records: List[Dict[str, Any]]) -> List[bool]:
     """Per record: did this step show real progress?
 
-    A step counts as progress-backed when its recorded ``gameplay_proof``
-    shows real state change, when a tracked progress metric advanced versus
-    the previous step, or when per-step UI work progress was observed.
+    Current governed traces use their explicit action-effect attribution.
+    Older traces fall back to observed proof, metric deltas, and UI work.
     """
 
     flags: List[bool] = []
@@ -269,27 +268,32 @@ def _step_progress_flags(records: List[Dict[str, Any]]) -> List[bool]:
             flags.append(False)
             previous_metrics = metrics
             continue
-        # count_labor=False: a bare labor flip is not world change here; the
-        # first flip per (unit, labor) target is credited via the labor helper,
-        # so repeated enable/disable churn on one target is not exempted.
-        proof_ok = (
-            isinstance(proof, dict)
-            and bool(proof.get("ok"))
-            and _proof_shows_world_change(proof, count_labor=False)
-        )
-        labor_progress = _labor_flip_credits_progress(record, proof, credited_labor_targets)
-        productive = any(
-            _to_int(metrics.get(field)) > _to_int(previous_metrics.get(field))
-            for field in _PROGRESS_FIELDS
-        )
-        flags.append(
-            bool(
-                proof_ok
-                or labor_progress
-                or productive
-                or _to_int(metrics.get("ui_step_work_progress")) > 0
+        explicit_action_effect = isinstance(proof, dict) and type(
+            proof.get("action_effect_observed")
+        ) is bool
+        if explicit_action_effect:
+            # Current governed traces already separated action-specific effect
+            # from concurrent world changes. Do not re-credit a command from a
+            # cumulative metric that happened to move in the same tick window.
+            proof_ok = bool(proof.get("ok") and proof.get("action_effect_observed"))
+            if str(action.get("type") or "") == "LABOR":
+                proof_ok = False
+            productive = False
+            ui_progress = False
+        else:
+            # Legacy traces predate explicit action attribution.
+            proof_ok = (
+                isinstance(proof, dict)
+                and bool(proof.get("ok"))
+                and _proof_shows_world_change(proof, count_labor=False)
             )
-        )
+            productive = any(
+                _to_int(metrics.get(field)) > _to_int(previous_metrics.get(field))
+                for field in _PROGRESS_FIELDS
+            )
+            ui_progress = _to_int(metrics.get("ui_step_work_progress")) > 0
+        labor_progress = _labor_flip_credits_progress(record, proof, credited_labor_targets)
+        flags.append(bool(proof_ok or labor_progress or productive or ui_progress))
         previous_metrics = metrics
     return flags
 
@@ -319,10 +323,8 @@ def evaluate_trace_records(
     )
     ticks_advanced = sum(_to_int(_tick_advance(record).get("ticks_advanced")) for record in recent)
     unique_action_types = len({item for item in action_types if item != "unknown"})
-    # Repetition is a failure only when the repeated steps produced no real
-    # state change (the dimension's own critique text). Steps whose recorded
-    # gameplay_proof shows real change, or whose metrics advanced, do not
-    # count toward the repetition tally.
+    # Current governed proofs carry action-specific attribution. Legacy traces
+    # fall back to their older proof/metric semantics.
     progress_flags = _step_progress_flags(recent)
     stale_fingerprints = Counter(
         _action_fingerprint(action)
@@ -348,6 +350,11 @@ def evaluate_trace_records(
         _metric_max(recent, "carpenter_workshops"),
         _metric_max(recent, "carpenter_workshops_delta"),
         _nested_work_max(recent, "carpenter_workshops"),
+    )
+    carpenter_workshops_usable = max(
+        _metric_max(recent, "carpenter_workshops_usable"),
+        _metric_max(recent, "carpenter_workshops_usable_delta"),
+        _nested_work_max(recent, "carpenter_workshops_usable"),
     )
     completed_spaces = max(
         _metric_max(recent, "fortress_complexity_spaces_completed"),
@@ -421,16 +428,17 @@ def evaluate_trace_records(
                 10.0,
                 production_progress
                 + utility_progress / 2.0
-                + carpenter_workshops * 2.0
-                + manager_orders,
+                + carpenter_workshops_usable * 2.0,
             ),
             [
                 f"production_progress={production_progress}",
                 f"utility_progress={utility_progress}",
                 f"carpenter_workshops={carpenter_workshops}",
-                f"manager_orders={manager_orders}",
+                f"carpenter_workshops_usable={carpenter_workshops_usable}",
+                f"manager_orders_uncredited={manager_orders}",
             ],
-            "Production credit requires buildings, orders, jobs, or produced goods.",
+            "Production credit requires completed workshop capacity or observed produced goods; "
+            "orders and queued jobs are evidence only.",
         ),
         "fortress_breadth": _dimension(
             min(
@@ -450,15 +458,14 @@ def evaluate_trace_records(
             "not progress against the retired fixed two_room_workshop plan.",
         ),
         "responsiveness": _dimension(
-            min(
-                10.0,
-                accepted_steps / max(1, total_steps) * 5.0 + tick_steps / max(1, total_steps) * 5.0,
-            ),
+            sum(progress_flags) / max(1, total_steps) * 10.0,
             [
-                f"accepted_steps={accepted_steps}/{total_steps}",
-                f"tick_steps={tick_steps}/{total_steps}",
+                f"action_effect_steps={sum(progress_flags)}/{total_steps}",
+                f"accepted_steps_uncredited={accepted_steps}/{total_steps}",
+                f"tick_steps_uncredited={tick_steps}/{total_steps}",
             ],
-            "The agent should issue valid commands and advance simulation when work is pending.",
+            "Responsiveness requires an observed action-specific effect; command acceptance and "
+            "elapsed ticks are evidence only.",
         ),
         "plan_coherence": _dimension(
             min(
@@ -467,13 +474,14 @@ def evaluate_trace_records(
                 + min(
                     6.0,
                     min(fort_functional_rooms, 2) * 2.0
-                    + carpenter_workshops * 2.0
-                    + manager_orders,
+                    + carpenter_workshops_usable * 2.0
+                    + bool(production_progress or utility_progress) * 2.0,
                 ),
             ),
             [
                 f"objective_steps={sum(1 for action in actions if action.get('objective'))}",
-                f"chain={fort_functional_rooms}/{carpenter_workshops}/{manager_orders}",
+                f"chain={fort_functional_rooms}/{carpenter_workshops_usable}/"
+                f"{bool(production_progress or utility_progress)}",
             ],
             "Plan coherence means actions state a goal and the trace advances along that goal — "
             "room completion credit comes from plan-agnostic flood-fill functional rooms, not the "
@@ -510,7 +518,11 @@ def evaluate_trace_records(
         and work_progress <= 0
     ):
         blockers.append("no_fort_structure")
-    if carpenter_workshops <= 0 and production_progress <= 0:
+    if (
+        carpenter_workshops_usable <= 0
+        and production_progress <= 0
+        and utility_progress <= 0
+    ):
         blockers.append("no_production_surface")
     if complexity_progress <= 0 and completed_spaces <= 0:
         blockers.append("no_broader_fort_layout")

@@ -465,6 +465,20 @@ def _format_action_history_entry(action_entry: Dict[str, Any]) -> str:
             f"{key}={value}" for key, value in result_details.items()
         )
         details.append("result=" + result_text)
+    action_effect = action_entry.get("action_effect")
+    if isinstance(action_effect, dict):
+        details.append(
+            "action_effect="
+            + ",".join(
+                (
+                    f"status={action_effect.get('status')}",
+                    f"job={action_effect.get('job')}",
+                    f"remaining={action_effect.get('remaining_job_ids') or []}",
+                    f"output={action_effect.get('output_source')}:"
+                    f"{action_effect.get('output_before')}->{action_effect.get('output_after')}",
+                )
+            )
+        )
     placed_targets = action_entry.get("placed_targets")
     if isinstance(placed_targets, list) and placed_targets:
         details.append("placed=" + ",".join(str(item) for item in placed_targets))
@@ -529,9 +543,15 @@ def _to_int(value: Any, default: int = 0) -> int:
         return default
 
 
-_GOVERNED_PROGRESS_OUTCOMES = {"gameplay_state_changed", "interface_state_changed"}
+_GOVERNED_PROGRESS_OUTCOMES = {
+    "action_effect_observed",
+    "gameplay_state_changed",
+    "interface_state_changed",
+}
 _GOVERNED_NO_PROGRESS_OUTCOMES = {
     "rejected",
+    "action_output_unattributed",
+    "concurrent_gameplay_state_changed",
     "advanced_ticks_without_tracked_state_change",
     "action_accepted_without_tracked_state_change",
     "interaction_accepted_without_tracked_state_change",
@@ -546,6 +566,8 @@ def _governed_review_verdict(entry: Dict[str, Any] | None) -> str:
     outcome = str(entry.get("outcome") or "")
     if outcome == "partial_mutation":
         return "partial"
+    if outcome == "action_pending":
+        return "partial"
     if outcome in {"rejected", "validation_rejected"}:
         return "rejected"
     if outcome in _GOVERNED_PROGRESS_OUTCOMES:
@@ -557,10 +579,15 @@ def _governed_review_verdict(entry: Dict[str, Any] | None) -> str:
 
 def _substantive_plan_review(entry: Dict[str, Any]) -> bool:
     review = entry.get("plan_review")
-    return bool(
-        isinstance(review, dict)
-        and review.get("decision") in {"establish", "continue", "revise"}
-    )
+    if not isinstance(review, dict):
+        return False
+    decision = review.get("decision")
+    if decision in {"establish", "revise"}:
+        return True
+    if decision != "continue":
+        return False
+    request_id = str(review.get("request_id") or "")
+    return bool(request_id and not request_id.endswith(":none"))
 
 
 def _governed_plan_control(
@@ -597,8 +624,8 @@ def _governed_plan_control(
         reasons.append("initial")
     elif actions_since_review >= _GOVERNED_PLAN_REVIEW_INTERVAL:
         reasons.append(f"periodic_{_GOVERNED_PLAN_REVIEW_INTERVAL}")
-    if previous and previous.get("outcome") == "partial_mutation":
-        reasons.append("partial_mutation")
+    if previous and previous.get("outcome") in {"partial_mutation", "action_pending"}:
+        reasons.append(str(previous.get("outcome")))
 
     if len(history) >= 2:
         recent = history[-2:]
@@ -1620,6 +1647,13 @@ def encode_observation(
                     f"construct_building={jobs_construct_building}, "
                     f"workshop_tasks={jobs_workshop_task}, suspended={jobs_suspended})"
                 )
+                plant_seeds = _int_or_none(jobs.get("plant_seeds"))
+                brew_reaction = _int_or_none(jobs.get("brew_reaction"))
+                if plant_seeds is not None and brew_reaction is not None:
+                    jobs_line += (
+                        f"; plant_seed_jobs={plant_seeds}, "
+                        f"brew_reaction_jobs={brew_reaction}"
+                    )
                 haul_connected = _int_or_none(
                     jobs.get("construct_building_walk_group_connected")
                 )
@@ -1705,6 +1739,24 @@ def encode_observation(
                     )
                     if jobs_construct_building == 0:
                         workshop_line += " — no construct job exists; construction is stalled"
+                queued_details = workshop.get("queued_job_details")
+                if isinstance(queued_details, list) and queued_details:
+                    rendered_jobs = []
+                    for job_detail in queued_details[:6]:
+                        if not isinstance(job_detail, dict):
+                            continue
+                        job_id = _int_or_none(job_detail.get("id"))
+                        job_type = str(job_detail.get("type") or "?")
+                        reaction = job_detail.get("reaction")
+                        label = f"#{job_id}:{job_type}" if job_id is not None else job_type
+                        if isinstance(reaction, str) and reaction:
+                            label += f"/{reaction}"
+                        label += "[assigned]" if job_detail.get("has_worker") else "[unassigned]"
+                        if job_detail.get("suspended"):
+                            label += "[suspended]"
+                        rendered_jobs.append(label)
+                    if rendered_jobs:
+                        workshop_line += "; queue=" + ",".join(rendered_jobs)
                 status_lines.append(workshop_line)
 
         placed = crew.get("placed_furniture")
@@ -1787,6 +1839,24 @@ def encode_observation(
                 line = f"Farm plot #{plot_id}{loc}"
                 if crop_parts:
                     line += " crops " + " ".join(crop_parts)
+                tile_context = detail.get("tile_context")
+                if isinstance(tile_context, dict):
+                    context_values = {
+                        key: _int_or_none(tile_context.get(key))
+                        for key in (
+                            "total",
+                            "readable",
+                            "outside",
+                            "light",
+                            "subterranean",
+                            "water_table",
+                        )
+                    }
+                    if all(value is not None for value in context_values.values()):
+                        line += (
+                            " raw_tile_context "
+                            + ",".join(f"{key}={value}" for key, value in context_values.items())
+                        )
                 status_lines.append(line)
 
         seeds = crew.get("seeds")
@@ -1812,6 +1882,23 @@ def encode_observation(
         current_season = crew.get("current_season")
         if isinstance(current_season, str) and current_season:
             status_lines.append(f"Season: {current_season}")
+
+        production_inputs = crew.get("production_inputs")
+        if isinstance(production_inputs, dict):
+            input_parts = []
+            for key in (
+                "brewable_plant_stacks",
+                "brewable_plant_units",
+                "brewable_plant_stacks_in_jobs",
+                "empty_barrels",
+                "empty_barrels_in_jobs",
+                "total_barrels",
+            ):
+                value = _int_or_none(production_inputs.get(key))
+                if value is not None:
+                    input_parts.append(f"{key}={value}")
+            if input_parts:
+                status_lines.append("Production inputs (raw inventory): " + ", ".join(input_parts))
 
         goods = crew.get("goods")
         if isinstance(goods, dict) and goods:
@@ -1885,7 +1972,35 @@ def encode_observation(
                 z = _int_or_none(space.get("z"))
                 if not kind or tiles is None or z is None:
                     continue
-                room_parts.append(f"{kind}({tiles} tiles, z{z})")
+                details = [f"{tiles} tiles", f"z{z}"]
+                bounds = _int_list_or_none(space.get("bounds"), 5)
+                if bounds is not None:
+                    details.append(
+                        f"bounds=({bounds[0]},{bounds[1]})..({bounds[2]},{bounds[3]})"
+                    )
+                contents = space.get("contents")
+                if isinstance(contents, dict):
+                    content_parts = []
+                    for content_key in ("bed", "door", "table", "chair", "workshop"):
+                        count = _int_or_none(contents.get(content_key))
+                        if count:
+                            content_parts.append(f"{content_key}={count}")
+                    details.append("contents=" + (",".join(content_parts) if content_parts else "empty"))
+                open_tiles = space.get("open_tiles")
+                if isinstance(open_tiles, list):
+                    rendered_open = []
+                    for coord in open_tiles[:16]:
+                        parsed_coord = _int_list_or_none(coord, 3)
+                        if parsed_coord is not None:
+                            rendered_open.append(
+                                f"({parsed_coord[0]},{parsed_coord[1]},{parsed_coord[2]})"
+                            )
+                    if rendered_open:
+                        suffix = "+" if space.get("open_tiles_truncated") else ""
+                        details.append("open=" + ",".join(rendered_open) + suffix)
+                    elif _int_or_none(space.get("open_tile_count")) == 0:
+                        details.append("open=none")
+                room_parts.append(f"{kind}(" + "; ".join(details) + ")")
             if room_parts:
                 status_lines.append("Rooms: " + ", ".join(room_parts))
 
@@ -2382,8 +2497,10 @@ def encode_observation(
             "Placed furniture buildings:",
             "Furniture positions:",
             "Farm plots built:",
+            "Farm plot #",
             "Seeds on hand:",
             "Season:",
+            "Production inputs (raw inventory):",
             "Finished goods in play:",
             "Fort-area tiles:",
             "Fort structure (plan-agnostic):",
