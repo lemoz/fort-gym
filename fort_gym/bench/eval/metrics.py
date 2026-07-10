@@ -91,6 +91,127 @@ def work_progress_delta(
     }
 
 
+def _snapshot_tile_index(snapshot: Dict[str, Any] | None) -> Dict[tuple[int, int, int], Dict[str, Any]]:
+    if not isinstance(snapshot, dict) or snapshot.get("ok") is not True:
+        return {}
+    indexed: Dict[tuple[int, int, int], Dict[str, Any]] = {}
+    for tile in snapshot.get("tiles", []):
+        if not isinstance(tile, dict):
+            continue
+        try:
+            key = (int(tile["x"]), int(tile["y"]), int(tile["z"]))
+        except (KeyError, TypeError, ValueError):
+            continue
+        indexed[key] = tile
+    return indexed
+
+
+def _has_dig_designation(tile: Dict[str, Any] | None) -> bool:
+    if not isinstance(tile, dict):
+        return False
+    value = str(tile.get("dig") or "No").strip().lower()
+    return value not in {"", "0", "no", "none"}
+
+
+def _owned_excavation_complete(tile: Dict[str, Any] | None, kind: str) -> bool:
+    if not isinstance(tile, dict) or tile.get("hidden") is True:
+        return False
+    if _has_dig_designation(tile):
+        return False
+    if kind == "dig":
+        return (
+            str(tile.get("category") or "").lower() == "floor"
+            and str(tile.get("material") or "").upper() != "FROZEN_LIQUID"
+        )
+    if kind == "channel":
+        return str(tile.get("shape") or "").upper() == "RAMP_TOP"
+    return False
+
+
+def governed_action_footprint_progress_delta(
+    action: Dict[str, Any],
+    before_snapshot: Dict[str, Any] | None,
+    after_snapshot: Dict[str, Any] | None,
+) -> Dict[str, Any]:
+    """Attribute only observed excavation effects inside a model DIG footprint.
+
+    A newly written designation establishes ownership but earns no scalar
+    progress. A tile becomes scoreable only after its native map state reaches
+    a stable completed dig floor or a completed channel ramp top.
+    """
+
+    empty: Dict[str, Any] = {
+        "governed_step_designation_progress": 0,
+        "governed_step_completion_progress": 0,
+        "governed_owned_tiles_added": [],
+        "governed_designated_tiles": [],
+        "governed_completed_tiles": [],
+    }
+    if str(action.get("type") or "").upper() != "DIG":
+        return empty
+    params = action.get("params")
+    if not isinstance(params, dict):
+        return empty
+    kind = str(params.get("kind") or "dig").lower()
+    if kind not in {"dig", "channel"}:
+        return empty
+    if not (
+        isinstance(before_snapshot, dict)
+        and isinstance(after_snapshot, dict)
+        and before_snapshot.get("ok") is True
+        and after_snapshot.get("ok") is True
+        and before_snapshot.get("rect") == after_snapshot.get("rect")
+    ):
+        return empty
+
+    before_tiles = _snapshot_tile_index(before_snapshot)
+    after_tiles = _snapshot_tile_index(after_snapshot)
+    designated: list[list[int]] = []
+    completed: list[list[int]] = []
+    owned: list[list[int]] = []
+    for coord in sorted(set(before_tiles) & set(after_tiles)):
+        before = before_tiles[coord]
+        after = after_tiles[coord]
+        newly_designated = not _has_dig_designation(before) and _has_dig_designation(after)
+        immediate_completion = (
+            not _has_dig_designation(before)
+            and str(before.get("category") or "").lower() in {"wall", "floor"}
+            and _owned_excavation_complete(after, kind)
+        )
+        rendered = [coord[0], coord[1], coord[2]]
+        if newly_designated:
+            designated.append(rendered)
+        if immediate_completion:
+            completed.append(rendered)
+        if newly_designated or immediate_completion:
+            owned.append(rendered)
+
+    return {
+        "governed_step_designation_progress": len(designated),
+        "governed_step_completion_progress": len(completed),
+        "governed_owned_tiles_added": owned,
+        "governed_designated_tiles": designated,
+        "governed_completed_tiles": completed,
+    }
+
+
+def governed_owned_excavation_completion_tiles(
+    owned_tiles: Dict[tuple[int, int, int], str],
+    *snapshots: Dict[str, Any] | None,
+) -> list[list[int]]:
+    """Return owned coordinates whose latest observed native state is complete."""
+
+    observed: Dict[tuple[int, int, int], Dict[str, Any]] = {}
+    for snapshot in snapshots:
+        observed.update(_snapshot_tile_index(snapshot))
+    completed = [
+        [x, y, z]
+        for (x, y, z), kind in sorted(owned_tiles.items())
+        if _owned_excavation_complete(observed.get((x, y, z)), kind)
+    ]
+    return completed
+
+
 def ui_work_progress_delta(
     current_work: Dict[str, Any] | None,
     baseline_work: Dict[str, Any] | None,

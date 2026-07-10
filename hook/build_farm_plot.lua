@@ -6,12 +6,11 @@
 -- MAX_LOCALITY tiles (Chebyshev) from every existing player building and
 -- every citizen (same 24-anchor pattern as build_workshop.lua/
 -- build_construction.lua/place_furniture.lua). Obvious per-tile placement
--- problems (occupied by a building, hidden/unexplored, not open floor) are
--- classified before attempting construction, reusing the same tile check as
--- place_furniture.lua's tile_placement_error. DF's real soil/mud farmability
--- requirement is NOT determined here (that needs live-save verification) --
--- if the engine itself refuses the placement for that reason, it is reported
--- honestly as construct_failed rather than guessed at.
+-- problems are classified before attempting construction. This helper accepts
+-- only the native soil/grass material set used by DFHack 0.47.05 quickfort's
+-- farm-plot placement check. Muddy stone is intentionally unsupported until it
+-- has its own native proof; unknown cases fail closed instead of creating an
+-- impossible plot through constructBuilding.
 
 local json = require('json')
 local buildings = require('dfhack.buildings')
@@ -103,26 +102,59 @@ for _, corner in ipairs(corners) do
   end
 end
 
--- Classify every tile in the footprint before attempting placement -- same
--- checks as place_furniture.lua's tile_placement_error. This does NOT
--- verify DF's real soil/mud farmability requirement, only the obvious cases.
+local FARMABLE_MATERIALS = {
+  [df.tiletype_material.SOIL] = true,
+  [df.tiletype_material.GRASS_LIGHT] = true,
+  [df.tiletype_material.GRASS_DARK] = true,
+  [df.tiletype_material.GRASS_DRY] = true,
+  [df.tiletype_material.GRASS_DEAD] = true,
+  [df.tiletype_material.PLANT] = true,
+}
+
+local function scan_building_at_tile(x, y)
+  return pcall(function()
+    local all = df.global.world.buildings and df.global.world.buildings.all
+    if not all then error('building_list_unavailable') end
+    for _, building in ipairs(all) do
+      if building.z == z
+          and x >= building.x1 and x <= building.x2
+          and y >= building.y1 and y <= building.y2 then
+        return building
+      end
+    end
+    return nil
+  end)
+end
+
+-- Classify every tile before attempting placement. The order matters: hidden
+-- state is checked before tiletype material. Scan buildings.all independently
+-- of the stale occupancy bit used by findAtTile in DFHack 0.47.05.
 local function tile_placement_error(x, y)
   local block = dfhack.maps.getTileBlock(x, y, z)
   if not block then return 'tile_out_of_bounds' end
   local dx, dy = x % 16, y % 16
-  local occupied, is_floor, frozen_liquid, hidden = false, false, false, false
-  pcall(function()
-    occupied = block.occupancy[dx][dy].building ~= 0
-    local attr = df.tiletype.attrs[block.tiletype[dx][dy]]
-    is_floor = attr ~= nil and attr.shape == df.tiletype_shape.FLOOR
-    frozen_liquid = attr ~= nil
-      and attr.material == df.tiletype_material.FROZEN_LIQUID
-    hidden = block.designation[dx][dy].hidden
+  local designation = block.designation[dx][dy]
+  if not designation then return 'tile_designation_unreadable' end
+  if designation.hidden then return 'tile_hidden_unexplored' end
+  if designation.flow_size > 0 then return 'tile_has_liquid' end
+
+  local ok_building, building = scan_building_at_tile(x, y)
+  if not ok_building then return 'tile_building_state_unreadable' end
+  if building or block.occupancy[dx][dy].building ~= 0 then
+    return 'tile_occupied_by_building'
+  end
+
+  local ok_attr, attr = pcall(function()
+    return df.tiletype.attrs[block.tiletype[dx][dy]]
   end)
-  if occupied then return 'tile_occupied_by_building' end
-  if hidden then return 'tile_hidden_unexplored' end
-  if frozen_liquid then return 'tile_frozen_liquid' end
-  if not is_floor then return 'tile_not_open_floor' end
+  if not ok_attr or not attr then return 'tiletype_unreadable' end
+  if attr.material == df.tiletype_material.FROZEN_LIQUID then
+    return 'tile_frozen_liquid'
+  end
+  if attr.shape ~= df.tiletype_shape.FLOOR then return 'tile_not_open_floor' end
+  if not FARMABLE_MATERIALS[attr.material] then
+    return 'tile_not_native_farmable_soil'
+  end
   return nil
 end
 
@@ -207,4 +239,6 @@ print(json.encode({
   after_buildings = after_buildings,
   before_farm_plots = before_farm_plots,
   after_farm_plots = after_farm_plots,
+  farmability = 'native_soil_material',
+  native_farmable_tiles = width * height,
 }))

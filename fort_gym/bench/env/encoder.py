@@ -1337,7 +1337,14 @@ def encode_observation(
                 "— a verified 3x3 stable-floor footprint valid for CarpenterWorkshop or Still."
                 + rect_text
             )
-        else:
+        elif any(
+            key in work
+            for key in (
+                "carpenter_build_site",
+                "carpenter_build_site_rect",
+                "carpenter_build_site_source",
+            )
+        ):
             status_lines.append(
                 "No stable 3x3 workshop site observed yet. CarpenterWorkshop and Still need a "
                 "full 3x3 footprint of stable open floor near your fort; dig out or clear more "
@@ -1613,7 +1620,13 @@ def encode_observation(
                     labor_str = ",".join(labor_names) if labor_names else "-"
                     job = entry.get("current_job_type")
                     job_str = str(job) if isinstance(job, str) and job else "idle"
-                    citizen_parts.append(f"#{cid} [{labor_str}] {job_str}")
+                    pos = entry.get("pos")
+                    pos_str = ""
+                    if isinstance(pos, (list, tuple)) and len(pos) >= 3:
+                        px, py, pz = (_int_or_none(pos[index]) for index in range(3))
+                        if px is not None and py is not None and pz is not None:
+                            pos_str = f" @({px},{py},{pz})"
+                    citizen_parts.append(f"#{cid} [{labor_str}] {job_str}{pos_str}")
                 if citizen_parts:
                     status_lines.append("Citizens: " + "; ".join(citizen_parts))
                 if governed and idle is not None and idle > 0:
@@ -1858,6 +1871,31 @@ def encode_observation(
                             + ",".join(f"{key}={value}" for key, value in context_values.items())
                         )
                 status_lines.append(line)
+                offered = detail.get("offered_crops_by_season")
+                options_complete = detail.get("crop_options_complete") is True
+                if options_complete and isinstance(offered, dict):
+                    offered_parts = []
+                    for label in season_labels:
+                        values = offered.get(label)
+                        if not isinstance(values, list):
+                            continue
+                        tokens = [
+                            _sanitize_token(value)
+                            for value in values[:12]
+                            if isinstance(value, str) and value
+                        ]
+                        tokens = [token for token in tokens if token]
+                        offered_parts.append(f"{label}={','.join(tokens) if tokens else '-'}")
+                    status_lines.append(
+                        f"Farm plot #{plot_id} native offered crops: "
+                        + " ".join(offered_parts)
+                        + ". FARM accepts only a listed token for every requested season."
+                    )
+                else:
+                    status_lines.append(
+                        f"Farm plot #{plot_id} native offered crops unavailable; "
+                        "do not submit a non-clear FARM crop selection for this plot."
+                    )
 
         seeds = crew.get("seeds")
         if isinstance(seeds, list) and seeds:
@@ -1939,8 +1977,9 @@ def encode_observation(
                 status_lines.append(
                     f"Fort-area tiles: wall={wall} (diggable), {tree_part}"
                     f"floor={floor}, {frozen_liquid_part}"
-                    f"{shrub_part} (this harness only designates WALL tiles for "
-                    "dig/channel; other tiles in the rect are left untouched), "
+                    f"{shrub_part} (dig/channel target natural WALL tiles; "
+                    "down_stair may target stable floor or natural wall; use "
+                    "kind=gather/chop for vegetation), "
                     f"designated={designated}"
                 )
 
@@ -2007,29 +2046,16 @@ def encode_observation(
         nearby_trees = fort.get("nearby_trees")
         if isinstance(nearby_trees, dict):
             tree_total = _int_or_none(nearby_trees.get("total"))
-            clusters = nearby_trees.get("clusters")
             if tree_total is not None:
-                if tree_total > 0 and isinstance(clusters, list) and clusters:
-                    parts = []
-                    for cluster in clusters[:3]:
-                        if not isinstance(cluster, dict):
-                            continue
-                        count = _int_or_none(cluster.get("count"))
-                        cl_x = _int_or_none(cluster.get("x"))
-                        cl_y = _int_or_none(cluster.get("y"))
-                        cl_z = _int_or_none(cluster.get("z"))
-                        if None in (count, cl_x, cl_y, cl_z):
-                            continue
-                        parts.append(f"{count} trunks near ({cl_x},{cl_y},{cl_z})")
-                    if parts:
-                        status_lines.append(
-                            "Nearby trees (within 40 tiles of the citizens, "
-                            "possibly beyond the minimap): " + "; ".join(parts)
-                        )
+                if tree_total > 0:
+                    status_lines.append(
+                        "Visible nearby trees: "
+                        f"{tree_total} trunks within 40 tiles of the citizens. "
+                        "Choose chop coordinates only from visible map evidence."
+                    )
                 else:
                     status_lines.append(
-                        "Nearby trees: none within 40 tiles of the citizens — "
-                        "wood must come from farther away."
+                        "Visible nearby trees: none within 40 tiles of the citizens."
                     )
 
         construction_tiles = fort.get("construction_tiles")
@@ -2063,6 +2089,51 @@ def encode_observation(
             if row_parts:
                 status_lines.append("Wall/floor layout: " + "; ".join(row_parts))
 
+        access_focus = fort.get("vertical_access_focus")
+        if isinstance(access_focus, dict) and access_focus.get("active") is True:
+            rect = _int_list_or_none(access_focus.get("rect"), 6)
+            status = access_focus.get("status")
+            if rect is not None and isinstance(status, str):
+                focus_parts = []
+                for key in (
+                    "channel_designations",
+                    "channel_jobs",
+                    "completed_geometry_pairs",
+                    "local_step_pairs",
+                    "native_connected_pairs",
+                ):
+                    value = _int_or_none(access_focus.get(key))
+                    if value is not None:
+                        focus_parts.append(f"{key}={value}")
+                status_lines.append(
+                    "Model channel focus: "
+                    f"rect={_render_int_list(rect)} status={_sanitize_token(status)}; "
+                    + ", ".join(focus_parts)
+                    + ". pending means designation/job exists; connected requires completed "
+                    "top/lower access geometry, a valid local ramp step, and native "
+                    "canWalkBetween=true for that step's endpoints and a citizen."
+                )
+            samples = access_focus.get("pair_samples")
+            if isinstance(samples, list) and samples:
+                sample_parts = []
+                for sample in samples[:8]:
+                    if not isinstance(sample, dict):
+                        continue
+                    x = _int_or_none(sample.get("x"))
+                    y = _int_or_none(sample.get("y"))
+                    if x is None or y is None:
+                        continue
+                    top_shape = _sanitize_token(str(sample.get("top_shape") or "unknown"))
+                    lower_shape = _sanitize_token(str(sample.get("lower_shape") or "unknown"))
+                    sample_parts.append(
+                        f"({x},{y}) top={top_shape} lower={lower_shape} "
+                        f"geometry={bool(sample.get('geometry_complete'))} "
+                        f"local_step={bool(sample.get('local_step_valid'))} "
+                        f"connected={bool(sample.get('native_connected'))}"
+                    )
+                if sample_parts:
+                    status_lines.append("Channel focus pairs: " + "; ".join(sample_parts))
+
         map_rows = fort.get("map_rows")
         map_origin = fort.get("map_origin")
         frozen_liquid_tiles = _int_or_none(fort.get("frozen_liquid_tiles"))
@@ -2090,6 +2161,7 @@ def encode_observation(
                     "is still building it), #=natural wall, T=tree trunk, "
                     "b=bed, t=table, c=chair, d=door, w=workshop, "
                     "o=other occupied building, .=floor, "
+                    "<=up stair, >=down stair, X=up/down stair, ^=ramp, "
                     "i=frozen liquid (unstable; can thaw), ,=gatherable shrub, "
                     "s=sapling, p=boulder/pebbles, "
                     "@=dwarf, ~=impassable:"
@@ -2112,6 +2184,41 @@ def encode_observation(
                     "safe BUILD target. An 'x' is already ordered: do NOT "
                     "re-place a wall there — advance time and it becomes W."
                 )
+
+        access_level_maps = fort.get("access_level_maps")
+        if isinstance(access_level_maps, list):
+            for level in access_level_maps[:4]:
+                if not isinstance(level, dict):
+                    continue
+                origin = level.get("origin")
+                rows_value = level.get("rows")
+                source = level.get("source_action_rect")
+                if (
+                    not isinstance(origin, (list, tuple))
+                    or len(origin) < 3
+                    or not isinstance(rows_value, list)
+                    or not rows_value
+                ):
+                    continue
+                ox, oy, oz = (_int_or_none(origin[index]) for index in range(3))
+                if ox is None or oy is None or oz is None:
+                    continue
+                rows = [str(row) for row in rows_value[:17]]
+                width = max((len(row) for row in rows), default=0)
+                source_text = ""
+                if isinstance(source, (list, tuple)) and len(source) >= 6:
+                    source_rect = _int_list_or_none(source, 6)
+                    if source_rect is not None:
+                        source_text = f" for model channel {_render_int_list(source_rect)}"
+                status_lines.append(
+                    f"Access-level minimap (z={oz}{source_text}; top-left tile is "
+                    f"x={ox},y={oy}; blanks are hidden/unreadable). Legend matches the fort "
+                    "minimap, including <=up stair, >=down stair, X=up/down stair, ^=ramp:"
+                )
+                ruler = "".join(str((ox + i) % 10) for i in range(width))
+                status_lines.append(f"      {ruler}")
+                for index, row in enumerate(rows):
+                    status_lines.append(f"y={oy + index:>3}|{row}")
 
         if enclosed_spaces == 0:
             status_lines.append(
@@ -2504,6 +2611,8 @@ def encode_observation(
             "Finished goods in play:",
             "Fort-area tiles:",
             "Fort structure (plan-agnostic):",
+            "Model channel focus:",
+            "Channel focus pairs:",
             "Rooms:",
             "Wall/floor layout:",
         )

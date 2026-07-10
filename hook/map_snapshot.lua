@@ -124,61 +124,64 @@ for ty = ry1, ry2 do
       local dx = tx % 16
       local dy = ty % 16
       local designation = block.designation[dx][dy]
-      local tiletype = block.tiletype[dx][dy]
-      local attr = attrs[tiletype]
-      tile.tiletype = tonumber(tiletype) or -1
-      tile.tiletype_name = tostring(tiletype)
-      tile.material = attr and tostring(df.tiletype_material[attr.material] or attr.material)
-        or 'unknown'
 
-      if designation then
-        tile.hidden = designation.hidden and true or false
-        tile.dig = tostring(designation.dig)
-        if designation.hidden then
-          hidden_tiles = hidden_tiles + 1
-        end
-        if designation.dig ~= no_dig then
-          dig_designations = dig_designations + 1
-        end
-      end
-
-      if attr and attr.material == frozen_liquid_material then
-        tile.category = 'frozen_liquid'
-        tile.shape = attr.shape == floor_shape and 'FLOOR' or tostring(attr.shape)
-        tile.tiletype_name = 'FROZEN_LIQUID'
-        tile.char = 'i'
-        frozen_liquid_tiles = frozen_liquid_tiles + 1
-      elseif attr and attr.shape == floor_shape then
-        tile.category = 'floor'
-        tile.shape = 'FLOOR'
-        tile.char = '.'
-        floor_tiles = floor_tiles + 1
-      elseif attr and attr.shape == wall_shape then
-        tile.category = 'wall'
-        tile.shape = 'WALL'
-        tile.char = '#'
-        wall_tiles = wall_tiles + 1
-      else
-        tile.category = 'other'
-        tile.shape = attr and tostring(attr.shape) or 'unknown'
-        tile.char = ','
-      end
-
-      if tile.hidden then
+      if designation and designation.hidden then
+        tile.hidden = true
         tile.category = 'hidden'
         tile.char = '?'
-      elseif designation and designation.dig ~= no_dig then
-        tile.category = 'dig'
-        tile.char = 'x'
-      end
+        hidden_tiles = hidden_tiles + 1
+      else
+        local tiletype = block.tiletype[dx][dy]
+        local attr = attrs[tiletype]
+        tile.tiletype = tonumber(tiletype) or -1
+        tile.tiletype_name = tostring(tiletype)
+        tile.material = attr
+          and tostring(df.tiletype_material[attr.material] or attr.material)
+          or 'unknown'
+        if designation then
+          tile.dig = tostring(designation.dig)
+        end
+        if designation and designation.dig ~= no_dig then
+          dig_designations = dig_designations + 1
+        end
 
-      local building = building_tiles[tile_key(tx, ty)]
-      if building then
-        tile.category = 'building'
-        tile.char = building.char
-        tile.building = building.name
-        tile.building_kind = building.kind
-        building_tile_count = building_tile_count + 1
+        if attr and attr.material == frozen_liquid_material then
+          tile.category = 'frozen_liquid'
+          tile.shape = attr.shape == floor_shape and 'FLOOR' or tostring(attr.shape)
+          tile.tiletype_name = 'FROZEN_LIQUID'
+          tile.char = 'i'
+          frozen_liquid_tiles = frozen_liquid_tiles + 1
+        elseif attr and attr.shape == floor_shape then
+          tile.category = 'floor'
+          tile.shape = 'FLOOR'
+          tile.char = '.'
+          floor_tiles = floor_tiles + 1
+        elseif attr and attr.shape == wall_shape then
+          tile.category = 'wall'
+          tile.shape = 'WALL'
+          tile.char = '#'
+          wall_tiles = wall_tiles + 1
+        else
+          tile.category = 'other'
+          tile.shape = attr
+            and tostring(df.tiletype_shape[attr.shape] or attr.shape)
+            or 'unknown'
+          tile.char = ','
+        end
+
+        if designation and designation.dig ~= no_dig then
+          tile.category = 'dig'
+          tile.char = 'x'
+        end
+
+        local building = building_tiles[tile_key(tx, ty)]
+        if building then
+          tile.category = 'building'
+          tile.char = building.char
+          tile.building = building.name
+          tile.building_kind = building.kind
+          building_tile_count = building_tile_count + 1
+        end
       end
     else
       missing_blocks = missing_blocks + 1

@@ -9,7 +9,12 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 
 from .rubric import evaluate_trace_records
-from .scoring import SCORE_VERSION, composite_score, score_components
+from .scoring import (
+    GOVERNED_SCORE_PROGRESS_PROVENANCE,
+    SCORE_VERSION,
+    composite_score,
+    score_components,
+)
 
 
 class RunSummary(BaseModel):
@@ -34,6 +39,12 @@ class RunSummary(BaseModel):
     work_progress: int = 0
     designation_progress: int = 0
     completion_progress: int = 0
+    governed_owned_work_progress: int = 0
+    governed_owned_completion_progress: int = 0
+    governed_owned_utility_progress: float = 0.0
+    governed_owned_production_progress: int = 0
+    governed_owned_complexity_progress: float = 0.0
+    score_progress_provenance: Optional[str] = None
     utility_progress: float = 0.0
     production_progress: int = 0
     complexity_progress: float = 0.0
@@ -147,6 +158,13 @@ def summarize(trace_path: Path) -> RunSummary:
     work_progress = 0
     designation_progress = 0
     completion_progress = 0
+    governed_owned_work_progress = 0
+    governed_owned_completion_progress = 0
+    governed_owned_designation_progress = 0
+    governed_score_progress_seen = False
+    governed_owned_utility_progress = 0.0
+    governed_owned_production_progress = 0
+    governed_owned_complexity_progress = 0.0
     utility_progress = 0.0
     production_progress = 0
     complexity_progress = 0.0
@@ -214,6 +232,7 @@ def summarize(trace_path: Path) -> RunSummary:
                 raise ValueError(f"trace row {step!r} has invalid events surface; expected list")
             metrics_snapshot = record.get("metrics") or {}
             score_payload = record.get("score") or {}
+            execute_payload = record.get("execute") or {}
             row_versions: set[int] = set()
             missing_surfaces = []
 
@@ -247,6 +266,26 @@ def summarize(trace_path: Path) -> RunSummary:
                 )
             trace_score_versions.update(row_versions)
 
+            if (
+                isinstance(execute_payload, dict)
+                and execute_payload.get("provenance") == "dfhack_governed"
+                and metrics_snapshot.get("score_progress_provenance")
+                != GOVERNED_SCORE_PROGRESS_PROVENANCE
+            ):
+                raise ValueError(
+                    "governed score-v5 trace row is missing action-owned progress "
+                    f"provenance (step {step!r})"
+                )
+            if (
+                metrics_snapshot.get("score_progress_provenance")
+                == GOVERNED_SCORE_PROGRESS_PROVENANCE
+                and type(metrics_snapshot.get("score_duration_blocked")) is not bool
+            ):
+                raise ValueError(
+                    "governed score-v5 trace row is missing a boolean "
+                    f"score_duration_blocked gate (step {step!r})"
+                )
+
             run_id = record.get("run_id", run_id)
             if isinstance(step, int) and step > steps_seen:
                 steps_seen = step
@@ -273,6 +312,35 @@ def summarize(trace_path: Path) -> RunSummary:
                 completion_progress,
                 _to_int(metrics_snapshot.get("completion_progress")),
             )
+            if (
+                metrics_snapshot.get("score_progress_provenance")
+                == GOVERNED_SCORE_PROGRESS_PROVENANCE
+            ):
+                governed_score_progress_seen = True
+                governed_owned_work_progress = max(
+                    governed_owned_work_progress,
+                    _to_int(metrics_snapshot.get("governed_owned_work_progress")),
+                )
+                governed_owned_completion_progress = max(
+                    governed_owned_completion_progress,
+                    _to_int(metrics_snapshot.get("governed_owned_completion_progress")),
+                )
+                governed_owned_designation_progress = max(
+                    governed_owned_designation_progress,
+                    _to_int(metrics_snapshot.get("governed_owned_designation_progress")),
+                )
+                governed_owned_utility_progress = max(
+                    governed_owned_utility_progress,
+                    _to_float(metrics_snapshot.get("governed_owned_utility_progress")),
+                )
+                governed_owned_production_progress = max(
+                    governed_owned_production_progress,
+                    _to_int(metrics_snapshot.get("governed_owned_production_progress")),
+                )
+                governed_owned_complexity_progress = max(
+                    governed_owned_complexity_progress,
+                    _to_float(metrics_snapshot.get("governed_owned_complexity_progress")),
+                )
             utility_progress = max(
                 utility_progress,
                 # score-v3: utility_progress can be a float (demand-capped
@@ -532,6 +600,14 @@ def summarize(trace_path: Path) -> RunSummary:
     total_steps = steps_seen + 1 if steps_seen >= 0 else 0
     drink_availability = (drink_sufficient / total_steps) if total_steps else 0.0
 
+    if governed_score_progress_seen:
+        work_progress = governed_owned_work_progress
+        completion_progress = governed_owned_completion_progress
+        designation_progress = governed_owned_designation_progress
+        utility_progress = governed_owned_utility_progress
+        production_progress = governed_owned_production_progress
+        complexity_progress = governed_owned_complexity_progress
+
     summary_payload = {
         "duration_ticks": duration,
         "peak_pop": peak_pop,
@@ -568,6 +644,16 @@ def summarize(trace_path: Path) -> RunSummary:
         work_progress=work_progress,
         designation_progress=designation_progress,
         completion_progress=completion_progress,
+        governed_owned_work_progress=governed_owned_work_progress,
+        governed_owned_completion_progress=governed_owned_completion_progress,
+        governed_owned_utility_progress=governed_owned_utility_progress,
+        governed_owned_production_progress=governed_owned_production_progress,
+        governed_owned_complexity_progress=governed_owned_complexity_progress,
+        score_progress_provenance=(
+            GOVERNED_SCORE_PROGRESS_PROVENANCE
+            if governed_score_progress_seen
+            else None
+        ),
         utility_progress=utility_progress,
         production_progress=production_progress,
         complexity_progress=complexity_progress,

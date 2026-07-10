@@ -3,6 +3,14 @@ from __future__ import annotations
 from fort_gym.bench.eval import metrics, scoring
 
 
+def _map_snapshot(*tiles: dict) -> dict:
+    return {
+        "ok": True,
+        "rect": [10, 20, 5, 10 + len(tiles) - 1, 20, 5],
+        "tiles": list(tiles),
+    }
+
+
 def test_work_progress_delta_counts_target_room_progress() -> None:
     baseline = {
         "target_dig_designations": 0,
@@ -28,6 +36,104 @@ def test_work_progress_delta_counts_target_room_progress() -> None:
         "completion_progress": 5,
         "work_progress": 11,
     }
+
+
+def test_governed_designation_establishes_ownership_but_not_completion() -> None:
+    action = {
+        "type": "DIG",
+        "params": {"kind": "dig", "area": [10, 20, 5], "size": [1, 1, 1]},
+    }
+    before = _map_snapshot(
+        {"x": 10, "y": 20, "z": 5, "category": "wall", "dig": "No"}
+    )
+    after = _map_snapshot(
+        {"x": 10, "y": 20, "z": 5, "category": "dig", "dig": "Default"}
+    )
+
+    delta = metrics.governed_action_footprint_progress_delta(action, before, after)
+
+    assert delta["governed_step_designation_progress"] == 1
+    assert delta["governed_step_completion_progress"] == 0
+    assert delta["governed_owned_tiles_added"] == [[10, 20, 5]]
+
+
+def test_governed_immediate_dig_completion_is_owned_and_completed() -> None:
+    action = {
+        "type": "DIG",
+        "params": {"kind": "dig", "area": [10, 20, 5], "size": [1, 1, 1]},
+    }
+    before = _map_snapshot(
+        {"x": 10, "y": 20, "z": 5, "category": "wall", "dig": "No"}
+    )
+    after = _map_snapshot(
+        {
+            "x": 10,
+            "y": 20,
+            "z": 5,
+            "category": "floor",
+            "material": "SOIL",
+            "dig": "No",
+        }
+    )
+
+    delta = metrics.governed_action_footprint_progress_delta(action, before, after)
+
+    assert delta["governed_step_designation_progress"] == 0
+    assert delta["governed_step_completion_progress"] == 1
+    assert delta["governed_owned_tiles_added"] == [[10, 20, 5]]
+    assert delta["governed_completed_tiles"] == [[10, 20, 5]]
+
+
+def test_governed_non_dig_and_mismatched_snapshots_never_own_progress() -> None:
+    before = _map_snapshot(
+        {"x": 10, "y": 20, "z": 5, "category": "wall", "dig": "No"}
+    )
+    after = _map_snapshot(
+        {"x": 10, "y": 20, "z": 5, "category": "floor", "dig": "No"}
+    )
+
+    wait_delta = metrics.governed_action_footprint_progress_delta(
+        {"type": "WAIT", "params": {}}, before, after
+    )
+    after["rect"] = [11, 20, 5, 11, 20, 5]
+    mismatch_delta = metrics.governed_action_footprint_progress_delta(
+        {
+            "type": "DIG",
+            "params": {"kind": "dig", "area": [10, 20, 5], "size": [1, 1, 1]},
+        },
+        before,
+        after,
+    )
+
+    assert wait_delta["governed_owned_tiles_added"] == []
+    assert mismatch_delta["governed_owned_tiles_added"] == []
+
+
+def test_governed_owned_channel_requires_completed_ramp_top() -> None:
+    owned = {(10, 20, 5): "channel", (11, 20, 5): "dig"}
+    snapshot = _map_snapshot(
+        {
+            "x": 10,
+            "y": 20,
+            "z": 5,
+            "category": "other",
+            "shape": "RAMP_TOP",
+            "dig": "No",
+        },
+        {
+            "x": 11,
+            "y": 20,
+            "z": 5,
+            "category": "floor",
+            "material": "STONE",
+            "dig": "No",
+        },
+    )
+
+    assert metrics.governed_owned_excavation_completion_tiles(owned, snapshot) == [
+        [10, 20, 5],
+        [11, 20, 5],
+    ]
 
 
 def test_ui_work_progress_delta_counts_fixed_rect_progress() -> None:

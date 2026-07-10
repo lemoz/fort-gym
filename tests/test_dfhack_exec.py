@@ -183,6 +183,7 @@ def test_item_consuming_placement_hooks_require_walk_group_connectivity() -> Non
         assert expected_error in hook_text
         assert "construct_postcondition_failed" in hook_text
         assert "rollback_failed" in hook_text
+        assert "rollback_verified" in hook_text
 
 
 def test_workshop_hook_fails_closed_on_illegal_footprint() -> None:
@@ -250,7 +251,14 @@ def test_build_farm_plot_hook_is_bounded_and_reports_counts() -> None:
     assert "tile_occupied_by_building" in hook_text
     assert "tile_hidden_unexplored" in hook_text
     assert "tile_frozen_liquid" in hook_text
+    assert "tile_has_liquid" in hook_text
     assert "tile_not_open_floor" in hook_text
+    assert "tile_not_native_farmable_soil" in hook_text
+    assert "scan_building_at_tile" in hook_text
+    assert "for _, building in ipairs(all) do" in hook_text
+    assert "dfhack.buildings.findAtTile" not in hook_text
+    assert "FARMABLE_MATERIALS" in hook_text
+    assert "df.tiletype_material.SOIL" in hook_text
     assert "tile_placement_error" in hook_text
 
 
@@ -328,9 +336,8 @@ def test_set_farm_crop_hook_writes_plant_id_and_reports_before_after() -> None:
     hook_path = Path(__file__).resolve().parents[1] / "hook" / "set_farm_crop.lua"
     hook_text = hook_path.read_text(encoding="utf-8")
 
-    # writes the plant raw index into the seasonal plant_id slot (the q-menu op)
-    assert "plot.plant_id[idx] = crop_index" in hook_text
-    assert "plot.plant_id[idx] = -1" in hook_text
+    # Writes only after an all-season native eligibility preflight.
+    assert "plot.plant_id[idx] = expected_plant_id[idx + 1]" in hook_text
     assert "df.building_farmplotst:is_instance" in hook_text
     assert "plot:getBuildStage()" in hook_text
     assert "plot:getMaxBuildStage()" in hook_text
@@ -339,12 +346,19 @@ def test_set_farm_crop_hook_writes_plant_id_and_reports_before_after() -> None:
     assert "before_plant_id" in hook_text
     assert "after_plant_id" in hook_text
     assert "seasons_changed" in hook_text
-    # engine-constraint gating mirrors the q-menu (not a heuristic): only the
-    # season grow-flag is gated. Surface/subterranean eligibility is left to
-    # the engine, so no crop_not_growable_here rejection is emitted.
-    assert "season_not_growable" in hook_text
-    assert "crop_not_growable_here" not in hook_text
-    # NO seed gating, but seeds_on_hand reported as evidence
+    assert "expected_plant_id" in hook_text
+    assert "restore_before" in hook_text
+    assert "crop_write_failed" in hook_text
+    assert "crop_readback_mismatch" in hook_text
+    assert "rollback_verified" in hook_text
+    assert "crop_not_offered_for_plot_season" in hook_text
+    assert "surface_crop_options_unverified" in hook_text
+    assert "BIOME_SUBTERRANEAN_WATER" in hook_text
+    assert "underground_depth_min" in hook_text
+    assert "offered_crops_by_season" in hook_text
+    assert "if #seasons_skipped > 0 then" in hook_text
+    # Usable seed stock is both a gate and evidence.
+    assert "seed_inventory_unreadable" in hook_text
     assert "seeds_on_hand" in hook_text
     # CP437 safety and single json.encode print discipline
     assert "gsub('[^%w %p]', '?')" in hook_text
@@ -450,15 +464,42 @@ def test_designate_rect_reports_designation_counts() -> None:
     assert "missing_tiles" in hook_text
 
 
-def test_designate_rect_dig_channel_never_writes_non_wall_tiles() -> None:
-    # dig/channel must only ever write a real designation onto WALL tiles.
-    # Writing it unconditionally on a non-wall tile (e.g. a SHRUB) would
-    # silently create a real Gather-Plants designation the harness never
-    # reports and the agent was never told would happen.
+def test_designate_rect_channel_is_floor_capable_and_fail_closed() -> None:
     hook_path = Path(__file__).resolve().parents[1] / "hook" / "designate_rect.lua"
     hook_text = hook_path.read_text(encoding="utf-8")
 
-    assert "if status ~= 'non_wall_tiles' then" in hook_text
+    assert "shape_ok = shape_ok or attr.shape == floor_shape" in hook_text
+    assert "designation.hidden" in hook_text
+    assert "scan_building_at_tile(x, y, z)" in hook_text
+    assert "for _, building in ipairs(all) do" in hook_text
+    assert "dfhack.buildings.findAtTile" not in hook_text
+    assert "block.occupancy[dx][dy].building ~= 0" in hook_text
+    assert "designation.flow_size > 0" in hook_text
+    assert "attr.material == frozen_liquid_material" in hook_text
+    assert "attr.material == construction_material" in hook_text
+    assert "attr.material == tree_material" in hook_text
+    for material in (
+        "POOL",
+        "RIVER",
+        "ROOT",
+        "LAVA_STONE",
+        "MAGMA",
+        "HFS",
+        "UNDERWORLD_GATE",
+        "FEATURE",
+    ):
+        assert f"df.tiletype_material.{material}" in hook_text
+    assert "native_material_not_diggable" in hook_text
+    assert "if failed_count > 0 then" in hook_text
+    assert "tile_not_designatable" in hook_text
+    assert "for _, record in ipairs(writes) do" in hook_text
+    assert "rollback_writes" in hook_text
+    assert "designation_readback_mismatch" in hook_text
+    assert "designation_write_failed" in hook_text
+    assert "designation_rollback_readback_mismatch" in hook_text
+    assert "rollback_verified" in hook_text
+    assert "df.tile_dig_designation.DownStair" not in hook_text
+    assert "complete_dig" not in hook_text
 
 
 def test_designate_rect_chop_is_bounded_tree_designation() -> None:
@@ -469,6 +510,9 @@ def test_designate_rect_chop_is_bounded_tree_designation() -> None:
     assert "trees_designated" in hook_text
     assert "non_tree_tiles" in hook_text
     assert "df.tiletype_material.TREE" in hook_text
+    assert "designation_preflight_failed" in hook_text
+    assert "designation_readback_mismatch" in hook_text
+    assert "rollback_verified" in hook_text
     # the old global autochop pulse (broken on this DFHack: no such script) is gone
     assert "autochop" not in hook_text
 
@@ -483,6 +527,9 @@ def test_designate_rect_gather_is_bounded_shrub_designation() -> None:
     assert "shrubs_designated" in hook_text
     assert "already_designated" in hook_text
     assert "non_shrub_tiles" in hook_text
+    assert "designation_preflight_failed" in hook_text
+    assert "local committed, commit_error = pcall" in hook_text
+    assert "designation_rollback_readback_mismatch" in hook_text
     # shares the bounded rect (30x30, one z-level) with dig/channel/chop
     assert "rect_too_large" in hook_text
     assert "bad_rect" in hook_text
@@ -633,14 +680,27 @@ def test_job_metrics_hook_emits_per_citizen_list() -> None:
     hook_path = Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua"
     hook_text = hook_path.read_text(encoding="utf-8")
 
-    # per-citizen detail (id + enabled whitelist labors + current job), capped
+    # per-citizen detail (id + position + enabled labors + current job), capped
     assert "MAX_CITIZEN_ENTRIES = 20" in hook_text
     assert "citizen_enabled_labors" in hook_text
     assert "current_job_type" in hook_text
+    assert "pos = path_pos" in hook_text
     assert "list = {}" in hook_text
     # aggregate counts kept for backward compatibility
     assert "mining_labor = 0" in hook_text
     assert "carpentry_labor = 0" in hook_text
+
+
+def test_job_and_work_metrics_count_stair_jobs_as_excavation() -> None:
+    hook_dir = Path(__file__).resolve().parents[1] / "hook"
+    for name in ("job_metrics.lua", "work_metrics.lua"):
+        script = (hook_dir / name).read_text(encoding="utf-8")
+        for job_name in (
+            "CarveUpwardStaircase",
+            "CarveDownwardStaircase",
+            "CarveUpDownStaircase",
+        ):
+            assert job_name in script
 
 
 def test_prepare_keystroke_tree_material_target_uses_broad_selection() -> None:
@@ -666,6 +726,8 @@ def test_job_metrics_is_read_only_and_reports_crew() -> None:
         "getBuildStage",
         "shrub_or_other",
         "has_worker",
+        "stage_read_ok",
+        "max_stage > 0",
     ):
         assert needle in script
     # read-only: must never write designations or tiletypes
@@ -725,8 +787,22 @@ def test_job_metrics_reports_order_lifecycle_and_raw_production_inputs() -> None
         "getContainedItems",
         "tile_context",
         "designation.subterranean",
+        "offered_crops_by_season",
+        "crop_options_complete",
+        "local seed_scan_ok = pcall",
+        "if not readable then error('seed_flags_unreadable') end",
+        "crop_option_scan_ok",
+        "crop_options_truncated",
+        "crop_options_any_truncated",
+        "and not crop_options_any_truncated",
+        "native_seed_season_depth_subterranean_water",
     ):
         assert needle in script
+
+    # Enumeration continues after the 12-item presentation bound so the hook
+    # can report truncation instead of falsely claiming exhaustive options.
+    assert "if #offers[season] < 12 then" in script
+    assert "truncated[season] = true" in script
 
 
 def test_work_metrics_usable_workshop_requires_completed_build_stage() -> None:
@@ -737,6 +813,29 @@ def test_work_metrics_usable_workshop_requires_completed_build_stage() -> None:
     assert "building:getBuildStage() >= building:getMaxBuildStage()" in script
     assert "if building_complete then" in script
     assert "if building_task_jobs > 0 then" not in script
+
+
+def test_global_work_metrics_suppresses_legacy_plan_geometry(monkeypatch) -> None:
+    captured: dict = {}
+
+    def fake_run_lua_file(path, *args, **kwargs):
+        captured["path"] = path
+        captured["args"] = args
+        return {"ok": True, "observation_scope": "global"}
+
+    monkeypatch.setattr(dfhack_backend, "run_lua_file", fake_run_lua_file)
+
+    assert dfhack_backend.read_work_metrics(global_only=True) == {
+        "ok": True,
+        "observation_scope": "global",
+    }
+    assert captured["args"] == ("global",)
+    assert Path(captured["path"]).name == "work_metrics.lua"
+
+    script = Path(captured["path"]).read_text(encoding="utf-8")
+    assert "if not global_only then" in script
+    assert "out.fortress_plan_name = 'two_room_workshop'" in script
+    assert "observation_scope = global_only and 'global' or 'target'" in script
 
 
 def test_place_furniture_hook_installs_existing_items_only() -> None:
@@ -831,6 +930,11 @@ def test_floor_observers_distinguish_frozen_liquid_from_stable_floor() -> None:
     map_snapshot = (hook_dir / "map_snapshot.lua").read_text(encoding="utf-8")
     assert "tile.category = 'frozen_liquid'" in map_snapshot
     assert "tile.char = 'i'" in map_snapshot
+    visible_block = map_snapshot[map_snapshot.index("if designation and designation.hidden") :]
+    assert visible_block.index("else") < visible_block.index("tile.tiletype =")
+    hidden_branch = visible_block[: visible_block.index("else")]
+    assert "tiletype" not in hidden_branch
+    assert "material" not in hidden_branch
 
     fort_metrics = (hook_dir / "fort_metrics.lua").read_text(encoding="utf-8")
     assert "material ~= FROZEN_LIQUID_MATERIAL" in fort_metrics
@@ -899,7 +1003,7 @@ def test_fort_metrics_renders_minimap_grid() -> None:
     )
     for needle in ("map_rows", "map_origin", "BUILDING_CHARS", "construction_set"):
         assert needle in script
-    assert "elseif building_at(x, y, anchor_z) then" in script
+    assert "elseif building_at(x, y, z) then" in script
     assert "ch = 'o'" in script
 
 
@@ -936,8 +1040,51 @@ def test_fort_metrics_anchors_on_citizens_and_marks_dwarves() -> None:
         encoding="utf-8"
     )
     assert "citizen_positions" in script
-    assert "citizen_lookup" in script
+    assert "citizen_tile_lookup" in script
     assert "'@'" in script
+
+
+def test_fort_metrics_reports_model_channel_focused_vertical_access() -> None:
+    script = (Path(__file__).resolve().parents[1] / "hook" / "fort_metrics.lua").read_text(
+        encoding="utf-8"
+    )
+
+    for needle in (
+        "STAIR_UP_SHAPE",
+        "STAIR_DOWN_SHAPE",
+        "STAIR_UPDOWN_SHAPE",
+        "RAMP_SHAPE",
+        "vertical_access_focus",
+        "access_level_maps",
+        "local radius = 8",
+        "source = 'model_owned_channel_tile'",
+        "source_action_rect",
+        "local function local_ramp_step(x, y)",
+        "dfhack.maps.canWalkBetween(lower_pos, upper_pos)",
+        "dfhack.maps.canWalkBetween(cpos, upper_pos)",
+        "local_step_pairs",
+        "visible_shape_name(top_shape, top_hidden)",
+        "visible_shape_name(lower_shape, lower_hidden)",
+        "status = 'pending'",
+        "status = 'connected'",
+    ):
+        assert needle in script
+    assert "primary_access_count" not in script
+    assert "dfhack.maps.canStepBetween" not in script
+    assert "citizens_below" not in script
+    assert "TREE_MATERIAL" in script
+    assert "tree_material" not in script
+
+
+def test_fort_metrics_never_reads_hidden_tiletype_for_room_boundaries() -> None:
+    script = (Path(__file__).resolve().parents[1] / "hook" / "fort_metrics.lua").read_text(
+        encoding="utf-8"
+    )
+
+    hidden_guard = script.index("if hidden then return nil, true, nil end")
+    tiletype_read = script.index("local attr = attrs[block.tiletype[dx][dy]]")
+    assert hidden_guard < tiletype_read
+    assert "elseif shape == WALL_SHAPE" in script
 
 
 def test_fort_metrics_marks_queued_constructions_without_sealing_rooms() -> None:
@@ -980,15 +1127,16 @@ def test_read_game_state_reports_concrete_viewscreen_type() -> None:
     assert 'rendered:match("<type: ([^>]+)>")' in source
 
 
-def test_fort_metrics_reports_nearby_tree_clusters() -> None:
+def test_fort_metrics_counts_only_visible_nearby_trees_without_target_coordinates() -> None:
     script = (Path(__file__).resolve().parents[1] / "hook" / "fort_metrics.lua").read_text(
         encoding="utf-8"
     )
-    # clearing spawns: the fort window can hold zero trunks while forests
-    # stand 20 tiles away — the scan is factual content, bounded, read-only
     assert "nearby_trees" in script
     assert "local RADIUS = 40" in script
-    assert "table.sort(list" in script
+    nearby_block = script[script.index("local nearby_trees") : script.index("-- ASCII minimap")]
+    assert "designation.hidden" in nearby_block
+    assert "clusters" not in nearby_block
+    assert "BUCKET" not in nearby_block
 
 
 def test_read_game_state_reports_usable_stock_counts() -> None:

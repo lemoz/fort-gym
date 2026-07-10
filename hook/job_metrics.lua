@@ -65,6 +65,99 @@ local function plant_token(idx)
   return nil
 end
 
+local function raw_flag(flags, name)
+  local ok, value = pcall(function() return flags[name] and true or false end)
+  return ok and value or false
+end
+
+local function strict_raw_flag(flags, name)
+  local ok, value = pcall(function() return flags[name] and true or false end)
+  if not ok then error('plant_flag_unreadable:' .. tostring(name)) end
+  return value
+end
+
+local function usable_seed(item)
+  local flags = item and item.flags
+  if not flags then return false, false end
+  local rejected = false
+  local readable = pcall(function()
+    rejected = flags.dump
+      or flags.forbid
+      or flags.garbage_collect
+      or flags.hostile
+      or flags.on_fire
+      or flags.rotten
+      or flags.trader
+      or flags.in_building
+      or flags.construction
+      or flags.artifact
+  end)
+  return readable and not rejected, readable
+end
+
+local seed_counts_by_index = {}
+local seed_scan_ok = pcall(function()
+  for _, item in ipairs(df.global.world.items.other.SEEDS or {}) do
+    local usable, readable = usable_seed(item)
+    if not readable then error('seed_flags_unreadable') end
+    if usable then
+      seed_counts_by_index[item.mat_index] =
+        (seed_counts_by_index[item.mat_index] or 0) + (tonumber(item.stack_size) or 1)
+    end
+  end
+end)
+if not seed_scan_ok then seed_counts_by_index = {} end
+
+local SEASON_FLAG = { 'SPRING', 'SUMMER', 'AUTUMN', 'WINTER' }
+
+local function underground_offers()
+  local offers = { {}, {}, {}, {} }
+  local truncated = { false, false, false, false }
+  local scan_ok = pcall(function()
+    for index, plant in ipairs(_plant_raws) do
+      local flags = plant.flags
+      local surface_crop = plant.underground_depth_min == 0
+        or plant.underground_depth_max == 0
+      if (seed_counts_by_index[index] or 0) > 0
+          and strict_raw_flag(flags, 'SEED')
+          and not strict_raw_flag(flags, 'TREE')
+          and not surface_crop
+          and strict_raw_flag(flags, 'BIOME_SUBTERRANEAN_WATER') then
+        for season = 1, 4 do
+          if strict_raw_flag(flags, SEASON_FLAG[season]) then
+            if #offers[season] < 12 then
+              table.insert(offers[season], sanitize(plant.id))
+            else
+              truncated[season] = true
+            end
+          end
+        end
+      end
+    end
+    for season = 1, 4 do table.sort(offers[season]) end
+  end)
+  local offered = {
+    spring = offers[1],
+    summer = offers[2],
+    autumn = offers[3],
+    winter = offers[4],
+  }
+  local truncation = {
+    spring = truncated[1],
+    summer = truncated[2],
+    autumn = truncated[3],
+    winter = truncated[4],
+  }
+  return offered, truncation, scan_ok
+end
+
+local offered_crops_by_season, crop_options_truncated, crop_option_scan_ok =
+  underground_offers()
+local crop_options_any_truncated = crop_options_truncated.spring
+  or crop_options_truncated.summer
+  or crop_options_truncated.autumn
+  or crop_options_truncated.winter
+
 local function labor_enabled(unit, labor_name)
   local ok, enabled = pcall(function()
     local labor = df.unit_labor[labor_name]
@@ -193,6 +286,7 @@ for _, unit in ipairs(df.global.world.units.active) do
       end
       table.insert(out.citizens.list, {
         id = unit.id,
+        pos = path_pos and { path_pos.x, path_pos.y, path_pos.z } or false,
         labors = citizen_enabled_labors(unit),
         current_job_type = current_job_type,
       })
@@ -255,7 +349,11 @@ while link do
       table.insert(out.jobs.active_ids, job.id)
     end
     local name = job_type_name(job.job_type)
-    if name == 'Dig' or name == 'DigChannel' then
+    if name == 'Dig'
+        or name == 'DigChannel'
+        or name == 'CarveUpwardStaircase'
+        or name == 'CarveDownwardStaircase'
+        or name == 'CarveUpDownStaircase' then
       out.jobs.dig = out.jobs.dig + 1
     elseif name == 'ConstructBuilding' then
       out.jobs.construct_building = out.jobs.construct_building + 1
@@ -400,11 +498,20 @@ out.placed_furniture = { bed = 0, door = 0, table = 0, chair = 0 }
 out.placed_furniture_completed = { bed = 0, door = 0, table = 0, chair = 0 }
 out.placed_furniture_positions = { bed = {}, door = {}, table = {}, chair = {} }
 
-local function building_is_complete(bld)
-  local ok, complete = pcall(function()
-    return bld:getBuildStage() >= bld:getMaxBuildStage()
+local function building_stage(bld)
+  local ok, stage, max_stage = pcall(function()
+    return bld:getBuildStage(), bld:getMaxBuildStage()
   end)
-  return ok and complete or false
+  stage = ok and tonumber(stage) or nil
+  max_stage = ok and tonumber(max_stage) or nil
+  local stage_read_ok = ok and stage ~= nil and max_stage ~= nil and max_stage > 0
+  if not stage_read_ok then return false, 0, 0, false end
+  return true, stage, max_stage, stage >= max_stage
+end
+
+local function building_is_complete(bld)
+  local _, _, _, built = building_stage(bld)
+  return built
 end
 
 -- farm plots placed (G7 survival primitive: see build_farm_plot.lua)
@@ -416,11 +523,7 @@ out.farm_plot_positions = {}
 out.farm_plot_details = {}
 
 local function farm_plot_detail(bld)
-  local stage, max_stage = 0, 0
-  pcall(function()
-    stage = bld:getBuildStage()
-    max_stage = bld:getMaxBuildStage()
-  end)
+  local stage_read_ok, stage, max_stage, built = building_stage(bld)
   local crops = { false, false, false, false }
   pcall(function()
     for s = 0, 3 do
@@ -442,6 +545,7 @@ local function farm_plot_detail(bld)
         local block = dfhack.maps.getTileBlock(x, y, bld.z)
         if not block then return end
         local designation = block.designation[x % 16][y % 16]
+        if not designation or designation.hidden then return end
         tile_context.readable = tile_context.readable + 1
         if designation.outside then tile_context.outside = tile_context.outside + 1 end
         if designation.light then tile_context.light = tile_context.light + 1 end
@@ -454,14 +558,34 @@ local function farm_plot_detail(bld)
       end)
     end
   end
+  local plot_subterranean = tile_context.total > 0
+    and tile_context.readable == tile_context.total
+    and tile_context.subterranean == tile_context.total
+  local crop_options_complete = built
+    and plot_subterranean
+    and seed_scan_ok
+    and crop_option_scan_ok
+    and not crop_options_any_truncated
   return {
     id = bld.id,
     rect = { bld.x1, bld.y1, bld.x2, bld.y2, bld.z },
     stage = stage,
     max_stage = max_stage,
-    built = stage >= max_stage,
+    stage_read_ok = stage_read_ok,
+    built = built,
     crops = crops,
     tile_context = tile_context,
+    plot_subterranean = plot_subterranean,
+    crop_options_complete = crop_options_complete,
+    crop_options_seed_scan_ok = seed_scan_ok,
+    crop_options_scan_ok = crop_option_scan_ok,
+    crop_options_truncated = crop_options_truncated,
+    crop_options_scope = crop_options_complete
+      and 'native_seed_season_depth_subterranean_water'
+      or 'unsupported_or_incomplete',
+    offered_crops_by_season = crop_options_complete and offered_crops_by_season or {
+      spring = {}, summer = {}, autumn = {}, winter = {},
+    },
   }
 end
 
@@ -504,11 +628,7 @@ for _, bld in ipairs(df.global.world.buildings.all) do
     pcall(function()
       subtype = df.workshop_type[bld:getSubtype()] or tostring(bld:getSubtype())
     end)
-    local stage, max_stage = 0, 0
-    pcall(function()
-      stage = bld:getBuildStage()
-      max_stage = bld:getMaxBuildStage()
-    end)
+    local stage_read_ok, stage, max_stage, built = building_stage(bld)
     local queued = 0
     pcall(function() queued = #bld.jobs end)
     local queued_job_details = {}
@@ -533,7 +653,8 @@ for _, bld in ipairs(df.global.world.buildings.all) do
       id = bld.id,
       subtype = tostring(subtype),
       pos = { bld.centerx, bld.centery, bld.z },
-      built = stage >= max_stage,
+      built = built,
+      stage_read_ok = stage_read_ok,
       stage = stage,
       max_stage = max_stage,
       queued_jobs = queued,
@@ -698,43 +819,31 @@ end
 out.seeds = {}
 out.current_season = SEASON_NAMES[(df.global.cur_season or 0) + 1] or 'unknown'
 do
-  local summary = {}
-  local order = {}
-  pcall(function()
-    local seeds = df.global.world.items.other.SEEDS
-    if not seeds then return end
-    for _, item in ipairs(seeds) do
-      local mi = item.mat_index
-      local tok = plant_token(mi)
-      if tok then
-        local entry = summary[tok]
-        if not entry and #order < 12 then
-          local subterranean = false
-          local seasons = {}
-          pcall(function()
-            local pf = _plant_raws[mi].flags
-            subterranean = pf.BIOME_SUBTERRANEAN_WATER and true or false
-            if pf.SPRING then table.insert(seasons, 'sp') end
-            if pf.SUMMER then table.insert(seasons, 'su') end
-            if pf.AUTUMN then table.insert(seasons, 'au') end
-            if pf.WINTER then table.insert(seasons, 'wi') end
-          end)
-          entry = { count = 0, surface = not subterranean, seasons = seasons }
-          summary[tok] = entry
-          table.insert(order, tok)
-        end
-        if entry then entry.count = entry.count + 1 end
-      end
+  local seed_indices = {}
+  for index in pairs(seed_counts_by_index) do table.insert(seed_indices, index) end
+  table.sort(seed_indices)
+  for _, index in ipairs(seed_indices) do
+    if #out.seeds >= 12 then break end
+    local count = seed_counts_by_index[index]
+    local tok = plant_token(index)
+    if tok then
+      local subterranean = false
+      local seasons = {}
+      pcall(function()
+        local pf = _plant_raws[index].flags
+        subterranean = pf.BIOME_SUBTERRANEAN_WATER and true or false
+        if pf.SPRING then table.insert(seasons, 'sp') end
+        if pf.SUMMER then table.insert(seasons, 'su') end
+        if pf.AUTUMN then table.insert(seasons, 'au') end
+        if pf.WINTER then table.insert(seasons, 'wi') end
+      end)
+      table.insert(out.seeds, {
+        token = tok,
+        count = count,
+        surface = not subterranean,
+        seasons = seasons,
+      })
     end
-  end)
-  for _, tok in ipairs(order) do
-    local e = summary[tok]
-    table.insert(out.seeds, {
-      token = tok,
-      count = e.count,
-      surface = e.surface,
-      seasons = e.seasons,
-    })
   end
 end
 

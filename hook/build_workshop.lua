@@ -340,6 +340,7 @@ if not postcondition_ok then
     error = rollback_ok and 'construct_postcondition_failed' or 'rollback_failed',
     building_id = building_id,
     material_item_id = material_item.id,
+    rollback_verified = rollback_ok,
     rollback_error = rollback_call_ok and nil or tostring(rollback_error),
   }))
   return

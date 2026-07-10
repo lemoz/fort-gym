@@ -1723,7 +1723,7 @@ def test_encoder_surfaces_legal_build_site_without_plan_lines() -> None:
     assert "workshop_room" not in text
 
 
-def test_encoder_reports_no_legal_build_site_without_carpenter_build_site() -> None:
+def test_encoder_does_not_infer_build_site_from_legacy_target_rect() -> None:
     text, _ = encode_observation(
         {
             "time": 100,
@@ -1736,11 +1736,9 @@ def test_encoder_reports_no_legal_build_site_without_carpenter_build_site() -> N
         screen_text="main map",
     )
 
-    assert "No stable 3x3 workshop site observed yet." in text
-    assert (
-        "CarpenterWorkshop and Still need a full 3x3 footprint of stable open floor near your "
-        "fort; dig out or clear more contiguous floor space first." in text
-    )
+    assert "Stable workshop site candidate observed" not in text
+    assert "No stable 3x3 workshop site observed yet." not in text
+    assert "verified 3x3 stable-floor footprint" not in text
 
 
 def test_encoder_echoes_bounded_helper_result_counts() -> None:
@@ -1822,7 +1820,12 @@ def test_encoder_surfaces_per_citizen_labor_list() -> None:
                     "masonry_labor": 1,
                     "herbalism_labor": 1,
                     "list": [
-                        {"id": 243, "labors": ["mine", "masonry"], "current_job_type": None},
+                        {
+                            "id": 243,
+                            "pos": [95, 97, 161],
+                            "labors": ["mine", "masonry"],
+                            "current_job_type": None,
+                        },
                         {
                             "id": 248,
                             "labors": ["herbalism", "brewing"],
@@ -1835,7 +1838,10 @@ def test_encoder_surfaces_per_citizen_labor_list() -> None:
         screen_text="main map",
     )
 
-    assert "Citizens: #243 [mine,masonry] idle; #248 [herbalism,brewing] GatherPlants" in text
+    assert (
+        "Citizens: #243 [mine,masonry] idle @(95,97,161); "
+        "#248 [herbalism,brewing] GatherPlants" in text
+    )
 
 
 def test_encoder_renders_citizen_with_no_enabled_labors() -> None:
@@ -1875,7 +1881,8 @@ def test_encoder_ignores_malformed_plan_rects_without_crashing() -> None:
     )
 
     assert "Plan rects" not in text
-    assert "No stable 3x3 workshop site observed yet." in text
+    assert "Stable workshop site candidate observed" not in text
+    assert "No stable 3x3 workshop site observed yet." not in text
 
 
 def test_encoder_omits_legacy_plan_progress_lines() -> None:
@@ -1972,8 +1979,8 @@ def test_encoder_surfaces_full_crew_block() -> None:
     assert "ORDER can queue jobs to any built carpenter workshop." in text
     assert (
         "Fort-area tiles: wall=3 (diggable), floor=20, shrub/other=9 "
-        "(this harness only designates WALL tiles for dig/channel; other tiles "
-        "in the rect are left untouched), designated=0" in text
+        "(dig/channel target natural WALL tiles; down_stair may target stable "
+        "floor or natural wall; use kind=gather/chop for vegetation), designated=0" in text
     )
 
 
@@ -2034,13 +2041,20 @@ def test_encoder_renders_farm_crops_seeds_and_season() -> None:
                         "stage": 0,
                         "max_stage": 0,
                         "built": True,
-                        "crops": [False, "RADISH", False, False],
+                        "crops": [False, "MUSHROOM_HELMET_PLUMP", False, False],
+                        "crop_options_complete": True,
+                        "offered_crops_by_season": {
+                            "spring": ["MUSHROOM_HELMET_PLUMP"],
+                            "summer": ["MUSHROOM_HELMET_PLUMP"],
+                            "autumn": ["MUSHROOM_HELMET_PLUMP"],
+                            "winter": ["MUSHROOM_HELMET_PLUMP"],
+                        },
                         "tile_context": {
                             "total": 4,
                             "readable": 4,
-                            "outside": 4,
-                            "light": 4,
-                            "subterranean": 0,
+                            "outside": 0,
+                            "light": 0,
+                            "subterranean": 4,
                             "water_table": 0,
                         },
                     }
@@ -2075,8 +2089,13 @@ def test_encoder_renders_farm_crops_seeds_and_season() -> None:
 
     assert (
         "Farm plot #34 (77,91..78,92 z161, built) crops "
-        "spring=- summer=RADISH autumn=- winter=- raw_tile_context "
-        "total=4,readable=4,outside=4,light=4,subterranean=0,water_table=0" in text
+        "spring=- summer=MUSHROOM_HELMET_PLUMP autumn=- winter=- raw_tile_context "
+        "total=4,readable=4,outside=0,light=0,subterranean=4,water_table=0" in text
+    )
+    assert (
+        "Farm plot #34 native offered crops: "
+        "spring=MUSHROOM_HELMET_PLUMP summer=MUSHROOM_HELMET_PLUMP "
+        "autumn=MUSHROOM_HELMET_PLUMP winter=MUSHROOM_HELMET_PLUMP" in text
     )
     assert (
         "Seeds on hand: RADISH x1 (surface, all), "
@@ -2088,6 +2107,47 @@ def test_encoder_renders_farm_crops_seeds_and_season() -> None:
         "brewable_plant_units=0, brewable_plant_stacks_in_jobs=0, "
         "empty_barrels=9, empty_barrels_in_jobs=0, total_barrels=15" in text
     )
+
+
+def test_encoder_hides_partial_crop_options_when_enumeration_is_incomplete() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {},
+            "crew": {
+                "ok": True,
+                "farm_plots": 1,
+                "farm_plot_details": [
+                    {
+                        "id": 34,
+                        "rect": [77, 91, 78, 92, 161],
+                        "stage": 3,
+                        "max_stage": 3,
+                        "built": True,
+                        "crops": [False, False, False, False],
+                        "crop_options_complete": False,
+                        "crop_options_truncated": {
+                            "spring": True,
+                            "summer": False,
+                            "autumn": False,
+                            "winter": False,
+                        },
+                        "offered_crops_by_season": {
+                            "spring": ["PARTIAL_CROP"],
+                            "summer": [],
+                            "autumn": [],
+                            "winter": [],
+                        },
+                    }
+                ],
+            },
+        },
+        screen_text="main map",
+    )
+
+    assert "native offered crops unavailable" in text
+    assert "PARTIAL_CROP" not in text
 
 
 def test_encoder_renders_partial_season_seed_list() -> None:
@@ -2144,9 +2204,9 @@ def test_encoder_reports_true_shrub_count_separately_from_other_tiles() -> None:
     # (boulders/pebbles/fortifications/ramps) that are not actually gatherable.
     assert (
         "Fort-area tiles: wall=3 (diggable), floor=20, shrubs=5 (gatherable "
-        "with DIG kind=gather), other=4 (this harness only designates WALL "
-        "tiles for dig/channel; other tiles in the rect are left untouched), "
-        "designated=0" in text
+        "with DIG kind=gather), other=4 (dig/channel target natural WALL tiles; "
+        "down_stair may target stable floor or natural wall; use kind=gather/chop "
+        "for vegetation), designated=0" in text
     )
 
 
@@ -2730,6 +2790,66 @@ def test_encoder_renders_fort_minimap_with_rulers() -> None:
     assert "Trace a one-tile-thick ring on the minimap" in obs_text
 
 
+def test_encoder_renders_model_channel_focus_and_lower_level_map() -> None:
+    state = {
+        "time": 100,
+        "population": 7,
+        "stocks": {},
+        "fort": {
+            "ok": True,
+            "enclosed_spaces": 0,
+            "functional_rooms": 0,
+            "constructions": 0,
+            "vertical_access_focus": {
+                "active": True,
+                "rect": [95, 97, 161, 95, 97, 161],
+                "status": "connected",
+                "channel_designations": 0,
+                "channel_jobs": 0,
+                "completed_geometry_pairs": 1,
+                "local_step_pairs": 1,
+                "native_connected_pairs": 1,
+                "pair_samples": [
+                    {
+                        "x": 95,
+                        "y": 97,
+                        "top_shape": "EMPTY",
+                        "lower_shape": "RAMP",
+                        "geometry_complete": True,
+                        "local_step_valid": True,
+                        "native_connected": True,
+                    }
+                ],
+            },
+            "map_origin": [94, 96, 161],
+            "map_rows": ["...", ".>.", "..."],
+            "access_level_maps": [
+                {
+                    "z": 160,
+                    "origin": [94, 96, 160],
+                    "source_action_rect": [95, 97, 161, 95, 97, 161],
+                    "visible_tiles": 9,
+                    "rows": ["###", "#<#", "..."],
+                }
+            ],
+        },
+    }
+
+    obs_text, _ = encode_observation(state)
+
+    assert "Completed vertical access geometry:" not in obs_text
+    assert "Model channel focus: rect=[95,97,161,95,97,161] status=connected" in obs_text
+    assert "native_connected_pairs=1" in obs_text
+    assert "local_step_pairs=1" in obs_text
+    assert "citizens_below" not in obs_text
+    assert "Channel focus pairs: (95,97) top=EMPTY lower=RAMP" in obs_text
+    assert "local_step=True" in obs_text
+    assert "<=up stair, >=down stair, X=up/down stair, ^=ramp" in obs_text
+    assert "Access-level minimap (z=160 for model channel [95,97,161,95,97,161]" in obs_text
+    assert "y= 97|#<#" in obs_text
+    assert "blanks are hidden/unreadable" in obs_text
+
+
 def test_encoder_labels_frozen_liquid_as_unstable_not_floor() -> None:
     state = {
         "time": 100,
@@ -2807,7 +2927,7 @@ def test_encoder_skips_minimap_when_malformed() -> None:
     assert "Fort minimap" not in obs_text
 
 
-def test_encoder_surfaces_nearby_tree_clusters() -> None:
+def test_encoder_surfaces_visible_nearby_tree_count_without_coordinates() -> None:
     base = {
         "time": 100,
         "population": 7,
@@ -2818,22 +2938,16 @@ def test_encoder_surfaces_nearby_tree_clusters() -> None:
             "functional_rooms": 0,
             "constructions": 0,
             "spaces": [],
-            "nearby_trees": {
-                "total": 58,
-                "clusters": [
-                    {"x": 66, "y": 70, "z": 161, "count": 31},
-                    {"x": 95, "y": 120, "z": 161, "count": 27},
-                ],
-            },
+            "nearby_trees": {"total": 58},
         },
     }
     text, _ = encode_observation(base, screen_text="main map")
-    assert "Nearby trees (within 40 tiles" in text
-    assert "31 trunks near (66,70,161)" in text
+    assert "Visible nearby trees: 58 trunks within 40 tiles" in text
+    assert "(66,70,161)" not in text
 
-    base["fort"]["nearby_trees"] = {"total": 0, "clusters": []}
+    base["fort"]["nearby_trees"] = {"total": 0}
     text, _ = encode_observation(base, screen_text="main map")
-    assert "Nearby trees: none within 40 tiles" in text
+    assert "Visible nearby trees: none within 40 tiles" in text
 
 
 def test_encoder_distinguishes_usable_from_locked_stock() -> None:

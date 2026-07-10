@@ -155,6 +155,32 @@ def test_dfhack_dig_completion_requires_explicit_opt_in(monkeypatch) -> None:
     assert complete_calls == [(50, 35, 0, 54, 39, 0)]
 
 
+def test_dfhack_dig_completion_can_be_forbidden_by_executor(monkeypatch) -> None:
+    complete_calls: list[tuple[int, int, int, int, int, int]] = []
+
+    monkeypatch.setenv("FORT_GYM_DFHACK_COMPLETE_DIG", "1")
+    monkeypatch.setattr(
+        "fort_gym.bench.env.executor.safe_designate_rect",
+        lambda kind, x1, y1, z1, x2, y2, z2: {"ok": True, "kind": kind},
+    )
+    monkeypatch.setattr(
+        "fort_gym.bench.env.executor.safe_complete_dig_rect",
+        lambda *coords: complete_calls.append(coords) or {"ok": True},
+    )
+
+    result = Executor(
+        dfhack_client=_ConnectedDFHackClient(),
+        allow_assisted_dig_completion=False,
+    ).apply(
+        {"type": "DIG", "params": {"area": [50, 35, 0], "size": [5, 5, 1]}},
+        backend="dfhack",
+    )
+
+    assert result["accepted"] is True
+    assert "completion" not in result["result"]
+    assert complete_calls == []
+
+
 def test_dfhack_keystroke_allows_advance_only_empty_keys(monkeypatch) -> None:
     def fail_execute_keystroke_action(_keys):
         raise AssertionError("advance-only empty keys should not send keystrokes")

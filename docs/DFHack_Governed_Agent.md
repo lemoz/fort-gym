@@ -12,12 +12,13 @@ control surface for this path.
 
 Legal actions:
 
-- Designate bounded dig/channel work.
+- Designate bounded dig/channel work, including legal floor-channel access.
 - Designate bounded tree-chopping and plant-gathering work.
 - Place bounded workshops, farm plots, furniture, walls, and floors that create
   normal construction/jobs.
 - Queue bounded manager or workshop production orders and unsuspend jobs.
-- Select seasonal farm crops and toggle one whitelisted labor on one citizen.
+- Select only crops offered by a completed underground farm plot for each
+  requested season, and toggle one whitelisted labor on one citizen.
 - Wait for a chosen number of ticks so dwarves can perform the work.
 - Send one semantic confirm/cancel/cursor input to an attested paused dialog,
   plus the view-specific topic-meeting finish option proven by attempt 4.
@@ -35,13 +36,15 @@ It must not be treated as legal fortress gameplay.
 ## Governed Models
 
 Governed mode is gated by model name: `GOVERNED_DFHACK_MODELS` in
-`fort_gym/bench/run/runner.py`. The runner marks a governed model's structured
+`fort_gym/bench/run/model_modes.py`. The runner marks a governed model's structured
 `DIG`, `BUILD`, `ORDER`, `UNSUSPEND`, `FARM`, `LABOR`, `WAIT`, and `INTERACT`
 actions as `execute.provenance = "dfhack_governed"`. World actions may carry
 `gameplay_progress_eligible = true` only through observed state; `INTERACT` is
 always false and uses `score_provenance = "dfhack_governed_interaction_only"`.
-Other governed per-step
-metrics carry `score_provenance = "dfhack_governed_observed_state"`. Older
+Other governed per-step metrics carry
+`score_provenance = "dfhack_governed_observed_state_action_owned_progress"`
+and `score_progress_provenance = "dfhack_governed_action_owned_progress_v2"`.
+Older
 structured DFHack agents still get `dfhack_assisted` progress zeroed for scalar
 scoring (and one accepted assisted action blocks scoreable elapsed time for the
 rest of that run).
@@ -72,9 +75,17 @@ It uses OpenRouter chat completions (default `z-ai/glm-5.2`, override with
 
 - the encoded observation (including the recorded CopyScreen text, a fort
   minimap where `.` is stable floor, `i` is frozen liquid, `,` is a gatherable
-  shrub, `s` is a sapling, and `p` is loose rock, plus bounded `work` metrics),
+  shrub, `s` is a sapling, `p` is loose rock, and `<`/`>`/`X`/`^` are completed
+  stairs/ramps, plus bounded access-centered lower-level maps, citizen
+  positions, and `work` metrics),
 - its own memory context from `MemoryManager` (recent steps, summary, POIs,
   failed attempts, current gameplay plan).
+
+Governed runs use the global-only work observation mode. It preserves factual
+job, workshop, labor, and manager-order counters but never invokes or emits the
+legacy starter rectangle, two-room plan, connector, workshop-room footprint, or
+runner-selected workshop candidate. Every gameplay coordinate comes from the
+model's interpretation of observed game state.
 
 The agent maintains its plan and POIs across steps via the action's
 `plan_step`/`memory_update` fields and the executed-result feedback loop. The
@@ -110,11 +121,26 @@ Every governed step records into `trace.jsonl`:
 - `screen_text` — a real CopyScreen frame at that step (the replay UI's
   "DF Screen" mode). This is the recorded gameplay evidence.
 - `map_snapshot` — a derived DFHack tile read, shown only under the explicit
-  "Map Inspect" label ("not gameplay proof").
-- `gameplay_proof` — a per-step evidence object (evidence only, never feeds
-  scoring): before/after map-tile diffs, productive state deltas, and bounded
-  helper facts. It separates command acceptance, concurrent world changes, and
-  action-specific effects. `created_job_ids` prove only that DF accepted an
+  "Map Inspect" label. The general display window is not gameplay proof by
+  itself. For model-authored `dig`/`channel`, an additional exact-footprint
+  before/immediately-after-paused-write diff establishes run ownership before
+  ticks can clear a designation into an assigned job. Designations are audit
+  facts and only later native completion of owned tiles feeds scalar
+  work/completion. Every unfinished owned coordinate is monitored independently
+  of the display/camera window. A completion outside that window is persisted as
+  `gameplay_proof.owned_completion_observation` with the model-authored
+  coordinate and kind, so scalar progress never outruns its trace evidence.
+- `owned_building_completion_observation` — exact building IDs claimed from
+  accepted model-authored BUILD results and later matched to native completed
+  stages and authored kinds in `job_metrics`. Stage reads must explicitly
+  succeed with numeric values and `max_stage > 0`; failed `0/0` reads are not
+  completion. Unmatched global workshops, rooms, constructions,
+  furniture, goods, and production remain audit-only and cannot raise governed
+  utility, production, complexity, or unlock duration.
+- `gameplay_proof` — a per-step evidence object containing before/after map
+  diffs, productive state deltas, bounded helper facts, and the exact action
+  footprint delta. It separates command acceptance, concurrent world changes,
+  and action-specific effects. `created_job_ids` prove only that DF accepted an
   order. An order is `pending` while one of those IDs remains in the live job
   list, `progressed` only when its matching output counter moves, and
   `no_progress` when the IDs vanish without output. Output is action-attributed
@@ -125,6 +151,14 @@ Every governed step records into `trace.jsonl`:
   `gameplay_progress_eligible` fields are set from this post-tick proof, never
   from action type alone.
 - `execute.provenance` / `metrics.score_provenance` — the legality tags above.
+  Re-summarization rejects any governed score-v5 row that lacks the action-owned
+  progress marker or a boolean duration gate instead of falling back to global
+  counters. The governed rubric consumes those owned progress fields too;
+  global rooms/constructions cannot clear blockers until exact ownership is
+  implemented.
+- Governed runs cannot be advanced through the administrative `/step` route.
+  It returns HTTP 409 before opening a client so rollback, ownership, duration,
+  and trace semantics cannot be bypassed by a second control loop.
 - `interaction` — for `INTERACT`, the semantic operation, fixed key, pause and
   viewscreen types, and before/after CopyScreen hashes. It is audit evidence,
   never world-progress evidence.
@@ -145,18 +179,14 @@ seeds.
 
 Success gates for this whole effort live in `docs/WDSLL.md`.
 
-Governed target discovery wraps helper probes with
-`hook/view_state.lua` / `hook/restore_view_state.lua` so the live DF
-camera/cursor is preserved — probes never disturb the visible game. Traces
-recorded before screen capture existed show "No Recorded DF Screen Frame" in
-replay instead of pretending a derived view is gameplay.
-
-Workshop-site discovery reports only a verified 3x3 stable-floor footprint and
-keeps that fact available for both CarpenterWorkshop and Still. It excludes
-`FROZEN_LIQUID`, which can look floor-shaped while frozen but thaw into open
-air. The map snapshot, fort minimap, room flood-fill, legacy work metrics, and
-all four structured BUILD target hooks use the same distinction; a frozen
-target fails closed as `tile_frozen_liquid` without creating a building.
+Governed mode performs no target discovery and supplies no starter, workshop,
+room, tree-cluster, or access coordinates. The model chooses every coordinate
+from recorded observation evidence. Read-only screen capture does not move the
+DF camera/cursor. Traces recorded before screen capture existed show "No
+Recorded DF Screen Frame" in replay instead of pretending a derived view is
+gameplay. Structured BUILD hooks validate the model's chosen footprint and
+reject `FROZEN_LIQUID`, which can look floor-shaped while frozen but thaw into
+open air.
 
 ## Rubric Evaluation
 
@@ -190,7 +220,9 @@ Current structural limits of the governed surface:
   eight operations per modal episode, and three unchanged screens terminate.
   `finish_topic_meeting` sends one `OPTION1` only on
   `viewscreen_topicmeetingst`; arbitrary letter keys remain unavailable.
-- Multi-z stairs and depth are not yet exposed; G8 remains unimplemented.
+- There is no general stair-designation command. The model can create and
+  inspect one-level vertical access with `channel`; the latest accepted channel
+  receives action-focused upper/lower maps and local connectivity evidence.
 - Workshop placement is limited to Carpenter and Still; orders cover seven
   whitelisted goods/reactions. Mason, smith, kitchen, trade, military, and
   healthcare control are not exposed.

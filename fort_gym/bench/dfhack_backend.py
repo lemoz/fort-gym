@@ -399,8 +399,22 @@ def complete_dig_rect(x1: int, y1: int, z1: int, x2: int, y2: int, z2: int) -> D
         return {"ok": False, "error": str(exc)}
 
 
-def read_work_metrics(rect: tuple[int, int, int, int, int, int] | None = None) -> Dict[str, object]:
-    """Read bounded live work metrics for a target rectangle."""
+def read_work_metrics(
+    rect: tuple[int, int, int, int, int, int] | None = None,
+    *,
+    global_only: bool = False,
+) -> Dict[str, object]:
+    """Read live work metrics.
+
+    ``global_only`` preserves factual job/workshop/labor counters while
+    suppressing the legacy runner-authored target and two-room plan geometry.
+    """
+
+    if global_only:
+        try:
+            return run_lua_file(_hook_path("work_metrics.lua"), "global")
+        except (DFHackError, OSError) as exc:
+            return {"ok": False, "error": str(exc)}
 
     x1, y1, z1, x2, y2, z2 = rect or _work_rect_from_env()
     width = abs(int(x2) - int(x1)) + 1
@@ -502,7 +516,9 @@ def read_map_snapshot(rect: tuple[int, int, int, int, int, int]) -> Dict[str, ob
         return {"ok": False, "error": str(exc)}
 
 
-def read_fort_metrics() -> Dict[str, object]:
+def read_fort_metrics(
+    channel_focus: tuple[int, int, int, int, int, int] | None = None,
+) -> Dict[str, object]:
     """Read plan-agnostic fortress structure metrics (read-only).
 
     Flood-fills enclosed spaces from player buildings, classifies them
@@ -510,8 +526,19 @@ def read_fort_metrics() -> Dict[str, object]:
     player actually built — no plan rectangles; works on any seed.
     """
 
+    args: list[str] = []
+    if channel_focus is not None:
+        x1, y1, z1, x2, y2, z2 = channel_focus
+        width = abs(int(x2) - int(x1)) + 1
+        height = abs(int(y2) - int(y1)) + 1
+        if int(z1) != int(z2):
+            return {"ok": False, "error": "z_span_not_supported"}
+        if width > MAX_RECT_W or height > MAX_RECT_H:
+            return {"ok": False, "error": "rect_too_large"}
+        args = [str(int(value)) for value in channel_focus]
+
     try:
-        return run_lua_file(_hook_path("fort_metrics.lua"), timeout=10.0)
+        return run_lua_file(_hook_path("fort_metrics.lua"), *args, timeout=10.0)
     except (DFHackError, OSError) as exc:
         return {"ok": False, "error": str(exc)}
 

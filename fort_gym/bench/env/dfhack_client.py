@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import os
 import socket
 import struct
@@ -203,7 +202,6 @@ def screen_to_text(screen: Dict[str, Any]) -> str:
     Returns:
         Multi-line string representation of the screen
     """
-    width = screen.get("width", 80)
     height = screen.get("height", 25)
     if not screen.get("tiles"):
         return "(empty screen)"
@@ -268,11 +266,17 @@ class DFHackClient:
         self._capture_text: Optional[List[str]] = None
         self._last_tick_info: Dict[str, Any] = {}
         self._work_rect: tuple[int, int, int, int, int, int] | None = None
+        self._work_metrics_global_only = False
 
     def set_work_rect(self, rect: tuple[int, int, int, int, int, int] | None) -> None:
         """Set the bounded work rectangle used for live work metrics."""
 
         self._work_rect = rect
+
+    def set_work_metrics_global_only(self, enabled: bool) -> None:
+        """Suppress legacy target/plan geometry while keeping global work facts."""
+
+        self._work_metrics_global_only = bool(enabled)
 
     # ------------------------------------------------------------------
     # Connection orchestration
@@ -384,7 +388,10 @@ class DFHackClient:
         data.setdefault("risks", [])
         data.setdefault("reminders", [])
         data.setdefault("map_bounds", (0, 0, 0))
-        data["work"] = read_work_metrics(self._work_rect)
+        data["work"] = read_work_metrics(
+            self._work_rect,
+            global_only=self._work_metrics_global_only,
+        )
         return data
 
     def get_screen(self) -> Dict[str, Any]:

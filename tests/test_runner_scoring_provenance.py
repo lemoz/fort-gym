@@ -4,14 +4,19 @@ from pathlib import Path
 
 from fort_gym.bench.run.runner import (
     _action_history_entry,
-    _add_governed_build_site,
     _available_building_materials,
     _carry_forward_carpenter_workshop_proof,
     _carpenter_workshops,
+    _channel_focus_rect_from_action,
+    _owned_channel_focus_rect,
     _desired_keystroke_target_mode,
     _gameplay_proof,
+    _governed_dig_rect_from_action,
+    _governed_building_claims,
+    _governed_completed_owned_buildings,
+    _governed_durable_helper_progress,
     _governed_gameplay_proof,
-    _governed_rejected_workshop_target,
+    _governed_owned_building_progress,
     _is_exit_only_recovery_action,
     _is_governed_dfhack_model,
     _is_keystroke_model,
@@ -20,7 +25,6 @@ from fort_gym.bench.run.runner import (
     _material_exhausted_fallback_target_mode,
     _preserve_state_after_degraded_read,
     _preserve_work_after_degraded_read,
-    _prepared_target_work_rect,
     _screen_shows_blocked_workshop_placement,
     _screen_shows_building_type_menu,
     _screen_shows_ready_workshop_placement,
@@ -50,7 +54,52 @@ def test_governed_dfhack_model_is_not_keystroke_mode() -> None:
     assert _is_keystroke_model("dfhack-governed-scripted") is False
 
 
-def test_governed_runner_preserves_view_and_records_copy_screen_text() -> None:
+def test_channel_focus_comes_only_from_model_authored_channel_rect() -> None:
+    action = {
+        "type": "DIG",
+        "params": {"kind": "channel", "area": [91, 88, 177], "size": [2, 1, 1]},
+    }
+
+    assert _channel_focus_rect_from_action(action) == (91, 88, 177, 92, 88, 177)
+    assert _channel_focus_rect_from_action(
+        {**action, "params": {**action["params"], "kind": "dig"}}
+    ) is None
+
+
+def test_channel_focus_requires_a_newly_model_owned_tile() -> None:
+    action = {
+        "type": "DIG",
+        "params": {
+            "kind": "channel",
+            "area": [91, 88, 177],
+            "size": [2, 1, 1],
+        },
+    }
+
+    assert _owned_channel_focus_rect(action, {"governed_designated_tiles": []}) is None
+    assert _owned_channel_focus_rect(
+        action,
+        {"governed_designated_tiles": [[92, 88, 177], [91, 88, 177]]},
+    ) == (91, 88, 177, 91, 88, 177)
+    assert _channel_focus_rect_from_action(
+        {**action, "params": {**action["params"], "size": [2, 1, 2]}}
+    ) is None
+
+
+def test_governed_dig_rect_tracks_only_excavation_footprints() -> None:
+    action = {
+        "type": "DIG",
+        "params": {"kind": "dig", "area": [91, 88, 177], "size": [2, 3, 1]},
+    }
+
+    assert _governed_dig_rect_from_action(action) == (91, 88, 177, 92, 90, 177)
+    assert _governed_dig_rect_from_action(
+        {**action, "params": {**action["params"], "kind": "chop"}}
+    ) is None
+    assert _governed_dig_rect_from_action({"type": "WAIT", "params": {}}) is None
+
+
+def test_governed_runner_uses_plan_agnostic_work_and_records_copy_screen_text() -> None:
     runner_text = (
         Path(__file__).resolve().parents[1]
         / "fort_gym"
@@ -59,116 +108,12 @@ def test_governed_runner_preserves_view_and_records_copy_screen_text() -> None:
         / "runner.py"
     ).read_text(encoding="utf-8")
 
-    assert "def prepare_governed_target" in runner_text
-    assert "view_before = read_view_state()" in runner_text
-    assert "restore_result = restore_view_state(view_before)" in runner_text
-    assert "target[\"view_preserved\"]" in runner_text
+    assert "dfhack_client.set_work_metrics_global_only(True)" in runner_text
+    assert "def prepare_governed_target" not in runner_text
+    assert "governed_workshop_target" not in runner_text
+    assert 'crew = read_job_metrics()' in runner_text
     assert "if is_keystroke_mode or is_governed_dfhack_mode" in runner_text
     assert "record_line[\"screen_text\"] = screen_text" in runner_text
-
-
-def test_prepared_target_work_rect_prefers_selection_rect() -> None:
-    target = {
-        "target_rect": [87, 82, 177, 101, 96, 177],
-        "selection_rect": [94, 90, 177, 97, 91, 177],
-    }
-
-    assert _prepared_target_work_rect(target) == (94, 90, 177, 97, 91, 177)
-
-
-def test_add_governed_build_site_adds_observed_placement_rect() -> None:
-    state = {"work": {"target_rect": [94, 91, 177, 97, 92, 177]}}
-    target = {
-        "ok": True,
-        "source": "citizen_near_empty_floor_workshop_footprint",
-        "placement_rect": [88, 96, 177, 90, 98, 177],
-        "stable_floor_tiles": 9,
-        "frozen_liquid_tiles": 0,
-        "liquid_tiles": 0,
-        "locality_ok": True,
-        "reachable_citizen": True,
-        "path_cache_current": True,
-        "placement_fingerprint": "site-fingerprint",
-    }
-
-    updated = _add_governed_build_site(state, target)
-
-    assert updated["work"]["carpenter_build_site"] == [88, 96, 177]
-    assert updated["work"]["carpenter_build_site_rect"] == [88, 96, 177, 90, 98, 177]
-    assert (
-        updated["work"]["carpenter_build_site_source"]
-        == "citizen_near_empty_floor_workshop_footprint"
-    )
-    assert updated["work"]["carpenter_build_site_fingerprint"] == "site-fingerprint"
-    assert updated["work"]["carpenter_build_site_reachable_citizen"] is True
-    assert "carpenter_build_site" not in state["work"]
-
-
-def test_add_governed_build_site_rejects_unstable_or_unproven_footprints() -> None:
-    state = {"work": {"target_rect": [94, 91, 177, 97, 92, 177]}}
-    base_target = {
-        "ok": True,
-        "source": "citizen_near_empty_floor_workshop_footprint",
-        "placement_rect": [88, 96, 177, 90, 98, 177],
-    }
-
-    assert _add_governed_build_site(state, base_target) is state
-    assert (
-        _add_governed_build_site(
-            state,
-            {
-                **base_target,
-                "stable_floor_tiles": 8,
-                "frozen_liquid_tiles": 1,
-                "liquid_tiles": 0,
-                "locality_ok": True,
-                "reachable_citizen": True,
-                "path_cache_current": True,
-            },
-        )
-        is state
-    )
-
-
-def test_governed_rejected_workshop_site_is_bound_to_its_tile_fingerprint() -> None:
-    target = {
-        "target_rect": [88, 96, 177, 90, 98, 177],
-        "placement_fingerprint": "site-fingerprint",
-    }
-    action = {
-        "type": "BUILD",
-        "params": {"kind": "Still", "x": 88, "y": 96, "z": 177},
-    }
-
-    assert _governed_rejected_workshop_target(
-        action,
-        {"accepted": False, "why": "tile_has_liquid"},
-        target,
-    ) == (88, 96, 177, "site-fingerprint")
-    assert (
-        _governed_rejected_workshop_target(
-            action,
-            {"accepted": False, "why": "path_cache_stale"},
-            target,
-        )
-        is None
-    )
-    assert (
-        _governed_rejected_workshop_target(
-            action,
-            {"accepted": False, "why": "workshop_unreachable_from_citizens"},
-            target,
-        )
-        is None
-    )
-    assert (
-        _governed_rejected_workshop_target(
-            {**action, "params": {**action["params"], "x": 89}},
-            {"accepted": False, "why": "tile_has_liquid"},
-            target,
-        )
-        is None
-    )
 
 
 def test_zero_assisted_dfhack_progress_preserves_audit_values() -> None:
@@ -1753,7 +1698,7 @@ def test_governed_gameplay_proof_rejects_noop_gather_redesignation() -> None:
     assert proof["helper_evidence"]["already_designated"] == 9
 
 
-def test_governed_gameplay_proof_accepts_new_gather_designations() -> None:
+def test_governed_gameplay_proof_records_new_gather_designations_without_progress() -> None:
     proof = _governed_gameplay_proof(
         **_governed_proof_kwargs(
             action={
@@ -1767,7 +1712,8 @@ def test_governed_gameplay_proof_accepts_new_gather_designations() -> None:
             },
         )
     )
-    assert proof["ok"] is True
+    assert proof["ok"] is False
+    assert proof["gameplay_progress_eligible"] is False
     assert proof["helper_evidence"]["shrubs_designated"] == 4
 
 
@@ -1824,13 +1770,13 @@ def test_governed_gameplay_proof_rejects_noop_farm_reset() -> None:
     assert proof["gameplay_progress_eligible"] is False
 
 
-def test_governed_gameplay_proof_accepts_designations_but_not_job_ids_alone() -> None:
+def test_governed_gameplay_proof_rejects_designations_and_job_ids_alone() -> None:
     proof = _governed_gameplay_proof(
         **_governed_proof_kwargs(
             execute_result={"accepted": True, "result": {"newly_designated": 25}}
         )
     )
-    assert proof["ok"] is True
+    assert proof["ok"] is False
 
     proof = _governed_gameplay_proof(
         **_governed_proof_kwargs(
@@ -1842,7 +1788,7 @@ def test_governed_gameplay_proof_accepts_designations_but_not_job_ids_alone() ->
             execute_result={"accepted": True, "result": {"trees_designated": 4}},
         )
     )
-    assert proof["ok"] is True
+    assert proof["ok"] is False
     assert proof["helper_evidence"]["trees_designated"] == 4
 
     proof = _governed_gameplay_proof(
@@ -1906,6 +1852,150 @@ def test_governed_gameplay_proof_accepts_new_still_workshop() -> None:
     )
     assert proof["ok"] is True
     assert proof["helper_evidence"]["after_workshops_of_kind"] == 1
+
+
+def test_governed_duration_gate_rejects_queued_placements_but_accepts_built_farm_crop() -> None:
+    assert not _governed_durable_helper_progress(
+        {"type": "BUILD"},
+        {
+            "ok": True,
+            "building_id": 42,
+            "placed_count": 1,
+            "before_workshops_of_kind": 0,
+            "after_workshops_of_kind": 1,
+        },
+    )
+    assert _governed_durable_helper_progress(
+        {"type": "FARM"},
+        {"ok": True, "farm_building_id": 42, "seasons_changed": 1},
+    )
+
+
+def test_governed_building_progress_requires_exact_owned_id_and_completed_stage() -> None:
+    action = {
+        "type": "BUILD",
+        "params": {"kind": "CarpenterWorkshop", "x": 10, "y": 20, "z": 5},
+    }
+    execute_result = {
+        "accepted": True,
+        "result": {"ok": True, "building_id": 42},
+    }
+
+    claims = _governed_building_claims(action, execute_result)
+    assert claims == {42: "CarpenterWorkshop"}
+    assert _governed_completed_owned_buildings(
+        claims,
+        {
+            "crew": {
+                "ok": True,
+                "workshops": [
+                    {
+                        "id": 41,
+                        "subtype": "Carpenters",
+                        "stage_read_ok": True,
+                        "stage": 3,
+                        "max_stage": 3,
+                        "built": True,
+                    },
+                    {
+                        "id": 42,
+                        "subtype": "Carpenters",
+                        "stage_read_ok": True,
+                        "stage": 2,
+                        "max_stage": 3,
+                        "built": False,
+                    },
+                ],
+            }
+        },
+    ) == set()
+
+    completed = _governed_completed_owned_buildings(
+        claims,
+        {
+            "crew": {
+                "ok": True,
+                "workshops": [
+                    {
+                        "id": 41,
+                        "subtype": "Carpenters",
+                        "stage_read_ok": True,
+                        "stage": 3,
+                        "max_stage": 3,
+                        "built": True,
+                    },
+                    {
+                        "id": 42,
+                        "subtype": "Carpenters",
+                        "stage_read_ok": True,
+                        "stage": 3,
+                        "max_stage": 3,
+                        "built": True,
+                    },
+                ],
+            }
+        },
+    )
+    assert completed == {42}
+    assert _governed_completed_owned_buildings(
+        claims,
+        {
+            "crew": {
+                "ok": True,
+                "workshops": [
+                    {
+                        "id": 42,
+                        "subtype": "Still",
+                        "stage_read_ok": True,
+                        "stage": 3,
+                        "max_stage": 3,
+                        "built": True,
+                    }
+                ],
+            }
+        },
+    ) == set()
+    assert _governed_completed_owned_buildings(
+        claims,
+        {
+            "crew": {
+                "ok": True,
+                "workshops": [
+                    {
+                        "id": 42,
+                        "subtype": "Carpenters",
+                        "stage_read_ok": False,
+                        "stage": 0,
+                        "max_stage": 0,
+                        "built": True,
+                    }
+                ],
+            }
+        },
+    ) == set()
+    assert _governed_owned_building_progress(claims, completed) == {
+        "governed_owned_buildings": 1,
+        "governed_owned_completed_buildings": 1,
+        "governed_owned_completed_building_ids": [42],
+        "governed_owned_completed_carpenter_workshops": 1,
+        "governed_owned_completed_stills": 0,
+        "governed_owned_completed_farm_plots": 0,
+        "governed_owned_utility_progress": 5,
+        "governed_owned_production_progress": 5,
+        "governed_owned_complexity_progress": 0.0,
+    }
+
+
+def test_governed_building_claim_rejects_unaccepted_or_unmonitored_builds() -> None:
+    action = {"type": "BUILD", "params": {"kind": "CarpenterWorkshop"}}
+    assert _governed_building_claims(
+        action,
+        {"accepted": False, "result": {"ok": True, "building_id": 42}},
+    ) == {}
+    assert _governed_building_claims(
+        {"type": "BUILD", "params": {"kind": "Bed"}},
+        {"accepted": True, "result": {"ok": True, "building_id": 42}},
+    ) == {}
 
 
 def test_governed_gameplay_proof_rejects_noop_still_workshop_evidence() -> None:
@@ -1997,7 +2087,7 @@ def test_governed_gameplay_proof_rejects_noop_labor_flip() -> None:
     assert proof["helper_evidence"]["labor_changed"] is False
 
 
-def test_governed_gameplay_proof_accepts_real_tile_changes_during_wait() -> None:
+def test_governed_gameplay_proof_keeps_unowned_tile_changes_during_wait_uncredited() -> None:
     rect = [49, 34, 0, 55, 40, 0]
     before = {
         "ok": True,
@@ -2016,7 +2106,9 @@ def test_governed_gameplay_proof_accepts_real_tile_changes_during_wait() -> None
             after_map_snapshot=after,
         )
     )
-    assert proof["ok"] is True
+    assert proof["ok"] is False
+    assert proof["action_effect_observed"] is False
+    assert proof["concurrent_world_state_changed"] is True
     assert proof["changed_tile_count"] == 1
 
 
@@ -2030,9 +2122,10 @@ def test_governed_runner_attaches_crew_observability() -> None:
     ).read_text(encoding="utf-8")
 
     assert "def attach_crew_metrics" in runner_text
-    # The crew tile survey rect follows the fort/legacy snapshot window, bounded
-    # to job_metrics' tighter tile limit so crew observability never drops.
-    assert "read_job_metrics(_job_metrics_survey_rect(state))" in runner_text
+    # Governed crew facts are global and plan agnostic. In particular, the
+    # legacy target/plan rectangle is not used as a tile survey.
+    assert "crew = read_job_metrics()" in runner_text
+    assert "read_job_metrics(_job_metrics_survey_rect(state))" not in runner_text
     assert 'state["crew"] = crew' in runner_text
 
 

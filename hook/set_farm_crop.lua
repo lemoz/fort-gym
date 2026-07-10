@@ -9,19 +9,12 @@
 -- (live-verified on 0.47.05). "clear" writes -1 (no crop) into the requested
 -- seasons.
 --
--- Engine-constraint gating mirrors what the q-menu itself offers (NOT a
--- gameplay heuristic — the UI simply does not present these choices):
---   * a crop is only offered in the seasons whose grow-flag is set; a
---     requested season the crop lacks is skipped with season_not_growable.
--- We do NOT gate on surface-vs-subterranean here. DF farm-plot crop
--- eligibility is governed by a plant's full biome/environment token set
--- against the plot, not a single biome flag; approximating that from one
--- unverified flag risked wrongly rejecting a legal crop selection with a
--- dishonest not-growable-here reason. Surface/subterranean eligibility
--- is therefore left to the engine, and no such rejection is emitted.
--- There is NO seed-availability gating (the player can select a crop with
--- zero seeds; planting simply waits) — seeds_on_hand is reported as evidence
--- only.
+-- Crop gating follows DFHack 0.47.05's native farm-plot/autofarm rules for the
+-- underground slice: usable seed stock, SEED/non-TREE raw flags, season flag,
+-- underground depth, and SUBTERRANEAN_WATER biome. Surface biome filtering is
+-- deliberately unsupported until it has equivalent native proof, so surface
+-- crop selection fails closed. All requested seasons are preflighted before a
+-- plant_id slot is changed.
 
 local json = require('json')
 local args = {...}
@@ -33,7 +26,8 @@ local function to_int(v)
 end
 
 local function sanitize(text)
-  return tostring(text or ''):gsub('[^%w %p]', '?')
+  local cleaned = tostring(text or ''):gsub('[^%w %p]', '?')
+  return cleaned
 end
 
 local SEASON_NAMES = { 'spring', 'summer', 'autumn', 'winter' }
@@ -130,36 +124,6 @@ if build_stage < max_build_stage then
   return
 end
 
--- Resolve the crop token to a plant raw index (exact match on .id).
-local CLEAR = crop_token == 'clear'
-local crop_index = -1
-local crop_flags = nil
-if not CLEAR then
-  local ok_scan = pcall(function()
-    for i, plant in ipairs(df.global.world.raws.plants.all) do
-      if plant.id == crop_token then
-        crop_index = i
-        crop_flags = plant.flags
-        return
-      end
-    end
-  end)
-  if not ok_scan then
-    print(json.encode({ ok = false, error = 'raws_unavailable' }))
-    return
-  end
-  if crop_index < 0 or crop_flags == nil then
-    print(json.encode({ ok = false, error = 'crop_not_found', crop = sanitize(crop_token) }))
-    return
-  end
-end
-
--- Surface-vs-subterranean eligibility is intentionally NOT gated here. DF
--- decides a plot's offered crop list from the plant's full biome/environment
--- token set, not a single biome flag; approximating it from one unverified
--- flag would risk a dishonest not-growable-here rejection of a legal
--- crop. We leave that constraint to the engine and never reject on it.
-
 -- Snapshot the plant_id array before mutating so world-change can be diffed.
 local before_plant_id = {}
 local ok_before = pcall(function()
@@ -173,32 +137,220 @@ if not ok_before then
 end
 
 local SEASON_FLAG = { [0] = 'SPRING', [1] = 'SUMMER', [2] = 'AUTUMN', [3] = 'WINTER' }
-local seasons_set = {}
-local seasons_skipped = {}
-local after_plant_id = { before_plant_id[1], before_plant_id[2], before_plant_id[3], before_plant_id[4] }
+local function raw_flag(flags, name)
+  local ok, value = pcall(function() return flags[name] and true or false end)
+  return ok and value or false
+end
 
-for _, idx in ipairs(requested) do
-  if CLEAR then
-    -- Clearing is offered in every season.
-    plot.plant_id[idx] = -1
-    after_plant_id[idx + 1] = -1
-    table.insert(seasons_set, SEASON_NAMES[idx + 1])
-  else
-    local grows = false
-    pcall(function()
-      grows = crop_flags[SEASON_FLAG[idx]] and true or false
-    end)
-    if grows then
-      plot.plant_id[idx] = crop_index
-      after_plant_id[idx + 1] = crop_index
-      table.insert(seasons_set, SEASON_NAMES[idx + 1])
-    else
+local function usable_seed(item)
+  local flags = item and item.flags
+  if not flags then return false end
+  local rejected = false
+  pcall(function()
+    rejected = flags.dump
+      or flags.forbid
+      or flags.garbage_collect
+      or flags.hostile
+      or flags.on_fire
+      or flags.rotten
+      or flags.trader
+      or flags.in_building
+      or flags.construction
+      or flags.artifact
+  end)
+  return not rejected
+end
+
+local seeds_by_plant = {}
+local ok_seeds = pcall(function()
+  for _, item in ipairs(df.global.world.items.other.SEEDS or {}) do
+    if usable_seed(item) then
+      seeds_by_plant[item.mat_index] =
+        (seeds_by_plant[item.mat_index] or 0) + (tonumber(item.stack_size) or 1)
+    end
+  end
+end)
+if not ok_seeds then
+  print(json.encode({ ok = false, error = 'seed_inventory_unreadable' }))
+  return
+end
+
+local plot_subterranean = nil
+local ok_context = pcall(function()
+  local block = dfhack.maps.getTileBlock(plot.centerx, plot.centery, plot.z)
+  if not block then return end
+  local designation = block.designation[plot.centerx % 16][plot.centery % 16]
+  if designation and not designation.hidden then
+    plot_subterranean = designation.subterranean and true or false
+  end
+end)
+if not ok_context or plot_subterranean == nil then
+  print(json.encode({ ok = false, error = 'farm_plot_context_unreadable' }))
+  return
+end
+
+local offered_lookup = { [0] = {}, [1] = {}, [2] = {}, [3] = {} }
+local offered_crops_by_season = {
+  spring = {}, summer = {}, autumn = {}, winter = {},
+}
+if plot_subterranean then
+  local ok_offers = pcall(function()
+    for index, plant in ipairs(df.global.world.raws.plants.all) do
+      local flags = plant.flags
+      local has_seed_stock = (seeds_by_plant[index] or 0) > 0
+      local surface_crop = plant.underground_depth_min == 0
+        or plant.underground_depth_max == 0
+      local depth_ok = surface_crop ~= plot_subterranean
+      local biome_ok = raw_flag(flags, 'BIOME_SUBTERRANEAN_WATER')
+      if has_seed_stock
+          and raw_flag(flags, 'SEED')
+          and not raw_flag(flags, 'TREE')
+          and depth_ok
+          and biome_ok then
+        for season = 0, 3 do
+          if raw_flag(flags, SEASON_FLAG[season]) then
+            offered_lookup[season][index] = true
+            table.insert(
+              offered_crops_by_season[SEASON_NAMES[season + 1]],
+              sanitize(plant.id)
+            )
+          end
+        end
+      end
+    end
+  end)
+  if not ok_offers then
+    print(json.encode({ ok = false, error = 'crop_options_unreadable' }))
+    return
+  end
+  for _, name in ipairs(SEASON_NAMES) do
+    table.sort(offered_crops_by_season[name])
+  end
+end
+
+local CLEAR = crop_token == 'clear'
+local crop_index = -1
+if not CLEAR then
+  local ok_scan = pcall(function()
+    for index, plant in ipairs(df.global.world.raws.plants.all) do
+      if plant.id == crop_token then
+        crop_index = index
+        return
+      end
+    end
+  end)
+  if not ok_scan then
+    print(json.encode({ ok = false, error = 'raws_unavailable' }))
+    return
+  end
+  if crop_index < 0 then
+    print(json.encode({ ok = false, error = 'crop_not_found', crop = sanitize(crop_token) }))
+    return
+  end
+  if not plot_subterranean then
+    print(json.encode({
+      ok = false,
+      error = 'surface_crop_options_unverified',
+      farm_building_id = building_id,
+      plot_subterranean = false,
+      before_plant_id = before_plant_id,
+      offered_crops_by_season = offered_crops_by_season,
+    }))
+    return
+  end
+end
+
+local seasons_skipped = {}
+if not CLEAR then
+  for _, idx in ipairs(requested) do
+    if not offered_lookup[idx][crop_index] then
       table.insert(seasons_skipped, {
         season = SEASON_NAMES[idx + 1],
-        reason = 'season_not_growable',
+        reason = 'crop_not_offered_for_plot_season',
       })
     end
   end
+end
+if #seasons_skipped > 0 then
+  print(json.encode({
+    ok = false,
+    error = 'crop_not_offered',
+    farm_building_id = building_id,
+    crop = sanitize(crop_token),
+    plot_subterranean = plot_subterranean,
+    before_plant_id = before_plant_id,
+    seasons_skipped = seasons_skipped,
+    offered_crops_by_season = offered_crops_by_season,
+    seeds_on_hand = seeds_by_plant[crop_index] or 0,
+  }))
+  return
+end
+
+local seasons_set = {}
+local expected_plant_id = {
+  before_plant_id[1], before_plant_id[2], before_plant_id[3], before_plant_id[4],
+}
+for _, idx in ipairs(requested) do
+  local value = CLEAR and -1 or crop_index
+  expected_plant_id[idx + 1] = value
+  table.insert(seasons_set, SEASON_NAMES[idx + 1])
+end
+
+local function restore_before()
+  for s = 0, 3 do
+    plot.plant_id[s] = before_plant_id[s + 1]
+  end
+end
+
+local write_ok, write_error = pcall(function()
+  for _, idx in ipairs(requested) do
+    plot.plant_id[idx] = expected_plant_id[idx + 1]
+  end
+end)
+
+local after_plant_id = {}
+local readback_ok = false
+if write_ok then
+  readback_ok = pcall(function()
+    for s = 0, 3 do
+      after_plant_id[s + 1] = plot.plant_id[s]
+    end
+  end)
+end
+
+local readback_matches = write_ok and readback_ok
+if readback_matches then
+  for s = 1, 4 do
+    if after_plant_id[s] ~= expected_plant_id[s] then
+      readback_matches = false
+      break
+    end
+  end
+end
+
+if not readback_matches then
+  local rollback_ok = pcall(restore_before)
+  local rollback_verified = false
+  if rollback_ok then
+    rollback_verified = pcall(function()
+      for s = 0, 3 do
+        if plot.plant_id[s] ~= before_plant_id[s + 1] then
+          error('rollback_readback_mismatch')
+        end
+      end
+    end)
+  end
+  print(json.encode({
+    ok = false,
+    error = write_ok and 'crop_readback_mismatch' or 'crop_write_failed',
+    detail = write_ok and nil or sanitize(write_error),
+    farm_building_id = building_id,
+    before_plant_id = before_plant_id,
+    attempted_plant_id = expected_plant_id,
+    observed_plant_id = after_plant_id,
+    rollback_verified = rollback_verified,
+  }))
+  return
 end
 
 local seasons_changed = 0
@@ -208,26 +360,18 @@ for s = 1, 4 do
   end
 end
 
--- Seeds on hand for the crop (informational only — never gates the action).
-local seeds_on_hand = 0
-if not CLEAR then
-  pcall(function()
-    local seeds = df.global.world.items.other.SEEDS
-    if seeds then
-      for _, item in ipairs(seeds) do
-        if item.mat_index == crop_index then
-          seeds_on_hand = seeds_on_hand + 1
-        end
-      end
-    end
-  end)
-end
+local seeds_on_hand = CLEAR and 0 or (seeds_by_plant[crop_index] or 0)
 
 print(json.encode({
   ok = true,
   farm_building_id = building_id,
   build_stage = build_stage,
   max_build_stage = max_build_stage,
+  plot_subterranean = plot_subterranean,
+  eligibility_scope = plot_subterranean
+    and 'native_seed_season_depth_subterranean_water'
+    or 'surface_unverified',
+  offered_crops_by_season = offered_crops_by_season,
   crop = CLEAR and 'clear' or sanitize(crop_token),
   crop_raw_index = crop_index,
   before_plant_id = before_plant_id,

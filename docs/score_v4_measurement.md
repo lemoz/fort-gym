@@ -1,7 +1,9 @@
 # score-v4 stable-floor measurement boundary
 
-Historical boundary: score-v5 now supersedes v4 for new runs. Existing v4
-artifacts remain immutable and leaderboard-partitioned.
+Current production boundary as of the attempt-20 pre-deploy review. The
+implemented score-v5 candidate will supersede v4 only after review, merge, and
+deployment. Existing v4 artifacts remain immutable and
+leaderboard-partitioned.
 
 Status: implemented for the post-Attempt-10 candidate on 2026-07-10.
 
