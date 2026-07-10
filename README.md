@@ -277,13 +277,15 @@ unknown occupied buildings render as `o`, premature FARM crop assignment fails
 closed, and the room contract distinguishes a hollow boundary from a filled
 wall rectangle. A deployed smoke and live completed-plot probe passed.
 
-Attempts 12 and 13 both failed before gameplay while testing GLM-5.2 transport:
-forced and automatic tool calls returned missing, partial, or malformed
-arguments. The automatic path also failed 3/3 with a larger output budget. An
-exact-state no-execution comparison then found JSON-object transport passed the
-full governed validator 3/3 on the first call at the normal 512-token cap. That
-transport correction is the candidate for attempt 14; gameplay validation
-remains open. Full findings and gate predicates are recorded in `docs/WDSLL.md`.
+Attempts 12 and 13 failed before gameplay while testing GLM-5.2 transport.
+JSON-object transport then carried attempt 14 through 25 real gameplay rows:
+trees were felled, a Carpenter's Workshop completed, three beds and doors were
+made, seven plants were gathered, and 14 constructions were recorded. It still
+made no Still, FarmPlot, drink, enclosed room, or furniture installation.
+Attempt 14 terminated when later correction responses exceeded the 512-token
+cap. The exact terminal state passed 3/3 at 1,024 tokens, which is the candidate
+for attempt 15; G7 remains open. Full findings and gate predicates are recorded
+in `docs/WDSLL.md`.
 
 **Success definition and gate ladder: [docs/WDSLL.md](docs/WDSLL.md)** — every claim of "the agent plays" must pass a gate there on public, replayable evidence.
 

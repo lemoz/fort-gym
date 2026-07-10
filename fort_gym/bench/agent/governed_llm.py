@@ -1200,7 +1200,7 @@ register_agent("dfhack-governed-llm", lambda: DFHackGovernedLLMAgent())
 # governed run to date turned out to be served by an env-file override).
 register_agent(
     "dfhack-governed-llm-glm52",
-    lambda: DFHackGovernedLLMAgent(model_override="z-ai/glm-5.2"),
+    lambda: DFHackGovernedLLMAgent(model_override="z-ai/glm-5.2", max_tokens=1024),
 )
 register_agent(
     "dfhack-governed-llm-deepseek-v4",
