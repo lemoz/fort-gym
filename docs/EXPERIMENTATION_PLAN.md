@@ -84,7 +84,7 @@ counts (see `docs/Actions_Headless_Safety.md`).
 
 ## Open Experiment Questions
 
-1. **G7 run integrity**: after attempt 5's second topic-dialog abort, can every
+1. **G7 run integrity**: after attempt 6's non-due review-contract abort, can every
    accepted build reserve a material a citizen can actually haul, can every
    accepted order create real workshop jobs, and can bounded dialog interaction
    traverse the observed topic-meeting screen without arbitrary key access?
@@ -136,7 +136,7 @@ counts (see `docs/Actions_Headless_Safety.md`).
   PR #72 preserves factual governed history and PR #73 grounds BUILD targets.
   The next candidate keeps strategy in the model while requiring factual
   previous-action review plus initial/every-five/stalled/partial plan reviews;
-  malformed review metadata gets one correction, then fails before gameplay.
+  malformed review metadata gets up to two corrections, then fails before gameplay.
   Its evidence is restricted to runner-authored factual lines, plan reviews
   require two distinct immutable `E#` references, `retry_same_action` is checked
   against a stable type+params fingerprint, and a six-entry governed-history

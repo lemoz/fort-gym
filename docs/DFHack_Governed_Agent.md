@@ -88,12 +88,14 @@ factual allowlist; model-authored history cannot manufacture a new evidence
 line. Plan reviews select two IDs backed by distinct lines. A stable type+params
 fingerprint makes `retry_same_action` factual, and governed mode retains at
 least six action outcomes even if the display-history limit is configured lower.
+When no checkpoint is due, the model may submit a minimal `not_due` review or a
+voluntary `continue`; only substantive reviews require a reason.
 
 The agent holds no gameplay heuristics — the model plus the loop must solve
 gameplay. Legacy direct callers still degrade malformed model output to a
-recorded `WAIT`; governed runs carrying `AGENT PLAN CONTROL` permit one review-
-contract correction and then fail before execution instead of advancing hidden
-fallback ticks. OpenRouter transport gets three bounded attempts by default,
+recorded `WAIT`; governed runs carrying `AGENT PLAN CONTROL` permit up to two
+review-contract corrections and then fail before execution instead of advancing
+hidden fallback ticks. OpenRouter transport gets three bounded attempts by default,
 all within the same paused decision and before any gameplay command or tick.
 
 ## Replay Evidence
