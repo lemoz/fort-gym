@@ -647,95 +647,147 @@ class DFHackGovernedLLMAgent(Agent):
             return f"{field} must be single-line"
         return None
 
-    def _review_contract_error(
+    def _review_contract_errors(
         self,
         payload: Dict[str, Any],
         obs_text: str,
         control: Dict[str, Any],
-    ) -> str | None:
+    ) -> List[str]:
+        errors: List[str] = []
         allowed_evidence_lines = control.get("allowed_evidence_lines")
         if not isinstance(allowed_evidence_lines, list) or not all(
             isinstance(line, str) and re.fullmatch(r"E\d+: .+", line)
             for line in allowed_evidence_lines
         ):
-            return "AGENT PLAN CONTROL is missing its factual evidence allowlist"
+            return ["AGENT PLAN CONTROL is missing its factual evidence allowlist"]
         evidence_text = "\n".join(allowed_evidence_lines)
 
         for field in ("intent", "objective", "plan_step", "expected_simulation_result"):
             error = self._scalar_contract_error(payload.get(field), field)
             if error:
-                return error
+                errors.append(error)
 
         last_review = payload.get("last_action_review")
         if not isinstance(last_review, dict):
-            return "last_action_review must be an object"
-        if type(last_review.get("previous_step")) is not int:
-            return "last_action_review.previous_step must be an integer"
-        if last_review["previous_step"] != int(control.get("previous_step", -1)):
-            return "last_action_review.previous_step does not match AGENT PLAN CONTROL"
-        if last_review.get("verdict") != control.get("previous_verdict"):
-            return "last_action_review.verdict does not match AGENT PLAN CONTROL"
-        if type(last_review.get("retry_same_action")) is not bool:
-            return "last_action_review.retry_same_action must be boolean"
-        error = self._scalar_contract_error(
-            last_review.get("lesson"), "last_action_review.lesson"
-        )
-        if error:
-            return error
-        expected_previous_id = str(control.get("previous_evidence_id") or "")
-        if re.fullmatch(r"E\d+", expected_previous_id) is None:
-            return "AGENT PLAN CONTROL is missing the required previous evidence id"
-        last_evidence = last_review.get("evidence")
-        if expected_previous_id and (
-            not isinstance(last_evidence, list)
-            or expected_previous_id not in last_evidence
-        ):
-            return (
-                "last_action_review.evidence must include required evidence id "
-                f"{expected_previous_id!r}"
-            )
-        error = self._evidence_error(
-            last_evidence, evidence_text, "last_action_review.evidence"
-        )
-        if error:
-            return error
-        previous_step = int(control.get("previous_step", -1))
-        retry_same_action = last_review["retry_same_action"]
-        previous_fingerprint = str(control.get("previous_action_fingerprint") or "")
-        if previous_step < 0:
-            if retry_same_action:
-                return "last_action_review.retry_same_action must be false on the initial step"
+            errors.append("last_action_review must be an object")
         else:
-            if not re.fullmatch(r"[0-9a-f]{64}", previous_fingerprint):
-                return "AGENT PLAN CONTROL is missing the previous action fingerprint"
-            try:
-                canonical_action = parse_action(self._normalize_payload(payload))
-            except (TypeError, ValueError) as exc:
-                return f"invalid action payload: {exc}"
-            repeats_previous = (
-                normalized_action_fingerprint(canonical_action) == previous_fingerprint
-            )
-            if retry_same_action != repeats_previous:
-                return (
-                    "last_action_review.retry_same_action must match whether type+params "
-                    "repeat the previous action"
+            previous_step = int(control.get("previous_step", -1))
+            submitted_previous_step = last_review.get("previous_step")
+            if type(submitted_previous_step) is not int:
+                errors.append("last_action_review.previous_step must be an integer")
+            elif submitted_previous_step != previous_step:
+                errors.append(
+                    "last_action_review.previous_step does not match AGENT PLAN CONTROL "
+                    f"(expected {previous_step})"
                 )
+
+            expected_verdict = control.get("previous_verdict")
+            if last_review.get("verdict") != expected_verdict:
+                errors.append(
+                    "last_action_review.verdict does not match AGENT PLAN CONTROL "
+                    f"(expected {expected_verdict!r})"
+                )
+
+            retry_same_action = last_review.get("retry_same_action")
+            retry_is_bool = type(retry_same_action) is bool
+            if not retry_is_bool:
+                errors.append("last_action_review.retry_same_action must be boolean")
+
+            error = self._scalar_contract_error(
+                last_review.get("lesson"), "last_action_review.lesson"
+            )
+            if error:
+                errors.append(error)
+
+            expected_previous_id = str(control.get("previous_evidence_id") or "")
+            if re.fullmatch(r"E\d+", expected_previous_id) is None:
+                errors.append("AGENT PLAN CONTROL is missing the required previous evidence id")
+            last_evidence = last_review.get("evidence")
+            if expected_previous_id and (
+                not isinstance(last_evidence, list)
+                or expected_previous_id not in last_evidence
+            ):
+                errors.append(
+                    "last_action_review.evidence must include required evidence id "
+                    f"{expected_previous_id!r}"
+                )
+            error = self._evidence_error(
+                last_evidence, evidence_text, "last_action_review.evidence"
+            )
+            if error:
+                errors.append(error)
+
+            previous_fingerprint = str(control.get("previous_action_fingerprint") or "")
+            if previous_step < 0:
+                if retry_same_action is True:
+                    errors.append(
+                        "last_action_review.retry_same_action must be false on the initial step"
+                    )
+            elif not re.fullmatch(r"[0-9a-f]{64}", previous_fingerprint):
+                errors.append("AGENT PLAN CONTROL is missing the previous action fingerprint")
+            else:
+                try:
+                    canonical_action = parse_action(self._normalize_payload(payload))
+                except (TypeError, ValueError) as exc:
+                    errors.append(f"invalid action payload: {exc}")
+                else:
+                    repeats_previous = (
+                        normalized_action_fingerprint(canonical_action) == previous_fingerprint
+                    )
+                    if retry_is_bool and retry_same_action != repeats_previous:
+                        errors.append(
+                            "last_action_review.retry_same_action must match whether type+params "
+                            "repeat the previous action "
+                            f"(expected {str(repeats_previous).lower()})"
+                        )
 
         plan_review = payload.get("plan_review")
         if not isinstance(plan_review, dict):
-            return "plan_review must be an object"
-        for field in (
-            "request_id",
-            "prior_objective",
-            "objective",
-        ):
-            error = self._scalar_contract_error(
-                plan_review.get(field), f"plan_review.{field}"
+            errors.append("plan_review must be an object")
+            return errors
+
+        request_error = self._scalar_contract_error(
+            plan_review.get("request_id"), "plan_review.request_id"
+        )
+        if request_error:
+            errors.append(request_error)
+        elif plan_review.get("request_id") != control.get("request_id"):
+            errors.append(
+                "plan_review.request_id does not match AGENT PLAN CONTROL "
+                f"(expected {control.get('request_id')!r})"
             )
-            if field == "prior_objective" and plan_review.get(field) == "":
-                error = None
-            if error:
-                return error
+
+        prior = str(control.get("prior_objective") or "")
+        prior_error = self._scalar_contract_error(
+            plan_review.get("prior_objective"), "plan_review.prior_objective"
+        )
+        if plan_review.get("prior_objective") == "":
+            prior_error = None
+        if prior_error:
+            errors.append(prior_error)
+        else:
+            if self._normalized_prior_objective(
+                plan_review.get("prior_objective")
+            ) != self._normalized_prior_objective(prior):
+                errors.append(
+                    "plan_review.prior_objective does not match AGENT PLAN CONTROL "
+                    f"(expected {prior!r})"
+                )
+
+        objective = str(payload.get("objective") or "")
+        plan_objective_error = self._scalar_contract_error(
+            plan_review.get("objective"), "plan_review.objective"
+        )
+        if plan_objective_error:
+            errors.append(f"{plan_objective_error} (expected {objective!r})")
+        elif self._normalized_objective(
+            plan_review.get("objective")
+        ) != self._normalized_objective(objective):
+            errors.append(
+                "plan_review.objective must equal objective "
+                f"(expected {objective!r})"
+            )
+
         steps = plan_review.get("steps")
         if steps is not None and (
             not isinstance(steps, list)
@@ -747,38 +799,35 @@ class DFHackGovernedLLMAgent(Agent):
                 for step in steps
             )
         ):
-            return "plan_review.steps must contain only non-empty single-line strings"
-        if plan_review.get("request_id") != control.get("request_id"):
-            return "plan_review.request_id does not match AGENT PLAN CONTROL"
+            errors.append("plan_review.steps must contain only non-empty single-line strings")
+
         decision = str(plan_review.get("decision") or "")
-        if decision not in {"not_due", "establish", "continue", "revise"}:
-            return "plan_review.decision is invalid"
+        valid_decisions = {"not_due", "establish", "continue", "revise"}
+        decision_valid = decision in valid_decisions
+        if not decision_valid:
+            errors.append("plan_review.decision is invalid")
         reason = plan_review.get("reason")
         if decision != "not_due":
             error = self._scalar_contract_error(reason, "plan_review.reason")
             if error:
-                return error
+                errors.append(error)
         elif reason not in (None, ""):
             error = self._scalar_contract_error(reason, "plan_review.reason")
             if error:
-                return error
-        prior = str(control.get("prior_objective") or "")
-        if self._normalized_prior_objective(
-            plan_review.get("prior_objective")
-        ) != self._normalized_prior_objective(prior):
-            return "plan_review.prior_objective does not match AGENT PLAN CONTROL"
-        objective = str(payload.get("objective") or "")
-        if self._normalized_objective(plan_review.get("objective")) != self._normalized_objective(objective):
-            return "plan_review.objective must equal objective"
+                errors.append(error)
+
         plan_evidence = plan_review.get("evidence")
-        error = self._evidence_error(plan_evidence, evidence_text, "plan_review.evidence")
-        if error:
-            return error
+        evidence_error = self._evidence_error(
+            plan_evidence, evidence_text, "plan_review.evidence"
+        )
+        if evidence_error:
+            errors.append(evidence_error)
         if not isinstance(plan_evidence, list) or len(plan_evidence) < 2:
-            return "plan_review requires at least two factual observation excerpts"
+            errors.append("plan_review requires at least two factual observation excerpts")
+        plan_evidence_ready = evidence_error is None and len(plan_evidence) >= 2
 
         review_due = bool(control.get("review_due"))
-        if review_due:
+        if review_due and plan_evidence_ready:
             control_prefixes = (
                 "AGENT PLAN CONTROL:",
                 "Plan review reasons:",
@@ -791,33 +840,35 @@ class DFHackGovernedLLMAgent(Agent):
                 for quote in plan_evidence
             ]
             if len(set(matched_lines)) != len(matched_lines):
-                return "a due plan_review must cite two distinct factual lines"
+                errors.append("a due plan_review must cite two distinct factual lines")
             matched_contents = [
                 line.split(": ", 1)[-1] for line in matched_lines
             ]
             if all(line.startswith(control_prefixes) for line in matched_contents):
-                return "a due plan_review must quote at least one current game-state fact"
-        same_objective = self._normalized_objective(objective) == self._normalized_objective(prior)
-        if review_due:
+                errors.append("a due plan_review must quote at least one current game-state fact")
+        same_objective = self._normalized_objective(objective) == self._normalized_objective(
+            prior
+        )
+        if review_due and decision_valid and plan_objective_error is None:
             if not prior and decision != "establish":
-                return "initial plan review must use decision=establish"
+                errors.append("initial plan review must use decision=establish")
             if prior and decision == "continue" and not same_objective:
-                return "decision=continue must preserve the prior objective"
+                errors.append("decision=continue must preserve the prior objective")
             if prior and decision == "revise" and same_objective:
-                return "decision=revise must change the prior objective"
+                errors.append("decision=revise must change the prior objective")
             if prior and decision not in {"continue", "revise"}:
-                return "due plan review must continue or revise the prior objective"
-        else:
+                errors.append("due plan review must continue or revise the prior objective")
+        elif not review_due and decision_valid and plan_objective_error is None:
             if decision == "revise" and same_objective:
-                return "decision=revise must change the prior objective"
+                errors.append("decision=revise must change the prior objective")
             if not same_objective and decision != "revise":
-                return "an objective change requires decision=revise"
+                errors.append("an objective change requires decision=revise")
             if same_objective and decision not in {"not_due", "continue"}:
-                return (
+                errors.append(
                     "when review_due=no, unchanged objectives must use "
                     "decision=not_due or continue"
                 )
-        return None
+        return errors
 
     def decide(self, obs_text: str, obs_json: Dict[str, Any]) -> Dict[str, Any]:
         self._record_previous_outcome(obs_text)
@@ -852,6 +903,7 @@ class DFHackGovernedLLMAgent(Agent):
         action = None
         last_error = "model returned no submit_action tool call"
         for attempt in range(max_contract_attempts):
+            contract_errors: List[str] = []
             try:
                 response = self._create_completion(messages)
             except Exception as exc:
@@ -862,40 +914,72 @@ class DFHackGovernedLLMAgent(Agent):
             payload = self._extract_tool_payload(response)
             if payload is None:
                 last_error = "model returned no submit_action tool call"
+                contract_errors = [last_error]
             else:
                 action_type = str(payload.get("type") or "").upper()
                 if action_type not in GOVERNED_ACTION_TYPES:
                     last_error = f"illegal action type: {action_type or 'missing'}"
+                    contract_errors = [last_error]
                 else:
-                    contract_error = (
-                        self._review_contract_error(payload, obs_text, review_control)
+                    contract_errors = (
+                        self._review_contract_errors(payload, obs_text, review_control)
                         if review_control is not None
-                        else None
+                        else []
                     )
-                    if contract_error:
-                        last_error = contract_error
+                    if contract_errors:
+                        last_error = "; ".join(contract_errors)
                     else:
                         try:
                             action = parse_action(self._normalize_payload(payload))
                         except (TypeError, ValueError) as exc:
                             last_error = f"invalid action payload: {exc}"
+                            contract_errors = [last_error]
                         else:
                             break
             if review_control is not None and attempt + 1 < max_contract_attempts:
+                rejected_payload = (
+                    json.dumps(payload, ensure_ascii=True, sort_keys=True)
+                    if isinstance(payload, dict)
+                    else "null"
+                )
+                expected_control = json.dumps(
+                    {
+                        "plan_request_id": review_control.get("request_id"),
+                        "previous_step": review_control.get("previous_step"),
+                        "previous_verdict": review_control.get("previous_verdict"),
+                        "prior_objective": review_control.get("prior_objective"),
+                        "required_previous_evidence_id": review_control.get(
+                            "previous_evidence_id"
+                        ),
+                    },
+                    ensure_ascii=True,
+                    sort_keys=True,
+                )
+                validation_feedback = "\n".join(
+                    f"- {error}" for error in (contract_errors or [last_error])
+                )
                 self._tool_events.append(
                     {
                         "tool": "governed_llm.review_contract_retry",
                         "input": {"request_id": review_control.get("request_id")},
-                        "output": {"error": last_error},
+                        "output": {
+                            "error": last_error,
+                            "errors": contract_errors or [last_error],
+                        },
                     }
                 )
                 messages.append(
                     {
                         "role": "user",
                         "content": (
-                            "Your submit_action was rejected before gameplay because: "
-                            f"{last_error}. Re-read AGENT PLAN CONTROL and return one corrected "
-                            "submit_action. No game ticks have advanced."
+                            "Your most recent submit_action was rejected before gameplay. "
+                            "Correct this exact payload and preserve every field that already "
+                            f"satisfies the contract:\n{rejected_payload}\n"
+                            "Validation errors (all currently detected):\n"
+                            f"{validation_feedback}\n"
+                            f"Authoritative AGENT PLAN CONTROL values: {expected_control}\n"
+                            "Re-read AGENT PLAN CONTROL and "
+                            "return one corrected submit_action. No game ticks have advanced."
                         ),
                     }
                 )
