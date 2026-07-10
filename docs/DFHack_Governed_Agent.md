@@ -70,8 +70,9 @@ It uses OpenRouter chat completions (default `z-ai/glm-5.2`, override with
 `OPENROUTER_MODEL`) with a single `submit_action` tool restricted to
 `DIG`/`BUILD`/`ORDER`/`UNSUSPEND`/`FARM`/`LABOR`/`WAIT`/`INTERACT`. Per step it receives:
 
-- the encoded observation (including the recorded CopyScreen text and the
-  bounded `work` metrics),
+- the encoded observation (including the recorded CopyScreen text, a fort
+  minimap where `.` is stable floor and `i` is frozen liquid, and bounded
+  `work` metrics),
 - its own memory context from `MemoryManager` (recent steps, summary, POIs,
   failed attempts, current gameplay plan).
 
@@ -137,6 +138,13 @@ Governed target discovery wraps helper probes with
 camera/cursor is preserved — probes never disturb the visible game. Traces
 recorded before screen capture existed show "No Recorded DF Screen Frame" in
 replay instead of pretending a derived view is gameplay.
+
+Workshop-site discovery reports only a verified 3x3 stable-floor footprint and
+keeps that fact available for both CarpenterWorkshop and Still. It excludes
+`FROZEN_LIQUID`, which can look floor-shaped while frozen but thaw into open
+air. The map snapshot, fort minimap, room flood-fill, legacy work metrics, and
+all four structured BUILD target hooks use the same distinction; a frozen
+target fails closed as `tile_frozen_liquid` without creating a building.
 
 ## Rubric Evaluation
 

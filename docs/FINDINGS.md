@@ -402,7 +402,7 @@ above, the same discipline held:
   *observation's factual content* are widened, and only with prior approval. When
   a correction raised the G4 bar (plan-agnostic room detection), the bar went up,
   not down — no run to date passed it more easily.
-- **Scoring is version-stamped.** `score_version` 1 → 2 → 3 are hard boundaries;
+- **Scoring is version-stamped.** `score_version` 1 → 2 → 3 → 4 are hard boundaries;
   runs are never compared across them, and every boundary carries a corrections-
   log entry and a calibration table.
 - **Failures are reported at equal prominence with passes** — same fields, same

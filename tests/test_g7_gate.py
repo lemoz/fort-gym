@@ -58,7 +58,7 @@ def _summary(**overrides):
         "end_pop": 15,
         "fort_functional_rooms": 3,
         "total_score": 150,
-        "score_version": 3,
+        "score_version": 4,
         "rubric": {"rubric_score": 70, "blockers": []},
     }
     value.update(overrides)
@@ -79,7 +79,27 @@ def test_g7_pass_requires_every_ratified_fact() -> None:
     result = evaluate_g7([_row(0, survival=survival)], _summary())
 
     assert result["status"] == PASS
+    assert result["gate_version"] == 2
     assert all(item["status"] == PASS for item in result["criteria"].values())
+
+
+def test_g7_rejects_pre_stable_floor_score_version() -> None:
+    survival = {
+        "food_produced_in_run": 21,
+        "food_consumed_in_run": 20,
+        "drink_produced_in_run": 31,
+        "drink_consumed_in_run": 30,
+        "flow_evidence_complete": True,
+        "death_evidence_complete": True,
+        "death_causes_known": True,
+        "neglect_deaths": 0,
+    }
+
+    result = evaluate_g7([_row(0, survival=survival)], _summary(score_version=3))
+
+    assert result["status"] == FAIL
+    assert result["criteria"]["scalar_score"]["status"] == FAIL
+    assert result["criteria"]["scalar_score"]["required"] == "score-v4 >=150.0"
 
 
 def test_g7_failure_wins_over_unknown_evidence() -> None:

@@ -8,8 +8,8 @@ from __future__ import annotations
 from fort_gym.bench.eval import metrics, scoring
 
 
-def test_score_version_is_3() -> None:
-    assert scoring.SCORE_VERSION == 3
+def test_score_version_is_4_after_stable_floor_measurement_boundary() -> None:
+    assert scoring.SCORE_VERSION == 4
 
 
 def test_demand_capped_production_pays_full_rate_up_to_population() -> None:

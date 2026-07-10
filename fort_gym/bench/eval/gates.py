@@ -5,6 +5,8 @@ from __future__ import annotations
 from math import ceil
 from typing import Any, Dict, Iterable, Mapping, Sequence
 
+from .scoring import SCORE_VERSION
+
 PASS = "pass"
 FAIL = "fail"
 UNKNOWN = "unknown"
@@ -339,9 +341,9 @@ def evaluate_g7(
             required=f">={G7_MIN_RUBRIC} with zero blockers",
         ),
         "scalar_score": _criterion(
-            PASS if score_version == 3 and score >= G7_MIN_SCORE else FAIL,
+            PASS if score_version == SCORE_VERSION and score >= G7_MIN_SCORE else FAIL,
             observed={"score": score, "score_version": score_version},
-            required=f"score-v3 >={G7_MIN_SCORE}",
+            required=f"score-v{SCORE_VERSION} >={G7_MIN_SCORE}",
         ),
     }
 
@@ -350,7 +352,7 @@ def evaluate_g7(
     terminal = records[-1].get("stopped") or records[-1].get("terminal_reason") if records else None
     return {
         "gate": "G7",
-        "gate_version": 1,
+        "gate_version": 2,
         "status": overall,
         "criteria": criteria,
         "terminal": terminal,

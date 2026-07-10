@@ -20,6 +20,16 @@ def test_render_minimap_handles_queued_construction_glyph() -> None:
     assert png is not None and png[:8] == b"\x89PNG\r\n\x1a\n"
 
 
+def test_render_minimap_distinguishes_frozen_liquid() -> None:
+    from fort_gym.bench.agent.minimap_render import LEGEND_TEXT, TILE_STYLES
+
+    assert "i" in TILE_STYLES
+    assert "i=frozen liquid" in LEGEND_TEXT
+    assert TILE_STYLES["i"] != TILE_STYLES["."]
+    png = render_minimap_png(["..iii..", "..i.i..", "..iii.."], [90, 87, 177])
+    assert png is not None and png[:8] == b"\x89PNG\r\n\x1a\n"
+
+
 def test_minimap_data_url_prefix_and_fallbacks() -> None:
     url = minimap_data_url(
         {"map_rows": ["..WWW..", "..W.W.."], "map_origin": [90, 87, 177]}

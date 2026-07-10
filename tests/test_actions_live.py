@@ -31,6 +31,53 @@ def test_designate_rect_clamp():
     assert result.get("error") == "rect_too_large"
 
 
+@pytest.mark.skipif(not LIVE, reason="requires live DFHack")
+def test_workshop_candidate_live_preflight_and_fingerprint_recovery():
+    from fort_gym.bench.dfhack_backend import (
+        prepare_keystroke_target,
+        read_map_snapshot,
+        read_view_state,
+        restore_view_state,
+    )
+
+    def probe(blocked=()):
+        view_before = read_view_state()
+        try:
+            return prepare_keystroke_target(
+                "workshop",
+                blocked_workshop_targets=blocked,
+            )
+        finally:
+            assert restore_view_state(view_before).get("ok") is True
+
+    first = probe()
+    assert first.get("ok") is True
+    assert first.get("stable_floor_tiles") == 9
+    assert first.get("frozen_liquid_tiles") == 0
+    assert first.get("liquid_tiles") == 0
+    assert first.get("locality_ok") is True
+    assert first.get("reachable_citizen") is True
+    assert first.get("path_cache_current") is True
+
+    rect = tuple(int(value) for value in first["placement_rect"])
+    snapshot = read_map_snapshot(rect)
+    assert snapshot.get("ok") is True
+    assert snapshot.get("floor_tiles") == 9
+    assert snapshot.get("frozen_liquid_tiles") == 0
+
+    x, y, z = rect[:3]
+    fingerprint = str(first["placement_fingerprint"])
+    same_state_blocked = probe(((x, y, z, fingerprint),))
+    if same_state_blocked.get("ok") is True:
+        assert tuple(same_state_blocked["placement_rect"][:3]) != (x, y, z)
+
+    stale_fingerprint = f"{fingerprint}_previous"
+    recovered = probe(((x, y, z, stale_fingerprint),))
+    assert recovered.get("ok") is True
+    assert tuple(recovered["placement_rect"][:3]) == (x, y, z)
+    assert recovered.get("placement_fingerprint") == fingerprint
+
+
 def test_read_work_metrics_rejects_oversized_rect_without_live_dfhack():
     from fort_gym.bench.dfhack_backend import read_work_metrics
 

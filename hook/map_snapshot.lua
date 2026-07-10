@@ -38,6 +38,7 @@ end
 local attrs = df.tiletype.attrs
 local floor_shape = df.tiletype_shape.FLOOR
 local wall_shape = df.tiletype_shape.WALL
+local frozen_liquid_material = df.tiletype_material.FROZEN_LIQUID
 local no_dig = df.tile_dig_designation.No
 
 local function get_tile_block(tx, ty, tz)
@@ -98,6 +99,7 @@ end
 
 local tiles = {}
 local floor_tiles = 0
+local frozen_liquid_tiles = 0
 local wall_tiles = 0
 local hidden_tiles = 0
 local dig_designations = 0
@@ -126,6 +128,8 @@ for ty = ry1, ry2 do
       local attr = attrs[tiletype]
       tile.tiletype = tonumber(tiletype) or -1
       tile.tiletype_name = tostring(tiletype)
+      tile.material = attr and tostring(df.tiletype_material[attr.material] or attr.material)
+        or 'unknown'
 
       if designation then
         tile.hidden = designation.hidden and true or false
@@ -138,7 +142,13 @@ for ty = ry1, ry2 do
         end
       end
 
-      if attr and attr.shape == floor_shape then
+      if attr and attr.material == frozen_liquid_material then
+        tile.category = 'frozen_liquid'
+        tile.shape = attr.shape == floor_shape and 'FLOOR' or tostring(attr.shape)
+        tile.tiletype_name = 'FROZEN_LIQUID'
+        tile.char = 'i'
+        frozen_liquid_tiles = frozen_liquid_tiles + 1
+      elseif attr and attr.shape == floor_shape then
         tile.category = 'floor'
         tile.shape = 'FLOOR'
         tile.char = '.'
@@ -187,6 +197,7 @@ print(json.encode({
   z = rz,
   window_z = df.global.window_z or 0,
   floor_tiles = floor_tiles,
+  frozen_liquid_tiles = frozen_liquid_tiles,
   wall_tiles = wall_tiles,
   hidden_tiles = hidden_tiles,
   dig_designations = dig_designations,

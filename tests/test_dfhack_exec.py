@@ -36,7 +36,11 @@ def test_prepare_keystroke_workshop_target_moves_cursor_before_confirm() -> None
     assert "local function append_cursor_moves" in hook_text
     assert "placement_cursor_before_moves" in hook_text
     assert "blocked_workshop_targets" in hook_text
-    assert "blocked_workshop_targets[workshop_target_key(x1, y1, z)]" in hook_text
+    assert "blocked_fingerprint == fingerprint" in hook_text
+    assert "placement_fingerprint" in hook_text
+    assert "designation.flow_size" in hook_text
+    assert "dfhack.maps.canWalkBetween" in hook_text
+    assert "MAX_LOCALITY = 24" in hook_text
     assert (
         "append_cursor_moves(recommended_keys, placement_cursor_x, placement_cursor_y, x1, y1)"
         in hook_text
@@ -62,6 +66,23 @@ def test_prepare_keystroke_target_passes_blocked_workshop_targets(monkeypatch) -
 
     assert captured["args"] == ("workshop", "97,93,177;88,98,177")
     assert captured["kwargs"]["timeout"] == 10.0
+
+
+def test_prepare_keystroke_target_formats_fingerprint_scoped_block(monkeypatch) -> None:
+    captured = {}
+
+    def fake_run_lua_file(path, *args, **kwargs):
+        captured["args"] = args
+        return {"ok": True}
+
+    monkeypatch.setattr(dfhack_backend, "run_lua_file", fake_run_lua_file)
+
+    dfhack_backend.prepare_keystroke_target(
+        "workshop",
+        blocked_workshop_targets=[(97, 93, 177, "258:0:No:0:0_site")],
+    )
+
+    assert captured["args"] == ("workshop", "97,93,177,258:0:No:0:0_site")
 
 
 def test_view_state_helpers_use_dedicated_hooks(monkeypatch) -> None:
@@ -172,6 +193,7 @@ def test_workshop_hook_fails_closed_on_illegal_footprint() -> None:
         "footprint_error",
         "tile_occupied_by_building",
         "tile_hidden_unexplored",
+        "tile_frozen_liquid",
         "tile_not_open_floor",
         "tile_has_liquid",
         "workshop_unreachable_from_citizens",
@@ -227,6 +249,7 @@ def test_build_farm_plot_hook_is_bounded_and_reports_counts() -> None:
     # obvious per-tile placement problems reuse place_furniture's checks
     assert "tile_occupied_by_building" in hook_text
     assert "tile_hidden_unexplored" in hook_text
+    assert "tile_frozen_liquid" in hook_text
     assert "tile_not_open_floor" in hook_text
     assert "tile_placement_error" in hook_text
 
@@ -730,14 +753,72 @@ def test_build_construction_reports_occupied_and_wall_tiles() -> None:
     assert "tile_shape =" in script
     assert "tiletype_name =" in script
     assert "tile_hidden_unexplored" in script
+    assert "tile_frozen_liquid" in script
     assert "tile_has_liquid" in script
     assert "item:isBuildMat()" in script
     assert "local rollback_failed = false" in script
     assert "building_id = building_id" in script
     assert "partial_placement" in script
     failure_blocks = re.findall(r"table\.insert\(failed, \{(.*?)\}\)", script, re.DOTALL)
-    assert len(failure_blocks) == 12
+    assert len(failure_blocks) == 13
     assert all("z = z1" in block for block in failure_blocks)
+
+
+def test_build_target_hooks_reject_frozen_liquid_as_unstable_floor() -> None:
+    hook_dir = Path(__file__).resolve().parents[1] / "hook"
+    for hook_name in (
+        "build_workshop.lua",
+        "place_furniture.lua",
+        "build_construction.lua",
+        "build_farm_plot.lua",
+    ):
+        script = (hook_dir / hook_name).read_text(encoding="utf-8")
+        assert "df.tiletype_material.FROZEN_LIQUID" in script
+        assert "tile_frozen_liquid" in script
+
+
+def test_floor_observers_distinguish_frozen_liquid_from_stable_floor() -> None:
+    hook_dir = Path(__file__).resolve().parents[1] / "hook"
+    for hook_name in (
+        "map_snapshot.lua",
+        "fort_metrics.lua",
+        "work_metrics.lua",
+    ):
+        script = (hook_dir / hook_name).read_text(encoding="utf-8")
+        assert "df.tiletype_material.FROZEN_LIQUID" in script
+        assert "frozen_liquid_tiles" in script
+
+    job_metrics = (hook_dir / "job_metrics.lua").read_text(encoding="utf-8")
+    assert "df.tiletype_material.FROZEN_LIQUID" in job_metrics
+    assert "frozen_liquid = counts.frozen_liquid" in job_metrics
+
+    map_snapshot = (hook_dir / "map_snapshot.lua").read_text(encoding="utf-8")
+    assert "tile.category = 'frozen_liquid'" in map_snapshot
+    assert "tile.char = 'i'" in map_snapshot
+
+    fort_metrics = (hook_dir / "fort_metrics.lua").read_text(encoding="utf-8")
+    assert "material ~= FROZEN_LIQUID_MATERIAL" in fort_metrics
+    assert "ch = 'i'" in fort_metrics
+    assert fort_metrics.index("elseif material == FROZEN_LIQUID_MATERIAL") < fort_metrics.index(
+        "elseif shape == WALL_SHAPE"
+    )
+
+    assert job_metrics.index("if ok and is_frozen_liquid then") < job_metrics.index(
+        "elseif shape_name == 'WALL'"
+    )
+
+
+def test_workshop_site_finder_requires_nine_stable_floor_tiles() -> None:
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "prepare_keystroke_target.lua"
+    ).read_text(encoding="utf-8")
+    assert "attr.material ~= df.tiletype_material.FROZEN_LIQUID" in script
+    assert "stable_floor_tiles = WORKSHOP_SIZE * WORKSHOP_SIZE" in script
+    assert "frozen_liquid_tiles = 0" in script
+    assert "liquid_tiles = 0" in script
+    assert "locality_ok = true" in script
+    assert "reachable_citizen = true" in script
+    assert "path_cache_current = true" in script
 
 
 def test_job_metrics_reports_construct_building_walk_group_truth() -> None:

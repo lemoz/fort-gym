@@ -33,6 +33,7 @@ from .minimap_render import minimap_data_url
 
 GOVERNED_ACTION_TYPES = ("DIG", "BUILD", "ORDER", "UNSUSPEND", "FARM", "LABOR", "WAIT", "INTERACT")
 DEFAULT_ADVANCE_TICKS = 1000
+MAX_OBJECTIVE_LENGTH = 160
 
 _MEMORY_PATH_ENV_VAR = "FORT_GYM_GOVERNED_MEMORY_PATH"
 _MEMORY_PATH_DISABLE_VALUES = {"off", "0"}
@@ -63,8 +64,9 @@ the plant stock — gathered plants are brewable.
 "x": X, "y": Y, "z": Z, "x2": X2, "y2": Y2 (optional)}. \
 CarpenterWorkshop places a 3x3 workshop on open floor within 24 tiles of your fort — near any \
 existing building or citizen (the work metrics include a `carpenter_build_site` when a candidate \
-spot is visible); a dwarf must then construct it. \
-Still places a 3x3 workshop the same way; a dwarf must then construct it. A built Still brews \
+spot of nine stable floor tiles is visible); a dwarf must then construct it. \
+Still places a 3x3 workshop the same way and can use the same reported `carpenter_build_site`; a \
+dwarf must then construct it. A built Still brews \
 plants into drink via ORDER job "brew" — brew orders need gatherable plants and empty barrels \
 in stock; drink is what dwarves actually consume. \
 FarmPlot places a farm plot on open ground: a single tile at (x, y, z), or a rectangle up to 5x5 \
@@ -137,10 +139,13 @@ time advances.
 The observation includes a Fort minimap — a top-down character grid (and, when attached, the \
 same grid rendered as a color image) of your fort area with a \
 coordinate ruler (W=your walls, x=your queued wall/floor a dwarf is still building — never \
-re-place on an x tile, advance time instead, b/t/c/d=furniture, w=workshop, .=open floor). It is the \
+re-place on an x tile, advance time instead, b/t/c/d=furniture, w=workshop, .=stable open floor, \
+i=frozen liquid that can thaw). It is the \
 authoritative view for BUILD placement and wall geometry. Before submitting any BUILD, derive its \
-full target footprint and verify every target tile is `.` open floor in the current minimap. Never \
-target `b`, `t`, `c`, `d`, `w`, or `x`, a coordinate listed under Furniture positions, or a \
+full target footprint and verify every target tile is `.` open floor in the current minimap, OR for \
+CarpenterWorkshop/Still use the exact runner-authored `carpenter_build_site_rect`, which is an \
+authoritative nine-tile stable-floor preflight even when it lies outside the cropped minimap. Never \
+target `b`, `t`, `c`, `d`, `w`, `x`, or `i`, a coordinate listed under Furniture positions, or a \
 coordinate just reported under Failed tiles. If the footprint is not provably open and unoccupied, \
 choose a different valid tile or a different productive action; WAIT only when advancing the \
 simulation can change the relevant world state, and name the change you expect. Do not retry a \
@@ -166,7 +171,9 @@ model-authored action history or Last Action command/detail as evidence.
 
 With each action also submit:
 - "intent": one sentence on what this command does.
-- "objective": the fortress goal this action advances (used as your persistent plan objective).
+- "objective": the short, durable fortress goal this action advances (used as your persistent plan
+  objective; keep it under 160 characters and do not include changing counts, evidence IDs, step
+  numbers, or other volatile observation facts — put those details in intent or plan_step).
 - "plan_step": which step of your plan this is.
 - "expected_simulation_result": what the real simulation should show afterwards if it worked.
 - "last_action_review": previous_step and verdict exactly matching AGENT PLAN CONTROL, one or more
@@ -202,7 +209,14 @@ def _submit_action_tool() -> Dict[str, Any]:
                     "type": {"type": "string", "enum": list(GOVERNED_ACTION_TYPES)},
                     "params": {"type": "object"},
                     "intent": {"type": "string"},
-                    "objective": {"type": "string"},
+                    "objective": {
+                        "type": "string",
+                        "maxLength": MAX_OBJECTIVE_LENGTH,
+                        "description": (
+                            "Short durable fortress goal; omit live counts, evidence IDs, and "
+                            "step numbers."
+                        ),
+                    },
                     "plan_step": {"type": "string"},
                     "expected_simulation_result": {"type": "string"},
                     "last_action_review": {
@@ -246,7 +260,10 @@ def _submit_action_tool() -> Dict[str, Any]:
                                 "enum": ["not_due", "establish", "continue", "revise"],
                             },
                             "prior_objective": {"type": "string"},
-                            "objective": {"type": "string"},
+                            "objective": {
+                                "type": "string",
+                                "maxLength": MAX_OBJECTIVE_LENGTH,
+                            },
                             "evidence": {
                                 "type": "array",
                                 "items": {"type": "string"},
@@ -641,11 +658,18 @@ class DFHackGovernedLLMAgent(Agent):
         return None
 
     @staticmethod
-    def _scalar_contract_error(value: Any, field: str) -> str | None:
+    def _scalar_contract_error(
+        value: Any,
+        field: str,
+        *,
+        max_length: int | None = None,
+    ) -> str | None:
         if not isinstance(value, str) or not value.strip():
             return f"{field} is required by the governed review contract"
         if "\n" in value or "\r" in value:
             return f"{field} must be single-line"
+        if max_length is not None and len(value.strip()) > max_length:
+            return f"{field} must be at most {max_length} characters"
         return None
 
     def _review_contract_errors(
@@ -665,7 +689,11 @@ class DFHackGovernedLLMAgent(Agent):
         evidence_text = "\n".join(allowed_evidence_lines)
 
         for field in ("intent", "objective", "plan_step", "expected_simulation_result"):
-            error = self._scalar_contract_error(payload.get(field), field)
+            error = self._scalar_contract_error(
+                payload.get(field),
+                field,
+                max_length=MAX_OBJECTIVE_LENGTH if field == "objective" else None,
+            )
             if error:
                 errors.append(error)
 
@@ -773,7 +801,9 @@ class DFHackGovernedLLMAgent(Agent):
 
         objective = str(payload.get("objective") or "")
         plan_objective_error = self._scalar_contract_error(
-            plan_review.get("objective"), "plan_review.objective"
+            plan_review.get("objective"),
+            "plan_review.objective",
+            max_length=MAX_OBJECTIVE_LENGTH,
         )
         if plan_objective_error:
             errors.append(f"{plan_objective_error} (expected {objective!r})")

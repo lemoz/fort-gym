@@ -11,6 +11,7 @@ from fort_gym.bench.run.runner import (
     _desired_keystroke_target_mode,
     _gameplay_proof,
     _governed_gameplay_proof,
+    _governed_rejected_workshop_target,
     _is_exit_only_recovery_action,
     _is_governed_dfhack_model,
     _is_keystroke_model,
@@ -81,6 +82,13 @@ def test_add_governed_build_site_adds_observed_placement_rect() -> None:
         "ok": True,
         "source": "citizen_near_empty_floor_workshop_footprint",
         "placement_rect": [88, 96, 177, 90, 98, 177],
+        "stable_floor_tiles": 9,
+        "frozen_liquid_tiles": 0,
+        "liquid_tiles": 0,
+        "locality_ok": True,
+        "reachable_citizen": True,
+        "path_cache_current": True,
+        "placement_fingerprint": "site-fingerprint",
     }
 
     updated = _add_governed_build_site(state, target)
@@ -91,7 +99,76 @@ def test_add_governed_build_site_adds_observed_placement_rect() -> None:
         updated["work"]["carpenter_build_site_source"]
         == "citizen_near_empty_floor_workshop_footprint"
     )
+    assert updated["work"]["carpenter_build_site_fingerprint"] == "site-fingerprint"
+    assert updated["work"]["carpenter_build_site_reachable_citizen"] is True
     assert "carpenter_build_site" not in state["work"]
+
+
+def test_add_governed_build_site_rejects_unstable_or_unproven_footprints() -> None:
+    state = {"work": {"target_rect": [94, 91, 177, 97, 92, 177]}}
+    base_target = {
+        "ok": True,
+        "source": "citizen_near_empty_floor_workshop_footprint",
+        "placement_rect": [88, 96, 177, 90, 98, 177],
+    }
+
+    assert _add_governed_build_site(state, base_target) is state
+    assert (
+        _add_governed_build_site(
+            state,
+            {
+                **base_target,
+                "stable_floor_tiles": 8,
+                "frozen_liquid_tiles": 1,
+                "liquid_tiles": 0,
+                "locality_ok": True,
+                "reachable_citizen": True,
+                "path_cache_current": True,
+            },
+        )
+        is state
+    )
+
+
+def test_governed_rejected_workshop_site_is_bound_to_its_tile_fingerprint() -> None:
+    target = {
+        "target_rect": [88, 96, 177, 90, 98, 177],
+        "placement_fingerprint": "site-fingerprint",
+    }
+    action = {
+        "type": "BUILD",
+        "params": {"kind": "Still", "x": 88, "y": 96, "z": 177},
+    }
+
+    assert _governed_rejected_workshop_target(
+        action,
+        {"accepted": False, "why": "tile_has_liquid"},
+        target,
+    ) == (88, 96, 177, "site-fingerprint")
+    assert (
+        _governed_rejected_workshop_target(
+            action,
+            {"accepted": False, "why": "path_cache_stale"},
+            target,
+        )
+        is None
+    )
+    assert (
+        _governed_rejected_workshop_target(
+            action,
+            {"accepted": False, "why": "workshop_unreachable_from_citizens"},
+            target,
+        )
+        is None
+    )
+    assert (
+        _governed_rejected_workshop_target(
+            {**action, "params": {**action["params"], "x": 89}},
+            {"accepted": False, "why": "tile_has_liquid"},
+            target,
+        )
+        is None
+    )
 
 
 def test_zero_assisted_dfhack_progress_preserves_audit_values() -> None:

@@ -288,6 +288,7 @@ def _run_governed_interact_fixture(
     viewscreen_type: str = "viewscreen_textviewerst",
     screen_text: str = "dialog screen",
     screen_capture_fails_after: bool = False,
+    prepare_target_callback: Any | None = None,
 ) -> tuple[Agent, RunRegistry, str]:
     monkeypatch.setenv("ARTIFACTS_DIR", str(tmp_path))
     monkeypatch.setenv("DFHACK_ENABLED", "1")
@@ -358,7 +359,7 @@ def _run_governed_interact_fixture(
     )
     monkeypatch.setattr(
         "fort_gym.bench.run.runner.prepare_keystroke_target",
-        lambda *args, **kwargs: {"ok": False},
+        prepare_target_callback or (lambda *args, **kwargs: {"ok": False}),
     )
     monkeypatch.setattr(
         "fort_gym.bench.run.runner.restore_view_state",
@@ -426,6 +427,51 @@ def _run_governed_interact_fixture(
         preserve_save=True,
     )
     return agent, registry, run_id
+
+
+def test_governed_workshop_candidate_revalidates_after_wait(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    workshop_calls = 0
+
+    def prepare_target(mode: str, **_: Any) -> Dict[str, Any]:
+        nonlocal workshop_calls
+        if mode == "starter":
+            return {"ok": False}
+        assert mode == "workshop"
+        workshop_calls += 1
+        return {
+            "ok": True,
+            "source": "live_preflight",
+            "target_rect": [88, 96, 177, 90, 98, 177],
+            "selection_rect": [88, 96, 177, 90, 98, 177],
+            "placement_rect": [88, 96, 177, 90, 98, 177],
+            "stable_floor_tiles": 9,
+            "frozen_liquid_tiles": 0,
+            "liquid_tiles": 0,
+            "locality_ok": True,
+            "reachable_citizen": True,
+            "path_cache_current": True,
+            "placement_fingerprint": f"site-state-{workshop_calls}",
+        }
+
+    agent = CountingWaitAgent(10)
+    _run_governed_interact_fixture(
+        tmp_path,
+        monkeypatch,
+        screen_changes=False,
+        max_steps=2,
+        agent_override=agent,
+        prepare_target_callback=prepare_target,
+    )
+
+    assert len(agent.observations) == 2
+    assert [
+        observation["work"]["carpenter_build_site_fingerprint"]
+        for observation in agent.observations
+    ] == ["site-state-1", "site-state-2"]
+    assert workshop_calls >= 2
 
 
 def test_zero_progress_timeout_is_terminal_before_another_agent_decide(

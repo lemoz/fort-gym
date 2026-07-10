@@ -162,8 +162,11 @@ separates "solved one map" from "plays Dwarf Fortress."
 ### G7 — The fort lives: a self-sufficient year (RATIFIED 2026-07-09)
 Status: RATIFIED at the 2026-07-09 operator window; attempt 1 FAILED, while
 attempts 2 through 6 ended in infrastructure-aborted FAILs with no full-year
-policy verdict. All six are recorded below. The criteria remain unchanged. All three
-activation preconditions hold: (a) score-v3 ratified and landed; (b) G6 attempted
+policy verdict. All attempts are recorded below. The gameplay criteria remain
+unchanged; post-Attempt-10 runs use the score-v4 stable-floor measurement
+boundary. All three activation preconditions hold: (a) score-v3 ratified and
+landed, with score-v4 retaining its coefficients and threshold while removing
+false frozen-floor credit; (b) G6 attempted
 (7 runs, 2 models — frontier documented in the escalation log); (c) the
 survival primitives exist, adversarially reviewed and live-validated:
 gather (DIG kind), FarmPlot (BUILD kind), Still + brew ORDER
@@ -173,8 +176,9 @@ deferred (optional in the proposal; not required for the drink/food loop).
 Pre-declared scalar bar for attempt 1 (set before launch, per the gate
 protocol): score-v3 >= 150 — the best corrected 100k-tick region3 run
 scored 152.39, and a fort that lives a full year must at least match the
-best quarter-year camp — and rubric >= 70 with zero blockers (the
-standing clean bar). Attempt 1 ran as GLM-5V, max_steps 450,
+best quarter-year camp. Score-v4 keeps the same >=150 bar without transient
+ice credit — and rubric >= 70 with zero blockers (the standing clean bar).
+Attempt 1 ran as GLM-5V, max_steps 450,
 ticks_per_step 1000, seed_region3_fresh (the unseen-map frontier, water
 hazard and all); its public failure record is below.
 
@@ -185,7 +189,7 @@ fort ever built here eventually dies of thirst with no enemy required.
 G7 is the first gate where the game itself pushes back, and it is
 monoculture-proof by construction: survival is a portfolio problem.
 
-Criteria (one run, plan-agnostic, score-v3, memory per standing config):
+Criteria (one run, plan-agnostic, current score version, memory per standing config):
 - **Duration**: >= 403,200 elapsed ticks (one full in-game year).
 - **The loop closes**: food AND drink produced in-run (from the run's own
   farms/brewing, evidenced by production deltas — same evidence class as
@@ -198,8 +202,8 @@ Criteria (one run, plan-agnostic, score-v3, memory per standing config):
   waves survived), >= 3 functional rooms, installed beds >= population/3.
 - **No degeneracy**: rubric clean of repetitive_policy /
   no_production_surface / no_fort_structure / legality blockers; scalar
-  bar to be set from the score-v3 calibration table before the first
-  attempt (pre-declared, like every gate).
+  bar remains the pre-declared 150 under score-v4; version 4 is a conservative
+  measurement correction, not a coefficient or threshold change.
 
 Evidence: unchanged — recorded frames, per-step gameplay_proof, provenance
 gating, public replay. Beyond G7 the ladder continues to G8 — depth
@@ -1309,6 +1313,74 @@ gate. Each entry states what changed and the evidence that forced it.
   `decision=revise`, ordered a chair from the proven workshop, and advanced zero
   ticks. Local verification is 690 passed, 4 skipped, plus changed-file Ruff,
   compileall, and `git diff --check`; deployment proof remains candidate work.
+
+- **2026-07-10 — G7 attempt 10: POLICY FAIL at the 100-step diagnostic
+  checkpoint; frozen-liquid observation exposed.** PR #79 passed CI, merged,
+  and deployed as `82c45dc15103b881fcd6234f7244d346d3ece4df`. Attempt 10 run
+  `32dc68d1faaa4c10bdd717c0477f4df5`
+  ([live replay](https://fortgym.live/r/F7cxVSNhegOQRnnlWmX_pn3s_0ICVVsU))
+  used pinned GLM-5V through OpenRouter, memory off, Anthropic disabled, and the
+  fresh region3 seed. A stop was requested at the public step-100 checkpoint;
+  one already-decided command completed, leaving 101 gameplay advances and a
+  truthful `stopped` terminal row at tick 101,728. All 102 durable rows have
+  governed provenance, 101 have screen frames and gameplay proofs, and model
+  use was 203 calls, 3,075,926 prompt tokens, and 131,866 completion tokens.
+
+  This is a long-enough policy diagnosis, not a G7 infrastructure abort. The
+  policy completed a Carpenter's Workshop, three beds, one door, 16
+  construction tiles, and initially completed a Still through real dwarf labor.
+  It made 49 BUILD decisions (18 accepted), 13 accepted DIG decisions, four
+  accepted ORDER decisions, one accepted UNSUSPEND, and 35 WAIT decisions. It
+  never completed a FarmPlot, enclosed space, functional room, or food/drink
+  production loop. Deterministic G7 is FAIL: duration 101,728/403,200, food
+  produced 0 versus 14 consumed, drink produced 0 versus 28 consumed,
+  population 7/15, rooms 0/3, scalar 103.84/150, and final food/drink 35/36;
+  no deaths, installed beds 3/3, and rubric 73.75 with zero blockers pass. The
+  stopped terminal row is intentionally absent from the gameplay-only summary,
+  which explains the 102-row versus 101-proof evidence count.
+
+  The central failure was not fictitious gameplay. The initial Still footprint
+  at `(91..93,105..107,161)` was tiletype 258, material `FROZEN_LIQUID`; the
+  observation and candidate layers incorrectly exposed those nine tiles as
+  stable `.` floor. The Still reached build stage 3/3 by step 24, then seasonal
+  thaw changed the footprint to `AIR/RAMP_TOP` and `AIR/EMPTY` at step 25 and
+  the real building disappeared. The policy subsequently attempted the same
+  footprint 15 times, receiving honest `tile_not_open_floor` rejections, while
+  its reviewed objective churned on every step. One FarmPlot attempt also
+  rejected. This explains the rising score without sustainable progress: some
+  real durable goods and walls existed, but the production site was transient
+  and no loop ever ran.
+
+  The candidate fix separates frozen liquid from stable floor throughout map,
+  room, work, and replay observations; renders it as cyan `i`; excludes it from
+  floor and room credit; and makes workshop, furniture, construction, and farm
+  hooks reject it as `tile_frozen_liquid`. Workshop discovery now applies the
+  same stable-floor, zero-liquid, locality, path-cache, and citizen-reachability
+  preflight as execution, publishes an explicit alternate-authority rectangle
+  with a tile fingerprint, and skips a rejected advertised site only while that
+  fingerprint is unchanged. Objectives are constrained to short durable text,
+  leaving volatile counts and identifiers in intent and plan-step fields.
+
+  Because frozen-liquid floor had contributed to measurement inputs, the
+  candidate introduces score-v4 and gate-v2 rather than silently changing old
+  score semantics; coefficients and the conservative G7 scalar threshold remain
+  unchanged, and leaderboard cohorts remain partitioned by score version and
+  seed. Production-DFHack candidate proof on the stopped disposable runtime
+  found a stable nine-tile Still site at `(91..93,95..97,161)`, completed the
+  structured BUILD preflight there, and proved fingerprint blocking moved to a
+  distinct second site. The initial Sol release review found four remaining
+  boundaries: frozen WALL classification, stale candidates after non-BUILD
+  actions, schema-only objective length, and source-only behavior coverage.
+  The candidate now classifies frozen material before shape, revalidates after
+  every action, permanently blocks only tile-state failures, enforces objective
+  length locally, and carries explicit zero-liquid/locality/reachability/path
+  preflight facts. A real DFHack behavior test passed against the disposable VM
+  runtime, including unchanged-fingerprint suppression and changed-fingerprint
+  recovery. Final local verification is 704 passed, 5 live-only skipped, with
+  the live fixture separately 1 passed; changed-file Ruff, Lua `loadfile`
+  parsing on production DFHack, and `git diff --check` pass. Final Sol re-review
+  reports no deployment blockers. This remains candidate evidence until merge,
+  deploy, and a fresh-seed smoke complete.
 
 ## Reporting format (every gate attempt)
 

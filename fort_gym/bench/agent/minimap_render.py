@@ -22,6 +22,7 @@ TILE_STYLES: Dict[str, tuple] = {
     "x": ((240, 178, 122), "x"),    # queued wall/floor — pale orange
     "T": ((34, 102, 48), "T"),      # tree trunk — deep green
     ".": ((222, 210, 180), None),   # open floor — light tan
+    "i": ((116, 194, 214), "i"),    # frozen liquid — cyan
     ",": ((176, 200, 150), None),   # shrub/boulder — pale green
     "~": ((110, 130, 160), None),   # impassable — blue-gray
     " ": ((20, 20, 20), None),      # unknown/out of range — near-black
@@ -36,7 +37,8 @@ TILE_STYLES: Dict[str, tuple] = {
 
 LEGEND_TEXT = (
     "W=your wall  x=queued wall (building)  #=natural wall  T=tree  "
-    "b=bed t=table c=chair d=door w=workshop  @=dwarf  .=floor  ,=shrub"
+    "b=bed t=table c=chair d=door w=workshop  @=dwarf  .=floor  "
+    "i=frozen liquid  ,=shrub"
 )
 
 

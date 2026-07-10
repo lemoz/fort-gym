@@ -238,17 +238,21 @@ local function footprint_error()
       local block = dfhack.maps.getTileBlock(tx, ty, z)
       if not block then return 'tile_out_of_bounds' end
       local dx, dy = tx % 16, ty % 16
-      local occupied, hidden, open_floor, liquid_depth = false, true, false, 0
+      local occupied, hidden, open_floor, frozen_liquid, liquid_depth =
+        false, true, false, false, 0
       local ok = pcall(function()
         occupied = block.occupancy[dx][dy].building ~= 0
         hidden = block.designation[dx][dy].hidden and true or false
         liquid_depth = tonumber(block.designation[dx][dy].flow_size) or 0
         local attr = df.tiletype.attrs[block.tiletype[dx][dy]]
         open_floor = attr ~= nil and attr.shape == df.tiletype_shape.FLOOR
+        frozen_liquid = attr ~= nil
+          and attr.material == df.tiletype_material.FROZEN_LIQUID
       end)
       if not ok then return 'tile_state_unreadable' end
       if occupied then return 'tile_occupied_by_building' end
       if hidden then return 'tile_hidden_unexplored' end
+      if frozen_liquid then return 'tile_frozen_liquid' end
       if not open_floor then return 'tile_not_open_floor' end
       if liquid_depth > 0 then return 'tile_has_liquid' end
     end

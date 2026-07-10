@@ -227,6 +227,7 @@ for tx = rx1, rx2 do
     local already_construction = completed_construction_tiles[tx .. ',' .. ty .. ',' .. z1] or false
     local hidden = true
     local open_floor = false
+    local frozen_liquid = false
     local liquid_depth = 0
     local tile_shape = nil
     local tiletype_name = nil
@@ -238,6 +239,8 @@ for tx = rx1, rx2 do
         local attr = df.tiletype.attrs[tiletype]
         already_wall = attr ~= nil and attr.shape == df.tiletype_shape.WALL
         open_floor = attr ~= nil and attr.shape == df.tiletype_shape.FLOOR
+        frozen_liquid = attr ~= nil
+          and attr.material == df.tiletype_material.FROZEN_LIQUID
         hidden = tile_block.designation[bdx][bdy].hidden and true or false
         liquid_depth = tonumber(tile_block.designation[bdx][bdy].flow_size) or 0
         pcall(function()
@@ -258,6 +261,8 @@ for tx = rx1, rx2 do
       table.insert(failed, { x = tx, y = ty, z = z1, error = 'already_construction' })
     elseif hidden then
       table.insert(failed, { x = tx, y = ty, z = z1, error = 'tile_hidden_unexplored' })
+    elseif frozen_liquid then
+      table.insert(failed, { x = tx, y = ty, z = z1, error = 'tile_frozen_liquid' })
     elseif not open_floor then
       table.insert(failed, {
         x = tx,
