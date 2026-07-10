@@ -102,7 +102,15 @@ class KeystrokeParams(BaseModel):
 class InteractParams(BaseModel):
     """Parameters for one bounded paused-interface interaction."""
 
-    operation: Literal["confirm", "cancel", "up", "down", "left", "right"]
+    operation: Literal[
+        "confirm",
+        "cancel",
+        "up",
+        "down",
+        "left",
+        "right",
+        "finish_topic_meeting",
+    ]
 
     model_config = {"extra": "forbid"}
 
@@ -299,6 +307,8 @@ INTERACT_ALLOWED_VIEWSCREEN_TYPES = frozenset(
     }
 )
 
+FINISH_TOPIC_MEETING_OPTION_TEXT = "a - Finish peeking in on conversation"
+
 
 def parse_action(obj_or_str: Dict[str, Any] | str) -> Dict[str, Any]:
     """Parse raw action payload from JSON string or dict and validate it."""
@@ -382,8 +392,19 @@ def validate_action(state: Dict[str, Any], action: Dict[str, Any]) -> tuple[bool
             return False, "INTERACT params must be an object"
         if set(params) != {"operation"}:
             return False, "INTERACT params must contain only operation"
-        if params.get("operation") not in {"confirm", "cancel", "up", "down", "left", "right"}:
-            return False, "INTERACT operation must be confirm, cancel, up, down, left, or right"
+        if params.get("operation") not in {
+            "confirm",
+            "cancel",
+            "up",
+            "down",
+            "left",
+            "right",
+            "finish_topic_meeting",
+        }:
+            return False, (
+                "INTERACT operation must be confirm, cancel, up, down, left, right, "
+                "or finish_topic_meeting"
+            )
         advance_ticks = action.get("advance_ticks")
         if type(advance_ticks) is not int or advance_ticks != 0:
             return False, "INTERACT action requires advance_ticks == 0"
@@ -459,6 +480,8 @@ __all__ = [
     "ActionModel",
     "ACTION_TOOL_SPEC",
     "ALLOWED_TYPES",
+    "FINISH_TOPIC_MEETING_OPTION_TEXT",
+    "INTERACT_ALLOWED_VIEWSCREEN_TYPES",
     "parse_action",
     "schema_json",
     "system_prompt_v1",

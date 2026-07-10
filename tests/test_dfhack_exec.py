@@ -142,6 +142,42 @@ def test_build_workshop_hook_uses_existing_material_item() -> None:
     assert "or item.flags.in_building" in hook_text
 
 
+def test_item_consuming_placement_hooks_require_walk_group_connectivity() -> None:
+    hook_dir = Path(__file__).resolve().parents[1] / "hook"
+    expected_errors = {
+        "build_construction.lua": "no_reachable_building_material",
+        "build_workshop.lua": "no_reachable_building_material",
+        "place_furniture.lua": "no_reachable_finished_item",
+    }
+
+    for hook_name, expected_error in expected_errors.items():
+        hook_text = (hook_dir / hook_name).read_text(encoding="utf-8")
+        assert "dfhack.maps.canWalkBetween" in hook_text
+        assert "dfhack.items.getPosition" in hook_text
+        assert "dfhack.units.getPosition" in hook_text
+        assert "dfhack.units.isCitizen" in hook_text
+        assert "item.flags.in_inventory" in hook_text
+        assert "path_cache_stale" in hook_text
+        assert expected_error in hook_text
+        assert "construct_postcondition_failed" in hook_text
+        assert "rollback_failed" in hook_text
+
+
+def test_workshop_hook_fails_closed_on_illegal_footprint() -> None:
+    hook_text = (
+        Path(__file__).resolve().parents[1] / "hook" / "build_workshop.lua"
+    ).read_text(encoding="utf-8")
+    for needle in (
+        "footprint_error",
+        "tile_occupied_by_building",
+        "tile_hidden_unexplored",
+        "tile_not_open_floor",
+        "tile_has_liquid",
+        "workshop_unreachable_from_citizens",
+    ):
+        assert needle in hook_text
+
+
 def test_build_workshop_hook_supports_still_subtype() -> None:
     hook_path = Path(__file__).resolve().parents[1] / "hook" / "build_workshop.lua"
     hook_text = hook_path.read_text(encoding="utf-8")
@@ -339,8 +375,13 @@ def test_order_make_hook_prefers_direct_workshop_jobs() -> None:
     assert "require('dfhack.workshops')" in hook_text
     assert "mode = 'workshop_job'" in hook_text
     assert "dfhack.job.linkIntoWorld(job, true)" in hook_text
-    assert "manager_recorded = manager_recorded" in hook_text
-    assert "manager_orders:insert('#', wo)" in hook_text
+    assert "manager_recorded = false" in hook_text
+    assert "manager_orders:insert('#', wo)" not in hook_text
+    assert "required_workshop_unavailable" in hook_text
+    assert "unsupported_workshop_job" in hook_text
+    assert "building:getBuildStage() >= building:getMaxBuildStage()" in hook_text
+    assert "dfhack.run_script('orders', 'process-new')" not in hook_text
+    assert "dfhack.buildings.markedForRemoval(building)" in hook_text
 
 
 def test_order_make_hook_supports_brew_item_at_still() -> None:
@@ -683,6 +724,43 @@ def test_build_construction_reports_occupied_and_wall_tiles() -> None:
     )
     assert "tile_occupied_by_building" in script
     assert "already_wall" in script
+    assert "already_construction" in script
+    assert "tile_not_open_floor" in script
+    assert "tile_hidden_unexplored" in script
+    assert "tile_has_liquid" in script
+    assert "item:isBuildMat()" in script
+    assert "local rollback_failed = false" in script
+    assert "building_id = building_id" in script
+    assert "partial_placement" in script
+
+
+def test_job_metrics_reports_construct_building_walk_group_truth() -> None:
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua"
+    ).read_text(encoding="utf-8")
+    for needle in (
+        "construct_building_walk_group_connected",
+        "construct_building_walk_group_disconnected",
+        "construct_building_walk_group_unknown",
+        "walk_group_connectivity",
+        "assigned_item_id",
+        "assigned_item_pos",
+        "assigned_items",
+        "dfhack.maps.canWalkBetween",
+        "dfhack.items.getPosition",
+        "dfhack.units.getPosition",
+        "unknown_seen",
+    ):
+        assert needle in script
+
+
+def test_furniture_hook_rejects_unreadable_or_wet_tiles() -> None:
+    script = (Path(__file__).resolve().parents[1] / "hook" / "place_furniture.lua").read_text(
+        encoding="utf-8"
+    )
+    assert "tile_state_unreadable" in script
+    assert "tile_has_liquid" in script
+    assert "flow_size" in script
 
 
 def test_job_metrics_reports_furniture_positions() -> None:

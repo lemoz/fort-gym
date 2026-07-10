@@ -447,7 +447,7 @@ gate. Each entry states what changed and the evidence that forced it.
   and both were blocked by suspended construction jobs the agent can
   diagnose but not legally clear. PR #40's per-tile furniture reasons
   worked as intended (tile_not_open_floor/tile_occupied_by_building now
-  visible). The prepared correction: UNSUSPEND, a bounded player-parity
+  visible). The prepared correction: UNSUSPEND, a bounded legal-gameplay
   primitive (q-menu equivalent: flips job.flags.suspend in a <=10x10 rect,
   dwarves still perform the work, provenance-gated in both governed and
   assisted sets, proof via unsuspended/suspended_found counts) — draft PR
@@ -996,8 +996,98 @@ gate. Each entry states what changed and the evidence that forced it.
   passes (626 passed, 4 skipped). An isolated live smoke first failed closed on the
   seed's in-building wagon material; after legal tree chopping, Carpenter used
   item `776`, Still used item `771`, and both completed workshops remained in
-  the world. Review, deployment, and deployed lifecycle proof remain before
-  attempt 4.
+  the world. Independent review then closed five lifecycle gaps; PR #69 merged
+  and deployed as `808f25d6942b89844768c78b80911646dbb0d5b0`. A deployed
+  boundary smoke observed the registry remain `running` until the ledger was
+  inactive, cleanup and summary were durable, and final status became
+  `stopped`. Attempt 4 then launched from that exact SHA.
+
+- **2026-07-09 — G7 attempt 4: INFRASTRUCTURE ABORT / FAIL; no policy
+  verdict.** Run `45659da07fb749f9b5ebe9c55dd1eb91`
+  ([replay](https://fortgym.live/r/4Gn9v9WaPf_i4qhGJFQs9bo9d8y_GSBo)),
+  deployed SHA `808f25d6942b89844768c78b80911646dbb0d5b0`,
+  trace-attributed model `z-ai/glm-5v-turbo` via OpenRouter, Anthropic disabled,
+  memory off. The declared 450-step run failed closed after 208 durable rows
+  and 202,737 trace ticks with terminal code
+  `interaction_unchanged_screen_loop`. Cleanup completed, the run ledger is
+  inactive, and `summary.json` was durable before status `failed`. All 208 rows
+  contain screen text, gameplay proof, and governed provenance; 130 proof rows
+  report real state change. The 208 model calls used 1,520,316 prompt and 66,213
+  completion tokens. Actions were BUILD 85, DIG 5, FARM 2, INTERACT 4, LABOR 2,
+  ORDER 20, UNSUSPEND 27, and WAIT 63.
+
+  Deterministic G7 verdict: duration **FAIL** (202,737/403,200); food/drink loop
+  **FAIL** (food produced 0 vs consumed 35, drink produced 0 vs consumed 60,
+  final food 16 and drink 0); neglect-death rule **UNKNOWN** (one observed
+  drowning has complete death-record capture but no mapped cause enum);
+  population **FAIL** (13/15); functional rooms **FAIL** (0/3); installed beds
+  **FAIL** (1/5 completed); rubric **FAIL** (68.86/70, no blockers); scalar
+  **PASS** (score-v3 180.56). Overall G7 is **FAIL** independently of the
+  infrastructure invalidation.
+
+  Real play included a completed Carpenter workshop; final in-play goods of five
+  beds, five doors, five tables, five chairs, five bins, and 29 barrels; 40
+  construction tiles; three
+  completed door installations and one completed bed installation; a completed
+  one-tile farm plot configured for plump helmets in all seasons; a migrant wave
+  from 6 to 13 citizens; and one drowning. The Still remained stage 0/3, 35 wall
+  jobs plus the Still job remained pending, no room became enclosed or
+  functional, and no food or drink was produced.
+
+  Two command-boundary defects permanently invalidate a policy verdict. First,
+  the placement hooks selected the nearest material by coordinate distance but
+  never required shared engine walk connectivity. A post-terminal read-only
+  candidate probe against the still-loaded run classified **36/36
+  ConstructBuilding jobs as walk-group disconnected**: zero connected, zero
+  unknown. Sample job 82 targeted `(89,102,161)` but reserved item 777 at
+  `(90,105,160)`; no citizen shared a walk group with both job and item. The
+  deployed hook also accepted non-floor terrain and completed construction tiles
+  because DFHack's direct `constructBuilding` API performs fewer player-menu
+  legality checks. Second, four `ORDER job=brew` actions returned `ok=true` with no built
+  Still; the fallback recorded manager entries, called a missing `orders`
+  script, and returned `processed=false` rather than rejecting the action. No
+  brew job existed.
+
+  The terminal dialog exposed a third bounded-surface gap. After a liaison
+  screen transitioned to `viewscreen_topicmeetingst`, the visible command was
+  `a - Finish peeking in on conversation`; `confirm` sent `SELECT`, which did
+  nothing three times and correctly tripped the unchanged-screen guard. A
+  post-terminal live probe proved DF's semantic `OPTION1` exits that exact
+  screen while the game remains paused and tick 220,247 does not advance.
+
+  Follow-up candidate now requires dry, visible FLOOR targets and one living
+  citizen whose current DF walk group includes both target and selected item
+  across walls, workshops, and furniture; applies DF's `isBuildMat()` predicate
+  and item flags; rejects completed construction tiles; verifies the resulting
+  job is linked to the selected item; and exposes per-job
+  `connected`/`disconnected`/`unknown` walk-group evidence to the model. This is
+  a connectivity snapshot, not a guarantee of haul assignment or completion.
+  ORDER now fails unless a completed matching workshop exists and real workshop
+  jobs are linked. `finish_topic_meeting` maps to one `OPTION1` only on
+  `viewscreen_topicmeetingst` with the exact option visible; an unchanged result
+  is recorded as `interaction_no_effect`, not success. Final review also made
+  wet furniture, removal-marked workshops, partial rectangles, and rollback
+  failures explicit non-successes.
+
+  The final isolated fresh-seed repetition passed against DF 0.47.05. Immediately
+  after load, Wall and Still failed closed with `path_cache_stale`; 129 real
+  ticks rebuilt DF's path data. They then rejected the wagon's in-building logs
+  with `no_building_material`, while brew rejected
+  `required_workshop_unavailable`. After one legal chop and 1,000 real ticks,
+  Wall selected connected item 768 at `(91,100,161)`; the read-only observation
+  reported `walk_group_connectivity=connected`, and a dwarf completed the wall
+  at `(90,102,161)` in the next 1,004 ticks. Still then selected connected item
+  772 at `(92,101,161)`, reported `connected`, and a dwarf completed workshop 2
+  to stage 3/3 in 1,007 ticks. Only then did quantity-two brew create exactly
+  two concrete `CustomReaction` jobs 6 and 8. The manager-order count remained 0
+  before and after, proving the direct jobs were not duplicated by a latent
+  manager order. Two post-smoke boundary probes also passed: a five-tile mixed
+  rectangle placed three legal jobs but returned `ok=false`,
+  `partial_placement`, and both rejected tile reasons; a completed Still marked
+  for removal rejected another brew order with `required_workshop_unavailable`.
+  Local verification is 634 passed, 4 skipped; targeted Ruff, compileall, and
+  live Lua parsing passed. Attempt 5 is prohibited until final review, merge,
+  deployment, and a deployed repetition of these boundary smokes pass.
 
 ## Reporting format (every gate attempt)
 

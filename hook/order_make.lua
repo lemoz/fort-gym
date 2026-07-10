@@ -39,22 +39,6 @@ if not job_type then
   return
 end
 
-local function record_manager_order(job_type, qty, reaction)
-  local manager_orders = df.global.world.manager_orders
-  if not manager_orders then
-    return false
-  end
-  local wo = df.manager_order:new()
-  wo.job_type = job_type
-  if reaction then
-    wo.reaction_name = reaction
-  end
-  wo.amount_total = qty
-  wo.amount_left = qty
-  manager_orders:insert('#', wo)
-  return true
-end
-
 -- subtype_name is the DF workshop_type name string (e.g. "Carpenters",
 -- "Still") -- the same convention used for the Carpenters/Carpenter naming
 -- quirk this already defended against.
@@ -72,6 +56,16 @@ local function is_workshop_of_subtype(building, subtype_name)
     is_workshop = true
   end
   if not is_workshop then return false end
+
+  local ok_removal, marked_for_removal = pcall(function()
+    return dfhack.buildings.markedForRemoval(building)
+  end)
+  if not ok_removal or marked_for_removal then return false end
+
+  local ok_stage, is_complete = pcall(function()
+    return building:getBuildStage() >= building:getMaxBuildStage()
+  end)
+  if not ok_stage or not is_complete then return false end
 
   local target_type = df.workshop_type and df.workshop_type[subtype_name] or nil
   local ok_workshop_type, workshop_type = pcall(function() return building.type end)
@@ -137,41 +131,42 @@ local function create_workshop_job(building, entry)
 end
 
 local workshop = first_workshop_of_subtype(spec.workshop)
-if workshop then
-  local entry = job_definition_for(workshop, job_type, spec.reaction)
-  if entry then
-    local created_jobs = {}
-    for _ = 1, qty do
-      local job = create_workshop_job(workshop, entry)
-      table.insert(created_jobs, job.id)
-    end
-    local manager_recorded = record_manager_order(job_type, qty, spec.reaction)
-    print(json.encode({
-      ok = true,
-      item = item,
-      qty = qty,
-      mode = 'workshop_job',
-      workshop_id = workshop.id,
-      created_job_ids = created_jobs,
-      manager_recorded = manager_recorded,
-    }))
-    return
-  end
-end
-
-if not record_manager_order(job_type, qty, spec.reaction) then
-  print(json.encode({ ok = false, error = 'manager_orders_unavailable' }))
+if not workshop then
+  print(json.encode({
+    ok = false,
+    error = 'required_workshop_unavailable',
+    item = item,
+    required_workshop = spec.workshop,
+  }))
   return
 end
 
-local processed_ok, processed_error = pcall(function()
-  dfhack.run_script('orders', 'process-new')
-end)
+local entry = job_definition_for(workshop, job_type, spec.reaction)
+if not entry then
+  print(json.encode({
+    ok = false,
+    error = 'unsupported_workshop_job',
+    item = item,
+    required_workshop = spec.workshop,
+    workshop_id = workshop.id,
+  }))
+  return
+end
+
+local created_jobs = {}
+for _ = 1, qty do
+  local job = create_workshop_job(workshop, entry)
+  table.insert(created_jobs, job.id)
+end
 
 print(json.encode({
   ok = true,
   item = item,
   qty = qty,
-  processed = processed_ok,
-  process_error = processed_ok and nil or tostring(processed_error),
+  mode = 'workshop_job',
+  workshop_id = workshop.id,
+  created_job_ids = created_jobs,
+  -- Direct workshop jobs are the requested quantity. Do not also insert a
+  -- manager order, which could enqueue the same quantity a second time.
+  manager_recorded = false,
 }))

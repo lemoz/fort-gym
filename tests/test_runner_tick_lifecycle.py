@@ -39,14 +39,15 @@ class CountingWaitAgent(Agent):
 
 
 class CountingInteractAgent(Agent):
-    def __init__(self) -> None:
+    def __init__(self, operation: str = "confirm") -> None:
         self.calls = 0
+        self.operation = operation
 
     def decide(self, obs_text: str, obs_json: Dict[str, Any]) -> Dict[str, Any]:
         self.calls += 1
         return {
             "type": "INTERACT",
-            "params": {"operation": "confirm"},
+            "params": {"operation": self.operation},
             "intent": "advance the visible dialog by one bounded input",
             "advance_ticks": 0,
         }
@@ -272,6 +273,10 @@ def _run_governed_interact_fixture(
     stop_during_cleanup: bool = False,
     observe_error: bool = False,
     cleanup_error: bool = False,
+    operation: str = "confirm",
+    viewscreen_type: str = "viewscreen_textviewerst",
+    screen_text: str = "dialog screen",
+    screen_capture_fails_after: bool = False,
 ) -> tuple[Agent, RunRegistry, str]:
     monkeypatch.setenv("ARTIFACTS_DIR", str(tmp_path))
     monkeypatch.setenv("DFHACK_ENABLED", "1")
@@ -281,10 +286,11 @@ def _run_governed_interact_fixture(
     raw_state.update(
         {
             "pause_state": True,
-            "viewscreen_type": "viewscreen_textviewerst",
+            "viewscreen_type": viewscreen_type,
         }
     )
     screen_version = [0]
+    interaction_sent = [False]
 
     class FakeDFHackClient:
         def __init__(self, **_: Any) -> None:
@@ -308,7 +314,9 @@ def _run_governed_interact_fixture(
 
         def get_screen_text(self, *, include_visual_hints: bool = False) -> str:
             assert include_visual_hints is True
-            return f"dialog screen {screen_version[0]}"
+            if screen_capture_fails_after and interaction_sent[0]:
+                raise RuntimeError("screen unavailable")
+            return f"{screen_text} {screen_version[0]}"
 
         def close(self) -> None:
             if lifecycle_events is not None:
@@ -318,9 +326,13 @@ def _run_governed_interact_fixture(
             return None
 
     def fake_execute(keys: list[str]) -> Dict[str, Any]:
-        assert keys == ["SELECT"]
+        expected_key = "OPTION1" if operation == "finish_topic_meeting" else "SELECT"
+        assert keys == [expected_key]
+        interaction_sent[0] = True
         if screen_changes:
             screen_version[0] += 1
+            if operation == "finish_topic_meeting":
+                raw_state["viewscreen_type"] = "viewscreen_dwarfmodest"
         return {"ok": True, "keys_sent": 1}
 
     monkeypatch.setattr("fort_gym.bench.run.runner.DFHackClient", FakeDFHackClient)
@@ -386,7 +398,7 @@ def _run_governed_interact_fixture(
         max_steps=max_steps,
         ticks_per_step=10,
     )
-    agent = agent_override or CountingInteractAgent()
+    agent = agent_override or CountingInteractAgent(operation)
     run_id = run_once(
         agent,
         backend="dfhack",
@@ -539,6 +551,31 @@ def test_interact_context_is_governed_paused_and_viewscreen_allowlisted() -> Non
             state={"pause_state": True, "viewscreen_type": "viewscreen_dwarfmodest"},
         )
     )
+    topic_action = {
+        "type": "INTERACT",
+        "params": {"operation": "finish_topic_meeting"},
+        "advance_ticks": 0,
+    }
+    topic_state = {"pause_state": True, "viewscreen_type": "viewscreen_topicmeetingst"}
+    assert (
+        _interact_context_reason(
+            backend_name="dfhack",
+            is_governed_dfhack_mode=True,
+            state=topic_state,
+            action=topic_action,
+            screen_text="a - Finish peeking in on conversation",
+        )
+        is None
+    )
+    assert "requires the visible option" in str(
+        _interact_context_reason(
+            backend_name="dfhack",
+            is_governed_dfhack_mode=True,
+            state=topic_state,
+            action=topic_action,
+            screen_text="unrelated topic text",
+        )
+    )
 
 
 def test_interact_modal_exit_resets_episode_without_terminal_failure() -> None:
@@ -578,6 +615,56 @@ def test_unchanged_interact_loop_terminates_before_another_model_call(
     assert all(row["gameplay_proof"]["ok"] is False for row in rows)
     assert rows[-1]["interaction"]["screen_changed"] is False
     assert "screen_text_after_interaction" in rows[-1]
+
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+
+
+def test_finish_topic_meeting_no_effect_is_recorded_as_rejected(tmp_path, monkeypatch) -> None:
+    agent, registry, run_id = _run_governed_interact_fixture(
+        tmp_path,
+        monkeypatch,
+        screen_changes=False,
+        max_steps=1,
+        operation="finish_topic_meeting",
+        viewscreen_type="viewscreen_topicmeetingst",
+        screen_text="a - Finish peeking in on conversation",
+    )
+
+    assert agent.calls == 1
+    loaded = registry.get(run_id)
+    assert loaded is not None
+    assert loaded.status == "completed"
+    row = _trace_rows(tmp_path, run_id)[0]
+    assert row["execute"]["accepted"] is False
+    assert row["execute"]["why"] == "interaction_no_effect"
+    assert row["execute"]["result"]["ok"] is False
+    assert row["execute"]["result"]["error"] == "interaction_no_effect"
+    assert row["interaction"]["semantic_effect_observed"] is False
+
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+
+
+def test_finish_topic_meeting_capture_failure_is_not_success(tmp_path, monkeypatch) -> None:
+    _, registry, run_id = _run_governed_interact_fixture(
+        tmp_path,
+        monkeypatch,
+        screen_changes=False,
+        screen_capture_fails_after=True,
+        max_steps=1,
+        operation="finish_topic_meeting",
+        viewscreen_type="viewscreen_topicmeetingst",
+        screen_text="a - Finish peeking in on conversation",
+    )
+
+    loaded = registry.get(run_id)
+    assert loaded is not None
+    assert loaded.status == "completed"
+    row = _trace_rows(tmp_path, run_id)[0]
+    assert row["execute"]["accepted"] is False
+    assert row["execute"]["why"] == "interaction_no_effect"
+    assert row["interaction"]["post_screen_captured"] is False
+    assert row["interaction"]["semantic_effect_observed"] is False
+    assert row["screen_text_after_interaction"] == "(screen capture failed)"
 
     get_settings.cache_clear()  # type: ignore[attr-defined]
 

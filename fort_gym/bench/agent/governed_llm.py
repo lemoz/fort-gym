@@ -113,10 +113,12 @@ completes no work itself and moves no dwarf — a dwarf must still path to and p
 time. The observation's Citizens line lists each citizen id with its currently-enabled labors and \
 current job, so you can see who lacks the labor a stalled job needs and flip exactly that one.
 - WAIT: params {}. Issues nothing and lets the simulation run.
-- INTERACT: params {"operation": "confirm"|"cancel"|"up"|"down"|"left"|"right"}. Sends exactly one
+- INTERACT: params {"operation": "confirm"|"cancel"|"up"|"down"|"left"|"right"|"finish_topic_meeting"}. Sends exactly one
 semantic input to a paused interface or dialog, then observes one screen after that input. It must
 use advance_ticks=0 and never advances simulation time. Use it only when the observation says the
 game is PAUSED and reports an interactive DF Viewscreen; the runner rejects all other contexts.
+Use finish_topic_meeting only on viewscreen_topicmeetingst when the visible option says
+"a - Finish peeking in on conversation"; it sends exactly that one bounded letter option.
 
 Every action must include "advance_ticks" (how many game ticks to run after the command, up to \
 2000; around 1000 is a typical step; INTERACT must use 0). Nothing in the fortress changes unless

@@ -1273,6 +1273,24 @@ def encode_observation(
                     f"construct_building={jobs_construct_building}, "
                     f"workshop_tasks={jobs_workshop_task}, suspended={jobs_suspended})"
                 )
+                haul_connected = _int_or_none(
+                    jobs.get("construct_building_walk_group_connected")
+                )
+                haul_disconnected = _int_or_none(
+                    jobs.get("construct_building_walk_group_disconnected")
+                )
+                haul_unknown = _int_or_none(
+                    jobs.get("construct_building_walk_group_unknown")
+                )
+                if all(
+                    value is not None
+                    for value in (haul_connected, haul_disconnected, haul_unknown)
+                ):
+                    jobs_line += (
+                        "; construction walk groups: "
+                        f"connected={haul_connected}, disconnected={haul_disconnected}, "
+                        f"unknown={haul_unknown}"
+                    )
                 entries = jobs.get("entries")
                 if isinstance(entries, list) and entries:
                     sample_parts = []
@@ -1289,6 +1307,15 @@ def encode_observation(
                             sample += "[suspended]"
                         if entry.get("has_worker") is False:
                             sample += "[unassigned]"
+                        walk_group_connectivity = entry.get("walk_group_connectivity")
+                        if (
+                            isinstance(walk_group_connectivity, str)
+                            and walk_group_connectivity
+                        ):
+                            sample += (
+                                "[walk_group_connectivity="
+                                f"{walk_group_connectivity}]"
+                            )
                         sample_parts.append(sample)
                     if sample_parts:
                         jobs_line += "; sample: " + ", ".join(sample_parts)

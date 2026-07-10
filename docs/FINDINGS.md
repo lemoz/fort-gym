@@ -15,8 +15,10 @@ not, the run is cited by id.
 Fort-Gym is an environment lab's flagship: real Dwarf Fortress, played by an LLM
 policy that may issue only eight bounded, audited primitives —
 `DIG`, `BUILD`, `ORDER`, `UNSUSPEND`, `FARM`, `LABOR`, `WAIT`, `INTERACT`
-(`fort_gym/bench/agent/governed_llm.py`). Each primitive is player-parity (it
-does only what a human at the q-menu could do), locality-bounded, and
+(`fort_gym/bench/agent/governed_llm.py`). Each primitive is a bounded legal
+gameplay command: it may designate work or create normal jobs available to a
+human player, but it may not create goods, teleport material, complete labor,
+or advance score directly. Every action is locality-bounded and
 provenance-tagged. One `dfhack_assisted` action zeroes a run.
 
 Scoring is evidence-gated. A gate passes only on recorded facts in a public
@@ -36,8 +38,8 @@ issuing only legal governed actions, takes a fixed embark from fresh seed to a
 producing fortress on public, replayable evidence, with zero rubric blockers.*
 G0–G4 have passed; G5 failed and stands; G6 is unpassed after seven attempts
 on the unseen map, with the first enclosed rooms arriving only after the factual
-observation corrections; G7 is ratified and its first three attempts failed,
-with attempt 3 an infrastructure abort and no policy verdict.
+observation corrections; G7 is ratified and its first four attempts failed,
+with attempts 2 through 4 infrastructure aborts and no policy verdict.
 
 ## 2. The findings
 
@@ -362,7 +364,35 @@ player parity, and the run missed the G7 duration, production, and rooms
 criteria. Follow-up: add the `in_building` guard and cleanup-before-terminal/
 analyzer ordering, pass full and live verification, then run attempt 4.
 
-### 2.9 The meta-finding: correction discipline is the product
+### 2.9 G7 attempt 4: command success was not executable work
+
+G7 attempt 4, run `45659da07fb749f9b5ebe9c55dd1eb91`
+([replay](https://fortgym.live/r/4Gn9v9WaPf_i4qhGJFQs9bo9d8y_GSBo)), ran
+208 governed rows and 202,737 ticks from deployed SHA
+`808f25d6942b89844768c78b80911646dbb0d5b0`. Lifecycle hardening worked:
+terminal status was `failed`, cleanup was verified, the ledger detached, and the
+summary was durable. The gameplay gate did not: duration, food/drink production,
+population, rooms, beds, and rubric all failed; score-v3 alone passed at 180.56.
+
+The central finding is that a structurally valid DF job can still be impossible
+work. The placement helpers chose materials by coordinate distance, not engine
+walk connectivity. A post-terminal read-only probe found 36 pending
+`ConstructBuilding` jobs, all walk-group disconnected and none connected or
+unknown. This engine snapshot does not itself prove whether a connected job has
+been claimed by a worker.
+The Still was one of them and remained stage 0/3. Separately, `ORDER brew`
+recorded manager entries and returned `ok=true` even when no completed Still
+existed and the fallback `orders` script was missing; four accepted brew actions
+created no brew jobs. These are command-boundary defects, not policy mistakes.
+
+The run also found the next dialog primitive by evidence. A topic-meeting screen
+displayed `a - Finish peeking in on conversation`; generic `confirm` sent
+`SELECT` and correctly hit the three-unchanged-screen terminal guard. On the
+stopped screen, DF's semantic `OPTION1` exited the dialog with no tick advance.
+The follow-up therefore adds one view-specific semantic operation rather than
+opening arbitrary keyboard input.
+
+### 2.10 The meta-finding: correction discipline is the product
 
 The most reusable result is not a score — it is the method. Across every finding
 above, the same discipline held:
@@ -397,13 +427,13 @@ caught by a failing public run and closed on the record.
   passes in seven region3 attempts. "Plays Dwarf Fortress" is not yet
   demonstrated — "solved one map" is.
 - **Small n.** The reliability claim rests on a five-run lineage; the endurance
-  result on one probe; the G6 verdict on seven runs; G7 on three failed attempts.
+  result on one probe; the G6 verdict on seven runs; G7 on four failed attempts.
   These are findings, not distributions.
 - **One policy family for most results.** GLM-5V-turbo produced the G4 passes
   and most of the G6 campaign; GPT-5.5 served the earlier G2/G3 passes.
   Cross-model generality is thin — two GPT-5.5-vision escalation runs are the
   only cross-family data points on the unseen map.
-- **G6 is unpassed; G7 attempts 1, 2, and 3 failed.** Attempts 2 and 3 were
+- **G6 is unpassed; G7 attempts 1 through 4 failed.** Attempts 2, 3, and 4 were
   infrastructure aborts, not policy verdicts. Score-v3 is active, but the
   chair-factory calibration gap (§2.4) remains part of its historical record.
   Attempt 1 demonstrated why the scalar is telemetry rather than the verdict:
@@ -411,15 +441,19 @@ caught by a failing public run and closed on the record.
 
 ## 4. What's next
 
-- **Repair attempt 3's infrastructure abort, then attempt 4**: the follow-up
-  candidate adds the `item.flags.in_building` guard, durable terminal evidence,
-  verified cleanup and summary-before-terminal/analyzer ordering, and durable
-  stop recovery across API restarts. The full suite passes (626 passed, 4
-  skipped); live proof used distinct legally chopped logs for
-  coexisting Carpenter and Still workshops. Review, deployment, and deployed
-  lifecycle proof remain before the next 450-step run.
+- **Repair attempt 4's command boundary, then attempt 5**: require one citizen
+  to share its current DF walk group with both build target and selected item;
+  reject invalid materials plus targets outside the conservative dry/visible
+  FLOOR subset; verify resulting jobs; report walk-group connectivity without
+  claiming job assignment; reject ORDER unless a completed matching workshop
+  receives real jobs; and add the live-proven, view-specific topic-meeting
+  operation. An isolated fresh-seed smoke proved one connected wall and one
+  connected Still completed through dwarf labor, then proved brew created
+  exactly the requested real jobs only after the Still was complete, without a
+  duplicate manager order. Review, merge, deployment, and deployed repetition
+  remain before the next 450-step run.
 - **G6 remains open**: the best unseen-map run reached 4/5 and missed only its
-  second functional room. G7 attempt 4 runs on the same unseen seed, so a strong
+  second functional room. G7 attempt 5 runs on the same unseen seed, so a strong
   endurance result can add evidence without a separate blind retry campaign.
 - **G8 — depth**: a multi-z fortress (stairs, underground rooms), the next
   spatial-reasoning escalation past the hollow ring.

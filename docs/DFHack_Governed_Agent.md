@@ -19,7 +19,8 @@ Legal actions:
 - Queue bounded manager or workshop production orders and unsuspend jobs.
 - Select seasonal farm crops and toggle one whitelisted labor on one citizen.
 - Wait for a chosen number of ticks so dwarves can perform the work.
-- Send one semantic confirm/cancel/cursor input to an attested paused dialog.
+- Send one semantic confirm/cancel/cursor input to an attested paused dialog,
+  plus the view-specific topic-meeting finish option proven by attempt 4.
 
 Illegal actions:
 
@@ -141,6 +142,8 @@ Current structural limits of the governed surface:
 - No stockpile/zone/assignment/alert helpers are in the governed action tuple.
 - Dialog input is deliberately narrow: paused allowlisted viewscreens only,
   eight operations per modal episode, and three unchanged screens terminate.
+  `finish_topic_meeting` sends one `OPTION1` only on
+  `viewscreen_topicmeetingst`; arbitrary letter keys remain unavailable.
 - Multi-z stairs and depth are not yet exposed; G8 remains unimplemented.
 - Workshop placement is limited to Carpenter and Still; orders cover seven
   whitelisted goods/reactions. Mason, smith, kitchen, trade, military, and
