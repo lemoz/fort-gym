@@ -2312,8 +2312,10 @@ def test_encoder_flags_zero_enclosed_spaces() -> None:
     assert "Fort structure (plan-agnostic): enclosed_spaces=0" in text
     assert (
         "No enclosed rooms yet — spaces count as rooms only when fully bounded "
-        "by walls, buildings, or doors. BUILD kind=Wall can enclose them" in text
+        "by walls, buildings, or doors around at least one untouched passable "
+        "interior tile" in text
     )
+    assert "A solid block of W tiles encloses nothing" in text
     assert "Rooms:" not in text
 
 
@@ -2450,7 +2452,7 @@ def test_encoder_renders_wall_layout_with_run_compression() -> None:
     assert "Wall/floor layout: " in obs_text
     assert "z177 y90: x94-97" in obs_text
     assert "z177 y93: x94-98" in obs_text
-    assert "check the Wall/floor layout line for gaps" in obs_text
+    assert "check the Wall/floor layout for both border gaps and interior '.' tiles" in obs_text
 
 
 def test_encoder_surfaces_furniture_positions_and_failed_tiles() -> None:
@@ -2512,7 +2514,7 @@ def test_encoder_renders_fort_minimap_with_rulers() -> None:
     assert "      0123456" in obs_text
     assert "y= 87|..WWW.." in obs_text
     assert "y= 89|..WWW.." in obs_text
-    assert "trace the ring on the minimap" in obs_text
+    assert "Trace a one-tile-thick ring on the minimap" in obs_text
 
 
 def test_encoder_labels_frozen_liquid_as_unstable_not_floor() -> None:
@@ -2536,6 +2538,28 @@ def test_encoder_labels_frozen_liquid_as_unstable_not_floor() -> None:
     assert "Frozen-liquid tiles in fort view: 3" in obs_text
     assert "i=frozen liquid (unstable; can thaw)" in obs_text
     assert "Never treat 'i' as permanent floor" in obs_text
+
+
+def test_encoder_marks_other_buildings_as_occupied_not_floor() -> None:
+    state = {
+        "time": 100,
+        "population": 7,
+        "stocks": {},
+        "fort": {
+            "ok": True,
+            "enclosed_spaces": 0,
+            "functional_rooms": 0,
+            "constructions": 0,
+            "map_origin": [94, 96, 161],
+            "map_rows": ["ooo", "o@o", "ooo"],
+        },
+    }
+
+    obs_text, _ = encode_observation(state)
+
+    assert "o=other occupied building" in obs_text
+    assert "W/#/T/w/o/d" in obs_text
+    assert "A solid W block encloses no space" in obs_text
 
 
 def test_encoder_reports_stable_workshop_site_for_carpenter_or_still() -> None:

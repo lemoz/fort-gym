@@ -1885,7 +1885,8 @@ def encode_observation(
                     "x increases rightward, y increases downward). Legend: "
                     "W=your wall, x=your QUEUED wall/floor (ordered, a dwarf "
                     "is still building it), #=natural wall, T=tree trunk, "
-                    "b=bed, t=table, c=chair, d=door, w=workshop, .=floor, "
+                    "b=bed, t=table, c=chair, d=door, w=workshop, "
+                    "o=other occupied building, .=floor, "
                     "i=frozen liquid (unstable; can thaw), ,=shrub/boulder, "
                     "@=dwarf, ~=impassable:"
                 )
@@ -1895,8 +1896,11 @@ def encode_observation(
                     status_lines.append(f"y={oy + index:>3}|{row}")
                 status_lines.append(
                     "A room is enclosed only if every tile of its border is "
-                    "W/#/T/w/d — trace the ring on the minimap and wall any "
-                    "'.' or ',' gaps. Never treat 'i' as permanent floor or a "
+                    "W/#/T/w/o/d and the ring surrounds at least one untouched "
+                    "passable interior tile. A solid W block encloses no space. "
+                    "Trace a one-tile-thick ring on the minimap and wall any "
+                    "'.' or ',' border gaps while leaving interior '.' tiles "
+                    "unbuilt. Never treat 'i' as permanent floor or a "
                     "safe BUILD target. An 'x' is already ordered: do NOT "
                     "re-place a wall there — advance time and it becomes W."
                 )
@@ -1904,9 +1908,11 @@ def encode_observation(
         if enclosed_spaces == 0:
             status_lines.append(
                 "No enclosed rooms yet — spaces count as rooms only when fully "
-                "bounded by walls, buildings, or doors. BUILD kind=Wall can "
-                "enclose them; check the Wall/floor layout line for gaps in "
-                "your own walls."
+                "bounded by walls, buildings, or doors around at least one "
+                "untouched passable interior tile. A solid block of W tiles "
+                "encloses nothing. BUILD kind=Wall can make a one-tile-thick "
+                "ring; check the Wall/floor layout for both border gaps and "
+                "interior '.' tiles."
             )
 
     if ui_work:

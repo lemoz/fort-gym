@@ -483,6 +483,39 @@ submitted objective matches the prior objective and state the corresponding
 required decision. On the exact no-execution shadow, that clarification produced
 a valid `revise` response after one correction.
 
+### 2.14 G7 attempt 10: seasonal ice was being presented as permanent floor
+
+Attempt 10, run `32dc68d1faaa4c10bdd717c0477f4df5`
+([replay](https://fortgym.live/r/F7cxVSNhegOQRnnlWmX_pn3s_0ICVVsU)),
+ran 101 gameplay advances before an operator diagnostic stop. It built a real
+Carpenter's Workshop, three beds, one door, 16 construction tiles, and a Still.
+The Still completed at stage 3/3 on nine `FROZEN_LIQUID` floor-shape tiles, then
+seasonal thaw changed them to air/ramp and removed the building. The observation
+had called those tiles stable `.` floor, so the model retried the vanished site.
+Score-v4 corrects this measurement boundary: ice is a separate `i` category,
+never receives stable floor/room credit, and every structured BUILD rejects it.
+Workshop discovery now shares BUILD's liquid, locality, path, and reachability
+preflight and republishes a fingerprinted candidate after every action.
+
+### 2.15 G7 attempt 11: truthful sites enabled play, then spatial truth lagged
+
+Attempt 11, run `beaf1a3f0c99478bb504bdd8f004e2ec`
+([replay](https://fortgym.live/r/SFFx5jWKPJxYYywMVIpXuw4d3vwRePna)),
+was stopped after 51 gameplay advances once a policy failure persisted. It
+completed both production workshops, produced three beds and three doors, built
+a FarmPlot, gathered plants, created brew jobs, and made 50 constructions with
+complete evidence and no death. Unlike attempts 6-9, it crossed every review
+boundary without an infrastructure abort.
+
+It still produced zero food/drink, installed no furniture, and enclosed no
+space. Three factual defects mattered. The embark Wagon occupied nine tiles that
+the agent minimap rendered as `.`, FARM wrote transient crop slots on a stage-0
+plot that DF cleared when construction completed, and the room explanation did
+not explicitly say that a solid W mass encloses nothing. The next correction
+marks every otherwise-unclassified building footprint as occupied `o`, rejects
+FARM until the plot reaches maximum construction stage, and defines a room as a
+one-tile-thick hollow ring around untouched passable interior.
+
 ## 3. Limitations
 
 - **A single passing embark family.** Every pass (G0–G4) is on
@@ -490,29 +523,31 @@ a valid `revise` response after one correction.
   passes in seven region3 attempts. "Plays Dwarf Fortress" is not yet
   demonstrated — "solved one map" is.
 - **Small n.** The reliability claim rests on a five-run lineage; the endurance
-  result on one probe; the G6 verdict on seven runs; G7 on nine failed attempts.
+  result on one probe; the G6 verdict on seven runs; G7 on 11 failed attempts.
   These are findings, not distributions.
 - **One policy family for most results.** GLM-5V-turbo produced the G4 passes
   and most of the G6 campaign; GPT-5.5 served the earlier G2/G3 passes.
   Cross-model generality is thin — two GPT-5.5-vision escalation runs are the
   only cross-family data points on the unseen map.
-- **G6 is unpassed; G7 attempts 1 through 9 failed.** Attempts 2 through 9 were
-  infrastructure aborts, not policy verdicts. Score-v3 is active, but the
-  chair-factory calibration gap (§2.4) remains part of its historical record.
+- **G6 is unpassed; G7 attempts 1 through 11 failed.** Attempts 2 through 9 were
+  infrastructure aborts; attempts 10 and 11 are policy diagnostics. Score-v4
+  is active after the frozen-liquid measurement correction, while the
+  chair-factory calibration gap (§2.4) remains part of score-v3's historical
+  record.
   Attempt 1 demonstrated why the scalar is telemetry rather than the verdict:
   score 209.44 passed its bar while the fort failed survival and structure.
 
 ## 4. What's next
 
-- **Attempt 9 exposed objective/decision correction ambiguity; deploy the
-  explicit required-decision context before attempt 10.** Keep strict objective
-  identity, the existing three-submission limit, and fail closed. A fresh run
-  must turn the now-demonstrated production and construction behavior into
-  farms, installed furniture, and multiple enclosed functional rooms.
+- **Attempt 11 exposed occupied-map, farm-stage, and hollow-ring facts; deploy
+  those corrections before attempt 12.** Keep the action surface policy-neutral,
+  strict review identity, the existing correction limit, and fail-closed BUILD
+  and FARM execution. A fresh run must convert real workshops and goods into
+  sustained production, installed furniture, and multiple enclosed rooms.
 - **G6 remains open**: the best unseen-map run reached 4/5 and missed only its
-  second functional room. G7 attempt 9 ran on the same unseen seed, so a strong
-  attempt 10 can add evidence without a separate blind retry campaign.
+  second functional room. G7 attempt 11 ran on the same unseen seed, so attempt
+  12 can test the corrected facts without a separate blind retry campaign.
 - **G8 — depth**: a multi-z fortress (stairs, underground rooms), the next
-  spatial-reasoning escalation past the hollow ring.
+  spatial-reasoning escalation after the hollow ring is actually demonstrated.
 - **The open-source flywheel**: a standing public leaderboard where any model
   attempts the ladder, every run replayable at `fortgym.live/r/<token>`.

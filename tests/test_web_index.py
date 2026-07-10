@@ -62,6 +62,13 @@ def test_replay_distinguishes_frozen_liquid_from_stable_floor() -> None:
     assert "Ice:" in html
 
 
+def test_replay_distinguishes_other_occupied_buildings_from_floor() -> None:
+    html = Path("web/index.html").read_text(encoding="utf-8")
+
+    assert "'o': { fill: '#694b7d', glyph: 'o' }" in html
+    assert "o=occupied" in html
+
+
 def test_replay_screen_offers_graphical_tileset_toggle() -> None:
     html = Path("web/index.html").read_text(encoding="utf-8")
 
