@@ -549,6 +549,23 @@ transport evidence only: the unchanged validator accepted the model-authored
 actions, but no game action executed during the probe. Attempt 14 must provide
 the policy verdict.
 
+### 2.18 G7 attempt 14: JSON transport reached gameplay, then hit its cap
+
+PR #83 deployed JSON-object transport and attempt 14 run
+`af3b1c0609934afeab2c401c78351ef8`
+([replay](https://fortgym.live/r/ZdSulSc9wjLoAgThfzFovsNao66JobGy))
+executed 25 governed gameplay rows and 25,073 ticks. It made a Carpenter's
+Workshop, three beds, three doors, seven gathered plants, and 14 construction
+records. It made no Still, FarmPlot, sustainable production, installed
+furniture, or enclosed room. Geometry and target preflight remained recurring
+policy failures despite a truthful minimap and rejection evidence.
+
+The terminal row was transport, not policy: a parseable response failed review,
+then two corrections exhausted the 512-token cap before completing JSON. The
+exact terminal state passed JSON mode 3/3 at 1,024 tokens, first call each; one
+valid response needed 536 tokens. The follow-up raises only pinned GLM-5.2's
+output ceiling so attempt 15 can test the unresolved gameplay policy.
+
 ## 3. Limitations
 
 - **A single passing embark family.** Every pass (G0–G4) is on
@@ -556,15 +573,16 @@ the policy verdict.
   passes in seven region3 attempts. "Plays Dwarf Fortress" is not yet
   demonstrated — "solved one map" is.
 - **Small n.** The reliability claim rests on a five-run lineage; the endurance
-  result on one probe; the G6 verdict on seven runs; G7 on 13 failed attempts.
+  result on one probe; the G6 verdict on seven runs; G7 on 14 failed attempts.
   These are findings, not distributions.
 - **One policy family for most results.** GLM-5V-turbo produced the G4 passes
   and most of the G6 campaign; GPT-5.5 served the earlier G2/G3 passes.
   Cross-model generality is thin — two GPT-5.5-vision escalation runs are the
   only cross-family data points on the unseen map.
-- **G6 is unpassed; G7 attempts 1 through 13 failed.** Attempts 2 through 9,
-  12, and 13 were infrastructure aborts; attempts 10 and 11 are policy
-  diagnostics. Score-v4 is active after the frozen-liquid correction, while the
+- **G6 is unpassed; G7 attempts 1 through 14 failed.** Attempts 2 through 9 and
+  12 through 14 were infrastructure aborts, although attempt 14 contains 25
+  policy-bearing gameplay rows; attempts 10 and 11 are policy diagnostics.
+  Score-v4 is active after the frozen-liquid correction, while the
   chair-factory calibration gap (§2.4) remains part of score-v3's historical
   record.
   Attempt 1 demonstrated why the scalar is telemetry rather than the verdict:
@@ -572,13 +590,13 @@ the policy verdict.
 
 ## 4. What's next
 
-- **Attempt 13 disproved automatic tool calls; deploy the 3/3 exact-state JSON
-  transport before attempt 14.** Keep strict review identity, the existing
-  correction limit, and fail-closed execution. A fresh run must convert real
-  workshops and goods into sustained production, installed furniture, and
-  multiple enclosed rooms.
+- **Attempt 14 proved JSON gameplay but exposed a later response cap; deploy the
+  3/3 exact-terminal 1,024-token headroom before attempt 15.** Keep strict review
+  identity, the existing correction limit, and fail-closed execution. A fresh
+  run must convert real workshops and goods into sustained production, installed
+  furniture, and multiple enclosed rooms.
 - **G6 remains open**: the best unseen-map run reached 4/5 and missed only its
-  second functional room. G7 attempt 14 can test the corrected facts and
+  second functional room. G7 attempt 15 can test the corrected facts and
   GLM-5.2 transport without a separate blind retry campaign.
 - **G8 — depth**: a multi-z fortress (stairs, underground rooms), the next
   spatial-reasoning escalation after the hollow ring is actually demonstrated.

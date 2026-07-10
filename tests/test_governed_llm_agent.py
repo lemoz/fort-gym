@@ -1257,6 +1257,20 @@ def test_glm5v_variant_has_governed_review_output_headroom(monkeypatch) -> None:
     assert agent._max_tokens == 1024
 
 
+def test_glm52_variant_has_json_correction_output_headroom(monkeypatch) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    try:
+        agent = AGENT_FACTORIES["dfhack-governed-llm-glm52"]()
+    finally:
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert isinstance(agent, DFHackGovernedLLMAgent)
+    assert agent._model == "z-ai/glm-5.2"
+    assert agent._vision is False
+    assert agent._max_tokens == 1024
+
+
 def test_tool_choice_degrades_to_auto_on_provider_rejection() -> None:
     class _PickyCompletions:
         def __init__(self) -> None:

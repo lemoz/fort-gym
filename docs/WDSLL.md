@@ -1499,6 +1499,41 @@ gate. Each entry states what changed and the evidence that forced it.
   tests passed, 5 live-only skipped, with changed-file Ruff, compileall, and
   `git diff --check` passing.
 
+- **2026-07-10 — PR #83 deployed; G7 attempt 14: INFRASTRUCTURE-ABORTED FAIL
+  after 25 real gameplay rows; later JSON corrections need output headroom.**
+  PR #83 passed CI, merged, and deployed as
+  `d19a1a5dbd5cb58d7298f9eab1e1464030415e4d`. Attempt 14 run
+  `af3b1c0609934afeab2c401c78351ef8`
+  ([replay](https://fortgym.live/r/ZdSulSc9wjLoAgThfzFovsNao66JobGy))
+  used fresh `seed_region3_fresh`, pinned OpenRouter GLM-5.2, memory off, and a
+  450-step budget. JSON transport crossed the earlier step-0 blocker: all 25
+  gameplay rows have screen text, governed provenance, and proof records; 18
+  have productive-change proof. The run advanced 25,073 real ticks before a
+  terminal row at step 25, and cleanup completed before failure publication.
+
+  This was real but incomplete play. The model felled trees, completed a
+  Carpenter's Workshop, produced three beds and three doors, gathered seven
+  non-farm plants, and made 14 constructions. It never built a Still or
+  FarmPlot, configured crops, brewed drink, installed furniture, or enclosed a
+  space. It consumed seven drinks and produced zero food or drink. Geometry
+  remained weak: the model planned a hollow 5x5 ring and door gap, then called a
+  vertical interior segment a top wall, targeted pebbles/shrubs despite the
+  current minimap, and made several no-progress retries. Deterministic gate-v2
+  is FAIL: rubric 81.89 with zero blockers and evidence/death criteria pass;
+  duration, production, population, rooms, installed beds, and score-v4 87.09
+  fail.
+
+  The terminal failure is separate from policy quality. The first step-25 JSON
+  response was parseable but violated three review fields; both correction
+  responses hit the 512-token cap and became incomplete JSON. Replaying that
+  exact terminal observation with JSON mode and a 1,024-token cap passed 3/3,
+  each on the first call (325, 508, and 536 completion tokens). The attempt-15
+  candidate raises only the pinned GLM-5.2 output cap to 1,024, matching the
+  existing GLM-5V review-headroom pattern; prompts, validators, gameplay
+  controls, and every other model remain unchanged. Local verification is 60
+  focused tests and 711 full-suite tests passed, 5 live-only skipped, with
+  changed-file Ruff, compileall, and `git diff --check` passing.
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,
