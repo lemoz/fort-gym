@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Tuple
 
+from .actions import normalized_objective
+
 INVALID_DF_CURSOR = -30000
 MENU_ESCAPE_OBSERVATION_RULE = (
     "If escaping this screen, submit only LEAVESCREEN keys with advance_ticks=0; "
@@ -392,6 +394,13 @@ def _format_key_preview(keys: Any, limit: int = 5) -> str:
     return keys_str
 
 
+def _single_line_text(value: Any, limit: int | None = None) -> str:
+    """Collapse rendered values so model-authored metadata cannot add evidence lines."""
+
+    rendered = " ".join(str(value or "").split())
+    return rendered if limit is None else rendered[:limit]
+
+
 def _format_action_preview(action_entry: Dict[str, Any]) -> str:
     keys_str = _format_key_preview(action_entry.get("keys", []))
     action_type = str(action_entry.get("action_type") or "").strip()
@@ -433,6 +442,20 @@ def _format_action_history_entry(action_entry: Dict[str, Any]) -> str:
         details.append("accepted=yes" if accepted else "accepted=no")
     if outcome:
         details.append(f"outcome={outcome}")
+    objective = str(action_entry.get("objective") or "").strip()
+    if objective:
+        details.append(f"objective={objective[:100]}")
+    plan_step = str(action_entry.get("plan_step") or "").strip()
+    if plan_step:
+        details.append(f"plan_step={plan_step[:100]}")
+    plan_review = action_entry.get("plan_review")
+    if isinstance(plan_review, dict):
+        decision = str(plan_review.get("decision") or "").strip()
+        request_id = str(plan_review.get("request_id") or "").strip()
+        if decision:
+            details.append(
+                "plan_review=" + decision + (f"/{request_id}" if request_id else "")
+            )
     error = action_entry.get("error")
     if error:
         details.append(f"error={error}")
@@ -464,6 +487,14 @@ def _format_action_history_entry(action_entry: Dict[str, Any]) -> str:
         if mode:
             details.append("agent_screen=" + mode + (f"/{confidence}" if confidence else ""))
     if last_action_review:
+        verdict = str(last_action_review.get("verdict") or "").strip()
+        if verdict:
+            details.append(f"agent_prev_verdict={verdict}")
+        if last_action_review.get("retry_same_action") is not None:
+            details.append(
+                "agent_retry_same_action="
+                + str(last_action_review.get("retry_same_action")).lower()
+            )
         worked = last_action_review.get("worked")
         if worked is not None:
             details.append(f"agent_prev_worked={worked}")
@@ -473,7 +504,8 @@ def _format_action_history_entry(action_entry: Dict[str, Any]) -> str:
                 + str(last_action_review.get("should_retry_same_path")).lower()
             )
 
-    return f"  Step {step_num}: {intent} -> [{action_preview}] ({'; '.join(details)})"
+    rendered = f"Step {step_num}: {intent} -> [{action_preview}] ({'; '.join(details)})"
+    return "  " + _single_line_text(rendered)
 
 
 def _format_last_action_command(step: Any, action: Dict[str, Any]) -> str:
@@ -485,9 +517,9 @@ def _format_last_action_command(step: Any, action: Dict[str, Any]) -> str:
         },
         "keys": params.get("keys", []),
     }
-    intent = str(action.get("intent") or "").strip()
+    intent = _single_line_text(action.get("intent"))
     command = f"step={step} {_format_action_preview(entry)}"
-    return command + (f"; intent={intent}" if intent else "")
+    return _single_line_text(command + (f"; intent={intent}" if intent else ""))
 
 
 def _to_int(value: Any, default: int = 0) -> int:
@@ -495,6 +527,104 @@ def _to_int(value: Any, default: int = 0) -> int:
         return int(value)
     except (TypeError, ValueError):
         return default
+
+
+_GOVERNED_PROGRESS_OUTCOMES = {"gameplay_state_changed", "interface_state_changed"}
+_GOVERNED_NO_PROGRESS_OUTCOMES = {
+    "rejected",
+    "advanced_ticks_without_tracked_state_change",
+    "action_accepted_without_tracked_state_change",
+    "interaction_accepted_without_tracked_state_change",
+    "keys_sent_without_tracked_state_change",
+}
+_GOVERNED_PLAN_REVIEW_INTERVAL = 5
+
+
+def _governed_review_verdict(entry: Dict[str, Any] | None) -> str:
+    if not entry:
+        return "unknown"
+    outcome = str(entry.get("outcome") or "")
+    if outcome == "partial_mutation":
+        return "partial"
+    if outcome in {"rejected", "validation_rejected"}:
+        return "rejected"
+    if outcome in _GOVERNED_PROGRESS_OUTCOMES:
+        return "progressed"
+    if outcome in _GOVERNED_NO_PROGRESS_OUTCOMES:
+        return "no_progress"
+    return "unknown"
+
+
+def _substantive_plan_review(entry: Dict[str, Any]) -> bool:
+    review = entry.get("plan_review")
+    return bool(
+        isinstance(review, dict)
+        and review.get("decision") in {"establish", "continue", "revise"}
+    )
+
+
+def _governed_plan_control(
+    action_history: Optional[List[Dict[str, Any]]],
+) -> Dict[str, Any]:
+    """Derive policy-neutral review cadence from factual governed outcomes."""
+
+    history = [
+        entry
+        for entry in (action_history or [])
+        if entry.get("action_type") not in (None, "KEYSTROKE")
+    ]
+    previous = history[-1] if history else None
+    previous_step = _to_int(previous.get("step"), -1) if previous else -1
+    next_step = previous_step + 1 if previous_step >= 0 else 0
+    prior_objective = ""
+    for entry in reversed(history):
+        objective = _single_line_text(entry.get("objective"), 160)
+        if objective:
+            prior_objective = objective
+            break
+
+    last_review_index = None
+    for index in range(len(history) - 1, -1, -1):
+        if _substantive_plan_review(history[index]):
+            last_review_index = index
+            break
+    actions_since_review = (
+        len(history) if last_review_index is None else len(history) - last_review_index - 1
+    )
+
+    reasons: List[str] = []
+    if last_review_index is None:
+        reasons.append("initial")
+    elif actions_since_review >= _GOVERNED_PLAN_REVIEW_INTERVAL:
+        reasons.append(f"periodic_{_GOVERNED_PLAN_REVIEW_INTERVAL}")
+    if previous and previous.get("outcome") == "partial_mutation":
+        reasons.append("partial_mutation")
+
+    if len(history) >= 2:
+        recent = history[-2:]
+        objectives = [normalized_objective(entry.get("objective")) for entry in recent]
+        verdicts = [_governed_review_verdict(entry) for entry in recent]
+        if objectives[0] and objectives[0] == objectives[1] and all(
+            verdict in {"rejected", "no_progress"} for verdict in verdicts
+        ):
+            reasons.append("same_objective_stalled_2")
+
+    reasons = list(dict.fromkeys(reasons))
+    reason_token = "+".join(reasons) if reasons else "none"
+    return {
+        "review_due": bool(reasons),
+        "request_id": f"{next_step}:{reason_token}",
+        "reasons": reasons,
+        "prior_objective": prior_objective,
+        "previous_step": previous_step,
+        "previous_outcome": previous.get("outcome") if previous else None,
+        "previous_verdict": _governed_review_verdict(previous),
+        "previous_action_fingerprint": (
+            str(previous.get("action_fingerprint") or "") if previous else ""
+        ),
+        "actions_since_review": actions_since_review,
+        "review_interval": _GOVERNED_PLAN_REVIEW_INTERVAL,
+    }
 
 
 def _key_fingerprint(keys: Any) -> str:
@@ -742,6 +872,7 @@ def encode_observation(
     action_history: Optional[List[Dict[str, Any]]] = None,
     last_action_result: Optional[Dict[str, Any]] = None,
     previous_screen: Optional[str] = None,
+    governed: bool = False,
 ) -> Tuple[str, Dict[str, Any]]:
     """Return (text_summary, machine_state) tuple for a given environment state.
 
@@ -773,6 +904,9 @@ def encode_observation(
     recent_progress_summary = _recent_progress_summary(keystroke_history, work)
     if recent_progress_summary:
         clean_state["recent_progress_summary"] = recent_progress_summary
+    agent_plan_control = _governed_plan_control(action_history) if governed else None
+    if agent_plan_control is not None:
+        clean_state["agent_plan_control"] = agent_plan_control
     ui_work = clean_state.get("ui_work") if isinstance(clean_state.get("ui_work"), dict) else {}
     ui_target_setup = (
         clean_state.get("ui_target_setup")
@@ -1042,6 +1176,41 @@ def encode_observation(
                             skip_parts.append(label)
                 if skip_parts:
                     status_lines.append("FARM seasons skipped: " + "; ".join(skip_parts))
+
+    if agent_plan_control is not None:
+        due = "yes" if agent_plan_control["review_due"] else "no"
+        reasons = agent_plan_control["reasons"] or ["none"]
+        prior_objective = agent_plan_control["prior_objective"] or "none"
+        previous_step = agent_plan_control["previous_step"]
+        previous_fingerprint = str(
+            agent_plan_control.get("previous_action_fingerprint") or ""
+        )
+        previous_label = (
+            "No previous action attempt"
+            if previous_step < 0
+            else (
+                f"step={previous_step} outcome={agent_plan_control['previous_outcome']} "
+                f"expected_review_verdict={agent_plan_control['previous_verdict']} "
+                f"fingerprint={previous_fingerprint[:12]}"
+            )
+        )
+        agent_plan_control["previous_evidence_excerpt"] = previous_label
+        status_lines.extend(
+            [
+                (
+                    "AGENT PLAN CONTROL: "
+                    f"review_due={due} request_id={agent_plan_control['request_id']}"
+                ),
+                "Plan review reasons: " + ",".join(str(reason) for reason in reasons),
+                f"Prior objective: {prior_objective}",
+                f"Previous action attempt for review: {previous_label}",
+                (
+                    "Review evidence rule: last_action_review uses the required E-id; "
+                    "plan_review uses two distinct E-ids and, when due, at least one current "
+                    "game-state fact. The harness checks facts, not strategy."
+                ),
+            ]
+        )
 
     # Screen change feedback - critical for agent to know if actions had effect
     if screen_text and previous_screen:
@@ -2070,6 +2239,69 @@ def encode_observation(
 
     if reminders:
         status_lines.append("Reminders: " + "; ".join(reminders))
+
+    if agent_plan_control is not None:
+        evidence_prefixes = (
+            "AGENT PLAN CONTROL:",
+            "Plan review reasons:",
+            "Previous action attempt for review:",
+            "Game Status:",
+            "DF Viewscreen:",
+            "Run resource flow:",
+            "Run death evidence:",
+            "Time:",
+            "Population:",
+            "Food:",
+            "Utility work:",
+            "Crew:",
+            "Jobs:",
+            "Workshop id=",
+            "Placed furniture buildings:",
+            "Furniture positions:",
+            "Farm plots built:",
+            "Seeds on hand:",
+            "Season:",
+            "Finished goods in play:",
+            "Fort-area tiles:",
+            "Fort structure (plan-agnostic):",
+            "Rooms:",
+            "Wall/floor layout:",
+        )
+        evidence_contents = []
+        for status_line in status_lines:
+            if not str(status_line).startswith(evidence_prefixes):
+                continue
+            rendered = _single_line_text(status_line)
+            if rendered:
+                evidence_contents.append(rendered)
+        for screen_line in (screen_text or "").splitlines():
+            option = screen_line.strip("# ")
+            if (
+                len(option) >= 3
+                and option[0].casefold() in "abcdefgh"
+                and option[1:].lstrip().startswith("-")
+            ):
+                evidence_contents.append("Screen: " + _single_line_text(option))
+        evidence_contents = list(dict.fromkeys(evidence_contents))
+        allowed_evidence_lines = [
+            f"E{index}: {line}" for index, line in enumerate(evidence_contents)
+        ]
+        previous_line = (
+            "Previous action attempt for review: "
+            + str(agent_plan_control["previous_evidence_excerpt"])
+        )
+        previous_evidence_id = next(
+            entry.split(":", 1)[0]
+            for entry in allowed_evidence_lines
+            if entry.split(": ", 1)[-1] == previous_line
+        )
+        agent_plan_control["allowed_evidence_lines"] = allowed_evidence_lines
+        agent_plan_control["previous_evidence_id"] = previous_evidence_id
+        status_lines.append(
+            "Required last_action_review.evidence id: " + previous_evidence_id
+        )
+        status_lines.append("REVIEW EVIDENCE CHOICES (submit E-ids, not text):")
+        status_lines.extend(f"- {line}" for line in allowed_evidence_lines)
 
     # If screen text is provided, format for keystroke mode
     if screen_text:

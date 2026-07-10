@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, get_args
+
+import pytest
 
 import fort_gym.bench.agent.governed_llm  # noqa: F401 - registration side effect
 from fort_gym.bench.agent.base import AGENT_FACTORIES
@@ -13,8 +16,10 @@ from fort_gym.bench.agent.governed_llm import (
     DFHackGovernedLLMAgent,
     _submit_action_tool,
 )
+from fort_gym.bench.env.actions import normalized_action_fingerprint, parse_action
 from fort_gym.bench.api.schemas import ModelType
 from fort_gym.bench.api.server import OPTIONAL_AGENT_MODULES
+from fort_gym.bench.config import get_settings
 from fort_gym.bench.run.runner import (
     ASSISTED_DFHACK_ACTIONS,
     GOVERNED_DFHACK_ACTIONS,
@@ -56,7 +61,10 @@ class _FakeCompletions:
         self.requests.append(kwargs)
         if self.error is not None:
             raise self.error
-        return self.responses.pop(0)
+        response = self.responses.pop(0)
+        if isinstance(response, Exception):
+            raise response
+        return response
 
 
 class _FakeClient:
@@ -65,16 +73,194 @@ class _FakeClient:
 
 
 def _agent(
-    responses: list[Any] | None = None, error: Exception | None = None
+    responses: list[Any] | None = None,
+    error: Exception | None = None,
+    *,
+    max_attempts: int = 1,
 ) -> DFHackGovernedLLMAgent:
-    agent = DFHackGovernedLLMAgent(api_key="test-key", max_attempts=1, memory_path=None)
+    agent = DFHackGovernedLLMAgent(
+        api_key="test-key",
+        max_attempts=max_attempts,
+        memory_path=None,
+    )
     agent._client = _FakeClient(responses, error)
     return agent
+
+
+def _plan_control(
+    *,
+    review_due: bool = True,
+    request_id: str = "0:initial",
+    prior_objective: str = "",
+    previous_step: int = -1,
+    previous_verdict: str = "unknown",
+    previous_action: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    previous_outcome = None
+    if previous_step >= 0:
+        previous_outcome = {
+            "progressed": "gameplay_state_changed",
+            "partial": "partial_mutation",
+            "rejected": "rejected",
+            "no_progress": "action_accepted_without_tracked_state_change",
+        }.get(previous_verdict)
+    previous_action = previous_action or {"type": "WAIT", "params": {}}
+    control = {
+        "review_due": review_due,
+        "request_id": request_id,
+        "reasons": ["initial"] if review_due and not prior_objective else [],
+        "prior_objective": prior_objective,
+        "previous_step": previous_step,
+        "previous_outcome": previous_outcome,
+        "previous_verdict": previous_verdict,
+        "previous_action_fingerprint": (
+            normalized_action_fingerprint(parse_action(previous_action))
+            if previous_step >= 0
+            else ""
+        ),
+        "actions_since_review": 0,
+        "review_interval": 5,
+    }
+    previous = (
+        "No previous action attempt"
+        if previous_step < 0
+        else (
+            f"step={previous_step} outcome={previous_outcome} "
+            f"expected_review_verdict={previous_verdict} "
+            f"fingerprint={control['previous_action_fingerprint'][:12]}"
+        )
+    )
+    evidence_contents = [
+        f"AGENT PLAN CONTROL: review_due={'yes' if review_due else 'no'} "
+        f"request_id={request_id}",
+        (
+            "Plan review reasons: initial"
+            if review_due and not prior_objective
+            else "Plan review reasons: none"
+        ),
+        f"Previous action attempt for review: {previous}",
+        "Time: tick 100",
+    ]
+    control["allowed_evidence_lines"] = [
+        f"E{index}: {line}" for index, line in enumerate(evidence_contents)
+    ]
+    control["previous_evidence_excerpt"] = previous
+    control["previous_evidence_id"] = "E2"
+    control["plan_evidence_ids"] = ["E0", "E3"]
+    return control
+
+
+def _reviewed_action_payload(
+    *,
+    control: dict[str, Any] | None = None,
+    objective: str = "Build durable shelter.",
+    decision: str | None = None,
+) -> dict[str, Any]:
+    control = control or _plan_control()
+    if decision is None:
+        if control["review_due"]:
+            decision = "continue" if control["prior_objective"] else "establish"
+        else:
+            decision = "not_due"
+    previous_evidence = control["previous_evidence_id"]
+    plan_evidence = control["plan_evidence_ids"]
+    return {
+        "type": "DIG",
+        "params": {"area": [50, 35, 0], "size": [5, 5, 1]},
+        "intent": "designate the starter room",
+        "objective": objective,
+        "plan_step": "Dig the starter room.",
+        "expected_simulation_result": "Walls become designated and miners begin work.",
+        "last_action_review": {
+            "previous_step": control["previous_step"],
+            "verdict": control["previous_verdict"],
+            "evidence": [previous_evidence],
+            "retry_same_action": False,
+            "lesson": "Use the observed result before choosing the next action.",
+        },
+        "plan_review": {
+            "request_id": control["request_id"],
+            "decision": decision,
+            "prior_objective": control["prior_objective"],
+            "objective": objective,
+            "evidence": plan_evidence,
+            "reason": "The current observation supports this next step.",
+            "steps": ["Dig shelter.", "Build production."],
+        },
+        "advance_ticks": 800,
+    }
+
+
+def _review_observation(control: dict[str, Any]) -> str:
+    return "\n".join(control["allowed_evidence_lines"])
 
 
 def test_governed_system_prompt_teaches_wall_construction() -> None:
     assert "Wall" in GOVERNED_SYSTEM_PROMPT
     assert "x2" in GOVERNED_SYSTEM_PROMPT
+
+
+def test_openrouter_transport_defaults_to_three_attempts(monkeypatch) -> None:
+    monkeypatch.delenv("OPENROUTER_MAX_ATTEMPTS", raising=False)
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    try:
+        assert get_settings().OPENROUTER_MAX_ATTEMPTS == 3
+    finally:
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+
+def test_deployment_template_keeps_three_transport_attempts() -> None:
+    template = (
+        Path(__file__).parents[1]
+        / "infra/ansible/roles/fortgym/templates/fort-gym.env.j2"
+    ).read_text(encoding="utf-8")
+
+    assert (
+        "OPENROUTER_MAX_ATTEMPTS={{ lookup('env','OPENROUTER_MAX_ATTEMPTS') "
+        "| default('3', true) }}"
+    ) in template
+
+
+def test_governed_submit_tool_requires_agent_review_contract() -> None:
+    parameters = _submit_action_tool()["function"]["parameters"]
+
+    assert "last_action_review" in parameters["required"]
+    assert "plan_review" in parameters["required"]
+    assert parameters["properties"]["last_action_review"]["additionalProperties"] is False
+    assert parameters["properties"]["plan_review"]["properties"]["decision"]["enum"] == [
+        "not_due",
+        "establish",
+        "continue",
+        "revise",
+    ]
+    assert parameters["properties"]["last_action_review"]["properties"]["evidence"][
+        "minItems"
+    ] == 1
+    assert parameters["properties"]["plan_review"]["properties"]["evidence"][
+        "minItems"
+    ] == 2
+    assert "next_step" not in parameters["properties"]["plan_review"]["properties"]
+    assert "REVIEW EVIDENCE CHOICES" in GOVERNED_SYSTEM_PROMPT
+
+
+def test_review_evidence_accepts_only_exact_catalog_ids() -> None:
+    observation = (
+        "E0: Previous action attempt for review: No previous action attempt\n"
+        "E1: Run resource flow: food produced=0, consumed=38; "
+        "drink produced=0, consumed=60"
+    )
+
+    assert (
+        DFHackGovernedLLMAgent._matching_evidence_line("E0", observation)
+        == "E0: Previous action attempt for review: No previous action attempt"
+    )
+    assert DFHackGovernedLLMAgent._matching_evidence_line("E1", observation) is not None
+    assert DFHackGovernedLLMAgent._matching_evidence_line("0", observation) is None
+    assert DFHackGovernedLLMAgent._matching_evidence_line("100", observation) is None
+    assert DFHackGovernedLLMAgent._matching_evidence_line("E0: Previous", observation) is None
+    assert DFHackGovernedLLMAgent._normalized_prior_objective("none") == ""
+    assert DFHackGovernedLLMAgent._normalized_prior_objective("") == ""
+    assert DFHackGovernedLLMAgent._normalized_prior_objective("Build shelter") == "build shelter"
 
 
 def test_governed_system_prompt_requires_build_target_preflight() -> None:
@@ -225,6 +411,8 @@ def test_governed_interact_tool_and_prompt_are_bounded_and_paused() -> None:
         '"confirm"|"cancel"|"up"|"down"|"left"|"right"|"finish_topic_meeting"'
         in GOVERNED_SYSTEM_PROMPT
     )
+    assert '"topic_option_a"|...|"topic_option_h"' in GOVERNED_SYSTEM_PROMPT
+    assert '"a - Begin discussion" requires topic_option_a' in GOVERNED_SYSTEM_PROMPT
     assert '"a - Finish peeking in on conversation"' in GOVERNED_SYSTEM_PROMPT
     assert "observes one screen after that input" in GOVERNED_SYSTEM_PROMPT
     assert "paused interface or dialog" in GOVERNED_SYSTEM_PROMPT
@@ -283,6 +471,241 @@ def test_decide_returns_normalized_governed_action_and_writes_plan() -> None:
     assert agent._memory.gameplay_plan["current_step"] == "dig starter room"
     request = agent._client.chat.completions.requests[0]
     assert request["tool_choice"] == {"type": "function", "function": {"name": "submit_action"}}
+
+
+def test_review_contract_establishes_initial_agent_owned_plan() -> None:
+    control = _plan_control()
+    payload = _reviewed_action_payload(control=control)
+    agent = _agent([_submit_action_response(payload)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["last_action_review"]["verdict"] == "unknown"
+    assert action["plan_review"]["decision"] == "establish"
+    assert len(agent._client.chat.completions.requests) == 1
+    assert agent._memory.gameplay_plan["objective"] == "Build durable shelter."
+    assert agent._memory.gameplay_plan["steps"] == ["Dig shelter.", "Build production."]
+
+
+def test_review_contract_gets_exactly_one_model_correction() -> None:
+    control = _plan_control()
+    invalid = _reviewed_action_payload(control=control)
+    invalid["last_action_review"]["verdict"] = "progressed"
+    valid = _reviewed_action_payload(control=control)
+    agent = _agent([_submit_action_response(invalid), _submit_action_response(valid)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["type"] == "DIG"
+    assert len(agent._client.chat.completions.requests) == 2
+    events = agent.pop_tool_events()
+    assert sum(event["tool"] == "governed_llm.review_contract_retry" for event in events) == 1
+
+
+def test_due_plan_review_requires_two_distinct_factual_lines() -> None:
+    control = _plan_control()
+    invalid = _reviewed_action_payload(control=control)
+    invalid["plan_review"]["evidence"] = ["E3", "E3"]
+    valid = _reviewed_action_payload(control=control)
+    agent = _agent([_submit_action_response(invalid), _submit_action_response(valid)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["plan_review"]["decision"] == "establish"
+    retry = next(
+        event
+        for event in agent.pop_tool_events()
+        if event["tool"] == "governed_llm.review_contract_retry"
+    )
+    assert retry["output"]["error"] == (
+        "a due plan_review must cite two distinct factual lines"
+    )
+
+
+def test_review_contract_requires_last_action_evidence_to_cite_its_outcome() -> None:
+    control = _plan_control(
+        review_due=False,
+        request_id="5:none",
+        prior_objective="Build durable shelter.",
+        previous_step=4,
+        previous_verdict="progressed",
+    )
+    invalid = _reviewed_action_payload(control=control)
+    invalid["last_action_review"]["evidence"] = ["E3"]
+    valid = _reviewed_action_payload(control=control)
+    agent = _agent([_submit_action_response(invalid), _submit_action_response(valid)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["last_action_review"]["evidence"] == [control["previous_evidence_id"]]
+    assert len(agent._client.chat.completions.requests) == 2
+    events = agent.pop_tool_events()
+    retry = next(event for event in events if event["tool"] == "governed_llm.review_contract_retry")
+    assert retry["output"]["error"] == (
+        "last_action_review.evidence must include required evidence id 'E2'"
+    )
+
+
+def test_review_contract_binds_retry_flag_to_normalized_action() -> None:
+    repeated_action = {
+        "type": "DIG",
+        "params": {"area": [50, 35, 0], "size": [5, 5, 1]},
+    }
+    control = _plan_control(
+        review_due=False,
+        request_id="5:none",
+        prior_objective="Build durable shelter.",
+        previous_step=4,
+        previous_verdict="rejected",
+        previous_action=repeated_action,
+    )
+    invalid = _reviewed_action_payload(control=control)
+    valid = _reviewed_action_payload(control=control)
+    valid["last_action_review"]["retry_same_action"] = True
+    agent = _agent([_submit_action_response(invalid), _submit_action_response(valid)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["last_action_review"]["retry_same_action"] is True
+    events = agent.pop_tool_events()
+    retry = next(event for event in events if event["tool"] == "governed_llm.review_contract_retry")
+    assert "retry_same_action must match" in retry["output"]["error"]
+
+
+def test_review_contract_fails_before_gameplay_after_bad_correction() -> None:
+    control = _plan_control()
+    first = _reviewed_action_payload(control=control)
+    second = _reviewed_action_payload(control=control)
+    first["plan_review"]["evidence"] = ["invented evidence"]
+    second["plan_review"]["evidence"] = ["still invented"]
+    agent = _agent([_submit_action_response(first), _submit_action_response(second)])
+
+    with pytest.raises(RuntimeError, match="failed before gameplay after one correction"):
+        agent.decide(
+            _review_observation(control),
+            {"agent_plan_control": control},
+        )
+
+    assert agent._pending is None
+    assert not any(
+        event["tool"] == "governed_llm.fallback_wait" for event in agent.pop_tool_events()
+    )
+
+
+def test_review_control_provider_failure_does_not_advance_with_fallback_wait() -> None:
+    control = _plan_control()
+    agent = _agent(error=RuntimeError("provider unavailable"))
+
+    with pytest.raises(RuntimeError, match="failed before gameplay"):
+        agent.decide(
+            _review_observation(control),
+            {"agent_plan_control": control},
+        )
+
+    assert agent._pending is None
+    assert not any(
+        event["tool"] == "governed_llm.fallback_wait" for event in agent.pop_tool_events()
+    )
+
+
+def test_review_control_retries_transient_provider_failure_without_gameplay() -> None:
+    control = _plan_control()
+    payload = _reviewed_action_payload(control=control)
+    agent = _agent(
+        [RuntimeError("provider timeout"), _submit_action_response(payload)],
+        max_attempts=2,
+    )
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["type"] == "DIG"
+    assert len(agent._client.chat.completions.requests) == 2
+    transport_events = [
+        event
+        for event in agent.pop_tool_events()
+        if event["tool"] == "openrouter.chat.completions.create"
+    ]
+    assert transport_events[0]["output"]["retrying"] is True
+
+
+def test_review_contract_allows_agent_to_revise_objective_when_not_due() -> None:
+    control = _plan_control(
+        review_due=False,
+        request_id="5:none",
+        prior_objective="Build durable shelter.",
+        previous_step=4,
+        previous_verdict="progressed",
+    )
+    payload = _reviewed_action_payload(
+        control=control,
+        objective="Close the drink-production loop.",
+        decision="revise",
+    )
+    agent = _agent([_submit_action_response(payload)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["objective"] == "Close the drink-production loop."
+    assert action["plan_review"]["decision"] == "revise"
+    assert agent._memory.gameplay_plan["objective"] == "Close the drink-production loop."
+
+
+def test_not_due_review_advances_memory_plan_step_without_recording_review() -> None:
+    initial_control = _plan_control()
+    initial = _reviewed_action_payload(control=initial_control)
+    repeated_action = {
+        "type": "DIG",
+        "params": {"area": [50, 35, 0], "size": [5, 5, 1]},
+    }
+    next_control = _plan_control(
+        review_due=False,
+        request_id="1:none",
+        prior_objective="Build durable shelter.",
+        previous_step=0,
+        previous_verdict="progressed",
+        previous_action=repeated_action,
+    )
+    next_action = _reviewed_action_payload(control=next_control)
+    next_action["plan_step"] = "Build the first production workshop."
+    next_action["last_action_review"]["retry_same_action"] = True
+    agent = _agent(
+        [_submit_action_response(initial), _submit_action_response(next_action)]
+    )
+
+    agent.decide(
+        _review_observation(initial_control),
+        {"agent_plan_control": initial_control},
+    )
+    revision = agent._memory.gameplay_plan["revision"]
+    agent.decide(
+        _review_observation(next_control),
+        {"agent_plan_control": next_control},
+    )
+
+    assert agent._memory.gameplay_plan["current_step"] == next_action["plan_step"]
+    assert agent._memory.gameplay_plan["revision"] == revision
+    assert agent._memory.plan_reviews == []
 
 
 def test_order_qty_alias_and_missing_advance_ticks_normalized() -> None:

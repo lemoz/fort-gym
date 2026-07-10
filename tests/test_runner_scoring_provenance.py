@@ -1255,6 +1255,105 @@ def test_governed_action_history_does_not_call_zero_tick_noop_keystrokes() -> No
     assert entry["outcome"] == "action_accepted_without_tracked_state_change"
 
 
+def test_action_history_preserves_review_contract_for_all_outcomes() -> None:
+    action = {
+        "type": "BUILD",
+        "params": {"kind": "Wall", "x": 88, "y": 101, "z": 161},
+        "objective": "Close the workshop room wall.",
+        "plan_step": "Build the north wall.",
+        "plan_review": "The target tile remains open floor.",
+        "last_action_review": {
+            "worked": False,
+            "should_retry_same_path": False,
+        },
+    }
+    outcomes = (
+        ({"accepted": True, "result": {}}, "action_accepted_without_tracked_state_change"),
+        ({"accepted": False, "reason": "blocked", "result": {}}, "rejected"),
+        (
+            {
+                "accepted": False,
+                "reason": "invalid target",
+                "validation_rejected": True,
+            },
+            "validation_rejected",
+        ),
+    )
+
+    for execute_result, expected_outcome in outcomes:
+        entry = _action_history_entry(
+            step=4,
+            action=action,
+            requested_ticks=0,
+            tick_info={"ticks_advanced": 0},
+            execute_result=execute_result,
+            state_before={"stocks": {}, "work": {}},
+            advance_state={"stocks": {}, "work": {}},
+            metrics_snapshot={},
+        )
+
+        assert entry["objective"] == action["objective"]
+        assert entry["plan_step"] == action["plan_step"]
+        assert entry["plan_review"] == action["plan_review"]
+        assert entry["last_action_review"] == action["last_action_review"]
+        assert entry["outcome"] == expected_outcome
+
+
+def test_action_history_fingerprint_uses_only_normalized_type_and_params() -> None:
+    contract = {"type": "build", "params": {"z": 161, "kind": "Wall", "x": 88}}
+    same_contract_different_metadata = {
+        "type": " BUILD ",
+        "params": {"kind": "Wall", "x": 88, "z": 161},
+        "objective": "A different goal.",
+        "plan_step": "A different plan step.",
+        "plan_review": "A different review.",
+        "last_action_review": {"worked": False},
+        "intent": "Different metadata must not matter.",
+    }
+
+    def fingerprint(action):
+        return _action_history_entry(
+            step=1,
+            action=action,
+            requested_ticks=0,
+            tick_info={"ticks_advanced": 0},
+            execute_result={"accepted": True, "result": {}},
+            state_before={"stocks": {}, "work": {}},
+            advance_state={"stocks": {}, "work": {}},
+            metrics_snapshot={},
+        )["action_fingerprint"]
+
+    base = fingerprint(contract)
+    assert base == fingerprint(same_contract_different_metadata)
+    assert base != fingerprint({**contract, "type": "DIG"})
+    assert base != fingerprint({**contract, "params": {"z": 161, "kind": "Wall", "x": 89}})
+
+
+def test_review_metadata_does_not_enter_helper_evidence_or_score_progress() -> None:
+    review_metadata = {
+        "objective": "Close the workshop room wall.",
+        "plan_step": "Build the north wall.",
+        "plan_review": "The target tile remains open floor.",
+        "last_action_review": {"worked": False, "should_retry_same_path": False},
+    }
+    proof = _governed_gameplay_proof(
+        **_governed_proof_kwargs(
+            action={
+                "type": "DIG",
+                "params": {"area": [50, 35, 0], "size": [5, 5, 1]},
+                **review_metadata,
+            },
+            execute_result={
+                "accepted": True,
+                "result": {"newly_designated": 1, **review_metadata},
+            },
+        )
+    )
+
+    assert proof["helper_evidence"] == {"newly_designated": 1}
+    assert not _keystroke_step_score_progress(review_metadata)
+
+
 def test_governed_gameplay_proof_rejects_noop_redesignation() -> None:
     proof = _governed_gameplay_proof(
         **_governed_proof_kwargs(

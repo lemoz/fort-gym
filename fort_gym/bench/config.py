@@ -60,7 +60,7 @@ class Settings(BaseModel):
         "OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"
     )
     OPENROUTER_TIMEOUT_SECONDS: float = float(os.getenv("OPENROUTER_TIMEOUT_SECONDS", "30"))
-    OPENROUTER_MAX_ATTEMPTS: int = int(os.getenv("OPENROUTER_MAX_ATTEMPTS", "1"))
+    OPENROUTER_MAX_ATTEMPTS: int = int(os.getenv("OPENROUTER_MAX_ATTEMPTS", "3"))
     OPENROUTER_MAX_TOOL_ROUNDS: int = int(os.getenv("OPENROUTER_MAX_TOOL_ROUNDS", "4"))
     OPENROUTER_DISABLE_REASONING: bool = bool(
         int(os.getenv("OPENROUTER_DISABLE_REASONING", "1"))
@@ -107,7 +107,7 @@ def get_settings() -> Settings:
             "OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"
         ),
         OPENROUTER_TIMEOUT_SECONDS=float(os.getenv("OPENROUTER_TIMEOUT_SECONDS", "30")),
-        OPENROUTER_MAX_ATTEMPTS=int(os.getenv("OPENROUTER_MAX_ATTEMPTS", "1")),
+        OPENROUTER_MAX_ATTEMPTS=int(os.getenv("OPENROUTER_MAX_ATTEMPTS", "3")),
         OPENROUTER_MAX_TOOL_ROUNDS=int(os.getenv("OPENROUTER_MAX_TOOL_ROUNDS", "4")),
         OPENROUTER_DISABLE_REASONING=bool(
             int(os.getenv("OPENROUTER_DISABLE_REASONING", "1"))

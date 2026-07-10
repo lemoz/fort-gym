@@ -14,6 +14,8 @@ from fort_gym.bench.run.runner import (
     INTERACT_ALLOWED_VIEWSCREEN_TYPES,
     MAX_INTERACT_OPERATIONS_PER_MODAL,
     MAX_UNCHANGED_INTERACT_SCREENS,
+    MIN_GOVERNED_ACTION_HISTORY,
+    _effective_action_history_limit,
     _interact_context_reason,
     _interaction_terminal_reason,
     run_once,
@@ -330,7 +332,12 @@ def _run_governed_interact_fixture(
             return None
 
     def fake_execute(keys: list[str]) -> Dict[str, Any]:
-        expected_key = "OPTION1" if operation == "finish_topic_meeting" else "SELECT"
+        if operation == "finish_topic_meeting":
+            expected_key = "OPTION1"
+        elif operation.startswith("topic_option_"):
+            expected_key = f"OPTION{'abcdefgh'.index(operation[-1]) + 1}"
+        else:
+            expected_key = "SELECT"
         assert keys == [expected_key]
         interaction_sent[0] = True
         if screen_changes:
@@ -516,6 +523,16 @@ def test_action_history_limit_prefers_generic_env_and_keeps_legacy_fallback(
     get_settings.cache_clear()  # type: ignore[attr-defined]
 
 
+def test_governed_history_limit_cannot_erase_review_continuity() -> None:
+    assert _effective_action_history_limit(0, governed=False) == 0
+    for configured in (0, 1, 5):
+        assert (
+            _effective_action_history_limit(configured, governed=True)
+            == MIN_GOVERNED_ACTION_HISTORY
+        )
+    assert _effective_action_history_limit(30, governed=True) == 30
+
+
 def test_parsed_validation_failure_keeps_command_identity(tmp_path, monkeypatch) -> None:
     interact_agent = CountingInteractAgent("finish_topic_meeting")
     agent, registry, run_id = _run_governed_interact_fixture(
@@ -651,6 +668,30 @@ def test_interact_context_is_governed_paused_and_viewscreen_allowlisted() -> Non
             screen_text="unrelated topic text",
         )
     )
+    visible_option_action = {
+        "type": "INTERACT",
+        "params": {"operation": "topic_option_a"},
+        "advance_ticks": 0,
+    }
+    assert (
+        _interact_context_reason(
+            backend_name="dfhack",
+            is_governed_dfhack_mode=True,
+            state=topic_state,
+            action=visible_option_action,
+            screen_text="# a - Begin discussion.",
+        )
+        is None
+    )
+    assert "requires a visible 'a - ...'" in str(
+        _interact_context_reason(
+            backend_name="dfhack",
+            is_governed_dfhack_mode=True,
+            state=topic_state,
+            action=visible_option_action,
+            screen_text="# b - Discuss another matter.",
+        )
+    )
 
 
 def test_interact_modal_exit_resets_episode_without_terminal_failure() -> None:
@@ -665,6 +706,37 @@ def test_interact_modal_exit_resets_episode_without_terminal_failure() -> None:
     assert terminal is None
     assert count == 0
     assert unchanged == 0
+
+
+def test_governed_validation_rejection_keeps_complete_zero_change_evidence(
+    tmp_path, monkeypatch
+) -> None:
+    _, registry, run_id = _run_governed_interact_fixture(
+        tmp_path,
+        monkeypatch,
+        screen_changes=False,
+        max_steps=1,
+        operation="finish_topic_meeting",
+        viewscreen_type="viewscreen_topicmeetingst",
+        screen_text="# a - Begin discussion.",
+    )
+
+    loaded = registry.get(run_id)
+    assert loaded is not None
+    assert loaded.status == "completed"
+    row = _trace_rows(tmp_path, run_id)[0]
+    assert row["validation"]["valid"] is False
+    assert "requires the visible option" in row["validation"]["reason"]
+    assert row["execute"]["accepted"] is False
+    assert row["execute"]["provenance"] == "dfhack_governed"
+    assert row["execute"]["gameplay_progress_eligible"] is False
+    assert row["gameplay_proof"]["ok"] is False
+    assert row["gameplay_proof"]["source"] == "dfhack-map-and-state"
+    assert row["gameplay_proof"]["provenance"] == "dfhack_governed"
+    assert row["tick_advance"]["ticks_advanced"] == 0
+    assert "a - Begin discussion" in row["screen_text"]
+
+    get_settings.cache_clear()  # type: ignore[attr-defined]
 
 
 def test_unchanged_interact_loop_terminates_before_another_model_call(
@@ -714,6 +786,25 @@ def test_finish_topic_meeting_no_effect_is_recorded_as_rejected(tmp_path, monkey
     assert row["execute"]["why"] == "interaction_no_effect"
     assert row["execute"]["result"]["ok"] is False
     assert row["execute"]["result"]["error"] == "interaction_no_effect"
+    assert row["interaction"]["semantic_effect_observed"] is False
+
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+
+
+def test_visible_topic_option_no_effect_is_recorded_as_rejected(tmp_path, monkeypatch) -> None:
+    _, registry, run_id = _run_governed_interact_fixture(
+        tmp_path,
+        monkeypatch,
+        screen_changes=False,
+        max_steps=1,
+        operation="topic_option_a",
+        viewscreen_type="viewscreen_topicmeetingst",
+        screen_text="# a - Begin discussion.",
+    )
+
+    row = _trace_rows(tmp_path, run_id)[0]
+    assert row["execute"]["accepted"] is False
+    assert row["execute"]["why"] == "interaction_no_effect"
     assert row["interaction"]["semantic_effect_observed"] is False
 
     get_settings.cache_clear()  # type: ignore[attr-defined]
