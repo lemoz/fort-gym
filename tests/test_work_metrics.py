@@ -230,7 +230,7 @@ def test_complexity_progress_delta_counts_second_room_shape() -> None:
     }
 
 
-def test_utility_action_progress_counts_accepted_safe_actions() -> None:
+def test_utility_action_progress_never_pays_command_acceptance() -> None:
     order_progress = metrics.utility_action_progress(
         {"type": "ORDER", "params": {"job": "bed", "quantity": 5}},
         {"accepted": True},
@@ -252,15 +252,10 @@ def test_utility_action_progress_counts_accepted_safe_actions() -> None:
         {"accepted": False},
     )
 
-    assert order_progress == {"utility_action_progress": 5}
-    assert oversized_order_progress == {"utility_action_progress": 5}
-    assert build_progress == {"utility_action_progress": 5}
-    # Still is an equally legal BUILD workshop kind (dfhack_backend's
-    # ALLOWED_WORKSHOPS, executor.py's kind-routing set, build_workshop.lua's
-    # SUBTYPES table all already treat CarpenterWorkshop/Still symmetrically)
-    # so it must earn the same instant utility credit, not score strictly
-    # worse than building a redundant second Carpenter's Workshop.
-    assert still_build_progress == {"utility_action_progress": 5}
+    assert order_progress == {"utility_action_progress": 0}
+    assert oversized_order_progress == {"utility_action_progress": 0}
+    assert build_progress == {"utility_action_progress": 0}
+    assert still_build_progress == {"utility_action_progress": 0}
     assert rejected_progress == {"utility_action_progress": 0}
 
 

@@ -271,6 +271,13 @@ if buildings then
             or workshop_type_name == 'Carpenters'
             or workshop_type_name == 'Carpenter' then
           carpenter_workshops = carpenter_workshops + 1
+          local building_complete = false
+          pcall(function()
+            building_complete = building:getBuildStage() >= building:getMaxBuildStage()
+          end)
+          if building_complete then
+            carpenter_workshops_usable = carpenter_workshops_usable + 1
+          end
           if carpenter_workshop_x1 == nil then
             pcall(function()
               carpenter_workshop_x1 = building.x1
@@ -299,9 +306,6 @@ if buildings then
           if ok_jobs then
             carpenter_workshop_task_jobs = carpenter_workshop_task_jobs + building_task_jobs
             carpenter_workshop_construction_jobs = carpenter_workshop_construction_jobs + building_construction_jobs
-            if building_task_jobs > 0 then
-              carpenter_workshops_usable = carpenter_workshops_usable + 1
-            end
           end
         end
       end

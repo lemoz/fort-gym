@@ -129,6 +129,74 @@ def test_agent_review_metadata_receives_no_rubric_credit() -> None:
     assert evaluate_trace_records(reviewed) == evaluate_trace_records(records)
 
 
+def test_queue_and_incomplete_workshop_do_not_satisfy_production_rubric() -> None:
+    records = [
+        {
+            "step": step,
+            "action": {"type": "ORDER", "params": {"job": "bed", "quantity": 5}},
+            "execute": {"accepted": True, "provenance": "dfhack_governed"},
+            "metrics": {
+                "pop": 7,
+                "food": 40,
+                "drink": 50,
+                "work": {
+                    "carpenter_workshops": 1,
+                    "carpenter_workshops_usable": 0,
+                    "manager_orders_count": 10,
+                },
+                "manager_orders_delta": 10,
+            },
+            "gameplay_proof": {"ok": False, "changed_tile_count": 0},
+            "tick_advance": {"ticks_advanced": 1000},
+        }
+        for step in range(6)
+    ]
+
+    rubric = evaluate_trace_records(records)
+
+    assert rubric["dimensions"]["production_economy"]["score"] == 0
+    assert rubric["dimensions"]["responsiveness"]["score"] == 0
+    assert "manager_orders_uncredited=10" in rubric["dimensions"]["production_economy"]["evidence"]
+    assert "no_production_surface" in rubric["blockers"]
+
+    completed = deepcopy(records)
+    for record in completed:
+        record["metrics"]["work"]["carpenter_workshops_usable"] = 1
+    completed_rubric = evaluate_trace_records(completed)
+    assert completed_rubric["dimensions"]["production_economy"]["score"] == 2
+    assert "no_production_surface" not in completed_rubric["blockers"]
+
+
+def test_explicit_action_attribution_beats_unrelated_metric_changes() -> None:
+    records = [
+        {
+            "step": step,
+            "action": {"type": "ORDER", "params": {"job": "brew", "quantity": 3}},
+            "execute": {"accepted": True, "provenance": "dfhack_governed"},
+            "metrics": {
+                "pop": 7,
+                "food": 40,
+                "drink": 50,
+                # A different construction completed during this tick window.
+                "complexity_progress": step + 1,
+            },
+            "gameplay_proof": {
+                "ok": False,
+                "action_effect_observed": False,
+                "concurrent_world_state_changed": True,
+                "changed_tile_count": 1,
+            },
+            "tick_advance": {"ticks_advanced": 1000},
+        }
+        for step in range(8)
+    ]
+
+    assert _step_progress_flags(records) == [False] * 8
+    rubric = evaluate_trace_records(records)
+    assert rubric["dimensions"]["responsiveness"]["score"] == 0
+    assert "repetitive_policy" in rubric["blockers"]
+
+
 def test_placement_and_chop_helper_counts_are_world_change() -> None:
     for helper_evidence in ({"placed_count": 1}, {"trees_designated": 4}):
         proof = {

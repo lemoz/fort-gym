@@ -1,5 +1,8 @@
 # score-v4 stable-floor measurement boundary
 
+Historical boundary: score-v5 now supersedes v4 for new runs. Existing v4
+artifacts remain immutable and leaderboard-partitioned.
+
 Status: implemented for the post-Attempt-10 candidate on 2026-07-10.
 
 ## Why the boundary exists
@@ -29,6 +32,6 @@ changed.
 The scalar threshold remains exactly 150. This is conservative: score-v4 only
 removes transient false floor/room credit and changes no positive coefficient.
 Every survival, duration, population, room, bed, rubric, legality, and evidence
-predicate is unchanged. Deterministic G7 gate version 2 requires score-v4 for
-new attempts and reports score-v3 attempts as version-ineligible.
-
+predicate is unchanged. Deterministic G7 gate version 2 required score-v4 for
+attempts 11 through 19. Score-v5 is required after the action-effect truth
+boundary; v3 and v4 attempts are version-ineligible under current code.

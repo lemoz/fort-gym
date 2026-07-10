@@ -706,6 +706,39 @@ def test_job_metrics_reports_finished_goods_counts() -> None:
         assert needle in script
 
 
+def test_job_metrics_reports_order_lifecycle_and_raw_production_inputs() -> None:
+    script = (Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua").read_text(
+        encoding="utf-8"
+    )
+
+    for needle in (
+        "active_ids",
+        "active_ids_truncated",
+        "order_jobs",
+        "order_jobs_truncated",
+        "queued_job_details",
+        "brew_reaction",
+        "plant_seeds",
+        "brewable_plant_stacks",
+        "empty_barrels",
+        "ALCOHOL_PLANT",
+        "getContainedItems",
+        "tile_context",
+        "designation.subterranean",
+    ):
+        assert needle in script
+
+
+def test_work_metrics_usable_workshop_requires_completed_build_stage() -> None:
+    script = (Path(__file__).resolve().parents[1] / "hook" / "work_metrics.lua").read_text(
+        encoding="utf-8"
+    )
+
+    assert "building:getBuildStage() >= building:getMaxBuildStage()" in script
+    assert "if building_complete then" in script
+    assert "if building_task_jobs > 0 then" not in script
+
+
 def test_place_furniture_hook_installs_existing_items_only() -> None:
     script = (Path(__file__).resolve().parents[1] / "hook" / "place_furniture.lua").read_text(
         encoding="utf-8"
@@ -868,6 +901,21 @@ def test_fort_metrics_renders_minimap_grid() -> None:
         assert needle in script
     assert "elseif building_at(x, y, anchor_z) then" in script
     assert "ch = 'o'" in script
+
+
+def test_fort_metrics_reports_room_bounds_contents_and_open_tiles() -> None:
+    script = (Path(__file__).resolve().parents[1] / "hook" / "fort_metrics.lua").read_text(
+        encoding="utf-8"
+    )
+
+    for needle in (
+        "MAX_ROOM_OPEN_TILE_SAMPLES",
+        "bounds = { min_x, min_y, max_x, max_y, bld.z }",
+        "open_tiles = open_tiles",
+        "open_tile_count = open_tile_count",
+        "contents = contents",
+    ):
+        assert needle in script
 
 
 def test_fort_metrics_distinguishes_gatherable_shrubs_from_other_floor_features() -> None:

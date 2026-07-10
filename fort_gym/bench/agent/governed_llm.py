@@ -97,7 +97,9 @@ facts confirm success.
 right kind (construction stage complete), wherever it stands: bed, door, table, chair, barrel, and \
 bin need a built Carpenter's Workshop; brew (the brewing reaction) needs a built Still and a \
 dwarf with the brewing labor. Dwarves then do the \
-work.
+work. Created job IDs prove only that DF accepted the command. They do not prove that inputs were \
+available, a worker claimed the job, or output was produced. Verify the next observation's matching \
+job lifecycle and output counter before attributing output to that order.
 - UNSUSPEND: params {"area": [x, y, z], "size": [w, h, 1]} (max 10x10, one z-level). Clears the \
 suspended flag on construction/build jobs whose position falls inside the rect. A job suspends \
 when a dwarf cannot currently path to or reach the job site or the placement is blocked; the jobs \
@@ -147,12 +149,13 @@ The observation includes a Fort minimap — a top-down character grid (and, when
 same grid rendered as a color image) of your fort area with a \
 coordinate ruler (W=your walls, x=your queued wall/floor a dwarf is still building — never \
 re-place on an x tile, advance time instead, b/t/c/d=furniture, w=workshop, o=other occupied \
-building footprint, .=stable open floor, i=frozen liquid that can thaw). It is the \
+building footprint, .=stable open floor, ,=gatherable shrub, s=sapling, p=loose rock, \
+i=frozen liquid that can thaw). It is the \
 authoritative view for BUILD placement and wall geometry. Before submitting any BUILD, derive its \
 full target footprint and verify every target tile is `.` open floor in the current minimap, OR for \
 CarpenterWorkshop/Still use the exact runner-authored `carpenter_build_site_rect`, which is an \
 authoritative nine-tile stable-floor preflight even when it lies outside the cropped minimap. Never \
-BUILD on `W`, `#`, `T`, `b`, `t`, `c`, `d`, `w`, `o`, `x`, `i`, `,`, `@`, or `~`, a coordinate \
+BUILD on `W`, `#`, `T`, `b`, `t`, `c`, `d`, `w`, `o`, `x`, `i`, `,`, `s`, `p`, `@`, or `~`, a coordinate \
 listed under Furniture positions, or a \
 coordinate just reported under Failed tiles. If the footprint is not provably open and unoccupied, \
 choose a different valid tile or a different productive action; WAIT only when advancing the \
@@ -172,11 +175,9 @@ eat/drink history since this run began. Use them to verify that farming and brew
 are out-producing consumption; current stock totals alone do not prove a sustainable loop.
 
 Dwarves and jobs run in parallel. An active specialist job occupies its assigned dwarf; an
-unassigned queued job occupies nobody. Neither prevents the overseer from issuing a different legal
-command. When citizens are idle, advance independent survival, shelter, or production branches
-instead of serially waiting on one workshop queue. Any legal action with positive advance_ticks also
-lets existing jobs progress. Do not add more copies of a job merely because its existing backlog has
-not finished.
+unassigned queued job occupies nobody. Any legal action with positive advance_ticks lets all existing
+jobs progress. Adding another copy creates a distinct job; it does not make an existing job finish or
+verify that the earlier command worked.
 
 The observation's AGENT PLAN CONTROL lines are a policy-neutral review checkpoint. They state the
 exact previous step and factual verdict, whether a plan review is due, its request_id, and the prior
@@ -186,12 +187,18 @@ AGENT PLAN CONTROL previous-attempt line for last_action_review and current stat
 plan. Submit only the `E#` ids shown in REVIEW EVIDENCE CHOICES; do not submit excerpts or use
 model-authored action history or Last Action command/detail as evidence.
 
+Review the previous command against its declared expected simulation result. Command acceptance is
+not action success. A concurrent wall, workshop, stock, or score change during the same tick window
+does not prove an ORDER, FARM, BUILD, or other command caused its intended effect. For ORDER, use
+the action-specific lifecycle plus the matching produced-goods or drink-production counter. A
+pending job is partial, and a created job that vanished without matching output is no progress.
+
 At every due plan review, compare all of the factual branches rather than defending the current
 queue: resource production versus consumption, enclosed and functional rooms, built production
 facilities, idle citizens and their labors, queued/active/suspended jobs, and recent rejected or
-no-progress targets. Choose the next objective yourself from that comparison. If one coordinate or
-footprint remains blocked through two no-progress reviews and no observed job can change it, abandon
-that footprint and choose a different valid site or objective; do not let one tile monopolize the run.
+no-progress targets. Record pending actions as pending, and classify a coordinate or footprint as
+stalled when two reviews show no progress and no observed job can change it. Choose the next
+objective and action yourself from those facts.
 
 With each action also submit:
 - "intent": one sentence on what this command does.

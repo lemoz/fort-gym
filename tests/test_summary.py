@@ -3,7 +3,134 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from fort_gym.bench.eval.summary import RunSummary, summarize
+from fort_gym.bench.eval.scoring import SCORE_VERSION
+
+
+def _write_trace(trace_path: Path, records: list[dict]) -> None:
+    with trace_path.open("w", encoding="utf-8") as handle:
+        for record in records:
+            record["score_version"] = SCORE_VERSION
+            if isinstance(record.get("metrics"), dict):
+                record["metrics"]["score_version"] = SCORE_VERSION
+            if isinstance(record.get("score"), dict):
+                record["score"]["version"] = SCORE_VERSION
+            for event in record.get("events", []) or []:
+                if isinstance(event, dict) and event.get("type") == "score":
+                    event.setdefault("data", {})["version"] = SCORE_VERSION
+            handle.write(json.dumps(record) + "\n")
+
+
+@pytest.mark.parametrize(
+    ("versions", "error"),
+    [
+        ([None], "unversioned score rows"),
+        ([SCORE_VERSION - 1], "does not match this evaluator"),
+        ([SCORE_VERSION, SCORE_VERSION - 1], "mixes score versions"),
+    ],
+)
+def test_summarize_rejects_cross_version_trace(tmp_path, versions, error) -> None:
+    trace_path = Path(tmp_path) / "trace.jsonl"
+    records = []
+    for step, version in enumerate(versions):
+        record = {
+            "run_id": "version-boundary",
+            "step": step,
+            "metrics": {},
+            "events": [],
+        }
+        if version is not None:
+            record["score_version"] = version
+            record["metrics"]["score_version"] = version
+        records.append(record)
+    trace_path.write_text(
+        "".join(json.dumps(record) + "\n" for record in records),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match=error):
+        summarize(trace_path)
+
+    assert not trace_path.with_name("summary.json").exists()
+
+
+def test_summarize_rejects_conflicting_version_surfaces(tmp_path) -> None:
+    trace_path = Path(tmp_path) / "trace.jsonl"
+    trace_path.write_text(
+        json.dumps(
+            {
+                "run_id": "conflicting-version",
+                "step": 0,
+                "score_version": SCORE_VERSION,
+                "metrics": {"score_version": SCORE_VERSION - 1},
+                "events": [],
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="conflicting score versions"):
+        summarize(trace_path)
+
+
+def test_summarize_rejects_fractional_version(tmp_path) -> None:
+    trace_path = Path(tmp_path) / "trace.jsonl"
+    trace_path.write_text(
+        json.dumps(
+            {
+                "run_id": "fractional-version",
+                "step": 0,
+                "score_version": float(SCORE_VERSION) + 0.9,
+                "metrics": {"score_version": float(SCORE_VERSION) + 0.9},
+                "events": [],
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="positive integers"):
+        summarize(trace_path)
+
+
+def test_summarize_rejects_empty_trace(tmp_path) -> None:
+    trace_path = Path(tmp_path) / "trace.jsonl"
+    trace_path.write_text("", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="no valid records"):
+        summarize(trace_path)
+
+
+@pytest.mark.parametrize(
+    ("surface", "value", "expected"),
+    [
+        ("metrics", None, "invalid metrics surface"),
+        ("metrics", [], "invalid metrics surface"),
+        ("score", None, "invalid score surface"),
+        ("score", 1.0, "invalid score surface"),
+        ("events", {}, "invalid events surface"),
+    ],
+)
+def test_summarize_rejects_malformed_present_surfaces(
+    tmp_path,
+    surface,
+    value,
+    expected,
+) -> None:
+    trace_path = Path(tmp_path) / "trace.jsonl"
+    record = {
+        "run_id": "malformed-surface",
+        "step": 0,
+        "score_version": SCORE_VERSION,
+    }
+    record[surface] = value
+    trace_path.write_text(json.dumps(record) + "\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match=expected):
+        summarize(trace_path)
 
 
 def test_summarize_creates_summary(tmp_path) -> None:
@@ -34,9 +161,7 @@ def test_summarize_creates_summary(tmp_path) -> None:
             ],
         },
     ]
-    with trace_path.open("w", encoding="utf-8") as handle:
-        for record in records:
-            handle.write(json.dumps(record) + "\n")
+    _write_trace(trace_path, records)
 
     summary = summarize(trace_path)
     assert isinstance(summary, RunSummary)
@@ -86,9 +211,7 @@ def test_summarize_prefers_run_elapsed_ticks(tmp_path) -> None:
             "events": [],
         },
     ]
-    with trace_path.open("w", encoding="utf-8") as handle:
-        for record in records:
-            handle.write(json.dumps(record) + "\n")
+    _write_trace(trace_path, records)
 
     summary = summarize(trace_path)
 
@@ -124,9 +247,7 @@ def test_summarize_blocks_assisted_duration_score(tmp_path) -> None:
             "events": [],
         }
     ]
-    with trace_path.open("w", encoding="utf-8") as handle:
-        for record in records:
-            handle.write(json.dumps(record) + "\n")
+    _write_trace(trace_path, records)
 
     summary = summarize(trace_path)
 
@@ -192,9 +313,7 @@ def test_summarize_unblocks_duration_after_real_keystroke_progress(tmp_path) -> 
             "events": [],
         },
     ]
-    with trace_path.open("w", encoding="utf-8") as handle:
-        for record in records:
-            handle.write(json.dumps(record) + "\n")
+    _write_trace(trace_path, records)
 
     summary = summarize(trace_path)
 
@@ -315,9 +434,7 @@ def test_summarize_tracks_work_progress(tmp_path) -> None:
             "events": [],
         },
     ]
-    with trace_path.open("w", encoding="utf-8") as handle:
-        for record in records:
-            handle.write(json.dumps(record) + "\n")
+    _write_trace(trace_path, records)
 
     summary = summarize(trace_path)
 

@@ -111,8 +111,17 @@ def _to_float(value: Any, default: float = 0.0) -> float:
         return default
 
 
+def _strict_score_version(value: Any, *, step: Any, surface: str) -> int:
+    if type(value) is not int or value <= 0:
+        raise ValueError(
+            f"trace row {step!r} has invalid {surface}; "
+            "score versions must be positive integers"
+        )
+    return value
+
+
 def summarize(trace_path: Path) -> RunSummary:
-    """Produce a run summary from a trace JSONL file."""
+    """Produce a run summary without crossing scoring-era boundaries."""
 
     if not trace_path.exists():
         raise FileNotFoundError(trace_path)
@@ -184,6 +193,7 @@ def summarize(trace_path: Path) -> RunSummary:
     fort_functional_rooms = 0
     fort_constructions = 0
     trace_records: List[Dict[str, Any]] = []
+    trace_score_versions: set[int] = set()
 
     with trace_path.open("r", encoding="utf-8") as handle:
         for line in handle:
@@ -195,12 +205,52 @@ def summarize(trace_path: Path) -> RunSummary:
                 continue
             trace_records.append(record)
 
-            run_id = record.get("run_id", run_id)
             step = record.get("step")
+            if "metrics" in record and not isinstance(record.get("metrics"), dict):
+                raise ValueError(f"trace row {step!r} has invalid metrics surface; expected object")
+            if "score" in record and not isinstance(record.get("score"), dict):
+                raise ValueError(f"trace row {step!r} has invalid score surface; expected object")
+            if "events" in record and not isinstance(record.get("events"), list):
+                raise ValueError(f"trace row {step!r} has invalid events surface; expected list")
+            metrics_snapshot = record.get("metrics") or {}
+            score_payload = record.get("score") or {}
+            row_versions: set[int] = set()
+            missing_surfaces = []
+
+            marker_surfaces = [("score_version", record, "score_version")]
+            if isinstance(record.get("metrics"), dict):
+                marker_surfaces.append(("metrics.score_version", metrics_snapshot, "score_version"))
+            if isinstance(record.get("score"), dict):
+                marker_surfaces.append(("score.version", score_payload, "version"))
+            for index, event in enumerate(record.get("events", []) or []):
+                if not isinstance(event, dict) or event.get("type") != "score":
+                    continue
+                data = event.get("data") if isinstance(event.get("data"), dict) else {}
+                marker_surfaces.append((f"events[{index}].data.version", data, "version"))
+
+            for surface, container, key in marker_surfaces:
+                if key not in container:
+                    missing_surfaces.append(surface)
+                    continue
+                row_versions.add(
+                    _strict_score_version(container[key], step=step, surface=surface)
+                )
+            if missing_surfaces:
+                raise ValueError(
+                    "trace contains unversioned score rows; use its original summary artifact "
+                    f"instead (step {step!r}, missing {', '.join(missing_surfaces)})"
+                )
+            if len(row_versions) != 1:
+                raise ValueError(
+                    f"trace row {step!r} has conflicting score versions: "
+                    f"{sorted(row_versions)}"
+                )
+            trace_score_versions.update(row_versions)
+
+            run_id = record.get("run_id", run_id)
             if isinstance(step, int) and step > steps_seen:
                 steps_seen = step
 
-            metrics_snapshot = record.get("metrics") or {}
             if "score_duration_blocked" in metrics_snapshot:
                 score_duration_blocked = metrics_snapshot.get("score_duration_blocked") is True
             time_tick = metrics_snapshot.get("time") or metrics_snapshot.get("time_tick")
@@ -458,6 +508,17 @@ def summarize(trace_path: Path) -> RunSummary:
                         milestones.append(item)
                     else:
                         milestones.append({"k": str(item), "ts": data.get("step")})
+
+    if not trace_records:
+        raise ValueError("trace contains no valid records and cannot be score-versioned")
+    if len(trace_score_versions) > 1:
+        raise ValueError(f"trace mixes score versions: {sorted(trace_score_versions)}")
+    if trace_score_versions and trace_score_versions != {SCORE_VERSION}:
+        raise ValueError(
+            "trace score version does not match this evaluator: "
+            f"trace={next(iter(trace_score_versions))}, evaluator={SCORE_VERSION}; "
+            "use the original summary artifact"
+        )
 
     if score_duration_blocked:
         duration = 0

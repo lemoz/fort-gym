@@ -402,7 +402,7 @@ above, the same discipline held:
   *observation's factual content* are widened, and only with prior approval. When
   a correction raised the G4 bar (plan-agnostic room detection), the bar went up,
   not down — no run to date passed it more easily.
-- **Scoring is version-stamped.** `score_version` 1 → 2 → 3 → 4 are hard boundaries;
+- **Scoring is version-stamped.** `score_version` 1 → 2 → 3 → 4 → 5 are hard boundaries;
   runs are never compared across them, and every boundary carries a corrections-
   log entry and a calibration table.
 - **Failures are reported at equal prominence with passes** — same fields, same
@@ -739,7 +739,8 @@ No planner, room template, coordinate, action, or score credit is added.
   contain policy-bearing gameplay rows; attempts 10, 11, 17, and 18 are policy
   diagnostics. Attempts 17 and 18 were manually stopped after their loops were
   decisive.
-  Score-v4 is active after the frozen-liquid correction, while the
+  Score-v5 is active after the action-effect truth correction; score-v4 remains
+  the frozen-liquid measurement era. The
   chair-factory calibration gap (§2.4) remains part of score-v3's historical
   record.
   Attempt 1 demonstrated why the scalar is telemetry rather than the verdict:

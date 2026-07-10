@@ -59,6 +59,16 @@ class CountingInteractAgent(Agent):
         }
 
 
+class OneOrderAgent(Agent):
+    def decide(self, obs_text: str, obs_json: Dict[str, Any]) -> Dict[str, Any]:
+        return {
+            "type": "ORDER",
+            "params": {"job": "bed", "quantity": 1},
+            "intent": "queue one bed",
+            "advance_ticks": 10,
+        }
+
+
 class RaisingDecisionAgent(Agent):
     def decide(self, obs_text: str, obs_json: Dict[str, Any]) -> Dict[str, Any]:
         raise RuntimeError("review contract exhausted")
@@ -289,6 +299,7 @@ def _run_governed_interact_fixture(
     screen_text: str = "dialog screen",
     screen_capture_fails_after: bool = False,
     prepare_target_callback: Any | None = None,
+    job_metrics_callback: Any | None = None,
 ) -> tuple[Agent, RunRegistry, str]:
     monkeypatch.setenv("ARTIFACTS_DIR", str(tmp_path))
     monkeypatch.setenv("DFHACK_ENABLED", "1")
@@ -367,7 +378,7 @@ def _run_governed_interact_fixture(
     )
     monkeypatch.setattr(
         "fort_gym.bench.run.runner.read_job_metrics",
-        lambda rect: {"ok": False},
+        job_metrics_callback or (lambda rect: {"ok": False}),
     )
     monkeypatch.setattr(
         "fort_gym.bench.run.runner.read_fort_metrics",
@@ -427,6 +438,51 @@ def _run_governed_interact_fixture(
         preserve_save=True,
     )
     return agent, registry, run_id
+
+
+def test_vanished_order_jobs_remain_ineligible_in_complete_trace(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(
+        "fort_gym.bench.env.executor.safe_queue_manager_order",
+        lambda job, qty: {"ok": True, "created_job_ids": [501], "item": job, "qty": qty},
+    )
+
+    def empty_jobs(_rect=None):
+        return {
+            "ok": True,
+            "jobs": {
+                "total": 0,
+                "active_ids": [],
+                "active_ids_truncated": False,
+                "order_jobs": [],
+                "order_jobs_truncated": False,
+            },
+            "goods": {"bed": 0},
+            "workshops": [],
+        }
+
+    _, _, run_id = _run_governed_interact_fixture(
+        tmp_path,
+        monkeypatch,
+        screen_changes=False,
+        max_steps=1,
+        agent_override=OneOrderAgent(),
+        job_metrics_callback=empty_jobs,
+    )
+
+    row = _trace_rows(tmp_path, run_id)[0]
+    assert row["score_version"] == 5
+    assert row["score"]["version"] == 5
+    assert row["metrics"]["score_version"] == 5
+    score_event = next(event for event in row["events"] if event["type"] == "score")
+    assert score_event["data"]["version"] == 5
+    assert row["execute"]["accepted"] is True
+    assert row["execute"]["gameplay_progress_eligible"] is False
+    assert row["metrics"]["gameplay_progress_eligible"] is False
+    assert row["metrics"]["governed_dfhack_progress"] is False
+    assert row["gameplay_proof"]["ok"] is False
+    assert row["gameplay_proof"]["action_effect"]["status"] == "no_progress"
+
+    get_settings.cache_clear()  # type: ignore[attr-defined]
 
 
 def test_governed_workshop_candidate_revalidates_after_wait(

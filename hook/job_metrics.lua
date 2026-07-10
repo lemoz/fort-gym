@@ -7,9 +7,20 @@ local json = require('json')
 local args = {...}
 
 local MAX_JOB_ENTRIES = 12
+local MAX_TRACKED_JOB_IDS = 256
 local MAX_WORKSHOPS = 10
+local MAX_WORKSHOP_JOB_ENTRIES = 12
 local MAX_CITIZEN_ENTRIES = 20
 local MAX_RECT_W, MAX_RECT_H = 30, 30
+
+local ORDER_JOB_ITEMS = {
+  ConstructBed = 'bed',
+  ConstructDoor = 'door',
+  ConstructTable = 'table',
+  ConstructThrone = 'chair',
+  MakeBarrel = 'barrel',
+  ConstructBin = 'bin',
+}
 
 -- Friendly labor name -> df.unit_labor enum name. Mirrors LABOR_WHITELIST in
 -- hook/set_labor.lua and dfhack_backend.py so the per-citizen observation lists
@@ -114,8 +125,14 @@ local out = {
     construct_building_walk_group_disconnected = 0,
     construct_building_walk_group_unknown = 0,
     workshop_task = 0,
+    plant_seeds = 0,
+    brew_reaction = 0,
     suspended = 0,
     entries = {},
+    active_ids = {},
+    active_ids_truncated = false,
+    order_jobs = {},
+    order_jobs_truncated = false,
   },
   workshops = {},
 }
@@ -234,11 +251,33 @@ while link do
   local job = link.item
   if job then
     out.jobs.total = out.jobs.total + 1
+    if #out.jobs.active_ids < MAX_TRACKED_JOB_IDS then
+      table.insert(out.jobs.active_ids, job.id)
+    end
     local name = job_type_name(job.job_type)
     if name == 'Dig' or name == 'DigChannel' then
       out.jobs.dig = out.jobs.dig + 1
     elseif name == 'ConstructBuilding' then
       out.jobs.construct_building = out.jobs.construct_building + 1
+    end
+    if name == 'PlantSeeds' then out.jobs.plant_seeds = out.jobs.plant_seeds + 1 end
+    local reaction_name = false
+    pcall(function()
+      if job.reaction_name and job.reaction_name ~= '' then
+        reaction_name = sanitize(job.reaction_name)
+      end
+    end)
+    if reaction_name == 'BREW_DRINK_FROM_PLANT' then
+      out.jobs.brew_reaction = out.jobs.brew_reaction + 1
+    end
+    local order_item = ORDER_JOB_ITEMS[name]
+    if reaction_name == 'BREW_DRINK_FROM_PLANT' then order_item = 'brew' end
+    if order_item then
+      if #out.jobs.order_jobs < MAX_TRACKED_JOB_IDS then
+        table.insert(out.jobs.order_jobs, { id = job.id, item = order_item })
+      else
+        out.jobs.order_jobs_truncated = true
+      end
     end
     local walk_group_connectivity, assigned_items = nil, nil
     if name == 'ConstructBuilding' then
@@ -250,7 +289,9 @@ while link do
     if suspended then out.jobs.suspended = out.jobs.suspended + 1 end
     if #out.jobs.entries < MAX_JOB_ENTRIES then
       local entry = {
+        id = job.id,
         type = name,
+        reaction = reaction_name,
         pos = { job.pos.x, job.pos.y, job.pos.z },
         suspended = suspended,
         has_worker = job_has_worker(job),
@@ -279,6 +320,7 @@ while link do
   end
   link = link.next
 end
+out.jobs.active_ids_truncated = out.jobs.total > #out.jobs.active_ids
 
 -- finished goods and logs currently in play (read-only counts)
 local GOODS_ITEM_TYPES = { 'BED', 'DOOR', 'TABLE', 'CHAIR', 'BARREL', 'BIN', 'WOOD', 'DRINK' }
@@ -293,6 +335,55 @@ do
   out.goods = {}
   for _, key in ipairs(GOODS_ITEM_TYPES) do
     out.goods[string.lower(key)] = counts[key] or 0
+  end
+end
+
+-- Raw production inputs. These are inventory facts, not a prediction that a
+-- queued job will succeed: the simulation still decides item assignment.
+out.production_inputs = {
+  brewable_plant_stacks = 0,
+  brewable_plant_units = 0,
+  brewable_plant_stacks_in_jobs = 0,
+  empty_barrels = 0,
+  empty_barrels_in_jobs = 0,
+  total_barrels = 0,
+}
+do
+  for _, item in ipairs(df.global.world.items.other.IN_PLAY) do
+    local ok_type, item_type = pcall(function() return df.item_type[item:getType()] end)
+    if ok_type and item_type == 'PLANT' then
+      local ok_brewable, brewable = pcall(function()
+        local mat = dfhack.matinfo.decode(item)
+        return mat and mat.material and mat.material.flags.ALCOHOL_PLANT and true or false
+      end)
+      if ok_brewable and brewable then
+        local in_job = item.flags and item.flags.in_job and true or false
+        if in_job then
+          out.production_inputs.brewable_plant_stacks_in_jobs =
+            out.production_inputs.brewable_plant_stacks_in_jobs + 1
+        else
+          out.production_inputs.brewable_plant_stacks =
+            out.production_inputs.brewable_plant_stacks + 1
+          local stack_size = 1
+          pcall(function() stack_size = math.max(1, tonumber(item.stack_size) or 1) end)
+          out.production_inputs.brewable_plant_units =
+            out.production_inputs.brewable_plant_units + stack_size
+        end
+      end
+    elseif ok_type and item_type == 'BARREL' then
+      out.production_inputs.total_barrels = out.production_inputs.total_barrels + 1
+      local ok_contents, contents = pcall(function()
+        return dfhack.items.getContainedItems(item)
+      end)
+      if ok_contents and contents and #contents == 0 then
+        if item.flags and item.flags.in_job then
+          out.production_inputs.empty_barrels_in_jobs =
+            out.production_inputs.empty_barrels_in_jobs + 1
+        else
+          out.production_inputs.empty_barrels = out.production_inputs.empty_barrels + 1
+        end
+      end
+    end
   end
 end
 
@@ -336,6 +427,33 @@ local function farm_plot_detail(bld)
       crops[s + 1] = plant_token(bld.plant_id[s]) or false
     end
   end)
+  local tile_context = {
+    total = 0,
+    readable = 0,
+    outside = 0,
+    light = 0,
+    subterranean = 0,
+    water_table = 0,
+  }
+  for x = bld.x1, bld.x2 do
+    for y = bld.y1, bld.y2 do
+      tile_context.total = tile_context.total + 1
+      pcall(function()
+        local block = dfhack.maps.getTileBlock(x, y, bld.z)
+        if not block then return end
+        local designation = block.designation[x % 16][y % 16]
+        tile_context.readable = tile_context.readable + 1
+        if designation.outside then tile_context.outside = tile_context.outside + 1 end
+        if designation.light then tile_context.light = tile_context.light + 1 end
+        if designation.subterranean then
+          tile_context.subterranean = tile_context.subterranean + 1
+        end
+        if designation.water_table then
+          tile_context.water_table = tile_context.water_table + 1
+        end
+      end)
+    end
+  end
   return {
     id = bld.id,
     rect = { bld.x1, bld.y1, bld.x2, bld.y2, bld.z },
@@ -343,6 +461,7 @@ local function farm_plot_detail(bld)
     max_stage = max_stage,
     built = stage >= max_stage,
     crops = crops,
+    tile_context = tile_context,
   }
 end
 
@@ -392,6 +511,23 @@ for _, bld in ipairs(df.global.world.buildings.all) do
     end)
     local queued = 0
     pcall(function() queued = #bld.jobs end)
+    local queued_job_details = {}
+    pcall(function()
+      for _, job in ipairs(bld.jobs) do
+        if #queued_job_details >= MAX_WORKSHOP_JOB_ENTRIES then break end
+        local reaction = false
+        if job.reaction_name and job.reaction_name ~= '' then
+          reaction = sanitize(job.reaction_name)
+        end
+        table.insert(queued_job_details, {
+          id = job.id,
+          type = job_type_name(job.job_type),
+          reaction = reaction,
+          suspended = job.flags.suspend and true or false,
+          has_worker = job_has_worker(job),
+        })
+      end
+    end)
     out.jobs.workshop_task = out.jobs.workshop_task + queued
     table.insert(out.workshops, {
       id = bld.id,
@@ -401,6 +537,7 @@ for _, bld in ipairs(df.global.world.buildings.all) do
       stage = stage,
       max_stage = max_stage,
       queued_jobs = queued,
+      queued_job_details = queued_job_details,
     })
   end
 end

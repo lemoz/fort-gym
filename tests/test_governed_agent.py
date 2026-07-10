@@ -6,6 +6,7 @@ from pathlib import Path
 from fort_gym.bench.agent.governed import DFHackGovernedScriptedAgent
 from fort_gym.bench.config import get_settings
 from fort_gym.bench.env.mock_env import MockEnvironment
+from fort_gym.bench.eval.scoring import SCORE_VERSION
 from fort_gym.bench.eval.summary import summarize
 from fort_gym.bench.run.runner import run_once
 
@@ -171,6 +172,7 @@ def test_summary_rubric_flags_repetitive_score_only_run(tmp_path) -> None:
             {
                 "run_id": "repetitive",
                 "step": step,
+                "score_version": SCORE_VERSION,
                 "action": {
                     "type": "ORDER",
                     "params": {"job": "bed", "quantity": 1},
@@ -182,6 +184,7 @@ def test_summary_rubric_flags_repetitive_score_only_run(tmp_path) -> None:
                     "result": {"ok": True},
                 },
                 "metrics": {
+                    "score_version": SCORE_VERSION,
                     "time": step * 100,
                     "run_elapsed_ticks": step * 100,
                     "pop": 7,

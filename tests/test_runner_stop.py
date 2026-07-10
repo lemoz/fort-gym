@@ -63,6 +63,7 @@ def test_run_once_honors_stop_before_agent_decide(tmp_path, monkeypatch) -> None
         {
             "run_id": run_id,
             "step": 0,
+            "score_version": 5,
             "stopped": {"reason": "stop_requested"},
             "events": [
                 {
@@ -111,6 +112,7 @@ def test_run_once_honors_stop_after_agent_decide_before_execute(tmp_path, monkey
     rows = [json.loads(line) for line in trace_path.read_text().splitlines()]
 
     assert len(rows) == 1
+    assert rows[0]["score_version"] == 5
     assert rows[0]["raw_action"]["intent"] == "this action must not execute after stop"
     assert rows[0]["stopped"]["reason"] == "stop_requested_after_agent_decide"
     assert "execute" not in rows[0]

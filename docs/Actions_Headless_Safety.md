@@ -23,12 +23,19 @@ fort-gym executes DFHack actions exclusively through curated Lua helpers stored 
 - `hook/view_state.lua` reads the live DF viewport and cursor without mutating anything; `hook/restore_view_state.lua` writes them back. The runner wraps governed target discovery with this pair so helper probes preserve the live camera/cursor.
 - `hook/prepare_keystroke_target.lua` searches for legal work/material/workshop targets near citizens (bounded search radii, 10s timeout). Read-only discovery; used by keystroke mode and (view-state-preserved) by governed mode.
 - `hook/job_metrics.lua` reports crew/jobs, completed-stage furniture, farms,
-  workshops, and raw dead-citizen facts without mutating game state. Pending
+  workshops, and raw dead-citizen facts without mutating game state. It also
+  reports bounded active/queued job IDs and reactions with explicit truncation
+  flags, planting/brewing job
+  counts, raw brewable-plant and empty-barrel inventory, and each farm plot's
+  raw outside/light/subterranean/water-table tile counts. Pending
   construction jobs include every assigned item's resolved position and current
   walk-group connectivity (`connected`, `disconnected`, or `unknown`). This is
   an engine connectivity snapshot, not a claim that a dwarf has accepted or can
   complete the haul; `unknown` is reported while path data is rebuilding or
   cannot be read.
+- `hook/fort_metrics.lua` reports each detected space's factual bounds,
+  furniture/workshop contents, and up to 16 currently open member tiles. These
+  are read-only room-membership facts, not a room plan or placement target.
 - `hook/g7_evidence.lua` owns a run-scoped DFHack event/eat-history ledger for
   cumulative food/drink production and consumption plus immediate death facts.
 
@@ -58,6 +65,11 @@ fort-gym executes DFHack actions exclusively through curated Lua helpers stored 
   explicit zero ticks, a paused allowlisted viewscreen, and an enabled governed
   capability; it never earns progress credit. This path treats DFHack as a
   legal command transport, not as direct state mutation.
+- Accepted `ORDER` and workshop-placement commands earn no utility by
+  themselves. `carpenter_workshops_usable` requires a completed build stage;
+  order IDs are acceptance evidence until a surviving job or causally
+  attributable matching output is observed. Ambiguous older-job output and
+  incomplete lifecycle reads fail closed.
 - `INTERACT finish_topic_meeting` is additionally restricted to
   `viewscreen_topicmeetingst` and sends exactly one `OPTION1`, the live-verified
   semantic key only when the exact visible

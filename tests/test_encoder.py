@@ -2035,6 +2035,14 @@ def test_encoder_renders_farm_crops_seeds_and_season() -> None:
                         "max_stage": 0,
                         "built": True,
                         "crops": [False, "RADISH", False, False],
+                        "tile_context": {
+                            "total": 4,
+                            "readable": 4,
+                            "outside": 4,
+                            "light": 4,
+                            "subterranean": 0,
+                            "water_table": 0,
+                        },
                     }
                 ],
                 "seeds": [
@@ -2052,6 +2060,14 @@ def test_encoder_renders_farm_crops_seeds_and_season() -> None:
                     },
                 ],
                 "current_season": "summer",
+                "production_inputs": {
+                    "brewable_plant_stacks": 0,
+                    "brewable_plant_units": 0,
+                    "brewable_plant_stacks_in_jobs": 0,
+                    "empty_barrels": 9,
+                    "empty_barrels_in_jobs": 0,
+                    "total_barrels": 15,
+                },
             },
         },
         screen_text="main map",
@@ -2059,13 +2075,19 @@ def test_encoder_renders_farm_crops_seeds_and_season() -> None:
 
     assert (
         "Farm plot #34 (77,91..78,92 z161, built) crops "
-        "spring=- summer=RADISH autumn=- winter=-" in text
+        "spring=- summer=RADISH autumn=- winter=- raw_tile_context "
+        "total=4,readable=4,outside=4,light=4,subterranean=0,water_table=0" in text
     )
     assert (
         "Seeds on hand: RADISH x1 (surface, all), "
         "MUSHROOM_HELMET_PLUMP x11 (subterranean, all)" in text
     )
     assert "Season: summer" in text
+    assert (
+        "Production inputs (raw inventory): brewable_plant_stacks=0, "
+        "brewable_plant_units=0, brewable_plant_stacks_in_jobs=0, "
+        "empty_barrels=9, empty_barrels_in_jobs=0, total_barrels=15" in text
+    )
 
 
 def test_encoder_renders_partial_season_seed_list() -> None:
@@ -2181,6 +2203,41 @@ def test_encoder_surfaces_built_still_workshop_with_brew_hint() -> None:
         "(stage 3/3), queued_jobs=0" in text
     )
     assert "ORDER job=brew can queue brewing jobs at any built Still." in text
+
+
+def test_encoder_surfaces_workshop_job_ids_and_reactions() -> None:
+    text, _ = encode_observation(
+        {
+            "crew": {
+                "ok": True,
+                "workshops": [
+                    {
+                        "id": 2,
+                        "subtype": "Still",
+                        "pos": [88, 96, 177],
+                        "built": True,
+                        "stage": 3,
+                        "max_stage": 3,
+                        "queued_jobs": 1,
+                        "queued_job_details": [
+                            {
+                                "id": 223,
+                                "type": "CustomReaction",
+                                "reaction": "BREW_DRINK_FROM_PLANT",
+                                "has_worker": False,
+                                "suspended": False,
+                            }
+                        ],
+                    }
+                ],
+            }
+        },
+        screen_text="main map",
+    )
+
+    assert (
+        "queue=#223:CustomReaction/BREW_DRINK_FROM_PLANT[unassigned]" in text
+    )
 
 
 def test_encoder_echoes_still_workshop_of_kind_result_counts() -> None:
@@ -2400,6 +2457,10 @@ def test_encoder_surfaces_full_fort_block() -> None:
                     "tiles": 6,
                     "kind": "production",
                     "contents": {"bed": 0, "table": 0, "chair": 0, "door": 0, "workshop": 1},
+                    "bounds": [88, 96, 90, 97, 177],
+                    "open_tiles": [[88, 96, 177], [89, 96, 177]],
+                    "open_tile_count": 2,
+                    "open_tiles_truncated": False,
                 }
             ],
         },
@@ -2411,7 +2472,10 @@ def test_encoder_surfaces_full_fort_block() -> None:
         "Fort structure (plan-agnostic): enclosed_spaces=1, functional_rooms=1, "
         "constructions=26" in text
     )
-    assert "Rooms: production(6 tiles, z177)" in text
+    assert (
+        "Rooms: production(6 tiles; z177; bounds=(88,96)..(90,97); "
+        "contents=workshop=1; open=(88,96,177),(89,96,177))" in text
+    )
     assert "No enclosed rooms yet" not in text
 
 
@@ -2910,6 +2974,35 @@ def test_governed_encoder_requests_periodic_review_after_five_actions() -> None:
     assert control["actions_since_review"] == 5
 
 
+def test_non_due_continue_reviews_do_not_reset_periodic_cadence() -> None:
+    initial_review = {
+        "request_id": "0:initial",
+        "decision": "establish",
+        "objective": "Build durable shelter.",
+    }
+    history = [_governed_history_entry(0, plan_review=initial_review)]
+    for step in range(1, 6):
+        history.append(
+            _governed_history_entry(
+                step,
+                plan_review={
+                    "request_id": f"{step}:none",
+                    "decision": "continue",
+                    "objective": "Build durable shelter.",
+                },
+            )
+        )
+
+    _, state = encode_observation(
+        {}, screen_text="main map", action_history=history, governed=True
+    )
+
+    control = state["agent_plan_control"]
+    assert control["review_due"] is True
+    assert control["request_id"] == "6:periodic_5"
+    assert control["actions_since_review"] == 5
+
+
 def test_governed_encoder_requests_review_for_stall_and_partial_mutation() -> None:
     initial_review = {
         "request_id": "0:initial",
@@ -2952,6 +3045,36 @@ def test_governed_encoder_requests_review_for_stall_and_partial_mutation() -> No
         {}, screen_text="main map", action_history=partial, governed=True
     )
     assert "partial_mutation" in partial_state["agent_plan_control"]["reasons"]
+
+    pending = [
+        _governed_history_entry(0, plan_review=initial_review),
+        _governed_history_entry(1, outcome="action_pending"),
+    ]
+    _, pending_state = encode_observation(
+        {}, screen_text="main map", action_history=pending, governed=True
+    )
+    assert pending_state["agent_plan_control"]["previous_verdict"] == "partial"
+    assert "action_pending" in pending_state["agent_plan_control"]["reasons"]
+
+    unattributed = [
+        _governed_history_entry(0, plan_review=initial_review),
+        _governed_history_entry(1, outcome="action_output_unattributed"),
+        _governed_history_entry(2, outcome="action_output_unattributed"),
+    ]
+    _, unattributed_state = encode_observation(
+        {}, screen_text="main map", action_history=unattributed, governed=True
+    )
+    assert unattributed_state["agent_plan_control"]["previous_verdict"] == "no_progress"
+    assert "same_objective_stalled_2" in unattributed_state["agent_plan_control"]["reasons"]
+
+    unobserved = [
+        _governed_history_entry(0, plan_review=initial_review),
+        _governed_history_entry(1, outcome="action_effect_unobserved"),
+    ]
+    _, unobserved_state = encode_observation(
+        {}, screen_text="main map", action_history=unobserved, governed=True
+    )
+    assert unobserved_state["agent_plan_control"]["previous_verdict"] == "unknown"
 
 
 def test_governed_action_history_renders_agent_plan_metadata() -> None:

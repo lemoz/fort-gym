@@ -10,6 +10,7 @@ local json = require('json')
 
 local MAX_COMPONENT_TILES = 400
 local MAX_SPACES = 12
+local MAX_ROOM_OPEN_TILE_SAMPLES = 16
 local Z_NEIGHBORS = false -- single-z spaces for v1
 
 local attrs = df.tiletype.attrs
@@ -244,11 +245,31 @@ for _, bld in ipairs(buildings) do
               if contents.table > 0 and contents.chair > 0 then return 'dining' end
               return 'enclosed_space'
             end
+            local min_x, min_y, max_x, max_y = nil, nil, nil, nil
+            local open_tiles = {}
+            local open_tile_count = 0
+            for _, tile in ipairs(tiles) do
+              local tx, ty = tile[1], tile[2]
+              min_x = min_x and math.min(min_x, tx) or tx
+              min_y = min_y and math.min(min_y, ty) or ty
+              max_x = max_x and math.max(max_x, tx) or tx
+              max_y = max_y and math.max(max_y, ty) or ty
+              if not building_at(tx, ty, bld.z) then
+                open_tile_count = open_tile_count + 1
+                if #open_tiles < MAX_ROOM_OPEN_TILE_SAMPLES then
+                  table.insert(open_tiles, { tx, ty, bld.z })
+                end
+              end
+            end
             table.insert(spaces, {
               z = bld.z,
               tiles = #tiles,
               kind = classify(),
               contents = contents,
+              bounds = { min_x, min_y, max_x, max_y, bld.z },
+              open_tiles = open_tiles,
+              open_tile_count = open_tile_count,
+              open_tiles_truncated = open_tile_count > #open_tiles,
             })
           end
         end
