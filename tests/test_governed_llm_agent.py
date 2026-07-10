@@ -52,6 +52,17 @@ def _submit_action_response(payload: dict[str, Any]) -> Any:
     )
 
 
+def _text_action_response(payload: dict[str, Any]) -> Any:
+    return SimpleNamespace(
+        choices=[
+            SimpleNamespace(
+                message=SimpleNamespace(content=json.dumps(payload), tool_calls=None)
+            )
+        ],
+        usage=SimpleNamespace(prompt_tokens=10, completion_tokens=5, total_tokens=15),
+    )
+
+
 class _FakeCompletions:
     def __init__(self, responses: list[Any] | None = None, error: Exception | None = None) -> None:
         self.requests: list[dict[str, Any]] = []
@@ -78,7 +89,7 @@ def _agent(
     error: Exception | None = None,
     *,
     max_attempts: int = 1,
-    model_override: str | None = None,
+    model_override: str | None = "openai/gpt-5.5",
 ) -> DFHackGovernedLLMAgent:
     agent = DFHackGovernedLLMAgent(
         api_key="test-key",
@@ -497,10 +508,10 @@ def test_decide_returns_normalized_governed_action_and_writes_plan() -> None:
     assert "parallel_tool_calls" not in request
 
 
-def test_glm52_uses_provider_supported_auto_tool_choice() -> None:
+def test_glm52_uses_validated_json_transport() -> None:
     agent = _agent(
         [
-            _submit_action_response(
+            _text_action_response(
                 {
                     "type": "WAIT",
                     "params": {},
@@ -516,8 +527,36 @@ def test_glm52_uses_provider_supported_auto_tool_choice() -> None:
 
     assert action["type"] == "WAIT"
     request = agent._client.chat.completions.requests[0]
-    assert request["tool_choice"] == "auto"
-    assert request["parallel_tool_calls"] is False
+    assert request["response_format"] == {"type": "json_object"}
+    assert "tools" not in request
+    assert "tool_choice" not in request
+    assert "parallel_tool_calls" not in request
+    assert request["messages"][-1]["role"] == "user"
+    assert "Use JSON objects for last_action_review and plan_review" in request["messages"][-1][
+        "content"
+    ]
+
+
+def test_glm52_json_transport_preserves_review_correction_feedback() -> None:
+    control = _plan_control()
+    invalid = _reviewed_action_payload(control=control)
+    del invalid["plan_review"]["objective"]
+    valid = _reviewed_action_payload(control=control)
+    agent = _agent(
+        [_text_action_response(invalid), _text_action_response(valid)],
+        model_override="z-ai/glm-5.2",
+    )
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["type"] == "DIG"
+    second_request = agent._client.chat.completions.requests[1]
+    assert "plan_review.objective" in second_request["messages"][-2]["content"]
+    assert "Transport requirement" in second_request["messages"][-1]["content"]
+    assert second_request["response_format"] == {"type": "json_object"}
 
 
 def test_review_contract_establishes_initial_agent_owned_plan() -> None:

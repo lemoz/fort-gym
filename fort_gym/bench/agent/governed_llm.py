@@ -317,6 +317,16 @@ def _submit_action_tool() -> Dict[str, Any]:
     }
 
 
+_GLM52_JSON_TRANSPORT_INSTRUCTION = (
+    "Transport requirement: return exactly one JSON object for submit_action, without Markdown. "
+    "Include every required top-level field: type, params, intent, objective, plan_step, "
+    "expected_simulation_result, last_action_review, plan_review, and advance_ticks. "
+    "Use JSON objects for last_action_review and plan_review, and a JSON string for plan_step. "
+    "The governed validator rejects missing, mistyped, or factually inconsistent fields before "
+    "gameplay."
+)
+
+
 _LAST_ACTION_LINE = re.compile(r"^Last Action:.*$", re.MULTILINE)
 _MEMORY_UPDATE_POI = re.compile(
     r"^(?P<label>[^@]{1,80})@\s*(?P<x>-?\d+)\s*,\s*(?P<y>-?\d+)\s*,\s*(?P<z>-?\d+)\s*:?\s*(?P<note>.*)$"
@@ -440,16 +450,23 @@ class DFHackGovernedLLMAgent(Agent):
         self._last_call = time.monotonic()
 
     def _create_completion(self, messages: List[Dict[str, Any]]) -> Any:
-        request_kwargs: Dict[str, Any] = {
-            "tools": [_submit_action_tool()],
-            "tool_choice": {"type": "function", "function": {"name": "submit_action"}},
-        }
+        request_messages = messages
         if self._model == "z-ai/glm-5.2":
-            # Z.AI documents auto as its supported function-selection mode.
-            # On the exact G7 observation, forced selection returned a partial
-            # argument object while auto returned the complete schema.
-            request_kwargs["tool_choice"] = "auto"
-            request_kwargs["parallel_tool_calls"] = False
+            # Exact-state probes were 3/3 valid in JSON mode; both forced and
+            # auto tool transports repeatedly returned partial argument objects.
+            request_kwargs: Dict[str, Any] = {"response_format": {"type": "json_object"}}
+            request_messages = [
+                *messages,
+                {"role": "user", "content": _GLM52_JSON_TRANSPORT_INSTRUCTION},
+            ]
+        else:
+            request_kwargs = {
+                "tools": [_submit_action_tool()],
+                "tool_choice": {
+                    "type": "function",
+                    "function": {"name": "submit_action"},
+                },
+            }
         if self._settings.OPENROUTER_DISABLE_REASONING:
             request_kwargs["extra_body"] = {"reasoning": {"enabled": False, "exclude": True}}
         max_attempts = max(1, self._max_attempts)
@@ -459,7 +476,7 @@ class DFHackGovernedLLMAgent(Agent):
                 self._rate_limit()
                 return self._client_instance().chat.completions.create(
                     model=self._model,
-                    messages=messages,
+                    messages=request_messages,
                     temperature=self._settings.LLM_TEMP,
                     max_tokens=self._max_tokens or self._settings.LLM_MAX_TOKENS,
                     **request_kwargs,
@@ -480,7 +497,7 @@ class DFHackGovernedLLMAgent(Agent):
                         self._rate_limit()
                         return self._client_instance().chat.completions.create(
                             model=self._model,
-                            messages=messages,
+                            messages=request_messages,
                             temperature=self._settings.LLM_TEMP,
                             max_tokens=self._max_tokens or self._settings.LLM_MAX_TOKENS,
                             **request_kwargs,
@@ -491,6 +508,7 @@ class DFHackGovernedLLMAgent(Agent):
                 # tool_choice; degrade to auto once and retry immediately
                 if (
                     "tool choice" in str(exc).lower()
+                    and "tools" in request_kwargs
                     and request_kwargs.get("tool_choice") != "auto"
                 ):
                     request_kwargs["tool_choice"] = "auto"
@@ -505,7 +523,7 @@ class DFHackGovernedLLMAgent(Agent):
                         self._rate_limit()
                         return self._client_instance().chat.completions.create(
                             model=self._model,
-                            messages=messages,
+                            messages=request_messages,
                             temperature=self._settings.LLM_TEMP,
                             max_tokens=self._max_tokens or self._settings.LLM_MAX_TOKENS,
                             **request_kwargs,

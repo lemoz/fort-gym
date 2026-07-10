@@ -277,14 +277,13 @@ unknown occupied buildings render as `o`, premature FARM crop assignment fails
 closed, and the room contract distinguishes a hollow boundary from a filled
 wall rectangle. A deployed smoke and live completed-plot probe passed.
 
-Attempt 12
-([replay](https://fortgym.live/r/fu-pA7GAYbvq8nfe0-VdlH7LRdLLKI1Q))
-then failed before gameplay because GLM-5.2 returned partial arguments when the
-API forced a specific tool. An exact-state no-execution probe showed the
-provider's documented `tool_choice=auto` transport returns the complete action
-schema. That transport correction is the candidate for attempt 13; gameplay
-validation remains open. Full findings and gate predicates are recorded in
-`docs/WDSLL.md`.
+Attempts 12 and 13 both failed before gameplay while testing GLM-5.2 transport:
+forced and automatic tool calls returned missing, partial, or malformed
+arguments. The automatic path also failed 3/3 with a larger output budget. An
+exact-state no-execution comparison then found JSON-object transport passed the
+full governed validator 3/3 on the first call at the normal 512-token cap. That
+transport correction is the candidate for attempt 14; gameplay validation
+remains open. Full findings and gate predicates are recorded in `docs/WDSLL.md`.
 
 **Success definition and gate ladder: [docs/WDSLL.md](docs/WDSLL.md)** — every claim of "the agent plays" must pass a gate there on public, replayable evidence.
 

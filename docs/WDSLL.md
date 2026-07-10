@@ -1475,6 +1475,30 @@ gate. Each entry states what changed and the evidence that forced it.
   focused tests and 709 full-suite tests passed, 5 live-only skipped, with
   changed-file Ruff, compileall, and `git diff --check` passing.
 
+- **2026-07-10 — PR #82 deployed; G7 attempt 13: INFRASTRUCTURE-ABORTED FAIL
+  before gameplay; automatic tool calls remained unreliable.** PR #82 passed
+  CI, merged, and deployed as `d78d4f930e10a1726a97b4ea1413021c84f75200`.
+  Attempt 13 run `74ac5d02872548d8971a54159bf17446`
+  ([replay](https://fortgym.live/r/93gd9qD8DVw3VnmM77-3TWA-jwIshzI6))
+  used the same fresh seed, pinned GLM-5.2 model, and 450-step budget as attempt
+  12. It again failed at step 0 before an action or tick. The three calls used
+  20,203 prompt and 1,530 completion tokens: the first returned no tool call,
+  the second omitted required fields, and the third supplied empty DIG params
+  plus a string-encoded review object. Cleanup completed before failure was
+  published.
+
+  Increasing automatic-tool output headroom to 1,024 tokens did not fix the
+  transport: three independent exact-state no-execution decisions all failed
+  after the full correction budget. JSON-object transport was then tested with
+  an explicit field/type reminder and the unchanged governed validator. It
+  passed the exact failed observation 3/3, on the first call each time, at the
+  real 512-token cap (316, 316, and 355 completion tokens). The candidate for
+  attempt 14 therefore replaces GLM-5.2's tool-call transport with JSON-object
+  transport; all legal-action, evidence, review, parsing, and fail-closed checks
+  remain in force. Local verification is 59 focused tests and 710 full-suite
+  tests passed, 5 live-only skipped, with changed-file Ruff, compileall, and
+  `git diff --check` passing.
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,
