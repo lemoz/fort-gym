@@ -179,9 +179,10 @@ With each action also submit:
   evidence ids,
   and reason. When review_due=yes, establish the first plan, continue the exact prior
   objective, or revise to a genuinely different objective. When review_due=no, use not_due unless
-  you voluntarily continue/review or revise the objective. `reason` may be omitted only for
-  decision=not_due. plan_review.objective must equal objective; the top-level plan_step is the
-  next plan step.
+  you voluntarily continue/review or revise the objective. Any objective change, including when
+  review_due=no, requires decision=revise; otherwise copy the prior objective exactly without
+  paraphrasing it. `reason` may be omitted only for decision=not_due. plan_review.objective must
+  equal objective; the top-level plan_step is the next plan step.
 - "memory_update" (optional): a fact worth remembering, as "label @ x,y,z: note" if it has a \
 location.
 
@@ -858,7 +859,11 @@ class DFHackGovernedLLMAgent(Agent):
             if decision == "revise" and same_objective:
                 errors.append("decision=revise must change the prior objective")
             if not same_objective and decision != "revise":
-                errors.append("an objective change requires decision=revise")
+                errors.append(
+                    "an objective change requires decision=revise; either keep the submitted "
+                    "objective and use revise, or restore the exact prior objective and use "
+                    "not_due/continue"
+                )
             if same_objective and decision not in {"not_due", "continue"}:
                 errors.append(
                     "when review_due=no, unchanged objectives must use "
@@ -956,14 +961,50 @@ class DFHackGovernedLLMAgent(Agent):
                     if isinstance(payload, dict)
                     else "null"
                 )
+                submitted_objective = (
+                    str(payload.get("objective") or "")
+                    if isinstance(payload, dict)
+                    else None
+                )
+                prior_objective = str(review_control.get("prior_objective") or "")
+                objective_matches_prior = (
+                    self._normalized_objective(submitted_objective)
+                    == self._normalized_objective(prior_objective)
+                    if submitted_objective is not None
+                    else None
+                )
+                if submitted_objective is None:
+                    required_plan_decision = None
+                elif bool(review_control.get("review_due")):
+                    if not self._normalized_prior_objective(prior_objective):
+                        required_plan_decision = "establish"
+                    elif objective_matches_prior:
+                        required_plan_decision = "continue"
+                    else:
+                        required_plan_decision = "revise"
+                elif objective_matches_prior:
+                    required_plan_decision = "not_due or continue"
+                else:
+                    required_plan_decision = "revise"
                 expected_control = json.dumps(
                     {
                         "plan_request_id": review_control.get("request_id"),
                         "previous_step": review_control.get("previous_step"),
                         "previous_verdict": review_control.get("previous_verdict"),
-                        "prior_objective": review_control.get("prior_objective"),
+                        "prior_objective": prior_objective,
+                        "required_plan_decision_for_submitted_objective": (
+                            required_plan_decision
+                        ),
                         "required_previous_evidence_id": review_control.get(
                             "previous_evidence_id"
+                        ),
+                        "submitted_objective": submitted_objective,
+                        "submitted_objective_matches_prior": objective_matches_prior,
+                        "submitted_plan_decision": (
+                            payload.get("plan_review", {}).get("decision")
+                            if isinstance(payload, dict)
+                            and isinstance(payload.get("plan_review"), dict)
+                            else None
                         ),
                     },
                     ensure_ascii=True,

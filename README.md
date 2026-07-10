@@ -256,20 +256,19 @@ These systems are implemented (not roadmap):
 2. **Tools** (`fort_gym/bench/agent/tools.py`): `ToolManager` with memory/plan/perception tools wired into the review-mode agents.
 3. **Experimentation** (`fort_gym/bench/experiment/`): YAML config → `ExperimentRunner` → run with experiment metadata.
 
-The latest G7 result is attempt 8, run
-`89c7ac68126541888140f6754a50f6f1`
-([replay](https://fortgym.live/r/cJWntNq83M0zo-n1NJT6vw7huU8OVur6)),
-from deployed SHA `9f9cdffc96449ad57f672c037bd12f057b6a4247`. It made genuine
-room-building progress through legal governed actions and real simulation
-ticks: a completed Carpenter's Workshop, three beds, one door, and 24
-construction tiles. It still had zero FarmPlots, installed furniture, enclosed
-spaces, functional rooms, or food/drink production. The run failed before
-gameplay at step 22 because all three GLM-5V responses exhausted the configured
-512-token output ceiling. It advanced 21,193 ticks and is an
-infrastructure-aborted G7 FAIL with no long-horizon policy verdict. The exact
-failed observation passed a no-execution shadow on its first response with a
-1,024-token budget, so the pinned GLM-5V variant now receives that headroom
-without changing the legal surface or gate.
+The latest G7 result is attempt 9, run
+`4d25c36795eb489faf3c51bec496ae34`
+([replay](https://fortgym.live/r/7Ov5ifRPfJ1l2s5mgUI666YmsOlVZYPN)),
+from deployed SHA `efea8c86dabf6bae81cd2a8c294c195d6fac1706`. It produced the
+strongest reviewed-plan opening so far: a completed Carpenter's Workshop, one
+installed bed, door, and table, and 20 construction tiles. It still had zero
+FarmPlots, Stills, enclosed spaces, functional rooms, or food/drink production.
+The run failed before gameplay at step 33 because complete model responses
+changed the objective while labeling the plan decision `continue`. It advanced
+33,135 ticks and is an infrastructure-aborted G7 FAIL with no long-horizon
+policy verdict. The correction context now states the submitted objective's
+identity relation and required decision without selecting either the objective
+or action for the model.
 
 Attempt 5, run `680a938aabd84764953dd01c0ccf1c7f`
 ([replay](https://fortgym.live/r/88uZqRulANyNG_e7t7c6KFlEOYRvHZdz)),

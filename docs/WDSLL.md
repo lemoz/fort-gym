@@ -1266,6 +1266,50 @@ gate. Each entry states what changed and the evidence that forced it.
   unchanged. Local verification is 689 passed, 4 skipped, plus changed-file
   Ruff, compileall, and `git diff --check`.
 
+- **2026-07-10 — G7 attempt 9: INFRASTRUCTURE-ABORTED FAIL after the strongest
+  reviewed-plan start.** PR #78 passed CI, merged, and deployed as
+  `efea8c86dabf6bae81cd2a8c294c195d6fac1706`. Its four-step fresh-seed smoke
+  completed with verified cleanup; two bounded correction responses used 620
+  and 669 completion tokens, proving the deployed 1,024-token headroom crossed
+  the old ceiling before a legal reviewed workshop action executed.
+
+  Attempt 9 run `4d25c36795eb489faf3c51bec496ae34`
+  ([live replay](https://fortgym.live/r/7Ov5ifRPfJ1l2s5mgUI666YmsOlVZYPN))
+  launched for 450 steps with pinned GLM-5V, memory off, Anthropic disabled, and
+  the fresh region3 seed. It failed before gameplay at step 33 after 33 durable
+  gameplay rows and 33,135 real ticks. All rows have governed provenance,
+  screen text, and gameplay proof; `gameplay_proof.ok` is 24/33. Whole-run model
+  use was 38 calls, 459,547 prompt tokens, and 23,254 completion tokens; the
+  maximum response used 951 tokens without truncation.
+
+  This was the strongest reviewed-plan opening: the first ten commands executed
+  without a full rejection, completing a Carpenter's Workshop, producing and
+  installing one bed, one door, and one table, then starting a wall ring. The
+  policy recognized persistent shrub obstructions, gathered and waited, switched
+  to an alternate wall route, completed 20 construction tiles, then revised
+  toward brewing. It tested multiple Still footprints, designated the only shrub
+  across a ten-tile strip, observed the gather stall, and explicitly pivoted
+  away from shrub-dependent actions at step 32. It still had zero FarmPlots,
+  Stills, enclosed spaces, functional rooms, or food/drink production; drink
+  consumption was 7 and no dwarf died.
+
+  Deterministic G7 is FAIL: duration 33,135/403,200, population 7/15, rooms 0/3,
+  installed beds 1/3, scalar 81.66/150, and both production loops fail;
+  evidence, neglect deaths, and rubric 75.75 with no blockers pass. The terminal
+  responses were complete but contradicted their own plan metadata: they changed
+  the objective while using `decision=continue`. The unchanged validator
+  correctly rejected all three. The correction prompt had stated the rule but
+  not the one required decision for the submitted objective identity.
+
+  The follow-up correction context now reports the submitted objective, whether
+  it exactly matches the authoritative prior objective, the submitted decision,
+  and the required decision (`revise` or `not_due/continue`). It does not select
+  an objective or action. A no-execution shadow on attempt 9's exact terminal
+  observation then passed after one correction: GLM-5V chose
+  `decision=revise`, ordered a chair from the proven workshop, and advanced zero
+  ticks. Local verification is 690 passed, 4 skipped, plus changed-file Ruff,
+  compileall, and `git diff --check`; deployment proof remains candidate work.
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,
