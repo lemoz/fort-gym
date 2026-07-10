@@ -843,6 +843,38 @@ def test_review_contract_allows_agent_to_revise_objective_when_not_due() -> None
     assert agent._memory.gameplay_plan["objective"] == "Close the drink-production loop."
 
 
+def test_review_correction_states_required_decision_for_objective_change() -> None:
+    control = _plan_control(
+        review_due=False,
+        request_id="33:none",
+        prior_objective="Place a Still on verified open floor.",
+        previous_step=32,
+        previous_verdict="rejected",
+    )
+    invalid = _reviewed_action_payload(
+        control=control,
+        objective="Build a FarmPlot on verified open floor.",
+        decision="continue",
+    )
+    valid = _reviewed_action_payload(
+        control=control,
+        objective="Build a FarmPlot on verified open floor.",
+        decision="revise",
+    )
+    agent = _agent([_submit_action_response(invalid), _submit_action_response(valid)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["plan_review"]["decision"] == "revise"
+    correction = agent._client.chat.completions.requests[1]["messages"][-1]["content"]
+    assert '"required_plan_decision_for_submitted_objective": "revise"' in correction
+    assert '"submitted_objective_matches_prior": false' in correction
+    assert '"submitted_plan_decision": "continue"' in correction
+
+
 def test_review_contract_allows_voluntary_continue_when_not_due() -> None:
     control = _plan_control(
         review_due=False,
