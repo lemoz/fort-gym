@@ -1003,12 +1003,18 @@ def encode_observation(
             screen_line += "; evidence=" + " | ".join(str(item) for item in evidence[:3])
         status_lines.append(screen_line)
         instruction = screen_state.get("instruction")
-        if instruction:
+        if instruction and not governed:
             status_lines.append(f"Screen instruction: {instruction}")
 
     # Game state feedback (critical for agent to know if game is running)
     if pause_state is True:
-        status_lines.append("Game Status: PAUSED (press SPACE to unpause)")
+        if governed:
+            status_lines.append(
+                "Game Status: PAUSED (map inspection and legal commands remain available; "
+                "simulation time advances only through positive advance_ticks)"
+            )
+        else:
+            status_lines.append("Game Status: PAUSED (press SPACE to unpause)")
     elif pause_state is False:
         status_lines.append("Game Status: RUNNING")
     if isinstance(viewscreen_type, str) and viewscreen_type:
@@ -1367,87 +1373,130 @@ def encode_observation(
                 _work_int(work, "carpenter_workshop_construction_jobs") > 0
                 or _work_int(work, "active_construct_building_jobs") > 0
             ):
-                status_lines.append(
-                    "Workshop construction route: a construction job is already "
-                    "queued for the placed workshop. Do not start a new starter, "
-                    "material, D_BUILDING, D_NOBLES, or manager route. If a menu "
-                    "is visible, first submit only LEAVESCREEN with "
-                    "advance_ticks=0. Once the main map is visible, submit an "
-                    "empty-key KEYSTROKE with advance_ticks >= 1000 so the "
-                    "carpenter can build it. If that still leaves usable_workshops=0, "
-                    "inspect the existing workshop or jobs screen with visible "
-                    "evidence instead of placing another workshop."
-                )
+                if governed:
+                    status_lines.append(
+                        "Direct-action workshop construction: a real construction job is "
+                        "already queued for the placed workshop. Any legal command with "
+                        "positive advance_ticks lets that job progress; WAIT is not required, "
+                        "and idle citizens may pursue independent work in parallel. Do not "
+                        "place a duplicate workshop while this job exists."
+                    )
+                else:
+                    status_lines.append(
+                        "Workshop construction route: a construction job is already "
+                        "queued for the placed workshop. Do not start a new starter, "
+                        "material, D_BUILDING, D_NOBLES, or manager route. If a menu "
+                        "is visible, first submit only LEAVESCREEN with "
+                        "advance_ticks=0. Once the main map is visible, submit an "
+                        "empty-key KEYSTROKE with advance_ticks >= 1000 so the "
+                        "carpenter can build it. If that still leaves usable_workshops=0, "
+                        "inspect the existing workshop or jobs screen with visible "
+                        "evidence instead of placing another workshop."
+                    )
             if (
                 _work_int(work, "carpenter_workshop_construction_jobs") <= 0
                 and _work_int(work, "active_construct_building_jobs") <= 0
                 and _work_int(work, "carpenter_workshop_task_jobs") <= 0
             ):
-                status_lines.append(
-                    "Workshop proof route: before using manager/nobles or waiting, "
-                    "return to a verified main-map screen and reselect the existing "
-                    "workshop with the existing_workshop target. If the selected "
-                    "workshop screen is usable, open BUILDJOB_ADD; if it still says "
-                    "Waiting for construction or Needs Carpentry, diagnose that "
-                    "visible blocker instead of placing another workshop."
-                )
+                if governed:
+                    status_lines.append(
+                        "Direct-action workshop blocker: a workshop object exists, but no "
+                        "construction or task job is visible and usability is unproven. "
+                        "Do not wait indefinitely, queue production, or place a duplicate; "
+                        "reassess the observed site while advancing an independent branch."
+                    )
+                else:
+                    status_lines.append(
+                        "Workshop proof route: before using manager/nobles or waiting, "
+                        "return to a verified main-map screen and reselect the existing "
+                        "workshop with the existing_workshop target. If the selected "
+                        "workshop screen is usable, open BUILDJOB_ADD; if it still says "
+                        "Waiting for construction or Needs Carpentry, diagnose that "
+                        "visible blocker instead of placing another workshop."
+                    )
         elif work.get("carpenter_workshops_usable_carried_forward"):
-            status_lines.append(
-                "Workshop proof: this workshop was already proven usable by "
-                "earlier real task-menu evidence in this run. Do not reopen the "
-                "same workshop just to prove usability again; either let queued "
-                "work run, inspect visible cancellation text, or choose a new "
-                "productive branch."
-            )
+            if governed:
+                status_lines.append(
+                    "Workshop proof: this workshop is already proven built and usable. "
+                    "ORDER can target it directly; no inspection or duplicate workshop is "
+                    "needed, and independent branches can proceed while its jobs run."
+                )
+            else:
+                status_lines.append(
+                    "Workshop proof: this workshop was already proven usable by "
+                    "earlier real task-menu evidence in this run. Do not reopen the "
+                    "same workshop just to prove usability again; either let queued "
+                    "work run, inspect visible cancellation text, or choose a new "
+                    "productive branch."
+                )
         if (
             int(work.get("manager_orders_count") or 0) > 0
             and int(work.get("manager_orders_amount_left") or 0) > 0
             and usable_workshops > 0
         ):
-            production_note = (
-                "Live UI production phase: a real manager order is queued and "
-                "a usable/task-proven carpenter workshop exists."
-            )
-            if screen_shows_manager_required:
-                production_note += (
-                    " The visible screen says a manager is required; appoint a "
-                    "manager before relying on time advancement."
-                )
-            elif screen_shows_production_cancellation:
-                production_note += (
-                    " A visible production cancellation/Needs message is present; "
-                    "do not blindly wait or switch to unrelated dig/stockpile work. "
-                    "Inspect the carpenter workshop/task list or cancellation "
-                    "reason, then fix the shown production blocker."
+            if governed:
+                production_note = (
+                    "Direct-action production queue: a real order is queued and a usable "
+                    "carpenter workshop exists. Any legal command with positive "
+                    "advance_ticks lets it progress; the queue does not block parallel "
+                    "survival or shelter work. Do not add duplicate orders while this "
+                    "backlog remains."
                 )
             else:
-                production_note += (
-                    " If you are in a menu, use LEAVESCREEN to return to the main "
-                    "map; from the main map, advance_ticks >= 1000 so dwarves can "
-                    "work the order. If a large advance leaves order_qty_left "
-                    "unchanged, inspect the workshop/task/cancellation path before "
-                    "changing objectives."
+                production_note = (
+                    "Live UI production phase: a real manager order is queued and "
+                    "a usable/task-proven carpenter workshop exists."
                 )
+                if screen_shows_manager_required:
+                    production_note += (
+                        " The visible screen says a manager is required; appoint a "
+                        "manager before relying on time advancement."
+                    )
+                elif screen_shows_production_cancellation:
+                    production_note += (
+                        " A visible production cancellation/Needs message is present; "
+                        "do not blindly wait or switch to unrelated dig/stockpile work. "
+                        "Inspect the carpenter workshop/task list or cancellation "
+                        "reason, then fix the shown production blocker."
+                    )
+                else:
+                    production_note += (
+                        " If you are in a menu, use LEAVESCREEN to return to the main "
+                        "map; from the main map, advance_ticks >= 1000 so dwarves can "
+                        "work the order. If a large advance leaves order_qty_left "
+                        "unchanged, inspect the workshop/task/cancellation path before "
+                        "changing objectives."
+                    )
             status_lines.append(production_note)
         elif (
             int(work.get("carpenter_workshop_task_jobs") or 0) > 0
             and usable_workshops > 0
             and int(work.get("manager_orders_count") or 0) <= 0
         ):
-            task_note = (
-                "Live UI workshop task phase: a real carpenter workshop task is "
-                "queued on a usable workshop. Keep the existing_workshop target "
-                "anchored to the placed workshop; do not switch to starter "
-                "digging, fresh D_BUILDING placement, D_NOBLES, or manager orders "
-                "until this queued task either starts, completes, or shows a "
-                "visible cancellation/blocker."
-            )
-            if int(work.get("active_carpenter_jobs") or 0) <= 0:
-                task_note += (
-                    " No active carpenter job is currently proven, so from the "
-                    "main map prefer a larger empty-key time advance or inspect "
-                    "D_JOBLIST/cancellation evidence before adding more tasks."
+            if governed:
+                task_note = (
+                    "Direct-action workshop queue: real carpenter tasks are pending on "
+                    "a usable workshop. An assigned task occupies its carpenter; an "
+                    "unassigned task occupies nobody. Neither constrains the overseer's "
+                    "next command, so idle citizens can advance independent survival or "
+                    "shelter work while any positive advance_ticks also progresses this "
+                    "queue. Do not add duplicate tasks merely because the backlog remains."
                 )
+            else:
+                task_note = (
+                    "Live UI workshop task phase: a real carpenter workshop task is "
+                    "queued on a usable workshop. Keep the existing_workshop target "
+                    "anchored to the placed workshop; do not switch to starter "
+                    "digging, fresh D_BUILDING placement, D_NOBLES, or manager orders "
+                    "until this queued task either starts, completes, or shows a "
+                    "visible cancellation/blocker."
+                )
+                if int(work.get("active_carpenter_jobs") or 0) <= 0:
+                    task_note += (
+                        " No active carpenter job is currently proven, so from the "
+                        "main map prefer a larger empty-key time advance or inspect "
+                        "D_JOBLIST/cancellation evidence before adding more tasks."
+                    )
             status_lines.append(task_note)
         elif (
             int(work.get("manager_orders_count") or 0) > 0
@@ -1455,12 +1504,20 @@ def encode_observation(
             and planned_workshops > 0
             and usable_workshops <= 0
         ):
-            status_lines.append(
-                "Live UI production blocker: a production order may exist and a "
-                "workshop object is placed, but the workshop is not usable/task-"
-                "proven. Solve the construction or task-menu blocker before "
-                "waiting for production."
-            )
+            if governed:
+                status_lines.append(
+                    "Direct-action production blocker: an order and workshop object "
+                    "exist, but no usable workshop is proven. Do not wait for production "
+                    "or add duplicate orders; use observed jobs, construction stage, and "
+                    "labor capacity to reassess while advancing an independent branch."
+                )
+            else:
+                status_lines.append(
+                    "Live UI production blocker: a production order may exist and a "
+                    "workshop object is placed, but the workshop is not usable/task-"
+                    "proven. Solve the construction or task-menu blocker before "
+                    "waiting for production."
+                )
     crew = clean_state.get("crew")
     if isinstance(crew, dict) and crew.get("ok"):
         citizens = crew.get("citizens") if isinstance(crew.get("citizens"), dict) else {}
@@ -1508,6 +1565,13 @@ def encode_observation(
                     citizen_parts.append(f"#{cid} [{labor_str}] {job_str}")
                 if citizen_parts:
                     status_lines.append("Citizens: " + "; ".join(citizen_parts))
+                if governed and idle is not None and idle > 0:
+                    status_lines.append(
+                        f"Parallel capacity: {idle} idle citizens can take independent jobs. "
+                        "A queued specialist job does not require WAIT; issue another legal "
+                        "overseer command with positive advance_ticks, or use LABOR when a "
+                        "necessary job lacks an enabled idle worker."
+                    )
 
         jobs = crew.get("jobs") if isinstance(crew.get("jobs"), dict) else {}
         jobs_construct_building = None
@@ -1898,9 +1962,11 @@ def encode_observation(
                     "A room is enclosed only if every tile of its border is "
                     "W/#/T/w/o/d and the ring surrounds at least one untouched "
                     "passable interior tile. A solid W block encloses no space. "
-                    "Trace a one-tile-thick ring on the minimap and wall any "
-                    "'.' or ',' border gaps while leaving interior '.' tiles "
-                    "unbuilt. Never treat 'i' as permanent floor or a "
+                    "Trace a one-tile-thick ring on the minimap and BUILD walls only "
+                    "on border '.' tiles while leaving interior '.' tiles unbuilt. "
+                    "A ',' border tile is not buildable floor: gather a proven shrub "
+                    "and verify it becomes '.', or choose another footprint. Never "
+                    "treat 'i' as permanent floor or a "
                     "safe BUILD target. An 'x' is already ordered: do NOT "
                     "re-place a wall there — advance time and it becomes W."
                 )
@@ -1915,7 +1981,7 @@ def encode_observation(
                 "interior '.' tiles."
             )
 
-    if ui_work:
+    if ui_work and not governed:
         status_lines.append(
             "Live UI target: "
             f"z={ui_work.get('target_z', '?')}, "
@@ -1923,7 +1989,7 @@ def encode_observation(
             f"floors={ui_work.get('target_floor_tiles', 0)}, "
             f"walls={ui_work.get('target_wall_tiles', 0)}"
         )
-    if ui_work_feedback:
+    if ui_work_feedback and not governed:
         if ui_work_feedback.get("target_refreshed"):
             status_lines.append(
                 "Live UI feedback: target refreshed after repeated no-progress actions; "
@@ -1963,7 +2029,7 @@ def encode_observation(
                     "Live UI feedback: the last action changed no tracked tiles; "
                     "do not repeat the same key sequence unless a fresh target is shown."
                 )
-    if recent_progress_summary:
+    if recent_progress_summary and not governed:
         status_lines.append(
             "Recent progress summary: "
             f"last_productive_step={recent_progress_summary.get('last_productive_step')}, "
@@ -2032,7 +2098,7 @@ def encode_observation(
                     "Choose a different evidence route instead of retrying the same "
                     "workshop/build path."
                 )
-    if screen_shows_workshop_material_selection:
+    if not governed and screen_shows_workshop_material_selection:
         status_lines.append(
             "Live UI build feedback: the current visible workshop material "
             "selection screen lists material rows and says Enter: Select; "
@@ -2040,7 +2106,7 @@ def encode_observation(
             "material instead of exiting, unless the visible screen says Needs "
             "building material."
         )
-    elif screen_shows_pending_workshop_construction:
+    elif not governed and screen_shows_pending_workshop_construction:
         status_lines.append(
             "Live UI build feedback: the selected Carpenter's Workshop is still "
             "construction-pending. BUILDJOB_ADD is not a valid production action "
@@ -2048,14 +2114,14 @@ def encode_observation(
             "and work metrics to decide whether to wait, inspect jobs, or abandon "
             "this route."
         )
-    elif screen_shows_ready_workshop_placement:
+    elif not governed and screen_shows_ready_workshop_placement:
         status_lines.append(
             "Live UI build feedback: the current visible workshop placement "
             "screen says Enter: Place and does not show Blocked or Needs "
             "building material; treat older material warnings as stale for "
             "this screen."
         )
-    elif ui_build_feedback.get("material_blocked"):
+    elif not governed and ui_build_feedback.get("material_blocked"):
         if ui_build_feedback.get("visible", True):
             status_lines.append(
                 "Live UI build feedback: the visible build screen says material is "
@@ -2067,7 +2133,7 @@ def encode_observation(
                 "Live UI build feedback: a previous build screen said material was "
                 "missing; acquire logs or stone before retrying workshop placement."
             )
-    if ui_workshop_feedback.get("placement_blocked"):
+    if not governed and ui_workshop_feedback.get("placement_blocked"):
         status_lines.append(
             "Live UI workshop feedback: native DF rejected the current carpenter "
             "workshop footprint as blocked; do not retry that exact footprint. "
@@ -2079,7 +2145,7 @@ def encode_observation(
                 "Live UI workshop feedback: while still in the blocked build menus, "
                 "submit only LEAVESCREEN keys with advance_ticks=0."
             )
-    if ui_run_progress:
+    if ui_run_progress and not governed:
         total_work_delta = int(ui_run_progress.get("total_work_delta") or 0)
         total_excavation_delta = int(ui_run_progress.get("total_excavation_delta") or 0)
         total_material_delta = int(ui_run_progress.get("total_material_delta") or 0)
@@ -2119,7 +2185,7 @@ def encode_observation(
                         "Live UI phase: enough starter digging and building material exist; "
                         "stop using only dig actions and try D_BUILDING for construction."
                     )
-    if ui_target_setup.get("ok"):
+    if ui_target_setup.get("ok") and not governed:
         status_lines.append(
             "Live UI setup: "
             f"mode={ui_target_setup.get('target_mode', 'starter')}, "
@@ -2357,6 +2423,12 @@ def encode_observation(
         prior_action_history = (
             action_history[:-1] if latest_history_matches else action_history
         )
+        if governed and prior_action_history:
+            prior_action_history = [
+                entry
+                for entry in prior_action_history
+                if entry.get("action_type") not in (None, "KEYSTROKE")
+            ]
         if prior_action_history:
             history_lines = []
             for a in prior_action_history:

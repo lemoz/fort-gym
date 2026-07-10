@@ -630,6 +630,51 @@ An exact terminal-state no-execution probe recovered at the unchanged cap in one
 the candidate aligns that helper with the action schema's existing 2,000-tick
 maximum so the model actually chooses its turn duration.
 
+### 2.21 G7 attempt 17: control fixes held; legacy UI advice serialized the policy
+
+PR #86 deployed focused review corrections and aligned the DFHack tick helper
+with the action schema's 2,000-tick maximum. Attempt 17, run
+`5ab033b5f9fc4d94817ec6a183c1352c`
+([replay](https://fortgym.live/r/sUHqPDy822vChqPuXQmZhnw5QVbuQBOT)),
+crossed the prior step-32 terminal and remained live until it was deliberately
+stopped at step 40 after a stable policy loop was proven. The first model action
+requested 1,500 ticks and the helper advanced 1,507; later requests likewise
+retained the model-selected duration. Review correction no longer terminated
+the run.
+
+The resulting gameplay was legal but ineffective. The trace contains 41 action
+rows: six BUILD, ten DIG, five ORDER, and twenty WAIT. The agent completed one
+Carpenter workshop, produced three beds and four doors, and made 19
+constructions. It installed no furniture, enclosed no room, built no Still or
+FarmPlot, and produced zero food or drink while consuming seven food and 18
+drinks. Score-v4 reached 90.76 and the deterministic rubric reached 82.19 with
+zero blockers, but those telemetry values do not satisfy G7.
+
+The run exposed an observation-policy contradiction rather than a missing game
+control. At step 39, with five of seven citizens idle, the governed observation
+said not to switch away from ten queued carpenter tasks and to prefer an
+empty-key wait or `D_JOBLIST`. Those are legacy keystroke-agent instructions;
+the direct governed agent can issue another legal overseer command while the
+carpenter works. A second encoder sentence told the model to wall both `.` and
+`,` border gaps even though BUILD accepts only stable `.` floor. The model also
+described `(88,100)` while submitting a gather rectangle on `y=94` at step 10,
+and described `(89,94)` while submitting `(88,94)` at step 36.
+
+The run was manually stopped to avoid spending the remaining 410 decisions on
+the known loop. Its interrupted final row leaves 40 complete screen/proof
+records for 41 action rows and makes the trace duration disagree with the
+summary, so deterministic gate-v2 correctly fails evidence as well as duration,
+production, population, rooms, beds, and scalar score. The follow-up remains
+inside the agent loop: governed observations describe real parallel labor
+capacity instead of menu navigation, the model must compare survival, shelter,
+production, idle labor, queues, and stalls at due reviews, coordinate prose must
+match submitted params, and BUILD guidance consistently reserves non-`.` glyphs
+as invalid targets. The harness still chooses no objective, coordinate, or
+gameplay action. Local verification is 165 focused tests and 723 full-suite
+tests passed, 5 live-only skipped, with Ruff, compileall, and `git diff --check`
+clean. Independent Terra review found and then verified fixes for two remaining
+shared-encoder leaks; its final review reported no concrete blocker.
+
 ## 3. Limitations
 
 - **A single passing embark family.** Every pass (G0–G4) is on
@@ -637,16 +682,16 @@ maximum so the model actually chooses its turn duration.
   passes in seven region3 attempts. "Plays Dwarf Fortress" is not yet
   demonstrated — "solved one map" is.
 - **Small n.** The reliability claim rests on a five-run lineage; the endurance
-  result on one probe; the G6 verdict on seven runs; G7 on 16 failed attempts.
+  result on one probe; the G6 verdict on seven runs; G7 on 17 failed attempts.
   These are findings, not distributions.
 - **One policy family for most results.** GLM-5V-turbo produced the G4 passes
   and most of the G6 campaign; GPT-5.5 served the earlier G2/G3 passes.
   Cross-model generality is thin — two GPT-5.5-vision escalation runs are the
   only cross-family data points on the unseen map.
-- **G6 is unpassed; G7 attempts 1 through 16 failed.** Attempts 2 through 9 and
+- **G6 is unpassed; G7 attempts 1 through 17 failed.** Attempts 2 through 9 and
   12 through 16 were infrastructure aborts, although attempts 14 through 16
-  contain policy-bearing gameplay rows; attempts 10 and 11 are policy
-  diagnostics.
+  contain policy-bearing gameplay rows; attempts 10, 11, and 17 are policy
+  diagnostics. Attempt 17 was manually stopped after the loop was decisive.
   Score-v4 is active after the frozen-liquid correction, while the
   chair-factory calibration gap (§2.4) remains part of score-v3's historical
   record.
@@ -655,15 +700,16 @@ maximum so the model actually chooses its turn duration.
 
 ## 4. What's next
 
-- **Attempt 16 proved the evidence fix and exposed unfocused decision retries;
-  deploy focused corrections and the truthful 2,000-tick ceiling before attempt
-  17.** Keep strict review identity, model-selected evidence, the existing
-  correction limit, and fail-closed execution. The next run must cross step 32,
-  then break the repeated gather/build loop and prioritize sustainable
-  production, installed furniture, and multiple enclosed rooms.
+- **Attempt 17 proved focused corrections and truthful agent-selected tick
+  durations, then exposed legacy UI advice inside governed observations.**
+  Remove that contradiction before attempt 18 while keeping strict review
+  identity, model-selected evidence, the existing correction limit, and
+  fail-closed execution. The next run must use parallel labor capacity, abandon
+  stale coordinates, and prioritize sustainable production, installed
+  furniture, and multiple enclosed rooms from the model's own factual review.
 - **G6 remains open**: the best unseen-map run reached 4/5 and missed only its
-  second functional room. G7 attempt 17 can test the corrected facts and
-  GLM-5.2 transport without a separate blind retry campaign.
+  second functional room. G7 attempt 18 can test the direct-action observation
+  correction without a separate blind retry campaign.
 - **G8 — depth**: a multi-z fortress (stairs, underground rooms), the next
   spatial-reasoning escalation after the hollow ring is actually demonstrated.
 - **The open-source flywheel**: a standing public leaderboard where any model

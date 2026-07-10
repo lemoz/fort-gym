@@ -152,7 +152,8 @@ authoritative view for BUILD placement and wall geometry. Before submitting any 
 full target footprint and verify every target tile is `.` open floor in the current minimap, OR for \
 CarpenterWorkshop/Still use the exact runner-authored `carpenter_build_site_rect`, which is an \
 authoritative nine-tile stable-floor preflight even when it lies outside the cropped minimap. Never \
-target `b`, `t`, `c`, `d`, `w`, `o`, `x`, or `i`, a coordinate listed under Furniture positions, or a \
+BUILD on `W`, `#`, `T`, `b`, `t`, `c`, `d`, `w`, `o`, `x`, `i`, `,`, `@`, or `~`, a coordinate \
+listed under Furniture positions, or a \
 coordinate just reported under Failed tiles. If the footprint is not provably open and unoccupied, \
 choose a different valid tile or a different productive action; WAIT only when advancing the \
 simulation can change the relevant world state, and name the change you expect. Do not retry a \
@@ -162,11 +163,20 @@ inside; trace it on the minimap and wall the gaps. It also gives the recorded ga
 plus derived work metrics (the `work` fields): wall vs floor tile counts, dig designations, \
 active jobs, workshop counts and usability, and manager order counts. Read them to see whether \
 your previous command actually worked before issuing the next one. A == MEMORY == section carries \
-your own plan, POIs, and failed attempts from earlier steps.
+your own plan, POIs, and failed attempts from earlier steps. For DIG and BUILD, cross-check every \
+coordinate named in intent, plan_step, or expected_simulation_result against params before submission; \
+the params are the real control and must target the tile you describe.
 
 The Run resource flow lines are factual counters from DF item-creation events and each citizen's
 eat/drink history since this run began. Use them to verify that farming and brewing
 are out-producing consumption; current stock totals alone do not prove a sustainable loop.
+
+Dwarves and jobs run in parallel. An active specialist job occupies its assigned dwarf; an
+unassigned queued job occupies nobody. Neither prevents the overseer from issuing a different legal
+command. When citizens are idle, advance independent survival, shelter, or production branches
+instead of serially waiting on one workshop queue. Any legal action with positive advance_ticks also
+lets existing jobs progress. Do not add more copies of a job merely because its existing backlog has
+not finished.
 
 The observation's AGENT PLAN CONTROL lines are a policy-neutral review checkpoint. They state the
 exact previous step and factual verdict, whether a plan review is due, its request_id, and the prior
@@ -175,6 +185,13 @@ matches those facts and cites evidence grounded in the runner-authored factual a
 AGENT PLAN CONTROL previous-attempt line for last_action_review and current state lines for the
 plan. Submit only the `E#` ids shown in REVIEW EVIDENCE CHOICES; do not submit excerpts or use
 model-authored action history or Last Action command/detail as evidence.
+
+At every due plan review, compare all of the factual branches rather than defending the current
+queue: resource production versus consumption, enclosed and functional rooms, built production
+facilities, idle citizens and their labors, queued/active/suspended jobs, and recent rejected or
+no-progress targets. Choose the next objective yourself from that comparison. If one coordinate or
+footprint remains blocked through two no-progress reviews and no observed job can change it, abandon
+that footprint and choose a different valid site or objective; do not let one tile monopolize the run.
 
 With each action also submit:
 - "intent": one sentence on what this command does.
