@@ -55,6 +55,18 @@ def test_job_metrics_emits_raw_dead_citizen_observability_without_inference() ->
     assert "neglect_deaths" not in HOOK_SOURCE
 
 
+def test_death_hooks_keep_current_drowning_flag_separate_from_known_cause() -> None:
+    for source in (HOOK_SOURCE, G7_EVIDENCE_SOURCE):
+        assert "cause_name = 'DROWNING'" not in source
+        assert "cause_source = 'flags1.drowning'" not in source
+        assert "current-condition flag" in source
+        assert "cause_source = cause_source" in source
+
+
+def test_job_metrics_preserves_raw_unset_death_cause_enum() -> None:
+    assert "if cause_number then cause_enum = cause_number end" in HOOK_SOURCE
+
+
 def test_job_metrics_fails_closed_when_dead_record_evidence_is_incomplete() -> None:
     assert "out.dead_citizen_count = out.dead_citizen_count + 1" in HOOK_SOURCE
     assert "local dead_scan_ok = pcall(function()" in HOOK_SOURCE

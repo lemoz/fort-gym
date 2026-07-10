@@ -119,11 +119,13 @@ local function death_record(unit)
   local cause_enum = raw_value(unit, 'counters', 'death_cause')
   local cause_name = false
   local cause_known = false
+  local cause_source = false
   if tonumber(cause_enum) and tonumber(cause_enum) >= 0 then
     local ok, name = pcall(function() return df.death_type[tonumber(cause_enum)] end)
     if ok and name and tostring(name) ~= 'NONE' then
       cause_name = sanitize(name)
       cause_known = true
+      cause_source = 'counters.death_cause'
     end
   end
   return {
@@ -131,11 +133,13 @@ local function death_record(unit)
     cause_enum = cause_enum,
     cause_name = cause_name,
     cause_known = cause_known,
+    cause_source = cause_source,
     incident_id = raw_value(unit, 'counters', 'death_id'),
     hunger_timer = raw_value(unit, 'counters2', 'hunger_timer'),
     thirst_timer = raw_value(unit, 'counters2', 'thirst_timer'),
     stored_fat = raw_value(unit, 'counters2', 'stored_fat'),
     stomach_food = raw_value(unit, 'counters2', 'stomach_food'),
+    -- A current-condition flag, not authoritative historical cause evidence.
     drowning = raw_flag(unit, 'flags1', 'drowning'),
     suffocation = raw_value(unit, 'counters', 'suffocation'),
     emotionally_overloaded = raw_flag(unit, 'flags3', 'emotionally_overloaded'),

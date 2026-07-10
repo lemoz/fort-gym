@@ -434,14 +434,16 @@ local function dead_citizen_record(unit)
   if not ok_id or unit_id == nil then return nil, false end
 
   local cause_enum, cause_name, cause_known = false, false, false
+  local cause_source = false
   local ok_cause, cause_value = pcall(function() return unit.counters.death_cause end)
   local cause_number = ok_cause and tonumber(cause_value) or nil
+  if cause_number then cause_enum = cause_number end
   if cause_number and cause_number >= 0 then
-    cause_enum = cause_number
     local ok_name, name = pcall(function() return df.death_type[cause_number] end)
     if ok_name and name and tostring(name) ~= 'NONE' then
       cause_name = sanitize(name)
       cause_known = true
+      cause_source = 'counters.death_cause'
     end
   end
 
@@ -450,11 +452,13 @@ local function dead_citizen_record(unit)
     cause_enum = cause_enum,
     cause_name = cause_name,
     cause_known = cause_known,
+    cause_source = cause_source,
     incident_id = dead_value(unit, 'counters', 'death_id'),
     hunger_timer = dead_value(unit, 'counters2', 'hunger_timer'),
     thirst_timer = dead_value(unit, 'counters2', 'thirst_timer'),
     stored_fat = dead_value(unit, 'counters2', 'stored_fat'),
     stomach_food = dead_value(unit, 'counters2', 'stomach_food'),
+    -- A current-condition flag, not authoritative historical cause evidence.
     drowning = dead_flag(unit, 'flags1', 'drowning'),
     suffocation = dead_value(unit, 'counters', 'suffocation'),
     emotionally_overloaded = dead_flag(unit, 'flags3', 'emotionally_overloaded'),

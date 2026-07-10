@@ -1035,6 +1035,30 @@ def encode_observation(
             f"causes_known={survival.get('death_causes_known')}, "
             f"neglect_deaths={survival.get('neglect_deaths')}"
         )
+        if isinstance(death_records, list) and death_records:
+            record_parts = []
+            for record in death_records[:4]:
+                if not isinstance(record, dict):
+                    continue
+                cause = record.get("cause_name") if record.get("cause_known") else "UNKNOWN"
+                cause_source = record.get("cause_source") or "unavailable"
+                detail = (
+                    f"unit={record.get('unit_id', '?')} cause={cause} "
+                    f"cause_source={cause_source} "
+                    f"drowning={bool(record.get('drowning'))} "
+                    f"hunger_timer={record.get('hunger_timer')} "
+                    f"thirst_timer={record.get('thirst_timer')}"
+                )
+                observed_year = record.get("observed_year")
+                observed_tick = record.get("observed_tick")
+                if observed_year is not None and observed_tick is not None:
+                    detail += f" observed={observed_year}:{observed_tick}"
+                record_parts.append(detail)
+            if record_parts:
+                status_lines.append(
+                    "Death records (direct DF fields; do not infer missing causes): "
+                    + "; ".join(record_parts)
+                )
 
     # Last action result feedback
     if last_action_result is not None:
@@ -1951,7 +1975,8 @@ def encode_observation(
                     "is still building it), #=natural wall, T=tree trunk, "
                     "b=bed, t=table, c=chair, d=door, w=workshop, "
                     "o=other occupied building, .=floor, "
-                    "i=frozen liquid (unstable; can thaw), ,=shrub/boulder, "
+                    "i=frozen liquid (unstable; can thaw), ,=gatherable shrub, "
+                    "s=sapling, p=boulder/pebbles, "
                     "@=dwarf, ~=impassable:"
                 )
                 ruler = "".join(str((ox + i) % 10) for i in range(width))
@@ -1964,8 +1989,10 @@ def encode_observation(
                     "passable interior tile. A solid W block encloses no space. "
                     "Trace a one-tile-thick ring on the minimap and BUILD walls only "
                     "on border '.' tiles while leaving interior '.' tiles unbuilt. "
-                    "A ',' border tile is not buildable floor: gather a proven shrub "
-                    "and verify it becomes '.', or choose another footprint. Never "
+                    "A ',' border tile is a gatherable shrub but is not buildable floor: "
+                    "gather it and verify it becomes '.', or choose another footprint. "
+                    "An 's' sapling or 'p' loose-rock tile is neither a gatherable shrub "
+                    "nor valid BUILD floor. Never "
                     "treat 'i' as permanent floor or a "
                     "safe BUILD target. An 'x' is already ordered: do NOT "
                     "re-place a wall there — advance time and it becomes W."

@@ -23,7 +23,9 @@ TILE_STYLES: Dict[str, tuple] = {
     "T": ((34, 102, 48), "T"),      # tree trunk — deep green
     ".": ((222, 210, 180), None),   # open floor — light tan
     "i": ((116, 194, 214), "i"),    # frozen liquid — cyan
-    ",": ((176, 200, 150), None),   # shrub/boulder — pale green
+    ",": ((176, 200, 150), None),   # gatherable shrub — pale green
+    "s": ((55, 150, 75), "s"),      # sapling — green
+    "p": ((135, 130, 120), "p"),    # boulder/pebbles — gray
     "~": ((110, 130, 160), None),   # impassable — blue-gray
     " ": ((20, 20, 20), None),      # unknown/out of range — near-black
     "b": ((150, 60, 140), "b"),     # bed
@@ -39,7 +41,7 @@ TILE_STYLES: Dict[str, tuple] = {
 LEGEND_TEXT = (
     "W=your wall  x=queued wall (building)  #=natural wall  T=tree  "
     "b=bed t=table c=chair d=door w=workshop o=occupied  @=dwarf  .=floor  "
-    "i=frozen liquid  ,=shrub"
+    "i=frozen liquid  ,=gatherable shrub  s=sapling  p=loose rock"
 )
 
 
@@ -63,7 +65,10 @@ def render_minimap_png(
         return None
     ox, oy = int(map_origin[0]), int(map_origin[1])
 
-    img_w = RULER + width * CELL
+    measurement_canvas = Image.new("RGB", (1, 1))
+    measurement_draw = ImageDraw.Draw(measurement_canvas)
+    legend_width = measurement_draw.textbbox((0, 0), LEGEND_TEXT)[2]
+    img_w = max(RULER + width * CELL, RULER + legend_width + 4)
     img_h = RULER + height * CELL + LEGEND_HEIGHT
     image = Image.new("RGB", (img_w, img_h), (12, 12, 12))
     draw = ImageDraw.Draw(image)

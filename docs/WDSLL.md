@@ -1655,6 +1655,49 @@ gate. Each entry states what changed and the evidence that forced it.
   Independent Terra review found and then verified fixes for two remaining
   shared-encoder leaks; its final review reported no concrete blocker.
 
+- **2026-07-10 — PR #87 deployed; G7 attempt 18: POLICY-DIAGNOSTIC FAIL after
+  sustained brewing; geometry, food, and population remained unsolved.** PR #87
+  passed CI, merged, and deployed as
+  `4ab899dfa74b366f4d862626ae4cacdbaa6a374c`. Attempt 18 run
+  `78dd47ecda9f451a87d64560b9c79adc`
+  ([replay](https://fortgym.live/r/t87w_HCV17O8bNaHl7GcN5uFuNhjmAF-))
+  used fresh `seed_region3_fresh`, OpenRouter `z-ai/glm-5.2`, memory off, and a
+  450-step budget. The governed-only observation fix held: the policy issued
+  independent legal commands while existing jobs ran, revised at scheduled
+  reviews, configured the FarmPlot only after completion, and crossed every
+  previous transport/review terminal.
+
+  This produced the first positive G7 production loop. A completed Still made
+  90 drinks while 19 were consumed. The agent also completed a Carpenter
+  workshop, one FarmPlot, three beds, three doors, three tables, 18 barrels, and
+  at least 32 constructions. Its 69 actions were 24 BUILD, 11 DIG, two FARM,
+  two LABOR, ten ORDER, three UNSUSPEND, and 17 WAIT. Ninety-seven OpenRouter
+  calls used 1,409,050 prompt and 46,280 completion tokens.
+
+  Deterministic G7 is still FAIL. The manually interrupted final row leaves 68
+  complete screen/proof records for 69 actions and makes 83,059 trace ticks
+  disagree with the 81,857-tick summary. Food production was 0 versus six
+  consumed; population ended at six after one drowning; installed beds and
+  functional rooms were both zero. Score-v4 106.33 and rubric 84.13 with zero
+  blockers do not override those predicates.
+
+  The trace isolates perception rather than missing control. GLM-5.2 described
+  interior rows as room borders, filled areas it called hollow, targeted
+  non-floor glyphs as verified floor, and repeated one blocked gather rectangle
+  five times. The minimap itself collapsed shrubs, saplings, boulders, and
+  pebbles to one comma although only shrubs are gatherable. DF also exposed the
+  dead unit's direct `drowning=true` flag while leaving its cause enum unset;
+  the evidence hooks therefore returned an unknown cause and the observation
+  showed only aggregate death counts.
+
+  The attempt-19 candidate remains inside the agent loop: distinguish those raw
+  tile shapes in the recorded text/PNG minimap, preserve unknown cause when the
+  authoritative death enum is absent while exposing the raw drowning condition,
+  and show bounded raw death records to the policy. The next run switches to the
+  existing `dfhack-governed-llm-glm5v` alias (OpenRouter
+  `z-ai/glm-5v-turbo`) so the model can inspect the same minimap as an image. It
+  adds no room plan, target coordinates, action selection, or score credit.
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,

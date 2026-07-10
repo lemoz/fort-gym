@@ -71,8 +71,8 @@ It uses OpenRouter chat completions (default `z-ai/glm-5.2`, override with
 `DIG`/`BUILD`/`ORDER`/`UNSUSPEND`/`FARM`/`LABOR`/`WAIT`/`INTERACT`. Per step it receives:
 
 - the encoded observation (including the recorded CopyScreen text, a fort
-  minimap where `.` is stable floor and `i` is frozen liquid, and bounded
-  `work` metrics),
+  minimap where `.` is stable floor, `i` is frozen liquid, `,` is a gatherable
+  shrub, `s` is a sapling, and `p` is loose rock, plus bounded `work` metrics),
 - its own memory context from `MemoryManager` (recent steps, summary, POIs,
   failed attempts, current gameplay plan).
 
