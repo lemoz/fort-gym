@@ -1438,8 +1438,8 @@ gate. Each entry states what changed and the evidence that forced it.
   Wagon tiles as `o` and rejected crop selection on a freshly placed stage-0/3
   FarmPlot. Focused verification is 232 passed and the full suite is 708 passed,
   5 live-only skipped, with changed-file Ruff, compileall, Lua `loadfile`, and
-  `git diff --check` passing. Independent review and deployment remain candidate
-  work.
+  `git diff --check` passing. Independent Sol review reports no deployment
+  blockers; production deployment remains candidate work.
 
 ## Reporting format (every gate attempt)
 
