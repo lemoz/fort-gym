@@ -435,6 +435,124 @@ def test_encoder_anchors_queued_workshop_task_phase() -> None:
     assert "prefer a larger empty-key time advance or inspect D_JOBLIST" in text
 
 
+def test_governed_encoder_treats_queued_work_as_parallel_capacity() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 30, "stone": 0},
+            "work": {
+                "manager_orders_count": 0,
+                "manager_orders_amount_left": 0,
+                "carpenter_workshops": 1,
+                "carpenter_workshops_planned": 1,
+                "carpenter_workshops_usable": 1,
+                "carpenter_workshop_task_jobs": 10,
+                "active_jobs": 1,
+                "active_carpenter_jobs": 1,
+                "carpenter_labors_enabled": 1,
+                "carpenter_workshop_task_job_type_names": ["ConstructDoor"],
+            },
+            "crew": {
+                "ok": True,
+                "citizens": {
+                    "total": 7,
+                    "idle": 5,
+                    "list": [
+                        {
+                            "id": 243,
+                            "labors": ["construction"],
+                            "current_job_type": None,
+                        }
+                    ],
+                },
+            },
+        },
+        screen_text="main map",
+        governed=True,
+    )
+
+    assert "Direct-action workshop queue" in text
+    assert "an unassigned task occupies nobody" in text
+    assert "Neither constrains the overseer's next command" in text
+    assert "Parallel capacity: 5 idle citizens" in text
+    assert "does not require WAIT" in text
+    assert "D_JOBLIST" not in text
+
+
+def test_governed_encoder_suppresses_keystroke_only_guidance() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "pause_state": True,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 30, "stone": 0},
+            "ui_work": {"target_z": 161},
+            "ui_work_feedback": {"target_refreshed": True},
+            "ui_build_feedback": {"material_blocked": True},
+            "ui_workshop_feedback": {
+                "placement_blocked": True,
+                "menu_escape_keys": ["LEAVESCREEN"],
+            },
+            "ui_run_progress": {
+                "total_work_delta": 12,
+                "total_excavation_delta": 10,
+                "total_material_delta": 1,
+                "successful_targets": 2,
+            },
+            "ui_target_setup": {
+                "ok": True,
+                "target_mode": "existing_workshop",
+                "selection_rect": [91, 95, 161, 93, 97, 161],
+                "recommended_keys": ["D_BUILDJOB", "D_JOBLIST", "SELECT"],
+            },
+        },
+        screen_text="D: Designations\nB: Building\nmain map",
+        action_history=[
+            {
+                "step": step,
+                "action_type": "KEYSTROKE",
+                "keys": ["D_JOBLIST"],
+                "actual_ticks": 0,
+                "productive_reasons": [],
+            }
+            for step in range(6)
+        ],
+        governed=True,
+    )
+
+    assert "Screen state: mode=main_map" in text
+    assert "Game Status: PAUSED (map inspection and legal commands remain available" in text
+    assert "Screen instruction:" not in text
+    assert "Live UI" not in text
+    assert "Recent progress instruction:" not in text
+    assert "Fresh target recommended keys:" not in text
+    assert "press SPACE" not in text
+    assert "LEAVESCREEN" not in text
+    assert "D_JOBLIST" not in text
+    assert "SELECT" not in text
+
+
+def test_governed_minimap_never_recommends_building_on_shrubs() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 30, "stone": 0},
+            "fort": {
+                "ok": True,
+                "map_origin": [87, 94, 161],
+                "map_rows": ["...", ".,.", "..."],
+            },
+        },
+        governed=True,
+    )
+
+    assert "BUILD walls only on border '.' tiles" in text
+    assert "A ',' border tile is not buildable floor" in text
+    assert "wall any '.' or ',' border gaps" not in text
+
+
 def test_encoder_shows_build_phase_after_material_exists() -> None:
     text, _ = encode_observation(
         {

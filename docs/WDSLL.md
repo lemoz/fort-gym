@@ -1613,6 +1613,48 @@ gate. Each entry states what changed and the evidence that forced it.
   live-only skipped, with changed-file Ruff, compileall, and `git diff --check`
   clean; review and CI follow the candidate commit.
 
+- **2026-07-10 — PR #86 deployed; G7 attempt 17: POLICY-DIAGNOSTIC FAIL after
+  40 complete gameplay records; control fixes held and legacy UI advice
+  serialized the direct-action agent.** PR #86 passed CI, merged, and deployed
+  as `e74c998cc9c871feb583d901b25374ca5fa91298`. Attempt 17 run
+  `5ab033b5f9fc4d94817ec6a183c1352c`
+  ([replay](https://fortgym.live/r/sUHqPDy822vChqPuXQmZhnw5QVbuQBOT))
+  used fresh `seed_region3_fresh`, pinned OpenRouter GLM-5.2, memory off, and a
+  450-step budget. It crossed the prior step-32 review terminal. The first
+  action requested 1,500 ticks and advanced 1,507, proving that the model's
+  legal duration now reaches DFHack without the old 1,000-tick clamp.
+
+  The trace has 41 action rows: six BUILD, ten DIG, five ORDER, and twenty WAIT.
+  It completed a Carpenter workshop, produced three beds and four doors, and
+  made 19 constructions, but installed no furniture, enclosed no room, built no
+  Still or FarmPlot, and produced zero food or drink while consuming seven food
+  and 18 drinks. Score-v4 90.76 and rubric 82.19 with zero blockers are
+  telemetry, not a G7 pass. The run was deliberately stopped at step 40 after
+  the loop was decisive; the interrupted final row leaves 40 complete
+  screen/proof records for 41 action rows and summary/trace duration mismatch,
+  so deterministic gate-v2 correctly fails evidence in addition to duration,
+  production, population, rooms, beds, and scalar score.
+
+  The policy received contradictory instructions. At step 39, the observation
+  showed five idle citizens and ten carpenter tasks, then told the governed
+  agent not to change branches until that queue completed and to use an
+  empty-key wait or `D_JOBLIST`. That guidance belongs to the legacy keystroke
+  path; any direct legal action with positive ticks can run the carpenter while
+  idle dwarves take independent jobs. Room guidance also said to wall `,`
+  border gaps despite BUILD requiring stable `.` floor. The model compounded
+  this with coordinate/prose mismatches at steps 10 and 36.
+
+  The attempt-18 candidate changes only the agent-facing loop. Governed
+  observations describe parallel capacity without UI menu commands; due plan
+  reviews tell the model to compare resource flow, rooms, facilities, idle
+  labor, queues, and stalled targets; coordinate prose must match submitted
+  params; and all non-`.` minimap glyphs remain invalid BUILD targets. The
+  harness still selects no strategy, objective, coordinate, or action. Local
+  verification is 165 focused tests and 723 full-suite tests passed, 5
+  live-only skipped, with Ruff, compileall, and `git diff --check` clean.
+  Independent Terra review found and then verified fixes for two remaining
+  shared-encoder leaks; its final review reported no concrete blocker.
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,
