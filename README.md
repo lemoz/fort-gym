@@ -260,33 +260,29 @@ These systems are implemented (not roadmap):
 2. **Tools** (`fort_gym/bench/agent/tools.py`): `ToolManager` with memory/plan/perception tools wired into the review-mode agents.
 3. **Experimentation** (`fort_gym/bench/experiment/`): YAML config → `ExperimentRunner` → run with experiment metadata.
 
-The latest gameplay-bearing G7 result is attempt 16, run
-`1b1218635a1647ba96d83189c1095bd4`
-([replay](https://fortgym.live/r/S9_rAjwEV9CtCZaC6z4R0yOHP_vuPiUb)),
-from deployed SHA `ff9b7a6f59ad5c245fe75e9cf874bdb354112289`. It executed 32
-governed gameplay rows and 32,127 ticks before a fail-closed review-transport
-terminal. Every gameplay row retained screen text, governed provenance, and a
-DFHack proof record. The agent completed a Carpenter workshop, produced beds,
-doors, and tables, and made 22 constructions. It repeatedly retried a blocked
-room boundary, built no Still or FarmPlot, produced no food or drink, installed
-no beds, enclosed no space, and remained at population 7. Deterministic G7
-correctly failed it despite rubric 82.75 with no blockers; score-v4 was 92.04.
+The latest scored G7 result is attempt 20, run
+`f8ebc607402f4756838df19aecb75cc7`
+([replay](https://fortgym.live/r/IKqmVcZUvy_n5kGowOSfNUcGQdNZrfVa)),
+from deployed PR #90 merge SHA
+`f2cc864c9f36f4d847223da50bd70d143b5a3a07`. It executed 24 real governed
+gameplay rows with complete screen, proof, ownership-provenance, and model-usage
+evidence; 4/24 proof records had `ok=true`. The policy felled a tree, gathered
+plants, completed a FarmPlot,
+completed exact owned Carpenter workshop `#2`, and queued five barrel jobs.
+Score-v5 paid only the exact completed workshop capacity; accepted commands and
+global changes remained uncredited.
 
-PR #81 deployed the three factual corrections exposed by attempt 11: otherwise
-unknown occupied buildings render as `o`, premature FARM crop assignment fails
-closed, and the room contract distinguishes a hollow boundary from a filled
-wall rectangle. A deployed smoke and live completed-plot probe passed.
-
-Attempts 12 through 15 established reliable JSON transport and factual E-id
-corrections. Attempt 16 crossed the prior step-24 boundary and recovered from a
-live review error at step 25, then failed at step 32 when a decision-only retry
-unnecessarily repeated the full evidence catalog and two responses exhausted
-the 1,024-token cap. The current candidate includes the evidence catalog only
-for evidence errors and gives exact decision-field repairs. It also removes a
-backend-only 1,000-tick clamp that contradicted the governed action's legal
-0-2,000 `advance_ticks` range. An exact step-32 no-execution probe recovered in
-one 257-token correction at the unchanged cap. G7 remains open. Full findings
-and gate predicates are recorded in `docs/WDSLL.md`.
+The operator stopped the short diagnostic at 27,879 ticks, just after the
+workshop recovery. Deterministic G7 correctly failed on duration, sustainable
+food/drink, population, rooms, beds, rubric, and scalar score. The trace exposed
+a minimap-anchor bug: a distant fishing dwarf pulled the bounded current map
+away from the actual fort because the map ignored FarmPlots and other
+non-room-classified player buildings. The current candidate anchors to every
+visible player-building footprint and reports the exact first rejected
+workshop-footprint tile; it supplies no placement search, target coordinate,
+strategy, or score credit.
+G7 remains open. Full findings and gate predicates are recorded in
+`docs/WDSLL.md`.
 
 **Success definition and gate ladder: [docs/WDSLL.md](docs/WDSLL.md)** — every claim of "the agent plays" must pass a gate there on public, replayable evidence.
 

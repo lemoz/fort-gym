@@ -202,6 +202,39 @@ def test_workshop_hook_fails_closed_on_illegal_footprint() -> None:
         assert needle in hook_text
 
 
+def test_workshop_hook_reports_first_failing_tile_with_absolute_coordinates() -> None:
+    hook_text = (
+        Path(__file__).resolve().parents[1] / "hook" / "build_workshop.lua"
+    ).read_text(encoding="utf-8")
+
+    # The scan must return the first rejected tile, not a planner-selected
+    # replacement or a generic footprint-only error.
+    assert "for tx = x, x + 2 do" in hook_text
+    assert "for ty = y, y + 2 do" in hook_text
+    assert "return { x = tx, y = ty, z = z, error = 'tile_out_of_bounds' }" in hook_text
+    assert "return { x = tx, y = ty, z = z, error = 'tile_not_open_floor' }" in hook_text
+    assert "local placement_failure = footprint_error()" in hook_text
+    assert "error = placement_failure.error" in hook_text
+    assert "failed_tile = placement_failure" in hook_text
+    assert "failed = { placement_failure }" in hook_text
+
+
+def test_workshop_hook_keeps_every_footprint_reason_in_failed_tile_record() -> None:
+    hook_text = (
+        Path(__file__).resolve().parents[1] / "hook" / "build_workshop.lua"
+    ).read_text(encoding="utf-8")
+    for reason in (
+        "tile_out_of_bounds",
+        "tile_state_unreadable",
+        "tile_occupied_by_building",
+        "tile_hidden_unexplored",
+        "tile_frozen_liquid",
+        "tile_not_open_floor",
+        "tile_has_liquid",
+    ):
+        assert f"return {{ x = tx, y = ty, z = z, error = '{reason}' }}" in hook_text
+
+
 def test_build_workshop_hook_supports_still_subtype() -> None:
     hook_path = Path(__file__).resolve().parents[1] / "hook" / "build_workshop.lua"
     hook_text = hook_path.read_text(encoding="utf-8")
