@@ -161,8 +161,8 @@ separates "solved one map" from "plays Dwarf Fortress."
 
 ### G7 — The fort lives: a self-sufficient year (RATIFIED 2026-07-09)
 Status: RATIFIED at the 2026-07-09 operator window; attempt 1 FAILED, while
-attempts 2 through 5 ended in infrastructure-aborted FAILs with no full-year
-policy verdict. All five are recorded below. The criteria remain unchanged. All three
+attempts 2 through 6 ended in infrastructure-aborted FAILs with no full-year
+policy verdict. All six are recorded below. The criteria remain unchanged. All three
 activation preconditions hold: (a) score-v3 ratified and landed; (b) G6 attempted
 (7 runs, 2 models — frontier documented in the escalation log); (c) the
 survival primitives exist, adversarially reviewed and live-validated:
@@ -1155,6 +1155,36 @@ gate. Each entry states what changed and the evidence that forced it.
   679 passed, 4 skipped, plus changed-file
   Ruff, compileall, and `git diff --check`. This is candidate evidence, not a
   deployed fix or G7 pass.
+
+- **2026-07-10 — PR #74 deployed; G7 attempt 6: INFRASTRUCTURE-ABORTED FAIL
+  at the non-due review boundary.** PR #74 passed CI, merged, and deployed as
+  `4e1caf7ad2bca04eaf1a7af1e3558806c8e1a973`. A two-step fresh-seed smoke,
+  run `133d8784f35f4a40981ac33fcd5985e8`
+  ([replay](https://fortgym.live/r/7KeEU1H-U6JW01ijhbYOFMnVRocx3tNU)),
+  completed with two durable factual review rows, 2,000 real ticks, merged-SHA
+  provenance, and verified cleanup. Both workshop commands failed honestly on
+  `path_cache_stale` then `no_building_material`; no structure or production
+  credit is claimed.
+
+  Attempt 6 run `e8d67282a0864b189a4dea6a1bec9d6a`
+  ([replay](https://fortgym.live/r/0-WRs-CBBA7BXEx6bw5d8g1AG22irdiL))
+  reset the same fresh seed for 450 declared steps but failed closed at step 1
+  after only 1,005 ticks. Step 0's initial review was valid; the workshop BUILD
+  rejected `path_cache_stale`. On step 1, GLM-5V first omitted the non-due plan
+  reason, then corrected to a factual `continue` review that the
+  runtime unnecessarily required to be `not_due`. No second gameplay command
+  executed. Cleanup completed before failed status. This is an infrastructure
+  abort with no policy verdict.
+
+  The follow-up remains inside the agent loop: `not_due` may omit its reason,
+  unchanged objectives may voluntarily use `continue`, two bounded review
+  corrections are available before fail-closed termination, and an exhausted
+  decision persists terminal code `agent_decide_error`. A no-execution shadow
+  on attempt 6's exact failed observation passed on the first GLM-5V response
+  (6,218 prompt and 435 completion tokens), selected the same legal workshop
+  retry, and advanced zero ticks. Follow-up verification is 682 passed, 4
+  skipped, with changed-file Ruff, compileall, `git diff --check`, and a focused
+  Luna audit reporting no deployment blocker.
 
 ## Reporting format (every gate attempt)
 

@@ -256,7 +256,17 @@ These systems are implemented (not roadmap):
 2. **Tools** (`fort_gym/bench/agent/tools.py`): `ToolManager` with memory/plan/perception tools wired into the review-mode agents.
 3. **Experimentation** (`fort_gym/bench/experiment/`): YAML config → `ExperimentRunner` → run with experiment metadata.
 
-The latest research result is G7 attempt 5, run
+PR #74 merged and deployed as `4e1caf7ad2bca04eaf1a7af1e3558806c8e1a973`.
+Its two-step fresh-seed smoke completed with factual `E#` reviews and verified
+cleanup. G7 attempt 6, run `e8d67282a0864b189a4dea6a1bec9d6a`
+([replay](https://fortgym.live/r/0-WRs-CBBA7BXEx6bw5d8g1AG22irdiL)),
+then failed closed at step 1 after two sequential non-due review-format errors;
+it advanced only 1,005 ticks and has no policy verdict. The follow-up permits a
+minimal `not_due` review or voluntary `continue`, allows two bounded
+corrections, and durably identifies exhausted decisions as
+`agent_decide_error`.
+
+The latest substantive G7 result is attempt 5, run
 `680a938aabd84764953dd01c0ccf1c7f`
 ([replay](https://fortgym.live/r/88uZqRulANyNG_e7t7c6KFlEOYRvHZdz)),
 launched for at most 450 steps from deployed merge SHA
@@ -278,8 +288,8 @@ workshop/order postconditions, and exposes job walk-group connectivity to the
 model. It also adds a view-specific `finish_topic_meeting` operation using the
 live-verified `OPTION1` key. Its deployed fresh-seed boundary smoke passed before
 attempt 5 launched. PR #72 adds factual governed action history and PR #73
-grounds BUILD footprints. The next candidate adds visible letter-option dialog
-input and factual, model-authored action/plan reviews; it still leaves every
+grounds BUILD footprints. PR #74 adds visible letter-option dialog input and
+factual, model-authored action/plan reviews; it still leaves every
 gameplay objective and command to the model. Review evidence comes only from a
 runner-authored allowlist, repeated commands are bound to a stable type+params
 fingerprint, and governed history retains at least the six entries required for

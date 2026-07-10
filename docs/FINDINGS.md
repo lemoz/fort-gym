@@ -427,13 +427,13 @@ caught by a failing public run and closed on the record.
   passes in seven region3 attempts. "Plays Dwarf Fortress" is not yet
   demonstrated — "solved one map" is.
 - **Small n.** The reliability claim rests on a five-run lineage; the endurance
-  result on one probe; the G6 verdict on seven runs; G7 on five failed attempts.
+  result on one probe; the G6 verdict on seven runs; G7 on six failed attempts.
   These are findings, not distributions.
 - **One policy family for most results.** GLM-5V-turbo produced the G4 passes
   and most of the G6 campaign; GPT-5.5 served the earlier G2/G3 passes.
   Cross-model generality is thin — two GPT-5.5-vision escalation runs are the
   only cross-family data points on the unseen map.
-- **G6 is unpassed; G7 attempts 1 through 5 failed.** Attempts 2, 3, 4, and 5 were
+- **G6 is unpassed; G7 attempts 1 through 6 failed.** Attempts 2 through 6 were
   infrastructure aborts, not policy verdicts. Score-v3 is active, but the
   chair-factory calibration gap (§2.4) remains part of its historical record.
   Attempt 1 demonstrated why the scalar is telemetry rather than the verdict:
@@ -441,8 +441,8 @@ caught by a failing public run and closed on the record.
 
 ## 4. What's next
 
-- **Attempt 5 failed; close the observed control-loop and dialog gaps before
-  attempt 6**: PR #70 requires one citizen
+- **Attempt 6 failed at the review boundary; harden that boundary before the
+  next fresh-seed attempt**: PR #70 requires one citizen
   to share its current DF walk group with both build target and selected item;
   reject invalid materials plus targets outside the conservative dry/visible
   FLOOR subset; verify resulting jobs; report walk-group connectivity without

@@ -179,8 +179,9 @@ With each action also submit:
   evidence ids,
   and reason. When review_due=yes, establish the first plan, continue the exact prior
   objective, or revise to a genuinely different objective. When review_due=no, use not_due unless
-  you voluntarily revise the objective. plan_review.objective must equal objective; the top-level
-  plan_step is the next plan step.
+  you voluntarily continue/review or revise the objective. `reason` may be omitted only for
+  decision=not_due. plan_review.objective must equal objective; the top-level plan_step is the
+  next plan step.
 - "memory_update" (optional): a fact worth remembering, as "label @ x,y,z: note" if it has a \
 location.
 
@@ -264,7 +265,6 @@ def _submit_action_tool() -> Dict[str, Any]:
                             "prior_objective",
                             "objective",
                             "evidence",
-                            "reason",
                         ],
                         "additionalProperties": False,
                     },
@@ -728,7 +728,6 @@ class DFHackGovernedLLMAgent(Agent):
             "request_id",
             "prior_objective",
             "objective",
-            "reason",
         ):
             error = self._scalar_contract_error(
                 plan_review.get(field), f"plan_review.{field}"
@@ -754,6 +753,15 @@ class DFHackGovernedLLMAgent(Agent):
         decision = str(plan_review.get("decision") or "")
         if decision not in {"not_due", "establish", "continue", "revise"}:
             return "plan_review.decision is invalid"
+        reason = plan_review.get("reason")
+        if decision != "not_due":
+            error = self._scalar_contract_error(reason, "plan_review.reason")
+            if error:
+                return error
+        elif reason not in (None, ""):
+            error = self._scalar_contract_error(reason, "plan_review.reason")
+            if error:
+                return error
         prior = str(control.get("prior_objective") or "")
         if self._normalized_prior_objective(
             plan_review.get("prior_objective")
@@ -804,8 +812,11 @@ class DFHackGovernedLLMAgent(Agent):
                 return "decision=revise must change the prior objective"
             if not same_objective and decision != "revise":
                 return "an objective change requires decision=revise"
-            if same_objective and decision != "not_due":
-                return "when review_due=no, unchanged objectives must use decision=not_due"
+            if same_objective and decision not in {"not_due", "continue"}:
+                return (
+                    "when review_due=no, unchanged objectives must use "
+                    "decision=not_due or continue"
+                )
         return None
 
     def decide(self, obs_text: str, obs_json: Dict[str, Any]) -> Dict[str, Any]:
@@ -837,7 +848,7 @@ class DFHackGovernedLLMAgent(Agent):
 
         control = obs_json.get("agent_plan_control") if isinstance(obs_json, dict) else None
         review_control = control if isinstance(control, dict) else None
-        max_contract_attempts = 2 if review_control is not None else 1
+        max_contract_attempts = 3 if review_control is not None else 1
         action = None
         last_error = "model returned no submit_action tool call"
         for attempt in range(max_contract_attempts):
@@ -870,7 +881,7 @@ class DFHackGovernedLLMAgent(Agent):
                             last_error = f"invalid action payload: {exc}"
                         else:
                             break
-            if review_control is not None and attempt == 0:
+            if review_control is not None and attempt + 1 < max_contract_attempts:
                 self._tool_events.append(
                     {
                         "tool": "governed_llm.review_contract_retry",
@@ -892,7 +903,7 @@ class DFHackGovernedLLMAgent(Agent):
         if action is None:
             if review_control is not None:
                 raise RuntimeError(
-                    "governed review contract failed before gameplay after one correction: "
+                    "governed review contract failed before gameplay after two corrections: "
                     + last_error
                 )
             return self._store_pending(obs_text, self._fallback_wait(last_error))
