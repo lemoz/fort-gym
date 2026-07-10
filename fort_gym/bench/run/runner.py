@@ -886,10 +886,12 @@ def _governed_gameplay_proof(
         key: result[key]
         for key in (
             "newly_designated",
+            "trees_designated",
             "already_designated",
             "non_wall_tiles",
             "created_job_ids",
             "building_id",
+            "placed_count",
             "before_carpenter_workshops",
             "after_carpenter_workshops",
             "before_workshops_of_kind",

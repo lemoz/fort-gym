@@ -1214,6 +1214,7 @@ def test_governed_action_history_calls_full_placement_gameplay_change() -> None:
     assert entry["outcome"] == "gameplay_state_changed"
     assert entry["placed_targets"] == ["(88,101,161)"]
     assert proof["ok"] is True
+    assert proof["helper_evidence"]["placed_count"] == 1
 
 
 def test_governed_action_history_separates_interface_effects_from_gameplay() -> None:
@@ -1367,6 +1368,19 @@ def test_governed_gameplay_proof_accepts_new_designations_and_jobs() -> None:
         )
     )
     assert proof["ok"] is True
+
+    proof = _governed_gameplay_proof(
+        **_governed_proof_kwargs(
+            action={
+                "type": "DIG",
+                "params": {"kind": "chop", "area": [90, 100, 161], "size": [3, 3, 1]},
+                "advance_ticks": 1000,
+            },
+            execute_result={"accepted": True, "result": {"trees_designated": 4}},
+        )
+    )
+    assert proof["ok"] is True
+    assert proof["helper_evidence"]["trees_designated"] == 4
 
     proof = _governed_gameplay_proof(
         **_governed_proof_kwargs(
