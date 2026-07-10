@@ -260,7 +260,7 @@ These systems are implemented (not roadmap):
 2. **Tools** (`fort_gym/bench/agent/tools.py`): `ToolManager` with memory/plan/perception tools wired into the review-mode agents.
 3. **Experimentation** (`fort_gym/bench/experiment/`): YAML config → `ExperimentRunner` → run with experiment metadata.
 
-The latest G7 result is attempt 11, run
+The latest gameplay-bearing G7 result is attempt 11, run
 `beaf1a3f0c99478bb504bdd8f004e2ec`
 ([replay](https://fortgym.live/r/SFFx5jWKPJxYYywMVIpXuw4d3vwRePna)),
 from deployed SHA `6e640757e880da17663d35c1522484c1da835b2f`. The operator stopped
@@ -272,15 +272,18 @@ productive and seven correctly recorded rejected BUILD attempts. It nevertheless
 produced zero food and drink, enclosed no spaces, installed no beds, and
 remained at population 7, so deterministic G7 correctly failed it.
 
-Attempt 11 isolated three factual control-loop defects: the embark Wagon's
-occupied footprint appeared as open floor in the agent minimap; a crop choice
-accepted while a FarmPlot was unfinished was erased when construction completed;
-and the prompt did not state clearly enough that a room needs a hollow boundary
-around passable interior rather than a solid block of walls. Corrections for
-those defects are being validated for attempt 12. They expose otherwise unknown
-occupied building tiles, reject premature crop assignment, and clarify the
-observed room and construction semantics without choosing objectives or actions
-for the model. Full findings and gate predicates are recorded in
+PR #81 deployed the three factual corrections exposed by attempt 11: otherwise
+unknown occupied buildings render as `o`, premature FARM crop assignment fails
+closed, and the room contract distinguishes a hollow boundary from a filled
+wall rectangle. A deployed smoke and live completed-plot probe passed.
+
+Attempt 12
+([replay](https://fortgym.live/r/fu-pA7GAYbvq8nfe0-VdlH7LRdLLKI1Q))
+then failed before gameplay because GLM-5.2 returned partial arguments when the
+API forced a specific tool. An exact-state no-execution probe showed the
+provider's documented `tool_choice=auto` transport returns the complete action
+schema. That transport correction is the candidate for attempt 13; gameplay
+validation remains open. Full findings and gate predicates are recorded in
 `docs/WDSLL.md`.
 
 **Success definition and gate ladder: [docs/WDSLL.md](docs/WDSLL.md)** — every claim of "the agent plays" must pass a gate there on public, replayable evidence.

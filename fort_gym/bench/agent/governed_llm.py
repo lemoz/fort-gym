@@ -1,7 +1,7 @@
 """LLM policy on the DFHack-governed legal action surface.
 
-One OpenRouter decision per step (default ``z-ai/glm-5.2``), forced
-through a single ``submit_action`` tool restricted to DIG/BUILD/ORDER/UNSUSPEND/FARM/LABOR/WAIT/INTERACT.
+One OpenRouter decision per step (default ``z-ai/glm-5.2``), submitted through
+a single ``submit_action`` tool restricted to DIG/BUILD/ORDER/UNSUSPEND/FARM/LABOR/WAIT/INTERACT.
 ``MemoryManager`` carries the plan, POIs, and failed attempts across steps.
 
 This module intentionally contains no gameplay heuristics: the model plus the
@@ -444,6 +444,12 @@ class DFHackGovernedLLMAgent(Agent):
             "tools": [_submit_action_tool()],
             "tool_choice": {"type": "function", "function": {"name": "submit_action"}},
         }
+        if self._model == "z-ai/glm-5.2":
+            # Z.AI documents auto as its supported function-selection mode.
+            # On the exact G7 observation, forced selection returned a partial
+            # argument object while auto returned the complete schema.
+            request_kwargs["tool_choice"] = "auto"
+            request_kwargs["parallel_tool_calls"] = False
         if self._settings.OPENROUTER_DISABLE_REASONING:
             request_kwargs["extra_body"] = {"reasoning": {"enabled": False, "exclude": True}}
         max_attempts = max(1, self._max_attempts)

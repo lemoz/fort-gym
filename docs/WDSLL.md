@@ -1438,8 +1438,42 @@ gate. Each entry states what changed and the evidence that forced it.
   Wagon tiles as `o` and rejected crop selection on a freshly placed stage-0/3
   FarmPlot. Focused verification is 232 passed and the full suite is 708 passed,
   5 live-only skipped, with changed-file Ruff, compileall, Lua `loadfile`, and
-  `git diff --check` passing. Independent Sol review reports no deployment
-  blockers; production deployment remains candidate work.
+  `git diff --check` passing. Independent Sol review reported no deployment
+  blockers. PR #81 passed CI, merged, and deployed as
+  `e9299f37e21c0efb63431f76c261b088742cd0a3`.
+
+- **2026-07-10 — PR #81 deployed boundary proof: PASS.** Four-step run
+  `175c2944061240ceb78e2e500bcb1571`
+  ([replay](https://fortgym.live/r/rumyS1d17ph0WnHDbfMAMd0nJpz-QGFp))
+  completed on the deployed SHA with four governed proof records, four
+  productive-change proofs, 4,020 real ticks, score-v4 64.3, and verified
+  cleanup. Its first governed observation exposed the embark Wagon as exactly
+  nine `o` tiles. A separate live no-policy probe placed a real FarmPlot: crop
+  selection rejected at stage 0/3, accepted for all four seasons at stage 3/3,
+  and the four selected crop ids remained unchanged after another 1,007 ticks.
+  The smoke's deterministic gate-v2 verdict correctly remained FAIL; this is
+  control-boundary proof, not G7 gameplay success.
+
+- **2026-07-10 — G7 attempt 12: INFRASTRUCTURE-ABORTED FAIL before gameplay;
+  GLM-5.2 forced-tool transport returned partial arguments.** Run
+  `6834a9ee41d54b629d88a56913a123dd`
+  ([replay](https://fortgym.live/r/fu-pA7GAYbvq8nfe0-VdlH7LRdLLKI1Q))
+  started from fresh `seed_region3_fresh` on the deployed PR #81 SHA with the
+  pinned OpenRouter `z-ai/glm-5.2` model. All three model calls omitted required
+  governed fields, so the review contract failed closed after two corrections;
+  no action executed and no tick advanced. The run recorded 20,313 prompt and
+  1,368 completion tokens, a durable `agent_decide_error`, and verified cleanup.
+
+  A no-execution probe then replayed the exact terminal observation. Forced
+  function selection again returned a partial `submit_action`, while Z.AI's
+  documented `tool_choice=auto` returned one complete tool call with every
+  governed action and review field. JSON-object mode also returned an action but
+  typed `plan_step` incorrectly, so it is not the selected path. The candidate
+  changes only GLM-5.2 transport to `auto` with parallel calls disabled. Every
+  existing parser, evidence check, review contract, legal action allowlist, and
+  fail-closed execution boundary remains unchanged. Local verification is 58
+  focused tests and 709 full-suite tests passed, 5 live-only skipped, with
+  changed-file Ruff, compileall, and `git diff --check` passing.
 
 ## Reporting format (every gate attempt)
 

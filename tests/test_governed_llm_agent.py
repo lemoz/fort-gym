@@ -78,11 +78,13 @@ def _agent(
     error: Exception | None = None,
     *,
     max_attempts: int = 1,
+    model_override: str | None = None,
 ) -> DFHackGovernedLLMAgent:
     agent = DFHackGovernedLLMAgent(
         api_key="test-key",
         max_attempts=max_attempts,
         memory_path=None,
+        model_override=model_override,
     )
     agent._client = _FakeClient(responses, error)
     return agent
@@ -481,7 +483,8 @@ def test_decide_returns_normalized_governed_action_and_writes_plan() -> None:
                     "advance_ticks": 800,
                 }
             )
-        ]
+        ],
+        model_override="openai/gpt-5.5",
     )
     action = agent.decide("Time: tick 100", {"work": {}})
     assert action["type"] == "DIG"
@@ -491,6 +494,30 @@ def test_decide_returns_normalized_governed_action_and_writes_plan() -> None:
     assert agent._memory.gameplay_plan["current_step"] == "dig starter room"
     request = agent._client.chat.completions.requests[0]
     assert request["tool_choice"] == {"type": "function", "function": {"name": "submit_action"}}
+    assert "parallel_tool_calls" not in request
+
+
+def test_glm52_uses_provider_supported_auto_tool_choice() -> None:
+    agent = _agent(
+        [
+            _submit_action_response(
+                {
+                    "type": "WAIT",
+                    "params": {},
+                    "intent": "advance real work",
+                    "advance_ticks": 1000,
+                }
+            )
+        ],
+        model_override="z-ai/glm-5.2",
+    )
+
+    action = agent.decide("Time: tick 100", {})
+
+    assert action["type"] == "WAIT"
+    request = agent._client.chat.completions.requests[0]
+    assert request["tool_choice"] == "auto"
+    assert request["parallel_tool_calls"] is False
 
 
 def test_review_contract_establishes_initial_agent_owned_plan() -> None:
@@ -1206,7 +1233,12 @@ def test_tool_choice_degrades_to_auto_on_provider_rejection() -> None:
                 {"type": "WAIT", "params": {}, "intent": "ok", "advance_ticks": 1000}
             )
 
-    agent = DFHackGovernedLLMAgent(api_key="test-key", max_attempts=1, memory_path=None)
+    agent = DFHackGovernedLLMAgent(
+        api_key="test-key",
+        max_attempts=1,
+        memory_path=None,
+        model_override="openai/gpt-5.5",
+    )
     picky = _PickyCompletions()
     agent._client = SimpleNamespace(chat=SimpleNamespace(completions=picky))
 

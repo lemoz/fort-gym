@@ -518,6 +518,22 @@ marks every otherwise-unclassified building footprint as occupied `o`, rejects
 FARM until the plot reaches maximum construction stage, and defines a room as a
 one-tile-thick hollow ring around untouched passable interior.
 
+### 2.16 G7 attempt 12: GLM-5.2 required its documented tool transport
+
+PR #81 deployed the attempt-11 corrections and passed a four-row fresh-seed
+smoke. The first observation showed all nine Wagon tiles as `o`; a live probe
+then proved crop selection rejects at FarmPlot stage 0/3, accepts at 3/3, and
+persists across another 1,007 ticks.
+
+Attempt 12, run `6834a9ee41d54b629d88a56913a123dd`
+([replay](https://fortgym.live/r/fu-pA7GAYbvq8nfe0-VdlH7LRdLLKI1Q)),
+tested pinned GLM-5.2 but failed before gameplay. Three forced `submit_action`
+calls returned partial argument objects and the review contract correctly
+refused to execute them. An exact-state no-execution comparison found that the
+provider's documented `tool_choice=auto` returned the complete governed schema;
+JSON mode returned a type-invalid field. The follow-up changes transport only,
+leaving governance and gameplay controls intact.
+
 ## 3. Limitations
 
 - **A single passing embark family.** Every pass (G0–G4) is on
@@ -525,15 +541,15 @@ one-tile-thick hollow ring around untouched passable interior.
   passes in seven region3 attempts. "Plays Dwarf Fortress" is not yet
   demonstrated — "solved one map" is.
 - **Small n.** The reliability claim rests on a five-run lineage; the endurance
-  result on one probe; the G6 verdict on seven runs; G7 on 11 failed attempts.
+  result on one probe; the G6 verdict on seven runs; G7 on 12 failed attempts.
   These are findings, not distributions.
 - **One policy family for most results.** GLM-5V-turbo produced the G4 passes
   and most of the G6 campaign; GPT-5.5 served the earlier G2/G3 passes.
   Cross-model generality is thin — two GPT-5.5-vision escalation runs are the
   only cross-family data points on the unseen map.
-- **G6 is unpassed; G7 attempts 1 through 11 failed.** Attempts 2 through 9 were
-  infrastructure aborts; attempts 10 and 11 are policy diagnostics. Score-v4
-  is active after the frozen-liquid measurement correction, while the
+- **G6 is unpassed; G7 attempts 1 through 12 failed.** Attempts 2 through 9 and
+  12 were infrastructure aborts; attempts 10 and 11 are policy diagnostics.
+  Score-v4 is active after the frozen-liquid measurement correction, while the
   chair-factory calibration gap (§2.4) remains part of score-v3's historical
   record.
   Attempt 1 demonstrated why the scalar is telemetry rather than the verdict:
@@ -541,14 +557,14 @@ one-tile-thick hollow ring around untouched passable interior.
 
 ## 4. What's next
 
-- **Attempt 11 exposed occupied-map, farm-stage, and hollow-ring facts; deploy
-  those corrections before attempt 12.** Keep the action surface policy-neutral,
-  strict review identity, the existing correction limit, and fail-closed BUILD
-  and FARM execution. A fresh run must convert real workshops and goods into
-  sustained production, installed furniture, and multiple enclosed rooms.
+- **Attempt 12 exposed a GLM-5.2 transport mismatch; deploy the exact-state
+  proven `tool_choice=auto` correction before attempt 13.** Keep strict review
+  identity, the existing correction limit, and fail-closed execution. A fresh
+  run must convert real workshops and goods into sustained production, installed
+  furniture, and multiple enclosed rooms.
 - **G6 remains open**: the best unseen-map run reached 4/5 and missed only its
-  second functional room. G7 attempt 11 ran on the same unseen seed, so attempt
-  12 can test the corrected facts without a separate blind retry campaign.
+  second functional room. G7 attempt 13 can test the corrected facts and
+  GLM-5.2 transport without a separate blind retry campaign.
 - **G8 — depth**: a multi-z fortress (stairs, underground rooms), the next
   spatial-reasoning escalation after the hollow ring is actually demonstrated.
 - **The open-source flywheel**: a standing public leaderboard where any model
