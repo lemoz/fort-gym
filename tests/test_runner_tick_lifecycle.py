@@ -470,6 +470,11 @@ def test_vanished_order_jobs_remain_ineligible_in_complete_trace(tmp_path, monke
     )
 
     row = _trace_rows(tmp_path, run_id)[0]
+    assert row["score_version"] == 5
+    assert row["score"]["version"] == 5
+    assert row["metrics"]["score_version"] == 5
+    score_event = next(event for event in row["events"] if event["type"] == "score")
+    assert score_event["data"]["version"] == 5
     assert row["execute"]["accepted"] is True
     assert row["execute"]["gameplay_progress_eligible"] is False
     assert row["metrics"]["gameplay_progress_eligible"] is False

@@ -107,10 +107,40 @@ def _effective_action_history_limit(configured: Any, *, governed: bool) -> int:
     return max(minimum, int(configured))
 
 
+def _write_jsonl_record(fh: Any, record: Dict[str, Any]) -> None:
+    payload = dict(record)
+    payload.setdefault("score_version", scoring.SCORE_VERSION)
+    if isinstance(payload.get("metrics"), dict):
+        metrics_payload = dict(payload["metrics"])
+        metrics_payload.setdefault("score_version", scoring.SCORE_VERSION)
+        payload["metrics"] = metrics_payload
+    if isinstance(payload.get("score"), dict):
+        score_payload = dict(payload["score"])
+        score_payload.setdefault("version", scoring.SCORE_VERSION)
+        payload["score"] = score_payload
+    if isinstance(payload.get("events"), list):
+        versioned_events = []
+        for event in payload["events"]:
+            if not isinstance(event, dict) or event.get("type") != "score":
+                versioned_events.append(event)
+                continue
+            event_payload = dict(event)
+            data_payload = (
+                dict(event_payload["data"])
+                if isinstance(event_payload.get("data"), dict)
+                else {}
+            )
+            data_payload.setdefault("version", scoring.SCORE_VERSION)
+            event_payload["data"] = data_payload
+            versioned_events.append(event_payload)
+        payload["events"] = versioned_events
+    fh.write(json.dumps(payload) + "\n")
+
+
 def _write_durable_jsonl_record(fh: Any, record: Dict[str, Any]) -> None:
     """Make a terminal trace row durable before publishing terminal status."""
 
-    fh.write(json.dumps(record) + "\n")
+    _write_jsonl_record(fh, record)
     fh.flush()
     fsync(fh.fileno())
 
@@ -3007,7 +3037,7 @@ def run_once(
                         "validation": validation,
                         "events": events,
                     }
-                    fh.write(json.dumps(record_line) + "\n")
+                    _write_jsonl_record(fh, record_line)
                     if registry:
                         registry.set_status(run_identifier, step=step)
                     continue
@@ -3027,7 +3057,7 @@ def run_once(
                         "validation": validation,
                         "events": events,
                     }
-                    fh.write(json.dumps(record_line) + "\n")
+                    _write_jsonl_record(fh, record_line)
                     if registry:
                         registry.set_status(run_identifier, step=step)
                     continue
@@ -3112,7 +3142,7 @@ def run_once(
                         "metrics": {},
                         "events": events,
                     }
-                    fh.write(json.dumps(record_line) + "\n")
+                    _write_jsonl_record(fh, record_line)
                     if registry:
                         registry.set_status(run_identifier, step=step)
                     continue
@@ -3653,6 +3683,7 @@ def run_once(
                             "score_provenance"
                         ] = "keystroke_no_current_gameplay_progress"
                     score_elapsed_ticks = scoreable_elapsed_ticks
+                metrics_snapshot["score_version"] = scoring.SCORE_VERSION
                 metrics_snapshot["run_elapsed_ticks"] = score_elapsed_ticks
                 publish_event(step, "metrics", {"metrics": metrics_snapshot}, events)
 
@@ -3690,6 +3721,7 @@ def run_once(
                     "score",
                     {
                         "value": score_value,
+                        "version": scoring.SCORE_VERSION,
                         "milestones": milestone_notes,
                     },
                     events,
@@ -3799,6 +3831,7 @@ def run_once(
                 record_line = {
                     "run_id": run_identifier,
                     "step": step,
+                    "score_version": scoring.SCORE_VERSION,
                     "observation": obs_json,
                     "observation_text": obs_text,
                     "action": action,
@@ -3809,6 +3842,7 @@ def run_once(
                     "metrics": metrics_snapshot,
                     "score": {
                         "value": score_value,
+                        "version": scoring.SCORE_VERSION,
                         "milestones": milestone_notes,
                     },
                     "events": events,
@@ -3828,7 +3862,7 @@ def run_once(
                     record_line["tick_degraded"] = degraded_tick
                 if terminal_reason is not None:
                     record_line["terminal_reason"] = terminal_reason
-                fh.write(json.dumps(record_line) + "\n")
+                _write_jsonl_record(fh, record_line)
 
                 if terminal_reason is not None:
                     # Persist the terminal event now; status waits for DF cleanup below.

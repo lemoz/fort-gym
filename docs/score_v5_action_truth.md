@@ -33,6 +33,12 @@ queue churn moved the displayed score.
   and concurrent unrelated state changes are uncredited evidence.
 - Coefficients and the G7 scalar threshold remain unchanged at 150.
 
+Every score-v5 trace row carries its score version at the record, metrics, and
+score-event boundaries. Re-summarization fails closed when rows are
+unversioned, empty, malformed, internally inconsistent, non-integer,
+mixed-version, or from a different evaluator version; historical runs must use
+the summary artifact produced by their original scoring era.
+
 This is a measurement boundary, so v4 and v5 scores are not comparable. Public
 leaderboards already partition by score version and seed. Attempt 19 remains a
 v4 control; the first matched rerun after deployment is score-v5.
