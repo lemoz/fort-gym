@@ -67,8 +67,9 @@ when optional x2/y2 are given, within 24 tiles of your fort; unlike a workshop i
 material item. Dwarves with the farming labor plant seasonal crops on it IF seeds are available \
 (the embark carries plump helmet spawn); the harvested crops become brewable/cookable plants. The \
 observation's crew section reports a farm_plots count. \
-Furniture kinds install an already-produced item of that type as a 1x1 building, anywhere within \
-24 tiles of your fort — a dwarf hauls and installs it over time; furnishing an enclosed space is \
+Furniture kinds install an already-produced item of that type as a 1x1 building on an unoccupied \
+open-floor tile within 24 tiles of your fort — a dwarf hauls and installs it over time; furnishing \
+an enclosed space is \
 what turns it into a functional room. Installing furniture requires a finished item in \
 stock (see "Finished goods in play"); installed beds/doors/tables/chairs make rooms functional. \
 Wall and Floor kinds place construction segments: a single tile at (x, y, z), or a line up to 10 \
@@ -128,7 +129,14 @@ The observation includes a Fort minimap — a top-down character grid (and, when
 same grid rendered as a color image) of your fort area with a \
 coordinate ruler (W=your walls, x=your queued wall/floor a dwarf is still building — never \
 re-place on an x tile, advance time instead, b/t/c/d=furniture, w=workshop, .=open floor). It is the \
-authoritative view for wall geometry: an enclosure must form a complete hollow ring with floor \
+authoritative view for BUILD placement and wall geometry. Before submitting any BUILD, derive its \
+full target footprint and verify every target tile is `.` open floor in the current minimap. Never \
+target `b`, `t`, `c`, `d`, `w`, or `x`, a coordinate listed under Furniture positions, or a \
+coordinate just reported under Failed tiles. If the footprint is not provably open and unoccupied, \
+choose a different valid tile or a different productive action; WAIT only when advancing the \
+simulation can change the relevant world state, and name the change you expect. Do not retry a \
+rejected target until an observed fact about that tile changes. An enclosure must form a complete \
+hollow ring with floor \
 inside; trace it on the minimap and wall the gaps. It also gives the recorded game screen text \
 plus derived work metrics (the `work` fields): wall vs floor tile counts, dig designations, \
 active jobs, workshop counts and usability, and manager order counts. Read them to see whether \

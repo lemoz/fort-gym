@@ -77,6 +77,15 @@ def test_governed_system_prompt_teaches_wall_construction() -> None:
     assert "x2" in GOVERNED_SYSTEM_PROMPT
 
 
+def test_governed_system_prompt_requires_build_target_preflight() -> None:
+    assert "unoccupied open-floor tile" in GOVERNED_SYSTEM_PROMPT
+    assert "Before submitting any BUILD" in GOVERNED_SYSTEM_PROMPT
+    assert "`b`, `t`, `c`, `d`, `w`, or `x`" in GOVERNED_SYSTEM_PROMPT
+    assert "Furniture positions" in GOVERNED_SYSTEM_PROMPT
+    assert "Failed tiles" in GOVERNED_SYSTEM_PROMPT
+    assert "Do not retry a rejected target" in GOVERNED_SYSTEM_PROMPT
+
+
 def test_governed_system_prompt_describes_still_and_brew_mechanic_only() -> None:
     # Still rides the existing BUILD action type, brew rides ORDER -- no new
     # governed type for either.
