@@ -133,9 +133,10 @@ authoritative view for BUILD placement and wall geometry. Before submitting any 
 full target footprint and verify every target tile is `.` open floor in the current minimap. Never \
 target `b`, `t`, `c`, `d`, `w`, or `x`, a coordinate listed under Furniture positions, or a \
 coordinate just reported under Failed tiles. If the footprint is not provably open and unoccupied, \
-choose a different valid tile or a different productive action; WAIT only when an active job can \
-change the relevant world state. Do not retry a rejected target until an observed fact about that \
-tile changes. An enclosure must form a complete hollow ring with floor \
+choose a different valid tile or a different productive action; WAIT only when advancing the \
+simulation can change the relevant world state, and name the change you expect. Do not retry a \
+rejected target until an observed fact about that tile changes. An enclosure must form a complete \
+hollow ring with floor \
 inside; trace it on the minimap and wall the gaps. It also gives the recorded game screen text \
 plus derived work metrics (the `work` fields): wall vs floor tile counts, dig designations, \
 active jobs, workshop counts and usability, and manager order counts. Read them to see whether \
