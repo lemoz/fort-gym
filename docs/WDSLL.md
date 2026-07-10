@@ -1225,6 +1225,47 @@ gate. Each entry states what changed and the evidence that forced it.
   688 passed, 4 skipped, plus changed-file Ruff, compileall, and
   `git diff --check`; deployment proof remains candidate work.
 
+- **2026-07-10 — G7 attempt 8: INFRASTRUCTURE-ABORTED FAIL after real room
+  construction work.** PR #77 passed CI, merged, and deployed as
+  `9f9cdffc96449ad57f672c037bd12f057b6a4247`; the intermediate PR #76 merge was
+  never deployed. A four-step fresh-seed smoke on the deployed SHA completed
+  with verified cleanup, repaired a two-error review response in one bounded
+  correction, chopped trees, and completed a Carpenter's Workshop through real
+  dwarf labor.
+
+  Attempt 8 run `89c7ac68126541888140f6754a50f6f1`
+  ([live replay](https://fortgym.live/r/cJWntNq83M0zo-n1NJT6vw7huU8OVur6))
+  then launched for 450 steps with the pinned GLM-5V OpenRouter policy, memory
+  off, Anthropic disabled, and the fresh region3 seed. It failed before gameplay
+  at step 22 after 22 durable gameplay rows and 21,193 real ticks. Evidence is
+  complete: all 22 rows have governed provenance, screen text, and gameplay
+  proof; `gameplay_proof.ok` is 17/22. Whole-run model use, including the three
+  terminal submissions, was 36 calls, 387,446 prompt tokens, and 17,287
+  completion tokens.
+
+  The policy made genuine structural progress: it completed a Carpenter's
+  Workshop, produced three beds and one door, adapted from rejected workshop
+  placement by chopping trees, and completed 24 construction tiles. It detected
+  a shrub obstruction, designated it for gathering, recognized a separate
+  pebble tile as unusable for the wall helper, revised its objective, and began
+  using doors as an alternate enclosure strategy. It still had zero FarmPlots,
+  Stills, installed furniture, enclosed spaces, functional rooms, or food/drink
+  production; drink consumption was 5 and no dwarf died. Deterministic G7 is
+  FAIL: duration 21,193/403,200, population 7/15, rooms 0/3, installed beds 0/3,
+  scalar 86.97/150, and both production loops fail; evidence, neglect deaths,
+  and rubric 82.80 with no blockers pass.
+
+  The terminal failure was output truncation, not a game-state decision. Each
+  of the three GLM-5V responses used exactly the configured 512 completion
+  tokens; two ended without `submit_action`, and the third ended with an
+  incomplete `plan_review`. A no-execution shadow on the exact failed
+  observation with a 1,024-token budget passed on its first response, used 830
+  completion tokens, chose a legal bed installation, and advanced zero ticks.
+  The follow-up pins only the GLM-5V governed variant to 1,024 tokens; the
+  factual contract, correction count, legal action surface, and scoring remain
+  unchanged. Local verification is 689 passed, 4 skipped, plus changed-file
+  Ruff, compileall, and `git diff --check`.
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,

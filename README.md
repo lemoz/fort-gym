@@ -256,19 +256,20 @@ These systems are implemented (not roadmap):
 2. **Tools** (`fort_gym/bench/agent/tools.py`): `ToolManager` with memory/plan/perception tools wired into the review-mode agents.
 3. **Experimentation** (`fort_gym/bench/experiment/`): YAML config → `ExperimentRunner` → run with experiment metadata.
 
-The latest G7 result is attempt 7, run
-`82e5c2e18f6847f1bc251158e273f53e`
-([replay](https://fortgym.live/r/5dk997_GsCm1IJoKzGL_cLy8On3U7Hxz)),
-from deployed SHA `b38c40a255db62ae52c940f81883c8097e7ac273`. It made genuine
-early progress through legal governed actions and real simulation ticks: a
-completed Carpenter's Workshop and Still, two beds, one door, four new barrels,
-and 50 units of run-scoped drink. It still had zero FarmPlots, installed
-furniture, enclosed spaces, or functional rooms. The run failed before gameplay
-at step 17 because its bounded model-correction loop exposed contract errors one
-at a time. It advanced 17,064 ticks and is an infrastructure-aborted G7 FAIL
-with no long-horizon policy verdict. The correction path now preserves the
-rejected payload and aggregates every independently detectable action and review
-error before spending another model submission.
+The latest G7 result is attempt 8, run
+`89c7ac68126541888140f6754a50f6f1`
+([replay](https://fortgym.live/r/cJWntNq83M0zo-n1NJT6vw7huU8OVur6)),
+from deployed SHA `9f9cdffc96449ad57f672c037bd12f057b6a4247`. It made genuine
+room-building progress through legal governed actions and real simulation
+ticks: a completed Carpenter's Workshop, three beds, one door, and 24
+construction tiles. It still had zero FarmPlots, installed furniture, enclosed
+spaces, functional rooms, or food/drink production. The run failed before
+gameplay at step 22 because all three GLM-5V responses exhausted the configured
+512-token output ceiling. It advanced 21,193 ticks and is an
+infrastructure-aborted G7 FAIL with no long-horizon policy verdict. The exact
+failed observation passed a no-execution shadow on its first response with a
+1,024-token budget, so the pinned GLM-5V variant now receives that headroom
+without changing the legal surface or gate.
 
 Attempt 5, run `680a938aabd84764953dd01c0ccf1c7f`
 ([replay](https://fortgym.live/r/88uZqRulANyNG_e7t7c6KFlEOYRvHZdz)),
