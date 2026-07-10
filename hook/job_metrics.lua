@@ -110,6 +110,9 @@ local out = {
     total = 0,
     dig = 0,
     construct_building = 0,
+    construct_building_walk_group_connected = 0,
+    construct_building_walk_group_disconnected = 0,
+    construct_building_walk_group_unknown = 0,
     workshop_task = 0,
     suspended = 0,
     entries = {},
@@ -118,9 +121,34 @@ local out = {
 }
 
 -- citizens and labors
+local citizen_units = {}
+
+local function unit_position(unit)
+  local ok, x, y, z = pcall(function() return dfhack.units.getPosition(unit) end)
+  if not ok or x == nil or y == nil or z == nil or x < 0 or y < 0 or z < 0 then
+    return nil
+  end
+  return { x = x, y = y, z = z }
+end
+
+local function item_position(item)
+  local ok, x, y, z = pcall(function() return dfhack.items.getPosition(item) end)
+  if not ok or x == nil or y == nil or z == nil or x < 0 or y < 0 or z < 0 then
+    return nil
+  end
+  return { x = x, y = y, z = z }
+end
+
 for _, unit in ipairs(df.global.world.units.active) do
   local ok, is_citizen = pcall(function() return dfhack.units.isCitizen(unit) end)
   if ok and is_citizen then
+    local path_pos = unit_position(unit)
+    local ok_available, available = pcall(function()
+      return not dfhack.units.isDead(unit) and not (unit.flags1 and unit.flags1.caged)
+    end)
+    if ok_available and available and path_pos then
+      table.insert(citizen_units, { unit = unit, pos = path_pos })
+    end
     out.citizens.total = out.citizens.total + 1
     local has_job = unit.job and unit.job.current_job and true or false
     if not has_job then out.citizens.idle = out.citizens.idle + 1 end
@@ -155,6 +183,51 @@ for _, unit in ipairs(df.global.world.units.active) do
   end
 end
 
+local function construction_job_connectivity(job)
+  local items = {}
+  for _, item_ref in ipairs(job.items) do
+    if item_ref.item then
+      local pos = item_position(item_ref.item)
+      if not pos then return 'unknown', {} end
+      table.insert(items, { item = item_ref.item, pos = pos })
+    end
+  end
+  if #items == 0 or df.global.world.reindex_pathfinding then return 'unknown', items end
+
+  local checked = false
+  local unknown_seen = false
+  for _, citizen in ipairs(citizen_units) do
+    local ok_target, target_connected = pcall(function()
+      return dfhack.maps.canWalkBetween(citizen.pos, job.pos)
+    end)
+    if not ok_target then
+      unknown_seen = true
+    else
+      checked = true
+      if target_connected then
+        local all_items_connected = true
+        for _, entry in ipairs(items) do
+          local ok_item, item_connected = pcall(function()
+            return dfhack.maps.canWalkBetween(citizen.pos, entry.pos)
+          end)
+          if not ok_item then
+            unknown_seen = true
+            all_items_connected = false
+            break
+          end
+          if not item_connected then
+            all_items_connected = false
+            break
+          end
+        end
+        if all_items_connected then return 'connected', items end
+      end
+    end
+  end
+  if unknown_seen then return 'unknown', items end
+  return checked and 'disconnected' or 'unknown', items
+end
+
 -- world job list
 local link = df.global.world.jobs.list.next
 while link do
@@ -167,15 +240,41 @@ while link do
     elseif name == 'ConstructBuilding' then
       out.jobs.construct_building = out.jobs.construct_building + 1
     end
+    local walk_group_connectivity, assigned_items = nil, nil
+    if name == 'ConstructBuilding' then
+      walk_group_connectivity, assigned_items = construction_job_connectivity(job)
+      local count_key = 'construct_building_walk_group_' .. walk_group_connectivity
+      out.jobs[count_key] = out.jobs[count_key] + 1
+    end
     local suspended = job.flags.suspend and true or false
     if suspended then out.jobs.suspended = out.jobs.suspended + 1 end
     if #out.jobs.entries < MAX_JOB_ENTRIES then
-      table.insert(out.jobs.entries, {
+      local entry = {
         type = name,
         pos = { job.pos.x, job.pos.y, job.pos.z },
         suspended = suspended,
         has_worker = job_has_worker(job),
-      })
+      }
+      if name == 'ConstructBuilding' then
+        entry.walk_group_connectivity = walk_group_connectivity
+        entry.assigned_items = {}
+        for _, assigned in ipairs(assigned_items or {}) do
+          table.insert(entry.assigned_items, {
+            id = assigned.item.id,
+            pos = { assigned.pos.x, assigned.pos.y, assigned.pos.z },
+          })
+        end
+        local first = assigned_items and assigned_items[1] or nil
+        if first then
+          entry.assigned_item_id = first.item.id
+          entry.assigned_item_pos = {
+            first.pos.x,
+            first.pos.y,
+            first.pos.z,
+          }
+        end
+      end
+      table.insert(out.jobs.entries, entry)
     end
   end
   link = link.next

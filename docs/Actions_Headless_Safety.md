@@ -4,16 +4,31 @@ fort-gym executes DFHack actions exclusively through curated Lua helpers stored 
 
 ## CLI Wrappers
 
-- `hook/order_make.lua` enqueues manager orders for a limited set of goods (`bed`, `door`, `table`, `chair`, `barrel`, `bin`). Quantities are clamped to 1–5 and the script returns JSON describing the outcome.
+- `hook/order_make.lua` enqueues real jobs for a limited set of goods (`bed`, `door`, `table`, `chair`, `barrel`, `bin`, `brew`). Quantities are clamped to 1–5. The matching workshop must exist and be complete, and the hook returns success only after linking exactly that many concrete jobs into the workshop. It does not also insert a duplicate manager order, or report a manager record or missing `orders` script as completed enqueueing.
 - `hook/designate_rect.lua` designates dig/channel rectangles or, with kind `chop`, designates the tree trunks inside the rect for felling (the same designation a player sets with d-t; woodcutters with an axe then fell them over real time). Rectangles are limited to 30×30 tiles. The dig/channel result reports `newly_designated` / `already_designated` / `non_wall_tiles` / `missing_tiles` counts so a re-designation of already-designated tiles is visibly a no-op (`newly_designated=0`); the chop result reports `trees_designated` / `already_designated` / `non_tree_tiles`. (The previous chop implementation invoked `autochop now`, which does not exist as a script on DFHack v0.47.05 — it was a silent no-op that still reported ok.)
 - `hook/complete_dig_rect.lua` completes bounded dig designations by converting designated wall tiles to floor tiles. It is intentionally labeled as DFHack completion, not dwarf labor, and reports changed/skipped tiles as JSON. This helper is not part of gameplay scoring.
-- `hook/build_workshop.lua` places a bounded 3×3 carpenter workshop in either the starter room or the planned workshop annex via DFHack building APIs and returns before/after workshop counts. The placement footprint is bounded in Python before the call; the building-material lookup itself scans world items globally for the nearest legal item.
+- `hook/build_construction.lua`, `hook/build_workshop.lua`, and
+  `hook/place_furniture.lua` use existing items and create ordinary
+  `ConstructBuilding` jobs. Placement fails closed on hidden, occupied, wet, or
+  non-floor targets. This is intentionally a conservative dry/visible FLOOR
+  subset of legal placement, not the full vanilla placement surface. Material
+  selection requires the target and selected item to share one living
+  citizen's current DF walk group; geometric proximity alone is not sufficient,
+  and placement fails closed while DF is rebuilding path data. Successful
+  responses verify that the resulting job is linked to the selected item. A
+  mixed legal/illegal construction rectangle reports every applied and rejected
+  tile as `partial_placement` and is not accepted as full command success.
 - `hook/work_metrics.lua` reads bounded target-room progress for the default clean 5×5 starter room (`50,35,0` to `54,39,0`), plus the planned east connector (`55,37,0` to `57,37,0`) and workshop room (`58,35,0` to `62,39,0`). Scorecards use this to distinguish elapsed ticks, designations, actual tile completion, bounded utility/production starts, and visible fortress complexity. The room plan (`two_room_workshop`) is currently hardcoded.
 - `hook/map_snapshot.lua` reads a bounded tile rectangle (max 64×64, single z-level) for the derived "Map Inspect" replay layer. Read-only; explicitly not gameplay proof.
 - `hook/view_state.lua` reads the live DF viewport and cursor without mutating anything; `hook/restore_view_state.lua` writes them back. The runner wraps governed target discovery with this pair so helper probes preserve the live camera/cursor.
 - `hook/prepare_keystroke_target.lua` searches for legal work/material/workshop targets near citizens (bounded search radii, 10s timeout). Read-only discovery; used by keystroke mode and (view-state-preserved) by governed mode.
 - `hook/job_metrics.lua` reports crew/jobs, completed-stage furniture, farms,
-  workshops, and raw dead-citizen facts without mutating game state.
+  workshops, and raw dead-citizen facts without mutating game state. Pending
+  construction jobs include every assigned item's resolved position and current
+  walk-group connectivity (`connected`, `disconnected`, or `unknown`). This is
+  an engine connectivity snapshot, not a claim that a dwarf has accepted or can
+  complete the haul; `unknown` is reported while path data is rebuilding or
+  cannot be read.
 - `hook/g7_evidence.lua` owns a run-scoped DFHack event/eat-history ledger for
   cumulative food/drink production and consumption plus immediate death facts.
 
@@ -43,6 +58,13 @@ fort-gym executes DFHack actions exclusively through curated Lua helpers stored 
   explicit zero ticks, a paused allowlisted viewscreen, and an enabled governed
   capability; it never earns progress credit. This path treats DFHack as a
   legal command transport, not as direct state mutation.
+- `INTERACT finish_topic_meeting` is additionally restricted to
+  `viewscreen_topicmeetingst` and sends exactly one `OPTION1`, the live-verified
+  semantic key only when the exact visible
+  `a - Finish peeking in on conversation` choice is present. If that option
+  remains after injection, the action is recorded as `interaction_no_effect`
+  rather than success. It remains zero-tick, paused-only, and subject to the
+  same modal budgets.
 - Governed and keystroke runs record a real CopyScreen `screen_text` frame into every trace record for replay evidence; governed helper probes preserve/restore the live viewport via `view_state.lua`/`restore_view_state.lua`.
 - `summary.json` includes a separate `rubric` section that judges legal evidence, repetition, production, layout breadth, and plan coherence over recent trace history. A high scalar score without broad legal progress should show rubric blockers.
 - All scripts run from `/opt/dwarf-fortress`, ensuring relative includes resolve and dfhack resources remain available.

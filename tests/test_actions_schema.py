@@ -121,6 +121,16 @@ def test_interact_schema_accepts_only_a_semantic_operation_with_zero_ticks() -> 
     assert action["params"] == {"operation": "confirm"}
     assert validate_action({}, action) == (True, None)
 
+    topic_action = parse_action(
+        {
+            "type": "INTERACT",
+            "params": {"operation": "finish_topic_meeting"},
+            "advance_ticks": 0,
+        }
+    )
+    assert topic_action["params"] == {"operation": "finish_topic_meeting"}
+    assert validate_action({}, topic_action) == (True, None)
+
 
 @pytest.mark.parametrize(
     ("action", "reason"),

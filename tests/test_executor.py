@@ -221,6 +221,75 @@ def test_dfhack_interact_maps_each_operation_to_one_bounded_interface_key(monkey
     assert calls == [[key] for key in expected.values()]
 
 
+def test_dfhack_interact_finish_topic_meeting_is_one_key_and_view_specific(monkeypatch) -> None:
+    calls: list[list[str]] = []
+
+    def fake_execute_keystroke_action(keys: list[str]) -> Dict[str, object]:
+        calls.append(keys)
+        return {"ok": True, "keys_sent": len(keys)}
+
+    monkeypatch.setattr(
+        "fort_gym.bench.env.executor.execute_keystroke_action",
+        fake_execute_keystroke_action,
+    )
+    executor = Executor(dfhack_client=_ConnectedDFHackClient())
+    action = {
+        "type": "INTERACT",
+        "params": {"operation": "finish_topic_meeting"},
+        "advance_ticks": 0,
+    }
+
+    accepted = executor.apply(
+        action,
+        backend="dfhack",
+        state={
+            "pause_state": True,
+            "viewscreen_type": "viewscreen_topicmeetingst",
+            "screen_text": "a - Finish peeking in on conversation",
+        },
+        allow_interact=True,
+    )
+    rejected = executor.apply(
+        action,
+        backend="dfhack",
+        state={"pause_state": True, "viewscreen_type": "viewscreen_textviewerst"},
+        allow_interact=True,
+    )
+    missing_option = executor.apply(
+        action,
+        backend="dfhack",
+        state={
+            "pause_state": True,
+            "viewscreen_type": "viewscreen_topicmeetingst",
+            "screen_text": "b - Discuss another matter",
+        },
+        allow_interact=True,
+    )
+
+    assert accepted["accepted"] is True
+    assert accepted["result"] == {
+        "ok": True,
+        "keys_sent": 1,
+        "operation": "finish_topic_meeting",
+        "interface_key": "OPTION1",
+    }
+    assert rejected == {
+        "accepted": False,
+        "why": (
+            "INTERACT operation 'finish_topic_meeting' is not allowed on DF viewscreen "
+            "'viewscreen_textviewerst'"
+        ),
+    }
+    assert missing_option == {
+        "accepted": False,
+        "why": (
+            "INTERACT finish_topic_meeting requires the visible option "
+            "'a - Finish peeking in on conversation'"
+        ),
+    }
+    assert calls == [["OPTION1"]]
+
+
 def test_dfhack_interact_fails_closed_without_governed_capability(monkeypatch) -> None:
     monkeypatch.setattr(
         "fort_gym.bench.env.executor.execute_keystroke_action",

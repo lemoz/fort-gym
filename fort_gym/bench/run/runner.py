@@ -30,6 +30,7 @@ from ..dfhack_backend import (
     stop_g7_evidence,
 )
 from ..env.actions import (
+    FINISH_TOPIC_MEETING_OPTION_TEXT,
     INTERACT_ALLOWED_VIEWSCREEN_TYPES,
     parse_action,
     validate_action,
@@ -78,6 +79,7 @@ GOVERNED_DFHACK_ACTIONS = {
 MAX_CONSECUTIVE_ZERO_TICKS = 3
 MAX_INTERACT_OPERATIONS_PER_MODAL = 8
 MAX_UNCHANGED_INTERACT_SCREENS = 3
+SCREEN_CAPTURE_FAILED = "(screen capture failed)"
 
 
 def _screen_sha256(screen_text: str | None) -> str:
@@ -97,6 +99,8 @@ def _interact_context_reason(
     backend_name: str,
     is_governed_dfhack_mode: bool,
     state: Dict[str, Any],
+    action: Dict[str, Any] | None = None,
+    screen_text: str | None = None,
 ) -> str | None:
     """Reject semantic UI input unless DF attests a paused interactive view."""
 
@@ -107,6 +111,15 @@ def _interact_context_reason(
     viewscreen_type = str(state.get("viewscreen_type") or "unknown")
     if viewscreen_type not in INTERACT_ALLOWED_VIEWSCREEN_TYPES:
         return f"INTERACT is not allowed on DF viewscreen {viewscreen_type!r}"
+    operation = (action or {}).get("params", {}).get("operation")
+    if (
+        operation == "finish_topic_meeting"
+        and FINISH_TOPIC_MEETING_OPTION_TEXT not in (screen_text or "")
+    ):
+        return (
+            "INTERACT finish_topic_meeting requires the visible option "
+            f"{FINISH_TOPIC_MEETING_OPTION_TEXT!r}"
+        )
     return None
 
 
@@ -1954,7 +1967,7 @@ def run_once(
                 try:
                     return dfhack_client.get_screen_text(include_visual_hints=True)
                 except Exception:
-                    return "(screen capture failed)"
+                    return SCREEN_CAPTURE_FAILED
 
     else:
         fail_setup_after_cleanup()
@@ -2598,6 +2611,8 @@ def run_once(
                         backend_name=backend_name,
                         is_governed_dfhack_mode=is_governed_dfhack_mode,
                         state=obs_json,
+                        action=action,
+                        screen_text=screen_text,
                     )
                     valid = reason is None
                 validation = {"valid": valid, "reason": reason}
@@ -2619,8 +2634,11 @@ def run_once(
                     continue
 
                 try:
+                    apply_state = obs_json
+                    if action.get("type") == "INTERACT":
+                        apply_state = {**obs_json, "screen_text": screen_text}
                     execute_result = call_with_retry(
-                        "apply", lambda: apply_action(action, obs_json)
+                        "apply", lambda: apply_action(action, apply_state)
                     )
                 except DFHackError:
                     run_failed = True
@@ -2657,10 +2675,15 @@ def run_once(
                     }
                     if execute_result.get("accepted", False):
                         assisted_dfhack_action_seen = True
-                publish_event(step, "execute", {"result": execute_result}, events)
+                if action.get("type") != "INTERACT":
+                    publish_event(step, "execute", {"result": execute_result}, events)
                 state_after_apply = execute_result.get("state") or state_before
 
-                if registry and registry.stop_requested(run_identifier):
+                if (
+                    action.get("type") != "INTERACT"
+                    and registry
+                    and registry.stop_requested(run_identifier)
+                ):
                     run_stopped = True
                     publish_event(
                         step,
@@ -2750,6 +2773,10 @@ def run_once(
                     viewscreen_after = str(advance_state.get("viewscreen_type") or "unknown")
                     screen_before_sha256 = _screen_sha256(screen_text)
                     screen_after_sha256 = _screen_sha256(interaction_screen_after)
+                    screen_changed = (
+                        screen_before_sha256 != screen_after_sha256
+                        or viewscreen_before != viewscreen_after
+                    )
                     interaction_audit = {
                         "operation": interaction_result.get("operation"),
                         "interface_key": interaction_result.get("interface_key"),
@@ -2760,14 +2787,36 @@ def run_once(
                         "pause_after": advance_state.get("pause_state"),
                         "screen_before_sha256": screen_before_sha256,
                         "screen_after_sha256": screen_after_sha256,
-                        "screen_changed": (
-                            screen_before_sha256 != screen_after_sha256
-                            or viewscreen_before != viewscreen_after
-                        ),
+                        "screen_changed": screen_changed,
                     }
+                    if interaction_result.get("operation") == "finish_topic_meeting":
+                        post_screen_captured = interaction_screen_after != SCREEN_CAPTURE_FAILED
+                        semantic_effect_observed = (
+                            viewscreen_after != "viewscreen_topicmeetingst"
+                            or (
+                                post_screen_captured
+                                and FINISH_TOPIC_MEETING_OPTION_TEXT
+                                not in interaction_screen_after
+                            )
+                        )
+                        interaction_audit["post_screen_captured"] = post_screen_captured
+                        interaction_audit["semantic_effect_observed"] = semantic_effect_observed
+                        if not semantic_effect_observed:
+                            interaction_result.update(
+                                {
+                                    "ok": False,
+                                    "error": "interaction_no_effect",
+                                }
+                            )
+                            execute_result = {
+                                **execute_result,
+                                "accepted": False,
+                                "why": "interaction_no_effect",
+                            }
                     interaction_result.update(interaction_audit)
                     execute_result = {**execute_result, "result": interaction_result}
                     last_action_result = execute_result
+                    publish_event(step, "execute", {"result": execute_result}, events)
                     publish_event(
                         step,
                         "interaction",

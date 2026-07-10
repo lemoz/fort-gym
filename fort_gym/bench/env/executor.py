@@ -15,7 +15,11 @@ from ..dfhack_backend import queue_manager_order as safe_queue_manager_order
 from ..dfhack_backend import set_farm_crop as safe_set_farm_crop
 from ..dfhack_backend import set_labor as safe_set_labor
 from ..dfhack_backend import unsuspend_jobs as safe_unsuspend_jobs
-from .actions import INTERACT_ALLOWED_VIEWSCREEN_TYPES, validate_action
+from .actions import (
+    FINISH_TOPIC_MEETING_OPTION_TEXT,
+    INTERACT_ALLOWED_VIEWSCREEN_TYPES,
+    validate_action,
+)
 from .dfhack_client import DFHackClient, DFHackUnavailableError
 from .keystroke_exec import execute_keystroke_action
 from .mock_env import MockEnvironment
@@ -28,6 +32,11 @@ _INTERACT_INTERFACE_KEYS = {
     "down": "CURSOR_DOWN",
     "left": "CURSOR_LEFT",
     "right": "CURSOR_RIGHT",
+    "finish_topic_meeting": "OPTION1",
+}
+
+_INTERACT_OPERATION_VIEWSCREEN_TYPES = {
+    "finish_topic_meeting": frozenset({"viewscreen_topicmeetingst"}),
 }
 
 
@@ -94,6 +103,25 @@ class Executor:
                         "why": f"INTERACT is not allowed on DF viewscreen {viewscreen_type!r}",
                     }
                 operation = params["operation"]
+                operation_viewscreens = _INTERACT_OPERATION_VIEWSCREEN_TYPES.get(operation)
+                if operation_viewscreens is not None and viewscreen_type not in operation_viewscreens:
+                    return {
+                        "accepted": False,
+                        "why": (
+                            f"INTERACT operation {operation!r} is not allowed on DF viewscreen "
+                            f"{viewscreen_type!r}"
+                        ),
+                    }
+                if operation == "finish_topic_meeting" and FINISH_TOPIC_MEETING_OPTION_TEXT not in str(
+                    current_state.get("screen_text") or ""
+                ):
+                    return {
+                        "accepted": False,
+                        "why": (
+                            "INTERACT finish_topic_meeting requires the visible option "
+                            f"{FINISH_TOPIC_MEETING_OPTION_TEXT!r}"
+                        ),
+                    }
                 interface_key = _INTERACT_INTERFACE_KEYS[operation]
                 key_result = execute_keystroke_action([interface_key])
                 result = {

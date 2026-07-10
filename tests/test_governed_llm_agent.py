@@ -212,7 +212,11 @@ def test_governed_interact_tool_and_prompt_are_bounded_and_paused() -> None:
 
     assert GOVERNED_ACTION_TYPES[-1] == "INTERACT"
     assert "INTERACT" in tool["properties"]["type"]["enum"]
-    assert '"confirm"|"cancel"|"up"|"down"|"left"|"right"' in GOVERNED_SYSTEM_PROMPT
+    assert (
+        '"confirm"|"cancel"|"up"|"down"|"left"|"right"|"finish_topic_meeting"'
+        in GOVERNED_SYSTEM_PROMPT
+    )
+    assert '"a - Finish peeking in on conversation"' in GOVERNED_SYSTEM_PROMPT
     assert "observes one screen after that input" in GOVERNED_SYSTEM_PROMPT
     assert "paused interface or dialog" in GOVERNED_SYSTEM_PROMPT
     assert "INTERACT must use 0" in GOVERNED_SYSTEM_PROMPT

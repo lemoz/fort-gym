@@ -77,9 +77,10 @@ counts (see `docs/Actions_Headless_Safety.md`).
 
 ## Open Experiment Questions
 
-1. **G7 run integrity**: after attempt 3's infrastructure abort, can the
-   workshop-material guard and terminal cleanup preserve player parity and a
-   complete survival ledger through real farm/gather flow?
+1. **G7 run integrity**: after attempt 4's infrastructure abort, can every
+   accepted build reserve a material a citizen can actually haul, can every
+   accepted order create real workshop jobs, and can bounded dialog interaction
+   traverse the observed topic-meeting screen without arbitrary key access?
 2. **G7 survival**: on `seed_region3_fresh`, can one governed run close food
    and drink loops, survive a year, house migrants, and build three functional
    rooms under the ratified WDSLL predicates?
@@ -87,31 +88,38 @@ counts (see `docs/Actions_Headless_Safety.md`).
    survival on unseen embarks, rather than producing one exceptional replay?
 4. **Memory redesign**: can a causally grounded memory beat the standing
    memory-off control without repeating the G5 inversion?
-5. **Action-surface breadth**: when trace forensics prove a missing player
-   capability, does a bounded player-parity primitive remove the substrate gap
-   without embedding gameplay policy?
+5. **Action-surface breadth**: when trace forensics prove a missing legal
+   gameplay capability, does a bounded command primitive remove the substrate
+   gap without embedding gameplay policy or bypassing materials, jobs, labor,
+   and elapsed simulation time?
 
 ## Prerequisites / Blockers
 
-- The first G7 run-integrity release is deployed. Attempt 3 was an
-  infrastructure-aborted FAIL with no policy verdict after `build_workshop.lua`
-  reused material item `765` already installed in the Carpenter workshop;
-  attempt 3's public record is in `docs/WDSLL.md`.
-- The follow-up candidate rejects `item.flags.in_building`, durably stages
-  terminal failure evidence, and requires verified DF cleanup plus summary
-  persistence before publishing any terminal status. Stop intent and cleanup
-  proof survive API restarts; unverified cleanup is an infrastructure failure and
-  cannot start optional analysis. The complete suite passes (626 passed, 4 skipped).
-  Isolated live proof first rejected the seed's in-building wagon material,
-  then used legally chopped logs `776` and `771` for coexisting Carpenter and
-  Still workshops. Review, deployment, and deployed lifecycle proof remain
-  before attempt 4.
+- Attempt 3's material-reuse and terminal-lifecycle follow-up merged as PR #69,
+  deployed at `808f25d6942b89844768c78b80911646dbb0d5b0`, and passed the
+  deployed cleanup-before-terminal boundary smoke.
+- Attempt 4 is an infrastructure-aborted FAIL with no policy verdict. Its public
+  replay and exact gate output are in `docs/WDSLL.md`. It failed closed after
+  208 rows; cleanup, detached ledger, and durable summary all passed.
+- Post-terminal read-only evidence classified all 36 pending construction jobs
+  as walk-group disconnected. The follow-up candidate requires the target and
+  selected item to share one living citizen's current DF walk group, verifies a
+  conservative dry/visible FLOOR target and resulting job linkage, exposes the
+  connectivity snapshot, and rejects ORDER unless a completed matching
+  workshop receives concrete jobs. This does not assert that a dwarf has
+  accepted the haul. An isolated fresh-seed smoke proved a connected wall and
+  Still completed through dwarf labor, then linked exactly two concrete brew
+  jobs without inserting a duplicate manager order. Review, merge, deployment,
+  and deployed repetition remain before attempt 5.
 - The dedicated `INTERACT` action is strict zero-tick, governed-only, paused,
   viewscreen-allowlisted, and bounded to eight operations per modal episode
-  (three unchanged screens terminate earlier). An isolated live liaison smoke
-  passed; the same smoke must pass from the deployed commit.
-- Tick stalls and cancellation fail closed with durable terminal reasons;
-  attempt 3 requested stop at API step 44 and its final durable row is step 45.
+  (three unchanged screens terminate earlier). Attempt 4 proved generic confirm
+  is insufficient for `viewscreen_topicmeetingst`; a post-terminal live probe
+  proved semantic `OPTION1` exits the visible one-option screen without advancing
+  a tick. The candidate exposes that key only as `finish_topic_meeting` on that
+  exact viewscreen.
+- Tick stalls, modal loops, and cancellation fail closed with durable terminal
+  reasons; attempt 4 terminated on its third unchanged topic-meeting interaction.
 - Completed furniture, raw death causes, and a run-scoped event/eat-history
   food/drink ledger now reach the trace. The ledger's citizen filter and run
   scope passed an isolated live start/read/stop smoke. `scripts/evaluate_g7.py`

@@ -1689,6 +1689,47 @@ def test_encoder_surfaces_full_crew_block() -> None:
     )
 
 
+def test_encoder_surfaces_disconnected_construction_walk_groups() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 6, "stone": 0},
+            "crew": {
+                "ok": True,
+                "jobs": {
+                    "total": 1,
+                    "dig": 0,
+                    "construct_building": 1,
+                    "construct_building_walk_group_connected": 0,
+                    "construct_building_walk_group_disconnected": 1,
+                    "construct_building_walk_group_unknown": 0,
+                    "workshop_task": 0,
+                    "suspended": 0,
+                    "entries": [
+                        {
+                            "type": "ConstructBuilding",
+                            "pos": [89, 102, 161],
+                            "suspended": False,
+                            "has_worker": False,
+                            "walk_group_connectivity": "disconnected",
+                            "assigned_item_id": 777,
+                            "assigned_item_pos": [90, 105, 160],
+                        }
+                    ],
+                },
+            },
+        },
+        screen_text="main map",
+    )
+
+    assert "construction walk groups: connected=0, disconnected=1, unknown=0" in text
+    assert (
+        "ConstructBuilding@(89,102,161)[unassigned]"
+        "[walk_group_connectivity=disconnected]" in text
+    )
+
+
 def test_encoder_renders_farm_crops_seeds_and_season() -> None:
     text, _ = encode_observation(
         {
