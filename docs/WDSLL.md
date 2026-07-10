@@ -1186,6 +1186,41 @@ gate. Each entry states what changed and the evidence that forced it.
   skipped, with changed-file Ruff, compileall, `git diff --check`, and a focused
   Luna audit reporting no deployment blocker.
 
+- **2026-07-10 — G7 attempt 7: INFRASTRUCTURE-ABORTED FAIL after genuine early
+  production progress.** PR #75 passed CI, merged, and deployed as
+  `b38c40a255db62ae52c940f81883c8097e7ac273`. Attempt 7 run
+  `82e5c2e18f6847f1bc251158e273f53e`
+  ([live replay](https://fortgym.live/r/5dk997_GsCm1IJoKzGL_cLy8On3U7Hxz))
+  used the pinned GLM-5V OpenRouter policy, memory off, Anthropic disabled, and
+  the fresh region3 seed. It failed before gameplay at step 17 after 17 durable
+  gameplay rows and 17,064 real ticks. All 17 rows have governed provenance,
+  screen text, and gameplay proof. Trace-attributed model use was 30 calls,
+  274,003 prompt tokens, and 13,713 completion tokens.
+
+  The policy made genuine but incomplete progress: it chopped trees, completed
+  a Carpenter's Workshop and Still through dwarf labor, produced two beds, one
+  door, 19 barrels, and 50 units of run-scoped drink, with no deaths. It had not
+  yet placed furniture, enclosed a room, or built a FarmPlot. The deterministic
+  G7 verdict is FAIL: duration 17,064/403,200, food production 0, population
+  7/15, functional rooms 0/3, installed beds 0/3, and scalar 91.99/150; drink
+  production, neglect deaths, evidence, and rubric 80.39 with no blockers pass.
+  Because the run ended at the model-review boundary, this is an infrastructure
+  abort rather than a long-horizon policy verdict.
+
+  The terminal sequence exposed a concrete retry-context defect. Three model
+  submissions were rejected in turn for missing `plan_review.objective`, an
+  incorrect `retry_same_action`, and an incorrect previous verdict. The retry
+  loop had discarded each rejected payload and returned only the first detected
+  error, forcing the model to reconstruct rather than correct its response. The
+  candidate keeps the three-submission fail-closed limit and every factual
+  validator, but returns the exact rejected payload, all currently detectable
+  violations, and the authoritative control values on each correction. A
+  no-execution shadow on attempt 7's exact terminal observation passed on its
+  first GLM-5V response (9,675 prompt and 512 completion tokens), chose a legal
+  FarmPlot at `(91,108,161)`, and advanced zero ticks. Local verification is
+  685 passed, 4 skipped, plus changed-file Ruff, compileall, and
+  `git diff --check`; deployment proof remains candidate work.
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,

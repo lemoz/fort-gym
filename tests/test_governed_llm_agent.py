@@ -509,6 +509,93 @@ def test_review_contract_gets_exactly_one_model_correction() -> None:
     assert sum(event["tool"] == "governed_llm.review_contract_retry" for event in events) == 1
 
 
+def test_review_contract_correction_includes_exact_rejected_payload() -> None:
+    control = _plan_control()
+    invalid = _reviewed_action_payload(control=control)
+    del invalid["plan_review"]["objective"]
+    valid = _reviewed_action_payload(control=control)
+    agent = _agent([_submit_action_response(invalid), _submit_action_response(valid)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["type"] == "DIG"
+    correction = agent._client.chat.completions.requests[1]["messages"][-1]
+    assert correction["role"] == "user"
+    assert json.dumps(invalid, ensure_ascii=True, sort_keys=True) in correction["content"]
+    assert "plan_review.objective is required" in correction["content"]
+    assert "No game ticks have advanced" in correction["content"]
+
+
+def test_review_contract_correction_reports_all_attempt7_style_errors() -> None:
+    repeated_action = {
+        "type": "DIG",
+        "params": {"area": [50, 35, 0], "size": [5, 5, 1]},
+    }
+    control = _plan_control(
+        review_due=False,
+        request_id="17:none",
+        prior_objective="Build durable shelter.",
+        previous_step=16,
+        previous_verdict="progressed",
+        previous_action=repeated_action,
+    )
+    invalid = _reviewed_action_payload(control=control)
+    invalid["last_action_review"]["verdict"] = "rejected"
+    invalid["last_action_review"]["retry_same_action"] = False
+    del invalid["plan_review"]["objective"]
+    valid = _reviewed_action_payload(control=control)
+    valid["last_action_review"]["retry_same_action"] = True
+    agent = _agent([_submit_action_response(invalid), _submit_action_response(valid)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["last_action_review"]["retry_same_action"] is True
+    correction = agent._client.chat.completions.requests[1]["messages"][-1]["content"]
+    assert "last_action_review.verdict does not match" in correction
+    assert "last_action_review.retry_same_action must match" in correction
+    assert "plan_review.objective is required" in correction
+    events = agent.pop_tool_events()
+    retry = next(event for event in events if event["tool"] == "governed_llm.review_contract_retry")
+    assert len(retry["output"]["errors"]) == 3
+    assert not any(event["tool"] == "governed_llm.fallback_wait" for event in events)
+
+
+def test_review_contract_recomputes_retry_flag_after_corrected_action_changes() -> None:
+    repeated_action = {
+        "type": "DIG",
+        "params": {"area": [50, 35, 0], "size": [5, 5, 1]},
+    }
+    control = _plan_control(
+        review_due=False,
+        request_id="17:none",
+        prior_objective="Build durable shelter.",
+        previous_step=16,
+        previous_verdict="progressed",
+        previous_action=repeated_action,
+    )
+    invalid = _reviewed_action_payload(control=control)
+    corrected = _reviewed_action_payload(control=control)
+    corrected["type"] = "WAIT"
+    corrected["params"] = {}
+    agent = _agent([_submit_action_response(invalid), _submit_action_response(corrected)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["type"] == "WAIT"
+    assert action["last_action_review"]["retry_same_action"] is False
+    correction = agent._client.chat.completions.requests[1]["messages"][-1]["content"]
+    assert "expected true" in correction
+
+
 def test_due_plan_review_requires_two_distinct_factual_lines() -> None:
     control = _plan_control()
     invalid = _reviewed_action_payload(control=control)

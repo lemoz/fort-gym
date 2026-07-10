@@ -420,6 +420,28 @@ queued walls, off-frame proof windows, wood blindness, a hardcoded dead metric,
 phantom stock counts, and a whitelist that drops a field in transit — each
 caught by a failing public run and closed on the record.
 
+### 2.11 G7 attempt 7: genuine production, then a lossy correction loop
+
+Attempt 7, run `82e5c2e18f6847f1bc251158e273f53e`
+([replay](https://fortgym.live/r/5dk997_GsCm1IJoKzGL_cLy8On3U7Hxz)),
+proved that the new model-authored plan review can pivot after rejection and
+start a real production chain. Across 17 governed gameplay rows the GLM-5V
+policy recovered from two rejected workshop placements, chopped reachable
+trees, completed a Carpenter's Workshop and Still, and produced two beds, one
+door, 19 barrels, and 50 units of drink. No dwarf died. This was legal DFHack
+control followed by real simulation ticks, not score-only activity.
+
+It was still far from a fortress: zero FarmPlots, installed furniture,
+constructions, enclosed spaces, or functional rooms. At step 17 the next model
+decision failed before gameplay. The bounded correction loop reported only one
+contract violation at a time and omitted the rejected payload from the next
+request. Three independently malformed reconstructions exhausted the limit.
+The fix is correction quality rather than more retries or weaker validation:
+echo the exact rejected payload, report every currently detectable violation,
+include authoritative factual control values, then revalidate the complete new
+action before execution. The run remains an infrastructure-aborted G7 FAIL, not
+a policy pass or long-horizon policy verdict.
+
 ## 3. Limitations
 
 - **A single passing embark family.** Every pass (G0–G4) is on
@@ -427,13 +449,13 @@ caught by a failing public run and closed on the record.
   passes in seven region3 attempts. "Plays Dwarf Fortress" is not yet
   demonstrated — "solved one map" is.
 - **Small n.** The reliability claim rests on a five-run lineage; the endurance
-  result on one probe; the G6 verdict on seven runs; G7 on six failed attempts.
+  result on one probe; the G6 verdict on seven runs; G7 on seven failed attempts.
   These are findings, not distributions.
 - **One policy family for most results.** GLM-5V-turbo produced the G4 passes
   and most of the G6 campaign; GPT-5.5 served the earlier G2/G3 passes.
   Cross-model generality is thin — two GPT-5.5-vision escalation runs are the
   only cross-family data points on the unseen map.
-- **G6 is unpassed; G7 attempts 1 through 6 failed.** Attempts 2 through 6 were
+- **G6 is unpassed; G7 attempts 1 through 7 failed.** Attempts 2 through 7 were
   infrastructure aborts, not policy verdicts. Score-v3 is active, but the
   chair-factory calibration gap (§2.4) remains part of its historical record.
   Attempt 1 demonstrated why the scalar is telemetry rather than the verdict:
@@ -441,26 +463,13 @@ caught by a failing public run and closed on the record.
 
 ## 4. What's next
 
-- **Attempt 6 failed at the review boundary; harden that boundary before the
-  next fresh-seed attempt**: PR #70 requires one citizen
-  to share its current DF walk group with both build target and selected item;
-  reject invalid materials plus targets outside the conservative dry/visible
-  FLOOR subset; verify resulting jobs; report walk-group connectivity without
-  claiming job assignment; reject ORDER unless a completed matching workshop
-  receives real jobs; and add the live-proven, view-specific topic-meeting
-  operation. An isolated fresh-seed smoke proved one connected wall and one
-  connected Still completed through dwarf labor, then proved brew created
-  exactly the requested real jobs only after the Still was complete, without a
-  duplicate manager order. It merged and deployed as
-  `e012e704b7a45cd509034700c3524801217130ef`; the deployed repetition passed,
-  and the run has a
-  [permanent replay](https://fortgym.live/r/88uZqRulANyNG_e7t7c6KFlEOYRvHZdz).
-  It failed after 201,556 ticks: food/drink production 0/0, final drink 0,
-  one functional room, and a bounded abort on the visible `a - Begin
-  discussion` topic screen. Score-v3 nevertheless reached 178.59. PR #72 adds
-  factual governed history; PR #73 grounds BUILD footprints. The next candidate
-  adds visible letter-option interaction and mandatory, model-authored factual
-  action/plan reviews without an external strategy controller or review score.
+- **Attempt 7 failed at the review boundary; deploy the lossless bounded
+  correction candidate before attempt 8.** Preserve the exact rejected payload,
+  report all detected contract violations plus authoritative control values,
+  and revalidate the whole corrected action before execution. Keep the existing
+  three-submission limit and fail closed. A fresh run must then prove the policy
+  can move beyond the now-demonstrated workshop/Still/drink chain into farms,
+  installed furniture, and multiple enclosed functional rooms.
 - **G6 remains open**: the best unseen-map run reached 4/5 and missed only its
   second functional room. G7 attempt 5 ran on the same unseen seed, so a strong
   attempt 6 can add evidence without a separate blind retry campaign.
