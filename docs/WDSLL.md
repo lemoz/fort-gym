@@ -1086,8 +1086,27 @@ gate. Each entry states what changed and the evidence that forced it.
   `partial_placement`, and both rejected tile reasons; a completed Still marked
   for removal rejected another brew order with `required_workshop_unavailable`.
   Local verification is 634 passed, 4 skipped; targeted Ruff, compileall, and
-  live Lua parsing passed. Attempt 5 is prohibited until final review, merge,
-  deployment, and a deployed repetition of these boundary smokes pass.
+  live Lua parsing passed.
+
+- **2026-07-09/10 — G7 attempt 5 authorized and launched; verdict pending.**
+  Independent Sol and Terra audits found seven release blockers; each was fixed,
+  and final Sol review reported no remaining deployment blocker. PR #70 passed
+  GitHub CI, merged, and deployed as
+  `e012e704b7a45cd509034700c3524801217130ef`. The production API and DFHack
+  services stayed healthy. A deployed fresh-seed repetition again failed closed
+  on stale path data, wagon logs, and pre-Still brew; then dwarves completed a
+  connected wall and Still over real ticks, after which quantity-two brew linked
+  exactly jobs 6 and 8 while manager-order count stayed zero. Deployed probes
+  also returned `partial_placement` for a mixed rectangle and rejected a
+  removal-marked Still.
+
+  Attempt 5 run `680a938aabd84764953dd01c0ccf1c7f`
+  ([live replay](https://fortgym.live/r/88uZqRulANyNG_e7t7c6KFlEOYRvHZdz))
+  launched from that SHA for 450 steps on fresh `seed_region3_fresh`, with
+  `dfhack-governed-llm-glm5v` (`z-ai/glm-5v-turbo` through OpenRouter), memory
+  off, Anthropic disabled, score-v3, and 1,000 default ticks per step. This is a
+  running experiment, not a pass; its terminal deterministic G7 predicates and
+  real state changes will determine the verdict.
 
 ## Reporting format (every gate attempt)
 
