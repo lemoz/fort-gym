@@ -256,12 +256,13 @@ These systems are implemented (not roadmap):
 2. **Tools** (`fort_gym/bench/agent/tools.py`): `ToolManager` with memory/plan/perception tools wired into the review-mode agents.
 3. **Experimentation** (`fort_gym/bench/experiment/`): YAML config → `ExperimentRunner` → run with experiment metadata.
 
-The active research step is the live G7 attempt 5, run
+The latest research result is G7 attempt 5, run
 `680a938aabd84764953dd01c0ccf1c7f`
 ([replay](https://fortgym.live/r/88uZqRulANyNG_e7t7c6KFlEOYRvHZdz)),
-launched for 450 steps from deployed merge SHA
-`e012e704b7a45cd509034700c3524801217130ef`. No policy verdict exists while it
-is running. Attempt 4, run
+launched for at most 450 steps from deployed merge SHA
+`e012e704b7a45cd509034700c3524801217130ef`. It failed after 201,556 ticks on a
+bounded topic-dialog variant, with zero food/drink production, final drink 0,
+one functional room, score-v3 178.59, and deterministic G7 FAIL. Attempt 4, run
 `45659da07fb749f9b5ebe9c55dd1eb91`, is an infrastructure-aborted FAIL with no
 policy verdict ([replay](https://fortgym.live/r/4Gn9v9WaPf_i4qhGJFQs9bo9d8y_GSBo)).
 It completed 208 governed rows and 202,737 ticks before a bounded dialog guard
@@ -276,9 +277,14 @@ conservative dry/visible floor subset, fails closed on incomplete
 workshop/order postconditions, and exposes job walk-group connectivity to the
 model. It also adds a view-specific `finish_topic_meeting` operation using the
 live-verified `OPTION1` key. Its deployed fresh-seed boundary smoke passed before
-attempt 5 launched. The loop and model still own gameplay strategy;
-these changes repair command truth and observation, not policy. Full findings
-and gate predicates are recorded in `docs/WDSLL.md`.
+attempt 5 launched. PR #72 adds factual governed action history and PR #73
+grounds BUILD footprints. The next candidate adds visible letter-option dialog
+input and factual, model-authored action/plan reviews; it still leaves every
+gameplay objective and command to the model. Review evidence comes only from a
+runner-authored allowlist, repeated commands are bound to a stable type+params
+fingerprint, and governed history retains at least the six entries required for
+review continuity. Full findings and gate predicates are recorded in
+`docs/WDSLL.md`.
 
 **Success definition and gate ladder: [docs/WDSLL.md](docs/WDSLL.md)** — every claim of "the agent plays" must pass a gate there on public, replayable evidence.
 

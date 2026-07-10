@@ -84,7 +84,7 @@ counts (see `docs/Actions_Headless_Safety.md`).
 
 ## Open Experiment Questions
 
-1. **G7 run integrity**: after attempt 4's infrastructure abort, can every
+1. **G7 run integrity**: after attempt 5's second topic-dialog abort, can every
    accepted build reserve a material a citizen can actually haul, can every
    accepted order create real workshop jobs, and can bounded dialog interaction
    traverse the observed topic-meeting screen without arbitrary key access?
@@ -117,15 +117,31 @@ counts (see `docs/Actions_Headless_Safety.md`).
   accepted the haul. Fresh-seed candidate and deployed smokes proved a connected
   wall and Still completed through dwarf labor, then linked exactly two concrete brew
   jobs without inserting a duplicate manager order. PR #70 merged and deployed
-  as `e012e704b7a45cd509034700c3524801217130ef`; attempt 5 is now running from
-  that SHA with a [permanent replay](https://fortgym.live/r/88uZqRulANyNG_e7t7c6KFlEOYRvHZdz).
+  as `e012e704b7a45cd509034700c3524801217130ef`; attempt 5 failed from that SHA
+  after 201,556 ticks with a
+  [permanent replay](https://fortgym.live/r/88uZqRulANyNG_e7t7c6KFlEOYRvHZdz).
 - The dedicated `INTERACT` action is strict zero-tick, governed-only, paused,
   viewscreen-allowlisted, and bounded to eight operations per modal episode
   (three unchanged screens terminate earlier). Attempt 4 proved generic confirm
   is insufficient for `viewscreen_topicmeetingst`; a post-terminal live probe
   proved semantic `OPTION1` exits the visible one-option screen without advancing
   a tick. The deployed path exposes that key only as `finish_topic_meeting` on
-  that exact viewscreen.
+  that exact finish screen. Attempt 5 then exposed the distinct visible
+  `a - Begin discussion` state. A post-terminal probe proved one `OPTION1`
+  advances it to `viewscreen_topicmeeting_takerequestsst`; the candidate exposes
+  lettered options only when the corresponding line is visible.
+- Attempt 5 also proved the policy narrates rather than reviews: all recorded
+  `last_action_review`/`plan_review` values were null, 30/38 late BUILD attempts
+  were rejected, and furniture remained the objective after drink reached zero.
+  PR #72 preserves factual governed history and PR #73 grounds BUILD targets.
+  The next candidate keeps strategy in the model while requiring factual
+  previous-action review plus initial/every-five/stalled/partial plan reviews;
+  malformed review metadata gets one correction, then fails before gameplay.
+  Its evidence is restricted to runner-authored factual lines, plan reviews
+  require two distinct immutable `E#` references, `retry_same_action` is checked
+  against a stable type+params fingerprint, and a six-entry governed-history
+  floor preserves the review horizon. Transport retries remain inside the same
+  paused decision and consume no gameplay tick.
 - Tick stalls, modal loops, and cancellation fail closed with durable terminal
   reasons; attempt 4 terminated on its third unchanged topic-meeting interaction.
 - Completed furniture, raw death causes, and a run-scoped event/eat-history

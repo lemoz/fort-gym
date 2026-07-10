@@ -76,10 +76,25 @@ It uses OpenRouter chat completions (default `z-ai/glm-5.2`, override with
   failed attempts, current gameplay plan).
 
 The agent maintains its plan and POIs across steps via the action's
-`plan_step`/`memory_update` fields and the executed-result feedback loop. It
-holds no gameplay heuristics — the model plus the loop must solve gameplay.
-Invalid or failed LLM output degrades to a safe `WAIT` (time still advances;
-the failure is recorded in the trace).
+`plan_step`/`memory_update` fields and the executed-result feedback loop. The
+candidate review contract also carries `last_action_review` and structured
+`plan_review` in bounded run-local history, so memory-persistence-off runs can
+audit objective continuity. Initial, five-action, two-no-progress, and partial-
+mutation checkpoints are factual review triggers only: the model establishes,
+continues, or revises its own objective and selects observation evidence. Review
+metadata earns no score and never selects or vetoes a gameplay action. The
+evidence validator accepts only immutable `E#` references to a runner-authored
+factual allowlist; model-authored history cannot manufacture a new evidence
+line. Plan reviews select two IDs backed by distinct lines. A stable type+params
+fingerprint makes `retry_same_action` factual, and governed mode retains at
+least six action outcomes even if the display-history limit is configured lower.
+
+The agent holds no gameplay heuristics — the model plus the loop must solve
+gameplay. Legacy direct callers still degrade malformed model output to a
+recorded `WAIT`; governed runs carrying `AGENT PLAN CONTROL` permit one review-
+contract correction and then fail before execution instead of advancing hidden
+fallback ticks. OpenRouter transport gets three bounded attempts by default,
+all within the same paused decision and before any gameplay command or tick.
 
 ## Replay Evidence
 
@@ -98,6 +113,11 @@ Every governed step records into `trace.jsonl`:
 - `interaction` — for `INTERACT`, the semantic operation, fixed key, pause and
   viewscreen types, and before/after CopyScreen hashes. It is audit evidence,
   never world-progress evidence.
+- `AGENT PLAN CONTROL` / action history — previous factual outcome, stable
+  type+params fingerprint, objective, plan step, and review checkpoint. Visible
+  topic options map to one bounded `OPTION1`-`OPTION8` input only when the
+  corresponding `a -` through `h -` line is present on
+  `viewscreen_topicmeetingst`.
 - `survival` — run-scoped item-created and eat/drink-history counters plus raw
   death facts; missing or incomplete capture fails G7 evidence closed.
 
