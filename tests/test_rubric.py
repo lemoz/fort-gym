@@ -88,6 +88,17 @@ def test_interact_audit_evidence_is_not_world_change_or_progress() -> None:
     assert "repetitive_policy" in evaluate_trace_records(records)["blockers"]
 
 
+def test_placement_and_chop_helper_counts_are_world_change() -> None:
+    for helper_evidence in ({"placed_count": 1}, {"trees_designated": 4}):
+        proof = {
+            "ok": True,
+            "changed_tile_count": 0,
+            "state_deltas": {},
+            "helper_evidence": helper_evidence,
+        }
+        assert _proof_shows_world_change(proof) is True
+
+
 def _labor_record(step: int, *, unit_id: int, labor: str, enable: bool) -> dict:
     """A governed LABOR step whose flip genuinely changes real labor state."""
     return {

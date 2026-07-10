@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from fort_gym.bench.run.runner import (
+    _action_history_entry,
     _add_governed_build_site,
     _available_building_materials,
     _carry_forward_carpenter_workshop_proof,
@@ -1100,6 +1101,160 @@ def _governed_proof_kwargs(**overrides):
     return kwargs
 
 
+def test_governed_action_history_preserves_partial_and_tile_postconditions() -> None:
+    entry = _action_history_entry(
+        step=24,
+        action={
+            "type": "BUILD",
+            "params": {"kind": "Wall", "x": 88, "y": 101, "z": 161, "x2": 91},
+            "intent": "build a north wall",
+            "advance_ticks": 1000,
+        },
+        requested_ticks=1000,
+        tick_info={"ticks_advanced": 1005},
+        execute_result={
+            "accepted": False,
+            "why": "partial_placement",
+            "result": {
+                "partial": True,
+                "placed_count": 2,
+                "failed_count": 1,
+                "placed": [
+                    {"x": 88, "y": 101, "z": 161},
+                    {"x": 89, "y": 101, "z": 161},
+                ],
+                "failed": [
+                    {
+                        "x": 91,
+                        "y": 101,
+                        "z": 161,
+                        "error": "tile_not_open_floor",
+                        "tile_shape": "BOULDER",
+                        "tiletype": "GRASS_DARK_BOULDER",
+                    }
+                ],
+            },
+        },
+        state_before={"stocks": {}, "work": {}},
+        advance_state={"stocks": {}, "work": {}},
+        metrics_snapshot={},
+    )
+
+    assert entry["outcome"] == "partial_mutation"
+    assert entry["placed_targets"] == ["(88,101,161)", "(89,101,161)"]
+    assert entry["failed_targets"] == [
+        "(91,101,161):tile_not_open_floor"
+        "[tile_shape=BOULDER,tiletype=GRASS_DARK_BOULDER]"
+    ]
+    assert entry["result_details"] == {"placed_count": 2, "failed_count": 1}
+
+
+def test_governed_action_history_calls_helper_mutations_gameplay_changes() -> None:
+    entry = _action_history_entry(
+        step=1,
+        action={
+            "type": "BUILD",
+            "params": {"kind": "Still", "x": 91, "y": 100, "z": 161},
+            "intent": "place a still",
+            "advance_ticks": 0,
+        },
+        requested_ticks=0,
+        tick_info={"ticks_advanced": 0},
+        execute_result={
+            "accepted": True,
+            "result": {
+                "ok": True,
+                "before_workshops_of_kind": 0,
+                "after_workshops_of_kind": 1,
+            },
+        },
+        state_before={"stocks": {}, "work": {}},
+        advance_state={"stocks": {}, "work": {}},
+        metrics_snapshot={},
+    )
+
+    assert entry["outcome"] == "gameplay_state_changed"
+
+
+def test_governed_action_history_calls_full_placement_gameplay_change() -> None:
+    action = {
+        "type": "BUILD",
+        "params": {"kind": "Wall", "x": 88, "y": 101, "z": 161},
+        "intent": "place one wall",
+        "advance_ticks": 0,
+    }
+    execute_result = {
+        "accepted": True,
+        "result": {
+            "ok": True,
+            "partial": False,
+            "placed_count": 1,
+            "failed_count": 0,
+            "placed": [{"x": 88, "y": 101, "z": 161}],
+        },
+    }
+    entry = _action_history_entry(
+        step=1,
+        action=action,
+        requested_ticks=0,
+        tick_info={"ticks_advanced": 0},
+        execute_result=execute_result,
+        state_before={"stocks": {}, "work": {}},
+        advance_state={"stocks": {}, "work": {}},
+        metrics_snapshot={},
+    )
+    proof = _governed_gameplay_proof(
+        **_governed_proof_kwargs(
+            action=action,
+            execute_result=execute_result,
+            tick_info={"ticks_advanced": 0},
+        )
+    )
+
+    assert entry["outcome"] == "gameplay_state_changed"
+    assert entry["placed_targets"] == ["(88,101,161)"]
+    assert proof["ok"] is True
+    assert proof["helper_evidence"]["placed_count"] == 1
+
+
+def test_governed_action_history_separates_interface_effects_from_gameplay() -> None:
+    entry = _action_history_entry(
+        step=1,
+        action={
+            "type": "INTERACT",
+            "params": {"operation": "finish_topic_meeting"},
+            "intent": "close the current topic meeting",
+            "advance_ticks": 0,
+        },
+        requested_ticks=0,
+        tick_info={"ticks_advanced": 0},
+        execute_result={
+            "accepted": True,
+            "result": {"semantic_effect_observed": True, "screen_changed": True},
+        },
+        state_before={"stocks": {}, "work": {}},
+        advance_state={"stocks": {}, "work": {}},
+        metrics_snapshot={},
+    )
+
+    assert entry["outcome"] == "interface_state_changed"
+
+
+def test_governed_action_history_does_not_call_zero_tick_noop_keystrokes() -> None:
+    entry = _action_history_entry(
+        step=1,
+        action={"type": "WAIT", "params": {}, "intent": "observe", "advance_ticks": 0},
+        requested_ticks=0,
+        tick_info={"ticks_advanced": 0},
+        execute_result={"accepted": True, "result": {}},
+        state_before={"stocks": {}, "work": {}},
+        advance_state={"stocks": {}, "work": {}},
+        metrics_snapshot={},
+    )
+
+    assert entry["outcome"] == "action_accepted_without_tracked_state_change"
+
+
 def test_governed_gameplay_proof_rejects_noop_redesignation() -> None:
     proof = _governed_gameplay_proof(
         **_governed_proof_kwargs(
@@ -1213,6 +1368,19 @@ def test_governed_gameplay_proof_accepts_new_designations_and_jobs() -> None:
         )
     )
     assert proof["ok"] is True
+
+    proof = _governed_gameplay_proof(
+        **_governed_proof_kwargs(
+            action={
+                "type": "DIG",
+                "params": {"kind": "chop", "area": [90, 100, 161], "size": [3, 3, 1]},
+                "advance_ticks": 1000,
+            },
+            execute_result={"accepted": True, "result": {"trees_designated": 4}},
+        )
+    )
+    assert proof["ok"] is True
+    assert proof["helper_evidence"]["trees_designated"] == 4
 
     proof = _governed_gameplay_proof(
         **_governed_proof_kwargs(

@@ -829,6 +829,36 @@ def _gameplay_proof(
     }
 
 
+def _governed_helper_progress(action: Dict[str, Any], result: Dict[str, Any]) -> bool:
+    """Return helper-reported world progress under the canonical governed rules."""
+
+    if action.get("type") == "INTERACT":
+        return False
+    workshops_added = max(
+        int(result.get("after_carpenter_workshops") or 0)
+        - int(result.get("before_carpenter_workshops") or 0),
+        int(result.get("after_workshops_of_kind") or 0)
+        - int(result.get("before_workshops_of_kind") or 0),
+    )
+    farm_plots_added = int(result.get("after_farm_plots") or 0) - int(
+        result.get("before_farm_plots") or 0
+    )
+    created_jobs = result.get("created_job_ids")
+    return bool(
+        (isinstance(created_jobs, list) and created_jobs)
+        or workshops_added > 0
+        or farm_plots_added > 0
+        or int(result.get("placed_count") or 0) > 0
+        or int(result.get("trees_designated") or 0) > 0
+        or (result.get("ok") is True and result.get("building_id") is not None)
+        or int(result.get("newly_designated") or 0) > 0
+        or int(result.get("unsuspended") or 0) > 0
+        or int(result.get("shrubs_designated") or 0) > 0
+        or bool(result.get("labor_changed"))
+        or int(result.get("seasons_changed") or 0) > 0
+    )
+
+
 def _governed_gameplay_proof(
     *,
     action: Dict[str, Any],
@@ -856,10 +886,12 @@ def _governed_gameplay_proof(
         key: result[key]
         for key in (
             "newly_designated",
+            "trees_designated",
             "already_designated",
             "non_wall_tiles",
             "created_job_ids",
             "building_id",
+            "placed_count",
             "before_carpenter_workshops",
             "after_carpenter_workshops",
             "before_workshops_of_kind",
@@ -898,31 +930,10 @@ def _governed_gameplay_proof(
         )
         if key in result
     }
-    # before/after_carpenter_workshops is carpenter-specific (kept for
-    # backward compatibility); before/after_workshops_of_kind is the
-    # generalized equivalent build_workshop.lua now emits for every kind it
-    # supports (e.g. Still), so a built Still counts as progress too.
-    workshops_added = max(
-        int(result.get("after_carpenter_workshops") or 0)
-        - int(result.get("before_carpenter_workshops") or 0),
-        int(result.get("after_workshops_of_kind") or 0)
-        - int(result.get("before_workshops_of_kind") or 0),
-    )
-    farm_plots_added = int(result.get("after_farm_plots") or 0) - int(
-        result.get("before_farm_plots") or 0
-    )
-    created_jobs = result.get("created_job_ids")
     step_gameplay_progress = action.get("type") != "INTERACT" and bool(
         int(tile_changes.get("changed_tile_count") or 0)
         or state_deltas
-        or (isinstance(created_jobs, list) and created_jobs)
-        or workshops_added > 0
-        or farm_plots_added > 0
-        or int(result.get("newly_designated") or 0) > 0
-        or int(result.get("unsuspended") or 0) > 0
-        or int(result.get("shrubs_designated") or 0) > 0
-        or bool(result.get("labor_changed"))
-        or int(result.get("seasons_changed") or 0) > 0
+        or _governed_helper_progress(action, result)
     )
     return {
         "ok": step_gameplay_progress,
@@ -1013,7 +1024,7 @@ def _keystroke_action_family(action: Dict[str, Any]) -> str:
     return key_values[0] if key_values else "none"
 
 
-def _keystroke_action_history_entry(
+def _action_history_entry(
     *,
     step: int,
     action: Dict[str, Any],
@@ -1127,17 +1138,106 @@ def _keystroke_action_history_entry(
     productive_reasons = list(dict.fromkeys(productive_reasons))
     actual_ticks = int(tick_info.get("ticks_advanced") or 0)
     accepted = bool(execute_result.get("accepted", execute_result.get("ok", False)))
-    if not accepted:
+    action_result = (
+        execute_result.get("result") if isinstance(execute_result.get("result"), dict) else {}
+    )
+    result_error = (
+        execute_result.get("reason")
+        or execute_result.get("why")
+        or execute_result.get("error")
+        or action_result.get("error")
+    )
+    failed_targets = []
+    failed = action_result.get("failed")
+    if isinstance(failed, list):
+        for item in failed:
+            if not isinstance(item, dict):
+                continue
+            coords = [item.get(key) for key in ("x", "y", "z") if item.get(key) is not None]
+            target = "(" + ",".join(str(value) for value in coords) + ")" if coords else "?"
+            tile_facts = [
+                f"{key}={item[key]}"
+                for key in ("tile_shape", "tiletype")
+                if item.get(key) is not None
+            ]
+            fact_suffix = "[" + ",".join(tile_facts) + "]" if tile_facts else ""
+            failed_targets.append(
+                f"{target}:{item.get('error') or 'unknown'}{fact_suffix}"
+            )
+    placed_targets = []
+    placed = action_result.get("placed")
+    if isinstance(placed, list):
+        for item in placed:
+            if not isinstance(item, dict):
+                continue
+            coords = [item.get(key) for key in ("x", "y", "z") if item.get(key) is not None]
+            if coords:
+                placed_targets.append("(" + ",".join(str(value) for value in coords) + ")")
+    result_details = {
+        key: action_result[key]
+        for key in (
+            "newly_designated",
+            "trees_designated",
+            "shrubs_designated",
+            "placed_count",
+            "failed_count",
+            "building_id",
+            "material_item_id",
+            "created_job_ids",
+            "workshop_id",
+            "farm_plot_id",
+            "before_carpenter_workshops",
+            "after_carpenter_workshops",
+            "before_workshops_of_kind",
+            "after_workshops_of_kind",
+            "before_farm_plots",
+            "after_farm_plots",
+            "seasons_changed",
+            "unsuspended",
+            "labor_changed",
+            "operation",
+            "semantic_effect_observed",
+            "screen_changed",
+        )
+        if key in action_result
+    }
+    partial_mutation = bool(
+        action_result.get("partial")
+        and (_int_or_none(action_result.get("placed_count")) or 0) > 0
+    )
+    governed_action = action.get("type") != "KEYSTROKE"
+    helper_mutation = governed_action and _governed_helper_progress(action, action_result)
+    state_mutation = bool(_keystroke_productive_state_deltas(state_before, advance_state))
+    if partial_mutation:
+        outcome = "partial_mutation"
+    elif not accepted:
         outcome = "rejected"
-    elif productive_reasons:
+    elif governed_action and action.get("type") == "INTERACT":
+        interaction_changed = bool(
+            action_result.get("semantic_effect_observed") or action_result.get("screen_changed")
+        )
+        outcome = (
+            "interface_state_changed"
+            if interaction_changed
+            else "interaction_accepted_without_tracked_state_change"
+        )
+    elif helper_mutation or state_mutation or productive_reasons:
         outcome = "gameplay_state_changed"
     elif actual_ticks > 0:
         outcome = "advanced_ticks_without_tracked_state_change"
+    elif governed_action:
+        outcome = "action_accepted_without_tracked_state_change"
     else:
         outcome = "keys_sent_without_tracked_state_change"
 
     return {
         "step": step,
+        "action_type": action.get("type"),
+        "params": {
+            key: value
+            for key, value in (action.get("params") or {}).items()
+            if key != "keys" and value is not None
+        },
         "keys": action.get("params", {}).get("keys", []),
         "key_fingerprint": _keystroke_key_fingerprint(action.get("params", {}).get("keys", [])),
         "action_family": _keystroke_action_family(action),
@@ -1151,6 +1251,10 @@ def _keystroke_action_history_entry(
         "actual_ticks": actual_ticks,
         "accepted": accepted,
         "outcome": outcome,
+        "error": result_error,
+        "failed_targets": failed_targets,
+        "placed_targets": placed_targets,
+        "result_details": result_details,
         "productive_reasons": productive_reasons,
         "changed": changed,
         "manager_orders_before": _int_or_none(before_work.get("manager_orders_count")) or 0,
@@ -1978,8 +2082,8 @@ def run_once(
     baseline_fort: Optional[Dict[str, Any]] = None
     baseline_goods: Optional[Dict[str, Any]] = None
     baseline_wealth: int | None = None
-    action_history: List[Dict[str, Any]] = []  # Track recent actions for keystroke mode memory
-    action_history_limit = max(0, int(settings.KEYSTROKE_ACTION_HISTORY_LIMIT))
+    action_history: List[Dict[str, Any]] = []
+    action_history_limit = max(0, int(settings.ACTION_HISTORY_LIMIT))
     last_action_result: Optional[Dict[str, Any]] = None  # Track previous action result for feedback
     previous_screen = (
         None  # Track previous screen for diff feedback (no type annotation for nonlocal)
@@ -2445,7 +2549,11 @@ def run_once(
                 obs_text, obs_json = encode_observation(
                     state_before,
                     screen_text=screen_text,
-                    action_history=action_history if is_keystroke_mode else None,
+                    action_history=(
+                        action_history
+                        if is_keystroke_mode or is_governed_dfhack_mode
+                        else None
+                    ),
                     last_action_result=last_action_result,
                     previous_screen=previous_screen if is_keystroke_mode else None,
                 )
@@ -2618,7 +2726,12 @@ def run_once(
                 validation = {"valid": valid, "reason": reason}
                 publish_event(step, "validation", validation, events)
                 if not valid:
-                    last_action_result = {"accepted": False, "reason": reason}
+                    last_action_result = {
+                        "accepted": False,
+                        "reason": reason,
+                        "_action": action,
+                        "_action_step": step,
+                    }
                     record_line = {
                         "run_id": run_identifier,
                         "step": step,
@@ -3109,9 +3222,9 @@ def run_once(
                         metrics_snapshot["fort_constructions"] = int(
                             fort_after.get("constructions") or 0
                         )
-                if is_keystroke_mode and action_history_limit > 0:
+                if (is_keystroke_mode or is_governed_dfhack_mode) and action_history_limit > 0:
                     action_history.append(
-                        _keystroke_action_history_entry(
+                        _action_history_entry(
                             step=step,
                             action=action,
                             requested_ticks=requested_ticks,
@@ -3124,6 +3237,12 @@ def run_once(
                     )
                     if len(action_history) > action_history_limit:
                         del action_history[:-action_history_limit]
+                if isinstance(last_action_result, dict):
+                    last_action_result = {
+                        **last_action_result,
+                        "_action": action,
+                        "_action_step": step,
+                    }
                 keystroke_step_score_progress = False
                 if is_keystroke_mode:
                     keystroke_step_score_progress = _keystroke_step_score_progress(

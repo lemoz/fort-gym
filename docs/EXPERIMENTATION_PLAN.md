@@ -42,6 +42,13 @@ Governed-agent memory can persist across runs through
 counterproductive, so production experiments keep it disabled until a new
 memory design earns its own matched ablation.
 
+Separately from agent-authored memory, the runner injects compact factual action
+outcomes into both keystroke and governed observations. The latest result is
+shown once, older outcomes retain exact action parameters and bounded
+placed/failed targets, and partial mutations remain explicit. The shared window
+uses `FORT_GYM_ACTION_HISTORY_LIMIT` (default 30); the older
+`FORT_GYM_KEYSTROKE_ACTION_HISTORY_LIMIT` name remains a fallback.
+
 ### Tools — `fort_gym/bench/agent/tools.py`
 
 `ToolManager` exposes memory/plan/perception tools (`remember_poi`,
