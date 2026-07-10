@@ -534,6 +534,21 @@ provider's documented `tool_choice=auto` returned the complete governed schema;
 JSON mode returned a type-invalid field. The follow-up changes transport only,
 leaving governance and gameplay controls intact.
 
+### 2.17 G7 attempt 13: automatic tool selection was a false positive
+
+PR #82 deployed the exact-state `tool_choice=auto` result, but attempt 13 run
+`74ac5d02872548d8971a54159bf17446`
+([replay](https://fortgym.live/r/93gd9qD8DVw3VnmM77-3TWA-jwIshzI6))
+failed before gameplay. Its three calls returned no tool, a partial object, then
+malformed nested fields. Giving automatic calls 1,024 output tokens still
+failed 3/3 on the exact state, disproving output headroom as the fix.
+
+JSON-object transport with an explicit field/type reminder passed the same
+observation 3/3 at the normal 512-token cap, each on its first call. This is
+transport evidence only: the unchanged validator accepted the model-authored
+actions, but no game action executed during the probe. Attempt 14 must provide
+the policy verdict.
+
 ## 3. Limitations
 
 - **A single passing embark family.** Every pass (G0–G4) is on
@@ -541,15 +556,15 @@ leaving governance and gameplay controls intact.
   passes in seven region3 attempts. "Plays Dwarf Fortress" is not yet
   demonstrated — "solved one map" is.
 - **Small n.** The reliability claim rests on a five-run lineage; the endurance
-  result on one probe; the G6 verdict on seven runs; G7 on 12 failed attempts.
+  result on one probe; the G6 verdict on seven runs; G7 on 13 failed attempts.
   These are findings, not distributions.
 - **One policy family for most results.** GLM-5V-turbo produced the G4 passes
   and most of the G6 campaign; GPT-5.5 served the earlier G2/G3 passes.
   Cross-model generality is thin — two GPT-5.5-vision escalation runs are the
   only cross-family data points on the unseen map.
-- **G6 is unpassed; G7 attempts 1 through 12 failed.** Attempts 2 through 9 and
-  12 were infrastructure aborts; attempts 10 and 11 are policy diagnostics.
-  Score-v4 is active after the frozen-liquid measurement correction, while the
+- **G6 is unpassed; G7 attempts 1 through 13 failed.** Attempts 2 through 9,
+  12, and 13 were infrastructure aborts; attempts 10 and 11 are policy
+  diagnostics. Score-v4 is active after the frozen-liquid correction, while the
   chair-factory calibration gap (§2.4) remains part of score-v3's historical
   record.
   Attempt 1 demonstrated why the scalar is telemetry rather than the verdict:
@@ -557,13 +572,13 @@ leaving governance and gameplay controls intact.
 
 ## 4. What's next
 
-- **Attempt 12 exposed a GLM-5.2 transport mismatch; deploy the exact-state
-  proven `tool_choice=auto` correction before attempt 13.** Keep strict review
-  identity, the existing correction limit, and fail-closed execution. A fresh
-  run must convert real workshops and goods into sustained production, installed
-  furniture, and multiple enclosed rooms.
+- **Attempt 13 disproved automatic tool calls; deploy the 3/3 exact-state JSON
+  transport before attempt 14.** Keep strict review identity, the existing
+  correction limit, and fail-closed execution. A fresh run must convert real
+  workshops and goods into sustained production, installed furniture, and
+  multiple enclosed rooms.
 - **G6 remains open**: the best unseen-map run reached 4/5 and missed only its
-  second functional room. G7 attempt 13 can test the corrected facts and
+  second functional room. G7 attempt 14 can test the corrected facts and
   GLM-5.2 transport without a separate blind retry campaign.
 - **G8 — depth**: a multi-z fortress (stairs, underground rooms), the next
   spatial-reasoning escalation after the hollow ring is actually demonstrated.
