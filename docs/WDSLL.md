@@ -1194,13 +1194,17 @@ gate. Each entry states what changed and the evidence that forced it.
   used the pinned GLM-5V OpenRouter policy, memory off, Anthropic disabled, and
   the fresh region3 seed. It failed before gameplay at step 17 after 17 durable
   gameplay rows and 17,064 real ticks. All 17 rows have governed provenance,
-  screen text, and gameplay proof. Trace-attributed model use was 30 calls,
-  274,003 prompt tokens, and 13,713 completion tokens.
+  screen text, and gameplay proof, with `gameplay_proof.ok` on 15/17 gameplay
+  rows. The gameplay rows used 30 model calls, 274,003 prompt tokens, and
+  13,713 completion tokens. Including the three rejected terminal submissions,
+  whole-run use was 33 calls, 309,891 prompt tokens, and 15,238 completion
+  tokens.
 
   The policy made genuine but incomplete progress: it chopped trees, completed
   a Carpenter's Workshop and Still through dwarf labor, produced two beds, one
-  door, 19 barrels, and 50 units of run-scoped drink, with no deaths. It had not
-  yet placed furniture, enclosed a room, or built a FarmPlot. The deterministic
+  door, four barrels (finishing with 19), and 50 units of run-scoped drink, with
+  no deaths. It had not yet placed furniture, enclosed a room, or built a
+  FarmPlot. The deterministic
   G7 verdict is FAIL: duration 17,064/403,200, food production 0, population
   7/15, functional rooms 0/3, installed beds 0/3, and scalar 91.99/150; drink
   production, neglect deaths, evidence, and rubric 80.39 with no blockers pass.
@@ -1218,7 +1222,7 @@ gate. Each entry states what changed and the evidence that forced it.
   no-execution shadow on attempt 7's exact terminal observation passed on its
   first GLM-5V response (9,675 prompt and 512 completion tokens), chose a legal
   FarmPlot at `(91,108,161)`, and advanced zero ticks. Local verification is
-  685 passed, 4 skipped, plus changed-file Ruff, compileall, and
+  688 passed, 4 skipped, plus changed-file Ruff, compileall, and
   `git diff --check`; deployment proof remains candidate work.
 
 ## Reporting format (every gate attempt)
