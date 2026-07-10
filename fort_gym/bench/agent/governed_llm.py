@@ -1052,43 +1052,95 @@ class DFHackGovernedLLMAgent(Agent):
                     required_plan_decision = "not_due or continue"
                 else:
                     required_plan_decision = "revise"
-                allowed_evidence_lines = [
-                    line
-                    for line in review_control.get("allowed_evidence_lines", [])
-                    if isinstance(line, str) and re.fullmatch(r"E\d+: .+", line)
-                ]
-                allowed_evidence_ids = [
-                    line.split(": ", 1)[0] for line in allowed_evidence_lines
-                ]
+                detected_errors = contract_errors or [last_error]
+                evidence_correction_needed = any(
+                    "evidence" in error.lower()
+                    or "current game-state fact" in error.lower()
+                    for error in detected_errors
+                )
+                submitted_plan_decision = (
+                    payload.get("plan_review", {}).get("decision")
+                    if isinstance(payload, dict)
+                    and isinstance(payload.get("plan_review"), dict)
+                    else None
+                )
+                if required_plan_decision in {"establish", "continue", "revise"}:
+                    decision_correction_needed = (
+                        submitted_plan_decision != required_plan_decision
+                    )
+                elif required_plan_decision == "not_due or continue":
+                    decision_correction_needed = submitted_plan_decision not in {
+                        "not_due",
+                        "continue",
+                    }
+                else:
+                    decision_correction_needed = False
+                objective_correction_needed = any(
+                    error.lower().startswith(("objective ", "plan_review.objective "))
+                    for error in detected_errors
+                )
+                expected_values: Dict[str, Any] = {
+                    "plan_request_id": review_control.get("request_id"),
+                    "previous_step": review_control.get("previous_step"),
+                    "previous_verdict": review_control.get("previous_verdict"),
+                    "prior_objective": prior_objective,
+                    "required_plan_decision_for_submitted_objective": required_plan_decision,
+                    "required_previous_evidence_id": review_control.get(
+                        "previous_evidence_id"
+                    ),
+                    "submitted_objective": submitted_objective,
+                    "submitted_objective_matches_prior": objective_matches_prior,
+                    "submitted_plan_decision": submitted_plan_decision,
+                }
+                repair_instructions: List[str] = []
+                if (
+                    decision_correction_needed
+                    and not objective_correction_needed
+                    and required_plan_decision in {
+                    "establish",
+                    "continue",
+                    "revise",
+                    }
+                ):
+                    repair_instructions.append(
+                        "Required decision repair: preserve the submitted objective and set "
+                        f"plan_review.decision exactly to {required_plan_decision!r}."
+                    )
+                elif (
+                    decision_correction_needed
+                    and not objective_correction_needed
+                    and required_plan_decision == "not_due or continue"
+                ):
+                    repair_instructions.append(
+                        "Required decision repair: preserve the submitted objective and set "
+                        "plan_review.decision to either 'not_due' or 'continue'."
+                    )
+                if evidence_correction_needed:
+                    allowed_evidence_lines = [
+                        line
+                        for line in review_control.get("allowed_evidence_lines", [])
+                        if isinstance(line, str) and re.fullmatch(r"E\d+: .+", line)
+                    ]
+                    expected_values["allowed_evidence_ids"] = [
+                        line.split(": ", 1)[0] for line in allowed_evidence_lines
+                    ]
+                    expected_values["allowed_evidence_lines"] = allowed_evidence_lines
+                    repair_instructions.append(
+                        "Evidence fields must contain only E# identifiers, never copied "
+                        "observation text. Set last_action_review.evidence to a JSON array "
+                        "that includes required_previous_evidence_id. Set "
+                        "plan_review.evidence to a JSON array containing at least two distinct "
+                        "allowed_evidence_ids that factually support the plan review."
+                    )
                 expected_control = json.dumps(
-                    {
-                        "allowed_evidence_ids": allowed_evidence_ids,
-                        "allowed_evidence_lines": allowed_evidence_lines,
-                        "plan_request_id": review_control.get("request_id"),
-                        "previous_step": review_control.get("previous_step"),
-                        "previous_verdict": review_control.get("previous_verdict"),
-                        "prior_objective": prior_objective,
-                        "required_plan_decision_for_submitted_objective": (
-                            required_plan_decision
-                        ),
-                        "required_previous_evidence_id": review_control.get(
-                            "previous_evidence_id"
-                        ),
-                        "submitted_objective": submitted_objective,
-                        "submitted_objective_matches_prior": objective_matches_prior,
-                        "submitted_plan_decision": (
-                            payload.get("plan_review", {}).get("decision")
-                            if isinstance(payload, dict)
-                            and isinstance(payload.get("plan_review"), dict)
-                            else None
-                        ),
-                    },
+                    expected_values,
                     ensure_ascii=True,
                     sort_keys=True,
                 )
                 validation_feedback = "\n".join(
-                    f"- {error}" for error in (contract_errors or [last_error])
+                    f"- {error}" for error in detected_errors
                 )
+                focused_repairs = " ".join(repair_instructions)
                 self._tool_events.append(
                     {
                         "tool": "governed_llm.review_contract_retry",
@@ -1109,11 +1161,7 @@ class DFHackGovernedLLMAgent(Agent):
                             "Validation errors (all currently detected):\n"
                             f"{validation_feedback}\n"
                             f"Authoritative AGENT PLAN CONTROL values: {expected_control}\n"
-                            "Evidence fields must contain only E# identifiers, never copied "
-                            "observation text. Set last_action_review.evidence to a JSON array "
-                            "that includes required_previous_evidence_id. Set "
-                            "plan_review.evidence to a JSON array containing at least two distinct "
-                            "allowed_evidence_ids that factually support the plan review. "
+                            f"{focused_repairs} "
                             "Re-read AGENT PLAN CONTROL and "
                             "return one corrected submit_action. No game ticks have advanced."
                         ),

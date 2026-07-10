@@ -33,6 +33,7 @@ MAX_SNAPSHOT_W = 64
 MAX_SNAPSHOT_H = 64
 MAX_FARM_PLOT_W = 5
 MAX_FARM_PLOT_H = 5
+MAX_ADVANCE_TICKS = 2000
 FARM_SEASONS = ("spring", "summer", "autumn", "winter")
 MAX_CROP_TOKEN_LEN = 64
 VALID_KINDS: Iterable[str] = ("dig", "channel", "chop", "gather")
@@ -619,7 +620,7 @@ def advance_ticks_exact_external(ticks: int, repause: bool = True) -> Dict[str, 
     if want <= 0:
         return {"ok": False, "error": "invalid_ticks"}
 
-    want = min(want, 1000)
+    want = min(want, MAX_ADVANCE_TICKS)
 
     started_paused = _safe_read_pause_state()
 

@@ -661,9 +661,8 @@ def test_review_contract_correction_includes_exact_rejected_payload() -> None:
     assert json.dumps(invalid, ensure_ascii=True, sort_keys=True) in correction["content"]
     assert "plan_review.objective is required" in correction["content"]
     assert "No game ticks have advanced" in correction["content"]
-    assert '"allowed_evidence_ids": ["E0", "E1", "E2", "E3"]' in correction["content"]
-    assert '"allowed_evidence_lines": ["E0: AGENT PLAN CONTROL:' in correction["content"]
-    assert "Evidence fields must contain only E# identifiers" in correction["content"]
+    assert '"allowed_evidence_ids"' not in correction["content"]
+    assert '"allowed_evidence_lines"' not in correction["content"]
 
 
 def test_review_contract_correction_uses_evidence_id_terminology() -> None:
@@ -685,7 +684,77 @@ def test_review_contract_correction_uses_evidence_id_terminology() -> None:
         "plan_review.evidence requires at least two distinct allowed evidence ids (E#)"
         in correction
     )
+    assert '"allowed_evidence_ids": ["E0", "E1", "E2", "E3"]' in correction
+    assert '"allowed_evidence_lines": ["E0: AGENT PLAN CONTROL:' in correction
+    assert "Evidence fields must contain only E# identifiers" in correction
     assert "observation-grounded excerpt" not in correction
+
+
+def test_review_contract_decision_correction_is_focused_and_omits_evidence_catalog() -> None:
+    control = _plan_control(
+        review_due=True,
+        request_id="32:same_objective_stalled_2",
+        prior_objective="Build durable shelter.",
+        previous_step=31,
+        previous_verdict="no_progress",
+    )
+    invalid = _reviewed_action_payload(control=control, decision="revise")
+    valid = _reviewed_action_payload(control=control, decision="continue")
+    agent = _agent([_text_action_response(invalid), _text_action_response(valid)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["plan_review"]["decision"] == "continue"
+    correction = agent._client.chat.completions.requests[1]["messages"][-1]["content"]
+    assert "Required decision repair" in correction
+    assert "plan_review.decision exactly to 'continue'" in correction
+    assert '"allowed_evidence_ids"' not in correction
+    assert '"allowed_evidence_lines"' not in correction
+
+
+def test_due_not_due_decision_gets_exact_continue_repair() -> None:
+    control = _plan_control(
+        review_due=True,
+        request_id="35:periodic_5",
+        prior_objective="Build durable shelter.",
+        previous_step=34,
+        previous_verdict="progressed",
+    )
+    invalid = _reviewed_action_payload(control=control, decision="not_due")
+    valid = _reviewed_action_payload(control=control, decision="continue")
+    agent = _agent([_text_action_response(invalid), _text_action_response(valid)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["plan_review"]["decision"] == "continue"
+    correction = agent._client.chat.completions.requests[1]["messages"][-1]["content"]
+    assert "due plan review must continue or revise the prior objective" in correction
+    assert "plan_review.decision exactly to 'continue'" in correction
+
+
+def test_current_state_fact_error_includes_evidence_catalog() -> None:
+    control = _plan_control()
+    invalid = _reviewed_action_payload(control=control)
+    invalid["plan_review"]["evidence"] = ["E0", "E1"]
+    valid = _reviewed_action_payload(control=control)
+    agent = _agent([_text_action_response(invalid), _text_action_response(valid)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["plan_review"]["evidence"] == ["E0", "E3"]
+    correction = agent._client.chat.completions.requests[1]["messages"][-1]["content"]
+    assert "must quote at least one current game-state fact" in correction
+    assert '"allowed_evidence_ids": ["E0", "E1", "E2", "E3"]' in correction
+    assert '"allowed_evidence_lines": ["E0: AGENT PLAN CONTROL:' in correction
 
 
 def test_review_contract_corrects_overlong_objectives_locally() -> None:

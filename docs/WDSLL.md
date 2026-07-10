@@ -1573,6 +1573,46 @@ gate. Each entry states what changed and the evidence that forced it.
   tests and 714 full-suite tests passed, 5 live-only skipped, with Ruff,
   compileall, and `git diff --check` clean; CI follows the candidate commit.
 
+- **2026-07-10 — PR #85 deployed; G7 attempt 16: INFRASTRUCTURE-ABORTED FAIL
+  after 32 real gameplay rows; evidence recovery worked, then an unrelated
+  correction truncated.** PR #85 passed CI, merged, and deployed as
+  `ff9b7a6f59ad5c245fe75e9cf874bdb354112289`. Attempt 16 run
+  `1b1218635a1647ba96d83189c1095bd4`
+  ([replay](https://fortgym.live/r/S9_rAjwEV9CtCZaC6z4R0yOHP_vuPiUb))
+  used fresh `seed_region3_fresh`, pinned OpenRouter GLM-5.2, memory off, and a
+  450-step budget. It executed 32 gameplay rows and 32,127 real ticks; all 32
+  rows have screen text, governed provenance, and DFHack proof. Gameplay rows
+  used 42 model calls, 468,048 prompt tokens, and 18,521 completion tokens; the
+  three terminal calls brought the full trace total to 45 calls, 518,033 prompt
+  tokens, and 21,073 completion tokens.
+
+  The evidence correction was proven live. The run crossed step 24, and a bad
+  step-25 review received one correction, returned valid `E6`/`E20`/`E21`
+  evidence, executed a WAIT, and advanced 1,007 ticks. Policy quality remained
+  poor: the model completed a Carpenter workshop, produced three beds, three
+  doors, and two tables, and made 22 constructions, but enclosed no space and
+  installed no furniture. It repeatedly re-designated one shrub and retried the
+  blocked wall despite zero changed tiles. It built no Still or FarmPlot and
+  produced zero food and drink while seven drinks were consumed. Deterministic
+  gate-v2 is FAIL: evidence, neglect-death, and rubric 82.75 with zero blockers
+  pass; duration 32,127/403,200, production, population 7/15, rooms 0/3, beds
+  0/3, and score-v4 92.04/150 fail.
+
+  At terminal step 32, the initial 504-token JSON parsed but used
+  `decision=revise` without changing its objective. That decision-only retry
+  unnecessarily repeated the full 24-line evidence catalog; both correction
+  responses exhausted the 1,024-token cap. The attempt-17 candidate emits the
+  catalog only for evidence errors and states the exact required decision field.
+  An exact terminal-state no-execution probe recovered in one 257-token
+  correction at the unchanged cap. The same trace also proved an independent
+  control mismatch: actions submitted `advance_ticks=1500`, but the external
+  DFHack helper silently clamped them to 1,000. The candidate raises that helper
+  ceiling to the action schema's existing legal maximum of 2,000; it does not
+  force any duration or choose for the model. Local verification is 70 focused
+  tests passed, 1 live-only skipped, and 719 full-suite tests passed, 5
+  live-only skipped, with changed-file Ruff, compileall, and `git diff --check`
+  clean; review and CI follow the candidate commit.
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,
