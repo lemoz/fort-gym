@@ -7,6 +7,33 @@
 -- player constructions. Works on any seed/embark.
 
 local json = require('json')
+local args = {...}
+
+local function to_int(value)
+  local number = tonumber(value)
+  if not number then return nil end
+  return math.floor(number)
+end
+
+-- Optional focus is supplied only from the model's own accepted channel
+-- action. Without all six bounded coordinates this hook remains fully
+-- plan-agnostic and emits no access target.
+local access_focus_rect = nil
+if #args >= 6 then
+  local x1 = to_int(args[1])
+  local y1 = to_int(args[2])
+  local z1 = to_int(args[3])
+  local x2 = to_int(args[4])
+  local y2 = to_int(args[5])
+  local z2 = to_int(args[6])
+  if x1 and y1 and z1 and x2 and y2 and z2 and z1 == z2 then
+    local rx1, ry1 = math.min(x1, x2), math.min(y1, y2)
+    local rx2, ry2 = math.max(x1, x2), math.max(y1, y2)
+    if rx2 - rx1 + 1 <= 30 and ry2 - ry1 + 1 <= 30 then
+      access_focus_rect = { rx1, ry1, z1, rx2, ry2, z1 }
+    end
+  end
+end
 
 local MAX_COMPONENT_TILES = 400
 local MAX_SPACES = 12
@@ -16,7 +43,14 @@ local Z_NEIGHBORS = false -- single-z spaces for v1
 local attrs = df.tiletype.attrs
 local FLOOR_SHAPE = df.tiletype_shape.FLOOR
 local WALL_SHAPE = df.tiletype_shape.WALL
+local STAIR_UP_SHAPE = df.tiletype_shape.STAIR_UP
+local STAIR_DOWN_SHAPE = df.tiletype_shape.STAIR_DOWN
+local STAIR_UPDOWN_SHAPE = df.tiletype_shape.STAIR_UPDOWN
+local RAMP_SHAPE = df.tiletype_shape.RAMP
+local RAMP_TOP_SHAPE = df.tiletype_shape.RAMP_TOP
+local EMPTY_SHAPE = df.tiletype_shape.EMPTY
 local FROZEN_LIQUID_MATERIAL = df.tiletype_material.FROZEN_LIQUID
+local TREE_MATERIAL = df.tiletype_material.TREE
 
 -- standable ground that counts as room interior (vegetation and loose rock
 -- on a floor do not connect a room to the wild)
@@ -32,14 +66,19 @@ local function tile_shape(x, y, z)
   local block = dfhack.maps.getTileBlock(x, y, z)
   if not block then return nil, nil, nil end
   local dx, dy = x % 16, y % 16
-  local ok, shape, hidden, material = pcall(function()
+  local ok_hidden, hidden = pcall(function()
+    return block.designation[dx][dy].hidden
+  end)
+  if not ok_hidden then return nil, nil, nil end
+  -- Hidden tiles are opaque. Do not read tiletype attributes and do not let a
+  -- hidden wall close a room flood, since either would leak unexplored geology.
+  if hidden then return nil, true, nil end
+  local ok, shape, material = pcall(function()
     local attr = attrs[block.tiletype[dx][dy]]
-    return attr and attr.shape or nil,
-      block.designation[dx][dy].hidden,
-      attr and attr.material or nil
+    return attr and attr.shape or nil, attr and attr.material or nil
   end)
   if not ok then return nil, nil, nil end
-  return shape, hidden, material
+  return shape, false, material
 end
 
 local function stable_interior_shape(shape, material)
@@ -283,12 +322,10 @@ for _, space in ipairs(spaces) do
   if space.kind ~= 'enclosed_space' then functional = functional + 1 end
 end
 
--- Nearby tree clusters beyond the minimap window. On clearing spawns the
--- fort window can hold zero trunks while forests stand 20 tiles away (G6
--- attempt 1, run 769f5034: the agent chopped blind and wood-starved all
--- run). Bounded read-only scan around the citizens; factual observation
--- content only.
-local nearby_trees = { total = 0, clusters = {} }
+-- Count only visible nearby trunks. Coordinates and cluster centroids are not
+-- emitted: the agent must choose targets from visible map evidence instead of
+-- receiving runner-selected strategy hints.
+local nearby_trees = { total = 0 }
 pcall(function()
   local cx, cy, cz, n = 0, 0, nil, 0
   for _, unit in ipairs(df.global.world.units.active) do
@@ -303,43 +340,23 @@ pcall(function()
   if n == 0 then return end
   cx, cy = math.floor(cx / n), math.floor(cy / n)
   local RADIUS = 40
-  local BUCKET = 16
-  local tree_material = df.tiletype_material.TREE
-  local buckets = {}
   for x = math.max(0, cx - RADIUS), cx + RADIUS do
     for y = math.max(0, cy - RADIUS), cy + RADIUS do
       local block = dfhack.maps.getTileBlock(x, y, cz)
       if block then
         local dx, dy = x % 16, y % 16
+        local designation = block.designation[dx][dy]
         local ok_t, is_trunk = pcall(function()
+          if not designation or designation.hidden then return false end
           local attr = attrs[block.tiletype[dx][dy]]
           return attr ~= nil and attr.shape == WALL_SHAPE
-            and attr.material == tree_material
+            and attr.material == TREE_MATERIAL
         end)
         if ok_t and is_trunk then
           nearby_trees.total = nearby_trees.total + 1
-          local key = math.floor(x / BUCKET) .. ',' .. math.floor(y / BUCKET)
-          local b = buckets[key] or { x = 0, y = 0, count = 0 }
-          b.x = b.x + x
-          b.y = b.y + y
-          b.count = b.count + 1
-          buckets[key] = b
         end
       end
     end
-  end
-  local list = {}
-  for _, b in pairs(buckets) do
-    table.insert(list, {
-      x = math.floor(b.x / b.count),
-      y = math.floor(b.y / b.count),
-      z = cz,
-      count = b.count,
-    })
-  end
-  table.sort(list, function(a, b2) return a.count > b2.count end)
-  for i = 1, math.min(3, #list) do
-    table.insert(nearby_trees.clusters, list[i])
   end
 end)
 
@@ -348,6 +365,8 @@ end)
 local map_origin = nil
 local map_rows = {}
 local frozen_liquid_tiles = 0
+local access_level_maps = {}
+local vertical_access_focus = { active = false }
 do
   local construction_set = {}
   pcall(function()
@@ -380,6 +399,77 @@ do
       end
     end
   end)
+
+  local citizen_tile_lookup = {}
+  for _, cpos in ipairs(citizen_positions) do
+    citizen_tile_lookup[cpos.x .. ',' .. cpos.y .. ',' .. cpos.z] = true
+  end
+
+  local function access_kind_for_shape(shape)
+    if shape == STAIR_UP_SHAPE then return 'up_stair' end
+    if shape == STAIR_DOWN_SHAPE then return 'down_stair' end
+    if shape == STAIR_UPDOWN_SHAPE then return 'up_down_stair' end
+    if shape == RAMP_SHAPE then return 'ramp' end
+    if shape == RAMP_TOP_SHAPE then return 'ramp_top' end
+    return nil
+  end
+
+  local function visible_shape_name(shape, hidden)
+    if shape == nil or hidden then return false end
+    local ok, name = pcall(function() return df.tiletype_shape[shape] end)
+    if ok and name then return tostring(name) end
+    return tostring(shape)
+  end
+
+  local function render_tile(x, y, z)
+    local key = x .. ',' .. y .. ',' .. z
+    local shape, hidden, material = tile_shape(x, y, z)
+    local kind = building_tile_kind[key]
+    local access_kind = access_kind_for_shape(shape)
+    local ch = ' '
+    if citizen_tile_lookup[key] then
+      ch = '@'
+      kind = nil
+    elseif kind then
+      ch = BUILDING_CHARS[kind] or '?'
+    elseif pending_construction_tiles[key] then
+      ch = 'x'
+    elseif building_at(x, y, z) then
+      ch = 'o'
+    elseif shape == nil or hidden then
+      ch = ' '
+    elseif material == FROZEN_LIQUID_MATERIAL then
+      ch = 'i'
+    elseif shape == STAIR_UP_SHAPE then
+      ch = '<'
+    elseif shape == STAIR_DOWN_SHAPE then
+      ch = '>'
+    elseif shape == STAIR_UPDOWN_SHAPE then
+      ch = 'X'
+    elseif shape == RAMP_SHAPE or shape == RAMP_TOP_SHAPE then
+      ch = '^'
+    elseif shape == WALL_SHAPE then
+      if construction_set[key] then
+        ch = 'W'
+      elseif material == TREE_MATERIAL then
+        ch = 'T'
+      else
+        ch = '#'
+      end
+    elseif shape == FLOOR_SHAPE then
+      ch = '.'
+    elseif shape == df.tiletype_shape.SHRUB then
+      ch = ','
+    elseif shape == df.tiletype_shape.SAPLING then
+      ch = 's'
+    elseif shape == df.tiletype_shape.BOULDER
+      or shape == df.tiletype_shape.PEBBLES then
+      ch = 'p'
+    else
+      ch = '~'
+    end
+    return ch, shape, hidden, material, access_kind
+  end
 
   local anchor_z, best = nil, 0
   for z, count in pairs(anchor_z_counts) do
@@ -433,70 +523,229 @@ do
     if max_x - min_x + 1 > 34 then max_x = min_x + 33 end
     if max_y - min_y + 1 > 34 then max_y = min_y + 33 end
 
-    local citizen_lookup = {}
-    for _, cpos in ipairs(citizen_positions) do
-      if cpos.z == anchor_z then
-        citizen_lookup[cpos.x .. ',' .. cpos.y] = true
-      end
-    end
     map_origin = { min_x, min_y, anchor_z }
     for y = min_y, max_y do
       local row = {}
       for x = min_x, max_x do
-        local ch = ' '
-        local shape, hidden, material = tile_shape(x, y, anchor_z)
+        local ch, _, hidden, material = render_tile(x, y, anchor_z)
         if not hidden and material == FROZEN_LIQUID_MATERIAL then
           frozen_liquid_tiles = frozen_liquid_tiles + 1
-        end
-        local kind = building_tile_kind[x .. ',' .. y .. ',' .. anchor_z]
-        if citizen_lookup[x .. ',' .. y] then
-          ch = '@'
-          kind = nil
-        elseif kind then
-          ch = BUILDING_CHARS[kind] or '?'
-        elseif pending_construction_tiles[x .. ',' .. y .. ',' .. anchor_z] then
-          ch = 'x'
-        elseif building_at(x, y, anchor_z) then
-          -- Wagons, depots, stockpiles, and any other building footprint are
-          -- legal room boundaries but never open BUILD targets.
-          ch = 'o'
-        else
-          if shape == nil or hidden then
-            ch = ' '
-          elseif material == FROZEN_LIQUID_MATERIAL then
-            ch = 'i'
-          elseif shape == WALL_SHAPE then
-            local is_tree = false
-            pcall(function()
-              local block = dfhack.maps.getTileBlock(x, y, anchor_z)
-              local attr = attrs[block.tiletype[x % 16][y % 16]]
-              is_tree = attr ~= nil and attr.material == tree_material
-            end)
-            if construction_set[x .. ',' .. y .. ',' .. anchor_z] then
-              ch = 'W'
-            elseif is_tree then
-              ch = 'T'
-            else
-              ch = '#'
-            end
-          elseif shape == FLOOR_SHAPE then
-            ch = '.'
-          elseif shape == df.tiletype_shape.SHRUB then
-            ch = ','
-          elseif shape == df.tiletype_shape.SAPLING then
-            ch = 's'
-          elseif shape == df.tiletype_shape.BOULDER
-            or shape == df.tiletype_shape.PEBBLES then
-            ch = 'p'
-          elseif INTERIOR_SHAPES[shape] then
-            ch = '~'
-          else
-            ch = '~'
-          end
         end
         table.insert(row, ch)
       end
       table.insert(map_rows, table.concat(row))
+    end
+
+    if access_focus_rect then
+      local fx1, fy1, fz, fx2, fy2 =
+        access_focus_rect[1], access_focus_rect[2], access_focus_rect[3],
+        access_focus_rect[4], access_focus_rect[5]
+      local designated = 0
+      local channel_jobs = 0
+      local top_visible = 0
+      local lower_visible = 0
+      local completed_pairs = 0
+      local local_step_pairs = 0
+      local native_connected_pairs = 0
+      local pair_samples = {}
+      pcall(function()
+        local link = df.global.world.jobs.list.next
+        while link do
+          local job = link.item
+          local name = tostring(df.job_type[job.job_type] or job.job_type)
+          local pos = job.pos
+          if name == 'DigChannel' and pos and pos.z == fz
+              and pos.x >= fx1 and pos.x <= fx2
+              and pos.y >= fy1 and pos.y <= fy2 then
+            channel_jobs = channel_jobs + 1
+          end
+          link = link.next
+        end
+      end)
+
+      -- DFHack 0.47.05 does not expose Maps::canStepBetween to Lua. Mirror
+      -- its ordinary diagonal-ramp branch exactly enough to prove the local
+      -- edge, then require native canWalkBetween for the specific endpoints.
+      -- This prevents an unrelated route elsewhere from satisfying focus.
+      local function local_ramp_step(x, y)
+        local lower_z = fz - 1
+        local lower_block = dfhack.maps.getTileBlock(x, y, lower_z)
+        local ramp_top_block = dfhack.maps.getTileBlock(x, y, fz)
+        if not lower_block or not ramp_top_block then return false, false end
+        local lower_dx, lower_dy = x % 16, y % 16
+        local lower_shape, lower_hidden = tile_shape(x, y, lower_z)
+        local ramp_top_shape, ramp_top_hidden = tile_shape(x, y, fz)
+        if lower_hidden or ramp_top_hidden
+            or lower_shape ~= RAMP_SHAPE
+            or ramp_top_shape ~= RAMP_TOP_SHAPE then
+          return false, false
+        end
+        local lower_walkable = lower_block.walkable[lower_dx][lower_dy]
+        if not lower_walkable or lower_walkable == 0 then return false, false end
+        if lower_block.designation[lower_dx][lower_dy].flow_size >= 4 then
+          return false, false
+        end
+
+        local support_wall = false
+        for sx = -1, 1 do
+          for sy = -1, 1 do
+            if sx ~= 0 or sy ~= 0 then
+              local shape, hidden = tile_shape(x + sx, y + sy, lower_z)
+              if not hidden and shape == WALL_SHAPE then support_wall = true end
+            end
+          end
+        end
+        if not support_wall then return false, false end
+
+        local top_occ = ramp_top_block.occupancy[x % 16][y % 16].building
+        if top_occ == df.tile_building_occ.Obstacle
+            or top_occ == df.tile_building_occ.Floored
+            or top_occ == df.tile_building_occ.Impassable then
+          return false, false
+        end
+
+        local lower_pos = { x = x, y = y, z = lower_z }
+        local valid_local_endpoint = false
+        for sx = -1, 1 do
+          for sy = -1, 1 do
+            if sx ~= 0 or sy ~= 0 then
+              local ux, uy = x + sx, y + sy
+              local upper_block = dfhack.maps.getTileBlock(ux, uy, fz)
+              local upper_shape, upper_hidden = tile_shape(ux, uy, fz)
+              if upper_block and upper_shape ~= nil and not upper_hidden then
+                local udx, udy = ux % 16, uy % 16
+                local upper_walkable = upper_block.walkable[udx][udy]
+                local upper_flow = upper_block.designation[udx][udy].flow_size
+                if upper_walkable and upper_walkable ~= 0 and upper_flow < 4 then
+                  valid_local_endpoint = true
+                  local upper_pos = { x = ux, y = uy, z = fz }
+                  local ok_pair, pair_connected = pcall(function()
+                    return dfhack.maps.canWalkBetween(lower_pos, upper_pos)
+                  end)
+                  if ok_pair and pair_connected then
+                    for _, cpos in ipairs(citizen_positions) do
+                      local ok_citizen, citizen_connected = pcall(function()
+                        return dfhack.maps.canWalkBetween(cpos, upper_pos)
+                      end)
+                      if ok_citizen and citizen_connected then return true, true end
+                    end
+                  end
+                end
+              end
+            end
+          end
+        end
+        return valid_local_endpoint, false
+      end
+
+      for x = fx1, fx2 do
+        for y = fy1, fy2 do
+          local top_shape, top_hidden = tile_shape(x, y, fz)
+          local lower_shape, lower_hidden = tile_shape(x, y, fz - 1)
+          local top_block = dfhack.maps.getTileBlock(x, y, fz)
+          if top_shape ~= nil and not top_hidden then
+            top_visible = top_visible + 1
+            pcall(function()
+              if top_block.designation[x % 16][y % 16].dig
+                  == df.tile_dig_designation.Channel then
+                designated = designated + 1
+              end
+            end)
+          end
+          if lower_shape ~= nil and not lower_hidden then
+            lower_visible = lower_visible + 1
+          end
+
+          local top_open = top_shape == EMPTY_SHAPE
+            or top_shape == RAMP_TOP_SHAPE
+            or top_shape == STAIR_DOWN_SHAPE
+            or top_shape == STAIR_UPDOWN_SHAPE
+          local lower_access = lower_shape == RAMP_SHAPE
+            or lower_shape == STAIR_UP_SHAPE
+            or lower_shape == STAIR_UPDOWN_SHAPE
+          local geometry_complete = not top_hidden and not lower_hidden
+            and top_open and lower_access
+          local local_step_valid = false
+          local connected = false
+          if geometry_complete then
+            completed_pairs = completed_pairs + 1
+            local_step_valid, connected = local_ramp_step(x, y)
+            if local_step_valid then local_step_pairs = local_step_pairs + 1 end
+            if connected then
+              native_connected_pairs = native_connected_pairs + 1
+            end
+          end
+          if #pair_samples < 16 then
+            table.insert(pair_samples, {
+              x = x,
+              y = y,
+              top_z = fz,
+              lower_z = fz - 1,
+              top_visible = top_shape ~= nil and not top_hidden,
+              lower_visible = lower_shape ~= nil and not lower_hidden,
+              top_shape = visible_shape_name(top_shape, top_hidden),
+              lower_shape = visible_shape_name(lower_shape, lower_hidden),
+              geometry_complete = geometry_complete,
+              local_step_valid = local_step_valid,
+              native_connected = connected,
+            })
+          end
+        end
+      end
+
+      local status = 'unknown'
+      if designated > 0 or channel_jobs > 0 then
+        status = 'pending'
+      elseif native_connected_pairs > 0 then
+        status = 'connected'
+      elseif top_visible > 0 and lower_visible > 0 then
+        status = 'failed'
+      end
+      vertical_access_focus = {
+        active = true,
+        source = 'model_owned_channel_tile',
+        rect = access_focus_rect,
+        status = status,
+        channel_designations = designated,
+        channel_jobs = channel_jobs,
+        top_visible_tiles = top_visible,
+        lower_visible_tiles = lower_visible,
+        completed_geometry_pairs = completed_pairs,
+        local_step_pairs = local_step_pairs,
+        native_connected_pairs = native_connected_pairs,
+        pair_samples = pair_samples,
+      }
+
+      local center_x = math.floor((fx1 + fx2) / 2)
+      local center_y = math.floor((fy1 + fy2) / 2)
+      local radius = 8
+      local level_x1 = math.max(0, center_x - radius)
+      local level_y1 = math.max(0, center_y - radius)
+      local level_x2 = level_x1 + radius * 2
+      local level_y2 = level_y1 + radius * 2
+      for _, level_z in ipairs({ fz, fz - 1 }) do
+        if level_z >= 0 then
+          local rows = {}
+          local visible_tiles = 0
+          for y = level_y1, level_y2 do
+            local row = {}
+            for x = level_x1, level_x2 do
+              local ch, shape, hidden = render_tile(x, y, level_z)
+              if shape ~= nil and not hidden then visible_tiles = visible_tiles + 1 end
+              table.insert(row, ch)
+            end
+            table.insert(rows, table.concat(row))
+          end
+          table.insert(access_level_maps, {
+            z = level_z,
+            origin = { level_x1, level_y1, level_z },
+            center = { center_x, center_y, level_z },
+            source_action_rect = access_focus_rect,
+            visible_tiles = visible_tiles,
+            rows = rows,
+          })
+        end
+      end
     end
   end
 end
@@ -512,6 +761,8 @@ print(json.encode({
   nearby_trees = nearby_trees,
   player_buildings = #buildings,
   frozen_liquid_tiles = frozen_liquid_tiles,
+  vertical_access_focus = vertical_access_focus,
+  access_level_maps = access_level_maps,
   map_origin = map_origin,
   map_rows = map_rows,
 }))

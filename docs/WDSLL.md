@@ -163,12 +163,13 @@ separates "solved one map" from "plays Dwarf Fortress."
 Status: RATIFIED at the 2026-07-09 operator window; attempt 1 FAILED, while
 attempts 2 through 6 ended in infrastructure-aborted FAILs with no full-year
 policy verdict. All attempts are recorded below. The gameplay criteria remain
-unchanged; post-Attempt-10 runs use the score-v4 stable-floor measurement
-boundary, and post-Attempt-19 runs use the score-v5 action-effect truth
-boundary. All three activation preconditions hold: (a) score-v3 ratified and
-landed, with score-v4 removing false frozen-floor credit and score-v5 removing
-command-acceptance/task-presence credit while both retain the coefficients and
-threshold; (b) G6 attempted
+unchanged. Production runs after Attempt 10 use the score-v4 stable-floor
+measurement boundary. Score-v5 is implemented for Attempt 20 but remains an
+undeployed candidate until review, CI, merge, deployment, and a boundary smoke;
+no v5 run is yet valid. The gate activation preconditions otherwise hold: (a)
+score-v3 was ratified and landed, score-v4 removed false frozen-floor credit,
+and the score-v5 candidate removes command-acceptance/task-presence credit while
+retaining the coefficients and threshold; (b) G6 attempted
 (7 runs, 2 models — frontier documented in the escalation log); (c) the
 survival primitives exist, adversarially reviewed and live-validated:
 gather (DIG kind), FarmPlot (BUILD kind), Still + brew ORDER
@@ -205,7 +206,8 @@ Criteria (one run, plan-agnostic, current score version, memory per standing con
   waves survived), >= 3 functional rooms, installed beds >= population/3.
 - **No degeneracy**: rubric clean of repetitive_policy /
   no_production_surface / no_fort_structure / legality blockers; scalar
-  bar remains the pre-declared 150 under score-v5; versions 4 and 5 are
+  bar remains the pre-declared 150. Attempt 20 uses score-v5 only after that
+  boundary is deployed; versions 4 and 5 are
   conservative measurement corrections, not coefficient or threshold changes.
 
 Evidence: unchanged — recorded frames, per-step gameplay_proof, provenance
@@ -1702,6 +1704,119 @@ gate. Each entry states what changed and the evidence that forced it.
   existing `dfhack-governed-llm-glm5v` alias (OpenRouter
   `z-ai/glm-5v-turbo`) so the model can inspect the same minimap as an image. It
   adds no room plan, target coordinates, action selection, or score credit.
+
+- **2026-07-10 UTC — G7 attempt 19: CONTAMINATED / INVALID after a candidate
+  hook probe mutated the active save.** Run
+  `e75981445d9a4b0786ed7b1b81afb499`
+  ([replay](https://fortgym.live/r/or01cSujoIE17kNnOVianwx1_SeEGhM8))
+  used deployed commit `21b2b7dc31a24ddb8d6cdf13fa40f592e1908c83`,
+  fresh `seed_region3_fresh`, OpenRouter `z-ai/glm-5v-turbo`, memory off, and a
+  450-step budget. Before the incident, the agent performed real gameplay: it
+  escaped liaison dialogs, reached population 17, made 112 constructions,
+  completed a Still and surface FarmPlot, selected subterranean plump helmets
+  on that plot, and produced 25 drinks. It produced no food; food and drink
+  later reached zero, six citizens died, and large brew queues accumulated with
+  zero brewable plants.
+
+  During live validation, an operator ran a candidate stair hook at the Still's
+  center `(99,101,161)`, expecting building occupancy to reject it. The hook
+  instead applied one-tile stair designations. The exact designation was
+  immediately cleared and the run stopped, but the external mutation makes the
+  entire run ineligible for a terminal policy verdict. The stopped artifact's
+  score 155.16, rubric 76.56 with zero blockers, population 16, one functional
+  room, three installed beds, and six unknown-cause deaths are incident
+  diagnostics only. Its trace is also incomplete: 291 gameplay rows versus 290
+  screen/proof rows and 321,997 summary ticks versus 323,204 trace ticks. The
+  353 model calls used 6,299,908 tokens.
+
+  Attempt 20 is blocked by evidence, not permission. No mutation probe will run
+  against an active scored save again. A disposable fresh reset must first
+  prove legal visible-floor channel designation, a real DigChannel job,
+  completed top/lower geometry, native walk connectivity, citizen traversal,
+  an underground farmable plot, a game-offered crop, planting/harvest, and
+  positive food production. The governed runner must not supply
+  externally-selected coordinates or plan geometry, and native farm controls
+  must reject invalid tile/crop combinations. Only then does the fresh scored
+  loop resume.
+
+- **2026-07-10 UTC — Disposable attempt-20 control proof: PASS from visible
+  floor channel to native underground harvest; not a scored policy run.** With
+  no active registry run, the VM was reset from pristine
+  `seed_region3_fresh`. The candidate designated `(90,90,161)` as a channel,
+  observed the pending designation, then native assigned `DigChannel` job `2`.
+  Completion produced `RAMP_TOP` over `RAMP`; the model-action-focused observer
+  reported one completed pair, one native `canWalkBetween` connection, and
+  status `connected`. Citizen `243` was then observed at z=160 performing an
+  assigned Dig job.
+
+  A one-tile FarmPlot at `(92,90,160)` passed the native-soil gate, created its
+  normal construction job, and completed stage 3/3. The observation exposed
+  per-season underground crop options. `GRASS_TAIL_PIG` in spring was rejected
+  with every crop slot unchanged; offered `MUSHROOM_HELMET_PLUMP` changed all
+  four slots, and DF created assigned PlantSeeds job `8`. Ordinary 2,000-tick
+  turns, with no completion helper, advanced native growth and harvest. The
+  run-scoped ledger ended at tick 54,497 with food produced 2, nonfarm plants
+  created 0, complete flow evidence, and no deaths.
+
+  The exact attempt-19 Still coordinate also passed its negative regression:
+  channel at `(99,101,161)` rejected `occupied_by_building` and left the
+  designation `No`. The old surface plot rejected subterranean plump helmets
+  without changing its four slots. Read-only hooks executed on real DFHack
+  0.47.05, and the intermediate live probe caught and fixed linked-list job
+  traversal before publication. The evidence ledger was stopped and the VM
+  reset again; final attestation was population 7, farms 0, evidence inactive.
+  The next fresh scored run tests whether the agent can discover and operate
+  this proven surface without any runner-selected coordinate or plan.
+
+- **Attempt-20 pre-deploy review: four reviews found the control and
+  measurement gaps; the revised candidate remains undeployed.** Governed mode
+  now fails closed if assisted completion is configured, and `/step` rejects
+  governed models before opening a second DFHack control/scoring path.
+  Dig/channel, chop/gather, and crop
+  multi-writes are transactional with readback; an unverified rollback is a
+  zero-tick terminal failure. Native-undiggable materials fail before
+  designation, and building collision scans no longer trust stale occupancy.
+  Generalized access coordinates, `citizens_below`, and tree-cluster centroids
+  are removed. Focused access reports one newly model-owned channel tile and
+  requires the version-pinned local ramp predicate plus native connectivity.
+  Hidden replay and room metrics treat unexplored tiles as opaque before
+  tiletype/material reads.
+
+  Score-v5 captures excavation ownership immediately after the paused native
+  write, before ticks can clear a designation into a job, then monitors every
+  unfinished owned coordinate independent of the camera and persists each new
+  completion in `gameplay_proof`. Designations earn
+  zero scalar and cannot unlock duration; summarization rejects any governed v5
+  row without `dfhack_governed_action_owned_progress_v2` provenance. Exact
+  workshop/farm building IDs are claimed from accepted model-authored BUILDs and
+  matched to later native completed stages. Only completed owned Carpenter
+  workshops feed governed utility/production capacity; global goods, output,
+  workshops, rooms, constructions, furniture, and ORDER output are audit-only,
+  complexity fails closed to zero, and none can unlock duration. Crop-option completeness now requires
+  successful exhaustive scans and suppresses truncated/partial lists. The
+  final review also forced native stage-read attestation (`stage_read_ok`,
+  numeric stage/max, `max_stage > 0`), explicit and inferred rollback-failure
+  quarantine, mandatory boolean duration gates during reaggregation, and an
+  owned-only governed rubric. Unowned world changes during WAIT are concurrent
+  telemetry, not responsiveness credit. Global rooms/constructions intentionally
+  cannot clear governed rubric blockers until an exact ownership surface exists.
+  The affected suite is 256 passed; the full suite is 786 passed, 5 skipped, with changed
+  Python Ruff-clean and compiled. Disposable live 0.47.05 checks proved wagon
+  collision rejection for channel and farm, transactional real chop/gather,
+  hidden-snapshot opacity, and legal channel acceptance.
+
+  The earlier complete disposable positive re-proof also passed: native
+  channel/job/local connectivity, citizen traversal below, stage-3 FarmPlot,
+  invalid-crop no-op, transactional four-slot crop readback, native planting,
+  and run-scoped harvest
+  (`food_produced_in_run=1`, nonfarm plants 0, zero deaths). The ledger was
+  stopped and the VM reset pristine. The latest mutation probe was likewise
+  reset and attested at farms 0, an undesignated target tile, and evidence
+  inactive. Candidate copies of the changed Lua hooks parsed on DFHack 0.47.05,
+  and read-only `job_metrics` returned `ok=true` with farms/workshops 0. Sol
+  Ultra independently reran 256 focused and 786 full-suite tests, found all four
+  findings closed, and returned DEPLOY. Merge/deploy and scored Attempt 20
+  remain pending.
 
 ## Reporting format (every gate attempt)
 

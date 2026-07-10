@@ -20,7 +20,9 @@ def test_g7_citizen_filter_returns_one_boolean_value() -> None:
 
 def test_job_metrics_separates_completed_furniture_from_all_placed_furniture() -> None:
     assert "out.placed_furniture_completed" in HOOK_SOURCE
-    assert "bld:getBuildStage() >= bld:getMaxBuildStage()" in HOOK_SOURCE
+    assert "local function building_stage(bld)" in HOOK_SOURCE
+    assert "max_stage > 0" in HOOK_SOURCE
+    assert "return true, stage, max_stage, stage >= max_stage" in HOOK_SOURCE
     assert "out.placed_furniture[key] = out.placed_furniture[key] + 1" in HOOK_SOURCE
     assert (
         "out.placed_furniture_completed[key] = out.placed_furniture_completed[key] + 1"

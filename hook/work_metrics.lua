@@ -2,6 +2,7 @@
 
 local json = require('json')
 local args = {...}
+local global_only = tostring(args[1] or '') == 'global'
 
 local function to_int(v, default)
   local n = tonumber(v)
@@ -9,12 +10,12 @@ local function to_int(v, default)
   return math.floor(n)
 end
 
-local x1 = to_int(args[1], 50)
-local y1 = to_int(args[2], 35)
-local z1 = to_int(args[3], 0)
-local x2 = to_int(args[4], 54)
-local y2 = to_int(args[5], 39)
-local z2 = to_int(args[6], z1)
+local x1 = global_only and 0 or to_int(args[1], 50)
+local y1 = global_only and 0 or to_int(args[2], 35)
+local z1 = global_only and 0 or to_int(args[3], 0)
+local x2 = global_only and 0 or to_int(args[4], 54)
+local y2 = global_only and 0 or to_int(args[5], 39)
+local z2 = global_only and 0 or to_int(args[6], z1)
 local window_x = df.global.window_x or 0
 local window_y = df.global.window_y or 0
 local window_z = df.global.window_z or 0
@@ -36,7 +37,7 @@ if (rx2 - rx1 + 1) > 30 or (ry2 - ry1 + 1) > 30 then
 end
 
 local region = df.global.world.map
-if not region or not region.map_blocks then
+if not global_only and (not region or not region.map_blocks) then
   print(json.encode({ ok = false, error = 'map_unavailable' }))
   return
 end
@@ -112,36 +113,38 @@ local function scan_rect(ax1, ay1, az, ax2, ay2)
   return rect
 end
 
-for tx = rx1, rx2 do
-  for ty = ry1, ry2 do
-    target_tiles = target_tiles + 1
-    local block = get_tile_block(tx, ty, rz)
-    if block then
-      local dx = tx % 16
-      local dy = ty % 16
-      local designation = block.designation[dx][dy]
-      if designation and designation.dig ~= no_dig then
-        target_dig_designations = target_dig_designations + 1
-      end
-      if designation and designation.hidden then
-        target_hidden_tiles = target_hidden_tiles + 1
-      elseif designation then
-        target_visible_tiles = target_visible_tiles + 1
-      end
-
-      local tiletype = block.tiletype[dx][dy]
-      local attr = attrs[tiletype]
-      if attr then
-        if attr.material == frozen_liquid_material then
-          target_frozen_liquid_tiles = target_frozen_liquid_tiles + 1
-        elseif attr.shape == floor_shape then
-          target_floor_tiles = target_floor_tiles + 1
-        elseif attr.shape == wall_shape then
-          target_wall_tiles = target_wall_tiles + 1
+if not global_only then
+  for tx = rx1, rx2 do
+    for ty = ry1, ry2 do
+      target_tiles = target_tiles + 1
+      local block = get_tile_block(tx, ty, rz)
+      if block then
+        local dx = tx % 16
+        local dy = ty % 16
+        local designation = block.designation[dx][dy]
+        if designation and designation.dig ~= no_dig then
+          target_dig_designations = target_dig_designations + 1
         end
+        if designation and designation.hidden then
+          target_hidden_tiles = target_hidden_tiles + 1
+        elseif designation then
+          target_visible_tiles = target_visible_tiles + 1
+        end
+
+        local tiletype = block.tiletype[dx][dy]
+        local attr = attrs[tiletype]
+        if attr then
+          if attr.material == frozen_liquid_material then
+            target_frozen_liquid_tiles = target_frozen_liquid_tiles + 1
+          elseif attr.shape == floor_shape then
+            target_floor_tiles = target_floor_tiles + 1
+          elseif attr.shape == wall_shape then
+            target_wall_tiles = target_wall_tiles + 1
+          end
+        end
+      else
+        target_missing_blocks = target_missing_blocks + 1
       end
-    else
-      target_missing_blocks = target_missing_blocks + 1
     end
   end
 end
@@ -155,14 +158,33 @@ local workshop_room_x1 = rx2 + 4
 local workshop_room_y1 = ry1
 local workshop_room_x2 = rx2 + 8
 local workshop_room_y2 = plan_ry2
-local fortress_connector = scan_rect(connector_x1, connector_y1, rz, connector_x2, connector_y2)
-local fortress_workshop_room = scan_rect(
-  workshop_room_x1,
-  workshop_room_y1,
-  rz,
-  workshop_room_x2,
-  workshop_room_y2
-)
+local function empty_rect()
+  return {
+    tiles = 0,
+    dig_designations = 0,
+    floor_tiles = 0,
+    frozen_liquid_tiles = 0,
+    wall_tiles = 0,
+    hidden_tiles = 0,
+    visible_tiles = 0,
+    missing_blocks = 0,
+  }
+end
+
+local fortress_connector = empty_rect()
+local fortress_workshop_room = empty_rect()
+if not global_only then
+  fortress_connector = scan_rect(
+    connector_x1, connector_y1, rz, connector_x2, connector_y2
+  )
+  fortress_workshop_room = scan_rect(
+    workshop_room_x1,
+    workshop_room_y1,
+    rz,
+    workshop_room_x2,
+    workshop_room_y2
+  )
+end
 
 local function is_completed_space(rect)
   return rect.tiles > 0
@@ -173,10 +195,10 @@ local function is_completed_space(rect)
 end
 
 local fortress_complexity_spaces_completed = 0
-if is_completed_space(fortress_connector) then
+if not global_only and is_completed_space(fortress_connector) then
   fortress_complexity_spaces_completed = fortress_complexity_spaces_completed + 1
 end
-if is_completed_space(fortress_workshop_room) then
+if not global_only and is_completed_space(fortress_workshop_room) then
   fortress_complexity_spaces_completed = fortress_complexity_spaces_completed + 1
 end
 
@@ -193,18 +215,26 @@ local function append_limited(list, value, limit)
 end
 
 local function job_type_name(job)
-  local ok, name = pcall(function() return tostring(job.job_type) end)
+  local ok, name = pcall(function()
+    return tostring(df.job_type[job.job_type] or job.job_type)
+  end)
   if ok and name then return name end
   return ''
 end
 
 if df.global.world.jobs and df.global.world.jobs.list then
-  for _, job in ipairs(df.global.world.jobs.list) do
+  local link = df.global.world.jobs.list.next
+  while link do
+    local job = link.item
     active_jobs = active_jobs + 1
-    if job.job_type == df.job_type.Dig then
+    local name = job_type_name(job)
+    if job.job_type == df.job_type.Dig
+        or name == 'DigChannel'
+        or name == 'CarveUpwardStaircase'
+        or name == 'CarveDownwardStaircase'
+        or name == 'CarveUpDownStaircase' then
       active_dig_jobs = active_dig_jobs + 1
     end
-    local name = job_type_name(job)
     append_limited(active_job_type_names, name, 12)
     if job.job_type == df.job_type.ConstructBuilding or name == 'ConstructBuilding' then
       active_construct_building_jobs = active_construct_building_jobs + 1
@@ -217,6 +247,7 @@ if df.global.world.jobs and df.global.world.jobs.list then
         or name == 'ConstructChair' then
       active_carpenter_jobs = active_carpenter_jobs + 1
     end
+    link = link.next
   end
 end
 
@@ -321,7 +352,7 @@ if df.global.world.units and df.global.world.units.active then
   for _, unit in ipairs(df.global.world.units.active) do
     if dfhack.units.isCitizen(unit) and not dfhack.units.isDead(unit) then
       citizens_total = citizens_total + 1
-      if unit.pos and unit.pos.z == rz then
+      if not global_only and unit.pos and unit.pos.z == rz then
         citizens_on_target_z = citizens_on_target_z + 1
       end
       if unit.status and unit.status.labors then
@@ -344,47 +375,9 @@ if df.global.world.units and df.global.world.units.active then
   end
 end
 
-print(json.encode({
+local out = {
   ok = true,
-  target_rect = { rx1, ry1, rz, rx2, ry2, rz },
-  target_z = rz,
-  window_x = window_x,
-  window_y = window_y,
-  window_z = window_z,
-  cursor_x = cursor_x,
-  cursor_y = cursor_y,
-  cursor_z = cursor_z,
-  target_tiles = target_tiles,
-  target_dig_designations = target_dig_designations,
-  target_floor_tiles = target_floor_tiles,
-  target_frozen_liquid_tiles = target_frozen_liquid_tiles,
-  target_wall_tiles = target_wall_tiles,
-  target_hidden_tiles = target_hidden_tiles,
-  target_visible_tiles = target_visible_tiles,
-  target_missing_blocks = target_missing_blocks,
-  fortress_plan_name = 'two_room_workshop',
-  fortress_connector_rect = { connector_x1, connector_y1, rz, connector_x2, connector_y2, rz },
-  fortress_workshop_room_rect = { workshop_room_x1, workshop_room_y1, rz, workshop_room_x2, workshop_room_y2, rz },
-  fortress_connector_tiles = fortress_connector.tiles,
-  fortress_connector_floor_tiles = fortress_connector.floor_tiles,
-  fortress_connector_frozen_liquid_tiles = fortress_connector.frozen_liquid_tiles,
-  fortress_connector_wall_tiles = fortress_connector.wall_tiles,
-  fortress_connector_hidden_tiles = fortress_connector.hidden_tiles,
-  fortress_connector_missing_blocks = fortress_connector.missing_blocks,
-  fortress_workshop_room_tiles = fortress_workshop_room.tiles,
-  fortress_workshop_room_floor_tiles = fortress_workshop_room.floor_tiles,
-  fortress_workshop_room_frozen_liquid_tiles = fortress_workshop_room.frozen_liquid_tiles,
-  fortress_workshop_room_wall_tiles = fortress_workshop_room.wall_tiles,
-  fortress_workshop_room_hidden_tiles = fortress_workshop_room.hidden_tiles,
-  fortress_workshop_room_missing_blocks = fortress_workshop_room.missing_blocks,
-  fortress_complexity_tiles = fortress_connector.tiles + fortress_workshop_room.tiles,
-  fortress_complexity_floor_tiles = fortress_connector.floor_tiles + fortress_workshop_room.floor_tiles,
-  fortress_complexity_frozen_liquid_tiles = fortress_connector.frozen_liquid_tiles
-    + fortress_workshop_room.frozen_liquid_tiles,
-  fortress_complexity_wall_tiles = fortress_connector.wall_tiles + fortress_workshop_room.wall_tiles,
-  fortress_complexity_hidden_tiles = fortress_connector.hidden_tiles + fortress_workshop_room.hidden_tiles,
-  fortress_complexity_missing_blocks = fortress_connector.missing_blocks + fortress_workshop_room.missing_blocks,
-  fortress_complexity_spaces_completed = fortress_complexity_spaces_completed,
+  observation_scope = global_only and 'global' or 'target',
   active_jobs = active_jobs,
   active_dig_jobs = active_dig_jobs,
   active_construct_building_jobs = active_construct_building_jobs,
@@ -411,4 +404,56 @@ print(json.encode({
   miners_total = miners_total,
   carpenter_labors_enabled = carpenter_labors_enabled,
   citizens_on_target_z = citizens_on_target_z,
-}))
+}
+
+if not global_only then
+  out.target_rect = { rx1, ry1, rz, rx2, ry2, rz }
+  out.target_z = rz
+  out.window_x = window_x
+  out.window_y = window_y
+  out.window_z = window_z
+  out.cursor_x = cursor_x
+  out.cursor_y = cursor_y
+  out.cursor_z = cursor_z
+  out.target_tiles = target_tiles
+  out.target_dig_designations = target_dig_designations
+  out.target_floor_tiles = target_floor_tiles
+  out.target_frozen_liquid_tiles = target_frozen_liquid_tiles
+  out.target_wall_tiles = target_wall_tiles
+  out.target_hidden_tiles = target_hidden_tiles
+  out.target_visible_tiles = target_visible_tiles
+  out.target_missing_blocks = target_missing_blocks
+  out.fortress_plan_name = 'two_room_workshop'
+  out.fortress_connector_rect = {
+    connector_x1, connector_y1, rz, connector_x2, connector_y2, rz,
+  }
+  out.fortress_workshop_room_rect = {
+    workshop_room_x1, workshop_room_y1, rz, workshop_room_x2, workshop_room_y2, rz,
+  }
+  out.fortress_connector_tiles = fortress_connector.tiles
+  out.fortress_connector_floor_tiles = fortress_connector.floor_tiles
+  out.fortress_connector_frozen_liquid_tiles = fortress_connector.frozen_liquid_tiles
+  out.fortress_connector_wall_tiles = fortress_connector.wall_tiles
+  out.fortress_connector_hidden_tiles = fortress_connector.hidden_tiles
+  out.fortress_connector_missing_blocks = fortress_connector.missing_blocks
+  out.fortress_workshop_room_tiles = fortress_workshop_room.tiles
+  out.fortress_workshop_room_floor_tiles = fortress_workshop_room.floor_tiles
+  out.fortress_workshop_room_frozen_liquid_tiles = fortress_workshop_room.frozen_liquid_tiles
+  out.fortress_workshop_room_wall_tiles = fortress_workshop_room.wall_tiles
+  out.fortress_workshop_room_hidden_tiles = fortress_workshop_room.hidden_tiles
+  out.fortress_workshop_room_missing_blocks = fortress_workshop_room.missing_blocks
+  out.fortress_complexity_tiles = fortress_connector.tiles + fortress_workshop_room.tiles
+  out.fortress_complexity_floor_tiles =
+    fortress_connector.floor_tiles + fortress_workshop_room.floor_tiles
+  out.fortress_complexity_frozen_liquid_tiles =
+    fortress_connector.frozen_liquid_tiles + fortress_workshop_room.frozen_liquid_tiles
+  out.fortress_complexity_wall_tiles =
+    fortress_connector.wall_tiles + fortress_workshop_room.wall_tiles
+  out.fortress_complexity_hidden_tiles =
+    fortress_connector.hidden_tiles + fortress_workshop_room.hidden_tiles
+  out.fortress_complexity_missing_blocks =
+    fortress_connector.missing_blocks + fortress_workshop_room.missing_blocks
+  out.fortress_complexity_spaces_completed = fortress_complexity_spaces_completed
+end
+
+print(json.encode(out))

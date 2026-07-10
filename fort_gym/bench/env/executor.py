@@ -57,9 +57,12 @@ class Executor:
         self,
         mock_env: Optional[MockEnvironment] = None,
         dfhack_client: Optional[DFHackClient] = None,
+        *,
+        allow_assisted_dig_completion: bool = True,
     ) -> None:
         self._mock_env = mock_env or MockEnvironment()
         self._dfhack_client = dfhack_client
+        self._allow_assisted_dig_completion = allow_assisted_dig_completion
 
     def apply(
         self,
@@ -171,6 +174,7 @@ class Executor:
                 if (
                     kind == "dig"
                     and result.get("ok")
+                    and self._allow_assisted_dig_completion
                     and os.getenv("FORT_GYM_DFHACK_COMPLETE_DIG", "0") == "1"
                 ):
                     completion = safe_complete_dig_rect(x1, y1, z, x2, y2, z2)

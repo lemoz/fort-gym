@@ -27,6 +27,7 @@ from typing import Dict, Optional
 # requires a completed build stage instead of a queued task. Coefficients and
 # the G7 threshold remain unchanged; old v4 scores are not comparable.
 SCORE_VERSION = 5
+GOVERNED_SCORE_PROGRESS_PROVENANCE = "dfhack_governed_action_owned_progress_v2"
 
 
 TARGET_SURVIVAL_TICKS = 2400
@@ -155,6 +156,7 @@ def composite_score(summary: Dict[str, float]) -> float:
 
 __all__ = [
     "composite_score",
+    "GOVERNED_SCORE_PROGRESS_PROVENANCE",
     "TARGET_SURVIVAL_TICKS",
     "POP_CAP",
     "DRINK_THRESHOLD",

@@ -5,6 +5,8 @@ from __future__ import annotations
 from collections import Counter
 from typing import Any, Dict, Iterable, List
 
+from .scoring import GOVERNED_SCORE_PROGRESS_PROVENANCE
+
 RUBRIC_WINDOW = 100
 DIMENSION_NAMES = (
     "survival_management",
@@ -334,36 +336,70 @@ def evaluate_trace_records(
     most_common_count = stale_fingerprints.most_common(1)[0][1] if stale_fingerprints else 0
     repetition_ratio = most_common_count / total_steps if total_steps else 0.0
 
-    completion_progress = _metric_max(recent, "completion_progress")
-    utility_progress = _metric_max(recent, "utility_progress")
-    production_progress = _metric_max(recent, "production_progress")
-    complexity_progress = _metric_max(recent, "complexity_progress")
-    work_progress = _metric_max(recent, "work_progress")
-    designation_progress = _metric_max(recent, "designation_progress")
-    ui_work_progress = _metric_max(recent, "ui_work_progress")
+    governed_action_truth = any(
+        _metrics(record).get("score_progress_provenance")
+        == GOVERNED_SCORE_PROGRESS_PROVENANCE
+        for record in recent
+    )
+    if governed_action_truth:
+        completion_progress = _metric_max(
+            recent, "governed_owned_completion_progress"
+        )
+        utility_progress = _metric_max(recent, "governed_owned_utility_progress")
+        production_progress = _metric_max(
+            recent, "governed_owned_production_progress"
+        )
+        complexity_progress = _metric_max(
+            recent, "governed_owned_complexity_progress"
+        )
+        work_progress = _metric_max(recent, "governed_owned_work_progress")
+        designation_progress = _metric_max(
+            recent, "governed_owned_designation_progress"
+        )
+        ui_work_progress = 0
+    else:
+        completion_progress = _metric_max(recent, "completion_progress")
+        utility_progress = _metric_max(recent, "utility_progress")
+        production_progress = _metric_max(recent, "production_progress")
+        complexity_progress = _metric_max(recent, "complexity_progress")
+        work_progress = _metric_max(recent, "work_progress")
+        designation_progress = _metric_max(recent, "designation_progress")
+        ui_work_progress = _metric_max(recent, "ui_work_progress")
     manager_orders = max(
         _metric_max(recent, "manager_orders_count"),
         _metric_max(recent, "manager_orders_delta"),
         _nested_work_max(recent, "manager_orders_count"),
     )
-    carpenter_workshops = max(
-        _metric_max(recent, "carpenter_workshops"),
-        _metric_max(recent, "carpenter_workshops_delta"),
-        _nested_work_max(recent, "carpenter_workshops"),
-    )
-    carpenter_workshops_usable = max(
-        _metric_max(recent, "carpenter_workshops_usable"),
-        _metric_max(recent, "carpenter_workshops_usable_delta"),
-        _nested_work_max(recent, "carpenter_workshops_usable"),
-    )
-    completed_spaces = max(
-        _metric_max(recent, "fortress_complexity_spaces_completed"),
-        _nested_work_max(recent, "fortress_complexity_spaces_completed"),
-    )
-    # plan-agnostic fort structure (from fort_metrics.lua via the runner)
-    fort_enclosed_spaces = _metric_max(recent, "fort_enclosed_spaces")
-    fort_functional_rooms = _metric_max(recent, "fort_functional_rooms")
-    fort_constructions = _metric_max(recent, "fort_constructions")
+    if governed_action_truth:
+        carpenter_workshops = _metric_max(
+            recent, "governed_owned_completed_carpenter_workshops"
+        )
+        carpenter_workshops_usable = carpenter_workshops
+        # Global room/construction totals are retained in trace telemetry, but
+        # they cannot clear governed rubric blockers without owned evidence.
+        completed_spaces = 0
+        fort_enclosed_spaces = 0
+        fort_functional_rooms = 0
+        fort_constructions = 0
+    else:
+        carpenter_workshops = max(
+            _metric_max(recent, "carpenter_workshops"),
+            _metric_max(recent, "carpenter_workshops_delta"),
+            _nested_work_max(recent, "carpenter_workshops"),
+        )
+        carpenter_workshops_usable = max(
+            _metric_max(recent, "carpenter_workshops_usable"),
+            _metric_max(recent, "carpenter_workshops_usable_delta"),
+            _nested_work_max(recent, "carpenter_workshops_usable"),
+        )
+        completed_spaces = max(
+            _metric_max(recent, "fortress_complexity_spaces_completed"),
+            _nested_work_max(recent, "fortress_complexity_spaces_completed"),
+        )
+        # plan-agnostic fort structure (from fort_metrics.lua via the runner)
+        fort_enclosed_spaces = _metric_max(recent, "fort_enclosed_spaces")
+        fort_functional_rooms = _metric_max(recent, "fort_functional_rooms")
+        fort_constructions = _metric_max(recent, "fort_constructions")
     final_pop = 0
     final_food = 0
     final_drink = 0
@@ -533,6 +569,11 @@ def evaluate_trace_records(
 
     return {
         "rubric_score": rubric_score,
+        "progress_provenance": (
+            GOVERNED_SCORE_PROGRESS_PROVENANCE
+            if governed_action_truth
+            else "legacy_or_ungoverned"
+        ),
         "window": min(window, total_steps) if window > 0 else total_steps,
         "total_steps": total_steps,
         "dimensions": dimensions,

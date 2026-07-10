@@ -10,6 +10,7 @@ import pytest
 from fort_gym.bench.agent.base import Agent
 from fort_gym.bench.config import get_settings
 from fort_gym.bench.env.mock_env import MockEnvironment
+from fort_gym.bench.eval.scoring import GOVERNED_SCORE_PROGRESS_PROVENANCE
 from fort_gym.bench.run.runner import (
     INTERACT_ALLOWED_VIEWSCREEN_TYPES,
     MAX_INTERACT_OPERATIONS_PER_MODAL,
@@ -18,6 +19,7 @@ from fort_gym.bench.run.runner import (
     _effective_action_history_limit,
     _interact_context_reason,
     _interaction_terminal_reason,
+    _owned_excavation_snapshot_rects,
     run_once,
 )
 from fort_gym.bench.run.storage import RunRegistry
@@ -65,6 +67,68 @@ class OneOrderAgent(Agent):
             "type": "ORDER",
             "params": {"job": "bed", "quantity": 1},
             "intent": "queue one bed",
+            "advance_ticks": 10,
+        }
+
+
+class OneDigAgent(Agent):
+    def decide(self, obs_text: str, obs_json: Dict[str, Any]) -> Dict[str, Any]:
+        return {
+            "type": "DIG",
+            "params": {"kind": "dig", "area": [10, 20, 5], "size": [1, 1, 1]},
+            "intent": "prove one native completed excavation",
+            "advance_ticks": 10,
+        }
+
+
+class OneWorkshopAgent(Agent):
+    def decide(self, obs_text: str, obs_json: Dict[str, Any]) -> Dict[str, Any]:
+        return {
+            "type": "BUILD",
+            "params": {
+                "kind": "CarpenterWorkshop",
+                "x": 10,
+                "y": 20,
+                "z": 5,
+            },
+            "intent": "build one exactly tracked workshop",
+            "advance_ticks": 10,
+        }
+
+
+class WorkshopThenWaitAgent(Agent):
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def decide(self, obs_text: str, obs_json: Dict[str, Any]) -> Dict[str, Any]:
+        self.calls += 1
+        if self.calls == 1:
+            return OneWorkshopAgent().decide(obs_text, obs_json)
+        return {
+            "type": "WAIT",
+            "params": {},
+            "intent": "let the exactly owned workshop finish natively",
+            "advance_ticks": 10,
+        }
+
+
+class DigThenWaitAgent(Agent):
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def decide(self, obs_text: str, obs_json: Dict[str, Any]) -> Dict[str, Any]:
+        self.calls += 1
+        if self.calls == 1:
+            return {
+                "type": "DIG",
+                "params": {"kind": "dig", "area": [10, 20, 5], "size": [1, 1, 1]},
+                "intent": "designate one native excavation",
+                "advance_ticks": 10,
+            }
+        return {
+            "type": "WAIT",
+            "params": {},
+            "intent": "let the owned native job finish",
             "advance_ticks": 10,
         }
 
@@ -165,7 +229,9 @@ def test_duplicate_worker_cannot_touch_an_already_claimed_trace(tmp_path, monkey
     get_settings.cache_clear()  # type: ignore[attr-defined]
 
 
-def test_governed_setup_failure_cleans_runtime_before_failed_status(tmp_path, monkeypatch) -> None:
+def test_governed_work_metrics_setup_failure_cleans_runtime_before_failed_status(
+    tmp_path, monkeypatch
+) -> None:
     monkeypatch.setenv("ARTIFACTS_DIR", str(tmp_path))
     monkeypatch.setenv("DFHACK_ENABLED", "1")
     get_settings.cache_clear()  # type: ignore[attr-defined]
@@ -177,6 +243,10 @@ def test_governed_setup_failure_cleans_runtime_before_failed_status(tmp_path, mo
 
         def connect(self) -> None:
             lifecycle_events.append("client_connected")
+
+        def set_work_metrics_global_only(self, enabled: bool) -> None:
+            assert enabled is True
+            raise RuntimeError("work metrics setup failed")
 
         def pause(self) -> None:
             lifecycle_events.append("client_paused")
@@ -193,18 +263,6 @@ def test_governed_setup_failure_cleans_runtime_before_failed_status(tmp_path, mo
     monkeypatch.setattr(
         "fort_gym.bench.run.runner.stop_g7_evidence",
         lambda: lifecycle_events.append("evidence_stopped") or {"ok": True, "active": False},
-    )
-    monkeypatch.setattr(
-        "fort_gym.bench.run.runner.read_view_state",
-        lambda: {"window": [0, 0, 0]},
-    )
-
-    def fail_target_setup(*args, **kwargs):
-        raise RuntimeError("target setup failed")
-
-    monkeypatch.setattr(
-        "fort_gym.bench.run.runner.prepare_keystroke_target",
-        fail_target_setup,
     )
     monkeypatch.setattr("subprocess.run", lambda *args, **kwargs: None)
 
@@ -224,7 +282,7 @@ def test_governed_setup_failure_cleans_runtime_before_failed_status(tmp_path, mo
 
     monkeypatch.setattr(registry, "set_status", tracked_set_status)
 
-    with pytest.raises(RuntimeError, match="target setup failed"):
+    with pytest.raises(RuntimeError, match="work metrics setup failed"):
         run_once(
             CountingWaitAgent(10),
             backend="dfhack",
@@ -241,9 +299,7 @@ def test_governed_setup_failure_cleans_runtime_before_failed_status(tmp_path, mo
     assert loaded.status == "failed"
     assert lifecycle_events == [
         "client_connected",
-        "evidence_started",
         "client_paused",
-        "evidence_stopped",
         "client_closed",
         "status_failed",
     ]
@@ -282,6 +338,48 @@ def test_disabled_dfhack_setup_does_not_leave_claimed_run_running(tmp_path, monk
     get_settings.cache_clear()  # type: ignore[attr-defined]
 
 
+def test_governed_run_rejects_assisted_dig_before_connecting(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("ARTIFACTS_DIR", str(tmp_path))
+    monkeypatch.setenv("DFHACK_ENABLED", "1")
+    monkeypatch.setenv("FORT_GYM_DFHACK_COMPLETE_DIG", "1")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    connected = False
+
+    class UnexpectedDFHackClient:
+        def __init__(self, **_: Any) -> None:
+            nonlocal connected
+            connected = True
+
+    monkeypatch.setattr("fort_gym.bench.run.runner.DFHackClient", UnexpectedDFHackClient)
+
+    registry = RunRegistry(db_path=tmp_path / "runs.sqlite3")
+    created = registry.create(
+        backend="dfhack",
+        model="dfhack-governed-scripted",
+        max_steps=1,
+        ticks_per_step=10,
+    )
+
+    with pytest.raises(RuntimeError, match="forbid.*FORT_GYM_DFHACK_COMPLETE_DIG"):
+        run_once(
+            CountingWaitAgent(10),
+            backend="dfhack",
+            model="dfhack-governed-scripted",
+            max_steps=1,
+            ticks_per_step=10,
+            run_id=created.run_id,
+            registry=registry,
+            preserve_save=True,
+        )
+
+    loaded = registry.get(created.run_id)
+    assert loaded is not None
+    assert loaded.status == "failed"
+    assert connected is False
+    assert "cleanup_completed_at" in loaded.metadata
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+
+
 def _run_governed_interact_fixture(
     tmp_path: Path,
     monkeypatch,
@@ -300,6 +398,9 @@ def _run_governed_interact_fixture(
     screen_capture_fails_after: bool = False,
     prepare_target_callback: Any | None = None,
     job_metrics_callback: Any | None = None,
+    fort_metrics_callback: Any | None = None,
+    map_snapshot_callback: Any | None = None,
+    advance_callback: Any | None = None,
 ) -> tuple[Agent, RunRegistry, str]:
     monkeypatch.setenv("ARTIFACTS_DIR", str(tmp_path))
     monkeypatch.setenv("DFHACK_ENABLED", "1")
@@ -322,6 +423,9 @@ def _run_governed_interact_fixture(
         def connect(self) -> None:
             return None
 
+        def set_work_metrics_global_only(self, enabled: bool) -> None:
+            assert enabled is True
+
         def pause(self) -> None:
             raw_state["pause_state"] = True
 
@@ -333,6 +437,8 @@ def _run_governed_interact_fixture(
         def advance(self, ticks: int) -> Dict[str, Any]:
             self.last_tick_info = {"ok": True, "ticks_advanced": ticks}
             raw_state["time"] = int(raw_state.get("time") or 0) + ticks
+            if advance_callback is not None:
+                advance_callback(ticks, raw_state)
             return dict(raw_state)
 
         def get_screen_text(self, *, include_visual_hints: bool = False) -> str:
@@ -365,25 +471,22 @@ def _run_governed_interact_fixture(
 
     monkeypatch.setattr("fort_gym.bench.run.runner.DFHackClient", FakeDFHackClient)
     monkeypatch.setattr(
-        "fort_gym.bench.run.runner.read_view_state",
-        lambda: {"window": [0, 0, 0]},
-    )
-    monkeypatch.setattr(
         "fort_gym.bench.run.runner.prepare_keystroke_target",
         prepare_target_callback or (lambda *args, **kwargs: {"ok": False}),
     )
     monkeypatch.setattr(
-        "fort_gym.bench.run.runner.restore_view_state",
-        lambda state: {"ok": True},
-    )
-    monkeypatch.setattr(
         "fort_gym.bench.run.runner.read_job_metrics",
-        job_metrics_callback or (lambda rect: {"ok": False}),
+        job_metrics_callback or (lambda: {"ok": False}),
     )
     monkeypatch.setattr(
         "fort_gym.bench.run.runner.read_fort_metrics",
-        lambda: {"ok": False},
+        fort_metrics_callback or (lambda _focus=None: {"ok": False}),
     )
+    if map_snapshot_callback is not None:
+        monkeypatch.setattr(
+            "fort_gym.bench.run.runner.read_map_snapshot",
+            map_snapshot_callback,
+        )
     evidence_run_id: list[str | None] = [None]
 
     def fake_start_g7(run_id: str) -> Dict[str, Any]:
@@ -440,6 +543,543 @@ def _run_governed_interact_fixture(
     return agent, registry, run_id
 
 
+def test_governed_runner_scores_only_completed_owned_excavation(tmp_path, monkeypatch) -> None:
+    tile_state = {"value": "wall"}
+
+    def fake_designate(*_args):
+        tile_state["value"] = "designated"
+        return {"ok": True, "newly_designated": 1, "already_designated": 0}
+
+    def complete_after_advance(_ticks: int, _state: Dict[str, Any]) -> None:
+        tile_state["value"] = "floor"
+
+    def fort_metrics(_focus=None) -> Dict[str, Any]:
+        return {
+            "ok": True,
+            "map_origin": [10, 20, 5],
+            "map_rows": ["#"],
+            "enclosed_spaces": 0,
+            "functional_rooms": 0,
+            "constructions": 0,
+        }
+
+    def map_snapshot(rect) -> Dict[str, Any]:
+        x1, y1, z1, x2, y2, z2 = rect
+        tiles = []
+        for y in range(y1, y2 + 1):
+            for x in range(x1, x2 + 1):
+                tile = {
+                    "x": x,
+                    "y": y,
+                    "z": z1,
+                    "category": "floor",
+                    "shape": "FLOOR",
+                    "material": "SOIL",
+                    "dig": "No",
+                    "hidden": False,
+                }
+                if (x, y, z1) == (10, 20, 5):
+                    if tile_state["value"] == "wall":
+                        tile.update(category="wall", shape="WALL")
+                    elif tile_state["value"] == "designated":
+                        tile.update(category="dig", shape="WALL", dig="Default")
+                tiles.append(tile)
+        return {"ok": True, "rect": list(rect), "tiles": tiles}
+
+    monkeypatch.setattr("fort_gym.bench.env.executor.safe_designate_rect", fake_designate)
+    _, _, run_id = _run_governed_interact_fixture(
+        tmp_path,
+        monkeypatch,
+        screen_changes=False,
+        max_steps=1,
+        agent_override=OneDigAgent(),
+        fort_metrics_callback=fort_metrics,
+        map_snapshot_callback=map_snapshot,
+        advance_callback=complete_after_advance,
+    )
+
+    row = _trace_rows(tmp_path, run_id)[0]
+    assert row["metrics"]["observed_global_work_progress"] == 0
+    assert row["metrics"]["governed_owned_excavation_tiles"] == 1
+    assert row["metrics"]["governed_owned_work_progress"] == 1
+    assert row["metrics"]["work_progress"] == 1
+    assert row["metrics"]["completion_progress"] == 1
+    assert row["gameplay_proof"]["ok"] is True
+    assert row["gameplay_proof"]["owned_completion_observation"][
+        "completed_tiles"
+    ] == [{"coordinate": [10, 20, 5], "kind": "dig"}]
+    assert (
+        row["metrics"]["score_progress_provenance"]
+        == GOVERNED_SCORE_PROGRESS_PROVENANCE
+    )
+    assert row["gameplay_proof"]["action_footprint"]["owned_delta"][
+        "governed_step_completion_progress"
+    ] == 1
+
+
+def test_governed_runner_keeps_unowned_global_progress_audit_only(
+    tmp_path, monkeypatch
+) -> None:
+    advanced = {"value": False}
+
+    def advance(_ticks: int, state: Dict[str, Any]) -> None:
+        advanced["value"] = True
+        state["work"] = {
+            "carpenter_workshops_planned": 1,
+            "carpenter_workshops_usable": 1,
+        }
+
+    def job_metrics(_rect=None) -> Dict[str, Any]:
+        if not advanced["value"]:
+            return {
+                "ok": True,
+                "jobs": {"total": 0, "active_ids": [], "active_ids_truncated": False},
+                "goods": {"bed": 0},
+                "workshops": [],
+                "farm_plot_details": [],
+            }
+        return {
+            "ok": True,
+            "jobs": {"total": 0, "active_ids": [], "active_ids_truncated": False},
+            "goods": {"bed": 1},
+            "workshops": [
+                {
+                    "id": 999,
+                    "subtype": "Carpenters",
+                    "stage_read_ok": True,
+                    "stage": 3,
+                    "max_stage": 3,
+                    "built": True,
+                }
+            ],
+            "farm_plot_details": [],
+        }
+
+    def fort_metrics(_focus=None) -> Dict[str, Any]:
+        return {
+            "ok": True,
+            "map_origin": [10, 20, 5],
+            "map_rows": ["#"],
+            "enclosed_spaces": 1 if advanced["value"] else 0,
+            "functional_rooms": 1 if advanced["value"] else 0,
+            "constructions": 1 if advanced["value"] else 0,
+        }
+
+    _, _, run_id = _run_governed_interact_fixture(
+        tmp_path,
+        monkeypatch,
+        screen_changes=False,
+        max_steps=1,
+        agent_override=CountingWaitAgent(10),
+        job_metrics_callback=job_metrics,
+        fort_metrics_callback=fort_metrics,
+        advance_callback=advance,
+    )
+
+    row = _trace_rows(tmp_path, run_id)[0]
+    assert row["metrics"]["observed_global_utility_progress"] > 0
+    assert row["metrics"]["observed_global_production_progress"] > 0
+    assert row["metrics"]["observed_global_complexity_progress"] > 0
+    assert row["metrics"]["utility_progress"] == 0
+    assert row["metrics"]["production_progress"] == 0
+    assert row["metrics"]["complexity_progress"] == 0
+    assert row["metrics"]["governed_owned_buildings"] == 0
+    assert row["metrics"]["score_duration_blocked"] is True
+    assert row["metrics"]["run_elapsed_ticks"] == 0
+
+    summary = json.loads((tmp_path / run_id / "summary.json").read_text())
+    assert summary["utility_progress"] == 0
+    assert summary["production_progress"] == 0
+    assert summary["complexity_progress"] == 0
+    assert summary["rubric"]["progress_provenance"] == (
+        GOVERNED_SCORE_PROGRESS_PROVENANCE
+    )
+    assert "no_fort_structure" in summary["rubric"]["blockers"]
+    assert "no_production_surface" in summary["rubric"]["blockers"]
+    assert "no_broader_fort_layout" in summary["rubric"]["blockers"]
+
+
+def test_governed_runner_credits_exact_owned_completed_workshop(
+    tmp_path, monkeypatch
+) -> None:
+    advanced = {"value": False}
+
+    monkeypatch.setattr(
+        "fort_gym.bench.env.executor.safe_build_workshop",
+        lambda *_args: {
+            "ok": True,
+            "building_id": 42,
+            "before_carpenter_workshops": 0,
+            "after_carpenter_workshops": 1,
+        },
+    )
+
+    def advance(_ticks: int, state: Dict[str, Any]) -> None:
+        advanced["value"] = True
+        state["work"] = {
+            "carpenter_workshops_planned": 1,
+            "carpenter_workshops_usable": 1,
+        }
+
+    def job_metrics(_rect=None) -> Dict[str, Any]:
+        return {
+            "ok": True,
+            "jobs": {"total": 0, "active_ids": [], "active_ids_truncated": False},
+            "goods": {"bed": 0},
+            "workshops": (
+                [
+                    {
+                        "id": 42,
+                        "subtype": "Carpenters",
+                        "stage_read_ok": True,
+                        "stage": 3,
+                        "max_stage": 3,
+                        "built": True,
+                    }
+                ]
+                if advanced["value"]
+                else []
+            ),
+            "farm_plot_details": [],
+        }
+
+    _, _, run_id = _run_governed_interact_fixture(
+        tmp_path,
+        monkeypatch,
+        screen_changes=False,
+        max_steps=1,
+        agent_override=OneWorkshopAgent(),
+        job_metrics_callback=job_metrics,
+        advance_callback=advance,
+    )
+
+    row = _trace_rows(tmp_path, run_id)[0]
+    assert row["metrics"]["governed_owned_buildings"] == 1
+    assert row["metrics"]["governed_owned_completed_building_ids"] == [42]
+    assert row["metrics"]["governed_owned_utility_progress"] == 5
+    assert row["metrics"]["governed_owned_production_progress"] == 5
+    assert row["metrics"]["utility_progress"] == 5
+    assert row["metrics"]["production_progress"] == 5
+    assert row["metrics"]["score_duration_blocked"] is False
+    assert row["gameplay_proof"]["owned_building_completion_observation"] == {
+        "source": "job_metrics_exact_building_id_and_native_stage",
+        "completed_buildings": [{"building_id": 42, "kind": "CarpenterWorkshop"}],
+    }
+
+
+def test_governed_runner_rejects_fail_open_zero_stage_workshop_read(
+    tmp_path, monkeypatch
+) -> None:
+    advanced = {"value": False}
+
+    monkeypatch.setattr(
+        "fort_gym.bench.env.executor.safe_build_workshop",
+        lambda *_args: {
+            "ok": True,
+            "building_id": 42,
+            "before_carpenter_workshops": 0,
+            "after_carpenter_workshops": 1,
+        },
+    )
+
+    def advance(_ticks: int, state: Dict[str, Any]) -> None:
+        advanced["value"] = True
+        state["work"] = {
+            "carpenter_workshops_planned": 1,
+            "carpenter_workshops_usable": 1,
+        }
+
+    def job_metrics(_rect=None) -> Dict[str, Any]:
+        return {
+            "ok": True,
+            "jobs": {"total": 0, "active_ids": [], "active_ids_truncated": False},
+            "goods": {"bed": 0},
+            "workshops": (
+                [
+                    {
+                        "id": 42,
+                        "subtype": "Carpenters",
+                        "stage_read_ok": False,
+                        "stage": 0,
+                        "max_stage": 0,
+                        "built": True,
+                    }
+                ]
+                if advanced["value"]
+                else []
+            ),
+            "farm_plot_details": [],
+        }
+
+    _, _, run_id = _run_governed_interact_fixture(
+        tmp_path,
+        monkeypatch,
+        screen_changes=False,
+        max_steps=1,
+        agent_override=OneWorkshopAgent(),
+        job_metrics_callback=job_metrics,
+        advance_callback=advance,
+    )
+
+    row = _trace_rows(tmp_path, run_id)[0]
+    assert row["metrics"]["observed_global_utility_progress"] > 0
+    assert row["metrics"]["governed_owned_buildings"] == 1
+    assert row["metrics"]["governed_owned_completed_buildings"] == 0
+    assert row["metrics"]["utility_progress"] == 0
+    assert row["metrics"]["production_progress"] == 0
+    assert row["metrics"]["score_duration_blocked"] is True
+
+
+def test_governed_runner_persists_owned_building_until_later_native_completion(
+    tmp_path, monkeypatch
+) -> None:
+    advances = {"value": 0}
+
+    monkeypatch.setattr(
+        "fort_gym.bench.env.executor.safe_build_workshop",
+        lambda *_args: {
+            "ok": True,
+            "building_id": 42,
+            "before_carpenter_workshops": 0,
+            "after_carpenter_workshops": 1,
+        },
+    )
+
+    def advance(_ticks: int, state: Dict[str, Any]) -> None:
+        advances["value"] += 1
+        state["work"] = {
+            "carpenter_workshops_planned": 1,
+            "carpenter_workshops_usable": int(advances["value"] >= 2),
+        }
+
+    def job_metrics(_rect=None) -> Dict[str, Any]:
+        return {
+            "ok": True,
+            "jobs": {"total": 0, "active_ids": [], "active_ids_truncated": False},
+            "goods": {"bed": 0},
+            "workshops": (
+                [
+                    {
+                        "id": 42,
+                        "subtype": "Carpenters",
+                        "stage_read_ok": True,
+                        "stage": 3 if advances["value"] >= 2 else 2,
+                        "max_stage": 3,
+                        "built": advances["value"] >= 2,
+                    }
+                ]
+                if advances["value"] >= 1
+                else []
+            ),
+            "farm_plot_details": [],
+        }
+
+    _, _, run_id = _run_governed_interact_fixture(
+        tmp_path,
+        monkeypatch,
+        screen_changes=False,
+        max_steps=2,
+        agent_override=WorkshopThenWaitAgent(),
+        job_metrics_callback=job_metrics,
+        advance_callback=advance,
+    )
+
+    first, second = _trace_rows(tmp_path, run_id)
+    assert first["metrics"]["governed_owned_buildings"] == 1
+    assert first["metrics"]["governed_owned_completed_buildings"] == 0
+    assert first["metrics"]["utility_progress"] == 0
+    assert first["metrics"]["score_duration_blocked"] is True
+    assert second["action"]["type"] == "WAIT"
+    assert second["metrics"]["governed_owned_completed_building_ids"] == [42]
+    assert second["metrics"]["utility_progress"] == 5
+    assert second["metrics"]["production_progress"] == 5
+    assert second["metrics"]["score_duration_blocked"] is False
+    assert second["gameplay_proof"]["owned_prior_action_effect_observed"] is True
+
+
+def test_owned_excavation_snapshot_rects_are_bounded_and_camera_independent() -> None:
+    owned = {
+        (1, 2, 5): "dig",
+        (63, 60, 5): "dig",
+        (64, 2, 5): "channel",
+        (130, 130, 4): "dig",
+    }
+
+    rects = _owned_excavation_snapshot_rects(owned)
+
+    assert rects == [
+        (130, 130, 4, 130, 130, 4),
+        (1, 2, 5, 63, 60, 5),
+        (64, 2, 5, 64, 2, 5),
+    ]
+    assert all(x2 - x1 + 1 <= 64 and y2 - y1 + 1 <= 64 for x1, y1, _, x2, y2, _ in rects)
+
+
+def test_governed_runner_retains_owned_dig_through_job_assignment_and_off_camera_completion(
+    tmp_path, monkeypatch
+) -> None:
+    tile_state = {"value": "wall"}
+    advance_count = {"value": 0}
+
+    def fake_designate(*_args):
+        tile_state["value"] = "designated"
+        return {"ok": True, "newly_designated": 1, "already_designated": 0}
+
+    def advance(_ticks: int, _state: Dict[str, Any]) -> None:
+        advance_count["value"] += 1
+        tile_state["value"] = "assigned" if advance_count["value"] == 1 else "floor"
+
+    def fort_metrics(_focus=None) -> Dict[str, Any]:
+        # The replay/camera window never contains the owned coordinate.
+        return {
+            "ok": True,
+            "map_origin": [50, 50, 5],
+            "map_rows": ["#"],
+            "enclosed_spaces": 0,
+            "functional_rooms": 0,
+            "constructions": 0,
+        }
+
+    def map_snapshot(rect) -> Dict[str, Any]:
+        x1, y1, z1, x2, y2, _ = rect
+        tiles = []
+        for y in range(y1, y2 + 1):
+            for x in range(x1, x2 + 1):
+                tile = {
+                    "x": x,
+                    "y": y,
+                    "z": z1,
+                    "category": "floor",
+                    "shape": "FLOOR",
+                    "material": "SOIL",
+                    "dig": "No",
+                    "hidden": False,
+                }
+                if (x, y, z1) == (10, 20, 5):
+                    if tile_state["value"] in {"wall", "assigned"}:
+                        tile.update(category="wall", shape="WALL")
+                    elif tile_state["value"] == "designated":
+                        tile.update(category="dig", shape="WALL", dig="Default")
+                tiles.append(tile)
+        return {"ok": True, "rect": list(rect), "tiles": tiles}
+
+    monkeypatch.setattr("fort_gym.bench.env.executor.safe_designate_rect", fake_designate)
+    _, _, run_id = _run_governed_interact_fixture(
+        tmp_path,
+        monkeypatch,
+        screen_changes=False,
+        max_steps=2,
+        agent_override=DigThenWaitAgent(),
+        fort_metrics_callback=fort_metrics,
+        map_snapshot_callback=map_snapshot,
+        advance_callback=advance,
+    )
+
+    first, second = _trace_rows(tmp_path, run_id)
+    assert first["metrics"]["governed_owned_excavation_tiles"] == 1
+    assert first["metrics"]["governed_owned_completion_progress"] == 0
+    assert first["metrics"]["score_duration_blocked"] is True
+    assert first["gameplay_proof"]["ok"] is False
+    assert second["action"]["type"] == "WAIT"
+    assert second["metrics"]["governed_owned_completion_progress"] == 1
+    assert second["metrics"]["work_progress"] == 1
+    assert second["metrics"]["score_duration_blocked"] is False
+    assert second["gameplay_proof"]["ok"] is True
+    assert second["gameplay_proof"]["owned_prior_action_effect_observed"] is True
+    assert second["gameplay_proof"]["owned_completion_observation"][
+        "completed_tiles"
+    ] == [{"coordinate": [10, 20, 5], "kind": "dig"}]
+
+
+def test_governed_runner_quarantines_unverified_rollback_before_advancing(
+    tmp_path, monkeypatch
+) -> None:
+    advances = {"value": 0}
+
+    monkeypatch.setattr(
+        "fort_gym.bench.env.executor.safe_designate_rect",
+        lambda *_args: {
+            "ok": False,
+            "error": "designation_write_failed",
+            "rollback_verified": False,
+        },
+    )
+
+    def advance(_ticks: int, _state: Dict[str, Any]) -> None:
+        advances["value"] += 1
+
+    def map_snapshot(rect) -> Dict[str, Any]:
+        x, y, z, *_ = rect
+        return {
+            "ok": True,
+            "rect": list(rect),
+            "tiles": [
+                {
+                    "x": x,
+                    "y": y,
+                    "z": z,
+                    "category": "wall",
+                    "shape": "WALL",
+                    "material": "SOIL",
+                    "dig": "No",
+                    "hidden": False,
+                }
+            ],
+        }
+
+    _, registry, run_id = _run_governed_interact_fixture(
+        tmp_path,
+        monkeypatch,
+        screen_changes=False,
+        max_steps=1,
+        agent_override=OneDigAgent(),
+        map_snapshot_callback=map_snapshot,
+        advance_callback=advance,
+    )
+
+    row = _trace_rows(tmp_path, run_id)[0]
+    loaded = registry.get(run_id)
+    assert advances["value"] == 0
+    assert row["tick_advance"]["ticks_advanced"] == 0
+    assert row["terminal_reason"]["code"] == "governed_rollback_unverified"
+    assert loaded is not None and loaded.status == "failed"
+
+
+def test_governed_runner_quarantines_explicit_rollback_failure_without_flag(
+    tmp_path, monkeypatch
+) -> None:
+    advances = {"value": 0}
+
+    monkeypatch.setattr(
+        "fort_gym.bench.env.executor.safe_build_workshop",
+        lambda *_args: {
+            "ok": False,
+            "error": "rollback_failed",
+            "building_id": 42,
+        },
+    )
+
+    def advance(_ticks: int, _state: Dict[str, Any]) -> None:
+        advances["value"] += 1
+
+    _, registry, run_id = _run_governed_interact_fixture(
+        tmp_path,
+        monkeypatch,
+        screen_changes=False,
+        max_steps=1,
+        agent_override=OneWorkshopAgent(),
+        advance_callback=advance,
+    )
+
+    row = _trace_rows(tmp_path, run_id)[0]
+    loaded = registry.get(run_id)
+    assert advances["value"] == 0
+    assert row["tick_advance"]["ticks_advanced"] == 0
+    assert row["terminal_reason"]["code"] == "governed_rollback_unverified"
+    assert row["terminal_reason"]["helper_error"] == "rollback_failed"
+    assert loaded is not None and loaded.status == "failed"
+
+
 def test_vanished_order_jobs_remain_ineligible_in_complete_trace(tmp_path, monkeypatch) -> None:
     monkeypatch.setattr(
         "fort_gym.bench.env.executor.safe_queue_manager_order",
@@ -485,32 +1125,16 @@ def test_vanished_order_jobs_remain_ineligible_in_complete_trace(tmp_path, monke
     get_settings.cache_clear()  # type: ignore[attr-defined]
 
 
-def test_governed_workshop_candidate_revalidates_after_wait(
+def test_governed_runner_never_requests_workshop_candidate(
     tmp_path,
     monkeypatch,
 ) -> None:
-    workshop_calls = 0
+    target_calls = 0
 
     def prepare_target(mode: str, **_: Any) -> Dict[str, Any]:
-        nonlocal workshop_calls
-        if mode == "starter":
-            return {"ok": False}
-        assert mode == "workshop"
-        workshop_calls += 1
-        return {
-            "ok": True,
-            "source": "live_preflight",
-            "target_rect": [88, 96, 177, 90, 98, 177],
-            "selection_rect": [88, 96, 177, 90, 98, 177],
-            "placement_rect": [88, 96, 177, 90, 98, 177],
-            "stable_floor_tiles": 9,
-            "frozen_liquid_tiles": 0,
-            "liquid_tiles": 0,
-            "locality_ok": True,
-            "reachable_citizen": True,
-            "path_cache_current": True,
-            "placement_fingerprint": f"site-state-{workshop_calls}",
-        }
+        nonlocal target_calls
+        target_calls += 1
+        raise AssertionError(f"governed runner requested external {mode} target")
 
     agent = CountingWaitAgent(10)
     _run_governed_interact_fixture(
@@ -523,11 +1147,11 @@ def test_governed_workshop_candidate_revalidates_after_wait(
     )
 
     assert len(agent.observations) == 2
-    assert [
-        observation["work"]["carpenter_build_site_fingerprint"]
+    assert target_calls == 0
+    assert all(
+        "carpenter_build_site" not in observation.get("work", {})
         for observation in agent.observations
-    ] == ["site-state-1", "site-state-2"]
-    assert workshop_calls >= 2
+    )
 
 
 def test_zero_progress_timeout_is_terminal_before_another_agent_decide(

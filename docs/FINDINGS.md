@@ -721,6 +721,274 @@ existing `dfhack-governed-llm-glm5v` alias (OpenRouter
 `z-ai/glm-5v-turbo`), which receives a PNG of the same trace-recorded minimap.
 No planner, room template, coordinate, action, or score credit is added.
 
+### 2.23 G7 attempt 19: real play, then operator-contaminated and invalidated
+
+Attempt 19, run `e75981445d9a4b0786ed7b1b81afb499`
+([replay](https://fortgym.live/r/or01cSujoIE17kNnOVianwx1_SeEGhM8)),
+ran the deployed score-v4 commit
+`21b2b7dc31a24ddb8d6cdf13fa40f592e1908c83` on fresh
+`seed_region3_fresh` with OpenRouter `z-ai/glm-5v-turbo`, memory off, and a
+450-step budget. The policy made real game changes before the incident: it
+escaped liaison dialogs, reached population 17, recorded 112 constructions,
+completed a Still and a surface FarmPlot, selected subterranean plump helmets
+for that surface plot, and produced 25 drinks. It never established food
+production. Food and drink both later reached zero, six citizens died, and the
+policy repeatedly queued brew orders while native observations showed zero
+brewable plants.
+
+This run has no valid terminal policy verdict. While validating a candidate
+stair-designation hook, the operator targeted `(99,101,161)`, expecting the
+Still's footprint to make the probe fail closed. The candidate instead applied
+three one-tile stair designations under the building. The exact designation was
+immediately cleared and a stop was requested, but an external mutation had
+already occurred. The run is therefore **CONTAMINATED / INVALID**, regardless
+of whether the mutation affected later state. This also proved that the
+candidate's occupancy guard was unsafe and that mutation probes must never run
+against an active scored run.
+
+The stopped artifact ended at step 290 with scalar score 155.16. A diagnostic
+gate-v2 evaluation reported 291 gameplay rows but only 290 screen/proof rows,
+321,997 summary ticks versus 323,204 trace ticks, food production 0 versus 35
+consumed, drink production 25 versus 85 consumed, final food/drink 0/0, one
+functional room, three installed beds, six deaths with unknown causes,
+population 16, rubric 76.56 with zero blockers, and 353 model calls using
+6,299,908 tokens. Those values are retained only as incident diagnostics; they
+are not an official G7 result. The pre-incident resource collapse independently
+shows that the policy had already failed the survival objective, and the scalar
+and rubric pass-shaped values again demonstrate why neither is the verdict.
+
+The next run is gated on disposable-save proof. The smallest candidate is a
+visible, legal floor-capable channel action whose designation, DigChannel job,
+completed top/lower geometry, walk connectivity, citizen traversal, and
+underground farm loop are all observed from native DF state. Governed runs must
+also lose runner-selected starter/workshop coordinates, and farm controls must
+reject tiles and crops that the native game would not offer. No long scored run
+resumes until those controls pass without hidden-map reads or forced
+completion.
+
+### 2.24 Disposable access/farm proof: native channel-to-harvest loop passed
+
+The attempt-20 control candidate was validated against DFHack 0.47.05 on a
+disposable `seed_region3_fresh` reset, outside the run registry and with no
+active scored run. This is control proof, not a policy result. Read-only
+candidate `work_metrics`, `job_metrics`, and `fort_metrics` hooks first executed
+successfully against the real VM. Global work mode emitted actual jobs,
+workshops, labors, and orders while omitting every legacy starter/connector/
+workshop-room field.
+
+The exact attempt-19 incident coordinate was replayed before the reset. A
+channel request at the Still center `(99,101,161)` failed with
+`occupied_by_building`, `newly_designated=0`, and the tile designation remained
+`No`. The existing surface FarmPlot likewise rejected subterranean plump
+helmets with `surface_crop_options_unverified`; all four existing crop slots
+remained unchanged. These are negative no-op regressions only, not gameplay.
+
+On the fresh disposable save, `channel` at visible floor `(90,90,161)` returned
+`newly_designated=1`. After 21 ticks the action-focused observer reported one
+pending channel designation. After another 205 ticks DF had cleared the tile
+designation into assigned native `DigChannel` job `2` at the same coordinate;
+the observer initially missed that linked-list job, which exposed and fixed a
+numeric-enum/list traversal bug in both focused and global work metrics. After
+1,207 more ticks the job was gone and the same coordinate had
+`RAMP_TOP` at z=161 over `RAMP` at z=160. Native
+`dfhack.maps.canWalkBetween` returned true, so the focus status was
+`connected` with one completed geometry pair and one native-connected pair.
+
+The proof then designated ordinary `Dig` work below. Citizen `243` was observed
+at `(91,90,160)` performing an assigned Dig job, proving physical traversal,
+not merely compatible glyphs. A one-tile FarmPlot at `(92,90,160)` passed the
+native-soil guard, created a normal construction job, and reached stage 3/3.
+Its observation listed native underground crop options per season. A spring
+`GRASS_TAIL_PIG` request failed as `crop_not_offered` with all slots still -1;
+`MUSHROOM_HELMET_PLUMP` was offered in all four seasons and changed all four
+slots to raw index 172. DF then created assigned `PlantSeeds` job `8` at the
+plot.
+
+No growth or harvest was accelerated. The simulation advanced in ordinary
+2,000-tick turns until the planted seed's native growth counter matured. The
+run-scoped evidence ledger, started before maturity, ended at tick 54,497 with
+`food_produced_in_run=2`, `nonfarm_plants_created_in_run=0`, complete flow
+evidence, and no deaths; DF had already created a new PlantSeeds job for the
+next cycle. The ledger was stopped and the runtime reset again from pristine
+`seed_region3_fresh`. Final reset attestation was population 7, farm plots 0,
+and evidence active false.
+
+This closes the control-semantic uncertainty for the smallest depth slice. It
+does not show that the model will choose these actions. The remaining question
+for attempt 20 is policy: with no runner-selected geometry, can the agent infer
+and execute the same native loop while also building shelter and maintaining
+survival?
+
+### 2.25 Independent pre-deploy review hardened ownership and local proof
+
+The first independent review of the attempt-20 candidate found six deploy
+blockers. The candidate now fails governed startup when the harness-only
+`FORT_GYM_DFHACK_COMPLETE_DIG=1` flag is present and also disables that path in
+the executor. Channel designation rejects the DFHack 0.47.05 native material
+exclusions, commits rectangles transactionally, and rereads every designation.
+Farm crop selection likewise rereads all four native season slots and rolls all
+of them back on a write/readback mismatch.
+
+The observation no longer emits fort-wide completed-access coordinates or
+runner-computed tree-cluster centroids. Nearby-tree scanning checks visibility
+and reports only a count; target coordinates must come from visible maps.
+Replay snapshots previously retained tiletype/material fields after labeling a
+tile hidden, those fields are now omitted before any hidden-tile inspection.
+Since DFHack 0.47.05 does not expose `Maps::canStepBetween` to Lua, channel
+completion
+mirrors that version's ordinary diagonal-ramp predicate locally, then requires
+native `canWalkBetween` for the exact lower-ramp/adjacent-upper endpoints and a
+citizen. An unrelated staircase elsewhere cannot satisfy the focused proof.
+
+Score-v5 now treats accepted excavation designations as ownership evidence, not
+scalar progress. Only a model-owned tile later observed as a native completed
+dig floor or channel ramp top raises governed work/completion; raw global jobs
+and plan-era counters are audit-only. Summarization keys off that explicit
+provenance, so raw global values cannot re-inflate the scalar. No v5 artifact
+existed locally or publicly before this boundary was finalized.
+
+At that first-pass point the pre-deploy candidate had 763 passing tests and
+5 live-only skips; Ruff, compileall, and diff checks passed. On the pristine VM,
+a candidate channel request over wagon tile `(95,97,161)` rejected
+`occupied_by_building`; its designation and block flag remained unchanged. A
+hidden z=160 snapshot contained only coordinates, `hidden=true`, `category`,
+and `?`, with no tiletype, shape, material, designation, or building data.
+
+The complete disposable matrix was then repeated. Channel `(90,90,161)` moved
+from one designation to native assigned `DigChannel` job 2, then to
+`RAMP_TOP/RAMP` with one local-step pair and one native-connected pair. Citizen
+243 was observed at `(91,90,160)` doing assigned `Dig` job 4. A stage-3/3
+FarmPlot at `(92,90,160)` rejected spring pig tails without changing its four
+slots, then transactionally read back plump helmets as raw 172 in all four
+slots. Native `PlantSeeds` job 6 was assigned. A ledger started before planting
+and ordinary 2,000-tick turns ended at tick 54,684 with
+`food_produced_in_run=1`, `nonfarm_plants_created_in_run=0`, complete flow/death
+evidence, and zero deaths; job 25 was already replanting and seed stock had
+moved from five to four. The ledger was stopped and the VM reset; final
+attestation was population 7, farm plots 0, seed stock restored to five, and
+evidence inactive. Fresh independent re-review remains required before deploy.
+
+### 2.26 Second review closed excavation and hook gaps but left two scoring paths
+
+A fresh Sol review correctly returned **DO NOT DEPLOY** after the first
+hardening pass. It found that ownership was still derived only after requested
+ticks, so DF could clear a designation into an assigned job before the runner
+recorded it; later completion checks followed the camera window instead of all
+owned coordinates. It also found that a designation could unlock accumulated
+duration score, governed summary could fall back to raw global progress,
+`/step` still constructed a permissive executor, and channel focus could adopt
+an already-designated no-op.
+
+The runner now snapshots the exact footprint before and immediately after the
+paused helper write, records only newly observed designation/completion tiles,
+and monitors unfinished ownership in bounded coordinate buckets independent of
+the replay window. Newly completed owned coordinates and kinds are persisted in
+`gameplay_proof.owned_completion_observation`, so off-camera scalar progress has
+matching trace evidence. Focus is one newly owned channel tile, not the submitted
+rectangle. Designation, labor, unsuspend, accepted order, and unrelated wait
+changes cannot unlock elapsed score. Every governed v5 trace row must carry
+`dfhack_governed_action_owned_excavation_v1`; re-summarization otherwise raises
+instead of accepting raw work/completion. At this intermediate point `/step`
+disabled assisted completion for every model, but it still retained a separate
+raw scoring loop. Section 2.27 records the later review that found this was not
+a sufficient governed boundary.
+
+The same review caught three Lua truth gaps. DFHack 0.47.05 `findAtTile` returns
+early when occupancy is zero, so dig and farm collision checks now scan
+`world.buildings.all` footprints directly. Chop/gather now use full
+preflight/commit/readback/verified rollback, and any helper response with
+`rollback_verified=false` terminates the run before ticks advance. Hidden room
+floods now check hidden state before tiletype/material and treat hidden tiles as
+leaks; the global `citizens_below` field is gone. Finally,
+`crop_options_complete=true` now requires successful seed and plant scans plus
+no 12-item truncation; partial lists are withheld.
+
+The affected regression suite passed 384 tests; the final full suite passed 773
+with 5 live-only skips, and changed Python passed Ruff and compileall.
+Disposable execution against DFHack 0.47.05 proved both wagon-tile collision
+rejections, one real chop and
+one real gather transactional designation, hidden-snapshot opacity, legal
+channel designation, and read-only job/fort hook execution. The VM was reset
+from `seed_region3_fresh`; final attestation was farms 0, the channel target
+undesignated, and evidence inactive. This evidence repairs the candidate; it is
+not a deployment claim.
+
+### 2.27 Third review closed the alternate runner and global non-excavation score
+
+A fresh Terra review correctly returned **DO NOT DEPLOY** on the revised
+candidate. First, the administrative `/step` endpoint still accepted governed
+models, advanced DF, and scored raw global state outside the serialized runner's
+ownership, rollback, duration, and trace rules. Disabling its assisted dig
+helper did not make that alternate loop governed. Second, the core runner
+replaced global work/completion with owned excavation but continued paying
+global utility, production, and complexity; an unrelated completed workshop,
+room, construction, or produced item could therefore raise the scalar and
+unlock accumulated duration.
+
+The candidate now centralizes governed model classification in
+`run/model_modes.py` and returns HTTP 409 from `/step` before creating context
+or a DFHack client. Governed runs have one mutation/advance/scoring path. The
+serialized runner also keeps an exact non-excavation ownership ledger: accepted
+CarpenterWorkshop, Still, and FarmPlot BUILDs must return a concrete
+`building_id`, and completion is recognized only when native `job_metrics`
+reports that same ID and authored kind at completed build stage. Only exact-ID completed owned
+Carpenter workshops feed the existing utility/production capacity terms;
+complexity is zero until equally exact causal evidence exists. Global goods,
+output, workshop, room, enclosed-space, construction, and furniture changes are
+retained as `observed_global_*` audit facts but cannot pay governed scalar
+progress or unlock duration. ORDER lifecycle/output remains audit evidence only
+because the current surface does not link one produced item to one exact order
+job.
+
+Governed summary now requires
+`dfhack_governed_action_owned_progress_v2` and replaces all six progress inputs
+with owned fields. Regression proof covers pre-client `/step` rejection,
+unrelated global progress remaining zero with duration blocked, exact-ID
+workshop completion earning capacity only after native readback, and summary
+reaggregation refusing global fallback. The focused suite passed 149 tests; the
+full suite passed 779 with 5 live-only skips. Changed Python is Ruff-clean and
+compileall passes. This remains candidate evidence pending the final independent
+verdict, merge, exact-SHA deployment, and boundary smoke.
+
+### 2.28 Sol Ultra review closed four deeper fail-open paths
+
+The final broad pre-deploy review returned **DO NOT DEPLOY** with four further
+P1 findings. Native workshop/farm stage reads initialized to `0/0` and ignored
+`pcall` failure, so failed telemetry could emit `built=true`. Workshop,
+furniture, and construction helpers could report `error=rollback_failed`
+without `rollback_verified=false`, bypassing the runner's zero-tick quarantine.
+Summary reaggregation treated a missing or non-boolean
+`score_duration_blocked` as unblocked. Finally, the deterministic rubric still
+paid global workshops, rooms, constructions, and WAIT-time world changes even
+though the scalar had switched to owned fields.
+
+The candidate now emits `stage_read_ok` only after successful numeric native
+stage reads with `max_stage > 0`; `built` is false otherwise. The runner
+independently requires that attestation, internally consistent stage values,
+the exact owned building ID, and matching workshop kind. All mutating building
+helpers emit `rollback_verified`, while the runner also recognizes top-level or
+nested `rollback_failed` errors and advances zero ticks. Reaggregation requires
+an actual boolean duration gate on every governed action-truth row. The rubric
+selects `governed_owned_*` work, completion, utility, production, complexity,
+and completed-Carpenter fields whenever the v2 ownership marker is present;
+global rooms and constructions remain visible in traces but cannot pay or clear
+governed blockers. A WAIT-time world change is concurrent evidence only unless
+the runner later matches it to an owned excavation or building completion.
+
+Regression coverage includes false `built=true` with failed `0/0` stage reads,
+explicit rollback failure without the flag, missing/string/integer duration
+gates, unrelated global workshop/room/construction changes in both scalar and
+rubric, delayed exact-ID completion, and owned WAIT completion. The affected
+suite passed 256 tests; the full suite passed 786 with 5 live-only skips.
+Changed Python is Ruff-clean, compileall passes, and `git diff --check` is
+clean. Candidate copies of all four changed Lua hooks parsed on production
+DFHack 0.47.05, and the read-only `job_metrics` hook executed with `ok=true` on
+the pristine save (farms 0, workshops 0). Sol Ultra re-reviewed only its four
+findings, independently reproduced 256 focused and 786 full-suite passes, found
+no remaining issue, and returned **DEPLOY**. Production remains score-v4 and the
+VM remains pristine; merge, exact-SHA deployment, and scored Attempt 20 are
+still pending.
+
 ## 3. Limitations
 
 - **A single passing embark family.** Every pass (G0–G4) is on
@@ -734,13 +1002,15 @@ No planner, room template, coordinate, action, or score credit is added.
   and most of the G6 campaign; GPT-5.5 served the earlier G2/G3 passes.
   Cross-model generality is thin — two GPT-5.5-vision escalation runs are the
   only cross-family data points on the unseen map.
-- **G6 is unpassed; G7 attempts 1 through 18 failed.** Attempts 2 through 9 and
+- **G6 is unpassed; G7 attempts 1 through 18 failed and attempt 19 is invalid.**
+  Attempts 2 through 9 and
   12 through 16 were infrastructure aborts, although attempts 14 through 16
   contain policy-bearing gameplay rows; attempts 10, 11, 17, and 18 are policy
   diagnostics. Attempts 17 and 18 were manually stopped after their loops were
-  decisive.
-  Score-v5 is active after the action-effect truth correction; score-v4 remains
-  the frozen-liquid measurement era. The
+  decisive. Attempt 19 was stopped and invalidated after an operator's
+  candidate-hook probe mutated its live save.
+  Score-v5 is implemented but not active or deployed; production remains on the
+  score-v4 frozen-liquid measurement boundary. The
   chair-factory calibration gap (§2.4) remains part of score-v3's historical
   record.
   Attempt 1 demonstrated why the scalar is telemetry rather than the verdict:
@@ -748,11 +1018,14 @@ No planner, room template, coordinate, action, or score credit is added.
 
 ## 4. What's next
 
-- **Attempt 18 proved governed parallelism and sustained brewing, then isolated
-  spatial perception as the dominant blocker.** Attempt 19 should retain the
-  same legal controls and review contract, expose exact terrain/death facts, and
-  test the existing OpenRouter GLM-5V policy on the same fresh seed. Its room,
-  food, population, furniture, and duration predicates remain fail-closed.
+- **Attempt 19 exposed control-truth blockers before it was invalidated.** A
+  surface plot accepted subterranean plump helmets, repeated brew orders had no
+  brewable inputs, and the candidate stair hook designated through a building.
+  The attempt-20 candidate now has disposable-save proof for native tile/crop
+  eligibility, building occupancy, completed vertical connectivity, immediate
+  ownership capture, and camera-independent completion. The governed runner no
+  longer supplies starter/workshop coordinates. Independent re-review and
+  deployment remain before the scored policy run.
 - **G6 remains open**: the best unseen-map run reached 4/5 and missed only its
   second functional room. G7 attempt 19 tests whether the demonstrated vision
   advantage transfers to the corrected direct-action loop.

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import io
 
 from fort_gym.bench.agent.minimap_render import minimap_data_url, render_minimap_png
@@ -58,6 +59,17 @@ def test_render_minimap_distinguishes_shrubs_saplings_and_loose_rock() -> None:
     assert image.width >= RULER + legend_width
 
 
+def test_render_minimap_distinguishes_vertical_access_geometry() -> None:
+    from fort_gym.bench.agent.minimap_render import LEGEND_TEXT, TILE_STYLES
+
+    for glyph in ("<", ">", "X", "^"):
+        assert glyph in TILE_STYLES
+    assert "X=up/down" in LEGEND_TEXT
+    assert "^=ramp" in LEGEND_TEXT
+    png = render_minimap_png([".<>", ".X^"], [90, 87, 177])
+    assert png is not None and png[:8] == b"\x89PNG\r\n\x1a\n"
+
+
 def test_minimap_data_url_prefix_and_fallbacks() -> None:
     url = minimap_data_url(
         {"map_rows": ["..WWW..", "..W.W.."], "map_origin": [90, 87, 177]}
@@ -66,3 +78,25 @@ def test_minimap_data_url_prefix_and_fallbacks() -> None:
 
     assert minimap_data_url({"map_rows": "junk", "map_origin": [1, 2, 3]}) is None
     assert minimap_data_url({"map_rows": [], "map_origin": [1, 2, 3]}) is None
+
+
+def test_minimap_data_url_stacks_model_focused_level_maps() -> None:
+    from PIL import Image
+
+    single_url = minimap_data_url(
+        {"map_rows": ["...", ".@."], "map_origin": [90, 87, 177]}
+    )
+    stacked_url = minimap_data_url(
+        {
+            "map_rows": ["...", ".@."],
+            "map_origin": [90, 87, 177],
+            "access_level_maps": [
+                {"rows": ["###", "#^#"], "origin": [90, 87, 176]}
+            ],
+        }
+    )
+
+    assert single_url is not None and stacked_url is not None
+    single = Image.open(io.BytesIO(base64.b64decode(single_url.split(",", 1)[1])))
+    stacked = Image.open(io.BytesIO(base64.b64decode(stacked_url.split(",", 1)[1])))
+    assert stacked.height > single.height

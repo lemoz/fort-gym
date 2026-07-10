@@ -41,98 +41,174 @@ local block_w, block_h = 16, 16
 
 local attrs = df.tiletype.attrs
 local wall_shape = df.tiletype_shape.WALL
+local floor_shape = df.tiletype_shape.FLOOR
 local tree_material = df.tiletype_material.TREE
-
--- Bounded tree-fell designation: mark tree-trunk tiles inside the rect for
--- chopping (the same designation a player sets with d-t). Woodcutters with an
--- axe then fell them over real time, producing logs.
-if kind == 'chop' then
-  local trees_designated = 0
-  local already_designated = 0
-  local non_tree_tiles = 0
-  for tx = rx1, rx2 do
-    for ty = ry1, ry2 do
-      local block = dfhack.maps.getTileBlock(tx, ty, rz)
-      if block then
-        local dx, dy = tx % block_w, ty % block_h
-        local is_trunk = false
-        pcall(function()
-          local attr = attrs[block.tiletype[dx][dy]]
-          is_trunk = attr ~= nil
-            and attr.material == tree_material
-            and attr.shape == wall_shape
-        end)
-        if is_trunk then
-          local designation = block.designation[dx][dy]
-          if designation.dig == df.tile_dig_designation.Default then
-            already_designated = already_designated + 1
-          else
-            designation.dig = df.tile_dig_designation.Default
-            block.flags.designated = true
-            trees_designated = trees_designated + 1
-          end
-        else
-          non_tree_tiles = non_tree_tiles + 1
-        end
-      end
-    end
-  end
-  print(json.encode({
-    ok = true,
-    kind = kind,
-    rect = { rx1, ry1, rz, rx2, ry2, rz },
-    trees_designated = trees_designated,
-    already_designated = already_designated,
-    non_tree_tiles = non_tree_tiles,
-  }))
-  return
-end
+local frozen_liquid_material = df.tiletype_material.FROZEN_LIQUID
+local construction_material = df.tiletype_material.CONSTRUCTION
+local disallowed_native_dig_materials = {
+  [df.tiletype_material.POOL] = true,
+  [df.tiletype_material.RIVER] = true,
+  [df.tiletype_material.TREE] = true,
+  [df.tiletype_material.ROOT] = true,
+  [df.tiletype_material.LAVA_STONE] = true,
+  [df.tiletype_material.MAGMA] = true,
+  [df.tiletype_material.HFS] = true,
+  [df.tiletype_material.UNDERWORLD_GATE] = true,
+  -- DFHack's native helper allows only deep-special-tube FEATURE tiles. The
+  -- 0.47 Lua surface cannot verify that feature type without inspecting
+  -- hidden geology, so the governed action conservatively rejects all FEATURE.
+  [df.tiletype_material.FEATURE] = true,
+}
 
 local shrub_shape = df.tiletype_shape.SHRUB
 
--- Bounded gather-plants designation: mark shrub tiles inside the rect for
--- gathering (the same designation a player sets with d-p). This writes the
--- same tile_dig_designation field dig/chop use — DF's engine reads the
--- underlying tile's shape to decide the outcome (WALL mines, a tree-shaped
--- WALL fells, SHRUB gathers) so no separate "gather" flag exists. A dwarf
--- with the herbalism labor collects the plant over time.
-if kind == 'gather' then
-  local shrubs_designated = 0
+-- Bounded chop/gather designation. Preflight the entire selection, then commit
+-- and read back every eligible tile as one transaction. A failed write is
+-- rolled back and verified before returning, matching the dig/channel contract.
+if kind == 'chop' or kind == 'gather' then
+  local target = df.tile_dig_designation.Default
+  local writes = {}
+  local newly_designated = 0
   local already_designated = 0
-  local non_shrub_tiles = 0
+  local non_target_tiles = 0
+  local preflight_error = nil
   for tx = rx1, rx2 do
     for ty = ry1, ry2 do
       local block = dfhack.maps.getTileBlock(tx, ty, rz)
       if block then
         local dx, dy = tx % block_w, ty % block_h
-        local is_shrub = false
-        pcall(function()
-          local attr = attrs[block.tiletype[dx][dy]]
-          is_shrub = attr ~= nil and attr.shape == shrub_shape
-        end)
-        if is_shrub then
-          local designation = block.designation[dx][dy]
-          if designation.dig == df.tile_dig_designation.Default then
+        local designation = block.designation[dx][dy]
+        local is_target = false
+        if not designation then
+          preflight_error = preflight_error or 'designation_unreadable'
+        elseif not designation.hidden then
+          local ok_attr, attr = pcall(function()
+            return attrs[block.tiletype[dx][dy]]
+          end)
+          if not ok_attr or not attr then
+            preflight_error = preflight_error or 'tiletype_unreadable'
+          else
+            if kind == 'chop' then
+              is_target = attr.material == tree_material and attr.shape == wall_shape
+            else
+              is_target = attr.shape == shrub_shape
+            end
+          end
+        end
+        if is_target then
+          local already = designation.dig == target
+          table.insert(writes, {
+            block = block,
+            designation = designation,
+            original = designation.dig,
+            original_block_designated = block.flags.designated,
+            already = already,
+          })
+          if already then
             already_designated = already_designated + 1
           else
-            designation.dig = df.tile_dig_designation.Default
-            block.flags.designated = true
-            shrubs_designated = shrubs_designated + 1
+            newly_designated = newly_designated + 1
           end
         else
-          non_shrub_tiles = non_shrub_tiles + 1
+          non_target_tiles = non_target_tiles + 1
         end
+      else
+        preflight_error = preflight_error or 'missing_block'
+        non_target_tiles = non_target_tiles + 1
       end
     end
   end
-  print(json.encode({
+
+  if preflight_error then
+    local failure = {
+      ok = false,
+      error = 'designation_preflight_failed',
+      detail = preflight_error,
+      kind = kind,
+      rect = { rx1, ry1, rz, rx2, ry2, rz },
+      already_designated = 0,
+    }
+    if kind == 'chop' then
+      failure.trees_designated = 0
+      failure.non_tree_tiles = non_target_tiles
+    else
+      failure.shrubs_designated = 0
+      failure.non_shrub_tiles = non_target_tiles
+    end
+    print(json.encode(failure))
+    return
+  end
+
+  local function rollback_writes()
+    for _, record in ipairs(writes) do
+      record.designation.dig = record.original
+      record.block.flags.designated = record.original_block_designated
+    end
+  end
+
+  local committed, commit_error = pcall(function()
+    for _, record in ipairs(writes) do
+      if not record.already then record.designation.dig = target end
+      record.block.flags.designated = true
+    end
+  end)
+  if committed then
+    for _, record in ipairs(writes) do
+      if record.designation.dig ~= target or not record.block.flags.designated then
+        committed = false
+        commit_error = 'designation_readback_mismatch'
+        break
+      end
+    end
+  end
+
+  if not committed then
+    local rollback_ok = pcall(rollback_writes)
+    local rollback_verified = false
+    if rollback_ok then
+      rollback_verified = pcall(function()
+        for _, record in ipairs(writes) do
+          if record.designation.dig ~= record.original
+              or record.block.flags.designated ~= record.original_block_designated then
+            error('designation_rollback_readback_mismatch')
+          end
+        end
+      end)
+    end
+    local failure = {
+      ok = false,
+      error = 'designation_write_failed',
+      detail = tostring(commit_error),
+      kind = kind,
+      rect = { rx1, ry1, rz, rx2, ry2, rz },
+      already_designated = 0,
+      rollback_verified = rollback_verified,
+    }
+    if kind == 'chop' then
+      failure.trees_designated = 0
+      failure.non_tree_tiles = non_target_tiles
+    else
+      failure.shrubs_designated = 0
+      failure.non_shrub_tiles = non_target_tiles
+    end
+    print(json.encode(failure))
+    return
+  end
+
+  local success = {
     ok = true,
     kind = kind,
     rect = { rx1, ry1, rz, rx2, ry2, rz },
-    shrubs_designated = shrubs_designated,
     already_designated = already_designated,
-    non_shrub_tiles = non_shrub_tiles,
-  }))
+  }
+  if kind == 'chop' then
+    success.trees_designated = newly_designated
+    success.non_tree_tiles = non_target_tiles
+  else
+    success.shrubs_designated = newly_designated
+    success.non_shrub_tiles = non_target_tiles
+  end
+  print(json.encode(success))
   return
 end
 
@@ -145,76 +221,178 @@ local function target_designation(mode)
   return nil
 end
 
-local function is_wall_tile(block, dx, dy)
-  local ok, result = pcall(function()
-    local tiletype = block.tiletype[dx][dy]
-    local attr = attrs[tiletype]
-    return attr ~= nil and attr.shape == wall_shape
-  end)
-  if not ok then return nil end
-  return result
+local function is_map_edge(x, y)
+  local region = df.global.world.map
+  if not region then return true end
+  local max_x = (region.x_count_block or 0) * block_w - 1
+  local max_y = (region.y_count_block or 0) * block_h - 1
+  return x <= 0 or y <= 0 or x >= max_x or y >= max_y
 end
 
--- Classifies and writes a single tile, returning a status string:
--- 'missing', 'already_designated', 'non_wall_tiles', or 'newly_designated'.
-local function set_tile(x, y, z, mode)
-  local region = df.global.world.map
-  local bx, by = math.floor(x / block_w), math.floor(y / block_h)
-  local sx = region.x_count_block
-  local sy = region.y_count_block
-  if bx < 0 or by < 0 or bx >= sx or by >= sy then return 'missing' end
+local function scan_building_at_tile(x, y, z)
+  return pcall(function()
+    local all = df.global.world.buildings and df.global.world.buildings.all
+    if not all then error('building_list_unavailable') end
+    for _, building in ipairs(all) do
+      if building.z == z
+          and x >= building.x1 and x <= building.x2
+          and y >= building.y1 and y <= building.y2 then
+        -- Conservatively treat every tile in a building's native footprint as
+        -- occupied. This scan is independent of the potentially stale map
+        -- occupancy bit used internally by findAtTile in DFHack 0.47.05.
+        return building
+      end
+    end
+    return nil
+  end)
+end
 
-  local index = bx + by * sx + z * sx * sy
-  if index < 0 or index >= #region.map_blocks then return 'missing' end
-  local block = region.map_blocks[index]
-  if not block then return 'missing' end
-
+-- Return a write record or a factual rejection reason. Hidden tiles are
+-- rejected before tiletype inspection, so this helper cannot become a geology
+-- oracle. Scan buildings.all directly because DFHack 0.47.05 findAtTile exits
+-- early when the occupancy bit is stale-zero (the attempt-19 incident).
+local function classify_tile(x, y, z, mode)
+  if is_map_edge(x, y) then return nil, 'map_edge' end
+  local block = dfhack.maps.getTileBlock(x, y, z)
+  if not block then return nil, 'missing_block' end
   local dx, dy = x % block_w, y % block_h
   local designation = block.designation[dx][dy]
-  local target = target_designation(mode)
-  local status
-  if designation.dig == target then
-    status = 'already_designated'
-  else
-    local wall = is_wall_tile(block, dx, dy)
-    if wall == false then
-      status = 'non_wall_tiles'
-    else
-      status = 'newly_designated'
-    end
+  if not designation then return nil, 'designation_unreadable' end
+  if designation.hidden then return nil, 'hidden_unexplored' end
+
+  local ok_building, building = scan_building_at_tile(x, y, z)
+  if not ok_building then return nil, 'building_state_unreadable' end
+  if building or block.occupancy[dx][dy].building ~= 0 then
+    return nil, 'occupied_by_building'
+  end
+  if designation.flow_size > 0 then return nil, 'active_liquid' end
+
+  local ok_attr, attr = pcall(function()
+    return attrs[block.tiletype[dx][dy]]
+  end)
+  if not ok_attr or not attr then return nil, 'tiletype_unreadable' end
+  if attr.material == construction_material then return nil, 'player_construction' end
+  if attr.material == frozen_liquid_material then return nil, 'frozen_liquid' end
+  if attr.material == tree_material then return nil, 'tree' end
+  if disallowed_native_dig_materials[attr.material] then
+    return nil, 'native_material_not_diggable'
   end
 
-  -- Only wall tiles actually get the designation written. DF's engine reads
-  -- the underlying tile's shape to decide a dig-designation's outcome (WALL
-  -- mines, a tree-shaped WALL fells, SHRUB gathers) so writing this on a
-  -- non-wall tile would silently create a real designation (e.g. a Gather
-  -- Plants job on a shrub) that dig/channel never intended and that no
-  -- evidence/rubric tracking would see. Use kind=gather for shrubs instead.
-  if status ~= 'non_wall_tiles' then
-    designation.dig = target
-    block.flags.designated = true
+  local shape_ok = attr.shape == wall_shape
+  if mode == 'channel' then
+    shape_ok = shape_ok or attr.shape == floor_shape
   end
-  return status
+  if not shape_ok then return nil, 'ineligible_shape' end
+
+  local target = target_designation(mode)
+  return {
+    block = block,
+    designation = designation,
+    target = target,
+    original = designation.dig,
+    original_block_designated = block.flags.designated,
+    already = designation.dig == target,
+  }, nil
+end
+
+-- Preflight the complete requested rectangle before writing anything. A
+-- rejected multi-tile command is therefore a true no-op instead of a partial
+-- designation whose actual footprint differs from the model's command.
+local writes = {}
+local failed = {}
+local failed_count = 0
+local reason_counts = {}
+local MAX_FAILED_DETAILS = 32
+
+for tx = rx1, rx2 do
+  for ty = ry1, ry2 do
+    local record, reason = classify_tile(tx, ty, rz, kind)
+    if record then
+      table.insert(writes, record)
+    else
+      failed_count = failed_count + 1
+      reason_counts[reason] = (reason_counts[reason] or 0) + 1
+      if #failed < MAX_FAILED_DETAILS then
+        table.insert(failed, { x = tx, y = ty, z = rz, error = reason })
+      end
+    end
+  end
+end
+
+if failed_count > 0 then
+  print(json.encode({
+    ok = false,
+    error = 'tile_not_designatable',
+    kind = kind,
+    rect = { rx1, ry1, rz, rx2, ry2, rz },
+    failed_count = failed_count,
+    failed = failed,
+    rejection_counts = reason_counts,
+    newly_designated = 0,
+    already_designated = 0,
+    ineligible_tiles = failed_count,
+    non_wall_tiles = reason_counts.ineligible_shape or 0,
+    missing_tiles = reason_counts.missing_block or 0,
+  }))
+  return
 end
 
 local newly_designated = 0
 local already_designated = 0
-local non_wall_tiles = 0
-local missing_tiles = 0
+local function rollback_writes()
+  for _, record in ipairs(writes) do
+    record.designation.dig = record.original
+    record.block.flags.designated = record.original_block_designated
+  end
+end
 
-for tx = rx1, rx2 do
-  for ty = ry1, ry2 do
-    local status = set_tile(tx, ty, rz, kind)
-    if status == 'missing' then
-      missing_tiles = missing_tiles + 1
-    elseif status == 'already_designated' then
+local committed, commit_error = pcall(function()
+  for _, record in ipairs(writes) do
+    if record.already then
       already_designated = already_designated + 1
-    elseif status == 'non_wall_tiles' then
-      non_wall_tiles = non_wall_tiles + 1
-    elseif status == 'newly_designated' then
+    else
+      record.designation.dig = record.target
       newly_designated = newly_designated + 1
     end
+    record.block.flags.designated = true
   end
+end)
+
+if committed then
+  for _, record in ipairs(writes) do
+    if record.designation.dig ~= record.target
+        or not record.block.flags.designated then
+      committed = false
+      commit_error = 'designation_readback_mismatch'
+      break
+    end
+  end
+end
+
+if not committed then
+  local rollback_ok = pcall(rollback_writes)
+  local rollback_verified = false
+  if rollback_ok then
+    rollback_verified = pcall(function()
+      for _, record in ipairs(writes) do
+        if record.designation.dig ~= record.original
+            or record.block.flags.designated ~= record.original_block_designated then
+          error('designation_rollback_readback_mismatch')
+        end
+      end
+    end)
+  end
+  print(json.encode({
+    ok = false,
+    error = 'designation_write_failed',
+    detail = tostring(commit_error),
+    kind = kind,
+    rect = { rx1, ry1, rz, rx2, ry2, rz },
+    newly_designated = 0,
+    already_designated = 0,
+    rollback_verified = rollback_verified,
+  }))
+  return
 end
 
 print(json.encode({
@@ -223,6 +401,7 @@ print(json.encode({
   rect = { rx1, ry1, rz, rx2, ry2, rz },
   newly_designated = newly_designated,
   already_designated = already_designated,
-  non_wall_tiles = non_wall_tiles,
-  missing_tiles = missing_tiles,
+  ineligible_tiles = 0,
+  non_wall_tiles = 0,
+  missing_tiles = 0,
 }))

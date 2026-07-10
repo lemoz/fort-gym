@@ -6,7 +6,10 @@ from pathlib import Path
 import pytest
 
 from fort_gym.bench.eval.summary import RunSummary, summarize
-from fort_gym.bench.eval.scoring import SCORE_VERSION
+from fort_gym.bench.eval.scoring import (
+    GOVERNED_SCORE_PROGRESS_PROVENANCE,
+    SCORE_VERSION,
+)
 
 
 def _write_trace(trace_path: Path, records: list[dict]) -> None:
@@ -326,6 +329,118 @@ def test_summarize_unblocks_duration_after_real_keystroke_progress(tmp_path) -> 
     assert summary.ui_excavation_progress == 6
     assert summary.ui_target_dig_designations_delta == 9
     assert summary.ui_target_floor_removed_delta == 6
+
+
+def test_summarize_governed_score_uses_only_owned_progress(tmp_path) -> None:
+    trace_path = Path(tmp_path) / "trace.jsonl"
+    records = [
+        {
+            "run_id": "run-governed-owned",
+            "step": 0,
+            "metrics": {
+                "time": 100,
+                "run_elapsed_ticks": 100,
+                "pop": 7,
+                "drink": 60,
+                "food": 45,
+                "wealth": 9,
+                "dead": 0,
+                "hostiles": False,
+                "work_progress": 99,
+                "designation_progress": 99,
+                "completion_progress": 99,
+                "governed_owned_work_progress": 2,
+                "governed_owned_designation_progress": 4,
+                "governed_owned_completion_progress": 2,
+                "score_progress_provenance": GOVERNED_SCORE_PROGRESS_PROVENANCE,
+                "score_duration_blocked": False,
+                "utility_progress": 100,
+                "production_progress": 100,
+                "complexity_progress": 100,
+                "governed_owned_utility_progress": 5,
+                "governed_owned_production_progress": 5,
+                "governed_owned_complexity_progress": 0,
+            },
+            "tick_advance": {"ticks_advanced": 100},
+            "events": [],
+        }
+    ]
+    _write_trace(trace_path, records)
+
+    summary = summarize(trace_path)
+
+    assert summary.work_progress == 2
+    assert summary.designation_progress == 4
+    assert summary.completion_progress == 2
+    assert summary.governed_owned_work_progress == 2
+    assert summary.governed_owned_completion_progress == 2
+    assert summary.utility_progress == 5
+    assert summary.production_progress == 5
+    assert summary.complexity_progress == 0
+    assert summary.governed_owned_utility_progress == 5
+    assert summary.governed_owned_production_progress == 5
+    assert summary.score_progress_provenance == GOVERNED_SCORE_PROGRESS_PROVENANCE
+
+
+@pytest.mark.parametrize("gate", [None, "false", 0, 1])
+def test_summarize_governed_score_requires_boolean_duration_gate(
+    tmp_path, gate
+) -> None:
+    trace_path = Path(tmp_path) / "trace.jsonl"
+    metrics = {
+        "run_elapsed_ticks": 1000,
+        "governed_owned_work_progress": 0,
+        "governed_owned_designation_progress": 0,
+        "governed_owned_completion_progress": 0,
+        "governed_owned_utility_progress": 0,
+        "governed_owned_production_progress": 0,
+        "governed_owned_complexity_progress": 0,
+        "score_progress_provenance": GOVERNED_SCORE_PROGRESS_PROVENANCE,
+    }
+    if gate is not None:
+        metrics["score_duration_blocked"] = gate
+    _write_trace(
+        trace_path,
+        [
+            {
+                "run_id": "run-governed-duration-gate",
+                "step": 0,
+                "metrics": metrics,
+                "tick_advance": {"ticks_advanced": 1000},
+                "events": [],
+            }
+        ],
+    )
+
+    with pytest.raises(ValueError, match="boolean score_duration_blocked"):
+        summarize(trace_path)
+
+
+def test_summarize_governed_score_rejects_missing_owned_progress_provenance(
+    tmp_path,
+) -> None:
+    trace_path = Path(tmp_path) / "trace.jsonl"
+    _write_trace(
+        trace_path,
+        [
+            {
+                "run_id": "run-governed-unowned",
+                "step": 0,
+                "execute": {"accepted": True, "provenance": "dfhack_governed"},
+                "metrics": {
+                    "time": 100,
+                    "run_elapsed_ticks": 100,
+                    "work_progress": 99,
+                    "completion_progress": 99,
+                },
+                "tick_advance": {"ticks_advanced": 100},
+                "events": [],
+            }
+        ],
+    )
+
+    with pytest.raises(ValueError, match="missing action-owned progress provenance"):
+        summarize(trace_path)
 
 
 def test_summarize_tracks_work_progress(tmp_path) -> None:

@@ -26,6 +26,10 @@ TILE_STYLES: Dict[str, tuple] = {
     ",": ((176, 200, 150), None),   # gatherable shrub — pale green
     "s": ((55, 150, 75), "s"),      # sapling — green
     "p": ((135, 130, 120), "p"),    # boulder/pebbles — gray
+    "<": ((170, 150, 90), "<"),     # up stair
+    ">": ((170, 150, 90), ">"),     # down stair
+    "X": ((190, 165, 85), "X"),     # up/down stair
+    "^": ((155, 135, 80), "^"),     # ramp or ramp top
     "~": ((110, 130, 160), None),   # impassable — blue-gray
     " ": ((20, 20, 20), None),      # unknown/out of range — near-black
     "b": ((150, 60, 140), "b"),     # bed
@@ -41,7 +45,8 @@ TILE_STYLES: Dict[str, tuple] = {
 LEGEND_TEXT = (
     "W=your wall  x=queued wall (building)  #=natural wall  T=tree  "
     "b=bed t=table c=chair d=door w=workshop o=occupied  @=dwarf  .=floor  "
-    "i=frozen liquid  ,=gatherable shrub  s=sapling  p=loose rock"
+    "i=frozen liquid  ,=gatherable shrub  s=sapling  p=loose rock  "
+    "<=up stair >=down stair X=up/down ^=ramp"
 )
 
 
@@ -63,7 +68,7 @@ def render_minimap_png(
     width = max(len(row) for row in rows)
     if width == 0 or height == 0:
         return None
-    ox, oy = int(map_origin[0]), int(map_origin[1])
+    ox, oy, oz = int(map_origin[0]), int(map_origin[1]), int(map_origin[2])
 
     measurement_canvas = Image.new("RGB", (1, 1))
     measurement_draw = ImageDraw.Draw(measurement_canvas)
@@ -101,6 +106,7 @@ def render_minimap_png(
             str((oy + row_index) % 100),
             fill=(220, 220, 220),
         )
+    draw.text((2, 4), f"z={oz}", fill=(240, 220, 120))
     draw.text((RULER, img_h - LEGEND_HEIGHT + 8), LEGEND_TEXT, fill=(230, 230, 230))
 
     buffer = io.BytesIO()
@@ -109,15 +115,50 @@ def render_minimap_png(
 
 
 def minimap_data_url(fort: Dict[str, Any]) -> Optional[str]:
-    """Return a data: URL PNG for a fort observation dict, or None."""
+    """Return a PNG data URL for the main and model-focused level maps."""
 
     map_rows = fort.get("map_rows")
     map_origin = fort.get("map_origin")
     if not isinstance(map_rows, list) or not isinstance(map_origin, (list, tuple)):
         return None
-    png = render_minimap_png(map_rows, map_origin)
-    if png is None:
+    panels: list[bytes] = []
+    main_png = render_minimap_png(map_rows, map_origin)
+    if main_png is None:
         return None
+    panels.append(main_png)
+
+    access_maps = fort.get("access_level_maps")
+    if isinstance(access_maps, list):
+        for level in access_maps[:2]:
+            if not isinstance(level, dict):
+                continue
+            rows = level.get("rows")
+            origin = level.get("origin")
+            if not isinstance(rows, list) or not isinstance(origin, (list, tuple)):
+                continue
+            panel = render_minimap_png(rows, origin)
+            if panel is not None:
+                panels.append(panel)
+
+    png = main_png
+    if len(panels) > 1:
+        try:
+            from PIL import Image
+
+            images = [Image.open(io.BytesIO(panel)).convert("RGB") for panel in panels]
+            width = max(panel.width for panel in images)
+            height = sum(panel.height for panel in images) + 8 * (len(images) - 1)
+            stacked = Image.new("RGB", (width, height), (8, 8, 8))
+            y = 0
+            for panel in images:
+                stacked.paste(panel, (0, y))
+                y += panel.height + 8
+            buffer = io.BytesIO()
+            stacked.save(buffer, format="PNG")
+            png = buffer.getvalue()
+        except (ImportError, OSError):
+            png = main_png
+
     encoded = base64.b64encode(png).decode("ascii")
     return f"data:image/png;base64,{encoded}"
 

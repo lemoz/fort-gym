@@ -95,16 +95,44 @@ def client(tmp_path, monkeypatch):
     return TestClient(app)
 
 
-def _register_run(max_steps: int = 5) -> str:
+def _register_run(max_steps: int = 5, *, model: str = "fake") -> str:
     run_id = uuid.uuid4().hex
     RUN_REGISTRY.create(
         backend="dfhack",
-        model="fake",
+        model=model,
         max_steps=max_steps,
         ticks_per_step=500,
         run_id=run_id,
     )
     return run_id
+
+
+def test_step_rejects_governed_runs_before_opening_an_alternate_control_path(
+    client: TestClient, tmp_path, monkeypatch
+) -> None:
+    client_calls = {"value": 0}
+
+    def unexpected_client(*_args: Any, **_kwargs: Any) -> _StubDFHackClient:
+        client_calls["value"] += 1
+        return _StubDFHackClient()
+
+    monkeypatch.setattr(routes_step, "DFHackClient", unexpected_client)
+    run_id = _register_run(model="dfhack-governed-llm-glm52")
+
+    response = client.post(
+        "/step",
+        json={
+            "run_id": run_id,
+            "action": {"type": "WAIT", "params": {}},
+            "min_step_period_ms": 100,
+            "max_ticks": 1,
+        },
+    )
+
+    assert response.status_code == 409
+    assert "serialized runner" in response.json()["detail"]
+    assert client_calls["value"] == 0
+    assert not (tmp_path / run_id).exists()
 
 
 def test_step_enforces_rate_limit(client: TestClient):
@@ -166,3 +194,36 @@ def test_step_updates_artifacts_and_sse(client: TestClient, tmp_path):
         evt.get("t") == "advance" and "tick_advance" in evt.get("data", {})
         for evt in events
     )
+
+
+def test_step_never_uses_environment_assisted_dig_completion(
+    client: TestClient, monkeypatch
+) -> None:
+    completion_calls = {"value": 0}
+    monkeypatch.setenv("FORT_GYM_DFHACK_COMPLETE_DIG", "1")
+
+    def complete(*_args: Any) -> Dict[str, Any]:
+        completion_calls["value"] += 1
+        return {"ok": True}
+
+    monkeypatch.setattr(
+        "fort_gym.bench.env.executor.safe_complete_dig_rect",
+        complete,
+    )
+    run_id = _register_run()
+
+    response = client.post(
+        "/step",
+        json={
+            "run_id": run_id,
+            "action": {
+                "type": "DIG",
+                "params": {"area": [0, 0, 0], "size": [1, 1, 1]},
+            },
+            "min_step_period_ms": 100,
+            "max_ticks": 1,
+        },
+    )
+
+    assert response.status_code == 200
+    assert completion_calls["value"] == 0

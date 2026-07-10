@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import os
 import uuid
 from datetime import datetime
 from os import fsync
@@ -23,9 +24,7 @@ from ..dfhack_backend import (
     read_g7_evidence,
     read_job_metrics,
     read_map_snapshot,
-    read_view_state,
     read_work_metrics,
-    restore_view_state,
     start_g7_evidence,
     stop_g7_evidence,
 )
@@ -46,6 +45,10 @@ from ..env.scenarios import evaluate_scenario_assertions, get_mock_scenario
 from ..env.state_reader import StateReader
 from ..eval import metrics, milestones, scoring
 from ..eval.summary import RunSummary, summarize
+from .model_modes import (
+    GOVERNED_DFHACK_MODELS as GOVERNED_DFHACK_MODELS,
+    is_governed_dfhack_model,
+)
 from .seed_reset import maybe_reset_dfhack_seed
 from .storage import RunRegistry
 
@@ -57,17 +60,6 @@ ASSISTED_DFHACK_ACTIONS = {
     "FARM",
     "LABOR",
     "INTERACT",
-}
-GOVERNED_DFHACK_MODELS = {
-    "dfhack-governed-scripted",
-    "dfhack-governed-llm",
-    "dfhack-governed-llm-glm52",
-    "dfhack-governed-llm-deepseek-v4",
-    "dfhack-governed-llm-gpt55",
-    "dfhack-governed-llm-glm5v",
-    "dfhack-governed-llm-gpt55-vision",
-    "dfhack-governed-llm-kimi-vision",
-    "dfhack-governed-llm-minimax-vision",
 }
 GOVERNED_DFHACK_ACTIONS = {
     "DIG",
@@ -84,18 +76,6 @@ MAX_INTERACT_OPERATIONS_PER_MODAL = 8
 MAX_UNCHANGED_INTERACT_SCREENS = 3
 MIN_GOVERNED_ACTION_HISTORY = 6
 SCREEN_CAPTURE_FAILED = "(screen capture failed)"
-GOVERNED_STATIC_WORKSHOP_SITE_ERRORS = frozenset(
-    {
-        "tile_out_of_bounds",
-        "tile_occupied_by_building",
-        "tile_hidden_unexplored",
-        "tile_frozen_liquid",
-        "tile_not_open_floor",
-        "tile_has_liquid",
-    }
-)
-
-
 def _screen_sha256(screen_text: str | None) -> str:
     return hashlib.sha256((screen_text or "").encode("utf-8")).hexdigest()
 
@@ -310,7 +290,9 @@ def _is_keystroke_model(model: str) -> bool:
 
 
 def _is_governed_dfhack_model(model: str) -> bool:
-    return str(model or "").lower() in GOVERNED_DFHACK_MODELS
+    """Compatibility wrapper for callers that imported the old private helper."""
+
+    return is_governed_dfhack_model(model)
 
 
 def _artifacts_root() -> Path:
@@ -335,6 +317,85 @@ def _normalize_rect(value: Any) -> tuple[int, int, int, int, int, int] | None:
     )
 
 
+def _governed_dig_rect_from_action(
+    action: Dict[str, Any],
+) -> tuple[int, int, int, int, int, int] | None:
+    """Return the exact bounded footprint from a model-authored dig action."""
+
+    if str(action.get("type") or "").upper() != "DIG":
+        return None
+    params = action.get("params")
+    if not isinstance(params, dict):
+        return None
+    if str(params.get("kind") or "dig").lower() not in {"dig", "channel"}:
+        return None
+    area = params.get("area")
+    size = params.get("size")
+    if not isinstance(area, (list, tuple)) or len(area) != 3:
+        return None
+    if not isinstance(size, (list, tuple)) or len(size) != 3:
+        return None
+    try:
+        x, y, z = (int(value) for value in area)
+        width, height, depth = (int(value) for value in size)
+    except (TypeError, ValueError):
+        return None
+    if width < 1 or height < 1 or depth != 1:
+        return None
+    if width > MAX_RECT_W or height > MAX_RECT_H:
+        return None
+    return (x, y, z, x + width - 1, y + height - 1, z)
+
+
+def _channel_focus_rect_from_action(
+    action: Dict[str, Any],
+) -> tuple[int, int, int, int, int, int] | None:
+    """Return the exact rect from a model-authored channel action."""
+
+    params = action.get("params")
+    if not isinstance(params, dict) or str(params.get("kind") or "").lower() != "channel":
+        return None
+    return _governed_dig_rect_from_action(action)
+
+
+def _owned_channel_focus_rect(
+    action: Dict[str, Any], owned_delta: Dict[str, Any]
+) -> tuple[int, int, int, int, int, int] | None:
+    """Focus access telemetry on one newly model-owned channel tile only."""
+
+    if _channel_focus_rect_from_action(action) is None:
+        return None
+    designated = []
+    for coordinate in owned_delta.get("governed_designated_tiles", []):
+        if not isinstance(coordinate, list) or len(coordinate) != 3:
+            continue
+        try:
+            designated.append(tuple(int(value) for value in coordinate))
+        except (TypeError, ValueError):
+            continue
+    if not designated:
+        return None
+    x, y, z = sorted(designated)[0]
+    return x, y, z, x, y, z
+
+
+def _owned_excavation_snapshot_rects(
+    owned_tiles: Dict[tuple[int, int, int], str],
+) -> list[tuple[int, int, int, int, int, int]]:
+    """Cover owned coordinates with bounded, camera-independent snapshot rects."""
+
+    buckets: Dict[tuple[int, int, int], list[tuple[int, int]]] = {}
+    for x, y, z in owned_tiles:
+        bucket = (z, x // MAX_SNAPSHOT_W, y // MAX_SNAPSHOT_H)
+        buckets.setdefault(bucket, []).append((x, y))
+    rects = []
+    for (z, _, _), coordinates in sorted(buckets.items()):
+        xs = [coordinate[0] for coordinate in coordinates]
+        ys = [coordinate[1] for coordinate in coordinates]
+        rects.append((min(xs), min(ys), z, max(xs), max(ys), z))
+    return rects
+
+
 def _same_target_rect(
     first: Dict[str, Any] | None,
     second: Dict[str, Any] | None,
@@ -344,56 +405,6 @@ def _same_target_rect(
     first_rect = _normalize_rect(first.get("target_rect") or first.get("selection_rect"))
     second_rect = _normalize_rect(second.get("target_rect") or second.get("selection_rect"))
     return first_rect is not None and first_rect == second_rect
-
-
-def _prepared_target_work_rect(
-    target: Dict[str, Any] | None
-) -> tuple[int, int, int, int, int, int] | None:
-    if not isinstance(target, dict):
-        return None
-    return _normalize_rect(target.get("selection_rect")) or _normalize_rect(
-        target.get("target_rect")
-    )
-
-
-def _add_governed_build_site(
-    state: Dict[str, Any],
-    target: Dict[str, Any] | None,
-) -> Dict[str, Any]:
-    if not isinstance(target, dict) or not target.get("ok"):
-        return state
-    fingerprint = target.get("placement_fingerprint")
-    if (
-        target.get("stable_floor_tiles") != 9
-        or target.get("frozen_liquid_tiles") != 0
-        or target.get("liquid_tiles") != 0
-        or target.get("locality_ok") is not True
-        or target.get("reachable_citizen") is not True
-        or target.get("path_cache_current") is not True
-        or not isinstance(fingerprint, str)
-        or not fingerprint
-    ):
-        return state
-    rect = _normalize_rect(target.get("placement_rect") or target.get("selection_rect"))
-    if rect is None:
-        return state
-    work = state.get("work")
-    if not isinstance(work, dict):
-        return state
-    state = dict(state)
-    work = dict(work)
-    work["carpenter_build_site"] = [rect[0], rect[1], rect[2]]
-    work["carpenter_build_site_rect"] = [*rect]
-    work["carpenter_build_site_source"] = target.get("source")
-    work["carpenter_build_site_floor_tiles"] = target["stable_floor_tiles"]
-    work["carpenter_build_site_frozen_liquid_tiles"] = target["frozen_liquid_tiles"]
-    work["carpenter_build_site_liquid_tiles"] = target["liquid_tiles"]
-    work["carpenter_build_site_locality_ok"] = target["locality_ok"]
-    work["carpenter_build_site_reachable_citizen"] = target["reachable_citizen"]
-    work["carpenter_build_site_path_cache_current"] = target["path_cache_current"]
-    work["carpenter_build_site_fingerprint"] = fingerprint
-    state["work"] = work
-    return state
 
 
 def _recommended_key_route(target: Dict[str, Any] | None) -> tuple[str, ...]:
@@ -903,11 +914,161 @@ def _gameplay_proof(
     }
 
 
-def _governed_helper_progress(action: Dict[str, Any], result: Dict[str, Any]) -> bool:
-    """Return helper-reported world progress under the canonical governed rules."""
+def _governed_durable_helper_progress(action: Dict[str, Any], result: Dict[str, Any]) -> bool:
+    """Return helper effects durable enough to unlock governed scalar scoring."""
 
     if action.get("type") == "INTERACT":
         return False
+    # A BUILD helper creates an ordinary pending ConstructBuilding job. That is
+    # legal command evidence, but it is not completed fortress work and cannot
+    # unlock accumulated survival time. FARM can change a crop only on a built
+    # plot after exhaustive native eligibility checks and four-slot readback.
+    return int(result.get("seasons_changed") or 0) > 0
+
+
+_GOVERNED_TRACKED_BUILDING_KINDS = frozenset(
+    {"CarpenterWorkshop", "Still", "FarmPlot"}
+)
+
+
+def _governed_rollback_unverified(result: Dict[str, Any]) -> bool:
+    """Recognize every helper form that explicitly reports rollback failure."""
+
+    if result.get("rollback_verified") is False:
+        return True
+    if str(result.get("error") or "").lower() == "rollback_failed":
+        return True
+    failed = result.get("failed")
+    return any(
+        isinstance(item, dict)
+        and (
+            item.get("rollback_verified") is False
+            or str(item.get("error") or "").lower() == "rollback_failed"
+        )
+        for item in (failed if isinstance(failed, list) else [])
+    )
+
+
+def _governed_building_claims(
+    action: Dict[str, Any], execute_result: Dict[str, Any]
+) -> Dict[int, str]:
+    """Return exact building IDs created by one accepted governed BUILD."""
+
+    if action.get("type") != "BUILD" or execute_result.get("accepted") is not True:
+        return {}
+    params = action.get("params") if isinstance(action.get("params"), dict) else {}
+    kind = str(params.get("kind") or "")
+    if kind not in _GOVERNED_TRACKED_BUILDING_KINDS:
+        return {}
+    result = (
+        execute_result.get("result")
+        if isinstance(execute_result.get("result"), dict)
+        else {}
+    )
+    if result.get("ok") is not True:
+        return {}
+    building_id = _int_or_none(result.get("building_id"))
+    if building_id is None or building_id < 0:
+        return {}
+    return {building_id: kind}
+
+
+def _native_building_stage_complete(entry: Dict[str, Any]) -> bool:
+    """Require an attested, internally consistent native build-stage read."""
+
+    if entry.get("stage_read_ok") is not True or entry.get("built") is not True:
+        return False
+    stage = _int_or_none(entry.get("stage"))
+    max_stage = _int_or_none(entry.get("max_stage"))
+    return bool(
+        stage is not None
+        and max_stage is not None
+        and max_stage > 0
+        and stage >= max_stage
+    )
+
+
+def _governed_completed_owned_buildings(
+    owned_buildings: Dict[int, str], state: Dict[str, Any]
+) -> set[int]:
+    """Match owned building IDs to native completed-stage observations."""
+
+    if not owned_buildings:
+        return set()
+    crew = state.get("crew") if isinstance(state.get("crew"), dict) else {}
+    if crew.get("ok") is not True:
+        return set()
+
+    completed: set[int] = set()
+    workshops = crew.get("workshops")
+    for entry in workshops if isinstance(workshops, list) else []:
+        if not isinstance(entry, dict) or not _native_building_stage_complete(entry):
+            continue
+        building_id = _int_or_none(entry.get("id"))
+        if building_id is None:
+            continue
+        owned_kind = owned_buildings.get(building_id)
+        observed_subtype = str(entry.get("subtype") or "")
+        expected_subtype = {
+            "CarpenterWorkshop": "Carpenters",
+            "Still": "Still",
+        }.get(owned_kind)
+        if expected_subtype is not None and observed_subtype == expected_subtype:
+            completed.add(building_id)
+
+    farm_plots = crew.get("farm_plot_details")
+    for entry in farm_plots if isinstance(farm_plots, list) else []:
+        if not isinstance(entry, dict) or not _native_building_stage_complete(entry):
+            continue
+        building_id = _int_or_none(entry.get("id"))
+        if building_id is None:
+            continue
+        if owned_buildings.get(building_id) == "FarmPlot":
+            completed.add(building_id)
+    return completed
+
+
+def _governed_owned_building_progress(
+    owned_buildings: Dict[int, str], completed_buildings: set[int]
+) -> Dict[str, Any]:
+    """Compute paid non-excavation progress from exact completed IDs only."""
+
+    completed_ids = sorted(
+        building_id
+        for building_id in completed_buildings
+        if building_id in owned_buildings
+    )
+    completed_carpenters = sum(
+        owned_buildings[building_id] == "CarpenterWorkshop"
+        for building_id in completed_ids
+    )
+    completed_stills = sum(
+        owned_buildings[building_id] == "Still" for building_id in completed_ids
+    )
+    completed_farms = sum(
+        owned_buildings[building_id] == "FarmPlot" for building_id in completed_ids
+    )
+    paid_workshop_progress = (
+        completed_carpenters * metrics.PRODUCTION_WORKSHOP_PROGRESS
+    )
+    return {
+        "governed_owned_buildings": len(owned_buildings),
+        "governed_owned_completed_buildings": len(completed_ids),
+        "governed_owned_completed_building_ids": completed_ids,
+        "governed_owned_completed_carpenter_workshops": completed_carpenters,
+        "governed_owned_completed_stills": completed_stills,
+        "governed_owned_completed_farm_plots": completed_farms,
+        "governed_owned_utility_progress": paid_workshop_progress,
+        "governed_owned_production_progress": paid_workshop_progress,
+        # Rooms and construction totals are global observations. They remain
+        # audit-only until exact model-owned completion evidence exists.
+        "governed_owned_complexity_progress": 0.0,
+    }
+
+
+def _governed_helper_progress(action: Dict[str, Any], result: Dict[str, Any]) -> bool:
+    """Return action-specific state change for audit and agent feedback."""
+
     workshops_added = max(
         int(result.get("after_carpenter_workshops") or 0)
         - int(result.get("before_carpenter_workshops") or 0),
@@ -918,16 +1079,13 @@ def _governed_helper_progress(action: Dict[str, Any], result: Dict[str, Any]) ->
         result.get("before_farm_plots") or 0
     )
     return bool(
-        workshops_added > 0
+        _governed_durable_helper_progress(action, result)
+        or workshops_added > 0
         or farm_plots_added > 0
         or int(result.get("placed_count") or 0) > 0
-        or int(result.get("trees_designated") or 0) > 0
         or (result.get("ok") is True and result.get("building_id") is not None)
-        or int(result.get("newly_designated") or 0) > 0
         or int(result.get("unsuspended") or 0) > 0
-        or int(result.get("shrubs_designated") or 0) > 0
         or bool(result.get("labor_changed"))
-        or int(result.get("seasons_changed") or 0) > 0
     )
 
 
@@ -1148,7 +1306,6 @@ def _governed_gameplay_proof(
     action_effect_observed = bool(
         _governed_helper_progress(action, result)
         or (isinstance(order_effect, dict) and order_effect.get("status") == "progressed")
-        or (action.get("type") == "WAIT" and world_state_changed)
     )
     step_gameplay_progress = action.get("type") != "INTERACT" and action_effect_observed
     return {
@@ -1712,38 +1869,6 @@ def _workshop_target_key(target: Dict[str, Any] | None) -> tuple[int, int, int] 
     return (rect[0], rect[1], rect[2])
 
 
-def _governed_rejected_workshop_target(
-    action: Dict[str, Any],
-    execute: Dict[str, Any],
-    target: Dict[str, Any] | None,
-) -> tuple[int, int, int, str] | None:
-    """Bind a rejected advertised workshop site to its exact tile fingerprint."""
-
-    if str(action.get("type") or "").upper() != "BUILD" or execute.get("accepted") is True:
-        return None
-    params = action.get("params")
-    if not isinstance(params, dict) or params.get("kind") not in {"CarpenterWorkshop", "Still"}:
-        return None
-    target_key = _workshop_target_key(target)
-    if target_key is None:
-        return None
-    try:
-        action_key = (int(params["x"]), int(params["y"]), int(params["z"]))
-    except (KeyError, TypeError, ValueError):
-        return None
-    if action_key != target_key:
-        return None
-    nested = execute.get("result")
-    nested_error = nested.get("error") if isinstance(nested, dict) else None
-    error = str(execute.get("why") or nested_error or "")
-    if error not in GOVERNED_STATIC_WORKSHOP_SITE_ERRORS:
-        return None
-    fingerprint = target.get("placement_fingerprint") if isinstance(target, dict) else None
-    if not isinstance(fingerprint, str) or not fingerprint:
-        return None
-    return (*target_key, fingerprint)
-
-
 def _ui_work_rect_from_state(
     state: Dict[str, Any],
     radius: int = UI_WORK_RADIUS,
@@ -2185,17 +2310,27 @@ def run_once(
     # Detect models that need screen capture and native UI keystroke scaffolding.
     is_keystroke_mode = _is_keystroke_model(model)
     is_governed_dfhack_mode = _is_governed_dfhack_model(model)
+    governed_channel_focus: tuple[int, int, int, int, int, int] | None = None
     keystroke_ui_target: Optional[Dict[str, Any]] = None
-    governed_workshop_target: Optional[Dict[str, Any]] = None
     ui_target_mode = "starter"
     ui_target_generation = 0
     ui_target_attempts = 0
     ui_blocked_workshop_targets: set[tuple[int, int, int]] = set()
-    governed_blocked_workshop_targets: set[tuple[int, int, int, str]] = set()
 
     def get_screen_text() -> str:
         """Get screen text when CopyScreen is available."""
         return ""
+
+    if (
+        backend_name == "dfhack"
+        and is_governed_dfhack_mode
+        and os.getenv("FORT_GYM_DFHACK_COMPLETE_DIG", "0") == "1"
+    ):
+        fail_setup_after_cleanup()
+        raise RuntimeError(
+            "Governed DFHack runs forbid FORT_GYM_DFHACK_COMPLETE_DIG=1; "
+            "unset the harness-assisted completion flag before gameplay"
+        )
 
     if backend_name == "mock":
         mock_env = MockEnvironment(scenario_name=scenario)
@@ -2240,7 +2375,12 @@ def run_once(
         try:
             dfhack_client = DFHackClient(host=settings.DFHACK_HOST, port=settings.DFHACK_PORT)
             dfhack_client.connect()
-            executor = Executor(dfhack_client=dfhack_client)
+            if is_governed_dfhack_mode:
+                dfhack_client.set_work_metrics_global_only(True)
+            executor = Executor(
+                dfhack_client=dfhack_client,
+                allow_assisted_dig_completion=not is_governed_dfhack_mode,
+            )
             if is_governed_dfhack_mode:
                 g7_evidence_attempted = True
                 g7_evidence_start = start_g7_evidence(run_identifier)
@@ -2255,40 +2395,6 @@ def run_once(
             fail_setup_after_cleanup()
             raise
 
-        def prepare_governed_target(mode: str) -> Dict[str, object]:
-            view_before = read_view_state()
-            target = prepare_keystroke_target(
-                mode,
-                blocked_workshop_targets=tuple(governed_blocked_workshop_targets),
-            )
-            restore_result = restore_view_state(view_before)
-            if target.get("ok"):
-                target["view_preserved"] = bool(restore_result.get("ok"))
-                if not restore_result.get("ok"):
-                    target["view_preservation_error"] = restore_result.get("error")
-            return target
-
-        if is_governed_dfhack_mode:
-            try:
-                governed_target = prepare_governed_target("starter")
-                governed_rect = _prepared_target_work_rect(governed_target)
-                if governed_rect is not None:
-                    dfhack_client.set_work_rect(governed_rect)
-            except Exception:
-                fail_setup_after_cleanup()
-                raise
-
-        def attach_governed_build_site(state: Dict[str, Any]) -> Dict[str, Any]:
-            nonlocal governed_workshop_target
-            if not is_governed_dfhack_mode:
-                return state
-            work = state.get("work")
-            if not isinstance(work, dict):
-                return state
-            if not governed_workshop_target or not governed_workshop_target.get("ok"):
-                governed_workshop_target = prepare_governed_target("workshop")
-            return _add_governed_build_site(state, governed_workshop_target)
-
         def pause_env() -> None:
             dfhack_client.pause()
 
@@ -2297,7 +2403,7 @@ def run_once(
 
             if not is_governed_dfhack_mode:
                 return state
-            crew = read_job_metrics(_job_metrics_survey_rect(state))
+            crew = read_job_metrics()
             if isinstance(crew, dict) and crew.get("ok"):
                 state = dict(state)
                 state["crew"] = crew
@@ -2308,7 +2414,7 @@ def run_once(
 
             if not is_governed_dfhack_mode:
                 return state
-            fort = read_fort_metrics()
+            fort = read_fort_metrics(governed_channel_focus)
             if isinstance(fort, dict) and fort.get("ok"):
                 state = dict(state)
                 state["fort"] = fort
@@ -2348,33 +2454,18 @@ def run_once(
             return attach_survival_evidence(
                 attach_crew_metrics(
                     attach_fort_metrics(
-                        attach_governed_build_site(StateReader.from_dfhack(dfhack_client))
+                        StateReader.from_dfhack(dfhack_client)
                     )
                 )
             )
 
         def apply_action(action_dict: Dict[str, Any], state: Dict[str, Any]) -> Dict[str, Any]:
-            nonlocal governed_workshop_target
-            result = executor.apply(
+            return executor.apply(
                 action_dict,
                 backend="dfhack",
                 state=state,
                 allow_interact=is_governed_dfhack_mode,
             )
-            rejected_target = _governed_rejected_workshop_target(
-                action_dict,
-                result,
-                governed_workshop_target,
-            )
-            if rejected_target is not None:
-                governed_blocked_workshop_targets.add(rejected_target)
-                result["blocked_workshop_target"] = list(rejected_target[:3])
-                result["blocked_workshop_target_fingerprint"] = rejected_target[3]
-            # Any command can change occupancy, liquid, citizen reachability, or
-            # path state once its ticks advance. Re-run the legal-site probe
-            # before publishing another authoritative footprint.
-            governed_workshop_target = None
-            return result
 
         def advance_env(num_ticks: int) -> Dict[str, Any]:
             nonlocal tick_info_state
@@ -2384,7 +2475,7 @@ def run_once(
             state = attach_survival_evidence(
                 attach_crew_metrics(
                     attach_fort_metrics(
-                        attach_governed_build_site(dfhack_client.advance(num_ticks))
+                        dfhack_client.advance(num_ticks)
                     )
                 )
             )
@@ -2439,6 +2530,37 @@ def run_once(
     carpenter_workshop_usable_seen = 0
     scoreable_elapsed_ticks = 0
     last_keystroke_score_value: float | None = None
+    governed_owned_excavation: Dict[tuple[int, int, int], str] = {}
+    governed_designated_tiles: set[tuple[int, int, int]] = set()
+    governed_completed_tiles: set[tuple[int, int, int]] = set()
+    governed_owned_buildings: Dict[int, str] = {}
+    governed_completed_buildings: set[int] = set()
+    governed_score_progress_seen = False
+
+    def current_governed_score_metrics() -> Dict[str, Any]:
+        if not is_governed_dfhack_mode:
+            return {}
+        building_progress = _governed_owned_building_progress(
+            governed_owned_buildings,
+            governed_completed_buildings,
+        )
+        return {
+            "score_progress_provenance": scoring.GOVERNED_SCORE_PROGRESS_PROVENANCE,
+            "governed_owned_work_progress": len(governed_completed_tiles),
+            "governed_owned_designation_progress": len(governed_designated_tiles),
+            "governed_owned_completion_progress": len(governed_completed_tiles),
+            "utility_progress": building_progress[
+                "governed_owned_utility_progress"
+            ],
+            "production_progress": building_progress[
+                "governed_owned_production_progress"
+            ],
+            "complexity_progress": building_progress[
+                "governed_owned_complexity_progress"
+            ],
+            **building_progress,
+            "score_duration_blocked": not governed_score_progress_seen,
+        }
 
     def publish_event(
         step: int, event_type: str, payload: Dict[str, Any], events: List[Dict[str, Any]]
@@ -2472,6 +2594,21 @@ def run_once(
                 events: List[Dict[str, Any]] = []
                 tick_info_state = {}
                 map_snapshot_before = None
+                map_snapshot = None
+                gameplay_proof = None
+                governed_action_rect = None
+                governed_action_snapshot_before = None
+                governed_action_snapshot_applied = None
+                governed_action_snapshot_after = None
+                governed_action_owned_delta = metrics.governed_action_footprint_progress_delta(
+                    {"type": "WAIT", "params": {}}, None, None
+                )
+                governed_action_owned_keys: set[tuple[int, int, int]] = set()
+                governed_completed_before_step = set(governed_completed_tiles)
+                governed_completed_buildings_before_step = set(
+                    governed_completed_buildings
+                )
+                execution_terminal_reason: Dict[str, Any] | None = None
                 interaction_audit: Dict[str, Any] | None = None
                 interaction_screen_after: str | None = None
 
@@ -3107,6 +3244,7 @@ def run_once(
                         "_action": action,
                         "_action_step": step,
                     }
+                    validation_metrics = current_governed_score_metrics()
                     if is_keystroke_mode or is_governed_dfhack_mode:
                         _record_action_history(
                             action_history,
@@ -3139,13 +3277,20 @@ def run_once(
                             "ticks_advanced": 0,
                             "validation_rejected": True,
                         },
-                        "metrics": {},
+                        "metrics": validation_metrics,
                         "events": events,
                     }
                     _write_jsonl_record(fh, record_line)
                     if registry:
                         registry.set_status(run_identifier, step=step)
                     continue
+
+                if backend_name == "dfhack" and is_governed_dfhack_mode:
+                    governed_action_rect = _governed_dig_rect_from_action(action)
+                    if governed_action_rect is not None:
+                        governed_action_snapshot_before = read_map_snapshot(
+                            governed_action_rect
+                        )
 
                 try:
                     apply_state = obs_json
@@ -3190,6 +3335,66 @@ def run_once(
                     }
                     if execute_result.get("accepted", False):
                         assisted_dfhack_action_seen = True
+                if (
+                    backend_name == "dfhack"
+                    and is_governed_dfhack_mode
+                    and governed_action_rect is not None
+                    and execute_result.get("accepted") is True
+                ):
+                    governed_action_snapshot_applied = read_map_snapshot(governed_action_rect)
+                    governed_action_owned_delta = (
+                        metrics.governed_action_footprint_progress_delta(
+                            action,
+                            governed_action_snapshot_before,
+                            governed_action_snapshot_applied,
+                        )
+                    )
+                    params = action.get("params") if isinstance(action.get("params"), dict) else {}
+                    owned_kind = str(params.get("kind") or "dig").lower()
+                    for coord in governed_action_owned_delta.get(
+                        "governed_owned_tiles_added", []
+                    ):
+                        if not isinstance(coord, list) or len(coord) != 3:
+                            continue
+                        key = (int(coord[0]), int(coord[1]), int(coord[2]))
+                        governed_action_owned_keys.add(key)
+                        governed_owned_excavation[key] = owned_kind
+                    for coord in governed_action_owned_delta.get(
+                        "governed_designated_tiles", []
+                    ):
+                        if isinstance(coord, list) and len(coord) == 3:
+                            governed_designated_tiles.add(
+                                (int(coord[0]), int(coord[1]), int(coord[2]))
+                            )
+                    for coord in governed_action_owned_delta.get(
+                        "governed_completed_tiles", []
+                    ):
+                        if isinstance(coord, list) and len(coord) == 3:
+                            governed_completed_tiles.add(
+                                (int(coord[0]), int(coord[1]), int(coord[2]))
+                            )
+                    channel_focus = _owned_channel_focus_rect(
+                        action, governed_action_owned_delta
+                    )
+                    if channel_focus is not None:
+                        governed_channel_focus = channel_focus
+
+                result_payload = (
+                    execute_result.get("result")
+                    if isinstance(execute_result.get("result"), dict)
+                    else {}
+                )
+                if (
+                    backend_name == "dfhack"
+                    and is_governed_dfhack_mode
+                    and _governed_rollback_unverified(result_payload)
+                ):
+                    execution_terminal_reason = {
+                        "code": "governed_rollback_unverified",
+                        "action_type": action.get("type"),
+                        "helper_error": result_payload.get("error"),
+                        "helper_detail": result_payload.get("detail"),
+                    }
                 if action.get("type") != "INTERACT":
                     publish_event(step, "execute", {"result": execute_result}, events)
                 state_after_apply = execute_result.get("state") or state_before
@@ -3217,6 +3422,7 @@ def run_once(
                             "validation": validation,
                             "execute": execute_result,
                             "state_after_apply": state_after_apply,
+                            "metrics": current_governed_score_metrics(),
                             "stopped": {"reason": "stop_requested_after_execute"},
                             "events": events,
                         },
@@ -3239,11 +3445,22 @@ def run_once(
 
                 # Use agent-requested ticks, falling back to default if not specified
                 requested_ticks = action.get("advance_ticks", ticks)
-                try:
-                    advance_state = call_with_retry("advance", lambda: advance_env(requested_ticks))
-                except DFHackError:
-                    run_failed = True
-                    break
+                if execution_terminal_reason is not None:
+                    advance_state = state_after_apply
+                    tick_info_state = {
+                        "ok": False,
+                        "ticks_advanced": 0,
+                        "skipped": True,
+                        "error": "governed_rollback_unverified",
+                    }
+                else:
+                    try:
+                        advance_state = call_with_retry(
+                            "advance", lambda: advance_env(requested_ticks)
+                        )
+                    except DFHackError:
+                        run_failed = True
+                        break
                 state_preservation = None
                 if backend_name == "dfhack" and is_keystroke_mode:
                     advance_state, state_preservation = _preserve_state_after_degraded_read(
@@ -3376,6 +3593,7 @@ def run_once(
                             "execute": execute_result,
                             "state_after_apply": state_after_apply,
                             "state_after_advance": advance_state,
+                            "metrics": current_governed_score_metrics(),
                             "tick_advance": tick_info_state,
                             "stopped": {"reason": "stop_requested_after_advance"},
                             "events": events,
@@ -3403,6 +3621,11 @@ def run_once(
                             )
                         },
                         events,
+                    )
+
+                if governed_action_rect is not None:
+                    governed_action_snapshot_after = read_map_snapshot(
+                        governed_action_rect
                     )
 
                 metrics_snapshot = metrics.step_snapshot(advance_state)
@@ -3611,15 +3834,129 @@ def run_once(
                     metrics_snapshot.get("utility_progress") or 0,
                     int(utility_action.get("utility_action_progress") or 0),
                 )
-                if is_governed_dfhack_mode:
+                if backend_name == "dfhack" and is_governed_dfhack_mode:
+                    metrics_snapshot["observed_global_work_progress"] = int(
+                        metrics_snapshot.get("work_progress") or 0
+                    )
+                    metrics_snapshot["observed_global_completion_progress"] = int(
+                        metrics_snapshot.get("completion_progress") or 0
+                    )
+                    metrics_snapshot["observed_global_utility_progress"] = float(
+                        metrics_snapshot.get("utility_progress") or 0
+                    )
+                    metrics_snapshot["observed_global_production_progress"] = int(
+                        metrics_snapshot.get("production_progress") or 0
+                    )
+                    metrics_snapshot["observed_global_complexity_progress"] = float(
+                        metrics_snapshot.get("complexity_progress") or 0
+                    )
+
+                    governed_owned_buildings.update(
+                        _governed_building_claims(action, execute_result)
+                    )
+                    governed_completed_buildings.update(
+                        _governed_completed_owned_buildings(
+                            governed_owned_buildings,
+                            advance_state,
+                        )
+                    )
+                    newly_completed_owned_buildings = sorted(
+                        governed_completed_buildings
+                        - governed_completed_buildings_before_step
+                    )
+                    owned_building_progress = _governed_owned_building_progress(
+                        governed_owned_buildings,
+                        governed_completed_buildings,
+                    )
+                    metrics_snapshot.update(owned_building_progress)
+                    metrics_snapshot["governed_step_owned_completed_building_ids"] = (
+                        newly_completed_owned_buildings
+                    )
+                    metrics_snapshot["utility_progress"] = owned_building_progress[
+                        "governed_owned_utility_progress"
+                    ]
+                    metrics_snapshot["production_progress"] = owned_building_progress[
+                        "governed_owned_production_progress"
+                    ]
+                    metrics_snapshot["complexity_progress"] = owned_building_progress[
+                        "governed_owned_complexity_progress"
+                    ]
+                    if governed_snapshot_rect is not None:
+                        map_snapshot = read_map_snapshot(governed_snapshot_rect)
+                    pending_owned_excavation = {
+                        coordinate: kind
+                        for coordinate, kind in governed_owned_excavation.items()
+                        if coordinate not in governed_completed_tiles
+                    }
+                    owned_observation_snapshots = [
+                        read_map_snapshot(rect)
+                        for rect in _owned_excavation_snapshot_rects(
+                            pending_owned_excavation
+                        )
+                    ]
+                    completed_observations = (
+                        metrics.governed_owned_excavation_completion_tiles(
+                            governed_owned_excavation,
+                            *owned_observation_snapshots,
+                            governed_action_snapshot_after,
+                        )
+                    )
+                    for coord in completed_observations:
+                        governed_completed_tiles.add(
+                            (int(coord[0]), int(coord[1]), int(coord[2]))
+                        )
+
+                    newly_completed_owned = sorted(
+                        governed_completed_tiles - governed_completed_before_step
+                    )
+                    step_completed = sorted(
+                        governed_action_owned_keys
+                        & set(newly_completed_owned)
+                    )
+                    owned_delta = {
+                        **governed_action_owned_delta,
+                        "governed_step_completion_progress": len(step_completed),
+                        "governed_completed_tiles": [list(coord) for coord in step_completed],
+                    }
+                    metrics_snapshot.update(owned_delta)
+
+                    metrics_snapshot["designation_progress"] = len(
+                        governed_designated_tiles
+                    )
+                    metrics_snapshot["work_progress"] = len(governed_completed_tiles)
+                    metrics_snapshot["completion_progress"] = len(
+                        governed_completed_tiles
+                    )
+                    metrics_snapshot["governed_owned_excavation_tiles"] = len(
+                        governed_owned_excavation
+                    )
+                    metrics_snapshot["governed_owned_designation_progress"] = len(
+                        governed_designated_tiles
+                    )
+                    metrics_snapshot["governed_owned_work_progress"] = len(
+                        governed_completed_tiles
+                    )
+                    metrics_snapshot["governed_owned_completion_progress"] = len(
+                        governed_completed_tiles
+                    )
+                    metrics_snapshot["governed_step_owned_completion_progress"] = len(
+                        newly_completed_owned
+                    )
+                    metrics_snapshot["governed_step_owned_completion_tiles"] = [
+                        list(coord) for coord in newly_completed_owned
+                    ]
+                    metrics_snapshot["governed_owned_observation_rects"] = len(
+                        owned_observation_snapshots
+                    )
+                    metrics_snapshot[
+                        "score_progress_provenance"
+                    ] = scoring.GOVERNED_SCORE_PROGRESS_PROVENANCE
                     interaction_only = action.get("type") == "INTERACT"
                     metrics_snapshot["score_provenance"] = (
                         "dfhack_governed_interaction_only"
                         if interaction_only
-                        else "dfhack_governed_observed_state"
+                        else "dfhack_governed_observed_state_action_owned_progress"
                     )
-                    metrics_snapshot["gameplay_progress_eligible"] = False
-                    metrics_snapshot["governed_dfhack_progress"] = False
                     fort_after = advance_state.get("fort") or state_before.get("fort")
                     if isinstance(fort_after, dict):
                         metrics_snapshot["fort_enclosed_spaces"] = int(
@@ -3631,6 +3968,84 @@ def run_once(
                         metrics_snapshot["fort_constructions"] = int(
                             fort_after.get("constructions") or 0
                         )
+                    gameplay_proof = _governed_gameplay_proof(
+                        action=action,
+                        execute_result=execute_result,
+                        metrics_snapshot=metrics_snapshot,
+                        before_map_snapshot=map_snapshot_before,
+                        after_map_snapshot=map_snapshot,
+                        state_before=state_before,
+                        advance_state=advance_state,
+                        tick_info=tick_info_state,
+                        score_value=0.0,
+                    )
+                    gameplay_proof["action_footprint"] = {
+                        "rect": list(governed_action_rect)
+                        if governed_action_rect is not None
+                        else None,
+                        "tile_changes": _snapshot_tile_changes(
+                            governed_action_snapshot_before,
+                            governed_action_snapshot_after,
+                        ),
+                        "applied_tile_changes": _snapshot_tile_changes(
+                            governed_action_snapshot_before,
+                            governed_action_snapshot_applied,
+                        ),
+                        "owned_delta": owned_delta,
+                    }
+                    owned_completion_evidence = [
+                        {
+                            "coordinate": list(coord),
+                            "kind": governed_owned_excavation[coord],
+                        }
+                        for coord in newly_completed_owned
+                    ]
+                    gameplay_proof["owned_completion_observation"] = {
+                        "source": "camera_independent_bounded_map_snapshot",
+                        "completed_tiles": owned_completion_evidence,
+                    }
+                    owned_building_completion_evidence = [
+                        {
+                            "building_id": building_id,
+                            "kind": governed_owned_buildings[building_id],
+                        }
+                        for building_id in newly_completed_owned_buildings
+                    ]
+                    gameplay_proof["owned_building_completion_observation"] = {
+                        "source": "job_metrics_exact_building_id_and_native_stage",
+                        "completed_buildings": owned_building_completion_evidence,
+                    }
+                    if owned_completion_evidence or owned_building_completion_evidence:
+                        gameplay_proof.update(
+                            {
+                                "ok": True,
+                                "gameplay_progress_eligible": True,
+                                "action_effect_observed": True,
+                                "owned_prior_action_effect_observed": (
+                                    action.get("type") == "WAIT"
+                                ),
+                                "concurrent_world_state_changed": False,
+                            }
+                        )
+                    progress_eligible = bool(gameplay_proof.get("ok"))
+                    result_payload = (
+                        execute_result.get("result")
+                        if isinstance(execute_result.get("result"), dict)
+                        else {}
+                    )
+                    if (
+                        governed_completed_tiles
+                        or governed_completed_buildings
+                        or _governed_durable_helper_progress(action, result_payload)
+                    ):
+                        governed_score_progress_seen = True
+                    execute_result = {
+                        **execute_result,
+                        "gameplay_progress_eligible": progress_eligible,
+                    }
+                    last_action_result = execute_result
+                    metrics_snapshot["gameplay_progress_eligible"] = progress_eligible
+                    metrics_snapshot["governed_dfhack_progress"] = progress_eligible
                 if is_keystroke_mode or is_governed_dfhack_mode:
                     _record_action_history(
                         action_history,
@@ -3667,6 +4082,19 @@ def run_once(
                     metrics_snapshot["observed_run_elapsed_ticks"] = elapsed_ticks_total
                     metrics_snapshot["score_duration_blocked"] = True
                     score_elapsed_ticks = 0
+                elif (
+                    backend_name == "dfhack"
+                    and is_governed_dfhack_mode
+                    and not governed_score_progress_seen
+                ):
+                    metrics_snapshot["observed_run_elapsed_ticks"] = elapsed_ticks_total
+                    metrics_snapshot["score_duration_blocked"] = True
+                    metrics_snapshot[
+                        "score_provenance"
+                    ] = "dfhack_governed_no_gameplay_progress_yet"
+                    score_elapsed_ticks = 0
+                elif backend_name == "dfhack" and is_governed_dfhack_mode:
+                    metrics_snapshot["score_duration_blocked"] = False
                 elif is_keystroke_mode and not keystroke_gameplay_progress_seen:
                     metrics_snapshot["observed_run_elapsed_ticks"] = elapsed_ticks_total
                     metrics_snapshot["score_duration_blocked"] = True
@@ -3729,17 +4157,16 @@ def run_once(
 
                 previous_state = advance_state
 
-                map_snapshot = None
-                gameplay_proof = None
                 if backend_name == "dfhack":
                     if is_keystroke_mode and ui_work_rect is not None:
                         snapshot_rect = ui_work_rect
-                    elif is_governed_dfhack_mode and governed_snapshot_rect is not None:
+                    elif is_governed_dfhack_mode:
                         snapshot_rect = governed_snapshot_rect
                     else:
                         snapshot_rect = _map_snapshot_rect_from_state(advance_state)
-                    if snapshot_rect:
+                    if snapshot_rect and map_snapshot is None:
                         map_snapshot = read_map_snapshot(snapshot_rect)
+                    if map_snapshot is not None:
                         publish_event(step, "map_snapshot", {"map_snapshot": map_snapshot}, events)
                     if is_keystroke_mode:
                         gameplay_proof = _gameplay_proof(
@@ -3759,24 +4186,20 @@ def run_once(
                             events,
                         )
                     elif is_governed_dfhack_mode:
-                        gameplay_proof = _governed_gameplay_proof(
-                            action=action,
-                            execute_result=execute_result,
-                            metrics_snapshot=metrics_snapshot,
-                            before_map_snapshot=map_snapshot_before,
-                            after_map_snapshot=map_snapshot,
-                            state_before=state_before,
-                            advance_state=advance_state,
-                            tick_info=tick_info_state,
-                            score_value=score_value,
-                        )
-                        progress_eligible = bool(gameplay_proof.get("ok"))
-                        execute_result = {
-                            **execute_result,
-                            "gameplay_progress_eligible": progress_eligible,
-                        }
-                        metrics_snapshot["gameplay_progress_eligible"] = progress_eligible
-                        metrics_snapshot["governed_dfhack_progress"] = progress_eligible
+                        if gameplay_proof is None:
+                            gameplay_proof = _governed_gameplay_proof(
+                                action=action,
+                                execute_result=execute_result,
+                                metrics_snapshot=metrics_snapshot,
+                                before_map_snapshot=map_snapshot_before,
+                                after_map_snapshot=map_snapshot,
+                                state_before=state_before,
+                                advance_state=advance_state,
+                                tick_info=tick_info_state,
+                                score_value=score_value,
+                            )
+                        else:
+                            gameplay_proof = {**gameplay_proof, "score": score_value}
                         publish_event(
                             step,
                             "gameplay_proof",
@@ -3784,15 +4207,18 @@ def run_once(
                             events,
                         )
 
-                (
-                    terminal_reason,
-                    degraded_tick,
-                    consecutive_zero_tick_streak,
-                ) = _tick_terminal_reason(
-                    requested_ticks,
-                    tick_info_state,
-                    consecutive_zero_tick_streak,
-                )
+                terminal_reason = execution_terminal_reason
+                degraded_tick = None
+                if terminal_reason is None:
+                    (
+                        terminal_reason,
+                        degraded_tick,
+                        consecutive_zero_tick_streak,
+                    ) = _tick_terminal_reason(
+                        requested_ticks,
+                        tick_info_state,
+                        consecutive_zero_tick_streak,
+                    )
                 if int(tick_info_state.get("ticks_advanced") or 0) > 0:
                     interaction_episode_count = 0
                     interaction_unchanged_screen_streak = 0
@@ -3961,8 +4387,6 @@ def run_once(
 
         # Auto-analyze trace with LLM (optional - requires GOOGLE_API_KEY)
         try:
-            import os
-
             from ..eval.analyzer import TraceAnalyzer, save_analysis
 
             if os.environ.get("GOOGLE_API_KEY") and (cleanup_outcome or {}).get("ok"):

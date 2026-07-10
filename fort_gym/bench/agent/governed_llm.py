@@ -49,12 +49,14 @@ building MULTIPLE enclosed functional rooms while keeping every dwarf alive.
 
 Legal actions (the only eight types accepted):
 - DIG: params {"area": [x, y, z], "size": [w, h, 1], "kind": "dig"|"channel"|"chop"|"gather"}. \
-kind dig/channel designates the rectangle (max 30x30, one z-level); this harness only designates \
-WALL tiles for dig/channel — floor/shrub/other tiles in the rect are left untouched (use \
-kind=gather for shrubs), and miners must then reach the walls and work over time. kind "chop" \
+kind dig designates visible natural WALL tiles; kind channel designates visible natural WALL or \
+stable FLOOR tiles. Occupied, constructed, wet, frozen, hidden, tree, and other ineligible tiles \
+reject the entire rectangle without changing any tile. Miners must reach an accepted designation \
+and work over time. kind "chop" \
 designates the tree trunks inside the rect for felling (the observation's Fort-area tiles line \
-reports tree_trunk counts, and the Nearby-trees line reports tree clusters up to 40 tiles from \
-the citizens, possibly beyond the minimap); a dwarf with the woodcutting labor fells them over \
+reports tree_trunk counts, and the Visible-nearby-trees line reports only the count of visible \
+trunks within 40 tiles; choose coordinates from visible map evidence); a dwarf with the \
+woodcutting labor fells them over \
 time and the logs appear in the Wood stock. Carpentry production consumes wood — without logs, \
 workshop orders cancel. kind "gather" designates shrub tiles inside the rect for plant gathering \
 (only SHRUB-shaped tiles are marked; other tiles in the rect are left untouched and reported as \
@@ -63,10 +65,8 @@ the plant stock — gathered plants are brewable.
 - BUILD: params {"kind": "CarpenterWorkshop"|"Still"|"FarmPlot"|"Bed"|"Door"|"Table"|"Chair"|"Wall"|"Floor", \
 "x": X, "y": Y, "z": Z, "x2": X2, "y2": Y2 (optional)}. \
 CarpenterWorkshop places a 3x3 workshop on open floor within 24 tiles of your fort — near any \
-existing building or citizen (the work metrics include a `carpenter_build_site` when a candidate \
-spot of nine stable floor tiles is visible); a dwarf must then construct it. \
-Still places a 3x3 workshop the same way and can use the same reported `carpenter_build_site`; a \
-dwarf must then construct it. A built Still brews \
+existing building or citizen; choose and verify the complete footprint from observed map facts, \
+then a dwarf must construct it. Still places a 3x3 workshop under the same rules. A built Still brews \
 plants into drink via ORDER job "brew" — brew orders need gatherable plants and empty barrels \
 in stock; drink is what dwarves actually consume. \
 FarmPlot places a farm plot on open ground: a single tile at (x, y, z), or a rectangle up to 5x5 \
@@ -110,10 +110,12 @@ reattempt it as the simulation continues to run.
 Sets which crop a farm plot grows in each season — the same choice the q-menu crop picker writes. \
 A farm plot has four independent season slots (spring, summer, autumn, winter); each holds one \
 crop or nothing. crop is a plant raw token (the observation's "Seeds on hand" line lists the \
-tokens you hold seeds for, e.g. RADISH); "clear" empties the selected seasons. seasons is optional \
-— omit it to set all four at once. Engine facts: a crop only grows in the seasons its raw allows, \
-so a requested season the crop lacks is skipped (season_not_growable). Whether a crop can grow on a \
-given plot (surface vs. underground) is decided by the engine, not this command. \
+tokens you hold seeds for, e.g. MUSHROOM_HELMET_PLUMP); "clear" empties the selected seasons. \
+seasons is optional — omit it to set all four at once. The observation reports each completed \
+underground plot's native offered crops separately for spring, summer, autumn, and winter. Every \
+requested season must list the token; otherwise the whole FARM action is rejected with \
+crop_not_offered and no slot changes. Surface crop options currently fail closed as \
+surface_crop_options_unverified instead of accepting a guessed biome match. \
 Setting a crop does not plant it — a dwarf with the farming labor plants a matching seed from \
 stock over real time, and only if a seed exists (seeds are consumed by planting; growth then takes \
 further time before harvest). The observation reports each plot's per-season crop tokens, your \
@@ -152,9 +154,7 @@ re-place on an x tile, advance time instead, b/t/c/d=furniture, w=workshop, o=ot
 building footprint, .=stable open floor, ,=gatherable shrub, s=sapling, p=loose rock, \
 i=frozen liquid that can thaw). It is the \
 authoritative view for BUILD placement and wall geometry. Before submitting any BUILD, derive its \
-full target footprint and verify every target tile is `.` open floor in the current minimap, OR for \
-CarpenterWorkshop/Still use the exact runner-authored `carpenter_build_site_rect`, which is an \
-authoritative nine-tile stable-floor preflight even when it lies outside the cropped minimap. Never \
+full target footprint and verify every target tile is `.` open floor in the current minimap. Never \
 BUILD on `W`, `#`, `T`, `b`, `t`, `c`, `d`, `w`, `o`, `x`, `i`, `,`, `s`, `p`, `@`, or `~`, a coordinate \
 listed under Furniture positions, or a \
 coordinate just reported under Failed tiles. If the footprint is not provably open and unoccupied, \
@@ -163,8 +163,8 @@ simulation can change the relevant world state, and name the change you expect. 
 rejected target until an observed fact about that tile changes. An enclosure must form a complete \
 hollow ring with floor \
 inside; trace it on the minimap and wall the gaps. It also gives the recorded game screen text \
-plus derived work metrics (the `work` fields): wall vs floor tile counts, dig designations, \
-active jobs, workshop counts and usability, and manager order counts. Read them to see whether \
+plus plan-agnostic work and crew facts: active jobs, workshop counts and usability, citizen \
+positions/labors, and manager order counts. Read them to see whether \
 your previous command actually worked before issuing the next one. A == MEMORY == section carries \
 your own plan, POIs, and failed attempts from earlier steps. For DIG and BUILD, cross-check every \
 coordinate named in intent, plan_step, or expected_simulation_result against params before submission; \

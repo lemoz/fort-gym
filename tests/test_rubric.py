@@ -10,6 +10,7 @@ from fort_gym.bench.eval.rubric import (
     _step_progress_flags,
     evaluate_trace_records,
 )
+from fort_gym.bench.eval.scoring import GOVERNED_SCORE_PROGRESS_PROVENANCE
 
 
 def test_dig_fingerprint_is_kind_aware() -> None:
@@ -195,6 +196,61 @@ def test_explicit_action_attribution_beats_unrelated_metric_changes() -> None:
     rubric = evaluate_trace_records(records)
     assert rubric["dimensions"]["responsiveness"]["score"] == 0
     assert "repetitive_policy" in rubric["blockers"]
+
+
+def test_governed_action_truth_rubric_keeps_global_progress_audit_only() -> None:
+    records = [
+        {
+            "step": step,
+            "action": {"type": "WAIT", "params": {}, "advance_ticks": 1000},
+            "execute": {"accepted": True, "provenance": "dfhack_governed"},
+            "metrics": {
+                "score_progress_provenance": GOVERNED_SCORE_PROGRESS_PROVENANCE,
+                "pop": 7,
+                "food": 40,
+                "drink": 50,
+                "work_progress": 99,
+                "completion_progress": 99,
+                "utility_progress": 99,
+                "production_progress": 99,
+                "complexity_progress": 99,
+                "governed_owned_work_progress": 0,
+                "governed_owned_designation_progress": 0,
+                "governed_owned_completion_progress": 0,
+                "governed_owned_utility_progress": 0,
+                "governed_owned_production_progress": 0,
+                "governed_owned_complexity_progress": 0,
+                "governed_owned_completed_carpenter_workshops": 0,
+                "carpenter_workshops_usable": 1,
+                "fort_enclosed_spaces": 2,
+                "fort_functional_rooms": 2,
+                "fort_constructions": 20,
+                "work": {
+                    "carpenter_workshops": 1,
+                    "carpenter_workshops_usable": 1,
+                    "fortress_complexity_spaces_completed": 2,
+                },
+            },
+            "gameplay_proof": {
+                "ok": False,
+                "action_effect_observed": False,
+                "concurrent_world_state_changed": True,
+                "changed_tile_count": 5,
+            },
+            "tick_advance": {"ticks_advanced": 1000},
+        }
+        for step in range(5)
+    ]
+
+    rubric = evaluate_trace_records(records)
+
+    assert rubric["progress_provenance"] == GOVERNED_SCORE_PROGRESS_PROVENANCE
+    assert rubric["dimensions"]["shelter_layout"]["score"] == 0
+    assert rubric["dimensions"]["production_economy"]["score"] == 0
+    assert rubric["dimensions"]["responsiveness"]["score"] == 0
+    assert "no_fort_structure" in rubric["blockers"]
+    assert "no_production_surface" in rubric["blockers"]
+    assert "no_broader_fort_layout" in rubric["blockers"]
 
 
 def test_placement_and_chop_helper_counts_are_world_change() -> None:

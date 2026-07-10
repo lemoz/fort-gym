@@ -290,8 +290,8 @@ def test_governed_system_prompt_requires_build_target_preflight() -> None:
     )
     assert "o=other occupied" in GOVERNED_SYSTEM_PROMPT
     assert "i=frozen liquid that can thaw" in GOVERNED_SYSTEM_PROMPT
-    assert "carpenter_build_site_rect" in GOVERNED_SYSTEM_PROMPT
-    assert "even when it lies outside the cropped minimap" in GOVERNED_SYSTEM_PROMPT
+    assert "carpenter_build_site_rect" not in GOVERNED_SYSTEM_PROMPT
+    assert "runner-authored footprint" not in GOVERNED_SYSTEM_PROMPT
     assert "Furniture positions" in GOVERNED_SYSTEM_PROMPT
     assert "Failed tiles" in GOVERNED_SYSTEM_PROMPT
     assert "Do not retry a rejected target" in GOVERNED_SYSTEM_PROMPT
@@ -374,12 +374,11 @@ def test_governed_action_types_include_farm() -> None:
 def test_governed_system_prompt_describes_farm_crop_mechanic_only() -> None:
     # factual engine mechanics only, no strategy advice
     assert "FARM: params" in GOVERNED_SYSTEM_PROMPT
-    assert "season_not_growable" in GOVERNED_SYSTEM_PROMPT
+    assert "crop_not_offered" in GOVERNED_SYSTEM_PROMPT
+    assert "surface_crop_options_unverified" in GOVERNED_SYSTEM_PROMPT
     assert "farming labor plants a matching seed" in GOVERNED_SYSTEM_PROMPT
-    # crops only grow in listed seasons; surface/underground eligibility is
-    # left to the engine, not gated by this command
-    assert "only grows in the seasons its raw allows" in GOVERNED_SYSTEM_PROMPT
-    assert "decided by the engine" in GOVERNED_SYSTEM_PROMPT
+    assert "native offered crops separately" in GOVERNED_SYSTEM_PROMPT
+    assert "Every requested season must list the token" in GOVERNED_SYSTEM_PROMPT
     assert "farm_plot_not_built" in GOVERNED_SYSTEM_PROMPT
     assert "only after that plot reaches its maximum stage" in GOVERNED_SYSTEM_PROMPT
     assert "crop_not_growable_here" not in GOVERNED_SYSTEM_PROMPT
@@ -450,8 +449,6 @@ def test_governed_system_prompt_describes_gather_mechanic_only() -> None:
         "WAIT",
         "INTERACT",
     )
-
-
 def test_governed_interact_tool_and_prompt_are_bounded_and_paused() -> None:
     tool = _submit_action_tool()["function"]["parameters"]
 

@@ -340,6 +340,7 @@ for tx = rx1, rx2 do
             error = failure_error,
             building_id = building_id,
             material_item_id = material.id,
+            rollback_verified = rollback_ok,
             rollback_error = rollback_error,
           })
           if not rollback_ok then rollback_failed = true end
@@ -360,6 +361,7 @@ print(json.encode({
   failed_count = #failed,
   placed = placed,
   failed = failed,
+  rollback_verified = not rollback_failed,
   error = rollback_failed and 'rollback_failed'
       or (#placed > 0 and #failed > 0 and 'partial_placement'
           or (#placed == 0 and 'no_tiles_placed' or nil)),

@@ -19,6 +19,7 @@ from ..env.encoder import encode_observation
 from ..env.executor import Executor
 from ..env.state_reader import StateReader
 from ..eval import metrics, milestones, scoring
+from ..run.model_modes import is_governed_dfhack_model
 from ..run.storage import RUN_REGISTRY, RunInfo
 from .auth import require_admin
 from .schemas import StepRequest, StepResponse
@@ -113,6 +114,15 @@ async def step_endpoint(payload: StepRequest, _: None = Depends(require_admin)) 
         raise HTTPException(status_code=404, detail="Run not found.")
     if run.backend != "dfhack":
         raise HTTPException(status_code=400, detail="Interactive steps require DFHack backend.")
+    if is_governed_dfhack_model(run.model):
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Governed DFHack runs use the serialized runner; /step is disabled "
+                "because it cannot preserve governed action ownership, rollback, and "
+                "score provenance."
+            ),
+        )
 
     context = _get_context(run)
     now_ms = int(time.time() * 1000)
@@ -139,7 +149,12 @@ async def step_endpoint(payload: StepRequest, _: None = Depends(require_admin)) 
         raise HTTPException(status_code=400, detail="Action must be a JSON object.")
 
     dfhack_client = DFHackClient(host=settings.DFHACK_HOST, port=settings.DFHACK_PORT)
-    executor = Executor(dfhack_client=dfhack_client)
+    # The ad-hoc endpoint is an administrative control surface, not a test
+    # harness. It must never inherit the environment-gated dig completion aid.
+    executor = Executor(
+        dfhack_client=dfhack_client,
+        allow_assisted_dig_completion=False,
+    )
     events: list[Dict[str, Any]] = []
 
     try:
@@ -225,10 +240,8 @@ async def step_endpoint(payload: StepRequest, _: None = Depends(require_admin)) 
             context.last_step_ts_ms = end_ms
             context.last_elapsed_ms = elapsed_ms
             context.inflight = False
-            done = False
             if context.max_steps and context.step_idx >= context.max_steps:
                 context.completed = True
-                done = True
 
         pace_target_hz = round(1000.0 / min_period_ms, 3)
         now_hz = round(1000.0 / elapsed_ms, 3)
