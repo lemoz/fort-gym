@@ -59,6 +59,11 @@ class CountingInteractAgent(Agent):
         }
 
 
+class RaisingDecisionAgent(Agent):
+    def decide(self, obs_text: str, obs_json: Dict[str, Any]) -> Dict[str, Any]:
+        raise RuntimeError("review contract exhausted")
+
+
 def _run_dfhack_tick_fixture(
     tmp_path: Path,
     monkeypatch,
@@ -1114,6 +1119,31 @@ def test_unexpected_exception_cleans_df_before_failed_status(tmp_path, monkeypat
     assert lifecycle_events.count("evidence_stopped") == 1
     assert lifecycle_events.count("client_closed") == 1
     assert lifecycle_events.index("client_closed") < lifecycle_events.index("status:failed")
+
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+
+
+def test_agent_decide_failure_records_durable_terminal_reason(tmp_path, monkeypatch) -> None:
+    _, registry, run_id = _run_governed_interact_fixture(
+        tmp_path,
+        monkeypatch,
+        screen_changes=False,
+        max_steps=1,
+        agent_override=RaisingDecisionAgent(),
+    )
+
+    loaded = registry.get(run_id)
+    assert loaded is not None
+    assert loaded.status == "failed"
+    assert loaded.metadata["terminal_reason"] == {
+        "code": "agent_decide_error",
+        "stage": "agent_decide",
+        "type": "RuntimeError",
+        "message": "review contract exhausted",
+    }
+    row = _trace_rows(tmp_path, run_id)[0]
+    assert row["terminal_reason"] == loaded.metadata["terminal_reason"]
+    assert row["events"][-1]["type"] == "terminal"
 
     get_settings.cache_clear()  # type: ignore[attr-defined]
 

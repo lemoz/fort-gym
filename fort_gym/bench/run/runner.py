@@ -2680,6 +2680,17 @@ def run_once(
                         "message": str(exc),
                     }
                     publish_event(step, "error", error_payload, events)
+                    terminal_failure_reason = {
+                        "code": "agent_decide_error",
+                        **error_payload,
+                    }
+                    terminal_failure_step = step
+                    publish_event(
+                        step,
+                        "terminal",
+                        {"terminal_reason": terminal_failure_reason},
+                        events,
+                    )
                     _write_durable_jsonl_record(
                         fh,
                         {
@@ -2688,9 +2699,16 @@ def run_once(
                             "observation": obs_json,
                             "observation_text": obs_text,
                             "error": error_payload,
+                            "terminal_reason": terminal_failure_reason,
                             "events": events,
                         },
                     )
+                    if registry:
+                        registry.record_pending_terminal_failure(
+                            run_identifier,
+                            terminal_reason=terminal_failure_reason,
+                            step=step,
+                        )
                     run_failed = True
                     break
 

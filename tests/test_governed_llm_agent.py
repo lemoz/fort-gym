@@ -239,6 +239,7 @@ def test_governed_submit_tool_requires_agent_review_contract() -> None:
     assert parameters["properties"]["plan_review"]["properties"]["evidence"][
         "minItems"
     ] == 2
+    assert "reason" not in parameters["properties"]["plan_review"]["required"]
     assert "next_step" not in parameters["properties"]["plan_review"]["properties"]
     assert "REVIEW EVIDENCE CHOICES" in GOVERNED_SYSTEM_PROMPT
 
@@ -591,20 +592,28 @@ def test_review_contract_fails_before_gameplay_after_bad_correction() -> None:
     control = _plan_control()
     first = _reviewed_action_payload(control=control)
     second = _reviewed_action_payload(control=control)
+    third = _reviewed_action_payload(control=control)
     first["plan_review"]["evidence"] = ["invented evidence"]
     second["plan_review"]["evidence"] = ["still invented"]
-    agent = _agent([_submit_action_response(first), _submit_action_response(second)])
+    third["plan_review"]["evidence"] = ["invented again"]
+    agent = _agent(
+        [
+            _submit_action_response(first),
+            _submit_action_response(second),
+            _submit_action_response(third),
+        ]
+    )
 
-    with pytest.raises(RuntimeError, match="failed before gameplay after one correction"):
+    with pytest.raises(RuntimeError, match="failed before gameplay after two corrections"):
         agent.decide(
             _review_observation(control),
             {"agent_plan_control": control},
         )
 
     assert agent._pending is None
-    assert not any(
-        event["tool"] == "governed_llm.fallback_wait" for event in agent.pop_tool_events()
-    )
+    events = agent.pop_tool_events()
+    assert sum(event["tool"] == "governed_llm.review_contract_retry" for event in events) == 2
+    assert not any(event["tool"] == "governed_llm.fallback_wait" for event in events)
 
 
 def test_review_control_provider_failure_does_not_advance_with_fallback_wait() -> None:
@@ -669,6 +678,46 @@ def test_review_contract_allows_agent_to_revise_objective_when_not_due() -> None
     assert action["objective"] == "Close the drink-production loop."
     assert action["plan_review"]["decision"] == "revise"
     assert agent._memory.gameplay_plan["objective"] == "Close the drink-production loop."
+
+
+def test_review_contract_allows_voluntary_continue_when_not_due() -> None:
+    control = _plan_control(
+        review_due=False,
+        request_id="5:none",
+        prior_objective="Build durable shelter.",
+        previous_step=4,
+        previous_verdict="progressed",
+    )
+    payload = _reviewed_action_payload(control=control, decision="continue")
+    agent = _agent([_submit_action_response(payload)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["plan_review"]["decision"] == "continue"
+
+
+def test_not_due_plan_review_may_omit_reason() -> None:
+    control = _plan_control(
+        review_due=False,
+        request_id="5:none",
+        prior_objective="Build durable shelter.",
+        previous_step=4,
+        previous_verdict="progressed",
+    )
+    payload = _reviewed_action_payload(control=control)
+    payload["plan_review"].pop("reason")
+    agent = _agent([_submit_action_response(payload)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["plan_review"]["decision"] == "not_due"
+    assert "reason" not in action["plan_review"]
 
 
 def test_not_due_review_advances_memory_plan_step_without_recording_review() -> None:
