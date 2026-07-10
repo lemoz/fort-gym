@@ -427,13 +427,13 @@ caught by a failing public run and closed on the record.
   passes in seven region3 attempts. "Plays Dwarf Fortress" is not yet
   demonstrated — "solved one map" is.
 - **Small n.** The reliability claim rests on a five-run lineage; the endurance
-  result on one probe; the G6 verdict on seven runs; G7 on four failed attempts.
+  result on one probe; the G6 verdict on seven runs; G7 on five failed attempts.
   These are findings, not distributions.
 - **One policy family for most results.** GLM-5V-turbo produced the G4 passes
   and most of the G6 campaign; GPT-5.5 served the earlier G2/G3 passes.
   Cross-model generality is thin — two GPT-5.5-vision escalation runs are the
   only cross-family data points on the unseen map.
-- **G6 is unpassed; G7 attempts 1 through 4 failed.** Attempts 2, 3, and 4 were
+- **G6 is unpassed; G7 attempts 1 through 5 failed.** Attempts 2, 3, 4, and 5 were
   infrastructure aborts, not policy verdicts. Score-v3 is active, but the
   chair-factory calibration gap (§2.4) remains part of its historical record.
   Attempt 1 demonstrated why the scalar is telemetry rather than the verdict:
@@ -441,7 +441,8 @@ caught by a failing public run and closed on the record.
 
 ## 4. What's next
 
-- **Evaluate live attempt 5**: PR #70 now requires one citizen
+- **Attempt 5 failed; close the observed control-loop and dialog gaps before
+  attempt 6**: PR #70 requires one citizen
   to share its current DF walk group with both build target and selected item;
   reject invalid materials plus targets outside the conservative dry/visible
   FLOOR subset; verify resulting jobs; report walk-group connectivity without
@@ -452,12 +453,17 @@ caught by a failing public run and closed on the record.
   exactly the requested real jobs only after the Still was complete, without a
   duplicate manager order. It merged and deployed as
   `e012e704b7a45cd509034700c3524801217130ef`; the deployed repetition passed,
-  and the 450-step run has a
-  [live replay](https://fortgym.live/r/88uZqRulANyNG_e7t7c6KFlEOYRvHZdz). Its eventual
-  deterministic gate result, not its interim score, is the next verdict.
+  and the run has a
+  [permanent replay](https://fortgym.live/r/88uZqRulANyNG_e7t7c6KFlEOYRvHZdz).
+  It failed after 201,556 ticks: food/drink production 0/0, final drink 0,
+  one functional room, and a bounded abort on the visible `a - Begin
+  discussion` topic screen. Score-v3 nevertheless reached 178.59. PR #72 adds
+  factual governed history; PR #73 grounds BUILD footprints. The next candidate
+  adds visible letter-option interaction and mandatory, model-authored factual
+  action/plan reviews without an external strategy controller or review score.
 - **G6 remains open**: the best unseen-map run reached 4/5 and missed only its
-  second functional room. G7 attempt 5 runs on the same unseen seed, so a strong
-  endurance result can add evidence without a separate blind retry campaign.
+  second functional room. G7 attempt 5 ran on the same unseen seed, so a strong
+  attempt 6 can add evidence without a separate blind retry campaign.
 - **G8 — depth**: a multi-z fortress (stairs, underground rooms), the next
   spatial-reasoning escalation past the hollow ring.
 - **The open-source flywheel**: a standing public leaderboard where any model

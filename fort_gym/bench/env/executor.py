@@ -18,7 +18,9 @@ from ..dfhack_backend import unsuspend_jobs as safe_unsuspend_jobs
 from .actions import (
     FINISH_TOPIC_MEETING_OPTION_TEXT,
     INTERACT_ALLOWED_VIEWSCREEN_TYPES,
+    TOPIC_MEETING_OPTION_OPERATIONS,
     validate_action,
+    visible_topic_meeting_option,
 )
 from .dfhack_client import DFHackClient, DFHackUnavailableError
 from .keystroke_exec import execute_keystroke_action
@@ -33,10 +35,18 @@ _INTERACT_INTERFACE_KEYS = {
     "left": "CURSOR_LEFT",
     "right": "CURSOR_RIGHT",
     "finish_topic_meeting": "OPTION1",
+    **{
+        f"topic_option_{letter}": f"OPTION{index}"
+        for index, letter in enumerate("abcdefgh", start=1)
+    },
 }
 
 _INTERACT_OPERATION_VIEWSCREEN_TYPES = {
     "finish_topic_meeting": frozenset({"viewscreen_topicmeetingst"}),
+    **{
+        operation: frozenset({"viewscreen_topicmeetingst"})
+        for operation in TOPIC_MEETING_OPTION_OPERATIONS
+    },
 }
 
 
@@ -120,6 +130,18 @@ class Executor:
                         "why": (
                             "INTERACT finish_topic_meeting requires the visible option "
                             f"{FINISH_TOPIC_MEETING_OPTION_TEXT!r}"
+                        ),
+                    }
+                if operation in TOPIC_MEETING_OPTION_OPERATIONS and not visible_topic_meeting_option(
+                    operation,
+                    str(current_state.get("screen_text") or ""),
+                ):
+                    letter = operation.rsplit("_", 1)[-1]
+                    return {
+                        "accepted": False,
+                        "why": (
+                            f"INTERACT {operation} requires a visible "
+                            f"'{letter} - ...' topic option"
                         ),
                     }
                 interface_key = _INTERACT_INTERFACE_KEYS[operation]

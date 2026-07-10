@@ -32,8 +32,11 @@ from ..dfhack_backend import (
 from ..env.actions import (
     FINISH_TOPIC_MEETING_OPTION_TEXT,
     INTERACT_ALLOWED_VIEWSCREEN_TYPES,
+    TOPIC_MEETING_OPTION_OPERATIONS,
+    normalized_action_fingerprint,
     parse_action,
     validate_action,
+    visible_topic_meeting_option,
 )
 from ..env.dfhack_client import DFHackClient, DFHackError
 from ..env.encoder import encode_observation
@@ -79,11 +82,19 @@ GOVERNED_DFHACK_ACTIONS = {
 MAX_CONSECUTIVE_ZERO_TICKS = 3
 MAX_INTERACT_OPERATIONS_PER_MODAL = 8
 MAX_UNCHANGED_INTERACT_SCREENS = 3
+MIN_GOVERNED_ACTION_HISTORY = 6
 SCREEN_CAPTURE_FAILED = "(screen capture failed)"
 
 
 def _screen_sha256(screen_text: str | None) -> str:
     return hashlib.sha256((screen_text or "").encode("utf-8")).hexdigest()
+
+
+def _effective_action_history_limit(configured: Any, *, governed: bool) -> int:
+    """Keep enough governed history for one review interval plus its checkpoint."""
+
+    minimum = MIN_GOVERNED_ACTION_HISTORY if governed else 0
+    return max(minimum, int(configured))
 
 
 def _write_durable_jsonl_record(fh: Any, record: Dict[str, Any]) -> None:
@@ -120,6 +131,11 @@ def _interact_context_reason(
             "INTERACT finish_topic_meeting requires the visible option "
             f"{FINISH_TOPIC_MEETING_OPTION_TEXT!r}"
         )
+    if operation in TOPIC_MEETING_OPTION_OPERATIONS and not visible_topic_meeting_option(
+        str(operation), screen_text or ""
+    ):
+        letter = str(operation).rsplit("_", 1)[-1]
+        return f"INTERACT {operation} requires a visible '{letter} - ...' topic option"
     return None
 
 
@@ -1208,8 +1224,11 @@ def _action_history_entry(
     governed_action = action.get("type") != "KEYSTROKE"
     helper_mutation = governed_action and _governed_helper_progress(action, action_result)
     state_mutation = bool(_keystroke_productive_state_deltas(state_before, advance_state))
+    validation_rejected = bool(execute_result.get("validation_rejected"))
     if partial_mutation:
         outcome = "partial_mutation"
+    elif validation_rejected:
+        outcome = "validation_rejected"
     elif not accepted:
         outcome = "rejected"
     elif governed_action and action.get("type") == "INTERACT":
@@ -1240,8 +1259,12 @@ def _action_history_entry(
         },
         "keys": action.get("params", {}).get("keys", []),
         "key_fingerprint": _keystroke_key_fingerprint(action.get("params", {}).get("keys", [])),
+        "action_fingerprint": normalized_action_fingerprint(action),
         "action_family": _keystroke_action_family(action),
         "intent": action.get("intent", ""),
+        "objective": action.get("objective"),
+        "plan_step": action.get("plan_step"),
+        "plan_review": action.get("plan_review"),
         "expected_visible_result": action.get("expected_visible_result"),
         "expected_simulation_result": action.get("expected_simulation_result"),
         "screen_read": action.get("screen_read"),
@@ -1250,6 +1273,7 @@ def _action_history_entry(
         "requested_ticks": requested_ticks,
         "actual_ticks": actual_ticks,
         "accepted": accepted,
+        "validation_rejected": validation_rejected,
         "outcome": outcome,
         "error": result_error,
         "failed_targets": failed_targets,
@@ -1266,6 +1290,39 @@ def _action_history_entry(
         "active_jobs_before": _int_or_none(before_work.get("active_jobs")) or 0,
         "active_jobs_after": _int_or_none(after_work.get("active_jobs")) or 0,
     }
+
+
+def _record_action_history(
+    action_history: List[Dict[str, Any]],
+    *,
+    action_history_limit: int,
+    step: int,
+    action: Dict[str, Any],
+    requested_ticks: Any,
+    tick_info: Dict[str, Any],
+    execute_result: Dict[str, Any],
+    state_before: Dict[str, Any],
+    advance_state: Dict[str, Any],
+    metrics_snapshot: Dict[str, Any],
+) -> None:
+    """Append one run-local action outcome while retaining the configured window."""
+
+    if action_history_limit <= 0:
+        return
+    action_history.append(
+        _action_history_entry(
+            step=step,
+            action=action,
+            requested_ticks=requested_ticks,
+            tick_info=tick_info,
+            execute_result=execute_result,
+            state_before=state_before,
+            advance_state=advance_state,
+            metrics_snapshot=metrics_snapshot,
+        )
+    )
+    if len(action_history) > action_history_limit:
+        del action_history[:-action_history_limit]
 
 
 def _desired_keystroke_target_mode(
@@ -2083,7 +2140,10 @@ def run_once(
     baseline_goods: Optional[Dict[str, Any]] = None
     baseline_wealth: int | None = None
     action_history: List[Dict[str, Any]] = []
-    action_history_limit = max(0, int(settings.ACTION_HISTORY_LIMIT))
+    action_history_limit = _effective_action_history_limit(
+        settings.ACTION_HISTORY_LIMIT,
+        governed=is_governed_dfhack_mode,
+    )
     last_action_result: Optional[Dict[str, Any]] = None  # Track previous action result for feedback
     previous_screen = (
         None  # Track previous screen for diff feedback (no type annotation for nonlocal)
@@ -2554,6 +2614,7 @@ def run_once(
                         if is_keystroke_mode or is_governed_dfhack_mode
                         else None
                     ),
+                    governed=is_governed_dfhack_mode,
                     last_action_result=last_action_result,
                     previous_screen=previous_screen if is_keystroke_mode else None,
                 )
@@ -2726,12 +2787,51 @@ def run_once(
                 validation = {"valid": valid, "reason": reason}
                 publish_event(step, "validation", validation, events)
                 if not valid:
+                    requested_ticks = action.get("advance_ticks", 0)
+                    validation_execute_result: Dict[str, Any] = {
+                        "accepted": False,
+                        "why": reason,
+                        "result": {
+                            "ok": False,
+                            "error": "validation_rejected",
+                            "reason": reason,
+                        },
+                        "gameplay_progress_eligible": False,
+                        "validation_rejected": True,
+                    }
+                    validation_gameplay_proof = None
+                    if is_governed_dfhack_mode:
+                        validation_execute_result["provenance"] = "dfhack_governed"
+                        validation_gameplay_proof = _governed_gameplay_proof(
+                            action=action,
+                            execute_result=validation_execute_result,
+                            metrics_snapshot={},
+                            before_map_snapshot=map_snapshot_before,
+                            after_map_snapshot=map_snapshot_before,
+                            state_before=state_before,
+                            advance_state=state_before,
+                            tick_info={"ticks_advanced": 0},
+                            score_value=0.0,
+                        )
                     last_action_result = {
                         "accepted": False,
                         "reason": reason,
                         "_action": action,
                         "_action_step": step,
                     }
+                    if is_keystroke_mode or is_governed_dfhack_mode:
+                        _record_action_history(
+                            action_history,
+                            action_history_limit=action_history_limit,
+                            step=step,
+                            action=action,
+                            requested_ticks=requested_ticks,
+                            tick_info={"ticks_advanced": 0},
+                            execute_result=validation_execute_result,
+                            state_before=state_before,
+                            advance_state=state_before,
+                            metrics_snapshot={},
+                        )
                     record_line = {
                         "run_id": run_identifier,
                         "step": step,
@@ -2739,6 +2839,19 @@ def run_once(
                         "observation_text": obs_text,
                         "action": action,
                         "validation": validation,
+                        "execute": validation_execute_result,
+                        "state_after_apply": state_before,
+                        "state_after_advance": state_before,
+                        "screen_text": screen_text,
+                        "map_snapshot": map_snapshot_before,
+                        "gameplay_proof": validation_gameplay_proof,
+                        "tick_advance": {
+                            "ok": True,
+                            "requested_ticks": requested_ticks,
+                            "ticks_advanced": 0,
+                            "validation_rejected": True,
+                        },
+                        "metrics": {},
                         "events": events,
                     }
                     fh.write(json.dumps(record_line) + "\n")
@@ -2902,16 +3015,23 @@ def run_once(
                         "screen_after_sha256": screen_after_sha256,
                         "screen_changed": screen_changed,
                     }
-                    if interaction_result.get("operation") == "finish_topic_meeting":
+                    if (
+                        interaction_result.get("operation") == "finish_topic_meeting"
+                        or interaction_result.get("operation")
+                        in TOPIC_MEETING_OPTION_OPERATIONS
+                    ):
                         post_screen_captured = interaction_screen_after != SCREEN_CAPTURE_FAILED
-                        semantic_effect_observed = (
-                            viewscreen_after != "viewscreen_topicmeetingst"
-                            or (
-                                post_screen_captured
-                                and FINISH_TOPIC_MEETING_OPTION_TEXT
-                                not in interaction_screen_after
+                        if interaction_result.get("operation") == "finish_topic_meeting":
+                            semantic_effect_observed = (
+                                viewscreen_after != "viewscreen_topicmeetingst"
+                                or (
+                                    post_screen_captured
+                                    and FINISH_TOPIC_MEETING_OPTION_TEXT
+                                    not in interaction_screen_after
+                                )
                             )
-                        )
+                        else:
+                            semantic_effect_observed = post_screen_captured and screen_changed
                         interaction_audit["post_screen_captured"] = post_screen_captured
                         interaction_audit["semantic_effect_observed"] = semantic_effect_observed
                         if not semantic_effect_observed:
@@ -3222,21 +3342,19 @@ def run_once(
                         metrics_snapshot["fort_constructions"] = int(
                             fort_after.get("constructions") or 0
                         )
-                if (is_keystroke_mode or is_governed_dfhack_mode) and action_history_limit > 0:
-                    action_history.append(
-                        _action_history_entry(
-                            step=step,
-                            action=action,
-                            requested_ticks=requested_ticks,
-                            tick_info=tick_info_state,
-                            execute_result=execute_result,
-                            state_before=state_before,
-                            advance_state=advance_state,
-                            metrics_snapshot=metrics_snapshot,
-                        )
+                if is_keystroke_mode or is_governed_dfhack_mode:
+                    _record_action_history(
+                        action_history,
+                        action_history_limit=action_history_limit,
+                        step=step,
+                        action=action,
+                        requested_ticks=requested_ticks,
+                        tick_info=tick_info_state,
+                        execute_result=execute_result,
+                        state_before=state_before,
+                        advance_state=advance_state,
+                        metrics_snapshot=metrics_snapshot,
                     )
-                    if len(action_history) > action_history_limit:
-                        del action_history[:-action_history_limit]
                 if isinstance(last_action_result, dict):
                     last_action_result = {
                         **last_action_result,

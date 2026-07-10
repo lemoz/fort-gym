@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
+import re
 from json import JSONDecodeError
 from typing import Annotated, Any, Dict, Literal, Optional, Union
 
@@ -110,6 +112,14 @@ class InteractParams(BaseModel):
         "left",
         "right",
         "finish_topic_meeting",
+        "topic_option_a",
+        "topic_option_b",
+        "topic_option_c",
+        "topic_option_d",
+        "topic_option_e",
+        "topic_option_f",
+        "topic_option_g",
+        "topic_option_h",
     ]
 
     model_config = {"extra": "forbid"}
@@ -157,9 +167,12 @@ class BaseAction(BaseModel):
         default=None,
         description="Current agent-maintained plan step this action is meant to advance.",
     )
-    plan_review: Optional[str] = Field(
+    plan_review: Optional[Union[str, Dict[str, Any]]] = Field(
         default=None,
-        description="Brief summary of the latest plan review used before this action.",
+        description=(
+            "Agent-authored plan review metadata, or a legacy brief summary, used before "
+            "this action. This is audit metadata, not gameplay execution."
+        ),
     )
     advance_ticks: int = Field(
         default=0,
@@ -308,6 +321,40 @@ INTERACT_ALLOWED_VIEWSCREEN_TYPES = frozenset(
 )
 
 FINISH_TOPIC_MEETING_OPTION_TEXT = "a - Finish peeking in on conversation"
+TOPIC_MEETING_OPTION_OPERATIONS = frozenset(
+    f"topic_option_{letter}" for letter in "abcdefgh"
+)
+
+
+def normalized_action_fingerprint(action: Dict[str, Any]) -> str:
+    """Return a stable identifier for an action's execution contract only."""
+
+    params = action.get("params")
+    canonical = json.dumps(
+        {
+            "type": str(action.get("type") or "").strip().upper(),
+            "params": params if isinstance(params, dict) else {},
+        },
+        ensure_ascii=True,
+        separators=(",", ":"),
+        sort_keys=True,
+    )
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def normalized_objective(value: Any) -> str:
+    """Normalize model-authored objective identity for continuity checks."""
+
+    return " ".join(str(value or "").split()).casefold()
+
+
+def visible_topic_meeting_option(operation: str, screen_text: str) -> bool:
+    """Return whether the requested lettered topic option is visibly present."""
+
+    if operation not in TOPIC_MEETING_OPTION_OPERATIONS:
+        return False
+    letter = operation.rsplit("_", 1)[-1]
+    return bool(re.search(rf"(?m)^[# ]*{re.escape(letter)}\s*-\s+\S", screen_text or ""))
 
 
 def parse_action(obj_or_str: Dict[str, Any] | str) -> Dict[str, Any]:
@@ -400,10 +447,11 @@ def validate_action(state: Dict[str, Any], action: Dict[str, Any]) -> tuple[bool
             "left",
             "right",
             "finish_topic_meeting",
+            *TOPIC_MEETING_OPTION_OPERATIONS,
         }:
             return False, (
                 "INTERACT operation must be confirm, cancel, up, down, left, right, "
-                "or finish_topic_meeting"
+                "finish_topic_meeting, or topic_option_a through topic_option_h"
             )
         advance_ticks = action.get("advance_ticks")
         if type(advance_ticks) is not int or advance_ticks != 0:

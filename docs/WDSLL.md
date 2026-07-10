@@ -161,8 +161,8 @@ separates "solved one map" from "plays Dwarf Fortress."
 
 ### G7 — The fort lives: a self-sufficient year (RATIFIED 2026-07-09)
 Status: RATIFIED at the 2026-07-09 operator window; attempt 1 FAILED, while
-attempts 2 and 3 ended in infrastructure-aborted FAILs on 2026-07-09 with no
-policy verdict. All three are recorded below. The criteria remain unchanged. All three
+attempts 2 through 5 ended in infrastructure-aborted FAILs with no full-year
+policy verdict. All five are recorded below. The criteria remain unchanged. All three
 activation preconditions hold: (a) score-v3 ratified and landed; (b) G6 attempted
 (7 runs, 2 models — frontier documented in the escalation log); (c) the
 survival primitives exist, adversarially reviewed and live-validated:
@@ -1088,7 +1088,8 @@ gate. Each entry states what changed and the evidence that forced it.
   Local verification is 634 passed, 4 skipped; targeted Ruff, compileall, and
   live Lua parsing passed.
 
-- **2026-07-09/10 — G7 attempt 5 authorized and launched; verdict pending.**
+- **2026-07-09/10 — G7 attempt 5: INFRASTRUCTURE-ABORTED FAIL; policy
+  behavior also failed every survival objective reached before the abort.**
   Independent Sol and Terra audits found seven release blockers; each was fixed,
   and final Sol review reported no remaining deployment blocker. PR #70 passed
   GitHub CI, merged, and deployed as
@@ -1102,11 +1103,58 @@ gate. Each entry states what changed and the evidence that forced it.
 
   Attempt 5 run `680a938aabd84764953dd01c0ccf1c7f`
   ([live replay](https://fortgym.live/r/88uZqRulANyNG_e7t7c6KFlEOYRvHZdz))
-  launched from that SHA for 450 steps on fresh `seed_region3_fresh`, with
+  launched from that SHA for at most 450 steps on fresh `seed_region3_fresh`, with
   `dfhack-governed-llm-glm5v` (`z-ai/glm-5v-turbo` through OpenRouter), memory
-  off, Anthropic disabled, score-v3, and 1,000 default ticks per step. This is a
-  running experiment, not a pass; its terminal deterministic G7 predicates and
-  real state changes will determine the verdict.
+  persistence off, Anthropic disabled, score-v3, and 1,000 default ticks per
+  step. It terminated failed after 210 rows at step 209. The terminal code was
+  `interaction_unchanged_screen_loop`: a second
+  `viewscreen_topicmeetingst` variant visibly offered only `a - Begin
+  discussion`; the deployed `finish_topic_meeting` operation correctly
+  rejected that different text, while two cursor-down inputs and `confirm`
+  left the screen unchanged. Cleanup completed before failed status and the G7
+  evidence ledger is inactive with the final run-scoped record intact.
+
+  Deterministic G7 verdict: duration **FAIL** (201,556/403,200 ticks); food and
+  drink loop **FAIL** (food 0 produced/38 consumed, drink 0/60, final stocks
+  food 7 and drink 0); neglect death **UNKNOWN** (one drowning record lacks
+  factual cause evidence and is not falsely cleared); population **FAIL**
+  (13/15); functional rooms **FAIL** (1/3); installed beds **PASS** (5/5);
+  rubric **PASS** (70.72, no blockers); scalar **PASS** (score-v3 178.59).
+  Evidence completeness failed because 210 gameplay rows contain 208 executed
+  governed proof/screen rows; the validation-rejected dialog attempt did not
+  mutate the game. Overall G7 is **FAIL** independently of the inflated scalar.
+
+  Real DF changes were substantial but not self-sustaining: population rose
+  from 7 to 13, dwarves completed a Carpenter's Workshop, 15 constructions,
+  five beds, four doors, five tables, and six chairs, but the fort had only one
+  malformed one-tile functional room, no FarmPlot, no Still, and zero food or
+  drink production. From steps 145-194, 30 of 38 BUILD attempts were rejected
+  on occupied/non-floor coordinates already represented in observation facts.
+  At drink zero the model continued furniture production; an accepted chair
+  order helped score-v3 jump even though survival worsened. The scalar remains
+  telemetry, not the verdict.
+
+  Post-terminal candidate proof sent one `OPTION1` only after re-reading the
+  exact `a - Begin discussion` screen; DF changed to
+  `viewscreen_topicmeeting_takerequestsst`. PR #72 now preserves factual
+  governed action history and PR #73 requires BUILD-footprint grounding. The
+  next candidate adds visible `topic_option_a` through `topic_option_h`
+  operations plus an agent-authored review contract: every decision reviews
+  the factual previous outcome, and initial/periodic/stalled/partial checkpoints
+  establish, continue, or revise the model's own objective using observation-
+  grounded evidence. The candidate restricts evidence to runner-authored lines,
+  requires two distinct immutable `E#` plan references, binds retry claims to a
+  stable type+params fingerprint, preserves a six-entry minimum review horizon,
+  and retries transient OpenRouter transport before gameplay. Reviews receive
+  no score and choose no gameplay action.
+  A no-execution GLM-5V shadow on attempt 5's terminal observation passed the
+  final hardened contract on its first response (10,774 prompt and 405
+  completion tokens), selected `topic_option_a`, cited immutable `E#`
+  references to the exact prior outcome plus real paused/dialog facts, and
+  advanced zero ticks because no command was executed. Local verification is
+  679 passed, 4 skipped, plus changed-file
+  Ruff, compileall, and `git diff --check`. This is candidate evidence, not a
+  deployed fix or G7 pass.
 
 ## Reporting format (every gate attempt)
 

@@ -1,13 +1,14 @@
 """LLM policy on the DFHack-governed legal action surface.
 
-One OpenRouter chat-completion call per step (default ``z-ai/glm-5.2``), forced
+One OpenRouter decision per step (default ``z-ai/glm-5.2``), forced
 through a single ``submit_action`` tool restricted to DIG/BUILD/ORDER/UNSUSPEND/FARM/LABOR/WAIT/INTERACT.
 ``MemoryManager`` carries the plan, POIs, and failed attempts across steps.
 
 This module intentionally contains no gameplay heuristics: the model plus the
-run loop must solve gameplay. The only local logic is schema normalization and
-a safe WAIT fallback when the model call or its payload is unusable, so a bad
-step degrades to "let the simulation run" instead of crashing the run.
+run loop must solve gameplay. Local logic is limited to transport retry, schema
+normalization, and factual review validation. Legacy direct callers can use a
+safe WAIT fallback; governed review-controlled runs fail before gameplay when a
+bounded retry/correction cannot produce a valid action.
 """
 
 from __future__ import annotations
@@ -21,7 +22,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from ..config import get_settings
-from ..env.actions import parse_action
+from ..env.actions import (
+    normalized_action_fingerprint,
+    normalized_objective as normalize_objective_identity,
+    parse_action,
+)
 from .base import Agent, register_agent
 from .memory import MemoryManager
 from .minimap_render import minimap_data_url
@@ -114,12 +119,16 @@ completes no work itself and moves no dwarf — a dwarf must still path to and p
 time. The observation's Citizens line lists each citizen id with its currently-enabled labors and \
 current job, so you can see who lacks the labor a stalled job needs and flip exactly that one.
 - WAIT: params {}. Issues nothing and lets the simulation run.
-- INTERACT: params {"operation": "confirm"|"cancel"|"up"|"down"|"left"|"right"|"finish_topic_meeting"}. Sends exactly one
+- INTERACT: params {"operation": "confirm"|"cancel"|"up"|"down"|"left"|"right"|"finish_topic_meeting"|"topic_option_a"|...|"topic_option_h"}. Sends exactly one
 semantic input to a paused interface or dialog, then observes one screen after that input. It must
 use advance_ticks=0 and never advances simulation time. Use it only when the observation says the
 game is PAUSED and reports an interactive DF Viewscreen; the runner rejects all other contexts.
 Use finish_topic_meeting only on viewscreen_topicmeetingst when the visible option says
-"a - Finish peeking in on conversation"; it sends exactly that one bounded letter option.
+"a - Finish peeking in on conversation"; it sends exactly that one bounded letter option. Use a
+topic_option_a through topic_option_h operation only when that exact lettered option is visibly
+listed on viewscreen_topicmeetingst; each sends one corresponding bounded letter option. In
+particular, "a - Begin discussion" requires topic_option_a and must never use
+finish_topic_meeting.
 
 Every action must include "advance_ticks" (how many game ticks to run after the command, up to \
 2000; around 1000 is a typical step; INTERACT must use 0). Nothing in the fortress changes unless
@@ -147,11 +156,31 @@ The Run resource flow lines are factual counters from DF item-creation events an
 eat/drink history since this run began. Use them to verify that farming and brewing
 are out-producing consumption; current stock totals alone do not prove a sustainable loop.
 
+The observation's AGENT PLAN CONTROL lines are a policy-neutral review checkpoint. They state the
+exact previous step and factual verdict, whether a plan review is due, its request_id, and the prior
+objective. You choose the objective and gameplay actions. The harness only checks that your review
+matches those facts and cites evidence grounded in the runner-authored factual allowlist. Cite the
+AGENT PLAN CONTROL previous-attempt line for last_action_review and current state lines for the
+plan. Submit only the `E#` ids shown in REVIEW EVIDENCE CHOICES; do not submit excerpts or use
+model-authored action history or Last Action command/detail as evidence.
+
 With each action also submit:
 - "intent": one sentence on what this command does.
 - "objective": the fortress goal this action advances (used as your persistent plan objective).
 - "plan_step": which step of your plan this is.
 - "expected_simulation_result": what the real simulation should show afterwards if it worked.
+- "last_action_review": previous_step and verdict exactly matching AGENT PLAN CONTROL, one or more
+  factual evidence ids, retry_same_action, and a short lesson. Copy the id after
+  "Required last_action_review.evidence id:" exactly as one evidence item. retry_same_action
+  must be true exactly when this action repeats the previous action's normalized type and params.
+  Use step -1 and verdict unknown only when there is no previous action attempt.
+- "plan_review": request_id from AGENT PLAN CONTROL, decision
+  not_due|establish|continue|revise, prior_objective, objective, at least two distinct factual
+  evidence ids,
+  and reason. When review_due=yes, establish the first plan, continue the exact prior
+  objective, or revise to a genuinely different objective. When review_due=no, use not_due unless
+  you voluntarily revise the objective. plan_review.objective must equal objective; the top-level
+  plan_step is the next plan step.
 - "memory_update" (optional): a fact worth remembering, as "label @ x,y,z: note" if it has a \
 location.
 
@@ -174,6 +203,71 @@ def _submit_action_tool() -> Dict[str, Any]:
                     "objective": {"type": "string"},
                     "plan_step": {"type": "string"},
                     "expected_simulation_result": {"type": "string"},
+                    "last_action_review": {
+                        "type": "object",
+                        "properties": {
+                            "previous_step": {"type": "integer", "minimum": -1},
+                            "verdict": {
+                                "type": "string",
+                                "enum": [
+                                    "progressed",
+                                    "partial",
+                                    "rejected",
+                                    "no_progress",
+                                    "unknown",
+                                ],
+                            },
+                            "evidence": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "minItems": 1,
+                                "maxItems": 4,
+                            },
+                            "retry_same_action": {"type": "boolean"},
+                            "lesson": {"type": "string"},
+                        },
+                        "required": [
+                            "previous_step",
+                            "verdict",
+                            "evidence",
+                            "retry_same_action",
+                            "lesson",
+                        ],
+                        "additionalProperties": False,
+                    },
+                    "plan_review": {
+                        "type": "object",
+                        "properties": {
+                            "request_id": {"type": "string"},
+                            "decision": {
+                                "type": "string",
+                                "enum": ["not_due", "establish", "continue", "revise"],
+                            },
+                            "prior_objective": {"type": "string"},
+                            "objective": {"type": "string"},
+                            "evidence": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "minItems": 2,
+                                "maxItems": 4,
+                            },
+                            "reason": {"type": "string"},
+                            "steps": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "maxItems": 8,
+                            },
+                        },
+                        "required": [
+                            "request_id",
+                            "decision",
+                            "prior_objective",
+                            "objective",
+                            "evidence",
+                            "reason",
+                        ],
+                        "additionalProperties": False,
+                    },
                     "memory_update": {"type": "string"},
                     "advance_ticks": {
                         "type": "integer",
@@ -182,7 +276,17 @@ def _submit_action_tool() -> Dict[str, Any]:
                         "description": "Game ticks to run after the command (~1000 typical).",
                     },
                 },
-                "required": ["type", "params", "intent", "advance_ticks"],
+                "required": [
+                    "type",
+                    "params",
+                    "intent",
+                    "objective",
+                    "plan_step",
+                    "expected_simulation_result",
+                    "last_action_review",
+                    "plan_review",
+                    "advance_ticks",
+                ],
             },
         },
     }
@@ -426,7 +530,33 @@ class DFHackGovernedLLMAgent(Agent):
 
     def _apply_memory_fields(self, action: Dict[str, Any]) -> None:
         objective = str(action.get("objective") or "").strip()
-        if objective:
+        plan_review = action.get("plan_review")
+        if isinstance(plan_review, dict):
+            decision = str(plan_review.get("decision") or "")
+            evidence = " | ".join(str(item) for item in plan_review.get("evidence") or [])
+            next_step = str(action.get("plan_step") or "").strip()
+            if decision in {"establish", "revise"}:
+                self._memory.write_gameplay_plan(
+                    objective=objective,
+                    steps=plan_review.get("steps") or [],
+                    current_step=next_step,
+                    reason=str(plan_review.get("reason") or ""),
+                    evidence=evidence,
+                )
+            elif decision == "continue" and self._memory.gameplay_plan:
+                self._memory.review_gameplay_plan(
+                    status="continue",
+                    evidence=evidence,
+                    next_step=next_step,
+                    reason=str(plan_review.get("reason") or ""),
+                )
+            elif decision == "not_due" and self._memory.gameplay_plan:
+                self._memory.gameplay_plan = {
+                    **self._memory.gameplay_plan,
+                    "current_step": next_step[:120],
+                }
+        elif objective:
+            # Backward-compatible path for direct callers without plan control.
             self._memory.write_gameplay_plan(
                 objective=objective,
                 current_step=str(action.get("plan_step") or "").strip(),
@@ -450,6 +580,7 @@ class DFHackGovernedLLMAgent(Agent):
     @staticmethod
     def _normalize_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
         normalized = dict(payload)
+        normalized["type"] = str(normalized.get("type") or "").strip().upper()
         params = normalized.get("params")
         normalized["params"] = dict(params) if isinstance(params, dict) else {}
         if normalized.get("type") == "ORDER":
@@ -475,6 +606,207 @@ class DFHackGovernedLLMAgent(Agent):
                 "advance_ticks": DEFAULT_ADVANCE_TICKS,
             }
         )
+
+    @staticmethod
+    def _normalized_objective(value: Any) -> str:
+        return normalize_objective_identity(value)
+
+    @classmethod
+    def _normalized_prior_objective(cls, value: Any) -> str:
+        normalized = cls._normalized_objective(value)
+        return "" if normalized in {"none", "null", "n/a", "no prior objective"} else normalized
+
+    @staticmethod
+    def _matching_evidence_line(quote: str, obs_text: str) -> str | None:
+        evidence_id = quote.strip()
+        if re.fullmatch(r"E\d+", evidence_id) is None:
+            return None
+        for line in obs_text.splitlines():
+            if line.startswith(evidence_id + ": "):
+                return line
+        return None
+
+    @classmethod
+    def _evidence_error(cls, value: Any, obs_text: str, field: str) -> str | None:
+        if not isinstance(value, list) or not value:
+            return f"{field} must contain at least one observation-grounded excerpt"
+        for quote in value:
+            if not isinstance(quote, str) or not quote.strip():
+                return f"{field} contains an empty or non-string excerpt"
+            if "\n" in quote or "\r" in quote:
+                return f"{field} excerpts must be single-line"
+            if cls._matching_evidence_line(quote, obs_text) is None:
+                return f"{field} contains an unknown evidence id: {quote!r}"
+        return None
+
+    @staticmethod
+    def _scalar_contract_error(value: Any, field: str) -> str | None:
+        if not isinstance(value, str) or not value.strip():
+            return f"{field} is required by the governed review contract"
+        if "\n" in value or "\r" in value:
+            return f"{field} must be single-line"
+        return None
+
+    def _review_contract_error(
+        self,
+        payload: Dict[str, Any],
+        obs_text: str,
+        control: Dict[str, Any],
+    ) -> str | None:
+        allowed_evidence_lines = control.get("allowed_evidence_lines")
+        if not isinstance(allowed_evidence_lines, list) or not all(
+            isinstance(line, str) and re.fullmatch(r"E\d+: .+", line)
+            for line in allowed_evidence_lines
+        ):
+            return "AGENT PLAN CONTROL is missing its factual evidence allowlist"
+        evidence_text = "\n".join(allowed_evidence_lines)
+
+        for field in ("intent", "objective", "plan_step", "expected_simulation_result"):
+            error = self._scalar_contract_error(payload.get(field), field)
+            if error:
+                return error
+
+        last_review = payload.get("last_action_review")
+        if not isinstance(last_review, dict):
+            return "last_action_review must be an object"
+        if type(last_review.get("previous_step")) is not int:
+            return "last_action_review.previous_step must be an integer"
+        if last_review["previous_step"] != int(control.get("previous_step", -1)):
+            return "last_action_review.previous_step does not match AGENT PLAN CONTROL"
+        if last_review.get("verdict") != control.get("previous_verdict"):
+            return "last_action_review.verdict does not match AGENT PLAN CONTROL"
+        if type(last_review.get("retry_same_action")) is not bool:
+            return "last_action_review.retry_same_action must be boolean"
+        error = self._scalar_contract_error(
+            last_review.get("lesson"), "last_action_review.lesson"
+        )
+        if error:
+            return error
+        expected_previous_id = str(control.get("previous_evidence_id") or "")
+        if re.fullmatch(r"E\d+", expected_previous_id) is None:
+            return "AGENT PLAN CONTROL is missing the required previous evidence id"
+        last_evidence = last_review.get("evidence")
+        if expected_previous_id and (
+            not isinstance(last_evidence, list)
+            or expected_previous_id not in last_evidence
+        ):
+            return (
+                "last_action_review.evidence must include required evidence id "
+                f"{expected_previous_id!r}"
+            )
+        error = self._evidence_error(
+            last_evidence, evidence_text, "last_action_review.evidence"
+        )
+        if error:
+            return error
+        previous_step = int(control.get("previous_step", -1))
+        retry_same_action = last_review["retry_same_action"]
+        previous_fingerprint = str(control.get("previous_action_fingerprint") or "")
+        if previous_step < 0:
+            if retry_same_action:
+                return "last_action_review.retry_same_action must be false on the initial step"
+        else:
+            if not re.fullmatch(r"[0-9a-f]{64}", previous_fingerprint):
+                return "AGENT PLAN CONTROL is missing the previous action fingerprint"
+            try:
+                canonical_action = parse_action(self._normalize_payload(payload))
+            except (TypeError, ValueError) as exc:
+                return f"invalid action payload: {exc}"
+            repeats_previous = (
+                normalized_action_fingerprint(canonical_action) == previous_fingerprint
+            )
+            if retry_same_action != repeats_previous:
+                return (
+                    "last_action_review.retry_same_action must match whether type+params "
+                    "repeat the previous action"
+                )
+
+        plan_review = payload.get("plan_review")
+        if not isinstance(plan_review, dict):
+            return "plan_review must be an object"
+        for field in (
+            "request_id",
+            "prior_objective",
+            "objective",
+            "reason",
+        ):
+            error = self._scalar_contract_error(
+                plan_review.get(field), f"plan_review.{field}"
+            )
+            if field == "prior_objective" and plan_review.get(field) == "":
+                error = None
+            if error:
+                return error
+        steps = plan_review.get("steps")
+        if steps is not None and (
+            not isinstance(steps, list)
+            or any(
+                not isinstance(step, str)
+                or not step.strip()
+                or "\n" in step
+                or "\r" in step
+                for step in steps
+            )
+        ):
+            return "plan_review.steps must contain only non-empty single-line strings"
+        if plan_review.get("request_id") != control.get("request_id"):
+            return "plan_review.request_id does not match AGENT PLAN CONTROL"
+        decision = str(plan_review.get("decision") or "")
+        if decision not in {"not_due", "establish", "continue", "revise"}:
+            return "plan_review.decision is invalid"
+        prior = str(control.get("prior_objective") or "")
+        if self._normalized_prior_objective(
+            plan_review.get("prior_objective")
+        ) != self._normalized_prior_objective(prior):
+            return "plan_review.prior_objective does not match AGENT PLAN CONTROL"
+        objective = str(payload.get("objective") or "")
+        if self._normalized_objective(plan_review.get("objective")) != self._normalized_objective(objective):
+            return "plan_review.objective must equal objective"
+        plan_evidence = plan_review.get("evidence")
+        error = self._evidence_error(plan_evidence, evidence_text, "plan_review.evidence")
+        if error:
+            return error
+        if not isinstance(plan_evidence, list) or len(plan_evidence) < 2:
+            return "plan_review requires at least two factual observation excerpts"
+
+        review_due = bool(control.get("review_due"))
+        if review_due:
+            control_prefixes = (
+                "AGENT PLAN CONTROL:",
+                "Plan review reasons:",
+                "Prior objective:",
+                "Previous action attempt for review:",
+                "Review evidence rule:",
+            )
+            matched_lines = [
+                self._matching_evidence_line(str(quote), evidence_text) or ""
+                for quote in plan_evidence
+            ]
+            if len(set(matched_lines)) != len(matched_lines):
+                return "a due plan_review must cite two distinct factual lines"
+            matched_contents = [
+                line.split(": ", 1)[-1] for line in matched_lines
+            ]
+            if all(line.startswith(control_prefixes) for line in matched_contents):
+                return "a due plan_review must quote at least one current game-state fact"
+        same_objective = self._normalized_objective(objective) == self._normalized_objective(prior)
+        if review_due:
+            if not prior and decision != "establish":
+                return "initial plan review must use decision=establish"
+            if prior and decision == "continue" and not same_objective:
+                return "decision=continue must preserve the prior objective"
+            if prior and decision == "revise" and same_objective:
+                return "decision=revise must change the prior objective"
+            if prior and decision not in {"continue", "revise"}:
+                return "due plan review must continue or revise the prior objective"
+        else:
+            if decision == "revise" and same_objective:
+                return "decision=revise must change the prior objective"
+            if not same_objective and decision != "revise":
+                return "an objective change requires decision=revise"
+            if same_objective and decision != "not_due":
+                return "when review_due=no, unchanged objectives must use decision=not_due"
+        return None
 
     def decide(self, obs_text: str, obs_json: Dict[str, Any]) -> Dict[str, Any]:
         self._record_previous_outcome(obs_text)
@@ -503,29 +835,67 @@ class DFHackGovernedLLMAgent(Agent):
             {"role": "user", "content": message_content},
         ]
 
-        try:
-            response = self._create_completion(messages)
-        except Exception as exc:
-            return self._store_pending(obs_text, self._fallback_wait(f"llm call failed: {exc}"))
+        control = obs_json.get("agent_plan_control") if isinstance(obs_json, dict) else None
+        review_control = control if isinstance(control, dict) else None
+        max_contract_attempts = 2 if review_control is not None else 1
+        action = None
+        last_error = "model returned no submit_action tool call"
+        for attempt in range(max_contract_attempts):
+            try:
+                response = self._create_completion(messages)
+            except Exception as exc:
+                if review_control is not None:
+                    raise RuntimeError(f"governed model call failed before gameplay: {exc}") from exc
+                return self._store_pending(obs_text, self._fallback_wait(f"llm call failed: {exc}"))
 
-        payload = self._extract_tool_payload(response)
-        if payload is None:
-            return self._store_pending(
-                obs_text, self._fallback_wait("model returned no submit_action tool call")
-            )
+            payload = self._extract_tool_payload(response)
+            if payload is None:
+                last_error = "model returned no submit_action tool call"
+            else:
+                action_type = str(payload.get("type") or "").upper()
+                if action_type not in GOVERNED_ACTION_TYPES:
+                    last_error = f"illegal action type: {action_type or 'missing'}"
+                else:
+                    contract_error = (
+                        self._review_contract_error(payload, obs_text, review_control)
+                        if review_control is not None
+                        else None
+                    )
+                    if contract_error:
+                        last_error = contract_error
+                    else:
+                        try:
+                            action = parse_action(self._normalize_payload(payload))
+                        except (TypeError, ValueError) as exc:
+                            last_error = f"invalid action payload: {exc}"
+                        else:
+                            break
+            if review_control is not None and attempt == 0:
+                self._tool_events.append(
+                    {
+                        "tool": "governed_llm.review_contract_retry",
+                        "input": {"request_id": review_control.get("request_id")},
+                        "output": {"error": last_error},
+                    }
+                )
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": (
+                            "Your submit_action was rejected before gameplay because: "
+                            f"{last_error}. Re-read AGENT PLAN CONTROL and return one corrected "
+                            "submit_action. No game ticks have advanced."
+                        ),
+                    }
+                )
 
-        action_type = str(payload.get("type") or "").upper()
-        if action_type not in GOVERNED_ACTION_TYPES:
-            return self._store_pending(
-                obs_text, self._fallback_wait(f"illegal action type: {action_type or 'missing'}")
-            )
-
-        try:
-            action = parse_action(self._normalize_payload(payload))
-        except (TypeError, ValueError) as exc:
-            return self._store_pending(
-                obs_text, self._fallback_wait(f"invalid action payload: {exc}")
-            )
+        if action is None:
+            if review_control is not None:
+                raise RuntimeError(
+                    "governed review contract failed before gameplay after one correction: "
+                    + last_error
+                )
+            return self._store_pending(obs_text, self._fallback_wait(last_error))
 
         self._apply_memory_fields(action)
         return self._store_pending(obs_text, action)

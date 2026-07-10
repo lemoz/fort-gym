@@ -157,6 +157,29 @@ def test_g7_missing_step_evidence_fails_closed() -> None:
     assert result["criteria"]["evidence"]["status"] == FAIL
 
 
+def test_g7_validation_rejection_keeps_complete_evidence_without_progress() -> None:
+    row = _row(0, ticks_advanced=0)
+    row["validation"] = {"valid": False, "reason": "bounded target rejected"}
+    row["execute"] = {
+        "accepted": False,
+        "why": "bounded target rejected",
+        "provenance": "dfhack_governed",
+        "gameplay_progress_eligible": False,
+        "validation_rejected": True,
+    }
+    row["gameplay_proof"] = {
+        "ok": False,
+        "source": "dfhack-map-and-state",
+        "provenance": "dfhack_governed",
+        "gameplay_progress_eligible": False,
+    }
+
+    result = evaluate_g7([row], _summary(duration_ticks=0))
+
+    assert result["criteria"]["evidence"]["status"] == PASS
+    assert result["criteria"]["duration"]["status"] == FAIL
+
+
 def test_g7_screen_capture_error_is_not_counted_as_evidence() -> None:
     row = _row(0)
     row["screen_text"] = "(screen capture failed)"

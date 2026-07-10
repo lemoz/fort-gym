@@ -44,6 +44,30 @@ def test_keystroke_action_preserves_agent_perception_metadata() -> None:
     assert action["last_action_review"]["worked"] is False
 
 
+def test_action_schema_preserves_structured_plan_review() -> None:
+    action = parse_action(
+        {
+            "type": "WAIT",
+            "params": {},
+            "objective": "Keep the current shelter plan.",
+            "plan_step": "Observe construction progress.",
+            "plan_review": {
+                "request_id": "5:periodic_5",
+                "decision": "continue",
+                "prior_objective": "Keep the current shelter plan.",
+                "objective": "Keep the current shelter plan.",
+                "evidence": ["Fort structure: functional_rooms=1"],
+                "reason": "Construction is still moving.",
+                "next_step": "Observe construction progress.",
+            },
+            "advance_ticks": 1000,
+        }
+    )
+
+    assert action["plan_review"]["decision"] == "continue"
+    assert action["plan_review"]["request_id"] == "5:periodic_5"
+
+
 def test_keystroke_validation_rejects_empty_key_name() -> None:
     action = parse_action(
         {
@@ -130,6 +154,16 @@ def test_interact_schema_accepts_only_a_semantic_operation_with_zero_ticks() -> 
     )
     assert topic_action["params"] == {"operation": "finish_topic_meeting"}
     assert validate_action({}, topic_action) == (True, None)
+
+    visible_option_action = parse_action(
+        {
+            "type": "INTERACT",
+            "params": {"operation": "topic_option_a"},
+            "advance_ticks": 0,
+        }
+    )
+    assert visible_option_action["params"] == {"operation": "topic_option_a"}
+    assert validate_action({}, visible_option_action) == (True, None)
 
 
 @pytest.mark.parametrize(

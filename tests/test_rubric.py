@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
+
 from fort_gym.bench.eval.rubric import (
     _action_fingerprint,
     _proof_shows_world_change,
@@ -86,6 +88,45 @@ def test_interact_audit_evidence_is_not_world_change_or_progress() -> None:
     assert _proof_shows_world_change(proof) is False
     assert _step_progress_flags(records) == [False] * 10
     assert "repetitive_policy" in evaluate_trace_records(records)["blockers"]
+
+
+def test_agent_review_metadata_receives_no_rubric_credit() -> None:
+    records = [
+        {
+            "step": step,
+            "action": {
+                "type": "WAIT",
+                "params": {},
+                "objective": "Observe the current work queue.",
+                "plan_step": "Wait for one bounded interval.",
+                "advance_ticks": 1000,
+            },
+            "execute": {"accepted": True, "provenance": "dfhack_governed"},
+            "metrics": {"pop": 7, "food": 40, "drink": 50},
+            "gameplay_proof": {"ok": False, "changed_tile_count": 0},
+            "tick_advance": {"ticks_advanced": 1000},
+        }
+        for step in range(6)
+    ]
+    reviewed = deepcopy(records)
+    for step, record in enumerate(reviewed):
+        record["action"]["last_action_review"] = {
+            "previous_step": step - 1,
+            "verdict": "no_progress",
+            "evidence": ["changed=none"],
+            "retry_same_action": False,
+            "lesson": "No tracked world state changed.",
+        }
+        record["action"]["plan_review"] = {
+            "request_id": f"{step}:periodic_5",
+            "decision": "continue",
+            "objective": "Observe the current work queue.",
+            "evidence": ["changed=none"],
+            "reason": "Keep observing.",
+            "next_step": "Wait for one bounded interval.",
+        }
+
+    assert evaluate_trace_records(reviewed) == evaluate_trace_records(records)
 
 
 def test_placement_and_chop_helper_counts_are_world_change() -> None:
