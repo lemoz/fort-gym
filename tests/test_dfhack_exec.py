@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from fort_gym.bench import dfhack_backend, dfhack_exec
@@ -726,12 +727,17 @@ def test_build_construction_reports_occupied_and_wall_tiles() -> None:
     assert "already_wall" in script
     assert "already_construction" in script
     assert "tile_not_open_floor" in script
+    assert "tile_shape =" in script
+    assert "tiletype_name =" in script
     assert "tile_hidden_unexplored" in script
     assert "tile_has_liquid" in script
     assert "item:isBuildMat()" in script
     assert "local rollback_failed = false" in script
     assert "building_id = building_id" in script
     assert "partial_placement" in script
+    failure_blocks = re.findall(r"table\.insert\(failed, \{(.*?)\}\)", script, re.DOTALL)
+    assert len(failure_blocks) == 12
+    assert all("z = z1" in block for block in failure_blocks)
 
 
 def test_job_metrics_reports_construct_building_walk_group_truth() -> None:

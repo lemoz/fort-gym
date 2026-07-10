@@ -392,10 +392,22 @@ def _format_key_preview(keys: Any, limit: int = 5) -> str:
     return keys_str
 
 
+def _format_action_preview(action_entry: Dict[str, Any]) -> str:
+    keys_str = _format_key_preview(action_entry.get("keys", []))
+    action_type = str(action_entry.get("action_type") or "").strip()
+    if not action_type or action_type == "KEYSTROKE":
+        return keys_str
+    params = action_entry.get("params")
+    param_parts = []
+    if isinstance(params, dict):
+        param_parts = [f"{key}={value}" for key, value in params.items()]
+    return action_type + ("(" + ", ".join(param_parts) + ")" if param_parts else "")
+
+
 def _format_action_history_entry(action_entry: Dict[str, Any]) -> str:
     step_num = action_entry.get("step", "?")
     intent = action_entry.get("intent", "no intent")
-    keys_str = _format_key_preview(action_entry.get("keys", []))
+    action_preview = _format_action_preview(action_entry)
     requested_ticks = action_entry.get(
         "requested_ticks",
         action_entry.get("advance_ticks", 0),
@@ -421,6 +433,21 @@ def _format_action_history_entry(action_entry: Dict[str, Any]) -> str:
         details.append("accepted=yes" if accepted else "accepted=no")
     if outcome:
         details.append(f"outcome={outcome}")
+    error = action_entry.get("error")
+    if error:
+        details.append(f"error={error}")
+    result_details = action_entry.get("result_details")
+    if isinstance(result_details, dict) and result_details:
+        result_text = ",".join(
+            f"{key}={value}" for key, value in result_details.items()
+        )
+        details.append("result=" + result_text)
+    placed_targets = action_entry.get("placed_targets")
+    if isinstance(placed_targets, list) and placed_targets:
+        details.append("placed=" + ",".join(str(item) for item in placed_targets))
+    failed_targets = action_entry.get("failed_targets")
+    if isinstance(failed_targets, list) and failed_targets:
+        details.append("failed=" + ",".join(str(item) for item in failed_targets))
     if isinstance(reasons, list) and reasons:
         details.append("reasons=" + ",".join(str(reason) for reason in reasons[:4]))
     if isinstance(changed, list):
@@ -446,7 +473,21 @@ def _format_action_history_entry(action_entry: Dict[str, Any]) -> str:
                 + str(last_action_review.get("should_retry_same_path")).lower()
             )
 
-    return f"  Step {step_num}: {intent} -> [{keys_str}] ({'; '.join(details)})"
+    return f"  Step {step_num}: {intent} -> [{action_preview}] ({'; '.join(details)})"
+
+
+def _format_last_action_command(step: Any, action: Dict[str, Any]) -> str:
+    params = action.get("params") if isinstance(action.get("params"), dict) else {}
+    entry = {
+        "action_type": action.get("type"),
+        "params": {
+            key: value for key, value in params.items() if key != "keys" and value is not None
+        },
+        "keys": params.get("keys", []),
+    }
+    intent = str(action.get("intent") or "").strip()
+    command = f"step={step} {_format_action_preview(entry)}"
+    return command + (f"; intent={intent}" if intent else "")
 
 
 def _to_int(value: Any, default: int = 0) -> int:
@@ -724,7 +765,12 @@ def encode_observation(
     viewscreen_type = clean_state.get("viewscreen_type")
     survival = clean_state.get("survival") if isinstance(clean_state.get("survival"), dict) else {}
     work = clean_state.get("work") if isinstance(clean_state.get("work"), dict) else {}
-    recent_progress_summary = _recent_progress_summary(action_history, work)
+    keystroke_history = [
+        entry
+        for entry in (action_history or [])
+        if entry.get("action_type") in (None, "KEYSTROKE")
+    ]
+    recent_progress_summary = _recent_progress_summary(keystroke_history, work)
     if recent_progress_summary:
         clean_state["recent_progress_summary"] = recent_progress_summary
     ui_work = clean_state.get("ui_work") if isinstance(clean_state.get("ui_work"), dict) else {}
@@ -852,13 +898,22 @@ def encode_observation(
 
     # Last action result feedback
     if last_action_result is not None:
+        last_action = last_action_result.get("_action")
+        if isinstance(last_action, dict):
+            status_lines.append(
+                "Last Action command: "
+                + _format_last_action_command(last_action_result.get("_action_step", "?"), last_action)
+            )
         accepted = last_action_result.get("accepted", last_action_result.get("ok", True))
+        action_result = (
+            last_action_result.get("result")
+            if isinstance(last_action_result.get("result"), dict)
+            else {}
+        )
         if accepted:
             status_lines.append("Last Action: ACCEPTED")
         else:
-            result_error = None
-            if isinstance(last_action_result.get("result"), dict):
-                result_error = last_action_result["result"].get("error")
+            result_error = action_result.get("error")
             reason = (
                 last_action_result.get("reason")
                 or last_action_result.get("why")
@@ -866,20 +921,43 @@ def encode_observation(
                 or result_error
                 or "unknown"
             )
-            status_lines.append(f"Last Action: REJECTED - {reason}")
-        action_result = last_action_result.get("result")
-        if isinstance(action_result, dict):
+            if action_result.get("partial") and (_int_or_none(action_result.get("placed_count")) or 0) > 0:
+                status_lines.append(f"Last Action: PARTIAL MUTATION - {reason}")
+            else:
+                status_lines.append(f"Last Action: REJECTED - {reason}")
+        if action_result:
+            placed_tiles = action_result.get("placed")
+            if isinstance(placed_tiles, list) and placed_tiles:
+                tile_parts = []
+                for entry in placed_tiles:
+                    if not isinstance(entry, dict):
+                        continue
+                    coords = _int_list_or_none(
+                        [entry.get("x"), entry.get("y"), entry.get("z")], 3
+                    )
+                    if coords:
+                        tile_parts.append(f"({coords[0]},{coords[1]},{coords[2]})")
+                if tile_parts:
+                    status_lines.append("Placed tiles: " + ", ".join(tile_parts))
             failed_tiles = action_result.get("failed")
             if isinstance(failed_tiles, list) and failed_tiles:
                 tile_parts = []
-                for entry in failed_tiles[:4]:
+                for entry in failed_tiles:
                     if not isinstance(entry, dict):
                         continue
                     fx = _int_or_none(entry.get("x"))
                     fy = _int_or_none(entry.get("y"))
+                    fz = _int_or_none(entry.get("z"))
                     err = entry.get("error")
                     if fx is not None and fy is not None and err:
-                        tile_parts.append(f"({fx},{fy}): {err}")
+                        facts = [
+                            f"{key}={entry[key]}"
+                            for key in ("tile_shape", "tiletype")
+                            if entry.get(key) is not None
+                        ]
+                        suffix = " [" + ", ".join(facts) + "]" if facts else ""
+                        coords = f"({fx},{fy},{fz})" if fz is not None else f"({fx},{fy})"
+                        tile_parts.append(f"{coords}: {err}{suffix}")
                 if tile_parts:
                     status_lines.append("Failed tiles: " + "; ".join(tile_parts))
             detail_parts = []
@@ -887,6 +965,8 @@ def encode_observation(
                 "newly_designated",
                 "already_designated",
                 "non_wall_tiles",
+                "placed_count",
+                "failed_count",
                 "created_job_ids",
                 "building_id",
                 "unsuspended",
@@ -1998,10 +2078,26 @@ def encode_observation(
 
 == STATUS ==
 {chr(10).join(status_lines)}"""
-        # Add action history if available
-        if action_history:
+        # When the latest result has an explicit matching action identity,
+        # render its command above and its result once; history supplies only
+        # older outcomes. Validation failures have no matching history step,
+        # so they never hide an unrelated executed action.
+        last_action_step = (
+            last_action_result.get("_action_step")
+            if isinstance(last_action_result, dict)
+            else None
+        )
+        latest_history_matches = bool(
+            action_history
+            and last_action_step is not None
+            and action_history[-1].get("step") == last_action_step
+        )
+        prior_action_history = (
+            action_history[:-1] if latest_history_matches else action_history
+        )
+        if prior_action_history:
             history_lines = []
-            for a in action_history:
+            for a in prior_action_history:
                 history_lines.append(_format_action_history_entry(a))
             summary_text += "\n\n== RECENT ACTION OUTCOMES ==\n" + "\n".join(history_lines)
     else:

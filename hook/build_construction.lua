@@ -228,42 +228,56 @@ for tx = rx1, rx2 do
     local hidden = true
     local open_floor = false
     local liquid_depth = 0
+    local tile_shape = nil
+    local tiletype_name = nil
     if tile_block then
       local bdx, bdy = tx % 16, ty % 16
       pcall(function()
         occupied_by_building = tile_block.occupancy[bdx][bdy].building ~= 0
-        local attr = df.tiletype.attrs[tile_block.tiletype[bdx][bdy]]
+        local tiletype = tile_block.tiletype[bdx][bdy]
+        local attr = df.tiletype.attrs[tiletype]
         already_wall = attr ~= nil and attr.shape == df.tiletype_shape.WALL
         open_floor = attr ~= nil and attr.shape == df.tiletype_shape.FLOOR
         hidden = tile_block.designation[bdx][bdy].hidden and true or false
         liquid_depth = tonumber(tile_block.designation[bdx][bdy].flow_size) or 0
+        pcall(function()
+          tiletype_name = tostring(df.tiletype[tiletype] or tiletype)
+          tile_shape = attr ~= nil and tostring(df.tiletype_shape[attr.shape] or attr.shape) or nil
+        end)
       end)
     end
     if not near_fort(tx, ty) then
-      table.insert(failed, { x = tx, y = ty, error = 'too_far_from_fort' })
+      table.insert(failed, { x = tx, y = ty, z = z1, error = 'too_far_from_fort' })
     elseif not tile_block then
-      table.insert(failed, { x = tx, y = ty, error = 'tile_out_of_bounds' })
+      table.insert(failed, { x = tx, y = ty, z = z1, error = 'tile_out_of_bounds' })
     elseif occupied_by_building then
-      table.insert(failed, { x = tx, y = ty, error = 'tile_occupied_by_building' })
+      table.insert(failed, { x = tx, y = ty, z = z1, error = 'tile_occupied_by_building' })
     elseif already_wall then
-      table.insert(failed, { x = tx, y = ty, error = 'already_wall' })
+      table.insert(failed, { x = tx, y = ty, z = z1, error = 'already_wall' })
     elseif already_construction then
-      table.insert(failed, { x = tx, y = ty, error = 'already_construction' })
+      table.insert(failed, { x = tx, y = ty, z = z1, error = 'already_construction' })
     elseif hidden then
-      table.insert(failed, { x = tx, y = ty, error = 'tile_hidden_unexplored' })
+      table.insert(failed, { x = tx, y = ty, z = z1, error = 'tile_hidden_unexplored' })
     elseif not open_floor then
-      table.insert(failed, { x = tx, y = ty, error = 'tile_not_open_floor' })
+      table.insert(failed, {
+        x = tx,
+        y = ty,
+        z = z1,
+        error = 'tile_not_open_floor',
+        tile_shape = tile_shape,
+        tiletype = tiletype_name,
+      })
     elseif liquid_depth > 0 then
-      table.insert(failed, { x = tx, y = ty, error = 'tile_has_liquid' })
+      table.insert(failed, { x = tx, y = ty, z = z1, error = 'tile_has_liquid' })
     else
       local citizens = reachable_citizens(tx, ty, z1)
       local material, material_pos, valid_material_count = find_material(tx, ty, z1, citizens)
       if #citizens == 0 then
-        table.insert(failed, { x = tx, y = ty, error = 'tile_unreachable_from_citizens' })
+        table.insert(failed, { x = tx, y = ty, z = z1, error = 'tile_unreachable_from_citizens' })
       elseif not material and valid_material_count == 0 then
-        table.insert(failed, { x = tx, y = ty, error = 'no_building_material' })
+        table.insert(failed, { x = tx, y = ty, z = z1, error = 'no_building_material' })
       elseif not material then
-        table.insert(failed, { x = tx, y = ty, error = 'no_reachable_building_material' })
+        table.insert(failed, { x = tx, y = ty, z = z1, error = 'no_reachable_building_material' })
       else
         local ok, result, construct_error = pcall(function()
           return buildings.constructBuilding{
@@ -293,6 +307,7 @@ for tx = rx1, rx2 do
           table.insert(placed, {
             x = tx,
             y = ty,
+            z = z1,
             building_id = result.id,
             material_item_id = material.id,
             material_pos = { material_pos.x, material_pos.y, material_pos.z },
@@ -316,6 +331,7 @@ for tx = rx1, rx2 do
           table.insert(failed, {
             x = tx,
             y = ty,
+            z = z1,
             error = failure_error,
             building_id = building_id,
             material_item_id = material.id,

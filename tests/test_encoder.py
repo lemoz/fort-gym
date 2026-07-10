@@ -1133,6 +1133,143 @@ def test_encoder_renders_recent_action_outcomes() -> None:
     assert "changed=none" in text
 
 
+def test_encoder_renders_governed_action_targets_and_partial_results() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60, "wood": 10, "stone": 0},
+        },
+        screen_text="screen",
+        action_history=[
+            {
+                "step": 24,
+                "action_type": "BUILD",
+                "params": {"kind": "Wall", "x": 88, "y": 101, "z": 161, "x2": 91},
+                "intent": "build the north wall",
+                "requested_ticks": 1000,
+                "actual_ticks": 1005,
+                "accepted": False,
+                "outcome": "partial_mutation",
+                "error": "partial_placement",
+                "result_details": {"placed_count": 3, "failed_count": 1},
+                "placed_targets": ["(88,101,161)", "(89,101,161)", "(90,101,161)"],
+                "failed_targets": ["(91,101,161):tile_not_open_floor"],
+                "productive_reasons": [],
+                "changed": [],
+            }
+        ],
+    )
+
+    assert "BUILD(kind=Wall, x=88, y=101, z=161, x2=91)" in text
+    assert "error=partial_placement" in text
+    assert "outcome=partial_mutation" in text
+    assert "result=placed_count=3,failed_count=1" in text
+    assert "placed=(88,101,161),(89,101,161),(90,101,161)" in text
+    assert "failed=(91,101,161):tile_not_open_floor" in text
+
+
+def test_encoder_does_not_duplicate_latest_action_in_history() -> None:
+    text, _ = encode_observation(
+        {"time": 100, "population": 7, "stocks": {}},
+        screen_text="screen",
+        last_action_result={
+            "accepted": True,
+            "result": {},
+            "_action_step": 2,
+            "_action": {
+                "type": "WAIT",
+                "params": {},
+                "intent": "latest factual outcome",
+            },
+        },
+        action_history=[
+            {
+                "step": 1,
+                "action_type": "WAIT",
+                "params": {},
+                "intent": "older factual outcome",
+                "requested_ticks": 1000,
+                "actual_ticks": 1000,
+                "accepted": True,
+                "outcome": "advanced_ticks_without_tracked_state_change",
+            },
+            {
+                "step": 2,
+                "action_type": "WAIT",
+                "params": {},
+                "intent": "latest factual outcome",
+                "requested_ticks": 1000,
+                "actual_ticks": 1000,
+                "accepted": True,
+                "outcome": "advanced_ticks_without_tracked_state_change",
+            },
+        ],
+    )
+
+    assert "older factual outcome" in text
+    assert "Last Action command: step=2 WAIT; intent=latest factual outcome" in text
+    assert text.count("latest factual outcome") == 1
+
+
+def test_encoder_validation_failure_does_not_hide_executed_history() -> None:
+    text, _ = encode_observation(
+        {"time": 100, "population": 7, "stocks": {}},
+        screen_text="screen",
+        last_action_result={"accepted": False, "reason": "invalid action payload"},
+        action_history=[
+            {
+                "step": 4,
+                "action_type": "WAIT",
+                "params": {},
+                "intent": "last executed action",
+                "requested_ticks": 1000,
+                "actual_ticks": 1000,
+                "accepted": True,
+                "outcome": "advanced_ticks_without_tracked_state_change",
+            }
+        ],
+    )
+
+    assert "Last Action: REJECTED - invalid action payload" in text
+    assert "last executed action" in text
+
+
+def test_encoder_keeps_latest_keystroke_identity_with_separate_result() -> None:
+    text, _ = encode_observation(
+        {"time": 100, "population": 7, "stocks": {}},
+        screen_text="screen",
+        last_action_result={
+            "accepted": True,
+            "result": {},
+            "_action_step": 3,
+            "_action": {
+                "type": "KEYSTROKE",
+                "params": {"keys": ["D_BUILDING", "SELECT"]},
+                "intent": "open and select a building",
+            },
+        },
+        action_history=[
+            {
+                "step": 3,
+                "action_type": "KEYSTROKE",
+                "keys": ["D_BUILDING", "SELECT"],
+                "intent": "open and select a building",
+                "requested_ticks": 0,
+                "actual_ticks": 0,
+                "accepted": True,
+                "outcome": "keys_sent_without_tracked_state_change",
+            }
+        ],
+    )
+
+    assert (
+        "Last Action command: step=3 D_BUILDING, SELECT; "
+        "intent=open and select a building" in text
+    )
+    assert "== RECENT ACTION OUTCOMES ==" not in text
+
+
 def test_encoder_summarizes_stuck_queued_order_waits() -> None:
     text, state = encode_observation(
         {
@@ -2186,6 +2323,46 @@ def test_encoder_surfaces_executor_why_as_rejection_reason() -> None:
     )
 
     assert "Last Action: REJECTED - no_building_material" in obs_text
+
+
+def test_encoder_surfaces_partial_build_mutation_and_tile_facts() -> None:
+    state = {"time": 100, "population": 7, "stocks": {}}
+
+    obs_text, _ = encode_observation(
+        state,
+        last_action_result={
+            "accepted": False,
+            "why": "partial_placement",
+            "result": {
+                "ok": False,
+                "partial": True,
+                "placed_count": 2,
+                "failed_count": 1,
+                "placed": [
+                    {"x": 88, "y": 101, "z": 161},
+                    {"x": 89, "y": 101, "z": 161},
+                ],
+                "failed": [
+                    {
+                        "x": 91,
+                        "y": 101,
+                        "z": 161,
+                        "error": "tile_not_open_floor",
+                        "tile_shape": "BOULDER",
+                        "tiletype": "GRASS_DARK_BOULDER",
+                    }
+                ],
+            },
+        },
+    )
+
+    assert "Last Action: PARTIAL MUTATION - partial_placement" in obs_text
+    assert "Placed tiles: (88,101,161), (89,101,161)" in obs_text
+    assert "placed_count=2" in obs_text
+    assert "failed_count=1" in obs_text
+    assert "Failed tiles: (91,101,161): tile_not_open_floor" in obs_text
+    assert "tile_shape=BOULDER" in obs_text
+    assert "tiletype=GRASS_DARK_BOULDER" in obs_text
 
 
 def test_encoder_surfaces_farm_seasons_set_and_skipped() -> None:

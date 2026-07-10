@@ -26,10 +26,12 @@ class CountingWaitAgent(Agent):
         self.calls = 0
         self.requested_ticks = requested_ticks
         self.observations: list[Dict[str, Any]] = []
+        self.observation_texts: list[str] = []
 
     def decide(self, obs_text: str, obs_json: Dict[str, Any]) -> Dict[str, Any]:
         self.calls += 1
         self.observations.append(dict(obs_json))
+        self.observation_texts.append(obs_text)
         return {
             "type": "WAIT",
             "params": {},
@@ -42,9 +44,11 @@ class CountingInteractAgent(Agent):
     def __init__(self, operation: str = "confirm") -> None:
         self.calls = 0
         self.operation = operation
+        self.observation_texts: list[str] = []
 
     def decide(self, obs_text: str, obs_json: Dict[str, Any]) -> Dict[str, Any]:
         self.calls += 1
+        self.observation_texts.append(obs_text)
         return {
             "type": "INTERACT",
             "params": {"operation": self.operation},
@@ -464,6 +468,77 @@ def test_partial_timeout_is_degraded_and_allows_next_agent_decide(tmp_path, monk
     assert rows[0]["tick_degraded"]["code"] == "partial_tick_timeout"
     assert rows[0]["tick_degraded"]["ticks_advanced"] == 915
     assert not any(event["type"] == "terminal" for event in rows[0]["events"])
+
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+
+
+def test_governed_runner_passes_recent_action_outcomes_to_next_decision(
+    tmp_path, monkeypatch
+) -> None:
+    wait_agent = CountingWaitAgent(10)
+    agent, registry, run_id = _run_governed_interact_fixture(
+        tmp_path,
+        monkeypatch,
+        screen_changes=False,
+        max_steps=3,
+        agent_override=wait_agent,
+    )
+
+    assert agent is wait_agent
+    assert wait_agent.calls == 3
+    assert "== RECENT ACTION OUTCOMES ==" not in wait_agent.observation_texts[0]
+    assert "== RECENT ACTION OUTCOMES ==" not in wait_agent.observation_texts[1]
+    assert "Last Action command: step=0 WAIT" in wait_agent.observation_texts[1]
+    assert "Last Action: ACCEPTED" in wait_agent.observation_texts[1]
+    assert "== RECENT ACTION OUTCOMES ==" in wait_agent.observation_texts[2]
+    assert "WAIT" in wait_agent.observation_texts[2]
+    assert "actual=10t" in wait_agent.observation_texts[2]
+    assert "recent_progress_summary" not in wait_agent.observations[2]
+    loaded = registry.get(run_id)
+    assert loaded is not None
+    assert loaded.status == "completed"
+
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+
+
+def test_action_history_limit_prefers_generic_env_and_keeps_legacy_fallback(
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("FORT_GYM_KEYSTROKE_ACTION_HISTORY_LIMIT", "17")
+    monkeypatch.delenv("FORT_GYM_ACTION_HISTORY_LIMIT", raising=False)
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    assert get_settings().ACTION_HISTORY_LIMIT == 17
+
+    monkeypatch.setenv("FORT_GYM_ACTION_HISTORY_LIMIT", "23")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    assert get_settings().ACTION_HISTORY_LIMIT == 23
+
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+
+
+def test_parsed_validation_failure_keeps_command_identity(tmp_path, monkeypatch) -> None:
+    interact_agent = CountingInteractAgent("finish_topic_meeting")
+    agent, registry, run_id = _run_governed_interact_fixture(
+        tmp_path,
+        monkeypatch,
+        screen_changes=False,
+        max_steps=2,
+        agent_override=interact_agent,
+        viewscreen_type="viewscreen_topicmeetingst",
+        screen_text="unrelated topic text",
+    )
+
+    assert agent is interact_agent
+    assert interact_agent.calls == 2
+    assert (
+        "Last Action command: step=0 INTERACT(operation=finish_topic_meeting)"
+        in interact_agent.observation_texts[1]
+    )
+    assert "requires the visible option" in interact_agent.observation_texts[1]
+    assert "== RECENT ACTION OUTCOMES ==" not in interact_agent.observation_texts[1]
+    loaded = registry.get(run_id)
+    assert loaded is not None
+    assert loaded.status == "completed"
 
     get_settings.cache_clear()  # type: ignore[attr-defined]
 
