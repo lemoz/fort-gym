@@ -18,7 +18,11 @@ from typing import Dict, Optional
 # change only — evidence boundaries, provenance gating, gameplay-proof
 # rules, and every recorded v1/v2 score are unaffected and not comparable
 # across this version boundary. Operator-ratified per docs/score_v3_proposal.md.
-SCORE_VERSION = 3
+# v4 2026-07-10: stable-floor measurement boundary. Frozen liquid had been
+# counted as permanent floor by work/room metrics, creating transient score
+# credit before seasonal thaw. Coefficients are unchanged; the v3 threshold is
+# retained, making the corrected G7 scalar bar conservative rather than softer.
+SCORE_VERSION = 4
 
 
 TARGET_SURVIVAL_TICKS = 2400

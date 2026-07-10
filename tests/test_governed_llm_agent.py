@@ -13,6 +13,7 @@ from fort_gym.bench.agent.governed_llm import (
     DEFAULT_ADVANCE_TICKS,
     GOVERNED_ACTION_TYPES,
     GOVERNED_SYSTEM_PROMPT,
+    MAX_OBJECTIVE_LENGTH,
     DFHackGovernedLLMAgent,
     _submit_action_tool,
 )
@@ -241,6 +242,9 @@ def test_governed_submit_tool_requires_agent_review_contract() -> None:
     ] == 2
     assert "reason" not in parameters["properties"]["plan_review"]["required"]
     assert "next_step" not in parameters["properties"]["plan_review"]["properties"]
+    assert parameters["properties"]["objective"]["maxLength"] == 160
+    assert parameters["properties"]["plan_review"]["properties"]["objective"]["maxLength"] == 160
+    assert "do not include changing counts" in GOVERNED_SYSTEM_PROMPT
     assert "REVIEW EVIDENCE CHOICES" in GOVERNED_SYSTEM_PROMPT
 
 
@@ -267,7 +271,10 @@ def test_review_evidence_accepts_only_exact_catalog_ids() -> None:
 def test_governed_system_prompt_requires_build_target_preflight() -> None:
     assert "unoccupied open-floor tile" in GOVERNED_SYSTEM_PROMPT
     assert "Before submitting any BUILD" in GOVERNED_SYSTEM_PROMPT
-    assert "`b`, `t`, `c`, `d`, `w`, or `x`" in GOVERNED_SYSTEM_PROMPT
+    assert "`b`, `t`, `c`, `d`, `w`, `x`, or `i`" in GOVERNED_SYSTEM_PROMPT
+    assert "i=frozen liquid that can thaw" in GOVERNED_SYSTEM_PROMPT
+    assert "carpenter_build_site_rect" in GOVERNED_SYSTEM_PROMPT
+    assert "even when it lies outside the cropped minimap" in GOVERNED_SYSTEM_PROMPT
     assert "Furniture positions" in GOVERNED_SYSTEM_PROMPT
     assert "Failed tiles" in GOVERNED_SYSTEM_PROMPT
     assert "Do not retry a rejected target" in GOVERNED_SYSTEM_PROMPT
@@ -527,6 +534,26 @@ def test_review_contract_correction_includes_exact_rejected_payload() -> None:
     assert json.dumps(invalid, ensure_ascii=True, sort_keys=True) in correction["content"]
     assert "plan_review.objective is required" in correction["content"]
     assert "No game ticks have advanced" in correction["content"]
+
+
+def test_review_contract_corrects_overlong_objectives_locally() -> None:
+    control = _plan_control()
+    invalid = _reviewed_action_payload(
+        control=control,
+        objective="x" * (MAX_OBJECTIVE_LENGTH + 1),
+    )
+    valid = _reviewed_action_payload(control=control)
+    agent = _agent([_submit_action_response(invalid), _submit_action_response(valid)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["objective"] == valid["objective"]
+    correction = agent._client.chat.completions.requests[1]["messages"][-1]["content"]
+    assert "objective must be at most 160 characters" in correction
+    assert "plan_review.objective must be at most 160 characters" in correction
 
 
 def test_review_contract_correction_reports_all_attempt7_style_errors() -> None:

@@ -15,6 +15,7 @@ local Z_NEIGHBORS = false -- single-z spaces for v1
 local attrs = df.tiletype.attrs
 local FLOOR_SHAPE = df.tiletype_shape.FLOOR
 local WALL_SHAPE = df.tiletype_shape.WALL
+local FROZEN_LIQUID_MATERIAL = df.tiletype_material.FROZEN_LIQUID
 
 -- standable ground that counts as room interior (vegetation and loose rock
 -- on a floor do not connect a room to the wild)
@@ -28,14 +29,20 @@ local INTERIOR_SHAPES = {
 
 local function tile_shape(x, y, z)
   local block = dfhack.maps.getTileBlock(x, y, z)
-  if not block then return nil, nil end
+  if not block then return nil, nil, nil end
   local dx, dy = x % 16, y % 16
-  local ok, shape, hidden = pcall(function()
+  local ok, shape, hidden, material = pcall(function()
     local attr = attrs[block.tiletype[dx][dy]]
-    return attr and attr.shape or nil, block.designation[dx][dy].hidden
+    return attr and attr.shape or nil,
+      block.designation[dx][dy].hidden,
+      attr and attr.material or nil
   end)
-  if not ok then return nil, nil end
-  return shape, hidden
+  if not ok then return nil, nil, nil end
+  return shape, hidden, material
+end
+
+local function stable_interior_shape(shape, material)
+  return INTERIOR_SHAPES[shape] and material ~= FROZEN_LIQUID_MATERIAL
 end
 
 local function building_at(x, y, z)
@@ -143,8 +150,11 @@ local function flood(seed_x, seed_y, seed_z)
   while #queue > 0 do
     local cell = table.remove(queue)
     local x, y = cell[1], cell[2]
-    local shape, hidden = tile_shape(x, y, seed_z)
+    local shape, hidden, material = tile_shape(x, y, seed_z)
     if shape == nil then
+      enclosed = false
+    elseif material == FROZEN_LIQUID_MATERIAL then
+      -- Seasonal ice is not stable room interior; thawing opens the region.
       enclosed = false
     elseif interior_furniture_at(x, y, seed_z) then
       -- beds/tables/chairs are part of the room they furnish
@@ -164,7 +174,7 @@ local function flood(seed_x, seed_y, seed_z)
       -- other buildings (incl. doors and workshops) close the boundary
     elseif shape == WALL_SHAPE then
       -- walls (and tree trunks) close the boundary
-    elseif INTERIOR_SHAPES[shape] and not hidden then
+    elseif stable_interior_shape(shape, material) and not hidden then
       table.insert(tiles, { x, y })
       if #tiles > MAX_COMPONENT_TILES then
         enclosed = false
@@ -200,9 +210,11 @@ for _, bld in ipairs(buildings) do
       local seed_key = sx .. ',' .. sy .. ',' .. bld.z
       if not inside_fp and not seen_seed[seed_key] and #spaces < MAX_SPACES then
         seen_seed[seed_key] = true
-        local shape, hidden = tile_shape(sx, sy, bld.z)
+        local shape, hidden, material = tile_shape(sx, sy, bld.z)
         local seedable = interior_furniture_at(sx, sy, bld.z)
-          or (INTERIOR_SHAPES[shape] and not hidden and not building_at(sx, sy, bld.z))
+          or (stable_interior_shape(shape, material)
+            and not hidden
+            and not building_at(sx, sy, bld.z))
         if seedable then
           local tiles, enclosed = flood(sx, sy, bld.z)
           if enclosed and #tiles > 0 then
@@ -314,6 +326,7 @@ end)
 -- spatially instead of as coordinate lists. Read-only; bounded to 34x34.
 local map_origin = nil
 local map_rows = {}
+local frozen_liquid_tiles = 0
 do
   local construction_set = {}
   pcall(function()
@@ -410,6 +423,10 @@ do
       local row = {}
       for x = min_x, max_x do
         local ch = ' '
+        local shape, hidden, material = tile_shape(x, y, anchor_z)
+        if not hidden and material == FROZEN_LIQUID_MATERIAL then
+          frozen_liquid_tiles = frozen_liquid_tiles + 1
+        end
         local kind = building_tile_kind[x .. ',' .. y .. ',' .. anchor_z]
         if citizen_lookup[x .. ',' .. y] then
           ch = '@'
@@ -419,9 +436,10 @@ do
         elseif pending_construction_tiles[x .. ',' .. y .. ',' .. anchor_z] then
           ch = 'x'
         else
-          local shape, hidden = tile_shape(x, y, anchor_z)
           if shape == nil or hidden then
             ch = ' '
+          elseif material == FROZEN_LIQUID_MATERIAL then
+            ch = 'i'
           elseif shape == WALL_SHAPE then
             local is_tree = false
             pcall(function()
@@ -461,6 +479,7 @@ print(json.encode({
   pending_constructions = pending_constructions,
   nearby_trees = nearby_trees,
   player_buildings = #buildings,
+  frozen_liquid_tiles = frozen_liquid_tiles,
   map_origin = map_origin,
   map_rows = map_rows,
 }))

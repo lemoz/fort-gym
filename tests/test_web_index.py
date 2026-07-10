@@ -52,6 +52,16 @@ def test_live_index_uses_saved_replay_for_completed_runs() -> None:
     assert "if (!isRunning)" in html
 
 
+def test_replay_distinguishes_frozen_liquid_from_stable_floor() -> None:
+    html = Path("web/index.html").read_text(encoding="utf-8")
+
+    assert "case 'frozen_liquid':" in html
+    assert "'i': { fill: '#74c2d6', glyph: 'i' }" in html
+    assert "i=ice" in html
+    assert "Stable floor:" in html
+    assert "Ice:" in html
+
+
 def test_replay_screen_offers_graphical_tileset_toggle() -> None:
     html = Path("web/index.html").read_text(encoding="utf-8")
 

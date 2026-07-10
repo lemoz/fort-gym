@@ -140,7 +140,11 @@ changes. Each accepted governed action is tagged `execute.provenance =
 "dfhack_governed_observed_state"`, and every step records a real `screen_text`
 CopyScreen frame for replay evidence. Governed target discovery preserves and
 restores the live DF camera/cursor so helper probes never disturb the visible
-game. `INTERACT` is a zero-tick, paused-dialog action and is never score-progress
+game. The fort minimap distinguishes stable `.` floor from seasonal frozen
+liquid (`i`); frozen liquid is excluded from room/site floor counts and every
+structured BUILD helper rejects it before mutation. A verified 3x3 workshop
+site remains available for either CarpenterWorkshop or Still after earlier
+buildings are placed. `INTERACT` is a zero-tick, paused-dialog action and is never score-progress
 eligible by itself. Non-governed models that emit structured governed actions are tagged
 `dfhack_assisted`: their progress metrics are zeroed and — once one assisted
 action is accepted — the run's scoreable elapsed time is blocked for the rest

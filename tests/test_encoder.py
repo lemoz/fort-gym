@@ -1564,8 +1564,9 @@ def test_encoder_surfaces_legal_build_site_without_plan_lines() -> None:
         screen_text="main map",
     )
 
-    assert "Workshop site candidate observed: carpenter_build_site=(99,93,177)" in text
-    assert "3x3 open floor there." in text
+    assert "Stable workshop site candidate observed: carpenter_build_site=(99,93,177)" in text
+    assert "valid for CarpenterWorkshop or Still" in text
+    assert "verified 3x3 stable-floor footprint" in text
     # Legacy plan-completion framing must stay out of the governed observation:
     # it reads as an objective and misdirects agents after their first room.
     assert "Plan rects" not in text
@@ -1586,10 +1587,10 @@ def test_encoder_reports_no_legal_build_site_without_carpenter_build_site() -> N
         screen_text="main map",
     )
 
-    assert "No 3x3 workshop site observed yet." in text
+    assert "No stable 3x3 workshop site observed yet." in text
     assert (
-        "CarpenterWorkshop needs a full 3x3 footprint of open floor near "
-        "your fort; dig out or clear more contiguous floor space first." in text
+        "CarpenterWorkshop and Still need a full 3x3 footprint of stable open floor near your "
+        "fort; dig out or clear more contiguous floor space first." in text
     )
 
 
@@ -1725,7 +1726,7 @@ def test_encoder_ignores_malformed_plan_rects_without_crashing() -> None:
     )
 
     assert "Plan rects" not in text
-    assert "No 3x3 workshop site observed yet." in text
+    assert "No stable 3x3 workshop site observed yet." in text
 
 
 def test_encoder_omits_legacy_plan_progress_lines() -> None:
@@ -1976,6 +1977,30 @@ def test_encoder_reports_true_shrub_count_separately_from_other_tiles() -> None:
         "tiles for dig/channel; other tiles in the rect are left untouched), "
         "designated=0" in text
     )
+
+
+def test_encoder_separates_frozen_liquid_from_fort_area_floor() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {},
+            "crew": {
+                "ok": True,
+                "rect_tiles": {
+                    "wall": 3,
+                    "floor": 20,
+                    "frozen_liquid": 9,
+                    "shrub": 0,
+                    "shrub_or_other": 0,
+                    "designated": 0,
+                },
+            },
+        },
+        screen_text="main map",
+    )
+
+    assert "floor=20, frozen_liquid=9 (unstable; can thaw)" in text
 
 
 def test_encoder_surfaces_built_still_workshop_with_brew_hint() -> None:
@@ -2488,6 +2513,48 @@ def test_encoder_renders_fort_minimap_with_rulers() -> None:
     assert "y= 87|..WWW.." in obs_text
     assert "y= 89|..WWW.." in obs_text
     assert "trace the ring on the minimap" in obs_text
+
+
+def test_encoder_labels_frozen_liquid_as_unstable_not_floor() -> None:
+    state = {
+        "time": 100,
+        "population": 7,
+        "stocks": {},
+        "fort": {
+            "ok": True,
+            "enclosed_spaces": 0,
+            "functional_rooms": 0,
+            "constructions": 0,
+            "frozen_liquid_tiles": 3,
+            "map_origin": [90, 87, 177],
+            "map_rows": ["..iii.."],
+        },
+    }
+
+    obs_text, _ = encode_observation(state)
+
+    assert "Frozen-liquid tiles in fort view: 3" in obs_text
+    assert "i=frozen liquid (unstable; can thaw)" in obs_text
+    assert "Never treat 'i' as permanent floor" in obs_text
+
+
+def test_encoder_reports_stable_workshop_site_for_carpenter_or_still() -> None:
+    state = {
+        "time": 100,
+        "population": 7,
+        "stocks": {},
+        "work": {
+            "carpenter_build_site": [88, 96, 177],
+            "carpenter_build_site_rect": [88, 96, 177, 90, 98, 177],
+        },
+    }
+
+    obs_text, _ = encode_observation(state)
+
+    assert "Stable workshop site candidate observed" in obs_text
+    assert "valid for CarpenterWorkshop or Still" in obs_text
+    assert "Exact verified footprint=(88,96,177)-(90,98,177)" in obs_text
+    assert "authoritative even when outside the cropped minimap" in obs_text
 
 
 def test_encoder_skips_minimap_when_malformed() -> None:

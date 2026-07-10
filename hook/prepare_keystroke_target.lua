@@ -30,9 +30,15 @@ local STONE_MATERIALS = {
 
 local blocked_workshop_targets = {}
 for token in string.gmatch(BLOCKED_WORKSHOP_TARGETS_ARG, '([^;]+)') do
-  local x, y, z = string.match(token, '^(-?%d+),(-?%d+),(-?%d+)$')
+  local x, y, z, fingerprint = string.match(
+    token,
+    '^(-?%d+),(-?%d+),(-?%d+),([%w:_-]+)$'
+  )
+  if not x then
+    x, y, z = string.match(token, '^(-?%d+),(-?%d+),(-?%d+)$')
+  end
   if x and y and z then
-    blocked_workshop_targets[x .. ',' .. y .. ',' .. z] = true
+    blocked_workshop_targets[x .. ',' .. y .. ',' .. z] = fingerprint or true
   end
 end
 
@@ -123,16 +129,98 @@ local function valid_floor_tile(tx, ty, tz)
   if occupancy and occupancy.building ~= 0 then
     return false
   end
+  if tonumber(designation.flow_size) and tonumber(designation.flow_size) > 0 then
+    return false
+  end
 
   local attr = df.tiletype.attrs[block.tiletype[dx][dy]]
-  return attr and attr.shape == df.tiletype_shape.FLOOR
+  return attr
+    and attr.shape == df.tiletype_shape.FLOOR
+    and attr.material ~= df.tiletype_material.FROZEN_LIQUID
+end
+
+local MAX_LOCALITY = 24
+
+local function unit_position(unit)
+  local ok, x, y, z = pcall(function() return dfhack.units.getPosition(unit) end)
+  if not ok or x == nil or y == nil or z == nil or x < 0 or y < 0 or z < 0 then
+    return nil
+  end
+  return { x = x, y = y, z = z }
+end
+
+local function near_fort(x, y)
+  local buildings = df.global.world.buildings and df.global.world.buildings.all
+  if buildings then
+    for _, building in ipairs(buildings) do
+      local ok, bx, by = pcall(function() return building.centerx, building.centery end)
+      if ok and math.max(math.abs(bx - x), math.abs(by - y)) <= MAX_LOCALITY then
+        return true
+      end
+    end
+  end
+  local active_units = df.global.world.units and df.global.world.units.active
+  if not active_units then return false end
+  for _, unit in ipairs(active_units) do
+    local ok_citizen, is_citizen = pcall(function() return dfhack.units.isCitizen(unit) end)
+    local pos = ok_citizen and is_citizen and unit_position(unit) or nil
+    if pos and math.max(math.abs(pos.x - x), math.abs(pos.y - y)) <= MAX_LOCALITY then
+      return true
+    end
+  end
+  return false
+end
+
+local function reachable_citizen(x, y, z)
+  local target = { x = x, y = y, z = z }
+  local active_units = df.global.world.units and df.global.world.units.active
+  if not active_units then return false end
+  for _, unit in ipairs(active_units) do
+    local ok_citizen, is_citizen = pcall(function()
+      return dfhack.units.isCitizen(unit)
+        and not dfhack.units.isDead(unit)
+        and not (unit.flags1 and unit.flags1.caged)
+    end)
+    local pos = ok_citizen and is_citizen and unit_position(unit) or nil
+    if pos then
+      local ok_path, has_path = pcall(function()
+        return dfhack.maps.canWalkBetween(pos, target)
+      end)
+      if ok_path and has_path then return true end
+    end
+  end
+  return false
+end
+
+local function workshop_footprint_fingerprint(x1, y1, z)
+  local parts = {}
+  for tx = x1, x1 + WORKSHOP_SIZE - 1 do
+    for ty = y1, y1 + WORKSHOP_SIZE - 1 do
+      local block = dfhack.maps.getTileBlock(tx, ty, z)
+      if not block then
+        table.insert(parts, 'missing')
+      else
+        local dx, dy = tx % 16, ty % 16
+        local designation = block.designation[dx][dy]
+        local occupancy = block.occupancy[dx][dy]
+        table.insert(parts, table.concat({
+          tostring(tonumber(block.tiletype[dx][dy]) or -1),
+          designation and designation.hidden and '1' or '0',
+          tostring(designation and tonumber(designation.dig) or -1),
+          tostring(designation and tonumber(designation.flow_size) or -1),
+          tostring(occupancy and tonumber(occupancy.building) or -1),
+        }, ':'))
+      end
+    end
+  end
+  return table.concat(parts, '_')
 end
 
 local function valid_workshop_footprint(x1, y1, z)
   if x1 < 0 or y1 < 0 or z < 0 then
     return false
   end
-  if blocked_workshop_targets[workshop_target_key(x1, y1, z)] then
+  if df.global.world.reindex_pathfinding then
     return false
   end
 
@@ -149,6 +237,15 @@ local function valid_workshop_footprint(x1, y1, z)
         return false
       end
     end
+  end
+
+  local fingerprint = workshop_footprint_fingerprint(x1, y1, z)
+  local blocked_fingerprint = blocked_workshop_targets[workshop_target_key(x1, y1, z)]
+  if blocked_fingerprint == true or blocked_fingerprint == fingerprint then
+    return false
+  end
+  if not near_fort(x1, y1) or not reachable_citizen(x1 + 1, y1 + 1, z) then
+    return false
   end
 
   return true
@@ -294,6 +391,13 @@ local function workshop_candidate_payload(x1, y1, z, source)
     selection_rect = { x1, y1, z, x1 + WORKSHOP_SIZE - 1, y1 + WORKSHOP_SIZE - 1, z },
     placement_rect = { x1, y1, z, x1 + WORKSHOP_SIZE - 1, y1 + WORKSHOP_SIZE - 1, z },
     designatable_tiles = WORKSHOP_SIZE * WORKSHOP_SIZE,
+    stable_floor_tiles = WORKSHOP_SIZE * WORKSHOP_SIZE,
+    frozen_liquid_tiles = 0,
+    liquid_tiles = 0,
+    locality_ok = true,
+    reachable_citizen = true,
+    path_cache_current = true,
+    placement_fingerprint = workshop_footprint_fingerprint(x1, y1, z),
     window_x = window_x,
     window_y = window_y,
     window_z = z,

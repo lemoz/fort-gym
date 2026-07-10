@@ -44,11 +44,13 @@ end
 local attrs = df.tiletype.attrs
 local floor_shape = df.tiletype_shape.FLOOR
 local wall_shape = df.tiletype_shape.WALL
+local frozen_liquid_material = df.tiletype_material.FROZEN_LIQUID
 local no_dig = df.tile_dig_designation.No
 
 local target_tiles = 0
 local target_dig_designations = 0
 local target_floor_tiles = 0
+local target_frozen_liquid_tiles = 0
 local target_wall_tiles = 0
 local target_hidden_tiles = 0
 local target_visible_tiles = 0
@@ -66,6 +68,7 @@ local function scan_rect(ax1, ay1, az, ax2, ay2)
     tiles = 0,
     dig_designations = 0,
     floor_tiles = 0,
+    frozen_liquid_tiles = 0,
     wall_tiles = 0,
     hidden_tiles = 0,
     visible_tiles = 0,
@@ -92,7 +95,9 @@ local function scan_rect(ax1, ay1, az, ax2, ay2)
         local tiletype = block.tiletype[dx][dy]
         local attr = attrs[tiletype]
         if attr then
-          if attr.shape == floor_shape then
+          if attr.material == frozen_liquid_material then
+            rect.frozen_liquid_tiles = rect.frozen_liquid_tiles + 1
+          elseif attr.shape == floor_shape then
             rect.floor_tiles = rect.floor_tiles + 1
           elseif attr.shape == wall_shape then
             rect.wall_tiles = rect.wall_tiles + 1
@@ -127,7 +132,9 @@ for tx = rx1, rx2 do
       local tiletype = block.tiletype[dx][dy]
       local attr = attrs[tiletype]
       if attr then
-        if attr.shape == floor_shape then
+        if attr.material == frozen_liquid_material then
+          target_frozen_liquid_tiles = target_frozen_liquid_tiles + 1
+        elseif attr.shape == floor_shape then
           target_floor_tiles = target_floor_tiles + 1
         elseif attr.shape == wall_shape then
           target_wall_tiles = target_wall_tiles + 1
@@ -346,6 +353,7 @@ print(json.encode({
   target_tiles = target_tiles,
   target_dig_designations = target_dig_designations,
   target_floor_tiles = target_floor_tiles,
+  target_frozen_liquid_tiles = target_frozen_liquid_tiles,
   target_wall_tiles = target_wall_tiles,
   target_hidden_tiles = target_hidden_tiles,
   target_visible_tiles = target_visible_tiles,
@@ -355,16 +363,20 @@ print(json.encode({
   fortress_workshop_room_rect = { workshop_room_x1, workshop_room_y1, rz, workshop_room_x2, workshop_room_y2, rz },
   fortress_connector_tiles = fortress_connector.tiles,
   fortress_connector_floor_tiles = fortress_connector.floor_tiles,
+  fortress_connector_frozen_liquid_tiles = fortress_connector.frozen_liquid_tiles,
   fortress_connector_wall_tiles = fortress_connector.wall_tiles,
   fortress_connector_hidden_tiles = fortress_connector.hidden_tiles,
   fortress_connector_missing_blocks = fortress_connector.missing_blocks,
   fortress_workshop_room_tiles = fortress_workshop_room.tiles,
   fortress_workshop_room_floor_tiles = fortress_workshop_room.floor_tiles,
+  fortress_workshop_room_frozen_liquid_tiles = fortress_workshop_room.frozen_liquid_tiles,
   fortress_workshop_room_wall_tiles = fortress_workshop_room.wall_tiles,
   fortress_workshop_room_hidden_tiles = fortress_workshop_room.hidden_tiles,
   fortress_workshop_room_missing_blocks = fortress_workshop_room.missing_blocks,
   fortress_complexity_tiles = fortress_connector.tiles + fortress_workshop_room.tiles,
   fortress_complexity_floor_tiles = fortress_connector.floor_tiles + fortress_workshop_room.floor_tiles,
+  fortress_complexity_frozen_liquid_tiles = fortress_connector.frozen_liquid_tiles
+    + fortress_workshop_room.frozen_liquid_tiles,
   fortress_complexity_wall_tiles = fortress_connector.wall_tiles + fortress_workshop_room.wall_tiles,
   fortress_complexity_hidden_tiles = fortress_connector.hidden_tiles + fortress_workshop_room.hidden_tiles,
   fortress_complexity_missing_blocks = fortress_connector.missing_blocks + fortress_workshop_room.missing_blocks,

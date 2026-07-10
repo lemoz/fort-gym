@@ -1264,17 +1264,27 @@ def encode_observation(
     )
     if work:
         build_site = _int_list_or_none(work.get("carpenter_build_site"), 3)
+        build_site_rect = _int_list_or_none(work.get("carpenter_build_site_rect"), 6)
         if build_site is not None:
             x, y, z = build_site
+            rect_text = ""
+            if build_site_rect is not None:
+                x1, y1, z1, x2, y2, z2 = build_site_rect
+                rect_text = (
+                    f" Exact verified footprint=({x1},{y1},{z1})-({x2},{y2},{z2}); "
+                    "this runner-authored footprint is authoritative even when outside the "
+                    "cropped minimap."
+                )
             status_lines.append(
-                f"Workshop site candidate observed: carpenter_build_site=({x},{y},{z}) "
-                "— 3x3 open floor there."
+                f"Stable workshop site candidate observed: carpenter_build_site=({x},{y},{z}) "
+                "— a verified 3x3 stable-floor footprint valid for CarpenterWorkshop or Still."
+                + rect_text
             )
         else:
             status_lines.append(
-                "No 3x3 workshop site observed yet. CarpenterWorkshop needs a "
-                "full 3x3 footprint of open floor near your fort; dig out or "
-                "clear more contiguous floor space first."
+                "No stable 3x3 workshop site observed yet. CarpenterWorkshop and Still need a "
+                "full 3x3 footprint of stable open floor near your fort; dig out or clear more "
+                "contiguous floor space first."
             )
         if work.get("cursor_z") is not None or work.get("window_z") is not None:
             cursor_x = work.get("cursor_x")
@@ -1731,6 +1741,7 @@ def encode_observation(
             wall = _int_or_none(rect_tiles.get("wall"))
             tree = _int_or_none(rect_tiles.get("tree"))
             floor = _int_or_none(rect_tiles.get("floor"))
+            frozen_liquid = _int_or_none(rect_tiles.get("frozen_liquid"))
             shrub = _int_or_none(rect_tiles.get("shrub"))
             shrub_or_other = _int_or_none(rect_tiles.get("shrub_or_other"))
             designated = _int_or_none(rect_tiles.get("designated"))
@@ -1745,9 +1756,14 @@ def encode_observation(
                     shrub_part = f"shrubs={shrub} (gatherable with DIG kind=gather), other={other}"
                 else:
                     shrub_part = f"shrub/other={shrub_or_other}"
+                frozen_liquid_part = (
+                    f"frozen_liquid={frozen_liquid} (unstable; can thaw), "
+                    if frozen_liquid is not None
+                    else ""
+                )
                 status_lines.append(
                     f"Fort-area tiles: wall={wall} (diggable), {tree_part}"
-                    f"floor={floor}, "
+                    f"floor={floor}, {frozen_liquid_part}"
                     f"{shrub_part} (this harness only designates WALL tiles for "
                     "dig/channel; other tiles in the rect are left untouched), "
                     f"designated={designated}"
@@ -1846,6 +1862,12 @@ def encode_observation(
 
         map_rows = fort.get("map_rows")
         map_origin = fort.get("map_origin")
+        frozen_liquid_tiles = _int_or_none(fort.get("frozen_liquid_tiles"))
+        if frozen_liquid_tiles:
+            status_lines.append(
+                f"Frozen-liquid tiles in fort view: {frozen_liquid_tiles} — shown as 'i'; "
+                "seasonal ice is not stable open floor and can thaw."
+            )
         if (
             isinstance(map_rows, list)
             and map_rows
@@ -1864,7 +1886,8 @@ def encode_observation(
                     "W=your wall, x=your QUEUED wall/floor (ordered, a dwarf "
                     "is still building it), #=natural wall, T=tree trunk, "
                     "b=bed, t=table, c=chair, d=door, w=workshop, .=floor, "
-                    ",=shrub/boulder, @=dwarf, ~=impassable:"
+                    "i=frozen liquid (unstable; can thaw), ,=shrub/boulder, "
+                    "@=dwarf, ~=impassable:"
                 )
                 ruler = "".join(str((ox + i) % 10) for i in range(width))
                 status_lines.append(f"      {ruler}")
@@ -1873,7 +1896,8 @@ def encode_observation(
                 status_lines.append(
                     "A room is enclosed only if every tile of its border is "
                     "W/#/T/w/d — trace the ring on the minimap and wall any "
-                    "'.' or ',' gaps. An 'x' is already ordered: do NOT "
+                    "'.' or ',' gaps. Never treat 'i' as permanent floor or a "
+                    "safe BUILD target. An 'x' is already ordered: do NOT "
                     "re-place a wall there — advance time and it becomes W."
                 )
 

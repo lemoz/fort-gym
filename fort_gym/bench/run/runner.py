@@ -84,6 +84,16 @@ MAX_INTERACT_OPERATIONS_PER_MODAL = 8
 MAX_UNCHANGED_INTERACT_SCREENS = 3
 MIN_GOVERNED_ACTION_HISTORY = 6
 SCREEN_CAPTURE_FAILED = "(screen capture failed)"
+GOVERNED_STATIC_WORKSHOP_SITE_ERRORS = frozenset(
+    {
+        "tile_out_of_bounds",
+        "tile_occupied_by_building",
+        "tile_hidden_unexplored",
+        "tile_frozen_liquid",
+        "tile_not_open_floor",
+        "tile_has_liquid",
+    }
+)
 
 
 def _screen_sha256(screen_text: str | None) -> str:
@@ -322,6 +332,18 @@ def _add_governed_build_site(
 ) -> Dict[str, Any]:
     if not isinstance(target, dict) or not target.get("ok"):
         return state
+    fingerprint = target.get("placement_fingerprint")
+    if (
+        target.get("stable_floor_tiles") != 9
+        or target.get("frozen_liquid_tiles") != 0
+        or target.get("liquid_tiles") != 0
+        or target.get("locality_ok") is not True
+        or target.get("reachable_citizen") is not True
+        or target.get("path_cache_current") is not True
+        or not isinstance(fingerprint, str)
+        or not fingerprint
+    ):
+        return state
     rect = _normalize_rect(target.get("placement_rect") or target.get("selection_rect"))
     if rect is None:
         return state
@@ -333,7 +355,13 @@ def _add_governed_build_site(
     work["carpenter_build_site"] = [rect[0], rect[1], rect[2]]
     work["carpenter_build_site_rect"] = [*rect]
     work["carpenter_build_site_source"] = target.get("source")
-    work["carpenter_build_site_floor_tiles"] = 9
+    work["carpenter_build_site_floor_tiles"] = target["stable_floor_tiles"]
+    work["carpenter_build_site_frozen_liquid_tiles"] = target["frozen_liquid_tiles"]
+    work["carpenter_build_site_liquid_tiles"] = target["liquid_tiles"]
+    work["carpenter_build_site_locality_ok"] = target["locality_ok"]
+    work["carpenter_build_site_reachable_citizen"] = target["reachable_citizen"]
+    work["carpenter_build_site_path_cache_current"] = target["path_cache_current"]
+    work["carpenter_build_site_fingerprint"] = fingerprint
     state["work"] = work
     return state
 
@@ -1489,6 +1517,38 @@ def _workshop_target_key(target: Dict[str, Any] | None) -> tuple[int, int, int] 
     return (rect[0], rect[1], rect[2])
 
 
+def _governed_rejected_workshop_target(
+    action: Dict[str, Any],
+    execute: Dict[str, Any],
+    target: Dict[str, Any] | None,
+) -> tuple[int, int, int, str] | None:
+    """Bind a rejected advertised workshop site to its exact tile fingerprint."""
+
+    if str(action.get("type") or "").upper() != "BUILD" or execute.get("accepted") is True:
+        return None
+    params = action.get("params")
+    if not isinstance(params, dict) or params.get("kind") not in {"CarpenterWorkshop", "Still"}:
+        return None
+    target_key = _workshop_target_key(target)
+    if target_key is None:
+        return None
+    try:
+        action_key = (int(params["x"]), int(params["y"]), int(params["z"]))
+    except (KeyError, TypeError, ValueError):
+        return None
+    if action_key != target_key:
+        return None
+    nested = execute.get("result")
+    nested_error = nested.get("error") if isinstance(nested, dict) else None
+    error = str(execute.get("why") or nested_error or "")
+    if error not in GOVERNED_STATIC_WORKSHOP_SITE_ERRORS:
+        return None
+    fingerprint = target.get("placement_fingerprint") if isinstance(target, dict) else None
+    if not isinstance(fingerprint, str) or not fingerprint:
+        return None
+    return (*target_key, fingerprint)
+
+
 def _ui_work_rect_from_state(
     state: Dict[str, Any],
     radius: int = UI_WORK_RADIUS,
@@ -1936,6 +1996,7 @@ def run_once(
     ui_target_generation = 0
     ui_target_attempts = 0
     ui_blocked_workshop_targets: set[tuple[int, int, int]] = set()
+    governed_blocked_workshop_targets: set[tuple[int, int, int, str]] = set()
 
     def get_screen_text() -> str:
         """Get screen text when CopyScreen is available."""
@@ -2001,7 +2062,10 @@ def run_once(
 
         def prepare_governed_target(mode: str) -> Dict[str, object]:
             view_before = read_view_state()
-            target = prepare_keystroke_target(mode)
+            target = prepare_keystroke_target(
+                mode,
+                blocked_workshop_targets=tuple(governed_blocked_workshop_targets),
+            )
             restore_result = restore_view_state(view_before)
             if target.get("ok"):
                 target["view_preserved"] = bool(restore_result.get("ok"))
@@ -2025,10 +2089,6 @@ def run_once(
                 return state
             work = state.get("work")
             if not isinstance(work, dict):
-                return state
-            if int(work.get("carpenter_workshops") or 0) > 0:
-                return state
-            if int(work.get("fortress_workshop_room_floor_tiles") or 0) < 9:
                 return state
             if not governed_workshop_target or not governed_workshop_target.get("ok"):
                 governed_workshop_target = prepare_governed_target("workshop")
@@ -2099,12 +2159,27 @@ def run_once(
             )
 
         def apply_action(action_dict: Dict[str, Any], state: Dict[str, Any]) -> Dict[str, Any]:
-            return executor.apply(
+            nonlocal governed_workshop_target
+            result = executor.apply(
                 action_dict,
                 backend="dfhack",
                 state=state,
                 allow_interact=is_governed_dfhack_mode,
             )
+            rejected_target = _governed_rejected_workshop_target(
+                action_dict,
+                result,
+                governed_workshop_target,
+            )
+            if rejected_target is not None:
+                governed_blocked_workshop_targets.add(rejected_target)
+                result["blocked_workshop_target"] = list(rejected_target[:3])
+                result["blocked_workshop_target_fingerprint"] = rejected_target[3]
+            # Any command can change occupancy, liquid, citizen reachability, or
+            # path state once its ticks advance. Re-run the legal-site probe
+            # before publishing another authoritative footprint.
+            governed_workshop_target = None
+            return result
 
         def advance_env(num_ticks: int) -> Dict[str, Any]:
             nonlocal tick_info_state

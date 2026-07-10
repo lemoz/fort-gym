@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import re
 import time
 from pathlib import Path
 from typing import Dict, Iterable, Sequence
@@ -544,7 +545,7 @@ def restore_view_state(view_state: Dict[str, object] | None) -> Dict[str, object
 
 
 def _format_blocked_workshop_targets(
-    blocked_workshop_targets: Sequence[Sequence[int]] | None,
+    blocked_workshop_targets: Sequence[Sequence[object]] | None,
 ) -> str:
     if not blocked_workshop_targets:
         return ""
@@ -556,14 +557,18 @@ def _format_blocked_workshop_targets(
             x, y, z = int(target[0]), int(target[1]), int(target[2])
         except (TypeError, ValueError):
             continue
-        tokens.append(f"{x},{y},{z}")
+        fingerprint = str(target[3]) if len(target) >= 4 else ""
+        if fingerprint and re.fullmatch(r"[A-Za-z0-9:_-]{1,512}", fingerprint):
+            tokens.append(f"{x},{y},{z},{fingerprint}")
+        else:
+            tokens.append(f"{x},{y},{z}")
     return ";".join(tokens)
 
 
 def prepare_keystroke_target(
     mode: str = "starter",
     *,
-    blocked_workshop_targets: Sequence[Sequence[int]] | None = None,
+    blocked_workshop_targets: Sequence[Sequence[object]] | None = None,
 ) -> Dict[str, object]:
     """Center the live UI on a visible, mineable wall pocket for keystroke runs."""
 

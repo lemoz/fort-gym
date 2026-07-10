@@ -110,15 +110,18 @@ local function tile_placement_error(x, y)
   local block = dfhack.maps.getTileBlock(x, y, z)
   if not block then return 'tile_out_of_bounds' end
   local dx, dy = x % 16, y % 16
-  local occupied, is_floor, hidden = false, false, false
+  local occupied, is_floor, frozen_liquid, hidden = false, false, false, false
   pcall(function()
     occupied = block.occupancy[dx][dy].building ~= 0
     local attr = df.tiletype.attrs[block.tiletype[dx][dy]]
     is_floor = attr ~= nil and attr.shape == df.tiletype_shape.FLOOR
+    frozen_liquid = attr ~= nil
+      and attr.material == df.tiletype_material.FROZEN_LIQUID
     hidden = block.designation[dx][dy].hidden
   end)
   if occupied then return 'tile_occupied_by_building' end
   if hidden then return 'tile_hidden_unexplored' end
+  if frozen_liquid then return 'tile_frozen_liquid' end
   if not is_floor then return 'tile_not_open_floor' end
   return nil
 end
