@@ -504,8 +504,10 @@ Attempt 11, run `beaf1a3f0c99478bb504bdd8f004e2ec`
 was stopped after 51 gameplay advances once a policy failure persisted. It
 completed both production workshops, produced three beds and three doors, built
 a FarmPlot, gathered plants, created brew jobs, and made 50 constructions with
-complete evidence and no death. Unlike attempts 6-9, it crossed every review
-boundary without an infrastructure abort.
+proof records on all 51 gameplay rows and no death. Productive-change proof
+passed on 44/51 rows; the other seven truthfully recorded rejected BUILDs.
+Unlike attempts 6-9, it crossed every review boundary without an infrastructure
+abort.
 
 It still produced zero food/drink, installed no furniture, and enclosed no
 space. Three factual defects mattered. The embark Wagon occupied nine tiles that

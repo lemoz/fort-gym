@@ -1397,8 +1397,10 @@ gate. Each entry states what changed and the evidence that forced it.
   operator-stopped after the public step-50 checkpoint once the failure mode
   was persistent; one already-decided action left a stopped terminal row at
   step 51. The 51 gameplay rows advanced 51,200 real ticks and all have screen
-  text, governed provenance, and gameplay proof. Model use was 55 calls,
-  703,542 prompt tokens, and 32,757 completion tokens (736,299 total).
+  text, governed provenance, and proof records. Productive-change proof is
+  `gameplay_proof.ok=true` on 44/51 rows; the other seven truthfully record
+  rejected BUILDs. Model use was 55 calls, 703,542 prompt tokens, and 32,757
+  completion tokens (736,299 total).
 
   This was real, materially better gameplay. The policy felled trees; completed
   a Carpenter's Workshop and stable Still; produced three beds and three doors;

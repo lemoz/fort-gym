@@ -267,9 +267,10 @@ from deployed SHA `6e640757e880da17663d35c1522484c1da835b2f`. The operator stopp
 it after 51 gameplay rows and 51,200 ticks once the repeated failure was clear.
 It produced a real Carpenter's Workshop, Still, FarmPlot, beds, doors, gathered
 plants, brew jobs, and 50 constructions. Every gameplay row retained governed
-provenance, recorded screen text, and gameplay proof. It nevertheless produced
-zero food and drink, enclosed no spaces, installed no beds, and remained at
-population 7, so deterministic G7 correctly failed it.
+provenance, recorded screen text, and a proof record; 44/51 action proofs were
+productive and seven correctly recorded rejected BUILD attempts. It nevertheless
+produced zero food and drink, enclosed no spaces, installed no beds, and
+remained at population 7, so deterministic G7 correctly failed it.
 
 Attempt 11 isolated three factual control-loop defects: the embark Wagon's
 occupied footprint appeared as open floor in the agent minimap; a crop choice
