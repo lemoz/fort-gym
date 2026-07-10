@@ -652,6 +652,7 @@ class DFHackGovernedLLMAgent(Agent):
         payload: Dict[str, Any],
         obs_text: str,
         control: Dict[str, Any],
+        fingerprint_action: Dict[str, Any] | None,
     ) -> List[str]:
         errors: List[str] = []
         allowed_evidence_lines = control.get("allowed_evidence_lines")
@@ -725,21 +726,16 @@ class DFHackGovernedLLMAgent(Agent):
                     )
             elif not re.fullmatch(r"[0-9a-f]{64}", previous_fingerprint):
                 errors.append("AGENT PLAN CONTROL is missing the previous action fingerprint")
-            else:
-                try:
-                    canonical_action = parse_action(self._normalize_payload(payload))
-                except (TypeError, ValueError) as exc:
-                    errors.append(f"invalid action payload: {exc}")
-                else:
-                    repeats_previous = (
-                        normalized_action_fingerprint(canonical_action) == previous_fingerprint
+            elif fingerprint_action is not None:
+                repeats_previous = (
+                    normalized_action_fingerprint(fingerprint_action) == previous_fingerprint
+                )
+                if retry_is_bool and retry_same_action != repeats_previous:
+                    errors.append(
+                        "last_action_review.retry_same_action must match whether type+params "
+                        "repeat the previous action "
+                        f"(expected {str(repeats_previous).lower()})"
                     )
-                    if retry_is_bool and retry_same_action != repeats_previous:
-                        errors.append(
-                            "last_action_review.retry_same_action must match whether type+params "
-                            "repeat the previous action "
-                            f"(expected {str(repeats_previous).lower()})"
-                        )
 
         plan_review = payload.get("plan_review")
         if not isinstance(plan_review, dict):
@@ -917,25 +913,43 @@ class DFHackGovernedLLMAgent(Agent):
                 contract_errors = [last_error]
             else:
                 action_type = str(payload.get("type") or "").upper()
+                canonical_action = None
+                fingerprint_action = None
                 if action_type not in GOVERNED_ACTION_TYPES:
-                    last_error = f"illegal action type: {action_type or 'missing'}"
-                    contract_errors = [last_error]
-                else:
-                    contract_errors = (
-                        self._review_contract_errors(payload, obs_text, review_control)
-                        if review_control is not None
-                        else []
+                    contract_errors.append(
+                        f"illegal action type: {action_type or 'missing'}"
                     )
-                    if contract_errors:
-                        last_error = "; ".join(contract_errors)
-                    else:
-                        try:
-                            action = parse_action(self._normalize_payload(payload))
-                        except (TypeError, ValueError) as exc:
-                            last_error = f"invalid action payload: {exc}"
-                            contract_errors = [last_error]
-                        else:
-                            break
+                else:
+                    fingerprint_payload = {
+                        "type": payload.get("type"),
+                        "params": payload.get("params"),
+                    }
+                    if action_type == "INTERACT":
+                        fingerprint_payload["advance_ticks"] = 0
+                    try:
+                        fingerprint_action = parse_action(
+                            self._normalize_payload(fingerprint_payload)
+                        )
+                    except (TypeError, ValueError):
+                        pass
+                    try:
+                        canonical_action = parse_action(self._normalize_payload(payload))
+                    except (TypeError, ValueError) as exc:
+                        contract_errors.append(f"invalid action payload: {exc}")
+                if review_control is not None:
+                    contract_errors.extend(
+                        self._review_contract_errors(
+                            payload,
+                            obs_text,
+                            review_control,
+                            fingerprint_action,
+                        )
+                    )
+                if contract_errors:
+                    last_error = "; ".join(contract_errors)
+                elif canonical_action is not None:
+                    action = canonical_action
+                    break
             if review_control is not None and attempt + 1 < max_contract_attempts:
                 rejected_payload = (
                     json.dumps(payload, ensure_ascii=True, sort_keys=True)

@@ -596,6 +596,82 @@ def test_review_contract_recomputes_retry_flag_after_corrected_action_changes() 
     assert "expected true" in correction
 
 
+def test_review_contract_combines_action_parse_and_review_errors() -> None:
+    control = _plan_control()
+    invalid = _reviewed_action_payload(control=control)
+    invalid["params"] = {"area": [50, 35, 0]}
+    invalid["last_action_review"]["verdict"] = "progressed"
+    valid = _reviewed_action_payload(control=control)
+    agent = _agent([_submit_action_response(invalid), _submit_action_response(valid)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["type"] == "DIG"
+    correction = agent._client.chat.completions.requests[1]["messages"][-1]["content"]
+    assert "invalid action payload" in correction
+    assert "last_action_review.verdict does not match" in correction
+    retry = next(
+        event
+        for event in agent.pop_tool_events()
+        if event["tool"] == "governed_llm.review_contract_retry"
+    )
+    assert len(retry["output"]["errors"]) == 2
+
+
+def test_review_contract_fingerprint_ignores_invalid_nonexecution_metadata() -> None:
+    repeated_action = {
+        "type": "DIG",
+        "params": {"area": [50, 35, 0], "size": [5, 5, 1]},
+    }
+    control = _plan_control(
+        review_due=False,
+        request_id="17:none",
+        prior_objective="Build durable shelter.",
+        previous_step=16,
+        previous_verdict="progressed",
+        previous_action=repeated_action,
+    )
+    invalid = _reviewed_action_payload(control=control)
+    invalid["intent"] = 123
+    invalid["last_action_review"]["retry_same_action"] = False
+    valid = _reviewed_action_payload(control=control)
+    valid["last_action_review"]["retry_same_action"] = True
+    agent = _agent([_submit_action_response(invalid), _submit_action_response(valid)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["last_action_review"]["retry_same_action"] is True
+    correction = agent._client.chat.completions.requests[1]["messages"][-1]["content"]
+    assert "invalid action payload" in correction
+    assert "intent is required" in correction
+    assert "last_action_review.retry_same_action must match" in correction
+
+
+def test_review_contract_combines_illegal_type_and_review_errors() -> None:
+    control = _plan_control()
+    invalid = _reviewed_action_payload(control=control)
+    invalid["type"] = "HACK"
+    invalid["last_action_review"]["verdict"] = "progressed"
+    valid = _reviewed_action_payload(control=control)
+    agent = _agent([_submit_action_response(invalid), _submit_action_response(valid)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["type"] == "DIG"
+    correction = agent._client.chat.completions.requests[1]["messages"][-1]["content"]
+    assert "illegal action type: HACK" in correction
+    assert "last_action_review.verdict does not match" in correction
+
+
 def test_due_plan_review_requires_two_distinct_factual_lines() -> None:
     control = _plan_control()
     invalid = _reviewed_action_payload(control=control)

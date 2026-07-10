@@ -256,23 +256,25 @@ These systems are implemented (not roadmap):
 2. **Tools** (`fort_gym/bench/agent/tools.py`): `ToolManager` with memory/plan/perception tools wired into the review-mode agents.
 3. **Experimentation** (`fort_gym/bench/experiment/`): YAML config → `ExperimentRunner` → run with experiment metadata.
 
-PR #74 merged and deployed as `4e1caf7ad2bca04eaf1a7af1e3558806c8e1a973`.
-Its two-step fresh-seed smoke completed with factual `E#` reviews and verified
-cleanup. G7 attempt 6, run `e8d67282a0864b189a4dea6a1bec9d6a`
-([replay](https://fortgym.live/r/0-WRs-CBBA7BXEx6bw5d8g1AG22irdiL)),
-then failed closed at step 1 after two sequential non-due review-format errors;
-it advanced only 1,005 ticks and has no policy verdict. The follow-up permits a
-minimal `not_due` review or voluntary `continue`, allows two bounded
-corrections, and durably identifies exhausted decisions as
-`agent_decide_error`.
+The latest G7 result is attempt 7, run
+`82e5c2e18f6847f1bc251158e273f53e`
+([replay](https://fortgym.live/r/5dk997_GsCm1IJoKzGL_cLy8On3U7Hxz)),
+from deployed SHA `b38c40a255db62ae52c940f81883c8097e7ac273`. It made genuine
+early progress through legal governed actions and real simulation ticks: a
+completed Carpenter's Workshop and Still, two beds, one door, four new barrels,
+and 50 units of run-scoped drink. It still had zero FarmPlots, installed
+furniture, enclosed spaces, or functional rooms. The run failed before gameplay
+at step 17 because its bounded model-correction loop exposed contract errors one
+at a time. It advanced 17,064 ticks and is an infrastructure-aborted G7 FAIL
+with no long-horizon policy verdict. The correction path now preserves the
+rejected payload and aggregates every independently detectable action and review
+error before spending another model submission.
 
-The latest substantive G7 result is attempt 5, run
-`680a938aabd84764953dd01c0ccf1c7f`
+Attempt 5, run `680a938aabd84764953dd01c0ccf1c7f`
 ([replay](https://fortgym.live/r/88uZqRulANyNG_e7t7c6KFlEOYRvHZdz)),
-launched for at most 450 steps from deployed merge SHA
-`e012e704b7a45cd509034700c3524801217130ef`. It failed after 201,556 ticks on a
-bounded topic-dialog variant, with zero food/drink production, final drink 0,
-one functional room, score-v3 178.59, and deterministic G7 FAIL. Attempt 4, run
+remains the longest region3 attempt at 201,556 ticks. It failed on a bounded
+topic-dialog variant, with zero food/drink production, final drink 0, one
+functional room, score-v3 178.59, and deterministic G7 FAIL. Attempt 4, run
 `45659da07fb749f9b5ebe9c55dd1eb91`, is an infrastructure-aborted FAIL with no
 policy verdict ([replay](https://fortgym.live/r/4Gn9v9WaPf_i4qhGJFQs9bo9d8y_GSBo)).
 It completed 208 governed rows and 202,737 ticks before a bounded dialog guard

@@ -38,8 +38,8 @@ issuing only legal governed actions, takes a fixed embark from fresh seed to a
 producing fortress on public, replayable evidence, with zero rubric blockers.*
 G0–G4 have passed; G5 failed and stands; G6 is unpassed after seven attempts
 on the unseen map, with the first enclosed rooms arriving only after the factual
-observation corrections; G7 is ratified and its first four attempts failed,
-with attempts 2 through 4 infrastructure aborts and no policy verdict.
+observation corrections; G7 is ratified and its first seven attempts failed,
+with attempts 2 through 7 infrastructure aborts and no policy verdict.
 
 ## 2. The findings
 
@@ -428,8 +428,9 @@ proved that the new model-authored plan review can pivot after rejection and
 start a real production chain. Across 17 governed gameplay rows the GLM-5V
 policy recovered from two rejected workshop placements, chopped reachable
 trees, completed a Carpenter's Workshop and Still, and produced two beds, one
-door, 19 barrels, and 50 units of drink. No dwarf died. This was legal DFHack
-control followed by real simulation ticks, not score-only activity.
+door, four barrels (finishing with 19), and 50 units of drink. No dwarf died.
+This was legal DFHack control followed by real simulation ticks, not score-only
+activity.
 
 It was still far from a fortress: zero FarmPlots, installed furniture,
 constructions, enclosed spaces, or functional rooms. At step 17 the next model
@@ -471,8 +472,8 @@ a policy pass or long-horizon policy verdict.
   can move beyond the now-demonstrated workshop/Still/drink chain into farms,
   installed furniture, and multiple enclosed functional rooms.
 - **G6 remains open**: the best unseen-map run reached 4/5 and missed only its
-  second functional room. G7 attempt 5 ran on the same unseen seed, so a strong
-  attempt 6 can add evidence without a separate blind retry campaign.
+  second functional room. G7 attempt 7 ran on the same unseen seed, so a strong
+  attempt 8 can add evidence without a separate blind retry campaign.
 - **G8 — depth**: a multi-z fortress (stairs, underground rooms), the next
   spatial-reasoning escalation past the hollow ring.
 - **The open-source flywheel**: a standing public leaderboard where any model
