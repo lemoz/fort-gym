@@ -37,6 +37,29 @@ def test_read_tick_pause_viewscreen_parses_atomic_json(monkeypatch) -> None:
     }
 
 
+def test_read_tick_pause_viewscreen_parses_pretty_dfhack_json(monkeypatch) -> None:
+    monkeypatch.setattr(
+        dfhack_exec,
+        "run_lua_expr",
+        lambda *_args, **_kwargs: (
+            "notice from dfhack\n"
+            "{\n"
+            '\t"cur_year": 30,\n'
+            '\t"cur_year_tick": 223702,\n'
+            '\t"pause_state": true,\n'
+            '\t"viewscreen_type": "viewscreen_dwarfmodest"\n'
+            "}"
+        ),
+    )
+
+    assert dfhack_exec.read_tick_pause_viewscreen() == {
+        "cur_year": 30,
+        "cur_year_tick": 223702,
+        "pause_state": True,
+        "viewscreen_type": "viewscreen_dwarfmodest",
+    }
+
+
 def test_read_tick_pause_viewscreen_rejects_invalid_json_and_shape(monkeypatch) -> None:
     monkeypatch.setattr(
         dfhack_exec, "run_lua_expr", lambda *_args, **_kwargs: "not json"
@@ -52,6 +75,22 @@ def test_read_tick_pause_viewscreen_rejects_invalid_json_and_shape(monkeypatch) 
         ),
     )
     with pytest.raises(dfhack_exec.DFHackError, match="invalid pause_state"):
+        dfhack_exec.read_tick_pause_viewscreen()
+
+
+def test_read_tick_pause_viewscreen_rejects_json_embedded_in_diagnostic(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        dfhack_exec,
+        "run_lua_expr",
+        lambda *_args, **_kwargs: (
+            'notice {"cur_year": 30, "cur_year_tick": 223702, '
+            '"pause_state": true, "viewscreen_type": "viewscreen_dwarfmodest"}'
+        ),
+    )
+
+    with pytest.raises(dfhack_exec.DFHackError, match="invalid output"):
         dfhack_exec.read_tick_pause_viewscreen()
 
 
