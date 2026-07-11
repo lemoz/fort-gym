@@ -158,15 +158,24 @@ print(json.encode({
 }))
 """
     out = run_lua_expr(lua_script, timeout=timeout)
-    lines = [line.strip() for line in out.splitlines() if line.strip()]
-    if not lines:
+    clean = out.strip()
+    if not clean:
         raise DFHackError("read_tick_pause_viewscreen: empty output")
-    try:
-        value = json.loads(lines[-1])
-    except json.JSONDecodeError as exc:
-        raise DFHackError(
-            f"read_tick_pause_viewscreen: invalid output {lines[-1]!r}"
-        ) from exc
+    decoder = json.JSONDecoder()
+    value: object | None = None
+    candidate_starts = [
+        match.end() - 1 for match in re.finditer(r"(?m)^[ \t]*[\{\[]", clean)
+    ]
+    for start in reversed(candidate_starts):
+        try:
+            candidate, end = decoder.raw_decode(clean, start)
+        except json.JSONDecodeError:
+            continue
+        if not clean[end:].strip():
+            value = candidate
+            break
+    if value is None:
+        raise DFHackError(f"read_tick_pause_viewscreen: invalid output {clean!r}")
     if not isinstance(value, dict):
         raise DFHackError("read_tick_pause_viewscreen: expected object output")
     cur_year = value.get("cur_year")
