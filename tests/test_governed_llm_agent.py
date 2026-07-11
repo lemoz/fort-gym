@@ -356,6 +356,11 @@ def test_governed_system_prompt_describes_farm_plot_mechanic_only() -> None:
     assert "farming labor" in GOVERNED_SYSTEM_PROMPT
     assert "brewable/cookable" in GOVERNED_SYSTEM_PROMPT
     assert "consumes no material item" in GOVERNED_SYSTEM_PROMPT
+    assert "A one-tile lower-floor FarmPlot is a valid probe" in GOVERNED_SYSTEM_PROMPT
+    assert "chamber size alone is not a reason to continue excavating" in GOVERNED_SYSTEM_PROMPT
+    assert "choose the target yourself from the current lower-level map" in GOVERNED_SYSTEM_PROMPT
+    assert "use the completed plot readback" in GOVERNED_SYSTEM_PROMPT
+    assert "94,95,160" not in GOVERNED_SYSTEM_PROMPT
     # FarmPlot-as-BUILD predates the FARM crop-selection action; both now exist
     assert GOVERNED_ACTION_TYPES == (
         "DIG",

@@ -86,6 +86,10 @@ placement. Dwarves with the farming labor plant seasonal crops on them IF seeds 
 (the embark carries plump helmet spawn); the harvested crops become brewable/cookable plants. The \
 z-level alone does not make a plot subterranean: floor directly below an open channel shaft can \
 remain light/outside, while excavated floor beneath intact overhead rock is the relevant candidate. \
+A one-tile lower-floor FarmPlot is a valid probe. Once connected lower access reveals a verified \
+lower-level `.` floor tile, chamber size alone is not a reason to continue excavating: choose the \
+target yourself from the current lower-level map, attempt the FarmPlot, advance real work, and use \
+the completed plot readback to decide whether more excavation is actually needed. \
 Only a completed plot's `plot_subterranean=true` and offered-crop readback confirm underground \
 farming; `plot_subterranean=false` with empty options cannot grow plump helmets. The \
 observation's crew section reports each plot's construction stage. FARM crop selection is durable \
