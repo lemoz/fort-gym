@@ -1264,6 +1264,17 @@ the two duplicated objective strings are identical; conflicting objectives
 still enter bounded correction and fail closed. Neither change chooses a plan,
 action, coordinate, or gameplay target.
 
+PR #101 passed 829 local tests, GitHub CI, and an independent focused review,
+then merged and deployed at exact SHA
+`a8f696ac17a4a8205306b327a284f78ea74ae9bf`. Production targeted tests and API
+health passed. On the paused Attempt 25 save, `(87,94,161)` read as
+`ShrubDead`; the deployed gather returned `ok=false`,
+`no_gatherable_shrubs`, and `dead_shrub_ungatherable`. Tick remained 102,863,
+pause remained true, and the full tile/designation snapshot was unchanged.
+Fresh-seed Attempt 26 then launched on that exact SHA as run
+`57095606c09d454c9f3fae8bb37fb0dd`
+([replay](https://fortgym.live/r/ke3Mv0MUTO7fSpuJmLJpUVH-Gn6d_IqD)).
+
 ## 3. Limitations
 
 - **A single passing embark family.** Every pass (G0–G4) is on
@@ -1311,8 +1322,9 @@ action, coordinate, or gameplay target.
 - **Attempt 25 proved the fail-closed tick controller can support a fresh run
   while preserving exact post-pause ticks.** Its two observed blockers are now
   narrow: identical duplicated objective prose exceeded the schema cap, and
-  dead shrubs were presented as legal gather targets. Review, deploy, and live
-  prove those factual boundary fixes, then launch a fresh replacement run.
+  dead shrubs were presented as legal gather targets. PR #101 deployed and live
+  proved both factual boundary fixes; fresh-seed Attempt 26 is running on its
+  exact merge SHA.
 - **Attempt 23 proved the corrected loop can independently transition from
   excavation to farming, workshops, furniture, and two functional rooms.** Its
   decisive blockers were incomplete native feedback for rejected 3x3
