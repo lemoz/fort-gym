@@ -1,0 +1,169 @@
+schema_version: "fort-eval.experiment/v1"
+name: fort-eval-easy-v1
+description: >-
+  Conservative Easy-profile substrate pilot for Fort-Eval. The executable arm is
+  the current governed scripted control; external provider model IDs and pricing
+  are intentionally unresolved and must be approved before adding paid policy arms.
+status: provisional
+
+program:
+  umbrella: Fort Labs
+  benchmark: Fort-Eval
+  harness: Fort-Gym
+  profile: easy
+  profile_version: "easy-v1"
+  current_repo_truth:
+    governed_structured_state: true
+    legal_semantic_dfhack_controls: true
+    copy_screen_text:
+      enabled: true
+      width: 80
+      height: 25
+    fort_minimap:
+      enabled: true
+      max_width: 34
+      max_height: 34
+    focused_access_maps:
+      enabled: true
+      max_width: 17
+      max_height: 17
+    observer_snapshot:
+      max_width: 64
+      max_height: 64
+      agent_input_by_default: false
+    current_keystroke_mode_is_hard: false
+
+model_catalog:
+  executable_agent_id: dfhack-governed-scripted
+  arms:
+    - agent_id: dfhack-governed-scripted
+      provider_model_id: null
+      pricing_status: not_applicable
+      input_price_usd_per_1m_tokens: null
+      output_price_usd_per_1m_tokens: null
+    - agent_id: dfhack-governed-llm
+      provider_model_id: null
+      pricing_status: unresolved
+      input_price_usd_per_1m_tokens: null
+      output_price_usd_per_1m_tokens: null
+
+interface:
+  agent_observation_profile: governed_structured_state_v1
+  agent_action_profile: legal_semantic_dfhack_v1
+  observer_map:
+    spectator_visible: true
+    agent_visible: false
+    prompt_or_memory_injection: false
+    explicit_profile_override_required: true
+  hard_interface:
+    status: future
+    viewport: fixed_pixel
+    inputs: primitive_human_inputs
+  discovery_interface:
+    status: future
+    inherits: hard
+
+actions:
+  legal_semantic_dfhack:
+    - DIG
+    - BUILD
+    - ORDER
+    - UNSUSPEND
+    - FARM
+    - LABOR
+    - WAIT
+    - INTERACT
+  debug_completion_enabled: false
+  assisted_structured_actions_ranked: false
+
+knowledge:
+  axis: independent
+  condition: none
+  documents_allowed: false
+  static_corpus_digest: null
+  live_web_allowed: false
+  pretraining_claim: not_evaluated
+
+comparability:
+  key_format: >-
+    forteval/v1|profile={profile}|task={task_id}|knowledge={knowledge}|seed_split={seed_split}|mechanics={mechanics_digest}|obs={observation_digest}|action={action_digest}|budget={budget_digest}|model={model_digest}|prompt={prompt_digest}|memory={memory_digest}|harness={fort_gym_commit}|df={df_version}|evaluator={evaluator_version}
+  fields:
+    task_id: easy_substrate_control
+    task_version: easy-v1
+    seed_split: fixed_seed_pilot
+    mechanics_digest: unresolved_before_run
+    observation_digest: governed_structured_state_v1
+    action_digest: legal_semantic_dfhack_v1
+    budget_digest: max_steps_10_ticks_per_step_200
+    model_digest: resolved_at_run
+    prompt_digest: resolved_at_run
+    memory_digest: memory_window_variant
+    fort_gym_commit: resolved_at_run
+    df_version: resolved_at_run
+    evaluator_version: resolved_at_run
+
+contamination:
+  policy_version: contamination-v1
+  held_out_seeds: false
+  held_out_mechanics: false
+  docs_or_web_during_run: false
+  observer_map_to_agent: forbidden
+  prompt_and_retry_tuning_after_run: forbidden
+  contamination_status: must_be_recorded_per_run
+
+metrics:
+  primary:
+    - task_success_predicates
+    - owned_observed_progress
+    - legality_and_rubric_blockers
+    - evidence_completeness
+  secondary:
+    - steps
+    - ticks
+    - model_calls
+    - provider_usage
+    - cost
+  score_is_sufficient_alone: false
+  required_provenance: [screen_text, gameplay_proof, action_provenance, score_provenance]
+
+cost_and_kill:
+  pricing_status: unresolved
+  currency: null
+  per_run_budget_usd: null
+  paid_policy_arms_require_explicit_approval: true
+  stop_on:
+    - provenance_violation
+    - rollback_unverified
+    - contamination_signal
+    - missing_required_evidence_after_retry_budget
+    - declared_step_or_tick_ceiling
+    - declared_no_progress_kill_threshold
+  infrastructure_abort_is_policy_failure: false
+
+ranking:
+  status: provisional_only
+  minimum_valid_runs_per_cell: null
+  ranked_seed_split_required: true
+  unresolved_pricing_blocks_ranked_cost_claims: true
+
+staged_pilot:
+  stage: P0_substrate
+  next_stage: P1_easy_fixed_seed
+  gates:
+    - validate_manifest
+    - run_known_governed_scripted_control
+    - verify_observer_firewall
+    - verify_replayable_evidence
+    - freeze_comparability_key_before_policy_arms
+
+# These fields are consumed by the current Fort-Gym experiment runner.
+base_config:
+  backend: dfhack
+  max_steps: 10
+  model: dfhack-governed-scripted
+  ticks_per_step: 200
+  evaluation_protocol: fort-eval-easy-v1
+variants:
+  - name: substrate-control-memory-off
+    memory_window: 0
+runs_per_variant: 1

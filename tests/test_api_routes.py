@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import sqlite3
+
+import pytest
+
 
 def test_routes_import() -> None:
     from fort_gym.bench.api.server import app
@@ -9,15 +13,145 @@ def test_routes_import() -> None:
 
 
 def test_run_create_request_accepts_preserve_save() -> None:
+    from pydantic import ValidationError
+
     from fort_gym.bench.api.schemas import RunCreateRequest
 
     request = RunCreateRequest(
         backend="dfhack",
         model="openrouter-keystroke-perception-review",
         preserve_save=True,
+        evaluation_protocol="fort-eval.v1",
     )
 
     assert request.preserve_save is True
+    assert request.evaluation_protocol == "fort-eval.v1"
+
+    with pytest.raises(ValidationError):
+        RunCreateRequest(evaluation_protocol="fort eval v1")
+
+
+def test_active_run_serializes_protocol_and_survives_registry_restart(tmp_path, monkeypatch) -> None:
+    from datetime import datetime
+
+    from fastapi.testclient import TestClient
+
+    from fort_gym.bench.api import server
+    from fort_gym.bench.run.storage import RunRegistry
+
+    monkeypatch.setenv("FORT_GYM_INSECURE_ADMIN", "1")
+    registry = RunRegistry(db_path=tmp_path / "runs.sqlite3")
+    monkeypatch.setattr(server, "RUN_REGISTRY", registry)
+    run = registry.create(
+        backend="mock",
+        model="fake",
+        max_steps=2,
+        ticks_per_step=10,
+        evaluation_protocol="fort-eval-v1",
+    )
+    share = registry.create_share(run.run_id, scope=["live"])
+    assert registry.claim_pending_run(run.run_id, started_at=datetime.utcnow())
+
+    client = TestClient(server.app)
+    admin_response = client.get(f"/runs/{run.run_id}")
+    public_response = client.get("/public/runs")
+
+    assert admin_response.status_code == 200
+    assert admin_response.json()["status"] == "running"
+    assert admin_response.json()["evaluation_protocol"] == "fort-eval-v1"
+    assert public_response.status_code == 200
+    public_run = public_response.json()[0]
+    assert public_run["run_id"] == run.run_id
+    assert public_run["token"] == share.token
+    assert public_run["evaluation_protocol"] == "fort-eval-v1"
+
+    reloaded = RunRegistry(db_path=tmp_path / "runs.sqlite3").get(run.run_id)
+    assert reloaded is not None
+    assert reloaded.status == "failed"
+    assert reloaded.evaluation_protocol == "fort-eval-v1"
+
+
+def test_create_run_propagates_protocol_to_registry_and_runner(tmp_path, monkeypatch) -> None:
+    from fastapi.testclient import TestClient
+
+    from fort_gym.bench.api import server
+    from fort_gym.bench.run.storage import RunRegistry
+
+    class ImmediateThread:
+        def __init__(self, *, target, **_kwargs) -> None:
+            self._target = target
+
+        def start(self) -> None:
+            self._target()
+
+    captured: dict[str, object] = {}
+    registry = RunRegistry(db_path=tmp_path / "runs.sqlite3")
+    monkeypatch.setenv("FORT_GYM_INSECURE_ADMIN", "1")
+    monkeypatch.setattr(server, "RUN_REGISTRY", registry)
+    monkeypatch.setattr(server.threading, "Thread", ImmediateThread)
+    monkeypatch.setattr(server, "run_once", lambda _agent, **kwargs: captured.update(kwargs))
+
+    response = TestClient(server.app).post(
+        "/runs",
+        json={"backend": "mock", "model": "fake", "evaluation_protocol": "fort-eval-v1"},
+    )
+
+    assert response.status_code == 200
+    run_id = response.json()["id"]
+    assert response.json()["evaluation_protocol"] == "fort-eval-v1"
+    assert captured["run_id"] == run_id
+    assert captured["evaluation_protocol"] == "fort-eval-v1"
+    persisted = registry.get(run_id)
+    assert persisted is not None
+    assert persisted.evaluation_protocol == "fort-eval-v1"
+
+
+def test_run_registry_migrates_legacy_rows_without_a_protocol(tmp_path) -> None:
+    from fort_gym.bench.run.storage import RunRegistry
+
+    db_path = tmp_path / "legacy.sqlite3"
+    conn = sqlite3.connect(db_path)
+    conn.executescript(
+        """
+        CREATE TABLE runs (
+          run_id TEXT PRIMARY KEY,
+          backend TEXT NOT NULL,
+          model TEXT NOT NULL,
+          max_steps INTEGER NOT NULL,
+          ticks_per_step INTEGER NOT NULL,
+          status TEXT NOT NULL,
+          step INTEGER NOT NULL,
+          created_at TEXT NOT NULL,
+          started_at TEXT,
+          ended_at TEXT,
+          git_sha TEXT,
+          seed_save TEXT,
+          runtime_save TEXT,
+          preserve_save INTEGER NOT NULL DEFAULT 0,
+          artifacts_dir TEXT,
+          trace_path TEXT,
+          last_score REAL,
+          total_score REAL,
+          survival_score REAL,
+          milestones_json TEXT,
+          summary_json TEXT,
+          terminal_reason_json TEXT,
+          stop_requested_at TEXT,
+          cleanup_completed_at TEXT
+        );
+        INSERT INTO runs (
+          run_id, backend, model, max_steps, ticks_per_step, status, step, created_at
+        ) VALUES ('legacy-run', 'mock', 'fake', 1, 1, 'completed', 1, '2026-01-01T00:00:00');
+        """
+    )
+    conn.commit()
+    conn.close()
+
+    registry = RunRegistry(db_path=db_path)
+    legacy = registry.get("legacy-run")
+
+    assert legacy is not None
+    assert legacy.evaluation_protocol is None
 
 
 def test_run_create_request_accepts_poi_review_keystroke_model() -> None:

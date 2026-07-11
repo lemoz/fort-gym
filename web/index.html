@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Fort-Gym: Dwarf Fortress Agent Benchmark</title>
+  <title>Fort-Eval Live | Fort Labs</title>
   <style>
     * { box-sizing: border-box; }
     body {
@@ -167,6 +167,18 @@
       cursor: not-allowed;
       background: transparent;
     }
+    .observer-level-select {
+      display: none;
+      height: 2rem;
+      padding: 0.2rem 0.55rem;
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 4px;
+      background: #0b0d12;
+      color: #dbe6ff;
+      font-size: 0.75rem;
+      font-family: 'SFMono-Regular', Menlo, Monaco, monospace;
+    }
+    .observer-level-select[data-visible="true"] { display: inline-block; }
     .replay-legend {
       display: flex;
       gap: 0.55rem;
@@ -217,15 +229,16 @@
     /* Dashboard row */
     .dashboard-row {
       display: grid;
-      grid-template-columns: 1fr 2fr;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
       gap: 1rem;
     }
     @media (max-width: 900px) {
-      .dashboard-row { grid-template-columns: 1fr; }
+      .dashboard-row { grid-template-columns: minmax(0, 1fr); }
     }
 
     /* Stats panel */
     .stats-panel {
+      min-width: 0;
       background: rgba(15, 21, 33, 0.9);
       border: 1px solid rgba(255,255,255,0.08);
       border-radius: 12px;
@@ -307,6 +320,7 @@
 
     /* Chart panel */
     .chart-panel {
+      min-width: 0;
       background: rgba(15, 21, 33, 0.9);
       border: 1px solid rgba(255,255,255,0.08);
       border-radius: 12px;
@@ -321,6 +335,9 @@
     }
     .chart-container {
       position: relative;
+      min-width: 0;
+      max-width: 100%;
+      overflow: hidden;
       height: 200px;
     }
 
@@ -401,7 +418,7 @@
 <body>
   <!-- Header bar -->
   <div class="header-bar">
-    <h1><span>&#x1F3F0;</span> Fort-Gym Live</h1>
+    <h1><span>FORT</span> LABS / Fort-Eval Live</h1>
     <div class="run-info">
       <select id="run-selector" class="run-selector">
         <option value="">Select a run...</option>
@@ -429,7 +446,9 @@
         <div id="replay-view-toggle" class="replay-view-toggle" aria-label="Replay evidence view">
           <button id="replay-view-screen" type="button" data-active="true">DF Screen</button>
           <button id="replay-view-map" type="button" data-active="false">Map Inspect</button>
+          <button id="replay-view-observer" type="button" data-active="false">Observer Map</button>
         </div>
+        <select id="observer-level-select" class="observer-level-select" aria-label="Observer map z-level"></select>
         <div id="replay-glyph-toggle" class="replay-view-toggle" aria-label="Replay glyph style">
           <button id="replay-glyph-graphical" type="button" data-active="true" title="Re-skin the recorded characters with a graphical DF tileset (same evidence, different glyphs)">Graphical</button>
           <button id="replay-glyph-ascii" type="button" data-active="false" title="Raw recorded CopyScreen characters, for ASCII purists">ASCII</button>
@@ -516,7 +535,7 @@
   </div>
 
   <footer>
-    Fort-Gym Benchmark &middot; <a href="/leaderboard">Leaderboard</a> &middot; <a href="/admin">Admin Panel</a> &middot; <a href="https://github.com/lemoz/fort-gym" target="_blank">GitHub</a>
+    Fort Labs / Fort-Eval &middot; <a href="/">Overview</a> &middot; <a href="/leaderboard">Historical leaderboard</a> &middot; <a href="https://github.com/lemoz/fort-gym" target="_blank">GitHub</a>
   </footer>
 
   <!-- pcface bitmap font library -->
@@ -540,6 +559,7 @@
     let replayRecords = [];
     let replayStepIndex = 0;
     let replayEvidenceView = 'screen';
+    let observerLevel = null;
     // Glyph style for recorded DF screen frames: 'graphical' re-skins the
     // recorded characters through a DF tileset sprite sheet; 'ascii' shows
     // the raw recorded characters. Defaults to graphical.
@@ -577,6 +597,8 @@
     const replayStepLabel = document.getElementById('replay-step-label');
     const replayViewScreen = document.getElementById('replay-view-screen');
     const replayViewMap = document.getElementById('replay-view-map');
+    const replayViewObserver = document.getElementById('replay-view-observer');
+    const observerLevelSelect = document.getElementById('observer-level-select');
     const replayGlyphGraphical = document.getElementById('replay-glyph-graphical');
     const replayGlyphAscii = document.getElementById('replay-glyph-ascii');
     const statPop = document.getElementById('stat-pop');
@@ -935,6 +957,261 @@
       if (!Array.isArray(mapOrigin) || mapOrigin.length < 3) return null;
       if (!mapOrigin.every(value => typeof value === 'number' && Number.isFinite(value))) return null;
       return fort;
+    }
+
+    function observerActionRect(action) {
+      if (!action || !action.params) return null;
+      const params = action.params;
+      if (Array.isArray(params.area) && Array.isArray(params.size)) {
+        return normalizeRect(rectFromArea(params.area, params.size));
+      }
+      if (params.x == null || params.y == null) return null;
+      const x1 = toNumber(params.x);
+      const y1 = toNumber(params.y);
+      const z = toNumber(params.z);
+      const x2 = params.x2 == null
+        ? x1 + (String(params.kind || '').includes('Workshop') ? 2 : 0)
+        : toNumber(params.x2);
+      const y2 = params.y2 == null
+        ? y1 + (String(params.kind || '').includes('Workshop') ? 2 : 0)
+        : toNumber(params.y2);
+      return normalizeRect([x1, y1, z, x2, y2, z]);
+    }
+
+    function observerMapGlyph(tile) {
+      if (!tile || tile.hidden === true) return ' ';
+      if (typeof tile.char === 'string' && tile.char.length) return tile.char[0];
+      const category = String(tile.category || '').toLowerCase();
+      const shape = String(tile.shape || '').toUpperCase();
+      if (category.includes('tree')) return 'T';
+      if (category.includes('shrub')) return ',';
+      if (category.includes('frozen')) return 'i';
+      if (category.includes('wall')) return '#';
+      if (category.includes('floor')) return '.';
+      if (category.includes('dig')) return 'x';
+      if (shape.includes('STAIR_UPDOWN')) return 'X';
+      if (shape.includes('STAIR_UP')) return '<';
+      if (shape.includes('STAIR_DOWN')) return '>';
+      if (shape.includes('RAMP')) return '^';
+      return '~';
+    }
+
+    function collectObserverMaps(record, tiles, levels) {
+      const fort = extractFortMap(record);
+      const maps = [];
+      if (fort) maps.push({origin: fort.map_origin, rows: fort.map_rows});
+      if (Array.isArray(fort?.access_level_maps)) {
+        fort.access_level_maps.forEach(level => maps.push(level));
+      }
+      maps.forEach(map => {
+        if (!Array.isArray(map?.origin) || !Array.isArray(map?.rows)) return;
+        const [originX, originY, originZ] = map.origin.map(value => toNumber(value));
+        levels.add(originZ);
+        map.rows.forEach((row, rowIndex) => {
+          String(row).split('').forEach((char, colIndex) => {
+            if (char !== ' ') tiles.set(`${originX + colIndex},${originY + rowIndex},${originZ}`, {
+              x: originX + colIndex,
+              y: originY + rowIndex,
+              z: originZ,
+              glyph: char
+            });
+          });
+        });
+      });
+
+      const snapshot = record?.map_snapshot;
+      if (snapshot?.ok && Array.isArray(snapshot.tiles)) {
+        snapshot.tiles.forEach(tile => {
+          const x = Number(tile?.x);
+          const y = Number(tile?.y);
+          const z = Number(tile?.z);
+          if (![x, y, z].every(Number.isFinite)) return;
+          levels.add(z);
+          const glyph = observerMapGlyph(tile);
+          if (glyph !== ' ') tiles.set(`${x},${y},${z}`, {x, y, z, glyph});
+        });
+      }
+    }
+
+    function buildObserverState(maxIndex) {
+      const tiles = new Map();
+      const levels = new Set();
+      const actions = [];
+      const changes = [];
+      for (let index = 0; index <= Math.min(maxIndex, replayRecords.length - 1); index++) {
+        const record = replayRecords[index] || {};
+        collectObserverMaps(record, tiles, levels);
+        const rect = observerActionRect(record.action);
+        if (rect) {
+          levels.add(rect[2]);
+          actions.push({
+            rect,
+            step: record.step ?? index,
+            type: String(record.action?.type || 'STATE'),
+            accepted: record.execute?.accepted !== false && record.execute?.ok !== false
+          });
+        }
+        const proof = extractGameplayProof(record);
+        if (Array.isArray(proof?.changed_tiles)) {
+          proof.changed_tiles.forEach(change => {
+            const x = Number(change?.x);
+            const y = Number(change?.y);
+            const z = Number(change?.z);
+            if (![x, y, z].every(Number.isFinite)) return;
+            levels.add(z);
+            changes.push({x, y, z, step: record.step ?? index});
+          });
+        }
+      }
+      return {tiles, levels: [...levels].sort((a, b) => b - a), actions, changes};
+    }
+
+    function refreshObserverLevels(maxIndex = replayRecords.length - 1) {
+      const state = buildObserverState(maxIndex);
+      const levels = state.levels;
+      if (!levels.length) {
+        observerLevel = null;
+        observerLevelSelect.innerHTML = '';
+        replayViewObserver.disabled = true;
+        return state;
+      }
+      replayViewObserver.disabled = false;
+      if (observerLevel == null || !levels.includes(Number(observerLevel))) {
+        observerLevel = levels[0];
+      }
+      observerLevelSelect.innerHTML = levels.map(level =>
+        `<option value="${level}"${Number(observerLevel) === level ? ' selected' : ''}>z=${level}</option>`
+      ).join('');
+      return state;
+    }
+
+    function observerTileStyle(glyph) {
+      const styles = {
+        '#': {fill: '#39413b', text: '#d8ddd7'},
+        'W': {fill: '#668627', text: '#f4ffbd'},
+        'x': {fill: '#806625', text: '#ffe29a'},
+        '.': {fill: '#263027', text: '#829085'},
+        'T': {fill: '#285533', text: '#9ce3a7'},
+        ',': {fill: '#24432b', text: '#7ed18a'},
+        'i': {fill: '#23565a', text: '#91f3ee'},
+        '@': {fill: '#e5e5dd', text: '#11140f'},
+        '<': {fill: '#40517c', text: '#dbe6ff'},
+        '>': {fill: '#40517c', text: '#dbe6ff'},
+        'X': {fill: '#4f638f', text: '#ffffff'},
+        '^': {fill: '#73572b', text: '#ffe2a6'}
+      };
+      return styles[glyph] || {fill: '#242a25', text: '#a8b0a9'};
+    }
+
+    function drawObserverMap(index) {
+      const state = refreshObserverLevels(index);
+      const z = Number(observerLevel);
+      const levelTiles = [...state.tiles.values()].filter(tile => tile.z === z);
+      const levelActions = state.actions.filter(action => action.rect[2] === z);
+      const levelChanges = state.changes.filter(change => change.z === z);
+      const points = levelTiles.map(tile => [tile.x, tile.y]);
+      levelActions.forEach(action => points.push(
+        [action.rect[0], action.rect[1]], [action.rect[3], action.rect[4]]
+      ));
+      levelChanges.forEach(change => points.push([change.x, change.y]));
+
+      const canvasW = 1440;
+      const canvasH = 720;
+      if (gameCanvas.width !== canvasW * 2 || gameCanvas.height !== canvasH * 2) {
+        gameCanvas.width = canvasW * 2;
+        gameCanvas.height = canvasH * 2;
+      }
+      gameCtx.setTransform(2, 0, 0, 2, 0, 0);
+      showCanvas();
+      gameCtx.fillStyle = '#070a08';
+      gameCtx.fillRect(0, 0, canvasW, canvasH);
+      gameCtx.fillStyle = '#101510';
+      gameCtx.fillRect(24, 24, 1030, 672);
+      gameCtx.strokeStyle = 'rgba(255,255,255,0.09)';
+      gameCtx.strokeRect(24, 24, 1030, 672);
+
+      if (!points.length) {
+        drawReplayText(`No located observer evidence on z=${Number.isFinite(z) ? z : '--'}`, 539, 330, {
+          color: '#ffd966', size: 20, weight: 800, align: 'center'
+        });
+      } else {
+        const minX = Math.min(...points.map(point => point[0])) - 2;
+        const maxX = Math.max(...points.map(point => point[0])) + 2;
+        const minY = Math.min(...points.map(point => point[1])) - 2;
+        const maxY = Math.max(...points.map(point => point[1])) + 2;
+        const tile = Math.max(4, Math.min(28, Math.floor(Math.min(950 / Math.max(1, maxX - minX + 1), 590 / Math.max(1, maxY - minY + 1)))));
+        const mapWidth = (maxX - minX + 1) * tile;
+        const mapHeight = (maxY - minY + 1) * tile;
+        const left = 24 + Math.floor((1030 - mapWidth) / 2);
+        const top = 24 + Math.floor((672 - mapHeight) / 2);
+
+        levelTiles.forEach(entry => {
+          const px = left + (entry.x - minX) * tile;
+          const py = top + (entry.y - minY) * tile;
+          const style = observerTileStyle(entry.glyph);
+          gameCtx.fillStyle = style.fill;
+          gameCtx.fillRect(px + .5, py + .5, Math.max(1, tile - 1), Math.max(1, tile - 1));
+          if (tile >= 11) {
+            gameCtx.fillStyle = style.text;
+            gameCtx.font = `700 ${Math.max(7, Math.floor(tile * .58))}px 'SFMono-Regular', Menlo, monospace`;
+            gameCtx.textAlign = 'center';
+            gameCtx.textBaseline = 'middle';
+            gameCtx.fillText(entry.glyph, px + tile / 2, py + tile / 2);
+          }
+        });
+
+        levelActions.forEach((action, actionIndex) => {
+          const x = left + (action.rect[0] - minX) * tile;
+          const y = top + (action.rect[1] - minY) * tile;
+          const width = (action.rect[3] - action.rect[0] + 1) * tile;
+          const height = (action.rect[4] - action.rect[1] + 1) * tile;
+          gameCtx.strokeStyle = action.accepted ? '#f0b94f' : '#ef756f';
+          gameCtx.globalAlpha = .28 + .72 * ((actionIndex + 1) / levelActions.length);
+          gameCtx.lineWidth = actionIndex === levelActions.length - 1 ? 3 : 1.5;
+          gameCtx.strokeRect(x + 1, y + 1, Math.max(2, width - 2), Math.max(2, height - 2));
+        });
+        gameCtx.globalAlpha = 1;
+        levelChanges.forEach(change => {
+          const x = left + (change.x - minX) * tile;
+          const y = top + (change.y - minY) * tile;
+          gameCtx.fillStyle = 'rgba(217,244,91,.55)';
+          gameCtx.fillRect(x + tile * .22, y + tile * .22, tile * .56, tile * .56);
+        });
+
+        gameCtx.textAlign = 'left';
+        gameCtx.textBaseline = 'alphabetic';
+        drawReplayText(`revealed bounds x=${minX}..${maxX}, y=${minY}..${maxY}`, 44, 678, {
+          color: '#9fb1d6', size: 11, weight: 700
+        });
+      }
+
+      gameCtx.fillStyle = '#111827';
+      gameCtx.fillRect(1074, 24, 342, 672);
+      gameCtx.strokeStyle = 'rgba(255,255,255,0.09)';
+      gameCtx.strokeRect(1074, 24, 342, 672);
+      drawReplayText('OBSERVER MAP', 1100, 58, {color: '#9fd7b2', size: 15, weight: 800});
+      drawReplayText(`Through step ${replayRecords[index]?.step ?? index}`, 1100, 92, {color: '#f5f7fb', size: 22, weight: 800});
+      drawReplayText(`Level z=${Number.isFinite(z) ? z : '--'}`, 1100, 126, {color: '#ffd966', size: 16, weight: 800});
+      let y = wrapReplayText(
+        'Derived spectator evidence. This accumulated atlas is not passed to the evaluated model unless its protocol explicitly allows it.',
+        1100, 168, 284, 19, '#9fb1d6'
+      );
+      y += 16;
+      drawReplayText(`${levelTiles.length} discovered tiles`, 1100, y, {color: '#dbe6ff', size: 13, weight: 700});
+      drawReplayText(`${levelActions.length} located actions`, 1100, y + 26, {color: '#f0b94f', size: 13, weight: 700});
+      drawReplayText(`${levelChanges.length} verified tile changes`, 1100, y + 52, {color: '#d9f45b', size: 13, weight: 700});
+      drawReplayText('Cyan/gray: observed world tiles', 1100, y + 104, {color: '#9fb1d6', size: 12});
+      drawReplayText('Amber: accepted action footprint', 1100, y + 128, {color: '#f0b94f', size: 12});
+      drawReplayText('Red: rejected action footprint', 1100, y + 152, {color: '#ef756f', size: 12});
+      drawReplayText('Acid: verified world change', 1100, y + 176, {color: '#d9f45b', size: 12});
+      drawReplayText('Source: trace map snapshots + model-authored coordinates', 1100, 666, {
+        color: '#9fd7b2', size: 10, weight: 700
+      });
+      gameTitle.textContent = 'Observer Map';
+      updateReplayControls(
+        buildReplaySnapshot(index),
+        `Derived spectator atlas through step ${replayRecords[index]?.step ?? index}; not agent input`
+      );
     }
 
     function buildReplaySnapshot(index) {
@@ -1671,7 +1948,9 @@
       replayNext.disabled = replayStepIndex >= replayRecords.length - 1;
       replayViewScreen.dataset.active = replayEvidenceView === 'screen' ? 'true' : 'false';
       replayViewMap.dataset.active = replayEvidenceView === 'map' ? 'true' : 'false';
+      replayViewObserver.dataset.active = replayEvidenceView === 'observer' ? 'true' : 'false';
       replayViewMap.disabled = !snapshot.fortMap && !snapshot.mapSnapshot;
+      observerLevelSelect.dataset.visible = replayEvidenceView === 'observer' ? 'true' : 'false';
       replayGlyphGraphical.dataset.active = replayGlyphMode === 'graphical' ? 'true' : 'false';
       replayGlyphAscii.dataset.active = replayGlyphMode === 'ascii' ? 'true' : 'false';
       gameStatus.textContent = statusText;
@@ -1809,6 +2088,11 @@
       }
       gameCtx.setTransform(2, 0, 0, 2, 0, 0);
       showCanvas();
+
+      if (replayEvidenceView === 'observer') {
+        drawObserverMap(replayStepIndex);
+        return;
+      }
 
       if (replayEvidenceView === 'map') {
         if (snapshot.fortMap) {
@@ -1966,11 +2250,12 @@
       replayStepSlider.min = 0;
       replayStepSlider.max = Math.max(0, records.length - 1);
       replayStepSlider.value = replayStepIndex;
+      refreshObserverLevels(replayStepIndex);
       renderSavedRunReplay(replayStepIndex);
     }
 
     function setReplayEvidenceView(mode) {
-      replayEvidenceView = mode === 'map' ? 'map' : 'screen';
+      replayEvidenceView = mode === 'observer' ? 'observer' : mode === 'map' ? 'map' : 'screen';
       if (viewMode === 'replay' && replayRecords.length > 0) {
         renderSavedRunReplay(replayStepIndex);
       }
@@ -2455,6 +2740,17 @@
 
     replayViewMap.addEventListener('click', () => {
       setReplayEvidenceView('map');
+    });
+
+    replayViewObserver.addEventListener('click', () => {
+      setReplayEvidenceView('observer');
+    });
+
+    observerLevelSelect.addEventListener('change', (event) => {
+      observerLevel = Number(event.target.value);
+      if (viewMode === 'replay' && replayRecords.length > 0) {
+        renderSavedRunReplay(replayStepIndex);
+      }
     });
 
     replayGlyphGraphical.addEventListener('click', () => {
