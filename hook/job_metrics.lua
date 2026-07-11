@@ -845,14 +845,9 @@ local function dead_citizen_record(unit)
 end
 
 local dead_scan_ok = pcall(function()
-  local civ_id = df.global.ui.civ_id
   for _, unit in ipairs(df.global.world.units.all) do
-    local ok_dead, is_dead_citizen = pcall(function()
-      return unit.civ_id == civ_id
-        and dfhack.units.isDwarf(unit)
-        and dfhack.units.isDead(unit)
-    end)
-    if ok_dead and is_dead_citizen then
+    if dfhack.units.isCitizen(unit, true)
+      and dfhack.units.isDead(unit) then
       out.dead_citizen_count = out.dead_citizen_count + 1
       local record, cause_known = dead_citizen_record(unit)
       if record then
