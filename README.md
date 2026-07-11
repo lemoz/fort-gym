@@ -341,6 +341,25 @@ deployed room read was also false: its sole "bedroom" was a sealed one-tile
 bed-and-door pocket. The fail-closed candidate reports zero rooms on that save
 and rejects a zero-target chop over the real farm without changing tick, pause,
 or any designation.
+
+Attempt 27, run `4eded56b1d224fbab47d336df7c521f6`
+([replay](https://fortgym.live/r/eMtR2Bp3-kmp2JQ5MI2lLT_ANdyuR9qV)), is an
+**OPERATOR-STOPPED POLICY-DIAGNOSTIC FAIL**, not a G7 success. It retained 225
+real governed gameplay rows with screen text and governed provenance, using only
+OpenRouter `z-ai/glm-5v-turbo` (no Anthropic model). Legal DFHack controls built
+a connected channel/ramp and lower excavation, Carpenter workshop and Still, six
+installed beds, three functional rooms, and a genuinely subterranean plump-helmet
+farm that received and completed a native PlantSeeds job; population reached 17.
+
+The operator stopped at step 225 after preserving artifacts because an
+active-ledger citizenship bug falsely admitted same-civ merchants, irreparably
+contaminating death and consumption evidence. Deterministic G7-v3 still fails:
+246,752/403,200 ticks, food 6/44 and drink 75/113 produced/consumed, rubric
+67.39 with `no_broader_fort_layout`, and score 142.47/150. The scalar is not a
+success verdict. PRs #109-#111 merged the raw farm evidence, governed
+completion/stall, and own-group citizen-evidence corrections; the next action is
+to deploy the reviewed contract plus a labor-eligibility correction, then launch
+a fresh Attempt 28.
 G7 remains open. Full findings and gate predicates are recorded in
 `docs/WDSLL.md`.
 

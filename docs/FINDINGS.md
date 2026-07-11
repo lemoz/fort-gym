@@ -1315,6 +1315,50 @@ polling interruptible on an observed paused viewscreen transition. It preserves
 the actual tick delta and fail-closed repause evidence and leaves every UI
 choice to the next model turn.
 
+### 2.36 Attempt 27 made a larger real fort, but contaminated citizenship evidence stopped the run
+
+Attempt 27, run `4eded56b1d224fbab47d336df7c521f6`
+([replay](https://fortgym.live/r/eMtR2Bp3-kmp2JQ5MI2lLT_ANdyuR9qV)), is an
+**OPERATOR-STOPPED POLICY-DIAGNOSTIC FAIL**. It retained 225 real governed
+gameplay rows with screen text and governed provenance. The only model was
+OpenRouter `z-ai/glm-5v-turbo`; 300 calls used 6,306,577 prompt and 218,336
+completion tokens (6,524,913 total). No Anthropic model was used.
+
+The run made meaningful legal DF gameplay progress: a connected channel/ramp and
+lower excavation, a Carpenter workshop and Still, six installed beds, three
+doors, three tables, two chairs, and nine constructions. Population reached 17
+and the fort had three functional rooms. Three farm plots were placed. Plot #28
+at `(93,98,160)` was genuinely subterranean, set to plump helmets, received a
+real PlantSeeds job, and completed planting. The modal controller also held its
+contract: at step 174 it requested 1,200 ticks, stopped after 712 on
+`dwarfmodest -> textviewerst`, and repaused; it rejected the wrong
+`finish_topic_meeting`, corrected it with a zero-tick cancel, later handled
+`topicmeetingst` with zero-tick `finish_topic_meeting`, and handled liaison
+request/agreement/farewell screens with early stop and repause without safety
+errors.
+
+The operator stopped at step 225 after preserving artifacts because the active
+ledger falsely admitted same-civ merchants as fortress citizens. That made death
+and consumption evidence irreparably contaminated. Deterministic G7-v3 is FAIL:
+duration 246,752/403,200 ticks; evidence passes with 225 gameplay rows and
+governed provenance/screen text; food 6 produced/44 consumed/final 9 and drink
+75 produced/113 consumed/final 29 fail sustainability; rooms 3, beds 6, and
+population 17 pass; neglect deaths are UNKNOWN, with no confirmed
+fortress-citizen death; rubric 67.39 retains `no_broader_fort_layout`; and scalar
+142.47 is below 150. The terminal reason was `stop_requested_after_agent_decide`.
+Neither the scalar nor the real construction changes make this a G7 success.
+
+The policy errors are distinct from the evidence defect. After native planting
+completed, it repeatedly treated `plant_seed_jobs=0` as a path blockage. After
+reaching `functional_rooms=3/3`, it continued wall-building and regressed; the
+`same_objective_stalled_2` signal allowed continuation instead of a real pivot.
+LABOR also targeted a child because citizenship and work eligibility were
+conflated. PR #109 merged raw farm contained-item evidence, PR #110 merged
+governed objective completion and hard stall transitions, and PR #111 merged
+own-group G7 citizen/consumption/death evidence with fail-closed predicate
+errors. The next experiment is not yet started: deploy that reviewed contract
+with the labor-eligibility correction, then launch fresh Attempt 28.
+
 ## 3. Limitations
 
 - **A single passing embark family.** Every pass (G0–G4) is on
@@ -1354,7 +1398,10 @@ choice to the next model turn.
   short G7 FAIL, not a long-horizon verdict. Attempt 26 built a connected lower
   farm and completed planting with all dwarves alive, but reached that phase
   after 51 lower-dig turns and stopped at half-year duration before any harvest;
-  its sole reported room was a one-tile false positive. The
+  its sole reported room was a one-tile false positive. Attempt 27 made a larger
+  fort with a completed subterranean planting job, but its active-ledger
+  citizenship bug contaminated consumption and death evidence, so it remains an
+  operator-stopped policy-diagnostic FAIL. The
   chair-factory calibration gap (§2.4) remains part of score-v3's historical
   record.
   Attempt 1 demonstrated why the scalar is telemetry rather than the verdict:
@@ -1362,13 +1409,13 @@ choice to the next model turn.
 
 ## 4. What's next
 
-- **Attempt 26 proved the direct-action loop can reach connected lower farming
-  and complete planting without operator gameplay.** Its decisive blockers are
-  now narrow and measured: late transition from excavation to building, missing
-  owned-excavation completion feedback, a one-tile room false positive, and
-  300-second waits after paused viewscreen transitions. Reviewed candidates
-  address only those observation, truth, and control boundaries; they add no
-  planner, target, coordinate, or automatic UI action.
+- **Attempt 27 proved the direct-action loop can grow a real fort through a
+  completed subterranean planting job, workshops, rooms, furniture, and
+  migration without operator gameplay.** The next boundary is truthful
+  own-group citizenship, consumption, and death evidence, plus policy fixes for
+  post-planting diagnosis, hard stalls, and labor eligibility. Deploy the
+  reviewed contract with that labor correction, then launch fresh Attempt 28;
+  Attempt 28 does not exist yet.
 - **Attempt 23 proved the corrected loop can independently transition from
   excavation to farming, workshops, furniture, and two functional rooms.** Its
   decisive blockers were incomplete native feedback for rejected 3x3
