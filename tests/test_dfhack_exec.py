@@ -1041,6 +1041,32 @@ def test_job_metrics_reports_construct_building_walk_group_truth() -> None:
         assert needle in script
 
 
+def test_job_metrics_reports_general_job_target_walk_group_truth() -> None:
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua"
+    ).read_text(encoding="utf-8")
+
+    assert "local function job_target_walk_group_connectivity(pos)" in script
+    assert "dfhack.maps.isValidTilePos(target)" in script
+    assert "dfhack.maps.canWalkBetween(citizen.pos, target)" in script
+    assert "target_walk_group_connectivity = job_target_walk_group_connectivity(job.pos)" in script
+    assert "return checked and 'disconnected' or 'unknown'" in script
+
+    helper = script[
+        script.index("local function job_target_walk_group_connectivity(pos)") :
+        script.index("-- world job list")
+    ]
+    assert helper.index("df.global.world.reindex_pathfinding") < helper.index(
+        "dfhack.maps.isValidTilePos(target)"
+    )
+    assert helper.index("dfhack.maps.isValidTilePos(target)") < helper.index(
+        "for _, citizen in ipairs(citizen_units)"
+    )
+    assert helper.index("if connected then return 'connected' end") < helper.index(
+        "if unknown_seen then return 'unknown' end"
+    )
+
+
 def test_furniture_hook_rejects_unreadable_or_wet_tiles() -> None:
     script = (Path(__file__).resolve().parents[1] / "hook" / "place_furniture.lua").read_text(
         encoding="utf-8"

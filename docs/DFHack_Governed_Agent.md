@@ -87,6 +87,14 @@ legacy starter rectangle, two-room plan, connector, workshop-room footprint, or
 runner-selected workshop candidate. Every gameplay coordinate comes from the
 model's interpretation of observed game state.
 
+Sampled jobs also carry native target walk-group connectivity. `connected`
+means the cached native check says at least one current citizen may share a
+walk group with the job tile, `disconnected` means every checked citizen is in
+a different cached walk group, and `unknown` remains unresolved. This read-only
+geometry fact is not a current path guarantee, does not account for
+unit-specific restrictions, and does not select a repair, infer the required
+labor, or prove that a citizen will claim the job.
+
 The agent maintains its plan and POIs across steps via the action's
 `plan_step`/`memory_update` fields and the executed-result feedback loop. The
 candidate review contract also carries `last_action_review` and structured
