@@ -91,6 +91,16 @@ class OneDigAgent(Agent):
         }
 
 
+class OneLaborAgent(Agent):
+    def decide(self, obs_text: str, obs_json: Dict[str, Any]) -> Dict[str, Any]:
+        return {
+            "type": "LABOR",
+            "params": {"unit_id": 1, "labor": "farming", "enable": True},
+            "intent": "toggle one legal labor",
+            "advance_ticks": 10,
+        }
+
+
 class OneWorkshopAgent(Agent):
     def decide(self, obs_text: str, obs_json: Dict[str, Any]) -> Dict[str, Any]:
         return {
@@ -436,6 +446,8 @@ def _run_governed_interact_fixture(
     agent_override: Agent | None = None,
     stale_evidence: bool = False,
     lifecycle_events: list[str] | None = None,
+    stop_after_execute: bool = False,
+    stop_after_advance: bool = False,
     stop_during_cleanup: bool = False,
     observe_error: bool = False,
     cleanup_error: bool = False,
@@ -486,6 +498,8 @@ def _run_governed_interact_fixture(
             raw_state["time"] = int(raw_state.get("time") or 0) + ticks
             if advance_callback is not None:
                 advance_callback(ticks, raw_state)
+            if stop_after_advance:
+                assert registry.request_stop(created.run_id) is True
             return dict(raw_state)
 
         def get_screen_text(self, *, include_visual_hints: bool = False) -> str:
@@ -582,6 +596,16 @@ def _run_governed_interact_fixture(
         max_steps=max_steps,
         ticks_per_step=10,
     )
+    if stop_after_execute:
+
+        def stop_from_labor(*_args) -> Dict[str, Any]:
+            assert registry.request_stop(created.run_id) is True
+            return {"ok": True, "labor_changed": True}
+
+        monkeypatch.setattr(
+            "fort_gym.bench.env.executor.safe_set_labor",
+            stop_from_labor,
+        )
     agent = agent_override or CountingInteractAgent(operation)
     run_id = run_once(
         agent,
@@ -697,7 +721,10 @@ def test_governed_runner_does_not_reuse_stale_fort_metrics_after_failed_read(
 
     row = _trace_rows(tmp_path, run_id)[0]
     assert row["observation"]["fort"]["functional_rooms"] == 3
-    assert "fort" not in row["state_after_advance"]
+    assert row["state_after_advance"]["fort"] == {
+        "ok": False,
+        "error": "read_failed",
+    }
     assert row["metrics"]["fort_metrics_observed"] is False
     assert row["metrics"]["fort_enclosed_spaces"] == 0
     assert row["metrics"]["fort_functional_rooms"] == 0
@@ -707,6 +734,56 @@ def test_governed_runner_does_not_reuse_stale_fort_metrics_after_failed_read(
     assert summary["fort_enclosed_spaces"] == 0
     assert summary["fort_functional_rooms"] == 0
     assert "no_fort_structure" in summary["rubric"]["blockers"]
+
+
+def test_governed_stop_after_advance_keeps_current_fort_attestation(
+    tmp_path, monkeypatch
+) -> None:
+    def fort_metrics(_focus=None) -> Dict[str, Any]:
+        return {
+            "ok": True,
+            "enclosed_spaces": 2,
+            "functional_rooms": 2,
+            "constructions": 8,
+        }
+
+    _, _, run_id = _run_governed_interact_fixture(
+        tmp_path,
+        monkeypatch,
+        screen_changes=False,
+        max_steps=2,
+        agent_override=CountingWaitAgent(10),
+        fort_metrics_callback=fort_metrics,
+        stop_after_advance=True,
+    )
+
+    row = _trace_rows(tmp_path, run_id)[0]
+    assert row["stopped"]["reason"] == "stop_requested_after_advance"
+    assert row["state_after_advance"]["fort"]["ok"] is True
+    assert row["metrics"]["fort_metrics_observed"] is True
+    assert row["metrics"]["fort_enclosed_spaces"] == 2
+    assert row["metrics"]["fort_functional_rooms"] == 2
+    assert row["metrics"]["fort_constructions"] == 8
+
+
+def test_governed_stop_after_execute_marks_missing_post_action_fort_observation(
+    tmp_path, monkeypatch
+) -> None:
+    _, _, run_id = _run_governed_interact_fixture(
+        tmp_path,
+        monkeypatch,
+        screen_changes=True,
+        max_steps=2,
+        agent_override=OneLaborAgent(),
+        stop_after_execute=True,
+    )
+
+    row = _trace_rows(tmp_path, run_id)[0]
+    assert row["stopped"]["reason"] == "stop_requested_after_execute"
+    assert row["metrics"]["fort_metrics_observed"] is False
+    assert row["metrics"]["fort_enclosed_spaces"] == 0
+    assert row["metrics"]["fort_functional_rooms"] == 0
+    assert row["metrics"]["fort_constructions"] == 0
 
 
 def test_governed_runner_keeps_unowned_global_progress_audit_only(
@@ -1144,6 +1221,12 @@ def test_governed_runner_quarantines_unverified_rollback_before_advancing(
     assert advances["value"] == 0
     assert row["tick_advance"]["ticks_advanced"] == 0
     assert row["terminal_reason"]["code"] == "governed_rollback_unverified"
+    assert row["state_after_advance"]["fort"] == {
+        "ok": False,
+        "error": "post_action_fort_observation_skipped",
+        "reason": "governed_rollback_unverified",
+    }
+    assert row["metrics"]["fort_metrics_observed"] is False
     assert loaded is not None and loaded.status == "failed"
 
 
@@ -1179,6 +1262,7 @@ def test_governed_runner_quarantines_explicit_rollback_failure_without_flag(
     assert row["tick_advance"]["ticks_advanced"] == 0
     assert row["terminal_reason"]["code"] == "governed_rollback_unverified"
     assert row["terminal_reason"]["helper_error"] == "rollback_failed"
+    assert row["metrics"]["fort_metrics_observed"] is False
     assert loaded is not None and loaded.status == "failed"
 
 
@@ -1597,6 +1681,8 @@ def test_governed_validation_rejection_keeps_complete_zero_change_evidence(
     assert row["gameplay_proof"]["provenance"] == "dfhack_governed"
     assert row["tick_advance"]["ticks_advanced"] == 0
     assert "a - Begin discussion" in row["screen_text"]
+    assert row["state_after_advance"]["fort"]["ok"] is False
+    assert row["metrics"]["fort_metrics_observed"] is False
 
     get_settings.cache_clear()  # type: ignore[attr-defined]
 

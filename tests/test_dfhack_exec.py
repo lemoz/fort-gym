@@ -1119,6 +1119,13 @@ def test_fort_metrics_reports_room_bounds_contents_and_open_tiles() -> None:
     assert "if #tiles >= MIN_ROOM_INTERIOR_TILES then" in script
     assert "fully furnished multi-tile rooms" in script
     assert "if space.kind ~= 'enclosed_space' then" in script
+    assert "local function building_is_complete(bld)" in script
+    assert "bld:getBuildStage(), bld:getMaxBuildStage()" in script
+    assert "if building_is_complete(bld) then" in script
+    assert "local function completed_building_at(x, y, z)" in script
+    assert "elseif completed_building_at(x, y, seed_z) then" in script
+    assert "and not completed_building_at(sx, sy, bld.z)" in script
+    assert "if not completed_building_at(tx, ty, bld.z) then" in script
 
 
 def test_fort_metrics_distinguishes_gatherable_shrubs_from_other_floor_features() -> None:
