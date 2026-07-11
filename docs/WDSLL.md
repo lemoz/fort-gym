@@ -2110,6 +2110,19 @@ gate. Each entry states what changed and the evidence that forced it.
   existing correction contract. These are control and schema facts, not a
   planner, target selector, coordinate source, or score change.
 
+  PR #101 passed 829 local tests, GitHub CI, and independent focused review,
+  merged, and deployed at exact SHA
+  `a8f696ac17a4a8205306b327a284f78ea74ae9bf`. Production targeted tests and API
+  health passed. A deployed proof read `(87,94,161)` as `ShrubDead`; gather
+  returned `ok=false`, `no_gatherable_shrubs`, and
+  `dead_shrub_ungatherable`. Tick remained 102,863, pause remained true, and
+  tile type, designation, hidden state, and block designation were identical
+  before and after. Fresh-seed Attempt 26 then launched on that exact SHA as run
+  `57095606c09d454c9f3fae8bb37fb0dd`
+  ([replay](https://fortgym.live/r/ke3Mv0MUTO7fSpuJmLJpUVH-Gn6d_IqD)),
+  pinned to OpenRouter `z-ai/glm-5v-turbo`, vision on, memory off, score-v5, 450
+  steps, and at most 2,000 ticks per turn.
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,

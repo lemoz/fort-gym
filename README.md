@@ -322,10 +322,15 @@ with population 7/15, rooms 0/3, final food/drink 44/33, rubric 54.1 with
 `no_broader_fort_layout`, and score-v5 82.1/150. Before step 72 gameplay, three
 model responses repeated the same objective above the 160-character schema cap;
 the run failed closed. The trace also showed repeated gather attempts against
-native `ShrubDead` tiles, which cannot produce gather jobs. The next candidate
-normalizes only identical duplicated overlong objectives and returns explicit
+native `ShrubDead` tiles, which cannot produce gather jobs. PR #101 deployed a
+schema boundary that normalizes only identical duplicated overlong objectives
+and returns explicit
 `dead_shrub_ungatherable` / `no_gatherable_shrubs` feedback without choosing a
-strategy or target.
+strategy or target. On the paused terminal save, a known dead shrub returned
+that exact rejection while tick 102,863, pause state, tile type, and designation
+remained unchanged. Fresh-seed Attempt 26 is running on the exact merge SHA
+`a8f696ac17a4a8205306b327a284f78ea74ae9bf`
+([replay](https://fortgym.live/r/ke3Mv0MUTO7fSpuJmLJpUVH-Gn6d_IqD)).
 G7 remains open. Full findings and gate predicates are recorded in
 `docs/WDSLL.md`.
 
