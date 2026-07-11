@@ -247,6 +247,52 @@ def test_dfhack_interact_maps_each_operation_to_one_bounded_interface_key(monkey
     assert calls == [[key] for key in expected.values()]
 
 
+def test_dfhack_stores_view_dispatches_only_cancel(monkeypatch) -> None:
+    calls: list[list[str]] = []
+
+    def fake_execute_keystroke_action(keys: list[str]) -> Dict[str, object]:
+        calls.append(keys)
+        return {"ok": True, "keys_sent": len(keys)}
+
+    monkeypatch.setattr(
+        "fort_gym.bench.env.executor.execute_keystroke_action",
+        fake_execute_keystroke_action,
+    )
+    executor = Executor(dfhack_client=_ConnectedDFHackClient())
+    state = {
+        "pause_state": True,
+        "viewscreen_type": "viewscreen_storesst",
+    }
+
+    accepted = executor.apply(
+        {"type": "INTERACT", "params": {"operation": "cancel"}, "advance_ticks": 0},
+        backend="dfhack",
+        state=state,
+        allow_interact=True,
+    )
+    rejected = executor.apply(
+        {"type": "INTERACT", "params": {"operation": "confirm"}, "advance_ticks": 0},
+        backend="dfhack",
+        state=state,
+        allow_interact=True,
+    )
+    raw_keystroke = executor.apply(
+        {
+            "type": "KEYSTROKE",
+            "params": {"keys": ["LEAVESCREEN"]},
+            "advance_ticks": 0,
+        },
+        backend="dfhack",
+        state=state,
+    )
+
+    assert accepted["accepted"] is True
+    assert accepted["result"]["interface_key"] == "LEAVESCREEN"
+    assert "blocks simulation" in rejected["why"]
+    assert raw_keystroke["accepted"] is True
+    assert calls == [["LEAVESCREEN"], ["LEAVESCREEN"]]
+
+
 def test_dfhack_interact_finish_topic_meeting_is_one_key_and_view_specific(monkeypatch) -> None:
     calls: list[list[str]] = []
 

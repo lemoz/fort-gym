@@ -474,6 +474,8 @@ def test_governed_interact_tool_and_prompt_are_bounded_and_paused() -> None:
     assert '"topic_option_a"|...|"topic_option_h"' in GOVERNED_SYSTEM_PROMPT
     assert '"a - Begin discussion" requires topic_option_a' in GOVERNED_SYSTEM_PROMPT
     assert '"a - Finish peeking in on conversation"' in GOVERNED_SYSTEM_PROMPT
+    assert "`viewscreen_storesst` is a blocking Wealth/Stocks screen" in GOVERNED_SYSTEM_PROMPT
+    assert "submit only INTERACT cancel" in GOVERNED_SYSTEM_PROMPT
     assert "observes one screen after that input" in GOVERNED_SYSTEM_PROMPT
     assert "paused interface or dialog" in GOVERNED_SYSTEM_PROMPT
     assert "INTERACT must use 0" in GOVERNED_SYSTEM_PROMPT

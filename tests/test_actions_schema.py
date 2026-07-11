@@ -5,6 +5,7 @@ import pytest
 from fort_gym.bench.env.actions import (
     ACTION_TOOL_SPEC,
     DigParams,
+    blocking_viewscreen_action_reason,
     parse_action,
     system_prompt_v1,
     validate_action,
@@ -172,6 +173,39 @@ def test_interact_schema_accepts_only_a_semantic_operation_with_zero_ticks() -> 
     )
     assert visible_option_action["params"] == {"operation": "topic_option_a"}
     assert validate_action({}, visible_option_action) == (True, None)
+
+
+def test_blocking_stores_view_contract_accepts_only_zero_tick_cancel() -> None:
+    state = {"viewscreen_type": "viewscreen_storesst"}
+    cancel = parse_action(
+        {
+            "type": "INTERACT",
+            "params": {"operation": "cancel"},
+            "advance_ticks": 0,
+        }
+    )
+
+    assert blocking_viewscreen_action_reason(state, cancel) is None
+    assert validate_action(
+        state,
+        {
+            "type": "KEYSTROKE",
+            "params": {"keys": ["LEAVESCREEN"]},
+            "advance_ticks": 0,
+        },
+    ) == (True, None)
+    for action in (
+        {"type": "INTERACT", "params": {"operation": "confirm"}, "advance_ticks": 0},
+        {"type": "WAIT", "params": {}, "advance_ticks": 1200},
+        {
+            "type": "BUILD",
+            "params": {"kind": "Wall", "x": 93, "y": 97, "z": 161},
+            "advance_ticks": 1200,
+        },
+    ):
+        reason = blocking_viewscreen_action_reason(state, action)
+        assert "blocks simulation" in str(reason)
+        assert "INTERACT cancel with advance_ticks=0" in str(reason)
 
 
 @pytest.mark.parametrize(

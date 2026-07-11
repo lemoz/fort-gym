@@ -260,29 +260,31 @@ These systems are implemented (not roadmap):
 2. **Tools** (`fort_gym/bench/agent/tools.py`): `ToolManager` with memory/plan/perception tools wired into the review-mode agents.
 3. **Experimentation** (`fort_gym/bench/experiment/`): YAML config → `ExperimentRunner` → run with experiment metadata.
 
-The latest scored G7 result is attempt 21, run
-`eecdd0e5d0924f9a984c96d702f09d59`
-([replay](https://fortgym.live/r/JBVG-tn9pxYcd_MJMMICYhXr7WqTK0gx)),
-from deployed PR #91 merge SHA
-`ae15fcfb282dbb084dc7574f1242ed97a7ec2051`. It executed 296 real governed
-gameplay rows; 295 carried screen/proof records and 55 proof records had
-`ok=true`. The policy completed a Carpenter workshop, two beds, a door, 26
-constructions, a connected channel ramp, 27 owned excavation tiles, a Still,
-and two crop-configured subterranean FarmPlots. Native dwarves planted and
-harvested plump helmets, producing three food units. Score-v5 remained
-action-owned and did not turn accepted commands or global changes into credit.
+The latest scored G7 result is attempt 22, run
+`e83950a358e745c4ad3f0796e4c9c8bb`
+([replay](https://fortgym.live/r/Ly6r_18HCyz-MdmJw8Zr_AmHybpjtKiX)),
+from deployed SHA `73700c5d588859c8c8ebfd1623895b59e1f87b6b`. It retained
+156 real governed gameplay rows, all with screen text, gameplay proof, and
+governed provenance; 51 proof records had `ok=true`. The policy completed
+vertical access by step 3, lower excavation by step 8, a Carpenter workshop by
+step 21 and a Still by step 30. It placed a subterranean FarmPlot at step 42,
+observed stage-3 completion at step 45, and selected crops at step 46. Native
+work produced 75 drink and five food units. Population reached 15,
+three beds were installed, and the final fort had 56 constructions, two
+enclosed spaces, and two functional rooms. Score-v5 remained action-owned.
 
-The operator stopped the decisive collapse at 318,470 summary ticks (319,673
-trace ticks). Population peaked at 22 and ended at 15; final food and drink were
-zero, the run ledger recorded 11 unknown-cause deaths, food production versus
-consumption was 3/54, drink was 0/60, and functional rooms remained 0. The
-deterministic G7 verdict is FAIL; only population passed. The final in-flight
-stop row also leaves evidence and duration inconsistent, so neither is claimed
-as complete. The next candidate keeps all decisions in the agent: it clarifies
-channel/farm lifecycle mechanics and exact minimap indexing, and returns bounded
-visible non-target facts for accepted chop/gather no-ops while hidden tiles
-remain opaque. It supplies no placement search, target coordinate, strategy, or
-score credit.
+The run failed at step 155 after 200,252 trace ticks. Final flow was food 5
+produced/36 consumed and drink 75/81, with stocks 15/54. Deterministic G7
+gate-v2 passed evidence, population, and zero-neglect death evidence; duration,
+resource loops, three rooms, five beds, rubric 59.38 with
+`no_broader_fort_layout`, and score-v5 93.31/150 failed. The terminal reason was
+`tick_timeout_zero_progress`: a liaison sequence left the game on
+`viewscreen_storesst`, which the observation called unknown and the legal
+INTERACT allowlist could not exit. The model then submitted BUILD from that
+blocking screen and requested 1,200 ticks; zero advanced. The next candidate
+adds only the missing legal `INTERACT cancel`, factual blocking-screen state,
+and pre-execution rejection of any other Stores-screen action. It does not
+choose coordinates, actions, objectives, or strategy for the model.
 G7 remains open. Full findings and gate predicates are recorded in
 `docs/WDSLL.md`.
 
