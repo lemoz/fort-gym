@@ -55,7 +55,7 @@ def test_advance_ticks_timeout_path(monkeypatch):
 def test_advance_ticks_uses_space_fallback_when_pause_flag_sticks(monkeypatch):
     from fort_gym.bench import dfhack_backend
 
-    ticks = iter([100, 100, 100, 112, 112])
+    ticks = iter([100, 100, 100, 112, 112, 112])
     clock = {"now": 0.0}
     keys = []
 
@@ -97,7 +97,7 @@ def test_advance_ticks_uses_space_fallback_when_pause_flag_sticks(monkeypatch):
 def test_advance_ticks_honors_agent_request_above_legacy_cap(monkeypatch):
     from fort_gym.bench import dfhack_backend
 
-    ticks = iter([100, 1600, 1600])
+    ticks = iter([100, 1600, 1600, 1600])
 
     monkeypatch.setattr(dfhack_backend, "tick_read", lambda timeout=1.0: next(ticks))
     monkeypatch.setattr(dfhack_backend, "read_pause_state", lambda timeout=1.0: True)
@@ -115,7 +115,7 @@ def test_advance_ticks_honors_agent_request_above_legacy_cap(monkeypatch):
 def test_advance_ticks_caps_direct_calls_at_action_schema_limit(monkeypatch):
     from fort_gym.bench import dfhack_backend
 
-    ticks = iter([100, 2100, 2100])
+    ticks = iter([100, 2100, 2100, 2100])
 
     monkeypatch.setattr(dfhack_backend, "tick_read", lambda timeout=1.0: next(ticks))
     monkeypatch.setattr(dfhack_backend, "read_pause_state", lambda timeout=1.0: True)
@@ -171,6 +171,49 @@ def test_tick_read_failure_after_nopause_fails_closed_and_recovers_end_tick(monk
     assert result["paused_after"] is True
     assert result["repause_effective"] is True
     assert toggles == [True, False]
+
+
+def test_successful_repause_records_the_stable_post_pause_tick(monkeypatch):
+    from fort_gym.bench import dfhack_backend
+
+    ticks = iter([100, 110, 110, 115])
+    monkeypatch.setattr(dfhack_backend, "tick_read", lambda timeout=1.0: next(ticks))
+    monkeypatch.setattr(dfhack_backend, "read_pause_state", lambda timeout=1.0: True)
+    monkeypatch.setattr(dfhack_backend, "set_paused", lambda paused, timeout=1.0: None)
+    monkeypatch.setattr(dfhack_backend, "_set_nopause", lambda enabled: None)
+    monkeypatch.setattr(dfhack_backend.time, "sleep", lambda _duration: None)
+
+    result = dfhack_backend.advance_ticks_exact_external(10, True)
+
+    assert result["ok"] is True
+    assert result["end_tick"] == 115
+    assert result["ticks_advanced"] == 15
+    assert result["paused_after"] is True
+
+
+def test_post_pause_tick_read_failure_is_not_reported_as_success(monkeypatch):
+    from fort_gym.bench import dfhack_backend
+    from fort_gym.bench.dfhack_exec import DFHackError
+
+    ticks = iter([100, 110, 110, DFHackError("final read timeout")])
+
+    def fake_tick_read(timeout: float = 1.0) -> int:
+        value = next(ticks)
+        if isinstance(value, Exception):
+            raise value
+        return value
+
+    monkeypatch.setattr(dfhack_backend, "tick_read", fake_tick_read)
+    monkeypatch.setattr(dfhack_backend, "read_pause_state", lambda timeout=1.0: True)
+    monkeypatch.setattr(dfhack_backend, "set_paused", lambda paused, timeout=1.0: None)
+    monkeypatch.setattr(dfhack_backend, "_set_nopause", lambda enabled: None)
+    monkeypatch.setattr(dfhack_backend.time, "sleep", lambda _duration: None)
+
+    result = dfhack_backend.advance_ticks_exact_external(10, True)
+
+    assert result["ok"] is False
+    assert result["error"] == "final_tick_read_failed:final read timeout"
+    assert result["repause_effective"] is True
 
 
 def test_successful_tick_advance_fails_when_repause_is_unverified(monkeypatch):
