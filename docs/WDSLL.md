@@ -2063,7 +2063,52 @@ gate. Each entry states what changed and the evidence that forced it.
   `/step` exception path also repauses before close. Regression tests cover the
   exact post-enable read failure, truthful recovered end-tick evidence, failed
   disable, false pause readback, cleanup rejection, and endpoint exception
-  ordering. A fresh replacement run is required after deployment.
+  ordering. A fresh replacement run was required after deployment.
+
+  PR #99 passed review and CI, merged, and deployed the fail-closed controller.
+  Its first live smoke exposed a smaller accounting error: the in-loop end tick
+  was lower than the independently stable post-pause tick. PR #100 made the
+  verified post-pause read authoritative and also passed review and CI. Both are
+  deployed at exact SHA `005fdccd79993b1dd3a0451eae43a61fdc1a9dd3`. Final
+  live proof requested 10 ticks, advanced from 58,140 to reported and
+  independently stable tick 58,161, and read `pause_state=true` twice.
+
+- **2026-07-11 UTC - G7 attempt 25: INFRASTRUCTURE-ABORTED FAIL after real
+  early production; identical overlong objective copies exhausted bounded
+  correction.** Run `9162ea4247c04fd4a64f3b0dcf502cf9`
+  ([replay](https://fortgym.live/r/dBYI_DISuN6iXv6WjFzTs-7Gq7-ahf00))
+  used exact deployed SHA `005fdccd79993b1dd3a0451eae43a61fdc1a9dd3`, fresh
+  `seed_region3_fresh`, OpenRouter `z-ai/glm-5v-turbo`, vision on, memory off,
+  score-v5, 450 steps, and 2,000 maximum ticks per turn. It retained 72 real
+  gameplay rows; all 72 have screen text, gameplay proof, and governed
+  provenance. Eighty-nine model calls used 1,678,144 prompt and 63,712
+  completion tokens. Every completed gameplay row retained verified repause.
+
+  The model completed two channel accesses, eight action-owned excavation
+  completions, one usable Carpenter workshop, and five beds in inventory. It
+  gathered two surface plants but completed no Still, FarmPlot, installed bed,
+  or functional room. Final population was seven, food 44, drink 33, and wood
+  four; no dwarf died.
+
+  Deterministic gate-v2 is FAIL: duration 86,062/403,200; food 0 produced/13
+  consumed; drink 0/27; population 7/15; rooms 0/3; installed beds 0/3; rubric
+  54.1 with `no_broader_fort_layout`; score-v5 82.1/150. Evidence and
+  zero-neglect-death predicates pass. Before step 72 gameplay, the model returned
+  the same longer-than-160-character objective in both governed fields and
+  repeated it through two corrections. The run therefore failed closed with
+  `agent_decide_error`; it did not consume its 450-turn policy budget.
+
+  Roughly 20 Still-footprint attempts also exposed false gather affordance.
+  Stopped-save reads identified repeatedly designated tiles as native
+  `ShrubDead`, with no gather job after substantial real time. The old hook
+  treated every SHRUB shape as a target and could report success with zero
+  targets. The next candidate rejects dead shrubs as
+  `dead_shrub_ungatherable`, rejects an all-empty gather rectangle as
+  `no_gatherable_shrubs`, and factually distinguishes live from dead shrubs in
+  the observation. It also shortens an overlong objective only when its two
+  duplicated fields are identical; disagreement still fails closed through the
+  existing correction contract. These are control and schema facts, not a
+  planner, target selector, coordinate source, or score change.
 
 ## Reporting format (every gate attempt)
 

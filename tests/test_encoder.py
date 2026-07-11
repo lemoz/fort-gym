@@ -856,7 +856,8 @@ def test_governed_minimap_never_recommends_building_on_shrubs() -> None:
     )
 
     assert "BUILD walls only on border '.' tiles" in text
-    assert "A ',' border tile is a gatherable shrub but is not buildable floor" in text
+    assert "A ',' border tile is a shrub and is not buildable floor" in text
+    assert "If BUILD feedback reports ShrubDead, gather cannot clear it" in text
     assert "An 's' sapling or 'p' loose-rock tile is neither a gatherable shrub" in text
     assert "wall any '.' or ',' border gaps" not in text
 

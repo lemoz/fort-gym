@@ -66,16 +66,18 @@ reports tree_trunk counts, and the Visible-nearby-trees line reports only the co
 trunks within 40 tiles; choose coordinates from visible map evidence); a dwarf with the \
 woodcutting labor fells them over \
 time and the logs appear in the Wood stock. Carpentry production consumes wood — without logs, \
-workshop orders cancel. kind "gather" designates shrub tiles inside the rect for plant gathering \
-(only SHRUB-shaped tiles are marked; other tiles in the rect are left untouched and reported as \
+workshop orders cancel. kind "gather" designates live shrub tiles inside the rect for plant gathering \
+(only live SHRUB-shaped tiles are marked; other tiles in the rect are left untouched and reported as \
 non_shrub_tiles); a dwarf with the herbalism labor collects the plant over time and it appears in \
-the plant stock — gathered plants are brewable.
+the plant stock. A tile reported as ShrubDead cannot be gathered, cleared by gather, or produce a \
+plant; choose a different build footprint instead of retrying it. Verify brewable plant stock or \
+completed brew output before treating any gathered plant as brewing input.
 - BUILD: params {"kind": "CarpenterWorkshop"|"Still"|"FarmPlot"|"Bed"|"Door"|"Table"|"Chair"|"Wall"|"Floor", \
 "x": X, "y": Y, "z": Z, "x2": X2, "y2": Y2 (optional)}. \
 CarpenterWorkshop places a 3x3 workshop on open floor within 24 tiles of your fort — near any \
 existing building or citizen; choose and verify the complete footprint from observed map facts, \
 then a dwarf must construct it. Still places a 3x3 workshop under the same rules. A built Still brews \
-plants into drink via ORDER job "brew" — brew orders need gatherable plants and empty barrels \
+plants into drink via ORDER job "brew" — brew orders need brewable plants in stock and empty barrels \
 in stock; drink is what dwarves actually consume. \
 FarmPlot places a farm plot on open ground: a single tile at (x, y, z), or a rectangle up to 5x5 \
 when optional x2/y2 are given, within 24 tiles of your fort; unlike a workshop it consumes no \
@@ -698,6 +700,50 @@ class DFHackGovernedLLMAgent(Agent):
             normalized["advance_ticks"] = DEFAULT_ADVANCE_TICKS
         return normalized
 
+    def _normalize_duplicated_objective_length(
+        self, payload: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Bound identical duplicated objective prose at the schema boundary."""
+
+        objective = payload.get("objective")
+        plan_review = payload.get("plan_review")
+        if not isinstance(objective, str) or not isinstance(plan_review, dict):
+            return payload
+        plan_objective = plan_review.get("objective")
+        if not isinstance(plan_objective, str):
+            return payload
+
+        stripped = objective.strip()
+        if (
+            stripped != plan_objective.strip()
+            or len(stripped) <= MAX_OBJECTIVE_LENGTH
+            or "\n" in stripped
+            or "\r" in stripped
+        ):
+            return payload
+
+        shortened = stripped[:MAX_OBJECTIVE_LENGTH]
+        word_boundary = shortened.rfind(" ")
+        if word_boundary > 0:
+            shortened = shortened[:word_boundary]
+
+        normalized = dict(payload)
+        normalized_plan_review = dict(plan_review)
+        normalized["objective"] = shortened
+        normalized_plan_review["objective"] = shortened
+        normalized["plan_review"] = normalized_plan_review
+        self._tool_events.append(
+            {
+                "tool": "governed_llm.objective_length_normalized",
+                "input": {},
+                "output": {
+                    "original_length": len(stripped),
+                    "normalized_length": len(shortened),
+                },
+            }
+        )
+        return normalized
+
     def _fallback_wait(self, reason: str) -> Dict[str, Any]:
         self._tool_events.append(
             {"tool": "governed_llm.fallback_wait", "input": {}, "output": {"reason": reason}}
@@ -1041,6 +1087,7 @@ class DFHackGovernedLLMAgent(Agent):
                 last_error = "model returned no submit_action tool call"
                 contract_errors = [last_error]
             else:
+                payload = self._normalize_duplicated_objective_length(payload)
                 action_type = str(payload.get("type") or "").upper()
                 canonical_action = None
                 fingerprint_action = None

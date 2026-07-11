@@ -572,6 +572,13 @@ def test_designate_rect_gather_is_bounded_shrub_designation() -> None:
     assert "designation_preflight_failed" in hook_text
     assert "local committed, commit_error = pcall" in hook_text
     assert "designation_rollback_readback_mismatch" in hook_text
+    assert "tiletype_name == 'ShrubDead'" in hook_text
+    assert "dead_shrub_ungatherable" in hook_text
+    assert "kind == 'gather' and #writes == 0" in hook_text
+    assert "error = 'no_gatherable_shrubs'" in hook_text
+    assert hook_text.index("kind == 'gather' and #writes == 0") < hook_text.index(
+        "local committed, commit_error = pcall"
+    )
     # shares the bounded rect (30x30, one z-level) with dig/channel/chop
     assert "rect_too_large" in hook_text
     assert "bad_rect" in hook_text

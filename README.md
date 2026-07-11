@@ -260,7 +260,7 @@ These systems are implemented (not roadmap):
 2. **Tools** (`fort_gym/bench/agent/tools.py`): `ToolManager` with memory/plan/perception tools wired into the review-mode agents.
 3. **Experimentation** (`fort_gym/bench/experiment/`): YAML config → `ExperimentRunner` → run with experiment metadata.
 
-The latest scored G7 result is attempt 22, run
+The best long scored G7 result remains attempt 22, run
 `e83950a358e745c4ad3f0796e4c9c8bb`
 ([replay](https://fortgym.live/r/Ly6r_18HCyz-MdmJw8Zr_AmHybpjtKiX)),
 from deployed SHA `73700c5d588859c8c8ebfd1623895b59e1f87b6b`. It retained
@@ -307,7 +307,25 @@ and terminal cleanup trusted command completion without reading the actual pause
 state. The fail-closed controller now places every unpaused exit under cleanup,
 disables `nopause`, attests `pause_state=true`, rejects unverified cleanup, and
 performs the same attestation before the first agent turn. A fresh replacement
-run follows deployment of that repair.
+run followed deployment of PRs #99 and #100 at
+`005fdccd79993b1dd3a0451eae43a61fdc1a9dd3`. A live 10-tick probe reported the
+same stable post-pause tick as an independent read: 58,140 to 58,161, with
+`pause_state=true` on two reads.
+
+Attempt 25
+([replay](https://fortgym.live/r/dBYI_DISuN6iXv6WjFzTs-7Gq7-ahf00))
+then retained 72 real governed gameplay rows on that exact SHA. It completed two
+channel accesses, eight owned excavation completions, one usable Carpenter
+workshop, and five beds in stock. It installed no furniture, completed no room,
+and produced no food or drink. Deterministic G7 failed at 86,062/403,200 ticks,
+with population 7/15, rooms 0/3, final food/drink 44/33, rubric 54.1 with
+`no_broader_fort_layout`, and score-v5 82.1/150. Before step 72 gameplay, three
+model responses repeated the same objective above the 160-character schema cap;
+the run failed closed. The trace also showed repeated gather attempts against
+native `ShrubDead` tiles, which cannot produce gather jobs. The next candidate
+normalizes only identical duplicated overlong objectives and returns explicit
+`dead_shrub_ungatherable` / `no_gatherable_shrubs` feedback without choosing a
+strategy or target.
 G7 remains open. Full findings and gate predicates are recorded in
 `docs/WDSLL.md`.
 
