@@ -735,7 +735,7 @@ def _substantive_plan_review(entry: Dict[str, Any]) -> bool:
     if not isinstance(review, dict):
         return False
     decision = review.get("decision")
-    if decision in {"establish", "revise"}:
+    if decision in {"establish", "revise", "complete"}:
         return True
     if decision != "continue":
         return False

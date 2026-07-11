@@ -109,6 +109,7 @@ def _plan_control(
     previous_step: int = -1,
     previous_verdict: str = "unknown",
     previous_action: dict[str, Any] | None = None,
+    reasons: list[str] | None = None,
 ) -> dict[str, Any]:
     previous_outcome = None
     if previous_step >= 0:
@@ -119,10 +120,12 @@ def _plan_control(
             "no_progress": "action_accepted_without_tracked_state_change",
         }.get(previous_verdict)
     previous_action = previous_action or {"type": "WAIT", "params": {}}
+    if reasons is None:
+        reasons = ["initial"] if review_due and not prior_objective else []
     control = {
         "review_due": review_due,
         "request_id": request_id,
-        "reasons": ["initial"] if review_due and not prior_objective else [],
+        "reasons": reasons,
         "prior_objective": prior_objective,
         "previous_step": previous_step,
         "previous_outcome": previous_outcome,
@@ -147,11 +150,7 @@ def _plan_control(
     evidence_contents = [
         f"AGENT PLAN CONTROL: review_due={'yes' if review_due else 'no'} "
         f"request_id={request_id}",
-        (
-            "Plan review reasons: initial"
-            if review_due and not prior_objective
-            else "Plan review reasons: none"
-        ),
+        f"Plan review reasons: {', '.join(reasons) if reasons else 'none'}",
         f"Previous action attempt for review: {previous}",
         "Time: tick 100",
     ]
@@ -205,6 +204,30 @@ def _reviewed_action_payload(
     }
 
 
+def _brew_action_payload(
+    *,
+    control: dict[str, Any],
+    objective: str,
+    decision: str = "complete",
+) -> dict[str, Any]:
+    payload = _reviewed_action_payload(
+        control=control,
+        objective=objective,
+        decision=decision,
+    )
+    payload.update(
+        {
+            "type": "ORDER",
+            "params": {"job": "brew", "quantity": 1},
+            "intent": "queue one brew job for the new drink-production objective",
+            "plan_step": "Queue one brew job.",
+            "expected_simulation_result": "A brew job is accepted for production.",
+        }
+    )
+    payload["plan_review"]["steps"] = ["Queue one brew job.", "Verify produced drink."]
+    return payload
+
+
 def _review_observation(control: dict[str, Any]) -> str:
     return "\n".join(control["allowed_evidence_lines"])
 
@@ -252,6 +275,7 @@ def test_governed_submit_tool_requires_agent_review_contract() -> None:
         "establish",
         "continue",
         "revise",
+        "complete",
     ]
     assert parameters["properties"]["last_action_review"]["properties"]["evidence"][
         "minItems"
@@ -333,6 +357,20 @@ def test_governed_system_prompt_requires_parallel_and_stall_review() -> None:
     assert "created job that vanished without matching output is no progress" in GOVERNED_SYSTEM_PROMPT
     assert "Adding another copy creates a distinct job" in GOVERNED_SYSTEM_PROMPT
     assert "Choose the next\nobjective and action yourself" in GOVERNED_SYSTEM_PROMPT
+
+
+def test_governed_system_prompt_requires_exact_hard_stall_transition() -> None:
+    prompt = " ".join(GOVERNED_SYSTEM_PROMPT.split())
+
+    assert "two rejected or no-progress attempts are not progress" in prompt
+    assert "decision=continue is invalid" in prompt
+    assert "choose a genuinely different current objective" in prompt
+    assert "normalized type and params must differ" in prompt
+    assert "even when retry_same_action=true" in prompt
+    assert "another target for the same rejected approach is not a revision" in prompt
+    assert "harness identifies the stall but does not choose the replacement" in prompt
+    assert "transition applies only to `same_objective_stalled_2`" in prompt
+    assert "`periodic`, `partial_mutation`, or `action_pending`" in prompt
 
 
 def test_governed_system_prompt_distinguishes_room_ring_from_wall_mass() -> None:
@@ -673,6 +711,144 @@ def test_review_contract_establishes_initial_agent_owned_plan() -> None:
     assert agent._memory.gameplay_plan["steps"] == ["Dig shelter.", "Build production."]
 
 
+def test_complete_plan_review_requires_observed_local_objective_transition() -> None:
+    assert "not_due|establish|continue|revise|complete" in GOVERNED_SYSTEM_PROMPT
+    assert "When observed facts meet the current objective's stated\n  measurable condition" in (
+        GOVERNED_SYSTEM_PROMPT
+    )
+    assert "submitted action advances only that next objective" in GOVERNED_SYSTEM_PROMPT
+    assert "it is not terminal G7 completion" in GOVERNED_SYSTEM_PROMPT
+
+
+def test_complete_plan_review_replaces_memory_with_next_objective() -> None:
+    prior_objective = "Build three functional rooms."
+    next_objective = "Establish a sustainable drink supply."
+    control = _plan_control(
+        request_id="12:rooms_complete",
+        prior_objective=prior_objective,
+        previous_step=11,
+        previous_verdict="progressed",
+    )
+    control["allowed_evidence_lines"].append(
+        "E4: Fortress rooms observed: functional_rooms=3/3"
+    )
+    control["plan_evidence_ids"] = ["E2", "E4"]
+    payload = _brew_action_payload(
+        control=control,
+        objective=next_objective,
+        decision="complete",
+    )
+    agent = _agent([_submit_action_response(payload)])
+    agent._memory.write_gameplay_plan(
+        objective=prior_objective,
+        steps=["Finish the third room."],
+        current_step="Check room count.",
+    )
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["plan_review"]["decision"] == "complete"
+    assert action["type"] == "ORDER"
+    assert action["params"]["job"] == "brew"
+    assert action["params"]["quantity"] == 1
+    assert action["plan_review"]["evidence"] == ["E2", "E4"]
+    assert agent._memory.gameplay_plan["objective"] == next_objective
+    assert agent._memory.gameplay_plan["steps"] == payload["plan_review"]["steps"]
+    assert agent._memory.gameplay_plan["current_step"] == payload["plan_step"]
+
+
+def test_complete_plan_review_rejects_the_same_objective() -> None:
+    prior_objective = "Build three functional rooms."
+    control = _plan_control(
+        request_id="12:rooms_complete",
+        prior_objective=prior_objective,
+        previous_step=11,
+        previous_verdict="progressed",
+    )
+    control["allowed_evidence_lines"].append(
+        "E4: Fortress rooms observed: functional_rooms=3/3"
+    )
+    control["plan_evidence_ids"] = ["E2", "E4"]
+    invalid = _brew_action_payload(
+        control=control,
+        objective=prior_objective,
+        decision="complete",
+    )
+    valid = _brew_action_payload(
+        control=control,
+        objective="Establish a sustainable drink supply.",
+        decision="complete",
+    )
+    agent = _agent([_submit_action_response(invalid), _submit_action_response(valid)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["plan_review"]["decision"] == "complete"
+    assert action["objective"] == "Establish a sustainable drink supply."
+    correction = agent._client.chat.completions.requests[1]["messages"][-1]["content"]
+    assert "decision=complete must change the prior objective" in correction
+    assert '"required_plan_decision_for_submitted_objective": "complete"' in correction
+    assert "Preserve plan_review.decision exactly as 'complete'" in correction
+    assert "change it to continue or revise" in correction
+
+
+def test_complete_plan_review_rejects_no_prior_objective() -> None:
+    control = _plan_control()
+    invalid = _reviewed_action_payload(control=control, decision="complete")
+    valid = _reviewed_action_payload(control=control, decision="establish")
+    agent = _agent([_submit_action_response(invalid), _submit_action_response(valid)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["plan_review"]["decision"] == "establish"
+    correction = agent._client.chat.completions.requests[1]["messages"][-1]["content"]
+    assert "decision=complete requires an existing prior objective" in correction
+
+
+def test_voluntary_complete_rejects_control_only_evidence() -> None:
+    control = _plan_control(
+        review_due=False,
+        request_id="12:none",
+        prior_objective="Build three functional rooms.",
+        previous_step=11,
+        previous_verdict="progressed",
+    )
+    control["allowed_evidence_lines"].append(
+        "E4: Fortress rooms observed: functional_rooms=3/3"
+    )
+    invalid = _brew_action_payload(
+        control=control,
+        objective="Establish a sustainable drink supply.",
+    )
+    invalid["plan_review"]["evidence"] = ["E0", "E1"]
+    valid = _brew_action_payload(
+        control=control,
+        objective="Establish a sustainable drink supply.",
+    )
+    valid["plan_review"]["evidence"] = ["E2", "E4"]
+    agent = _agent([_submit_action_response(invalid), _submit_action_response(valid)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["plan_review"]["decision"] == "complete"
+    correction = agent._client.chat.completions.requests[1]["messages"][-1]["content"]
+    assert "decision=complete plan_review must cite" in correction
+    assert "non-control current game-state fact" in correction
+    assert '"required_plan_decision_for_submitted_objective": "complete"' in correction
+
+
 def test_review_contract_gets_exactly_one_model_correction() -> None:
     control = _plan_control()
     invalid = _reviewed_action_payload(control=control)
@@ -738,13 +914,168 @@ def test_review_contract_correction_uses_evidence_id_terminology() -> None:
     assert "observation-grounded excerpt" not in correction
 
 
-def test_review_contract_decision_correction_is_focused_and_omits_evidence_catalog() -> None:
+def test_same_objective_stalled_requires_different_objective_revision() -> None:
     control = _plan_control(
         review_due=True,
         request_id="32:same_objective_stalled_2",
         prior_objective="Build durable shelter.",
         previous_step=31,
         previous_verdict="no_progress",
+        reasons=["same_objective_stalled_2"],
+    )
+    invalid = _reviewed_action_payload(control=control, decision="continue")
+    valid = _reviewed_action_payload(
+        control=control,
+        objective="Establish sustainable drink production.",
+        decision="revise",
+    )
+    agent = _agent([_text_action_response(invalid), _text_action_response(valid)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["objective"] == "Establish sustainable drink production."
+    assert action["plan_review"]["decision"] == "revise"
+    correction = agent._client.chat.completions.requests[1]["messages"][-1]["content"]
+    assert "same_objective_stalled_2" in correction
+    assert "decision=continue is invalid" in correction
+    assert '"required_plan_decision_for_submitted_objective": "revise"' in correction
+    assert "genuinely different current objective" in correction
+    assert '"allowed_evidence_ids"' not in correction
+    assert '"allowed_evidence_lines"' not in correction
+
+
+def test_same_objective_stalled_revision_overrides_submitted_complete() -> None:
+    control = _plan_control(
+        review_due=True,
+        request_id="32:same_objective_stalled_2",
+        prior_objective="Build durable shelter.",
+        previous_step=31,
+        previous_verdict="no_progress",
+        reasons=["same_objective_stalled_2"],
+    )
+    invalid = _reviewed_action_payload(
+        control=control,
+        objective="Establish sustainable drink production.",
+        decision="complete",
+    )
+    valid = _reviewed_action_payload(
+        control=control,
+        objective="Establish sustainable drink production.",
+        decision="revise",
+    )
+    agent = _agent([_submit_action_response(invalid), _submit_action_response(valid)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["plan_review"]["decision"] == "revise"
+    correction = agent._client.chat.completions.requests[1]["messages"][-1]["content"]
+    assert '"required_plan_decision_for_submitted_objective": "revise"' in correction
+    assert "Required hard transition for reason 'same_objective_stalled_2'" in correction
+    assert "Preserve plan_review.decision exactly as 'complete'" not in correction
+
+
+def test_same_objective_stalled_rejects_repeated_action_fingerprint() -> None:
+    repeated_action = {
+        "type": "DIG",
+        "params": {"area": [50, 35, 0], "size": [5, 5, 1]},
+    }
+    control = _plan_control(
+        review_due=True,
+        request_id="32:same_objective_stalled_2",
+        prior_objective="Build durable shelter.",
+        previous_step=31,
+        previous_verdict="no_progress",
+        previous_action=repeated_action,
+        reasons=["same_objective_stalled_2"],
+    )
+    invalid = _reviewed_action_payload(
+        control=control,
+        objective="Establish sustainable drink production.",
+        decision="revise",
+    )
+    invalid["last_action_review"]["retry_same_action"] = True
+    valid = _reviewed_action_payload(
+        control=control,
+        objective="Establish sustainable drink production.",
+        decision="revise",
+    )
+    valid.update(
+        {
+            "type": "WAIT",
+            "params": {},
+            "intent": "advance existing work for the replacement objective",
+            "plan_step": "Advance existing replacement-objective work.",
+            "expected_simulation_result": "Existing jobs advance without repeating the rejected dig.",
+        }
+    )
+    agent = _agent([_submit_action_response(invalid), _submit_action_response(valid)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["type"] == "WAIT"
+    assert action["last_action_review"]["retry_same_action"] is False
+    correction = agent._client.chat.completions.requests[1]["messages"][-1]["content"]
+    assert "normalized type+params" in correction
+    assert "previous rejected/no-progress action" in correction
+    assert "retry_same_action must match whether" not in correction
+
+
+def test_same_objective_stalled_accepts_materially_different_action() -> None:
+    previous_action = {
+        "type": "DIG",
+        "params": {"area": [50, 35, 0], "size": [5, 5, 1]},
+    }
+    control = _plan_control(
+        review_due=True,
+        request_id="32:same_objective_stalled_2",
+        prior_objective="Build durable shelter.",
+        previous_step=31,
+        previous_verdict="rejected",
+        previous_action=previous_action,
+        reasons=["same_objective_stalled_2"],
+    )
+    payload = _reviewed_action_payload(
+        control=control,
+        objective="Advance existing production jobs.",
+        decision="revise",
+    )
+    payload.update(
+        {
+            "type": "WAIT",
+            "params": {},
+            "intent": "advance existing production jobs",
+            "plan_step": "Advance existing production work.",
+            "expected_simulation_result": "Existing production jobs advance.",
+        }
+    )
+    agent = _agent([_submit_action_response(payload)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["type"] == "WAIT"
+    assert len(agent._client.chat.completions.requests) == 1
+
+
+def test_due_review_rejects_same_objective_revise() -> None:
+    control = _plan_control(
+        review_due=True,
+        request_id="32:periodic_5",
+        prior_objective="Build durable shelter.",
+        previous_step=31,
+        previous_verdict="progressed",
+        reasons=["periodic_5"],
     )
     invalid = _reviewed_action_payload(control=control, decision="revise")
     valid = _reviewed_action_payload(control=control, decision="continue")
@@ -757,10 +1088,8 @@ def test_review_contract_decision_correction_is_focused_and_omits_evidence_catal
 
     assert action["plan_review"]["decision"] == "continue"
     correction = agent._client.chat.completions.requests[1]["messages"][-1]["content"]
-    assert "Required decision repair" in correction
+    assert "decision=revise must change the prior objective" in correction
     assert "plan_review.decision exactly to 'continue'" in correction
-    assert '"allowed_evidence_ids"' not in correction
-    assert '"allowed_evidence_lines"' not in correction
 
 
 def test_due_not_due_decision_gets_exact_continue_repair() -> None:
@@ -770,6 +1099,7 @@ def test_due_not_due_decision_gets_exact_continue_repair() -> None:
         prior_objective="Build durable shelter.",
         previous_step=34,
         previous_verdict="progressed",
+        reasons=["periodic_5"],
     )
     invalid = _reviewed_action_payload(control=control, decision="not_due")
     valid = _reviewed_action_payload(control=control, decision="continue")
@@ -782,8 +1112,30 @@ def test_due_not_due_decision_gets_exact_continue_repair() -> None:
 
     assert action["plan_review"]["decision"] == "continue"
     correction = agent._client.chat.completions.requests[1]["messages"][-1]["content"]
-    assert "due plan review must continue or revise the prior objective" in correction
+    assert "due plan review must continue, revise, or complete the prior objective" in correction
     assert "plan_review.decision exactly to 'continue'" in correction
+
+
+@pytest.mark.parametrize("reason", ["periodic", "partial_mutation", "action_pending"])
+def test_non_stall_review_reasons_allow_continue(reason: str) -> None:
+    control = _plan_control(
+        review_due=True,
+        request_id=f"35:{reason}",
+        prior_objective="Build durable shelter.",
+        previous_step=34,
+        previous_verdict="progressed",
+        reasons=[reason],
+    )
+    payload = _reviewed_action_payload(control=control, decision="continue")
+    agent = _agent([_submit_action_response(payload)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["plan_review"]["decision"] == "continue"
+    assert len(agent._client.chat.completions.requests) == 1
 
 
 def test_current_state_fact_error_includes_evidence_catalog() -> None:
@@ -1225,6 +1577,103 @@ def test_review_correction_states_required_decision_for_objective_change() -> No
     assert '"required_plan_decision_for_submitted_objective": "revise"' in correction
     assert '"submitted_objective_matches_prior": false' in correction
     assert '"submitted_plan_decision": "continue"' in correction
+
+
+def test_locked_revise_requirement_rejects_switch_to_complete() -> None:
+    control = _plan_control(
+        review_due=False,
+        request_id="33:none",
+        prior_objective="Place a Still on verified open floor.",
+        previous_step=32,
+        previous_verdict="rejected",
+    )
+    changed_objective = "Build a FarmPlot on verified open floor."
+    invalid_continue = _reviewed_action_payload(
+        control=control,
+        objective=changed_objective,
+        decision="continue",
+    )
+    switched_complete = _reviewed_action_payload(
+        control=control,
+        objective=changed_objective,
+        decision="complete",
+    )
+    compliant_revise = _reviewed_action_payload(
+        control=control,
+        objective=changed_objective,
+        decision="revise",
+    )
+    agent = _agent(
+        [
+            _submit_action_response(invalid_continue),
+            _submit_action_response(switched_complete),
+            _submit_action_response(compliant_revise),
+        ]
+    )
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["plan_review"]["decision"] == "revise"
+    assert len(agent._client.chat.completions.requests) == 3
+    second_correction = agent._client.chat.completions.requests[2]["messages"][-1]["content"]
+    assert "locked first-correction requirement 'revise'" in second_correction
+    assert '"locked_required_plan_decision": "revise"' in second_correction
+    assert '"required_plan_decision_for_submitted_objective": "revise"' in second_correction
+
+
+def test_locked_complete_requirement_rejects_switch_to_continue() -> None:
+    prior_objective = "Build three functional rooms."
+    next_objective = "Establish a sustainable drink supply."
+    control = _plan_control(
+        request_id="12:rooms_complete",
+        prior_objective=prior_objective,
+        previous_step=11,
+        previous_verdict="progressed",
+    )
+    control["allowed_evidence_lines"].append(
+        "E4: Fortress rooms observed: functional_rooms=3/3"
+    )
+    control["plan_evidence_ids"] = ["E2", "E4"]
+    malformed_complete = _brew_action_payload(
+        control=control,
+        objective=prior_objective,
+        decision="complete",
+    )
+    switched_continue = _reviewed_action_payload(
+        control=control,
+        objective=prior_objective,
+        decision="continue",
+    )
+    compliant_complete = _brew_action_payload(
+        control=control,
+        objective=next_objective,
+        decision="complete",
+    )
+    agent = _agent(
+        [
+            _submit_action_response(malformed_complete),
+            _submit_action_response(switched_continue),
+            _submit_action_response(compliant_complete),
+        ]
+    )
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["plan_review"]["decision"] == "complete"
+    assert action["objective"] == next_objective
+    assert len(agent._client.chat.completions.requests) == 3
+    first_correction = agent._client.chat.completions.requests[1]["messages"][-1]["content"]
+    assert "Preserve plan_review.decision exactly as 'complete'" in first_correction
+    second_correction = agent._client.chat.completions.requests[2]["messages"][-1]["content"]
+    assert "locked first-correction requirement 'complete'" in second_correction
+    assert '"locked_required_plan_decision": "complete"' in second_correction
+    assert "Preserve plan_review.decision exactly as 'complete'" in second_correction
 
 
 def test_review_contract_allows_voluntary_continue_when_not_due() -> None:
