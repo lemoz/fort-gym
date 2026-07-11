@@ -5,11 +5,12 @@ from __future__ import annotations
 import asyncio
 import os
 import threading
+from datetime import datetime
 from importlib import import_module
 from pathlib import Path
-from typing import AsyncGenerator, Callable, Dict, Iterable, List, Optional
+from typing import Any, AsyncGenerator, Callable, Dict, Iterable, List, Optional, Tuple
 
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -29,11 +30,17 @@ from .schemas import (
     AdminKeysRequest,
     JobCreate,
     JobInfo,
+    PublicComparisonGroup,
+    PublicModelResult,
+    PublicOverview,
+    PublicRunPreview,
+    PublicRunSummary,
     RunCreateRequest,
     RunInfo,
     RunInfoPublic,
     ShareCreate,
 )
+from .trace_preview import read_trace_preview
 from .sse import ndjson_iter, sse_event, stream_queue
 
 app = FastAPI(title="fort-gym API")
@@ -153,6 +160,7 @@ def _serialize(record: RegistryRunInfo) -> RunInfo:
         seed_save=getattr(record, "seed_save", None),
         runtime_save=getattr(record, "runtime_save", None),
         preserve_save=getattr(record, "preserve_save", False),
+        evaluation_protocol=getattr(record, "evaluation_protocol", None),
         status=record.status,
         step=record.step,
         max_steps=record.max_steps,
@@ -178,11 +186,128 @@ def _serialize_public(record: RegistryRunInfo, share: ShareToken) -> RunInfoPubl
         seed_save=getattr(record, "seed_save", None),
         runtime_save=getattr(record, "runtime_save", None),
         preserve_save=getattr(record, "preserve_save", False),
+        evaluation_protocol=getattr(record, "evaluation_protocol", None),
         started_at=record.started_at,
         finished_at=record.ended_at,
         score=summary.get("total_score") or metadata.get("last_score"),
         token=share.token,
         scopes=sorted(share.scope),
+    )
+
+
+_COMPARABILITY_FIELDS = [
+    "evaluation_protocol",
+    "backend",
+    "git_sha",
+    "score_version",
+    "seed_save",
+    "max_steps",
+    "ticks_per_step",
+]
+_PUBLIC_SUMMARY_FIELDS = {
+    "evaluation_protocol",
+    "score_version",
+    "total_score",
+    "survival_score",
+    "steps",
+    "duration_ticks",
+    "peak_pop",
+    "end_pop",
+    "rubric",
+    "milestones",
+    "scenario_assertions",
+}
+
+
+def _compact_public_summary(summary: Dict[str, Any]) -> Dict[str, Any]:
+    """Keep persisted score and evaluation fields without deriving new data."""
+
+    result = {key: summary[key] for key in _PUBLIC_SUMMARY_FIELDS if key in summary}
+    result.update(
+        {
+            key: value
+            for key, value in summary.items()
+            if "gate" in key.lower() and key not in result
+        }
+    )
+    return result
+
+
+def _comparison_groups(
+    items: List[Tuple[RegistryRunInfo, ShareToken]],
+) -> List[PublicComparisonGroup]:
+    """Return model rows only for runs with complete comparison provenance."""
+
+    groups: Dict[
+        Tuple[str, str, str, int, str, int, int], Dict[str, List[Tuple[float, str]]]
+    ] = {}
+    for record, share in items:
+        if not {"replay", "export"}.issubset(share.scope):
+            continue
+        summary = record.latest_summary
+        if not isinstance(summary, dict):
+            continue
+        evaluation_protocol = record.evaluation_protocol
+        summary_evaluation_protocol = summary.get("evaluation_protocol")
+        score_version = summary.get("score_version")
+        total_score = summary.get("total_score")
+        if (
+            not isinstance(evaluation_protocol, str)
+            or not evaluation_protocol.strip()
+            or summary_evaluation_protocol != evaluation_protocol
+            or not isinstance(record.git_sha, str)
+            or not record.git_sha.strip()
+            or type(score_version) is not int
+            or score_version <= 0
+            or not record.seed_save
+            or isinstance(total_score, bool)
+        ):
+            continue
+        try:
+            score = float(total_score)
+        except (TypeError, ValueError):
+            continue
+        key = (
+            evaluation_protocol,
+            record.backend,
+            record.git_sha.strip(),
+            score_version,
+            record.seed_save,
+            record.max_steps,
+            record.ticks_per_step,
+        )
+        groups.setdefault(key, {}).setdefault(record.model, []).append((score, share.token))
+
+    response: List[PublicComparisonGroup] = []
+    for key, scores_by_model in groups.items():
+        response.append(
+            PublicComparisonGroup(
+                comparability=dict(zip(_COMPARABILITY_FIELDS, key, strict=True)),
+                model_results=sorted(
+                    [
+                        PublicModelResult(
+                            model=model,
+                            run_count=len(scored_runs),
+                            mean_score=round(
+                                sum(score for score, _token in scored_runs) / len(scored_runs), 2
+                            ),
+                            best_score=round(max(score for score, _token in scored_runs), 2),
+                            best_token=max(scored_runs, key=lambda item: item[0])[1],
+                        )
+                        for model, scored_runs in scores_by_model.items()
+                    ],
+                    key=lambda result: (result.mean_score, result.model),
+                    reverse=True,
+                ),
+            )
+        )
+    return sorted(
+        response,
+        key=lambda group: (
+            group.comparability["score_version"],
+            group.comparability["evaluation_protocol"],
+        ),
+        reverse=True,
     )
 
 
@@ -277,6 +402,7 @@ async def create_run(payload: RunCreateRequest, _: None = Depends(require_admin)
         preserve_save=payload.preserve_save,
         seed_save=payload.seed_save,
         runtime_save=payload.runtime_save,
+        evaluation_protocol=payload.evaluation_protocol,
         loop=loop,
     )
 
@@ -300,6 +426,7 @@ async def create_run(payload: RunCreateRequest, _: None = Depends(require_admin)
             preserve_save=payload.preserve_save,
             seed_save=payload.seed_save,
             runtime_save=payload.runtime_save,
+            evaluation_protocol=payload.evaluation_protocol,
         )
 
     thread = threading.Thread(target=_target, name=f"run-{record.run_id}", daemon=True)
@@ -399,6 +526,22 @@ async def public_runs() -> List[RunInfoPublic]:
     return [_serialize_public(record, share) for record, share in items]
 
 
+@app.get("/public/overview", response_model=PublicOverview)
+async def public_overview(
+    recent_limit: int = Query(default=20, ge=1, le=100),
+) -> PublicOverview:
+    active_items, recent_items, terminal_items = RUN_REGISTRY.public_overview_runs(
+        recent_limit=recent_limit
+    )
+    return PublicOverview(
+        generated_at=datetime.utcnow(),
+        active_runs=[_serialize_public(record, share) for record, share in active_items],
+        recent_runs=[_serialize_public(record, share) for record, share in recent_items],
+        comparability_fields=_COMPARABILITY_FIELDS,
+        comparison_groups=_comparison_groups(terminal_items),
+    )
+
+
 @app.get("/public/leaderboard")
 async def public_leaderboard(limit: int = 50) -> List[Dict[str, object]]:
     return RUN_REGISTRY.public_leaderboard(limit)
@@ -428,6 +571,34 @@ async def public_run(token: str) -> RunInfoPublic:
     if record is None:
         raise HTTPException(status_code=404, detail="Run not found")
     return _serialize_public(record, share)
+
+
+@app.get("/public/runs/{token}/summary", response_model=PublicRunSummary)
+async def public_run_summary(token: str) -> PublicRunSummary:
+    share = _require_share(token)
+    record = RUN_REGISTRY.get(share.run_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail="Run not found")
+    latest_summary = record.latest_summary if isinstance(record.latest_summary, dict) else {}
+    cost = latest_summary.get("cost")
+    return PublicRunSummary(
+        run=_serialize_public(record, share),
+        summary=_compact_public_summary(latest_summary),
+        usage=latest_summary.get("usage"),
+        cost=cost,
+        cost_status="reported" if cost is not None else "not_reported",
+    )
+
+
+@app.get("/public/runs/{token}/preview", response_model=PublicRunPreview)
+async def public_run_preview(token: str) -> PublicRunPreview:
+    share = _require_share(token, scope="replay")
+    path = _artifacts_path(share.run_id)
+    try:
+        preview = read_trace_preview(path)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Trace not available") from exc
+    return PublicRunPreview(**preview)
 
 
 @app.get("/public/runs/{token}/events/stream")

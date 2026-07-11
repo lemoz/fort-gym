@@ -46,6 +46,7 @@ from ..env.mock_env import MockEnvironment
 from ..env.scenarios import evaluate_scenario_assertions, get_mock_scenario
 from ..env.state_reader import StateReader
 from ..eval import metrics, milestones, scoring
+from ..eval.protocol import validate_evaluation_protocol
 from ..eval.summary import RunSummary, summarize
 from ..tick_receipt import validate_clean_interruption_receipt
 from .model_modes import (
@@ -2276,6 +2277,7 @@ def run_once(
     preserve_save: bool = False,
     seed_save: Optional[str] = None,
     runtime_save: Optional[str] = None,
+    evaluation_protocol: Optional[str] = None,
 ) -> str:
     """Execute a run and persist a JSONL trace while streaming events."""
 
@@ -2285,6 +2287,7 @@ def run_once(
         raise ValueError("Scenarios are currently supported only by the mock backend")
     ticks = ticks_per_step if ticks_per_step is not None else settings.TICKS_PER_STEP
     run_identifier = run_id or uuid.uuid4().hex
+    evaluation_protocol = validate_evaluation_protocol(evaluation_protocol)
 
     if registry:
         record = registry.get(run_identifier)
@@ -2297,6 +2300,7 @@ def run_once(
                 loop=loop,
                 run_id=run_identifier,
                 preserve_save=preserve_save,
+                evaluation_protocol=evaluation_protocol,
             )
         if not registry.claim_pending_run(
             run_identifier,
@@ -4566,6 +4570,7 @@ def run_once(
         summary = summarize(trace_path)
         summary.model = model
         summary.backend = backend_name
+        summary.evaluation_protocol = evaluation_protocol
         if scenario:
             summary.scenario = scenario
             scenario_pack = get_mock_scenario(scenario)

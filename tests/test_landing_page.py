@@ -4,27 +4,25 @@ import inspect
 from pathlib import Path
 
 
-def test_landing_page_exists_with_lab_positioning() -> None:
+def test_landing_page_is_results_first_fort_eval_surface() -> None:
     html = Path("web/landing.html").read_text(encoding="utf-8")
 
-    assert "environment lab" in html
-    assert "instruments" in html
-    # every capability card carries a gate-backed claim and an evidence link
-    for tag in (
-        "SPATIAL REASONING",
-        "LONG-HORIZON PLANNING",
-        "INCENTIVE ROBUSTNESS",
-        "MEMORY UTILITY",
-        "GENERALIZATION",
-        "RELIABILITY",
-    ):
-        assert tag in html
-    # evidence links: real replay tokens and repo docs, never fabricated stats
-    assert 'href="/r/qw8S-Wmf53DYLESSrgCWGvLPvY2n0IuH"' in html
-    assert "docs/WDSLL.md" in html
+    assert "<span>FORT</span> LABS" in html
+    assert "FORT-EVAL" in html
+    assert "Can an AI build a civilization that" in html
+    assert 'id="hero-canvas"' in html
+    assert "Source: recorded DF CopyScreen" in html
+    assert "Results belong to protocols" in html
+    assert "Easy" in html and "Hard" in html and "Discovery" in html
+    assert "Observer Map" in html
+    assert "Observer view / derived evidence" in html
+    assert "never silently passed to evaluated models" in html
+    assert "No frozen Fort-Eval cohort has been published yet" in html
+    assert "'/public/overview'" in html
+    assert "/preview" in html
+    assert "/export/trace" not in html
     assert 'href="/live"' in html
-    # honesty footer: claims are auditable
-    assert "backed by a" in html and "public run" in html
+    assert "Failures receive the same permanent replay" in html
 
 
 def test_root_serves_landing_and_live_serves_viewer() -> None:

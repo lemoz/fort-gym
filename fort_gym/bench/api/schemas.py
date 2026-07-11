@@ -7,6 +7,8 @@ from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
+from ..eval.protocol import EVALUATION_PROTOCOL_PATTERN
+
 
 BackendType = Literal["mock", "dfhack"]
 ModelType = Literal[
@@ -51,6 +53,7 @@ class RunInfo(BaseModel):
     seed_save: Optional[str] = None
     runtime_save: Optional[str] = None
     preserve_save: bool = False
+    evaluation_protocol: Optional[str] = None
     max_steps: int = 0
     ticks_per_step: int = 0
     step: int = 0
@@ -66,6 +69,12 @@ class RunCreateRequest(BaseModel):
     model: ModelType = "random"
     safe: Optional[bool] = True
     preserve_save: bool = False
+    evaluation_protocol: Optional[str] = Field(
+        default=None,
+        min_length=1,
+        max_length=64,
+        pattern=EVALUATION_PROTOCOL_PATTERN,
+    )
     # Per-run seed selection (G6 generalization): a bare save-folder name
     # under data/seed_saves to reset from, and the runtime save name to reset
     # into. None keeps the deployment defaults
@@ -115,11 +124,58 @@ class RunInfoPublic(BaseModel):
     seed_save: Optional[str] = None
     runtime_save: Optional[str] = None
     preserve_save: bool = False
+    evaluation_protocol: Optional[str] = None
     started_at: Optional[datetime] = None
     finished_at: Optional[datetime] = None
     score: Optional[float] = None
     token: str
     scopes: List[str] = Field(default_factory=list)
+
+
+class PublicModelResult(BaseModel):
+    """One model's scores inside a complete comparison scope."""
+
+    model: str
+    run_count: int
+    mean_score: float
+    best_score: float
+    best_token: Optional[str] = None
+
+
+class PublicComparisonGroup(BaseModel):
+    """A protocol-scoped comparison with separate model result rows."""
+
+    comparability: Dict[str, Any]
+    model_results: List[PublicModelResult] = Field(default_factory=list)
+
+
+class PublicOverview(BaseModel):
+    """Compact public snapshot of shared run activity and safe score groups."""
+
+    generated_at: datetime
+    active_runs: List[RunInfoPublic] = Field(default_factory=list)
+    recent_runs: List[RunInfoPublic] = Field(default_factory=list)
+    comparability_fields: List[str]
+    comparison_groups: List[PublicComparisonGroup] = Field(default_factory=list)
+
+
+class PublicRunSummary(BaseModel):
+    """Persisted public summary data for one shared run."""
+
+    run: RunInfoPublic
+    summary: Dict[str, Any] = Field(default_factory=dict)
+    usage: Optional[Any] = None
+    cost: Optional[Any] = None
+    cost_status: Literal["reported", "not_reported"]
+
+
+class PublicRunPreview(BaseModel):
+    """Bounded latest-frame preview for a public saved run."""
+
+    step: Optional[int] = None
+    screen_text: Optional[str] = None
+    screen_status: Literal["recorded", "not_reported"]
+    inspected_records: int = 0
 
 
 class ShareCreate(BaseModel):

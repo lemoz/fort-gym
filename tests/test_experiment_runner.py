@@ -22,6 +22,7 @@ base_config:
   backend: mock
   max_steps: 2
   model: fake
+  evaluation_protocol: fort-eval-v1
 variants:
   - name: short
     memory_window: 0
@@ -46,6 +47,7 @@ runs_per_variant: 1
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
     assert metadata["name"] == "test-experiment"
     assert metadata["runs_per_variant"] == 1
+    assert metadata["base_config"]["evaluation_protocol"] == "fort-eval-v1"
 
     run_ids = [
         run["run_id"]
@@ -57,6 +59,8 @@ runs_per_variant: 1
     for run_id in run_ids:
         trace_path = artifacts_root / run_id / "trace.jsonl"
         assert trace_path.is_file()
+        summary = json.loads((artifacts_root / run_id / "summary.json").read_text(encoding="utf-8"))
+        assert summary["evaluation_protocol"] == "fort-eval-v1"
 
     assert os.environ.get("FORT_GYM_MEMORY_WINDOW") == original_memory
     get_settings.cache_clear()  # type: ignore[attr-defined]

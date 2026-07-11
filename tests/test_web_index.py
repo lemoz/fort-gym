@@ -52,6 +52,18 @@ def test_live_index_uses_saved_replay_for_completed_runs() -> None:
     assert "if (!isRunning)" in html
 
 
+def test_replay_exposes_spectator_only_observer_map() -> None:
+    html = Path("web/index.html").read_text(encoding="utf-8")
+
+    assert 'id="replay-view-observer"' in html
+    assert 'id="observer-level-select"' in html
+    assert "function buildObserverState" in html
+    assert "function drawObserverMap" in html
+    assert "Derived spectator evidence" in html
+    assert "not passed to the evaluated model" in html
+    assert "verified tile changes" in html
+
+
 def test_replay_distinguishes_frozen_liquid_from_stable_floor() -> None:
     html = Path("web/index.html").read_text(encoding="utf-8")
 

@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, Optional, Set, Tuple
 
 from ..config import get_settings
+from ..eval.protocol import validate_evaluation_protocol
 
 EventPayload = Dict[str, Any]
 
@@ -100,6 +101,7 @@ class RunInfo:
     seed_save: Optional[str] = None
     runtime_save: Optional[str] = None
     preserve_save: bool = False
+    evaluation_protocol: Optional[str] = None
     artifacts_dir: Optional[str] = None
     trace_path: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict, repr=False)
@@ -180,6 +182,7 @@ class RunRegistry:
               seed_save TEXT,
               runtime_save TEXT,
               preserve_save INTEGER NOT NULL DEFAULT 0,
+              evaluation_protocol TEXT,
               artifacts_dir TEXT,
               trace_path TEXT,
               last_score REAL,
@@ -198,6 +201,12 @@ class RunRegistry:
             table="runs",
             column="preserve_save",
             definition="INTEGER NOT NULL DEFAULT 0",
+        )
+        RunRegistry._ensure_column(
+            conn,
+            table="runs",
+            column="evaluation_protocol",
+            definition="TEXT",
         )
         RunRegistry._ensure_column(
             conn,
@@ -274,6 +283,7 @@ class RunRegistry:
         preserve_save: bool = False,
         seed_save: Optional[str] = None,
         runtime_save: Optional[str] = None,
+        evaluation_protocol: Optional[str] = None,
     ) -> RunInfo:
         """Register a new run and return its record.
 
@@ -283,6 +293,7 @@ class RunRegistry:
         """
 
         conn = self._ensure_conn()
+        evaluation_protocol = validate_evaluation_protocol(evaluation_protocol)
 
         identifier = run_id or uuid.uuid4().hex
         queue: asyncio.Queue[EventPayload] = asyncio.Queue(maxsize=512)
@@ -306,8 +317,8 @@ class RunRegistry:
                 INSERT INTO runs (
                   run_id, backend, model, max_steps, ticks_per_step,
                   status, step, created_at, git_sha, seed_save, runtime_save,
-                  preserve_save, artifacts_dir, trace_path
-                ) VALUES (?, ?, ?, ?, ?, 'pending', 0, ?, ?, ?, ?, ?, ?, ?)
+                  preserve_save, evaluation_protocol, artifacts_dir, trace_path
+                ) VALUES (?, ?, ?, ?, ?, 'pending', 0, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     identifier,
@@ -320,6 +331,7 @@ class RunRegistry:
                     seed_save,
                     runtime_save,
                     1 if preserve_save else 0,
+                    evaluation_protocol,
                     str(artifacts_dir),
                     str(trace_path),
                 ),
@@ -343,6 +355,7 @@ class RunRegistry:
             seed_save=seed_save,
             runtime_save=runtime_save,
             preserve_save=preserve_save,
+            evaluation_protocol=evaluation_protocol,
             artifacts_dir=str(artifacts_dir),
             trace_path=str(trace_path),
         )
@@ -814,16 +827,56 @@ class RunRegistry:
             items.append((self._row_to_runinfo(run_row), share))
         return items
 
+    def public_overview_runs(
+        self, *, recent_limit: int = 20
+    ) -> Tuple[
+        list[Tuple[RunInfo, ShareToken]],
+        list[Tuple[RunInfo, ShareToken]],
+        list[Tuple[RunInfo, ShareToken]],
+    ]:
+        """Return active, recent terminal, and all terminal shared runs.
+
+        This reads the registry only. In particular, callers must not inspect
+        trace files while constructing an overview response.
+        """
+
+        active_statuses = {"pending", "running", "paused"}
+        terminal_statuses = {"completed", "failed", "stopped"}
+        active_runs: list[Tuple[RunInfo, ShareToken]] = []
+        terminal_runs: list[Tuple[RunInfo, ShareToken]] = []
+
+        for item in self.list_public():
+            record, _share = item
+            if record.status in active_statuses:
+                active_runs.append(item)
+            elif record.status in terminal_statuses:
+                terminal_runs.append(item)
+
+        def sort_key(
+            item: Tuple[RunInfo, ShareToken], timestamp: Optional[datetime]
+        ) -> tuple[float, str]:
+            return (
+                timestamp.timestamp() if timestamp is not None else float("-inf"),
+                item[0].run_id,
+            )
+
+        active_runs.sort(key=lambda item: sort_key(item, item[0].started_at), reverse=True)
+        terminal_runs.sort(key=lambda item: sort_key(item, item[0].ended_at), reverse=True)
+        return active_runs, terminal_runs[:recent_limit], terminal_runs
+
     @staticmethod
     def _select_share(tokens: Iterable[ShareToken]) -> Optional[ShareToken]:
+        evidence: Optional[ShareToken] = None
         preferred: Optional[ShareToken] = None
         fallback: Optional[ShareToken] = None
         for share in tokens:
+            if {"replay", "export"}.issubset(share.scope) and evidence is None:
+                evidence = share
             if "live" in share.scope and preferred is None:
                 preferred = share
             if fallback is None:
                 fallback = share
-        return preferred or fallback
+        return evidence or preferred or fallback
 
     def public_leaderboard(self, limit: int = 50) -> list[Dict[str, Any]]:
         """Return per-(model, score_version, seed_save) aggregates.
@@ -1128,6 +1181,7 @@ class RunRegistry:
             seed_save=row["seed_save"],
             runtime_save=row["runtime_save"],
             preserve_save=bool(row["preserve_save"]),
+            evaluation_protocol=row["evaluation_protocol"],
             artifacts_dir=row["artifacts_dir"],
             trace_path=row["trace_path"],
             metadata=metadata,

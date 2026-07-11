@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
+from .protocol import EVALUATION_PROTOCOL_PATTERN
 from .rubric import evaluate_trace_records
 from .scoring import (
     GOVERNED_SCORE_PROGRESS_PROVENANCE,
@@ -23,6 +24,12 @@ class RunSummary(BaseModel):
     run_id: str
     model: str = "unknown"
     backend: str = "unknown"
+    evaluation_protocol: Optional[str] = Field(
+        default=None,
+        min_length=1,
+        max_length=64,
+        pattern=EVALUATION_PROTOCOL_PATTERN,
+    )
     scenario: Optional[str] = None
     steps: int = 0
     duration_ticks: int = 0

@@ -2,9 +2,9 @@
 
 [![CI](https://github.com/lemoz/fort-gym/actions/workflows/ci.yml/badge.svg)](https://github.com/lemoz/fort-gym/actions/workflows/ci.yml)
 
-**An open-source benchmark harness for autonomous agents, set in Dwarf Fortress.** Agents play a live fortress one action per step; the harness records every observation, state, and action to JSONL, streams runs live over SSE, and ranks agents on a public leaderboard.
+**An open-source environment harness for autonomous agents, set in Dwarf Fortress.** Agents play a live fortress one action per step; the harness records every observation, state, and action to JSONL and streams public, replayable evidence.
 
-Dwarf Fortress is a deep, partially observable, long-horizon environment that agents can't memorize their way through — which makes it a useful stress test for the planning, tool-use, and recovery behaviors that matter in real agentic work.
+Fort-Gym is the harness beneath [Fort-Eval](docs/FORT_EVAL_SPEC.md), Fort Labs' benchmark for planning, spatial memory, resource management, and adaptation in a procedurally generated civilization. Official model comparisons require the same versioned protocol, code, seed cohort, score, and budgets; older runs remain public evidence rather than a universal ranking.
 
 ![fort-gym leaderboard dashboard](docs/assets/leaderboard-dashboard.png)
 
@@ -42,7 +42,8 @@ FORT_GYM_INSECURE_ADMIN=1 fort-gym api --no-reload
 ```
 
 Artifacts (trace JSONL + summary) land under `fort_gym/artifacts/<run_id>/`. You
-can replay them via the public UI (`/`) or inspect the leaderboard (`/leaderboard`).
+can replay them via the public UI (`/live`) or inspect the historical leaderboard
+(`/leaderboard`).
 
 Run the built-in drink-scarcity scenario pack with assertion checks:
 ```bash
@@ -223,21 +224,24 @@ cp .env.example .env
 
 The web interface at `https://fortgym.live/` (or local dev at `http://127.0.0.1:8000/`) provides:
 
+- **Fort-Eval Overview** (`/`): results-first Fort Labs homepage with the active or latest evidence run, protocol-scoped comparison groups, and recent public runs.
 - **Live Game View** (running runs only): polls the public screenshot endpoint (`/public/runs/{token}/screenshot`, scope `live`) every 500ms and renders the DF screen with [pcface](https://github.com/susam/pcface) CP437 bitmap fonts. This is a genuinely live CopyScreen RPC read of the DF process the server is attached to — it is *not* per-run isolated, so it is only meaningful while that run is the one executing.
 - **Replay View** (finished runs, `/r/{token}`): loads the recorded `trace.jsonl` and steps through it. See "Replay Evidence Boundaries" below for exactly what each replay mode does and does not prove.
-- **Leaderboard**: Best score over time per backend/model/version (`/leaderboard`).
+- **Observer Map** (inside saved replays): accumulates revealed trace tiles, model-authored action footprints, verified tile changes, and z-levels through the selected step. It is a richer derived spectator view and is never silently passed to the agent.
+- **Historical Leaderboard**: Best score over time per backend/model/version (`/leaderboard`). This predates the Fort-Eval protocol manifest and is not an official cross-model cohort.
 - **Live/Replay Streams**: SSE event streams (`/public/runs/{token}/events/stream` and `/events/replay`).
 - **Admin Panel** (`/admin`): Create runs, manage jobs, generate share tokens (basic auth required; disabled if `FORT_GYM_ADMIN_PASSWORD` is empty).
 
 ## Replay Evidence Boundaries
 
-fort-gym separates what is gameplay proof from what is merely helpful. The five surfaces:
+fort-gym separates agent input, gameplay proof, and richer spectator evidence. The six surfaces:
 
 | Surface | What it is | Gameplay proof? |
 |---|---|---|
 | Live screenshot (`/public/runs/{token}/screenshot`) | Live CopyScreen RPC of the currently attached DF process, while a run executes | Live view only — not recorded, not per-run isolated |
 | Replay **DF Screen** frames | `screen_text` recorded into `trace.jsonl` each step (keystroke and governed runs) — real CopyScreen text at that moment of play | **Yes** — recorded evidence of the actual game screen |
 | Replay **Map Inspect** | `map_snapshot` — a derived DFHack tile read (≤64×64 rect) recorded per step. Labeled on-canvas "DERIVED DFHACK MAP INSPECTION / not gameplay proof" | No — analysis/debugging layer only |
+| Replay **Observer Map** | Accumulated revealed tiles, located action footprints, verified changes, and z-levels through the selected trace step | No — richer spectator-only evidence; not agent input unless a future protocol explicitly allows it |
 | **No Recorded DF Screen Frame** | Shown for old traces recorded before `screen_text` capture existed. The replay refuses to pass off derived data as a screen | Honest evidence gap — these runs cannot retroactively prove screen state |
 | Score + rubric | `composite_score` over observed DF state deltas, provenance-gated; deterministic 8-dimension rubric over the last 100 trace rows with blockers | Scoring judgment over real state — reported alongside, never instead of, the evidence above |
 

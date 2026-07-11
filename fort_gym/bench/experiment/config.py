@@ -8,6 +8,8 @@ from typing import Mapping
 
 import yaml
 
+from ..eval.protocol import validate_evaluation_protocol
+
 
 @dataclass(frozen=True)
 class BaseRunConfig:
@@ -15,6 +17,7 @@ class BaseRunConfig:
     max_steps: int
     model: str
     ticks_per_step: int | None = None
+    evaluation_protocol: str | None = None
 
 
 @dataclass(frozen=True)
@@ -73,12 +76,14 @@ def _parse_base_config(value: object) -> BaseRunConfig:
     ticks_per_step = _optional_int(value, "ticks_per_step")
     if ticks_per_step is not None and ticks_per_step < 1:
         raise ExperimentConfigError("base_config.ticks_per_step must be >= 1")
+    evaluation_protocol = _optional_evaluation_protocol(value)
 
     return BaseRunConfig(
         backend=backend,
         max_steps=max_steps,
         model=model,
         ticks_per_step=ticks_per_step,
+        evaluation_protocol=evaluation_protocol,
     )
 
 
@@ -113,6 +118,14 @@ def _optional_str(data: Mapping[str, object], field: str) -> str | None:
     if not isinstance(value, str):
         raise ExperimentConfigError(f"{field} must be a string")
     return value
+
+
+def _optional_evaluation_protocol(data: Mapping[str, object]) -> str | None:
+    value = _optional_str(data, "evaluation_protocol")
+    try:
+        return validate_evaluation_protocol(value)
+    except ValueError as exc:
+        raise ExperimentConfigError(str(exc)) from exc
 
 
 def _require_int(data: Mapping[str, object], field: str) -> int:

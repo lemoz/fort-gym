@@ -39,6 +39,7 @@ class VariantResult:
     max_steps: int
     model: str
     ticks_per_step: int
+    evaluation_protocol: str | None
     runs: list[VariantRun]
 
     def to_dict(self) -> dict[str, object]:
@@ -49,6 +50,7 @@ class VariantResult:
             "max_steps": self.max_steps,
             "model": self.model,
             "ticks_per_step": self.ticks_per_step,
+            "evaluation_protocol": self.evaluation_protocol,
             "runs": [run.to_dict() for run in self.runs],
         }
 
@@ -81,6 +83,7 @@ class ExperimentResult:
                 "max_steps": self.base_config.max_steps,
                 "model": self.base_config.model,
                 "ticks_per_step": self.base_config.ticks_per_step,
+                "evaluation_protocol": self.base_config.evaluation_protocol,
             },
             "variants": [variant.to_dict() for variant in self.variants],
         }
@@ -123,6 +126,7 @@ class ExperimentRunner:
                     max_steps=resolved["max_steps"],
                     model=resolved["model"],
                     ticks_per_step=resolved["ticks_per_step"],
+                    evaluation_protocol=resolved["evaluation_protocol"],
                     runs=runs,
                 )
             )
@@ -146,7 +150,7 @@ class ExperimentRunner:
     def _experiment_dir(self, name: str, experiment_id: str) -> Path:
         return self._artifacts_root / "experiments" / name / experiment_id
 
-    def _run_variant(self, resolved: dict[str, int | str], variant: VariantConfig) -> str:
+    def _run_variant(self, resolved: dict[str, int | str | None], variant: VariantConfig) -> str:
         agent_name = str(resolved["model"])
         ticks_per_step = int(resolved["ticks_per_step"])
         with _memory_window_context(variant.memory_window):
@@ -157,6 +161,7 @@ class ExperimentRunner:
                 model=str(resolved["model"]),
                 max_steps=int(resolved["max_steps"]),
                 ticks_per_step=ticks_per_step,
+                evaluation_protocol=resolved["evaluation_protocol"],
             )
 
 
@@ -174,7 +179,7 @@ def resolve_experiment_path(config_path: str | Path) -> Path:
     raise FileNotFoundError(f"Experiment config not found: {config_path}")
 
 
-def _resolve_variant(base: BaseRunConfig) -> dict[str, int | str]:
+def _resolve_variant(base: BaseRunConfig) -> dict[str, int | str | None]:
     settings = get_settings()
     ticks = base.ticks_per_step if base.ticks_per_step is not None else settings.TICKS_PER_STEP
     return {
@@ -182,6 +187,7 @@ def _resolve_variant(base: BaseRunConfig) -> dict[str, int | str]:
         "max_steps": base.max_steps,
         "model": base.model,
         "ticks_per_step": ticks,
+        "evaluation_protocol": base.evaluation_protocol,
     }
 
 
