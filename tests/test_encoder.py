@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from fort_gym.bench.env.actions import normalized_action_fingerprint
 from fort_gym.bench.env.encoder import encode_observation
 
@@ -1638,6 +1640,123 @@ def test_encoder_does_not_duplicate_latest_action_in_history() -> None:
     assert "older factual outcome" in text
     assert "Last Action command: step=2 WAIT; intent=latest factual outcome" in text
     assert text.count("latest factual outcome") == 1
+
+
+def test_encoder_surfaces_current_owned_excavation_completion() -> None:
+    text, _ = encode_observation(
+        {"time": 100, "population": 7, "stocks": {}},
+        screen_text="screen",
+        last_action_result={
+            "accepted": True,
+            "provenance": "dfhack_governed",
+            "result": {"newly_designated": 1},
+            "governed_current_action_effect_observed": True,
+            "_action_step": 7,
+            "_action": {
+                "type": "DIG",
+                "params": {
+                    "kind": "dig",
+                    "area": [94, 95, 160],
+                    "size": [1, 1, 1],
+                },
+                "intent": "open one model-chosen lower wall",
+            },
+        },
+    )
+
+    assert "Last Action command: step=7 DIG(kind=dig, area=[94, 95, 160]" in text
+    assert "Last Action owned excavation progress: ONE OR MORE SUBMITTED TILES COMPLETE" in text
+    assert "post-advance map proof observed completion" in text
+    assert "Full rectangle completion is not implied" in text
+
+
+def test_encoder_distinguishes_designation_acceptance_from_completion() -> None:
+    text, _ = encode_observation(
+        {"time": 100, "population": 7, "stocks": {}},
+        screen_text="screen",
+        last_action_result={
+            "accepted": True,
+            "provenance": "dfhack_governed",
+            "result": {"newly_designated": 1},
+            "governed_current_action_effect_observed": False,
+            "_action_step": 7,
+            "_action": {
+                "type": "DIG",
+                "params": {
+                    "kind": "channel",
+                    "area": [93, 95, 161],
+                    "size": [1, 1, 1],
+                },
+                "intent": "open legal lower access",
+            },
+        },
+    )
+
+    assert "Last Action owned excavation progress: NO SUBMITTED TILE COMPLETION OBSERVED" in text
+    assert "designation acceptance alone is not completed geometry" in text
+
+
+def test_encoder_does_not_overclaim_full_multi_tile_excavation() -> None:
+    text, _ = encode_observation(
+        {"time": 100, "population": 7, "stocks": {}},
+        screen_text="screen",
+        last_action_result={
+            "accepted": True,
+            "provenance": "dfhack_governed",
+            "result": {"newly_designated": 2},
+            "governed_current_action_effect_observed": True,
+            "_action_step": 7,
+            "_action": {
+                "type": "DIG",
+                "params": {
+                    "kind": "dig",
+                    "area": [94, 95, 160],
+                    "size": [2, 1, 1],
+                },
+                "intent": "open two model-chosen lower walls",
+            },
+        },
+    )
+
+    assert "ONE OR MORE SUBMITTED TILES COMPLETE" in text
+    assert "Full rectangle completion is not implied" in text
+    assert "FULL RECTANGLE COMPLETE" not in text
+
+
+@pytest.mark.parametrize(
+    ("action_type", "kind", "provenance"),
+    [
+        ("DIG", "dig", "dfhack_assisted"),
+        ("DIG", "chop", "dfhack_governed"),
+        ("DIG", "gather", "dfhack_governed"),
+        ("BUILD", "FarmPlot", "dfhack_governed"),
+        ("WAIT", None, "dfhack_governed"),
+    ],
+)
+def test_encoder_limits_owned_excavation_feedback_to_governed_dig_and_channel(
+    action_type: str,
+    kind: str | None,
+    provenance: str,
+) -> None:
+    params = {"kind": kind} if kind is not None else {}
+    text, _ = encode_observation(
+        {"time": 100, "population": 7, "stocks": {}},
+        screen_text="screen",
+        last_action_result={
+            "accepted": True,
+            "provenance": provenance,
+            "result": {},
+            "governed_current_action_effect_observed": True,
+            "_action_step": 7,
+            "_action": {
+                "type": action_type,
+                "params": params,
+                "intent": "exercise an excluded action surface",
+            },
+        },
+    )
+
+    assert "Last Action owned excavation progress:" not in text
 
 
 def test_encoder_validation_failure_does_not_hide_executed_history() -> None:

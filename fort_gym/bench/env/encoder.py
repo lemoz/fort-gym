@@ -1304,6 +1304,33 @@ def encode_observation(
                 status_lines.append(f"Last Action: PARTIAL MUTATION - {reason}")
             else:
                 status_lines.append(f"Last Action: REJECTED - {reason}")
+        last_action_params = (
+            last_action.get("params")
+            if isinstance(last_action, dict) and isinstance(last_action.get("params"), dict)
+            else {}
+        )
+        is_owned_excavation = bool(
+            isinstance(last_action, dict)
+            and last_action.get("type") == "DIG"
+            and str(last_action_params.get("kind") or "dig").lower() in {"dig", "channel"}
+            and last_action_result.get("provenance") == "dfhack_governed"
+        )
+        if accepted and is_owned_excavation:
+            completion_observed = last_action_result.get(
+                "governed_current_action_effect_observed"
+            )
+            if completion_observed is True:
+                status_lines.append(
+                    "Last Action owned excavation progress: ONE OR MORE SUBMITTED TILES "
+                    "COMPLETE; post-advance map proof observed completion inside the submitted "
+                    "dig/channel footprint. Full rectangle completion is not implied; inspect "
+                    "the current map."
+                )
+            elif completion_observed is False:
+                status_lines.append(
+                    "Last Action owned excavation progress: NO SUBMITTED TILE COMPLETION "
+                    "OBSERVED; designation acceptance alone is not completed geometry."
+                )
         if action_result:
             placed_tiles = action_result.get("placed")
             if isinstance(placed_tiles, list) and placed_tiles:
