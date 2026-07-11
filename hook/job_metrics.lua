@@ -11,6 +11,8 @@ local MAX_TRACKED_JOB_IDS = 256
 local MAX_WORKSHOPS = 10
 local MAX_WORKSHOP_JOB_ENTRIES = 12
 local MAX_CITIZEN_ENTRIES = 20
+local MAX_FARM_PLOT_DETAILS = 8
+local MAX_FARM_PLOT_CONTAINED_ITEMS = 25
 local MAX_RECT_W, MAX_RECT_H = 30, 30
 
 local ORDER_JOB_ITEMS = {
@@ -63,6 +65,15 @@ local function plant_token(idx)
   local ok, tok = pcall(function() return _plant_raws[idx].id end)
   if ok and tok and tok ~= '' then return sanitize(tok) end
   return nil
+end
+
+-- Farm plot contained items carry native planting metadata. Material tokens
+-- are resolved only by their raw index; this never scans world plants.
+local function contained_item_mat_token(mat_index)
+  if mat_index == nil or mat_index < 0 then return false, false end
+  local ok, token = pcall(function() return _plant_raws[mat_index].id end)
+  if ok and token and token ~= '' then return sanitize(token), true end
+  return false, false
 end
 
 local function raw_flag(flags, name)
@@ -553,6 +564,77 @@ out.farm_plot_positions = {}
 -- Each crops entry is a 4-slot array [spring,summer,autumn,winter]; an empty
 -- slot is emitted as false so the array stays dense (json-safe).
 out.farm_plot_details = {}
+out.farm_plot_details_truncated = false
+
+local function native_number_field(object, field)
+  local ok, value = pcall(function() return object[field] end)
+  local number = ok and to_int(value) or nil
+  if number == nil then return false, false end
+  return number, true
+end
+
+local function farm_plot_contained_item_record(contained)
+  local record = {
+    read_ok = false,
+    item_type = false,
+    item_id = false,
+    use_mode = false,
+    mat_index = false,
+    grow_counter = false,
+    planting_skill = false,
+    mat_token = false,
+    mat_token_read_ok = false,
+  }
+  local item_ok, item = pcall(function() return contained.item end)
+  if not item_ok or not item then return record end
+
+  local type_ok, type_enum = pcall(function() return item:getType() end)
+  local item_type = false
+  if type_ok and type_enum ~= nil then
+    local type_name_ok, type_name = pcall(function() return df.item_type[type_enum] end)
+    if type_name_ok and type_name then item_type = sanitize(type_name) end
+  end
+  local item_id, item_id_ok = native_number_field(item, 'id')
+  local use_mode, use_mode_ok = native_number_field(contained, 'use_mode')
+  local mat_index, mat_index_ok = native_number_field(item, 'mat_index')
+  local grow_counter, grow_counter_ok = native_number_field(item, 'grow_counter')
+  local planting_skill, planting_skill_ok = native_number_field(item, 'planting_skill')
+  if not type_ok or not item_type or not item_id_ok or not use_mode_ok
+      or not mat_index_ok or not grow_counter_ok or not planting_skill_ok then
+    return record
+  end
+
+  record.item_type = item_type
+  record.item_id = item_id
+  record.use_mode = use_mode
+  record.mat_index = mat_index
+  record.grow_counter = grow_counter
+  record.planting_skill = planting_skill
+  record.mat_token, record.mat_token_read_ok = contained_item_mat_token(mat_index)
+  record.read_ok = true
+  return record
+end
+
+local function farm_plot_contained_items(bld)
+  local records = {}
+  local read_ok = true
+  local truncated = false
+  local scan_ok = pcall(function()
+    local contained_items = bld.contained_items
+    if not contained_items then error('contained_items_unreadable') end
+    for _, contained in ipairs(contained_items) do
+      if #records >= MAX_FARM_PLOT_CONTAINED_ITEMS then
+        truncated = true
+        break
+      end
+      local record = farm_plot_contained_item_record(contained)
+      table.insert(records, record)
+      if not record.read_ok then read_ok = false end
+    end
+  end)
+  if not scan_ok then read_ok = false end
+  return read_ok, truncated, records
+end
 
 local function farm_plot_detail(bld)
   local stage_read_ok, stage, max_stage, built = building_stage(bld)
@@ -598,6 +680,8 @@ local function farm_plot_detail(bld)
     and seed_scan_ok
     and crop_option_scan_ok
     and not crop_options_any_truncated
+  local contained_items_read_ok, contained_items_truncated, contained_items =
+    farm_plot_contained_items(bld)
   return {
     id = bld.id,
     rect = { bld.x1, bld.y1, bld.x2, bld.y2, bld.z },
@@ -606,6 +690,9 @@ local function farm_plot_detail(bld)
     stage_read_ok = stage_read_ok,
     built = built,
     crops = crops,
+    contained_items_read_ok = contained_items_read_ok,
+    contained_items_truncated = contained_items_truncated,
+    contained_items = contained_items,
     tile_context = tile_context,
     plot_subterranean = plot_subterranean,
     crop_options_complete = crop_options_complete,
@@ -646,10 +733,12 @@ for _, bld in ipairs(df.global.world.buildings.all) do
         table.insert(out.farm_plot_positions, { bld.centerx, bld.centery, bld.z })
       end)
     end
-    if #out.farm_plot_details < 8 then
+    if #out.farm_plot_details < MAX_FARM_PLOT_DETAILS then
       pcall(function()
         table.insert(out.farm_plot_details, farm_plot_detail(bld))
       end)
+    else
+      out.farm_plot_details_truncated = true
     end
   end
   local ok, is_workshop = pcall(function()

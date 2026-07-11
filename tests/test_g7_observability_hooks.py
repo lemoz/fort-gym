@@ -30,6 +30,37 @@ def test_job_metrics_separates_completed_furniture_from_all_placed_furniture() -
     )
 
 
+def test_job_metrics_collects_bounded_raw_farm_contained_item_evidence() -> None:
+    for needle in (
+        "MAX_FARM_PLOT_DETAILS = 8",
+        "MAX_FARM_PLOT_CONTAINED_ITEMS = 25",
+        "out.farm_plot_details_truncated = false",
+        "contained_items_read_ok = contained_items_read_ok",
+        "contained_items_truncated = contained_items_truncated",
+        "read_ok = false",
+        "item_type = false",
+        "item_id = false",
+        "use_mode = false",
+        "mat_index = false",
+        "grow_counter = false",
+        "planting_skill = false",
+        "mat_token = false",
+        "mat_token_read_ok = false",
+        "_plant_raws[mat_index].id",
+        "#records >= MAX_FARM_PLOT_CONTAINED_ITEMS",
+        "if not record.read_ok then read_ok = false end",
+    ):
+        assert needle in HOOK_SOURCE
+    assert "world.plants.all" not in HOOK_SOURCE
+    for heuristic_label in (
+        "is_growing",
+        "pathing_blocked",
+        "percent",
+        "inferred status",
+    ):
+        assert heuristic_label not in HOOK_SOURCE
+
+
 def test_job_metrics_emits_raw_dead_citizen_observability_without_inference() -> None:
     for needle in (
         "df.global.world.units.all",

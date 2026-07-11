@@ -2042,6 +2042,8 @@ def encode_observation(
             status_lines.append(farm_plots_line)
 
         farm_plot_details = crew.get("farm_plot_details")
+        if crew.get("farm_plot_details_truncated") is True:
+            status_lines.append("Farm plot details truncated at 8 records.")
         if isinstance(farm_plot_details, list) and farm_plot_details:
             season_labels = ("spring", "summer", "autumn", "winter")
             for detail in farm_plot_details[:8]:
@@ -2117,6 +2119,53 @@ def encode_observation(
                         f"Farm plot #{plot_id} native offered crops unavailable; "
                         "do not submit a non-clear FARM crop selection for this plot."
                     )
+
+                contained_read_ok = detail.get("contained_items_read_ok")
+                contained_truncated = detail.get("contained_items_truncated") is True
+                contained_items = detail.get("contained_items")
+                contained_line = f"Farm plot #{plot_id} raw contained items: "
+                if not isinstance(contained_items, list):
+                    contained_line += "unreadable"
+                elif not contained_items and contained_read_ok is not True:
+                    contained_line += "unreadable"
+                elif not contained_items:
+                    contained_line += "empty"
+                else:
+                    if contained_read_ok is not True:
+                        contained_line += "partial/unreadable; "
+                    contained_parts = []
+                    for index, record in enumerate(contained_items[:25], start=1):
+                        if not isinstance(record, dict) or record.get("read_ok") is not True:
+                            contained_parts.append(f"record{index}=unreadable")
+                            continue
+                        item_type = record.get("item_type")
+                        if not isinstance(item_type, str) or not item_type:
+                            item_type = "unknown"
+                        values = {
+                            key: _int_or_none(record.get(key))
+                            for key in (
+                                "item_id",
+                                "use_mode",
+                                "mat_index",
+                                "grow_counter",
+                                "planting_skill",
+                            )
+                        }
+                        fields = [f"item_type={_sanitize_token(item_type)}"]
+                        fields.extend(
+                            f"{key}={value if value is not None else 'unknown'}"
+                            for key, value in values.items()
+                        )
+                        mat_token = record.get("mat_token")
+                        if record.get("mat_token_read_ok") is True and isinstance(mat_token, str):
+                            fields.append(f"mat_token={_sanitize_token(mat_token)}")
+                        else:
+                            fields.append("mat_token=unreadable")
+                        contained_parts.append(",".join(fields))
+                    contained_line += "; ".join(contained_parts)
+                if contained_truncated:
+                    contained_line += "; truncated at 25 records"
+                status_lines.append(contained_line)
 
         seeds = crew.get("seeds")
         if isinstance(seeds, list) and seeds:
