@@ -157,6 +157,8 @@ topic_option_a through topic_option_h operation only when that exact lettered op
 listed on viewscreen_topicmeetingst; each sends one corresponding bounded letter option. In
 particular, "a - Begin discussion" requires topic_option_a and must never use
 finish_topic_meeting.
+`viewscreen_storesst` is a blocking Wealth/Stocks screen: submit only INTERACT cancel with
+advance_ticks=0, then wait for a fresh observation before any gameplay command or time advancement.
 
 Every action must include "advance_ticks" (how many game ticks to run after the command, up to \
 2000; around 1000 is a typical step; INTERACT must use 0). Nothing in the fortress changes unless

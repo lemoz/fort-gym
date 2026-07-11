@@ -230,13 +230,13 @@ def _screen_visual_hint_texts(screen_text: str) -> List[str]:
     return hints
 
 
-def _classify_screen_state(screen_text: Optional[str]) -> Dict[str, Any]:
-    if not screen_text:
-        return {}
-
-    lower = screen_text.lower()
-    lines = _screen_text_lines(screen_text)
-    visual_hints = _screen_visual_hint_texts(screen_text)
+def _classify_screen_state(
+    screen_text: Optional[str], viewscreen_type: Optional[str] = None
+) -> Dict[str, Any]:
+    captured_screen = screen_text or ""
+    lower = captured_screen.lower()
+    lines = _screen_text_lines(captured_screen)
+    visual_hints = _screen_visual_hint_texts(captured_screen)
     highlighted = visual_hints[0] if visual_hints else None
     evidence: List[str] = []
 
@@ -257,6 +257,24 @@ def _classify_screen_state(screen_text: Optional[str]) -> Dict[str, Any]:
             "evidence": facts[:5],
             "instruction": instruction,
         }
+
+    if viewscreen_type == "viewscreen_storesst":
+        stores_evidence = ["DFHack attests viewscreen_storesst"]
+        if "the wealth of" in lower and "tab: mode" in lower:
+            stores_evidence.append("visible Wealth screen title and stores footer")
+        return result(
+            "stores",
+            confidence="high",
+            instruction=(
+                "Blocking Wealth/Stocks screen: submit only INTERACT "
+                '{"operation":"cancel"} with advance_ticks=0; wait for the next '
+                "observation before gameplay commands or time advancement."
+            ),
+            extra_evidence=stores_evidence,
+        )
+
+    if not captured_screen:
+        return {}
 
     if "manager is required" in lower:
         return result(
@@ -1144,7 +1162,7 @@ def encode_observation(
             or "s: suspend construction" in screen_lower
         )
     )
-    screen_state = _classify_screen_state(screen_text)
+    screen_state = _classify_screen_state(screen_text, viewscreen_type)
     if screen_state:
         clean_state["screen_state"] = screen_state
     active_material_blocked = bool(
@@ -1168,7 +1186,7 @@ def encode_observation(
             screen_line += "; evidence=" + " | ".join(str(item) for item in evidence[:3])
         status_lines.append(screen_line)
         instruction = screen_state.get("instruction")
-        if instruction and not governed:
+        if instruction and (not governed or screen_state.get("mode") == "stores"):
             status_lines.append(f"Screen instruction: {instruction}")
 
     # Game state feedback (critical for agent to know if game is running)

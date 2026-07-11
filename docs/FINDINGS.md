@@ -1088,6 +1088,54 @@ never disclose tile shape/type. A stopped-save production-runtime probe proved
 one visible `not_tree` sample and one hidden-only `hidden_unexplored` sample
 with both tiles and the building count unchanged.
 
+### 2.31 Attempt 22 front-loaded the fort, then exposed a missing legal UI exit
+
+Attempt 22, run `e83950a358e745c4ad3f0796e4c9c8bb`
+([replay](https://fortgym.live/r/Ly6r_18HCyz-MdmJw8Zr_AmHybpjtKiX)),
+ran deployed SHA `73700c5d588859c8c8ebfd1623895b59e1f87b6b` on fresh
+`seed_region3_fresh` with OpenRouter `z-ai/glm-5v-turbo`, vision enabled,
+memory disabled, score-v5, and a 450-step budget. It retained 156 governed rows;
+all 156 had screen text, gameplay proof, and governed provenance, with 51
+`gameplay_proof.ok=true` rows. Two hundred ten model calls used 4,228,125 prompt
+and 151,504 completion tokens.
+
+This was the strongest opening yet. The model completed a native connected
+channel by step 3, lower excavation by step 8, Carpenter workshop `#1` by step
+21, and Still `#2` by step 30. It placed subterranean FarmPlot `#3` at step 42;
+the plot first reached stage 3 at step 45, and step 46 selected plump helmets in
+every season. Native brewing
+produced 75 drink, planting produced five food units, and the first migrant wave
+raised population from 7 to 15 at step 88. Three beds were installed. The final
+fort had 56 constructions, two enclosed production spaces, and two functional
+rooms. No dwarf died, and the complete run-scoped death ledger recorded zero
+neglect deaths.
+
+The fort was not yet sustainable. At 200,252 trace ticks, food flow was 5
+produced/36 consumed and drink was 75/81; final stocks were food 15 and drink
+54. Deterministic G7 gate-v2 passed evidence, population, and neglect deaths.
+It failed duration, both resource flows, functional rooms 2/3, installed beds
+3/5, rubric 59.38 with `no_broader_fort_layout`, and score-v5 93.31/150.
+
+The terminal failure was a missing legal control, not a simulated action. A
+real liaison sequence repeatedly interrupted tick advances. At step 154 one
+bounded INTERACT moved from `viewscreen_topicmeeting_takerequestsst` to
+`viewscreen_storesst`, the native Wealth/Stocks screen. The encoder classified
+that screen as low-confidence unknown, its governed instruction was omitted,
+and `viewscreen_storesst` was absent from the INTERACT allowlist even though the
+existing `cancel` operation maps to one legal `LEAVESCREEN` key. The model
+incorrectly called the screen non-blocking, submitted BUILD at an already-built
+wall tile, and requested 1,200 ticks. The BUILD was rejected `already_wall` and
+zero ticks advanced, so the runner correctly terminated
+`tick_timeout_zero_progress` rather than inventing progress.
+
+The narrow correction is control plumbing, not a planner: classify the attested
+Stores screen as blocking, allow exactly zero-tick `INTERACT cancel`, reject any
+other Stores-screen action before execution or time advancement, and wait for a
+fresh observation. Coordinate selection and all fortress strategy remain with
+the model. Separately, the next observation candidate surfaces compact G7
+planning facts but fails closed on invalid survival scope and never claims a
+terminal verdict.
+
 ## 3. Limitations
 
 - **A single passing embark family.** Every pass (G0–G4) is on
@@ -1095,14 +1143,14 @@ with both tiles and the building count unchanged.
   passes in seven region3 attempts. "Plays Dwarf Fortress" is not yet
   demonstrated — "solved one map" is.
 - **Small n.** The reliability claim rests on a five-run lineage; the endurance
-  result on one probe; the G6 verdict on seven runs; G7 on 20 failed attempts
+  result on one probe; the G6 verdict on seven runs; G7 on 21 failed attempts
   plus one invalidated attempt.
   These are findings, not distributions.
 - **One policy family for most results.** GLM-5V-turbo produced the G4 passes
   and most of the G6 campaign; GPT-5.5 served the earlier G2/G3 passes.
   Cross-model generality is thin — two GPT-5.5-vision escalation runs are the
   only cross-family data points on the unseen map.
-- **G6 is unpassed; G7 attempts 1 through 18, 20, and 21 failed, and attempt 19
+- **G6 is unpassed; G7 attempts 1 through 18 and 20 through 22 failed, and attempt 19
   is invalid.**
   Attempts 2 through 9 and
   12 through 16 were infrastructure aborts, although attempts 14 through 16
@@ -1114,7 +1162,10 @@ with both tiles and the building count unchanged.
   Carpenter workshop; it is a valid short G7 FAIL, not a long-horizon policy
   verdict. Attempt 21 was stopped after 296 rows when its late farm recovery
   could no longer reverse 11 deaths or cumulative food/drink deficits; it is a
-  long policy diagnostic with an incomplete final stop row. Score-v5 is
+  long policy diagnostic with an incomplete final stop row. Attempt 22 reached
+  the milestones much earlier and kept all 15 dwarves alive, but failed resource
+  flow, structure, duration, rubric, and scalar requirements before a missing
+  Stores-screen exit caused a zero-tick infrastructure abort. Score-v5 is
   deployed and active. The
   chair-factory calibration gap (§2.4) remains part of score-v3's historical
   record.
@@ -1123,13 +1174,14 @@ with both tiles and the building count unchanged.
 
 ## 4. What's next
 
-- **Attempt 21 proved the controls can reach a real underground farm and Still,
-  but policy interpretation was too slow.** The next candidate makes minimap
-  index conversion and existing channel/farm lifecycle facts harder to misread,
-  and reports bounded factual non-target tiles for accepted chop/gather no-ops.
-  It remains factual observation/control feedback, with no external planner,
-  runner-selected coordinate, or score change. Review, deployment, and a fresh
-  long run are next.
+- **Attempt 22 proved those controls can reach vertical access, farming, brewing,
+  migrants, and two functional rooms early enough to matter.** The immediate
+  blocker is the native Wealth/Stocks screen opened by the liaison sequence. The
+  next candidate exposes its existing legal cancel control and rejects any
+  positive-tick action there before execution. Compact fail-closed G7 planning
+  facts keep resource deficits visible at plan review. Neither change supplies
+  strategy, coordinates, objectives, or score credit. Review, deployment, and a
+  fresh long run are next.
 - **G6 remains open**: the best unseen-map run reached 4/5 and missed only its
   second functional room. G7 now tests whether stable spatial observation lets
   the corrected direct-action loop sustain production and structure for a year.

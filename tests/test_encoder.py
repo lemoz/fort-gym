@@ -20,6 +20,60 @@ def test_encoder_surfaces_pause_and_concrete_viewscreen_type() -> None:
     assert state["viewscreen_type"] == "viewscreen_textviewerst"
 
 
+def test_governed_encoder_marks_stores_view_as_blocking_and_escapable() -> None:
+    screen_text = (
+        "################ The Wealth of Kilrudvutok ################\n"
+        "Beds                    None   3\n"
+        "Tab: Mode                  z: Zoom      v: View\n"
+    )
+    text, state = encode_observation(
+        {
+            "pause_state": True,
+            "viewscreen_type": "viewscreen_storesst",
+        },
+        screen_text=screen_text,
+        governed=True,
+    )
+
+    assert "Screen state: mode=stores, confidence=high" in text
+    assert "Blocking Wealth/Stocks screen" in text
+    assert 'INTERACT {"operation":"cancel"} with advance_ticks=0' in text
+    assert "before gameplay commands or time advancement" in text
+    assert state["screen_state"]["mode"] == "stores"
+
+
+def test_stores_classification_trusts_attested_view_not_screen_text() -> None:
+    missing_text, missing_state = encode_observation(
+        {
+            "pause_state": True,
+            "viewscreen_type": "viewscreen_storesst",
+        },
+        screen_text=None,
+        governed=True,
+    )
+    assert "Screen state: mode=stores, confidence=high" in missing_text
+    assert "Blocking Wealth/Stocks screen" in missing_text
+    assert missing_state["screen_state"]["evidence"] == [
+        "DFHack attests viewscreen_storesst"
+    ]
+
+    mismatched_text, mismatched_state = encode_observation(
+        {
+            "pause_state": True,
+            "viewscreen_type": "viewscreen_dwarfmodest",
+        },
+        screen_text=(
+            "The Wealth of Kilrudvutok\n"
+            "Beds                    None   3\n"
+            "Tab: Mode                  z: Zoom"
+        ),
+        governed=True,
+    )
+    assert "Screen state: mode=stores" not in mismatched_text
+    assert "Blocking Wealth/Stocks screen" not in mismatched_text
+    assert mismatched_state["screen_state"]["mode"] == "unknown"
+
+
 def test_encoder_surfaces_factual_run_scoped_survival_evidence() -> None:
     text, state = encode_observation(
         {

@@ -317,8 +317,13 @@ INTERACT_ALLOWED_VIEWSCREEN_TYPES = frozenset(
         "viewscreen_topicmeeting_fill_land_holder_positionsst",
         "viewscreen_topicmeeting_takerequestsst",
         "viewscreen_topicmeetingst",
+        "viewscreen_storesst",
     }
 )
+
+BLOCKING_VIEWSCREEN_INTERACT_OPERATIONS = {
+    "viewscreen_storesst": frozenset({"cancel"}),
+}
 
 FINISH_TOPIC_MEETING_OPTION_TEXT = "a - Finish peeking in on conversation"
 TOPIC_MEETING_OPTION_OPERATIONS = frozenset(
@@ -355,6 +360,33 @@ def visible_topic_meeting_option(operation: str, screen_text: str) -> bool:
         return False
     letter = operation.rsplit("_", 1)[-1]
     return bool(re.search(rf"(?m)^[# ]*{re.escape(letter)}\s*-\s+\S", screen_text or ""))
+
+
+def blocking_viewscreen_action_reason(
+    state: Dict[str, Any], action: Dict[str, Any]
+) -> str | None:
+    """Require the single attested exit action while a blocking UI is open."""
+
+    viewscreen_type = str(state.get("viewscreen_type") or "unknown")
+    allowed_operations = BLOCKING_VIEWSCREEN_INTERACT_OPERATIONS.get(viewscreen_type)
+    if allowed_operations is None:
+        return None
+
+    params = action.get("params")
+    operation = params.get("operation") if isinstance(params, dict) else None
+    if (
+        action.get("type") == "INTERACT"
+        and operation in allowed_operations
+        and type(action.get("advance_ticks")) is int
+        and action.get("advance_ticks") == 0
+    ):
+        return None
+
+    operations = " or ".join(sorted(allowed_operations))
+    return (
+        f"DF viewscreen {viewscreen_type!r} blocks simulation; submit only INTERACT "
+        f"{operations} with advance_ticks=0 and wait for a fresh observation"
+    )
 
 
 def parse_action(obj_or_str: Dict[str, Any] | str) -> Dict[str, Any]:
@@ -528,8 +560,10 @@ __all__ = [
     "ActionModel",
     "ACTION_TOOL_SPEC",
     "ALLOWED_TYPES",
+    "BLOCKING_VIEWSCREEN_INTERACT_OPERATIONS",
     "FINISH_TOPIC_MEETING_OPTION_TEXT",
     "INTERACT_ALLOWED_VIEWSCREEN_TYPES",
+    "blocking_viewscreen_action_reason",
     "parse_action",
     "schema_json",
     "system_prompt_v1",

@@ -32,6 +32,7 @@ from ..env.actions import (
     FINISH_TOPIC_MEETING_OPTION_TEXT,
     INTERACT_ALLOWED_VIEWSCREEN_TYPES,
     TOPIC_MEETING_OPTION_OPERATIONS,
+    blocking_viewscreen_action_reason,
     normalized_action_fingerprint,
     parse_action,
     validate_action,
@@ -139,6 +140,9 @@ def _interact_context_reason(
         return "INTERACT is available only in governed DFHack mode"
     if state.get("pause_state") is not True:
         return "INTERACT requires an attested paused game state"
+    blocking_reason = blocking_viewscreen_action_reason(state, action or {})
+    if blocking_reason is not None:
+        return blocking_reason
     viewscreen_type = str(state.get("viewscreen_type") or "unknown")
     if viewscreen_type not in INTERACT_ALLOWED_VIEWSCREEN_TYPES:
         return f"INTERACT is not allowed on DF viewscreen {viewscreen_type!r}"
@@ -2621,6 +2625,81 @@ def run_once(
 
     try:
         with trace_path.open("w", encoding="utf-8") as fh:
+            def record_pre_execution_rejection(
+                *,
+                step: int,
+                state: Dict[str, Any],
+                reason: Any,
+                events: List[Dict[str, Any]],
+                record_line: Dict[str, Any],
+            ) -> bool:
+                """Record one no-execution row and bound blocked-screen retries."""
+
+                nonlocal interaction_episode_count
+                nonlocal interaction_unchanged_screen_streak
+                nonlocal run_failed
+                nonlocal terminal_failure_reason
+                nonlocal terminal_failure_step
+
+                blocking_context = (
+                    blocking_viewscreen_action_reason(state, {})
+                    if is_governed_dfhack_mode
+                    else None
+                )
+                terminal_reason = None
+                interaction_audit = None
+                if blocking_context is not None:
+                    interaction_audit = {
+                        "screen_changed": False,
+                        "validation_rejected": True,
+                        "blocking_viewscreen": str(
+                            state.get("viewscreen_type") or "unknown"
+                        ),
+                        "reason": str(reason),
+                        "required_recovery": blocking_context,
+                    }
+                    (
+                        terminal_reason,
+                        interaction_episode_count,
+                        interaction_unchanged_screen_streak,
+                    ) = _interaction_terminal_reason(
+                        action_type="INTERACT",
+                        interaction_audit=interaction_audit,
+                        state_after=state,
+                        episode_count=interaction_episode_count,
+                        unchanged_screen_streak=interaction_unchanged_screen_streak,
+                    )
+                    record_line["interaction"] = interaction_audit
+
+                if terminal_reason is None:
+                    _write_jsonl_record(fh, record_line)
+                    if registry:
+                        registry.set_status(run_identifier, step=step)
+                    return False
+
+                terminal_data = {
+                    "run_id": run_identifier,
+                    "step": step,
+                    "terminal_reason": terminal_reason,
+                }
+                events.append({"type": "terminal", "data": terminal_data})
+                record_line["terminal_reason"] = terminal_reason
+                _write_durable_jsonl_record(fh, record_line)
+                terminal_failure_reason = terminal_reason
+                terminal_failure_step = step
+                if registry:
+                    registry.record_pending_terminal_failure(
+                        run_identifier,
+                        terminal_reason=terminal_reason,
+                        step=step,
+                    )
+                    registry.append_event(
+                        run_identifier,
+                        {"t": "terminal", "data": terminal_data},
+                    )
+                run_failed = True
+                return True
+
             for step in range(max_steps):
                 last_step = step
                 events: List[Dict[str, Any]] = []
@@ -3206,9 +3285,14 @@ def run_once(
                         "validation": validation,
                         "events": events,
                     }
-                    _write_jsonl_record(fh, record_line)
-                    if registry:
-                        registry.set_status(run_identifier, step=step)
+                    if record_pre_execution_rejection(
+                        step=step,
+                        state=obs_json,
+                        reason=reason,
+                        events=events,
+                        record_line=record_line,
+                    ):
+                        break
                     continue
 
                 try:
@@ -3226,12 +3310,25 @@ def run_once(
                         "validation": validation,
                         "events": events,
                     }
-                    _write_jsonl_record(fh, record_line)
-                    if registry:
-                        registry.set_status(run_identifier, step=step)
+                    if record_pre_execution_rejection(
+                        step=step,
+                        state=obs_json,
+                        reason=str(exc),
+                        events=events,
+                        record_line=record_line,
+                    ):
+                        break
                     continue
 
                 valid, reason = validate_action(obs_json, action)
+                blocking_rejection_reason = (
+                    blocking_viewscreen_action_reason(obs_json, action)
+                    if is_governed_dfhack_mode
+                    else None
+                )
+                if valid and blocking_rejection_reason is not None:
+                    reason = blocking_rejection_reason
+                    valid = False
                 if valid and action.get("type") == "INTERACT":
                     reason = _interact_context_reason(
                         backend_name=backend_name,
@@ -3312,9 +3409,14 @@ def run_once(
                         "metrics": validation_metrics,
                         "events": events,
                     }
-                    _write_jsonl_record(fh, record_line)
-                    if registry:
-                        registry.set_status(run_identifier, step=step)
+                    if record_pre_execution_rejection(
+                        step=step,
+                        state=obs_json,
+                        reason=reason,
+                        events=events,
+                        record_line=record_line,
+                    ):
+                        break
                     continue
 
                 if backend_name == "dfhack" and is_governed_dfhack_mode:

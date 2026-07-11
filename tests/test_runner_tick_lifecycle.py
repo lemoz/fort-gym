@@ -61,6 +61,16 @@ class CountingInteractAgent(Agent):
         }
 
 
+class RepeatingRawActionAgent(Agent):
+    def __init__(self, payload: Dict[str, Any]) -> None:
+        self.payload = payload
+        self.calls = 0
+
+    def decide(self, obs_text: str, obs_json: Dict[str, Any]) -> Dict[str, Any]:
+        self.calls += 1
+        return dict(self.payload)
+
+
 class OneOrderAgent(Agent):
     def decide(self, obs_text: str, obs_json: Dict[str, Any]) -> Dict[str, Any]:
         return {
@@ -459,6 +469,8 @@ def _run_governed_interact_fixture(
     def fake_execute(keys: list[str]) -> Dict[str, Any]:
         if operation == "finish_topic_meeting":
             expected_key = "OPTION1"
+        elif operation == "cancel":
+            expected_key = "LEAVESCREEN"
         elif operation.startswith("topic_option_"):
             expected_key = f"OPTION{'abcdefgh'.index(operation[-1]) + 1}"
         else:
@@ -467,7 +479,7 @@ def _run_governed_interact_fixture(
         interaction_sent[0] = True
         if screen_changes:
             screen_version[0] += 1
-            if operation == "finish_topic_meeting":
+            if operation in {"cancel", "finish_topic_meeting"}:
                 raw_state["viewscreen_type"] = "viewscreen_dwarfmodest"
         return {"ok": True, "keys_sent": 1}
 
@@ -1356,7 +1368,8 @@ def test_requested_zero_ticks_are_legal_and_do_not_trigger_the_streak(
 
 
 def test_interact_context_is_governed_paused_and_viewscreen_allowlisted() -> None:
-    allowed = next(iter(INTERACT_ALLOWED_VIEWSCREEN_TYPES))
+    allowed = "viewscreen_textviewerst"
+    assert allowed in INTERACT_ALLOWED_VIEWSCREEN_TYPES
     assert (
         _interact_context_reason(
             backend_name="dfhack",
@@ -1436,6 +1449,34 @@ def test_interact_context_is_governed_paused_and_viewscreen_allowlisted() -> Non
         )
     )
 
+    stores_state = {"pause_state": True, "viewscreen_type": "viewscreen_storesst"}
+    stores_cancel = {
+        "type": "INTERACT",
+        "params": {"operation": "cancel"},
+        "advance_ticks": 0,
+    }
+    assert (
+        _interact_context_reason(
+            backend_name="dfhack",
+            is_governed_dfhack_mode=True,
+            state=stores_state,
+            action=stores_cancel,
+        )
+        is None
+    )
+    assert "blocks simulation" in str(
+        _interact_context_reason(
+            backend_name="dfhack",
+            is_governed_dfhack_mode=True,
+            state=stores_state,
+            action={
+                "type": "INTERACT",
+                "params": {"operation": "confirm"},
+                "advance_ticks": 0,
+            },
+        )
+    )
+
 
 def test_interact_modal_exit_resets_episode_without_terminal_failure() -> None:
     terminal, count, unchanged = _interaction_terminal_reason(
@@ -1478,6 +1519,162 @@ def test_governed_validation_rejection_keeps_complete_zero_change_evidence(
     assert row["gameplay_proof"]["provenance"] == "dfhack_governed"
     assert row["tick_advance"]["ticks_advanced"] == 0
     assert "a - Begin discussion" in row["screen_text"]
+
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+
+
+def test_blocking_stores_view_rejects_positive_ticks_before_execution(
+    tmp_path, monkeypatch
+) -> None:
+    advanced: list[int] = []
+    agent = CountingWaitAgent(1200)
+    _, registry, run_id = _run_governed_interact_fixture(
+        tmp_path,
+        monkeypatch,
+        screen_changes=False,
+        max_steps=1,
+        agent_override=agent,
+        viewscreen_type="viewscreen_storesst",
+        screen_text=(
+            "The Wealth of Kilrudvutok\n"
+            "Beds                    None   3\n"
+            "Tab: Mode                  z: Zoom"
+        ),
+        advance_callback=lambda ticks, _state: advanced.append(ticks),
+    )
+
+    loaded = registry.get(run_id)
+    assert loaded is not None
+    assert loaded.status == "completed"
+    row = _trace_rows(tmp_path, run_id)[0]
+    assert row["validation"]["valid"] is False
+    assert "blocks simulation" in row["validation"]["reason"]
+    assert row["execute"]["validation_rejected"] is True
+    assert row["tick_advance"]["ticks_advanced"] == 0
+    assert row["tick_advance"]["validation_rejected"] is True
+    assert "timeout" not in row["tick_advance"]
+    assert advanced == []
+    assert "Blocking Wealth/Stocks screen" in agent.observation_texts[0]
+
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+
+
+def test_repeated_stores_rejections_hit_modal_recovery_limit(tmp_path, monkeypatch) -> None:
+    agent = CountingWaitAgent(1200)
+    _, registry, run_id = _run_governed_interact_fixture(
+        tmp_path,
+        monkeypatch,
+        screen_changes=False,
+        max_steps=MAX_UNCHANGED_INTERACT_SCREENS + 2,
+        agent_override=agent,
+        viewscreen_type="viewscreen_storesst",
+        screen_text=(
+            "The Wealth of Kilrudvutok\n"
+            "Beds                    None   3\n"
+            "Tab: Mode                  z: Zoom"
+        ),
+    )
+
+    assert agent.calls == MAX_UNCHANGED_INTERACT_SCREENS
+    loaded = registry.get(run_id)
+    assert loaded is not None
+    assert loaded.status == "failed"
+    assert loaded.metadata["terminal_reason"]["code"] == (
+        "interaction_unchanged_screen_loop"
+    )
+    rows = _trace_rows(tmp_path, run_id)
+    assert len(rows) == MAX_UNCHANGED_INTERACT_SCREENS
+    assert all(row["execute"]["validation_rejected"] is True for row in rows)
+    assert all(row["tick_advance"]["ticks_advanced"] == 0 for row in rows)
+    assert rows[-1]["terminal_reason"]["unchanged_screen_streak"] == (
+        MAX_UNCHANGED_INTERACT_SCREENS
+    )
+    assert rows[-1]["interaction"]["blocking_viewscreen"] == "viewscreen_storesst"
+
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {
+            "type": "INTERACT",
+            "params": {"operation": "escape"},
+            "advance_ticks": 0,
+        },
+        {
+            "actions": [
+                {
+                    "type": "WAIT",
+                    "params": {},
+                    "advance_ticks": 1200,
+                }
+            ]
+        },
+    ],
+)
+def test_stores_preparse_rejections_hit_modal_recovery_limit(
+    tmp_path, monkeypatch, payload
+) -> None:
+    agent = RepeatingRawActionAgent(payload)
+    _, registry, run_id = _run_governed_interact_fixture(
+        tmp_path,
+        monkeypatch,
+        screen_changes=False,
+        max_steps=MAX_UNCHANGED_INTERACT_SCREENS + 2,
+        agent_override=agent,
+        viewscreen_type="viewscreen_storesst",
+        screen_text="The Wealth of Kilrudvutok\nTab: Mode",
+    )
+
+    assert agent.calls == MAX_UNCHANGED_INTERACT_SCREENS
+    loaded = registry.get(run_id)
+    assert loaded is not None
+    assert loaded.status == "failed"
+    assert loaded.metadata["terminal_reason"]["code"] == (
+        "interaction_unchanged_screen_loop"
+    )
+    rows = _trace_rows(tmp_path, run_id)
+    assert len(rows) == MAX_UNCHANGED_INTERACT_SCREENS
+    assert all(row["validation"]["valid"] is False for row in rows)
+    assert rows[-1]["terminal_reason"]["unchanged_screen_streak"] == (
+        MAX_UNCHANGED_INTERACT_SCREENS
+    )
+
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+
+
+def test_stores_cancel_exits_with_one_zero_tick_interaction(tmp_path, monkeypatch) -> None:
+    agent, registry, run_id = _run_governed_interact_fixture(
+        tmp_path,
+        monkeypatch,
+        screen_changes=True,
+        max_steps=1,
+        operation="cancel",
+        viewscreen_type="viewscreen_storesst",
+        screen_text=(
+            "The Wealth of Kilrudvutok\n"
+            "Beds                    None   3\n"
+            "Tab: Mode                  z: Zoom"
+        ),
+    )
+
+    assert isinstance(agent, CountingInteractAgent)
+    assert agent.calls == 1
+    loaded = registry.get(run_id)
+    assert loaded is not None
+    assert loaded.status == "completed"
+    row = _trace_rows(tmp_path, run_id)[0]
+    assert row["validation"] == {"valid": True, "reason": None}
+    assert row["execute"]["accepted"] is True
+    assert row["execute"]["result"]["interface_key"] == "LEAVESCREEN"
+    assert row["tick_advance"]["ticks_advanced"] == 0
+    assert row["gameplay_proof"]["helper_evidence"]["viewscreen_before"] == (
+        "viewscreen_storesst"
+    )
+    assert row["gameplay_proof"]["helper_evidence"]["viewscreen_after"] == (
+        "viewscreen_dwarfmodest"
+    )
 
     get_settings.cache_clear()  # type: ignore[attr-defined]
 

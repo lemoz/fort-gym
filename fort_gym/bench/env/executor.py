@@ -19,6 +19,7 @@ from .actions import (
     FINISH_TOPIC_MEETING_OPTION_TEXT,
     INTERACT_ALLOWED_VIEWSCREEN_TYPES,
     TOPIC_MEETING_OPTION_OPERATIONS,
+    blocking_viewscreen_action_reason,
     validate_action,
     visible_topic_meeting_option,
 )
@@ -91,6 +92,10 @@ class Executor:
             valid, reason = validate_action(current_state, action)
             if not valid:
                 return {"accepted": False, "why": reason}
+            if allow_interact:
+                blocking_reason = blocking_viewscreen_action_reason(current_state, action)
+                if blocking_reason is not None:
+                    return {"accepted": False, "why": blocking_reason}
 
             action_type = action.get("type")
             params = action.get("params", {})

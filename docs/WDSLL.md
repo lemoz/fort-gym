@@ -1931,6 +1931,53 @@ gate. Each entry states what changed and the evidence that forced it.
   snapshots were unchanged, and player-building count remained 5 before and
   after. This is candidate safety evidence, not a deployed-fix claim.
 
+- **2026-07-10/11 UTC — G7 attempt 22: INFRASTRUCTURE-ABORTED FAIL after the
+  strongest early fort yet; a missing legal Stores-screen exit ended it at step
+  155.** Run `e83950a358e745c4ad3f0796e4c9c8bb`
+  ([replay](https://fortgym.live/r/Ly6r_18HCyz-MdmJw8Zr_AmHybpjtKiX))
+  used deployed SHA `73700c5d588859c8c8ebfd1623895b59e1f87b6b`, fresh
+  `seed_region3_fresh`, OpenRouter `z-ai/glm-5v-turbo`, vision on, memory off,
+  score-v5, and a 450-step budget. The trace contains 156 governed gameplay
+  rows, all with screen text, gameplay proof, and governed provenance; 51 proof
+  rows have `ok=true`. Two hundred ten model calls used 4,228,125 prompt and
+  151,504 completion tokens.
+
+  The model made substantial real progress much earlier than Attempt 21. It
+  completed connected channel access by step 3, lower excavation by step 8,
+  Carpenter workshop `#1` by step 21, and Still `#2` by step 30. It placed
+  subterranean FarmPlot `#3` at step 42; the plot first reached stage 3 at step
+  45, and step 46 selected plump helmets for all seasons. Native work produced
+  75 drink and five
+  food units. Population reached 15 at step 88, three beds were installed, and
+  the final fort contained 56 constructions, two enclosed production spaces,
+  and two functional rooms. All 15 dwarves survived; complete run-scoped death
+  evidence recorded zero neglect deaths.
+
+  Deterministic gate-v2 is still FAIL. Trace and summary agree on 200,252 ticks
+  versus 403,200 required. Final food flow was 5 produced/36 consumed and drink
+  was 75/81, with stocks 15/54. Evidence, population, and neglect deaths passed.
+  Functional rooms 2/3, installed beds 3/5, rubric 59.38 with
+  `no_broader_fort_layout`, and score-v5 93.31/150 failed.
+
+  The terminal row identifies an actionable control gap. A native liaison
+  sequence left the paused game on `viewscreen_storesst`. The observation
+  classified the Wealth/Stocks screen as unknown and omitted its generic screen
+  instruction from governed text; the legal INTERACT allowlist also excluded
+  that viewscreen even though `cancel` already maps to one `LEAVESCREEN` key.
+  The model called it non-blocking, submitted BUILD at `(93,97,161)`, which was
+  truthfully rejected `already_wall`, and requested 1,200 ticks. Zero advanced,
+  so the runner failed `tick_timeout_zero_progress` after 240 seconds. It did
+  not award progress or continue from a fabricated state.
+
+  PR #94 subsequently merged compact G7 planning facts that keep duration,
+  resource flow, population, room, bed, and death branches visible while
+  failing closed on invalid run-scoped evidence. The next candidate adds only
+  legal control plumbing for the attested Stores screen: classify it as
+  blocking, allow exactly zero-tick `INTERACT cancel`, reject every other action
+  before execution or tick advancement, and require a fresh observation. It
+  adds no planner, target, coordinate, objective, strategy, or score credit and
+  is not a deployed-fix claim until reviewed and shipped.
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,
