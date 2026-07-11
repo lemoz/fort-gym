@@ -118,10 +118,12 @@ if kind == 'chop' or kind == 'gather' then
             tiletype_name = tostring(df.tiletype[tiletype] or tiletype)
             if kind == 'chop' then
               is_target = attr.material == tree_material and attr.shape == wall_shape
+            elseif tiletype_name == 'ShrubDead' then
+              non_target_error = 'dead_shrub_ungatherable'
             else
               is_target = attr.shape == shrub_shape
             end
-            if not is_target then
+            if not is_target and not non_target_error then
               non_target_error = kind == 'chop' and 'not_tree' or 'not_shrub'
             end
           end
@@ -174,6 +176,21 @@ if kind == 'chop' or kind == 'gather' then
       failure.shrubs_designated = 0
       failure.non_shrub_tiles = non_target_tiles
     end
+    attach_non_target_evidence(failure)
+    print(json.encode(failure))
+    return
+  end
+
+  if kind == 'gather' and #writes == 0 then
+    local failure = {
+      ok = false,
+      error = 'no_gatherable_shrubs',
+      kind = kind,
+      rect = { rx1, ry1, rz, rx2, ry2, rz },
+      shrubs_designated = 0,
+      already_designated = 0,
+      non_shrub_tiles = non_target_tiles,
+    }
     attach_non_target_evidence(failure)
     print(json.encode(failure))
     return

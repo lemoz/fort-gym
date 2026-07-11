@@ -1215,7 +1215,54 @@ cleanup fail. The serialized runner performs the same attestation before the
 first agent observation, and the administrative `/step` exception path uses the
 same bounded repause. Regression coverage reproduces the post-`nopause` read
 failure, false pause attestation, disable failure, and endpoint exception path.
-A fresh replacement attempt is required after deployment.
+PR #99 deployed that repair. A live smoke then exposed truthful undercounting:
+the first stable pause tick could advance beyond the last in-loop read. PR #100
+made the verified post-pause read authoritative. Both deployed at exact SHA
+`005fdccd79993b1dd3a0451eae43a61fdc1a9dd3`; a final live probe advanced from
+58,140 to the reported and independently stable tick 58,161, with two subsequent
+`pause_state=true` reads.
+
+### 2.34 Attempt 25 made real early goods, then died on duplicated prose
+
+Attempt 25, run `9162ea4247c04fd4a64f3b0dcf502cf9`
+([replay](https://fortgym.live/r/dBYI_DISuN6iXv6WjFzTs-7Gq7-ahf00)),
+ran exact deployed SHA `005fdccd79993b1dd3a0451eae43a61fdc1a9dd3` on fresh
+`seed_region3_fresh` with OpenRouter `z-ai/glm-5v-turbo`, vision enabled,
+memory disabled, score-v5, a 450-step budget, and at most 2,000 ticks per turn.
+It retained 72 gameplay rows, all with screen text, gameplay proof, and governed
+provenance. Eighty-nine model calls used 1,678,144 prompt and 63,712 completion
+tokens. The verified pause lifecycle held for every gameplay step.
+
+The policy completed two channel accesses, eight action-owned excavation
+completions, a usable Carpenter workshop, and five beds in stock. It gathered
+two surface plants, but neither created a usable drink loop. No furniture was
+installed, no room or farm completed, and no Still completed. Final population
+was seven, food 44, drink 33, and wood four; no dwarf died.
+
+Deterministic gate-v2 is FAIL. Duration was 86,062/403,200 ticks, food flow was
+0 produced/13 consumed, drink flow 0/27, population 7/15, functional rooms 0/3,
+installed beds 0/3, rubric 54.1 retained `no_broader_fort_layout`, and score-v5
+was 82.1/150. Evidence and zero-neglect-death predicates passed.
+
+The terminal happened before step 72 gameplay. The model proposed the same
+objective in `objective` and `plan_review.objective`, but both copies were longer
+than the 160-character schema cap. Two correction calls repeated that sole
+error, so the governed contract failed closed. This is an infrastructure-aborted
+G7 FAIL after real early gameplay, not evidence that the long policy exhausted
+its 450 turns.
+
+The trace exposed a second factual boundary error. The policy spent roughly 20
+Still-footprint attempts around native shrubs, dead shrubs, boulders, and the
+wagon. Stopped-save reads showed three repeatedly designated tiles were
+`ShrubDead`; no gather job was created despite substantial real time. The old
+gather hook classified every SHRUB-shaped tile as eligible and could return
+`ok=true` with no target. The corrective candidate rejects dead shrubs as
+`dead_shrub_ungatherable`, rejects all-empty gather rectangles as
+`no_gatherable_shrubs`, and teaches the model that only a live shrub can be
+cleared by gather. Separately, schema-boundary normalization shortens only when
+the two duplicated objective strings are identical; conflicting objectives
+still enter bounded correction and fail closed. Neither change chooses a plan,
+action, coordinate, or gameplay target.
 
 ## 3. Limitations
 
@@ -1224,14 +1271,14 @@ A fresh replacement attempt is required after deployment.
   passes in seven region3 attempts. "Plays Dwarf Fortress" is not yet
   demonstrated — "solved one map" is.
 - **Small n.** The reliability claim rests on a five-run lineage; the endurance
-  result on one probe; the G6 verdict on seven runs; G7 on 23 failed attempts
+  result on one probe; the G6 verdict on seven runs; G7 on 24 failed attempts
   plus one invalidated attempt.
   These are findings, not distributions.
 - **One policy family for most results.** GLM-5V-turbo produced the G4 passes
   and most of the G6 campaign; GPT-5.5 served the earlier G2/G3 passes.
   Cross-model generality is thin — two GPT-5.5-vision escalation runs are the
   only cross-family data points on the unseen map.
-- **G6 is unpassed; G7 attempts 1 through 18 and 20 through 24 failed, and attempt 19
+- **G6 is unpassed; G7 attempts 1 through 18 and 20 through 25 failed, and attempt 19
   is invalid.**
   Attempts 2 through 9 and
   12 through 16 were infrastructure aborts, although attempts 14 through 16
@@ -1250,7 +1297,10 @@ A fresh replacement attempt is required after deployment.
   two real rooms and a Still, but sealed its farm and reached drink zero before
   the production loop started. Attempt 24 aborted at step 0 when a tick-read
   timeout bypassed repause; it produced no policy evidence. Score-v5 is
-  deployed and active. The
+  deployed and active. Attempt 25 made a real Carpenter workshop and five beds,
+  but repeated dead-shrub footprint attempts and then terminated before step 72
+  gameplay on identical overlong objective fields. It is an infrastructure-aborted
+  short G7 FAIL, not a long-horizon verdict. The
   chair-factory calibration gap (§2.4) remains part of score-v3's historical
   record.
   Attempt 1 demonstrated why the scalar is telemetry rather than the verdict:
@@ -1258,13 +1308,18 @@ A fresh replacement attempt is required after deployment.
 
 ## 4. What's next
 
+- **Attempt 25 proved the fail-closed tick controller can support a fresh run
+  while preserving exact post-pause ticks.** Its two observed blockers are now
+  narrow: identical duplicated objective prose exceeded the schema cap, and
+  dead shrubs were presented as legal gather targets. Review, deploy, and live
+  prove those factual boundary fixes, then launch a fresh replacement run.
 - **Attempt 23 proved the corrected loop can independently transition from
   excavation to farming, workshops, furniture, and two functional rooms.** Its
   decisive blockers were incomplete native feedback for rejected 3x3
   footprints and missing job-target connectivity after the farm was sealed.
   Both factual changes are deployed without strategy or target selection.
-  Attempt 24 then exposed a fail-open tick-controller return before any valid
-  gameplay. Deploy the attested pause repair and launch a fresh replacement run.
+  Attempt 24 then exposed the fail-open tick-controller return now repaired by
+  PRs #99 and #100.
 - **G6 remains open**: the best unseen-map run reached 4/5 and missed only its
   second functional room. G7 now tests whether stable spatial observation lets
   the corrected direct-action loop sustain production and structure for a year.

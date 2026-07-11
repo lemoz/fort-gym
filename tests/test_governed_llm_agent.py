@@ -214,6 +214,12 @@ def test_governed_system_prompt_teaches_wall_construction() -> None:
     assert "x2" in GOVERNED_SYSTEM_PROMPT
 
 
+def test_governed_system_prompt_distinguishes_dead_shrubs() -> None:
+    assert "ShrubDead cannot be gathered" in GOVERNED_SYSTEM_PROMPT
+    assert "choose a different build footprint" in GOVERNED_SYSTEM_PROMPT
+    assert "gathered plants are brewable" not in GOVERNED_SYSTEM_PROMPT
+
+
 def test_openrouter_transport_defaults_to_three_attempts(monkeypatch) -> None:
     monkeypatch.delenv("OPENROUTER_MAX_ATTEMPTS", raising=False)
     get_settings.cache_clear()  # type: ignore[attr-defined]
@@ -338,7 +344,7 @@ def test_governed_system_prompt_describes_still_and_brew_mechanic_only() -> None
     # Still rides the existing BUILD action type, brew rides ORDER -- no new
     # governed type for either.
     assert '"CarpenterWorkshop"|"Still"' in GOVERNED_SYSTEM_PROMPT
-    assert "brew orders need gatherable plants and empty barrels" in GOVERNED_SYSTEM_PROMPT
+    assert "brew orders need brewable plants in stock and empty barrels" in GOVERNED_SYSTEM_PROMPT
     assert "drink is what dwarves actually consume" in GOVERNED_SYSTEM_PROMPT
     assert "brew (the brewing reaction) needs a built Still" in GOVERNED_SYSTEM_PROMPT
     # no new governed action type was introduced for Still/brew
@@ -787,12 +793,38 @@ def test_current_state_fact_error_includes_evidence_catalog() -> None:
     assert '"allowed_evidence_lines": ["E0: AGENT PLAN CONTROL:' in correction
 
 
-def test_review_contract_corrects_overlong_objectives_locally() -> None:
+def test_review_contract_normalizes_identical_overlong_objectives_locally() -> None:
+    control = _plan_control()
+    overlong = _reviewed_action_payload(
+        control=control,
+        objective=("Excavate protected underground farm space " * 5).strip(),
+    )
+    agent = _agent([_submit_action_response(overlong)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert len(action["objective"]) <= MAX_OBJECTIVE_LENGTH
+    assert action["objective"] == action["plan_review"]["objective"]
+    assert len(agent._client.chat.completions.requests) == 1
+    event = next(
+        event
+        for event in agent.pop_tool_events()
+        if event["tool"] == "governed_llm.objective_length_normalized"
+    )
+    assert event["output"]["original_length"] > MAX_OBJECTIVE_LENGTH
+    assert event["output"]["normalized_length"] == len(action["objective"])
+
+
+def test_review_contract_does_not_collapse_different_overlong_objectives() -> None:
     control = _plan_control()
     invalid = _reviewed_action_payload(
         control=control,
         objective="x" * (MAX_OBJECTIVE_LENGTH + 1),
     )
+    invalid["plan_review"]["objective"] = "y" * (MAX_OBJECTIVE_LENGTH + 1)
     valid = _reviewed_action_payload(control=control)
     agent = _agent([_submit_action_response(invalid), _submit_action_response(valid)])
 
@@ -802,9 +834,14 @@ def test_review_contract_corrects_overlong_objectives_locally() -> None:
     )
 
     assert action["objective"] == valid["objective"]
+    assert len(agent._client.chat.completions.requests) == 2
     correction = agent._client.chat.completions.requests[1]["messages"][-1]["content"]
     assert "objective must be at most 160 characters" in correction
     assert "plan_review.objective must be at most 160 characters" in correction
+    assert not any(
+        event["tool"] == "governed_llm.objective_length_normalized"
+        for event in agent.pop_tool_events()
+    )
 
 
 def test_review_contract_correction_reports_all_attempt7_style_errors() -> None:
