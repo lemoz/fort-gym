@@ -1969,14 +1969,25 @@ gate. Each entry states what changed and the evidence that forced it.
   so the runner failed `tick_timeout_zero_progress` after 240 seconds. It did
   not award progress or continue from a fabricated state.
 
-  PR #94 subsequently merged compact G7 planning facts that keep duration,
-  resource flow, population, room, bed, and death branches visible while
-  failing closed on invalid run-scoped evidence. The next candidate adds only
-  legal control plumbing for the attested Stores screen: classify it as
-  blocking, allow exactly zero-tick `INTERACT cancel`, reject every other action
-  before execution or tick advancement, and require a fresh observation. It
-  adds no planner, target, coordinate, objective, strategy, or score credit and
-  is not a deployed-fix claim until reviewed and shipped.
+  PR #94 merged compact G7 planning facts that keep duration, resource flow,
+  population, room, bed, and death branches visible while failing closed on
+  invalid run-scoped evidence. PR #95 classified the attested Stores screen as
+  blocking, allowed exactly zero-tick `INTERACT cancel`, rejected every other
+  action before execution or tick advancement, and bounded malformed retries.
+  Both passed CI and deployed together at exact SHA
+  `506ce6986029c5885ecb26074fa45ac55d47c541`.
+
+  The still-open production Stores screen provided exact live proof. The
+  deployed encoder reported `stores/high`; the old step-155 BUILD returned the
+  blocking validation reason; one `INTERACT cancel` sent one `LEAVESCREEN` and
+  zero ticks. DF moved from `viewscreen_storesst` to
+  `viewscreen_topicmeeting_takerequestsst` with tick 217,563 unchanged.
+  Fresh-seed Attempt 23 then launched on the deployed SHA as run
+  `94ea15d9c6c141da9540ced2a216493e`
+  ([replay](https://fortgym.live/r/uGx2o874VECGSlqciDUrbQxo-JrbkQ41)),
+  pinned to OpenRouter `z-ai/glm-5v-turbo`, vision on, memory off, score-v5,
+  and 450 steps. These changes add no planner, target, coordinate, objective,
+  strategy, or score credit.
 
 ## Reporting format (every gate attempt)
 
