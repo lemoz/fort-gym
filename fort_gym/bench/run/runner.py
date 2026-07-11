@@ -4113,8 +4113,12 @@ def run_once(
                         if interaction_only
                         else "dfhack_governed_observed_state_action_owned_progress"
                     )
-                    fort_after = advance_state.get("fort") or state_before.get("fort")
-                    if isinstance(fort_after, dict):
+                    fort_after = advance_state.get("fort")
+                    fort_metrics_observed = bool(
+                        isinstance(fort_after, dict) and fort_after.get("ok") is True
+                    )
+                    metrics_snapshot["fort_metrics_observed"] = fort_metrics_observed
+                    if fort_metrics_observed:
                         metrics_snapshot["fort_enclosed_spaces"] = int(
                             fort_after.get("enclosed_spaces") or 0
                         )
@@ -4124,6 +4128,13 @@ def run_once(
                         metrics_snapshot["fort_constructions"] = int(
                             fort_after.get("constructions") or 0
                         )
+                    else:
+                        # A failed current read cannot inherit structure from an
+                        # earlier observation. Zero the scoring surface while the
+                        # explicit flag preserves the distinction from observed zero.
+                        metrics_snapshot["fort_enclosed_spaces"] = 0
+                        metrics_snapshot["fort_functional_rooms"] = 0
+                        metrics_snapshot["fort_constructions"] = 0
                     gameplay_proof = _governed_gameplay_proof(
                         action=action,
                         execute_result=execute_result,

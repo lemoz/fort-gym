@@ -670,6 +670,45 @@ def test_governed_runner_scores_only_completed_owned_excavation(tmp_path, monkey
     ] == 1
 
 
+def test_governed_runner_does_not_reuse_stale_fort_metrics_after_failed_read(
+    tmp_path, monkeypatch
+) -> None:
+    reads = {"count": 0}
+
+    def fort_metrics(_focus=None) -> Dict[str, Any]:
+        reads["count"] += 1
+        if reads["count"] == 1:
+            return {
+                "ok": True,
+                "enclosed_spaces": 3,
+                "functional_rooms": 3,
+                "constructions": 12,
+            }
+        return {"ok": False, "error": "read_failed"}
+
+    _, _, run_id = _run_governed_interact_fixture(
+        tmp_path,
+        monkeypatch,
+        screen_changes=False,
+        max_steps=1,
+        agent_override=CountingWaitAgent(10),
+        fort_metrics_callback=fort_metrics,
+    )
+
+    row = _trace_rows(tmp_path, run_id)[0]
+    assert row["observation"]["fort"]["functional_rooms"] == 3
+    assert "fort" not in row["state_after_advance"]
+    assert row["metrics"]["fort_metrics_observed"] is False
+    assert row["metrics"]["fort_enclosed_spaces"] == 0
+    assert row["metrics"]["fort_functional_rooms"] == 0
+    assert row["metrics"]["fort_constructions"] == 0
+
+    summary = json.loads((tmp_path / run_id / "summary.json").read_text())
+    assert summary["fort_enclosed_spaces"] == 0
+    assert summary["fort_functional_rooms"] == 0
+    assert "no_fort_structure" in summary["rubric"]["blockers"]
+
+
 def test_governed_runner_keeps_unowned_global_progress_audit_only(
     tmp_path, monkeypatch
 ) -> None:

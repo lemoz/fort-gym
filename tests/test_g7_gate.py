@@ -83,6 +83,28 @@ def test_g7_pass_requires_every_ratified_fact() -> None:
     assert all(item["status"] == PASS for item in result["criteria"].values())
 
 
+def test_g7_room_criterion_is_unknown_when_final_fort_read_failed() -> None:
+    survival = {
+        "food_produced_in_run": 21,
+        "food_consumed_in_run": 20,
+        "drink_produced_in_run": 31,
+        "drink_consumed_in_run": 30,
+        "flow_evidence_complete": True,
+        "death_evidence_complete": True,
+        "death_causes_known": True,
+        "neglect_deaths": 0,
+    }
+    row = _row(0, survival=survival)
+    row["metrics"]["fort_metrics_observed"] = False
+
+    result = evaluate_g7([row], _summary())
+
+    rooms = result["criteria"]["functional_rooms"]
+    assert rooms["status"] == UNKNOWN
+    assert rooms["observed"] == {"rooms": 3, "fort_metrics_observed": False}
+    assert rooms["reason"] == "final post-advance fort structure observation failed"
+
+
 def test_g7_rejects_pre_action_effect_truth_score_version() -> None:
     survival = {
         "food_produced_in_run": 21,

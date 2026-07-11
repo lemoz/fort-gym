@@ -555,6 +555,8 @@ def test_designate_rect_chop_is_bounded_tree_designation() -> None:
     assert "designation_preflight_failed" in hook_text
     assert "designation_readback_mismatch" in hook_text
     assert "rollback_verified" in hook_text
+    assert "error = 'no_choppable_trees'" in hook_text
+    assert "if #writes == 0 then" in hook_text
     # the old global autochop pulse (broken on this DFHack: no such script) is gone
     assert "autochop" not in hook_text
 
@@ -574,9 +576,9 @@ def test_designate_rect_gather_is_bounded_shrub_designation() -> None:
     assert "designation_rollback_readback_mismatch" in hook_text
     assert "tiletype_name == 'ShrubDead'" in hook_text
     assert "dead_shrub_ungatherable" in hook_text
-    assert "kind == 'gather' and #writes == 0" in hook_text
+    assert "if #writes == 0 then" in hook_text
     assert "error = 'no_gatherable_shrubs'" in hook_text
-    assert hook_text.index("kind == 'gather' and #writes == 0") < hook_text.index(
+    assert hook_text.index("if #writes == 0 then") < hook_text.index(
         "local committed, commit_error = pcall"
     )
     # shares the bounded rect (30x30, one z-level) with dig/channel/chop
@@ -1107,12 +1109,16 @@ def test_fort_metrics_reports_room_bounds_contents_and_open_tiles() -> None:
 
     for needle in (
         "MAX_ROOM_OPEN_TILE_SAMPLES",
+        "MIN_ROOM_INTERIOR_TILES = 2",
         "bounds = { min_x, min_y, max_x, max_y, bld.z }",
         "open_tiles = open_tiles",
         "open_tile_count = open_tile_count",
         "contents = contents",
     ):
         assert needle in script
+    assert "if #tiles >= MIN_ROOM_INTERIOR_TILES then" in script
+    assert "fully furnished multi-tile rooms" in script
+    assert "if space.kind ~= 'enclosed_space' then" in script
 
 
 def test_fort_metrics_distinguishes_gatherable_shrubs_from_other_floor_features() -> None:

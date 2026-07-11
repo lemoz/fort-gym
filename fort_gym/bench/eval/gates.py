@@ -247,6 +247,13 @@ def evaluate_g7(
 
     population = _to_int(summary.get("end_pop", state.get("population")))
     rooms = _to_int(summary.get("fort_functional_rooms", metrics.get("fort_functional_rooms")))
+    fort_metrics_observed = metrics.get("fort_metrics_observed")
+    if fort_metrics_observed is False:
+        room_status = UNKNOWN
+        room_reason = "final post-advance fort structure observation failed"
+    else:
+        room_status = PASS if rooms >= G7_MIN_FUNCTIONAL_ROOMS else FAIL
+        room_reason = None
     required_beds = ceil(population / 3) if population > 0 else 0
     completed_furniture = crew.get("placed_furniture_completed")
     completed_beds = (
@@ -317,9 +324,10 @@ def evaluate_g7(
             required=f">={G7_MIN_POPULATION}",
         ),
         "functional_rooms": _criterion(
-            PASS if rooms >= G7_MIN_FUNCTIONAL_ROOMS else FAIL,
-            observed=rooms,
+            room_status,
+            observed={"rooms": rooms, "fort_metrics_observed": fort_metrics_observed},
             required=f">={G7_MIN_FUNCTIONAL_ROOMS}",
+            reason=room_reason,
         ),
         "installed_beds": _criterion(
             UNKNOWN

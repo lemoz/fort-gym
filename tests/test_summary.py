@@ -178,6 +178,53 @@ def test_summarize_creates_summary(tmp_path) -> None:
     assert summary_path.exists()
 
 
+def test_summarize_uses_latest_observed_room_counts(tmp_path) -> None:
+    trace_path = Path(tmp_path) / "trace.jsonl"
+    records = [
+        {
+            "run_id": "room-regression",
+            "step": 0,
+            "metrics": {
+                "time": 100,
+                "pop": 7,
+                "food": 40,
+                "drink": 50,
+                "fort_enclosed_spaces": 2,
+                "fort_functional_rooms": 2,
+            },
+            "tick_advance": {"ticks_advanced": 10},
+            "events": [],
+        },
+        {
+            "run_id": "room-regression",
+            "step": 1,
+            "metrics": {
+                "time": 110,
+                "pop": 7,
+                "food": 40,
+                "drink": 50,
+                "fort_enclosed_spaces": 0,
+                "fort_functional_rooms": 0,
+            },
+            "tick_advance": {"ticks_advanced": 10},
+            "events": [],
+        },
+        {
+            "run_id": "room-regression",
+            "step": 2,
+            "metrics": {"time": 120, "pop": 7, "food": 40, "drink": 50},
+            "tick_advance": {"ticks_advanced": 10},
+            "events": [],
+        },
+    ]
+    _write_trace(trace_path, records)
+
+    summary = summarize(trace_path)
+
+    assert summary.fort_enclosed_spaces == 0
+    assert summary.fort_functional_rooms == 0
+
+
 def test_summarize_prefers_run_elapsed_ticks(tmp_path) -> None:
     trace_path = Path(tmp_path) / "trace.jsonl"
     records = [
@@ -669,6 +716,36 @@ def test_rubric_credits_plan_agnostic_fort_structure() -> None:
         "fort_functional_rooms=2" in item
         for item in rubric["dimensions"]["shelter_layout"]["evidence"]
     )
+
+
+def test_rubric_uses_latest_observed_room_counts() -> None:
+    from fort_gym.bench.eval.rubric import evaluate_trace_records
+
+    records = [
+        {
+            "step": step,
+            "action": {"type": "WAIT", "params": {}},
+            "execute": {"accepted": True, "provenance": "dfhack_governed"},
+            "metrics": {
+                "pop": 7,
+                "food": 40,
+                "drink": 50,
+                "fort_enclosed_spaces": 2 if step < 5 else 0,
+                "fort_functional_rooms": 2 if step < 5 else 0,
+                "fort_constructions": 20,
+            },
+            "gameplay_proof": {"ok": True, "changed_tile_count": 1},
+            "tick_advance": {"ticks_advanced": 1000},
+        }
+        for step in range(6)
+    ]
+
+    rubric = evaluate_trace_records(records)
+
+    shelter = rubric["dimensions"]["shelter_layout"]
+    assert any("fort_functional_rooms=0" in item for item in shelter["evidence"])
+    assert any("fort_enclosed_spaces=0" in item for item in shelter["evidence"])
+    assert shelter["score"] == 2.0
 
 
 def test_rubric_flags_missing_fort_structure() -> None:

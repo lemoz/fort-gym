@@ -38,6 +38,7 @@ end
 local MAX_COMPONENT_TILES = 400
 local MAX_SPACES = 12
 local MAX_ROOM_OPEN_TILE_SAMPLES = 16
+local MIN_ROOM_INTERIOR_TILES = 2
 local Z_NEIGHBORS = false -- single-z spaces for v1
 
 local attrs = df.tiletype.attrs
@@ -300,16 +301,21 @@ for _, bld in ipairs(buildings) do
                 end
               end
             end
-            table.insert(spaces, {
-              z = bld.z,
-              tiles = #tiles,
-              kind = classify(),
-              contents = contents,
-              bounds = { min_x, min_y, max_x, max_y, bld.z },
-              open_tiles = open_tiles,
-              open_tile_count = open_tile_count,
-              open_tiles_truncated = open_tile_count > #open_tiles,
-            })
+            -- A one-tile furnishing pocket is not a usable room. Furniture is
+            -- still traversable interior, so fully furnished multi-tile rooms
+            -- remain valid even when no furniture-free floor remains.
+            if #tiles >= MIN_ROOM_INTERIOR_TILES then
+              table.insert(spaces, {
+                z = bld.z,
+                tiles = #tiles,
+                kind = classify(),
+                contents = contents,
+                bounds = { min_x, min_y, max_x, max_y, bld.z },
+                open_tiles = open_tiles,
+                open_tile_count = open_tile_count,
+                open_tiles_truncated = open_tile_count > #open_tiles,
+              })
+            end
           end
         end
       end
@@ -319,7 +325,9 @@ end
 
 local functional = 0
 for _, space in ipairs(spaces) do
-  if space.kind ~= 'enclosed_space' then functional = functional + 1 end
+  if space.kind ~= 'enclosed_space' then
+    functional = functional + 1
+  end
 end
 
 -- Count only visible nearby trunks. Coordinates and cluster centroids are not

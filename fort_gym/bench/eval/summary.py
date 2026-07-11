@@ -503,12 +503,14 @@ def summarize(trace_path: Path) -> RunSummary:
                     _to_int(work_snapshot.get("fortress_complexity_spaces_completed")),
                 )
 
-            fort_enclosed_spaces = max(
-                fort_enclosed_spaces, _to_int(metrics_snapshot.get("fort_enclosed_spaces"))
-            )
-            fort_functional_rooms = max(
-                fort_functional_rooms, _to_int(metrics_snapshot.get("fort_functional_rooms"))
-            )
+            if metrics_snapshot.get("fort_enclosed_spaces") is not None:
+                fort_enclosed_spaces = _to_int(
+                    metrics_snapshot.get("fort_enclosed_spaces")
+                )
+            if metrics_snapshot.get("fort_functional_rooms") is not None:
+                fort_functional_rooms = _to_int(
+                    metrics_snapshot.get("fort_functional_rooms")
+                )
             fort_constructions = max(
                 fort_constructions, _to_int(metrics_snapshot.get("fort_constructions"))
             )
