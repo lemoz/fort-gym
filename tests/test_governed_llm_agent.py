@@ -1193,6 +1193,139 @@ def test_review_contract_normalizes_identical_overlong_objectives_locally() -> N
     assert event["output"]["normalized_length"] == len(action["objective"])
 
 
+def test_review_contract_normalizes_unmatched_terminal_objective_quote() -> None:
+    prior_objective = (
+        "Construct enclosed bedroom: build walls on verified open floor tiles around placed "
+        "bed and door furniture to create a functional room with bounded interior"
+    )
+    control = _plan_control(
+        review_due=False,
+        request_id="20:none",
+        prior_objective=prior_objective,
+        previous_step=19,
+        previous_verdict="rejected",
+    )
+    payload = _reviewed_action_payload(
+        control=control,
+        objective=prior_objective,
+        decision="continue",
+    )
+    payload["objective"] += '"'
+    agent = _agent([_submit_action_response(payload)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["objective"] == prior_objective
+    assert action["plan_review"]["objective"] == prior_objective
+    assert action["plan_review"]["decision"] == "continue"
+    assert len(agent._client.chat.completions.requests) == 1
+    event = next(
+        event
+        for event in agent.pop_tool_events()
+        if event["tool"] == "governed_llm.objective_quote_artifact_normalized"
+    )
+    assert event["output"] == {"fields": ["objective"]}
+
+
+def test_review_contract_preserves_balanced_terminal_objective_quote() -> None:
+    objective = 'Construct the room named "Granite Hall"'
+    control = _plan_control()
+    payload = _reviewed_action_payload(control=control, objective=objective)
+    agent = _agent([_submit_action_response(payload)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["objective"] == objective
+    assert action["plan_review"]["objective"] == objective
+    assert not any(
+        event["tool"] == "governed_llm.objective_quote_artifact_normalized"
+        for event in agent.pop_tool_events()
+    )
+
+
+def test_review_contract_does_not_repair_conflicting_objectives() -> None:
+    prior_objective = "Build durable shelter."
+    next_objective = "Close the drink-production loop."
+    control = _plan_control(
+        review_due=False,
+        request_id="20:none",
+        prior_objective=prior_objective,
+        previous_step=19,
+        previous_verdict="rejected",
+    )
+    conflicting = _reviewed_action_payload(
+        control=control,
+        objective=prior_objective + '"',
+        decision="revise",
+    )
+    conflicting["plan_review"]["objective"] = next_objective
+    corrected = _reviewed_action_payload(
+        control=control,
+        objective=next_objective,
+        decision="revise",
+    )
+    agent = _agent(
+        [_submit_action_response(conflicting), _submit_action_response(corrected)]
+    )
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["objective"] == next_objective
+    assert action["plan_review"]["decision"] == "revise"
+    assert len(agent._client.chat.completions.requests) == 2
+    assert not any(
+        event["tool"] == "governed_llm.objective_quote_artifact_normalized"
+        for event in agent.pop_tool_events()
+    )
+
+
+def test_review_contract_does_not_repair_two_malformed_objectives() -> None:
+    prior_objective = "Build durable shelter."
+    next_objective = "Close the drink-production loop."
+    control = _plan_control(
+        review_due=False,
+        request_id="20:none",
+        prior_objective=prior_objective,
+        previous_step=19,
+        previous_verdict="rejected",
+    )
+    malformed = _reviewed_action_payload(
+        control=control,
+        objective=prior_objective + '"',
+        decision="continue",
+    )
+    corrected = _reviewed_action_payload(
+        control=control,
+        objective=next_objective,
+        decision="revise",
+    )
+    agent = _agent(
+        [_submit_action_response(malformed), _submit_action_response(corrected)]
+    )
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["objective"] == next_objective
+    assert action["plan_review"]["decision"] == "revise"
+    assert len(agent._client.chat.completions.requests) == 2
+    assert not any(
+        event["tool"] == "governed_llm.objective_quote_artifact_normalized"
+        for event in agent.pop_tool_events()
+    )
+
+
 def test_review_contract_does_not_collapse_different_overlong_objectives() -> None:
     control = _plan_control()
     invalid = _reviewed_action_payload(
