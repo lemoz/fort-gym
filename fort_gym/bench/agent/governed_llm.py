@@ -780,6 +780,61 @@ class DFHackGovernedLLMAgent(Agent):
         )
         return normalized
 
+    def _normalize_objective_quote_artifacts(
+        self, payload: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Repair one corroborated terminal quote across duplicated objectives."""
+
+        plan_review = payload.get("plan_review")
+        if not isinstance(plan_review, dict):
+            return payload
+
+        objective = payload.get("objective")
+        plan_objective = plan_review.get("objective")
+        if not isinstance(objective, str) or not isinstance(plan_objective, str):
+            return payload
+
+        def without_lone_terminal_quote(value: str) -> str | None:
+            stripped = value.strip()
+            if (
+                stripped.endswith('"')
+                and stripped.count('"') % 2 == 1
+                and stripped[:-1].strip()
+            ):
+                return stripped[:-1].rstrip()
+            return None
+
+        cleaned_objective = without_lone_terminal_quote(objective)
+        cleaned_plan_objective = without_lone_terminal_quote(plan_objective)
+        if (cleaned_objective is None) == (cleaned_plan_objective is None):
+            return payload
+
+        if cleaned_objective is not None:
+            if cleaned_objective != plan_objective.strip():
+                return payload
+            canonical = plan_objective.strip()
+            changed_field = "objective"
+        else:
+            assert cleaned_plan_objective is not None
+            if cleaned_plan_objective != objective.strip():
+                return payload
+            canonical = objective.strip()
+            changed_field = "plan_review.objective"
+
+        normalized = dict(payload)
+        normalized_plan_review = dict(plan_review)
+        normalized["objective"] = canonical
+        normalized_plan_review["objective"] = canonical
+        normalized["plan_review"] = normalized_plan_review
+        self._tool_events.append(
+            {
+                "tool": "governed_llm.objective_quote_artifact_normalized",
+                "input": {},
+                "output": {"fields": [changed_field]},
+            }
+        )
+        return normalized
+
     def _fallback_wait(self, reason: str) -> Dict[str, Any]:
         self._tool_events.append(
             {"tool": "governed_llm.fallback_wait", "input": {}, "output": {"reason": reason}}
@@ -1176,6 +1231,7 @@ class DFHackGovernedLLMAgent(Agent):
                 last_error = "model returned no submit_action tool call"
                 contract_errors = [last_error]
             else:
+                payload = self._normalize_objective_quote_artifacts(payload)
                 payload = self._normalize_duplicated_objective_length(payload)
                 action_type = str(payload.get("type") or "").upper()
                 canonical_action = None
