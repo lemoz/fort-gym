@@ -1171,6 +1171,64 @@ def test_governed_action_history_preserves_partial_and_tile_postconditions() -> 
     assert entry["result_details"] == {"placed_count": 2, "failed_count": 1}
 
 
+def test_governed_action_history_preserves_complete_rejected_workshop_footprint() -> None:
+    entry = _action_history_entry(
+        step=83,
+        action={
+            "type": "BUILD",
+            "params": {"kind": "Still", "x": 97, "y": 98, "z": 160},
+            "intent": "build a still",
+            "advance_ticks": 1500,
+        },
+        requested_ticks=1500,
+        tick_info={"ticks_advanced": 1505},
+        execute_result={
+            "accepted": False,
+            "why": "tile_not_open_floor",
+            "result": {
+                "ok": False,
+                "error": "tile_not_open_floor",
+                "failed_count": 3,
+                "failed": [
+                    {
+                        "x": 97,
+                        "y": 98,
+                        "z": 160,
+                        "error": "tile_not_open_floor",
+                        "tile_shape": "WALL",
+                        "tiletype": "SoilWall",
+                    },
+                    {
+                        "x": 98,
+                        "y": 98,
+                        "z": 160,
+                        "error": "tile_occupied_by_building",
+                        "tile_shape": "FLOOR",
+                        "tiletype": "SoilFloor1",
+                    },
+                    {
+                        "x": 99,
+                        "y": 98,
+                        "z": 160,
+                        "error": "tile_hidden_unexplored",
+                    },
+                ],
+            },
+        },
+        state_before={"stocks": {}, "work": {}},
+        advance_state={"stocks": {}, "work": {}},
+        metrics_snapshot={},
+    )
+
+    assert entry["outcome"] == "rejected"
+    assert entry["failed_targets"] == [
+        "(97,98,160):tile_not_open_floor[tile_shape=WALL,tiletype=SoilWall]",
+        "(98,98,160):tile_occupied_by_building[tile_shape=FLOOR,tiletype=SoilFloor1]",
+        "(99,98,160):tile_hidden_unexplored",
+    ]
+    assert entry["result_details"] == {"failed_count": 3}
+
+
 def test_governed_action_history_uses_exact_owned_completion_proof() -> None:
     entry = _action_history_entry(
         step=3,

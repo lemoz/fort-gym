@@ -191,7 +191,7 @@ def test_workshop_hook_fails_closed_on_illegal_footprint() -> None:
         Path(__file__).resolve().parents[1] / "hook" / "build_workshop.lua"
     ).read_text(encoding="utf-8")
     for needle in (
-        "footprint_error",
+        "footprint_failures",
         "tile_occupied_by_building",
         "tile_hidden_unexplored",
         "tile_frozen_liquid",
@@ -202,21 +202,22 @@ def test_workshop_hook_fails_closed_on_illegal_footprint() -> None:
         assert needle in hook_text
 
 
-def test_workshop_hook_reports_first_failing_tile_with_absolute_coordinates() -> None:
+def test_workshop_hook_reports_complete_failed_footprint_with_compatibility_fields() -> None:
     hook_text = (
         Path(__file__).resolve().parents[1] / "hook" / "build_workshop.lua"
     ).read_text(encoding="utf-8")
 
-    # The scan must return the first rejected tile, not a planner-selected
-    # replacement or a generic footprint-only error.
+    # Collect every rejected tile while retaining the first failure for
+    # compatibility. The hook must not select a replacement.
     assert "for tx = x, x + 2 do" in hook_text
     assert "for ty = y, y + 2 do" in hook_text
-    assert "return { x = tx, y = ty, z = z, error = 'tile_out_of_bounds' }" in hook_text
-    assert "return { x = tx, y = ty, z = z, error = 'tile_not_open_floor' }" in hook_text
-    assert "local placement_failure = footprint_error()" in hook_text
+    assert "local placement_failures = footprint_failures()" in hook_text
+    assert "local placement_failure = placement_failures[1]" in hook_text
     assert "error = placement_failure.error" in hook_text
     assert "failed_tile = placement_failure" in hook_text
-    assert "failed = { placement_failure }" in hook_text
+    assert "failed_count = #placement_failures" in hook_text
+    assert "failed_truncated = false" in hook_text
+    assert "failed = placement_failures" in hook_text
 
 
 def test_workshop_hook_keeps_every_footprint_reason_in_failed_tile_record() -> None:
@@ -232,7 +233,15 @@ def test_workshop_hook_keeps_every_footprint_reason_in_failed_tile_record() -> N
         "tile_not_open_floor",
         "tile_has_liquid",
     ):
-        assert f"return {{ x = tx, y = ty, z = z, error = '{reason}' }}" in hook_text
+        assert reason in hook_text
+
+    assert "failure.tile_shape = tile_shape" in hook_text
+    assert "failure.tiletype = tiletype" in hook_text
+    hidden_start = hook_text.index("elseif hidden then")
+    hidden_end = hook_text.index("\n        else\n", hidden_start)
+    hidden_branch = hook_text[hidden_start:hidden_end]
+    assert "tile_shape" not in hidden_branch
+    assert "tiletype" not in hidden_branch
 
 
 def test_build_workshop_hook_supports_still_subtype() -> None:
