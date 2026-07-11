@@ -2939,6 +2939,65 @@ def test_encoder_surfaces_executor_why_as_rejection_reason() -> None:
     assert "Last Action: REJECTED - no_building_material" in obs_text
 
 
+def test_encoder_surfaces_complete_rejected_workshop_footprint() -> None:
+    state = {"time": 100, "population": 7, "stocks": {}}
+
+    obs_text, _ = encode_observation(
+        state,
+        last_action_result={
+            "accepted": False,
+            "why": "tile_not_open_floor",
+            "result": {
+                "ok": False,
+                "error": "tile_not_open_floor",
+                "failed_count": 3,
+                "failed_truncated": False,
+                "failed_tile": {
+                    "x": 97,
+                    "y": 98,
+                    "z": 160,
+                    "error": "tile_not_open_floor",
+                    "tile_shape": "WALL",
+                    "tiletype": "SoilWall",
+                },
+                "failed": [
+                    {
+                        "x": 97,
+                        "y": 98,
+                        "z": 160,
+                        "error": "tile_not_open_floor",
+                        "tile_shape": "WALL",
+                        "tiletype": "SoilWall",
+                    },
+                    {
+                        "x": 98,
+                        "y": 98,
+                        "z": 160,
+                        "error": "tile_occupied_by_building",
+                        "tile_shape": "FLOOR",
+                        "tiletype": "SoilFloor1",
+                    },
+                    {
+                        "x": 99,
+                        "y": 98,
+                        "z": 160,
+                        "error": "tile_hidden_unexplored",
+                    },
+                ],
+            },
+        },
+    )
+
+    assert "Last Action: REJECTED - tile_not_open_floor" in obs_text
+    assert "failed_count=3" in obs_text
+    assert "(97,98,160): tile_not_open_floor [tile_shape=WALL, tiletype=SoilWall]" in obs_text
+    assert (
+        "(98,98,160): tile_occupied_by_building "
+        "[tile_shape=FLOOR, tiletype=SoilFloor1]" in obs_text
+    )
+    assert "(99,98,160): tile_hidden_unexplored" in obs_text
+
+
 def test_encoder_surfaces_partial_build_mutation_and_tile_facts() -> None:
     state = {"time": 100, "population": 7, "stocks": {}}
 

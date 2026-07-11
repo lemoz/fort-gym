@@ -232,55 +232,82 @@ if not near_fort(x, y) then
   return
 end
 
-local function footprint_error()
+local function footprint_failures()
+  local failures = {}
   for tx = x, x + 2 do
     for ty = y, y + 2 do
       local block = dfhack.maps.getTileBlock(tx, ty, z)
       if not block then
-        return { x = tx, y = ty, z = z, error = 'tile_out_of_bounds' }
-      end
-      local dx, dy = tx % 16, ty % 16
-      local occupied, hidden, open_floor, frozen_liquid, liquid_depth =
-        false, true, false, false, 0
-      local ok = pcall(function()
-        occupied = block.occupancy[dx][dy].building ~= 0
-        hidden = block.designation[dx][dy].hidden and true or false
-        liquid_depth = tonumber(block.designation[dx][dy].flow_size) or 0
-        local attr = df.tiletype.attrs[block.tiletype[dx][dy]]
-        open_floor = attr ~= nil and attr.shape == df.tiletype_shape.FLOOR
-        frozen_liquid = attr ~= nil
-          and attr.material == df.tiletype_material.FROZEN_LIQUID
-      end)
-      if not ok then
-        return { x = tx, y = ty, z = z, error = 'tile_state_unreadable' }
-      end
-      if occupied then
-        return { x = tx, y = ty, z = z, error = 'tile_occupied_by_building' }
-      end
-      if hidden then
-        return { x = tx, y = ty, z = z, error = 'tile_hidden_unexplored' }
-      end
-      if frozen_liquid then
-        return { x = tx, y = ty, z = z, error = 'tile_frozen_liquid' }
-      end
-      if not open_floor then
-        return { x = tx, y = ty, z = z, error = 'tile_not_open_floor' }
-      end
-      if liquid_depth > 0 then
-        return { x = tx, y = ty, z = z, error = 'tile_has_liquid' }
+        table.insert(failures, { x = tx, y = ty, z = z, error = 'tile_out_of_bounds' })
+      else
+        local dx, dy = tx % 16, ty % 16
+        local hidden = true
+        local visibility_ok = pcall(function()
+          hidden = block.designation[dx][dy].hidden and true or false
+        end)
+        if not visibility_ok then
+          table.insert(
+            failures,
+            { x = tx, y = ty, z = z, error = 'tile_state_unreadable' }
+          )
+        elseif hidden then
+          -- Hidden tiles fail closed without exposing their underlying type.
+          table.insert(
+            failures,
+            { x = tx, y = ty, z = z, error = 'tile_hidden_unexplored' }
+          )
+        else
+          local occupied, open_floor, frozen_liquid, liquid_depth =
+            false, false, false, 0
+          local tile_shape, tiletype = nil, nil
+          local state_ok = pcall(function()
+            occupied = block.occupancy[dx][dy].building ~= 0
+            liquid_depth = tonumber(block.designation[dx][dy].flow_size) or 0
+            local tiletype_id = block.tiletype[dx][dy]
+            local attr = df.tiletype.attrs[tiletype_id]
+            open_floor = attr ~= nil and attr.shape == df.tiletype_shape.FLOOR
+            frozen_liquid = attr ~= nil
+              and attr.material == df.tiletype_material.FROZEN_LIQUID
+            tile_shape = attr and tostring(df.tiletype_shape[attr.shape] or attr.shape) or nil
+            tiletype = tostring(df.tiletype[tiletype_id] or tiletype_id)
+          end)
+          local error_name = nil
+          if not state_ok then
+            error_name = 'tile_state_unreadable'
+          elseif occupied then
+            error_name = 'tile_occupied_by_building'
+          elseif frozen_liquid then
+            error_name = 'tile_frozen_liquid'
+          elseif not open_floor then
+            error_name = 'tile_not_open_floor'
+          elseif liquid_depth > 0 then
+            error_name = 'tile_has_liquid'
+          end
+          if error_name then
+            local failure = { x = tx, y = ty, z = z, error = error_name }
+            if state_ok then
+              failure.tile_shape = tile_shape
+              failure.tiletype = tiletype
+            end
+            table.insert(failures, failure)
+          end
+        end
       end
     end
   end
-  return nil
+  return failures
 end
 
-local placement_failure = footprint_error()
+local placement_failures = footprint_failures()
+local placement_failure = placement_failures[1]
 if placement_failure then
   print(json.encode({
     ok = false,
     error = placement_failure.error,
     failed_tile = placement_failure,
-    failed = { placement_failure },
+    failed_count = #placement_failures,
+    failed_truncated = false,
+    failed = placement_failures,
   }))
   return
 end
