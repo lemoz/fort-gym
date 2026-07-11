@@ -26,8 +26,9 @@ local ORDER_JOB_ITEMS = {
 
 -- Friendly labor name -> df.unit_labor enum name. Mirrors LABOR_WHITELIST in
 -- hook/set_labor.lua and dfhack_backend.py so the per-citizen observation lists
--- exactly the labors the LABOR action can flip. Each enum is pcall-guarded so a
--- name absent on this DF build is simply skipped, never a crash.
+-- exactly the labors the LABOR action can flip. Each enum and status read is
+-- pcall-guarded; any unreadable value is marked incomplete instead of being
+-- reported as a disabled labor.
 local LABOR_WHITELIST = {
   { name = 'mine', enum = 'MINE' },
   { name = 'woodcutting', enum = 'CUTWOOD' },
@@ -53,6 +54,16 @@ local function sanitize(text)
   end)
   if ok then return cleaned end
   return '?'
+end
+
+local function sanitized_profession(unit)
+  local ok, profession = pcall(function()
+    local value = df.profession[unit.profession]
+    if value == nil then value = tostring(unit.profession) end
+    return sanitize(value)
+  end)
+  if ok then return profession end
+  return sanitize('?')
 end
 
 local SEASON_NAMES = { 'spring', 'summer', 'autumn', 'winter' }
@@ -172,22 +183,37 @@ local crop_options_any_truncated = crop_options_truncated.spring
 local function labor_enabled(unit, labor_name)
   local ok, enabled = pcall(function()
     local labor = df.unit_labor[labor_name]
-    if labor == nil then return false end
+    if labor == nil then error('labor_enum_unavailable') end
+    if not unit.status or not unit.status.labors then
+      error('labor_state_unavailable')
+    end
     return unit.status.labors[labor] and true or false
   end)
-  if not ok then return false end
-  return enabled and true or false
+  if not ok or type(enabled) ~= 'boolean' then return false, false end
+  return enabled, true
 end
 
--- Enabled whitelist labors (friendly names) for one citizen.
+-- Enabled whitelist labors (friendly names) for one citizen plus whether every
+-- whitelisted state was readable.
 local function citizen_enabled_labors(unit)
   local names = {}
+  local complete = true
   for _, entry in ipairs(LABOR_WHITELIST) do
-    if labor_enabled(unit, entry.enum) then
+    local enabled, known = labor_enabled(unit, entry.enum)
+    if not known then
+      complete = false
+    elseif enabled then
       table.insert(names, entry.name)
     end
   end
-  return names
+  return names, complete
+end
+
+local function has_enabled_labor(names, wanted)
+  for _, name in ipairs(names) do
+    if name == wanted then return true end
+  end
+  return false
 end
 
 local function job_type_name(job_type)
@@ -211,14 +237,20 @@ local out = {
   citizens = {
     total = 0,
     idle = 0,
+    labor_eligible = 0,
+    labor_eligible_idle = 0,
+    labor_eligibility_complete = true,
+    labor_state_complete = true,
+    list_truncated = false,
     mining_labor = 0,
     carpentry_labor = 0,
     woodcutting_labor = 0,
     masonry_labor = 0,
     herbalism_labor = 0,
-    -- per-citizen detail (cap MAX_CITIZEN_ENTRIES): id, enabled whitelist
-    -- labors, and current job type. The LABOR action targets a unit by id, so
-    -- the agent needs the id -> labors mapping to choose whom to reassign.
+    -- per-citizen detail (cap MAX_CITIZEN_ENTRIES): id, profession,
+    -- eligibility, enabled whitelist labors, and current job type. The LABOR
+    -- action targets a unit by id, so the agent needs this mapping to choose
+    -- whom to reassign.
     list = {},
   },
   jobs = {
@@ -262,45 +294,84 @@ end
 
 for _, unit in ipairs(df.global.world.units.active) do
   local ok, is_citizen = pcall(function() return dfhack.units.isCitizen(unit) end)
-  if ok and is_citizen then
+  if not ok then
+    out.citizens.labor_eligibility_complete = false
+    out.citizens.labor_state_complete = false
+  elseif is_citizen then
+    local profession = sanitized_profession(unit)
+    local ok_adult, is_adult = pcall(function()
+      return dfhack.units.isAdult(unit)
+    end)
+    local labor_eligibility_known = ok_adult and type(is_adult) == 'boolean'
+    local labor_eligible = labor_eligibility_known and is_adult or false
+    local enabled_labors, labor_state_known = citizen_enabled_labors(unit)
+    if not labor_eligibility_known then
+      out.citizens.labor_eligibility_complete = false
+    elseif labor_eligible then
+      out.citizens.labor_eligible = out.citizens.labor_eligible + 1
+    end
+    if not labor_state_known then
+      out.citizens.labor_state_complete = false
+    end
+
     local path_pos = unit_position(unit)
     local ok_available, available = pcall(function()
       return not dfhack.units.isDead(unit) and not (unit.flags1 and unit.flags1.caged)
     end)
-    if ok_available and available and path_pos then
+    if labor_eligibility_known and labor_eligible
+        and ok_available and available and path_pos then
       table.insert(citizen_units, { unit = unit, pos = path_pos })
     end
     out.citizens.total = out.citizens.total + 1
     local has_job = unit.job and unit.job.current_job and true or false
     if not has_job then out.citizens.idle = out.citizens.idle + 1 end
-    if labor_enabled(unit, 'MINE') then
-      out.citizens.mining_labor = out.citizens.mining_labor + 1
+    if labor_eligible and not has_job then
+      out.citizens.labor_eligible_idle = out.citizens.labor_eligible_idle + 1
     end
-    if labor_enabled(unit, 'CARPENTER') then
-      out.citizens.carpentry_labor = out.citizens.carpentry_labor + 1
-    end
-    if labor_enabled(unit, 'CUTWOOD') then
-      out.citizens.woodcutting_labor = out.citizens.woodcutting_labor + 1
-    end
-    if labor_enabled(unit, 'MASON') then
-      out.citizens.masonry_labor = out.citizens.masonry_labor + 1
-    end
-    if labor_enabled(unit, 'HERBALIST') then
-      out.citizens.herbalism_labor = out.citizens.herbalism_labor + 1
+    if labor_eligible and labor_state_known then
+      if has_enabled_labor(enabled_labors, 'mine') then
+        out.citizens.mining_labor = out.citizens.mining_labor + 1
+      end
+      if has_enabled_labor(enabled_labors, 'carpentry') then
+        out.citizens.carpentry_labor = out.citizens.carpentry_labor + 1
+      end
+      if has_enabled_labor(enabled_labors, 'woodcutting') then
+        out.citizens.woodcutting_labor = out.citizens.woodcutting_labor + 1
+      end
+      if has_enabled_labor(enabled_labors, 'masonry') then
+        out.citizens.masonry_labor = out.citizens.masonry_labor + 1
+      end
+      if has_enabled_labor(enabled_labors, 'herbalism') then
+        out.citizens.herbalism_labor = out.citizens.herbalism_labor + 1
+      end
     end
     if #out.citizens.list < MAX_CITIZEN_ENTRIES then
-      local current_job_type = nil
+      local current_job_type = false
+      local current_job_known = true
       if has_job then
-        pcall(function()
-          current_job_type = sanitize(df.job_type[unit.job.current_job.job_type])
+        local ok_job, observed_job_type = pcall(function()
+          local raw_job_type = unit.job.current_job.job_type
+          return sanitize(df.job_type[raw_job_type] or tostring(raw_job_type))
         end)
+        if ok_job then
+          current_job_type = observed_job_type
+        else
+          current_job_known = false
+        end
       end
       table.insert(out.citizens.list, {
         id = unit.id,
+        profession = profession,
+        labor_eligible = labor_eligible,
+        labor_eligibility_known = labor_eligibility_known,
         pos = path_pos and { path_pos.x, path_pos.y, path_pos.z } or false,
-        labors = citizen_enabled_labors(unit),
+        labors = enabled_labors,
+        labors_known = labor_state_known,
         current_job_type = current_job_type,
+        current_job_known = current_job_known,
       })
+    else
+      out.citizens.list_truncated = true
     end
   end
 end

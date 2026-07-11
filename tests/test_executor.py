@@ -610,6 +610,28 @@ def test_dfhack_labor_reports_rejection_when_hook_errors(monkeypatch) -> None:
     assert result["why"] == "not_a_citizen"
 
 
+def test_dfhack_labor_preserves_unverified_mutation_evidence(monkeypatch) -> None:
+    def fake_set_labor(*args):
+        return {
+            "ok": False,
+            "error": "labor_readback_failed",
+            "rollback_verified": False,
+            "mutation_state": "unknown",
+        }
+
+    monkeypatch.setattr("fort_gym.bench.env.executor.safe_set_labor", fake_set_labor)
+
+    result = Executor(dfhack_client=_ConnectedDFHackClient()).apply(
+        {"type": "LABOR", "params": {"unit_id": 243, "labor": "mine", "enable": True}},
+        backend="dfhack",
+    )
+
+    assert result["accepted"] is False
+    assert result["why"] == "labor_readback_failed"
+    assert result["result"]["rollback_verified"] is False
+    assert result["result"]["mutation_state"] == "unknown"
+
+
 def test_dfhack_farm_routes_to_set_farm_crop_wrapper(monkeypatch) -> None:
     calls: list[tuple] = []
 

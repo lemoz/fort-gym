@@ -46,10 +46,18 @@ fort-gym executes DFHack actions exclusively through curated Lua helpers stored 
   Surface crop selection fails closed until native surface-biome options are
   proven. All four `plant_id` slots are snapshotted, committed under `pcall`,
   reread from DF, and rolled back together on any write/readback mismatch.
+- `hook/set_labor.lua` toggles one whitelisted labor only for a live fortress
+  citizen that DFHack 0.47.05-r8 also reports as an adult. Children and babies
+  remain population/citizen facts but fail before any labor-state read or
+  write. Adult eligibility and before-state reads fail closed. A write is
+  accepted only after exact readback; any write/readback failure restores the
+  observed before state and reports whether rollback was verified. An
+  unverified rollback terminates governed execution as an unknown mutation.
 - `hook/work_metrics.lua` retains its bounded legacy target mode for keystroke
   evaluation. Governed runs call its `global` mode, which emits only factual
-  job, workshop, labor, and manager-order counters and never scans or emits the
-  retired starter, connector, workshop-room, or two-room plan geometry.
+  job, workshop, and manager-order counters plus adult-scoped labor counters
+  with explicit completeness. It never scans or emits the retired starter,
+  connector, workshop-room, or two-room plan geometry.
 - `hook/map_snapshot.lua` reads a bounded tile rectangle (max 64×64, single
   z-level) for the derived "Map Inspect" replay layer. A display snapshot is
   not gameplay proof by itself, and hidden tiles serialize no underlying
@@ -73,7 +81,12 @@ fort-gym executes DFHack actions exclusively through curated Lua helpers stored 
   walk-group connectivity (`connected`, `disconnected`, or `unknown`). This is
   an engine connectivity snapshot, not a claim that a dwarf has accepted or can
   complete the haul; `unknown` is reported while path data is rebuilding or
-  cannot be read.
+  cannot be read. All citizens remain population/idle facts, while labor counts
+  and path-worker candidates are scoped to known adults. Per-citizen
+  `labor_eligibility_known`, `labor_eligible`, `labors_known`, and
+  `current_job_known` fields keep unreadable state distinct from disabled labor
+  or idleness. Aggregate completeness fields and `list_truncated` expose the
+  bounded 20-entry citizen list.
 - `hook/fort_metrics.lua` reports each detected space's factual bounds,
   furniture/workshop contents, and up to 16 currently open member tiles. These
   are read-only room-membership facts, not a room plan or placement target. It

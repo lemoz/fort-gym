@@ -483,12 +483,23 @@ def test_governed_action_types_and_tool_include_labor() -> None:
 
 def test_governed_system_prompt_describes_labor_mechanic_only() -> None:
     assert "LABOR" in GOVERNED_SYSTEM_PROMPT
+    assert "LABOR may target only a" in GOVERNED_SYSTEM_PROMPT
+    assert "labor_eligibility_known=true and labor_eligible=true" in GOVERNED_SYSTEM_PROMPT
+    assert "children and babies remain factual citizens and population members" in (
+        GOVERNED_SYSTEM_PROMPT
+    )
+    assert "labors_known=false or current_job_known=false is unknown evidence" in (
+        GOVERNED_SYSTEM_PROMPT
+    )
+    assert "list_truncated=true means additional citizens are not displayed" in (
+        GOVERNED_SYSTEM_PROMPT
+    )
     # factual mechanic: jobs are only taken by citizens with the matching labor
     assert "matching labor enabled" in GOVERNED_SYSTEM_PROMPT
     # flips one labor on one citizen and completes no work itself
     assert "completes no work itself" in GOVERNED_SYSTEM_PROMPT
-    # the citizens observation lists ids and enabled labors
-    assert "Citizens line lists each citizen id" in GOVERNED_SYSTEM_PROMPT
+    # the bounded citizens observation lists only displayed, attested targets
+    assert "bounded Citizens line lists each displayed citizen id" in GOVERNED_SYSTEM_PROMPT
     # whitelist named factually
     assert "brewing" in GOVERNED_SYSTEM_PROMPT
     assert "herbalism" in GOVERNED_SYSTEM_PROMPT
