@@ -185,6 +185,10 @@ def _run_dfhack_tick_fixture(
 
     monkeypatch.setattr("fort_gym.bench.run.runner.DFHackClient", FakeDFHackClient)
     monkeypatch.setattr(
+        "fort_gym.bench.run.runner.ensure_paused_external",
+        lambda **_kwargs: {"ok": True, "paused": True},
+    )
+    monkeypatch.setattr(
         "fort_gym.bench.run.runner.StateReader.from_dfhack",
         lambda _: dict(state),
     )
@@ -241,6 +245,33 @@ def test_duplicate_worker_cannot_touch_an_already_claimed_trace(tmp_path, monkey
     get_settings.cache_clear()  # type: ignore[attr-defined]
 
 
+def test_positive_ticks_with_unverified_repause_are_terminal(tmp_path, monkeypatch) -> None:
+    agent, registry, run_id = _run_dfhack_tick_fixture(
+        tmp_path,
+        monkeypatch,
+        [
+            {
+                "ok": False,
+                "error": "repause_unverified",
+                "ticks_advanced": 10,
+                "repause_requested": True,
+                "repause_effective": False,
+            }
+        ],
+        max_steps=2,
+    )
+
+    loaded = registry.get(run_id)
+    assert loaded is not None
+    assert agent.calls == 1
+    assert loaded.status == "failed"
+    assert loaded.metadata["terminal_reason"]["code"] == "tick_repause_unverified"
+    row = _trace_rows(tmp_path, run_id)[0]
+    assert row["terminal_reason"]["ticks_advanced"] == 10
+
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+
+
 def test_governed_work_metrics_setup_failure_cleans_runtime_before_failed_status(
     tmp_path, monkeypatch
 ) -> None:
@@ -267,6 +298,10 @@ def test_governed_work_metrics_setup_failure_cleans_runtime_before_failed_status
             lifecycle_events.append("client_closed")
 
     monkeypatch.setattr("fort_gym.bench.run.runner.DFHackClient", FakeDFHackClient)
+    monkeypatch.setattr(
+        "fort_gym.bench.run.runner.ensure_paused_external",
+        lambda **_kwargs: {"ok": True, "paused": True},
+    )
     monkeypatch.setattr(
         "fort_gym.bench.run.runner.start_g7_evidence",
         lambda run_id: lifecycle_events.append("evidence_started")
@@ -484,6 +519,10 @@ def _run_governed_interact_fixture(
         return {"ok": True, "keys_sent": 1}
 
     monkeypatch.setattr("fort_gym.bench.run.runner.DFHackClient", FakeDFHackClient)
+    monkeypatch.setattr(
+        "fort_gym.bench.run.runner.ensure_paused_external",
+        lambda **_kwargs: {"ok": True, "paused": True},
+    )
     monkeypatch.setattr(
         "fort_gym.bench.run.runner.prepare_keystroke_target",
         prepare_target_callback or (lambda *args, **kwargs: {"ok": False}),
@@ -1879,6 +1918,103 @@ def test_dfhack_cleanup_precedes_terminal_status_and_optional_analysis(
     assert lifecycle_events.index("client_closed") < lifecycle_events.index("summary_persisted")
     assert lifecycle_events.index("summary_persisted") < lifecycle_events.index("status:completed")
     assert lifecycle_events.index("status:completed") < lifecycle_events.index("analysis_started")
+
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+
+
+def test_dfhack_cleanup_rejects_rpc_success_without_pause_attestation(monkeypatch) -> None:
+    from fort_gym.bench.run import runner as runner_module
+
+    lifecycle_events: list[str] = []
+
+    class ApparentlyPausedClient:
+        def pause(self) -> None:
+            lifecycle_events.append("pause_rpc_returned")
+
+        def close(self) -> None:
+            lifecycle_events.append("client_closed")
+
+    monkeypatch.setattr(
+        runner_module,
+        "ensure_paused_external",
+        lambda **_kwargs: {
+            "ok": False,
+            "paused": False,
+            "error": "pause_state_unverified",
+        },
+    )
+
+    outcome = runner_module._cleanup_dfhack_runtime(
+        ApparentlyPausedClient(),
+        evidence_attempted=False,
+    )
+
+    assert outcome["ok"] is False
+    assert outcome["pause_rpc_completed"] is True
+    assert outcome["pause_verified"] is False
+    assert outcome["errors"] == [
+        {"stage": "pause_attestation", "error": "pause_state_unverified"}
+    ]
+    assert lifecycle_events == ["pause_rpc_returned", "client_closed"]
+
+
+def test_run_without_registry_raises_when_cleanup_cannot_attest_pause(
+    tmp_path, monkeypatch
+) -> None:
+    from fort_gym.bench.run import runner as runner_module
+
+    monkeypatch.setenv("ARTIFACTS_DIR", str(tmp_path))
+    monkeypatch.setenv("DFHACK_ENABLED", "1")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    state = MockEnvironment().observe()
+
+    class FakeDFHackClient:
+        def __init__(self, **_: Any) -> None:
+            self.last_tick_info: Dict[str, Any] = {}
+
+        def connect(self) -> None:
+            return None
+
+        def pause(self) -> None:
+            return None
+
+        def advance(self, ticks: int) -> Dict[str, Any]:
+            self.last_tick_info = {"ok": True, "ticks_advanced": ticks}
+            state["time"] = int(state.get("time") or 0) + ticks
+            return dict(state)
+
+        def close(self) -> None:
+            return None
+
+    pause_results = iter(
+        [
+            {"ok": True, "paused": True},
+            {"ok": False, "paused": False, "error": "pause_state_unverified"},
+            {"ok": False, "paused": False, "error": "pause_state_unverified"},
+        ]
+    )
+    monkeypatch.setattr(runner_module, "DFHackClient", FakeDFHackClient)
+    monkeypatch.setattr(
+        runner_module.StateReader,
+        "from_dfhack",
+        lambda _client: dict(state),
+    )
+    monkeypatch.setattr(
+        runner_module,
+        "ensure_paused_external",
+        lambda **_kwargs: next(pause_results),
+    )
+
+    with pytest.raises(RuntimeError, match="cleanup remained unverified"):
+        run_once(
+            CountingWaitAgent(10),
+            backend="dfhack",
+            model="fake",
+            max_steps=1,
+            ticks_per_step=10,
+            run_id="cleanup-without-registry",
+            preserve_save=True,
+        )
 
     get_settings.cache_clear()  # type: ignore[attr-defined]
 

@@ -1989,6 +1989,82 @@ gate. Each entry states what changed and the evidence that forced it.
   and 450 steps. These changes add no planner, target, coordinate, objective,
   strategy, or score credit.
 
+- **2026-07-11 UTC — G7 attempt 23: OPERATOR-STOPPED POLICY-DIAGNOSTIC FAIL
+  after real early structure; incomplete footprint feedback and a sealed farm
+  lost the drink race.** Run `94ea15d9c6c141da9540ced2a216493e`
+  ([replay](https://fortgym.live/r/uGx2o874VECGSlqciDUrbQxo-JrbkQ41))
+  used deployed SHA `506ce6986029c5885ecb26074fa45ac55d47c541`, fresh
+  `seed_region3_fresh`, OpenRouter `z-ai/glm-5v-turbo`, vision on, memory off,
+  score-v5, and a 450-step budget. The stopped trace has 126 governed rows; 125
+  carry screen text and gameplay proof, 59 proofs have `ok=true`, and all 126
+  retain governed provenance. One hundred sixty-two model calls used 3,279,290
+  prompt and 109,962 completion tokens.
+
+  The model made substantial real changes. It completed connected channel
+  access at step 2, excavated 43 owned tiles, completed subterranean FarmPlot
+  `#1` and selected plump helmets for every season, felled trees, completed
+  Carpenter workshop `#2`, produced and installed furniture, and used 14 wall
+  constructions to create two enclosed functional rooms. It eventually found
+  a valid surface footprint and completed Still `#21`. Population peaked at
+  11. Run-owned farming produced three food units, but no drink was brewed.
+
+  Deterministic gate-v2 is FAIL. The stop-after-advance trace reached 185,487
+  ticks while the summary retained 184,483, both below 403,200; the mismatch
+  and missing final screen/proof row fail evidence closed. Food flow was 3
+  produced/31 consumed and drink 0/60, with final stocks 17/0. Population ended
+  10/15, functional rooms 2/3, installed beds 1/4, rubric 65.97 retained
+  `no_broader_fort_layout`, and score-v5 was 115.39/150. Dwarf `#249` died with
+  `thirst_timer=75000`; its cause enum was unavailable, so neglect is UNKNOWN,
+  not cleared. The run was stopped at step 125 once it could no longer pass.
+
+  Two factual control-surface gaps dominated the failure. First, six early
+  Still attempts each received only the first invalid tile from a nine-tile
+  native preflight, turning one rejected footprint into serial probing. PR #97
+  now returns every invalid submitted tile, while preserving atomic rejection,
+  the first-failure compatibility fields, and hidden-tile secrecy. Second, the
+  wall layout sealed FarmPlot `(95,95,160)`. A PlantSeeds job remained
+  unassigned while the model spent turns toggling already-enabled farmers. A
+  stopped-save native check found 10 citizens checked, zero connected to that
+  target, and zero unknown. PR #98 surfaces cached possible job-target walk-group
+  connectivity as `connected`, `disconnected`, or `unknown`; it does not choose
+  a repair, labor, action, or coordinate.
+
+  PRs #97 and #98 passed CI and independent review and deployed together at
+  exact SHA `e0d51ef1d7a37c3f09606340a1d3bc0a1e914a23`. Deployed proof rejected a
+  known-invalid Still footprint with all five invalid visible tiles in one
+  response; building count 8, paused state, year 30, and tick 202,720 were
+  unchanged. The deployed job hook emitted native connectivity, and public/API
+  health passed. Fresh-seed Attempt 24 then launched on that exact SHA as run
+  `0d3dad764c9640af8d8bd6f67be1dcf1`
+  ([replay](https://fortgym.live/r/64584CWkX3eWm6TOwJST1_t4mgpGB-6Q)).
+
+- **2026-07-11 UTC — G7 attempt 24: INVALID INFRASTRUCTURE ABORT at step 0;
+  a tick-read timeout bypassed repause and left `nopause` active.** The run used
+  exact SHA `e0d51ef1d7a37c3f09606340a1d3bc0a1e914a23`, fresh
+  `seed_region3_fresh`, OpenRouter `z-ai/glm-5v-turbo`, vision on, memory off,
+  score-v5, 450 steps, and 2,000 maximum ticks per turn. Its initial native
+  observation attested a paused year-30 map at tick 16,801. The submitted
+  surface DIG was rejected with zero newly designated tiles and no map change.
+
+  The subsequent 1,000-tick request failed on the first read after enabling
+  DFHack `nopause`. The old early return occurred before the cleanup `finally`,
+  so the trace correctly recorded `tick_failed_zero_progress` but the process
+  remained unpaused. Terminal cleanup compounded the problem by treating RPC or
+  Lua command completion as pause verification. Live reads found the game still
+  running at tick 54,248; a normal pause command was still ineffective at tick
+  57,460. Explicitly disabling `nopause` and then setting pause contained it at
+  tick 58,122 with `pause_state=true`.
+
+  This run is excluded from policy comparison and contributes no G7 evidence.
+  The repair moves all post-`nopause` exits under fail-closed cleanup, disables
+  `nopause`, independently reads `pause_state`, makes unverified repause a failed
+  advance, rejects unverified terminal cleanup, and performs the same pause
+  attestation before the first serialized-run observation. The administrative
+  `/step` exception path also repauses before close. Regression tests cover the
+  exact post-enable read failure, truthful recovered end-tick evidence, failed
+  disable, false pause readback, cleanup rejection, and endpoint exception
+  ordering. A fresh replacement run is required after deployment.
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,

@@ -85,6 +85,11 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr("fort_gym.bench.config.get_settings", lambda: stub_settings)
     monkeypatch.setattr(routes_step, "DFHackClient", _StubDFHackClient)
     monkeypatch.setattr(
+        routes_step,
+        "ensure_paused_external",
+        lambda **_kwargs: {"ok": True, "paused": True},
+    )
+    monkeypatch.setattr(
         "fort_gym.bench.env.executor.safe_designate_rect",
         lambda *args, **kwargs: {"ok": True},
     )
@@ -133,6 +138,139 @@ def test_step_rejects_governed_runs_before_opening_an_alternate_control_path(
     assert "serialized runner" in response.json()["detail"]
     assert client_calls["value"] == 0
     assert not (tmp_path / run_id).exists()
+
+
+def test_step_exception_repauses_before_closing(client: TestClient, monkeypatch) -> None:
+    lifecycle_events: list[str] = []
+
+    class RaisingClient(_StubDFHackClient):
+        def advance(self, ticks: int) -> Dict[str, Any]:
+            raise RuntimeError("advance failed")
+
+        def close(self) -> None:
+            lifecycle_events.append("client_closed")
+
+    monkeypatch.setattr(routes_step, "DFHackClient", RaisingClient)
+    monkeypatch.setattr(
+        routes_step,
+        "ensure_paused_external",
+        lambda **_kwargs: lifecycle_events.append("pause_attested")
+        or {"ok": True, "paused": True},
+    )
+    run_id = _register_run()
+
+    with pytest.raises(RuntimeError, match="advance failed"):
+        client.post(
+            "/step",
+            json={
+                "run_id": run_id,
+                "action": {"type": "noop"},
+                "min_step_period_ms": 100,
+                "max_ticks": 1,
+            },
+        )
+
+    assert lifecycle_events == ["pause_attested", "pause_attested", "client_closed"]
+
+
+def test_step_tick_failure_cannot_complete_run(client: TestClient, monkeypatch) -> None:
+    class FailedTickClient(_StubDFHackClient):
+        def advance(self, ticks: int) -> Dict[str, Any]:
+            self._tick_info = {
+                "ok": False,
+                "error": "repause_unverified",
+                "ticks_advanced": ticks,
+            }
+            return self.get_state()
+
+    monkeypatch.setattr(routes_step, "DFHackClient", FailedTickClient)
+    run_id = _register_run(max_steps=1)
+
+    response = client.post(
+        "/step",
+        json={
+            "run_id": run_id,
+            "action": {"type": "noop"},
+            "min_step_period_ms": 100,
+            "max_ticks": 1,
+        },
+    )
+
+    assert response.status_code == 503
+    loaded = RUN_REGISTRY.get(run_id)
+    assert loaded is not None
+    assert loaded.status == "pending"
+    assert loaded.step == 0
+
+
+def test_step_false_pause_attestation_fails_before_completion(
+    client: TestClient, monkeypatch
+) -> None:
+    pause_results = iter(
+        [
+            {"ok": True, "paused": True},
+            {"ok": False, "paused": False, "error": "pause_state_unverified"},
+            {"ok": True, "paused": True},
+        ]
+    )
+    monkeypatch.setattr(
+        routes_step,
+        "ensure_paused_external",
+        lambda **_kwargs: next(pause_results),
+    )
+    run_id = _register_run(max_steps=1)
+
+    response = client.post(
+        "/step",
+        json={
+            "run_id": run_id,
+            "action": {"type": "noop"},
+            "min_step_period_ms": 100,
+            "max_ticks": 1,
+        },
+    )
+
+    assert response.status_code == 503
+    loaded = RUN_REGISTRY.get(run_id)
+    assert loaded is not None
+    assert loaded.status == "pending"
+    assert loaded.step == 0
+
+
+def test_step_final_pause_attestation_precedes_completion(
+    client: TestClient, monkeypatch
+) -> None:
+    pause_results = iter(
+        [
+            {"ok": True, "paused": True},
+            {"ok": True, "paused": True},
+            {"ok": False, "paused": False, "error": "pause_state_unverified"},
+            {"ok": True, "paused": True},
+        ]
+    )
+    monkeypatch.setattr(
+        routes_step,
+        "ensure_paused_external",
+        lambda **_kwargs: next(pause_results),
+    )
+    run_id = _register_run(max_steps=1)
+
+    response = client.post(
+        "/step",
+        json={
+            "run_id": run_id,
+            "action": {"type": "noop"},
+            "min_step_period_ms": 100,
+            "max_ticks": 1,
+        },
+    )
+
+    assert response.status_code == 503
+    assert "final pause" in response.json()["detail"]
+    loaded = RUN_REGISTRY.get(run_id)
+    assert loaded is not None
+    assert loaded.status == "pending"
+    assert loaded.step == 0
 
 
 def test_step_enforces_rate_limit(client: TestClient):

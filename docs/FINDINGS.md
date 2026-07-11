@@ -1145,6 +1145,78 @@ the old step-155 BUILD before execution, and sent exactly one zero-tick
 217,563 was unchanged. Fresh-seed Attempt 23 then launched on that exact SHA
 ([replay](https://fortgym.live/r/uGx2o874VECGSlqciDUrbQxo-JrbkQ41)).
 
+### 2.32 Attempt 23 built two real rooms, then sealed its farm and lost drink
+
+Attempt 23, run `94ea15d9c6c141da9540ced2a216493e`
+([replay](https://fortgym.live/r/uGx2o874VECGSlqciDUrbQxo-JrbkQ41)),
+ran deployed SHA `506ce6986029c5885ecb26074fa45ac55d47c541` on fresh
+`seed_region3_fresh` with OpenRouter `z-ai/glm-5v-turbo`, vision enabled,
+memory disabled, score-v5, and a 450-step budget. It retained 126 governed rows;
+125 had screen/proof records, 59 proofs had `ok=true`, and all 126 retained
+governed provenance. One hundred sixty-two model calls used 3,389,252 total
+tokens.
+
+The opening was real and useful. The policy completed connected channel access
+at step 2, excavated 43 owned tiles, completed a subterranean FarmPlot and set
+plump helmets in every season, felled trees, built a Carpenter workshop,
+produced and installed furniture, and constructed 14 walls. Those actions
+created two enclosed functional rooms. A surface Still eventually completed at
+step 114, population peaked at 11, and run-owned farming produced three food
+units. No drink was produced.
+
+The run was stopped at step 125 after drink reached zero and dwarf `#249` died
+with a thirst timer of 75,000. Deterministic G7 is FAIL: trace duration
+185,487/403,200, food flow 3/31, drink flow 0/60, population 10/15, functional
+rooms 2/3, installed beds 1/4, rubric 65.97 with
+`no_broader_fort_layout`, and score-v5 115.39/150. The death cause enum was
+unavailable, so neglect remains UNKNOWN. The stop-after-advance final row also
+left summary duration at 184,483 and one fewer screen/proof record, correctly
+failing evidence closed.
+
+The trace isolated two observation gaps rather than missing gameplay powers.
+The 3x3 workshop preflight returned only its first invalid tile, so repeated
+Still attempts learned one cell at a time. Later, completed walls sealed the
+FarmPlot while its door remained inside the room instead of in the boundary.
+The agent saw an unassigned PlantSeeds job and idle farmers but not the native
+walk-group fact. A stopped-save read found 10 citizens checked, zero connected
+to `(95,95,160)`, and zero unknown.
+
+PR #97 now returns every invalid tile in the submitted workshop footprint while
+remaining atomic and hidden-safe. PR #98 adds cached possible job-target
+walk-group connectivity to sampled jobs. It reports geometry only and does not
+select a repair, labor, target, or strategy. Both passed CI and independent
+review and deployed at exact SHA `e0d51ef1d7a37c3f09606340a1d3bc0a1e914a23`.
+A deployed invalid-Still probe returned five factual failures with unchanged
+building count, pause state, year, and tick.
+
+### 2.33 Attempt 24 exposed a fail-open tick-controller return
+
+Attempt 24, run `0d3dad764c9640af8d8bd6f67be1dcf1`
+([replay](https://fortgym.live/r/64584CWkX3eWm6TOwJST1_t4mgpGB-6Q)),
+started from fresh `seed_region3_fresh` on exact deployed SHA
+`e0d51ef1d7a37c3f09606340a1d3bc0a1e914a23`. The step-0 observation was a
+paused native map at year 30, tick 16,801. The policy submitted an invalid
+surface DIG, which designated no tiles and changed no map state, then requested
+1,000 ticks.
+
+The first tick read after the runner enabled DFHack `nopause` exceeded its
+bound. The old function returned before entering its cleanup `finally`, recorded
+zero ticks, and left `nopause` active. Terminal cleanup then treated successful
+pause command submission as verification even though the game remained
+unpaused. A direct read found tick 54,248 and `pause_state=false`; another normal
+pause request remained ineffective at tick 57,460. Explicitly disabling
+`nopause` and setting pause contained the game at tick 58,122 with
+`pause_state=true`. This is an infrastructure abort with no policy or G7 signal.
+
+The corrective slice puts every tick-read exit after `nopause` under one
+fail-closed cleanup path. Cleanup must both disable `nopause` and independently
+read `pause_state=true`; unknown or false state makes the advance and terminal
+cleanup fail. The serialized runner performs the same attestation before the
+first agent observation, and the administrative `/step` exception path uses the
+same bounded repause. Regression coverage reproduces the post-`nopause` read
+failure, false pause attestation, disable failure, and endpoint exception path.
+A fresh replacement attempt is required after deployment.
+
 ## 3. Limitations
 
 - **A single passing embark family.** Every pass (G0–G4) is on
@@ -1152,14 +1224,14 @@ the old step-155 BUILD before execution, and sent exactly one zero-tick
   passes in seven region3 attempts. "Plays Dwarf Fortress" is not yet
   demonstrated — "solved one map" is.
 - **Small n.** The reliability claim rests on a five-run lineage; the endurance
-  result on one probe; the G6 verdict on seven runs; G7 on 21 failed attempts
+  result on one probe; the G6 verdict on seven runs; G7 on 23 failed attempts
   plus one invalidated attempt.
   These are findings, not distributions.
 - **One policy family for most results.** GLM-5V-turbo produced the G4 passes
   and most of the G6 campaign; GPT-5.5 served the earlier G2/G3 passes.
   Cross-model generality is thin — two GPT-5.5-vision escalation runs are the
   only cross-family data points on the unseen map.
-- **G6 is unpassed; G7 attempts 1 through 18 and 20 through 22 failed, and attempt 19
+- **G6 is unpassed; G7 attempts 1 through 18 and 20 through 24 failed, and attempt 19
   is invalid.**
   Attempts 2 through 9 and
   12 through 16 were infrastructure aborts, although attempts 14 through 16
@@ -1174,7 +1246,10 @@ the old step-155 BUILD before execution, and sent exactly one zero-tick
   long policy diagnostic with an incomplete final stop row. Attempt 22 reached
   the milestones much earlier and kept all 15 dwarves alive, but failed resource
   flow, structure, duration, rubric, and scalar requirements before a missing
-  Stores-screen exit caused a zero-tick infrastructure abort. Score-v5 is
+  Stores-screen exit caused a zero-tick infrastructure abort. Attempt 23 built
+  two real rooms and a Still, but sealed its farm and reached drink zero before
+  the production loop started. Attempt 24 aborted at step 0 when a tick-read
+  timeout bypassed repause; it produced no policy evidence. Score-v5 is
   deployed and active. The
   chair-factory calibration gap (§2.4) remains part of score-v3's historical
   record.
@@ -1183,14 +1258,13 @@ the old step-155 BUILD before execution, and sent exactly one zero-tick
 
 ## 4. What's next
 
-- **Attempt 22 proved those controls can reach vertical access, farming, brewing,
-  migrants, and two functional rooms early enough to matter.** The immediate
-  blocker was the native Wealth/Stocks screen opened by the liaison sequence.
-  The deployed boundary now exposes its existing legal cancel control and
-  rejects any positive-tick action there before execution. Compact fail-closed
-  G7 planning facts keep resource deficits visible at plan review. Neither
-  change supplies strategy, coordinates, objectives, or score credit. Attempt
-  23 is the active fresh-seed long run.
+- **Attempt 23 proved the corrected loop can independently transition from
+  excavation to farming, workshops, furniture, and two functional rooms.** Its
+  decisive blockers were incomplete native feedback for rejected 3x3
+  footprints and missing job-target connectivity after the farm was sealed.
+  Both factual changes are deployed without strategy or target selection.
+  Attempt 24 then exposed a fail-open tick-controller return before any valid
+  gameplay. Deploy the attested pause repair and launch a fresh replacement run.
 - **G6 remains open**: the best unseen-map run reached 4/5 and missed only its
   second functional room. G7 now tests whether stable spatial observation lets
   the corrected direct-action loop sustain production and structure for a year.
