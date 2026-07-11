@@ -1889,6 +1889,12 @@ def encode_observation(
                             sample += "[suspended]"
                         if entry.get("has_worker") is False:
                             sample += "[unassigned]"
+                        target_connectivity = entry.get("target_walk_group_connectivity")
+                        if isinstance(target_connectivity, str) and target_connectivity:
+                            sample += (
+                                "[target_walk_group_connectivity="
+                                f"{target_connectivity}]"
+                            )
                         walk_group_connectivity = entry.get("walk_group_connectivity")
                         if (
                             isinstance(walk_group_connectivity, str)

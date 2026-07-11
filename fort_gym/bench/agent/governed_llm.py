@@ -205,6 +205,13 @@ unassigned queued job occupies nobody. Any legal action with positive advance_ti
 jobs progress. Adding another copy creates a distinct job; it does not make an existing job finish or
 verify that the earlier command worked.
 
+A Jobs sample can report `target_walk_group_connectivity=connected|disconnected|unknown` for its
+target tile. `connected` means the cached native check says at least one current citizen may share a
+walk group with the target; `disconnected` means every checked citizen is in a different cached walk
+group; `unknown` is not evidence of either. This is geometry only, not a current path guarantee: it
+does not account for unit-specific restrictions or prove that a citizen has the needed labor, will
+claim the job, or can obtain required materials.
+
 The observation's AGENT PLAN CONTROL lines are a policy-neutral review checkpoint. They state the
 exact previous step and factual verdict, whether a plan review is due, its request_id, and the prior
 objective. You choose the objective and gameplay actions. The harness only checks that your review

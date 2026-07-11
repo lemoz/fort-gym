@@ -339,6 +339,37 @@ local function construction_job_connectivity(job)
   return checked and 'disconnected' or 'unknown', items
 end
 
+local function job_target_walk_group_connectivity(pos)
+  if df.global.world.reindex_pathfinding or not pos then return 'unknown' end
+  local ok_pos, x, y, z = pcall(function()
+    return tonumber(pos.x), tonumber(pos.y), tonumber(pos.z)
+  end)
+  if not ok_pos or not x or not y or not z or x < 0 or y < 0 or z < 0 then
+    return 'unknown'
+  end
+
+  local target = { x = x, y = y, z = z }
+  local ok_valid, valid = pcall(function()
+    return dfhack.maps.isValidTilePos(target)
+  end)
+  if not ok_valid or not valid then return 'unknown' end
+  local checked = false
+  local unknown_seen = false
+  for _, citizen in ipairs(citizen_units) do
+    local ok_target, connected = pcall(function()
+      return dfhack.maps.canWalkBetween(citizen.pos, target)
+    end)
+    if not ok_target then
+      unknown_seen = true
+    else
+      checked = true
+      if connected then return 'connected' end
+    end
+  end
+  if unknown_seen then return 'unknown' end
+  return checked and 'disconnected' or 'unknown'
+end
+
 -- world job list
 local link = df.global.world.jobs.list.next
 while link do
@@ -393,6 +424,7 @@ while link do
         pos = { job.pos.x, job.pos.y, job.pos.z },
         suspended = suspended,
         has_worker = job_has_worker(job),
+        target_walk_group_connectivity = job_target_walk_group_connectivity(job.pos),
       }
       if name == 'ConstructBuilding' then
         entry.walk_group_connectivity = walk_group_connectivity
