@@ -11,6 +11,7 @@ from fort_gym.bench.agent.base import Agent
 from fort_gym.bench.config import get_settings
 from fort_gym.bench.env.mock_env import MockEnvironment
 from fort_gym.bench.eval.scoring import GOVERNED_SCORE_PROGRESS_PROVENANCE
+from fort_gym.bench.eval.summary import summarize
 from fort_gym.bench.run.runner import (
     INTERACT_ALLOWED_VIEWSCREEN_TYPES,
     MAX_INTERACT_OPERATIONS_PER_MODAL,
@@ -20,9 +21,11 @@ from fort_gym.bench.run.runner import (
     _interact_context_reason,
     _interaction_terminal_reason,
     _owned_excavation_snapshot_rects,
+    _tick_terminal_reason,
     run_once,
 )
 from fort_gym.bench.run.storage import RunRegistry
+from fort_gym.bench.tick_receipt import TICKS_PER_YEAR
 
 
 class CountingWaitAgent(Agent):
@@ -59,6 +62,33 @@ class CountingInteractAgent(Agent):
             "intent": "advance the visible dialog by one bounded input",
             "advance_ticks": 0,
         }
+
+
+class WaitThenInteractAgent(Agent):
+    def __init__(self) -> None:
+        self.calls = 0
+        self.actions: list[Dict[str, Any]] = []
+        self.observations: list[Dict[str, Any]] = []
+
+    def decide(self, obs_text: str, obs_json: Dict[str, Any]) -> Dict[str, Any]:
+        self.calls += 1
+        self.observations.append(dict(obs_json))
+        if self.calls == 1:
+            action = {
+                "type": "WAIT",
+                "params": {},
+                "intent": "allow bounded governed tick polling",
+                "advance_ticks": 15,
+            }
+        else:
+            action = {
+                "type": "INTERACT",
+                "params": {"operation": "confirm"},
+                "intent": "handle the freshly observed dialog",
+                "advance_ticks": 0,
+            }
+        self.actions.append(action)
+        return action
 
 
 class RepeatingRawActionAgent(Agent):
@@ -160,6 +190,15 @@ class RaisingDecisionAgent(Agent):
         raise RuntimeError("review contract exhausted")
 
 
+def _advance_state_calendar(state: Dict[str, Any], ticks: int) -> None:
+    year = int(state.get("year") or 0)
+    year_tick = int(state.get("year_tick", state.get("time", 0)) or 0)
+    absolute = year * TICKS_PER_YEAR + year_tick + max(0, ticks)
+    state["year"] = absolute // TICKS_PER_YEAR
+    state["year_tick"] = absolute % TICKS_PER_YEAR
+    state["time"] = state["year_tick"]
+
+
 def _run_dfhack_tick_fixture(
     tmp_path: Path,
     monkeypatch,
@@ -187,7 +226,9 @@ def _run_dfhack_tick_fixture(
 
         def advance(self, ticks: int) -> Dict[str, Any]:
             self.last_tick_info = dict(next(tick_info_sequence))
-            state["time"] += int(self.last_tick_info.get("ticks_advanced") or 0)
+            _advance_state_calendar(
+                state, int(self.last_tick_info.get("ticks_advanced") or 0)
+            )
             return dict(state)
 
         def close(self) -> None:
@@ -460,6 +501,8 @@ def _run_governed_interact_fixture(
     fort_metrics_callback: Any | None = None,
     map_snapshot_callback: Any | None = None,
     advance_callback: Any | None = None,
+    advance_tick_info: Dict[str, Any] | None = None,
+    advance_options: list[Dict[str, Any]] | None = None,
 ) -> tuple[Agent, RunRegistry, str]:
     monkeypatch.setenv("ARTIFACTS_DIR", str(tmp_path))
     monkeypatch.setenv("DFHACK_ENABLED", "1")
@@ -470,6 +513,8 @@ def _run_governed_interact_fixture(
         {
             "pause_state": True,
             "viewscreen_type": viewscreen_type,
+            "year": 0,
+            "year_tick": int(raw_state.get("time") or 0),
         }
     )
     screen_version = [0]
@@ -493,9 +538,15 @@ def _run_governed_interact_fixture(
                 raise RuntimeError("unexpected observation failure")
             return dict(raw_state)
 
-        def advance(self, ticks: int) -> Dict[str, Any]:
-            self.last_tick_info = {"ok": True, "ticks_advanced": ticks}
-            raw_state["time"] = int(raw_state.get("time") or 0) + ticks
+        def advance(self, ticks: int, **kwargs: Any) -> Dict[str, Any]:
+            if advance_options is not None:
+                advance_options.append(dict(kwargs))
+            self.last_tick_info = dict(
+                advance_tick_info or {"ok": True, "ticks_advanced": ticks}
+            )
+            _advance_state_calendar(
+                raw_state, int(self.last_tick_info.get("ticks_advanced") or 0)
+            )
             if advance_callback is not None:
                 advance_callback(ticks, raw_state)
             if stop_after_advance:
@@ -1392,6 +1443,521 @@ def test_partial_timeout_is_degraded_and_allows_next_agent_decide(tmp_path, monk
     assert rows[0]["tick_degraded"]["code"] == "partial_tick_timeout"
     assert rows[0]["tick_degraded"]["ticks_advanced"] == 915
     assert not any(event["type"] == "terminal" for event in rows[0]["events"])
+
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+
+
+def test_governed_viewscreen_interruption_is_degraded_and_reobserved(
+    tmp_path, monkeypatch
+) -> None:
+    agent = WaitThenInteractAgent()
+    advance_options: list[Dict[str, Any]] = []
+
+    def interrupt_with_modal(_ticks: int, state: Dict[str, Any]) -> None:
+        state["pause_state"] = True
+        state["viewscreen_type"] = "viewscreen_topicmeetingst"
+
+    _, registry, run_id = _run_governed_interact_fixture(
+        tmp_path,
+        monkeypatch,
+        screen_changes=False,
+        max_steps=2,
+        agent_override=agent,
+        viewscreen_type="viewscreen_dwarfmodest",
+        advance_callback=interrupt_with_modal,
+        advance_tick_info={
+            "ok": False,
+            "error": "blocking_viewscreen_transition",
+            "interrupted": True,
+            "requested": 15,
+            "ticks_advanced": 0,
+            "start_year": 0,
+            "start_tick": 0,
+            "end_year": 0,
+            "end_tick": 0,
+            "paused_before": True,
+            "paused_after": True,
+            "viewscreen_before": "viewscreen_dwarfmodest",
+            "viewscreen_after": "viewscreen_topicmeetingst",
+            "pause_state_at_interrupt": True,
+            "repause_requested": True,
+            "repause_effective": True,
+            "repause": {
+                "ok": True,
+                "paused": True,
+                "attempts": 1,
+                "attempt_records": [
+                    {"attempt": 1, "nopause_disabled": True, "paused": True}
+                ],
+            },
+            "interrupt_safety_error": False,
+            "calendar_safety_error": False,
+            "final_pause_state": True,
+            "final_viewscreen_type": "viewscreen_topicmeetingst",
+        },
+        advance_options=advance_options,
+    )
+
+    assert agent.calls == 2
+    assert agent.actions[1]["type"] == "INTERACT"
+    assert agent.actions[1]["advance_ticks"] == 0
+    assert agent.observations[1]["time"] == 0
+    assert agent.observations[1]["viewscreen_type"] == "viewscreen_topicmeetingst"
+    assert advance_options[0] == {
+        "interrupt_on_viewscreen_transition": True,
+        "viewscreen_before": "viewscreen_dwarfmodest",
+    }
+    assert len(advance_options) == 1
+
+    loaded = registry.get(run_id)
+    assert loaded is not None
+    assert loaded.status == "completed"
+    rows = _trace_rows(tmp_path, run_id)
+    assert rows[0]["tick_degraded"]["code"] == "blocking_viewscreen_transition"
+    assert rows[0]["tick_advance"]["ticks_advanced"] == 0
+    assert not any(event["type"] == "terminal" for event in rows[0]["events"])
+
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+
+
+def test_viewscreen_interruption_does_not_mask_repause_failure(
+    tmp_path, monkeypatch
+) -> None:
+    def interrupt_with_modal(_ticks: int, state: Dict[str, Any]) -> None:
+        state["pause_state"] = True
+        state["viewscreen_type"] = "viewscreen_topicmeetingst"
+
+    agent, registry, run_id = _run_governed_interact_fixture(
+        tmp_path,
+        monkeypatch,
+        screen_changes=False,
+        agent_override=CountingWaitAgent(15),
+        viewscreen_type="viewscreen_dwarfmodest",
+        advance_callback=interrupt_with_modal,
+        advance_tick_info={
+            "ok": False,
+            "error": "blocking_viewscreen_transition",
+            "interrupted": True,
+            "ticks_advanced": 0,
+            "start_tick": 0,
+            "end_tick": 0,
+            "viewscreen_before": "viewscreen_dwarfmodest",
+            "viewscreen_after": "viewscreen_topicmeetingst",
+            "pause_state_at_interrupt": True,
+            "repause_requested": True,
+            "repause_effective": False,
+            "repause_error": "pause_state_unverified",
+        },
+        max_steps=2,
+    )
+
+    assert agent.calls == 1
+    loaded = registry.get(run_id)
+    assert loaded is not None
+    assert loaded.status == "failed"
+    assert loaded.metadata["terminal_reason"]["code"] == "tick_repause_unverified"
+
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+
+
+def test_incomplete_viewscreen_interruption_receipt_is_terminal(
+    tmp_path, monkeypatch
+) -> None:
+    def interrupt_with_modal(_ticks: int, state: Dict[str, Any]) -> None:
+        state["pause_state"] = True
+        state["viewscreen_type"] = "viewscreen_topicmeetingst"
+
+    agent, registry, run_id = _run_governed_interact_fixture(
+        tmp_path,
+        monkeypatch,
+        screen_changes=False,
+        agent_override=CountingWaitAgent(15),
+        viewscreen_type="viewscreen_dwarfmodest",
+        advance_callback=interrupt_with_modal,
+        advance_tick_info={
+            "ok": False,
+            "error": "blocking_viewscreen_transition",
+            "interrupted": True,
+            "requested": 15,
+            "ticks_advanced": 277,
+            "start_year": 0,
+            "start_tick": 0,
+            "end_year": 0,
+            "end_tick": 277,
+            "paused_before": True,
+            "paused_after": True,
+            "viewscreen_before": "viewscreen_dwarfmodest",
+            "viewscreen_after": "viewscreen_topicmeetingst",
+            "pause_state_at_interrupt": True,
+            "repause_requested": True,
+            "repause_effective": True,
+            "repause": {
+                "ok": True,
+                "paused": True,
+                "attempts": 1,
+                "attempt_records": [
+                    {"attempt": 1, "nopause_disabled": True, "paused": True}
+                ],
+            },
+            "interrupt_safety_error": False,
+        },
+        max_steps=2,
+    )
+
+    assert agent.calls == 1
+    loaded = registry.get(run_id)
+    assert loaded is not None
+    assert loaded.status == "failed"
+    assert (
+        loaded.metadata["terminal_reason"]["code"] == "interruption_attestation_failed"
+    )
+
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+
+
+@pytest.mark.parametrize(
+    ("mutation", "expected_error"),
+    [
+        ("missing_start_tick", "interrupt_calendar_sample_invalid"),
+        ("boolean_end_tick", "interrupt_calendar_sample_invalid"),
+        ("contradictory_ticks", "interrupt_tick_evidence_mismatch"),
+        ("post_time_mismatch", "interrupt_end_tick_state_mismatch"),
+        ("requested_mismatch", "interrupt_requested_ticks_mismatch"),
+        ("paused_before_false", "interrupt_paused_before_unattested"),
+        ("paused_after_false", "interrupt_paused_after_unattested"),
+        ("missing_repause", "interrupt_repause_missing"),
+        ("nested_repause_disagreement", "interrupt_repause_nested_unattested"),
+        ("nested_repause_error", "interrupt_repause_nested_error_present"),
+        ("missing_repause_records", "interrupt_repause_records_invalid"),
+        ("repause_record_count", "interrupt_repause_records_invalid"),
+        ("repause_final_disable", "interrupt_repause_final_record_invalid"),
+        ("negative_year", "interrupt_calendar_sample_invalid"),
+        ("negative_tick", "interrupt_calendar_sample_invalid"),
+        ("negative_state_calendar", "interrupt_calendar_state_invalid"),
+        ("timeout_string", "interrupt_timeout_invalid"),
+        ("boolean_state_time", "interrupt_start_tick_state_invalid"),
+        ("boolean_attempt", "interrupt_repause_records_invalid"),
+        ("boolean_attempt_count", "interrupt_repause_attempts_invalid"),
+        ("resume_error", "interrupt_resume_error_present"),
+    ],
+)
+def test_interruption_receipt_contradictions_are_terminal(
+    mutation, expected_error
+) -> None:
+    tick_info: Dict[str, Any] = {
+        "ok": False,
+        "error": "blocking_viewscreen_transition",
+        "interrupted": True,
+        "requested": 1500,
+        "ticks_advanced": 277,
+        "start_year": 0,
+        "start_tick": 100,
+        "end_year": 0,
+        "end_tick": 377,
+        "paused_before": True,
+        "paused_after": True,
+        "viewscreen_before": "viewscreen_dwarfmodest",
+        "viewscreen_after": "viewscreen_textviewerst",
+        "pause_state_at_interrupt": True,
+        "repause_requested": True,
+        "repause_effective": True,
+        "repause": {
+            "ok": True,
+            "paused": True,
+            "attempts": 1,
+            "attempt_records": [
+                {"attempt": 1, "nopause_disabled": True, "paused": True}
+            ],
+        },
+        "interrupt_safety_error": False,
+        "calendar_safety_error": False,
+        "final_pause_state": True,
+        "final_viewscreen_type": "viewscreen_textviewerst",
+    }
+    state_after_apply = {
+        "year": 0,
+        "year_tick": 100,
+        "time": 100,
+        "pause_state": True,
+        "viewscreen_type": "viewscreen_dwarfmodest",
+    }
+    state_after_advance = {
+        "year": 0,
+        "year_tick": 377,
+        "time": 377,
+        "pause_state": True,
+        "viewscreen_type": "viewscreen_textviewerst",
+    }
+    if mutation == "missing_start_tick":
+        del tick_info["start_tick"]
+    elif mutation == "boolean_end_tick":
+        tick_info["end_tick"] = True
+    elif mutation == "contradictory_ticks":
+        tick_info["ticks_advanced"] = 276
+    elif mutation == "post_time_mismatch":
+        state_after_advance["time"] = 376
+    elif mutation == "requested_mismatch":
+        tick_info["requested"] = 15
+    elif mutation == "paused_before_false":
+        tick_info["paused_before"] = False
+    elif mutation == "paused_after_false":
+        tick_info["paused_after"] = False
+    elif mutation == "missing_repause":
+        del tick_info["repause"]
+    elif mutation == "nested_repause_disagreement":
+        tick_info["repause"] = {"ok": True, "paused": False}
+    elif mutation == "nested_repause_error":
+        tick_info["repause"] = {
+            "ok": True,
+            "paused": True,
+            "error": "pause_state_unverified",
+        }
+    elif mutation == "missing_repause_records":
+        del tick_info["repause"]["attempt_records"]
+    elif mutation == "repause_record_count":
+        tick_info["repause"]["attempts"] = 2
+    elif mutation == "repause_final_disable":
+        tick_info["repause"]["attempt_records"][-1]["nopause_disabled"] = False
+    elif mutation == "negative_year":
+        tick_info["start_year"] = -1
+    elif mutation == "negative_tick":
+        tick_info["end_tick"] = -1
+    elif mutation == "negative_state_calendar":
+        state_after_advance["year_tick"] = -1
+    elif mutation == "timeout_string":
+        tick_info["timeout"] = "false"
+    elif mutation == "boolean_state_time":
+        state_after_apply["time"] = True
+    elif mutation == "boolean_attempt":
+        tick_info["repause"]["attempt_records"][0]["attempt"] = True
+    elif mutation == "boolean_attempt_count":
+        tick_info["repause"]["attempts"] = True
+    else:
+        tick_info["resume_error"] = "resume RPC failed"
+
+    terminal, degraded, _ = _tick_terminal_reason(
+        1500,
+        tick_info,
+        0,
+        state_after_apply=state_after_apply,
+        state_after_advance=state_after_advance,
+    )
+
+    assert degraded is None
+    assert terminal is not None
+    assert terminal["code"] == "interruption_attestation_failed"
+    assert terminal["attestation_error"] == expected_error
+
+
+def test_rollover_interruption_receipt_has_exact_duration() -> None:
+    tick_info: Dict[str, Any] = {
+        "ok": False,
+        "error": "blocking_viewscreen_transition",
+        "interrupted": True,
+        "requested": 15,
+        "ticks_advanced": 2,
+        "start_year": 7,
+        "start_tick": 403199,
+        "end_year": 8,
+        "end_tick": 1,
+        "paused_before": True,
+        "paused_after": True,
+        "viewscreen_before": "viewscreen_dwarfmodest",
+        "viewscreen_after": "viewscreen_textviewerst",
+        "pause_state_at_interrupt": True,
+        "repause_requested": True,
+        "repause_effective": True,
+        "repause": {
+            "ok": True,
+            "paused": True,
+            "attempts": 1,
+            "attempt_records": [
+                {"attempt": 1, "nopause_disabled": True, "paused": True}
+            ],
+        },
+        "interrupt_safety_error": False,
+        "calendar_safety_error": False,
+        "final_pause_state": True,
+        "final_viewscreen_type": "viewscreen_textviewerst",
+    }
+    start_state = {
+        "year": 7,
+        "year_tick": 403199,
+        "time": 403199,
+        "pause_state": True,
+        "viewscreen_type": "viewscreen_dwarfmodest",
+    }
+    end_state = {
+        "year": 8,
+        "year_tick": 1,
+        "time": 1,
+        "pause_state": True,
+        "viewscreen_type": "viewscreen_textviewerst",
+    }
+
+    terminal, degraded, _ = _tick_terminal_reason(
+        15, tick_info, 0, state_after_apply=start_state, state_after_advance=end_state
+    )
+
+    assert terminal is None
+    assert degraded is not None
+    assert degraded["ticks_advanced"] == 2
+
+
+@pytest.mark.parametrize(
+    ("end_tick", "ticks_advanced", "terminal_error"),
+    [
+        (2101, 2001, None),
+        (2151, 2051, "interrupt_tick_overshoot_exceeds_allowance"),
+    ],
+)
+def test_clean_interruption_receipt_uses_request_overshoot_allowance(
+    end_tick, ticks_advanced, terminal_error
+) -> None:
+    tick_info: Dict[str, Any] = {
+        "ok": False,
+        "error": "blocking_viewscreen_transition",
+        "interrupted": True,
+        "requested": 2000,
+        "ticks_advanced": ticks_advanced,
+        "start_year": 7,
+        "start_tick": 100,
+        "end_year": 7,
+        "end_tick": end_tick,
+        "paused_before": True,
+        "paused_after": True,
+        "viewscreen_before": "viewscreen_dwarfmodest",
+        "viewscreen_after": "viewscreen_textviewerst",
+        "pause_state_at_interrupt": True,
+        "repause_requested": True,
+        "repause_effective": True,
+        "repause": {
+            "ok": True,
+            "paused": True,
+            "attempts": 1,
+            "attempt_records": [
+                {"attempt": 1, "nopause_disabled": True, "paused": True}
+            ],
+        },
+        "interrupt_safety_error": False,
+        "calendar_safety_error": False,
+        "final_pause_state": True,
+        "final_viewscreen_type": "viewscreen_textviewerst",
+    }
+    state_after_apply = {
+        "year": 7,
+        "year_tick": 100,
+        "time": 100,
+        "pause_state": True,
+        "viewscreen_type": "viewscreen_dwarfmodest",
+    }
+    state_after_advance = {
+        "year": 7,
+        "year_tick": end_tick,
+        "time": end_tick,
+        "pause_state": True,
+        "viewscreen_type": "viewscreen_textviewerst",
+    }
+
+    terminal, degraded, _ = _tick_terminal_reason(
+        2000,
+        tick_info,
+        0,
+        state_after_apply=state_after_apply,
+        state_after_advance=state_after_advance,
+    )
+
+    if terminal_error is None:
+        assert terminal is None
+        assert degraded is not None
+        assert degraded["ticks_advanced"] == 2001
+    else:
+        assert degraded is None
+        assert terminal is not None
+        assert terminal["attestation_error"] == terminal_error
+
+
+def test_summary_calendar_fallback_uses_exact_g7_rollover_duration(tmp_path) -> None:
+    trace_path = tmp_path / "trace.jsonl"
+    trace_path.write_text(
+        "\n".join(
+            json.dumps(record)
+            for record in (
+                {
+                    "run_id": "g7-rollover",
+                    "step": 0,
+                    "score_version": 5,
+                    "metrics": {
+                        "score_version": 5,
+                        "time": 403199,
+                        "year": 7,
+                        "year_tick": 403199,
+                        "pop": 7,
+                        "food": 1,
+                        "drink": 1,
+                    },
+                    "events": [],
+                },
+                {
+                    "run_id": "g7-rollover",
+                    "step": 1,
+                    "score_version": 5,
+                    "metrics": {
+                        "score_version": 5,
+                        "time": 1,
+                        "year": 8,
+                        "year_tick": 1,
+                        "pop": 7,
+                        "food": 1,
+                        "drink": 1,
+                    },
+                    "events": [],
+                },
+            )
+        ),
+        encoding="utf-8",
+    )
+
+    assert summarize(trace_path).duration_ticks == 2
+
+
+def test_interrupt_safety_error_is_terminal_with_partial_ticks(
+    tmp_path, monkeypatch
+) -> None:
+    agent, registry, run_id = _run_dfhack_tick_fixture(
+        tmp_path,
+        monkeypatch,
+        [
+            {
+                "ok": False,
+                "error": "interrupt_viewscreen_unexpected",
+                "interrupt_safety_error": True,
+                "ticks_advanced": 277,
+                "repause_requested": True,
+                "repause_effective": True,
+            }
+        ],
+        max_steps=2,
+    )
+
+    assert agent.calls == 1
+    loaded = registry.get(run_id)
+    assert loaded is not None
+    assert loaded.status == "failed"
+    assert loaded.metadata["terminal_reason"] == {
+        "code": "interruption_attestation_failed",
+        "attestation_error": "interrupt_viewscreen_unexpected",
+        "requested_ticks": 10,
+        "ticks_advanced": 277,
+        "tick_info": {
+            "ok": False,
+            "error": "interrupt_viewscreen_unexpected",
+            "interrupt_safety_error": True,
+            "ticks_advanced": 277,
+            "repause_requested": True,
+            "repause_effective": True,
+        },
+    }
 
     get_settings.cache_clear()  # type: ignore[attr-defined]
 

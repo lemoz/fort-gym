@@ -8,6 +8,7 @@ from fort_gym.bench.env.dfhack_client import (
     screen_to_text,
     screen_to_text_with_visual_hints,
 )
+from fort_gym.bench.env.state_reader import StateReader
 
 
 class _TimeoutBuildingClient(DFHackClient):
@@ -25,6 +26,82 @@ def test_place_building_returns_failure_on_timeout() -> None:
 
     assert ok is False
     assert why == "timed out"
+
+
+def test_advance_threads_viewscreen_interrupt_options(monkeypatch) -> None:
+    from fort_gym.bench.env import dfhack_client as client_module
+
+    calls: list[dict[str, Any]] = []
+
+    class AdvancingClient(DFHackClient):
+        def _ensure_connection(self) -> None:
+            return
+
+        def get_state(self) -> dict[str, Any]:
+            return {"time": 100}
+
+    def fake_advance_ticks(ticks: int, **kwargs: Any) -> dict[str, Any]:
+        calls.append({"ticks": ticks, **kwargs})
+        return {"ok": False, "ticks_advanced": 0, "interrupted": True}
+
+    monkeypatch.setattr(client_module, "advance_ticks_exact", fake_advance_ticks)
+
+    client = AdvancingClient()
+    state = client.advance(
+        15,
+        interrupt_on_viewscreen_transition=True,
+        viewscreen_before="viewscreen_dwarfmodest",
+    )
+
+    assert state == {"time": 100}
+    assert calls == [
+        {
+            "ticks": 15,
+            "repause": True,
+            "interrupt_on_viewscreen_transition": True,
+            "viewscreen_before": "viewscreen_dwarfmodest",
+        }
+    ]
+    assert client.last_tick_info["interrupted"] is True
+
+
+def test_advance_preserves_default_delegation_signature(monkeypatch) -> None:
+    from fort_gym.bench.env import dfhack_client as client_module
+
+    calls: list[tuple[int, dict[str, Any]]] = []
+
+    class AdvancingClient(DFHackClient):
+        def _ensure_connection(self) -> None:
+            return
+
+        def get_state(self) -> dict[str, Any]:
+            return {"time": 100}
+
+    def fake_advance_ticks(ticks: int, **kwargs: Any) -> dict[str, Any]:
+        calls.append((ticks, kwargs))
+        return {"ok": True, "ticks_advanced": ticks}
+
+    monkeypatch.setattr(client_module, "advance_ticks_exact", fake_advance_ticks)
+
+    assert AdvancingClient().advance(15) == {"time": 100}
+    assert calls == [(15, {"repause": True})]
+
+
+def test_state_reader_preserves_dfhack_calendar_fields() -> None:
+    class CalendarClient:
+        def get_state(self) -> dict[str, Any]:
+            return {
+                "time": 1,
+                "year": 8,
+                "year_tick": 1,
+                "stocks": {},
+            }
+
+    state = StateReader.from_dfhack(CalendarClient())  # type: ignore[arg-type]
+
+    assert state["time"] == 1
+    assert state["year"] == 8
+    assert state["year_tick"] == 1
 
 
 def _screen_from_rows(

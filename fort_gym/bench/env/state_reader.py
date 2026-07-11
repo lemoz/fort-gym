@@ -18,6 +18,8 @@ class StateReader:
         stocks = raw.get("stocks") or {}
         normalized = {
             "time": raw.get("time", 0),
+            "year": raw.get("year", 0),
+            "year_tick": raw.get("year_tick", raw.get("time", 0)),
             "population": raw.get("population", 0),
             "stocks": {
                 "food": stocks.get("food", 0),

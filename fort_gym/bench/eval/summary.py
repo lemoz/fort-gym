@@ -16,6 +16,8 @@ from .scoring import (
     score_components,
 )
 
+TICKS_PER_YEAR = 403200
+
 
 class RunSummary(BaseModel):
     run_id: str
@@ -146,6 +148,8 @@ def summarize(trace_path: Path) -> RunSummary:
     max_elapsed_ticks = 0
     first_time_tick: Optional[int] = None
     last_time_tick: Optional[int] = None
+    first_calendar: tuple[int, int] | None = None
+    last_calendar: tuple[int, int] | None = None
     peak_pop = 0
     end_pop = 0
     wealth: Optional[int] = None
@@ -298,6 +302,18 @@ def summarize(trace_path: Path) -> RunSummary:
                 if first_time_tick is None:
                     first_time_tick = time_value
                 last_time_tick = time_value
+            year = metrics_snapshot.get("year")
+            year_tick = metrics_snapshot.get("year_tick")
+            if (
+                type(year) is int
+                and type(year_tick) is int
+                and year >= 0
+                and 0 <= year_tick < TICKS_PER_YEAR
+            ):
+                calendar = (year, year_tick)
+                if first_calendar is None:
+                    first_calendar = calendar
+                last_calendar = calendar
 
             elapsed = metrics_snapshot.get("run_elapsed_ticks")
             if elapsed is not None:
@@ -596,6 +612,13 @@ def summarize(trace_path: Path) -> RunSummary:
         duration = max_elapsed_ticks
     elif saw_tick_advance:
         duration = duration_from_tick_advance
+    elif first_calendar is not None and last_calendar is not None:
+        duration = max(
+            0,
+            (last_calendar[0] - first_calendar[0]) * TICKS_PER_YEAR
+            + last_calendar[1]
+            - first_calendar[1],
+        )
     elif first_time_tick is not None and last_time_tick is not None:
         duration = max(0, last_time_tick - first_time_tick)
 

@@ -47,6 +47,7 @@ from ..env.scenarios import evaluate_scenario_assertions, get_mock_scenario
 from ..env.state_reader import StateReader
 from ..eval import metrics, milestones, scoring
 from ..eval.summary import RunSummary, summarize
+from ..tick_receipt import validate_clean_interruption_receipt
 from .model_modes import (
     GOVERNED_DFHACK_MODELS as GOVERNED_DFHACK_MODELS,
     is_governed_dfhack_model,
@@ -202,6 +203,9 @@ def _tick_terminal_reason(
     requested_ticks: Any,
     tick_info: Dict[str, Any],
     consecutive_zero_tick_streak: int,
+    *,
+    state_after_apply: Dict[str, Any] | None = None,
+    state_after_advance: Dict[str, Any] | None = None,
 ) -> tuple[Optional[Dict[str, Any]], Optional[Dict[str, Any]], int]:
     """Classify an advance result without treating paused UI actions as failures."""
 
@@ -224,6 +228,32 @@ def _tick_terminal_reason(
         )
     ):
         return {"code": "tick_repause_unverified", **base}, None, 0
+    if tick_info.get("interrupt_safety_error") is True:
+        return {
+            "code": "interruption_attestation_failed",
+            "attestation_error": tick_info.get("error"),
+            **base,
+        }, None, 0
+    if tick_info.get("calendar_safety_error") is True:
+        return {
+            "code": "interruption_attestation_failed",
+            "attestation_error": tick_info.get("error") or "calendar_safety_error",
+            **base,
+        }, None, 0
+    if tick_info.get("interrupted") is True:
+        receipt_error = validate_clean_interruption_receipt(
+            tick_info,
+            requested_ticks=requested_ticks_int,
+            state_after_apply=state_after_apply,
+            state_after_advance=state_after_advance,
+        )
+        if receipt_error is not None:
+            return {
+                "code": "interruption_attestation_failed",
+                "attestation_error": receipt_error,
+                **base,
+            }, None, 0
+        return None, {"code": "blocking_viewscreen_transition", **base}, 0
     if actual_ticks > 0:
         if tick_info.get("timeout") is True:
             return None, {"code": "partial_tick_timeout", **base}, 0
@@ -2396,7 +2426,9 @@ def run_once(
         def apply_action(action_dict: Dict[str, Any], state: Dict[str, Any]) -> Dict[str, Any]:
             return executor.apply(action_dict, backend="mock", state=state)
 
-        def advance_env(num_ticks: int) -> Dict[str, Any]:
+        def advance_env(
+            num_ticks: int, state_after_apply: Dict[str, Any] | None = None
+        ) -> Dict[str, Any]:
             nonlocal tick_info_state
             if num_ticks <= 0:
                 tick_info_state = {"ok": True, "ticks_advanced": 0, "skipped": True}
@@ -2526,15 +2558,25 @@ def run_once(
                 allow_interact=is_governed_dfhack_mode,
             )
 
-        def advance_env(num_ticks: int) -> Dict[str, Any]:
+        def advance_env(
+            num_ticks: int, state_after_apply: Dict[str, Any] | None = None
+        ) -> Dict[str, Any]:
             nonlocal tick_info_state
             if num_ticks <= 0:
                 tick_info_state = {"ok": True, "ticks_advanced": 0, "skipped": True}
                 return observe()
+            interrupt_options: Dict[str, Any] = {}
+            if is_governed_dfhack_mode:
+                interrupt_options = {
+                    "interrupt_on_viewscreen_transition": True,
+                    "viewscreen_before": str(
+                        (state_after_apply or {}).get("viewscreen_type") or "unknown"
+                    ),
+                }
             state = attach_survival_evidence(
                 attach_crew_metrics(
                     attach_fort_metrics(
-                        dfhack_client.advance(num_ticks)
+                        dfhack_client.advance(num_ticks, **interrupt_options)
                     )
                 )
             )
@@ -3639,7 +3681,8 @@ def run_once(
                 else:
                     try:
                         advance_state = call_with_retry(
-                            "advance", lambda: advance_env(requested_ticks)
+                            "advance",
+                            lambda: advance_env(requested_ticks, state_after_apply),
                         )
                     except DFHackError:
                         run_failed = True
@@ -4407,6 +4450,8 @@ def run_once(
                         requested_ticks,
                         tick_info_state,
                         consecutive_zero_tick_streak,
+                        state_after_apply=state_after_apply,
+                        state_after_advance=advance_state,
                     )
                 if int(tick_info_state.get("ticks_advanced") or 0) > 0:
                     interaction_episode_count = 0

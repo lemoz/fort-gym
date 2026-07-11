@@ -137,6 +137,57 @@ def read_pause_state(timeout: float = 1.0) -> bool:
     return lines[-1] == "1"
 
 
+def read_tick_pause_viewscreen(timeout: float = 1.0) -> Dict[str, object]:
+    """Atomically read the tick, pause flag, and concrete current viewscreen."""
+
+    lua_script = """
+local json = require('json')
+local viewscreen_type = "unknown"
+pcall(function()
+    local view = dfhack.gui.getCurViewscreen()
+    if view and view._type then
+        local rendered = tostring(view._type)
+        viewscreen_type = rendered:match("<type: ([^>]+)>") or rendered
+    end
+end)
+print(json.encode({
+    cur_year = df.global.cur_year or 0,
+    cur_year_tick = df.global.cur_year_tick or 0,
+    pause_state = df.global.pause_state and true or false,
+    viewscreen_type = viewscreen_type,
+}))
+"""
+    out = run_lua_expr(lua_script, timeout=timeout)
+    lines = [line.strip() for line in out.splitlines() if line.strip()]
+    if not lines:
+        raise DFHackError("read_tick_pause_viewscreen: empty output")
+    try:
+        value = json.loads(lines[-1])
+    except json.JSONDecodeError as exc:
+        raise DFHackError(
+            f"read_tick_pause_viewscreen: invalid output {lines[-1]!r}"
+        ) from exc
+    if not isinstance(value, dict):
+        raise DFHackError("read_tick_pause_viewscreen: expected object output")
+    cur_year = value.get("cur_year")
+    cur_year_tick = value.get("cur_year_tick")
+    if type(cur_year) is not int or cur_year < 0:
+        raise DFHackError("read_tick_pause_viewscreen: invalid cur_year")
+    if type(cur_year_tick) is not int or cur_year_tick < 0:
+        raise DFHackError("read_tick_pause_viewscreen: invalid cur_year_tick")
+    if not isinstance(value.get("pause_state"), bool):
+        raise DFHackError("read_tick_pause_viewscreen: invalid pause_state")
+    viewscreen_type = value.get("viewscreen_type")
+    if not isinstance(viewscreen_type, str):
+        raise DFHackError("read_tick_pause_viewscreen: invalid viewscreen_type")
+    return {
+        "cur_year": cur_year,
+        "cur_year_tick": cur_year_tick,
+        "pause_state": value["pause_state"],
+        "viewscreen_type": viewscreen_type,
+    }
+
+
 def set_paused(paused: bool, timeout: float = 1.0) -> None:
     """Set df.global.pause_state to the requested value."""
 
@@ -151,6 +202,8 @@ def read_game_state(timeout: float = 2.5) -> Dict[str, object]:
 local json = require('json')
 local state = {}
 state.time = df.global.cur_year_tick or 0
+state.year = df.global.cur_year or 0
+state.year_tick = df.global.cur_year_tick or 0
 
 -- Pause state - critical for agent to know if game is running
 state.pause_state = df.global.pause_state and true or false
@@ -261,6 +314,7 @@ __all__ = [
     "run_lua_expr",
     "tick_read",
     "read_pause_state",
+    "read_tick_pause_viewscreen",
     "set_paused",
     "read_game_state",
 ]

@@ -3,6 +3,8 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+import pytest
+
 from fort_gym.bench import dfhack_backend, dfhack_exec
 
 
@@ -14,6 +16,85 @@ def test_run_lua_file_parses_last_json_line(monkeypatch) -> None:
     )
 
     assert dfhack_exec.run_lua_file("/tmp/hook.lua") == {"ok": True, "value": 3}
+
+
+def test_read_tick_pause_viewscreen_parses_atomic_json(monkeypatch) -> None:
+    monkeypatch.setattr(
+        dfhack_exec,
+        "run_lua_expr",
+        lambda *_args, **_kwargs: (
+            "notice from dfhack\n"
+            '{"cur_year": 0, "cur_year_tick": 377, "pause_state": true, '
+            '"viewscreen_type": "viewscreen_topicmeetingst"}'
+        ),
+    )
+
+    assert dfhack_exec.read_tick_pause_viewscreen() == {
+        "cur_year": 0,
+        "cur_year_tick": 377,
+        "pause_state": True,
+        "viewscreen_type": "viewscreen_topicmeetingst",
+    }
+
+
+def test_read_tick_pause_viewscreen_rejects_invalid_json_and_shape(monkeypatch) -> None:
+    monkeypatch.setattr(
+        dfhack_exec, "run_lua_expr", lambda *_args, **_kwargs: "not json"
+    )
+    with pytest.raises(dfhack_exec.DFHackError, match="invalid output"):
+        dfhack_exec.read_tick_pause_viewscreen()
+
+    monkeypatch.setattr(
+        dfhack_exec,
+        "run_lua_expr",
+        lambda *_args, **_kwargs: (
+            '{"cur_year": 0, "cur_year_tick": 1, "pause_state": 1}'
+        ),
+    )
+    with pytest.raises(dfhack_exec.DFHackError, match="invalid pause_state"):
+        dfhack_exec.read_tick_pause_viewscreen()
+
+
+@pytest.mark.parametrize("tick", [True, 1.5, "1", -1, None])
+def test_read_tick_pause_viewscreen_rejects_non_integer_or_negative_tick(
+    monkeypatch, tick
+) -> None:
+    import json
+
+    payload = {
+        "cur_year": 0,
+        "pause_state": True,
+        "viewscreen_type": "viewscreen_dwarfmodest",
+    }
+    if tick is not None:
+        payload["cur_year_tick"] = tick
+    monkeypatch.setattr(
+        dfhack_exec,
+        "run_lua_expr",
+        lambda *_args, **_kwargs: json.dumps(payload),
+    )
+
+    with pytest.raises(dfhack_exec.DFHackError, match="invalid cur_year_tick"):
+        dfhack_exec.read_tick_pause_viewscreen()
+
+
+@pytest.mark.parametrize("year", [True, 1.5, "1", -1, None])
+def test_read_tick_pause_viewscreen_rejects_invalid_year(monkeypatch, year) -> None:
+    import json
+
+    payload = {
+        "cur_year_tick": 1,
+        "pause_state": True,
+        "viewscreen_type": "viewscreen_dwarfmodest",
+    }
+    if year is not None:
+        payload["cur_year"] = year
+    monkeypatch.setattr(
+        dfhack_exec, "run_lua_expr", lambda *_args, **_kwargs: json.dumps(payload)
+    )
+
+    with pytest.raises(dfhack_exec.DFHackError, match="invalid cur_year"):
+        dfhack_exec.read_tick_pause_viewscreen()
 
 
 def test_hook_path_prefers_repo_hook_over_installed_copy(tmp_path, monkeypatch) -> None:

@@ -4,20 +4,23 @@ from __future__ import annotations
 
 import os
 import re
-import time
 from pathlib import Path
 from typing import Dict, Iterable, Sequence
 
 from .config import DFROOT
 from .dfhack_exec import (
     DFHackError,
-    read_pause_state,
-    run_dfhack,
     run_lua_file,
-    set_paused,
-    tick_read,
 )
-from .env.keystroke_exec import execute_keystroke_action
+from .tick_controller import (
+    GOVERNED_POSITIVE_TICK_BASELINE_VIEWSCREEN_TYPE,
+    MAX_ADVANCE_TICKS,
+    TICKS_PER_YEAR,
+    advance_ticks_exact,
+    advance_ticks_exact_external,
+    ensure_paused_external,
+    execute_keystroke_action,
+)
 
 HOOK_ROOT = DFROOT / "hook"
 REPO_HOOK_ROOT = Path(__file__).resolve().parents[2] / "hook"
@@ -33,7 +36,6 @@ MAX_SNAPSHOT_W = 64
 MAX_SNAPSHOT_H = 64
 MAX_FARM_PLOT_W = 5
 MAX_FARM_PLOT_H = 5
-MAX_ADVANCE_TICKS = 2000
 FARM_SEASONS = ("spring", "summer", "autumn", "winter")
 MAX_CROP_TOKEN_LEN = 64
 VALID_KINDS: Iterable[str] = ("dig", "channel", "chop", "gather")
@@ -316,7 +318,9 @@ def designate_rect(
         return {"ok": False, "error": str(exc)}
 
 
-def unsuspend_jobs(x1: int, y1: int, z1: int, x2: int, y2: int, z2: int) -> Dict[str, object]:
+def unsuspend_jobs(
+    x1: int, y1: int, z1: int, x2: int, y2: int, z2: int
+) -> Dict[str, object]:
     """Clear the suspended flag on construction/build jobs inside a bounded rect.
 
     Mirrors a player's q-menu unsuspend action. Does not complete any work —
@@ -375,7 +379,9 @@ def set_labor(unit_id: int, labor: str, enable: bool) -> Dict[str, object]:
         return {"ok": False, "error": str(exc)}
 
 
-def complete_dig_rect(x1: int, y1: int, z1: int, x2: int, y2: int, z2: int) -> Dict[str, object]:
+def complete_dig_rect(
+    x1: int, y1: int, z1: int, x2: int, y2: int, z2: int
+) -> Dict[str, object]:
     """Complete bounded DFHack dig designations by converting wall tiles to floors."""
 
     width = abs(int(x2) - int(x1)) + 1
@@ -468,7 +474,9 @@ def start_g7_evidence(run_id: str) -> Dict[str, object]:
     """Start a run-scoped, read-only survival evidence ledger in DFHack."""
 
     try:
-        return run_lua_file(_hook_path("g7_evidence.lua"), "start", str(run_id), timeout=5.0)
+        return run_lua_file(
+            _hook_path("g7_evidence.lua"), "start", str(run_id), timeout=5.0
+        )
     except (DFHackError, OSError) as exc:
         return {"ok": False, "active": False, "error": str(exc)}
 
@@ -602,7 +610,9 @@ def prepare_keystroke_target(
 
     try:
         safe_mode = (
-            mode if mode in {"starter", "material", "workshop", "existing_workshop"} else "starter"
+            mode
+            if mode in {"starter", "material", "workshop", "existing_workshop"}
+            else "starter"
         )
         return run_lua_file(
             _hook_path("prepare_keystroke_target.lua"),
@@ -614,259 +624,6 @@ def prepare_keystroke_target(
         return {"ok": False, "error": str(exc)}
 
 
-def _safe_read_pause_state(timeout: float = 1.0) -> bool | None:
-    try:
-        return read_pause_state(timeout=timeout)
-    except (DFHackError, OSError):
-        return None
-
-
-def _set_nopause(enabled: bool) -> str | None:
-    """Toggle DFHack nopause mode, returning an error instead of raising."""
-
-    try:
-        from .config import DFHACK_RUN, DFROOT
-
-        run_dfhack(
-            [str(DFHACK_RUN), "nopause", "1" if enabled else "0"],
-            timeout=2.0,
-            cwd=str(DFROOT),
-        )
-    except Exception as exc:
-        return str(exc)
-    return None
-
-
-def ensure_paused_external(*, timeout: float = 2.5, attempts: int = 2) -> Dict[str, object]:
-    """Disable nopause and attest that DF is actually paused."""
-
-    attempt_records: list[Dict[str, object]] = []
-    paused: bool | None = None
-    for attempt in range(1, max(1, int(attempts)) + 1):
-        nopause_error = _set_nopause(False)
-        pause_error: str | None = None
-        try:
-            set_paused(True, timeout=timeout)
-        except (DFHackError, OSError) as exc:
-            pause_error = str(exc)
-        paused = _safe_read_pause_state(timeout=timeout)
-
-        record: Dict[str, object] = {
-            "attempt": attempt,
-            "nopause_disabled": nopause_error is None,
-            "paused": paused,
-        }
-        if nopause_error:
-            record["nopause_error"] = nopause_error
-        if pause_error:
-            record["pause_error"] = pause_error
-        attempt_records.append(record)
-
-        # The observed state is authoritative. A failed pause command is harmless
-        # when the independent read still proves the desired state, but nopause
-        # must also have been disabled successfully.
-        if nopause_error is None and paused is True:
-            return {
-                "ok": True,
-                "paused": True,
-                "attempts": attempt,
-                "attempt_records": attempt_records,
-            }
-        if attempt < max(1, int(attempts)):
-            time.sleep(0.1)
-
-    return {
-        "ok": False,
-        "paused": paused,
-        "attempts": len(attempt_records),
-        "attempt_records": attempt_records,
-        "error": "pause_state_unverified",
-    }
-
-
-def advance_ticks_exact_external(ticks: int, repause: bool = True) -> Dict[str, object]:
-    """Advance DF by polling cur_year_tick via repeated dfhack-run ticks."""
-
-    try:
-        want = int(ticks)
-    except (TypeError, ValueError):
-        return {"ok": False, "error": "invalid_ticks"}
-
-    if want <= 0:
-        return {"ok": False, "error": "invalid_ticks"}
-
-    want = min(want, MAX_ADVANCE_TICKS)
-
-    started_paused = _safe_read_pause_state(timeout=2.5)
-    start_tick: int | None = None
-    current_tick: int | None = None
-    ok = True
-    error: str | None = None
-    resume_error: str | None = None
-    resume_fallback: str | None = None
-    nopause_enable_error: str | None = None
-    repause_outcome: Dict[str, object] | None = None
-    timed_out = False
-    # Allow ~200ms per tick (conservative for slow headless mode)
-    safety_ms = max(10000, want * 200)
-    t_start = time.monotonic()
-
-    try:
-        try:
-            start_tick = tick_read(timeout=2.5)
-        except (DFHackError, OSError) as exc:
-            ok = False
-            error = f"tick_read_failed:{exc}"
-
-        if error is None and start_tick is not None:
-            # Some headless DFHack builds report a stale pause state. Prefer
-            # observed tick movement over pause flags, and only try the RPC or
-            # keystroke resume fallbacks when the clock is stalled.
-            nopause_enable_error = _set_nopause(True)
-            time.sleep(0.1)
-            try:
-                current_tick = tick_read(timeout=2.5)
-            except (DFHackError, OSError) as exc:
-                ok = False
-                error = f"tick_read_failed:{exc}"
-
-        if error is None and start_tick is not None and current_tick is not None:
-            if current_tick <= start_tick:
-                try:
-                    set_paused(False, timeout=2.5)
-                except (DFHackError, OSError) as exc:
-                    resume_error = str(exc)
-                time.sleep(0.1)
-                try:
-                    current_tick = tick_read(timeout=2.5)
-                except (DFHackError, OSError) as exc:
-                    ok = False
-                    error = f"tick_read_failed:{exc}"
-
-        if (
-            error is None
-            and start_tick is not None
-            and current_tick is not None
-            and current_tick <= start_tick
-            and _safe_read_pause_state(timeout=2.5) is True
-        ):
-            try:
-                fallback_result = execute_keystroke_action(["STRING_A032"])
-            except Exception as exc:  # pragma: no cover - defensive runtime guard
-                resume_fallback = f"STRING_A032_failed:{exc}"
-            else:
-                resume_fallback = (
-                    "STRING_A032" if fallback_result.get("ok") else str(fallback_result)
-                )
-            time.sleep(0.1)
-            try:
-                current_tick = tick_read(timeout=2.5)
-            except (DFHackError, OSError) as exc:
-                ok = False
-                error = f"tick_read_failed:{exc}"
-
-        if error is None and start_tick is not None and current_tick is not None:
-            while True:
-                try:
-                    current_tick = tick_read(timeout=2.5)
-                except (DFHackError, OSError) as exc:
-                    ok = False
-                    error = f"tick_read_failed:{exc}"
-                    break
-                if current_tick - start_tick >= want:
-                    break
-                elapsed_ms = (time.monotonic() - t_start) * 1000.0
-                if elapsed_ms > safety_ms:
-                    timed_out = True
-                    ok = False
-                    error = "timeout_waiting_for_ticks"
-                    break
-                time.sleep(0.05)
-    finally:
-        # Errors always fail closed, even if a caller explicitly asked not to
-        # repause after a successful advance.
-        if repause or error is not None:
-            repause_outcome = ensure_paused_external(timeout=2.5, attempts=2)
-        else:
-            nopause_disable_error = _set_nopause(False)
-            if nopause_disable_error:
-                ok = False
-                error = "nopause_disable_failed"
-                repause_outcome = ensure_paused_external(timeout=2.5, attempts=2)
-
-    elapsed_ms_int = int((time.monotonic() - t_start) * 1000.0)
-    paused_after = (
-        repause_outcome.get("paused")
-        if repause_outcome is not None
-        else _safe_read_pause_state(timeout=2.5)
-    )
-
-    # The last polling read precedes repause, so it can undercount ticks that run
-    # while nopause is being disabled. Once pause is attested, read the stable
-    # end tick used by the trace. An existing tick error remains terminal.
-    if (
-        start_tick is not None
-        and repause_outcome is not None
-        and repause_outcome.get("ok") is True
-    ):
-        try:
-            current_tick = tick_read(timeout=2.5)
-        except (DFHackError, OSError) as exc:
-            if error is None:
-                ok = False
-                error = f"final_tick_read_failed:{exc}"
-
-    ticks_advanced = (
-        max(0, current_tick - start_tick)
-        if current_tick is not None and start_tick is not None
-        else 0
-    )
-
-    if timed_out:
-        ok = False
-        error = error or resume_error or "timeout_waiting_for_ticks"
-    elif ticks_advanced < want:
-        ok = False
-        error = error or resume_error or "insufficient_tick_advance"
-    if repause_outcome is not None and repause_outcome.get("ok") is not True:
-        ok = False
-        error = error or "repause_unverified"
-
-    result: Dict[str, object] = {
-        "ok": ok and error is None,
-        "requested": want,
-        "ticks_advanced": ticks_advanced,
-        "start_tick": start_tick,
-        "end_tick": current_tick,
-        "paused_before": started_paused,
-        "paused_after": paused_after,
-        "elapsed_ms": elapsed_ms_int,
-        "repause_requested": repause,
-        "repause_effective": paused_after is True if repause else None,
-    }
-    if nopause_enable_error:
-        result["nopause_enable_error"] = nopause_enable_error
-    if resume_error:
-        result["resume_error"] = resume_error
-    if resume_fallback:
-        result["resume_fallback"] = resume_fallback
-    if repause_outcome is not None:
-        result["repause"] = repause_outcome
-        if repause_outcome.get("ok") is not True:
-            result["repause_error"] = str(
-                repause_outcome.get("error") or "pause_state_unverified"
-            )
-    if error:
-        result["error"] = error
-    if timed_out:
-        result["timeout"] = True
-    return result
-
-
-# Backwards compatibility for previous import path
-advance_ticks_exact = advance_ticks_exact_external
-
-
 __all__ = [
     "ALLOWED_ITEMS",
     "MAX_QTY",
@@ -876,6 +633,9 @@ __all__ = [
     "MAX_SNAPSHOT_H",
     "MAX_FARM_PLOT_W",
     "MAX_FARM_PLOT_H",
+    "MAX_ADVANCE_TICKS",
+    "TICKS_PER_YEAR",
+    "GOVERNED_POSITIVE_TICK_BASELINE_VIEWSCREEN_TYPE",
     "FARM_SEASONS",
     "queue_manager_order",
     "build_workshop",
