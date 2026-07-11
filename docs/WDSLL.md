@@ -2174,6 +2174,48 @@ gate. Each entry states what changed and the evidence that forced it.
   and returns control to the model. It does not dismiss a screen or choose an
   interaction.
 
+- **2026-07-11 UTC - G7 attempt 27: OPERATOR-STOPPED POLICY-DIAGNOSTIC FAIL;
+  real DF gameplay and material progress, but not a G7 success.** Run
+  `4eded56b1d224fbab47d336df7c521f6`
+  ([replay](https://fortgym.live/r/eMtR2Bp3-kmp2JQ5MI2lLT_ANdyuR9qV)) retained
+  225 governed gameplay rows with screen text and governed provenance. Only
+  OpenRouter `z-ai/glm-5v-turbo` was used: 300 calls, 6,306,577 prompt tokens,
+  218,336 completion tokens, and 6,524,913 total; no Anthropic model was used.
+  The terminal reason was `stop_requested_after_agent_decide`.
+
+  The legal DFHack surface produced genuine game state: connected channel/ramp
+  and lower excavation, a Carpenter workshop and Still, six installed beds,
+  three doors, three tables, two chairs, nine constructions, population 17, and
+  three functional rooms. Three farm plots were placed. Plot #28 at
+  `(93,98,160)` was subterranean, set to plump helmets, received a native
+  PlantSeeds job, and completed planting. The modal controller also preserved
+  truthful control: step 174 requested 1,200 ticks, stopped after 712 on
+  `dwarfmodest -> textviewerst`, and repaused; a wrong `finish_topic_meeting`
+  was rejected and corrected with a zero-tick cancel. Later `topicmeetingst`
+  used zero-tick `finish_topic_meeting`, while liaison request/agreement/farewell
+  screens stopped early and repaused with no safety errors.
+
+  G7-v3 is deterministically FAIL. Evidence passes; duration fails at
+  246,752/403,200 ticks. Food 6 produced/44 consumed/final 9 and drink 75
+  produced/113 consumed/final 29 fail the self-sustaining-loop criterion.
+  Functional rooms 3, installed beds 6, and population 17 pass. Neglect deaths
+  are UNKNOWN, not passed: an active-ledger citizenship bug falsely admitted
+  same-civ merchants, contaminating death and consumption evidence; no
+  fortress-citizen death is confirmed. Rubric 67.39 fails with
+  `no_broader_fort_layout`; scalar 142.47 fails the 150 bar. The scalar is
+  telemetry, not a substitute pass.
+
+  The next fresh-run contract is concrete. `plant_seed_jobs=0` after planting
+  completion was repeatedly misread as path blockage; after
+  `functional_rooms=3/3`, the policy continued wall-building; and
+  `same_objective_stalled_2` allowed continuation rather than a true pivot.
+  LABOR targeted a child because citizenship and work eligibility were
+  conflated. Merged PR #109 supplies raw farm contained-item evidence, PR #110
+  supplies governed objective completion and hard-stall transitions, and PR
+  #111 supplies own-group G7 citizen/consumption/death evidence with fail-closed
+  predicate errors. Deploy that reviewed contract with the labor-eligibility
+  correction, then launch fresh Attempt 28. No Attempt 28 exists yet.
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,
