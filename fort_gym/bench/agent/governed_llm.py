@@ -37,6 +37,7 @@ MAX_OBJECTIVE_LENGTH = 160
 
 _MEMORY_PATH_ENV_VAR = "FORT_GYM_GOVERNED_MEMORY_PATH"
 _MEMORY_PATH_DISABLE_VALUES = {"off", "0"}
+_HARD_REVISION_REASON = "same_objective_stalled_2"
 
 GOVERNED_SYSTEM_PROMPT = """You are the overseer of a live Dwarf Fortress fortress. You play by issuing \
 exactly one bounded, legal overseer command per step, then the real simulation runs and you observe \
@@ -244,6 +245,17 @@ classify a coordinate or footprint as
 stalled when two reviews show no progress and no observed job can change it. Choose the next
 objective and action yourself from those facts.
 
+When AGENT PLAN CONTROL reasons includes exactly `same_objective_stalled_2`, two rejected or
+no-progress attempts are not progress and decision=continue is invalid. You must use
+decision=revise, keep prior_objective as the stalled objective, choose a genuinely different current
+objective, and submit an action that advances that replacement objective. The action's normalized
+type and params must differ from the previous rejected or no-progress action even when
+retry_same_action=true. Merely renaming the stalled objective or choosing another target for the
+same rejected approach is not a revision. The harness identifies the stall but does not choose the
+replacement objective or action. This hard transition applies only to
+`same_objective_stalled_2`; do not infer it from `periodic`, `partial_mutation`, or `action_pending`
+review reasons.
+
 With each action also submit:
 - "intent": one sentence on what this command does.
 - "objective": the short, durable fortress goal this action advances (used as your persistent plan
@@ -257,14 +269,19 @@ With each action also submit:
   must be true exactly when this action repeats the previous action's normalized type and params.
   Use step -1 and verdict unknown only when there is no previous action attempt.
 - "plan_review": request_id from AGENT PLAN CONTROL, decision
-  not_due|establish|continue|revise, prior_objective, objective, at least two distinct factual
-  evidence ids,
-  and reason. When review_due=yes, establish the first plan, continue the exact prior
-  objective, or revise to a genuinely different objective. When review_due=no, use not_due unless
-  you voluntarily continue/review or revise the objective. Any objective change, including when
-  review_due=no, requires decision=revise; otherwise copy the prior objective exactly without
-  paraphrasing it. `reason` may be omitted only for decision=not_due. plan_review.objective must
-  equal objective; the top-level plan_step is the next plan step.
+  not_due|establish|continue|revise|complete, prior_objective, objective, at least two distinct
+  factual evidence ids, and reason. When observed facts meet the current objective's stated
+  measurable condition, you must use decision=complete rather than continue: prior_objective
+  remains the completed objective, objective becomes a genuinely different next objective, and the
+  submitted action advances only that next objective. `complete` records a local objective
+  transition; it is not terminal G7 completion. A complete review must cite at least one non-control
+  current game-state evidence id even when review_due=no. When review_due=yes, establish the first
+  plan, continue the exact prior objective, revise to a genuinely different objective, or complete
+  the prior objective as above. When review_due=no, use not_due unless you voluntarily
+  continue/review, revise, or complete the objective. Any objective change, including when
+  review_due=no, requires decision=revise or decision=complete; otherwise copy the prior objective
+  exactly without paraphrasing it. `reason` may be omitted only for decision=not_due.
+  plan_review.objective must equal objective; the top-level plan_step is the next plan step.
 - "memory_update" (optional): a fact worth remembering, as "label @ x,y,z: note" if it has a \
 location.
 
@@ -332,7 +349,13 @@ def _submit_action_tool() -> Dict[str, Any]:
                             "request_id": {"type": "string"},
                             "decision": {
                                 "type": "string",
-                                "enum": ["not_due", "establish", "continue", "revise"],
+                                "enum": [
+                                    "not_due",
+                                    "establish",
+                                    "continue",
+                                    "revise",
+                                    "complete",
+                                ],
                             },
                             "prior_objective": {"type": "string"},
                             "objective": {
@@ -652,7 +675,7 @@ class DFHackGovernedLLMAgent(Agent):
             decision = str(plan_review.get("decision") or "")
             evidence = " | ".join(str(item) for item in plan_review.get("evidence") or [])
             next_step = str(action.get("plan_step") or "").strip()
-            if decision in {"establish", "revise"}:
+            if decision in {"establish", "revise", "complete"}:
                 self._memory.write_gameplay_plan(
                     objective=objective,
                     steps=plan_review.get("steps") or [],
@@ -778,6 +801,17 @@ class DFHackGovernedLLMAgent(Agent):
         return "" if normalized in {"none", "null", "n/a", "no prior objective"} else normalized
 
     @staticmethod
+    def _requires_hard_revision(control: Dict[str, Any]) -> bool:
+        reasons = control.get("reasons")
+        return isinstance(reasons, list) and _HARD_REVISION_REASON in reasons
+
+    @staticmethod
+    def _decision_satisfies_requirement(decision: Any, requirement: str) -> bool:
+        if requirement == "not_due or continue":
+            return decision in {"not_due", "continue"}
+        return decision == requirement
+
+    @staticmethod
     def _matching_evidence_line(quote: str, obs_text: str) -> str | None:
         evidence_id = quote.strip()
         if re.fullmatch(r"E\d+", evidence_id) is None:
@@ -823,6 +857,7 @@ class DFHackGovernedLLMAgent(Agent):
         fingerprint_action: Dict[str, Any] | None,
     ) -> List[str]:
         errors: List[str] = []
+        repeats_previous_action: bool | None = None
         allowed_evidence_lines = control.get("allowed_evidence_lines")
         if not isinstance(allowed_evidence_lines, list) or not all(
             isinstance(line, str) and re.fullmatch(r"E\d+: .+", line)
@@ -899,14 +934,15 @@ class DFHackGovernedLLMAgent(Agent):
             elif not re.fullmatch(r"[0-9a-f]{64}", previous_fingerprint):
                 errors.append("AGENT PLAN CONTROL is missing the previous action fingerprint")
             elif fingerprint_action is not None:
-                repeats_previous = (
-                    normalized_action_fingerprint(fingerprint_action) == previous_fingerprint
+                repeats_previous_action = (
+                    normalized_action_fingerprint(fingerprint_action)
+                    == previous_fingerprint
                 )
-                if retry_is_bool and retry_same_action != repeats_previous:
+                if retry_is_bool and retry_same_action != repeats_previous_action:
                     errors.append(
                         "last_action_review.retry_same_action must match whether type+params "
                         "repeat the previous action "
-                        f"(expected {str(repeats_previous).lower()})"
+                        f"(expected {str(repeats_previous_action).lower()})"
                     )
 
         plan_review = payload.get("plan_review")
@@ -972,7 +1008,7 @@ class DFHackGovernedLLMAgent(Agent):
             errors.append("plan_review.steps must contain only non-empty single-line strings")
 
         decision = str(plan_review.get("decision") or "")
-        valid_decisions = {"not_due", "establish", "continue", "revise"}
+        valid_decisions = {"not_due", "establish", "continue", "revise", "complete"}
         decision_valid = decision in valid_decisions
         if not decision_valid:
             errors.append("plan_review.decision is invalid")
@@ -1008,7 +1044,8 @@ class DFHackGovernedLLMAgent(Agent):
                 errors.append("plan_review.evidence must cite distinct factual lines")
 
         review_due = bool(control.get("review_due"))
-        if review_due and plan_evidence_ready:
+        current_state_evidence_required = review_due or decision == "complete"
+        if current_state_evidence_required and plan_evidence_ready:
             control_prefixes = (
                 "AGENT PLAN CONTROL:",
                 "Plan review reasons:",
@@ -1020,33 +1057,71 @@ class DFHackGovernedLLMAgent(Agent):
                 line.split(": ", 1)[-1] for line in matched_lines
             ]
             if all(line.startswith(control_prefixes) for line in matched_contents):
-                errors.append("a due plan_review must quote at least one current game-state fact")
-        same_objective = self._normalized_objective(objective) == self._normalized_objective(
-            prior
-        )
+                if decision == "complete":
+                    errors.append(
+                        "decision=complete plan_review must cite at least one non-control "
+                        "current game-state fact"
+                    )
+                else:
+                    errors.append(
+                        "a due plan_review must quote at least one current game-state fact"
+                    )
+        normalized_prior = self._normalized_prior_objective(prior)
+        has_prior_objective = bool(normalized_prior)
+        same_objective = self._normalized_objective(objective) == normalized_prior
+        hard_revision_required = self._requires_hard_revision(control)
+        if decision == "complete":
+            if not has_prior_objective:
+                errors.append("decision=complete requires an existing prior objective")
+            elif same_objective:
+                errors.append("decision=complete must change the prior objective")
+        if hard_revision_required:
+            if decision == "continue":
+                errors.append(
+                    "same_objective_stalled_2 requires decision=revise; "
+                    "decision=continue is invalid"
+                )
+            elif decision != "revise":
+                errors.append("same_objective_stalled_2 requires decision=revise")
+            if same_objective:
+                errors.append(
+                    "same_objective_stalled_2 requires a genuinely different objective"
+                )
+            if (
+                control.get("previous_verdict") in {"rejected", "no_progress"}
+                and repeats_previous_action is True
+            ):
+                errors.append(
+                    "same_objective_stalled_2 requires submitted action normalized type+params "
+                    "to differ from the previous rejected/no-progress action"
+                )
         if review_due and decision_valid and plan_objective_error is None:
-            if not prior and decision != "establish":
+            if not has_prior_objective and decision != "establish":
                 errors.append("initial plan review must use decision=establish")
-            if prior and decision == "continue" and not same_objective:
-                errors.append("decision=continue must preserve the prior objective")
-            if prior and decision == "revise" and same_objective:
-                errors.append("decision=revise must change the prior objective")
-            if prior and decision not in {"continue", "revise"}:
-                errors.append("due plan review must continue or revise the prior objective")
+            if not hard_revision_required:
+                if has_prior_objective and decision == "continue" and not same_objective:
+                    errors.append("decision=continue must preserve the prior objective")
+                if has_prior_objective and decision == "revise" and same_objective:
+                    errors.append("decision=revise must change the prior objective")
+                if has_prior_objective and decision not in {"continue", "revise", "complete"}:
+                    errors.append(
+                        "due plan review must continue, revise, or complete the prior objective"
+                    )
         elif not review_due and decision_valid and plan_objective_error is None:
-            if decision == "revise" and same_objective:
-                errors.append("decision=revise must change the prior objective")
-            if not same_objective and decision != "revise":
-                errors.append(
-                    "an objective change requires decision=revise; either keep the submitted "
-                    "objective and use revise, or restore the exact prior objective and use "
-                    "not_due/continue"
-                )
-            if same_objective and decision not in {"not_due", "continue"}:
-                errors.append(
-                    "when review_due=no, unchanged objectives must use "
-                    "decision=not_due or continue"
-                )
+            if not hard_revision_required:
+                if decision == "revise" and same_objective:
+                    errors.append("decision=revise must change the prior objective")
+                if not same_objective and decision not in {"revise", "complete"}:
+                    errors.append(
+                        "an objective change requires decision=revise or decision=complete; either "
+                        "keep the submitted objective and use revise/complete, or restore the exact "
+                        "prior objective and use not_due/continue"
+                    )
+                if same_objective and decision not in {"not_due", "continue"}:
+                    errors.append(
+                        "when review_due=no, unchanged objectives must use "
+                        "decision=not_due or continue"
+                    )
         return errors
 
     def decide(self, obs_text: str, obs_json: Dict[str, Any]) -> Dict[str, Any]:
@@ -1081,6 +1156,7 @@ class DFHackGovernedLLMAgent(Agent):
         max_contract_attempts = 3 if review_control is not None else 1
         action = None
         last_error = "model returned no submit_action tool call"
+        locked_required_plan_decision: str | None = None
         for attempt in range(max_contract_attempts):
             contract_errors: List[str] = []
             try:
@@ -1129,6 +1205,21 @@ class DFHackGovernedLLMAgent(Agent):
                             fingerprint_action,
                         )
                     )
+                    if locked_required_plan_decision is not None:
+                        submitted_plan_decision = (
+                            payload.get("plan_review", {}).get("decision")
+                            if isinstance(payload.get("plan_review"), dict)
+                            else None
+                        )
+                        if not self._decision_satisfies_requirement(
+                            submitted_plan_decision,
+                            locked_required_plan_decision,
+                        ):
+                            contract_errors.append(
+                                "plan_review.decision violates locked first-correction "
+                                f"requirement {locked_required_plan_decision!r} "
+                                f"(submitted {submitted_plan_decision!r})"
+                            )
                 if contract_errors:
                     last_error = "; ".join(contract_errors)
                 elif canonical_action is not None:
@@ -1146,6 +1237,13 @@ class DFHackGovernedLLMAgent(Agent):
                     else None
                 )
                 prior_objective = str(review_control.get("prior_objective") or "")
+                hard_revision_required = self._requires_hard_revision(review_control)
+                submitted_plan_decision = (
+                    payload.get("plan_review", {}).get("decision")
+                    if isinstance(payload, dict)
+                    and isinstance(payload.get("plan_review"), dict)
+                    else None
+                )
                 objective_matches_prior = (
                     self._normalized_objective(submitted_objective)
                     == self._normalized_objective(prior_objective)
@@ -1153,31 +1251,43 @@ class DFHackGovernedLLMAgent(Agent):
                     else None
                 )
                 if submitted_objective is None:
-                    required_plan_decision = None
+                    computed_required_plan_decision = None
+                elif hard_revision_required:
+                    computed_required_plan_decision = "revise"
+                elif bool(
+                    review_control.get("review_due")
+                ) and not self._normalized_prior_objective(prior_objective):
+                    computed_required_plan_decision = "establish"
+                elif submitted_plan_decision == "complete":
+                    computed_required_plan_decision = "complete"
                 elif bool(review_control.get("review_due")):
-                    if not self._normalized_prior_objective(prior_objective):
-                        required_plan_decision = "establish"
-                    elif objective_matches_prior:
-                        required_plan_decision = "continue"
-                    else:
-                        required_plan_decision = "revise"
+                    computed_required_plan_decision = (
+                        "continue" if objective_matches_prior else "revise"
+                    )
                 elif objective_matches_prior:
-                    required_plan_decision = "not_due or continue"
+                    computed_required_plan_decision = "not_due or continue"
                 else:
-                    required_plan_decision = "revise"
+                    computed_required_plan_decision = "revise"
+                if (
+                    locked_required_plan_decision is None
+                    and computed_required_plan_decision is not None
+                ):
+                    locked_required_plan_decision = computed_required_plan_decision
+                required_plan_decision = (
+                    locked_required_plan_decision or computed_required_plan_decision
+                )
                 detected_errors = contract_errors or [last_error]
                 evidence_correction_needed = any(
                     "evidence" in error.lower()
                     or "current game-state fact" in error.lower()
                     for error in detected_errors
                 )
-                submitted_plan_decision = (
-                    payload.get("plan_review", {}).get("decision")
-                    if isinstance(payload, dict)
-                    and isinstance(payload.get("plan_review"), dict)
-                    else None
-                )
-                if required_plan_decision in {"establish", "continue", "revise"}:
+                if required_plan_decision in {
+                    "establish",
+                    "continue",
+                    "revise",
+                    "complete",
+                }:
                     decision_correction_needed = (
                         submitted_plan_decision != required_plan_decision
                     )
@@ -1197,6 +1307,8 @@ class DFHackGovernedLLMAgent(Agent):
                     "previous_step": review_control.get("previous_step"),
                     "previous_verdict": review_control.get("previous_verdict"),
                     "prior_objective": prior_objective,
+                    "plan_review_reasons": review_control.get("reasons"),
+                    "locked_required_plan_decision": locked_required_plan_decision,
                     "required_plan_decision_for_submitted_objective": required_plan_decision,
                     "required_previous_evidence_id": review_control.get(
                         "previous_evidence_id"
@@ -1206,13 +1318,34 @@ class DFHackGovernedLLMAgent(Agent):
                     "submitted_plan_decision": submitted_plan_decision,
                 }
                 repair_instructions: List[str] = []
-                if (
+                if hard_revision_required:
+                    repair_instructions.append(
+                        "Required hard transition for reason 'same_objective_stalled_2': "
+                        "decision=continue is invalid. Set plan_review.decision exactly to 'revise', "
+                        "keep prior_objective unchanged, ensure objective and plan_review.objective "
+                        "name the same genuinely different current objective, and submit an action "
+                        "that advances that replacement. Its normalized type+params must differ "
+                        "from the previous rejected/no-progress action even when "
+                        "retry_same_action=true. Renaming the stalled objective or selecting another "
+                        "target for the same rejected approach is not a revision. The harness does "
+                        "not choose the replacement."
+                    )
+                elif required_plan_decision == "complete":
+                    repair_instructions.append(
+                        "Preserve plan_review.decision exactly as 'complete'; do not change it to "
+                        "continue or revise. Keep prior_objective as the completed objective, set "
+                        "objective and plan_review.objective to the same genuinely different next "
+                        "objective, submit an action that advances only that next objective, and cite "
+                        "at least one non-control current game-state evidence id supporting completion."
+                    )
+                elif (
                     decision_correction_needed
                     and not objective_correction_needed
-                    and required_plan_decision in {
-                    "establish",
-                    "continue",
-                    "revise",
+                    and required_plan_decision
+                    in {
+                        "establish",
+                        "continue",
+                        "revise",
                     }
                 ):
                     repair_instructions.append(

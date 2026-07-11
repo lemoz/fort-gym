@@ -3789,6 +3789,58 @@ def test_non_due_continue_reviews_do_not_reset_periodic_cadence() -> None:
     assert control["actions_since_review"] == 5
 
 
+def test_complete_review_resets_periodic_cadence() -> None:
+    initial_review = {
+        "request_id": "0:initial",
+        "decision": "establish",
+        "objective": "Build three functional rooms.",
+    }
+    history = [
+        _governed_history_entry(
+            0,
+            objective="Build three functional rooms.",
+            plan_review=initial_review,
+        )
+    ]
+    history.extend(
+        _governed_history_entry(step, objective="Build three functional rooms.")
+        for step in range(1, 6)
+    )
+    complete_review = {
+        "request_id": "6:periodic_5",
+        "decision": "complete",
+        "prior_objective": "Build three functional rooms.",
+        "objective": "Establish a sustainable drink supply.",
+    }
+    history.append(
+        _governed_history_entry(
+            6,
+            objective="Establish a sustainable drink supply.",
+            plan_review=complete_review,
+        )
+    )
+
+    _, state = encode_observation(
+        {}, screen_text="main map", action_history=history, governed=True
+    )
+
+    control = state["agent_plan_control"]
+    assert control["review_due"] is False
+    assert control["request_id"] == "7:none"
+    assert control["actions_since_review"] == 0
+
+    history.append(
+        _governed_history_entry(7, objective="Establish a sustainable drink supply.")
+    )
+    _, next_state = encode_observation(
+        {}, screen_text="main map", action_history=history, governed=True
+    )
+    next_control = next_state["agent_plan_control"]
+    assert next_control["review_due"] is False
+    assert next_control["request_id"] == "8:none"
+    assert next_control["actions_since_review"] == 1
+
+
 def test_governed_encoder_requests_review_for_stall_and_partial_mutation() -> None:
     initial_review = {
         "request_id": "0:initial",
