@@ -142,7 +142,9 @@ stock over real time, and only if a seed exists (seeds are consumed by planting;
 further time before harvest). Once planting completes, zero active PlantSeeds jobs can mean the \
 crop is growing; it is not by itself evidence that the plot is stalled. The observation reports \
 each plot's per-season crop tokens, your \
-seeds on hand, and the current season. Setting a slot to a crop it already holds changes nothing.
+seeds on hand, and the current season. Raw contained-item evidence reports native item fields only; \
+it is not a heuristic conclusion about crop growth or route accessibility. Setting a slot to a crop \
+it already holds changes nothing.
 - LABOR: params {"unit_id": <citizen id>, "labor": <name>, "enable": true|false}. Toggles one \
 labor on one citizen, exactly like the player's unit-labors screen. A queued job is only ever \
 taken by a citizen who has the matching labor enabled: brew jobs need a citizen with brewing, \

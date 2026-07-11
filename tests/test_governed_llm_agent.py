@@ -274,6 +274,10 @@ def test_governed_submit_tool_requires_agent_review_contract() -> None:
     assert "`plot_subterranean=true` and offered-crop readback" in GOVERNED_SYSTEM_PROMPT
     assert "Additional FarmPlots also consume no material" in GOVERNED_SYSTEM_PROMPT
     assert "zero active PlantSeeds jobs can mean the" in GOVERNED_SYSTEM_PROMPT
+    assert "Raw contained-item evidence reports native item fields only" in GOVERNED_SYSTEM_PROMPT
+    assert "not a heuristic conclusion about crop growth or route accessibility" in (
+        GOVERNED_SYSTEM_PROMPT
+    )
     assert "target_walk_group_connectivity=connected|disconnected|unknown" in GOVERNED_SYSTEM_PROMPT
 
 

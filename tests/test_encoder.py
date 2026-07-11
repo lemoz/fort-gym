@@ -2623,6 +2623,138 @@ def test_encoder_hides_partial_crop_options_when_enumeration_is_incomplete() -> 
     assert "PARTIAL_CROP" not in text
 
 
+def test_encoder_renders_bounded_raw_farm_contained_item_evidence() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {},
+            "crew": {
+                "ok": True,
+                "farm_plots": 1,
+                "jobs": {
+                    "total": 0,
+                    "dig": 0,
+                    "construct_building": 0,
+                    "workshop_task": 0,
+                    "suspended": 0,
+                    "plant_seeds": 0,
+                    "brew_reaction": 0,
+                },
+                "farm_plot_details": [
+                    {
+                        "id": 1,
+                        "contained_items_read_ok": True,
+                        "contained_items_truncated": False,
+                        "contained_items": [
+                            {
+                                "read_ok": True,
+                                "item_type": "SEEDS",
+                                "item_id": 86,
+                                "use_mode": 2,
+                                "mat_index": 172,
+                                "grow_counter": 288,
+                                "planting_skill": 1,
+                                "mat_token": "MUSHROOM_HELMET_PLUMP",
+                                "mat_token_read_ok": True,
+                            }
+                        ],
+                    }
+                ],
+            },
+        },
+        screen_text="main map",
+    )
+
+    assert "plant_seed_jobs=0" in text
+    raw_line = next(
+        line for line in text.splitlines() if line.startswith("Farm plot #1 raw contained items:")
+    )
+    assert (
+        raw_line
+        == "Farm plot #1 raw contained items: "
+        "item_type=SEEDS,item_id=86,use_mode=2,mat_index=172,"
+        "grow_counter=288,planting_skill=1,mat_token=MUSHROOM_HELMET_PLUMP"
+    )
+    for label in ("is_growing", "planted", "pathing_blocked", "percent", "inferred status"):
+        assert label not in raw_line
+
+
+def test_encoder_marks_empty_and_unreadable_farm_contained_item_evidence() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {},
+            "crew": {
+                "ok": True,
+                "farm_plot_details": [
+                    {
+                        "id": 2,
+                        "contained_items_read_ok": True,
+                        "contained_items_truncated": False,
+                        "contained_items": [],
+                    },
+                    {
+                        "id": 3,
+                        "contained_items_read_ok": False,
+                        "contained_items_truncated": False,
+                        "contained_items": [],
+                    },
+                    {
+                        "id": 4,
+                        "contained_items_read_ok": False,
+                        "contained_items_truncated": True,
+                        "contained_items": [{"read_ok": False}],
+                    },
+                    {
+                        "id": 5,
+                        "contained_items_read_ok": True,
+                        "contained_items_truncated": False,
+                        "contained_items": [
+                            {
+                                "read_ok": True,
+                                "item_type": "SEEDS",
+                                "item_id": 85,
+                                "use_mode": 2,
+                                "mat_index": 172,
+                                "grow_counter": 281,
+                                "planting_skill": 1,
+                                "mat_token": False,
+                                "mat_token_read_ok": False,
+                            }
+                        ],
+                    },
+                ],
+            },
+        },
+        screen_text="main map",
+    )
+
+    assert "Farm plot #2 raw contained items: empty" in text
+    assert "Farm plot #3 raw contained items: unreadable" in text
+    assert (
+        "Farm plot #4 raw contained items: partial/unreadable; "
+        "record1=unreadable; truncated at 25 records" in text
+    )
+    assert "Farm plot #5 raw contained items:" in text
+    assert "mat_token=unreadable" in text
+
+
+def test_encoder_marks_farm_plot_detail_cap_truncation() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {},
+            "crew": {"ok": True, "farm_plot_details_truncated": True},
+        },
+        screen_text="main map",
+    )
+
+    assert "Farm plot details truncated at 8 records." in text
+
+
 def test_encoder_renders_partial_season_seed_list() -> None:
     text, _ = encode_observation(
         {
