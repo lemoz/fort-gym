@@ -801,14 +801,20 @@ def advance_ticks_exact_external(ticks: int, repause: bool = True) -> Dict[str, 
         else _safe_read_pause_state(timeout=2.5)
     )
 
-    # If a read failed while the game was moving, recover the truthful end tick
-    # only after the fail-closed pause has run. The original read error remains
-    # terminal even when this recovery succeeds.
-    if error is not None and start_tick is not None and repause_outcome is not None:
+    # The last polling read precedes repause, so it can undercount ticks that run
+    # while nopause is being disabled. Once pause is attested, read the stable
+    # end tick used by the trace. An existing tick error remains terminal.
+    if (
+        start_tick is not None
+        and repause_outcome is not None
+        and repause_outcome.get("ok") is True
+    ):
         try:
             current_tick = tick_read(timeout=2.5)
-        except (DFHackError, OSError):
-            pass
+        except (DFHackError, OSError) as exc:
+            if error is None:
+                ok = False
+                error = f"final_tick_read_failed:{exc}"
 
     ticks_advanced = (
         max(0, current_tick - start_tick)
