@@ -819,6 +819,36 @@ def test_set_labor_hook_validates_citizen_and_reports_before_after() -> None:
     assert "gsub('[^%w %p]', '?')" in hook_text
 
 
+def test_set_labor_rejects_ineligible_units_before_labor_mutation() -> None:
+    hook_text = (
+        Path(__file__).resolve().parents[1] / "hook" / "set_labor.lua"
+    ).read_text(encoding="utf-8")
+
+    adult_call = hook_text.index("dfhack.units.isAdult(target)")
+    labor_read = hook_text.index("target.status.labors[labor_enum]")
+    assert hook_text.index("dfhack.units.isCitizen(target)") < adult_call < labor_read
+    assert "local ok_adult, is_adult = pcall" in hook_text
+    assert "labor_eligibility_unavailable" in hook_text
+    assert "unit_not_labor_eligible" in hook_text
+
+    gate_block = hook_text[adult_call:labor_read]
+    assert "status.labors" not in gate_block
+    assert "unit_id = unit_id" in gate_block
+    assert "profession = profession" in gate_block
+
+    write = hook_text.index("target.status.labors[labor_enum] = enable")
+    readback = hook_text.index("local ok_after, after = pcall", write)
+    rollback = hook_text.index("target.status.labors[labor_enum] = before", readback)
+    assert adult_call < labor_read < write < readback < rollback
+    for needle in (
+        "labor_readback_failed",
+        "labor_readback_mismatch",
+        "rollback_verified = rollback_verified",
+        "mutation_state = rollback_verified and 'rolled_back' or 'unknown'",
+    ):
+        assert needle in hook_text
+
+
 def test_set_labor_hook_whitelists_exact_labor_enums() -> None:
     hook_path = Path(__file__).resolve().parents[1] / "hook" / "set_labor.lua"
     hook_text = hook_path.read_text(encoding="utf-8")
@@ -878,6 +908,57 @@ def test_job_metrics_hook_emits_per_citizen_list() -> None:
     # aggregate counts kept for backward compatibility
     assert "mining_labor = 0" in hook_text
     assert "carpentry_labor = 0" in hook_text
+
+
+def test_job_metrics_scopes_labor_and_path_workers_to_known_adults() -> None:
+    hook_text = (
+        Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua"
+    ).read_text(encoding="utf-8")
+
+    for needle in (
+        "dfhack.units.isAdult(unit)",
+        "labor_eligible = 0",
+        "labor_eligible_idle = 0",
+        "labor_eligibility_complete = true",
+        "labor_state_complete = true",
+        "list_truncated = false",
+        "out.citizens.labor_eligibility_complete = false",
+        "out.citizens.labor_state_complete = false",
+        "profession = profession",
+        "labor_eligible = labor_eligible",
+        "labor_eligibility_known = labor_eligibility_known",
+        "labors_known = labor_state_known",
+        "current_job_known = current_job_known",
+        "out.citizens.list_truncated = true",
+    ):
+        assert needle in hook_text
+
+    adult_call = hook_text.index("dfhack.units.isAdult(unit)")
+    path_insert = hook_text.index("table.insert(citizen_units")
+    labor_count_gate = hook_text.index("if labor_eligible and labor_state_known then")
+    assert adult_call < path_insert
+    assert adult_call < labor_count_gate
+    assert "labor_eligibility_known and labor_eligible" in hook_text[adult_call:path_insert]
+    citizen_scan = hook_text[hook_text.index("for _, unit in ipairs(df.global.world.units.active)") :]
+    assert "if not ok then" in citizen_scan
+    assert "out.citizens.labor_eligibility_complete = false" in citizen_scan
+    assert "return false, false" in hook_text
+    assert "error('labor_enum_unavailable')" in hook_text
+    assert "error('labor_state_unavailable')" in hook_text
+
+
+def test_work_metrics_labor_counts_are_adult_scoped_and_fail_closed() -> None:
+    hook_text = (
+        Path(__file__).resolve().parents[1] / "hook" / "work_metrics.lua"
+    ).read_text(encoding="utf-8")
+
+    adult_call = hook_text.index("dfhack.units.isAdult(unit)")
+    labor_walk = hook_text.index("for labor, enabled in pairs(unit.status.labors)")
+    assert adult_call < labor_walk
+    assert "labor_state_complete = true" in hook_text
+    assert hook_text.count("labor_state_complete = false") >= 3
+    assert "error('labor_state_unavailable')" in hook_text
+    assert "labor_state_complete = labor_state_complete" in hook_text
 
 
 def test_job_and_work_metrics_count_stair_jobs_as_excavation() -> None:

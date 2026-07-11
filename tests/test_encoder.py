@@ -760,6 +760,7 @@ def test_governed_encoder_treats_queued_work_as_parallel_capacity() -> None:
                 "active_jobs": 1,
                 "active_carpenter_jobs": 1,
                 "carpenter_labors_enabled": 1,
+                "labor_state_complete": True,
                 "carpenter_workshop_task_job_type_names": ["ConstructDoor"],
             },
             "crew": {
@@ -767,11 +768,20 @@ def test_governed_encoder_treats_queued_work_as_parallel_capacity() -> None:
                 "citizens": {
                     "total": 7,
                     "idle": 5,
+                    "labor_eligible": 5,
+                    "labor_eligible_idle": 5,
+                    "labor_eligibility_complete": True,
+                    "labor_state_complete": True,
+                    "list_truncated": False,
                     "list": [
                         {
                             "id": 243,
                             "labors": ["construction"],
+                            "labors_known": True,
                             "current_job_type": None,
+                            "current_job_known": True,
+                            "labor_eligible": True,
+                            "labor_eligibility_known": True,
                         }
                     ],
                 },
@@ -784,9 +794,174 @@ def test_governed_encoder_treats_queued_work_as_parallel_capacity() -> None:
     assert "Direct-action workshop queue" in text
     assert "an unassigned task occupies nobody" in text
     assert "Neither constrains the overseer's next command" in text
-    assert "Parallel capacity: 5 idle citizens" in text
-    assert "does not require WAIT" in text
+    assert "neither proves worker capacity" in text
+    assert "idle citizens can advance" not in text
+    assert (
+        "Parallel capacity candidates: 5 adult citizens are labor-eligible "
+        "with no current job" in text
+    )
+    assert "does not by itself require WAIT" in text
     assert "D_JOBLIST" not in text
+
+
+def test_encoder_separates_adult_labor_capacity_from_child_population() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60},
+            "work": {
+                "manager_orders_count": 0,
+                "manager_orders_amount_left": 0,
+                "carpenter_workshops": 1,
+                "carpenter_workshops_planned": 1,
+                "carpenter_workshops_usable": 1,
+                "carpenter_workshop_task_jobs": 1,
+                "active_jobs": 0,
+                "active_carpenter_jobs": 0,
+                "carpenter_labors_enabled": 1,
+                "labor_state_complete": False,
+            },
+            "crew": {
+                "ok": True,
+                "citizens": {
+                    "total": 2,
+                    "idle": 2,
+                    "labor_eligible": 1,
+                    "labor_eligible_idle": 1,
+                    "labor_eligibility_complete": True,
+                    "labor_state_complete": True,
+                    "list_truncated": False,
+                    "list": [
+                        {
+                            "id": 243,
+                            "profession": "Peasant",
+                            "labors": ["brewing"],
+                            "labors_known": True,
+                            "current_job_type": None,
+                            "current_job_known": True,
+                            "labor_eligible": True,
+                            "labor_eligibility_known": True,
+                        },
+                        {
+                            "id": 244,
+                            "profession": "Child",
+                            "labors": [],
+                            "labors_known": True,
+                            "current_job_type": None,
+                            "current_job_known": True,
+                            "labor_eligible": False,
+                            "labor_eligibility_known": True,
+                        },
+                    ],
+                },
+            },
+        },
+        screen_text="main map",
+        governed=True,
+    )
+
+    assert "Crew: 2 citizens, 2 idle; labor_eligible=1, labor_eligible_idle=1" in text
+    assert (
+        "#243 [brewing] idle profession=Peasant labor_eligibility=eligible "
+        "labor_eligibility_known=true labor_eligible=true" in text
+    )
+    assert (
+        "#244 [-] idle profession=Child labor_eligibility=ineligible "
+        "labor_eligibility_known=true labor_eligible=false" in text
+    )
+    assert (
+        "Parallel capacity candidates: 1 adult citizen is labor-eligible "
+        "with no current job" in text
+    )
+    assert "assignment still depends on game state, matching labor, and pathing" in text
+    assert "Parallel capacity candidates: 2 citizens" not in text
+    assert "carpenter_labors=unknown, labor_state_complete=false" in text
+    assert "idle citizens can advance" not in text
+    assert "idle citizens may pursue" not in text
+
+
+def test_encoder_does_not_claim_capacity_when_labor_eligibility_is_unknown() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60},
+            "crew": {
+                "ok": True,
+                "citizens": {
+                    "total": 2,
+                    "idle": 2,
+                    "labor_eligible": 1,
+                    "labor_eligible_idle": 1,
+                    "labor_eligibility_complete": False,
+                    "labor_state_complete": False,
+                    "list_truncated": True,
+                    "list": [
+                        {
+                            "id": 243,
+                            "profession": "Peasant",
+                            "labors": [],
+                            "labors_known": True,
+                            "current_job_type": None,
+                            "current_job_known": True,
+                            "labor_eligible": True,
+                            "labor_eligibility_known": True,
+                        },
+                        {
+                            "id": 244,
+                            "profession": "?",
+                            "labors": [],
+                            "labors_known": False,
+                            "current_job_type": None,
+                            "current_job_known": False,
+                            "labor_eligible": False,
+                            "labor_eligibility_known": False,
+                        },
+                    ],
+                },
+            },
+        },
+        screen_text="main map",
+        governed=True,
+    )
+
+    assert "labor_eligibility_complete=false" in text
+    assert "labor_eligibility=unknown labor_eligibility_known=false labor_eligible=false" in text
+    assert "#244 [?] job=unknown" in text
+    assert "Citizen labor state incomplete" in text
+    assert "list_truncated=true" in text
+    assert "Citizens list truncated: only displayed entries are valid LABOR targets" in text
+    assert "Parallel capacity candidates: unknown; labor eligibility is incomplete" in text
+    assert "can take independent jobs" not in text
+
+
+def test_encoder_preserves_legacy_citizen_observations_without_inventing_eligibility() -> None:
+    text, _ = encode_observation(
+        {
+            "time": 100,
+            "population": 7,
+            "stocks": {"food": 45, "drink": 60},
+            "crew": {
+                "ok": True,
+                "citizens": {
+                    "total": 2,
+                    "idle": 2,
+                    "list": [
+                        {"id": 243, "labors": [], "current_job_type": None},
+                    ],
+                },
+            },
+        },
+        screen_text="main map",
+        governed=True,
+    )
+
+    assert "Crew: 2 citizens, 2 idle" in text
+    assert "Citizens: #243 [?] job=unknown" in text
+    assert "Citizens: #243 [-] idle" not in text
+    assert "labor_eligible=" not in text
+    assert "Parallel capacity candidates: unknown; labor eligibility is incomplete" in text
 
 
 def test_governed_encoder_suppresses_keystroke_only_guidance() -> None:
@@ -2234,6 +2409,45 @@ def test_encoder_echoes_labor_result_state() -> None:
     )
 
     assert "Last Action LABOR: #243 brewing before=False after=True changed=True" in text
+
+
+def test_encoder_distinguishes_rolled_back_and_unknown_labor_mutations() -> None:
+    base_state = {
+        "time": 100,
+        "population": 7,
+        "stocks": {"food": 45, "drink": 60, "wood": 6, "stone": 0},
+    }
+    unknown_text, _ = encode_observation(
+        base_state,
+        screen_text="main map",
+        last_action_result={
+            "accepted": False,
+            "why": "labor_readback_failed",
+            "result": {
+                "error": "labor_readback_failed",
+                "rollback_verified": False,
+                "mutation_state": "unknown",
+            },
+        },
+    )
+    rolled_back_text, _ = encode_observation(
+        base_state,
+        screen_text="main map",
+        last_action_result={
+            "accepted": False,
+            "why": "labor_readback_mismatch",
+            "result": {
+                "error": "labor_readback_mismatch",
+                "rollback_verified": True,
+                "mutation_state": "rolled_back",
+            },
+        },
+    )
+
+    assert "Last Action: MUTATION STATE UNKNOWN" in unknown_text
+    assert "rollback unverified" in unknown_text
+    assert "Last Action: REJECTED - labor_readback_failed" not in unknown_text
+    assert "Last Action: REJECTED AND ROLLED BACK" in rolled_back_text
 
 
 def test_encoder_surfaces_per_citizen_labor_list() -> None:

@@ -348,28 +348,48 @@ local citizens_total = 0
 local miners_total = 0
 local carpenter_labors_enabled = 0
 local citizens_on_target_z = 0
+local labor_state_complete = true
 if df.global.world.units and df.global.world.units.active then
   for _, unit in ipairs(df.global.world.units.active) do
-    if dfhack.units.isCitizen(unit) and not dfhack.units.isDead(unit) then
+    local ok_citizen, is_citizen = pcall(function()
+      return dfhack.units.isCitizen(unit)
+    end)
+    if not ok_citizen then
+      labor_state_complete = false
+    elseif is_citizen and not dfhack.units.isDead(unit) then
       citizens_total = citizens_total + 1
       if not global_only and unit.pos and unit.pos.z == rz then
         citizens_on_target_z = citizens_on_target_z + 1
       end
-      if unit.status and unit.status.labors then
+      local ok_adult, is_adult = pcall(function()
+        return dfhack.units.isAdult(unit)
+      end)
+      if not ok_adult or type(is_adult) ~= 'boolean' then
+        labor_state_complete = false
+      elseif is_adult then
         local is_miner = false
         local is_carpenter = false
-        for labor, enabled in pairs(unit.status.labors) do
-          if enabled then
-            local labor_name = tostring(labor)
-            if labor_name == 'MINE' then
-              is_miner = true
-            elseif labor_name == 'CARPENTER' then
-              is_carpenter = true
+        local ok_labors = pcall(function()
+          if not unit.status or not unit.status.labors then
+            error('labor_state_unavailable')
+          end
+          for labor, enabled in pairs(unit.status.labors) do
+            if enabled then
+              local labor_name = tostring(labor)
+              if labor_name == 'MINE' then
+                is_miner = true
+              elseif labor_name == 'CARPENTER' then
+                is_carpenter = true
+              end
             end
           end
+        end)
+        if ok_labors then
+          if is_miner then miners_total = miners_total + 1 end
+          if is_carpenter then carpenter_labors_enabled = carpenter_labors_enabled + 1 end
+        else
+          labor_state_complete = false
         end
-        if is_miner then miners_total = miners_total + 1 end
-        if is_carpenter then carpenter_labors_enabled = carpenter_labors_enabled + 1 end
       end
     end
   end
@@ -403,6 +423,7 @@ local out = {
   citizens_total = citizens_total,
   miners_total = miners_total,
   carpenter_labors_enabled = carpenter_labors_enabled,
+  labor_state_complete = labor_state_complete,
   citizens_on_target_z = citizens_on_target_z,
 }
 

@@ -1300,7 +1300,15 @@ def encode_observation(
                 or result_error
                 or "unknown"
             )
-            if action_result.get("partial") and (_int_or_none(action_result.get("placed_count")) or 0) > 0:
+            if action_result.get("rollback_verified") is False:
+                status_lines.append(
+                    f"Last Action: MUTATION STATE UNKNOWN - {reason}; rollback unverified"
+                )
+            elif action_result.get("mutation_state") == "rolled_back":
+                status_lines.append(f"Last Action: REJECTED AND ROLLED BACK - {reason}")
+            elif action_result.get("partial") and (
+                _int_or_none(action_result.get("placed_count")) or 0
+            ) > 0:
                 status_lines.append(f"Last Action: PARTIAL MUTATION - {reason}")
             else:
                 status_lines.append(f"Last Action: REJECTED - {reason}")
@@ -1593,6 +1601,16 @@ def encode_observation(
             "carpenter_workshops_unproven",
             default=max(0, planned_workshops - usable_workshops),
         )
+        work_labor_state = work.get("labor_state_complete")
+        if work_labor_state is True:
+            carpenter_labor_text = str(work.get("carpenter_labors_enabled", 0))
+            work_labor_state_text = "true"
+        elif work_labor_state is False:
+            carpenter_labor_text = "unknown"
+            work_labor_state_text = "false"
+        else:
+            carpenter_labor_text = "unknown"
+            work_labor_state_text = "unknown"
         status_lines.append(
             "Utility work: "
             f"manager_orders={work.get('manager_orders_count', 0)}, "
@@ -1606,7 +1624,8 @@ def encode_observation(
             f"{work.get('carpenter_workshop_construction_jobs', 0)}, "
             f"active_jobs={work.get('active_jobs', 0)}, "
             f"active_carpenter_jobs={work.get('active_carpenter_jobs', 0)}, "
-            f"carpenter_labors={work.get('carpenter_labors_enabled', 0)}"
+            f"carpenter_labors={carpenter_labor_text}, "
+            f"labor_state_complete={work_labor_state_text}"
         )
         task_job_names = work.get("carpenter_workshop_task_job_type_names")
         if isinstance(task_job_names, list) and task_job_names:
@@ -1651,8 +1670,9 @@ def encode_observation(
                         "Direct-action workshop construction: a real construction job is "
                         "already queued for the placed workshop. Any legal command with "
                         "positive advance_ticks lets that job progress; WAIT is not required, "
-                        "and idle citizens may pursue independent work in parallel. Do not "
-                        "place a duplicate workshop while this job exists."
+                        "but the queue does not prove another worker is available. Use the "
+                        "Crew adult-eligibility, current-job, matching-labor, and path evidence "
+                        "before starting parallel work. Do not place a duplicate workshop."
                     )
                 else:
                     status_lines.append(
@@ -1751,9 +1771,10 @@ def encode_observation(
                     "Direct-action workshop queue: real carpenter tasks are pending on "
                     "a usable workshop. An assigned task occupies its carpenter; an "
                     "unassigned task occupies nobody. Neither constrains the overseer's "
-                    "next command, so idle citizens can advance independent survival or "
-                    "shelter work while any positive advance_ticks also progresses this "
-                    "queue. Do not add duplicate tasks merely because the backlog remains."
+                    "next command, but neither proves worker capacity. Use the Crew "
+                    "adult-eligibility, current-job, matching-labor, and path evidence "
+                    "before starting parallel work; positive advance_ticks also progresses "
+                    "this queue. Do not add duplicate tasks merely because the backlog remains."
                 )
             else:
                 task_note = (
@@ -1797,24 +1818,57 @@ def encode_observation(
         if isinstance(citizens, dict) and citizens:
             total = _int_or_none(citizens.get("total"))
             idle = _int_or_none(citizens.get("idle"))
+            labor_eligible = _int_or_none(citizens.get("labor_eligible"))
+            labor_eligible_idle = _int_or_none(citizens.get("labor_eligible_idle"))
+            labor_eligibility_complete = citizens.get("labor_eligibility_complete") is True
+            labor_state_complete = citizens.get("labor_state_complete") is True
+            citizen_list_truncated = citizens.get("list_truncated") is True
             if total is not None and idle is not None:
                 labor_parts = []
-                for label, key in (
-                    ("mining", "mining_labor"),
-                    ("carpentry", "carpentry_labor"),
-                    ("woodcutting", "woodcutting_labor"),
-                    ("masonry", "masonry_labor"),
-                    ("herbalism", "herbalism_labor"),
+                if labor_state_complete or (
+                    citizens.get("labor_state_complete") is None and not governed
                 ):
-                    labor_value = _int_or_none(citizens.get(key))
-                    if labor_value is not None:
-                        labor_parts.append(f"{label}={labor_value}")
+                    for label, key in (
+                        ("mining", "mining_labor"),
+                        ("carpentry", "carpentry_labor"),
+                        ("woodcutting", "woodcutting_labor"),
+                        ("masonry", "masonry_labor"),
+                        ("herbalism", "herbalism_labor"),
+                    ):
+                        labor_value = _int_or_none(citizens.get(key))
+                        if labor_value is not None:
+                            labor_parts.append(f"{label}={labor_value}")
+                elif governed or isinstance(citizens.get("labor_state_complete"), bool):
+                    labor_parts.append("state=unknown")
                 crew_line = f"Crew: {total} citizens, {idle} idle"
+                eligibility_parts = []
+                if labor_eligible is not None:
+                    eligibility_parts.append(f"labor_eligible={labor_eligible}")
+                if labor_eligible_idle is not None:
+                    eligibility_parts.append(f"labor_eligible_idle={labor_eligible_idle}")
+                if isinstance(citizens.get("labor_eligibility_complete"), bool):
+                    eligibility_parts.append(
+                        "labor_eligibility_complete="
+                        f"{'true' if labor_eligibility_complete else 'false'}"
+                    )
+                if isinstance(citizens.get("labor_state_complete"), bool):
+                    eligibility_parts.append(
+                        "labor_state_complete="
+                        f"{'true' if labor_state_complete else 'false'}"
+                    )
+                if isinstance(citizens.get("list_truncated"), bool):
+                    eligibility_parts.append(
+                        "list_truncated="
+                        f"{'true' if citizen_list_truncated else 'false'}"
+                    )
+                if eligibility_parts:
+                    crew_line += "; " + ", ".join(eligibility_parts)
                 if labor_parts:
                     crew_line += "; labors: " + ", ".join(labor_parts)
                 status_lines.append(crew_line)
 
-            # Per-citizen detail: id -> enabled whitelist labors + current job.
+            # Per-citizen detail: id -> profession, labor eligibility, enabled
+            # whitelist labors, and current job.
             # The LABOR action targets a unit by id, so the agent needs this
             # mapping to choose whom to reassign (e.g. flip brewing on an idle
             # citizen so a starved brew job gets taken).
@@ -1828,28 +1882,100 @@ def encode_observation(
                     if cid is None:
                         continue
                     labors = entry.get("labors")
-                    if isinstance(labors, list):
+                    labors_known = entry.get("labors_known")
+                    if (governed and labors_known is not True) or labors_known is False:
+                        labor_names = []
+                        labor_str = "?"
+                    elif isinstance(labors, list):
                         labor_names = [str(name) for name in labors if isinstance(name, str)]
+                        labor_str = ",".join(labor_names) if labor_names else "-"
                     else:
                         labor_names = []
-                    labor_str = ",".join(labor_names) if labor_names else "-"
+                        labor_str = "?"
                     job = entry.get("current_job_type")
-                    job_str = str(job) if isinstance(job, str) and job else "idle"
+                    current_job_known = entry.get("current_job_known")
+                    if (
+                        governed
+                        and current_job_known is not True
+                    ) or current_job_known is False:
+                        job_str = "job=unknown"
+                    elif isinstance(job, str) and job:
+                        job_str = str(job)
+                    else:
+                        job_str = "idle"
                     pos = entry.get("pos")
                     pos_str = ""
                     if isinstance(pos, (list, tuple)) and len(pos) >= 3:
                         px, py, pz = (_int_or_none(pos[index]) for index in range(3))
                         if px is not None and py is not None and pz is not None:
                             pos_str = f" @({px},{py},{pz})"
-                    citizen_parts.append(f"#{cid} [{labor_str}] {job_str}{pos_str}")
+                    citizen_line = f"#{cid} [{labor_str}] {job_str}{pos_str}"
+                    profession = entry.get("profession")
+                    if isinstance(profession, str) and profession:
+                        profession_text = _sanitize_token(profession) or "?"
+                        citizen_line += f" profession={profession_text}"
+                    eligibility_known = entry.get("labor_eligibility_known")
+                    eligibility_value = entry.get("labor_eligible")
+                    if isinstance(eligibility_known, bool):
+                        if not eligibility_known:
+                            citizen_line += (
+                                " labor_eligibility=unknown"
+                                " labor_eligibility_known=false labor_eligible=false"
+                            )
+                        elif isinstance(eligibility_value, bool):
+                            eligibility_state = (
+                                "eligible" if eligibility_value else "ineligible"
+                            )
+                            eligibility_bool = "true" if eligibility_value else "false"
+                            citizen_line += (
+                                f" labor_eligibility={eligibility_state}"
+                                " labor_eligibility_known=true"
+                                f" labor_eligible={eligibility_bool}"
+                            )
+                        else:
+                            citizen_line += " labor_eligibility=unknown"
+                    if isinstance(labors_known, bool):
+                        citizen_line += f" labors_known={'true' if labors_known else 'false'}"
+                    if isinstance(current_job_known, bool):
+                        citizen_line += (
+                            " current_job_known="
+                            f"{'true' if current_job_known else 'false'}"
+                        )
+                    citizen_parts.append(citizen_line)
                 if citizen_parts:
                     status_lines.append("Citizens: " + "; ".join(citizen_parts))
-                if governed and idle is not None and idle > 0:
+                if citizen_list_truncated:
                     status_lines.append(
-                        f"Parallel capacity: {idle} idle citizens can take independent jobs. "
-                        "A queued specialist job does not require WAIT; issue another legal "
-                        "overseer command with positive advance_ticks, or use LABOR when a "
-                        "necessary job lacks an enabled idle worker."
+                        "Citizens list truncated: only displayed entries are valid LABOR "
+                        "targets; do not infer eligibility for hidden citizens."
+                    )
+                if citizens.get("labor_state_complete") is False:
+                    status_lines.append(
+                        "Citizen labor state incomplete: absent labor names do not prove "
+                        "that a labor is disabled."
+                    )
+            if governed and idle is not None and idle > 0:
+                if (
+                    labor_eligibility_complete
+                    and labor_eligible_idle is not None
+                    and labor_eligible_idle >= 0
+                ):
+                    candidate_subject = (
+                        "adult citizen is" if labor_eligible_idle == 1 else "adult citizens are"
+                    )
+                    status_lines.append(
+                        f"Parallel capacity candidates: {labor_eligible_idle} {candidate_subject} "
+                        "labor-eligible with no current job "
+                        f"(labor_eligible_idle={labor_eligible_idle}). A queued specialist "
+                        "job does not by itself require WAIT; assignment still depends on "
+                        "game state, matching labor, and pathing. Issue another legal "
+                        "overseer command with positive advance_ticks, or use LABOR when "
+                        "a necessary job lacks an enabled eligible worker."
+                    )
+                else:
+                    status_lines.append(
+                        "Parallel capacity candidates: unknown; labor eligibility is incomplete, "
+                        "so idle citizens are not proven work capacity."
                     )
 
         jobs = crew.get("jobs") if isinstance(crew.get("jobs"), dict) else {}

@@ -147,7 +147,10 @@ seeds on hand, and the current season. Raw contained-item evidence reports nativ
 it is not a heuristic conclusion about crop growth or route accessibility. Setting a slot to a crop \
 it already holds changes nothing.
 - LABOR: params {"unit_id": <citizen id>, "labor": <name>, "enable": true|false}. Toggles one \
-labor on one citizen, exactly like the player's unit-labors screen. A queued job is only ever \
+labor on one citizen, exactly like the player's unit-labors screen. LABOR may target only a \
+citizen entry with labor_eligibility_known=true and labor_eligible=true. Never target an entry \
+whose eligibility is unknown or false; children and babies remain factual citizens and population \
+members but are not labor capacity. A queued job is only ever \
 taken by a citizen who has the matching labor enabled: brew jobs need a citizen with brewing, \
 farm work needs farming, plant gathering needs herbalism, felling needs woodcutting, mining needs \
 mine, wall/floor/workshop construction needs construction, hauling/installing furniture and \
@@ -155,8 +158,10 @@ building workshops needs construction, carpentry/masonry/cooking/fishing likewis
 labor names: mine, woodcutting, carpentry, masonry, farming, herbalism, brewing, fishing, \
 construction, cooking. Enabling a labor lets that citizen pick up a matching starved job; it \
 completes no work itself and moves no dwarf — a dwarf must still path to and perform the job over \
-time. The observation's Citizens line lists each citizen id with its currently-enabled labors and \
-current job, so you can see who lacks the labor a stalled job needs and flip exactly that one.
+time. The bounded Citizens line lists each displayed citizen id with attested labor and current-job \
+state. labors_known=false or current_job_known=false is unknown evidence, not disabled labor or \
+idleness. list_truncated=true means additional citizens are not displayed; target only a displayed \
+entry with the required true eligibility fields and never infer eligibility for a hidden citizen.
 - WAIT: params {}. Issues nothing and lets the simulation run.
 - INTERACT: params {"operation": "confirm"|"cancel"|"up"|"down"|"left"|"right"|"finish_topic_meeting"|"topic_option_a"|...|"topic_option_h"}. Sends exactly one
 semantic input to a paused interface or dialog, then observes one screen after that input. It must
