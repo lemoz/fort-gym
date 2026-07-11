@@ -41,6 +41,7 @@ def test_advance_ticks_timeout_path(monkeypatch):
     monkeypatch.setattr(dfhack_backend, "tick_read", fake_tick_read)
     monkeypatch.setattr(dfhack_backend, "read_pause_state", fake_read_pause_state)
     monkeypatch.setattr(dfhack_backend, "set_paused", fake_set_paused)
+    monkeypatch.setattr(dfhack_backend, "_set_nopause", lambda enabled: None)
     monkeypatch.setattr(dfhack_backend.time, "monotonic", fake_monotonic)
     monkeypatch.setattr(dfhack_backend.time, "sleep", fake_sleep)
 
@@ -80,6 +81,7 @@ def test_advance_ticks_uses_space_fallback_when_pause_flag_sticks(monkeypatch):
     monkeypatch.setattr(dfhack_backend, "tick_read", fake_tick_read)
     monkeypatch.setattr(dfhack_backend, "read_pause_state", fake_read_pause_state)
     monkeypatch.setattr(dfhack_backend, "set_paused", fake_set_paused)
+    monkeypatch.setattr(dfhack_backend, "_set_nopause", lambda enabled: None)
     monkeypatch.setattr(dfhack_backend, "execute_keystroke_action", fake_execute_keystroke_action)
     monkeypatch.setattr(dfhack_backend.time, "monotonic", fake_monotonic)
     monkeypatch.setattr(dfhack_backend.time, "sleep", fake_sleep)
@@ -126,3 +128,141 @@ def test_advance_ticks_caps_direct_calls_at_action_schema_limit(monkeypatch):
     assert result["ok"] is True
     assert result["requested"] == dfhack_backend.MAX_ADVANCE_TICKS
     assert result["ticks_advanced"] == dfhack_backend.MAX_ADVANCE_TICKS
+
+
+def test_tick_read_failure_after_nopause_fails_closed_and_recovers_end_tick(monkeypatch):
+    from fort_gym.bench import dfhack_backend
+    from fort_gym.bench.dfhack_exec import DFHackError
+
+    reads = iter([100, DFHackError("transient timeout"), 123])
+    toggles: list[bool] = []
+    pause_state = {"value": True}
+
+    def fake_tick_read(timeout: float = 1.0) -> int:
+        value = next(reads)
+        if isinstance(value, Exception):
+            raise value
+        return value
+
+    def fake_set_nopause(enabled: bool) -> None:
+        toggles.append(enabled)
+        if enabled:
+            pause_state["value"] = False
+        return None
+
+    def fake_set_paused(paused: bool, timeout: float = 1.0) -> None:
+        pause_state["value"] = paused
+
+    monkeypatch.setattr(dfhack_backend, "tick_read", fake_tick_read)
+    monkeypatch.setattr(dfhack_backend, "_set_nopause", fake_set_nopause)
+    monkeypatch.setattr(dfhack_backend, "set_paused", fake_set_paused)
+    monkeypatch.setattr(
+        dfhack_backend,
+        "read_pause_state",
+        lambda timeout=1.0: pause_state["value"],
+    )
+    monkeypatch.setattr(dfhack_backend.time, "sleep", lambda _duration: None)
+
+    result = dfhack_backend.advance_ticks_exact_external(10, True)
+
+    assert result["ok"] is False
+    assert result["error"] == "tick_read_failed:transient timeout"
+    assert result["ticks_advanced"] == 23
+    assert result["paused_after"] is True
+    assert result["repause_effective"] is True
+    assert toggles == [True, False]
+
+
+def test_successful_tick_advance_fails_when_repause_is_unverified(monkeypatch):
+    from fort_gym.bench import dfhack_backend
+
+    ticks = iter([100, 110, 110])
+    monkeypatch.setattr(dfhack_backend, "tick_read", lambda timeout=1.0: next(ticks))
+    monkeypatch.setattr(dfhack_backend, "read_pause_state", lambda timeout=1.0: True)
+    monkeypatch.setattr(dfhack_backend, "_set_nopause", lambda enabled: None)
+    monkeypatch.setattr(dfhack_backend.time, "sleep", lambda _duration: None)
+    monkeypatch.setattr(
+        dfhack_backend,
+        "ensure_paused_external",
+        lambda **_kwargs: {
+            "ok": False,
+            "paused": False,
+            "error": "pause_state_unverified",
+        },
+    )
+
+    result = dfhack_backend.advance_ticks_exact_external(10, True)
+
+    assert result["ok"] is False
+    assert result["error"] == "repause_unverified"
+    assert result["repause_effective"] is False
+    assert result["repause_error"] == "pause_state_unverified"
+
+
+def test_ensure_paused_requires_nopause_disable_and_pause_readback(monkeypatch):
+    from fort_gym.bench import dfhack_backend
+
+    monkeypatch.setattr(
+        dfhack_backend,
+        "_set_nopause",
+        lambda enabled: "disable failed" if enabled is False else None,
+    )
+    monkeypatch.setattr(dfhack_backend, "set_paused", lambda paused, timeout=1.0: None)
+    monkeypatch.setattr(dfhack_backend, "read_pause_state", lambda timeout=1.0: True)
+    monkeypatch.setattr(dfhack_backend.time, "sleep", lambda _duration: None)
+
+    result = dfhack_backend.ensure_paused_external(attempts=2)
+
+    assert result["ok"] is False
+    assert result["paused"] is True
+    assert result["attempts"] == 2
+    assert all(
+        record["nopause_disabled"] is False for record in result["attempt_records"]
+    )
+
+
+def test_success_with_repause_false_still_disables_nopause(monkeypatch):
+    from fort_gym.bench import dfhack_backend
+
+    ticks = iter([100, 110, 110])
+    pauses = iter([True, False])
+    toggles: list[bool] = []
+    monkeypatch.setattr(dfhack_backend, "tick_read", lambda timeout=1.0: next(ticks))
+    monkeypatch.setattr(
+        dfhack_backend,
+        "read_pause_state",
+        lambda timeout=1.0: next(pauses),
+    )
+    monkeypatch.setattr(
+        dfhack_backend,
+        "_set_nopause",
+        lambda enabled: toggles.append(enabled) or None,
+    )
+    monkeypatch.setattr(dfhack_backend.time, "sleep", lambda _duration: None)
+
+    result = dfhack_backend.advance_ticks_exact_external(10, repause=False)
+
+    assert result["ok"] is True
+    assert result["paused_after"] is False
+    assert result["repause_effective"] is None
+    assert toggles == [True, False]
+
+
+def test_ensure_paused_converts_process_spawn_errors_to_failed_attempts(monkeypatch):
+    from fort_gym.bench import dfhack_backend
+
+    monkeypatch.setattr(dfhack_backend, "_set_nopause", lambda enabled: None)
+
+    def fail_spawn(*_args, **_kwargs):
+        raise FileNotFoundError("dfhack-run missing")
+
+    monkeypatch.setattr(dfhack_backend, "set_paused", fail_spawn)
+    monkeypatch.setattr(dfhack_backend, "read_pause_state", fail_spawn)
+    monkeypatch.setattr(dfhack_backend.time, "sleep", lambda _duration: None)
+
+    result = dfhack_backend.ensure_paused_external(attempts=2)
+
+    assert result["ok"] is False
+    assert result["paused"] is None
+    assert result["attempts"] == 2
+    assert all("dfhack-run missing" in record["pause_error"] for record in result["attempt_records"])

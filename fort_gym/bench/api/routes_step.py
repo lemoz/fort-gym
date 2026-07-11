@@ -13,6 +13,7 @@ from typing import Any, Dict, Optional
 from fastapi import APIRouter, Depends, HTTPException
 
 from ..config import get_settings
+from ..dfhack_backend import ensure_paused_external
 from ..env.actions import parse_action, validate_action
 from ..env.dfhack_client import DFHackClient
 from ..env.encoder import encode_observation
@@ -156,10 +157,17 @@ async def step_endpoint(payload: StepRequest, _: None = Depends(require_admin)) 
         allow_assisted_dig_completion=False,
     )
     events: list[Dict[str, Any]] = []
+    exit_pause_verified = False
 
     try:
         dfhack_client.connect()
         dfhack_client.pause()
+        pause_preflight = ensure_paused_external(timeout=2.5, attempts=2)
+        if pause_preflight.get("ok") is not True:
+            raise RuntimeError(
+                "DFHack step startup pause is unverified: "
+                f"{pause_preflight.get('error') or pause_preflight}"
+            )
 
         state_before = StateReader.from_dfhack(dfhack_client)
         obs_text, obs_json = encode_observation(state_before)
@@ -204,12 +212,25 @@ async def step_endpoint(payload: StepRequest, _: None = Depends(require_admin)) 
         advance_state = dfhack_client.advance(max_ticks)
         tick_info = dfhack_client.last_tick_info or {}
         dfhack_client.pause()
+        pause_after_advance = ensure_paused_external(timeout=2.5, attempts=2)
+        if pause_after_advance.get("ok") is not True:
+            tick_info = {
+                **tick_info,
+                "ok": False,
+                "error": "repause_unverified",
+                "repause": pause_after_advance,
+            }
         _emit_event(
             run.run_id,
             events,
             "advance",
             {"state": advance_state, "tick_advance": tick_info},
         )
+        if tick_info.get("ok") is False:
+            raise HTTPException(
+                status_code=503,
+                detail=f"DFHack tick advance failed: {tick_info.get('error') or tick_info}",
+            )
 
         metrics_snapshot = metrics.step_snapshot(advance_state)
         _emit_event(run.run_id, events, "metrics", {"metrics": metrics_snapshot})
@@ -225,6 +246,17 @@ async def step_endpoint(payload: StepRequest, _: None = Depends(require_admin)) 
                 "milestones": milestone_notes,
             },
         )
+
+        final_pause = ensure_paused_external(timeout=2.5, attempts=2)
+        if final_pause.get("ok") is not True:
+            raise HTTPException(
+                status_code=503,
+                detail=(
+                    "DFHack final pause is unverified: "
+                    f"{final_pause.get('error') or final_pause}"
+                ),
+            )
+        exit_pause_verified = True
 
         end_ms = int(time.time() * 1000)
         elapsed_ms = end_ms - (previous_ts if previous_ts is not None else now_ms)
@@ -330,10 +362,24 @@ async def step_endpoint(payload: StepRequest, _: None = Depends(require_admin)) 
     finally:
         with context.lock:
             context.inflight = False
+        pause_cleanup_error: str | None = None
+        if not exit_pause_verified:
+            try:
+                pause_cleanup = ensure_paused_external(timeout=2.5, attempts=2)
+                if pause_cleanup.get("ok") is not True:
+                    pause_cleanup_error = str(
+                        pause_cleanup.get("error") or pause_cleanup
+                    )
+            except Exception as exc:
+                pause_cleanup_error = str(exc)
         try:
             dfhack_client.close()
         except Exception:
             pass
+        if pause_cleanup_error is not None:
+            raise RuntimeError(
+                f"DFHack step cleanup pause is unverified: {pause_cleanup_error}"
+            )
 
 
 def _reset_step_contexts_for_tests() -> None:

@@ -19,6 +19,7 @@ from ..dfhack_backend import (
     MAX_RECT_W,
     MAX_SNAPSHOT_H,
     MAX_SNAPSHOT_W,
+    ensure_paused_external,
     prepare_keystroke_target,
     read_fort_metrics,
     read_g7_evidence,
@@ -214,6 +215,15 @@ def _tick_terminal_reason(
         "ticks_advanced": actual_ticks,
         "tick_info": dict(tick_info),
     }
+    if (
+        tick_info.get("error") == "repause_unverified"
+        or tick_info.get("repause_error") is not None
+        or (
+            tick_info.get("repause_requested") is True
+            and tick_info.get("repause_effective") is not True
+        )
+    ):
+        return {"code": "tick_repause_unverified", **base}, None, 0
     if actual_ticks > 0:
         if tick_info.get("timeout") is True:
             return None, {"code": "partial_tick_timeout", **base}, 0
@@ -2154,40 +2164,39 @@ def _cleanup_dfhack_runtime(
     client: Optional[DFHackClient],
     *,
     evidence_attempted: bool,
+    require_pause: bool = False,
 ) -> Dict[str, Any]:
     """Attempt one bounded runtime release and report whether it was verified."""
 
     errors: list[Dict[str, str]] = []
-    pause_rpc_ok = client is None
-    pause_direct_ok = client is None
+    pause_rpc_ok = False
+    pause_direct_ok = client is None and not require_pause
+    pause_attestation: Dict[str, Any] | None = None
     if client is not None:
         try:
             client.pause()
             pause_rpc_ok = True
         except Exception as exc:
             errors.append({"stage": "pause_rpc", "error": str(exc)})
+    if client is not None or require_pause:
         try:
-            import subprocess
-
-            from ..config import dfhack_cmd
-
-            result = subprocess.run(
-                dfhack_cmd("lua", "df.global.pause_state = true"),
-                timeout=5,
-                capture_output=True,
+            pause_attestation = dict(
+                ensure_paused_external(timeout=2.5, attempts=2)
             )
-            pause_direct_ok = int(getattr(result, "returncode", 0) or 0) == 0
+            pause_direct_ok = pause_attestation.get("ok") is True
             if not pause_direct_ok:
                 errors.append(
                     {
-                        "stage": "pause_direct",
-                        "error": f"exit_{getattr(result, 'returncode', 'unknown')}",
+                        "stage": "pause_attestation",
+                        "error": str(
+                            pause_attestation.get("error") or pause_attestation
+                        ),
                     }
                 )
         except Exception as exc:
-            errors.append({"stage": "pause_direct", "error": str(exc)})
-        if pause_rpc_ok or pause_direct_ok:
-            errors = [error for error in errors if not error["stage"].startswith("pause_")]
+            errors.append({"stage": "pause_attestation", "error": str(exc)})
+        if pause_direct_ok:
+            errors = [error for error in errors if error["stage"] != "pause_rpc"]
 
     evidence_result: Dict[str, Any] | None = None
     if evidence_attempted:
@@ -2214,7 +2223,9 @@ def _cleanup_dfhack_runtime(
     return {
         "ok": not errors,
         "errors": errors,
-        "pause_verified": bool(pause_rpc_ok or pause_direct_ok),
+        "pause_rpc_completed": pause_rpc_ok,
+        "pause_verified": pause_direct_ok,
+        "pause_attestation": pause_attestation,
         "evidence_stop": evidence_result,
         "client_closed": client_closed,
     }
@@ -2281,6 +2292,8 @@ def run_once(
     cleanup_attempts = 0
     cleanup_outcome: Dict[str, Any] | None = None
     cleanup_recorded = False
+    cleanup_failure_without_registry: Dict[str, Any] | None = None
+    dfhack_runtime_may_be_active = False
 
     def cleanup_dfhack_runtime() -> Dict[str, Any]:
         nonlocal cleanup_attempts, cleanup_outcome, cleanup_recorded
@@ -2290,6 +2303,7 @@ def run_once(
             cleanup_outcome = _cleanup_dfhack_runtime(
                 dfhack_client,
                 evidence_attempted=g7_evidence_attempted,
+                require_pause=dfhack_runtime_may_be_active,
             )
         if cleanup_outcome is None:
             cleanup_outcome = {
@@ -2396,6 +2410,8 @@ def run_once(
             fail_setup_after_cleanup()
             raise RuntimeError("DFHack backend disabled. Set DFHACK_ENABLED=1 to use it.")
 
+        dfhack_runtime_may_be_active = True
+
         # If configured, reset the save from a pristine seed before connecting.
         if not preserve_save:
             try:
@@ -2411,6 +2427,12 @@ def run_once(
         try:
             dfhack_client = DFHackClient(host=settings.DFHACK_HOST, port=settings.DFHACK_PORT)
             dfhack_client.connect()
+            pause_preflight = ensure_paused_external(timeout=2.5, attempts=2)
+            if pause_preflight.get("ok") is not True:
+                raise RuntimeError(
+                    "DFHack startup pause preflight failed: "
+                    f"{pause_preflight.get('error') or pause_preflight}"
+                )
             if is_governed_dfhack_mode:
                 dfhack_client.set_work_metrics_global_only(True)
             executor = Executor(
@@ -4462,6 +4484,8 @@ def run_once(
 
         cleanup_outcome = cleanup_dfhack_runtime()
         if not cleanup_outcome.get("ok"):
+            if registry is None:
+                cleanup_failure_without_registry = dict(cleanup_outcome)
             terminal_failure_reason = cleanup_terminal_reason(
                 cleanup_outcome,
                 prior_reason=terminal_failure_reason,
@@ -4570,6 +4594,12 @@ def run_once(
         raise
     finally:
         cleanup_dfhack_runtime()
+
+    if cleanup_failure_without_registry is not None:
+        raise RuntimeError(
+            "DFHack cleanup remained unverified: "
+            f"{cleanup_failure_without_registry.get('errors') or cleanup_failure_without_registry}"
+        )
 
     return run_identifier
 

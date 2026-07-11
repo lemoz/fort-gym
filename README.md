@@ -286,11 +286,28 @@ added only the missing legal `INTERACT cancel`, factual blocking-screen state,
 and pre-execution rejection of any other Stores-screen action. PRs #94 and #95
 merged and deployed at `506ce6986029c5885ecb26074fa45ac55d47c541`.
 A live proof sent one `LEAVESCREEN`, advanced zero ticks, and moved from
-`viewscreen_storesst` to `viewscreen_topicmeeting_takerequestsst`. Fresh-seed
-Attempt 23 is running at
-[fortgym.live/r/uGx2o874VECGSlqciDUrbQxo-JrbkQ41](https://fortgym.live/r/uGx2o874VECGSlqciDUrbQxo-JrbkQ41).
-The changes choose no coordinates, actions, objectives, or strategy for the
-model.
+`viewscreen_storesst` to `viewscreen_topicmeeting_takerequestsst`.
+
+Fresh-seed Attempt 23
+([replay](https://fortgym.live/r/uGx2o874VECGSlqciDUrbQxo-JrbkQ41))
+then completed real channel access, 43 owned excavations, a subterranean
+FarmPlot, a Carpenter workshop, a surface Still, two functional rooms, and one
+bed. It was operator-stopped after 125 steps when drink reached zero and one
+dwarf died. Deterministic G7 failed at 185,487/403,200 trace ticks: food flow
+3/31, drink flow 0/60, population 10/15, rooms 2/3, beds 1/4, rubric 65.97 with
+`no_broader_fort_layout`, and score-v5 115.39/150. PRs #97 and #98 now return
+the complete rejected 3x3 workshop footprint and expose cached native job-target
+walk-group connectivity; neither chooses a repair or target.
+
+Attempt 24
+([replay](https://fortgym.live/r/64584CWkX3eWm6TOwJST1_t4mgpGB-6Q))
+was an infrastructure abort at step 0, not a policy result. Its first tick read
+after enabling DFHack `nopause` timed out; the old early return bypassed repause
+and terminal cleanup trusted command completion without reading the actual pause
+state. The fail-closed controller now places every unpaused exit under cleanup,
+disables `nopause`, attests `pause_state=true`, rejects unverified cleanup, and
+performs the same attestation before the first agent turn. A fresh replacement
+run follows deployment of that repair.
 G7 remains open. Full findings and gate predicates are recorded in
 `docs/WDSLL.md`.
 
