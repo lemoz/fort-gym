@@ -164,6 +164,86 @@ def test_advance_ticks_interrupts_on_paused_viewscreen_transition(monkeypatch):
     assert keystroke_calls == []
 
 
+def test_advance_ticks_repauses_unpaused_allowlisted_transition(monkeypatch) -> None:
+    from fort_gym.bench import tick_controller
+
+    set_paused_calls: list[bool] = []
+    keystroke_calls: list[list[str]] = []
+    probes = iter(
+        [
+            {
+                "cur_year": 30,
+                "cur_year_tick": 223702,
+                "pause_state": True,
+                "viewscreen_type": "viewscreen_dwarfmodest",
+            },
+            {
+                "cur_year": 30,
+                "cur_year_tick": 223702,
+                "pause_state": True,
+                "viewscreen_type": "viewscreen_dwarfmodest",
+            },
+            {
+                "cur_year": 30,
+                "cur_year_tick": 223716,
+                "pause_state": False,
+                "viewscreen_type": "viewscreen_topicmeetingst",
+            },
+            {
+                "cur_year": 30,
+                "cur_year_tick": 223716,
+                "pause_state": True,
+                "viewscreen_type": "viewscreen_topicmeetingst",
+            },
+        ]
+    )
+    monkeypatch.setattr(tick_controller, "_set_nopause", lambda _enabled: None)
+    monkeypatch.setattr(
+        tick_controller,
+        "set_paused",
+        lambda paused, **_kwargs: set_paused_calls.append(paused),
+    )
+    monkeypatch.setattr(
+        tick_controller,
+        "execute_keystroke_action",
+        lambda keys: keystroke_calls.append(keys) or {"ok": True},
+    )
+    monkeypatch.setattr(
+        tick_controller, "read_tick_pause_viewscreen", lambda **_kwargs: next(probes)
+    )
+    monkeypatch.setattr(
+        tick_controller,
+        "ensure_paused_external",
+        lambda **_kwargs: {
+            "ok": True,
+            "paused": True,
+            "attempts": 1,
+            "attempt_records": [
+                {"attempt": 1, "nopause_disabled": True, "paused": True}
+            ],
+        },
+    )
+    monkeypatch.setattr(tick_controller.time, "sleep", lambda _duration: None)
+
+    result = tick_controller.advance_ticks_exact_external(
+        10,
+        interrupt_on_viewscreen_transition=True,
+        viewscreen_before="viewscreen_dwarfmodest",
+    )
+
+    assert result["ok"] is False
+    assert result["error"] == "blocking_viewscreen_transition"
+    assert result["interrupted"] is True
+    assert result["pause_state_at_interrupt"] is False
+    assert result["ticks_advanced"] == 14
+    assert result["paused_after"] is True
+    assert result["final_pause_state"] is True
+    assert result["final_viewscreen_type"] == "viewscreen_topicmeetingst"
+    assert result["interrupt_safety_error"] is False
+    assert set_paused_calls == [False]
+    assert keystroke_calls == []
+
+
 def test_advance_ticks_interrupts_before_any_tick_progress(monkeypatch):
     from fort_gym.bench import tick_controller
 
