@@ -17,16 +17,12 @@ local function add_error(ledger, code)
   ledger.evidence_errors[code] = true
 end
 
-local function civ_dwarf(unit)
-  local ok, result = pcall(function()
-    return unit.civ_id == df.global.ui.civ_id and dfhack.units.isDwarf(unit)
-  end)
-  return ok and result or false
+local function is_run_citizen(unit)
+  return dfhack.units.isCitizen(unit, true) and true or false
 end
 
 local function unit_is_dead(unit)
-  local ok, dead = pcall(function() return dfhack.units.isDead(unit) end)
-  return ok and dead or false
+  return dfhack.units.isDead(unit) and true or false
 end
 
 local function history_signatures(unit, kind)
@@ -87,7 +83,7 @@ end
 local function scan_consumption(ledger, baseline_only)
   local ok = pcall(function()
     for _, unit in ipairs(df.global.world.units.all) do
-      if civ_dwarf(unit) and not unit_is_dead(unit) then
+      if is_run_citizen(unit) and not unit_is_dead(unit) then
         update_unit_consumption(ledger, unit, baseline_only)
       end
     end
@@ -149,7 +145,7 @@ local function death_record(unit)
 end
 
 local function record_death(ledger, unit)
-  if not unit or not civ_dwarf(unit) then return end
+  if not unit or not is_run_citizen(unit) then return end
   update_unit_consumption(ledger, unit, false)
   local key = tostring(unit.id)
   local record = death_record(unit)
@@ -163,13 +159,14 @@ local function scan_deaths(ledger)
   local ok = pcall(function()
     for _, unit in ipairs(df.global.world.units.all) do
       if unit_is_dead(unit)
-        and civ_dwarf(unit)
+        and is_run_citizen(unit)
         and not ledger.baseline_dead_ids[tostring(unit.id)] then
         record_death(ledger, unit)
       end
     end
   end)
   if not ok then
+    ledger.flow_evidence_complete = false
     ledger.death_evidence_complete = false
     add_error(ledger, 'dead_citizen_scan_failed')
   end
@@ -256,10 +253,12 @@ local function attach_callbacks(ledger)
       elseif unit then
         local death_ok, death_err = pcall(record_death, active, unit)
         if not death_ok then
+          active.flow_evidence_complete = false
           active.death_evidence_complete = false
           add_error(active, 'death_callback_failed:' .. sanitize(death_err))
         end
       else
+        active.flow_evidence_complete = false
         active.death_evidence_complete = false
         add_error(active, 'death_callback_unit_missing')
       end
@@ -352,10 +351,16 @@ if command == 'start' then
   detach_callbacks()
   local ledger = new_ledger(run_id)
   _G[GLOBAL_KEY] = ledger
-  for _, unit in ipairs(df.global.world.units.all) do
-    if civ_dwarf(unit) and unit_is_dead(unit) then
-      ledger.baseline_dead_ids[tostring(unit.id)] = true
+  local baseline_ok = pcall(function()
+    for _, unit in ipairs(df.global.world.units.all) do
+      if is_run_citizen(unit) and unit_is_dead(unit) then
+        ledger.baseline_dead_ids[tostring(unit.id)] = true
+      end
     end
+  end)
+  if not baseline_ok then
+    ledger.death_evidence_complete = false
+    add_error(ledger, 'baseline_dead_citizen_scan_failed')
   end
   scan_consumption(ledger, true)
   attach_callbacks(ledger)

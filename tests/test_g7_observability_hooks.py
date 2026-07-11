@@ -10,12 +10,52 @@ G7_EVIDENCE_SOURCE = (Path(__file__).resolve().parents[1] / "hook" / "g7_evidenc
 )
 
 
-def test_g7_citizen_filter_returns_one_boolean_value() -> None:
-    citizen_filter = G7_EVIDENCE_SOURCE.split("local function civ_dwarf", 1)[1].split(
+def test_g7_citizen_filter_propagates_classifier_failures() -> None:
+    citizen_filter = G7_EVIDENCE_SOURCE.split("local function is_run_citizen", 1)[1].split(
         "local function unit_is_dead", 1
     )[0]
-    assert "return ok and result or false" in citizen_filter
-    assert "return ok, ok and result or false" not in citizen_filter
+    assert "dfhack.units.isCitizen(unit, true)" in citizen_filter
+    assert G7_EVIDENCE_SOURCE.count("dfhack.units.isCitizen(unit, true)") == 1
+    assert "civ_dwarf" not in G7_EVIDENCE_SOURCE
+    assert "pcall" not in citizen_filter
+    assert "and true or false" in citizen_filter
+    assert "unit.civ_id" not in G7_EVIDENCE_SOURCE
+    assert "dfhack.units.isDwarf(unit)" not in G7_EVIDENCE_SOURCE
+
+    dead_filter = G7_EVIDENCE_SOURCE.split("local function unit_is_dead", 1)[1].split(
+        "local function history_signatures", 1
+    )[0]
+    assert "dfhack.units.isDead(unit)" in dead_filter
+    assert "pcall" not in dead_filter
+
+
+def test_g7_citizen_filter_is_used_for_every_membership_sensitive_path() -> None:
+    scan_consumption = G7_EVIDENCE_SOURCE.split("local function scan_consumption", 1)[1].split(
+        "local function raw_value", 1
+    )[0]
+    record_death = G7_EVIDENCE_SOURCE.split("local function record_death", 1)[1].split(
+        "local function scan_deaths", 1
+    )[0]
+    scan_deaths = G7_EVIDENCE_SOURCE.split("local function scan_deaths", 1)[1].split(
+        "local function item_on_completed_farm_plot", 1
+    )[0]
+    baseline = G7_EVIDENCE_SOURCE.split("if command == 'start'", 1)[1].split(
+        "scan_consumption(ledger, true)", 1
+    )[0]
+    callback = G7_EVIDENCE_SOURCE.split(
+        "eventful.onUnitDeath[CALLBACK_KEY] = function(unit_id)", 1
+    )[1].split("eventful.enableEvent", 1)[0]
+
+    for path in (scan_consumption, record_death, scan_deaths, baseline):
+        assert "is_run_citizen(unit)" in path
+    assert "pcall(record_death, active, unit)" in callback
+    assert "ledger.flow_evidence_complete = false" in scan_deaths
+    assert "ledger.death_evidence_complete = false" in scan_deaths
+    assert callback.count("active.flow_evidence_complete = false") == 2
+    assert callback.count("active.death_evidence_complete = false") == 2
+    assert "local baseline_ok = pcall(function()" in baseline
+    assert "ledger.death_evidence_complete = false" in baseline
+    assert "baseline_dead_citizen_scan_failed" in baseline
 
 
 def test_job_metrics_separates_completed_furniture_from_all_placed_furniture() -> None:
@@ -62,11 +102,14 @@ def test_job_metrics_collects_bounded_raw_farm_contained_item_evidence() -> None
 
 
 def test_job_metrics_emits_raw_dead_citizen_observability_without_inference() -> None:
+    dead_observability = HOOK_SOURCE.split("out.dead_citizen_count = 0", 1)[1].split(
+        "-- optional bounded rect tile composition", 1
+    )[0]
+    dead_scan = dead_observability.split("local dead_scan_ok = pcall(function()", 1)[1].split(
+        "-- A failed record must fail closed", 1
+    )[0]
     for needle in (
         "df.global.world.units.all",
-        "unit.civ_id == civ_id",
-        "dfhack.units.isDwarf(unit)",
-        "dfhack.units.isDead(unit)",
         "out.dead_citizen_records",
         "unit_id = unit_id",
         "cause_enum = cause_enum",
@@ -83,9 +126,14 @@ def test_job_metrics_emits_raw_dead_citizen_observability_without_inference() ->
         "df.death_type[cause_number]",
         "pcall(function()",
     ):
-        assert needle in HOOK_SOURCE
+        assert needle in dead_observability
 
-    assert "neglect_deaths" not in HOOK_SOURCE
+    assert "dfhack.units.isCitizen(unit, true)" in dead_scan
+    assert "and dfhack.units.isDead(unit)" in dead_scan
+    assert "local ok_dead" not in dead_scan
+    assert "unit.civ_id == civ_id" not in dead_scan
+    assert "dfhack.units.isDwarf(unit)" not in dead_scan
+    assert "neglect_deaths" not in dead_observability
 
 
 def test_death_hooks_keep_current_drowning_flag_separate_from_known_cause() -> None:
