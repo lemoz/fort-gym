@@ -188,6 +188,15 @@ the params are the real control and must target the tile you describe.
 The Run resource flow lines are factual counters from DF item-creation events and each citizen's
 eat/drink history since this run began. Use them to verify that farming and brewing
 are out-producing consumption; current stock totals alone do not prove a sustainable loop.
+The G7 planning facts line compares those counters and other ratified thresholds without choosing a
+strategy for you. A branch marked `below`, or a count below its shown requirement, remains
+unresolved; `unknown` is not success. Never describe either as complete or sustainable until the
+observed facts meet the stated condition. At plan review, account honestly for every unresolved
+branch even when you choose to work on a different one this turn. This planning line is not the
+terminal G7 verdict: evidence integrity, run scope, rubric, and scalar score are evaluated later.
+The death branch says `no_neglect_observed` only when its run-scoped evidence is complete and either
+no dwarf died or every recorded death has a known cause with zero neglect deaths. `unknown` remains
+unresolved, and `neglect_observed` is direct evidence that the branch is not clear.
 
 Dwarves and jobs run in parallel. An active specialist job occupies its assigned dwarf; an
 unassigned queued job occupies nobody. Any legal action with positive advance_ticks lets all existing
@@ -210,8 +219,9 @@ pending job is partial, and a created job that vanished without matching output 
 
 At every due plan review, compare all of the factual branches rather than defending the current
 queue: resource production versus consumption, enclosed and functional rooms, built production
-facilities, idle citizens and their labors, queued/active/suspended jobs, and recent rejected or
-no-progress targets. Record pending actions as pending, and classify a coordinate or footprint as
+facilities, run-scoped death evidence, idle citizens and their labors, queued/active/suspended jobs,
+and recent rejected or no-progress targets. Record pending actions as pending, and
+classify a coordinate or footprint as
 stalled when two reviews show no progress and no observed job can change it. Choose the next
 objective and action yourself from those facts.
 

@@ -45,6 +45,229 @@ def test_encoder_surfaces_factual_run_scoped_survival_evidence() -> None:
     assert state["survival"]["drink_produced_in_run"] == 10
 
 
+def test_governed_encoder_surfaces_compact_ratified_g7_facts() -> None:
+    text, state = encode_observation(
+        {
+            "time": 160_000,
+            "population": 15,
+            "stocks": {"food": 22, "drink": 108},
+            "survival": {
+                "ok": True,
+                "active": True,
+                "run_id": "g7-test",
+                "start_year": 30,
+                "start_tick": 16_801,
+                "observed_year": 30,
+                "observed_tick": 159_152,
+                "food_produced_in_run": 2,
+                "food_consumed_in_run": 20,
+                "drink_produced_in_run": 75,
+                "drink_consumed_in_run": 41,
+                "flow_evidence_complete": True,
+                "deaths_in_run": 0,
+                "death_records": [],
+                "death_evidence_complete": True,
+                "death_causes_known": True,
+                "neglect_deaths": 0,
+            },
+            "fort": {"functional_rooms": 1},
+            "crew": {"placed_furniture_completed": {"bed": 3}},
+        },
+        action_history=[],
+        governed=True,
+    )
+
+    assert (
+        "G7 planning facts (not a verdict; evidence, run scope, rubric, and scalar "
+        "are terminal-only): survival_evidence=valid; duration=142351/403200 ticks "
+        "(below); food_flow=below "
+        "(2 produced vs 20 consumed; requires produced>consumed); "
+        "drink_loop=above (flow=above; 75 produced vs 41 consumed; final_stock=108; "
+        "requires produced>consumed and final_stock>0); "
+        "population=15/15 (at_or_above); functional_rooms=1/3 (below); "
+        "installed_beds=3/5 (below); death_branch=no_neglect_observed "
+        "(deaths_in_run=0, death_evidence_complete=True, death_causes_known=True, "
+        "neglect_deaths=0)"
+        in text
+    )
+    assert state["g7_fact_snapshot"] == {
+        "survival_evidence_status": "valid",
+        "duration_ticks": 142_351,
+        "duration_required": 403_200,
+        "duration_status": "below",
+        "food_produced": 2,
+        "food_consumed": 20,
+        "food_flow_status": "below",
+        "drink_produced": 75,
+        "drink_consumed": 41,
+        "final_drink": 108,
+        "drink_flow_status": "above",
+        "drink_loop_status": "above",
+        "flow_evidence_complete": True,
+        "population": 15,
+        "population_required": 15,
+        "population_status": "at_or_above",
+        "functional_rooms": 1,
+        "functional_rooms_required": 3,
+        "functional_rooms_status": "below",
+        "installed_beds": 3,
+        "installed_beds_required": 5,
+        "installed_beds_status": "below",
+        "death_status": "no_neglect_observed",
+        "deaths_in_run": 0,
+        "death_evidence_complete": True,
+        "death_causes_known": True,
+        "neglect_deaths": 0,
+    }
+    assert any(
+        "G7 planning facts (not a verdict" in line
+        for line in state["agent_plan_control"]["allowed_evidence_lines"]
+    )
+
+
+def test_governed_g7_duration_fact_handles_valid_year_rollover() -> None:
+    text, state = encode_observation(
+        {
+            "population": 7,
+            "survival": {
+                "ok": True,
+                "active": True,
+                "run_id": "g7-test",
+                "start_year": 30,
+                "start_tick": 400_000,
+                "observed_year": 31,
+                "observed_tick": 10_000,
+                "flow_evidence_complete": False,
+                "deaths_in_run": 0,
+                "death_evidence_complete": False,
+                "death_causes_known": False,
+                "neglect_deaths": None,
+            },
+        },
+        governed=True,
+    )
+
+    assert "survival_evidence=valid; duration=13200/403200 ticks" in text
+    assert "food_flow=unknown" in text
+    assert "drink_loop=unknown (flow=unknown" in text
+    assert "population=7/15 (below)" in text
+    assert "functional_rooms=None/3 (unknown)" in text
+    assert "death_branch=unknown (deaths_in_run=0, death_evidence_complete=False" in text
+    assert state["g7_fact_snapshot"]["duration_ticks"] == 13_200
+
+
+def test_governed_g7_planning_facts_keep_missing_and_invalid_data_unknown() -> None:
+    text, state = encode_observation(
+        {"population": 7},
+        action_history=[],
+        governed=True,
+    )
+
+    assert "duration=None/403200 ticks (unknown)" in text
+    assert "survival_evidence=unavailable" in text
+    assert "food_flow=unknown (None produced vs None consumed" in text
+    assert "functional_rooms=None/3 (unknown)" in text
+    assert "death_branch=unknown (deaths_in_run=None, death_evidence_complete=None" in text
+    assert any(
+        "G7 planning facts (not a verdict" in line
+        for line in state["agent_plan_control"]["allowed_evidence_lines"]
+    )
+
+    reversed_text, reversed_state = encode_observation(
+        {
+            "population": 7,
+            "survival": {
+                "ok": True,
+                "active": True,
+                "run_id": "g7-test",
+                "start_year": 31,
+                "start_tick": 10_000,
+                "observed_year": 30,
+                "observed_tick": 400_000,
+            },
+        },
+        governed=True,
+    )
+    assert "duration=None/403200 ticks (unknown)" in reversed_text
+    assert reversed_state["g7_fact_snapshot"]["duration_ticks"] is None
+
+    invalid_text, invalid_state = encode_observation(
+        {
+            "population": 15,
+            "stocks": {"drink": 20},
+            "survival": {
+                "start_year": 30,
+                "start_tick": 0,
+                "observed_year": 31,
+                "observed_tick": 0,
+                "food_produced_in_run": 50,
+                "food_consumed_in_run": 10,
+                "drink_produced_in_run": 50,
+                "drink_consumed_in_run": 10,
+                "flow_evidence_complete": True,
+                "deaths_in_run": 0,
+                "death_evidence_complete": True,
+                "death_causes_known": True,
+                "neglect_deaths": 0,
+                "error": "g7_evidence_run_scope_invalid",
+            },
+        },
+        governed=True,
+    )
+    assert "survival_evidence=invalid; duration=None/403200 ticks (unknown)" in invalid_text
+    assert "food_flow=unknown" in invalid_text
+    assert "drink_loop=unknown (flow=unknown" in invalid_text
+    assert "death_branch=unknown" in invalid_text
+    assert invalid_state["g7_fact_snapshot"]["survival_evidence_status"] == "invalid"
+
+    invalid_zero_stock_text, invalid_zero_stock_state = encode_observation(
+        {
+            "stocks": {"drink": 0},
+            "survival": {
+                "start_year": 30,
+                "start_tick": 0,
+                "observed_year": 31,
+                "observed_tick": 0,
+                "food_produced_in_run": 50,
+                "food_consumed_in_run": 10,
+                "drink_produced_in_run": 50,
+                "drink_consumed_in_run": 10,
+                "flow_evidence_complete": True,
+            },
+        },
+        governed=True,
+    )
+    assert "survival_evidence=invalid" in invalid_zero_stock_text
+    assert "duration=None/403200 ticks (unknown)" in invalid_zero_stock_text
+    assert "drink_loop=below (flow=unknown" in invalid_zero_stock_text
+    assert invalid_zero_stock_state["g7_fact_snapshot"]["drink_flow_status"] == "unknown"
+    assert invalid_zero_stock_state["g7_fact_snapshot"]["drink_loop_status"] == "below"
+
+    missing_population_text, missing_population_state = encode_observation(
+        {"crew": {"placed_furniture_completed": {"bed": 3}}},
+        governed=True,
+    )
+    assert "installed_beds=3/None (unknown)" in missing_population_text
+    assert missing_population_state["g7_fact_snapshot"]["installed_beds_required"] is None
+
+    neglect_text, neglect_state = encode_observation(
+        {
+            "survival": {
+                "ok": True,
+                "active": True,
+                "run_id": "g7-test",
+                "deaths_in_run": 1,
+                "death_evidence_complete": True,
+                "death_causes_known": True,
+                "neglect_deaths": 1,
+            }
+        },
+        governed=True,
+    )
+    assert "death_branch=neglect_observed" in neglect_text
+    assert neglect_state["g7_fact_snapshot"]["death_status"] == "neglect_observed"
+
+
 def test_encoder_surfaces_bounded_direct_death_records() -> None:
     text, _ = encode_observation(
         {

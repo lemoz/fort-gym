@@ -313,6 +313,10 @@ def test_governed_system_prompt_requires_parallel_and_stall_review() -> None:
     assert "Any legal action with positive advance_ticks" in GOVERNED_SYSTEM_PROMPT
     assert "lets all existing\njobs progress" in GOVERNED_SYSTEM_PROMPT
     assert "At every due plan review, compare all of the factual branches" in GOVERNED_SYSTEM_PROMPT
+    assert "A branch marked `below`" in GOVERNED_SYSTEM_PROMPT
+    assert "Never describe either as complete or sustainable" in GOVERNED_SYSTEM_PROMPT
+    assert "`no_neglect_observed` only when its run-scoped evidence is complete" in GOVERNED_SYSTEM_PROMPT
+    assert "run-scoped death evidence" in GOVERNED_SYSTEM_PROMPT
     assert "classify a coordinate or footprint as\nstalled" in GOVERNED_SYSTEM_PROMPT
     assert "Command acceptance is\nnot action success" in GOVERNED_SYSTEM_PROMPT
     assert "created job that vanished without matching output is no progress" in GOVERNED_SYSTEM_PROMPT
