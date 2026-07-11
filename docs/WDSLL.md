@@ -2123,6 +2123,57 @@ gate. Each entry states what changed and the evidence that forced it.
   pinned to OpenRouter `z-ai/glm-5v-turbo`, vision on, memory off, score-v5, 450
   steps, and at most 2,000 ticks per turn.
 
+- **2026-07-11 UTC - G7 attempt 26: OPERATOR-STOPPED POLICY-DIAGNOSTIC FAIL
+  after real underground farming; late phase transition and blocking-dialog
+  polling consumed the remaining window.** Run
+  `57095606c09d454c9f3fae8bb37fb0dd`
+  ([replay](https://fortgym.live/r/ke3Mv0MUTO7fSpuJmLJpUVH-Gn6d_IqD))
+  used exact deployed SHA `a8f696ac17a4a8205306b327a284f78ea74ae9bf`,
+  fresh `seed_region3_fresh`, OpenRouter `z-ai/glm-5v-turbo`, vision on,
+  memory off, score-v5, a 450-step budget, and at most 2,000 ticks per turn.
+  The durable trace has 150 governed gameplay rows; every row has screen text,
+  gameplay proof, and governed provenance. One hundred seventy-three model
+  calls used 3,224,654 prompt and 115,523 completion tokens.
+
+  The run made substantial legal game changes. It completed a Carpenter
+  workshop at step 17, made a bed at step 18 and installed it at step 19,
+  completed a Still at step 40, and produced 25 drink. It completed connected
+  channel access at step 76, excavated the lower level, placed a real 3x3
+  subterranean FarmPlot at step 128, and selected plump helmets for all four
+  seasons at step 129. Native PlantSeeds jobs completed. The final fort had 29
+  constructions, one bed, one door, two installed tables, population nine,
+  and zero deaths.
+
+  The policy transitioned too late. It spent steps 77 through 127 extending an
+  already usable lower excavation before two rejected targets finally caused a
+  plan revision. The planted crop did not mature before the run stopped, so
+  run-scoped food production remained zero and drink production never exceeded
+  the earlier 25. Deterministic gate-v2 is FAIL: duration 206,901/403,200;
+  food 0 produced/38 consumed; drink 25/71 with final stocks 18/15; population
+  9/15; installed beds 1/3; rubric 69.91 with `no_broader_fort_layout`; and
+  score-v5 117.07/150. Evidence and zero-neglect-death predicates pass.
+
+  The trace and stopped save exposed two truth defects. Deployed
+  `fort_metrics.lua` called a sealed one-tile pocket at `(92,99,161)` a
+  bedroom because its only tile held a bed and its boundary included a door.
+  The candidate requires at least two traversable interior tiles and reports
+  zero functional rooms on the same save. Gate-v3 therefore treats the old
+  trace room branch as UNKNOWN because its final row predates the required
+  `fort_metrics_observed=true` attestation; every other failed predicate is
+  unchanged. A second stopped-save probe selected the real 3x3 farm footprint,
+  where no tree existed. Candidate chop returned
+  `ok=false/no_choppable_trees`, `trees_designated=0`; all nine tile
+  designations stayed zero, tick stayed 223,702, and pause stayed true.
+
+  Finally, native liaison dialogs interrupted WAIT at steps 140, 142, 144, and
+  148. The model legally navigated each observed screen, including the visible
+  `Begin discussion` option, but the tick poller waited its full 300-second
+  timeout before each next decision while only 277, 15, 20, and 74 ticks
+  advanced. The next runner candidate detects a known paused viewscreen
+  transition during governed polling, records truthful partial ticks, repauses,
+  and returns control to the model. It does not dismiss a screen or choose an
+  interaction.
+
 ## Reporting format (every gate attempt)
 
 Public URL, run id, commit, score, rubric score + blockers, screen_text count,

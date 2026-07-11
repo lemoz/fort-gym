@@ -1275,6 +1275,46 @@ Fresh-seed Attempt 26 then launched on that exact SHA as run
 `57095606c09d454c9f3fae8bb37fb0dd`
 ([replay](https://fortgym.live/r/ke3Mv0MUTO7fSpuJmLJpUVH-Gn6d_IqD)).
 
+### 2.35 Attempt 26 reached a real farm, but only after 51 lower-dig turns
+
+Attempt 26 retained 150 governed gameplay rows on deployed SHA
+`a8f696ac17a4a8205306b327a284f78ea74ae9bf`; every row has screen text,
+gameplay proof, and governed provenance. The OpenRouter `z-ai/glm-5v-turbo`
+policy used 173 calls, 3,224,654 prompt tokens, and 115,523 completion tokens.
+
+The model completed a Carpenter workshop, made and installed a bed, completed
+a Still, produced 25 drink, and built a connected channel to a lower level. It
+then spent steps 77 through 127 extending that lower excavation. After two
+rejected dig targets it revised the plan, built a 3x3 subterranean FarmPlot at
+step 128, selected plump helmets for every season, and let the native planting
+jobs complete. The crop did not mature before the operator stopped the run.
+Final population was nine, all dwarves survived, and the fort had 29
+constructions, one installed bed, one door, and two installed tables.
+
+Deterministic gate-v2 is FAIL: duration 206,901/403,200 ticks, food flow 0
+produced/38 consumed, drink flow 25/71, final food/drink 18/15, population 9/15,
+installed beds 1/3, rubric 69.91 with `no_broader_fort_layout`, and score-v5
+117.07/150. Evidence and zero-neglect-death predicates pass. This is a real
+policy-diagnostic failure, not a simulated score result.
+
+The stopped save invalidated the reported room. Deployed `fort_metrics.lua`
+returned one bedroom whose bounds and only interior tile were
+`(92,99,161)..(92,99,161)`, containing one bed and one boundary door. The
+candidate minimum-interior rule returned zero rooms on the identical save.
+Gate-v3 also rejects the old final row's missing fort-observation attestation,
+so its room branch is UNKNOWN rather than accepting the stale summary value.
+On the same paused save, candidate chop over the real underground farm returned
+`no_choppable_trees` with zero writes. The nine designation cells, tick 223,702,
+and pause state were identical before and after.
+
+The run also exposed pure wall-time loss in the control loop. Four liaison
+viewscreens paused simulation after 277, 15, 20, and 74 ticks, but each WAIT
+blocked for the full 300-second timeout before the model could inspect and
+legally handle the dialog. A strategy-neutral candidate makes governed tick
+polling interruptible on an observed paused viewscreen transition. It preserves
+the actual tick delta and fail-closed repause evidence and leaves every UI
+choice to the next model turn.
+
 ## 3. Limitations
 
 - **A single passing embark family.** Every pass (G0–G4) is on
@@ -1282,14 +1322,14 @@ Fresh-seed Attempt 26 then launched on that exact SHA as run
   passes in seven region3 attempts. "Plays Dwarf Fortress" is not yet
   demonstrated — "solved one map" is.
 - **Small n.** The reliability claim rests on a five-run lineage; the endurance
-  result on one probe; the G6 verdict on seven runs; G7 on 24 failed attempts
+  result on one probe; the G6 verdict on seven runs; G7 on 25 failed attempts
   plus one invalidated attempt.
   These are findings, not distributions.
 - **One policy family for most results.** GLM-5V-turbo produced the G4 passes
   and most of the G6 campaign; GPT-5.5 served the earlier G2/G3 passes.
   Cross-model generality is thin — two GPT-5.5-vision escalation runs are the
   only cross-family data points on the unseen map.
-- **G6 is unpassed; G7 attempts 1 through 18 and 20 through 25 failed, and attempt 19
+- **G6 is unpassed; G7 attempts 1 through 18 and 20 through 26 failed, and attempt 19
   is invalid.**
   Attempts 2 through 9 and
   12 through 16 were infrastructure aborts, although attempts 14 through 16
@@ -1311,7 +1351,10 @@ Fresh-seed Attempt 26 then launched on that exact SHA as run
   deployed and active. Attempt 25 made a real Carpenter workshop and five beds,
   but repeated dead-shrub footprint attempts and then terminated before step 72
   gameplay on identical overlong objective fields. It is an infrastructure-aborted
-  short G7 FAIL, not a long-horizon verdict. The
+  short G7 FAIL, not a long-horizon verdict. Attempt 26 built a connected lower
+  farm and completed planting with all dwarves alive, but reached that phase
+  after 51 lower-dig turns and stopped at half-year duration before any harvest;
+  its sole reported room was a one-tile false positive. The
   chair-factory calibration gap (§2.4) remains part of score-v3's historical
   record.
   Attempt 1 demonstrated why the scalar is telemetry rather than the verdict:
@@ -1319,12 +1362,13 @@ Fresh-seed Attempt 26 then launched on that exact SHA as run
 
 ## 4. What's next
 
-- **Attempt 25 proved the fail-closed tick controller can support a fresh run
-  while preserving exact post-pause ticks.** Its two observed blockers are now
-  narrow: identical duplicated objective prose exceeded the schema cap, and
-  dead shrubs were presented as legal gather targets. PR #101 deployed and live
-  proved both factual boundary fixes; fresh-seed Attempt 26 is running on its
-  exact merge SHA.
+- **Attempt 26 proved the direct-action loop can reach connected lower farming
+  and complete planting without operator gameplay.** Its decisive blockers are
+  now narrow and measured: late transition from excavation to building, missing
+  owned-excavation completion feedback, a one-tile room false positive, and
+  300-second waits after paused viewscreen transitions. Reviewed candidates
+  address only those observation, truth, and control boundaries; they add no
+  planner, target, coordinate, or automatic UI action.
 - **Attempt 23 proved the corrected loop can independently transition from
   excavation to farming, workshops, furniture, and two functional rooms.** Its
   decisive blockers were incomplete native feedback for rejected 3x3

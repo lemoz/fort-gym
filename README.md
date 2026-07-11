@@ -328,9 +328,19 @@ and returns explicit
 `dead_shrub_ungatherable` / `no_gatherable_shrubs` feedback without choosing a
 strategy or target. On the paused terminal save, a known dead shrub returned
 that exact rejection while tick 102,863, pause state, tile type, and designation
-remained unchanged. Fresh-seed Attempt 26 is running on the exact merge SHA
+remained unchanged. Fresh-seed Attempt 26 ran on the exact merge SHA
 `a8f696ac17a4a8205306b327a284f78ea74ae9bf`
-([replay](https://fortgym.live/r/ke3Mv0MUTO7fSpuJmLJpUVH-Gn6d_IqD)).
+([replay](https://fortgym.live/r/ke3Mv0MUTO7fSpuJmLJpUVH-Gn6d_IqD)) and was
+operator-stopped after 150 governed gameplay rows. It completed a Carpenter
+workshop, Still, connected channel, 3x3 subterranean FarmPlot with plump
+helmets selected for every season, one installed bed, and 25 drink production;
+all nine dwarves survived. Deterministic G7 still failed at 206,901/403,200
+ticks, food 0 produced/38 consumed, drink 25/71, population 9/15, one installed
+bed, rubric 69.91 with `no_broader_fort_layout`, and score-v5 117.07/150. The
+deployed room read was also false: its sole "bedroom" was a sealed one-tile
+bed-and-door pocket. The fail-closed candidate reports zero rooms on that save
+and rejects a zero-target chop over the real farm without changing tick, pause,
+or any designation.
 G7 remains open. Full findings and gate predicates are recorded in
 `docs/WDSLL.md`.
 
