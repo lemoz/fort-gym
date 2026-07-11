@@ -282,9 +282,15 @@ resource loops, three rooms, five beds, rubric 59.38 with
 `viewscreen_storesst`, which the observation called unknown and the legal
 INTERACT allowlist could not exit. The model then submitted BUILD from that
 blocking screen and requested 1,200 ticks; zero advanced. The next candidate
-adds only the missing legal `INTERACT cancel`, factual blocking-screen state,
-and pre-execution rejection of any other Stores-screen action. It does not
-choose coordinates, actions, objectives, or strategy for the model.
+added only the missing legal `INTERACT cancel`, factual blocking-screen state,
+and pre-execution rejection of any other Stores-screen action. PRs #94 and #95
+merged and deployed at `506ce6986029c5885ecb26074fa45ac55d47c541`.
+A live proof sent one `LEAVESCREEN`, advanced zero ticks, and moved from
+`viewscreen_storesst` to `viewscreen_topicmeeting_takerequestsst`. Fresh-seed
+Attempt 23 is running at
+[fortgym.live/r/uGx2o874VECGSlqciDUrbQxo-JrbkQ41](https://fortgym.live/r/uGx2o874VECGSlqciDUrbQxo-JrbkQ41).
+The changes choose no coordinates, actions, objectives, or strategy for the
+model.
 G7 remains open. Full findings and gate predicates are recorded in
 `docs/WDSLL.md`.
 

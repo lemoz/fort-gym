@@ -1136,6 +1136,15 @@ the model. Separately, the next observation candidate surfaces compact G7
 planning facts but fails closed on invalid survival scope and never claims a
 terminal verdict.
 
+PRs #94 and #95 passed CI, merged, and deployed together at exact SHA
+`506ce6986029c5885ecb26074fa45ac55d47c541`. Production DF was still paused on
+the real terminal `viewscreen_storesst`, so the deployed boundary could be
+tested without reconstruction. It classified the screen `stores/high`, rejected
+the old step-155 BUILD before execution, and sent exactly one zero-tick
+`LEAVESCREEN`. DF returned to `viewscreen_topicmeeting_takerequestsst`; tick
+217,563 was unchanged. Fresh-seed Attempt 23 then launched on that exact SHA
+([replay](https://fortgym.live/r/uGx2o874VECGSlqciDUrbQxo-JrbkQ41)).
+
 ## 3. Limitations
 
 - **A single passing embark family.** Every pass (G0–G4) is on
@@ -1176,12 +1185,12 @@ terminal verdict.
 
 - **Attempt 22 proved those controls can reach vertical access, farming, brewing,
   migrants, and two functional rooms early enough to matter.** The immediate
-  blocker is the native Wealth/Stocks screen opened by the liaison sequence. The
-  next candidate exposes its existing legal cancel control and rejects any
-  positive-tick action there before execution. Compact fail-closed G7 planning
-  facts keep resource deficits visible at plan review. Neither change supplies
-  strategy, coordinates, objectives, or score credit. Review, deployment, and a
-  fresh long run are next.
+  blocker was the native Wealth/Stocks screen opened by the liaison sequence.
+  The deployed boundary now exposes its existing legal cancel control and
+  rejects any positive-tick action there before execution. Compact fail-closed
+  G7 planning facts keep resource deficits visible at plan review. Neither
+  change supplies strategy, coordinates, objectives, or score credit. Attempt
+  23 is the active fresh-seed long run.
 - **G6 remains open**: the best unseen-map run reached 4/5 and missed only its
   second functional room. G7 now tests whether stable spatial observation lets
   the corrected direct-action loop sustain production and structure for a year.
