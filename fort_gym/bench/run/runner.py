@@ -2473,9 +2473,10 @@ def run_once(
             if not is_governed_dfhack_mode:
                 return state
             fort = read_fort_metrics(governed_channel_focus)
-            if isinstance(fort, dict) and fort.get("ok"):
-                state = dict(state)
-                state["fort"] = fort
+            if not isinstance(fort, dict):
+                fort = {"ok": False, "error": "fort_metrics_invalid_response"}
+            state = dict(state)
+            state["fort"] = fort
             return state
 
         def attach_survival_evidence(state: Dict[str, Any]) -> Dict[str, Any]:
@@ -2595,7 +2596,27 @@ def run_once(
     governed_completed_buildings: set[int] = set()
     governed_score_progress_seen = False
 
-    def current_governed_score_metrics() -> Dict[str, Any]:
+    def fort_structure_score_metrics(
+        state: Optional[Dict[str, Any]],
+    ) -> Dict[str, Any]:
+        fort = state.get("fort") if isinstance(state, dict) else None
+        observed = bool(isinstance(fort, dict) and fort.get("ok") is True)
+        return {
+            "fort_metrics_observed": observed,
+            "fort_enclosed_spaces": int(fort.get("enclosed_spaces") or 0)
+            if observed
+            else 0,
+            "fort_functional_rooms": int(fort.get("functional_rooms") or 0)
+            if observed
+            else 0,
+            "fort_constructions": int(fort.get("constructions") or 0)
+            if observed
+            else 0,
+        }
+
+    def current_governed_score_metrics(
+        state: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         if not is_governed_dfhack_mode:
             return {}
         building_progress = _governed_owned_building_progress(
@@ -2618,6 +2639,7 @@ def run_once(
             ],
             **building_progress,
             "score_duration_blocked": not governed_score_progress_seen,
+            **fort_structure_score_metrics(state),
         }
 
     def publish_event(
@@ -3395,7 +3417,7 @@ def run_once(
                         "_action": action,
                         "_action_step": step,
                     }
-                    validation_metrics = current_governed_score_metrics()
+                    validation_metrics = current_governed_score_metrics(state_before)
                     if is_keystroke_mode or is_governed_dfhack_mode:
                         _record_action_history(
                             action_history,
@@ -3602,7 +3624,12 @@ def run_once(
                 # Use agent-requested ticks, falling back to default if not specified
                 requested_ticks = action.get("advance_ticks", ticks)
                 if execution_terminal_reason is not None:
-                    advance_state = state_after_apply
+                    advance_state = dict(state_after_apply)
+                    advance_state["fort"] = {
+                        "ok": False,
+                        "error": "post_action_fort_observation_skipped",
+                        "reason": "governed_rollback_unverified",
+                    }
                     tick_info_state = {
                         "ok": False,
                         "ticks_advanced": 0,
@@ -3749,7 +3776,7 @@ def run_once(
                             "execute": execute_result,
                             "state_after_apply": state_after_apply,
                             "state_after_advance": advance_state,
-                            "metrics": current_governed_score_metrics(),
+                            "metrics": current_governed_score_metrics(advance_state),
                             "tick_advance": tick_info_state,
                             "stopped": {"reason": "stop_requested_after_advance"},
                             "events": events,
@@ -3818,7 +3845,7 @@ def run_once(
                     metrics.complexity_progress_delta(
                         current_work if isinstance(current_work, dict) else {},
                         baseline_work,
-                        current_fort=advance_state.get("fort") or state_before.get("fort"),
+                        current_fort=advance_state.get("fort"),
                         baseline_fort=baseline_fort,
                     )
                 )
@@ -4113,17 +4140,9 @@ def run_once(
                         if interaction_only
                         else "dfhack_governed_observed_state_action_owned_progress"
                     )
-                    fort_after = advance_state.get("fort") or state_before.get("fort")
-                    if isinstance(fort_after, dict):
-                        metrics_snapshot["fort_enclosed_spaces"] = int(
-                            fort_after.get("enclosed_spaces") or 0
-                        )
-                        metrics_snapshot["fort_functional_rooms"] = int(
-                            fort_after.get("functional_rooms") or 0
-                        )
-                        metrics_snapshot["fort_constructions"] = int(
-                            fort_after.get("constructions") or 0
-                        )
+                    metrics_snapshot.update(
+                        fort_structure_score_metrics(advance_state)
+                    )
                     gameplay_proof = _governed_gameplay_proof(
                         action=action,
                         execute_result=execute_result,

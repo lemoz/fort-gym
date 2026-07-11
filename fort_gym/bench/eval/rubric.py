@@ -98,6 +98,14 @@ def _metric_max(records: Iterable[Dict[str, Any]], field: str) -> int:
     return max((_to_int(_metrics(record).get(field)) for record in records), default=0)
 
 
+def _metric_latest(records: Iterable[Dict[str, Any]], field: str) -> int:
+    for record in reversed(list(records)):
+        metrics = _metrics(record)
+        if metrics.get(field) is not None:
+            return _to_int(metrics.get(field))
+    return 0
+
+
 def _nested_work_max(records: Iterable[Dict[str, Any]], field: str) -> int:
     value = 0
     for record in records:
@@ -397,8 +405,8 @@ def evaluate_trace_records(
             _nested_work_max(recent, "fortress_complexity_spaces_completed"),
         )
         # plan-agnostic fort structure (from fort_metrics.lua via the runner)
-        fort_enclosed_spaces = _metric_max(recent, "fort_enclosed_spaces")
-        fort_functional_rooms = _metric_max(recent, "fort_functional_rooms")
+        fort_enclosed_spaces = _metric_latest(recent, "fort_enclosed_spaces")
+        fort_functional_rooms = _metric_latest(recent, "fort_functional_rooms")
         fort_constructions = _metric_max(recent, "fort_constructions")
     final_pop = 0
     final_food = 0

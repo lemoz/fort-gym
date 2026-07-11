@@ -16,6 +16,7 @@ G7_MIN_POPULATION = 15
 G7_MIN_FUNCTIONAL_ROOMS = 3
 G7_MIN_SCORE = 150.0
 G7_MIN_RUBRIC = 70.0
+G7_GATE_VERSION = 3
 
 
 def _to_int(value: Any, default: int = 0) -> int:
@@ -246,7 +247,25 @@ def evaluate_g7(
         death_reason = "one or more deaths lack recorded cause evidence"
 
     population = _to_int(summary.get("end_pop", state.get("population")))
-    rooms = _to_int(summary.get("fort_functional_rooms", metrics.get("fort_functional_rooms")))
+    trace_rooms_value = metrics.get("fort_functional_rooms")
+    trace_rooms = _to_int(trace_rooms_value) if trace_rooms_value is not None else None
+    summary_rooms_value = summary.get("fort_functional_rooms")
+    summary_rooms = _to_int(summary_rooms_value) if summary_rooms_value is not None else None
+    fort_metrics_observed = metrics.get("fort_metrics_observed")
+    rooms_summary_consistent = (
+        trace_rooms is not None
+        and summary_rooms is not None
+        and trace_rooms == summary_rooms
+    )
+    if fort_metrics_observed is not True or trace_rooms is None:
+        room_status = UNKNOWN
+        room_reason = "final trace lacks an attested fort structure observation"
+    elif not rooms_summary_consistent:
+        room_status = FAIL
+        room_reason = "summary room count disagrees with final trace observation"
+    else:
+        room_status = PASS if trace_rooms >= G7_MIN_FUNCTIONAL_ROOMS else FAIL
+        room_reason = None
     required_beds = ceil(population / 3) if population > 0 else 0
     completed_furniture = crew.get("placed_furniture_completed")
     completed_beds = (
@@ -317,9 +336,15 @@ def evaluate_g7(
             required=f">={G7_MIN_POPULATION}",
         ),
         "functional_rooms": _criterion(
-            PASS if rooms >= G7_MIN_FUNCTIONAL_ROOMS else FAIL,
-            observed=rooms,
+            room_status,
+            observed={
+                "trace_rooms": trace_rooms,
+                "summary_rooms": summary_rooms,
+                "summary_consistent": rooms_summary_consistent,
+                "fort_metrics_observed": fort_metrics_observed,
+            },
             required=f">={G7_MIN_FUNCTIONAL_ROOMS}",
+            reason=room_reason,
         ),
         "installed_beds": _criterion(
             UNKNOWN
@@ -352,7 +377,7 @@ def evaluate_g7(
     terminal = records[-1].get("stopped") or records[-1].get("terminal_reason") if records else None
     return {
         "gate": "G7",
-        "gate_version": 2,
+        "gate_version": G7_GATE_VERSION,
         "status": overall,
         "criteria": criteria,
         "terminal": terminal,

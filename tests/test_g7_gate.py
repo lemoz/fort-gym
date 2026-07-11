@@ -30,7 +30,11 @@ def _row(
         "action": {"type": "WAIT", "params": {}, "advance_ticks": ticks_advanced},
         "observation": state,
         "state_after_advance": state,
-        "metrics": {"dead": dead, "fort_functional_rooms": 3},
+        "metrics": {
+            "dead": dead,
+            "fort_functional_rooms": 3,
+            "fort_metrics_observed": True,
+        },
         "execute": {"accepted": True, "provenance": "dfhack_governed"},
         "tick_advance": {"ticks_advanced": ticks_advanced},
         "screen_text": "DF screen",
@@ -79,8 +83,86 @@ def test_g7_pass_requires_every_ratified_fact() -> None:
     result = evaluate_g7([_row(0, survival=survival)], _summary())
 
     assert result["status"] == PASS
-    assert result["gate_version"] == 2
+    assert result["gate_version"] == 3
     assert all(item["status"] == PASS for item in result["criteria"].values())
+
+
+def test_g7_room_criterion_is_unknown_when_final_fort_read_failed() -> None:
+    survival = {
+        "food_produced_in_run": 21,
+        "food_consumed_in_run": 20,
+        "drink_produced_in_run": 31,
+        "drink_consumed_in_run": 30,
+        "flow_evidence_complete": True,
+        "death_evidence_complete": True,
+        "death_causes_known": True,
+        "neglect_deaths": 0,
+    }
+    row = _row(0, survival=survival)
+    row["metrics"]["fort_metrics_observed"] = False
+
+    result = evaluate_g7([row], _summary())
+
+    rooms = result["criteria"]["functional_rooms"]
+    assert rooms["status"] == UNKNOWN
+    assert rooms["observed"] == {
+        "trace_rooms": 3,
+        "summary_rooms": 3,
+        "summary_consistent": True,
+        "fort_metrics_observed": False,
+    }
+    assert rooms["reason"] == "final trace lacks an attested fort structure observation"
+
+
+def test_g7_rejects_summary_rooms_that_disagree_with_final_trace() -> None:
+    survival = {
+        "food_produced_in_run": 21,
+        "food_consumed_in_run": 20,
+        "drink_produced_in_run": 31,
+        "drink_consumed_in_run": 30,
+        "flow_evidence_complete": True,
+        "death_evidence_complete": True,
+        "death_causes_known": True,
+        "neglect_deaths": 0,
+    }
+    row = _row(0, survival=survival)
+    row["metrics"]["fort_functional_rooms"] = 0
+
+    result = evaluate_g7([row], _summary(fort_functional_rooms=3))
+
+    rooms = result["criteria"]["functional_rooms"]
+    assert result["status"] == FAIL
+    assert rooms["status"] == FAIL
+    assert rooms["observed"] == {
+        "trace_rooms": 0,
+        "summary_rooms": 3,
+        "summary_consistent": False,
+        "fort_metrics_observed": True,
+    }
+    assert rooms["reason"] == "summary room count disagrees with final trace observation"
+
+
+def test_g7_requires_strict_boolean_final_fort_attestation() -> None:
+    survival = {
+        "food_produced_in_run": 21,
+        "food_consumed_in_run": 20,
+        "drink_produced_in_run": 31,
+        "drink_consumed_in_run": 30,
+        "flow_evidence_complete": True,
+        "death_evidence_complete": True,
+        "death_causes_known": True,
+        "neglect_deaths": 0,
+    }
+    for attestation in (None, 1, "true"):
+        row = _row(0, survival=survival)
+        if attestation is None:
+            row["metrics"].pop("fort_metrics_observed")
+        else:
+            row["metrics"]["fort_metrics_observed"] = attestation
+
+        result = evaluate_g7([row], _summary())
+
+        assert result["criteria"]["functional_rooms"]["status"] == UNKNOWN
 
 
 def test_g7_rejects_pre_action_effect_truth_score_version() -> None:

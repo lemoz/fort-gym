@@ -38,6 +38,7 @@ end
 local MAX_COMPONENT_TILES = 400
 local MAX_SPACES = 12
 local MAX_ROOM_OPEN_TILE_SAMPLES = 16
+local MIN_ROOM_INTERIOR_TILES = 2
 local Z_NEIGHBORS = false -- single-z spaces for v1
 
 local attrs = df.tiletype.attrs
@@ -95,6 +96,22 @@ local function building_at(x, y, z)
   return ok and occupied or false
 end
 
+local completed_building_tiles = {}
+
+local function completed_building_at(x, y, z)
+  return completed_building_tiles[x .. ',' .. y .. ',' .. z] == true
+end
+
+local function building_is_complete(bld)
+  local ok, stage, max_stage = pcall(function()
+    return bld:getBuildStage(), bld:getMaxBuildStage()
+  end)
+  stage = ok and tonumber(stage) or nil
+  max_stage = ok and tonumber(max_stage) or nil
+  return ok and stage ~= nil and max_stage ~= nil and max_stage > 0
+    and stage >= max_stage
+end
+
 -- furniture a dwarf can stand on/next to belongs to the room's interior; a
 -- fully furnished bedroom must not stop being a room. Doors, workshops, and
 -- anything else seal the boundary.
@@ -108,28 +125,35 @@ end
 -- collect player buildings with their footprints, grouped for classification
 local buildings = {}
 for _, bld in ipairs(df.global.world.buildings.all) do
-  local ok, entry = pcall(function()
-    local t = bld:getType()
-    local kind = nil
-    if t == df.building_type.Bed then kind = 'bed'
-    elseif t == df.building_type.Table then kind = 'table'
-    elseif t == df.building_type.Chair then kind = 'chair'
-    elseif t == df.building_type.Door then kind = 'door'
-    elseif t == df.building_type.Workshop then kind = 'workshop'
-    end
-    if not kind then return nil end
-    return {
-      kind = kind,
-      x1 = bld.x1, y1 = bld.y1, x2 = bld.x2, y2 = bld.y2, z = bld.z,
-      cx = bld.centerx, cy = bld.centery,
-    }
-  end)
-  if ok and entry then
-    table.insert(buildings, entry)
-    if INTERIOR_FURNITURE[entry.kind] then
-      for fx = entry.x1, entry.x2 do
-        for fy = entry.y1, entry.y2 do
-          furniture_tiles[fx .. ',' .. fy .. ',' .. entry.z] = true
+  if building_is_complete(bld) then
+    local ok, entry = pcall(function()
+      for fx = bld.x1, bld.x2 do
+        for fy = bld.y1, bld.y2 do
+          completed_building_tiles[fx .. ',' .. fy .. ',' .. bld.z] = true
+        end
+      end
+      local t = bld:getType()
+      local kind = nil
+      if t == df.building_type.Bed then kind = 'bed'
+      elseif t == df.building_type.Table then kind = 'table'
+      elseif t == df.building_type.Chair then kind = 'chair'
+      elseif t == df.building_type.Door then kind = 'door'
+      elseif t == df.building_type.Workshop then kind = 'workshop'
+      end
+      if not kind then return nil end
+      return {
+        kind = kind,
+        x1 = bld.x1, y1 = bld.y1, x2 = bld.x2, y2 = bld.y2, z = bld.z,
+        cx = bld.centerx, cy = bld.centery,
+      }
+    end)
+    if ok and entry then
+      table.insert(buildings, entry)
+      if INTERIOR_FURNITURE[entry.kind] then
+        for fx = entry.x1, entry.x2 do
+          for fy = entry.y1, entry.y2 do
+            furniture_tiles[fx .. ',' .. fy .. ',' .. entry.z] = true
+          end
         end
       end
     end
@@ -210,8 +234,8 @@ local function flood(seed_x, seed_y, seed_z)
           table.insert(queue, { nx, ny })
         end
       end
-    elseif building_at(x, y, seed_z) then
-      -- other buildings (incl. doors and workshops) close the boundary
+    elseif completed_building_at(x, y, seed_z) then
+      -- completed buildings (incl. doors and workshops) close the boundary
     elseif shape == WALL_SHAPE then
       -- walls (and tree trunks) close the boundary
     elseif stable_interior_shape(shape, material) and not hidden then
@@ -254,7 +278,7 @@ for _, bld in ipairs(buildings) do
         local seedable = interior_furniture_at(sx, sy, bld.z)
           or (stable_interior_shape(shape, material)
             and not hidden
-            and not building_at(sx, sy, bld.z))
+            and not completed_building_at(sx, sy, bld.z))
         if seedable then
           local tiles, enclosed = flood(sx, sy, bld.z)
           if enclosed and #tiles > 0 then
@@ -293,23 +317,28 @@ for _, bld in ipairs(buildings) do
               min_y = min_y and math.min(min_y, ty) or ty
               max_x = max_x and math.max(max_x, tx) or tx
               max_y = max_y and math.max(max_y, ty) or ty
-              if not building_at(tx, ty, bld.z) then
+              if not completed_building_at(tx, ty, bld.z) then
                 open_tile_count = open_tile_count + 1
                 if #open_tiles < MAX_ROOM_OPEN_TILE_SAMPLES then
                   table.insert(open_tiles, { tx, ty, bld.z })
                 end
               end
             end
-            table.insert(spaces, {
-              z = bld.z,
-              tiles = #tiles,
-              kind = classify(),
-              contents = contents,
-              bounds = { min_x, min_y, max_x, max_y, bld.z },
-              open_tiles = open_tiles,
-              open_tile_count = open_tile_count,
-              open_tiles_truncated = open_tile_count > #open_tiles,
-            })
+            -- A one-tile furnishing pocket is not a usable room. Furniture is
+            -- still traversable interior, so fully furnished multi-tile rooms
+            -- remain valid even when no furniture-free floor remains.
+            if #tiles >= MIN_ROOM_INTERIOR_TILES then
+              table.insert(spaces, {
+                z = bld.z,
+                tiles = #tiles,
+                kind = classify(),
+                contents = contents,
+                bounds = { min_x, min_y, max_x, max_y, bld.z },
+                open_tiles = open_tiles,
+                open_tile_count = open_tile_count,
+                open_tiles_truncated = open_tile_count > #open_tiles,
+              })
+            end
           end
         end
       end
@@ -319,7 +348,9 @@ end
 
 local functional = 0
 for _, space in ipairs(spaces) do
-  if space.kind ~= 'enclosed_space' then functional = functional + 1 end
+  if space.kind ~= 'enclosed_space' then
+    functional = functional + 1
+  end
 end
 
 -- Count only visible nearby trunks. Coordinates and cluster centroids are not

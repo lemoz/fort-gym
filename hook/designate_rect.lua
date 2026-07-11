@@ -181,16 +181,22 @@ if kind == 'chop' or kind == 'gather' then
     return
   end
 
-  if kind == 'gather' and #writes == 0 then
+  if #writes == 0 then
     local failure = {
       ok = false,
-      error = 'no_gatherable_shrubs',
       kind = kind,
       rect = { rx1, ry1, rz, rx2, ry2, rz },
-      shrubs_designated = 0,
       already_designated = 0,
-      non_shrub_tiles = non_target_tiles,
     }
+    if kind == 'chop' then
+      failure.error = 'no_choppable_trees'
+      failure.trees_designated = 0
+      failure.non_tree_tiles = non_target_tiles
+    else
+      failure.error = 'no_gatherable_shrubs'
+      failure.shrubs_designated = 0
+      failure.non_shrub_tiles = non_target_tiles
+    end
     attach_non_target_evidence(failure)
     print(json.encode(failure))
     return
