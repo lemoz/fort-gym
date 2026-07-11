@@ -357,13 +357,27 @@ class DFHackClient:
             {"Value": False},
         )
 
-    def advance(self, ticks: int) -> Dict[str, Any]:
+    def advance(
+        self,
+        ticks: int,
+        *,
+        interrupt_on_viewscreen_transition: bool = False,
+        viewscreen_before: str | None = None,
+    ) -> Dict[str, Any]:
         self._ensure_connection()
         if ticks <= 0:
             self._last_tick_info = {"ok": False, "error": "invalid_ticks"}
             return self.get_state()
 
-        tick_info = advance_ticks_exact(int(ticks), repause=True)
+        if interrupt_on_viewscreen_transition:
+            tick_info = advance_ticks_exact(
+                int(ticks),
+                repause=True,
+                interrupt_on_viewscreen_transition=True,
+                viewscreen_before=viewscreen_before,
+            )
+        else:
+            tick_info = advance_ticks_exact(int(ticks), repause=True)
         self._last_tick_info = dict(tick_info) if isinstance(tick_info, dict) else tick_info
 
         return self.get_state()
@@ -380,11 +394,15 @@ class DFHackClient:
         if not data:
             data = {
                 "time": 0,
+                "year": 0,
+                "year_tick": 0,
                 "population": 0,
                 "stocks": {"food": 0, "drink": 0, "wood": 0, "stone": 0},
                 "recent_events": [],
             }
 
+        data.setdefault("year", 0)
+        data.setdefault("year_tick", data.get("time", 0))
         data.setdefault("risks", [])
         data.setdefault("reminders", [])
         data.setdefault("map_bounds", (0, 0, 0))
