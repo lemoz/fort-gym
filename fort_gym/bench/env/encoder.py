@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Tuple
 
+from ..eval.gates import G7_DURATION_TICKS, G7_MIN_FUNCTIONAL_ROOMS, G7_MIN_POPULATION
 from .actions import normalized_objective
 
 INVALID_DF_CURSOR = -30000
@@ -31,6 +32,140 @@ def _int_or_none(value: Any) -> int | None:
         return int(value)
     except (TypeError, ValueError):
         return None
+
+
+def _dict_or_empty(value: Any) -> Dict[str, Any]:
+    return value if isinstance(value, dict) else {}
+
+
+def _g7_fact_snapshot(state: Dict[str, Any]) -> Dict[str, Any]:
+    """Return current G7 planning facts without claiming a terminal verdict."""
+
+    survival = _dict_or_empty(state.get("survival"))
+    if not survival:
+        survival_evidence_status = "unavailable"
+    elif (
+        survival.get("error") is None
+        and survival.get("ok") is True
+        and survival.get("active") is True
+        and isinstance(survival.get("run_id"), str)
+        and bool(survival["run_id"].strip())
+    ):
+        survival_evidence_status = "valid"
+    else:
+        survival_evidence_status = "invalid"
+    start_year = _int_or_none(survival.get("start_year"))
+    start_tick = _int_or_none(survival.get("start_tick"))
+    observed_year = _int_or_none(survival.get("observed_year"))
+    observed_tick = _int_or_none(survival.get("observed_tick"))
+    elapsed_ticks = None
+    if (
+        survival_evidence_status == "valid"
+        and start_year is not None
+        and start_tick is not None
+        and observed_year is not None
+        and observed_tick is not None
+    ):
+        candidate_elapsed = (
+            (observed_year - start_year) * G7_DURATION_TICKS
+            + observed_tick
+            - start_tick
+        )
+        elapsed_ticks = candidate_elapsed if candidate_elapsed >= 0 else None
+
+    population = _int_or_none(state.get("population"))
+    if population is None:
+        required_beds = None
+    elif population > 0:
+        required_beds = (population + 2) // 3
+    else:
+        required_beds = 0
+    fort = _dict_or_empty(state.get("fort"))
+    crew = _dict_or_empty(state.get("crew"))
+    completed = _dict_or_empty(crew.get("placed_furniture_completed"))
+
+    food_produced = _int_or_none(survival.get("food_produced_in_run"))
+    food_consumed = _int_or_none(survival.get("food_consumed_in_run"))
+    drink_produced = _int_or_none(survival.get("drink_produced_in_run"))
+    drink_consumed = _int_or_none(survival.get("drink_consumed_in_run"))
+    flow_complete = (
+        survival_evidence_status == "valid"
+        and survival.get("flow_evidence_complete") is True
+    )
+    stocks = _dict_or_empty(state.get("stocks"))
+    final_drink = _int_or_none(stocks.get("drink"))
+
+    def flow_status(produced: int | None, consumed: int | None) -> str:
+        if not flow_complete or produced is None or consumed is None:
+            return "unknown"
+        return "above" if produced > consumed else "below"
+
+    def threshold_status(observed: int | None, required: int | None) -> str:
+        if observed is None or required is None:
+            return "unknown"
+        return "at_or_above" if observed >= required else "below"
+
+    deaths = _int_or_none(survival.get("deaths_in_run"))
+    death_evidence_complete = survival.get("death_evidence_complete")
+    death_causes_known = survival.get("death_causes_known")
+    neglect_deaths = _int_or_none(survival.get("neglect_deaths"))
+    if (
+        survival_evidence_status != "valid"
+        or deaths is None
+        or deaths < 0
+        or death_evidence_complete is not True
+    ):
+        death_status = "unknown"
+    elif deaths == 0:
+        death_status = "no_neglect_observed"
+    elif death_causes_known is not True or neglect_deaths is None:
+        death_status = "unknown"
+    elif neglect_deaths == 0:
+        death_status = "no_neglect_observed"
+    else:
+        death_status = "neglect_observed"
+
+    functional_rooms = _int_or_none(fort.get("functional_rooms"))
+    installed_beds = _int_or_none(completed.get("bed"))
+    drink_flow_status = flow_status(drink_produced, drink_consumed)
+    drink_loop_status = (
+        "unknown"
+        if final_drink is None
+        else "below"
+        if final_drink <= 0
+        else drink_flow_status
+    )
+    return {
+        "survival_evidence_status": survival_evidence_status,
+        "duration_ticks": elapsed_ticks,
+        "duration_required": G7_DURATION_TICKS,
+        "duration_status": threshold_status(elapsed_ticks, G7_DURATION_TICKS),
+        "food_produced": food_produced,
+        "food_consumed": food_consumed,
+        "food_flow_status": flow_status(food_produced, food_consumed),
+        "drink_produced": drink_produced,
+        "drink_consumed": drink_consumed,
+        "final_drink": final_drink,
+        "drink_flow_status": drink_flow_status,
+        "drink_loop_status": drink_loop_status,
+        "flow_evidence_complete": flow_complete,
+        "population": population,
+        "population_required": G7_MIN_POPULATION,
+        "population_status": threshold_status(population, G7_MIN_POPULATION),
+        "functional_rooms": functional_rooms,
+        "functional_rooms_required": G7_MIN_FUNCTIONAL_ROOMS,
+        "functional_rooms_status": threshold_status(
+            functional_rooms, G7_MIN_FUNCTIONAL_ROOMS
+        ),
+        "installed_beds": installed_beds,
+        "installed_beds_required": required_beds,
+        "installed_beds_status": threshold_status(installed_beds, required_beds),
+        "death_status": death_status,
+        "deaths_in_run": deaths,
+        "death_evidence_complete": death_evidence_complete,
+        "death_causes_known": death_causes_known,
+        "neglect_deaths": neglect_deaths,
+    }
 
 
 def _work_int(work: Dict[str, Any], key: str, default: int = 0) -> int:
@@ -934,6 +1069,9 @@ def encode_observation(
     agent_plan_control = _governed_plan_control(action_history) if governed else None
     if agent_plan_control is not None:
         clean_state["agent_plan_control"] = agent_plan_control
+    g7_snapshot = _g7_fact_snapshot(clean_state) if governed else None
+    if g7_snapshot is not None:
+        clean_state["g7_fact_snapshot"] = g7_snapshot
     ui_work = clean_state.get("ui_work") if isinstance(clean_state.get("ui_work"), dict) else {}
     ui_target_setup = (
         clean_state.get("ui_target_setup")
@@ -1086,6 +1224,38 @@ def encode_observation(
                     "Death records (direct DF fields; do not infer missing causes): "
                     + "; ".join(record_parts)
                 )
+    if g7_snapshot is not None:
+        status_lines.append(
+            "G7 planning facts (not a verdict; evidence, run scope, rubric, and scalar "
+            "are terminal-only): "
+            f"survival_evidence={g7_snapshot['survival_evidence_status']}; "
+            f"duration={g7_snapshot['duration_ticks']}/"
+            f"{g7_snapshot['duration_required']} ticks "
+            f"({g7_snapshot['duration_status']}); "
+            f"food_flow={g7_snapshot['food_flow_status']} "
+            f"({g7_snapshot['food_produced']} produced vs "
+            f"{g7_snapshot['food_consumed']} consumed; requires produced>consumed); "
+            f"drink_loop={g7_snapshot['drink_loop_status']} "
+            f"(flow={g7_snapshot['drink_flow_status']}; "
+            f"{g7_snapshot['drink_produced']} produced vs "
+            f"{g7_snapshot['drink_consumed']} consumed; "
+            f"final_stock={g7_snapshot['final_drink']}; "
+            "requires produced>consumed and final_stock>0); "
+            f"population={g7_snapshot['population']}/"
+            f"{g7_snapshot['population_required']} "
+            f"({g7_snapshot['population_status']}); "
+            f"functional_rooms={g7_snapshot['functional_rooms']}/"
+            f"{g7_snapshot['functional_rooms_required']} "
+            f"({g7_snapshot['functional_rooms_status']}); "
+            f"installed_beds={g7_snapshot['installed_beds']}/"
+            f"{g7_snapshot['installed_beds_required']} "
+            f"({g7_snapshot['installed_beds_status']}); "
+            f"death_branch={g7_snapshot['death_status']} "
+            f"(deaths_in_run={g7_snapshot['deaths_in_run']}, "
+            f"death_evidence_complete={g7_snapshot['death_evidence_complete']}, "
+            f"death_causes_known={g7_snapshot['death_causes_known']}, "
+            f"neglect_deaths={g7_snapshot['neglect_deaths']})"
+        )
 
     # Last action result feedback
     if last_action_result is not None:
@@ -2604,6 +2774,7 @@ def encode_observation(
             "DF Viewscreen:",
             "Run resource flow:",
             "Run death evidence:",
+            "G7 planning facts",
             "Time:",
             "Population:",
             "Food:",
