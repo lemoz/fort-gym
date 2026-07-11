@@ -213,12 +213,9 @@ def advance_ticks_exact_external(
                 interrupt_safety_error = error
                 return False
             return True
-        if (
-            pause_state is True
-            and viewscreen_after in INTERACT_ALLOWED_VIEWSCREEN_TYPES
-        ):
+        if viewscreen_after in INTERACT_ALLOWED_VIEWSCREEN_TYPES:
             interrupted = True
-            pause_state_at_interrupt = True
+            pause_state_at_interrupt = pause_state
             error = "blocking_viewscreen_transition"
             return False
         error = "interrupt_viewscreen_unexpected"

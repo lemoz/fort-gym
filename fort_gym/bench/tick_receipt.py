@@ -151,8 +151,8 @@ def validate_clean_interruption_receipt(
         return "interrupt_baseline_mismatch"
     if (state_after_apply or {}).get("pause_state") is not True:
         return "interrupt_baseline_not_paused"
-    if tick_info.get("pause_state_at_interrupt") is not True:
-        return "interrupt_pause_unattested"
+    if type(tick_info.get("pause_state_at_interrupt")) is not bool:
+        return "interrupt_pause_state_invalid"
     if (
         tick_info.get("repause_requested") is not True
         or tick_info.get("repause_effective") is not True

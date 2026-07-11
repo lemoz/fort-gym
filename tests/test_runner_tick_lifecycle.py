@@ -1638,6 +1638,7 @@ def test_incomplete_viewscreen_interruption_receipt_is_terminal(
         ("boolean_state_time", "interrupt_start_tick_state_invalid"),
         ("boolean_attempt", "interrupt_repause_records_invalid"),
         ("boolean_attempt_count", "interrupt_repause_attempts_invalid"),
+        ("invalid_interrupt_pause", "interrupt_pause_state_invalid"),
         ("resume_error", "interrupt_resume_error_present"),
     ],
 )
@@ -1732,6 +1733,8 @@ def test_interruption_receipt_contradictions_are_terminal(
         tick_info["repause"]["attempt_records"][0]["attempt"] = True
     elif mutation == "boolean_attempt_count":
         tick_info["repause"]["attempts"] = True
+    elif mutation == "invalid_interrupt_pause":
+        tick_info["pause_state_at_interrupt"] = "false"
     else:
         tick_info["resume_error"] = "resume RPC failed"
 
@@ -1764,7 +1767,7 @@ def test_rollover_interruption_receipt_has_exact_duration() -> None:
         "paused_after": True,
         "viewscreen_before": "viewscreen_dwarfmodest",
         "viewscreen_after": "viewscreen_textviewerst",
-        "pause_state_at_interrupt": True,
+        "pause_state_at_interrupt": False,
         "repause_requested": True,
         "repause_effective": True,
         "repause": {
