@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recorded Worlds | Fort Labs</title>
+<meta name="description" content="Browse the Dwarf Fortress worlds built by evaluated AI agents and open every recorded run.">
+<link rel="stylesheet" href="/static/fort-labs.css?v=20260711-2">
+<style>
+  .worlds-hero { padding: 50px 0 38px; border-bottom: 1px solid var(--line); }
+  .worlds-hero-grid { display: grid; grid-template-columns: .78fr 1.22fr; gap: 54px; align-items: end; }
+  .worlds-summary { margin-top: 22px; color: var(--muted); font: 650 11px/1.6 var(--mono); }
+  .featured-world { display: grid; grid-template-columns: 1.25fr .75fr; min-height: 250px; border: 1px solid var(--line); background: var(--coal); }
+  .featured-media { min-height: 250px; border: 0; border-right: 1px solid var(--line); }
+  .featured-copy { padding: 24px; display: flex; flex-direction: column; }
+  .featured-model { margin-top: 20px; font: 750 20px/1.15 var(--mono); overflow-wrap: anywhere; }
+  .featured-grid { margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .featured-copy .fl-link { margin-top: auto; padding-top: 22px; }
+
+  .filter-band { position: sticky; top: var(--header-height); z-index: 20; border-bottom: 1px solid var(--line); background: rgba(3,5,3,.96); backdrop-filter: blur(10px); }
+  .filters { display: grid; grid-template-columns: minmax(220px, 1.5fr) repeat(4, minmax(120px, .65fr)) auto; gap: 0; align-items: stretch; }
+  .filter-field { min-width: 0; border-right: 1px solid var(--line); }
+  .filter-field:first-child { border-left: 1px solid var(--line); }
+  .filter-field input, .filter-field select {
+    width: 100%; height: 52px; padding: 0 14px; border: 0; border-radius: 0; outline: 0;
+    background: transparent; color: var(--paper); font: 650 11px/1 var(--mono);
+  }
+  .filter-field input::placeholder { color: var(--muted); }
+  .filter-field select { appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 16px) 22px, calc(100% - 11px) 22px; background-size: 5px 5px; background-repeat: no-repeat; }
+  .filter-submit { min-width: 110px; border-radius: 0; border-block: 0; border-right: 1px solid var(--line); }
+
+  .library { padding: 36px 0 72px; }
+  .library-head { display: flex; justify-content: space-between; align-items: baseline; gap: 24px; margin-bottom: 18px; }
+  .library-count { color: var(--muted); font: 650 11px/1 var(--mono); }
+  .world-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .run-card { min-width: 0; border: 1px solid var(--line); background: var(--coal); }
+  .run-card:hover { border-color: var(--cyan); }
+  .run-card-media { aspect-ratio: 4 / 3; border: 0; border-bottom: 1px solid var(--line); }
+  .run-card-media a { display: block; height: 100%; }
+  .run-card-main { padding: 14px; }
+  .run-card-head { display: flex; justify-content: space-between; align-items: start; gap: 14px; }
+  .run-card-model { overflow-wrap: anywhere; font: 750 13px/1.35 var(--mono); }
+  .run-card-status { white-space: nowrap; color: var(--muted); font: 650 9px/1.3 var(--mono); text-transform: uppercase; }
+  .run-card-data { margin-top: 16px; display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--line); }
+  .run-card-cell { padding: 11px 10px 0 0; min-width: 0; }
+  .run-card-cell:nth-child(even) { padding-left: 10px; border-left: 1px solid var(--line); }
+  .run-card-label { color: var(--muted); font: 700 8px/1.2 var(--mono); text-transform: uppercase; }
+  .run-card-value { margin-top: 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 11px/1.25 var(--mono); }
+  .run-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px; border-top: 1px solid var(--line); }
+  .run-card-date { color: var(--muted); font: 600 9px/1.25 var(--mono); }
+
+  .pager { margin-top: 30px; display: flex; justify-content: space-between; align-items: center; gap: 18px; padding-top: 20px; border-top: 1px solid var(--line); }
+  .pager-info { color: var(--muted); font: 650 11px/1 var(--mono); }
+  .pager-actions { display: flex; gap: 8px; }
+  .pager-actions .fl-btn[disabled] { opacity: .35; cursor: default; }
+
+  @media (max-width: 1050px) {
+    .worlds-hero-grid { grid-template-columns: 1fr; }
+    .filters { grid-template-columns: 1.4fr repeat(2, 1fr); }
+    .filter-submit { min-width: 0; }
+    .world-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 640px) {
+    .worlds-hero { padding-top: 38px; }
+    .featured-world { grid-template-columns: 1fr; }
+    .featured-media { min-height: 220px; border-right: 0; border-bottom: 1px solid var(--line); }
+    .featured-copy { padding: 18px; }
+    .filter-band { position: static; }
+    .filters { grid-template-columns: 1fr 1fr; }
+    .filter-field:first-child { grid-column: 1 / -1; }
+    .filter-field:nth-child(3) { border-right: 1px solid var(--line); }
+    .filter-submit { width: 100%; grid-column: 1 / -1; border-top: 1px solid var(--line); }
+    .world-grid { grid-template-columns: 1fr; }
+    .run-card { display: grid; grid-template-columns: .9fr 1.1fr; }
+    .run-card-media { aspect-ratio: auto; min-height: 180px; border-bottom: 0; border-right: 1px solid var(--line); }
+    .run-card-main { padding: 12px; }
+    .run-card-data { grid-template-columns: 1fr; }
+    .run-card-cell:nth-child(even) { padding-left: 0; border-left: 0; }
+    .run-card-foot { grid-column: 1 / -1; }
+    .pager { align-items: flex-start; flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+<header class="fl-header">
+  <div class="fl-wrap fl-nav">
+    <a class="fl-brand" href="/"><span>FORT</span> LABS</a>
+    <nav class="fl-nav-links" aria-label="Primary navigation">
+      <a href="/">Home</a><a href="/#results">Results</a><a href="/#protocols">Protocols</a><a href="/worlds" aria-current="page">Runs</a><a href="/#evidence">Findings</a><a href="/#about">About</a><a class="fl-live-link" href="/live"><span class="fl-status-dot" id="nav-live-dot"></span><span id="nav-live-label">No live run</span></a>
+    </nav>
+    <button class="fl-menu-button" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="fl-mobile-menu" data-fl-menu-button>☰</button>
+  </div>
+</header>
+<nav class="fl-mobile-menu" id="fl-mobile-menu" aria-label="Mobile navigation" aria-hidden="true" data-fl-mobile-menu data-open="false">
+  <a href="/">Home <span>01</span></a><a href="/#results">Results <span>02</span></a><a href="/#protocols">Protocols <span>03</span></a><a href="/worlds">Runs <span>04</span></a><a href="/#evidence">Findings <span>05</span></a><a href="/#about">About <span>06</span></a>
+</nav>
+
+<main>
+  <section class="worlds-hero" aria-labelledby="worlds-title">
+    <div class="fl-wrap worlds-hero-grid">
+      <div>
+        <div class="fl-eyebrow">Recorded worlds</div>
+        <h1 class="fl-title" id="worlds-title">Every world leaves a trace.</h1>
+        <p class="fl-copy">Browse the fortresses agents built, the strategies they followed, and the moments that changed each run.</p>
+        <div class="worlds-summary" id="worlds-summary">Loading the public run archive…</div>
+      </div>
+      <article class="featured-world" id="featured-world" aria-label="Featured run">
+        <div class="fl-media featured-media"><canvas id="featured-canvas"></canvas><div class="fl-media-source" id="featured-source">Loading recorded world…</div></div>
+        <div class="featured-copy">
+          <div class="fl-kicker" id="featured-kicker">Featured world</div>
+          <div class="featured-model" id="featured-model">Loading…</div>
+          <div class="featured-grid">
+            <div><div class="fl-data-label">Step</div><div class="fl-data-value" id="featured-step">--</div></div>
+            <div><div class="fl-data-label">Score</div><div class="fl-data-value fl-data-value-acid" id="featured-score">--</div></div>
+            <div><div class="fl-data-label">Protocol</div><div class="fl-data-value" id="featured-protocol">--</div></div>
+            <div><div class="fl-data-label">Seed</div><div class="fl-data-value" id="featured-seed">--</div></div>
+          </div>
+          <a class="fl-link" id="featured-link" href="/live">Open run →</a>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="filter-band" aria-label="Run filters">
+    <form class="fl-wrap filters" id="filters-form">
+      <div class="filter-field"><input id="filter-query" name="q" type="search" maxlength="100" placeholder="Search models, protocols, seeds…" aria-label="Search recorded worlds"></div>
+      <div class="filter-field"><select id="filter-status" name="status" aria-label="Filter by status"><option value="">All statuses</option><option value="pending">Pending</option><option value="running">Live</option><option value="paused">Paused</option><option value="completed">Completed</option><option value="stopped">Stopped</option><option value="failed">Failed</option></select></div>
+      <div class="filter-field"><input id="filter-model" name="model" list="model-options" maxlength="200" placeholder="Model" aria-label="Filter by model"><datalist id="model-options"></datalist></div>
+      <div class="filter-field"><input id="filter-protocol" name="evaluation_protocol" list="protocol-options" maxlength="100" placeholder="Protocol" aria-label="Filter by protocol"><datalist id="protocol-options"></datalist></div>
+      <div class="filter-field"><input id="filter-seed" name="seed_save" list="seed-options" maxlength="200" placeholder="Seed" aria-label="Filter by seed"><datalist id="seed-options"></datalist></div>
+      <button class="fl-btn fl-btn-primary filter-submit" type="submit">Apply →</button>
+    </form>
+  </section>
+
+  <section class="library">
+    <div class="fl-wrap">
+      <div class="library-head"><div class="fl-kicker">World archive</div><div class="library-count" id="library-count">Loading…</div></div>
+      <div class="world-grid" id="world-grid" aria-live="polite"><div class="fl-empty">Reconstructing recorded worlds…</div></div>
+      <div class="pager" id="pager" hidden>
+        <div class="pager-info" id="pager-info"></div>
+        <div class="pager-actions"><button class="fl-btn" id="pager-prev" type="button">← Previous</button><button class="fl-btn" id="pager-next" type="button">Next →</button></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="fl-footer">
+  <div class="fl-wrap fl-footer-grid">
+    <div><div class="fl-footer-mark"><span>FORT</span> LABS</div><p class="fl-footer-copy">Worlds for long-horizon intelligence. Every public run opens into its recorded gameplay.</p></div>
+    <div><div class="fl-footer-title">Explore</div><div class="fl-footer-links"><a href="/#results">Results</a><a href="/#protocols">Protocols</a><a href="/worlds">Runs</a></div></div>
+    <div><div class="fl-footer-title">Research</div><div class="fl-footer-links"><a href="https://github.com/lemoz/fort-gym/blob/main/docs/FORT_EVAL_SPEC.md">Methodology</a><a href="https://github.com/lemoz/fort-gym">GitHub</a><a href="/live">Live viewer</a></div></div>
+    <div><div class="fl-footer-title">Archive</div><div class="fl-footer-links"><a href="/leaderboard">Historical leaderboard</a><a href="/worlds">Recorded worlds</a></div></div>
+  </div>
+</footer>
+
+<script src="/static/fort-labs.js?v=20260711-2"></script>
+<script>
+(function () {
+  'use strict';
+  const FL = window.FortLabs;
+  FL.initShell();
+  const $ = id => document.getElementById(id);
+  const PAGE_SIZE = 24;
+  let state = {offset: 0, total: 0, items: []};
+  let lazyObserver = null;
+
+  function readFilters() {
+    const params = new URLSearchParams(window.location.search);
+    return {
+      q: params.get('q') || '', status: params.get('status') || '', model: params.get('model') || '',
+      evaluation_protocol: params.get('evaluation_protocol') || '', seed_save: params.get('seed_save') || '',
+      offset: Math.max(0, Number(params.get('offset')) || 0),
+    };
+  }
+
+  function writeFilters(filters) {
+    const params = new URLSearchParams();
+    ['q', 'status', 'model', 'evaluation_protocol', 'seed_save'].forEach(key => { if (filters[key]) params.set(key, filters[key]); });
+    if (filters.offset) params.set('offset', String(filters.offset));
+    history.pushState({}, '', `${location.pathname}${params.size ? `?${params}` : ''}`);
+  }
+
+  function syncForm(filters) {
+    $('filter-query').value = filters.q;
+    $('filter-status').value = filters.status;
+    $('filter-model').value = filters.model;
+    $('filter-protocol').value = filters.evaluation_protocol;
+    $('filter-seed').value = filters.seed_save;
+  }
+
+  function endpoint(filters) {
+    const params = new URLSearchParams({limit: String(PAGE_SIZE), offset: String(filters.offset)});
+    ['q', 'status', 'model', 'evaluation_protocol', 'seed_save'].forEach(key => { if (filters[key]) params.set(key, filters[key]); });
+    return `/public/worlds?${params}`;
+  }
+
+  function renderDatalist(id, values) {
+    $(id).innerHTML = [...new Set(values.filter(Boolean))].sort().map(value => `<option value="${FL.escapeHtml(value)}"></option>`).join('');
+  }
+
+  function applyFeatured(run) {
+    if (!run) {
+      FL.renderUnavailable($('featured-canvas'));
+      $('featured-source').textContent = 'No recorded world available';
+      $('featured-model').textContent = 'The next world begins soon';
+      return;
+    }
+    const isRunning = FL.canWatchLive(run);
+    const featureLabel = isRunning
+      ? 'Live world'
+      : (FL.isActiveStatus(run.status) ? 'Active world' : 'Featured recorded world');
+    $('featured-kicker').innerHTML = `<span class="fl-status-dot ${FL.escapeHtml(run.status)}"></span>${FL.escapeHtml(featureLabel)}`;
+    $('featured-model').textContent = run.model || 'Unknown model';
+    $('featured-step').textContent = `${run.step ?? 0} / ${run.max_steps ?? '--'}`;
+    $('featured-score').textContent = FL.formatNumber(run.score);
+    $('featured-protocol').textContent = run.evaluation_protocol || 'Not reported';
+    $('featured-seed').textContent = run.seed_save || 'Not reported';
+    $('featured-link').href = FL.runUrl(run);
+    $('featured-link').textContent = isRunning ? 'Watch live →' : 'Open run →';
+    FL.loadRunFrame(run, $('featured-canvas'), $('featured-source'));
+    if (isRunning) {
+      $('nav-live-dot').className = 'fl-status-dot running';
+      $('nav-live-label').textContent = 'Live now';
+    }
+  }
+
+  function cardHtml(run, index) {
+    return `<article class="run-card">
+      <div class="fl-media run-card-media"><a href="${FL.runUrl(run)}" aria-label="Open ${FL.escapeHtml(run.model || 'recorded run')}"><canvas id="world-canvas-${index}" data-run-index="${index}"></canvas></a><div class="fl-media-source" id="world-source-${index}">Recorded frame</div></div>
+      <div class="run-card-main">
+        <div class="run-card-head"><div class="run-card-model">${FL.escapeHtml(run.model || 'Unknown model')}</div><div class="run-card-status"><span class="fl-status-dot ${FL.escapeHtml(run.status)}"></span>${FL.escapeHtml(FL.statusLabel(run.status))}</div></div>
+        <div class="run-card-data">
+          <div class="run-card-cell"><div class="run-card-label">Step</div><div class="run-card-value">${FL.escapeHtml(run.step ?? 0)} / ${FL.escapeHtml(run.max_steps ?? '--')}</div></div>
+          <div class="run-card-cell"><div class="run-card-label">Score</div><div class="run-card-value" style="color:var(--acid)">${FL.escapeHtml(FL.formatNumber(run.score))}</div></div>
+          <div class="run-card-cell"><div class="run-card-label">Protocol</div><div class="run-card-value">${FL.escapeHtml(run.evaluation_protocol || 'Not reported')}</div></div>
+          <div class="run-card-cell"><div class="run-card-label">Seed</div><div class="run-card-value">${FL.escapeHtml(run.seed_save || 'Not reported')}</div></div>
+        </div>
+      </div>
+      <div class="run-card-foot"><div class="run-card-date">${FL.escapeHtml(FL.formatDate(run.finished_at || run.started_at))}</div><a class="fl-link" href="${FL.runUrl(run)}">Open run →</a></div>
+    </article>`;
+  }
+
+  function observeFrames(items) {
+    lazyObserver?.disconnect();
+    const load = canvas => {
+      const index = Number(canvas.dataset.runIndex);
+      const run = items[index];
+      if (run) FL.loadRunFrame(run, canvas, $(`world-source-${index}`));
+    };
+    if (typeof IntersectionObserver !== 'function') {
+      document.querySelectorAll('[data-run-index]').forEach(load);
+      return;
+    }
+    lazyObserver = new IntersectionObserver(entries => entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      lazyObserver.unobserve(entry.target);
+      load(entry.target);
+    }), {rootMargin: '300px'});
+    document.querySelectorAll('[data-run-index]').forEach(canvas => lazyObserver.observe(canvas));
+  }
+
+  function renderPage(payload, filters) {
+    state = {offset: payload.offset, total: payload.total, items: payload.items || []};
+    const items = state.items;
+    $('worlds-summary').textContent = `${state.total.toLocaleString()} public worlds · real gameplay and replay evidence`;
+    $('library-count').textContent = state.total ? `Showing ${state.offset + 1}–${Math.min(state.offset + items.length, state.total)} of ${state.total}` : 'No matching worlds';
+    applyFeatured(items[0]);
+    if (!items.length) {
+      $('world-grid').innerHTML = '<div class="fl-empty">No recorded worlds match these filters. Try a broader model, protocol, seed, or status.</div>';
+    } else {
+      $('world-grid').innerHTML = items.map(cardHtml).join('');
+      observeFrames(items);
+    }
+    renderDatalist('model-options', items.map(item => item.model));
+    renderDatalist('protocol-options', items.map(item => item.evaluation_protocol));
+    renderDatalist('seed-options', items.map(item => item.seed_save));
+    $('pager').hidden = state.total <= PAGE_SIZE;
+    $('pager-info').textContent = `Page ${Math.floor(state.offset / PAGE_SIZE) + 1} of ${Math.max(1, Math.ceil(state.total / PAGE_SIZE))}`;
+    $('pager-prev').disabled = state.offset === 0;
+    $('pager-next').disabled = state.offset + items.length >= state.total;
+    syncForm(filters);
+  }
+
+  async function loadWorlds(filters, updateHistory = false) {
+    $('world-grid').innerHTML = '<div class="fl-empty">Reconstructing recorded worlds…</div>';
+    if (updateHistory) writeFilters(filters);
+    try {
+      renderPage(await FL.fetchJson(endpoint(filters)), filters);
+    } catch (_) {
+      $('world-grid').innerHTML = '<div class="fl-empty">Recorded worlds are temporarily unavailable. The archive will reconnect automatically on the next request.</div>';
+      $('library-count').textContent = 'Archive unavailable';
+    }
+  }
+
+  $('filters-form').addEventListener('submit', event => {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    loadWorlds({q: String(data.get('q') || '').trim(), status: String(data.get('status') || ''), model: String(data.get('model') || '').trim(), evaluation_protocol: String(data.get('evaluation_protocol') || '').trim(), seed_save: String(data.get('seed_save') || '').trim(), offset: 0}, true);
+  });
+  $('pager-prev').addEventListener('click', () => { const filters = readFilters(); filters.offset = Math.max(0, state.offset - PAGE_SIZE); loadWorlds(filters, true); scrollTo({top: 0, behavior: 'smooth'}); });
+  $('pager-next').addEventListener('click', () => { const filters = readFilters(); filters.offset = state.offset + PAGE_SIZE; loadWorlds(filters, true); scrollTo({top: 0, behavior: 'smooth'}); });
+  window.addEventListener('popstate', () => loadWorlds(readFilters()));
+  loadWorlds(readFilters());
+})();
+</script>
+</body>
+</html>

@@ -4,28 +4,70 @@ import inspect
 from pathlib import Path
 
 
-def test_landing_page_is_results_first_fort_eval_surface() -> None:
+def test_landing_page_is_gameplay_first_fort_labs_surface() -> None:
     html = Path("web/landing.html").read_text(encoding="utf-8")
 
     assert "<span>FORT</span> LABS" in html
-    assert "FORT-EVAL" in html
+    assert "Fort-Eval" in html
+    assert "/static/fort-labs.css" in html
+    assert "/static/fort-labs.js" in html
+    assert "Worlds on record" in html
     assert "Can an AI build a civilization that" in html
-    assert 'id="hero-canvas"' in html
-    assert "Source: recorded DF CopyScreen" in html
-    assert "Results belong to protocols" in html
+    assert "Dwarf Fortress gives long-horizon agents a living world" in html
+    assert "See what each model builds when the world keeps moving" in html
+    assert "Every score opens into a complete gameplay trace" in html
+    assert "The next great benchmark is a world" in html
     assert "Easy" in html and "Hard" in html and "Discovery" in html
-    assert "Observer Map" in html
-    assert "Observer view / derived evidence" in html
-    assert "never silently passed to evaluated models" in html
-    assert "No frozen Fort-Eval cohort has been published yet" in html
-    assert "'/public/overview'" in html
-    assert "/preview" in html
+    assert "Spectator view · the agent plays from its declared interface" in html
+    assert "The first experimental cohort is being assembled" in html
+    assert "/public/worlds?limit=24" in html
+    assert "/public/overview?recent_limit=24" in html
+    assert "FL.loadRunFrame" in html
     assert "/export/trace" not in html
-    assert 'href="/live"' in html
-    assert "Failures receive the same permanent replay" in html
+    assert 'href="/worlds"' in html
+    assert "Results belong to protocols" not in html
+    assert "A run is a trace, not a claim" not in html
 
 
-def test_root_serves_landing_and_live_serves_viewer() -> None:
+def test_worlds_page_uses_real_public_run_evidence() -> None:
+    html = Path("web/worlds.html").read_text(encoding="utf-8")
+
+    assert "Every world leaves a trace" in html
+    assert "Browse the fortresses agents built" in html
+    assert "/public/worlds" in html
+    assert "FL.loadRunFrame" in html
+    assert "IntersectionObserver" in html
+    assert "No recorded worlds match these filters" in html
+    assert "Open run" in html
+
+
+def test_shared_fort_labs_assets_define_truthful_media_states() -> None:
+    css = Path("web/static/fort-labs.css").read_text(encoding="utf-8")
+    js = Path("web/static/fort-labs.js").read_text(encoding="utf-8")
+
+    assert "--acid: #d9f45b" in css
+    assert "--cyan: #68d9d0" in css
+    assert "44px" in css
+    assert "function renderScreenText" in js
+    assert "function renderScreenTiles" in js
+    assert "function renderUnavailable" in js
+    assert "No frame was recorded for this moment" in js
+    assert "/preview" in js
+    assert "/screenshot" not in js
+    assert "/export/trace" not in js
+    assert "aria-hidden" in js
+    assert "button.focus()" in js
+
+
+def test_replay_viewer_requires_live_scope_before_live_mode() -> None:
+    html = Path("web/index.html").read_text(encoding="utf-8")
+
+    assert "Array.isArray(run.scopes)" in html
+    assert "run.scopes.includes('live')" in html
+    assert "if (canWatchLive)" in html
+
+
+def test_root_serves_landing_and_public_entrypoints() -> None:
     from fort_gym.bench.api import server
 
     assert 'return _html_file_response("landing.html")' in inspect.getsource(
@@ -38,6 +80,19 @@ def test_root_serves_landing_and_live_serves_viewer() -> None:
     assert 'return _html_file_response("index.html")' in inspect.getsource(
         server.serve_short_visual_replay
     )
+    assert 'return _html_file_response("worlds.html")' in inspect.getsource(server.serve_worlds)
+
+
+def test_public_pages_and_shared_assets_are_served() -> None:
+    from fastapi.testclient import TestClient
+
+    from fort_gym.bench.api import server
+
+    client = TestClient(server.app)
+    assert client.get("/").status_code == 200
+    assert client.get("/worlds").status_code == 200
+    assert client.get("/static/fort-labs.css").status_code == 200
+    assert client.get("/static/fort-labs.js").status_code == 200
 
 
 def test_run_shares_are_permanent_evidence() -> None:

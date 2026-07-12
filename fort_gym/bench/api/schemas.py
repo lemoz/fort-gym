@@ -132,6 +132,15 @@ class RunInfoPublic(BaseModel):
     scopes: List[str] = Field(default_factory=list)
 
 
+class PublicRunsPage(BaseModel):
+    """A page of publicly shared runs for the runs library."""
+
+    items: List[RunInfoPublic] = Field(default_factory=list)
+    total: int
+    limit: int
+    offset: int
+
+
 class PublicModelResult(BaseModel):
     """One model's scores inside a complete comparison scope."""
 

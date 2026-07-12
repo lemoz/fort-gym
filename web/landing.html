@@ -4,804 +4,416 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Fort-Eval | Fort Labs</title>
-<meta name="description" content="Fort-Eval measures whether AI agents can build and sustain a real Dwarf Fortress civilization, with versioned protocols and public replay evidence.">
+<meta name="description" content="Watch long-horizon AI agents build, adapt, and survive in real Dwarf Fortress worlds.">
+<link rel="stylesheet" href="/static/fort-labs.css?v=20260711-2">
 <style>
-  :root {
-    --black: #050605;
-    --coal: #0d0f0d;
-    --panel: #141714;
-    --panel-2: #191d19;
-    --line: #303630;
-    --paper: #f1f0e8;
-    --muted: #a8aca2;
-    --acid: #d9f45b;
-    --cyan: #68d9d0;
-    --amber: #f0b94f;
-    --red: #ef756f;
-    --green: #7ed18a;
-    --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-    --sans: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  }
-  * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
-  body {
-    margin: 0;
-    background: var(--black);
-    color: var(--paper);
-    font-family: var(--sans);
-    font-size: 16px;
-    line-height: 1.55;
-    letter-spacing: 0;
-  }
-  a { color: inherit; }
-  button, a { -webkit-tap-highlight-color: transparent; }
-  a:focus-visible, button:focus-visible { outline: 2px solid var(--acid); outline-offset: 3px; }
-  .wrap { width: min(1180px, calc(100% - 40px)); margin: 0 auto; }
-  .mono { font-family: var(--mono); }
-  .eyebrow {
-    color: var(--acid);
-    font: 700 12px/1.2 var(--mono);
-    text-transform: uppercase;
-    letter-spacing: .12em;
-  }
-  .muted { color: var(--muted); }
-  .status-dot {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--muted);
-    margin-right: 7px;
-  }
-  .status-dot.running { background: var(--green); box-shadow: 0 0 0 4px rgba(126,209,138,.12); }
-  .status-dot.failed, .status-dot.stopped { background: var(--red); }
-  .status-dot.completed { background: var(--cyan); }
-
-  header {
-    position: fixed;
-    inset: 0 0 auto;
-    z-index: 20;
-    background: rgba(5, 6, 5, .92);
-    border-bottom: 1px solid rgba(255,255,255,.12);
-    backdrop-filter: blur(10px);
-  }
-  .nav {
-    height: 64px;
-    display: flex;
-    align-items: center;
-    gap: 28px;
-  }
-  .brand {
-    text-decoration: none;
-    font: 800 14px/1 var(--mono);
-    white-space: nowrap;
-  }
-  .brand span { color: var(--acid); }
-  .brand small { color: var(--muted); font-size: 11px; font-weight: 600; }
-  .nav-links { margin-left: auto; display: flex; gap: 24px; align-items: center; }
-  .nav-links a { color: var(--muted); text-decoration: none; font: 600 13px/1 var(--mono); }
-  .nav-links a:hover { color: var(--paper); }
-  .nav-live { color: var(--paper) !important; }
-
-  .hero {
-    min-height: clamp(560px, 76vh, 760px);
-    padding: 0;
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    align-items: flex-end;
-    border-bottom: 1px solid var(--line);
-  }
-  #hero-canvas {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    background: #000;
-  }
-  .hero::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: rgba(5, 6, 5, .44);
-    pointer-events: none;
-  }
-  .hero-content {
-    position: relative;
-    z-index: 2;
-    width: 100%;
-    padding: 128px 0 64px;
-    text-shadow: 0 2px 20px #000, 0 2px 4px #000;
-  }
-  .hero h1 {
-    margin: 12px 0 18px;
-    max-width: 920px;
-    font-size: clamp(46px, 7vw, 90px);
-    line-height: .98;
-    font-weight: 760;
-    letter-spacing: 0;
-  }
-  .hero h1 span { color: var(--acid); }
-  .hero-copy { max-width: 700px; color: #dedfd7; font-size: clamp(17px, 2vw, 21px); }
-  .hero-actions { margin-top: 30px; display: flex; flex-wrap: wrap; gap: 10px; }
-  .btn {
-    min-height: 44px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 10px 16px;
-    border: 1px solid rgba(255,255,255,.28);
-    border-radius: 4px;
-    background: rgba(5,6,5,.72);
-    color: var(--paper);
-    text-decoration: none;
-    font: 700 13px/1 var(--mono);
-    text-shadow: none;
-  }
-  .btn:hover { border-color: var(--paper); }
-  .btn.primary { background: var(--acid); border-color: var(--acid); color: #12140b; }
-  .hero-source {
-    position: absolute;
-    right: 20px;
-    bottom: 18px;
-    z-index: 3;
-    padding: 6px 9px;
-    background: rgba(0,0,0,.78);
-    border: 1px solid rgba(255,255,255,.15);
-    color: #d3d6cc;
-    font: 600 11px/1.3 var(--mono);
-  }
-
-  .run-band { background: var(--coal); border-bottom: 1px solid var(--line); }
-  .run-grid {
+  .worlds-rail { padding: 24px 0 20px; border-bottom: 1px solid var(--line); }
+  .worlds-rail-head { display: flex; justify-content: space-between; gap: 24px; align-items: center; margin-bottom: 12px; }
+  .worlds-counter { color: var(--muted); font: 650 11px/1 var(--mono); }
+  .worlds-track {
     display: grid;
-    grid-template-columns: 1.25fr repeat(4, minmax(100px, .7fr)) auto;
-    min-height: 104px;
-    align-items: stretch;
+    grid-auto-flow: column;
+    grid-auto-columns: 250px;
+    gap: 4px;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-color: var(--line-strong) transparent;
+    padding-bottom: 4px;
   }
-  .run-cell {
+  .world-tile {
     min-width: 0;
-    padding: 20px 18px;
-    border-right: 1px solid var(--line);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
-  .run-cell:first-child { padding-left: 0; }
-  .run-cell:last-child { border-right: 0; padding-right: 0; }
-  .run-label { color: var(--muted); font: 700 10px/1.2 var(--mono); text-transform: uppercase; letter-spacing: .1em; }
-  .run-value { margin-top: 7px; font: 700 16px/1.2 var(--mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .run-value.score { color: var(--acid); font-size: 25px; }
-  .run-open { align-items: flex-end; }
-
-  section { padding: 88px 0; border-bottom: 1px solid var(--line); }
-  section h2 { margin: 12px 0 16px; font-size: clamp(31px, 4vw, 50px); line-height: 1.05; letter-spacing: 0; }
-  .section-copy { max-width: 760px; color: var(--muted); font-size: 18px; }
-
-  .results-head { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 34px; }
-  .results-scope { max-width: 520px; color: var(--muted); font: 600 12px/1.5 var(--mono); text-align: right; }
-  .table-shell { overflow-x: auto; border-top: 1px solid var(--line); }
-  table { width: 100%; border-collapse: collapse; min-width: 840px; }
-  th, td { padding: 15px 12px; text-align: left; border-bottom: 1px solid var(--line); }
-  th { color: var(--muted); font: 700 10px/1.2 var(--mono); text-transform: uppercase; letter-spacing: .1em; }
-  td { font-size: 14px; }
-  td:first-child, th:first-child { padding-left: 0; }
-  .table-model { font: 700 13px/1.3 var(--mono); }
-  .table-num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
-  .evidence-link { color: var(--cyan); font: 700 12px/1 var(--mono); text-decoration: none; }
-  .empty-row { color: var(--muted); padding: 28px 0; }
-
-  .profile-grid {
-    margin-top: 42px;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
     border: 1px solid var(--line);
-  }
-  .profile {
-    min-width: 0;
-    padding: 30px;
-    border-right: 1px solid var(--line);
     background: var(--coal);
-  }
-  .profile:last-child { border-right: 0; }
-  .profile-state { color: var(--muted); font: 700 11px/1.2 var(--mono); text-transform: uppercase; }
-  .profile.live .profile-state { color: var(--green); }
-  .profile h3 { margin: 18px 0 8px; font-size: 25px; }
-  .profile p { color: var(--muted); font-size: 15px; }
-  .profile dl { margin: 24px 0 0; }
-  .profile dt { margin-top: 14px; color: var(--paper); font: 700 11px/1.2 var(--mono); text-transform: uppercase; }
-  .profile dd { margin: 5px 0 0; color: var(--muted); font-size: 13px; }
-
-  .evidence-grid { margin-top: 38px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); }
-  .evidence-item { background: var(--black); padding: 24px; min-height: 176px; }
-  .evidence-item .index { color: var(--amber); font: 700 11px/1 var(--mono); }
-  .evidence-item h3 { margin: 28px 0 7px; font-size: 17px; }
-  .evidence-item p { margin: 0; color: var(--muted); font-size: 14px; }
-
-  .recent-list { margin-top: 34px; border-top: 1px solid var(--line); }
-  .recent-run {
-    display: grid;
-    grid-template-columns: 1.3fr .8fr .7fr .7fr auto;
-    gap: 18px;
-    align-items: center;
-    padding: 18px 0;
-    border-bottom: 1px solid var(--line);
-  }
-  .recent-model { font: 700 13px/1.3 var(--mono); overflow-wrap: anywhere; }
-  .recent-meta { color: var(--muted); font: 600 12px/1.4 var(--mono); }
-
-  .observer-band { background: var(--paper); color: #151713; }
-  .observer-band .eyebrow { color: #536400; }
-  .observer-band .section-copy { color: #5c6159; }
-  .observer-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 70px; align-items: center; }
-  .atlas {
-    position: relative;
-    aspect-ratio: 1.4;
-    background: #0a0c0a;
-    border: 1px solid #303630;
-    overflow: hidden;
-  }
-  #atlas-canvas { width: 100%; height: 100%; display: block; }
-  .atlas-label {
-    position: absolute;
-    left: 12px;
-    top: 12px;
-    padding: 6px 8px;
-    background: rgba(0,0,0,.82);
     color: var(--paper);
-    font: 700 10px/1.2 var(--mono);
-    text-transform: uppercase;
-    letter-spacing: .08em;
+    text-decoration: none;
   }
-  .observer-legend { margin-top: 20px; display: flex; flex-wrap: wrap; gap: 15px; color: #555b53; font: 700 11px/1 var(--mono); }
-  .swatch { display: inline-block; width: 9px; height: 9px; margin-right: 6px; }
+  .world-tile:hover { border-color: var(--cyan); }
+  .world-tile-media { position: relative; height: 138px; overflow: hidden; background: #010201; }
+  .world-tile-media canvas { display: block; width: 100%; height: 100%; }
+  .world-tile-state { position: absolute; inset: 8px auto auto 8px; padding: 4px 6px; background: rgba(0,0,0,.82); font: 700 9px/1 var(--mono); text-transform: uppercase; }
+  .world-tile-meta { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 10px; }
+  .world-tile-model { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 11px/1.25 var(--mono); }
+  .world-tile-step { color: var(--muted); font: 650 10px/1.25 var(--mono); }
+  .world-tile-score { color: var(--acid); font: 700 11px/1.25 var(--mono); }
 
-  .closing { display: grid; grid-template-columns: 1.2fr .8fr; gap: 70px; align-items: start; }
-  .lab-mark { color: var(--acid); font: 800 clamp(40px, 7vw, 86px)/.9 var(--mono); }
-  .lab-links { border-top: 1px solid var(--line); }
-  .lab-links a { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid var(--line); color: var(--paper); text-decoration: none; font: 700 13px/1.2 var(--mono); }
-  .lab-links a span { color: var(--muted); }
+  .home-hero { padding: 42px 0 40px; border-bottom: 1px solid var(--line); }
+  .hero-grid { display: grid; grid-template-columns: 1.2fr .85fr .75fr; gap: clamp(32px, 5vw, 78px); align-items: center; }
+  .hero-grid h1 { margin: 10px 0 0; font-size: clamp(48px, 5.6vw, 80px); line-height: .98; font-weight: 790; }
+  .hero-grid h1 span { color: var(--acid); }
+  .hero-copy { color: #d7dbd2; font-size: clamp(17px, 1.6vw, 21px); }
+  .hero-copy p { margin: 0 0 16px; }
+  .hero-actions { display: grid; gap: 10px; align-self: center; }
+  .hero-how { padding: 10px 0; border-bottom: 1px solid var(--line); }
 
-  footer { padding: 38px 0 58px; color: var(--muted); font: 600 12px/1.6 var(--mono); }
-  footer .wrap { display: flex; justify-content: space-between; gap: 30px; }
+  .latest-band { background: var(--coal); }
+  .latest-grid { grid-template-columns: 1.2fr .7fr .7fr .8fr .65fr auto; }
+  .latest-action { display: flex; align-items: center; justify-content: flex-end; }
 
-  @media (max-width: 900px) {
-    .nav-links a:not(.nav-live) { display: none; }
-    .run-grid { grid-template-columns: 1fr 1fr; }
-    .run-cell { border-bottom: 1px solid var(--line); }
-    .run-cell:first-child { padding-left: 18px; grid-column: 1 / -1; }
-    .run-cell:last-child { padding-right: 18px; }
-    .run-open { align-items: stretch; }
-    .profile-grid, .evidence-grid { grid-template-columns: 1fr; }
+  .results-layout { display: grid; grid-template-columns: 1.15fr .85fr; gap: 58px; align-items: start; }
+  .results-note { padding-left: 22px; border-left: 1px solid var(--line); color: var(--muted); font-size: 14px; }
+  .results-note strong { display: block; margin-bottom: 10px; color: var(--paper); font-size: 18px; }
+  .results-empty { min-height: 150px; }
+
+  .profile-grid { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 38px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .profile { min-width: 0; padding: 30px 28px; border-right: 1px solid var(--line); }
+  .profile:last-child { border-right: 0; }
+  .profile-icon { color: var(--acid); font: 800 30px/1 var(--mono); }
+  .profile:nth-child(2) .profile-icon, .profile:nth-child(2) .profile-status { color: var(--cyan); }
+  .profile:nth-child(3) .profile-icon, .profile:nth-child(3) .profile-status { color: #d28bd2; }
+  .profile h3 { margin: 20px 0 8px; font-size: 22px; }
+  .profile p { color: var(--muted); font-size: 14px; }
+  .profile-status { margin-top: 24px; color: var(--acid); font: 700 10px/1.2 var(--mono); text-transform: uppercase; }
+
+  .story-layout { display: grid; grid-template-columns: .6fr 1.4fr; gap: 52px; align-items: center; }
+  .story-media { aspect-ratio: 2.1 / 1; }
+  .story-legend { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 18px; color: var(--muted); font: 650 10px/1 var(--mono); }
+
+  .world-reason { display: grid; grid-template-columns: .72fr 1.28fr; gap: 52px; align-items: stretch; }
+  .reason-list { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 32px; border-top: 1px solid var(--line); }
+  .reason { padding: 22px 18px 0 0; border-right: 1px solid var(--line); }
+  .reason + .reason { padding-left: 18px; }
+  .reason:last-child { border-right: 0; }
+  .reason strong { display: block; color: var(--acid); font: 700 11px/1.3 var(--mono); text-transform: uppercase; }
+  .reason p { color: var(--muted); font-size: 13px; }
+  .reason-media { min-height: 370px; }
+
+  .trace-flow { display: grid; grid-template-columns: repeat(6, 1fr); margin-top: 36px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .trace-step { position: relative; padding: 24px 20px; border-right: 1px solid var(--line); }
+  .trace-step:last-child { border-right: 0; }
+  .trace-index { color: var(--cyan); font: 700 11px/1 var(--mono); }
+  .trace-step h3 { margin: 18px 0 7px; font-size: 15px; }
+  .trace-step p { color: var(--muted); font-size: 12px; }
+
+  .home-closing { padding: 90px 0; text-align: center; }
+  .home-closing h2 { margin: 0 auto 12px; max-width: 1100px; font-size: clamp(40px, 6vw, 78px); line-height: 1; }
+  .home-closing p { margin: 0 auto 28px; max-width: 620px; color: var(--muted); font-size: 18px; }
+
+  @media (max-width: 1000px) {
+    .hero-grid { grid-template-columns: 1fr 1fr; }
+    .hero-actions { grid-column: 1 / -1; grid-template-columns: repeat(3, 1fr); }
+    .results-layout, .story-layout, .world-reason { grid-template-columns: 1fr; }
+    .profile-grid { grid-template-columns: 1fr; }
     .profile { border-right: 0; border-bottom: 1px solid var(--line); }
     .profile:last-child { border-bottom: 0; }
-    .observer-layout, .closing { grid-template-columns: 1fr; gap: 38px; }
-    .results-head { display: block; }
-    .results-scope { margin-top: 18px; text-align: left; }
-    .recent-run { grid-template-columns: 1fr 1fr; }
-    .recent-run .recent-model { grid-column: 1 / -1; }
+    .trace-flow { grid-template-columns: repeat(3, 1fr); }
+    .trace-step:nth-child(3) { border-right: 0; }
+    .trace-step:nth-child(-n+3) { border-bottom: 1px solid var(--line); }
+    .latest-grid { grid-template-columns: 1fr 1fr 1fr; }
+    .latest-action { justify-content: stretch; }
+    .latest-action .fl-btn { width: 100%; }
   }
-  @media (max-width: 560px) {
-    .wrap { width: min(100% - 28px, 1180px); }
-    .brand small { display: none; }
-    .nav { height: 58px; }
-    .hero-content { padding-top: 108px; padding-bottom: 52px; }
-    .hero h1 { font-size: 48px; }
-    .hero-actions .btn { width: 190px; }
-    .hero-source { right: 8px; bottom: 8px; max-width: calc(100% - 16px); }
-    section { padding: 66px 0; }
-    .run-grid { grid-template-columns: 1fr 1fr; }
-    .run-value { font-size: 14px; }
-    .recent-run { grid-template-columns: 1fr; gap: 7px; }
-    .recent-run .recent-model { grid-column: auto; }
-    footer .wrap { display: block; }
-    footer .wrap > :last-child { margin-top: 14px; }
+  @media (max-width: 640px) {
+    .worlds-rail { padding-top: 18px; }
+    .worlds-track { grid-auto-columns: 78vw; }
+    .world-tile-media { height: auto; aspect-ratio: 16 / 9; }
+    .home-hero { padding: 42px 0 38px; }
+    .hero-grid { grid-template-columns: 1fr; gap: 24px; }
+    .hero-grid h1 { font-size: 50px; }
+    .hero-actions { grid-column: auto; grid-template-columns: 1fr 1fr; }
+    .hero-actions .fl-btn-primary { grid-column: 1 / -1; }
+    .latest-grid { grid-template-columns: 1fr 1fr; }
+    .latest-grid .fl-data-cell:first-child { grid-column: 1 / -1; }
+    .profile { padding-inline: 4px; }
+    .reason-list { grid-template-columns: 1fr; }
+    .reason { padding: 18px 0; border-right: 0; border-bottom: 1px solid var(--line); }
+    .reason + .reason { padding-left: 0; }
+    .trace-flow { grid-template-columns: 1fr 1fr; }
+    .trace-step:nth-child(2n) { border-right: 0; }
+    .trace-step:nth-child(-n+4) { border-bottom: 1px solid var(--line); }
+    .story-media { aspect-ratio: 1 / 1; }
+    .reason-media { min-height: 280px; }
   }
-  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 </style>
 </head>
 <body>
-<header>
-  <div class="wrap nav">
-    <a class="brand" href="/"><span>FORT</span> LABS <small>/ FORT-EVAL</small></a>
-    <nav class="nav-links" aria-label="Primary navigation">
-      <a class="nav-live" href="/live"><span class="status-dot" id="nav-status-dot"></span><span id="nav-status">No active run</span></a>
+<header class="fl-header">
+  <div class="fl-wrap fl-nav">
+    <a class="fl-brand" href="/"><span>FORT</span> LABS</a>
+    <nav class="fl-nav-links" aria-label="Primary navigation">
+      <a href="/" aria-current="page">Home</a>
       <a href="#results">Results</a>
-      <a href="#profiles">Protocols</a>
-      <a href="#observer">Observer Map</a>
-      <a href="https://github.com/lemoz/fort-gym">GitHub</a>
+      <a href="#protocols">Protocols</a>
+      <a href="/worlds">Runs</a>
+      <a href="#evidence">Findings</a>
+      <a href="#about">About</a>
+      <a class="fl-live-link" href="/live"><span class="fl-status-dot" id="nav-live-dot"></span><span id="nav-live-label">No live run</span></a>
     </nav>
+    <button class="fl-menu-button" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="fl-mobile-menu" data-fl-menu-button>☰</button>
   </div>
 </header>
+<nav class="fl-mobile-menu" id="fl-mobile-menu" aria-label="Mobile navigation" aria-hidden="true" data-fl-mobile-menu data-open="false">
+  <a href="/">Home <span>01</span></a>
+  <a href="#results">Results <span>02</span></a>
+  <a href="#protocols">Protocols <span>03</span></a>
+  <a href="/worlds">Runs <span>04</span></a>
+  <a href="#evidence">Findings <span>05</span></a>
+  <a href="#about">About <span>06</span></a>
+</nav>
 
 <main>
-  <section class="hero" aria-labelledby="hero-title">
-    <canvas id="hero-canvas" width="1600" height="820" aria-label="Latest recorded Dwarf Fortress gameplay frame"></canvas>
-    <div class="hero-content">
-      <div class="wrap">
-        <div class="eyebrow">Fort-Eval / Dwarf Fortress agent evaluation</div>
-        <h1 id="hero-title">Can an AI build a civilization that <span>survives?</span></h1>
-        <p class="hero-copy">A long-horizon evaluation of planning, spatial memory, resource management, and adaptation in a real procedurally generated world.</p>
-        <div class="hero-actions">
-          <a class="btn primary" id="hero-run-link" href="/live">Open latest evidence</a>
-          <a class="btn" href="#profiles">Read the protocols</a>
-          <a class="btn" href="https://github.com/lemoz/fort-gym">Inspect the harness</a>
-        </div>
+  <section class="worlds-rail" aria-labelledby="worlds-title">
+    <div class="fl-wrap">
+      <div class="worlds-rail-head">
+        <div class="fl-kicker" id="worlds-title">Worlds on record</div>
+        <a class="fl-link" href="/worlds">Explore all recorded worlds →</a>
+      </div>
+      <div class="worlds-track" id="worlds-track" aria-live="polite">
+        <div class="fl-empty">Loading recorded gameplay…</div>
       </div>
     </div>
-    <div class="hero-source" id="hero-source">Awaiting public run evidence</div>
   </section>
 
-  <div class="run-band" aria-label="Current run summary">
-    <div class="wrap run-grid">
-      <div class="run-cell">
-        <div class="run-label">Run</div>
-        <div class="run-value" id="run-model">No public run selected</div>
+  <section class="home-hero" aria-labelledby="hero-title">
+    <div class="fl-wrap hero-grid">
+      <div>
+        <div class="fl-eyebrow">Fort-Eval / Dwarf Fortress agent evaluation</div>
+        <h1 id="hero-title">Can an AI build a civilization that <span>survives?</span></h1>
       </div>
-      <div class="run-cell">
-        <div class="run-label">Status</div>
-        <div class="run-value" id="run-status">Idle</div>
+      <div class="hero-copy">
+        <p>Dwarf Fortress gives long-horizon agents a living world of survival, construction, and consequence.</p>
+        <p>Watch how each model plans, adapts, and leaves its mark on the fortress.</p>
       </div>
-      <div class="run-cell">
-        <div class="run-label">Step</div>
-        <div class="run-value" id="run-step">--</div>
-      </div>
-      <div class="run-cell">
-        <div class="run-label">Seed</div>
-        <div class="run-value" id="run-seed">--</div>
-      </div>
-      <div class="run-cell">
-        <div class="run-label">Score</div>
-        <div class="run-value score" id="run-score">--</div>
-      </div>
-      <div class="run-cell run-open">
-        <a class="btn" id="run-open-link" href="/live">Inspect run</a>
+      <div class="hero-actions">
+        <a class="fl-btn fl-btn-primary" id="hero-run-link" href="/worlds">Open latest run →</a>
+        <a class="fl-btn" href="#results">Explore results →</a>
+        <a class="fl-link hero-how" href="#evidence">How Fort-Eval works →</a>
       </div>
     </div>
-  </div>
+  </section>
 
-  <section id="results">
-    <div class="wrap">
-      <div class="results-head">
+  <section class="latest-band" aria-label="Latest run summary">
+    <div class="fl-wrap fl-data-band latest-grid">
+      <div class="fl-data-cell"><div class="fl-data-label">Latest run</div><div class="fl-data-value" id="latest-model">Loading…</div></div>
+      <div class="fl-data-cell"><div class="fl-data-label">Status</div><div class="fl-data-value" id="latest-status">--</div></div>
+      <div class="fl-data-cell"><div class="fl-data-label">Step</div><div class="fl-data-value" id="latest-step">--</div></div>
+      <div class="fl-data-cell"><div class="fl-data-label">Seed</div><div class="fl-data-value" id="latest-seed">--</div></div>
+      <div class="fl-data-cell"><div class="fl-data-label">Score</div><div class="fl-data-value fl-data-value-acid" id="latest-score">--</div></div>
+      <div class="fl-data-cell latest-action"><a class="fl-btn" id="latest-link" href="/worlds">Open run →</a></div>
+    </div>
+  </section>
+
+  <section class="fl-section" id="results">
+    <div class="fl-wrap">
+      <div class="results-layout">
         <div>
-          <div class="eyebrow">Comparable evidence</div>
-          <h2>Results belong to protocols, not a universal leaderboard.</h2>
+          <div class="fl-eyebrow">Same world / different strategies</div>
+          <h2 class="fl-section-title">See what each model builds when the world keeps moving.</h2>
+          <p class="fl-copy">One protocol creates a fair field. Every result opens into the gameplay behind it.</p>
         </div>
-        <div class="results-scope" id="results-scope">A ranked Fort-Eval cohort requires the same interface, backend, score version, seed cohort, step budget, and tick budget.</div>
+        <div class="results-note">
+          <strong>Experimental cohorts</strong>
+          Results appear only when runs share the same protocol, world, score version, and time budget.
+        </div>
       </div>
-      <div class="table-shell">
-        <table aria-label="Fort-Eval comparable model results">
-          <thead>
-            <tr><th>Model</th><th>Protocol</th><th>Runs</th><th>Mean</th><th>Best</th><th>Tokens</th><th>Cost</th><th>Evidence</th></tr>
-          </thead>
-          <tbody id="results-body">
-            <tr><td class="empty-row" colspan="8">No frozen Fort-Eval cohort has been published yet. Historical runs remain available as evidence, not as a cross-protocol ranking.</td></tr>
-          </tbody>
+      <div class="fl-table-shell" style="margin-top:36px">
+        <table class="fl-table" aria-label="Comparable Fort-Eval results">
+          <thead><tr><th>Model</th><th>Protocol</th><th>Worlds</th><th>Mean score</th><th>Best score</th><th>Watch</th></tr></thead>
+          <tbody id="results-body"><tr><td colspan="6"><div class="fl-empty results-empty">The first experimental cohort is being assembled.</div></td></tr></tbody>
         </table>
       </div>
     </div>
   </section>
 
-  <section id="profiles">
-    <div class="wrap">
-      <div class="eyebrow">Evaluation profiles</div>
-      <h2>One world. Three increasingly constrained agent interfaces.</h2>
-      <p class="section-copy">Observation, action, knowledge, memory, seed, and inference budgets are versioned independently. Results never cross those boundaries.</p>
+  <section class="fl-section" id="protocols">
+    <div class="fl-wrap">
+      <div class="fl-eyebrow">Three levels of the challenge</div>
+      <h2 class="fl-section-title">From strategic control to learning the world from scratch.</h2>
       <div class="profile-grid">
-        <article class="profile live">
-          <div class="profile-state">Available now / privileged interface</div>
-          <h3>Easy</h3>
-          <p>Can the model manage a fortress when perception and UI mechanics are compressed into legal, structured controls?</p>
-          <dl>
-            <dt>Observation</dt><dd>Visible structured state, a bounded fort map, focused z-level maps, and recorded screen text.</dd>
-            <dt>Action</dt><dd>Audited semantic DFHack commands that create normal jobs, orders, designations, and UI-equivalent settings.</dd>
-            <dt>Primary capability</dt><dd>Long-horizon strategy, causal reasoning, spatial planning, and civilization management.</dd>
-          </dl>
+        <article class="profile">
+          <div class="profile-icon">▥</div><h3>Easy</h3>
+          <p>Build with a powerful, structured interface. Focus on planning, coordination, and resource management across a living fortress.</p>
+          <div class="profile-status">Available</div>
         </article>
         <article class="profile">
-          <div class="profile-state">Protocol design / not yet ratified</div>
-          <h3>Hard</h3>
-          <p>Can the model perceive, navigate, remember, and operate the same bounded interface available to a human player?</p>
-          <dl>
-            <dt>Observation</dt><dd>A fixed rendered viewport. No global map, semantic coordinates, CopyScreen text, or structured inventories.</dd>
-            <dt>Action</dt><dd>Primitive keyboard and mouse inputs with fixed cadence and no semantic key catalogue.</dd>
-            <dt>Primary capability</dt><dd>Active perception, map construction, navigation, z-level reasoning, and execution.</dd>
-          </dl>
+          <div class="profile-icon">◉</div><h3>Hard</h3>
+          <p>See, navigate, and act through the game itself. Every decision must handle perception, navigation, and uncertainty.</p>
+          <div class="profile-status">In development</div>
         </article>
         <article class="profile">
-          <div class="profile-state">Research horizon</div>
-          <h3>Discovery</h3>
-          <p>Can a fixed model learn from failed playthroughs and transfer what it discovers into unfamiliar worlds?</p>
-          <dl>
-            <dt>Observation</dt><dd>The Hard interface on held-out seeds and eventually held-out mechanics.</dd>
-            <dt>Knowledge</dt><dd>No guide corpus or live web; only a bounded learner-state artifact carried across declared episodes.</dd>
-            <dt>Primary capability</dt><dd>Environment learning, experimentation, recovery, and held-out transfer.</dd>
-          </dl>
+          <div class="profile-icon">⌁</div><h3>Discovery</h3>
+          <p>Learn the world through experience and carry lessons forward across unfamiliar worlds and mechanics.</p>
+          <div class="profile-status">Research horizon</div>
         </article>
       </div>
     </div>
   </section>
 
-  <section id="observer" class="observer-band">
-    <div class="wrap observer-layout">
+  <section class="fl-section" id="observer">
+    <div class="fl-wrap story-layout">
       <div>
-        <div class="eyebrow">Observer Map</div>
-        <h2>See the world the agent has touched, not only the frame it can see.</h2>
-        <p class="section-copy">Spectators receive a richer, real-world atlas assembled from recorded observations and actions. It can show revealed terrain, z-levels, viewports, action footprints, verified changes, and remembered points of interest. This derived surface is never agent input unless the protocol explicitly permits it.</p>
-        <div class="observer-legend" aria-label="Observer map legend">
-          <span><i class="swatch" style="background:#68d9d0"></i>Observed viewport</span>
-          <span><i class="swatch" style="background:#d9f45b"></i>Verified world change</span>
-          <span><i class="swatch" style="background:#f0b94f"></i>Action footprint</span>
-          <span><i class="swatch" style="background:#ef756f"></i>Rejected action</span>
+        <div class="fl-eyebrow">The full story</div>
+        <h2 class="fl-section-title">Watch a fortress unfold across space, time, and z-levels.</h2>
+        <p class="fl-copy">Follow where the agent looked, what it tried, and how the world responded.</p>
+        <p class="fl-muted fl-mono" style="font-size:12px">Spectator view · the agent plays from its declared interface.</p>
+        <a class="fl-link" id="story-link" href="/worlds">Explore a run →</a>
+      </div>
+      <div>
+        <div class="fl-media story-media"><canvas id="story-canvas" aria-label="Recorded Dwarf Fortress world"></canvas><div class="fl-media-source" id="story-source">Loading recorded world…</div></div>
+        <div class="story-legend"><span>Recorded world</span><span>Decision history in replay</span><span>Full World view in replay</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="fl-section" id="about">
+    <div class="fl-wrap world-reason">
+      <div>
+        <div class="fl-eyebrow">A world large enough for intelligence</div>
+        <h2 class="fl-section-title">Planning matters when the story never stops changing.</h2>
+        <div class="reason-list">
+          <div class="reason"><strong>Procedural worlds</strong><p>Each fortress begins with terrain, history, resources, and pressures of its own.</p></div>
+          <div class="reason"><strong>Long-horizon consequences</strong><p>A choice made now changes what becomes possible many seasons later.</p></div>
+          <div class="reason"><strong>Civilizations, not tasks</strong><p>Agents coordinate people, production, space, and survival as one system.</p></div>
         </div>
       </div>
-      <div class="atlas">
-        <canvas id="atlas-canvas" width="780" height="560" aria-label="Illustrative observer activity map"></canvas>
-        <div class="atlas-label">Observer view / derived evidence</div>
+      <div class="fl-media reason-media"><canvas id="reason-canvas" aria-label="Recorded Dwarf Fortress gameplay"></canvas><div class="fl-media-source" id="reason-source">Loading recorded world…</div></div>
+    </div>
+  </section>
+
+  <section class="fl-section" id="evidence">
+    <div class="fl-wrap">
+      <div class="fl-eyebrow">From decision to world change</div>
+      <h2 class="fl-section-title">Every score opens into a complete gameplay trace.</h2>
+      <p class="fl-copy">Replay the run, inspect the evidence, and see how the fortress became what it is.</p>
+      <div class="trace-flow" aria-label="Fort-Eval trace sequence">
+        <article class="trace-step"><div class="trace-index">01</div><h3>Agent view</h3><p>What the agent could see and understand.</p></article>
+        <article class="trace-step"><div class="trace-index">02</div><h3>Decision</h3><p>The plan and next action it selected.</p></article>
+        <article class="trace-step"><div class="trace-index">03</div><h3>Game action</h3><p>The governed control sent to Dwarf Fortress.</p></article>
+        <article class="trace-step"><div class="trace-index">04</div><h3>Dwarf Fortress</h3><p>Native jobs, orders, and simulation advance the world.</p></article>
+        <article class="trace-step"><div class="trace-index">05</div><h3>Visible change</h3><p>The result appears in recorded world state.</p></article>
+        <article class="trace-step"><div class="trace-index">06</div><h3>Result</h3><p>The score and evidence are recorded together.</p></article>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:28px;margin-top:28px">
+        <a class="fl-link" href="/worlds">Browse all runs →</a>
+        <a class="fl-link" href="/leaderboard">Explore results →</a>
+        <a class="fl-link" href="https://github.com/lemoz/fort-gym/blob/main/docs/FORT_EVAL_SPEC.md">Read the protocol →</a>
       </div>
     </div>
   </section>
 
-  <section id="evidence">
-    <div class="wrap">
-      <div class="eyebrow">Measurement contract</div>
-      <h2>A run is a trace, not a claim.</h2>
-      <p class="section-copy">Every public result keeps the game, model, protocol, score, and evidence boundary inspectable.</p>
-      <div class="evidence-grid">
-        <article class="evidence-item"><div class="index">01 / WORLD</div><h3>Recorded gameplay</h3><p>Per-step game frames show the actual Dwarf Fortress process at the moment of each decision.</p></article>
-        <article class="evidence-item"><div class="index">02 / ACTION</div><h3>Legal control</h3><p>Governed commands are bounded, validated, provenance-tagged, and disqualify illegal or assisted progress.</p></article>
-        <article class="evidence-item"><div class="index">03 / EFFECT</div><h3>Observed change</h3><p>Accepted intent is separated from jobs created, work completed, production delivered, and world state changed.</p></article>
-        <article class="evidence-item"><div class="index">04 / SCORE</div><h3>Versioned measurement</h3><p>Score versions never mix, and rubric blockers remain visible beside the scalar result.</p></article>
-        <article class="evidence-item"><div class="index">05 / COST</div><h3>Inference accounting</h3><p>Model calls, input tokens, output tokens, pricing snapshot, and kill reason belong with the result.</p></article>
-        <article class="evidence-item"><div class="index">06 / REPLAY</div><h3>Public failure evidence</h3><p>Failures receive the same permanent replay and trace links as successful runs.</p></article>
-      </div>
-    </div>
-  </section>
-
-  <section id="recent">
-    <div class="wrap">
-      <div class="eyebrow">Public run ledger</div>
-      <h2>Recent evidence</h2>
-      <div class="recent-list" id="recent-list"><div class="empty-row">Loading public runs...</div></div>
-    </div>
-  </section>
-
-  <section>
-    <div class="wrap closing">
-      <div>
-        <div class="lab-mark">FORT<br>LABS</div>
-        <p class="section-copy" style="margin-top:30px">An environment lab for measuring long-horizon agents in worlds large enough to resist shortcuts. Fort-Eval is the first benchmark. Fort-Gym is the open-source harness underneath it.</p>
-      </div>
-      <div class="lab-links">
-        <a href="/live">Live viewer <span>01</span></a>
-        <a href="/leaderboard">Historical leaderboard <span>02</span></a>
-        <a href="https://github.com/lemoz/fort-gym/blob/main/docs/FORT_EVAL_SPEC.md">Evaluation specification <span>03</span></a>
-        <a href="https://github.com/lemoz/fort-gym">Source and traces <span>04</span></a>
-      </div>
+  <section class="home-closing">
+    <div class="fl-wrap">
+      <h2>The next great benchmark is a world.</h2>
+      <p>Fort Labs builds environments where intelligence has room to reveal itself.</p>
+      <a class="fl-btn fl-btn-primary" href="/worlds">Watch the agents build →</a>
     </div>
   </section>
 </main>
 
-<footer>
-  <div class="wrap">
-    <span>Fort Labs / Fort-Eval / Dwarf Fortress environment</span>
-    <span>Observer surfaces are derived evidence and are never silently passed to evaluated models.</span>
+<footer class="fl-footer">
+  <div class="fl-wrap fl-footer-grid">
+    <div><div class="fl-footer-mark"><span>FORT</span> LABS</div><p class="fl-footer-copy">Worlds for long-horizon intelligence. Fort-Eval is the first environment; Fort-Gym is the open-source harness.</p></div>
+    <div><div class="fl-footer-title">Explore</div><div class="fl-footer-links"><a href="#results">Results</a><a href="#protocols">Protocols</a><a href="/worlds">Runs</a></div></div>
+    <div><div class="fl-footer-title">Research</div><div class="fl-footer-links"><a href="https://github.com/lemoz/fort-gym/blob/main/docs/FORT_EVAL_SPEC.md">Methodology</a><a href="https://github.com/lemoz/fort-gym">GitHub</a><a href="/live">Live viewer</a></div></div>
+    <div><div class="fl-footer-title">Experiment status</div><div class="fl-footer-links"><a id="footer-status-link" href="/live">No live run</a><a href="/worlds">Recorded worlds</a></div></div>
   </div>
 </footer>
 
+<script src="/static/fort-labs.js?v=20260711-2"></script>
 <script>
-(() => {
+(function () {
+  'use strict';
+  const FL = window.FortLabs;
+  FL.initShell();
   const $ = id => document.getElementById(id);
-  const heroCanvas = $('hero-canvas');
-  const heroCtx = heroCanvas.getContext('2d');
-  const atlasCanvas = $('atlas-canvas');
-  const atlasCtx = atlasCanvas.getContext('2d');
-  const terminalStatuses = new Set(['completed', 'failed', 'stopped']);
-  let selectedRun = null;
 
-  function escapeHtml(value) {
-    return String(value ?? '')
-      .replaceAll('&', '&amp;')
-      .replaceAll('<', '&lt;')
-      .replaceAll('>', '&gt;')
-      .replaceAll('"', '&quot;')
-      .replaceAll("'", '&#039;');
+  function uniqueRuns(runs) {
+    const seen = new Set();
+    return runs.filter(run => run?.token && !seen.has(run.token) && seen.add(run.token));
   }
 
-  function number(value, digits = 1) {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed.toFixed(digits) : '--';
-  }
-
-  function statusLabel(status) {
-    const value = String(status || 'unknown');
-    return value.charAt(0).toUpperCase() + value.slice(1);
-  }
-
-  function runUrl(run) {
-    return run?.token ? `/r/${encodeURIComponent(run.token)}` : '/live';
-  }
-
-  function resizeHero() {
-    const rect = heroCanvas.getBoundingClientRect();
-    const scale = Math.min(window.devicePixelRatio || 1, 2);
-    const width = Math.max(900, Math.floor(rect.width * scale));
-    const height = Math.max(620, Math.floor(rect.height * scale));
-    if (heroCanvas.width !== width || heroCanvas.height !== height) {
-      heroCanvas.width = width;
-      heroCanvas.height = height;
-    }
-  }
-
-  function glyphColor(char) {
-    if ('@☺☻'.includes(char)) return '#f1f0e8';
-    if ('Wwbdtc'.includes(char)) return '#d9f45b';
-    if ('T,s'.includes(char)) return '#7ed18a';
-    if ('~i'.includes(char)) return '#68d9d0';
-    if ('#X<>^'.includes(char)) return '#b4b8ad';
-    if ('!?'.includes(char)) return '#ef756f';
-    return '#7d8979';
-  }
-
-  function renderTerminal(text) {
-    resizeHero();
-    const width = heroCanvas.width;
-    const height = heroCanvas.height;
-    heroCtx.fillStyle = '#020302';
-    heroCtx.fillRect(0, 0, width, height);
-    const lines = String(text || '').split('\n').slice(0, 30);
-    if (!lines.length || !lines.some(line => line.trim())) {
-      renderFallback();
+  function renderWorldRail(runs) {
+    const track = $('worlds-track');
+    if (!runs.length) {
+      track.innerHTML = '<div class="fl-empty">The next world begins soon. Explore the methodology while the experiment is prepared.</div>';
       return;
     }
-    heroCanvas.setAttribute('aria-label', 'Recorded Dwarf Fortress CopyScreen frame');
-    const cols = Math.max(80, ...lines.map(line => line.length));
-    const fontSize = Math.max(15, Math.floor(Math.min(width / (cols * .62), height / 28)));
-    const charWidth = fontSize * .62;
-    const lineHeight = fontSize * 1.12;
-    heroCtx.font = `700 ${fontSize}px ${getComputedStyle(document.documentElement).getPropertyValue('--mono')}`;
-    heroCtx.textBaseline = 'top';
-    const offsetX = Math.max(18, (width - cols * charWidth) / 2);
-    const offsetY = Math.max(76, (height - lines.length * lineHeight) / 2);
-    lines.forEach((line, row) => {
-      for (let col = 0; col < line.length; col++) {
-        const char = line[col];
-        if (char === ' ') continue;
-        heroCtx.fillStyle = glyphColor(char);
-        heroCtx.fillText(char, offsetX + col * charWidth, offsetY + row * lineHeight);
-      }
-    });
+    track.innerHTML = runs.slice(0, 6).map((run, index) => `
+      <a class="world-tile" href="${FL.runUrl(run)}" aria-label="Open ${FL.escapeHtml(run.model || 'recorded run')}">
+        <div class="world-tile-media"><canvas id="rail-canvas-${index}"></canvas><div class="world-tile-state"><span class="fl-status-dot ${FL.escapeHtml(run.status)}"></span>${FL.escapeHtml(FL.statusLabel(run.status))}</div></div>
+        <div class="world-tile-meta">
+          <div><div class="world-tile-model">${FL.escapeHtml(run.model || 'Unknown model')}</div><div class="world-tile-step">Step ${FL.escapeHtml(run.step ?? 0)} / ${FL.escapeHtml(run.max_steps ?? '--')}</div></div>
+          <div class="world-tile-score">${FL.escapeHtml(FL.formatNumber(run.score))}</div>
+        </div>
+      </a>`).join('');
+    runs.slice(0, 6).forEach((run, index) => FL.loadRunFrame(run, $(`rail-canvas-${index}`)));
   }
 
-  function renderScreenTiles(data) {
-    if (!data || !Array.isArray(data.tiles) || !data.width || !data.height) return false;
-    heroCanvas.setAttribute('aria-label', 'Live Dwarf Fortress screen from the evaluated process');
-    resizeHero();
-    const palette = ['#000','#17354a','#305f35','#28726f','#74362f','#623a62','#75642c','#bbb','#666','#4b83d2','#7ed18a','#68d9d0','#ef756f','#d28bd2','#d9f45b','#f1f0e8'];
-    const cellW = heroCanvas.width / data.width;
-    const cellH = heroCanvas.height / data.height;
-    const fontSize = Math.max(12, Math.floor(cellH * .88));
-    heroCtx.fillStyle = '#000';
-    heroCtx.fillRect(0, 0, heroCanvas.width, heroCanvas.height);
-    heroCtx.font = `700 ${fontSize}px ${getComputedStyle(document.documentElement).getPropertyValue('--mono')}`;
-    heroCtx.textBaseline = 'top';
-    for (let y = 0; y < data.height; y++) {
-      for (let x = 0; x < data.width; x++) {
-        const tile = data.tiles[x * data.height + y];
-        if (!Array.isArray(tile)) continue;
-        const [code, fg, bg] = tile;
-        if (bg) {
-          heroCtx.fillStyle = palette[bg % 16];
-          heroCtx.fillRect(x * cellW, y * cellH, cellW + 1, cellH + 1);
-        }
-        if (code > 31 && code < 127) {
-          heroCtx.fillStyle = palette[fg % 16];
-          heroCtx.fillText(String.fromCharCode(code), x * cellW, y * cellH);
-        }
-      }
-    }
-    return true;
-  }
-
-  function renderFallback() {
-    resizeHero();
-    const width = heroCanvas.width;
-    const height = heroCanvas.height;
-    heroCtx.fillStyle = '#020302';
-    heroCtx.fillRect(0, 0, width, height);
-    heroCtx.strokeStyle = '#182018';
-    heroCtx.lineWidth = 1;
-    for (let x = 0; x <= width; x += 32) { heroCtx.beginPath(); heroCtx.moveTo(x,0); heroCtx.lineTo(x,height); heroCtx.stroke(); }
-    for (let y = 0; y <= height; y += 32) { heroCtx.beginPath(); heroCtx.moveTo(0,y); heroCtx.lineTo(width,y); heroCtx.stroke(); }
-    heroCtx.fillStyle = '#7d8979';
-    heroCtx.font = `700 20px ${getComputedStyle(document.documentElement).getPropertyValue('--mono')}`;
-    heroCtx.textAlign = 'center';
-    heroCtx.textBaseline = 'middle';
-    heroCtx.fillText('RECORDED FRAME UNAVAILABLE', width / 2, height / 2);
-    heroCtx.textAlign = 'start';
-    heroCanvas.setAttribute('aria-label', 'Recorded Dwarf Fortress frame unavailable');
-  }
-
-  function renderAtlas(records) {
-    const width = atlasCanvas.width;
-    const height = atlasCanvas.height;
-    atlasCtx.fillStyle = '#080a08';
-    atlasCtx.fillRect(0, 0, width, height);
-    atlasCtx.strokeStyle = '#1d241d';
-    atlasCtx.lineWidth = 1;
-    for (let x = 0; x <= width; x += 26) { atlasCtx.beginPath(); atlasCtx.moveTo(x,0); atlasCtx.lineTo(x,height); atlasCtx.stroke(); }
-    for (let y = 0; y <= height; y += 26) { atlasCtx.beginPath(); atlasCtx.moveTo(0,y); atlasCtx.lineTo(width,y); atlasCtx.stroke(); }
-    const actions = [];
-    (records || []).forEach((record, index) => {
-      const action = record?.action || {};
-      const params = action.params || {};
-      let x = params.x ?? params.area?.[0];
-      let y = params.y ?? params.area?.[1];
-      let z = params.z ?? params.area?.[2] ?? 0;
-      if (Number.isFinite(Number(x)) && Number.isFinite(Number(y))) actions.push({x:Number(x), y:Number(y), z:Number(z), type:String(action.type || 'STATE'), index, ok:record?.execute?.ok !== false});
-    });
-    if (!actions.length) {
-      atlasCtx.fillStyle = '#7d8979';
-      atlasCtx.font = '700 14px ui-monospace, monospace';
-      atlasCtx.textAlign = 'center';
-      atlasCtx.fillText('OPEN A REPLAY FOR RECORDED OBSERVER EVIDENCE', width / 2, height / 2);
-      atlasCtx.textAlign = 'start';
-      atlasCanvas.setAttribute('aria-label', 'No observer map evidence selected');
-      return;
-    }
-    atlasCanvas.setAttribute('aria-label', 'Recorded observer action map');
-    const minX = Math.min(...actions.map(a => a.x)) - 3;
-    const maxX = Math.max(...actions.map(a => a.x)) + 3;
-    const minY = Math.min(...actions.map(a => a.y)) - 3;
-    const maxY = Math.max(...actions.map(a => a.y)) + 3;
-    const pad = 58;
-    const sx = (width - pad * 2) / Math.max(1, maxX - minX);
-    const sy = (height - pad * 2) / Math.max(1, maxY - minY);
-    const scale = Math.min(sx, sy);
-    actions.forEach((action, index) => {
-      const px = pad + (action.x - minX) * scale;
-      const py = pad + (action.y - minY) * scale;
-      atlasCtx.fillStyle = action.ok ? (action.type === 'BUILD' ? '#d9f45b' : action.type === 'DIG' ? '#68d9d0' : '#f0b94f') : '#ef756f';
-      atlasCtx.globalAlpha = .28 + .72 * ((index + 1) / actions.length);
-      atlasCtx.fillRect(px - 5, py - 5, 10, 10);
-      if (index > 0) {
-        const prev = actions[index - 1];
-        atlasCtx.strokeStyle = 'rgba(104,217,208,.22)';
-        atlasCtx.beginPath();
-        atlasCtx.moveTo(pad + (prev.x - minX) * scale, pad + (prev.y - minY) * scale);
-        atlasCtx.lineTo(px, py);
-        atlasCtx.stroke();
-      }
-    });
-    atlasCtx.globalAlpha = 1;
-    atlasCtx.fillStyle = '#f1f0e8';
-    atlasCtx.font = '700 13px ui-monospace, monospace';
-    atlasCtx.fillText(`z=${actions[actions.length - 1]?.z ?? '--'}  ${actions.length} located actions`, 18, height - 18);
-  }
-
-  async function loadEvidenceFrame(run) {
-    if (!run?.token) return;
-    try {
-      if (run.status === 'running') {
-        const response = await fetch(`/public/runs/${encodeURIComponent(run.token)}/screenshot`);
-        if (response.ok && renderScreenTiles(await response.json())) {
-          $('hero-source').textContent = 'Source: live DF CopyScreen / evaluated process';
-          return;
-        }
-      }
-      const response = await fetch(`/public/runs/${encodeURIComponent(run.token)}/preview`);
-      if (!response.ok) throw new Error('preview unavailable');
-      const preview = await response.json();
-      if (preview.screen_status === 'recorded' && preview.screen_text) {
-        renderTerminal(preview.screen_text);
-        $('hero-source').textContent = `Source: recorded DF CopyScreen / step ${preview.step ?? run.step ?? '--'}`;
-      } else {
-        renderFallback();
-        $('hero-source').textContent = 'Recorded frame unavailable / open trace for evidence';
-      }
-    } catch (_) {
-      renderFallback();
-      $('hero-source').textContent = 'Public evidence preview unavailable';
-    }
-  }
-
-  function applyRun(run) {
+  function applyFeatured(run) {
     if (!run) return;
-    selectedRun = run;
-    const status = String(run.status || 'unknown');
-    const url = runUrl(run);
-    $('run-model').textContent = run.model || 'Unknown model';
-    $('run-status').innerHTML = `<span class="status-dot ${escapeHtml(status)}"></span>${escapeHtml(statusLabel(status))}`;
-    $('run-step').textContent = `${run.step ?? 0} / ${run.max_steps ?? '--'}`;
-    $('run-seed').textContent = run.seed_save || 'unspecified';
-    $('run-score').textContent = number(run.score);
-    $('run-open-link').href = url;
+    const url = FL.runUrl(run);
+    $('latest-model').textContent = run.model || 'Unknown model';
+    $('latest-status').innerHTML = `<span class="fl-status-dot ${FL.escapeHtml(run.status)}"></span>${FL.escapeHtml(FL.statusLabel(run.status))}`;
+    $('latest-step').textContent = `${run.step ?? 0} / ${run.max_steps ?? '--'}`;
+    $('latest-seed').textContent = run.seed_save || 'Not reported';
+    $('latest-score').textContent = FL.formatNumber(run.score);
+    $('latest-link').href = url;
     $('hero-run-link').href = url;
-    $('hero-run-link').textContent = status === 'running' ? 'Watch live run' : 'Open latest evidence';
-    $('nav-status').textContent = status === 'running' ? 'Run live' : 'No active run';
-    $('nav-status-dot').className = `status-dot ${status === 'running' ? 'running' : ''}`;
-    loadEvidenceFrame(run);
+    $('hero-run-link').textContent = FL.canWatchLive(run) ? 'Watch live run →' : 'Open latest run →';
   }
 
-  function renderRecent(runs) {
-    const container = $('recent-list');
-    if (!Array.isArray(runs) || !runs.length) {
-      container.innerHTML = '<div class="empty-row">No public evidence runs available.</div>';
-      return;
-    }
-    container.innerHTML = runs.slice(0, 8).map(run => `
-      <article class="recent-run">
-        <div class="recent-model">${escapeHtml(run.model || 'unknown')}</div>
-        <div class="recent-meta"><span class="status-dot ${escapeHtml(run.status || '')}"></span>${escapeHtml(statusLabel(run.status))}</div>
-        <div class="recent-meta">step ${escapeHtml(run.step ?? 0)}/${escapeHtml(run.max_steps ?? '--')}</div>
-        <div class="recent-meta">score ${escapeHtml(number(run.score))}</div>
-        <a class="evidence-link" href="${runUrl(run)}">Inspect evidence</a>
-      </article>`).join('');
-  }
-
-  function renderGroups(groups) {
-    if (!Array.isArray(groups) || !groups.length) return;
+  function renderResults(groups) {
     const body = $('results-body');
     const rows = [];
-    groups.slice(0, 12).forEach(group => {
-      const models = Array.isArray(group.model_results) ? group.model_results : [];
-      models.forEach(result => rows.push({group, result}));
+    (groups || []).slice(0, 4).forEach(group => {
+      (group.model_results || []).forEach(result => rows.push({group, result}));
     });
     if (!rows.length) return;
-    body.innerHTML = rows.map(({group, result}) => {
-      const token = result.best_token || result.token;
-      const link = token ? `/r/${encodeURIComponent(token)}` : null;
-      const protocol = group.comparability?.evaluation_protocol || 'unversioned';
+    body.innerHTML = rows.slice(0, 8).map(({group, result}) => {
+      const token = result.best_token;
+      const protocol = group.comparability?.evaluation_protocol || 'Not reported';
       return `<tr>
-        <td class="table-model">${escapeHtml(result.model || 'unknown')}</td>
-        <td>${escapeHtml(protocol)}</td>
-        <td class="table-num">${escapeHtml(result.run_count ?? '--')}</td>
-        <td class="table-num">${escapeHtml(number(result.mean_score))}</td>
-        <td class="table-num">${escapeHtml(number(result.best_score))}</td>
-        <td class="table-num">${escapeHtml(result.median_tokens ?? 'not reported')}</td>
-        <td class="table-num">${escapeHtml(result.median_cost_usd == null ? 'not reported' : `$${number(result.median_cost_usd, 2)}`)}</td>
-        <td>${link ? `<a class="evidence-link" href="${link}">Replay</a>` : 'not reported'}</td>
+        <td class="fl-mono"><strong>${FL.escapeHtml(result.model || 'Unknown')}</strong></td>
+        <td class="fl-mono">${FL.escapeHtml(protocol)}</td>
+        <td class="fl-mono">${FL.escapeHtml(result.run_count ?? '--')}</td>
+        <td class="fl-mono">${FL.escapeHtml(FL.formatNumber(result.mean_score))}</td>
+        <td class="fl-mono">${FL.escapeHtml(FL.formatNumber(result.best_score))}</td>
+        <td>${token ? `<a class="fl-link" href="/r/${encodeURIComponent(token)}">Watch →</a>` : 'Not reported'}</td>
       </tr>`;
     }).join('');
   }
 
-  async function loadOverview() {
-    renderFallback();
-    renderAtlas([]);
+  async function loadHome() {
     try {
-      const response = await fetch('/public/overview');
-      if (!response.ok) throw new Error('overview unavailable');
-      const overview = await response.json();
-      const active = Array.isArray(overview.active_runs) ? overview.active_runs : [];
-      const recent = Array.isArray(overview.recent_runs) ? overview.recent_runs : [];
-      const run = active[0] || recent[0];
-      if (run) applyRun(run);
-      renderRecent([...active, ...recent]);
-      renderGroups(overview.comparison_groups || []);
-      if (Array.isArray(overview.comparability_fields) && overview.comparability_fields.length) {
-        $('results-scope').textContent = `Comparable only within: ${overview.comparability_fields.join(' + ')}.`;
+      const page = await FL.fetchJson('/public/worlds?limit=24');
+      const runs = uniqueRuns(Array.isArray(page.items) ? page.items : []);
+      renderWorldRail(runs);
+      applyFeatured(runs[0]);
+      const live = runs.find(run => FL.canWatchLive(run));
+      if (live) {
+        $('nav-live-dot').className = 'fl-status-dot running';
+        $('nav-live-label').textContent = 'Live now';
+        $('footer-status-link').textContent = 'Live now';
+        $('footer-status-link').href = FL.runUrl(live);
       }
-      return;
-    } catch (_) {}
-
-    try {
-      const response = await fetch('/public/runs');
-      if (!response.ok) throw new Error('runs unavailable');
-      const runs = await response.json();
-      const active = runs.filter(run => run.status === 'running');
-      const recent = runs.filter(run => terminalStatuses.has(run.status)).slice(-8).reverse();
-      const run = active[0] || recent[0];
-      if (run) applyRun(run);
-      renderRecent([...active, ...recent]);
+      const storyRun = runs[1] || runs[0];
+      const reasonRun = runs[2] || runs[0];
+      if (storyRun) {
+        $('story-link').href = FL.runUrl(storyRun);
+        FL.loadRunFrame(storyRun, $('story-canvas'), $('story-source'));
+      } else {
+        FL.renderUnavailable($('story-canvas'));
+        $('story-source').textContent = 'No recorded world available';
+      }
+      if (reasonRun) FL.loadRunFrame(reasonRun, $('reason-canvas'), $('reason-source'));
+      else {
+        FL.renderUnavailable($('reason-canvas'));
+        $('reason-source').textContent = 'No recorded world available';
+      }
     } catch (_) {
-      $('recent-list').innerHTML = '<div class="empty-row">Public run ledger is temporarily unavailable.</div>';
+      $('worlds-track').innerHTML = '<div class="fl-empty">Recorded worlds are temporarily unavailable.</div>';
+      $('latest-model').textContent = 'Run data unavailable';
+      FL.renderUnavailable($('story-canvas'), 'Recorded worlds temporarily unavailable');
+      FL.renderUnavailable($('reason-canvas'), 'Recorded worlds temporarily unavailable');
+      $('story-source').textContent = 'Recorded worlds temporarily unavailable';
+      $('reason-source').textContent = 'Recorded worlds temporarily unavailable';
     }
+    try {
+      const overview = await FL.fetchJson('/public/overview?recent_limit=24');
+      renderResults(overview.comparison_groups);
+    } catch (_) {}
   }
 
-  window.addEventListener('resize', () => {
-    if (!selectedRun) renderFallback();
-  });
-  loadOverview();
+  loadHome();
 })();
 </script>
 </body>

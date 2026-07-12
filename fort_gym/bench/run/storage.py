@@ -240,7 +240,14 @@ class RunRegistry:
         )
         conn.execute("CREATE INDEX IF NOT EXISTS idx_runs_model_sha ON runs(model, git_sha)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_runs_end ON runs(ended_at)")
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_runs_public ON "
+            "runs(backend, status, ended_at, started_at, created_at)"
+        )
         conn.execute("CREATE INDEX IF NOT EXISTS idx_shares_run ON shares(run_id)")
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_shares_run_expiry ON shares(run_id, expires_at)"
+        )
 
     @staticmethod
     def _ensure_column(
@@ -827,6 +834,141 @@ class RunRegistry:
             items.append((self._row_to_runinfo(run_row), share))
         return items
 
+    def list_public_page(
+        self,
+        *,
+        limit: int,
+        offset: int,
+        status: Optional[str] = None,
+        model: Optional[str] = None,
+        evaluation_protocol: Optional[str] = None,
+        seed_save: Optional[str] = None,
+        query: Optional[str] = None,
+    ) -> Tuple[list[Tuple[RunInfo, ShareToken]], int]:
+        """Return one bounded page of shared run metadata from the registry.
+
+        The database filters and orders runs before loading their shares. Trace
+        files are intentionally outside this query path.
+        """
+
+        self._ensure_conn()
+        now = datetime.utcnow().isoformat()
+        where = [
+            "r.backend = 'dfhack'",
+            "EXISTS (SELECT 1 FROM shares s "
+            "WHERE s.run_id = r.run_id "
+            "AND (s.expires_at IS NULL OR s.expires_at > ?) "
+            "AND 2 = (SELECT COUNT(DISTINCT scope.value) "
+            "FROM json_each(s.scope_json) scope "
+            "WHERE scope.value IN ('replay', 'export')))",
+        ]
+        params: list[object] = [now]
+
+        for column, value in (
+            ("status", status),
+            ("model", model),
+            ("evaluation_protocol", evaluation_protocol),
+            ("seed_save", seed_save),
+        ):
+            if value is not None:
+                where.append(f"r.{column} = ?")
+                params.append(value)
+
+        if query and query.strip():
+            pattern = self._public_query_pattern(query)
+            fields = (
+                "r.model",
+                "r.backend",
+                "r.status",
+                "r.evaluation_protocol",
+                "r.seed_save",
+                "r.git_sha",
+            )
+            where.append(
+                "("
+                + " OR ".join(
+                    f"LOWER(COALESCE({field}, '')) LIKE ? ESCAPE '\\'" for field in fields
+                )
+                + ")"
+            )
+            params.extend([pattern] * len(fields))
+
+        where_sql = " AND ".join(where)
+        ordering = """
+            CASE WHEN r.status IN ('pending', 'running', 'paused') THEN 0 ELSE 1 END ASC,
+            COALESCE(r.ended_at, r.started_at, r.created_at) DESC,
+            r.run_id DESC
+        """
+        read_conn = sqlite3.connect(
+            f"{self._db_path().resolve().as_uri()}?mode=ro", uri=True, timeout=1.0
+        )
+        read_conn.row_factory = sqlite3.Row
+        try:
+            read_conn.execute("PRAGMA query_only = ON")
+            total_row = read_conn.execute(
+                f"SELECT COUNT(*) AS total FROM runs r WHERE {where_sql}", params
+            ).fetchone()
+            rows = read_conn.execute(
+                f"""
+                WITH page_runs AS (
+                    SELECT r.*
+                      FROM runs r
+                     WHERE {where_sql}
+                     ORDER BY {ordering}
+                     LIMIT ? OFFSET ?
+                )
+                SELECT
+                  r.*,
+                  s.token AS share_token,
+                  s.scope_json AS share_scope_json,
+                  s.expires_at AS share_expires_at,
+                  s.created_at AS share_created_at
+                  FROM page_runs r
+                  JOIN shares s ON s.run_id = r.run_id
+                 WHERE (s.expires_at IS NULL OR s.expires_at > ?)
+                   AND 2 = (
+                     SELECT COUNT(DISTINCT scope.value)
+                       FROM json_each(s.scope_json) scope
+                      WHERE scope.value IN ('replay', 'export')
+                   )
+                 ORDER BY {ordering}, s.created_at ASC
+                """,
+                [*params, int(limit), int(offset), now],
+            ).fetchall()
+        finally:
+            read_conn.close()
+
+        shares_by_run: Dict[str, list[ShareToken]] = {}
+        run_rows: Dict[str, sqlite3.Row] = {}
+        run_order: list[str] = []
+        for row in rows:
+            run_id = str(row["run_id"])
+            if run_id not in run_rows:
+                run_rows[run_id] = row
+                run_order.append(run_id)
+            shares_by_run.setdefault(run_id, []).append(
+                ShareToken(
+                    token=str(row["share_token"]),
+                    run_id=run_id,
+                    scope=set(json.loads(row["share_scope_json"])),
+                    expires_at=_dt_from_iso(row["share_expires_at"]),
+                    created_at=_dt_from_iso(row["share_created_at"]) or datetime.utcnow(),
+                )
+            )
+
+        items: list[Tuple[RunInfo, ShareToken]] = []
+        for run_id in run_order:
+            share = self._select_share(shares_by_run[run_id])
+            if share is not None:
+                items.append((self._row_to_runinfo(run_rows[run_id]), share))
+        return items, int(total_row["total"] if total_row is not None else 0)
+
+    @staticmethod
+    def _public_query_pattern(query: str) -> str:
+        escaped = query.strip().lower()
+        escaped = escaped.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        return f"%{escaped}%"
+
     def public_overview_runs(
         self, *, recent_limit: int = 20
     ) -> Tuple[
@@ -866,17 +1008,23 @@ class RunRegistry:
 
     @staticmethod
     def _select_share(tokens: Iterable[ShareToken]) -> Optional[ShareToken]:
+        comprehensive: Optional[ShareToken] = None
         evidence: Optional[ShareToken] = None
+        replay: Optional[ShareToken] = None
         preferred: Optional[ShareToken] = None
         fallback: Optional[ShareToken] = None
         for share in tokens:
+            if {"live", "replay", "export"}.issubset(share.scope) and comprehensive is None:
+                comprehensive = share
             if {"replay", "export"}.issubset(share.scope) and evidence is None:
                 evidence = share
+            if "replay" in share.scope and replay is None:
+                replay = share
             if "live" in share.scope and preferred is None:
                 preferred = share
             if fallback is None:
                 fallback = share
-        return evidence or preferred or fallback
+        return comprehensive or evidence or replay or preferred or fallback
 
     def public_leaderboard(self, limit: int = 50) -> list[Dict[str, Any]]:
         """Return per-(model, score_version, seed_save) aggregates.

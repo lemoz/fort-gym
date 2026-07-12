@@ -48,8 +48,9 @@ def test_live_index_uses_saved_replay_for_completed_runs() -> None:
     assert "setReplayEvidenceView" in html
     assert "replay-step-slider" in html
     assert "state_after_advance?.work" in html
-    assert "if (isRunning)" in html
-    assert "if (!isRunning)" in html
+    assert "if (canWatchLive)" in html
+    assert "run.scopes.includes('live')" in html
+    assert "if (!canWatchLive)" in html
 
 
 def test_replay_exposes_spectator_only_observer_map() -> None:
