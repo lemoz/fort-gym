@@ -224,7 +224,8 @@ cp .env.example .env
 
 The web interface at `https://fortgym.live/` (or local dev at `http://127.0.0.1:8000/`) provides:
 
-- **Fort-Eval Overview** (`/`): results-first Fort Labs homepage with the active or latest evidence run, protocol-scoped comparison groups, and recent public runs.
+- **Fort Labs Overview** (`/`): gameplay-first homepage with a filmstrip of real public run frames, the active or latest recorded world, protocol-scoped comparisons, evaluation profiles, and the Fort-Eval evidence path. Missing media stays visibly unavailable; the page does not synthesize gameplay.
+- **Recorded Worlds** (`/worlds`): paginated library of public DFHack runs with replay scope, model, status, protocol, seed, score, and real bounded frame previews. Filters operate on persisted registry metadata without parsing traces during list requests; visible cards load their own bounded previews lazily.
 - **Live Game View** (running runs only): polls the public screenshot endpoint (`/public/runs/{token}/screenshot`, scope `live`) every 500ms and renders the DF screen with [pcface](https://github.com/susam/pcface) CP437 bitmap fonts. This is a genuinely live CopyScreen RPC read of the DF process the server is attached to — it is *not* per-run isolated, so it is only meaningful while that run is the one executing.
 - **Replay View** (finished runs, `/r/{token}`): loads the recorded `trace.jsonl` and steps through it. See "Replay Evidence Boundaries" below for exactly what each replay mode does and does not prove.
 - **Observer Map** (inside saved replays): accumulates revealed trace tiles, model-authored action footprints, verified tile changes, and z-levels through the selected step. It is a richer derived spectator view and is never silently passed to the agent.

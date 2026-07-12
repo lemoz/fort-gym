@@ -2644,8 +2644,8 @@
 
       updateRunLinks(token);
       stopLiveScreen();
-      const isRunning = run && run.status === 'running';
-      if (isRunning) {
+      const canWatchLive = run && run.status === 'running' && Array.isArray(run.scopes) && run.scopes.includes('live');
+      if (canWatchLive) {
         setViewMode('live');
         showCanvas();
         fetchScreen();
@@ -2664,7 +2664,7 @@
       // Then override with run's final score (summary score is more accurate)
       loadTraceData(token).then((records) => {
         if (currentToken !== token) return;
-        if (!isRunning) {
+        if (!canWatchLive) {
           if (records && records.length > 0) {
             setReplayRecords(records);
           } else {
@@ -2677,9 +2677,9 @@
         }
       });
 
-      // Connect to SSE for live updates (only for running runs)
-      // For completed runs, trace data is sufficient
-      if (run && run.status === 'running') {
+      // Connect only when this token explicitly carries live scope.
+      // Replay-capable running runs otherwise stay on their saved trace.
+      if (canWatchLive) {
         connectToRun(token, true);  // skipReset since we already reset above
       } else {
         // Close any existing connection

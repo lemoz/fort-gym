@@ -34,6 +34,7 @@ from .schemas import (
     PublicModelResult,
     PublicOverview,
     PublicRunPreview,
+    PublicRunsPage,
     PublicRunSummary,
     RunCreateRequest,
     RunInfo,
@@ -65,9 +66,17 @@ async def _rate_limit_middleware(request: Request, call_next):  # type: ignore[n
     if path == "/runs" or path.startswith("/runs/"):
         bucket = "runs"
 
+    if path == "/public/worlds":
+        bucket = "public_worlds"
+
     if bucket:
         admin_rpm, runs_rpm = get_rate_limit_config()
-        rpm = admin_rpm if bucket == "admin" else runs_rpm
+        if bucket == "admin":
+            rpm = admin_rpm
+        elif bucket == "runs":
+            rpm = runs_rpm
+        else:
+            rpm = max(1, int(os.getenv("FORT_GYM_RATE_LIMIT_PUBLIC_RPM", "120")))
         client_id = get_rate_limit_client_id(request)
         ok, retry_after = _RATE_LIMITER.allow(
             bucket, client_id, capacity=rpm, refill_per_s=rpm / 60.0
@@ -133,6 +142,12 @@ async def serve_admin(_: None = Depends(require_admin)):
 async def serve_leaderboard():
     """Serve the public leaderboard UI."""
     return _html_file_response("leaderboard.html")
+
+
+@app.get("/worlds", response_class=FileResponse)
+async def serve_worlds():
+    """Serve the public runs library."""
+    return _html_file_response("worlds.html")
 
 
 # Bundled static assets (e.g. the CC BY 4.0 Oddball tileset used by the
@@ -524,6 +539,35 @@ async def export_trace(run_id: str, _: None = Depends(require_admin)) -> Streami
 async def public_runs() -> List[RunInfoPublic]:
     items = RUN_REGISTRY.list_public()
     return [_serialize_public(record, share) for record, share in items]
+
+
+@app.get("/public/worlds", response_model=PublicRunsPage)
+async def public_worlds(
+    limit: int = Query(default=24, ge=1, le=100),
+    offset: int = Query(default=0, ge=0, le=10000),
+    status: Optional[str] = Query(default=None, max_length=32),
+    model: Optional[str] = Query(default=None, max_length=200),
+    evaluation_protocol: Optional[str] = Query(default=None, max_length=100),
+    seed_save: Optional[str] = Query(default=None, max_length=200),
+    q: Optional[str] = Query(default=None, max_length=100),
+) -> PublicRunsPage:
+    """List public run metadata without opening trace artifacts."""
+
+    items, total = RUN_REGISTRY.list_public_page(
+        limit=limit,
+        offset=offset,
+        status=status,
+        model=model,
+        evaluation_protocol=evaluation_protocol,
+        seed_save=seed_save,
+        query=q,
+    )
+    return PublicRunsPage(
+        items=[_serialize_public(record, share) for record, share in items],
+        total=total,
+        limit=limit,
+        offset=offset,
+    )
 
 
 @app.get("/public/overview", response_model=PublicOverview)

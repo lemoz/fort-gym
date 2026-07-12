@@ -13,6 +13,7 @@ def test_public_routes_exist() -> None:
     assert "/r/{token}" in paths
     assert "/replay/{token}" in paths
     assert "/public/runs" in paths
+    assert "/public/worlds" in paths
     assert "/public/overview" in paths
     assert "/public/leaderboard" in paths
     assert "/public/runs/{token}" in paths
@@ -293,6 +294,132 @@ def test_public_run_selection_prefers_replayable_evidence_token() -> None:
         assert selected_run.run_id == run.run_id
         assert selected_share.token == evidence.token
         assert {"replay", "export"}.issubset(selected_share.scope)
+    finally:
+        RUN_REGISTRY.reset_for_tests()
+
+
+def test_public_worlds_filters_paginates_sorts_and_never_reads_traces(monkeypatch) -> None:
+    from fort_gym.bench.api import server
+    from fort_gym.bench.run.storage import RUN_REGISTRY
+
+    RUN_REGISTRY.reset_for_tests()
+    monkeypatch.setattr(
+        server,
+        "read_trace_preview",
+        lambda _path: (_ for _ in ()).throw(AssertionError("runs library read a trace")),
+    )
+    try:
+        oldest = RUN_REGISTRY.create(
+            backend="mock",
+            model="Agent Alpha",
+            max_steps=1,
+            ticks_per_step=1,
+            seed_save="seed-a",
+        )
+        RUN_REGISTRY.create_share(oldest.run_id)
+        RUN_REGISTRY.set_status(oldest.run_id, status="completed", ended_at=datetime(2026, 1, 1))
+
+        live_only = RUN_REGISTRY.create(
+            backend="dfhack",
+            model="Agent Live Only",
+            max_steps=1,
+            ticks_per_step=1,
+            seed_save="seed-a",
+        )
+        RUN_REGISTRY.create_share(live_only.run_id, scope=["live"])
+        RUN_REGISTRY.set_status(
+            live_only.run_id, status="failed", ended_at=datetime(2026, 1, 2)
+        )
+
+        replay_only = RUN_REGISTRY.create(
+            backend="dfhack",
+            model="Agent Replay Only",
+            max_steps=1,
+            ticks_per_step=1,
+            seed_save="seed-a",
+        )
+        RUN_REGISTRY.create_share(replay_only.run_id, scope=["replay"])
+        RUN_REGISTRY.set_status(
+            replay_only.run_id, status="failed", ended_at=datetime(2026, 1, 2)
+        )
+
+        legacy = RUN_REGISTRY.create(
+            backend="dfhack",
+            model="Agent Legacy",
+            max_steps=1,
+            ticks_per_step=1,
+            seed_save="seed-a",
+        )
+        legacy_share = RUN_REGISTRY.create_share(legacy.run_id, scope=["replay", "export"])
+        RUN_REGISTRY.set_status(legacy.run_id, status="failed", ended_at=datetime(2026, 1, 2))
+
+        newest = RUN_REGISTRY.create(
+            backend="dfhack",
+            model="Agent Beta",
+            max_steps=1,
+            ticks_per_step=1,
+            seed_save="seed-b",
+            evaluation_protocol="fort-eval-v1",
+        )
+        RUN_REGISTRY.create_share(newest.run_id, scope=["live"])
+        newest_share = RUN_REGISTRY.create_share(newest.run_id, scope=["replay", "export"])
+        RUN_REGISTRY.set_status(newest.run_id, status="completed", ended_at=datetime(2026, 1, 3))
+
+        active = RUN_REGISTRY.create(
+            backend="dfhack",
+            model="Agent Beta",
+            max_steps=1,
+            ticks_per_step=1,
+            seed_save="seed-b",
+            evaluation_protocol="fort-eval-v1",
+        )
+        active_share = RUN_REGISTRY.create_share(active.run_id)
+        assert RUN_REGISTRY.claim_pending_run(active.run_id, started_at=datetime(2025, 1, 1))
+
+        client = TestClient(server.app)
+        response = client.get("/public/worlds?limit=2&offset=0")
+
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["total"] == 3
+        assert payload["limit"] == 2
+        assert payload["offset"] == 0
+        assert [item["run_id"] for item in payload["items"]] == [active.run_id, newest.run_id]
+        assert payload["items"][0]["token"] == active_share.token
+        assert payload["items"][0]["scopes"] == ["export", "live", "replay"]
+        assert payload["items"][1]["token"] == newest_share.token
+
+        second_page = client.get("/public/worlds?limit=2&offset=2").json()
+        assert [item["run_id"] for item in second_page["items"]] == [legacy.run_id]
+
+        filtered = client.get(
+            "/public/worlds?status=completed&model=Agent%20Beta&"
+            "evaluation_protocol=fort-eval-v1&seed_save=seed-b&q=DFHACK"
+        ).json()
+        assert filtered["total"] == 1
+        assert filtered["items"][0]["run_id"] == newest.run_id
+
+        legacy_result = client.get("/public/worlds?q=legacy").json()
+        assert legacy_result["items"][0]["run_id"] == legacy.run_id
+        assert legacy_result["items"][0]["evaluation_protocol"] is None
+        assert legacy_result["items"][0]["token"] == legacy_share.token
+        assert client.get("/public/worlds?q=alpha").json()["total"] == 0
+        assert client.get("/public/worlds?q=live%20only").json()["total"] == 0
+        assert client.get("/public/worlds?q=replay%20only").json()["total"] == 0
+
+        assert client.get(f"/public/worlds?model={'x' * 201}").status_code == 422
+        assert client.get("/public/worlds?offset=10001").status_code == 422
+
+        class RejectReadLock:
+            def __enter__(self):
+                raise AssertionError("public archive acquired the registry write lock")
+
+            def __exit__(self, *_args):
+                return False
+
+        with monkeypatch.context() as context:
+            context.setattr(RUN_REGISTRY, "_db_lock", RejectReadLock())
+            assert client.get("/public/worlds?limit=1").status_code == 200
     finally:
         RUN_REGISTRY.reset_for_tests()
 
