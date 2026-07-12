@@ -3,7 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- SOCIAL_META_START -->
   <title>Fort-Eval Live | Fort Labs</title>
+  <meta name="description" content="Watch live Fort-Eval gameplay and inspect recorded Dwarf Fortress agent runs.">
+  <link rel="canonical" href="https://fortgym.live/live">
+  <meta name="theme-color" content="#071009">
+  <meta property="og:site_name" content="Fort Labs"><meta property="og:type" content="website"><meta property="og:locale" content="en_US">
+  <meta property="og:title" content="Fort-Eval Live | Fort Labs"><meta property="og:description" content="Watch live Fort-Eval gameplay and inspect recorded Dwarf Fortress agent runs."><meta property="og:url" content="https://fortgym.live/live">
+  <meta property="og:image" content="https://fortgym.live/static/social/live.png?v=1"><meta property="og:image:secure_url" content="https://fortgym.live/static/social/live.png?v=1"><meta property="og:image:type" content="image/png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Fort-Eval live viewer showing real Dwarf Fortress agent gameplay">
+  <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Fort-Eval Live | Fort Labs"><meta name="twitter:description" content="Watch live Fort-Eval gameplay and inspect recorded Dwarf Fortress agent runs."><meta name="twitter:image" content="https://fortgym.live/static/social/live.png?v=1"><meta name="twitter:image:alt" content="Fort-Eval live viewer showing real Dwarf Fortress agent gameplay">
+  <link rel="icon" type="image/svg+xml" href="/static/brand/favicon.svg"><link rel="icon" type="image/png" sizes="32x32" href="/static/brand/favicon-32.png"><link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
+  <!-- SOCIAL_META_END -->
   <style>
     * { box-sizing: border-box; }
     body {
@@ -2649,7 +2659,8 @@
         protocolBadge.textContent = run.evaluation_protocol || 'unscoped run';
         runKicker.textContent = `${run.status === 'running' ? 'Live world' : 'Recorded world'} / ${String(run.run_id || '').slice(0, 8) || 'Fort-Eval'}`;
         runHeading.textContent = 'Inside this run.';
-        document.title = `${run.model || 'Fort-Eval'} run | Fort Labs`;
+        const socialTitle = document.querySelector('meta[property="og:title"]');
+        document.title = socialTitle?.content || `${run.model || 'Fort-Eval'} run | Fort Labs`;
         if (run.score !== null && run.score !== undefined) {
           updateScore(run.score);
         }

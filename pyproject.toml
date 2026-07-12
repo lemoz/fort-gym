@@ -19,14 +19,14 @@ dependencies = [
   "pyyaml",
   "typer",
   "httpx",
-  "pytest"
+  "pytest",
+  "pillow>=10.1"
 ]
 
 [project.optional-dependencies]
 agent = [
   "openai",
-  "anthropic",
-  "pillow"
+  "anthropic"
 ]
 proto = [
   "grpcio-tools"

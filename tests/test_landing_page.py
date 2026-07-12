@@ -110,8 +110,7 @@ def test_root_serves_landing_and_public_entrypoints() -> None:
     assert 'return _html_file_response("index.html")' in inspect.getsource(
         server.serve_index
     )
-    # evidence permalinks unchanged
-    assert 'return _html_file_response("index.html")' in inspect.getsource(
+    assert '_html_with_social_meta("index.html", metadata)' in inspect.getsource(
         server.serve_short_visual_replay
     )
     assert 'return _html_file_response("worlds.html")' in inspect.getsource(server.serve_worlds)
@@ -139,6 +138,8 @@ def test_public_pages_and_shared_assets_are_served() -> None:
     assert client.get("/static/fort-labs.css").status_code == 200
     assert client.get("/static/fort-labs.js").status_code == 200
     assert client.get("/static/findings-v1.json").status_code == 200
+    assert client.get("/favicon.ico").status_code == 200
+    assert client.get("/favicon.ico").headers["content-type"] == "image/png"
 
 
 def test_run_shares_are_permanent_evidence() -> None:

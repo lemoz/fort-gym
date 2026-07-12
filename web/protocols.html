@@ -3,8 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- SOCIAL_META_START -->
 <title>Protocols | Fort Labs</title>
 <meta name="description" content="The declared observation, action, knowledge, evidence, and ranking contracts for Fort-Eval.">
+<link rel="canonical" href="https://fortgym.live/protocols">
+<meta name="theme-color" content="#071009">
+<meta property="og:site_name" content="Fort Labs"><meta property="og:type" content="website"><meta property="og:locale" content="en_US">
+<meta property="og:title" content="Protocols | Fort Labs"><meta property="og:description" content="The declared observation, action, knowledge, evidence, and ranking contracts for Fort-Eval."><meta property="og:url" content="https://fortgym.live/protocols">
+<meta property="og:image" content="https://fortgym.live/static/social/protocols.png?v=1"><meta property="og:image:secure_url" content="https://fortgym.live/static/social/protocols.png?v=1"><meta property="og:image:type" content="image/png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Fort-Eval Easy, Hard, and Discovery protocol interfaces">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Protocols | Fort Labs"><meta name="twitter:description" content="The declared observation, action, knowledge, evidence, and ranking contracts for Fort-Eval."><meta name="twitter:image" content="https://fortgym.live/static/social/protocols.png?v=1"><meta name="twitter:image:alt" content="Fort-Eval Easy, Hard, and Discovery protocol interfaces">
+<link rel="icon" type="image/svg+xml" href="/static/brand/favicon.svg"><link rel="icon" type="image/png" sizes="32x32" href="/static/brand/favicon-32.png"><link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
+<!-- SOCIAL_META_END -->
 <link rel="stylesheet" href="/static/fort-labs.css?v=20260711-2">
 <style>
   .protocol-hero { padding: 58px 0 48px; border-bottom: 1px solid var(--line); }
@@ -121,7 +130,8 @@
   }
 
   function renderDetail(protocol) {
-    document.title = `${protocol.name} | Fort Labs`;
+    const socialTitle = document.querySelector('meta[property="og:title"]');
+    document.title = socialTitle?.content || `${protocol.name} | Fort Labs`;
     $('protocol-index').hidden = true;
     $('protocol-detail').hidden = false;
     $('detail-status').textContent = `${protocol.status} · ${protocol.result_status}`;
