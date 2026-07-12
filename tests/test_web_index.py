@@ -7,7 +7,7 @@ def test_live_index_exposes_completed_run_inspection_links() -> None:
     html = Path("web/index.html").read_text(encoding="utf-8")
 
     assert "formatRunLabel(run)" in html
-    assert "updateRunLinks(token)" in html
+    assert "updateRunLinks(token, runScopes)" in html
     assert "tokenFromLocation()" in html
     assert "window.location.pathname.match" in html
     assert "^\\/(?:r|replay)\\/" in html
@@ -15,6 +15,30 @@ def test_live_index_exposes_completed_run_inspection_links() -> None:
     assert "Replay saved SSE events" in html
     assert "Open NDJSON trace export" in html
     assert "runSelector.value = currentToken" in html
+
+
+def test_replay_uses_fort_labs_run_workspace() -> None:
+    html = Path("web/index.html").read_text(encoding="utf-8")
+    css = Path("web/static/replay-labs.css").read_text(encoding="utf-8")
+
+    assert "/static/fort-labs.css" in html
+    assert "/static/replay-labs.css" in html
+    assert 'class="replay-workspace"' in html
+    assert "Inside a recorded world" in html
+    assert "Follow the agent from plan to action to a changing fortress" in html
+    assert "Decision trace" in html
+    assert "How the run unfolded" in html
+    assert "The shape of this run" in html
+    assert "runHeading.textContent" in html
+    assert "protocolBadge.textContent" in html
+    assert "grid-template-columns: minmax(0, 1fr) 290px" in css
+    assert "@media (max-width: 640px)" in css
+    assert "#game-canvas" in css and "height: auto" in css
+    assert "max: 100" not in html
+    assert "suggestedMin: 0" in html
+    assert "if (!presetToken) setInterval(loadRuns, 5000)" in html
+    assert "`/public/runs/${encodeURIComponent(presetToken)}`" in html
+    assert "const runs = presetToken ? [payload] : payload" in html
 
 
 def test_live_index_uses_saved_replay_for_completed_runs() -> None:
@@ -49,8 +73,11 @@ def test_live_index_uses_saved_replay_for_completed_runs() -> None:
     assert "replay-step-slider" in html
     assert "state_after_advance?.work" in html
     assert "if (canWatchLive)" in html
-    assert "run.scopes.includes('live')" in html
+    assert "runScopes.includes('live')" in html
     assert "if (!canWatchLive)" in html
+    assert "runScopes.includes('replay') && runScopes.includes('export')" in html
+    assert "canLoadVisualReplay ? loadTraceData(token) : Promise.resolve([])" in html
+    assert "Replay and export scopes are required" in html
 
 
 def test_replay_exposes_spectator_only_observer_map() -> None:
@@ -63,6 +90,9 @@ def test_replay_exposes_spectator_only_observer_map() -> None:
     assert "Derived spectator evidence" in html
     assert "not passed to the evaluated model" in html
     assert "verified tile changes" in html
+    assert "executionStatus: executionRejected ? 'rejected' : executionAccepted ? 'accepted' : 'unknown'" in html
+    assert "White: execution result not recorded" in html
+    assert "record.execute?.accepted !== false" not in html
 
 
 def test_replay_distinguishes_frozen_liquid_from_stable_floor() -> None:
@@ -104,6 +134,11 @@ def test_replay_screen_offers_graphical_tileset_toggle() -> None:
     assert "same recorded text, re-skinned" in html
     assert "gameCtx.fillText(char, textX + col * charW, y)" in html
     assert "Graphical tileset unavailable" in html
+
+    # Both mode controls expose the current selection to assistive technology.
+    assert html.count('aria-pressed="true"') >= 2
+    assert "replayViewObserver.setAttribute('aria-pressed'" in html
+    assert "replayGlyphAscii.setAttribute('aria-pressed'" in html
 
 
 def test_graphical_tileset_asset_is_bundled_with_attribution() -> None:

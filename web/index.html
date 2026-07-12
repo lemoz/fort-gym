@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Fort-Eval Live | Fort Labs</title>
   <style>
     * { box-sizing: border-box; }
@@ -414,129 +415,110 @@
     footer a { color: #9ab3ff; text-decoration: none; }
     footer a:hover { text-decoration: underline; }
   </style>
+  <link rel="stylesheet" href="/static/fort-labs.css?v=20260711-2">
+  <link rel="stylesheet" href="/static/replay-labs.css?v=20260711-1">
 </head>
-<body>
-  <!-- Header bar -->
-  <div class="header-bar">
-    <h1><span>FORT</span> LABS / Fort-Eval Live</h1>
-    <div class="run-info">
-      <select id="run-selector" class="run-selector">
-        <option value="">Select a run...</option>
-      </select>
-      <span id="status-badge" class="badge-pill">No run selected</span>
-      <span id="step-badge" class="badge-pill">Step --</span>
-      <span id="score-badge" class="badge-pill score">Score --</span>
-      <div id="run-links" class="run-links" aria-label="Selected run inspection links"></div>
-    </div>
-  </div>
-
-  <!-- Main content -->
-  <div class="main-content">
-    <!-- Game view -->
-    <div class="game-section">
-      <div class="game-header">
-        <h2 id="game-title">Run View</h2>
-        <span id="game-status" class="game-status">Waiting for run...</span>
-      </div>
-      <div id="replay-controls" class="replay-controls" aria-label="Saved run replay controls">
-        <button id="replay-prev" type="button" title="Previous step" aria-label="Previous step">&#9664;</button>
-        <input id="replay-step-slider" type="range" min="0" max="0" value="0" aria-label="Replay step">
-        <button id="replay-next" type="button" title="Next step" aria-label="Next step">&#9654;</button>
-        <span id="replay-step-label" class="replay-step-label">Step --</span>
-        <div id="replay-view-toggle" class="replay-view-toggle" aria-label="Replay evidence view">
-          <button id="replay-view-screen" type="button" data-active="true">DF Screen</button>
-          <button id="replay-view-map" type="button" data-active="false">Map Inspect</button>
-          <button id="replay-view-observer" type="button" data-active="false">Observer Map</button>
-        </div>
-        <select id="observer-level-select" class="observer-level-select" aria-label="Observer map z-level"></select>
-        <div id="replay-glyph-toggle" class="replay-view-toggle" aria-label="Replay glyph style">
-          <button id="replay-glyph-graphical" type="button" data-active="true" title="Re-skin the recorded characters with a graphical DF tileset (same evidence, different glyphs)">Graphical</button>
-          <button id="replay-glyph-ascii" type="button" data-active="false" title="Raw recorded CopyScreen characters, for ASCII purists">ASCII</button>
-        </div>
-        <div class="replay-legend" aria-label="Replay legend">
-          <span class="legend-item"><span class="legend-swatch legend-starter"></span>Starter</span>
-          <span class="legend-item"><span class="legend-swatch legend-connector"></span>Connector</span>
-          <span class="legend-item"><span class="legend-swatch legend-workshop-room"></span>Workshop room</span>
-          <span class="legend-item"><span class="legend-swatch legend-production"></span>Production</span>
-        </div>
-      </div>
-      <div id="game-container">
-        <div class="no-game-placeholder" id="no-game">
-          <span>&#x1F3AE;</span>
-          <p>Select a run above to start watching</p>
-        </div>
-        <canvas id="game-canvas" width="960" height="400" style="display: none;"></canvas>
+<body class="replay-body">
+  <header class="replay-header">
+    <div class="replay-header-inner">
+      <a class="replay-brand" href="/"><span>FORT</span> LABS</a>
+      <span class="replay-crumb">/ Fort-Eval run</span>
+      <div class="run-info">
+        <select id="run-selector" class="run-selector" aria-label="Select a recorded or live run">
+          <option value="">Select a run...</option>
+        </select>
+        <div id="run-links" class="run-links" aria-label="Selected run inspection links"></div>
       </div>
     </div>
+  </header>
 
-    <!-- Dashboard row: Stats + Chart -->
-    <div class="dashboard-row">
-      <!-- Stats panel -->
+  <main class="replay-page">
+    <section class="run-intro" aria-labelledby="run-heading">
+      <div class="run-intro-grid">
+        <div>
+          <div class="run-kicker" id="run-kicker">Recorded world / Fort-Eval</div>
+          <h1 class="run-title" id="run-heading">Inside a recorded world.</h1>
+          <p class="run-deck">Follow the agent from plan to action to a changing fortress.</p>
+        </div>
+        <a class="fl-link" href="/worlds">All recorded worlds &rarr;</a>
+      </div>
+      <div class="run-meta-ribbon" aria-label="Selected run summary">
+        <div class="run-meta-cell"><div class="run-meta-label">Model</div><div class="run-meta-value" id="model-badge">--</div></div>
+        <div class="run-meta-cell"><div class="run-meta-label">Protocol</div><div class="run-meta-value" id="protocol-badge">--</div></div>
+        <div class="run-meta-cell"><div class="run-meta-label">Status</div><span id="status-badge" class="badge-pill">No run selected</span></div>
+        <div class="run-meta-cell"><div class="run-meta-label">Progress</div><span id="step-badge" class="badge-pill">Step --</span></div>
+        <div class="run-meta-cell"><div class="run-meta-label">Score</div><span id="score-badge" class="badge-pill score">--</span></div>
+      </div>
+    </section>
+
+    <section class="replay-workspace" aria-label="Run replay and decisions">
+      <div class="replay-stage">
+        <div class="game-section">
+          <div class="game-header">
+            <h2 id="game-title">Run View</h2>
+            <span id="game-status" class="game-status">Waiting for run...</span>
+          </div>
+          <div id="game-container">
+            <div class="no-game-placeholder" id="no-game"><span aria-hidden="true"></span><p>Select a run above to start watching</p></div>
+            <canvas id="game-canvas" width="960" height="400" style="display: none;"></canvas>
+          </div>
+          <div id="replay-controls" class="replay-controls" aria-label="Saved run replay controls">
+            <div class="replay-control-modes">
+              <div id="replay-view-toggle" class="replay-view-toggle" aria-label="Replay evidence view">
+                <button id="replay-view-screen" type="button" data-active="true" aria-pressed="true">DF Screen</button>
+                <button id="replay-view-map" type="button" data-active="false" aria-pressed="false">Map Inspect</button>
+                <button id="replay-view-observer" type="button" data-active="false" aria-pressed="false">Observer Map</button>
+              </div>
+              <select id="observer-level-select" class="observer-level-select" aria-label="Observer map z-level"></select>
+              <div id="replay-glyph-toggle" class="replay-view-toggle replay-glyphs" aria-label="Replay glyph style">
+                <button id="replay-glyph-graphical" type="button" data-active="true" aria-pressed="true" title="Re-skin the recorded characters with a graphical DF tileset (same evidence, different glyphs)">Graphical</button>
+                <button id="replay-glyph-ascii" type="button" data-active="false" aria-pressed="false" title="Raw recorded CopyScreen characters, for ASCII purists">ASCII</button>
+              </div>
+            </div>
+            <div class="replay-transport">
+              <button id="replay-prev" type="button" title="Previous step" aria-label="Previous step">&#9664;</button>
+              <input id="replay-step-slider" type="range" min="0" max="0" value="0" aria-label="Replay step">
+              <button id="replay-next" type="button" title="Next step" aria-label="Next step">&#9654;</button>
+              <span id="replay-step-label" class="replay-step-label">Step --</span>
+            </div>
+            <div class="replay-evidence-key">
+              <div class="replay-legend" aria-label="Replay legend">
+                <span class="legend-item"><span class="legend-swatch legend-starter"></span>Starter</span>
+                <span class="legend-item"><span class="legend-swatch legend-connector"></span>Connector</span>
+                <span class="legend-item"><span class="legend-swatch legend-workshop-room"></span>Workshop room</span>
+                <span class="legend-item"><span class="legend-swatch legend-production"></span>Production</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="decision-panel" aria-labelledby="decision-title">
+        <div class="decision-head"><div class="run-kicker">Decision trace</div><h3 id="decision-title">Recent decisions</h3></div>
+        <div id="agent-actions-list" class="agent-actions-list"><div class="agent-action-item empty">No actions yet...</div></div>
+      </aside>
+    </section>
+
+    <section class="dashboard-row" aria-label="Run score and fortress shape">
+      <div class="chart-panel"><h3>How the run unfolded</h3><div class="chart-container"><canvas id="score-chart"></canvas></div></div>
       <div class="stats-panel">
-        <h3>Fortress Stats</h3>
+        <h3>The shape of this run</h3>
         <div class="stats-grid">
-          <div class="stat-card">
-            <div class="label">Population</div>
-            <div class="value healthy" id="stat-pop">--</div>
-          </div>
-          <div class="stat-card">
-            <div class="label">Food</div>
-            <div class="value healthy" id="stat-food">--</div>
-          </div>
-          <div class="stat-card">
-            <div class="label">Drink</div>
-            <div class="value healthy" id="stat-drink">--</div>
-          </div>
-          <div class="stat-card">
-            <div class="label">Wealth</div>
-            <div class="value" id="stat-wealth">--</div>
-          </div>
-          <div class="stat-card score-card">
-            <div class="label">Score</div>
-            <div class="value" id="stat-score">--</div>
-          </div>
-          <div class="stat-card">
-            <div class="label">Complexity</div>
-            <div class="value healthy" id="stat-complexity">--</div>
-          </div>
-          <div class="stat-card">
-            <div class="label">Plan Spaces</div>
-            <div class="value healthy" id="stat-plan-spaces">--</div>
-          </div>
-          <div class="stat-card score-card">
-            <div class="label">Workshop Room</div>
-            <div class="value" id="stat-workshop-room">--</div>
-          </div>
+          <div class="stat-card"><div class="label">Population</div><div class="value healthy" id="stat-pop">--</div></div>
+          <div class="stat-card"><div class="label">Food</div><div class="value healthy" id="stat-food">--</div></div>
+          <div class="stat-card"><div class="label">Drink</div><div class="value healthy" id="stat-drink">--</div></div>
+          <div class="stat-card"><div class="label">Wealth</div><div class="value" id="stat-wealth">--</div></div>
+          <div class="stat-card score-card"><div class="label">Score</div><div class="value" id="stat-score">--</div></div>
+          <div class="stat-card"><div class="label">Complexity</div><div class="value healthy" id="stat-complexity">--</div></div>
+          <div class="stat-card"><div class="label">Plan spaces</div><div class="value healthy" id="stat-plan-spaces">--</div></div>
+          <div class="stat-card score-card"><div class="label">Workshop room</div><div class="value" id="stat-workshop-room">--</div></div>
         </div>
-        <div class="milestones">
-          <h4>Milestones</h4>
-          <div class="milestone-list" id="milestone-list">
-            <span class="milestone-badge pending">None yet</span>
-          </div>
-        </div>
+        <div class="milestones"><h4>Milestones</h4><div class="milestone-list" id="milestone-list"><span class="milestone-badge pending">None yet</span></div></div>
       </div>
+    </section>
+  </main>
 
-      <!-- Chart panel -->
-      <div class="chart-panel">
-        <h3>Score Timeline</h3>
-        <div class="chart-container">
-          <canvas id="score-chart"></canvas>
-        </div>
-      </div>
-    </div>
-
-    <!-- Agent actions panel -->
-    <div class="agent-panel">
-      <h3><span>&#x1F916;</span> Agent Actions (Last 10)</h3>
-      <div id="agent-actions-list" class="agent-actions-list">
-        <div class="agent-action-item empty">No actions yet...</div>
-      </div>
-    </div>
-  </div>
-
-  <footer>
-    Fort Labs / Fort-Eval &middot; <a href="/">Overview</a> &middot; <a href="/leaderboard">Historical leaderboard</a> &middot; <a href="https://github.com/lemoz/fort-gym" target="_blank">GitHub</a>
-  </footer>
+  <footer class="replay-footer">Fort Labs / Fort-Eval <a href="/">Overview</a><a href="/results">Results</a><a href="/protocols">Protocols</a><a href="/worlds">Runs</a><a href="https://github.com/lemoz/fort-gym" target="_blank" rel="noreferrer">GitHub</a></footer>
 
   <!-- pcface bitmap font library -->
   <script src="https://cdn.jsdelivr.net/npm/pcface@0.3.0/src/pcface.js"></script>
@@ -584,6 +566,10 @@
     const statusBadge = document.getElementById('status-badge');
     const stepBadge = document.getElementById('step-badge');
     const scoreBadge = document.getElementById('score-badge');
+    const modelBadge = document.getElementById('model-badge');
+    const protocolBadge = document.getElementById('protocol-badge');
+    const runHeading = document.getElementById('run-heading');
+    const runKicker = document.getElementById('run-kicker');
     const runLinks = document.getElementById('run-links');
     const gameTitle = document.getElementById('game-title');
     const gameCanvas = document.getElementById('game-canvas');
@@ -633,18 +619,21 @@
       return `${formatRunStarted(run.started_at)} · ${run.model} · ${run.status} · step ${run.step || 0} · score ${score} · ${token}`;
     }
 
-    function updateRunLinks(token) {
+    function updateRunLinks(token, scopes = []) {
       if (!token) {
         runLinks.style.display = 'none';
         runLinks.innerHTML = '';
         return;
       }
       const encoded = encodeURIComponent(token);
-      runLinks.innerHTML = `
-        <a href="/r/${encoded}" title="Open visual replay page">Run</a>
-        <a href="/public/runs/${encoded}/events/replay?speed=4" title="Replay saved SSE events">Replay</a>
-        <a href="/public/runs/${encoded}/export/trace" title="Open NDJSON trace export">Trace</a>
-      `;
+      const links = [`<a href="/r/${encoded}" title="Open run page">Run</a>`];
+      if (scopes.includes('replay')) {
+        links.push(`<a href="/public/runs/${encoded}/events/replay?speed=4" title="Replay saved SSE events">Replay</a>`);
+      }
+      if (scopes.includes('export')) {
+        links.push(`<a href="/public/runs/${encoded}/export/trace" title="Open NDJSON trace export">Trace</a>`);
+      }
+      runLinks.innerHTML = links.join('');
       runLinks.style.display = 'flex';
     }
 
@@ -1044,11 +1033,13 @@
         const rect = observerActionRect(record.action);
         if (rect) {
           levels.add(rect[2]);
+          const executionRejected = record.execute?.accepted === false || record.execute?.ok === false;
+          const executionAccepted = record.execute?.accepted === true || record.execute?.ok === true;
           actions.push({
             rect,
             step: record.step ?? index,
             type: String(record.action?.type || 'STATE'),
-            accepted: record.execute?.accepted !== false && record.execute?.ok !== false
+            executionStatus: executionRejected ? 'rejected' : executionAccepted ? 'accepted' : 'unknown'
           });
         }
         const proof = extractGameplayProof(record);
@@ -1165,7 +1156,9 @@
           const y = top + (action.rect[1] - minY) * tile;
           const width = (action.rect[3] - action.rect[0] + 1) * tile;
           const height = (action.rect[4] - action.rect[1] + 1) * tile;
-          gameCtx.strokeStyle = action.accepted ? '#f0b94f' : '#ef756f';
+          gameCtx.strokeStyle = action.executionStatus === 'accepted'
+            ? '#f0b94f'
+            : action.executionStatus === 'rejected' ? '#ef756f' : '#dbe6ff';
           gameCtx.globalAlpha = .28 + .72 * ((actionIndex + 1) / levelActions.length);
           gameCtx.lineWidth = actionIndex === levelActions.length - 1 ? 3 : 1.5;
           gameCtx.strokeRect(x + 1, y + 1, Math.max(2, width - 2), Math.max(2, height - 2));
@@ -1203,7 +1196,8 @@
       drawReplayText('Cyan/gray: observed world tiles', 1100, y + 104, {color: '#9fb1d6', size: 12});
       drawReplayText('Amber: accepted action footprint', 1100, y + 128, {color: '#f0b94f', size: 12});
       drawReplayText('Red: rejected action footprint', 1100, y + 152, {color: '#ef756f', size: 12});
-      drawReplayText('Acid: verified world change', 1100, y + 176, {color: '#d9f45b', size: 12});
+      drawReplayText('White: execution result not recorded', 1100, y + 176, {color: '#dbe6ff', size: 12});
+      drawReplayText('Acid: verified world change', 1100, y + 200, {color: '#d9f45b', size: 12});
       drawReplayText('Source: trace map snapshots + model-authored coordinates', 1100, 666, {
         color: '#9fd7b2', size: 10, weight: 700
       });
@@ -1949,10 +1943,15 @@
       replayViewScreen.dataset.active = replayEvidenceView === 'screen' ? 'true' : 'false';
       replayViewMap.dataset.active = replayEvidenceView === 'map' ? 'true' : 'false';
       replayViewObserver.dataset.active = replayEvidenceView === 'observer' ? 'true' : 'false';
+      replayViewScreen.setAttribute('aria-pressed', String(replayEvidenceView === 'screen'));
+      replayViewMap.setAttribute('aria-pressed', String(replayEvidenceView === 'map'));
+      replayViewObserver.setAttribute('aria-pressed', String(replayEvidenceView === 'observer'));
       replayViewMap.disabled = !snapshot.fortMap && !snapshot.mapSnapshot;
       observerLevelSelect.dataset.visible = replayEvidenceView === 'observer' ? 'true' : 'false';
       replayGlyphGraphical.dataset.active = replayGlyphMode === 'graphical' ? 'true' : 'false';
       replayGlyphAscii.dataset.active = replayGlyphMode === 'ascii' ? 'true' : 'false';
+      replayGlyphGraphical.setAttribute('aria-pressed', String(replayGlyphMode === 'graphical'));
+      replayGlyphAscii.setAttribute('aria-pressed', String(replayGlyphMode === 'ascii'));
       gameStatus.textContent = statusText;
       updateReplayStats(snapshot);
     }
@@ -2282,12 +2281,12 @@
           datasets: [{
             label: 'Score',
             data: [],
-            borderColor: '#4f7cff',
-            backgroundColor: 'rgba(79, 124, 255, 0.1)',
+            borderColor: '#d9f45b',
+            backgroundColor: 'rgba(217, 244, 91, 0.08)',
             fill: true,
             tension: 0.3,
             pointRadius: 3,
-            pointBackgroundColor: '#4f7cff',
+            pointBackgroundColor: '#d9f45b',
           }]
         },
         options: {
@@ -2298,16 +2297,15 @@
           },
           scales: {
             x: {
-              title: { display: true, text: 'Step', color: '#6b7c99' },
-              ticks: { color: '#6b7c99' },
-              grid: { color: 'rgba(255,255,255,0.05)' }
+              title: { display: true, text: 'Step', color: '#8f958e' },
+              ticks: { color: '#8f958e' },
+              grid: { color: 'rgba(255,255,255,0.08)' }
             },
             y: {
-              title: { display: true, text: 'Score', color: '#6b7c99' },
-              min: 0,
-              max: 100,
-              ticks: { color: '#6b7c99' },
-              grid: { color: 'rgba(255,255,255,0.05)' }
+              title: { display: true, text: 'Score', color: '#8f958e' },
+              suggestedMin: 0,
+              ticks: { color: '#8f958e' },
+              grid: { color: 'rgba(255,255,255,0.08)' }
             }
           }
         }
@@ -2380,7 +2378,7 @@
     function updateScore(value) {
       const display = typeof value === 'number' ? value.toFixed(1) : '--';
       statScore.textContent = display;
-      scoreBadge.textContent = 'Score ' + display;
+      scoreBadge.textContent = display;
     }
 
     function updateMilestones(milestones) {
@@ -2503,9 +2501,13 @@
     // ===============================
     async function loadRuns() {
       try {
-        const res = await fetch('/public/runs');
+        const endpoint = presetToken
+          ? `/public/runs/${encodeURIComponent(presetToken)}`
+          : '/public/runs';
+        const res = await fetch(endpoint);
         if (!res.ok) return;
-        const runs = await res.json();
+        const payload = await res.json();
+        const runs = presetToken ? [payload] : payload;
 
         runSelector.innerHTML = '<option value="">Select a run...</option>';
 
@@ -2619,7 +2621,12 @@
         statusBadge.textContent = 'No run selected';
         statusBadge.className = 'badge-pill';
         stepBadge.textContent = 'Step --';
-        scoreBadge.textContent = 'Score --';
+        scoreBadge.textContent = '--';
+        modelBadge.textContent = '--';
+        protocolBadge.textContent = '--';
+        runKicker.textContent = 'Recorded world / Fort-Eval';
+        runHeading.textContent = 'Inside a recorded world.';
+        document.title = 'Fort-Eval Live | Fort Labs';
         setViewMode('empty');
         showPlaceholder('Select a run above to start watching');
         stopLiveScreen();
@@ -2634,25 +2641,37 @@
       let run = null;
       if (opt && opt.dataset.run) {
         run = JSON.parse(opt.dataset.run);
+        currentRun = run;
         statusBadge.textContent = run.status;
         statusBadge.className = 'badge-pill ' + (run.status === 'running' ? 'running' : '');
         stepBadge.textContent = `Step ${run.step || 0}`;
+        modelBadge.textContent = run.model || 'not reported';
+        protocolBadge.textContent = run.evaluation_protocol || 'unscoped run';
+        runKicker.textContent = `${run.status === 'running' ? 'Live world' : 'Recorded world'} / ${String(run.run_id || '').slice(0, 8) || 'Fort-Eval'}`;
+        runHeading.textContent = 'Inside this run.';
+        document.title = `${run.model || 'Fort-Eval'} run | Fort Labs`;
         if (run.score !== null && run.score !== undefined) {
           updateScore(run.score);
         }
       }
 
-      updateRunLinks(token);
+      const runScopes = run && Array.isArray(run.scopes) ? run.scopes : [];
+      updateRunLinks(token, runScopes);
       stopLiveScreen();
-      const canWatchLive = run && run.status === 'running' && Array.isArray(run.scopes) && run.scopes.includes('live');
+      const canWatchLive = run && run.status === 'running' && runScopes.includes('live');
+      const canLoadVisualReplay = runScopes.includes('replay') && runScopes.includes('export');
       if (canWatchLive) {
         setViewMode('live');
         showCanvas();
         fetchScreen();
         gameInterval = setInterval(fetchScreen, 500);
-      } else {
+      } else if (canLoadVisualReplay) {
         setViewMode('replay');
         showPlaceholder('Loading saved run replay');
+      } else {
+        setViewMode('empty');
+        showPlaceholder('Visual replay is not available for this share');
+        gameStatus.textContent = 'Replay and export scopes are required';
       }
 
       // Reset data before loading trace (do this BEFORE async load)
@@ -2662,12 +2681,13 @@
 
       // Load trace data (for completed runs, this gives us the full history)
       // Then override with run's final score (summary score is more accurate)
-      loadTraceData(token).then((records) => {
+      const traceRecords = canLoadVisualReplay ? loadTraceData(token) : Promise.resolve([]);
+      traceRecords.then((records) => {
         if (currentToken !== token) return;
         if (!canWatchLive) {
-          if (records && records.length > 0) {
+          if (canLoadVisualReplay && records && records.length > 0) {
             setReplayRecords(records);
-          } else {
+          } else if (canLoadVisualReplay) {
             showPlaceholder('Trace unavailable for selected run');
             gameStatus.textContent = 'Saved replay unavailable';
           }
@@ -2706,8 +2726,9 @@
           selectRun(presetToken);
         }
       });
-      // Refresh run list periodically
-      setInterval(loadRuns, 5000);
+      // The run picker stays fresh on the live dashboard. A replay permalink
+      // is immutable evidence and does not need to poll the global registry.
+      if (!presetToken) setInterval(loadRuns, 5000);
     });
 
     // Pause when tab is hidden

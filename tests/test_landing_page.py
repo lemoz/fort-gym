@@ -96,7 +96,7 @@ def test_replay_viewer_requires_live_scope_before_live_mode() -> None:
     html = Path("web/index.html").read_text(encoding="utf-8")
 
     assert "Array.isArray(run.scopes)" in html
-    assert "run.scopes.includes('live')" in html
+    assert "runScopes.includes('live')" in html
     assert "if (canWatchLive)" in html
 
 
