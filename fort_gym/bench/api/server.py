@@ -160,6 +160,12 @@ async def serve_results():
     return _html_file_response("results.html")
 
 
+@app.get("/findings", response_class=FileResponse)
+async def serve_findings():
+    """Serve the curated public research findings UI."""
+    return _html_file_response("findings.html")
+
+
 @app.get("/protocols", response_class=FileResponse)
 async def serve_protocols():
     """Serve the public protocol catalog UI."""

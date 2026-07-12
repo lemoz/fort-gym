@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Findings | Fort Labs</title>
+<meta name="description" content="Curated findings from real Dwarf Fortress agent runs, linked to recorded gameplay and source documentation.">
+<link rel="stylesheet" href="/static/fort-labs.css?v=20260711-2">
+<style>
+  .findings-hero { padding: 58px 0 42px; border-bottom: 1px solid var(--line); }
+  .findings-hero-grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 70px; align-items: end; }
+  .findings-byline { border-left: 1px solid var(--line); padding-left: 24px; }
+  .byline-row { display: grid; grid-template-columns: .6fr 1.4fr; gap: 14px; padding: 8px 0; font: 650 10px/1.4 var(--mono); }
+  .byline-key { color: var(--muted); text-transform: uppercase; }
+  .gate-band { background: var(--coal); border-bottom: 1px solid var(--line); }
+  .gate-grid { grid-template-columns: repeat(4, 1fr); }
+  .gate-value { margin-top: 7px; font: 800 20px/1 var(--mono); text-transform: uppercase; }
+  .gate-value.passed { color: var(--acid); }
+  .gate-value.failed { color: var(--signal); }
+  .gate-value.open { color: var(--cyan); }
+  .gate-detail { margin-top: 9px; color: var(--muted); font-size: 12px; line-height: 1.45; }
+  .lead-layout { display: grid; grid-template-columns: .72fr 1.28fr; gap: 44px; align-items: start; }
+  .lead-copy { position: sticky; top: 88px; }
+  .lead-claim { margin: 14px 0 18px; font-size: clamp(30px, 4vw, 54px); line-height: 1.03; }
+  .lead-evidence { border: 1px solid var(--line); background: var(--coal); }
+  .lead-media { aspect-ratio: 16 / 9; border: 0; border-bottom: 1px solid var(--line); }
+  .lead-caption { display: grid; grid-template-columns: 1fr auto; gap: 24px; padding: 15px; }
+  .lead-caption strong { display: block; margin-bottom: 5px; font-size: 15px; }
+  .lead-caption span { color: var(--muted); font-size: 12px; }
+  .finding-list { border-top: 1px solid var(--line); }
+  .finding-row { display: grid; grid-template-columns: 80px .7fr 1.3fr; gap: 28px; padding: 34px 0; border-bottom: 1px solid var(--line); }
+  .finding-index { color: var(--acid); font: 800 28px/1 var(--mono); }
+  .finding-status { margin-top: 10px; color: var(--cyan); font: 700 9px/1.4 var(--mono); text-transform: uppercase; }
+  .finding-row h3 { margin: 0; font-size: 25px; line-height: 1.08; }
+  .finding-claim { margin: 0 0 16px; color: var(--paper); font-size: 16px; line-height: 1.55; }
+  .finding-evidence, .finding-caveat { margin: 0; padding: 12px 0; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; line-height: 1.5; }
+  .finding-evidence strong, .finding-caveat strong { color: var(--acid); font: 750 9px/1 var(--mono); text-transform: uppercase; }
+  .finding-links { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 16px; }
+  .evidence-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 30px; }
+  .evidence-card { min-width: 0; border: 1px solid var(--line); background: var(--coal); color: inherit; text-decoration: none; }
+  .evidence-card:first-child { grid-column: span 2; }
+  .evidence-media { aspect-ratio: 16 / 9; border: 0; border-bottom: 1px solid var(--line); }
+  .evidence-card-copy { padding: 14px; }
+  .evidence-top { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+  .evidence-label { font-weight: 760; }
+  .evidence-verdict { color: var(--acid); font: 700 9px/1.3 var(--mono); text-transform: uppercase; }
+  .evidence-meta { margin-top: 8px; color: var(--muted); font: 650 9px/1.4 var(--mono); overflow-wrap: anywhere; }
+  .evidence-note { margin: 10px 0 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+  .method-grid { display: grid; grid-template-columns: repeat(3, 1fr); border-block: 1px solid var(--line); }
+  .method-cell { padding: 24px; border-right: 1px solid var(--line); }
+  .method-cell:last-child { border-right: 0; }
+  .method-cell strong { display: block; color: var(--acid); font: 750 10px/1.3 var(--mono); text-transform: uppercase; }
+  .method-cell p { margin-bottom: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+  .findings-status { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+  @media (max-width: 900px) {
+    .findings-hero-grid, .lead-layout { grid-template-columns: 1fr; }
+    .lead-copy { position: static; }
+    .gate-grid { grid-template-columns: 1fr 1fr; }
+    .finding-row { grid-template-columns: 54px 1fr; }
+    .finding-body { grid-column: 2; }
+    .evidence-grid { grid-template-columns: 1fr 1fr; }
+    .method-grid { grid-template-columns: 1fr; }
+    .method-cell { border-right: 0; border-bottom: 1px solid var(--line); }
+  }
+  @media (max-width: 640px) {
+    .findings-hero { padding-top: 40px; }
+    .findings-byline { border-left: 0; border-top: 1px solid var(--line); padding: 18px 0 0; }
+    .gate-grid { grid-template-columns: 1fr; }
+    .finding-row { grid-template-columns: 1fr; gap: 14px; }
+    .finding-body { grid-column: auto; }
+    .evidence-grid { grid-template-columns: 1fr; }
+    .evidence-card:first-child { grid-column: auto; }
+  }
+</style>
+</head>
+<body>
+<header class="fl-header"><div class="fl-wrap fl-nav"><a class="fl-brand" href="/"><span>FORT</span> LABS</a><nav class="fl-nav-links" aria-label="Primary navigation"><a href="/">Home</a><a href="/results">Results</a><a href="/protocols">Protocols</a><a href="/worlds">Runs</a><a href="/findings" aria-current="page">Findings</a><a href="/#about">About</a><a class="fl-live-link" href="/live"><span class="fl-status-dot" id="nav-live-dot"></span><span id="nav-live-label">No live run</span></a></nav><button class="fl-menu-button" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="fl-mobile-menu" data-fl-menu-button>☰</button></div></header>
+<nav class="fl-mobile-menu" id="fl-mobile-menu" aria-label="Mobile navigation" aria-hidden="true" data-fl-mobile-menu data-open="false"><a href="/">Home <span>01</span></a><a href="/results">Results <span>02</span></a><a href="/protocols">Protocols <span>03</span></a><a href="/worlds">Runs <span>04</span></a><a href="/findings">Findings <span>05</span></a><a href="/#about">About <span>06</span></a><a href="/live">Live viewer <span>07</span></a></nav>
+
+<main>
+  <p class="findings-status" id="findings-load-status" role="status" aria-live="polite">Loading findings.</p>
+  <section class="findings-hero" aria-labelledby="findings-title"><div class="fl-wrap findings-hero-grid"><div><div class="fl-eyebrow">Research note 001 / Fort-Eval</div><h1 class="fl-title" id="findings-title">What agents reveal when the world keeps pushing back.</h1><p class="fl-copy">Dwarf Fortress turns plans into consequences. These findings follow what models built, where they stalled, and which measurements changed after the replay audit.</p></div><div class="findings-byline"><div class="byline-row"><span class="byline-key">Published by</span><span>Fort Labs Research</span></div><div class="byline-row"><span class="byline-key">As of</span><span id="findings-as-of">Loading…</span></div><div class="byline-row"><span class="byline-key">Source</span><span>FINDINGS.md + WDSLL.md</span></div><div class="byline-row"><span class="byline-key">Evidence</span><span>Recorded runs + declared gates</span></div></div></div></section>
+
+  <section class="gate-band" aria-label="Current gate status"><div class="fl-wrap fl-data-grid gate-grid" id="gate-grid"><div class="fl-data-cell">Loading current gate status…</div></div></section>
+
+  <section class="fl-section" aria-labelledby="lead-title"><div class="fl-wrap lead-layout"><div class="lead-copy"><div class="fl-eyebrow">Lead finding</div><h2 class="lead-claim" id="lead-title">Agents can build real forts. The frontier is keeping them alive.</h2><p class="fl-copy">The action substrate now produces legal, visible Dwarf Fortress progress. Reliable adaptation, resource flow, and long-horizon survival remain the open work.</p><div class="finding-links"><a class="fl-link" href="#all-findings">Read the findings &rarr;</a><a class="fl-link" href="/protocols/fort-eval-easy-v1">Read the protocol &rarr;</a></div></div><div class="lead-evidence"><div class="fl-media lead-media"><canvas id="lead-canvas"></canvas><div class="fl-media-source" id="lead-source">Recorded frame</div></div><div class="lead-caption"><div><strong id="lead-run-title">Loading representative run…</strong><span id="lead-run-meta">Recorded Dwarf Fortress evidence</span></div><a class="fl-link" id="lead-run-link" href="/worlds">Open replay &rarr;</a></div></div></div></section>
+
+  <section class="fl-section fl-section-paper" id="all-findings" aria-labelledby="all-findings-title"><div class="fl-wrap"><div class="fl-eyebrow">Seven findings from the ladder</div><h2 class="fl-title" id="all-findings-title">The corrections log became the research.</h2><div class="finding-list" id="finding-list"><div class="fl-empty">Loading curated findings…</div></div></div></section>
+
+  <section class="fl-section" aria-labelledby="evidence-title"><div class="fl-wrap"><div class="fl-eyebrow">Replay the evidence</div><h2 class="fl-title" id="evidence-title">The worlds behind the claims.</h2><p class="fl-copy">Each card names its verdict before it shows its score.</p><div class="evidence-grid" id="evidence-grid"><div class="fl-empty">Loading recorded worlds…</div></div></div></section>
+
+  <section class="fl-section fl-section-paper" aria-labelledby="method-title"><div class="fl-wrap"><div class="fl-eyebrow">How to read this page</div><h2 class="fl-title" id="method-title">Claims follow the strongest recorded evidence.</h2><div class="method-grid"><div class="method-cell"><strong>DF Screen</strong><p>Recorded CopyScreen text is the gameplay frame captured at that step.</p></div><div class="method-cell"><strong>Map Inspect</strong><p>Structured map inspection is derived evidence and carries its own label.</p></div><div class="method-cell"><strong>Observer Map</strong><p>The cumulative spectator atlas stays outside agent context unless a protocol declares otherwise.</p></div></div></div></section>
+</main>
+
+<footer class="fl-footer"><div class="fl-wrap fl-footer-grid"><div><div class="fl-footer-mark"><span>FORT</span> LABS</div><p class="fl-footer-copy">Worlds for long-horizon intelligence. Findings lead back to recorded play.</p></div><div><div class="fl-footer-title">Explore</div><div class="fl-footer-links"><a href="/results">Results</a><a href="/protocols">Protocols</a><a href="/worlds">Runs</a><a href="/findings">Findings</a></div></div><div><div class="fl-footer-title">Research</div><div class="fl-footer-links"><a href="https://github.com/lemoz/fort-gym/blob/main/docs/FINDINGS.md">Full findings</a><a href="https://github.com/lemoz/fort-gym/blob/main/docs/WDSLL.md">Gate ladder</a></div></div><div><div class="fl-footer-title">Source</div><div class="fl-footer-links"><a href="https://github.com/lemoz/fort-gym">GitHub</a><a href="/leaderboard">Historical dashboard</a></div></div></div></footer>
+
+<script src="/static/fort-labs.js?v=20260711-2"></script>
+<script>
+(function () {
+  'use strict';
+  const FL = window.FortLabs;
+  const $ = id => document.getElementById(id);
+  FL.initShell();
+
+  function findingMarkup(finding) {
+    const replay = finding.run_token ? `<a class="fl-link" href="/r/${encodeURIComponent(finding.run_token)}">Open replay &rarr;</a>` : '';
+    const evidenceSource = finding.evidence_url ? `<a class="fl-link" href="${FL.escapeHtml(finding.evidence_url)}">Open evidence &rarr;</a>` : '';
+    return `<article class="finding-row"><div><div class="finding-index">${FL.escapeHtml(finding.index)}</div><div class="finding-status">${FL.escapeHtml(finding.status)}</div></div><h3>${FL.escapeHtml(finding.title)}</h3><div class="finding-body"><p class="finding-claim">${FL.escapeHtml(finding.claim)}</p><p class="finding-evidence"><strong>Evidence</strong><br>${FL.escapeHtml(finding.evidence)}</p><p class="finding-caveat"><strong>Boundary</strong><br>${FL.escapeHtml(finding.caveat)}</p><div class="finding-links"><a class="fl-link" href="${FL.escapeHtml(finding.source_url)}">Read source &rarr;</a>${evidenceSource}${replay}</div></div></article>`;
+  }
+
+  async function loadRun(entry) {
+    const run = await FL.fetchJson(`/public/runs/${encodeURIComponent(entry.token)}`);
+    return {entry, run};
+  }
+
+  async function renderEvidence(items) {
+    if (!items.length) {
+      $('evidence-grid').innerHTML = '<div class="fl-empty">Recorded run metadata is temporarily unavailable.</div>';
+      return [];
+    }
+    $('evidence-grid').innerHTML = items.map(({entry, run}, index) => {
+      const meta = run ? `${run.model} · ${run.seed_save || 'seed not reported'} · score ${FL.formatNumber(run.score)}` : 'Run metadata temporarily unavailable';
+      return `<a class="evidence-card${run ? '' : ' is-unavailable'}" href="/r/${encodeURIComponent(entry.token)}"><div class="fl-media evidence-media"><canvas id="finding-run-${index}"></canvas><div class="fl-media-source" id="finding-source-${index}">${run ? 'Recorded frame' : 'Metadata unavailable'}</div></div><div class="evidence-card-copy"><div class="evidence-top"><div class="evidence-label">${FL.escapeHtml(entry.label)}</div><div class="evidence-verdict">${FL.escapeHtml(entry.verdict)}</div></div><div class="evidence-meta">${FL.escapeHtml(meta)}</div><p class="evidence-note">${FL.escapeHtml(entry.note)}</p></div></a>`;
+    }).join('');
+    return Promise.all(items.map(({run}, index) => {
+      if (run) return FL.loadRunFrame(run, $(`finding-run-${index}`), $(`finding-source-${index}`));
+      FL.renderUnavailable($(`finding-run-${index}`), 'Run metadata temporarily unavailable');
+      return {status: 'metadata_unavailable'};
+    }));
+  }
+
+  async function load() {
+    try {
+      const manifest = await FL.fetchJson('/static/findings-v1.json');
+      $('findings-as-of').textContent = `${manifest.as_of} · ${manifest.version}`;
+      $('gate-grid').innerHTML = (manifest.gate_status || []).map(item => `<div class="fl-data-cell"><div class="fl-data-label">${FL.escapeHtml(item.gate)}</div><div class="gate-value ${FL.escapeHtml(item.status)}">${FL.escapeHtml(item.status)}</div><div class="gate-detail">${FL.escapeHtml(item.detail)}</div></div>`).join('');
+      $('finding-list').innerHTML = (manifest.findings || []).map(findingMarkup).join('');
+
+      const settled = await Promise.allSettled((manifest.evidence_runs || []).map(loadRun));
+      const records = settled.map((item, index) => item.status === 'fulfilled' ? item.value : {entry: manifest.evidence_runs[index], run: null});
+      const frameResults = await renderEvidence(records);
+      const lead = records.find(item => item.entry.lead === true) || records[0];
+      if (lead) {
+        const leadIndex = records.indexOf(lead);
+        const leadFrame = frameResults[leadIndex];
+        $('lead-run-title').textContent = lead.entry.label;
+        $('lead-run-meta').textContent = lead.run ? `${lead.entry.verdict} · ${lead.run.model} · score ${FL.formatNumber(lead.run.score)}` : `${lead.entry.verdict} · run metadata temporarily unavailable`;
+        $('lead-run-link').href = `/r/${encodeURIComponent(lead.entry.token)}`;
+        if (leadFrame?.status === 'recorded') {
+          FL.renderScreenText($('lead-canvas'), leadFrame.preview.screen_text);
+          $('lead-source').textContent = `Recorded step ${leadFrame.preview.step ?? lead.run.step ?? '--'}`;
+        } else if (!lead.run) {
+          FL.renderUnavailable($('lead-canvas'), 'Run metadata temporarily unavailable');
+          $('lead-source').textContent = 'Metadata unavailable';
+        } else if (leadFrame?.status === 'not_reported') {
+          FL.renderUnavailable($('lead-canvas'), 'No frame was recorded for this run');
+          $('lead-source').textContent = 'Frame not recorded';
+        } else {
+          FL.renderUnavailable($('lead-canvas'), 'Frame temporarily unavailable');
+          $('lead-source').textContent = 'Frame temporarily unavailable';
+        }
+      }
+      const unavailableCount = records.filter(item => !item.run).length;
+      const frameGapCount = frameResults.filter((result, index) => records[index].run && result.status !== 'recorded').length;
+      const degraded = [];
+      if (unavailableCount) degraded.push(`Run metadata is unavailable for ${unavailableCount} evidence ${unavailableCount === 1 ? 'run' : 'runs'}.`);
+      if (frameGapCount) degraded.push(`Recorded frames are missing or unavailable for ${frameGapCount} evidence ${frameGapCount === 1 ? 'run' : 'runs'}.`);
+      $('findings-load-status').textContent = degraded.length ? `Findings loaded. ${degraded.join(' ')}` : 'Findings and recorded evidence loaded.';
+    } catch (_) {
+      $('gate-grid').innerHTML = '<div class="fl-data-cell">Gate status is temporarily unavailable.</div>';
+      $('finding-list').innerHTML = '<div class="fl-empty">Curated findings are temporarily unavailable.</div>';
+      $('evidence-grid').innerHTML = '<div class="fl-empty">Recorded worlds are temporarily unavailable.</div>';
+      $('lead-run-title').textContent = 'Representative run unavailable';
+      $('lead-run-meta').textContent = 'Recorded run metadata is temporarily unavailable';
+      $('lead-source').textContent = 'Metadata unavailable';
+      FL.renderUnavailable($('lead-canvas'), 'Run metadata temporarily unavailable');
+      $('findings-load-status').textContent = 'Findings are temporarily unavailable.';
+    }
+  }
+
+  load();
+})();
+</script>
+</body>
+</html>
