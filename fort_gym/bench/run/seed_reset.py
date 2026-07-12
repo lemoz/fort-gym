@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import shutil
 import socket
 import subprocess
@@ -75,6 +76,13 @@ def reset_save_from_seed(
         _reset_with_shutil(seed_dir, runtime_dir)
     except PermissionError:
         _reset_with_sudo(seed_dir, runtime_dir)
+    seed_world = seed_dir / "world.sav"
+    runtime_world = runtime_dir / "world.sav"
+    if _path_is_file(seed_world):
+        if not _path_is_file(runtime_world):
+            raise SeedResetError("Seed reset is missing the runtime world.sav copy")
+        if not _files_equal(seed_world, runtime_world):
+            raise SeedResetError("Runtime world.sav differs from the pristine seed copy")
 
     if restart_service and host in {"127.0.0.1", "localhost"}:
         _restart_dfhack_headless(host, port, timeout_s=timeout_s)
@@ -225,6 +233,31 @@ def _files_equal(first: Path, second: Path) -> bool:
         return result.returncode == 0
 
 
+def pristine_seed_sha256(seed_name: str, *, dfroot: Path = DFROOT) -> str:
+    """Return the byte identity used to attest repeated fixed-seed resets."""
+
+    _validate_save_name(seed_name, label="seed")
+    world_path = _resolve_seed_dir(dfroot, seed_name) / "world.sav"
+    try:
+        digest = hashlib.sha256()
+        with world_path.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+        return digest.hexdigest()
+    except OSError:
+        try:
+            output = subprocess.check_output(
+                ["sudo", "-n", "sha256sum", "--", str(world_path)],
+                text=True,
+            )
+            value = output.split()[0]
+            if len(value) == 64:
+                return value
+        except (OSError, subprocess.CalledProcessError, IndexError) as exc:
+            raise SeedResetError(f"Cannot hash pristine seed {world_path}: {exc}") from exc
+    raise SeedResetError(f"Invalid SHA-256 output for pristine seed {world_path}")
+
+
 def _resolve_loadable_save_name(
     seed_dir: Path,
     *,
@@ -308,6 +341,7 @@ def _sudo_is_dir(path: Path) -> bool:
 __all__ = [
     "SeedResetError",
     "maybe_reset_dfhack_seed",
+    "pristine_seed_sha256",
     "reset_save_from_seed",
     "reset_current_from_seed",
 ]

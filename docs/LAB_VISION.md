@@ -57,6 +57,15 @@ Hard is the next instrument, not a relabeling exercise. It needs a fixed-pixel v
 
 Discovery comes after Hard is stable. Its restriction is about accessible information during evaluation: no docs, no web, a bounded learner state across episodes, and held-out seeds or mechanics. It must not make an unverifiable claim about model pretraining. A clean statement is: the agent had the declared interface, knowledge channel, memory budget, and held-out split.
 
+The current provisional Easy P1 manifest is
+`experiments/fort_eval_easy_p1_g7_v3.yaml`. It freezes G7-v3 on
+`seed_region3_fresh` at 200 steps and up to 2,500 ticks per step, with score-v5,
+vision on, memory off, and no knowledge access. Its two model arms are compared
+inside one shared benchmark condition. The arm name, provider route, resolved
+model, prompt, and generation settings identify the policy arm; they are not
+alternate benchmark conditions. Valid failures with complete evidence remain
+publishable, while infrastructure aborts and invalid evidence remain distinct.
+
 ## Design commitments
 
 ### Evidence before narrative
@@ -87,7 +96,10 @@ Validate the Easy manifest against the current Fort-Gym experiment loader, confi
 
 ### Stage 1: Easy baseline
 
-Run the fixed-seed governed pilot with a legal scripted control. Add external model arms only after the provider model IDs, routing, usage records, and pricing are resolved and approved. Keep the fixed-seed result provisional.
+Run the frozen Easy P1 G7-v3 pilot with the declared governed model arms and
+keep the fixed-seed result provisional. Resolve and record provider model IDs,
+routing, usage, and pricing per run. A valid failure is still a publishable
+finding; it is not a leaderboard pass.
 
 ### Stage 2: Easy generalization
 

@@ -114,6 +114,13 @@ def test_replay_card_distinguishes_run_progress_from_recorded_frame(
     assert captured["screen_text"] == "real frame"
 
 
+def test_public_model_labels_include_fable_and_sol() -> None:
+    from fort_gym.bench.api.social_cards import public_model_label
+
+    assert public_model_label("dfhack-governed-llm-fable5") == "Fable"
+    assert public_model_label("openai/gpt-5.6-sol") == "Sol"
+
+
 def test_static_evidence_frame_matches_provenance_manifest() -> None:
     social_dir = Path("web/static/social")
     provenance = json.loads(

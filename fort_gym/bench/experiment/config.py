@@ -18,12 +18,16 @@ class BaseRunConfig:
     model: str
     ticks_per_step: int | None = None
     evaluation_protocol: str | None = None
+    preserve_save: bool = False
+    seed_save: str | None = None
+    runtime_save: str | None = None
 
 
 @dataclass(frozen=True)
 class VariantConfig:
     name: str
     memory_window: int
+    model: str | None = None
 
 
 @dataclass(frozen=True)
@@ -77,6 +81,9 @@ def _parse_base_config(value: object) -> BaseRunConfig:
     if ticks_per_step is not None and ticks_per_step < 1:
         raise ExperimentConfigError("base_config.ticks_per_step must be >= 1")
     evaluation_protocol = _optional_evaluation_protocol(value)
+    preserve_save = _optional_bool(value, "preserve_save", default=False)
+    seed_save = _optional_str(value, "seed_save")
+    runtime_save = _optional_str(value, "runtime_save")
 
     return BaseRunConfig(
         backend=backend,
@@ -84,6 +91,9 @@ def _parse_base_config(value: object) -> BaseRunConfig:
         model=model,
         ticks_per_step=ticks_per_step,
         evaluation_protocol=evaluation_protocol,
+        preserve_save=preserve_save,
+        seed_save=seed_save,
+        runtime_save=runtime_save,
     )
 
 
@@ -99,7 +109,13 @@ def _parse_variants(value: object) -> list[VariantConfig]:
         memory_window = _require_int(raw_variant, "memory_window")
         if memory_window < 0:
             raise ExperimentConfigError("variants.memory_window must be >= 0")
-        variants.append(VariantConfig(name=name, memory_window=memory_window))
+        variants.append(
+            VariantConfig(
+                name=name,
+                memory_window=memory_window,
+                model=_optional_str(raw_variant, "model"),
+            )
+        )
 
     return variants
 
@@ -143,6 +159,13 @@ def _optional_int(data: Mapping[str, object], field: str) -> int | None:
         return None
     if isinstance(value, bool) or not isinstance(value, int):
         raise ExperimentConfigError(f"{field} must be an integer")
+    return value
+
+
+def _optional_bool(data: Mapping[str, object], field: str, *, default: bool) -> bool:
+    value = data.get(field, default)
+    if not isinstance(value, bool):
+        raise ExperimentConfigError(f"{field} must be a boolean")
     return value
 
 

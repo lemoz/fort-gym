@@ -46,6 +46,16 @@ from ..env.mock_env import MockEnvironment
 from ..env.scenarios import evaluate_scenario_assertions, get_mock_scenario
 from ..env.state_reader import StateReader
 from ..eval import metrics, milestones, scoring
+from ..eval.fort_eval_easy_p1 import (
+    P1_PROTOCOL,
+    attest_seed_region3,
+    enrich_openrouter_usage,
+    p1_integrity_attestation,
+    p1_summary_metadata,
+    p1_usage_is_publishable,
+    resolved_model_digest,
+    validate_p1_declaration,
+)
 from ..eval.protocol import validate_evaluation_protocol
 from ..eval.summary import RunSummary, summarize
 from ..tick_receipt import validate_clean_interruption_receipt
@@ -53,7 +63,7 @@ from .model_modes import (
     GOVERNED_DFHACK_MODELS as GOVERNED_DFHACK_MODELS,
     is_governed_dfhack_model,
 )
-from .seed_reset import maybe_reset_dfhack_seed
+from .seed_reset import maybe_reset_dfhack_seed, pristine_seed_sha256
 from .storage import RunRegistry
 
 ASSISTED_DFHACK_ACTIONS = {
@@ -255,6 +265,16 @@ def _tick_terminal_reason(
                 **base,
             }, None, 0
         return None, {"code": "blocking_viewscreen_transition", **base}, 0
+    controller_request = _int_or_none(tick_info.get("requested"))
+    if (
+        controller_request is not None
+        and controller_request != requested_ticks_int
+    ):
+        return {
+            "code": "tick_request_attestation_failed",
+            "controller_requested_ticks": controller_request,
+            **base,
+        }, None, 0
     if actual_ticks > 0:
         if tick_info.get("timeout") is True:
             return None, {"code": "partial_tick_timeout", **base}, 0
@@ -2288,6 +2308,17 @@ def run_once(
     ticks = ticks_per_step if ticks_per_step is not None else settings.TICKS_PER_STEP
     run_identifier = run_id or uuid.uuid4().hex
     evaluation_protocol = validate_evaluation_protocol(evaluation_protocol)
+    validate_p1_declaration(
+        protocol=evaluation_protocol,
+        backend=backend_name,
+        model=model,
+        seed_save=seed_save,
+        runtime_save=runtime_save,
+        preserve_save=preserve_save,
+        max_steps=max_steps,
+        ticks_per_step=ticks,
+    )
+    agent.set_run_context(run_id=run_identifier)
 
     if registry:
         record = registry.get(run_identifier)
@@ -2300,6 +2331,8 @@ def run_once(
                 loop=loop,
                 run_id=run_identifier,
                 preserve_save=preserve_save,
+                seed_save=seed_save,
+                runtime_save=runtime_save,
                 evaluation_protocol=evaluation_protocol,
             )
         if not registry.claim_pending_run(
@@ -2328,6 +2361,8 @@ def run_once(
     cleanup_recorded = False
     cleanup_failure_without_registry: Dict[str, Any] | None = None
     dfhack_runtime_may_be_active = False
+    seed_attestation: Dict[str, Any] = {}
+    seed_world_sha256: str | None = None
 
     def cleanup_dfhack_runtime() -> Dict[str, Any]:
         nonlocal cleanup_attempts, cleanup_outcome, cleanup_recorded
@@ -2451,6 +2486,8 @@ def run_once(
         # If configured, reset the save from a pristine seed before connecting.
         if not preserve_save:
             try:
+                if evaluation_protocol == P1_PROTOCOL:
+                    seed_world_sha256 = pristine_seed_sha256(seed_save or "")
                 maybe_reset_dfhack_seed(
                     settings,
                     seed_save=seed_save,
@@ -2577,6 +2614,8 @@ def run_once(
                         (state_after_apply or {}).get("viewscreen_type") or "unknown"
                     ),
                 }
+                if evaluation_protocol == P1_PROTOCOL:
+                    interrupt_options["max_advance_ticks"] = 2500
             state = attach_survival_evidence(
                 attach_crew_metrics(
                     attach_fort_metrics(
@@ -2982,6 +3021,41 @@ def run_once(
                 except DFHackError:
                     run_failed = True
                     break
+                if evaluation_protocol == P1_PROTOCOL and not seed_attestation:
+                    seed_attestation = attest_seed_region3(
+                        state_before,
+                        runtime_save=runtime_save or settings.FORT_GYM_RUNTIME_SAVE,
+                        seed_world_sha256=seed_world_sha256,
+                    )
+                    attestation_path = artifacts_dir / "seed_attestation.json"
+                    attestation_path.write_text(
+                        json.dumps(seed_attestation, indent=2),
+                        encoding="utf-8",
+                    )
+                    publish_event(
+                        step,
+                        "seed_attestation",
+                        seed_attestation,
+                        events,
+                    )
+                    if seed_attestation.get("eligible") is not True:
+                        terminal_failure_reason = {
+                            "code": "seed_attestation_failed",
+                            "failed_checks": seed_attestation.get("failed_checks", []),
+                        }
+                        terminal_failure_step = step
+                        _write_durable_jsonl_record(
+                            fh,
+                            {
+                                "run_id": run_identifier,
+                                "step": step,
+                                "observation": state_before,
+                                "terminal_reason": terminal_failure_reason,
+                                "events": events,
+                            },
+                        )
+                        run_failed = True
+                        break
                 if is_keystroke_mode:
                     carpenter_workshop_usable_seen = _carry_forward_carpenter_workshop_proof(
                         state_before,
@@ -3386,7 +3460,12 @@ def run_once(
                     continue
 
                 try:
-                    action = parse_action(raw_action)
+                    action = parse_action(
+                        raw_action,
+                        max_advance_ticks=(
+                            2500 if evaluation_protocol == P1_PROTOCOL else 2000
+                        ),
+                    )
                 except (TypeError, ValueError) as exc:
                     validation = {"valid": False, "reason": str(exc)}
                     publish_event(step, "validation", validation, events)
@@ -4571,6 +4650,34 @@ def run_once(
         summary.model = model
         summary.backend = backend_name
         summary.evaluation_protocol = evaluation_protocol
+        if evaluation_protocol == P1_PROTOCOL:
+            record = registry.get(run_identifier) if registry else None
+            for key, value in p1_summary_metadata(
+                model=model,
+                fort_gym_commit=getattr(record, "git_sha", None),
+            ).items():
+                setattr(summary, key, value)
+            summary.seed_attestation = seed_attestation
+            summary.integrity_attestation = p1_integrity_attestation(
+                terminal_failure_reason,
+                run_failed=run_failed,
+            )
+            summary.usage = enrich_openrouter_usage(
+                summary.usage,
+                api_key=settings.OPENROUTER_API_KEY,
+                base_url=settings.OPENROUTER_BASE_URL,
+            )
+            summary.model_digest = resolved_model_digest(
+                model=model,
+                usage=summary.usage,
+            )
+            summary.public_eligibility = (
+                "eligible"
+                if seed_attestation.get("eligible") is True
+                and summary.integrity_attestation.get("status") == "pass"
+                and p1_usage_is_publishable(model=model, usage=summary.usage)
+                else "ineligible"
+            )
         if scenario:
             summary.scenario = scenario
             scenario_pack = get_mock_scenario(scenario)

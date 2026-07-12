@@ -10,6 +10,8 @@ GOVERNED_DFHACK_MODELS = frozenset(
         "dfhack-governed-llm-glm52",
         "dfhack-governed-llm-deepseek-v4",
         "dfhack-governed-llm-gpt55",
+        "dfhack-governed-llm-fable5",
+        "dfhack-governed-llm-gpt56-sol",
         "dfhack-governed-llm-glm5v",
         "dfhack-governed-llm-gpt55-vision",
         "dfhack-governed-llm-kimi-vision",

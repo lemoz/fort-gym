@@ -72,7 +72,7 @@
       </div>
       <div class="results-contract" aria-label="Current result field">
         <div class="contract-row"><div class="contract-key">Profile</div><div class="contract-value">Easy v1</div></div>
-        <div class="contract-row"><div class="contract-key">Pilot</div><div class="contract-value">P0 substrate</div></div>
+        <div class="contract-row"><div class="contract-key">Pilot</div><div class="contract-value">P1 fixed seed</div></div>
         <div class="contract-row"><div class="contract-key">Ranking</div><div class="contract-value">Provisional only</div></div>
         <div class="contract-row"><div class="contract-key">Protocol</div><div class="contract-value">fort-eval-easy-v1</div></div>
       </div>
@@ -144,10 +144,10 @@
     $('eligible-count').textContent = payload.eligible_run_count ?? 0;
     $('group-count').textContent = groups.length;
     if (!groups.length) {
-      $('cohort-groups').innerHTML = `<div class="cohort-state"><strong>The first frozen field starts here.</strong><p>Easy v1 is in its substrate stage. The table opens when completed, replayable runs carry the full declared field.</p></div>`;
+      $('cohort-groups').innerHTML = `<div class="cohort-state"><strong>The Fable and Sol field opens here.</strong><p>Completed runs appear with their score, G7 verdict, and replay.</p></div>`;
       return;
     }
-    $('cohort-groups').innerHTML = groups.map(group => `<div class="group-block"><div class="group-key">${FL.escapeHtml(keyText(group.comparability))}</div><div class="fl-table-shell"><table class="fl-table"><thead><tr><th>Model</th><th>Runs</th><th>Mean</th><th>Best</th><th>Gameplay</th></tr></thead><tbody>${(group.model_results || []).map(row => `<tr><td><strong>${FL.escapeHtml(row.model)}</strong></td><td class="fl-mono">${FL.escapeHtml(row.run_count)}</td><td class="fl-mono">${FL.escapeHtml(FL.formatNumber(row.mean_score))}</td><td class="fl-mono">${FL.escapeHtml(FL.formatNumber(row.best_score))}</td><td>${row.best_token ? `<a class="fl-link" href="/r/${encodeURIComponent(row.best_token)}">Watch →</a>` : 'Not reported'}</td></tr>`).join('')}</tbody></table></div></div>`).join('');
+    $('cohort-groups').innerHTML = groups.map(group => `<div class="group-block"><div class="group-key">${FL.escapeHtml(keyText(group.comparability))}</div><div class="fl-table-shell"><table class="fl-table"><thead><tr><th>Model</th><th>Verdict</th><th>G7</th><th>Runs</th><th>Mean</th><th>Best</th><th>Gameplay</th></tr></thead><tbody>${(group.model_results || []).map(row => { const label = row.public_label || row.model; const digest = row.model_digest && row.model_digest !== label ? `<div class="fl-mono">${FL.escapeHtml(row.model_digest)}</div>` : ''; const g7 = Object.entries(row.g7_outcomes || {}).map(([outcome, count]) => `${outcome} ${count}`).join(' · ') || 'Not reported'; return `<tr><td><strong>${FL.escapeHtml(label)}</strong>${digest}</td><td class="fl-mono">${FL.escapeHtml(row.task_verdict || 'Not reported')}</td><td class="fl-mono">${FL.escapeHtml(g7)}</td><td class="fl-mono">${FL.escapeHtml(row.run_count)}</td><td class="fl-mono">${FL.escapeHtml(FL.formatNumber(row.mean_score))}</td><td class="fl-mono">${FL.escapeHtml(FL.formatNumber(row.best_score))}</td><td>${row.best_token ? `<a class="fl-link" href="/r/${encodeURIComponent(row.best_token)}">Watch →</a>` : 'Not reported'}</td></tr>`; }).join('')}</tbody></table></div></div>`).join('');
   }
 
   function renderEvidence(items) {
@@ -172,7 +172,7 @@
 
   async function load() {
     try {
-      const results = await FL.fetchJson('/public/results?evaluation_protocol=fort-eval-easy-v1');
+      const results = await FL.fetchJson('/public/results?evaluation_protocol=fort-eval-easy-p1-g7-v3');
       const groups = Array.isArray(results.comparison_groups) ? results.comparison_groups : [];
       renderGroups(results);
       await loadEvidence(groups);

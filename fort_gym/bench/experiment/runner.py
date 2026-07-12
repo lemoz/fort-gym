@@ -14,7 +14,9 @@ from typing import Mapping
 from .config import BaseRunConfig, ExperimentConfig, VariantConfig, load_experiment_config
 from ..agent.base import AGENT_FACTORIES, Agent
 from ..config import get_settings
+from ..eval.fort_eval_easy_p1 import P1_PROTOCOL
 from ..run.runner import run_once
+from ..run.storage import RUN_REGISTRY
 
 
 @dataclass(frozen=True)
@@ -84,6 +86,9 @@ class ExperimentResult:
                 "model": self.base_config.model,
                 "ticks_per_step": self.base_config.ticks_per_step,
                 "evaluation_protocol": self.base_config.evaluation_protocol,
+                "preserve_save": self.base_config.preserve_save,
+                "seed_save": self.base_config.seed_save,
+                "runtime_save": self.base_config.runtime_save,
             },
             "variants": [variant.to_dict() for variant in self.variants],
         }
@@ -112,7 +117,7 @@ class ExperimentRunner:
 
         variants_results: list[VariantResult] = []
         for variant in config.variants:
-            resolved = _resolve_variant(config.base_config)
+            resolved = _resolve_variant(config.base_config, variant)
             runs: list[VariantRun] = []
             for index in range(config.runs_per_variant):
                 run_id = self._run_variant(resolved, variant)
@@ -150,19 +155,43 @@ class ExperimentRunner:
     def _experiment_dir(self, name: str, experiment_id: str) -> Path:
         return self._artifacts_root / "experiments" / name / experiment_id
 
-    def _run_variant(self, resolved: dict[str, int | str | None], variant: VariantConfig) -> str:
+    def _run_variant(
+        self,
+        resolved: dict[str, int | str | bool | None],
+        variant: VariantConfig,
+    ) -> str:
         agent_name = str(resolved["model"])
         ticks_per_step = int(resolved["ticks_per_step"])
         with _memory_window_context(variant.memory_window):
             agent = _make_agent(agent_name)
-            return run_once(
-                agent,
-                backend=str(resolved["backend"]),
-                model=str(resolved["model"]),
-                max_steps=int(resolved["max_steps"]),
-                ticks_per_step=ticks_per_step,
-                evaluation_protocol=resolved["evaluation_protocol"],
-            )
+            run_kwargs = {
+                "backend": str(resolved["backend"]),
+                "model": str(resolved["model"]),
+                "max_steps": int(resolved["max_steps"]),
+                "ticks_per_step": ticks_per_step,
+                "evaluation_protocol": resolved["evaluation_protocol"],
+                "preserve_save": bool(resolved["preserve_save"]),
+                "seed_save": (
+                    str(resolved["seed_save"]) if resolved["seed_save"] else None
+                ),
+                "runtime_save": (
+                    str(resolved["runtime_save"]) if resolved["runtime_save"] else None
+                ),
+            }
+            if resolved["evaluation_protocol"] == P1_PROTOCOL:
+                record = RUN_REGISTRY.create(**run_kwargs)
+                RUN_REGISTRY.create_share(
+                    record.run_id,
+                    scope=["live", "replay", "export"],
+                    ttl_seconds=None,
+                )
+                return run_once(
+                    agent,
+                    run_id=record.run_id,
+                    registry=RUN_REGISTRY,
+                    **run_kwargs,
+                )
+            return run_once(agent, **run_kwargs)
 
 
 def resolve_experiment_path(config_path: str | Path) -> Path:
@@ -179,15 +208,20 @@ def resolve_experiment_path(config_path: str | Path) -> Path:
     raise FileNotFoundError(f"Experiment config not found: {config_path}")
 
 
-def _resolve_variant(base: BaseRunConfig) -> dict[str, int | str | None]:
+def _resolve_variant(
+    base: BaseRunConfig, variant: VariantConfig
+) -> dict[str, int | str | bool | None]:
     settings = get_settings()
     ticks = base.ticks_per_step if base.ticks_per_step is not None else settings.TICKS_PER_STEP
     return {
         "backend": base.backend,
         "max_steps": base.max_steps,
-        "model": base.model,
+        "model": variant.model or base.model,
         "ticks_per_step": ticks,
         "evaluation_protocol": base.evaluation_protocol,
+        "preserve_save": base.preserve_save,
+        "seed_save": base.seed_save,
+        "runtime_save": base.runtime_save,
     }
 
 
@@ -242,9 +276,25 @@ def _make_agent(name: str) -> Agent:
 
 
 def _ensure_agent_factories() -> None:
-    from ..agent import fake_llm, llm_anthropic, llm_anthropic_research, llm_openai, llm_openrouter
+    from ..agent import (
+        fake_llm,
+        governed,
+        governed_llm,
+        llm_anthropic,
+        llm_anthropic_research,
+        llm_openai,
+        llm_openrouter,
+    )
 
-    _ = (fake_llm, llm_anthropic, llm_anthropic_research, llm_openai, llm_openrouter)
+    _ = (
+        fake_llm,
+        governed,
+        governed_llm,
+        llm_anthropic,
+        llm_anthropic_research,
+        llm_openai,
+        llm_openrouter,
+    )
 
 
 __all__ = [

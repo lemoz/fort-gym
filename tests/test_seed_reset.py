@@ -66,6 +66,23 @@ def test_reset_save_from_seed_supports_custom_runtime_save(tmp_path):
         )
 
 
+def test_reset_save_from_seed_fails_when_world_copy_differs(monkeypatch, tmp_path):
+    from fort_gym.bench.run import seed_reset
+
+    dfroot = tmp_path / "df"
+    seed_dir = dfroot / "data" / "seed_saves" / "seed_region2_fresh"
+    seed_dir.mkdir(parents=True)
+    (seed_dir / "world.sav").write_bytes(b"seed")
+    monkeypatch.setattr(seed_reset, "_files_equal", lambda _first, _second: False)
+
+    with pytest.raises(seed_reset.SeedResetError, match="differs from the pristine seed"):
+        seed_reset.reset_save_from_seed(
+            "seed_region2_fresh",
+            runtime_name="current",
+            dfroot=dfroot,
+            restart_service=False,
+        )
+
 def test_reset_current_from_seed_rejects_bad_name(tmp_path):
     from fort_gym.bench.run.seed_reset import SeedResetError, reset_current_from_seed
 

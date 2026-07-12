@@ -177,7 +177,7 @@ finish_topic_meeting.
 advance_ticks=0, then wait for a fresh observation before any gameplay command or time advancement.
 
 Every action must include "advance_ticks" (how many game ticks to run after the command, up to \
-2000; around 1000 is a typical step; INTERACT must use 0). Nothing in the fortress changes unless
+the declared submit_action maximum; around 1000 is a typical step; INTERACT must use 0). Nothing in the fortress changes unless
 time advances.
 
 The observation includes a Fort minimap — a top-down character grid (and, when attached, the \
@@ -294,7 +294,7 @@ Be honest: if the metrics show your last action did nothing, say so in your next
 Repeating an identical failing action wastes the run and is scored against you."""
 
 
-def _submit_action_tool() -> Dict[str, Any]:
+def _submit_action_tool(*, max_advance_ticks: int = 2000) -> Dict[str, Any]:
     return {
         "type": "function",
         "function": {
@@ -393,7 +393,7 @@ def _submit_action_tool() -> Dict[str, Any]:
                     "advance_ticks": {
                         "type": "integer",
                         "minimum": 0,
-                        "maximum": 2000,
+                        "maximum": max_advance_ticks,
                         "description": "Game ticks to run after the command (~1000 typical).",
                     },
                 },
@@ -428,6 +428,11 @@ _MEMORY_UPDATE_POI = re.compile(
     r"^(?P<label>[^@]{1,80})@\s*(?P<x>-?\d+)\s*,\s*(?P<y>-?\d+)\s*,\s*(?P<z>-?\d+)\s*:?\s*(?P<note>.*)$"
 )
 
+GOVERNED_OBSERVATION_PREAMBLE = (
+    "The next user message is the current live Dwarf Fortress observation. "
+    "Treat it as authoritative, inspect any attached minimap, and submit exactly one legal action."
+)
+
 
 class DFHackGovernedLLMAgent(Agent):
     """OpenRouter policy for the eight-action governed DFHack gameplay surface.
@@ -449,9 +454,19 @@ class DFHackGovernedLLMAgent(Agent):
         memory_path: str | None = "auto",
         vision: bool = False,
         max_tokens: int | None = None,
+        reasoning_effort: str | None = None,
+        prompt_cache: str | None = None,
+        omit_temperature: bool = False,
+        memory_window: int | None = None,
+        max_advance_ticks: int = 2000,
     ) -> None:
         self._vision = vision
         self._max_tokens = max_tokens
+        self._reasoning_effort = reasoning_effort
+        self._prompt_cache = prompt_cache
+        self._omit_temperature = omit_temperature
+        self._session_id: str | None = None
+        self._max_advance_ticks = max_advance_ticks
         self._settings = get_settings()
         self._api_key = api_key if api_key is not None else self._settings.OPENROUTER_API_KEY
         if not self._api_key:
@@ -462,11 +477,19 @@ class DFHackGovernedLLMAgent(Agent):
         )
         self._client = None
         self._last_call = 0.0
-        self._memory = MemoryManager(window_size=self._settings.MEMORY_WINDOW)
+        self._memory = MemoryManager(
+            window_size=(
+                self._settings.MEMORY_WINDOW if memory_window is None else memory_window
+            )
+        )
         self._tool_events: List[Dict[str, Any]] = []
         self._pending: Optional[Dict[str, Any]] = None
         self._memory_path = self._resolve_memory_path(memory_path)
         self._load_memory()
+
+    def set_run_context(self, *, run_id: str) -> None:
+        """Keep OpenRouter routing and cache affinity stable within one run."""
+        self._session_id = f"fort-gym:{run_id}"
 
     # -- memory persistence ------------------------------------------------
 
@@ -546,7 +569,17 @@ class DFHackGovernedLLMAgent(Agent):
         self._last_call = time.monotonic()
 
     def _create_completion(self, messages: List[Dict[str, Any]]) -> Any:
-        request_messages = messages
+        request_messages = [dict(message) for message in messages]
+        if self._prompt_cache == "explicit_ephemeral" and request_messages:
+            system = request_messages[0]
+            if system.get("role") == "system" and isinstance(system.get("content"), str):
+                system["content"] = [
+                    {
+                        "type": "text",
+                        "text": system["content"],
+                        "cache_control": {"type": "ephemeral"},
+                    }
+                ]
         if self._model == "z-ai/glm-5.2":
             # Exact-state probes were 3/3 valid in JSON mode; both forced and
             # auto tool transports repeatedly returned partial argument objects.
@@ -557,31 +590,54 @@ class DFHackGovernedLLMAgent(Agent):
             ]
         else:
             request_kwargs = {
-                "tools": [_submit_action_tool()],
+                "tools": [_submit_action_tool(max_advance_ticks=self._max_advance_ticks)],
                 "tool_choice": {
                     "type": "function",
                     "function": {"name": "submit_action"},
                 },
             }
-        if self._settings.OPENROUTER_DISABLE_REASONING:
-            request_kwargs["extra_body"] = {"reasoning": {"enabled": False, "exclude": True}}
+        extra_body: Dict[str, Any] = {}
+        if self._reasoning_effort:
+            extra_body["reasoning"] = {
+                "effort": self._reasoning_effort,
+                "exclude": True,
+            }
+        elif self._settings.OPENROUTER_DISABLE_REASONING:
+            extra_body["reasoning"] = {"enabled": False, "exclude": True}
+        if self._session_id:
+            extra_body["session_id"] = self._session_id
+            if self._prompt_cache == "automatic":
+                extra_body["prompt_cache_key"] = self._session_id
+        if extra_body:
+            request_kwargs["extra_body"] = extra_body
+        completion_kwargs: Dict[str, Any] = {
+            "model": self._model,
+            "messages": request_messages,
+            "max_tokens": self._max_tokens or self._settings.LLM_MAX_TOKENS,
+            **request_kwargs,
+        }
+        if not self._omit_temperature:
+            completion_kwargs["temperature"] = self._settings.LLM_TEMP
         max_attempts = max(1, self._max_attempts)
         last_exc: Exception | None = None
         for attempt in range(max_attempts):
             try:
                 self._rate_limit()
-                return self._client_instance().chat.completions.create(
-                    model=self._model,
-                    messages=request_messages,
-                    temperature=self._settings.LLM_TEMP,
-                    max_tokens=self._max_tokens or self._settings.LLM_MAX_TOKENS,
-                    **request_kwargs,
-                )
+                return self._client_instance().chat.completions.create(**completion_kwargs)
             except Exception as exc:
                 # some providers (e.g. Kimi K2.7) refuse to run with reasoning
                 # disabled; drop the disable flag once and retry immediately
-                if "reasoning is mandatory" in str(exc).lower() and "extra_body" in request_kwargs:
-                    request_kwargs.pop("extra_body", None)
+                if (
+                    "reasoning is mandatory" in str(exc).lower()
+                    and self._reasoning_effort is None
+                    and "extra_body" in completion_kwargs
+                ):
+                    degraded_extra = dict(completion_kwargs.get("extra_body") or {})
+                    degraded_extra.pop("reasoning", None)
+                    if degraded_extra:
+                        completion_kwargs["extra_body"] = degraded_extra
+                    else:
+                        completion_kwargs.pop("extra_body", None)
                     self._tool_events.append(
                         {
                             "tool": "governed_llm.reasoning_enabled_degraded",
@@ -592,11 +648,7 @@ class DFHackGovernedLLMAgent(Agent):
                     try:
                         self._rate_limit()
                         return self._client_instance().chat.completions.create(
-                            model=self._model,
-                            messages=request_messages,
-                            temperature=self._settings.LLM_TEMP,
-                            max_tokens=self._max_tokens or self._settings.LLM_MAX_TOKENS,
-                            **request_kwargs,
+                            **completion_kwargs
                         )
                     except Exception as retry_exc:
                         exc = retry_exc
@@ -604,10 +656,10 @@ class DFHackGovernedLLMAgent(Agent):
                 # tool_choice; degrade to auto once and retry immediately
                 if (
                     "tool choice" in str(exc).lower()
-                    and "tools" in request_kwargs
-                    and request_kwargs.get("tool_choice") != "auto"
+                    and "tools" in completion_kwargs
+                    and completion_kwargs.get("tool_choice") != "auto"
                 ):
-                    request_kwargs["tool_choice"] = "auto"
+                    completion_kwargs["tool_choice"] = "auto"
                     self._tool_events.append(
                         {
                             "tool": "governed_llm.tool_choice_degraded",
@@ -618,11 +670,7 @@ class DFHackGovernedLLMAgent(Agent):
                     try:
                         self._rate_limit()
                         return self._client_instance().chat.completions.create(
-                            model=self._model,
-                            messages=request_messages,
-                            temperature=self._settings.LLM_TEMP,
-                            max_tokens=self._max_tokens or self._settings.LLM_MAX_TOKENS,
-                            **request_kwargs,
+                            **completion_kwargs
                         )
                     except Exception as retry_exc:
                         exc = retry_exc
@@ -1208,6 +1256,7 @@ class DFHackGovernedLLMAgent(Agent):
                     )
         messages = [
             {"role": "system", "content": GOVERNED_SYSTEM_PROMPT},
+            {"role": "user", "content": GOVERNED_OBSERVATION_PREAMBLE},
             {"role": "user", "content": message_content},
         ]
 
@@ -1249,12 +1298,16 @@ class DFHackGovernedLLMAgent(Agent):
                         fingerprint_payload["advance_ticks"] = 0
                     try:
                         fingerprint_action = parse_action(
-                            self._normalize_payload(fingerprint_payload)
+                            self._normalize_payload(fingerprint_payload),
+                            max_advance_ticks=self._max_advance_ticks,
                         )
                     except (TypeError, ValueError):
                         pass
                     try:
-                        canonical_action = parse_action(self._normalize_payload(payload))
+                        canonical_action = parse_action(
+                            self._normalize_payload(payload),
+                            max_advance_ticks=self._max_advance_ticks,
+                        )
                     except (TypeError, ValueError) as exc:
                         contract_errors.append(f"invalid action payload: {exc}")
                 if review_control is not None:
@@ -1502,18 +1555,7 @@ class DFHackGovernedLLMAgent(Agent):
             tool_calls = getattr(message, "tool_calls", None) or []
         except (IndexError, AttributeError):
             return None
-        usage = getattr(response, "usage", None)
-        if usage is not None:
-            self._tool_events.append(
-                {
-                    "tool": "openrouter.chat.completions.create",
-                    "input": {"model": self._model},
-                    "output": {
-                        "prompt_tokens": getattr(usage, "prompt_tokens", None),
-                        "completion_tokens": getattr(usage, "completion_tokens", None),
-                    },
-                }
-            )
+        self._record_response_telemetry(response, choices)
         for call in tool_calls:
             function = getattr(call, "function", None)
             if getattr(function, "name", "") != "submit_action":
@@ -1535,6 +1577,100 @@ class DFHackGovernedLLMAgent(Agent):
                 }
             )
         return payload
+
+    @staticmethod
+    def _field(value: Any, name: str, default: Any = None) -> Any:
+        if isinstance(value, dict):
+            return value.get(name, default)
+        return getattr(value, name, default)
+
+    @classmethod
+    def _plain_mapping(cls, value: Any) -> Dict[str, Any]:
+        if value is None:
+            return {}
+        if isinstance(value, dict):
+            return dict(value)
+        dump = getattr(value, "model_dump", None)
+        if callable(dump):
+            data = dump()
+            return dict(data) if isinstance(data, dict) else {}
+        data = getattr(value, "__dict__", None)
+        return dict(data) if isinstance(data, dict) else {}
+
+    def _generation_metadata(self, generation_id: str | None) -> Dict[str, Any]:
+        if not generation_id:
+            return {"status": "unavailable", "reason": "missing_generation_id"}
+        try:
+            httpx = import_module("httpx")
+            base_url = str(self._settings.OPENROUTER_BASE_URL).rstrip("/")
+            response = httpx.get(
+                f"{base_url}/generation",
+                params={"id": generation_id},
+                headers={"Authorization": f"Bearer {self._api_key}"},
+                timeout=min(float(self._settings.OPENROUTER_TIMEOUT_SECONDS), 10.0),
+            )
+            response.raise_for_status()
+            body = response.json()
+            data = body.get("data") if isinstance(body, dict) else None
+            if not isinstance(data, dict):
+                return {"status": "unavailable", "reason": "invalid_generation_payload"}
+            return {
+                "status": "available",
+                "provider_name": data.get("provider_name") or data.get("provider"),
+                "model": data.get("model"),
+                "total_cost": data.get("total_cost"),
+                "upstream_inference_cost": data.get("upstream_inference_cost"),
+                "cache_discount": data.get("cache_discount"),
+                "native_tokens_prompt": data.get("native_tokens_prompt"),
+                "native_tokens_completion": data.get("native_tokens_completion"),
+            }
+        except Exception as exc:
+            return {
+                "status": "unavailable",
+                "reason": type(exc).__name__,
+                "message": str(exc)[:240],
+            }
+
+    def _record_response_telemetry(self, response: Any, choices: List[Any]) -> None:
+        usage = self._field(response, "usage")
+        prompt_details = self._plain_mapping(self._field(usage, "prompt_tokens_details"))
+        completion_details = self._plain_mapping(
+            self._field(usage, "completion_tokens_details")
+        )
+        generation_id = self._field(response, "id")
+        finish_reasons = [
+            self._field(choice, "finish_reason")
+            for choice in choices
+            if self._field(choice, "finish_reason") is not None
+        ]
+        self._tool_events.append(
+            {
+                "tool": "openrouter.chat.completions.create",
+                "input": {
+                    "model": self._model,
+                    "session_id": self._session_id,
+                    "reasoning_effort": self._reasoning_effort,
+                    "prompt_cache": self._prompt_cache or "automatic",
+                    "max_tokens": self._max_tokens or self._settings.LLM_MAX_TOKENS,
+                    "vision": self._vision,
+                },
+                "output": {
+                    "generation_id": generation_id,
+                    "resolved_model": self._field(response, "model"),
+                    "finish_reasons": finish_reasons,
+                    "prompt_tokens": self._field(usage, "prompt_tokens"),
+                    "completion_tokens": self._field(usage, "completion_tokens"),
+                    "total_tokens": self._field(usage, "total_tokens"),
+                    "cached_tokens": prompt_details.get("cached_tokens"),
+                    "cache_write_tokens": prompt_details.get("cache_write_tokens"),
+                    "reasoning_tokens": completion_details.get("reasoning_tokens"),
+                    "cost": self._field(usage, "cost"),
+                    "cost_details": self._plain_mapping(self._field(usage, "cost_details")),
+                    "is_byok": self._field(usage, "is_byok"),
+                    "generation": self._generation_metadata(generation_id),
+                },
+            }
+        )
 
     @staticmethod
     def _json_payload_from_text(content: Any) -> Optional[Dict[str, Any]]:
@@ -1585,6 +1721,33 @@ register_agent(
     "dfhack-governed-llm-gpt55",
     lambda: DFHackGovernedLLMAgent(model_override="openai/gpt-5.5"),
 )
+register_agent(
+    "dfhack-governed-llm-fable5",
+    lambda: DFHackGovernedLLMAgent(
+        model_override="anthropic/claude-fable-5",
+        memory_path=None,
+        vision=True,
+        max_tokens=128000,
+        reasoning_effort="max",
+        prompt_cache="explicit_ephemeral",
+        omit_temperature=True,
+        memory_window=0,
+        max_advance_ticks=2500,
+    ),
+)
+register_agent(
+    "dfhack-governed-llm-gpt56-sol",
+    lambda: DFHackGovernedLLMAgent(
+        model_override="openai/gpt-5.6-sol",
+        memory_path=None,
+        vision=True,
+        max_tokens=128000,
+        reasoning_effort="max",
+        prompt_cache="automatic",
+        memory_window=0,
+        max_advance_ticks=2500,
+    ),
+)
 # Vision variants: the same governed surface, with the fort minimap attached
 # as a rendered PNG (same grid, different modality).
 register_agent(
@@ -1613,4 +1776,9 @@ register_agent(
 )
 
 
-__all__ = ["DFHackGovernedLLMAgent", "GOVERNED_ACTION_TYPES", "GOVERNED_SYSTEM_PROMPT"]
+__all__ = [
+    "DFHackGovernedLLMAgent",
+    "GOVERNED_ACTION_TYPES",
+    "GOVERNED_OBSERVATION_PREAMBLE",
+    "GOVERNED_SYSTEM_PROMPT",
+]

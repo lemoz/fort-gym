@@ -26,6 +26,10 @@ _MODEL_LABELS = {
     "dfhack-governed-llm-gpt55": "GPT-5.5",
     "dfhack-governed-llm-gpt55-vision": "GPT-5.5 Vision",
     "dfhack-governed-llm-glm52": "GLM-5.2",
+    "dfhack-governed-llm-fable5": "Fable",
+    "anthropic/claude-fable-5": "Fable",
+    "dfhack-governed-llm-gpt56-sol": "Sol",
+    "openai/gpt-5.6-sol": "Sol",
     "dfhack-governed-scripted": "Scripted baseline",
     "fake": "Mock agent",
 }

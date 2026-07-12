@@ -29,6 +29,7 @@ from ..config import get_settings
 from ..env.keystroke_exec import execute_keystroke_action
 from ..eval.protocol import EVALUATION_PROTOCOL_PATTERN
 from ..eval.public_protocols import get_public_protocol, list_public_protocols
+from ..eval.fort_eval_easy_p1 import validate_p1_declaration
 from ..run.jobs import JOB_REGISTRY
 from ..run.jobs import JobInfo as RegistryJobInfo
 from ..run.runner import run_once
@@ -394,6 +395,10 @@ _COMPARABILITY_FIELDS = [
 ]
 _PUBLIC_SUMMARY_FIELDS = {
     "evaluation_protocol",
+    "public_eligibility",
+    "public_label",
+    "task_verdict",
+    "g7",
     "score_version",
     "total_score",
     "survival_score",
@@ -526,6 +531,59 @@ def _has_replay_artifact(run_id: str) -> bool:
         return False
 
 
+_REPORTED_OUTCOMES = {"pass", "fail", "unknown"}
+
+
+def _reported_outcome(value: Any) -> str | None:
+    """Return a declared public outcome without promoting an unrecognized value."""
+
+    if not isinstance(value, str):
+        return None
+    normalized = value.strip().lower()
+    return normalized if normalized in _REPORTED_OUTCOMES else None
+
+
+def _reported_g7_outcome(summary: Dict[str, Any]) -> str | None:
+    gate = summary.get("g7")
+    if not isinstance(gate, dict):
+        # Older public summaries used the pre-P1 field name.
+        gate = summary.get("g7_gate")
+    return _reported_outcome(gate.get("status")) if isinstance(gate, dict) else None
+
+
+def _g7_evidence_is_complete(summary: Dict[str, Any]) -> bool:
+    """Require the gate's evidence predicate without requiring a successful gate."""
+
+    gate = summary.get("g7")
+    if not isinstance(gate, dict):
+        return False
+    criteria = gate.get("criteria")
+    evidence = criteria.get("evidence") if isinstance(criteria, dict) else None
+    return isinstance(evidence, dict) and evidence.get("status") == "pass"
+
+
+def _p1_integrity_is_complete(summary: Dict[str, Any]) -> bool:
+    attestation = summary.get("integrity_attestation")
+    return bool(
+        isinstance(attestation, dict)
+        and attestation.get("status") == "pass"
+        and attestation.get("terminal_reason") is None
+    )
+
+
+def _public_label(summary: Dict[str, Any]) -> str | None:
+    label = summary.get("public_label")
+    if not isinstance(label, str) or not label.strip() or label != label.strip():
+        return None
+    return label
+
+
+def _combined_outcome(outcomes: List[str]) -> str:
+    """Keep mixed terminal outcomes visible instead of suppressing a failure."""
+
+    return outcomes[0] if len(set(outcomes)) == 1 else "mixed"
+
+
 def _protocol_comparison_groups(
     items: List[Tuple[RegistryRunInfo, ShareToken]],
     protocol_definition: Any,
@@ -535,11 +593,13 @@ def _protocol_comparison_groups(
     declared_fields = list(protocol_definition.comparability_fields)
     group_fields = [field for field in declared_fields if field != "model_digest"]
     response_fields = ["evaluation_protocol", *group_fields, "score_version"]
-    groups: Dict[Tuple[object, ...], Dict[str, List[Tuple[float, str]]]] = {}
+    strict_publication = bool(protocol_definition.requires_public_eligibility)
+    groups: Dict[Tuple[object, ...], Dict[Tuple[str, str], List[Tuple[Any, ...]]]] = {}
 
     for record, share in items:
+        allowed_statuses = {"completed", "failed"} if strict_publication else {"completed"}
         if (
-            record.status != "completed"
+            record.status not in allowed_statuses
             or record.backend != "dfhack"
             or not {"replay", "export"}.issubset(share.scope)
             or not _has_replay_artifact(record.run_id)
@@ -550,6 +610,8 @@ def _protocol_comparison_groups(
             not isinstance(summary, dict)
             or summary.get("evaluation_protocol") != record.evaluation_protocol
         ):
+            continue
+        if strict_publication and summary.get("public_eligibility") != "eligible":
             continue
         score_version = summary.get("score_version")
         total_score = summary.get("total_score")
@@ -588,9 +650,23 @@ def _protocol_comparison_groups(
             *(values[field] for field in group_fields),
             score_version,
         )
-        groups.setdefault(key_values, {}).setdefault(values["model_digest"], []).append(
-            (score, share.token)
-        )
+        if strict_publication:
+            public_label = _public_label(summary)
+            g7_outcome = _reported_g7_outcome(summary)
+            if (
+                not _g7_evidence_is_complete(summary)
+                or not _p1_integrity_is_complete(summary)
+                or public_label is None
+                or g7_outcome is None
+            ):
+                continue
+            task_verdict = _reported_outcome(summary.get("task_verdict")) or g7_outcome
+            model_key = (values["model_digest"], public_label)
+            scored_run: Tuple[Any, ...] = (score, share.token, task_verdict, g7_outcome)
+        else:
+            model_key = (values["model_digest"], "")
+            scored_run = (score, share.token)
+        groups.setdefault(key_values, {}).setdefault(model_key, []).append(scored_run)
 
     response: List[PublicComparisonGroup] = []
     for key, scores_by_model in groups.items():
@@ -599,22 +675,19 @@ def _protocol_comparison_groups(
                 comparability=dict(zip(response_fields, key, strict=True)),
                 model_results=sorted(
                     [
-                        PublicModelResult(
-                            model=model_digest,
-                            run_count=len(scored_runs),
-                            mean_score=round(
-                                sum(score for score, _token in scored_runs)
-                                / len(scored_runs),
-                                2,
-                            ),
-                            best_score=round(
-                                max(score for score, _token in scored_runs), 2
-                            ),
-                            best_token=max(scored_runs, key=lambda item: item[0])[1],
+                        _public_model_result(
+                            model_digest=model_digest,
+                            public_label=public_label or None,
+                            scored_runs=scored_runs,
+                            strict_publication=strict_publication,
                         )
-                        for model_digest, scored_runs in scores_by_model.items()
+                        for (model_digest, public_label), scored_runs in scores_by_model.items()
                     ],
-                    key=lambda result: (result.mean_score, result.model),
+                    key=lambda result: (
+                        result.mean_score,
+                        result.public_label or "",
+                        result.model_digest or "",
+                    ),
                     reverse=True,
                 ),
             )
@@ -627,6 +700,37 @@ def _protocol_comparison_groups(
         ),
         reverse=True,
     )
+
+
+def _public_model_result(
+    *,
+    model_digest: str,
+    public_label: str | None,
+    scored_runs: List[Tuple[Any, ...]],
+    strict_publication: bool,
+) -> PublicModelResult:
+    """Serialize either a legacy P0 row or a strict P1 public report row."""
+
+    scores = [float(run[0]) for run in scored_runs]
+    result = PublicModelResult(
+        model=public_label or model_digest,
+        run_count=len(scored_runs),
+        mean_score=round(sum(scores) / len(scores), 2),
+        best_score=round(max(scores), 2),
+        best_token=max(scored_runs, key=lambda item: item[0])[1],
+    )
+    if not strict_publication:
+        return result
+    outcomes = [str(run[3]) for run in scored_runs]
+    result.model_digest = model_digest
+    result.public_label = public_label
+    result.task_verdict = _combined_outcome([str(run[2]) for run in scored_runs])
+    result.g7_outcomes = {
+        outcome: outcomes.count(outcome)
+        for outcome in sorted(_REPORTED_OUTCOMES)
+        if outcome in outcomes
+    }
+    return result
 
 
 def _serialize_job(job: RegistryJobInfo) -> JobInfo:
@@ -660,6 +764,8 @@ OPTIONAL_AGENT_MODULES = {
     "dfhack-governed-llm-glm52": "fort_gym.bench.agent.governed_llm",
     "dfhack-governed-llm-deepseek-v4": "fort_gym.bench.agent.governed_llm",
     "dfhack-governed-llm-gpt55": "fort_gym.bench.agent.governed_llm",
+    "dfhack-governed-llm-fable5": "fort_gym.bench.agent.governed_llm",
+    "dfhack-governed-llm-gpt56-sol": "fort_gym.bench.agent.governed_llm",
     "dfhack-governed-llm-glm5v": "fort_gym.bench.agent.governed_llm",
     "dfhack-governed-llm-gpt55-vision": "fort_gym.bench.agent.governed_llm",
     "dfhack-governed-llm-kimi-vision": "fort_gym.bench.agent.governed_llm",
@@ -711,6 +817,20 @@ async def create_run(
     payload: RunCreateRequest, _: None = Depends(require_admin)
 ) -> RunInfo:
     loop = asyncio.get_running_loop()
+
+    try:
+        validate_p1_declaration(
+            protocol=payload.evaluation_protocol,
+            backend=payload.backend,
+            model=payload.model,
+            seed_save=payload.seed_save,
+            runtime_save=payload.runtime_save,
+            preserve_save=payload.preserve_save,
+            max_steps=payload.max_steps,
+            ticks_per_step=payload.ticks_per_step,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     agent_factory = _get_agent_factory(payload.model)
 
@@ -881,7 +1001,11 @@ async def public_worlds(
     )
 
 
-@app.get("/public/overview", response_model=PublicOverview)
+@app.get(
+    "/public/overview",
+    response_model=PublicOverview,
+    response_model_exclude_none=True,
+)
 async def public_overview(
     recent_limit: int = Query(default=20, ge=1, le=100),
 ) -> PublicOverview:
@@ -901,7 +1025,11 @@ async def public_overview(
     )
 
 
-@app.get("/public/results", response_model=PublicResults)
+@app.get(
+    "/public/results",
+    response_model=PublicResults,
+    response_model_exclude_none=True,
+)
 async def public_results(
     evaluation_protocol: str = Query(
         ...,
@@ -930,6 +1058,9 @@ async def public_results(
     return PublicResults(
         generated_at=datetime.utcnow(),
         protocol=evaluation_protocol,
+        publication_stage=(
+            "P1 discovery" if protocol_definition.requires_public_eligibility else None
+        ),
         comparability_fields=[
             "evaluation_protocol",
             *protocol_definition.comparability_fields,

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fort_gym.bench.eval.gates import FAIL, PASS, UNKNOWN, evaluate_g7
+from fort_gym.bench.eval.gates import FAIL, PASS, UNKNOWN, _model_usage, evaluate_g7
 
 
 def _row(
@@ -49,7 +49,13 @@ def _row(
                 "data": {
                     "tool": "openrouter.chat.completions.create",
                     "input": {"model": "z-ai/glm-5v-turbo"},
-                    "output": {"prompt_tokens": 10, "completion_tokens": 2},
+                    "output": {
+                        "generation_id": f"gen-{step}",
+                        "resolved_model": "z-ai/glm-5v-turbo",
+                        "prompt_tokens": 10,
+                        "completion_tokens": 2,
+                        "cost": 0.01,
+                    },
                 },
             }
         ],
@@ -67,6 +73,28 @@ def _summary(**overrides):
     }
     value.update(overrides)
     return value
+
+
+def test_model_usage_separates_failed_attempt_events_from_billed_generations() -> None:
+    row = _row(0)
+    row["events"].insert(
+        0,
+        {
+            "type": "tool_call",
+            "data": {
+                "tool": "openrouter.chat.completions.create",
+                "input": {"model": "z-ai/glm-5v-turbo"},
+                "output": {"error": "timeout", "retrying": True},
+            },
+        },
+    )
+
+    usage = _model_usage([row])
+
+    assert usage["attempt_events"] == 2
+    assert usage["failed_attempt_events"] == 1
+    assert usage["calls"] == 1
+    assert usage["generation_ids"] == ["gen-0"]
 
 
 def test_g7_pass_requires_every_ratified_fact() -> None:

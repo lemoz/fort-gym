@@ -1,0 +1,89 @@
+{
+  "schema_version": "fort-eval.provider-preflight/v1",
+  "date": "2026-07-12",
+  "protocol": "fort-eval-easy-p1-g7-v3",
+  "request_contract": {
+    "reasoning_effort": "max",
+    "max_tokens": 128000,
+    "max_advance_ticks": 2500,
+    "vision": true,
+    "memory": "off",
+    "tool_choice": "submit_action"
+  },
+  "cache_test": {
+    "stable_prefix": "system prompt, observation preamble, and tool schema",
+    "dynamic_observation_changed_between_calls": true,
+    "response_caching_enabled": false
+  },
+  "results": [
+    {
+      "arm": "dfhack-governed-llm-gpt56-sol",
+      "requested_model": "openai/gpt-5.6-sol",
+      "resolved_model": "openai/gpt-5.6-sol-20260709",
+      "provider": "OpenAI",
+      "cache_policy": "automatic",
+      "transport_verified": true,
+      "cache_verified": true,
+      "calls": [
+        {
+          "action_type": "WAIT",
+          "advance_ticks": 2500,
+          "prompt_tokens": 5156,
+          "completion_tokens": 540,
+          "reasoning_tokens": 372,
+          "cached_tokens": 4991,
+          "cache_write_tokens": 0,
+          "cost_usd": 0.019325295
+        },
+        {
+          "action_type": "WAIT",
+          "advance_ticks": 2500,
+          "prompt_tokens": 5156,
+          "completion_tokens": 670,
+          "reasoning_tokens": 516,
+          "cached_tokens": 4991,
+          "cache_write_tokens": 0,
+          "cache_discount_usd": 0.0224595,
+          "cost_usd": 0.023186295
+        }
+      ]
+    },
+    {
+      "arm": "dfhack-governed-llm-fable5",
+      "requested_model": "anthropic/claude-fable-5",
+      "resolved_model": "anthropic/claude-5-fable-20260609",
+      "provider": "Amazon Bedrock",
+      "cache_policy": "explicit_ephemeral",
+      "transport_verified": true,
+      "cache_verified": true,
+      "calls": [
+        {
+          "action_type": "WAIT",
+          "advance_ticks": 2500,
+          "prompt_tokens": 8822,
+          "completion_tokens": 446,
+          "reasoning_tokens": 0,
+          "cached_tokens": 8222,
+          "cache_write_tokens": 0,
+          "cost_usd": 0.03615678
+        },
+        {
+          "action_type": "WAIT",
+          "advance_ticks": 2500,
+          "prompt_tokens": 8822,
+          "completion_tokens": 441,
+          "reasoning_tokens": 0,
+          "cached_tokens": 8222,
+          "cache_write_tokens": 0,
+          "cache_discount_usd": 0.073998,
+          "cost_usd": 0.03590928
+        }
+      ]
+    }
+  ],
+  "seed": {
+    "name": "seed_region3_fresh",
+    "world_sha256": "070b10a3f2403e72368290eea0d09396fe06f7912b9babdea7ad26eb0498a87d"
+  },
+  "ok": true
+}

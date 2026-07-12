@@ -19,6 +19,8 @@ ModelType = Literal[
     "dfhack-governed-llm-glm52",
     "dfhack-governed-llm-deepseek-v4",
     "dfhack-governed-llm-gpt55",
+    "dfhack-governed-llm-fable5",
+    "dfhack-governed-llm-gpt56-sol",
     "dfhack-governed-llm-glm5v",
     "dfhack-governed-llm-gpt55-vision",
     "dfhack-governed-llm-kimi-vision",
@@ -145,6 +147,10 @@ class PublicModelResult(BaseModel):
     """One model's scores inside a complete comparison scope."""
 
     model: str
+    model_digest: Optional[str] = None
+    public_label: Optional[str] = None
+    task_verdict: Optional[str] = None
+    g7_outcomes: Optional[Dict[str, int]] = None
     run_count: int
     mean_score: float
     best_score: float
@@ -173,6 +179,7 @@ class PublicResults(BaseModel):
 
     generated_at: datetime
     protocol: str
+    publication_stage: Optional[str] = None
     status: Literal["experimental"] = "experimental"
     comparability_fields: List[str]
     candidate_run_count: int = Field(ge=0)

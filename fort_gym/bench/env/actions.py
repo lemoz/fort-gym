@@ -10,6 +10,9 @@ from typing import Annotated, Any, Dict, Literal, Optional, Union
 
 from pydantic import BaseModel, Field, StrictInt, ValidationError, field_validator
 
+DEFAULT_MAX_ADVANCE_TICKS = 2000
+ABSOLUTE_MAX_ADVANCE_TICKS = 2500
+
 
 def _dump_model(model: BaseModel) -> Dict[str, Any]:
     """Return a JSON-ready representation supporting both Pydantic v1/v2."""
@@ -177,7 +180,7 @@ class BaseAction(BaseModel):
     advance_ticks: int = Field(
         default=0,
         ge=0,
-        le=2000,
+        le=ABSOLUTE_MAX_ADVANCE_TICKS,
         description="Number of game ticks to advance after executing this action. 0 = no time passes (stay paused).",
     )
 
@@ -389,7 +392,11 @@ def blocking_viewscreen_action_reason(
     )
 
 
-def parse_action(obj_or_str: Dict[str, Any] | str) -> Dict[str, Any]:
+def parse_action(
+    obj_or_str: Dict[str, Any] | str,
+    *,
+    max_advance_ticks: int = DEFAULT_MAX_ADVANCE_TICKS,
+) -> Dict[str, Any]:
     """Parse raw action payload from JSON string or dict and validate it."""
     if isinstance(obj_or_str, str):
         try:
@@ -407,6 +414,9 @@ def parse_action(obj_or_str: Dict[str, Any] | str) -> Dict[str, Any]:
         raise ValueError(exc.errors(include_url=False)) from exc
 
     normalized = _dump_model(model.action)
+    advance_ticks = normalized.get("advance_ticks")
+    if type(advance_ticks) is int and advance_ticks > max_advance_ticks:
+        raise ValueError(f"advance_ticks must be less than or equal to {max_advance_ticks}")
     return normalized
 
 
@@ -543,7 +553,7 @@ ACTION_TOOL_SPEC = {
             "advance_ticks": {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 2000,
+                "maximum": DEFAULT_MAX_ADVANCE_TICKS,
                 "default": 0,
                 "description": "Game ticks to advance after action. 0 = stay paused.",
             },

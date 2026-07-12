@@ -101,19 +101,42 @@ The same task and interface may be run at multiple knowledge conditions, but res
 
 Each run and aggregate cell carries a canonical comparability key. A recommended serialization is:
 
-`forteval/v1|profile=<profile>|task=<task_id>|knowledge=<knowledge>|seed_split=<seed_split>|mechanics=<mechanics_digest>|obs=<observation_digest>|action=<action_digest>|budget=<budget_digest>|model=<model_digest>|prompt=<prompt_digest>|memory=<memory_digest>|harness=<fort_gym_commit>|df=<df_version>|evaluator=<evaluator_version>`
+`forteval/v1|condition=<benchmark_condition_digest>|model_arm=<model_arm_identity_digest>|harness=<fort_gym_commit>|df=<df_version>|evaluator=<evaluator_version>`
 
-The key must include:
+The condition digest must include:
 
 - profile, task ID, task version, and objective;
 - seed or seed split, including held-out status;
 - mechanics and ruleset digest;
 - observation and action interface digests;
 - max steps, ticks or wall-clock budget, pause/timing policy, and retry policy;
-- model adapter ID, resolved provider model ID if any, system prompt digest, temperature and relevant generation settings;
 - memory mode and bounded state budget;
 - knowledge condition and corpus or web-policy digest;
 - Fort-Gym commit, Dwarf Fortress/DFHack versions, and evaluator/score version.
+
+The model-arm identity is a separate run field. It includes the model arm ID,
+adapter ID, provider route, resolved provider model ID, prompt identity, and
+relevant generation settings. It is used to group policy results inside one
+benchmark-condition key; it is not a benchmark-condition comparison field.
+In particular, a comparison table should show `model_arm` as the policy being
+compared rather than treating each arm as a different task condition. Memory,
+vision, knowledge, task, seed, budget, action surface, and score version remain
+shared condition fields when the manifest says they are shared.
+
+The legacy direct-Anthropic prohibition remains in force. A manifest may make
+an explicit exception for a named arm routed through OpenRouter, such as the
+Fort-Eval Fable arm. That exception permits the OpenRouter route only; it does
+not enable the direct Anthropic API or the legacy direct-Anthropic adapter.
+
+### 5.1 Frozen Easy P1 G7-v3 condition
+
+`experiments/fort_eval_easy_p1_g7_v3.yaml` freezes a provisional P1 pilot on
+`seed_region3_fresh` with 200 steps and up to 2,500 ticks per step, for a maximum
+of 500,000 ticks. It uses score-v5, no knowledge access, vision on, and memory off.
+The two model-arm identities are `dfhack-governed-llm-fable5` and
+`dfhack-governed-llm-gpt56-sol`; both use maximum reasoning and a 128,000-token
+completion limit. The manifest declares no numeric expenditure cap, but usage,
+provider routing, and per-run pricing state must still be recorded.
 
 Runs with different keys may be compared descriptively, but they must not share one ranked table or one aggregate mean.
 
@@ -148,7 +171,11 @@ Composite scores may remain useful for local progress, but a high scalar score c
 
 Pricing is recorded only when the provider, model ID, token accounting, currency, and price schedule are resolved. Unknown pricing is represented as unknown; it is never estimated from a guessed model name. The manifest must preserve request counts and provider usage where available so cost can be backfilled without rerunning.
 
-Before any paid arm starts, the operator must approve a per-run and per-cell budget. The harness must stop or quarantine a run on:
+Before any paid arm starts, the manifest must make the expenditure policy
+explicit. A manifest may declare no numeric expenditure cap for a provisional
+pilot, as P1 does; that declaration does not waive usage logging, pricing
+recording, provenance checks, or the stop conditions below. The harness must
+stop or quarantine a run on:
 
 - a safety or provenance violation;
 - a failed rollback or unknown mutation;
@@ -163,7 +190,7 @@ An infrastructure stop is reported as infrastructure-aborted, not as a policy fa
 
 ### Provisional
 
-Use provisional status for a substrate check, a single run, an unresolved model or price, a changed evaluator, a single seed, an unratified task, a future interface prototype, incomplete evidence, or any run with a declared contamination concern. Provisional results can guide iteration and can be published as findings, but they do not establish a leaderboard order or a model claim.
+Use provisional status for a substrate check, a single run, an unresolved model or price, a changed evaluator, a single seed, an unratified task, a future interface prototype, incomplete evidence, or any run with a declared contamination concern. Provisional results can guide iteration and can be published as findings, but they do not establish a leaderboard order or a model claim. A valid policy failure with complete, contamination-free evidence is publishable under the manifest; publication does not turn it into a pass or a ranked result.
 
 ### Ranked
 
@@ -172,7 +199,7 @@ A ranked cell requires a frozen manifest and comparability key, resolved provena
 ## 10. Staged pilot
 
 1. **P0, contract and substrate:** validate the YAML, action allowlist, observation firewall, trace fields, evidence predicates, and a known governed scripted control. No model ranking.
-2. **P1, Easy pilot:** run the current governed profile on a fixed seed with the declared step/tick budget. Include a legal scripted control and, only after model ID and pricing are resolved, approved policy arms. Report evidence, legality, progress, and cost separately.
+2. **P1, Easy pilot:** run the frozen `fort_eval_easy_p1_g7_v3.yaml` condition on `seed_region3_fresh` for up to 200 steps at up to 2,500 ticks per step, with score-v5, no knowledge, vision on, and memory off. Compare the two declared model-arm identities inside the shared condition key. Report evidence, legality, progress, provider usage, pricing state, and valid failures separately.
 3. **P2, Easy generalization:** add held-out seeds and then held-out mechanics. Freeze the evaluator and contamination policy before the window. Promote only cells meeting the ranked rules.
 4. **P3, Hard interface validation:** implement fixed-pixel capture and primitive inputs, then test viewport fidelity, input determinism, replay completeness, and spectator firewall before measuring policy capability.
 5. **P4, Hard and Discovery:** measure active perception, navigation, memory, and z reasoning. Add Discovery's no-docs/no-web policy and bounded cross-episode learner state only after Hard is stable. Keep transfer claims separate from Easy claims.
