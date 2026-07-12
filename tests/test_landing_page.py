@@ -15,7 +15,7 @@ def test_landing_page_is_gameplay_first_fort_labs_surface() -> None:
     assert "Can an AI build a civilization that" in html
     assert "Dwarf Fortress gives long-horizon agents a living world" in html
     assert "See what each model builds when the world keeps moving" in html
-    assert "Every score opens into a complete gameplay trace" in html
+    assert "Every published result opens into its replay evidence" in html
     assert "The next great benchmark is a world" in html
     assert "Easy" in html and "Hard" in html and "Discovery" in html
     assert "Spectator view · the agent plays from its declared interface" in html
@@ -27,6 +27,7 @@ def test_landing_page_is_gameplay_first_fort_labs_surface() -> None:
     assert 'href="/worlds"' in html
     assert 'href="/results"' in html
     assert 'href="/protocols"' in html
+    assert 'href="/findings"' in html
     assert "Results belong to protocols" not in html
     assert "A run is a trace, not a claim" not in html
 
@@ -115,6 +116,9 @@ def test_root_serves_landing_and_public_entrypoints() -> None:
     )
     assert 'return _html_file_response("worlds.html")' in inspect.getsource(server.serve_worlds)
     assert 'return _html_file_response("results.html")' in inspect.getsource(server.serve_results)
+    assert 'return _html_file_response("findings.html")' in inspect.getsource(
+        server.serve_findings
+    )
     assert 'return _html_file_response("protocols.html")' in inspect.getsource(
         server.serve_protocols
     )
@@ -129,10 +133,12 @@ def test_public_pages_and_shared_assets_are_served() -> None:
     assert client.get("/").status_code == 200
     assert client.get("/worlds").status_code == 200
     assert client.get("/results").status_code == 200
+    assert client.get("/findings").status_code == 200
     assert client.get("/protocols").status_code == 200
     assert client.get("/protocols/fort-eval-easy-v1").status_code == 200
     assert client.get("/static/fort-labs.css").status_code == 200
     assert client.get("/static/fort-labs.js").status_code == 200
+    assert client.get("/static/findings-v1.json").status_code == 200
 
 
 def test_run_shares_are_permanent_evidence() -> None:

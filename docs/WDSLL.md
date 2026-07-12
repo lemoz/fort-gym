@@ -160,16 +160,15 @@ agent has never seen, reaching G4-level structure. This is the gate that
 separates "solved one map" from "plays Dwarf Fortress."
 
 ### G7 — The fort lives: a self-sufficient year (RATIFIED 2026-07-09)
-Status: RATIFIED at the 2026-07-09 operator window; attempt 1 FAILED, while
-attempts 2 through 6 ended in infrastructure-aborted FAILs with no full-year
-policy verdict. All attempts are recorded below. The gameplay criteria remain
-unchanged. Production runs after Attempt 10 use the score-v4 stable-floor
-measurement boundary. Score-v5 is implemented for Attempt 20 but remains an
-undeployed candidate until review, CI, merge, deployment, and a boundary smoke;
-no v5 run is yet valid. The gate activation preconditions otherwise hold: (a)
-score-v3 was ratified and landed, score-v4 removed false frozen-floor credit,
-and the score-v5 candidate removes command-acceptance/task-presence credit while
-retaining the coefficients and threshold; (b) G6 attempted
+Status: RATIFIED at the 2026-07-09 operator window and still unpassed after 27
+numbered attempts. The log below separates infrastructure aborts, invalidated
+evidence, and policy diagnostics; none is a full-year pass. The gameplay
+criteria remain unchanged. Production runs after Attempt 10 use the score-v4
+stable-floor measurement boundary. Score-v5 is deployed and active for Attempts
+20 through 27; it removes command-acceptance/task-presence credit while retaining
+the coefficients and threshold. The gate activation preconditions otherwise
+hold: (a) score-v3 was ratified and landed, score-v4 removed false frozen-floor
+credit, and score-v5 passed its deployment boundary; (b) G6 attempted
 (7 runs, 2 models — frontier documented in the escalation log); (c) the
 survival primitives exist, adversarially reviewed and live-validated:
 gather (DIG kind), FarmPlot (BUILD kind), Still + brew ORDER

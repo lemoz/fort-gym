@@ -36,10 +36,11 @@ not queues) → G4 (a fortress, not a demo) → G5 (memory pays rent) → G6
 The success statement the whole ladder makes falsifiable: *an LLM policy,
 issuing only legal governed actions, takes a fixed embark from fresh seed to a
 producing fortress on public, replayable evidence, with zero rubric blockers.*
-G0–G4 have passed; G5 failed and stands; G6 is unpassed after seven attempts
-on the unseen map, with the first enclosed rooms arriving only after the factual
-observation corrections; G7 is ratified and its first nine attempts failed,
-with attempts 2 through 9 infrastructure aborts and no policy verdict.
+G0–G4 have passed; G5 failed and stands; G6 remains unpassed on the unseen
+map, with the first enclosed rooms arriving only after factual observation
+corrections. G7 remains open. Its log now records attempts 1 through 27,
+including infrastructure aborts, invalidated evidence, short and long policy
+diagnostics, and no full-year pass.
 
 ## 2. The findings
 

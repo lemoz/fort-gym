@@ -1,0 +1,98 @@
+{
+  "version": "findings-v1",
+  "as_of": "2026-07-11",
+  "source_revision": "e8b6b64fb8f5ed6d05c3c3ef366ce84b3f98d5e9",
+  "gate_status": [
+    {"gate": "G0-G4", "status": "passed", "detail": "Legal play through fortress construction has public replay evidence."},
+    {"gate": "G5", "status": "failed", "detail": "The first persistent-memory design underperformed its memory-off control."},
+    {"gate": "G6", "status": "open", "detail": "The best unseen-map run reached 4/5 and still missed its second functional room."},
+    {"gate": "G7", "status": "open", "detail": "Attempts 1 through 27 contain no full-year self-sufficient pass."}
+  ],
+  "findings": [
+    {
+      "id": "real-play-is-not-successful-play",
+      "index": "01",
+      "status": "open boundary",
+      "title": "Real gameplay and successful gameplay are different achievements.",
+      "claim": "Agents now dig, build, furnish, farm, handle dialogs, and change a live fortress through legal governed actions. The strongest long runs still fail sustainability, structure, or evidence gates.",
+      "evidence": "Attempt 27 made three functional rooms, two workshops, furniture, and a planted subterranean farm. It remained a policy-diagnostic fail after citizenship evidence was contaminated and resource flow missed the G7 bar.",
+      "caveat": "A high scalar score or visible construction does not establish a gate pass.",
+      "source_url": "https://github.com/lemoz/fort-gym/blob/e8b6b64fb8f5ed6d05c3c3ef366ce84b3f98d5e9/docs/FINDINGS.md#236-attempt-27-made-a-larger-real-fort-but-contaminated-citizenship-evidence-stopped-the-run",
+      "run_token": "eMtR2Bp3-kmp2JQ5MI2lLT_ANdyuR9qV"
+    },
+    {
+      "id": "spatial-modality-gap",
+      "index": "02",
+      "status": "observed",
+      "title": "Spatial perception changed what models could build.",
+      "claim": "Text-only policies rarely maintained the hollow-ring invariant needed for rooms. Two of three vision arms closed a ring on their first run after a rendered minimap entered the declared observation.",
+      "evidence": "The first G4 pass later completed two enclosed functional rooms with 100 recorded screen frames and governed provenance on every step.",
+      "caveat": "Vision removed a modality barrier; it did not make every model or repeat reliable.",
+      "source_url": "https://github.com/lemoz/fort-gym/blob/e8b6b64fb8f5ed6d05c3c3ef366ce84b3f98d5e9/docs/FINDINGS.md#21-the-spatial-modality-gap",
+      "evidence_url": "https://github.com/lemoz/fort-gym/blob/e8b6b64fb8f5ed6d05c3c3ef366ce84b3f98d5e9/docs/FINDINGS.md#22-the-g4-arc-one-pass-40-reliability-and-four-removed-lies",
+      "run_token": "qw8S-Wmf53DYLESSrgCWGvLPvY2n0IuH"
+    },
+    {
+      "id": "memory-inversion",
+      "index": "03",
+      "status": "controlled failure",
+      "title": "The first persistent memory made the policy worse.",
+      "claim": "A five-run memory-on series declined while the matched memory-off control produced more functional rooms. Failure tallies and a persistent plan amplified wall spam instead of learning.",
+      "evidence": "Memory-on rubric fell from 90.4 to 82.6; three of five memory-off runs built a functional room while the memory-on arm built none.",
+      "caveat": "This rejects one memory design, not memory as a capability.",
+      "source_url": "https://github.com/lemoz/fort-gym/blob/e8b6b64fb8f5ed6d05c3c3ef366ce84b3f98d5e9/docs/FINDINGS.md#23-the-memory-inversion-g5",
+      "run_token": null
+    },
+    {
+      "id": "reward-hacking",
+      "index": "04",
+      "status": "measurement correction",
+      "title": "The scalar found shortcuts before the fortress did.",
+      "claim": "Queue spam and later chair-factory monoculture drove large score gains without broader fortress quality. Each exploit forced a versioned scoring boundary and replay audit.",
+      "evidence": "The 250-step endurance probe compounded economically while remaining at one functional room, directly motivating score-v3.",
+      "caveat": "Scores from different score versions, seeds, or horizons are not one ranking.",
+      "source_url": "https://github.com/lemoz/fort-gym/blob/e8b6b64fb8f5ed6d05c3c3ef366ce84b3f98d5e9/docs/FINDINGS.md#24-two-generations-of-reward-hacking-and-their-closures",
+      "run_token": "8ACitgQEErsR8fdjTRMb59CrTm4D6k1q"
+    },
+    {
+      "id": "endurance-degeneration",
+      "index": "05",
+      "status": "diagnostic",
+      "title": "Longer runs reveal where a plan stops adapting.",
+      "claim": "After reaching passing-level structure, the endurance policy stopped expanding and optimized repeated production. More turns exposed a durable strategy failure that a short run hid.",
+      "evidence": "From step 100 to 250 the score grew 5.35x and goods diversity reached five types, while functional rooms stayed fixed at one.",
+      "caveat": "The production was real and legal; the failure was strategic degeneration.",
+      "source_url": "https://github.com/lemoz/fort-gym/blob/e8b6b64fb8f5ed6d05c3c3ef366ce84b3f98d5e9/docs/FINDINGS.md#25-the-endurance-result",
+      "run_token": "8ACitgQEErsR8fdjTRMb59CrTm4D6k1q"
+    },
+    {
+      "id": "unseen-map-generalization",
+      "index": "06",
+      "status": "open campaign",
+      "title": "A new map exposed assumptions the home embark concealed.",
+      "claim": "The unseen region surfaced wood blindness, drowning risk, dead metrics, and hardcoded terrain assumptions. With the corrected observation stack, GLM-5V advanced from zero rooms to one; the GPT-5.5 escalation reached 4/5.",
+      "evidence": "Corrected-instrument GLM-5V built its first region3 room. GPT-5.5 vision held population 7/7, built 74 constructions and one functional room, and missed only the second-room criterion.",
+      "caveat": "G6 remains unpassed. One near-pass does not establish general play.",
+      "source_url": "https://github.com/lemoz/fort-gym/blob/e8b6b64fb8f5ed6d05c3c3ef366ce84b3f98d5e9/docs/FINDINGS.md#26-the-generalization-campaign-g6-03-an-escalation-and-what-an-unseen-map-exposed",
+      "run_token": "ayENDjV5v5K35Mblffz3I53mEGsA3sOW"
+    },
+    {
+      "id": "instrumentation-is-the-benchmark",
+      "index": "07",
+      "status": "recurring lesson",
+      "title": "A benchmark can only be as truthful as its observation and evidence.",
+      "claim": "Phantom objectives, invisible legality walls, queued walls, off-frame proof windows, wood blindness, dead metrics, phantom stock counts, and dropped fields each changed what a run appeared to prove.",
+      "evidence": "The project repeatedly stopped, invalidated claims, versioned the boundary, and reran rather than converting a measurement defect into model progress.",
+      "caveat": "Observer Map and derived inspection views remain spectator evidence unless a protocol explicitly gives them to the agent.",
+      "source_url": "https://github.com/lemoz/fort-gym/blob/e8b6b64fb8f5ed6d05c3c3ef366ce84b3f98d5e9/docs/FINDINGS.md#210-the-meta-finding-correction-discipline-is-the-product",
+      "run_token": "qw8S-Wmf53DYLESSrgCWGvLPvY2n0IuH"
+    }
+  ],
+  "evidence_runs": [
+    {"token": "qw8S-Wmf53DYLESSrgCWGvLPvY2n0IuH", "lead": true, "label": "First G4 pass", "verdict": "pass", "note": "Two functional rooms; 100/100 recorded screens."},
+    {"token": "8ACitgQEErsR8fdjTRMb59CrTm4D6k1q", "label": "Endurance probe", "verdict": "diagnostic", "note": "Real production compounded while structure stalled."},
+    {"token": "ayENDjV5v5K35Mblffz3I53mEGsA3sOW", "label": "Best unseen-map run", "verdict": "fail 4/5", "note": "Missed only the second functional room."},
+    {"token": "GbccbSS-d6bADihKEosLgx6788yhoaqx", "label": "G7 attempt 1", "verdict": "fail", "note": "A real half-year fort that missed survival and structure."},
+    {"token": "eMtR2Bp3-kmp2JQ5MI2lLT_ANdyuR9qV", "label": "G7 attempt 27", "verdict": "policy-diagnostic fail", "note": "Larger fort; evidence contamination stopped the run."}
+  ]
+}
