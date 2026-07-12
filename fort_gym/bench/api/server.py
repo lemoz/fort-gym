@@ -3,15 +3,25 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import html
 import os
 import threading
 from datetime import datetime
 from importlib import import_module
 from pathlib import Path
 from typing import Any, AsyncGenerator, Callable, Dict, Iterable, List, Optional, Tuple
+from urllib.parse import quote
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
-from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+from fastapi.responses import (
+    FileResponse,
+    HTMLResponse,
+    JSONResponse,
+    RedirectResponse,
+    Response,
+    StreamingResponse,
+)
 from fastapi.staticfiles import StaticFiles
 
 from ..agent.base import AGENT_FACTORIES, Agent, RandomAgent
@@ -70,7 +80,9 @@ async def _rate_limit_middleware(request: Request, call_next):  # type: ignore[n
     if path == "/runs" or path.startswith("/runs/"):
         bucket = "runs"
 
-    if path in {"/public/worlds", "/public/results"}:
+    if path in {"/public/worlds", "/public/results"} or (
+        path.startswith("/public/runs/") and path.endswith("/social-card.png")
+    ):
         bucket = "public_worlds"
 
     if bucket:
@@ -101,10 +113,81 @@ HTML_CACHE_HEADERS = {
     "Cache-Control": "no-store, max-age=0",
     "Pragma": "no-cache",
 }
+PUBLIC_SITE_URL = os.getenv("FORT_GYM_PUBLIC_SITE_URL", "https://fortgym.live").rstrip(
+    "/"
+)
+SOCIAL_META_START = "<!-- SOCIAL_META_START -->"
+SOCIAL_META_END = "<!-- SOCIAL_META_END -->"
 
 
 def _html_file_response(filename: str) -> FileResponse:
-    return FileResponse(WEB_ROOT / filename, media_type="text/html", headers=HTML_CACHE_HEADERS)
+    return FileResponse(
+        WEB_ROOT / filename, media_type="text/html", headers=HTML_CACHE_HEADERS
+    )
+
+
+def _social_meta_html(
+    *,
+    title: str,
+    description: str,
+    canonical_path: str,
+    image_path: str,
+    image_alt: str,
+) -> str:
+    """Build crawler-visible metadata from trusted public fields."""
+
+    canonical_url = f"{PUBLIC_SITE_URL}{canonical_path}"
+    image_url = f"{PUBLIC_SITE_URL}{image_path}"
+    values = {
+        "title": html.escape(title, quote=True),
+        "description": html.escape(description, quote=True),
+        "canonical_url": html.escape(canonical_url, quote=True),
+        "image_url": html.escape(image_url, quote=True),
+        "image_alt": html.escape(image_alt, quote=True),
+    }
+    return "\n".join(
+        [
+            SOCIAL_META_START,
+            f"<title>{values['title']}</title>",
+            f'<meta name="description" content="{values["description"]}">',
+            f'<link rel="canonical" href="{values["canonical_url"]}">',
+            '<meta name="theme-color" content="#071009">',
+            '<meta property="og:site_name" content="Fort Labs">',
+            '<meta property="og:type" content="website">',
+            '<meta property="og:locale" content="en_US">',
+            f'<meta property="og:title" content="{values["title"]}">',
+            f'<meta property="og:description" content="{values["description"]}">',
+            f'<meta property="og:url" content="{values["canonical_url"]}">',
+            f'<meta property="og:image" content="{values["image_url"]}">',
+            f'<meta property="og:image:secure_url" content="{values["image_url"]}">',
+            '<meta property="og:image:type" content="image/png">',
+            '<meta property="og:image:width" content="1200">',
+            '<meta property="og:image:height" content="630">',
+            f'<meta property="og:image:alt" content="{values["image_alt"]}">',
+            '<meta name="twitter:card" content="summary_large_image">',
+            f'<meta name="twitter:title" content="{values["title"]}">',
+            f'<meta name="twitter:description" content="{values["description"]}">',
+            f'<meta name="twitter:image" content="{values["image_url"]}">',
+            f'<meta name="twitter:image:alt" content="{values["image_alt"]}">',
+            '<link rel="icon" type="image/svg+xml" href="/static/brand/favicon.svg">',
+            '<link rel="icon" type="image/png" sizes="32x32" href="/static/brand/favicon-32.png">',
+            '<link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">',
+            SOCIAL_META_END,
+        ]
+    )
+
+
+def _html_with_social_meta(filename: str, metadata: str) -> HTMLResponse:
+    document = (WEB_ROOT / filename).read_text(encoding="utf-8")
+    start = document.find(SOCIAL_META_START)
+    end = document.find(SOCIAL_META_END)
+    if start < 0 or end < start:
+        raise RuntimeError(f"{filename} is missing its social metadata markers")
+    end += len(SOCIAL_META_END)
+    return HTMLResponse(
+        document[:start] + metadata + document[end:],
+        headers=HTML_CACHE_HEADERS,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -118,22 +201,73 @@ async def serve_landing():
     return _html_file_response("landing.html")
 
 
+@app.get("/favicon.ico", response_class=FileResponse, include_in_schema=False)
+async def serve_favicon():
+    return FileResponse(
+        WEB_ROOT / "static" / "brand" / "favicon-32.png",
+        media_type="image/png",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
+
+
 @app.get("/live", response_class=FileResponse)
 async def serve_index():
     """Serve the public spectator UI (live viewer)."""
     return _html_file_response("index.html")
 
 
-@app.get("/replay/{token}", response_class=FileResponse)
+@app.get("/replay/{token}", response_class=RedirectResponse)
 async def serve_visual_replay(token: str):
-    """Serve the public spectator UI for a specific shared run token."""
-    return _html_file_response("index.html")
+    """Canonicalize the legacy replay URL onto the short public permalink."""
+    share = _require_share(token, scope="replay")
+    if "export" not in share.scope:
+        raise HTTPException(status_code=404, detail="Not found")
+    return RedirectResponse(url=f"/r/{quote(token, safe='')}", status_code=308)
 
 
-@app.get("/r/{token}", response_class=FileResponse)
+@app.get("/r/{token}", response_class=HTMLResponse)
 async def serve_short_visual_replay(token: str):
-    """Serve the public spectator UI at the short shared-run URL."""
-    return _html_file_response("index.html")
+    """Serve crawler-visible metadata and the public replay application."""
+    share = _require_share(token, scope="replay")
+    if "export" not in share.scope:
+        raise HTTPException(status_code=404, detail="Not found")
+    record = RUN_REGISTRY.get(share.run_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail="Run not found")
+
+    from .social_cards import CARD_VERSION, public_model_label
+
+    model = public_model_label(record.model)
+    status = str(record.status).replace("_", " ")
+    seed = record.seed_save or "an undeclared seed"
+    try:
+        preview = read_trace_preview(_artifacts_path(share.run_id))
+    except FileNotFoundError:
+        preview = {"step": None, "screen_status": "not_reported"}
+    frame_step = preview.get("step")
+    run_step = (
+        max(record.step, frame_step) if isinstance(frame_step, int) else record.step
+    )
+    run_progress = (
+        f"{run_step}/{record.max_steps}" if record.max_steps else str(run_step)
+    )
+    frame_note = (
+        f" The pictured recorded frame is step {frame_step}."
+        if isinstance(frame_step, int)
+        else ""
+    )
+    encoded_token = quote(token, safe="")
+    metadata = _social_meta_html(
+        title=f"{model} Dwarf Fortress Replay | Fort Labs",
+        description=(
+            f"Watch the recorded Fort-Eval run by {model}: {status}, "
+            f"run progress {run_progress}, on {seed}.{frame_note}"
+        ),
+        canonical_path=f"/r/{encoded_token}",
+        image_path=f"/public/runs/{encoded_token}/social-card.png?v={CARD_VERSION}",
+        image_alt=f"Recorded Dwarf Fortress gameplay from the {model} Fort-Eval run",
+    )
+    return _html_with_social_meta("index.html", metadata)
 
 
 @app.get("/admin", response_class=FileResponse)
@@ -172,12 +306,21 @@ async def serve_protocols():
     return _html_file_response("protocols.html")
 
 
-@app.get("/protocols/{slug}", response_class=FileResponse)
+@app.get("/protocols/{slug}", response_class=HTMLResponse)
 async def serve_protocol_detail(slug: str):
-    """Serve the protocol detail UI; the client resolves the path slug."""
-    if get_public_protocol(slug) is None:
+    """Serve protocol-specific metadata while the client resolves the detail body."""
+    protocol = get_public_protocol(slug)
+    if protocol is None:
         raise HTTPException(status_code=404, detail="Protocol not found")
-    return _html_file_response("protocols.html")
+    encoded_slug = quote(protocol.slug, safe="")
+    metadata = _social_meta_html(
+        title=f"{protocol.name} Protocol | Fort Labs",
+        description=protocol.summary,
+        canonical_path=f"/protocols/{encoded_slug}",
+        image_path=f"/static/social/{encoded_slug}.png?v=1",
+        image_alt=f"Fort Labs preview for the {protocol.name} protocol",
+    )
+    return _html_with_social_meta("protocols.html", metadata)
 
 
 # Bundled static assets (e.g. the CC BY 4.0 Oddball tileset used by the
@@ -326,7 +469,9 @@ def _comparison_groups(
             record.max_steps,
             record.ticks_per_step,
         )
-        groups.setdefault(key, {}).setdefault(record.model, []).append((score, share.token))
+        groups.setdefault(key, {}).setdefault(record.model, []).append(
+            (score, share.token)
+        )
 
     response: List[PublicComparisonGroup] = []
     for key, scores_by_model in groups.items():
@@ -339,9 +484,13 @@ def _comparison_groups(
                             model=model,
                             run_count=len(scored_runs),
                             mean_score=round(
-                                sum(score for score, _token in scored_runs) / len(scored_runs), 2
+                                sum(score for score, _token in scored_runs)
+                                / len(scored_runs),
+                                2,
                             ),
-                            best_score=round(max(score for score, _token in scored_runs), 2),
+                            best_score=round(
+                                max(score for score, _token in scored_runs), 2
+                            ),
                             best_token=max(scored_runs, key=lambda item: item[0])[1],
                         )
                         for model, scored_runs in scores_by_model.items()
@@ -397,12 +546,19 @@ def _protocol_comparison_groups(
         ):
             continue
         summary = record.latest_summary
-        if not isinstance(summary, dict) or summary.get("evaluation_protocol") != record.evaluation_protocol:
+        if (
+            not isinstance(summary, dict)
+            or summary.get("evaluation_protocol") != record.evaluation_protocol
+        ):
             continue
         score_version = summary.get("score_version")
         total_score = summary.get("total_score")
         values: Dict[str, str] = {}
-        complete = type(score_version) is int and score_version > 0 and not isinstance(total_score, bool)
+        complete = (
+            type(score_version) is int
+            and score_version > 0
+            and not isinstance(total_score, bool)
+        )
         for field in declared_fields:
             value = summary.get(field)
             if not isinstance(value, str) or not value.strip():
@@ -410,7 +566,11 @@ def _protocol_comparison_groups(
                 break
             value = value.strip()
             expected = protocol_definition.comparability_defaults.get(field)
-            if expected and expected not in _UNRESOLVED_PROTOCOL_VALUES and value != expected:
+            if (
+                expected
+                and expected not in _UNRESOLVED_PROTOCOL_VALUES
+                and value != expected
+            ):
                 complete = False
                 break
             if value in _UNRESOLVED_PROTOCOL_VALUES:
@@ -443,9 +603,13 @@ def _protocol_comparison_groups(
                             model=model_digest,
                             run_count=len(scored_runs),
                             mean_score=round(
-                                sum(score for score, _token in scored_runs) / len(scored_runs), 2
+                                sum(score for score, _token in scored_runs)
+                                / len(scored_runs),
+                                2,
                             ),
-                            best_score=round(max(score for score, _token in scored_runs), 2),
+                            best_score=round(
+                                max(score for score, _token in scored_runs), 2
+                            ),
                             best_token=max(scored_runs, key=lambda item: item[0])[1],
                         )
                         for model_digest, scored_runs in scores_by_model.items()
@@ -543,7 +707,9 @@ def _get_agent_factory(model: str) -> Callable[[], Agent]:
 
 
 @app.post("/runs", response_model=RunInfo)
-async def create_run(payload: RunCreateRequest, _: None = Depends(require_admin)) -> RunInfo:
+async def create_run(
+    payload: RunCreateRequest, _: None = Depends(require_admin)
+) -> RunInfo:
     loop = asyncio.get_running_loop()
 
     agent_factory = _get_agent_factory(payload.model)
@@ -562,7 +728,9 @@ async def create_run(payload: RunCreateRequest, _: None = Depends(require_admin)
 
     # Auto-create share token so run appears in public spectator view
     # Benchmark runs are public evidence: their share links must never rot.
-    RUN_REGISTRY.create_share(record.run_id, scope=["live", "replay", "export"], ttl_seconds=None)
+    RUN_REGISTRY.create_share(
+        record.run_id, scope=["live", "replay", "export"], ttl_seconds=None
+    )
 
     def _target() -> None:
         agent = agent_factory()
@@ -645,7 +813,9 @@ async def create_share(
         raise HTTPException(status_code=404, detail="Run not found")
     scope = body.scope or ["live", "replay", "export"]
     try:
-        share = RUN_REGISTRY.create_share(run_id, scope=scope, ttl_seconds=body.ttl_seconds)
+        share = RUN_REGISTRY.create_share(
+            run_id, scope=scope, ttl_seconds=body.ttl_seconds
+        )
     except KeyError as exc:  # pragma: no cover - guarded above
         raise HTTPException(status_code=404, detail="Run not found") from exc
     return {
@@ -656,7 +826,9 @@ async def create_share(
 
 
 @app.get("/runs/{run_id}/export/trace")
-async def export_trace(run_id: str, _: None = Depends(require_admin)) -> StreamingResponse:
+async def export_trace(
+    run_id: str, _: None = Depends(require_admin)
+) -> StreamingResponse:
     path = _artifacts_path(run_id)
     if not path.exists():
         raise HTTPException(status_code=404, detail="Trace not available")
@@ -718,8 +890,12 @@ async def public_overview(
     )
     return PublicOverview(
         generated_at=datetime.utcnow(),
-        active_runs=[_serialize_public(record, share) for record, share in active_items],
-        recent_runs=[_serialize_public(record, share) for record, share in recent_items],
+        active_runs=[
+            _serialize_public(record, share) for record, share in active_items
+        ],
+        recent_runs=[
+            _serialize_public(record, share) for record, share in recent_items
+        ],
         comparability_fields=_COMPARABILITY_FIELDS,
         comparison_groups=_comparison_groups(terminal_items),
     )
@@ -741,7 +917,9 @@ async def public_results(
         raise HTTPException(status_code=404, detail="Protocol not found")
     candidates, truncated = RUN_REGISTRY.list_public_for_protocol(evaluation_protocol)
     if truncated:
-        raise HTTPException(status_code=503, detail="Protocol cohort exceeds publication limit")
+        raise HTTPException(
+            status_code=503, detail="Protocol cohort exceeds publication limit"
+        )
     comparison_groups = _protocol_comparison_groups(candidates, protocol_definition)
     eligible_run_count = sum(
         result.run_count
@@ -768,7 +946,9 @@ async def public_results(
 async def public_protocols() -> List[PublicProtocol]:
     """List the public, allowlisted Fort-Eval profiles."""
 
-    return [PublicProtocol(**entry.to_public_dict()) for entry in list_public_protocols()]
+    return [
+        PublicProtocol(**entry.to_public_dict()) for entry in list_public_protocols()
+    ]
 
 
 @app.get("/public/protocols/{slug}", response_model=PublicProtocol)
@@ -820,7 +1000,9 @@ async def public_run_summary(token: str) -> PublicRunSummary:
     record = RUN_REGISTRY.get(share.run_id)
     if record is None:
         raise HTTPException(status_code=404, detail="Run not found")
-    latest_summary = record.latest_summary if isinstance(record.latest_summary, dict) else {}
+    latest_summary = (
+        record.latest_summary if isinstance(record.latest_summary, dict) else {}
+    )
     cost = latest_summary.get("cost")
     return PublicRunSummary(
         run=_serialize_public(record, share),
@@ -842,17 +1024,67 @@ async def public_run_preview(token: str) -> PublicRunPreview:
     return PublicRunPreview(**preview)
 
 
+@app.get("/public/runs/{token}/social-card.png", response_class=Response)
+async def public_run_social_card(token: str, request: Request) -> Response:
+    """Render a shareable card from public metadata and the bounded replay frame."""
+
+    share = _require_share(token, scope="replay")
+    if "export" not in share.scope:
+        raise HTTPException(status_code=404, detail="Not found")
+    record = RUN_REGISTRY.get(share.run_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail="Run not found")
+
+    try:
+        preview = read_trace_preview(_artifacts_path(share.run_id))
+    except FileNotFoundError:
+        preview = {
+            "step": record.step,
+            "screen_text": None,
+            "screen_status": "not_reported",
+            "inspected_records": 0,
+        }
+
+    from .social_cards import render_run_social_card
+
+    payload = await asyncio.to_thread(render_run_social_card, record, preview)
+    etag = f'"{hashlib.sha256(payload).hexdigest()}"'
+    cache_control = "private, no-store, max-age=0"
+    if request.headers.get("if-none-match") == etag:
+        return Response(
+            status_code=304,
+            headers={
+                "Cache-Control": cache_control,
+                "ETag": etag,
+                "X-Content-Type-Options": "nosniff",
+            },
+        )
+    return Response(
+        content=payload,
+        media_type="image/png",
+        headers={
+            "Cache-Control": cache_control,
+            "ETag": etag,
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
+
+
 @app.get("/public/runs/{token}/events/stream")
 async def public_stream(token: str, request: Request) -> StreamingResponse:
     share = _require_share(token, scope="live")
     queue = RUN_REGISTRY.get_queue(share.run_id)
     if queue is None:
         raise HTTPException(status_code=404, detail="Run not found")
-    return StreamingResponse(stream_queue(request, queue), media_type="text/event-stream")
+    return StreamingResponse(
+        stream_queue(request, queue), media_type="text/event-stream"
+    )
 
 
 @app.get("/public/runs/{token}/events/replay")
-async def public_replay(token: str, request: Request, speed: int = 4) -> StreamingResponse:
+async def public_replay(
+    token: str, request: Request, speed: int = 4
+) -> StreamingResponse:
     share = _require_share(token, scope="replay")
     path = _artifacts_path(share.run_id)
     if not path.exists():
@@ -955,7 +1187,9 @@ async def public_screenshot(token: str) -> JSONResponse:
 
 
 @app.post("/admin/keys")
-async def admin_keys(payload: AdminKeysRequest, _: None = Depends(require_admin)) -> JSONResponse:
+async def admin_keys(
+    payload: AdminKeysRequest, _: None = Depends(require_admin)
+) -> JSONResponse:
     """Send raw DF interface keys for manual admin control."""
     from ..config import get_settings
 

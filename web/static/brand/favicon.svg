@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Fort Labs">
+  <rect width="64" height="64" fill="#071009"/>
+  <rect width="64" height="5" fill="#b9f34a"/>
+  <path fill="#b9f34a" d="M17 15h34v9H28v8h19v9H28v17H17z"/>
+</svg>

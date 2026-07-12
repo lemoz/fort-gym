@@ -165,6 +165,13 @@ def test_static_assets_are_served() -> None:
     assert response.content[:8] == b"\x89PNG\r\n\x1a\n"
 
 
+def test_replay_keeps_server_rendered_social_title() -> None:
+    html = Path("web/index.html").read_text(encoding="utf-8")
+
+    assert "document.querySelector('meta[property=\"og:title\"]')" in html
+    assert "document.title = socialTitle?.content" in html
+
+
 def test_replay_ticks_show_labeled_delta_and_monotonic_total() -> None:
     html = Path("web/index.html").read_text(encoding="utf-8")
 

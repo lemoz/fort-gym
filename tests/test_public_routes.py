@@ -20,6 +20,7 @@ def test_public_routes_exist() -> None:
     assert "/public/runs/{token}" in paths
     assert "/public/runs/{token}/summary" in paths
     assert "/public/runs/{token}/preview" in paths
+    assert "/public/runs/{token}/social-card.png" in paths
     assert "/public/runs/{token}/events/stream" in paths
     assert "/public/runs/{token}/events/replay" in paths
 
@@ -29,12 +30,15 @@ def test_public_html_entrypoints_are_not_cached() -> None:
 
     client = TestClient(app)
 
-    for path in ("/", "/r/example-token", "/replay/example-token", "/leaderboard"):
+    for path in ("/", "/live", "/leaderboard"):
         response = client.get(path)
 
         assert response.status_code == 200
         assert response.headers["Cache-Control"] == "no-store, max-age=0"
         assert response.headers["Pragma"] == "no-cache"
+
+    assert client.get("/r/example-token").status_code == 404
+    assert client.get("/replay/example-token", follow_redirects=False).status_code == 404
 
 
 def test_public_screenshot_recovers_stale_dfhack_client(monkeypatch) -> None:
