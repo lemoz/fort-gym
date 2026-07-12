@@ -267,9 +267,6 @@ def _resolve_loadable_save_name(
     """Resolve DF's canonical save folder after startup consumes a staging alias."""
 
     runtime_world = saves_dir / runtime_name / "world.sav"
-    if _path_is_file(runtime_world):
-        return runtime_name
-
     seed_world = seed_dir / "world.sav"
     if not _path_is_file(seed_world):
         raise SeedResetError(f"Seed save lacks world.sav: {seed_world}")
@@ -284,13 +281,19 @@ def _resolve_loadable_save_name(
         if _files_equal(seed_world, candidate_world):
             matches.append(candidate.name)
 
-    if len(matches) == 1:
-        return matches[0]
-    if not matches:
+    canonical_matches = [name for name in matches if name != runtime_name]
+    if len(canonical_matches) == 1:
+        return canonical_matches[0]
+    if len(canonical_matches) > 1:
         raise SeedResetError(
-            f"DF did not expose a loadable copy of seed {seed_dir.name!r} after restart"
+            f"Ambiguous canonical save for seed {seed_dir.name!r}: "
+            f"{sorted(canonical_matches)}"
         )
-    raise SeedResetError(f"Ambiguous canonical save for seed {seed_dir.name!r}: {sorted(matches)}")
+    if runtime_name in matches or _path_is_file(runtime_world):
+        return runtime_name
+    raise SeedResetError(
+        f"DF did not expose a loadable copy of seed {seed_dir.name!r} after restart"
+    )
 
 
 def _wait_for_map_loaded(*, timeout_s: float) -> None:
