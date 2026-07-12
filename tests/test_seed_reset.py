@@ -171,6 +171,28 @@ def test_resolve_loadable_save_name_uses_runtime_folder_when_world_remains(tmp_p
     )
 
 
+def test_resolve_loadable_save_name_prefers_single_canonical_duplicate(tmp_path):
+    from fort_gym.bench.run import seed_reset
+
+    seed_dir = tmp_path / "seed_region3_fresh"
+    saves_dir = tmp_path / "save"
+    seed_dir.mkdir()
+    (seed_dir / "world.sav").write_bytes(b"fresh-world")
+    for name in ("region1", "region3"):
+        candidate = saves_dir / name
+        candidate.mkdir(parents=True)
+        (candidate / "world.sav").write_bytes(b"fresh-world")
+
+    assert (
+        seed_reset._resolve_loadable_save_name(
+            seed_dir,
+            saves_dir=saves_dir,
+            runtime_name="region1",
+        )
+        == "region3"
+    )
+
+
 def test_resolve_loadable_save_name_finds_dfs_canonical_folder(tmp_path):
     from fort_gym.bench.run import seed_reset
 
