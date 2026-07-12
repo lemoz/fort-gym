@@ -834,6 +834,76 @@ class RunRegistry:
             items.append((self._row_to_runinfo(run_row), share))
         return items
 
+    def list_public_for_protocol(
+        self, evaluation_protocol: str, *, limit: int = 5000
+    ) -> Tuple[list[Tuple[RunInfo, ShareToken]], bool]:
+        """Return a bounded public cohort for one exact protocol label."""
+
+        self._ensure_conn()
+        now = datetime.utcnow().isoformat()
+        read_conn = sqlite3.connect(
+            f"{self._db_path().resolve().as_uri()}?mode=ro", uri=True, timeout=1.0
+        )
+        read_conn.row_factory = sqlite3.Row
+        try:
+            read_conn.execute("PRAGMA query_only = ON")
+            rows = read_conn.execute(
+                """
+                WITH protocol_runs AS (
+                    SELECT r.*
+                      FROM runs r
+                     WHERE r.evaluation_protocol = ?
+                       AND EXISTS (
+                           SELECT 1
+                             FROM shares active_share
+                            WHERE active_share.run_id = r.run_id
+                              AND (
+                                  active_share.expires_at IS NULL
+                                  OR active_share.expires_at > ?
+                              )
+                       )
+                     ORDER BY r.run_id
+                     LIMIT ?
+                )
+                SELECT
+                  r.*,
+                  s.token AS share_token,
+                  s.scope_json AS share_scope_json,
+                  s.expires_at AS share_expires_at,
+                  s.created_at AS share_created_at
+                  FROM protocol_runs r
+                  JOIN shares s ON s.run_id = r.run_id
+                 WHERE s.expires_at IS NULL OR s.expires_at > ?
+                """,
+                (evaluation_protocol, now, int(limit) + 1, now),
+            ).fetchall()
+        finally:
+            read_conn.close()
+
+        grouped: Dict[str, Tuple[sqlite3.Row, list[ShareToken]]] = {}
+        for row in rows:
+            run_id = str(row["run_id"])
+            share = ShareToken(
+                token=str(row["share_token"]),
+                run_id=run_id,
+                scope=set(json.loads(row["share_scope_json"])),
+                expires_at=_dt_from_iso(row["share_expires_at"]),
+                created_at=_dt_from_iso(row["share_created_at"]) or datetime.utcnow(),
+            )
+            item = grouped.get(run_id)
+            if item is None:
+                grouped[run_id] = (row, [share])
+            else:
+                item[1].append(share)
+
+        truncated = len(grouped) > limit
+        items: list[Tuple[RunInfo, ShareToken]] = []
+        for run_row, shares in list(grouped.values())[:limit]:
+            share = self._select_share(shares)
+            if share is not None:
+                items.append((self._row_to_runinfo(run_row), share))
+        return items, truncated
+
     def list_public_page(
         self,
         *,

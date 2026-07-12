@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Results | Fort Labs</title>
+<meta name="description" content="Protocol-scoped Fort-Eval results and the recorded Dwarf Fortress runs behind every comparison.">
+<link rel="stylesheet" href="/static/fort-labs.css?v=20260711-2">
+<style>
+  .results-hero { padding: 58px 0 42px; border-bottom: 1px solid var(--line); }
+  .results-hero-grid { display: grid; grid-template-columns: 1.25fr .75fr; gap: 70px; align-items: end; }
+  .results-contract { border-top: 1px solid var(--line); }
+  .contract-row { display: grid; grid-template-columns: .8fr 1.2fr; gap: 20px; padding: 15px 0; border-bottom: 1px solid var(--line); }
+  .contract-key { color: var(--muted); font: 700 9px/1.3 var(--mono); text-transform: uppercase; }
+  .contract-value { text-align: right; font: 700 11px/1.3 var(--mono); }
+  .results-band { background: var(--coal); border-bottom: 1px solid var(--line); }
+  .results-band-grid { grid-template-columns: 1.2fr repeat(3, .65fr); }
+  .cohort-layout { display: grid; grid-template-columns: .72fr 1.28fr; gap: 52px; align-items: start; }
+  .cohort-state { padding: 24px 0; border-block: 1px solid var(--line); }
+  .cohort-state strong { display: block; margin-bottom: 8px; color: var(--acid); font-size: 20px; }
+  .cohort-state p { margin: 0; color: var(--muted); }
+  .group-block { margin-bottom: 28px; border-top: 1px solid var(--line); }
+  .group-key { padding: 14px 0; color: var(--cyan); font: 650 10px/1.5 var(--mono); overflow-wrap: anywhere; }
+  .archive-band { display: grid; grid-template-columns: 1fr auto; gap: 48px; align-items: end; }
+  .run-evidence-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 32px; }
+  .evidence-run { min-width: 0; border: 1px solid var(--line); background: var(--coal); color: inherit; text-decoration: none; }
+  .evidence-media { aspect-ratio: 16 / 9; border: 0; border-bottom: 1px solid var(--line); }
+  .evidence-meta { display: flex; justify-content: space-between; gap: 14px; padding: 12px; }
+  .evidence-model { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 11px/1.3 var(--mono); }
+  .evidence-score { color: var(--acid); font: 700 11px/1.3 var(--mono); }
+  @media (max-width: 900px) {
+    .results-hero-grid, .cohort-layout, .archive-band { grid-template-columns: 1fr; }
+    .results-band-grid { grid-template-columns: 1fr 1fr; }
+    .run-evidence-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 640px) {
+    .results-hero { padding-top: 40px; }
+    .contract-row { grid-template-columns: 1fr; gap: 5px; }
+    .contract-value { text-align: left; }
+    .fl-table { min-width: 680px; }
+  }
+</style>
+</head>
+<body>
+<header class="fl-header">
+  <div class="fl-wrap fl-nav">
+    <a class="fl-brand" href="/"><span>FORT</span> LABS</a>
+    <nav class="fl-nav-links" aria-label="Primary navigation">
+      <a href="/">Home</a><a href="/results" aria-current="page">Results</a><a href="/protocols">Protocols</a><a href="/worlds">Runs</a><a href="/#evidence">Findings</a><a href="/#about">About</a><a class="fl-live-link" href="/live"><span class="fl-status-dot" id="nav-live-dot"></span><span id="nav-live-label">No live run</span></a>
+    </nav>
+    <button class="fl-menu-button" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="fl-mobile-menu" data-fl-menu-button>☰</button>
+  </div>
+</header>
+<nav class="fl-mobile-menu" id="fl-mobile-menu" aria-label="Mobile navigation" aria-hidden="true" data-fl-mobile-menu data-open="false">
+  <a href="/">Home <span>01</span></a><a href="/results">Results <span>02</span></a><a href="/protocols">Protocols <span>03</span></a><a href="/worlds">Runs <span>04</span></a><a href="/#evidence">Findings <span>05</span></a><a href="/#about">About <span>06</span></a>
+</nav>
+
+<main>
+  <section class="results-hero" aria-labelledby="results-title">
+    <div class="fl-wrap results-hero-grid">
+      <div>
+        <div class="fl-eyebrow">Fort-Eval results</div>
+        <h1 class="fl-title" id="results-title">See what each model builds when the world keeps moving.</h1>
+        <p class="fl-copy">Every result belongs to one declared protocol and opens into the gameplay behind it.</p>
+      </div>
+      <div class="results-contract" aria-label="Current result field">
+        <div class="contract-row"><div class="contract-key">Profile</div><div class="contract-value">Easy v1</div></div>
+        <div class="contract-row"><div class="contract-key">Pilot</div><div class="contract-value">P0 substrate</div></div>
+        <div class="contract-row"><div class="contract-key">Ranking</div><div class="contract-value">Provisional only</div></div>
+        <div class="contract-row"><div class="contract-key">Protocol</div><div class="contract-value">fort-eval-easy-v1</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="results-band" aria-label="Result field summary">
+    <div class="fl-wrap fl-data-grid results-band-grid">
+      <div class="fl-data-cell"><div class="fl-data-label">Field</div><div class="fl-data-value">Experimental comparisons</div></div>
+      <div class="fl-data-cell"><div class="fl-data-label">Candidate runs</div><div class="fl-data-value" id="candidate-count">--</div></div>
+      <div class="fl-data-cell"><div class="fl-data-label">Eligible runs</div><div class="fl-data-value fl-data-value-acid" id="eligible-count">--</div></div>
+      <div class="fl-data-cell"><div class="fl-data-label">Comparable groups</div><div class="fl-data-value" id="group-count">--</div></div>
+    </div>
+  </section>
+
+  <section class="fl-section" aria-labelledby="cohort-title">
+    <div class="fl-wrap cohort-layout">
+      <div>
+        <div class="fl-eyebrow">One protocol / one field</div>
+        <h2 class="fl-title" id="cohort-title">The ranked table begins with a frozen world.</h2>
+        <p class="fl-copy">Shared worlds, prompts, memory, interfaces, models, code, and evaluator versions define one complete Easy v1 field.</p>
+        <a class="fl-link" href="/protocols/fort-eval-easy-v1">Open Easy v1 protocol →</a>
+      </div>
+      <div id="cohort-groups" aria-live="polite"><div class="fl-empty">Loading protocol-scoped results…</div></div>
+    </div>
+  </section>
+
+  <section class="fl-section fl-section-paper" aria-labelledby="archive-title">
+    <div class="fl-wrap archive-band">
+      <div><div class="fl-eyebrow">Earlier experiments</div><h2 class="fl-title" id="archive-title">The score archive keeps its original context.</h2><p class="fl-copy">Explore earlier score versions and seed lanes in the historical dashboard. They remain separate from Fort-Eval cohorts.</p></div>
+      <a class="fl-btn" href="/leaderboard">Open historical dashboard →</a>
+    </div>
+  </section>
+
+  <section class="fl-section" aria-labelledby="evidence-title">
+    <div class="fl-wrap">
+      <div class="fl-eyebrow">Protocol evidence</div>
+      <h2 class="fl-title" id="evidence-title">Every score tells a story you can replay.</h2>
+      <p class="fl-copy">Each replay here is selected directly from the protocol field above.</p>
+      <div class="run-evidence-grid" id="run-evidence"><div class="fl-empty">Loading protocol evidence…</div></div>
+    </div>
+  </section>
+</main>
+
+<footer class="fl-footer">
+  <div class="fl-wrap fl-footer-grid">
+    <div><div class="fl-footer-mark"><span>FORT</span> LABS</div><p class="fl-footer-copy">Worlds for long-horizon intelligence. Results lead back to gameplay.</p></div>
+    <div><div class="fl-footer-title">Explore</div><div class="fl-footer-links"><a href="/results">Results</a><a href="/protocols">Protocols</a><a href="/worlds">Runs</a></div></div>
+    <div><div class="fl-footer-title">Research</div><div class="fl-footer-links"><a href="https://github.com/lemoz/fort-gym/blob/main/docs/FORT_EVAL_SPEC.md">Methodology</a><a href="https://github.com/lemoz/fort-gym">GitHub</a></div></div>
+    <div><div class="fl-footer-title">Archive</div><div class="fl-footer-links"><a href="/leaderboard">Historical dashboard</a><a href="/worlds">Recorded worlds</a></div></div>
+  </div>
+</footer>
+
+<script src="/static/fort-labs.js?v=20260711-2"></script>
+<script>
+(function () {
+  'use strict';
+  const FL = window.FortLabs;
+  const $ = id => document.getElementById(id);
+  FL.initShell();
+
+  function keyText(key) {
+    return Object.entries(key || {}).map(([name, value]) => `${name}=${value ?? 'not reported'}`).join(' · ');
+  }
+
+  function renderGroups(payload) {
+    const groups = Array.isArray(payload.comparison_groups) ? payload.comparison_groups : [];
+    $('candidate-count').textContent = payload.candidate_run_count ?? 0;
+    $('eligible-count').textContent = payload.eligible_run_count ?? 0;
+    $('group-count').textContent = groups.length;
+    if (!groups.length) {
+      $('cohort-groups').innerHTML = `<div class="cohort-state"><strong>The first frozen field starts here.</strong><p>Easy v1 is in its substrate stage. The table opens when completed, replayable runs carry the full declared field.</p></div>`;
+      return;
+    }
+    $('cohort-groups').innerHTML = groups.map(group => `<div class="group-block"><div class="group-key">${FL.escapeHtml(keyText(group.comparability))}</div><div class="fl-table-shell"><table class="fl-table"><thead><tr><th>Model</th><th>Runs</th><th>Mean</th><th>Best</th><th>Gameplay</th></tr></thead><tbody>${(group.model_results || []).map(row => `<tr><td><strong>${FL.escapeHtml(row.model)}</strong></td><td class="fl-mono">${FL.escapeHtml(row.run_count)}</td><td class="fl-mono">${FL.escapeHtml(FL.formatNumber(row.mean_score))}</td><td class="fl-mono">${FL.escapeHtml(FL.formatNumber(row.best_score))}</td><td>${row.best_token ? `<a class="fl-link" href="/r/${encodeURIComponent(row.best_token)}">Watch →</a>` : 'Not reported'}</td></tr>`).join('')}</tbody></table></div></div>`).join('');
+  }
+
+  function renderEvidence(items) {
+    const runs = (items || []).slice(0, 3);
+    if (!runs.length) {
+      $('run-evidence').innerHTML = '<div class="fl-empty">No replayable worlds are published yet.</div>';
+      return;
+    }
+    $('run-evidence').innerHTML = runs.map((run, index) => `<a class="evidence-run" href="${FL.runUrl(run)}"><div class="fl-media evidence-media"><canvas id="result-run-${index}"></canvas><div class="fl-media-source" id="result-source-${index}">Recorded frame</div></div><div class="evidence-meta"><div class="evidence-model">${FL.escapeHtml(run.model)}</div><div class="evidence-score">${FL.escapeHtml(FL.formatNumber(run.score))}</div></div></a>`).join('');
+    runs.forEach((run, index) => FL.loadRunFrame(run, $(`result-run-${index}`), $(`result-source-${index}`)));
+  }
+
+  async function loadEvidence(groups) {
+    const tokens = [...new Set(groups.flatMap(group => (group.model_results || []).map(row => row.best_token).filter(Boolean)))].slice(0, 3);
+    if (!tokens.length) {
+      $('run-evidence').innerHTML = '<div class="fl-empty">Protocol replay evidence will appear with the first complete field.</div>';
+      return;
+    }
+    const settled = await Promise.allSettled(tokens.map(token => FL.fetchJson(`/public/runs/${encodeURIComponent(token)}`)));
+    renderEvidence(settled.filter(item => item.status === 'fulfilled').map(item => item.value));
+  }
+
+  async function load() {
+    try {
+      const results = await FL.fetchJson('/public/results?evaluation_protocol=fort-eval-easy-v1');
+      const groups = Array.isArray(results.comparison_groups) ? results.comparison_groups : [];
+      renderGroups(results);
+      await loadEvidence(groups);
+    } catch (_) {
+      $('cohort-groups').innerHTML = '<div class="fl-empty">Protocol results are temporarily unavailable.</div>';
+      $('run-evidence').innerHTML = '<div class="fl-empty">Protocol replay evidence is temporarily unavailable.</div>';
+    }
+  }
+
+  load();
+})();
+</script>
+</body>
+</html>

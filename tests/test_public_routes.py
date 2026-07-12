@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from pathlib import Path
 import uuid
 
 from fastapi.testclient import TestClient
@@ -125,6 +126,10 @@ def test_public_overview_groups_only_protocol_scoped_model_results() -> None:
                     "rubric": {"rubric_score": 70},
                 },
             )
+            assert run.trace_path is not None
+            trace_path = Path(run.trace_path)
+            trace_path.parent.mkdir(parents=True, exist_ok=True)
+            trace_path.write_text('{"step": 0}\n', encoding="utf-8")
             RUN_REGISTRY.set_status(run.run_id, status="completed", ended_at=datetime.utcnow())
             official_run_ids.append(run.run_id)
             terminal_tokens.append(share.token)
@@ -144,6 +149,10 @@ def test_public_overview_groups_only_protocol_scoped_model_results() -> None:
             agent_b.run_id,
             {"evaluation_protocol": "fort-eval-v1", "total_score": 100.0, "score_version": 5},
         )
+        assert agent_b.trace_path is not None
+        agent_b_trace = Path(agent_b.trace_path)
+        agent_b_trace.parent.mkdir(parents=True, exist_ok=True)
+        agent_b_trace.write_text('{"step": 0}\n', encoding="utf-8")
         RUN_REGISTRY.set_status(agent_b.run_id, status="completed", ended_at=datetime.utcnow())
         official_run_ids.append(agent_b.run_id)
 

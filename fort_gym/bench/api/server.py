@@ -17,6 +17,8 @@ from fastapi.staticfiles import StaticFiles
 from ..agent.base import AGENT_FACTORIES, Agent, RandomAgent
 from ..config import get_settings
 from ..env.keystroke_exec import execute_keystroke_action
+from ..eval.protocol import EVALUATION_PROTOCOL_PATTERN
+from ..eval.public_protocols import get_public_protocol, list_public_protocols
 from ..run.jobs import JOB_REGISTRY
 from ..run.jobs import JobInfo as RegistryJobInfo
 from ..run.runner import run_once
@@ -33,6 +35,8 @@ from .schemas import (
     PublicComparisonGroup,
     PublicModelResult,
     PublicOverview,
+    PublicProtocol,
+    PublicResults,
     PublicRunPreview,
     PublicRunsPage,
     PublicRunSummary,
@@ -66,7 +70,7 @@ async def _rate_limit_middleware(request: Request, call_next):  # type: ignore[n
     if path == "/runs" or path.startswith("/runs/"):
         bucket = "runs"
 
-    if path == "/public/worlds":
+    if path in {"/public/worlds", "/public/results"}:
         bucket = "public_worlds"
 
     if bucket:
@@ -148,6 +152,26 @@ async def serve_leaderboard():
 async def serve_worlds():
     """Serve the public runs library."""
     return _html_file_response("worlds.html")
+
+
+@app.get("/results", response_class=FileResponse)
+async def serve_results():
+    """Serve the public results UI."""
+    return _html_file_response("results.html")
+
+
+@app.get("/protocols", response_class=FileResponse)
+async def serve_protocols():
+    """Serve the public protocol catalog UI."""
+    return _html_file_response("protocols.html")
+
+
+@app.get("/protocols/{slug}", response_class=FileResponse)
+async def serve_protocol_detail(slug: str):
+    """Serve the protocol detail UI; the client resolves the path slug."""
+    if get_public_protocol(slug) is None:
+        raise HTTPException(status_code=404, detail="Protocol not found")
+    return _html_file_response("protocols.html")
 
 
 # Bundled static assets (e.g. the CC BY 4.0 Oddball tileset used by the
@@ -257,7 +281,12 @@ def _comparison_groups(
         Tuple[str, str, str, int, str, int, int], Dict[str, List[Tuple[float, str]]]
     ] = {}
     for record, share in items:
-        if not {"replay", "export"}.issubset(share.scope):
+        if (
+            record.status != "completed"
+            or record.backend != "dfhack"
+            or not {"replay", "export"}.issubset(share.scope)
+            or not _has_replay_artifact(record.run_id)
+        ):
             continue
         summary = record.latest_summary
         if not isinstance(summary, dict):
@@ -310,6 +339,110 @@ def _comparison_groups(
                             best_token=max(scored_runs, key=lambda item: item[0])[1],
                         )
                         for model, scored_runs in scores_by_model.items()
+                    ],
+                    key=lambda result: (result.mean_score, result.model),
+                    reverse=True,
+                ),
+            )
+        )
+    return sorted(
+        response,
+        key=lambda group: (
+            group.comparability["score_version"],
+            group.comparability["evaluation_protocol"],
+        ),
+        reverse=True,
+    )
+
+
+_UNRESOLVED_PROTOCOL_VALUES = {
+    "resolved_at_run",
+    "unresolved_before_run",
+    "memory_window_variant",
+}
+
+
+def _has_replay_artifact(run_id: str) -> bool:
+    """Require a non-empty recorded trace before publishing result evidence."""
+
+    try:
+        return _artifacts_path(run_id).stat().st_size > 0
+    except OSError:
+        return False
+
+
+def _protocol_comparison_groups(
+    items: List[Tuple[RegistryRunInfo, ShareToken]],
+    protocol_definition: Any,
+) -> List[PublicComparisonGroup]:
+    """Build comparisons only from complete declared protocol provenance."""
+
+    declared_fields = list(protocol_definition.comparability_fields)
+    group_fields = [field for field in declared_fields if field != "model_digest"]
+    response_fields = ["evaluation_protocol", *group_fields, "score_version"]
+    groups: Dict[Tuple[object, ...], Dict[str, List[Tuple[float, str]]]] = {}
+
+    for record, share in items:
+        if (
+            record.status != "completed"
+            or record.backend != "dfhack"
+            or not {"replay", "export"}.issubset(share.scope)
+            or not _has_replay_artifact(record.run_id)
+        ):
+            continue
+        summary = record.latest_summary
+        if not isinstance(summary, dict) or summary.get("evaluation_protocol") != record.evaluation_protocol:
+            continue
+        score_version = summary.get("score_version")
+        total_score = summary.get("total_score")
+        values: Dict[str, str] = {}
+        complete = type(score_version) is int and score_version > 0 and not isinstance(total_score, bool)
+        for field in declared_fields:
+            value = summary.get(field)
+            if not isinstance(value, str) or not value.strip():
+                complete = False
+                break
+            value = value.strip()
+            expected = protocol_definition.comparability_defaults.get(field)
+            if expected and expected not in _UNRESOLVED_PROTOCOL_VALUES and value != expected:
+                complete = False
+                break
+            if value in _UNRESOLVED_PROTOCOL_VALUES:
+                complete = False
+                break
+            values[field] = value
+        if not complete or values.get("fort_gym_commit") != record.git_sha:
+            continue
+        try:
+            score = float(total_score)
+        except (TypeError, ValueError):
+            continue
+        key_values: Tuple[object, ...] = (
+            record.evaluation_protocol,
+            *(values[field] for field in group_fields),
+            score_version,
+        )
+        groups.setdefault(key_values, {}).setdefault(values["model_digest"], []).append(
+            (score, share.token)
+        )
+
+    response: List[PublicComparisonGroup] = []
+    for key, scores_by_model in groups.items():
+        response.append(
+            PublicComparisonGroup(
+                comparability=dict(zip(response_fields, key, strict=True)),
+                model_results=sorted(
+                    [
+                        PublicModelResult(
+                            model=model_digest,
+                            run_count=len(scored_runs),
+                            mean_score=round(
+                                sum(score for score, _token in scored_runs) / len(scored_runs), 2
+                            ),
+                            best_score=round(max(score for score, _token in scored_runs), 2),
+                            best_token=max(scored_runs, key=lambda item: item[0])[1],
+                        )
+                        for model_digest, scored_runs in scores_by_model.items()
                     ],
                     key=lambda result: (result.mean_score, result.model),
                     reverse=True,
@@ -586,8 +719,66 @@ async def public_overview(
     )
 
 
+@app.get("/public/results", response_model=PublicResults)
+async def public_results(
+    evaluation_protocol: str = Query(
+        ...,
+        min_length=1,
+        max_length=64,
+        pattern=EVALUATION_PROTOCOL_PATTERN,
+    ),
+) -> PublicResults:
+    """Return experimental, provenance-gated comparisons for one protocol."""
+
+    protocol_definition = get_public_protocol(evaluation_protocol)
+    if protocol_definition is None:
+        raise HTTPException(status_code=404, detail="Protocol not found")
+    candidates, truncated = RUN_REGISTRY.list_public_for_protocol(evaluation_protocol)
+    if truncated:
+        raise HTTPException(status_code=503, detail="Protocol cohort exceeds publication limit")
+    comparison_groups = _protocol_comparison_groups(candidates, protocol_definition)
+    eligible_run_count = sum(
+        result.run_count
+        for group in comparison_groups
+        for result in group.model_results
+    )
+    candidate_run_count = len(candidates)
+    return PublicResults(
+        generated_at=datetime.utcnow(),
+        protocol=evaluation_protocol,
+        comparability_fields=[
+            "evaluation_protocol",
+            *protocol_definition.comparability_fields,
+            "score_version",
+        ],
+        candidate_run_count=candidate_run_count,
+        eligible_run_count=eligible_run_count,
+        excluded_run_count=candidate_run_count - eligible_run_count,
+        comparison_groups=comparison_groups,
+    )
+
+
+@app.get("/public/protocols", response_model=List[PublicProtocol])
+async def public_protocols() -> List[PublicProtocol]:
+    """List the public, allowlisted Fort-Eval profiles."""
+
+    return [PublicProtocol(**entry.to_public_dict()) for entry in list_public_protocols()]
+
+
+@app.get("/public/protocols/{slug}", response_model=PublicProtocol)
+async def public_protocol(slug: str) -> PublicProtocol:
+    """Return one public-safe protocol definition."""
+
+    entry = get_public_protocol(slug)
+    if entry is None:
+        raise HTTPException(status_code=404, detail="Protocol not found")
+    return PublicProtocol(**entry.to_public_dict())
+
+
 @app.get("/public/leaderboard")
-async def public_leaderboard(limit: int = 50) -> List[Dict[str, object]]:
+async def public_leaderboard(
+    limit: int = Query(default=50, ge=1, le=5000),
+) -> List[Dict[str, object]]:
     return RUN_REGISTRY.public_leaderboard(limit)
 
 

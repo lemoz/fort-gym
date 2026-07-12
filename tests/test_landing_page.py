@@ -25,6 +25,8 @@ def test_landing_page_is_gameplay_first_fort_labs_surface() -> None:
     assert "FL.loadRunFrame" in html
     assert "/export/trace" not in html
     assert 'href="/worlds"' in html
+    assert 'href="/results"' in html
+    assert 'href="/protocols"' in html
     assert "Results belong to protocols" not in html
     assert "A run is a trace, not a claim" not in html
 
@@ -59,6 +61,37 @@ def test_shared_fort_labs_assets_define_truthful_media_states() -> None:
     assert "button.focus()" in js
 
 
+def test_results_page_uses_protocol_scoped_data_without_embedded_cohort_rows() -> None:
+    html = Path("web/results.html").read_text(encoding="utf-8")
+
+    assert "See what each model builds when the world keeps moving" in html
+    assert "/public/results?evaluation_protocol=fort-eval-easy-v1" in html
+    assert "payload.comparison_groups" in html
+    assert "/public/leaderboard" not in html
+    assert "/public/worlds?limit=3" not in html
+    assert "The score archive keeps its original context" in html
+    assert "selected directly from the protocol field above" in html
+    assert "Every score tells a story you can replay" in html
+    assert "GPT-5" not in html
+    assert "Claude" not in html
+    assert "Gemini" not in html
+
+
+def test_protocol_pages_render_only_public_catalog_data() -> None:
+    html = Path("web/protocols.html").read_text(encoding="utf-8")
+
+    assert "The world through the agent’s eyes" in html
+    assert "One protocol. The same challenge for every model" in html
+    assert "FL.fetchJson('/public/protocols')" in html
+    assert "/public/protocols/${encodeURIComponent(slug)}" in html
+    assert "protocol.result_status" in html
+    assert "protocol.observer_firewall" in html
+    assert "protocol.comparability_fields" in html
+    assert "GPT-5" not in html
+    assert "Claude" not in html
+    assert "Gemini" not in html
+
+
 def test_replay_viewer_requires_live_scope_before_live_mode() -> None:
     html = Path("web/index.html").read_text(encoding="utf-8")
 
@@ -81,6 +114,10 @@ def test_root_serves_landing_and_public_entrypoints() -> None:
         server.serve_short_visual_replay
     )
     assert 'return _html_file_response("worlds.html")' in inspect.getsource(server.serve_worlds)
+    assert 'return _html_file_response("results.html")' in inspect.getsource(server.serve_results)
+    assert 'return _html_file_response("protocols.html")' in inspect.getsource(
+        server.serve_protocols
+    )
 
 
 def test_public_pages_and_shared_assets_are_served() -> None:
@@ -91,6 +128,9 @@ def test_public_pages_and_shared_assets_are_served() -> None:
     client = TestClient(server.app)
     assert client.get("/").status_code == 200
     assert client.get("/worlds").status_code == 200
+    assert client.get("/results").status_code == 200
+    assert client.get("/protocols").status_code == 200
+    assert client.get("/protocols/fort-eval-easy-v1").status_code == 200
     assert client.get("/static/fort-labs.css").status_code == 200
     assert client.get("/static/fort-labs.js").status_code == 200
 
