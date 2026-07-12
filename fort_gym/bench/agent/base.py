@@ -21,6 +21,10 @@ class Agent(ABC):
         """Return tool-call events emitted during the last decision step."""
         return []
 
+    def set_run_context(self, *, run_id: str) -> None:
+        """Attach stable, non-gameplay context for one benchmark run."""
+        return None
+
 
 class RandomAgent(Agent):
     """Random policy emitting syntactically valid actions."""

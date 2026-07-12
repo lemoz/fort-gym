@@ -23,6 +23,17 @@ surface.
 Anthropic agents are legacy and disabled unless `FORT_GYM_ENABLE_ANTHROPIC=1`.
 Experiments should run on OpenRouter models.
 
+The current frozen protocol is
+[`experiments/fort_eval_easy_p1_g7_v3.yaml`](../experiments/fort_eval_easy_p1_g7_v3.yaml):
+provisional Easy P1 G7-v3 on `seed_region3_fresh`, 200 steps, up to 2,500 ticks per
+step, score-v5, no knowledge, vision on, and memory off. The two declared arms
+are `dfhack-governed-llm-fable5` and `dfhack-governed-llm-gpt56-sol`. They share
+one benchmark-condition key; arm identity and provider routing are comparison
+identity, not alternate condition fields. Valid failures with complete,
+contamination-free evidence are publishable.
+The linked provider preflight changes the live observation between calls and
+requires cache reads plus a valid tool payload from both arms.
+
 ## Implemented Components
 
 ### Memory — `fort_gym/bench/agent/memory.py`
@@ -63,7 +74,10 @@ review-mode keystroke agents.
 - `runner.py`: `ExperimentRunner` executes a run and saves experiment metadata
   alongside the artifacts
 
-There are no `/experiments` API endpoints; the runner is Python/CLI-level.
+There are no `/experiments` API endpoints; the runner is Python/CLI-level. P1
+manifests still create registry-backed runs and permanent public share tokens,
+so their sequential CLI execution enters the same public evidence surface as a
+run launched through `POST /runs`.
 
 ### Trace analysis — `fort_gym/bench/eval/analyzer.py`
 

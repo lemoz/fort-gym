@@ -2062,7 +2062,7 @@ def test_vision_agent_attaches_minimap_image() -> None:
     )
 
     request = agent._client.chat.completions.requests[0]
-    content = request["messages"][1]["content"]
+    content = request["messages"][2]["content"]
     assert isinstance(content, list)
     kinds = [part.get("type") for part in content]
     assert kinds == ["text", "image_url"]
@@ -2081,6 +2081,99 @@ def test_vision_variants_registered_in_all_gates() -> None:
         assert name in get_args(ModelType)
         assert OPTIONAL_AGENT_MODULES[name] == "fort_gym.bench.agent.governed_llm"
         assert _is_keystroke_model(name) is False
+
+
+def test_frontier_p1_variants_are_pinned_in_all_gates(monkeypatch) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    try:
+        fable = AGENT_FACTORIES["dfhack-governed-llm-fable5"]()
+        sol = AGENT_FACTORIES["dfhack-governed-llm-gpt56-sol"]()
+    finally:
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    for name in ("dfhack-governed-llm-fable5", "dfhack-governed-llm-gpt56-sol"):
+        assert name in GOVERNED_DFHACK_MODELS
+        assert name in get_args(ModelType)
+        assert OPTIONAL_AGENT_MODULES[name] == "fort_gym.bench.agent.governed_llm"
+    assert fable._model == "anthropic/claude-fable-5"
+    assert fable._vision is True
+    assert fable._memory_path is None
+    assert fable._memory.window_size == 0
+    assert fable._max_tokens == 128000
+    assert fable._reasoning_effort == "max"
+    assert fable._prompt_cache == "explicit_ephemeral"
+    assert fable._omit_temperature is True
+    assert fable._max_advance_ticks == 2500
+    assert sol._model == "openai/gpt-5.6-sol"
+    assert sol._vision is True
+    assert sol._memory_path is None
+    assert sol._memory.window_size == 0
+    assert sol._max_tokens == 128000
+    assert sol._reasoning_effort == "max"
+    assert sol._prompt_cache == "automatic"
+    assert sol._max_advance_ticks == 2500
+
+
+@pytest.mark.parametrize(
+    ("model", "cache", "omit_temperature"),
+    [
+        ("anthropic/claude-fable-5", "explicit_ephemeral", True),
+        ("openai/gpt-5.6-sol", "automatic", False),
+    ],
+)
+def test_p1_request_policy_and_session_are_stable(
+    model: str, cache: str, omit_temperature: bool
+) -> None:
+    agent = DFHackGovernedLLMAgent(
+        api_key="test-key",
+        max_attempts=1,
+        memory_path=None,
+        model_override=model,
+        vision=True,
+        max_tokens=128000,
+        reasoning_effort="max",
+        prompt_cache=cache,
+        omit_temperature=omit_temperature,
+        max_advance_ticks=2500,
+    )
+    agent._client = _FakeClient(
+        [
+            _submit_action_response(
+                {"type": "WAIT", "params": {}, "intent": "one", "advance_ticks": 1000}
+            ),
+            _submit_action_response(
+                {"type": "WAIT", "params": {}, "intent": "two", "advance_ticks": 1000}
+            ),
+        ]
+    )
+    agent.set_run_context(run_id="run-p1")
+
+    agent.decide("obs one", {})
+    agent.decide("Last Action: accepted\nobs two", {})
+
+    first, second = agent._client.chat.completions.requests
+    assert first["model"] == model
+    assert first["max_tokens"] == 128000
+    assert first["tools"][0]["function"]["parameters"]["properties"]["advance_ticks"][
+        "maximum"
+    ] == 2500
+    assert first["extra_body"]["reasoning"] == {"effort": "max", "exclude": True}
+    assert first["extra_body"]["session_id"] == "fort-gym:run-p1"
+    assert second["extra_body"]["session_id"] == "fort-gym:run-p1"
+    if cache == "explicit_ephemeral":
+        assert first["messages"][0]["content"] == [
+            {
+                "type": "text",
+                "text": GOVERNED_SYSTEM_PROMPT,
+                "cache_control": {"type": "ephemeral"},
+            }
+        ]
+        assert "cache_control" not in first["extra_body"]
+    else:
+        assert first["messages"][0]["content"] == GOVERNED_SYSTEM_PROMPT
+        assert first["extra_body"]["prompt_cache_key"] == "fort-gym:run-p1"
+    assert ("temperature" not in first) is omit_temperature
 
 
 def test_glm5v_variant_has_governed_review_output_headroom(monkeypatch) -> None:
@@ -2212,3 +2305,46 @@ def test_max_tokens_override_reaches_the_request() -> None:
     agent.decide("obs", {})
 
     assert agent._client.chat.completions.requests[0]["max_tokens"] == 4096
+
+
+def test_openrouter_usage_event_records_cache_reasoning_cost_and_provider(monkeypatch) -> None:
+    response = _submit_action_response(
+        {"type": "WAIT", "params": {}, "intent": "observe", "advance_ticks": 1000}
+    )
+    response.id = "gen-test"
+    response.model = "openai/gpt-5.6-sol"
+    response.choices[0].finish_reason = "tool_calls"
+    response.usage.prompt_tokens_details = SimpleNamespace(
+        cached_tokens=4000,
+        cache_write_tokens=0,
+    )
+    response.usage.completion_tokens_details = SimpleNamespace(reasoning_tokens=1200)
+    response.usage.cost = 0.123
+    response.usage.cost_details = {"upstream_inference_cost": 0.09}
+    response.usage.is_byok = False
+    agent = _agent([response], model_override="openai/gpt-5.6-sol")
+    agent.set_run_context(run_id="usage-run")
+    monkeypatch.setattr(
+        agent,
+        "_generation_metadata",
+        lambda generation_id: {
+            "status": "available",
+            "provider_name": "OpenAI",
+            "total_cost": 0.123,
+        },
+    )
+
+    agent.decide("obs", {})
+
+    usage = next(
+        event
+        for event in agent.pop_tool_events()
+        if event["tool"] == "openrouter.chat.completions.create"
+    )
+    assert usage["input"]["session_id"] == "fort-gym:usage-run"
+    assert usage["output"]["generation_id"] == "gen-test"
+    assert usage["output"]["resolved_model"] == "openai/gpt-5.6-sol"
+    assert usage["output"]["cached_tokens"] == 4000
+    assert usage["output"]["reasoning_tokens"] == 1200
+    assert usage["output"]["cost"] == pytest.approx(0.123)
+    assert usage["output"]["generation"]["provider_name"] == "OpenAI"

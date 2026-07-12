@@ -363,21 +363,30 @@ class DFHackClient:
         *,
         interrupt_on_viewscreen_transition: bool = False,
         viewscreen_before: str | None = None,
+        max_advance_ticks: int | None = None,
     ) -> Dict[str, Any]:
         self._ensure_connection()
         if ticks <= 0:
             self._last_tick_info = {"ok": False, "error": "invalid_ticks"}
             return self.get_state()
 
+        limit_options = (
+            {"max_advance_ticks": max_advance_ticks}
+            if max_advance_ticks is not None
+            else {}
+        )
         if interrupt_on_viewscreen_transition:
             tick_info = advance_ticks_exact(
                 int(ticks),
                 repause=True,
                 interrupt_on_viewscreen_transition=True,
                 viewscreen_before=viewscreen_before,
+                **limit_options,
             )
         else:
-            tick_info = advance_ticks_exact(int(ticks), repause=True)
+            tick_info = advance_ticks_exact(
+                int(ticks), repause=True, **limit_options
+            )
         self._last_tick_info = dict(tick_info) if isinstance(tick_info, dict) else tick_info
 
         return self.get_state()

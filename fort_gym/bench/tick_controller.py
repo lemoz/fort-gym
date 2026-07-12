@@ -13,7 +13,10 @@ from .dfhack_exec import (
     run_dfhack,
     set_paused,
 )
-from .env.actions import INTERACT_ALLOWED_VIEWSCREEN_TYPES
+from .env.actions import (
+    ABSOLUTE_MAX_ADVANCE_TICKS,
+    INTERACT_ALLOWED_VIEWSCREEN_TYPES,
+)
 from .env.keystroke_exec import execute_keystroke_action
 from .tick_receipt import (
     GOVERNED_POSITIVE_TICK_BASELINE_VIEWSCREEN_TYPE,
@@ -93,6 +96,7 @@ def advance_ticks_exact_external(
     *,
     interrupt_on_viewscreen_transition: bool = False,
     viewscreen_before: str | None = None,
+    max_advance_ticks: int = MAX_ADVANCE_TICKS,
 ) -> Dict[str, object]:
     """Advance a bounded number of ticks using atomic DF calendar samples."""
 
@@ -102,7 +106,13 @@ def advance_ticks_exact_external(
         return {"ok": False, "error": "invalid_ticks"}
     if want <= 0:
         return {"ok": False, "error": "invalid_ticks"}
-    want = min(want, MAX_ADVANCE_TICKS)
+    try:
+        effective_max = int(max_advance_ticks)
+    except (TypeError, ValueError):
+        return {"ok": False, "error": "invalid_max_advance_ticks"}
+    if effective_max <= 0 or effective_max > ABSOLUTE_MAX_ADVANCE_TICKS:
+        return {"ok": False, "error": "invalid_max_advance_ticks"}
+    want = min(want, effective_max)
     if interrupt_on_viewscreen_transition and repause is not True:
         return {
             "ok": False,

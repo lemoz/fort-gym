@@ -1880,6 +1880,23 @@ def test_clean_interruption_receipt_uses_request_overshoot_allowance(
         assert terminal["attestation_error"] == terminal_error
 
 
+def test_tick_request_rewrite_fails_attestation() -> None:
+    tick_info: Dict[str, Any] = {
+        "ok": True,
+        "requested": 2000,
+        "ticks_advanced": 2000,
+    }
+
+    terminal, degraded, streak = _tick_terminal_reason(2500, tick_info, 0)
+
+    assert terminal is not None
+    assert terminal["code"] == "tick_request_attestation_failed"
+    assert terminal["requested_ticks"] == 2500
+    assert terminal["controller_requested_ticks"] == 2000
+    assert degraded is None
+    assert streak == 0
+
+
 def test_summary_calendar_fallback_uses_exact_g7_rollover_duration(tmp_path) -> None:
     trace_path = tmp_path / "trace.jsonl"
     trace_path.write_text(

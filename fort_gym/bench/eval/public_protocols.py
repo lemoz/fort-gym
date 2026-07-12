@@ -34,15 +34,25 @@ class PublicProtocolDefinition:
     comparability_defaults: dict[str, str]
     ranking: str
     pilot_state: str
+    requires_public_eligibility: bool = False
 
     def to_public_dict(self) -> dict[str, object]:
         result = asdict(self)
         result.pop("comparability_defaults")
+        result.pop("requires_public_eligibility")
         return result
 
 
 def _manifest_path() -> Path:
     return Path(__file__).resolve().parents[3] / "experiments" / "fort_eval_easy_v1.yaml"
+
+
+def _p1_manifest_path() -> Path:
+    return (
+        Path(__file__).resolve().parents[3]
+        / "experiments"
+        / "fort_eval_easy_p1_g7_v3.yaml"
+    )
 
 
 def _required_mapping(data: dict[str, Any], key: str) -> dict[str, Any]:
@@ -124,6 +134,88 @@ def _easy_protocol() -> PublicProtocolDefinition:
     )
 
 
+def _p1_protocol() -> PublicProtocolDefinition:
+    with _p1_manifest_path().open(encoding="utf-8") as handle:
+        manifest = yaml.safe_load(handle)
+    if not isinstance(manifest, dict):
+        raise RuntimeError("P1 protocol manifest must be a mapping")
+
+    program = _required_mapping(manifest, "program")
+    task = _required_mapping(manifest, "task")
+    condition = _required_mapping(manifest, "benchmark_condition")
+    observation = _required_mapping(condition, "observation")
+    action = _required_mapping(condition, "action")
+    knowledge = _required_mapping(condition, "knowledge")
+    memory = _required_mapping(condition, "memory")
+    budget = _required_mapping(condition, "budget")
+
+    return PublicProtocolDefinition(
+        slug=str(manifest["manifest_id"]),
+        name=str(manifest["name"]),
+        profile=str(program["profile"]),
+        profile_version=str(program["profile_version"]),
+        status=str(manifest["status"]),
+        result_status=(
+            "Provisional P1 fixed-seed results. Eligible completed runs report "
+            "G7 pass, fail, or unknown outcomes; no ranked results."
+        ),
+        summary=str(manifest["description"]),
+        interface={
+            "observation": str(observation["profile"]),
+            "actions": str(action["profile"]),
+        },
+        actions=["legal semantic DFHack actions"],
+        observation_bounds={
+            "vision": "enabled" if observation.get("vision_enabled") else "disabled",
+            "budget": (
+                f"{budget['max_steps']} steps; {budget['ticks_per_step']} ticks per step; "
+                f"{budget['max_ticks']} ticks maximum"
+            ),
+        },
+        knowledge={
+            "condition": str(knowledge["condition"]),
+            "documents": "allowed" if knowledge.get("documents_allowed") else "not allowed",
+            "live_web": "allowed" if knowledge.get("live_web_allowed") else "not allowed",
+        },
+        observer_firewall="Observer maps remain outside agent input.",
+        comparability_fields=[
+            "task_id",
+            "task_version",
+            "seed_split",
+            "mechanics_digest",
+            "observation_digest",
+            "action_digest",
+            "budget_digest",
+            "model_digest",
+            "prompt_digest",
+            "memory_digest",
+            "fort_gym_commit",
+            "df_version",
+            "evaluator_version",
+        ],
+        comparability_defaults={
+            "task_id": str(task["task_id"]),
+            "task_version": str(task["task_version"]),
+            "seed_split": str(task["seed_split"]),
+            "mechanics_digest": "df-51.11+governed-semantic-dfhack-v1",
+            "observation_digest": "governed_structured_state_v1+fort_minimap_vision_v1",
+            "action_digest": str(action["profile"]),
+            "budget_digest": (
+                f"max_steps_{budget['max_steps']}_ticks_per_step_{budget['ticks_per_step']}"
+            ),
+            "model_digest": "resolved_at_run",
+            "prompt_digest": "resolved_at_run",
+            "memory_digest": "memory_off" if memory.get("mode") == "off" else str(memory["mode"]),
+            "fort_gym_commit": "resolved_at_run",
+            "df_version": "df-51.11",
+            "evaluator_version": "score-v5+g7-v3",
+        },
+        ranking="Provisional only; P1 does not establish a model ranking.",
+        pilot_state="P1 Easy fixed-seed discovery; P0 substrate remains separately published.",
+        requires_public_eligibility=True,
+    )
+
+
 def _future_protocols() -> tuple[PublicProtocolDefinition, PublicProtocolDefinition]:
     hard = PublicProtocolDefinition(
         slug="fort-eval-hard-v1",
@@ -197,8 +289,9 @@ def _future_protocols() -> tuple[PublicProtocolDefinition, PublicProtocolDefinit
 @lru_cache(maxsize=1)
 def _catalog() -> dict[str, PublicProtocolDefinition]:
     easy = _easy_protocol()
+    p1 = _p1_protocol()
     hard, discovery = _future_protocols()
-    return {entry.slug: entry for entry in (easy, hard, discovery)}
+    return {entry.slug: entry for entry in (easy, p1, hard, discovery)}
 
 
 def list_public_protocols() -> list[PublicProtocolDefinition]:

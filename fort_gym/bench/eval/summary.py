@@ -104,6 +104,26 @@ class RunSummary(BaseModel):
     rubric: Dict[str, Any] = Field(default_factory=dict)
     milestones: List[Dict[str, Any]] = Field(default_factory=list)
     scenario_assertions: List[Dict[str, Any]] = Field(default_factory=list)
+    usage: Dict[str, Any] = Field(default_factory=dict)
+    g7: Dict[str, Any] = Field(default_factory=dict)
+    task_verdict: Optional[str] = None
+    public_eligibility: Optional[str] = None
+    public_label: Optional[str] = None
+    seed_attestation: Dict[str, Any] = Field(default_factory=dict)
+    integrity_attestation: Dict[str, Any] = Field(default_factory=dict)
+    task_id: Optional[str] = None
+    task_version: Optional[str] = None
+    seed_split: Optional[str] = None
+    mechanics_digest: Optional[str] = None
+    observation_digest: Optional[str] = None
+    action_digest: Optional[str] = None
+    budget_digest: Optional[str] = None
+    model_digest: Optional[str] = None
+    prompt_digest: Optional[str] = None
+    memory_digest: Optional[str] = None
+    fort_gym_commit: Optional[str] = None
+    df_version: Optional[str] = None
+    evaluator_version: Optional[str] = None
 
 
 def _model_dump(model: BaseModel) -> Dict[str, Any]:
@@ -736,6 +756,12 @@ def summarize(trace_path: Path) -> RunSummary:
         rubric=evaluate_trace_records(trace_records),
         milestones=milestones,
     )
+
+    from .gates import _model_usage, evaluate_g7
+
+    summary.usage = _model_usage(trace_records)
+    summary.g7 = evaluate_g7(trace_records, _model_dump(summary))
+    summary.task_verdict = str(summary.g7.get("status") or "unknown")
 
     summary_path = trace_path.with_name("summary.json")
     summary_path.write_text(json.dumps(_model_dump(summary), indent=2), encoding="utf-8")

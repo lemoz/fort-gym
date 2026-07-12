@@ -87,6 +87,45 @@ def test_advance_preserves_default_delegation_signature(monkeypatch) -> None:
     assert calls == [(15, {"repause": True})]
 
 
+def test_advance_threads_explicit_tick_limit(monkeypatch) -> None:
+    from fort_gym.bench.env import dfhack_client as client_module
+
+    calls: list[tuple[int, dict[str, Any]]] = []
+
+    class AdvancingClient(DFHackClient):
+        def _ensure_connection(self) -> None:
+            return
+
+        def get_state(self) -> dict[str, Any]:
+            return {"time": 100}
+
+    def fake_advance_ticks(ticks: int, **kwargs: Any) -> dict[str, Any]:
+        calls.append((ticks, kwargs))
+        return {"ok": True, "requested": ticks, "ticks_advanced": ticks}
+
+    monkeypatch.setattr(client_module, "advance_ticks_exact", fake_advance_ticks)
+
+    state = AdvancingClient().advance(
+        2500,
+        interrupt_on_viewscreen_transition=True,
+        viewscreen_before="viewscreen_dwarfmodest",
+        max_advance_ticks=2500,
+    )
+
+    assert state == {"time": 100}
+    assert calls == [
+        (
+            2500,
+            {
+                "repause": True,
+                "interrupt_on_viewscreen_transition": True,
+                "viewscreen_before": "viewscreen_dwarfmodest",
+                "max_advance_ticks": 2500,
+            },
+        )
+    ]
+
+
 def test_state_reader_preserves_dfhack_calendar_fields() -> None:
     class CalendarClient:
         def get_state(self) -> dict[str, Any]:

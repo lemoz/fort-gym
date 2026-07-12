@@ -911,6 +911,35 @@ def test_advance_ticks_caps_direct_calls_at_action_schema_limit(monkeypatch):
     assert result["ticks_advanced"] == tick_controller.MAX_ADVANCE_TICKS
 
 
+def test_advance_ticks_allows_explicit_p1_limit(monkeypatch):
+    from fort_gym.bench import tick_controller
+
+    ticks = iter([100, 2600, 2600, 2600])
+
+    monkeypatch.setattr(
+        tick_controller,
+        "read_tick_pause_viewscreen",
+        lambda timeout=1.0: {
+            "cur_year": 0,
+            "cur_year_tick": next(ticks),
+            "pause_state": True,
+            "viewscreen_type": "viewscreen_dwarfmodest",
+        },
+    )
+    monkeypatch.setattr(tick_controller, "read_pause_state", lambda timeout=1.0: True)
+    monkeypatch.setattr(tick_controller, "set_paused", lambda paused, timeout=1.0: None)
+    monkeypatch.setattr(tick_controller, "_set_nopause", lambda enabled: None)
+    monkeypatch.setattr(tick_controller.time, "sleep", lambda duration: None)
+
+    result = tick_controller.advance_ticks_exact_external(
+        2500, True, max_advance_ticks=2500
+    )
+
+    assert result["ok"] is True
+    assert result["requested"] == 2500
+    assert result["ticks_advanced"] == 2500
+
+
 def test_tick_read_failure_after_nopause_fails_closed_and_recovers_end_tick(
     monkeypatch,
 ):

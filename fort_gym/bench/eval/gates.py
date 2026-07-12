@@ -93,9 +93,21 @@ def _last_metrics(records: Sequence[Mapping[str, Any]]) -> Mapping[str, Any]:
 
 def _model_usage(rows: Iterable[Mapping[str, Any]]) -> Dict[str, Any]:
     models: set[str] = set()
+    resolved_models: set[str] = set()
+    providers: set[str] = set()
+    generation_ids: set[str] = set()
     calls = 0
+    attempt_events = 0
+    failed_attempt_events = 0
+    calls_missing_cost = 0
+    calls_missing_resolved_model = 0
     prompt_tokens = 0
     completion_tokens = 0
+    cached_tokens = 0
+    cache_write_tokens = 0
+    reasoning_tokens = 0
+    cost = 0.0
+    generation_telemetry_unavailable = 0
     for record in rows:
         events = record.get("events")
         if not isinstance(events, list):
@@ -114,18 +126,63 @@ def _model_usage(rows: Iterable[Mapping[str, Any]]) -> Dict[str, Any]:
                 continue
             input_data = data.get("input")
             output_data = data.get("output")
+            attempt_events += 1
             if isinstance(input_data, Mapping) and input_data.get("model"):
                 models.add(str(input_data["model"]))
             if isinstance(output_data, Mapping):
+                generation_id = output_data.get("generation_id")
+                if not generation_id:
+                    failed_attempt_events += 1
+                    continue
+                calls += 1
                 prompt_tokens += _to_int(output_data.get("prompt_tokens"))
                 completion_tokens += _to_int(output_data.get("completion_tokens"))
-            calls += 1
+                cached_tokens += _to_int(output_data.get("cached_tokens"))
+                cache_write_tokens += _to_int(output_data.get("cache_write_tokens"))
+                reasoning_tokens += _to_int(output_data.get("reasoning_tokens"))
+                if output_data.get("cost") is None:
+                    calls_missing_cost += 1
+                else:
+                    cost += _to_float(output_data.get("cost"))
+                if output_data.get("resolved_model"):
+                    resolved_models.add(str(output_data["resolved_model"]))
+                else:
+                    calls_missing_resolved_model += 1
+                generation_ids.add(str(generation_id))
+                generation = output_data.get("generation")
+                if isinstance(generation, Mapping):
+                    if generation.get("provider_name"):
+                        providers.add(str(generation["provider_name"]))
+                    if generation.get("status") != "available":
+                        generation_telemetry_unavailable += 1
+                    generation_cost = generation.get("total_cost")
+                    if generation_cost is not None and output_data.get("cost") is None:
+                        cost += _to_float(generation_cost)
+            else:
+                failed_attempt_events += 1
+    uncached_prompt_tokens = max(0, prompt_tokens - cached_tokens)
     return {
         "models": sorted(models),
+        "resolved_models": sorted(resolved_models),
+        "providers": sorted(providers),
+        "generation_ids": sorted(generation_ids),
         "calls": calls,
+        "attempt_events": attempt_events,
+        "failed_attempt_events": failed_attempt_events,
+        "calls_missing_cost": calls_missing_cost,
+        "calls_missing_resolved_model": calls_missing_resolved_model,
         "prompt_tokens": prompt_tokens,
         "completion_tokens": completion_tokens,
         "total_tokens": prompt_tokens + completion_tokens,
+        "cached_tokens": cached_tokens,
+        "cache_write_tokens": cache_write_tokens,
+        "uncached_prompt_tokens": uncached_prompt_tokens,
+        "cache_read_rate": (
+            round(cached_tokens / prompt_tokens, 6) if prompt_tokens > 0 else 0.0
+        ),
+        "reasoning_tokens": reasoning_tokens,
+        "cost_usd": round(cost, 8),
+        "generation_telemetry_unavailable": generation_telemetry_unavailable,
     }
 
 
@@ -384,4 +441,4 @@ def evaluate_g7(
     }
 
 
-__all__ = ["FAIL", "PASS", "UNKNOWN", "evaluate_g7"]
+__all__ = ["FAIL", "PASS", "UNKNOWN", "_model_usage", "evaluate_g7"]

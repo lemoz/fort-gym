@@ -66,8 +66,11 @@ def test_results_page_uses_protocol_scoped_data_without_embedded_cohort_rows() -
     html = Path("web/results.html").read_text(encoding="utf-8")
 
     assert "See what each model builds when the world keeps moving" in html
-    assert "/public/results?evaluation_protocol=fort-eval-easy-v1" in html
+    assert "/public/results?evaluation_protocol=fort-eval-easy-p1-g7-v3" in html
     assert "payload.comparison_groups" in html
+    assert "P1 fixed seed" in html
+    assert "row.public_label || row.model" in html
+    assert "row.task_verdict" in html
     assert "/public/leaderboard" not in html
     assert "/public/worlds?limit=3" not in html
     assert "The score archive keeps its original context" in html

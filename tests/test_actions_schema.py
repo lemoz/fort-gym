@@ -302,6 +302,39 @@ def test_parse_action_accepts_labor_unit_labor_enable() -> None:
     assert action["params"]["enable"] is True
 
 
+def test_action_tick_ceiling_preserves_p0_and_allows_p1_slack() -> None:
+    p0_action = parse_action(
+        {
+            "type": "WAIT",
+            "params": {},
+            "intent": "advance the simulation",
+            "advance_ticks": 2000,
+        }
+    )
+
+    assert p0_action["advance_ticks"] == 2000
+    with pytest.raises(ValueError, match="less than or equal to 2000"):
+        parse_action(
+            {
+                "type": "WAIT",
+                "params": {},
+                "intent": "exceed the P0 ceiling",
+                "advance_ticks": 2001,
+            }
+        )
+
+    p1_action = parse_action(
+        {
+            "type": "WAIT",
+            "params": {},
+            "intent": "use P1 duration slack",
+            "advance_ticks": 2500,
+        },
+        max_advance_ticks=2500,
+    )
+    assert p1_action["advance_ticks"] == 2500
+
+
 def test_validate_action_rejects_labor_missing_fields() -> None:
     valid, reason = validate_action(
         {}, {"type": "LABOR", "params": {"unit_id": 243, "labor": "brewing"}}

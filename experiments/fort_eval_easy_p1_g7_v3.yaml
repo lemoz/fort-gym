@@ -1,0 +1,184 @@
+schema_version: "fort-eval.manifest/v1"
+manifest_id: fort-eval-easy-p1-g7-v3
+name: Fort-Eval Easy P1 G7-v3
+description: >-
+  Frozen provisional Easy-profile pilot for the ratified G7-v3 survival task.
+  This manifest declares two model arms under one shared benchmark condition.
+status: provisional
+frozen_date: 2026-07-12
+provider_preflight_evidence: experiments/evidence/fort_eval_easy_p1_provider_preflight_20260712.json
+
+program:
+  umbrella: Fort Labs
+  benchmark: Fort-Eval
+  harness: Fort-Gym
+  profile: easy
+  profile_version: easy-v1
+
+task:
+  task_id: g7_survival
+  task_version: g7-v3
+  seed: seed_region3_fresh
+  seed_world_sha256: 070b10a3f2403e72368290eea0d09396fe06f7912b9babdea7ad26eb0498a87d
+  seed_split: fixed_seed_pilot
+  objective: >-
+    Sustain a legal governed fortress for one full in-game year on the fresh
+    region3 embark, with food and drink production, survival, settlement
+    growth, functional rooms, and score-v5 evidence intact.
+  success_predicates:
+    duration_ticks_min: 403200
+    food_produced_exceeds_consumed: true
+    drink_produced_exceeds_consumed: true
+    neglect_deaths_max: 0
+    population_min: 15
+    functional_rooms_min: 3
+    installed_beds_at_least_population_fraction: 0.3333333333
+    rubric_min: 70
+    rubric_blockers_allowed: false
+    score_min: 150
+
+benchmark_condition:
+  observation:
+    profile: governed_structured_state_v1
+    vision_enabled: true
+    observer_map_agent_visible: false
+  action:
+    profile: legal_semantic_dfhack_v1
+    debug_completion_enabled: false
+  knowledge:
+    condition: none
+    documents_allowed: false
+    live_web_allowed: false
+  memory:
+    mode: "off"
+    cross_episode_state: false
+  budget:
+    max_steps: 200
+    ticks_per_step: 2500
+    max_ticks: 500000
+  score:
+    version: score-v5
+    evaluator_version: score-v5
+
+model_arms:
+  identity_field: model_arm
+  arms:
+    - model_arm: dfhack-governed-llm-fable5
+      adapter_id: dfhack-governed-llm
+      provider_route: openrouter
+      provider_model_id: resolved_at_run
+      generation:
+        reasoning_effort: max
+        max_completion_tokens: 128000
+        prompt_cache: explicit_system_ephemeral
+        sticky_routing: per_run_session_id
+      vision_enabled: true
+      memory_mode: "off"
+    - model_arm: dfhack-governed-llm-gpt56-sol
+      adapter_id: dfhack-governed-llm
+      provider_route: openrouter
+      provider_model_id: resolved_at_run
+      generation:
+        reasoning_effort: max
+        max_completion_tokens: 128000
+        prompt_cache: automatic
+        prompt_cache_key: per_run_session_id
+        sticky_routing: per_run_session_id
+      vision_enabled: true
+      memory_mode: "off"
+
+provider_policy:
+  legacy_direct_anthropic_api: prohibited
+  openrouter_fable_exception:
+    enabled: true
+    model_arm: dfhack-governed-llm-fable5
+    provider_route: openrouter
+    direct_anthropic_api: false
+    rationale: >-
+      Fable is explicitly permitted as an OpenRouter-routed arm. This routing
+      exception does not enable the legacy direct Anthropic adapter or API.
+
+comparability:
+  benchmark_condition_fields:
+    - profile
+    - profile_version
+    - task_id
+    - task_version
+    - seed
+    - seed_split
+    - observation_profile
+    - vision_enabled
+    - action_profile
+    - knowledge_condition
+    - memory_mode
+    - max_steps
+    - ticks_per_step
+    - score_version
+    - evaluator_version
+  model_arm_identity:
+    field: model_arm
+    values:
+      - dfhack-governed-llm-fable5
+      - dfhack-governed-llm-gpt56-sol
+    is_benchmark_condition_field: false
+    per_arm_identity_fields:
+      - model_arm
+      - adapter_id
+      - provider_route
+      - provider_model_id
+      - generation.reasoning_effort
+      - generation.max_completion_tokens
+      - generation.prompt_cache
+      - generation.prompt_cache_key
+      - generation.sticky_routing
+  condition_key_format: >-
+    forteval/v1|profile={profile}|profile_version={profile_version}|task={task_id}|task_version={task_version}|seed={seed}|seed_split={seed_split}|obs={observation_profile}|vision={vision_enabled}|action={action_profile}|knowledge={knowledge_condition}|memory={memory_mode}|steps={max_steps}|ticks_per_step={ticks_per_step}|score={score_version}|evaluator={evaluator_version}
+  run_identity_key_format: "{condition_key}|model_arm={model_arm}"
+  comparison_rule: >-
+    Compare model arms only inside one identical benchmark-condition key. Arm
+    identity, provider routing, resolved provider model, prompt, and generation
+    settings identify the policy being compared; they are not alternate values
+    of the shared benchmark condition.
+
+cost_and_kill:
+  expenditure_cap:
+    enabled: false
+    per_run_usd: null
+    per_cell_usd: null
+  pricing_status: must_be_recorded_per_run
+  usage_logging_required: true
+  stop_on:
+    - provenance_violation
+    - rollback_unverified
+    - contamination_signal
+    - missing_required_evidence_after_retry_budget
+    - declared_step_or_tick_ceiling
+  infrastructure_abort_is_policy_failure: false
+
+publication:
+  valid_failures_publishable: true
+  valid_failure_definition:
+    required_evidence_complete: true
+    contamination_free: true
+    declared_condition_and_arm_recorded: true
+    policy_or_budget_failure_is_not_suppressed: true
+  invalid_results_remain_unpublishable: true
+  publish_failure_with_same_prominence_as_success: true
+
+base_config:
+  backend: dfhack
+  max_steps: 200
+  model: dfhack-governed-llm-fable5
+  ticks_per_step: 2500
+  evaluation_protocol: fort-eval-easy-p1-g7-v3
+  preserve_save: false
+  seed_save: seed_region3_fresh
+  runtime_save: region1
+variants:
+  - name: fable5-memory-off
+    model: dfhack-governed-llm-fable5
+    memory_window: 0
+  - name: gpt56-sol-memory-off
+    model: dfhack-governed-llm-gpt56-sol
+    memory_window: 0
+runs_per_variant: 1
