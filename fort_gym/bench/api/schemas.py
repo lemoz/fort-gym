@@ -168,6 +168,39 @@ class PublicOverview(BaseModel):
     comparison_groups: List[PublicComparisonGroup] = Field(default_factory=list)
 
 
+class PublicResults(BaseModel):
+    """Experimental comparison groups for one declared evaluation protocol."""
+
+    generated_at: datetime
+    protocol: str
+    status: Literal["experimental"] = "experimental"
+    comparability_fields: List[str]
+    candidate_run_count: int = Field(ge=0)
+    eligible_run_count: int = Field(ge=0)
+    excluded_run_count: int = Field(ge=0)
+    comparison_groups: List[PublicComparisonGroup] = Field(default_factory=list)
+
+
+class PublicProtocol(BaseModel):
+    """Public-safe definition of one allowlisted Fort-Eval protocol."""
+
+    slug: str
+    name: str
+    profile: str
+    profile_version: str
+    status: str
+    result_status: str
+    summary: str
+    interface: Dict[str, str]
+    actions: List[str] = Field(default_factory=list)
+    observation_bounds: Dict[str, str]
+    knowledge: Dict[str, str]
+    observer_firewall: str
+    comparability_fields: List[str] = Field(default_factory=list)
+    ranking: str
+    pilot_state: str
+
+
 class PublicRunSummary(BaseModel):
     """Persisted public summary data for one shared run."""
 
