@@ -254,29 +254,27 @@ def enrich_openrouter_usage(
         enriched["generation_telemetry_error"] = "OPENROUTER_API_KEY unavailable"
         return enriched
     httpx = import_module("httpx")
-    generations = []
-    for generation_id in generation_ids:
-        try:
-            response = None
-            for attempt in range(3):
+    retry_delays = (1.0, 2.0, 4.0, 8.0)
+    pending = set(generation_ids)
+    generation_records: Dict[str, Dict[str, Any]] = {}
+    generation_errors: Dict[str, Exception] = {}
+    lookup_attempts: Dict[str, int] = {str(generation_id): 0 for generation_id in generation_ids}
+    for round_index in range(len(retry_delays) + 1):
+        for generation_id in list(pending):
+            lookup_attempts[generation_id] += 1
+            try:
                 response = httpx.get(
                     f"{base_url.rstrip('/')}/generation",
                     params={"id": generation_id},
                     headers={"Authorization": f"Bearer {api_key}"},
                     timeout=10.0,
                 )
-                if response.status_code not in {404, 429, 500, 502, 503, 504}:
-                    break
-                time.sleep(attempt + 1)
-            if response is None:
-                raise RuntimeError("generation lookup was not attempted")
-            response.raise_for_status()
-            body = response.json()
-            data = body.get("data") if isinstance(body, dict) else None
-            if not isinstance(data, dict):
-                raise ValueError("invalid generation payload")
-            generations.append(
-                {
+                response.raise_for_status()
+                body = response.json()
+                data = body.get("data") if isinstance(body, dict) else None
+                if not isinstance(data, dict):
+                    raise ValueError("invalid generation payload")
+                generation_records[generation_id] = {
                     "id": generation_id,
                     "model": data.get("model"),
                     "provider_name": data.get("provider_name") or data.get("provider"),
@@ -285,17 +283,33 @@ def enrich_openrouter_usage(
                     "native_tokens_prompt": data.get("native_tokens_prompt"),
                     "native_tokens_completion": data.get("native_tokens_completion"),
                     "status": "available",
+                    "lookup_attempts": lookup_attempts[generation_id],
                 }
-            )
-        except Exception as exc:
-            generations.append(
-                {
-                    "id": generation_id,
-                    "status": "unavailable",
-                    "reason": type(exc).__name__,
-                    "message": str(exc)[:240],
-                }
-            )
+                pending.remove(generation_id)
+                generation_errors.pop(generation_id, None)
+            except Exception as exc:
+                generation_errors[generation_id] = exc
+        if pending and round_index < len(retry_delays):
+            time.sleep(retry_delays[round_index])
+
+    generations = []
+    for generation_id in generation_ids:
+        record = generation_records.get(generation_id)
+        if record is not None:
+            generations.append(record)
+            continue
+        lookup_error = generation_errors.get(generation_id)
+        if lookup_error is None:
+            lookup_error = RuntimeError("generation lookup was not attempted")
+        generations.append(
+            {
+                "id": generation_id,
+                "status": "unavailable",
+                "reason": type(lookup_error).__name__,
+                "message": str(lookup_error)[:240],
+                "lookup_attempts": lookup_attempts.get(generation_id, 0),
+            }
+        )
     available = [
         item
         for item in generations
@@ -307,8 +321,19 @@ def enrich_openrouter_usage(
         and item.get("native_tokens_completion") is not None
     ]
     enriched["generation_metadata"] = generations
+    enriched["resolved_models"] = sorted(
+        {str(item["model"]) for item in available if item.get("model")}
+    )
     enriched["providers"] = sorted(
         {str(item["provider_name"]) for item in available if item.get("provider_name")}
+    )
+    enriched["calls_missing_cost"] = sum(
+        item.get("status") != "available" or item.get("total_cost") is None
+        for item in generations
+    )
+    enriched["calls_missing_resolved_model"] = sum(
+        item.get("status") != "available" or not item.get("model")
+        for item in generations
     )
     enriched["provider_total_cost_usd"] = round(
         sum(float(item.get("total_cost") or 0.0) for item in available), 8

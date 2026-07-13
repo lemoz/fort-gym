@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import pytest
 
 from fort_gym.bench.eval.fort_eval_easy_p1 import (
     P1_PROTOCOL,
     P1_SEED_WORLD_SHA256,
     attest_seed_region3,
+    enrich_openrouter_usage,
     p1_integrity_attestation,
     p1_usage_is_publishable,
     resolved_model_digest,
@@ -164,6 +167,112 @@ def test_p1_usage_requires_cache_and_provider_truth() -> None:
     assert not p1_usage_is_publishable(
         model="dfhack-governed-llm-gpt56-sol", usage=usage
     )
+
+
+def test_generation_enrichment_retries_pending_rows_and_uses_provider_truth(
+    monkeypatch,
+) -> None:
+    attempts: dict[str, int] = {}
+    sleeps: list[float] = []
+
+    class FakeResponse:
+        def __init__(self, generation_id: str, *, unavailable: bool) -> None:
+            self.generation_id = generation_id
+            self.unavailable = unavailable
+
+        def raise_for_status(self) -> None:
+            if self.unavailable:
+                raise RuntimeError("404 generation pending")
+
+        def json(self) -> dict:
+            return {
+                "data": {
+                    "model": "openai/gpt-5.6-sol-20260709",
+                    "provider_name": "OpenAI",
+                    "total_cost": 0.25,
+                    "cache_discount": 0.1,
+                    "native_tokens_prompt": 5000,
+                    "native_tokens_completion": 500,
+                }
+            }
+
+    def get(_url, *, params, headers, timeout):
+        del headers, timeout
+        generation_id = params["id"]
+        attempts[generation_id] = attempts.get(generation_id, 0) + 1
+        return FakeResponse(
+            generation_id,
+            unavailable=generation_id == "gen-pending" and attempts[generation_id] == 1,
+        )
+
+    monkeypatch.setattr(
+        "fort_gym.bench.eval.fort_eval_easy_p1.import_module",
+        lambda _name: SimpleNamespace(get=get),
+    )
+    monkeypatch.setattr(
+        "fort_gym.bench.eval.fort_eval_easy_p1.time.sleep", sleeps.append
+    )
+
+    enriched = enrich_openrouter_usage(
+        {
+            "calls": 2,
+            "generation_ids": ["gen-ready", "gen-pending"],
+            "resolved_models": ["openai/gpt-5.6-sol"],
+            "calls_missing_cost": 2,
+            "calls_missing_resolved_model": 0,
+        },
+        api_key="test-key",
+        base_url="https://openrouter.test/api/v1",
+    )
+
+    assert attempts == {"gen-ready": 1, "gen-pending": 2}
+    assert sleeps == [1.0]
+    assert enriched["resolved_models"] == ["openai/gpt-5.6-sol-20260709"]
+    assert enriched["providers"] == ["OpenAI"]
+    assert enriched["calls_missing_cost"] == 0
+    assert enriched["calls_missing_resolved_model"] == 0
+    assert enriched["provider_total_cost_usd"] == pytest.approx(0.5)
+    assert enriched["generation_telemetry_complete"] is True
+    by_id = {item["id"]: item for item in enriched["generation_metadata"]}
+    assert by_id["gen-ready"]["lookup_attempts"] == 1
+    assert by_id["gen-pending"]["lookup_attempts"] == 2
+
+
+def test_generation_enrichment_bounds_unavailable_row_retries(monkeypatch) -> None:
+    attempts = 0
+    sleeps: list[float] = []
+
+    class MissingResponse:
+        def raise_for_status(self) -> None:
+            raise RuntimeError("404 generation unavailable")
+
+    def get(_url, *, params, headers, timeout):
+        nonlocal attempts
+        del params, headers, timeout
+        attempts += 1
+        return MissingResponse()
+
+    monkeypatch.setattr(
+        "fort_gym.bench.eval.fort_eval_easy_p1.import_module",
+        lambda _name: SimpleNamespace(get=get),
+    )
+    monkeypatch.setattr(
+        "fort_gym.bench.eval.fort_eval_easy_p1.time.sleep", sleeps.append
+    )
+
+    enriched = enrich_openrouter_usage(
+        {"calls": 1, "generation_ids": ["gen-missing"]},
+        api_key="test-key",
+        base_url="https://openrouter.test/api/v1",
+    )
+
+    assert attempts == 5
+    assert sleeps == [1.0, 2.0, 4.0, 8.0]
+    assert enriched["generation_telemetry_complete"] is False
+    assert enriched["generation_telemetry_unavailable"] == 1
+    assert enriched["calls_missing_cost"] == 1
+    assert enriched["calls_missing_resolved_model"] == 1
+    assert enriched["generation_metadata"][0]["lookup_attempts"] == 5
 
 
 def test_p1_integrity_attestation_rejects_harness_terminal_failure() -> None:

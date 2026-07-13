@@ -38,6 +38,30 @@ MAX_OBJECTIVE_LENGTH = 160
 _MEMORY_PATH_ENV_VAR = "FORT_GYM_GOVERNED_MEMORY_PATH"
 _MEMORY_PATH_DISABLE_VALUES = {"off", "0"}
 _HARD_REVISION_REASON = "same_objective_stalled_2"
+_BLOCKED_PROVIDER_FINISH_REASONS = {"content_filter"}
+
+
+class GovernedDecisionError(RuntimeError):
+    """Fail-closed decision error with a durable terminal classification."""
+
+    terminal_code = "governed_decision_error"
+
+    def __init__(self, message: str, **terminal_details: Any) -> None:
+        super().__init__(message)
+        self.terminal_details = terminal_details
+
+
+class GovernedProviderFinishError(GovernedDecisionError):
+    """Provider returned a terminal response that cannot contain an action."""
+
+    terminal_code = "provider_content_filter"
+
+
+class GovernedReviewContractError(GovernedDecisionError):
+    """Bounded model corrections could not satisfy the review contract."""
+
+    terminal_code = "governed_review_contract_exhausted"
+
 
 GOVERNED_SYSTEM_PROMPT = """You are the overseer of a live Dwarf Fortress fortress. You play by issuing \
 exactly one bounded, legal overseer command per step, then the real simulation runs and you observe \
@@ -623,7 +647,25 @@ class DFHackGovernedLLMAgent(Agent):
         for attempt in range(max_attempts):
             try:
                 self._rate_limit()
-                return self._client_instance().chat.completions.create(**completion_kwargs)
+                response = self._client_instance().chat.completions.create(
+                    **completion_kwargs
+                )
+                return self._reject_blocked_provider_finish(response)
+            except GovernedProviderFinishError as exc:
+                last_exc = exc
+                will_retry = attempt + 1 < max_attempts
+                self._tool_events.append(
+                    {
+                        "tool": "governed_llm.provider_finish_retry",
+                        "input": {"model": self._model, "attempt": attempt + 1},
+                        "output": {
+                            **exc.terminal_details,
+                            "retrying": will_retry,
+                        },
+                    }
+                )
+                if will_retry:
+                    time.sleep(min(2.0 * (attempt + 1), 5.0))
             except Exception as exc:
                 # some providers (e.g. Kimi K2.7) refuse to run with reasoning
                 # disabled; drop the disable flag once and retry immediately
@@ -647,9 +689,10 @@ class DFHackGovernedLLMAgent(Agent):
                     )
                     try:
                         self._rate_limit()
-                        return self._client_instance().chat.completions.create(
+                        response = self._client_instance().chat.completions.create(
                             **completion_kwargs
                         )
+                        return self._reject_blocked_provider_finish(response)
                     except Exception as retry_exc:
                         exc = retry_exc
                 # some providers (e.g. Z.AI vision endpoints) reject forced
@@ -669,9 +712,10 @@ class DFHackGovernedLLMAgent(Agent):
                     )
                     try:
                         self._rate_limit()
-                        return self._client_instance().chat.completions.create(
+                        response = self._client_instance().chat.completions.create(
                             **completion_kwargs
                         )
+                        return self._reject_blocked_provider_finish(response)
                     except Exception as retry_exc:
                         exc = retry_exc
                 last_exc = exc
@@ -689,7 +733,37 @@ class DFHackGovernedLLMAgent(Agent):
                 )
                 if will_retry:
                     time.sleep(min(2.0 * (attempt + 1), 5.0))
+        if isinstance(last_exc, GovernedProviderFinishError):
+            last_exc.terminal_details["attempts"] = max_attempts
+            raise last_exc
         raise RuntimeError(f"openrouter request failed after {max_attempts} attempts") from last_exc
+
+    def _reject_blocked_provider_finish(self, response: Any) -> Any:
+        choices = list(self._field(response, "choices") or [])
+        finish_reasons = [
+            str(reason)
+            for reason in (
+                self._field(choice, "finish_reason") for choice in choices
+            )
+            if reason is not None
+        ]
+        blocked = sorted(
+            {
+                reason.lower()
+                for reason in finish_reasons
+                if reason.lower() in _BLOCKED_PROVIDER_FINISH_REASONS
+            }
+        )
+        if not blocked:
+            return response
+
+        self._record_response_telemetry(response, choices)
+        generation_id = self._field(response, "id")
+        raise GovernedProviderFinishError(
+            "provider blocked the governed action response: " + ", ".join(blocked),
+            finish_reasons=finish_reasons,
+            generation_id=generation_id,
+        )
 
     # -- memory ----------------------------------------------------------
 
@@ -879,6 +953,40 @@ class DFHackGovernedLLMAgent(Agent):
                 "tool": "governed_llm.objective_quote_artifact_normalized",
                 "input": {},
                 "output": {"fields": [changed_field]},
+            }
+        )
+        return normalized
+
+    def _normalize_redundant_plan_decision(
+        self, payload: Dict[str, Any], control: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Canonicalize ``revise`` when the submitted objective did not change."""
+
+        if self._requires_hard_revision(control):
+            return payload
+        plan_review = payload.get("plan_review")
+        if not isinstance(plan_review, dict) or plan_review.get("decision") != "revise":
+            return payload
+        prior_objective = self._normalized_prior_objective(control.get("prior_objective"))
+        if not prior_objective:
+            return payload
+        if self._normalized_objective(payload.get("objective")) != prior_objective:
+            return payload
+
+        canonical_decision = "continue" if bool(control.get("review_due")) else "not_due"
+        normalized = dict(payload)
+        normalized_plan_review = dict(plan_review)
+        normalized_plan_review["decision"] = canonical_decision
+        normalized["plan_review"] = normalized_plan_review
+        self._tool_events.append(
+            {
+                "tool": "governed_llm.plan_decision_normalized",
+                "input": {"request_id": control.get("request_id")},
+                "output": {
+                    "original_decision": "revise",
+                    "normalized_decision": canonical_decision,
+                    "reason": "submitted_objective_matches_prior",
+                },
             }
         )
         return normalized
@@ -1270,6 +1378,8 @@ class DFHackGovernedLLMAgent(Agent):
             contract_errors: List[str] = []
             try:
                 response = self._create_completion(messages)
+            except GovernedDecisionError:
+                raise
             except Exception as exc:
                 if review_control is not None:
                     raise RuntimeError(f"governed model call failed before gameplay: {exc}") from exc
@@ -1282,6 +1392,10 @@ class DFHackGovernedLLMAgent(Agent):
             else:
                 payload = self._normalize_objective_quote_artifacts(payload)
                 payload = self._normalize_duplicated_objective_length(payload)
+                if review_control is not None:
+                    payload = self._normalize_redundant_plan_decision(
+                        payload, review_control
+                    )
                 action_type = str(payload.get("type") or "").upper()
                 canonical_action = None
                 fingerprint_action = None
@@ -1530,9 +1644,11 @@ class DFHackGovernedLLMAgent(Agent):
 
         if action is None:
             if review_control is not None:
-                raise RuntimeError(
+                raise GovernedReviewContractError(
                     "governed review contract failed before gameplay after two corrections: "
-                    + last_error
+                    + last_error,
+                    corrections=max_contract_attempts - 1,
+                    contract_error=last_error,
                 )
             return self._store_pending(obs_text, self._fallback_wait(last_error))
 

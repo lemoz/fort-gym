@@ -15,6 +15,8 @@ from fort_gym.bench.agent.governed_llm import (
     GOVERNED_SYSTEM_PROMPT,
     MAX_OBJECTIVE_LENGTH,
     DFHackGovernedLLMAgent,
+    GovernedProviderFinishError,
+    GovernedReviewContractError,
     _submit_action_tool,
 )
 from fort_gym.bench.env.actions import normalized_action_fingerprint, parse_action
@@ -60,6 +62,25 @@ def _text_action_response(payload: dict[str, Any]) -> Any:
             )
         ],
         usage=SimpleNamespace(prompt_tokens=10, completion_tokens=5, total_tokens=15),
+    )
+
+
+def _content_filter_response(generation_id: str) -> Any:
+    return SimpleNamespace(
+        id=generation_id,
+        model="openai/gpt-5.6-sol",
+        choices=[
+            SimpleNamespace(
+                finish_reason="content_filter",
+                message=SimpleNamespace(content=None, tool_calls=None),
+            )
+        ],
+        usage=SimpleNamespace(
+            prompt_tokens=0,
+            completion_tokens=0,
+            total_tokens=0,
+            cost=0,
+        ),
     )
 
 
@@ -958,6 +979,41 @@ def test_same_objective_stalled_requires_different_objective_revision() -> None:
     assert '"allowed_evidence_lines"' not in correction
 
 
+def test_same_objective_stalled_is_not_plan_decision_normalized() -> None:
+    control = _plan_control(
+        review_due=True,
+        request_id="32:same_objective_stalled_2",
+        prior_objective="Build durable shelter.",
+        previous_step=31,
+        previous_verdict="no_progress",
+        reasons=["same_objective_stalled_2"],
+    )
+    invalid = _reviewed_action_payload(control=control, decision="revise")
+    valid = _reviewed_action_payload(
+        control=control,
+        objective="Establish sustainable drink production.",
+        decision="revise",
+    )
+    agent = _agent([_submit_action_response(invalid), _submit_action_response(valid)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["objective"] == "Establish sustainable drink production."
+    events = agent.pop_tool_events()
+    assert not any(
+        event["tool"] == "governed_llm.plan_decision_normalized" for event in events
+    )
+    retry = next(
+        event
+        for event in events
+        if event["tool"] == "governed_llm.review_contract_retry"
+    )
+    assert "requires a genuinely different objective" in retry["output"]["error"]
+
+
 def test_same_objective_stalled_revision_overrides_submitted_complete() -> None:
     control = _plan_control(
         review_due=True,
@@ -1079,7 +1135,7 @@ def test_same_objective_stalled_accepts_materially_different_action() -> None:
     assert len(agent._client.chat.completions.requests) == 1
 
 
-def test_due_review_rejects_same_objective_revise() -> None:
+def test_due_review_normalizes_same_objective_revise_to_continue() -> None:
     control = _plan_control(
         review_due=True,
         request_id="32:periodic_5",
@@ -1089,8 +1145,7 @@ def test_due_review_rejects_same_objective_revise() -> None:
         reasons=["periodic_5"],
     )
     invalid = _reviewed_action_payload(control=control, decision="revise")
-    valid = _reviewed_action_payload(control=control, decision="continue")
-    agent = _agent([_text_action_response(invalid), _text_action_response(valid)])
+    agent = _agent([_text_action_response(invalid)])
 
     action = agent.decide(
         _review_observation(control),
@@ -1098,9 +1153,41 @@ def test_due_review_rejects_same_objective_revise() -> None:
     )
 
     assert action["plan_review"]["decision"] == "continue"
-    correction = agent._client.chat.completions.requests[1]["messages"][-1]["content"]
-    assert "decision=revise must change the prior objective" in correction
-    assert "plan_review.decision exactly to 'continue'" in correction
+    assert len(agent._client.chat.completions.requests) == 1
+    normalization = next(
+        event
+        for event in agent.pop_tool_events()
+        if event["tool"] == "governed_llm.plan_decision_normalized"
+    )
+    assert normalization["output"]["original_decision"] == "revise"
+    assert normalization["output"]["normalized_decision"] == "continue"
+
+
+def test_not_due_review_normalizes_same_objective_revise_to_not_due() -> None:
+    control = _plan_control(
+        review_due=False,
+        request_id="179:none",
+        prior_objective="Build durable shelter.",
+        previous_step=178,
+        previous_verdict="progressed",
+    )
+    payload = _reviewed_action_payload(control=control, decision="revise")
+    agent = _agent([_submit_action_response(payload)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["plan_review"]["decision"] == "not_due"
+    assert len(agent._client.chat.completions.requests) == 1
+    events = agent.pop_tool_events()
+    assert any(
+        event["tool"] == "governed_llm.plan_decision_normalized"
+        and event["output"]["normalized_decision"] == "not_due"
+        for event in events
+    )
+    assert not any(event["tool"] == "governed_llm.review_contract_retry" for event in events)
 
 
 def test_due_not_due_decision_gets_exact_continue_repair() -> None:
@@ -1615,12 +1702,16 @@ def test_review_contract_fails_before_gameplay_after_bad_correction() -> None:
         ]
     )
 
-    with pytest.raises(RuntimeError, match="failed before gameplay after two corrections"):
+    with pytest.raises(
+        GovernedReviewContractError, match="failed before gameplay after two corrections"
+    ) as exc_info:
         agent.decide(
             _review_observation(control),
             {"agent_plan_control": control},
         )
 
+    assert exc_info.value.terminal_code == "governed_review_contract_exhausted"
+    assert exc_info.value.terminal_details["corrections"] == 2
     assert agent._pending is None
     events = agent.pop_tool_events()
     assert sum(event["tool"] == "governed_llm.review_contract_retry" for event in events) == 2
@@ -1664,6 +1755,71 @@ def test_review_control_retries_transient_provider_failure_without_gameplay() ->
         if event["tool"] == "openrouter.chat.completions.create"
     ]
     assert transport_events[0]["output"]["retrying"] is True
+
+
+def test_review_control_retries_content_filter_without_contract_correction(monkeypatch) -> None:
+    control = _plan_control()
+    payload = _reviewed_action_payload(control=control)
+    agent = _agent(
+        [_content_filter_response("gen-filtered"), _submit_action_response(payload)],
+        max_attempts=2,
+        model_override="openai/gpt-5.6-sol",
+    )
+    monkeypatch.setattr("fort_gym.bench.agent.governed_llm.time.sleep", lambda _: None)
+    monkeypatch.setattr(
+        agent,
+        "_generation_metadata",
+        lambda generation_id: {"status": "unavailable", "id": generation_id},
+    )
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["type"] == "DIG"
+    assert len(agent._client.chat.completions.requests) == 2
+    events = agent.pop_tool_events()
+    provider_retry = next(
+        event
+        for event in events
+        if event["tool"] == "governed_llm.provider_finish_retry"
+    )
+    assert provider_retry["output"]["finish_reasons"] == ["content_filter"]
+    assert provider_retry["output"]["retrying"] is True
+    assert not any(event["tool"] == "governed_llm.review_contract_retry" for event in events)
+
+
+def test_review_control_classifies_exhausted_content_filter(monkeypatch) -> None:
+    control = _plan_control()
+    agent = _agent(
+        [
+            _content_filter_response("gen-filtered-1"),
+            _content_filter_response("gen-filtered-2"),
+        ],
+        max_attempts=2,
+        model_override="openai/gpt-5.6-sol",
+    )
+    monkeypatch.setattr("fort_gym.bench.agent.governed_llm.time.sleep", lambda _: None)
+    monkeypatch.setattr(
+        agent,
+        "_generation_metadata",
+        lambda generation_id: {"status": "unavailable", "id": generation_id},
+    )
+
+    with pytest.raises(GovernedProviderFinishError) as exc_info:
+        agent.decide(
+            _review_observation(control),
+            {"agent_plan_control": control},
+        )
+
+    assert exc_info.value.terminal_code == "provider_content_filter"
+    assert exc_info.value.terminal_details["attempts"] == 2
+    events = agent.pop_tool_events()
+    assert sum(
+        event["tool"] == "governed_llm.provider_finish_retry" for event in events
+    ) == 2
+    assert not any(event["tool"] == "governed_llm.review_contract_retry" for event in events)
 
 
 def test_review_contract_allows_agent_to_revise_objective_when_not_due() -> None:

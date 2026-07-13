@@ -190,6 +190,20 @@ class RaisingDecisionAgent(Agent):
         raise RuntimeError("review contract exhausted")
 
 
+class ClassifiedDecisionError(RuntimeError):
+    terminal_code = "provider_content_filter"
+    terminal_details = {
+        "finish_reasons": ["content_filter"],
+        "attempts": 3,
+        "code": "must_not_override",
+    }
+
+
+class RaisingClassifiedDecisionAgent(Agent):
+    def decide(self, obs_text: str, obs_json: Dict[str, Any]) -> Dict[str, Any]:
+        raise ClassifiedDecisionError("provider blocked the governed action response")
+
+
 def _advance_state_calendar(state: Dict[str, Any], ticks: int) -> None:
     year = int(state.get("year") or 0)
     year_tick = int(state.get("year_tick", state.get("time", 0)) or 0)
@@ -2926,6 +2940,34 @@ def test_agent_decide_failure_records_durable_terminal_reason(tmp_path, monkeypa
     row = _trace_rows(tmp_path, run_id)[0]
     assert row["terminal_reason"] == loaded.metadata["terminal_reason"]
     assert row["events"][-1]["type"] == "terminal"
+
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+
+
+def test_agent_decide_failure_preserves_safe_terminal_classification(
+    tmp_path, monkeypatch
+) -> None:
+    _, registry, run_id = _run_governed_interact_fixture(
+        tmp_path,
+        monkeypatch,
+        screen_changes=False,
+        max_steps=1,
+        agent_override=RaisingClassifiedDecisionAgent(),
+    )
+
+    loaded = registry.get(run_id)
+    assert loaded is not None
+    assert loaded.status == "failed"
+    assert loaded.metadata["terminal_reason"] == {
+        "code": "provider_content_filter",
+        "stage": "agent_decide",
+        "type": "ClassifiedDecisionError",
+        "message": "provider blocked the governed action response",
+        "finish_reasons": ["content_filter"],
+        "attempts": 3,
+    }
+    row = _trace_rows(tmp_path, run_id)[0]
+    assert row["terminal_reason"] == loaded.metadata["terminal_reason"]
 
     get_settings.cache_clear()  # type: ignore[attr-defined]
 
