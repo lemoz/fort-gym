@@ -138,6 +138,7 @@ def advance_ticks_exact_external(
     timed_out = False
     interrupted = False
     viewscreen_after: str | None = None
+    viewscreen_at_interrupt: str | None = None
     pause_state_at_interrupt: bool | None = None
     baseline_viewscreen = str(viewscreen_before or "unknown")
     safety_ms = max(10000, want * 200)
@@ -155,6 +156,7 @@ def advance_ticks_exact_external(
             interrupt_safety_error, \
             interrupted, \
             viewscreen_after, \
+            viewscreen_at_interrupt, \
             pause_state_at_interrupt
         try:
             probe = read_tick_pause_viewscreen(timeout=2.5)
@@ -185,9 +187,7 @@ def advance_ticks_exact_external(
                 interrupt_safety_error = calendar_error
             return False
         if not governed:
-            if start_sample is not None and exceeds_request_overshoot(
-                observed_elapsed
-            ):
+            if start_sample is not None and exceeds_request_overshoot(observed_elapsed):
                 error = "tick_overshoot_exceeds_allowance"
                 calendar_safety_error = error
                 return False
@@ -215,9 +215,7 @@ def advance_ticks_exact_external(
                 return False
             return True
         if viewscreen_after == baseline_viewscreen:
-            if start_sample is not None and exceeds_request_overshoot(
-                observed_elapsed
-            ):
+            if start_sample is not None and exceeds_request_overshoot(observed_elapsed):
                 error = "tick_overshoot_exceeds_allowance"
                 calendar_safety_error = error
                 interrupt_safety_error = error
@@ -225,6 +223,7 @@ def advance_ticks_exact_external(
             return True
         if viewscreen_after in INTERACT_ALLOWED_VIEWSCREEN_TYPES:
             interrupted = True
+            viewscreen_at_interrupt = viewscreen_after
             pause_state_at_interrupt = pause_state
             error = "blocking_viewscreen_transition"
             return False
@@ -322,15 +321,23 @@ def advance_ticks_exact_external(
             current_sample = final_sample
             paused_after = final_sample["pause_state"]
             if interrupt_on_viewscreen_transition:
-                expected_viewscreen = (
-                    viewscreen_after if interrupted else baseline_viewscreen
+                final_viewscreen = str(final_sample["viewscreen_type"])
+                final_viewscreen_valid = (
+                    final_viewscreen in INTERACT_ALLOWED_VIEWSCREEN_TYPES
+                    if interrupted
+                    else final_viewscreen == baseline_viewscreen
                 )
                 if (
                     final_sample["pause_state"] is not True
-                    or final_sample["viewscreen_type"] == "unknown"
-                    or final_sample["viewscreen_type"] != expected_viewscreen
+                    or not final_viewscreen_valid
                 ):
                     interrupt_safety_error = "final_interrupt_attestation_inconsistent"
+                elif interrupted:
+                    # DF can progress through a chain of blocking meeting views
+                    # while the controller is re-pausing it. Preserve the first
+                    # detected modal for audit, but hand the runner the final,
+                    # paused, allowlisted modal it will actually observe.
+                    viewscreen_after = final_viewscreen
             if start_sample is not None:
                 final_elapsed, final_calendar_error = calendar_elapsed_ticks(
                     start_sample["cur_year"],
@@ -376,8 +383,7 @@ def advance_ticks_exact_external(
             interrupt_safety_error = calendar_safety_error
 
     repause_unverified = repause_outcome is not None and (
-        repause_outcome.get("ok") is not True
-        or (repause and paused_after is not True)
+        repause_outcome.get("ok") is not True or (repause and paused_after is not True)
     )
     if repause_unverified:
         ok = False
@@ -433,6 +439,7 @@ def advance_ticks_exact_external(
             {
                 "interrupted": True,
                 "viewscreen_before": baseline_viewscreen,
+                "viewscreen_at_interrupt": viewscreen_at_interrupt,
                 "viewscreen_after": viewscreen_after,
                 "pause_state_at_interrupt": pause_state_at_interrupt,
             }
