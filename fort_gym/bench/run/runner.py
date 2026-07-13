@@ -3362,9 +3362,32 @@ def run_once(
                         "message": str(exc),
                     }
                     publish_event(step, "error", error_payload, events)
+                    classified_code = getattr(exc, "terminal_code", None)
+                    if not (
+                        isinstance(classified_code, str)
+                        and 1 <= len(classified_code) <= 64
+                        and all(
+                            character.islower()
+                            or character.isdigit()
+                            or character == "_"
+                            for character in classified_code
+                        )
+                    ):
+                        classified_code = "agent_decide_error"
+                    raw_terminal_details = getattr(exc, "terminal_details", None)
+                    terminal_details = (
+                        {
+                            str(key): value
+                            for key, value in raw_terminal_details.items()
+                            if key not in {"code", "stage", "type", "message"}
+                        }
+                        if isinstance(raw_terminal_details, dict)
+                        else {}
+                    )
                     terminal_failure_reason = {
-                        "code": "agent_decide_error",
+                        "code": classified_code,
                         **error_payload,
+                        **terminal_details,
                     }
                     terminal_failure_step = step
                     publish_event(
