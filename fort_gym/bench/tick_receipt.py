@@ -62,6 +62,9 @@ def validate_clean_interruption_receipt(
     """Return the first failed invariant for a clean governed interruption."""
 
     before = tick_info.get("viewscreen_before")
+    at_interrupt = tick_info.get(
+        "viewscreen_at_interrupt", tick_info.get("viewscreen_after")
+    )
     after = tick_info.get("viewscreen_after")
     baseline = str((state_after_apply or {}).get("viewscreen_type") or "unknown")
     observed_after = str(
@@ -141,10 +144,16 @@ def validate_clean_interruption_receipt(
         return "interrupt_paused_before_unattested"
     if tick_info.get("paused_after") is not True:
         return "interrupt_paused_after_unattested"
-    if not isinstance(before, str) or not isinstance(after, str):
+    if (
+        not isinstance(before, str)
+        or not isinstance(at_interrupt, str)
+        or not isinstance(after, str)
+    ):
         return "interrupt_viewscreen_missing"
     if before != GOVERNED_POSITIVE_TICK_BASELINE_VIEWSCREEN_TYPE:
         return "interrupt_baseline_not_normal_gameplay"
+    if at_interrupt not in INTERACT_ALLOWED_VIEWSCREEN_TYPES:
+        return "interrupt_initial_viewscreen_not_allowlisted"
     if after not in INTERACT_ALLOWED_VIEWSCREEN_TYPES:
         return "interrupt_viewscreen_not_allowlisted"
     if before != baseline:

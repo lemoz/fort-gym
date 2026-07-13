@@ -163,6 +163,11 @@ fort-gym executes DFHack actions exclusively through curated Lua helpers stored 
   remains after injection, the action is recorded as `interaction_no_effect`
   rather than success. It remains zero-tick, paused-only, and subject to the
   same modal budgets.
+- Tick interruption attestation preserves the first blocking viewscreen it
+  detects and the final paused viewscreen handed to the agent. A transition
+  between two interaction-allowlisted meeting screens during repause is a
+  clean interruption; an unpaused, unknown, or non-allowlisted final screen
+  still fails closed.
 - Governed and keystroke runs record a real CopyScreen `screen_text` frame into every trace record for replay evidence; governed helper probes preserve/restore the live viewport via `view_state.lua`/`restore_view_state.lua`.
 - `summary.json` includes a separate `rubric` section that judges legal evidence, repetition, production, layout breadth, and plan coherence over recent trace history. A high scalar score without broad legal progress should show rubric blockers.
 - Governed summary and rubric reaggregation require the action-owned v2 marker.
