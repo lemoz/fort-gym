@@ -32,6 +32,25 @@ def test_trace_preview_returns_latest_recorded_screen(tmp_path: Path) -> None:
     }
 
 
+def test_trace_preview_prefers_post_interaction_screen(tmp_path: Path) -> None:
+    path = tmp_path / "trace.jsonl"
+    _write_rows(
+        path,
+        {
+            "step": 173,
+            "screen_text": "announcement before cancel",
+            "screen_text_after_interaction": "fortress map after cancel\r\n",
+        },
+    )
+
+    assert read_trace_preview(path) == {
+        "step": 173,
+        "screen_text": "fortress map after cancel\n",
+        "screen_status": "recorded",
+        "inspected_records": 1,
+    }
+
+
 def test_trace_preview_never_substitutes_a_derived_map(tmp_path: Path) -> None:
     path = tmp_path / "trace.jsonl"
     _write_rows(path, {"step": 8, "map_snapshot": {"ok": True, "tiles": [{"char": "W"}]}})

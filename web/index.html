@@ -909,23 +909,71 @@
       return null;
     }
 
-    function extractScreenText(record) {
-      if (!record) return '';
-      const direct = record.screen_text || record.screenText || record.observation?.screen_text;
-      if (typeof direct === 'string' && direct.trim()) {
-        return direct.replace(/\r/g, '');
+    function extractScreenFrame(record) {
+      if (!record) return { text: '', phase: 'missing', source: 'not_reported' };
+
+      // An INTERACT row can contain both the screen the agent saw before it
+      // acted and a CopyScreen captured after the key was accepted. Replaying
+      // the pre-action field next to the completed action makes a successful
+      // modal close look like a failure, so prefer the post-action evidence.
+      const postActionCandidates = [
+        ['screen_text_after_action', record.screen_text_after_action],
+        ['screen_text_after_interaction', record.screen_text_after_interaction],
+        ['screenTextAfterInteraction', record.screenTextAfterInteraction]
+      ];
+      for (const [source, value] of postActionCandidates) {
+        if (typeof value === 'string' && value.trim()) {
+          return { text: value.replace(/\r/g, ''), phase: 'post-action', source };
+        }
+      }
+
+      const preActionCandidates = [
+        ['screen_text', record.screen_text],
+        ['screenText', record.screenText],
+        ['observation.screen_text', record.observation?.screen_text]
+      ];
+      for (const [source, value] of preActionCandidates) {
+        if (typeof value === 'string' && value.trim()) {
+          return { text: value.replace(/\r/g, ''), phase: 'pre-action', source };
+        }
       }
       const observationText = typeof record.observation_text === 'string' ? record.observation_text : '';
       const screenMarker = '== SCREEN ==';
       const statusMarker = '== STATUS ==';
       const screenStart = observationText.indexOf(screenMarker);
-      if (screenStart === -1) return '';
+      if (screenStart === -1) return { text: '', phase: 'missing', source: 'not_reported' };
       const contentStart = screenStart + screenMarker.length;
       const statusStart = observationText.indexOf(statusMarker, contentStart);
       const screen = statusStart === -1
         ? observationText.slice(contentStart)
         : observationText.slice(contentStart, statusStart);
-      return screen.replace(/\r/g, '').replace(/^\n+|\n+$/g, '');
+      return {
+        text: screen.replace(/\r/g, '').replace(/^\n+|\n+$/g, ''),
+        phase: 'pre-action',
+        source: 'observation_text'
+      };
+    }
+
+    function extractScreenText(record) {
+      return extractScreenFrame(record).text;
+    }
+
+    function formatReplayInput(snapshot) {
+      const keys = Array.isArray(snapshot.action?.params?.keys)
+        ? snapshot.action.params.keys.slice(0, 4)
+        : [];
+      if (keys.length) return `Keys: ${keys.join(', ')}`;
+
+      const interaction = snapshot.record?.interaction || {};
+      const interfaceKey = interaction.interface_key || interaction.interfaceKey;
+      const operation = snapshot.action?.params?.operation || interaction.operation;
+      if (interfaceKey) {
+        return `Input: ${interfaceKey}${operation ? ` (${operation})` : ''}`;
+      }
+      if (snapshot.action?.type === 'INTERACT' && operation) {
+        return `Input: ${operation}`;
+      }
+      return 'Input: --';
     }
 
     function extractGameplayProof(record) {
@@ -1237,6 +1285,7 @@
       const action = record.action || {};
       const metrics = record.metrics || {};
       const score = record.score || {};
+      const screenFrame = extractScreenFrame(record);
 
       return {
         index: boundedIndex,
@@ -1259,7 +1308,9 @@
         plannedWorkshops: toNumber(work.carpenter_workshops_planned, work.carpenter_workshops),
         usableWorkshops: toNumber(work.carpenter_workshops_usable, work.carpenter_workshops),
         buildAction,
-        screenText: extractScreenText(record),
+        screenText: screenFrame.text,
+        screenPhase: screenFrame.phase,
+        screenSource: screenFrame.source,
         mapSnapshot: record.map_snapshot?.ok ? record.map_snapshot : null,
         fortMap: extractFortMap(record),
         gameplayProof: extractGameplayProof(record)
@@ -1798,7 +1849,8 @@
         size: 26,
         weight: 800
       });
-      drawReplayText('Recorded CopyScreen', col1, panel.y + 62, {
+      const isPostActionFrame = snapshot.screenPhase === 'post-action';
+      drawReplayText(isPostActionFrame ? 'Post-action CopyScreen' : 'Pre-action CopyScreen', col1, panel.y + 62, {
         color: '#9fd7b2',
         size: 14,
         weight: 800
@@ -1809,18 +1861,23 @@
         size: 18,
         weight: 800
       });
-      drawReplayText('Source: DF CopyScreen text', col1, panel.y + panel.h - 36, {
+      drawReplayText(
+        isPostActionFrame ? 'Source: DF CopyScreen after action' : 'Source: DF CopyScreen before action',
+        col1,
+        panel.y + panel.h - 36,
+        {
         color: '#9fd7b2',
         size: 13,
         weight: 700
-      });
+        }
+      );
 
       wrapReplayText(snapshot.action.intent || 'Saved DF screen frame', col2, panel.y + 26, 400, 18);
 
       const metrics = snapshot.metrics || {};
       const stocks = snapshot.record?.state_after_advance?.stocks || snapshot.record?.observation?.stocks || {};
       const work = getRecordWork(snapshot.record);
-      drawReplayText(`Keys: ${(snapshot.action.params?.keys || []).slice(0, 4).join(', ') || '--'}`, col3, panel.y + 26);
+      drawReplayText(formatReplayInput(snapshot), col3, panel.y + 26);
       drawReplayText(formatReplayTicks(snapshot.record), col3, panel.y + 52);
       drawReplayText(`Wood: ${stocks.wood ?? '--'}  Stone: ${stocks.stone ?? '--'}`, col3, panel.y + 78);
       const plannedWorkshops = work.carpenter_workshops_planned ?? work.carpenter_workshops ?? 0;
@@ -2132,7 +2189,7 @@
         drawDfScreenFrame(snapshot, canvasW, canvasH);
         updateReplayControls(
           snapshot,
-          `Recorded DF screen: step ${snapshot.record.step ?? replayStepIndex} of ${replayRecords.length - 1}`
+          `${snapshot.screenPhase === 'post-action' ? 'Post-action' : 'Pre-action'} DF screen: step ${snapshot.record.step ?? replayStepIndex} of ${replayRecords.length - 1}`
         );
         return;
       }

@@ -28,6 +28,12 @@ def _tail_lines(path: Path, *, max_bytes: int) -> Iterator[bytes]:
 
 def _screen_text(record: Dict[str, Any]) -> str | None:
     candidates = [
+        # When a completed interaction records both sides of the transition,
+        # the preview must show the resulting screen rather than the modal the
+        # action just closed.
+        record.get("screen_text_after_action"),
+        record.get("screen_text_after_interaction"),
+        record.get("screenTextAfterInteraction"),
         record.get("screen_text"),
         record.get("screenText"),
         (record.get("observation") or {}).get("screen_text")
