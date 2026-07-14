@@ -373,7 +373,7 @@
   {
     "type": "WAIT",
     "params": {},
-    "advance_ticks": 2500
+    "advance_ticks": 0
   },
   {
     "type": "ORDER",
@@ -503,7 +503,7 @@
   {
     "type": "WAIT",
     "params": {},
-    "advance_ticks": 2500
+    "advance_ticks": 0
   },
   {
     "type": "FARM",
@@ -532,7 +532,7 @@
   {
     "type": "WAIT",
     "params": {},
-    "advance_ticks": 2500
+    "advance_ticks": 0
   },
   {
     "type": "DIG",
@@ -670,7 +670,7 @@
   {
     "type": "WAIT",
     "params": {},
-    "advance_ticks": 2500
+    "advance_ticks": 0
   },
   {
     "type": "DIG",
@@ -692,7 +692,7 @@
   {
     "type": "WAIT",
     "params": {},
-    "advance_ticks": 2500
+    "advance_ticks": 0
   },
   {
     "type": "WAIT",

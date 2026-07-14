@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import copy
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -583,6 +584,34 @@ def test_live_calibration_runner_rejects_untracked_checkout(monkeypatch) -> None
         "--porcelain",
         "--untracked-files=all",
     ]
+
+
+def test_owned_calibration_plan_settles_tree_without_shifting_first_meeting() -> None:
+    from scripts import run_p1_live_calibration as calibration_runner
+
+    actions = calibration_runner._load_plan(
+        Path(
+            "experiments/calibration/"
+            "p1_g7_v5_owned_layout_and_provisioning.json"
+        ),
+        scenario="owned_layout_and_provisioning",
+    )
+    first_interact = next(
+        index for index, action in enumerate(actions) if action["type"] == "INTERACT"
+    )
+
+    assert len(actions) == 200
+    assert [action["type"] for action in actions[:7]] == [
+        "DIG",
+        "WAIT",
+        "WAIT",
+        "WAIT",
+        "WAIT",
+        "WAIT",
+        "BUILD",
+    ]
+    assert first_interact == 101
+    assert sum(action["advance_ticks"] for action in actions[:first_interact]) == 199100
 
 
 def test_task_failure_terminal_forces_failed_task_verdict() -> None:
