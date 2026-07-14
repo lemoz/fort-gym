@@ -612,6 +612,116 @@ def test_owned_calibration_plan_settles_tree_without_shifting_first_meeting() ->
     ]
     assert first_interact == 101
     assert sum(action["advance_ticks"] for action in actions[:first_interact]) == 199100
+    assert actions[6]["params"] == {
+        "kind": "CarpenterWorkshop",
+        "structure": None,
+        "material": None,
+        "location": None,
+        "x": 94,
+        "y": 93,
+        "z": 161,
+        "x2": None,
+        "y2": None,
+    }
+
+
+def test_live_calibration_agent_waits_for_observed_workshop() -> None:
+    from scripts import run_p1_live_calibration as calibration_runner
+
+    action = calibration_runner._load_plan(
+        Path("experiments/calibration/p1_g7_v5_owned_layout_and_provisioning.json"),
+        scenario="owned_layout_and_provisioning",
+    )[12]
+    agent = calibration_runner.CalibrationPlanAgent([action])
+
+    waiting = agent.decide(
+        "main map",
+        {
+            "viewscreen_type": "viewscreen_dwarfmodest",
+            "work": {"carpenter_workshops_usable": 0},
+            "crew": {"farm_plot_details": []},
+        },
+    )
+    ready = agent.decide(
+        "main map",
+        {
+            "viewscreen_type": "viewscreen_dwarfmodest",
+            "work": {"carpenter_workshops_usable": 1},
+            "crew": {"farm_plot_details": []},
+        },
+    )
+
+    assert waiting["type"] == "WAIT"
+    assert waiting["advance_ticks"] == 2500
+    assert ready["type"] == "ORDER"
+    assert ready["params"]["job"] == "barrel"
+
+
+def test_live_calibration_agent_remaps_farm_ids_from_observation() -> None:
+    from scripts import run_p1_live_calibration as calibration_runner
+
+    actions = calibration_runner._load_plan(
+        Path("experiments/calibration/p1_g7_v5_owned_layout_and_provisioning.json"),
+        scenario="owned_layout_and_provisioning",
+    )
+    agent = calibration_runner.CalibrationPlanAgent([actions[9], actions[10], actions[10]])
+
+    build = agent.decide(
+        "main map",
+        {
+            "viewscreen_type": "viewscreen_dwarfmodest",
+            "crew": {"farm_plot_details": []},
+        },
+    )
+    live_state = {
+        "viewscreen_type": "viewscreen_dwarfmodest",
+        "crew": {"farm_plot_details": [{"id": 31, "built": True}]},
+    }
+    first_farm = agent.decide("main map", live_state)
+    second_farm = agent.decide("main map", live_state)
+
+    assert build["type"] == "BUILD"
+    assert first_farm["params"]["building_id"] == 31
+    assert second_farm["params"]["building_id"] == 31
+
+
+def test_live_calibration_agent_recovers_modal_and_skips_blind_interact() -> None:
+    from scripts import run_p1_live_calibration as calibration_runner
+
+    actions = calibration_runner._load_plan(
+        Path("experiments/calibration/p1_g7_v5_owned_layout_and_provisioning.json"),
+        scenario="owned_layout_and_provisioning",
+    )
+    agent = calibration_runner.CalibrationPlanAgent(
+        [actions[0], actions[101], actions[1]]
+    )
+
+    recovery = agent.decide(
+        "a - Begin discussion",
+        {
+            "viewscreen_type": "viewscreen_topicmeetingst",
+            "crew": {"farm_plot_details": []},
+        },
+    )
+    first_plan_action = agent.decide(
+        "main map",
+        {
+            "viewscreen_type": "viewscreen_dwarfmodest",
+            "crew": {"farm_plot_details": []},
+        },
+    )
+    after_skipped_placeholder = agent.decide(
+        "main map",
+        {
+            "viewscreen_type": "viewscreen_dwarfmodest",
+            "crew": {"farm_plot_details": []},
+        },
+    )
+
+    assert recovery["type"] == "INTERACT"
+    assert recovery["params"]["operation"] == "topic_option_a"
+    assert first_plan_action["type"] == "DIG"
+    assert after_skipped_placeholder["type"] == "WAIT"
 
 
 def test_task_failure_terminal_forces_failed_task_verdict() -> None:
