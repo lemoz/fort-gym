@@ -101,8 +101,9 @@ def main() -> None:
     args = parser.parse_args()
 
     _require_clean_checkout()
+    actions = _load_plan(args.plan, scenario=args.scenario)
     run_id = run_once(
-        CalibrationPlanAgent(_load_plan(args.plan, scenario=args.scenario)),
+        CalibrationPlanAgent(actions),
         backend="dfhack",
         model=P1_CALIBRATION_MODEL,
         max_steps=P1_MAX_STEPS,
@@ -113,6 +114,7 @@ def main() -> None:
         runtime_save=P1_RUNTIME_SAVE,
         evaluation_protocol=P1_PROTOCOL,
         measurement_calibration_scenario=args.scenario,
+        measurement_calibration_step_limit=len(actions),
     )
     print(run_id)
 

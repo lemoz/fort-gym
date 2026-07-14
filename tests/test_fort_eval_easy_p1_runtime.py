@@ -436,6 +436,21 @@ def test_scripted_live_calibration_bootstraps_without_unlocking_model_arms() -> 
         )
 
 
+def test_measurement_calibration_scenario_requires_v5_protocol() -> None:
+    with pytest.raises(ValueError, match="require.*G7-v5 protocol"):
+        validate_p1_declaration(
+            protocol=None,
+            backend="dfhack",
+            model=P1_CALIBRATION_MODEL,
+            seed_save="seed_region3_fresh",
+            runtime_save="region1",
+            preserve_save=False,
+            max_steps=200,
+            ticks_per_step=2500,
+            measurement_calibration_scenario="sensor_dropout",
+        )
+
+
 def test_measurement_digest_normalizes_only_post_calibration_lock_values() -> None:
     from fort_gym.bench.eval import fort_eval_easy_p1 as contract
 

@@ -20,6 +20,7 @@ from fort_gym.bench.run.runner import (
     _effective_action_history_limit,
     _interact_context_reason,
     _interaction_terminal_reason,
+    _measurement_calibration_step_limit_reached,
     _owned_excavation_snapshot_rects,
     _tick_terminal_reason,
     run_once,
@@ -282,6 +283,13 @@ def _run_dfhack_tick_fixture(
 def _trace_rows(tmp_path: Path, run_id: str) -> list[Dict[str, Any]]:
     trace_path = tmp_path / run_id / "trace.jsonl"
     return [json.loads(line) for line in trace_path.read_text().splitlines()]
+
+
+def test_measurement_calibration_step_limit_stops_after_final_durable_row() -> None:
+    assert _measurement_calibration_step_limit_reached(step=0, limit=1) is True
+    assert _measurement_calibration_step_limit_reached(step=0, limit=2) is False
+    assert _measurement_calibration_step_limit_reached(step=199, limit=200) is True
+    assert _measurement_calibration_step_limit_reached(step=199, limit=None) is False
 
 
 def test_duplicate_worker_cannot_touch_an_already_claimed_trace(

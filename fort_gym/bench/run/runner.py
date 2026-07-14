@@ -2952,6 +2952,12 @@ def _cleanup_dfhack_runtime(
     }
 
 
+def _measurement_calibration_step_limit_reached(
+    *, step: int, limit: int | None
+) -> bool:
+    return limit is not None and step + 1 >= limit
+
+
 def run_once(
     agent: Agent,
     *,
@@ -2969,6 +2975,7 @@ def run_once(
     runtime_save: Optional[str] = None,
     evaluation_protocol: Optional[str] = None,
     measurement_calibration_scenario: Optional[str] = None,
+    measurement_calibration_step_limit: Optional[int] = None,
 ) -> str:
     """Execute a run and persist a JSONL trace while streaming events."""
 
@@ -2990,6 +2997,20 @@ def run_once(
         ticks_per_step=ticks,
         measurement_calibration_scenario=measurement_calibration_scenario,
     )
+    if measurement_calibration_step_limit is not None:
+        if measurement_calibration_scenario is None:
+            raise ValueError(
+                "measurement_calibration_step_limit requires a calibration scenario"
+            )
+        if (
+            isinstance(measurement_calibration_step_limit, bool)
+            or not isinstance(measurement_calibration_step_limit, int)
+            or not 1 <= measurement_calibration_step_limit <= max_steps
+        ):
+            raise ValueError(
+                "measurement_calibration_step_limit must be an integer between 1 "
+                "and max_steps"
+            )
     agent.set_run_context(run_id=run_identifier)
 
     if registry:
@@ -5690,6 +5711,16 @@ def run_once(
 
                 if registry:
                     registry.set_status(run_identifier, step=step)
+
+                if _measurement_calibration_step_limit_reached(
+                    step=step,
+                    limit=measurement_calibration_step_limit,
+                ):
+                    # Calibration scenarios keep the frozen 200-step declaration,
+                    # but short sensor-isolation plans should finish normally once
+                    # their final post-advance evidence row is durable. This is not
+                    # exposed to benchmark model arms.
+                    break
 
         cleanup_outcome = cleanup_dfhack_runtime()
         if not cleanup_outcome.get("ok"):

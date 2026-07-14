@@ -17,6 +17,31 @@
     "advance_ticks": 1200
   },
   {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
     "type": "BUILD",
     "params": {
       "kind": "CarpenterWorkshop",
@@ -2268,61 +2293,6 @@
   {
     "type": "WAIT",
     "params": {},
-    "advance_ticks": 2500
-  },
-  {
-    "type": "DIG",
-    "params": {
-      "area": [
-        109,
-        99,
-        160
-      ],
-      "size": [
-        1,
-        1,
-        1
-      ],
-      "kind": "dig"
-    },
-    "advance_ticks": 2500
-  },
-  {
-    "type": "BUILD",
-    "params": {
-      "kind": "Wall",
-      "structure": null,
-      "material": null,
-      "location": null,
-      "x": 100,
-      "y": 103,
-      "z": 161,
-      "x2": 100,
-      "y2": 105
-    },
-    "advance_ticks": 2500
-  },
-  {
-    "type": "WAIT",
-    "params": {},
-    "advance_ticks": 2500
-  },
-  {
-    "type": "ORDER",
-    "params": {
-      "job": "brew",
-      "quantity": 5,
-      "at": null
-    },
-    "advance_ticks": 2500
-  },
-  {
-    "type": "ORDER",
-    "params": {
-      "job": "brew",
-      "quantity": 5,
-      "at": null
-    },
     "advance_ticks": 2500
   }
 ]

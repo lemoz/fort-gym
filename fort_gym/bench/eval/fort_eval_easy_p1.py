@@ -586,6 +586,11 @@ def validate_p1_declaration(
     ticks_per_step: int,
     measurement_calibration_scenario: str | None = None,
 ) -> None:
+    if measurement_calibration_scenario is not None and protocol != P1_PROTOCOL:
+        raise ValueError(
+            "measurement calibration scenarios require the Fort-Eval Easy P1 "
+            "G7-v5 protocol"
+        )
     if protocol in {P1_PROTOCOL_V3, P1_PROTOCOL_V4}:
         frozen_version = protocol.rsplit("g7-", 1)[-1]
         raise ValueError(
