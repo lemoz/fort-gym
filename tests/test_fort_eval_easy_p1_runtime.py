@@ -700,6 +700,7 @@ def test_live_calibration_agent_recovers_modal_and_skips_blind_interact() -> Non
         "a - Begin discussion",
         {
             "viewscreen_type": "viewscreen_topicmeetingst",
+            "pause_state": True,
             "crew": {"farm_plot_details": []},
         },
     )
@@ -722,6 +723,47 @@ def test_live_calibration_agent_recovers_modal_and_skips_blind_interact() -> Non
     assert recovery["params"]["operation"] == "topic_option_a"
     assert first_plan_action["type"] == "DIG"
     assert after_skipped_placeholder["type"] == "WAIT"
+
+
+@pytest.mark.parametrize(
+    "viewscreen",
+    sorted(
+        {
+            "viewscreen_textviewerst",
+            "viewscreen_meetingst",
+            "viewscreen_requestagreementst",
+            "viewscreen_topicmeeting_fill_land_holder_positionsst",
+            "viewscreen_topicmeeting_takerequestsst",
+            "viewscreen_storesst",
+        }
+    ),
+)
+def test_live_calibration_agent_uses_nonselecting_modal_recovery(
+    viewscreen: str,
+) -> None:
+    from scripts import run_p1_live_calibration as calibration_runner
+
+    recovery = calibration_runner.CalibrationPlanAgent._interaction_recovery(
+        "blocking menu",
+        {"viewscreen_type": viewscreen, "pause_state": True},
+    )
+
+    assert recovery is not None
+    assert recovery["type"] == "INTERACT"
+    assert recovery["params"]["operation"] == "cancel"
+    assert recovery["advance_ticks"] == 0
+
+
+def test_live_calibration_agent_never_sends_input_without_pause_attestation() -> None:
+    from scripts import run_p1_live_calibration as calibration_runner
+
+    assert (
+        calibration_runner.CalibrationPlanAgent._interaction_recovery(
+            "Press Enter to close window",
+            {"viewscreen_type": "viewscreen_textviewerst", "pause_state": False},
+        )
+        is None
+    )
 
 
 def test_task_failure_terminal_forces_failed_task_verdict() -> None:

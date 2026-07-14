@@ -92,12 +92,12 @@ class CalibrationPlanAgent(Agent):
     def _interaction_recovery(
         cls, obs_text: str, obs_json: dict[str, Any]
     ) -> dict[str, Any] | None:
+        if obs_json.get("pause_state") is not True:
+            return None
         viewscreen = str(obs_json.get("viewscreen_type") or "unknown")
         if viewscreen not in INTERACT_ALLOWED_VIEWSCREEN_TYPES:
             return None
-        if viewscreen == "viewscreen_storesst":
-            operation = "cancel"
-        elif viewscreen == "viewscreen_topicmeetingst":
+        if viewscreen == "viewscreen_topicmeetingst":
             if FINISH_TOPIC_MEETING_OPTION_TEXT in obs_text:
                 operation = "finish_topic_meeting"
             elif visible_topic_meeting_option("topic_option_a", obs_text):
@@ -105,7 +105,11 @@ class CalibrationPlanAgent(Agent):
             else:
                 operation = "cancel"
         else:
-            operation = "confirm"
+            # Text notices close with LEAVESCREEN, and cancel is the only
+            # non-selecting recovery for stores, requests, agreements, and
+            # meeting submenus. A generic SELECT fallback can oscillate
+            # forever between takerequests and stores.
+            operation = "cancel"
         return parse_action(
             {
                 "type": "INTERACT",
