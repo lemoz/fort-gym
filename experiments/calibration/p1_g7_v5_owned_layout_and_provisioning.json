@@ -1,0 +1,2328 @@
+[
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        92,
+        98,
+        161
+      ],
+      "size": [
+        1,
+        1,
+        1
+      ],
+      "kind": "chop"
+    },
+    "advance_ticks": 1200
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "CarpenterWorkshop",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 90,
+      "y": 97,
+      "z": 161,
+      "x2": null,
+      "y2": null
+    },
+    "advance_ticks": 1000
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        99,
+        100,
+        161
+      ],
+      "size": [
+        1,
+        1,
+        1
+      ],
+      "kind": "channel"
+    },
+    "advance_ticks": 1200
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        98,
+        100,
+        160
+      ],
+      "size": [
+        1,
+        1,
+        1
+      ],
+      "kind": "dig"
+    },
+    "advance_ticks": 1000
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "FarmPlot",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 98,
+      "y": 100,
+      "z": 160,
+      "x2": null,
+      "y2": null
+    },
+    "advance_ticks": 1000
+  },
+  {
+    "type": "FARM",
+    "params": {
+      "building_id": 2,
+      "crop": "MUSHROOM_HELMET_PLUMP",
+      "seasons": [
+        "spring",
+        "summer",
+        "autumn",
+        "winter"
+      ]
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        100,
+        99,
+        160
+      ],
+      "size": [
+        1,
+        5,
+        1
+      ],
+      "kind": "dig"
+    },
+    "advance_ticks": 1500
+  },
+  {
+    "type": "ORDER",
+    "params": {
+      "job": "barrel",
+      "quantity": 3,
+      "at": null
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        100,
+        99,
+        160
+      ],
+      "size": [
+        1,
+        4,
+        1
+      ],
+      "kind": "dig"
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "FarmPlot",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 100,
+      "y": 99,
+      "z": 160,
+      "x2": 100,
+      "y2": 102
+    },
+    "advance_ticks": 1200
+  },
+  {
+    "type": "FARM",
+    "params": {
+      "building_id": 3,
+      "crop": "MUSHROOM_HELMET_PLUMP",
+      "seasons": [
+        "spring",
+        "summer",
+        "autumn",
+        "winter"
+      ]
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "Still",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 98,
+      "y": 92,
+      "z": 161,
+      "x2": null,
+      "y2": null
+    },
+    "advance_ticks": 1200
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        86,
+        88,
+        161
+      ],
+      "size": [
+        19,
+        16,
+        1
+      ],
+      "kind": "gather"
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "LABOR",
+    "params": {
+      "unit_id": 247,
+      "labor": "herbalism",
+      "enable": true
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "LABOR",
+    "params": {
+      "unit_id": 245,
+      "labor": "herbalism",
+      "enable": true
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        101,
+        99,
+        160
+      ],
+      "size": [
+        1,
+        4,
+        1
+      ],
+      "kind": "dig"
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "FarmPlot",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 101,
+      "y": 99,
+      "z": 160,
+      "x2": 101,
+      "y2": 102
+    },
+    "advance_ticks": 1600
+  },
+  {
+    "type": "FARM",
+    "params": {
+      "building_id": 5,
+      "crop": "POD_SWEET",
+      "seasons": [
+        "spring",
+        "summer"
+      ]
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "FARM",
+    "params": {
+      "building_id": 5,
+      "crop": "MUSHROOM_CUP_DIMPLE",
+      "seasons": [
+        "autumn",
+        "winter"
+      ]
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        102,
+        99,
+        160
+      ],
+      "size": [
+        1,
+        4,
+        1
+      ],
+      "kind": "dig"
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        102,
+        99,
+        160
+      ],
+      "size": [
+        1,
+        3,
+        1
+      ],
+      "kind": "dig"
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "FarmPlot",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 102,
+      "y": 99,
+      "z": 160,
+      "x2": 102,
+      "y2": 101
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "FARM",
+    "params": {
+      "building_id": 6,
+      "crop": "POD_SWEET",
+      "seasons": [
+        "spring",
+        "summer"
+      ]
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "FARM",
+    "params": {
+      "building_id": 6,
+      "crop": "MUSHROOM_CUP_DIMPLE",
+      "seasons": [
+        "autumn",
+        "winter"
+      ]
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "ORDER",
+    "params": {
+      "job": "bed",
+      "quantity": 1,
+      "at": null
+    },
+    "advance_ticks": 1200
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        103,
+        99,
+        160
+      ],
+      "size": [
+        2,
+        1,
+        1
+      ],
+      "kind": "dig"
+    },
+    "advance_ticks": 1200
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "Bed",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 104,
+      "y": 99,
+      "z": 160,
+      "x2": null,
+      "y2": null
+    },
+    "advance_ticks": 1200
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        105,
+        92,
+        161
+      ],
+      "size": [
+        1,
+        1,
+        1
+      ],
+      "kind": "chop"
+    },
+    "advance_ticks": 1800
+  },
+  {
+    "type": "ORDER",
+    "params": {
+      "job": "bed",
+      "quantity": 2,
+      "at": null
+    },
+    "advance_ticks": 2000
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        103,
+        101,
+        160
+      ],
+      "size": [
+        2,
+        1,
+        1
+      ],
+      "kind": "dig"
+    },
+    "advance_ticks": 1200
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        98,
+        101,
+        160
+      ],
+      "size": [
+        2,
+        1,
+        1
+      ],
+      "kind": "dig"
+    },
+    "advance_ticks": 1500
+  },
+  {
+    "type": "FARM",
+    "params": {
+      "building_id": 3,
+      "crop": "GRASS_WHEAT_CAVE",
+      "seasons": [
+        "summer",
+        "autumn"
+      ]
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "FARM",
+    "params": {
+      "building_id": 2,
+      "crop": "GRASS_WHEAT_CAVE",
+      "seasons": [
+        "summer",
+        "autumn"
+      ]
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "FARM",
+    "params": {
+      "building_id": 6,
+      "crop": "GRASS_TAIL_PIG",
+      "seasons": [
+        "summer",
+        "autumn"
+      ]
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "FARM",
+    "params": {
+      "building_id": 5,
+      "crop": "GRASS_TAIL_PIG",
+      "seasons": [
+        "summer",
+        "autumn"
+      ]
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        98,
+        99,
+        160
+      ],
+      "size": [
+        1,
+        1,
+        1
+      ],
+      "kind": "dig"
+    },
+    "advance_ticks": 1500
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "Bed",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 98,
+      "y": 99,
+      "z": 160,
+      "x2": null,
+      "y2": null
+    },
+    "advance_ticks": 1200
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        97,
+        99,
+        160
+      ],
+      "size": [
+        1,
+        1,
+        1
+      ],
+      "kind": "dig"
+    },
+    "advance_ticks": 1500
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        99,
+        102,
+        160
+      ],
+      "size": [
+        1,
+        1,
+        1
+      ],
+      "kind": "dig"
+    },
+    "advance_ticks": 1500
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        97,
+        101,
+        160
+      ],
+      "size": [
+        2,
+        1,
+        1
+      ],
+      "kind": "dig"
+    },
+    "advance_ticks": 1500
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "Bed",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 98,
+      "y": 101,
+      "z": 160,
+      "x2": null,
+      "y2": null
+    },
+    "advance_ticks": 1200
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        91,
+        92,
+        161
+      ],
+      "size": [
+        17,
+        17,
+        1
+      ],
+      "kind": "gather"
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "LABOR",
+    "params": {
+      "unit_id": 245,
+      "labor": "farming",
+      "enable": true
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "LABOR",
+    "params": {
+      "unit_id": 243,
+      "labor": "farming",
+      "enable": true
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        95,
+        92,
+        161
+      ],
+      "size": [
+        13,
+        17,
+        1
+      ],
+      "kind": "gather"
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        102,
+        102,
+        160
+      ],
+      "size": [
+        2,
+        5,
+        1
+      ],
+      "kind": "dig"
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "ORDER",
+    "params": {
+      "job": "table",
+      "quantity": 1,
+      "at": null
+    },
+    "advance_ticks": 1800
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "Table",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 102,
+      "y": 93,
+      "z": 161,
+      "x2": null,
+      "y2": null
+    },
+    "advance_ticks": 1200
+  },
+  {
+    "type": "ORDER",
+    "params": {
+      "job": "door",
+      "quantity": 1,
+      "at": null
+    },
+    "advance_ticks": 1800
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "Door",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 101,
+      "y": 94,
+      "z": 161,
+      "x2": null,
+      "y2": null
+    },
+    "advance_ticks": 1200
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "Wall",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 101,
+      "y": 92,
+      "z": 161,
+      "x2": 103,
+      "y2": 92
+    },
+    "advance_ticks": 1500
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "Wall",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 103,
+      "y": 93,
+      "z": 161,
+      "x2": 103,
+      "y2": 94
+    },
+    "advance_ticks": 1200
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        99,
+        101,
+        161
+      ],
+      "size": [
+        1,
+        1,
+        1
+      ],
+      "kind": "chop"
+    },
+    "advance_ticks": 2000
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "Wall",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 102,
+      "y": 94,
+      "z": 161,
+      "x2": null,
+      "y2": null
+    },
+    "advance_ticks": 1500
+  },
+  {
+    "type": "ORDER",
+    "params": {
+      "job": "chair",
+      "quantity": 1,
+      "at": null
+    },
+    "advance_ticks": 1800
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "Chair",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 101,
+      "y": 93,
+      "z": 161,
+      "x2": null,
+      "y2": null
+    },
+    "advance_ticks": 1200
+  },
+  {
+    "type": "FARM",
+    "params": {
+      "building_id": 6,
+      "crop": "MUSHROOM_CUP_DIMPLE",
+      "seasons": null
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "FARM",
+    "params": {
+      "building_id": 5,
+      "crop": "MUSHROOM_HELMET_PLUMP",
+      "seasons": [
+        "spring",
+        "summer",
+        "autumn",
+        "winter"
+      ]
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "FARM",
+    "params": {
+      "building_id": 3,
+      "crop": "MUSHROOM_HELMET_PLUMP",
+      "seasons": null
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "FARM",
+    "params": {
+      "building_id": 2,
+      "crop": "MUSHROOM_HELMET_PLUMP",
+      "seasons": [
+        "spring",
+        "summer",
+        "autumn",
+        "winter"
+      ]
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "FARM",
+    "params": {
+      "building_id": 6,
+      "crop": "MUSHROOM_HELMET_PLUMP",
+      "seasons": [
+        "spring",
+        "summer",
+        "autumn",
+        "winter"
+      ]
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        100,
+        103,
+        160
+      ],
+      "size": [
+        1,
+        1,
+        1
+      ],
+      "kind": "dig"
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "ORDER",
+    "params": {
+      "job": "bed",
+      "quantity": 1,
+      "at": null
+    },
+    "advance_ticks": 1800
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        99,
+        104,
+        161
+      ],
+      "size": [
+        1,
+        1,
+        1
+      ],
+      "kind": "chop"
+    },
+    "advance_ticks": 2000
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        103,
+        101,
+        160
+      ],
+      "size": [
+        2,
+        1,
+        1
+      ],
+      "kind": "dig"
+    },
+    "advance_ticks": 2000
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        105,
+        99,
+        160
+      ],
+      "size": [
+        2,
+        1,
+        1
+      ],
+      "kind": "dig"
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        104,
+        94,
+        161
+      ],
+      "size": [
+        4,
+        5,
+        1
+      ],
+      "kind": "gather"
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "LABOR",
+    "params": {
+      "unit_id": 245,
+      "labor": "brewing",
+      "enable": true
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        99,
+        102,
+        161
+      ],
+      "size": [
+        9,
+        7,
+        1
+      ],
+      "kind": "gather"
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "FarmPlot",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 96,
+      "y": 106,
+      "z": 160,
+      "x2": null,
+      "y2": null
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        95,
+        104,
+        161
+      ],
+      "size": [
+        1,
+        1,
+        1
+      ],
+      "kind": "gather"
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "Bed",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 103,
+      "y": 99,
+      "z": 160,
+      "x2": null,
+      "y2": null
+    },
+    "advance_ticks": 1200
+  },
+  {
+    "type": "ORDER",
+    "params": {
+      "job": "bed",
+      "quantity": 1,
+      "at": null
+    },
+    "advance_ticks": 1800
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "Bed",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 97,
+      "y": 99,
+      "z": 160,
+      "x2": null,
+      "y2": null
+    },
+    "advance_ticks": 1200
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        104,
+        100,
+        161
+      ],
+      "size": [
+        1,
+        1,
+        1
+      ],
+      "kind": "channel"
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        105,
+        100,
+        160
+      ],
+      "size": [
+        1,
+        1,
+        1
+      ],
+      "kind": "dig"
+    },
+    "advance_ticks": 2000
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        108,
+        93,
+        161
+      ],
+      "size": [
+        1,
+        1,
+        1
+      ],
+      "kind": "gather"
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        110,
+        94,
+        161
+      ],
+      "size": [
+        1,
+        1,
+        1
+      ],
+      "kind": "gather"
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        108,
+        95,
+        161
+      ],
+      "size": [
+        5,
+        9,
+        1
+      ],
+      "kind": "gather"
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "INTERACT",
+    "params": {
+      "operation": "confirm"
+    },
+    "advance_ticks": 0
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "INTERACT",
+    "params": {
+      "operation": "finish_topic_meeting"
+    },
+    "advance_ticks": 0
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "INTERACT",
+    "params": {
+      "operation": "topic_option_a"
+    },
+    "advance_ticks": 0
+  },
+  {
+    "type": "INTERACT",
+    "params": {
+      "operation": "cancel"
+    },
+    "advance_ticks": 0
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "FarmPlot",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 96,
+      "y": 106,
+      "z": 160,
+      "x2": null,
+      "y2": null
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "INTERACT",
+    "params": {
+      "operation": "finish_topic_meeting"
+    },
+    "advance_ticks": 0
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "INTERACT",
+    "params": {
+      "operation": "finish_topic_meeting"
+    },
+    "advance_ticks": 0
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "INTERACT",
+    "params": {
+      "operation": "topic_option_a"
+    },
+    "advance_ticks": 0
+  },
+  {
+    "type": "INTERACT",
+    "params": {
+      "operation": "cancel"
+    },
+    "advance_ticks": 0
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        105,
+        97,
+        161
+      ],
+      "size": [
+        1,
+        1,
+        1
+      ],
+      "kind": "gather"
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "INTERACT",
+    "params": {
+      "operation": "confirm"
+    },
+    "advance_ticks": 0
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        104,
+        101,
+        160
+      ],
+      "size": [
+        1,
+        1,
+        1
+      ],
+      "kind": "dig"
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "Wall",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 106,
+      "y": 95,
+      "z": 161,
+      "x2": 108,
+      "y2": 95
+    },
+    "advance_ticks": 1500
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "Wall",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 106,
+      "y": 96,
+      "z": 161,
+      "x2": 106,
+      "y2": 97
+    },
+    "advance_ticks": 1500
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "Wall",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 108,
+      "y": 96,
+      "z": 161,
+      "x2": 108,
+      "y2": 97
+    },
+    "advance_ticks": 1500
+  },
+  {
+    "type": "ORDER",
+    "params": {
+      "job": "bed",
+      "quantity": 1,
+      "at": null
+    },
+    "advance_ticks": 1500
+  },
+  {
+    "type": "ORDER",
+    "params": {
+      "job": "door",
+      "quantity": 1,
+      "at": null
+    },
+    "advance_ticks": 2000
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "Bed",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 107,
+      "y": 96,
+      "z": 161,
+      "x2": null,
+      "y2": null
+    },
+    "advance_ticks": 1500
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "Door",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 107,
+      "y": 97,
+      "z": 161,
+      "x2": null,
+      "y2": null
+    },
+    "advance_ticks": 1500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 1000
+  },
+  {
+    "type": "ORDER",
+    "params": {
+      "job": "bed",
+      "quantity": 1,
+      "at": null
+    },
+    "advance_ticks": 2000
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "Wall",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 109,
+      "y": 95,
+      "z": 161,
+      "x2": 112,
+      "y2": 95
+    },
+    "advance_ticks": 1500
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "Wall",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 109,
+      "y": 96,
+      "z": 161,
+      "x2": 109,
+      "y2": 98
+    },
+    "advance_ticks": 1500
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "Wall",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 112,
+      "y": 96,
+      "z": 161,
+      "x2": 112,
+      "y2": 98
+    },
+    "advance_ticks": 1500
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "Wall",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 110,
+      "y": 98,
+      "z": 161,
+      "x2": null,
+      "y2": null
+    },
+    "advance_ticks": 1500
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "Bed",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 110,
+      "y": 96,
+      "z": 161,
+      "x2": null,
+      "y2": null
+    },
+    "advance_ticks": 1500
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "Wall",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 111,
+      "y": 98,
+      "z": 161,
+      "x2": null,
+      "y2": null
+    },
+    "advance_ticks": 1500
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        108,
+        93,
+        161
+      ],
+      "size": [
+        1,
+        1,
+        1
+      ],
+      "kind": "gather"
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        96,
+        92,
+        161
+      ],
+      "size": [
+        17,
+        17,
+        1
+      ],
+      "kind": "gather"
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "FarmPlot",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 97,
+      "y": 101,
+      "z": 160,
+      "x2": null,
+      "y2": null
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 1500
+  },
+  {
+    "type": "LABOR",
+    "params": {
+      "unit_id": 245,
+      "labor": "brewing",
+      "enable": false
+    },
+    "advance_ticks": 1
+  },
+  {
+    "type": "LABOR",
+    "params": {
+      "unit_id": 485,
+      "labor": "brewing",
+      "enable": false
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "LABOR",
+    "params": {
+      "unit_id": 248,
+      "labor": "brewing",
+      "enable": false
+    },
+    "advance_ticks": 1
+  },
+  {
+    "type": "ORDER",
+    "params": {
+      "job": "brew",
+      "quantity": 5,
+      "at": null
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "FARM",
+    "params": {
+      "building_id": 43,
+      "crop": "MUSHROOM_HELMET_PLUMP",
+      "seasons": [
+        "spring",
+        "summer",
+        "autumn",
+        "winter"
+      ]
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "LABOR",
+    "params": {
+      "unit_id": 350,
+      "labor": "farming",
+      "enable": true
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        96,
+        98,
+        160
+      ],
+      "size": [
+        4,
+        1,
+        1
+      ],
+      "kind": "dig"
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "FarmPlot",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 96,
+      "y": 98,
+      "z": 160,
+      "x2": 99,
+      "y2": 98
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "FARM",
+    "params": {
+      "building_id": 44,
+      "crop": "MUSHROOM_HELMET_PLUMP",
+      "seasons": [
+        "spring",
+        "summer",
+        "autumn",
+        "winter"
+      ]
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "LABOR",
+    "params": {
+      "unit_id": 485,
+      "labor": "farming",
+      "enable": true
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        100,
+        98,
+        160
+      ],
+      "size": [
+        4,
+        1,
+        1
+      ],
+      "kind": "dig"
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "FarmPlot",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 100,
+      "y": 98,
+      "z": 160,
+      "x2": 103,
+      "y2": 98
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "FARM",
+    "params": {
+      "building_id": 45,
+      "crop": "MUSHROOM_HELMET_PLUMP",
+      "seasons": [
+        "spring",
+        "summer",
+        "autumn",
+        "winter"
+      ]
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        104,
+        98,
+        160
+      ],
+      "size": [
+        5,
+        1,
+        1
+      ],
+      "kind": "dig"
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "FarmPlot",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 104,
+      "y": 98,
+      "z": 160,
+      "x2": 108,
+      "y2": 98
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "FARM",
+    "params": {
+      "building_id": 46,
+      "crop": "MUSHROOM_HELMET_PLUMP",
+      "seasons": [
+        "spring",
+        "summer",
+        "autumn",
+        "winter"
+      ]
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "Still",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 107,
+      "y": 100,
+      "z": 161,
+      "x2": null,
+      "y2": null
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "ORDER",
+    "params": {
+      "job": "bed",
+      "quantity": 1,
+      "at": null
+    },
+    "advance_ticks": 1500
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "Wall",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 100,
+      "y": 99,
+      "z": 161,
+      "x2": 102,
+      "y2": 99
+    },
+    "advance_ticks": 1500
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "Wall",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 100,
+      "y": 100,
+      "z": 161,
+      "x2": 100,
+      "y2": 101
+    },
+    "advance_ticks": 1500
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "Wall",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 102,
+      "y": 100,
+      "z": 161,
+      "x2": 102,
+      "y2": 101
+    },
+    "advance_ticks": 1500
+  },
+  {
+    "type": "ORDER",
+    "params": {
+      "job": "door",
+      "quantity": 1,
+      "at": null
+    },
+    "advance_ticks": 1500
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "Bed",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 101,
+      "y": 100,
+      "z": 161,
+      "x2": null,
+      "y2": null
+    },
+    "advance_ticks": 1500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 1500
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "Door",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 101,
+      "y": 101,
+      "z": 161,
+      "x2": null,
+      "y2": null
+    },
+    "advance_ticks": 1500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 1000
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "Wall",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 98,
+      "y": 102,
+      "z": 161,
+      "x2": 100,
+      "y2": 102
+    },
+    "advance_ticks": 1500
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "Wall",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 98,
+      "y": 103,
+      "z": 161,
+      "x2": 98,
+      "y2": 105
+    },
+    "advance_ticks": 1500
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "Still",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 99,
+      "y": 96,
+      "z": 161,
+      "x2": null,
+      "y2": null
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        98,
+        93,
+        161
+      ],
+      "size": [
+        13,
+        14,
+        1
+      ],
+      "kind": "gather"
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "LABOR",
+    "params": {
+      "unit_id": 351,
+      "labor": "brewing",
+      "enable": true
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "INTERACT",
+    "params": {
+      "operation": "confirm"
+    },
+    "advance_ticks": 0
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        109,
+        98,
+        160
+      ],
+      "size": [
+        4,
+        1,
+        1
+      ],
+      "kind": "dig"
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        108,
+        93,
+        161
+      ],
+      "size": [
+        3,
+        5,
+        1
+      ],
+      "kind": "gather"
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "LABOR",
+    "params": {
+      "unit_id": 349,
+      "labor": "farming",
+      "enable": true
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        109,
+        98,
+        160
+      ],
+      "size": [
+        1,
+        1,
+        1
+      ],
+      "kind": "dig"
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "FarmPlot",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 109,
+      "y": 98,
+      "z": 160,
+      "x2": null,
+      "y2": null
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "FARM",
+    "params": {
+      "building_id": 59,
+      "crop": "MUSHROOM_HELMET_PLUMP",
+      "seasons": [
+        "spring",
+        "summer",
+        "autumn",
+        "winter"
+      ]
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "ORDER",
+    "params": {
+      "job": "brew",
+      "quantity": 5,
+      "at": null
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "Still",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 106,
+      "y": 99,
+      "z": 161,
+      "x2": null,
+      "y2": null
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "LABOR",
+    "params": {
+      "unit_id": 482,
+      "labor": "carpentry",
+      "enable": true
+    },
+    "advance_ticks": 1000
+  },
+  {
+    "type": "ORDER",
+    "params": {
+      "job": "bin",
+      "quantity": 5,
+      "at": null
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "ORDER",
+    "params": {
+      "job": "brew",
+      "quantity": 5,
+      "at": null
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "Still",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 106,
+      "y": 99,
+      "z": 161,
+      "x2": null,
+      "y2": null
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "Wall",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 98,
+      "y": 103,
+      "z": 161,
+      "x2": 98,
+      "y2": 105
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "ORDER",
+    "params": {
+      "job": "brew",
+      "quantity": 5,
+      "at": null
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "DIG",
+    "params": {
+      "area": [
+        109,
+        99,
+        160
+      ],
+      "size": [
+        1,
+        1,
+        1
+      ],
+      "kind": "dig"
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "BUILD",
+    "params": {
+      "kind": "Wall",
+      "structure": null,
+      "material": null,
+      "location": null,
+      "x": 100,
+      "y": 103,
+      "z": 161,
+      "x2": 100,
+      "y2": 105
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  },
+  {
+    "type": "ORDER",
+    "params": {
+      "job": "brew",
+      "quantity": 5,
+      "at": null
+    },
+    "advance_ticks": 2500
+  },
+  {
+    "type": "ORDER",
+    "params": {
+      "job": "brew",
+      "quantity": 5,
+      "at": null
+    },
+    "advance_ticks": 2500
+  }
+]

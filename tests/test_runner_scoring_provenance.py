@@ -10,13 +10,19 @@ from fort_gym.bench.run.runner import (
     _channel_focus_rect_from_action,
     _owned_channel_focus_rect,
     _desired_keystroke_target_mode,
+    _current_governed_operational_farm_ids,
+    _int_or_none,
     _gameplay_proof,
     _governed_dig_rect_from_action,
     _governed_building_claims,
+    _governed_building_evidence_complete,
+    _governed_completed_owned_constructions,
     _governed_completed_owned_buildings,
+    _governed_construction_claims,
     _governed_durable_helper_progress,
     _governed_gameplay_proof,
     _governed_owned_building_progress,
+    _governed_owned_room_metrics,
     _is_exit_only_recovery_action,
     _is_governed_dfhack_model,
     _is_keystroke_model,
@@ -35,6 +41,7 @@ from fort_gym.bench.run.runner import (
     _ui_target_setup_for_observation,
     _ui_target_step_succeeded,
     _ui_work_rect_from_state,
+    _update_governed_owned_output_progress,
     _workshop_current_screen_select_target,
     _workshop_blocked_fallback_active,
     _workshop_placement_confirm_target,
@@ -61,9 +68,12 @@ def test_channel_focus_comes_only_from_model_authored_channel_rect() -> None:
     }
 
     assert _channel_focus_rect_from_action(action) == (91, 88, 177, 92, 88, 177)
-    assert _channel_focus_rect_from_action(
-        {**action, "params": {**action["params"], "kind": "dig"}}
-    ) is None
+    assert (
+        _channel_focus_rect_from_action(
+            {**action, "params": {**action["params"], "kind": "dig"}}
+        )
+        is None
+    )
 
 
 def test_channel_focus_requires_a_newly_model_owned_tile() -> None:
@@ -81,9 +91,12 @@ def test_channel_focus_requires_a_newly_model_owned_tile() -> None:
         action,
         {"governed_designated_tiles": [[92, 88, 177], [91, 88, 177]]},
     ) == (91, 88, 177, 91, 88, 177)
-    assert _channel_focus_rect_from_action(
-        {**action, "params": {**action["params"], "size": [2, 1, 2]}}
-    ) is None
+    assert (
+        _channel_focus_rect_from_action(
+            {**action, "params": {**action["params"], "size": [2, 1, 2]}}
+        )
+        is None
+    )
 
 
 def test_governed_dig_rect_tracks_only_excavation_footprints() -> None:
@@ -93,27 +106,26 @@ def test_governed_dig_rect_tracks_only_excavation_footprints() -> None:
     }
 
     assert _governed_dig_rect_from_action(action) == (91, 88, 177, 92, 90, 177)
-    assert _governed_dig_rect_from_action(
-        {**action, "params": {**action["params"], "kind": "chop"}}
-    ) is None
+    assert (
+        _governed_dig_rect_from_action(
+            {**action, "params": {**action["params"], "kind": "chop"}}
+        )
+        is None
+    )
     assert _governed_dig_rect_from_action({"type": "WAIT", "params": {}}) is None
 
 
 def test_governed_runner_uses_plan_agnostic_work_and_records_copy_screen_text() -> None:
     runner_text = (
-        Path(__file__).resolve().parents[1]
-        / "fort_gym"
-        / "bench"
-        / "run"
-        / "runner.py"
+        Path(__file__).resolve().parents[1] / "fort_gym" / "bench" / "run" / "runner.py"
     ).read_text(encoding="utf-8")
 
     assert "dfhack_client.set_work_metrics_global_only(True)" in runner_text
     assert "def prepare_governed_target" not in runner_text
     assert "governed_workshop_target" not in runner_text
-    assert 'crew = read_job_metrics()' in runner_text
+    assert "crew = read_job_metrics()" in runner_text
     assert "if is_keystroke_mode or is_governed_dfhack_mode" in runner_text
-    assert "record_line[\"screen_text\"] = screen_text" in runner_text
+    assert 'record_line["screen_text"] = screen_text' in runner_text
 
 
 def test_zero_assisted_dfhack_progress_preserves_audit_values() -> None:
@@ -193,7 +205,14 @@ def test_snapshot_tile_changes_compares_real_map_tiles() -> None:
         "hidden_tiles": 0,
         "building_tiles": 0,
         "tiles": [
-            {"x": 10, "y": 20, "z": 0, "category": "dig", "char": "x", "dig": "Default"},
+            {
+                "x": 10,
+                "y": 20,
+                "z": 0,
+                "category": "dig",
+                "char": "x",
+                "dig": "Default",
+            },
             {"x": 11, "y": 20, "z": 0, "category": "floor", "char": ".", "dig": "No"},
         ],
     }
@@ -235,7 +254,14 @@ def test_gameplay_proof_marks_keystroke_progress_as_evidence_backed() -> None:
         "hidden_tiles": 0,
         "building_tiles": 0,
         "tiles": [
-            {"x": 10, "y": 20, "z": 0, "category": "dig", "char": "x", "dig": "Default"},
+            {
+                "x": 10,
+                "y": 20,
+                "z": 0,
+                "category": "dig",
+                "char": "x",
+                "dig": "Default",
+            },
         ],
     }
 
@@ -254,8 +280,14 @@ def test_gameplay_proof_marks_keystroke_progress_as_evidence_backed() -> None:
         },
         before_map_snapshot=before_snapshot,
         after_map_snapshot=after_snapshot,
-        state_before={"stocks": {"wood": 0, "stone": 0}, "work": {"target_dig_designations": 0}},
-        advance_state={"stocks": {"wood": 0, "stone": 0}, "work": {"target_dig_designations": 1}},
+        state_before={
+            "stocks": {"wood": 0, "stone": 0},
+            "work": {"target_dig_designations": 0},
+        },
+        advance_state={
+            "stocks": {"wood": 0, "stone": 0},
+            "work": {"target_dig_designations": 1},
+        },
         tick_info={"ticks_advanced": 200},
         score_value=24.1,
     )
@@ -302,8 +334,14 @@ def test_gameplay_proof_requires_current_step_progress() -> None:
         },
         before_map_snapshot=snapshot,
         after_map_snapshot=snapshot,
-        state_before={"stocks": {"wood": 3, "stone": 0}, "work": {"carpenter_workshops": 1}},
-        advance_state={"stocks": {"wood": 3, "stone": 0}, "work": {"carpenter_workshops": 1}},
+        state_before={
+            "stocks": {"wood": 3, "stone": 0},
+            "work": {"carpenter_workshops": 1},
+        },
+        advance_state={
+            "stocks": {"wood": 3, "stone": 0},
+            "work": {"carpenter_workshops": 1},
+        },
         tick_info={"ticks_advanced": 0},
         score_value=74.3,
     )
@@ -396,7 +434,9 @@ def test_ui_work_rect_falls_back_to_window_when_cursor_invalid() -> None:
     assert _ui_work_rect_from_state(state) == (94, 95, 177, 108, 109, 177)
 
 
-def test_desired_keystroke_target_mode_switches_to_material_after_starter_digging() -> None:
+def test_desired_keystroke_target_mode_switches_to_material_after_starter_digging() -> (
+    None
+):
     state = {"stocks": {"wood": 0, "stone": 0}}
 
     assert (
@@ -417,7 +457,9 @@ def test_desired_keystroke_target_mode_switches_to_material_after_starter_diggin
     )
 
 
-def test_desired_keystroke_target_mode_switches_to_workshop_when_material_exists() -> None:
+def test_desired_keystroke_target_mode_switches_to_workshop_when_material_exists() -> (
+    None
+):
     state = {"stocks": {"wood": 0, "stone": 1}, "work": {"carpenter_workshops": 0}}
 
     assert _available_building_materials(state) == 1
@@ -505,7 +547,9 @@ def test_desired_keystroke_target_mode_inspects_unproven_workshop() -> None:
     )
 
 
-def test_desired_keystroke_target_mode_stays_on_existing_workshop_during_construction() -> None:
+def test_desired_keystroke_target_mode_stays_on_existing_workshop_during_construction() -> (
+    None
+):
     state = {
         "stocks": {"wood": 3, "stone": 0},
         "work": {
@@ -528,7 +572,9 @@ def test_desired_keystroke_target_mode_stays_on_existing_workshop_during_constru
     )
 
 
-def test_desired_keystroke_target_mode_keeps_usable_workshop_with_wood_productive() -> None:
+def test_desired_keystroke_target_mode_keeps_usable_workshop_with_wood_productive() -> (
+    None
+):
     state = {
         "stocks": {"wood": 3, "stone": 0},
         "work": {
@@ -549,7 +595,9 @@ def test_desired_keystroke_target_mode_keeps_usable_workshop_with_wood_productiv
     )
 
 
-def test_desired_keystroke_target_mode_usable_workshop_without_wood_gets_material() -> None:
+def test_desired_keystroke_target_mode_usable_workshop_without_wood_gets_material() -> (
+    None
+):
     state = {
         "stocks": {"wood": 0, "stone": 0},
         "work": {
@@ -570,7 +618,9 @@ def test_desired_keystroke_target_mode_usable_workshop_without_wood_gets_materia
     )
 
 
-def test_desired_keystroke_target_mode_stays_on_existing_workshop_for_queued_task() -> None:
+def test_desired_keystroke_target_mode_stays_on_existing_workshop_for_queued_task() -> (
+    None
+):
     state = {
         "stocks": {"wood": 30, "stone": 0},
         "work": {
@@ -713,7 +763,9 @@ def test_ready_workshop_placement_screen_gets_select_target() -> None:
 def test_blocked_workshop_placement_screen_is_distinct_from_ready_select() -> None:
     blocked = "Carpenter's Workshop\nPlacement\nBlocked\nESC: Cancel"
     occupied = "Carpenter's Workshop\nPlacement\nBuilding present\nEnter: Place"
-    needs_material = "Carpenter's Workshop\nPlacement\nNeeds building material\nESC: Cancel"
+    needs_material = (
+        "Carpenter's Workshop\nPlacement\nNeeds building material\nESC: Cancel"
+    )
     ready = "Carpenter's Workshop\nPlacement\nEnter: Place\nESC: Cancel"
 
     assert _screen_shows_blocked_workshop_placement(blocked)
@@ -938,21 +990,30 @@ def test_exit_only_recovery_action_is_not_a_target_attempt() -> None:
 
 
 def test_material_target_requires_material_delta_for_success() -> None:
-    assert _ui_target_step_succeeded(
-        "material",
-        ui_step_work_progress=3,
-        ui_step_material_progress=0,
-    ) is False
-    assert _ui_target_step_succeeded(
-        "material",
-        ui_step_work_progress=0,
-        ui_step_material_progress=1,
-    ) is True
-    assert _ui_target_step_succeeded(
-        "starter",
-        ui_step_work_progress=3,
-        ui_step_material_progress=0,
-    ) is True
+    assert (
+        _ui_target_step_succeeded(
+            "material",
+            ui_step_work_progress=3,
+            ui_step_material_progress=0,
+        )
+        is False
+    )
+    assert (
+        _ui_target_step_succeeded(
+            "material",
+            ui_step_work_progress=0,
+            ui_step_material_progress=1,
+        )
+        is True
+    )
+    assert (
+        _ui_target_step_succeeded(
+            "starter",
+            ui_step_work_progress=3,
+            ui_step_material_progress=0,
+        )
+        is True
+    )
 
 
 def test_keystroke_step_score_progress_requires_current_progress() -> None:
@@ -966,8 +1027,14 @@ def test_keystroke_step_score_progress_requires_current_progress() -> None:
             "production_progress": 0,
             "utility_action_progress": 0,
         },
-        state_before={"stocks": {"wood": 3}, "work": {"carpenter_workshops_planned": 0}},
-        advance_state={"stocks": {"wood": 3}, "work": {"carpenter_workshops_planned": 0}},
+        state_before={
+            "stocks": {"wood": 3},
+            "work": {"carpenter_workshops_planned": 0},
+        },
+        advance_state={
+            "stocks": {"wood": 3},
+            "work": {"carpenter_workshops_planned": 0},
+        },
     )
     assert not _keystroke_step_score_progress(
         {
@@ -1047,7 +1114,9 @@ def test_keystroke_state_progress_ignores_negative_construction_job_delta() -> N
     )
 
 
-def test_keystroke_state_progress_counts_completed_workshop_task_with_consumed_wood() -> None:
+def test_keystroke_state_progress_counts_completed_workshop_task_with_consumed_wood() -> (
+    None
+):
     state_before = {
         "stocks": {"wood": 8, "wealth": 9},
         "work": {
@@ -1109,7 +1178,11 @@ def test_workshop_target_setup_keeps_exact_placement_keys_visible() -> None:
 
 def _governed_proof_kwargs(**overrides):
     kwargs = {
-        "action": {"type": "DIG", "params": {"area": [50, 35, 0], "size": [5, 5, 1]}, "advance_ticks": 1000},
+        "action": {
+            "type": "DIG",
+            "params": {"area": [50, 35, 0], "size": [5, 5, 1]},
+            "advance_ticks": 1000,
+        },
         "execute_result": {"accepted": True, "result": {}},
         "metrics_snapshot": {"score_provenance": "dfhack_governed_observed_state"},
         "before_map_snapshot": None,
@@ -1171,7 +1244,9 @@ def test_governed_action_history_preserves_partial_and_tile_postconditions() -> 
     assert entry["result_details"] == {"placed_count": 2, "failed_count": 1}
 
 
-def test_governed_action_history_preserves_complete_rejected_workshop_footprint() -> None:
+def test_governed_action_history_preserves_complete_rejected_workshop_footprint() -> (
+    None
+):
     entry = _action_history_entry(
         step=83,
         action={
@@ -1399,15 +1474,41 @@ def test_governed_order_ids_without_output_are_not_progress() -> None:
     }
     state_before = {
         "stocks": {},
-        "work": {"active_jobs": 1},
-        "crew": {"jobs": {"active_ids": []}},
+        "work": {
+            "ok": True,
+            "active_jobs": 1,
+            "manager_orders_count": 0,
+            "manager_orders_amount_left": 0,
+        },
+        "crew": {
+            "ok": True,
+            "jobs": {
+                "active_ids": [],
+                "active_ids_truncated": False,
+                "order_jobs": [],
+                "order_jobs_truncated": False,
+            },
+        },
         "survival": {"drink_produced_in_run": 25},
     }
     advance_state = {
         "stocks": {},
         # An unrelated job starts during the tick window.
-        "work": {"active_jobs": 2},
-        "crew": {"jobs": {"active_ids": [999]}},
+        "work": {
+            "ok": True,
+            "active_jobs": 2,
+            "manager_orders_count": 0,
+            "manager_orders_amount_left": 0,
+        },
+        "crew": {
+            "ok": True,
+            "jobs": {
+                "active_ids": [999],
+                "active_ids_truncated": False,
+                "order_jobs": [],
+                "order_jobs_truncated": False,
+            },
+        },
         "survival": {"drink_produced_in_run": 25},
     }
 
@@ -1445,6 +1546,7 @@ def test_governed_order_ids_without_output_are_not_progress() -> None:
         "prior_matching_job_ids": [],
         "prior_matching_jobs_complete": True,
         "manager_orders_present": False,
+        "manager_orders_complete": True,
         "attribution_complete": True,
         "output_observed": True,
         "output_source": "survival.drink_produced_in_run",
@@ -1470,8 +1572,20 @@ def test_governed_order_reports_pending_and_completed_lifecycle() -> None:
     }
     state_before = {
         "stocks": {},
-        "work": {},
-        "crew": {"jobs": {"active_ids": []}},
+        "work": {
+            "ok": True,
+            "manager_orders_count": 0,
+            "manager_orders_amount_left": 0,
+        },
+        "crew": {
+            "ok": True,
+            "jobs": {
+                "active_ids": [],
+                "active_ids_truncated": False,
+                "order_jobs": [],
+                "order_jobs_truncated": False,
+            },
+        },
         "survival": {"drink_produced_in_run": 25},
     }
     pending = _action_history_entry(
@@ -1483,8 +1597,23 @@ def test_governed_order_reports_pending_and_completed_lifecycle() -> None:
         state_before=state_before,
         advance_state={
             "stocks": {},
-            "work": {},
-            "crew": {"jobs": {"active_ids": [301, 302]}},
+            "work": {
+                "ok": True,
+                "manager_orders_count": 0,
+                "manager_orders_amount_left": 0,
+            },
+            "crew": {
+                "ok": True,
+                "jobs": {
+                    "active_ids": [301, 302],
+                    "active_ids_truncated": False,
+                    "order_jobs": [
+                        {"id": 301, "item": "brew"},
+                        {"id": 302, "item": "brew"},
+                    ],
+                    "order_jobs_truncated": False,
+                },
+            },
             "survival": {"drink_produced_in_run": 25},
         },
         metrics_snapshot={},
@@ -1498,8 +1627,20 @@ def test_governed_order_reports_pending_and_completed_lifecycle() -> None:
         state_before=state_before,
         advance_state={
             "stocks": {},
-            "work": {},
-            "crew": {"jobs": {"active_ids": []}},
+            "work": {
+                "ok": True,
+                "manager_orders_count": 0,
+                "manager_orders_amount_left": 0,
+            },
+            "crew": {
+                "ok": True,
+                "jobs": {
+                    "active_ids": [],
+                    "active_ids_truncated": False,
+                    "order_jobs": [],
+                    "order_jobs_truncated": False,
+                },
+            },
             "survival": {"drink_produced_in_run": 50},
         },
         metrics_snapshot={},
@@ -1511,7 +1652,9 @@ def test_governed_order_reports_pending_and_completed_lifecycle() -> None:
     assert completed["action_effect"]["output_delta"] == 25
 
 
-def test_governed_order_does_not_claim_output_while_all_created_jobs_remain_active() -> None:
+def test_governed_order_does_not_claim_output_while_all_created_jobs_remain_active() -> (
+    None
+):
     action = {
         "type": "ORDER",
         "params": {"job": "brew", "quantity": 3},
@@ -1724,7 +1867,10 @@ def test_action_history_preserves_review_contract_for_all_outcomes() -> None:
         },
     }
     outcomes = (
-        ({"accepted": True, "result": {}}, "action_accepted_without_tracked_state_change"),
+        (
+            {"accepted": True, "result": {}},
+            "action_accepted_without_tracked_state_change",
+        ),
         ({"accepted": False, "reason": "blocked", "result": {}}, "rejected"),
         (
             {
@@ -1782,7 +1928,9 @@ def test_action_history_fingerprint_uses_only_normalized_type_and_params() -> No
     base = fingerprint(contract)
     assert base == fingerprint(same_contract_different_metadata)
     assert base != fingerprint({**contract, "type": "DIG"})
-    assert base != fingerprint({**contract, "params": {"z": 161, "kind": "Wall", "x": 89}})
+    assert base != fingerprint(
+        {**contract, "params": {"z": 161, "kind": "Wall", "x": 89}}
+    )
 
 
 def test_review_metadata_does_not_enter_helper_evidence_or_score_progress() -> None:
@@ -1815,7 +1963,11 @@ def test_governed_gameplay_proof_rejects_noop_redesignation() -> None:
         **_governed_proof_kwargs(
             execute_result={
                 "accepted": True,
-                "result": {"newly_designated": 0, "already_designated": 25, "non_wall_tiles": 0},
+                "result": {
+                    "newly_designated": 0,
+                    "already_designated": 25,
+                    "non_wall_tiles": 0,
+                },
             }
         )
     )
@@ -1836,7 +1988,11 @@ def test_governed_gameplay_proof_rejects_noop_gather_redesignation() -> None:
             },
             execute_result={
                 "accepted": True,
-                "result": {"shrubs_designated": 0, "already_designated": 9, "non_shrub_tiles": 16},
+                "result": {
+                    "shrubs_designated": 0,
+                    "already_designated": 9,
+                    "non_shrub_tiles": 16,
+                },
             },
         )
     )
@@ -1845,7 +2001,9 @@ def test_governed_gameplay_proof_rejects_noop_gather_redesignation() -> None:
     assert proof["helper_evidence"]["already_designated"] == 9
 
 
-def test_governed_gameplay_proof_records_new_gather_designations_without_progress() -> None:
+def test_governed_gameplay_proof_records_new_gather_designations_without_progress() -> (
+    None
+):
     proof = _governed_gameplay_proof(
         **_governed_proof_kwargs(
             action={
@@ -1855,7 +2013,11 @@ def test_governed_gameplay_proof_records_new_gather_designations_without_progres
             },
             execute_result={
                 "accepted": True,
-                "result": {"shrubs_designated": 4, "already_designated": 0, "non_shrub_tiles": 21},
+                "result": {
+                    "shrubs_designated": 4,
+                    "already_designated": 0,
+                    "non_shrub_tiles": 21,
+                },
             },
         )
     )
@@ -1940,7 +2102,11 @@ def test_governed_gameplay_proof_rejects_designations_and_job_ids_alone() -> Non
 
     proof = _governed_gameplay_proof(
         **_governed_proof_kwargs(
-            action={"type": "ORDER", "params": {"job": "bed", "quantity": 2}, "advance_ticks": 1000},
+            action={
+                "type": "ORDER",
+                "params": {"job": "bed", "quantity": 2},
+                "advance_ticks": 1000,
+            },
             execute_result={"accepted": True, "result": {"created_job_ids": [5, 7]}},
         )
     )
@@ -1950,10 +2116,17 @@ def test_governed_gameplay_proof_rejects_designations_and_job_ids_alone() -> Non
 
     proof = _governed_gameplay_proof(
         **_governed_proof_kwargs(
-            action={"type": "BUILD", "params": {"kind": "CarpenterWorkshop"}, "advance_ticks": 1000},
+            action={
+                "type": "BUILD",
+                "params": {"kind": "CarpenterWorkshop"},
+                "advance_ticks": 1000,
+            },
             execute_result={
                 "accepted": True,
-                "result": {"before_carpenter_workshops": 0, "after_carpenter_workshops": 1},
+                "result": {
+                    "before_carpenter_workshops": 0,
+                    "after_carpenter_workshops": 1,
+                },
             },
         )
     )
@@ -1963,10 +2136,18 @@ def test_governed_gameplay_proof_rejects_designations_and_job_ids_alone() -> Non
 def test_governed_gameplay_proof_accepts_new_farm_plot() -> None:
     proof = _governed_gameplay_proof(
         **_governed_proof_kwargs(
-            action={"type": "BUILD", "params": {"kind": "FarmPlot", "x": 90, "y": 95, "z": 177}, "advance_ticks": 1000},
+            action={
+                "type": "BUILD",
+                "params": {"kind": "FarmPlot", "x": 90, "y": 95, "z": 177},
+                "advance_ticks": 1000,
+            },
             execute_result={
                 "accepted": True,
-                "result": {"before_farm_plots": 0, "after_farm_plots": 1, "building_id": 42},
+                "result": {
+                    "before_farm_plots": 0,
+                    "after_farm_plots": 1,
+                    "building_id": 42,
+                },
             },
         )
     )
@@ -1977,7 +2158,11 @@ def test_governed_gameplay_proof_accepts_new_farm_plot() -> None:
 def test_governed_gameplay_proof_rejects_failed_farm_plot_placement() -> None:
     proof = _governed_gameplay_proof(
         **_governed_proof_kwargs(
-            action={"type": "BUILD", "params": {"kind": "FarmPlot", "x": 90, "y": 95, "z": 177}, "advance_ticks": 1000},
+            action={
+                "type": "BUILD",
+                "params": {"kind": "FarmPlot", "x": 90, "y": 95, "z": 177},
+                "advance_ticks": 1000,
+            },
             execute_result={
                 "accepted": False,
                 "result": {"error": "tile_not_placeable"},
@@ -1990,7 +2175,11 @@ def test_governed_gameplay_proof_rejects_failed_farm_plot_placement() -> None:
 def test_governed_gameplay_proof_accepts_new_still_workshop() -> None:
     proof = _governed_gameplay_proof(
         **_governed_proof_kwargs(
-            action={"type": "BUILD", "params": {"kind": "Still", "x": 88, "y": 96, "z": 177}, "advance_ticks": 1000},
+            action={
+                "type": "BUILD",
+                "params": {"kind": "Still", "x": 88, "y": 96, "z": 177},
+                "advance_ticks": 1000,
+            },
             execute_result={
                 "accepted": True,
                 "result": {"before_workshops_of_kind": 0, "after_workshops_of_kind": 1},
@@ -2001,7 +2190,9 @@ def test_governed_gameplay_proof_accepts_new_still_workshop() -> None:
     assert proof["helper_evidence"]["after_workshops_of_kind"] == 1
 
 
-def test_governed_duration_gate_rejects_queued_placements_but_accepts_built_farm_crop() -> None:
+def test_governed_duration_gate_rejects_queued_placements_but_accepts_built_farm_crop() -> (
+    None
+):
     assert not _governed_durable_helper_progress(
         {"type": "BUILD"},
         {
@@ -2018,7 +2209,9 @@ def test_governed_duration_gate_rejects_queued_placements_but_accepts_built_farm
     )
 
 
-def test_governed_building_progress_requires_exact_owned_id_and_completed_stage() -> None:
+def test_governed_building_progress_requires_exact_owned_id_and_completed_stage() -> (
+    None
+):
     action = {
         "type": "BUILD",
         "params": {"kind": "CarpenterWorkshop", "x": 10, "y": 20, "z": 5},
@@ -2030,32 +2223,35 @@ def test_governed_building_progress_requires_exact_owned_id_and_completed_stage(
 
     claims = _governed_building_claims(action, execute_result)
     assert claims == {42: "CarpenterWorkshop"}
-    assert _governed_completed_owned_buildings(
-        claims,
-        {
-            "crew": {
-                "ok": True,
-                "workshops": [
-                    {
-                        "id": 41,
-                        "subtype": "Carpenters",
-                        "stage_read_ok": True,
-                        "stage": 3,
-                        "max_stage": 3,
-                        "built": True,
-                    },
-                    {
-                        "id": 42,
-                        "subtype": "Carpenters",
-                        "stage_read_ok": True,
-                        "stage": 2,
-                        "max_stage": 3,
-                        "built": False,
-                    },
-                ],
-            }
-        },
-    ) == set()
+    assert (
+        _governed_completed_owned_buildings(
+            claims,
+            {
+                "crew": {
+                    "ok": True,
+                    "workshops": [
+                        {
+                            "id": 41,
+                            "subtype": "Carpenters",
+                            "stage_read_ok": True,
+                            "stage": 3,
+                            "max_stage": 3,
+                            "built": True,
+                        },
+                        {
+                            "id": 42,
+                            "subtype": "Carpenters",
+                            "stage_read_ok": True,
+                            "stage": 2,
+                            "max_stage": 3,
+                            "built": False,
+                        },
+                    ],
+                }
+            },
+        )
+        == set()
+    )
 
     completed = _governed_completed_owned_buildings(
         claims,
@@ -2084,65 +2280,694 @@ def test_governed_building_progress_requires_exact_owned_id_and_completed_stage(
         },
     )
     assert completed == {42}
-    assert _governed_completed_owned_buildings(
-        claims,
-        {
-            "crew": {
-                "ok": True,
-                "workshops": [
-                    {
-                        "id": 42,
-                        "subtype": "Still",
-                        "stage_read_ok": True,
-                        "stage": 3,
-                        "max_stage": 3,
-                        "built": True,
-                    }
-                ],
-            }
-        },
-    ) == set()
-    assert _governed_completed_owned_buildings(
-        claims,
-        {
-            "crew": {
-                "ok": True,
-                "workshops": [
-                    {
-                        "id": 42,
-                        "subtype": "Carpenters",
-                        "stage_read_ok": False,
-                        "stage": 0,
-                        "max_stage": 0,
-                        "built": True,
-                    }
-                ],
-            }
-        },
-    ) == set()
+    assert (
+        _governed_completed_owned_buildings(
+            claims,
+            {
+                "crew": {
+                    "ok": True,
+                    "workshops": [
+                        {
+                            "id": 42,
+                            "subtype": "Still",
+                            "stage_read_ok": True,
+                            "stage": 3,
+                            "max_stage": 3,
+                            "built": True,
+                        }
+                    ],
+                }
+            },
+        )
+        == set()
+    )
+    assert (
+        _governed_completed_owned_buildings(
+            claims,
+            {
+                "crew": {
+                    "ok": True,
+                    "workshops": [
+                        {
+                            "id": 42,
+                            "subtype": "Carpenters",
+                            "stage_read_ok": False,
+                            "stage": 0,
+                            "max_stage": 0,
+                            "built": True,
+                        }
+                    ],
+                }
+            },
+        )
+        == set()
+    )
     assert _governed_owned_building_progress(claims, completed) == {
+        "governed_owned_building_evidence_complete": True,
         "governed_owned_buildings": 1,
         "governed_owned_completed_buildings": 1,
         "governed_owned_completed_building_ids": [42],
         "governed_owned_completed_carpenter_workshops": 1,
         "governed_owned_completed_stills": 0,
         "governed_owned_completed_farm_plots": 0,
-        "governed_owned_utility_progress": 5,
-        "governed_owned_production_progress": 5,
+        "governed_owned_completed_furniture": {
+            "bed": 0,
+            "chair": 0,
+            "door": 0,
+            "table": 0,
+        },
+        "governed_owned_completed_beds": 0,
+        "governed_owned_production_capacity": 1,
+        "governed_owned_utility_progress": 0,
+        "governed_owned_production_progress": 1,
         "governed_owned_complexity_progress": 0.0,
     }
 
 
-def test_governed_building_claim_rejects_unaccepted_or_unmonitored_builds() -> None:
+def test_governed_building_claim_rejects_unaccepted_and_tracks_furniture() -> None:
     action = {"type": "BUILD", "params": {"kind": "CarpenterWorkshop"}}
-    assert _governed_building_claims(
-        action,
-        {"accepted": False, "result": {"ok": True, "building_id": 42}},
-    ) == {}
+    assert (
+        _governed_building_claims(
+            action,
+            {"accepted": False, "result": {"ok": True, "building_id": 42}},
+        )
+        == {}
+    )
     assert _governed_building_claims(
         {"type": "BUILD", "params": {"kind": "Bed"}},
         {"accepted": True, "result": {"ok": True, "building_id": 42}},
-    ) == {}
+    ) == {42: "Bed"}
+
+
+def test_governed_partial_construction_claims_and_exact_completion() -> None:
+    action = {
+        "type": "BUILD",
+        "params": {"kind": "Wall", "x": 10, "y": 20, "z": 5},
+    }
+    execute = {
+        "accepted": False,
+        "result": {
+            "ok": False,
+            "partial": True,
+            "placed_count": 2,
+            "rollback_verified": True,
+            "placed": [
+                {"x": 10, "y": 20, "z": 5, "building_id": 41},
+                {"x": 11, "y": 20, "z": 5, "building_id": 42},
+            ],
+        },
+    }
+
+    claims = _governed_construction_claims(action, execute)
+
+    assert claims == {
+        (10, 20, 5): {"kind": "Wall", "building_id": 41},
+        (11, 20, 5): {"kind": "Wall", "building_id": 42},
+    }
+    assert _governed_completed_owned_constructions(
+        claims,
+        {
+            "fort": {
+                "ok": True,
+                "construction_tiles_complete": True,
+                "construction_tiles": [[10, 20, 5]],
+                "construction_details": [{"x": 10, "y": 20, "z": 5, "kind": "Wall"}],
+            }
+        },
+    ) == {(10, 20, 5)}
+
+    wrong_kind_state = {
+        "fort": {
+            "ok": True,
+            "construction_tiles_complete": True,
+            "construction_details": [{"x": 10, "y": 20, "z": 5, "kind": "Floor"}],
+        }
+    }
+    assert _governed_completed_owned_constructions(claims, wrong_kind_state) == set()
+
+
+def test_building_evidence_is_incomplete_after_native_stage_read_failure() -> None:
+    crew = {
+        "ok": True,
+        "building_evidence_complete": True,
+        "workshops_truncated": False,
+        "farm_plot_details_truncated": False,
+        "placed_furniture_details_truncated": False,
+        "workshops": [],
+        "farm_plot_details": [],
+        "placed_furniture_details": [{"id": 42, "kind": "bed", "stage_read_ok": True}],
+    }
+    assert _governed_building_evidence_complete({"crew": crew}) is True
+
+    crew["placed_furniture_details"][0]["stage_read_ok"] = False
+    assert _governed_building_evidence_complete({"crew": crew}) is False
+
+    crew["placed_furniture_details"][0]["stage_read_ok"] = True
+    crew["building_evidence_complete"] = False
+    assert _governed_building_evidence_complete({"crew": crew}) is False
+
+
+def test_operational_farm_proof_requires_the_farm_to_remain_complete() -> None:
+    operational = {42}
+    owned = {42: "FarmPlot"}
+    assigned = {
+        "crew": {
+            "ok": True,
+            "farm_plot_details_truncated": False,
+            "farm_plot_details": [
+                {
+                    "id": 42,
+                    "crops_read_ok": True,
+                    "crops": ["MUSHROOM_HELMET_PLUMP", False, False, False],
+                }
+            ],
+        }
+    }
+
+    assert _current_governed_operational_farm_ids(
+        operational, {42}, owned, assigned
+    ) == ({42}, True)
+    assert _current_governed_operational_farm_ids(
+        operational, set(), owned, assigned
+    ) == (set(), True)
+
+
+def test_runner_integer_parser_rejects_bool_and_fractional_sensor_values() -> None:
+    assert _int_or_none(3) == 3
+    assert _int_or_none(-3) == -3
+    assert _int_or_none(3.0) == 3
+    assert _int_or_none("-3") == -3
+    assert _int_or_none(True) is None
+    assert _int_or_none(3.5) is None
+    assert _int_or_none("3.5") is None
+
+
+def test_operational_farm_proof_requires_current_crop_assignment_and_read_health() -> None:
+    operational = {42}
+    owned = {42: "FarmPlot"}
+    state = {
+        "crew": {
+            "ok": True,
+            "farm_plot_details_truncated": False,
+            "farm_plot_details": [
+                {"id": 42, "crops_read_ok": True, "crops": [False] * 4}
+            ],
+        }
+    }
+
+    assert _current_governed_operational_farm_ids(
+        operational, {42}, owned, state
+    ) == (set(), True)
+
+    state["crew"]["farm_plot_details"][0]["crops_read_ok"] = False
+    assert _current_governed_operational_farm_ids(
+        operational, {42}, owned, state
+    ) == (set(), False)
+
+
+def test_owned_room_requires_final_geometry_function_and_native_access() -> None:
+    room = {
+        "signature": "5:10:20:12:22:9:42",
+        "kind": "bedroom",
+        "interior_tiles": [
+            [11, 21, 5],
+            [12, 21, 5],
+            [11, 22, 5],
+            [12, 22, 5],
+        ],
+        "interior_tiles_complete": True,
+        "boundary_construction_tiles": [[10, 20, 5]],
+        "boundary_construction_tiles_complete": True,
+        "boundary_tile_count": 8,
+        "boundary_tiles_complete": True,
+        "touching_building_ids": [42],
+        "accessible": True,
+        "accessibility_evidence_complete": True,
+    }
+    state = {
+        "fort": {
+            "ok": True,
+            "spaces": [room],
+            "spaces_truncated": False,
+            "component_scan_truncated": False,
+            "building_scan_complete": True,
+            "construction_tiles_complete": True,
+            "construction_details": [],
+        }
+    }
+
+    result = _governed_owned_room_metrics(
+        state,
+        completed_excavation={(11, 21, 5), (12, 21, 5), (11, 22, 5)},
+        completed_constructions={(10, 20, 5)},
+        owned_buildings={42: "Bed"},
+        completed_buildings={42},
+        building_evidence_complete=True,
+    )
+
+    assert result["governed_owned_room_evidence_complete"] is True
+    assert result["governed_owned_accessible_layout_rooms"] == 1
+    assert result["governed_owned_accessible_functional_rooms"] == 1
+    assert result["governed_owned_unique_construction_tiles"] == 1
+
+    room["accessible"] = False
+    inaccessible = _governed_owned_room_metrics(
+        state,
+        completed_excavation={(11, 21, 5), (12, 21, 5), (11, 22, 5)},
+        completed_constructions={(10, 20, 5)},
+        owned_buildings={42: "Bed"},
+        completed_buildings={42},
+        building_evidence_complete=True,
+    )
+    assert inaccessible["governed_owned_accessible_functional_rooms"] == 0
+    assert inaccessible["governed_owned_inaccessible_room_signatures"] == [
+        "5:10:20:12:22:9:42"
+    ]
+
+
+def test_owned_room_rejects_one_tile_claim_and_unowned_function() -> None:
+    room = {
+        "signature": "room",
+        "kind": "bedroom",
+        "interior_tiles": [[x, 20, 5] for x in range(10, 14)],
+        "interior_tiles_complete": True,
+        "boundary_construction_tiles": [[9, 20, 5]],
+        "boundary_construction_tiles_complete": True,
+        "boundary_tile_count": 8,
+        "boundary_tiles_complete": True,
+        "touching_building_ids": [42, 99],
+        "accessible": True,
+        "accessibility_evidence_complete": True,
+    }
+    state = {
+        "fort": {
+            "ok": True,
+            "spaces": [room],
+            "spaces_truncated": False,
+            "component_scan_truncated": False,
+            "building_scan_complete": True,
+            "construction_tiles_complete": True,
+            "construction_details": [],
+        }
+    }
+
+    weak = _governed_owned_room_metrics(
+        state,
+        completed_excavation={(10, 20, 5)},
+        completed_constructions={(9, 20, 5)},
+        owned_buildings={42: "Chair"},
+        completed_buildings={42},
+        building_evidence_complete=True,
+    )
+    assert weak["governed_owned_accessible_layout_rooms"] == 0
+    assert weak["governed_owned_accessible_functional_rooms"] == 0
+
+    owned_layout_unowned_bed = _governed_owned_room_metrics(
+        state,
+        completed_excavation={(10, 20, 5), (11, 20, 5), (12, 20, 5)},
+        completed_constructions=set(),
+        owned_buildings={42: "Chair"},
+        completed_buildings={42},
+        building_evidence_complete=True,
+    )
+    assert owned_layout_unowned_bed["governed_owned_accessible_layout_rooms"] == 1
+    assert owned_layout_unowned_bed["governed_owned_accessible_functional_rooms"] == 0
+
+
+def test_owned_room_requires_exact_boundary_door_not_diagonal_proximity() -> None:
+    room = {
+        "signature": "door-room",
+        "kind": "enclosed_space",
+        "interior_tiles": [[10, 10, 5], [11, 10, 5], [10, 11, 5], [11, 11, 5]],
+        "interior_tiles_complete": True,
+        "boundary_construction_tiles": [],
+        "boundary_construction_tiles_complete": True,
+        "boundary_tile_count": 8,
+        "boundary_tiles_complete": True,
+        "touching_building_ids": [42],
+        "boundary_door_ids": [],
+        "accessible": True,
+        "accessibility_evidence_complete": True,
+    }
+    state = {
+        "fort": {
+            "ok": True,
+            "spaces": [room],
+            "spaces_truncated": False,
+            "component_scan_truncated": False,
+            "building_scan_complete": True,
+            "construction_tiles_complete": True,
+            "construction_details": [],
+        }
+    }
+    diagonal_only = _governed_owned_room_metrics(
+        state,
+        completed_excavation=set(),
+        completed_constructions=set(),
+        owned_buildings={42: "Door"},
+        completed_buildings={42},
+        building_evidence_complete=True,
+    )
+    assert diagonal_only["governed_owned_accessible_layout_rooms"] == 0
+
+    room["boundary_door_ids"] = [42]
+    exact_boundary = _governed_owned_room_metrics(
+        state,
+        completed_excavation=set(),
+        completed_constructions=set(),
+        owned_buildings={42: "Door"},
+        completed_buildings={42},
+        building_evidence_complete=True,
+    )
+    assert exact_boundary["governed_owned_accessible_layout_rooms"] == 1
+    evidence = exact_boundary["governed_owned_room_structural_evidence"]["door-room"]
+    assert evidence["ownership_basis"] == "owned_door_closure"
+
+
+def test_owned_floor_boundary_cannot_be_credited_as_structural_wall() -> None:
+    boundary = [[9, 10, 5], [9, 11, 5], [10, 9, 5], [11, 9, 5]]
+    state = {
+        "fort": {
+            "ok": True,
+            "spaces": [
+                {
+                    "signature": "floor-boundary",
+                    "kind": "enclosed_space",
+                    "interior_tiles": [
+                        [10, 10, 5],
+                        [11, 10, 5],
+                        [10, 11, 5],
+                        [11, 11, 5],
+                    ],
+                    "interior_tiles_complete": True,
+                    "boundary_construction_tiles": boundary,
+                    "boundary_construction_tiles_complete": True,
+                    "boundary_tile_count": 8,
+                    "boundary_tiles_complete": True,
+                    "touching_building_ids": [],
+                    "boundary_door_ids": [],
+                    "accessible": True,
+                    "accessibility_evidence_complete": True,
+                }
+            ],
+            "spaces_truncated": False,
+            "component_scan_truncated": False,
+            "building_scan_complete": True,
+            "construction_tiles_complete": True,
+            "construction_details": [
+                {"x": x, "y": y, "z": z, "kind": "Floor"} for x, y, z in boundary
+            ],
+        }
+    }
+
+    result = _governed_owned_room_metrics(
+        state,
+        completed_excavation=set(),
+        completed_constructions={tuple(value) for value in boundary},
+        owned_buildings={},
+        completed_buildings=set(),
+        building_evidence_complete=True,
+    )
+
+    assert result["governed_owned_accessible_layout_rooms"] == 0
+    evidence = result["governed_owned_room_structural_evidence"]["floor-boundary"]
+    assert evidence["owned_boundary_construction_tiles"] == 0
+
+
+def test_owned_order_output_is_attributed_when_it_completes_during_later_wait() -> None:
+    jobs: dict[str, set[int]] = {}
+    last_values: dict[str, int] = {}
+    output_units: dict[str, int] = {}
+    health = {"complete": True}
+    before = {
+        "work": {
+            "ok": True,
+            "manager_orders_count": 0,
+            "manager_orders_amount_left": 0,
+        },
+        "crew": {
+            "ok": True,
+            "goods": {"bed": 0},
+            "jobs": {
+                "active_ids": [],
+                "active_ids_truncated": False,
+                "order_jobs": [],
+                "order_jobs_truncated": False,
+            },
+        },
+    }
+    queued_state = {
+        **before,
+        "crew": {
+            **before["crew"],
+            "jobs": {
+                "active_ids": [77],
+                "active_ids_truncated": False,
+                "order_jobs": [{"id": 77, "item": "bed"}],
+                "order_jobs_truncated": False,
+            },
+        },
+    }
+
+    queued = _update_governed_owned_output_progress(
+        action={"type": "ORDER", "params": {"job": "bed", "quantity": 1}},
+        result={"created_job_ids": [77]},
+        state_before=before,
+        advance_state=queued_state,
+        attributed_jobs=jobs,
+        last_values=last_values,
+        output_units=output_units,
+        attribution_health=health,
+    )
+    assert queued["governed_owned_output_units"] == 0
+
+    completed = _update_governed_owned_output_progress(
+        action={"type": "WAIT", "params": {}},
+        result={},
+        state_before=queued_state,
+        advance_state={
+            **before,
+            "crew": {**before["crew"], "goods": {"bed": 1}},
+        },
+        attributed_jobs=jobs,
+        last_values=last_values,
+        output_units=output_units,
+        attribution_health=health,
+    )
+    assert completed["governed_owned_output_units"] == 1
+    assert completed["governed_step_owned_output_units_by_job"] == {"bed": 1}
+
+
+def test_owned_output_rejects_untracked_same_family_job() -> None:
+    jobs: dict[str, set[int]] = {}
+    last_values: dict[str, int] = {}
+    output_units: dict[str, int] = {}
+    health = {"complete": True}
+    base = {
+        "work": {
+            "ok": True,
+            "manager_orders_count": 0,
+            "manager_orders_amount_left": 0,
+        },
+        "crew": {
+            "goods": {"bed": 0},
+            "jobs": {
+                "active_ids": [],
+                "active_ids_truncated": False,
+                "order_jobs": [],
+                "order_jobs_truncated": False,
+            },
+        },
+    }
+    queued = {
+        **base,
+        "crew": {
+            **base["crew"],
+            "jobs": {
+                "active_ids": [77],
+                "active_ids_truncated": False,
+                "order_jobs": [{"id": 77, "item": "bed"}],
+                "order_jobs_truncated": False,
+            },
+        },
+    }
+    _update_governed_owned_output_progress(
+        action={"type": "ORDER", "params": {"job": "bed"}},
+        result={"created_job_ids": [77]},
+        state_before=base,
+        advance_state=queued,
+        attributed_jobs=jobs,
+        last_values=last_values,
+        output_units=output_units,
+        attribution_health=health,
+    )
+    contaminated = {
+        **base,
+        "crew": {
+            **base["crew"],
+            "goods": {"bed": 1},
+            "jobs": {
+                "active_ids": [88],
+                "active_ids_truncated": False,
+                "order_jobs": [{"id": 88, "item": "bed"}],
+                "order_jobs_truncated": False,
+            },
+        },
+    }
+    result = _update_governed_owned_output_progress(
+        action={"type": "WAIT", "params": {}},
+        result={},
+        state_before=queued,
+        advance_state=contaminated,
+        attributed_jobs=jobs,
+        last_values=last_values,
+        output_units=output_units,
+        attribution_health=health,
+    )
+
+    assert result["governed_owned_output_units"] == 0
+    assert result["governed_owned_output_evidence_complete"] is False
+
+
+def test_owned_output_manager_order_observation_gap_taints_attribution() -> None:
+    result = _update_governed_owned_output_progress(
+        action={"type": "WAIT", "params": {}},
+        result={},
+        state_before={},
+        advance_state={
+            "work": {
+                "ok": False,
+                "manager_orders_count": 0,
+                "manager_orders_amount_left": 0,
+            }
+        },
+        attributed_jobs={},
+        last_values={},
+        output_units={},
+        attribution_health={"complete": True},
+    )
+
+    assert result["governed_owned_output_evidence_complete"] is False
+    assert result["governed_owned_output_manager_orders_observed_complete"] is False
+
+
+def test_owned_output_zero_is_complete_when_no_owned_order_was_attempted() -> None:
+    result = _update_governed_owned_output_progress(
+        action={"type": "WAIT", "params": {}},
+        result={},
+        state_before={},
+        advance_state={},
+        attributed_jobs={},
+        last_values={},
+        output_units={},
+        attribution_health={"complete": True},
+    )
+
+    assert result["governed_owned_output_units"] == 0
+    assert result["governed_owned_output_evidence_complete"] is False
+    assert result["governed_owned_output_lower_bound_proven"] is False
+
+    complete_zero = _update_governed_owned_output_progress(
+        action={"type": "WAIT", "params": {}},
+        result={},
+        state_before={},
+        advance_state={
+            "work": {
+                "ok": True,
+                "manager_orders_count": 0,
+                "manager_orders_amount_left": 0,
+            }
+        },
+        attributed_jobs={},
+        last_values={},
+        output_units={},
+        attribution_health={"complete": True},
+    )
+    assert complete_zero["governed_owned_output_evidence_complete"] is True
+
+
+def test_owned_output_sensor_gap_is_persistent_and_cannot_later_credit_delta() -> None:
+    jobs: dict[str, set[int]] = {}
+    last_values: dict[str, int] = {}
+    output_units: dict[str, int] = {}
+    health = {"complete": True}
+    before = {
+        "work": {
+            "ok": True,
+            "manager_orders_count": 0,
+            "manager_orders_amount_left": 0,
+        },
+        "crew": {
+            "goods": {"bed": 0},
+            "jobs": {
+                "active_ids": [],
+                "active_ids_truncated": False,
+                "order_jobs": [],
+                "order_jobs_truncated": False,
+            },
+        },
+    }
+    queued = {
+        **before,
+        "crew": {
+            **before["crew"],
+            "jobs": {
+                "active_ids": [77],
+                "active_ids_truncated": False,
+                "order_jobs": [{"id": 77, "item": "bed"}],
+                "order_jobs_truncated": False,
+            },
+        },
+    }
+    _update_governed_owned_output_progress(
+        action={"type": "ORDER", "params": {"job": "bed"}},
+        result={"created_job_ids": [77]},
+        state_before=before,
+        advance_state=queued,
+        attributed_jobs=jobs,
+        last_values=last_values,
+        output_units=output_units,
+        attribution_health=health,
+    )
+    gap = {
+        **queued,
+        "crew": {
+            **queued["crew"],
+            "jobs": {
+                "active_ids": [77],
+                "active_ids_truncated": True,
+                "order_jobs": [{"id": 77, "item": "bed"}],
+                "order_jobs_truncated": False,
+            },
+        },
+    }
+    incomplete = _update_governed_owned_output_progress(
+        action={"type": "WAIT", "params": {}},
+        result={},
+        state_before=queued,
+        advance_state=gap,
+        attributed_jobs=jobs,
+        last_values=last_values,
+        output_units=output_units,
+        attribution_health=health,
+    )
+    assert incomplete["governed_owned_output_evidence_complete"] is False
+
+    recovered = _update_governed_owned_output_progress(
+        action={"type": "WAIT", "params": {}},
+        result={},
+        state_before=gap,
+        advance_state={
+            **before,
+            "crew": {**before["crew"], "goods": {"bed": 1}},
+        },
+        attributed_jobs=jobs,
+        last_values=last_values,
+        output_units=output_units,
+        attribution_health=health,
+    )
+    assert recovered["governed_owned_output_units"] == 0
+    assert recovered["governed_owned_output_evidence_complete"] is False
 
 
 def test_governed_gameplay_proof_rejects_noop_still_workshop_evidence() -> None:
@@ -2150,7 +2975,11 @@ def test_governed_gameplay_proof_rejects_noop_still_workshop_evidence() -> None:
     # that still echoes the pre-existing count) must not read as progress
     proof = _governed_gameplay_proof(
         **_governed_proof_kwargs(
-            action={"type": "BUILD", "params": {"kind": "Still", "x": 88, "y": 96, "z": 177}, "advance_ticks": 1000},
+            action={
+                "type": "BUILD",
+                "params": {"kind": "Still", "x": 88, "y": 96, "z": 177},
+                "advance_ticks": 1000,
+            },
             execute_result={
                 "accepted": False,
                 "result": {"before_workshops_of_kind": 1, "after_workshops_of_kind": 1},
@@ -2163,17 +2992,47 @@ def test_governed_gameplay_proof_rejects_noop_still_workshop_evidence() -> None:
 def test_governed_gameplay_proof_accepts_observed_brew_output() -> None:
     proof = _governed_gameplay_proof(
         **_governed_proof_kwargs(
-            action={"type": "ORDER", "params": {"job": "brew", "quantity": 3}, "advance_ticks": 1000},
+            action={
+                "type": "ORDER",
+                "params": {"job": "brew", "quantity": 3},
+                "advance_ticks": 1000,
+            },
             execute_result={
                 "accepted": True,
                 "result": {"created_job_ids": [11, 12, 13], "workshop_id": 3},
             },
             state_before={
-                "crew": {"jobs": {"active_ids": []}},
+                "work": {
+                    "ok": True,
+                    "manager_orders_count": 0,
+                    "manager_orders_amount_left": 0,
+                },
+                "crew": {
+                    "ok": True,
+                    "jobs": {
+                        "active_ids": [],
+                        "active_ids_truncated": False,
+                        "order_jobs": [],
+                        "order_jobs_truncated": False,
+                    },
+                },
                 "survival": {"drink_produced_in_run": 25},
             },
             advance_state={
-                "crew": {"jobs": {"active_ids": []}},
+                "work": {
+                    "ok": True,
+                    "manager_orders_count": 0,
+                    "manager_orders_amount_left": 0,
+                },
+                "crew": {
+                    "ok": True,
+                    "jobs": {
+                        "active_ids": [],
+                        "active_ids_truncated": False,
+                        "order_jobs": [],
+                        "order_jobs_truncated": False,
+                    },
+                },
                 "survival": {"drink_produced_in_run": 50},
             },
         )
@@ -2234,17 +3093,23 @@ def test_governed_gameplay_proof_rejects_noop_labor_flip() -> None:
     assert proof["helper_evidence"]["labor_changed"] is False
 
 
-def test_governed_gameplay_proof_keeps_unowned_tile_changes_during_wait_uncredited() -> None:
+def test_governed_gameplay_proof_keeps_unowned_tile_changes_during_wait_uncredited() -> (
+    None
+):
     rect = [49, 34, 0, 55, 40, 0]
     before = {
         "ok": True,
         "rect": rect,
-        "tiles": [{"x": 50, "y": 35, "z": 0, "category": "wall", "dig": 1, "hidden": False}],
+        "tiles": [
+            {"x": 50, "y": 35, "z": 0, "category": "wall", "dig": 1, "hidden": False}
+        ],
     }
     after = {
         "ok": True,
         "rect": rect,
-        "tiles": [{"x": 50, "y": 35, "z": 0, "category": "floor", "dig": 0, "hidden": False}],
+        "tiles": [
+            {"x": 50, "y": 35, "z": 0, "category": "floor", "dig": 0, "hidden": False}
+        ],
     }
     proof = _governed_gameplay_proof(
         **_governed_proof_kwargs(
@@ -2261,11 +3126,7 @@ def test_governed_gameplay_proof_keeps_unowned_tile_changes_during_wait_uncredit
 
 def test_governed_runner_attaches_crew_observability() -> None:
     runner_text = (
-        Path(__file__).resolve().parents[1]
-        / "fort_gym"
-        / "bench"
-        / "run"
-        / "runner.py"
+        Path(__file__).resolve().parents[1] / "fort_gym" / "bench" / "run" / "runner.py"
     ).read_text(encoding="utf-8")
 
     assert "def attach_crew_metrics" in runner_text
@@ -2278,11 +3139,7 @@ def test_governed_runner_attaches_crew_observability() -> None:
 
 def test_governed_runner_attaches_fort_observability() -> None:
     runner_text = (
-        Path(__file__).resolve().parents[1]
-        / "fort_gym"
-        / "bench"
-        / "run"
-        / "runner.py"
+        Path(__file__).resolve().parents[1] / "fort_gym" / "bench" / "run" / "runner.py"
     ).read_text(encoding="utf-8")
 
     assert "def attach_fort_metrics" in runner_text

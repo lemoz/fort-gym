@@ -238,7 +238,9 @@ class RunRegistry:
             )
             """
         )
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_runs_model_sha ON runs(model, git_sha)")
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_runs_model_sha ON runs(model, git_sha)"
+        )
         conn.execute("CREATE INDEX IF NOT EXISTS idx_runs_end ON runs(ended_at)")
         conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_runs_public ON "
@@ -316,7 +318,9 @@ class RunRegistry:
         runtime_save = runtime_save or getattr(settings, "FORT_GYM_RUNTIME_SAVE", None)
 
         with self._db_lock:
-            row = conn.execute("SELECT 1 FROM runs WHERE run_id = ?", (identifier,)).fetchone()
+            row = conn.execute(
+                "SELECT 1 FROM runs WHERE run_id = ?", (identifier,)
+            ).fetchone()
             if row is not None:
                 raise ValueError(f"Run '{identifier}' already registered")
             conn.execute(
@@ -370,7 +374,9 @@ class RunRegistry:
     def get(self, run_id: str) -> Optional[RunInfo]:
         conn = self._ensure_conn()
         with self._db_lock:
-            row = conn.execute("SELECT * FROM runs WHERE run_id = ?", (run_id,)).fetchone()
+            row = conn.execute(
+                "SELECT * FROM runs WHERE run_id = ?", (run_id,)
+            ).fetchone()
             if row is None:
                 return None
             queue = self._queues.get(run_id)
@@ -380,7 +386,9 @@ class RunRegistry:
     def list(self) -> list[RunInfo]:
         conn = self._ensure_conn()
         with self._db_lock:
-            rows = conn.execute("SELECT * FROM runs ORDER BY created_at DESC").fetchall()
+            rows = conn.execute(
+                "SELECT * FROM runs ORDER BY created_at DESC"
+            ).fetchall()
             queues = dict(self._queues)
             loops = dict(self._loops)
         return [
@@ -440,7 +448,9 @@ class RunRegistry:
             return
         params.append(run_id)
         with self._db_lock:
-            conn.execute(f"UPDATE runs SET {', '.join(updates)} WHERE run_id = ?", params)
+            conn.execute(
+                f"UPDATE runs SET {', '.join(updates)} WHERE run_id = ?", params
+            )
             conn.commit()
 
     def record_terminal_failure(
@@ -558,10 +568,16 @@ class RunRegistry:
                     event.clear()
                 return current_status
             if row["cleanup_completed_at"] is None:
-                raise RuntimeError(f"Run '{run_id}' cannot finalize before cleanup completes")
+                raise RuntimeError(
+                    f"Run '{run_id}' cannot finalize before cleanup completes"
+                )
             if row["summary_json"] is None:
-                raise RuntimeError(f"Run '{run_id}' cannot finalize before summary persistence")
-            stop_requested = row["stop_requested_at"] is not None or bool(event and event.is_set())
+                raise RuntimeError(
+                    f"Run '{run_id}' cannot finalize before summary persistence"
+                )
+            stop_requested = row["stop_requested_at"] is not None or bool(
+                event and event.is_set()
+            )
             final_status = "stopped" if stop_requested else "completed"
             conn.execute(
                 """
@@ -669,7 +685,9 @@ class RunRegistry:
         else:
             push()
 
-    def _update_score(self, run_id: str, score_value: object, milestones: object) -> None:
+    def _update_score(
+        self, run_id: str, score_value: object, milestones: object
+    ) -> None:
         conn = self._ensure_conn()
         score: Optional[float] = None
         if score_value is not None:
@@ -748,7 +766,9 @@ class RunRegistry:
         )
 
         with self._db_lock:
-            exists = conn.execute("SELECT 1 FROM runs WHERE run_id = ?", (run_id,)).fetchone()
+            exists = conn.execute(
+                "SELECT 1 FROM runs WHERE run_id = ?", (run_id,)
+            ).fetchone()
             if exists is None:
                 raise KeyError(run_id)
             conn.execute(
@@ -914,6 +934,7 @@ class RunRegistry:
         evaluation_protocol: Optional[str] = None,
         seed_save: Optional[str] = None,
         query: Optional[str] = None,
+        excluded_evaluation_protocols: Optional[set[str]] = None,
     ) -> Tuple[list[Tuple[RunInfo, ShareToken]], int]:
         """Return one bounded page of shared run metadata from the registry.
 
@@ -933,6 +954,15 @@ class RunRegistry:
             "WHERE scope.value IN ('replay', 'export')))",
         ]
         params: list[object] = [now]
+
+        excluded_protocols = sorted(excluded_evaluation_protocols or set())
+        if excluded_protocols:
+            placeholders = ", ".join("?" for _ in excluded_protocols)
+            where.append(
+                f"(r.evaluation_protocol IS NULL OR "
+                f"r.evaluation_protocol NOT IN ({placeholders}))"
+            )
+            params.extend(excluded_protocols)
 
         for column, value in (
             ("status", status),
@@ -957,7 +987,8 @@ class RunRegistry:
             where.append(
                 "("
                 + " OR ".join(
-                    f"LOWER(COALESCE({field}, '')) LIKE ? ESCAPE '\\'" for field in fields
+                    f"LOWER(COALESCE({field}, '')) LIKE ? ESCAPE '\\'"
+                    for field in fields
                 )
                 + ")"
             )
@@ -1022,7 +1053,8 @@ class RunRegistry:
                     run_id=run_id,
                     scope=set(json.loads(row["share_scope_json"])),
                     expires_at=_dt_from_iso(row["share_expires_at"]),
-                    created_at=_dt_from_iso(row["share_created_at"]) or datetime.utcnow(),
+                    created_at=_dt_from_iso(row["share_created_at"])
+                    or datetime.utcnow(),
                 )
             )
 
@@ -1072,8 +1104,12 @@ class RunRegistry:
                 item[0].run_id,
             )
 
-        active_runs.sort(key=lambda item: sort_key(item, item[0].started_at), reverse=True)
-        terminal_runs.sort(key=lambda item: sort_key(item, item[0].ended_at), reverse=True)
+        active_runs.sort(
+            key=lambda item: sort_key(item, item[0].started_at), reverse=True
+        )
+        terminal_runs.sort(
+            key=lambda item: sort_key(item, item[0].ended_at), reverse=True
+        )
         return active_runs, terminal_runs[:recent_limit], terminal_runs
 
     @staticmethod
@@ -1084,7 +1120,9 @@ class RunRegistry:
         preferred: Optional[ShareToken] = None
         fallback: Optional[ShareToken] = None
         for share in tokens:
-            if {"live", "replay", "export"}.issubset(share.scope) and comprehensive is None:
+            if {"live", "replay", "export"}.issubset(
+                share.scope
+            ) and comprehensive is None:
                 comprehensive = share
             if {"replay", "export"}.issubset(share.scope) and evidence is None:
                 evidence = share
@@ -1096,7 +1134,12 @@ class RunRegistry:
                 fallback = share
         return comprehensive or evidence or replay or preferred or fallback
 
-    def public_leaderboard(self, limit: int = 50) -> list[Dict[str, Any]]:
+    def public_leaderboard(
+        self,
+        limit: int = 50,
+        *,
+        excluded_evaluation_protocols: Optional[set[str]] = None,
+    ) -> list[Dict[str, Any]]:
         """Return per-(model, score_version, seed_save) aggregates.
 
         WDSLL's non-negotiables hold scores comparable only on the same seed
@@ -1109,9 +1152,20 @@ class RunRegistry:
 
         conn = self._ensure_conn()
         now = datetime.utcnow().isoformat()
+        excluded_protocols = sorted(excluded_evaluation_protocols or set())
+        exclusion_sql = ""
+        params: list[object] = [now]
+        if excluded_protocols:
+            placeholders = ", ".join("?" for _ in excluded_protocols)
+            exclusion_sql = (
+                "AND (r.evaluation_protocol IS NULL OR "
+                f"r.evaluation_protocol NOT IN ({placeholders}))"
+            )
+            params.extend(excluded_protocols)
+        params.append(int(limit))
         with self._db_lock:
             rows = conn.execute(
-                """
+                f"""
                 SELECT r.run_id, r.model, r.summary_json, r.seed_save,
                        s.token AS share_token, s.scope_json AS share_scope_json,
                        s.expires_at AS share_expires_at, s.created_at AS share_created_at
@@ -1119,10 +1173,11 @@ class RunRegistry:
                   JOIN shares s ON s.run_id = r.run_id
                  WHERE (s.expires_at IS NULL OR s.expires_at > ?)
                    AND r.summary_json IS NOT NULL
+                   {exclusion_sql}
                  ORDER BY COALESCE(r.ended_at, r.created_at) DESC
                  LIMIT ?
                 """,
-                (now, int(limit)),
+                params,
             ).fetchall()
 
         # A run may carry more than one live share token; dedupe to one row
@@ -1142,7 +1197,8 @@ class RunRegistry:
                     run_id=run_id,
                     scope=scopes,
                     expires_at=_dt_from_iso(row["share_expires_at"]),
-                    created_at=_dt_from_iso(row["share_created_at"]) or datetime.utcnow(),
+                    created_at=_dt_from_iso(row["share_created_at"])
+                    or datetime.utcnow(),
                 )
             )
 
@@ -1195,7 +1251,9 @@ class RunRegistry:
                     "best_token": stats["best_token"],
                 }
             )
-        leaderboard.sort(key=lambda item: (item["score_version"], item["mean_score"]), reverse=True)
+        leaderboard.sort(
+            key=lambda item: (item["score_version"], item["mean_score"]), reverse=True
+        )
         return leaderboard
 
     def best_scores_over_time(
@@ -1206,6 +1264,7 @@ class RunRegistry:
         model: Optional[str] = None,
         max_steps: Optional[int] = None,
         limit_per_series: int = 500,
+        excluded_evaluation_protocols: Optional[set[str]] = None,
     ) -> list[Dict[str, Any]]:
         """Return best-score time series per (model, git_sha, backend, score_version, seed_save).
 
@@ -1229,6 +1288,15 @@ class RunRegistry:
         ]
         params: list[object] = [now, since]
 
+        excluded_protocols = sorted(excluded_evaluation_protocols or set())
+        if excluded_protocols:
+            placeholders = ", ".join("?" for _ in excluded_protocols)
+            where.append(
+                "(r.evaluation_protocol IS NULL OR "
+                f"r.evaluation_protocol NOT IN ({placeholders}))"
+            )
+            params.extend(excluded_protocols)
+
         if backend:
             where.append("r.backend = ?")
             params.append(str(backend))
@@ -1247,7 +1315,7 @@ class RunRegistry:
               s.expires_at AS share_expires_at, s.created_at AS share_created_at
             FROM runs r
             JOIN shares s ON s.run_id = r.run_id
-            WHERE {' AND '.join(where)}
+            WHERE {" AND ".join(where)}
             ORDER BY r.ended_at ASC
         """
 
@@ -1269,7 +1337,8 @@ class RunRegistry:
                     run_id=run_id,
                     scope=scopes,
                     expires_at=_dt_from_iso(row["share_expires_at"]),
-                    created_at=_dt_from_iso(row["share_created_at"]) or datetime.utcnow(),
+                    created_at=_dt_from_iso(row["share_created_at"])
+                    or datetime.utcnow(),
                 )
             )
 
@@ -1291,7 +1360,9 @@ class RunRegistry:
                     )
                 except Exception:
                     score_version = 1
-            seed_save = str(run_row["seed_save"]) if run_row["seed_save"] else "unspecified"
+            seed_save = (
+                str(run_row["seed_save"]) if run_row["seed_save"] else "unspecified"
+            )
             key = (
                 str(run_row["model"]),
                 git_sha,
@@ -1340,7 +1411,9 @@ class RunRegistry:
                 }
             )
 
-        series.sort(key=lambda item: (item.get("best") or {}).get("score", 0.0), reverse=True)
+        series.sort(
+            key=lambda item: (item.get("best") or {}).get("score", 0.0), reverse=True
+        )
         return series
 
     # ------------------------------------------------------------------

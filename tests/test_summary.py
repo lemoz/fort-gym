@@ -26,6 +26,64 @@ def _write_trace(trace_path: Path, records: list[dict]) -> None:
             handle.write(json.dumps(record) + "\n")
 
 
+def test_v5_summary_uses_only_strict_final_owned_measurements(tmp_path) -> None:
+    trace_path = Path(tmp_path) / "trace.jsonl"
+    owned_metrics = {
+        "score_progress_provenance": GOVERNED_SCORE_PROGRESS_PROVENANCE,
+        "score_duration_blocked": False,
+        "governed_owned_completed_beds": 3,
+        "governed_owned_completed_farm_plots": 1,
+        "governed_owned_completed_stills": 1,
+        "governed_owned_operational_farm_plots": 1,
+        "governed_owned_operational_farm_evidence_complete": True,
+        "governed_owned_production_capacity": 2,
+        "governed_owned_unique_construction_tiles": 8,
+        "governed_owned_accessible_layout_rooms": 3,
+        "governed_owned_accessible_functional_rooms": 1,
+        "governed_owned_room_evidence_complete": True,
+        "governed_owned_layout_room_lower_bound_proven": True,
+        "governed_owned_building_evidence_complete": True,
+        "governed_owned_output_units": 1,
+        "governed_owned_output_units_by_job": {"brew": 1},
+        "governed_owned_output_evidence_complete": True,
+    }
+    _write_trace(
+        trace_path,
+        [
+            {"run_id": "owned-final", "step": 0, "metrics": owned_metrics, "events": []},
+            {"run_id": "owned-final", "step": 1, "metrics": {}, "events": []},
+        ],
+    )
+
+    summary = summarize(trace_path, g7_gate_version=5)
+
+    assert summary.governed_owned_completed_beds is None
+    assert summary.governed_owned_accessible_layout_rooms is None
+    assert summary.governed_owned_output_units_by_job is None
+    assert summary.governed_owned_room_evidence_complete is None
+
+    _write_trace(
+        trace_path,
+        [
+            {
+                "run_id": "owned-final",
+                "step": 0,
+                "metrics": {
+                    **owned_metrics,
+                    "governed_owned_completed_beds": 3.5,
+                    "governed_owned_output_units_by_job": {"brew": -1},
+                },
+                "events": [],
+            }
+        ],
+    )
+
+    malformed = summarize(trace_path, g7_gate_version=5)
+    assert malformed.governed_owned_completed_beds is None
+    assert malformed.governed_owned_output_units_by_job is None
+    assert malformed.governed_owned_accessible_layout_rooms == 3
+
+
 @pytest.mark.parametrize(
     ("versions", "error"),
     [

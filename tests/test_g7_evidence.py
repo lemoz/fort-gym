@@ -4,9 +4,9 @@ from pathlib import Path
 
 from fort_gym.bench import dfhack_backend
 
-HOOK_SOURCE = (Path(__file__).resolve().parents[1] / "hook" / "g7_evidence.lua").read_text(
-    encoding="utf-8"
-)
+HOOK_SOURCE = (
+    Path(__file__).resolve().parents[1] / "hook" / "g7_evidence.lua"
+).read_text(encoding="utf-8")
 
 
 def test_g7_evidence_is_run_scoped_and_event_backed() -> None:
@@ -42,20 +42,34 @@ def test_g7_food_production_is_farm_output_not_any_created_food_item() -> None:
     assert "item_on_completed_farm_plot" in HOOK_SOURCE
     assert "bld:getType() == df.building_type.FarmPlot" in HOOK_SOURCE
     assert "bld:getBuildStage() >= bld:getMaxBuildStage()" in HOOK_SOURCE
-    assert "farm_check_ok, on_completed_farm = item_on_completed_farm_plot(item)" in HOOK_SOURCE
-    farm_classifier = HOOK_SOURCE.split("local function item_on_completed_farm_plot", 1)[1].split(
-        "local function record_created_item", 1
-    )[0]
+    assert (
+        "farm_check_ok, on_completed_farm = item_on_completed_farm_plot(item)"
+        in HOOK_SOURCE
+    )
+    farm_classifier = HOOK_SOURCE.split(
+        "local function item_on_completed_farm_plot", 1
+    )[1].split("local function record_created_item", 1)[0]
     assert "return ok, ok and result or false" in farm_classifier
     assert "farm_output_classification_failed" in HOOK_SOURCE
     assert "nonfarm_plants_created_in_run" in HOOK_SOURCE
 
 
 def test_g7_death_classification_fails_closed_for_non_direct_cases() -> None:
+    assert "df.incident.find(id)" in HOOK_SOURCE
+    assert "victim ~= tonumber(unit.id)" in HOOK_SOURCE
+    assert "incident.death_cause" in HOOK_SOURCE
+    assert "world.incidents.all[death_id].death_cause" in HOOK_SOURCE
     assert "record.cause_name == 'HUNGER'" in HOOK_SOURCE
     assert "record.cause_name == 'THIRST'" in HOOK_SOURCE
     assert "if #deaths == 0 or direct_neglect_deaths > 0 then" in HOOK_SOURCE
     assert "Other deaths need separate tantrum-chain evidence" in HOOK_SOURCE
+
+
+def test_death_calibration_forces_real_incident_fallback_only() -> None:
+    assert "force_incident_death_cause = mode == 'force_incident_death_cause'" in HOOK_SOURCE
+    assert "if not ledger.force_incident_death_cause" in HOOK_SOURCE
+    assert "incident_death_cause(unit, incident_id)" in HOOK_SOURCE
+    assert "measurement_calibration_mode = ledger.calibration_mode" in HOOK_SOURCE
 
 
 def test_g7_backend_helpers_dispatch_bounded_commands(monkeypatch) -> None:
@@ -77,6 +91,75 @@ def test_g7_backend_helpers_dispatch_bounded_commands(monkeypatch) -> None:
     ]
     assert all(call[0].endswith("g7_evidence.lua") for call in calls)
     assert all(call[2] == 5.0 for call in calls)
+
+
+def test_g7_backend_death_calibration_passes_narrow_mode(monkeypatch) -> None:
+    calls: list[tuple[str, ...]] = []
+
+    def fake_run(path: str, *args: str, timeout: float):
+        del path, timeout
+        calls.append(args)
+        return {"ok": True}
+
+    monkeypatch.setattr(dfhack_backend, "run_lua_file", fake_run)
+
+    assert dfhack_backend.start_g7_evidence(
+        "run-123", measurement_calibration_mode="force_incident_death_cause"
+    ) == {"ok": True}
+    assert calls == [
+        ("start", "run-123", "force_incident_death_cause"),
+    ]
+    assert dfhack_backend.start_g7_evidence(
+        "run-123", measurement_calibration_mode="invented"
+    ) == {"ok": False, "error": "invalid_measurement_calibration_mode"}
+
+
+def test_death_calibration_fixture_is_one_bounded_friendly_kill(monkeypatch) -> None:
+    calls: list[tuple[list[str], float, str]] = []
+
+    def fake_run(args: list[str], *, timeout: float, cwd: str) -> str:
+        calls.append((args, timeout, cwd))
+        return "marked one friendly unit"
+
+    monkeypatch.setattr(dfhack_backend, "run_dfhack", fake_run)
+
+    result = dfhack_backend.trigger_p1_death_calibration_fixture()
+
+    assert result == {
+        "ok": True,
+        "fixture": "dfhack_exterminate_friendly_instant",
+        "target": "DWARF",
+        "limit": 1,
+        "output": "marked one friendly unit",
+    }
+    assert calls[0][0][-7:] == [
+        "exterminate",
+        "DWARF",
+        "--include-friendly",
+        "--limit",
+        "1",
+        "--method",
+        "instant",
+    ]
+    assert calls[0][1] == 5.0
+
+
+def test_death_calibration_fixture_fails_without_command_confirmation(
+    monkeypatch,
+) -> None:
+    def fake_run(args: list[str], *, timeout: float, cwd: str) -> str:
+        del args, timeout, cwd
+        return "  "
+
+    monkeypatch.setattr(dfhack_backend, "run_dfhack", fake_run)
+
+    assert dfhack_backend.trigger_p1_death_calibration_fixture() == {
+        "ok": False,
+        "fixture": "dfhack_exterminate_friendly_instant",
+        "target": "DWARF",
+        "limit": 1,
+        "error": "exterminate_returned_no_confirmation",
+    }
 
 
 def test_g7_stop_error_does_not_claim_callbacks_are_inactive(monkeypatch) -> None:

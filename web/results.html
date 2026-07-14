@@ -147,7 +147,7 @@
       $('cohort-groups').innerHTML = `<div class="cohort-state"><strong>The Fable and Sol field opens here.</strong><p>Completed runs appear with their score, G7 verdict, and replay.</p></div>`;
       return;
     }
-    $('cohort-groups').innerHTML = groups.map(group => `<div class="group-block"><div class="group-key">${FL.escapeHtml(keyText(group.comparability))}</div><div class="fl-table-shell"><table class="fl-table"><thead><tr><th>Model</th><th>Verdict</th><th>G7</th><th>Runs</th><th>Mean</th><th>Best</th><th>Gameplay</th></tr></thead><tbody>${(group.model_results || []).map(row => { const label = row.public_label || row.model; const digest = row.model_digest && row.model_digest !== label ? `<div class="fl-mono">${FL.escapeHtml(row.model_digest)}</div>` : ''; const g7 = Object.entries(row.g7_outcomes || {}).map(([outcome, count]) => `${outcome} ${count}`).join(' · ') || 'Not reported'; return `<tr><td><strong>${FL.escapeHtml(label)}</strong>${digest}</td><td class="fl-mono">${FL.escapeHtml(row.task_verdict || 'Not reported')}</td><td class="fl-mono">${FL.escapeHtml(g7)}</td><td class="fl-mono">${FL.escapeHtml(row.run_count)}</td><td class="fl-mono">${FL.escapeHtml(FL.formatNumber(row.mean_score))}</td><td class="fl-mono">${FL.escapeHtml(FL.formatNumber(row.best_score))}</td><td>${row.best_token ? `<a class="fl-link" href="/r/${encodeURIComponent(row.best_token)}">Watch →</a>` : 'Not reported'}</td></tr>`; }).join('')}</tbody></table></div></div>`).join('');
+    $('cohort-groups').innerHTML = groups.map(group => `<div class="group-block"><div class="group-key">${FL.escapeHtml(keyText(group.comparability))}</div><div class="fl-table-shell"><table class="fl-table"><thead><tr><th>Model</th><th>Verdict</th><th>G7</th><th>Runs</th><th>Scalar mean</th><th>Scalar best</th><th>Gameplay</th></tr></thead><tbody>${(group.model_results || []).map(row => { const label = row.public_label || row.model; const digest = row.model_digest && row.model_digest !== label ? `<div class="fl-mono">${FL.escapeHtml(row.model_digest)}</div>` : ''; const g7 = Object.entries(row.g7_outcomes || {}).map(([outcome, count]) => `${outcome} ${count}`).join(' · ') || 'Not reported'; const outcomeVector = row.result_kind === 'outcome_vector'; const token = row.representative_token || row.best_token; return `<tr><td><strong>${FL.escapeHtml(label)}</strong>${digest}</td><td class="fl-mono">${FL.escapeHtml(row.task_verdict || 'Not reported')}</td><td class="fl-mono">${FL.escapeHtml(g7)}</td><td class="fl-mono">${FL.escapeHtml(row.run_count)}</td><td class="fl-mono">${outcomeVector ? 'N/A' : FL.escapeHtml(FL.formatNumber(row.mean_score))}</td><td class="fl-mono">${outcomeVector ? 'N/A' : FL.escapeHtml(FL.formatNumber(row.best_score))}</td><td>${token ? `<a class="fl-link" href="/r/${encodeURIComponent(token)}">Watch →</a>` : 'Not reported'}</td></tr>`; }).join('')}</tbody></table></div></div>`).join('');
   }
 
   function renderEvidence(items) {
@@ -161,7 +161,7 @@
   }
 
   async function loadEvidence(groups) {
-    const tokens = [...new Set(groups.flatMap(group => (group.model_results || []).map(row => row.best_token).filter(Boolean)))].slice(0, 3);
+    const tokens = [...new Set(groups.flatMap(group => (group.model_results || []).map(row => row.representative_token || row.best_token).filter(Boolean)))].slice(0, 3);
     if (!tokens.length) {
       $('run-evidence').innerHTML = '<div class="fl-empty">Protocol replay evidence will appear with the first complete field.</div>';
       return;

@@ -23,16 +23,30 @@ surface.
 Anthropic agents are legacy and disabled unless `FORT_GYM_ENABLE_ANTHROPIC=1`.
 Experiments should run on OpenRouter models.
 
-The current frozen protocol is
-[`experiments/fort_eval_easy_p1_g7_v3.yaml`](../experiments/fort_eval_easy_p1_g7_v3.yaml):
-provisional Easy P1 G7-v3 on `seed_region3_fresh`, 200 steps, up to 2,500 ticks per
-step, score-v5, no knowledge, vision on, and memory off. The two declared arms
-are `dfhack-governed-llm-fable5` and `dfhack-governed-llm-gpt56-sol`. They share
-one benchmark-condition key; arm identity and provider routing are comparison
-identity, not alternate condition fields. Valid failures with complete,
-contamination-free evidence are publishable.
-The linked provider preflight changes the live observation between calls and
-requires cache reads plus a valid tool payload from both arms.
+The successor protocol under calibration is
+[`experiments/fort_eval_easy_p1_g7_v5.yaml`](../experiments/fort_eval_easy_p1_g7_v5.yaml):
+Easy P1 G7-v5 on `seed_region3_fresh`, 200 steps, up to 2,500 ticks per step,
+no knowledge, vision on, and memory off. It is not launchable or publishable
+until the owned-room and authoritative-death sensors pass live DFHack
+validation. Elapsed ticks, absolute population, peak layout, cache rate, and the
+score-v5 scalar remain diagnostics and do not affect the G7 verdict. G7-v5 uses
+a non-numeric outcome vector over an exact owned crop-assigned farm, an exact
+owned completed Still, exact governed brew output, authoritatively classified preventable
+deaths, three final owned accessible layout rooms, and three exact owned
+completed beds for the fixed initial seven-dwarf cohort. Cumulative production
+and consumption plus final reserves are exposure diagnostics, not gates. The old scalar
+action/outcome rubric is retired for G7-v5;
+full-trace action-effect, repeated-no-op, and productive-wait rates remain
+diagnostics. The completed G7-v3 and G7-v4 protocols remain frozen under their
+original evaluators for historical replay. The two declared arms are
+`dfhack-governed-llm-fable5` and
+`dfhack-governed-llm-gpt56-sol`. They share one benchmark-condition key; arm
+identity and provider routing are comparison identity, not alternate condition
+fields. After calibration, valid gameplay failures with complete,
+contamination-free evidence may be publishable; invalid or incomplete evidence
+remains unpublishable. The linked provider preflight changes the live
+observation between calls and proves a valid tool payload from both arms. Cache
+reads are recorded as a cost diagnostic, not a validity condition.
 
 ## Implemented Components
 

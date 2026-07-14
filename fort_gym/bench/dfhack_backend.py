@@ -7,9 +7,10 @@ import re
 from pathlib import Path
 from typing import Dict, Iterable, Sequence
 
-from .config import DFROOT
+from .config import DFROOT, dfhack_cmd
 from .dfhack_exec import (
     DFHackError,
+    run_dfhack,
     run_lua_file,
 )
 from .tick_controller import (
@@ -470,13 +471,18 @@ def read_job_metrics(
         return {"ok": False, "error": str(exc)}
 
 
-def start_g7_evidence(run_id: str) -> Dict[str, object]:
+def start_g7_evidence(
+    run_id: str, *, measurement_calibration_mode: str | None = None
+) -> Dict[str, object]:
     """Start a run-scoped, read-only survival evidence ledger in DFHack."""
 
     try:
-        return run_lua_file(
-            _hook_path("g7_evidence.lua"), "start", str(run_id), timeout=5.0
-        )
+        args = ["start", str(run_id)]
+        if measurement_calibration_mode is not None:
+            if measurement_calibration_mode != "force_incident_death_cause":
+                return {"ok": False, "error": "invalid_measurement_calibration_mode"}
+            args.append(measurement_calibration_mode)
+        return run_lua_file(_hook_path("g7_evidence.lua"), *args, timeout=5.0)
     except (DFHackError, OSError) as exc:
         return {"ok": False, "active": False, "error": str(exc)}
 
@@ -497,6 +503,53 @@ def stop_g7_evidence() -> Dict[str, object]:
         return run_lua_file(_hook_path("g7_evidence.lua"), "stop", timeout=5.0)
     except (DFHackError, OSError) as exc:
         return {"ok": False, "active": None, "error": str(exc)}
+
+
+def trigger_p1_death_calibration_fixture() -> Dict[str, object]:
+    """Deterministically create one real friendly death for calibration only.
+
+    The runner exposes this helper only after pristine-seed attestation, only
+    for the scripted death-cause calibration scenario, and always with a
+    disposable runtime save. The following positive tick creates the actual
+    death/incident evidence consumed by the ordinary G7 ledger.
+    """
+
+    try:
+        output = run_dfhack(
+            dfhack_cmd(
+                "exterminate",
+                "DWARF",
+                "--include-friendly",
+                "--limit",
+                "1",
+                "--method",
+                "instant",
+            ),
+            timeout=5.0,
+            cwd=str(DFROOT),
+        )
+        if not output.strip():
+            return {
+                "ok": False,
+                "fixture": "dfhack_exterminate_friendly_instant",
+                "target": "DWARF",
+                "limit": 1,
+                "error": "exterminate_returned_no_confirmation",
+            }
+        return {
+            "ok": True,
+            "fixture": "dfhack_exterminate_friendly_instant",
+            "target": "DWARF",
+            "limit": 1,
+            "output": output,
+        }
+    except (DFHackError, OSError) as exc:
+        return {
+            "ok": False,
+            "fixture": "dfhack_exterminate_friendly_instant",
+            "target": "DWARF",
+            "error": str(exc),
+        }
 
 
 def read_map_snapshot(rect: tuple[int, int, int, int, int, int]) -> Dict[str, object]:
@@ -651,6 +704,7 @@ __all__ = [
     "read_work_metrics",
     "read_job_metrics",
     "start_g7_evidence",
+    "trigger_p1_death_calibration_fixture",
     "read_g7_evidence",
     "stop_g7_evidence",
     "read_fort_metrics",

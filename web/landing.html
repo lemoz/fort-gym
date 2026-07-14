@@ -382,14 +382,14 @@
     });
     if (!rows.length) return;
     body.innerHTML = rows.slice(0, 8).map(({group, result}) => {
-      const token = result.best_token;
+      const token = result.representative_token || result.best_token;
       const protocol = group.comparability?.evaluation_protocol || 'Not reported';
       return `<tr>
         <td class="fl-mono"><strong>${FL.escapeHtml(result.model || 'Unknown')}</strong></td>
         <td class="fl-mono">${FL.escapeHtml(protocol)}</td>
         <td class="fl-mono">${FL.escapeHtml(result.run_count ?? '--')}</td>
-        <td class="fl-mono">${FL.escapeHtml(FL.formatNumber(result.mean_score))}</td>
-        <td class="fl-mono">${FL.escapeHtml(FL.formatNumber(result.best_score))}</td>
+        <td class="fl-mono">${result.result_kind === 'outcome_vector' ? 'N/A' : FL.escapeHtml(FL.formatNumber(result.mean_score))}</td>
+        <td class="fl-mono">${result.result_kind === 'outcome_vector' ? 'N/A' : FL.escapeHtml(FL.formatNumber(result.best_score))}</td>
         <td>${token ? `<a class="fl-link" href="/r/${encodeURIComponent(token)}">Watch →</a>` : 'Not reported'}</td>
       </tr>`;
     }).join('');

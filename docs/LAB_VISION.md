@@ -57,14 +57,23 @@ Hard is the next instrument, not a relabeling exercise. It needs a fixed-pixel v
 
 Discovery comes after Hard is stable. Its restriction is about accessible information during evaluation: no docs, no web, a bounded learner state across episodes, and held-out seeds or mechanics. It must not make an unverifiable claim about model pretraining. A clean statement is: the agent had the declared interface, knowledge channel, memory budget, and held-out split.
 
-The current provisional Easy P1 manifest is
-`experiments/fort_eval_easy_p1_g7_v3.yaml`. It freezes G7-v3 on
-`seed_region3_fresh` at 200 steps and up to 2,500 ticks per step, with score-v5,
-vision on, memory off, and no knowledge access. Its two model arms are compared
-inside one shared benchmark condition. The arm name, provider route, resolved
-model, prompt, and generation settings identify the policy arm; they are not
-alternate benchmark conditions. Valid failures with complete evidence remain
-publishable, while infrastructure aborts and invalid evidence remain distinct.
+The current Easy P1 successor is the calibration-only
+`experiments/fort_eval_easy_p1_g7_v5.yaml`. It keeps the same seed, model arms,
+200-step budget, vision, memory-off, and no-knowledge condition while replacing
+global and peak proxies with exact governed ownership evidence. An exact owned
+crop-assigned farm, owned completed Still, exact governed brew output, authoritative
+preventable-death classification, final owned accessible layout rooms, and
+fixed-initial-cohort bed capacity form a non-numeric outcome vector. Duration,
+population, final reserves, production/consumption exposure, peak layout, cache rate, and score-v5 are
+diagnostics only. Missing or truncated evidence remains unknown. G7-v5 is not
+launchable or publishable until the new room and death sensors pass live DFHack
+validation. The completed G7-v3 and G7-v4 protocols remain frozen as historical
+evidence under their original evaluators.
+The two model arms are compared inside one shared benchmark condition. The arm
+name, provider route, resolved model, prompt, and generation settings identify
+the policy arm; they are not alternate benchmark conditions. Valid failures
+with complete evidence remain publishable, while infrastructure aborts and
+invalid evidence remain distinct.
 
 ## Design commitments
 

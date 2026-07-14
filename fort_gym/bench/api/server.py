@@ -29,7 +29,7 @@ from ..config import get_settings
 from ..env.keystroke_exec import execute_keystroke_action
 from ..eval.protocol import EVALUATION_PROTOCOL_PATTERN
 from ..eval.public_protocols import get_public_protocol, list_public_protocols
-from ..eval.fort_eval_easy_p1 import validate_p1_declaration
+from ..eval.fort_eval_easy_p1 import P1_PROTOCOL, validate_p1_declaration
 from ..run.jobs import JOB_REGISTRY
 from ..run.jobs import JobInfo as RegistryJobInfo
 from ..run.runner import run_once
@@ -396,8 +396,13 @@ _COMPARABILITY_FIELDS = [
 _PUBLIC_SUMMARY_FIELDS = {
     "evaluation_protocol",
     "public_eligibility",
+    "publication_status",
     "public_label",
     "task_verdict",
+    "gameplay_outcome",
+    "evaluation_validity",
+    "provenance_completeness",
+    "terminal_class",
     "g7",
     "score_version",
     "total_score",
@@ -446,6 +451,11 @@ def _comparison_groups(
         if not isinstance(summary, dict):
             continue
         evaluation_protocol = record.evaluation_protocol
+        if evaluation_protocol == P1_PROTOCOL:
+            # G7-v5 is an outcome vector and is calibration-only until its
+            # live evidence activation. It must never enter this legacy scalar
+            # overview, even if an old/manual share token exists.
+            continue
         summary_evaluation_protocol = summary.get("evaluation_protocol")
         score_version = summary.get("score_version")
         total_score = summary.get("total_score")
@@ -515,6 +525,11 @@ def _comparison_groups(
     )
 
 
+def _protocol_is_calibration(slug: str | None) -> bool:
+    definition = get_public_protocol(slug) if slug else None
+    return bool(definition is not None and definition.status == "calibration")
+
+
 _UNRESOLVED_PROTOCOL_VALUES = {
     "resolved_at_run",
     "unresolved_before_run",
@@ -564,10 +579,20 @@ def _g7_evidence_is_complete(summary: Dict[str, Any]) -> bool:
 
 def _p1_integrity_is_complete(summary: Dict[str, Any]) -> bool:
     attestation = summary.get("integrity_attestation")
+    return bool(isinstance(attestation, dict) and attestation.get("status") == "pass")
+
+
+def _v5_publication_is_complete(summary: Dict[str, Any]) -> bool:
+    """Accept valid task failures but never incomplete or calibration evidence."""
+
+    publication = summary.get("publication_status")
     return bool(
-        isinstance(attestation, dict)
-        and attestation.get("status") == "pass"
-        and attestation.get("terminal_reason") is None
+        isinstance(publication, dict)
+        and publication.get("status") == "eligible"
+        and publication.get("evaluation_validity") == "pass"
+        and publication.get("provenance_completeness") == "pass"
+        and publication.get("provider_telemetry_complete") is True
+        and _p1_integrity_is_complete(summary)
     )
 
 
@@ -590,14 +615,22 @@ def _protocol_comparison_groups(
 ) -> List[PublicComparisonGroup]:
     """Build comparisons only from complete declared protocol provenance."""
 
+    if protocol_definition.status == "calibration":
+        return []
+
     declared_fields = list(protocol_definition.comparability_fields)
     group_fields = [field for field in declared_fields if field != "model_digest"]
-    response_fields = ["evaluation_protocol", *group_fields, "score_version"]
+    non_scalar = str(protocol_definition.slug).endswith("g7-v5")
+    response_fields = ["evaluation_protocol", *group_fields]
+    if not non_scalar:
+        response_fields.append("score_version")
     strict_publication = bool(protocol_definition.requires_public_eligibility)
     groups: Dict[Tuple[object, ...], Dict[Tuple[str, str], List[Tuple[Any, ...]]]] = {}
 
     for record, share in items:
-        allowed_statuses = {"completed", "failed"} if strict_publication else {"completed"}
+        allowed_statuses = (
+            {"completed", "failed"} if strict_publication else {"completed"}
+        )
         if (
             record.status not in allowed_statuses
             or record.backend != "dfhack"
@@ -616,7 +649,7 @@ def _protocol_comparison_groups(
         score_version = summary.get("score_version")
         total_score = summary.get("total_score")
         values: Dict[str, str] = {}
-        complete = (
+        complete = non_scalar or (
             type(score_version) is int
             and score_version > 0
             and not isinstance(total_score, bool)
@@ -641,20 +674,26 @@ def _protocol_comparison_groups(
             values[field] = value
         if not complete or values.get("fort_gym_commit") != record.git_sha:
             continue
-        try:
-            score = float(total_score)
-        except (TypeError, ValueError):
-            continue
+        score: float | None = None
+        if not non_scalar:
+            try:
+                score = float(total_score)
+            except (TypeError, ValueError):
+                continue
         key_values: Tuple[object, ...] = (
             record.evaluation_protocol,
             *(values[field] for field in group_fields),
-            score_version,
+            *(() if non_scalar else (score_version,)),
         )
         if strict_publication:
             public_label = _public_label(summary)
             g7_outcome = _reported_g7_outcome(summary)
             if (
-                not _g7_evidence_is_complete(summary)
+                not (
+                    _v5_publication_is_complete(summary)
+                    if non_scalar
+                    else _g7_evidence_is_complete(summary)
+                )
                 or not _p1_integrity_is_complete(summary)
                 or public_label is None
                 or g7_outcome is None
@@ -662,7 +701,12 @@ def _protocol_comparison_groups(
                 continue
             task_verdict = _reported_outcome(summary.get("task_verdict")) or g7_outcome
             model_key = (values["model_digest"], public_label)
-            scored_run: Tuple[Any, ...] = (score, share.token, task_verdict, g7_outcome)
+            scored_run: Tuple[Any, ...] = (
+                score,
+                share.token,
+                task_verdict,
+                g7_outcome,
+            )
         else:
             model_key = (values["model_digest"], "")
             scored_run = (score, share.token)
@@ -680,13 +724,17 @@ def _protocol_comparison_groups(
                             public_label=public_label or None,
                             scored_runs=scored_runs,
                             strict_publication=strict_publication,
+                            non_scalar=non_scalar,
                         )
-                        for (model_digest, public_label), scored_runs in scores_by_model.items()
+                        for (
+                            model_digest,
+                            public_label,
+                        ), scored_runs in scores_by_model.items()
                     ],
                     key=lambda result: (
-                        result.mean_score,
                         result.public_label or "",
                         result.model_digest or "",
+                        result.mean_score or 0.0,
                     ),
                     reverse=True,
                 ),
@@ -695,7 +743,7 @@ def _protocol_comparison_groups(
     return sorted(
         response,
         key=lambda group: (
-            group.comparability["score_version"],
+            group.comparability.get("score_version", 0),
             group.comparability["evaluation_protocol"],
         ),
         reverse=True,
@@ -708,17 +756,23 @@ def _public_model_result(
     public_label: str | None,
     scored_runs: List[Tuple[Any, ...]],
     strict_publication: bool,
+    non_scalar: bool = False,
 ) -> PublicModelResult:
     """Serialize either a legacy P0 row or a strict P1 public report row."""
 
-    scores = [float(run[0]) for run in scored_runs]
+    numeric_runs = [run for run in scored_runs if run[0] is not None]
+    scores = [float(run[0]) for run in numeric_runs]
     result = PublicModelResult(
         model=public_label or model_digest,
         run_count=len(scored_runs),
-        mean_score=round(sum(scores) / len(scores), 2),
-        best_score=round(max(scores), 2),
-        best_token=max(scored_runs, key=lambda item: item[0])[1],
+        result_kind="outcome_vector" if non_scalar else None,
     )
+    if scores and not non_scalar:
+        result.mean_score = round(sum(scores) / len(scores), 2)
+        result.best_score = round(max(scores), 2)
+        result.best_token = max(numeric_runs, key=lambda item: float(item[0]))[1]
+    elif scored_runs:
+        result.representative_token = str(scored_runs[0][1])
     if not strict_publication:
         return result
     outcomes = [str(run[3]) for run in scored_runs]
@@ -741,6 +795,9 @@ def _serialize_job(job: RegistryJobInfo) -> JobInfo:
 def _require_share(token: str, *, scope: Optional[str] = None) -> ShareToken:
     share = RUN_REGISTRY.get_share(token)
     if not share:
+        raise HTTPException(status_code=404, detail="Not found")
+    record = RUN_REGISTRY.get(share.run_id)
+    if record is None or _protocol_is_calibration(record.evaluation_protocol):
         raise HTTPException(status_code=404, detail="Not found")
     if scope and scope not in share.scope:
         raise HTTPException(status_code=404, detail="Not found")
@@ -846,11 +903,17 @@ async def create_run(
         loop=loop,
     )
 
-    # Auto-create share token so run appears in public spectator view
-    # Benchmark runs are public evidence: their share links must never rot.
-    RUN_REGISTRY.create_share(
-        record.run_id, scope=["live", "replay", "export"], ttl_seconds=None
+    protocol_definition = (
+        get_public_protocol(payload.evaluation_protocol)
+        if payload.evaluation_protocol
+        else None
     )
+    if protocol_definition is None or protocol_definition.status != "calibration":
+        # Publishable benchmark runs receive permanent evidence links. A
+        # calibration protocol remains admin-only until explicitly activated.
+        RUN_REGISTRY.create_share(
+            record.run_id, scope=["live", "replay", "export"], ttl_seconds=None
+        )
 
     def _target() -> None:
         agent = agent_factory()
@@ -929,8 +992,14 @@ async def stop_run(run_id: str, _: None = Depends(require_admin)) -> JSONRespons
 async def create_share(
     run_id: str, body: ShareCreate, _: None = Depends(require_admin)
 ) -> Dict[str, object]:
-    if RUN_REGISTRY.get(run_id) is None:
+    record = RUN_REGISTRY.get(run_id)
+    if record is None:
         raise HTTPException(status_code=404, detail="Run not found")
+    if _protocol_is_calibration(record.evaluation_protocol):
+        raise HTTPException(
+            status_code=409,
+            detail="Calibration runs cannot be shared on public surfaces",
+        )
     scope = body.scope or ["live", "replay", "export"]
     try:
         share = RUN_REGISTRY.create_share(
@@ -969,7 +1038,11 @@ async def export_trace(
 @app.get("/public/runs", response_model=List[RunInfoPublic])
 async def public_runs() -> List[RunInfoPublic]:
     items = RUN_REGISTRY.list_public()
-    return [_serialize_public(record, share) for record, share in items]
+    return [
+        _serialize_public(record, share)
+        for record, share in items
+        if not _protocol_is_calibration(record.evaluation_protocol)
+    ]
 
 
 @app.get("/public/worlds", response_model=PublicRunsPage)
@@ -992,6 +1065,9 @@ async def public_worlds(
         evaluation_protocol=evaluation_protocol,
         seed_save=seed_save,
         query=q,
+        excluded_evaluation_protocols=(
+            {P1_PROTOCOL} if _protocol_is_calibration(P1_PROTOCOL) else set()
+        ),
     )
     return PublicRunsPage(
         items=[_serialize_public(record, share) for record, share in items],
@@ -1012,6 +1088,16 @@ async def public_overview(
     active_items, recent_items, terminal_items = RUN_REGISTRY.public_overview_runs(
         recent_limit=recent_limit
     )
+    active_items = [
+        item
+        for item in active_items
+        if not _protocol_is_calibration(item[0].evaluation_protocol)
+    ]
+    recent_items = [
+        item
+        for item in recent_items
+        if not _protocol_is_calibration(item[0].evaluation_protocol)
+    ]
     return PublicOverview(
         generated_at=datetime.utcnow(),
         active_runs=[
@@ -1043,6 +1129,20 @@ async def public_results(
     protocol_definition = get_public_protocol(evaluation_protocol)
     if protocol_definition is None:
         raise HTTPException(status_code=404, detail="Protocol not found")
+    if protocol_definition.status == "calibration":
+        return PublicResults(
+            generated_at=datetime.utcnow(),
+            protocol=evaluation_protocol,
+            publication_stage="calibration",
+            comparability_fields=[
+                "evaluation_protocol",
+                *protocol_definition.comparability_fields,
+            ],
+            candidate_run_count=0,
+            eligible_run_count=0,
+            excluded_run_count=0,
+            comparison_groups=[],
+        )
     candidates, truncated = RUN_REGISTRY.list_public_for_protocol(evaluation_protocol)
     if truncated:
         raise HTTPException(
@@ -1064,7 +1164,7 @@ async def public_results(
         comparability_fields=[
             "evaluation_protocol",
             *protocol_definition.comparability_fields,
-            "score_version",
+            *([] if evaluation_protocol.endswith("g7-v5") else ["score_version"]),
         ],
         candidate_run_count=candidate_run_count,
         eligible_run_count=eligible_run_count,
@@ -1096,7 +1196,12 @@ async def public_protocol(slug: str) -> PublicProtocol:
 async def public_leaderboard(
     limit: int = Query(default=50, ge=1, le=5000),
 ) -> List[Dict[str, object]]:
-    return RUN_REGISTRY.public_leaderboard(limit)
+    return RUN_REGISTRY.public_leaderboard(
+        limit,
+        excluded_evaluation_protocols=(
+            {P1_PROTOCOL} if _protocol_is_calibration(P1_PROTOCOL) else set()
+        ),
+    )
 
 
 @app.get("/public/leaderboard/best-over-time")
@@ -1113,6 +1218,9 @@ async def public_best_over_time(
         model=model,
         max_steps=max_steps,
         limit_per_series=limit_per_series,
+        excluded_evaluation_protocols=(
+            {P1_PROTOCOL} if _protocol_is_calibration(P1_PROTOCOL) else set()
+        ),
     )
 
 

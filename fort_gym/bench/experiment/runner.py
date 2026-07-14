@@ -11,10 +11,15 @@ from datetime import datetime
 from pathlib import Path
 from typing import Mapping
 
-from .config import BaseRunConfig, ExperimentConfig, VariantConfig, load_experiment_config
+from .config import (
+    BaseRunConfig,
+    ExperimentConfig,
+    VariantConfig,
+    load_experiment_config,
+)
 from ..agent.base import AGENT_FACTORIES, Agent
 from ..config import get_settings
-from ..eval.fort_eval_easy_p1 import P1_PROTOCOL
+from ..eval.fort_eval_easy_p1 import P1_PROTOCOL, validate_p1_declaration
 from ..run.runner import run_once
 from ..run.storage import RUN_REGISTRY
 
@@ -103,7 +108,9 @@ class ExperimentRunner:
         config = load_experiment_config(resolved_path)
         return self.run(config, config_path=resolved_path)
 
-    def run(self, config: ExperimentConfig, *, config_path: Path | None = None) -> ExperimentResult:
+    def run(
+        self, config: ExperimentConfig, *, config_path: Path | None = None
+    ) -> ExperimentResult:
         _ensure_agent_factories()
         experiment_id = _new_experiment_id()
         started_at = datetime.utcnow()
@@ -122,7 +129,9 @@ class ExperimentRunner:
             for index in range(config.runs_per_variant):
                 run_id = self._run_variant(resolved, variant)
                 summary = _load_summary(self._artifacts_root, run_id)
-                runs.append(VariantRun(run_id=run_id, run_index=index + 1, summary=summary))
+                runs.append(
+                    VariantRun(run_id=run_id, run_index=index + 1, summary=summary)
+                )
             variants_results.append(
                 VariantResult(
                     name=variant.name,
@@ -178,6 +187,20 @@ class ExperimentRunner:
                     str(resolved["runtime_save"]) if resolved["runtime_save"] else None
                 ),
             }
+            validate_p1_declaration(
+                protocol=resolved["evaluation_protocol"],
+                backend=str(resolved["backend"]),
+                model=str(resolved["model"]),
+                seed_save=(
+                    str(resolved["seed_save"]) if resolved["seed_save"] else None
+                ),
+                runtime_save=(
+                    str(resolved["runtime_save"]) if resolved["runtime_save"] else None
+                ),
+                preserve_save=bool(resolved["preserve_save"]),
+                max_steps=int(resolved["max_steps"]),
+                ticks_per_step=ticks_per_step,
+            )
             if resolved["evaluation_protocol"] == P1_PROTOCOL:
                 record = RUN_REGISTRY.create(**run_kwargs)
                 RUN_REGISTRY.create_share(
@@ -212,7 +235,11 @@ def _resolve_variant(
     base: BaseRunConfig, variant: VariantConfig
 ) -> dict[str, int | str | bool | None]:
     settings = get_settings()
-    ticks = base.ticks_per_step if base.ticks_per_step is not None else settings.TICKS_PER_STEP
+    ticks = (
+        base.ticks_per_step
+        if base.ticks_per_step is not None
+        else settings.TICKS_PER_STEP
+    )
     return {
         "backend": base.backend,
         "max_steps": base.max_steps,

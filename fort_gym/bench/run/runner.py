@@ -28,6 +28,7 @@ from ..dfhack_backend import (
     read_work_metrics,
     start_g7_evidence,
     stop_g7_evidence,
+    trigger_p1_death_calibration_fixture,
 )
 from ..env.actions import (
     FINISH_TOPIC_MEETING_OPTION_TEXT,
@@ -48,10 +49,15 @@ from ..env.state_reader import StateReader
 from ..eval import metrics, milestones, scoring
 from ..eval.fort_eval_easy_p1 import (
     P1_PROTOCOL,
+    P1_PROTOCOL_V3,
+    P1_PROTOCOL_V4,
     attest_seed_region3,
     enrich_openrouter_usage,
+    p1_evaluation_is_publishable,
     p1_integrity_attestation,
+    p1_measurement_calibration_is_complete,
     p1_summary_metadata,
+    p1_task_verdict,
     p1_usage_is_publishable,
     resolved_model_digest,
     validate_p1_declaration,
@@ -90,6 +96,8 @@ MAX_INTERACT_OPERATIONS_PER_MODAL = 8
 MAX_UNCHANGED_INTERACT_SCREENS = 3
 MIN_GOVERNED_ACTION_HISTORY = 6
 SCREEN_CAPTURE_FAILED = "(screen capture failed)"
+
+
 def _screen_sha256(screen_text: str | None) -> str:
     return hashlib.sha256((screen_text or "").encode("utf-8")).hexdigest()
 
@@ -160,16 +168,16 @@ def _interact_context_reason(
     if viewscreen_type not in INTERACT_ALLOWED_VIEWSCREEN_TYPES:
         return f"INTERACT is not allowed on DF viewscreen {viewscreen_type!r}"
     operation = (action or {}).get("params", {}).get("operation")
-    if (
-        operation == "finish_topic_meeting"
-        and FINISH_TOPIC_MEETING_OPTION_TEXT not in (screen_text or "")
+    if operation == "finish_topic_meeting" and FINISH_TOPIC_MEETING_OPTION_TEXT not in (
+        screen_text or ""
     ):
         return (
             "INTERACT finish_topic_meeting requires the visible option "
             f"{FINISH_TOPIC_MEETING_OPTION_TEXT!r}"
         )
-    if operation in TOPIC_MEETING_OPTION_OPERATIONS and not visible_topic_meeting_option(
-        str(operation), screen_text or ""
+    if (
+        operation in TOPIC_MEETING_OPTION_OPERATIONS
+        and not visible_topic_meeting_option(str(operation), screen_text or "")
     ):
         letter = str(operation).rsplit("_", 1)[-1]
         return f"INTERACT {operation} requires a visible '{letter} - ...' topic option"
@@ -204,9 +212,17 @@ def _interaction_terminal_reason(
         "interaction": dict(interaction_audit),
     }
     if next_unchanged >= MAX_UNCHANGED_INTERACT_SCREENS:
-        return {"code": "interaction_unchanged_screen_loop", **base}, next_count, next_unchanged
+        return (
+            {"code": "interaction_unchanged_screen_loop", **base},
+            next_count,
+            next_unchanged,
+        )
     if next_count >= MAX_INTERACT_OPERATIONS_PER_MODAL:
-        return {"code": "interaction_budget_exhausted", **base}, next_count, next_unchanged
+        return (
+            {"code": "interaction_budget_exhausted", **base},
+            next_count,
+            next_unchanged,
+        )
     return None, next_count, next_unchanged
 
 
@@ -240,17 +256,25 @@ def _tick_terminal_reason(
     ):
         return {"code": "tick_repause_unverified", **base}, None, 0
     if tick_info.get("interrupt_safety_error") is True:
-        return {
-            "code": "interruption_attestation_failed",
-            "attestation_error": tick_info.get("error"),
-            **base,
-        }, None, 0
+        return (
+            {
+                "code": "interruption_attestation_failed",
+                "attestation_error": tick_info.get("error"),
+                **base,
+            },
+            None,
+            0,
+        )
     if tick_info.get("calendar_safety_error") is True:
-        return {
-            "code": "interruption_attestation_failed",
-            "attestation_error": tick_info.get("error") or "calendar_safety_error",
-            **base,
-        }, None, 0
+        return (
+            {
+                "code": "interruption_attestation_failed",
+                "attestation_error": tick_info.get("error") or "calendar_safety_error",
+                **base,
+            },
+            None,
+            0,
+        )
     if tick_info.get("interrupted") is True:
         receipt_error = validate_clean_interruption_receipt(
             tick_info,
@@ -259,22 +283,27 @@ def _tick_terminal_reason(
             state_after_advance=state_after_advance,
         )
         if receipt_error is not None:
-            return {
-                "code": "interruption_attestation_failed",
-                "attestation_error": receipt_error,
-                **base,
-            }, None, 0
+            return (
+                {
+                    "code": "interruption_attestation_failed",
+                    "attestation_error": receipt_error,
+                    **base,
+                },
+                None,
+                0,
+            )
         return None, {"code": "blocking_viewscreen_transition", **base}, 0
     controller_request = _int_or_none(tick_info.get("requested"))
-    if (
-        controller_request is not None
-        and controller_request != requested_ticks_int
-    ):
-        return {
-            "code": "tick_request_attestation_failed",
-            "controller_requested_ticks": controller_request,
-            **base,
-        }, None, 0
+    if controller_request is not None and controller_request != requested_ticks_int:
+        return (
+            {
+                "code": "tick_request_attestation_failed",
+                "controller_requested_ticks": controller_request,
+                **base,
+            },
+            None,
+            0,
+        )
     if actual_ticks > 0:
         if tick_info.get("timeout") is True:
             return None, {"code": "partial_tick_timeout", **base}, 0
@@ -418,7 +447,10 @@ def _channel_focus_rect_from_action(
     """Return the exact rect from a model-authored channel action."""
 
     params = action.get("params")
-    if not isinstance(params, dict) or str(params.get("kind") or "").lower() != "channel":
+    if (
+        not isinstance(params, dict)
+        or str(params.get("kind") or "").lower() != "channel"
+    ):
         return None
     return _governed_dig_rect_from_action(action)
 
@@ -467,8 +499,12 @@ def _same_target_rect(
 ) -> bool:
     if not isinstance(first, dict) or not isinstance(second, dict):
         return False
-    first_rect = _normalize_rect(first.get("target_rect") or first.get("selection_rect"))
-    second_rect = _normalize_rect(second.get("target_rect") or second.get("selection_rect"))
+    first_rect = _normalize_rect(
+        first.get("target_rect") or first.get("selection_rect")
+    )
+    second_rect = _normalize_rect(
+        second.get("target_rect") or second.get("selection_rect")
+    )
     return first_rect is not None and first_rect == second_rect
 
 
@@ -539,7 +575,11 @@ def _map_snapshot_rect_from_state(
 
     rects = [
         rect
-        for key in ("target_rect", "fortress_connector_rect", "fortress_workshop_room_rect")
+        for key in (
+            "target_rect",
+            "fortress_connector_rect",
+            "fortress_workshop_room_rect",
+        )
         if (rect := _normalize_rect(work.get(key))) is not None and rect[2] == rect[5]
     ]
     if not rects:
@@ -588,10 +628,19 @@ def _job_metrics_survey_rect(
 
 
 def _int_or_none(value: Any) -> int | None:
-    try:
-        return int(value)
-    except (TypeError, ValueError):
+    """Parse an exact integer without truncating floats or accepting booleans."""
+
+    if isinstance(value, bool) or value is None:
         return None
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return int(value) if value.is_integer() else None
+    if isinstance(value, str):
+        stripped = value.strip()
+        if stripped and stripped.lstrip("+-").isdigit():
+            return int(stripped)
+    return None
 
 
 def _stock_total(state: Dict[str, Any]) -> int:
@@ -632,7 +681,9 @@ def _preserve_state_after_degraded_read(
     fallback_work = fallback_state.get("work")
     work_failed = _work_read_failed(state_work)
     top_level_zeroed = not _read_state_has_live_values(state)
-    fallback_work_ok = isinstance(fallback_work, dict) and fallback_work.get("ok") is not False
+    fallback_work_ok = (
+        isinstance(fallback_work, dict) and fallback_work.get("ok") is not False
+    )
 
     if not top_level_zeroed and not (work_failed and fallback_work_ok):
         return state, None
@@ -738,8 +789,12 @@ def _unproven_carpenter_workshop_needs_selection(state: Dict[str, Any]) -> bool:
         planned = _int_or_none(work.get("carpenter_workshops"))
     usable = _int_or_none(work.get("carpenter_workshops_usable")) or 0
     task_jobs = _int_or_none(work.get("carpenter_workshop_task_jobs")) or 0
-    construction_jobs = _int_or_none(work.get("carpenter_workshop_construction_jobs")) or 0
-    active_construct_jobs = _int_or_none(work.get("active_construct_building_jobs")) or 0
+    construction_jobs = (
+        _int_or_none(work.get("carpenter_workshop_construction_jobs")) or 0
+    )
+    active_construct_jobs = (
+        _int_or_none(work.get("active_construct_building_jobs")) or 0
+    )
 
     return bool(
         (planned or 0) > 0
@@ -760,8 +815,12 @@ def _pending_carpenter_workshop_construction(state: Dict[str, Any]) -> bool:
         planned = _int_or_none(work.get("carpenter_workshops"))
     usable = _int_or_none(work.get("carpenter_workshops_usable")) or 0
     task_jobs = _int_or_none(work.get("carpenter_workshop_task_jobs")) or 0
-    construction_jobs = _int_or_none(work.get("carpenter_workshop_construction_jobs")) or 0
-    active_construct_jobs = _int_or_none(work.get("active_construct_building_jobs")) or 0
+    construction_jobs = (
+        _int_or_none(work.get("carpenter_workshop_construction_jobs")) or 0
+    )
+    active_construct_jobs = (
+        _int_or_none(work.get("active_construct_building_jobs")) or 0
+    )
 
     return bool(
         (planned or 0) > 0
@@ -798,7 +857,9 @@ def _carry_forward_carpenter_workshop_proof(
         planned = _int_or_none(work.get("carpenter_workshops"))
     planned = max(0, planned or 0)
     current_usable = max(0, _int_or_none(work.get("carpenter_workshops_usable")) or 0)
-    current_task_jobs = max(0, _int_or_none(work.get("carpenter_workshop_task_jobs")) or 0)
+    current_task_jobs = max(
+        0, _int_or_none(work.get("carpenter_workshop_task_jobs")) or 0
+    )
 
     proof_now = current_usable
     if current_task_jobs > 0:
@@ -935,8 +996,12 @@ def _gameplay_proof(
     tile_changes = _snapshot_tile_changes(before_map_snapshot, after_map_snapshot)
     state_deltas = _keystroke_productive_state_deltas(state_before, advance_state)
     ui_step_work_progress = int(metrics_snapshot.get("ui_step_work_progress") or 0)
-    ui_step_excavation_progress = int(metrics_snapshot.get("ui_step_excavation_progress") or 0)
-    ui_step_material_progress = int(metrics_snapshot.get("ui_step_material_progress") or 0)
+    ui_step_excavation_progress = int(
+        metrics_snapshot.get("ui_step_excavation_progress") or 0
+    )
+    ui_step_material_progress = int(
+        metrics_snapshot.get("ui_step_material_progress") or 0
+    )
     step_gameplay_progress = bool(
         ui_step_work_progress
         or ui_step_excavation_progress
@@ -953,7 +1018,9 @@ def _gameplay_proof(
         "score": score_value,
         "score_provenance": metrics_snapshot.get("score_provenance"),
         "gameplay_progress_eligible": step_gameplay_progress,
-        "score_duration_blocked": bool(metrics_snapshot.get("score_duration_blocked", False)),
+        "score_duration_blocked": bool(
+            metrics_snapshot.get("score_duration_blocked", False)
+        ),
         "tick_advance": {
             "requested": action.get("advance_ticks"),
             "actual": int(tick_info.get("ticks_advanced") or 0),
@@ -969,7 +1036,9 @@ def _gameplay_proof(
             "ui_excavation": ui_step_excavation_progress,
             "ui_material": ui_step_material_progress,
             "cumulative_ui_work": int(metrics_snapshot.get("ui_work_progress") or 0),
-            "cumulative_ui_excavation": int(metrics_snapshot.get("ui_excavation_progress") or 0),
+            "cumulative_ui_excavation": int(
+                metrics_snapshot.get("ui_excavation_progress") or 0
+            ),
         },
         "state_deltas": state_deltas,
         "tile_changes": tile_changes,
@@ -979,7 +1048,9 @@ def _gameplay_proof(
     }
 
 
-def _governed_durable_helper_progress(action: Dict[str, Any], result: Dict[str, Any]) -> bool:
+def _governed_durable_helper_progress(
+    action: Dict[str, Any], result: Dict[str, Any]
+) -> bool:
     """Return helper effects durable enough to unlock governed scalar scoring."""
 
     if action.get("type") == "INTERACT":
@@ -992,8 +1063,18 @@ def _governed_durable_helper_progress(action: Dict[str, Any], result: Dict[str, 
 
 
 _GOVERNED_TRACKED_BUILDING_KINDS = frozenset(
-    {"CarpenterWorkshop", "Still", "FarmPlot"}
+    {
+        "CarpenterWorkshop",
+        "Still",
+        "FarmPlot",
+        "Bed",
+        "Door",
+        "Table",
+        "Chair",
+    }
 )
+_GOVERNED_CONSTRUCTION_KINDS = frozenset({"Wall", "Floor"})
+_GOVERNED_FURNITURE_KINDS = frozenset({"Bed", "Door", "Table", "Chair"})
 
 
 def _governed_rollback_unverified(result: Dict[str, Any]) -> bool:
@@ -1038,6 +1119,101 @@ def _governed_building_claims(
     return {building_id: kind}
 
 
+def _governed_construction_claims(
+    action: Dict[str, Any], execute_result: Dict[str, Any]
+) -> Dict[tuple[int, int, int], Dict[str, Any]]:
+    """Return every exact wall/floor placement, including partial commands.
+
+    ``build_construction.lua`` can place a strict subset of a requested
+    rectangle and return ``ok=false, partial=true``. Those placements are real
+    persistent game mutations, so aggregate command acceptance must never be
+    used as their ownership boundary.
+    """
+
+    if action.get("type") != "BUILD":
+        return {}
+    params = action.get("params") if isinstance(action.get("params"), dict) else {}
+    kind = str(params.get("kind") or "")
+    if kind not in _GOVERNED_CONSTRUCTION_KINDS:
+        return {}
+    result = (
+        execute_result.get("result")
+        if isinstance(execute_result.get("result"), dict)
+        else {}
+    )
+    if result.get("rollback_verified") is False:
+        return {}
+    placed = result.get("placed")
+    claims: Dict[tuple[int, int, int], Dict[str, Any]] = {}
+    for entry in placed if isinstance(placed, list) else []:
+        if not isinstance(entry, dict):
+            continue
+        x = _int_or_none(entry.get("x"))
+        y = _int_or_none(entry.get("y"))
+        z = _int_or_none(entry.get("z"))
+        building_id = _int_or_none(entry.get("building_id"))
+        if None in {x, y, z} or building_id is None or building_id < 0:
+            continue
+        coordinate = (int(x), int(y), int(z))
+        claims[coordinate] = {"kind": kind, "building_id": building_id}
+    return claims
+
+
+def _coordinate_set(values: Any) -> set[tuple[int, int, int]]:
+    coordinates: set[tuple[int, int, int]] = set()
+    for value in values if isinstance(values, list) else []:
+        if isinstance(value, dict):
+            raw = (value.get("x"), value.get("y"), value.get("z"))
+        elif isinstance(value, (list, tuple)) and len(value) == 3:
+            raw = value
+        else:
+            continue
+        parsed = tuple(_int_or_none(item) for item in raw)
+        if any(item is None for item in parsed):
+            continue
+        coordinates.add((int(parsed[0]), int(parsed[1]), int(parsed[2])))
+    return coordinates
+
+
+def _construction_detail_map(values: Any) -> Dict[tuple[int, int, int], str]:
+    """Return exact current construction kind by coordinate."""
+
+    details: Dict[tuple[int, int, int], str] = {}
+    for value in values if isinstance(values, list) else []:
+        if not isinstance(value, dict):
+            continue
+        coordinate_values = (value.get("x"), value.get("y"), value.get("z"))
+        parsed = tuple(_int_or_none(item) for item in coordinate_values)
+        kind = str(value.get("kind") or "")
+        if (
+            any(item is None for item in parsed)
+            or kind not in _GOVERNED_CONSTRUCTION_KINDS
+        ):
+            continue
+        details[(int(parsed[0]), int(parsed[1]), int(parsed[2]))] = kind
+    return details
+
+
+def _governed_completed_owned_constructions(
+    owned_constructions: Dict[tuple[int, int, int], Dict[str, Any]],
+    state: Dict[str, Any],
+) -> set[tuple[int, int, int]]:
+    """Confirm owned construction against exact final world coordinates."""
+
+    fort = state.get("fort") if isinstance(state.get("fort"), dict) else {}
+    if (
+        fort.get("ok") is not True
+        or fort.get("construction_tiles_complete") is not True
+    ):
+        return set()
+    observed = _construction_detail_map(fort.get("construction_details"))
+    return {
+        coordinate
+        for coordinate, claim in owned_constructions.items()
+        if observed.get(coordinate) == claim.get("kind")
+    }
+
+
 def _native_building_stage_complete(entry: Dict[str, Any]) -> bool:
     """Require an attested, internally consistent native build-stage read."""
 
@@ -1065,6 +1241,20 @@ def _governed_completed_owned_buildings(
         return set()
 
     completed: set[int] = set()
+    furniture = crew.get("placed_furniture_details")
+    for entry in furniture if isinstance(furniture, list) else []:
+        if not isinstance(entry, dict) or not _native_building_stage_complete(entry):
+            continue
+        building_id = _int_or_none(entry.get("id"))
+        if building_id is None:
+            continue
+        expected_kind = owned_buildings.get(building_id)
+        if (
+            expected_kind in _GOVERNED_FURNITURE_KINDS
+            and str(entry.get("kind") or "").lower() == expected_kind.lower()
+        ):
+            completed.add(building_id)
+
     workshops = crew.get("workshops")
     for entry in workshops if isinstance(workshops, list) else []:
         if not isinstance(entry, dict) or not _native_building_stage_complete(entry):
@@ -1093,8 +1283,33 @@ def _governed_completed_owned_buildings(
     return completed
 
 
+def _governed_building_evidence_complete(state: Dict[str, Any]) -> bool:
+    crew = state.get("crew") if isinstance(state.get("crew"), dict) else {}
+    lists = (
+        crew.get("workshops"),
+        crew.get("farm_plot_details"),
+        crew.get("placed_furniture_details"),
+    )
+    return bool(
+        crew.get("ok") is True
+        and crew.get("building_evidence_complete") is True
+        and crew.get("workshops_truncated") is not True
+        and crew.get("farm_plot_details_truncated") is not True
+        and crew.get("placed_furniture_details_truncated") is not True
+        and all(isinstance(entries, list) for entries in lists)
+        and all(
+            isinstance(entry, dict) and entry.get("stage_read_ok") is True
+            for entries in lists
+            for entry in entries
+        )
+    )
+
+
 def _governed_owned_building_progress(
-    owned_buildings: Dict[int, str], completed_buildings: set[int]
+    owned_buildings: Dict[int, str],
+    completed_buildings: set[int],
+    *,
+    evidence_complete: bool = True,
 ) -> Dict[str, Any]:
     """Compute paid non-excavation progress from exact completed IDs only."""
 
@@ -1113,21 +1328,238 @@ def _governed_owned_building_progress(
     completed_farms = sum(
         owned_buildings[building_id] == "FarmPlot" for building_id in completed_ids
     )
-    paid_workshop_progress = (
-        completed_carpenters * metrics.PRODUCTION_WORKSHOP_PROGRESS
-    )
+    completed_furniture = {
+        kind.lower(): sum(
+            owned_buildings[building_id] == kind for building_id in completed_ids
+        )
+        for kind in sorted(_GOVERNED_FURNITURE_KINDS)
+    }
+    production_capacity = completed_carpenters + completed_stills + completed_farms
+    utility_capacity = sum(completed_furniture.values())
     return {
+        "governed_owned_building_evidence_complete": evidence_complete,
         "governed_owned_buildings": len(owned_buildings),
         "governed_owned_completed_buildings": len(completed_ids),
         "governed_owned_completed_building_ids": completed_ids,
         "governed_owned_completed_carpenter_workshops": completed_carpenters,
         "governed_owned_completed_stills": completed_stills,
         "governed_owned_completed_farm_plots": completed_farms,
-        "governed_owned_utility_progress": paid_workshop_progress,
-        "governed_owned_production_progress": paid_workshop_progress,
-        # Rooms and construction totals are global observations. They remain
-        # audit-only until exact model-owned completion evidence exists.
+        "governed_owned_completed_furniture": completed_furniture,
+        "governed_owned_completed_beds": completed_furniture["bed"],
+        "governed_owned_production_capacity": production_capacity,
+        # Distinct primitives: furniture is utility, while workshops/farms are
+        # production capacity. One Carpenter Workshop no longer pays both.
+        "governed_owned_utility_progress": utility_capacity,
+        "governed_owned_production_progress": production_capacity,
         "governed_owned_complexity_progress": 0.0,
+    }
+
+
+def _current_governed_operational_farm_ids(
+    operational_farm_ids: set[int],
+    completed_buildings: set[int],
+    owned_buildings: Dict[int, str],
+    state: Dict[str, Any],
+) -> tuple[set[int], bool]:
+    """Require an attributed farm setup to remain built and crop-assigned now."""
+
+    completed_owned_farms = {
+        building_id
+        for building_id in completed_buildings
+        if owned_buildings.get(building_id) == "FarmPlot"
+    }
+    crew = state.get("crew") if isinstance(state.get("crew"), dict) else {}
+    details = crew.get("farm_plot_details")
+    evidence_complete = bool(
+        crew.get("ok") is True
+        and crew.get("farm_plot_details_truncated") is False
+        and isinstance(details, list)
+    )
+    assigned_farm_ids: set[int] = set()
+    observed_farm_ids: set[int] = set()
+    for detail in details if isinstance(details, list) else []:
+        if not isinstance(detail, dict):
+            evidence_complete = False
+            continue
+        building_id = _int_or_none(detail.get("id"))
+        if building_id not in completed_owned_farms:
+            continue
+        observed_farm_ids.add(building_id)
+        crops = detail.get("crops")
+        crops_valid = bool(
+            detail.get("crops_read_ok") is True
+            and isinstance(crops, list)
+            and len(crops) == 4
+            and all(value is False or isinstance(value, str) and value for value in crops)
+        )
+        if not crops_valid:
+            evidence_complete = False
+            continue
+        if any(isinstance(value, str) and value for value in crops):
+            assigned_farm_ids.add(building_id)
+    if observed_farm_ids != completed_owned_farms:
+        evidence_complete = False
+    return (
+        operational_farm_ids.intersection(completed_owned_farms, assigned_farm_ids),
+        evidence_complete,
+    )
+
+
+def _governed_owned_room_metrics(
+    state: Dict[str, Any],
+    *,
+    completed_excavation: set[tuple[int, int, int]],
+    completed_constructions: set[tuple[int, int, int]],
+    owned_buildings: Dict[int, str],
+    completed_buildings: set[int],
+    building_evidence_complete: bool,
+) -> Dict[str, Any]:
+    """Attribute final accessible room geometry to exact governed work."""
+
+    fort = state.get("fort") if isinstance(state.get("fort"), dict) else {}
+    spaces = fort.get("spaces") if isinstance(fort.get("spaces"), list) else None
+    evidence_complete = bool(
+        fort.get("ok") is True
+        and spaces is not None
+        and fort.get("building_scan_complete") is True
+        and fort.get("spaces_truncated") is False
+        and fort.get("component_scan_truncated") is False
+        and fort.get("construction_tiles_complete") is True
+        and isinstance(fort.get("construction_details"), list)
+        and building_evidence_complete
+    )
+    owned_layout_signatures: list[str] = []
+    owned_functional_signatures: list[str] = []
+    inaccessible_owned_signatures: list[str] = []
+    structural_evidence: Dict[str, Dict[str, Any]] = {}
+    observed_wall_constructions = {
+        coordinate
+        for coordinate, kind in _construction_detail_map(
+            fort.get("construction_details")
+        ).items()
+        if kind == "Wall"
+    }
+    owned_completed_ids_by_kind = {
+        kind: {
+            building_id
+            for building_id in completed_buildings
+            if owned_buildings.get(building_id) == kind
+        }
+        for kind in _GOVERNED_TRACKED_BUILDING_KINDS
+    }
+    for index, space in enumerate(spaces or []):
+        if not isinstance(space, dict):
+            evidence_complete = False
+            continue
+        required_flags = (
+            "interior_tiles_complete",
+            "boundary_tiles_complete",
+            "boundary_construction_tiles_complete",
+            "accessibility_evidence_complete",
+        )
+        space_evidence_complete = all(
+            space.get(flag) is True for flag in required_flags
+        )
+        if not space_evidence_complete:
+            evidence_complete = False
+        interior = _coordinate_set(space.get("interior_tiles"))
+        boundary = _coordinate_set(space.get("boundary_construction_tiles"))
+        touching_ids = {
+            parsed
+            for value in space.get("touching_building_ids", [])
+            if (parsed := _int_or_none(value)) is not None
+        }
+        signature = str(space.get("signature") or f"space-{index}")
+        owned_interior = interior.intersection(completed_excavation)
+        owned_boundary = boundary.intersection(
+            completed_constructions, observed_wall_constructions
+        )
+        boundary_tile_count = _int_or_none(space.get("boundary_tile_count"))
+        boundary_door_ids = {
+            parsed
+            for value in space.get("boundary_door_ids", [])
+            if (parsed := _int_or_none(value)) is not None
+        }
+        owned_boundary_door_ids = boundary_door_ids.intersection(
+            owned_completed_ids_by_kind["Door"]
+        )
+        excavation_majority = bool(
+            interior and len(owned_interior) * 2 >= len(interior)
+        )
+        construction_majority = bool(
+            boundary_tile_count is not None
+            and boundary_tile_count > 0
+            and len(owned_boundary) * 2 >= boundary_tile_count
+        )
+        owned_door_closure = bool(owned_boundary_door_ids)
+        layout_owned = bool(
+            space_evidence_complete
+            and (excavation_majority or construction_majority or owned_door_closure)
+        )
+        accessible = space.get("accessible") is True
+        structural_evidence[signature] = {
+            "interior_tiles": len(interior),
+            "owned_excavated_interior_tiles": len(owned_interior),
+            "boundary_tiles": boundary_tile_count,
+            "owned_boundary_construction_tiles": len(owned_boundary),
+            "owned_boundary_door_ids": sorted(owned_boundary_door_ids),
+            "ownership_basis": (
+                "owned_excavation_majority"
+                if excavation_majority
+                else "owned_construction_majority"
+                if construction_majority
+                else "owned_door_closure"
+                if owned_door_closure
+                else None
+            ),
+        }
+        if layout_owned and accessible:
+            owned_layout_signatures.append(signature)
+        elif layout_owned:
+            inaccessible_owned_signatures.append(signature)
+        kind = str(space.get("kind") or "")
+        functional_owned = bool(
+            (
+                kind == "bedroom"
+                and touching_ids.intersection(owned_completed_ids_by_kind["Bed"])
+            )
+            or (
+                kind == "production"
+                and touching_ids.intersection(
+                    owned_completed_ids_by_kind["CarpenterWorkshop"]
+                    | owned_completed_ids_by_kind["Still"]
+                )
+            )
+            or (
+                kind == "dining"
+                and touching_ids.intersection(owned_completed_ids_by_kind["Table"])
+                and touching_ids.intersection(owned_completed_ids_by_kind["Chair"])
+            )
+        )
+        if layout_owned and accessible and functional_owned:
+            owned_functional_signatures.append(signature)
+
+    unique_constructions = len(completed_constructions)
+    layout_rooms = len(owned_layout_signatures)
+    functional_rooms = len(owned_functional_signatures)
+    return {
+        "governed_owned_room_evidence_complete": evidence_complete,
+        "governed_owned_layout_room_lower_bound_proven": bool(
+            len(owned_layout_signatures) >= 3
+        ),
+        "governed_owned_unique_construction_tiles": unique_constructions,
+        "governed_owned_completed_construction_tiles": [
+            list(coordinate) for coordinate in sorted(completed_constructions)
+        ],
+        "governed_owned_accessible_layout_rooms": layout_rooms,
+        "governed_owned_accessible_functional_rooms": functional_rooms,
+        "governed_owned_layout_room_signatures": owned_layout_signatures,
+        "governed_owned_functional_room_signatures": owned_functional_signatures,
+        "governed_owned_inaccessible_room_signatures": inaccessible_owned_signatures,
+        "governed_owned_room_structural_evidence": structural_evidence,
+        "governed_owned_complexity_progress": float(
+            unique_constructions + layout_rooms * 10
+        ),
     }
 
 
@@ -1184,7 +1616,9 @@ def _tracked_job_ids(state: Dict[str, Any]) -> tuple[set[int], bool]:
     jobs = crew.get("jobs") if isinstance(crew.get("jobs"), dict) else {}
     values = jobs.get("active_ids")
     if isinstance(values, list):
-        complete = not bool(jobs.get("active_ids_truncated"))
+        complete = bool(
+            crew.get("ok") is True and jobs.get("active_ids_truncated") is False
+        )
     else:
         values = [
             entry.get("id")
@@ -1196,8 +1630,10 @@ def _tracked_job_ids(state: Dict[str, Any]) -> tuple[set[int], bool]:
     tracked: set[int] = set()
     for value in values:
         parsed = _int_or_none(value)
-        if parsed is not None:
+        if parsed is not None and parsed >= 0:
             tracked.add(parsed)
+        else:
+            complete = False
     return tracked, complete
 
 
@@ -1206,7 +1642,9 @@ def _matching_order_job_ids(state: Dict[str, Any], job: str) -> tuple[set[int], 
     jobs = crew.get("jobs") if isinstance(crew.get("jobs"), dict) else {}
     values = jobs.get("order_jobs")
     if isinstance(values, list):
-        complete = not bool(jobs.get("order_jobs_truncated"))
+        complete = bool(
+            crew.get("ok") is True and jobs.get("order_jobs_truncated") is False
+        )
     else:
         active_ids, active_complete = _tracked_job_ids(state)
         if active_complete and not active_ids:
@@ -1214,17 +1652,24 @@ def _matching_order_job_ids(state: Dict[str, Any], job: str) -> tuple[set[int], 
         return set(), False
     matching: set[int] = set()
     for value in values:
-        if not isinstance(value, dict) or str(value.get("item") or "") != job:
+        if not isinstance(value, dict):
+            complete = False
             continue
         parsed = _int_or_none(value.get("id"))
-        if parsed is not None:
+        item = value.get("item")
+        if parsed is None or parsed < 0 or not isinstance(item, str) or not item:
+            complete = False
+            continue
+        if item == job:
             matching.add(parsed)
     return matching, complete
 
 
 def _order_output_value(state: Dict[str, Any], job: str) -> tuple[str, int | None]:
     if job == "brew":
-        survival = state.get("survival") if isinstance(state.get("survival"), dict) else {}
+        survival = (
+            state.get("survival") if isinstance(state.get("survival"), dict) else {}
+        )
         value = _int_or_none(survival.get("drink_produced_in_run"))
         return "survival.drink_produced_in_run", value
     goods_key = _ORDER_GOODS_KEYS.get(job)
@@ -1233,6 +1678,22 @@ def _order_output_value(state: Dict[str, Any], job: str) -> tuple[str, int | Non
     crew = state.get("crew") if isinstance(state.get("crew"), dict) else {}
     goods = crew.get("goods") if isinstance(crew.get("goods"), dict) else {}
     return f"crew.goods.{goods_key}", _int_or_none(goods.get(goods_key))
+
+
+def _manager_order_observation(state: Dict[str, Any]) -> tuple[bool, bool]:
+    """Return manager-order presence and exact observation completeness."""
+
+    work = state.get("work") if isinstance(state.get("work"), dict) else {}
+    count = _int_or_none(work.get("manager_orders_count"))
+    amount_left = _int_or_none(work.get("manager_orders_amount_left"))
+    complete = bool(
+        work.get("ok") is True
+        and count is not None
+        and count >= 0
+        and amount_left is not None
+        and amount_left >= 0
+    )
+    return bool(complete and (count > 0 or amount_left > 0)), complete
 
 
 def _governed_order_effect(
@@ -1253,11 +1714,11 @@ def _governed_order_effect(
     active_ids, active_ids_complete = _tracked_job_ids(advance_state)
     remaining = [job_id for job_id in created if job_id in active_ids]
     job = str((action.get("params") or {}).get("job") or "").strip().lower()
-    prior_matching_ids, prior_matching_complete = _matching_order_job_ids(state_before, job)
-    before_work = state_before.get("work") if isinstance(state_before.get("work"), dict) else {}
-    manager_orders_present = bool(
-        int(before_work.get("manager_orders_count") or 0)
-        or int(before_work.get("manager_orders_amount_left") or 0)
+    prior_matching_ids, prior_matching_complete = _matching_order_job_ids(
+        state_before, job
+    )
+    manager_orders_present, manager_orders_complete = _manager_order_observation(
+        state_before
     )
     output_source, output_before = _order_output_value(state_before, job)
     _, output_after = _order_output_value(advance_state, job)
@@ -1268,12 +1729,15 @@ def _governed_order_effect(
     )
     output_observed = output_before is not None and output_after is not None
     completed = [job_id for job_id in created if job_id not in active_ids]
-    lifecycle_complete = active_ids_complete or all(job_id in active_ids for job_id in created)
+    lifecycle_complete = active_ids_complete or all(
+        job_id in active_ids for job_id in created
+    )
     created_job_completion_observed = bool(active_ids_complete and completed)
     attribution_complete = bool(
         created
         and created_job_completion_observed
         and prior_matching_complete
+        and manager_orders_complete
         and not prior_matching_ids
         and not manager_orders_present
     )
@@ -1298,12 +1762,135 @@ def _governed_order_effect(
         "prior_matching_job_ids": sorted(prior_matching_ids),
         "prior_matching_jobs_complete": prior_matching_complete,
         "manager_orders_present": manager_orders_present,
+        "manager_orders_complete": manager_orders_complete,
         "attribution_complete": attribution_complete,
         "output_observed": output_observed,
         "output_source": output_source,
         "output_before": output_before,
         "output_after": output_after,
         "output_delta": output_delta,
+    }
+
+
+def _update_governed_owned_output_progress(
+    *,
+    action: Dict[str, Any],
+    result: Dict[str, Any],
+    state_before: Dict[str, Any],
+    advance_state: Dict[str, Any],
+    attributed_jobs: Dict[str, set[int]],
+    last_values: Dict[str, int],
+    output_units: Dict[str, int],
+    attribution_health: Dict[str, bool],
+) -> Dict[str, Any]:
+    """Persist output attribution beyond the originating ORDER step.
+
+    The pristine seed begins without manager/workshop orders. A job family
+    becomes attributable only when an ORDER creates exact job IDs while no
+    earlier matching job or manager order exists. Subsequent positive output
+    deltas remain credited even when they occur during a later WAIT.
+    """
+
+    manager_orders_present, manager_orders_complete = _manager_order_observation(
+        advance_state
+    )
+    if not manager_orders_complete or manager_orders_present:
+        attribution_health["complete"] = False
+
+    if action.get("type") == "ORDER":
+        params = action.get("params") if isinstance(action.get("params"), dict) else {}
+        job = str(params.get("job") or "").strip().lower()
+        created_values = result.get("created_job_ids")
+        created_ids = [
+            parsed
+            for value in (created_values if isinstance(created_values, list) else [])
+            if (parsed := _int_or_none(value)) is not None
+        ]
+        prior_matching, prior_complete = _matching_order_job_ids(state_before, job)
+        manager_orders_present, manager_orders_complete = (
+            _manager_order_observation(state_before)
+        )
+        source, before_value = _order_output_value(state_before, job)
+        if (
+            created_ids
+            and prior_complete
+            and manager_orders_complete
+            and not prior_matching
+            and not manager_orders_present
+            and source != "untracked"
+            and before_value is not None
+        ):
+            attributed_jobs.setdefault(job, set()).update(created_ids)
+            last_values.setdefault(job, before_value)
+        elif created_ids and (
+            not prior_complete
+            or not manager_orders_complete
+            or prior_matching
+            or manager_orders_present
+            or source == "untracked"
+            or before_value is None
+        ):
+            attribution_health["complete"] = False
+
+    step_deltas: Dict[str, int] = {}
+    attribution_observation_complete = True
+    for job in sorted(list(attributed_jobs)):
+        _, current_value = _order_output_value(advance_state, job)
+        previous_value = last_values.get(job)
+        active_ids, active_complete = _tracked_job_ids(advance_state)
+        matching_ids, matching_complete = _matching_order_job_ids(advance_state, job)
+        tracked_ids = attributed_jobs[job]
+        unrelated_matching_ids = matching_ids.difference(tracked_ids)
+        completed_ids = tracked_ids.difference(active_ids) if active_complete else set()
+        observation_complete = bool(
+            active_complete
+            and matching_complete
+            and not unrelated_matching_ids
+            and current_value is not None
+            and previous_value is not None
+        )
+        attribution_observation_complete = (
+            attribution_observation_complete and observation_complete
+        )
+        if not observation_complete:
+            attribution_health["complete"] = False
+        previous_int = int(previous_value) if previous_value is not None else None
+        if current_value is None:
+            continue
+        if (
+            observation_complete
+            and attribution_health.get("complete") is True
+            and completed_ids
+            and previous_int is not None
+            and current_value > previous_int
+        ):
+            delta = current_value - previous_int
+            output_units[job] = output_units.get(job, 0) + delta
+            step_deltas[job] = delta
+        last_values[job] = current_value
+        if active_complete:
+            tracked_ids.intersection_update(active_ids)
+            if not tracked_ids:
+                attributed_jobs.pop(job, None)
+    output_evidence_complete = bool(
+        attribution_health.get("complete") is True and attribution_observation_complete
+    )
+    return {
+        "governed_owned_output_units": sum(output_units.values()),
+        "governed_owned_output_units_by_job": dict(sorted(output_units.items())),
+        "governed_step_owned_output_units_by_job": step_deltas,
+        "governed_owned_output_attribution_jobs": sorted(attributed_jobs),
+        "governed_owned_output_evidence_complete": output_evidence_complete,
+        "governed_owned_output_manager_orders_observed_complete": (
+            manager_orders_complete
+        ),
+        "governed_owned_output_manager_orders_present": manager_orders_present,
+        "governed_owned_output_lower_bound_proven": bool(output_units),
+        "governed_owned_output_attribution_scope": (
+            "exact_order_job_completion_and_uncontaminated_positive_output_delta"
+            if output_units
+            else None
+        ),
     }
 
 
@@ -1328,7 +1915,11 @@ def _governed_gameplay_proof(
 
     tile_changes = _snapshot_tile_changes(before_map_snapshot, after_map_snapshot)
     state_deltas = _keystroke_productive_state_deltas(state_before, advance_state)
-    result = execute_result.get("result") if isinstance(execute_result.get("result"), dict) else {}
+    result = (
+        execute_result.get("result")
+        if isinstance(execute_result.get("result"), dict)
+        else {}
+    )
     helper_evidence: Dict[str, Any] = {
         key: result[key]
         for key in (
@@ -1377,7 +1968,9 @@ def _governed_gameplay_proof(
         )
         if key in result
     }
-    world_state_changed = bool(int(tile_changes.get("changed_tile_count") or 0) or state_deltas)
+    world_state_changed = bool(
+        int(tile_changes.get("changed_tile_count") or 0) or state_deltas
+    )
     order_effect = (
         _governed_order_effect(action, result, state_before, advance_state)
         if action.get("type") == "ORDER"
@@ -1385,7 +1978,10 @@ def _governed_gameplay_proof(
     )
     action_effect_observed = bool(
         _governed_helper_progress(action, result)
-        or (isinstance(order_effect, dict) and order_effect.get("status") == "progressed")
+        or (
+            isinstance(order_effect, dict)
+            and order_effect.get("status") == "progressed"
+        )
     )
     step_gameplay_progress = action.get("type") != "INTERACT" and action_effect_observed
     return {
@@ -1404,7 +2000,8 @@ def _governed_gameplay_proof(
         "helper_evidence": helper_evidence,
         "action_effect": order_effect,
         "action_effect_observed": action_effect_observed,
-        "concurrent_world_state_changed": world_state_changed and not action_effect_observed,
+        "concurrent_world_state_changed": world_state_changed
+        and not action_effect_observed,
         "state_deltas": state_deltas,
         "tile_changes": tile_changes,
         "changed_tile_count": int(tile_changes.get("changed_tile_count") or 0),
@@ -1493,13 +2090,21 @@ def _action_history_entry(
 ) -> Dict[str, Any]:
     """Build a compact factual outcome row for the next model observation."""
 
-    before_work = state_before.get("work") if isinstance(state_before.get("work"), dict) else {}
-    after_work = advance_state.get("work") if isinstance(advance_state.get("work"), dict) else {}
+    before_work = (
+        state_before.get("work") if isinstance(state_before.get("work"), dict) else {}
+    )
+    after_work = (
+        advance_state.get("work") if isinstance(advance_state.get("work"), dict) else {}
+    )
     before_stocks = (
-        state_before.get("stocks") if isinstance(state_before.get("stocks"), dict) else {}
+        state_before.get("stocks")
+        if isinstance(state_before.get("stocks"), dict)
+        else {}
     )
     after_stocks = (
-        advance_state.get("stocks") if isinstance(advance_state.get("stocks"), dict) else {}
+        advance_state.get("stocks")
+        if isinstance(advance_state.get("stocks"), dict)
+        else {}
     )
 
     changed: List[str] = []
@@ -1567,7 +2172,10 @@ def _action_history_entry(
             ("carpenter_workshops_planned", "carpenter_workshop_placed_unproven"),
             ("carpenter_workshops_usable", "carpenter_workshop_usable_proven"),
             ("carpenter_workshop_task_jobs", "workshop_task_job_created"),
-            ("carpenter_workshop_construction_jobs", "workshop_construction_job_created"),
+            (
+                "carpenter_workshop_construction_jobs",
+                "workshop_construction_job_created",
+            ),
             ("workshop_count", "workshop_created_or_queued"),
         ):
             _append_delta(
@@ -1595,7 +2203,9 @@ def _action_history_entry(
     actual_ticks = int(tick_info.get("ticks_advanced") or 0)
     accepted = bool(execute_result.get("accepted", execute_result.get("ok", False)))
     action_result = (
-        execute_result.get("result") if isinstance(execute_result.get("result"), dict) else {}
+        execute_result.get("result")
+        if isinstance(execute_result.get("result"), dict)
+        else {}
     )
     order_effect = (
         _governed_order_effect(action, action_result, state_before, advance_state)
@@ -1614,8 +2224,12 @@ def _action_history_entry(
         for item in failed:
             if not isinstance(item, dict):
                 continue
-            coords = [item.get(key) for key in ("x", "y", "z") if item.get(key) is not None]
-            target = "(" + ",".join(str(value) for value in coords) + ")" if coords else "?"
+            coords = [
+                item.get(key) for key in ("x", "y", "z") if item.get(key) is not None
+            ]
+            target = (
+                "(" + ",".join(str(value) for value in coords) + ")" if coords else "?"
+            )
             tile_facts = [
                 f"{key}={item[key]}"
                 for key in ("tile_shape", "tiletype")
@@ -1631,9 +2245,13 @@ def _action_history_entry(
         for item in placed:
             if not isinstance(item, dict):
                 continue
-            coords = [item.get(key) for key in ("x", "y", "z") if item.get(key) is not None]
+            coords = [
+                item.get(key) for key in ("x", "y", "z") if item.get(key) is not None
+            ]
             if coords:
-                placed_targets.append("(" + ",".join(str(value) for value in coords) + ")")
+                placed_targets.append(
+                    "(" + ",".join(str(value) for value in coords) + ")"
+                )
     result_details = {
         key: action_result[key]
         for key in (
@@ -1667,7 +2285,9 @@ def _action_history_entry(
         and (_int_or_none(action_result.get("placed_count")) or 0) > 0
     )
     governed_action = action.get("type") != "KEYSTROKE"
-    helper_mutation = governed_action and _governed_helper_progress(action, action_result)
+    helper_mutation = governed_action and _governed_helper_progress(
+        action, action_result
+    )
     helper_pending = governed_action and _governed_helper_pending(action, action_result)
     proven_governed_progress = bool(
         governed_action
@@ -1677,7 +2297,9 @@ def _action_history_entry(
         action.get("type") == "WAIT"
         and execute_result.get("governed_wait_effect_observed") is True
     )
-    state_mutation = bool(_keystroke_productive_state_deltas(state_before, advance_state))
+    state_mutation = bool(
+        _keystroke_productive_state_deltas(state_before, advance_state)
+    )
     validation_rejected = bool(execute_result.get("validation_rejected"))
     if partial_mutation:
         outcome = "partial_mutation"
@@ -1687,7 +2309,8 @@ def _action_history_entry(
         outcome = "rejected"
     elif governed_action and action.get("type") == "INTERACT":
         interaction_changed = bool(
-            action_result.get("semantic_effect_observed") or action_result.get("screen_changed")
+            action_result.get("semantic_effect_observed")
+            or action_result.get("screen_changed")
         )
         outcome = (
             "interface_state_changed"
@@ -1698,7 +2321,10 @@ def _action_history_entry(
         outcome = "action_effect_observed"
     elif isinstance(order_effect, dict) and order_effect.get("status") == "pending":
         outcome = "action_pending"
-    elif isinstance(order_effect, dict) and order_effect.get("status") == "unattributed_output":
+    elif (
+        isinstance(order_effect, dict)
+        and order_effect.get("status") == "unattributed_output"
+    ):
         outcome = "action_output_unattributed"
     elif isinstance(order_effect, dict) and order_effect.get("status") == "unobserved":
         outcome = "action_effect_unobserved"
@@ -1734,7 +2360,9 @@ def _action_history_entry(
             if key != "keys" and value is not None
         },
         "keys": action.get("params", {}).get("keys", []),
-        "key_fingerprint": _keystroke_key_fingerprint(action.get("params", {}).get("keys", [])),
+        "key_fingerprint": _keystroke_key_fingerprint(
+            action.get("params", {}).get("keys", [])
+        ),
         "action_fingerprint": normalized_action_fingerprint(action),
         "action_family": _keystroke_action_family(action),
         "intent": action.get("intent", ""),
@@ -1758,12 +2386,24 @@ def _action_history_entry(
         "action_effect": order_effect,
         "productive_reasons": productive_reasons,
         "changed": changed,
-        "manager_orders_before": _int_or_none(before_work.get("manager_orders_count")) or 0,
-        "manager_orders_after": _int_or_none(after_work.get("manager_orders_count")) or 0,
-        "order_qty_left_before": _int_or_none(before_work.get("manager_orders_amount_left")) or 0,
-        "order_qty_left_after": _int_or_none(after_work.get("manager_orders_amount_left")) or 0,
-        "carpenter_workshops_before": _int_or_none(before_work.get("carpenter_workshops")) or 0,
-        "carpenter_workshops_after": _int_or_none(after_work.get("carpenter_workshops")) or 0,
+        "manager_orders_before": _int_or_none(before_work.get("manager_orders_count"))
+        or 0,
+        "manager_orders_after": _int_or_none(after_work.get("manager_orders_count"))
+        or 0,
+        "order_qty_left_before": _int_or_none(
+            before_work.get("manager_orders_amount_left")
+        )
+        or 0,
+        "order_qty_left_after": _int_or_none(
+            after_work.get("manager_orders_amount_left")
+        )
+        or 0,
+        "carpenter_workshops_before": _int_or_none(
+            before_work.get("carpenter_workshops")
+        )
+        or 0,
+        "carpenter_workshops_after": _int_or_none(after_work.get("carpenter_workshops"))
+        or 0,
         "active_jobs_before": _int_or_none(before_work.get("active_jobs")) or 0,
         "active_jobs_after": _int_or_none(after_work.get("active_jobs")) or 0,
     }
@@ -2049,7 +2689,9 @@ def _ui_target_setup_for_observation(
             else:
                 setup["recommended_keys"] = prefix + list(original_keys)
             setup["recommended_key_prefix"] = prefix
-            setup["recommended_keys_exit_only"] = bool(recommended_keys_exit_only and prefix)
+            setup["recommended_keys_exit_only"] = bool(
+                recommended_keys_exit_only and prefix
+            )
         setup["recommended_keys_suppressed"] = False
         setup["recommended_keys_retry"] = attempts > 0
         setup["recommended_keys_force_shown"] = force_show_recommended
@@ -2092,13 +2734,21 @@ def _keystroke_real_state_deltas(
 ) -> Dict[str, int]:
     """Return state deltas that represent real game progress, not target movement."""
 
-    before_work = state_before.get("work") if isinstance(state_before.get("work"), dict) else {}
-    after_work = advance_state.get("work") if isinstance(advance_state.get("work"), dict) else {}
+    before_work = (
+        state_before.get("work") if isinstance(state_before.get("work"), dict) else {}
+    )
+    after_work = (
+        advance_state.get("work") if isinstance(advance_state.get("work"), dict) else {}
+    )
     before_stocks = (
-        state_before.get("stocks") if isinstance(state_before.get("stocks"), dict) else {}
+        state_before.get("stocks")
+        if isinstance(state_before.get("stocks"), dict)
+        else {}
     )
     after_stocks = (
-        advance_state.get("stocks") if isinstance(advance_state.get("stocks"), dict) else {}
+        advance_state.get("stocks")
+        if isinstance(advance_state.get("stocks"), dict)
+        else {}
     )
     deltas = {
         "wood": _dict_delta(before_stocks, after_stocks, "wood"),
@@ -2110,9 +2760,13 @@ def _keystroke_real_state_deltas(
             after_work,
             "active_construct_building_jobs",
         ),
-        "active_carpenter_jobs": _dict_delta(before_work, after_work, "active_carpenter_jobs"),
+        "active_carpenter_jobs": _dict_delta(
+            before_work, after_work, "active_carpenter_jobs"
+        ),
         "active_jobs": _dict_delta(before_work, after_work, "active_jobs"),
-        "carpenter_workshops": _dict_delta(before_work, after_work, "carpenter_workshops"),
+        "carpenter_workshops": _dict_delta(
+            before_work, after_work, "carpenter_workshops"
+        ),
         "carpenter_workshops_planned": _dict_delta(
             before_work,
             after_work,
@@ -2133,7 +2787,9 @@ def _keystroke_real_state_deltas(
             after_work,
             "carpenter_workshop_construction_jobs",
         ),
-        "manager_orders_count": _dict_delta(before_work, after_work, "manager_orders_count"),
+        "manager_orders_count": _dict_delta(
+            before_work, after_work, "manager_orders_count"
+        ),
         "manager_orders_amount_left": _dict_delta(
             before_work,
             after_work,
@@ -2155,13 +2811,21 @@ def _keystroke_productive_state_deltas(
         if value <= 0:
             continue
         productive[key] = value
-    before_work = state_before.get("work") if isinstance(state_before.get("work"), dict) else {}
-    after_work = advance_state.get("work") if isinstance(advance_state.get("work"), dict) else {}
+    before_work = (
+        state_before.get("work") if isinstance(state_before.get("work"), dict) else {}
+    )
+    after_work = (
+        advance_state.get("work") if isinstance(advance_state.get("work"), dict) else {}
+    )
     before_stocks = (
-        state_before.get("stocks") if isinstance(state_before.get("stocks"), dict) else {}
+        state_before.get("stocks")
+        if isinstance(state_before.get("stocks"), dict)
+        else {}
     )
     after_stocks = (
-        advance_state.get("stocks") if isinstance(advance_state.get("stocks"), dict) else {}
+        advance_state.get("stocks")
+        if isinstance(advance_state.get("stocks"), dict)
+        else {}
     )
     task_delta = _dict_delta(
         before_work,
@@ -2169,7 +2833,12 @@ def _keystroke_productive_state_deltas(
         "carpenter_workshop_task_jobs",
     )
     wood_delta = _dict_delta(before_stocks, after_stocks, "wood")
-    if task_delta is not None and task_delta < 0 and wood_delta is not None and wood_delta < 0:
+    if (
+        task_delta is not None
+        and task_delta < 0
+        and wood_delta is not None
+        and wood_delta < 0
+    ):
         productive["carpenter_workshop_completed_tasks"] = abs(task_delta)
         productive["wood_consumed_by_workshop"] = abs(wood_delta)
     return productive
@@ -2231,9 +2900,7 @@ def _cleanup_dfhack_runtime(
             errors.append({"stage": "pause_rpc", "error": str(exc)})
     if client is not None or require_pause:
         try:
-            pause_attestation = dict(
-                ensure_paused_external(timeout=2.5, attempts=2)
-            )
+            pause_attestation = dict(ensure_paused_external(timeout=2.5, attempts=2))
             pause_direct_ok = pause_attestation.get("ok") is True
             if not pause_direct_ok:
                 errors.append(
@@ -2255,7 +2922,10 @@ def _cleanup_dfhack_runtime(
             evidence_result = dict(stop_g7_evidence())
         except Exception as exc:
             evidence_result = {"ok": False, "active": None, "error": str(exc)}
-        if evidence_result.get("ok") is not True or evidence_result.get("active") is not False:
+        if (
+            evidence_result.get("ok") is not True
+            or evidence_result.get("active") is not False
+        ):
             errors.append(
                 {
                     "stage": "g7_evidence_stop",
@@ -2298,6 +2968,7 @@ def run_once(
     seed_save: Optional[str] = None,
     runtime_save: Optional[str] = None,
     evaluation_protocol: Optional[str] = None,
+    measurement_calibration_scenario: Optional[str] = None,
 ) -> str:
     """Execute a run and persist a JSONL trace while streaming events."""
 
@@ -2317,6 +2988,7 @@ def run_once(
         preserve_save=preserve_save,
         max_steps=max_steps,
         ticks_per_step=ticks,
+        measurement_calibration_scenario=measurement_calibration_scenario,
     )
     agent.set_run_context(run_id=run_identifier)
 
@@ -2363,6 +3035,7 @@ def run_once(
     dfhack_runtime_may_be_active = False
     seed_attestation: Dict[str, Any] = {}
     seed_world_sha256: str | None = None
+    measurement_calibration_fixture: Dict[str, Any] = {}
 
     def cleanup_dfhack_runtime() -> Dict[str, Any]:
         nonlocal cleanup_attempts, cleanup_outcome, cleanup_recorded
@@ -2462,7 +3135,9 @@ def run_once(
         def observe() -> Dict[str, Any]:
             return mock_env.observe()
 
-        def apply_action(action_dict: Dict[str, Any], state: Dict[str, Any]) -> Dict[str, Any]:
+        def apply_action(
+            action_dict: Dict[str, Any], state: Dict[str, Any]
+        ) -> Dict[str, Any]:
             return executor.apply(action_dict, backend="mock", state=state)
 
         def advance_env(
@@ -2479,7 +3154,9 @@ def run_once(
     elif backend_name == "dfhack":
         if not settings.DFHACK_ENABLED:
             fail_setup_after_cleanup()
-            raise RuntimeError("DFHack backend disabled. Set DFHACK_ENABLED=1 to use it.")
+            raise RuntimeError(
+                "DFHack backend disabled. Set DFHACK_ENABLED=1 to use it."
+            )
 
         dfhack_runtime_may_be_active = True
 
@@ -2498,7 +3175,9 @@ def run_once(
                 raise
 
         try:
-            dfhack_client = DFHackClient(host=settings.DFHACK_HOST, port=settings.DFHACK_PORT)
+            dfhack_client = DFHackClient(
+                host=settings.DFHACK_HOST, port=settings.DFHACK_PORT
+            )
             dfhack_client.connect()
             pause_preflight = ensure_paused_external(timeout=2.5, attempts=2)
             if pause_preflight.get("ok") is not True:
@@ -2514,7 +3193,13 @@ def run_once(
             )
             if is_governed_dfhack_mode:
                 g7_evidence_attempted = True
-                g7_evidence_start = start_g7_evidence(run_identifier)
+                if measurement_calibration_scenario == "death_cause_fallback":
+                    g7_evidence_start = start_g7_evidence(
+                        run_identifier,
+                        measurement_calibration_mode="force_incident_death_cause",
+                    )
+                else:
+                    g7_evidence_start = start_g7_evidence(run_identifier)
             if is_keystroke_mode:
                 keystroke_ui_target = prepare_keystroke_target(
                     ui_target_mode,
@@ -2548,6 +3233,21 @@ def run_once(
             fort = read_fort_metrics(governed_channel_focus)
             if not isinstance(fort, dict):
                 fort = {"ok": False, "error": "fort_metrics_invalid_response"}
+            if measurement_calibration_scenario == "sensor_dropout":
+                # Deterministic live fault injection at the sensor boundary.
+                # The underlying world is untouched; downstream ownership and
+                # G7 validity must preserve this as unknown rather than fail or
+                # infer success from stale/global values.
+                fort = {
+                    **fort,
+                    "ok": False,
+                    "spaces_truncated": True,
+                    "measurement_calibration_fault": {
+                        "sensor": "fort_metrics",
+                        "field": "spaces_truncated",
+                        "value": True,
+                    },
+                }
             state = dict(state)
             state["fort"] = fort
             return state
@@ -2585,13 +3285,13 @@ def run_once(
             # follows the fort minimap window when it is available.
             return attach_survival_evidence(
                 attach_crew_metrics(
-                    attach_fort_metrics(
-                        StateReader.from_dfhack(dfhack_client)
-                    )
+                    attach_fort_metrics(StateReader.from_dfhack(dfhack_client))
                 )
             )
 
-        def apply_action(action_dict: Dict[str, Any], state: Dict[str, Any]) -> Dict[str, Any]:
+        def apply_action(
+            action_dict: Dict[str, Any], state: Dict[str, Any]
+        ) -> Dict[str, Any]:
             return executor.apply(
                 action_dict,
                 backend="dfhack",
@@ -2649,10 +3349,10 @@ def run_once(
         settings.ACTION_HISTORY_LIMIT,
         governed=is_governed_dfhack_mode,
     )
-    last_action_result: Optional[Dict[str, Any]] = None  # Track previous action result for feedback
-    previous_screen = (
-        None  # Track previous screen for diff feedback (no type annotation for nonlocal)
+    last_action_result: Optional[Dict[str, Any]] = (
+        None  # Track previous action result for feedback
     )
+    previous_screen = None  # Track previous screen for diff feedback (no type annotation for nonlocal)
     assisted_dfhack_action_seen = False
     ui_work_rect: tuple[int, int, int, int, int, int] | None = None
     baseline_ui_work: Optional[Dict[str, Any]] = None
@@ -2679,6 +3379,13 @@ def run_once(
     governed_completed_tiles: set[tuple[int, int, int]] = set()
     governed_owned_buildings: Dict[int, str] = {}
     governed_completed_buildings: set[int] = set()
+    governed_owned_constructions: Dict[tuple[int, int, int], Dict[str, Any]] = {}
+    governed_completed_constructions: set[tuple[int, int, int]] = set()
+    governed_attributed_order_jobs: Dict[str, set[int]] = {}
+    governed_order_last_values: Dict[str, int] = {}
+    governed_owned_output_units: Dict[str, int] = {}
+    governed_output_attribution_health = {"complete": True}
+    governed_operational_farm_ids: set[int] = set()
     governed_score_progress_seen = False
 
     def fort_structure_score_metrics(
@@ -2686,6 +3393,9 @@ def run_once(
     ) -> Dict[str, Any]:
         fort = state.get("fort") if isinstance(state, dict) else None
         observed = bool(isinstance(fort, dict) and fort.get("ok") is True)
+        construction_tiles = (
+            _coordinate_set(fort.get("construction_tiles")) if observed else set()
+        )
         return {
             "fort_metrics_observed": observed,
             "fort_enclosed_spaces": int(fort.get("enclosed_spaces") or 0)
@@ -2694,9 +3404,21 @@ def run_once(
             "fort_functional_rooms": int(fort.get("functional_rooms") or 0)
             if observed
             else 0,
-            "fort_constructions": int(fort.get("constructions") or 0)
+            "fort_constructions": (
+                len(construction_tiles)
+                if fort.get("construction_tiles_complete") is True
+                else int(fort.get("constructions") or 0)
+            )
             if observed
             else 0,
+            "fort_raw_construction_records": int(
+                fort.get("raw_construction_records") or 0
+            )
+            if observed
+            else 0,
+            "fort_construction_tiles_complete": bool(
+                observed and fort.get("construction_tiles_complete") is True
+            ),
         }
 
     def current_governed_score_metrics(
@@ -2707,28 +3429,78 @@ def run_once(
         building_progress = _governed_owned_building_progress(
             governed_owned_buildings,
             governed_completed_buildings,
+            evidence_complete=_governed_building_evidence_complete(state or {}),
         )
+        room_progress = _governed_owned_room_metrics(
+            state or {},
+            completed_excavation=governed_completed_tiles,
+            completed_constructions=governed_completed_constructions,
+            owned_buildings=governed_owned_buildings,
+            completed_buildings=governed_completed_buildings,
+            building_evidence_complete=_governed_building_evidence_complete(
+                state or {}
+            ),
+        )
+        current_operational_farm_ids, operational_farm_evidence_complete = (
+            _current_governed_operational_farm_ids(
+                governed_operational_farm_ids,
+                governed_completed_buildings,
+                governed_owned_buildings,
+                state or {},
+            )
+        )
+        manager_orders_present, manager_orders_complete = _manager_order_observation(
+            state or {}
+        )
+        if not manager_orders_complete or manager_orders_present:
+            governed_output_attribution_health["complete"] = False
         return {
             "score_progress_provenance": scoring.GOVERNED_SCORE_PROGRESS_PROVENANCE,
             "governed_owned_work_progress": len(governed_completed_tiles),
             "governed_owned_designation_progress": len(governed_designated_tiles),
             "governed_owned_completion_progress": len(governed_completed_tiles),
-            "utility_progress": building_progress[
-                "governed_owned_utility_progress"
-            ],
+            "utility_progress": building_progress["governed_owned_utility_progress"],
             "production_progress": building_progress[
                 "governed_owned_production_progress"
             ],
-            "complexity_progress": building_progress[
-                "governed_owned_complexity_progress"
-            ],
+            "complexity_progress": room_progress["governed_owned_complexity_progress"],
             **building_progress,
+            **room_progress,
+            "governed_owned_output_units": sum(governed_owned_output_units.values()),
+            "governed_owned_output_units_by_job": dict(
+                sorted(governed_owned_output_units.items())
+            ),
+            "governed_owned_output_attribution_jobs": sorted(
+                governed_attributed_order_jobs
+            ),
+            "governed_owned_output_evidence_complete": bool(
+                governed_output_attribution_health["complete"]
+            ),
+            "governed_owned_output_manager_orders_observed_complete": (
+                manager_orders_complete
+            ),
+            "governed_owned_output_manager_orders_present": manager_orders_present,
+            "governed_owned_output_lower_bound_proven": bool(
+                governed_owned_output_units
+            ),
+            "governed_owned_output_attribution_scope": (
+                "exact_order_job_completion_and_uncontaminated_positive_output_delta"
+                if governed_owned_output_units
+                else None
+            ),
+            "governed_owned_operational_farm_plots": len(current_operational_farm_ids),
+            "governed_owned_operational_farm_evidence_complete": (
+                operational_farm_evidence_complete
+            ),
             "score_duration_blocked": not governed_score_progress_seen,
             **fort_structure_score_metrics(state),
         }
 
     def publish_event(
-        step: int, event_type: str, payload: Dict[str, Any], events: List[Dict[str, Any]]
+        step: int,
+        event_type: str,
+        payload: Dict[str, Any],
+        events: List[Dict[str, Any]],
     ) -> None:
         data = {"run_id": run_identifier, "step": step, **payload}
         events.append({"type": event_type, "data": data})
@@ -2740,7 +3512,9 @@ def run_once(
             return model.model_dump()
         return model.dict()  # type: ignore[attr-defined]
 
-    def _handle_dfhack_failure(step_index: int, message: str, events: List[Dict[str, Any]]) -> None:
+    def _handle_dfhack_failure(
+        step_index: int, message: str, events: List[Dict[str, Any]]
+    ) -> None:
         publish_event(step_index, "stderr", {"message": message}, events)
 
     run_failed = False
@@ -2754,6 +3528,7 @@ def run_once(
 
     try:
         with trace_path.open("w", encoding="utf-8") as fh:
+
             def record_pre_execution_rejection(
                 *,
                 step: int,
@@ -2840,13 +3615,18 @@ def run_once(
                 governed_action_snapshot_before = None
                 governed_action_snapshot_applied = None
                 governed_action_snapshot_after = None
-                governed_action_owned_delta = metrics.governed_action_footprint_progress_delta(
-                    {"type": "WAIT", "params": {}}, None, None
+                governed_action_owned_delta = (
+                    metrics.governed_action_footprint_progress_delta(
+                        {"type": "WAIT", "params": {}}, None, None
+                    )
                 )
                 governed_action_owned_keys: set[tuple[int, int, int]] = set()
                 governed_completed_before_step = set(governed_completed_tiles)
                 governed_completed_buildings_before_step = set(
                     governed_completed_buildings
+                )
+                governed_completed_constructions_before_step = set(
+                    governed_completed_constructions
                 )
                 execution_terminal_reason: Dict[str, Any] | None = None
                 interaction_audit: Dict[str, Any] | None = None
@@ -2918,7 +3698,9 @@ def run_once(
                                     "multiple workshop footprints were blocked; "
                                     "expanding starter floor before retrying placement"
                                 ),
-                                "blocked_workshop_target_count": len(ui_blocked_workshop_targets),
+                                "blocked_workshop_target_count": len(
+                                    ui_blocked_workshop_targets
+                                ),
                                 "refresh_after_no_progress_steps": UI_TARGET_REFRESH_NO_PROGRESS_STEPS,
                             }
                         else:
@@ -2927,7 +3709,9 @@ def run_once(
                                 "error": starter_target.get("error", "unknown"),
                                 "target_mode": "starter",
                                 "previous_target_mode": ui_target_mode,
-                                "blocked_workshop_target_count": len(ui_blocked_workshop_targets),
+                                "blocked_workshop_target_count": len(
+                                    ui_blocked_workshop_targets
+                                ),
                                 "no_progress_streak": ui_no_progress_streak,
                             }
                     else:
@@ -2942,7 +3726,9 @@ def run_once(
                             ):
                                 starter_target = prepare_keystroke_target(
                                     "starter",
-                                    blocked_workshop_targets=tuple(ui_blocked_workshop_targets),
+                                    blocked_workshop_targets=tuple(
+                                        ui_blocked_workshop_targets
+                                    ),
                                 )
                                 if starter_target.get("ok"):
                                     ui_material_target_exhausted = True
@@ -3056,13 +3842,45 @@ def run_once(
                         )
                         run_failed = True
                         break
+                    if measurement_calibration_scenario == "death_cause_fallback":
+                        measurement_calibration_fixture = dict(
+                            trigger_p1_death_calibration_fixture()
+                        )
+                        publish_event(
+                            step,
+                            "measurement_calibration_fixture",
+                            measurement_calibration_fixture,
+                            events,
+                        )
+                        if measurement_calibration_fixture.get("ok") is not True:
+                            terminal_failure_reason = {
+                                "code": "measurement_calibration_fixture_failed",
+                                "fixture": measurement_calibration_fixture,
+                            }
+                            terminal_failure_step = step
+                            _write_durable_jsonl_record(
+                                fh,
+                                {
+                                    "run_id": run_identifier,
+                                    "step": step,
+                                    "observation": state_before,
+                                    "terminal_reason": terminal_failure_reason,
+                                    "events": events,
+                                },
+                            )
+                            run_failed = True
+                            break
                 if is_keystroke_mode:
-                    carpenter_workshop_usable_seen = _carry_forward_carpenter_workshop_proof(
-                        state_before,
-                        carpenter_workshop_usable_seen,
+                    carpenter_workshop_usable_seen = (
+                        _carry_forward_carpenter_workshop_proof(
+                            state_before,
+                            carpenter_workshop_usable_seen,
+                        )
                     )
                 screen_text = (
-                    get_screen_text() if is_keystroke_mode or is_governed_dfhack_mode else None
+                    get_screen_text()
+                    if is_keystroke_mode or is_governed_dfhack_mode
+                    else None
                 )
                 if (
                     str(state_before.get("viewscreen_type") or "unknown")
@@ -3071,16 +3889,24 @@ def run_once(
                     interaction_episode_count = 0
                     interaction_unchanged_screen_streak = 0
                 screen_has_material_blocker = bool(
-                    is_keystroke_mode and screen_text and "Needs building material" in screen_text
+                    is_keystroke_mode
+                    and screen_text
+                    and "Needs building material" in screen_text
                 )
-                screen_has_ready_workshop_placement = _screen_shows_ready_workshop_placement(
-                    screen_text if is_keystroke_mode else None
+                screen_has_ready_workshop_placement = (
+                    _screen_shows_ready_workshop_placement(
+                        screen_text if is_keystroke_mode else None
+                    )
                 )
-                screen_has_workshop_material_selection = _screen_shows_workshop_material_selection(
-                    screen_text if is_keystroke_mode else None
+                screen_has_workshop_material_selection = (
+                    _screen_shows_workshop_material_selection(
+                        screen_text if is_keystroke_mode else None
+                    )
                 )
-                screen_has_blocked_workshop_placement = _screen_shows_blocked_workshop_placement(
-                    screen_text if is_keystroke_mode else None
+                screen_has_blocked_workshop_placement = (
+                    _screen_shows_blocked_workshop_placement(
+                        screen_text if is_keystroke_mode else None
+                    )
                 )
                 screen_has_building_type_menu = _screen_shows_building_type_menu(
                     screen_text if is_keystroke_mode else None
@@ -3092,7 +3918,8 @@ def run_once(
                     if blocked_key is not None:
                         ui_blocked_workshop_targets.add(blocked_key)
                     if (
-                        len(ui_blocked_workshop_targets) >= UI_WORKSHOP_BLOCKED_FALLBACK_TARGETS
+                        len(ui_blocked_workshop_targets)
+                        >= UI_WORKSHOP_BLOCKED_FALLBACK_TARGETS
                         and ui_workshop_blocked_at_work_progress is None
                     ):
                         ui_workshop_blocked_at_work_progress = ui_run_work_progress
@@ -3101,7 +3928,10 @@ def run_once(
                         ui_no_progress_streak,
                         UI_TARGET_REFRESH_NO_PROGRESS_STEPS,
                     )
-                elif screen_has_ready_workshop_placement or screen_has_workshop_material_selection:
+                elif (
+                    screen_has_ready_workshop_placement
+                    or screen_has_workshop_material_selection
+                ):
                     ui_build_material_blocked = False
                 if backend_name == "dfhack" and is_keystroke_mode:
                     if (
@@ -3132,23 +3962,31 @@ def run_once(
                             ui_successful_targets=ui_successful_targets,
                             build_material_blocked=ui_build_material_blocked,
                         )
-                        if ui_material_target_exhausted and desired_target_mode == "material":
+                        if (
+                            ui_material_target_exhausted
+                            and desired_target_mode == "material"
+                        ):
                             desired_target_mode = _material_exhausted_fallback_target_mode(
                                 state_before,
                                 ui_run_excavation_progress=ui_run_excavation_progress,
                                 ui_successful_targets=ui_successful_targets,
                                 build_material_blocked=ui_build_material_blocked,
                             )
-                        if desired_target_mode == "workshop" and _workshop_blocked_fallback_active(
-                            len(ui_blocked_workshop_targets),
-                            ui_workshop_blocked_at_work_progress,
-                            ui_run_work_progress,
+                        if (
+                            desired_target_mode == "workshop"
+                            and _workshop_blocked_fallback_active(
+                                len(ui_blocked_workshop_targets),
+                                ui_workshop_blocked_at_work_progress,
+                                ui_run_work_progress,
+                            )
                         ):
                             desired_target_mode = "starter"
                         if desired_target_mode != ui_target_mode:
                             refreshed_target = prepare_keystroke_target(
                                 desired_target_mode,
-                                blocked_workshop_targets=tuple(ui_blocked_workshop_targets),
+                                blocked_workshop_targets=tuple(
+                                    ui_blocked_workshop_targets
+                                ),
                             )
                             if refreshed_target.get("ok"):
                                 ui_target_mode = desired_target_mode
@@ -3164,15 +4002,19 @@ def run_once(
                                 if desired_target_mode == "workshop":
                                     ui_workshop_target_blocked = False
                                 if ui_target_mode == "material":
-                                    refresh_reason = "switching to material acquisition target"
-                                elif ui_target_mode == "existing_workshop":
                                     refresh_reason = (
-                                        "switching to existing workshop inspection target"
+                                        "switching to material acquisition target"
                                     )
+                                elif ui_target_mode == "existing_workshop":
+                                    refresh_reason = "switching to existing workshop inspection target"
                                 elif ui_target_mode == "workshop":
-                                    refresh_reason = "switching to workshop placement target"
+                                    refresh_reason = (
+                                        "switching to workshop placement target"
+                                    )
                                 else:
-                                    refresh_reason = "switching to starter excavation target"
+                                    refresh_reason = (
+                                        "switching to starter excavation target"
+                                    )
                                 ui_work_feedback = {
                                     "target_refreshed": True,
                                     "target_mode": ui_target_mode,
@@ -3188,32 +4030,44 @@ def run_once(
                         material_needs_menu_escape = ui_target_mode == "material" and (
                             screen_has_material_blocker or screen_has_building_type_menu
                         )
-                        workshop_blocked_menu_escape = ui_target_mode == "workshop" and (
-                            screen_has_blocked_workshop_placement
-                            or (ui_workshop_target_blocked and screen_has_building_type_menu)
+                        workshop_blocked_menu_escape = (
+                            ui_target_mode == "workshop"
+                            and (
+                                screen_has_blocked_workshop_placement
+                                or (
+                                    ui_workshop_target_blocked
+                                    and screen_has_building_type_menu
+                                )
+                            )
                         )
                         recovery_prefix = (
                             list(UI_MATERIAL_BLOCKER_ESCAPE_KEYS)
-                            if material_needs_menu_escape or workshop_blocked_menu_escape
+                            if material_needs_menu_escape
+                            or workshop_blocked_menu_escape
                             else []
                         )
-                        state_before["ui_target_setup"] = _ui_target_setup_for_observation(
-                            keystroke_ui_target,
-                            generation=ui_target_generation,
-                            attempts=ui_target_attempts,
-                            no_progress_streak=ui_no_progress_streak,
-                            target_progress_seen=ui_target_progress_seen,
-                            recommended_key_prefix=recovery_prefix,
-                            force_show_recommended=bool(recovery_prefix),
-                            recommended_keys_exit_only=bool(recovery_prefix),
+                        state_before["ui_target_setup"] = (
+                            _ui_target_setup_for_observation(
+                                keystroke_ui_target,
+                                generation=ui_target_generation,
+                                attempts=ui_target_attempts,
+                                no_progress_streak=ui_no_progress_streak,
+                                target_progress_seen=ui_target_progress_seen,
+                                recommended_key_prefix=recovery_prefix,
+                                force_show_recommended=bool(recovery_prefix),
+                                recommended_keys_exit_only=bool(recovery_prefix),
+                            )
                         )
                     if ui_work_rect is None:
                         prepared_rect = None
                         if keystroke_ui_target and keystroke_ui_target.get("ok"):
-                            prepared_rect = _normalize_rect(keystroke_ui_target.get("target_rect"))
+                            prepared_rect = _normalize_rect(
+                                keystroke_ui_target.get("target_rect")
+                            )
                         ui_work_rect = (
                             prepared_rect
-                            if prepared_rect is not None and prepared_rect[2] == prepared_rect[5]
+                            if prepared_rect is not None
+                            and prepared_rect[2] == prepared_rect[5]
                             else _ui_work_rect_from_state(state_before)
                         )
                     if ui_work_rect is not None:
@@ -3244,7 +4098,8 @@ def run_once(
                             "placement_blocked": True,
                             "blocked_target_count": len(ui_blocked_workshop_targets),
                             "blocked_targets": [
-                                [x, y, z] for x, y, z in sorted(ui_blocked_workshop_targets)
+                                [x, y, z]
+                                for x, y, z in sorted(ui_blocked_workshop_targets)
                             ],
                             "menu_escape_keys": (
                                 list(UI_MATERIAL_BLOCKER_ESCAPE_KEYS)
@@ -3270,10 +4125,14 @@ def run_once(
 
                 if baseline_work is None:
                     work_snapshot = state_before.get("work")
-                    baseline_work = dict(work_snapshot) if isinstance(work_snapshot, dict) else {}
+                    baseline_work = (
+                        dict(work_snapshot) if isinstance(work_snapshot, dict) else {}
+                    )
                 if baseline_fort is None:
                     fort_snapshot = state_before.get("fort")
-                    baseline_fort = dict(fort_snapshot) if isinstance(fort_snapshot, dict) else {}
+                    baseline_fort = (
+                        dict(fort_snapshot) if isinstance(fort_snapshot, dict) else {}
+                    )
                 crew_snapshot = state_before.get("crew")
                 current_goods = (
                     dict(crew_snapshot.get("goods"))
@@ -3286,7 +4145,9 @@ def run_once(
                 if baseline_wealth is None:
                     stocks_snapshot = state_before.get("stocks")
                     if isinstance(stocks_snapshot, dict):
-                        baseline_wealth = _int_or_none(stocks_snapshot.get("wealth")) or 0
+                        baseline_wealth = (
+                            _int_or_none(stocks_snapshot.get("wealth")) or 0
+                        )
 
                 obs_text, obs_json = encode_observation(
                     state_before,
@@ -3303,7 +4164,9 @@ def run_once(
                 # Update previous_screen for next step's diff
                 if is_keystroke_mode:
                     previous_screen = screen_text
-                publish_event(step, "state", {"state": obs_json, "text": obs_text}, events)
+                publish_event(
+                    step, "state", {"state": obs_json, "text": obs_text}, events
+                )
 
                 if registry and registry.stop_requested(run_identifier):
                     run_stopped = True
@@ -3334,7 +4197,9 @@ def run_once(
                     if callable(pop_tool_events):
                         try:
                             tool_events = pop_tool_events()
-                        except Exception as pop_exc:  # pragma: no cover - defensive logging
+                        except (
+                            Exception
+                        ) as pop_exc:  # pragma: no cover - defensive logging
                             tool_events = [
                                 {
                                     "tool": "agent.pop_tool_events",
@@ -3653,7 +4518,10 @@ def run_once(
                         # Final eligibility is set only after post-tick proof.
                         "gameplay_progress_eligible": False,
                     }
-                elif backend_name == "dfhack" and action.get("type") in ASSISTED_DFHACK_ACTIONS:
+                elif (
+                    backend_name == "dfhack"
+                    and action.get("type") in ASSISTED_DFHACK_ACTIONS
+                ):
                     execute_result = {
                         **execute_result,
                         "provenance": "dfhack_assisted",
@@ -3667,7 +4535,9 @@ def run_once(
                     and governed_action_rect is not None
                     and execute_result.get("accepted") is True
                 ):
-                    governed_action_snapshot_applied = read_map_snapshot(governed_action_rect)
+                    governed_action_snapshot_applied = read_map_snapshot(
+                        governed_action_rect
+                    )
                     governed_action_owned_delta = (
                         metrics.governed_action_footprint_progress_delta(
                             action,
@@ -3675,7 +4545,11 @@ def run_once(
                             governed_action_snapshot_applied,
                         )
                     )
-                    params = action.get("params") if isinstance(action.get("params"), dict) else {}
+                    params = (
+                        action.get("params")
+                        if isinstance(action.get("params"), dict)
+                        else {}
+                    )
                     owned_kind = str(params.get("kind") or "dig").lower()
                     for coord in governed_action_owned_delta.get(
                         "governed_owned_tiles_added", []
@@ -3766,7 +4640,9 @@ def run_once(
                     target_setup_exit_only = isinstance(target_setup, dict) and bool(
                         target_setup.get("recommended_keys_exit_only")
                     )
-                    if not (target_setup_exit_only and _is_exit_only_recovery_action(action)):
+                    if not (
+                        target_setup_exit_only and _is_exit_only_recovery_action(action)
+                    ):
                         ui_target_attempts += 1
 
                 # Use agent-requested ticks, falling back to default if not specified
@@ -3795,15 +4671,23 @@ def run_once(
                         break
                 state_preservation = None
                 if backend_name == "dfhack" and is_keystroke_mode:
-                    advance_state, state_preservation = _preserve_state_after_degraded_read(
-                        advance_state,
-                        state_after_apply,
+                    advance_state, state_preservation = (
+                        _preserve_state_after_degraded_read(
+                            advance_state,
+                            state_after_apply,
+                        )
                     )
-                    carpenter_workshop_usable_seen = _carry_forward_carpenter_workshop_proof(
-                        advance_state,
-                        carpenter_workshop_usable_seen,
+                    carpenter_workshop_usable_seen = (
+                        _carry_forward_carpenter_workshop_proof(
+                            advance_state,
+                            carpenter_workshop_usable_seen,
+                        )
                     )
-                if backend_name == "dfhack" and is_keystroke_mode and ui_work_rect is not None:
+                if (
+                    backend_name == "dfhack"
+                    and is_keystroke_mode
+                    and ui_work_rect is not None
+                ):
                     ui_work_after = read_work_metrics(ui_work_rect)
                     ui_work_preservation = None
                     fallback_ui_work = (
@@ -3811,20 +4695,26 @@ def run_once(
                         if isinstance(state_after_apply, dict)
                         else None
                     )
-                    ui_work_after, ui_work_preservation = _preserve_work_after_degraded_read(
-                        ui_work_after,
-                        fallback_ui_work,
+                    ui_work_after, ui_work_preservation = (
+                        _preserve_work_after_degraded_read(
+                            ui_work_after,
+                            fallback_ui_work,
+                        )
                     )
                     advance_state["ui_work"] = ui_work_after
                     if ui_work_preservation is not None:
-                        advance_state["ui_work_read_preservation"] = ui_work_preservation
+                        advance_state["ui_work_read_preservation"] = (
+                            ui_work_preservation
+                        )
                     if keystroke_ui_target is not None:
-                        advance_state["ui_target_setup"] = _ui_target_setup_for_observation(
-                            keystroke_ui_target,
-                            generation=ui_target_generation,
-                            attempts=ui_target_attempts,
-                            no_progress_streak=ui_no_progress_streak,
-                            target_progress_seen=ui_target_progress_seen,
+                        advance_state["ui_target_setup"] = (
+                            _ui_target_setup_for_observation(
+                                keystroke_ui_target,
+                                generation=ui_target_generation,
+                                attempts=ui_target_attempts,
+                                no_progress_streak=ui_no_progress_streak,
+                                target_progress_seen=ui_target_progress_seen,
+                            )
                         )
                 if action.get("type") == "INTERACT":
                     interaction_screen_after = get_screen_text()
@@ -3833,8 +4723,12 @@ def run_once(
                         if isinstance(execute_result.get("result"), dict)
                         else {}
                     )
-                    viewscreen_before = str(obs_json.get("viewscreen_type") or "unknown")
-                    viewscreen_after = str(advance_state.get("viewscreen_type") or "unknown")
+                    viewscreen_before = str(
+                        obs_json.get("viewscreen_type") or "unknown"
+                    )
+                    viewscreen_after = str(
+                        advance_state.get("viewscreen_type") or "unknown"
+                    )
                     screen_before_sha256 = _screen_sha256(screen_text)
                     screen_after_sha256 = _screen_sha256(interaction_screen_after)
                     screen_changed = (
@@ -3858,8 +4752,13 @@ def run_once(
                         or interaction_result.get("operation")
                         in TOPIC_MEETING_OPTION_OPERATIONS
                     ):
-                        post_screen_captured = interaction_screen_after != SCREEN_CAPTURE_FAILED
-                        if interaction_result.get("operation") == "finish_topic_meeting":
+                        post_screen_captured = (
+                            interaction_screen_after != SCREEN_CAPTURE_FAILED
+                        )
+                        if (
+                            interaction_result.get("operation")
+                            == "finish_topic_meeting"
+                        ):
                             semantic_effect_observed = (
                                 viewscreen_after != "viewscreen_topicmeetingst"
                                 or (
@@ -3869,9 +4768,13 @@ def run_once(
                                 )
                             )
                         else:
-                            semantic_effect_observed = post_screen_captured and screen_changed
+                            semantic_effect_observed = (
+                                post_screen_captured and screen_changed
+                            )
                         interaction_audit["post_screen_captured"] = post_screen_captured
-                        interaction_audit["semantic_effect_observed"] = semantic_effect_observed
+                        interaction_audit["semantic_effect_observed"] = (
+                            semantic_effect_observed
+                        )
                         if not semantic_effect_observed:
                             interaction_result.update(
                                 {
@@ -3896,7 +4799,9 @@ def run_once(
                     )
                 # Game stays paused - agent controls time
                 try:
-                    elapsed_ticks_total += max(0, int(tick_info_state.get("ticks_advanced") or 0))
+                    elapsed_ticks_total += max(
+                        0, int(tick_info_state.get("ticks_advanced") or 0)
+                    )
                 except (TypeError, ValueError):
                     pass
                 publish_event(
@@ -4018,13 +4923,15 @@ def run_once(
                     if completed_workshop_tasks > 0:
                         ui_run_completed_workshop_tasks += completed_workshop_tasks
                     if ui_run_completed_workshop_tasks > 0:
-                        production_unit = int(getattr(metrics, "PRODUCTION_WORKSHOP_PROGRESS", 5))
-                        metrics_snapshot[
-                            "production_completed_tasks"
-                        ] = ui_run_completed_workshop_tasks
-                        metrics_snapshot[
-                            "production_completed_tasks_delta"
-                        ] = completed_workshop_tasks
+                        production_unit = int(
+                            getattr(metrics, "PRODUCTION_WORKSHOP_PROGRESS", 5)
+                        )
+                        metrics_snapshot["production_completed_tasks"] = (
+                            ui_run_completed_workshop_tasks
+                        )
+                        metrics_snapshot["production_completed_tasks_delta"] = (
+                            completed_workshop_tasks
+                        )
                         metrics_snapshot["production_progress"] = max(
                             int(metrics_snapshot.get("production_progress") or 0),
                             int(metrics_snapshot.get("production_progress") or 0)
@@ -4035,28 +4942,46 @@ def run_once(
                         _available_building_materials(advance_state)
                         - _available_building_materials(state_before),
                     )
-                    metrics_snapshot["ui_step_material_progress"] = ui_step_material_progress
-                if is_keystroke_mode and isinstance(current_ui_work, dict) and baseline_ui_work:
-                    ui_delta = metrics.ui_work_progress_delta(current_ui_work, baseline_ui_work)
+                    metrics_snapshot["ui_step_material_progress"] = (
+                        ui_step_material_progress
+                    )
+                if (
+                    is_keystroke_mode
+                    and isinstance(current_ui_work, dict)
+                    and baseline_ui_work
+                ):
+                    ui_delta = metrics.ui_work_progress_delta(
+                        current_ui_work, baseline_ui_work
+                    )
                     metrics_snapshot.update(ui_delta)
                     ui_total_work_progress = int(ui_delta.get("ui_work_progress") or 0)
-                    ui_total_excavation_progress = int(ui_delta.get("ui_excavation_progress") or 0)
-                    ui_step_work_progress = max(0, ui_total_work_progress - ui_last_work_progress)
+                    ui_total_excavation_progress = int(
+                        ui_delta.get("ui_excavation_progress") or 0
+                    )
+                    ui_step_work_progress = max(
+                        0, ui_total_work_progress - ui_last_work_progress
+                    )
                     ui_step_excavation_progress = max(
                         0,
                         ui_total_excavation_progress - ui_last_excavation_progress,
                     )
-                    ui_last_work_progress = max(ui_last_work_progress, ui_total_work_progress)
+                    ui_last_work_progress = max(
+                        ui_last_work_progress, ui_total_work_progress
+                    )
                     ui_last_excavation_progress = max(
                         ui_last_excavation_progress,
                         ui_total_excavation_progress,
                     )
                     metrics_snapshot["ui_step_work_progress"] = ui_step_work_progress
-                    metrics_snapshot["ui_step_excavation_progress"] = ui_step_excavation_progress
+                    metrics_snapshot["ui_step_excavation_progress"] = (
+                        ui_step_excavation_progress
+                    )
                     if int(ui_delta.get("ui_work_progress") or 0) > 0:
                         metrics_snapshot["score_provenance"] = "keystroke_ui_work_rect"
                         metrics_snapshot["gameplay_progress_eligible"] = True
-                        metrics_snapshot["ui_work_rect"] = current_ui_work.get("target_rect")
+                        metrics_snapshot["ui_work_rect"] = current_ui_work.get(
+                            "target_rect"
+                        )
                         metrics_snapshot["designation_progress"] = max(
                             int(metrics_snapshot.get("designation_progress") or 0),
                             int(ui_delta.get("ui_designation_progress") or 0),
@@ -4104,7 +5029,8 @@ def run_once(
                                 ui_target_mode == "starter"
                                 and ui_step_work_progress > 0
                                 and ui_workshop_blocked_at_work_progress is not None
-                                and ui_run_work_progress > ui_workshop_blocked_at_work_progress
+                                and ui_run_work_progress
+                                > ui_workshop_blocked_at_work_progress
                             ):
                                 ui_workshop_blocked_at_work_progress = None
                                 ui_workshop_target_blocked = False
@@ -4121,7 +5047,8 @@ def run_once(
                                 "target_step_succeeded": target_step_succeeded,
                                 "message": (
                                     "last UI action changed tracked tiles but did not acquire usable material"
-                                    if ui_target_mode == "material" and not target_step_succeeded
+                                    if ui_target_mode == "material"
+                                    and not target_step_succeeded
                                     else (
                                         "last action changed real workshop state or consumed production material"
                                         if made_state_progress
@@ -4149,13 +5076,19 @@ def run_once(
                     metrics_snapshot["ui_no_progress_streak"] = ui_no_progress_streak
                     metrics_snapshot["ui_target_generation"] = ui_target_generation
                     metrics_snapshot["ui_target_attempts"] = ui_target_attempts
-                    metrics_snapshot["ui_target_progress_seen"] = ui_target_progress_seen
+                    metrics_snapshot["ui_target_progress_seen"] = (
+                        ui_target_progress_seen
+                    )
                     metrics_snapshot["ui_run_work_progress"] = ui_run_work_progress
-                    metrics_snapshot["ui_run_excavation_progress"] = ui_run_excavation_progress
-                    metrics_snapshot["ui_run_material_progress"] = ui_run_material_progress
-                    metrics_snapshot[
-                        "ui_run_completed_workshop_tasks"
-                    ] = ui_run_completed_workshop_tasks
+                    metrics_snapshot["ui_run_excavation_progress"] = (
+                        ui_run_excavation_progress
+                    )
+                    metrics_snapshot["ui_run_material_progress"] = (
+                        ui_run_material_progress
+                    )
+                    metrics_snapshot["ui_run_completed_workshop_tasks"] = (
+                        ui_run_completed_workshop_tasks
+                    )
                     metrics_snapshot["ui_successful_targets"] = ui_successful_targets
                 utility_action = metrics.utility_action_progress(action, execute_result)
                 metrics_snapshot.update(utility_action)
@@ -4186,9 +5119,28 @@ def run_once(
                     governed_owned_buildings.update(
                         _governed_building_claims(action, execute_result)
                     )
-                    governed_completed_buildings.update(
-                        _governed_completed_owned_buildings(
-                            governed_owned_buildings,
+                    governed_owned_constructions.update(
+                        _governed_construction_claims(action, execute_result)
+                    )
+                    governed_completed_buildings = _governed_completed_owned_buildings(
+                        governed_owned_buildings,
+                        advance_state,
+                    )
+                    if action.get("type") == "FARM":
+                        farm_building_id = _int_or_none(
+                            result_payload.get("farm_building_id")
+                        )
+                        if (
+                            result_payload.get("ok") is True
+                            and int(result_payload.get("seasons_changed") or 0) > 0
+                            and farm_building_id in governed_completed_buildings
+                            and governed_owned_buildings.get(farm_building_id)
+                            == "FarmPlot"
+                        ):
+                            governed_operational_farm_ids.add(farm_building_id)
+                    governed_completed_constructions = (
+                        _governed_completed_owned_constructions(
+                            governed_owned_constructions,
                             advance_state,
                         )
                     )
@@ -4196,11 +5148,35 @@ def run_once(
                         governed_completed_buildings
                         - governed_completed_buildings_before_step
                     )
+                    newly_completed_owned_constructions = sorted(
+                        governed_completed_constructions
+                        - governed_completed_constructions_before_step
+                    )
                     owned_building_progress = _governed_owned_building_progress(
                         governed_owned_buildings,
                         governed_completed_buildings,
+                        evidence_complete=_governed_building_evidence_complete(
+                            advance_state
+                        ),
                     )
                     metrics_snapshot.update(owned_building_progress)
+                    (
+                        current_operational_farm_ids,
+                        operational_farm_evidence_complete,
+                    ) = (
+                        _current_governed_operational_farm_ids(
+                            governed_operational_farm_ids,
+                            governed_completed_buildings,
+                            governed_owned_buildings,
+                            advance_state,
+                        )
+                    )
+                    metrics_snapshot["governed_owned_operational_farm_plots"] = len(
+                        current_operational_farm_ids
+                    )
+                    metrics_snapshot[
+                        "governed_owned_operational_farm_evidence_complete"
+                    ] = operational_farm_evidence_complete
                     metrics_snapshot["governed_step_owned_completed_building_ids"] = (
                         newly_completed_owned_buildings
                     )
@@ -4209,9 +5185,6 @@ def run_once(
                     ]
                     metrics_snapshot["production_progress"] = owned_building_progress[
                         "governed_owned_production_progress"
-                    ]
-                    metrics_snapshot["complexity_progress"] = owned_building_progress[
-                        "governed_owned_complexity_progress"
                     ]
                     if governed_snapshot_rect is not None:
                         map_snapshot = read_map_snapshot(governed_snapshot_rect)
@@ -4242,13 +5215,14 @@ def run_once(
                         governed_completed_tiles - governed_completed_before_step
                     )
                     step_completed = sorted(
-                        governed_action_owned_keys
-                        & set(newly_completed_owned)
+                        governed_action_owned_keys & set(newly_completed_owned)
                     )
                     owned_delta = {
                         **governed_action_owned_delta,
                         "governed_step_completion_progress": len(step_completed),
-                        "governed_completed_tiles": [list(coord) for coord in step_completed],
+                        "governed_completed_tiles": [
+                            list(coord) for coord in step_completed
+                        ],
                     }
                     metrics_snapshot.update(owned_delta)
 
@@ -4280,18 +5254,41 @@ def run_once(
                     metrics_snapshot["governed_owned_observation_rects"] = len(
                         owned_observation_snapshots
                     )
-                    metrics_snapshot[
-                        "score_progress_provenance"
-                    ] = scoring.GOVERNED_SCORE_PROGRESS_PROVENANCE
+                    owned_room_progress = _governed_owned_room_metrics(
+                        advance_state,
+                        completed_excavation=governed_completed_tiles,
+                        completed_constructions=governed_completed_constructions,
+                        owned_buildings=governed_owned_buildings,
+                        completed_buildings=governed_completed_buildings,
+                        building_evidence_complete=_governed_building_evidence_complete(
+                            advance_state
+                        ),
+                    )
+                    metrics_snapshot.update(owned_room_progress)
+                    metrics_snapshot["complexity_progress"] = owned_room_progress[
+                        "governed_owned_complexity_progress"
+                    ]
+                    owned_output_progress = _update_governed_owned_output_progress(
+                        action=action,
+                        result=result_payload,
+                        state_before=state_before,
+                        advance_state=advance_state,
+                        attributed_jobs=governed_attributed_order_jobs,
+                        last_values=governed_order_last_values,
+                        output_units=governed_owned_output_units,
+                        attribution_health=governed_output_attribution_health,
+                    )
+                    metrics_snapshot.update(owned_output_progress)
+                    metrics_snapshot["score_progress_provenance"] = (
+                        scoring.GOVERNED_SCORE_PROGRESS_PROVENANCE
+                    )
                     interaction_only = action.get("type") == "INTERACT"
                     metrics_snapshot["score_provenance"] = (
                         "dfhack_governed_interaction_only"
                         if interaction_only
                         else "dfhack_governed_observed_state_action_owned_progress"
                     )
-                    metrics_snapshot.update(
-                        fort_structure_score_metrics(advance_state)
-                    )
+                    metrics_snapshot.update(fort_structure_score_metrics(advance_state))
                     gameplay_proof = _governed_gameplay_proof(
                         action=action,
                         execute_result=execute_result,
@@ -4339,7 +5336,37 @@ def run_once(
                         "source": "job_metrics_exact_building_id_and_native_stage",
                         "completed_buildings": owned_building_completion_evidence,
                     }
-                    if owned_completion_evidence or owned_building_completion_evidence:
+                    owned_construction_completion_evidence = [
+                        {
+                            "coordinate": list(coordinate),
+                            **governed_owned_constructions[coordinate],
+                        }
+                        for coordinate in newly_completed_owned_constructions
+                    ]
+                    gameplay_proof["owned_construction_completion_observation"] = {
+                        "source": "fort_metrics_exact_world_construction_coordinate",
+                        "completed_constructions": owned_construction_completion_evidence,
+                    }
+                    owned_output_completion_evidence = dict(
+                        owned_output_progress.get(
+                            "governed_step_owned_output_units_by_job"
+                        )
+                        or {}
+                    )
+                    gameplay_proof["owned_output_completion_observation"] = {
+                        "source": (
+                            "pristine_seed_exact_order_ids_and_positive_output_deltas"
+                        ),
+                        "completed_output_units_by_job": (
+                            owned_output_completion_evidence
+                        ),
+                    }
+                    if (
+                        owned_completion_evidence
+                        or owned_building_completion_evidence
+                        or owned_construction_completion_evidence
+                        or owned_output_completion_evidence
+                    ):
                         gameplay_proof.update(
                             {
                                 "ok": True,
@@ -4360,6 +5387,8 @@ def run_once(
                     if (
                         governed_completed_tiles
                         or governed_completed_buildings
+                        or governed_completed_constructions
+                        or governed_owned_output_units
                         or _governed_durable_helper_progress(action, result_payload)
                     ):
                         governed_score_progress_seen = True
@@ -4378,6 +5407,8 @@ def run_once(
                             and (
                                 owned_completion_evidence
                                 or owned_building_completion_evidence
+                                or owned_construction_completion_evidence
+                                or owned_output_completion_evidence
                             )
                         ),
                     }
@@ -4410,9 +5441,9 @@ def run_once(
                         state_before=state_before,
                         advance_state=advance_state,
                     )
-                    metrics_snapshot[
-                        "keystroke_step_score_progress"
-                    ] = keystroke_step_score_progress
+                    metrics_snapshot["keystroke_step_score_progress"] = (
+                        keystroke_step_score_progress
+                    )
 
                 score_elapsed_ticks = elapsed_ticks_total
                 if assisted_dfhack_action_seen:
@@ -4427,27 +5458,31 @@ def run_once(
                 ):
                     metrics_snapshot["observed_run_elapsed_ticks"] = elapsed_ticks_total
                     metrics_snapshot["score_duration_blocked"] = True
-                    metrics_snapshot[
-                        "score_provenance"
-                    ] = "dfhack_governed_no_gameplay_progress_yet"
+                    metrics_snapshot["score_provenance"] = (
+                        "dfhack_governed_no_gameplay_progress_yet"
+                    )
                     score_elapsed_ticks = 0
                 elif backend_name == "dfhack" and is_governed_dfhack_mode:
                     metrics_snapshot["score_duration_blocked"] = False
                 elif is_keystroke_mode and not keystroke_gameplay_progress_seen:
                     metrics_snapshot["observed_run_elapsed_ticks"] = elapsed_ticks_total
                     metrics_snapshot["score_duration_blocked"] = True
-                    metrics_snapshot["score_provenance"] = "keystroke_no_gameplay_progress_yet"
+                    metrics_snapshot["score_provenance"] = (
+                        "keystroke_no_gameplay_progress_yet"
+                    )
                     score_elapsed_ticks = 0
                 elif is_keystroke_mode:
                     if keystroke_step_score_progress:
                         scoreable_elapsed_ticks = elapsed_ticks_total
                         metrics_snapshot["score_duration_blocked"] = False
                     else:
-                        metrics_snapshot["observed_run_elapsed_ticks"] = elapsed_ticks_total
+                        metrics_snapshot["observed_run_elapsed_ticks"] = (
+                            elapsed_ticks_total
+                        )
                         metrics_snapshot["score_duration_blocked"] = True
-                        metrics_snapshot[
-                            "score_provenance"
-                        ] = "keystroke_no_current_gameplay_progress"
+                        metrics_snapshot["score_provenance"] = (
+                            "keystroke_no_current_gameplay_progress"
+                        )
                     score_elapsed_ticks = scoreable_elapsed_ticks
                 metrics_snapshot["score_version"] = scoring.SCORE_VERSION
                 metrics_snapshot["run_elapsed_ticks"] = score_elapsed_ticks
@@ -4505,7 +5540,9 @@ def run_once(
                     if snapshot_rect and map_snapshot is None:
                         map_snapshot = read_map_snapshot(snapshot_rect)
                     if map_snapshot is not None:
-                        publish_event(step, "map_snapshot", {"map_snapshot": map_snapshot}, events)
+                        publish_event(
+                            step, "map_snapshot", {"map_snapshot": map_snapshot}, events
+                        )
                     if is_keystroke_mode:
                         gameplay_proof = _gameplay_proof(
                             action=action,
@@ -4623,7 +5660,9 @@ def run_once(
                 if interaction_audit is not None:
                     record_line["interaction"] = interaction_audit
                 if interaction_screen_after:
-                    record_line["screen_text_after_interaction"] = interaction_screen_after
+                    record_line["screen_text_after_interaction"] = (
+                        interaction_screen_after
+                    )
                 if degraded_tick is not None:
                     record_line["tick_degraded"] = degraded_tick
                 if terminal_reason is not None:
@@ -4669,7 +5708,18 @@ def run_once(
                     step=terminal_failure_step,
                 )
 
-        summary = summarize(trace_path)
+        summary = summarize(
+            trace_path,
+            g7_gate_version=(
+                3
+                if evaluation_protocol == P1_PROTOCOL_V3
+                else 4
+                if evaluation_protocol == P1_PROTOCOL_V4
+                else 5
+                if evaluation_protocol == P1_PROTOCOL
+                else None
+            ),
+        )
         summary.model = model
         summary.backend = backend_name
         summary.evaluation_protocol = evaluation_protocol
@@ -4678,28 +5728,69 @@ def run_once(
             for key, value in p1_summary_metadata(
                 model=model,
                 fort_gym_commit=getattr(record, "git_sha", None),
+                measurement_calibration_scenario=measurement_calibration_scenario,
             ).items():
                 setattr(summary, key, value)
             summary.seed_attestation = seed_attestation
+            summary.measurement_calibration_fixture = measurement_calibration_fixture
             summary.integrity_attestation = p1_integrity_attestation(
                 terminal_failure_reason,
                 run_failed=run_failed,
             )
-            summary.usage = enrich_openrouter_usage(
-                summary.usage,
-                api_key=settings.OPENROUTER_API_KEY,
-                base_url=settings.OPENROUTER_BASE_URL,
-            )
-            summary.model_digest = resolved_model_digest(
-                model=model,
-                usage=summary.usage,
-            )
+            if measurement_calibration_scenario is None:
+                summary.usage = enrich_openrouter_usage(
+                    summary.usage,
+                    api_key=settings.OPENROUTER_API_KEY,
+                    base_url=settings.OPENROUTER_BASE_URL,
+                )
+                summary.model_digest = resolved_model_digest(
+                    model=model,
+                    usage=summary.usage,
+                )
             summary.public_eligibility = (
                 "eligible"
-                if seed_attestation.get("eligible") is True
+                if measurement_calibration_scenario is None
+                and p1_measurement_calibration_is_complete()
+                and seed_attestation.get("eligible") is True
                 and summary.integrity_attestation.get("status") == "pass"
+                and p1_evaluation_is_publishable(
+                    evaluation_validity=summary.evaluation_validity,
+                    provenance_completeness=summary.provenance_completeness,
+                )
                 and p1_usage_is_publishable(model=model, usage=summary.usage)
                 else "ineligible"
+            )
+            summary.terminal_class = str(
+                summary.integrity_attestation.get("terminal_class")
+                or "invalid_execution"
+            )
+            summary.task_verdict = p1_task_verdict(
+                gameplay_outcome=summary.gameplay_outcome,
+                terminal_class=summary.terminal_class,
+            )
+            summary.publication_status = {
+                "status": summary.public_eligibility,
+                "provider_telemetry_complete": summary.usage.get(
+                    "generation_telemetry_complete"
+                )
+                is True,
+                "cache_read_rate": summary.usage.get("cache_read_rate"),
+                "cache_read_tokens": summary.usage.get("cached_tokens"),
+                "cache_write_tokens": summary.usage.get("cache_write_tokens"),
+                "cache_affects_eligibility": False,
+                "evaluation_validity": summary.evaluation_validity.get("status"),
+                "gameplay_outcome": summary.gameplay_outcome.get("status"),
+                "provenance_completeness": summary.provenance_completeness.get(
+                    "status"
+                ),
+            }
+            provenance = summary.g7.get("provenance_completeness")
+            if isinstance(provenance, dict):
+                observed = provenance.get("observed")
+                if isinstance(observed, dict):
+                    observed["model_usage"] = summary.usage
+            summary.provenance_completeness = dict(
+                summary.g7.get("provenance_completeness") or {}
             )
         if scenario:
             summary.scenario = scenario
@@ -4710,7 +5801,9 @@ def run_once(
                 summary=summary_payload,
             )
         summary_path = trace_path.with_name("summary.json")
-        summary_path.write_text(json.dumps(_dump_model(summary), indent=2), encoding="utf-8")
+        summary_path.write_text(
+            json.dumps(_dump_model(summary), indent=2), encoding="utf-8"
+        )
         if registry:
             registry.set_summary(run_identifier, _dump_model(summary))
             registry.append_event(

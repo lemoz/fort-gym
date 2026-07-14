@@ -108,8 +108,8 @@ local function building_is_complete(bld)
   end)
   stage = ok and tonumber(stage) or nil
   max_stage = ok and tonumber(max_stage) or nil
-  return ok and stage ~= nil and max_stage ~= nil and max_stage > 0
-    and stage >= max_stage
+  local read_ok = ok and stage ~= nil and max_stage ~= nil and max_stage > 0
+  return read_ok and stage >= max_stage, read_ok
 end
 
 -- furniture a dwarf can stand on/next to belongs to the room's interior; a
@@ -124,14 +124,12 @@ end
 
 -- collect player buildings with their footprints, grouped for classification
 local buildings = {}
+local building_scan_complete = true
 for _, bld in ipairs(df.global.world.buildings.all) do
-  if building_is_complete(bld) then
+  local is_complete, stage_read_ok = building_is_complete(bld)
+  if not stage_read_ok then building_scan_complete = false end
+  if is_complete then
     local ok, entry = pcall(function()
-      for fx = bld.x1, bld.x2 do
-        for fy = bld.y1, bld.y2 do
-          completed_building_tiles[fx .. ',' .. fy .. ',' .. bld.z] = true
-        end
-      end
       local t = bld:getType()
       local kind = nil
       if t == df.building_type.Bed then kind = 'bed'
@@ -141,13 +139,22 @@ for _, bld in ipairs(df.global.world.buildings.all) do
       elseif t == df.building_type.Workshop then kind = 'workshop'
       end
       if not kind then return nil end
+      -- Only measured room fixtures seal a flood-fill boundary. Walkable or
+      -- unclassified buildings such as farm plots must not become fake walls.
+      for fx = bld.x1, bld.x2 do
+        for fy = bld.y1, bld.y2 do
+          completed_building_tiles[fx .. ',' .. fy .. ',' .. bld.z] = true
+        end
+      end
       return {
+        id = bld.id,
         kind = kind,
         x1 = bld.x1, y1 = bld.y1, x2 = bld.x2, y2 = bld.y2, z = bld.z,
         cx = bld.centerx, cy = bld.centery,
       }
     end)
-    if ok and entry then
+    if not ok then building_scan_complete = false
+    elseif entry then
       table.insert(buildings, entry)
       if INTERIOR_FURNITURE[entry.kind] then
         for fx = entry.x1, entry.x2 do
@@ -160,23 +167,38 @@ for _, bld in ipairs(df.global.world.buildings.all) do
   end
 end
 
+local raw_construction_records = 0
 local constructions = 0
 local construction_tiles = {}
-pcall(function()
-  constructions = #df.global.world.constructions
-  -- surface the layout so the agent can see gaps in its own walls; cap the
-  -- list and skip the mirrored above-z entries built walls create
-  local seen_z = {}
-  for _, bld in ipairs(df.global.world.buildings.all) do
-    pcall(function() seen_z[bld.z] = true end)
-  end
+local construction_details = {}
+local completed_construction_tiles = {}
+local construction_tiles_complete = true
+local construction_scan_ok = pcall(function()
+  raw_construction_records = #df.global.world.constructions
+  -- Verify each record against the current native tile shape. This removes
+  -- mirrored/stale records without a lossy z-level heuristic and preserves the
+  -- construction kind needed for exact owned-claim matching.
   for _, c in ipairs(df.global.world.constructions) do
-    if #construction_tiles >= 80 then break end
-    if next(seen_z) == nil or seen_z[c.pos.z] then
-      table.insert(construction_tiles, { c.pos.x, c.pos.y, c.pos.z })
+    local shape = tile_shape(c.pos.x, c.pos.y, c.pos.z)
+    local kind = nil
+    if shape == WALL_SHAPE then kind = 'Wall'
+    elseif shape == FLOOR_SHAPE then kind = 'Floor'
+    elseif shape == nil then construction_tiles_complete = false
+    end
+    if kind then
+      local key = c.pos.x .. ',' .. c.pos.y .. ',' .. c.pos.z
+      if not completed_construction_tiles[key] then
+        completed_construction_tiles[key] = true
+        table.insert(construction_tiles, { c.pos.x, c.pos.y, c.pos.z })
+        table.insert(construction_details, {
+          x = c.pos.x, y = c.pos.y, z = c.pos.z, kind = kind,
+        })
+      end
     end
   end
+  constructions = #construction_tiles
 end)
+construction_tiles_complete = construction_scan_ok and construction_tiles_complete
 
 -- Queued wall/floor constructions: Construction-type buildings a dwarf has
 -- not finished yet (once built they leave buildings.all and become tiletype
@@ -201,14 +223,15 @@ pcall(function()
   end
 end)
 
--- flood fill open floor from seeds; doors and buildings are boundaries that
--- still close a room; open floor beyond MAX_COMPONENT_TILES means "leaky"
--- (connected to the open map) and therefore not enclosed.
+-- Flood-fill open floor from seeds. Doors and buildings close boundaries.
+-- Oversized components are sensor-incomplete, not evidence of an open room.
+local component_scan_truncated = false
 local function flood(seed_x, seed_y, seed_z)
   local visited = {}
   local queue = { { seed_x, seed_y } }
   local tiles = {}
   local enclosed = true
+  local truncated = false
   local function key(x, y) return x .. ',' .. y end
   visited[key(seed_x, seed_y)] = true
   while #queue > 0 do
@@ -224,7 +247,8 @@ local function flood(seed_x, seed_y, seed_z)
       -- beds/tables/chairs are part of the room they furnish
       table.insert(tiles, { x, y })
       if #tiles > MAX_COMPONENT_TILES then
-        enclosed = false
+        component_scan_truncated = true
+        truncated = true
         break
       end
       for _, d in ipairs({ { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }) do
@@ -241,7 +265,8 @@ local function flood(seed_x, seed_y, seed_z)
     elseif stable_interior_shape(shape, material) and not hidden then
       table.insert(tiles, { x, y })
       if #tiles > MAX_COMPONENT_TILES then
-        enclosed = false
+        component_scan_truncated = true
+        truncated = true
         break
       end
       for _, d in ipairs({ { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }) do
@@ -256,23 +281,68 @@ local function flood(seed_x, seed_y, seed_z)
       enclosed = false
     end
   end
-  return tiles, enclosed
+  return tiles, enclosed, truncated
 end
 
 local function point_in_component(component_lookup, x, y)
   return component_lookup[x .. ',' .. y] == true
 end
 
+local function room_accessibility(open_tiles, open_tile_count)
+  -- Accessibility is a final-state native path query, not an inference from a
+  -- door count. A room with no unoccupied interior tile is not usable.
+  if #open_tiles == 0 then return false, true, 'no_open_interior_tile' end
+  local citizen_seen = false
+  local citizen_classification_failed = false
+  local query_seen = false
+  local query_failed = false
+  for _, unit in ipairs(df.global.world.units.active) do
+    local ok_citizen, is_citizen = pcall(function()
+      return dfhack.units.isCitizen(unit)
+        and not dfhack.units.isDead(unit)
+        and not (unit.flags1 and unit.flags1.caged)
+    end)
+    if not ok_citizen then citizen_classification_failed = true end
+    if ok_citizen and is_citizen and unit.pos then
+      citizen_seen = true
+      for _, tile in ipairs(open_tiles) do
+        local target = { x = tile[1], y = tile[2], z = tile[3] }
+        local ok_path, connected = pcall(function()
+          return dfhack.maps.canWalkBetween(
+            { x = unit.pos.x, y = unit.pos.y, z = unit.pos.z },
+            target
+          )
+        end)
+        if ok_path then
+          query_seen = true
+          if connected then return true, true, 'citizen_path_confirmed' end
+        else
+          query_failed = true
+        end
+      end
+    end
+  end
+  if not citizen_seen then return false, false, 'no_live_citizen_for_path_query' end
+  if query_failed or not query_seen then return false, false, 'path_query_incomplete' end
+  if citizen_classification_failed then
+    return false, false, 'citizen_classification_incomplete'
+  end
+  if open_tile_count > #open_tiles then
+    return false, false, 'open_tile_samples_truncated'
+  end
+  return false, true, 'no_citizen_path'
+end
+
 local spaces = {}
 local seen_seed = {}
+local spaces_truncated = false
 for _, bld in ipairs(buildings) do
-  if #spaces >= MAX_SPACES then break end
   -- seed from tiles adjacent to the building footprint
   for sx = bld.x1 - 1, bld.x2 + 1 do
     for sy = bld.y1 - 1, bld.y2 + 1 do
       local inside_fp = sx >= bld.x1 and sx <= bld.x2 and sy >= bld.y1 and sy <= bld.y2
       local seed_key = sx .. ',' .. sy .. ',' .. bld.z
-      if not inside_fp and not seen_seed[seed_key] and #spaces < MAX_SPACES then
+      if not inside_fp and not seen_seed[seed_key] and not spaces_truncated then
         seen_seed[seed_key] = true
         local shape, hidden, material = tile_shape(sx, sy, bld.z)
         local seedable = interior_furniture_at(sx, sy, bld.z)
@@ -280,25 +350,49 @@ for _, bld in ipairs(buildings) do
             and not hidden
             and not completed_building_at(sx, sy, bld.z))
         if seedable then
-          local tiles, enclosed = flood(sx, sy, bld.z)
-          if enclosed and #tiles > 0 then
+          local tiles, enclosed, component_truncated = flood(sx, sy, bld.z)
+          if enclosed and not component_truncated and #tiles > 0 then
             local lookup = {}
             for _, t in ipairs(tiles) do
               lookup[t[1] .. ',' .. t[2]] = true
               seen_seed[t[1] .. ',' .. t[2] .. ',' .. bld.z] = true
             end
             local contents = { bed = 0, table = 0, chair = 0, door = 0, workshop = 0 }
+            local touching_building_ids = {}
+            local touching_building_kinds = {}
+            local boundary_building_ids = {}
+            local boundary_door_ids = {}
             for _, other in ipairs(buildings) do
               if other.z == bld.z then
-                -- a building belongs to the space when its footprint touches it
+                -- Interior furniture overlaps the component. Boundary
+                -- buildings must occupy an exact four-neighbor boundary tile;
+                -- diagonal proximity is not room membership or door closure.
                 local touches = false
-                for ox = other.x1 - 1, other.x2 + 1 do
-                  for oy = other.y1 - 1, other.y2 + 1 do
-                    if point_in_component(lookup, ox, oy) then touches = true end
+                local boundary_touches = false
+                for ox = other.x1, other.x2 do
+                  for oy = other.y1, other.y2 do
+                    if point_in_component(lookup, ox, oy) then
+                      touches = true
+                    else
+                      for _, d in ipairs({ { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }) do
+                        if point_in_component(lookup, ox + d[1], oy + d[2]) then
+                          touches = true
+                          boundary_touches = true
+                        end
+                      end
+                    end
                   end
                 end
                 if touches then
                   contents[other.kind] = contents[other.kind] + 1
+                  table.insert(touching_building_ids, other.id)
+                  table.insert(touching_building_kinds, other.kind)
+                end
+                if boundary_touches then
+                  table.insert(boundary_building_ids, other.id)
+                  if other.kind == 'door' then
+                    table.insert(boundary_door_ids, other.id)
+                  end
                 end
               end
             end
@@ -311,8 +405,14 @@ for _, bld in ipairs(buildings) do
             local min_x, min_y, max_x, max_y = nil, nil, nil, nil
             local open_tiles = {}
             local open_tile_count = 0
+            local interior_tiles = {}
+            local boundary_construction_tiles = {}
+            local boundary_seen = {}
+            local all_boundary_seen = {}
+            local boundary_tile_count = 0
             for _, tile in ipairs(tiles) do
               local tx, ty = tile[1], tile[2]
+              table.insert(interior_tiles, { tx, ty, bld.z })
               min_x = min_x and math.min(min_x, tx) or tx
               min_y = min_y and math.min(min_y, ty) or ty
               max_x = max_x and math.max(max_x, tx) or tx
@@ -323,21 +423,65 @@ for _, bld in ipairs(buildings) do
                   table.insert(open_tiles, { tx, ty, bld.z })
                 end
               end
+              for _, d in ipairs({ { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }) do
+                local bx, by = tx + d[1], ty + d[2]
+                if not point_in_component(lookup, bx, by) then
+                  local boundary_key = bx .. ',' .. by .. ',' .. bld.z
+                  if not all_boundary_seen[boundary_key] then
+                    all_boundary_seen[boundary_key] = true
+                    boundary_tile_count = boundary_tile_count + 1
+                  end
+                  if completed_construction_tiles[boundary_key]
+                      and not boundary_seen[boundary_key] then
+                    boundary_seen[boundary_key] = true
+                    table.insert(boundary_construction_tiles, { bx, by, bld.z })
+                  end
+                end
+              end
             end
             -- A one-tile furnishing pocket is not a usable room. Furniture is
             -- still traversable interior, so fully furnished multi-tile rooms
             -- remain valid even when no furniture-free floor remains.
             if #tiles >= MIN_ROOM_INTERIOR_TILES then
-              table.insert(spaces, {
+              table.sort(touching_building_ids)
+              table.sort(boundary_building_ids)
+              table.sort(boundary_door_ids)
+              local accessible, accessibility_complete, accessibility_reason =
+                room_accessibility(open_tiles, open_tile_count)
+              local signature = table.concat({
+                tostring(bld.z), tostring(min_x), tostring(min_y),
+                tostring(max_x), tostring(max_y), tostring(#tiles),
+                table.concat(touching_building_ids, ','),
+              }, ':')
+              local space = {
+                signature = signature,
                 z = bld.z,
                 tiles = #tiles,
                 kind = classify(),
                 contents = contents,
                 bounds = { min_x, min_y, max_x, max_y, bld.z },
+                interior_tiles = interior_tiles,
+                interior_tiles_complete = true,
+                boundary_construction_tiles = boundary_construction_tiles,
+                boundary_construction_tiles_complete = true,
+                boundary_tile_count = boundary_tile_count,
+                boundary_tiles_complete = true,
+                touching_building_ids = touching_building_ids,
+                touching_building_kinds = touching_building_kinds,
+                boundary_building_ids = boundary_building_ids,
+                boundary_door_ids = boundary_door_ids,
                 open_tiles = open_tiles,
                 open_tile_count = open_tile_count,
                 open_tiles_truncated = open_tile_count > #open_tiles,
-              })
+                accessible = accessible,
+                accessibility_evidence_complete = accessibility_complete,
+                accessibility_reason = accessibility_reason,
+              }
+              if #spaces < MAX_SPACES then
+                table.insert(spaces, space)
+              else
+                spaces_truncated = true
+              end
             end
           end
         end
@@ -842,8 +986,15 @@ print(json.encode({
   enclosed_spaces = #spaces,
   functional_rooms = functional,
   spaces = spaces,
+  spaces_limit = MAX_SPACES,
+  spaces_truncated = spaces_truncated,
+  component_scan_truncated = component_scan_truncated,
+  building_scan_complete = building_scan_complete,
+  raw_construction_records = raw_construction_records,
   constructions = constructions,
   construction_tiles = construction_tiles,
+  construction_details = construction_details,
+  construction_tiles_complete = construction_tiles_complete,
   pending_constructions = pending_constructions,
   nearby_trees = nearby_trees,
   player_buildings = #buildings,

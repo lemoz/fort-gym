@@ -46,7 +46,9 @@ class RunInfo(BaseModel):
     """Metadata about a single run instance."""
 
     id: str
-    status: Literal["pending", "running", "paused", "stopped", "completed", "failed"] = "pending"
+    status: Literal[
+        "pending", "running", "paused", "stopped", "completed", "failed"
+    ] = "pending"
     started_at: Optional[datetime] = None
     finished_at: Optional[datetime] = None
     backend: BackendType = "mock"
@@ -152,9 +154,11 @@ class PublicModelResult(BaseModel):
     task_verdict: Optional[str] = None
     g7_outcomes: Optional[Dict[str, int]] = None
     run_count: int
-    mean_score: float
-    best_score: float
+    mean_score: Optional[float] = None
+    best_score: Optional[float] = None
     best_token: Optional[str] = None
+    representative_token: Optional[str] = None
+    result_kind: Optional[Literal["outcome_vector"]] = None
 
 
 class PublicComparisonGroup(BaseModel):

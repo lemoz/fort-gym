@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 
 from .protocol import EVALUATION_PROTOCOL_PATTERN
-from .rubric import evaluate_trace_records
+from .rubric import evaluate_trace_records, evaluate_trace_records_v2
 from .scoring import (
     GOVERNED_SCORE_PROGRESS_PROVENANCE,
     SCORE_VERSION,
@@ -53,6 +53,21 @@ class RunSummary(BaseModel):
     governed_owned_utility_progress: float = 0.0
     governed_owned_production_progress: int = 0
     governed_owned_complexity_progress: float = 0.0
+    governed_owned_completed_beds: Optional[int] = None
+    governed_owned_completed_farm_plots: Optional[int] = None
+    governed_owned_completed_stills: Optional[int] = None
+    governed_owned_operational_farm_plots: Optional[int] = None
+    governed_owned_operational_farm_evidence_complete: Optional[bool] = None
+    governed_owned_production_capacity: Optional[int] = None
+    governed_owned_unique_construction_tiles: Optional[int] = None
+    governed_owned_accessible_layout_rooms: Optional[int] = None
+    governed_owned_accessible_functional_rooms: Optional[int] = None
+    governed_owned_room_evidence_complete: Optional[bool] = None
+    governed_owned_layout_room_lower_bound_proven: Optional[bool] = None
+    governed_owned_building_evidence_complete: Optional[bool] = None
+    governed_owned_output_units: Optional[int] = None
+    governed_owned_output_units_by_job: Optional[Dict[str, int]] = None
+    governed_owned_output_evidence_complete: Optional[bool] = None
     score_progress_provenance: Optional[str] = None
     utility_progress: float = 0.0
     production_progress: int = 0
@@ -107,6 +122,11 @@ class RunSummary(BaseModel):
     usage: Dict[str, Any] = Field(default_factory=dict)
     g7: Dict[str, Any] = Field(default_factory=dict)
     task_verdict: Optional[str] = None
+    evaluation_validity: Dict[str, Any] = Field(default_factory=dict)
+    gameplay_outcome: Dict[str, Any] = Field(default_factory=dict)
+    provenance_completeness: Dict[str, Any] = Field(default_factory=dict)
+    terminal_class: Optional[str] = None
+    publication_status: Dict[str, Any] = Field(default_factory=dict)
     public_eligibility: Optional[str] = None
     public_label: Optional[str] = None
     seed_attestation: Dict[str, Any] = Field(default_factory=dict)
@@ -124,6 +144,8 @@ class RunSummary(BaseModel):
     fort_gym_commit: Optional[str] = None
     df_version: Optional[str] = None
     evaluator_version: Optional[str] = None
+    measurement_calibration_scenario: Optional[str] = None
+    measurement_calibration_fixture: Dict[str, Any] = Field(default_factory=dict)
 
 
 def _model_dump(model: BaseModel) -> Dict[str, Any]:
@@ -151,6 +173,34 @@ def _to_float(value: Any, default: float = 0.0) -> float:
         return default
 
 
+def _strict_nonnegative_int_or_none(value: Any) -> int | None:
+    """Parse an exact nonnegative sensor count without truncation or defaults."""
+
+    if isinstance(value, bool) or value is None:
+        return None
+    if isinstance(value, int):
+        return value if value >= 0 else None
+    if isinstance(value, float):
+        return int(value) if value.is_integer() and value >= 0 else None
+    if isinstance(value, str):
+        stripped = value.strip()
+        if stripped.isdigit():
+            return int(stripped)
+    return None
+
+
+def _strict_count_mapping_or_none(value: Any) -> Dict[str, int] | None:
+    if not isinstance(value, dict):
+        return None
+    parsed: Dict[str, int] = {}
+    for key, raw_count in value.items():
+        count = _strict_nonnegative_int_or_none(raw_count)
+        if not isinstance(key, str) or not key or count is None:
+            return None
+        parsed[key] = count
+    return parsed
+
+
 def _strict_score_version(value: Any, *, step: Any, surface: str) -> int:
     if type(value) is not int or value <= 0:
         raise ValueError(
@@ -160,7 +210,7 @@ def _strict_score_version(value: Any, *, step: Any, surface: str) -> int:
     return value
 
 
-def summarize(trace_path: Path) -> RunSummary:
+def summarize(trace_path: Path, *, g7_gate_version: int | None = None) -> RunSummary:
     """Produce a run summary without crossing scoring-era boundaries."""
 
     if not trace_path.exists():
@@ -196,6 +246,21 @@ def summarize(trace_path: Path) -> RunSummary:
     governed_owned_utility_progress = 0.0
     governed_owned_production_progress = 0
     governed_owned_complexity_progress = 0.0
+    governed_owned_completed_beds: Optional[int] = None
+    governed_owned_completed_farm_plots: Optional[int] = None
+    governed_owned_completed_stills: Optional[int] = None
+    governed_owned_operational_farm_plots: Optional[int] = None
+    governed_owned_operational_farm_evidence_complete: Optional[bool] = None
+    governed_owned_production_capacity: Optional[int] = None
+    governed_owned_unique_construction_tiles: Optional[int] = None
+    governed_owned_accessible_layout_rooms: Optional[int] = None
+    governed_owned_accessible_functional_rooms: Optional[int] = None
+    governed_owned_room_evidence_complete: Optional[bool] = None
+    governed_owned_layout_room_lower_bound_proven: Optional[bool] = None
+    governed_owned_building_evidence_complete: Optional[bool] = None
+    governed_owned_output_units: Optional[int] = None
+    governed_owned_output_units_by_job: Optional[Dict[str, int]] = None
+    governed_owned_output_evidence_complete: Optional[bool] = None
     utility_progress = 0.0
     production_progress = 0
     complexity_progress = 0.0
@@ -256,11 +321,17 @@ def summarize(trace_path: Path) -> RunSummary:
 
             step = record.get("step")
             if "metrics" in record and not isinstance(record.get("metrics"), dict):
-                raise ValueError(f"trace row {step!r} has invalid metrics surface; expected object")
+                raise ValueError(
+                    f"trace row {step!r} has invalid metrics surface; expected object"
+                )
             if "score" in record and not isinstance(record.get("score"), dict):
-                raise ValueError(f"trace row {step!r} has invalid score surface; expected object")
+                raise ValueError(
+                    f"trace row {step!r} has invalid score surface; expected object"
+                )
             if "events" in record and not isinstance(record.get("events"), list):
-                raise ValueError(f"trace row {step!r} has invalid events surface; expected list")
+                raise ValueError(
+                    f"trace row {step!r} has invalid events surface; expected list"
+                )
             metrics_snapshot = record.get("metrics") or {}
             score_payload = record.get("score") or {}
             execute_payload = record.get("execute") or {}
@@ -269,14 +340,18 @@ def summarize(trace_path: Path) -> RunSummary:
 
             marker_surfaces = [("score_version", record, "score_version")]
             if isinstance(record.get("metrics"), dict):
-                marker_surfaces.append(("metrics.score_version", metrics_snapshot, "score_version"))
+                marker_surfaces.append(
+                    ("metrics.score_version", metrics_snapshot, "score_version")
+                )
             if isinstance(record.get("score"), dict):
                 marker_surfaces.append(("score.version", score_payload, "version"))
             for index, event in enumerate(record.get("events", []) or []):
                 if not isinstance(event, dict) or event.get("type") != "score":
                     continue
                 data = event.get("data") if isinstance(event.get("data"), dict) else {}
-                marker_surfaces.append((f"events[{index}].data.version", data, "version"))
+                marker_surfaces.append(
+                    (f"events[{index}].data.version", data, "version")
+                )
 
             for surface, container, key in marker_surfaces:
                 if key not in container:
@@ -322,8 +397,12 @@ def summarize(trace_path: Path) -> RunSummary:
                 steps_seen = step
 
             if "score_duration_blocked" in metrics_snapshot:
-                score_duration_blocked = metrics_snapshot.get("score_duration_blocked") is True
-            time_tick = metrics_snapshot.get("time") or metrics_snapshot.get("time_tick")
+                score_duration_blocked = (
+                    metrics_snapshot.get("score_duration_blocked") is True
+                )
+            time_tick = metrics_snapshot.get("time") or metrics_snapshot.get(
+                "time_tick"
+            )
             if time_tick is not None:
                 time_value = _to_int(time_tick, default=last_time_tick or 0)
                 if first_time_tick is None:
@@ -344,9 +423,13 @@ def summarize(trace_path: Path) -> RunSummary:
 
             elapsed = metrics_snapshot.get("run_elapsed_ticks")
             if elapsed is not None:
-                max_elapsed_ticks = max(max_elapsed_ticks, _to_int(elapsed, default=max_elapsed_ticks))
+                max_elapsed_ticks = max(
+                    max_elapsed_ticks, _to_int(elapsed, default=max_elapsed_ticks)
+                )
 
-            work_progress = max(work_progress, _to_int(metrics_snapshot.get("work_progress")))
+            work_progress = max(
+                work_progress, _to_int(metrics_snapshot.get("work_progress"))
+            )
             designation_progress = max(
                 designation_progress,
                 _to_int(metrics_snapshot.get("designation_progress")),
@@ -370,7 +453,9 @@ def summarize(trace_path: Path) -> RunSummary:
                 )
                 governed_owned_designation_progress = max(
                     governed_owned_designation_progress,
-                    _to_int(metrics_snapshot.get("governed_owned_designation_progress")),
+                    _to_int(
+                        metrics_snapshot.get("governed_owned_designation_progress")
+                    ),
                 )
                 governed_owned_utility_progress = max(
                     governed_owned_utility_progress,
@@ -382,8 +467,62 @@ def summarize(trace_path: Path) -> RunSummary:
                 )
                 governed_owned_complexity_progress = max(
                     governed_owned_complexity_progress,
-                    _to_float(metrics_snapshot.get("governed_owned_complexity_progress")),
+                    _to_float(
+                        metrics_snapshot.get("governed_owned_complexity_progress")
+                    ),
                 )
+                if metrics_snapshot.get("governed_owned_completed_beds") is not None:
+                    governed_owned_completed_beds = _to_int(
+                        metrics_snapshot.get("governed_owned_completed_beds")
+                    )
+                if (
+                    metrics_snapshot.get("governed_owned_production_capacity")
+                    is not None
+                ):
+                    governed_owned_production_capacity = _to_int(
+                        metrics_snapshot.get("governed_owned_production_capacity")
+                    )
+                if (
+                    metrics_snapshot.get("governed_owned_unique_construction_tiles")
+                    is not None
+                ):
+                    governed_owned_unique_construction_tiles = _to_int(
+                        metrics_snapshot.get("governed_owned_unique_construction_tiles")
+                    )
+                if (
+                    metrics_snapshot.get("governed_owned_accessible_layout_rooms")
+                    is not None
+                ):
+                    governed_owned_accessible_layout_rooms = _to_int(
+                        metrics_snapshot.get("governed_owned_accessible_layout_rooms")
+                    )
+                if (
+                    metrics_snapshot.get("governed_owned_accessible_functional_rooms")
+                    is not None
+                ):
+                    governed_owned_accessible_functional_rooms = _to_int(
+                        metrics_snapshot.get(
+                            "governed_owned_accessible_functional_rooms"
+                        )
+                    )
+                if (
+                    type(metrics_snapshot.get("governed_owned_room_evidence_complete"))
+                    is bool
+                ):
+                    governed_owned_room_evidence_complete = metrics_snapshot.get(
+                        "governed_owned_room_evidence_complete"
+                    )
+                if metrics_snapshot.get("governed_owned_output_units") is not None:
+                    governed_owned_output_units = _to_int(
+                        metrics_snapshot.get("governed_owned_output_units")
+                    )
+                output_by_job = metrics_snapshot.get(
+                    "governed_owned_output_units_by_job"
+                )
+                if isinstance(output_by_job, dict):
+                    governed_owned_output_units_by_job = {
+                        str(key): _to_int(value) for key, value in output_by_job.items()
+                    }
             utility_progress = max(
                 utility_progress,
                 # score-v3: utility_progress can be a float (demand-capped
@@ -503,8 +642,12 @@ def summarize(trace_path: Path) -> RunSummary:
                     target_hidden_tiles,
                     _to_int(work_snapshot.get("target_hidden_tiles")),
                 )
-                citizens_total = max(citizens_total, _to_int(work_snapshot.get("citizens_total")))
-                miners_total = max(miners_total, _to_int(work_snapshot.get("miners_total")))
+                citizens_total = max(
+                    citizens_total, _to_int(work_snapshot.get("citizens_total"))
+                )
+                miners_total = max(
+                    miners_total, _to_int(work_snapshot.get("miners_total"))
+                )
                 citizens_on_target_z = max(
                     citizens_on_target_z,
                     _to_int(work_snapshot.get("citizens_on_target_z")),
@@ -561,7 +704,9 @@ def summarize(trace_path: Path) -> RunSummary:
             tick_advance = record.get("tick_advance") or {}
             if isinstance(tick_advance, dict) and "ticks_advanced" in tick_advance:
                 saw_tick_advance = True
-                duration_from_tick_advance += max(0, _to_int(tick_advance.get("ticks_advanced")))
+                duration_from_tick_advance += max(
+                    0, _to_int(tick_advance.get("ticks_advanced"))
+                )
 
             pop = metrics_snapshot.get("pop")
             if pop is None:
@@ -623,7 +768,9 @@ def summarize(trace_path: Path) -> RunSummary:
                         milestones.append({"k": str(item), "ts": data.get("step")})
 
     if not trace_records:
-        raise ValueError("trace contains no valid records and cannot be score-versioned")
+        raise ValueError(
+            "trace contains no valid records and cannot be score-versioned"
+        )
     if len(trace_score_versions) > 1:
         raise ValueError(f"trace mixes score versions: {sorted(trace_score_versions)}")
     if trace_score_versions and trace_score_versions != {SCORE_VERSION}:
@@ -632,6 +779,75 @@ def summarize(trace_path: Path) -> RunSummary:
             f"trace={next(iter(trace_score_versions))}, evaluator={SCORE_VERSION}; "
             "use the original summary artifact"
         )
+
+    # Outcome-vector facts are final-state measurements, not historical maxima.
+    # Read them only from the final trace row so a sensor dropout cannot preserve
+    # an earlier valid-looking value, and never coerce malformed evidence to zero.
+    final_metrics = (
+        trace_records[-1].get("metrics")
+        if isinstance(trace_records[-1].get("metrics"), dict)
+        else {}
+    )
+    governed_owned_completed_beds = _strict_nonnegative_int_or_none(
+        final_metrics.get("governed_owned_completed_beds")
+    )
+    governed_owned_completed_farm_plots = _strict_nonnegative_int_or_none(
+        final_metrics.get("governed_owned_completed_farm_plots")
+    )
+    governed_owned_completed_stills = _strict_nonnegative_int_or_none(
+        final_metrics.get("governed_owned_completed_stills")
+    )
+    governed_owned_operational_farm_plots = _strict_nonnegative_int_or_none(
+        final_metrics.get("governed_owned_operational_farm_plots")
+    )
+    governed_owned_operational_farm_evidence_complete = (
+        final_metrics.get("governed_owned_operational_farm_evidence_complete")
+        if type(
+            final_metrics.get("governed_owned_operational_farm_evidence_complete")
+        )
+        is bool
+        else None
+    )
+    governed_owned_production_capacity = _strict_nonnegative_int_or_none(
+        final_metrics.get("governed_owned_production_capacity")
+    )
+    governed_owned_unique_construction_tiles = _strict_nonnegative_int_or_none(
+        final_metrics.get("governed_owned_unique_construction_tiles")
+    )
+    governed_owned_accessible_layout_rooms = _strict_nonnegative_int_or_none(
+        final_metrics.get("governed_owned_accessible_layout_rooms")
+    )
+    governed_owned_accessible_functional_rooms = _strict_nonnegative_int_or_none(
+        final_metrics.get("governed_owned_accessible_functional_rooms")
+    )
+    governed_owned_room_evidence_complete = (
+        final_metrics.get("governed_owned_room_evidence_complete")
+        if type(final_metrics.get("governed_owned_room_evidence_complete")) is bool
+        else None
+    )
+    governed_owned_layout_room_lower_bound_proven = (
+        final_metrics.get("governed_owned_layout_room_lower_bound_proven")
+        if type(final_metrics.get("governed_owned_layout_room_lower_bound_proven"))
+        is bool
+        else None
+    )
+    governed_owned_building_evidence_complete = (
+        final_metrics.get("governed_owned_building_evidence_complete")
+        if type(final_metrics.get("governed_owned_building_evidence_complete"))
+        is bool
+        else None
+    )
+    governed_owned_output_units = _strict_nonnegative_int_or_none(
+        final_metrics.get("governed_owned_output_units")
+    )
+    governed_owned_output_units_by_job = _strict_count_mapping_or_none(
+        final_metrics.get("governed_owned_output_units_by_job")
+    )
+    governed_owned_output_evidence_complete = (
+        final_metrics.get("governed_owned_output_evidence_complete")
+        if type(final_metrics.get("governed_owned_output_evidence_complete")) is bool
+        else None
+    )
 
     if score_duration_blocked:
         duration = 0
@@ -677,6 +893,17 @@ def summarize(trace_path: Path) -> RunSummary:
     components = score_components(summary_payload)
     total_score = composite_score(summary_payload)
 
+    from .gates import G7_GATE_VERSION, G7_V4_GATE_VERSION
+
+    resolved_g7_gate_version = (
+        G7_V4_GATE_VERSION if g7_gate_version is None else g7_gate_version
+    )
+    rubric_payload = (
+        evaluate_trace_records_v2(trace_records)
+        if resolved_g7_gate_version == G7_GATE_VERSION
+        else evaluate_trace_records(trace_records)
+    )
+
     summary = RunSummary(
         run_id=run_id,
         steps=total_steps,
@@ -701,10 +928,35 @@ def summarize(trace_path: Path) -> RunSummary:
         governed_owned_utility_progress=governed_owned_utility_progress,
         governed_owned_production_progress=governed_owned_production_progress,
         governed_owned_complexity_progress=governed_owned_complexity_progress,
+        governed_owned_completed_beds=governed_owned_completed_beds,
+        governed_owned_completed_farm_plots=governed_owned_completed_farm_plots,
+        governed_owned_completed_stills=governed_owned_completed_stills,
+        governed_owned_operational_farm_plots=(
+            governed_owned_operational_farm_plots
+        ),
+        governed_owned_operational_farm_evidence_complete=(
+            governed_owned_operational_farm_evidence_complete
+        ),
+        governed_owned_production_capacity=governed_owned_production_capacity,
+        governed_owned_unique_construction_tiles=governed_owned_unique_construction_tiles,
+        governed_owned_accessible_layout_rooms=governed_owned_accessible_layout_rooms,
+        governed_owned_accessible_functional_rooms=(
+            governed_owned_accessible_functional_rooms
+        ),
+        governed_owned_room_evidence_complete=governed_owned_room_evidence_complete,
+        governed_owned_layout_room_lower_bound_proven=(
+            governed_owned_layout_room_lower_bound_proven
+        ),
+        governed_owned_building_evidence_complete=(
+            governed_owned_building_evidence_complete
+        ),
+        governed_owned_output_units=governed_owned_output_units,
+        governed_owned_output_units_by_job=governed_owned_output_units_by_job,
+        governed_owned_output_evidence_complete=(
+            governed_owned_output_evidence_complete
+        ),
         score_progress_provenance=(
-            GOVERNED_SCORE_PROGRESS_PROVENANCE
-            if governed_score_progress_seen
-            else None
+            GOVERNED_SCORE_PROGRESS_PROVENANCE if governed_score_progress_seen else None
         ),
         utility_progress=utility_progress,
         production_progress=production_progress,
@@ -753,18 +1005,29 @@ def summarize(trace_path: Path) -> RunSummary:
         fort_constructions=fort_constructions,
         total_score=total_score,
         score_version=SCORE_VERSION,
-        rubric=evaluate_trace_records(trace_records),
+        rubric=rubric_payload,
         milestones=milestones,
     )
 
     from .gates import _model_usage, evaluate_g7
 
     summary.usage = _model_usage(trace_records)
-    summary.g7 = evaluate_g7(trace_records, _model_dump(summary))
+    summary.g7 = evaluate_g7(
+        trace_records,
+        _model_dump(summary),
+        gate_version=resolved_g7_gate_version,
+    )
     summary.task_verdict = str(summary.g7.get("status") or "unknown")
+    summary.evaluation_validity = dict(summary.g7.get("evaluation_validity") or {})
+    summary.gameplay_outcome = dict(summary.g7.get("gameplay_outcome") or {})
+    summary.provenance_completeness = dict(
+        summary.g7.get("provenance_completeness") or {}
+    )
 
     summary_path = trace_path.with_name("summary.json")
-    summary_path.write_text(json.dumps(_model_dump(summary), indent=2), encoding="utf-8")
+    summary_path.write_text(
+        json.dumps(_model_dump(summary), indent=2), encoding="utf-8"
+    )
     return summary
 
 

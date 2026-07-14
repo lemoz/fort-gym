@@ -128,11 +128,29 @@ an explicit exception for a named arm routed through OpenRouter, such as the
 Fort-Eval Fable arm. That exception permits the OpenRouter route only; it does
 not enable the direct Anthropic API or the legacy direct-Anthropic adapter.
 
-### 5.1 Frozen Easy P1 G7-v3 condition
+### 5.1 Easy P1 G7-v5 calibration condition
 
-`experiments/fort_eval_easy_p1_g7_v3.yaml` freezes a provisional P1 pilot on
+`experiments/fort_eval_easy_p1_g7_v5.yaml` declares the current P1 calibration
+successor on
 `seed_region3_fresh` with 200 steps and up to 2,500 ticks per step, for a maximum
-of 500,000 ticks. It uses score-v5, no knowledge access, vision on, and memory off.
+of 500,000 ticks. It uses the `outcome-vector-v1+g7-v5` evaluator, no knowledge
+access, vision on, and memory off. It is calibration-only and cannot launch until
+the owned-room and authoritative-death sensors pass live DFHack validation.
+
+G7-v5 requires at least one exact owned crop-assigned operational farm, one
+exact owned completed Still, and exact governed completed brew output; zero authoritatively classified
+preventable deaths, three final owned accessible layout rooms, and three exact
+owned completed beds for the fixed initial seven-dwarf cohort. Room credit
+requires final exact geometry with majority owned excavation, majority owned
+boundary construction, or an owned completed boundary door, plus native citizen
+path accessibility. Functional-room classification remains diagnostic and must
+be satisfied by the exact owned touching building recipe.
+Missing or truncated evidence produces an unknown validity state, never a
+synthesized zero. Elapsed simulation ticks, absolute population, peak layout,
+cache rate, score-v5, final reserves, and run-scoped production/consumption totals remain
+diagnostics. The scalar action/outcome rubric is retired for G7-v5; full-trace behavior rates are reported without a numeric
+composite. G7-v3 and G7-v4 remain frozen under their original criteria for
+historical replay and are not launchable.
 The two model-arm identities are `dfhack-governed-llm-fable5` and
 `dfhack-governed-llm-gpt56-sol`; both use maximum reasoning and a 128,000-token
 completion limit. The manifest declares no numeric expenditure cap, but usage,
@@ -199,9 +217,9 @@ A ranked cell requires a frozen manifest and comparability key, resolved provena
 ## 10. Staged pilot
 
 1. **P0, contract and substrate:** validate the YAML, action allowlist, observation firewall, trace fields, evidence predicates, and a known governed scripted control. No model ranking.
-2. **P1, Easy pilot:** run the frozen `fort_eval_easy_p1_g7_v3.yaml` condition on `seed_region3_fresh` for up to 200 steps at up to 2,500 ticks per step, with score-v5, no knowledge, vision on, and memory off. Compare the two declared model-arm identities inside the shared condition key. Report evidence, legality, progress, provider usage, pricing state, and valid failures separately.
+2. **P1, Easy pilot:** validate G7-v5 owned-room geometry, native accessibility, exact building IDs, partial construction attribution, delayed output attribution, and authoritative death evidence in live DFHack before permitting a paid run. Then run the exact `fort_eval_easy_p1_g7_v5.yaml` condition on `seed_region3_fresh`. Compare the two declared model-arm identities only inside the shared condition key. Report the gameplay outcome, evaluation validity, provenance completeness, terminal class, provider usage, pricing state, and diagnostics separately. Historical G7-v3 and G7-v4 results retain their original evaluators.
 3. **P2, Easy generalization:** add held-out seeds and then held-out mechanics. Freeze the evaluator and contamination policy before the window. Promote only cells meeting the ranked rules.
 4. **P3, Hard interface validation:** implement fixed-pixel capture and primitive inputs, then test viewport fidelity, input determinism, replay completeness, and spectator firewall before measuring policy capability.
 5. **P4, Hard and Discovery:** measure active perception, navigation, memory, and z reasoning. Add Discovery's no-docs/no-web policy and bounded cross-episode learner state only after Hard is stable. Keep transfer claims separate from Easy claims.
 
-The current repository's WDSLL and score documents remain the source of truth for current Fort-Gym gate criteria. This specification adds the cross-profile research boundary; it does not silently change existing score gates.
+The current repository's WDSLL and score documents remain the source of truth for historical Fort-Gym scoring. G7-v5 is an explicit, versioned non-scalar evaluator change; score-v5 remains available only as a diagnostic for this protocol.

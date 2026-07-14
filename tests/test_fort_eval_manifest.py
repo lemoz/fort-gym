@@ -17,7 +17,8 @@ from fort_gym.bench.eval.fort_eval_easy_p1 import (
 )
 from fort_gym.bench.experiment.config import load_experiment_config
 
-MANIFEST_PATH = Path("experiments/fort_eval_easy_p1_g7_v3.yaml")
+MANIFEST_PATH = Path("experiments/fort_eval_easy_p1_g7_v4.yaml")
+V5_MANIFEST_PATH = Path("experiments/fort_eval_easy_p1_g7_v5.yaml")
 
 
 def _manifest() -> dict[str, object]:
@@ -26,17 +27,23 @@ def _manifest() -> dict[str, object]:
     return raw
 
 
-def test_fort_eval_easy_p1_g7_v3_freezes_requested_condition() -> None:
+def _v5_manifest() -> dict[str, object]:
+    raw = yaml.safe_load(V5_MANIFEST_PATH.read_text(encoding="utf-8"))
+    assert isinstance(raw, dict)
+    return raw
+
+
+def test_fort_eval_easy_p1_g7_v4_freezes_requested_condition() -> None:
     manifest = _manifest()
     task = manifest["task"]
     condition = manifest["benchmark_condition"]
     assert isinstance(task, dict)
     assert isinstance(condition, dict)
 
-    assert manifest["manifest_id"] == "fort-eval-easy-p1-g7-v3"
+    assert manifest["manifest_id"] == "fort-eval-easy-p1-g7-v4"
     assert manifest["status"] == "provisional"
     assert task["task_id"] == "g7_survival"
-    assert task["task_version"] == "g7-v3"
+    assert task["task_version"] == "g7-v4"
     assert task["seed"] == "seed_region3_fresh"
     assert condition["observation"]["vision_enabled"] is True
     assert condition["knowledge"]["condition"] == "none"
@@ -47,6 +54,18 @@ def test_fort_eval_easy_p1_g7_v3_freezes_requested_condition() -> None:
         "max_ticks": 500000,
     }
     assert condition["score"]["version"] == "score-v5"
+    assert "duration_ticks_min" not in task["success_predicates"]
+    assert "population_min" not in task["success_predicates"]
+    assert "score_min" not in task["success_predicates"]
+    assert task["diagnostics"]["duration_ticks"]["affects_gate_status"] is False
+    assert task["diagnostics"]["population"]["affects_gate_status"] is False
+    assert (
+        task["diagnostics"]["population"]["comparison_scope"] == "matched_cohort_only"
+    )
+    assert task["diagnostics"]["scalar_score"]["affects_gate_status"] is False
+    assert (
+        task["diagnostics"]["scalar_score"]["comparison_scope"] == "matched_cohort_only"
+    )
 
 
 def test_fort_eval_easy_p1_declares_two_arms_with_shared_generation_contract() -> None:
@@ -64,7 +83,9 @@ def test_fort_eval_easy_p1_declares_two_arms_with_shared_generation_contract() -
     assert all(arm["memory_mode"] == "off" for arm in arms)
     assert all(arm["generation"]["reasoning_effort"] == "max" for arm in arms)
     assert all(arm["generation"]["max_completion_tokens"] == 128000 for arm in arms)
-    assert all(arm["generation"]["sticky_routing"] == "per_run_session_id" for arm in arms)
+    assert all(
+        arm["generation"]["sticky_routing"] == "per_run_session_id" for arm in arms
+    )
     by_name = {arm["model_arm"]: arm for arm in arms}
     assert (
         by_name["dfhack-governed-llm-fable5"]["generation"]["prompt_cache"]
@@ -87,7 +108,10 @@ def test_fort_eval_p1_separates_condition_fields_from_arm_identity() -> None:
     assert "model_arm" not in condition_fields
     assert arm_identity["field"] == "model_arm"
     assert arm_identity["is_benchmark_condition_field"] is False
-    assert comparability["run_identity_key_format"] == "{condition_key}|model_arm={model_arm}"
+    assert (
+        comparability["run_identity_key_format"]
+        == "{condition_key}|model_arm={model_arm}"
+    )
 
 
 def test_fort_eval_p1_records_provider_exception_cost_policy_and_failures() -> None:
@@ -113,7 +137,7 @@ def test_fort_eval_p1_records_provider_exception_cost_policy_and_failures() -> N
 
 
 def test_fort_eval_p1_runtime_contract_matches_manifest() -> None:
-    manifest = _manifest()
+    manifest = _v5_manifest()
     task = manifest["task"]
     budget = manifest["benchmark_condition"]["budget"]
     arms = manifest["model_arms"]["arms"]
@@ -126,12 +150,34 @@ def test_fort_eval_p1_runtime_contract_matches_manifest() -> None:
     assert {arm["model_arm"] for arm in arms} == set(MODEL_ARMS)
 
 
+def test_g7_v5_replaces_scalar_rubric_with_owned_outcome_vector() -> None:
+    manifest = _v5_manifest()
+    task = manifest["task"]
+    score = manifest["benchmark_condition"]["score"]
+
+    assert manifest["status"] == "calibration"
+    assert task["task_version"] == "g7-v5"
+    assert task["success_predicates"] == {
+        "exact_owned_operational_farm_plots_min": 1,
+        "exact_owned_completed_stills_min": 1,
+        "exact_governed_brew_output_units_min": 1,
+        "authoritatively_classified_preventable_deaths_max": 0,
+        "final_owned_accessible_layout_rooms_min": 3,
+        "exact_owned_completed_beds_min": 3,
+    }
+    assert score["version"] == "outcome-vector-v1"
+    assert score["diagnostic_scalar_version"] == "score-v5"
+    assert task["outcome_vector"]["numeric_composite"] is False
+    assert task["outcome_vector"]["action_variety_credit"] is False
+    assert task["outcome_vector"]["objective_text_credit"] is False
+
+
 def test_fort_eval_p1_links_passing_provider_preflight() -> None:
     manifest = _manifest()
     evidence_path = Path(manifest["provider_preflight_evidence"])
     evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
 
-    assert evidence["protocol"] == P1_PROTOCOL
+    assert evidence["protocol"] == manifest["provider_preflight_inherits_from"]
     assert evidence["ok"] is True
     assert {result["arm"] for result in evidence["results"]} == set(MODEL_ARMS)
     assert all(result["transport_verified"] for result in evidence["results"])

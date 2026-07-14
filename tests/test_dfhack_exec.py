@@ -12,7 +12,9 @@ def test_run_lua_file_parses_last_json_line(monkeypatch) -> None:
     monkeypatch.setattr(
         dfhack_exec,
         "run_dfhack",
-        lambda *args, **kwargs: 'notice from dfhack\n\x1b[0m{"ok": true, "value": 3}\x1b[0m',
+        lambda *args, **kwargs: (
+            'notice from dfhack\n\x1b[0m{"ok": true, "value": 3}\x1b[0m'
+        ),
     )
 
     assert dfhack_exec.run_lua_file("/tmp/hook.lua") == {"ok": True, "value": 3}
@@ -142,15 +144,22 @@ def test_hook_path_prefers_repo_hook_over_installed_copy(tmp_path, monkeypatch) 
     repo_hook.mkdir(parents=True)
     installed_hook.mkdir(parents=True)
     (repo_hook / "work_metrics.lua").write_text("-- repo", encoding="utf-8")
-    (installed_hook / "work_metrics.lua").write_text("-- stale installed", encoding="utf-8")
+    (installed_hook / "work_metrics.lua").write_text(
+        "-- stale installed", encoding="utf-8"
+    )
     monkeypatch.setattr(dfhack_backend, "REPO_HOOK_ROOT", repo_hook)
     monkeypatch.setattr(dfhack_backend, "HOOK_ROOT", installed_hook)
 
-    assert Path(dfhack_backend._hook_path("work_metrics.lua")) == repo_hook / "work_metrics.lua"
+    assert (
+        Path(dfhack_backend._hook_path("work_metrics.lua"))
+        == repo_hook / "work_metrics.lua"
+    )
 
 
 def test_prepare_keystroke_workshop_target_moves_cursor_before_confirm() -> None:
-    hook_path = Path(__file__).resolve().parents[1] / "hook" / "prepare_keystroke_target.lua"
+    hook_path = (
+        Path(__file__).resolve().parents[1] / "hook" / "prepare_keystroke_target.lua"
+    )
     hook_text = hook_path.read_text(encoding="utf-8")
 
     assert "local function append_cursor_moves" in hook_text
@@ -165,7 +174,9 @@ def test_prepare_keystroke_workshop_target_moves_cursor_before_confirm() -> None
         "append_cursor_moves(recommended_keys, placement_cursor_x, placement_cursor_y, x1, y1)"
         in hook_text
     )
-    assert "'HOTKEY_BUILDING_WORKSHOP_CARPENTER',\n  }\n  append_cursor_moves" in hook_text
+    assert (
+        "'HOTKEY_BUILDING_WORKSHOP_CARPENTER',\n  }\n  append_cursor_moves" in hook_text
+    )
 
 
 def test_prepare_keystroke_target_passes_blocked_workshop_targets(monkeypatch) -> None:
@@ -251,7 +262,11 @@ def test_build_workshop_passes_site_through_to_locality_hook(monkeypatch) -> Non
 
 
 def test_placement_hooks_enforce_fort_locality() -> None:
-    for hook_name in ("build_workshop.lua", "place_furniture.lua", "build_farm_plot.lua"):
+    for hook_name in (
+        "build_workshop.lua",
+        "place_furniture.lua",
+        "build_farm_plot.lua",
+    ):
         hook_path = Path(__file__).resolve().parents[1] / "hook" / hook_name
         hook_text = hook_path.read_text(encoding="utf-8")
         assert "MAX_LOCALITY = 24" in hook_text
@@ -260,9 +275,9 @@ def test_placement_hooks_enforce_fort_locality() -> None:
 
 
 def test_place_furniture_hook_reports_tile_state_on_failure() -> None:
-    hook_text = (Path(__file__).resolve().parents[1] / "hook" / "place_furniture.lua").read_text(
-        encoding="utf-8"
-    )
+    hook_text = (
+        Path(__file__).resolve().parents[1] / "hook" / "place_furniture.lua"
+    ).read_text(encoding="utf-8")
     # run 0a1be1c5 burned 40 actions on bare construct_failed: the tile is
     # classified before placement so the rejection names the visible cause
     for needle in (
@@ -322,7 +337,9 @@ def test_workshop_hook_fails_closed_on_illegal_footprint() -> None:
         assert needle in hook_text
 
 
-def test_workshop_hook_reports_complete_failed_footprint_with_compatibility_fields() -> None:
+def test_workshop_hook_reports_complete_failed_footprint_with_compatibility_fields() -> (
+    None
+):
     hook_text = (
         Path(__file__).resolve().parents[1] / "hook" / "build_workshop.lua"
     ).read_text(encoding="utf-8")
@@ -458,7 +475,12 @@ def test_build_farm_plot_wraps_bounded_lua_hook(monkeypatch) -> None:
     def fake_run_lua_file(path, *args, **kwargs):
         captured["path"] = path
         captured["args"] = args
-        return {"ok": True, "kind": "FarmPlot", "before_farm_plots": 0, "after_farm_plots": 1}
+        return {
+            "ok": True,
+            "kind": "FarmPlot",
+            "before_farm_plots": 0,
+            "after_farm_plots": 1,
+        }
 
     monkeypatch.setattr(dfhack_backend, "run_lua_file", fake_run_lua_file)
 
@@ -713,9 +735,13 @@ def test_designate_rect_reports_bounded_visible_non_target_facts() -> None:
 
     assert "local MAX_NON_TARGET_SAMPLES = 12" in hook_text
     assert "payload.failed = non_target_samples" in hook_text
-    assert "payload.failed_truncated = non_target_tiles > #non_target_samples" in hook_text
+    assert (
+        "payload.failed_truncated = non_target_tiles > #non_target_samples" in hook_text
+    )
     assert "non_target_error = 'hidden_unexplored'" in hook_text
-    assert "non_target_error = kind == 'chop' and 'not_tree' or 'not_shrub'" in hook_text
+    assert (
+        "non_target_error = kind == 'chop' and 'not_tree' or 'not_shrub'" in hook_text
+    )
     assert "df.tiletype_shape[attr.shape]" in hook_text
     assert "df.tiletype[tiletype]" in hook_text
 
@@ -938,8 +964,13 @@ def test_job_metrics_scopes_labor_and_path_workers_to_known_adults() -> None:
     labor_count_gate = hook_text.index("if labor_eligible and labor_state_known then")
     assert adult_call < path_insert
     assert adult_call < labor_count_gate
-    assert "labor_eligibility_known and labor_eligible" in hook_text[adult_call:path_insert]
-    citizen_scan = hook_text[hook_text.index("for _, unit in ipairs(df.global.world.units.active)") :]
+    assert (
+        "labor_eligibility_known and labor_eligible"
+        in hook_text[adult_call:path_insert]
+    )
+    citizen_scan = hook_text[
+        hook_text.index("for _, unit in ipairs(df.global.world.units.active)") :
+    ]
     assert "if not ok then" in citizen_scan
     assert "out.citizens.labor_eligibility_complete = false" in citizen_scan
     assert "return false, false" in hook_text
@@ -974,7 +1005,9 @@ def test_job_and_work_metrics_count_stair_jobs_as_excavation() -> None:
 
 
 def test_prepare_keystroke_tree_material_target_uses_broad_selection() -> None:
-    hook_path = Path(__file__).resolve().parents[1] / "hook" / "prepare_keystroke_target.lua"
+    hook_path = (
+        Path(__file__).resolve().parents[1] / "hook" / "prepare_keystroke_target.lua"
+    )
     hook_text = hook_path.read_text(encoding="utf-8")
 
     assert "local TREE_SELECT_WIDTH = 7" in hook_text
@@ -985,9 +1018,9 @@ def test_prepare_keystroke_tree_material_target_uses_broad_selection() -> None:
 
 
 def test_job_metrics_is_read_only_and_reports_crew() -> None:
-    script = (Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua").read_text(
-        encoding="utf-8"
-    )
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua"
+    ).read_text(encoding="utf-8")
     for needle in (
         "mining_labor",
         "carpentry_labor",
@@ -1007,9 +1040,9 @@ def test_job_metrics_is_read_only_and_reports_crew() -> None:
 
 
 def test_job_metrics_reports_farm_plots_count() -> None:
-    script = (Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua").read_text(
-        encoding="utf-8"
-    )
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua"
+    ).read_text(encoding="utf-8")
 
     assert "out.farm_plots" in script
     assert "out.farm_plot_positions" in script
@@ -1022,26 +1055,26 @@ def test_job_metrics_splits_true_shrub_count_from_other_tiles() -> None:
     # terrain (boulders, pebbles, fortifications, ramps). A separate `shrub`
     # count lets callers report how many of those tiles are actually
     # gatherable rather than attaching gather-ability to the combined count.
-    script = (Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua").read_text(
-        encoding="utf-8"
-    )
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua"
+    ).read_text(encoding="utf-8")
     assert "counts.shrub = counts.shrub + 1" in script
     assert "shape_name == 'SHRUB'" in script
     assert "shrub = counts.shrub," in script
 
 
 def test_job_metrics_reports_finished_goods_counts() -> None:
-    script = (Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua").read_text(
-        encoding="utf-8"
-    )
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua"
+    ).read_text(encoding="utf-8")
     for needle in ("GOODS_ITEM_TYPES", "'BED'", "'BARREL'", "'WOOD'", "out.goods"):
         assert needle in script
 
 
 def test_job_metrics_reports_order_lifecycle_and_raw_production_inputs() -> None:
-    script = (Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua").read_text(
-        encoding="utf-8"
-    )
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua"
+    ).read_text(encoding="utf-8")
 
     for needle in (
         "active_ids",
@@ -1076,9 +1109,9 @@ def test_job_metrics_reports_order_lifecycle_and_raw_production_inputs() -> None
 
 
 def test_work_metrics_usable_workshop_requires_completed_build_stage() -> None:
-    script = (Path(__file__).resolve().parents[1] / "hook" / "work_metrics.lua").read_text(
-        encoding="utf-8"
-    )
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "work_metrics.lua"
+    ).read_text(encoding="utf-8")
 
     assert "building:getBuildStage() >= building:getMaxBuildStage()" in script
     assert "if building_complete then" in script
@@ -1109,9 +1142,9 @@ def test_global_work_metrics_suppresses_legacy_plan_geometry(monkeypatch) -> Non
 
 
 def test_place_furniture_hook_installs_existing_items_only() -> None:
-    script = (Path(__file__).resolve().parents[1] / "hook" / "place_furniture.lua").read_text(
-        encoding="utf-8"
-    )
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "place_furniture.lua"
+    ).read_text(encoding="utf-8")
     for needle in (
         "df.item_type.BED",
         "df.building_type.Bed",
@@ -1125,17 +1158,17 @@ def test_place_furniture_hook_installs_existing_items_only() -> None:
 
 
 def test_job_metrics_reports_placed_furniture() -> None:
-    script = (Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua").read_text(
-        encoding="utf-8"
-    )
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua"
+    ).read_text(encoding="utf-8")
     assert "placed_furniture" in script
     assert "df.building_type.Bed" in script
 
 
 def test_build_construction_hook_enforces_locality_and_uses_existing_material() -> None:
-    script = (Path(__file__).resolve().parents[1] / "hook" / "build_construction.lua").read_text(
-        encoding="utf-8"
-    )
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "build_construction.lua"
+    ).read_text(encoding="utf-8")
     for needle in (
         "too_far_from_fort",
         "df.construction_type.Wall",
@@ -1148,9 +1181,9 @@ def test_build_construction_hook_enforces_locality_and_uses_existing_material() 
 
 
 def test_build_construction_reports_occupied_and_wall_tiles() -> None:
-    script = (Path(__file__).resolve().parents[1] / "hook" / "build_construction.lua").read_text(
-        encoding="utf-8"
-    )
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "build_construction.lua"
+    ).read_text(encoding="utf-8")
     assert "tile_occupied_by_building" in script
     assert "already_wall" in script
     assert "already_construction" in script
@@ -1164,7 +1197,9 @@ def test_build_construction_reports_occupied_and_wall_tiles() -> None:
     assert "local rollback_failed = false" in script
     assert "building_id = building_id" in script
     assert "partial_placement" in script
-    failure_blocks = re.findall(r"table\.insert\(failed, \{(.*?)\}\)", script, re.DOTALL)
+    failure_blocks = re.findall(
+        r"table\.insert\(failed, \{(.*?)\}\)", script, re.DOTALL
+    )
     assert len(failure_blocks) == 13
     assert all("z = z1" in block for block in failure_blocks)
 
@@ -1200,7 +1235,9 @@ def test_floor_observers_distinguish_frozen_liquid_from_stable_floor() -> None:
     map_snapshot = (hook_dir / "map_snapshot.lua").read_text(encoding="utf-8")
     assert "tile.category = 'frozen_liquid'" in map_snapshot
     assert "tile.char = 'i'" in map_snapshot
-    visible_block = map_snapshot[map_snapshot.index("if designation and designation.hidden") :]
+    visible_block = map_snapshot[
+        map_snapshot.index("if designation and designation.hidden") :
+    ]
     assert visible_block.index("else") < visible_block.index("tile.tiletype =")
     hidden_branch = visible_block[: visible_block.index("else")]
     assert "tiletype" not in hidden_branch
@@ -1209,9 +1246,9 @@ def test_floor_observers_distinguish_frozen_liquid_from_stable_floor() -> None:
     fort_metrics = (hook_dir / "fort_metrics.lua").read_text(encoding="utf-8")
     assert "material ~= FROZEN_LIQUID_MATERIAL" in fort_metrics
     assert "ch = 'i'" in fort_metrics
-    assert fort_metrics.index("elseif material == FROZEN_LIQUID_MATERIAL") < fort_metrics.index(
-        "elseif shape == WALL_SHAPE"
-    )
+    assert fort_metrics.index(
+        "elseif material == FROZEN_LIQUID_MATERIAL"
+    ) < fort_metrics.index("elseif shape == WALL_SHAPE")
 
     assert job_metrics.index("if ok and is_frozen_liquid then") < job_metrics.index(
         "elseif shape_name == 'WALL'"
@@ -1259,12 +1296,16 @@ def test_job_metrics_reports_general_job_target_walk_group_truth() -> None:
     assert "local function job_target_walk_group_connectivity(pos)" in script
     assert "dfhack.maps.isValidTilePos(target)" in script
     assert "dfhack.maps.canWalkBetween(citizen.pos, target)" in script
-    assert "target_walk_group_connectivity = job_target_walk_group_connectivity(job.pos)" in script
+    assert (
+        "target_walk_group_connectivity = job_target_walk_group_connectivity(job.pos)"
+        in script
+    )
     assert "return checked and 'disconnected' or 'unknown'" in script
 
     helper = script[
-        script.index("local function job_target_walk_group_connectivity(pos)") :
-        script.index("-- world job list")
+        script.index(
+            "local function job_target_walk_group_connectivity(pos)"
+        ) : script.index("-- world job list")
     ]
     assert helper.index("df.global.world.reindex_pathfinding") < helper.index(
         "dfhack.maps.isValidTilePos(target)"
@@ -1278,25 +1319,25 @@ def test_job_metrics_reports_general_job_target_walk_group_truth() -> None:
 
 
 def test_furniture_hook_rejects_unreadable_or_wet_tiles() -> None:
-    script = (Path(__file__).resolve().parents[1] / "hook" / "place_furniture.lua").read_text(
-        encoding="utf-8"
-    )
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "place_furniture.lua"
+    ).read_text(encoding="utf-8")
     assert "tile_state_unreadable" in script
     assert "tile_has_liquid" in script
     assert "flow_size" in script
 
 
 def test_job_metrics_reports_furniture_positions() -> None:
-    script = (Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua").read_text(
-        encoding="utf-8"
-    )
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua"
+    ).read_text(encoding="utf-8")
     assert "placed_furniture_positions" in script
 
 
 def test_fort_metrics_renders_minimap_grid() -> None:
-    script = (Path(__file__).resolve().parents[1] / "hook" / "fort_metrics.lua").read_text(
-        encoding="utf-8"
-    )
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "fort_metrics.lua"
+    ).read_text(encoding="utf-8")
     for needle in ("map_rows", "map_origin", "BUILDING_CHARS", "construction_set"):
         assert needle in script
     assert "elseif building_at(x, y, z) then" in script
@@ -1304,9 +1345,9 @@ def test_fort_metrics_renders_minimap_grid() -> None:
 
 
 def test_fort_metrics_reports_room_bounds_contents_and_open_tiles() -> None:
-    script = (Path(__file__).resolve().parents[1] / "hook" / "fort_metrics.lua").read_text(
-        encoding="utf-8"
-    )
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "fort_metrics.lua"
+    ).read_text(encoding="utf-8")
 
     for needle in (
         "MAX_ROOM_OPEN_TILE_SAMPLES",
@@ -1322,17 +1363,20 @@ def test_fort_metrics_reports_room_bounds_contents_and_open_tiles() -> None:
     assert "if space.kind ~= 'enclosed_space' then" in script
     assert "local function building_is_complete(bld)" in script
     assert "bld:getBuildStage(), bld:getMaxBuildStage()" in script
-    assert "if building_is_complete(bld) then" in script
+    assert "local is_complete, stage_read_ok = building_is_complete(bld)" in script
+    assert "if is_complete then" in script
     assert "local function completed_building_at(x, y, z)" in script
     assert "elseif completed_building_at(x, y, seed_z) then" in script
     assert "and not completed_building_at(sx, sy, bld.z)" in script
     assert "if not completed_building_at(tx, ty, bld.z) then" in script
 
 
-def test_fort_metrics_distinguishes_gatherable_shrubs_from_other_floor_features() -> None:
-    script = (Path(__file__).resolve().parents[1] / "hook" / "fort_metrics.lua").read_text(
-        encoding="utf-8"
-    )
+def test_fort_metrics_distinguishes_gatherable_shrubs_from_other_floor_features() -> (
+    None
+):
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "fort_metrics.lua"
+    ).read_text(encoding="utf-8")
     assert "shape == df.tiletype_shape.SHRUB" in script
     assert "shape == df.tiletype_shape.SAPLING" in script
     assert "shape == df.tiletype_shape.BOULDER" in script
@@ -1343,18 +1387,18 @@ def test_fort_metrics_distinguishes_gatherable_shrubs_from_other_floor_features(
 
 
 def test_fort_metrics_anchors_on_citizens_and_marks_dwarves() -> None:
-    script = (Path(__file__).resolve().parents[1] / "hook" / "fort_metrics.lua").read_text(
-        encoding="utf-8"
-    )
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "fort_metrics.lua"
+    ).read_text(encoding="utf-8")
     assert "citizen_positions" in script
     assert "citizen_tile_lookup" in script
     assert "'@'" in script
 
 
 def test_fort_metrics_reports_model_channel_focused_vertical_access() -> None:
-    script = (Path(__file__).resolve().parents[1] / "hook" / "fort_metrics.lua").read_text(
-        encoding="utf-8"
-    )
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "fort_metrics.lua"
+    ).read_text(encoding="utf-8")
 
     for needle in (
         "STAIR_UP_SHAPE",
@@ -1384,9 +1428,9 @@ def test_fort_metrics_reports_model_channel_focused_vertical_access() -> None:
 
 
 def test_fort_metrics_never_reads_hidden_tiletype_for_room_boundaries() -> None:
-    script = (Path(__file__).resolve().parents[1] / "hook" / "fort_metrics.lua").read_text(
-        encoding="utf-8"
-    )
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "fort_metrics.lua"
+    ).read_text(encoding="utf-8")
 
     hidden_guard = script.index("if hidden then return nil, true, nil end")
     tiletype_read = script.index("local attr = attrs[block.tiletype[dx][dy]]")
@@ -1395,9 +1439,9 @@ def test_fort_metrics_never_reads_hidden_tiletype_for_room_boundaries() -> None:
 
 
 def test_fort_metrics_marks_queued_constructions_without_sealing_rooms() -> None:
-    script = (Path(__file__).resolve().parents[1] / "hook" / "fort_metrics.lua").read_text(
-        encoding="utf-8"
-    )
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "fort_metrics.lua"
+    ).read_text(encoding="utf-8")
     # queued (unbuilt) constructions render as 'x' on the minimap...
     assert "pending_construction_tiles" in script
     assert "ch = 'x'" in script
@@ -1434,13 +1478,17 @@ def test_read_game_state_reports_concrete_viewscreen_type() -> None:
     assert 'rendered:match("<type: ([^>]+)>")' in source
 
 
-def test_fort_metrics_counts_only_visible_nearby_trees_without_target_coordinates() -> None:
-    script = (Path(__file__).resolve().parents[1] / "hook" / "fort_metrics.lua").read_text(
-        encoding="utf-8"
-    )
+def test_fort_metrics_counts_only_visible_nearby_trees_without_target_coordinates() -> (
+    None
+):
+    script = (
+        Path(__file__).resolve().parents[1] / "hook" / "fort_metrics.lua"
+    ).read_text(encoding="utf-8")
     assert "nearby_trees" in script
     assert "local RADIUS = 40" in script
-    nearby_block = script[script.index("local nearby_trees") : script.index("-- ASCII minimap")]
+    nearby_block = script[
+        script.index("local nearby_trees") : script.index("-- ASCII minimap")
+    ]
     assert "designation.hidden" in nearby_block
     assert "clusters" not in nearby_block
     assert "BUCKET" not in nearby_block

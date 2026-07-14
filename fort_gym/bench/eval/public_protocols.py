@@ -44,14 +44,16 @@ class PublicProtocolDefinition:
 
 
 def _manifest_path() -> Path:
-    return Path(__file__).resolve().parents[3] / "experiments" / "fort_eval_easy_v1.yaml"
+    return (
+        Path(__file__).resolve().parents[3] / "experiments" / "fort_eval_easy_v1.yaml"
+    )
 
 
-def _p1_manifest_path() -> Path:
+def _p1_manifest_path(version: int) -> Path:
     return (
         Path(__file__).resolve().parents[3]
         / "experiments"
-        / "fort_eval_easy_p1_g7_v3.yaml"
+        / f"fort_eval_easy_p1_g7_v{version}.yaml"
     )
 
 
@@ -83,7 +85,9 @@ def _easy_protocol() -> PublicProtocolDefinition:
 
     action_names = actions.get("legal_semantic_dfhack")
     comparison_fields = comparability.get("fields")
-    if not isinstance(action_names, list) or not all(isinstance(item, str) for item in action_names):
+    if not isinstance(action_names, list) or not all(
+        isinstance(item, str) for item in action_names
+    ):
         raise RuntimeError("Easy protocol manifest has invalid legal actions")
     if not isinstance(comparison_fields, dict):
         raise RuntimeError("Easy protocol manifest has invalid comparability fields")
@@ -125,7 +129,9 @@ def _easy_protocol() -> PublicProtocolDefinition:
             "explicit declared override."
         ),
         comparability_fields=list(comparison_fields),
-        comparability_defaults={key: str(value) for key, value in comparison_fields.items()},
+        comparability_defaults={
+            key: str(value) for key, value in comparison_fields.items()
+        },
         ranking=(
             f"{ranking['status']}; ranked seed split and resolved provenance are required "
             "before ranking."
@@ -134,8 +140,8 @@ def _easy_protocol() -> PublicProtocolDefinition:
     )
 
 
-def _p1_protocol() -> PublicProtocolDefinition:
-    with _p1_manifest_path().open(encoding="utf-8") as handle:
+def _p1_protocol(version: int) -> PublicProtocolDefinition:
+    with _p1_manifest_path(version).open(encoding="utf-8") as handle:
         manifest = yaml.safe_load(handle)
     if not isinstance(manifest, dict):
         raise RuntimeError("P1 protocol manifest must be a mapping")
@@ -148,6 +154,13 @@ def _p1_protocol() -> PublicProtocolDefinition:
     knowledge = _required_mapping(condition, "knowledge")
     memory = _required_mapping(condition, "memory")
     budget = _required_mapping(condition, "budget")
+    evaluator_version = str(_required_mapping(condition, "score")["evaluator_version"])
+    if version == 3:
+        # Historical G7-v3 summaries combined the unchanged score-v5 scalar with
+        # the versioned terminal gate even though the frozen manifest recorded
+        # only the scalar evaluator name.
+        evaluator_version = "score-v5+g7-v3"
+    calibration_only = str(manifest["status"]) == "calibration"
 
     return PublicProtocolDefinition(
         slug=str(manifest["manifest_id"]),
@@ -156,8 +169,13 @@ def _p1_protocol() -> PublicProtocolDefinition:
         profile_version=str(program["profile_version"]),
         status=str(manifest["status"]),
         result_status=(
-            "Provisional P1 fixed-seed results. Eligible completed runs report "
-            "G7 pass, fail, or unknown outcomes; no ranked results."
+            "Calibration only. No publishable results until the new ownership "
+            "and death sensors pass live validation."
+            if calibration_only
+            else (
+                "Provisional P1 fixed-seed results. Eligible completed runs report "
+                "G7 pass, fail, or unknown outcomes; no ranked results."
+            )
         ),
         summary=str(manifest["description"]),
         interface={
@@ -174,8 +192,12 @@ def _p1_protocol() -> PublicProtocolDefinition:
         },
         knowledge={
             "condition": str(knowledge["condition"]),
-            "documents": "allowed" if knowledge.get("documents_allowed") else "not allowed",
-            "live_web": "allowed" if knowledge.get("live_web_allowed") else "not allowed",
+            "documents": "allowed"
+            if knowledge.get("documents_allowed")
+            else "not allowed",
+            "live_web": "allowed"
+            if knowledge.get("live_web_allowed")
+            else "not allowed",
         },
         observer_firewall="Observer maps remain outside agent input.",
         comparability_fields=[
@@ -198,21 +220,27 @@ def _p1_protocol() -> PublicProtocolDefinition:
             "task_version": str(task["task_version"]),
             "seed_split": str(task["seed_split"]),
             "mechanics_digest": "df-51.11+governed-semantic-dfhack-v1",
-            "observation_digest": "governed_structured_state_v1+fort_minimap_vision_v1",
+            "observation_digest": (
+                "governed_structured_state_v3_owned_layout+fort_minimap_vision_v1"
+                if version == 5
+                else "governed_structured_state_v1+fort_minimap_vision_v1"
+            ),
             "action_digest": str(action["profile"]),
             "budget_digest": (
                 f"max_steps_{budget['max_steps']}_ticks_per_step_{budget['ticks_per_step']}"
             ),
             "model_digest": "resolved_at_run",
             "prompt_digest": "resolved_at_run",
-            "memory_digest": "memory_off" if memory.get("mode") == "off" else str(memory["mode"]),
+            "memory_digest": "memory_off"
+            if memory.get("mode") == "off"
+            else str(memory["mode"]),
             "fort_gym_commit": "resolved_at_run",
             "df_version": "df-51.11",
-            "evaluator_version": "score-v5+g7-v3",
+            "evaluator_version": evaluator_version,
         },
         ranking="Provisional only; P1 does not establish a model ranking.",
         pilot_state="P1 Easy fixed-seed discovery; P0 substrate remains separately published.",
-        requires_public_eligibility=True,
+        requires_public_eligibility=not calibration_only,
     )
 
 
@@ -237,7 +265,11 @@ def _future_protocols() -> tuple[PublicProtocolDefinition, PublicProtocolDefinit
             "viewport": "fixed dimensions and capture policy must be declared before ranking",
             "timing": "pause semantics and action timing are part of comparability",
         },
-        knowledge={"condition": "declared per run", "documents": "declared per run", "live_web": "declared per run"},
+        knowledge={
+            "condition": "declared per run",
+            "documents": "declared per run",
+            "live_web": "declared per run",
+        },
         observer_firewall="Observer evidence must remain outside agent inputs unless explicitly declared.",
         comparability_fields=[
             "viewport",
@@ -270,7 +302,11 @@ def _future_protocols() -> tuple[PublicProtocolDefinition, PublicProtocolDefinit
             "learner_state": "bounded cross-episode state with logged read and write events",
             "held_out_material": "not exposed through agent, observer, or retry paths",
         },
-        knowledge={"condition": "none", "documents": "not allowed", "live_web": "not allowed"},
+        knowledge={
+            "condition": "none",
+            "documents": "not allowed",
+            "live_web": "not allowed",
+        },
         observer_firewall="Observer evidence and held-out material must not reach agent context or retries.",
         comparability_fields=[
             "hard_interface_digest",
@@ -289,9 +325,11 @@ def _future_protocols() -> tuple[PublicProtocolDefinition, PublicProtocolDefinit
 @lru_cache(maxsize=1)
 def _catalog() -> dict[str, PublicProtocolDefinition]:
     easy = _easy_protocol()
-    p1 = _p1_protocol()
+    p1_v3 = _p1_protocol(3)
+    p1_v4 = _p1_protocol(4)
+    p1_v5 = _p1_protocol(5)
     hard, discovery = _future_protocols()
-    return {entry.slug: entry for entry in (easy, p1, hard, discovery)}
+    return {entry.slug: entry for entry in (easy, p1_v3, p1_v4, p1_v5, hard, discovery)}
 
 
 def list_public_protocols() -> list[PublicProtocolDefinition]:

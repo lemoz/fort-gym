@@ -91,6 +91,7 @@ def test_protocol_pages_render_only_public_catalog_data() -> None:
     assert "protocol.result_status" in html
     assert "protocol.observer_firewall" in html
     assert "protocol.comparability_fields" in html
+    assert 'href="/protocols/fort-eval-easy-p1-g7-v5">Easy</a>' in html
     assert "GPT-5" not in html
     assert "Claude" not in html
     assert "Gemini" not in html
@@ -116,8 +117,12 @@ def test_root_serves_landing_and_public_entrypoints() -> None:
     assert '_html_with_social_meta("index.html", metadata)' in inspect.getsource(
         server.serve_short_visual_replay
     )
-    assert 'return _html_file_response("worlds.html")' in inspect.getsource(server.serve_worlds)
-    assert 'return _html_file_response("results.html")' in inspect.getsource(server.serve_results)
+    assert 'return _html_file_response("worlds.html")' in inspect.getsource(
+        server.serve_worlds
+    )
+    assert 'return _html_file_response("results.html")' in inspect.getsource(
+        server.serve_results
+    )
     assert 'return _html_file_response("findings.html")' in inspect.getsource(
         server.serve_findings
     )
