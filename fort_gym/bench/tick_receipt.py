@@ -62,10 +62,15 @@ def validate_clean_interruption_receipt(
     """Return the first failed invariant for a clean governed interruption."""
 
     before = tick_info.get("viewscreen_before")
-    at_interrupt = tick_info.get(
-        "viewscreen_at_interrupt", tick_info.get("viewscreen_after")
-    )
     after = tick_info.get("viewscreen_after")
+    at_interrupt = tick_info.get("viewscreen_at_interrupt", after)
+    interruption_detection = tick_info.get("interruption_detection")
+    fallback_fields = (
+        "intermediate_probe_error",
+        "intermediate_probe_phase",
+        "intermediate_probe_failure_kind",
+    )
+    final_attestation = interruption_detection == "final_attestation"
     baseline = str((state_after_apply or {}).get("viewscreen_type") or "unknown")
     observed_after = str(
         (state_after_advance or {}).get("viewscreen_type") or "unknown"
@@ -85,6 +90,30 @@ def validate_clean_interruption_receipt(
         return "interrupt_ok_must_be_false"
     if tick_info.get("error") != "blocking_viewscreen_transition":
         return "interrupt_error_invalid"
+    if interruption_detection is None:
+        if any(field in tick_info for field in fallback_fields):
+            return "interrupt_fallback_provenance_unexpected"
+    elif not final_attestation:
+        return "interrupt_detection_invalid"
+    else:
+        if tick_info.get("intermediate_probe_error") != "calendar_sample_read_failed":
+            return "interrupt_final_attestation_probe_error_invalid"
+        if tick_info.get("intermediate_probe_phase") not in {
+            "post_nopause",
+            "post_resume",
+            "poll",
+        }:
+            return "interrupt_final_attestation_probe_phase_invalid"
+        if tick_info.get("intermediate_probe_failure_kind") not in {
+            "dfhack_error",
+            "os_error",
+        }:
+            return "interrupt_final_attestation_probe_kind_invalid"
+        if (
+            "viewscreen_at_interrupt" in tick_info
+            or "pause_state_at_interrupt" in tick_info
+        ):
+            return "interrupt_final_attestation_temporal_evidence_invalid"
     timeout = tick_info.get("timeout")
     if timeout is not None and type(timeout) is not bool:
         return "interrupt_timeout_invalid"
@@ -144,23 +173,25 @@ def validate_clean_interruption_receipt(
         return "interrupt_paused_before_unattested"
     if tick_info.get("paused_after") is not True:
         return "interrupt_paused_after_unattested"
-    if (
-        not isinstance(before, str)
-        or not isinstance(at_interrupt, str)
-        or not isinstance(after, str)
-    ):
+    if not isinstance(before, str) or not isinstance(after, str):
         return "interrupt_viewscreen_missing"
     if before != GOVERNED_POSITIVE_TICK_BASELINE_VIEWSCREEN_TYPE:
         return "interrupt_baseline_not_normal_gameplay"
-    if at_interrupt not in INTERACT_ALLOWED_VIEWSCREEN_TYPES:
-        return "interrupt_initial_viewscreen_not_allowlisted"
+    if not final_attestation:
+        if not isinstance(at_interrupt, str):
+            return "interrupt_viewscreen_missing"
+        if at_interrupt not in INTERACT_ALLOWED_VIEWSCREEN_TYPES:
+            return "interrupt_initial_viewscreen_not_allowlisted"
     if after not in INTERACT_ALLOWED_VIEWSCREEN_TYPES:
         return "interrupt_viewscreen_not_allowlisted"
     if before != baseline:
         return "interrupt_baseline_mismatch"
     if (state_after_apply or {}).get("pause_state") is not True:
         return "interrupt_baseline_not_paused"
-    if type(tick_info.get("pause_state_at_interrupt")) is not bool:
+    if (
+        not final_attestation
+        and type(tick_info.get("pause_state_at_interrupt")) is not bool
+    ):
         return "interrupt_pause_state_invalid"
     if (
         tick_info.get("repause_requested") is not True

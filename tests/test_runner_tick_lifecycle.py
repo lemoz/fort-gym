@@ -66,8 +66,9 @@ class CountingInteractAgent(Agent):
 
 
 class WaitThenInteractAgent(Agent):
-    def __init__(self) -> None:
+    def __init__(self, operation: str = "confirm") -> None:
         self.calls = 0
+        self.operation = operation
         self.actions: list[Dict[str, Any]] = []
         self.observations: list[Dict[str, Any]] = []
 
@@ -84,7 +85,7 @@ class WaitThenInteractAgent(Agent):
         else:
             action = {
                 "type": "INTERACT",
-                "params": {"operation": "confirm"},
+                "params": {"operation": self.operation},
                 "intent": "handle the freshly observed dialog",
                 "advance_ticks": 0,
             }
@@ -1508,12 +1509,12 @@ def test_partial_timeout_is_degraded_and_allows_next_agent_decide(
 def test_governed_viewscreen_interruption_is_degraded_and_reobserved(
     tmp_path, monkeypatch
 ) -> None:
-    agent = WaitThenInteractAgent()
+    agent = WaitThenInteractAgent(operation="cancel")
     advance_options: list[Dict[str, Any]] = []
 
     def interrupt_with_modal(_ticks: int, state: Dict[str, Any]) -> None:
         state["pause_state"] = True
-        state["viewscreen_type"] = "viewscreen_topicmeetingst"
+        state["viewscreen_type"] = "viewscreen_textviewerst"
 
     _, registry, run_id = _run_governed_interact_fixture(
         tmp_path,
@@ -1536,8 +1537,7 @@ def test_governed_viewscreen_interruption_is_degraded_and_reobserved(
             "paused_before": True,
             "paused_after": True,
             "viewscreen_before": "viewscreen_dwarfmodest",
-            "viewscreen_after": "viewscreen_topicmeetingst",
-            "pause_state_at_interrupt": True,
+            "viewscreen_after": "viewscreen_textviewerst",
             "repause_requested": True,
             "repause_effective": True,
             "repause": {
@@ -1551,16 +1551,22 @@ def test_governed_viewscreen_interruption_is_degraded_and_reobserved(
             "interrupt_safety_error": False,
             "calendar_safety_error": False,
             "final_pause_state": True,
-            "final_viewscreen_type": "viewscreen_topicmeetingst",
+            "final_viewscreen_type": "viewscreen_textviewerst",
+            "intermediate_probe_error": "calendar_sample_read_failed",
+            "intermediate_probe_phase": "poll",
+            "intermediate_probe_failure_kind": "dfhack_error",
+            "interruption_detection": "final_attestation",
         },
         advance_options=advance_options,
+        operation="cancel",
     )
 
     assert agent.calls == 2
     assert agent.actions[1]["type"] == "INTERACT"
+    assert agent.actions[1]["params"]["operation"] == "cancel"
     assert agent.actions[1]["advance_ticks"] == 0
     assert agent.observations[1]["time"] == 0
-    assert agent.observations[1]["viewscreen_type"] == "viewscreen_topicmeetingst"
+    assert agent.observations[1]["viewscreen_type"] == "viewscreen_textviewerst"
     assert advance_options[0] == {
         "interrupt_on_viewscreen_transition": True,
         "viewscreen_before": "viewscreen_dwarfmodest",
@@ -1573,6 +1579,13 @@ def test_governed_viewscreen_interruption_is_degraded_and_reobserved(
     rows = _trace_rows(tmp_path, run_id)
     assert rows[0]["tick_degraded"]["code"] == "blocking_viewscreen_transition"
     assert rows[0]["tick_advance"]["ticks_advanced"] == 0
+    assert (
+        rows[0]["tick_advance"]["intermediate_probe_error"]
+        == "calendar_sample_read_failed"
+    )
+    assert rows[0]["tick_advance"]["intermediate_probe_phase"] == "poll"
+    assert rows[0]["tick_advance"]["intermediate_probe_failure_kind"] == "dfhack_error"
+    assert rows[0]["tick_advance"]["interruption_detection"] == "final_attestation"
     assert not any(event["type"] == "terminal" for event in rows[0]["events"])
 
     get_settings.cache_clear()  # type: ignore[attr-defined]
@@ -1808,6 +1821,123 @@ def test_interruption_receipt_contradictions_are_terminal(
     assert terminal is not None
     assert terminal["code"] == "interruption_attestation_failed"
     assert terminal["attestation_error"] == expected_error
+
+
+FINAL_ATTESTATION_PROVENANCE_CONTRADICTIONS = (
+    ("missing_detection", "interrupt_fallback_provenance_unexpected"),
+    ("unknown_detection", "interrupt_detection_invalid"),
+    ("missing_probe_error", "interrupt_final_attestation_probe_error_invalid"),
+    ("changed_probe_error", "interrupt_final_attestation_probe_error_invalid"),
+    ("missing_probe_phase", "interrupt_final_attestation_probe_phase_invalid"),
+    ("initial_probe_phase", "interrupt_final_attestation_probe_phase_invalid"),
+    ("missing_probe_kind", "interrupt_final_attestation_probe_kind_invalid"),
+    ("unknown_probe_kind", "interrupt_final_attestation_probe_kind_invalid"),
+    (
+        "synthetic_interrupt_viewscreen",
+        "interrupt_final_attestation_temporal_evidence_invalid",
+    ),
+    (
+        "synthetic_interrupt_pause",
+        "interrupt_final_attestation_temporal_evidence_invalid",
+    ),
+)
+
+
+@pytest.mark.parametrize(
+    ("mutation", "expected_error"),
+    FINAL_ATTESTATION_PROVENANCE_CONTRADICTIONS,
+)
+def test_final_attestation_provenance_contradictions_are_terminal(
+    mutation, expected_error
+) -> None:
+    tick_info: Dict[str, Any] = {
+        "ok": False,
+        "error": "blocking_viewscreen_transition",
+        "interrupted": True,
+        "requested": 2500,
+        "ticks_advanced": 2289,
+        "start_year": 30,
+        "start_tick": 348551,
+        "end_year": 30,
+        "end_tick": 350840,
+        "paused_before": True,
+        "paused_after": True,
+        "viewscreen_before": "viewscreen_dwarfmodest",
+        "viewscreen_after": "viewscreen_textviewerst",
+        "repause_requested": True,
+        "repause_effective": True,
+        "repause": {
+            "ok": True,
+            "paused": True,
+            "attempts": 1,
+            "attempt_records": [
+                {"attempt": 1, "nopause_disabled": True, "paused": True}
+            ],
+        },
+        "interrupt_safety_error": False,
+        "calendar_safety_error": False,
+        "final_pause_state": True,
+        "final_viewscreen_type": "viewscreen_textviewerst",
+        "intermediate_probe_error": "calendar_sample_read_failed",
+        "intermediate_probe_phase": "poll",
+        "intermediate_probe_failure_kind": "dfhack_error",
+        "interruption_detection": "final_attestation",
+    }
+    state_after_apply = {
+        "year": 30,
+        "year_tick": 348551,
+        "time": 348551,
+        "pause_state": True,
+        "viewscreen_type": "viewscreen_dwarfmodest",
+    }
+    state_after_advance = {
+        "year": 30,
+        "year_tick": 350840,
+        "time": 350840,
+        "pause_state": True,
+        "viewscreen_type": "viewscreen_textviewerst",
+    }
+
+    if mutation == "missing_detection":
+        del tick_info["interruption_detection"]
+    elif mutation == "unknown_detection":
+        tick_info["interruption_detection"] = "inferred"
+    elif mutation == "missing_probe_error":
+        del tick_info["intermediate_probe_error"]
+    elif mutation == "changed_probe_error":
+        tick_info["intermediate_probe_error"] = "timeout"
+    elif mutation == "missing_probe_phase":
+        del tick_info["intermediate_probe_phase"]
+    elif mutation == "initial_probe_phase":
+        tick_info["intermediate_probe_phase"] = "initial"
+    elif mutation == "missing_probe_kind":
+        del tick_info["intermediate_probe_failure_kind"]
+    elif mutation == "unknown_probe_kind":
+        tick_info["intermediate_probe_failure_kind"] = "unknown"
+    elif mutation == "synthetic_interrupt_viewscreen":
+        tick_info["viewscreen_at_interrupt"] = "viewscreen_textviewerst"
+    else:
+        tick_info["pause_state_at_interrupt"] = True
+
+    terminal, degraded, _ = _tick_terminal_reason(
+        2500,
+        tick_info,
+        0,
+        state_after_apply=state_after_apply,
+        state_after_advance=state_after_advance,
+    )
+
+    assert degraded is None
+    assert terminal is not None
+    assert terminal["code"] == "interruption_attestation_failed"
+    assert terminal["attestation_error"] == expected_error
+
+
+def test_final_attestation_provenance_fails_closed_gate() -> None:
+    for mutation, expected_error in FINAL_ATTESTATION_PROVENANCE_CONTRADICTIONS:
+        test_final_attestation_provenance_contradictions_are_terminal(
+            mutation, expected_error
+        )
 
 
 def test_rollover_interruption_receipt_has_exact_duration() -> None:

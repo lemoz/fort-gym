@@ -47,6 +47,11 @@ CALIBRATION_TEST_NODE_IDS = (
     "tests/test_public_research_routes.py::test_calibration_protocol_never_builds_public_comparison_groups",
     "tests/test_public_research_routes.py::test_calibration_protocol_is_excluded_from_public_overview_and_scalar_groups",
     "tests/test_fort_eval_easy_p1_runtime.py::test_seed_region3_attestation_fails_closed_when_zero_valued_sensors_are_missing",
+    "tests/test_advance_ticks_external.py::test_final_attestation_recovers_modal_transition_after_probe_failure",
+    "tests/test_advance_ticks_external.py::test_final_attestation_recovery_fails_closed_gate",
+    "tests/test_runner_tick_lifecycle.py::test_governed_viewscreen_interruption_is_degraded_and_reobserved",
+    "tests/test_runner_tick_lifecycle.py::test_final_attestation_provenance_fails_closed_gate",
+    "tests/test_remote_proto_fetch.py::test_remote_proto_runtime_digest_binds_actual_generated_modules",
 )
 
 
@@ -76,6 +81,11 @@ def _load_summary(path: Path, *, run_id: str, scenario: str) -> dict[str, Any]:
     commit = str(summary.get("fort_gym_commit") or "")
     if not re.fullmatch(r"[0-9a-f]{40}", commit):
         raise ValueError(f"summary for {run_id} lacks an exact fort_gym_commit")
+    runtime_proto_digest = contract.p1_remote_proto_runtime_digest()
+    if runtime_proto_digest is None:
+        raise ValueError("generated DFHack protobuf bindings are unavailable")
+    if summary.get("remote_proto_runtime_sha256") != runtime_proto_digest:
+        raise ValueError(f"summary protobuf binding mismatch for {run_id}")
     return summary
 
 
@@ -130,6 +140,11 @@ def _verify_bundle(bundle: dict[str, Any], *, evidence_root: Path) -> None:
         raise ValueError("bundle manifest semantic digest is stale")
     if bundle.get("measurement_code_sha256") != contract.p1_measurement_code_digest():
         raise ValueError("bundle measurement code digest is stale")
+    runtime_proto_digest = contract.p1_remote_proto_runtime_digest()
+    if runtime_proto_digest is None:
+        raise ValueError("generated DFHack protobuf bindings are unavailable")
+    if bundle.get("remote_proto_runtime_sha256") != runtime_proto_digest:
+        raise ValueError("bundle protobuf binding digest is stale")
     previous_root = contract.P1_MEASUREMENT_CALIBRATION_ARTIFACT_ROOT
     try:
         contract.P1_MEASUREMENT_CALIBRATION_ARTIFACT_ROOT = evidence_root
@@ -137,7 +152,9 @@ def _verify_bundle(bundle: dict[str, Any], *, evidence_root: Path) -> None:
             bundle.get("live_traces"),
             str(bundle.get("calibration_fort_gym_commit") or ""),
         ):
-            raise ValueError("live calibration traces do not satisfy the runtime contract")
+            raise ValueError(
+                "live calibration traces do not satisfy the runtime contract"
+            )
         if not contract._calibration_regression_report_is_bound(
             bundle.get("regression_report")
         ):
@@ -149,8 +166,12 @@ def _verify_bundle(bundle: dict[str, Any], *, evidence_root: Path) -> None:
 def main() -> None:
     repo = Path(__file__).resolve().parents[1]
     parser = argparse.ArgumentParser()
-    parser.add_argument("--artifacts-root", type=Path, default=repo / "fort_gym" / "artifacts")
-    parser.add_argument("--evidence-root", type=Path, default=repo / "experiments" / "evidence")
+    parser.add_argument(
+        "--artifacts-root", type=Path, default=repo / "fort_gym" / "artifacts"
+    )
+    parser.add_argument(
+        "--evidence-root", type=Path, default=repo / "experiments" / "evidence"
+    )
     parser.add_argument("--owned-run", required=True)
     parser.add_argument("--death-run", required=True)
     parser.add_argument("--dropout-run", required=True)
@@ -159,6 +180,9 @@ def main() -> None:
     args = parser.parse_args()
     if args.approve and not args.reviewer.strip():
         parser.error("--approve requires a non-empty --reviewer")
+    runtime_proto_digest = contract.p1_remote_proto_runtime_digest()
+    if runtime_proto_digest is None:
+        raise ValueError("generated DFHack protobuf bindings are unavailable")
 
     run_ids = {
         scenario: str(getattr(args, argument))
@@ -174,7 +198,9 @@ def main() -> None:
         source_trace = source / "trace.jsonl"
         source_summary = source / "summary.json"
         if not source_trace.is_file() or not source_summary.is_file():
-            raise FileNotFoundError(f"missing trace/summary for calibration run {run_id}")
+            raise FileNotFoundError(
+                f"missing trace/summary for calibration run {run_id}"
+            )
         summary = _load_summary(source_summary, run_id=run_id, scenario=scenario)
         commits.add(str(summary["fort_gym_commit"]))
         sources.append((scenario, run_id, source_trace, source_summary))
@@ -213,6 +239,7 @@ def main() -> None:
         "calibration_manifest_sha256": _sha256(contract.P1_MANIFEST_PATH),
         "manifest_semantic_sha256": contract.p1_manifest_semantic_digest(),
         "measurement_code_sha256": contract.p1_measurement_code_digest(),
+        "remote_proto_runtime_sha256": runtime_proto_digest,
         "calibration_fort_gym_commit": calibration_commit,
         "review_status": "approved" if args.approve else "pending",
         "reviewer": args.reviewer.strip(),
@@ -224,8 +251,18 @@ def main() -> None:
     }
     _verify_bundle(bundle, evidence_root=args.evidence_root)
     target = args.evidence_root / "fort_eval_easy_p1_g7_v5_live_calibration.json"
-    target.write_text(json.dumps(bundle, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    print(json.dumps({"bundle": str(target), "sha256": _sha256(target), "review_status": bundle["review_status"]}))
+    target.write_text(
+        json.dumps(bundle, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    print(
+        json.dumps(
+            {
+                "bundle": str(target),
+                "sha256": _sha256(target),
+                "review_status": bundle["review_status"],
+            }
+        )
+    )
 
 
 if __name__ == "__main__":

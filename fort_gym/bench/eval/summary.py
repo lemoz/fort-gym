@@ -144,6 +144,7 @@ class RunSummary(BaseModel):
     fort_gym_commit: Optional[str] = None
     df_version: Optional[str] = None
     evaluator_version: Optional[str] = None
+    remote_proto_runtime_sha256: Optional[str] = None
     measurement_calibration_scenario: Optional[str] = None
     measurement_calibration_fixture: Dict[str, Any] = Field(default_factory=dict)
 
@@ -802,9 +803,7 @@ def summarize(trace_path: Path, *, g7_gate_version: int | None = None) -> RunSum
     )
     governed_owned_operational_farm_evidence_complete = (
         final_metrics.get("governed_owned_operational_farm_evidence_complete")
-        if type(
-            final_metrics.get("governed_owned_operational_farm_evidence_complete")
-        )
+        if type(final_metrics.get("governed_owned_operational_farm_evidence_complete"))
         is bool
         else None
     )
@@ -833,8 +832,7 @@ def summarize(trace_path: Path, *, g7_gate_version: int | None = None) -> RunSum
     )
     governed_owned_building_evidence_complete = (
         final_metrics.get("governed_owned_building_evidence_complete")
-        if type(final_metrics.get("governed_owned_building_evidence_complete"))
-        is bool
+        if type(final_metrics.get("governed_owned_building_evidence_complete")) is bool
         else None
     )
     governed_owned_output_units = _strict_nonnegative_int_or_none(
@@ -931,9 +929,7 @@ def summarize(trace_path: Path, *, g7_gate_version: int | None = None) -> RunSum
         governed_owned_completed_beds=governed_owned_completed_beds,
         governed_owned_completed_farm_plots=governed_owned_completed_farm_plots,
         governed_owned_completed_stills=governed_owned_completed_stills,
-        governed_owned_operational_farm_plots=(
-            governed_owned_operational_farm_plots
-        ),
+        governed_owned_operational_farm_plots=(governed_owned_operational_farm_plots),
         governed_owned_operational_farm_evidence_complete=(
             governed_owned_operational_farm_evidence_complete
         ),

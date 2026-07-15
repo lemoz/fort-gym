@@ -14,6 +14,8 @@ from xml.etree import ElementTree
 
 import yaml
 
+from ..env.remote_proto import runtime_binding_digest
+
 P1_PROTOCOL_V3 = "fort-eval-easy-p1-g7-v3"
 P1_PROTOCOL_V4 = "fort-eval-easy-p1-g7-v4"
 P1_PROTOCOL = "fort-eval-easy-p1-g7-v5"
@@ -72,7 +74,61 @@ P1_CALIBRATION_REQUIRED_REGRESSION_TESTS = frozenset(
         "test_calibration_protocol_never_builds_public_comparison_groups",
         "test_calibration_protocol_is_excluded_from_public_overview_and_scalar_groups",
         "test_seed_region3_attestation_fails_closed_when_zero_valued_sensors_are_missing",
+        "test_final_attestation_recovers_modal_transition_after_probe_failure",
+        "test_final_attestation_recovery_fails_closed_gate",
+        "test_governed_viewscreen_interruption_is_degraded_and_reobserved",
+        "test_final_attestation_provenance_fails_closed_gate",
+        "test_remote_proto_runtime_digest_binds_actual_generated_modules",
     }
+)
+
+P1_MEASUREMENT_CODE_RELATIVE_PATHS = (
+    "hook/fort_metrics.lua",
+    "hook/g7_evidence.lua",
+    "hook/job_metrics.lua",
+    "hook/work_metrics.lua",
+    "hook/map_snapshot.lua",
+    "hook/designate_rect.lua",
+    "hook/build_construction.lua",
+    "hook/build_workshop.lua",
+    "hook/build_farm_plot.lua",
+    "hook/place_furniture.lua",
+    "hook/order_make.lua",
+    "hook/set_farm_crop.lua",
+    "hook/set_labor.lua",
+    "hook/unsuspend_jobs.lua",
+    "hook/prepare_keystroke_target.lua",
+    "hook/view_state.lua",
+    "hook/restore_view_state.lua",
+    "fort_gym/bench/agent/base.py",
+    "fort_gym/bench/config.py",
+    "fort_gym/bench/dfhack_backend.py",
+    "fort_gym/bench/dfhack_exec.py",
+    "fort_gym/bench/tick_controller.py",
+    "fort_gym/bench/tick_receipt.py",
+    "fort_gym/bench/env/actions.py",
+    "fort_gym/bench/env/dfhack_client.py",
+    "fort_gym/bench/env/encoder.py",
+    "fort_gym/bench/env/executor.py",
+    "fort_gym/bench/env/keystroke_exec.py",
+    "fort_gym/bench/env/remote_proto/__init__.py",
+    "fort_gym/bench/env/remote_proto/fetch_proto.py",
+    "fort_gym/bench/env/state_reader.py",
+    "fort_gym/bench/run/runner.py",
+    "fort_gym/bench/run/model_modes.py",
+    "fort_gym/bench/run/seed_reset.py",
+    "fort_gym/bench/run/storage.py",
+    "fort_gym/bench/eval/fort_eval_easy_p1.py",
+    "fort_gym/bench/eval/gates.py",
+    "fort_gym/bench/eval/milestones.py",
+    "fort_gym/bench/eval/metrics.py",
+    "fort_gym/bench/eval/protocol.py",
+    "fort_gym/bench/eval/rubric.py",
+    "fort_gym/bench/eval/scoring.py",
+    "fort_gym/bench/eval/summary.py",
+    "fort_gym/bench/eval/measurement_replay.py",
+    "scripts/run_p1_live_calibration.py",
+    "scripts/build_p1_live_calibration_bundle.py",
 )
 
 MODEL_ARMS: Dict[str, Dict[str, str]] = {
@@ -149,34 +205,10 @@ def p1_measurement_code_digest() -> str:
     """Hash every evaluator/sensor source covered by live calibration."""
 
     repo = Path(__file__).resolve().parents[3]
-    paths = (
-        repo / "hook" / "fort_metrics.lua",
-        repo / "hook" / "g7_evidence.lua",
-        repo / "hook" / "job_metrics.lua",
-        repo / "hook" / "work_metrics.lua",
-        repo / "hook" / "map_snapshot.lua",
-        repo / "hook" / "designate_rect.lua",
-        repo / "hook" / "build_construction.lua",
-        repo / "hook" / "build_workshop.lua",
-        repo / "hook" / "build_farm_plot.lua",
-        repo / "hook" / "place_furniture.lua",
-        repo / "hook" / "order_make.lua",
-        repo / "hook" / "set_farm_crop.lua",
-        repo / "fort_gym" / "bench" / "dfhack_backend.py",
-        repo / "fort_gym" / "bench" / "env" / "actions.py",
-        repo / "fort_gym" / "bench" / "env" / "executor.py",
-        repo / "fort_gym" / "bench" / "run" / "runner.py",
-        repo / "fort_gym" / "bench" / "run" / "model_modes.py",
-        repo / "fort_gym" / "bench" / "eval" / "fort_eval_easy_p1.py",
-        repo / "fort_gym" / "bench" / "eval" / "gates.py",
-        repo / "fort_gym" / "bench" / "eval" / "metrics.py",
-        repo / "fort_gym" / "bench" / "eval" / "rubric.py",
-        repo / "fort_gym" / "bench" / "eval" / "summary.py",
-        repo / "fort_gym" / "bench" / "eval" / "measurement_replay.py",
-    )
     digest = hashlib.sha256()
-    for path in paths:
-        digest.update(str(path.relative_to(repo)).encode("utf-8"))
+    for relative_path in P1_MEASUREMENT_CODE_RELATIVE_PATHS:
+        path = repo / relative_path
+        digest.update(relative_path.encode("utf-8"))
         digest.update(b"\0")
         source = path.read_bytes()
         if path == Path(__file__).resolve():
@@ -184,6 +216,12 @@ def p1_measurement_code_digest() -> str:
         digest.update(source)
         digest.update(b"\0")
     return digest.hexdigest()
+
+
+def p1_remote_proto_runtime_digest() -> str | None:
+    """Return the exact untracked generated-binding digest for live DFHack RPCs."""
+
+    return runtime_binding_digest()
 
 
 def _normalized_calibration_contract_source(source: bytes) -> bytes:
@@ -246,6 +284,9 @@ def _live_calibration_traces_are_bound(value: Any, calibration_commit: str) -> b
     """Require scenario-specific DFHack traces and summaries, not hash-shaped claims."""
 
     if not isinstance(value, list):
+        return False
+    remote_proto_digest = p1_remote_proto_runtime_digest()
+    if remote_proto_digest is None:
         return False
     artifact_root = P1_MEASUREMENT_CALIBRATION_ARTIFACT_ROOT.resolve()
     required_scenarios = P1_LIVE_CALIBRATION_SCENARIOS
@@ -314,6 +355,7 @@ def _live_calibration_traces_are_bound(value: Any, calibration_commit: str) -> b
             or summary.get("model") != P1_CALIBRATION_MODEL
             or summary.get("evaluation_protocol") != P1_PROTOCOL
             or summary.get("evaluator_version") != "outcome-vector-v1+g7-v5"
+            or summary.get("remote_proto_runtime_sha256") != remote_proto_digest
             or summary.get("fort_gym_commit") != calibration_commit
             or summary.get("measurement_calibration_scenario") != scenario
             or not isinstance(summary.get("seed_attestation"), dict)
@@ -335,25 +377,19 @@ def _live_calibration_traces_are_bound(value: Any, calibration_commit: str) -> b
             structural = metrics.get("governed_owned_room_structural_evidence")
             owned_signatures = metrics.get("governed_owned_layout_room_signatures")
             gameplay = summary.get("gameplay_outcome")
-            criteria = (
-                gameplay.get("criteria") if isinstance(gameplay, dict) else None
-            )
+            criteria = gameplay.get("criteria") if isinstance(gameplay, dict) else None
             if not (
                 metrics.get("governed_owned_room_evidence_complete") is True
-                and metrics.get("governed_owned_layout_room_lower_bound_proven")
-                is True
+                and metrics.get("governed_owned_layout_room_lower_bound_proven") is True
                 and metrics.get("governed_owned_building_evidence_complete") is True
-                and metrics.get(
-                    "governed_owned_operational_farm_evidence_complete"
-                )
+                and metrics.get("governed_owned_operational_farm_evidence_complete")
                 is True
                 and metrics.get("governed_owned_output_evidence_complete") is True
                 and metrics.get(
                     "governed_owned_output_manager_orders_observed_complete"
                 )
                 is True
-                and metrics.get("governed_owned_output_manager_orders_present")
-                is False
+                and metrics.get("governed_owned_output_manager_orders_present") is False
                 and (
                     _strict_nonnegative_int(
                         metrics.get("governed_owned_accessible_layout_rooms")
@@ -553,13 +589,16 @@ def p1_measurement_calibration_is_complete() -> bool:
     regression_report = (
         evidence.get("regression_report") if isinstance(evidence, dict) else None
     )
+    remote_proto_digest = p1_remote_proto_runtime_digest()
     return bool(
         observed == expected
+        and remote_proto_digest is not None
         and evidence.get("protocol") == P1_PROTOCOL
         and evidence.get("evaluator_version") == "outcome-vector-v1+g7-v5"
         and evidence.get("seed_world_sha256") == P1_SEED_WORLD_SHA256
         and evidence.get("manifest_semantic_sha256") == p1_manifest_semantic_digest()
         and evidence.get("measurement_code_sha256") == p1_measurement_code_digest()
+        and evidence.get("remote_proto_runtime_sha256") == remote_proto_digest
         and re.fullmatch(
             r"[0-9a-f]{40}",
             str(evidence.get("calibration_fort_gym_commit") or ""),
@@ -699,8 +738,7 @@ def attest_seed_region3(
         "initial_wealth": wealth == 9,
         "no_deaths": dead == 0,
         "no_hostiles": state.get("hostiles") is False,
-        "no_risks": isinstance(state.get("risks"), list)
-        and state.get("risks") == [],
+        "no_risks": isinstance(state.get("risks"), list) and state.get("risks") == [],
         "no_workshops": workshop_count == 0,
         "no_farm_plots": farm_plots == 0,
         "no_fort_structures": all(value == 0 for value in structure_counts),
@@ -744,6 +782,7 @@ def p1_summary_metadata(
     fort_gym_commit: str | None,
     measurement_calibration_scenario: str | None = None,
 ) -> Dict[str, Any]:
+    remote_proto_digest = p1_remote_proto_runtime_digest()
     if measurement_calibration_scenario is not None:
         if model != P1_CALIBRATION_MODEL:
             raise ValueError("measurement calibration requires the scripted model")
@@ -764,6 +803,7 @@ def p1_summary_metadata(
             "fort_gym_commit": fort_gym_commit or _current_git_commit(),
             "df_version": "df-51.11",
             "evaluator_version": "outcome-vector-v1+g7-v5",
+            "remote_proto_runtime_sha256": remote_proto_digest,
             "measurement_calibration_scenario": measurement_calibration_scenario,
         }
     arm = MODEL_ARMS[model]
@@ -786,6 +826,7 @@ def p1_summary_metadata(
         "fort_gym_commit": fort_gym_commit,
         "df_version": "df-51.11",
         "evaluator_version": "outcome-vector-v1+g7-v5",
+        "remote_proto_runtime_sha256": remote_proto_digest,
     }
 
 
@@ -1010,6 +1051,7 @@ __all__ = [
     "P1_MEASUREMENT_CALIBRATION_ARTIFACT_ROOT",
     "P1_MEASUREMENT_CALIBRATION_EVIDENCE_PATH",
     "P1_MEASUREMENT_CALIBRATION_EVIDENCE_SHA256",
+    "P1_MEASUREMENT_CODE_RELATIVE_PATHS",
     "P1_PROTOCOL",
     "P1_PROTOCOL_V3",
     "P1_PROTOCOL_V4",
@@ -1023,6 +1065,7 @@ __all__ = [
     "p1_integrity_attestation",
     "p1_measurement_calibration_is_complete",
     "p1_measurement_code_digest",
+    "p1_remote_proto_runtime_digest",
     "p1_manifest_semantic_digest",
     "p1_summary_metadata",
     "p1_task_verdict",

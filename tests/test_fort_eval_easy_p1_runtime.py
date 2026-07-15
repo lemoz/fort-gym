@@ -88,7 +88,9 @@ def test_seed_region3_attestation_fails_closed_on_prior_world_change() -> None:
     assert result["failed_checks"] == ["food", "no_fort_structures"]
 
 
-def test_seed_region3_attestation_fails_closed_when_zero_valued_sensors_are_missing() -> None:
+def test_seed_region3_attestation_fails_closed_when_zero_valued_sensors_are_missing() -> (
+    None
+):
     state = _initial_state()
     del state["dead"]
     del state["risks"]
@@ -116,11 +118,14 @@ def test_seed_region3_attestation_fails_closed_when_zero_valued_sensors_are_miss
     malformed = _initial_state()
     malformed["dead"] = "0"
     malformed["work"]["workshop_count"] = 0.0
-    assert attest_seed_region3(
-        malformed,
-        runtime_save="fortgym_runtime",
-        seed_world_sha256=P1_SEED_WORLD_SHA256,
-    )["eligible"] is False
+    assert (
+        attest_seed_region3(
+            malformed,
+            runtime_save="fortgym_runtime",
+            seed_world_sha256=P1_SEED_WORLD_SHA256,
+        )["eligible"]
+        is False
+    )
 
 
 def test_p1_declaration_requires_exact_arm_seed_and_budget_but_blocks_calibration() -> (
@@ -169,6 +174,12 @@ def test_measurement_unlock_requires_pinned_reviewed_live_evidence(
     from fort_gym.bench.eval import fort_eval_easy_p1 as contract
 
     calibration_commit = "a" * 40
+    runtime_proto_digest = "b" * 64
+    monkeypatch.setattr(
+        contract,
+        "p1_remote_proto_runtime_digest",
+        lambda: runtime_proto_digest,
+    )
     trace_items = []
     trace_payloads = {}
     for index, scenario in enumerate(
@@ -283,6 +294,7 @@ def test_measurement_unlock_requires_pinned_reviewed_live_evidence(
                     "model": P1_CALIBRATION_MODEL,
                     "evaluation_protocol": P1_PROTOCOL,
                     "evaluator_version": "outcome-vector-v1+g7-v5",
+                    "remote_proto_runtime_sha256": runtime_proto_digest,
                     "fort_gym_commit": calibration_commit,
                     "measurement_calibration_scenario": scenario,
                     "measurement_calibration_fixture": (
@@ -339,6 +351,7 @@ def test_measurement_unlock_requires_pinned_reviewed_live_evidence(
         "seed_world_sha256": P1_SEED_WORLD_SHA256,
         "manifest_semantic_sha256": contract.p1_manifest_semantic_digest(),
         "measurement_code_sha256": contract.p1_measurement_code_digest(),
+        "remote_proto_runtime_sha256": runtime_proto_digest,
         "calibration_fort_gym_commit": calibration_commit,
         "review_status": "approved",
         "reviewer": "test-reviewer",
@@ -361,6 +374,18 @@ def test_measurement_unlock_requires_pinned_reviewed_live_evidence(
     )
 
     assert p1_measurement_calibration_is_complete() is True
+
+    monkeypatch.setattr(
+        contract,
+        "p1_remote_proto_runtime_digest",
+        lambda: "c" * 64,
+    )
+    assert p1_measurement_calibration_is_complete() is False
+    monkeypatch.setattr(
+        contract,
+        "p1_remote_proto_runtime_digest",
+        lambda: runtime_proto_digest,
+    )
 
     death_item = next(
         item for item in trace_items if item["scenario"] == "death_cause_fallback"
@@ -479,6 +504,44 @@ def test_measurement_digest_normalizes_only_post_calibration_lock_values() -> No
     )
 
 
+def test_measurement_digest_covers_runtime_and_calibration_dependencies(
+    monkeypatch,
+) -> None:
+    from fort_gym.bench.eval import fort_eval_easy_p1 as contract
+
+    required = {
+        "fort_gym/bench/config.py",
+        "fort_gym/bench/dfhack_exec.py",
+        "fort_gym/bench/tick_controller.py",
+        "fort_gym/bench/tick_receipt.py",
+        "fort_gym/bench/env/dfhack_client.py",
+        "fort_gym/bench/env/encoder.py",
+        "fort_gym/bench/env/keystroke_exec.py",
+        "fort_gym/bench/env/remote_proto/__init__.py",
+        "fort_gym/bench/env/remote_proto/fetch_proto.py",
+        "fort_gym/bench/env/state_reader.py",
+        "fort_gym/bench/eval/milestones.py",
+        "fort_gym/bench/eval/protocol.py",
+        "fort_gym/bench/eval/scoring.py",
+        "fort_gym/bench/run/seed_reset.py",
+        "scripts/run_p1_live_calibration.py",
+        "scripts/build_p1_live_calibration_bundle.py",
+    }
+    assert required <= set(contract.P1_MEASUREMENT_CODE_RELATIVE_PATHS)
+
+    baseline = contract.p1_measurement_code_digest()
+    original_read_bytes = Path.read_bytes
+
+    def changed_tick_controller(path: Path) -> bytes:
+        source = original_read_bytes(path)
+        if path.as_posix().endswith("fort_gym/bench/tick_controller.py"):
+            return source + b"\n# digest sensitivity probe\n"
+        return source
+
+    monkeypatch.setattr(Path, "read_bytes", changed_tick_controller)
+    assert contract.p1_measurement_code_digest() != baseline
+
+
 def test_manifest_semantic_digest_survives_only_activation_lifecycle_flip(
     tmp_path,
 ) -> None:
@@ -539,9 +602,7 @@ def test_bundle_builder_binds_clean_checkout_to_trace_commit(
     builder._require_clean_checkout_at_commit(tmp_path, commit)
 
 
-def test_bundle_builder_rejects_wrong_or_dirty_checkout(
-    monkeypatch, tmp_path
-) -> None:
+def test_bundle_builder_rejects_wrong_or_dirty_checkout(monkeypatch, tmp_path) -> None:
     from scripts import build_p1_live_calibration_bundle as builder
 
     commit = "a" * 40
@@ -590,10 +651,7 @@ def test_owned_calibration_plan_settles_tree_without_shifting_first_meeting() ->
     from scripts import run_p1_live_calibration as calibration_runner
 
     actions = calibration_runner._load_plan(
-        Path(
-            "experiments/calibration/"
-            "p1_g7_v5_owned_layout_and_provisioning.json"
-        ),
+        Path("experiments/calibration/p1_g7_v5_owned_layout_and_provisioning.json"),
         scenario="owned_layout_and_provisioning",
     )
     first_interact = next(
@@ -664,7 +722,9 @@ def test_live_calibration_agent_remaps_farm_ids_from_observation() -> None:
         Path("experiments/calibration/p1_g7_v5_owned_layout_and_provisioning.json"),
         scenario="owned_layout_and_provisioning",
     )
-    agent = calibration_runner.CalibrationPlanAgent([actions[9], actions[10], actions[10]])
+    agent = calibration_runner.CalibrationPlanAgent(
+        [actions[9], actions[10], actions[10]]
+    )
 
     build = agent.decide(
         "main map",
