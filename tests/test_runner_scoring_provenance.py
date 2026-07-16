@@ -2545,6 +2545,65 @@ def test_owned_room_requires_final_geometry_function_and_native_access() -> None
     ]
 
 
+def test_owned_room_lower_bound_survives_unrelated_component_scan_truncation() -> None:
+    spaces = []
+    completed_excavation = set()
+    for index in range(3):
+        x = 10 + index * 10
+        interior = [
+            [x, 20, 5],
+            [x + 1, 20, 5],
+            [x, 21, 5],
+            [x + 1, 21, 5],
+        ]
+        completed_excavation.update(tuple(tile) for tile in interior)
+        spaces.append(
+            {
+                "signature": f"owned-room-{index}",
+                "kind": "enclosed_space",
+                "interior_tiles": interior,
+                "interior_tiles_complete": True,
+                "boundary_construction_tiles": [],
+                "boundary_construction_tiles_complete": True,
+                "boundary_tile_count": 8,
+                "boundary_tiles_complete": True,
+                "touching_building_ids": [],
+                "boundary_door_ids": [],
+                "accessible": True,
+                "accessibility_evidence_complete": True,
+            }
+        )
+    state = {
+        "fort": {
+            "ok": True,
+            "spaces": spaces,
+            "spaces_truncated": False,
+            "component_scan_truncated": True,
+            "building_scan_complete": True,
+            "construction_tiles_complete": True,
+            "construction_details": [],
+        }
+    }
+
+    result = _governed_owned_room_metrics(
+        state,
+        completed_excavation=completed_excavation,
+        completed_constructions=set(),
+        owned_buildings={},
+        completed_buildings=set(),
+        building_evidence_complete=True,
+    )
+
+    assert result["governed_owned_room_evidence_complete"] is False
+    assert result["governed_owned_layout_room_lower_bound_proven"] is True
+    assert result["governed_owned_accessible_layout_rooms"] == 3
+    assert result["governed_owned_layout_room_signatures"] == [
+        "owned-room-0",
+        "owned-room-1",
+        "owned-room-2",
+    ]
+
+
 def test_owned_room_rejects_one_tile_claim_and_unowned_function() -> None:
     room = {
         "signature": "room",

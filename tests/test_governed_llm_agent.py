@@ -2231,6 +2231,7 @@ def test_vision_variants_registered_in_all_gates() -> None:
         "dfhack-governed-llm-gpt55-vision",
         "dfhack-governed-llm-kimi-vision",
         "dfhack-governed-llm-minimax-vision",
+        "dfhack-governed-llm-minimax-canary",
     ):
         assert name in AGENT_FACTORIES
         assert name in GOVERNED_DFHACK_MODELS
@@ -2269,6 +2270,23 @@ def test_frontier_p1_variants_are_pinned_in_all_gates(monkeypatch) -> None:
     assert sol._reasoning_effort == "max"
     assert sol._prompt_cache == "automatic"
     assert sol._max_advance_ticks == 2500
+
+
+def test_minimax_canary_is_bounded_and_stateless(monkeypatch) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    try:
+        canary = AGENT_FACTORIES["dfhack-governed-llm-minimax-canary"]()
+    finally:
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert canary._model == "minimax/minimax-m3"
+    assert canary._vision is True
+    assert canary._memory_path is None
+    assert canary._memory.window_size == 0
+    assert canary._max_tokens == 1024
+    assert canary._max_attempts == 2
+    assert canary._max_advance_ticks == 2500
 
 
 @pytest.mark.parametrize(

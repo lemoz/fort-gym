@@ -28,6 +28,7 @@ CALIBRATION_TEST_NODE_IDS = (
     "tests/test_runner_scoring_provenance.py::test_operational_farm_proof_requires_the_farm_to_remain_complete",
     "tests/test_runner_scoring_provenance.py::test_operational_farm_proof_requires_current_crop_assignment_and_read_health",
     "tests/test_runner_scoring_provenance.py::test_owned_room_requires_final_geometry_function_and_native_access",
+    "tests/test_runner_scoring_provenance.py::test_owned_room_lower_bound_survives_unrelated_component_scan_truncation",
     "tests/test_runner_scoring_provenance.py::test_owned_room_rejects_one_tile_claim_and_unowned_function",
     "tests/test_runner_scoring_provenance.py::test_owned_room_requires_exact_boundary_door_not_diagonal_proximity",
     "tests/test_runner_scoring_provenance.py::test_owned_floor_boundary_cannot_be_credited_as_structural_wall",

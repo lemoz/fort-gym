@@ -827,6 +827,7 @@ OPTIONAL_AGENT_MODULES = {
     "dfhack-governed-llm-gpt55-vision": "fort_gym.bench.agent.governed_llm",
     "dfhack-governed-llm-kimi-vision": "fort_gym.bench.agent.governed_llm",
     "dfhack-governed-llm-minimax-vision": "fort_gym.bench.agent.governed_llm",
+    "dfhack-governed-llm-minimax-canary": "fort_gym.bench.agent.governed_llm",
     "openai": "fort_gym.bench.agent.llm_openai",
     "openai-keystroke-perception-review": "fort_gym.bench.agent.llm_openai",
     "openrouter-keystroke": "fort_gym.bench.agent.llm_openrouter",

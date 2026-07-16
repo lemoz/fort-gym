@@ -55,6 +55,7 @@ P1_CALIBRATION_REQUIRED_REGRESSION_TESTS = frozenset(
         "test_operational_farm_proof_requires_the_farm_to_remain_complete",
         "test_operational_farm_proof_requires_current_crop_assignment_and_read_health",
         "test_owned_room_requires_final_geometry_function_and_native_access",
+        "test_owned_room_lower_bound_survives_unrelated_component_scan_truncation",
         "test_owned_room_rejects_one_tile_claim_and_unowned_function",
         "test_owned_room_requires_exact_boundary_door_not_diagonal_proximity",
         "test_owned_floor_boundary_cannot_be_credited_as_structural_wall",
@@ -379,8 +380,12 @@ def _live_calibration_traces_are_bound(value: Any, calibration_commit: str) -> b
             gameplay = summary.get("gameplay_outcome")
             criteria = gameplay.get("criteria") if isinstance(gameplay, dict) else None
             if not (
-                metrics.get("governed_owned_room_evidence_complete") is True
-                and metrics.get("governed_owned_layout_room_lower_bound_proven") is True
+                # An unrelated component can exceed the bounded exhaustive scan
+                # after three owned rooms have each been observed with complete
+                # local geometry, accessibility, and ownership evidence. Preserve
+                # the honest exhaustive-scan flag, but bind positive calibration
+                # to the directly proven lower bound just as the G7 gate does.
+                metrics.get("governed_owned_layout_room_lower_bound_proven") is True
                 and metrics.get("governed_owned_building_evidence_complete") is True
                 and metrics.get("governed_owned_operational_farm_evidence_complete")
                 is True

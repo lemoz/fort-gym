@@ -192,7 +192,9 @@ def test_measurement_unlock_requires_pinned_reviewed_live_evidence(
         run_id = f"run-{index}"
         artifact = tmp_path / f"{scenario}.jsonl"
         metrics = {
-            "governed_owned_room_evidence_complete": True,
+            # The positive lower bound remains valid even if an unrelated
+            # component prevents an exhaustive global space enumeration.
+            "governed_owned_room_evidence_complete": False,
             "governed_owned_building_evidence_complete": True,
             "governed_owned_output_evidence_complete": True,
             "governed_owned_accessible_layout_rooms": 3,
@@ -647,19 +649,18 @@ def test_live_calibration_runner_rejects_untracked_checkout(monkeypatch) -> None
     ]
 
 
-def test_owned_calibration_plan_settles_tree_without_shifting_first_meeting() -> None:
+def test_owned_calibration_plan_is_bounded_and_keeps_a_settlement_buffer() -> None:
     from scripts import run_p1_live_calibration as calibration_runner
 
     actions = calibration_runner._load_plan(
         Path("experiments/calibration/p1_g7_v5_owned_layout_and_provisioning.json"),
         scenario="owned_layout_and_provisioning",
     )
-    first_interact = next(
-        index for index, action in enumerate(actions) if action["type"] == "INTERACT"
-    )
 
-    assert len(actions) == 200
-    assert [action["type"] for action in actions[:7]] == [
+    assert len(actions) == 84
+    assert [action["type"] for action in actions[:9]] == [
+        "DIG",
+        "DIG",
         "DIG",
         "WAIT",
         "WAIT",
@@ -668,9 +669,14 @@ def test_owned_calibration_plan_settles_tree_without_shifting_first_meeting() ->
         "WAIT",
         "BUILD",
     ]
-    assert first_interact == 101
-    assert sum(action["advance_ticks"] for action in actions[:first_interact]) == 199100
-    assert actions[6]["params"] == {
+    assert all(action["type"] != "INTERACT" for action in actions)
+    assert [action["type"] for action in actions[-30:]] == ["WAIT"] * 30
+    assert [
+        action["params"]["job"]
+        for action in actions
+        if action["type"] == "ORDER" and action["params"]["job"] == "brew"
+    ] == ["brew"]
+    assert actions[8]["params"] == {
         "kind": "CarpenterWorkshop",
         "structure": None,
         "material": None,
@@ -689,7 +695,7 @@ def test_live_calibration_agent_waits_for_observed_workshop() -> None:
     action = calibration_runner._load_plan(
         Path("experiments/calibration/p1_g7_v5_owned_layout_and_provisioning.json"),
         scenario="owned_layout_and_provisioning",
-    )[12]
+    )[10]
     agent = calibration_runner.CalibrationPlanAgent([action])
 
     waiting = agent.decide(
@@ -715,6 +721,94 @@ def test_live_calibration_agent_waits_for_observed_workshop() -> None:
     assert ready["params"]["job"] == "barrel"
 
 
+def test_live_calibration_agent_waits_for_produced_furniture() -> None:
+    from scripts import run_p1_live_calibration as calibration_runner
+
+    action = calibration_runner._load_plan(
+        Path("experiments/calibration/p1_g7_v5_owned_layout_and_provisioning.json"),
+        scenario="owned_layout_and_provisioning",
+    )[36]
+    agent = calibration_runner.CalibrationPlanAgent([action])
+
+    waiting = agent.decide(
+        "main map",
+        {
+            "viewscreen_type": "viewscreen_dwarfmodest",
+            "crew": {
+                "farm_plot_details": [],
+                "goods": {"bed": 1},
+                "placed_furniture": {"bed": 1},
+            },
+        },
+    )
+    ready = agent.decide(
+        "main map",
+        {
+            "viewscreen_type": "viewscreen_dwarfmodest",
+            "crew": {
+                "farm_plot_details": [],
+                "goods": {"bed": 2},
+                "placed_furniture": {"bed": 1},
+            },
+        },
+    )
+
+    assert waiting["type"] == "WAIT"
+    assert ready["type"] == "BUILD"
+    assert ready["params"]["kind"] == "Bed"
+
+
+def test_live_calibration_agent_waits_for_observed_brew_inputs() -> None:
+    from scripts import run_p1_live_calibration as calibration_runner
+
+    action = calibration_runner._load_plan(
+        Path("experiments/calibration/p1_g7_v5_owned_layout_and_provisioning.json"),
+        scenario="owned_layout_and_provisioning",
+    )[53]
+    agent = calibration_runner.CalibrationPlanAgent([action])
+    base_crew = {
+        "farm_plot_details": [],
+        "workshops": [
+            {
+                "subtype": "Still",
+                "stage_read_ok": True,
+                "built": True,
+            }
+        ],
+    }
+
+    waiting = agent.decide(
+        "main map",
+        {
+            "viewscreen_type": "viewscreen_dwarfmodest",
+            "crew": {
+                **base_crew,
+                "production_inputs": {
+                    "brewable_plant_stacks": 0,
+                    "empty_barrels": 1,
+                },
+            },
+        },
+    )
+    ready = agent.decide(
+        "main map",
+        {
+            "viewscreen_type": "viewscreen_dwarfmodest",
+            "crew": {
+                **base_crew,
+                "production_inputs": {
+                    "brewable_plant_stacks": 1,
+                    "empty_barrels": 1,
+                },
+            },
+        },
+    )
+
+    assert waiting["type"] == "WAIT"
+    assert ready["type"] == "ORDER"
+    assert ready["params"]["job"] == "brew"
+
+
 def test_live_calibration_agent_remaps_farm_ids_from_observation() -> None:
     from scripts import run_p1_live_calibration as calibration_runner
 
@@ -723,7 +817,7 @@ def test_live_calibration_agent_remaps_farm_ids_from_observation() -> None:
         scenario="owned_layout_and_provisioning",
     )
     agent = calibration_runner.CalibrationPlanAgent(
-        [actions[9], actions[10], actions[10]]
+        [actions[18], actions[19], actions[19]]
     )
 
     build = agent.decide(
@@ -745,7 +839,7 @@ def test_live_calibration_agent_remaps_farm_ids_from_observation() -> None:
     assert second_farm["params"]["building_id"] == 31
 
 
-def test_live_calibration_agent_recovers_modal_and_skips_blind_interact() -> None:
+def test_live_calibration_agent_recovers_modal_without_consuming_plan_action() -> None:
     from scripts import run_p1_live_calibration as calibration_runner
 
     actions = calibration_runner._load_plan(
@@ -753,7 +847,7 @@ def test_live_calibration_agent_recovers_modal_and_skips_blind_interact() -> Non
         scenario="owned_layout_and_provisioning",
     )
     agent = calibration_runner.CalibrationPlanAgent(
-        [actions[0], actions[101], actions[1]]
+        [actions[0], actions[1]]
     )
 
     recovery = agent.decide(
@@ -771,7 +865,7 @@ def test_live_calibration_agent_recovers_modal_and_skips_blind_interact() -> Non
             "crew": {"farm_plot_details": []},
         },
     )
-    after_skipped_placeholder = agent.decide(
+    second_plan_action = agent.decide(
         "main map",
         {
             "viewscreen_type": "viewscreen_dwarfmodest",
@@ -782,7 +876,7 @@ def test_live_calibration_agent_recovers_modal_and_skips_blind_interact() -> Non
     assert recovery["type"] == "INTERACT"
     assert recovery["params"]["operation"] == "topic_option_a"
     assert first_plan_action["type"] == "DIG"
-    assert after_skipped_placeholder["type"] == "WAIT"
+    assert second_plan_action["type"] == "DIG"
 
 
 @pytest.mark.parametrize(

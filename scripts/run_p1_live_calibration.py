@@ -41,6 +41,12 @@ class CalibrationPlanAgent(Agent):
     _CARPENTER_ORDER_JOBS = frozenset(
         {"barrel", "bed", "bin", "chair", "door", "table"}
     )
+    _FURNITURE_GOODS_BY_KIND = {
+        "Bed": "bed",
+        "Chair": "chair",
+        "Door": "door",
+        "Table": "table",
+    }
     _MAX_PRECONDITION_WAITS = 8
 
     def __init__(self, actions: list[dict[str, Any]]) -> None:
@@ -160,6 +166,50 @@ class CalibrationPlanAgent(Agent):
         self._precondition_waits[key] = waits + 1
         return self._wait(reason)
 
+    @classmethod
+    def _available_furniture(
+        cls, kind: str, obs_json: dict[str, Any]
+    ) -> int:
+        good = cls._FURNITURE_GOODS_BY_KIND.get(kind)
+        crew = obs_json.get("crew")
+        if good is None or not isinstance(crew, dict):
+            return 0
+        goods = crew.get("goods")
+        placed = crew.get("placed_furniture")
+        if not isinstance(goods, dict) or not isinstance(placed, dict):
+            return 0
+        produced = cls._positive_int(goods.get(good))
+        installed = cls._positive_int(placed.get(good))
+        if produced is None or installed is None:
+            return 0
+        return max(0, produced - installed)
+
+    @classmethod
+    def _brew_preconditions_observed(cls, obs_json: dict[str, Any]) -> bool:
+        crew = obs_json.get("crew")
+        if not isinstance(crew, dict):
+            return False
+        workshops = crew.get("workshops")
+        inputs = crew.get("production_inputs")
+        if not isinstance(workshops, list) or not isinstance(inputs, dict):
+            return False
+        built_still = any(
+            isinstance(workshop, dict)
+            and workshop.get("subtype") == "Still"
+            and workshop.get("stage_read_ok") is True
+            and workshop.get("built") is True
+            for workshop in workshops
+        )
+        brewable = cls._positive_int(inputs.get("brewable_plant_stacks"))
+        barrels = cls._positive_int(inputs.get("empty_barrels"))
+        return bool(
+            built_still
+            and brewable is not None
+            and brewable >= 1
+            and barrels is not None
+            and barrels >= 1
+        )
+
     def decide(self, obs_text: str, obs_json: dict[str, Any]) -> dict[str, Any]:
         observed_farms = self._observed_farm_ids(obs_json)
         if self._baseline_farm_ids is None:
@@ -189,6 +239,27 @@ class CalibrationPlanAgent(Agent):
                 if job in self._CARPENTER_ORDER_JOBS and not usable:
                     wait = self._bounded_precondition_wait(
                         reason="wait for the observed carpenter workshop to become usable"
+                    )
+                    if wait is not None:
+                        return wait
+                if job == "brew" and not self._brew_preconditions_observed(obs_json):
+                    wait = self._bounded_precondition_wait(
+                        reason=(
+                            "wait for a built Still, a brewable plant stack, "
+                            "and an empty barrel"
+                        )
+                    )
+                    if wait is not None:
+                        return wait
+
+            if action.get("type") == "BUILD" and isinstance(params, dict):
+                kind = str(params.get("kind") or "")
+                if (
+                    kind in self._FURNITURE_GOODS_BY_KIND
+                    and self._available_furniture(kind, obs_json) < 1
+                ):
+                    wait = self._bounded_precondition_wait(
+                        reason=f"wait for an available produced {kind.lower()}"
                     )
                     if wait is not None:
                         return wait
@@ -270,11 +341,7 @@ def main() -> None:
         runtime_save=P1_RUNTIME_SAVE,
         evaluation_protocol=P1_PROTOCOL,
         measurement_calibration_scenario=args.scenario,
-        measurement_calibration_step_limit=(
-            None
-            if args.scenario == "owned_layout_and_provisioning"
-            else len(actions)
-        ),
+        measurement_calibration_step_limit=len(actions),
     )
     print(run_id)
 

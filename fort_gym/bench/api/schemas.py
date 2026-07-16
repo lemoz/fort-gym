@@ -25,6 +25,7 @@ ModelType = Literal[
     "dfhack-governed-llm-gpt55-vision",
     "dfhack-governed-llm-kimi-vision",
     "dfhack-governed-llm-minimax-vision",
+    "dfhack-governed-llm-minimax-canary",
     "openai",
     "openai-keystroke-perception-review",
     "openrouter-keystroke",
