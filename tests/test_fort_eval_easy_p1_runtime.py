@@ -657,11 +657,17 @@ def test_owned_calibration_plan_is_bounded_and_keeps_a_settlement_buffer() -> No
         scenario="owned_layout_and_provisioning",
     )
 
-    assert len(actions) == 84
-    assert [action["type"] for action in actions[:9]] == [
+    assert len(actions) == 125
+    assert [action["type"] for action in actions[:15]] == [
         "DIG",
         "DIG",
         "DIG",
+        "DIG",
+        "DIG",
+        "DIG",
+        "DIG",
+        "WAIT",
+        "WAIT",
         "WAIT",
         "WAIT",
         "WAIT",
@@ -670,13 +676,25 @@ def test_owned_calibration_plan_is_bounded_and_keeps_a_settlement_buffer() -> No
         "BUILD",
     ]
     assert all(action["type"] != "INTERACT" for action in actions)
-    assert [action["type"] for action in actions[-30:]] == ["WAIT"] * 30
+    assert [action["type"] for action in actions[-20:]] == ["WAIT"] * 20
     assert [
         action["params"]["job"]
         for action in actions
         if action["type"] == "ORDER" and action["params"]["job"] == "brew"
     ] == ["brew"]
-    assert actions[8]["params"] == {
+    wall_indices = [
+        index
+        for index, action in enumerate(actions)
+        if action["type"] == "BUILD" and action["params"]["kind"] == "Wall"
+    ]
+    assert len(wall_indices) == 27
+    assert all(
+        actions[index]["params"]["x2"] is None
+        and actions[index]["params"]["y2"] is None
+        and actions[index + 1]["type"] == "WAIT"
+        for index in wall_indices
+    )
+    assert actions[14]["params"] == {
         "kind": "CarpenterWorkshop",
         "structure": None,
         "material": None,
@@ -695,7 +713,7 @@ def test_live_calibration_agent_waits_for_observed_workshop() -> None:
     action = calibration_runner._load_plan(
         Path("experiments/calibration/p1_g7_v5_owned_layout_and_provisioning.json"),
         scenario="owned_layout_and_provisioning",
-    )[10]
+    )[16]
     agent = calibration_runner.CalibrationPlanAgent([action])
 
     waiting = agent.decide(
@@ -727,7 +745,7 @@ def test_live_calibration_agent_waits_for_produced_furniture() -> None:
     action = calibration_runner._load_plan(
         Path("experiments/calibration/p1_g7_v5_owned_layout_and_provisioning.json"),
         scenario="owned_layout_and_provisioning",
-    )[36]
+    )[56]
     agent = calibration_runner.CalibrationPlanAgent([action])
 
     waiting = agent.decide(
@@ -764,7 +782,7 @@ def test_live_calibration_agent_waits_for_observed_brew_inputs() -> None:
     action = calibration_runner._load_plan(
         Path("experiments/calibration/p1_g7_v5_owned_layout_and_provisioning.json"),
         scenario="owned_layout_and_provisioning",
-    )[53]
+    )[104]
     agent = calibration_runner.CalibrationPlanAgent([action])
     base_crew = {
         "farm_plot_details": [],
@@ -817,7 +835,7 @@ def test_live_calibration_agent_remaps_farm_ids_from_observation() -> None:
         scenario="owned_layout_and_provisioning",
     )
     agent = calibration_runner.CalibrationPlanAgent(
-        [actions[18], actions[19], actions[19]]
+        [actions[24], actions[25], actions[25]]
     )
 
     build = agent.decide(
