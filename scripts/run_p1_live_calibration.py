@@ -47,6 +47,8 @@ class CalibrationPlanAgent(Agent):
         "Door": "door",
         "Table": "table",
     }
+    _WORKSHOP_KINDS = frozenset({"CarpenterWorkshop", "Still"})
+    _OPEN_SURFACE_CHARS = frozenset({".", ","})
     _MAX_PRECONDITION_WAITS = 8
 
     def __init__(self, actions: list[dict[str, Any]]) -> None:
@@ -210,6 +212,73 @@ class CalibrationPlanAgent(Agent):
             and barrels >= 1
         )
 
+    @classmethod
+    def _remap_blocked_workshop_action(
+        cls, action: dict[str, Any], obs_json: dict[str, Any]
+    ) -> dict[str, Any]:
+        params = action.get("params")
+        fort = obs_json.get("fort")
+        if not isinstance(params, dict) or not isinstance(fort, dict):
+            return action
+        kind = str(params.get("kind") or "")
+        rows = fort.get("map_rows")
+        origin = fort.get("map_origin")
+        x = cls._positive_int(params.get("x"))
+        y = cls._positive_int(params.get("y"))
+        z = cls._positive_int(params.get("z"))
+        if (
+            kind not in cls._WORKSHOP_KINDS
+            or not isinstance(rows, list)
+            or not rows
+            or not all(isinstance(row, str) for row in rows)
+            or not isinstance(origin, list)
+            or len(origin) < 3
+            or x is None
+            or y is None
+            or z is None
+        ):
+            return action
+        origin_x = cls._positive_int(origin[0])
+        origin_y = cls._positive_int(origin[1])
+        origin_z = cls._positive_int(origin[2])
+        if origin_x is None or origin_y is None or origin_z != z:
+            return action
+
+        def footprint_clear(candidate_x: int, candidate_y: int) -> bool:
+            return all(
+                0 <= candidate_y + dy - origin_y < len(rows)
+                and 0 <= candidate_x + dx - origin_x < len(rows[candidate_y + dy - origin_y])
+                and rows[candidate_y + dy - origin_y][
+                    candidate_x + dx - origin_x
+                ]
+                in cls._OPEN_SURFACE_CHARS
+                for dy in range(3)
+                for dx in range(3)
+            )
+
+        if footprint_clear(x, y):
+            return action
+        candidates = [
+            (origin_x + dx, origin_y + dy)
+            for dy in range(max(0, len(rows) - 2))
+            for dx in range(max(0, min(len(row) for row in rows) - 2))
+            if footprint_clear(origin_x + dx, origin_y + dy)
+        ]
+        if not candidates:
+            return action
+        candidate_x, candidate_y = min(
+            candidates,
+            key=lambda candidate: (
+                abs(candidate[0] - x) + abs(candidate[1] - y),
+                candidate[1],
+                candidate[0],
+            ),
+        )
+        remapped = copy.deepcopy(action)
+        remapped["params"]["x"] = candidate_x
+        remapped["params"]["y"] = candidate_y
+        return remapped
+
     def decide(self, obs_text: str, obs_json: dict[str, Any]) -> dict[str, Any]:
         observed_farms = self._observed_farm_ids(obs_json)
         if self._baseline_farm_ids is None:
@@ -254,6 +323,8 @@ class CalibrationPlanAgent(Agent):
 
             if action.get("type") == "BUILD" and isinstance(params, dict):
                 kind = str(params.get("kind") or "")
+                if kind in self._WORKSHOP_KINDS:
+                    action = self._remap_blocked_workshop_action(action, obs_json)
                 if (
                     kind in self._FURNITURE_GOODS_BY_KIND
                     and self._available_furniture(kind, obs_json) < 1
