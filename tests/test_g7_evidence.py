@@ -3,6 +3,10 @@ from __future__ import annotations
 from pathlib import Path
 
 from fort_gym.bench import dfhack_backend
+from fort_gym.bench.eval.fort_eval_easy_p1 import (
+    P1_CALIBRATION_REQUIRED_REGRESSION_TESTS,
+    P1_MEASUREMENT_CODE_RELATIVE_PATHS,
+)
 
 HOOK_SOURCE = (
     Path(__file__).resolve().parents[1] / "hook" / "g7_evidence.lua"
@@ -161,6 +165,11 @@ def test_death_calibration_fixture_is_one_bounded_friendly_kill(monkeypatch) -> 
         "It does not write any measurement or death-cause evidence itself.",
     ):
         assert needle in DEATH_FIXTURE_HOOK_SOURCE
+    assert "hook/calibration_kill_one.lua" in P1_MEASUREMENT_CODE_RELATIVE_PATHS
+    assert (
+        "test_death_calibration_fixture_is_one_bounded_friendly_kill"
+        in P1_CALIBRATION_REQUIRED_REGRESSION_TESTS
+    )
 
 
 def test_death_calibration_fixture_fails_without_command_confirmation(

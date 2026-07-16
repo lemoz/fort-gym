@@ -69,6 +69,7 @@ P1_CALIBRATION_REQUIRED_REGRESSION_TESTS = frozenset(
         "test_g7_v5_rejects_non_authoritative_death_cause_source",
         "test_g7_v5_rejects_contradictory_death_aggregates_as_invalid",
         "test_g7_v5_rejects_duplicate_death_records",
+        "test_death_calibration_fixture_is_one_bounded_friendly_kill",
         "test_fort_metrics_emits_typed_constructions_and_honest_scan_flags",
         "test_fort_metrics_distinguishes_actual_caps_and_path_sample_gaps",
         "test_fort_metrics_tracks_building_scan_and_exact_boundary_membership",
@@ -86,6 +87,7 @@ P1_CALIBRATION_REQUIRED_REGRESSION_TESTS = frozenset(
 P1_MEASUREMENT_CODE_RELATIVE_PATHS = (
     "hook/fort_metrics.lua",
     "hook/g7_evidence.lua",
+    "hook/calibration_kill_one.lua",
     "hook/job_metrics.lua",
     "hook/work_metrics.lua",
     "hook/map_snapshot.lua",
