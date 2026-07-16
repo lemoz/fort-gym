@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+from itertools import combinations
 import json
 from pathlib import Path
 import subprocess
@@ -49,6 +50,9 @@ class CalibrationPlanAgent(Agent):
     }
     _WORKSHOP_KINDS = frozenset({"CarpenterWorkshop", "Still"})
     _OPEN_SURFACE_CHARS = frozenset({".", ","})
+    _SURFACE_ROOM_DEFAULT_ANCHORS = ((91, 88), (95, 88), (104, 88))
+    _SURFACE_ROOM_WIDTH = 4
+    _SURFACE_ROOM_HEIGHT = 3
     _MAX_PRECONDITION_WAITS = 8
 
     def __init__(self, actions: list[dict[str, Any]]) -> None:
@@ -58,6 +62,7 @@ class CalibrationPlanAgent(Agent):
         self._farm_id_map: dict[int, int] = {}
         self._assigned_farm_ids: set[int] = set()
         self._precondition_waits: dict[tuple[int, str], int] = {}
+        self._surface_room_anchors: list[tuple[int, int]] | None = None
 
     @staticmethod
     def _positive_int(value: Any) -> int | None:
@@ -279,6 +284,99 @@ class CalibrationPlanAgent(Agent):
         remapped["params"]["y"] = candidate_y
         return remapped
 
+    @classmethod
+    def _select_surface_room_anchors(
+        cls, obs_json: dict[str, Any], *, z: int
+    ) -> list[tuple[int, int]] | None:
+        fort = obs_json.get("fort")
+        if not isinstance(fort, dict):
+            return None
+        rows = fort.get("map_rows")
+        origin = fort.get("map_origin")
+        if (
+            not isinstance(rows, list)
+            or not rows
+            or not all(isinstance(row, str) for row in rows)
+            or not isinstance(origin, list)
+            or len(origin) < 3
+        ):
+            return None
+        origin_x = cls._positive_int(origin[0])
+        origin_y = cls._positive_int(origin[1])
+        origin_z = cls._positive_int(origin[2])
+        if origin_x is None or origin_y is None or origin_z != z:
+            return None
+        width = min(len(row) for row in rows)
+
+        def footprint_clear(candidate_x: int, candidate_y: int) -> bool:
+            return all(
+                rows[candidate_y + dy - origin_y][candidate_x + dx - origin_x]
+                in cls._OPEN_SURFACE_CHARS
+                for dy in range(cls._SURFACE_ROOM_HEIGHT)
+                for dx in range(cls._SURFACE_ROOM_WIDTH)
+            )
+
+        candidates = [
+            (origin_x + dx, origin_y + dy)
+            for dy in range(max(0, len(rows) - cls._SURFACE_ROOM_HEIGHT + 1))
+            for dx in range(max(0, width - cls._SURFACE_ROOM_WIDTH + 1))
+            if footprint_clear(origin_x + dx, origin_y + dy)
+        ]
+
+        def overlaps(left: tuple[int, int], right: tuple[int, int]) -> bool:
+            return not (
+                left[0] + cls._SURFACE_ROOM_WIDTH <= right[0]
+                or right[0] + cls._SURFACE_ROOM_WIDTH <= left[0]
+                or left[1] + cls._SURFACE_ROOM_HEIGHT <= right[1]
+                or right[1] + cls._SURFACE_ROOM_HEIGHT <= left[1]
+            )
+
+        for selected in combinations(candidates, 3):
+            if all(
+                not overlaps(left, right)
+                for left, right in combinations(selected, 2)
+            ):
+                return list(selected)
+        return None
+
+    def _remap_surface_room_action(
+        self, action: dict[str, Any], obs_json: dict[str, Any]
+    ) -> dict[str, Any]:
+        params = action.get("params")
+        if not isinstance(params, dict):
+            return action
+        kind = str(params.get("kind") or "")
+        x = self._positive_int(params.get("x"))
+        y = self._positive_int(params.get("y"))
+        z = self._positive_int(params.get("z"))
+        if kind not in {"Wall", "Bed", "Door"} or x is None or y is None or z is None:
+            return action
+        room_index = next(
+            (
+                index
+                for index, (anchor_x, anchor_y) in enumerate(
+                    self._SURFACE_ROOM_DEFAULT_ANCHORS
+                )
+                if anchor_x <= x < anchor_x + self._SURFACE_ROOM_WIDTH
+                and anchor_y <= y < anchor_y + self._SURFACE_ROOM_HEIGHT
+            ),
+            None,
+        )
+        if room_index is None:
+            return action
+        if self._surface_room_anchors is None:
+            self._surface_room_anchors = self._select_surface_room_anchors(
+                obs_json, z=z
+            )
+        if self._surface_room_anchors is None:
+            return action
+        source_x, source_y = self._SURFACE_ROOM_DEFAULT_ANCHORS[room_index]
+        target_x, target_y = self._surface_room_anchors[room_index]
+        remapped = copy.deepcopy(action)
+        remapped["params"]["x"] = target_x + (x - source_x)
+        remapped["params"]["y"] = target_y + (y - source_y)
+        return remapped
+
     def decide(self, obs_text: str, obs_json: dict[str, Any]) -> dict[str, Any]:
         observed_farms = self._observed_farm_ids(obs_json)
         if self._baseline_farm_ids is None:
@@ -325,6 +423,8 @@ class CalibrationPlanAgent(Agent):
                 kind = str(params.get("kind") or "")
                 if kind in self._WORKSHOP_KINDS:
                     action = self._remap_blocked_workshop_action(action, obs_json)
+                elif kind in {"Wall", "Bed", "Door"}:
+                    action = self._remap_surface_room_action(action, obs_json)
                 if (
                     kind in self._FURNITURE_GOODS_BY_KIND
                     and self._available_furniture(kind, obs_json) < 1
