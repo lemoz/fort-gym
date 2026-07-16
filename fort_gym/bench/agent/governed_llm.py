@@ -858,6 +858,63 @@ class DFHackGovernedLLMAgent(Agent):
             normalized["advance_ticks"] = DEFAULT_ADVANCE_TICKS
         return normalized
 
+    @staticmethod
+    def _wrapped_coordinate_triplet(value: Any) -> list[int] | None:
+        """Decode one observed provider wrapper without weakening validation."""
+
+        if not isinstance(value, dict) or set(value) != {"item"}:
+            return None
+        raw_items = value.get("item")
+        if not isinstance(raw_items, list) or len(raw_items) != 3:
+            return None
+        coordinates: list[int] = []
+        for raw in raw_items:
+            if type(raw) is int:
+                coordinates.append(raw)
+                continue
+            if isinstance(raw, str) and re.fullmatch(r"-?\d+", raw.strip()):
+                coordinates.append(int(raw.strip()))
+                continue
+            return None
+        return coordinates
+
+    def _normalize_provider_coordinate_wrappers(
+        self, payload: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Normalize MiniMax's exact ``{"item": [x, y, z]}`` transport quirk."""
+
+        action_type = str(payload.get("type") or "").strip().upper()
+        coordinate_fields = {
+            "DIG": ("area", "size"),
+            "UNSUSPEND": ("area", "size"),
+            "BUILD": ("location",),
+        }.get(action_type, ())
+        params = payload.get("params")
+        if not coordinate_fields or not isinstance(params, dict):
+            return payload
+
+        normalized_params = dict(params)
+        normalized_fields: list[str] = []
+        for field in coordinate_fields:
+            coordinates = self._wrapped_coordinate_triplet(params.get(field))
+            if coordinates is None:
+                continue
+            normalized_params[field] = coordinates
+            normalized_fields.append(field)
+        if not normalized_fields:
+            return payload
+
+        normalized = dict(payload)
+        normalized["params"] = normalized_params
+        self._tool_events.append(
+            {
+                "tool": "governed_llm.coordinate_wrapper_normalized",
+                "input": {"action_type": action_type},
+                "output": {"fields": normalized_fields},
+            }
+        )
+        return normalized
+
     def _normalize_duplicated_objective_length(
         self, payload: Dict[str, Any]
     ) -> Dict[str, Any]:
@@ -1390,6 +1447,7 @@ class DFHackGovernedLLMAgent(Agent):
                 last_error = "model returned no submit_action tool call"
                 contract_errors = [last_error]
             else:
+                payload = self._normalize_provider_coordinate_wrappers(payload)
                 payload = self._normalize_objective_quote_artifacts(payload)
                 payload = self._normalize_duplicated_objective_length(payload)
                 if review_control is not None:

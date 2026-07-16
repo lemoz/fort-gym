@@ -743,6 +743,53 @@ def test_review_contract_establishes_initial_agent_owned_plan() -> None:
     assert agent._memory.gameplay_plan["steps"] == ["Dig shelter.", "Build production."]
 
 
+def test_review_contract_normalizes_minimax_coordinate_wrapper() -> None:
+    control = _plan_control()
+    payload = _reviewed_action_payload(control=control)
+    payload["params"] = {
+        "area": {"item": ["98", "98", "161"]},
+        "size": {"item": ["1", "1", "1"]},
+    }
+    agent = _agent(
+        [_submit_action_response(payload)],
+        model_override="minimax/minimax-m3",
+    )
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["type"] == "DIG"
+    assert action["params"]["area"] == [98, 98, 161]
+    assert action["params"]["size"] == [1, 1, 1]
+    events = agent.pop_tool_events()
+    normalized = next(
+        event
+        for event in events
+        if event["tool"] == "governed_llm.coordinate_wrapper_normalized"
+    )
+    assert normalized["input"] == {"action_type": "DIG"}
+    assert normalized["output"] == {"fields": ["area", "size"]}
+    assert not any(
+        event["tool"] == "governed_llm.review_contract_retry" for event in events
+    )
+
+
+def test_coordinate_wrapper_normalizer_rejects_non_triplet_or_extra_keys() -> None:
+    agent = _agent()
+
+    assert agent._wrapped_coordinate_triplet({"item": ["1", "2"]}) is None
+    assert (
+        agent._wrapped_coordinate_triplet(
+            {"item": ["1", "2", "3"], "unexpected": True}
+        )
+        is None
+    )
+    assert agent._wrapped_coordinate_triplet({"item": ["1", "two", "3"]}) is None
+    assert agent._wrapped_coordinate_triplet({"item": [True, 2, 3]}) is None
+
+
 def test_complete_plan_review_requires_observed_local_objective_transition() -> None:
     assert "not_due|establish|continue|revise|complete" in GOVERNED_SYSTEM_PROMPT
     assert "When observed facts meet the current objective's stated\n  measurable condition" in (
