@@ -80,6 +80,7 @@ P1_CALIBRATION_REQUIRED_REGRESSION_TESTS = frozenset(
         "test_final_attestation_recovery_fails_closed_gate",
         "test_governed_viewscreen_interruption_is_degraded_and_reobserved",
         "test_final_attestation_provenance_fails_closed_gate",
+        "test_calibration_scenario_never_starts_optional_provider_analysis",
         "test_remote_proto_runtime_digest_binds_actual_generated_modules",
     }
 )

@@ -53,6 +53,7 @@ CALIBRATION_TEST_NODE_IDS = (
     "tests/test_advance_ticks_external.py::test_final_attestation_recovery_fails_closed_gate",
     "tests/test_runner_tick_lifecycle.py::test_governed_viewscreen_interruption_is_degraded_and_reobserved",
     "tests/test_runner_tick_lifecycle.py::test_final_attestation_provenance_fails_closed_gate",
+    "tests/test_runner_tick_lifecycle.py::test_calibration_scenario_never_starts_optional_provider_analysis",
     "tests/test_remote_proto_fetch.py::test_remote_proto_runtime_digest_binds_actual_generated_modules",
 )
 

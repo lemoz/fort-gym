@@ -22,6 +22,7 @@ from fort_gym.bench.run.runner import (
     _interaction_terminal_reason,
     _measurement_calibration_step_limit_reached,
     _owned_excavation_snapshot_rects,
+    _should_auto_analyze_trace,
     _tick_terminal_reason,
     run_once,
 )
@@ -2849,6 +2850,25 @@ def test_dfhack_cleanup_precedes_terminal_status_and_optional_analysis(
     )
 
     get_settings.cache_clear()  # type: ignore[attr-defined]
+
+
+def test_calibration_scenario_never_starts_optional_provider_analysis() -> None:
+    assert (
+        _should_auto_analyze_trace(
+            measurement_calibration_scenario="owned_layout_and_provisioning",
+            google_api_key="configured-provider-key",
+            cleanup_outcome={"ok": True},
+        )
+        is False
+    )
+    assert (
+        _should_auto_analyze_trace(
+            measurement_calibration_scenario=None,
+            google_api_key="configured-provider-key",
+            cleanup_outcome={"ok": True},
+        )
+        is True
+    )
 
 
 def test_dfhack_cleanup_rejects_rpc_success_without_pause_attestation(

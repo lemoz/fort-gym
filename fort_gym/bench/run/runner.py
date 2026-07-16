@@ -10,7 +10,7 @@ import uuid
 from datetime import datetime
 from os import fsync
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Mapping, Optional
 
 from ..agent.base import Agent
 from ..config import get_settings
@@ -2958,6 +2958,21 @@ def _measurement_calibration_step_limit_reached(
     return limit is not None and step + 1 >= limit
 
 
+def _should_auto_analyze_trace(
+    *,
+    measurement_calibration_scenario: str | None,
+    google_api_key: str | None,
+    cleanup_outcome: Mapping[str, Any] | None,
+) -> bool:
+    """Keep provider-free calibration traces free of hidden analysis calls."""
+
+    return (
+        measurement_calibration_scenario is None
+        and bool(google_api_key)
+        and bool((cleanup_outcome or {}).get("ok"))
+    )
+
+
 def run_once(
     agent: Agent,
     *,
@@ -5884,7 +5899,11 @@ def run_once(
         try:
             from ..eval.analyzer import TraceAnalyzer, save_analysis
 
-            if os.environ.get("GOOGLE_API_KEY") and (cleanup_outcome or {}).get("ok"):
+            if _should_auto_analyze_trace(
+                measurement_calibration_scenario=measurement_calibration_scenario,
+                google_api_key=os.environ.get("GOOGLE_API_KEY"),
+                cleanup_outcome=cleanup_outcome,
+            ):
                 analyzer = TraceAnalyzer()
                 analysis = analyzer.analyze(trace_path)
                 save_analysis(analysis, trace_path.parent)
