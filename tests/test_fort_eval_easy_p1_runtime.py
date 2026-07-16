@@ -776,7 +776,7 @@ def test_live_calibration_agent_remaps_blocked_workshop_to_observed_open_floor()
     y = remapped["params"]["y"]
     assert (x, y) != (98, 92)
     assert all(
-        rows[y + dy - 89][x + dx - 90] in {".", ","}
+        rows[y + dy - 89][x + dx - 90] == "."
         for dy in range(3)
         for dx in range(3)
     )
@@ -821,7 +821,7 @@ def test_live_calibration_agent_selects_three_nonoverlapping_surface_rooms() -> 
     assert remapped["params"]["x"] == 91
     assert remapped["params"]["y"] == 88
     assert all(
-        rows[anchor_y + dy - 88][anchor_x + dx - 90] in {".", ","}
+        rows[anchor_y + dy - 88][anchor_x + dx - 90] == "."
         for anchor_x, anchor_y in anchors
         for dy in range(3)
         for dx in range(4)

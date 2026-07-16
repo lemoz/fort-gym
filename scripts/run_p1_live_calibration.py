@@ -49,7 +49,7 @@ class CalibrationPlanAgent(Agent):
         "Table": "table",
     }
     _WORKSHOP_KINDS = frozenset({"CarpenterWorkshop", "Still"})
-    _OPEN_SURFACE_CHARS = frozenset({".", ","})
+    _OPEN_SURFACE_CHARS = frozenset({"."})
     _SURFACE_ROOM_DEFAULT_ANCHORS = ((91, 88), (95, 88), (104, 88))
     _SURFACE_ROOM_WIDTH = 4
     _SURFACE_ROOM_HEIGHT = 3
