@@ -1950,12 +1950,15 @@ register_agent(
 )
 register_agent(
     "dfhack-governed-llm-minimax-canary",
+    # Keep the diagnostic arm on the same generation envelope as a full P1
+    # run. Its lower spend comes from the model price, not reduced headroom.
     lambda: DFHackGovernedLLMAgent(
         model_override="minimax/minimax-m3",
         memory_path=None,
         vision=True,
-        max_tokens=2048,
-        max_attempts=2,
+        max_tokens=128000,
+        reasoning_effort="max",
+        prompt_cache="automatic",
         memory_window=0,
         max_advance_ticks=2500,
     ),

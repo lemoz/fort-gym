@@ -2319,11 +2319,12 @@ def test_frontier_p1_variants_are_pinned_in_all_gates(monkeypatch) -> None:
     assert sol._max_advance_ticks == 2500
 
 
-def test_minimax_canary_is_bounded_and_stateless(monkeypatch) -> None:
+def test_minimax_canary_matches_full_run_budget_and_is_stateless(monkeypatch) -> None:
     monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
     get_settings.cache_clear()  # type: ignore[attr-defined]
     try:
         canary = AGENT_FACTORIES["dfhack-governed-llm-minimax-canary"]()
+        sol = AGENT_FACTORIES["dfhack-governed-llm-gpt56-sol"]()
     finally:
         get_settings.cache_clear()  # type: ignore[attr-defined]
 
@@ -2331,9 +2332,11 @@ def test_minimax_canary_is_bounded_and_stateless(monkeypatch) -> None:
     assert canary._vision is True
     assert canary._memory_path is None
     assert canary._memory.window_size == 0
-    assert canary._max_tokens == 2048
-    assert canary._max_attempts == 2
-    assert canary._max_advance_ticks == 2500
+    assert canary._max_tokens == sol._max_tokens == 128000
+    assert canary._reasoning_effort == sol._reasoning_effort == "max"
+    assert canary._prompt_cache == sol._prompt_cache == "automatic"
+    assert canary._max_attempts == sol._max_attempts
+    assert canary._max_advance_ticks == sol._max_advance_ticks == 2500
 
 
 @pytest.mark.parametrize(
