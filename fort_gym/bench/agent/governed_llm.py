@@ -1954,7 +1954,7 @@ register_agent(
         model_override="minimax/minimax-m3",
         memory_path=None,
         vision=True,
-        max_tokens=1024,
+        max_tokens=2048,
         max_attempts=2,
         memory_window=0,
         max_advance_ticks=2500,

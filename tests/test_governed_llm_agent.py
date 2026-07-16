@@ -2331,7 +2331,7 @@ def test_minimax_canary_is_bounded_and_stateless(monkeypatch) -> None:
     assert canary._vision is True
     assert canary._memory_path is None
     assert canary._memory.window_size == 0
-    assert canary._max_tokens == 1024
+    assert canary._max_tokens == 2048
     assert canary._max_attempts == 2
     assert canary._max_advance_ticks == 2500
 
