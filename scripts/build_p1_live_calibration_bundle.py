@@ -42,6 +42,7 @@ CALIBRATION_TEST_NODE_IDS = (
     "tests/test_g7_gate.py::test_g7_v5_rejects_non_authoritative_death_cause_source",
     "tests/test_g7_gate.py::test_g7_v5_rejects_contradictory_death_aggregates_as_invalid",
     "tests/test_g7_gate.py::test_g7_v5_rejects_duplicate_death_records",
+    "tests/test_g7_evidence.py::test_death_calibration_fixture_is_one_bounded_friendly_kill",
     "tests/test_g7_observability_hooks.py::test_fort_metrics_emits_typed_constructions_and_honest_scan_flags",
     "tests/test_g7_observability_hooks.py::test_fort_metrics_distinguishes_actual_caps_and_path_sample_gaps",
     "tests/test_g7_observability_hooks.py::test_fort_metrics_tracks_building_scan_and_exact_boundary_membership",

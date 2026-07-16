@@ -7,10 +7,9 @@ import re
 from pathlib import Path
 from typing import Dict, Iterable, Sequence
 
-from .config import DFROOT, dfhack_cmd
+from .config import DFROOT
 from .dfhack_exec import (
     DFHackError,
-    run_dfhack,
     run_lua_file,
 )
 from .tick_controller import (
@@ -515,39 +514,40 @@ def trigger_p1_death_calibration_fixture() -> Dict[str, object]:
     """
 
     try:
-        output = run_dfhack(
-            dfhack_cmd(
-                "exterminate",
-                "DWARF",
-                "--include-friendly",
-                "--limit",
-                "1",
-                "--method",
-                "instant",
-            ),
+        fixture = run_lua_file(
+            _hook_path("calibration_kill_one.lua"),
             timeout=5.0,
-            cwd=str(DFROOT),
         )
-        if not output.strip():
+        if fixture.get("ok") is not True:
+            return fixture
+        confirmation_valid = (
+            fixture.get("fixture") == "dfhack_bounded_friendly_bloodloss"
+            and fixture.get("target") == "citizen"
+            and fixture.get("limit") == 1
+            and fixture.get("method") == "blood_loss_next_tick"
+            and isinstance(fixture.get("unit_id"), int)
+            and isinstance(fixture.get("blood_before"), int)
+            and int(fixture["blood_before"]) > 0
+            and fixture.get("blood_after") == 0
+        )
+        if not confirmation_valid:
             return {
                 "ok": False,
-                "fixture": "dfhack_exterminate_friendly_instant",
-                "target": "DWARF",
+                "fixture": "dfhack_bounded_friendly_bloodloss",
+                "target": "citizen",
                 "limit": 1,
-                "error": "exterminate_returned_no_confirmation",
+                "method": "blood_loss_next_tick",
+                "error": "invalid_fixture_confirmation",
+                "observed": fixture,
             }
-        return {
-            "ok": True,
-            "fixture": "dfhack_exterminate_friendly_instant",
-            "target": "DWARF",
-            "limit": 1,
-            "output": output,
-        }
+        return fixture
     except (DFHackError, OSError) as exc:
         return {
             "ok": False,
-            "fixture": "dfhack_exterminate_friendly_instant",
-            "target": "DWARF",
+            "fixture": "dfhack_bounded_friendly_bloodloss",
+            "target": "citizen",
+            "limit": 1,
+            "method": "blood_loss_next_tick",
             "error": str(exc),
         }
 

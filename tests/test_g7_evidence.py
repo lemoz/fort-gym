@@ -7,6 +7,9 @@ from fort_gym.bench import dfhack_backend
 HOOK_SOURCE = (
     Path(__file__).resolve().parents[1] / "hook" / "g7_evidence.lua"
 ).read_text(encoding="utf-8")
+DEATH_FIXTURE_HOOK_SOURCE = (
+    Path(__file__).resolve().parents[1] / "hook" / "calibration_kill_one.lua"
+).read_text(encoding="utf-8")
 
 
 def test_g7_evidence_is_run_scoped_and_event_backed() -> None:
@@ -115,50 +118,86 @@ def test_g7_backend_death_calibration_passes_narrow_mode(monkeypatch) -> None:
 
 
 def test_death_calibration_fixture_is_one_bounded_friendly_kill(monkeypatch) -> None:
-    calls: list[tuple[list[str], float, str]] = []
+    calls: list[tuple[str, tuple[str, ...], float]] = []
 
-    def fake_run(args: list[str], *, timeout: float, cwd: str) -> str:
-        calls.append((args, timeout, cwd))
-        return "marked one friendly unit"
+    def fake_run(path: str, *args: str, timeout: float):
+        calls.append((path, args, timeout))
+        return {
+            "ok": True,
+            "fixture": "dfhack_bounded_friendly_bloodloss",
+            "target": "citizen",
+            "limit": 1,
+            "method": "blood_loss_next_tick",
+            "unit_id": 243,
+            "race_token": "DWARF",
+            "blood_before": 60000,
+            "blood_after": 0,
+        }
 
-    monkeypatch.setattr(dfhack_backend, "run_dfhack", fake_run)
+    monkeypatch.setattr(dfhack_backend, "run_lua_file", fake_run)
 
     result = dfhack_backend.trigger_p1_death_calibration_fixture()
 
     assert result == {
         "ok": True,
-        "fixture": "dfhack_exterminate_friendly_instant",
-        "target": "DWARF",
+        "fixture": "dfhack_bounded_friendly_bloodloss",
+        "target": "citizen",
         "limit": 1,
-        "output": "marked one friendly unit",
+        "method": "blood_loss_next_tick",
+        "unit_id": 243,
+        "race_token": "DWARF",
+        "blood_before": 60000,
+        "blood_after": 0,
     }
-    assert calls[0][0][-7:] == [
-        "exterminate",
-        "DWARF",
-        "--include-friendly",
-        "--limit",
-        "1",
-        "--method",
-        "instant",
-    ]
-    assert calls[0][1] == 5.0
+    assert calls[0][0].endswith("calibration_kill_one.lua")
+    assert calls[0][1] == ()
+    assert calls[0][2] == 5.0
+    for needle in (
+        "dfhack.units.isCitizen(unit, true)",
+        "not dfhack.units.isDead(unit)",
+        "unit.id < target.id",
+        "target.body.blood_count = 0",
+        "blood_loss_next_tick",
+        "It does not write any measurement or death-cause evidence itself.",
+    ):
+        assert needle in DEATH_FIXTURE_HOOK_SOURCE
 
 
 def test_death_calibration_fixture_fails_without_command_confirmation(
     monkeypatch,
 ) -> None:
-    def fake_run(args: list[str], *, timeout: float, cwd: str) -> str:
-        del args, timeout, cwd
-        return "  "
+    def fake_run(path: str, *args: str, timeout: float):
+        del path, args, timeout
+        return {
+            "ok": True,
+            "fixture": "dfhack_bounded_friendly_bloodloss",
+            "target": "citizen",
+            "limit": 1,
+            "method": "blood_loss_next_tick",
+            "unit_id": 243,
+            "blood_before": 60000,
+            "blood_after": 60000,
+        }
 
-    monkeypatch.setattr(dfhack_backend, "run_dfhack", fake_run)
+    monkeypatch.setattr(dfhack_backend, "run_lua_file", fake_run)
 
     assert dfhack_backend.trigger_p1_death_calibration_fixture() == {
         "ok": False,
-        "fixture": "dfhack_exterminate_friendly_instant",
-        "target": "DWARF",
+        "fixture": "dfhack_bounded_friendly_bloodloss",
+        "target": "citizen",
         "limit": 1,
-        "error": "exterminate_returned_no_confirmation",
+        "method": "blood_loss_next_tick",
+        "error": "invalid_fixture_confirmation",
+        "observed": {
+            "ok": True,
+            "fixture": "dfhack_bounded_friendly_bloodloss",
+            "target": "citizen",
+            "limit": 1,
+            "method": "blood_loss_next_tick",
+            "unit_id": 243,
+            "blood_before": 60000,
+            "blood_after": 60000,
+        },
     }
 
 

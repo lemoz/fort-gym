@@ -482,11 +482,14 @@ def _live_calibration_traces_are_bound(value: Any, calibration_commit: str) -> b
             if not (
                 isinstance(fixture, dict)
                 and fixture.get("ok") is True
-                and fixture.get("fixture") == "dfhack_exterminate_friendly_instant"
-                and fixture.get("target") == "DWARF"
+                and fixture.get("fixture") == "dfhack_bounded_friendly_bloodloss"
+                and fixture.get("target") == "citizen"
                 and fixture.get("limit") == 1
-                and isinstance(fixture.get("output"), str)
-                and bool(fixture["output"].strip())
+                and fixture.get("method") == "blood_loss_next_tick"
+                and isinstance(fixture.get("unit_id"), int)
+                and isinstance(fixture.get("blood_before"), int)
+                and _to_int(fixture.get("blood_before")) > 0
+                and fixture.get("blood_after") == 0
                 and len(fixture_events) == 1
                 and all(
                     fixture_events[0].get(key) == value

@@ -271,10 +271,14 @@ def test_measurement_unlock_requires_pinned_reviewed_live_evidence(
                                     "run_id": run_id,
                                     "step": 0,
                                     "ok": True,
-                                    "fixture": "dfhack_exterminate_friendly_instant",
-                                    "target": "DWARF",
+                                    "fixture": "dfhack_bounded_friendly_bloodloss",
+                                    "target": "citizen",
                                     "limit": 1,
-                                    "output": "marked one friendly unit",
+                                    "method": "blood_loss_next_tick",
+                                    "unit_id": 243,
+                                    "race_token": "DWARF",
+                                    "blood_before": 60000,
+                                    "blood_after": 0,
                                 },
                             }
                         ]
@@ -302,10 +306,14 @@ def test_measurement_unlock_requires_pinned_reviewed_live_evidence(
                     "measurement_calibration_fixture": (
                         {
                             "ok": True,
-                            "fixture": "dfhack_exterminate_friendly_instant",
-                            "target": "DWARF",
+                            "fixture": "dfhack_bounded_friendly_bloodloss",
+                            "target": "citizen",
                             "limit": 1,
-                            "output": "marked one friendly unit",
+                            "method": "blood_loss_next_tick",
+                            "unit_id": 243,
+                            "race_token": "DWARF",
+                            "blood_before": 60000,
+                            "blood_after": 0,
                         }
                         if scenario == "death_cause_fallback"
                         else {}
