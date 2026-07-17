@@ -39,6 +39,8 @@ _MEMORY_PATH_ENV_VAR = "FORT_GYM_GOVERNED_MEMORY_PATH"
 _MEMORY_PATH_DISABLE_VALUES = {"off", "0"}
 _HARD_REVISION_REASON = "same_objective_stalled_2"
 _BLOCKED_PROVIDER_FINISH_REASONS = {"content_filter"}
+_MINIMAX_M3_MODEL = "minimax/minimax-m3"
+_FARM_SEASONS = frozenset({"spring", "summer", "autumn", "winter"})
 
 
 class GovernedDecisionError(RuntimeError):
@@ -915,6 +917,51 @@ class DFHackGovernedLLMAgent(Agent):
         )
         return normalized
 
+    @staticmethod
+    def _wrapped_farm_seasons(value: Any) -> list[str] | None:
+        """Decode MiniMax's exact season-list wrapper without coercion."""
+
+        if not isinstance(value, dict) or set(value) != {"item"}:
+            return None
+        raw_items = value.get("item")
+        if not isinstance(raw_items, list) or not 1 <= len(raw_items) <= 4:
+            return None
+        if any(type(item) is not str or item not in _FARM_SEASONS for item in raw_items):
+            return None
+        if len(set(raw_items)) != len(raw_items):
+            return None
+        return list(raw_items)
+
+    def _normalize_minimax_farm_seasons_wrapper(
+        self, payload: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Repair one observed MiniMax FARM transport shape, fail-closed."""
+
+        if self._model != _MINIMAX_M3_MODEL:
+            return payload
+        action_type = str(payload.get("type") or "").strip().upper()
+        params = payload.get("params")
+        if action_type != "FARM" or not isinstance(params, dict):
+            return payload
+        seasons = self._wrapped_farm_seasons(params.get("seasons"))
+        if seasons is None:
+            return payload
+
+        normalized = dict(payload)
+        normalized["params"] = {**params, "seasons": seasons}
+        self._tool_events.append(
+            {
+                "tool": "governed_llm.farm_seasons_wrapper_normalized",
+                "input": {
+                    "action_type": action_type,
+                    "field": "seasons",
+                    "wrapper": "item",
+                },
+                "output": {"item_count": len(seasons)},
+            }
+        )
+        return normalized
+
     def _normalize_duplicated_objective_length(
         self, payload: Dict[str, Any]
     ) -> Dict[str, Any]:
@@ -1448,6 +1495,7 @@ class DFHackGovernedLLMAgent(Agent):
                 contract_errors = [last_error]
             else:
                 payload = self._normalize_provider_coordinate_wrappers(payload)
+                payload = self._normalize_minimax_farm_seasons_wrapper(payload)
                 payload = self._normalize_objective_quote_artifacts(payload)
                 payload = self._normalize_duplicated_objective_length(payload)
                 if review_control is not None:

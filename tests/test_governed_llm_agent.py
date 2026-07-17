@@ -790,6 +790,120 @@ def test_coordinate_wrapper_normalizer_rejects_non_triplet_or_extra_keys() -> No
     assert agent._wrapped_coordinate_triplet({"item": [True, 2, 3]}) is None
 
 
+def test_review_contract_normalizes_minimax_farm_seasons_wrapper() -> None:
+    control = _plan_control()
+    payload = _reviewed_action_payload(control=control)
+    payload.update(
+        {
+            "type": "FARM",
+            "params": {
+                "building_id": 19,
+                "crop": "MUSHROOM_HELMET_PLUMP",
+                "seasons": {"item": ["spring", "summer", "autumn", "winter"]},
+            },
+            "intent": "assign plump helmets to the completed farm plot",
+            "plan_step": "Assign a crop for every season.",
+            "expected_simulation_result": "The farm reports plump helmets in every season.",
+        }
+    )
+    agent = _agent(
+        [_submit_action_response(payload)],
+        model_override="minimax/minimax-m3",
+    )
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["type"] == "FARM"
+    assert action["params"]["seasons"] == ["spring", "summer", "autumn", "winter"]
+    events = agent.pop_tool_events()
+    normalized = next(
+        event
+        for event in events
+        if event["tool"] == "governed_llm.farm_seasons_wrapper_normalized"
+    )
+    assert normalized["input"] == {
+        "action_type": "FARM",
+        "field": "seasons",
+        "wrapper": "item",
+    }
+    assert normalized["output"] == {"item_count": 4}
+    assert not any(
+        event["tool"] == "governed_llm.review_contract_retry" for event in events
+    )
+
+
+@pytest.mark.parametrize(
+    "wrapped",
+    [
+        {"item": []},
+        {"item": ["spring"] * 5},
+        {"item": ["spring", "spring"]},
+        {"item": ["Spring"]},
+        {"item": ["monsoon"]},
+        {"item": [1]},
+        {"item": "spring"},
+        {"item": ["spring"], "unexpected": True},
+    ],
+)
+def test_farm_seasons_wrapper_normalizer_rejects_unsafe_shapes(
+    wrapped: object,
+) -> None:
+    assert DFHackGovernedLLMAgent._wrapped_farm_seasons(wrapped) is None
+
+
+def test_farm_seasons_wrapper_normalizer_is_minimax_only_and_non_mutating() -> None:
+    payload = {
+        "type": "FARM",
+        "params": {
+            "building_id": 19,
+            "crop": "MUSHROOM_HELMET_PLUMP",
+            "seasons": {"item": ["spring", "summer"]},
+        },
+    }
+    other_provider = _agent(model_override="openai/gpt-5.5")
+
+    assert other_provider._normalize_minimax_farm_seasons_wrapper(payload) is payload
+    assert payload["params"]["seasons"] == {"item": ["spring", "summer"]}
+    assert other_provider.pop_tool_events() == []
+
+    minimax = _agent(model_override="minimax/minimax-m3")
+    normalized = minimax._normalize_minimax_farm_seasons_wrapper(payload)
+
+    assert normalized is not payload
+    assert normalized["params"] is not payload["params"]
+    assert normalized["params"]["seasons"] == ["spring", "summer"]
+    assert payload["params"]["seasons"] == {"item": ["spring", "summer"]}
+
+
+@pytest.mark.parametrize(
+    "params",
+    [
+        {
+            "building_id": 19,
+            "crop": "MUSHROOM_HELMET_PLUMP",
+            "seasons": ["spring", "summer"],
+        },
+        {"building_id": 19, "crop": "MUSHROOM_HELMET_PLUMP"},
+        {
+            "building_id": 19,
+            "crop": "MUSHROOM_HELMET_PLUMP",
+            "seasons": {"item": ["spring"], "unexpected": True},
+        },
+    ],
+)
+def test_minimax_farm_seasons_wrapper_normalizer_leaves_other_shapes_unchanged(
+    params: dict[str, Any],
+) -> None:
+    payload = {"type": "FARM", "params": params}
+    agent = _agent(model_override="minimax/minimax-m3")
+
+    assert agent._normalize_minimax_farm_seasons_wrapper(payload) is payload
+    assert agent.pop_tool_events() == []
+
+
 def test_complete_plan_review_requires_observed_local_objective_transition() -> None:
     assert "not_due|establish|continue|revise|complete" in GOVERNED_SYSTEM_PROMPT
     assert "When observed facts meet the current objective's stated\n  measurable condition" in (
