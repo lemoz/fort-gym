@@ -16,6 +16,7 @@ from fort_gym.bench.agent.governed_llm import (
     MAX_OBJECTIVE_LENGTH,
     DFHackGovernedLLMAgent,
     GovernedProviderFinishError,
+    GovernedProviderResponseError,
     GovernedReviewContractError,
     _submit_action_tool,
 )
@@ -2018,6 +2019,205 @@ def test_review_control_retries_transient_provider_failure_without_gameplay() ->
         if event["tool"] == "openrouter.chat.completions.create"
     ]
     assert transport_events[0]["output"]["retrying"] is True
+
+
+def test_review_control_retries_empty_choices_inside_transport_budget(monkeypatch) -> None:
+    control = _plan_control()
+    payload = _reviewed_action_payload(control=control)
+    empty_response = {
+        "id": "gen-empty",
+        "model": "openai/gpt-5.6-sol",
+        "choices": [],
+        "usage": {
+            "prompt_tokens": 10,
+            "completion_tokens": 0,
+            "total_tokens": 10,
+        },
+    }
+    agent = _agent(
+        [empty_response, _submit_action_response(payload)],
+        max_attempts=2,
+        model_override="openai/gpt-5.6-sol",
+    )
+    monkeypatch.setattr("fort_gym.bench.agent.governed_llm.time.sleep", lambda _: None)
+    monkeypatch.setattr(
+        agent,
+        "_generation_metadata",
+        lambda generation_id: {"status": "unavailable", "id": generation_id},
+    )
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["type"] == "DIG"
+    assert len(agent._client.chat.completions.requests) == 2
+    assert not any(
+        "Your most recent submit_action was rejected" in str(message.get("content"))
+        for message in agent._client.chat.completions.requests[1]["messages"]
+    )
+    events = agent.pop_tool_events()
+    telemetry = [
+        event
+        for event in events
+        if event["tool"] == "openrouter.chat.completions.create"
+    ]
+    assert len(telemetry) == 2
+    assert telemetry[0]["output"]["choice_count"] == 0
+    provider_retry = next(
+        event
+        for event in events
+        if event["tool"] == "governed_llm.provider_response_retry"
+    )
+    assert provider_retry["output"]["reason"] == "empty_choices"
+    assert provider_retry["output"]["retrying"] is True
+    assert not any(event["tool"] == "governed_llm.review_contract_retry" for event in events)
+
+
+def test_review_control_exhausts_empty_choices_as_typed_provider_error(monkeypatch) -> None:
+    control = _plan_control()
+    long_provider_error = "provider unavailable\n" + ("x" * 400)
+    responses = [
+        {
+            "id": f"gen-empty-{attempt}",
+            "model": "openai/gpt-5.6-sol",
+            "choices": [],
+            "error": {"message": long_provider_error},
+            "usage": {
+                "prompt_tokens": 10,
+                "completion_tokens": 0,
+                "total_tokens": 10,
+            },
+        }
+        for attempt in (1, 2)
+    ]
+    agent = _agent(
+        responses,
+        max_attempts=2,
+        model_override="openai/gpt-5.6-sol",
+    )
+    monkeypatch.setattr("fort_gym.bench.agent.governed_llm.time.sleep", lambda _: None)
+    monkeypatch.setattr(
+        agent,
+        "_generation_metadata",
+        lambda generation_id: {"status": "unavailable", "id": generation_id},
+    )
+
+    with pytest.raises(GovernedProviderResponseError) as exc_info:
+        agent.decide(
+            _review_observation(control),
+            {"agent_plan_control": control},
+        )
+
+    assert exc_info.value.terminal_code == "provider_invalid_response"
+    assert exc_info.value.terminal_details["reason"] == "empty_choices"
+    assert exc_info.value.terminal_details["attempts"] == 2
+    events = agent.pop_tool_events()
+    telemetry = [
+        event
+        for event in events
+        if event["tool"] == "openrouter.chat.completions.create"
+    ]
+    assert len(telemetry) == 2
+    assert all(event["output"]["choice_count"] == 0 for event in telemetry)
+    assert all("\n" not in event["output"]["provider_error"] for event in telemetry)
+    assert all(len(event["output"]["provider_error"]) <= 240 for event in telemetry)
+    assert sum(
+        event["tool"] == "governed_llm.provider_response_retry" for event in events
+    ) == 2
+    assert not any(event["tool"] == "governed_llm.review_contract_retry" for event in events)
+
+
+def test_mapping_shaped_provider_response_extracts_submit_action() -> None:
+    response = {
+        "id": "gen-mapping",
+        "model": "openai/gpt-5.5",
+        "choices": [
+            {
+                "finish_reason": "tool_calls",
+                "message": {
+                    "content": None,
+                    "tool_calls": [
+                        {
+                            "id": "call_submit",
+                            "function": {
+                                "name": "submit_action",
+                                "arguments": json.dumps(
+                                    {
+                                        "type": "WAIT",
+                                        "params": {},
+                                        "intent": "observe real simulation",
+                                        "advance_ticks": 1000,
+                                    }
+                                ),
+                            },
+                        }
+                    ],
+                },
+            }
+        ],
+        "usage": {
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "total_tokens": 15,
+        },
+    }
+    agent = _agent([response])
+
+    action = agent.decide("obs", {})
+
+    assert action["type"] == "WAIT"
+    events = agent.pop_tool_events()
+    telemetry = [
+        event
+        for event in events
+        if event["tool"] == "openrouter.chat.completions.create"
+    ]
+    assert len(telemetry) == 1
+    assert telemetry[0]["output"]["choice_count"] == 1
+    assert telemetry[0]["output"]["finish_reasons"] == ["tool_calls"]
+
+
+def test_valid_choice_without_action_still_uses_review_contract_correction() -> None:
+    control = _plan_control()
+    no_action_response = {
+        "choices": [
+            {
+                "finish_reason": "stop",
+                "message": {"content": None, "tool_calls": []},
+            }
+        ],
+        "usage": {
+            "prompt_tokens": 10,
+            "completion_tokens": 0,
+            "total_tokens": 10,
+        },
+    }
+    payload = _reviewed_action_payload(control=control)
+    agent = _agent([no_action_response, _submit_action_response(payload)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["type"] == "DIG"
+    assert len(agent._client.chat.completions.requests) == 2
+    events = agent.pop_tool_events()
+    assert sum(
+        event["tool"] == "governed_llm.review_contract_retry" for event in events
+    ) == 1
+    assert not any(
+        event["tool"] == "governed_llm.provider_response_retry" for event in events
+    )
+    telemetry = [
+        event
+        for event in events
+        if event["tool"] == "openrouter.chat.completions.create"
+    ]
+    assert len(telemetry) == 2
+    assert telemetry[0]["output"]["choice_count"] == 1
 
 
 def test_review_control_retries_content_filter_without_contract_correction(monkeypatch) -> None:

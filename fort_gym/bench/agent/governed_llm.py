@@ -17,6 +17,7 @@ import json
 import os
 import re
 import time
+from collections.abc import Mapping, Sequence
 from importlib import import_module
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -41,6 +42,7 @@ _HARD_REVISION_REASON = "same_objective_stalled_2"
 _BLOCKED_PROVIDER_FINISH_REASONS = {"content_filter"}
 _MINIMAX_M3_MODEL = "minimax/minimax-m3"
 _FARM_SEASONS = frozenset({"spring", "summer", "autumn", "winter"})
+_MAX_PROVIDER_ERROR_LENGTH = 240
 
 
 class GovernedDecisionError(RuntimeError):
@@ -57,6 +59,12 @@ class GovernedProviderFinishError(GovernedDecisionError):
     """Provider returned a terminal response that cannot contain an action."""
 
     terminal_code = "provider_content_filter"
+
+
+class GovernedProviderResponseError(GovernedDecisionError):
+    """Provider returned a malformed envelope that cannot contain an action."""
+
+    terminal_code = "provider_invalid_response"
 
 
 class GovernedReviewContractError(GovernedDecisionError):
@@ -652,13 +660,17 @@ class DFHackGovernedLLMAgent(Agent):
                 response = self._client_instance().chat.completions.create(
                     **completion_kwargs
                 )
-                return self._reject_blocked_provider_finish(response)
-            except GovernedProviderFinishError as exc:
+                return self._accept_provider_response(response)
+            except (GovernedProviderFinishError, GovernedProviderResponseError) as exc:
                 last_exc = exc
                 will_retry = attempt + 1 < max_attempts
                 self._tool_events.append(
                     {
-                        "tool": "governed_llm.provider_finish_retry",
+                        "tool": (
+                            "governed_llm.provider_finish_retry"
+                            if isinstance(exc, GovernedProviderFinishError)
+                            else "governed_llm.provider_response_retry"
+                        ),
                         "input": {"model": self._model, "attempt": attempt + 1},
                         "output": {
                             **exc.terminal_details,
@@ -694,7 +706,7 @@ class DFHackGovernedLLMAgent(Agent):
                         response = self._client_instance().chat.completions.create(
                             **completion_kwargs
                         )
-                        return self._reject_blocked_provider_finish(response)
+                        return self._accept_provider_response(response)
                     except Exception as retry_exc:
                         exc = retry_exc
                 # some providers (e.g. Z.AI vision endpoints) reject forced
@@ -717,9 +729,32 @@ class DFHackGovernedLLMAgent(Agent):
                         response = self._client_instance().chat.completions.create(
                             **completion_kwargs
                         )
-                        return self._reject_blocked_provider_finish(response)
+                        return self._accept_provider_response(response)
                     except Exception as retry_exc:
                         exc = retry_exc
+                if isinstance(
+                    exc,
+                    (GovernedProviderFinishError, GovernedProviderResponseError),
+                ):
+                    last_exc = exc
+                    will_retry = attempt + 1 < max_attempts
+                    self._tool_events.append(
+                        {
+                            "tool": (
+                                "governed_llm.provider_finish_retry"
+                                if isinstance(exc, GovernedProviderFinishError)
+                                else "governed_llm.provider_response_retry"
+                            ),
+                            "input": {"model": self._model, "attempt": attempt + 1},
+                            "output": {
+                                **exc.terminal_details,
+                                "retrying": will_retry,
+                            },
+                        }
+                    )
+                    if will_retry:
+                        time.sleep(min(2.0 * (attempt + 1), 5.0))
+                    continue
                 last_exc = exc
                 will_retry = attempt + 1 < max_attempts
                 self._tool_events.append(
@@ -735,13 +770,52 @@ class DFHackGovernedLLMAgent(Agent):
                 )
                 if will_retry:
                     time.sleep(min(2.0 * (attempt + 1), 5.0))
-        if isinstance(last_exc, GovernedProviderFinishError):
+        if isinstance(
+            last_exc,
+            (GovernedProviderFinishError, GovernedProviderResponseError),
+        ):
             last_exc.terminal_details["attempts"] = max_attempts
             raise last_exc
         raise RuntimeError(f"openrouter request failed after {max_attempts} attempts") from last_exc
 
-    def _reject_blocked_provider_finish(self, response: Any) -> Any:
-        choices = list(self._field(response, "choices") or [])
+    def _accept_provider_response(self, response: Any) -> Any:
+        """Record a returned envelope once, then validate it for extraction."""
+
+        telemetry = self._record_response_telemetry(response)
+        choices = self._response_choices(response)
+        telemetry["output"]["choice_count"] = (
+            len(choices) if choices is not None else None
+        )
+        telemetry["output"]["finish_reasons"] = [
+            self._field(choice, "finish_reason")
+            for choice in (choices or [])
+            if self._field(choice, "finish_reason") is not None
+        ]
+        if choices is None:
+            raise GovernedProviderResponseError(
+                "provider returned a malformed choices envelope",
+                reason="malformed_choices",
+                choice_count=None,
+                provider_error=self._bounded_provider_error(response),
+                generation_id=self._field(response, "id"),
+            )
+        if not choices:
+            raise GovernedProviderResponseError(
+                "provider returned no choices",
+                reason="empty_choices",
+                choice_count=0,
+                provider_error=self._bounded_provider_error(response),
+                generation_id=self._field(response, "id"),
+            )
+        return self._reject_blocked_provider_finish(response, choices)
+
+    def _reject_blocked_provider_finish(
+        self,
+        response: Any,
+        choices: List[Any] | None = None,
+    ) -> Any:
+        if choices is None:
+            choices = self._response_choices(response) or []
         finish_reasons = [
             str(reason)
             for reason in (
@@ -759,7 +833,6 @@ class DFHackGovernedLLMAgent(Agent):
         if not blocked:
             return response
 
-        self._record_response_telemetry(response, choices)
         generation_id = self._field(response, "id")
         raise GovernedProviderFinishError(
             "provider blocked the governed action response: " + ", ".join(blocked),
@@ -1821,25 +1894,25 @@ class DFHackGovernedLLMAgent(Agent):
         return action
 
     def _extract_tool_payload(self, response: Any) -> Optional[Dict[str, Any]]:
-        try:
-            choices = getattr(response, "choices", None) or []
-            message = getattr(choices[0], "message", None)
-            tool_calls = getattr(message, "tool_calls", None) or []
-        except (IndexError, AttributeError):
+        choices = self._response_choices(response)
+        if not choices:
             return None
-        self._record_response_telemetry(response, choices)
+        message = self._field(choices[0], "message")
+        tool_calls = self._field(message, "tool_calls") or []
         for call in tool_calls:
-            function = getattr(call, "function", None)
-            if getattr(function, "name", "") != "submit_action":
+            function = self._field(call, "function")
+            if self._field(function, "name", "") != "submit_action":
                 continue
             try:
-                arguments = json.loads(getattr(function, "arguments", "") or "{}")
+                arguments = json.loads(
+                    self._field(function, "arguments", "") or "{}"
+                )
             except json.JSONDecodeError:
                 return None
             return arguments if isinstance(arguments, dict) else None
         # some providers (e.g. Kimi with mandatory reasoning) answer with the
         # action as JSON in the text body instead of a tool call
-        payload = self._json_payload_from_text(getattr(message, "content", None))
+        payload = self._json_payload_from_text(self._field(message, "content"))
         if payload is not None:
             self._tool_events.append(
                 {
@@ -1852,15 +1925,49 @@ class DFHackGovernedLLMAgent(Agent):
 
     @staticmethod
     def _field(value: Any, name: str, default: Any = None) -> Any:
-        if isinstance(value, dict):
+        if isinstance(value, Mapping):
             return value.get(name, default)
         return getattr(value, name, default)
+
+    @classmethod
+    def _response_choices(cls, response: Any) -> List[Any] | None:
+        try:
+            choices = cls._field(response, "choices")
+        except Exception:
+            return None
+        if isinstance(choices, (str, bytes, bytearray, Mapping)):
+            return None
+        if not isinstance(choices, Sequence):
+            return None
+        return list(choices)
+
+    @classmethod
+    def _bounded_provider_error(cls, response: Any) -> str | None:
+        provider_error = cls._field(response, "error")
+        if provider_error is None:
+            return None
+        error_mapping = cls._plain_mapping(provider_error)
+        if error_mapping:
+            candidate = next(
+                (
+                    error_mapping.get(field)
+                    for field in ("message", "code", "type")
+                    if error_mapping.get(field) is not None
+                ),
+                "provider_error_present",
+            )
+        elif isinstance(provider_error, (str, int, float, bool)):
+            candidate = provider_error
+        else:
+            candidate = type(provider_error).__name__
+        sanitized = re.sub(r"\s+", " ", str(candidate)).strip()
+        return sanitized[:_MAX_PROVIDER_ERROR_LENGTH] or "provider_error_present"
 
     @classmethod
     def _plain_mapping(cls, value: Any) -> Dict[str, Any]:
         if value is None:
             return {}
-        if isinstance(value, dict):
+        if isinstance(value, Mapping):
             return dict(value)
         dump = getattr(value, "model_dump", None)
         if callable(dump):
@@ -1903,46 +2010,43 @@ class DFHackGovernedLLMAgent(Agent):
                 "message": str(exc)[:240],
             }
 
-    def _record_response_telemetry(self, response: Any, choices: List[Any]) -> None:
+    def _record_response_telemetry(self, response: Any) -> Dict[str, Any]:
         usage = self._field(response, "usage")
         prompt_details = self._plain_mapping(self._field(usage, "prompt_tokens_details"))
         completion_details = self._plain_mapping(
             self._field(usage, "completion_tokens_details")
         )
         generation_id = self._field(response, "id")
-        finish_reasons = [
-            self._field(choice, "finish_reason")
-            for choice in choices
-            if self._field(choice, "finish_reason") is not None
-        ]
-        self._tool_events.append(
-            {
-                "tool": "openrouter.chat.completions.create",
-                "input": {
-                    "model": self._model,
-                    "session_id": self._session_id,
-                    "reasoning_effort": self._reasoning_effort,
-                    "prompt_cache": self._prompt_cache or "automatic",
-                    "max_tokens": self._max_tokens or self._settings.LLM_MAX_TOKENS,
-                    "vision": self._vision,
-                },
-                "output": {
-                    "generation_id": generation_id,
-                    "resolved_model": self._field(response, "model"),
-                    "finish_reasons": finish_reasons,
-                    "prompt_tokens": self._field(usage, "prompt_tokens"),
-                    "completion_tokens": self._field(usage, "completion_tokens"),
-                    "total_tokens": self._field(usage, "total_tokens"),
-                    "cached_tokens": prompt_details.get("cached_tokens"),
-                    "cache_write_tokens": prompt_details.get("cache_write_tokens"),
-                    "reasoning_tokens": completion_details.get("reasoning_tokens"),
-                    "cost": self._field(usage, "cost"),
-                    "cost_details": self._plain_mapping(self._field(usage, "cost_details")),
-                    "is_byok": self._field(usage, "is_byok"),
-                    "generation": self._generation_metadata(generation_id),
-                },
-            }
-        )
+        event = {
+            "tool": "openrouter.chat.completions.create",
+            "input": {
+                "model": self._model,
+                "session_id": self._session_id,
+                "reasoning_effort": self._reasoning_effort,
+                "prompt_cache": self._prompt_cache or "automatic",
+                "max_tokens": self._max_tokens or self._settings.LLM_MAX_TOKENS,
+                "vision": self._vision,
+            },
+            "output": {
+                "generation_id": generation_id,
+                "resolved_model": self._field(response, "model"),
+                "choice_count": None,
+                "provider_error": self._bounded_provider_error(response),
+                "finish_reasons": [],
+                "prompt_tokens": self._field(usage, "prompt_tokens"),
+                "completion_tokens": self._field(usage, "completion_tokens"),
+                "total_tokens": self._field(usage, "total_tokens"),
+                "cached_tokens": prompt_details.get("cached_tokens"),
+                "cache_write_tokens": prompt_details.get("cache_write_tokens"),
+                "reasoning_tokens": completion_details.get("reasoning_tokens"),
+                "cost": self._field(usage, "cost"),
+                "cost_details": self._plain_mapping(self._field(usage, "cost_details")),
+                "is_byok": self._field(usage, "is_byok"),
+                "generation": self._generation_metadata(generation_id),
+            },
+        }
+        self._tool_events.append(event)
+        return event
 
     @staticmethod
     def _json_payload_from_text(content: Any) -> Optional[Dict[str, Any]]:
