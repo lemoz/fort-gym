@@ -280,9 +280,9 @@ When AGENT PLAN CONTROL reasons includes exactly `same_objective_stalled_2`, two
 no-progress attempts are not progress and decision=continue is invalid. You must use
 decision=revise, keep prior_objective as the stalled objective, choose a genuinely different current
 objective, and submit an action that advances that replacement objective. The action's normalized
-type and params must differ from the previous rejected or no-progress action even when
-retry_same_action=true. Merely renaming the stalled objective or choosing another target for the
-same rejected approach is not a revision. The harness identifies the stall but does not choose the
+type and params must differ from the previous rejected or no-progress action. Merely renaming the
+stalled objective or choosing another target for the same rejected approach is not a revision.
+The harness identifies the stall but does not choose the
 replacement objective or action. This hard transition applies only to
 `same_objective_stalled_2`; do not infer it from `periodic`, `partial_mutation`, or `action_pending`
 review reasons.
@@ -295,9 +295,10 @@ With each action also submit:
 - "plan_step": which step of your plan this is.
 - "expected_simulation_result": what the real simulation should show afterwards if it worked.
 - "last_action_review": previous_step and verdict exactly matching AGENT PLAN CONTROL, one or more
-  factual evidence ids, retry_same_action, and a short lesson. Copy the id after
-  "Required last_action_review.evidence id:" exactly as one evidence item. retry_same_action
-  must be true exactly when this action repeats the previous action's normalized type and params.
+  factual evidence ids, and a short lesson. Copy the id after
+  "Required last_action_review.evidence id:" exactly as one evidence item. The harness computes
+  retry_same_action from the current and previous normalized actions; you may omit it. If supplied,
+  it is diagnostic only and the harness replaces it with the computed fact.
   Use step -1 and verdict unknown only when there is no previous action attempt.
 - "plan_review": request_id from AGENT PLAN CONTROL, decision
   not_due|establish|continue|revise|complete, prior_objective, objective, at least two distinct
@@ -369,7 +370,6 @@ def _submit_action_tool(*, max_advance_ticks: int = 2000) -> Dict[str, Any]:
                             "previous_step",
                             "verdict",
                             "evidence",
-                            "retry_same_action",
                             "lesson",
                         ],
                         "additionalProperties": False,
@@ -962,6 +962,67 @@ class DFHackGovernedLLMAgent(Agent):
         )
         return normalized
 
+    @staticmethod
+    def _derived_retry_same_action(
+        control: Dict[str, Any],
+        fingerprint_action: Dict[str, Any] | None,
+    ) -> bool | None:
+        """Derive repetition from normalized executable action facts."""
+
+        previous_step = control.get("previous_step")
+        if type(previous_step) is not int:
+            return None
+        if previous_step < 0:
+            return False
+        previous_fingerprint = str(control.get("previous_action_fingerprint") or "")
+        if (
+            fingerprint_action is None
+            or re.fullmatch(r"[0-9a-f]{64}", previous_fingerprint) is None
+        ):
+            return None
+        return normalized_action_fingerprint(fingerprint_action) == previous_fingerprint
+
+    def _normalize_retry_same_action(
+        self,
+        payload: Dict[str, Any],
+        control: Dict[str, Any],
+        fingerprint_action: Dict[str, Any] | None,
+    ) -> Dict[str, Any]:
+        """Replace model-authored repetition bookkeeping with the derived fact."""
+
+        last_review = payload.get("last_action_review")
+        derived = self._derived_retry_same_action(control, fingerprint_action)
+        if not isinstance(last_review, dict) or derived is None:
+            return payload
+
+        submitted_present = "retry_same_action" in last_review
+        submitted = last_review.get("retry_same_action")
+
+        normalized = dict(payload)
+        normalized["last_action_review"] = {
+            **last_review,
+            "retry_same_action": derived,
+        }
+        disagreement = submitted_present and (
+            type(submitted) is not bool or submitted != derived
+        )
+        self._tool_events.append(
+            {
+                "tool": "governed_llm.retry_same_action_derived",
+                "input": {
+                    "action_type": str(payload.get("type") or "").strip().upper(),
+                    "previous_step": control.get("previous_step"),
+                    "submitted_present": submitted_present,
+                    "submitted": submitted,
+                },
+                "output": {
+                    "derived": derived,
+                    "disagreement": disagreement,
+                },
+            }
+        )
+        return normalized
+
     def _normalize_duplicated_objective_length(
         self, payload: Dict[str, Any]
     ) -> Dict[str, Any]:
@@ -1177,7 +1238,9 @@ class DFHackGovernedLLMAgent(Agent):
         fingerprint_action: Dict[str, Any] | None,
     ) -> List[str]:
         errors: List[str] = []
-        repeats_previous_action: bool | None = None
+        repeats_previous_action = self._derived_retry_same_action(
+            control, fingerprint_action
+        )
         allowed_evidence_lines = control.get("allowed_evidence_lines")
         if not isinstance(allowed_evidence_lines, list) or not all(
             isinstance(line, str) and re.fullmatch(r"E\d+: .+", line)
@@ -1216,11 +1279,6 @@ class DFHackGovernedLLMAgent(Agent):
                     f"(expected {expected_verdict!r})"
                 )
 
-            retry_same_action = last_review.get("retry_same_action")
-            retry_is_bool = type(retry_same_action) is bool
-            if not retry_is_bool:
-                errors.append("last_action_review.retry_same_action must be boolean")
-
             error = self._scalar_contract_error(
                 last_review.get("lesson"), "last_action_review.lesson"
             )
@@ -1246,24 +1304,10 @@ class DFHackGovernedLLMAgent(Agent):
                 errors.append(error)
 
             previous_fingerprint = str(control.get("previous_action_fingerprint") or "")
-            if previous_step < 0:
-                if retry_same_action is True:
-                    errors.append(
-                        "last_action_review.retry_same_action must be false on the initial step"
-                    )
-            elif not re.fullmatch(r"[0-9a-f]{64}", previous_fingerprint):
+            if previous_step >= 0 and not re.fullmatch(
+                r"[0-9a-f]{64}", previous_fingerprint
+            ):
                 errors.append("AGENT PLAN CONTROL is missing the previous action fingerprint")
-            elif fingerprint_action is not None:
-                repeats_previous_action = (
-                    normalized_action_fingerprint(fingerprint_action)
-                    == previous_fingerprint
-                )
-                if retry_is_bool and retry_same_action != repeats_previous_action:
-                    errors.append(
-                        "last_action_review.retry_same_action must match whether type+params "
-                        "repeat the previous action "
-                        f"(expected {str(repeats_previous_action).lower()})"
-                    )
 
         plan_review = payload.get("plan_review")
         if not isinstance(plan_review, dict):
@@ -1523,6 +1567,12 @@ class DFHackGovernedLLMAgent(Agent):
                         )
                     except (TypeError, ValueError):
                         pass
+                    if review_control is not None:
+                        payload = self._normalize_retry_same_action(
+                            payload,
+                            review_control,
+                            fingerprint_action,
+                        )
                     try:
                         canonical_action = parse_action(
                             self._normalize_payload(payload),
@@ -1659,8 +1709,8 @@ class DFHackGovernedLLMAgent(Agent):
                         "keep prior_objective unchanged, ensure objective and plan_review.objective "
                         "name the same genuinely different current objective, and submit an action "
                         "that advances that replacement. Its normalized type+params must differ "
-                        "from the previous rejected/no-progress action even when "
-                        "retry_same_action=true. Renaming the stalled objective or selecting another "
+                        "from the previous rejected/no-progress action. Renaming the stalled "
+                        "objective or selecting another "
                         "target for the same rejected approach is not a revision. The harness does "
                         "not choose the replacement."
                     )

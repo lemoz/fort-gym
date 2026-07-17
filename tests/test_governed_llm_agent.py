@@ -291,6 +291,10 @@ def test_governed_submit_tool_requires_agent_review_contract() -> None:
     assert "last_action_review" in parameters["required"]
     assert "plan_review" in parameters["required"]
     assert parameters["properties"]["last_action_review"]["additionalProperties"] is False
+    assert (
+        "retry_same_action"
+        not in parameters["properties"]["last_action_review"]["required"]
+    )
     assert parameters["properties"]["plan_review"]["properties"]["decision"]["enum"] == [
         "not_due",
         "establish",
@@ -323,6 +327,8 @@ def test_governed_submit_tool_requires_agent_review_contract() -> None:
     assert "not a heuristic conclusion about crop growth or route accessibility" in (
         GOVERNED_SYSTEM_PROMPT
     )
+    assert "The harness computes\n  retry_same_action" in GOVERNED_SYSTEM_PROMPT
+    assert "it is diagnostic only" in GOVERNED_SYSTEM_PROMPT
     assert "target_walk_group_connectivity=connected|disconnected|unknown" in GOVERNED_SYSTEM_PROMPT
 
 
@@ -387,7 +393,7 @@ def test_governed_system_prompt_requires_exact_hard_stall_transition() -> None:
     assert "decision=continue is invalid" in prompt
     assert "choose a genuinely different current objective" in prompt
     assert "normalized type and params must differ" in prompt
-    assert "even when retry_same_action=true" in prompt
+    assert "even when retry_same_action=true" not in prompt
     assert "another target for the same rejected approach is not a revision" in prompt
     assert "harness identifies the stall but does not choose the replacement" in prompt
     assert "transition applies only to `same_objective_stalled_2`" in prompt
@@ -1629,15 +1635,22 @@ def test_review_contract_correction_reports_all_attempt7_style_errors() -> None:
     assert action["last_action_review"]["retry_same_action"] is True
     correction = agent._client.chat.completions.requests[1]["messages"][-1]["content"]
     assert "last_action_review.verdict does not match" in correction
-    assert "last_action_review.retry_same_action must match" in correction
+    assert "last_action_review.retry_same_action must match" not in correction
     assert "plan_review.objective is required" in correction
     events = agent.pop_tool_events()
     retry = next(event for event in events if event["tool"] == "governed_llm.review_contract_retry")
-    assert len(retry["output"]["errors"]) == 3
+    assert len(retry["output"]["errors"]) == 2
+    derivation = next(
+        event
+        for event in events
+        if event["tool"] == "governed_llm.retry_same_action_derived"
+    )
+    assert derivation["input"]["submitted"] is False
+    assert derivation["output"] == {"derived": True, "disagreement": True}
     assert not any(event["tool"] == "governed_llm.fallback_wait" for event in events)
 
 
-def test_review_contract_recomputes_retry_flag_after_corrected_action_changes() -> None:
+def test_review_contract_derives_repeated_action_without_correction() -> None:
     repeated_action = {
         "type": "DIG",
         "params": {"area": [50, 35, 0], "size": [5, 5, 1]},
@@ -1651,10 +1664,47 @@ def test_review_contract_recomputes_retry_flag_after_corrected_action_changes() 
         previous_action=repeated_action,
     )
     invalid = _reviewed_action_payload(control=control)
-    corrected = _reviewed_action_payload(control=control)
-    corrected["type"] = "WAIT"
-    corrected["params"] = {}
-    agent = _agent([_submit_action_response(invalid), _submit_action_response(corrected)])
+    agent = _agent([_submit_action_response(invalid)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["type"] == "DIG"
+    assert action["last_action_review"]["retry_same_action"] is True
+    assert len(agent._client.chat.completions.requests) == 1
+    events = agent.pop_tool_events()
+    derivation = next(
+        event
+        for event in events
+        if event["tool"] == "governed_llm.retry_same_action_derived"
+    )
+    assert derivation["input"]["submitted"] is False
+    assert derivation["output"] == {"derived": True, "disagreement": True}
+    assert not any(
+        event["tool"] == "governed_llm.review_contract_retry" for event in events
+    )
+
+
+def test_review_contract_derives_changed_action_without_correction() -> None:
+    repeated_action = {
+        "type": "DIG",
+        "params": {"area": [50, 35, 0], "size": [5, 5, 1]},
+    }
+    control = _plan_control(
+        review_due=False,
+        request_id="17:none",
+        prior_objective="Build durable shelter.",
+        previous_step=16,
+        previous_verdict="progressed",
+        previous_action=repeated_action,
+    )
+    payload = _reviewed_action_payload(control=control)
+    payload["type"] = "WAIT"
+    payload["params"] = {}
+    payload["last_action_review"]["retry_same_action"] = True
+    agent = _agent([_submit_action_response(payload)])
 
     action = agent.decide(
         _review_observation(control),
@@ -1663,8 +1713,43 @@ def test_review_contract_recomputes_retry_flag_after_corrected_action_changes() 
 
     assert action["type"] == "WAIT"
     assert action["last_action_review"]["retry_same_action"] is False
-    correction = agent._client.chat.completions.requests[1]["messages"][-1]["content"]
-    assert "expected true" in correction
+    events = agent.pop_tool_events()
+    derivation = next(
+        event
+        for event in events
+        if event["tool"] == "governed_llm.retry_same_action_derived"
+    )
+    assert derivation["input"]["submitted"] is True
+    assert derivation["output"] == {"derived": False, "disagreement": True}
+    assert not any(
+        event["tool"] == "governed_llm.review_contract_retry" for event in events
+    )
+
+
+@pytest.mark.parametrize("submitted", [True, "yes", 1, None])
+def test_review_contract_derives_initial_retry_flag_without_correction(
+    submitted: object,
+) -> None:
+    control = _plan_control()
+    payload = _reviewed_action_payload(control=control)
+    payload["last_action_review"]["retry_same_action"] = submitted
+    agent = _agent([_submit_action_response(payload)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["last_action_review"]["retry_same_action"] is False
+    assert len(agent._client.chat.completions.requests) == 1
+    events = agent.pop_tool_events()
+    derivation = next(
+        event
+        for event in events
+        if event["tool"] == "governed_llm.retry_same_action_derived"
+    )
+    assert derivation["input"]["submitted"] == submitted
+    assert derivation["output"] == {"derived": False, "disagreement": True}
 
 
 def test_review_contract_combines_action_parse_and_review_errors() -> None:
@@ -1710,6 +1795,8 @@ def test_review_contract_fingerprint_ignores_invalid_nonexecution_metadata() -> 
     invalid["last_action_review"]["retry_same_action"] = False
     valid = _reviewed_action_payload(control=control)
     valid["last_action_review"]["retry_same_action"] = True
+    valid["type"] = "WAIT"
+    valid["params"] = {}
     agent = _agent([_submit_action_response(invalid), _submit_action_response(valid)])
 
     action = agent.decide(
@@ -1717,11 +1804,19 @@ def test_review_contract_fingerprint_ignores_invalid_nonexecution_metadata() -> 
         {"agent_plan_control": control},
     )
 
-    assert action["last_action_review"]["retry_same_action"] is True
+    assert action["type"] == "WAIT"
+    assert action["last_action_review"]["retry_same_action"] is False
     correction = agent._client.chat.completions.requests[1]["messages"][-1]["content"]
     assert "invalid action payload" in correction
     assert "intent is required" in correction
-    assert "last_action_review.retry_same_action must match" in correction
+    assert "last_action_review.retry_same_action must match" not in correction
+    derivations = [
+        event
+        for event in agent.pop_tool_events()
+        if event["tool"] == "governed_llm.retry_same_action_derived"
+    ]
+    assert [event["output"]["derived"] for event in derivations] == [True, False]
+    assert all(event["output"]["disagreement"] is True for event in derivations)
 
 
 def test_review_contract_combines_illegal_type_and_review_errors() -> None:
@@ -1818,7 +1913,7 @@ def test_review_contract_requires_last_action_evidence_to_cite_its_outcome() -> 
     )
 
 
-def test_review_contract_binds_retry_flag_to_normalized_action() -> None:
+def test_review_contract_injects_missing_retry_flag_from_normalized_action() -> None:
     repeated_action = {
         "type": "DIG",
         "params": {"area": [50, 35, 0], "size": [5, 5, 1]},
@@ -1831,10 +1926,9 @@ def test_review_contract_binds_retry_flag_to_normalized_action() -> None:
         previous_verdict="rejected",
         previous_action=repeated_action,
     )
-    invalid = _reviewed_action_payload(control=control)
-    valid = _reviewed_action_payload(control=control)
-    valid["last_action_review"]["retry_same_action"] = True
-    agent = _agent([_submit_action_response(invalid), _submit_action_response(valid)])
+    payload = _reviewed_action_payload(control=control)
+    del payload["last_action_review"]["retry_same_action"]
+    agent = _agent([_submit_action_response(payload)])
 
     action = agent.decide(
         _review_observation(control),
@@ -1843,8 +1937,16 @@ def test_review_contract_binds_retry_flag_to_normalized_action() -> None:
 
     assert action["last_action_review"]["retry_same_action"] is True
     events = agent.pop_tool_events()
-    retry = next(event for event in events if event["tool"] == "governed_llm.review_contract_retry")
-    assert "retry_same_action must match" in retry["output"]["error"]
+    derivation = next(
+        event
+        for event in events
+        if event["tool"] == "governed_llm.retry_same_action_derived"
+    )
+    assert derivation["input"]["submitted_present"] is False
+    assert derivation["output"] == {"derived": True, "disagreement": False}
+    assert not any(
+        event["tool"] == "governed_llm.review_contract_retry" for event in events
+    )
 
 
 def test_review_contract_fails_before_gameplay_after_bad_correction() -> None:
