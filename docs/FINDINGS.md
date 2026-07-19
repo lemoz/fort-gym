@@ -38,9 +38,11 @@ issuing only legal governed actions, takes a fixed embark from fresh seed to a
 producing fortress on public, replayable evidence, with zero rubric blockers.*
 G0–G4 have passed; G5 failed and stands; G6 remains unpassed on the unseen
 map, with the first enclosed rooms arriving only after factual observation
-corrections. G7 remains open. Its log now records attempts 1 through 27,
-including infrastructure aborts, invalidated evidence, short and long policy
-diagnostics, and no full-year pass.
+corrections. The frozen scalar G7-v3 gate closed after attempts 1 through 27 —
+infrastructure aborts, invalidated evidence, short and long policy diagnostics,
+and no full-year pass — and G7-v3 will not be relaunched. The current protocol
+is the non-scalar G7-v5 owned-evidence outcome vector (see §3.2); score-v5 is
+diagnostic-only under it.
 
 ## 2. The findings
 
@@ -63,6 +65,10 @@ ring though it never started an economy. MiniMax-M3 (`83ff5d61`, 63.95, valid
 calls) managed neither — the control that establishes vision does not manufacture
 capability, it removes a modality barrier. Two vision runs achieved what one text
 run in fifteen ever had.
+
+(MiniMax-M3 is a separate private-harness evaluation lane, not a substitute for
+the Fable/Sol governed frontier arms; see §3. Its remaining blocker is that
+normal tool-call responses lacked a usable `submit_action` payload.)
 
 ### 2.2 The G4 arc: one pass, 40% reliability, and four removed lies
 
@@ -1408,15 +1414,53 @@ with the labor-eligibility correction, then launch fresh Attempt 28.
   Attempt 1 demonstrated why the scalar is telemetry rather than the verdict:
   score 209.44 passed its bar while the fort failed survival and structure.
 
+### 3.1 The frozen G7-v3 Fable/Sol pair is descriptive, not a comparable result
+
+The Fable-versus-Sol comparison already ran under the **frozen** G7-v3 protocol;
+it is a completed, recorded pilot, not a future run, and G7-v3 will not be
+relaunched. Both arms were 200-step governed runs on `fort-eval-easy-p1-g7-v3`
+and **both failed G7-v3**:
+
+- **Fable** (`dfhack-governed-llm-fable5`), run
+  `a55b2c2cbef54825bc7784bdb8e51855`: cost $56.14648677, **public-ELIGIBLE**,
+  0 deaths, failed G7-v3.
+- **Sol** (`dfhack-governed-llm-gpt56-sol`), run
+  `cb997beed6d94a3680f2637556cc529d`: cost $36.54745875, **INELIGIBLE** (the
+  frozen cached-token requirement was unsatisfied), 10 deaths, failed G7-v3.
+
+Because Sol was ineligible, the pair does **not** share one ranked table or one
+aggregate mean and is **not a publishable comparable pair**. The only defensible
+finding is descriptive: *Fable was safer and more risk-aware; Sol was more
+capable and productive but collapse-prone.* The next frontier comparison is a
+**new protocol decision under G7-v5**, gated on explicit operator approval.
+
+Note on naming: "Sol" here is the **gpt56-sol model arm**. Elsewhere in WDSLL
+and FINDINGS, "Sol", "Sol Ultra", "Terra", and "Luna" are code-**review** agent
+names (e.g. §2.28 "Sol Ultra review"); they are unrelated to the model arm and
+must not be conflated with it.
+
+### 3.2 Verdict semantics under G7-v5
+
+Under G7-v5 the scalar action/outcome rubric is retired to diagnostics only, and
+score-v5 is diagnostic, not a gate. Gameplay pass is not evaluation-validity
+pass, and `unknown` is not `fail`. `task_verdict` is gated on the validity-gated
+G7 status: when evaluation validity or provenance is unknown (for example a
+provider-free calibration run with zero model calls), the persisted summary
+shows `task_verdict="unknown"`, keeps `gameplay_outcome` visible as `"pass"`,
+and marks the run `public_eligibility="ineligible"`. A verdict-truth fix closed
+the path that previously let a summary carry `task_verdict="pass"` while
+`g7.status` was `"unknown"`.
+
 ## 4. What's next
 
 - **Attempt 27 proved the direct-action loop can grow a real fort through a
   completed subterranean planting job, workshops, rooms, furniture, and
-  migration without operator gameplay.** The next boundary is truthful
-  own-group citizenship, consumption, and death evidence, plus policy fixes for
-  post-planting diagnosis, hard stalls, and labor eligibility. Deploy the
-  reviewed contract with that labor correction, then launch fresh Attempt 28;
-  Attempt 28 does not exist yet.
+  migration without operator gameplay.** Its blocker was truthful own-group
+  citizenship, consumption, and death evidence. The scalar G7-v3 ladder is now
+  frozen (§3.1): fresh Attempt 28 will not be launched under G7-v3. The next
+  frontier run is a **new G7-v5 protocol decision** — the owned-evidence outcome
+  vector (exact owned farm/Still/brew, zero preventable deaths, three owned
+  accessible rooms, three owned beds) — gated on explicit operator approval.
 - **Attempt 23 proved the corrected loop can independently transition from
   excavation to farming, workshops, furniture, and two functional rooms.** Its
   decisive blockers were incomplete native feedback for rejected 3x3

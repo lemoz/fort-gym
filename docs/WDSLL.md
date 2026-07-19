@@ -160,6 +160,18 @@ agent has never seen, reaching G4-level structure. This is the gate that
 separates "solved one map" from "plays Dwarf Fortress."
 
 ### G7 — The fort lives: a self-sufficient year (RATIFIED 2026-07-09)
+
+> **2026-07-19 — FROZEN G7-v3 HISTORY. This section records the frozen scalar
+> G7-v3 gate (the 450-step / one-year scalar-survival protocol) exactly as
+> ratified and attempted. G7-v3 is closed to new launches; G7-v4 was REJECTED
+> as non-launchable; the current protocol is G7-v5, a non-scalar owned-evidence
+> outcome vector (exact owned farm/Still/brew, authoritatively classified
+> preventable deaths, three owned accessible rooms, three owned beds) that is
+> calibration-only until live DFHack validation passes. The 27 attempt records
+> and criteria below are preserved verbatim as history — nothing here is
+> deleted, rescored, or re-adjudicated, and no new attempt will be launched
+> under G7-v3.**
+
 Status: RATIFIED at the 2026-07-09 operator window and still unpassed after 27
 numbered attempts. The log below separates infrastructure aborts, invalidated
 evidence, and policy diagnostics; none is a full-year pass. The gameplay
@@ -359,8 +371,14 @@ gate. Each entry states what changed and the evidence that forced it.
   family after ~10 text attempts; Kimi K2.7-code (`91928e29`, 69.01) also
   closed **1 ring** but never started its economy; MiniMax-M3 (`83ff5d61`,
   63.95, valid calls) managed neither — the control showing vision doesn't
-  create capability. Two of three vision arms achieved what one text run in
-  ~15 ever did. G4 still unpassed (nobody has economy + two rooms at once);
+  create capability. **2026-07-19 relabel: MiniMax-M3 is the PRIVATE HARNESS
+  LANE, not a Fable/gpt56-sol substitute arm.** Its recorded vision-experiment
+  result stands as history, but MiniMax-M3 is a separate private-harness lane
+  and is not part of the declared two-arm Fable/gpt56-sol comparison surface.
+  Its remaining failure in that lane: normal tool-call responses lacked a
+  usable `submit_action` payload. Two of three vision arms achieved what one
+  text run in ~15 ever did. G4 still unpassed (nobody has economy + two rooms
+  at once);
   the strongest untested candidate is GPT-5.5-vision — best text economy on
   record, now with eyes.
 
@@ -2212,8 +2230,29 @@ gate. Each entry states what changed and the evidence that forced it.
   conflated. Merged PR #109 supplies raw farm contained-item evidence, PR #110
   supplies governed objective completion and hard-stall transitions, and PR
   #111 supplies own-group G7 citizen/consumption/death evidence with fail-closed
-  predicate errors. Deploy that reviewed contract with the labor-eligibility
-  correction, then launch fresh Attempt 28. No Attempt 28 exists yet.
+  predicate errors. **2026-07-19 — the fresh Attempt 28 relaunch is superseded
+  and will not be launched under G7-v3:** G7-v3 is frozen history (see the gate
+  header note) and G7-v4 was rejected as non-launchable, so the next paid run
+  is a NEW G7-v5 protocol decision requiring explicit operator approval, not a
+  G7-v3 relaunch. No Attempt 28 exists yet, and none will under the frozen
+  scalar gate.
+
+- **2026-07-19 UTC — Fable-vs-gpt56-sol comparison: COMPLETED under frozen
+  G7-v3; DESCRIPTIVE finding only, not a publishable comparable pair.** The
+  two-arm comparison already ran under the frozen G7-v3 protocol on
+  `fort-eval-easy-p1-g7-v3`, 200 steps per arm. `dfhack-governed-llm-fable5`
+  ran as run `a55b2c2cbef54825bc7784bdb8e51855` ($56.14648677): public-ELIGIBLE,
+  0 deaths, FAILED G7-v3. The gpt56-sol model arm
+  (`dfhack-governed-llm-gpt56-sol`) ran as run
+  `cb997beed6d94a3680f2637556cc529d` ($36.54745875): INELIGIBLE — the frozen
+  cached-token requirement was unsatisfied — with 10 deaths, FAILED G7-v3.
+  Because one arm was ineligible, this is NOT a publishable comparable pair;
+  the finding is descriptive only, verbatim: "Fable was safer and more
+  risk-aware; the gpt56-sol model arm was more capable and productive but
+  collapse-prone." Both results stand as frozen G7-v3 history; neither is a
+  G7-v5 result, and neither arm's verdict is re-adjudicated here. (The
+  gpt56-sol model arm is a model arm, not the Sol/Sol Ultra/Terra/Luna
+  code-review agents referenced elsewhere in this document.)
 
 ## Reporting format (every gate attempt)
 

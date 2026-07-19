@@ -105,10 +105,28 @@ Validate the Easy manifest against the current Fort-Gym experiment loader, confi
 
 ### Stage 1: Easy baseline
 
-Run the frozen Easy P1 G7-v3 pilot with the declared governed model arms and
-keep the fixed-seed result provisional. Resolve and record provider model IDs,
-routing, usage, and pricing per run. A valid failure is still a publishable
-finding; it is not a leaderboard pass.
+The frozen Easy P1 G7-v3 pilot is COMPLETE and recorded. It ran under the
+frozen `fort-eval-easy-p1-g7-v3` protocol with both declared governed model
+arms at 200 steps, fixed seed, and the declared knowledge/vision condition:
+
+- Fable: run `a55b2c2cbef54825bc7784bdb8e51855`, model
+  `dfhack-governed-llm-fable5`, 200 steps, cost $56.14648677, public-ELIGIBLE,
+  0 deaths, FAILED G7-v3.
+- Sol: run `cb997beed6d94a3680f2637556cc529d`, model
+  `dfhack-governed-llm-gpt56-sol`, 200 steps, cost $36.54745875, INELIGIBLE
+  (frozen cached-token requirement unsatisfied), 10 deaths, FAILED G7-v3.
+
+Both arms failed the frozen G7-v3 gates; these are valid completed failures,
+not leaderboard passes, and provider model IDs, routing, usage, and pricing
+were resolved and recorded per run. The defensible finding is DESCRIPTIVE
+only: "Fable was safer and more risk-aware; Sol was more capable and
+productive but collapse-prone." Because Sol was ineligible under the frozen
+cached-token requirement, this is NOT a publishable comparable pair — it
+remains a provisional recorded pilot, per the frozen-protocol boundary above.
+
+No G7-v3 relaunch. The next paid run is a NEW protocol decision under the
+current G7-v5 calibration protocol and requires Chris's explicit approval
+before any spend.
 
 ### Stage 2: Easy generalization
 

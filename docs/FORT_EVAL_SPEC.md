@@ -146,7 +146,11 @@ boundary construction, or an owned completed boundary door, plus native citizen
 path accessibility. Functional-room classification remains diagnostic and must
 be satisfied by the exact owned touching building recipe.
 Missing or truncated evidence produces an unknown validity state, never a
-synthesized zero. Elapsed simulation ticks, absolute population, peak layout,
+synthesized zero. This guarantee holds for the deterministic evaluator/gate
+layer. In addition, the task_verdict fix ensures that the top-level verdict is
+gated on the validity-gated G7 status: if validity or provenance is unknown,
+the summary cannot show task_verdict=pass, and unknown is never coerced to
+fail. Elapsed simulation ticks, absolute population, peak layout,
 cache rate, score-v5, final reserves, and run-scoped production/consumption totals remain
 diagnostics. The scalar action/outcome rubric is retired for G7-v5; full-trace behavior rates are reported without a numeric
 composite. G7-v3 and G7-v4 remain frozen under their original criteria for
@@ -155,6 +159,12 @@ The two model-arm identities are `dfhack-governed-llm-fable5` and
 `dfhack-governed-llm-gpt56-sol`; both use maximum reasoning and a 128,000-token
 completion limit. The manifest declares no numeric expenditure cap, but usage,
 provider routing, and per-run pricing state must still be recorded.
+
+Eligibility asymmetry in the completed G7-v3 pair: Fable was public-ELIGIBLE
+while Sol was INELIGIBLE (frozen cached-token requirement unsatisfied). Because
+the two arms did not satisfy the same eligibility gate, the G7-v3 Fable/Sol
+pair is descriptive-only and must not be treated as a ranked or publishable
+comparison.
 
 Runs with different keys may be compared descriptively, but they must not share one ranked table or one aggregate mean.
 
@@ -218,8 +228,28 @@ A ranked cell requires a frozen manifest and comparability key, resolved provena
 
 1. **P0, contract and substrate:** validate the YAML, action allowlist, observation firewall, trace fields, evidence predicates, and a known governed scripted control. No model ranking.
 2. **P1, Easy pilot:** validate G7-v5 owned-room geometry, native accessibility, exact building IDs, partial construction attribution, delayed output attribution, and authoritative death evidence in live DFHack before permitting a paid run. Then run the exact `fort_eval_easy_p1_g7_v5.yaml` condition on `seed_region3_fresh`. Compare the two declared model-arm identities only inside the shared condition key. Report the gameplay outcome, evaluation validity, provenance completeness, terminal class, provider usage, pricing state, and diagnostics separately. Historical G7-v3 and G7-v4 results retain their original evaluators.
+
+   *Note (2026-07-19):* The Fable/Sol comparison under frozen G7-v3 is COMPLETE
+   and recorded; both runs FAILED G7-v3. The upcoming G7-v5 comparison is the
+   next, approval-gated step and has not yet launched.
+
 3. **P2, Easy generalization:** add held-out seeds and then held-out mechanics. Freeze the evaluator and contamination policy before the window. Promote only cells meeting the ranked rules.
 4. **P3, Hard interface validation:** implement fixed-pixel capture and primitive inputs, then test viewport fidelity, input determinism, replay completeness, and spectator firewall before measuring policy capability.
 5. **P4, Hard and Discovery:** measure active perception, navigation, memory, and z reasoning. Add Discovery's no-docs/no-web policy and bounded cross-episode learner state only after Hard is stable. Keep transfer claims separate from Easy claims.
 
 The current repository's WDSLL and score documents remain the source of truth for historical Fort-Gym scoring. G7-v5 is an explicit, versioned non-scalar evaluator change; score-v5 remains available only as a diagnostic for this protocol.
+
+### Results: G7-v3 Fable/Sol pilot (completed)
+
+Two runs were executed under frozen G7-v3 on `seed_region3_fresh`, 200 steps
+each:
+
+- **Fable** (`dfhack-governed-llm-fable5`): run `a55b2c2cbef54825bc7784bdb8e51855`,
+  cost $56.14648677, public-ELIGIBLE, 0 deaths, FAILED G7-v3.
+- **Sol** (`dfhack-governed-llm-gpt56-sol`): run `cb997beed6d94a3680f2637556cc529d`,
+  cost $36.54745875, INELIGIBLE (frozen cached-token requirement unsatisfied),
+  10 deaths, FAILED G7-v3.
+
+Descriptive finding: Fable was safer and more risk-aware; Sol was more capable
+and productive but collapse-prone. Because Sol was ineligible, this pair is NOT
+a publishable comparable pair and does not establish a ranked order.

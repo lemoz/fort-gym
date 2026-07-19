@@ -42,7 +42,18 @@ original evaluators for historical replay. The two declared arms are
 `dfhack-governed-llm-fable5` and
 `dfhack-governed-llm-gpt56-sol`. They share one benchmark-condition key; arm
 identity and provider routing are comparison identity, not alternate condition
-fields. After calibration, valid gameplay failures with complete,
+fields. **Eligibility asymmetry + recorded G7-v3 results (2026-07-19):** the
+two-arm comparison already ran under the frozen G7-v3 protocol on
+`fort-eval-easy-p1-g7-v3`, 200 steps per arm. `dfhack-governed-llm-fable5`
+(run `a55b2c2cbef54825bc7784bdb8e51855`, $56.14648677) was public-ELIGIBLE with
+0 deaths and FAILED G7-v3; the gpt56-sol model arm
+(run `cb997beed6d94a3680f2637556cc529d`, $36.54745875) was INELIGIBLE — the
+frozen cached-token requirement was unsatisfied — with 10 deaths and FAILED
+G7-v3. Because one arm was ineligible this is a DESCRIPTIVE finding only, not a
+publishable comparable pair: "Fable was safer and more risk-aware; the
+gpt56-sol model arm was more capable and productive but collapse-prone." Both
+results are frozen G7-v3 history; they are not G7-v5 results. After
+calibration, valid gameplay failures with complete,
 contamination-free evidence may be publishable; invalid or incomplete evidence
 remains unpublishable. The linked provider preflight changes the live
 observation between calls and proves a valid tool payload from both arms. Cache
@@ -110,15 +121,33 @@ evidence, plus explicit blockers (`no_fort_structure`,
 rubric blockers alongside score deltas, and only provenance-eligible progress
 counts (see `docs/Actions_Headless_Safety.md`).
 
+**`task_verdict` semantics (2026-07-19):** `task_verdict` is gated on the
+validity-gated G7 status. A gameplay pass is not an evaluation-validity pass —
+the run must satisfy both the gameplay outcome AND the public-eligibility /
+evidence-validity conditions before `task_verdict` can be `pass`. An unknown
+validity state yields `task_verdict=unknown`, never `pass`, and `unknown` is
+never coerced to `fail`. Concretely, a provider-free run will show
+`task_verdict=unknown` with `gameplay_outcome` visible as `pass` and
+`public_eligibility=ineligible` — the gameplay result is recorded honestly,
+but without validity evidence the verdict stays unknown.
+
 ## Open Experiment Questions
 
-1. **G7 run integrity**: after attempt 6's non-due review-contract abort, can every
+Retargeted 2026-07-19: the frozen 450-step scalar-survival framing below is
+G7-v3 history; the open questions now target the G7-v5 owned-evidence outcome
+vector (exact owned farm/Still/brew, authoritatively classified preventable
+deaths, three owned accessible rooms, three owned beds).
+
+1. **G7-v5 run integrity**: after attempt 6's non-due review-contract abort, can every
    accepted build reserve a material a citizen can actually haul, can every
    accepted order create real workshop jobs, and can bounded dialog interaction
    traverse the observed topic-meeting screen without arbitrary key access?
-2. **G7 survival**: on `seed_region3_fresh`, can one governed run close food
-   and drink loops, survive a year, house migrants, and build three functional
-   rooms under the ratified WDSLL predicates?
+2. **G7-v5 owned-evidence outcome**: on `seed_region3_fresh`, can one governed
+   run satisfy the G7-v5 outcome vector — an exact owned crop-assigned farm, an
+   exact owned completed Still, exact governed brew output, zero authoritatively
+   classified preventable deaths, three final owned accessible layout rooms,
+   and three exact owned completed beds for the fixed initial seven-dwarf
+   cohort — rather than the frozen G7-v3 scalar survival gate?
 3. **G6/G7 generalization reliability**: do matched runs repeat structure and
    survival on unseen embarks, rather than producing one exceptional replay?
 4. **Memory redesign**: can a causally grounded memory beat the standing
