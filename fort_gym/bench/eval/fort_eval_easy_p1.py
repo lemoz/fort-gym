@@ -895,13 +895,13 @@ def p1_evaluation_is_publishable(
 
 
 def p1_task_verdict(
-    *, gameplay_outcome: Mapping[str, Any], terminal_class: str | None
+    *, g7: Mapping[str, Any], terminal_class: str | None
 ) -> str:
-    """Return the gameplay verdict while preserving valid task failures."""
+    """Return the validity-gated gate verdict, preserving valid task failures."""
 
     if terminal_class == "task_failure":
         return "fail"
-    status = str(gameplay_outcome.get("status") or "unknown")
+    status = str(g7.get("status") or "unknown")
     return status if status in {"pass", "fail", "unknown"} else "unknown"
 
 

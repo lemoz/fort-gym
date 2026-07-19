@@ -5811,7 +5811,7 @@ def run_once(
                 or "invalid_execution"
             )
             summary.task_verdict = p1_task_verdict(
-                gameplay_outcome=summary.gameplay_outcome,
+                g7=summary.g7,
                 terminal_class=summary.terminal_class,
             )
             summary.publication_status = {
