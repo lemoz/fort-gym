@@ -1039,15 +1039,132 @@ def test_live_calibration_agent_never_sends_input_without_pause_attestation() ->
 
 def test_task_failure_terminal_forces_failed_task_verdict() -> None:
     assert (
-        p1_task_verdict(
-            gameplay_outcome={"status": "pass"}, terminal_class="task_failure"
-        )
-        == "fail"
+        p1_task_verdict(g7={"status": "pass"}, terminal_class="task_failure") == "fail"
     )
     assert (
-        p1_task_verdict(gameplay_outcome={"status": "pass"}, terminal_class="completed")
-        == "pass"
+        p1_task_verdict(g7={"status": "pass"}, terminal_class="completed") == "pass"
     )
+
+
+def test_p1_task_verdict_is_unknown_when_gameplay_passes_but_validity_unknown() -> None:
+    # The reported contradiction: gameplay passed but validity is unknown, so the
+    # validity-gated gate status is unknown and the task verdict must follow it.
+    assert (
+        p1_task_verdict(
+            g7={
+                "status": "unknown",
+                "gameplay_outcome": {"status": "pass"},
+                "evaluation_validity": {"status": "unknown"},
+            },
+            terminal_class="completed",
+        )
+        == "unknown"
+    )
+
+
+def test_p1_task_verdict_passes_only_when_gate_status_pass() -> None:
+    assert p1_task_verdict(g7={"status": "pass"}, terminal_class="completed") == "pass"
+    assert p1_task_verdict(g7={"status": "fail"}, terminal_class="completed") == "fail"
+
+
+def test_p1_task_verdict_task_failure_overrides_to_fail() -> None:
+    assert (
+        p1_task_verdict(g7={"status": "pass"}, terminal_class="task_failure") == "fail"
+    )
+    assert (
+        p1_task_verdict(g7={"status": "unknown"}, terminal_class="task_failure")
+        == "fail"
+    )
+
+
+def test_p1_task_verdict_unknown_is_not_coerced_to_fail() -> None:
+    for terminal_class in ("completed", None, "invalid_execution"):
+        assert (
+            p1_task_verdict(g7={"status": "unknown"}, terminal_class=terminal_class)
+            == "unknown"
+        )
+
+
+def test_p1_evaluation_is_publishable_requires_validity_and_provenance() -> None:
+    assert (
+        p1_evaluation_is_publishable(
+            evaluation_validity={"status": "pass"},
+            provenance_completeness={"status": "pass"},
+        )
+        is True
+    )
+    for validity, provenance in (
+        ("unknown", "pass"),
+        ("pass", "unknown"),
+        ("fail", "pass"),
+        ("pass", "fail"),
+        ("unknown", "unknown"),
+    ):
+        assert (
+            p1_evaluation_is_publishable(
+                evaluation_validity={"status": validity},
+                provenance_completeness={"status": provenance},
+            )
+            is False
+        )
+
+
+def test_p1_persisted_summary_shows_unknown_verdict_with_visible_gameplay(
+    tmp_path: Path,
+) -> None:
+    """End-to-end persisted-summary regression for the verdict-truth bug.
+
+    A provider-free (zero-call) run can legitimately pass gameplay while its
+    evaluation validity and provenance are unknown. The persisted summary must
+    show task_verdict="unknown" (never coerced to "pass"), keep the gameplay
+    outcome visible as "pass", and mark the run ineligible for publication.
+    This mirrors the runner's post-run semantics (runner.py:5796-5830).
+    """
+    from fort_gym.bench.eval.summary import RunSummary, _model_dump
+
+    summary = RunSummary(run_id="provider-free-calibration", backend="dfhack")
+    summary.g7 = {
+        "gate": "G7",
+        "gate_version": 5,
+        "status": "unknown",  # validity-gated: gameplay passed but validity unknown
+        "gameplay_outcome": {"status": "pass", "criteria": {}},
+        "evaluation_validity": {"status": "unknown"},
+        "provenance_completeness": {"status": "unknown"},
+    }
+    summary.evaluation_validity = dict(summary.g7["evaluation_validity"])
+    summary.gameplay_outcome = dict(summary.g7["gameplay_outcome"])
+    summary.provenance_completeness = dict(summary.g7["provenance_completeness"])
+    summary.terminal_class = "completed"
+
+    # The fixed verdict writer: reads the validity-gated gate status, not the
+    # raw gameplay outcome.
+    summary.task_verdict = p1_task_verdict(
+        g7=summary.g7, terminal_class=summary.terminal_class
+    )
+    # The runner's publication gate requires BOTH validity and provenance pass.
+    summary.public_eligibility = (
+        "eligible"
+        if p1_evaluation_is_publishable(
+            evaluation_validity=summary.evaluation_validity,
+            provenance_completeness=summary.provenance_completeness,
+        )
+        else "ineligible"
+    )
+
+    # Persist exactly as summary.py:1023-1025 does and read it back.
+    summary_path = tmp_path / "summary.json"
+    summary_path.write_text(json.dumps(_model_dump(summary), indent=2), encoding="utf-8")
+    persisted = json.loads(summary_path.read_text(encoding="utf-8"))
+
+    # The contradiction that the bug produced must be impossible: verdict is
+    # unknown while gameplay stays visible as pass, and the run is ineligible.
+    assert persisted["task_verdict"] == "unknown"
+    assert persisted["gameplay_outcome"]["status"] == "pass"
+    assert persisted["evaluation_validity"]["status"] == "unknown"
+    assert persisted["provenance_completeness"]["status"] == "unknown"
+    assert persisted["public_eligibility"] == "ineligible"
+    # And unknown is never coerced into fail.
+    assert persisted["task_verdict"] != "fail"
 
 
 def test_non_p1_declaration_is_unchanged() -> None:
