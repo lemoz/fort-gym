@@ -32,8 +32,18 @@
       "protocol": "fort-eval-easy-p1-g7-v3",
       "fort_gym_commit": "UNKNOWN (historical frozen run; predates this index)",
       "manifest_semantic_sha256": "UNKNOWN (G7-v3 frozen manifest; not re-derived here)",
-      "artifact_paths": [],
-      "artifact_sha256": "BLOCKED: artifact location unverified. Not present in local canonical artifacts/ or in the orphaned /private/tmp/fort-gym-fable-sol worktree (1493 dirs checked); only candidate copy is VM /opt/fort-gym/fort_gym/artifacts_old/ and VM SSH access was denied (sandbox-level). Never fabricate checksums.",
+      "artifact_location": "VM /opt/fort-gym/fort_gym/artifacts/a55b2c2cbef54825bc7784bdb8e51855/ (verified present 2026-07-19; deployed SHA 47c035f117f2; NOT present in local canonical artifacts/)",
+      "artifact_paths": [
+        "seed_attestation.json",
+        "summary.json",
+        "trace.jsonl"
+      ],
+      "artifact_sha256": {
+        "seed_attestation.json": "9c923f9e2ee8ce25344fc88d66f54f2c0262d9f62317c1b44946cd73f6ee01e8",
+        "summary.json": "39a5000d22020f10d9bc84e4510e95828be5d2c00d54d3527e6d12fe665c2307",
+        "trace.jsonl": "5fd4611e96bef262f584cd2aac116879ca4ea0123cd59483cd933f931e231612"
+      },
+      "artifact_sha256_computed": "2026-07-19 via sha256sum on the VM (read-only)",
       "terminal_classification": "completed (valid observed failure)",
       "validity_state": "pass (public-ELIGIBLE per historical record)",
       "provenance_state": "pass (public-ELIGIBLE per historical record)",
@@ -52,8 +62,22 @@
       "protocol": "fort-eval-easy-p1-g7-v3",
       "fort_gym_commit": "UNKNOWN (historical frozen run; predates this index)",
       "manifest_semantic_sha256": "UNKNOWN (G7-v3 frozen manifest; not re-derived here)",
-      "artifact_paths": [],
-      "artifact_sha256": "BLOCKED: artifact location unverified. Not present in local canonical artifacts/ or in the orphaned /private/tmp/fort-gym-fable-sol worktree (1493 dirs checked); only candidate copy is VM /opt/fort-gym/fort_gym/artifacts_old/ and VM SSH access was denied (sandbox-level). Never fabricate checksums.",
+      "artifact_location": "VM /opt/fort-gym/fort_gym/artifacts/cb997beed6d94a3680f2637556cc529d/ (verified present 2026-07-19; deployed SHA 47c035f117f2; NOT present in local canonical artifacts/)",
+      "artifact_paths": [
+        "analysis.json",
+        "analysis.txt",
+        "seed_attestation.json",
+        "summary.json",
+        "trace.jsonl"
+      ],
+      "artifact_sha256": {
+        "analysis.json": "4292901c9d2bdb5421a0bc52c68d05e682716de925221f42dd380df110ca90a4",
+        "analysis.txt": "721011a05b98c8224e25fe14ce2594193d1ba35e0e8f892d0208584a8564fa92",
+        "seed_attestation.json": "9c923f9e2ee8ce25344fc88d66f54f2c0262d9f62317c1b44946cd73f6ee01e8",
+        "summary.json": "db5649b4d85138db23ea2aba9fc9bf98a60efd7499b0efb3db9aea2d1ca64941",
+        "trace.jsonl": "e740af41ac282a6a1bcd81419ede361656c3f36c05dd2a1f099e58da5e4a4dc7"
+      },
+      "artifact_sha256_computed": "2026-07-19 via sha256sum on the VM (read-only)",
       "terminal_classification": "completed (valid observed failure)",
       "validity_state": "unknown/fail (INELIGIBLE per historical record: frozen cached-token requirement unsatisfied)",
       "provenance_state": "unknown (INELIGIBLE per historical record)",
@@ -71,7 +95,7 @@
       "kind": "calibration",
       "scenario": "owned_layout_and_provisioning",
       "plan": "experiments/calibration/p1_g7_v5_owned_layout_and_provisioning.json",
-      "status": "BLOCKED: requires VM (live DFHack RPC loopback :5000). Transfer reviewed commit to VM ~/fort-gym-test WITHOUT push, verify zero active runs, disclose dfhack-headless seed-reset restart to Chris before first run, run with NEW immutable run id. VM access currently denied."
+      "status": "BLOCKED on Chris's explicit approval + the reviewed-commit transfer. VM is reachable (verified 2026-07-19: deployed SHA 47c035f117f2, services active, zero active runs in prod registry). Preconditions before first run: transfer reviewed commit to VM ~/fort-gym-test WITHOUT push (git bundle scp or rsync to ~/fort-gym-test only), confirm zero active runs, disclose the intrinsic dfhack-headless seed-reset restart to Chris, run with a NEW immutable run id from the scratch checkout (never /opt/fort-gym)."
     },
     {
       "entry_id": "g7v5-calibration-death-cause-fallback",
@@ -93,5 +117,16 @@
     "EXPECTED and HONEST: a provider-free calibration run has usage.calls==0, so evidence_ok=False and validity/provenance are UNKNOWN; task_verdict will be 'unknown' with gameplay_outcome visible as 'pass'. Calibration completeness is judged separately by p1_measurement_calibration_is_complete (gameplay evidence + digests + approved review), which does NOT require validity/provenance pass. Do NOT weaken evidence_ok to force a pass.",
     "Independent review: an independent_review object (reviewer != builder, reviewed_bundle_sha256, reviewed_at) goes in the evidence bundle SIDECAR ONLY — never in experiments/fort_eval_easy_p1_g7_v5.yaml (that would change the frozen manifest semantic digest).",
     "P1_MEASUREMENT_CALIBRATION_COMPLETE is currently False / evidence sha None in fort_eval_easy_p1.py; the final unlock hand-flip is a reviewed code change, not a casual edit, and happens only after independent review approves the bundle."
-  ]
+  ],
+  "funding_state": {
+    "verified_at": "2026-07-19",
+    "openrouter_per_key": {
+      "usage_usd": 7.993400875,
+      "limit_usd": 10,
+      "limit_remaining_usd": 2.006599125,
+      "note": "The OPENROUTER_API_KEY in ~/.zshenv has a $10 per-key limit with only ~$2.01 remaining this cycle. Even if account-level credits were sufficient, THIS key cannot fund a paid run as-is."
+    },
+    "historical_pair_cost_usd": 92.693946,
+    "assessment": "A new exact Fable/Sol pair (~$92.69 historical) is NOT safely funded by the current key ($2.01 remaining). Account-level remaining (~$72.37 at the 7/18 snapshot, key never printed) is below the historical pair cost and shared with other projects. Purchasing credits or raising the key limit is a HARD GATE requiring Chris's separate explicit approval."
+  }
 }
