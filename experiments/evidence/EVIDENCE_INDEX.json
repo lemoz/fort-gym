@@ -1,0 +1,97 @@
+{
+  "schema_version": "fort-eval.evidence-index/v1",
+  "created_at": "2026-07-19",
+  "updated_at": "2026-07-19",
+  "purpose": "Versioned, append-only index of Fort-Eval run and calibration evidence. New entries are appended; existing terminal artifacts are never rewritten. This index does NOT modify the frozen v5 manifest semantic digest (experiments/fort_eval_easy_p1_g7_v5.yaml) and is not linked from it.",
+  "fields": [
+    "entry_id",
+    "kind (run | calibration)",
+    "run_or_calibration_id",
+    "model",
+    "protocol",
+    "fort_gym_commit",
+    "manifest_semantic_sha256",
+    "artifact_paths",
+    "artifact_sha256",
+    "terminal_classification",
+    "validity_state",
+    "provenance_state",
+    "public_or_private",
+    "eligibility",
+    "cost_usd",
+    "reviewer",
+    "review_status",
+    "notes"
+  ],
+  "entries": [
+    {
+      "entry_id": "g7v3-fable-2026-07",
+      "kind": "run",
+      "run_or_calibration_id": "a55b2c2cbef54825bc7784bdb8e51855",
+      "model": "dfhack-governed-llm-fable5",
+      "protocol": "fort-eval-easy-p1-g7-v3",
+      "fort_gym_commit": "UNKNOWN (historical frozen run; predates this index)",
+      "manifest_semantic_sha256": "UNKNOWN (G7-v3 frozen manifest; not re-derived here)",
+      "artifact_paths": [],
+      "artifact_sha256": "BLOCKED: artifact location unverified. Not present in local canonical artifacts/ or in the orphaned /private/tmp/fort-gym-fable-sol worktree (1493 dirs checked); only candidate copy is VM /opt/fort-gym/fort_gym/artifacts_old/ and VM SSH access was denied (sandbox-level). Never fabricate checksums.",
+      "terminal_classification": "completed (valid observed failure)",
+      "validity_state": "pass (public-ELIGIBLE per historical record)",
+      "provenance_state": "pass (public-ELIGIBLE per historical record)",
+      "public_or_private": "public",
+      "eligibility": "eligible",
+      "cost_usd": 56.14648677,
+      "reviewer": null,
+      "review_status": "historical (frozen G7-v3; never re-run or re-adjudicated)",
+      "notes": "200 steps, 0 deaths, FAILED G7-v3. Immutable historical evidence; preserve exactly, never rerun or reinterpret. Part of the Fable/gpt56-sol pair that is descriptive-only (see g7v3-gpt56-sol entry)."
+    },
+    {
+      "entry_id": "g7v3-gpt56-sol-2026-07",
+      "kind": "run",
+      "run_or_calibration_id": "cb997beed6d94a3680f2637556cc529d",
+      "model": "dfhack-governed-llm-gpt56-sol",
+      "protocol": "fort-eval-easy-p1-g7-v3",
+      "fort_gym_commit": "UNKNOWN (historical frozen run; predates this index)",
+      "manifest_semantic_sha256": "UNKNOWN (G7-v3 frozen manifest; not re-derived here)",
+      "artifact_paths": [],
+      "artifact_sha256": "BLOCKED: artifact location unverified. Not present in local canonical artifacts/ or in the orphaned /private/tmp/fort-gym-fable-sol worktree (1493 dirs checked); only candidate copy is VM /opt/fort-gym/fort_gym/artifacts_old/ and VM SSH access was denied (sandbox-level). Never fabricate checksums.",
+      "terminal_classification": "completed (valid observed failure)",
+      "validity_state": "unknown/fail (INELIGIBLE per historical record: frozen cached-token requirement unsatisfied)",
+      "provenance_state": "unknown (INELIGIBLE per historical record)",
+      "public_or_private": "private (ineligible for publication)",
+      "eligibility": "ineligible",
+      "cost_usd": 36.54745875,
+      "reviewer": null,
+      "review_status": "historical (frozen G7-v3; never re-run or re-adjudicated)",
+      "notes": "200 steps, 10 deaths, FAILED G7-v3. Immutable historical evidence. Because this arm was ineligible, the Fable/gpt56-sol pair does NOT share one ranked table or aggregate mean and is NOT a publishable comparable pair. Defensible descriptive finding only: 'Fable was safer and more risk-aware; Sol was more capable and productive but collapse-prone.' NOTE: 'Sol' here is the gpt56-sol MODEL ARM, not the Sol/Sol Ultra/Terra/Luna code-review agents referenced in WDSLL/FINDINGS."
+    }
+  ],
+  "pending_entries": [
+    {
+      "entry_id": "g7v5-calibration-owned-layout-and-provisioning",
+      "kind": "calibration",
+      "scenario": "owned_layout_and_provisioning",
+      "plan": "experiments/calibration/p1_g7_v5_owned_layout_and_provisioning.json",
+      "status": "BLOCKED: requires VM (live DFHack RPC loopback :5000). Transfer reviewed commit to VM ~/fort-gym-test WITHOUT push, verify zero active runs, disclose dfhack-headless seed-reset restart to Chris before first run, run with NEW immutable run id. VM access currently denied."
+    },
+    {
+      "entry_id": "g7v5-calibration-death-cause-fallback",
+      "kind": "calibration",
+      "scenario": "death_cause_fallback",
+      "plan": "experiments/calibration/p1_g7_v5_death_cause_fallback.json",
+      "status": "BLOCKED: requires VM (see owned-layout entry)."
+    },
+    {
+      "entry_id": "g7v5-calibration-sensor-dropout",
+      "kind": "calibration",
+      "scenario": "sensor_dropout",
+      "plan": "experiments/calibration/p1_g7_v5_sensor_dropout.json",
+      "status": "BLOCKED: requires VM (see owned-layout entry)."
+    }
+  ],
+  "notes": [
+    "Calibration bundle (experiments/evidence/fort_eval_easy_p1_g7_v5_live_calibration.json) is built AFTER the three scenario runs via scripts/build_p1_live_calibration_bundle.py and binds calibration_fort_gym_commit, manifest_semantic_sha256, measurement_code_sha256, remote_proto_runtime_sha256, per-scenario trace/summary sha256s, and a JUnit regression report that must exactly match the 31 required node IDs.",
+    "EXPECTED and HONEST: a provider-free calibration run has usage.calls==0, so evidence_ok=False and validity/provenance are UNKNOWN; task_verdict will be 'unknown' with gameplay_outcome visible as 'pass'. Calibration completeness is judged separately by p1_measurement_calibration_is_complete (gameplay evidence + digests + approved review), which does NOT require validity/provenance pass. Do NOT weaken evidence_ok to force a pass.",
+    "Independent review: an independent_review object (reviewer != builder, reviewed_bundle_sha256, reviewed_at) goes in the evidence bundle SIDECAR ONLY — never in experiments/fort_eval_easy_p1_g7_v5.yaml (that would change the frozen manifest semantic digest).",
+    "P1_MEASUREMENT_CALIBRATION_COMPLETE is currently False / evidence sha None in fort_eval_easy_p1.py; the final unlock hand-flip is a reviewed code change, not a casual edit, and happens only after independent review approves the bundle."
+  ]
+}
