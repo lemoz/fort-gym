@@ -665,7 +665,7 @@ def test_owned_calibration_plan_is_bounded_and_keeps_a_settlement_buffer() -> No
         scenario="owned_layout_and_provisioning",
     )
 
-    assert len(actions) == 111
+    assert len(actions) == 115
     assert [action["type"] for action in actions[:14]] == [
         "DIG",
         "DIG",
@@ -683,21 +683,25 @@ def test_owned_calibration_plan_is_bounded_and_keeps_a_settlement_buffer() -> No
         "BUILD",
     ]
     assert all(action["type"] != "INTERACT" for action in actions)
-    assert [action["type"] for action in actions[-20:]] == ["WAIT"] * 20
+    # Standing brew demand now punctuates the tail: the late brew order at
+    # index 92 is followed by two interleaved brew reorders, but the 20-step
+    # settlement buffer is preserved as WAITs and the plan still ends idle.
+    assert [action["type"] for action in actions[-7:]] == ["WAIT"] * 7
+    assert sum(1 for action in actions[92:] if action["type"] == "WAIT") == 20
     assert [
         action["params"]["job"]
         for action in actions
         if action["type"] == "ORDER" and action["params"]["job"] == "brew"
-    ] == ["brew"]
+    ] == ["brew"] * 4
     wall_indices = [
         index
         for index, action in enumerate(actions)
         if action["type"] == "BUILD" and action["params"]["kind"] == "Wall"
     ]
     assert len(wall_indices) == 27
-    assert [action["type"] for action in actions[37:70]] == ["BUILD"] * 33
-    assert all(action["advance_ticks"] == 0 for action in actions[37:70])
-    assert [action["type"] for action in actions[70:90]] == ["WAIT"] * 20
+    assert [action["type"] for action in actions[39:72]] == ["BUILD"] * 33
+    assert all(action["advance_ticks"] == 0 for action in actions[39:72])
+    assert [action["type"] for action in actions[72:92]] == ["WAIT"] * 20
     assert all(
         actions[index]["params"]["x2"] is None
         and actions[index]["params"]["y2"] is None
@@ -798,7 +802,7 @@ def test_live_calibration_agent_selects_three_nonoverlapping_surface_rooms() -> 
     action = calibration_runner._load_plan(
         Path("experiments/calibration/p1_g7_v5_owned_layout_and_provisioning.json"),
         scenario="owned_layout_and_provisioning",
-    )[37]
+    )[39]
     rows = [
         ".........s.....",
         "s...........p.,",
@@ -844,7 +848,7 @@ def test_live_calibration_agent_waits_for_produced_furniture() -> None:
     action = calibration_runner._load_plan(
         Path("experiments/calibration/p1_g7_v5_owned_layout_and_provisioning.json"),
         scenario="owned_layout_and_provisioning",
-    )[46]
+    )[48]
     agent = calibration_runner.CalibrationPlanAgent([action])
 
     waiting = agent.decide(
@@ -881,7 +885,7 @@ def test_live_calibration_agent_waits_for_observed_brew_inputs() -> None:
     action = calibration_runner._load_plan(
         Path("experiments/calibration/p1_g7_v5_owned_layout_and_provisioning.json"),
         scenario="owned_layout_and_provisioning",
-    )[90]
+    )[92]
     agent = calibration_runner.CalibrationPlanAgent([action])
     base_crew = {
         "farm_plot_details": [],
