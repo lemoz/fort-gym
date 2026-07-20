@@ -1365,6 +1365,9 @@ governed objective completion and hard stall transitions, and PR #111 merged
 own-group G7 citizen/consumption/death evidence with fail-closed predicate
 errors. The next experiment is not yet started: deploy that reviewed contract
 with the labor-eligibility correction, then launch fresh Attempt 28.
+(2026-07-19 note: this closing sentence is preserved as the attempt-27-era
+plan of record; Attempt 28 was never launched and will not be launched under
+frozen G7-v3 — see section 4 and the G7-v5 successor protocol.)
 
 ## 3. Limitations
 
