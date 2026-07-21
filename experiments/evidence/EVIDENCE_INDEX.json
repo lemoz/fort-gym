@@ -1,7 +1,7 @@
 {
   "schema_version": "fort-eval.evidence-index/v1",
   "created_at": "2026-07-19",
-  "updated_at": "2026-07-19",
+  "updated_at": "2026-07-21",
   "purpose": "Versioned, append-only index of Fort-Eval run and calibration evidence. New entries are appended; existing terminal artifacts are never rewritten. This index does NOT modify the frozen v5 manifest semantic digest (experiments/fort_eval_easy_p1_g7_v5.yaml) and is not linked from it.",
   "fields": [
     "entry_id",
@@ -87,31 +87,111 @@
       "reviewer": null,
       "review_status": "historical (frozen G7-v3; never re-run or re-adjudicated)",
       "notes": "200 steps, 10 deaths, FAILED G7-v3. Immutable historical evidence. Because this arm was ineligible, the Fable/gpt56-sol pair does NOT share one ranked table or aggregate mean and is NOT a publishable comparable pair. Defensible descriptive finding only: 'Fable was safer and more risk-aware; Sol was more capable and productive but collapse-prone.' NOTE: 'Sol' here is the gpt56-sol MODEL ARM, not the Sol/Sol Ultra/Terra/Luna code-review agents referenced in WDSLL/FINDINGS."
-    }
-  ],
-  "pending_entries": [
+    },
     {
       "entry_id": "g7v5-calibration-owned-layout-and-provisioning",
       "kind": "calibration",
-      "scenario": "owned_layout_and_provisioning",
-      "plan": "experiments/calibration/p1_g7_v5_owned_layout_and_provisioning.json",
-      "status": "BLOCKED on Chris's explicit approval + the reviewed-commit transfer. VM is reachable (verified 2026-07-19: deployed SHA 47c035f117f2, services active, zero active runs in prod registry). Preconditions before first run: transfer reviewed commit to VM ~/fort-gym-test WITHOUT push (git bundle scp or rsync to ~/fort-gym-test only), confirm zero active runs, disclose the intrinsic dfhack-headless seed-reset restart to Chris, run with a NEW immutable run id from the scratch checkout (never /opt/fort-gym)."
+      "run_or_calibration_id": "calib-g7v5-owned-20260721a",
+      "model": "dfhack-governed-scripted",
+      "protocol": "fort-eval-easy-p1-g7-v5",
+      "fort_gym_commit": "a8de39d03da48da32110776bf84ddfcbcb2ccefc",
+      "manifest_semantic_sha256": "b85957669eb02668f965f103e42b1feaf88cdad7ecc8e45fc5eb2b78d8269cc6",
+      "artifact_location": "experiments/evidence/ (committed in-repo; landed from VM /var/tmp/fort-gym-calib-g7v5 checkout at commit a8de39d03)",
+      "artifact_paths": [
+        "p1_g7_v5_owned_layout_and_provisioning_calib-g7v5-owned-20260721a.jsonl",
+        "p1_g7_v5_owned_layout_and_provisioning_calib-g7v5-owned-20260721a_summary.json",
+        "fort_eval_easy_p1_g7_v5_live_calibration.json",
+        "p1_g7_v5_measurement_regressions.xml"
+      ],
+      "artifact_sha256": {
+        "p1_g7_v5_owned_layout_and_provisioning_calib-g7v5-owned-20260721a.jsonl": "0ce3899fbaef8d90ccca7dee2e7bbc47bc62382d9e68b3f44fc38ce778403073",
+        "p1_g7_v5_owned_layout_and_provisioning_calib-g7v5-owned-20260721a_summary.json": "2c07304aa58ceededb5a51d976407443d2953ea99c65862ec340cb5fd34b4af8",
+        "fort_eval_easy_p1_g7_v5_live_calibration.json": "f41f1a80b63cdc0e323cf57dc914a28fc613cf183905e29828ede298baf59598",
+        "p1_g7_v5_measurement_regressions.xml": "a2469336c9ce32cc96941cf5fa5fe6e1d341e6e6c96e2591da6d49ece96d616e"
+      },
+      "artifact_sha256_computed": "2026-07-21 via shasum -a 256 locally after scp from VM /var/tmp/fort-gym-calib-g7v5 (read-only); verified against VM-supplied known-good digests before commit",
+      "terminal_classification": "completed",
+      "validity_state": "unknown (provider-free calibration run; usage.calls==0 by design, evidence_ok=False — honest, not weakened)",
+      "provenance_state": "unknown (provider-free calibration run; usage.calls==0 by design, evidence_ok=False — honest, not weakened)",
+      "public_or_private": "private",
+      "eligibility": "ineligible (calibration)",
+      "cost_usd": 0,
+      "reviewer": "",
+      "review_status": "pending",
+      "task_verdict": "unknown",
+      "gameplay_outcome": "pass — brew 65",
+      "notes": "Provider-free G7-v5 calibration scenario 'owned_layout_and_provisioning', run id calib-g7v5-owned-20260721a. Captured on the VM checkout /var/tmp/fort-gym-calib-g7v5 at fort_gym commit a8de39d03 and landed into this worktree via read-only scp; all 4 artifact sha256s verified against VM-supplied known-good digests before commit. Part of the 3-scenario calibration bundle experiments/evidence/fort_eval_easy_p1_g7_v5_live_calibration.json (review_status pending, reviewer empty). This entry supersedes the prior 20260720a/20260719 calibration attempts, which failed due to a plan defect and home-dir permissions respectively; artifacts from those failed attempts remain on the VM only and were not transferred or committed. P1_MEASUREMENT_CALIBRATION_COMPLETE and P1_MEASUREMENT_CALIBRATION_EVIDENCE_SHA256 are NOT flipped by this entry; that remains a separate, reviewed unlock pending independent review approval of the bundle."
     },
     {
       "entry_id": "g7v5-calibration-death-cause-fallback",
       "kind": "calibration",
-      "scenario": "death_cause_fallback",
-      "plan": "experiments/calibration/p1_g7_v5_death_cause_fallback.json",
-      "status": "BLOCKED: requires VM (see owned-layout entry)."
+      "run_or_calibration_id": "calib-g7v5-death-20260721a",
+      "model": "dfhack-governed-scripted",
+      "protocol": "fort-eval-easy-p1-g7-v5",
+      "fort_gym_commit": "a8de39d03da48da32110776bf84ddfcbcb2ccefc",
+      "manifest_semantic_sha256": "b85957669eb02668f965f103e42b1feaf88cdad7ecc8e45fc5eb2b78d8269cc6",
+      "artifact_location": "experiments/evidence/ (committed in-repo; landed from VM /var/tmp/fort-gym-calib-g7v5 checkout at commit a8de39d03)",
+      "artifact_paths": [
+        "p1_g7_v5_death_cause_fallback_calib-g7v5-death-20260721a.jsonl",
+        "p1_g7_v5_death_cause_fallback_calib-g7v5-death-20260721a_summary.json",
+        "fort_eval_easy_p1_g7_v5_live_calibration.json",
+        "p1_g7_v5_measurement_regressions.xml"
+      ],
+      "artifact_sha256": {
+        "p1_g7_v5_death_cause_fallback_calib-g7v5-death-20260721a.jsonl": "2385d1b3f4c100ad5737f653c98235e7292471b09cefbef2d2b7600cd52af05c",
+        "p1_g7_v5_death_cause_fallback_calib-g7v5-death-20260721a_summary.json": "205016815cadb584c51acc39c1807be47c3ada8ec3108af0e4c31a9c4e2ab43f",
+        "fort_eval_easy_p1_g7_v5_live_calibration.json": "f41f1a80b63cdc0e323cf57dc914a28fc613cf183905e29828ede298baf59598",
+        "p1_g7_v5_measurement_regressions.xml": "a2469336c9ce32cc96941cf5fa5fe6e1d341e6e6c96e2591da6d49ece96d616e"
+      },
+      "artifact_sha256_computed": "2026-07-21 via shasum -a 256 locally after scp from VM /var/tmp/fort-gym-calib-g7v5 (read-only); verified against VM-supplied known-good digests before commit",
+      "terminal_classification": "completed",
+      "validity_state": "unknown (provider-free calibration run; usage.calls==0 by design, evidence_ok=False — honest, not weakened)",
+      "provenance_state": "unknown (provider-free calibration run; usage.calls==0 by design, evidence_ok=False — honest, not weakened)",
+      "public_or_private": "private",
+      "eligibility": "ineligible (calibration)",
+      "cost_usd": 0,
+      "reviewer": "",
+      "review_status": "pending",
+      "task_verdict": "unknown",
+      "gameplay_outcome": "fail — by design, 1 authoritative death, neglect unknown",
+      "notes": "Provider-free G7-v5 calibration scenario 'death_cause_fallback', run id calib-g7v5-death-20260721a. Captured on the VM checkout /var/tmp/fort-gym-calib-g7v5 at fort_gym commit a8de39d03 and landed into this worktree via read-only scp; all 4 artifact sha256s verified against VM-supplied known-good digests before commit. Part of the 3-scenario calibration bundle experiments/evidence/fort_eval_easy_p1_g7_v5_live_calibration.json (review_status pending, reviewer empty). This entry supersedes the prior 20260720a/20260719 calibration attempts, which failed due to a plan defect and home-dir permissions respectively; artifacts from those failed attempts remain on the VM only and were not transferred or committed. P1_MEASUREMENT_CALIBRATION_COMPLETE and P1_MEASUREMENT_CALIBRATION_EVIDENCE_SHA256 are NOT flipped by this entry; that remains a separate, reviewed unlock pending independent review approval of the bundle."
     },
     {
       "entry_id": "g7v5-calibration-sensor-dropout",
       "kind": "calibration",
-      "scenario": "sensor_dropout",
-      "plan": "experiments/calibration/p1_g7_v5_sensor_dropout.json",
-      "status": "BLOCKED: requires VM (see owned-layout entry)."
+      "run_or_calibration_id": "calib-g7v5-dropout-20260721a",
+      "model": "dfhack-governed-scripted",
+      "protocol": "fort-eval-easy-p1-g7-v5",
+      "fort_gym_commit": "a8de39d03da48da32110776bf84ddfcbcb2ccefc",
+      "manifest_semantic_sha256": "b85957669eb02668f965f103e42b1feaf88cdad7ecc8e45fc5eb2b78d8269cc6",
+      "artifact_location": "experiments/evidence/ (committed in-repo; landed from VM /var/tmp/fort-gym-calib-g7v5 checkout at commit a8de39d03)",
+      "artifact_paths": [
+        "p1_g7_v5_sensor_dropout_calib-g7v5-dropout-20260721a.jsonl",
+        "p1_g7_v5_sensor_dropout_calib-g7v5-dropout-20260721a_summary.json",
+        "fort_eval_easy_p1_g7_v5_live_calibration.json",
+        "p1_g7_v5_measurement_regressions.xml"
+      ],
+      "artifact_sha256": {
+        "p1_g7_v5_sensor_dropout_calib-g7v5-dropout-20260721a.jsonl": "47475ad8cd5d3e69668ea27f9c69e14208d0fbd8554012ed70a3dc3c874354cc",
+        "p1_g7_v5_sensor_dropout_calib-g7v5-dropout-20260721a_summary.json": "fc59b94a951dd616ab0b04046874ed9e64a11207b9421cee4d912021f7af5fca",
+        "fort_eval_easy_p1_g7_v5_live_calibration.json": "f41f1a80b63cdc0e323cf57dc914a28fc613cf183905e29828ede298baf59598",
+        "p1_g7_v5_measurement_regressions.xml": "a2469336c9ce32cc96941cf5fa5fe6e1d341e6e6c96e2591da6d49ece96d616e"
+      },
+      "artifact_sha256_computed": "2026-07-21 via shasum -a 256 locally after scp from VM /var/tmp/fort-gym-calib-g7v5 (read-only); verified against VM-supplied known-good digests before commit",
+      "terminal_classification": "completed",
+      "validity_state": "unknown (provider-free calibration run; usage.calls==0 by design, evidence_ok=False — honest, not weakened)",
+      "provenance_state": "unknown (provider-free calibration run; usage.calls==0 by design, evidence_ok=False — honest, not weakened)",
+      "public_or_private": "private",
+      "eligibility": "ineligible (calibration)",
+      "cost_usd": 0,
+      "reviewer": "",
+      "review_status": "pending",
+      "task_verdict": "unknown",
+      "gameplay_outcome": "fail/unknown — sensor loss",
+      "notes": "Provider-free G7-v5 calibration scenario 'sensor_dropout', run id calib-g7v5-dropout-20260721a. Captured on the VM checkout /var/tmp/fort-gym-calib-g7v5 at fort_gym commit a8de39d03 and landed into this worktree via read-only scp; all 4 artifact sha256s verified against VM-supplied known-good digests before commit. Part of the 3-scenario calibration bundle experiments/evidence/fort_eval_easy_p1_g7_v5_live_calibration.json (review_status pending, reviewer empty). This entry supersedes the prior 20260720a/20260719 calibration attempts, which failed due to a plan defect and home-dir permissions respectively; artifacts from those failed attempts remain on the VM only and were not transferred or committed. P1_MEASUREMENT_CALIBRATION_COMPLETE and P1_MEASUREMENT_CALIBRATION_EVIDENCE_SHA256 are NOT flipped by this entry; that remains a separate, reviewed unlock pending independent review approval of the bundle."
     }
   ],
+  "pending_entries": [],
   "notes": [
     "Calibration bundle (experiments/evidence/fort_eval_easy_p1_g7_v5_live_calibration.json) is built AFTER the three scenario runs via scripts/build_p1_live_calibration_bundle.py and binds calibration_fort_gym_commit, manifest_semantic_sha256, measurement_code_sha256, remote_proto_runtime_sha256, per-scenario trace/summary sha256s, and a JUnit regression report that must exactly match the 31 required node IDs.",
     "EXPECTED and HONEST: a provider-free calibration run has usage.calls==0, so evidence_ok=False and validity/provenance are UNKNOWN; task_verdict will be 'unknown' with gameplay_outcome visible as 'pass'. Calibration completeness is judged separately by p1_measurement_calibration_is_complete (gameplay evidence + digests + approved review), which does NOT require validity/provenance pass. Do NOT weaken evidence_ok to force a pass.",
