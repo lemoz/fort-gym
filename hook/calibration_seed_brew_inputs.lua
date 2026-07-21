@@ -162,7 +162,14 @@ local function is_walkable_non_building_floor(x, y, z)
     if not tt then return false end
     local shape = df.tiletype.attrs[tt].shape
     local shape_attrs = df.tiletype_shape.attrs[shape]
-    if not (shape_attrs and shape_attrs.walkable and shape_attrs.walkable > 0) then
+    -- On the pinned 0.47.05 build df.tiletype_shape.attrs[shape].walkable is a
+    -- BOOLEAN; other builds expose it as an integer weight. Accept either
+    -- (boolean true, or a positive number) so the check never trips
+    -- 'attempt to compare number with boolean' (which pcall would swallow,
+    -- reading every tile as unwalkable and failing closed before createItem).
+    local wk = shape_attrs and shape_attrs.walkable
+    local is_walkable = (wk == true) or (type(wk) == 'number' and wk > 0)
+    if not is_walkable then
       return false
     end
     local bld = dfhack.buildings.findAtTile(x, y, z)
