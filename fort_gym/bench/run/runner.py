@@ -28,6 +28,7 @@ from ..dfhack_backend import (
     read_work_metrics,
     start_g7_evidence,
     stop_g7_evidence,
+    trigger_p1_brew_input_calibration_fixture,
     trigger_p1_death_calibration_fixture,
 )
 from ..env.actions import (
@@ -92,6 +93,7 @@ GOVERNED_DFHACK_ACTIONS = {
     "INTERACT",
 }
 MAX_CONSECUTIVE_ZERO_TICKS = 3
+P1_BREW_INPUT_FIXTURE_STEP = 32  # WAIT immediately before owned_layout plan's early brew ORDER at index 33
 MAX_INTERACT_OPERATIONS_PER_MODAL = 8
 MAX_UNCHANGED_INTERACT_SCREENS = 3
 MIN_GOVERNED_ACTION_HISTORY = 6
@@ -3906,6 +3908,41 @@ def run_once(
                             )
                             run_failed = True
                             break
+                if (
+                    is_governed_dfhack_mode
+                    and measurement_calibration_scenario
+                    == "owned_layout_and_provisioning"
+                    and step == P1_BREW_INPUT_FIXTURE_STEP
+                    and not measurement_calibration_fixture
+                    and seed_attestation.get("eligible") is True
+                ):
+                    measurement_calibration_fixture = dict(
+                        trigger_p1_brew_input_calibration_fixture()
+                    )
+                    publish_event(
+                        step,
+                        "measurement_calibration_fixture",
+                        measurement_calibration_fixture,
+                        events,
+                    )
+                    if measurement_calibration_fixture.get("ok") is not True:
+                        terminal_failure_reason = {
+                            "code": "measurement_calibration_fixture_failed",
+                            "fixture": measurement_calibration_fixture,
+                        }
+                        terminal_failure_step = step
+                        _write_durable_jsonl_record(
+                            fh,
+                            {
+                                "run_id": run_identifier,
+                                "step": step,
+                                "observation": state_before,
+                                "terminal_reason": terminal_failure_reason,
+                                "events": events,
+                            },
+                        )
+                        run_failed = True
+                        break
                 if is_keystroke_mode:
                     carpenter_workshop_usable_seen = (
                         _carry_forward_carpenter_workshop_proof(

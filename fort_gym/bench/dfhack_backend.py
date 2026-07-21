@@ -552,6 +552,61 @@ def trigger_p1_death_calibration_fixture() -> Dict[str, object]:
         }
 
 
+def trigger_p1_brew_input_calibration_fixture() -> Dict[str, object]:
+    """Deterministically seed one bounded brewable-input stock for calibration.
+
+    The runner exposes this helper only after pristine-seed attestation, only
+    for the scripted owned-layout-and-provisioning calibration scenario, and
+    always with a disposable runtime save. The hook places exactly eight
+    off-farm brewable plants adjacent to the completed Still so the plan's
+    already-committed brew ORDER jobs can produce drink; the ordinary G7 ledger
+    credits only that drink, never the raw plant stock this seeds.
+    """
+
+    try:
+        fixture = run_lua_file(
+            _hook_path("calibration_seed_brew_inputs.lua"),
+            timeout=5.0,
+        )
+        if fixture.get("ok") is not True:
+            return fixture
+        created_item_ids = fixture.get("created_item_ids")
+        confirmation_valid = (
+            fixture.get("fixture") == "dfhack_bounded_brewable_input_seed"
+            and fixture.get("target") == "brewable_plant_stock"
+            and fixture.get("item") == "MUSHROOM_HELMET_PLUMP"
+            and fixture.get("limit") == 8
+            and fixture.get("method") == "still_adjacent_item_create"
+            and fixture.get("created_count") == 8
+            and isinstance(created_item_ids, list)
+            and len(created_item_ids) == 8
+            and all(isinstance(item_id, int) for item_id in created_item_ids)
+            and fixture.get("created_all_plant") is True
+            and fixture.get("placement_off_farm") is True
+            and isinstance(fixture.get("still_building_id"), int)
+        )
+        if not confirmation_valid:
+            return {
+                "ok": False,
+                "fixture": "dfhack_bounded_brewable_input_seed",
+                "target": "brewable_plant_stock",
+                "limit": 8,
+                "method": "still_adjacent_item_create",
+                "error": "invalid_fixture_confirmation",
+                "observed": fixture,
+            }
+        return fixture
+    except (DFHackError, OSError) as exc:
+        return {
+            "ok": False,
+            "fixture": "dfhack_bounded_brewable_input_seed",
+            "target": "brewable_plant_stock",
+            "limit": 8,
+            "method": "still_adjacent_item_create",
+            "error": str(exc),
+        }
+
+
 def read_map_snapshot(rect: tuple[int, int, int, int, int, int]) -> Dict[str, object]:
     """Capture a bounded live DFHack map tile snapshot for replay proof."""
 
@@ -705,6 +760,7 @@ __all__ = [
     "read_job_metrics",
     "start_g7_evidence",
     "trigger_p1_death_calibration_fixture",
+    "trigger_p1_brew_input_calibration_fixture",
     "read_g7_evidence",
     "stop_g7_evidence",
     "read_fort_metrics",
