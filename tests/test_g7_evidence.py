@@ -14,6 +14,16 @@ HOOK_SOURCE = (
 DEATH_FIXTURE_HOOK_SOURCE = (
     Path(__file__).resolve().parents[1] / "hook" / "calibration_kill_one.lua"
 ).read_text(encoding="utf-8")
+BREW_INPUT_FIXTURE_HOOK_SOURCE = (
+    Path(__file__).resolve().parents[1] / "hook" / "calibration_seed_brew_inputs.lua"
+).read_text(encoding="utf-8")
+RUNNER_SOURCE = (
+    Path(__file__).resolve().parents[1]
+    / "fort_gym"
+    / "bench"
+    / "run"
+    / "runner.py"
+).read_text(encoding="utf-8")
 
 
 def test_g7_evidence_is_run_scoped_and_event_backed() -> None:
@@ -208,6 +218,122 @@ def test_death_calibration_fixture_fails_without_command_confirmation(
             "blood_after": 60000,
         },
     }
+
+
+def _valid_brew_fixture_payload() -> dict:
+    return {
+        "ok": True,
+        "fixture": "dfhack_bounded_brewable_input_seed",
+        "target": "brewable_plant_stock",
+        "item": "MUSHROOM_HELMET_PLUMP",
+        "method": "still_adjacent_item_create",
+        "limit": 8,
+        "created_count": 8,
+        "created_item_ids": [101, 102, 103, 104, 105, 106, 107, 108],
+        "created_all_plant": True,
+        "plant_raw_index": 42,
+        "material": "MUSHROOM_HELMET_PLUMP:STRUCTURAL",
+        "mat_type": 419,
+        "mat_index": 42,
+        "still_found": True,
+        "still_building_id": 77,
+        "placement": {"x": 10, "y": 20, "z": 161},
+        "placement_off_farm": True,
+    }
+
+
+def test_brew_input_calibration_fixture_is_one_bounded_stock_seed(monkeypatch) -> None:
+    calls: list[tuple[str, tuple[str, ...], float]] = []
+
+    def fake_run(path: str, *args: str, timeout: float):
+        calls.append((path, args, timeout))
+        return _valid_brew_fixture_payload()
+
+    monkeypatch.setattr(dfhack_backend, "run_lua_file", fake_run)
+
+    result = dfhack_backend.trigger_p1_brew_input_calibration_fixture()
+
+    assert result == _valid_brew_fixture_payload()
+    assert calls[0][0].endswith("calibration_seed_brew_inputs.lua")
+    assert calls[0][1] == ()
+    assert calls[0][2] == 5.0
+    for needle in (
+        "MUSHROOM_HELMET_PLUMP",
+        "BREW_INPUT_LIMIT = 8",
+        "df.item_type.PLANT",
+        "'Still'",
+        "item_on_completed_farm",
+        "placement_off_farm",
+        "It does not write any measurement or output evidence itself.",
+    ):
+        assert needle in BREW_INPUT_FIXTURE_HOOK_SOURCE
+    assert (
+        "hook/calibration_seed_brew_inputs.lua"
+        in P1_MEASUREMENT_CODE_RELATIVE_PATHS
+    )
+    assert (
+        "test_brew_input_calibration_fixture_is_one_bounded_stock_seed"
+        in P1_CALIBRATION_REQUIRED_REGRESSION_TESTS
+    )
+
+
+def test_brew_input_calibration_fixture_fails_without_command_confirmation(
+    monkeypatch,
+) -> None:
+    payload = _valid_brew_fixture_payload()
+    payload["created_count"] = 3
+    payload["created_item_ids"] = [101, 102, 103]
+
+    def fake_run(path: str, *args: str, timeout: float):
+        del path, args, timeout
+        return dict(payload)
+
+    monkeypatch.setattr(dfhack_backend, "run_lua_file", fake_run)
+
+    assert dfhack_backend.trigger_p1_brew_input_calibration_fixture() == {
+        "ok": False,
+        "fixture": "dfhack_bounded_brewable_input_seed",
+        "target": "brewable_plant_stock",
+        "limit": 8,
+        "method": "still_adjacent_item_create",
+        "error": "invalid_fixture_confirmation",
+        "observed": payload,
+    }
+
+
+def test_brew_input_fixture_only_fires_in_owned_layout_calibration() -> None:
+    from fort_gym.bench.run.runner import P1_BREW_INPUT_FIXTURE_STEP
+
+    assert RUNNER_SOURCE.count("trigger_p1_brew_input_calibration_fixture()") == 1
+    gate_marker = (
+        'measurement_calibration_scenario\n'
+        '                    == "owned_layout_and_provisioning"'
+    )
+    assert gate_marker in RUNNER_SOURCE
+    assert "step == P1_BREW_INPUT_FIXTURE_STEP" in RUNNER_SOURCE
+    assert "not measurement_calibration_fixture" in RUNNER_SOURCE
+    assert P1_BREW_INPUT_FIXTURE_STEP < 33
+
+    # The brew block is a SIBLING of the seed-attestation block (16-space
+    # indent), evaluated every step and latched once -- NOT nested inside the
+    # step-0 `not seed_attestation` guard nor the death-fixture branch. Assert
+    # its gate opens at sibling indentation.
+    assert (
+        "\n                if (\n"
+        "                    is_governed_dfhack_mode\n"
+        "                    and measurement_calibration_scenario\n"
+        '                    == "owned_layout_and_provisioning"\n'
+    ) in RUNNER_SOURCE
+    # The death-fixture branch is nested one level deeper than the brew block
+    # and appears before it; the brew trigger is not inside that branch.
+    death_marker = 'if measurement_calibration_scenario == "death_cause_fallback":'
+    assert RUNNER_SOURCE.index(death_marker) < RUNNER_SOURCE.index(
+        "trigger_p1_brew_input_calibration_fixture()"
+    )
+    death_branch = RUNNER_SOURCE.split(death_marker, 1)[1].split(
+        "\n                if (\n", 1
+    )[0]
+    assert "trigger_p1_brew_input_calibration_fixture()" not in death_branch
 
 
 def test_g7_stop_error_does_not_claim_callbacks_are_inactive(monkeypatch) -> None:
