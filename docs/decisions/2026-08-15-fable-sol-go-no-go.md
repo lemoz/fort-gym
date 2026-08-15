@@ -31,6 +31,28 @@ else.** All eight §0 states were re-read against the finalized tip; the calibra
 by that parallel work. Where the refreshed index and this packet describe the same live
 numbers, they agree.
 
+**Count correction (annotation added 2026-08-15, after independent verification).** The
+sentence above overstated its own coverage in exactly one respect: two *numeric* branch-topology
+counts in §0 row 1 were **not** re-derived at the finalized tip. As first written, this packet
+said the branch was "36 commits ahead of `origin/main`" and the measurement code "13 commits
+past `47c035f`" in five places (§0 rows 1 and 3, §3 Option A, §7 push checklist, §9 item 5).
+Those are the true values at the **commission** tip `153b98163`; they were read before the
+three documentation commits above landed and were never refreshed. Measured at the reviewed
+tip `ccfac2c9314662e675dcd1dd685f167c8158e530` the correct values are **39 ahead of
+`origin/main`** (`git rev-list --count origin/main..ccfac2c93`) and **16 past `47c035f11`**
+(`git rev-list --count 47c035f11..ccfac2c93`); at the branch HEAD that carried this packet,
+`e9b0c2421`, they are 40 and 17. All five sites now carry the corrected figures **and name the
+tip they were measured at**. This matters most in §3 Option A, which sizes a gated production
+deploy: it is 16 commits forward, not 13.
+
+Nothing qualitative changed. Independently re-verified at correction time and unchanged:
+`origin/main` = `82ee3e07859b2813fc4643d02aa034daecea6b18`, unchanged since 2026-07-13; the
+branch is **0 behind**; `47c035f11` **is** a direct ancestor of both `ccfac2c93` and HEAD, so a
+push remains a clean fast-forward with zero conflicts; and `47c035f11` is 23 commits ahead of
+`origin/main`. Counts move by one with every commit to this branch — including the commit that
+records this correction — which is why each figure above is stated against a named tip rather
+than against "the tip."
+
 ---
 
 ## §0 — Eight-state table
@@ -40,9 +62,9 @@ read; "Verified" is when it was read **this session** unless the row is explicit
 
 | # | State | Value on 2026-08-15 | Basis | Verified (UTC) |
 |---|---|---|---|---|
-| 1 | **Local source** | Branch `claude/g7v5-truth-repair`, tip `ccfac2c93`. Local-only (no upstream configured). 36 commits ahead of `origin/main` (`82ee3e078`, unchanged since 2026-07-13), 0 behind. Contains `origin/codex/remove-g7-duration-gate` (`47c035f11`) as a direct ancestor → a push would be a clean fast-forward, zero conflicts. Working tree clean apart from this packet. | `git rev-parse`, `git rev-list --left-right --count`, `git merge-base --is-ancestor`, `git status --porcelain` in the worktree | 2026-08-15 17:19–17:21 |
+| 1 | **Local source** | Branch `claude/g7v5-truth-repair`, tip `ccfac2c93`. Local-only (no upstream configured). **39** commits ahead of `origin/main` (`82ee3e078`, unchanged since 2026-07-13), 0 behind — both counts measured **at `ccfac2c93`**, the tip this row names. (Corrected 2026-08-15; see "Count correction" below.) Contains `origin/codex/remove-g7-duration-gate` (`47c035f11`) as a direct ancestor → a push would be a clean fast-forward, zero conflicts. Working tree clean apart from this packet. | `git rev-parse`, `git rev-list --left-right --count`, `git merge-base --is-ancestor`, `git status --porcelain` in the worktree | 2026-08-15 17:19–17:21 |
 | 2 | **Review** | Two independent reviews returned **APPROVE** on 2026-07-21: scientific-validity/provenance (3 advisories, 0 blocking) and unlock-semantics (12-step runbook, Appendix D). Reviewer of record as stated in that review: *"Claude Opus 4.8 — independent scientific-validity & provenance reviewer, 2026-07-21, non-authoring"*. Earlier completeness objections were raised against a **stale** packet and are resolved. **But** the **bundle** on disk still carries `review_status: "pending"`, `reviewer: ""` — approval has not been *stamped*, because stamping requires Chris to designate the reviewer identity string and run the `--approve` rebuild. (The evidence **index** now records `approved-pending-unlock` with that reviewer string on all three calibration entries, via `ccfac2c93`; the index is documentary and no gate reads it. The gate reads the bundle, and the bundle still says `pending`.) | `experiments/evidence/fort_eval_easy_p1_g7_v5_live_calibration.json` (fields read directly, re-read at the finalized tip); `experiments/evidence/EVIDENCE_INDEX.json`; `docs/decisions/2026-07-21-g7v5-calibration-independent-review.md` (source of the verbatim runbook in Appendix D) | 2026-08-15 17:19 / 17:23 |
-| 3 | **Deployment** | VM `34.41.155.134`: `/opt/fort-gym` HEAD = `47c035f117f2a8663c2b276160d546c49f47a5da` (detached), i.e. the research branch tip — **not** the reviewed branch tip. `fort-gym-api` and `dfhack-headless` both `active`; API active since 2026-07-17 17:00:18 UTC. The reviewed measurement code (13 commits past `47c035f`) is **not deployed**. | read-only `ssh`: `git -C /opt/fort-gym rev-parse HEAD`, `systemctl is-active`, `systemctl show -p ActiveEnterTimestamp` | 2026-08-15 17:19:50 / 17:21:15 |
+| 3 | **Deployment** | VM `34.41.155.134`: `/opt/fort-gym` HEAD = `47c035f117f2a8663c2b276160d546c49f47a5da` (detached), i.e. the research branch tip — **not** the reviewed branch tip. `fort-gym-api` and `dfhack-headless` both `active`; API active since 2026-07-17 17:00:18 UTC. The reviewed measurement code (**16** commits past `47c035f`, measured at `ccfac2c93`) is **not deployed**. | read-only `ssh`: `git -C /opt/fort-gym rev-parse HEAD`, `systemctl is-active`, `systemctl show -p ActiveEnterTimestamp` | 2026-08-15 17:19:50 / 17:21:15 |
 | 4 | **Runtime** | Calibration scratch checkout `/var/tmp/fort-gym-calib-g7v5` still present, still pinned at `a8de39d03da48da32110776bf84ddfcbcb2ccefc`, 408 MB, all 10 evidence files present on the VM. Directory mtime 2026-07-21 → **25 days old**. Host `tmpfiles.d` carries a `/var/tmp … 30d` age rule but it is **commented out**, and `systemd-tmpfiles-clean.timer` is `static` (not enabled) — so the classic ~5-day fuse is a *conservative* assumption, not an observed live countdown. Treat it as a fuse anyway: nothing guarantees the box, the disk, or the policy stays as-is. | read-only `ssh`: `ls -ld`, `git rev-parse`, `du -sh`, `ls experiments/evidence/`, `grep /usr/lib/tmpfiles.d`, `systemctl is-enabled` | 2026-08-15 17:21:03 / 17:21:15 |
 | 5 | **Artifact** | Calibration bundle `experiments/evidence/fort_eval_easy_p1_g7_v5_live_calibration.json` present in-repo, sha256 **recomputed this session** = `f41f1a80b63cdc0e323cf57dc914a28fc613cf183905e29828ede298baf59598` (matches the recorded digest). All three scenario traces + summaries + `p1_g7_v5_measurement_regressions.xml` present. Required regression node-ID set = **33**, counted from source. On the VM, 1298 historical run-artifact directories under `/opt/fort-gym/fort_gym/artifacts/`, including both frozen G7-v3 runs. | `shasum -a 256`; parse of `P1_CALIBRATION_REQUIRED_REGRESSION_TESTS` in `fort_gym/bench/eval/fort_eval_easy_p1.py`; read-only `ssh ls` | 2026-08-15 17:19–17:21 |
 | 6 | **Eligibility** | **Locked.** `P1_MEASUREMENT_CALIBRATION_COMPLETE = False` and `P1_MEASUREMENT_CALIBRATION_EVIDENCE_SHA256: str \| None = None` at `fort_gym/bench/eval/fort_eval_easy_p1.py:37-38`. While these hold, `validate_p1_declaration` refuses a real `MODEL_ARMS` arm, so **no paid v5 run can be launched at all** — through the CLI or the API. All three calibration runs are `task_verdict: "unknown"`, `public_eligibility: "ineligible"` (calibration), by design. | `sed -n '37,38p'` on the constants; `p1_task_verdict` at `fort_eval_easy_p1.py:899`; the three `*_summary.json` files | 2026-08-15 17:19 |
@@ -254,7 +276,8 @@ Fable's arm runs to completion and is verified **before** Sol's arm is created. 
   `/opt/fort-gym/fort_gym/artifacts/<run_id>/` alongside the 1298 existing runs, where the
   frozen G7-v3 pair already lives.
 - *Against:* `/opt/fort-gym` is currently at `47c035f` and has been stable since
-  2026-07-17. Deploying moves prod 13 commits forward, including the measurement changes.
+  2026-07-17. Deploying the reviewed tip `ccfac2c93` moves prod **16** commits forward
+  (17 from the current branch HEAD), including the measurement changes.
   This is a **gated** action — it changes the state of a live service and must not happen as
   a side effect of launching a run.
 - *Requires:* explicit approval (§7f), a recorded pre-deploy SHA (`47c035f117f2a8663c2b276160d546c49f47a5da`),
@@ -557,7 +580,8 @@ implied by another. Approving (d) is not approving (e).
       only copy of some of these artifacts.
 - [ ] **Push / PR the branch.** `claude/g7v5-truth-repair` is local-only with **no upstream**.
       It contains `origin/codex/remove-g7-duration-gate` (`47c035f11`) as a direct ancestor and
-      is 13 commits past it, 36 past `origin/main`, **0 behind** — a clean fast-forward over
+      is **16** commits past it, **39** past `origin/main`, **0 behind** (measured at
+      `ccfac2c93`) — a clean fast-forward over
       `47c035f`, zero conflicts. The work is currently single-copy on one machine.
 - [ ] **Stale `~/fort-gym-test` on the VM** (last touched 2025-12-11). Decide: delete or keep.
       Note the home directory is `0750`, which is why dfhack cannot run as `ubuntu` from
@@ -747,8 +771,9 @@ Stated so no reader mistakes an assumption for a measurement.
    stale). Given that Sol's G7-v3 arm was ruled INELIGIBLE on cached tokens *despite* that
    file, the inherited evidence is necessary but demonstrably not sufficient. §3 preflight
    step 5 exists for this reason.
-5. **That the reviewed tip actually runs on the VM.** The reviewed measurement code is 13
-   commits past what is deployed at `/opt/fort-gym` (`47c035f`). It has never been executed
+5. **That the reviewed tip actually runs on the VM.** The reviewed measurement code is **16**
+   commits past what is deployed at `/opt/fort-gym` (`47c035f`), measured at `ccfac2c93`.
+   It has never been executed
    on the deployment host. Appendix D step 10's green-verify is the check, and it has not
    been performed.
 6. **Whether the ~$23/day non-fort-gym burn will continue.** It is observed, not explained.
