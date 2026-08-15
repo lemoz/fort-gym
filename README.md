@@ -366,11 +366,36 @@ contaminating death and consumption evidence. Deterministic G7-v3 still fails:
 246,752/403,200 ticks, food 6/44 and drink 75/113 produced/consumed, rubric
 67.39 with `no_broader_fort_layout`, and score 142.47/150. The scalar is not a
 success verdict. PRs #109-#111 merged the raw farm evidence, governed
-completion/stall, and own-group citizen-evidence corrections; the next action is
-to deploy the reviewed contract plus a labor-eligibility correction, then launch
-a fresh Attempt 28.
+completion/stall, and own-group citizen-evidence corrections.
+(2026-08-15 note: the attempt-27-era plan of record ended "then launch a fresh
+Attempt 28". No Attempt 28 exists and none will be launched — G7-v3 is frozen
+history. See "Current protocol status" below, `docs/WDSLL.md`, and
+`docs/FINDINGS.md` §4.)
 G7 remains open. Full findings and gate predicates are recorded in
 `docs/WDSLL.md`.
+
+## Current protocol status
+
+*As of 2026-08-15.*
+
+- **G7-v3 is frozen** after 27 numbered attempts with no full-year pass. It is
+  closed to new launches and will not be relaunched; **G7-v4 was rejected** as
+  non-launchable. All 27 records are preserved verbatim in `docs/WDSLL.md`.
+- **G7-v5 is the current protocol**: a non-scalar owned-evidence outcome vector
+  (exact owned crop-assigned farm, owned completed Still, exact governed brew
+  output, zero authoritatively classified preventable deaths, three final owned
+  accessible rooms, three owned beds). Score-v5 is diagnostic only under it.
+- **Measurement calibration passed 2026-07-21** — three provider-free scenarios
+  terminal at commit `a8de39d03`, $0.00 cost, independent review APPROVE. Being
+  provider-free (`usage.calls==0`), it establishes measurement fidelity only and
+  makes no claim about any model's ability to play.
+- **Not yet unlocked, not yet launched.**
+  `P1_MEASUREMENT_CALIBRATION_COMPLETE` is still `False`; the unlock needs a
+  designated reviewer identity and a reviewed code change, and any paid run
+  needs separate explicit spend approval.
+
+Details: [docs/FORT_EVAL_SPEC.md](docs/FORT_EVAL_SPEC.md) §5.1 and
+[experiments/evidence/EVIDENCE_INDEX.json](experiments/evidence/EVIDENCE_INDEX.json).
 
 **Success definition and gate ladder: [docs/WDSLL.md](docs/WDSLL.md)** — every claim of "the agent plays" must pass a gate there on public, replayable evidence.
 
