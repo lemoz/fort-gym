@@ -2284,9 +2284,12 @@ gate. Each entry states what changed and the evidence that forced it.
     action/outcome rubric is retired under G7-v5 and score-v5 is diagnostic
     only; no scalar verdict was produced or is claimed here.
   - **screen_text count / gameplay_proof ok-count per step:** not asserted in
-    this entry. These are policy-run reporting fields; a scripted provider-free
-    control produces no model turns to attest, and no such count is claimed as
-    evidence for anything below.
+    this entry as evidence for anything below. The committed summaries do carry
+    these recorder fields (the scripted control runs on the same governed
+    surface, so frames and per-step proof objects are recorded as usual); they
+    are omitted here only because a provider-free scripted control makes no
+    policy claim for them to support — read them from the three
+    `*_summary.json` files in `experiments/evidence/` if needed.
   - **What really changed in-game, per scenario:**
     - `calib-g7v5-owned-20260721a` — 115 steps, gameplay **PASS**: 1 owned
       operational farm (still 1), **65 governed brew units**, 3 rooms, 3 beds,

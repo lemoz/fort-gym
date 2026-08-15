@@ -171,7 +171,7 @@ Key value never printed; sourced from `~/.zshenv` into the request header only.
 | Account `total_credits` | `3025` |
 | Account `total_usage` | `3001.702244408` |
 | **Account credits remaining** | **`23.297755592`** (≈ $23.30) |
-| Key label | `sk-or-v1-598…2a2` |
+| Key label | (OpenRouter's own truncated fingerprint; withheld from this committed record — same key as every prior fetch, verified by label match at fetch time) |
 | Key limit | `50` |
 | Key usage this cycle | `21.811375643` |
 | **Key limit remaining** | **`28.188624357`** (≈ $28.19) |
@@ -718,6 +718,20 @@ prior document alone.
 Embedded byte-for-byte, exactly as the independent unlock-semantics review (APPROVE,
 2026-07-21) produced it: 12 entries — a PRECONDITION, steps 1–10, and a closing ORDER
 RATIONALE. **Do not paraphrase it when executing — follow it literally, in order.**
+
+**Operator addendum (2026-08-15, not part of the reviewed text; two consequences the
+review's step 3 implies but does not spell out):**
+1. Step 3's `--approve` rebuild regenerates the bundle **and** the regression XML as a
+   mandatory pair and yields a **new bundle sha256** (S). Every `f41f1a80…` citation in
+   the repo — FORT_EVAL_SPEC, LAB_VISION, EXPERIMENTATION_PLAN, WDSLL, FINDINGS §2.37,
+   README, EVIDENCE_INDEX, and this packet — must be updated to S **in the same commit
+   as the constant flip (step 6/9)**, or the docs will cite a superseded artifact.
+2. Steps 1–3 depend on the VM checkout `/var/tmp/fort-gym-calib-g7v5` still existing at
+   `a8de39d03` with protos hashing `9d7949fe…`. That directory is in `/var/tmp` (25 days
+   idle as of 2026-08-15, ~5 days from likely eviction). If evicted, re-provision it
+   first (clone `/opt/fort-gym`, fetch the branch bundle, checkout `a8de39d03`, restore
+   `.venv` + `remote_proto/generated/`, re-verify the proto digest) — the committed
+   evidence in `experiments/evidence/` is unaffected either way.
 
 *Provenance of this copy, disclosed.* The scratch recovery file
 `docs/decisions/.unlock_runbook_recovered.json` was the original carrier and was slated for
