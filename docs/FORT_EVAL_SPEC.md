@@ -134,8 +134,26 @@ not enable the direct Anthropic API or the legacy direct-Anthropic adapter.
 successor on
 `seed_region3_fresh` with 200 steps and up to 2,500 ticks per step, for a maximum
 of 500,000 ticks. It uses the `outcome-vector-v1+g7-v5` evaluator, no knowledge
-access, vision on, and memory off. It is calibration-only and cannot launch until
-the owned-room and authoritative-death sensors pass live DFHack validation.
+access, vision on, and memory off. It is calibration-only.
+
+*2026-08-15 note (supersedes the earlier "cannot launch until the owned-room and
+authoritative-death sensors pass live DFHack validation" precondition):* those
+sensors passed live DFHack validation on 2026-07-21 at fort_gym commit
+`a8de39d03da48da32110776bf84ddfcbcb2ccefc`, across three provider-free
+scenarios recorded in `experiments/evidence/EVIDENCE_INDEX.json`. The evidence
+bundle is `experiments/evidence/fort_eval_easy_p1_g7_v5_live_calibration.json`,
+sha256 `f41f1a80b63cdc0e323cf57dc914a28fc613cf183905e29828ede298baf59598`
+(manifest_semantic_sha256 `b85957669eb02668f965f103e42b1feaf88cdad7ecc8e45fc5eb2b78d8269cc6`,
+measurement_code_sha256 `261a1fba89ce1a320a3248a37cbee26b37971ef6c2240705d6bdce51088c9b4c`,
+remote_proto_runtime_sha256 `9d7949fe3f7ef3497d145dff6cc921c13a3cf088cd1ff68ef58b5047a013570f`;
+33/33 required regression node IDs green). The campaign was provider-free
+(`dfhack-governed-scripted`, `usage.calls==0`), so validity and provenance are
+UNKNOWN by design: it establishes measurement fidelity only and makes no claim
+about policy capability. Launch is therefore no longer gated on sensor
+validation but on (a) the reviewed `P1_MEASUREMENT_CALIBRATION_COMPLETE` unlock,
+still `False` in `fort_gym/bench/eval/fort_eval_easy_p1.py`, and (b) Chris's
+explicit spend approval. See
+`docs/decisions/2026-07-21-g7v5-calibration-independent-review.md`.
 
 G7-v5 requires at least one exact owned crop-assigned operational farm, one
 exact owned completed Still, and exact governed completed brew output; zero authoritatively classified
@@ -145,6 +163,27 @@ requires final exact geometry with majority owned excavation, majority owned
 boundary construction, or an owned completed boundary door, plus native citizen
 path accessibility. Functional-room classification remains diagnostic and must
 be satisfied by the exact owned touching building recipe.
+
+*Calibration-only brewable-input fixture (2026-07-21).*
+`hook/calibration_seed_brew_inputs.lua` (code `34b00ade2`, tests `f629cb7fd`,
+boolean-walkable fix `a8de39d03`) places a bounded `LIMIT=8`
+`MUSHROOM_HELMET_PLUMP` `PLANT` item set off-farm, adjacent to a COMPLETED
+Still. It fires exactly once, at step 32, and only in the
+`owned_layout_and_provisioning` measurement-calibration scenario; it is
+disclosed in both the trace and the summary under
+`measurement_calibration_fixture`. It seeds brew INPUTS and never DRINK items,
+so brew credit still derives only from DRINK-item deltas under order-job
+attribution — there is no contamination path into the outcome vector, and the
+outcome vector above is unchanged by it. It is **not** a legal Easy shortcut
+under §2.1 and never runs in a scored or paid run; it exists solely to make the
+governed brew-output sensor observable while calibrating measurement. The
+kill-fixture precedent is commit `3119806b2`. Its necessity was established the
+hard way: the prior run `calib-g7v5-owned-20260720a` failed with brew 0 from
+input starvation (`brewable_plant_units=0` all run; one late qty-1 brew order
+lost the eat-vs-brew race). That run is superseded and its artifacts remain
+VM-only. Plan edit `67b798b80` additionally added standing brew orders and a
+second brewer.
+
 Missing or truncated evidence produces an unknown validity state, never a
 synthesized zero. This guarantee holds for the deterministic evaluator/gate
 layer. In addition, the task_verdict fix ensures that the top-level verdict is
@@ -155,6 +194,16 @@ cache rate, score-v5, final reserves, and run-scoped production/consumption tota
 diagnostics. The scalar action/outcome rubric is retired for G7-v5; full-trace behavior rates are reported without a numeric
 composite. G7-v3 and G7-v4 remain frozen under their original criteria for
 historical replay and are not launchable.
+
+*(2026-07-21)* The verdict guarantee above is now live-confirmed rather than
+merely asserted. The verdict fix (commit `557e5d6fb`) makes `p1_task_verdict`
+return the validity-gated `g7.status`, and all three provider-free calibration
+runs persisted `task_verdict=unknown` while `gameplay_outcome` stayed honestly
+visible — including `calib-g7v5-owned-20260721a`, whose gameplay outcome was a
+pass. The `sensor_dropout` scenario likewise produced
+`owned_room_lower_bound_proven=false` and an unknown rooms criterion; it was
+never coerced to fail.
+
 The two model-arm identities are `dfhack-governed-llm-fable5` and
 `dfhack-governed-llm-gpt56-sol`; both use maximum reasoning and a 128,000-token
 completion limit. The manifest declares no numeric expenditure cap, but usage,
@@ -227,11 +276,18 @@ A ranked cell requires a frozen manifest and comparability key, resolved provena
 ## 10. Staged pilot
 
 1. **P0, contract and substrate:** validate the YAML, action allowlist, observation firewall, trace fields, evidence predicates, and a known governed scripted control. No model ranking.
-2. **P1, Easy pilot:** validate G7-v5 owned-room geometry, native accessibility, exact building IDs, partial construction attribution, delayed output attribution, and authoritative death evidence in live DFHack before permitting a paid run. Then run the exact `fort_eval_easy_p1_g7_v5.yaml` condition on `seed_region3_fresh`. Compare the two declared model-arm identities only inside the shared condition key. Report the gameplay outcome, evaluation validity, provenance completeness, terminal class, provider usage, pricing state, and diagnostics separately. Historical G7-v3 and G7-v4 results retain their original evaluators.
+2. **P1, Easy pilot:** validate G7-v5 owned-room geometry, native accessibility, exact building IDs, partial construction attribution, delayed output attribution, and authoritative death evidence in live DFHack before permitting a paid run. **Status (2026-08-15): this validation step is COMPLETE-pending-review** — executed 2026-07-21 at commit `a8de39d03`, three provider-free scenarios, bundle sha256 `f41f1a80…`, independent scientific-validity review APPROVE with 0 blocking findings; the `P1_MEASUREMENT_CALIBRATION_COMPLETE` unlock has NOT been executed. Then run the exact `fort_eval_easy_p1_g7_v5.yaml` condition on `seed_region3_fresh`. Compare the two declared model-arm identities only inside the shared condition key. Report the gameplay outcome, evaluation validity, provenance completeness, terminal class, provider usage, pricing state, and diagnostics separately. Historical G7-v3 and G7-v4 results retain their original evaluators.
 
    *Note (2026-07-19):* The Fable/Sol comparison under frozen G7-v3 is COMPLETE
    and recorded; both runs FAILED G7-v3. The upcoming G7-v5 comparison is the
    next, approval-gated step and has not yet launched.
+
+   *Note (2026-08-15):* the 2026-07-19 note remains literally true of the PAID
+   two-arm G7-v5 comparison, which is still unlaunched and approval-gated. It is
+   not the whole G7-v5 record: a provider-free G7-v5 **measurement calibration**
+   campaign has since run to terminal with a committed evidence bundle
+   (sha256 `f41f1a80…`). Calibration is a measurement event, not a gate attempt
+   and not a paid comparison.
 
 3. **P2, Easy generalization:** add held-out seeds and then held-out mechanics. Freeze the evaluator and contamination policy before the window. Promote only cells meeting the ranked rules.
 4. **P3, Hard interface validation:** implement fixed-pixel capture and primitive inputs, then test viewport fidelity, input determinism, replay completeness, and spectator firewall before measuring policy capability.

@@ -167,7 +167,10 @@ separates "solved one map" from "plays Dwarf Fortress."
 > as non-launchable; the current protocol is G7-v5, a non-scalar owned-evidence
 > outcome vector (exact owned farm/Still/brew, authoritatively classified
 > preventable deaths, three owned accessible rooms, three owned beds) that is
-> calibration-only until live DFHack validation passes. The 27 attempt records
+> calibration-only; its live DFHack measurement calibration PASSED on 2026-07-21
+> (bundle sha256 `f41f1a80…`, see the 2026-07-21 corrections-log entry), and the
+> `P1_MEASUREMENT_CALIBRATION_COMPLETE` unlock remains pending Chris's reviewer
+> designation. The 27 attempt records
 > and criteria below are preserved verbatim as history — nothing here is
 > deleted, rescored, or re-adjudicated, and no new attempt will be launched
 > under G7-v3.**
@@ -2253,6 +2256,73 @@ gate. Each entry states what changed and the evidence that forced it.
   G7-v5 result, and neither arm's verdict is re-adjudicated here. (The
   gpt56-sol model arm is a model arm, not the Sol/Sol Ultra/Terra/Luna
   code-review agents referenced elsewhere in this document.)
+
+- **2026-07-21 UTC — G7-v5 provider-free MEASUREMENT CALIBRATION: 3 scenarios
+  terminal. This is NOT a G7 gate attempt.** It measures the instrument, not a
+  policy. It therefore neither advances nor resets the frozen 27-attempt G7-v3
+  record, produces no Attempt 28, and establishes no model claim. Reported below
+  in the standard reporting format, with fields that do not exist for a
+  provider-free calibration marked as such rather than filled in.
+
+  - **Public URL:** none. All three runs are private and
+    `public_eligibility=ineligible` (calibration); nothing was published to
+    `fortgym.live`.
+  - **Run ids:** `calib-g7v5-owned-20260721a`, `calib-g7v5-death-20260721a`,
+    `calib-g7v5-dropout-20260721a`. Model `dfhack-governed-scripted` (no
+    provider, no LLM), cost **$0.00** total.
+  - **Commit:** `a8de39d03da48da32110776bf84ddfcbcb2ccefc`.
+    manifest_semantic_sha256 `b85957669eb02668f965f103e42b1feaf88cdad7ecc8e45fc5eb2b78d8269cc6`;
+    measurement_code_sha256 `261a1fba89ce1a320a3248a37cbee26b37971ef6c2240705d6bdce51088c9b4c`;
+    remote_proto_runtime_sha256 `9d7949fe3f7ef3497d145dff6cc921c13a3cf088cd1ff68ef58b5047a013570f`.
+    Evidence bundle
+    `experiments/evidence/fort_eval_easy_p1_g7_v5_live_calibration.json`, sha256
+    `f41f1a80b63cdc0e323cf57dc914a28fc613cf183905e29828ede298baf59598`; 33/33
+    required regression node IDs green. All three runs share one
+    `seed_attestation` (sha
+    `9c923f9e2ee8ce25344fc88d66f54f2c0262d9f62317c1b44946cd73f6ee01e8`).
+  - **Score / rubric score + blockers:** not applicable. The scalar
+    action/outcome rubric is retired under G7-v5 and score-v5 is diagnostic
+    only; no scalar verdict was produced or is claimed here.
+  - **screen_text count / gameplay_proof ok-count per step:** not asserted in
+    this entry. These are policy-run reporting fields; a scripted provider-free
+    control produces no model turns to attest, and no such count is claimed as
+    evidence for anything below.
+  - **What really changed in-game, per scenario:**
+    - `calib-g7v5-owned-20260721a` — 115 steps, gameplay **PASS**: 1 owned
+      operational farm (still 1), **65 governed brew units**, 3 rooms, 3 beds,
+      0 deaths, `owned_room_lower_bound_proven=true`.
+    - `calib-g7v5-death-20260721a` — 1 step, gameplay **FAIL by design**: the
+      bounded kill fixture `dfhack_bounded_friendly_bloodloss` fired once,
+      `deaths_in_run=1`, `death_causes_known=true`, and the neglect criterion
+      stayed **unknown BY DESIGN**.
+    - `calib-g7v5-dropout-20260721a` — 1 step, **unknown by design**: induced
+      sensor loss produced `owned_room_lower_bound_proven=false` and an unknown
+      rooms criterion, which was never coerced to fail.
+  - **Verdict across all three:** `task_verdict=unknown`,
+    `public_eligibility=ineligible`. The verdict fix (commit `557e5d6fb`) makes
+    `p1_task_verdict` return the validity-gated `g7.status`; this campaign is
+    its live confirmation, with `gameplay_outcome` staying visible throughout.
+  - **Why unknown is the honest answer:** the campaign was provider-free
+    (`usage.calls==0`), so `evidence_ok=False` and validity/provenance are
+    UNKNOWN **by design, not by weakening**. The result establishes measurement
+    fidelity only and makes **no** policy-capability claim. Nothing here was
+    softened to manufacture a pass — the Polymarket lesson in the reporting
+    format below is exactly the rule being obeyed.
+  - **Review and unlock:** independent review 2026-07-21 returned APPROVE on
+    scientific validity (3 advisories, 0 blocking) and APPROVE on unlock
+    semantics. **The unlock was NOT executed.**
+    `P1_MEASUREMENT_CALIBRATION_COMPLETE` is still `False`. It needs Chris to
+    designate the reviewer identity, then an `--approve` rebuild on the VM, then
+    the constant flip. A paid G7-v5 run remains separately gated on explicit
+    spend approval. See
+    `docs/decisions/2026-07-21-g7v5-calibration-independent-review.md`.
+  - **Superseded predecessor, recorded not hidden:** `calib-g7v5-owned-20260720a`
+    failed with brew 0 from input starvation (`brewable_plant_units=0` all run;
+    one late qty-1 brew order lost the eat-vs-brew race). Its artifacts remain
+    VM-only. The fix was the bounded, disclosed, calibration-only fixture
+    `hook/calibration_seed_brew_inputs.lua` plus standing brew orders and a
+    second brewer (plan edit `67b798b80`) — the fixture seeds brew INPUTS only,
+    never DRINK, and is not a legal Easy shortcut in any scored or paid run.
 
 ## Reporting format (every gate attempt)
 

@@ -65,9 +65,19 @@ crop-assigned farm, owned completed Still, exact governed brew output, authorita
 preventable-death classification, final owned accessible layout rooms, and
 fixed-initial-cohort bed capacity form a non-numeric outcome vector. Duration,
 population, final reserves, production/consumption exposure, peak layout, cache rate, and score-v5 are
-diagnostics only. Missing or truncated evidence remains unknown. G7-v5 is not
-launchable or publishable until the new room and death sensors pass live DFHack
-validation. The completed G7-v3 and G7-v4 protocols remain frozen as historical
+diagnostics only. Missing or truncated evidence remains unknown.
+
+*2026-08-15 note (supersedes "G7-v5 is not launchable or publishable until the
+new room and death sensors pass live DFHack validation"):* the room and death
+sensors passed live DFHack validation on 2026-07-21 at commit `a8de39d03`
+(bundle sha256 `f41f1a80…`; see `experiments/evidence/EVIDENCE_INDEX.json`).
+"Calibration-only" is still the accurate status label for the manifest, but the
+calibration itself has been performed. The remaining gates are Chris's
+designation of a reviewer identity of record, the reviewed
+`P1_MEASUREMENT_CALIBRATION_COMPLETE` unlock, and explicit spend approval —
+none of which the calibration result grants.
+
+The completed G7-v3 and G7-v4 protocols remain frozen as historical
 evidence under their original evaluators.
 The two model arms are compared inside one shared benchmark condition. The arm
 name, provider route, resolved model, prompt, and generation settings identify
@@ -103,6 +113,11 @@ A pilot can be valuable while remaining provisional. A failed policy run, an inf
 
 Validate the Easy manifest against the current Fort-Gym experiment loader, confirm that the known scripted governed control can run, and verify that observer-only artifacts do not enter the model context. This stage produces no model ranking.
 
+*(2026-08-15)* Stage 0 is SATISFIED for G7-v5 by the 2026-07-21 provider-free
+campaign: the `dfhack-governed-scripted` control ran three scenarios to terminal
+under the G7-v5 manifest at commit `a8de39d03`, and — exactly as this stage
+requires — produced no model ranking.
+
 ### Stage 1: Easy baseline
 
 The frozen Easy P1 G7-v3 pilot is COMPLETE and recorded. It ran under the
@@ -127,6 +142,35 @@ remains a provisional recorded pilot, per the frozen-protocol boundary above.
 No G7-v3 relaunch. The next paid run is a NEW protocol decision under the
 current G7-v5 calibration protocol and requires Chris's explicit approval
 before any spend.
+
+#### G7-v5 measurement calibration (2026-07-21)
+
+Between Stage 0 and any Stage 1 G7-v5 run, a provider-free **measurement**
+calibration campaign ran three scenarios to terminal at commit `a8de39d03`,
+using `dfhack-governed-scripted` at zero cost:
+
+- `calib-g7v5-owned-20260721a` — 115 steps, gameplay PASS: 1 operational farm
+  (still 1), 65 governed brew units, 3 rooms, 3 beds, 0 deaths,
+  `owned_room_lower_bound_proven=true`.
+- `calib-g7v5-death-20260721a` — 1 step; the bounded kill fixture
+  `dfhack_bounded_friendly_bloodloss` fired once, `deaths_in_run=1`,
+  `death_causes_known=true`, and the neglect criterion stayed unknown BY DESIGN.
+- `calib-g7v5-dropout-20260721a` — 1 step; induced sensor loss produced
+  `owned_room_lower_bound_proven=false` and an unknown rooms criterion, never
+  coerced to fail.
+
+All three persisted `task_verdict=unknown` and `public_eligibility=ineligible`,
+and all three share one `seed_attestation` (sha
+`9c923f9e2ee8ce25344fc88d66f54f2c0262d9f62317c1b44946cd73f6ee01e8`). Because
+the campaign was provider-free (`usage.calls==0`), validity and provenance are
+UNKNOWN by design: this is a measurement-fidelity result, not a policy-capability
+result. Independent review on 2026-07-21 returned APPROVE on scientific validity
+(3 advisories, 0 blocking) and APPROVE on unlock semantics. **The unlock was NOT
+executed**: `P1_MEASUREMENT_CALIBRATION_COMPLETE` is still `False`. It requires
+Chris to designate the reviewer identity of record, then an `--approve` bundle
+rebuild on the VM, then the constant flip. Spend approval remains a separate
+hard gate. Details:
+`docs/decisions/2026-07-21-g7v5-calibration-independent-review.md`.
 
 ### Stage 2: Easy generalization
 

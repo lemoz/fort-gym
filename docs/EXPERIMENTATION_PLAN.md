@@ -26,9 +26,15 @@ Experiments should run on OpenRouter models.
 The successor protocol under calibration is
 [`experiments/fort_eval_easy_p1_g7_v5.yaml`](../experiments/fort_eval_easy_p1_g7_v5.yaml):
 Easy P1 G7-v5 on `seed_region3_fresh`, 200 steps, up to 2,500 ticks per step,
-no knowledge, vision on, and memory off. It is not launchable or publishable
-until the owned-room and authoritative-death sensors pass live DFHack
-validation. Elapsed ticks, absolute population, peak layout, cache rate, and the
+no knowledge, vision on, and memory off. *2026-08-15 note (supersedes "not
+launchable or publishable until the owned-room and authoritative-death sensors
+pass live DFHack validation"):* those sensors were validated live on 2026-07-21
+at commit `a8de39d03` across three provider-free scenarios; the evidence is
+indexed in
+[`experiments/evidence/EVIDENCE_INDEX.json`](../experiments/evidence/EVIDENCE_INDEX.json)
+with bundle sha256 `f41f1a80…`. Launchability now turns on the reviewed
+`P1_MEASUREMENT_CALIBRATION_COMPLETE` unlock (still `False`) plus explicit spend
+approval, not on further sensor work. Elapsed ticks, absolute population, peak layout, cache rate, and the
 score-v5 scalar remain diagnostics and do not affect the G7 verdict. G7-v5 uses
 a non-numeric outcome vector over an exact owned crop-assigned farm, an exact
 owned completed Still, exact governed brew output, authoritatively classified preventable
@@ -52,10 +58,14 @@ frozen cached-token requirement was unsatisfied — with 10 deaths and FAILED
 G7-v3. Because one arm was ineligible this is a DESCRIPTIVE finding only, not a
 publishable comparable pair: "Fable was safer and more risk-aware; the
 gpt56-sol model arm was more capable and productive but collapse-prone." Both
-results are frozen G7-v3 history; they are not G7-v5 results. After
-calibration, valid gameplay failures with complete,
-contamination-free evidence may be publishable; invalid or incomplete evidence
-remains unpublishable. The linked provider preflight changes the live
+results are frozen G7-v3 history; they are not G7-v5 results. **Measurement
+calibration completed 2026-07-21** (three provider-free scenarios at commit
+`a8de39d03`, bundle sha256 `f41f1a80…`, independent review APPROVE); valid
+gameplay failures with complete, contamination-free evidence may be
+publishable, while invalid or incomplete evidence remains unpublishable.
+Publishability now turns on writing the independent-review approval back into
+the evidence bundle sidecar and on the reviewed unlock flip — neither of which
+has happened yet. The linked provider preflight changes the live
 observation between calls and proves a valid tool payload from both arms. Cache
 reads are recorded as a cost diagnostic, not a validity condition.
 
@@ -110,6 +120,21 @@ Gemini-based post-run analyzer (default `gemini-2.5-flash`, override with
 `GEMINI_ANALYZER_MODEL`; requires `GOOGLE_API_KEY`). Writes `analysis.json` /
 `analysis.txt` per run. Diagnostic only — it never feeds score or rubric.
 
+### Calibration-only fixtures — `hook/calibration_seed_brew_inputs.lua` (2026-07-21)
+
+Calibration-only infrastructure, added in commits `34b00ade2` (hook),
+`f629cb7fd` (tests), and `a8de39d03` (boolean-walkable fix), gated in the runner
+and backend so it can only fire inside a measurement-calibration scenario. The
+brewable-input fixture places a bounded `LIMIT=8` `MUSHROOM_HELMET_PLUMP` `PLANT`
+item set off-farm, adjacent to a COMPLETED Still; it fires exactly once, at step
+32, only in `owned_layout_and_provisioning`, and is disclosed in the trace and
+summary as `measurement_calibration_fixture`. It seeds brew INPUTS only, never
+DRINK items, so brew credit still derives solely from DRINK-item deltas under
+order-job attribution — no contamination path exists. It is **not** a legal Easy
+shortcut and never runs in a scored or paid run. The bounded kill fixture
+`dfhack_bounded_friendly_bloodloss` used by the death scenario follows the same
+disclosure precedent (commit `3119806b2`).
+
 ## Scoring & Rubric (how experiments are judged)
 
 Scalar score is telemetry, not the final judge. Each `summary.json` includes a
@@ -126,10 +151,20 @@ validity-gated G7 status. A gameplay pass is not an evaluation-validity pass —
 the run must satisfy both the gameplay outcome AND the public-eligibility /
 evidence-validity conditions before `task_verdict` can be `pass`. An unknown
 validity state yields `task_verdict=unknown`, never `pass`, and `unknown` is
-never coerced to `fail`. Concretely, a provider-free run will show
+never coerced to `fail`. Concretely, a provider-free run shows
 `task_verdict=unknown` with `gameplay_outcome` visible as `pass` and
 `public_eligibility=ineligible` — the gameplay result is recorded honestly,
 but without validity evidence the verdict stays unknown.
+
+**Observed, not predicted (2026-08-15 note).** This is no longer a forecast. The
+verdict fix (commit `557e5d6fb`) makes `p1_task_verdict` return the
+validity-gated `g7.status`, and all three committed calibration summaries in the
+2026-07-21 bundle (sha256
+`f41f1a80b63cdc0e323cf57dc914a28fc613cf183905e29828ede298baf59598`) show
+`task_verdict=unknown` and `public_eligibility=ineligible`, with
+`gameplay_outcome` still visible — `pass` for
+`calib-g7v5-owned-20260721a`. Unknowns from the induced sensor dropout were
+likewise preserved as unknown rather than coerced to `fail`.
 
 ## Open Experiment Questions
 
@@ -142,6 +177,15 @@ deaths, three owned accessible rooms, three owned beds).
    accepted build reserve a material a citizen can actually haul, can every
    accepted order create real workshop jobs, and can bounded dialog interaction
    traverse the observed topic-meeting screen without arbitrary key access?
+
+   *Narrowed 2026-08-15:* the brew-input/order half was demonstrated in the
+   2026-07-21 calibration — `calib-g7v5-owned-20260721a` produced 65 governed
+   brew units through real order-job attribution, once the bounded
+   calibration-only fixture `hook/calibration_seed_brew_inputs.lua` removed the
+   input-starvation confound. That demonstration is measurement-side and
+   scripted, so it does not answer the question for a model policy under
+   provider load; the haulable-material-reservation and bounded-dialog halves
+   remain fully open.
 2. **G7-v5 owned-evidence outcome**: on `seed_region3_fresh`, can one governed
    run satisfy the G7-v5 outcome vector — an exact owned crop-assigned farm, an
    exact owned completed Still, exact governed brew output, zero authoritatively
@@ -210,3 +254,16 @@ deaths, three owned accessible rooms, three owned beds).
   it can be cleared as non-neglect; zero deaths and direct hunger/thirst deaths
   are unambiguous.
 - G8 has no ratified multi-z acceptance protocol or stair/depth action surface.
+- **2026-08-15 — current G7-v5 blocker chain (the bullets above are
+  attempt-3-through-5 era and are preserved as history).** G7-v5 measurement
+  calibration is DONE: three provider-free scenarios terminal on 2026-07-21 at
+  commit `a8de39d03`, bundle sha256 `f41f1a80…`, 33/33 required regression node
+  IDs green, independent review APPROVE on both scientific validity (3
+  advisories, 0 blocking) and unlock semantics. What is still blocking, in
+  order: (1) `P1_MEASUREMENT_CALIBRATION_COMPLETE` is still `False` in
+  `fort_gym/bench/eval/fort_eval_easy_p1.py:37` (evidence sha `None` at `:38`);
+  (2) the unlock requires Chris to designate the reviewer identity of record,
+  then an `--approve` bundle rebuild on the VM, then the two-constant flip — a
+  reviewed code change, not a casual edit; (3) a paid run is additionally
+  blocked on funding and on Chris's separate explicit spend approval. See
+  `docs/decisions/2026-07-21-g7v5-calibration-independent-review.md`.
