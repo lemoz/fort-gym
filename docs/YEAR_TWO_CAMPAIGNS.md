@@ -17,7 +17,7 @@ time alone is not proof of a functioning fortress or autonomous gameplay.
 
 1. Preserve and reconcile the working baseline. M1b is complete; do not repeat its
    acceptance campaign without a relevant regression. The environment-layer
-   checkout contains uncommitted M1b implementation. Its origin is a local clone;
+   checkout has preserved the M1b implementation on the integration branch. Its origin is a local clone;
    the actual remote is https://github.com/lemoz/fort-gym.git.
 2. Track actual game time independently of scores. Expose observed duration,
    first-anniversary progress, missing evidence, and run identity to the website.
@@ -67,7 +67,8 @@ isolation. This document does not expand resource authorizations by itself.
 ## Current checkpoint
 
 - Remote main verified read-only at `82ee3e07859b2813fc4643d02aa034daecea6b18`.
-- Environment-layer base: `236d3187c`, plus preserved uncommitted M1b work.
+- Environment-layer base: `236d3187c`; preserved M1b work and campaign foundations
+  are now published on `codex/year-two-campaigns` (tested candidate `7490c8727`).
 - M1b sealed GO: 16/16 gates and 26/26 runtime attempts (see acceptance decision).
 - No year-two success, persistent checkpoint recovery, new comparison campaign,
   website deployment, or remote merge is claimed by this planning checkpoint.
@@ -165,7 +166,8 @@ does not overwrite a live fortress or claim that DF has loaded the new copy.
 84 focused campaign-time, agent-state, native-save, and bundle tests passed.
 These include simulated asynchronous saving, temporary RPC unavailability,
 partial traces, modified files, source changes during copy, and refusal to
-overwrite an existing save. Native saving/loading still requires a real-DF test.
+overwrite an existing save. The later real snapshot proof below supersedes the
+initial save-test requirement; native loading and campaign recovery remain open.
 
 Remote preflight: the existing website/API and DFHack services are running.
 The deployed revision is `47c035f117f2a8663c2b276160d546c49f47a5da`. The private
@@ -187,3 +189,40 @@ agent/evaluation code and M1b tests; mypy initially reported 662 findings in 40
 files, including two new checkpoint annotation issues that were corrected.
 Focused campaign modules pass lint and have no remaining mypy diagnostics.
 Do not represent this branch as having passed the repository-wide static gates.
+
+## Real native snapshot proof: September 6, 2026 UTC
+
+The clean remote candidate `7490c8727ee148439ff41b301f24ea0f072f111e`
+passed all 94 campaign tests. Its provider-free native smoke then completed a
+real `quicksave`, verified the copied save tree, and verified the same paused
+`region3` boundary before and after: year 30, tick 19309. No gameplay ticks or
+provider calls were requested. Both existing production services remained active;
+their deployed code was not changed. No VM was created.
+
+The prior on-disk save and completed snapshot are retained privately in
+`/home/ubuntu/fort-gym-test/year-two-campaigns/artifacts/native-save-20260906-b/`
+on the existing host. `result.json` SHA-256 is
+`ca71bfd2032e864cced48e66f20f76827b92b9df2099f03476f2dd43234c2d3d`.
+The versioned public evidence manifest is
+`experiments/evidence/native_save_smoke_20260906.json`; game assets remain private.
+
+Attempt `native-save-20260906-a` retained its original save and copied snapshot,
+but did not produce a success receipt: the final native read hit the legacy
+one-second CLI timeout. The implementation now uses a five-second status call
+and bounded post-copy read retries without reissuing a save. Its regression test
+passed locally and remotely. A separate Linux fixture correction makes simulated
+same-size writes update their timestamp explicitly; no production check was weakened.
+
+Two new scratch checkouts were created without modifying existing folders:
+`/home/cdossman/fort-gym-test/year-two-campaigns` for the initial remote tests,
+and `/home/ubuntu/fort-gym-test/year-two-campaigns` for service-account access to
+the game save. The first user's home is not traversable by the service account;
+existing permissions were preserved. Runtime evidence belongs to the latter.
+
+Next is an isolated load of the verified copy. The existing game configuration
+has `PAUSE_ON_LOAD:YES`; do not restart or replace the production fortress for
+this test. Full campaign continuation must also preserve the runner's action
+history, measurement baselines, and gameplay bookkeeping outside agent memory,
+and reconcile charges accrued after a checkpoint. The current bundle has not yet
+proved those properties. Website campaign views, model experiments, review/merge,
+and production delivery remain required parts of the active goal.
