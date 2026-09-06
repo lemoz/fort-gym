@@ -33,7 +33,11 @@ The new toolchain's successful boot/reboot does not explain old startup failures
 The next experiment uses the [new local Qwen3.5 condition](../experiments/campaigns/local_native_qwen35_year_two_v1.json):
 existing 9B quantized weights, optional thinking disabled, 4,096 output tokens,
 and the unchanged digest-bound starting seed, not the fixture's post-WAIT state.
-It is not yet run. The changed seed, runtime and budgets are declared; this is
+Its first segment started September 6 on the isolated local VM with the existing
+local model and an owned loopback tunnel. At 23:17 UTC, six model-selected WAIT
+actions had advanced 6,000 native ticks. No completed segment or handoff is
+claimed; the running source is still frozen at `fad9d80c0`.
+The changed seed, runtime and budgets are declared; this is
 not a matched historical comparison. Year-two play and repeated model evaluation
 remain open. No production deployment is claimed.
 
