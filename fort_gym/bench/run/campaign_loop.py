@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from ..agent.base import Agent
+from ..agent.governed_llm import GovernedBudgetCapError
 from ..env.actions import parse_action
 from ..env.campaign_encoder import (
     PROFILE as CAMPAIGN_OBSERVATION_PROFILE,
@@ -42,6 +43,10 @@ class CampaignEnvironment(Protocol):
 
     def advance(self, ticks: int, state: dict[str, Any]) -> tuple[dict, dict]:
         ...
+
+
+class CampaignPreDispatchPause(GovernedBudgetCapError):
+    """A read-only preflight stopped before the decision/usage transaction began."""
 
 
 def _append(path: Path, value: dict) -> None:
@@ -183,7 +188,14 @@ class CampaignLoop:
             raise RuntimeError("Failed campaign execution requires verified checkpoint recovery")
         try:
             return self._step()
+        except CampaignPreDispatchPause as error:
+            _append(
+                self.output / "pauses.jsonl",
+                {"step": self.next_step, "reason": str(error), "decision_started": False},
+            )
+            raise
         except BaseException as error:
+            self.at_boundary = False
             self.failed = True
             _append(
                 self.output / "failures.jsonl",
@@ -202,7 +214,6 @@ class CampaignLoop:
     def _step(self) -> dict:
         from .runner import _action_history_entry
 
-        self.at_boundary = False
         self.failure_context = {}
         before = self.environment.observe()
         start = _clock(before)
@@ -224,6 +235,18 @@ class CampaignLoop:
                 last_action_result=self.last_result,
                 governed=True,
             )
+        preflight_state = deepcopy(self.agent.export_campaign_state())
+        try:
+            self.agent.preflight_decision(text, observation)
+        except GovernedBudgetCapError as error:
+            if self.agent.export_campaign_state() != preflight_state:
+                raise ValueError("Decision preflight mutated campaign state") from error
+            raise CampaignPreDispatchPause(str(error)) from error
+        if self.agent.export_campaign_state() != preflight_state:
+            raise ValueError("Decision preflight mutated campaign state")
+        # From here, a failed decision may have dispatched or mutated memory.
+        # Only the read-only preflight above can preserve the previous boundary.
+        self.at_boundary = False
         _append(self.journal, {"type": "decision_started", "step": self.next_step})
         returned = False
         try:

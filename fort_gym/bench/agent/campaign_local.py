@@ -9,7 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-from copy import deepcopy
+from copy import copy, deepcopy
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -188,8 +188,20 @@ class LocalCampaignAgent(CampaignLLMAgent):
             + json.dumps(self._action_tool()["function"]["parameters"], sort_keys=True)
         )
 
-    def _create_completion(self, messages):
+    def preflight_decision(self, obs_text: str, obs_json: dict) -> None:
+        # Preview the next memory review on independent state, not the live agent.
+        # The same serializer/bounds are used by the actual first dispatch below.
+        preview = copy(self)
+        preview._memory = deepcopy(self._memory)
+        preview._pending = deepcopy(self._pending)
+        preview._record_previous_outcome(obs_text)
+        self._request_body(preview._campaign_messages(obs_text))
+
+    def _request_body(self, messages) -> bytes:
         local = self.config["local_inference"]
+        max_output_tokens = self._max_tokens
+        if type(max_output_tokens) is not int or max_output_tokens < 1:
+            raise LocalInferenceError("Local inference requires a bounded output token count")
         body = json.dumps(
             {
                 "model": self._model,
@@ -205,7 +217,7 @@ class LocalCampaignAgent(CampaignLLMAgent):
                 "keep_alive": "30s",
                 "options": {
                     "num_ctx": local["context_tokens"],
-                    "num_predict": self._max_tokens,
+                    "num_predict": max_output_tokens,
                     "temperature": local["temperature"],
                     "seed": local["seed"],
                 },
@@ -217,10 +229,15 @@ class LocalCampaignAgent(CampaignLLMAgent):
         # bytes; reserve extra room for its short chat template and output.
         if (
             len(body) > self.config["max_request_bytes"]
-            or len(body) + self._max_tokens + 1024 > local["context_tokens"]
+            or len(body) + max_output_tokens + 1024 > local["context_tokens"]
         ):
             raise GovernedBudgetCapError("Local request no longer fits its declared context bound")
         self._pre_dispatch_gate()
+        return body
+
+    def _create_completion(self, messages):
+        local = self.config["local_inference"]
+        body = self._request_body(messages)
         verify_local_model(self.endpoint, self.config, self._model)
         self.dispatches += 1
         self._journal(

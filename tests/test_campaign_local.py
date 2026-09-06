@@ -305,3 +305,62 @@ def test_visible_contract_condition_preserves_baseline_execution_settings(config
         **config["local_inference"],
         "prompt_contract": "visible_action_contract/v1",
     }
+
+
+def test_context_preflight_keeps_latest_checkpoint_resumable(config, tmp_path, monkeypatch):
+    calls = fake_server(config, monkeypatch)
+    env = TestEnvironment()
+    monkeypatch.setattr(env, "screen", lambda: "x" * 25000 if env.actions else "test-only")
+    first = tmp_path / "first"
+    first.mkdir()
+    one = run_segment(
+        agent=policy(config, first),
+        environment=env,
+        snapshotter=env,
+        output=first,
+        config=config,
+        campaign_id="local-test",
+        model=MODEL,
+        revision="a" * 40,
+    )
+    assert one["status"] == "budget_limited_pause"
+    assert one["next_step"] == one["segment_committed_steps"] == len(calls) == 1
+    assert one["new_checkpoint_verified"] and not one["recovery_requires_reconciliation"]
+    journal = (first / "campaign/usage.jsonl").read_text()
+    assert '"decision_returned": false' not in journal
+    assert not (first / "campaign/failures.jsonl").exists()
+    checkpoint = Path(one["checkpoint"])
+    saved = json.loads((checkpoint / "agent.json").read_text())
+    assert saved["pending_outcome"] is not None
+    second = tmp_path / "second"
+    second.mkdir()
+    monkeypatch.setattr(env, "screen", lambda: "test-only")
+    two = run_segment(
+        agent=policy(config, second),
+        environment=env,
+        snapshotter=env,
+        output=second,
+        config=config,
+        campaign_id="local-test",
+        model=MODEL,
+        revision="a" * 40,
+        checkpoint=checkpoint,
+        latest_usage=first / "campaign/usage.jsonl",
+    )
+    assert two["status"] == "bounded_segment_complete"
+    assert two["first_step"] == 1 and two["next_step"] == len(calls) == 4
+    assert two["usage"]["total_tokens"] == 60
+
+
+def test_preflight_previews_pending_review_without_changing_memory(config, tmp_path, monkeypatch):
+    calls = fake_server(config, monkeypatch)
+    agent = policy(config, tmp_path)
+    agent.decide("Test-only observation", {})
+    before = agent.export_campaign_state()
+    next_observation = (
+        "Native calendar: year=30 tick=20\nPopulation: 7\nStocks: {}\nLast Action: ACCEPTED"
+    )
+    agent.preflight_decision(next_observation, {})
+    assert agent.export_campaign_state() == before and len(calls) == 1
+    agent.decide(next_observation, {})
+    assert "Last Action: ACCEPTED" in calls[1]["messages"][1]["content"]

@@ -141,6 +141,33 @@ def test_checkpoint_resume_matches_next_uninterrupted_decision(tmp_path):
     assert final["payload"]["next_step"] == 2
 
 
+@pytest.mark.parametrize("stage", ["preflight_mutation", "observe_failure", "decision_budget"])
+def test_only_read_only_preflight_can_preserve_a_boundary(tmp_path, monkeypatch, stage):
+    from fort_gym.bench.agent.governed_llm import GovernedBudgetCapError
+
+    loop = start(tmp_path)
+    loop.step()
+
+    def fail(*args):
+        if stage == "preflight_mutation":
+            loop.agent.count += 1
+        raise GovernedBudgetCapError("synthetic budget or context limit")
+
+    if stage == "preflight_mutation":
+        monkeypatch.setattr(loop.agent, "preflight_decision", fail)
+    elif stage == "observe_failure":
+        monkeypatch.setattr(loop.environment, "observe", fail)
+    else:
+        monkeypatch.setattr(loop.agent, "decide", fail)
+    with pytest.raises((ValueError, GovernedBudgetCapError)):
+        loop.step()
+    assert loop.failed and not loop.at_boundary
+    with pytest.raises(ValueError, match="committed action boundary"):
+        loop.checkpoint(
+            tmp_path / "not-a-checkpoint", snapshotter=loop.environment, code_revision="test"
+        )
+
+
 def test_resume_retains_later_charges_without_replaying_later_actions(tmp_path):
     loop = start(tmp_path)
     loop.step()

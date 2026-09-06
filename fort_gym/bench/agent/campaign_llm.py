@@ -153,13 +153,16 @@ class CampaignLLMAgent(DFHackGovernedLLMAgent):
         )
         return parse_action(action, max_advance_ticks=self._max_advance_ticks)
 
-    def decide(self, obs_text: str, obs_json: dict) -> dict:
-        self._record_previous_outcome(obs_text)
+    def _campaign_messages(self, obs_text: str) -> list[dict]:
         memory = self._memory.get_context()
-        messages = [
+        return [
             {"role": "system", "content": CAMPAIGN_SYSTEM_PROMPT},
             {"role": "user", "content": f"{memory}\n\n{obs_text}" if memory else obs_text},
         ]
+
+    def decide(self, obs_text: str, obs_json: dict) -> dict:
+        self._record_previous_outcome(obs_text)
+        messages = self._campaign_messages(obs_text)
         last_error = "No action object returned"
         for attempt in range(self._schema_attempts):
             # Transport failures propagate. Never synthesize a WAIT decision.

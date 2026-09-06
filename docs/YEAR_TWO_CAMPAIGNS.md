@@ -884,3 +884,48 @@ not resume the baseline under a changed prompt or be treated as an independent
 model comparison. Regression coverage checks schema/message equality, unchanged
 baseline bounds, and rejection of cross-condition checkpoint restoration. A
 native run is still needed to evaluate this hypothesis.
+
+That native run is now retained as
+[`local_qwen_visible_contract_20260906.json`](../experiments/evidence/local_qwen_visible_contract_20260906.json),
+under code `deaf42d96b0efbe24993ddc9ccacf45783e2c8ee`. The automatic controller
+completed a three-decision segment, verified teardown/checkpoint lineage, then
+started its successor without another operator launch. The model requested 500
+ticks on each of five decisions, unlike the zero-tick baseline. All five commands
+were digs on non-wall terrain and were rejected, so actual elapsed time remained
+zero. The model changed coordinates after feedback but did not correct the
+terrain/action mismatch. This is one short comparison, not a general causal claim
+or a ranking.
+
+The sixth decision exceeded the conservative serialized-request allowance before
+dispatch. Five calls returned 25,607 cumulative tokens; the first segment's 13,923
+is included. This is a harness request-bound pause, not proof that the model's
+24,576-token window was full. The second segment retained two additional committed
+rows but could not checkpoint them: the old loop had already begun a decision
+record and the agent had reviewed its pending outcome. The last verified native
+checkpoint therefore remains at cursor 3, while the canonical trace ends at 5.
+The original packet remains unchanged and requires reconciliation for recovery.
+
+The subsequent recovery fix adds a read-only decision preflight. The local adapter
+previews its next memory review on copied state and checks the same request
+serialization before a decision transaction starts. The loop verifies exported
+agent state stayed unchanged. A pre-dispatch budget/context pause can then retain
+the previous committed boundary and capture a new native checkpoint; ordinary
+decision failures, changed preflight state and observation failures still invalidate
+the boundary. Tests exercise a context-limited pause after an action, a clean
+checkpoint and resumed next action with cumulative usage intact. This is regression
+coverage, not a retroactive native repair or permission to enlarge a frozen condition.
+
+The candidate HTTP routes returned the actual terminal public feed: five committed
+rows, zero ticks, last-segment checkpoint unverified and cleanup verified. The
+website cost cell now distinguishes `$0 model API` for this self-hosted condition
+from unknown operating costs; incomplete or contradictory charge values stay
+unknown. Condition links include the two local configurations and endurance mode.
+Endpoint and frontend tests cover these paths. No browser-only preview was opened
+in this background continuation, no visual QA is claimed, and no production website
+setting or service was changed.
+
+Both isolated game runtimes, the temporary inference server/runner and the private
+tunnel were stopped and independently checked absent. Their receipts, native saves,
+traces and public summaries remain retained. Next work must address redundant
+history/request packing and terrain/action comprehension, then expand model coverage
+and native endurance. More accepted command counts alone are not the objective.
