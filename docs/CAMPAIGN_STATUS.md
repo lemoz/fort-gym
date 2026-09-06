@@ -2,17 +2,39 @@
 
 Verified September 6, 2026. The Year-Two Autonomous Play goal remains active.
 
+Latest local native attempt: source `43a53762c` captured a fresh paused seed and
+created an independently verified v3 checkpoint at cursor zero (year 30, tick
+16801). Automatic recovery stopped at first-process cleanup: no PIDs were
+identified by the scanner, but the listener was still live. Container-level
+teardown and VM stop completed. A subsequent diagnostic failed at VM SSH startup
+before creating a container. This is intermittent local infrastructure, not a
+model outcome. The independent `cwd`/`exe` ownership correction has focused
+regressions; native confirmation remains open. See the
+[execution receipt](../experiments/evidence/local_native_harness_checkpoint_20260906.json).
+No model calls, autonomous gameplay or year-two progress occurred.
+
+The cleanup correction is source `fad9d80c0a2e7aace8380b47b009db5edaf6bd2e`
+on the existing [PR #132](https://github.com/lemoz/fort-gym/pull/132). Its 73 focused
+tests passed with one Linux-only skip. The full suite had 1,864 passes, ten skips
+and one sandbox-blocked loopback test; that sole test passed separately with
+local socket access. Changed-file Ruff/Black and targeted typing passed.
+Full-tree checks still report ten Ruff issues and 464 typing errors in 26 files;
+the changed runtime script passes targeted typing. Exact-revision GitHub CI is
+a separate check; earlier green CI below does not cover this correction.
+Native execution remains frozen at `43a53762c`; the new correction is not yet
+native-confirmed. No PR merge or production deployment occurred.
+
 Local native compatibility is now verified on the isolated `fort-gym-native-b`
 profile: the retained DFHack image loaded with the narrow syscall allowance,
 then the same VM rebooted after guest-initiated shutdown and automatically
 loaded the fortress again. The earlier failed profile and evidence are retained.
 Both test VMs and Hermes were observed stopped after the experiment. There were
 zero model calls, gameplay commands, new campaign checkpoints or cloud resources.
-The shared host was untouched. The automatic campaign recovery fixture remains
-the next native test; VM reboot is not campaign continuation. See
+The shared host was untouched. The subsequent recovery attempt is recorded above;
+VM reboot is not campaign continuation. See
 [local runtime evidence and next decision](CAMPAIGN_LOCAL_RUNTIME.md).
 
-Latest published candidate: [PR #132](https://github.com/lemoz/fort-gym/pull/132)
+Earlier published candidate: [PR #132](https://github.com/lemoz/fort-gym/pull/132)
 contains the one-runtime native output-pause recovery fixture, bounded closed-port
 settling correction, and versioned native evidence. Source
 `43a53762c0dc819055a532c5fbb4fc4714fc2fa3` is verified on GitHub. The final full

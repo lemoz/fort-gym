@@ -67,6 +67,21 @@ Both test VMs were observed stopped. No model calls or gameplay progress occurre
 This opens a local capacity route for the automatic campaign recovery fixture
 without changing the shared host or creating cloud resources.
 
+The first local harness execution subsequently captured a fresh native save and
+created an independently verified v3 checkpoint at cursor zero. The automatic
+restore did not run: first-process cleanup still observed a live listener despite
+an empty process scan. Container/VM teardown completed, and a later diagnostic
+hit intermittent VM SSH startup failure before executing. The process scanner's
+independent-path correction is regression-tested, not yet native-confirmed.
+See [retained execution evidence](../experiments/evidence/local_native_harness_checkpoint_20260906.json).
+No autonomous game action, model cost or year-two progress is claimed.
+
+Cleanup candidate `fad9d80c0` is on PR #132 with 73 focused tests passed and one
+Linux-only skip. Full-suite coverage had 1,864 passes, ten skips and a sandbox
+loopback restriction; the isolated blocked test passed with socket access.
+Existing full-tree lint/type debt is separate from the passing changed-file
+checks. Neither this candidate's native confirmation nor a merge is claimed.
+
 ## Success statement (the one metric)
 
 Current native recovery evidence is published in [PR #132](https://github.com/lemoz/fort-gym/pull/132):

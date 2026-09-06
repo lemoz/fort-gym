@@ -1,0 +1,105 @@
+{
+  "schema_version": "fortgym.local-native-harness-evidence/v1",
+  "observed_date": "2026-09-06",
+  "classification": "native_checkpoint_created_recovery_incomplete",
+  "executed_code_revision": "43a53762c0dc819055a532c5fbb4fc4714fc2fa3",
+  "source_tree_clean": true,
+  "runtime": {
+    "profile": "fort-gym-native-b",
+    "base_image": "sha256:d90811a39d5edd7c0a61d9adbbe4251cbfc345df52f5fa48ba174ce8992b8a86",
+    "derived_image": "sha256:42047b24024b6c9ae43b73fd051bdecfecb0dd4f96be59812872619912980034",
+    "image_published": false,
+    "network": "none",
+    "published_ports": [],
+    "host_bind_mounts": [],
+    "capabilities_dropped": [
+      "ALL"
+    ],
+    "no_new_privileges": true,
+    "seccomp_sha256": "5ae96ce3d0a9c746765df7d4c5948312f3847b08e917174368797d788461657a",
+    "memory_limit_bytes": 1610612736,
+    "cpus": 2
+  },
+  "dependencies": {
+    "python": "3.11.16",
+    "python_source": "https://github.com/astral-sh/python-build-standalone/releases/tag/20260901",
+    "python_archive_sha256": "64427febea27864d136db46c8efe968eb6fa5ca2813ce1dca4bb95aec31cb2e4",
+    "offline_wheels_verified": 34,
+    "wheelhouse_archive_sha256": "0da2d54fa4b36f5a6154245a5ffb2a45cb7c83a57850630834542dfb16ebe804",
+    "retained_generated_proto_files_verified": 9,
+    "wire_target": "0.47.05-r8",
+    "provider_sdks_installed": false,
+    "git_package": "1:2.34.1-1ubuntu1.17",
+    "apt_repository_packages_frozen_before_build": false
+  },
+  "native_save": {
+    "verified": true,
+    "boundary": {
+      "year": 30,
+      "year_tick": 16801,
+      "paused": true
+    },
+    "receipt_sha256": "eaf5fa5a40014719e6c313f33497740e536a8faa1c90a84c4e09dcc380ac0595",
+    "original_seed_preserved": true
+  },
+  "checkpoint": {
+    "schema_version": "fortgym.campaign-checkpoint/v3",
+    "next_step": 0,
+    "gameplay_commands": 0,
+    "synthetic_policy_responses": 1,
+    "synthetic_tokens": 10,
+    "checkpoint_file_sha256": "7ecc26bfd065708d8723319f2a46f88e67fe465cf68611a3d8046e7bbe4d01d2",
+    "inventory_independently_verified": true,
+    "worker_result_sha256": "e112f646b3d662b931419cad8040805acf8ee34560b580672954975542005269"
+  },
+  "recovery": {
+    "automatic_cli_exit_code": 1,
+    "first_runtime_receipt_sha256": "48934dd2c14745a6a7acf4e5198616656217930ce6ce42bd1788f1e8cc6cd716",
+    "first_native_load_verified": true,
+    "first_runtime_scanner_remaining_pids": [],
+    "first_listener_closed": false,
+    "first_cleanup_verified": false,
+    "second_runtime_started": false,
+    "restoration_verified": false,
+    "error": "Test listener still present after process teardown"
+  },
+  "operator": {
+    "driver_sha256": "78523a6577fd15d3698ef3827e6bb627e1ad45158abc050374c4a40eda2126e2",
+    "result_sha256": "d19d157a72af434d283c90e3ae2a3b695fe1c353033d2ae3108b609b6b98ff6a",
+    "container_cleanup_verified": true,
+    "fixture_container_exit_code": 1,
+    "fixture_container_finished_at": "2026-09-06T22:12:47.126182142Z",
+    "guest_poweroff_observed_stopped": true,
+    "colima_stop_exit_code": 0,
+    "evidence_copied_to_host": true,
+    "retained_docker_volume": "fort-gym-local-v3-evidence-20260906"
+  },
+  "followup_diagnostic": {
+    "executed": false,
+    "failure_stage": "local_vm_ssh_readiness",
+    "startup_deadline_seconds": 180,
+    "result_sha256": "ff0ee7f811cc09890addbbef8dd106b7d0b4304408beb3e179f49c1f42e703fd",
+    "vm_start_log_sha256": "811546c811933e8c1cbd4c9bf639ea4ad17ecf42c06a1d01d28db727fd04240e",
+    "new_container_created": false,
+    "final_vm_status": "Stopped"
+  },
+  "outcomes": {
+    "provider_calls": 0,
+    "metered_model_cost_usd": "0",
+    "cloud_vms_created": 0,
+    "cloud_reservation_added_usd": "0",
+    "local_hardware_energy_and_app_cost_usd": null,
+    "autonomous_gameplay": false,
+    "year_two_verified": false,
+    "production_deployed": false,
+    "shared_host_modified": false
+  },
+  "proof_limits": [
+    "A captured checkpoint is not proven automatic recovery or a resumable endurance handoff",
+    "The owned process scanner required both cwd and exe to resolve despite its intended OR ownership rule; regressions reproduce that defect",
+    "The independent-link correction is not yet executed against this native failure",
+    "The translated process's exact procfs links were not captured, so the observed native failure's precise cause is not established",
+    "VM startup is intermittent: successful boots are retained evidence, not a reliability guarantee",
+    "Private game images, saves and detailed operator logs are retained locally, not included in this public manifest"
+  ]
+}

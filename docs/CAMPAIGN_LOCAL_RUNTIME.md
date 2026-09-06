@@ -1,8 +1,26 @@
 # Local native runtime investigation
 
-September 6, 2026. Status: **native loading and VM reboot verified; campaign recovery pending**.
+September 6, 2026. Status: **native checkpoint captured; automatic recovery incomplete**.
 
 ## Latest result
+
+The public harness at `43a53762c` now executed in a private derived image with
+pinned Python 3.11 and retained provider-free dependencies. It captured a fresh
+paused native seed, loaded that snapshot, and produced an independently verified
+v3 campaign checkpoint at cursor zero. The automatic fixture stopped at first
+process cleanup: its process scanner reported no owned PIDs while its listener
+remained open. The outer container exited and both containers and the VM stopped.
+See the [new harness execution evidence](../experiments/evidence/local_native_harness_checkpoint_20260906.json).
+
+A follow-up diagnostic failed before container creation because the VM again
+timed out at SSH readiness. Thus the successful boots below establish actual
+compatibility, not reliable startup. The exact cause remains unresolved.
+The scanner's independent-path correction has regression coverage but still
+needs native confirmation. No restore phase, game action or model call occurred.
+Private image, volume, saves and logs are retained; no historical evidence is
+deleted or relabeled as passing recovery.
+
+## Earlier successful load and reboot
 
 A fresh isolated profile, `fort-gym-native-b`, loaded DF 0.47.05/DFHack
 0.47.05-r8 successfully using the same retained image and the narrow
@@ -24,8 +42,8 @@ Use guest-initiated `systemctl poweroff`, observe the owned profile stopped, the
 run Colima lifecycle cleanup after stopping its containers. This shutdown path
 has reboot proof; do not silently substitute the earlier failed restart route.
 
-Next, install the public campaign harness and provider-free dependencies in a
-derived local image, then run the automatic v3 recovery fixture. This seed starts
+The next step after that reboot was to install the public campaign harness and
+run the automatic v3 recovery fixture, with the partial result above. This seed starts
 at a different native boundary from the previous shared-host snapshot; future
 campaign conditions must declare that difference. Native loading alone does not
 establish persistent campaign recovery, autonomous play or year-two progress.
