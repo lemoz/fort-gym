@@ -18,7 +18,8 @@
     'development-autonomous-v1': 'development_autonomous_v1.json',
     'endurance-autonomous-v1': 'endurance_autonomous_v1.json',
     'local-native-development-v1': 'local_native_development_v1.json',
-    'local-native-visible-contract-v1': 'local_native_visible_contract_v1.json'
+    'local-native-visible-contract-v1': 'local_native_visible_contract_v1.json',
+    'local-native-packed-comparison-v1': 'local_native_packed_comparison_v1.json'
   };
   function known(value) { return typeof value === 'number' && Number.isFinite(value) && value >= 0; }
   function number(value) { return known(value) ? value.toLocaleString('en-US') : 'Unknown'; }
@@ -71,7 +72,18 @@
     if (!row) return;
     node('h3', `${row.model} · ${row.campaign_id}`, panel);
     node('p', `${row.condition_id}; latest segment ${row.segment_id}. ${stateLabel(row, disconnected)}.`, panel);
+    if (row.publication === 'versioned_snapshot') node('p', 'Published terminal snapshot from the versioned repository. This is recorded evidence, not a live worker.', panel);
     node('p', `${number(row.committed_steps)} committed actions; ${duration(row.elapsed_ticks)}.`, panel);
+    const actions = row.actions || {};
+    node('p', `${number(actions.accepted)} accepted commands; ${number(actions.rejected)} rejected; ${number(actions.unknown)} with unknown outcomes. Accepted commands can be no-ops or queued work, not completed development.`, panel);
+    if (Object.keys(actions.by_type || {}).length) {
+      const commands = table(panel, 'Recorded command choices', ['Control', 'Accepted', 'Rejected', 'Unknown']);
+      Object.entries(actions.by_type).forEach(([kind, counts]) => {
+        const tr = node('tr', undefined, commands);
+        [kind, number(counts.accepted), number(counts.rejected), number(counts.unknown)].forEach(value => node('td', value, tr));
+      });
+      node('p', `${number(actions.changed_command_after_rejection)} changed commands following rejection. Changing a command does not establish recovery.`, panel);
+    }
     node('p', `Checkpoint: ${row.checkpoint_verified ? 'verified' : 'not verified'}. Teardown: ${row.cleanup_verified === true ? 'verified' : row.cleanup_verified === false ? 'not verified' : 'unknown'}.`, panel);
     const usage = row.usage || {};
     const local = usage.cost_basis === 'self_hosted_no_metered_provider';
@@ -104,7 +116,9 @@
       const link = node('a', 'Inspect this segment’s experiment configuration', panel);
       link.href = `https://github.com/lemoz/fort-gym/blob/${row.code_revision}/experiments/campaigns/${conditionFiles[row.condition_id]}`;
     }
-    node('pre', JSON.stringify({ code_revision: row.code_revision, configuration_sha256: row.configuration_sha256, source_sha256: row.source_sha256 }, null, 2), panel);
+    node('pre', JSON.stringify({ code_revision: row.code_revision, configuration_sha256: row.configuration_sha256,
+      declared_starting_snapshot_receipt_sha256: row.declared_starting_snapshot_receipt_sha256 || null,
+      source_sha256: row.source_sha256 }, null, 2), panel);
   }
   function render() {
     if (!data) return;
@@ -135,9 +149,10 @@
     });
     if (!rows.length) node('td', 'No campaign summaries match this condition.', node('tr', undefined, $('campaign-feed-rows'))).colSpan = 7;
     inspect(rows.find(row => row.campaign_id === selected));
-    $('campaign-feed-content').hidden = !data.configured;
+    $('campaign-feed-content').hidden = !data.configured && !data.campaigns.length;
     if (!disconnected) $('campaign-feed-status').textContent = data.configured
       ? `${data.campaigns.length} campaign summaries. Status is based on the last report, not a live process check.`
+      : data.campaigns.length ? `${data.campaigns.length} published terminal snapshots. Live campaign tracking is not connected to this site.`
       : 'Campaign tracking is not connected to this site yet. Published development probes remain below.';
   }
   async function refresh() {

@@ -91,6 +91,9 @@ def test_segment_reports_committed_boundaries_then_terminal_teardown(tmp_path):
     assert terminal["segment_status"] == "bounded_segment_complete"
     assert terminal["metric_summaries"]["population"]["start"] == 7
     assert terminal["usage"]["reported_model_cost_usd"] == "3E-13"
+    assert terminal["actions"]["committed_rows"] == 3
+    assert terminal["actions"]["accepted"] == 3
+    assert terminal["actions"]["by_type"]["WAIT"] == {"accepted": 3, "rejected": 0, "unknown": 0}
     assert (
         terminal["source_sha256"]["campaign-segment.json"]
         == hashlib.sha256((output / "campaign-segment.json").read_bytes()).hexdigest()
@@ -140,6 +143,12 @@ def test_public_projection_strips_private_nested_text_and_preserves_unknowns(tmp
         usage={"total_cost_usd": "0.003462525", "api_key": "PRIVATE"},
         metric_summaries={"population": {"start": 7, "end": 0, "evidence": "PRIVATE"}},
         source_sha256={"/PRIVATE/path": "not-a-digest"},
+        actions={
+            "accepted": 0,
+            "rejected": True,
+            "agent_memory": "PRIVATE",
+            "by_type": {"LABOR": {"accepted": 0, "params": "PRIVATE"}, "PRIVATE": {"accepted": 1}},
+        },
     )
     public = public_snapshot(record)
     assert "PRIVATE" not in json.dumps(public)
@@ -149,6 +158,10 @@ def test_public_projection_strips_private_nested_text_and_preserves_unknowns(tmp
     )
     assert public["metric_summaries"]["population"]["change"] == -7
     assert public["usage"]["reported_model_cost_usd"] == "0.003462525"
+    assert public["actions"]["accepted"] == 0 and public["actions"]["rejected"] is None
+    assert public["actions"]["by_type"] == {
+        "LABOR": {"accepted": 0, "rejected": None, "unknown": None}
+    }
     assert (
         public["functioning_fortress"] == "not_assessed"
         and not public["comparison_rankings_available"]

@@ -217,7 +217,10 @@ def campaign_profile(
         "actions": {
             "committed_rows": len(records),
             **{key: totals[key] for key in ("accepted", "rejected", "unknown")},
-            "by_type": {key: dict(value) for key, value in sorted(mix.items())},
+            "by_type": {
+                key: {outcome: value[outcome] for outcome in ("accepted", "rejected", "unknown")}
+                for key, value in sorted(mix.items())
+            },
             "changed_command_after_rejection": changed_after_rejection,
         },
         "usage": usage_profile(usage),

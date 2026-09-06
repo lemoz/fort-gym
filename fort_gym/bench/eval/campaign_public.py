@@ -6,7 +6,7 @@ import re
 from datetime import datetime, timezone
 from typing import Any
 
-from .campaign_profile import METRICS, count, mapping, usage_profile
+from .campaign_profile import ACTION_TYPES, METRICS, count, mapping, usage_profile
 
 SCHEMA = "fortgym.public-campaign-state/v1"
 STAT_FIELDS = (
@@ -135,5 +135,21 @@ def public_snapshot(value: dict) -> dict:
         key: _digest(digest, 64)
         for key, digest in mapping(value.get("source_sha256")).items()
         if key in {"campaign-segment.json", "result.json", "campaign/trace.jsonl"}
+    }
+    actions = mapping(value.get("actions"))
+    result["actions"] = {
+        key: count(actions.get(key))
+        for key in (
+            "committed_rows",
+            "accepted",
+            "rejected",
+            "unknown",
+            "changed_command_after_rejection",
+        )
+    }
+    result["actions"]["by_type"] = {
+        kind: {key: count(mapping(stats).get(key)) for key in ("accepted", "rejected", "unknown")}
+        for kind, stats in mapping(actions.get("by_type")).items()
+        if kind in ACTION_TYPES | {"UNKNOWN"}
     }
     return result

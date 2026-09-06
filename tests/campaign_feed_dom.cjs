@@ -41,7 +41,10 @@ first.lifecycle = 'running'; first.freshness = 'stale';
 first.elapsed_ticks = 403200; first.current_metrics.population = 0;
 first.code_revision = 'javascript:alert(1)';
 first.usage = {...first.usage, cost_basis:'self_hosted_no_metered_provider', metered_provider_charge_usd:'0', reported_model_cost_usd:null};
-data.campaigns.push({...first, model:'second-model', campaign_id:'second', condition_id:'second-condition'});
+first.actions = {accepted:16, rejected:0, unknown:0, changed_command_after_rejection:0,
+  by_type:{LABOR:{accepted:16, rejected:0, unknown:0}}};
+data.campaigns.push({...first, model:'second-model', campaign_id:'second',
+  condition_id:'local-native-packed-comparison-v1', code_revision:'a'.repeat(40)});
 let fail = false, malformed = false, requests = 0;
 const fetch = async url => {
   assert.equal(url, '/public/campaign-feed'); requests++;
@@ -64,12 +67,17 @@ vm.runInNewContext(fs.readFileSync(process.argv[2], 'utf8'), {
   row.children[0].children[1].events.click();
   assert.match(elements['campaign-profile-detail'].textContent, /not assessed/);
   assert.match(elements['campaign-profile-detail'].textContent, /do not mean zero operating cost/);
+  assert.match(elements['campaign-profile-detail'].textContent, /16 accepted commands; 0 rejected/);
+  assert.match(elements['campaign-profile-detail'].textContent, /can be no-ops or queued work/);
   assert.doesNotMatch(elements['campaign-profile-detail'].textContent, /Exact reported cost:/);
   assert.equal(elements['campaign-profile-detail'].children.some(child => child.href?.startsWith('javascript:')), false);
-  elements['campaign-condition-filter'].value = 'second-condition';
+  elements['campaign-condition-filter'].value = 'local-native-packed-comparison-v1';
   elements['campaign-condition-filter'].events.change();
   assert.equal(elements['campaign-feed-rows'].children.length, 1);
   assert.equal(elements['campaign-feed-rows'].children[0].children[0].text, 'second-model');
+  elements['campaign-feed-rows'].children[0].children[0].children[1].events.click();
+  assert.equal(elements['campaign-profile-detail'].children.find(child => child.href?.startsWith('https://github.com/')).href,
+    `https://github.com/lemoz/fort-gym/blob/${'a'.repeat(40)}/experiments/campaigns/local_native_packed_comparison_v1.json`);
   fail = true;
   await elements['refresh-campaign-feed'].events.click();
   assert.match(elements['campaign-feed-status'].textContent, /current state is unknown/);
@@ -82,4 +90,11 @@ vm.runInNewContext(fs.readFileSync(process.argv[2], 'utf8'), {
   await events.visibilitychange();
   await new Promise(setImmediate);
   assert.equal(requests, 4);
+  data.configured = false;
+  data.campaigns[1].publication = 'versioned_snapshot';
+  await elements['refresh-campaign-feed'].events.click();
+  assert.equal(elements['campaign-feed-content'].hidden, false);
+  assert.match(elements['campaign-feed-status'].textContent, /published terminal snapshots/);
+  assert.match(elements['campaign-feed-status'].textContent, /Live campaign tracking is not connected/);
+  assert.match(elements['campaign-profile-detail'].textContent, /recorded evidence, not a live worker/);
 })().catch(error => { console.error(error); process.exitCode = 1; });

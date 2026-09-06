@@ -2,6 +2,9 @@
 
 Owner-approved goal, September 5, 2026. Status: active implementation.
 
+This document retains historical implementation checkpoints below. Later sections
+supersede earlier candidate-status statements without rewriting old experiment results.
+
 ## Outcome
 
 Build and ship a model-swappable laboratory for autonomous Dwarf Fortress play.
@@ -971,3 +974,31 @@ decisions per segment and four segments. This is a development comparison, still
 short of year-two endurance. Actual completed decisions, schema retries, pauses,
 elapsed native time and response usage must be reported, not assumed equal. It
 does not permit rankings from one attempt or combine cumulative segment subtotals.
+
+## Versioned campaign results on the existing website
+
+`campaign_records.py` adds explicit, versioned terminal snapshot bundles to the
+existing `/public/campaign-feed` route and campaign table. Publication is an
+allowlist, not a scan of private artifacts. Each bundle binds its snapshots to
+the full declared configuration and starting-save receipt digest. Readers repeat
+the strict public projection and reject conflicting identities, missing files or
+unverified teardown. No raw prompts, actions with private parameters, memory or
+game assets enter this feed.
+
+Recorded snapshots remain visible without a configured live directory. The page
+labels that state as recorded evidence with live tracking disconnected. A broken
+configured live source still fails instead of being silently replaced by old
+published data. Matching live reports can update a recorded campaign without
+duplicating it or rolling it back to an older report.
+
+The existing profile inspector now includes accepted/rejected/unknown command
+counts and control mix, alongside native time, resources and model usage.
+Acceptance may be a no-op or queued work, not completed development. Missing
+historical action measurements remain unknown; newly generated per-control counts
+explicitly retain measured zeros.
+
+Candidate verification: 629 focused local campaign, governed-agent, API and website
+tests passed, with one Linux-only skip. Four changed reporting/projection modules
+passed targeted typing checks, and the standalone changed Python files passed
+Ruff and Black. This preserves the established FastAPI/static site and does not
+claim a production deployment or browser visual acceptance.
