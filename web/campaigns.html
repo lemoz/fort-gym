@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Campaign Experiments | Fort Labs</title>
+  <meta name="description" content="Track autonomous Dwarf Fortress experiments, actual game time, model outcomes, and reported costs.">
+  <link rel="canonical" href="https://fortgym.live/campaigns">
+  <link rel="icon" type="image/svg+xml" href="/static/brand/favicon.svg">
+  <link rel="stylesheet" href="/static/fort-labs.css?v=20260711-2">
+  <link rel="stylesheet" href="/static/campaigns.css?v=2">
+</head>
+<body>
+  <header class="fl-header">
+    <div class="fl-wrap fl-nav">
+      <a class="fl-brand" href="/"><span>FORT</span> LABS</a>
+      <nav class="campaign-nav" aria-label="Primary navigation">
+        <a href="/results">Results</a><a href="/campaigns" aria-current="page">Campaigns</a><a href="/worlds">Runs</a><a href="/live">Live</a>
+      </nav>
+    </div>
+  </header>
+  <main class="fl-wrap campaign-main">
+    <div class="campaign-heading">
+      <div><p class="campaign-kicker">Autonomous play research</p><h1>Campaign experiments</h1></div>
+      <button id="refresh-campaigns" type="button">Refresh evidence</button>
+    </div>
+    <p class="campaign-intro">One full game year is 403,200 elapsed ticks from the starting save. Reaching year two is a checkpoint, not the end of play.</p>
+    <section aria-labelledby="tracking-title" class="campaign-tracking">
+      <div class="campaign-tracking-heading">
+        <h2 id="tracking-title">Campaign performance</h2>
+        <button id="refresh-campaign-feed" type="button">Refresh campaigns</button>
+      </div>
+      <p id="campaign-feed-status" role="status" aria-live="polite">Loading campaign summaries…</p>
+      <div id="campaign-feed-content" hidden>
+        <label class="campaign-filter" for="campaign-condition-filter">Condition
+          <select id="campaign-condition-filter"><option value="">All conditions</option></select>
+        </label>
+        <p class="campaign-note">Each row follows one fortress across resumed segments. These are descriptive results, not a ranking. Matching conditions alone do not verify matching starting saves.</p>
+        <div class="campaign-table-scroll" role="region" aria-label="Campaign comparison" tabindex="0">
+          <table class="campaign-table">
+            <caption>Latest reported state, committed game time, and cumulative model usage</caption>
+            <thead><tr><th scope="col">Model / campaign</th><th scope="col">Reported state</th><th scope="col">Elapsed game time</th><th scope="col">Dwarves</th><th scope="col">Food / drink stocks</th><th scope="col">Completed workshops / beds / farms</th><th scope="col">Reported model cost</th></tr></thead>
+            <tbody id="campaign-feed-rows"></tbody>
+          </table>
+        </div>
+        <section id="campaign-profile-detail" aria-label="Selected campaign profile"></section>
+        <p class="campaign-note">Updates every 15 seconds while this page is visible. Recent reports are not proof that a worker is still running. Stock counts do not measure food or drink production; elapsed time does not establish a functioning fortress.</p>
+      </div>
+      <a href="/public/campaign-feed">Open campaign summary data</a>
+    </section>
+    <section class="campaign-condition" aria-labelledby="latest-result-title">
+      <h2 id="latest-result-title">Published result: local model timeout</h2>
+      <p>The longer Qwen3.5 9B attempt stopped when its fourth request timed out. Three responses returned, totaling 21,429 accounted tokens. Two workshop commands were rejected and one wait was accepted, advancing the game by 1,000 ticks. No workshop was completed.</p>
+      <p class="campaign-note">One request has no returned token usage. The final native save was retained for investigation, but there is no resumable campaign checkpoint. The game and temporary model server were stopped. This is an inference failure, not fortress collapse or a completed campaign.</p>
+      <a href="https://github.com/lemoz/fort-gym/blob/60fd08415b10adfe52a0d275c826669dad843937/experiments/evidence/local_native_llama_long_timeout_20260906.json">Read the timeout result and retained evidence</a>
+    </section>
+    <section class="campaign-condition" aria-labelledby="resource-result-title">
+      <h2 id="resource-result-title">Earlier result: autonomous wood collection</h2>
+      <p>Qwen3.5 9B with thinking enabled increased wood stock from 3 to 12 in 5,000 native ticks. Its eight commands included gathering, two rejected chopping attempts, corrected chopping commands and a wait. All eight responses and 58,359 tokens are accounted for.</p>
+      <p class="campaign-note">The final checkpoint covers all eight commands and responses. Seven dwarves remain, with food and drink stocks of 45 and 60. No workshop, bed or farm is completed. Both copied games and the temporary model server were stopped. This is a short resource-gain result, not year-two success or a model ranking.</p>
+      <a href="https://github.com/lemoz/fort-gym/blob/60fd08415b10adfe52a0d275c826669dad843937/experiments/evidence/local_native_llama_thinking_20260906.json">Read the autonomous resource-gain result and receipts</a>
+    </section>
+    <section class="campaign-condition" aria-labelledby="wait-result-title">
+      <h2 id="wait-result-title">Earlier result: valid commands, no development</h2>
+      <p>Qwen3.5 9B completed its bounded non-thinking attempt with 16 wait commands, 1,600 native ticks and 142,218 accounted tokens. Seven dwarves survived this short window; food and drink stocks stayed at 45 and 60. No gathering or construction was initiated.</p>
+      <p class="campaign-note">The final save covers all 16 commands and responses. Both copied games and the temporary model server were stopped. This is a dispatch-limited pause, not a functioning fortress or a model ranking.</p>
+      <a href="https://github.com/lemoz/fort-gym/blob/60fd08415b10adfe52a0d275c826669dad843937/experiments/evidence/local_native_llama_typed_20260906.json">Read the native model result and verified continuation evidence</a>
+    </section>
+    <section class="campaign-condition" aria-labelledby="earlier-result-title">
+      <h2 id="earlier-result-title">Earlier result: request-size pause</h2>
+      <p>The Qwen14 control-reference attempt recorded 14 rejected commands and 2,800 native ticks, with no completed fortress development. All 15 responses and 78,023 tokens are accounted for.</p>
+      <p class="campaign-note">The latest save covers 12 commands, not 14. Two newer commands and a malformed response need reconciliation before continuation. This stopped at the request-size limit, not the spending cap; it is not a completed campaign or a verified fortress collapse.</p>
+      <a href="https://github.com/lemoz/fort-gym/blob/60fd08415b10adfe52a0d275c826669dad843937/experiments/evidence/local_native_designation_reference_20260906.json">Read the terminal campaign and checkpoint evidence</a>
+    </section>
+    <section class="campaign-condition" aria-labelledby="adapter-title">
+      <h2 id="adapter-title">Adapter acceptance, not model performance</h2>
+      <p>A scripted native test chopped a tree and completed one carpenter’s workshop in 4,010 game ticks. It used real materials and dwarf construction jobs, with no model calls or instant completion.</p>
+      <p class="campaign-note">The isolated game was stopped and its final save verified. This test does not count toward any model’s fortress development or year-two result.</p>
+      <a href="https://github.com/lemoz/fort-gym/blob/60fd08415b10adfe52a0d275c826669dad843937/experiments/evidence/native_workshop_ground_20260906.json">Read the native workshop fixture evidence</a>
+    </section>
+    <section class="campaign-condition" aria-labelledby="compatibility-title">
+      <h2 id="compatibility-title">Local model compatibility, not gameplay</h2>
+      <p>Qwen3.5 9B copied two of three supplied test commands exactly with the existing contract, dropping the gather operation from the third. A typed-contract follow-up copied all three exactly. The two checks used 1,207 and 5,303 tokens respectively, with no metered model API charges; operating costs are unmeasured.</p>
+      <p class="campaign-note">The typed contract did not fit fourteen historical requests under their old size limit. The new local adapter measures tokens separately from payload bytes: two retained native inputs fit at 5,466 and 7,992 prompt tokens without dropping history. Its three-command check copied all three exactly, using another 5,303 accounted tokens.</p>
+      <p class="campaign-note">No game was loaded and no native actions were executed. The temporary server was stopped. This diagnostic is excluded from model-performance rows and rankings.</p>
+      <a href="https://github.com/lemoz/fort-gym/blob/60fd08415b10adfe52a0d275c826669dad843937/experiments/evidence/local_qwen35_9b_feasibility_20260906.json">Read the compatibility result and pinned model provenance</a>
+      <a href="https://github.com/lemoz/fort-gym/blob/60fd08415b10adfe52a0d275c826669dad843937/experiments/evidence/local_llama_adapter_20260906.json">Read the measured local-adapter checks</a>
+    </section>
+    <p id="catalog-status" role="status" aria-live="polite">Loading published experiment evidence…</p>
+    <div id="catalog-content" hidden>
+      <section class="campaign-condition" aria-labelledby="condition-title">
+        <h2 id="condition-title">Development probes</h2>
+        <p id="condition-description"></p>
+        <p class="campaign-note">These short interface tests are not a model ranking. Live campaign tracking and verified year-two results are not available in this catalog yet.</p>
+        <div id="model-coverage" class="model-coverage"></div>
+      </section>
+      <section aria-labelledby="experiments-title">
+        <h2 id="experiments-title">Recorded attempts</h2>
+        <div class="campaign-table-scroll" role="region" aria-label="Experiment results" tabindex="0">
+          <table class="campaign-table">
+            <caption>Reported game outcomes and costs under the declared development condition</caption>
+            <thead><tr><th scope="col">Model / attempt</th><th scope="col">Outcome</th><th scope="col">Elapsed ticks</th><th scope="col">Last observed dwarves</th><th scope="col">Reported model cost</th><th scope="col">Teardown</th></tr></thead>
+            <tbody id="experiment-rows"></tbody>
+          </table>
+        </div>
+        <div id="experiment-details"></div>
+      </section>
+      <p class="campaign-note">Costs shown are response-reported usage, not reconciled invoices or remaining budget. Failed requests without returned usage are tracked separately. Missing measurements stay unknown.</p>
+      <a href="/public/campaign-experiments">Open the published evidence JSON</a>
+    </div>
+    <noscript><p>JavaScript is needed for the table. <a href="/public/campaign-experiments">Read the published evidence JSON.</a></p></noscript>
+  </main>
+  <script src="/static/campaigns.js?v=1" defer></script>
+  <script src="/static/campaign-feed.js?v=7" defer></script>
+</body>
+</html>

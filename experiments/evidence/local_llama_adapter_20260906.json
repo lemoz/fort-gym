@@ -1,0 +1,59 @@
+{
+  "schema_version": "fortgym.local-llama-adapter-evidence/v1",
+  "condition_id": "local-native-llama-typed-v1",
+  "scope": "transport_contract_and_historical_input_fit_not_native_gameplay",
+  "model": "fort-gym-qwen35-9b-q4-03b74727a860",
+  "configuration_sha256": "86fce6ff6c735af93388e52355c2f8ed0c684db0c6a6988b31f99bf8576f7c79",
+  "launch_receipt_sha256": "3206a4f11a6574beef1da561c99042990bddfd35aa380cd1476d5e9c6bc63ff7",
+  "contract": {
+    "result_sha256": "568454112aeac110927f08ce90753830cec143c6a478e941ae4d0a241e9c357e",
+    "exact_copies": 3,
+    "cases": 3,
+    "dispatched_requests": 3,
+    "returned_responses": 3,
+    "accounted_responses": 3,
+    "total_tokens": 5303,
+    "preflight_prompt_tokens": [
+      1713,
+      1733,
+      1743
+    ],
+    "all_returned_prompt_counts_match": true
+  },
+  "historical_input_fit": {
+    "result_sha256": "4f235f646426d189a93305bf4d19ba10f4475e6e0a17bb64c33a05abdf9b28f7",
+    "source_trace_sha256": "eb83d086cea35b09be365a5084be15b7cf08b52cb129a0f567fa48f086369d77",
+    "checks": [
+      {
+        "source_step": 0,
+        "request_bytes": 27539,
+        "prompt_tokens": 5466,
+        "history_rows_retained": 0,
+        "history_rows_omitted": 0
+      },
+      {
+        "source_step": 13,
+        "request_bytes": 37462,
+        "prompt_tokens": 7992,
+        "history_rows_retained": 12,
+        "history_rows_omitted": 0
+      }
+    ],
+    "context_tokens": 32768,
+    "maximum_output_tokens": 1024,
+    "context_headroom_tokens": 512,
+    "current_facts_and_exact_memory_preserved": true,
+    "model_generation_requests": 0
+  },
+  "native_rpc_calls": 0,
+  "metered_model_api_cost_usd": 0,
+  "operating_costs": "unmeasured",
+  "temporary_servers_verified_stopped": true,
+  "limitations": [
+    "No native action was executed in these diagnostics.",
+    "API identity checks are not weight-file hash attestations; the separate verified launch receipt binds runtime and weight files.",
+    "Historical inputs were measured without generating actions or resuming that campaign.",
+    "Generic failed-decision checkpoint recovery remains unresolved.",
+    "This condition differs from earlier Ollama attempts and must not be presented as a matched model ranking."
+  ]
+}

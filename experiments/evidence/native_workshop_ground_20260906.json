@@ -1,0 +1,216 @@
+{
+  "schema_version": "fortgym.published-native-workshop-fixture/v1",
+  "code_revision": "82bcab14b758d6f4624e9080c857a607c2da0b51",
+  "autonomous_gameplay": false,
+  "model_ranking_evidence": false,
+  "provider_calls": 0,
+  "metered_model_api_charges_usd": "0",
+  "infrastructure_cost_usd": null,
+  "workshop_placement_policy": "dfhack_047_ground/v1",
+  "source_snapshot_receipt_sha256": "ca71bfd2032e864cced48e66f20f76827b92b9df2099f03476f2dd43234c2d3d",
+  "source_inventory_verified": true,
+  "terrain_predicate_verified": true,
+  "workshop_complete": true,
+  "elapsed_native_ticks": 4010,
+  "actions": [
+    {
+      "type": "WAIT",
+      "kind": null,
+      "requested_ticks": 10,
+      "actual_ticks": 10,
+      "accepted": true,
+      "why": null,
+      "native_result": null,
+      "sha256": "c3b4ba486351ceeef07cac6355fe816ddcc0b966f1e263f969e5f755ff29b562"
+    },
+    {
+      "type": "BUILD",
+      "kind": "CarpenterWorkshop",
+      "requested_ticks": 0,
+      "actual_ticks": 0,
+      "accepted": false,
+      "why": "no_building_material",
+      "native_result": {
+        "command_mutation": "not_attempted",
+        "error": "no_building_material",
+        "ok": false,
+        "workshop_placement_policy": "dfhack_047_ground/v1"
+      },
+      "sha256": "e34ff788753143b8d8d78534c74e2909fb57ea421c7fb3636c83fa9456176d94"
+    },
+    {
+      "type": "DIG",
+      "kind": "chop",
+      "requested_ticks": 2000,
+      "actual_ticks": 2000,
+      "accepted": true,
+      "why": null,
+      "native_result": {
+        "already_designated": 0,
+        "kind": "chop",
+        "non_tree_tiles": 0,
+        "ok": true,
+        "rect": [
+          92,
+          98,
+          161,
+          92,
+          98,
+          161
+        ],
+        "trees_designated": 1
+      },
+      "sha256": "d7a6397eb5fea36dc389a27f1598419c1ea13570c9fe4054d881062f4b5cd09d"
+    },
+    {
+      "type": "BUILD",
+      "kind": "CarpenterWorkshop",
+      "requested_ticks": 2000,
+      "actual_ticks": 2000,
+      "accepted": true,
+      "why": null,
+      "native_result": {
+        "after_buildings": 2,
+        "after_carpenter_workshops": 1,
+        "after_workshops_of_kind": 1,
+        "before_buildings": 1,
+        "before_carpenter_workshops": 0,
+        "before_workshops_of_kind": 0,
+        "building_id": 1,
+        "construction_stage": 0,
+        "height": 3,
+        "jobs_count": 1,
+        "kind": "CarpenterWorkshop",
+        "material_item_id": 776,
+        "material_item_type": "5",
+        "material_pos": [
+          91,
+          99,
+          161
+        ],
+        "ok": true,
+        "width": 3,
+        "workshop_placement_policy": "dfhack_047_ground/v1",
+        "x": 97,
+        "y": 95,
+        "z": 161
+      },
+      "sha256": "ca6a08702ba11c2c0da3a1bcb3d8ee09e969fc705ca55483f762fc5ec35297a4"
+    }
+  ],
+  "initial_materials": {
+    "free_flags": 0,
+    "in_building": 3,
+    "total": 3
+  },
+  "final_materials": {
+    "free_flags": 5,
+    "in_building": 4,
+    "total": 9
+  },
+  "initial_observation": {
+    "width": 11,
+    "height": 11,
+    "visible_tree_glyphs": 2,
+    "wood_usable": 0,
+    "fixture_tree_was_in_existing_model_map": true
+  },
+  "legacy_control": {
+    "command_mutation": "not_attempted",
+    "error": "tile_not_open_floor",
+    "failed": [
+      {
+        "error": "tile_not_open_floor",
+        "tile_shape": "BOULDER",
+        "tiletype": "StoneBoulder",
+        "x": 98,
+        "y": 95,
+        "z": 161
+      },
+      {
+        "error": "tile_not_open_floor",
+        "tile_shape": "SHRUB",
+        "tiletype": "ShrubDead",
+        "x": 99,
+        "y": 96,
+        "z": 161
+      }
+    ],
+    "failed_count": 2,
+    "failed_tile": {
+      "error": "tile_not_open_floor",
+      "tile_shape": "BOULDER",
+      "tiletype": "StoneBoulder",
+      "x": 98,
+      "y": 95,
+      "z": 161
+    },
+    "failed_truncated": false,
+    "ok": false
+  },
+  "final_workshops": [
+    {
+      "built": true,
+      "id": 1,
+      "max_stage": 3,
+      "pos": [
+        98,
+        96,
+        161
+      ],
+      "queued_job_details": [],
+      "queued_jobs": 0,
+      "stage": 3,
+      "stage_read_ok": true,
+      "subtype": "Carpenters"
+    }
+  ],
+  "native_start": {
+    "year": 30,
+    "year_tick": 19309
+  },
+  "native_final": {
+    "year": 30,
+    "year_tick": 23319,
+    "paused": true,
+    "population": 7,
+    "stocks": {
+      "food": 45,
+      "drink": 60,
+      "wood": 9,
+      "stone": 0,
+      "wood_usable": 5,
+      "stone_usable": 0,
+      "wealth": 9
+    },
+    "carpenter_workshops_usable": 1
+  },
+  "final_snapshot": {
+    "year": 30,
+    "year_tick": 23319,
+    "paused": true,
+    "inventory_verified": true,
+    "file_count": 127,
+    "total_bytes": 8628380,
+    "inventory_sha256": "9449ad1006b31f2aff4684f219e5e7921d79b90f280ec622f18501d5f54e5daf",
+    "world_sav_sha256": "f09a24afddce3c04bb2eaac8a8b83a92644793b66bf7741a4d2c7fc72cbf3e04"
+  },
+  "evidence_hashes": {
+    "worker-result.json": "6b91a0832e7935ec0485124908a494046b259b760908738da4739670ebd66278",
+    "result.json": "d54144d8e343956745cda5d2448b82004c45598939144149a104e0c8ecaa0eec"
+  },
+  "teardown": {
+    "receipt_verified": true,
+    "independent_process_check_empty": true,
+    "independent_listener_closed": true,
+    "production_calendar_unchanged": true,
+    "no_vm_created": true
+  },
+  "notes": [
+    "Scripted provider-free adapter acceptance, not autonomous play or model ranking evidence. The fixture final save is not a permitted substitute for the original matched-comparison start.",
+    "The control and new policy used the same footprint. Only the legacy strict-FLOOR predicate rejected its BOULDER/SHRUB tiles; the new policy correctly rejected absent free materials before native woodcutting produced logs.",
+    "The completed building reached native stage 3 of 3 after 4,010 explicitly requested fixture ticks. Nothing injected materials, enabled new labor, or completed work instantly.",
+    "The original model observation already exposed two tree glyphs and wood_usable=0, including the tree used by this fixture. A larger map is not necessary for this demonstrated sequence.",
+    "All source and final-save files were checked against retained inventories. Evidence hashes bind private receipts; raw observations, saves and model content are not published here."
+  ]
+}
