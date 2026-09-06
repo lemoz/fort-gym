@@ -2,7 +2,18 @@
 
 Verified September 6, 2026. The Year-Two Autonomous Play goal remains active.
 
-Latest: the [Mistral harness-repair run](../experiments/evidence/local_native_harness_repair_20260906.json)
+Latest: the [native-ground Mistral condition](../experiments/evidence/local_native_workshop_ground_20260906.json)
+has completed its first bounded segment: **five responses, 26,769 tokens and
+10,000 native ticks**. All five BUILD commands were rejected (one stale-cache,
+two occupied-footprint and two no-material rejections); no development completed.
+The cursor-5 checkpoint includes every response, command and usage record, and
+independent teardown verified the native runtime, model server/runner and tunnel
+are stopped. This is an invocation-limited pause with three segments and eleven
+dispatches still available, not a completed comparison. Continue on the isolated
+checkout at frozen native revision `82bcab14b758d6f4624e9080c857a607c2da0b51`; do
+not replace its HEAD with a reporting-only commit before resuming.
+
+Earlier: the [Mistral harness-repair run](../experiments/evidence/local_native_harness_repair_20260906.json)
 finished at **28,000 native elapsed ticks**, with 16/16 returned and accounted
 requests, 96,919 tokens and $0 metered model API charges. Four checkpoints retain
 all 16 committed commands and usage. All four copied runtimes/listeners, the local
@@ -86,9 +97,32 @@ eight failed tiles split evenly between BOULDER and SHRUB. The source hash and
 rule locations are retained in the new bundle. This is not proof those complete
 footprints had available materials or met every other placement condition.
 
-Next: align campaign placement with ordinary native rules under a separately
-declared condition, and verify native construction/material behavior. Then seek
-completed production, repeat matched model attempts, and expand the time horizon.
+The explicit `dfhack_047_ground/v1` workshop condition is now implemented at
+`82bcab14b758d6f4624e9080c857a607c2da0b51`; legacy strict-FLOOR behavior remains the
+default. A [provider-free native fixture](../experiments/evidence/native_workshop_ground_20260906.json)
+verified the complete material/construction path: its strict control rejected
+BOULDER/SHRUB terrain, the new policy passed terrain and correctly rejected absent
+free material, then native woodcutting supplied logs and a carpenter's workshop
+reached stage **3 of 3**. This took **4,010 scripted native ticks**, with zero model
+calls, no material injection, no assisted completion and no labor-setting changes.
+The final 127-file save inventory and independent process/listener teardown were
+verified. Production remained paused at year 30, tick 19,309. This fixture does not
+count toward model development, endurance, or rankings, and its save is not reused
+as a model campaign starting state.
+
+The three original logs were already `in_building`; `wood_usable` was zero. The
+existing 11x11 model map already showed two trees, including the fixture's tree.
+Do not misdiagnose this particular construction sequence as requiring extra map
+visibility or new inventory facts. The
+[new model condition](../experiments/campaigns/local_native_workshop_ground_v1.json)
+keeps observations and other bounds unchanged apart from factual workshop-policy
+disclosure, allowing a controlled test of the terrain repair.
+
+Next: resume the saved native-ground model campaign with its cumulative usage,
+then assess the completed condition before selecting another model or changing
+the interface. Seek completed production, repeated matched attempts and a longer
+time horizon. The model has not yet chosen woodcutting; the fixture is not a
+substitute for that autonomous decision.
 Retained runtime copies currently cost about 335 MB per segment versus about
 9 MB for its checkpoint. Use a bounded continuous-runtime/retention design before
 large endurance campaigns; no historical evidence has been deleted.
@@ -104,12 +138,25 @@ and feed. Focused static/typing and JavaScript syntax checks passed. Fresh remot
 CI verification is tracked on the PR.
 These test results do not substitute for native construction or website acceptance.
 
+The prior full CI run at `d396c456fb30a247925115de762aa45154031f47` passed. The
+workshop change passed **685 focused local tests** (one Linux-only skip), including
+20 additional Lua control-flow cases, and **142 isolated Linux tests** (20 Lua
+cases skipped there). Native fixture success is separate evidence above. Remote
+CI for `82bcab14b758d6f4624e9080c857a607c2da0b51` passed in run `34026849553`.
+
 ## Website and repository
 
 The existing campaign page now supports versioned terminal snapshots even when no
 live feed is configured, with profile, command mix, adapter-readiness limitations,
 native time, resources, costs and source identity. A broken configured live source
 still reports an error instead of pretending old data is current.
+
+There are now **five recorded model snapshots**, including the explicitly partial
+native-ground campaign. The successful scripted workshop fixture has a separate
+adapter-acceptance section and evidence link, never a model-comparison row. The
+latest combined local suite passed **687 tests** with one Linux-only skip; targeted
+typing, static and JavaScript syntax checks also passed. No browser-only preview
+or visual QA was performed in this background goal continuation.
 
 [Draft PR #125](https://github.com/lemoz/fort-gym/pull/125) is the integration surface.
 The website/reporting code is separate from the frozen native execution revision.

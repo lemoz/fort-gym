@@ -15,7 +15,7 @@ CONFIG = {"condition_id": "test-condition", "models": ["test-model"]}
 
 def test_three_published_native_attempts_preserve_distinct_failure_causes():
     result = records.campaign_feed(None)
-    assert result["configured"] is False and result["published_snapshots"] == 4
+    assert result["configured"] is False and result["published_snapshots"] == 5
     by_model = {
         row["model"]: row
         for row in result["campaigns"]
@@ -47,7 +47,7 @@ def test_recorded_comparison_is_served_without_enabling_a_live_directory(monkeyp
     client = TestClient(server.app)
     response = client.get("/public/campaign-feed")
     assert response.status_code == 200 and response.json()["configured"] is False
-    assert len(response.json()["campaigns"]) == 4
+    assert len(response.json()["campaigns"]) == 5
     assert "no-store" in response.headers["cache-control"]
     assert client.get("/campaigns").status_code == 200
 
@@ -78,6 +78,42 @@ def test_repair_record_preserves_clock_and_checkpoint_without_claiming_success()
     assert repaired["elapsed_ticks"] < 403200
     assert repaired["functioning_fortress"] == "not_assessed"
     assert repaired["comparison_rankings_available"] is False
+
+
+def test_native_workshop_fixture_is_visible_but_never_a_model_comparison_row():
+    from fort_gym.bench.api import server
+
+    path = records.PROJECT_ROOT / "experiments/evidence/native_workshop_ground_20260906.json"
+    fixture = json.loads(path.read_text())
+    assert fixture["autonomous_gameplay"] is False and fixture["model_ranking_evidence"] is False
+    assert fixture["provider_calls"] == 0 and fixture["elapsed_native_ticks"] == 4010
+    assert fixture["initial_materials"]["free_flags"] == 0
+    assert fixture["initial_observation"]["fixture_tree_was_in_existing_model_map"] is True
+    assert fixture["final_snapshot"]["inventory_verified"] is True
+    workshop = fixture["final_workshops"][0]
+    assert workshop["stage"] == workshop["max_stage"] == 3 and workshop["built"] is True
+    assert fixture["teardown"]["independent_process_check_empty"] is True
+    assert fixture["teardown"]["independent_listener_closed"] is True
+    page = TestClient(server.app).get("/campaigns").text
+    assert "Adapter acceptance, not model performance" in page
+    assert "4,010 game ticks" in page and path.name in page
+    assert path.name not in records.PUBLISHED_BUNDLES
+
+
+def test_partial_ground_condition_keeps_model_failure_separate_from_successful_fixture():
+    record = next(
+        row
+        for row in records.campaign_feed(None)["campaigns"]
+        if row["condition_id"] == "local-native-workshop-ground-v1"
+    )
+    assert (record["committed_steps"], record["elapsed_ticks"]) == (5, 10000)
+    assert record["checkpoint_verified"] is True and record["cleanup_verified"] is True
+    assert record["actions"]["accepted"] == 0 and record["actions"]["rejected"] == 5
+    assert record["current_metrics"]["completed_workshops"] == 0
+    assert record["usage"]["total_tokens"] == 26769
+    assert record["usage"]["dispatched_requests"] == record["usage"]["accounted_responses"] == 5
+    assert record["comparison_rankings_available"] is False
+    assert record["code_revision"] == "82bcab14b758d6f4624e9080c857a607c2da0b51"
 
 
 @pytest.fixture

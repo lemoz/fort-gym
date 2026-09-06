@@ -15,6 +15,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 PUBLISHED_BUNDLES = (
     "local_native_packed_comparison_20260906.json",
     "local_native_harness_repair_20260906.json",
+    "local_native_workshop_ground_20260906.json",
 )
 
 
