@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from copy import deepcopy
 
 import pytest
@@ -45,7 +46,14 @@ class NativeSaveSimulation:
                 raise RuntimeError("RPC temporarily unavailable while saving")
             if self.complete and self.polls >= 2:
                 if self.state["autosave_requested"]:
+                    before = self.world.stat()
                     self.world.write_bytes(b"new native save")
+                    # Fast same-size fixture writes can share an mtime on Linux.
+                    # Model the completed writer's observable file update explicitly.
+                    os.utime(
+                        self.world,
+                        ns=(before.st_atime_ns, before.st_mtime_ns + 1_000_000_000),
+                    )
                 self.state["autosave_requested"] = False
         return deepcopy(self.state)
 
