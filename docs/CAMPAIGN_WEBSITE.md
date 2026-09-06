@@ -59,13 +59,27 @@ test environment, dotenv disabled, and the native adapter disabled:
   evidence selection, unknown-value handling, failure responses, bounded public
   projections, symlink rejection, immutable configuration links, and frontend DOM
   test doubles.
-- Targeted Ruff and mypy checks passed for all six added Python modules. Targeted
+- Targeted project-environment Ruff 0.15.21 and mypy checks passed for all six added Python modules. Targeted
   Ruff also passed for the new website tests; JavaScript syntax checks passed.
 - Repository-wide Ruff reports ten findings in unchanged legacy files.
   Repository-wide mypy reports 475 errors across 28 files. Those existing-area
   findings are not silently fixed or represented as a clean repository-wide check.
 
+Run Ruff through the project's Python environment (`python -m ruff`), not an
+unrelated global executable. The separately installed Ruff 0.16.1 enables additional
+default rules and reports more style findings; it is not the version used for the
+ten-finding result above. No rule suppressions or exception-contract changes were
+introduced to manufacture a clean global-linter result.
+
 This background goal run did not perform browser visual acceptance or production
 deployment. Local source tests, remote CI, merge, deployment, and deployed website
 acceptance are separate proof steps. This branch is a bounded delivery candidate;
 the overall autonomous year-two and cross-model evaluation goal remains open.
+
+Source review checked the exact main-based diff, read-only route additions,
+dedicated-feed and public-record boundaries, data rendered as text, immutable
+condition links, source-file equality with the published integration revision,
+and isolation from existing runtime behavior. Review corrected the historical
+timeout heading to "Published result" so an active newer campaign does not make
+the static page falsely label the timeout as the latest attempt. This is an
+implementer review with regression coverage, not an independent peer approval.

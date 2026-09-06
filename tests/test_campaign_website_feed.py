@@ -9,6 +9,7 @@ from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
+
 from fort_gym.bench.run.campaign_feed import (
     CampaignFeed,
     initialize_feed,
