@@ -51,7 +51,7 @@ assert.equal(helpers.configurationUrl({condition_id:'local-native-llama-long-v2'
 
 def test_three_published_native_attempts_preserve_distinct_failure_causes():
     result = records.campaign_feed(None)
-    assert result["configured"] is False and result["published_snapshots"] == 10
+    assert result["configured"] is False and result["published_snapshots"] == 11
     by_model = {
         row["model"]: row
         for row in result["campaigns"]
@@ -83,7 +83,7 @@ def test_recorded_comparison_is_served_without_enabling_a_live_directory(monkeyp
     client = TestClient(server.app)
     response = client.get("/public/campaign-feed")
     assert response.status_code == 200 and response.json()["configured"] is False
-    assert len(response.json()["campaigns"]) == 10
+    assert len(response.json()["campaigns"]) == 11
     assert "no-store" in response.headers["cache-control"]
     assert client.get("/campaigns").status_code == 200
 
@@ -214,9 +214,44 @@ def test_long_native_timeout_preserves_missing_usage_and_nonresumable_save():
     assert segment["forensic_native_save"]["resumable_checkpoint"] is False
     assert segment["forensic_native_save"]["save_bytes"] == 8621334
     page = TestClient(server.app).get("/campaigns").text
-    assert "Published result: local model timeout" in page and filename in page
+    assert "Earlier result: local model timeout" in page and filename in page
     assert "21,429 accounted tokens" in page
     assert "One request has no returned token usage" in page
+
+
+def test_long_v2_keeps_manufacturing_output_limit_and_recovery_distinct():
+    from fort_gym.bench.api import server
+
+    rows = records.campaign_feed(None)["campaigns"]
+    row = next(r for r in rows if r["campaign_id"] == "local-long-v2-qwen35-20260906-a")
+    assert (row["committed_steps"], row["elapsed_ticks"]) == (42, 53500)
+    assert row["usage"]["total_tokens"] == 442693
+    assert row["usage"]["accounted_responses"] == row["usage"]["dispatched_requests"] == 45
+    assert row["usage"]["dispatches_without_returned_usage"] == 0
+    assert row["current_metrics"]["completed_workshops"] == 1
+    assert row["current_metrics"]["completed_beds"] == 0
+    assert row["current_metrics"]["completed_farms"] == 0
+    assert row["current_metrics"]["functional_rooms"] is None
+    assert row["checkpoint_verified"] is False and row["cleanup_verified"] is True
+    assert row["functioning_fortress"] == row["fortress_collapse"] == "not_assessed"
+    assert row["code_revision"] == "60fd08415b10adfe52a0d275c826669dad843937"
+    filename = "local_native_llama_long_v2_20260906.json"
+    bundle = json.loads((records.PROJECT_ROOT / "experiments/evidence" / filename).read_text())
+    assert bundle["terminal_response"]["finish_reason"] == "length"
+    assert bundle["terminal_response"]["content_characters"] == 0
+    assert bundle["terminal_response"]["usage"]["completion_tokens"] == 2048
+    assert bundle["recovery"]["latest_verified_periodic_cursor"] == 40
+    assert bundle["recovery"]["controller_handoff_cursor"] == 32
+    assert bundle["recovery"]["automatic_resume_safe"] is False
+    assert bundle["manufacturing_evidence"]["manufactured_bed_items"] == 5
+    assert bundle["manufacturing_evidence"]["type_read_failures"] == 0
+    assert bundle["observation_caveat"]["read_only_crosscheck"]["inventory_drink_units"] == 46
+    assert bundle["observation_caveat"]["historical_trace_rewritten"] is False
+    assert bundle["teardown"]["production_deployed"] is False
+    page = TestClient(server.app).get("/campaigns").text
+    assert "five manufactured beds" in page and filename in page
+    assert "442,693 tokens" in page and "40 commands, not 42" in page
+    assert "Historical food and drink values are UI estimates" in page
 
 
 def test_native_workshop_fixture_is_visible_but_never_a_model_comparison_row():
@@ -359,6 +394,7 @@ def test_website_separates_incomplete_checkpoint_and_new_model_compatibility():
         "local-llama-qwen35-20260906-a",
         "local-thinking-qwen35-20260906-a",
         "local-long-qwen35-20260906-a",
+        "local-long-v2-qwen35-20260906-a",
     }
 
 
