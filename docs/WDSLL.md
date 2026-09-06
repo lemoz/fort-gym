@@ -23,11 +23,12 @@ boundaries and cumulative usage across continuations; stale reporting and unknow
 teardown are explicit. See [feed setup and proof limits](YEAR_TWO_CAMPAIGNS.md#active-and-recorded-campaign-website-feed).
 This is not yet a deployed live feed or a cross-model capability result.
 
-Remote delivery now has a separate main-based website milestone in
-[PR #126](https://github.com/lemoz/fort-gym/pull/126), commit `aa6bd2903`:
+Remote delivery now has a separately merged website milestone in
+[PR #126](https://github.com/lemoz/fort-gym/pull/126), main commit `97e4533`:
 read-only campaign tracking and ten recorded native attempts, with 1,064 local
-tests passed and five skipped. The VM/gameplay implementation remains on draft
-PR #125. Neither milestone is merged or deployed. See
+tests passed and five skipped, plus passing PR and post-merge main CI. The
+VM/gameplay implementation remains on draft PR #125. No production deployment
+is claimed. See
 [Campaign status](CAMPAIGN_STATUS.md) for the active experiment and exact proof
 boundaries; completion still requires the actual gameplay and live website.
 

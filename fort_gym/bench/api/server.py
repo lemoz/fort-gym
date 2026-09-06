@@ -648,7 +648,7 @@ async def serve_protocols():
 
 @app.get("/campaigns", response_class=FileResponse)
 async def serve_campaigns() -> FileResponse:
-    """Serve the campaign experiment tracking surface."""
+    """Serve the read-only campaign experiment tracking surface."""
     return _html_file_response("campaigns.html")
 
 

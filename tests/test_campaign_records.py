@@ -214,7 +214,7 @@ def test_long_native_timeout_preserves_missing_usage_and_nonresumable_save():
     assert segment["forensic_native_save"]["resumable_checkpoint"] is False
     assert segment["forensic_native_save"]["save_bytes"] == 8621334
     page = TestClient(server.app).get("/campaigns").text
-    assert "Latest attempt: local model timeout" in page and filename in page
+    assert "Published result: local model timeout" in page and filename in page
     assert "21,429 accounted tokens" in page
     assert "One request has no returned token usage" in page
 

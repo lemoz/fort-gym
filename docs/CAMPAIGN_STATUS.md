@@ -2,22 +2,29 @@
 
 Verified September 6, 2026. The Year-Two Autonomous Play goal remains active.
 
-Remote delivery: the read-only campaign website is now isolated from the large
-integration stack in [PR #126](https://github.com/lemoz/fort-gym/pull/126), commit
-`aa6bd2903e0b5af30ea4fc1476606f7f3919cd15`, based directly on main. Its full local
+Remote delivery: the read-only campaign website is now merged separately from the
+large integration stack via [PR #126](https://github.com/lemoz/fort-gym/pull/126).
+Remote main is `97e4533abe0194b99c463e2fffe8cfcfb9191581`; the reviewed source head
+is `f15c47830974c5490b50df5f3f12af40d64aa8da`. Its final full local
 suite passed **1,064 tests with 5 skipped**; 35 focused website tests passed.
 Ten terminal native records, two read-only evidence endpoints, the campaign page,
 and exact condition links are included. VM and gameplay-runner changes remain in
-the separate draft [PR #125](https://github.com/lemoz/fort-gym/pull/125). Remote main
-still points to its July 13 commit `82ee3e07859b2813fc4643d02aa034daecea6b18`.
-The website PR is open for review, not merged or deployed; remote CI is a separate
-check. This separates delivery milestones without waiting for year-two success.
+the separate draft [PR #125](https://github.com/lemoz/fort-gym/pull/125).
+[Final PR CI](https://github.com/lemoz/fort-gym/actions/runs/34044644492) and
+[post-merge main CI](https://github.com/lemoz/fort-gym/actions/runs/34044875137)
+both passed. Review was implementer source review, not independent peer approval.
+No deployment hooks, environments, or deployment workflow were configured at the
+pre-merge check. The production website was not deployed or restarted. Main is
+merged back into the integration branch, preserving the immutable evidence links
+and avoiding duplicate mobile Campaigns links; 62 reconciliation regressions passed.
 
 In progress: `local-long-v2-qwen35-20260906-a` is executing the frozen long-v2
 condition at `60fd08415b10adfe52a0d275c826669dad843937`. At this checkpoint review,
-ten committed commands and eleven returned/accounted responses total 87,329 tokens
-and 5,000 elapsed native ticks. Wood has increased from three to nine; population
-is seven, food 45, drink 60, and no construction is complete. This is an observation
+24 committed commands and 25 returned/accounted responses total 237,078 tokens
+and 25,000 elapsed native ticks. A carpenter's workshop has completed; the native
+goods trace also shows beds increasing from zero to three after workshop orders,
+which is inventory output, not placed beds. At this sampled boundary wood is four,
+population seven, food 45 and drink 60. This is an observation
 of a running attempt, not a terminal result or proof of sustainability.
 
 The first periodic native/agent/trace/usage checkpoint at cursor 8 was independently

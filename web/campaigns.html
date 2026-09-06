@@ -49,42 +49,42 @@
       <a href="/public/campaign-feed">Open campaign summary data</a>
     </section>
     <section class="campaign-condition" aria-labelledby="latest-result-title">
-      <h2 id="latest-result-title">Latest attempt: local model timeout</h2>
+      <h2 id="latest-result-title">Published result: local model timeout</h2>
       <p>The longer Qwen3.5 9B attempt stopped when its fourth request timed out. Three responses returned, totaling 21,429 accounted tokens. Two workshop commands were rejected and one wait was accepted, advancing the game by 1,000 ticks. No workshop was completed.</p>
       <p class="campaign-note">One request has no returned token usage. The final native save was retained for investigation, but there is no resumable campaign checkpoint. The game and temporary model server were stopped. This is an inference failure, not fortress collapse or a completed campaign.</p>
-      <a href="https://github.com/lemoz/fort-gym/blob/codex/year-two-campaigns/experiments/evidence/local_native_llama_long_timeout_20260906.json">Read the timeout result and retained evidence</a>
+      <a href="https://github.com/lemoz/fort-gym/blob/60fd08415b10adfe52a0d275c826669dad843937/experiments/evidence/local_native_llama_long_timeout_20260906.json">Read the timeout result and retained evidence</a>
     </section>
     <section class="campaign-condition" aria-labelledby="resource-result-title">
       <h2 id="resource-result-title">Earlier result: autonomous wood collection</h2>
       <p>Qwen3.5 9B with thinking enabled increased wood stock from 3 to 12 in 5,000 native ticks. Its eight commands included gathering, two rejected chopping attempts, corrected chopping commands and a wait. All eight responses and 58,359 tokens are accounted for.</p>
       <p class="campaign-note">The final checkpoint covers all eight commands and responses. Seven dwarves remain, with food and drink stocks of 45 and 60. No workshop, bed or farm is completed. Both copied games and the temporary model server were stopped. This is a short resource-gain result, not year-two success or a model ranking.</p>
-      <a href="https://github.com/lemoz/fort-gym/blob/codex/year-two-campaigns/experiments/evidence/local_native_llama_thinking_20260906.json">Read the autonomous resource-gain result and receipts</a>
+      <a href="https://github.com/lemoz/fort-gym/blob/60fd08415b10adfe52a0d275c826669dad843937/experiments/evidence/local_native_llama_thinking_20260906.json">Read the autonomous resource-gain result and receipts</a>
     </section>
     <section class="campaign-condition" aria-labelledby="wait-result-title">
       <h2 id="wait-result-title">Earlier result: valid commands, no development</h2>
       <p>Qwen3.5 9B completed its bounded non-thinking attempt with 16 wait commands, 1,600 native ticks and 142,218 accounted tokens. Seven dwarves survived this short window; food and drink stocks stayed at 45 and 60. No gathering or construction was initiated.</p>
       <p class="campaign-note">The final save covers all 16 commands and responses. Both copied games and the temporary model server were stopped. This is a dispatch-limited pause, not a functioning fortress or a model ranking.</p>
-      <a href="https://github.com/lemoz/fort-gym/blob/codex/year-two-campaigns/experiments/evidence/local_native_llama_typed_20260906.json">Read the native model result and verified continuation evidence</a>
+      <a href="https://github.com/lemoz/fort-gym/blob/60fd08415b10adfe52a0d275c826669dad843937/experiments/evidence/local_native_llama_typed_20260906.json">Read the native model result and verified continuation evidence</a>
     </section>
     <section class="campaign-condition" aria-labelledby="earlier-result-title">
       <h2 id="earlier-result-title">Earlier result: request-size pause</h2>
       <p>The Qwen14 control-reference attempt recorded 14 rejected commands and 2,800 native ticks, with no completed fortress development. All 15 responses and 78,023 tokens are accounted for.</p>
       <p class="campaign-note">The latest save covers 12 commands, not 14. Two newer commands and a malformed response need reconciliation before continuation. This stopped at the request-size limit, not the spending cap; it is not a completed campaign or a verified fortress collapse.</p>
-      <a href="https://github.com/lemoz/fort-gym/blob/codex/year-two-campaigns/experiments/evidence/local_native_designation_reference_20260906.json">Read the terminal campaign and checkpoint evidence</a>
+      <a href="https://github.com/lemoz/fort-gym/blob/60fd08415b10adfe52a0d275c826669dad843937/experiments/evidence/local_native_designation_reference_20260906.json">Read the terminal campaign and checkpoint evidence</a>
     </section>
     <section class="campaign-condition" aria-labelledby="adapter-title">
       <h2 id="adapter-title">Adapter acceptance, not model performance</h2>
       <p>A scripted native test chopped a tree and completed one carpenter’s workshop in 4,010 game ticks. It used real materials and dwarf construction jobs, with no model calls or instant completion.</p>
       <p class="campaign-note">The isolated game was stopped and its final save verified. This test does not count toward any model’s fortress development or year-two result.</p>
-      <a href="https://github.com/lemoz/fort-gym/blob/codex/year-two-campaigns/experiments/evidence/native_workshop_ground_20260906.json">Read the native workshop fixture evidence</a>
+      <a href="https://github.com/lemoz/fort-gym/blob/60fd08415b10adfe52a0d275c826669dad843937/experiments/evidence/native_workshop_ground_20260906.json">Read the native workshop fixture evidence</a>
     </section>
     <section class="campaign-condition" aria-labelledby="compatibility-title">
       <h2 id="compatibility-title">Local model compatibility, not gameplay</h2>
       <p>Qwen3.5 9B copied two of three supplied test commands exactly with the existing contract, dropping the gather operation from the third. A typed-contract follow-up copied all three exactly. The two checks used 1,207 and 5,303 tokens respectively, with no metered model API charges; operating costs are unmeasured.</p>
       <p class="campaign-note">The typed contract did not fit fourteen historical requests under their old size limit. The new local adapter measures tokens separately from payload bytes: two retained native inputs fit at 5,466 and 7,992 prompt tokens without dropping history. Its three-command check copied all three exactly, using another 5,303 accounted tokens.</p>
       <p class="campaign-note">No game was loaded and no native actions were executed. The temporary server was stopped. This diagnostic is excluded from model-performance rows and rankings.</p>
-      <a href="https://github.com/lemoz/fort-gym/blob/codex/year-two-campaigns/experiments/evidence/local_qwen35_9b_feasibility_20260906.json">Read the compatibility result and pinned model provenance</a>
-      <a href="https://github.com/lemoz/fort-gym/blob/codex/year-two-campaigns/experiments/evidence/local_llama_adapter_20260906.json">Read the measured local-adapter checks</a>
+      <a href="https://github.com/lemoz/fort-gym/blob/60fd08415b10adfe52a0d275c826669dad843937/experiments/evidence/local_qwen35_9b_feasibility_20260906.json">Read the compatibility result and pinned model provenance</a>
+      <a href="https://github.com/lemoz/fort-gym/blob/60fd08415b10adfe52a0d275c826669dad843937/experiments/evidence/local_llama_adapter_20260906.json">Read the measured local-adapter checks</a>
     </section>
     <p id="catalog-status" role="status" aria-live="polite">Loading published experiment evidence…</p>
     <div id="catalog-content" hidden>

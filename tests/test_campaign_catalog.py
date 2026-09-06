@@ -64,13 +64,15 @@ def test_campaign_http_routes_and_assets():
     assert page.status_code == 200 and "no-store" in page.headers["cache-control"]
     assert "Campaign experiments" in page.text
     assert "not a model ranking" in page.text
+    assert "Published result: local model timeout" in page.text
+    assert "Latest attempt: local model timeout" not in page.text
     response = client.get("/public/campaign-experiments")
     assert response.status_code == 200 and "no-store" in response.headers["cache-control"]
     assert response.json() == campaign_catalog()
     for asset in ("campaigns.js", "campaigns.css"):
         assert client.get(f"/static/{asset}").status_code == 200
     for page in ("landing.html", "results.html"):
-        assert 'href="/campaigns"' in (PROJECT_ROOT / "web" / page).read_text()
+        assert (PROJECT_ROOT / "web" / page).read_text().count('href="/campaigns"') == 2
 
 
 def test_missing_catalog_is_service_error_not_empty_results(monkeypatch):
