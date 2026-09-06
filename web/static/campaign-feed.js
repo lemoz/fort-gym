@@ -15,7 +15,10 @@
     runtime: 'Runtime failure', checkpoint: 'Checkpoint failure', unclassified: 'Unclassified failure' };
   const conditionFiles = {
     'development-continuation-v1': 'development_continuation_v1.json',
-    'development-autonomous-v1': 'development_autonomous_v1.json'
+    'development-autonomous-v1': 'development_autonomous_v1.json',
+    'endurance-autonomous-v1': 'endurance_autonomous_v1.json',
+    'local-native-development-v1': 'local_native_development_v1.json',
+    'local-native-visible-contract-v1': 'local_native_visible_contract_v1.json'
   };
   function known(value) { return typeof value === 'number' && Number.isFinite(value) && value >= 0; }
   function number(value) { return known(value) ? value.toLocaleString('en-US') : 'Unknown'; }
@@ -24,6 +27,14 @@
     const amount = Number(value);
     if (amount > 0 && amount < 0.000001) return '< $0.000001';
     return Number.isFinite(amount) && amount >= 0 ? `$${amount.toFixed(6)}` : 'Unknown';
+  }
+  function modelCost(usage) {
+    if (usage?.cost_basis === 'self_hosted_no_metered_provider') {
+      const charge = usage.metered_provider_charge_usd;
+      const zero = typeof charge === 'string' && /^0+(\.0+)?([eE][+-]?\d+)?$/.test(charge);
+      return zero ? '$0 model API · self-hosted' : 'Model API charge unknown · self-hosted';
+    }
+    return money(usage?.reported_model_cost_usd);
   }
   function duration(ticks) { return known(ticks) ? `${number(ticks)} ticks · ${(ticks / TICKS_PER_YEAR).toFixed(3)} years` : 'Unknown'; }
   function stateLabel(row, disconnected) {
@@ -35,7 +46,7 @@
     if (row.lifecycle === 'awaiting_teardown') return 'Awaiting teardown report';
     return failureNames[row.failure_kind] || statusNames[row.segment_status] || 'Unknown';
   }
-  const helpers = { number, money, duration, stateLabel };
+  const helpers = { number, money, modelCost, duration, stateLabel };
   if (typeof module !== 'undefined') module.exports = helpers;
   if (typeof document === 'undefined') return;
   const $ = id => document.getElementById(id);
@@ -63,8 +74,10 @@
     node('p', `${number(row.committed_steps)} committed actions; ${duration(row.elapsed_ticks)}.`, panel);
     node('p', `Checkpoint: ${row.checkpoint_verified ? 'verified' : 'not verified'}. Teardown: ${row.cleanup_verified === true ? 'verified' : row.cleanup_verified === false ? 'not verified' : 'unknown'}.`, panel);
     const usage = row.usage || {};
-    node('p', `${money(usage.reported_model_cost_usd)} response-reported model usage; ${number(usage.total_tokens)} tokens. ${number(usage.returned_responses)} returned responses across ${number(usage.dispatched_requests)} dispatches. ${number(usage.dispatches_without_returned_usage)} dispatches lack returned usage. This is not reconciled billing or remaining budget.`, panel);
-    if (money(usage.reported_model_cost_usd) !== 'Unknown') node('p', `Exact reported cost: ${usage.reported_model_cost_usd} USD.`, panel);
+    const local = usage.cost_basis === 'self_hosted_no_metered_provider';
+    node('p', `${modelCost(usage)}${local ? '' : ' response-reported model usage'}; ${number(usage.total_tokens)} tokens. ${number(usage.returned_responses)} returned responses across ${number(usage.dispatched_requests)} dispatches. ${number(usage.dispatches_without_returned_usage)} dispatches lack returned usage. This is not reconciled billing or remaining budget.`, panel);
+    if (local) node('p', 'Hardware, electricity and infrastructure costs are not measured here. Zero model API charges do not mean zero operating cost.', panel);
+    if (!local && money(usage.reported_model_cost_usd) !== 'Unknown') node('p', `Exact reported cost: ${usage.reported_model_cost_usd} USD.`, panel);
     const summaries = row.metric_summaries || {};
     const body = table(panel, 'Observed state, not an inferred success score', ['Measure', 'Start', 'Latest', 'Change', 'Observed min / max']);
     Object.entries(metricNames).forEach(([key, label]) => {
@@ -117,7 +130,8 @@
       node('td', number(metrics.population), tr);
       node('td', `${number(metrics.food_stock)} / ${number(metrics.drink_stock)}`, tr);
       node('td', `${number(metrics.completed_workshops)} / ${number(metrics.completed_beds)} / ${number(metrics.completed_farms)}`, tr);
-      node('td', money(row.usage?.reported_model_cost_usd), tr);
+      const cost = node('td', modelCost(row.usage), tr);
+      if (row.usage?.cost_basis === 'self_hosted_no_metered_provider') node('small', 'Operating costs unknown', cost);
     });
     if (!rows.length) node('td', 'No campaign summaries match this condition.', node('tr', undefined, $('campaign-feed-rows'))).colSpan = 7;
     inspect(rows.find(row => row.campaign_id === selected));

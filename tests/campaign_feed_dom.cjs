@@ -8,6 +8,13 @@ for (const value of [null, undefined, false, true, '', ' ', [], {}, -1, NaN, Inf
 }
 assert.equal(helpers.money('0.003462525'), '$0.003463');
 assert.equal(helpers.money('3E-13'), '< $0.000001');
+const localCost = charge => helpers.modelCost({cost_basis:'self_hosted_no_metered_provider', metered_provider_charge_usd:charge});
+assert.equal(localCost('0'), '$0 model API · self-hosted');
+assert.equal(localCost('0.000e-3'), '$0 model API · self-hosted');
+for (const value of [null, undefined, false, true, 0, '', ' ', [], {}, '-1', '0.01', '1e-999', 'NaN']) {
+  assert.equal(localCost(value), 'Model API charge unknown · self-hosted');
+}
+assert.equal(helpers.modelCost({reported_model_cost_usd:'0.25'}), '$0.250000');
 assert.equal(helpers.number(null), 'Unknown');
 assert.equal(helpers.number(0), '0');
 assert.match(helpers.duration(403200), /1.000 years/);
@@ -33,6 +40,7 @@ first.model = '<img src=x onerror=alert(1)>';
 first.lifecycle = 'running'; first.freshness = 'stale';
 first.elapsed_ticks = 403200; first.current_metrics.population = 0;
 first.code_revision = 'javascript:alert(1)';
+first.usage = {...first.usage, cost_basis:'self_hosted_no_metered_provider', metered_provider_charge_usd:'0', reported_model_cost_usd:null};
 data.campaigns.push({...first, model:'second-model', campaign_id:'second', condition_id:'second-condition'});
 let fail = false, malformed = false, requests = 0;
 const fetch = async url => {
@@ -51,8 +59,12 @@ vm.runInNewContext(fs.readFileSync(process.argv[2], 'utf8'), {
   assert.match(row.children[1].textContent, /current state unknown/);
   assert.match(row.children[2].textContent, /1.000 years/);
   assert.equal(row.children[3].textContent, '0');
+  assert.match(row.children[6].textContent, /\$0 model API/);
+  assert.match(row.children[6].textContent, /Operating costs unknown/);
   row.children[0].children[1].events.click();
   assert.match(elements['campaign-profile-detail'].textContent, /not assessed/);
+  assert.match(elements['campaign-profile-detail'].textContent, /do not mean zero operating cost/);
+  assert.doesNotMatch(elements['campaign-profile-detail'].textContent, /Exact reported cost:/);
   assert.equal(elements['campaign-profile-detail'].children.some(child => child.href?.startsWith('javascript:')), false);
   elements['campaign-condition-filter'].value = 'second-condition';
   elements['campaign-condition-filter'].events.change();
