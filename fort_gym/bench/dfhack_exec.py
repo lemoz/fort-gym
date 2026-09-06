@@ -11,6 +11,7 @@ from shutil import which
 from typing import Dict, List
 
 from .config import DFHACK_RUN, DFROOT, dfhack_cmd
+from .drink_inventory import DRINK_INVENTORY_LUA
 
 
 class DFHackError(RuntimeError):
@@ -207,7 +208,7 @@ def set_paused(paused: bool, timeout: float = 1.0) -> None:
 def read_game_state(timeout: float = 2.5) -> Dict[str, object]:
     """Read game state via CLI and return as dict."""
 
-    lua_script = """
+    lua_script = DRINK_INVENTORY_LUA + """
 local json = require('json')
 local state = {}
 state.time = df.global.cur_year_tick or 0
@@ -237,10 +238,11 @@ for _, u in ipairs(df.global.world.units.active) do
 end
 state.population = dwarf_count
 
--- Use pre-computed food/drink counts from ui.tasks.food (no iteration needed)
+-- Food remains an explicitly unverified UI estimate. Drink is scanned below:
+-- ui.tasks.food.drink stayed at 60 while a paused native scan found 46 units.
 local food_stats = df.global.ui.tasks.food
 local food_count = (food_stats.meat or 0) + (food_stats.fish or 0) + (food_stats.plant or 0) + (food_stats.other or 0)
-local drink_count = food_stats.drink or 0
+local drink_ui_estimate = food_stats.drink
 local wealth = df.global.ui.tasks.wealth.total or 0
 
 local wood_count = 0
@@ -252,6 +254,9 @@ local in_play = item_lists and item_lists.IN_PLAY or {}
 local wood_type = df.item_type and df.item_type.WOOD
 local boulder_type = df.item_type and df.item_type.BOULDER
 local blocks_type = df.item_type and df.item_type.BLOCKS
+local drink_inventory = read_drink_inventory(
+    item_lists and item_lists.IN_PLAY, df.item_type and df.item_type.DRINK)
+drink_inventory.ui_estimate = drink_ui_estimate
 
 -- "usable" mirrors the material filter the build hooks apply: an item that
 -- is claimed by a job, locked inside a (pending) building/construction, or
@@ -282,8 +287,14 @@ for _, item in ipairs(in_play) do
     end
 end
 
-state.stocks = {food=food_count, drink=drink_count, wood=wood_count, stone=stone_count,
+state.stocks = {food=food_count, drink=drink_inventory.units, wood=wood_count, stone=stone_count,
     wood_usable=wood_usable, stone_usable=stone_usable, wealth=wealth}
+state.stock_observations = {
+    schema_version = 'fortgym.stock-observations/v1',
+    food = {source = 'ui.tasks.food counters', freshness = 'unverified',
+        scope = 'UI estimate, not production/consumption'},
+    drink = drink_inventory,
+}
 state.hostiles = false
 -- Count our civ's dead dwarves for real. This was hardcoded 0 until G6
 -- attempt 1 (run 769f5034): a citizen drowned, population dropped 7->6,
@@ -311,7 +322,16 @@ print(json.encode(state))
         if not out:
             return {}
         # Parse the entire output as JSON (may be multi-line formatted)
-        return json.loads(out)
+        state = json.loads(out)
+        # DFHack 0.47's JSON encoder omits Lua nil object values. Reinsert an
+        # explicit unknown so downstream normalization cannot turn it into zero.
+        observations = state.get("stock_observations") if isinstance(state, dict) else None
+        drink = observations.get("drink") if isinstance(observations, dict) else None
+        if isinstance(drink, dict) and drink.get("complete") is not True:
+            stocks = state.get("stocks")
+            if isinstance(stocks, dict):
+                stocks["drink"] = None
+        return state
     except (DFHackError, json.JSONDecodeError):
         return {}
 
