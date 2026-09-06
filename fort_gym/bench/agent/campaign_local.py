@@ -15,7 +15,8 @@ from urllib.parse import urlsplit
 
 import httpx
 
-from .campaign_llm import CampaignLLMAgent
+from .campaign_context import PACKING, pack_messages
+from .campaign_llm import CAMPAIGN_SYSTEM_PROMPT, CampaignLLMAgent
 from .governed_llm import GovernedBudgetCapError, GovernedDecisionError
 
 COST_BASIS = "self_hosted_no_metered_provider"
@@ -195,14 +196,31 @@ class LocalCampaignAgent(CampaignLLMAgent):
         preview._memory = deepcopy(self._memory)
         preview._pending = deepcopy(self._pending)
         preview._record_previous_outcome(obs_text)
-        self._request_body(preview._campaign_messages(obs_text))
+        self._request_body(preview._campaign_messages(obs_text, obs_json))
 
-    def _request_body(self, messages) -> bytes:
+    def _campaign_messages(self, obs_text: str, obs_json: dict | None = None) -> list[dict]:
+        packing = self.config["local_inference"].get("prompt_packing", "none")
+        if packing == "none":
+            return super()._campaign_messages(obs_text, obs_json)
+        if packing != PACKING or obs_json is None:
+            raise ValueError("Unsupported campaign prompt packing or missing observation")
+        self._pre_dispatch_gate()
+        messages = pack_messages(
+            obs_json,
+            system_prompt=CAMPAIGN_SYSTEM_PROMPT,
+            memory_context=self._memory.get_context(include_recent=False),
+            fits=lambda candidate: self._body_fits(self._serialize_request(candidate)),
+        )
+        if messages is None:
+            raise GovernedBudgetCapError("Current native facts exceed the declared context bound")
+        return messages
+
+    def _serialize_request(self, messages) -> bytes:
         local = self.config["local_inference"]
         max_output_tokens = self._max_tokens
         if type(max_output_tokens) is not int or max_output_tokens < 1:
             raise LocalInferenceError("Local inference requires a bounded output token count")
-        body = json.dumps(
+        return json.dumps(
             {
                 "model": self._model,
                 "messages": [{**message} for message in messages]
@@ -225,12 +243,19 @@ class LocalCampaignAgent(CampaignLLMAgent):
             ensure_ascii=True,
             allow_nan=False,
         ).encode()
-        # The pinned Qwen byte-level tokenizer needs no more tokens than input
-        # bytes; reserve extra room for its short chat template and output.
-        if (
-            len(body) > self.config["max_request_bytes"]
-            or len(body) + max_output_tokens + 1024 > local["context_tokens"]
-        ):
+
+    def _body_fits(self, body: bytes) -> bool:
+        # Conservatively budget serialized bytes plus template/output headroom.
+        # This is a request allowance, not a claim of measured tokenizer fullness.
+        return (
+            len(body) <= self.config["max_request_bytes"]
+            and len(body) + self.config["max_output_tokens"] + 1024
+            <= self.config["local_inference"]["context_tokens"]
+        )
+
+    def _request_body(self, messages) -> bytes:
+        body = self._serialize_request(messages)
+        if not self._body_fits(body):
             raise GovernedBudgetCapError("Local request no longer fits its declared context bound")
         self._pre_dispatch_gate()
         return body
@@ -267,7 +292,15 @@ class LocalCampaignAgent(CampaignLLMAgent):
             self._tool_events.append(
                 {
                     "tool": "campaign_local.chat",
-                    "input": {"request_bytes": len(body)},
+                    "input": {
+                        "request_bytes": len(body),
+                        "request_sha256": hashlib.sha256(body).hexdigest(),
+                        **(
+                            {"messages": deepcopy(messages)}
+                            if self.config["local_inference"].get("prompt_packing") == PACKING
+                            else {}
+                        ),
+                    },
                     "output": {
                         **response,
                         "model_manifest_sha256": local["model_digests"][self._model],

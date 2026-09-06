@@ -100,12 +100,12 @@ class MemoryManager:
         self.recent_steps.append(record)
         self.compress_old_steps()
 
-    def get_context(self) -> str:
+    def get_context(self, *, include_recent: bool = True) -> str:
         if not self._enabled:
             return ""
         if (
             not self.summary
-            and not self.recent_steps
+            and (not include_recent or not self.recent_steps)
             and not self.pois
             and not self.failed_attempts
             and not self.gameplay_plan
@@ -120,14 +120,16 @@ class MemoryManager:
             lines.extend(self._format_poi_line(poi) for poi in self.pois[-10:])
         if self.failed_attempts:
             lines.append("Recent Failed Attempts:")
-            lines.extend(self._format_failed_attempt_line(item) for item in self.failed_attempts[-10:])
+            lines.extend(
+                self._format_failed_attempt_line(item) for item in self.failed_attempts[-10:]
+            )
         if self.gameplay_plan:
             lines.append("Gameplay Plan:")
             lines.append(self._format_gameplay_plan(self.gameplay_plan))
         if self.plan_reviews:
             lines.append("Recent Plan Reviews:")
             lines.extend(self._format_plan_review_line(item) for item in self.plan_reviews[-5:])
-        if self.recent_steps:
+        if include_recent and self.recent_steps:
             lines.append("Recent Steps:")
             lines.extend(step.to_line(self.step_max_chars) for step in self.recent_steps)
         return "\n".join(lines).strip()

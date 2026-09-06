@@ -15,6 +15,8 @@ from fort_gym.bench.agent.governed_llm import GovernedBudgetCapError
 from fort_gym.bench.config import get_settings
 from fort_gym.bench.eval.campaign_profile import usage_profile
 from fort_gym.bench.run.campaign_config import load_segment_config
+from fort_gym.bench.run.campaign_loop import CampaignLoop
+from fort_gym.bench.env.campaign_encoder import encode_campaign_observation
 from scripts.campaign_development import make_agent
 from scripts.campaign_run import budget_reached
 from scripts.campaign_segment import run_segment
@@ -364,3 +366,81 @@ def test_preflight_previews_pending_review_without_changing_memory(config, tmp_p
     assert agent.export_campaign_state() == before and len(calls) == 1
     agent.decide(next_observation, {})
     assert "Last Action: ACCEPTED" in calls[1]["messages"][1]["content"]
+
+
+def packed_config():
+    return load_segment_config(CONFIG.with_name("local_native_packed_comparison_v1.json"), MODEL)
+
+
+def test_packed_campaign_scales_to_64_decisions_with_bounded_requests(tmp_path, monkeypatch):
+    config = packed_config()
+    config["max_dispatches"] = 128
+    calls = fake_server(config, monkeypatch)
+
+    class VerboseRejectedEnvironment(TestEnvironment):
+        def screen(self):
+            return "native test screen " * 120
+
+        def apply(self, action, state):
+            self.actions.append(action)
+            return {
+                "accepted": False,
+                "why": "tile_not_designatable",
+                "result": {
+                    "failed": [
+                        {"x": i, "y": 1, "z": 3, "error": "ineligible_shape"} for i in range(25)
+                    ]
+                },
+            }
+
+    env = VerboseRejectedEnvironment()
+    loop = CampaignLoop(
+        campaign_id="local-test",
+        agent=policy(config, tmp_path),
+        environment=env,
+        output=tmp_path / "campaign",
+        observation_profile="campaign_state/v1",
+    )
+    for _ in range(64):
+        loop.step()
+    assert len(calls) == loop.next_step == 64
+    assert loop.at_boundary and not loop.failed
+    for call in calls:
+        assert len(json.dumps(call, ensure_ascii=True, allow_nan=False).encode()) <= 22000
+        selected = json.loads(
+            call["messages"][1]["content"].split("Native facts and recent commands:\n")[1]
+        )
+        assert selected["screen_text"] == env.screen()
+        assert "Recent Steps:" not in call["messages"][1]["content"]
+        assert selected["prompt_projection"]["latest_command_result_preserved"]
+    rows = [json.loads(line) for line in loop.trace.read_text().splitlines()]
+    assert [row["step"] for row in rows] == list(range(64))
+    assert len(rows[-1]["observation"]["last_action_result"]["result"]["failed"]) == 25
+    chat = next(
+        item["data"] for item in rows[-1]["events"] if item["data"]["tool"] == "campaign_local.chat"
+    )
+    assert chat["input"]["messages"] == calls[-1]["messages"][:-1]
+    assert len(chat["input"]["request_sha256"]) == 64
+
+
+def test_packed_preflight_preserves_state_when_current_facts_cannot_fit(tmp_path, monkeypatch):
+    config = packed_config()
+    calls = fake_server(config, monkeypatch)
+    agent = policy(config, tmp_path)
+    before = agent.export_campaign_state()
+    text, observed = encode_campaign_observation(
+        {}, screen_text="X" * 25000, action_history=[], last_action_result=None
+    )
+    with pytest.raises(GovernedBudgetCapError, match="Current native facts"):
+        agent.preflight_decision(text, observed)
+    assert agent.export_campaign_state() == before and not calls
+    assert not (tmp_path / "spend.jsonl").exists()
+
+
+@pytest.mark.parametrize("packing", ["unknown/v1", None, [], False])
+def test_unknown_prompt_packing_is_rejected(config, tmp_path, packing):
+    config["local_inference"]["prompt_packing"] = packing
+    path = tmp_path / "condition.json"
+    path.write_text(json.dumps(config))
+    with pytest.raises(ValueError, match="prompt packing"):
+        load_segment_config(path, MODEL)

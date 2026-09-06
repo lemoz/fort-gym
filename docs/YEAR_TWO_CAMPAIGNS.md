@@ -929,3 +929,45 @@ tunnel were stopped and independently checked absent. Their receipts, native sav
 traces and public summaries remain retained. Next work must address redundant
 history/request packing and terrain/action comprehension, then expand model coverage
 and native endurance. More accepted command counts alone are not the objective.
+
+## Packed three-model development condition
+
+The retained visible-contract run shows the growth directly: observation text grew
+from 8,801 to 12,064 bytes over five decisions, while serialized requests grew from
+15,028 to 21,459 bytes. Returned prompt telemetry ranged from 3,945 to 5,953 tokens.
+The earlier 22,000-byte stop was a conservative request allowance, not measured
+exhaustion of the model's 24,576-token context.
+
+`local-native-packed-comparison-v1` uses a declared `bounded_history/v1` projection:
+
+- Preserve every current native observation field, the complete latest command
+  result, the screen and persistent model-authored notes.
+- Omit duplicate recent-memory rendering and old per-target result-detail arrays.
+- Keep the largest newest action-history suffix that fits the exact serialized
+  request, with explicit retained/omitted counts in the model-visible projection.
+- If current facts still do not fit with no older history, pause before dispatch.
+  Never truncate the current world state or invent actions to fit a context window.
+
+Original observations, full trace rows and checkpoint memory remain unchanged.
+Packed local requests retain their model messages and request hash in private tool
+events for audit. The old conditions keep their previous prompt rendering. The
+new projection is part of configuration identity; it is not an in-place upgrade
+to a frozen campaign. A model-free 64-decision stress test stays within the existing
+22,000-byte request allowance and preserves current native/result details. This
+test is not native gameplay, a model evaluation or year-two evidence.
+
+The common condition declares Qwen2.5 7B Instruct, [Llama 3.1 8B Instruct](https://ollama.com/library/llama3.1:8b-instruct-q4_K_M)
+and [Mistral 7B Instruct v0.3](https://ollama.com/library/mistral:7b-instruct-v0.3-q4_K_M),
+each pinned to the exact downloaded Q4_K_M manifest in the configuration. The two
+additional public weight sets occupy 4,920,753,328 and 4,372,824,384 bytes in the
+existing verified external project cache. Local metadata reports native context
+capacities of 131,072 for Llama and 32,768 for Mistral; the common requested context
+remains 24,576. Model preparation alone does not establish interface or gameplay
+success. Only one model and one isolated game run at a time.
+
+Each model gets the same starting native save, prompt/control profiles, temperature,
+seed and declared limits: up to 16 model dispatches, 262,144 returned tokens, eight
+decisions per segment and four segments. This is a development comparison, still
+short of year-two endurance. Actual completed decisions, schema retries, pauses,
+elapsed native time and response usage must be reported, not assumed equal. It
+does not permit rankings from one attempt or combine cumulative segment subtotals.

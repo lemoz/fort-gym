@@ -95,6 +95,11 @@ def validate_local_settings(config: dict, model: str) -> None:
         "visible_action_contract/v1",
     }:
         raise ValueError("Unsupported local prompt contract")
+    packing = local.get("prompt_packing", "none")
+    if not isinstance(packing, str) or packing not in {"none", "bounded_history/v1"}:
+        raise ValueError("Unsupported local prompt packing")
+    if packing != "none" and prompt_contract != "visible_action_contract/v1":
+        raise ValueError("Packed campaigns require the visible action contract")
     for key, lower, upper in (
         ("context_tokens", 4096, 32768),
         ("timeout_seconds", 1, 180),

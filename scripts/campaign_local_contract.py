@@ -7,6 +7,7 @@ The supplied actions test transport fidelity, not autonomous gameplay ability.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 
@@ -37,6 +38,10 @@ def probe(agent: LocalCampaignAgent, output: Path) -> dict:
         "scope": "synthetic_action_format_only",
         "native_game_loaded": False,
         "native_actions_executed": 0,
+        "model": agent._model,
+        "configuration_sha256": hashlib.sha256(
+            json.dumps(agent.config, sort_keys=True, allow_nan=False).encode()
+        ).hexdigest(),
         "cases": [],
     }
     for expected in CASES:

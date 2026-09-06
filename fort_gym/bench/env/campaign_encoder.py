@@ -155,6 +155,12 @@ def encode_campaign_observation(
     observation["action_history"] = [_select(row, HISTORY_FIELDS) for row in action_history[-12:]]
     observation["last_action_result"] = deepcopy(last_action_result)
     observation["screen_text"] = screen_text
+    return render_campaign_observation(observation), observation
+
+
+def render_campaign_observation(observation: dict, *, compact: bool = False) -> str:
+    """Render an already selected observation; legacy spacing remains the default."""
+    last_action_result = observation.get("last_action_result")
     accepted = last_action_result.get("accepted") if isinstance(last_action_result, dict) else None
     result_label = (
         "ACCEPTED" if accepted is True else "REJECTED" if accepted is False else "UNKNOWN"
@@ -163,14 +169,20 @@ def encode_campaign_observation(
     # The first three lines and the Last Action line feed checkpointable memory.
     # JSON null remains visibly unknown, never an invented zero/death/empty stock.
     lines = [
-        f"Native calendar: year={state.get('year')} tick={state.get('year_tick')}",
-        f"Population: {state.get('population', 'unknown')}",
+        f"Native calendar: year={observation.get('year')} tick={observation.get('year_tick')}",
+        f"Population: {observation.get('population', 'unknown')}",
         "Stocks: " + json.dumps(observation.get("stocks"), sort_keys=True),
         f"Last Action: {result_label}" + ("; " + json.dumps(reason) if reason else ""),
         MAP_LEGEND,
         "Observations are bounded snapshots. Missing values, ok=false and incomplete/truncated "
         "scans are not evidence of absence. Stock changes do not measure production/consumption. "
         "Command acceptance does not establish completed work. No planning review is required.",
-        "Native facts and recent commands:\n" + json.dumps(observation, sort_keys=True),
+        "Native facts and recent commands:\n"
+        + json.dumps(
+            observation,
+            sort_keys=True,
+            separators=(",", ":") if compact else None,
+            allow_nan=not compact,
+        ),
     ]
-    return "\n".join(lines), observation
+    return "\n".join(lines)
