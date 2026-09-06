@@ -6,7 +6,9 @@ one fresh 20-tick action and second-process teardown. The local container and VM
 stopped. See the [receipt](../experiments/evidence/local_native_automatic_recovery_20260906.json).
 This provider-free fixture is not autonomous gameplay or year-two acceptance.
 The [fresh local Qwen3.5 experiment](../experiments/campaigns/local_native_qwen35_year_two_v1.json)
-is configured but unrun. PR #132 remains open and production is unchanged.
+is running its first bounded segment. At September 6, 23:17 UTC it had recorded
+six model-selected WAIT actions and 6,000 native ticks, not a completed segment
+or functioning fortress. PR #132 remains open and production is unchanged.
 
 ## Current direction: year-two campaigns (September 5, 2026)
 

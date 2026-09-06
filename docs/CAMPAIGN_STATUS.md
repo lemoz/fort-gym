@@ -4,6 +4,14 @@ Verified September 6, 2026. The Year-Two Autonomous Play goal remains active.
 
 ## Latest: automatic native recovery passed
 
+Live experiment checkpoint, September 6 at 23:17 UTC: the new local Qwen3.5
+campaign is running its first bounded segment at frozen source `fad9d80c0`.
+Six model-selected WAIT actions advanced 6,000 native ticks; the latest native
+record shows seven citizens and 60 drink units, with no completed development.
+No completed segment or resumable handoff is claimed yet. The existing local
+model and isolated local VM use an owned loopback tunnel; the bounded operator
+owns teardown. No cloud VM or hosted model charge is involved.
+
 Source `fad9d80c0a2e7aace8380b47b009db5edaf6bd2e` passed the automatic v3
 checkpoint recovery fixture on isolated Colima 0.10.3 / Lima 2.2.0 tooling.
 It saved cursor zero at year 30, tick 16801, stopped the first game process,
@@ -21,7 +29,7 @@ The new toolchain's successful boot/reboot does not explain old startup failures
 The next experiment uses the [new local Qwen3.5 condition](../experiments/campaigns/local_native_qwen35_year_two_v1.json):
 existing 9B quantized weights, optional thinking disabled, 4,096 output tokens,
 and the unchanged digest-bound starting seed, not the fixture's post-WAIT state.
-It is not yet run. The changed seed, runtime and budgets are declared; this is
+Its first segment is now running. The changed seed, runtime and budgets are declared; this is
 not a matched historical comparison. Year-two play and repeated model evaluation
 remain open. No production deployment is claimed.
 
