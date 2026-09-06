@@ -15,9 +15,9 @@ from urllib.parse import urlsplit
 
 import httpx
 
-from .campaign_context import CORRECTION_PACKING, PACKING, pack_messages
 from .campaign_action_reference import action_reference
 from .campaign_action_schema import LEGACY, action_tool
+from .campaign_context import CORRECTION_PACKING, PACKING, pack_messages
 from .campaign_llm import CAMPAIGN_SYSTEM_PROMPT, CampaignLLMAgent
 from .governed_llm import GovernedBudgetCapError, GovernedDecisionError
 
@@ -27,6 +27,12 @@ LEGACY_RESPONSE_INSTRUCTION = "Return the submit_action object as JSON, without 
 
 class LocalInferenceError(GovernedDecisionError):
     terminal_code = "campaign_local_inference_error"
+
+
+class LocalOutputLimitPause(LocalInferenceError):
+    """Validated, accounted response truncated before an action is returned."""
+
+    terminal_code = "campaign_output_token_limit"
 
 
 def local_endpoint(value: str) -> str:

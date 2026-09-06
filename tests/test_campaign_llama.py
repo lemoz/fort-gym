@@ -1,15 +1,18 @@
 """Local llama.cpp transport doubles: no live model, native game or hosted calls."""
 
-from copy import deepcopy
 import hashlib
 import json
+from copy import deepcopy
 from pathlib import Path
 
 import pytest
 
 from fort_gym.bench.agent import campaign_llama as llama
 from fort_gym.bench.agent import campaign_llama_identity as identity
-from fort_gym.bench.agent.campaign_local import LocalInferenceError
+from fort_gym.bench.agent.campaign_local import (
+    LocalInferenceError,
+    LocalOutputLimitPause,
+)
 from fort_gym.bench.agent.governed_llm import GovernedBudgetCapError
 from fort_gym.bench.run.campaign_config import (
     decision_time_reserve,
@@ -283,6 +286,117 @@ def test_actual_preflight_refreshes_cached_identity_before_dispatch(config, tmp_
     with pytest.raises(LocalInferenceError, match="template differs"):
         agent._create_completion(MESSAGES)
     assert not generations(calls)
+
+
+@pytest.mark.parametrize(
+    "content", ["", '{"type":', '{"type":"WAIT","params":{},"advance_ticks":20}']
+)
+def test_output_limit_is_accounted_but_never_returns_a_partial_action(
+    config, tmp_path, monkeypatch, content
+):
+    def mutate(response, props):
+        response["usage"].update(
+            completion_tokens=config["max_output_tokens"],
+            total_tokens=42 + config["max_output_tokens"],
+        )
+        response["choices"][0]["finish_reason"] = "length"
+        response["choices"][0]["message"].update(
+            content=content, reasoning_content="PRIVATE-REASONING"
+        )
+
+    calls, _ = fake_server(config, monkeypatch, mutate=mutate)
+    agent = policy(config, tmp_path)
+    with pytest.raises(LocalOutputLimitPause):
+        agent._create_completion(MESSAGES)
+    assert len(generations(calls)) == 1
+    assert (
+        agent.export_campaign_state()["usage"]["total_tokens"] == 42 + config["max_output_tokens"]
+    )
+    assert agent.export_campaign_state()["usage"]["accounted_responses"] == 1
+    assert agent.pop_tool_events()[0]["output"]["choices"][0]["message"]["content"] == content
+    journal = [json.loads(line) for line in (tmp_path / "spend.jsonl").read_text().splitlines()]
+    assert journal[-1]["type"] == "dispatch_finished_or_failed"
+    assert journal[-1]["usage"]["dispatched_requests"] == 1
+
+
+@pytest.mark.parametrize(
+    "fault", ["usage", "model", "prompt", "template", "role", "content", "tools", "short_length"]
+)
+def test_output_length_cannot_bypass_response_verification(config, tmp_path, monkeypatch, fault):
+    def mutate(response, props):
+        response["choices"][0]["finish_reason"] = "length"
+        response["usage"].update(
+            completion_tokens=config["max_output_tokens"],
+            total_tokens=42 + config["max_output_tokens"],
+        )
+        message = response["choices"][0]["message"]
+        if fault == "usage":
+            response["usage"]["total_tokens"] = None
+        elif fault == "model":
+            response["model"] = "different-model"
+        elif fault == "prompt":
+            response["usage"]["prompt_tokens"] += 1
+            response["usage"]["total_tokens"] += 1
+        elif fault == "template":
+            props["chat_template"] = "changed"
+        elif fault == "role":
+            message["role"] = "tool"
+        elif fault == "content":
+            message["content"] = None
+        elif fault == "tools":
+            message["tool_calls"] = [{"type": "function"}]
+        elif fault == "short_length":
+            response["usage"].update(completion_tokens=7, total_tokens=49)
+
+    calls, _ = fake_server(config, monkeypatch, mutate=mutate)
+    agent = policy(config, tmp_path)
+    with pytest.raises(LocalInferenceError) as error:
+        agent._create_completion(MESSAGES)
+    assert not isinstance(error.value, LocalOutputLimitPause)
+    assert len(generations(calls)) == 1
+
+
+def test_real_adapter_state_round_trips_after_output_pause_without_native_replay(
+    config, tmp_path, monkeypatch
+):
+    from fort_gym.bench.run.campaign_loop import CampaignLoop, CampaignNoActionPause
+    from tests.test_campaign_loop import TestEnvironment
+
+    def mutate(response, props):
+        response["choices"][0]["finish_reason"] = "length"
+        response["choices"][0]["message"]["content"] = ""
+        response["usage"].update(
+            completion_tokens=config["max_output_tokens"],
+            total_tokens=42 + config["max_output_tokens"],
+        )
+
+    calls, _ = fake_server(config, monkeypatch, mutate=mutate)
+    agent, environment = policy(config, tmp_path), TestEnvironment()
+    loop = CampaignLoop(
+        campaign_id="llama-test",
+        agent=agent,
+        environment=environment,
+        output=tmp_path / "loop",
+        observation_profile=config["observation_profile"],
+        advance_policy=config["advance_policy"],
+    )
+    with pytest.raises(CampaignNoActionPause):
+        loop.step()
+    checkpoint = tmp_path / "checkpoint"
+    loop.checkpoint(checkpoint, snapshotter=environment, code_revision="test-only")
+    saved = agent.export_campaign_state()
+    assert len(generations(calls)) == 1 and not environment.actions
+    restored_agent = policy(config, tmp_path / "resumed-model")
+    resumed = CampaignLoop.resume(
+        checkpoint,
+        agent=restored_agent,
+        environment=TestEnvironment(),
+        output=tmp_path / "resumed-loop",
+        latest_usage_path=loop.journal,
+    )
+    assert restored_agent.export_campaign_state() == saved
+    assert resumed.next_step == 0 and resumed.committed_elapsed_ticks == 0
+    assert len(generations(calls)) == 1 and not resumed.environment.actions
 
 
 @pytest.mark.parametrize(

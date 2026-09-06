@@ -1,4 +1,4 @@
-"""Bind a completed native save, agent state, and committed trace in one checkpoint.
+"""Bind a completed native save, agent state, and settled trace in one checkpoint.
 
 A checkpoint directory is resumable only when its final manifest and every bound
 file verify. Restore materializes a new save directory; it never overwrites a live
@@ -51,6 +51,7 @@ def verify_checkpoint(directory: Path) -> dict[str, Any]:
     if not isinstance(manifest, dict) or manifest.get("schema_version") not in (
         "fortgym.campaign-checkpoint/v1",
         "fortgym.campaign-checkpoint/v2",
+        "fortgym.campaign-checkpoint/v3",
     ):
         raise CampaignCheckpointError("Unsupported checkpoint manifest")
     payload = manifest.get("payload")
@@ -59,14 +60,88 @@ def verify_checkpoint(directory: Path) -> dict[str, Any]:
     for name, key in (("agent.json", "agent_sha256"), ("trace.jsonl", "trace_sha256")):
         if _digest(_read_regular(directory / name)) != payload.get(key):
             raise CampaignCheckpointError(f"Checkpoint digest mismatch: {name}")
-    if manifest["schema_version"] == "fortgym.campaign-checkpoint/v2":
+    if manifest["schema_version"] in {
+        "fortgym.campaign-checkpoint/v2",
+        "fortgym.campaign-checkpoint/v3",
+    }:
         for name, key in (("runner.json", "runner_sha256"), ("usage.jsonl", "usage_sha256")):
             if _digest(_read_regular(directory / name)) != payload.get(key):
                 raise CampaignCheckpointError(f"Checkpoint digest mismatch: {name}")
     receipt = payload.get("native_save")
     if not isinstance(receipt, dict) or save_inventory(directory / "game") != receipt.get("files"):
         raise CampaignCheckpointError("Checkpoint game save digest mismatch")
+    if manifest["schema_version"] == "fortgym.campaign-checkpoint/v3":
+        _verify_no_action_boundary(directory, payload)
     return manifest
+
+
+def _verify_no_action_boundary(directory: Path, payload: dict) -> None:
+    # Runtime import avoids a module-initialization cycle with the loop, which
+    # owns the shared usage-journal validator used by resume as well.
+    from .campaign_loop import _clock, reconciled_usage
+
+    pause_bytes = _read_regular(directory / "decision-pauses.jsonl")
+    if _digest(pause_bytes) != payload.get("decision_pauses_sha256"):
+        raise CampaignCheckpointError("Checkpoint no-action receipt digest mismatch")
+    boundary = payload.get("no_action_boundary")
+    if not isinstance(boundary, dict):
+        raise CampaignCheckpointError("Checkpoint lacks a no-action boundary")
+    _clock(boundary)
+    last, cursor = payload.get("last_committed_step"), payload.get("next_step")
+    if type(last) is not int or last < -1 or type(cursor) is not int or cursor != last + 1:
+        raise CampaignCheckpointError("No-action checkpoint cursor is invalid")
+    trace = _read_regular(directory / "trace.jsonl")
+    if cursor == 0:
+        if trace:
+            raise CampaignCheckpointError("Initial no-action checkpoint must have an empty trace")
+    else:
+        rows = [json.loads(line) for line in trace.splitlines()]
+        if not trace.endswith(b"\n") or not rows or any(not isinstance(row, dict) for row in rows):
+            raise CampaignCheckpointError("No-action checkpoint trace is incomplete")
+        steps = [row.get("step") for row in rows]
+        if (
+            any(type(step) is not int for step in steps)
+            or steps[0] not in (0, 1)
+            or steps != list(range(steps[0], cursor))
+            or any(row.get("run_id") != payload.get("run_id") for row in rows)
+        ):
+            raise CampaignCheckpointError("No-action checkpoint trace cursor differs")
+        final = rows[-1].get("tick_advance")
+        if not isinstance(final, dict) or (final.get("end_year"), final.get("end_tick")) != (
+            boundary["year"],
+            boundary["year_tick"],
+        ):
+            raise CampaignCheckpointError("No-action checkpoint differs from its committed trace")
+    native = payload["native_save"]
+    if native.get("paused") is not True or (native.get("year"), native.get("year_tick")) != (
+        boundary["year"],
+        boundary["year_tick"],
+    ):
+        raise CampaignCheckpointError("No-action checkpoint differs from its native boundary")
+    if not pause_bytes.endswith(b"\n"):
+        raise CampaignCheckpointError("No-action receipt is incomplete")
+    pause = json.loads(pause_bytes.splitlines()[-1])
+    usage_bytes = _read_regular(directory / "usage.jsonl")
+    agent = json.loads(_read_regular(directory / "agent.json"))
+    if not isinstance(agent, dict) or agent.get("campaign_id") != payload.get("campaign_id"):
+        raise CampaignCheckpointError("No-action checkpoint agent identity differs")
+    if reconciled_usage(agent, usage_bytes) != agent.get("usage"):
+        raise CampaignCheckpointError("No-action checkpoint usage is not fully reconciled")
+    decision = json.loads(usage_bytes.splitlines()[-1])
+    if (
+        not isinstance(pause, dict)
+        or pause.get("type") != "accounted_no_action/v1"
+        or pause.get("decision_started") is not True
+        or pause.get("reason") != "output_token_limit"
+        or pause.get("native_action_dispatched") is not False
+        or pause.get("native_boundary") != boundary
+        or pause.get("step") != payload.get("next_step")
+        or decision.get("outcome") != "accounted_no_action/v1"
+        or decision.get("native_boundary") != boundary
+        or decision.get("step") != payload.get("next_step")
+        or decision.get("usage") != agent.get("usage")
+    ):
+        raise CampaignCheckpointError("No-action checkpoint receipt or usage boundary differs")
 
 
 def create_checkpoint(
@@ -81,46 +156,69 @@ def create_checkpoint(
     parent: Path | None = None,
     runner_state: dict[str, Any] | None = None,
     usage_path: Path | None = None,
+    no_action_boundary: dict[str, Any] | None = None,
+    pauses_path: Path | None = None,
 ) -> dict[str, Any]:
-    """Capture at a paused, committed action boundary with decisions suspended.
+    """Capture a paused action boundary or fully accounted no-action boundary.
 
-    The runner must call after execution and trace fsync, not after model decision.
-    The pending action inside agent state is therefore for review, not execution.
+    Decisions must be suspended. Normal checkpoints follow execution and trace
+    fsync. A v3 no-action checkpoint instead binds settled usage and a receipt
+    proving no command was dispatched, including before the first game action.
+    Pending agent actions are for review, never execution during restoration.
     Incomplete destinations are retained for diagnosis without a final manifest.
     """
-    if type(last_committed_step) is not int or last_committed_step < 0:
+    if type(last_committed_step) is not int or last_committed_step < (
+        -1 if no_action_boundary is not None else 0
+    ):
         raise ValueError("last_committed_step must be a nonnegative integer")
     if not campaign_id or not code_revision:
         raise ValueError("Campaign identity and code revision are required")
     if (runner_state is None) != (usage_path is None):
         raise ValueError("Runner state and usage journal must be checkpointed together")
+    if (no_action_boundary is None) != (pauses_path is None) or (
+        no_action_boundary is not None and runner_state is None
+    ):
+        raise ValueError("No-action boundary requires loop state, usage and pause receipts")
     runner_bytes = _json_bytes(runner_state) if runner_state is not None else None
+    boundary_bytes = _json_bytes(no_action_boundary)
     usage_bytes = _read_regular(usage_path) if usage_path is not None else None
+    pause_bytes = _read_regular(pauses_path) if pauses_path is not None else None
     state = agent.export_campaign_state()
     if state.get("campaign_id") != campaign_id:
         raise CampaignCheckpointError("Agent belongs to another campaign")
     agent_bytes = _json_bytes(state)
     trace_bytes = _read_regular(trace_path)
-    if not trace_bytes.endswith(b"\n"):
+    empty_boundary = no_action_boundary is not None and last_committed_step == -1
+    if not trace_bytes.endswith(b"\n") and not (empty_boundary and not trace_bytes):
         raise CampaignCheckpointError("Trace does not end at a committed newline")
     rows = [json.loads(line) for line in trace_bytes.splitlines() if line.strip()]
-    if not rows or any(not isinstance(row, dict) for row in rows):
+    if (not rows and not empty_boundary) or any(not isinstance(row, dict) for row in rows):
         raise CampaignCheckpointError("Trace has no committed action records")
-    run_id = rows[0].get("run_id")
+    run_id = rows[0].get("run_id") if rows else campaign_id
     steps = [row.get("step") for row in rows]
     if (
         not isinstance(run_id, str)
         or not run_id
         or any(row.get("run_id") != run_id for row in rows)
         or any(type(step) is not int for step in steps)
-        or steps != list(range(steps[0], last_committed_step + 1))
-        or steps[0] not in (0, 1)
+        or (
+            bool(steps)
+            and (steps != list(range(steps[0], last_committed_step + 1)) or steps[0] not in (0, 1))
+        )
+        or (empty_boundary and bool(rows))
     ):
         raise CampaignCheckpointError("Trace cursor or run identity does not match the checkpoint")
     parent_manifest = verify_checkpoint(parent) if parent is not None else None
     if parent_manifest is not None and parent_manifest["payload"].get("campaign_id") != campaign_id:
         raise CampaignCheckpointError("Parent checkpoint belongs to another campaign")
-    tick_advance = rows[-1].get("tick_advance")
+    if rows:
+        tick_advance = rows[-1].get("tick_advance")
+    else:
+        assert no_action_boundary is not None  # Empty trace requires the v3 boundary above.
+        tick_advance = {
+            "end_year": no_action_boundary.get("year"),
+            "end_tick": no_action_boundary.get("year_tick"),
+        }
     if not isinstance(tick_advance, dict) or any(
         type(tick_advance.get(key)) is not int for key in ("end_year", "end_tick")
     ):
@@ -149,6 +247,8 @@ def create_checkpoint(
         or _json_bytes(agent.export_campaign_state()) != agent_bytes
         or (usage_path is not None and _read_regular(usage_path) != usage_bytes)
         or (runner_state is not None and _json_bytes(runner_state) != runner_bytes)
+        or (pauses_path is not None and _read_regular(pauses_path) != pause_bytes)
+        or _json_bytes(no_action_boundary) != boundary_bytes
     ):
         raise CampaignCheckpointError("Agent or trace changed during checkpoint capture")
     _write_new(destination / "agent.json", agent_bytes)
@@ -156,6 +256,8 @@ def create_checkpoint(
     if runner_bytes is not None and usage_bytes is not None:
         _write_new(destination / "runner.json", runner_bytes)
         _write_new(destination / "usage.jsonl", usage_bytes)
+    if pause_bytes is not None:
+        _write_new(destination / "decision-pauses.jsonl", pause_bytes)
     for record in native["files"]:
         with (destination / "game" / record["path"]).open("rb") as handle:
             os.fsync(handle.fileno())
@@ -172,9 +274,18 @@ def create_checkpoint(
     }
     if runner_bytes is not None and usage_bytes is not None:
         payload.update(runner_sha256=_digest(runner_bytes), usage_sha256=_digest(usage_bytes))
+    if pause_bytes is not None:
+        payload.update(
+            no_action_boundary=no_action_boundary, decision_pauses_sha256=_digest(pause_bytes)
+        )
+        # Invalid no-action receipts must leave only an incomplete diagnostic
+        # directory, never a published final checkpoint manifest.
+        _verify_no_action_boundary(destination, payload)
     manifest = {
         "schema_version": (
-            "fortgym.campaign-checkpoint/v2"
+            "fortgym.campaign-checkpoint/v3"
+            if no_action_boundary is not None
+            else "fortgym.campaign-checkpoint/v2"
             if runner_bytes is not None
             else "fortgym.campaign-checkpoint/v1"
         ),

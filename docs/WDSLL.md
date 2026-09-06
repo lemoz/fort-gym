@@ -44,6 +44,13 @@ automatic recovery remains unsafe without reconciliation. Historical UI food/dri
 counts are preserved and explicitly caveated. This is source delivery and native
 experimental progress, not a production deploy, sustainable fortress or year-two result.
 
+The integration candidate adds an [accounted output-limit recovery protocol](CAMPAIGN_OUTPUT_LIMIT_RECOVERY.md):
+v3 checkpoints can settle a verified no-command response, even before the first
+action, without resetting usage or replaying a move. The controller and public
+website status distinguish this pause from failed native execution. This is
+synthetic regression coverage pending real native acceptance, not permission to
+rewrite or resume the old long-v2 tail. The active goal and no-deploy boundary remain.
+
 ## Success statement (the one metric)
 
 **An LLM policy, issuing only legal governed actions, takes the fixed embark

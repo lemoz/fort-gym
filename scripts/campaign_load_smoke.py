@@ -73,8 +73,11 @@ def verify_load_source(directory: Path, digest: str, kind: str) -> tuple[Path, d
     ):
         raise CampaignSaveError("Campaign checkpoint file digest mismatch")
     manifest = verify_checkpoint(directory)
-    if manifest["schema_version"] != "fortgym.campaign-checkpoint/v2":
-        raise CampaignSaveError("Campaign continuation requires a v2 checkpoint")
+    if manifest["schema_version"] not in {
+        "fortgym.campaign-checkpoint/v2",
+        "fortgym.campaign-checkpoint/v3",
+    }:
+        raise CampaignSaveError("Campaign continuation requires a v2 or v3 checkpoint")
     native = manifest["payload"]["native_save"]
     if native.get("paused") is not True:
         raise CampaignSaveError("Checkpoint does not identify a paused boundary")

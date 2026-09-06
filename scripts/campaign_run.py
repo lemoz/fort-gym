@@ -17,7 +17,11 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from fort_gym.bench.run.campaign_checkpoint import verify_checkpoint
-from fort_gym.bench.run.campaign_config import ENDURANCE_SCHEMA, LOCAL_SCHEMA, load_segment_config
+from fort_gym.bench.run.campaign_config import (
+    ENDURANCE_SCHEMA,
+    LOCAL_SCHEMA,
+    load_segment_config,
+)
 from scripts.campaign_development import append_event
 from scripts.campaign_load_smoke import verify_load_source
 from scripts.campaign_process import termination_as_interrupt
@@ -84,11 +88,20 @@ def inspect_segment(root: Path, record: dict, config: dict) -> tuple[dict, dict 
         agent = read_record(checkpoint_path / "agent.json")
         steps = segment.get("segment_committed_steps")
         if (
-            checkpoint["schema_version"] != "fortgym.campaign-checkpoint/v2"
+            checkpoint["schema_version"]
+            not in {"fortgym.campaign-checkpoint/v2", "fortgym.campaign-checkpoint/v3"}
             or payload.get("campaign_id") != record["campaign_id"]
             or payload.get("code_revision") != record["code_revision"]
             or type(steps) is not int
-            or steps <= 0
+            or steps < 0
+            or (
+                steps == 0
+                and (
+                    checkpoint["schema_version"] != "fortgym.campaign-checkpoint/v3"
+                    or segment.get("status") != "inference_output_limited_pause"
+                    or segment.get("recovery_requires_reconciliation") is not False
+                )
+            )
             or segment.get("first_step") != record["next_step"]
             or segment.get("next_step") != record["next_step"] + steps
             or payload.get("next_step") != segment["next_step"]
@@ -175,7 +188,11 @@ def run_campaign(args, *, launch=launch_segment) -> dict:
             or read_record(root / "condition.json") != config
         ):
             raise ValueError("Campaign continuation identity changed")
-        if record.get("status") not in {"ready", "invocation_limited_pause"}:
+        if record.get("status") not in {
+            "ready",
+            "invocation_limited_pause",
+            "inference_output_limited_pause",
+        }:
             raise ValueError("Campaign requires reconciliation before continuation")
         if record["segments_started"] != record["segments_completed"]:
             raise ValueError("An interrupted segment must be reconciled before continuation")
@@ -243,7 +260,13 @@ def run_campaign(args, *, launch=launch_segment) -> dict:
                         checkpoint_file_sha256=segment["checkpoint_file_sha256"],
                         usage_status="verified_checkpoint_reported",
                     )
-                if segment.get("status") == "budget_limited_pause":
+                if (
+                    segment.get("status") == "inference_output_limited_pause"
+                    and segment.get("recovery_requires_reconciliation") is False
+                    and checkpoint is not None
+                ):
+                    record.update(status="inference_output_limited_pause", segments_completed=index)
+                elif segment.get("status") == "budget_limited_pause":
                     record["status"] = "budget_limited_pause"
                 elif (
                     segment.get("status") != "bounded_segment_complete"

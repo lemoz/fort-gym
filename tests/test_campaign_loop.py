@@ -162,7 +162,7 @@ def test_only_read_only_preflight_can_preserve_a_boundary(tmp_path, monkeypatch,
     with pytest.raises((ValueError, GovernedBudgetCapError)):
         loop.step()
     assert loop.failed and not loop.at_boundary
-    with pytest.raises(ValueError, match="committed action boundary"):
+    with pytest.raises(ValueError, match="settled action boundary"):
         loop.checkpoint(
             tmp_path / "not-a-checkpoint", snapshotter=loop.environment, code_revision="test"
         )
@@ -201,7 +201,7 @@ def test_failed_execution_cannot_produce_a_checkpoint(tmp_path, monkeypatch):
     monkeypatch.setattr(loop.environment, "apply", fail)
     with pytest.raises(OSError):
         loop.step()
-    with pytest.raises(ValueError, match="committed"):
+    with pytest.raises(ValueError, match="settled"):
         loop.checkpoint(tmp_path / "bad", snapshotter=loop.environment, code_revision="test")
     assert not (tmp_path / "bad").exists()
     with pytest.raises(RuntimeError, match="checkpoint recovery"):

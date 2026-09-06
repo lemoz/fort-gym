@@ -16,17 +16,19 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from ..agent.base import Agent
+from ..agent.campaign_local import LocalOutputLimitPause
 from ..agent.governed_llm import GovernedBudgetCapError
 from ..env.actions import parse_action
-from ..env.campaign_encoder import (
-    PROFILE as CAMPAIGN_OBSERVATION_PROFILE,
-    encode_campaign_observation,
-)
+from ..env.campaign_encoder import PROFILE as CAMPAIGN_OBSERVATION_PROFILE
+from ..env.campaign_encoder import encode_campaign_observation
 from ..env.encoder import encode_observation
 from ..eval.campaign import TICKS_PER_YEAR
-from ..tick_receipt import MAX_REQUEST_OVERSHOOT_TICKS, validate_clean_interruption_receipt
-from .campaign_checkpoint import create_checkpoint, verify_checkpoint
+from ..tick_receipt import (
+    MAX_REQUEST_OVERSHOOT_TICKS,
+    validate_clean_interruption_receipt,
+)
 from .campaign_advance import ACCEPTED_ONLY, MODEL_REQUESTED, POLICIES, requested_ticks
+from .campaign_checkpoint import create_checkpoint, verify_checkpoint
 from .campaign_save import NativeSaveSnapshotter
 
 
@@ -48,6 +50,12 @@ class CampaignEnvironment(Protocol):
 
 class CampaignPreDispatchPause(GovernedBudgetCapError):
     """A read-only preflight stopped before the decision/usage transaction began."""
+
+
+class CampaignNoActionPause(RuntimeError):
+    """An accounted output stop with a verified unchanged native boundary."""
+
+    terminal_code = "campaign_output_token_limit"
 
 
 def _append(path: Path, value: dict) -> None:
@@ -107,10 +115,29 @@ def reconciled_usage(checkpoint: dict, journal: bytes) -> dict:
             continue
         if record.get("type") != "decision_finished" or not pending:
             raise ValueError("Usage journal decision sequence is invalid")
-        if record.get("step") != pending_step or record.get("decision_returned") is not True:
+        no_action = record.get("outcome") == "accounted_no_action/v1"
+        if record.get("step") != pending_step or (
+            record.get("decision_returned") is not True and not no_action
+        ):
             raise ValueError("Failed or mismatched decision has unresolved provider usage")
         pending = False
         usage = record["usage"]
+        if no_action:
+            if (
+                record.get("decision_returned") is not False
+                or record.get("native_action_dispatched") is not False
+                or record.get("reason") != "output_token_limit"
+                or not isinstance(record.get("native_boundary"), dict)
+                or type(usage.get("dispatched_requests")) is not int
+                or usage["dispatched_requests"] < 1
+                or usage.get("dispatched_requests") != usage.get("returned_responses")
+                or (
+                    last_usage is not None
+                    and usage["returned_responses"] <= last_usage["returned_responses"]
+                )
+            ):
+                raise ValueError("No-action pause does not establish accounted non-execution")
+            _clock(record["native_boundary"])
         for key in counters:
             if type(usage.get(key)) is not int or usage[key] < 0:
                 raise ValueError("Invalid returned usage counter")
@@ -142,7 +169,7 @@ def reconciled_usage(checkpoint: dict, journal: bytes) -> dict:
 
 
 class CampaignLoop:
-    """One serial campaign. Checkpoint only after a durable action boundary."""
+    """One serial campaign with durable action or accounted no-action boundaries."""
 
     def __init__(
         self,
@@ -180,6 +207,7 @@ class CampaignLoop:
         self.at_boundary = False
         self.failed = False
         self.failure_context: dict = {}
+        self.no_action_boundary: dict | None = None
         _append(
             self.journal,
             {
@@ -195,6 +223,26 @@ class CampaignLoop:
             raise RuntimeError("Failed campaign execution requires verified checkpoint recovery")
         try:
             return self._step()
+        except CampaignNoActionPause:
+            try:
+                _append(
+                    self.output / "pauses.jsonl",
+                    {
+                        "type": "accounted_no_action/v1",
+                        "step": self.next_step,
+                        "reason": "output_token_limit",
+                        "decision_started": True,
+                        "native_action_dispatched": False,
+                        "native_boundary": self.no_action_boundary,
+                        "events": self.agent.pop_tool_events(),
+                    },
+                )
+            except BaseException:
+                self.failed = True
+                self.at_boundary = False
+                raise
+            self.at_boundary = True
+            raise
         except CampaignPreDispatchPause as error:
             _append(
                 self.output / "pauses.jsonl",
@@ -222,6 +270,7 @@ class CampaignLoop:
         from .runner import _action_history_entry
 
         self.failure_context = {}
+        self.no_action_boundary = None
         before = self.environment.observe()
         start = _clock(before)
         screen = self.environment.screen()
@@ -253,13 +302,38 @@ class CampaignLoop:
         if self.agent.export_campaign_state() != preflight_state:
             raise ValueError("Decision preflight mutated campaign state")
         # From here, a failed decision may have dispatched or mutated memory.
-        # Only the read-only preflight above can preserve the previous boundary.
+        # A typed, fully-accounted output limit can settle a new no-action boundary;
+        # all other exceptions retain the existing uncertain-decision behavior.
         self.at_boundary = False
         _append(self.journal, {"type": "decision_started", "step": self.next_step})
         returned = False
+        no_action = None
         try:
             raw_action = self.agent.decide(text, observation)
             returned = True
+        except LocalOutputLimitPause as error:
+            usage = self.agent.export_campaign_state()["usage"]
+            previous_usage = preflight_state["usage"]
+            counts = [
+                usage.get(key)
+                for key in ("dispatched_requests", "returned_responses", "accounted_responses")
+            ]
+            if (
+                any(type(value) is not int or value < 1 for value in counts)
+                or len(set(counts)) != 1
+                or counts[0] <= previous_usage.get("returned_responses", -1)
+            ):
+                raise ValueError("Output-limited decision has unresolved model usage") from error
+            after_decision = self.environment.observe()
+            if _clock(after_decision) != start or (
+                after_decision.get("viewscreen_type") != before.get("viewscreen_type")
+            ):
+                raise ValueError(
+                    "Native state changed during an output-limited decision"
+                ) from error
+            no_action = {key: before[key] for key in ("year", "year_tick", "pause_state")}
+            if "viewscreen_type" in before:
+                no_action["viewscreen_type"] = before["viewscreen_type"]
         finally:
             _append(
                 self.journal,
@@ -268,8 +342,28 @@ class CampaignLoop:
                     "step": self.next_step,
                     "decision_returned": returned,
                     "usage": self.agent.export_campaign_state()["usage"],
+                    **(
+                        {
+                            "outcome": "accounted_no_action/v1",
+                            "reason": "output_token_limit",
+                            "native_action_dispatched": False,
+                            "native_boundary": no_action,
+                        }
+                        if no_action is not None
+                        else {}
+                    ),
                 },
             )
+        if no_action is not None:
+            current = self.agent.export_campaign_state()
+            if reconciled_usage(current, self.journal.read_bytes()) != current["usage"]:
+                raise ValueError("Output-limited decision usage does not reconcile")
+            if self.next_step == 0 and not self.trace.exists():
+                with self.trace.open("xb") as stream:
+                    stream.flush()
+                    os.fsync(stream.fileno())
+            self.no_action_boundary = no_action
+            raise CampaignNoActionPause("Accounted output limit before a native action")
         action = parse_action(raw_action, max_advance_ticks=self.max_advance_ticks)
         if action.get("type") not in {
             "DIG",
@@ -378,7 +472,7 @@ class CampaignLoop:
         advance_parent: bool = True,
     ) -> dict:
         if not self.at_boundary:
-            raise ValueError("Campaign is not at a committed action boundary")
+            raise ValueError("Campaign is not at a settled action boundary")
         result = create_checkpoint(
             destination,
             campaign_id=self.campaign_id,
@@ -397,6 +491,10 @@ class CampaignLoop:
                 "advance_policy": self.advance_policy,
             },
             usage_path=self.journal,
+            no_action_boundary=self.no_action_boundary,
+            pauses_path=self.output / "pauses.jsonl"
+            if self.no_action_boundary is not None
+            else None,
         )
         if advance_parent:
             self.parent = destination
@@ -420,7 +518,10 @@ class CampaignLoop:
         copy, so post-checkpoint provider charges are retained. No action is replayed.
         """
         manifest = verify_checkpoint(checkpoint)
-        if manifest["schema_version"] != "fortgym.campaign-checkpoint/v2":
+        if manifest["schema_version"] not in {
+            "fortgym.campaign-checkpoint/v2",
+            "fortgym.campaign-checkpoint/v3",
+        }:
             raise ValueError("Checkpoint does not contain complete campaign-loop state")
         payload = manifest["payload"]
         state = json.loads((checkpoint / "agent.json").read_text())
@@ -469,11 +570,19 @@ class CampaignLoop:
         from ..eval.campaign import read_campaign_progress
 
         progress = read_campaign_progress(instance.trace)
-        with instance.trace.open() as stream:
-            origin = json.loads(stream.readline())
-        instance.committed_elapsed_ticks = (
-            progress["elapsed_ticks"] if origin.get("step") == 0 else None
-        )
+        if (
+            payload["next_step"] == 0
+            and manifest["schema_version"] == "fortgym.campaign-checkpoint/v3"
+        ):
+            # A settled decision may precede the campaign's first game action.
+            # The v3 verifier binds its genuinely empty trace and initial cursor.
+            instance.committed_elapsed_ticks = 0
+        else:
+            with instance.trace.open() as stream:
+                origin = json.loads(stream.readline())
+            instance.committed_elapsed_ticks = (
+                progress["elapsed_ticks"] if origin.get("step") == 0 else None
+            )
         instance.parent = checkpoint
         instance.at_boundary = True
         return instance

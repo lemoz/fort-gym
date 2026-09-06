@@ -14,7 +14,13 @@ from pathlib import Path
 from typing import cast
 
 from .campaign_llama_identity import BUILD, TOKEN_PROFILE, TRANSPORT, verify_llama_model
-from .campaign_local import COST_BASIS, LocalCampaignAgent, LocalInferenceError, local_json
+from .campaign_local import (
+    COST_BASIS,
+    LocalCampaignAgent,
+    LocalInferenceError,
+    LocalOutputLimitPause,
+    local_json,
+)
 from .governed_llm import GovernedBudgetCapError
 
 TOKEN_PATH = "/v1/chat/completions/input_tokens"
@@ -209,6 +215,17 @@ class LlamaCampaignAgent(LocalCampaignAgent):
                 raise LocalInferenceError("Local response must contain one action completion")
             choice = choices[0]
             message = choice.get("message")
+            if (
+                choice.get("finish_reason") == "length"
+                and completion_tokens == self.config["max_output_tokens"]
+                and isinstance(message, dict)
+                and message.get("role") == "assistant"
+                and isinstance(message.get("content"), str)
+                and not message.get("tool_calls")
+            ):
+                # Usage, prompt, output bound and identity have already verified.
+                # Even a parseable partial response is not executed or repaired.
+                raise LocalOutputLimitPause("Local response reached its output token allowance")
             if (
                 choice.get("finish_reason") != "stop"
                 or not isinstance(message, dict)

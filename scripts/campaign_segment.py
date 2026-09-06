@@ -21,14 +21,14 @@ from fort_gym.bench.run.campaign_config import (
     decision_time_reserve,
     load_segment_config,
 )
-from scripts.campaign_development import make_agent
-from scripts.campaign_load_smoke import run_isolated
-from scripts.campaign_process import run_worker, termination_as_interrupt
 from fort_gym.bench.run.campaign_retention import (
     capture_periodic,
     require_disk_space,
     validate_retention,
 )
+from scripts.campaign_development import make_agent
+from scripts.campaign_load_smoke import run_isolated
+from scripts.campaign_process import run_worker, termination_as_interrupt
 
 
 def write_result(path: Path, value: dict) -> None:
@@ -54,7 +54,7 @@ def run_segment(
 ) -> dict:
     """Own one segment's terminal record; never interpret a pause as game collapse."""
     from fort_gym.bench.agent.governed_llm import GovernedBudgetCapError
-    from fort_gym.bench.run.campaign_loop import CampaignLoop
+    from fort_gym.bench.run.campaign_loop import CampaignLoop, CampaignNoActionPause
 
     if (checkpoint is None) != (latest_usage is None):
         raise ValueError("Resume requires both checkpoint and latest usage journal")
@@ -148,6 +148,14 @@ def run_segment(
                     raise
             report_progress(row["state_after_advance"])
         result["status"] = "bounded_segment_complete"
+    except CampaignNoActionPause as error:
+        result.update(
+            status="inference_output_limited_pause",
+            segment_stop_reason="output_token_limit",
+            error_type=type(error).__name__,
+            error=str(error),
+            terminal_code=error.terminal_code,
+        )
     except GovernedBudgetCapError as error:
         result.update(
             status="budget_limited_pause", error_type=type(error).__name__, error=str(error)
@@ -165,7 +173,7 @@ def run_segment(
         result["recovery_requires_reconciliation"] = bool(loop is not None and loop.failed)
         if loop is not None:
             result["next_step"] = loop.next_step
-            if loop.at_boundary and result["segment_committed_steps"]:
+            if loop.at_boundary and (result["segment_committed_steps"] or loop.no_action_boundary):
                 try:
                     destination = output / "checkpoint"
                     manifest = loop.checkpoint(

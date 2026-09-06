@@ -56,10 +56,20 @@ metadata into the campaign prompt and labels numeric validation separately from
 freshness/accessibility; 124 focused integration regressions passed. No new campaign
 has used the correction yet.
 
-Next: make fully-accounted no-action output-limit stops checkpointable, then test
-an explicitly declared reasoning/output allowance without enlarging or rewriting
-this historical condition. The goal remains autonomous sustained play and repeated
-cross-model evaluation, not observation tests or another infrastructure acceptance run.
+The integration candidate now checkpoints fully-accounted no-action output stops
+with the [v3 recovery protocol](CAMPAIGN_OUTPUT_LIMIT_RECOVERY.md), including a
+pause before the first game command. Controller continuation preserves usage and
+the action cursor, does not automatically retry, and consumes the unchanged
+campaign allowances. Public feed/profile status and the website label distinguish
+this pause from gameplay collapse. Synthetic save/load and transport coverage is
+not real native acceptance; the historical long-v2 result is unchanged.
+
+Next: native acceptance of this recovery path, then an explicitly declared
+reasoning/output allowance without enlarging or rewriting the historical
+condition. The existing acceptance disk is near its free-space floor; no new
+runtime copy, historical deletion, volume expansion or VM has been performed.
+The goal remains autonomous sustained play and repeated cross-model evaluation,
+not observation tests or another infrastructure acceptance run.
 
 Earlier: the [long local attempt](../experiments/evidence/local_native_llama_long_timeout_20260906.json)
 stopped at an inference timeout on request four. **Three returned responses,

@@ -45,7 +45,7 @@ def play(output, publisher, **kwargs):
         "native_population_resources_validated": True,
     }
     result = run_segment(
-        agent=SegmentAgent(),
+        agent=kwargs.pop("agent", SegmentAgent()),
         environment=environment,
         snapshotter=environment,
         output=output,
@@ -100,6 +100,32 @@ def test_segment_reports_committed_boundaries_then_terminal_teardown(tmp_path):
     )
     assert "PRIVATE-RUNTIME" not in json.dumps(terminal)
     assert len(list((publisher.root / "recorded").glob("*.json"))) == 1
+
+
+@pytest.mark.parametrize("before_pause", [0, 2])
+def test_output_pause_is_published_as_accounted_non_gameplay(tmp_path, before_pause):
+    from tests.test_campaign_output_pause import PausingAgent
+
+    publisher = feed(tmp_path / "public")
+    publisher.start()
+    output = tmp_path / "first"
+    result = play(output, publisher, agent=PausingAgent(before_pause + 1))
+    assert result["status"] == "inference_output_limited_pause"
+    assert result.get("public_feed_error") is None
+    current = read_feed(publisher.root)["campaigns"][0]
+    assert current["segment_status"] == "inference_output_limited_pause"
+    assert current["elapsed_ticks"] == before_pause * 200
+    assert current["failure_kind"] == "none"
+    assert current["checkpoint_verified"] is True
+    finish(output, publisher)
+    terminal = read_feed(publisher.root)["campaigns"][0]
+    assert terminal["lifecycle"] == "finished" and terminal["cleanup_verified"] is True
+    assert terminal["segment_status"] == "inference_output_limited_pause"
+    assert terminal["actions"]["committed_rows"] == before_pause
+    assert terminal["usage"]["returned_responses"] == before_pause + 1
+    assert terminal["usage"]["accounted_responses"] == before_pause + 1
+    assert terminal["functioning_fortress"] == terminal["fortress_collapse"] == "not_assessed"
+    assert "synthetic accounted output limit" not in json.dumps(terminal)
 
 
 def test_continuation_updates_one_fortress_without_adding_cumulative_costs(tmp_path):
