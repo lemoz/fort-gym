@@ -117,3 +117,19 @@ def test_deadline_cancel_rejects_untrusted_identity_before_rpc(monkeypatch):
     monkeypatch.setattr(tick_controller, "run_command", lambda *_a, **_kw: pytest.fail("unexpected RPC"))
     with pytest.raises(tick_controller.DFHackError, match="identity"):
         tick_controller._cancel_tick_deadline("'injected'")
+
+
+@pytest.mark.parametrize("colored", [False, True])
+def test_deadline_acknowledgements_accept_cli_display_codes_only(monkeypatch, colored):
+    token = "a" * 32
+    output = f"\x1b[0m{token}\n\x1b[0m" if colored else token
+    monkeypatch.setattr(tick_controller.uuid, "uuid4", lambda: type("ID", (), {"hex": token})())
+    monkeypatch.setattr(tick_controller, "run_command", lambda *_args, **_kwargs: output)
+    assert tick_controller._arm_tick_deadline(10, {"cur_year": 30, "cur_year_tick": 19309}) == token
+    tick_controller._cancel_tick_deadline(token)
+
+
+def test_colored_wrong_acknowledgement_is_still_rejected(monkeypatch):
+    monkeypatch.setattr(tick_controller, "run_command", lambda *_args, **_kwargs: "\x1b[0munexpected\n\x1b[0m")
+    with pytest.raises(tick_controller.DFHackError, match="acknowledgement"):
+        tick_controller._arm_tick_deadline(10, {"cur_year": 30, "cur_year_tick": 19309})

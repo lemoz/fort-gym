@@ -8,6 +8,7 @@ from typing import Dict
 
 from .dfhack_exec import (
     DFHackError,
+    _strip_ansi,
     read_pause_state,
     read_tick_pause_viewscreen,
     run_command,
@@ -57,7 +58,7 @@ if state.timer == nil then _G[key] = nil; error('tick deadline unavailable') end
 print('{token}')
 """
     output = run_command("lua", [script], timeout=2.5)
-    if output.strip() != token:
+    if _strip_ansi(output).strip() != token:
         raise DFHackError("tick deadline acknowledgement differs")
     return token
 
@@ -74,7 +75,7 @@ dfhack.timeout_active(state.timer, nil)
 _G[key] = nil
 print('{token}')
 """
-    if run_command("lua", [script], timeout=2.5).strip() != token:
+    if _strip_ansi(run_command("lua", [script], timeout=2.5)).strip() != token:
         raise DFHackError("tick deadline cancellation acknowledgement differs")
 
 
