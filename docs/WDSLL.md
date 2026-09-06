@@ -10,6 +10,13 @@ delivery. The historical gate ladder below remains unchanged as evidence, not
 as a prerequisite ladder for the new exploratory campaign mode. Full M1b
 acceptance is complete; see the [sealed GO decision](decisions/2026-09-05-full-m1b-acceptance.md).
 
+The exploratory campaign condition now has a separate minimal action/observation
+profile: optional model-authored plans, no mandatory benchmark review or scripted
+strategy, the existing native controls, and persistent usage/checkpoints. See
+[implementation and verification boundaries](YEAR_TWO_CAMPAIGNS.md#exploratory-agent-profile).
+This is implementation progress, not a first-year gameplay result. The website
+and remote delivery requirements remain part of the active goal.
+
 ## Success statement (the one metric)
 
 **An LLM policy, issuing only legal governed actions, takes the fixed embark

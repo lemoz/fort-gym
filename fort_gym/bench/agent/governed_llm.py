@@ -899,6 +899,13 @@ class DFHackGovernedLLMAgent(Agent):
         response = self._client_instance().chat.completions.create(**completion_kwargs)
         return self._accept_provider_response(response)
 
+    def _action_tool(self) -> Dict[str, Any]:
+        """Versioned decision profiles may replace grammar, not transport accounting."""
+        return _submit_action_tool(max_advance_ticks=self._max_advance_ticks)
+
+    def _json_action_transport_instruction(self) -> str:
+        return _GLM52_JSON_TRANSPORT_INSTRUCTION
+
     def _create_completion(self, messages: List[Dict[str, Any]]) -> Any:
         request_messages = [dict(message) for message in messages]
         if self._prompt_cache == "explicit_ephemeral" and request_messages:
@@ -921,13 +928,11 @@ class DFHackGovernedLLMAgent(Agent):
             }
             request_messages = [
                 *messages,
-                {"role": "user", "content": _GLM52_JSON_TRANSPORT_INSTRUCTION},
+                {"role": "user", "content": self._json_action_transport_instruction()},
             ]
         else:
             request_kwargs = {
-                "tools": [
-                    _submit_action_tool(max_advance_ticks=self._max_advance_ticks)
-                ],
+                "tools": [self._action_tool()],
                 "tool_choice": {
                     "type": "function",
                     "function": {"name": "submit_action"},

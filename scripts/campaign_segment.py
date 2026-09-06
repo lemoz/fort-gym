@@ -29,6 +29,19 @@ def load_segment_config(path: Path, model: str) -> dict:
         or len(condition) > 128
     ):
         raise ValueError("Campaign segments require their own declared runner condition")
+    profiles = (
+        config.get("decision_profile", "governed_review/v1"),
+        config.get("observation_profile", "governed_review/v1"),
+    )
+    if not all(isinstance(profile, str) for profile in profiles) or profiles not in {
+        ("governed_review/v1", "governed_review/v1"),
+        ("campaign_action/v1", "campaign_state/v1"),
+    }:
+        raise ValueError("Unsupported or mismatched campaign profiles")
+    if profiles[0] == "campaign_action/v1" and (
+        type(config.get("schema_attempts")) is not int or not 1 <= config["schema_attempts"] <= 3
+    ):
+        raise ValueError("Campaign schema_attempts must be one to three")
     return config
 
 
@@ -82,6 +95,7 @@ def run_segment(
                 environment=environment,
                 output=output / "campaign",
                 max_advance_ticks=config["max_advance_ticks"],
+                observation_profile=config.get("observation_profile", "governed_review/v1"),
             )
         else:
             assert latest_usage is not None
@@ -95,6 +109,7 @@ def run_segment(
                 environment=environment,
                 output=output / "campaign",
                 latest_usage_path=latest_usage,
+                observation_profile=config.get("observation_profile", "governed_review/v1"),
             )
         result["first_step"] = loop.next_step
         for _ in range(config["max_steps"]):
@@ -112,6 +127,9 @@ def run_segment(
         )
     except Exception as error:
         result.update(status="failed", error_type=type(error).__name__, error=str(error))
+        terminal_code = getattr(error, "terminal_code", None)
+        if isinstance(terminal_code, str):
+            result["terminal_code"] = terminal_code
     finally:
         result["recovery_requires_reconciliation"] = bool(loop is not None and loop.failed)
         if loop is not None:

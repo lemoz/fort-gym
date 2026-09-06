@@ -17,6 +17,10 @@ from typing import Any, Protocol
 
 from ..agent.base import Agent
 from ..env.actions import parse_action
+from ..env.campaign_encoder import (
+    PROFILE as CAMPAIGN_OBSERVATION_PROFILE,
+    encode_campaign_observation,
+)
 from ..env.encoder import encode_observation
 from ..eval.campaign import TICKS_PER_YEAR
 from ..tick_receipt import MAX_REQUEST_OVERSHOOT_TICKS, validate_clean_interruption_receipt
@@ -142,14 +146,18 @@ class CampaignLoop:
         environment: CampaignEnvironment,
         output: Path,
         max_advance_ticks: int = 2000,
+        observation_profile: str = "governed_review/v1",
     ) -> None:
         if type(max_advance_ticks) is not int or not 1 <= max_advance_ticks <= 2500:
             raise ValueError("Invalid campaign advance limit")
+        if observation_profile not in {"governed_review/v1", CAMPAIGN_OBSERVATION_PROFILE}:
+            raise ValueError("Unsupported campaign observation profile")
         agent.set_campaign_context(campaign_id=campaign_id)
         initial = agent.export_campaign_state()
         output.mkdir(mode=0o700, parents=False, exist_ok=False)
         self.agent, self.environment, self.output = agent, environment, output
         self.campaign_id, self.max_advance_ticks = campaign_id, max_advance_ticks
+        self.observation_profile = observation_profile
         self.trace = output / "trace.jsonl"
         self.journal = output / "usage.jsonl"
         self.next_step = 0
@@ -182,6 +190,9 @@ class CampaignLoop:
                     "step": self.next_step,
                     "error_type": type(error).__name__,
                     "message": str(error),
+                    # Failed decisions have no committed trace row. Retain their
+                    # raw response/usage diagnostics privately, not as gameplay.
+                    "events": self.agent.pop_tool_events(),
                     **self.failure_context,
                 },
             )
@@ -195,13 +206,23 @@ class CampaignLoop:
         before = self.environment.observe()
         start = _clock(before)
         screen = self.environment.screen()
-        text, observation = encode_observation(
-            before,
-            screen_text=screen,
-            action_history=self.history,
-            last_action_result=self.last_result,
-            governed=True,
-        )
+        if self.observation_profile == CAMPAIGN_OBSERVATION_PROFILE:
+            # Dialog legality depends on the screen just read at this paused boundary.
+            before["screen_text"] = screen
+            text, observation = encode_campaign_observation(
+                before,
+                screen_text=screen,
+                action_history=self.history,
+                last_action_result=self.last_result,
+            )
+        else:
+            text, observation = encode_observation(
+                before,
+                screen_text=screen,
+                action_history=self.history,
+                last_action_result=self.last_result,
+                governed=True,
+            )
         _append(self.journal, {"type": "decision_started", "step": self.next_step})
         returned = False
         try:
@@ -331,6 +352,7 @@ class CampaignLoop:
                 "history": self.history,
                 "last_result": self.last_result,
                 "max_advance_ticks": self.max_advance_ticks,
+                "observation_profile": self.observation_profile,
             },
             usage_path=self.journal,
         )
@@ -346,6 +368,7 @@ class CampaignLoop:
         environment: CampaignEnvironment,
         output: Path,
         latest_usage_path: Path,
+        observation_profile: str | None = None,
     ) -> CampaignLoop:
         """Resume after the caller loads the verified game into its isolated runtime.
 
@@ -360,6 +383,9 @@ class CampaignLoop:
         runner = json.loads((checkpoint / "runner.json").read_text())
         if runner.get("schema_version") != "fortgym.campaign-loop/v1":
             raise ValueError("Unsupported campaign runner state")
+        saved_profile = runner.get("observation_profile", "governed_review/v1")
+        if observation_profile is not None and observation_profile != saved_profile:
+            raise ValueError("Requested observation profile differs from checkpoint")
         latest = latest_usage_path.read_bytes()
         if not latest.startswith((checkpoint / "usage.jsonl").read_bytes()):
             raise ValueError("Latest usage journal does not extend this checkpoint")
@@ -374,6 +400,7 @@ class CampaignLoop:
             environment=environment,
             output=output,
             max_advance_ticks=runner["max_advance_ticks"],
+            observation_profile=saved_profile,
         )
         agent.restore_campaign_state(state, campaign_id=payload["campaign_id"])
         # The new journal's header is identical; replace only this newly-created

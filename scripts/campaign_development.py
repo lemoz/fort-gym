@@ -52,7 +52,14 @@ def append_event(path: Path, event: dict) -> None:
 
 
 def make_agent(config: dict, model: str, journal: Path, *, persist_dispatches: bool = False):
+    from fort_gym.bench.agent.campaign_llm import CampaignLLMAgent
     from fort_gym.bench.agent.governed_llm import DFHackGovernedLLMAgent, GovernedBudgetCapError
+
+    profile = config.get("decision_profile", "governed_review/v1")
+    if not isinstance(profile, str) or profile not in {"governed_review/v1", "campaign_action/v1"}:
+        raise ValueError("Unknown development decision profile")
+    if profile == "campaign_action/v1" and not persist_dispatches:
+        raise ValueError("Exploratory campaigns require persistent dispatch accounting")
 
     class DevelopmentAgent(DFHackGovernedLLMAgent):
         dispatches = 0
@@ -119,7 +126,16 @@ def make_agent(config: dict, model: str, journal: Path, *, persist_dispatches: b
             if persist_dispatches:
                 self.dispatches = dispatches
 
-    return DevelopmentAgent(
+    class CampaignDevelopmentAgent(DevelopmentAgent, CampaignLLMAgent):
+        """Compose the campaign policy with the same bounded, journaled transport."""
+
+    agent_class = DevelopmentAgent
+    options = {}
+    if profile == "campaign_action/v1":
+        agent_class = CampaignDevelopmentAgent
+        options["schema_attempts"] = config["schema_attempts"]
+    return agent_class(
+        **options,
         model_override=model,
         memory_path=None,
         provider_name=None,
@@ -199,6 +215,8 @@ def main():
     parser.add_argument("--worker", action="store_true")
     args = parser.parse_args()
     config = load_config(args.config, args.model)
+    if "runner" in config or "decision_profile" in config or "observation_profile" in config:
+        raise ValueError("Campaign conditions must use scripts.campaign_segment")
     if args.worker:
         worker(args, config)
         return

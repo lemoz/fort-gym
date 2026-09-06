@@ -499,3 +499,64 @@ Binding original starting-save identity through the full campaign lineage,
 campaign-scoped flow/death measurements, real model experiments, and the website's
 active/recorded profile delivery remain open. Private states, agent memory, saves,
 and raw paths are not included in the profile's public-shaped aggregate fields.
+
+## Exploratory agent profile
+
+The new
+[`development_autonomous_v1.json`](../experiments/campaigns/development_autonomous_v1.json)
+condition selects `campaign_action/v1` with `campaign_state/v1`. It uses the same
+eight native action families and inexpensive development bounds, but no longer
+requires structured last-action reviews, periodic plan reviews, a mandatory build
+order, or a plan revision after a fixed number of stalls. `type`, `params`, and
+`advance_ticks` are the only required top-level action fields. The model may keep
+its own objective, plan step, and memory notes; malformed optional notes do not
+veto a valid command. This changes the experiment condition, not historical results.
+
+The observation encoder retains native map coordinates and a factual glyph legend,
+stocks, citizens/labors, jobs, buildings, farms, completeness/error markers, and
+recent model commands. It omits historical benchmark targets, planning controls,
+and strategy instructions. The current paused screen is also passed to the native
+executor so visible dialog options can be validated. The interface is still
+limited, not full Dwarf Fortress control; missing capability remains a research
+finding rather than a model failure by assumption.
+
+The new policy reuses the existing provider transport, usage accounting, and
+checkpointable memory. Its three-attempt grammar correction allowance describes
+only the malformed fields; it does not select a replacement game action. Provider
+failure or exhausted grammar correction never becomes a synthetic WAIT. Failed
+decisions retain private raw response/usage events in `campaign/failures.jsonl`
+and report `campaign_invalid_action` separately from fortress collapse. These
+diagnostics are not automatically published.
+
+Checkpoints bind the decision profile and schema settings through the agent
+configuration, and persist the observation profile in the runner state. Resumption
+rejects a changed profile. Old checkpoints without that field retain the legacy
+profile. The development adapter still counts every dispatch, including retries,
+and measures the actual profile-specific request after applying the price ceiling.
+The original legacy probe entrypoint rejects campaign conditions instead of
+silently running them through the benchmark runner.
+
+Provider-free tests exercise the actual configured policy with a fake provider
+transport: minimal request schema, three committed actions, native-save-shaped
+checkpoint restoration, fresh next actions, preserved memory and decimal usage,
+cumulative request-cap pauses, malformed-action diagnostics, profile mismatch,
+and paused-screen propagation. These are software tests, not model capability or
+native campaign success. The three-step condition is an interface-development
+check, not the eventual year-two horizon. Live model trials, repeated cross-model
+results, campaign measurement, and website delivery remain open.
+
+Verification checkpoint before this policy change: `a658b41898b77500f2ac98bc59739087964ab5a1`
+passed GitHub CI [34010789527](https://github.com/lemoz/fort-gym/actions/runs/34010789527).
+Its full local suite had 2,530 passes, ten skips, and six local socket-binding
+permission failures; the exact six tests then passed with loopback binding allowed.
+On the existing Linux host, 107 targeted tests passed. A read-only strict native
+observation reported seven citizens, food 45, drink 60, wood 3, stone 0, and the
+original `region3` still paused at year 30, tick 19,309. That check did not advance
+the game, save it, create a process, or make a provider call. This baseline CI does
+not cover the later exploratory-policy changes.
+
+The exploratory-policy candidate passed 402 campaign/agent regressions, with one
+test skipped. Changed-file Ruff and targeted mypy checks passed. Repository-wide
+Ruff still reports 14 findings in unchanged historical files. Full-package mypy
+reports 659 errors across 37 files; no clean repository-wide typing result is
+claimed by the targeted checks.
