@@ -75,3 +75,13 @@ changed files; mypy excluding retained artifact worktrees reports 659 errors in
 
 Next native acceptance must exercise v3 save/load on a new declared execution
 revision. The earlier long-v2 result is not rewritten or resumed by this change.
+
+Remote recovery commit `6f5f2a86f4988e7a3311a2f22735848d98b9856c` passed
+[exact-head CI](https://github.com/lemoz/fort-gym/actions/runs/34050667414).
+The broader local run completed with 2,963 passes, 10 skips and one failure,
+followed by the final focused validation above. The failure compares the current
+hook source with the older pinned M1b OCI image: nine hook files differ due to
+earlier campaign changes. The recovery commit changes no hooks and the hook tree
+is clean, so this mismatch also exists at its parent. The archived image and
+historical proof have not been rewritten, and the failing comparison is not
+suppressed. GitHub CI does not substitute for that local retained-image comparison.

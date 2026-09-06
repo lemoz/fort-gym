@@ -64,6 +64,17 @@ campaign allowances. Public feed/profile status and the website label distinguis
 this pause from gameplay collapse. Synthetic save/load and transport coverage is
 not real native acceptance; the historical long-v2 result is unchanged.
 
+Recovery commit `6f5f2a86f4988e7a3311a2f22735848d98b9856c` is pushed and its
+GitHub CI passed. Final focused validation passed 247 tests with one skip. The
+broader local run had one pinned-M1b-image/current-hook comparison failure outside
+that commit, explicitly retained in the [recovery proof limits](CAMPAIGN_OUTPUT_LIMIT_RECOVERY.md).
+
+The [exact-prompt output-budget diagnostic](OUTPUT_BUDGET_DIAGNOSTIC.md) is now
+prepared: two local requests comparing 2,048 and 4,096 completion tokens, with
+every other serialized field unchanged and zero native actions. It is not run.
+The tool reviewer blocked transfer of the private source prompt from the stopped
+test host, so no model generation or source copy has occurred.
+
 Next: native acceptance of this recovery path, then an explicitly declared
 reasoning/output allowance without enlarging or rewriting the historical
 condition. The existing acceptance disk is near its free-space floor; no new
