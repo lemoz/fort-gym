@@ -256,3 +256,34 @@ still running at this checkpoint; the initial green run does not cover later cod
 No model call or gameplay advance has been made yet. Next: inexpensive model-driven
 experiments from isolated saves while completing runner-state continuation and
 website delivery. Native load success alone does not complete the active goal.
+
+## First model probe: September 6, 2026 UTC
+
+`dev-glm-flash-20260906-b` used `z-ai/glm-5.3-flash` selected through the
+development configuration, in an isolated copy of the retained native save.
+It returned three model responses across six dispatches, reporting $0.003462525
+and 31,965 tokens. The initial request in each pair rejected disabled reasoning;
+the immediate retry returned reported usage. This is response-reported cost,
+not reconciled billing, and the three unreturned dispatches are not assumed free.
+
+The gameplay probe failed before executing its first action. All three responses
+omitted required DIG parameters and supplied a string instead of a review object.
+The game stayed at year 30 tick 19309 with seven observed dwarves. A zero-population
+default in the historical terminal summary must not become a campaign collapse
+claim. Native teardown passed; the final save and agent state are retained.
+See `experiments/evidence/development_glm_flash_20260906.json` for source hashes.
+
+`python -m scripts.campaign_probe_report /absolute/path/to/dev-glm-flash-20260906-b`
+derives a read-only, source-hashed assessment from retained experiment, runtime,
+and trace files. It separates model action-contract failure, provider failure,
+budget-limited pause, unclassified failure, and a bounded worker return. It reports
+native boundary time separately from per-action tick evidence and leaves fortress
+viability and autonomous success unassessed. It makes no provider calls.
+
+The first attempt A failed on a keyword-only worker initialization contract before
+any model call; that defect and a worker-level regression test are committed.
+The subsequent Qwen probe was not launched: automated permission review rejected
+external game-observation transfer to OpenRouter even after the configured
+destination and prompt scope were inspected. Do not work around that rejection.
+Local reporting and website implementation remain available work. No additional
+budget is requested, and the overall goal remains active.
