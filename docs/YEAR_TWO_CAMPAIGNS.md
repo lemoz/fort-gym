@@ -571,3 +571,72 @@ There were no model calls, game advances, saves, new game processes, or new VMs.
 This verifies native observation availability, not model-chosen native actions.
 Full CI [34012306769](https://github.com/lemoz/fort-gym/actions/runs/34012306769)
 was still running at this checkpoint. The candidate is not merged or deployed.
+
+## Active and recorded campaign website feed
+
+The exploratory-agent candidates `d08c1c819c65650e29140c2b8a7659d4165e475a`
+and `5496cec3cf94386c408acbdee8806ba566ad6484` both completed full GitHub CI
+successfully (`34012306769` and `34012417643`). The website-feed changes below
+are a later candidate and require their own validation.
+
+`/campaigns` now includes a campaign-performance table above the historical
+development probes. It filters by condition and shows one current row per fortress,
+with reported lifecycle, cumulative committed native ticks, observed population,
+food/drink stocks, completed workshops/beds/farms, and response-reported model cost.
+The profile inspector shows metric start/end/change/minimum/maximum, recorded native
+calendar boundaries, exact reported cost, request accounting, checkpoint/teardown
+state, and code/configuration/source hashes. Missing values remain unknown. Dense
+histories are sampled to at most 128 displayed boundaries without interpolation;
+the complete private trace and full profile remain retained.
+
+The new `/public/campaign-feed` endpoint reads only a dedicated public-summary
+directory, not the private artifact registry. Run `scripts.campaign_segment` with
+`--public-campaign-dir /absolute/path/to/public-campaigns` to initialize that empty
+dedicated directory and emit updates. Configure the API's
+`FORT_GYM_PUBLIC_CAMPAIGN_DIR` to the same absolute path, readable by its service
+account. This is data-publication configuration, not an expansion of gameplay,
+provider, spending, or deployment authority. Existing commands without this option
+retain their private-only behavior. No production setting was changed here.
+
+The producer publishes a starting report, the loaded campaign boundary, each
+committed action boundary, and an awaiting-teardown report. The parent updates the
+terminal report after the isolated runtime's own cleanup path. A missing or failed
+cleanup receipt stays unverified, never an assertion that the process is gone.
+Elapsed time accumulates actual committed tick receipts; a resume reconstructs it
+once from the digest-bound canonical trace prefix, without adding overlapping
+segments or requested ticks. A completed segment is not a completed campaign.
+
+Current reports are atomically replaced under a nonblocking per-campaign writer
+lock. New continuations retain the same campaign row and cumulative usage; late
+updates from a different segment are rejected. Completed parent reports are also
+retained in immutable files under the feed's `recorded/` directory. The reader
+validates its directory marker, filenames, schema, identities, byte bounds, and a
+strict public field projection. It does not serve raw model responses, prompts,
+screens, saves, exception messages, credentials, or runtime paths. Its current-row
+bound is 128 campaigns, not 128 segments; exceeding the bound reports a service
+error rather than silently dropping results.
+
+The page refreshes visible campaign data every 15 seconds. Reports older than five
+minutes are marked stale unless terminal; future-dated reports show a clock issue.
+Even a recent report is not a live-process attestation. A failed refresh retains
+the last fetched data with current state explicitly unknown. An unset feed is
+shown as not connected; a configured but unreadable feed returns 503, not a false
+empty result. Public reporting errors or lock contention during play are retained
+as private reporting faults and do not select actions or stop the game. Parent
+publication faults likewise do not replace the original runtime outcome.
+
+These remain descriptive profiles, not model rankings. Matching condition labels
+alone do not verify matching initial saves; production/consumption rates,
+functioning-fortress success, autonomous success, and collapse are not inferred.
+This preserves the existing website architecture and dark data-table presentation.
+No new hosting platform was registered, browser-only preview opened by this
+background goal turn, or production website deployed. Live model trials and actual
+site delivery remain requirements of the active goal.
+
+Local verification of this feed candidate: 471 campaign, agent, website, and API
+tests passed, with one Linux-process-inspection test skipped on macOS. New/changed
+Python files passed Ruff; the four campaign feed/projection/loop/segment modules
+passed targeted mypy. Both static JavaScript files passed syntax checks, and the
+page behavior was exercised with an in-memory document/transport test double.
+HTTP tests covered the page, assets, configured feed, unconfigured feed, and 503
+source failure. No browser visual QA or deployed-site acceptance is claimed.

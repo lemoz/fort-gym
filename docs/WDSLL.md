@@ -17,6 +17,12 @@ strategy, the existing native controls, and persistent usage/checkpoints. See
 This is implementation progress, not a first-year gameplay result. The website
 and remote delivery requirements remain part of the active goal.
 
+Campaign website tracking now has a separate public-safe active/recorded feed and
+profile inspector on the integration branch. Its producer follows committed native
+boundaries and cumulative usage across continuations; stale reporting and unknown
+teardown are explicit. See [feed setup and proof limits](YEAR_TWO_CAMPAIGNS.md#active-and-recorded-campaign-website-feed).
+This is not yet a deployed live feed or a cross-model capability result.
+
 ## Success statement (the one metric)
 
 **An LLM policy, issuing only legal governed actions, takes the fixed embark

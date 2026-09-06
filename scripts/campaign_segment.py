@@ -64,6 +64,7 @@ def run_segment(
     revision: str,
     checkpoint: Path | None = None,
     latest_usage: Path | None = None,
+    on_progress=None,
 ) -> dict:
     """Own one segment's terminal record; never interpret a pause as game collapse."""
     from fort_gym.bench.agent.governed_llm import GovernedBudgetCapError
@@ -86,6 +87,17 @@ def run_segment(
         "year_two_gameplay_verified": False,
     }
     loop = None
+
+    def report_progress(state):
+        if on_progress is not None:
+            try:
+                result["usage"] = agent.export_campaign_state()["usage"]
+                on_progress(result, loop, state)
+            except Exception as error:
+                # A public projection failure must not change the policy or game.
+                # The feed becomes stale; the private result retains this fault.
+                result["progress_reporting_error_type"] = type(error).__name__
+
     try:
         result["native_start"] = environment.observe()
         if checkpoint is None:
@@ -112,14 +124,16 @@ def run_segment(
                 observation_profile=config.get("observation_profile", "governed_review/v1"),
             )
         result["first_step"] = loop.next_step
+        report_progress(result["native_start"])
         for _ in range(config["max_steps"]):
             # Stop at the existing boundary when a cap is already reached, without
             # starting a failed decision or mutating the agent's gameplay memory.
             if agent.dispatches >= config["max_dispatches"]:
                 raise GovernedBudgetCapError("Campaign dispatch allowance reached")
             agent._pre_dispatch_gate()
-            loop.step()
+            row = loop.step()
             result["segment_committed_steps"] += 1
+            report_progress(row["state_after_advance"])
         result["status"] = "bounded_segment_complete"
     except GovernedBudgetCapError as error:
         result.update(
@@ -164,6 +178,7 @@ def run_segment(
             write_result(output / "agent-final.json", state)
         except Exception as error:
             result["agent_final_error"] = type(error).__name__ + ": " + str(error)
+        report_progress(result.get("native_final"))
         write_result(output / "campaign-segment.json", result)
     return result
 
@@ -178,6 +193,18 @@ def worker(args, config: dict) -> dict:
         raise ValueError("Worker DFROOT does not identify its isolated runtime")
     environment = NativeCampaignEnvironment(expected_dfroot=runtime)
     try:
+        public_feed = None
+        if getattr(args, "public_campaign_dir", None) is not None:
+            from fort_gym.bench.run.campaign_feed import CampaignFeed
+
+            public_feed = CampaignFeed(
+                args.public_campaign_dir,
+                campaign_id=args.campaign_id,
+                segment_id=output.name,
+                model=args.model,
+                config=config,
+                revision=subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
+            )
         agent = make_agent(config, args.model, output / "spend.jsonl", persist_dispatches=True)
         return run_segment(
             agent=agent,
@@ -190,6 +217,7 @@ def worker(args, config: dict) -> dict:
             revision=subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
             checkpoint=args.checkpoint,
             latest_usage=args.latest_usage,
+            on_progress=public_feed.progress if public_feed is not None else None,
         )
     finally:
         environment.close()
@@ -208,6 +236,11 @@ def main() -> None:
     parser.add_argument("--latest-usage", type=Path)
     parser.add_argument("--port", type=int, default=5501)
     parser.add_argument("--worker", action="store_true")
+    parser.add_argument(
+        "--public-campaign-dir",
+        type=Path,
+        help="Opt in to website-safe summaries in a dedicated shared directory",
+    )
     args = parser.parse_args()
     config = load_segment_config(args.config, args.model)
     if (args.checkpoint is None) != (args.latest_usage is None):
@@ -232,6 +265,20 @@ def main() -> None:
         snapshot = args.checkpoint
         digest = hashlib.sha256((snapshot / "checkpoint.json").read_bytes()).hexdigest()
         source_kind = "campaign_checkpoint"
+    public_feed = None
+    if args.public_campaign_dir is not None:
+        from fort_gym.bench.run.campaign_feed import CampaignFeed, initialize_feed
+
+        initialize_feed(args.public_campaign_dir)
+        public_feed = CampaignFeed(
+            args.public_campaign_dir,
+            campaign_id=args.campaign_id,
+            segment_id=args.output.name,
+            model=args.model,
+            config=config,
+            revision=revision,
+        )
+        public_feed.start(resume=args.checkpoint is not None)
 
     def play(runtime, environment, loaded):
         worker_env = {
@@ -269,6 +316,8 @@ def main() -> None:
                 "--latest-usage",
                 str(args.latest_usage.resolve()),
             ]
+        if args.public_campaign_dir is not None:
+            command += ["--public-campaign-dir", str(args.public_campaign_dir.resolve())]
         with (args.output / "worker.log").open("xb") as stream:
             subprocess.run(
                 command,
@@ -284,20 +333,40 @@ def main() -> None:
             for key in ("status", "usage", "next_step", "new_checkpoint_verified")
         }
 
-    result = run_isolated(
-        source=args.source,
-        snapshot=snapshot,
-        digest=digest,
-        source_kind=source_kind,
-        output=args.output,
-        port=args.port,
-        revision=revision,
-        work=play,
-        hook_source=Path(__file__).resolve().parents[1] / "hook",
-    )
-    from scripts.campaign_profile import report_segment
+    report = None
+    try:
+        result = run_isolated(
+            source=args.source,
+            snapshot=snapshot,
+            digest=digest,
+            source_kind=source_kind,
+            output=args.output,
+            port=args.port,
+            revision=revision,
+            work=play,
+            hook_source=Path(__file__).resolve().parents[1] / "hook",
+        )
+        from scripts.campaign_profile import report_segment
 
-    write_result(args.output / "campaign-profile.json", report_segment(args.output))
+        report = report_segment(args.output)
+        write_result(args.output / "campaign-profile.json", report)
+    finally:
+        if public_feed is not None:
+            # The outer runtime's own finally block runs before this publication.
+            try:
+                public_feed.finish(args.output, report)
+            except Exception as error:
+                from scripts.campaign_development import append_event
+
+                if args.output.is_dir():
+                    try:
+                        append_event(
+                            args.output / "publication-errors.jsonl",
+                            {"error_type": type(error).__name__},
+                        )
+                    except OSError:
+                        pass  # Keep the original run outcome; stderr still reports this fault.
+                print(f"Campaign reporting failed: {type(error).__name__}", file=sys.stderr)
     print(json.dumps(result, sort_keys=True))
 
 

@@ -161,6 +161,7 @@ class CampaignLoop:
         self.trace = output / "trace.jsonl"
         self.journal = output / "usage.jsonl"
         self.next_step = 0
+        self.committed_elapsed_ticks: int | None = 0
         self.history: list[dict] = []
         self.last_result: dict | None = None
         self.parent: Path | None = None
@@ -330,6 +331,8 @@ class CampaignLoop:
         self.history = (self.history + [history])[-12:]
         self.last_result = execution
         self.next_step += 1
+        if self.committed_elapsed_ticks is not None:
+            self.committed_elapsed_ticks += actual
         self.at_boundary = True
         return row
 
@@ -416,6 +419,16 @@ class CampaignLoop:
         instance.history = runner["history"]
         instance.last_result = runner["last_result"]
         instance.next_step = payload["next_step"]
+        # Reconstruct once from the digest-bound canonical prefix, not from a
+        # public report or requested ticks. Each subsequent commit adds its receipt.
+        from ..eval.campaign import read_campaign_progress
+
+        progress = read_campaign_progress(instance.trace)
+        with instance.trace.open() as stream:
+            origin = json.loads(stream.readline())
+        instance.committed_elapsed_ticks = (
+            progress["elapsed_ticks"] if origin.get("step") == 0 else None
+        )
         instance.parent = checkpoint
         instance.at_boundary = True
         return instance
