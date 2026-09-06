@@ -166,7 +166,10 @@ def test_real_separate_session_cleanup_leaves_peer_alive(tmp_path):
 
 
 @pytest.mark.parametrize("tick", [19309, 19310])
-def test_load_checks_calendar_and_always_tears_down(tmp_path, sources, monkeypatch, tick):
+@pytest.mark.parametrize("listener_delay", [0, 2])
+def test_load_checks_calendar_and_always_tears_down(
+    tmp_path, sources, monkeypatch, tick, listener_delay
+):
     source, snapshot, digest = sources
     commands, kills = [], []
 
@@ -187,12 +190,17 @@ def test_load_checks_calendar_and_always_tears_down(tmp_path, sources, monkeypat
             pass
 
         def connect_ex(self, address):
+            nonlocal listener_delay
+            if listener_delay:
+                listener_delay -= 1
+                return 0
             return 111
 
     monkeypatch.setattr(smoke.subprocess, "Popen", lambda *args, **kwargs: Process())
     monkeypatch.setattr(smoke.socket, "socket", Socket)
     monkeypatch.setattr(smoke.os, "killpg", lambda pid, sig: kills.append(pid))
     monkeypatch.setattr(smoke, "runtime_live_members", lambda runtime: {})
+    monkeypatch.setattr(smoke.time, "sleep", lambda seconds: None)
     monkeypatch.setattr(smoke, "rpc", lambda runtime, environment, *args: commands.append(args))
     monkeypatch.setattr(
         smoke,

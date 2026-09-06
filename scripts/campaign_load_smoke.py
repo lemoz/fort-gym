@@ -258,9 +258,16 @@ def run_smoke(*, source: Path, snapshot: Path, digest: str, output: Path, port: 
             cleanup_deadline = time.monotonic() + 5
             while runtime_live_members(runtime) and time.monotonic() < cleanup_deadline:
                 time.sleep(0.1)
-            result["remaining_live_processes"] = sorted(runtime_live_members(runtime))
-            with socket.socket() as probe:
-                result["listener_closed"] = probe.connect_ex(("127.0.0.1", port)) != 0
+            listener_deadline = time.monotonic() + 5
+            while True:
+                result["remaining_live_processes"] = sorted(runtime_live_members(runtime))
+                with socket.socket() as probe:
+                    result["listener_closed"] = probe.connect_ex(("127.0.0.1", port)) != 0
+                if (
+                    result["listener_closed"] and not result["remaining_live_processes"]
+                ) or time.monotonic() >= listener_deadline:
+                    break
+                time.sleep(0.1)
             result["cleanup_verified"] = (
                 result["listener_closed"] and not result["remaining_live_processes"]
             )
