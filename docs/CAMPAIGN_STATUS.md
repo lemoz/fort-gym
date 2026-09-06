@@ -29,8 +29,11 @@ returned three accounted responses and 1,207 tokens. WAIT and LABOR copied exact
 DIG retained coordinates and time but omitted `kind: gather`. No native game was
 loaded or command executed, and the temporary server was independently verified
 stopped. This is not a modern-model native integration or gameplay result. The
-unchanged loose parameter schema remains a concrete hypothesis for a separately
-versioned typed-contract test, not an established cause of earlier gameplay choices.
+[typed-contract follow-up](TYPED_ACTION_CONTRACT.md) copied all three examples exactly
+with 5,303 additional accounted tokens. This is not an established cause of earlier
+gameplay choices. The larger typed grammar failed a provider-free fit check on all
+fourteen historical native requests under their existing 22,000-byte bound, even
+after older history was removed. No historical condition was enlarged or resumed.
 
 Earlier: [Qwen2.5 14B Q3_K_M](../experiments/evidence/local_native_qwen14_q3_20260906.json)
 completed its bounded attempt: **16 responses, 82,782 tokens and 3,200
@@ -238,6 +241,12 @@ is a separate publication slice: **515 targeted local tests passed**, five nativ
 environment checks skipped, including endpoint and frontend test-double regressions.
 Targeted Ruff, Black and JavaScript syntax checks passed. Fresh remote CI is tracked
 on the PR; this local suite is not a native-model acceptance run or browser visual QA.
+
+Terminal-result publication `5e595ecd826980b3d25fa57f7cdc5ba96f5fe7af` passed remote
+CI run `34034704331`. The subsequent typed-contract implementation and paired
+diagnostic passed **531 targeted local tests**, with five native-environment skips;
+focused static, formatting, typing and JavaScript syntax checks passed. Its new
+publication revision has separate CI and no new native-gameplay acceptance claim.
 
 [Draft PR #125](https://github.com/lemoz/fort-gym/pull/125) is the integration surface.
 The website/reporting code is separate from the frozen native execution revision.

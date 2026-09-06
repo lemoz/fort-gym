@@ -191,6 +191,7 @@ def test_website_separates_incomplete_checkpoint_and_new_model_compatibility():
     assert "not the spending cap" in page
     assert "Local model compatibility, not gameplay" in page
     assert "two of three supplied test commands exactly" in page
+    assert "typed-contract follow-up copied all three exactly" in page
     filename = "local_qwen35_9b_feasibility_20260906.json"
     assert filename in page and filename not in records.PUBLISHED_BUNDLES
     candidate = json.loads((records.PROJECT_ROOT / "experiments/evidence" / filename).read_text())
@@ -201,6 +202,13 @@ def test_website_separates_incomplete_checkpoint_and_new_model_compatibility():
     assert [case["exact_match"] for case in candidate["cases"]] == [True, True, False]
     assert candidate["cases"][-1]["omitted_field"] == "params.kind"
     assert candidate["teardown"]["independent_listener_closed"] is True
+    typed = candidate["typed_follow_up"]
+    assert typed["all_cases_exact"] is True and typed["native_actions_executed"] == 0
+    assert typed["usage"]["accounted_responses"] == 3
+    assert typed["usage"]["total_tokens"] == 5303
+    assert typed["fit_diagnostic"]["requests_fit"] == 0
+    assert len(typed["fit_diagnostic"]["requests"]) == 14
+    assert candidate["combined_diagnostic_usage"]["total_tokens"] == 6510
     assert not any("qwen35" in row["model"] for row in records.campaign_feed(None)["campaigns"])
 
 

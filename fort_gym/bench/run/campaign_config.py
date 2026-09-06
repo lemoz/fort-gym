@@ -12,6 +12,7 @@ import re
 from pathlib import Path
 
 from ..agent.campaign_action_reference import action_reference
+from ..agent.campaign_action_schema import LEGACY, validate_schema_profile
 
 DEVELOPMENT_SCHEMA = "fortgym.development-probe/v1"
 ENDURANCE_SCHEMA = "fortgym.campaign-condition/v1"
@@ -107,6 +108,9 @@ def validate_local_settings(config: dict, model: str) -> None:
     action_reference(reference)
     if reference != "none" and prompt_contract != "visible_action_contract/v1":
         raise ValueError("An action reference requires the visible action contract")
+    action_schema = validate_schema_profile(local.get("action_schema", LEGACY))
+    if action_schema != LEGACY and prompt_contract != "visible_action_contract/v1":
+        raise ValueError("A typed action schema requires the visible action contract")
     packing = local.get("prompt_packing", "none")
     if not isinstance(packing, str) or packing not in {
         "none",

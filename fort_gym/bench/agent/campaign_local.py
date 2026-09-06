@@ -17,6 +17,7 @@ import httpx
 
 from .campaign_context import CORRECTION_PACKING, PACKING, pack_messages
 from .campaign_action_reference import action_reference
+from .campaign_action_schema import LEGACY, action_tool
 from .campaign_llm import CAMPAIGN_SYSTEM_PROMPT, CampaignLLMAgent
 from .governed_llm import GovernedBudgetCapError, GovernedDecisionError
 
@@ -100,6 +101,11 @@ class LocalCampaignAgent(CampaignLLMAgent):
             max_cost_usd=0,
             strict_supervised=False,
             provider_name=None,
+        )
+
+    def _action_tool(self) -> dict:
+        return action_tool(
+            super()._action_tool(), self.config["local_inference"].get("action_schema", LEGACY)
         )
 
     def _resolve_transport_key(self, api_key):

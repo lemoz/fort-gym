@@ -62,7 +62,8 @@
     </section>
     <section class="campaign-condition" aria-labelledby="compatibility-title">
       <h2 id="compatibility-title">Local model compatibility, not gameplay</h2>
-      <p>Qwen3.5 9B copied two of three supplied test commands exactly. It dropped the gather operation from the third. These three local responses used 1,207 tokens and no metered model API charges; operating costs are unmeasured.</p>
+      <p>Qwen3.5 9B copied two of three supplied test commands exactly with the existing contract, dropping the gather operation from the third. A typed-contract follow-up copied all three exactly. The two checks used 1,207 and 5,303 tokens respectively, with no metered model API charges; operating costs are unmeasured.</p>
+      <p class="campaign-note">The typed contract is larger and did not fit fourteen historical native requests under their existing size limit. Native transport and context handling still need validation before gameplay.</p>
       <p class="campaign-note">No game was loaded and no native actions were executed. The temporary server was stopped. This diagnostic is excluded from model-performance rows and rankings.</p>
       <a href="https://github.com/lemoz/fort-gym/blob/codex/year-two-campaigns/experiments/evidence/local_qwen35_9b_feasibility_20260906.json">Read the compatibility result and pinned model provenance</a>
     </section>
