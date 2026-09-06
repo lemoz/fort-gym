@@ -139,6 +139,40 @@ The v3 campaign loop can save an accounted no-action output-limit response as
 loop versions keep their earlier failure/reconciliation semantics. Budget,
 invocation and output-limit pauses are distinct from gameplay failure.
 
+## Provider-free v3 restart acceptance fixture
+
+`python -m scripts.campaign_output_pause_smoke --help` describes the separate
+no-action recovery fixture. It uses one new runtime asset copy across two serial
+native process lifetimes, one retained v3 checkpoint, and no model/provider
+client. Its first synthetic response accounts ten fixture tokens but executes no
+game command. It saves and tears down, verifies the on-disk save still matches
+the checkpoint byte-for-byte, then restarts that same owned runtime and restores
+agent/runner/usage state before one fresh 20-tick WAIT fixture.
+
+The shared launcher checks the paused native calendar and tears down the exact
+owned process group/runtime members. Restart additionally requires the prior
+receipt digest, matching source revision, successful teardown, no live runtime
+members, a free non-production port, regular owned paths and exact save bytes.
+An exclusive lock serializes callers and a durable single-use claim prevents a
+second attempt, including after a failed launch. No file is deleted or replaced
+to restore a checkpoint; a changed save is rejected, not rolled back.
+
+The first preflight includes one checkpoint and the growth allowance above the
+declared floor. Restart reserves no space and checks the floor plus that allowance
+again. Defaults are a 1 GiB floor and a 1 MiB growth allowance; estimates are not
+guarantees against future growth or other writers. Source checkout/object storage
+must already be accounted for before execution.
+
+The fixture produces synthetic usage counters explicitly labeled
+`synthetic_fixture_only`, not actual model token consumption. It does not diagnose
+a real model's output limit or prove autonomous play. The resumed endpoint has no
+new final checkpoint and must not be presented as an endurance handoff. This
+candidate still requires actual native acceptance; unit tests use game doubles.
+It does not change the historical two-runtime continuation fixture or add runtime
+reuse/retention to the campaign controller. Long campaigns still require a
+separate storage lifecycle. The command does not provision a host or grant
+runtime/deployment authority.
+
 ## Website and historical compatibility
 
 Pass a private feed directory to the runner and configure the existing API's
