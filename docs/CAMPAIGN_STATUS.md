@@ -4,6 +4,20 @@ Verified September 6, 2026. The Year-Two Autonomous Play goal remains active.
 
 ## Latest: automatic native recovery passed
 
+The ongoing direct-response campaign has a preserved
+[twelve-action prefix audit](../experiments/evidence/local_native_qwen35_prefix12_20260906.json):
+12 model-selected WAITs, 12,000 native ticks and 106,661 reported tokens, with
+current facts reaching the model and no output-limit response in that prefix.
+The [matched thinking follow-up](CAMPAIGN_THINKING_COMPARISON.md) is declared
+but not executed. It changes only the optional thinking setting and must start
+from the same original seed after the current segment and teardown finish.
+
+CI passed for recovery publication `c277e8496`
+([run](https://github.com/lemoz/fort-gym/actions/runs/34066558654)) and the separate
+reporting correction `73ae9c3c7`
+([run](https://github.com/lemoz/fort-gym/actions/runs/34066516101)). PRs #132 and
+#133 remain open. No merge or production deployment is claimed.
+
 Live experiment checkpoint, September 6 at 23:17 UTC: the new local Qwen3.5
 campaign is running its first bounded segment at frozen source `fad9d80c0`.
 Six model-selected WAIT actions advanced 6,000 native ticks; the latest native
