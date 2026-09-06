@@ -1,0 +1,283 @@
+{
+  "schema_version": "fortgym.published-local-feasibility/v1",
+  "scope": "synthetic_copy_only_not_gameplay",
+  "candidate": "Qwen3.5-9B Q4_K_M",
+  "model_alias": "fort-gym-qwen35-9b-q4-03b74727a860",
+  "native_game_loaded": false,
+  "native_actions_executed": 0,
+  "model_ranking_evidence": false,
+  "weights": {
+    "publisher": "unsloth/Qwen3.5-9B-GGUF",
+    "revision": "3885219b6810b007914f3a7950a8d1b469d598a5",
+    "filename": "Qwen3.5-9B-Q4_K_M.gguf",
+    "bytes": 5680522464,
+    "sha256": "03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8",
+    "download_size_and_sha256_verified": true
+  },
+  "runtime": {
+    "repository": "ggml-org/llama.cpp",
+    "release": "b10516",
+    "source_commit": "b95502ba9aa0eb73a2f4fc8878d7fbe6a847a0b9",
+    "asset": "llama-b10516-bin-macos-arm64.tar.gz",
+    "asset_sha256": "ee3324327d621026ae80c24031670e65fa62a0b23a3a027dbe2f65f240affd30",
+    "github_build_attestation_verified": true,
+    "installed_archive_members_verified": true,
+    "returned_system_fingerprint": "b10516-b95502ba9",
+    "launch_receipt_sha256": "a00e05efe6c41c739c2c58a53d72605ae12643c36f781991e576d9c73b3780ab",
+    "declared_context_tokens": 32768,
+    "declared_flash_attention": true,
+    "declared_key_cache_type": "q8_0",
+    "declared_value_cache_type": "q8_0",
+    "loopback_only": true,
+    "builtin_agent_tools_disabled": true,
+    "web_ui_disabled": true,
+    "model_autoload_disabled": true,
+    "provider_credentials_not_inherited": true,
+    "global_installation_or_cache_change": false
+  },
+  "request_settings": {
+    "max_tokens": 512,
+    "temperature": 0.6,
+    "top_p": 0.95,
+    "top_k": 20,
+    "seed": 73,
+    "enable_thinking": false,
+    "schema": "unchanged_campaign_action_v1",
+    "grammar_constrained": true,
+    "retry_count": 0,
+    "timeout_seconds": 180
+  },
+  "cases": [
+    {
+      "action": "WAIT",
+      "exact_match": true
+    },
+    {
+      "action": "LABOR",
+      "exact_match": true,
+      "boolean_false_preserved": true
+    },
+    {
+      "action": "DIG",
+      "exact_match": false,
+      "coordinates_and_tick_count_preserved": true,
+      "omitted_field": "params.kind",
+      "expected_mode": "gather",
+      "actual_mode": "omitted",
+      "parser_default_if_executed": "dig",
+      "native_execution_performed": false
+    }
+  ],
+  "all_cases_exact": false,
+  "usage": {
+    "dispatched_requests": 3,
+    "returned_responses": 3,
+    "accounted_responses": 3,
+    "prompt_tokens": 1100,
+    "completion_tokens": 107,
+    "total_tokens": 1207,
+    "metered_model_api_charge_usd": "0",
+    "operating_cost_usd": null,
+    "billing_reconciled": false
+  },
+  "source_sha256": {
+    "result.json": "87445be3e9781e55473d5c7536b5c10a9f325bacd9a435686ce1e7e400f3c813",
+    "model-identity.json": "626d938555376d83ca928637e78c38290187f88bba22faa52a18e7b35f8be8a9",
+    "response-0.json": "7821b164e78e5cc87a6c7e30fc02a27f419e4be17c7643e97884d4e85f257c9b",
+    "response-1.json": "223ebf0eef586f26788f9fc811389899042eaed18a0807045dc92b977ad766e5",
+    "response-2.json": "34c434adcdf23be46bcf1b24e2ac433af306212f0b5d0e32de0e8e828596659b"
+  },
+  "teardown": {
+    "server_exited_zero": true,
+    "independent_listener_closed": true,
+    "independent_model_processes_empty": true,
+    "no_native_runtime_started": true,
+    "no_reverse_tunnel_created": true,
+    "no_vm_created": true
+  },
+  "sources": [
+    "https://huggingface.co/Qwen/Qwen3.5-9B",
+    "https://huggingface.co/unsloth/Qwen3.5-9B-GGUF/tree/3885219b6810b007914f3a7950a8d1b469d598a5",
+    "https://github.com/ggml-org/llama.cpp/releases/tag/b10516"
+  ],
+  "notes": [
+    "This is a three-request compatibility diagnostic using supplied synthetic actions, not an autonomous fortress attempt or a full native backend integration.",
+    "All original responses and request records are retained privately. Published data contains only bounded outcomes, configuration and provenance hashes.",
+    "The unchanged schema describes required action parameters but does not type the per-action parameter object. Dropping an optional operation is an observed copy-fidelity failure, not proof of why earlier autonomous models chose ordinary digging. A typed-contract experiment must be separately versioned before use.",
+    "Runtime cache and GPU flags are launch declarations, not an attestation of actual GPU offload or cache allocation. The server loaded the pinned model and every returned response used the declared alias and runtime fingerprint.",
+    "Zero metered model API charge does not mean zero hardware, electricity or existing infrastructure cost."
+  ],
+  "typed_follow_up": {
+    "scope": "synthetic_copy_only_not_gameplay",
+    "action_schema": "typed_native_parameters/v1",
+    "action_schema_sha256": "bb627b6a772969459d08e92cd7b2ee61e254e72a2c95746c631cee89c3214e66",
+    "same_model_runtime_sampling_commands_and_request_order": true,
+    "all_cases_exact": true,
+    "cases": [
+      {
+        "action": "WAIT",
+        "exact_match": true
+      },
+      {
+        "action": "LABOR",
+        "exact_match": true,
+        "boolean_false_preserved": true
+      },
+      {
+        "action": "DIG",
+        "exact_match": true,
+        "mode_gather_preserved": true,
+        "coordinates_and_tick_count_preserved": true
+      }
+    ],
+    "usage": {
+      "dispatched_requests": 3,
+      "returned_responses": 3,
+      "accounted_responses": 3,
+      "prompt_tokens": 5189,
+      "completion_tokens": 114,
+      "total_tokens": 5303,
+      "metered_model_api_charge_usd": "0",
+      "operating_cost_usd": null
+    },
+    "source_sha256": {
+      "result.json": "aa56ad7a90487869d541e6b56e4323418bd71ca6864a3742292876ced0fb38fe",
+      "response-0.json": "419cfeb881a61ecb211009acc9f0ff7b0ece1d4ad3f4e098bd48901a93ad0df9",
+      "response-1.json": "278bcfb659c57c12d6a99a6e14e29b626efbfc8624bbb56301fb8af7b00d94a8",
+      "response-2.json": "219d5efbe4fef1ee6ea927488140c89d7cb1f62f4e32b903932fbdfc2acb6e66"
+    },
+    "native_game_loaded": false,
+    "native_actions_executed": 0,
+    "teardown": {
+      "server_exited_zero": true,
+      "independent_listener_closed": true,
+      "independent_model_processes_empty": true,
+      "no_tunnel_or_vm_created": true
+    },
+    "fit_diagnostic": {
+      "native_rpc_calls": 0,
+      "provider_calls": 0,
+      "requests": [
+        {
+          "current_facts_memory_and_corrections_preserved": true,
+          "historical_request_bytes": 17185,
+          "minimum_typed_request_bytes_checked": 27461,
+          "step": 0,
+          "typed_fits_existing_request_bound": false
+        },
+        {
+          "current_facts_memory_and_corrections_preserved": true,
+          "historical_request_bytes": 19064,
+          "minimum_typed_request_bytes_checked": 28828,
+          "step": 1,
+          "typed_fits_existing_request_bound": false
+        },
+        {
+          "current_facts_memory_and_corrections_preserved": true,
+          "historical_request_bytes": 19691,
+          "minimum_typed_request_bytes_checked": 28942,
+          "step": 2,
+          "typed_fits_existing_request_bound": false
+        },
+        {
+          "current_facts_memory_and_corrections_preserved": true,
+          "historical_request_bytes": 20256,
+          "minimum_typed_request_bytes_checked": 28994,
+          "step": 3,
+          "typed_fits_existing_request_bound": false
+        },
+        {
+          "current_facts_memory_and_corrections_preserved": true,
+          "historical_request_bytes": 20865,
+          "minimum_typed_request_bytes_checked": 29090,
+          "step": 4,
+          "typed_fits_existing_request_bound": false
+        },
+        {
+          "current_facts_memory_and_corrections_preserved": true,
+          "historical_request_bytes": 21512,
+          "minimum_typed_request_bytes_checked": 29224,
+          "step": 5,
+          "typed_fits_existing_request_bound": false
+        },
+        {
+          "current_facts_memory_and_corrections_preserved": true,
+          "historical_request_bytes": 21577,
+          "minimum_typed_request_bytes_checked": 29289,
+          "step": 6,
+          "typed_fits_existing_request_bound": false
+        },
+        {
+          "current_facts_memory_and_corrections_preserved": true,
+          "historical_request_bytes": 21673,
+          "minimum_typed_request_bytes_checked": 29385,
+          "step": 7,
+          "typed_fits_existing_request_bound": false
+        },
+        {
+          "current_facts_memory_and_corrections_preserved": true,
+          "historical_request_bytes": 21814,
+          "minimum_typed_request_bytes_checked": 29526,
+          "step": 8,
+          "typed_fits_existing_request_bound": false
+        },
+        {
+          "current_facts_memory_and_corrections_preserved": true,
+          "historical_request_bytes": 21872,
+          "minimum_typed_request_bytes_checked": 29584,
+          "step": 9,
+          "typed_fits_existing_request_bound": false
+        },
+        {
+          "current_facts_memory_and_corrections_preserved": true,
+          "historical_request_bytes": 21968,
+          "minimum_typed_request_bytes_checked": 29681,
+          "step": 10,
+          "typed_fits_existing_request_bound": false
+        },
+        {
+          "current_facts_memory_and_corrections_preserved": true,
+          "historical_request_bytes": 21497,
+          "minimum_typed_request_bytes_checked": 30235,
+          "step": 11,
+          "typed_fits_existing_request_bound": false
+        },
+        {
+          "current_facts_memory_and_corrections_preserved": true,
+          "historical_request_bytes": 21495,
+          "minimum_typed_request_bytes_checked": 30744,
+          "step": 12,
+          "typed_fits_existing_request_bound": false
+        },
+        {
+          "current_facts_memory_and_corrections_preserved": true,
+          "historical_request_bytes": 21977,
+          "minimum_typed_request_bytes_checked": 31226,
+          "step": 13,
+          "typed_fits_existing_request_bound": false
+        }
+      ],
+      "requests_fit": 0,
+      "scope": "provider_free_counterfactual_request_fit_not_native_readiness",
+      "source_schema_sha256": "6dc69dcd82bdee6f25cd8a37cd87f9454ec838c28b21a860c29f8f1cb775032b",
+      "trace_sha256": "eb83d086cea35b09be365a5084be15b7cf08b52cb129a0f567fa48f086369d77",
+      "minimum_typed_request_bytes": 27461,
+      "maximum_minimum_typed_request_bytes": 31226
+    },
+    "notes": [
+      "These are supplied-action copy diagnostics, not game decisions. One three-case check per schema does not establish a general error rate or cause of earlier model gameplay failures.",
+      "The typed schema and its model-visible serialized copy were the only changed request-policy inputs. Sampling, weights, runtime, action examples and their order were retained.",
+      "The typed grammar requires an explicit DIG mode and exactly three integer entries for area and size. Native parser and executor behavior are unchanged. This is a decoder schema, not a replacement native legality validator or a guarantee about malformed unconstrained output.",
+      "The expanded schema did not fit any of fourteen historical native requests under the existing 22000-byte bound, even after removing all older history. Their irreducible reconstructed sizes were 27461 to 31226 bytes. This provider-free Ollama-serialization reconstruction is not proof of current llama.cpp native prompt fit.",
+      "No existing condition was enlarged or checkpoint resumed under the new schema. New native transport/context accounting and a separately declared condition remain required."
+    ]
+  },
+  "combined_diagnostic_usage": {
+    "dispatched_requests": 6,
+    "returned_responses": 6,
+    "accounted_responses": 6,
+    "total_tokens": 6510,
+    "metered_model_api_charge_usd": "0",
+    "operating_cost_usd": null
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "schema_version": "fortgym.development-probe/v1",
+  "phase": "development",
+  "hypothesis": "The existing governed interface can produce and execute native actions with inexpensive models selected only by configuration.",
+  "models": ["z-ai/glm-5.3-flash", "qwen/qwen3.8-flash", "deepseek/deepseek-v4-flash-0731"],
+  "max_steps": 3,
+  "ticks_per_step": 200,
+  "max_advance_ticks": 2000,
+  "max_output_tokens": 8192,
+  "max_attempts": 2,
+  "max_dispatches": 8,
+  "max_request_bytes": 100000,
+  "max_total_tokens": 131072,
+  "max_cost_usd": 1.0,
+  "provider_max_price": {"prompt": 0.5, "completion": 2.0, "request": 0.0},
+  "notes": [
+    "Not a frozen comparison, model ranking, year-two claim, or complete campaign-resume test.",
+    "Initial probes use the same retained native snapshot; its pre-existing fortress is not a fresh embark.",
+    "Provider prices are ceilings in USD per million tokens, not charges. Actual returned usage and unresolved dispatches are journaled separately."
+  ]
+}

@@ -37,6 +37,7 @@ from ..run.storage import RUN_REGISTRY
 from ..run.storage import RunInfo as RegistryRunInfo
 from ..run.storage import ShareToken
 from .auth import require_admin
+from .campaign_catalog import campaign_catalog
 from .rate_limit import RateLimiter, get_rate_limit_client_id, get_rate_limit_config
 from .routes_step import router as step_router
 from .schemas import (
@@ -305,6 +306,33 @@ async def serve_findings():
 async def serve_protocols():
     """Serve the public protocol catalog UI."""
     return _html_file_response("protocols.html")
+
+
+@app.get("/campaigns", response_class=FileResponse)
+async def serve_campaigns() -> FileResponse:
+    """Serve the read-only campaign experiment tracking surface."""
+    return _html_file_response("campaigns.html")
+
+
+@app.get("/public/campaign-experiments")
+async def public_campaign_experiments() -> JSONResponse:
+    try:
+        data = campaign_catalog()
+    except (OSError, ValueError, KeyError, TypeError):
+        raise HTTPException(status_code=503, detail="Campaign evidence is unavailable") from None
+    return JSONResponse(data, headers=HTML_CACHE_HEADERS)
+
+
+@app.get("/public/campaign-feed")
+async def public_campaign_feed() -> JSONResponse:
+    from .campaign_records import campaign_feed
+
+    location = get_settings().FORT_GYM_PUBLIC_CAMPAIGN_DIR
+    try:
+        data = campaign_feed(Path(location) if location else None)
+    except (OSError, ValueError, KeyError, TypeError):
+        raise HTTPException(status_code=503, detail="Campaign tracking is unavailable") from None
+    return JSONResponse(data, headers=HTML_CACHE_HEADERS)
 
 
 @app.get("/protocols/{slug}", response_class=HTMLResponse)
