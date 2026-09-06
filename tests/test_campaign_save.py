@@ -101,6 +101,36 @@ def test_rpc_interruption_retries_observation_not_the_save_request(tmp_path):
     assert native.requests == 1
 
 
+def test_rpc_interruption_after_copy_retries_final_read_not_save(tmp_path, monkeypatch):
+    from fort_gym.bench.run import campaign_save
+
+    native = NativeSaveSimulation(tmp_path)
+    snapshotter = native.snapshotter()
+    copytree = campaign_save.shutil.copytree
+    fail_next_read = False
+    failures = 0
+
+    def copy_then_interrupt(*args, **kwargs):
+        nonlocal fail_next_read
+        result = copytree(*args, **kwargs)
+        fail_next_read = True
+        return result
+
+    def status():
+        nonlocal fail_next_read, failures
+        if fail_next_read:
+            fail_next_read = False
+            failures += 1
+            raise RuntimeError("RPC temporarily unavailable after native copy")
+        return native.status()
+
+    monkeypatch.setattr(campaign_save.shutil, "copytree", copy_then_interrupt)
+    snapshotter.status = status
+    receipt = snapshotter.capture(tmp_path / "snapshot")
+    assert receipt["files"] == save_inventory(native.source)
+    assert failures == 1 and native.requests == 1
+
+
 @pytest.mark.parametrize(
     "field,value",
     [

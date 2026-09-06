@@ -79,7 +79,8 @@ print(json.encode({
     paused = df.global.pause_state,
     autosave_requested = df.global.ui.main.autosave_request,
 }))
-"""
+""",
+        timeout=5,
     )
     result = json.loads(output)
     if not isinstance(result, dict):
@@ -177,7 +178,17 @@ class NativeSaveSnapshotter:
         expected = save_inventory(source)
         shutil.copytree(source, destination, symlinks=True)
         actual = save_inventory(destination)
-        final = self.status()
+        final_deadline = self.clock() + self.timeout_seconds
+        while self.clock() < final_deadline:
+            try:
+                final = self.status()
+                break
+            except (OSError, RuntimeError):
+                # A completed copy is not evidence of the final native boundary.
+                # Retry only the read, never repeat the save or accept stale state.
+                self.sleep(0.1)
+        else:
+            raise CampaignSaveError("Native state could not be verified after snapshot copy")
         if (
             actual != expected
             or save_inventory(source) != expected
