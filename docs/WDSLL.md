@@ -51,6 +51,14 @@ website status distinguish this pause from failed native execution. This is
 synthetic regression coverage pending real native acceptance, not permission to
 rewrite or resume the old long-v2 tail. The active goal and no-deploy boundary remain.
 
+Latest source delivery, September 6: the persistent agent foundation (#129),
+native campaign runtime and checkpoint continuation (#130), and copy-capacity
+preflight/archive-exclusion fix (#131) are merged independently. Remote main is
+`5c1de785bd6abdbe1bc9520529c6157e44793c0d`. These supersede the earlier source
+delivery snapshots above, not historical gameplay evidence. Native v3 recovery,
+year-two play and production website acceptance remain open. See the current
+[campaign status](CAMPAIGN_STATUS.md) for CI and storage proof limits.
+
 ## Success statement (the one metric)
 
 **An LLM policy, issuing only legal governed actions, takes the fixed embark

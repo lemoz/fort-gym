@@ -2,7 +2,29 @@
 
 Verified September 6, 2026. The Year-Two Autonomous Play goal remains active.
 
-Latest merged delivery: [PR #130](https://github.com/lemoz/fort-gym/pull/130)
+Latest merged delivery: [PR #131](https://github.com/lemoz/fort-gym/pull/131)
+subtracts planned runtime/checkpoint copies before accepting the declared
+free-space floor and omits retained archive folders from NEW runtimes only.
+Original saves, archive directories and old runs are unchanged. Source
+`53747032d59a14a8794fb70e3ad387d0d2fc84a2` merged as
+`5c1de785bd6abdbe1bc9520529c6157e44793c0d`, with identical source/merged trees.
+The full local suite passed **1,814 tests with 10 skipped**; a fresh focused
+recheck passed 90 tests with one skip. Changed-file Ruff and targeted mypy pass.
+[PR CI](https://github.com/lemoz/fort-gym/actions/runs/34057106803) passed;
+[post-merge main CI](https://github.com/lemoz/fort-gym/actions/runs/34057329489)
+passed. Full-tree lint/type debt remains separately disclosed in the PR.
+
+Read-only host metadata estimated a new runtime at 105,377,792 bytes plus
+9,023,488 bytes per retained checkpoint, using a historical save only as a size
+proxy. At the observed free space, one checkpoint fit the 1 GiB floor estimate;
+four did not. This estimate excludes a new source checkout and future growth;
+it does not reserve disk or prove native execution fits. No original archive was
+deleted, no runtime started, and no VM, model request or deployment occurred.
+The current continuation fixture retains two runtime copies, so it is not made
+executable by a one-runtime estimate. A latest-checkpoint restart that reuses one
+owned runtime is the next implementation candidate, not implemented acceptance.
+
+Previous merged delivery: [PR #130](https://github.com/lemoz/fort-gym/pull/130)
 delivers the native campaign CLI, serial checkpoint continuation, local model
 adapters, versioned campaign-only measurement hooks, and launch documentation
 from clean main. Its source `ff5944bbd0be9acebee93d38276acd503ff4b597` is verified
