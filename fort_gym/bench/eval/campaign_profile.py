@@ -51,6 +51,25 @@ def metrics_from_state(value: Any) -> dict[str, int | None]:
         metrics["population"] = count(state.get("population"))
         for key in ("food", "drink", "wood", "stone"):
             metrics[f"{key}_stock"] = count(stocks.get(key))
+    elif (
+        quality.get("schema_version") == "fortgym.campaign-observation-quality/v2"
+        and quality.get("native_population_and_stock_value_types_validated") is True
+    ):
+        if quality.get("population_source") == "active living native citizens":
+            metrics["population"] = count(state.get("population"))
+        observations = mapping(state.get("stock_observations"))
+        drink = mapping(observations.get("drink"))
+        units = count(drink.get("units"))
+        if (
+            observations.get("schema_version") == "fortgym.stock-observations/v1"
+            and drink.get("source") == "world.items.other.IN_PLAY DRINK stack_size"
+            and drink.get("complete") is True
+            and units is not None
+            and units == count(stocks.get("drink"))
+        ):
+            metrics["drink_stock"] = units
+        # The v2 flag validates value types only. Missing stock provenance and
+        # freshness-unverified UI food estimates are not native stock evidence.
     fort, crew = mapping(state.get("fort")), mapping(state.get("crew"))
     if (
         fort.get("ok") is True
