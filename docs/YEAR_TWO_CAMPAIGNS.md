@@ -422,3 +422,39 @@ dispatch allowance after restoration. Invalid, missing, or regressing counters
 are rejected. The original probe mode and its checkpoint shape remain unchanged;
 old probe snapshots cannot silently become campaign snapshots with reset counters.
 This mode is implemented and locally tested, not exercised against a provider yet.
+
+## Executable bounded campaign segments
+
+`python -m scripts.campaign_segment` connects configuration-driven model selection
+to `CampaignLoop` and the verified isolated runtime lifecycle. Its distinct
+[`development_continuation_v1.json`](../experiments/campaigns/development_continuation_v1.json)
+condition uses the declared inexpensive models and a three-step segment limit.
+The eight-dispatch, token, and returned-cost limits are cumulative across resumed
+segments. These are small development-test bounds, not the eventual year-two
+campaign horizon. The model selects each action's simulation advance.
+
+For a new campaign, supply `--config`, `--model`, `--campaign-id`, a new `--output`,
+the existing `--source` game installation, and a digest-bound
+`--snapshot` / `--snapshot-sha256`. For continuation, use the same configuration,
+model, and campaign identity, another new output directory, and `--checkpoint`
+plus the previous segment's latest `campaign/usage.jsonl` as `--latest-usage`.
+Select a dedicated non-production `--port`; use a distinct port for an immediate
+restart. Neither path modifies the source installation or production registry.
+Use the existing authorized credential injection; never put credentials in arguments.
+
+Each segment retains `campaign-segment.json`, the agent state, the durable trace,
+decision-usage journal, and dispatch journal. A clean segment end or clean
+pre-dispatch budget pause writes a v2 native checkpoint. The result distinguishes
+`bounded_segment_complete`, `budget_limited_pause`, `failed`, and `checkpoint_failed`.
+It reports new checkpoint verification separately from action completion. A failed
+decision/execution does not generate a falsely current checkpoint; the previous
+valid checkpoint and latest usage remain the recovery inputs. A timeout still
+leaves outer runtime teardown and its receipt to the existing launcher.
+
+Verification uses simulated policy responses and native state: segment completion,
+fresh next-action continuation with preserved history, cumulative dispatch caps,
+budget pauses without extra decisions, execution failure, checkpoint failure,
+foreign campaign rejection, isolated worker arguments, and credential allowlisting.
+The command's help, Ruff, and targeted mypy checks pass. This implementation has
+not made a provider call or completed a model-driven native segment. It does not
+replace the existing published probe or promote its results into this condition.
