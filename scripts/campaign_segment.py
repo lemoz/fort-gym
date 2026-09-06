@@ -16,7 +16,11 @@ import sys
 import time
 from pathlib import Path
 
-from fort_gym.bench.run.campaign_config import decision_time_reserve, load_segment_config
+from fort_gym.bench.run.campaign_config import (
+    LOCAL_SCHEMA,
+    decision_time_reserve,
+    load_segment_config,
+)
 from scripts.campaign_development import make_agent
 from scripts.campaign_load_smoke import run_isolated
 from scripts.campaign_process import run_worker, termination_as_interrupt
@@ -190,7 +194,12 @@ def worker(args, config: dict) -> dict:
                 config=config,
                 revision=subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
             )
-        agent = make_agent(config, args.model, output / "spend.jsonl", persist_dispatches=True)
+        options = {}
+        if config.get("schema_version") == LOCAL_SCHEMA:
+            options["local_endpoint"] = args.local_endpoint
+        agent = make_agent(
+            config, args.model, output / "spend.jsonl", persist_dispatches=True, **options
+        )
         return run_segment(
             agent=agent,
             environment=environment,
@@ -222,6 +231,9 @@ def main() -> None:
     parser.add_argument("--port", type=int, default=5501)
     parser.add_argument("--worker", action="store_true")
     parser.add_argument(
+        "--local-endpoint", help="Literal loopback endpoint for a declared local condition"
+    )
+    parser.add_argument(
         "--public-campaign-dir",
         type=Path,
         help="Opt in to website-safe summaries in a dedicated shared directory",
@@ -245,7 +257,14 @@ def launch_segment(args, config: dict) -> dict:
         args.checkpoint is None and (args.snapshot is None or args.snapshot_sha256 is None)
     ):
         raise ValueError("Supply a source runtime and a checkpoint or digest-bound snapshot")
-    if not os.environ.get("OPENROUTER_API_KEY"):
+    local = config.get("schema_version") == LOCAL_SCHEMA
+    if local:
+        from fort_gym.bench.agent.campaign_local import verify_local_model
+
+        if getattr(args, "local_endpoint", None) is None:
+            raise ValueError("Local campaigns require an explicit loopback endpoint")
+        verify_local_model(args.local_endpoint, config, args.model)
+    elif not os.environ.get("OPENROUTER_API_KEY"):
         raise ValueError("The existing authorized project provider credential must be supplied")
     revision = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
     if subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=no"]):
@@ -274,7 +293,7 @@ def launch_segment(args, config: dict) -> dict:
     def play(runtime, environment, loaded):
         worker_env = {
             **environment,
-            "OPENROUTER_API_KEY": os.environ["OPENROUTER_API_KEY"],
+            "OPENROUTER_API_KEY": "" if local else os.environ["OPENROUTER_API_KEY"],
             "FORT_GYM_DISABLE_DOTENV": "1",
             "DFROOT": str(runtime.resolve()),
             "DFHACK_ENABLED": "1",
@@ -309,6 +328,8 @@ def launch_segment(args, config: dict) -> dict:
             ]
         if args.public_campaign_dir is not None:
             command += ["--public-campaign-dir", str(args.public_campaign_dir.resolve())]
+        if local:
+            command += ["--local-endpoint", args.local_endpoint]
         with (args.output / "worker.log").open("xb") as stream:
             run_worker(
                 command,

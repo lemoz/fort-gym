@@ -8,10 +8,12 @@ from __future__ import annotations
 
 import json
 import math
+import re
 from pathlib import Path
 
 DEVELOPMENT_SCHEMA = "fortgym.development-probe/v1"
 ENDURANCE_SCHEMA = "fortgym.campaign-condition/v1"
+LOCAL_SCHEMA = "fortgym.local-campaign-condition/v1"
 PRICE_CEILING = {"prompt": 0.5, "completion": 2.0, "request": 0.0}
 DEVELOPMENT_LIMITS = {
     "max_steps": 10,
@@ -40,8 +42,10 @@ def read_config(path: Path) -> dict:
     return value
 
 
-def validate_bounds(config: dict, model: str, *, endurance: bool = False) -> dict:
-    schema = ENDURANCE_SCHEMA if endurance else DEVELOPMENT_SCHEMA
+def validate_bounds(
+    config: dict, model: str, *, endurance: bool = False, local: bool = False
+) -> dict:
+    schema = LOCAL_SCHEMA if local else ENDURANCE_SCHEMA if endurance else DEVELOPMENT_SCHEMA
     if config.get("schema_version") != schema:
         raise ValueError(
             "Unsupported campaign configuration"
@@ -58,10 +62,15 @@ def validate_bounds(config: dict, model: str, *, endurance: bool = False) -> dic
         or model.lower().startswith("anthropic/")
     ):
         raise ValueError("Model is not declared in this development configuration")
-    for key, maximum in (ENDURANCE_LIMITS if endurance else DEVELOPMENT_LIMITS).items():
+    for key, maximum in (ENDURANCE_LIMITS if endurance or local else DEVELOPMENT_LIMITS).items():
         if type(config.get(key)) is not int or not 1 <= config[key] <= maximum:
             raise ValueError(f"Invalid bounded development setting: {key}")
     cost, maximum_cost = config.get("max_cost_usd"), 20 if endurance else 2
+    if local:
+        if type(cost) not in (float, int) or cost != 0 or "provider_max_price" in config:
+            raise ValueError("Local conditions declare zero metered provider charges, not prices")
+        validate_local_settings(config, model)
+        return config
     if (
         isinstance(cost, bool)
         or not isinstance(cost, (int, float))
@@ -74,6 +83,44 @@ def validate_bounds(config: dict, model: str, *, endurance: bool = False) -> dic
     return config
 
 
+def validate_local_settings(config: dict, model: str) -> None:
+    local = config.get("local_inference")
+    if not isinstance(local, dict) or local.get("transport") != "ollama-local/v1":
+        raise ValueError("Unsupported local campaign transport")
+    if config["max_attempts"] != 1:
+        raise ValueError("Local transport does not silently retry a failed inference")
+    for key, lower, upper in (
+        ("context_tokens", 4096, 32768),
+        ("timeout_seconds", 1, 180),
+        ("seed", 0, 2147483647),
+    ):
+        if type(local.get(key)) is not int or not lower <= local[key] <= upper:
+            raise ValueError(f"Invalid local inference setting: {key}")
+    if local.get("server_version") != "0.5.11":
+        raise ValueError(
+            "This local transport supports the verified pre-cloud Ollama 0.5.11 runtime"
+        )
+    if any("cloud" in item.lower() for item in config["models"]):
+        raise ValueError("Local model conditions cannot name cloud routing aliases")
+    temperature = local.get("temperature")
+    if (
+        isinstance(temperature, bool)
+        or not isinstance(temperature, (int, float))
+        or not 0 <= temperature <= 2
+    ):
+        raise ValueError("Invalid local inference temperature")
+    digests = local.get("model_digests")
+    if (
+        not isinstance(digests, dict)
+        or set(digests) != set(config["models"])
+        or any(
+            not isinstance(digest, str) or re.fullmatch(r"[a-f0-9]{64}", digest) is None
+            for digest in digests.values()
+        )
+    ):
+        raise ValueError("Bind every declared local model to its exact manifest digest")
+
+
 def decision_time_reserve(config: dict) -> int:
     """Scheduling allowance, not a promise about provider/network wall time.
 
@@ -81,13 +128,16 @@ def decision_time_reserve(config: dict) -> int:
     Every grammar attempt can exercise that path. Workers use a 60-second provider
     timeout; allow five seconds per dispatch for backoff and 60 for native work.
     The independent worker deadline still handles a stalled native call or network."""
+    if config.get("schema_version") == LOCAL_SCHEMA:
+        return config["schema_attempts"] * (config["local_inference"]["timeout_seconds"] + 5) + 60
     return 3 * config["max_attempts"] * config["schema_attempts"] * 65 + 60
 
 
 def load_segment_config(path: Path, model: str) -> dict:
     config = read_config(path)
     endurance = config.get("schema_version") == ENDURANCE_SCHEMA
-    validate_bounds(config, model, endurance=endurance)
+    local = config.get("schema_version") == LOCAL_SCHEMA
+    validate_bounds(config, model, endurance=endurance, local=local)
     condition = config.get("condition_id")
     if (
         config.get("runner") != "campaign-loop/v1"
@@ -109,7 +159,7 @@ def load_segment_config(path: Path, model: str) -> dict:
         type(config.get("schema_attempts")) is not int or not 1 <= config["schema_attempts"] <= 3
     ):
         raise ValueError("Campaign schema_attempts must be one to three")
-    if endurance:
+    if endurance or local:
         if profiles != ("campaign_action/v1", "campaign_state/v1"):
             raise ValueError("Endurance conditions require exploratory campaign profiles")
         if config["segment_time_budget_seconds"] <= decision_time_reserve(config):

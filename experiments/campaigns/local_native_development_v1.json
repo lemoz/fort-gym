@@ -1,0 +1,37 @@
+{
+  "schema_version": "fortgym.local-campaign-condition/v1",
+  "runner": "campaign-loop/v1",
+  "condition_id": "local-native-development-v1",
+  "decision_profile": "campaign_action/v1",
+  "observation_profile": "campaign_state/v1",
+  "schema_attempts": 2,
+  "phase": "development",
+  "hypothesis": "A self-hosted model can select and execute native fortress actions through the same exploratory grammar and factual observations without transferring game data to a hosted provider.",
+  "models": ["qwen2.5:7b-instruct"],
+  "max_steps": 3,
+  "max_segments": 8,
+  "segment_time_budget_seconds": 600,
+  "ticks_per_step": 2000,
+  "max_advance_ticks": 2000,
+  "max_output_tokens": 1024,
+  "max_attempts": 1,
+  "max_dispatches": 16,
+  "max_request_bytes": 22000,
+  "max_total_tokens": 131072,
+  "max_cost_usd": 0,
+  "local_inference": {
+    "transport": "ollama-local/v1",
+    "server_version": "0.5.11",
+    "model_digests": {"qwen2.5:7b-instruct": "845dbda0ea48ed749caafd9e6037047aa19acfcfd82e704d7ca97d631a0b697e"},
+    "context_tokens": 24576,
+    "timeout_seconds": 120,
+    "temperature": 0.2,
+    "seed": 73
+  },
+  "notes": [
+    "This is a separate local development condition, not equivalent to a hosted model or a year-two comparison.",
+    "A literal loopback endpoint is required. Remote native workers may reach the operator-owned local model through a private, loopback-bound SSH tunnel; there is no hosted-model fallback.",
+    "Zero describes absent metered provider API charges. Local hardware, electricity and existing infrastructure costs are separate and not assumed to be zero.",
+    "Native action choices remain the model's own; grammar constraints never prescribe strategy or synthesize WAIT. Model and context limitations are recorded as experiment findings."
+  ]
+}

@@ -551,11 +551,7 @@ class DFHackGovernedLLMAgent(Agent):
         self._campaign_id: str | None = None
         self._max_advance_ticks = max_advance_ticks
         self._settings = get_settings()
-        self._api_key = (
-            api_key if api_key is not None else self._settings.OPENROUTER_API_KEY
-        )
-        if not self._api_key:
-            raise RuntimeError("OPENROUTER_API_KEY not configured")
+        self._api_key = self._resolve_transport_key(api_key)
         configured_provider = (
             self._settings.OPENROUTER_PROVIDER_NAME
             if provider_name is _PROVIDER_NAME_UNSET
@@ -596,6 +592,13 @@ class DFHackGovernedLLMAgent(Agent):
         self._pending: Optional[Dict[str, Any]] = None
         self._memory_path = self._resolve_memory_path(memory_path)
         self._load_memory()
+
+    def _resolve_transport_key(self, api_key: str | None) -> str | None:
+        """Hosted transport requires its credential; local adapters own their auth."""
+        resolved = api_key if api_key is not None else self._settings.OPENROUTER_API_KEY
+        if not resolved:
+            raise RuntimeError("OPENROUTER_API_KEY not configured")
+        return resolved
 
     def set_run_context(
         self,

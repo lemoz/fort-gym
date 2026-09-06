@@ -17,7 +17,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from fort_gym.bench.run.campaign_checkpoint import verify_checkpoint
-from fort_gym.bench.run.campaign_config import ENDURANCE_SCHEMA, load_segment_config
+from fort_gym.bench.run.campaign_config import ENDURANCE_SCHEMA, LOCAL_SCHEMA, load_segment_config
 from scripts.campaign_development import append_event
 from scripts.campaign_load_smoke import verify_load_source
 from scripts.campaign_process import termination_as_interrupt
@@ -106,13 +106,16 @@ def budget_reached(usage: dict, config: dict) -> bool:
     return (
         usage["dispatched_requests"] >= config["max_dispatches"]
         or usage["total_tokens"] >= config["max_total_tokens"]
-        or Decimal(usage["total_cost_usd"]) >= Decimal(str(config["max_cost_usd"]))
+        or (
+            config.get("schema_version") != LOCAL_SCHEMA
+            and Decimal(usage["total_cost_usd"]) >= Decimal(str(config["max_cost_usd"]))
+        )
     )
 
 
 def run_campaign(args, *, launch=launch_segment) -> dict:
     config = load_segment_config(args.config, args.model)
-    if config["schema_version"] != ENDURANCE_SCHEMA:
+    if config["schema_version"] not in {ENDURANCE_SCHEMA, LOCAL_SCHEMA}:
         raise ValueError("Automatic continuation requires a separate endurance condition")
     if not args.campaign_id or len(args.campaign_id) > 128:
         raise ValueError("A bounded campaign identity is required")
@@ -213,6 +216,7 @@ def run_campaign(args, *, launch=launch_segment) -> dict:
                 checkpoint=previous / "checkpoint" if index > 1 else None,
                 latest_usage=previous / "campaign/usage.jsonl" if index > 1 else None,
                 public_campaign_dir=args.public_campaign_dir,
+                local_endpoint=getattr(args, "local_endpoint", None),
             )
             record.update(
                 status="running",
@@ -295,6 +299,7 @@ def main() -> None:
         help="First local RPC port; each successive segment uses the next port",
     )
     parser.add_argument("--public-campaign-dir", type=Path)
+    parser.add_argument("--local-endpoint")
     args = parser.parse_args()
     if args.resume and (args.snapshot is not None or args.snapshot_sha256 is not None):
         parser.error("Resume uses the retained campaign boundary, not a new snapshot")

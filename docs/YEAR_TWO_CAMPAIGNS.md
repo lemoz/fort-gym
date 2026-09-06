@@ -733,3 +733,66 @@ Python files passed Ruff and Black checks; the five execution/configuration modu
 passed targeted mypy. A real provider-free Python child was terminated and reaped
 after its test deadline. No provider calls, new VMs, native game advances, production
 changes, remote merge or year-two gameplay acceptance occurred in this slice.
+
+The endurance candidate `641f308a046bbbf6d5445a56f873a84b272ea6a3` subsequently
+passed full [CI 34014832115](https://github.com/lemoz/fort-gym/actions/runs/34014832115).
+Its campaign/API/website subset also passed on the isolated Linux test checkout:
+363 passed, three Node-dependent checks skipped. The PR remains a draft and no
+production promotion occurred.
+
+## Self-hosted inference condition
+
+`local-native-development-v1` adds a separate, explicitly declared local model
+route. It reuses the exploratory prompt, action grammar, memory, native controls
+and campaign checkpoints. It does not impersonate an OpenRouter model or silently
+fall back to a hosted provider. The original hosted adapter still requires its
+credential; the local adapter does not load one and cannot create a hosted client.
+
+The initial local candidate is Qwen2.5 7B Instruct, Q4_K_M, model manifest
+`845dbda0ea48ed749caafd9e6037047aa19acfcfd82e704d7ca97d631a0b697e`, through the
+already installed Ollama 0.5.11 runtime. The [official model library](https://ollama.com/library/qwen2.5:7b-instruct)
+describes this model and its Apache 2.0 license. The public model cache occupies
+4,683,087,332 bytes on the verified project-owned external-volume artifact path;
+it is reproducible, ignored by Git and separate from unique native gameplay saves.
+No global cache migration, application upgrade or persistent service installation
+is needed for this condition.
+
+The adapter uses Ollama's [versioned native chat API](https://raw.githubusercontent.com/ollama/ollama/v0.5.11/docs/api.md)
+with an explicit JSON action schema, context window, output bound, temperature,
+seed and request deadline. Only literal loopback HTTP endpoints are accepted.
+Environment proxies, redirects, authorization headers and hosted dispatch paths
+are disabled. The server version and exact model manifest are checked around each
+inference. This adapter supports the inspected 0.5.11 runtime, not unverified newer
+server/cloud-routing behavior. Transport failures and malformed actions are
+distinct from native gameplay outcomes.
+
+The local condition permits three actions per segment, up to 16 cumulative model
+dispatches and 131,072 returned tokens. It is a development probe, not a year-two
+endurance claim. Native workers on the existing Linux test host can use an
+operator-owned, loopback-bound SSH reverse tunnel to the disposable local server:
+both endpoints stay on the owner's machines, and no observations are routed to a
+hosted model service. Pass `--local-endpoint http://127.0.0.1:11439` to
+`scripts.campaign_segment` or `scripts.campaign_run`, with the local condition file
+and `--model qwen2.5:7b-instruct`. No hosted credential is required or inherited by
+that worker. The tunnel and local inference process require explicit teardown
+after the bounded experiment, as does each isolated native game process.
+
+Usage retains cumulative dispatch and returned-token counts plus the explicit
+`self_hosted_no_metered_provider` cost basis. Zero metered model-API charges are not
+presented as a provider-reported invoice or zero operating cost. Profiles leave
+hardware/electricity/infrastructure cost unknown. Checkpoint recovery rejects a
+changed cost basis or fabricated metered charge and never resets the dispatch cap.
+
+Preparation proof: a synthetic interface request to this exact local model
+returned the expected JSON marker and boolean, with 49 prompt-evaluation tokens
+and 18 output tokens. It then unloaded the model. The private request/response are
+retained in `fort_gym/artifacts/local-inference/`. This establishes local interface
+availability, not model-selected native actions or autonomous fortress success.
+The private SSH tunnel returned Ollama version 0.5.11 from the Linux test host, and
+the starting native snapshot receipt was reverified against its retained SHA-256.
+
+Local-adapter candidate verification: 526 campaign, governed-agent, API and website
+tests passed; one Linux-only process-inspection test skipped on macOS. Changed
+Python files passed Ruff, new/changed standalone modules passed Black, and seven
+adapter/configuration/reporting modules passed targeted mypy. These are harness
+regressions, not evidence that the local model has played the native fortress.

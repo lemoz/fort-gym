@@ -118,6 +118,16 @@ def usage_profile(usage: Any) -> dict:
         else None
     )
     result["billing_reconciled"] = False
+    if usage.get("cost_basis") == "self_hosted_no_metered_provider":
+        result.update(
+            cost_basis="self_hosted_no_metered_provider",
+            reported_model_cost_usd=None,
+            metered_provider_charge_usd="0"
+            if amount == 0
+            or ("total_cost_usd" not in usage and usage.get("metered_provider_charge_usd") == "0")
+            else None,
+            infrastructure_cost_usd=None,
+        )
     return result
 
 

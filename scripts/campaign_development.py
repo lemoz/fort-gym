@@ -30,7 +30,26 @@ def append_event(path: Path, event: dict) -> None:
         os.fsync(handle.fileno())
 
 
-def make_agent(config: dict, model: str, journal: Path, *, persist_dispatches: bool = False):
+def make_agent(
+    config: dict,
+    model: str,
+    journal: Path,
+    *,
+    persist_dispatches: bool = False,
+    local_endpoint: str | None = None,
+):
+    from fort_gym.bench.run.campaign_config import LOCAL_SCHEMA
+
+    if config.get("schema_version") == LOCAL_SCHEMA:
+        from fort_gym.bench.agent.campaign_local import LocalCampaignAgent
+
+        if not persist_dispatches or local_endpoint is None:
+            raise ValueError(
+                "Local campaigns require a dedicated endpoint and persistent accounting"
+            )
+        return LocalCampaignAgent(
+            config=config, model=model, endpoint=local_endpoint, journal=journal
+        )
     from fort_gym.bench.agent.campaign_llm import CampaignLLMAgent
     from fort_gym.bench.agent.governed_llm import DFHackGovernedLLMAgent, GovernedBudgetCapError
 
