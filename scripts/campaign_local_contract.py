@@ -82,8 +82,14 @@ def main() -> None:
     if config["schema_version"] != LOCAL_SCHEMA or config["max_advance_ticks"] < 2000:
         raise ValueError("This fixed diagnostic requires a local condition supporting 2000 ticks")
     args.output.mkdir(mode=0o700, parents=False, exist_ok=False)
-    agent = LocalCampaignAgent(
-        config=config, model=args.model, endpoint=args.endpoint, journal=args.output / "spend.jsonl"
+    from scripts.campaign_development import make_agent
+
+    agent = make_agent(
+        config,
+        args.model,
+        args.output / "spend.jsonl",
+        persist_dispatches=True,
+        local_endpoint=args.endpoint,
     )
     agent.set_campaign_context(campaign_id="synthetic-contract-" + args.output.name)
     result = probe(agent, args.output)

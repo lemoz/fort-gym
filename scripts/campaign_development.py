@@ -30,6 +30,18 @@ def append_event(path: Path, event: dict) -> None:
         os.fsync(handle.fileno())
 
 
+def verify_local_transport(endpoint: str, config: dict, model: str) -> None:
+    """Verify the declared transport before allocating an isolated game runtime."""
+    from fort_gym.bench.agent.campaign_llama_identity import TRANSPORT, verify_llama_model
+    from fort_gym.bench.agent.campaign_local import verify_local_model
+
+    validate_bounds(config, model, local=True)
+    if config["local_inference"]["transport"] == TRANSPORT:
+        verify_llama_model(endpoint, config, model)
+    else:
+        verify_local_model(endpoint, config, model)
+
+
 def make_agent(
     config: dict,
     model: str,
@@ -42,14 +54,20 @@ def make_agent(
 
     if config.get("schema_version") == LOCAL_SCHEMA:
         from fort_gym.bench.agent.campaign_local import LocalCampaignAgent
+        from fort_gym.bench.agent.campaign_llama import LlamaCampaignAgent
+        from fort_gym.bench.agent.campaign_llama_identity import TRANSPORT
 
+        validate_bounds(config, model, local=True)
         if not persist_dispatches or local_endpoint is None:
             raise ValueError(
                 "Local campaigns require a dedicated endpoint and persistent accounting"
             )
-        return LocalCampaignAgent(
-            config=config, model=model, endpoint=local_endpoint, journal=journal
+        agent_class = (
+            LlamaCampaignAgent
+            if config["local_inference"]["transport"] == TRANSPORT
+            else LocalCampaignAgent
         )
+        return agent_class(config=config, model=model, endpoint=local_endpoint, journal=journal)
     from fort_gym.bench.agent.campaign_llm import CampaignLLMAgent
     from fort_gym.bench.agent.governed_llm import DFHackGovernedLLMAgent, GovernedBudgetCapError
 

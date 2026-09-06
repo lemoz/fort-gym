@@ -38,7 +38,7 @@ were independently verified stopped. Metered model API charges are zero; operati
 costs are unmeasured. One tiny copy check does not establish a general error rate,
 causation for earlier autonomous failures or improved fortress management.
 
-## Context cost is still open
+## Historical payload limit and new measured transport
 
 A provider-free reconstruction of fourteen retained native requests preserved their
 current observations, exact model memory and correction messages. None fit the
@@ -46,11 +46,32 @@ existing 22,000-byte request bound after adding this grammar, even with all olde
 history removed. The irreducible sizes ranged from 27,461 to 31,226 bytes. This used
 the historical Ollama serializer, not a completed native llama.cpp integration.
 
-Do not enable this profile in a historical condition or simply resume an older
-save. The next implementation needs a separately declared modern local transport,
-measured token/context handling, verified native request fit and reliable failed-
-decision continuation. The larger schema is a measured tradeoff, not a reason to
-drop current game facts or pretend a paused campaign is complete.
+The separate [llama.cpp condition](../experiments/campaigns/local_native_llama_typed_v1.json)
+now measures the exact generation body using the pinned server's non-generating
+`/v1/chat/completions/input_tokens` endpoint. A 65,536-byte payload ceiling is
+independent of the 32,768-token context, 1,024-token output allowance and 512-token
+headroom. Returned prompt usage must equal the measured count. Valid returned
+usage is accounted before post-response checks can reject a response.
+
+[Actual adapter evidence](../experiments/evidence/local_llama_adapter_20260906.json)
+records another three exact copies and 5,303 accounted tokens. Two retained native
+input boundaries fit with their current facts and exact memory intact: 5,466 and
+7,992 prompt tokens, with no older history omitted. These input checks generated
+no actions and made no native RPC calls. They do not supersede the historical
+0-of-14 result under the old serializer and smaller byte limit.
+
+The local launcher verifies the pinned release archive, installed members and
+weight-file SHA before starting a temporary one-model server. API metadata and
+chat-template digests independently guard the active endpoint; they are not a
+cryptographic weight-file hash attestation. Model files, raw requests and raw
+receipts remain private artifacts, not public repository content.
+
+Do not enable this profile in a historical condition or resume an older model
+checkpoint. New native campaigns start from the original digest-bound save.
+Generic failed-decision continuation is still unresolved. A larger schema and
+successful context checks do not establish useful autonomous gameplay.
+
+Server contract: [pinned llama.cpp documentation](https://github.com/ggml-org/llama.cpp/blob/b10516/tools/server/README.md).
 
 The website keeps both compatibility diagnostics outside the seven model-performance
 rows. Unit, endpoint and frontend test-double checks do not establish deployment,

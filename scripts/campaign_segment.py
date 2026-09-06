@@ -264,11 +264,11 @@ def launch_segment(args, config: dict) -> dict:
         raise ValueError("Supply a source runtime and a checkpoint or digest-bound snapshot")
     local = config.get("schema_version") == LOCAL_SCHEMA
     if local:
-        from fort_gym.bench.agent.campaign_local import verify_local_model
+        from scripts.campaign_development import verify_local_transport
 
         if getattr(args, "local_endpoint", None) is None:
             raise ValueError("Local campaigns require an explicit loopback endpoint")
-        verify_local_model(args.local_endpoint, config, args.model)
+        verify_local_transport(args.local_endpoint, config, args.model)
     elif not os.environ.get("OPENROUTER_API_KEY"):
         raise ValueError("The existing authorized project provider credential must be supplied")
     revision = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()

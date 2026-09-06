@@ -87,8 +87,14 @@ def validate_bounds(
 
 
 def validate_local_settings(config: dict, model: str) -> None:
+    from ..agent.campaign_llama_identity import TRANSPORT, validate_llama_settings
+
     local = config.get("local_inference")
-    if not isinstance(local, dict) or local.get("transport") != "ollama-local/v1":
+    if (
+        not isinstance(local, dict)
+        or not isinstance(local.get("transport"), str)
+        or local["transport"] not in {"ollama-local/v1", TRANSPORT}
+    ):
         raise ValueError("Unsupported local campaign transport")
     runtime_profile = local.get("runtime_profile", "standard_f16/v1")
     if not isinstance(runtime_profile, str) or runtime_profile not in {
@@ -127,7 +133,9 @@ def validate_local_settings(config: dict, model: str) -> None:
     ):
         if type(local.get(key)) is not int or not lower <= local[key] <= upper:
             raise ValueError(f"Invalid local inference setting: {key}")
-    if local.get("server_version") != "0.5.11":
+    if local["transport"] == TRANSPORT:
+        validate_llama_settings(config)
+    elif local.get("server_version") != "0.5.11":
         raise ValueError(
             "This local transport supports the verified pre-cloud Ollama 0.5.11 runtime"
         )
@@ -160,6 +168,18 @@ def decision_time_reserve(config: dict) -> int:
     timeout; allow five seconds per dispatch for backoff and 60 for native work.
     The independent worker deadline still handles a stalled native call or network."""
     if config.get("schema_version") == LOCAL_SCHEMA:
+        from ..agent.campaign_llama_identity import TRANSPORT
+
+        local = config["local_inference"]
+        if local["transport"] == TRANSPORT:
+            # At most 13 history projections plus a refreshed preflight per round.
+            # Include the initial decision preview and bounded identity/count calls.
+            context_checks = (config["schema_attempts"] + 1) * 14
+            return (
+                context_checks * (6 + local["token_count_timeout_seconds"])
+                + config["schema_attempts"] * (local["timeout_seconds"] + 6)
+                + 60
+            )
         return config["schema_attempts"] * (config["local_inference"]["timeout_seconds"] + 5) + 60
     return 3 * config["max_attempts"] * config["schema_attempts"] * 65 + 60
 

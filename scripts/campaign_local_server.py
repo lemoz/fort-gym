@@ -26,6 +26,8 @@ RUNTIME_PROFILES = {
 def server_environment(
     config: dict, *, cache: Path, port: int, inherited: Mapping[str, str]
 ) -> dict[str, str]:
+    if config["local_inference"]["transport"] != "ollama-local/v1":
+        raise ValueError("This launcher serves Ollama conditions only")
     profile = config["local_inference"].get("runtime_profile", "standard_f16/v1")
     if not isinstance(profile, str) or profile not in RUNTIME_PROFILES:
         raise ValueError("Unsupported local server runtime profile")
