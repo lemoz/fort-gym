@@ -48,9 +48,9 @@ def verify_checkpoint(directory: Path) -> dict[str, Any]:
     if directory.is_symlink() or not directory.is_dir():
         raise CampaignCheckpointError("Checkpoint must be a regular directory")
     manifest = json.loads(_read_regular(directory / "checkpoint.json"))
-    if (
-        not isinstance(manifest, dict)
-        or manifest.get("schema_version") != "fortgym.campaign-checkpoint/v1"
+    if not isinstance(manifest, dict) or manifest.get("schema_version") not in (
+        "fortgym.campaign-checkpoint/v1",
+        "fortgym.campaign-checkpoint/v2",
     ):
         raise CampaignCheckpointError("Unsupported checkpoint manifest")
     payload = manifest.get("payload")
@@ -59,6 +59,10 @@ def verify_checkpoint(directory: Path) -> dict[str, Any]:
     for name, key in (("agent.json", "agent_sha256"), ("trace.jsonl", "trace_sha256")):
         if _digest(_read_regular(directory / name)) != payload.get(key):
             raise CampaignCheckpointError(f"Checkpoint digest mismatch: {name}")
+    if manifest["schema_version"] == "fortgym.campaign-checkpoint/v2":
+        for name, key in (("runner.json", "runner_sha256"), ("usage.jsonl", "usage_sha256")):
+            if _digest(_read_regular(directory / name)) != payload.get(key):
+                raise CampaignCheckpointError(f"Checkpoint digest mismatch: {name}")
     receipt = payload.get("native_save")
     if not isinstance(receipt, dict) or save_inventory(directory / "game") != receipt.get("files"):
         raise CampaignCheckpointError("Checkpoint game save digest mismatch")
@@ -75,6 +79,8 @@ def create_checkpoint(
     last_committed_step: int,
     code_revision: str,
     parent: Path | None = None,
+    runner_state: dict[str, Any] | None = None,
+    usage_path: Path | None = None,
 ) -> dict[str, Any]:
     """Capture at a paused, committed action boundary with decisions suspended.
 
@@ -86,6 +92,10 @@ def create_checkpoint(
         raise ValueError("last_committed_step must be a nonnegative integer")
     if not campaign_id or not code_revision:
         raise ValueError("Campaign identity and code revision are required")
+    if (runner_state is None) != (usage_path is None):
+        raise ValueError("Runner state and usage journal must be checkpointed together")
+    runner_bytes = _json_bytes(runner_state) if runner_state is not None else None
+    usage_bytes = _read_regular(usage_path) if usage_path is not None else None
     state = agent.export_campaign_state()
     if state.get("campaign_id") != campaign_id:
         raise CampaignCheckpointError("Agent belongs to another campaign")
@@ -137,10 +147,15 @@ def create_checkpoint(
     if (
         _read_regular(trace_path) != trace_bytes
         or _json_bytes(agent.export_campaign_state()) != agent_bytes
+        or (usage_path is not None and _read_regular(usage_path) != usage_bytes)
+        or (runner_state is not None and _json_bytes(runner_state) != runner_bytes)
     ):
         raise CampaignCheckpointError("Agent or trace changed during checkpoint capture")
     _write_new(destination / "agent.json", agent_bytes)
     _write_new(destination / "trace.jsonl", trace_bytes)
+    if runner_bytes is not None and usage_bytes is not None:
+        _write_new(destination / "runner.json", runner_bytes)
+        _write_new(destination / "usage.jsonl", usage_bytes)
     for record in native["files"]:
         with (destination / "game" / record["path"]).open("rb") as handle:
             os.fsync(handle.fileno())
@@ -155,8 +170,14 @@ def create_checkpoint(
         "trace_sha256": _digest(trace_bytes),
         "native_save": native,
     }
+    if runner_bytes is not None and usage_bytes is not None:
+        payload.update(runner_sha256=_digest(runner_bytes), usage_sha256=_digest(usage_bytes))
     manifest = {
-        "schema_version": "fortgym.campaign-checkpoint/v1",
+        "schema_version": (
+            "fortgym.campaign-checkpoint/v2"
+            if runner_bytes is not None
+            else "fortgym.campaign-checkpoint/v1"
+        ),
         "payload": payload,
         "sha256": _digest(_json_bytes(payload)),
     }

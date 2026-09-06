@@ -319,3 +319,51 @@ the local loopback HTML route returned HTTP 200 and the API returned the retaine
 aggregate evidence. This is not browser visual QA or production acceptance.
 No website deployment, active-campaign integration, year-two success, or complete
 campaign recovery is claimed. The goal still requires all of those outcomes.
+
+## Campaign loop and continuation state
+
+`run/campaign_loop.py` adds a separate serial campaign loop instead of treating
+the legacy benchmark runner's local variables as recoverable state. It reuses the
+existing action parser, governed observation encoder, and factual action-history
+builder. It does not add a score gate, automatic anniversary stop, scripted game
+strategy, or a gameplay-rescue action. The existing benchmark runner and its
+historical protocols retain their behavior.
+
+The loop persists each new decision's usage before action execution, and commits
+the action and actual native tick receipt before allowing a checkpoint. A v2
+checkpoint binds game files, agent state, trace, runner history/feedback, and the
+usage journal. Existing v1 checkpoint verification remains supported, but a v1
+bundle cannot resume this loop because it lacks the runner state.
+
+Resume requires an already loaded verified native save in a caller-owned runtime
+and the original run's latest usage journal. It checks the native clock, restores
+game-era memory and the next action cursor, and retains returned charges from
+decisions after an older checkpoint. It does not reissue a pending checkpoint
+action. Interrupted decisions, incomplete journals, and unaccounted usage require
+reconciliation; they do not become free calls. This is cumulative returned-usage
+reconciliation, not invoice verification. Failed or ambiguous execution poisons
+the current loop instance until checkpoint recovery instead of allowing a blind
+same-cursor retry.
+
+`run/campaign_environment.py` connects this loop to existing native controls. It
+checks the expected isolated DF root, verifies paused observations, disables
+assisted dig completion, uses the legal executor, and interrupts time advancement
+at viewscreen transitions. The outer runtime owner still handles save loading,
+process isolation, and teardown. No native G7 event monitor is started or reset:
+stock and structure observations are retained, while campaign-scoped production,
+consumption, and death-attribution measurement remain to be implemented.
+
+Local verification: 85 focused tests passed; new source passes Ruff and targeted
+mypy. The deterministic continuation test obtains identical next prompts, actions,
+feedback, agent state, and trace rows to uninterrupted execution. Separate tests
+retain later decimal-exact charges while restoring older game-era memory, reject
+native-clock mismatch and modified checkpoint files, record partial advances,
+and prevent a new action after ambiguous execution. Native-adapter tests exercise
+the real legal WAIT executor with an in-memory client, not an actual game.
+
+Still required: load v2 checkpoints through the isolated runtime launcher and
+verify continuation against real DF, connect the campaign loop to the executable
+model configuration, and complete campaign-scoped measurements and website live
+tracking. No new model call, native gameplay run, production deployment, or full
+campaign-recovery acceptance is claimed by these local checks. The website commit
+`bfd76cae7` passed full CI before this continuation slice was added.
