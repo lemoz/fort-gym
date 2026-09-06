@@ -15,7 +15,7 @@ CONFIG = {"condition_id": "test-condition", "models": ["test-model"]}
 
 def test_three_published_native_attempts_preserve_distinct_failure_causes():
     result = records.campaign_feed(None)
-    assert result["configured"] is False and result["published_snapshots"] == 8
+    assert result["configured"] is False and result["published_snapshots"] == 9
     by_model = {
         row["model"]: row
         for row in result["campaigns"]
@@ -47,7 +47,7 @@ def test_recorded_comparison_is_served_without_enabling_a_live_directory(monkeyp
     client = TestClient(server.app)
     response = client.get("/public/campaign-feed")
     assert response.status_code == 200 and response.json()["configured"] is False
-    assert len(response.json()["campaigns"]) == 8
+    assert len(response.json()["campaigns"]) == 9
     assert "no-store" in response.headers["cache-control"]
     assert client.get("/campaigns").status_code == 200
 
@@ -116,6 +116,38 @@ def test_repair_record_preserves_clock_and_checkpoint_without_claiming_success()
     assert repaired["elapsed_ticks"] < 403200
     assert repaired["functioning_fortress"] == "not_assessed"
     assert repaired["comparison_rankings_available"] is False
+
+
+def test_thinking_native_resource_gain_is_not_completed_development_or_a_ranking():
+    from fort_gym.bench.api import server
+
+    rows = records.campaign_feed(None)["campaigns"]
+    thinking = next(row for row in rows if row["condition_id"] == "local-native-llama-thinking-v1")
+    baseline = next(row for row in rows if row["condition_id"] == "local-native-llama-typed-v1")
+    assert thinking["model"] == baseline["model"]
+    assert thinking["configuration_sha256"] != baseline["configuration_sha256"]
+    assert (thinking["committed_steps"], thinking["elapsed_ticks"]) == (8, 5000)
+    assert thinking["usage"]["total_tokens"] == 58359
+    assert thinking["usage"]["dispatched_requests"] == thinking["usage"]["accounted_responses"] == 8
+    assert thinking["actions"]["accepted"] == 6 and thinking["actions"]["rejected"] == 2
+    assert thinking["actions"]["changed_command_after_rejection"] == 2
+    assert thinking["current_metrics"]["wood_stock"] == 12
+    assert baseline["current_metrics"]["wood_stock"] == 3
+    assert thinking["current_metrics"]["completed_workshops"] == 0
+    assert thinking["checkpoint_verified"] is True and thinking["cleanup_verified"] is True
+    assert thinking["functioning_fortress"] == "not_assessed"
+    assert thinking["comparison_rankings_available"] is False
+    assert thinking["code_revision"] == "91ba6df9f79b3a8d43bb4e862e71080258d99910"
+    filename = "local_native_llama_thinking_20260906.json"
+    bundle = json.loads((records.PROJECT_ROOT / "experiments/evidence" / filename).read_text())
+    assert bundle["native_audit"]["checkpoint_cursor"] == 8
+    assert bundle["native_audit"]["designation_outcomes"]["shrubs_designated"] == 10
+    assert bundle["native_audit"]["designation_outcomes"]["trees_designated"] == 2
+    assert bundle["native_audit"]["thinking_mode"]["returned_responses_with_reasoning_content"] == 8
+    assert bundle["configuration"]["local_inference"]["enable_thinking"] is True
+    page = TestClient(server.app).get("/campaigns").text
+    assert "Latest result: autonomous wood collection" in page and filename in page
+    assert "wood stock from 3 to 12" in page and "58,359 tokens" in page
 
 
 def test_native_workshop_fixture_is_visible_but_never_a_model_comparison_row():
@@ -250,11 +282,11 @@ def test_website_separates_incomplete_checkpoint_and_new_model_compatibility():
     assert typed["fit_diagnostic"]["requests_fit"] == 0
     assert len(typed["fit_diagnostic"]["requests"]) == 14
     assert candidate["combined_diagnostic_usage"]["total_tokens"] == 6510
-    assert [
+    assert {
         row["campaign_id"]
         for row in records.campaign_feed(None)["campaigns"]
         if "qwen35" in row["model"]
-    ] == ["local-llama-qwen35-20260906-a"]
+    } == {"local-llama-qwen35-20260906-a", "local-thinking-qwen35-20260906-a"}
 
 
 @pytest.fixture

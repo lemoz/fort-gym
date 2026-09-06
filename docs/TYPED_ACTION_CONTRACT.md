@@ -95,6 +95,13 @@ The [publisher's model card](https://huggingface.co/Qwen/Qwen3.5-9B) documents t
 and non-thinking modes. Local runtime behavior and native outcomes still require
 their own receipts.
 
-The website keeps both compatibility diagnostics outside the seven model-performance
+The [actual thinking-mode native result](../experiments/evidence/local_native_llama_thinking_20260906.json)
+records eight accounted responses, 58,359 tokens and 5,000 native ticks. The model
+gathered, attempted chopping, changed commands after two rejections, and increased
+observed wood stock from 3 to 12. No construction was initiated. The final cursor-8
+checkpoint covers every command and response, and teardown was independently
+verified. This is resource acquisition, not completed development or year-two success.
+
+The website keeps compatibility diagnostics separate from its nine native campaign
 rows. Unit, endpoint and frontend test-double checks do not establish deployment,
-browser acceptance or gameplay readiness.
+browser acceptance or gameplay success.

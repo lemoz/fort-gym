@@ -2,7 +2,35 @@
 
 Verified September 6, 2026. The Year-Two Autonomous Play goal remains active.
 
-Latest: [Qwen3.5 9B with the typed local adapter](../experiments/evidence/local_native_llama_typed_20260906.json)
+Latest: [Qwen3.5 9B with thinking enabled](../experiments/evidence/local_native_llama_thinking_20260906.json)
+produced autonomous resource growth: **wood stock increased from 3 to 12**.
+Eight accounted responses used **58,359 tokens** and advanced **5,000 native ticks**.
+Three gathering commands were accepted, two chopping commands rejected, two changed
+chopping commands accepted, and one WAIT accepted. Native receipts report ten shrub
+and two tree designations; these are not counts of completed harvests.
+
+The cursor-8 checkpoint covers every response and command across two digest-linked
+segments. All measured prompt counts matched returned usage. Every response included
+server-separated reasoning, retained privately and included in reported completion
+usage. Both copied games, the model and tunnel were independently verified stopped;
+production remained unchanged. Execution stayed at
+`91ba6df9f79b3a8d43bb4e862e71080258d99910`;
+[its CI passed](https://github.com/lemoz/fort-gym/actions/runs/34038331022).
+
+No construction was initiated or completed. Population stayed seven, food 45 and
+drink 60. The dispatch cap was reached, not gameplay collapse. This is neither a
+functioning-fortress assessment nor causal proof that reasoning mode solves gameplay:
+the two short conditions also differ in output and execution bounds. Nine terminal
+native model records are now included in the website source. No production deploy,
+merge or browser visual acceptance is claimed.
+
+Next: move from resource acquisition to completed production, then endurance.
+Preserve this bounded condition; do not enlarge it while resuming its checkpoint.
+The existing acceptance host has 2,454,065,152 bytes free after verified teardown.
+Longer runs need disk-bounded runtime retention or reuse, with private saves and
+evidence preserved, before scaling the number of copied segments.
+
+Earlier: [Qwen3.5 9B with the typed local adapter](../experiments/evidence/local_native_llama_typed_20260906.json)
 finished its bounded non-thinking attempt: **16 accounted responses, 142,218 tokens,
 16 WAIT commands and 1,600 native ticks**. It initiated no gathering or construction.
 Population remained seven, food 45 and drink 60. Two digest-linked checkpoints end
@@ -14,13 +42,13 @@ stopped. Production revision, services and original paused calendar were unchang
 Execution was frozen at `f04b3f92bfadf08da92039d373ee1bb62eee6e49`;
 [its CI passed](https://github.com/lemoz/fort-gym/actions/runs/34037691409).
 This is a dispatch-limited pause, not a model ranking, functioning fortress or first
-anniversary. Eight terminal model snapshots are now included in the website source;
+anniversary. That publication included eight terminal model snapshots in the website source;
 no production deployment or browser visual acceptance is claimed.
 
 The separately declared [thinking-mode follow-up](../experiments/campaigns/local_native_llama_thinking_v1.json)
-keeps the same weights, observations, control reference and original save, while
-changing reasoning mode and its explicit execution allowances. Its configuration
-alone is not evidence of execution or a claim that it fixes repeated waiting.
+keeps the same weights, observations, control reference and original save while
+changing reasoning mode and its explicit execution allowances. Its actual result
+is recorded above; unlike short conditions are not model rankings.
 
 Earlier: the [factual designation-reference condition](../experiments/evidence/local_native_designation_reference_20260906.json)
 stopped at a request-size boundary: **15 accounted responses, 78,023 tokens,

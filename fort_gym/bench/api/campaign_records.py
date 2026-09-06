@@ -19,6 +19,7 @@ PUBLISHED_BUNDLES = (
     "local_native_qwen14_q3_20260906.json",
     "local_native_designation_reference_20260906.json",
     "local_native_llama_typed_20260906.json",
+    "local_native_llama_thinking_20260906.json",
 )
 
 
