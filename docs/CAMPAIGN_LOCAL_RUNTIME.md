@@ -1,6 +1,36 @@
 # Local native runtime investigation
 
-September 6, 2026. Status: **not ready for autonomous gameplay**.
+September 6, 2026. Status: **native loading and VM reboot verified; campaign recovery pending**.
+
+## Latest result
+
+A fresh isolated profile, `fort-gym-native-b`, loaded DF 0.47.05/DFHack
+0.47.05-r8 successfully using the same retained image and the narrow
+`personality(262144)` syscall allowance. It then shut down through the guest,
+restarted, and automatically loaded a fresh container's fortress again. Both
+loads were paused at year 30, tick 16801. The first driver's line-oriented JSON
+parser missed successful readiness; an independent full-JSON probe verified it.
+The corrected reboot driver completed automatically with exit code zero.
+
+The [new versioned evidence](../experiments/evidence/local_native_load_reboot_20260906.json)
+preserves that distinction. No campaign commands, model calls or checkpoints
+occurred. Both test profiles and Hermes were observed stopped afterward. The
+working profile retains about 1.8 GiB allocated within its 10 GiB virtual disk.
+The old profile and its evidence remain unchanged. No global update or shared
+network-state deletion was used. This configuration is working evidence, not a
+controlled explanation of the first profile's failure.
+
+Use guest-initiated `systemctl poweroff`, observe the owned profile stopped, then
+run Colima lifecycle cleanup after stopping its containers. This shutdown path
+has reboot proof; do not silently substitute the earlier failed restart route.
+
+Next, install the public campaign harness and provider-free dependencies in a
+derived local image, then run the automatic v3 recovery fixture. This seed starts
+at a different native boundary from the previous shared-host snapshot; future
+campaign conditions must declare that difference. Native loading alone does not
+establish persistent campaign recovery, autonomous play or year-two progress.
+
+## Earlier attempts (retained history)
 
 The shared native host's free-space limit motivated a local development test.
 The retained private M1b Linux/amd64 game image was checksum-verified and loaded
@@ -45,15 +75,15 @@ No new model charge or cloud reservation was incurred by these attempts. Local
 hardware, energy, and application costs are not measured and are not reported as
 zero. The standing cloud expiry and no-production-deploy boundary are unchanged.
 
-## Next experimental decision
+## Decision after the earlier failures
 
-Resolve the owned VM's SSH routing/startup failure before any further game launch,
+The initial decision was to resolve the owned VM's SSH routing/startup failure,
 then test the narrow syscall policy with the same retained image. Do not delete
 shared Colima network state, prune profiles, or update global tooling as an
 unexamined reset. [Lima documents the Rosetta route](https://lima-vm.io/docs/config/multi-arch/),
 but that is not evidence this particular DFHack runtime works on it.
 
-Only after native load works should this local route run the automatic v3
+With native load now verified, this local route can run the automatic v3
 checkpoint recovery fixture and a newly declared autonomous campaign. The
 historical long-v2 tail must not be silently rolled back or reused as a clean
 continuation. No new model-comparison row or year-two progress is claimed here.

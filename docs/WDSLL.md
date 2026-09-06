@@ -59,11 +59,13 @@ delivery snapshots above, not historical gameplay evidence. Native v3 recovery,
 year-two play and production website acceptance remain open. See the current
 [campaign status](CAMPAIGN_STATUS.md) for CI and storage proof limits.
 
-A bounded [local runtime investigation](CAMPAIGN_LOCAL_RUNTIME.md) now records
-one stopped local VM and two distinct infrastructure failures: DFHack `setarch`
-permission denial, then VM SSH readiness timeout before testing a narrow syscall
-allowance. No model or gameplay progress is claimed. This leaves native local
-compatibility open without modifying the shared host or creating cloud resources.
+A bounded [local runtime investigation](CAMPAIGN_LOCAL_RUNTIME.md) now verifies
+native DFHack loading on a fresh local profile and successful loading again after
+guest-initiated shutdown and VM reboot. The narrow syscall allowance executed;
+no privileged/unconfined fallback was used. Earlier failed evidence is retained.
+Both test VMs were observed stopped. No model calls or gameplay progress occurred.
+This opens a local capacity route for the automatic campaign recovery fixture
+without changing the shared host or creating cloud resources.
 
 ## Success statement (the one metric)
 

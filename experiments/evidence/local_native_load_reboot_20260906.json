@@ -1,0 +1,95 @@
+{
+  "schema_version": "fortgym.local-native-load-reboot-evidence/v1",
+  "observed_date": "2026-09-06",
+  "classification": "native_compatibility_verified",
+  "supersedes_current_readiness_of": "local_native_compatibility_20260906.json",
+  "historical_failure_evidence_changed": false,
+  "profile": "fort-gym-native-b",
+  "local_vm": {
+    "cpus": 2,
+    "memory_bytes": 3221225472,
+    "virtual_disk_bytes": 10737418240,
+    "architecture": "aarch64",
+    "driver": "vz",
+    "rosetta": true,
+    "previous_test_profile_stopped": true,
+    "one_test_vm_running_at_a_time": true,
+    "ssh_agent_forwarding": false,
+    "home_directory_shared": false,
+    "docker_context_changed": false
+  },
+  "runtime": {
+    "image_config_sha256": "d90811a39d5edd7c0a61d9adbbe4251cbfc345df52f5fa48ba174ce8992b8a86",
+    "platform": "linux/amd64",
+    "df_version": "v0.47.05 linux64",
+    "dfhack_version": "0.47.05-r8",
+    "network": "none",
+    "published_ports": [],
+    "host_bind_mounts": [],
+    "capabilities_dropped": ["ALL"],
+    "no_new_privileges": true,
+    "seccomp_default_action": "SCMP_ACT_ERRNO",
+    "seccomp_base": "https://github.com/moby/moby/blob/v27.1.1/profiles/seccomp/default.json",
+    "seccomp_additional_allowance": "personality(262144)",
+    "seccomp_sha256": "5ae96ce3d0a9c746765df7d4c5948312f3847b08e917174368797d788461657a",
+    "privileged_or_unconfined_fallback_used": false
+  },
+  "attempts": [
+    {
+      "id": "fresh-profile-native-load",
+      "native_map_loaded": true,
+      "automatic_driver_reported_success": false,
+      "operator_intervention": "Independent full-JSON parsing verified native load; the driver was interrupted because its line-oriented parser could not parse the pretty-printed response",
+      "driver_sha256": "bbe6e90743c38368f5d65809d4c17ed563abaab4add2de52a4bd6a4ea7b2a231",
+      "native_status_sha256": "0410fed3b4a5a7422d0d2dab3def9d8b7d750ce0e1bace43e020addf64bd6d8c",
+      "guest_poweroff_observed_stopped": true
+    },
+    {
+      "id": "guest-shutdown-reboot-native-load",
+      "previous_shutdown": "guest_poweroff_observed_stopped",
+      "same_vm_restarted": true,
+      "fresh_container": true,
+      "native_map_loaded": true,
+      "automatic_driver_reported_success": true,
+      "driver_exit_code": 0,
+      "driver_sha256": "cb5e1c0bdbf4f9cc5791b9a8080ea5fed1636156de1863741256457eefd4fd96",
+      "result_sha256": "8de455d7ed2cf362b01d3c1017e673498f141d501ba271ddc2924837926c2e6e",
+      "native_status_sha256": "0410fed3b4a5a7422d0d2dab3def9d8b7d750ce0e1bace43e020addf64bd6d8c",
+      "container_state_sha256": "aeb544e60ab3850730cb0810dcd86e2b020889fc95020caf64cdfc1ff530b074",
+      "container_exit_code": 143,
+      "container_running_after_cleanup": false,
+      "container_oom_killed": false,
+      "container_finished_at": "2026-09-06T21:56:05.079928384Z",
+      "guest_poweroff_observed_stopped": true,
+      "colima_stop_exit_code": 0
+    }
+  ],
+  "observed_boundary": {
+    "save_name": "local_compat",
+    "paused": true,
+    "year": 30,
+    "year_tick": 16801
+  },
+  "outcomes": {
+    "native_load_verified": true,
+    "vm_reboot_then_native_load_verified": true,
+    "automatic_campaign_recovery_verified": false,
+    "gameplay_commands": 0,
+    "new_campaign_checkpoints": 0,
+    "provider_calls": 0,
+    "cloud_vms_created": 0,
+    "metered_model_cost_usd": "0",
+    "cloud_reservation_added_usd": "0",
+    "local_hardware_energy_and_app_cost_usd": null,
+    "year_two_verified": false,
+    "production_deployed": false
+  },
+  "proof_limits": [
+    "Fresh profile plus guest-initiated shutdown is a working configuration, not proof of the original profile failure's precise cause",
+    "VM reboot and loading a fresh seed are not campaign checkpoint continuation",
+    "This seed boundary differs from the previous shared-host snapshot and is not a matched-model comparison",
+    "Both local test profiles and the unrelated Hermes profile were observed stopped after these attempts",
+    "The raw game image, saves, operator logs and stopped VM disks remain private and retained",
+    "Native compatibility is infrastructure evidence, not autonomous gameplay or year-two success"
+  ]
+}
