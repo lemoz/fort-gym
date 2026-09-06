@@ -35,3 +35,20 @@ def test_year_two_condition_declares_start_and_sufficient_tick_envelope():
     }
     # Feasibility of the declared envelope is not evidence of model performance.
     assert config["max_steps"] * config["max_segments"] * config["max_advance_ticks"] > 403200
+
+
+def test_matched_thinking_condition_changes_only_the_declared_model_setting():
+    direct = load_segment_config(
+        ROOT / "experiments/campaigns/local_native_qwen35_year_two_v1.json", MODEL
+    )
+    thinking = load_segment_config(
+        ROOT / "experiments/campaigns/local_native_qwen35_year_two_thinking_v1.json", MODEL
+    )
+    assert direct["condition_id"] != thinking["condition_id"]
+    assert direct["local_inference"]["enable_thinking"] is False
+    assert thinking["local_inference"]["enable_thinking"] is True
+    for metadata in ("condition_id", "hypothesis", "notes"):
+        direct.pop(metadata)
+        thinking.pop(metadata)
+    thinking["local_inference"]["enable_thinking"] = False
+    assert thinking == direct
