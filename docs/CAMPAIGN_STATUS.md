@@ -2,6 +2,34 @@
 
 Verified September 6, 2026. The Year-Two Autonomous Play goal remains active.
 
+Latest published candidate: [PR #132](https://github.com/lemoz/fort-gym/pull/132)
+contains the one-runtime native output-pause recovery fixture, bounded closed-port
+settling correction, and versioned native evidence. Source
+`43a53762c0dc819055a532c5fbb4fc4714fc2fa3` is verified on GitHub. The final full
+local suite passed **1,862 tests with 10 skipped**; the focused suite passed
+115 tests with one skip. Changed-file lint/formatting and targeted typing pass.
+[Exact-head CI](https://github.com/lemoz/fort-gym/actions/runs/34060041534) passed.
+The PR remains open: merge into main requires explicit owner approval at the
+tool review boundary. No merge, post-merge CI or deployment is claimed for #132.
+
+Native execution remained frozen at `ade9af102`. The v3 checkpoint saved a
+zero-command pause, then restored its agent/runner/usage state in a second native
+process and executed one fresh 20-tick WAIT. The original automatic command stopped
+at a transient closed-port bind failure before claiming or launching the second
+process. After independent teardown/port verification, an explicitly retained
+driver completed only that second phase using the unchanged original source.
+This proves the native recovery plumbing, not an uninterrupted automatic CLI run.
+The later port-wait correction has unit/CI coverage, not a fresh native run.
+
+Both process lifetimes are independently verified stopped and their listener is
+closed. Synthetic usage moved from 10 to 20 fixture tokens; actual model calls
+and metered model charges were zero. Native time moved from year 30, tick 19309
+to tick 19329. This is not autonomous gameplay, a model comparison, or an endurance
+handoff; no new final checkpoint was created after the WAIT. The existing host
+has about 1.9 MB above its 1 GiB floor, so no further native allocation is planned
+there without a viable capacity route. Historical saves/runs are unchanged.
+No VM, disk expansion, production deployment or service restart occurred.
+
 Latest merged delivery: [PR #131](https://github.com/lemoz/fort-gym/pull/131)
 subtracts planned runtime/checkpoint copies before accepting the declared
 free-space floor and omits retained archive folders from NEW runtimes only.

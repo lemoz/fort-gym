@@ -61,6 +61,15 @@ year-two play and production website acceptance remain open. See the current
 
 ## Success statement (the one metric)
 
+Current native recovery evidence is published in [PR #132](https://github.com/lemoz/fort-gym/pull/132):
+one v3 no-action checkpoint restored at cursor zero in a second native process,
+followed by one fresh 20-tick provider-free WAIT. The initial automatic command
+hit a port-bind preflight error; an explicitly recorded continuation completed
+only the second phase. The new port-settling fix and evidence have 1,862 passing
+local tests (10 skipped) and green PR CI. #132 remains open pending explicit
+approval to merge into main. This is native recovery evidence, not model behavior,
+uninterrupted automatic acceptance, year-two play or production website delivery.
+
 **An LLM policy, issuing only legal governed actions, takes the fixed embark
 from fresh seed to a producing fortress — completed rooms, a working workshop,
 finished goods — on public, replayable evidence, with zero rubric blockers.**
