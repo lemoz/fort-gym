@@ -87,6 +87,12 @@ def validate_local_settings(config: dict, model: str) -> None:
     local = config.get("local_inference")
     if not isinstance(local, dict) or local.get("transport") != "ollama-local/v1":
         raise ValueError("Unsupported local campaign transport")
+    runtime_profile = local.get("runtime_profile", "standard_f16/v1")
+    if not isinstance(runtime_profile, str) or runtime_profile not in {
+        "standard_f16/v1",
+        "flash_q8/v1",
+    }:
+        raise ValueError("Unsupported local server runtime profile")
     if config["max_attempts"] != 1:
         raise ValueError("Local transport does not silently retry a failed inference")
     prompt_contract = local.get("prompt_contract", "grammar_only/v1")

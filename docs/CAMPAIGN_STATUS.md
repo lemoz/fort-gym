@@ -3,15 +3,17 @@
 Verified September 6, 2026. The Year-Two Autonomous Play goal remains active.
 
 Latest: the [native-ground Mistral condition](../experiments/evidence/local_native_workshop_ground_20260906.json)
-has completed its first bounded segment: **five responses, 26,769 tokens and
-10,000 native ticks**. All five BUILD commands were rejected (one stale-cache,
-two occupied-footprint and two no-material rejections); no development completed.
-The cursor-5 checkpoint includes every response, command and usage record, and
-independent teardown verified the native runtime, model server/runner and tunnel
-are stopped. This is an invocation-limited pause with three segments and eleven
-dispatches still available, not a completed comparison. Continue on the isolated
-checkout at frozen native revision `82bcab14b758d6f4624e9080c857a607c2da0b51`; do
-not replace its HEAD with a reporting-only commit before resuming.
+has completed its bounded attempt: **16 responses, 98,658 tokens and 32,000 native
+ticks** across four saved segments. All 16 BUILD commands were rejected (four
+stale-cache, two occupied-footprint and ten no-material rejections); no development
+completed. The cursor-16 checkpoint includes every response, command and usage
+record. Independent teardown verified all four native runtimes/listeners, the
+model server/runner and tunnel stopped; production remained unchanged. The model
+never chose woodcutting despite visible trees and `wood_usable: 0`. This is the
+completed 16-dispatch development condition, not a model ranking, collapse or
+year-two success. Its frozen native revision is
+`82bcab14b758d6f4624e9080c857a607c2da0b51`. The earlier five-response publication is
+preserved in Git history, not counted as an additional campaign.
 
 Earlier: the [Mistral harness-repair run](../experiments/evidence/local_native_harness_repair_20260906.json)
 finished at **28,000 native elapsed ticks**, with 16/16 returned and accounted
@@ -118,11 +120,15 @@ visibility or new inventory facts. The
 keeps observations and other bounds unchanged apart from factual workshop-policy
 disclosure, allowing a controlled test of the terrain repair.
 
-Next: resume the saved native-ground model campaign with its cumulative usage,
-then assess the completed condition before selecting another model or changing
-the interface. Seek completed production, repeated matched attempts and a longer
-time horizon. The model has not yet chosen woodcutting; the fixture is not a
-substitute for that autonomous decision.
+Next: test the larger Qwen2.5 14B Instruct candidate under the separately declared
+[local Flash Attention/Q8-cache condition](../experiments/campaigns/local_native_qwen14_flash_q8_v1.json).
+Its exact manifest, cache profile and scheduling allowance are explicit. Keep the
+same original save, observation/action interface, conservative request bounds and
+model-chosen ticks. The cache and scheduling changes mean it is a capability probe,
+not a matched causal comparison against earlier F16-cache runs. Actual local runner
+logs, not API identity alone, must verify the cache settings. Synthetic transport
+checks do not count as gameplay. Seek autonomous resource acquisition and completed
+production before allocating a longer horizon; never substitute the scripted fixture.
 Retained runtime copies currently cost about 335 MB per segment versus about
 9 MB for its checkpoint. Use a bounded continuous-runtime/retention design before
 large endurance campaigns; no historical evidence has been deleted.
@@ -151,12 +157,13 @@ live feed is configured, with profile, command mix, adapter-readiness limitation
 native time, resources, costs and source identity. A broken configured live source
 still reports an error instead of pretending old data is current.
 
-There are now **five recorded model snapshots**, including the explicitly partial
+There are now **five recorded model snapshots**, including the completed bounded
 native-ground campaign. The successful scripted workshop fixture has a separate
 adapter-acceptance section and evidence link, never a model-comparison row. The
-latest combined local suite passed **687 tests** with one Linux-only skip; targeted
+latest combined local suite passed **701 tests** with one Linux-only skip; targeted
 typing, static and JavaScript syntax checks also passed. No browser-only preview
-or visual QA was performed in this background goal continuation.
+or visual QA was performed in this background goal continuation. Publication CI
+for `2a47c74964c6a7fab9938afacc79b5a6309bc15d` passed in run `34027753420`.
 
 [Draft PR #125](https://github.com/lemoz/fort-gym/pull/125) is the integration surface.
 The website/reporting code is separate from the frozen native execution revision.

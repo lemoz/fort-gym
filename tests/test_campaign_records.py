@@ -100,18 +100,18 @@ def test_native_workshop_fixture_is_visible_but_never_a_model_comparison_row():
     assert path.name not in records.PUBLISHED_BUNDLES
 
 
-def test_partial_ground_condition_keeps_model_failure_separate_from_successful_fixture():
+def test_completed_ground_condition_keeps_model_failure_separate_from_successful_fixture():
     record = next(
         row
         for row in records.campaign_feed(None)["campaigns"]
         if row["condition_id"] == "local-native-workshop-ground-v1"
     )
-    assert (record["committed_steps"], record["elapsed_ticks"]) == (5, 10000)
+    assert (record["committed_steps"], record["elapsed_ticks"]) == (16, 32000)
     assert record["checkpoint_verified"] is True and record["cleanup_verified"] is True
-    assert record["actions"]["accepted"] == 0 and record["actions"]["rejected"] == 5
+    assert record["actions"]["accepted"] == 0 and record["actions"]["rejected"] == 16
     assert record["current_metrics"]["completed_workshops"] == 0
-    assert record["usage"]["total_tokens"] == 26769
-    assert record["usage"]["dispatched_requests"] == record["usage"]["accounted_responses"] == 5
+    assert record["usage"]["total_tokens"] == 98658
+    assert record["usage"]["dispatched_requests"] == record["usage"]["accounted_responses"] == 16
     assert record["comparison_rankings_available"] is False
     assert record["code_revision"] == "82bcab14b758d6f4624e9080c857a607c2da0b51"
 
