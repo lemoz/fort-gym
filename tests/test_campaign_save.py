@@ -94,6 +94,28 @@ def test_successful_command_without_completed_save_does_not_copy(tmp_path):
     assert not destination.exists()
 
 
+def test_space_floor_checks_measured_native_save_before_copy(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+    from fort_gym.bench.run import campaign_save
+
+    native = NativeSaveSimulation(tmp_path)
+    snapshotter = native.snapshotter()
+    snapshotter.minimum_free_bytes = 100
+    monkeypatch.setattr(campaign_save.shutil, "disk_usage", lambda path: SimpleNamespace(free=110))
+    destination = tmp_path / "snapshot"
+    with pytest.raises(CampaignSaveError, match="free-space floor"):
+        snapshotter.capture(destination)
+    assert native.requests == 1  # Native save completed; only the copy was refused.
+    assert native.world.read_bytes() == b"new native save"
+    assert not destination.exists()
+
+
+@pytest.mark.parametrize("value", [True, -1, "100"])
+def test_snapshot_free_space_bound_is_typed(tmp_path, value):
+    with pytest.raises(ValueError, match="nonnegative integer"):
+        NativeSaveSnapshotter(dfroot=tmp_path, minimum_free_bytes=value)
+
+
 def test_rpc_interruption_retries_observation_not_the_save_request(tmp_path):
     native = NativeSaveSimulation(tmp_path)
     native.rpc_failure = True

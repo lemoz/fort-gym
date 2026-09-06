@@ -24,6 +24,11 @@ from fort_gym.bench.run.campaign_config import (
 from scripts.campaign_development import make_agent
 from scripts.campaign_load_smoke import run_isolated
 from scripts.campaign_process import run_worker, termination_as_interrupt
+from fort_gym.bench.run.campaign_retention import (
+    capture_periodic,
+    require_disk_space,
+    validate_retention,
+)
 
 
 def write_result(path: Path, value: dict) -> None:
@@ -53,6 +58,7 @@ def run_segment(
 
     if (checkpoint is None) != (latest_usage is None):
         raise ValueError("Resume requires both checkpoint and latest usage journal")
+    retention = validate_retention(config)
     result = {
         "schema_version": "fortgym.campaign-segment/v1",
         "condition_id": config["condition_id"],
@@ -68,6 +74,8 @@ def run_segment(
         "year_two_gameplay_verified": False,
     }
     loop = None
+    if retention is not None:
+        result["periodic_checkpoints"] = []
 
     def report_progress(state):
         if on_progress is not None:
@@ -117,6 +125,7 @@ def run_segment(
             if agent.dispatches >= config["max_dispatches"]:
                 raise GovernedBudgetCapError("Campaign dispatch allowance reached")
             agent._pre_dispatch_gate()
+            require_disk_space(output, retention)
             if time_budget is not None and (
                 time.monotonic() - started + decision_time_reserve(config) >= time_budget
             ):
@@ -124,6 +133,19 @@ def run_segment(
                 break
             row = loop.step()
             result["segment_committed_steps"] += 1
+            if (
+                retention is not None
+                and result["segment_committed_steps"] % retention["interval_steps"] == 0
+                and result["segment_committed_steps"] < config["max_steps"]
+                and agent.dispatches < config["max_dispatches"]
+            ):
+                try:
+                    result["periodic_checkpoints"].append(
+                        capture_periodic(loop, snapshotter, output, revision)
+                    )
+                except Exception as error:
+                    result["periodic_checkpoint_error_type"] = type(error).__name__
+                    raise
             report_progress(row["state_after_advance"])
         result["status"] = "bounded_segment_complete"
     except GovernedBudgetCapError as error:
@@ -131,7 +153,11 @@ def run_segment(
             status="budget_limited_pause", error_type=type(error).__name__, error=str(error)
         )
     except Exception as error:
-        result.update(status="failed", error_type=type(error).__name__, error=str(error))
+        result.update(
+            status="checkpoint_failed" if "periodic_checkpoint_error_type" in result else "failed",
+            error_type=type(error).__name__,
+            error=str(error),
+        )
         terminal_code = getattr(error, "terminal_code", None)
         if isinstance(terminal_code, str):
             result["terminal_code"] = terminal_code
@@ -163,6 +189,18 @@ def run_segment(
             result["native_final"] = environment.observe()
         except Exception as error:
             result["native_final_error"] = type(error).__name__ + ": " + str(error)
+        if retention is not None and loop is not None and loop.failed:
+            # Preserve the actual paused native state after an unresolved decision
+            # or execution failure. This is forensic evidence, never a resumable
+            # campaign checkpoint or permission to replay an older saved action.
+            try:
+                result["unreconciled_native_snapshot"] = snapshotter.capture(
+                    output / "unreconciled-native-save"
+                )
+                result["unreconciled_native_snapshot_verified"] = True
+            except Exception as error:
+                result["unreconciled_native_snapshot_verified"] = False
+                result["unreconciled_native_snapshot_error_type"] = type(error).__name__
         try:
             state = agent.export_campaign_state()
             result["usage"] = state["usage"]
@@ -208,7 +246,12 @@ def worker(args, config: dict) -> dict:
         return run_segment(
             agent=agent,
             environment=environment,
-            snapshotter=NativeSaveSnapshotter(dfroot=runtime),
+            snapshotter=NativeSaveSnapshotter(
+                dfroot=runtime,
+                minimum_free_bytes=(config.get("checkpoint_policy") or {}).get(
+                    "minimum_free_bytes"
+                ),
+            ),
             output=output,
             config=config,
             campaign_id=args.campaign_id,
@@ -263,6 +306,7 @@ def launch_segment(args, config: dict) -> dict:
     ):
         raise ValueError("Supply a source runtime and a checkpoint or digest-bound snapshot")
     local = config.get("schema_version") == LOCAL_SCHEMA
+    require_disk_space(args.output.parent, validate_retention(config))
     if local:
         from scripts.campaign_development import verify_local_transport
 

@@ -100,15 +100,21 @@ class NativeSaveSnapshotter:
         clock: Callable[[], float] = time.monotonic,
         sleep: Callable[[float], None] = time.sleep,
         timeout_seconds: float = 120,
+        minimum_free_bytes: int | None = None,
     ) -> None:
         if not 0 < timeout_seconds <= 600:
             raise ValueError("Save timeout must be between zero and 600 seconds")
+        if minimum_free_bytes is not None and (
+            type(minimum_free_bytes) is not int or minimum_free_bytes < 0
+        ):
+            raise ValueError("Minimum free space must be a nonnegative integer")
         self.dfroot = dfroot.resolve()
         self.status = status
         self.request_save = request_save or (lambda: run_command("quicksave", timeout=10))
         self.clock = clock
         self.sleep = sleep
         self.timeout_seconds = timeout_seconds
+        self.minimum_free_bytes = minimum_free_bytes
 
     @staticmethod
     def _boundary(status: Mapping[str, Any]) -> tuple[str, int, int]:
@@ -176,6 +182,12 @@ class NativeSaveSnapshotter:
             raise CampaignSaveError("Native save completion was not observed before timeout")
 
         expected = save_inventory(source)
+        if self.minimum_free_bytes is not None and (
+            shutil.disk_usage(destination.parent).free
+            - sum(record["size_bytes"] for record in expected)
+            < self.minimum_free_bytes
+        ):
+            raise CampaignSaveError("Native snapshot would cross the declared free-space floor")
         shutil.copytree(source, destination, symlinks=True)
         actual = save_inventory(destination)
         final_deadline = self.clock() + self.timeout_seconds

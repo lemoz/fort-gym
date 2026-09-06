@@ -370,7 +370,12 @@ class CampaignLoop:
         return row
 
     def checkpoint(
-        self, destination: Path, *, snapshotter: NativeSaveSnapshotter, code_revision: str
+        self,
+        destination: Path,
+        *,
+        snapshotter: NativeSaveSnapshotter,
+        code_revision: str,
+        advance_parent: bool = True,
     ) -> dict:
         if not self.at_boundary:
             raise ValueError("Campaign is not at a committed action boundary")
@@ -393,7 +398,8 @@ class CampaignLoop:
             },
             usage_path=self.journal,
         )
-        self.parent = destination
+        if advance_parent:
+            self.parent = destination
         return result
 
     @classmethod

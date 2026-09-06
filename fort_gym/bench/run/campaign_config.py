@@ -13,6 +13,7 @@ from pathlib import Path
 
 from ..agent.campaign_action_reference import action_reference
 from ..agent.campaign_action_schema import LEGACY, validate_schema_profile
+from .campaign_retention import validate_retention
 
 DEVELOPMENT_SCHEMA = "fortgym.development-probe/v1"
 ENDURANCE_SCHEMA = "fortgym.campaign-condition/v1"
@@ -65,9 +66,15 @@ def validate_bounds(
         or model.lower().startswith("anthropic/")
     ):
         raise ValueError("Model is not declared in this development configuration")
-    for key, maximum in (ENDURANCE_LIMITS if endurance or local else DEVELOPMENT_LIMITS).items():
+    retention = validate_retention(config)
+    limits = ENDURANCE_LIMITS if endurance or local else DEVELOPMENT_LIMITS
+    if retention is not None:
+        limits = {**limits, "segment_time_budget_seconds": 7200}
+    for key, maximum in limits.items():
         if type(config.get(key)) is not int or not 1 <= config[key] <= maximum:
             raise ValueError(f"Invalid bounded development setting: {key}")
+    if retention is not None and retention["interval_steps"] > config["max_steps"]:
+        raise ValueError("Periodic checkpoint interval exceeds segment steps")
     cost, maximum_cost = config.get("max_cost_usd"), 20 if endurance else 2
     if local:
         if type(cost) not in (float, int) or cost != 0 or "provider_max_price" in config:

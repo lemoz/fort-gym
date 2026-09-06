@@ -135,6 +135,39 @@ def test_endurance_has_a_distinct_schema_and_keeps_old_probe_bounds():
     assert old["max_dispatches"] == 8 and old["max_steps"] == 3
 
 
+def test_controller_verifies_periodic_siblings_before_next_runtime(inputs):
+    model = "fort-gym-qwen35-9b-q4-03b74727a860"
+    config = load_segment_config(CONFIG.with_name("local_native_llama_long_v1.json"), model)
+    config.update(max_steps=4, max_dispatches=8)
+    config["checkpoint_policy"]["interval_steps"] = 2
+    inputs.model = model
+    path = inputs.output.parent / "periodic-condition.json"
+    path.write_text(json.dumps(config))
+    inputs.config = path
+    launcher = FakeLauncher()
+    result = campaign_run.run_campaign(inputs, launch=launcher)
+    assert result["status"] == "budget_limited_pause"
+    assert result["next_step"] == 8 and len(launcher.calls) == 2
+    assert [x["result"]["periodic_checkpoints"][0]["next_step"] for x in launcher.calls] == [2, 6]
+
+
+def test_missing_periodic_index_blocks_controller_handoff(inputs):
+    model = "fort-gym-qwen35-9b-q4-03b74727a860"
+    config = load_segment_config(CONFIG.with_name("local_native_llama_long_v1.json"), model)
+    config.update(max_steps=4, max_dispatches=8)
+    config["checkpoint_policy"]["interval_steps"] = 2
+    inputs.model = model
+    path = inputs.output.parent / "periodic-condition.json"
+    path.write_text(json.dumps(config))
+    inputs.config = path
+    launcher = FakeLauncher(
+        mutate=lambda root, segment, runtime: (root / "periodic-checkpoints.jsonl").unlink()
+    )
+    result = campaign_run.run_campaign(inputs, launch=launcher)
+    assert result["status"] == "requires_reconciliation"
+    assert result["next_step"] == 0 and len(launcher.calls) == 1
+
+
 @pytest.mark.parametrize(
     "field,value",
     [

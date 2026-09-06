@@ -73,6 +73,9 @@ def inspect_segment(root: Path, record: dict, config: dict) -> tuple[dict, dict 
     )
     if runtime.get(source_key) != expected_source:
         raise ValueError("Segment loaded a different snapshot or checkpoint")
+    from fort_gym.bench.run.campaign_retention import verify_periodic
+
+    verify_periodic(root, segment, config, record.get("checkpoint_payload_sha256"))
     checkpoint = None
     if segment.get("new_checkpoint_verified") is True:
         checkpoint_path = root / "checkpoint"

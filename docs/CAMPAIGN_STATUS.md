@@ -25,10 +25,25 @@ native model records are now included in the website source. No production deplo
 merge or browser visual acceptance is claimed.
 
 Next: move from resource acquisition to completed production, then endurance.
-Preserve this bounded condition; do not enlarge it while resuming its checkpoint.
-The existing acceptance host has 2,454,065,152 bytes free after verified teardown.
-Longer runs need disk-bounded runtime retention or reuse, with private saves and
-evidence preserved, before scaling the number of copied segments.
+The separately declared [long local condition](../experiments/campaigns/local_native_llama_long_v1.json)
+starts from the original save and allows 32 decisions in one live copied game,
+with native/agent/trace/usage checkpoints every eight decisions. Its two-segment,
+64-dispatch and 2,000,000-token limits do not enlarge any historical campaign.
+The model, gameplay instructions, action reference and sampling are unchanged
+from the short thinking condition. This new condition has no native result yet.
+
+The opt-in `periodic_checkpoints/v1` policy retains a durable checkpoint index
+before another decision. Intermediate snapshots share the segment's original
+parent; only the final checkpoint is the normal controller handoff. The controller
+checks their identities, calendar, usage and retained trace prefixes. A later
+unreconciled failure does not make an earlier checkpoint current. Its separately
+captured native save is forensic evidence, not permission to replay actions.
+
+The existing acceptance host had 2,453,381,120 bytes free at preflight. New decisions
+stop below a declared 1 GiB free-space floor; native snapshot copies also check
+their measured size against that floor. These checks are not a filesystem quota
+or protection from unrelated disk growth. No historical runtime, private save or
+evidence is deleted or moved. Legacy short-run configurations are unchanged.
 
 Earlier: [Qwen3.5 9B with the typed local adapter](../experiments/evidence/local_native_llama_typed_20260906.json)
 finished its bounded non-thinking attempt: **16 accounted responses, 142,218 tokens,
