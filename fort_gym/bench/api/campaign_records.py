@@ -16,6 +16,7 @@ PUBLISHED_BUNDLES = (
     "local_native_packed_comparison_20260906.json",
     "local_native_harness_repair_20260906.json",
     "local_native_workshop_ground_20260906.json",
+    "local_native_qwen14_q3_20260906.json",
 )
 
 

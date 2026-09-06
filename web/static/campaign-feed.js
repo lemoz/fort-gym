@@ -21,7 +21,8 @@
     'local-native-visible-contract-v1': 'local_native_visible_contract_v1.json',
     'local-native-packed-comparison-v1': 'local_native_packed_comparison_v1.json',
     'local-native-harness-repair-v1': 'local_native_harness_repair_v1.json',
-    'local-native-workshop-ground-v1': 'local_native_workshop_ground_v1.json'
+    'local-native-workshop-ground-v1': 'local_native_workshop_ground_v1.json',
+    'local-native-qwen14-q3-flash-q8-v1': 'local_native_qwen14_q3_flash_q8_v1.json'
   };
   function known(value) { return typeof value === 'number' && Number.isFinite(value) && value >= 0; }
   function number(value) { return known(value) ? value.toLocaleString('en-US') : 'Unknown'; }

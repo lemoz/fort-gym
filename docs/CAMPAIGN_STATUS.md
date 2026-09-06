@@ -2,7 +2,18 @@
 
 Verified September 6, 2026. The Year-Two Autonomous Play goal remains active.
 
-Latest: the [native-ground Mistral condition](../experiments/evidence/local_native_workshop_ground_20260906.json)
+Latest: [Qwen2.5 14B Q3_K_M](../experiments/evidence/local_native_qwen14_q3_20260906.json)
+completed one bounded native segment: **six responses, 27,825 tokens and 1,200
+model-requested native ticks**. All six DIG commands were rejected as
+`tile_not_designatable`; no development completed. The model changed its rectangle
+after each rejection. The cursor-6 checkpoint includes every command, response and
+usage record. Native runtime, local server/runner and tunnel teardown were
+independently verified, and production remained unchanged. This is an explicitly
+partial condition: **ten dispatches and three segment slots remain**. Resume with
+the saved state at frozen native revision
+`82645015444759f7bcebc048c34ea704930da8f4`, not a newer reporting-only HEAD.
+
+Earlier: the [native-ground Mistral condition](../experiments/evidence/local_native_workshop_ground_20260906.json)
 has completed its bounded attempt: **16 responses, 98,658 tokens and 32,000 native
 ticks** across four saved segments. All 16 BUILD commands were rejected (four
 stale-cache, two occupied-footprint and ten no-material rejections); no development
@@ -120,7 +131,7 @@ visibility or new inventory facts. The
 keeps observations and other bounds unchanged apart from factual workshop-policy
 disclosure, allowing a controlled test of the terrain repair.
 
-Next: test the larger Qwen2.5 14B Instruct candidate under the separately declared
+Next: continue the saved Qwen2.5 14B Instruct candidate under the separately declared
 [Q3_K_M/Flash Attention/Q8-cache condition](../experiments/campaigns/local_native_qwen14_q3_flash_q8_v1.json).
 Its exact manifest, cache profile and scheduling allowance are explicit. Keep the
 same original save, observation/action interface, conservative request bounds and
@@ -167,13 +178,19 @@ live feed is configured, with profile, command mix, adapter-readiness limitation
 native time, resources, costs and source identity. A broken configured live source
 still reports an error instead of pretending old data is current.
 
-There are now **five recorded model snapshots**, including the completed bounded
-native-ground campaign. The successful scripted workshop fixture has a separate
+There are now **six recorded model snapshots**, including the completed bounded
+native-ground campaign and explicitly partial Qwen14 campaign. The successful
+scripted workshop fixture has a separate
 adapter-acceptance section and evidence link, never a model-comparison row. The
-latest combined local suite passed **701 tests** with one Linux-only skip; targeted
+pre-publication combined local suite passed **702 tests** with one Linux-only skip; targeted
 typing, static and JavaScript syntax checks also passed. No browser-only preview
 or visual QA was performed in this background goal continuation. Publication CI
 for `2a47c74964c6a7fab9938afacc79b5a6309bc15d` passed in run `34027753420`.
+Full CI also passed for completed-Mistral publication `3692be5b18c0232560af92966ecef6c46d672463`
+(run `34029396944`) and the Qwen native revision (run `34029621187`). The latter
+also passed **71 targeted Linux tests**. Native outcomes remain separate from CI.
+The expanded six-record publication suite passed **703 local tests**, with one
+Linux-only skip. Focused static, typing and JavaScript syntax checks passed.
 
 [Draft PR #125](https://github.com/lemoz/fort-gym/pull/125) is the integration surface.
 The website/reporting code is separate from the frozen native execution revision.

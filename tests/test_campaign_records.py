@@ -15,7 +15,7 @@ CONFIG = {"condition_id": "test-condition", "models": ["test-model"]}
 
 def test_three_published_native_attempts_preserve_distinct_failure_causes():
     result = records.campaign_feed(None)
-    assert result["configured"] is False and result["published_snapshots"] == 5
+    assert result["configured"] is False and result["published_snapshots"] == 6
     by_model = {
         row["model"]: row
         for row in result["campaigns"]
@@ -47,7 +47,7 @@ def test_recorded_comparison_is_served_without_enabling_a_live_directory(monkeyp
     client = TestClient(server.app)
     response = client.get("/public/campaign-feed")
     assert response.status_code == 200 and response.json()["configured"] is False
-    assert len(response.json()["campaigns"]) == 5
+    assert len(response.json()["campaigns"]) == 6
     assert "no-store" in response.headers["cache-control"]
     assert client.get("/campaigns").status_code == 200
 
@@ -114,6 +114,30 @@ def test_completed_ground_condition_keeps_model_failure_separate_from_successful
     assert record["usage"]["dispatched_requests"] == record["usage"]["accounted_responses"] == 16
     assert record["comparison_rankings_available"] is False
     assert record["code_revision"] == "82bcab14b758d6f4624e9080c857a607c2da0b51"
+
+
+def test_qwen14_record_separates_native_usage_from_synthetic_feasibility():
+    path = records.PROJECT_ROOT / "experiments/evidence/local_native_qwen14_q3_20260906.json"
+    bundle = json.loads(path.read_text())
+    record = next(
+        row
+        for row in records.campaign_feed(None)["campaigns"]
+        if row["campaign_id"] == "local-qwen14-q3-20260906-a"
+    )
+    assert (record["committed_steps"], record["elapsed_ticks"]) == (6, 1200)
+    assert record["checkpoint_verified"] is True and record["cleanup_verified"] is True
+    assert record["actions"]["by_type"] == {"DIG": {"accepted": 0, "rejected": 6, "unknown": 0}}
+    assert record["current_metrics"]["completed_workshops"] == 0
+    assert record["usage"]["total_tokens"] == 27825
+    assert record["usage"]["dispatched_requests"] == record["usage"]["accounted_responses"] == 6
+    assert record["code_revision"] == "82645015444759f7bcebc048c34ea704930da8f4"
+    assert record["comparison_rankings_available"] is False
+    assert bundle["condition_completion"] == "partial_one_of_four_allowed_segments"
+    assert bundle["local_runtime"]["observed_gpu_layers"] == 49
+    assert bundle["synthetic_feasibility"]["total_tokens"] == 1182
+    assert bundle["synthetic_feasibility"]["all_cases_exact"] is False
+    assert bundle["prior_candidate_feasibility"]["requests_without_returned_usage"] == 1
+    assert bundle["prior_candidate_feasibility"]["total_returned_tokens"] == 766
 
 
 @pytest.fixture
