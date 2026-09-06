@@ -147,6 +147,7 @@ class CampaignLoop:
         self.parent: Path | None = None
         self.at_boundary = False
         self.failed = False
+        self.failure_context: dict = {}
         _append(
             self.journal,
             {
@@ -162,14 +163,24 @@ class CampaignLoop:
             raise RuntimeError("Failed campaign execution requires verified checkpoint recovery")
         try:
             return self._step()
-        except BaseException:
+        except BaseException as error:
             self.failed = True
+            _append(
+                self.output / "failures.jsonl",
+                {
+                    "step": self.next_step,
+                    "error_type": type(error).__name__,
+                    "message": str(error),
+                    **self.failure_context,
+                },
+            )
             raise
 
     def _step(self) -> dict:
         from .runner import _action_history_entry
 
         self.at_boundary = False
+        self.failure_context = {}
         before = self.environment.observe()
         start = _clock(before)
         screen = self.environment.screen()
@@ -213,6 +224,18 @@ class CampaignLoop:
         execution = self.environment.apply(action, before)
         requested = ticks if execution.get("accepted") is True else 0
         after, receipt = self.environment.advance(requested, before)
+        self.failure_context = {
+            "tick_receipt": receipt,
+            "requested_ticks": requested,
+            "native_before": {
+                key: before.get(key)
+                for key in ("year", "year_tick", "pause_state", "viewscreen_type")
+            },
+            "native_after": {
+                key: after.get(key)
+                for key in ("year", "year_tick", "pause_state", "viewscreen_type")
+            },
+        }
         end = _clock(after)
         actual = receipt.get("ticks_advanced")
         maximum = (

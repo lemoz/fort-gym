@@ -274,6 +274,9 @@ def test_failed_native_tick_receipt_is_not_a_clean_boundary(tmp_path, monkeypatc
     with pytest.raises(ValueError, match="cleanly"):
         loop.step()
     assert loop.failed and not loop.at_boundary
+    failure = json.loads((loop.output / "failures.jsonl").read_text())
+    assert failure["tick_receipt"]["error"] == "timeout"
+    assert failure["native_before"]["year_tick"] == 19309
 
 
 def test_model_decision_failure_retains_usage_but_requires_reconciliation(tmp_path, monkeypatch):

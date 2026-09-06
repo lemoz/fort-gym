@@ -25,7 +25,7 @@ class ContinuationFixtureAgent(Agent):
     """No provider client or API key; deterministic decisions for restart testing."""
 
     def __init__(self) -> None:
-        self.campaign_id = None
+        self.campaign_id: str | None = None
         self.decisions = 0
 
     def set_campaign_context(self, *, campaign_id: str) -> None:
@@ -153,6 +153,7 @@ def verify_continuation(first: dict, resumed: dict) -> dict:
         )
         if (
             error is not None
+            or elapsed is None
             or tick.get("ok") is not True
             or elapsed != tick["ticks_advanced"]
             or row["action"]["advance_ticks"] != requested
