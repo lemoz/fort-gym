@@ -8,10 +8,11 @@ local args = {...}
 
 local MAX_JOB_ENTRIES = 12
 local MAX_TRACKED_JOB_IDS = 256
-local MAX_WORKSHOPS = 10
+local MAX_WORKSHOPS = 256
 local MAX_WORKSHOP_JOB_ENTRIES = 12
 local MAX_CITIZEN_ENTRIES = 20
-local MAX_FARM_PLOT_DETAILS = 8
+local MAX_FARM_PLOT_DETAILS = 256
+local MAX_FURNITURE_DETAILS = 256
 local MAX_FARM_PLOT_CONTAINED_ITEMS = 25
 local MAX_RECT_W, MAX_RECT_H = 30, 30
 
@@ -76,6 +77,14 @@ local function plant_token(idx)
   local ok, tok = pcall(function() return _plant_raws[idx].id end)
   if ok and tok and tok ~= '' then return sanitize(tok) end
   return nil
+end
+
+local function farm_crop_token(idx)
+  if idx == nil then return false, false end
+  if idx < 0 then return false, true end
+  local ok, tok = pcall(function() return _plant_raws[idx].id end)
+  if ok and tok and tok ~= '' then return sanitize(tok), true end
+  return false, false
 end
 
 -- Farm plot contained items carry native planting metadata. Material tokens
@@ -271,6 +280,7 @@ local out = {
     order_jobs_truncated = false,
   },
   workshops = {},
+  workshops_truncated = false,
 }
 
 -- citizens and labors
@@ -611,6 +621,8 @@ out.placed_furniture = { bed = 0, door = 0, table = 0, chair = 0 }
 -- expose a separate count for furniture whose construction stage is complete.
 out.placed_furniture_completed = { bed = 0, door = 0, table = 0, chair = 0 }
 out.placed_furniture_positions = { bed = {}, door = {}, table = {}, chair = {} }
+out.placed_furniture_details = {}
+out.placed_furniture_details_truncated = false
 
 local function building_stage(bld)
   local ok, stage, max_stage = pcall(function()
@@ -623,11 +635,6 @@ local function building_stage(bld)
   return true, stage, max_stage, stage >= max_stage
 end
 
-local function building_is_complete(bld)
-  local _, _, _, built = building_stage(bld)
-  return built
-end
-
 -- farm plots placed (G7 survival primitive: see build_farm_plot.lua)
 out.farm_plots = 0
 out.farm_plot_positions = {}
@@ -636,6 +643,7 @@ out.farm_plot_positions = {}
 -- slot is emitted as false so the array stays dense (json-safe).
 out.farm_plot_details = {}
 out.farm_plot_details_truncated = false
+out.building_evidence_complete = true
 
 local function native_number_field(object, field)
   local ok, value = pcall(function() return object[field] end)
@@ -710,11 +718,15 @@ end
 local function farm_plot_detail(bld)
   local stage_read_ok, stage, max_stage, built = building_stage(bld)
   local crops = { false, false, false, false }
-  pcall(function()
+  local crops_read_ok = true
+  local crop_slots_read_ok = pcall(function()
     for s = 0, 3 do
-      crops[s + 1] = plant_token(bld.plant_id[s]) or false
+      local token, token_read_ok = farm_crop_token(bld.plant_id[s])
+      crops[s + 1] = token
+      if not token_read_ok then crops_read_ok = false end
     end
   end)
+  crops_read_ok = crop_slots_read_ok and crops_read_ok
   local tile_context = {
     total = 0,
     readable = 0,
@@ -761,6 +773,7 @@ local function farm_plot_detail(bld)
     stage_read_ok = stage_read_ok,
     built = built,
     crops = crops,
+    crops_read_ok = crops_read_ok,
     contained_items_read_ok = contained_items_read_ok,
     contained_items_truncated = contained_items_truncated,
     contained_items = contained_items,
@@ -782,11 +795,27 @@ end
 -- workshops with construction stage and queued jobs
 for _, bld in ipairs(df.global.world.buildings.all) do
   local ok_type, bld_type = pcall(function() return bld:getType() end)
+  if not ok_type then out.building_evidence_complete = false end
   if ok_type and FURNITURE_BUILDING_KEYS[bld_type] then
     local key = FURNITURE_BUILDING_KEYS[bld_type]
     out.placed_furniture[key] = out.placed_furniture[key] + 1
-    if building_is_complete(bld) then
+    local stage_read_ok, stage, max_stage, built = building_stage(bld)
+    if not stage_read_ok then out.building_evidence_complete = false end
+    if built then
       out.placed_furniture_completed[key] = out.placed_furniture_completed[key] + 1
+    end
+    if #out.placed_furniture_details < MAX_FURNITURE_DETAILS then
+      table.insert(out.placed_furniture_details, {
+        id = bld.id,
+        kind = key,
+        pos = { bld.centerx, bld.centery, bld.z },
+        stage_read_ok = stage_read_ok,
+        stage = stage,
+        max_stage = max_stage,
+        built = built,
+      })
+    else
+      out.placed_furniture_details_truncated = true
     end
     if #out.placed_furniture_positions[key] < 8 then
       pcall(function()
@@ -805,9 +834,13 @@ for _, bld in ipairs(df.global.world.buildings.all) do
       end)
     end
     if #out.farm_plot_details < MAX_FARM_PLOT_DETAILS then
-      pcall(function()
-        table.insert(out.farm_plot_details, farm_plot_detail(bld))
-      end)
+      local detail_ok, detail = pcall(function() return farm_plot_detail(bld) end)
+      if detail_ok and detail then
+        table.insert(out.farm_plot_details, detail)
+        if not detail.stage_read_ok then out.building_evidence_complete = false end
+      else
+        out.building_evidence_complete = false
+      end
     else
       out.farm_plot_details_truncated = true
     end
@@ -815,12 +848,17 @@ for _, bld in ipairs(df.global.world.buildings.all) do
   local ok, is_workshop = pcall(function()
     return bld:getType() == df.building_type.Workshop
   end)
+  if not ok then out.building_evidence_complete = false end
   if ok and is_workshop and #out.workshops < MAX_WORKSHOPS then
     local subtype = ''
-    pcall(function()
+    local subtype_read_ok = pcall(function()
       subtype = df.workshop_type[bld:getSubtype()] or tostring(bld:getSubtype())
     end)
+    if not subtype_read_ok or subtype == '' then
+      out.building_evidence_complete = false
+    end
     local stage_read_ok, stage, max_stage, built = building_stage(bld)
+    if not stage_read_ok then out.building_evidence_complete = false end
     local queued = 0
     pcall(function() queued = #bld.jobs end)
     local queued_job_details = {}
@@ -852,6 +890,8 @@ for _, bld in ipairs(df.global.world.buildings.all) do
       queued_jobs = queued,
       queued_job_details = queued_job_details,
     })
+  elseif ok and is_workshop then
+    out.workshops_truncated = true
   end
 end
 
@@ -879,10 +919,29 @@ local function dead_flag(unit, field_table, field)
   return ok and value or false
 end
 
+local function incident_death_cause(unit, incident_id)
+  local id = tonumber(incident_id)
+  if not id or id < 0 then return false, false, false end
+  local ok, incident = pcall(function() return df.incident.find(id) end)
+  if not ok or not incident then return false, false, false end
+  local victim_ok, victim = pcall(function() return tonumber(incident.victim) end)
+  if not victim_ok or victim ~= tonumber(unit.id) then
+    return false, false, false
+  end
+  local cause_ok, cause = pcall(function() return tonumber(incident.death_cause) end)
+  if not cause_ok or not cause or cause < 0 then return false, false, false end
+  local name_ok, name = pcall(function() return df.death_type[cause] end)
+  if not name_ok or not name or tostring(name) == 'NONE' then
+    return false, false, false
+  end
+  return cause, sanitize(name), 'world.incidents.all[death_id].death_cause'
+end
+
 local function dead_citizen_record(unit)
   local ok_id, unit_id = pcall(function() return unit.id end)
   if not ok_id or unit_id == nil then return nil, false end
 
+  local incident_id = dead_value(unit, 'counters', 'death_id')
   local cause_enum, cause_name, cause_known = false, false, false
   local cause_source = false
   local ok_cause, cause_value = pcall(function() return unit.counters.death_cause end)
@@ -896,6 +955,16 @@ local function dead_citizen_record(unit)
       cause_source = 'counters.death_cause'
     end
   end
+  if not cause_known then
+    local incident_cause, incident_name, incident_source =
+      incident_death_cause(unit, incident_id)
+    if incident_cause then
+      cause_enum = incident_cause
+      cause_name = incident_name
+      cause_known = true
+      cause_source = incident_source
+    end
+  end
 
   return {
     unit_id = unit_id,
@@ -903,7 +972,7 @@ local function dead_citizen_record(unit)
     cause_name = cause_name,
     cause_known = cause_known,
     cause_source = cause_source,
-    incident_id = dead_value(unit, 'counters', 'death_id'),
+    incident_id = incident_id,
     hunger_timer = dead_value(unit, 'counters2', 'hunger_timer'),
     thirst_timer = dead_value(unit, 'counters2', 'thirst_timer'),
     stored_fat = dead_value(unit, 'counters2', 'stored_fat'),

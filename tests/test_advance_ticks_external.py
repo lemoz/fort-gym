@@ -22,6 +22,10 @@ def _block_external_dfhack_mutation(monkeypatch, request):
     monkeypatch.setattr(tick_controller, "_set_nopause", blocked)
     monkeypatch.setattr(tick_controller, "set_paused", blocked)
     monkeypatch.setattr(tick_controller, "execute_keystroke_action", blocked)
+    # These receipt tests provide synthetic calendar samples. Runtime-side
+    # timer behavior is exercised independently with a Lua simulation.
+    monkeypatch.setattr(tick_controller, "_arm_tick_deadline", lambda *_args: "a" * 32)
+    monkeypatch.setattr(tick_controller, "_cancel_tick_deadline", lambda *_args: None)
 
 
 @pytest.mark.skipif(not LIVE, reason="requires live DFHack")
@@ -89,6 +93,50 @@ def test_backend_reexports_tick_controller_public_api() -> None:
         dfhack_backend.ensure_paused_external is tick_controller.ensure_paused_external
     )
     assert dfhack_backend.MAX_ADVANCE_TICKS == tick_controller.MAX_ADVANCE_TICKS
+
+
+def test_deadline_arm_failure_never_resumes_fortress(monkeypatch):
+    from fort_gym.bench import tick_controller
+
+    probe = {"cur_year": 1, "cur_year_tick": 100, "pause_state": True,
+             "viewscreen_type": "viewscreen_dwarfmodest"}
+    monkeypatch.setattr(tick_controller, "read_tick_pause_viewscreen", lambda **_kw: probe)
+    monkeypatch.setattr(tick_controller, "ensure_paused_external",
+                        lambda **_kw: {"ok": True, "paused": True})
+    def failed_arm(*_args):
+        raise tick_controller.DFHackError("runtime timer unavailable")
+    monkeypatch.setattr(tick_controller, "_arm_tick_deadline", failed_arm)
+    result = tick_controller.advance_ticks_exact_external(
+        200, interrupt_on_viewscreen_transition=True,
+        viewscreen_before="viewscreen_dwarfmodest")
+    assert result["ok"] is False
+    assert result["error"] == "tick_deadline_arm_failed"
+    assert result["ticks_advanced"] == 0
+    # The autouse mutation guards prove no resume/keystroke call occurred.
+
+
+def test_deadline_cancellation_failure_is_not_success(monkeypatch):
+    from fort_gym.bench import tick_controller
+
+    probes = iter([
+        {"cur_year": 1, "cur_year_tick": tick, "pause_state": True,
+         "viewscreen_type": "viewscreen_dwarfmodest"}
+        for tick in (100, 300, 300, 300)
+    ])
+    monkeypatch.setattr(tick_controller, "read_tick_pause_viewscreen", lambda **_kw: next(probes))
+    monkeypatch.setattr(tick_controller, "_set_nopause", lambda _enabled: None)
+    monkeypatch.setattr(tick_controller.time, "sleep", lambda _duration: None)
+    monkeypatch.setattr(tick_controller, "ensure_paused_external",
+                        lambda **_kw: {"ok": True, "paused": True})
+    def failed_cancel(*_args):
+        raise tick_controller.DFHackError("cancellation not acknowledged")
+    monkeypatch.setattr(tick_controller, "_cancel_tick_deadline", failed_cancel)
+    result = tick_controller.advance_ticks_exact_external(
+        200, interrupt_on_viewscreen_transition=True,
+        viewscreen_before="viewscreen_dwarfmodest")
+    assert result["ok"] is False
+    assert result["ticks_advanced"] == 200
+    assert result["error"] == "tick_deadline_cancel_failed"
 
 
 def test_advance_ticks_interrupts_on_paused_viewscreen_transition(monkeypatch):
@@ -686,6 +734,211 @@ def test_advance_ticks_fails_closed_when_atomic_probe_read_fails(monkeypatch):
     assert result["ok"] is False
     assert result["error"] == "calendar_sample_read_failed"
     assert result["interrupt_safety_error"] is True
+
+
+def test_final_attestation_recovers_modal_transition_after_probe_failure(
+    monkeypatch,
+) -> None:
+    from fort_gym.bench import tick_controller
+    from fort_gym.bench.dfhack_exec import DFHackError
+    from fort_gym.bench.tick_receipt import validate_clean_interruption_receipt
+
+    probes = iter(
+        [
+            {
+                "cur_year": 30,
+                "cur_year_tick": 348551,
+                "pause_state": True,
+                "viewscreen_type": "viewscreen_dwarfmodest",
+            },
+            {
+                "cur_year": 30,
+                "cur_year_tick": 348551,
+                "pause_state": True,
+                "viewscreen_type": "viewscreen_dwarfmodest",
+            },
+            DFHackError("probe blocked by notification"),
+            {
+                "cur_year": 30,
+                "cur_year_tick": 350840,
+                "pause_state": True,
+                "viewscreen_type": "viewscreen_textviewerst",
+            },
+        ]
+    )
+
+    def read_probe(**_kwargs):
+        value = next(probes)
+        if isinstance(value, Exception):
+            raise value
+        return value
+
+    monkeypatch.setattr(tick_controller, "read_tick_pause_viewscreen", read_probe)
+    monkeypatch.setattr(tick_controller, "_set_nopause", lambda _enabled: None)
+    monkeypatch.setattr(tick_controller, "set_paused", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        tick_controller,
+        "ensure_paused_external",
+        lambda **_kwargs: {
+            "ok": True,
+            "paused": True,
+            "attempts": 1,
+            "attempt_records": [
+                {"attempt": 1, "nopause_disabled": True, "paused": True}
+            ],
+        },
+    )
+    monkeypatch.setattr(tick_controller.time, "sleep", lambda _duration: None)
+
+    result = tick_controller.advance_ticks_exact_external(
+        2500,
+        interrupt_on_viewscreen_transition=True,
+        viewscreen_before="viewscreen_dwarfmodest",
+        max_advance_ticks=2500,
+    )
+
+    assert result["ok"] is False
+    assert result["error"] == "blocking_viewscreen_transition"
+    assert result["interrupted"] is True
+    assert result["ticks_advanced"] == 2289
+    assert result["viewscreen_after"] == "viewscreen_textviewerst"
+    assert result["final_pause_state"] is True
+    assert result["interrupt_safety_error"] is False
+    assert result["calendar_safety_error"] is False
+    assert result["intermediate_probe_error"] == "calendar_sample_read_failed"
+    assert result["intermediate_probe_phase"] == "post_resume"
+    assert result["intermediate_probe_failure_kind"] == "dfhack_error"
+    assert result["interruption_detection"] == "final_attestation"
+    assert "viewscreen_at_interrupt" not in result
+    assert "pause_state_at_interrupt" not in result
+    assert (
+        validate_clean_interruption_receipt(
+            result,
+            requested_ticks=2500,
+            state_after_apply={
+                "year": 30,
+                "year_tick": 348551,
+                "time": 348551,
+                "pause_state": True,
+                "viewscreen_type": "viewscreen_dwarfmodest",
+            },
+            state_after_advance={
+                "year": 30,
+                "year_tick": 350840,
+                "time": 350840,
+                "pause_state": True,
+                "viewscreen_type": "viewscreen_textviewerst",
+            },
+        )
+        is None
+    )
+
+
+def test_final_attestation_recovery_fails_closed_gate(monkeypatch) -> None:
+    from fort_gym.bench import tick_controller
+    from fort_gym.bench.dfhack_exec import DFHackError
+
+    cases = (
+        {"final_viewscreen": "viewscreen_dwarfmodest"},
+        {"final_pause": False},
+        {"final_tick": 351102},
+        {"final_tick": 348550},
+        {"final_year": 32, "final_tick": 100},
+        {"final_tick": 403200},
+        {"final_viewscreen": "unknown"},
+        {"final_viewscreen": "viewscreen_layer_noblelistst"},
+        {"nopause_error": "nopause command failed"},
+        {"resume_error": True},
+        {"repause_ok": False},
+    )
+    for case in cases:
+        final_year = case.get("final_year", 30)
+        final_tick = case.get("final_tick", 350840)
+        final_pause = case.get("final_pause", True)
+        final_viewscreen = case.get("final_viewscreen", "viewscreen_textviewerst")
+        repause_ok = case.get("repause_ok", True)
+        probes: list[object] = [
+            {
+                "cur_year": 30,
+                "cur_year_tick": 348551,
+                "pause_state": True,
+                "viewscreen_type": "viewscreen_dwarfmodest",
+            },
+            {
+                "cur_year": 30,
+                "cur_year_tick": 348551,
+                "pause_state": True,
+                "viewscreen_type": "viewscreen_dwarfmodest",
+            },
+            DFHackError("probe unavailable"),
+        ]
+        if repause_ok:
+            probes.append(
+                {
+                    "cur_year": final_year,
+                    "cur_year_tick": final_tick,
+                    "pause_state": final_pause,
+                    "viewscreen_type": final_viewscreen,
+                }
+            )
+        probe_iterator = iter(probes)
+
+        def read_probe(**_kwargs):
+            value = next(probe_iterator)
+            if isinstance(value, Exception):
+                raise value
+            return value
+
+        def set_paused(*_args, **_kwargs):
+            if case.get("resume_error"):
+                raise DFHackError("resume failed")
+
+        repause = (
+            {
+                "ok": True,
+                "paused": True,
+                "attempts": 1,
+                "attempt_records": [
+                    {"attempt": 1, "nopause_disabled": True, "paused": True}
+                ],
+            }
+            if repause_ok
+            else {
+                "ok": False,
+                "paused": False,
+                "attempts": 2,
+                "attempt_records": [],
+                "error": "pause_state_unverified",
+            }
+        )
+        with monkeypatch.context() as case_patch:
+            case_patch.setattr(
+                tick_controller, "read_tick_pause_viewscreen", read_probe
+            )
+            case_patch.setattr(
+                tick_controller,
+                "_set_nopause",
+                lambda _enabled: case.get("nopause_error"),
+            )
+            case_patch.setattr(tick_controller, "set_paused", set_paused)
+            case_patch.setattr(
+                tick_controller,
+                "ensure_paused_external",
+                lambda **_kwargs: repause,
+            )
+            case_patch.setattr(tick_controller.time, "sleep", lambda _duration: None)
+
+            result = tick_controller.advance_ticks_exact_external(
+                2500,
+                interrupt_on_viewscreen_transition=True,
+                viewscreen_before="viewscreen_dwarfmodest",
+                max_advance_ticks=2500,
+            )
+
+        assert result["ok"] is False
+        assert result["error"] != "blocking_viewscreen_transition"
+        assert result["interrupt_safety_error"] is True
+        assert result.get("interruption_detection") is None
 
 
 def test_interrupt_final_attestation_failure_dominates_interruption(monkeypatch):

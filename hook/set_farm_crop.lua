@@ -17,6 +17,14 @@
 -- plant_id slot is changed.
 
 local json = require('json')
+-- Attest preflight rejection separately from a failed/partial native write.
+local mutation_attempted = false
+local function encode_result(value)
+  if value.ok == false then
+    value.command_mutation = mutation_attempted and 'attempted' or 'not_attempted'
+  end
+  return json.encode(value)
+end
 local args = {...}
 
 local function to_int(v)
@@ -38,11 +46,11 @@ local crop_token = tostring(args[2] or '')
 local seasons_csv = tostring(args[3] or '')
 
 if not building_id then
-  print(json.encode({ ok = false, error = 'invalid_building_id' }))
+  print(encode_result({ ok = false, error = 'invalid_building_id' }))
   return
 end
 if crop_token == '' then
-  print(json.encode({ ok = false, error = 'invalid_crop' }))
+  print(encode_result({ ok = false, error = 'invalid_crop' }))
   return
 end
 
@@ -57,7 +65,7 @@ else
   for name in string.gmatch(seasons_csv, '[^,]+') do
     local idx = SEASON_INDEX[name]
     if idx == nil then
-      print(json.encode({ ok = false, error = 'invalid_season', season = sanitize(name) }))
+      print(encode_result({ ok = false, error = 'invalid_season', season = sanitize(name) }))
       return
     end
     if not seen[idx] then
@@ -67,7 +75,7 @@ else
   end
   table.sort(requested)
   if #requested == 0 then
-    print(json.encode({ ok = false, error = 'invalid_season' }))
+    print(encode_result({ ok = false, error = 'invalid_season' }))
     return
   end
 end
@@ -83,11 +91,11 @@ local ok_find = pcall(function()
   end
 end)
 if not ok_find then
-  print(json.encode({ ok = false, error = 'buildings_unavailable' }))
+  print(encode_result({ ok = false, error = 'buildings_unavailable' }))
   return
 end
 if not plot then
-  print(json.encode({ ok = false, error = 'building_not_found' }))
+  print(encode_result({ ok = false, error = 'building_not_found' }))
   return
 end
 
@@ -96,7 +104,7 @@ pcall(function()
   is_farm = df.building_farmplotst:is_instance(plot) and true or false
 end)
 if not is_farm then
-  print(json.encode({ ok = false, error = 'not_a_farm_plot' }))
+  print(encode_result({ ok = false, error = 'not_a_farm_plot' }))
   return
 end
 
@@ -111,11 +119,11 @@ local ok_stage = pcall(function()
   max_build_stage = plot:getMaxBuildStage()
 end)
 if not ok_stage or build_stage == nil or max_build_stage == nil then
-  print(json.encode({ ok = false, error = 'farm_plot_stage_unreadable' }))
+  print(encode_result({ ok = false, error = 'farm_plot_stage_unreadable' }))
   return
 end
 if build_stage < max_build_stage then
-  print(json.encode({
+  print(encode_result({
     ok = false,
     error = 'farm_plot_not_built',
     build_stage = build_stage,
@@ -132,7 +140,7 @@ local ok_before = pcall(function()
   end
 end)
 if not ok_before then
-  print(json.encode({ ok = false, error = 'plant_id_unreadable' }))
+  print(encode_result({ ok = false, error = 'plant_id_unreadable' }))
   return
 end
 
@@ -171,7 +179,7 @@ local ok_seeds = pcall(function()
   end
 end)
 if not ok_seeds then
-  print(json.encode({ ok = false, error = 'seed_inventory_unreadable' }))
+  print(encode_result({ ok = false, error = 'seed_inventory_unreadable' }))
   return
 end
 
@@ -185,7 +193,7 @@ local ok_context = pcall(function()
   end
 end)
 if not ok_context or plot_subterranean == nil then
-  print(json.encode({ ok = false, error = 'farm_plot_context_unreadable' }))
+  print(encode_result({ ok = false, error = 'farm_plot_context_unreadable' }))
   return
 end
 
@@ -220,7 +228,7 @@ if plot_subterranean then
     end
   end)
   if not ok_offers then
-    print(json.encode({ ok = false, error = 'crop_options_unreadable' }))
+    print(encode_result({ ok = false, error = 'crop_options_unreadable' }))
     return
   end
   for _, name in ipairs(SEASON_NAMES) do
@@ -240,15 +248,15 @@ if not CLEAR then
     end
   end)
   if not ok_scan then
-    print(json.encode({ ok = false, error = 'raws_unavailable' }))
+    print(encode_result({ ok = false, error = 'raws_unavailable' }))
     return
   end
   if crop_index < 0 then
-    print(json.encode({ ok = false, error = 'crop_not_found', crop = sanitize(crop_token) }))
+    print(encode_result({ ok = false, error = 'crop_not_found', crop = sanitize(crop_token) }))
     return
   end
   if not plot_subterranean then
-    print(json.encode({
+    print(encode_result({
       ok = false,
       error = 'surface_crop_options_unverified',
       farm_building_id = building_id,
@@ -272,7 +280,7 @@ if not CLEAR then
   end
 end
 if #seasons_skipped > 0 then
-  print(json.encode({
+  print(encode_result({
     ok = false,
     error = 'crop_not_offered',
     farm_building_id = building_id,
@@ -302,6 +310,7 @@ local function restore_before()
   end
 end
 
+mutation_attempted = true
 local write_ok, write_error = pcall(function()
   for _, idx in ipairs(requested) do
     plot.plant_id[idx] = expected_plant_id[idx + 1]
@@ -340,7 +349,7 @@ if not readback_matches then
       end
     end)
   end
-  print(json.encode({
+  print(encode_result({
     ok = false,
     error = write_ok and 'crop_readback_mismatch' or 'crop_write_failed',
     detail = write_ok and nil or sanitize(write_error),
@@ -362,7 +371,7 @@ end
 
 local seeds_on_hand = CLEAR and 0 or (seeds_by_plant[crop_index] or 0)
 
-print(json.encode({
+print(encode_result({
   ok = true,
   farm_building_id = building_id,
   build_stage = build_stage,

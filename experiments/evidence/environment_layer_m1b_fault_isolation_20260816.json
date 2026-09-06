@@ -1,0 +1,168 @@
+{
+  "schema_version": "fort-gym.environment-layer-m1b-fault-isolation/v1",
+  "created_at": "2026-08-16T22:41:36Z",
+  "status": "bounded_private_pass_complete_full_m1b_incomplete_no_go",
+  "decision": {
+    "further_local_offline_integration": "CONDITIONAL_GO",
+    "local_core_acceptance": "NO_GO",
+    "full_m1b": "INCOMPLETE_NO_GO",
+    "reason": "Component controls pass locally, but API supervision, terminal ownership, runtime identity, restart reconciliation, and the frozen real-runtime fault gates are not integrated or evidenced."
+  },
+  "source": {
+    "branch": "codex/environment-layer-m0a-m1a",
+    "base_head": "236d3187c548b9bc03c4c99829d479d381a008d5",
+    "worktree_committed": false,
+    "measurement_code_sha256": "be4db9de66ce3ceb69053fefe17b156535151f2e930d2266c5925133947302a9",
+    "measurement_lock": "changed from the M1b pre-package digest; G7-v5 requires recalibration and review before any paid pair"
+  },
+  "contract": {
+    "path": "infra/m1b/acceptance.yaml",
+    "sha256": "d1cf6d8141cbe2cf7d153b32de0be61dbf64b7db1ed16dc19e7b9db82ccd1f5f",
+    "status": "preregistered_with_documented_provenance_erratum",
+    "real_runtime_attempts_used": 0,
+    "formal_contract_issue": "CAP-FAKE says zero test cap while all production-facing cap validation requires a positive cap; the component test used a positive threshold equal to the first fake response and is not credited as the exact frozen procedure"
+  },
+  "runtime_identity": {
+    "classification": "private_stock_archive_seeded",
+    "runtime_reported_image_id": "sha256:d6403fc04f2231a75c2a4ca4379b393fddd08d9034df07dd4ff9a8d46a15068c",
+    "oci_manifest_digest": "sha256:d6403fc04f2231a75c2a4ca4379b393fddd08d9034df07dd4ff9a8d46a15068c",
+    "oci_config_digest": "sha256:d90811a39d5edd7c0a61d9adbbe4251cbfc345df52f5fa48ba174ce8992b8a86",
+    "compressed_oci_archive_sha256": "87d66d26553cb271af1b784405d63ea6b95f3bbe20e9429f05e6412133d1f43a",
+    "uncompressed_oci_archive_sha256": "39e4cfce8cc65ca4f4a761fd732cc5d3c2faa8d237b85992dae6da1076f8e756",
+    "local_image_loaded": true,
+    "local_image_executed": false,
+    "local_containers_from_image_verified_at": "2026-08-16T22:45:36Z",
+    "local_containers_from_image": 0,
+    "source_reproducible": false
+  },
+  "implemented_components": [
+    "stdlib process supervisor with durable attempt journal, process-group reaping, cleanup ordering, trace finalization, host-wide port lease, and bounded evidence mappings",
+    "worker-safe shared SQLite registry role",
+    "exact preassigned external run ID and eight-field config match",
+    "private-by-default POST /runs with explicit publication opt-in",
+    "opt-in native DFHack RPC Lua transport with no CLI fallback on native failure",
+    "dotenv disable switch and scripted-child provider environment stripping",
+    "strict OpenRouter provider pin, no-fallback request, returned-response accounting, and pre-dispatch token/USD caps",
+    "eight concurrent mock worker processes sharing SQLite without cross-talk"
+  ],
+  "verification": {
+    "python": "3.11.15",
+    "sanitized_environment": "env -i with FORT_GYM_DISABLE_DOTENV=1 and no provider credentials",
+    "regression": {
+      "tests": 208,
+      "passed": 208,
+      "failures": 0,
+      "errors": 0,
+      "warnings": 8,
+      "junit_path": "/Users/cdossman/Documents/Open Source Projects/fort-gym-m1b-fault-isolation-20260816/python311-regression.xml",
+      "junit_sha256": "02d8ead7b2f3f705d037928b0110c223535e53c71343809187ead9adc1c45a13"
+    },
+    "loopback_supervisor": {
+      "tests": 18,
+      "passed": 18,
+      "failures": 0,
+      "errors": 0,
+      "junit_path": "/Users/cdossman/Documents/Open Source Projects/fort-gym-m1b-fault-isolation-20260816/process-supervisor-loopback.xml",
+      "junit_sha256": "5548bfe01586016178e13c5116efa4936dcae40648082b8b96a6538a01274e9b"
+    },
+    "total_independently_rerun": 226,
+    "py_compile": "pass",
+    "git_diff_check": "pass",
+    "ruff_core_m1b": "pass for F, E9, and I",
+    "ruff_broader_touched_files": "same six baseline findings remain in API schemas/server, CLI, and experiment runner; no new finding was introduced by this pass"
+  },
+  "component_evidence": {
+    "port_lease_race": {
+      "contenders": 32,
+      "completed_winners": 1,
+      "durable_port_lease_conflicts": 31,
+      "loser_child_pids_present": 0
+    },
+    "mock_process_integration": {
+      "worker_processes": 8,
+      "backend": "mock",
+      "shared_sqlite": true,
+      "exact_external_run_ids": true,
+      "distinct_artifacts": true,
+      "public_shares": 0,
+      "provider_calls": 0,
+      "provider_cost_usd": 0,
+      "classification": "local_mock_engineering_only; not CO-8"
+    },
+    "provider_fake": {
+      "real_provider_used": false,
+      "real_network_used": false,
+      "strict_missing_pin_blocks_before_create": true,
+      "request_provider_order_pinned": true,
+      "request_fallbacks_disabled": true,
+      "second_fake_create_after_cap": 0,
+      "formal_gate_credited": false
+    }
+  },
+  "gate_disposition": {
+    "PORT-1": "PASS_LOCAL_COMPONENT",
+    "PORT-2": "NOT_RUN",
+    "COLD-RETRY": "NOT_RUN",
+    "CO-8": "NOT_RUN_MOCK_ENGINEERING_ONLY",
+    "DF-KILL": "NOT_RUN",
+    "HARNESS-KILL": "NOT_CREDITED_SYNTHETIC_PROCESS_GROUP_ONLY",
+    "OOM": "NOT_RUN",
+    "ENOSPC": "NOT_RUN",
+    "CONTAINER-RESTART": "NOT_RUN",
+    "DAEMON-RESTART": "NOT_RUN",
+    "ORPHAN-1": "NOT_CREDITED_LOCAL_DESCENDANT_ONLY",
+    "ORPHAN-2": "NOT_RUN",
+    "PROVIDER-ENV": "NOT_CREDITED_SPLIT_COMPONENT_TESTS",
+    "PROVIDER-NET": "NOT_RUN",
+    "CAP-FAKE": "NOT_CREDITED_PROTOCOL_DEVIATION_COMPONENT_BEHAVIOR_PASS",
+    "CLEANUP": "NOT_CREDITED_SYNTHETIC_ONLY"
+  },
+  "integration_blockers": [
+    "API and jobs bypass ProcessSupervisor and continue to launch run_once in threads",
+    "child registry terminalization and parent supervisor terminalization can contradict",
+    "API startup recovery does not reconcile surviving external workers or supervisor journals",
+    "provider supervision is not propagated end to end and strict mode defaults off",
+    "no canonical per-run runtime/environment builder or nonce-bound port/container/save identity exists",
+    "control evidence is stored in the faulted artifact directory",
+    "cross-process SSE/event relay and restart-safe event durability are absent",
+    "isolated x86 Linux real-runtime fault matrix has not run"
+  ],
+  "file_sha256": {
+    "fort_gym/bench/run/process_supervisor.py": "9f8515f8cf224945088280fb565429af06c8565094871c9de65a26b5e0abe303",
+    "fort_gym/bench/config.py": "23a545532039cf4595d289b6867203cbcf92768a2c25c97fdc8661e57c331c9b",
+    "fort_gym/bench/agent/governed_llm.py": "1b814e7bc7b1106a69010bac337338df324998c8a0067efa3fd1cdc6b7727b3c",
+    "fort_gym/bench/run/storage.py": "1173fb8298797b0174970ada078956162bf77eb300bec38d77602e140a194739",
+    "fort_gym/bench/experiment/runner.py": "4843027d019d4c526cb71505f3a7a4ec22ef18b8b4b0016a6c4e7431297337aa",
+    "fort_gym/bench/cli.py": "c88744c96ee12d518b2124380d7cc4be68ab377e8f81fbb8e96649b2c42c2eeb",
+    "fort_gym/bench/dfhack_exec.py": "5b624b9ed2e8af8f9ad3dd4163ee8e2739b4e296d981ad97ae460289b3c1be3d",
+    "fort_gym/bench/env/dfhack_client.py": "c17dcd20c6898bbefb07933462fd7546a2c0fbc9d83830b24027ea5fd322fa50",
+    "fort_gym/bench/api/schemas.py": "8d45357f050df63b493a235dd39fff0cd7cd910fa59ad1f05146ad2b7729fae5",
+    "fort_gym/bench/api/server.py": "95a74da1a44b3a0a13579da41ee412795a7c0d2c52e6291029483926a7229251"
+  },
+  "private_packet": {
+    "root": "/Users/cdossman/Documents/Open Source Projects/fort-gym-m1b-fault-isolation-20260816",
+    "manifest_sha256": "42b366bbedcac31a050f94a0f851d8b4691036056cb119074fd8f3f22edf8d10",
+    "file_count_excluding_manifest": 4
+  },
+  "local_cleanup_readback": {
+    "verified_at": "2026-08-16T22:46:14Z",
+    "fortgym_image_containers": 0,
+    "m1b_worker_or_test_processes_excluding_readback_commands": 0,
+    "result": "pass for local test residue only; not the frozen real-runtime CLEANUP gate"
+  },
+  "authorization_boundary": {
+    "paid_models_run": false,
+    "provider_api_calls": 0,
+    "provider_cost_usd": 0,
+    "production_accessed": false,
+    "production_mutated": false,
+    "new_cloud_infrastructure_created": false,
+    "infrastructure_spend_usd": 0,
+    "published": false,
+    "deployed": false,
+    "pushed": false,
+    "tags_created": false,
+    "e1_started": false
+  },
+  "next_gate": "Fix local P0 integration contradictions and pass them end to end. A separately approved explicit M1b infrastructure ceiling is then required before isolated x86-64 Linux real-runtime gates."
+}

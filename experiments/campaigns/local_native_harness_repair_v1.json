@@ -1,0 +1,45 @@
+{
+  "schema_version": "fortgym.local-campaign-condition/v1",
+  "runner": "campaign-loop/v1",
+  "condition_id": "local-native-harness-repair-v1",
+  "decision_profile": "campaign_action/v1",
+  "observation_profile": "campaign_state/v1",
+  "advance_policy": "model_requested/v1",
+  "schema_attempts": 2,
+  "phase": "development",
+  "hypothesis": "Honoring requested time after definite preflight rejections and repacking correction requests removes two measured harness obstacles. Test whether Mistral can then perform native development, without changing its gameplay decisions or starting save. This combined repair is not an isolated causal ablation of each change.",
+  "models": ["qwen2.5:7b-instruct", "llama3.1:8b-instruct-q4_K_M", "mistral:7b-instruct-v0.3-q4_K_M"],
+  "max_steps": 8,
+  "max_segments": 4,
+  "segment_time_budget_seconds": 600,
+  "ticks_per_step": 2000,
+  "max_advance_ticks": 2000,
+  "max_output_tokens": 1024,
+  "max_attempts": 1,
+  "max_dispatches": 16,
+  "max_request_bytes": 22000,
+  "max_total_tokens": 262144,
+  "max_cost_usd": 0,
+  "local_inference": {
+    "transport": "ollama-local/v1",
+    "server_version": "0.5.11",
+    "prompt_contract": "visible_action_contract/v1",
+    "prompt_packing": "bounded_history_corrections/v1",
+    "model_digests": {
+      "qwen2.5:7b-instruct": "845dbda0ea48ed749caafd9e6037047aa19acfcfd82e704d7ca97d631a0b697e",
+      "llama3.1:8b-instruct-q4_K_M": "46e0c10c039e019119339687c3c1757cc81b9da49709a3b3924863ba87ca666e",
+      "mistral:7b-instruct-v0.3-q4_K_M": "6577803aa9a036369e481d648a2baebb381ebc6e897f2bb9a766a2aa7bfbc1cf"
+    },
+    "context_tokens": 24576,
+    "timeout_seconds": 120,
+    "temperature": 0.2,
+    "seed": 73
+  },
+  "notes": [
+    "Preserve the original packed-comparison condition and results. Begin this condition from the same verified source save, not an unreconciled historical Mistral checkpoint.",
+    "Only the model chooses its command and advance_ticks. Accepted commands and native/Python preflight rejections with an explicit no-write receipt honor those ticks. Unknown or partial execution stops without additional time. Existing native clock and dialog-interruption checks remain active.",
+    "Corrections participate in exact serialized request fitting. Preserve every current native fact, the latest command result, persistent model notes and all correction messages; drop only older history. Irreducible post-response overflow still requires reconciliation and is not silently repaired or made free.",
+    "Use identical conditions and source save for any matched model runs. One short attempt per model does not support rankings or first-year success.",
+    "Run one local model and isolated native runtime at a time, retain evidence and verify teardown. Zero metered API charges do not imply zero hardware, electricity or existing-host costs."
+  ]
+}

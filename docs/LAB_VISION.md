@@ -57,14 +57,33 @@ Hard is the next instrument, not a relabeling exercise. It needs a fixed-pixel v
 
 Discovery comes after Hard is stable. Its restriction is about accessible information during evaluation: no docs, no web, a bounded learner state across episodes, and held-out seeds or mechanics. It must not make an unverifiable claim about model pretraining. A clean statement is: the agent had the declared interface, knowledge channel, memory budget, and held-out split.
 
-The current provisional Easy P1 manifest is
-`experiments/fort_eval_easy_p1_g7_v3.yaml`. It freezes G7-v3 on
-`seed_region3_fresh` at 200 steps and up to 2,500 ticks per step, with score-v5,
-vision on, memory off, and no knowledge access. Its two model arms are compared
-inside one shared benchmark condition. The arm name, provider route, resolved
-model, prompt, and generation settings identify the policy arm; they are not
-alternate benchmark conditions. Valid failures with complete evidence remain
-publishable, while infrastructure aborts and invalid evidence remain distinct.
+The current Easy P1 successor is the calibration-only
+`experiments/fort_eval_easy_p1_g7_v5.yaml`. It keeps the same seed, model arms,
+200-step budget, vision, memory-off, and no-knowledge condition while replacing
+global and peak proxies with exact governed ownership evidence. An exact owned
+crop-assigned farm, owned completed Still, exact governed brew output, authoritative
+preventable-death classification, final owned accessible layout rooms, and
+fixed-initial-cohort bed capacity form a non-numeric outcome vector. Duration,
+population, final reserves, production/consumption exposure, peak layout, cache rate, and score-v5 are
+diagnostics only. Missing or truncated evidence remains unknown.
+
+*2026-08-15 note (supersedes "G7-v5 is not launchable or publishable until the
+new room and death sensors pass live DFHack validation"):* the room and death
+sensors passed live DFHack validation on 2026-07-21 at commit `a8de39d03`
+(bundle sha256 `f41f1a80…`; see `experiments/evidence/EVIDENCE_INDEX.json`).
+"Calibration-only" is still the accurate status label for the manifest, but the
+calibration itself has been performed. The remaining gates are Chris's
+designation of a reviewer identity of record, the reviewed
+`P1_MEASUREMENT_CALIBRATION_COMPLETE` unlock, and explicit spend approval —
+none of which the calibration result grants.
+
+The completed G7-v3 and G7-v4 protocols remain frozen as historical
+evidence under their original evaluators.
+The two model arms are compared inside one shared benchmark condition. The arm
+name, provider route, resolved model, prompt, and generation settings identify
+the policy arm; they are not alternate benchmark conditions. Valid failures
+with complete evidence remain publishable, while infrastructure aborts and
+invalid evidence remain distinct.
 
 ## Design commitments
 
@@ -94,12 +113,64 @@ A pilot can be valuable while remaining provisional. A failed policy run, an inf
 
 Validate the Easy manifest against the current Fort-Gym experiment loader, confirm that the known scripted governed control can run, and verify that observer-only artifacts do not enter the model context. This stage produces no model ranking.
 
+*(2026-08-15)* Stage 0 is SATISFIED for G7-v5 by the 2026-07-21 provider-free
+campaign: the `dfhack-governed-scripted` control ran three scenarios to terminal
+under the G7-v5 manifest at commit `a8de39d03`, and — exactly as this stage
+requires — produced no model ranking.
+
 ### Stage 1: Easy baseline
 
-Run the frozen Easy P1 G7-v3 pilot with the declared governed model arms and
-keep the fixed-seed result provisional. Resolve and record provider model IDs,
-routing, usage, and pricing per run. A valid failure is still a publishable
-finding; it is not a leaderboard pass.
+The frozen Easy P1 G7-v3 pilot is COMPLETE and recorded. It ran under the
+frozen `fort-eval-easy-p1-g7-v3` protocol with both declared governed model
+arms at 200 steps, fixed seed, and the declared knowledge/vision condition:
+
+- Fable: run `a55b2c2cbef54825bc7784bdb8e51855`, model
+  `dfhack-governed-llm-fable5`, 200 steps, cost $56.14648677, public-ELIGIBLE,
+  0 deaths, FAILED G7-v3.
+- Sol: run `cb997beed6d94a3680f2637556cc529d`, model
+  `dfhack-governed-llm-gpt56-sol`, 200 steps, cost $36.54745875, INELIGIBLE
+  (frozen cached-token requirement unsatisfied), 10 deaths, FAILED G7-v3.
+
+Both arms failed the frozen G7-v3 gates; these are valid completed failures,
+not leaderboard passes, and provider model IDs, routing, usage, and pricing
+were resolved and recorded per run. The defensible finding is DESCRIPTIVE
+only: "Fable was safer and more risk-aware; Sol was more capable and
+productive but collapse-prone." Because Sol was ineligible under the frozen
+cached-token requirement, this is NOT a publishable comparable pair — it
+remains a provisional recorded pilot, per the frozen-protocol boundary above.
+
+No G7-v3 relaunch. The next paid run is a NEW protocol decision under the
+current G7-v5 calibration protocol and requires Chris's explicit approval
+before any spend.
+
+#### G7-v5 measurement calibration (2026-07-21)
+
+Between Stage 0 and any Stage 1 G7-v5 run, a provider-free **measurement**
+calibration campaign ran three scenarios to terminal at commit `a8de39d03`,
+using `dfhack-governed-scripted` at zero cost:
+
+- `calib-g7v5-owned-20260721a` — 115 steps, gameplay PASS: 1 operational farm
+  (still 1), 65 governed brew units, 3 rooms, 3 beds, 0 deaths,
+  `owned_room_lower_bound_proven=true`.
+- `calib-g7v5-death-20260721a` — 1 step; the bounded kill fixture
+  `dfhack_bounded_friendly_bloodloss` fired once, `deaths_in_run=1`,
+  `death_causes_known=true`, and the neglect criterion stayed unknown BY DESIGN.
+- `calib-g7v5-dropout-20260721a` — 1 step; induced sensor loss produced
+  `owned_room_lower_bound_proven=false` and an unknown rooms criterion, never
+  coerced to fail.
+
+All three persisted `task_verdict=unknown` and `public_eligibility=ineligible`,
+and all three share one `seed_attestation` (sha
+`9c923f9e2ee8ce25344fc88d66f54f2c0262d9f62317c1b44946cd73f6ee01e8`). Because
+the campaign was provider-free (`usage.calls==0`), validity and provenance are
+UNKNOWN by design: this is a measurement-fidelity result, not a policy-capability
+result. Independent review on 2026-07-21 returned APPROVE on scientific validity
+(3 advisories, 0 blocking) and APPROVE on unlock semantics. **The unlock was NOT
+executed**: `P1_MEASUREMENT_CALIBRATION_COMPLETE` is still `False`. It requires
+Chris to designate the reviewer identity of record, then an `--approve` bundle
+rebuild on the VM, then the constant flip. Spend approval remains a separate
+hard gate. Details:
+`docs/decisions/2026-07-21-g7v5-calibration-independent-review.md`.
 
 ### Stage 2: Easy generalization
 

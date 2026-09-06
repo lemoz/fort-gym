@@ -564,6 +564,7 @@ def test_place_furniture_enforces_kind_and_delegates_locality_to_hook(monkeypatc
     assert dfhack_backend.place_furniture("Throne", 1, 1, 0) == {
         "ok": False,
         "error": "invalid_kind",
+        "command_mutation": "not_attempted",
     }
     assert not calls
 
@@ -586,6 +587,7 @@ def test_build_construction_invalid_kind(monkeypatch) -> None:
     assert dfhack_backend.build_construction("Throne", 1, 1, 0) == {
         "ok": False,
         "error": "invalid_kind",
+        "command_mutation": "not_attempted",
     }
     assert not calls
 
@@ -602,7 +604,9 @@ def test_build_construction_rejects_too_many_tiles(monkeypatch) -> None:
     monkeypatch.setattr(dfhack_backend, "run_lua_file", fake_run_lua_file)
 
     too_many = dfhack_backend.build_construction("Wall", 0, 0, 0, x2=10, y2=0)
-    assert too_many == {"ok": False, "error": "too_many_tiles"}
+    assert too_many == {
+        "ok": False, "error": "too_many_tiles", "command_mutation": "not_attempted"
+    }
     assert not calls
 
 

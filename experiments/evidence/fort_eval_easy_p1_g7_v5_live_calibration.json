@@ -1,0 +1,44 @@
+{
+  "calibration_fort_gym_commit": "a8de39d03da48da32110776bf84ddfcbcb2ccefc",
+  "calibration_manifest_sha256": "fb61209de1a26d453292bce8c228c1617622509868290b014573d577c020c136",
+  "evaluator_version": "outcome-vector-v1+g7-v5",
+  "live_traces": [
+    {
+      "artifact": "p1_g7_v5_owned_layout_and_provisioning_calib-g7v5-owned-20260721a.jsonl",
+      "run_id": "calib-g7v5-owned-20260721a",
+      "scenario": "owned_layout_and_provisioning",
+      "summary_artifact": "p1_g7_v5_owned_layout_and_provisioning_calib-g7v5-owned-20260721a_summary.json",
+      "summary_sha256": "2c07304aa58ceededb5a51d976407443d2953ea99c65862ec340cb5fd34b4af8",
+      "trace_sha256": "0ce3899fbaef8d90ccca7dee2e7bbc47bc62382d9e68b3f44fc38ce778403073"
+    },
+    {
+      "artifact": "p1_g7_v5_death_cause_fallback_calib-g7v5-death-20260721a.jsonl",
+      "run_id": "calib-g7v5-death-20260721a",
+      "scenario": "death_cause_fallback",
+      "summary_artifact": "p1_g7_v5_death_cause_fallback_calib-g7v5-death-20260721a_summary.json",
+      "summary_sha256": "205016815cadb584c51acc39c1807be47c3ada8ec3108af0e4c31a9c4e2ab43f",
+      "trace_sha256": "2385d1b3f4c100ad5737f653c98235e7292471b09cefbef2d2b7600cd52af05c"
+    },
+    {
+      "artifact": "p1_g7_v5_sensor_dropout_calib-g7v5-dropout-20260721a.jsonl",
+      "run_id": "calib-g7v5-dropout-20260721a",
+      "scenario": "sensor_dropout",
+      "sensor_field": "governed_owned_room_evidence_complete",
+      "summary_artifact": "p1_g7_v5_sensor_dropout_calib-g7v5-dropout-20260721a_summary.json",
+      "summary_sha256": "fc59b94a951dd616ab0b04046874ed9e64a11207b9421cee4d912021f7af5fca",
+      "trace_sha256": "47475ad8cd5d3e69668ea27f9c69e14208d0fbd8554012ed70a3dc3c874354cc"
+    }
+  ],
+  "manifest_semantic_sha256": "b85957669eb02668f965f103e42b1feaf88cdad7ecc8e45fc5eb2b78d8269cc6",
+  "measurement_code_sha256": "261a1fba89ce1a320a3248a37cbee26b37971ef6c2240705d6bdce51088c9b4c",
+  "protocol": "fort-eval-easy-p1-g7-v5",
+  "regression_report": {
+    "artifact": "p1_g7_v5_measurement_regressions.xml",
+    "sha256": "a2469336c9ce32cc96941cf5fa5fe6e1d341e6e6c96e2591da6d49ece96d616e"
+  },
+  "remote_proto_runtime_sha256": "9d7949fe3f7ef3497d145dff6cc921c13a3cf088cd1ff68ef58b5047a013570f",
+  "review_status": "pending",
+  "reviewer": "",
+  "schema_version": "fort-eval.measurement-calibration/v1",
+  "seed_world_sha256": "070b10a3f2403e72368290eea0d09396fe06f7912b9babdea7ad26eb0498a87d"
+}

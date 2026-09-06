@@ -16,6 +16,7 @@ from fort_gym.bench.agent.governed_llm import (
     MAX_OBJECTIVE_LENGTH,
     DFHackGovernedLLMAgent,
     GovernedProviderFinishError,
+    GovernedProviderResponseError,
     GovernedReviewContractError,
     _submit_action_tool,
 )
@@ -291,6 +292,10 @@ def test_governed_submit_tool_requires_agent_review_contract() -> None:
     assert "last_action_review" in parameters["required"]
     assert "plan_review" in parameters["required"]
     assert parameters["properties"]["last_action_review"]["additionalProperties"] is False
+    assert (
+        "retry_same_action"
+        not in parameters["properties"]["last_action_review"]["required"]
+    )
     assert parameters["properties"]["plan_review"]["properties"]["decision"]["enum"] == [
         "not_due",
         "establish",
@@ -323,6 +328,8 @@ def test_governed_submit_tool_requires_agent_review_contract() -> None:
     assert "not a heuristic conclusion about crop growth or route accessibility" in (
         GOVERNED_SYSTEM_PROMPT
     )
+    assert "The harness computes\n  retry_same_action" in GOVERNED_SYSTEM_PROMPT
+    assert "it is diagnostic only" in GOVERNED_SYSTEM_PROMPT
     assert "target_walk_group_connectivity=connected|disconnected|unknown" in GOVERNED_SYSTEM_PROMPT
 
 
@@ -387,7 +394,7 @@ def test_governed_system_prompt_requires_exact_hard_stall_transition() -> None:
     assert "decision=continue is invalid" in prompt
     assert "choose a genuinely different current objective" in prompt
     assert "normalized type and params must differ" in prompt
-    assert "even when retry_same_action=true" in prompt
+    assert "even when retry_same_action=true" not in prompt
     assert "another target for the same rejected approach is not a revision" in prompt
     assert "harness identifies the stall but does not choose the replacement" in prompt
     assert "transition applies only to `same_objective_stalled_2`" in prompt
@@ -741,6 +748,167 @@ def test_review_contract_establishes_initial_agent_owned_plan() -> None:
     assert len(agent._client.chat.completions.requests) == 1
     assert agent._memory.gameplay_plan["objective"] == "Build durable shelter."
     assert agent._memory.gameplay_plan["steps"] == ["Dig shelter.", "Build production."]
+
+
+def test_review_contract_normalizes_minimax_coordinate_wrapper() -> None:
+    control = _plan_control()
+    payload = _reviewed_action_payload(control=control)
+    payload["params"] = {
+        "area": {"item": ["98", "98", "161"]},
+        "size": {"item": ["1", "1", "1"]},
+    }
+    agent = _agent(
+        [_submit_action_response(payload)],
+        model_override="minimax/minimax-m3",
+    )
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["type"] == "DIG"
+    assert action["params"]["area"] == [98, 98, 161]
+    assert action["params"]["size"] == [1, 1, 1]
+    events = agent.pop_tool_events()
+    normalized = next(
+        event
+        for event in events
+        if event["tool"] == "governed_llm.coordinate_wrapper_normalized"
+    )
+    assert normalized["input"] == {"action_type": "DIG"}
+    assert normalized["output"] == {"fields": ["area", "size"]}
+    assert not any(
+        event["tool"] == "governed_llm.review_contract_retry" for event in events
+    )
+
+
+def test_coordinate_wrapper_normalizer_rejects_non_triplet_or_extra_keys() -> None:
+    agent = _agent()
+
+    assert agent._wrapped_coordinate_triplet({"item": ["1", "2"]}) is None
+    assert (
+        agent._wrapped_coordinate_triplet(
+            {"item": ["1", "2", "3"], "unexpected": True}
+        )
+        is None
+    )
+    assert agent._wrapped_coordinate_triplet({"item": ["1", "two", "3"]}) is None
+    assert agent._wrapped_coordinate_triplet({"item": [True, 2, 3]}) is None
+
+
+def test_review_contract_normalizes_minimax_farm_seasons_wrapper() -> None:
+    control = _plan_control()
+    payload = _reviewed_action_payload(control=control)
+    payload.update(
+        {
+            "type": "FARM",
+            "params": {
+                "building_id": 19,
+                "crop": "MUSHROOM_HELMET_PLUMP",
+                "seasons": {"item": ["spring", "summer", "autumn", "winter"]},
+            },
+            "intent": "assign plump helmets to the completed farm plot",
+            "plan_step": "Assign a crop for every season.",
+            "expected_simulation_result": "The farm reports plump helmets in every season.",
+        }
+    )
+    agent = _agent(
+        [_submit_action_response(payload)],
+        model_override="minimax/minimax-m3",
+    )
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["type"] == "FARM"
+    assert action["params"]["seasons"] == ["spring", "summer", "autumn", "winter"]
+    events = agent.pop_tool_events()
+    normalized = next(
+        event
+        for event in events
+        if event["tool"] == "governed_llm.farm_seasons_wrapper_normalized"
+    )
+    assert normalized["input"] == {
+        "action_type": "FARM",
+        "field": "seasons",
+        "wrapper": "item",
+    }
+    assert normalized["output"] == {"item_count": 4}
+    assert not any(
+        event["tool"] == "governed_llm.review_contract_retry" for event in events
+    )
+
+
+@pytest.mark.parametrize(
+    "wrapped",
+    [
+        {"item": []},
+        {"item": ["spring"] * 5},
+        {"item": ["spring", "spring"]},
+        {"item": ["Spring"]},
+        {"item": ["monsoon"]},
+        {"item": [1]},
+        {"item": "spring"},
+        {"item": ["spring"], "unexpected": True},
+    ],
+)
+def test_farm_seasons_wrapper_normalizer_rejects_unsafe_shapes(
+    wrapped: object,
+) -> None:
+    assert DFHackGovernedLLMAgent._wrapped_farm_seasons(wrapped) is None
+
+
+def test_farm_seasons_wrapper_normalizer_is_minimax_only_and_non_mutating() -> None:
+    payload = {
+        "type": "FARM",
+        "params": {
+            "building_id": 19,
+            "crop": "MUSHROOM_HELMET_PLUMP",
+            "seasons": {"item": ["spring", "summer"]},
+        },
+    }
+    other_provider = _agent(model_override="openai/gpt-5.5")
+
+    assert other_provider._normalize_minimax_farm_seasons_wrapper(payload) is payload
+    assert payload["params"]["seasons"] == {"item": ["spring", "summer"]}
+    assert other_provider.pop_tool_events() == []
+
+    minimax = _agent(model_override="minimax/minimax-m3")
+    normalized = minimax._normalize_minimax_farm_seasons_wrapper(payload)
+
+    assert normalized is not payload
+    assert normalized["params"] is not payload["params"]
+    assert normalized["params"]["seasons"] == ["spring", "summer"]
+    assert payload["params"]["seasons"] == {"item": ["spring", "summer"]}
+
+
+@pytest.mark.parametrize(
+    "params",
+    [
+        {
+            "building_id": 19,
+            "crop": "MUSHROOM_HELMET_PLUMP",
+            "seasons": ["spring", "summer"],
+        },
+        {"building_id": 19, "crop": "MUSHROOM_HELMET_PLUMP"},
+        {
+            "building_id": 19,
+            "crop": "MUSHROOM_HELMET_PLUMP",
+            "seasons": {"item": ["spring"], "unexpected": True},
+        },
+    ],
+)
+def test_minimax_farm_seasons_wrapper_normalizer_leaves_other_shapes_unchanged(
+    params: dict[str, Any],
+) -> None:
+    payload = {"type": "FARM", "params": params}
+    agent = _agent(model_override="minimax/minimax-m3")
+
+    assert agent._normalize_minimax_farm_seasons_wrapper(payload) is payload
+    assert agent.pop_tool_events() == []
 
 
 def test_complete_plan_review_requires_observed_local_objective_transition() -> None:
@@ -1468,15 +1636,22 @@ def test_review_contract_correction_reports_all_attempt7_style_errors() -> None:
     assert action["last_action_review"]["retry_same_action"] is True
     correction = agent._client.chat.completions.requests[1]["messages"][-1]["content"]
     assert "last_action_review.verdict does not match" in correction
-    assert "last_action_review.retry_same_action must match" in correction
+    assert "last_action_review.retry_same_action must match" not in correction
     assert "plan_review.objective is required" in correction
     events = agent.pop_tool_events()
     retry = next(event for event in events if event["tool"] == "governed_llm.review_contract_retry")
-    assert len(retry["output"]["errors"]) == 3
+    assert len(retry["output"]["errors"]) == 2
+    derivation = next(
+        event
+        for event in events
+        if event["tool"] == "governed_llm.retry_same_action_derived"
+    )
+    assert derivation["input"]["submitted"] is False
+    assert derivation["output"] == {"derived": True, "disagreement": True}
     assert not any(event["tool"] == "governed_llm.fallback_wait" for event in events)
 
 
-def test_review_contract_recomputes_retry_flag_after_corrected_action_changes() -> None:
+def test_review_contract_derives_repeated_action_without_correction() -> None:
     repeated_action = {
         "type": "DIG",
         "params": {"area": [50, 35, 0], "size": [5, 5, 1]},
@@ -1490,10 +1665,47 @@ def test_review_contract_recomputes_retry_flag_after_corrected_action_changes() 
         previous_action=repeated_action,
     )
     invalid = _reviewed_action_payload(control=control)
-    corrected = _reviewed_action_payload(control=control)
-    corrected["type"] = "WAIT"
-    corrected["params"] = {}
-    agent = _agent([_submit_action_response(invalid), _submit_action_response(corrected)])
+    agent = _agent([_submit_action_response(invalid)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["type"] == "DIG"
+    assert action["last_action_review"]["retry_same_action"] is True
+    assert len(agent._client.chat.completions.requests) == 1
+    events = agent.pop_tool_events()
+    derivation = next(
+        event
+        for event in events
+        if event["tool"] == "governed_llm.retry_same_action_derived"
+    )
+    assert derivation["input"]["submitted"] is False
+    assert derivation["output"] == {"derived": True, "disagreement": True}
+    assert not any(
+        event["tool"] == "governed_llm.review_contract_retry" for event in events
+    )
+
+
+def test_review_contract_derives_changed_action_without_correction() -> None:
+    repeated_action = {
+        "type": "DIG",
+        "params": {"area": [50, 35, 0], "size": [5, 5, 1]},
+    }
+    control = _plan_control(
+        review_due=False,
+        request_id="17:none",
+        prior_objective="Build durable shelter.",
+        previous_step=16,
+        previous_verdict="progressed",
+        previous_action=repeated_action,
+    )
+    payload = _reviewed_action_payload(control=control)
+    payload["type"] = "WAIT"
+    payload["params"] = {}
+    payload["last_action_review"]["retry_same_action"] = True
+    agent = _agent([_submit_action_response(payload)])
 
     action = agent.decide(
         _review_observation(control),
@@ -1502,8 +1714,43 @@ def test_review_contract_recomputes_retry_flag_after_corrected_action_changes() 
 
     assert action["type"] == "WAIT"
     assert action["last_action_review"]["retry_same_action"] is False
-    correction = agent._client.chat.completions.requests[1]["messages"][-1]["content"]
-    assert "expected true" in correction
+    events = agent.pop_tool_events()
+    derivation = next(
+        event
+        for event in events
+        if event["tool"] == "governed_llm.retry_same_action_derived"
+    )
+    assert derivation["input"]["submitted"] is True
+    assert derivation["output"] == {"derived": False, "disagreement": True}
+    assert not any(
+        event["tool"] == "governed_llm.review_contract_retry" for event in events
+    )
+
+
+@pytest.mark.parametrize("submitted", [True, "yes", 1, None])
+def test_review_contract_derives_initial_retry_flag_without_correction(
+    submitted: object,
+) -> None:
+    control = _plan_control()
+    payload = _reviewed_action_payload(control=control)
+    payload["last_action_review"]["retry_same_action"] = submitted
+    agent = _agent([_submit_action_response(payload)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["last_action_review"]["retry_same_action"] is False
+    assert len(agent._client.chat.completions.requests) == 1
+    events = agent.pop_tool_events()
+    derivation = next(
+        event
+        for event in events
+        if event["tool"] == "governed_llm.retry_same_action_derived"
+    )
+    assert derivation["input"]["submitted"] == submitted
+    assert derivation["output"] == {"derived": False, "disagreement": True}
 
 
 def test_review_contract_combines_action_parse_and_review_errors() -> None:
@@ -1549,6 +1796,8 @@ def test_review_contract_fingerprint_ignores_invalid_nonexecution_metadata() -> 
     invalid["last_action_review"]["retry_same_action"] = False
     valid = _reviewed_action_payload(control=control)
     valid["last_action_review"]["retry_same_action"] = True
+    valid["type"] = "WAIT"
+    valid["params"] = {}
     agent = _agent([_submit_action_response(invalid), _submit_action_response(valid)])
 
     action = agent.decide(
@@ -1556,11 +1805,19 @@ def test_review_contract_fingerprint_ignores_invalid_nonexecution_metadata() -> 
         {"agent_plan_control": control},
     )
 
-    assert action["last_action_review"]["retry_same_action"] is True
+    assert action["type"] == "WAIT"
+    assert action["last_action_review"]["retry_same_action"] is False
     correction = agent._client.chat.completions.requests[1]["messages"][-1]["content"]
     assert "invalid action payload" in correction
     assert "intent is required" in correction
-    assert "last_action_review.retry_same_action must match" in correction
+    assert "last_action_review.retry_same_action must match" not in correction
+    derivations = [
+        event
+        for event in agent.pop_tool_events()
+        if event["tool"] == "governed_llm.retry_same_action_derived"
+    ]
+    assert [event["output"]["derived"] for event in derivations] == [True, False]
+    assert all(event["output"]["disagreement"] is True for event in derivations)
 
 
 def test_review_contract_combines_illegal_type_and_review_errors() -> None:
@@ -1657,7 +1914,7 @@ def test_review_contract_requires_last_action_evidence_to_cite_its_outcome() -> 
     )
 
 
-def test_review_contract_binds_retry_flag_to_normalized_action() -> None:
+def test_review_contract_injects_missing_retry_flag_from_normalized_action() -> None:
     repeated_action = {
         "type": "DIG",
         "params": {"area": [50, 35, 0], "size": [5, 5, 1]},
@@ -1670,10 +1927,9 @@ def test_review_contract_binds_retry_flag_to_normalized_action() -> None:
         previous_verdict="rejected",
         previous_action=repeated_action,
     )
-    invalid = _reviewed_action_payload(control=control)
-    valid = _reviewed_action_payload(control=control)
-    valid["last_action_review"]["retry_same_action"] = True
-    agent = _agent([_submit_action_response(invalid), _submit_action_response(valid)])
+    payload = _reviewed_action_payload(control=control)
+    del payload["last_action_review"]["retry_same_action"]
+    agent = _agent([_submit_action_response(payload)])
 
     action = agent.decide(
         _review_observation(control),
@@ -1682,8 +1938,16 @@ def test_review_contract_binds_retry_flag_to_normalized_action() -> None:
 
     assert action["last_action_review"]["retry_same_action"] is True
     events = agent.pop_tool_events()
-    retry = next(event for event in events if event["tool"] == "governed_llm.review_contract_retry")
-    assert "retry_same_action must match" in retry["output"]["error"]
+    derivation = next(
+        event
+        for event in events
+        if event["tool"] == "governed_llm.retry_same_action_derived"
+    )
+    assert derivation["input"]["submitted_present"] is False
+    assert derivation["output"] == {"derived": True, "disagreement": False}
+    assert not any(
+        event["tool"] == "governed_llm.review_contract_retry" for event in events
+    )
 
 
 def test_review_contract_fails_before_gameplay_after_bad_correction() -> None:
@@ -1755,6 +2019,205 @@ def test_review_control_retries_transient_provider_failure_without_gameplay() ->
         if event["tool"] == "openrouter.chat.completions.create"
     ]
     assert transport_events[0]["output"]["retrying"] is True
+
+
+def test_review_control_retries_empty_choices_inside_transport_budget(monkeypatch) -> None:
+    control = _plan_control()
+    payload = _reviewed_action_payload(control=control)
+    empty_response = {
+        "id": "gen-empty",
+        "model": "openai/gpt-5.6-sol",
+        "choices": [],
+        "usage": {
+            "prompt_tokens": 10,
+            "completion_tokens": 0,
+            "total_tokens": 10,
+        },
+    }
+    agent = _agent(
+        [empty_response, _submit_action_response(payload)],
+        max_attempts=2,
+        model_override="openai/gpt-5.6-sol",
+    )
+    monkeypatch.setattr("fort_gym.bench.agent.governed_llm.time.sleep", lambda _: None)
+    monkeypatch.setattr(
+        agent,
+        "_generation_metadata",
+        lambda generation_id: {"status": "unavailable", "id": generation_id},
+    )
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["type"] == "DIG"
+    assert len(agent._client.chat.completions.requests) == 2
+    assert not any(
+        "Your most recent submit_action was rejected" in str(message.get("content"))
+        for message in agent._client.chat.completions.requests[1]["messages"]
+    )
+    events = agent.pop_tool_events()
+    telemetry = [
+        event
+        for event in events
+        if event["tool"] == "openrouter.chat.completions.create"
+    ]
+    assert len(telemetry) == 2
+    assert telemetry[0]["output"]["choice_count"] == 0
+    provider_retry = next(
+        event
+        for event in events
+        if event["tool"] == "governed_llm.provider_response_retry"
+    )
+    assert provider_retry["output"]["reason"] == "empty_choices"
+    assert provider_retry["output"]["retrying"] is True
+    assert not any(event["tool"] == "governed_llm.review_contract_retry" for event in events)
+
+
+def test_review_control_exhausts_empty_choices_as_typed_provider_error(monkeypatch) -> None:
+    control = _plan_control()
+    long_provider_error = "provider unavailable\n" + ("x" * 400)
+    responses = [
+        {
+            "id": f"gen-empty-{attempt}",
+            "model": "openai/gpt-5.6-sol",
+            "choices": [],
+            "error": {"message": long_provider_error},
+            "usage": {
+                "prompt_tokens": 10,
+                "completion_tokens": 0,
+                "total_tokens": 10,
+            },
+        }
+        for attempt in (1, 2)
+    ]
+    agent = _agent(
+        responses,
+        max_attempts=2,
+        model_override="openai/gpt-5.6-sol",
+    )
+    monkeypatch.setattr("fort_gym.bench.agent.governed_llm.time.sleep", lambda _: None)
+    monkeypatch.setattr(
+        agent,
+        "_generation_metadata",
+        lambda generation_id: {"status": "unavailable", "id": generation_id},
+    )
+
+    with pytest.raises(GovernedProviderResponseError) as exc_info:
+        agent.decide(
+            _review_observation(control),
+            {"agent_plan_control": control},
+        )
+
+    assert exc_info.value.terminal_code == "provider_invalid_response"
+    assert exc_info.value.terminal_details["reason"] == "empty_choices"
+    assert exc_info.value.terminal_details["attempts"] == 2
+    events = agent.pop_tool_events()
+    telemetry = [
+        event
+        for event in events
+        if event["tool"] == "openrouter.chat.completions.create"
+    ]
+    assert len(telemetry) == 2
+    assert all(event["output"]["choice_count"] == 0 for event in telemetry)
+    assert all("\n" not in event["output"]["provider_error"] for event in telemetry)
+    assert all(len(event["output"]["provider_error"]) <= 240 for event in telemetry)
+    assert sum(
+        event["tool"] == "governed_llm.provider_response_retry" for event in events
+    ) == 2
+    assert not any(event["tool"] == "governed_llm.review_contract_retry" for event in events)
+
+
+def test_mapping_shaped_provider_response_extracts_submit_action() -> None:
+    response = {
+        "id": "gen-mapping",
+        "model": "openai/gpt-5.5",
+        "choices": [
+            {
+                "finish_reason": "tool_calls",
+                "message": {
+                    "content": None,
+                    "tool_calls": [
+                        {
+                            "id": "call_submit",
+                            "function": {
+                                "name": "submit_action",
+                                "arguments": json.dumps(
+                                    {
+                                        "type": "WAIT",
+                                        "params": {},
+                                        "intent": "observe real simulation",
+                                        "advance_ticks": 1000,
+                                    }
+                                ),
+                            },
+                        }
+                    ],
+                },
+            }
+        ],
+        "usage": {
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "total_tokens": 15,
+        },
+    }
+    agent = _agent([response])
+
+    action = agent.decide("obs", {})
+
+    assert action["type"] == "WAIT"
+    events = agent.pop_tool_events()
+    telemetry = [
+        event
+        for event in events
+        if event["tool"] == "openrouter.chat.completions.create"
+    ]
+    assert len(telemetry) == 1
+    assert telemetry[0]["output"]["choice_count"] == 1
+    assert telemetry[0]["output"]["finish_reasons"] == ["tool_calls"]
+
+
+def test_valid_choice_without_action_still_uses_review_contract_correction() -> None:
+    control = _plan_control()
+    no_action_response = {
+        "choices": [
+            {
+                "finish_reason": "stop",
+                "message": {"content": None, "tool_calls": []},
+            }
+        ],
+        "usage": {
+            "prompt_tokens": 10,
+            "completion_tokens": 0,
+            "total_tokens": 10,
+        },
+    }
+    payload = _reviewed_action_payload(control=control)
+    agent = _agent([no_action_response, _submit_action_response(payload)])
+
+    action = agent.decide(
+        _review_observation(control),
+        {"agent_plan_control": control},
+    )
+
+    assert action["type"] == "DIG"
+    assert len(agent._client.chat.completions.requests) == 2
+    events = agent.pop_tool_events()
+    assert sum(
+        event["tool"] == "governed_llm.review_contract_retry" for event in events
+    ) == 1
+    assert not any(
+        event["tool"] == "governed_llm.provider_response_retry" for event in events
+    )
+    telemetry = [
+        event
+        for event in events
+        if event["tool"] == "openrouter.chat.completions.create"
+    ]
+    assert len(telemetry) == 2
+    assert telemetry[0]["output"]["choice_count"] == 1
 
 
 def test_review_control_retries_content_filter_without_contract_correction(monkeypatch) -> None:
@@ -2231,6 +2694,7 @@ def test_vision_variants_registered_in_all_gates() -> None:
         "dfhack-governed-llm-gpt55-vision",
         "dfhack-governed-llm-kimi-vision",
         "dfhack-governed-llm-minimax-vision",
+        "dfhack-governed-llm-minimax-canary",
     ):
         assert name in AGENT_FACTORIES
         assert name in GOVERNED_DFHACK_MODELS
@@ -2269,6 +2733,26 @@ def test_frontier_p1_variants_are_pinned_in_all_gates(monkeypatch) -> None:
     assert sol._reasoning_effort == "max"
     assert sol._prompt_cache == "automatic"
     assert sol._max_advance_ticks == 2500
+
+
+def test_minimax_canary_matches_full_run_budget_and_is_stateless(monkeypatch) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+    get_settings.cache_clear()  # type: ignore[attr-defined]
+    try:
+        canary = AGENT_FACTORIES["dfhack-governed-llm-minimax-canary"]()
+        sol = AGENT_FACTORIES["dfhack-governed-llm-gpt56-sol"]()
+    finally:
+        get_settings.cache_clear()  # type: ignore[attr-defined]
+
+    assert canary._model == "minimax/minimax-m3"
+    assert canary._vision is True
+    assert canary._memory_path is None
+    assert canary._memory.window_size == 0
+    assert canary._max_tokens == sol._max_tokens == 128000
+    assert canary._reasoning_effort == sol._reasoning_effort == "max"
+    assert canary._prompt_cache == sol._prompt_cache == "automatic"
+    assert canary._max_attempts == sol._max_attempts
+    assert canary._max_advance_ticks == sol._max_advance_ticks == 2500
 
 
 @pytest.mark.parametrize(

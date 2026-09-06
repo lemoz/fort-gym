@@ -1,0 +1,45 @@
+{
+  "schema_version": "fortgym.local-campaign-condition/v1",
+  "runner": "campaign-loop/v1",
+  "condition_id": "local-native-packed-comparison-v1",
+  "decision_profile": "campaign_action/v1",
+  "observation_profile": "campaign_state/v1",
+  "schema_attempts": 2,
+  "phase": "development",
+  "hypothesis": "A declared bounded-history prompt projection permits longer native campaigns while retaining current world facts, and allows three small local models to be compared under one common condition.",
+  "models": ["qwen2.5:7b-instruct", "llama3.1:8b-instruct-q4_K_M", "mistral:7b-instruct-v0.3-q4_K_M"],
+  "max_steps": 8,
+  "max_segments": 4,
+  "segment_time_budget_seconds": 600,
+  "ticks_per_step": 2000,
+  "max_advance_ticks": 2000,
+  "max_output_tokens": 1024,
+  "max_attempts": 1,
+  "max_dispatches": 16,
+  "max_request_bytes": 22000,
+  "max_total_tokens": 262144,
+  "max_cost_usd": 0,
+  "local_inference": {
+    "transport": "ollama-local/v1",
+    "server_version": "0.5.11",
+    "prompt_contract": "visible_action_contract/v1",
+    "prompt_packing": "bounded_history/v1",
+    "model_digests": {
+      "qwen2.5:7b-instruct": "845dbda0ea48ed749caafd9e6037047aa19acfcfd82e704d7ca97d631a0b697e",
+      "llama3.1:8b-instruct-q4_K_M": "46e0c10c039e019119339687c3c1757cc81b9da49709a3b3924863ba87ca666e",
+      "mistral:7b-instruct-v0.3-q4_K_M": "6577803aa9a036369e481d648a2baebb381ebc6e897f2bb9a766a2aa7bfbc1cf"
+    },
+    "context_tokens": 24576,
+    "timeout_seconds": 120,
+    "temperature": 0.2,
+    "seed": 73
+  },
+  "notes": [
+    "Use the same digest-bound native starting save, exact model manifests, code, observation/action interfaces and bounds for every model. No rankings from one short attempt.",
+    "The packed prompt preserves all current native fields, the exact latest result and model-authored persistent notes. It omits duplicate recent-memory text and older per-target action details, then keeps the largest newest history suffix fitting the unchanged request allowance. Omissions are explicit and full private traces/checkpoints remain retained.",
+    "Never truncate the current fortress snapshot to make a request fit. An irreducible oversize snapshot pauses before dispatch at the checkpointable boundary.",
+    "The larger per-segment decision count and token allowance distinguish this development condition from the earlier six-decision baseline. This is still not a year-two endurance condition.",
+    "No action or simulation advancement is scripted. Zero metered model API charges do not imply zero local hardware, electricity or existing-host costs.",
+    "Run models serially with one loaded model and one isolated native game at a time. Temporary processes require teardown; public model weights are reproducible project cache, not committed game evidence."
+  ]
+}

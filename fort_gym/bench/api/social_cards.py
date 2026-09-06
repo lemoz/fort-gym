@@ -30,6 +30,7 @@ _MODEL_LABELS = {
     "anthropic/claude-fable-5": "Fable",
     "dfhack-governed-llm-gpt56-sol": "Sol",
     "openai/gpt-5.6-sol": "Sol",
+    "dfhack-governed-llm-minimax-canary": "MiniMax M3 canary",
     "dfhack-governed-scripted": "Scripted baseline",
     "fake": "Mock agent",
 }

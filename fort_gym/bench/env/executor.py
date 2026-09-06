@@ -27,6 +27,7 @@ from .dfhack_client import DFHackClient, DFHackUnavailableError
 from .keystroke_exec import execute_keystroke_action
 from .mock_env import MockEnvironment
 from .state_reader import StateReader
+from .workshop_placement import STRICT_FLOOR, validate_policy
 
 _INTERACT_INTERFACE_KEYS = {
     "confirm": "SELECT",
@@ -60,10 +61,12 @@ class Executor:
         dfhack_client: Optional[DFHackClient] = None,
         *,
         allow_assisted_dig_completion: bool = True,
+        workshop_placement_policy: str = STRICT_FLOOR,
     ) -> None:
         self._mock_env = mock_env or MockEnvironment()
         self._dfhack_client = dfhack_client
         self._allow_assisted_dig_completion = allow_assisted_dig_completion
+        self._workshop_placement_policy = validate_policy(workshop_placement_policy)
 
     def apply(
         self,
@@ -289,7 +292,12 @@ class Executor:
                         "result": result,
                     }
                 if kind in {"CarpenterWorkshop", "Still"}:
-                    result = safe_build_workshop(kind, x, y, z)
+                    if self._workshop_placement_policy == STRICT_FLOOR:
+                        result = safe_build_workshop(kind, x, y, z)
+                    else:
+                        result = safe_build_workshop(
+                            kind, x, y, z, placement_policy=self._workshop_placement_policy
+                        )
                 else:
                     result = safe_place_furniture(kind, x, y, z)
                 return {

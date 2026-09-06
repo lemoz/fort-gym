@@ -1,0 +1,167 @@
+{
+  "schema_version": "fort-gym.environment-layer-m1a-feasibility/v1",
+  "created_at": "2026-08-16",
+  "status": "private_feasibility_complete_conditional_go",
+  "decision": "CONDITIONAL GO to M1b after Chris review; canonical startup reliability and source reproducibility remain open",
+  "fort_gym": {
+    "branch": "codex/environment-layer-m0a-m1a",
+    "base_head": "236d3187c548b9bc03c4c99829d479d381a008d5",
+    "reviewed_tip": "ccfac2c9314662e675dcd1dd685f167c8158e530"
+  },
+  "m0a_dependency": {
+    "record": "experiments/evidence/environment_layer_m0a_preservation_20260816.json",
+    "record_sha256": "9d59dd26794fa062556a6a4577e48a7e45441fe44e07988200c37c4a3e5df7eb",
+    "raw_manifest_sha256": "797571ff2a2467816b51650e5878ead1e9597e71765b6bdf45e19c24db5e0fd6"
+  },
+  "host": {
+    "project": "scrolller-307201",
+    "zone": "us-central1-a",
+    "machine_type": "e2-standard-16",
+    "cpu_platform": "AMD Rome",
+    "vcpu": 16,
+    "physical_core_pairs": 8,
+    "memory_mib": 64298,
+    "boot_disk": "50GB pd-balanced auto-delete",
+    "source_image": "ubuntu-2204-jammy-v20260731",
+    "service_accounts": 0,
+    "network_tags": 0,
+    "max_run_duration_seconds": 28800,
+    "instance_termination_action": "DELETE",
+    "spot_quota": {
+      "E2_CPUS": 72,
+      "PREEMPTIBLE_CPUS": 0,
+      "decision": "standard provisioning used without a quota request"
+    }
+  },
+  "image": {
+    "runtime_reported_image_id": "sha256:d6403fc04f2231a75c2a4ca4379b393fddd08d9034df07dd4ff9a8d46a15068c",
+    "oci_manifest_digest": "sha256:d6403fc04f2231a75c2a4ca4379b393fddd08d9034df07dd4ff9a8d46a15068c",
+    "oci_config_digest": "sha256:d90811a39d5edd7c0a61d9adbbe4251cbfc345df52f5fa48ba174ce8992b8a86",
+    "base": "ubuntu@sha256:3b06811b2afd352be909dd088a004166d665dc76d38b13eada33522a9d915c6f",
+    "df_version": "0.47.05",
+    "df_archive_sha256": "ac74a6dbb7d7d9621f430405080322ab50c35f6632352ff2ea923f6dc5affca3",
+    "dfhack_version": "0.47.05-r8",
+    "dfhack_archive_sha256": "2eab7ca38a25eb15e6b2f1005a44968d58fae53f618ea9e4a31e1cd74d31926f",
+    "repository_patch_applied": false,
+    "classification": "private stock-prebuilt archive-seeded feasibility image; clean source build not demonstrated",
+    "compressed_oci_archive_sha256": "87d66d26553cb271af1b784405d63ea6b95f3bbe20e9429f05e6412133d1f43a",
+    "uncompressed_oci_archive_sha256": "39e4cfce8cc65ca4f4a761fd732cc5d3c2faa8d237b85992dae6da1076f8e756",
+    "identity_note": "Docker 29.1.3 reported the OCI manifest digest as Id and RepoDigest. The retained OCI archive index points to that same manifest; the manifest separately points to the config digest. Archive-byte digests bind the saved serialization and are not image-object digests."
+  },
+  "runtime": {
+    "python": "3.10.12",
+    "python_exception": "pyproject requires >=3.11; feasibility install used --ignore-requires-python",
+    "docker": "29.1.3",
+    "seed_tree_sha256": "49ba1de07b62e7afda93b42059b6c566598bb0f4c83d11ae1dfdb78b54cd9ec0",
+    "seed_world_sha256": "070b10a3f2403e72368290eea0d09396fe06f7912b9babdea7ad26eb0498a87d",
+    "provider_environment": "env -i; provider credentials/routes rejected",
+    "agent": "dfhack-governed-scripted",
+    "memory_enabled": false
+  },
+  "two_fort_isolation": {
+    "status": "pass",
+    "before": [
+      {"fort": 1, "port": 58001, "nonce": "isolation-r01", "year": 30, "tick": 16801, "population": 7},
+      {"fort": 2, "port": 58002, "nonce": "isolation-r02", "year": 30, "tick": 16801, "population": 7}
+    ],
+    "after_ten_steps_on_fort_1_only": [
+      {"fort": 1, "port": 58001, "nonce": "isolation-r01", "year": 30, "tick": 26879, "population": 7},
+      {"fort": 2, "port": 58002, "nonce": "isolation-r02", "year": 30, "tick": 16801, "population": 7}
+    ],
+    "listener": "loopback-only",
+    "external_connection": "timed out"
+  },
+  "sizing": {
+    "n1_baseline_ticks_per_second": 98.21541700373291,
+    "gate_ticks_per_second": 89.1,
+    "cohorts": [
+      {"n": 1, "accepted": 1, "min": 98.21541700373291, "mean": 98.21541700373291, "max": 98.21541700373291},
+      {"n": 2, "accepted": 2, "min": 98.26860084230229, "mean": 98.28145418703534, "max": 98.2943075317684},
+      {"n": 4, "accepted": 4, "min": 98.22055040149684, "mean": 98.24918636820078, "max": 98.26284799187572},
+      {"n": 8, "accepted": 8, "min": 98.16363530030996, "mean": 98.24375062046114, "max": 98.27238052501683, "replacement": true}
+    ],
+    "n8_worst_degradation_from_n1_percent": 0.0527225816502704,
+    "n8_gate_result": "pass"
+  },
+  "resources": {
+    "peak_container_cpu_percent": 86.8,
+    "peak_df_process_cpu_percent": 84.5,
+    "peak_harness_process_cpu_percent": 71.0,
+    "peak_container_memory_mib": 667.4,
+    "peak_df_process_rss_mib": 706.86328125,
+    "peak_harness_process_rss_mib": 57.2578125,
+    "peak_container_writable_layer_bytes": 10469376,
+    "final_host_available_memory_mib": 62938,
+    "final_host_swap_mib": 0,
+    "final_host_disk_use_percent": 11,
+    "note": "CPU values are peak observed snapshots/lifetime averages, not integrated CPU seconds; Docker memory and process RSS use different accounting."
+  },
+  "startup_attempts": {
+    "successful_container_starts_with_durable_run_summaries": 27,
+    "infrastructure_aborts_before_harness": 2,
+    "failures": [
+      {"batch": "m1a-20260816-04", "attempt": "matrix-n8-r06", "classification": "DFHack ready but no RPC listener; first N8 attempt aborted before harness launch"},
+      {"batch": "m1a-20260816-06", "attempt": "e0-a10-r01", "exit_code": 70, "oom_killed": false, "classification": "DFHack ready but no RPC listener after 120 seconds"}
+    ],
+    "result": "cold-start reliability open; failures retained and not erased by replacements"
+  },
+  "e0_short_horizon": {
+    "primary_planned": 10,
+    "primary_accepted": 9,
+    "primary_infrastructure_aborts": 1,
+    "post_failure_engineering_replacements": 1,
+    "valid_engineering_trajectories_with_replacement": 10,
+    "primary_ticks_per_second": {"mean": 98.24347770741281, "sample_sd": 0.024284202494883826, "min": 98.19449462449589, "max": 98.26899808750635},
+    "engineering_ticks_per_second_with_replacement": {"mean": 98.24165673336807, "sample_sd": 0.0236084144814383, "min": 98.19449462449589, "max": 98.26899808750635},
+    "engineering_ticks_advanced_with_replacement": {"mean": 10065.3, "sample_sd": 6.09280085200741, "min": 10056, "max": 10073},
+    "unique_seed_tree_hashes": 1,
+    "unique_seed_world_hashes": 1,
+    "unique_step_zero_state_hashes": 1,
+    "unique_action_sequence_hashes": 1,
+    "unique_terminal_state_hashes": 10,
+    "unique_normalized_trace_hashes": 10,
+    "first_divergence": "step 0 after the first action; crew/fort state and sometimes tick overshoot",
+    "provider_calls": 0,
+    "provider_cost_usd": 0,
+    "classification": "short-horizon conditional replay dispersion only; not general world variance, long-horizon E0-R, or E1 power evidence"
+  },
+  "cost": {
+    "maximum_eight_hour_estimate_before_egress_usd": 4.38352528,
+    "observed_lifecycle_hours": 1.3355,
+    "observed_resource_estimate_before_egress_usd": 0.7318,
+    "classification": "estimate, not invoice"
+  },
+  "cleanup": {
+    "verified_at": "2026-08-16T14:35:03Z",
+    "m1a_containers_before_vm_delete": 0,
+    "m1a_test_listeners_before_vm_delete": 0,
+    "instance_name_matches_after_delete": 0,
+    "disk_name_matches_after_delete": 0,
+    "reserved_address_matches_after_delete": 0,
+    "result": "pass"
+  },
+  "private_packet": {
+    "root": "/Users/cdossman/Documents/Open Source Projects/fort-gym-m1a-feasibility-20260816",
+    "readme_sha256": "d99f5d721615d93c72ac76572cae7cf685956ca667484e3c032f9b4dc1bf1f77",
+    "raw_file_count": 665,
+    "raw_manifest_sha256": "9a2d8d3f6eec8b3118c50f53a4e01379eb8ea95ec7ea5768221889628c1396a5",
+    "evidence_summary_sha256": "9e5106faee8c90f1e61d09fdd603676c41d8c0701c3d90666fe187a95d7d3f66",
+    "instance_lifecycle_sha256": "766b2c03bdb3d3f383042799569fd8b6bb6e59150289d00847932759ad972e77"
+  },
+  "authorization_boundary": {
+    "paid_models_run": false,
+    "production_mutated": false,
+    "published": false,
+    "deployed": false,
+    "pushed": false,
+    "tags_created": false,
+    "m1b_started": false
+  },
+  "m1b_conditions": [
+    "remove the Python 3.10 compatibility waiver and reproduce on Python 3.11",
+    "root-cause or safely supervise the intermittent no-RPC startup with explicit retry and terminal evidence",
+    "decide clean source rebuild versus archive/binary-seeded release identity",
+    "run duplicate-port, kill, OOM, ENOSPC, Docker restart/orphan, and cleanup fault gates",
+    "complete the longer frozen E0-R contract before power analysis or public research claims"
+  ]
+}

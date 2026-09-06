@@ -1,5 +1,56 @@
 # WDSLL — What Does Success Look Like
 
+## Current direction: year-two campaigns (September 5, 2026)
+
+The owner-approved operating goal is now [Year-Two Autonomous Play and
+Cross-Model Evaluation](YEAR_TWO_CAMPAIGNS.md): persistent, model-swappable
+campaigns, a functioning fortress after one full elapsed game year, continued
+play beyond that checkpoint, website delivery, and reproducible remote-repository
+delivery. The historical gate ladder below remains unchanged as evidence, not
+as a prerequisite ladder for the new exploratory campaign mode. Full M1b
+acceptance is complete; see the [sealed GO decision](decisions/2026-09-05-full-m1b-acceptance.md).
+
+The exploratory campaign condition now has a separate minimal action/observation
+profile: optional model-authored plans, no mandatory benchmark review or scripted
+strategy, the existing native controls, and persistent usage/checkpoints. See
+[implementation and verification boundaries](YEAR_TWO_CAMPAIGNS.md#exploratory-agent-profile).
+This is implementation progress, not a first-year gameplay result. The website
+and remote delivery requirements remain part of the active goal.
+
+Campaign website tracking now has a separate public-safe active/recorded feed and
+profile inspector on the integration branch. Its producer follows committed native
+boundaries and cumulative usage across continuations; stale reporting and unknown
+teardown are explicit. See [feed setup and proof limits](YEAR_TWO_CAMPAIGNS.md#active-and-recorded-campaign-website-feed).
+This is not yet a deployed live feed or a cross-model capability result.
+
+Remote delivery now has a separately merged website milestone in
+[PR #126](https://github.com/lemoz/fort-gym/pull/126), main commit `97e4533`:
+read-only campaign tracking and ten recorded native attempts, with 1,064 local
+tests passed and five skipped, plus passing PR and post-merge main CI. The
+VM/gameplay implementation remains on draft PR #125. No production deployment
+is claimed. See
+[Campaign status](CAMPAIGN_STATUS.md) for the active experiment and exact proof
+boundaries; completion still requires the actual gameplay and live website.
+
+The next two focused deliveries are also merged: native drink-unit observation
+correction [PR #127](https://github.com/lemoz/fort-gym/pull/127), and audited
+long-v2 gameplay result/website row [PR #128](https://github.com/lemoz/fort-gym/pull/128).
+Main is `3a52860e7b14bf9e3ebd6c268a59f7865f60a651`, with eleven terminal native
+records. The latest run completed a workshop and manufactured five beds over
+53,500 ticks, then stopped before an action when its response exhausted the output
+allowance. All 45 responses/442,693 tokens and temporary-process teardown are
+verified. Cursor 40 is the latest periodic checkpoint, not the final cursor 42;
+automatic recovery remains unsafe without reconciliation. Historical UI food/drink
+counts are preserved and explicitly caveated. This is source delivery and native
+experimental progress, not a production deploy, sustainable fortress or year-two result.
+
+The integration candidate adds an [accounted output-limit recovery protocol](CAMPAIGN_OUTPUT_LIMIT_RECOVERY.md):
+v3 checkpoints can settle a verified no-command response, even before the first
+action, without resetting usage or replaying a move. The controller and public
+website status distinguish this pause from failed native execution. This is
+synthetic regression coverage pending real native acceptance, not permission to
+rewrite or resume the old long-v2 tail. The active goal and no-deploy boundary remain.
+
 ## Success statement (the one metric)
 
 **An LLM policy, issuing only legal governed actions, takes the fixed embark
@@ -160,6 +211,21 @@ agent has never seen, reaching G4-level structure. This is the gate that
 separates "solved one map" from "plays Dwarf Fortress."
 
 ### G7 — The fort lives: a self-sufficient year (RATIFIED 2026-07-09)
+
+> **2026-07-19 — FROZEN G7-v3 HISTORY. This section records the frozen scalar
+> G7-v3 gate (the 450-step / one-year scalar-survival protocol) exactly as
+> ratified and attempted. G7-v3 is closed to new launches; G7-v4 was REJECTED
+> as non-launchable; the current protocol is G7-v5, a non-scalar owned-evidence
+> outcome vector (exact owned farm/Still/brew, authoritatively classified
+> preventable deaths, three owned accessible rooms, three owned beds) that is
+> calibration-only; its live DFHack measurement calibration PASSED on 2026-07-21
+> (bundle sha256 `f41f1a80…`, see the 2026-07-21 corrections-log entry), and the
+> `P1_MEASUREMENT_CALIBRATION_COMPLETE` unlock remains pending Chris's reviewer
+> designation. The 27 attempt records
+> and criteria below are preserved verbatim as history — nothing here is
+> deleted, rescored, or re-adjudicated, and no new attempt will be launched
+> under G7-v3.**
+
 Status: RATIFIED at the 2026-07-09 operator window and still unpassed after 27
 numbered attempts. The log below separates infrastructure aborts, invalidated
 evidence, and policy diagnostics; none is a full-year pass. The gameplay
@@ -359,8 +425,14 @@ gate. Each entry states what changed and the evidence that forced it.
   family after ~10 text attempts; Kimi K2.7-code (`91928e29`, 69.01) also
   closed **1 ring** but never started its economy; MiniMax-M3 (`83ff5d61`,
   63.95, valid calls) managed neither — the control showing vision doesn't
-  create capability. Two of three vision arms achieved what one text run in
-  ~15 ever did. G4 still unpassed (nobody has economy + two rooms at once);
+  create capability. **2026-07-19 relabel: MiniMax-M3 is the PRIVATE HARNESS
+  LANE, not a Fable/gpt56-sol substitute arm.** Its recorded vision-experiment
+  result stands as history, but MiniMax-M3 is a separate private-harness lane
+  and is not part of the declared two-arm Fable/gpt56-sol comparison surface.
+  Its remaining failure in that lane: normal tool-call responses lacked a
+  usable `submit_action` payload. Two of three vision arms achieved what one
+  text run in ~15 ever did. G4 still unpassed (nobody has economy + two rooms
+  at once);
   the strongest untested candidate is GPT-5.5-vision — best text economy on
   record, now with eyes.
 
@@ -2212,8 +2284,99 @@ gate. Each entry states what changed and the evidence that forced it.
   conflated. Merged PR #109 supplies raw farm contained-item evidence, PR #110
   supplies governed objective completion and hard-stall transitions, and PR
   #111 supplies own-group G7 citizen/consumption/death evidence with fail-closed
-  predicate errors. Deploy that reviewed contract with the labor-eligibility
-  correction, then launch fresh Attempt 28. No Attempt 28 exists yet.
+  predicate errors. **2026-07-19 — the fresh Attempt 28 relaunch is superseded
+  and will not be launched under G7-v3:** G7-v3 is frozen history (see the gate
+  header note) and G7-v4 was rejected as non-launchable, so the next paid run
+  is a NEW G7-v5 protocol decision requiring explicit operator approval, not a
+  G7-v3 relaunch. No Attempt 28 exists yet, and none will under the frozen
+  scalar gate.
+
+- **2026-07-19 UTC — Fable-vs-gpt56-sol comparison: COMPLETED under frozen
+  G7-v3; DESCRIPTIVE finding only, not a publishable comparable pair.** The
+  two-arm comparison already ran under the frozen G7-v3 protocol on
+  `fort-eval-easy-p1-g7-v3`, 200 steps per arm. `dfhack-governed-llm-fable5`
+  ran as run `a55b2c2cbef54825bc7784bdb8e51855` ($56.14648677): public-ELIGIBLE,
+  0 deaths, FAILED G7-v3. The gpt56-sol model arm
+  (`dfhack-governed-llm-gpt56-sol`) ran as run
+  `cb997beed6d94a3680f2637556cc529d` ($36.54745875): INELIGIBLE — the frozen
+  cached-token requirement was unsatisfied — with 10 deaths, FAILED G7-v3.
+  Because one arm was ineligible, this is NOT a publishable comparable pair;
+  the finding is descriptive only, verbatim: "Fable was safer and more
+  risk-aware; the gpt56-sol model arm was more capable and productive but
+  collapse-prone." Both results stand as frozen G7-v3 history; neither is a
+  G7-v5 result, and neither arm's verdict is re-adjudicated here. (The
+  gpt56-sol model arm is a model arm, not the Sol/Sol Ultra/Terra/Luna
+  code-review agents referenced elsewhere in this document.)
+
+- **2026-07-21 UTC — G7-v5 provider-free MEASUREMENT CALIBRATION: 3 scenarios
+  terminal. This is NOT a G7 gate attempt.** It measures the instrument, not a
+  policy. It therefore neither advances nor resets the frozen 27-attempt G7-v3
+  record, produces no Attempt 28, and establishes no model claim. Reported below
+  in the standard reporting format, with fields that do not exist for a
+  provider-free calibration marked as such rather than filled in.
+
+  - **Public URL:** none. All three runs are private and
+    `public_eligibility=ineligible` (calibration); nothing was published to
+    `fortgym.live`.
+  - **Run ids:** `calib-g7v5-owned-20260721a`, `calib-g7v5-death-20260721a`,
+    `calib-g7v5-dropout-20260721a`. Model `dfhack-governed-scripted` (no
+    provider, no LLM), cost **$0.00** total.
+  - **Commit:** `a8de39d03da48da32110776bf84ddfcbcb2ccefc`.
+    manifest_semantic_sha256 `b85957669eb02668f965f103e42b1feaf88cdad7ecc8e45fc5eb2b78d8269cc6`;
+    measurement_code_sha256 `261a1fba89ce1a320a3248a37cbee26b37971ef6c2240705d6bdce51088c9b4c`;
+    remote_proto_runtime_sha256 `9d7949fe3f7ef3497d145dff6cc921c13a3cf088cd1ff68ef58b5047a013570f`.
+    Evidence bundle
+    `experiments/evidence/fort_eval_easy_p1_g7_v5_live_calibration.json`, sha256
+    `f41f1a80b63cdc0e323cf57dc914a28fc613cf183905e29828ede298baf59598`; 33/33
+    required regression node IDs green. All three runs share one
+    `seed_attestation` (sha
+    `9c923f9e2ee8ce25344fc88d66f54f2c0262d9f62317c1b44946cd73f6ee01e8`).
+  - **Score / rubric score + blockers:** not applicable. The scalar
+    action/outcome rubric is retired under G7-v5 and score-v5 is diagnostic
+    only; no scalar verdict was produced or is claimed here.
+  - **screen_text count / gameplay_proof ok-count per step:** not asserted in
+    this entry as evidence for anything below. The committed summaries do carry
+    these recorder fields (the scripted control runs on the same governed
+    surface, so frames and per-step proof objects are recorded as usual); they
+    are omitted here only because a provider-free scripted control makes no
+    policy claim for them to support — read them from the three
+    `*_summary.json` files in `experiments/evidence/` if needed.
+  - **What really changed in-game, per scenario:**
+    - `calib-g7v5-owned-20260721a` — 115 steps, gameplay **PASS**: 1 owned
+      operational farm (still 1), **65 governed brew units**, 3 rooms, 3 beds,
+      0 deaths, `owned_room_lower_bound_proven=true`.
+    - `calib-g7v5-death-20260721a` — 1 step, gameplay **FAIL by design**: the
+      bounded kill fixture `dfhack_bounded_friendly_bloodloss` fired once,
+      `deaths_in_run=1`, `death_causes_known=true`, and the neglect criterion
+      stayed **unknown BY DESIGN**.
+    - `calib-g7v5-dropout-20260721a` — 1 step, **unknown by design**: induced
+      sensor loss produced `owned_room_lower_bound_proven=false` and an unknown
+      rooms criterion, which was never coerced to fail.
+  - **Verdict across all three:** `task_verdict=unknown`,
+    `public_eligibility=ineligible`. The verdict fix (commit `557e5d6fb`) makes
+    `p1_task_verdict` return the validity-gated `g7.status`; this campaign is
+    its live confirmation, with `gameplay_outcome` staying visible throughout.
+  - **Why unknown is the honest answer:** the campaign was provider-free
+    (`usage.calls==0`), so `evidence_ok=False` and validity/provenance are
+    UNKNOWN **by design, not by weakening**. The result establishes measurement
+    fidelity only and makes **no** policy-capability claim. Nothing here was
+    softened to manufacture a pass — the Polymarket lesson in the reporting
+    format below is exactly the rule being obeyed.
+  - **Review and unlock:** independent review 2026-07-21 returned APPROVE on
+    scientific validity (3 advisories, 0 blocking) and APPROVE on unlock
+    semantics. **The unlock was NOT executed.**
+    `P1_MEASUREMENT_CALIBRATION_COMPLETE` is still `False`. It needs Chris to
+    designate the reviewer identity, then an `--approve` rebuild on the VM, then
+    the constant flip. A paid G7-v5 run remains separately gated on explicit
+    spend approval. See
+    `docs/decisions/2026-07-21-g7v5-calibration-independent-review.md`.
+  - **Superseded predecessor, recorded not hidden:** `calib-g7v5-owned-20260720a`
+    failed with brew 0 from input starvation (`brewable_plant_units=0` all run;
+    one late qty-1 brew order lost the eat-vs-brew race). Its artifacts remain
+    VM-only. The fix was the bounded, disclosed, calibration-only fixture
+    `hook/calibration_seed_brew_inputs.lua` plus standing brew orders and a
+    second brewer (plan edit `67b798b80`) — the fixture seeds brew INPUTS only,
+    never DRINK, and is not a legal Easy shortcut in any scored or paid run.
 
 ## Reporting format (every gate attempt)
 

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import os
 import shutil
 import subprocess
 import sys
@@ -12,7 +11,9 @@ from typing import Iterable
 
 import urllib.request
 
-DEFAULT_VERSION = os.environ.get("DFHACK_VERSION", "52.04-r1")
+from . import PROTO_VERSION
+
+DEFAULT_VERSION = PROTO_VERSION
 REPO_BASE = "https://raw.githubusercontent.com/DFHack/dfhack/{version}/"
 CORE_PROTOS = [
     "library/proto/CoreProtocol.proto",
@@ -60,7 +61,9 @@ def flatten_protos(proto_paths: Iterable[Path], target: Path) -> list[Path]:
     return flattened
 
 
-def run_protoc(sources_dir: Path, proto_paths: Iterable[Path], output_dir: Path) -> None:
+def run_protoc(
+    sources_dir: Path, proto_paths: Iterable[Path], output_dir: Path
+) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     (output_dir / "__init__.py").touch()
     args = [
@@ -75,6 +78,10 @@ def run_protoc(sources_dir: Path, proto_paths: Iterable[Path], output_dir: Path)
 
 
 def generate_bindings(version: str = DEFAULT_VERSION) -> Path:
+    if version != PROTO_VERSION:
+        raise ValueError(
+            f"DFHack protobuf version must remain pinned to {PROTO_VERSION}, got {version}"
+        )
     proto_root = Path(__file__).resolve().parent
     sources_dir = proto_root / "sources"
     sources_dir.mkdir(parents=True, exist_ok=True)

@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import json
+from copy import deepcopy
 from dataclasses import dataclass
 from math import sqrt
 from typing import Any, Callable, Dict, List, Sequence
+
+from .checkpoint import MemoryCheckpoint
 
 
 def _normalize_text(text: str) -> str:
@@ -97,12 +100,12 @@ class MemoryManager:
         self.recent_steps.append(record)
         self.compress_old_steps()
 
-    def get_context(self) -> str:
+    def get_context(self, *, include_recent: bool = True) -> str:
         if not self._enabled:
             return ""
         if (
             not self.summary
-            and not self.recent_steps
+            and (not include_recent or not self.recent_steps)
             and not self.pois
             and not self.failed_attempts
             and not self.gameplay_plan
@@ -117,14 +120,16 @@ class MemoryManager:
             lines.extend(self._format_poi_line(poi) for poi in self.pois[-10:])
         if self.failed_attempts:
             lines.append("Recent Failed Attempts:")
-            lines.extend(self._format_failed_attempt_line(item) for item in self.failed_attempts[-10:])
+            lines.extend(
+                self._format_failed_attempt_line(item) for item in self.failed_attempts[-10:]
+            )
         if self.gameplay_plan:
             lines.append("Gameplay Plan:")
             lines.append(self._format_gameplay_plan(self.gameplay_plan))
         if self.plan_reviews:
             lines.append("Recent Plan Reviews:")
             lines.extend(self._format_plan_review_line(item) for item in self.plan_reviews[-5:])
-        if self.recent_steps:
+        if include_recent and self.recent_steps:
             lines.append("Recent Steps:")
             lines.extend(step.to_line(self.step_max_chars) for step in self.recent_steps)
         return "\n".join(lines).strip()
@@ -352,6 +357,55 @@ class MemoryManager:
         if not lines:
             return "No matching memory entries."
         return "\n".join(lines)
+
+    def checkpoint_configuration(self) -> Dict[str, Any]:
+        """Settings which must stay constant when restoring campaign context."""
+        return {
+            "window_size": self.window_size,
+            "summary_max_chars": self.summary_max_chars,
+            "step_max_chars": self.step_max_chars,
+            "max_pois": self.max_pois,
+            "max_failed_attempts": self.max_failed_attempts,
+            "summarizer": f"{self._summarizer.__module__}.{self._summarizer.__qualname__}",
+        }
+
+    def export_checkpoint(self) -> Dict[str, Any]:
+        """Snapshot same-campaign memory, including the recent observation window."""
+        snapshot = MemoryCheckpoint(
+            configuration=self.checkpoint_configuration(),
+            summary=self.summary,
+            pois=self.pois,
+            failed_attempts=self.failed_attempts,
+            gameplay_plan=self.gameplay_plan,
+            plan_reviews=self.plan_reviews,
+            step_counter=self._step_counter,
+            recent_steps=[
+                {
+                    "step": step.step,
+                    "observation": step.observation,
+                    "action": step.action,
+                    "result": step.result,
+                }
+                for step in self.recent_steps
+            ],
+        )
+        return deepcopy(snapshot.model_dump(mode="json"))
+
+    def restore_checkpoint(self, data: Dict[str, Any]) -> None:
+        """Restore all fields only after validating the entire checkpoint."""
+        snapshot = MemoryCheckpoint.model_validate(deepcopy(data))
+        if snapshot.configuration != self.checkpoint_configuration():
+            raise ValueError("Campaign memory configuration differs from checkpoint")
+        if len(snapshot.recent_steps) > self.window_size:
+            raise ValueError("Checkpoint recent history exceeds the configured window")
+        restored_steps = [StepRecord(**step.model_dump()) for step in snapshot.recent_steps]
+        self.summary = snapshot.summary
+        self.pois = snapshot.pois
+        self.failed_attempts = snapshot.failed_attempts
+        self.gameplay_plan = snapshot.gameplay_plan
+        self.plan_reviews = snapshot.plan_reviews
+        self._step_counter = snapshot.step_counter
+        self.recent_steps = restored_steps
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialize the cross-run-relevant parts of memory to a plain dict.

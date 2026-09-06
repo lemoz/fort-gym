@@ -9,15 +9,28 @@ from fort_gym.bench.eval.rubric import (
     _proof_shows_world_change,
     _step_progress_flags,
     evaluate_trace_records,
+    evaluate_trace_records_v2,
 )
 from fort_gym.bench.eval.scoring import GOVERNED_SCORE_PROGRESS_PROVENANCE
 
 
 def test_dig_fingerprint_is_kind_aware() -> None:
-    dig = {"type": "DIG", "params": {"kind": "dig", "area": [1, 2, 3], "size": [4, 4, 1]}}
-    channel = {"type": "DIG", "params": {"kind": "channel", "area": [1, 2, 3], "size": [4, 4, 1]}}
-    chop = {"type": "DIG", "params": {"kind": "chop", "area": [1, 2, 3], "size": [4, 4, 1]}}
-    gather = {"type": "DIG", "params": {"kind": "gather", "area": [1, 2, 3], "size": [4, 4, 1]}}
+    dig = {
+        "type": "DIG",
+        "params": {"kind": "dig", "area": [1, 2, 3], "size": [4, 4, 1]},
+    }
+    channel = {
+        "type": "DIG",
+        "params": {"kind": "channel", "area": [1, 2, 3], "size": [4, 4, 1]},
+    }
+    chop = {
+        "type": "DIG",
+        "params": {"kind": "chop", "area": [1, 2, 3], "size": [4, 4, 1]},
+    }
+    gather = {
+        "type": "DIG",
+        "params": {"kind": "gather", "area": [1, 2, 3], "size": [4, 4, 1]},
+    }
 
     fingerprints = {
         _action_fingerprint(dig),
@@ -32,7 +45,10 @@ def test_dig_fingerprint_is_kind_aware() -> None:
 
 def test_dig_fingerprint_defaults_kind_to_dig_when_missing() -> None:
     no_kind = {"type": "DIG", "params": {"area": [1, 2, 3], "size": [4, 4, 1]}}
-    explicit_dig = {"type": "DIG", "params": {"kind": "dig", "area": [1, 2, 3], "size": [4, 4, 1]}}
+    explicit_dig = {
+        "type": "DIG",
+        "params": {"kind": "dig", "area": [1, 2, 3], "size": [4, 4, 1]},
+    }
 
     assert _action_fingerprint(no_kind) == _action_fingerprint(explicit_dig)
 
@@ -157,7 +173,10 @@ def test_queue_and_incomplete_workshop_do_not_satisfy_production_rubric() -> Non
 
     assert rubric["dimensions"]["production_economy"]["score"] == 0
     assert rubric["dimensions"]["responsiveness"]["score"] == 0
-    assert "manager_orders_uncredited=10" in rubric["dimensions"]["production_economy"]["evidence"]
+    assert (
+        "manager_orders_uncredited=10"
+        in rubric["dimensions"]["production_economy"]["evidence"]
+    )
     assert "no_production_surface" in rubric["blockers"]
 
     completed = deepcopy(records)
@@ -288,10 +307,22 @@ def _labor_record(step: int, *, unit_id: int, labor: str, enable: bool) -> dict:
 
 
 def test_labor_fingerprint_distinguishes_unit_and_labor_not_enable() -> None:
-    base = {"type": "LABOR", "params": {"unit_id": 243, "labor": "brewing", "enable": True}}
-    other_unit = {"type": "LABOR", "params": {"unit_id": 248, "labor": "brewing", "enable": True}}
-    other_labor = {"type": "LABOR", "params": {"unit_id": 243, "labor": "mine", "enable": True}}
-    disable = {"type": "LABOR", "params": {"unit_id": 243, "labor": "brewing", "enable": False}}
+    base = {
+        "type": "LABOR",
+        "params": {"unit_id": 243, "labor": "brewing", "enable": True},
+    }
+    other_unit = {
+        "type": "LABOR",
+        "params": {"unit_id": 248, "labor": "brewing", "enable": True},
+    }
+    other_labor = {
+        "type": "LABOR",
+        "params": {"unit_id": 243, "labor": "mine", "enable": True},
+    }
+    disable = {
+        "type": "LABOR",
+        "params": {"unit_id": 243, "labor": "brewing", "enable": False},
+    }
 
     # unit and labor change the bucket; enable direction deliberately does not, so
     # an enable/disable oscillation on one (unit, labor) collapses into one stale
@@ -385,7 +416,10 @@ def test_labor_alternating_churn_triggers_repetitive_policy_blocker() -> None:
 
 def test_farm_fingerprint_distinguishes_target_crop_and_seasons() -> None:
     # Distinct plot, crop, or season set => distinct repetition buckets.
-    base = {"type": "FARM", "params": {"building_id": 34, "crop": "RADISH", "seasons": ["summer"]}}
+    base = {
+        "type": "FARM",
+        "params": {"building_id": 34, "crop": "RADISH", "seasons": ["summer"]},
+    }
     other_plot = {
         "type": "FARM",
         "params": {"building_id": 35, "crop": "RADISH", "seasons": ["summer"]},
@@ -410,11 +444,19 @@ def test_farm_fingerprint_distinguishes_target_crop_and_seasons() -> None:
 def test_farm_fingerprint_is_season_order_invariant() -> None:
     a = {
         "type": "FARM",
-        "params": {"building_id": 34, "crop": "RADISH", "seasons": ["summer", "spring"]},
+        "params": {
+            "building_id": 34,
+            "crop": "RADISH",
+            "seasons": ["summer", "spring"],
+        },
     }
     b = {
         "type": "FARM",
-        "params": {"building_id": 34, "crop": "RADISH", "seasons": ["spring", "summer"]},
+        "params": {
+            "building_id": 34,
+            "crop": "RADISH",
+            "seasons": ["spring", "summer"],
+        },
     }
     assert _action_fingerprint(a) == _action_fingerprint(b)
 
@@ -445,3 +487,277 @@ def test_rubric_does_not_flag_repetition_across_distinct_dig_kinds() -> None:
     # 2/5 for the most common fingerprint (dig or gather) is below the 0.6
     # repetitive_policy blocker threshold.
     assert "repetitive_policy" not in rubric["blockers"]
+
+
+def test_behavior_v2_uses_full_trace_outcomes_not_objectives_or_action_variety() -> (
+    None
+):
+    records = []
+    for step, action_type in enumerate(("DIG", "BUILD", "ORDER", "LABOR", "WAIT")):
+        records.append(
+            {
+                "run_id": "behavior-test",
+                "step": step,
+                "action": {
+                    "type": action_type,
+                    "params": {},
+                    "objective": "mandatory text that must not earn credit",
+                },
+                "execute": {"accepted": False, "provenance": "dfhack_governed"},
+                "metrics": {
+                    "governed_owned_room_evidence_complete": True,
+                    "governed_owned_building_evidence_complete": True,
+                    "governed_owned_accessible_functional_rooms": 0,
+                    "governed_owned_accessible_layout_rooms": 0,
+                    "governed_owned_completed_beds": 0,
+                    "governed_owned_production_capacity": 0,
+                    "governed_owned_output_units": 0,
+                    "governed_owned_output_evidence_complete": True,
+                },
+                "gameplay_proof": {
+                    "ok": False,
+                    "action_effect_observed": False,
+                    "source": "dfhack-map-and-state",
+                    "provenance": "dfhack_governed",
+                },
+                "state_after_advance": {
+                    "survival": {
+                        "food_produced_in_run": 0,
+                        "food_consumed_in_run": 1,
+                        "drink_produced_in_run": 0,
+                        "drink_consumed_in_run": 1,
+                        "flow_evidence_complete": True,
+                        "run_id": "behavior-test",
+                    }
+                },
+            }
+        )
+
+    behavior = evaluate_trace_records_v2(records)
+
+    assert behavior["score"] is None
+    assert behavior["window"] == "full_trace"
+    assert behavior["unknown_domain_count"] == 0
+    assert behavior["action_effect_steps"] == 0
+    assert "objective_steps" not in behavior
+    assert "unique_action_types" not in behavior
+
+
+def test_behavior_v2_keeps_missing_owned_evidence_unknown() -> None:
+    behavior = evaluate_trace_records_v2(
+        [
+            {
+                "action": {"type": "WAIT", "params": {}},
+                "execute": {"accepted": True, "provenance": "dfhack_governed"},
+                "metrics": {},
+                "state_after_advance": {"survival": {}},
+            }
+        ]
+    )
+
+    assert behavior["achieved_domains"] == {
+        "layout": None,
+        "furnishing": None,
+        "industry": None,
+        "realized_owned_output": None,
+        "food_loop": None,
+        "drink_loop": None,
+    }
+    assert behavior["unknown_domain_count"] == 6
+    assert behavior["evidence_complete"] is False
+
+
+def test_behavior_v2_explicit_incomplete_flow_cannot_become_false() -> None:
+    behavior = evaluate_trace_records_v2(
+        [
+            {
+                "run_id": "flow-test",
+                "action": {"type": "WAIT", "params": {}},
+                "execute": {"accepted": True, "provenance": "dfhack_governed"},
+                "metrics": {},
+                "state_after_advance": {
+                    "survival": {
+                        "run_id": "flow-test",
+                        "food_produced_in_run": 0,
+                        "food_consumed_in_run": 0,
+                        "drink_produced_in_run": 0,
+                        "drink_consumed_in_run": 0,
+                        "flow_evidence_complete": False,
+                    }
+                },
+            }
+        ]
+    )
+
+    assert behavior["achieved_domains"]["food_loop"] is None
+    assert behavior["achieved_domains"]["drink_loop"] is None
+
+
+def test_behavior_v2_null_flow_facts_remain_unknown() -> None:
+    behavior = evaluate_trace_records_v2(
+        [
+            {
+                "run_id": "flow-test",
+                "action": {"type": "WAIT", "params": {}},
+                "execute": {"accepted": True, "provenance": "dfhack_governed"},
+                "metrics": {},
+                "state_after_advance": {
+                    "survival": {
+                        "run_id": "flow-test",
+                        "food_produced_in_run": None,
+                        "food_consumed_in_run": None,
+                        "drink_produced_in_run": None,
+                        "drink_consumed_in_run": None,
+                        "flow_evidence_complete": True,
+                    }
+                },
+            }
+        ]
+    )
+
+    assert behavior["achieved_domains"]["food_loop"] is None
+    assert behavior["achieved_domains"]["drink_loop"] is None
+
+
+def test_behavior_v2_invalid_counts_remain_unknown() -> None:
+    for invalid in (-1, 0.5, "malformed", True):
+        behavior = evaluate_trace_records_v2(
+            [
+                {
+                    "run_id": "flow-test",
+                    "action": {"type": "WAIT", "params": {}},
+                    "execute": {"accepted": True, "provenance": "dfhack_governed"},
+                    "metrics": {
+                        "governed_owned_room_evidence_complete": True,
+                        "governed_owned_building_evidence_complete": True,
+                        "governed_owned_accessible_layout_rooms": invalid,
+                        "governed_owned_completed_beds": invalid,
+                        "governed_owned_production_capacity": invalid,
+                        "governed_owned_output_units": invalid,
+                        "governed_owned_output_evidence_complete": True,
+                    },
+                    "state_after_advance": {
+                        "survival": {
+                            "run_id": "flow-test",
+                            "food_produced_in_run": invalid,
+                            "food_consumed_in_run": 0,
+                            "drink_produced_in_run": invalid,
+                            "drink_consumed_in_run": 0,
+                            "flow_evidence_complete": True,
+                        }
+                    },
+                }
+            ]
+        )
+
+        assert set(behavior["achieved_domains"].values()) == {None}
+        assert behavior["unknown_domain_count"] == 6
+        assert behavior["evidence_complete"] is False
+
+
+def test_behavior_v2_complete_flags_cannot_hide_malformed_domain_fact() -> None:
+    behavior = evaluate_trace_records_v2(
+        [
+            {
+                "run_id": "flow-test",
+                "action": {"type": "WAIT", "params": {}},
+                "execute": {"accepted": True, "provenance": "dfhack_governed"},
+                "metrics": {
+                    "governed_owned_room_evidence_complete": True,
+                    "governed_owned_building_evidence_complete": True,
+                    "governed_owned_accessible_layout_rooms": "malformed",
+                    "governed_owned_completed_beds": 1,
+                    "governed_owned_production_capacity": 1,
+                    "governed_owned_output_units": 1,
+                    "governed_owned_output_evidence_complete": True,
+                },
+                "state_after_advance": {
+                    "survival": {
+                        "run_id": "flow-test",
+                        "food_produced_in_run": 2,
+                        "food_consumed_in_run": 1,
+                        "drink_produced_in_run": 2,
+                        "drink_consumed_in_run": 1,
+                        "flow_evidence_complete": True,
+                    }
+                },
+            }
+        ]
+    )
+
+    assert behavior["achieved_domains"]["layout"] is None
+    assert behavior["unknown_domain_count"] == 1
+    assert behavior["evidence_complete"] is False
+
+
+def test_behavior_v2_missing_provenance_cannot_claim_legal_execution() -> None:
+    behavior = evaluate_trace_records_v2(
+        [
+            {
+                "run_id": "flow-test",
+                "action": {"type": "WAIT", "params": {}},
+                "execute": {"accepted": True},
+                "metrics": {
+                    "governed_owned_room_evidence_complete": True,
+                    "governed_owned_building_evidence_complete": True,
+                    "governed_owned_accessible_layout_rooms": 1,
+                    "governed_owned_completed_beds": 1,
+                    "governed_owned_production_capacity": 1,
+                    "governed_owned_output_units": 1,
+                    "governed_owned_output_evidence_complete": True,
+                },
+                "state_after_advance": {
+                    "survival": {
+                        "run_id": "flow-test",
+                        "food_produced_in_run": 2,
+                        "food_consumed_in_run": 1,
+                        "drink_produced_in_run": 2,
+                        "drink_consumed_in_run": 1,
+                        "flow_evidence_complete": True,
+                    }
+                },
+            }
+        ]
+    )
+
+    assert behavior["unknown_domain_count"] == 0
+    assert behavior["legal_execution"] is None
+    assert behavior["legal_evidence_complete"] is False
+    assert behavior["evidence_complete"] is False
+
+
+def test_behavior_v2_requires_every_row_to_share_one_run_id() -> None:
+    records = []
+    for step in range(2):
+        records.append(
+            {
+                "run_id": "flow-test" if step == 0 else None,
+                "action": {"type": "WAIT", "params": {}},
+                "execute": {"accepted": True, "provenance": "dfhack_governed"},
+                "metrics": {
+                    "governed_owned_room_evidence_complete": True,
+                    "governed_owned_building_evidence_complete": True,
+                    "governed_owned_accessible_layout_rooms": 1,
+                    "governed_owned_completed_beds": 1,
+                    "governed_owned_production_capacity": 1,
+                    "governed_owned_output_units": 1,
+                    "governed_owned_output_evidence_complete": True,
+                },
+                "state_after_advance": {
+                    "survival": {
+                        "run_id": "flow-test",
+                        "food_produced_in_run": 2,
+                        "food_consumed_in_run": 1,
+                        "drink_produced_in_run": 2,
+                        "drink_consumed_in_run": 1,
+                        "flow_evidence_complete": True,
+                    }
+                },
+            }
+        )
+
+    behavior = evaluate_trace_records_v2(records)
+
+    assert behavior["achieved_domains"]["food_loop"] is None
+    assert behavior["achieved_domains"]["drink_loop"] is None
+    assert behavior["evidence_complete"] is False

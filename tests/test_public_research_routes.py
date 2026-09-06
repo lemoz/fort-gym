@@ -10,6 +10,8 @@ from fastapi.testclient import TestClient
 
 
 P1_PROTOCOL = "fort-eval-easy-p1-g7-v3"
+P1_PROTOCOL_V4 = "fort-eval-easy-p1-g7-v4"
+P1_PROTOCOL_V5 = "fort-eval-easy-p1-g7-v5"
 
 
 def _add_public_run(
@@ -107,9 +109,7 @@ def test_public_results_filters_protocol_and_reports_full_eligibility() -> None:
                 protocol=P1_PROTOCOL,
                 model=f"agent-{index % 2}",
                 model_digest=(
-                    "anthropic/claude-fable-5"
-                    if index < 30
-                    else "openai/gpt-5.6-sol"
+                    "anthropic/claude-fable-5" if index < 30 else "openai/gpt-5.6-sol"
                 ),
                 public_label="Claude Fable 5" if index < 30 else "GPT-5.6 Sol",
                 g7_status="fail" if index < 30 else "unknown",
@@ -134,9 +134,7 @@ def test_public_results_filters_protocol_and_reports_full_eligibility() -> None:
         missing_artifact_id = _add_public_run(
             protocol=P1_PROTOCOL, replay_artifact=False
         )
-        incomplete_id = _add_public_run(
-            protocol=P1_PROTOCOL, complete_provenance=False
-        )
+        incomplete_id = _add_public_run(protocol=P1_PROTOCOL, complete_provenance=False)
         ineligible_id = _add_public_run(
             protocol=P1_PROTOCOL, public_eligibility="ineligible"
         )
@@ -183,11 +181,14 @@ def test_public_results_filters_protocol_and_reports_full_eligibility() -> None:
         assert payload["candidate_run_count"] == 63
         assert payload["eligible_run_count"] == 56
         assert payload["excluded_run_count"] == 7
-        assert sum(
-            result["run_count"]
-            for group in payload["comparison_groups"]
-            for result in group["model_results"]
-        ) == 56
+        assert (
+            sum(
+                result["run_count"]
+                for group in payload["comparison_groups"]
+                for result in group["model_results"]
+            )
+            == 56
+        )
         assert all(
             group["comparability"]["evaluation_protocol"] == P1_PROTOCOL
             for group in payload["comparison_groups"]
@@ -198,8 +199,7 @@ def test_public_results_filters_protocol_and_reports_full_eligibility() -> None:
             for result in group["model_results"]
         ]
         assert {
-            (result["model_digest"], result["public_label"])
-            for result in model_results
+            (result["model_digest"], result["public_label"]) for result in model_results
         } == {
             ("anthropic/claude-fable-5", "Claude Fable 5"),
             ("openai/gpt-5.6-sol", "GPT-5.6 Sol"),
@@ -209,9 +209,7 @@ def test_public_results_filters_protocol_and_reports_full_eligibility() -> None:
         assert by_label["Claude Fable 5"]["g7_outcomes"] == {"fail": 31}
         assert by_label["GPT-5.6 Sol"]["task_verdict"] == "unknown"
         assert by_label["GPT-5.6 Sol"]["g7_outcomes"] == {"unknown": 25}
-        protocol = TestClient(server.app).get(
-            f"/public/protocols/{P1_PROTOCOL}"
-        ).json()
+        protocol = TestClient(server.app).get(f"/public/protocols/{P1_PROTOCOL}").json()
         assert set(protocol["comparability_fields"]).issubset(
             payload["comparability_fields"]
         )
@@ -231,7 +229,9 @@ def test_public_results_keeps_legacy_p0_independent_of_p1_eligibility() -> None:
             g7_status=None,
         )
         conn = RUN_REGISTRY._ensure_conn()  # noqa: SLF001 - test-only provenance setup
-        conn.execute("UPDATE runs SET git_sha = ? WHERE run_id = ?", ("commit-easy", run_id))
+        conn.execute(
+            "UPDATE runs SET git_sha = ? WHERE run_id = ?", ("commit-easy", run_id)
+        )
         conn.commit()
 
         response = TestClient(server.app).get(
@@ -254,14 +254,99 @@ def test_public_results_requires_a_valid_protocol_query() -> None:
 
     client = TestClient(app)
     assert client.get("/public/results").status_code == 422
-    assert client.get("/public/results?evaluation_protocol=not%20a%20protocol").status_code == 422
-    assert client.get("/public/results?evaluation_protocol=unknown-v1").status_code == 404
+    assert (
+        client.get("/public/results?evaluation_protocol=not%20a%20protocol").status_code
+        == 422
+    )
+    assert (
+        client.get("/public/results?evaluation_protocol=unknown-v1").status_code == 404
+    )
+
+
+def test_calibration_protocol_never_builds_public_comparison_groups() -> None:
+    from fort_gym.bench.api.server import _protocol_comparison_groups
+    from fort_gym.bench.eval.public_protocols import get_public_protocol
+
+    protocol = get_public_protocol(P1_PROTOCOL_V5)
+
+    assert protocol.status == "calibration"
+    assert _protocol_comparison_groups([], protocol) == []
+
+
+def test_calibration_protocol_is_excluded_from_public_overview_and_scalar_groups(
+    monkeypatch,
+) -> None:
+    from fort_gym.bench.api.server import app
+    from fort_gym.bench.run.storage import RUN_REGISTRY
+
+    RUN_REGISTRY.reset_for_tests()
+    try:
+        run_id = _add_public_run(protocol=P1_PROTOCOL_V5)
+        monkeypatch.setenv("FORT_GYM_INSECURE_ADMIN", "1")
+        client = TestClient(app)
+
+        payload = client.get("/public/overview").json()
+
+        assert payload["recent_runs"] == []
+        assert payload["comparison_groups"] == []
+        assert client.get("/public/runs").json() == []
+        worlds = client.get("/public/worlds").json()
+        assert worlds["items"] == []
+        assert worlds["total"] == 0
+        results = client.get(
+            f"/public/results?evaluation_protocol={P1_PROTOCOL_V5}"
+        ).json()
+        assert results["publication_stage"] == "calibration"
+        assert results["candidate_run_count"] == 0
+        assert results["comparison_groups"] == []
+        assert client.get("/public/leaderboard").json() == []
+        assert client.get("/public/leaderboard/best-over-time").json() == []
+        assert client.post(f"/runs/{run_id}/share", json={}).status_code == 409
+    finally:
+        RUN_REGISTRY.reset_for_tests()
+
+
+def test_v5_publication_accepts_valid_task_failure_without_scalar_ranking() -> None:
+    from fort_gym.bench.api.server import (
+        _public_model_result,
+        _v5_publication_is_complete,
+    )
+
+    summary = {
+        "publication_status": {
+            "status": "eligible",
+            "evaluation_validity": "pass",
+            "provenance_completeness": "pass",
+            "provider_telemetry_complete": True,
+        },
+        "integrity_attestation": {
+            "status": "pass",
+            "terminal_reason": {"code": "interaction_budget_exhausted"},
+        },
+    }
+
+    assert _v5_publication_is_complete(summary) is True
+    result = _public_model_result(
+        model_digest="model-digest",
+        public_label="Model",
+        scored_runs=[(None, "token", "fail", "fail")],
+        strict_publication=True,
+        non_scalar=True,
+    )
+    assert result.mean_score is None
+    assert result.best_score is None
+    assert result.best_token is None
+    assert result.representative_token == "token"
+    assert result.result_kind == "outcome_vector"
+    assert result.g7_outcomes == {"fail": 1}
 
 
 def test_public_results_refuses_a_truncated_protocol_cohort() -> None:
     from fort_gym.bench.api import server
 
-    with patch.object(server.RUN_REGISTRY, "list_public_for_protocol", return_value=([], True)):
+    with patch.object(
+        server.RUN_REGISTRY, "list_public_for_protocol", return_value=([], True)
+    ):
         response = TestClient(server.app).get(
             f"/public/results?evaluation_protocol={P1_PROTOCOL}"
         )
@@ -276,7 +361,9 @@ def test_historical_leaderboard_limit_is_bounded() -> None:
     assert client.get("/public/leaderboard?limit=5001").status_code == 422
 
 
-def test_public_protocol_catalog_is_allowlisted_and_uses_declared_status_wording() -> None:
+def test_public_protocol_catalog_is_allowlisted_and_uses_declared_status_wording() -> (
+    None
+):
     from fort_gym.bench.api.server import app
 
     client = TestClient(app)
@@ -287,15 +374,22 @@ def test_public_protocol_catalog_is_allowlisted_and_uses_declared_status_wording
     assert [entry["slug"] for entry in payload] == [
         "fort-eval-easy-v1",
         P1_PROTOCOL,
+        P1_PROTOCOL_V4,
+        P1_PROTOCOL_V5,
         "fort-eval-hard-v1",
         "fort-eval-discovery-v1",
     ]
     by_slug = {entry["slug"]: entry for entry in payload}
     assert "provisional p0/substrate" in by_slug["fort-eval-easy-v1"]["summary"].lower()
     assert "p1" in by_slug[P1_PROTOCOL]["result_status"].lower()
+    assert "p1" in by_slug[P1_PROTOCOL_V4]["result_status"].lower()
+    assert "calibration" in by_slug[P1_PROTOCOL_V5]["result_status"].lower()
+    assert "no publishable results" in by_slug[P1_PROTOCOL_V5]["result_status"].lower()
     assert "planned" in by_slug["fort-eval-hard-v1"]["result_status"].lower()
     assert "no results" in by_slug["fort-eval-hard-v1"]["result_status"].lower()
-    assert "research-horizon" in by_slug["fort-eval-discovery-v1"]["result_status"].lower()
+    assert (
+        "research-horizon" in by_slug["fort-eval-discovery-v1"]["result_status"].lower()
+    )
     assert "no results" in by_slug["fort-eval-discovery-v1"]["result_status"].lower()
     assert client.get("/public/protocols/not-a-real-protocol").status_code == 404
     assert client.get("/protocols/not-a-real-protocol").status_code == 404

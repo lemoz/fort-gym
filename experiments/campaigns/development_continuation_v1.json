@@ -1,0 +1,25 @@
+{
+  "schema_version": "fortgym.development-probe/v1",
+  "runner": "campaign-loop/v1",
+  "condition_id": "development-continuation-v1",
+  "phase": "development",
+  "hypothesis": "The configured model can execute a bounded campaign segment and continue from its native checkpoint with memory, action history and cumulative usage preserved.",
+  "models": ["z-ai/glm-5.3-flash", "qwen/qwen3.8-flash", "deepseek/deepseek-v4-flash-0731"],
+  "max_steps": 3,
+  "ticks_per_step": 200,
+  "max_advance_ticks": 2000,
+  "max_output_tokens": 8192,
+  "max_attempts": 2,
+  "max_dispatches": 8,
+  "max_request_bytes": 100000,
+  "max_total_tokens": 131072,
+  "max_cost_usd": 1.0,
+  "provider_max_price": {"prompt": 0.5, "completion": 2.0, "request": 0.0},
+  "notes": [
+    "A distinct development condition from the original legacy-runner probe; do not pool their results as one comparison.",
+    "max_steps bounds each segment; dispatch, token and returned-cost limits apply cumulatively across the campaign.",
+    "The model selects advance_ticks within max_advance_ticks; ticks_per_step is retained for loader compatibility, not a forced simulation advance.",
+    "A native checkpoint is written at a clean segment end or clean pre-dispatch budget pause. Failed decisions retain diagnostics and require recovery from the last valid checkpoint.",
+    "The retained starting snapshot is not a fresh embark. This test does not establish year-two viability or a model ranking."
+  ]
+}

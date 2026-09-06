@@ -4,14 +4,14 @@ import asyncio
 import json
 import uuid
 from dataclasses import dataclass
-from typing import Any, Dict
 from types import SimpleNamespace
+from typing import Any, Dict
 
 import pytest
 from fastapi.testclient import TestClient
 
-from fort_gym.bench.api.server import app
 from fort_gym.bench.api import routes_step
+from fort_gym.bench.api.server import app
 from fort_gym.bench.run.storage import RUN_REGISTRY
 
 
@@ -100,7 +100,12 @@ def client(tmp_path, monkeypatch):
     return TestClient(app)
 
 
-def _register_run(max_steps: int = 5, *, model: str = "fake") -> str:
+def _register_run(
+    max_steps: int = 5,
+    *,
+    model: str = "fake",
+    supervision_mode: str | None = None,
+) -> str:
     run_id = uuid.uuid4().hex
     RUN_REGISTRY.create(
         backend="dfhack",
@@ -108,6 +113,7 @@ def _register_run(max_steps: int = 5, *, model: str = "fake") -> str:
         max_steps=max_steps,
         ticks_per_step=500,
         run_id=run_id,
+        supervision_mode=supervision_mode,
     )
     return run_id
 
@@ -138,6 +144,61 @@ def test_step_rejects_governed_runs_before_opening_an_alternate_control_path(
     assert "serialized runner" in response.json()["detail"]
     assert client_calls["value"] == 0
     assert not (tmp_path / run_id).exists()
+
+
+def test_step_rejects_process_supervised_run_before_any_interactive_side_effect(
+    client: TestClient,
+    tmp_path,
+    monkeypatch,
+) -> None:
+    calls: list[str] = []
+
+    def forbidden(name: str):
+        def fail(*_args: Any, **_kwargs: Any) -> None:
+            calls.append(name)
+            raise AssertionError(f"unexpected interactive side effect: {name}")
+
+        return fail
+
+    run_id = _register_run(
+        model="fake",
+        supervision_mode="m1b-process",
+    )
+    persisted_before = RUN_REGISTRY.get(run_id)
+    assert persisted_before is not None
+    assert persisted_before.supervision_mode == "m1b-process"
+
+    monkeypatch.setattr(routes_step, "_get_context", forbidden("artifacts"))
+    monkeypatch.setattr(routes_step, "DFHackClient", forbidden("dfhack_client"))
+    monkeypatch.setattr(
+        routes_step,
+        "ensure_paused_external",
+        forbidden("pause_helper"),
+    )
+    monkeypatch.setattr(RUN_REGISTRY, "set_status", forbidden("status_write"))
+    monkeypatch.setattr(RUN_REGISTRY, "set_summary", forbidden("summary_write"))
+    monkeypatch.setattr(RUN_REGISTRY, "append_event", forbidden("event_write"))
+
+    response = client.post(
+        "/step",
+        json={
+            "run_id": run_id,
+            "action": {"type": "noop"},
+            "min_step_period_ms": 100,
+            "max_ticks": 1,
+        },
+    )
+
+    assert response.status_code == 409
+    assert "process-supervised" in response.json()["detail"]
+    assert calls == []
+    assert routes_step._STEP_CONTEXTS == {}
+    assert not (tmp_path / run_id).exists()
+    persisted_after = RUN_REGISTRY.get(run_id)
+    assert persisted_after is not None
+    assert persisted_after.status == persisted_before.status == "pending"
+    assert persisted_after.step == persisted_before.step == 0
+    assert RUN_REGISTRY.read_events_since(run_id) == []
 
 
 def test_step_exception_repauses_before_closing(client: TestClient, monkeypatch) -> None:

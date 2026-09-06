@@ -1,0 +1,199 @@
+{
+  "schema_version": "fort-gym.environment-layer-m1b-offline-integration/v1",
+  "created_at": "2026-08-17T03:44:00Z",
+  "status": "private_offline_integration_pass_local_full_m1b_incomplete_no_go",
+  "decision": {
+    "offline_integration": "PASS_LOCAL",
+    "local_core_acceptance": "PASS_LOCAL",
+    "frozen_local_gate_credit": [
+      "PORT-1",
+      "PROVIDER-ENV",
+      "CAP-FAKE"
+    ],
+    "engineering_preflight": "PASS_LOCAL_WITHOUT_LIVE_GATE_CREDIT",
+    "full_m1b": "INCOMPLETE_NO_GO",
+    "e1": "NOT_AUTHORIZED",
+    "reason": "The process-per-run local architecture and bounded fault/recovery contracts are integrated and fully green offline, but the frozen real-runtime and isolated x86-64 Linux acceptance matrix has not run."
+  },
+  "source": {
+    "branch": "codex/environment-layer-m0a-m1a",
+    "base_head": "236d3187c548b9bc03c4c99829d479d381a008d5",
+    "worktree_committed": false,
+    "worktree_path_count": 92,
+    "source_manifest_path": "/Users/cdossman/Documents/Open Source Projects/fort-gym-m1b-offline-integration-20260817/source-manifest.sha256",
+    "source_manifest_file_count": 90,
+    "source_manifest_sha256": "a1936504aa12e28cdb902e8f663264aa461d225e9bc9b92303bc91b95fed208f",
+    "manifest_exclusions": [
+      "experiments/evidence/EVIDENCE_INDEX.json because its documentary note is finalized after this record is hashed",
+      "experiments/evidence/environment_layer_m1b_offline_integration_20260817.json because it references the already sealed private packet"
+    ],
+    "measurement_code_sha256": "5bdcd821ddb7c916ddef96572bde06ca9600ead486db6b32ca39cde9332dd937",
+    "measurement_lock": "G7-v5 remains re-locked; no paid pair without recalibration and review"
+  },
+  "contract": {
+    "path": "infra/m1b/acceptance.yaml",
+    "current_sha256": "e960bceae0d8785af94a3d19fda650ab3a3506c8abfbe6c407cc4c058c0efd02",
+    "prior_component_packet_sha256": "d1cf6d8141cbe2cf7d153b32de0be61dbf64b7db1ed16dc19e7b9db82ccd1f5f",
+    "status": "preregistered_with_three_outcome_independent_amendments",
+    "amendments": [
+      "OCI provenance labels separated runtime-reported ID, manifest, config, compressed archive, and uncompressed tar",
+      "CAP-FAKE zero means zero remaining after one response reaches a positive configured cap",
+      "OOM unexplained host delta means global oom_kill delta minus target memory.events.local oom_kill delta"
+    ],
+    "gate_count": 16,
+    "real_runtime_attempts_used": 0
+  },
+  "runtime_identity": {
+    "classification": "private_stock_archive_seeded",
+    "runtime_reported_image_id": "sha256:d6403fc04f2231a75c2a4ca4379b393fddd08d9034df07dd4ff9a8d46a15068c",
+    "oci_manifest_digest": "sha256:d6403fc04f2231a75c2a4ca4379b393fddd08d9034df07dd4ff9a8d46a15068c",
+    "oci_config_digest": "sha256:d90811a39d5edd7c0a61d9adbbe4251cbfc345df52f5fa48ba174ce8992b8a86",
+    "compressed_oci_archive_sha256": "87d66d26553cb271af1b784405d63ea6b95f3bbe20e9429f05e6412133d1f43a",
+    "uncompressed_oci_archive_sha256": "39e4cfce8cc65ca4f4a761fd732cc5d3c2faa8d237b85992dae6da1076f8e756",
+    "seed_tree_sha256": "49ba1de07b62e7afda93b42059b6c566598bb0f4c83d11ae1dfdb78b54cd9ec0",
+    "seed_world_sha256": "070b10a3f2403e72368290eea0d09396fe06f7912b9babdea7ad26eb0498a87d",
+    "archive_chain_reverified": true,
+    "docker_server_arch": "arm64",
+    "local_image_loaded": false,
+    "image_loaded_in_this_pass": false,
+    "image_executed_in_this_pass": false,
+    "m1b_labeled_containers": 0,
+    "source_reproducible": false
+  },
+  "integration_closure": [
+    "API and jobs launch preassigned external workers through process supervision",
+    "parent-only terminal ownership after verified process/runtime/post-cleanup stages",
+    "durable SQLite event outbox and restart-safe SSE cursor relay",
+    "canonical nonce-bound runtime, seed, image, save, port, provider, environment, and co-tenancy identity",
+    "bounded startup replacement with fresh identity and exact OCI archive fallback verification",
+    "typed six-class fault validation plus cleanup-precedence terminalization",
+    "held pre-readiness OOM target with durable peer-ready release proof",
+    "prelaunch 16 MiB ENOSPC workspace and post-runtime unmount before classification/terminalization",
+    "provider-network pinned wrapper, cgroup-BPF source contract, strict report, and launch-intent crash recovery",
+    "dead-owner exact process-group/container reconciliation with foreign-canary preservation and idempotence",
+    "final ENOSPC terminal_pending crash-window recovery and provider inner-exec recovery",
+    "test settings cache isolation after full-suite order-dependency discovery"
+  ],
+  "verification": {
+    "python": "3.11.15",
+    "sanitized_environment": "env -i with FORT_GYM_DISABLE_DOTENV=1, plugin autoload disabled, and no provider credentials",
+    "offline_regression": {
+      "tests": 1766,
+      "passed": 1761,
+      "skipped": 5,
+      "failures": 0,
+      "errors": 0,
+      "isolated_loopback_nodes": 6,
+      "junit_path": "/Users/cdossman/Documents/Open Source Projects/fort-gym-m1b-offline-integration-20260817/python311-offline-regression.xml",
+      "junit_sha256": "75fc7dce3dddd9c2e7505af0e480a0e409769c30a22bb1f0fc196493924063c8"
+    },
+    "m1b_focused": {
+      "tests": 541,
+      "passed": 541,
+      "failures": 0,
+      "errors": 0,
+      "isolated_loopback_nodes": 4,
+      "junit_path": "/Users/cdossman/Documents/Open Source Projects/fort-gym-m1b-offline-integration-20260817/python311-m1b-focused.xml",
+      "junit_sha256": "8b938923c70c5740286515e8decd422ec2c64b3566e67f28d4c033fb50cb3c5f"
+    },
+    "loopback_local_gates": {
+      "tests": 6,
+      "passed": 6,
+      "failures": 0,
+      "errors": 0,
+      "junit_path": "/Users/cdossman/Documents/Open Source Projects/fort-gym-m1b-offline-integration-20260817/loopback-local-gates.xml",
+      "junit_sha256": "ccd6cbe7743013d28622202089ed1cfb39148ad2bcb17524bd2bfb5392947135"
+    },
+    "independent_final_repair_audit": {
+      "tests": 112,
+      "passed": 112,
+      "remaining_p1_or_p2_blockers": 0,
+      "author_edited_during_audit": false
+    },
+    "static": {
+      "ruff_untracked_python": "pass",
+      "ruff_modified_tracked_python_e9_f_i": "pass",
+      "py_compile": "pass",
+      "runtime_entrypoint_bash_n": "pass",
+      "provider_network_static_contract": "pass",
+      "acceptance_yaml_and_evidence_index_parse": "pass",
+      "git_diff_check": "pass"
+    }
+  },
+  "gate_disposition": {
+    "PORT-1": "PASS_LOCAL",
+    "PORT-2": "ENGINEERING_PREFLIGHT_PASS_LIVE_NOT_RUN",
+    "COLD-RETRY": "ENGINEERING_PREFLIGHT_PASS_LIVE_NOT_RUN",
+    "CO-8": "ENGINEERING_PREFLIGHT_PASS_MOCK_OS_WORKERS_LIVE_NOT_RUN",
+    "DF-KILL": "ENGINEERING_PREFLIGHT_PASS_LIVE_NOT_RUN",
+    "HARNESS-KILL": "ENGINEERING_PREFLIGHT_PASS_LIVE_NOT_RUN",
+    "OOM": "ENGINEERING_PREFLIGHT_PASS_LIVE_NOT_RUN",
+    "ENOSPC": "ENGINEERING_PREFLIGHT_PASS_LIVE_NOT_RUN",
+    "CONTAINER-RESTART": "ENGINEERING_PREFLIGHT_PASS_LIVE_NOT_RUN",
+    "DAEMON-RESTART": "ENGINEERING_PREFLIGHT_PASS_LIVE_NOT_RUN",
+    "ORPHAN-1": "PASS_LOCAL_SUBPROCEDURE_REAL_HALF_NOT_RUN",
+    "ORPHAN-2": "ENGINEERING_PREFLIGHT_PASS_LOCAL_PROCESS_REAL_RUNTIME_NOT_RUN",
+    "PROVIDER-ENV": "PASS_LOCAL",
+    "PROVIDER-NET": "ENGINEERING_PREFLIGHT_PASS_PRIVILEGED_LINUX_NOT_RUN",
+    "CAP-FAKE": "PASS_LOCAL",
+    "CLEANUP": "ENGINEERING_PREFLIGHT_PASS_FULL_EVERY_CASE_NOT_RUN"
+  },
+  "file_sha256": {
+    "fort_gym/bench/api/server.py": "3e0a51511ed174417fdfb8f80ce90fc0879d6918419e204df2115873ef056693",
+    "fort_gym/bench/api/schemas.py": "7abbc4ebfde2d558a33ed0d83a903957883a32c3d7974922b9e3a6de9ca7901d",
+    "fort_gym/bench/run/storage.py": "c7e3d1e5939013268c38f571694aa8ed247c41a635582103958a924027f94092",
+    "fort_gym/bench/run/jobs.py": "f64fc72d62c539ff3b68767606cd4c048818f1cb457cf58e273ad00bd32482ef",
+    "fort_gym/bench/run/runtime_contract.py": "2bbcb9cb18821bacc69a05189b5c41cf9776233518fd06e4c2645ead1c687cba",
+    "fort_gym/bench/run/runtime_controller.py": "9164c47b659654863b7e42b7f814da7e06745195f743010307d9a6c294c52d90",
+    "fort_gym/bench/run/process_supervisor.py": "0d78639c6232208cefb736ddfc6467332cfa47267a3e15c2551dea19212aabbf",
+    "fort_gym/bench/run/supervised_manager.py": "a2b47f4ffdba93135f89c90f7ed4eaefe8106b3343d67621c889dd400b31a216",
+    "fort_gym/bench/run/supervision_service.py": "47de3b9e5509e329687a74b72b3c2ac1db1c68b0c12bd54c017a3fee83a1be2e",
+    "fort_gym/bench/run/fault_classification.py": "d9eeeeb43f02aeec152a0c2b1d5dd555dcf94d86d894731864013144bc7cf759",
+    "fort_gym/bench/run/fault_driver.py": "40978fa604999838539fb997ac94ba9e9798ced47499e0f749c460494a0ce26f",
+    "fort_gym/bench/run/provider_network_isolation.py": "0bcdbdba3d7afbbf467d21fcf26c2e32ddb54ce125e1c40fe26c1936705bc6c5",
+    "fort_gym/bench/run/startup_replacement.py": "63473cc31014bf4fc8f90bf47b8d354833519856a717991edfcdf65fe818ca7b",
+    "fort_gym/bench/run/residue_audit.py": "57de00b78146b5d41094c57fd70e6150967c26acbbaf10e71107d589f608510d",
+    "tests/test_fault_driver.py": "7faef885f9b3a9a9fe8f79860353cf34e17d68246f0b1bbdf0aba4fe47f79921",
+    "tests/test_enospc_supervision_integration.py": "c1a5c6cf09e23da4e6a822fbb84386a0018f67112d061660284fb29057c737c4",
+    "tests/test_provider_network_supervisor_integration.py": "941ea466af942d352c17802da961d381302dafdbb3a9853c90ca62dee5eb7bf5",
+    "tests/test_orphan2_process_recovery.py": "f831dd2a17c30f86ace8ca7c788de64fde8ecdb60ca97b41a906e34d9d5a1f15"
+  },
+  "private_packet": {
+    "root": "/Users/cdossman/Documents/Open Source Projects/fort-gym-m1b-offline-integration-20260817",
+    "manifest_path": "/Users/cdossman/Documents/Open Source Projects/fort-gym-m1b-offline-integration-20260817/MANIFEST.sha256",
+    "manifest_sha256": "f2aef04bbb3c8f270f713422adfdab2da57bdb19390796de7f1d524a416ade59",
+    "file_count_excluding_manifest": 7,
+    "manifest_verified": true,
+    "prior_component_packet_manifest_sha256": "42b366bbedcac31a050f94a0f851d8b4691036056cb119074fd8f3f22edf8d10",
+    "prior_component_packet_unchanged": true
+  },
+  "local_cleanup_readback": {
+    "fort_gym_process_matches": 0,
+    "port_lease_directory_present": false,
+    "tmp_fort_gym_paths": 0,
+    "fort_gym_mounts": 0,
+    "m1b_labeled_containers": 0,
+    "result": "pass for local test residue only; not the frozen full CLEANUP gate"
+  },
+  "authorization_boundary": {
+    "paid_models_run": false,
+    "provider_api_calls": 0,
+    "provider_cost_usd": 0,
+    "production_accessed": false,
+    "production_mutated": false,
+    "new_cloud_infrastructure_created": false,
+    "infrastructure_spend_usd": 0,
+    "published": false,
+    "deployed": false,
+    "pushed": false,
+    "tags_created": false,
+    "e1_started": false
+  },
+  "known_live_limits": [
+    "Mac and Docker Desktop are arm64, not the required isolated x86-64 Linux host",
+    "pinned image is not loaded and no preserved DF runtime was executed in this pass",
+    "provider-network C helper and BPF object were statically checked but not compiled, loaded, or captured on Linux",
+    "real DF kill, harness kill, cgroup OOM, tmpfs ENOSPC, container restart, daemon restart, CO-8, and full cleanup remain unevidenced"
+  ],
+  "next_gate": "Chris separately approves an explicit infrastructure ceiling for one isolated x86-64 Linux M1b host and the frozen provider-free live acceptance matrix."
+}

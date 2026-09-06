@@ -1,0 +1,215 @@
+schema_version: "fort-eval.manifest/v1"
+manifest_id: fort-eval-easy-p1-g7-v5
+name: Fort-Eval Easy P1 G7-v5
+description: >-
+  Calibration successor to G7-v4. G7-v5 evaluates a non-overlapping gameplay
+  outcome vector from exact governed ownership evidence. Final accessible room
+  geometry, typed unique construction coordinates, completed building IDs,
+  owned operational provisioning, and exact governed brew output replace global totals, peak layout, action
+  vocabulary, objective-field presence, and the population-bearing score-v5
+  scalar.
+status: calibration
+frozen_date: 2026-07-14
+provider_preflight_evidence: experiments/evidence/fort_eval_easy_p1_provider_preflight_20260712.json
+provider_preflight_inherits_from: fort-eval-easy-p1-g7-v3
+
+program:
+  umbrella: Fort Labs
+  benchmark: Fort-Eval
+  harness: Fort-Gym
+  profile: easy
+  profile_version: easy-v1
+
+task:
+  task_id: g7_survival
+  task_version: g7-v5
+  seed: seed_region3_fresh
+  seed_world_sha256: 070b10a3f2403e72368290eea0d09396fe06f7912b9babdea7ad26eb0498a87d
+  seed_split: fixed_seed_pilot
+  objective: >-
+    Build and sustain a legal governed fortress on the fresh region3 embark
+    under the fixed 200-step budget. Establish exact owned farm and still
+    capacity with a crop assignment and exact governed brew output, avoid authoritatively
+    classified preventable deaths, create three final owned accessible layout rooms, and install bed capacity
+    for the fixed initial seven-dwarf cohort.
+  success_predicates:
+    exact_owned_operational_farm_plots_min: 1
+    exact_owned_completed_stills_min: 1
+    exact_governed_brew_output_units_min: 1
+    authoritatively_classified_preventable_deaths_max: 0
+    final_owned_accessible_layout_rooms_min: 3
+    exact_owned_completed_beds_min: 3
+  outcome_vector:
+    version: outcome-vector-v1
+    numeric_composite: false
+    full_trace_behavior_diagnostics: true
+    action_variety_credit: false
+    objective_text_credit: false
+    peak_layout_credit: false
+    global_unowned_state_credit: false
+  diagnostics:
+    duration_ticks:
+      recorded: true
+      affects_gate_status: false
+    population:
+      recorded: true
+      affects_gate_status: false
+      comparison_scope: matched_cohort_only
+    score_v5_scalar:
+      recorded: true
+      affects_gate_status: false
+      comparison_scope: diagnostic_only
+    peak_layout:
+      recorded: true
+      affects_gate_status: false
+    cache_read_rate:
+      recorded: true
+      affects_gameplay_validity: false
+
+benchmark_condition:
+  observation:
+    profile: governed_structured_state_v3_owned_layout
+    vision_enabled: true
+    observer_map_agent_visible: false
+  action:
+    profile: legal_semantic_dfhack_v1
+    debug_completion_enabled: false
+  knowledge:
+    condition: none
+    documents_allowed: false
+    live_web_allowed: false
+  memory:
+    mode: "off"
+    cross_episode_state: false
+  budget:
+    max_steps: 200
+    ticks_per_step: 2500
+    max_ticks: 500000
+  score:
+    version: outcome-vector-v1
+    diagnostic_scalar_version: score-v5
+    evaluator_version: outcome-vector-v1+g7-v5
+
+model_arms:
+  identity_field: model_arm
+  arms:
+    - model_arm: dfhack-governed-llm-fable5
+      adapter_id: dfhack-governed-llm
+      provider_route: openrouter
+      provider_model_id: resolved_at_run
+      generation:
+        reasoning_effort: max
+        max_completion_tokens: 128000
+        prompt_cache: explicit_system_ephemeral
+        sticky_routing: per_run_session_id
+      vision_enabled: true
+      memory_mode: "off"
+    - model_arm: dfhack-governed-llm-gpt56-sol
+      adapter_id: dfhack-governed-llm
+      provider_route: openrouter
+      provider_model_id: resolved_at_run
+      generation:
+        reasoning_effort: max
+        max_completion_tokens: 128000
+        prompt_cache: automatic
+        prompt_cache_key: per_run_session_id
+        sticky_routing: per_run_session_id
+      vision_enabled: true
+      memory_mode: "off"
+
+provider_policy:
+  legacy_direct_anthropic_api: prohibited
+  openrouter_fable_exception:
+    enabled: true
+    model_arm: dfhack-governed-llm-fable5
+    provider_route: openrouter
+    direct_anthropic_api: false
+
+comparability:
+  benchmark_condition_fields:
+    - profile
+    - profile_version
+    - task_id
+    - task_version
+    - seed
+    - seed_split
+    - observation_profile
+    - vision_enabled
+    - action_profile
+    - knowledge_condition
+    - memory_mode
+    - max_steps
+    - ticks_per_step
+    - score_version
+    - evaluator_version
+  model_arm_identity:
+    field: model_arm
+    values:
+      - dfhack-governed-llm-fable5
+      - dfhack-governed-llm-gpt56-sol
+    is_benchmark_condition_field: false
+    per_arm_identity_fields:
+      - model_arm
+      - adapter_id
+      - provider_route
+      - provider_model_id
+      - generation.reasoning_effort
+      - generation.max_completion_tokens
+      - generation.prompt_cache
+      - generation.prompt_cache_key
+      - generation.sticky_routing
+  condition_key_format: >-
+    forteval/v1|profile={profile}|profile_version={profile_version}|task={task_id}|task_version={task_version}|seed={seed}|seed_split={seed_split}|obs={observation_profile}|vision={vision_enabled}|action={action_profile}|knowledge={knowledge_condition}|memory={memory_mode}|steps={max_steps}|ticks_per_step={ticks_per_step}|score={score_version}|evaluator={evaluator_version}
+  run_identity_key_format: "{condition_key}|model_arm={model_arm}"
+  comparison_rule: >-
+    Compare model arms only inside one identical benchmark-condition key.
+    Stochastic cohort and exposure diagnostics may be compared only across
+    replicated matched-condition runs and never determine one-run pass/fail.
+  pair_comparison_enabled: false
+  pair_comparison_reason: calibration has one run per variant; no replicated claim is valid
+
+cost_and_kill:
+  expenditure_cap:
+    enabled: false
+    per_run_usd: null
+    per_cell_usd: null
+  pricing_status: must_be_recorded_per_run
+  usage_logging_required: true
+  stop_on:
+    - provenance_violation
+    - rollback_unverified
+    - contamination_signal
+    - missing_required_evidence_after_retry_budget
+    - declared_step_or_tick_ceiling
+  infrastructure_abort_is_policy_failure: false
+
+publication:
+  calibration_results_public: false
+  valid_failures_publishable: true
+  validity_and_outcome_separate: true
+  cache_hit_rate_is_cost_diagnostic: true
+  valid_failure_definition:
+    required_evidence_complete: true
+    contamination_free: true
+    declared_condition_and_arm_recorded: true
+    policy_or_budget_failure_is_not_suppressed: true
+  invalid_results_remain_unpublishable: true
+  publish_failure_with_same_prominence_as_success: true
+
+base_config:
+  backend: dfhack
+  max_steps: 200
+  model: dfhack-governed-llm-fable5
+  ticks_per_step: 2500
+  evaluation_protocol: fort-eval-easy-p1-g7-v5
+  preserve_save: false
+  seed_save: seed_region3_fresh
+  runtime_save: region1
+variants:
+  - name: fable5-memory-off
+    model: dfhack-governed-llm-fable5
+    memory_window: 0
+  - name: gpt56-sol-memory-off
+    model: dfhack-governed-llm-gpt56-sol
+    memory_window: 0
+runs_per_variant: 1

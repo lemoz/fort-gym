@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import re
 import socket
 import struct
 import time
@@ -21,6 +22,7 @@ except ModuleNotFoundError:  # noqa: pragma: no cover
 try:  # pragma: no cover - optional dependency
     from .remote_proto import ProtoLoadError, ensure_proto_modules
 except Exception:  # noqa: pragma: no cover
+
     class ProtoLoadError(RuntimeError):
         pass
 
@@ -36,6 +38,120 @@ class DFHackError(RuntimeError):
 
 class DFHackUnavailableError(DFHackError):
     """Raised when the remote DFHack interface is not reachable."""
+
+
+_RUNTIME_RUN_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$")
+_RUNTIME_NONCE_RE = re.compile(r"^[a-f0-9]{32,64}$")
+_RUNTIME_SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
+_RUNTIME_IDENTITY_PREFIX = "FORTGYM_RUNTIME_IDENTITY\t"
+_RUNTIME_IDENTITY_LUA = r"""
+local f = io.open('/run/fortgym/run-identity.tsv', 'r')
+if not f then
+  qerror('fortgym runtime identity unavailable')
+end
+local identity = f:read('*l') or ''
+f:close()
+dfhack.print('FORTGYM_RUNTIME_IDENTITY\t' .. identity)
+""".strip()
+
+
+def _validated_runtime_identity(
+    *,
+    run_id: str | None,
+    nonce: str | None,
+    contract_sha256: str | None,
+    seed_tree_sha256: str | None,
+    seed_world_sha256: str | None,
+    image_manifest_sha256: str | None,
+    image_config_sha256: str | None,
+    image_archive_sha256: str | None,
+) -> tuple[str, str, str, str, str, str, str, str] | None:
+    """Validate an all-or-none expected runtime identity.
+
+    A supervised worker receives this identity through its sanitized process
+    environment. Legacy callers have no identity fields and retain the old
+    connection behavior.
+    """
+
+    values = (
+        run_id,
+        nonce,
+        contract_sha256,
+        seed_tree_sha256,
+        seed_world_sha256,
+        image_manifest_sha256,
+        image_config_sha256,
+        image_archive_sha256,
+    )
+    if not any(value is not None for value in values):
+        return None
+    if not all(isinstance(value, str) and value for value in values):
+        raise ValueError(
+            "expected DFHack runtime identity requires run ID, nonce, contract, "
+            "seed-tree, seed-world, image-manifest, image-config, and image-archive digests"
+        )
+    assert run_id is not None
+    assert nonce is not None
+    assert contract_sha256 is not None
+    assert seed_tree_sha256 is not None
+    assert seed_world_sha256 is not None
+    assert image_manifest_sha256 is not None
+    assert image_config_sha256 is not None
+    assert image_archive_sha256 is not None
+    if not _RUNTIME_RUN_ID_RE.fullmatch(run_id):
+        raise ValueError("expected DFHack runtime run ID is invalid")
+    if not _RUNTIME_NONCE_RE.fullmatch(nonce):
+        raise ValueError("expected DFHack runtime nonce is invalid")
+    digests = {
+        "contract": contract_sha256,
+        "seed-tree": seed_tree_sha256,
+        "seed-world": seed_world_sha256,
+        "image-manifest": image_manifest_sha256,
+        "image-config": image_config_sha256,
+        "image-archive": image_archive_sha256,
+    }
+    for label, digest in digests.items():
+        if not _RUNTIME_SHA256_RE.fullmatch(digest):
+            raise ValueError(f"expected DFHack runtime {label} digest is invalid")
+    return (
+        run_id,
+        nonce,
+        contract_sha256,
+        seed_tree_sha256,
+        seed_world_sha256,
+        image_manifest_sha256,
+        image_config_sha256,
+        image_archive_sha256,
+    )
+
+
+def _runtime_identity_from_environment() -> (
+    tuple[str, str, str, str, str, str, str, str] | None
+):
+    """Load the complete supervisor identity, or preserve a true legacy launch."""
+
+    prepared = os.environ.get("FORT_GYM_RUNTIME_PREPARED")
+    values = {
+        "run_id": os.environ.get("FORT_GYM_RUN_ID"),
+        "nonce": os.environ.get("FORT_GYM_RUN_NONCE"),
+        "contract_sha256": os.environ.get("FORT_GYM_RUN_CONTRACT_SHA256"),
+        "seed_tree_sha256": os.environ.get("FORT_GYM_EXPECTED_SEED_TREE_SHA256"),
+        "seed_world_sha256": os.environ.get("FORT_GYM_EXPECTED_SEED_WORLD_SHA256"),
+        "image_manifest_sha256": os.environ.get(
+            "FORT_GYM_EXPECTED_IMAGE_MANIFEST_SHA256"
+        ),
+        "image_config_sha256": os.environ.get("FORT_GYM_EXPECTED_IMAGE_CONFIG_SHA256"),
+        "image_archive_sha256": os.environ.get(
+            "FORT_GYM_EXPECTED_IMAGE_ARCHIVE_SHA256"
+        ),
+    }
+    if prepared is None and not any(value is not None for value in values.values()):
+        return None
+    if prepared != "1":
+        raise ValueError(
+            "expected DFHack runtime identity requires FORT_GYM_RUNTIME_PREPARED=1"
+        )
+    return _validated_runtime_identity(**values)
 
 
 def _tile_to_char(tile: List[int]) -> str:
@@ -59,22 +175,33 @@ def _tile_to_char(tile: List[int]) -> str:
         250: ".",  # Interpunct
         254: "*",  # Square
         # Box drawing
-        179: "|", 180: "+", 191: "+", 192: "+",
-        193: "+", 194: "+", 195: "+", 196: "-",
-        197: "+", 217: "+", 218: "+",
+        179: "|",
+        180: "+",
+        191: "+",
+        192: "+",
+        193: "+",
+        194: "+",
+        195: "+",
+        196: "-",
+        197: "+",
+        217: "+",
+        218: "+",
         # Arrows
-        24: "^", 25: "v", 26: ">", 27: "<",
+        24: "^",
+        25: "v",
+        26: ">",
+        27: "<",
         # Other common
-        1: "@",    # Smiley (dwarf)
-        2: "@",    # Inverse smiley
-        3: "<3",   # Heart
-        4: "<>",   # Diamond
-        5: "*",    # Club
-        6: "*",    # Spade
-        7: "o",    # Bullet
-        15: "*",   # Sun
-        30: "^",   # Up triangle
-        31: "v",   # Down triangle
+        1: "@",  # Smiley (dwarf)
+        2: "@",  # Inverse smiley
+        3: "<3",  # Heart
+        4: "<>",  # Diamond
+        5: "*",  # Club
+        6: "*",  # Spade
+        7: "o",  # Bullet
+        15: "*",  # Sun
+        30: "^",  # Up triangle
+        31: "v",  # Down triangle
     }
     return cp437_map.get(char_code, "?")
 
@@ -85,7 +212,9 @@ def _tile_attr(tile: List[int]) -> Tuple[Optional[int], Optional[int]]:
     return fg, bg
 
 
-def _screen_rows(screen: Dict[str, Any]) -> List[Tuple[str, List[Tuple[Optional[int], Optional[int]]]]]:
+def _screen_rows(
+    screen: Dict[str, Any],
+) -> List[Tuple[str, List[Tuple[Optional[int], Optional[int]]]]]:
     width = screen.get("width", 80)
     height = screen.get("height", 25)
     tiles = screen.get("tiles", [])
@@ -212,7 +341,7 @@ def screen_to_text(screen: Dict[str, Any]) -> str:
     while lines and not lines[-1]:
         lines.pop()
 
-    return '\n'.join(lines)
+    return "\n".join(lines)
 
 
 def screen_to_text_with_visual_hints(screen: Dict[str, Any]) -> str:
@@ -230,6 +359,66 @@ class CallDescriptor:
     input_cls: type[Message]
     output_cls: type[Message]
     plugin: str = ""
+
+
+_MISSING_NOTIFICATION_FIELD = object()
+
+
+def _text_notification_content(notification: Any) -> str:
+    """Return text from a validated DFHack RPC text notification.
+
+    DFHack 0.47.05-r8 encodes output as ``CoreTextNotification.fragments``
+    where every fragment has a required ``text`` field. A direct ``text``
+    attribute is retained only for compatibility with legacy client shims.
+    """
+
+    try:
+        fragments = getattr(
+            notification,
+            "fragments",
+            _MISSING_NOTIFICATION_FIELD,
+        )
+    except Exception as exc:
+        raise DFHackError("Malformed DFHack RPC text notification") from exc
+
+    if fragments is not _MISSING_NOTIFICATION_FIELD:
+        if fragments is None or isinstance(fragments, (str, bytes, bytearray)):
+            raise DFHackError("Malformed DFHack RPC text notification fragments")
+        try:
+            iterator = iter(fragments)
+        except TypeError as exc:
+            raise DFHackError("Malformed DFHack RPC text notification fragments") from exc
+
+        chunks: list[str] = []
+        try:
+            for fragment in iterator:
+                has_field = getattr(fragment, "HasField", None)
+                if callable(has_field):
+                    try:
+                        has_text = bool(has_field("text"))
+                    except (TypeError, ValueError) as exc:
+                        raise DFHackError(
+                            "Malformed DFHack RPC text notification fragment"
+                        ) from exc
+                    if not has_text:
+                        raise DFHackError("Malformed DFHack RPC text notification fragment")
+                value = getattr(fragment, "text", _MISSING_NOTIFICATION_FIELD)
+                if not isinstance(value, str):
+                    raise DFHackError("Malformed DFHack RPC text notification fragment")
+                chunks.append(value)
+        except DFHackError:
+            raise
+        except Exception as exc:
+            raise DFHackError("Malformed DFHack RPC text notification fragments") from exc
+        return "".join(chunks)
+
+    try:
+        direct_text = getattr(notification, "text", _MISSING_NOTIFICATION_FIELD)
+    except Exception as exc:
+        raise DFHackError("Malformed DFHack RPC text notification") from exc
+    if isinstance(direct_text, str):
+        return direct_text
+    raise DFHackError("Malformed DFHack RPC text notification payload")
 
 
 class DFHackClient:
@@ -254,11 +443,43 @@ class DFHackClient:
         *,
         timeout: float = 5.0,
         retries: int = 3,
+        expected_run_id: str | None = None,
+        expected_nonce: str | None = None,
+        expected_contract_sha256: str | None = None,
+        expected_seed_tree_sha256: str | None = None,
+        expected_seed_world_sha256: str | None = None,
+        expected_image_manifest_sha256: str | None = None,
+        expected_image_config_sha256: str | None = None,
+        expected_image_archive_sha256: str | None = None,
     ) -> None:
         self.host = host or os.environ.get("DFHACK_HOST", "127.0.0.1")
         self.port = port or int(os.environ.get("DFHACK_PORT", "5000"))
         self.timeout = timeout
         self.retries = retries
+        explicit_identity = (
+            expected_run_id,
+            expected_nonce,
+            expected_contract_sha256,
+            expected_seed_tree_sha256,
+            expected_seed_world_sha256,
+            expected_image_manifest_sha256,
+            expected_image_config_sha256,
+            expected_image_archive_sha256,
+        )
+        if any(value is not None for value in explicit_identity):
+            self._expected_runtime_identity = _validated_runtime_identity(
+                run_id=expected_run_id,
+                nonce=expected_nonce,
+                contract_sha256=expected_contract_sha256,
+                seed_tree_sha256=expected_seed_tree_sha256,
+                seed_world_sha256=expected_seed_world_sha256,
+                image_manifest_sha256=expected_image_manifest_sha256,
+                image_config_sha256=expected_image_config_sha256,
+                image_archive_sha256=expected_image_archive_sha256,
+            )
+        else:
+            self._expected_runtime_identity = _runtime_identity_from_environment()
+        self._runtime_identity_verified = False
         self._sock: Optional[socket.socket] = None
         self._core = None
         self._fortress = None
@@ -306,29 +527,38 @@ class DFHackClient:
         last_error: Optional[Exception] = None
         for attempt in range(self.retries):
             try:
-                sock = socket.create_connection((self.host, self.port), timeout=self.timeout)
-                sock.settimeout(self.timeout)
+                sock = socket.create_connection(
+                    (self.host, self.port), timeout=self.timeout
+                )
                 self._sock = sock
+                sock.settimeout(self.timeout)
                 self._handshake()
+                self._attest_runtime_identity()
                 return
-            except OSError as exc:
+            except (DFHackError, OSError) as exc:
                 last_error = exc
-                time.sleep(0.25 * (attempt + 1))
+                self.close()
+                if attempt + 1 < self.retries:
+                    time.sleep(0.25 * (attempt + 1))
 
         raise DFHackUnavailableError(
             f"Unable to connect to DFHack remote interface at {self.host}:{self.port}: {last_error}"
         )
 
     def close(self) -> None:
-        if not self._sock:
+        sock = self._sock
+        self._sock = None
+        self._runtime_identity_verified = False
+        self._capture_text = None
+        self._method_cache.clear()
+        if not sock:
             return
 
         with suppress(Exception):
             header = self.HEADER_STRUCT.pack(self.RPC_REQUEST_QUIT, 0, 0)
-            self._sock.sendall(header)
+            sock.sendall(header)
         with suppress(Exception):
-            self._sock.close()
-        self._sock = None
+            sock.close()
 
     # ------------------------------------------------------------------
     # High-level helpers
@@ -384,10 +614,10 @@ class DFHackClient:
                 **limit_options,
             )
         else:
-            tick_info = advance_ticks_exact(
-                int(ticks), repause=True, **limit_options
-            )
-        self._last_tick_info = dict(tick_info) if isinstance(tick_info, dict) else tick_info
+            tick_info = advance_ticks_exact(int(ticks), repause=True, **limit_options)
+        self._last_tick_info = (
+            dict(tick_info) if isinstance(tick_info, dict) else tick_info
+        )
 
         return self.get_state()
 
@@ -395,11 +625,18 @@ class DFHackClient:
     def last_tick_info(self) -> Dict[str, Any]:
         return self._last_tick_info
 
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self, *, require_native: bool = False) -> Dict[str, Any]:
         self._ensure_connection()
 
         # Use CLI-based state reading since RPC doesn't capture dfhack.print output
         data = cli_read_game_state()
+        if require_native:
+            stocks = data.get("stocks") if isinstance(data, dict) else None
+            counts = [data.get("population")] if isinstance(data, dict) else []
+            if isinstance(stocks, dict):
+                counts += [stocks.get(key) for key in ("food", "drink", "wood", "stone")]
+            if len(counts) != 5 or any(type(value) is not int or value < 0 for value in counts):
+                raise RuntimeError("Native population/resource observation is unavailable")
         if not data:
             data = {
                 "time": 0,
@@ -456,7 +693,35 @@ class DFHackClient:
             return screen_to_text_with_visual_hints(screen)
         return screen_to_text(screen)
 
-    def designate_rect(self, x1: int, y1: int, z1: int, x2: int, y2: int, z2: int) -> Tuple[bool, Optional[str]]:
+    def run_command(
+        self,
+        command: str,
+        arguments: Iterable[str] | None = None,
+        *,
+        capture_output: bool = False,
+    ) -> list[str] | None:
+        """Run one DFHack command over the connected native RPC transport.
+
+        A command is never replayed automatically: doing so could duplicate a
+        mutating action. Transport and DFHack RPC failures close the connection
+        and clear connection-scoped state so the supervisor can explicitly
+        reconnect or terminate the run.
+        """
+
+        try:
+            self._ensure_connection()
+            return self._run_command(
+                command,
+                arguments,
+                capture_output=capture_output,
+            )
+        except (DFHackError, OSError):
+            self.close()
+            raise
+
+    def designate_rect(
+        self, x1: int, y1: int, z1: int, x2: int, y2: int, z2: int
+    ) -> Tuple[bool, Optional[str]]:
         self._ensure_connection()
         script = """
 local args = {...}
@@ -493,7 +758,9 @@ end
         except DFHackError as exc:
             return False, str(exc)
 
-    def queue_manager_order(self, job: str, quantity: int) -> Tuple[bool, Optional[str]]:
+    def queue_manager_order(
+        self, job: str, quantity: int
+    ) -> Tuple[bool, Optional[str]]:
         self._ensure_connection()
         if not job:
             return False, "Missing job name"
@@ -529,6 +796,40 @@ end
             raise DFHackUnavailableError("DFHack client not connected")
         if self._core is None or self._fortress is None:
             raise DFHackUnavailableError("DFHack protobuf modules not loaded")
+        if self._expected_runtime_identity and not self._runtime_identity_verified:
+            raise DFHackUnavailableError("DFHack runtime identity was not verified")
+
+    def _attest_runtime_identity(self) -> None:
+        """Fail closed if the connected DF process is not this worker's runtime.
+
+        This read-only command runs immediately after the native RPC handshake,
+        before the client can issue gameplay commands. It is intentionally not
+        retried as a command; a failed connection attempt is discarded in full.
+        """
+
+        expected = self._expected_runtime_identity
+        if expected is None:
+            self._runtime_identity_verified = True
+            return
+        output = self._run_command(
+            "lua",
+            [_RUNTIME_IDENTITY_LUA],
+            capture_output=True,
+        )
+        joined = "".join(output or [])
+        candidates = [
+            line[len(_RUNTIME_IDENTITY_PREFIX) :]
+            for line in joined.splitlines()
+            if line.startswith(_RUNTIME_IDENTITY_PREFIX)
+        ]
+        if len(candidates) != 1:
+            raise DFHackError(
+                "DFHack runtime identity attestation was missing or ambiguous"
+            )
+        observed = tuple(candidates[0].split("\t"))
+        if len(observed) != 8 or observed != expected:
+            raise DFHackError("DFHack runtime identity mismatch")
+        self._runtime_identity_verified = True
 
     def _handshake(self) -> None:
         assert self._sock is not None
@@ -587,10 +888,14 @@ end
             payload = self._read_exact(size)
 
             if rpc_id == self.RPC_REPLY_TEXT:
-                text = self._core.CoreTextNotification()
-                text.ParseFromString(payload)
-                if self._capture_text is not None and getattr(text, "text", ""):
-                    self._capture_text.append(text.text)
+                notification = self._core.CoreTextNotification()
+                try:
+                    notification.ParseFromString(payload)
+                except Exception as exc:
+                    raise DFHackError("Malformed DFHack RPC text notification") from exc
+                content = _text_notification_content(notification)
+                if self._capture_text is not None and content:
+                    self._capture_text.append(content)
                 continue
             if rpc_id == self.RPC_REPLY_FAIL:
                 code = struct.unpack("<i", payload)[0]
@@ -627,11 +932,13 @@ end
         if arguments:
             request.arguments.extend(arguments)
         self._capture_text = [] if capture_output else None
-        self._send_request(self.RPC_RUN_COMMAND, request)
-        self._read_reply(self._core.EmptyMessage)
-        output = self._capture_text
-        self._capture_text = None
-        return output if capture_output else None
+        try:
+            self._send_request(self.RPC_RUN_COMMAND, request)
+            self._read_reply(self._core.EmptyMessage)
+            output = list(self._capture_text or [])
+            return output if capture_output else None
+        finally:
+            self._capture_text = None
 
 
 __all__ = [

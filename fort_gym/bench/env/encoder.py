@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Tuple
 
-from ..eval.gates import G7_DURATION_TICKS, G7_MIN_FUNCTIONAL_ROOMS, G7_MIN_POPULATION
+from ..eval.gates import G7_INITIAL_COHORT, G7_MIN_FUNCTIONAL_ROOMS
+from ..tick_receipt import TICKS_PER_YEAR
 from .actions import normalized_objective
 
 INVALID_DF_CURSOR = -30000
@@ -67,19 +68,12 @@ def _g7_fact_snapshot(state: Dict[str, Any]) -> Dict[str, Any]:
         and observed_tick is not None
     ):
         candidate_elapsed = (
-            (observed_year - start_year) * G7_DURATION_TICKS
-            + observed_tick
-            - start_tick
+            (observed_year - start_year) * TICKS_PER_YEAR + observed_tick - start_tick
         )
         elapsed_ticks = candidate_elapsed if candidate_elapsed >= 0 else None
 
     population = _int_or_none(state.get("population"))
-    if population is None:
-        required_beds = None
-    elif population > 0:
-        required_beds = (population + 2) // 3
-    else:
-        required_beds = 0
+    required_beds = (G7_INITIAL_COHORT + 2) // 3
     fort = _dict_or_empty(state.get("fort"))
     crew = _dict_or_empty(state.get("crew"))
     completed = _dict_or_empty(crew.get("placed_furniture_completed"))
@@ -138,8 +132,7 @@ def _g7_fact_snapshot(state: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "survival_evidence_status": survival_evidence_status,
         "duration_ticks": elapsed_ticks,
-        "duration_required": G7_DURATION_TICKS,
-        "duration_status": threshold_status(elapsed_ticks, G7_DURATION_TICKS),
+        "duration_gate_effect": "none",
         "food_produced": food_produced,
         "food_consumed": food_consumed,
         "food_flow_status": flow_status(food_produced, food_consumed),
@@ -150,8 +143,7 @@ def _g7_fact_snapshot(state: Dict[str, Any]) -> Dict[str, Any]:
         "drink_loop_status": drink_loop_status,
         "flow_evidence_complete": flow_complete,
         "population": population,
-        "population_required": G7_MIN_POPULATION,
-        "population_status": threshold_status(population, G7_MIN_POPULATION),
+        "population_gate_effect": "none",
         "functional_rooms": functional_rooms,
         "functional_rooms_required": G7_MIN_FUNCTIONAL_ROOMS,
         "functional_rooms_status": threshold_status(
@@ -196,7 +188,9 @@ def _sanitize_token(value: str, limit: int = 32) -> str:
     conservative whitelist here so a stray character cannot corrupt the
     single-line observation. Non-whitelisted characters are dropped.
     """
-    cleaned = "".join(ch for ch in value if ch.isalnum() or ch in {"_", "-", " "}).strip()
+    cleaned = "".join(
+        ch for ch in value if ch.isalnum() or ch in {"_", "-", " "}
+    ).strip()
     return cleaned[:limit]
 
 
@@ -353,7 +347,9 @@ def _classify_screen_state(
             extra_evidence=useful_rows[:3] or ["visible manager new-order search"],
         )
 
-    if "manager" in lower and ("work order" in lower or "new order" in lower or "orders" in lower):
+    if "manager" in lower and (
+        "work order" in lower or "new order" in lower or "orders" in lower
+    ):
         return result(
             "manager_orders",
             confidence="medium",
@@ -366,7 +362,10 @@ def _classify_screen_state(
         )
 
     if "carpenter's workshop" in lower and (
-        "enter: select" in lower and "item" in lower and "dist" in lower and "num" in lower
+        "enter: select" in lower
+        and "item" in lower
+        and "dist" in lower
+        and "num" in lower
     ):
         return result(
             "workshop_material_selection",
@@ -381,7 +380,9 @@ def _classify_screen_state(
 
     if "carpenter's workshop" in lower and "placement" in lower:
         blocked = (
-            "blocked" in lower or "building present" in lower or "needs building material" in lower
+            "blocked" in lower
+            or "building present" in lower
+            or "needs building material" in lower
         )
         return result(
             "workshop_placement",
@@ -468,7 +469,9 @@ def _classify_screen_state(
         )
 
     if "carpenter's workshop" in lower and (
-        "x: remove building" in lower or "ctrl+n: give name" in lower or "esc: done" in lower
+        "x: remove building" in lower
+        or "ctrl+n: give name" in lower
+        or "esc: done" in lower
     ):
         return result(
             "carpenter_workshop_selected",
@@ -580,7 +583,9 @@ def _format_action_history_entry(action_entry: Dict[str, Any]) -> str:
     changed = action_entry.get("changed")
     reasons = action_entry.get("productive_reasons")
     screen_read = (
-        action_entry.get("screen_read") if isinstance(action_entry.get("screen_read"), dict) else {}
+        action_entry.get("screen_read")
+        if isinstance(action_entry.get("screen_read"), dict)
+        else {}
     )
     last_action_review = (
         action_entry.get("last_action_review")
@@ -642,7 +647,8 @@ def _format_action_history_entry(action_entry: Dict[str, Any]) -> str:
         details.append("reasons=" + ",".join(str(reason) for reason in reasons[:4]))
     if isinstance(changed, list):
         details.append(
-            "changed=" + (", ".join(str(item) for item in changed[:6]) if changed else "none")
+            "changed="
+            + (", ".join(str(item) for item in changed[:6]) if changed else "none")
         )
     before_order_qty = action_entry.get("order_qty_left_before")
     after_order_qty = action_entry.get("order_qty_left_after")
@@ -652,7 +658,9 @@ def _format_action_history_entry(action_entry: Dict[str, Any]) -> str:
         mode = str(screen_read.get("mode") or "").strip()
         confidence = str(screen_read.get("confidence") or "").strip()
         if mode:
-            details.append("agent_screen=" + mode + (f"/{confidence}" if confidence else ""))
+            details.append(
+                "agent_screen=" + mode + (f"/{confidence}" if confidence else "")
+            )
     if last_action_review:
         verdict = str(last_action_review.get("verdict") or "").strip()
         if verdict:
@@ -680,7 +688,9 @@ def _format_last_action_command(step: Any, action: Dict[str, Any]) -> str:
     entry = {
         "action_type": action.get("type"),
         "params": {
-            key: value for key, value in params.items() if key != "keys" and value is not None
+            key: value
+            for key, value in params.items()
+            if key != "keys" and value is not None
         },
         "keys": params.get("keys", []),
     }
@@ -769,7 +779,9 @@ def _governed_plan_control(
             last_review_index = index
             break
     actions_since_review = (
-        len(history) if last_review_index is None else len(history) - last_review_index - 1
+        len(history)
+        if last_review_index is None
+        else len(history) - last_review_index - 1
     )
 
     reasons: List[str] = []
@@ -784,8 +796,10 @@ def _governed_plan_control(
         recent = history[-2:]
         objectives = [normalized_objective(entry.get("objective")) for entry in recent]
         verdicts = [_governed_review_verdict(entry) for entry in recent]
-        if objectives[0] and objectives[0] == objectives[1] and all(
-            verdict in {"rejected", "no_progress"} for verdict in verdicts
+        if (
+            objectives[0]
+            and objectives[0] == objectives[1]
+            and all(verdict in {"rejected", "no_progress"} for verdict in verdicts)
         ):
             reasons.append("same_objective_stalled_2")
 
@@ -857,7 +871,11 @@ def _action_family(entry: Dict[str, Any]) -> str:
 
 def _is_escape_only_action(entry: Dict[str, Any]) -> bool:
     keys = entry.get("keys")
-    return bool(isinstance(keys, list) and keys and all(str(key) == "LEAVESCREEN" for key in keys))
+    return bool(
+        isinstance(keys, list)
+        and keys
+        and all(str(key) == "LEAVESCREEN" for key in keys)
+    )
 
 
 def _is_blockable_menu_family(family: str) -> bool:
@@ -946,7 +964,9 @@ def _recent_progress_summary(
             continue
         sticky_family_counts[family] = sticky_family_counts.get(family, 0) + 1
         fingerprint = _key_fingerprint(entry.get("keys"))
-        sticky_fingerprint_counts[fingerprint] = sticky_fingerprint_counts.get(fingerprint, 0) + 1
+        sticky_fingerprint_counts[fingerprint] = (
+            sticky_fingerprint_counts.get(fingerprint, 0) + 1
+        )
         review = entry.get("last_action_review")
         if isinstance(review, dict) and review.get("should_retry_same_path") is False:
             sticky_agent_marked_bad_path = True
@@ -968,7 +988,9 @@ def _recent_progress_summary(
     last_entry = action_history[-1]
     last_key_fingerprint = _key_fingerprint(last_entry.get("keys"))
     last_action_family = _action_family(last_entry)
-    escape_recovery_attempted = any(_is_escape_only_action(entry) for entry in no_progress_entries)
+    escape_recovery_attempted = any(
+        _is_escape_only_action(entry) for entry in no_progress_entries
+    )
 
     manager_orders = _to_int(work.get("manager_orders_count"))
     order_qty_left = _to_int(work.get("manager_orders_amount_left"))
@@ -1074,7 +1096,11 @@ def encode_observation(
     reminders = clean_state.get("reminders", [])
     pause_state = clean_state.get("pause_state", None)
     viewscreen_type = clean_state.get("viewscreen_type")
-    survival = clean_state.get("survival") if isinstance(clean_state.get("survival"), dict) else {}
+    survival = (
+        clean_state.get("survival")
+        if isinstance(clean_state.get("survival"), dict)
+        else {}
+    )
     work = clean_state.get("work") if isinstance(clean_state.get("work"), dict) else {}
     keystroke_history = [
         entry
@@ -1090,7 +1116,11 @@ def encode_observation(
     g7_snapshot = _g7_fact_snapshot(clean_state) if governed else None
     if g7_snapshot is not None:
         clean_state["g7_fact_snapshot"] = g7_snapshot
-    ui_work = clean_state.get("ui_work") if isinstance(clean_state.get("ui_work"), dict) else {}
+    ui_work = (
+        clean_state.get("ui_work")
+        if isinstance(clean_state.get("ui_work"), dict)
+        else {}
+    )
     ui_target_setup = (
         clean_state.get("ui_target_setup")
         if isinstance(clean_state.get("ui_target_setup"), dict)
@@ -1141,7 +1171,8 @@ def encode_observation(
         and "Needs building material" not in screen_text
     )
     screen_shows_workshop_select_state = bool(
-        screen_shows_ready_workshop_placement or screen_shows_workshop_material_selection
+        screen_shows_ready_workshop_placement
+        or screen_shows_workshop_material_selection
     )
     screen_lower = screen_text.lower() if screen_text else ""
     screen_shows_manager_required = "manager is required" in screen_lower
@@ -1166,7 +1197,8 @@ def encode_observation(
     if screen_state:
         clean_state["screen_state"] = screen_state
     active_material_blocked = bool(
-        ui_build_feedback.get("material_blocked") and not screen_shows_workshop_select_state
+        ui_build_feedback.get("material_blocked")
+        and not screen_shows_workshop_select_state
     )
 
     # Build status section
@@ -1183,7 +1215,9 @@ def encode_observation(
             screen_line += f", highlighted={highlighted}"
         evidence = screen_state.get("evidence")
         if isinstance(evidence, list) and evidence:
-            screen_line += "; evidence=" + " | ".join(str(item) for item in evidence[:3])
+            screen_line += "; evidence=" + " | ".join(
+                str(item) for item in evidence[:3]
+            )
         status_lines.append(screen_line)
         instruction = screen_state.get("instruction")
         if instruction and (not governed or screen_state.get("mode") == "stores"):
@@ -1223,7 +1257,9 @@ def encode_observation(
             for record in death_records[:4]:
                 if not isinstance(record, dict):
                     continue
-                cause = record.get("cause_name") if record.get("cause_known") else "UNKNOWN"
+                cause = (
+                    record.get("cause_name") if record.get("cause_known") else "UNKNOWN"
+                )
                 cause_source = record.get("cause_source") or "unavailable"
                 detail = (
                     f"unit={record.get('unit_id', '?')} cause={cause} "
@@ -1247,9 +1283,8 @@ def encode_observation(
             "G7 planning facts (not a verdict; evidence, run scope, rubric, and scalar "
             "are terminal-only): "
             f"survival_evidence={g7_snapshot['survival_evidence_status']}; "
-            f"duration={g7_snapshot['duration_ticks']}/"
-            f"{g7_snapshot['duration_required']} ticks "
-            f"({g7_snapshot['duration_status']}); "
+            f"elapsed_ticks={g7_snapshot['duration_ticks']} "
+            "(diagnostic only; no G7 threshold); "
             f"food_flow={g7_snapshot['food_flow_status']} "
             f"({g7_snapshot['food_produced']} produced vs "
             f"{g7_snapshot['food_consumed']} consumed; requires produced>consumed); "
@@ -1259,15 +1294,15 @@ def encode_observation(
             f"{g7_snapshot['drink_consumed']} consumed; "
             f"final_stock={g7_snapshot['final_drink']}; "
             "requires produced>consumed and final_stock>0); "
-            f"population={g7_snapshot['population']}/"
-            f"{g7_snapshot['population_required']} "
-            f"({g7_snapshot['population_status']}); "
+            f"population={g7_snapshot['population']} "
+            "(diagnostic only; compare matched cohorts); "
             f"functional_rooms={g7_snapshot['functional_rooms']}/"
             f"{g7_snapshot['functional_rooms_required']} "
-            f"({g7_snapshot['functional_rooms_status']}); "
+            f"({g7_snapshot['functional_rooms_status']}; terminal credit requires "
+            "final owned accessible geometry); "
             f"installed_beds={g7_snapshot['installed_beds']}/"
             f"{g7_snapshot['installed_beds_required']} "
-            f"({g7_snapshot['installed_beds_status']}); "
+            f"({g7_snapshot['installed_beds_status']}; fixed initial cohort); "
             f"death_branch={g7_snapshot['death_status']} "
             f"(deaths_in_run={g7_snapshot['deaths_in_run']}, "
             f"death_evidence_complete={g7_snapshot['death_evidence_complete']}, "
@@ -1281,9 +1316,13 @@ def encode_observation(
         if isinstance(last_action, dict):
             status_lines.append(
                 "Last Action command: "
-                + _format_last_action_command(last_action_result.get("_action_step", "?"), last_action)
+                + _format_last_action_command(
+                    last_action_result.get("_action_step", "?"), last_action
+                )
             )
-        accepted = last_action_result.get("accepted", last_action_result.get("ok", True))
+        accepted = last_action_result.get(
+            "accepted", last_action_result.get("ok", True)
+        )
         action_result = (
             last_action_result.get("result")
             if isinstance(last_action_result.get("result"), dict)
@@ -1306,21 +1345,24 @@ def encode_observation(
                 )
             elif action_result.get("mutation_state") == "rolled_back":
                 status_lines.append(f"Last Action: REJECTED AND ROLLED BACK - {reason}")
-            elif action_result.get("partial") and (
-                _int_or_none(action_result.get("placed_count")) or 0
-            ) > 0:
+            elif (
+                action_result.get("partial")
+                and (_int_or_none(action_result.get("placed_count")) or 0) > 0
+            ):
                 status_lines.append(f"Last Action: PARTIAL MUTATION - {reason}")
             else:
                 status_lines.append(f"Last Action: REJECTED - {reason}")
         last_action_params = (
             last_action.get("params")
-            if isinstance(last_action, dict) and isinstance(last_action.get("params"), dict)
+            if isinstance(last_action, dict)
+            and isinstance(last_action.get("params"), dict)
             else {}
         )
         is_owned_excavation = bool(
             isinstance(last_action, dict)
             and last_action.get("type") == "DIG"
-            and str(last_action_params.get("kind") or "dig").lower() in {"dig", "channel"}
+            and str(last_action_params.get("kind") or "dig").lower()
+            in {"dig", "channel"}
             and last_action_result.get("provenance") == "dfhack_governed"
         )
         if accepted and is_owned_excavation:
@@ -1370,7 +1412,9 @@ def encode_observation(
                             if entry.get(key) is not None
                         ]
                         suffix = " [" + ", ".join(facts) + "]" if facts else ""
-                        coords = f"({fx},{fy},{fz})" if fz is not None else f"({fx},{fy})"
+                        coords = (
+                            f"({fx},{fy},{fz})" if fz is not None else f"({fx},{fy})"
+                        )
                         tile_parts.append(f"{coords}: {err}{suffix}")
                 if tile_parts:
                     status_lines.append("Failed tiles: " + "; ".join(tile_parts))
@@ -1435,7 +1479,9 @@ def encode_observation(
             seasons_set = action_result.get("seasons_set")
             if isinstance(seasons_set, list) and seasons_set:
                 set_names = [
-                    _sanitize_token(name) for name in seasons_set if isinstance(name, str) and name
+                    _sanitize_token(name)
+                    for name in seasons_set
+                    if isinstance(name, str) and name
                 ]
                 set_names = [n for n in set_names if n]
                 if set_names:
@@ -1455,7 +1501,9 @@ def encode_observation(
                         if label:
                             skip_parts.append(label)
                 if skip_parts:
-                    status_lines.append("FARM seasons skipped: " + "; ".join(skip_parts))
+                    status_lines.append(
+                        "FARM seasons skipped: " + "; ".join(skip_parts)
+                    )
 
     if agent_plan_control is not None:
         due = "yes" if agent_plan_control["review_due"] else "no"
@@ -1502,8 +1550,12 @@ def encode_observation(
                 )
                 status_lines.append("   Try a DIFFERENT approach or key sequence.")
             elif not diff.get("cursor_moved") and diff.get("change_pct", 100) < 10:
-                status_lines.append("⚠️ NOTICE: Cursor did NOT move. Screen barely changed.")
-                status_lines.append("   Your navigation keys may not be working as expected.")
+                status_lines.append(
+                    "⚠️ NOTICE: Cursor did NOT move. Screen barely changed."
+                )
+                status_lines.append(
+                    "   Your navigation keys may not be working as expected."
+                )
             elif diff.get("cursor_moved"):
                 prev_pos = diff.get("prev_cursor")
                 curr_pos = diff.get("curr_cursor")
@@ -1520,7 +1572,9 @@ def encode_observation(
                     elif dx > 0:
                         direction.append(f"right {dx}")
                     if direction:
-                        status_lines.append(f"Cursor moved: {', '.join(direction)} tiles")
+                        status_lines.append(
+                            f"Cursor moved: {', '.join(direction)} tiles"
+                        )
 
     def _stock_with_usable(label: str, total_key: str, usable_key: str) -> str:
         total = stocks.get(total_key, 0)
@@ -1630,7 +1684,8 @@ def encode_observation(
         task_job_names = work.get("carpenter_workshop_task_job_type_names")
         if isinstance(task_job_names, list) and task_job_names:
             status_lines.append(
-                "Workshop queued tasks: " + ", ".join(str(name) for name in task_job_names[:8])
+                "Workshop queued tasks: "
+                + ", ".join(str(name) for name in task_job_names[:8])
             )
         active_job_names = work.get("active_job_type_names")
         if isinstance(active_job_names, list) and active_job_names:
@@ -1814,13 +1869,17 @@ def encode_observation(
                 )
     crew = clean_state.get("crew")
     if isinstance(crew, dict) and crew.get("ok"):
-        citizens = crew.get("citizens") if isinstance(crew.get("citizens"), dict) else {}
+        citizens = (
+            crew.get("citizens") if isinstance(crew.get("citizens"), dict) else {}
+        )
         if isinstance(citizens, dict) and citizens:
             total = _int_or_none(citizens.get("total"))
             idle = _int_or_none(citizens.get("idle"))
             labor_eligible = _int_or_none(citizens.get("labor_eligible"))
             labor_eligible_idle = _int_or_none(citizens.get("labor_eligible_idle"))
-            labor_eligibility_complete = citizens.get("labor_eligibility_complete") is True
+            labor_eligibility_complete = (
+                citizens.get("labor_eligibility_complete") is True
+            )
             labor_state_complete = citizens.get("labor_state_complete") is True
             citizen_list_truncated = citizens.get("list_truncated") is True
             if total is not None and idle is not None:
@@ -1845,7 +1904,9 @@ def encode_observation(
                 if labor_eligible is not None:
                     eligibility_parts.append(f"labor_eligible={labor_eligible}")
                 if labor_eligible_idle is not None:
-                    eligibility_parts.append(f"labor_eligible_idle={labor_eligible_idle}")
+                    eligibility_parts.append(
+                        f"labor_eligible_idle={labor_eligible_idle}"
+                    )
                 if isinstance(citizens.get("labor_eligibility_complete"), bool):
                     eligibility_parts.append(
                         "labor_eligibility_complete="
@@ -1887,7 +1948,9 @@ def encode_observation(
                         labor_names = []
                         labor_str = "?"
                     elif isinstance(labors, list):
-                        labor_names = [str(name) for name in labors if isinstance(name, str)]
+                        labor_names = [
+                            str(name) for name in labors if isinstance(name, str)
+                        ]
                         labor_str = ",".join(labor_names) if labor_names else "-"
                     else:
                         labor_names = []
@@ -1895,8 +1958,7 @@ def encode_observation(
                     job = entry.get("current_job_type")
                     current_job_known = entry.get("current_job_known")
                     if (
-                        governed
-                        and current_job_known is not True
+                        governed and current_job_known is not True
                     ) or current_job_known is False:
                         job_str = "job=unknown"
                     elif isinstance(job, str) and job:
@@ -1935,7 +1997,9 @@ def encode_observation(
                         else:
                             citizen_line += " labor_eligibility=unknown"
                     if isinstance(labors_known, bool):
-                        citizen_line += f" labors_known={'true' if labors_known else 'false'}"
+                        citizen_line += (
+                            f" labors_known={'true' if labors_known else 'false'}"
+                        )
                     if isinstance(current_job_known, bool):
                         citizen_line += (
                             " current_job_known="
@@ -1961,7 +2025,9 @@ def encode_observation(
                     and labor_eligible_idle >= 0
                 ):
                     candidate_subject = (
-                        "adult citizen is" if labor_eligible_idle == 1 else "adult citizens are"
+                        "adult citizen is"
+                        if labor_eligible_idle == 1
+                        else "adult citizens are"
                     )
                     status_lines.append(
                         f"Parallel capacity candidates: {labor_eligible_idle} {candidate_subject} "
@@ -2042,7 +2108,9 @@ def encode_observation(
                             sample += "[suspended]"
                         if entry.get("has_worker") is False:
                             sample += "[unassigned]"
-                        target_connectivity = entry.get("target_walk_group_connectivity")
+                        target_connectivity = entry.get(
+                            "target_walk_group_connectivity"
+                        )
                         if isinstance(target_connectivity, str) and target_connectivity:
                             sample += (
                                 "[target_walk_group_connectivity="
@@ -2054,8 +2122,7 @@ def encode_observation(
                             and walk_group_connectivity
                         ):
                             sample += (
-                                "[walk_group_connectivity="
-                                f"{walk_group_connectivity}]"
+                                f"[walk_group_connectivity={walk_group_connectivity}]"
                             )
                         sample_parts.append(sample)
                     if sample_parts:
@@ -2086,11 +2153,11 @@ def encode_observation(
                         f"queued_jobs={queued_jobs}"
                     )
                     if subtype == "Carpenters":
-                        workshop_line += " — ORDER can queue jobs to any built carpenter workshop."
-                    elif subtype == "Still":
                         workshop_line += (
-                            " — ORDER job=brew can queue brewing jobs at any built Still."
+                            " — ORDER can queue jobs to any built carpenter workshop."
                         )
+                    elif subtype == "Still":
+                        workshop_line += " — ORDER job=brew can queue brewing jobs at any built Still."
                 else:
                     workshop_line = (
                         f"Workshop id={workshop_id} {subtype} at ({x},{y},{z}): "
@@ -2098,7 +2165,9 @@ def encode_observation(
                         f"queued_jobs={queued_jobs}"
                     )
                     if jobs_construct_building == 0:
-                        workshop_line += " — no construct job exists; construction is stalled"
+                        workshop_line += (
+                            " — no construct job exists; construction is stalled"
+                        )
                 queued_details = workshop.get("queued_job_details")
                 if isinstance(queued_details, list) and queued_details:
                     rendered_jobs = []
@@ -2108,10 +2177,16 @@ def encode_observation(
                         job_id = _int_or_none(job_detail.get("id"))
                         job_type = str(job_detail.get("type") or "?")
                         reaction = job_detail.get("reaction")
-                        label = f"#{job_id}:{job_type}" if job_id is not None else job_type
+                        label = (
+                            f"#{job_id}:{job_type}" if job_id is not None else job_type
+                        )
                         if isinstance(reaction, str) and reaction:
                             label += f"/{reaction}"
-                        label += "[assigned]" if job_detail.get("has_worker") else "[unassigned]"
+                        label += (
+                            "[assigned]"
+                            if job_detail.get("has_worker")
+                            else "[unassigned]"
+                        )
                         if job_detail.get("suspended"):
                             label += "[suspended]"
                         rendered_jobs.append(label)
@@ -2127,7 +2202,9 @@ def encode_observation(
                 if value is not None:
                     placed_parts.append(f"{key}s={value}")
             if placed_parts:
-                status_lines.append("Placed furniture buildings: " + ", ".join(placed_parts))
+                status_lines.append(
+                    "Placed furniture buildings: " + ", ".join(placed_parts)
+                )
             positions = crew.get("placed_furniture_positions")
             if isinstance(positions, dict) and positions:
                 position_parts = []
@@ -2215,9 +2292,8 @@ def encode_observation(
                         )
                     }
                     if all(value is not None for value in context_values.values()):
-                        line += (
-                            " raw_tile_context "
-                            + ",".join(f"{key}={value}" for key, value in context_values.items())
+                        line += " raw_tile_context " + ",".join(
+                            f"{key}={value}" for key, value in context_values.items()
                         )
                 status_lines.append(line)
                 offered = detail.get("offered_crops_by_season")
@@ -2234,7 +2310,9 @@ def encode_observation(
                             if isinstance(value, str) and value
                         ]
                         tokens = [token for token in tokens if token]
-                        offered_parts.append(f"{label}={','.join(tokens) if tokens else '-'}")
+                        offered_parts.append(
+                            f"{label}={','.join(tokens) if tokens else '-'}"
+                        )
                     status_lines.append(
                         f"Farm plot #{plot_id} native offered crops: "
                         + " ".join(offered_parts)
@@ -2261,7 +2339,10 @@ def encode_observation(
                         contained_line += "partial/unreadable; "
                     contained_parts = []
                     for index, record in enumerate(contained_items[:25], start=1):
-                        if not isinstance(record, dict) or record.get("read_ok") is not True:
+                        if (
+                            not isinstance(record, dict)
+                            or record.get("read_ok") is not True
+                        ):
                             contained_parts.append(f"record{index}=unreadable")
                             continue
                         item_type = record.get("item_type")
@@ -2283,7 +2364,9 @@ def encode_observation(
                             for key, value in values.items()
                         )
                         mat_token = record.get("mat_token")
-                        if record.get("mat_token_read_ok") is True and isinstance(mat_token, str):
+                        if record.get("mat_token_read_ok") is True and isinstance(
+                            mat_token, str
+                        ):
                             fields.append(f"mat_token={_sanitize_token(mat_token)}")
                         else:
                             fields.append("mat_token=unreadable")
@@ -2306,7 +2389,11 @@ def encode_observation(
                 where = "surface" if entry.get("surface") else "subterranean"
                 seasons = entry.get("seasons")
                 if isinstance(seasons, list) and seasons:
-                    season_str = "all" if len(seasons) >= 4 else "/".join(str(s) for s in seasons)
+                    season_str = (
+                        "all"
+                        if len(seasons) >= 4
+                        else "/".join(str(s) for s in seasons)
+                    )
                 else:
                     season_str = "none"
                 seed_parts.append(f"{token} x{count} ({where}, {season_str})")
@@ -2332,7 +2419,9 @@ def encode_observation(
                 if value is not None:
                     input_parts.append(f"{key}={value}")
             if input_parts:
-                status_lines.append("Production inputs (raw inventory): " + ", ".join(input_parts))
+                status_lines.append(
+                    "Production inputs (raw inventory): " + ", ".join(input_parts)
+                )
 
         goods = crew.get("goods")
         if isinstance(goods, dict) and goods:
@@ -2354,7 +2443,9 @@ def encode_observation(
             shrub = _int_or_none(rect_tiles.get("shrub"))
             shrub_or_other = _int_or_none(rect_tiles.get("shrub_or_other"))
             designated = _int_or_none(rect_tiles.get("designated"))
-            if all(value is not None for value in (wall, floor, shrub_or_other, designated)):
+            if all(
+                value is not None for value in (wall, floor, shrub_or_other, designated)
+            ):
                 tree_part = (
                     f"tree_trunks={tree} (fell with DIG kind=chop for logs), "
                     if tree is not None
@@ -2393,7 +2484,9 @@ def encode_observation(
             )
             pending = _int_or_none(fort.get("pending_constructions"))
             if pending is not None:
-                structure_line += f", queued_constructions={pending} (ordered, not built yet)"
+                structure_line += (
+                    f", queued_constructions={pending} (ordered, not built yet)"
+                )
             status_lines.append(structure_line)
 
         spaces = fort.get("spaces")
@@ -2420,7 +2513,10 @@ def encode_observation(
                         count = _int_or_none(contents.get(content_key))
                         if count:
                             content_parts.append(f"{content_key}={count}")
-                    details.append("contents=" + (",".join(content_parts) if content_parts else "empty"))
+                    details.append(
+                        "contents="
+                        + (",".join(content_parts) if content_parts else "empty")
+                    )
                 open_tiles = space.get("open_tiles")
                 if isinstance(open_tiles, list):
                     rendered_open = []
@@ -2435,6 +2531,17 @@ def encode_observation(
                         details.append("open=" + ",".join(rendered_open) + suffix)
                     elif _int_or_none(space.get("open_tile_count")) == 0:
                         details.append("open=none")
+                if type(space.get("accessibility_evidence_complete")) is bool:
+                    details.append(
+                        "accessible="
+                        + (
+                            "yes"
+                            if space.get("accessible") is True
+                            else "no"
+                            if space.get("accessibility_evidence_complete") is True
+                            else "unknown"
+                        )
+                    )
                 room_parts.append(f"{kind}(" + "; ".join(details) + ")")
             if room_parts:
                 status_lines.append("Rooms: " + ", ".join(room_parts))
@@ -2519,8 +2626,12 @@ def encode_observation(
                     y = _int_or_none(sample.get("y"))
                     if x is None or y is None:
                         continue
-                    top_shape = _sanitize_token(str(sample.get("top_shape") or "unknown"))
-                    lower_shape = _sanitize_token(str(sample.get("lower_shape") or "unknown"))
+                    top_shape = _sanitize_token(
+                        str(sample.get("top_shape") or "unknown")
+                    )
+                    lower_shape = _sanitize_token(
+                        str(sample.get("lower_shape") or "unknown")
+                    )
                     sample_parts.append(
                         f"({x},{y}) top={top_shape} lower={lower_shape} "
                         f"geometry={bool(sample.get('geometry_complete'))} "
@@ -2528,7 +2639,9 @@ def encode_observation(
                         f"connected={bool(sample.get('native_connected'))}"
                     )
                 if sample_parts:
-                    status_lines.append("Channel focus pairs: " + "; ".join(sample_parts))
+                    status_lines.append(
+                        "Channel focus pairs: " + "; ".join(sample_parts)
+                    )
 
         map_rows = fort.get("map_rows")
         map_origin = fort.get("map_origin")
@@ -2612,7 +2725,9 @@ def encode_observation(
                 if isinstance(source, (list, tuple)) and len(source) >= 6:
                     source_rect = _int_list_or_none(source, 6)
                     if source_rect is not None:
-                        source_text = f" for model channel {_render_int_list(source_rect)}"
+                        source_text = (
+                            f" for model channel {_render_int_list(source_rect)}"
+                        )
                 status_lines.append(
                     f"Access-level minimap (z={oz}{source_text}; top-left tile is "
                     f"x={ox},y={oy}; blanks are hidden/unreadable). Legend matches the fort "
@@ -2680,7 +2795,9 @@ def encode_observation(
                         "wood or stone yet."
                     )
                 else:
-                    status_lines.append("Live UI feedback: the last action dug real tiles.")
+                    status_lines.append(
+                        "Live UI feedback: the last action dug real tiles."
+                    )
             elif no_progress_streak:
                 status_lines.append(
                     "Live UI feedback: the last action changed no tracked tiles; "
@@ -2815,8 +2932,14 @@ def encode_observation(
             f"successful_targets={successful_targets}"
         )
         if total_excavation_delta >= 10 or successful_targets >= 2:
-            available_materials = int(stocks.get("wood") or 0) + int(stocks.get("stone") or 0)
-            if available_materials <= 0 or total_material_delta <= 0 or active_material_blocked:
+            available_materials = int(stocks.get("wood") or 0) + int(
+                stocks.get("stone") or 0
+            )
+            if (
+                available_materials <= 0
+                or total_material_delta <= 0
+                or active_material_blocked
+            ):
                 status_lines.append(
                     "Live UI phase: starter digging exists but building material is "
                     "missing, unusable, or not yet proven by this run. Use material target recommended keys to chop "
@@ -2968,7 +3091,9 @@ def encode_observation(
                 if ui_target_setup.get("recommended_keys_retry")
                 else "Fresh target recommended keys: "
             )
-            status_lines.append(prefix + ", ".join(str(key) for key in recommended_keys))
+            status_lines.append(
+                prefix + ", ".join(str(key) for key in recommended_keys)
+            )
         elif ui_target_setup.get("recommended_keys_suppressed"):
             if ui_target_setup.get("target_progress_seen"):
                 reason = "this target already produced real tile progress."
@@ -2979,7 +3104,9 @@ def encode_observation(
                 reason = "the bounded retry limit was reached."
             else:
                 reason = "this target was already attempted."
-            status_lines.append("Fresh target recommended keys: hidden because " + reason)
+            status_lines.append(
+                "Fresh target recommended keys: hidden because " + reason
+            )
             status_lines.append(
                 "Fresh target route: unavailable. Treat the target coordinates "
                 "as evidence about the world, not a key sequence; choose a "
@@ -3044,9 +3171,8 @@ def encode_observation(
         allowed_evidence_lines = [
             f"E{index}: {line}" for index, line in enumerate(evidence_contents)
         ]
-        previous_line = (
-            "Previous action attempt for review: "
-            + str(agent_plan_control["previous_evidence_excerpt"])
+        previous_line = "Previous action attempt for review: " + str(
+            agent_plan_control["previous_evidence_excerpt"]
         )
         previous_evidence_id = next(
             entry.split(":", 1)[0]
@@ -3095,7 +3221,9 @@ def encode_observation(
             history_lines = []
             for a in prior_action_history:
                 history_lines.append(_format_action_history_entry(a))
-            summary_text += "\n\n== RECENT ACTION OUTCOMES ==\n" + "\n".join(history_lines)
+            summary_text += "\n\n== RECENT ACTION OUTCOMES ==\n" + "\n".join(
+                history_lines
+            )
     else:
         # Original format for toolbox mode
         bullets = [f"- {line}" for line in status_lines]

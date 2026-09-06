@@ -32,6 +32,20 @@ def _to_int(value: Any, default: int = 0) -> int:
             return default
 
 
+def _to_nonnegative_int_or_none(value: Any) -> int | None:
+    """Parse sensor counts without truncating or normalizing invalid evidence."""
+
+    if isinstance(value, bool) or value is None:
+        return None
+    if isinstance(value, float) and not value.is_integer():
+        return None
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        return None
+    return parsed if parsed >= 0 else None
+
+
 def _record_action(record: Dict[str, Any]) -> Dict[str, Any]:
     action = record.get("action")
     if isinstance(action, dict):
@@ -68,9 +82,7 @@ def _action_fingerprint(action: Dict[str, Any]) -> str:
         kind = params.get("kind") or "dig"
         return f"DIG:{kind}:{params.get('area')}:{params.get('size')}"
     if action_type == "BUILD":
-        fingerprint = (
-            f"BUILD:{params.get('kind')}:{params.get('x')}:{params.get('y')}:{params.get('z')}"
-        )
+        fingerprint = f"BUILD:{params.get('kind')}:{params.get('x')}:{params.get('y')}:{params.get('z')}"
         x2 = params.get("x2")
         y2 = params.get("y2")
         if x2 is not None or y2 is not None:
@@ -171,7 +183,9 @@ _QUEUE_ONLY_EVIDENCE_KEYS = {
 }
 
 
-def _proof_shows_world_change(proof: Dict[str, Any], *, count_labor: bool = True) -> bool:
+def _proof_shows_world_change(
+    proof: Dict[str, Any], *, count_labor: bool = True
+) -> bool:
     """Queueing jobs is real but is not world change for repetition purposes.
 
     A proof exempts a step from the repetition tally only when it shows the
@@ -278,9 +292,10 @@ def _step_progress_flags(records: List[Dict[str, Any]]) -> List[bool]:
             flags.append(False)
             previous_metrics = metrics
             continue
-        explicit_action_effect = isinstance(proof, dict) and type(
-            proof.get("action_effect_observed")
-        ) is bool
+        explicit_action_effect = (
+            isinstance(proof, dict)
+            and type(proof.get("action_effect_observed")) is bool
+        )
         if explicit_action_effect:
             # Current governed traces already separated action-specific effect
             # from concurrent world changes. Do not re-credit a command from a
@@ -302,7 +317,9 @@ def _step_progress_flags(records: List[Dict[str, Any]]) -> List[bool]:
                 for field in _PROGRESS_FIELDS
             )
             ui_progress = _to_int(metrics.get("ui_step_work_progress")) > 0
-        labor_progress = _labor_flip_credits_progress(record, proof, credited_labor_targets)
+        labor_progress = _labor_flip_credits_progress(
+            record, proof, credited_labor_targets
+        )
         flags.append(bool(proof_ok or labor_progress or productive or ui_progress))
         previous_metrics = metrics
     return flags
@@ -327,11 +344,17 @@ def evaluate_trace_records(
     action_types = [str(action.get("type") or "unknown") for action in actions]
     action_counts = Counter(action_types)
     fingerprints = Counter(_action_fingerprint(action) for action in actions)
-    accepted_steps = sum(1 for record in recent if _execute(record).get("accepted") is True)
-    tick_steps = sum(
-        1 for record in recent if _to_int(_tick_advance(record).get("ticks_advanced")) > 0
+    accepted_steps = sum(
+        1 for record in recent if _execute(record).get("accepted") is True
     )
-    ticks_advanced = sum(_to_int(_tick_advance(record).get("ticks_advanced")) for record in recent)
+    tick_steps = sum(
+        1
+        for record in recent
+        if _to_int(_tick_advance(record).get("ticks_advanced")) > 0
+    )
+    ticks_advanced = sum(
+        _to_int(_tick_advance(record).get("ticks_advanced")) for record in recent
+    )
     unique_action_types = len({item for item in action_types if item != "unknown"})
     # Current governed proofs carry action-specific attribution. Legacy traces
     # fall back to their older proof/metric semantics.
@@ -341,7 +364,9 @@ def evaluate_trace_records(
         for action, progressed in zip(actions, progress_flags)
         if not progressed
     )
-    most_common_count = stale_fingerprints.most_common(1)[0][1] if stale_fingerprints else 0
+    most_common_count = (
+        stale_fingerprints.most_common(1)[0][1] if stale_fingerprints else 0
+    )
     repetition_ratio = most_common_count / total_steps if total_steps else 0.0
 
     governed_action_truth = any(
@@ -350,16 +375,10 @@ def evaluate_trace_records(
         for record in recent
     )
     if governed_action_truth:
-        completion_progress = _metric_max(
-            recent, "governed_owned_completion_progress"
-        )
+        completion_progress = _metric_max(recent, "governed_owned_completion_progress")
         utility_progress = _metric_max(recent, "governed_owned_utility_progress")
-        production_progress = _metric_max(
-            recent, "governed_owned_production_progress"
-        )
-        complexity_progress = _metric_max(
-            recent, "governed_owned_complexity_progress"
-        )
+        production_progress = _metric_max(recent, "governed_owned_production_progress")
+        complexity_progress = _metric_max(recent, "governed_owned_complexity_progress")
         work_progress = _metric_max(recent, "governed_owned_work_progress")
         designation_progress = _metric_max(
             recent, "governed_owned_designation_progress"
@@ -426,10 +445,14 @@ def evaluate_trace_records(
         action = _record_action(record)
         execute = _execute(record)
         metrics = _metrics(record)
-        result = execute.get("result") if isinstance(execute.get("result"), dict) else {}
+        result = (
+            execute.get("result") if isinstance(execute.get("result"), dict) else {}
+        )
         if action.get("type") == "DIG" and "completion" in result:
             illegal_markers.append("debug_complete_dig")
-        provenance = str(execute.get("provenance") or metrics.get("score_provenance") or "")
+        provenance = str(
+            execute.get("provenance") or metrics.get("score_provenance") or ""
+        )
         if "assisted" in provenance and "governed" not in provenance:
             illegal_markers.append(provenance)
 
@@ -514,7 +537,9 @@ def evaluate_trace_records(
         "plan_coherence": _dimension(
             min(
                 10.0,
-                sum(1 for action in actions if action.get("objective")) / max(1, total_steps) * 4.0
+                sum(1 for action in actions if action.get("objective"))
+                / max(1, total_steps)
+                * 4.0
                 + min(
                     6.0,
                     min(fort_functional_rooms, 2) * 2.0
@@ -532,7 +557,10 @@ def evaluate_trace_records(
             "retired fixed two_room_workshop plan's space-completion count.",
         ),
         "anti_repetition": _dimension(
-            max(0.0, 10.0 - repetition_ratio * 10.0 - max(0, no_progress_steps - 3) * 0.25),
+            max(
+                0.0,
+                10.0 - repetition_ratio * 10.0 - max(0, no_progress_steps - 3) * 0.25,
+            ),
             [
                 f"stale_fingerprint_ratio={repetition_ratio:.2f}",
                 f"no_progress_steps={no_progress_steps}",
@@ -540,7 +568,9 @@ def evaluate_trace_records(
             "Repeated identical actions without state change are a failure even if the scalar score rises.",
         ),
         "legal_evidence": _dimension(
-            10.0 if not illegal_markers else max(0.0, 10.0 - len(set(illegal_markers)) * 4.0),
+            10.0
+            if not illegal_markers
+            else max(0.0, 10.0 - len(set(illegal_markers)) * 4.0),
             [
                 f"illegal_markers={sorted(set(illegal_markers))}",
                 f"designation_progress={designation_progress}",
@@ -587,7 +617,8 @@ def evaluate_trace_records(
         "dimensions": dimensions,
         "action_counts": dict(sorted(action_counts.items())),
         "top_action_fingerprints": [
-            {"fingerprint": key, "count": count} for key, count in fingerprints.most_common(5)
+            {"fingerprint": key, "count": count}
+            for key, count in fingerprints.most_common(5)
         ],
         "blockers": blockers,
         "critique": _critique(rubric_score, blockers, dimensions),
@@ -601,20 +632,224 @@ def _critique(
 ) -> str:
     if blockers:
         return (
-            "The run still fails the fortress-quality rubric because " + ", ".join(blockers) + "."
+            "The run still fails the fortress-quality rubric because "
+            + ", ".join(blockers)
+            + "."
         )
     weak = [
-        name for name, payload in dimensions.items() if float(payload.get("score") or 0.0) < 5.0
+        name
+        for name, payload in dimensions.items()
+        if float(payload.get("score") or 0.0) < 5.0
     ]
     if weak:
         return "The run is playable but weak on " + ", ".join(weak) + "."
     if rubric_score >= 75:
-        return (
-            "The run shows broad, legal fortress progress across layout, production, and survival."
+        return "The run shows broad, legal fortress progress across layout, production, and survival."
+    return "The run shows partial legal fortress progress but needs broader long-horizon development."
+
+
+def evaluate_trace_records_v2(records: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Return a full-trace, non-scalar behavior outcome vector.
+
+    Version 2 deliberately does not award points for action vocabulary,
+    objective-field presence, elapsed time, or stochastic population. It
+    reports achieved capabilities and normalized behavior rates so one
+    primitive cannot silently pay multiple quality dimensions.
+    """
+
+    total_steps = len(records)
+    actions = [_record_action(record) for record in records]
+    action_types = [str(action.get("type") or "unknown") for action in actions]
+    progress_flags = _step_progress_flags(records)
+    semantic_interactions = 0
+    productive_waits = 0
+    for index, record in enumerate(records):
+        action = actions[index]
+        proof = record.get("gameplay_proof")
+        execute = _execute(record)
+        result = (
+            execute.get("result") if isinstance(execute.get("result"), dict) else {}
         )
-    return (
-        "The run shows partial legal fortress progress but needs broader long-horizon development."
+        if (
+            action.get("type") == "INTERACT"
+            and result.get("semantic_effect_observed") is True
+        ):
+            progress_flags[index] = True
+            semantic_interactions += 1
+        if (
+            action.get("type") == "WAIT"
+            and isinstance(proof, dict)
+            and proof.get("owned_prior_action_effect_observed") is True
+        ):
+            progress_flags[index] = True
+            productive_waits += 1
+
+    stale_counts = Counter(
+        _action_fingerprint(action)
+        for action, progressed in zip(actions, progress_flags)
+        if not progressed
+    )
+    repeated_noops = sum(max(0, count - 1) for count in stale_counts.values())
+    final_metrics = _metrics(records[-1]) if records else {}
+    final_state: Dict[str, Any] = {}
+    if records:
+        for key in ("observation", "state_after_apply", "state_after_advance"):
+            value = records[-1].get(key)
+            if isinstance(value, dict):
+                final_state.update(value)
+    survival = (
+        final_state.get("survival")
+        if isinstance(final_state.get("survival"), dict)
+        else {}
     )
 
+    def _optional_fact(name: str) -> int | None:
+        raw = survival.get(name, final_metrics.get(name))
+        return _to_nonnegative_int_or_none(raw)
 
-__all__ = ["DIMENSION_NAMES", "RUBRIC_WINDOW", "evaluate_trace_records"]
+    food_produced = _optional_fact("food_produced_in_run")
+    food_consumed = _optional_fact("food_consumed_in_run")
+    drink_produced = _optional_fact("drink_produced_in_run")
+    drink_consumed = _optional_fact("drink_consumed_in_run")
+    room_evidence_complete = (
+        final_metrics.get("governed_owned_room_evidence_complete") is True
+    )
+    room_lower_bound_proven = (
+        final_metrics.get("governed_owned_layout_room_lower_bound_proven") is True
+    )
+    building_evidence_complete = (
+        final_metrics.get("governed_owned_building_evidence_complete") is True
+    )
+    output_evidence_complete = (
+        final_metrics.get("governed_owned_output_evidence_complete") is True
+    )
+    output_lower_bound_proven = (
+        final_metrics.get("governed_owned_output_lower_bound_proven") is True
+    )
+    flow_fields = (
+        "food_produced_in_run",
+        "food_consumed_in_run",
+        "drink_produced_in_run",
+        "drink_consumed_in_run",
+    )
+    trace_run_ids = {
+        record.get("run_id")
+        for record in records
+        if isinstance(record.get("run_id"), str) and record.get("run_id")
+    }
+    trace_run_binding_complete = bool(
+        records
+        and all(
+            isinstance(record.get("run_id"), str) and record.get("run_id")
+            for record in records
+        )
+        and len(trace_run_ids) == 1
+    )
+    flow_evidence_complete = bool(
+        survival.get("flow_evidence_complete") is True
+        and all(field in survival for field in flow_fields)
+        and all(
+            value is not None
+            for value in (
+                food_produced,
+                food_consumed,
+                drink_produced,
+                drink_consumed,
+            )
+        )
+        and trace_run_binding_complete
+        and survival.get("run_id") in trace_run_ids
+    )
+
+    def _domain(value: Any, *, complete: bool) -> bool | None:
+        parsed = _to_nonnegative_int_or_none(value)
+        return parsed > 0 if complete and parsed is not None else None
+
+    domains: Dict[str, bool | None] = {
+        "layout": _domain(
+            final_metrics.get("governed_owned_accessible_layout_rooms"),
+            complete=room_evidence_complete or room_lower_bound_proven,
+        ),
+        "furnishing": _domain(
+            final_metrics.get("governed_owned_completed_beds"),
+            complete=building_evidence_complete,
+        ),
+        "industry": _domain(
+            final_metrics.get("governed_owned_production_capacity"),
+            complete=building_evidence_complete,
+        ),
+        "realized_owned_output": _domain(
+            final_metrics.get("governed_owned_output_units"),
+            complete=output_evidence_complete or output_lower_bound_proven,
+        ),
+        "food_loop": (
+            food_produced > food_consumed if flow_evidence_complete else None
+        ),
+        "drink_loop": (
+            drink_produced > drink_consumed if flow_evidence_complete else None
+        ),
+    }
+
+    illegal_markers: List[str] = []
+    legal_evidence_complete = bool(records)
+    for record in records:
+        action = _record_action(record)
+        execute = _execute(record)
+        metrics = _metrics(record)
+        result = (
+            execute.get("result") if isinstance(execute.get("result"), dict) else {}
+        )
+        if action.get("type") == "DIG" and "completion" in result:
+            illegal_markers.append("debug_complete_dig")
+        provenance = str(
+            execute.get("provenance") or metrics.get("score_provenance") or ""
+        )
+        if not provenance:
+            legal_evidence_complete = False
+        if "assisted" in provenance and "governed" not in provenance:
+            illegal_markers.append(provenance)
+
+    evidence_complete = bool(
+        records
+        and (room_evidence_complete or room_lower_bound_proven)
+        and building_evidence_complete
+        and (output_evidence_complete or output_lower_bound_proven)
+        and flow_evidence_complete
+        and all(value is not None for value in domains.values())
+        and legal_evidence_complete
+    )
+    return {
+        "measurement_version": 2,
+        "score": None,
+        "score_status": "retired_for_g7_v5",
+        "window": "full_trace",
+        "total_steps": total_steps,
+        "achieved_domains": domains,
+        "unknown_domain_count": sum(value is None for value in domains.values()),
+        "action_effect_steps": sum(progress_flags),
+        "action_effect_rate": round(sum(progress_flags) / max(1, total_steps), 6),
+        "repeated_failed_noop_steps": repeated_noops,
+        "repeated_failed_noop_rate": round(repeated_noops / max(1, total_steps), 6),
+        "productive_wait_steps": productive_waits,
+        "semantic_interaction_steps": semantic_interactions,
+        "action_counts": dict(sorted(Counter(action_types).items())),
+        "legal_execution": (
+            not illegal_markers if legal_evidence_complete else None
+        ),
+        "legal_evidence_complete": legal_evidence_complete,
+        "illegal_markers": sorted(set(illegal_markers)),
+        "evidence_complete": evidence_complete,
+        "notes": [
+            "Objective text and action-type variety receive no credit.",
+            "Population and elapsed ticks are exposure diagnostics only.",
+            "Final owned accessible capabilities replace peak/global proxies.",
+        ],
+    }
+
+
+__all__ = [
+    "DIMENSION_NAMES",
+    "RUBRIC_WINDOW",
+    "evaluate_trace_records",
+    "evaluate_trace_records_v2",
+]

@@ -73,7 +73,7 @@ def test_campaign_http_routes_and_assets():
     for asset in ("campaigns.js", "campaigns.css"):
         assert client.get(f"/static/{asset}").status_code == 200
     for page in ("landing.html", "results.html"):
-        assert 'href="/campaigns"' in (PROJECT_ROOT / "web" / page).read_text()
+        assert (PROJECT_ROOT / "web" / page).read_text().count('href="/campaigns"') == 2
 
 
 def test_missing_catalog_is_service_error_not_empty_results(monkeypatch):

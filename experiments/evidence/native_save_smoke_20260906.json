@@ -1,0 +1,42 @@
+{
+  "schema_version": "fortgym.native-save-evidence/v1",
+  "evidence_id": "native-save-20260906-b",
+  "verified_on_utc_date": "2026-09-06",
+  "code_revision": "7490c8727ee148439ff41b301f24ea0f072f111e",
+  "branch": "codex/year-two-campaigns",
+  "environment": "existing dfhack-host service-account scratch checkout",
+  "command_module": "scripts.campaign_save_smoke",
+  "result_location": "/home/ubuntu/fort-gym-test/year-two-campaigns/artifacts/native-save-20260906-b/result.json",
+  "result_sha256": "ca71bfd2032e864cced48e66f20f76827b92b9df2099f03476f2dd43234c2d3d",
+  "result_contains": "complete prior-save and snapshot file inventories with byte sizes and SHA-256 digests",
+  "native_boundary_before_and_after": {
+    "save_name": "region3",
+    "year": 30,
+    "year_tick": 19309,
+    "paused": true,
+    "autosave_requested": false
+  },
+  "native_snapshot_verified": true,
+  "checkpoint_loaded": false,
+  "campaign_recovery_verified": false,
+  "year_two_gameplay_verified": false,
+  "remote_focused_tests": {"passed": 94, "failed": 0},
+  "provider_calls": 0,
+  "reported_model_cost_usd": "0",
+  "gameplay_ticks_requested": 0,
+  "new_vms_created": 0,
+  "incremental_vm_billing": "not separately measured on the existing host",
+  "production_code_changed": false,
+  "website_campaign_delivery_verified": false,
+  "prior_attempt": {
+    "evidence_id": "native-save-20260906-a",
+    "result": "incomplete after copied save due to final native status timeout",
+    "retained": true,
+    "success_receipt": false
+  },
+  "limits": [
+    "Native saving and byte verification are not proof of loading or agent continuation.",
+    "This is infrastructure evidence, not a gameplay outcome or model comparison.",
+    "No restricted game assets or credentials are included in the public repository."
+  ]
+}

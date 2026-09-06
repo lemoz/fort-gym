@@ -1,0 +1,32 @@
+{
+  "schema_version": "fortgym.campaign-condition/v1",
+  "runner": "campaign-loop/v1",
+  "condition_id": "endurance-autonomous-v1",
+  "decision_profile": "campaign_action/v1",
+  "observation_profile": "campaign_state/v1",
+  "schema_attempts": 2,
+  "phase": "development-endurance",
+  "hypothesis": "A model choosing its own strategy can sustain and develop the same fortress past its first anniversary when cumulative execution bounds allow a long campaign.",
+  "models": ["z-ai/glm-5.3-flash", "qwen/qwen3.8-flash", "deepseek/deepseek-v4-flash-0731"],
+  "max_steps": 16,
+  "max_segments": 256,
+  "segment_time_budget_seconds": 600,
+  "ticks_per_step": 2000,
+  "max_advance_ticks": 2000,
+  "max_output_tokens": 8192,
+  "max_attempts": 1,
+  "max_dispatches": 2048,
+  "max_request_bytes": 100000,
+  "max_total_tokens": 10000000,
+  "max_cost_usd": 20.0,
+  "provider_max_price": {"prompt": 0.5, "completion": 2.0, "request": 0.0},
+  "notes": [
+    "A separate condition; existing development and historical benchmark bounds/results are unchanged.",
+    "Run scripts.campaign_run for serial checkpoint-to-checkpoint continuation. Every segment owns and tears down one copied runtime before the next can start.",
+    "Max steps and the scheduling time slice are per segment. Dispatches, returned tokens and returned cost are cumulative for the campaign; continuation never resets them.",
+    "The first anniversary is 403200 elapsed ticks. It is reported, not used as an automatic success verdict or stop condition.",
+    "Twenty dollars is a returned-response cost cap, not a charge, reservation, provider billing reconciliation, or new spending authorization. Existing aggregate spending bounds still apply; a last response can cross the cap.",
+    "All models share the declared retry and grammar allowances. Native command legality remains enforced but the harness does not select a strategy or substitute WAIT.",
+    "The eight action families remain a limited interface. Starting-save digest and code/configuration identity must accompany comparisons; elapsed time alone does not prove viability."
+  ]
+}

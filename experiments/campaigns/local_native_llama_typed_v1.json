@@ -1,0 +1,67 @@
+{
+  "schema_version": "fortgym.local-campaign-condition/v1",
+  "runner": "campaign-loop/v1",
+  "condition_id": "local-native-llama-typed-v1",
+  "decision_profile": "campaign_action/v1",
+  "observation_profile": "campaign_state/v1",
+  "advance_policy": "model_requested/v1",
+  "schema_attempts": 2,
+  "phase": "development",
+  "hypothesis": "Test autonomous resource acquisition and completed fortress development using the pinned modern local Qwen3.5 model, an explicit typed action decoder, and measured prompt-token accounting. Native actions remain model-chosen. This is a separate development condition, not a matched comparison with earlier Ollama runs.",
+  "models": [
+    "fort-gym-qwen35-9b-q4-03b74727a860"
+  ],
+  "max_steps": 8,
+  "max_segments": 4,
+  "segment_time_budget_seconds": 1800,
+  "ticks_per_step": 2000,
+  "max_advance_ticks": 2000,
+  "max_output_tokens": 1024,
+  "max_attempts": 1,
+  "max_dispatches": 16,
+  "max_request_bytes": 65536,
+  "max_total_tokens": 262144,
+  "max_cost_usd": 0,
+  "local_inference": {
+    "transport": "llama-cpp-local/v1",
+    "server_version": "b10516-b95502ba9",
+    "prompt_contract": "visible_action_contract/v1",
+    "prompt_packing": "bounded_history_corrections/v1",
+    "model_digests": {
+      "fort-gym-qwen35-9b-q4-03b74727a860": "03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8"
+    },
+    "model_files": {
+      "fort-gym-qwen35-9b-q4-03b74727a860": "Qwen3.5-9B-Q4_K_M.gguf"
+    },
+    "model_metadata_sha256": {
+      "fort-gym-qwen35-9b-q4-03b74727a860": "55e0498c6d066243ffd3ebd364f7af4460596189d3d9d11e6697f9bdbfc93dea"
+    },
+    "chat_template_sha256": {
+      "fort-gym-qwen35-9b-q4-03b74727a860": "7f0e529032c25183bcd66c7f238da2d377f43be754a94e2725a58c4e16d2ed67"
+    },
+    "context_tokens": 32768,
+    "context_headroom_tokens": 512,
+    "token_count_profile": "llama-chat-input-tokens/v1",
+    "token_count_timeout_seconds": 10,
+    "timeout_seconds": 180,
+    "temperature": 0.6,
+    "top_p": 0.95,
+    "top_k": 20,
+    "seed": 73,
+    "enable_thinking": false,
+    "runtime_profile": "flash_q8/v1",
+    "action_reference": "native_designations/v1",
+    "action_schema": "typed_native_parameters/v1"
+  },
+  "workshop_placement_policy": "dfhack_047_ground/v1",
+  "notes": [
+    "Begin every new native campaign from the original digest-bound save, never a scripted workshop fixture or older model campaign checkpoint. Preserve all historical configurations and results.",
+    "Swap models by declaring their exact GGUF file digest, filename, observed API metadata and chat-template digests. The server API does not compute a weight-file hash; a separate verified launcher receipt establishes the local files and runtime actually launched.",
+    "Prompt preflight sends the exact generation body to the pinned server's non-generating input-token endpoint. Context, output and cumulative token allowances are separate from the 65536-byte serialized-payload ceiling. Require returned prompt usage to match the measured count; account unexpected returned usage before rejecting it.",
+    "Use only literal loopback transport, one loaded model and one isolated native runtime at a time. No hosted SDK, credential forwarding, hidden retry, automatic WAIT, chosen action or gameplay rescue.",
+    "Native parser, executor and documented factual action reference are unchanged. The typed decoding grammar explicitly requires DIG mode and three-entry integer rectangles; this is not a replacement native legality validator.",
+    "The longer segment scheduling allowance accounts for bounded identity/token checks as well as generation. The independent runtime deadline and teardown still apply.",
+    "This development condition changes model, transport, schema, sampling, context accounting, payload limit and scheduling relative to earlier Ollama experiments. Do not treat unlike short attempts as model rankings or causal ablations. Repeated matched campaigns remain required.",
+    "Zero metered model API charges do not imply zero hardware, electricity or existing-host costs. No claim of reconciled project spending is made."
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "schema_version": "fortgym.output-budget-diagnostic/v1",
+  "experiment_id": "local-llama-output-budget-v1",
+  "hypothesis": "On the exact retained long-v2 output-limited prompt, compare the original 2048 completion-token allowance with 4096 while preserving every other request field. Determine whether a longer allowance returns a syntactically valid model action; do not execute it or infer native legality or sustained gameplay.",
+  "baseline_condition_file": "experiments/campaigns/local_native_llama_long_v2.json",
+  "baseline_condition_file_sha256": "1b8469ce591dbbab984bb69562809a66b6e21ed0879858bcee8beee1efe1168b",
+  "source_campaign_id": "local-long-v2-qwen35-20260906-a",
+  "source_execution_revision": "60fd08415b10adfe52a0d275c826669dad843937",
+  "source_step": 42,
+  "source_failure_file_sha256": "9e579c0d4d8b4f5dd514c8f0c9bb866051560c7177ae05a72b7080f2fbf1e3f2",
+  "source_prompt_tokens": 8687,
+  "output_token_allowances": [2048, 4096],
+  "max_dispatches": 2,
+  "max_total_tokens": 30000,
+  "native_game_loaded": false,
+  "native_actions_executed": 0,
+  "notes": [
+    "The private source is not committed. Supply the exact retained failure file only through an authorized transfer into the owning project's ignored artifact directory.",
+    "Requests run sequentially against the pinned local llama.cpp model only. No hosted fallback, silent retry, game connection, native action or campaign resume occurs.",
+    "An accounted output-limit response permits the separately declared next comparison case. Missing usage, transport or identity failure ends the diagnostic without retry.",
+    "This is one prompt and one attempt per allowance, not a model ranking or causal proof of sustainable gameplay. The original native result stays unchanged.",
+    "Cases run in a fixed order on the same temporary server, without clearing its prompt cache. Request times are observations, not a matched cold-cache latency benchmark.",
+    "Local model API charges are zero; hardware and electricity costs remain unknown. The caller must verify the temporary server launch and teardown separately."
+  ]
+}

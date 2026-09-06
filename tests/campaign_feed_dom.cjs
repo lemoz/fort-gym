@@ -19,6 +19,8 @@ assert.equal(helpers.number(null), 'Unknown');
 assert.equal(helpers.number(0), '0');
 assert.match(helpers.duration(403200), /1.000 years/);
 assert.match(helpers.stateLabel({freshness: 'stale', lifecycle: 'running'}), /unknown/);
+assert.equal(helpers.stateLabel({lifecycle: 'finished', segment_status: 'inference_output_limited_pause', failure_kind: 'none'}),
+  'Paused at the model output limit');
 class Element {
   constructor(tag) { this.tag = tag; this.children = []; this.events = {}; }
   set textContent(value) { this.text = String(value); }

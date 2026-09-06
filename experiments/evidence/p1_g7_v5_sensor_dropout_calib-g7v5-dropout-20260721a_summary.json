@@ -1,0 +1,566 @@
+{
+  "run_id": "calib-g7v5-dropout-20260721a",
+  "model": "dfhack-governed-scripted",
+  "backend": "dfhack",
+  "evaluation_protocol": "fort-eval-easy-p1-g7-v5",
+  "scenario": null,
+  "steps": 1,
+  "duration_ticks": 0,
+  "peak_pop": 7,
+  "end_pop": 7,
+  "created_wealth": 0,
+  "survival_score": 0.0,
+  "population_score": 3.5,
+  "availability_score": 20.0,
+  "wealth_score": 0.0,
+  "work_score": 0.0,
+  "completion_score": 0.0,
+  "utility_score": 0.0,
+  "production_score": 0.0,
+  "complexity_score": 0.0,
+  "work_progress": 0,
+  "designation_progress": 0,
+  "completion_progress": 0,
+  "governed_owned_work_progress": 0,
+  "governed_owned_completion_progress": 0,
+  "governed_owned_utility_progress": 0.0,
+  "governed_owned_production_progress": 0,
+  "governed_owned_complexity_progress": 0.0,
+  "governed_owned_completed_beds": 0,
+  "governed_owned_completed_farm_plots": 0,
+  "governed_owned_completed_stills": 0,
+  "governed_owned_operational_farm_plots": 0,
+  "governed_owned_operational_farm_evidence_complete": true,
+  "governed_owned_production_capacity": 0,
+  "governed_owned_unique_construction_tiles": 0,
+  "governed_owned_accessible_layout_rooms": 0,
+  "governed_owned_accessible_functional_rooms": 0,
+  "governed_owned_room_evidence_complete": false,
+  "governed_owned_layout_room_lower_bound_proven": false,
+  "governed_owned_building_evidence_complete": true,
+  "governed_owned_output_units": 0,
+  "governed_owned_output_units_by_job": {},
+  "governed_owned_output_evidence_complete": true,
+  "score_progress_provenance": "dfhack_governed_action_owned_progress_v2",
+  "utility_progress": 0.0,
+  "production_progress": 0,
+  "complexity_progress": 0.0,
+  "ui_work_progress": 0,
+  "ui_designation_progress": 0,
+  "ui_completion_progress": 0,
+  "ui_excavation_progress": 0,
+  "ui_target_dig_designations_delta": 0,
+  "ui_target_floor_tiles_delta": 0,
+  "ui_target_floor_removed_delta": 0,
+  "ui_target_wall_tiles_delta": 0,
+  "target_dig_designations_delta": 0,
+  "target_floor_tiles_delta": 0,
+  "target_wall_tiles_delta": 0,
+  "active_dig_jobs_delta": 0,
+  "utility_action_progress": 0,
+  "demand_capped_production": 0.0,
+  "complexity_floor_tiles_delta": 0,
+  "complexity_wall_tiles_delta": 0,
+  "complexity_spaces_delta": 0,
+  "complexity_rooms_delta": 0,
+  "complexity_fort_spaces_delta": 0,
+  "complexity_constructions_delta": 0,
+  "manager_orders_delta": 0,
+  "manager_order_quantity_delta": 0,
+  "carpenter_workshops_delta": 0,
+  "production_workshops_delta": 0,
+  "manager_orders_count": 0,
+  "manager_orders_amount_left": 0,
+  "carpenter_workshops": 0,
+  "target_hidden_tiles": 0,
+  "citizens_total": 7,
+  "miners_total": 1,
+  "citizens_on_target_z": 0,
+  "target_z": 0,
+  "window_z": 0,
+  "fortress_plan_name": null,
+  "fortress_connector_floor_tiles": 0,
+  "fortress_workshop_room_floor_tiles": 0,
+  "fortress_complexity_floor_tiles": 0,
+  "fortress_complexity_wall_tiles": 0,
+  "fortress_complexity_spaces_completed": 0,
+  "fort_enclosed_spaces": 0,
+  "fort_functional_rooms": 0,
+  "fort_constructions": 0,
+  "total_score": 23.5,
+  "score_version": 5,
+  "rubric": {
+    "measurement_version": 2,
+    "score": null,
+    "score_status": "retired_for_g7_v5",
+    "window": "full_trace",
+    "total_steps": 1,
+    "achieved_domains": {
+      "layout": null,
+      "furnishing": false,
+      "industry": false,
+      "realized_owned_output": false,
+      "food_loop": false,
+      "drink_loop": false
+    },
+    "unknown_domain_count": 1,
+    "action_effect_steps": 0,
+    "action_effect_rate": 0.0,
+    "repeated_failed_noop_steps": 0,
+    "repeated_failed_noop_rate": 0.0,
+    "productive_wait_steps": 0,
+    "semantic_interaction_steps": 0,
+    "action_counts": {
+      "WAIT": 1
+    },
+    "legal_execution": true,
+    "legal_evidence_complete": true,
+    "illegal_markers": [],
+    "evidence_complete": false,
+    "notes": [
+      "Objective text and action-type variety receive no credit.",
+      "Population and elapsed ticks are exposure diagnostics only.",
+      "Final owned accessible capabilities replace peak/global proxies."
+    ]
+  },
+  "milestones": [],
+  "scenario_assertions": [],
+  "usage": {
+    "models": [],
+    "resolved_models": [],
+    "providers": [],
+    "generation_ids": [],
+    "calls": 0,
+    "attempt_events": 0,
+    "failed_attempt_events": 0,
+    "calls_missing_cost": 0,
+    "calls_missing_resolved_model": 0,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0,
+    "cached_tokens": 0,
+    "cache_write_tokens": 0,
+    "uncached_prompt_tokens": 0,
+    "cache_read_rate": 0.0,
+    "reasoning_tokens": 0,
+    "cost_usd": 0.0,
+    "generation_telemetry_unavailable": 0
+  },
+  "g7": {
+    "gate": "G7",
+    "gate_version": 5,
+    "status": "unknown",
+    "gameplay_outcome": {
+      "status": "fail",
+      "criteria": {
+        "owned_operational_provisioning": {
+          "status": "fail",
+          "observed": {
+            "final_food": 45,
+            "final_drink": 60,
+            "owned_completed_farm_plots": 0,
+            "owned_completed_stills": 0,
+            "owned_operational_farm_plots": 0,
+            "owned_operational_farm_evidence_complete": true,
+            "owned_brew_output_units": 0,
+            "owned_output_evidence_complete": true,
+            "owned_output_lower_bound_proven": false,
+            "food_produced_in_run": 0,
+            "food_consumed_in_run": 0,
+            "drink_produced_in_run": 0,
+            "drink_consumed_in_run": 0,
+            "flow_evidence_complete": true,
+            "run_scope_valid": true
+          },
+          "required": ">=1 exact owned operational crop-assigned farm, >=1 exact owned completed still, and >=1 exact governed completed brew output; stocks and cumulative flows are diagnostic only"
+        },
+        "neglect_deaths": {
+          "status": "pass",
+          "observed": {
+            "dead": 0,
+            "deaths_in_run": 0,
+            "death_evidence_complete": true,
+            "death_causes_known": true,
+            "death_records_complete": true,
+            "direct_neglect_deaths_from_records": 0,
+            "neglect_deaths": 0,
+            "run_scope_valid": true
+          },
+          "required": "zero authoritatively classified preventable deaths"
+        },
+        "owned_accessible_layout_rooms": {
+          "status": "unknown",
+          "observed": {
+            "trace_rooms": 0,
+            "summary_rooms": 0,
+            "summary_consistent": true,
+            "evidence_complete": false,
+            "lower_bound_proven": false,
+            "owned_unique_construction_tiles": 0
+          },
+          "required": ">=3 final owned accessible rooms",
+          "reason": "room scan was truncated before the required lower bound was proven"
+        },
+        "initial_cohort_bed_capacity": {
+          "status": "fail",
+          "observed": {
+            "owned_completed_beds": 0,
+            "initial_cohort": 7,
+            "peak_population_diagnostic": 7
+          },
+          "required": ">=3 exact owned completed beds"
+        }
+      }
+    },
+    "evaluation_validity": {
+      "status": "unknown",
+      "evidence_complete": false,
+      "final_state_evidence_complete": true,
+      "duration_evidence_available": true,
+      "duration_consistent": true,
+      "owned_room_evidence_complete": false,
+      "owned_room_lower_bound_proven": false,
+      "owned_room_summary_consistent": true,
+      "owned_building_evidence_complete": true,
+      "stock_evidence_complete": true
+    },
+    "provenance_completeness": {
+      "status": "unknown",
+      "observed": {
+        "gameplay_rows": 1,
+        "screen_text": 1,
+        "gameplay_proof": 1,
+        "governed_provenance": 1,
+        "model_usage": {
+          "models": [],
+          "resolved_models": [],
+          "providers": [],
+          "generation_ids": [],
+          "calls": 0,
+          "attempt_events": 0,
+          "failed_attempt_events": 0,
+          "calls_missing_cost": 0,
+          "calls_missing_resolved_model": 0,
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "uncached_prompt_tokens": 0,
+          "cache_read_rate": 0.0,
+          "reasoning_tokens": 0,
+          "cost_usd": 0.0,
+          "generation_telemetry_unavailable": 0
+        },
+        "trace_run_binding_complete": true,
+        "final_state_evidence_complete": true
+      }
+    },
+    "criteria": {
+      "owned_operational_provisioning": {
+        "status": "fail",
+        "observed": {
+          "final_food": 45,
+          "final_drink": 60,
+          "owned_completed_farm_plots": 0,
+          "owned_completed_stills": 0,
+          "owned_operational_farm_plots": 0,
+          "owned_operational_farm_evidence_complete": true,
+          "owned_brew_output_units": 0,
+          "owned_output_evidence_complete": true,
+          "owned_output_lower_bound_proven": false,
+          "food_produced_in_run": 0,
+          "food_consumed_in_run": 0,
+          "drink_produced_in_run": 0,
+          "drink_consumed_in_run": 0,
+          "flow_evidence_complete": true,
+          "run_scope_valid": true
+        },
+        "required": ">=1 exact owned operational crop-assigned farm, >=1 exact owned completed still, and >=1 exact governed completed brew output; stocks and cumulative flows are diagnostic only"
+      },
+      "neglect_deaths": {
+        "status": "pass",
+        "observed": {
+          "dead": 0,
+          "deaths_in_run": 0,
+          "death_evidence_complete": true,
+          "death_causes_known": true,
+          "death_records_complete": true,
+          "direct_neglect_deaths_from_records": 0,
+          "neglect_deaths": 0,
+          "run_scope_valid": true
+        },
+        "required": "zero authoritatively classified preventable deaths"
+      },
+      "owned_accessible_layout_rooms": {
+        "status": "unknown",
+        "observed": {
+          "trace_rooms": 0,
+          "summary_rooms": 0,
+          "summary_consistent": true,
+          "evidence_complete": false,
+          "lower_bound_proven": false,
+          "owned_unique_construction_tiles": 0
+        },
+        "required": ">=3 final owned accessible rooms",
+        "reason": "room scan was truncated before the required lower bound was proven"
+      },
+      "initial_cohort_bed_capacity": {
+        "status": "fail",
+        "observed": {
+          "owned_completed_beds": 0,
+          "initial_cohort": 7,
+          "peak_population_diagnostic": 7
+        },
+        "required": ">=3 exact owned completed beds"
+      }
+    },
+    "diagnostics": {
+      "duration": {
+        "status": "consistent",
+        "observed": {
+          "trace_ticks": 2508,
+          "summary_ticks": 0,
+          "summary_consistent": true
+        },
+        "gate_effect": "none",
+        "note": "Elapsed ticks are recorded for analysis only and do not affect G7 status."
+      },
+      "population": {
+        "status": "recorded",
+        "observed": {
+          "end_population": 7,
+          "peak_population": 7,
+          "deaths_in_run": 0
+        },
+        "gate_effect": "none",
+        "note": "Absolute population depends on stochastic migrant exposure. G7 records it for matched-cohort analysis but does not use it as a per-run pass/fail threshold."
+      },
+      "scalar_score": {
+        "status": "recorded",
+        "observed": {
+          "score": 23.5,
+          "score_version": 5,
+          "population_component": 3.5
+        },
+        "gate_effect": "none",
+        "note": "Score-v5 includes a peak-population component. G7 records the scalar score for matched-cohort analysis but does not use it as a per-run pass/fail threshold."
+      },
+      "behavior": {
+        "measurement_version": 2,
+        "score": null,
+        "score_status": "retired_for_g7_v5",
+        "window": "full_trace",
+        "total_steps": 1,
+        "achieved_domains": {
+          "layout": null,
+          "furnishing": false,
+          "industry": false,
+          "realized_owned_output": false,
+          "food_loop": false,
+          "drink_loop": false
+        },
+        "unknown_domain_count": 1,
+        "action_effect_steps": 0,
+        "action_effect_rate": 0.0,
+        "repeated_failed_noop_steps": 0,
+        "repeated_failed_noop_rate": 0.0,
+        "productive_wait_steps": 0,
+        "semantic_interaction_steps": 0,
+        "action_counts": {
+          "WAIT": 1
+        },
+        "legal_execution": true,
+        "legal_evidence_complete": true,
+        "illegal_markers": [],
+        "evidence_complete": false,
+        "notes": [
+          "Objective text and action-type variety receive no credit.",
+          "Population and elapsed ticks are exposure diagnostics only.",
+          "Final owned accessible capabilities replace peak/global proxies."
+        ]
+      }
+    },
+    "terminal": null
+  },
+  "task_verdict": "unknown",
+  "evaluation_validity": {
+    "status": "unknown",
+    "evidence_complete": false,
+    "final_state_evidence_complete": true,
+    "duration_evidence_available": true,
+    "duration_consistent": true,
+    "owned_room_evidence_complete": false,
+    "owned_room_lower_bound_proven": false,
+    "owned_room_summary_consistent": true,
+    "owned_building_evidence_complete": true,
+    "stock_evidence_complete": true
+  },
+  "gameplay_outcome": {
+    "status": "fail",
+    "criteria": {
+      "owned_operational_provisioning": {
+        "status": "fail",
+        "observed": {
+          "final_food": 45,
+          "final_drink": 60,
+          "owned_completed_farm_plots": 0,
+          "owned_completed_stills": 0,
+          "owned_operational_farm_plots": 0,
+          "owned_operational_farm_evidence_complete": true,
+          "owned_brew_output_units": 0,
+          "owned_output_evidence_complete": true,
+          "owned_output_lower_bound_proven": false,
+          "food_produced_in_run": 0,
+          "food_consumed_in_run": 0,
+          "drink_produced_in_run": 0,
+          "drink_consumed_in_run": 0,
+          "flow_evidence_complete": true,
+          "run_scope_valid": true
+        },
+        "required": ">=1 exact owned operational crop-assigned farm, >=1 exact owned completed still, and >=1 exact governed completed brew output; stocks and cumulative flows are diagnostic only"
+      },
+      "neglect_deaths": {
+        "status": "pass",
+        "observed": {
+          "dead": 0,
+          "deaths_in_run": 0,
+          "death_evidence_complete": true,
+          "death_causes_known": true,
+          "death_records_complete": true,
+          "direct_neglect_deaths_from_records": 0,
+          "neglect_deaths": 0,
+          "run_scope_valid": true
+        },
+        "required": "zero authoritatively classified preventable deaths"
+      },
+      "owned_accessible_layout_rooms": {
+        "status": "unknown",
+        "observed": {
+          "trace_rooms": 0,
+          "summary_rooms": 0,
+          "summary_consistent": true,
+          "evidence_complete": false,
+          "lower_bound_proven": false,
+          "owned_unique_construction_tiles": 0
+        },
+        "required": ">=3 final owned accessible rooms",
+        "reason": "room scan was truncated before the required lower bound was proven"
+      },
+      "initial_cohort_bed_capacity": {
+        "status": "fail",
+        "observed": {
+          "owned_completed_beds": 0,
+          "initial_cohort": 7,
+          "peak_population_diagnostic": 7
+        },
+        "required": ">=3 exact owned completed beds"
+      }
+    }
+  },
+  "provenance_completeness": {
+    "status": "unknown",
+    "observed": {
+      "gameplay_rows": 1,
+      "screen_text": 1,
+      "gameplay_proof": 1,
+      "governed_provenance": 1,
+      "model_usage": {
+        "models": [],
+        "resolved_models": [],
+        "providers": [],
+        "generation_ids": [],
+        "calls": 0,
+        "attempt_events": 0,
+        "failed_attempt_events": 0,
+        "calls_missing_cost": 0,
+        "calls_missing_resolved_model": 0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "uncached_prompt_tokens": 0,
+        "cache_read_rate": 0.0,
+        "reasoning_tokens": 0,
+        "cost_usd": 0.0,
+        "generation_telemetry_unavailable": 0
+      },
+      "trace_run_binding_complete": true,
+      "final_state_evidence_complete": true
+    }
+  },
+  "terminal_class": "completed",
+  "publication_status": {
+    "status": "ineligible",
+    "provider_telemetry_complete": false,
+    "cache_read_rate": 0.0,
+    "cache_read_tokens": 0,
+    "cache_write_tokens": 0,
+    "cache_affects_eligibility": false,
+    "evaluation_validity": "unknown",
+    "gameplay_outcome": "fail",
+    "provenance_completeness": "unknown"
+  },
+  "public_eligibility": "ineligible",
+  "public_label": "Scripted live measurement calibration",
+  "seed_attestation": {
+    "schema_version": "fort-eval.seed-attestation/v1",
+    "seed_save": "seed_region3_fresh",
+    "runtime_save": "region1",
+    "seed_world_sha256": "070b10a3f2403e72368290eea0d09396fe06f7912b9babdea7ad26eb0498a87d",
+    "eligible": true,
+    "checks": {
+      "pristine_seed_digest": true,
+      "paused": true,
+      "initial_tick": true,
+      "population": true,
+      "food": true,
+      "drink": true,
+      "initial_wealth": true,
+      "no_deaths": true,
+      "no_hostiles": true,
+      "no_risks": true,
+      "no_workshops": true,
+      "no_farm_plots": true,
+      "no_fort_structures": true,
+      "nearby_timber": true,
+      "plump_helmet_spawn": true,
+      "miner_available": true,
+      "woodcutter_available": true,
+      "carpenter_available": true,
+      "clean_g7_ledger": true
+    },
+    "failed_checks": [],
+    "observed": {
+      "tick": 16801,
+      "population": 7,
+      "food": 45,
+      "drink": 60,
+      "nearby_trees": 213,
+      "plump_helmet_spawn": 5
+    }
+  },
+  "integrity_attestation": {
+    "schema_version": "fort-eval.integrity-attestation/v1",
+    "status": "pass",
+    "terminal_class": "completed",
+    "terminal_reason": null
+  },
+  "task_id": "g7_survival",
+  "task_version": "g7-v5",
+  "seed_split": "fixed_seed_pilot",
+  "mechanics_digest": "df-51.11+governed-semantic-dfhack-v1",
+  "observation_digest": "governed_structured_state_v3_owned_layout+fort_minimap_vision_v1",
+  "action_digest": "legal_semantic_dfhack_v1",
+  "budget_digest": "max_steps_200_ticks_per_step_2500",
+  "model_digest": "scripted:dfhack-governed-scripted|provider=none",
+  "prompt_digest": "scripted-calibration-no-model-prompt",
+  "memory_digest": "memory_off",
+  "fort_gym_commit": "a8de39d03da48da32110776bf84ddfcbcb2ccefc",
+  "df_version": "df-51.11",
+  "evaluator_version": "outcome-vector-v1+g7-v5",
+  "remote_proto_runtime_sha256": "9d7949fe3f7ef3497d145dff6cc921c13a3cf088cd1ff68ef58b5047a013570f",
+  "measurement_calibration_scenario": "sensor_dropout",
+  "measurement_calibration_fixture": {}
+}

@@ -1,15 +1,26 @@
 from __future__ import annotations
 
+import hashlib
+import json
+import copy
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+import yaml
 
 from fort_gym.bench.eval.fort_eval_easy_p1 import (
+    P1_CALIBRATION_MODEL,
+    P1_CALIBRATION_REQUIRED_REGRESSION_TESTS,
     P1_PROTOCOL,
+    P1_PROTOCOL_V3,
     P1_SEED_WORLD_SHA256,
     attest_seed_region3,
     enrich_openrouter_usage,
+    p1_evaluation_is_publishable,
     p1_integrity_attestation,
+    p1_measurement_calibration_is_complete,
+    p1_task_verdict,
     p1_usage_is_publishable,
     resolved_model_digest,
     validate_p1_declaration,
@@ -77,17 +88,60 @@ def test_seed_region3_attestation_fails_closed_on_prior_world_change() -> None:
     assert result["failed_checks"] == ["food", "no_fort_structures"]
 
 
-def test_p1_declaration_requires_exact_arm_seed_and_budget() -> None:
-    validate_p1_declaration(
-        protocol=P1_PROTOCOL,
-        backend="dfhack",
-        model="dfhack-governed-llm-gpt56-sol",
-        seed_save="seed_region3_fresh",
-        runtime_save="region1",
-        preserve_save=False,
-        max_steps=200,
-        ticks_per_step=2500,
+def test_seed_region3_attestation_fails_closed_when_zero_valued_sensors_are_missing() -> (
+    None
+):
+    state = _initial_state()
+    del state["dead"]
+    del state["risks"]
+    del state["work"]["workshop_count"]
+    del state["crew"]["farm_plots"]
+    del state["fort"]["constructions"]
+    del state["survival"]["deaths_in_run"]
+
+    result = attest_seed_region3(
+        state,
+        runtime_save="fortgym_runtime",
+        seed_world_sha256=P1_SEED_WORLD_SHA256,
     )
+
+    assert result["eligible"] is False
+    assert {
+        "clean_g7_ledger",
+        "no_deaths",
+        "no_farm_plots",
+        "no_fort_structures",
+        "no_risks",
+        "no_workshops",
+    }.issubset(result["failed_checks"])
+
+    malformed = _initial_state()
+    malformed["dead"] = "0"
+    malformed["work"]["workshop_count"] = 0.0
+    assert (
+        attest_seed_region3(
+            malformed,
+            runtime_save="fortgym_runtime",
+            seed_world_sha256=P1_SEED_WORLD_SHA256,
+        )["eligible"]
+        is False
+    )
+
+
+def test_p1_declaration_requires_exact_arm_seed_and_budget_but_blocks_calibration() -> (
+    None
+):
+    with pytest.raises(ValueError, match="calibration-only"):
+        validate_p1_declaration(
+            protocol=P1_PROTOCOL,
+            backend="dfhack",
+            model="dfhack-governed-llm-gpt56-sol",
+            seed_save="seed_region3_fresh",
+            runtime_save="region1",
+            preserve_save=False,
+            max_steps=200,
+            ticks_per_step=2500,
+        )
 
     with pytest.raises(ValueError, match="ticks_per_step must be 2500"):
         validate_p1_declaration(
@@ -114,6 +168,1009 @@ def test_p1_declaration_requires_exact_arm_seed_and_budget() -> None:
         )
 
 
+def test_measurement_unlock_requires_pinned_reviewed_live_evidence(
+    tmp_path, monkeypatch
+) -> None:
+    from fort_gym.bench.eval import fort_eval_easy_p1 as contract
+
+    calibration_commit = "a" * 40
+    runtime_proto_digest = "b" * 64
+    monkeypatch.setattr(
+        contract,
+        "p1_remote_proto_runtime_digest",
+        lambda: runtime_proto_digest,
+    )
+    trace_items = []
+    trace_payloads = {}
+    for index, scenario in enumerate(
+        (
+            "owned_layout_and_provisioning",
+            "death_cause_fallback",
+            "sensor_dropout",
+        )
+    ):
+        run_id = f"run-{index}"
+        artifact = tmp_path / f"{scenario}.jsonl"
+        metrics = {
+            # The positive lower bound remains valid even if an unrelated
+            # component prevents an exhaustive global space enumeration.
+            "governed_owned_room_evidence_complete": False,
+            "governed_owned_building_evidence_complete": True,
+            "governed_owned_output_evidence_complete": True,
+            "governed_owned_accessible_layout_rooms": 3,
+            "governed_owned_layout_room_lower_bound_proven": True,
+            "governed_owned_unique_construction_tiles": 4,
+            "governed_owned_completed_beds": 3,
+            "governed_owned_completed_farm_plots": 1,
+            "governed_owned_operational_farm_plots": 1,
+            "governed_owned_operational_farm_evidence_complete": True,
+            "governed_owned_completed_stills": 1,
+            "governed_owned_output_units_by_job": {"brew": 1},
+            "governed_owned_output_attribution_scope": (
+                "exact_order_job_completion_and_uncontaminated_positive_output_delta"
+            ),
+            "governed_owned_output_manager_orders_observed_complete": True,
+            "governed_owned_output_manager_orders_present": False,
+            "governed_owned_layout_room_signatures": ["room-1", "room-2", "room-3"],
+            "governed_owned_room_structural_evidence": {
+                "room-1": {"ownership_basis": "owned_excavation_majority"},
+                "room-2": {"ownership_basis": "owned_construction_majority"},
+                "room-3": {"ownership_basis": "owned_door_closure"},
+            },
+        }
+        state_after_advance = {
+            "survival": {
+                "deaths_in_run": 0,
+                "death_evidence_complete": True,
+                "death_causes_known": True,
+            }
+        }
+        if scenario == "death_cause_fallback":
+            state_after_advance = {
+                "survival": {
+                    "deaths_in_run": 1,
+                    "death_evidence_complete": True,
+                    "death_causes_known": True,
+                    "measurement_calibration_mode": "force_incident_death_cause",
+                },
+                "crew": {
+                    "dead_citizen_records": [
+                        {"cause_source": ("world.incidents.all[death_id].death_cause")}
+                    ]
+                },
+            }
+        if scenario == "sensor_dropout":
+            metrics["governed_owned_room_evidence_complete"] = False
+            state_after_advance["fort"] = {
+                "measurement_calibration_fault": {
+                    "sensor": "fort_metrics",
+                    "field": "spaces_truncated",
+                    "value": True,
+                }
+            }
+        trace_payload = (
+            json.dumps(
+                {
+                    "run_id": run_id,
+                    "action": {
+                        "type": "WAIT",
+                        "params": {},
+                        "advance_ticks": 1,
+                    },
+                    "execute": {
+                        "accepted": True,
+                        "provenance": "dfhack_governed",
+                    },
+                    "metrics": metrics,
+                    "state_after_advance": state_after_advance,
+                    "events": (
+                        [
+                            {
+                                "type": "measurement_calibration_fixture",
+                                "data": {
+                                    "run_id": run_id,
+                                    "step": 0,
+                                    "ok": True,
+                                    "fixture": "dfhack_bounded_friendly_bloodloss",
+                                    "target": "citizen",
+                                    "limit": 1,
+                                    "method": "blood_loss_next_tick",
+                                    "unit_id": 243,
+                                    "race_token": "DWARF",
+                                    "blood_before": 60000,
+                                    "blood_after": 0,
+                                },
+                            }
+                        ]
+                        if scenario == "death_cause_fallback"
+                        else []
+                    ),
+                }
+            )
+            + "\n"
+        ).encode()
+        trace_payloads[scenario] = trace_payload
+        artifact.write_bytes(trace_payload)
+        summary_artifact = tmp_path / f"{scenario}-summary.json"
+        summary_artifact.write_text(
+            json.dumps(
+                {
+                    "run_id": run_id,
+                    "backend": "dfhack",
+                    "model": P1_CALIBRATION_MODEL,
+                    "evaluation_protocol": P1_PROTOCOL,
+                    "evaluator_version": "outcome-vector-v1+g7-v5",
+                    "remote_proto_runtime_sha256": runtime_proto_digest,
+                    "fort_gym_commit": calibration_commit,
+                    "measurement_calibration_scenario": scenario,
+                    "measurement_calibration_fixture": (
+                        {
+                            "ok": True,
+                            "fixture": "dfhack_bounded_friendly_bloodloss",
+                            "target": "citizen",
+                            "limit": 1,
+                            "method": "blood_loss_next_tick",
+                            "unit_id": 243,
+                            "race_token": "DWARF",
+                            "blood_before": 60000,
+                            "blood_after": 0,
+                        }
+                        if scenario == "death_cause_fallback"
+                        else {}
+                    ),
+                    "seed_attestation": {"eligible": True},
+                    "evaluation_validity": {
+                        "status": "unknown" if scenario == "sensor_dropout" else "pass"
+                    },
+                    "gameplay_outcome": {
+                        "status": "pass",
+                        "criteria": {
+                            "owned_operational_provisioning": {"status": "pass"},
+                            "owned_accessible_layout_rooms": {"status": "pass"},
+                            "initial_cohort_bed_capacity": {"status": "pass"},
+                        },
+                    },
+                }
+            ),
+            encoding="utf-8",
+        )
+        trace_item = {
+            "scenario": scenario,
+            "run_id": run_id,
+            "artifact": artifact.name,
+            "trace_sha256": hashlib.sha256(artifact.read_bytes()).hexdigest(),
+            "summary_artifact": summary_artifact.name,
+            "summary_sha256": hashlib.sha256(summary_artifact.read_bytes()).hexdigest(),
+        }
+        if scenario == "sensor_dropout":
+            trace_item["sensor_field"] = "governed_owned_room_evidence_complete"
+        trace_items.append(trace_item)
+    regression_report = tmp_path / "measurement-regressions.xml"
+    regression_report.write_text(
+        "<testsuite>"
+        + "".join(
+            f'<testcase name="{name}" />'
+            for name in sorted(P1_CALIBRATION_REQUIRED_REGRESSION_TESTS)
+        )
+        + "</testsuite>",
+        encoding="utf-8",
+    )
+    evidence = {
+        "protocol": P1_PROTOCOL,
+        "evaluator_version": "outcome-vector-v1+g7-v5",
+        "seed_world_sha256": P1_SEED_WORLD_SHA256,
+        "manifest_semantic_sha256": contract.p1_manifest_semantic_digest(),
+        "measurement_code_sha256": contract.p1_measurement_code_digest(),
+        "remote_proto_runtime_sha256": runtime_proto_digest,
+        "calibration_fort_gym_commit": calibration_commit,
+        "review_status": "approved",
+        "reviewer": "test-reviewer",
+        "live_traces": trace_items,
+        "regression_report": {
+            "artifact": regression_report.name,
+            "sha256": hashlib.sha256(regression_report.read_bytes()).hexdigest(),
+        },
+    }
+    path = tmp_path / "calibration.json"
+    raw = json.dumps(evidence, sort_keys=True).encode()
+    path.write_bytes(raw)
+    monkeypatch.setattr(contract, "P1_MEASUREMENT_CALIBRATION_COMPLETE", True)
+    monkeypatch.setattr(contract, "P1_MEASUREMENT_CALIBRATION_EVIDENCE_PATH", path)
+    monkeypatch.setattr(contract, "P1_MEASUREMENT_CALIBRATION_ARTIFACT_ROOT", tmp_path)
+    monkeypatch.setattr(
+        contract,
+        "P1_MEASUREMENT_CALIBRATION_EVIDENCE_SHA256",
+        hashlib.sha256(raw).hexdigest(),
+    )
+
+    assert p1_measurement_calibration_is_complete() is True
+
+    monkeypatch.setattr(
+        contract,
+        "p1_remote_proto_runtime_digest",
+        lambda: "c" * 64,
+    )
+    assert p1_measurement_calibration_is_complete() is False
+    monkeypatch.setattr(
+        contract,
+        "p1_remote_proto_runtime_digest",
+        lambda: runtime_proto_digest,
+    )
+
+    death_item = next(
+        item for item in trace_items if item["scenario"] == "death_cause_fallback"
+    )
+    death_path = tmp_path / "death_cause_fallback.jsonl"
+    observation_only = json.loads(
+        trace_payloads["death_cause_fallback"].decode("utf-8")
+    )
+    observation_only["observation"] = observation_only.pop("state_after_advance")
+    observation_only_payload = (json.dumps(observation_only) + "\n").encode()
+    death_path.write_bytes(observation_only_payload)
+    death_item["trace_sha256"] = hashlib.sha256(observation_only_payload).hexdigest()
+    assert (
+        contract._live_calibration_traces_are_bound(trace_items, calibration_commit)
+        is False
+    )
+    death_path.write_bytes(trace_payloads["death_cause_fallback"])
+    death_item["trace_sha256"] = hashlib.sha256(
+        trace_payloads["death_cause_fallback"]
+    ).hexdigest()
+
+    failed_report = tmp_path / "failed-regressions.xml"
+    failed_name = sorted(P1_CALIBRATION_REQUIRED_REGRESSION_TESTS)[0]
+    failed_report.write_text(
+        f'<testsuite><testcase name="{failed_name}"><failure /></testcase></testsuite>',
+        encoding="utf-8",
+    )
+    assert (
+        contract._calibration_regression_report_is_bound(
+            {
+                "artifact": failed_report.name,
+                "sha256": hashlib.sha256(failed_report.read_bytes()).hexdigest(),
+            }
+        )
+        is False
+    )
+
+    (tmp_path / "sensor_dropout.jsonl").write_text(
+        json.dumps({"run_id": "invented"}) + "\n", encoding="utf-8"
+    )
+    assert p1_measurement_calibration_is_complete() is False
+
+    (tmp_path / "sensor_dropout.jsonl").write_bytes(trace_payloads["sensor_dropout"])
+    monkeypatch.setattr(
+        contract, "P1_MEASUREMENT_CALIBRATION_EVIDENCE_SHA256", "0" * 64
+    )
+    assert p1_measurement_calibration_is_complete() is False
+
+
+def test_scripted_live_calibration_bootstraps_without_unlocking_model_arms() -> None:
+    validate_p1_declaration(
+        protocol=P1_PROTOCOL,
+        backend="dfhack",
+        model=P1_CALIBRATION_MODEL,
+        seed_save="seed_region3_fresh",
+        runtime_save="region1",
+        preserve_save=False,
+        max_steps=200,
+        ticks_per_step=2500,
+        measurement_calibration_scenario="owned_layout_and_provisioning",
+    )
+
+    with pytest.raises(ValueError, match="measurement calibration model"):
+        validate_p1_declaration(
+            protocol=P1_PROTOCOL,
+            backend="dfhack",
+            model="dfhack-governed-llm-gpt56-sol",
+            seed_save="seed_region3_fresh",
+            runtime_save="region1",
+            preserve_save=False,
+            max_steps=200,
+            ticks_per_step=2500,
+            measurement_calibration_scenario="owned_layout_and_provisioning",
+        )
+
+
+def test_measurement_calibration_scenario_requires_v5_protocol() -> None:
+    with pytest.raises(ValueError, match="require.*G7-v5 protocol"):
+        validate_p1_declaration(
+            protocol=None,
+            backend="dfhack",
+            model=P1_CALIBRATION_MODEL,
+            seed_save="seed_region3_fresh",
+            runtime_save="region1",
+            preserve_save=False,
+            max_steps=200,
+            ticks_per_step=2500,
+            measurement_calibration_scenario="sensor_dropout",
+        )
+
+
+def test_measurement_digest_normalizes_only_post_calibration_lock_values() -> None:
+    from fort_gym.bench.eval import fort_eval_easy_p1 as contract
+
+    first = b"\n".join(
+        (
+            b"P1_MEASUREMENT_CALIBRATION_COMPLETE = False",
+            b"P1_MEASUREMENT_CALIBRATION_EVIDENCE_SHA256: str | None = None",
+            b"validator_rule = 'strict'",
+        )
+    )
+    locked = b"\n".join(
+        (
+            b"P1_MEASUREMENT_CALIBRATION_COMPLETE = True",
+            b"P1_MEASUREMENT_CALIBRATION_EVIDENCE_SHA256: str | None = 'a' * 64",
+            b"validator_rule = 'strict'",
+        )
+    )
+    changed_validator = locked.replace(b"'strict'", b"'loose'")
+
+    assert contract._normalized_calibration_contract_source(first) == (
+        contract._normalized_calibration_contract_source(locked)
+    )
+    assert contract._normalized_calibration_contract_source(first) != (
+        contract._normalized_calibration_contract_source(changed_validator)
+    )
+
+
+def test_measurement_digest_covers_runtime_and_calibration_dependencies(
+    monkeypatch,
+) -> None:
+    from fort_gym.bench.eval import fort_eval_easy_p1 as contract
+
+    required = {
+        "fort_gym/bench/config.py",
+        "fort_gym/bench/dfhack_exec.py",
+        "fort_gym/bench/tick_controller.py",
+        "fort_gym/bench/tick_receipt.py",
+        "fort_gym/bench/env/dfhack_client.py",
+        "fort_gym/bench/env/encoder.py",
+        "fort_gym/bench/env/keystroke_exec.py",
+        "fort_gym/bench/env/remote_proto/__init__.py",
+        "fort_gym/bench/env/remote_proto/fetch_proto.py",
+        "fort_gym/bench/env/state_reader.py",
+        "fort_gym/bench/eval/milestones.py",
+        "fort_gym/bench/eval/protocol.py",
+        "fort_gym/bench/eval/scoring.py",
+        "fort_gym/bench/run/seed_reset.py",
+        "scripts/run_p1_live_calibration.py",
+        "scripts/build_p1_live_calibration_bundle.py",
+    }
+    assert required <= set(contract.P1_MEASUREMENT_CODE_RELATIVE_PATHS)
+
+    baseline = contract.p1_measurement_code_digest()
+    original_read_bytes = Path.read_bytes
+
+    def changed_tick_controller(path: Path) -> bytes:
+        source = original_read_bytes(path)
+        if path.as_posix().endswith("fort_gym/bench/tick_controller.py"):
+            return source + b"\n# digest sensitivity probe\n"
+        return source
+
+    monkeypatch.setattr(Path, "read_bytes", changed_tick_controller)
+    assert contract.p1_measurement_code_digest() != baseline
+
+
+def test_manifest_semantic_digest_survives_only_activation_lifecycle_flip(
+    tmp_path,
+) -> None:
+    from fort_gym.bench.eval import fort_eval_easy_p1 as contract
+
+    manifest = yaml.safe_load(contract.P1_MANIFEST_PATH.read_text(encoding="utf-8"))
+    calibration = tmp_path / "calibration.yaml"
+    active = tmp_path / "active.yaml"
+    changed = tmp_path / "changed.yaml"
+    calibration.write_text(yaml.safe_dump(manifest), encoding="utf-8")
+
+    active_manifest = copy.deepcopy(manifest)
+    active_manifest["status"] = "provisional"
+    active_manifest["publication"]["calibration_results_public"] = True
+    active_manifest["comparability"]["pair_comparison_enabled"] = True
+    active_manifest["comparability"]["pair_comparison_reason"] = "calibration approved"
+    active.write_text(yaml.safe_dump(active_manifest), encoding="utf-8")
+
+    changed_manifest = copy.deepcopy(active_manifest)
+    changed_manifest["task"]["objective"] = "different benchmark semantics"
+    changed.write_text(yaml.safe_dump(changed_manifest), encoding="utf-8")
+
+    assert contract.p1_manifest_semantic_digest(calibration) == (
+        contract.p1_manifest_semantic_digest(active)
+    )
+    assert contract.p1_manifest_semantic_digest(calibration) != (
+        contract.p1_manifest_semantic_digest(changed)
+    )
+
+    with pytest.raises(ValueError, match="scenario is not declared"):
+        validate_p1_declaration(
+            protocol=P1_PROTOCOL,
+            backend="dfhack",
+            model=P1_CALIBRATION_MODEL,
+            seed_save="seed_region3_fresh",
+            runtime_save="region1",
+            preserve_save=False,
+            max_steps=200,
+            ticks_per_step=2500,
+            measurement_calibration_scenario="invented",
+        )
+
+
+def test_bundle_builder_binds_clean_checkout_to_trace_commit(
+    monkeypatch, tmp_path
+) -> None:
+    from scripts import build_p1_live_calibration_bundle as builder
+
+    commit = "a" * 40
+    outputs = iter((f"{commit}\n", ""))
+
+    def fake_run(*args, **kwargs):
+        del args, kwargs
+        return SimpleNamespace(stdout=next(outputs))
+
+    monkeypatch.setattr(builder.subprocess, "run", fake_run)
+
+    builder._require_clean_checkout_at_commit(tmp_path, commit)
+
+
+def test_bundle_builder_rejects_wrong_or_dirty_checkout(monkeypatch, tmp_path) -> None:
+    from scripts import build_p1_live_calibration_bundle as builder
+
+    commit = "a" * 40
+    monkeypatch.setattr(
+        builder.subprocess,
+        "run",
+        lambda *args, **kwargs: SimpleNamespace(stdout=f"{'b' * 40}\n"),
+    )
+    with pytest.raises(RuntimeError, match="does not match trace commit"):
+        builder._require_clean_checkout_at_commit(tmp_path, commit)
+
+    outputs = iter((f"{commit}\n", "?? untracked-proof.py\n"))
+
+    def fake_dirty_run(*args, **kwargs):
+        del args, kwargs
+        return SimpleNamespace(stdout=next(outputs))
+
+    monkeypatch.setattr(builder.subprocess, "run", fake_dirty_run)
+    with pytest.raises(RuntimeError, match="requires a clean checkout"):
+        builder._require_clean_checkout_at_commit(tmp_path, commit)
+
+
+def test_live_calibration_runner_rejects_untracked_checkout(monkeypatch) -> None:
+    from scripts import run_p1_live_calibration as calibration_runner
+
+    calls = []
+
+    def fake_run(command, **kwargs):
+        calls.append((command, kwargs))
+        return SimpleNamespace(stdout="?? untracked-plan.json\n")
+
+    monkeypatch.setattr(calibration_runner.subprocess, "run", fake_run)
+
+    with pytest.raises(RuntimeError, match="checkout is dirty"):
+        calibration_runner._require_clean_checkout()
+
+    assert calls[0][0] == [
+        "git",
+        "status",
+        "--porcelain",
+        "--untracked-files=all",
+    ]
+
+
+def test_owned_calibration_plan_is_bounded_and_keeps_a_settlement_buffer() -> None:
+    from scripts import run_p1_live_calibration as calibration_runner
+
+    actions = calibration_runner._load_plan(
+        Path("experiments/calibration/p1_g7_v5_owned_layout_and_provisioning.json"),
+        scenario="owned_layout_and_provisioning",
+    )
+
+    assert len(actions) == 115
+    assert [action["type"] for action in actions[:14]] == [
+        "DIG",
+        "DIG",
+        "DIG",
+        "DIG",
+        "DIG",
+        "DIG",
+        "WAIT",
+        "WAIT",
+        "WAIT",
+        "WAIT",
+        "WAIT",
+        "WAIT",
+        "WAIT",
+        "BUILD",
+    ]
+    assert all(action["type"] != "INTERACT" for action in actions)
+    # Standing brew demand now punctuates the tail: the late brew order at
+    # index 92 is followed by two interleaved brew reorders, but the 20-step
+    # settlement buffer is preserved as WAITs and the plan still ends idle.
+    assert [action["type"] for action in actions[-7:]] == ["WAIT"] * 7
+    assert sum(1 for action in actions[92:] if action["type"] == "WAIT") == 20
+    assert [
+        action["params"]["job"]
+        for action in actions
+        if action["type"] == "ORDER" and action["params"]["job"] == "brew"
+    ] == ["brew"] * 4
+    wall_indices = [
+        index
+        for index, action in enumerate(actions)
+        if action["type"] == "BUILD" and action["params"]["kind"] == "Wall"
+    ]
+    assert len(wall_indices) == 27
+    assert [action["type"] for action in actions[39:72]] == ["BUILD"] * 33
+    assert all(action["advance_ticks"] == 0 for action in actions[39:72])
+    assert [action["type"] for action in actions[72:92]] == ["WAIT"] * 20
+    assert all(
+        actions[index]["params"]["x2"] is None
+        and actions[index]["params"]["y2"] is None
+        for index in wall_indices
+    )
+    assert actions[13]["params"] == {
+        "kind": "CarpenterWorkshop",
+        "structure": None,
+        "material": None,
+        "location": None,
+        "x": 94,
+        "y": 93,
+        "z": 161,
+        "x2": None,
+        "y2": None,
+    }
+
+
+def test_live_calibration_agent_waits_for_observed_workshop() -> None:
+    from scripts import run_p1_live_calibration as calibration_runner
+
+    action = calibration_runner._load_plan(
+        Path("experiments/calibration/p1_g7_v5_owned_layout_and_provisioning.json"),
+        scenario="owned_layout_and_provisioning",
+    )[15]
+    agent = calibration_runner.CalibrationPlanAgent([action])
+
+    waiting = agent.decide(
+        "main map",
+        {
+            "viewscreen_type": "viewscreen_dwarfmodest",
+            "work": {"carpenter_workshops_usable": 0},
+            "crew": {"farm_plot_details": []},
+        },
+    )
+    ready = agent.decide(
+        "main map",
+        {
+            "viewscreen_type": "viewscreen_dwarfmodest",
+            "work": {"carpenter_workshops_usable": 1},
+            "crew": {"farm_plot_details": []},
+        },
+    )
+
+    assert waiting["type"] == "WAIT"
+    assert waiting["advance_ticks"] == 2500
+    assert ready["type"] == "ORDER"
+    assert ready["params"]["job"] == "barrel"
+
+
+def test_live_calibration_agent_remaps_blocked_workshop_to_observed_open_floor() -> None:
+    from scripts import run_p1_live_calibration as calibration_runner
+
+    action = calibration_runner._load_plan(
+        Path("experiments/calibration/p1_g7_v5_owned_layout_and_provisioning.json"),
+        scenario="owned_layout_and_provisioning",
+    )[19]
+    rows = [
+        "ss.......,.",
+        "...,...,..,",
+        "...p.......",
+        "s....,p,.s.",
+        "..,.www....",
+        ",..pwww....",
+        "...@www.p.,",
+        ".s.@ooo..,.",
+        "...@o@o....",
+        "....ooo....",
+        ".....@...@.",
+        ".........^.",
+        ".p..,.,....",
+        ".....,.,...",
+    ]
+
+    remapped = calibration_runner.CalibrationPlanAgent._remap_blocked_workshop_action(
+        action,
+        {
+            "fort": {
+                "map_origin": [90, 89, 161],
+                "map_rows": rows,
+            }
+        },
+    )
+
+    x = remapped["params"]["x"]
+    y = remapped["params"]["y"]
+    assert (x, y) != (98, 92)
+    assert all(
+        rows[y + dy - 89][x + dx - 90] == "."
+        for dy in range(3)
+        for dx in range(3)
+    )
+
+
+def test_live_calibration_agent_selects_three_nonoverlapping_surface_rooms() -> None:
+    from scripts import run_p1_live_calibration as calibration_runner
+
+    action = calibration_runner._load_plan(
+        Path("experiments/calibration/p1_g7_v5_owned_layout_and_provisioning.json"),
+        scenario="owned_layout_and_provisioning",
+    )[39]
+    rows = [
+        ".........s.....",
+        "s...........p.,",
+        "............T..",
+        "...p........s..",
+        ".....,p.www....",
+        "....www.www....",
+        "...pwww.www....",
+        "....www.p.,....",
+        "....oo@........",
+        "....@oo.@....p.",
+        "....ooo........",
+        ".....@........s",
+        "..@..@...^.....",
+        ".p............s",
+        "........s...psT",
+    ]
+    obs_json = {
+        "fort": {
+            "map_origin": [90, 88, 161],
+            "map_rows": rows,
+        }
+    }
+    agent = calibration_runner.CalibrationPlanAgent([action])
+
+    anchors = agent._select_surface_room_anchors(obs_json, z=161)
+    remapped = agent._remap_surface_room_action(action, obs_json)
+
+    assert anchors == [(91, 88), (95, 88), (101, 92)]
+    assert remapped["params"]["x"] == 91
+    assert remapped["params"]["y"] == 88
+    assert all(
+        rows[anchor_y + dy - 88][anchor_x + dx - 90] == "."
+        for anchor_x, anchor_y in anchors
+        for dy in range(3)
+        for dx in range(4)
+    )
+
+
+def test_live_calibration_agent_waits_for_produced_furniture() -> None:
+    from scripts import run_p1_live_calibration as calibration_runner
+
+    action = calibration_runner._load_plan(
+        Path("experiments/calibration/p1_g7_v5_owned_layout_and_provisioning.json"),
+        scenario="owned_layout_and_provisioning",
+    )[48]
+    agent = calibration_runner.CalibrationPlanAgent([action])
+
+    waiting = agent.decide(
+        "main map",
+        {
+            "viewscreen_type": "viewscreen_dwarfmodest",
+            "crew": {
+                "farm_plot_details": [],
+                "goods": {"bed": 1},
+                "placed_furniture": {"bed": 1},
+            },
+        },
+    )
+    ready = agent.decide(
+        "main map",
+        {
+            "viewscreen_type": "viewscreen_dwarfmodest",
+            "crew": {
+                "farm_plot_details": [],
+                "goods": {"bed": 2},
+                "placed_furniture": {"bed": 1},
+            },
+        },
+    )
+
+    assert waiting["type"] == "WAIT"
+    assert ready["type"] == "BUILD"
+    assert ready["params"]["kind"] == "Bed"
+
+
+def test_live_calibration_agent_waits_for_observed_brew_inputs() -> None:
+    from scripts import run_p1_live_calibration as calibration_runner
+
+    action = calibration_runner._load_plan(
+        Path("experiments/calibration/p1_g7_v5_owned_layout_and_provisioning.json"),
+        scenario="owned_layout_and_provisioning",
+    )[92]
+    agent = calibration_runner.CalibrationPlanAgent([action])
+    base_crew = {
+        "farm_plot_details": [],
+        "workshops": [
+            {
+                "subtype": "Still",
+                "stage_read_ok": True,
+                "built": True,
+            }
+        ],
+    }
+
+    waiting = agent.decide(
+        "main map",
+        {
+            "viewscreen_type": "viewscreen_dwarfmodest",
+            "crew": {
+                **base_crew,
+                "production_inputs": {
+                    "brewable_plant_stacks": 0,
+                    "empty_barrels": 1,
+                },
+            },
+        },
+    )
+    ready = agent.decide(
+        "main map",
+        {
+            "viewscreen_type": "viewscreen_dwarfmodest",
+            "crew": {
+                **base_crew,
+                "production_inputs": {
+                    "brewable_plant_stacks": 1,
+                    "empty_barrels": 1,
+                },
+            },
+        },
+    )
+
+    assert waiting["type"] == "WAIT"
+    assert ready["type"] == "ORDER"
+    assert ready["params"]["job"] == "brew"
+
+
+def test_live_calibration_agent_remaps_farm_ids_from_observation() -> None:
+    from scripts import run_p1_live_calibration as calibration_runner
+
+    actions = calibration_runner._load_plan(
+        Path("experiments/calibration/p1_g7_v5_owned_layout_and_provisioning.json"),
+        scenario="owned_layout_and_provisioning",
+    )
+    agent = calibration_runner.CalibrationPlanAgent(
+        [actions[23], actions[24], actions[24]]
+    )
+
+    build = agent.decide(
+        "main map",
+        {
+            "viewscreen_type": "viewscreen_dwarfmodest",
+            "crew": {"farm_plot_details": []},
+        },
+    )
+    live_state = {
+        "viewscreen_type": "viewscreen_dwarfmodest",
+        "crew": {"farm_plot_details": [{"id": 31, "built": True}]},
+    }
+    first_farm = agent.decide("main map", live_state)
+    second_farm = agent.decide("main map", live_state)
+
+    assert build["type"] == "BUILD"
+    assert first_farm["params"]["building_id"] == 31
+    assert second_farm["params"]["building_id"] == 31
+
+
+def test_live_calibration_agent_recovers_modal_without_consuming_plan_action() -> None:
+    from scripts import run_p1_live_calibration as calibration_runner
+
+    actions = calibration_runner._load_plan(
+        Path("experiments/calibration/p1_g7_v5_owned_layout_and_provisioning.json"),
+        scenario="owned_layout_and_provisioning",
+    )
+    agent = calibration_runner.CalibrationPlanAgent(
+        [actions[0], actions[1]]
+    )
+
+    recovery = agent.decide(
+        "a - Begin discussion",
+        {
+            "viewscreen_type": "viewscreen_topicmeetingst",
+            "pause_state": True,
+            "crew": {"farm_plot_details": []},
+        },
+    )
+    first_plan_action = agent.decide(
+        "main map",
+        {
+            "viewscreen_type": "viewscreen_dwarfmodest",
+            "crew": {"farm_plot_details": []},
+        },
+    )
+    second_plan_action = agent.decide(
+        "main map",
+        {
+            "viewscreen_type": "viewscreen_dwarfmodest",
+            "crew": {"farm_plot_details": []},
+        },
+    )
+
+    assert recovery["type"] == "INTERACT"
+    assert recovery["params"]["operation"] == "topic_option_a"
+    assert first_plan_action["type"] == "DIG"
+    assert second_plan_action["type"] == "DIG"
+
+
+@pytest.mark.parametrize(
+    "viewscreen",
+    sorted(
+        {
+            "viewscreen_textviewerst",
+            "viewscreen_meetingst",
+            "viewscreen_requestagreementst",
+            "viewscreen_topicmeeting_fill_land_holder_positionsst",
+            "viewscreen_topicmeeting_takerequestsst",
+            "viewscreen_storesst",
+        }
+    ),
+)
+def test_live_calibration_agent_uses_nonselecting_modal_recovery(
+    viewscreen: str,
+) -> None:
+    from scripts import run_p1_live_calibration as calibration_runner
+
+    recovery = calibration_runner.CalibrationPlanAgent._interaction_recovery(
+        "blocking menu",
+        {"viewscreen_type": viewscreen, "pause_state": True},
+    )
+
+    assert recovery is not None
+    assert recovery["type"] == "INTERACT"
+    assert recovery["params"]["operation"] == "cancel"
+    assert recovery["advance_ticks"] == 0
+
+
+def test_live_calibration_agent_never_sends_input_without_pause_attestation() -> None:
+    from scripts import run_p1_live_calibration as calibration_runner
+
+    assert (
+        calibration_runner.CalibrationPlanAgent._interaction_recovery(
+            "Press Enter to close window",
+            {"viewscreen_type": "viewscreen_textviewerst", "pause_state": False},
+        )
+        is None
+    )
+
+
+def test_task_failure_terminal_forces_failed_task_verdict() -> None:
+    assert (
+        p1_task_verdict(g7={"status": "pass"}, terminal_class="task_failure") == "fail"
+    )
+    assert (
+        p1_task_verdict(g7={"status": "pass"}, terminal_class="completed") == "pass"
+    )
+
+
+def test_p1_task_verdict_is_unknown_when_gameplay_passes_but_validity_unknown() -> None:
+    # The reported contradiction: gameplay passed but validity is unknown, so the
+    # validity-gated gate status is unknown and the task verdict must follow it.
+    assert (
+        p1_task_verdict(
+            g7={
+                "status": "unknown",
+                "gameplay_outcome": {"status": "pass"},
+                "evaluation_validity": {"status": "unknown"},
+            },
+            terminal_class="completed",
+        )
+        == "unknown"
+    )
+
+
+def test_p1_task_verdict_passes_only_when_gate_status_pass() -> None:
+    assert p1_task_verdict(g7={"status": "pass"}, terminal_class="completed") == "pass"
+    assert p1_task_verdict(g7={"status": "fail"}, terminal_class="completed") == "fail"
+
+
+def test_p1_task_verdict_task_failure_overrides_to_fail() -> None:
+    assert (
+        p1_task_verdict(g7={"status": "pass"}, terminal_class="task_failure") == "fail"
+    )
+    assert (
+        p1_task_verdict(g7={"status": "unknown"}, terminal_class="task_failure")
+        == "fail"
+    )
+
+
+def test_p1_task_verdict_unknown_is_not_coerced_to_fail() -> None:
+    for terminal_class in ("completed", None, "invalid_execution"):
+        assert (
+            p1_task_verdict(g7={"status": "unknown"}, terminal_class=terminal_class)
+            == "unknown"
+        )
+
+
+def test_p1_evaluation_is_publishable_requires_validity_and_provenance() -> None:
+    assert (
+        p1_evaluation_is_publishable(
+            evaluation_validity={"status": "pass"},
+            provenance_completeness={"status": "pass"},
+        )
+        is True
+    )
+    for validity, provenance in (
+        ("unknown", "pass"),
+        ("pass", "unknown"),
+        ("fail", "pass"),
+        ("pass", "fail"),
+        ("unknown", "unknown"),
+    ):
+        assert (
+            p1_evaluation_is_publishable(
+                evaluation_validity={"status": validity},
+                provenance_completeness={"status": provenance},
+            )
+            is False
+        )
+
+
+def test_p1_persisted_summary_shows_unknown_verdict_with_visible_gameplay(
+    tmp_path: Path,
+) -> None:
+    """End-to-end persisted-summary regression for the verdict-truth bug.
+
+    A provider-free (zero-call) run can legitimately pass gameplay while its
+    evaluation validity and provenance are unknown. The persisted summary must
+    show task_verdict="unknown" (never coerced to "pass"), keep the gameplay
+    outcome visible as "pass", and mark the run ineligible for publication.
+    This mirrors the runner's post-run semantics (runner.py:5796-5830).
+    """
+    from fort_gym.bench.eval.summary import RunSummary, _model_dump
+
+    summary = RunSummary(run_id="provider-free-calibration", backend="dfhack")
+    summary.g7 = {
+        "gate": "G7",
+        "gate_version": 5,
+        "status": "unknown",  # validity-gated: gameplay passed but validity unknown
+        "gameplay_outcome": {"status": "pass", "criteria": {}},
+        "evaluation_validity": {"status": "unknown"},
+        "provenance_completeness": {"status": "unknown"},
+    }
+    summary.evaluation_validity = dict(summary.g7["evaluation_validity"])
+    summary.gameplay_outcome = dict(summary.g7["gameplay_outcome"])
+    summary.provenance_completeness = dict(summary.g7["provenance_completeness"])
+    summary.terminal_class = "completed"
+
+    # The fixed verdict writer: reads the validity-gated gate status, not the
+    # raw gameplay outcome.
+    summary.task_verdict = p1_task_verdict(
+        g7=summary.g7, terminal_class=summary.terminal_class
+    )
+    # The runner's publication gate requires BOTH validity and provenance pass.
+    summary.public_eligibility = (
+        "eligible"
+        if p1_evaluation_is_publishable(
+            evaluation_validity=summary.evaluation_validity,
+            provenance_completeness=summary.provenance_completeness,
+        )
+        else "ineligible"
+    )
+
+    # Persist exactly as summary.py:1023-1025 does and read it back.
+    summary_path = tmp_path / "summary.json"
+    summary_path.write_text(json.dumps(_model_dump(summary), indent=2), encoding="utf-8")
+    persisted = json.loads(summary_path.read_text(encoding="utf-8"))
+
+    # The contradiction that the bug produced must be impossible: verdict is
+    # unknown while gameplay stays visible as pass, and the run is ineligible.
+    assert persisted["task_verdict"] == "unknown"
+    assert persisted["gameplay_outcome"]["status"] == "pass"
+    assert persisted["evaluation_validity"]["status"] == "unknown"
+    assert persisted["provenance_completeness"]["status"] == "unknown"
+    assert persisted["public_eligibility"] == "ineligible"
+    # And unknown is never coerced into fail.
+    assert persisted["task_verdict"] != "fail"
+
+
 def test_non_p1_declaration_is_unchanged() -> None:
     validate_p1_declaration(
         protocol="fort-eval-easy-v1",
@@ -127,7 +1184,21 @@ def test_non_p1_declaration_is_unchanged() -> None:
     )
 
 
-def test_p1_usage_requires_cache_and_provider_truth() -> None:
+def test_frozen_g7_v3_declaration_cannot_be_relaunched() -> None:
+    with pytest.raises(ValueError, match="G7-v3 is frozen and no longer launchable"):
+        validate_p1_declaration(
+            protocol=P1_PROTOCOL_V3,
+            backend="dfhack",
+            model="dfhack-governed-llm-gpt56-sol",
+            seed_save="seed_region3_fresh",
+            runtime_save="region1",
+            preserve_save=False,
+            max_steps=200,
+            ticks_per_step=2500,
+        )
+
+
+def test_p1_usage_requires_provider_truth_but_cache_is_diagnostic() -> None:
     usage = {
         "calls": 200,
         "models": ["openai/gpt-5.6-sol"],
@@ -158,14 +1229,27 @@ def test_p1_usage_requires_cache_and_provider_truth() -> None:
     )
 
     usage["cached_tokens"] = 0
-    assert not p1_usage_is_publishable(
-        model="dfhack-governed-llm-gpt56-sol", usage=usage
-    )
+    assert p1_usage_is_publishable(model="dfhack-governed-llm-gpt56-sol", usage=usage)
 
     usage["cached_tokens"] = 900_000
     usage["resolved_models"] = ["openai/gpt-5.5"]
     assert not p1_usage_is_publishable(
         model="dfhack-governed-llm-gpt56-sol", usage=usage
+    )
+
+
+def test_p1_publication_requires_valid_complete_evaluation_not_gameplay_pass() -> None:
+    assert p1_evaluation_is_publishable(
+        evaluation_validity={"status": "pass"},
+        provenance_completeness={"status": "pass"},
+    )
+    assert not p1_evaluation_is_publishable(
+        evaluation_validity={"status": "unknown"},
+        provenance_completeness={"status": "pass"},
+    )
+    assert not p1_evaluation_is_publishable(
+        evaluation_validity={"status": "pass"},
+        provenance_completeness={"status": "unknown"},
     )
 
 
@@ -279,6 +1363,7 @@ def test_p1_integrity_attestation_rejects_harness_terminal_failure() -> None:
     assert p1_integrity_attestation(None, run_failed=False) == {
         "schema_version": "fort-eval.integrity-attestation/v1",
         "status": "pass",
+        "terminal_class": "completed",
         "terminal_reason": None,
     }
 
@@ -287,10 +1372,17 @@ def test_p1_integrity_attestation_rejects_harness_terminal_failure() -> None:
         run_failed=True,
     )
     assert failed["status"] == "fail"
+    assert failed["terminal_class"] == "invalid_execution"
     assert failed["terminal_reason"]["code"] == "tick_request_attestation_failed"
 
     aborted = p1_integrity_attestation(None, run_failed=True)
     assert aborted["status"] == "fail"
-    assert aborted["terminal_reason"] == {
-        "code": "run_aborted_without_terminal_reason"
-    }
+    assert aborted["terminal_class"] == "invalid_execution"
+    assert aborted["terminal_reason"] == {"code": "run_aborted_without_terminal_reason"}
+
+    model_failure = p1_integrity_attestation(
+        {"code": "governed_review_contract_exhausted"},
+        run_failed=True,
+    )
+    assert model_failure["status"] == "pass"
+    assert model_failure["terminal_class"] == "task_failure"

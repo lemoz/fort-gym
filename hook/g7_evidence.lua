@@ -6,6 +6,7 @@ local json = require('json')
 local args = {...}
 local command = tostring(args[1] or 'read')
 local run_id = tostring(args[2] or '')
+local calibration_mode = tostring(args[3] or '')
 local GLOBAL_KEY = 'FORT_GYM_G7_EVIDENCE'
 local CALLBACK_KEY = 'fort_gym_g7'
 
@@ -111,17 +112,47 @@ local function raw_flag(unit, field_table, field)
   return ok and value or false
 end
 
-local function death_record(unit)
+local function incident_death_cause(unit, incident_id)
+  local id = tonumber(incident_id)
+  if not id or id < 0 then return false, false, false end
+  local ok, incident = pcall(function() return df.incident.find(id) end)
+  if not ok or not incident then return false, false, false end
+  local victim_ok, victim = pcall(function() return tonumber(incident.victim) end)
+  if not victim_ok or victim ~= tonumber(unit.id) then
+    return false, false, false
+  end
+  local cause_ok, cause = pcall(function() return tonumber(incident.death_cause) end)
+  if not cause_ok or not cause or cause < 0 then return false, false, false end
+  local name_ok, name = pcall(function() return df.death_type[cause] end)
+  if not name_ok or not name or tostring(name) == 'NONE' then
+    return false, false, false
+  end
+  return cause, sanitize(name), 'world.incidents.all[death_id].death_cause'
+end
+
+local function death_record(ledger, unit)
+  local incident_id = raw_value(unit, 'counters', 'death_id')
   local cause_enum = raw_value(unit, 'counters', 'death_cause')
   local cause_name = false
   local cause_known = false
   local cause_source = false
-  if tonumber(cause_enum) and tonumber(cause_enum) >= 0 then
+  if not ledger.force_incident_death_cause
+      and tonumber(cause_enum) and tonumber(cause_enum) >= 0 then
     local ok, name = pcall(function() return df.death_type[tonumber(cause_enum)] end)
     if ok and name and tostring(name) ~= 'NONE' then
       cause_name = sanitize(name)
       cause_known = true
       cause_source = 'counters.death_cause'
+    end
+  end
+  if not cause_known then
+    local incident_cause, incident_name, incident_source =
+      incident_death_cause(unit, incident_id)
+    if incident_cause then
+      cause_enum = incident_cause
+      cause_name = incident_name
+      cause_known = true
+      cause_source = incident_source
     end
   end
   return {
@@ -130,7 +161,7 @@ local function death_record(unit)
     cause_name = cause_name,
     cause_known = cause_known,
     cause_source = cause_source,
-    incident_id = raw_value(unit, 'counters', 'death_id'),
+    incident_id = incident_id,
     hunger_timer = raw_value(unit, 'counters2', 'hunger_timer'),
     thirst_timer = raw_value(unit, 'counters2', 'thirst_timer'),
     stored_fat = raw_value(unit, 'counters2', 'stored_fat'),
@@ -148,7 +179,7 @@ local function record_death(ledger, unit)
   if not unit or not is_run_citizen(unit) then return end
   update_unit_consumption(ledger, unit, false)
   local key = tostring(unit.id)
-  local record = death_record(unit)
+  local record = death_record(ledger, unit)
   local previous = ledger.deaths[key]
   if not previous or record.cause_known or not previous.cause_known then
     ledger.deaths[key] = record
@@ -273,7 +304,7 @@ local function attach_callbacks(ledger)
   end
 end
 
-local function new_ledger(id)
+local function new_ledger(id, mode)
   return {
     active = true,
     run_id = id,
@@ -291,6 +322,8 @@ local function new_ledger(id)
     baseline_dead_ids = {},
     deaths = {},
     evidence_errors = {},
+    calibration_mode = mode ~= '' and mode or false,
+    force_incident_death_cause = mode == 'force_incident_death_cause',
   }
 end
 
@@ -338,6 +371,7 @@ local function snapshot(ledger)
     death_causes_known = all_causes_known,
     direct_neglect_deaths = direct_neglect_deaths,
     evidence_errors = errors,
+    measurement_calibration_mode = ledger.calibration_mode,
   }
   if #deaths == 0 or direct_neglect_deaths > 0 then
     -- Zero deaths is unambiguous; hunger/thirst is an unambiguous failure.
@@ -349,7 +383,7 @@ end
 
 if command == 'start' then
   detach_callbacks()
-  local ledger = new_ledger(run_id)
+  local ledger = new_ledger(run_id, calibration_mode)
   _G[GLOBAL_KEY] = ledger
   local baseline_ok = pcall(function()
     for _, unit in ipairs(df.global.world.units.all) do

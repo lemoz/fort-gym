@@ -2,18 +2,21 @@ from __future__ import annotations
 
 from pathlib import Path
 
-HOOK_SOURCE = (Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua").read_text(
-    encoding="utf-8"
-)
-G7_EVIDENCE_SOURCE = (Path(__file__).resolve().parents[1] / "hook" / "g7_evidence.lua").read_text(
-    encoding="utf-8"
-)
+HOOK_SOURCE = (
+    Path(__file__).resolve().parents[1] / "hook" / "job_metrics.lua"
+).read_text(encoding="utf-8")
+G7_EVIDENCE_SOURCE = (
+    Path(__file__).resolve().parents[1] / "hook" / "g7_evidence.lua"
+).read_text(encoding="utf-8")
+FORT_METRICS_SOURCE = (
+    Path(__file__).resolve().parents[1] / "hook" / "fort_metrics.lua"
+).read_text(encoding="utf-8")
 
 
 def test_g7_citizen_filter_propagates_classifier_failures() -> None:
-    citizen_filter = G7_EVIDENCE_SOURCE.split("local function is_run_citizen", 1)[1].split(
-        "local function unit_is_dead", 1
-    )[0]
+    citizen_filter = G7_EVIDENCE_SOURCE.split("local function is_run_citizen", 1)[
+        1
+    ].split("local function unit_is_dead", 1)[0]
     assert "dfhack.units.isCitizen(unit, true)" in citizen_filter
     assert G7_EVIDENCE_SOURCE.count("dfhack.units.isCitizen(unit, true)") == 1
     assert "civ_dwarf" not in G7_EVIDENCE_SOURCE
@@ -30,9 +33,9 @@ def test_g7_citizen_filter_propagates_classifier_failures() -> None:
 
 
 def test_g7_citizen_filter_is_used_for_every_membership_sensitive_path() -> None:
-    scan_consumption = G7_EVIDENCE_SOURCE.split("local function scan_consumption", 1)[1].split(
-        "local function raw_value", 1
-    )[0]
+    scan_consumption = G7_EVIDENCE_SOURCE.split("local function scan_consumption", 1)[
+        1
+    ].split("local function raw_value", 1)[0]
     record_death = G7_EVIDENCE_SOURCE.split("local function record_death", 1)[1].split(
         "local function scan_deaths", 1
     )[0]
@@ -68,13 +71,35 @@ def test_job_metrics_separates_completed_furniture_from_all_placed_furniture() -
         "out.placed_furniture_completed[key] = out.placed_furniture_completed[key] + 1"
         in HOOK_SOURCE
     )
+    assert "out.building_evidence_complete = true" in HOOK_SOURCE
+    assert (
+        "if not stage_read_ok then out.building_evidence_complete = false end"
+        in HOOK_SOURCE
+    )
+    assert "elseif ok and is_workshop then" in HOOK_SOURCE
+    assert "if #out.workshops >= MAX_WORKSHOPS then" not in HOOK_SOURCE
+
+
+def test_fort_room_scan_does_not_treat_unclassified_buildings_as_walls() -> None:
+    collection = FORT_METRICS_SOURCE.split(
+        "-- collect player buildings with their footprints", 1
+    )[1].split("local raw_construction_records", 1)[0]
+
+    assert collection.index("if not kind then return nil end") < collection.index(
+        "completed_building_tiles["
+    )
+    assert "farm plots must not become fake walls" in collection
 
 
 def test_job_metrics_collects_bounded_raw_farm_contained_item_evidence() -> None:
     for needle in (
-        "MAX_FARM_PLOT_DETAILS = 8",
+        "MAX_FARM_PLOT_DETAILS = 256",
         "MAX_FARM_PLOT_CONTAINED_ITEMS = 25",
         "out.farm_plot_details_truncated = false",
+        "crops_read_ok = crops_read_ok",
+        "local function farm_crop_token(idx)",
+        "if idx < 0 then return false, true end",
+        "if not token_read_ok then crops_read_ok = false end",
         "contained_items_read_ok = contained_items_read_ok",
         "contained_items_truncated = contained_items_truncated",
         "read_ok = false",
@@ -105,9 +130,9 @@ def test_job_metrics_emits_raw_dead_citizen_observability_without_inference() ->
     dead_observability = HOOK_SOURCE.split("out.dead_citizen_count = 0", 1)[1].split(
         "-- optional bounded rect tile composition", 1
     )[0]
-    dead_scan = dead_observability.split("local dead_scan_ok = pcall(function()", 1)[1].split(
-        "-- A failed record must fail closed", 1
-    )[0]
+    dead_scan = dead_observability.split("local dead_scan_ok = pcall(function()", 1)[
+        1
+    ].split("-- A failed record must fail closed", 1)[0]
     for needle in (
         "df.global.world.units.all",
         "out.dead_citizen_records",
@@ -146,6 +171,9 @@ def test_death_hooks_keep_current_drowning_flag_separate_from_known_cause() -> N
 
 def test_job_metrics_preserves_raw_unset_death_cause_enum() -> None:
     assert "if cause_number then cause_enum = cause_number end" in HOOK_SOURCE
+    assert "df.incident.find(id)" in HOOK_SOURCE
+    assert "victim ~= tonumber(unit.id)" in HOOK_SOURCE
+    assert "incident.death_cause" in HOOK_SOURCE
 
 
 def test_job_metrics_fails_closed_when_dead_record_evidence_is_incomplete() -> None:
@@ -153,5 +181,45 @@ def test_job_metrics_fails_closed_when_dead_record_evidence_is_incomplete() -> N
     assert "local dead_scan_ok = pcall(function()" in HOOK_SOURCE
     assert "and #out.dead_citizen_records == out.dead_citizen_count" in HOOK_SOURCE
     assert (
-        "out.death_causes_known = out.death_evidence_complete and all_causes_known" in HOOK_SOURCE
+        "out.death_causes_known = out.death_evidence_complete and all_causes_known"
+        in HOOK_SOURCE
     )
+
+
+def test_fort_metrics_emits_typed_constructions_and_honest_scan_flags() -> None:
+    assert "construction_details = construction_details" in FORT_METRICS_SOURCE
+    assert (
+        "construction_tiles_complete = construction_tiles_complete"
+        in FORT_METRICS_SOURCE
+    )
+    assert "construction_scan_ok and construction_tiles_complete" in FORT_METRICS_SOURCE
+    assert "local seen_z" not in FORT_METRICS_SOURCE
+    assert "kind = 'Wall'" in FORT_METRICS_SOURCE
+    assert "kind = 'Floor'" in FORT_METRICS_SOURCE
+
+
+def test_fort_metrics_distinguishes_actual_caps_and_path_sample_gaps() -> None:
+    assert "spaces_truncated = spaces_truncated" in FORT_METRICS_SOURCE
+    assert "spaces_truncated = #spaces >= MAX_SPACES" not in FORT_METRICS_SOURCE
+    assert "component_scan_truncated = component_scan_truncated" in FORT_METRICS_SOURCE
+    assert "for _, tile in ipairs(open_tiles) do" in FORT_METRICS_SOURCE
+    assert "open_tile_samples_truncated" in FORT_METRICS_SOURCE
+    assert "boundary_tiles_complete = true" in FORT_METRICS_SOURCE
+    assert (
+        "if enclosed and not component_truncated and #tiles > 0 then"
+        in FORT_METRICS_SOURCE
+    )
+
+
+def test_fort_metrics_tracks_building_scan_and_exact_boundary_membership() -> None:
+    for needle in (
+        "building_scan_complete = building_scan_complete",
+        "if not stage_read_ok then building_scan_complete = false end",
+        "if not ok then building_scan_complete = false",
+        "boundary_building_ids = boundary_building_ids",
+        "boundary_door_ids = boundary_door_ids",
+        "point_in_component(lookup, ox + d[1], oy + d[2])",
+        "citizen_classification_incomplete",
+    ):
+        assert needle in FORT_METRICS_SOURCE
+    assert "x1 = other.x1 - 1" not in FORT_METRICS_SOURCE

@@ -235,7 +235,7 @@ Agents must implement `Agent.decide(obs_text: str, obs_json: dict) -> dict` retu
 Registered models by category:
 
 **Governed (legal DFHack gameplay — the main research path):**
-- `dfhack-governed-scripted` (`agent/governed.py`) — deterministic Python state machine that validates the governed action substrate. No LLM.
+- `dfhack-governed-scripted` (`agent/governed.py`) — deterministic Python state machine that validates the governed action substrate. No LLM. This is the provider-free driver for measurement calibration (e.g. the 2026-07-21 G7-v5 campaign), so calibration runs incur no LLM spend and, having `usage.calls==0`, carry UNKNOWN validity/provenance by design.
 - `dfhack-governed-llm` (`agent/governed_llm.py`) — LLM policy (OpenRouter, default `z-ai/glm-5.2`) on the same governed action surface: DIG/BUILD/ORDER/WAIT with `MemoryManager` plan/POI memory.
 - Governed mode is gated by model name: the model must be in `GOVERNED_DFHACK_MODELS` in `run/runner.py`. A governed model name must NOT contain "keystroke" or end with "-research" (that would also match `_is_keystroke_model`).
 

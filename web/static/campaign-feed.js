@@ -9,6 +9,7 @@
   };
   const statusNames = {
     bounded_segment_complete: 'Segment complete', budget_limited_pause: 'Paused at a configured limit',
+    inference_output_limited_pause: 'Paused at the model output limit',
     failed: 'Failed segment', checkpoint_failed: 'Checkpoint failure', started: 'Started'
   };
   const failureNames = { model_action: 'Invalid model command', provider: 'Provider failure',

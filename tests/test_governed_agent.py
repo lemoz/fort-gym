@@ -3,12 +3,47 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from fort_gym.bench.agent.governed import DFHackGovernedScriptedAgent
 from fort_gym.bench.config import get_settings
 from fort_gym.bench.env.mock_env import MockEnvironment
 from fort_gym.bench.eval.scoring import SCORE_VERSION
 from fort_gym.bench.eval.summary import summarize
 from fort_gym.bench.run.runner import run_once
+from fort_gym.bench.run.storage import RunRegistry
+
+
+@pytest.mark.parametrize("ticks", [1, 200, 1000, 2000])
+def test_scripted_agent_uses_configured_tick_budget(ticks: int) -> None:
+    action = DFHackGovernedScriptedAgent(ticks_per_step=ticks).decide("", MockEnvironment().observe())
+    assert action["advance_ticks"] == ticks
+
+
+@pytest.mark.parametrize("ticks", [True, 0, -1, 2001, 1.5])
+def test_scripted_agent_rejects_invalid_tick_budget(ticks) -> None:
+    with pytest.raises(ValueError):
+        DFHackGovernedScriptedAgent(ticks_per_step=ticks)
+
+
+def test_supervised_scripted_worker_rejects_action_above_declared_budget(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("ARTIFACTS_DIR", str(tmp_path / "artifacts"))
+    get_settings.cache_clear()
+    registry = RunRegistry(db_path=tmp_path / "runs.sqlite", recover_interrupted=False)
+    registry.create(run_id="tick-bound", backend="mock", model="dfhack-governed-scripted",
+                    max_steps=1, ticks_per_step=200)
+    try:
+        run_once(DFHackGovernedScriptedAgent(), backend="mock", model="dfhack-governed-scripted",
+                 max_steps=1, ticks_per_step=200, run_id="tick-bound", registry=registry,
+                 supervisor_owns_terminal=True)
+        rows = [json.loads(line) for line in
+                (tmp_path / "artifacts/tick-bound/trace.jsonl").read_text().splitlines()]
+        assert len(rows) == 1
+        assert rows[0]["raw_action"]["advance_ticks"] == 1000
+        assert rows[0]["validation"]["valid"] is False
+        assert "tick_advance" not in rows[0]
+    finally:
+        get_settings.cache_clear()
 
 
 def test_governed_agent_starts_with_starter_room_dig() -> None:

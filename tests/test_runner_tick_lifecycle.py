@@ -20,7 +20,9 @@ from fort_gym.bench.run.runner import (
     _effective_action_history_limit,
     _interact_context_reason,
     _interaction_terminal_reason,
+    _measurement_calibration_step_limit_reached,
     _owned_excavation_snapshot_rects,
+    _should_auto_analyze_trace,
     _tick_terminal_reason,
     run_once,
 )
@@ -65,8 +67,9 @@ class CountingInteractAgent(Agent):
 
 
 class WaitThenInteractAgent(Agent):
-    def __init__(self) -> None:
+    def __init__(self, operation: str = "confirm") -> None:
         self.calls = 0
+        self.operation = operation
         self.actions: list[Dict[str, Any]] = []
         self.observations: list[Dict[str, Any]] = []
 
@@ -83,7 +86,7 @@ class WaitThenInteractAgent(Agent):
         else:
             action = {
                 "type": "INTERACT",
-                "params": {"operation": "confirm"},
+                "params": {"operation": self.operation},
                 "intent": "handle the freshly observed dialog",
                 "advance_ticks": 0,
             }
@@ -284,12 +287,23 @@ def _trace_rows(tmp_path: Path, run_id: str) -> list[Dict[str, Any]]:
     return [json.loads(line) for line in trace_path.read_text().splitlines()]
 
 
-def test_duplicate_worker_cannot_touch_an_already_claimed_trace(tmp_path, monkeypatch) -> None:
+def test_measurement_calibration_step_limit_stops_after_final_durable_row() -> None:
+    assert _measurement_calibration_step_limit_reached(step=0, limit=1) is True
+    assert _measurement_calibration_step_limit_reached(step=0, limit=2) is False
+    assert _measurement_calibration_step_limit_reached(step=199, limit=200) is True
+    assert _measurement_calibration_step_limit_reached(step=199, limit=None) is False
+
+
+def test_duplicate_worker_cannot_touch_an_already_claimed_trace(
+    tmp_path, monkeypatch
+) -> None:
     monkeypatch.setenv("ARTIFACTS_DIR", str(tmp_path))
     get_settings.cache_clear()  # type: ignore[attr-defined]
 
     registry = RunRegistry(db_path=tmp_path / "runs.sqlite3")
-    created = registry.create(backend="mock", model="fake", max_steps=1, ticks_per_step=0)
+    created = registry.create(
+        backend="mock", model="fake", max_steps=1, ticks_per_step=0
+    )
     assert registry.claim_pending_run(created.run_id, started_at=datetime.utcnow())
     trace_path = tmp_path / created.run_id / "trace.jsonl"
     trace_path.parent.mkdir(parents=True)
@@ -310,7 +324,9 @@ def test_duplicate_worker_cannot_touch_an_already_claimed_trace(tmp_path, monkey
     get_settings.cache_clear()  # type: ignore[attr-defined]
 
 
-def test_positive_ticks_with_unverified_repause_are_terminal(tmp_path, monkeypatch) -> None:
+def test_positive_ticks_with_unverified_repause_are_terminal(
+    tmp_path, monkeypatch
+) -> None:
     agent, registry, run_id = _run_dfhack_tick_fixture(
         tmp_path,
         monkeypatch,
@@ -369,12 +385,16 @@ def test_governed_work_metrics_setup_failure_cleans_runtime_before_failed_status
     )
     monkeypatch.setattr(
         "fort_gym.bench.run.runner.start_g7_evidence",
-        lambda run_id: lifecycle_events.append("evidence_started")
-        or {"ok": True, "active": True, "run_id": run_id},
+        lambda run_id: (
+            lifecycle_events.append("evidence_started")
+            or {"ok": True, "active": True, "run_id": run_id}
+        ),
     )
     monkeypatch.setattr(
         "fort_gym.bench.run.runner.stop_g7_evidence",
-        lambda: lifecycle_events.append("evidence_stopped") or {"ok": True, "active": False},
+        lambda: (
+            lifecycle_events.append("evidence_stopped") or {"ok": True, "active": False}
+        ),
     )
     monkeypatch.setattr("subprocess.run", lambda *args, **kwargs: None)
 
@@ -418,7 +438,9 @@ def test_governed_work_metrics_setup_failure_cleans_runtime_before_failed_status
     get_settings.cache_clear()  # type: ignore[attr-defined]
 
 
-def test_disabled_dfhack_setup_does_not_leave_claimed_run_running(tmp_path, monkeypatch) -> None:
+def test_disabled_dfhack_setup_does_not_leave_claimed_run_running(
+    tmp_path, monkeypatch
+) -> None:
     monkeypatch.setenv("ARTIFACTS_DIR", str(tmp_path))
     monkeypatch.setenv("DFHACK_ENABLED", "0")
     get_settings.cache_clear()  # type: ignore[attr-defined]
@@ -450,7 +472,9 @@ def test_disabled_dfhack_setup_does_not_leave_claimed_run_running(tmp_path, monk
     get_settings.cache_clear()  # type: ignore[attr-defined]
 
 
-def test_governed_run_rejects_assisted_dig_before_connecting(tmp_path, monkeypatch) -> None:
+def test_governed_run_rejects_assisted_dig_before_connecting(
+    tmp_path, monkeypatch
+) -> None:
     monkeypatch.setenv("ARTIFACTS_DIR", str(tmp_path))
     monkeypatch.setenv("DFHACK_ENABLED", "1")
     monkeypatch.setenv("FORT_GYM_DFHACK_COMPLETE_DIG", "1")
@@ -462,7 +486,9 @@ def test_governed_run_rejects_assisted_dig_before_connecting(tmp_path, monkeypat
             nonlocal connected
             connected = True
 
-    monkeypatch.setattr("fort_gym.bench.run.runner.DFHackClient", UnexpectedDFHackClient)
+    monkeypatch.setattr(
+        "fort_gym.bench.run.runner.DFHackClient", UnexpectedDFHackClient
+    )
 
     registry = RunRegistry(db_path=tmp_path / "runs.sqlite3")
     created = registry.create(
@@ -685,7 +711,9 @@ def _run_governed_interact_fixture(
     return agent, registry, run_id
 
 
-def test_governed_runner_scores_only_completed_owned_excavation(tmp_path, monkeypatch) -> None:
+def test_governed_runner_scores_only_completed_owned_excavation(
+    tmp_path, monkeypatch
+) -> None:
     tile_state = {"value": "wall"}
 
     def fake_designate(*_args):
@@ -728,7 +756,9 @@ def test_governed_runner_scores_only_completed_owned_excavation(tmp_path, monkey
                 tiles.append(tile)
         return {"ok": True, "rect": list(rect), "tiles": tiles}
 
-    monkeypatch.setattr("fort_gym.bench.env.executor.safe_designate_rect", fake_designate)
+    monkeypatch.setattr(
+        "fort_gym.bench.env.executor.safe_designate_rect", fake_designate
+    )
     _, _, run_id = _run_governed_interact_fixture(
         tmp_path,
         monkeypatch,
@@ -747,16 +777,19 @@ def test_governed_runner_scores_only_completed_owned_excavation(tmp_path, monkey
     assert row["metrics"]["work_progress"] == 1
     assert row["metrics"]["completion_progress"] == 1
     assert row["gameplay_proof"]["ok"] is True
-    assert row["gameplay_proof"]["owned_completion_observation"][
-        "completed_tiles"
-    ] == [{"coordinate": [10, 20, 5], "kind": "dig"}]
+    assert row["gameplay_proof"]["owned_completion_observation"]["completed_tiles"] == [
+        {"coordinate": [10, 20, 5], "kind": "dig"}
+    ]
     assert (
         row["metrics"]["score_progress_provenance"]
         == GOVERNED_SCORE_PROGRESS_PROVENANCE
     )
-    assert row["gameplay_proof"]["action_footprint"]["owned_delta"][
-        "governed_step_completion_progress"
-    ] == 1
+    assert (
+        row["gameplay_proof"]["action_footprint"]["owned_delta"][
+            "governed_step_completion_progress"
+        ]
+        == 1
+    )
 
 
 def test_governed_runner_does_not_reuse_stale_fort_metrics_after_failed_read(
@@ -990,10 +1023,10 @@ def test_governed_runner_credits_exact_owned_completed_workshop(
     row = _trace_rows(tmp_path, run_id)[0]
     assert row["metrics"]["governed_owned_buildings"] == 1
     assert row["metrics"]["governed_owned_completed_building_ids"] == [42]
-    assert row["metrics"]["governed_owned_utility_progress"] == 5
-    assert row["metrics"]["governed_owned_production_progress"] == 5
-    assert row["metrics"]["utility_progress"] == 5
-    assert row["metrics"]["production_progress"] == 5
+    assert row["metrics"]["governed_owned_utility_progress"] == 0
+    assert row["metrics"]["governed_owned_production_progress"] == 1
+    assert row["metrics"]["utility_progress"] == 0
+    assert row["metrics"]["production_progress"] == 1
     assert row["metrics"]["score_duration_blocked"] is False
     assert row["gameplay_proof"]["owned_building_completion_observation"] == {
         "source": "job_metrics_exact_building_id_and_native_stage",
@@ -1125,8 +1158,8 @@ def test_governed_runner_persists_owned_building_until_later_native_completion(
     assert first["metrics"]["score_duration_blocked"] is True
     assert second["action"]["type"] == "WAIT"
     assert second["metrics"]["governed_owned_completed_building_ids"] == [42]
-    assert second["metrics"]["utility_progress"] == 5
-    assert second["metrics"]["production_progress"] == 5
+    assert second["metrics"]["utility_progress"] == 0
+    assert second["metrics"]["production_progress"] == 1
     assert second["metrics"]["score_duration_blocked"] is False
     assert second["gameplay_proof"]["owned_prior_action_effect_observed"] is True
 
@@ -1146,7 +1179,9 @@ def test_owned_excavation_snapshot_rects_are_bounded_and_camera_independent() ->
         (1, 2, 5, 63, 60, 5),
         (64, 2, 5, 64, 2, 5),
     ]
-    assert all(x2 - x1 + 1 <= 64 and y2 - y1 + 1 <= 64 for x1, y1, _, x2, y2, _ in rects)
+    assert all(
+        x2 - x1 + 1 <= 64 and y2 - y1 + 1 <= 64 for x1, y1, _, x2, y2, _ in rects
+    )
 
 
 def test_governed_runner_retains_owned_dig_through_job_assignment_and_off_camera_completion(
@@ -1197,7 +1232,9 @@ def test_governed_runner_retains_owned_dig_through_job_assignment_and_off_camera
                 tiles.append(tile)
         return {"ok": True, "rect": list(rect), "tiles": tiles}
 
-    monkeypatch.setattr("fort_gym.bench.env.executor.safe_designate_rect", fake_designate)
+    monkeypatch.setattr(
+        "fort_gym.bench.env.executor.safe_designate_rect", fake_designate
+    )
     dig_agent = DigThenWaitAgent()
     _, _, run_id = _run_governed_interact_fixture(
         tmp_path,
@@ -1331,10 +1368,17 @@ def test_governed_runner_quarantines_explicit_rollback_failure_without_flag(
     assert loaded is not None and loaded.status == "failed"
 
 
-def test_vanished_order_jobs_remain_ineligible_in_complete_trace(tmp_path, monkeypatch) -> None:
+def test_vanished_order_jobs_remain_ineligible_in_complete_trace(
+    tmp_path, monkeypatch
+) -> None:
     monkeypatch.setattr(
         "fort_gym.bench.env.executor.safe_queue_manager_order",
-        lambda job, qty: {"ok": True, "created_job_ids": [501], "item": job, "qty": qty},
+        lambda job, qty: {
+            "ok": True,
+            "created_job_ids": [501],
+            "item": job,
+            "qty": qty,
+        },
     )
 
     def empty_jobs(_rect=None):
@@ -1435,7 +1479,9 @@ def test_zero_progress_timeout_is_terminal_before_another_agent_decide(
     get_settings.cache_clear()  # type: ignore[attr-defined]
 
 
-def test_partial_timeout_is_degraded_and_allows_next_agent_decide(tmp_path, monkeypatch) -> None:
+def test_partial_timeout_is_degraded_and_allows_next_agent_decide(
+    tmp_path, monkeypatch
+) -> None:
     agent, registry, run_id = _run_dfhack_tick_fixture(
         tmp_path,
         monkeypatch,
@@ -1464,12 +1510,12 @@ def test_partial_timeout_is_degraded_and_allows_next_agent_decide(tmp_path, monk
 def test_governed_viewscreen_interruption_is_degraded_and_reobserved(
     tmp_path, monkeypatch
 ) -> None:
-    agent = WaitThenInteractAgent()
+    agent = WaitThenInteractAgent(operation="cancel")
     advance_options: list[Dict[str, Any]] = []
 
     def interrupt_with_modal(_ticks: int, state: Dict[str, Any]) -> None:
         state["pause_state"] = True
-        state["viewscreen_type"] = "viewscreen_topicmeetingst"
+        state["viewscreen_type"] = "viewscreen_textviewerst"
 
     _, registry, run_id = _run_governed_interact_fixture(
         tmp_path,
@@ -1492,8 +1538,7 @@ def test_governed_viewscreen_interruption_is_degraded_and_reobserved(
             "paused_before": True,
             "paused_after": True,
             "viewscreen_before": "viewscreen_dwarfmodest",
-            "viewscreen_after": "viewscreen_topicmeetingst",
-            "pause_state_at_interrupt": True,
+            "viewscreen_after": "viewscreen_textviewerst",
             "repause_requested": True,
             "repause_effective": True,
             "repause": {
@@ -1507,16 +1552,22 @@ def test_governed_viewscreen_interruption_is_degraded_and_reobserved(
             "interrupt_safety_error": False,
             "calendar_safety_error": False,
             "final_pause_state": True,
-            "final_viewscreen_type": "viewscreen_topicmeetingst",
+            "final_viewscreen_type": "viewscreen_textviewerst",
+            "intermediate_probe_error": "calendar_sample_read_failed",
+            "intermediate_probe_phase": "poll",
+            "intermediate_probe_failure_kind": "dfhack_error",
+            "interruption_detection": "final_attestation",
         },
         advance_options=advance_options,
+        operation="cancel",
     )
 
     assert agent.calls == 2
     assert agent.actions[1]["type"] == "INTERACT"
+    assert agent.actions[1]["params"]["operation"] == "cancel"
     assert agent.actions[1]["advance_ticks"] == 0
     assert agent.observations[1]["time"] == 0
-    assert agent.observations[1]["viewscreen_type"] == "viewscreen_topicmeetingst"
+    assert agent.observations[1]["viewscreen_type"] == "viewscreen_textviewerst"
     assert advance_options[0] == {
         "interrupt_on_viewscreen_transition": True,
         "viewscreen_before": "viewscreen_dwarfmodest",
@@ -1529,6 +1580,13 @@ def test_governed_viewscreen_interruption_is_degraded_and_reobserved(
     rows = _trace_rows(tmp_path, run_id)
     assert rows[0]["tick_degraded"]["code"] == "blocking_viewscreen_transition"
     assert rows[0]["tick_advance"]["ticks_advanced"] == 0
+    assert (
+        rows[0]["tick_advance"]["intermediate_probe_error"]
+        == "calendar_sample_read_failed"
+    )
+    assert rows[0]["tick_advance"]["intermediate_probe_phase"] == "poll"
+    assert rows[0]["tick_advance"]["intermediate_probe_failure_kind"] == "dfhack_error"
+    assert rows[0]["tick_advance"]["interruption_detection"] == "final_attestation"
     assert not any(event["type"] == "terminal" for event in rows[0]["events"])
 
     get_settings.cache_clear()  # type: ignore[attr-defined]
@@ -1764,6 +1822,123 @@ def test_interruption_receipt_contradictions_are_terminal(
     assert terminal is not None
     assert terminal["code"] == "interruption_attestation_failed"
     assert terminal["attestation_error"] == expected_error
+
+
+FINAL_ATTESTATION_PROVENANCE_CONTRADICTIONS = (
+    ("missing_detection", "interrupt_fallback_provenance_unexpected"),
+    ("unknown_detection", "interrupt_detection_invalid"),
+    ("missing_probe_error", "interrupt_final_attestation_probe_error_invalid"),
+    ("changed_probe_error", "interrupt_final_attestation_probe_error_invalid"),
+    ("missing_probe_phase", "interrupt_final_attestation_probe_phase_invalid"),
+    ("initial_probe_phase", "interrupt_final_attestation_probe_phase_invalid"),
+    ("missing_probe_kind", "interrupt_final_attestation_probe_kind_invalid"),
+    ("unknown_probe_kind", "interrupt_final_attestation_probe_kind_invalid"),
+    (
+        "synthetic_interrupt_viewscreen",
+        "interrupt_final_attestation_temporal_evidence_invalid",
+    ),
+    (
+        "synthetic_interrupt_pause",
+        "interrupt_final_attestation_temporal_evidence_invalid",
+    ),
+)
+
+
+@pytest.mark.parametrize(
+    ("mutation", "expected_error"),
+    FINAL_ATTESTATION_PROVENANCE_CONTRADICTIONS,
+)
+def test_final_attestation_provenance_contradictions_are_terminal(
+    mutation, expected_error
+) -> None:
+    tick_info: Dict[str, Any] = {
+        "ok": False,
+        "error": "blocking_viewscreen_transition",
+        "interrupted": True,
+        "requested": 2500,
+        "ticks_advanced": 2289,
+        "start_year": 30,
+        "start_tick": 348551,
+        "end_year": 30,
+        "end_tick": 350840,
+        "paused_before": True,
+        "paused_after": True,
+        "viewscreen_before": "viewscreen_dwarfmodest",
+        "viewscreen_after": "viewscreen_textviewerst",
+        "repause_requested": True,
+        "repause_effective": True,
+        "repause": {
+            "ok": True,
+            "paused": True,
+            "attempts": 1,
+            "attempt_records": [
+                {"attempt": 1, "nopause_disabled": True, "paused": True}
+            ],
+        },
+        "interrupt_safety_error": False,
+        "calendar_safety_error": False,
+        "final_pause_state": True,
+        "final_viewscreen_type": "viewscreen_textviewerst",
+        "intermediate_probe_error": "calendar_sample_read_failed",
+        "intermediate_probe_phase": "poll",
+        "intermediate_probe_failure_kind": "dfhack_error",
+        "interruption_detection": "final_attestation",
+    }
+    state_after_apply = {
+        "year": 30,
+        "year_tick": 348551,
+        "time": 348551,
+        "pause_state": True,
+        "viewscreen_type": "viewscreen_dwarfmodest",
+    }
+    state_after_advance = {
+        "year": 30,
+        "year_tick": 350840,
+        "time": 350840,
+        "pause_state": True,
+        "viewscreen_type": "viewscreen_textviewerst",
+    }
+
+    if mutation == "missing_detection":
+        del tick_info["interruption_detection"]
+    elif mutation == "unknown_detection":
+        tick_info["interruption_detection"] = "inferred"
+    elif mutation == "missing_probe_error":
+        del tick_info["intermediate_probe_error"]
+    elif mutation == "changed_probe_error":
+        tick_info["intermediate_probe_error"] = "timeout"
+    elif mutation == "missing_probe_phase":
+        del tick_info["intermediate_probe_phase"]
+    elif mutation == "initial_probe_phase":
+        tick_info["intermediate_probe_phase"] = "initial"
+    elif mutation == "missing_probe_kind":
+        del tick_info["intermediate_probe_failure_kind"]
+    elif mutation == "unknown_probe_kind":
+        tick_info["intermediate_probe_failure_kind"] = "unknown"
+    elif mutation == "synthetic_interrupt_viewscreen":
+        tick_info["viewscreen_at_interrupt"] = "viewscreen_textviewerst"
+    else:
+        tick_info["pause_state_at_interrupt"] = True
+
+    terminal, degraded, _ = _tick_terminal_reason(
+        2500,
+        tick_info,
+        0,
+        state_after_apply=state_after_apply,
+        state_after_advance=state_after_advance,
+    )
+
+    assert degraded is None
+    assert terminal is not None
+    assert terminal["code"] == "interruption_attestation_failed"
+    assert terminal["attestation_error"] == expected_error
+
+
+def test_final_attestation_provenance_fails_closed_gate() -> None:
+    for mutation, expected_error in FINAL_ATTESTATION_PROVENANCE_CONTRADICTIONS:
+        test_final_attestation_provenance_contradictions_are_terminal(
+            mutation, expected_error
+        )
 
 
 def test_rollover_interruption_receipt_has_exact_duration() -> None:
@@ -2050,7 +2225,9 @@ def test_governed_history_limit_cannot_erase_review_continuity() -> None:
     assert _effective_action_history_limit(30, governed=True) == 30
 
 
-def test_parsed_validation_failure_keeps_command_identity(tmp_path, monkeypatch) -> None:
+def test_parsed_validation_failure_keeps_command_identity(
+    tmp_path, monkeypatch
+) -> None:
     interact_agent = CountingInteractAgent("finish_topic_meeting")
     agent, registry, run_id = _run_governed_interact_fixture(
         tmp_path,
@@ -2107,7 +2284,9 @@ def test_requested_zero_ticks_are_legal_and_do_not_trigger_the_streak(
     get_settings.cache_clear()  # type: ignore[attr-defined]
 
     registry = RunRegistry(db_path=tmp_path / "runs.sqlite3")
-    created = registry.create(backend="mock", model="fake", max_steps=2, ticks_per_step=10)
+    created = registry.create(
+        backend="mock", model="fake", max_steps=2, ticks_per_step=10
+    )
     agent = CountingWaitAgent(0)
     run_id = run_once(
         agent,
@@ -2124,7 +2303,10 @@ def test_requested_zero_ticks_are_legal_and_do_not_trigger_the_streak(
     assert loaded is not None
     assert loaded.status == "completed"
     assert "terminal_reason" not in loaded.metadata
-    assert all(row["tick_advance"]["ticks_advanced"] == 0 for row in _trace_rows(tmp_path, run_id))
+    assert all(
+        row["tick_advance"]["ticks_advanced"] == 0
+        for row in _trace_rows(tmp_path, run_id)
+    )
 
     get_settings.cache_clear()  # type: ignore[attr-defined]
 
@@ -2323,7 +2505,9 @@ def test_blocking_stores_view_rejects_positive_ticks_before_execution(
     get_settings.cache_clear()  # type: ignore[attr-defined]
 
 
-def test_repeated_stores_rejections_hit_modal_recovery_limit(tmp_path, monkeypatch) -> None:
+def test_repeated_stores_rejections_hit_modal_recovery_limit(
+    tmp_path, monkeypatch
+) -> None:
     agent = CountingWaitAgent(1200)
     _, registry, run_id = _run_governed_interact_fixture(
         tmp_path,
@@ -2408,7 +2592,9 @@ def test_stores_preparse_rejections_hit_modal_recovery_limit(
     get_settings.cache_clear()  # type: ignore[attr-defined]
 
 
-def test_stores_cancel_exits_with_one_zero_tick_interaction(tmp_path, monkeypatch) -> None:
+def test_stores_cancel_exits_with_one_zero_tick_interaction(
+    tmp_path, monkeypatch
+) -> None:
     agent, registry, run_id = _run_governed_interact_fixture(
         tmp_path,
         monkeypatch,
@@ -2456,7 +2642,10 @@ def test_unchanged_interact_loop_terminates_before_another_model_call(
     loaded = registry.get(run_id)
     assert loaded is not None
     assert loaded.status == "failed"
-    assert loaded.metadata["terminal_reason"]["code"] == "interaction_unchanged_screen_loop"
+    assert (
+        loaded.metadata["terminal_reason"]["code"]
+        == "interaction_unchanged_screen_loop"
+    )
 
     rows = _trace_rows(tmp_path, run_id)
     assert len(rows) == MAX_UNCHANGED_INTERACT_SCREENS
@@ -2470,7 +2659,9 @@ def test_unchanged_interact_loop_terminates_before_another_model_call(
     get_settings.cache_clear()  # type: ignore[attr-defined]
 
 
-def test_finish_topic_meeting_no_effect_is_recorded_as_rejected(tmp_path, monkeypatch) -> None:
+def test_finish_topic_meeting_no_effect_is_recorded_as_rejected(
+    tmp_path, monkeypatch
+) -> None:
     agent, registry, run_id = _run_governed_interact_fixture(
         tmp_path,
         monkeypatch,
@@ -2495,7 +2686,9 @@ def test_finish_topic_meeting_no_effect_is_recorded_as_rejected(tmp_path, monkey
     get_settings.cache_clear()  # type: ignore[attr-defined]
 
 
-def test_visible_topic_option_no_effect_is_recorded_as_rejected(tmp_path, monkeypatch) -> None:
+def test_visible_topic_option_no_effect_is_recorded_as_rejected(
+    tmp_path, monkeypatch
+) -> None:
     _, registry, run_id = _run_governed_interact_fixture(
         tmp_path,
         monkeypatch,
@@ -2514,7 +2707,9 @@ def test_visible_topic_option_no_effect_is_recorded_as_rejected(tmp_path, monkey
     get_settings.cache_clear()  # type: ignore[attr-defined]
 
 
-def test_finish_topic_meeting_capture_failure_is_not_success(tmp_path, monkeypatch) -> None:
+def test_finish_topic_meeting_capture_failure_is_not_success(
+    tmp_path, monkeypatch
+) -> None:
     _, registry, run_id = _run_governed_interact_fixture(
         tmp_path,
         monkeypatch,
@@ -2562,7 +2757,9 @@ def test_changing_interact_screens_still_hit_per_modal_operation_budget(
     get_settings.cache_clear()  # type: ignore[attr-defined]
 
 
-def test_governed_positive_advance_captures_final_survival_evidence(tmp_path, monkeypatch) -> None:
+def test_governed_positive_advance_captures_final_survival_evidence(
+    tmp_path, monkeypatch
+) -> None:
     wait_agent = CountingWaitAgent(10)
     agent, registry, run_id = _run_governed_interact_fixture(
         tmp_path,
@@ -2639,15 +2836,44 @@ def test_dfhack_cleanup_precedes_terminal_status_and_optional_analysis(
     assert loaded.status == "completed"
     assert lifecycle_events.count("evidence_stopped") == 1
     assert lifecycle_events.count("client_closed") == 1
-    assert lifecycle_events.index("evidence_stopped") < lifecycle_events.index("client_closed")
-    assert lifecycle_events.index("client_closed") < lifecycle_events.index("summary_persisted")
-    assert lifecycle_events.index("summary_persisted") < lifecycle_events.index("status:completed")
-    assert lifecycle_events.index("status:completed") < lifecycle_events.index("analysis_started")
+    assert lifecycle_events.index("evidence_stopped") < lifecycle_events.index(
+        "client_closed"
+    )
+    assert lifecycle_events.index("client_closed") < lifecycle_events.index(
+        "summary_persisted"
+    )
+    assert lifecycle_events.index("summary_persisted") < lifecycle_events.index(
+        "status:completed"
+    )
+    assert lifecycle_events.index("status:completed") < lifecycle_events.index(
+        "analysis_started"
+    )
 
     get_settings.cache_clear()  # type: ignore[attr-defined]
 
 
-def test_dfhack_cleanup_rejects_rpc_success_without_pause_attestation(monkeypatch) -> None:
+def test_calibration_scenario_never_starts_optional_provider_analysis() -> None:
+    assert (
+        _should_auto_analyze_trace(
+            measurement_calibration_scenario="owned_layout_and_provisioning",
+            google_api_key="configured-provider-key",
+            cleanup_outcome={"ok": True},
+        )
+        is False
+    )
+    assert (
+        _should_auto_analyze_trace(
+            measurement_calibration_scenario=None,
+            google_api_key="configured-provider-key",
+            cleanup_outcome={"ok": True},
+        )
+        is True
+    )
+
+
+def test_dfhack_cleanup_rejects_rpc_success_without_pause_attestation(
+    monkeypatch,
+) -> None:
     from fort_gym.bench.run import runner as runner_module
 
     lifecycle_events: list[str] = []
@@ -2744,7 +2970,9 @@ def test_run_without_registry_raises_when_cleanup_cannot_attest_pause(
     get_settings.cache_clear()  # type: ignore[attr-defined]
 
 
-def test_unverified_cleanup_cannot_publish_success_or_start_analysis(tmp_path, monkeypatch) -> None:
+def test_unverified_cleanup_cannot_publish_success_or_start_analysis(
+    tmp_path, monkeypatch
+) -> None:
     from fort_gym.bench.eval.analyzer import TraceAnalyzer
 
     lifecycle_events: list[str] = []
@@ -2812,7 +3040,9 @@ def test_stop_requested_during_cleanup_finalizes_stopped(tmp_path, monkeypatch) 
     assert loaded.status == "stopped"
     assert registry.stop_requested(run_id) is False
     assert "status:completed" not in lifecycle_events
-    assert lifecycle_events.index("client_closed") < lifecycle_events.index("status:stopped")
+    assert lifecycle_events.index("client_closed") < lifecycle_events.index(
+        "status:stopped"
+    )
 
     get_settings.cache_clear()  # type: ignore[attr-defined]
 
@@ -2885,11 +3115,15 @@ def test_terminal_reason_survives_sse_delivery_failure(tmp_path, monkeypatch) ->
     recovered = RunRegistry(db_path=tmp_path / "runs.sqlite3").list()
     assert len(recovered) == 1
     assert recovered[0].status == "failed"
-    assert recovered[0].metadata["terminal_reason"]["code"] == "tick_timeout_zero_progress"
+    assert (
+        recovered[0].metadata["terminal_reason"]["code"] == "tick_timeout_zero_progress"
+    )
     get_settings.cache_clear()  # type: ignore[attr-defined]
 
 
-def test_unexpected_exception_cleans_df_before_failed_status(tmp_path, monkeypatch) -> None:
+def test_unexpected_exception_cleans_df_before_failed_status(
+    tmp_path, monkeypatch
+) -> None:
     lifecycle_events: list[str] = []
     original_set_status = RunRegistry.set_status
 
@@ -2914,12 +3148,16 @@ def test_unexpected_exception_cleans_df_before_failed_status(tmp_path, monkeypat
 
     assert lifecycle_events.count("evidence_stopped") == 1
     assert lifecycle_events.count("client_closed") == 1
-    assert lifecycle_events.index("client_closed") < lifecycle_events.index("status:failed")
+    assert lifecycle_events.index("client_closed") < lifecycle_events.index(
+        "status:failed"
+    )
 
     get_settings.cache_clear()  # type: ignore[attr-defined]
 
 
-def test_agent_decide_failure_records_durable_terminal_reason(tmp_path, monkeypatch) -> None:
+def test_agent_decide_failure_records_durable_terminal_reason(
+    tmp_path, monkeypatch
+) -> None:
     _, registry, run_id = _run_governed_interact_fixture(
         tmp_path,
         monkeypatch,

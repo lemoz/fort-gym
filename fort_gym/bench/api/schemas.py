@@ -5,10 +5,9 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from ..eval.protocol import EVALUATION_PROTOCOL_PATTERN
-
 
 BackendType = Literal["mock", "dfhack"]
 ModelType = Literal[
@@ -25,6 +24,7 @@ ModelType = Literal[
     "dfhack-governed-llm-gpt55-vision",
     "dfhack-governed-llm-kimi-vision",
     "dfhack-governed-llm-minimax-vision",
+    "dfhack-governed-llm-minimax-canary",
     "openai",
     "openai-keystroke-perception-review",
     "openrouter-keystroke",
@@ -46,7 +46,9 @@ class RunInfo(BaseModel):
     """Metadata about a single run instance."""
 
     id: str
-    status: Literal["pending", "running", "paused", "stopped", "completed", "failed"] = "pending"
+    status: Literal[
+        "pending", "running", "paused", "stopped", "completed", "failed"
+    ] = "pending"
     started_at: Optional[datetime] = None
     finished_at: Optional[datetime] = None
     backend: BackendType = "mock"
@@ -60,10 +62,26 @@ class RunInfo(BaseModel):
     ticks_per_step: int = 0
     step: int = 0
     score: Optional[float] = None
+    supervision_mode: Optional[Literal["m1b-process"]] = None
+    environment: Optional[Dict[str, Any]] = None
+
+
+class SupervisedProviderPolicy(BaseModel):
+    """Explicit provider authority and default-on kill-switch bounds."""
+
+    model_config = {"extra": "forbid"}
+
+    route: Literal["openrouter"] = "openrouter"
+    model: str = Field(min_length=1, max_length=200)
+    provider_name: str = Field(min_length=1, max_length=100)
+    max_total_tokens: int = Field(default=128_000, ge=1)
+    max_cost_usd: float = Field(default=25.0, gt=0, allow_inf_nan=False)
 
 
 class RunCreateRequest(BaseModel):
     """Request payload for launching a benchmark run."""
+
+    model_config = {"extra": "forbid"}
 
     backend: BackendType = "mock"
     max_steps: int = Field(default=5, ge=1)
@@ -71,6 +89,14 @@ class RunCreateRequest(BaseModel):
     model: ModelType = "random"
     safe: Optional[bool] = True
     preserve_save: bool = False
+    publish: bool = Field(
+        default=False,
+        strict=True,
+        description=(
+            "Explicitly opt a non-calibration run into a permanent public share. "
+            "Calibration runs cannot be published."
+        ),
+    )
     evaluation_protocol: Optional[str] = Field(
         default=None,
         min_length=1,
@@ -83,6 +109,56 @@ class RunCreateRequest(BaseModel):
     # (FORT_GYM_SEED_SAVE / FORT_GYM_RUNTIME_SAVE).
     seed_save: Optional[str] = Field(default=None, pattern=r"^[A-Za-z0-9_-]+$")
     runtime_save: Optional[str] = Field(default=None, pattern=r"^[A-Za-z0-9_-]+$")
+    runtime_save_prefix: Optional[str] = Field(
+        default=None,
+        pattern=r"^[A-Za-z0-9_-]+$",
+        description="Prefix for a unique M1b runtime save; never an exact save name.",
+    )
+    supervision_mode: Optional[Literal["m1b-process"]] = None
+    provider: Optional[SupervisedProviderPolicy] = Field(
+        default=None,
+        description=(
+            "Explicit OpenRouter model, upstream provider pin, and per-run token/USD "
+            "ceilings. Credentials are never accepted in request bodies."
+        ),
+    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _require_literal_supervised_safe(cls, data: Any) -> Any:
+        if (
+            isinstance(data, dict)
+            and data.get("supervision_mode") == "m1b-process"
+            and type(data.get("safe", True)) is not bool
+        ):
+            raise ValueError("m1b-process safe must be a literal boolean")
+        return data
+
+    @model_validator(mode="after")
+    def _validate_supervision_fields(self) -> RunCreateRequest:
+        if self.supervision_mode == "m1b-process":
+            if self.safe is not True:
+                raise ValueError("m1b-process requires safe=true")
+            if self.runtime_save is not None:
+                raise ValueError(
+                    "m1b-process uses runtime_save_prefix, not runtime_save"
+                )
+            if self.publish:
+                raise ValueError("m1b-process runs cannot be published")
+            if self.max_steps > 20 or self.ticks_per_step > 200:
+                raise ValueError(
+                    "m1b-process is bounded to max_steps<=20 and ticks_per_step<=200"
+                )
+        else:
+            if self.provider is not None:
+                raise ValueError(
+                    "provider policy requires supervision_mode=m1b-process"
+                )
+            if self.runtime_save_prefix is not None:
+                raise ValueError(
+                    "runtime_save_prefix requires supervision_mode=m1b-process"
+                )
+        return self
 
 
 class ActionRecord(BaseModel):
@@ -152,9 +228,11 @@ class PublicModelResult(BaseModel):
     task_verdict: Optional[str] = None
     g7_outcomes: Optional[Dict[str, int]] = None
     run_count: int
-    mean_score: float
-    best_score: float
+    mean_score: Optional[float] = None
+    best_score: Optional[float] = None
     best_token: Optional[str] = None
+    representative_token: Optional[str] = None
+    result_kind: Optional[Literal["outcome_vector"]] = None
 
 
 class PublicComparisonGroup(BaseModel):
@@ -255,6 +333,8 @@ class StepResponse(BaseModel):
 class JobCreate(BaseModel):
     """Request payload for launching batched runs."""
 
+    model_config = {"extra": "forbid"}
+
     model: ModelType = "random"
     backend: BackendType = "mock"
     n: int = Field(default=10, ge=1)
@@ -262,6 +342,61 @@ class JobCreate(BaseModel):
     max_steps: int = Field(default=200, ge=1)
     ticks_per_step: int = Field(default=100, ge=1)
     safe: Optional[bool] = True
+    preserve_save: bool = False
+    evaluation_protocol: Optional[str] = Field(
+        default=None,
+        min_length=1,
+        max_length=64,
+        pattern=EVALUATION_PROTOCOL_PATTERN,
+    )
+    seed_save: Optional[str] = Field(default=None, pattern=r"^[A-Za-z0-9_-]+$")
+    runtime_save_prefix: Optional[str] = Field(
+        default=None,
+        pattern=r"^[A-Za-z0-9_-]+$",
+    )
+    provider: Optional[SupervisedProviderPolicy] = None
+    supervision_mode: Optional[Literal["m1b-process"]] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _require_literal_supervised_safe(cls, data: Any) -> Any:
+        if (
+            isinstance(data, dict)
+            and data.get("supervision_mode") == "m1b-process"
+            and type(data.get("safe", True)) is not bool
+        ):
+            raise ValueError("m1b-process safe must be a literal boolean")
+        return data
+
+    @model_validator(mode="after")
+    def _validate_supervision_fields(self) -> JobCreate:
+        if self.supervision_mode == "m1b-process":
+            if self.safe is not True:
+                raise ValueError("m1b-process requires safe=true")
+            if self.n > 8 or self.parallelism > 8:
+                raise ValueError("m1b-process cohorts are bounded to 8 runs")
+            if self.parallelism != self.n:
+                raise ValueError(
+                    "m1b-process requires parallelism=n for one co-tenancy cohort"
+                )
+            if self.max_steps > 20 or self.ticks_per_step > 200:
+                raise ValueError(
+                    "m1b-process is bounded to max_steps<=20 and ticks_per_step<=200"
+                )
+        elif any(
+            (
+                self.preserve_save,
+                self.evaluation_protocol is not None,
+                self.seed_save is not None,
+                self.runtime_save_prefix is not None,
+                self.provider is not None,
+            )
+        ):
+            raise ValueError(
+                "job reproducibility/provider fields require "
+                "supervision_mode=m1b-process"
+            )
+        return self
 
 
 class JobInfo(BaseModel):
@@ -272,10 +407,15 @@ class JobInfo(BaseModel):
     backend: BackendType
     n: int
     parallelism: int
+    isolation_supervised: bool = False
     run_ids: List[str]
     status: str
     created_at: datetime
     finished_at: Optional[datetime] = None
+    failure_reason: Optional[str] = None
+    start_barrier: bool = False
+    barrier_state: str = "not_required"
+    barrier_released_at: Optional[datetime] = None
 
 
 class AdminKeysRequest(BaseModel):

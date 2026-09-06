@@ -135,22 +135,21 @@ def test_governed_encoder_surfaces_compact_ratified_g7_facts() -> None:
 
     assert (
         "G7 planning facts (not a verdict; evidence, run scope, rubric, and scalar "
-        "are terminal-only): survival_evidence=valid; duration=142351/403200 ticks "
-        "(below); food_flow=below "
+        "are terminal-only): survival_evidence=valid; elapsed_ticks=142351 "
+        "(diagnostic only; no G7 threshold); food_flow=below "
         "(2 produced vs 20 consumed; requires produced>consumed); "
         "drink_loop=above (flow=above; 75 produced vs 41 consumed; final_stock=108; "
         "requires produced>consumed and final_stock>0); "
-        "population=15/15 (at_or_above); functional_rooms=1/3 (below); "
-        "installed_beds=3/5 (below); death_branch=no_neglect_observed "
+        "population=15 (diagnostic only; compare matched cohorts); "
+        "functional_rooms=1/3 (below; terminal credit requires final owned accessible geometry); "
+        "installed_beds=3/3 (at_or_above; fixed initial cohort); death_branch=no_neglect_observed "
         "(deaths_in_run=0, death_evidence_complete=True, death_causes_known=True, "
-        "neglect_deaths=0)"
-        in text
+        "neglect_deaths=0)" in text
     )
     assert state["g7_fact_snapshot"] == {
         "survival_evidence_status": "valid",
         "duration_ticks": 142_351,
-        "duration_required": 403_200,
-        "duration_status": "below",
+        "duration_gate_effect": "none",
         "food_produced": 2,
         "food_consumed": 20,
         "food_flow_status": "below",
@@ -161,14 +160,13 @@ def test_governed_encoder_surfaces_compact_ratified_g7_facts() -> None:
         "drink_loop_status": "above",
         "flow_evidence_complete": True,
         "population": 15,
-        "population_required": 15,
-        "population_status": "at_or_above",
+        "population_gate_effect": "none",
         "functional_rooms": 1,
         "functional_rooms_required": 3,
         "functional_rooms_status": "below",
         "installed_beds": 3,
-        "installed_beds_required": 5,
-        "installed_beds_status": "below",
+        "installed_beds_required": 3,
+        "installed_beds_status": "at_or_above",
         "death_status": "no_neglect_observed",
         "deaths_in_run": 0,
         "death_evidence_complete": True,
@@ -203,12 +201,17 @@ def test_governed_g7_duration_fact_handles_valid_year_rollover() -> None:
         governed=True,
     )
 
-    assert "survival_evidence=valid; duration=13200/403200 ticks" in text
+    assert "survival_evidence=valid; elapsed_ticks=13200" in text
     assert "food_flow=unknown" in text
     assert "drink_loop=unknown (flow=unknown" in text
-    assert "population=7/15 (below)" in text
-    assert "functional_rooms=None/3 (unknown)" in text
-    assert "death_branch=unknown (deaths_in_run=0, death_evidence_complete=False" in text
+    assert "population=7 (diagnostic only; compare matched cohorts)" in text
+    assert (
+        "functional_rooms=None/3 (unknown; terminal credit requires final owned accessible geometry)"
+        in text
+    )
+    assert (
+        "death_branch=unknown (deaths_in_run=0, death_evidence_complete=False" in text
+    )
     assert state["g7_fact_snapshot"]["duration_ticks"] == 13_200
 
 
@@ -219,11 +222,16 @@ def test_governed_g7_planning_facts_keep_missing_and_invalid_data_unknown() -> N
         governed=True,
     )
 
-    assert "duration=None/403200 ticks (unknown)" in text
+    assert "elapsed_ticks=None (diagnostic only; no G7 threshold)" in text
     assert "survival_evidence=unavailable" in text
     assert "food_flow=unknown (None produced vs None consumed" in text
-    assert "functional_rooms=None/3 (unknown)" in text
-    assert "death_branch=unknown (deaths_in_run=None, death_evidence_complete=None" in text
+    assert (
+        "functional_rooms=None/3 (unknown; terminal credit requires final owned accessible geometry)"
+        in text
+    )
+    assert (
+        "death_branch=unknown (deaths_in_run=None, death_evidence_complete=None" in text
+    )
     assert any(
         "G7 planning facts (not a verdict" in line
         for line in state["agent_plan_control"]["allowed_evidence_lines"]
@@ -244,7 +252,7 @@ def test_governed_g7_planning_facts_keep_missing_and_invalid_data_unknown() -> N
         },
         governed=True,
     )
-    assert "duration=None/403200 ticks (unknown)" in reversed_text
+    assert "elapsed_ticks=None (diagnostic only; no G7 threshold)" in reversed_text
     assert reversed_state["g7_fact_snapshot"]["duration_ticks"] is None
 
     invalid_text, invalid_state = encode_observation(
@@ -270,7 +278,10 @@ def test_governed_g7_planning_facts_keep_missing_and_invalid_data_unknown() -> N
         },
         governed=True,
     )
-    assert "survival_evidence=invalid; duration=None/403200 ticks (unknown)" in invalid_text
+    assert (
+        "survival_evidence=invalid; elapsed_ticks=None "
+        "(diagnostic only; no G7 threshold)"
+    ) in invalid_text
     assert "food_flow=unknown" in invalid_text
     assert "drink_loop=unknown (flow=unknown" in invalid_text
     assert "death_branch=unknown" in invalid_text
@@ -294,17 +305,25 @@ def test_governed_g7_planning_facts_keep_missing_and_invalid_data_unknown() -> N
         governed=True,
     )
     assert "survival_evidence=invalid" in invalid_zero_stock_text
-    assert "duration=None/403200 ticks (unknown)" in invalid_zero_stock_text
+    assert (
+        "elapsed_ticks=None (diagnostic only; no G7 threshold)"
+        in invalid_zero_stock_text
+    )
     assert "drink_loop=below (flow=unknown" in invalid_zero_stock_text
-    assert invalid_zero_stock_state["g7_fact_snapshot"]["drink_flow_status"] == "unknown"
+    assert (
+        invalid_zero_stock_state["g7_fact_snapshot"]["drink_flow_status"] == "unknown"
+    )
     assert invalid_zero_stock_state["g7_fact_snapshot"]["drink_loop_status"] == "below"
 
     missing_population_text, missing_population_state = encode_observation(
         {"crew": {"placed_furniture_completed": {"bed": 3}}},
         governed=True,
     )
-    assert "installed_beds=3/None (unknown)" in missing_population_text
-    assert missing_population_state["g7_fact_snapshot"]["installed_beds_required"] is None
+    assert (
+        "installed_beds=3/3 (at_or_above; fixed initial cohort)"
+        in missing_population_text
+    )
+    assert missing_population_state["g7_fact_snapshot"]["installed_beds_required"] == 3
 
     neglect_text, neglect_state = encode_observation(
         {
@@ -451,7 +470,9 @@ def test_encoder_shows_retry_recommended_keys_after_failed_attempt() -> None:
         screen_text="screen",
     )
 
-    assert "Retry fresh target recommended keys: D_DESIGNATE, DESIGNATE_STAIR_DOWN" in text
+    assert (
+        "Retry fresh target recommended keys: D_DESIGNATE, DESIGNATE_STAIR_DOWN" in text
+    )
     assert "last_action_work_delta=0" in text
 
 
@@ -513,7 +534,9 @@ def test_encoder_explains_inactive_df_cursor_sentinel() -> None:
     assert "opening a designation, stockpile, or building-placement mode" in text
 
 
-def test_encoder_shows_material_phase_after_enough_ui_excavation_without_materials() -> None:
+def test_encoder_shows_material_phase_after_enough_ui_excavation_without_materials() -> (
+    None
+):
     text, _ = encode_observation(
         {
             "time": 100,
@@ -634,7 +657,9 @@ def test_encoder_workshop_material_selection_recommends_select() -> None:
     )
 
     assert "current visible workshop material selection screen" in text
-    assert "press SELECT with advance_ticks=0 to choose the highlighted material" in text
+    assert (
+        "press SELECT with advance_ticks=0 to choose the highlighted material" in text
+    )
     assert "carpenter workshop material-selection list" in text
     assert "Fresh target recommended keys: SELECT" in text
     assert "previous build screen said material was missing" not in text
@@ -927,16 +952,26 @@ def test_encoder_does_not_claim_capacity_when_labor_eligibility_is_unknown() -> 
     )
 
     assert "labor_eligibility_complete=false" in text
-    assert "labor_eligibility=unknown labor_eligibility_known=false labor_eligible=false" in text
+    assert (
+        "labor_eligibility=unknown labor_eligibility_known=false labor_eligible=false"
+        in text
+    )
     assert "#244 [?] job=unknown" in text
     assert "Citizen labor state incomplete" in text
     assert "list_truncated=true" in text
-    assert "Citizens list truncated: only displayed entries are valid LABOR targets" in text
-    assert "Parallel capacity candidates: unknown; labor eligibility is incomplete" in text
+    assert (
+        "Citizens list truncated: only displayed entries are valid LABOR targets"
+        in text
+    )
+    assert (
+        "Parallel capacity candidates: unknown; labor eligibility is incomplete" in text
+    )
     assert "can take independent jobs" not in text
 
 
-def test_encoder_preserves_legacy_citizen_observations_without_inventing_eligibility() -> None:
+def test_encoder_preserves_legacy_citizen_observations_without_inventing_eligibility() -> (
+    None
+):
     text, _ = encode_observation(
         {
             "time": 100,
@@ -961,7 +996,9 @@ def test_encoder_preserves_legacy_citizen_observations_without_inventing_eligibi
     assert "Citizens: #243 [?] job=unknown" in text
     assert "Citizens: #243 [-] idle" not in text
     assert "labor_eligible=" not in text
-    assert "Parallel capacity candidates: unknown; labor eligibility is incomplete" in text
+    assert (
+        "Parallel capacity candidates: unknown; labor eligibility is incomplete" in text
+    )
 
 
 def test_governed_encoder_suppresses_keystroke_only_guidance() -> None:
@@ -1006,7 +1043,10 @@ def test_governed_encoder_suppresses_keystroke_only_guidance() -> None:
     )
 
     assert "Screen state: mode=main_map" in text
-    assert "Game Status: PAUSED (map inspection and legal commands remain available" in text
+    assert (
+        "Game Status: PAUSED (map inspection and legal commands remain available"
+        in text
+    )
     assert "Screen instruction:" not in text
     assert "Live UI" not in text
     assert "Recent progress instruction:" not in text
@@ -1351,7 +1391,7 @@ def test_encoder_classifies_selected_usable_carpenter_workshop_screen() -> None:
             },
         },
         screen_text=(
-            "Ctrl+n: Give name\n" "Carpenter's Workshop\n" "x: Remove Building\n" "ESC: Done"
+            "Ctrl+n: Give name\nCarpenter's Workshop\nx: Remove Building\nESC: Done"
         ),
     )
 
@@ -1362,7 +1402,9 @@ def test_encoder_classifies_selected_usable_carpenter_workshop_screen() -> None:
     assert state["screen_state"]["confidence"] == "high"
 
 
-def test_encoder_keeps_carpenter_placement_screen_distinct_from_selected_workshop() -> None:
+def test_encoder_keeps_carpenter_placement_screen_distinct_from_selected_workshop() -> (
+    None
+):
     text, state = encode_observation(
         {
             "time": 100,
@@ -1569,7 +1611,9 @@ def test_encoder_labels_workshop_target_setup() -> None:
     assert "D_BUILDING, HOTKEY_BUILDING_WORKSHOP" in text
 
 
-def test_encoder_lets_visible_blocked_workshop_screen_override_target_metadata() -> None:
+def test_encoder_lets_visible_blocked_workshop_screen_override_target_metadata() -> (
+    None
+):
     text, _ = encode_observation(
         {
             "time": 100,
@@ -1618,7 +1662,8 @@ def test_encoder_lets_visible_blocked_workshop_screen_override_target_metadata()
     )
 
     assert (
-        "visible DF placement screen currently says placement is blocked" in building_present_text
+        "visible DF placement screen currently says placement is blocked"
+        in building_present_text
     )
     assert "valid carpenter workshop placement screen" not in building_present_text
 
@@ -1690,7 +1735,9 @@ def test_encoder_surfaces_blocked_workshop_footprint_feedback() -> None:
         screen_text="Carpenter's Workshop\nPlacement\nBlocked",
     )
 
-    assert "native DF rejected the current carpenter workshop footprint as blocked" in text
+    assert (
+        "native DF rejected the current carpenter workshop footprint as blocked" in text
+    )
     assert "do not retry that exact footprint" in text
     assert "submit only LEAVESCREEN keys with advance_ticks=0" in text
 
@@ -1840,7 +1887,10 @@ def test_encoder_surfaces_current_owned_excavation_completion() -> None:
     )
 
     assert "Last Action command: step=7 DIG(kind=dig, area=[94, 95, 160]" in text
-    assert "Last Action owned excavation progress: ONE OR MORE SUBMITTED TILES COMPLETE" in text
+    assert (
+        "Last Action owned excavation progress: ONE OR MORE SUBMITTED TILES COMPLETE"
+        in text
+    )
     assert "post-advance map proof observed completion" in text
     assert "Full rectangle completion is not implied" in text
 
@@ -1867,7 +1917,10 @@ def test_encoder_distinguishes_designation_acceptance_from_completion() -> None:
         },
     )
 
-    assert "Last Action owned excavation progress: NO SUBMITTED TILE COMPLETION OBSERVED" in text
+    assert (
+        "Last Action owned excavation progress: NO SUBMITTED TILE COMPLETION OBSERVED"
+        in text
+    )
     assert "designation acceptance alone is not completed geometry" in text
 
 
@@ -2060,7 +2113,13 @@ def test_encoder_flags_repeated_manager_menu_loop() -> None:
             keys = ["LEAVESCREEN", "LEAVESCREEN", "D_NOBLES"]
             intent = "Open Nobles screen to assign manager"
         else:
-            keys = ["CURSOR_DOWN", "CURSOR_DOWN", "CURSOR_DOWN", "CURSOR_DOWN", "SELECT"]
+            keys = [
+                "CURSOR_DOWN",
+                "CURSOR_DOWN",
+                "CURSOR_DOWN",
+                "CURSOR_DOWN",
+                "SELECT",
+            ]
             intent = "Navigate to Manager row and select a candidate"
         action_history.append(
             {
@@ -2285,7 +2344,10 @@ def test_encoder_surfaces_legal_build_site_without_plan_lines() -> None:
         screen_text="main map",
     )
 
-    assert "Stable workshop site candidate observed: carpenter_build_site=(99,93,177)" in text
+    assert (
+        "Stable workshop site candidate observed: carpenter_build_site=(99,93,177)"
+        in text
+    )
     assert "valid for CarpenterWorkshop or Still" in text
     assert "verified 3x3 stable-floor footprint" in text
     # Legacy plan-completion framing must stay out of the governed observation:
@@ -2408,7 +2470,9 @@ def test_encoder_echoes_labor_result_state() -> None:
         },
     )
 
-    assert "Last Action LABOR: #243 brewing before=False after=True changed=True" in text
+    assert (
+        "Last Action LABOR: #243 brewing before=False after=True changed=True" in text
+    )
 
 
 def test_encoder_distinguishes_rolled_back_and_unknown_labor_mutations() -> None:
@@ -2627,7 +2691,8 @@ def test_encoder_surfaces_full_crew_block() -> None:
     assert (
         "Fort-area tiles: wall=3 (diggable), floor=20, shrub/other=9 "
         "(dig/channel target natural WALL tiles; down_stair may target stable "
-        "floor or natural wall; use kind=gather/chop for vegetation), designated=0" in text
+        "floor or natural wall; use kind=gather/chop for vegetation), designated=0"
+        in text
     )
 
 
@@ -2882,15 +2947,22 @@ def test_encoder_renders_bounded_raw_farm_contained_item_evidence() -> None:
 
     assert "plant_seed_jobs=0" in text
     raw_line = next(
-        line for line in text.splitlines() if line.startswith("Farm plot #1 raw contained items:")
+        line
+        for line in text.splitlines()
+        if line.startswith("Farm plot #1 raw contained items:")
     )
     assert (
-        raw_line
-        == "Farm plot #1 raw contained items: "
+        raw_line == "Farm plot #1 raw contained items: "
         "item_type=SEEDS,item_id=86,use_mode=2,mat_index=172,"
         "grow_counter=288,planting_skill=1,mat_token=MUSHROOM_HELMET_PLUMP"
     )
-    for label in ("is_growing", "planted", "pathing_blocked", "percent", "inferred status"):
+    for label in (
+        "is_growing",
+        "planted",
+        "pathing_blocked",
+        "percent",
+        "inferred status",
+    ):
         assert label not in raw_line
 
 
@@ -2978,7 +3050,12 @@ def test_encoder_renders_partial_season_seed_list() -> None:
             "crew": {
                 "ok": True,
                 "seeds": [
-                    {"token": "RADISH", "count": 2, "surface": True, "seasons": ["sp", "su"]},
+                    {
+                        "token": "RADISH",
+                        "count": 2,
+                        "surface": True,
+                        "seasons": ["sp", "su"],
+                    },
                 ],
                 "current_season": "spring",
             },
@@ -3114,9 +3191,7 @@ def test_encoder_surfaces_workshop_job_ids_and_reactions() -> None:
         screen_text="main map",
     )
 
-    assert (
-        "queue=#223:CustomReaction/BREW_DRINK_FROM_PLANT[unassigned]" in text
-    )
+    assert "queue=#223:CustomReaction/BREW_DRINK_FROM_PLANT[unassigned]" in text
 
 
 def test_encoder_echoes_still_workshop_of_kind_result_counts() -> None:
@@ -3310,7 +3385,11 @@ def test_encoder_echoes_farm_plot_result_counts() -> None:
         screen_text="main map",
         last_action_result={
             "accepted": True,
-            "result": {"before_farm_plots": 0, "after_farm_plots": 1, "building_id": 42},
+            "result": {
+                "before_farm_plots": 0,
+                "after_farm_plots": 1,
+                "building_id": 42,
+            },
         },
     )
 
@@ -3335,7 +3414,13 @@ def test_encoder_surfaces_full_fort_block() -> None:
                     "z": 177,
                     "tiles": 6,
                     "kind": "production",
-                    "contents": {"bed": 0, "table": 0, "chair": 0, "door": 0, "workshop": 1},
+                    "contents": {
+                        "bed": 0,
+                        "table": 0,
+                        "chair": 0,
+                        "door": 0,
+                        "workshop": 1,
+                    },
                     "bounds": [88, 96, 90, 97, 177],
                     "open_tiles": [[88, 96, 177], [89, 96, 177]],
                     "open_tile_count": 2,
@@ -3496,7 +3581,10 @@ def test_encoder_surfaces_complete_rejected_workshop_footprint() -> None:
 
     assert "Last Action: REJECTED - tile_not_open_floor" in obs_text
     assert "failed_count=3" in obs_text
-    assert "(97,98,160): tile_not_open_floor [tile_shape=WALL, tiletype=SoilWall]" in obs_text
+    assert (
+        "(97,98,160): tile_not_open_floor [tile_shape=WALL, tiletype=SoilWall]"
+        in obs_text
+    )
     assert (
         "(98,98,160): tile_occupied_by_building "
         "[tile_shape=FLOOR, tiletype=SoilFloor1]" in obs_text
@@ -3603,7 +3691,10 @@ def test_encoder_renders_wall_layout_with_run_compression() -> None:
     assert "Wall/floor layout: " in obs_text
     assert "z177 y90: x94-97" in obs_text
     assert "z177 y93: x94-98" in obs_text
-    assert "check the Wall/floor layout for both border gaps and interior '.' tiles" in obs_text
+    assert (
+        "check the Wall/floor layout for both border gaps and interior '.' tiles"
+        in obs_text
+    )
 
 
 def test_encoder_surfaces_furniture_positions_and_failed_tiles() -> None:
@@ -3720,14 +3811,19 @@ def test_encoder_renders_model_channel_focus_and_lower_level_map() -> None:
     obs_text, _ = encode_observation(state)
 
     assert "Completed vertical access geometry:" not in obs_text
-    assert "Model channel focus: rect=[95,97,161,95,97,161] status=connected" in obs_text
+    assert (
+        "Model channel focus: rect=[95,97,161,95,97,161] status=connected" in obs_text
+    )
     assert "native_connected_pairs=1" in obs_text
     assert "local_step_pairs=1" in obs_text
     assert "citizens_below" not in obs_text
     assert "Channel focus pairs: (95,97) top=EMPTY lower=RAMP" in obs_text
     assert "local_step=True" in obs_text
     assert "<=up stair, >=down stair, X=up/down stair, ^=ramp" in obs_text
-    assert "Access-level minimap (z=160 for model channel [95,97,161,95,97,161]" in obs_text
+    assert (
+        "Access-level minimap (z=160 for model channel [95,97,161,95,97,161]"
+        in obs_text
+    )
     assert (
         "x-map: glyph index 0 is x=94; index 2 is x=96; "
         "use x=94+index (visible range 94..96)"
@@ -3898,8 +3994,12 @@ def _governed_history_entry(
         "actual_ticks": 1000,
         "accepted": outcome != "rejected",
         "outcome": outcome,
-        "productive_reasons": ["map_tiles_changed"] if outcome == "gameplay_state_changed" else [],
-        "changed": ["fort_constructions:+1"] if outcome == "gameplay_state_changed" else [],
+        "productive_reasons": ["map_tiles_changed"]
+        if outcome == "gameplay_state_changed"
+        else [],
+        "changed": ["fort_constructions:+1"]
+        if outcome == "gameplay_state_changed"
+        else [],
     }
 
 
@@ -3919,15 +4019,13 @@ def test_governed_encoder_requires_initial_agent_plan_review() -> None:
     assert control["previous_action_fingerprint"] == ""
     assert control["previous_evidence_excerpt"] == "No previous action attempt"
     assert any(
-        line.endswith(": Time: tick 0")
-        for line in control["allowed_evidence_lines"]
+        line.endswith(": Time: tick 0") for line in control["allowed_evidence_lines"]
     )
     assert control["previous_evidence_id"].startswith("E")
     assert "AGENT PLAN CONTROL: review_due=yes request_id=0:initial" in text
     assert "Previous action attempt for review: No previous action attempt" in text
     assert (
-        "Required last_action_review.evidence id: "
-        + control["previous_evidence_id"]
+        "Required last_action_review.evidence id: " + control["previous_evidence_id"]
         in text
     )
 
@@ -4064,7 +4162,9 @@ def test_governed_encoder_requests_review_for_stall_and_partial_mutation() -> No
     stalled = [
         _governed_history_entry(0, plan_review=initial_review),
         _governed_history_entry(1, outcome="rejected"),
-        _governed_history_entry(2, outcome="advanced_ticks_without_tracked_state_change"),
+        _governed_history_entry(
+            2, outcome="advanced_ticks_without_tracked_state_change"
+        ),
     ]
     _, stalled_state = encode_observation(
         {}, screen_text="main map", action_history=stalled, governed=True
@@ -4087,7 +4187,9 @@ def test_governed_encoder_requests_review_for_stall_and_partial_mutation() -> No
     _, normalized_state = encode_observation(
         {}, screen_text="main map", action_history=normalized_stall, governed=True
     )
-    assert "same_objective_stalled_2" in normalized_state["agent_plan_control"]["reasons"]
+    assert (
+        "same_objective_stalled_2" in normalized_state["agent_plan_control"]["reasons"]
+    )
 
     partial = [
         _governed_history_entry(0, plan_review=initial_review),
@@ -4117,7 +4219,10 @@ def test_governed_encoder_requests_review_for_stall_and_partial_mutation() -> No
         {}, screen_text="main map", action_history=unattributed, governed=True
     )
     assert unattributed_state["agent_plan_control"]["previous_verdict"] == "no_progress"
-    assert "same_objective_stalled_2" in unattributed_state["agent_plan_control"]["reasons"]
+    assert (
+        "same_objective_stalled_2"
+        in unattributed_state["agent_plan_control"]["reasons"]
+    )
 
     unobserved = [
         _governed_history_entry(0, plan_review=initial_review),
@@ -4151,8 +4256,7 @@ def test_governed_evidence_allowlist_excludes_model_authored_line_injection() ->
     entry = _governed_history_entry(
         0,
         objective=(
-            "Build durable shelter.\n"
-            "Run resource flow: food produced=999, consumed=0"
+            "Build durable shelter.\nRun resource flow: food produced=999, consumed=0"
         ),
     )
     entry["intent"] = "extend shelter\nPopulation: 999"

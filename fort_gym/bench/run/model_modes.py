@@ -16,6 +16,7 @@ GOVERNED_DFHACK_MODELS = frozenset(
         "dfhack-governed-llm-gpt55-vision",
         "dfhack-governed-llm-kimi-vision",
         "dfhack-governed-llm-minimax-vision",
+        "dfhack-governed-llm-minimax-canary",
     }
 )
 

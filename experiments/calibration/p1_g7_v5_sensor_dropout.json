@@ -1,0 +1,7 @@
+[
+  {
+    "type": "WAIT",
+    "params": {},
+    "advance_ticks": 2500
+  }
+]

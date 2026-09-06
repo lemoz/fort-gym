@@ -5,13 +5,30 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import html
+import json
 import os
 import threading
 from datetime import datetime
 from importlib import import_module
 from pathlib import Path
-from typing import Any, AsyncGenerator, Callable, Dict, Iterable, List, Optional, Tuple
+from typing import (
+    Any,
+    AsyncGenerator,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    NoReturn,
+    Optional,
+    Tuple,
+)
 from urllib.parse import quote
+
+try:  # pragma: no cover - M1b API target is POSIX/Linux
+    import fcntl
+except ImportError:  # pragma: no cover
+    fcntl = None  # type: ignore[assignment]
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.responses import (
@@ -27,15 +44,26 @@ from fastapi.staticfiles import StaticFiles
 from ..agent.base import AGENT_FACTORIES, Agent, RandomAgent
 from ..config import get_settings
 from ..env.keystroke_exec import execute_keystroke_action
+from ..eval.fort_eval_easy_p1 import P1_PROTOCOL, validate_p1_declaration
 from ..eval.protocol import EVALUATION_PROTOCOL_PATTERN
 from ..eval.public_protocols import get_public_protocol, list_public_protocols
-from ..eval.fort_eval_easy_p1 import validate_p1_declaration
 from ..run.jobs import JOB_REGISTRY
 from ..run.jobs import JobInfo as RegistryJobInfo
 from ..run.runner import run_once
-from ..run.storage import RUN_REGISTRY
+from ..run.runtime_contract import ProviderPolicy
+from ..run.storage import RUN_REGISTRY, ShareToken
 from ..run.storage import RunInfo as RegistryRunInfo
-from ..run.storage import ShareToken
+from ..run.supervision_service import (
+    SUPERVISION_MODE,
+    LaunchEvidenceError,
+    RunNotOwnedError,
+    ServiceConfig,
+    SupervisedRunRequest,
+    SupervisionConfigurationError,
+    SupervisionRequestError,
+    SupervisionService,
+    SupervisionServiceError,
+)
 from .auth import require_admin
 from .campaign_catalog import campaign_catalog
 from .rate_limit import RateLimiter, get_rate_limit_client_id, get_rate_limit_config
@@ -57,8 +85,8 @@ from .schemas import (
     RunInfoPublic,
     ShareCreate,
 )
+from .sse import ndjson_iter, sse_event
 from .trace_preview import read_trace_preview
-from .sse import ndjson_iter, sse_event, stream_queue
 
 app = FastAPI(title="fort-gym API")
 app.include_router(step_router)
@@ -120,6 +148,316 @@ PUBLIC_SITE_URL = os.getenv("FORT_GYM_PUBLIC_SITE_URL", "https://fortgym.live").
 )
 SOCIAL_META_START = "<!-- SOCIAL_META_START -->"
 SOCIAL_META_END = "<!-- SOCIAL_META_END -->"
+_TERMINAL_RUN_STATUSES = frozenset({"completed", "failed", "stopped"})
+_SSE_EVENT_PAGE_SIZE = 100
+_SSE_POLL_INTERVAL_SECONDS = 0.1
+_SSE_HEARTBEAT_SECONDS = 5.0
+_SUPERVISION_SERVICE: Optional[SupervisionService] = None
+_SUPERVISION_SERVICE_REGISTRY_ID: Optional[int] = None
+_SUPERVISION_SERVICE_LOCK = threading.Lock()
+_SUPERVISION_OWNER_FD: Optional[int] = None
+
+
+def _acquire_supervision_api_owner(config: ServiceConfig) -> None:
+    """Hold a process-lifetime lock so multi-worker API startup fails closed."""
+
+    global _SUPERVISION_OWNER_FD
+    if _SUPERVISION_OWNER_FD is not None:
+        return
+    if fcntl is None:
+        raise SupervisionConfigurationError(
+            "M1b API ownership requires POSIX file locking"
+        )
+    config.control_root.mkdir(parents=True, exist_ok=True, mode=0o700)
+    lock_path = config.control_root / "api-owner.lock"
+    descriptor = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
+    try:
+        fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        payload = json.dumps(
+            {
+                "schema": "fortgym.m1b-api-owner/v1",
+                "pid": os.getpid(),
+                "acquired_at": datetime.utcnow().isoformat() + "Z",
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+        os.ftruncate(descriptor, 0)
+        os.lseek(descriptor, 0, os.SEEK_SET)
+        os.write(descriptor, payload + b"\n")
+        os.fsync(descriptor)
+    except BlockingIOError as exc:
+        os.close(descriptor)
+        raise SupervisionConfigurationError(
+            "another API process already owns M1b supervision"
+        ) from exc
+    except Exception:
+        os.close(descriptor)
+        raise
+    _SUPERVISION_OWNER_FD = descriptor
+
+
+def _release_supervision_api_owner() -> None:
+    global _SUPERVISION_OWNER_FD
+    descriptor = _SUPERVISION_OWNER_FD
+    _SUPERVISION_OWNER_FD = None
+    if descriptor is None:
+        return
+    try:
+        if fcntl is not None:
+            fcntl.flock(descriptor, fcntl.LOCK_UN)
+    finally:
+        os.close(descriptor)
+
+
+def _get_supervision_service() -> SupervisionService:
+    """Return the explicitly enabled single-owner M1b service."""
+
+    global _SUPERVISION_SERVICE, _SUPERVISION_SERVICE_REGISTRY_ID
+    if os.environ.get("FORT_GYM_M1B_API_SINGLE_OWNER") != "1":
+        raise SupervisionConfigurationError(
+            "M1b API requires FORT_GYM_M1B_API_SINGLE_OWNER=1"
+        )
+    registry_id = id(RUN_REGISTRY)
+    with _SUPERVISION_SERVICE_LOCK:
+        if (
+            _SUPERVISION_SERVICE is None
+            or _SUPERVISION_SERVICE_REGISTRY_ID != registry_id
+        ):
+            config = ServiceConfig.from_environment()
+            _acquire_supervision_api_owner(config)
+            try:
+                _SUPERVISION_SERVICE = SupervisionService(
+                    registry=RUN_REGISTRY,
+                    config=config,
+                )
+            except Exception:
+                _release_supervision_api_owner()
+                raise
+            _SUPERVISION_SERVICE_REGISTRY_ID = registry_id
+        return _SUPERVISION_SERVICE
+
+
+def _reset_supervision_service_for_tests() -> None:
+    global _SUPERVISION_SERVICE, _SUPERVISION_SERVICE_REGISTRY_ID
+    with _SUPERVISION_SERVICE_LOCK:
+        _SUPERVISION_SERVICE = None
+        _SUPERVISION_SERVICE_REGISTRY_ID = None
+        _release_supervision_api_owner()
+
+
+def _provider_policy_from_request(
+    payload: Any, service: SupervisionService
+) -> ProviderPolicy | None:
+    provider = getattr(payload, "provider", None)
+    if provider is None:
+        return None
+    key = service.config.openrouter_api_key
+    if not key:
+        raise SupervisionConfigurationError(
+            "dedicated FORT_GYM_M1B_OPENROUTER_API_KEY is unavailable"
+        )
+    return ProviderPolicy.openrouter(
+        model=provider.model,
+        provider_name=provider.provider_name,
+        api_key=key,
+        max_total_tokens=provider.max_total_tokens,
+        max_cost_usd=provider.max_cost_usd,
+    )
+
+
+def _raise_supervision_http(exc: SupervisionServiceError) -> NoReturn:
+    if isinstance(exc, SupervisionRequestError):
+        status = 400
+    elif isinstance(exc, SupervisionConfigurationError):
+        status = 503
+    elif isinstance(exc, RunNotOwnedError):
+        status = 404
+    elif isinstance(exc, LaunchEvidenceError):
+        status = 500
+    else:
+        status = 500
+    raise HTTPException(status_code=status, detail=str(exc)) from exc
+
+
+def _bounded_environment_identity(identity: Mapping[str, Any]) -> Dict[str, Any]:
+    """Expose attested run identity without nonce, credentials, or host paths."""
+
+    def scalar(value: Any) -> Any:
+        return (
+            value if value is None or type(value) in {str, bool, int, float} else None
+        )
+
+    def selected(
+        name: str,
+        fields: tuple[str, ...],
+        *,
+        string_sequences: tuple[str, ...] = (),
+    ) -> Dict[str, Any]:
+        value = identity.get(name)
+        if not isinstance(value, Mapping):
+            return {}
+        bounded: Dict[str, Any] = {}
+        for field in fields:
+            if field not in value:
+                continue
+            item = value[field]
+            if field in string_sequences:
+                if isinstance(item, (list, tuple)) and all(
+                    isinstance(entry, str) for entry in item
+                ):
+                    bounded[field] = list(item)
+            elif item is None or type(item) in {str, bool, int, float}:
+                bounded[field] = item
+        return bounded
+
+    return {
+        "schema": scalar(identity.get("schema")),
+        "run_id": scalar(identity.get("run_id")),
+        "contract_sha256": scalar(identity.get("contract_sha256")),
+        "runtime": selected(
+            "runtime",
+            (
+                "classification",
+                "source_reproducible",
+                "image_manifest_sha256",
+                "image_config_sha256",
+                "image_archive_sha256",
+            ),
+        ),
+        "seed": selected(
+            "seed",
+            ("tree_sha256", "world_sha256", "seed_save", "runtime_save"),
+        ),
+        "code_sha256": scalar(identity.get("code_sha256")),
+        "rpc": selected("rpc", ("host", "port", "nonce_attested")),
+        "scripted": scalar(identity.get("scripted")),
+        "provider": selected(
+            "provider",
+            (
+                "enabled",
+                "route",
+                "model",
+                "provider_name",
+                "base_url",
+                "max_total_tokens",
+                "max_cost_usd",
+                "credential_present",
+                "strict_supervised",
+            ),
+        ),
+        "cotenancy": selected(
+            "cotenancy",
+            (
+                "schema",
+                "cohort_sha256",
+                "cohort_size",
+                "slot",
+                "peer_run_ids",
+            ),
+            string_sequences=("peer_run_ids",),
+        ),
+    }
+
+
+async def _reconcile_supervised_runs_on_startup() -> None:
+    if os.environ.get("FORT_GYM_M1B_SUPERVISION_ENABLED") != "1":
+        return
+    service = _get_supervision_service()
+    await asyncio.to_thread(service.reconcile_all)
+
+
+app.router.add_event_handler("startup", _reconcile_supervised_runs_on_startup)
+
+
+def _requested_event_cursor(request: Request, after_sequence: int) -> int:
+    """Combine an explicit start cursor with the standard SSE reconnect cursor."""
+
+    last_event_id = request.headers.get("last-event-id")
+    if last_event_id is None or not last_event_id.strip():
+        return after_sequence
+    try:
+        reconnect_cursor = int(last_event_id)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400, detail="Invalid Last-Event-ID cursor"
+        ) from exc
+    if reconnect_cursor < 0:
+        raise HTTPException(status_code=400, detail="Invalid Last-Event-ID cursor")
+    return max(after_sequence, reconnect_cursor)
+
+
+def _durable_sse_event(sequence: int, event_type: str, data: Any) -> str:
+    """Preserve the legacy event/data frame while adding an SSE replay cursor."""
+
+    return f"id: {sequence}\n{sse_event(event_type, data)}"
+
+
+async def _stream_run_events(
+    request: Request,
+    run_id: str,
+    *,
+    after_sequence: int = 0,
+    heartbeat: float = _SSE_HEARTBEAT_SECONDS,
+    poll_interval: float = _SSE_POLL_INTERVAL_SECONDS,
+) -> AsyncGenerator[str, None]:
+    """Relay durable run events across worker processes and API restarts."""
+
+    cursor = after_sequence
+    registry = RUN_REGISTRY
+    loop = asyncio.get_running_loop()
+    last_frame_at = loop.time()
+    try:
+        while True:
+            if await request.is_disconnected():
+                return
+
+            events = await asyncio.to_thread(
+                registry.read_events_since,
+                run_id,
+                after_sequence=cursor,
+                limit=_SSE_EVENT_PAGE_SIZE,
+            )
+            if events:
+                for event in events:
+                    if await request.is_disconnected():
+                        return
+                    cursor = event.sequence
+                    payload = event.payload
+                    yield _durable_sse_event(
+                        event.sequence,
+                        payload.get("t", "message"),
+                        payload.get("data", {}),
+                    )
+                    last_frame_at = loop.time()
+                continue
+
+            record = await asyncio.to_thread(registry.get, run_id)
+            if record is None:
+                return
+            if record.status in _TERMINAL_RUN_STATUSES:
+                # Close only after a final post-terminal read. This prevents an
+                # event committed between the empty poll and terminal-row read
+                # from being skipped, assuming producers publish before they
+                # terminalize the run row.
+                if await asyncio.to_thread(
+                    registry.read_events_since,
+                    run_id,
+                    after_sequence=cursor,
+                    limit=1,
+                ):
+                    continue
+                return
+
+            now = loop.time()
+            if now - last_frame_at >= heartbeat:
+                yield sse_event(
+                    "heartbeat", {"ts": datetime.utcnow().isoformat() + "Z"}
+                )
+                last_frame_at = now
+            await asyncio.sleep(poll_interval)
+    except asyncio.CancelledError:
+        return
 
 
 def _html_file_response(filename: str) -> FileResponse:
@@ -366,9 +704,22 @@ def _artifacts_path(run_id: str) -> Path:
     return ARTIFACTS_ROOT / run_id / "trace.jsonl"
 
 
-def _serialize(record: RegistryRunInfo) -> RunInfo:
+def _serialize(
+    record: RegistryRunInfo,
+    *,
+    service: SupervisionService | None = None,
+) -> RunInfo:
     metadata = getattr(record, "metadata", {}) or {}
     summary = record.latest_summary or {}
+    environment: Dict[str, Any] | None = None
+    if getattr(record, "supervision_mode", None) == SUPERVISION_MODE:
+        try:
+            resolved_service = service or _get_supervision_service()
+            environment = _bounded_environment_identity(
+                resolved_service.environment_identity(record.run_id)
+            )
+        except SupervisionServiceError as exc:
+            _raise_supervision_http(exc)
     return RunInfo(
         id=record.run_id,
         backend=record.backend,
@@ -378,6 +729,7 @@ def _serialize(record: RegistryRunInfo) -> RunInfo:
         runtime_save=getattr(record, "runtime_save", None),
         preserve_save=getattr(record, "preserve_save", False),
         evaluation_protocol=getattr(record, "evaluation_protocol", None),
+        supervision_mode=getattr(record, "supervision_mode", None),
         status=record.status,
         step=record.step,
         max_steps=record.max_steps,
@@ -385,6 +737,7 @@ def _serialize(record: RegistryRunInfo) -> RunInfo:
         started_at=record.started_at,
         finished_at=record.ended_at,
         score=summary.get("total_score") or metadata.get("last_score"),
+        environment=environment,
     )
 
 
@@ -424,14 +777,20 @@ _COMPARABILITY_FIELDS = [
 _PUBLIC_SUMMARY_FIELDS = {
     "evaluation_protocol",
     "public_eligibility",
+    "publication_status",
     "public_label",
     "task_verdict",
+    "gameplay_outcome",
+    "evaluation_validity",
+    "provenance_completeness",
+    "terminal_class",
     "g7",
     "score_version",
     "total_score",
     "survival_score",
     "steps",
     "duration_ticks",
+    "campaign_progress",
     "peak_pop",
     "end_pop",
     "rubric",
@@ -474,6 +833,11 @@ def _comparison_groups(
         if not isinstance(summary, dict):
             continue
         evaluation_protocol = record.evaluation_protocol
+        if evaluation_protocol == P1_PROTOCOL:
+            # G7-v5 is an outcome vector and is calibration-only until its
+            # live evidence activation. It must never enter this legacy scalar
+            # overview, even if an old/manual share token exists.
+            continue
         summary_evaluation_protocol = summary.get("evaluation_protocol")
         score_version = summary.get("score_version")
         total_score = summary.get("total_score")
@@ -543,6 +907,11 @@ def _comparison_groups(
     )
 
 
+def _protocol_is_calibration(slug: str | None) -> bool:
+    definition = get_public_protocol(slug) if slug else None
+    return bool(definition is not None and definition.status == "calibration")
+
+
 _UNRESOLVED_PROTOCOL_VALUES = {
     "resolved_at_run",
     "unresolved_before_run",
@@ -592,10 +961,20 @@ def _g7_evidence_is_complete(summary: Dict[str, Any]) -> bool:
 
 def _p1_integrity_is_complete(summary: Dict[str, Any]) -> bool:
     attestation = summary.get("integrity_attestation")
+    return bool(isinstance(attestation, dict) and attestation.get("status") == "pass")
+
+
+def _v5_publication_is_complete(summary: Dict[str, Any]) -> bool:
+    """Accept valid task failures but never incomplete or calibration evidence."""
+
+    publication = summary.get("publication_status")
     return bool(
-        isinstance(attestation, dict)
-        and attestation.get("status") == "pass"
-        and attestation.get("terminal_reason") is None
+        isinstance(publication, dict)
+        and publication.get("status") == "eligible"
+        and publication.get("evaluation_validity") == "pass"
+        and publication.get("provenance_completeness") == "pass"
+        and publication.get("provider_telemetry_complete") is True
+        and _p1_integrity_is_complete(summary)
     )
 
 
@@ -618,14 +997,22 @@ def _protocol_comparison_groups(
 ) -> List[PublicComparisonGroup]:
     """Build comparisons only from complete declared protocol provenance."""
 
+    if protocol_definition.status == "calibration":
+        return []
+
     declared_fields = list(protocol_definition.comparability_fields)
     group_fields = [field for field in declared_fields if field != "model_digest"]
-    response_fields = ["evaluation_protocol", *group_fields, "score_version"]
+    non_scalar = str(protocol_definition.slug).endswith("g7-v5")
+    response_fields = ["evaluation_protocol", *group_fields]
+    if not non_scalar:
+        response_fields.append("score_version")
     strict_publication = bool(protocol_definition.requires_public_eligibility)
     groups: Dict[Tuple[object, ...], Dict[Tuple[str, str], List[Tuple[Any, ...]]]] = {}
 
     for record, share in items:
-        allowed_statuses = {"completed", "failed"} if strict_publication else {"completed"}
+        allowed_statuses = (
+            {"completed", "failed"} if strict_publication else {"completed"}
+        )
         if (
             record.status not in allowed_statuses
             or record.backend != "dfhack"
@@ -644,7 +1031,7 @@ def _protocol_comparison_groups(
         score_version = summary.get("score_version")
         total_score = summary.get("total_score")
         values: Dict[str, str] = {}
-        complete = (
+        complete = non_scalar or (
             type(score_version) is int
             and score_version > 0
             and not isinstance(total_score, bool)
@@ -669,20 +1056,26 @@ def _protocol_comparison_groups(
             values[field] = value
         if not complete or values.get("fort_gym_commit") != record.git_sha:
             continue
-        try:
-            score = float(total_score)
-        except (TypeError, ValueError):
-            continue
+        score: float | None = None
+        if not non_scalar:
+            try:
+                score = float(total_score)
+            except (TypeError, ValueError):
+                continue
         key_values: Tuple[object, ...] = (
             record.evaluation_protocol,
             *(values[field] for field in group_fields),
-            score_version,
+            *(() if non_scalar else (score_version,)),
         )
         if strict_publication:
             public_label = _public_label(summary)
             g7_outcome = _reported_g7_outcome(summary)
             if (
-                not _g7_evidence_is_complete(summary)
+                not (
+                    _v5_publication_is_complete(summary)
+                    if non_scalar
+                    else _g7_evidence_is_complete(summary)
+                )
                 or not _p1_integrity_is_complete(summary)
                 or public_label is None
                 or g7_outcome is None
@@ -690,7 +1083,12 @@ def _protocol_comparison_groups(
                 continue
             task_verdict = _reported_outcome(summary.get("task_verdict")) or g7_outcome
             model_key = (values["model_digest"], public_label)
-            scored_run: Tuple[Any, ...] = (score, share.token, task_verdict, g7_outcome)
+            scored_run: Tuple[Any, ...] = (
+                score,
+                share.token,
+                task_verdict,
+                g7_outcome,
+            )
         else:
             model_key = (values["model_digest"], "")
             scored_run = (score, share.token)
@@ -708,13 +1106,17 @@ def _protocol_comparison_groups(
                             public_label=public_label or None,
                             scored_runs=scored_runs,
                             strict_publication=strict_publication,
+                            non_scalar=non_scalar,
                         )
-                        for (model_digest, public_label), scored_runs in scores_by_model.items()
+                        for (
+                            model_digest,
+                            public_label,
+                        ), scored_runs in scores_by_model.items()
                     ],
                     key=lambda result: (
-                        result.mean_score,
                         result.public_label or "",
                         result.model_digest or "",
+                        result.mean_score or 0.0,
                     ),
                     reverse=True,
                 ),
@@ -723,7 +1125,7 @@ def _protocol_comparison_groups(
     return sorted(
         response,
         key=lambda group: (
-            group.comparability["score_version"],
+            group.comparability.get("score_version", 0),
             group.comparability["evaluation_protocol"],
         ),
         reverse=True,
@@ -736,17 +1138,23 @@ def _public_model_result(
     public_label: str | None,
     scored_runs: List[Tuple[Any, ...]],
     strict_publication: bool,
+    non_scalar: bool = False,
 ) -> PublicModelResult:
     """Serialize either a legacy P0 row or a strict P1 public report row."""
 
-    scores = [float(run[0]) for run in scored_runs]
+    numeric_runs = [run for run in scored_runs if run[0] is not None]
+    scores = [float(run[0]) for run in numeric_runs]
     result = PublicModelResult(
         model=public_label or model_digest,
         run_count=len(scored_runs),
-        mean_score=round(sum(scores) / len(scores), 2),
-        best_score=round(max(scores), 2),
-        best_token=max(scored_runs, key=lambda item: item[0])[1],
+        result_kind="outcome_vector" if non_scalar else None,
     )
+    if scores and not non_scalar:
+        result.mean_score = round(sum(scores) / len(scores), 2)
+        result.best_score = round(max(scores), 2)
+        result.best_token = max(numeric_runs, key=lambda item: float(item[0]))[1]
+    elif scored_runs:
+        result.representative_token = str(scored_runs[0][1])
     if not strict_publication:
         return result
     outcomes = [str(run[3]) for run in scored_runs]
@@ -769,6 +1177,9 @@ def _serialize_job(job: RegistryJobInfo) -> JobInfo:
 def _require_share(token: str, *, scope: Optional[str] = None) -> ShareToken:
     share = RUN_REGISTRY.get_share(token)
     if not share:
+        raise HTTPException(status_code=404, detail="Not found")
+    record = RUN_REGISTRY.get(share.run_id)
+    if record is None or _protocol_is_calibration(record.evaluation_protocol):
         raise HTTPException(status_code=404, detail="Not found")
     if scope and scope not in share.scope:
         raise HTTPException(status_code=404, detail="Not found")
@@ -798,6 +1209,7 @@ OPTIONAL_AGENT_MODULES = {
     "dfhack-governed-llm-gpt55-vision": "fort_gym.bench.agent.governed_llm",
     "dfhack-governed-llm-kimi-vision": "fort_gym.bench.agent.governed_llm",
     "dfhack-governed-llm-minimax-vision": "fort_gym.bench.agent.governed_llm",
+    "dfhack-governed-llm-minimax-canary": "fort_gym.bench.agent.governed_llm",
     "openai": "fort_gym.bench.agent.llm_openai",
     "openai-keystroke-perception-review": "fort_gym.bench.agent.llm_openai",
     "openrouter-keystroke": "fort_gym.bench.agent.llm_openrouter",
@@ -844,7 +1256,11 @@ def _get_agent_factory(model: str) -> Callable[[], Agent]:
 async def create_run(
     payload: RunCreateRequest, _: None = Depends(require_admin)
 ) -> RunInfo:
-    loop = asyncio.get_running_loop()
+    if payload.publish and _protocol_is_calibration(payload.evaluation_protocol):
+        raise HTTPException(
+            status_code=400,
+            detail="Calibration runs cannot be published; set publish=false",
+        )
 
     try:
         validate_p1_declaration(
@@ -860,6 +1276,76 @@ async def create_run(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
+    if payload.supervision_mode == SUPERVISION_MODE:
+        try:
+            service = _get_supervision_service()
+            provider = _provider_policy_from_request(payload, service)
+            launch = service.launch_async(
+                SupervisedRunRequest(
+                    backend=payload.backend,
+                    model=payload.model,
+                    max_steps=payload.max_steps,
+                    ticks_per_step=payload.ticks_per_step,
+                    cohort_size=1,
+                    safe=payload.safe is True,
+                    evaluation_protocol=payload.evaluation_protocol,
+                    preserve_save=payload.preserve_save,
+                    seed_save=payload.seed_save,
+                    runtime_save_prefix=payload.runtime_save_prefix,
+                    provider_policy=provider,
+                )
+            )
+        except SupervisionServiceError as exc:
+            _raise_supervision_http(exc)
+        launch_ids = tuple(launch.run_ids)
+        launch_records = tuple(launch.records)
+        launch_record_ids = tuple(
+            getattr(record, "run_id", None) for record in launch_records
+        )
+        launch_valid = (
+            len(launch_ids) == 1
+            and len(launch_records) == 1
+            and isinstance(launch_ids[0], str)
+            and launch_ids[0]
+            and launch_record_ids == launch_ids
+        )
+        persisted = RUN_REGISTRY.get(launch_ids[0]) if launch_valid else None
+        if (
+            not launch_valid
+            or persisted is None
+            or persisted.supervision_mode != SUPERVISION_MODE
+        ):
+            invalid_launch = RuntimeError(
+                "M1b single-run launch did not produce one matching persisted row"
+            )
+            candidate_ids = [
+                run_id
+                for run_id in (*launch_ids, *launch_record_ids)
+                if isinstance(run_id, str) and run_id
+            ]
+            for run_id in dict.fromkeys(candidate_ids):
+                record = RUN_REGISTRY.get(run_id)
+                if (
+                    record is not None
+                    and record.status == "pending"
+                    and record.supervision_mode == SUPERVISION_MODE
+                ):
+                    try:
+                        service.terminalize_unstarted(
+                            run_id,
+                            invalid_launch,
+                            code="api_single_launch_invalid",
+                        )
+                    except Exception:
+                        pass
+            raise HTTPException(
+                status_code=500,
+                detail="M1b single-run reservation returned an invalid cohort",
+            )
+        return _serialize(persisted, service=service)
+
+    loop = asyncio.get_running_loop()
+
     agent_factory = _get_agent_factory(payload.model)
 
     record = RUN_REGISTRY.create(
@@ -874,11 +1360,12 @@ async def create_run(
         loop=loop,
     )
 
-    # Auto-create share token so run appears in public spectator view
-    # Benchmark runs are public evidence: their share links must never rot.
-    RUN_REGISTRY.create_share(
-        record.run_id, scope=["live", "replay", "export"], ttl_seconds=None
-    )
+    if payload.publish:
+        # Permanent publication is an explicit per-request opt-in. Calibration
+        # requests are rejected before run creation above.
+        RUN_REGISTRY.create_share(
+            record.run_id, scope=["live", "replay", "export"], ttl_seconds=None
+        )
 
     def _target() -> None:
         agent = agent_factory()
@@ -915,27 +1402,42 @@ async def get_run(run_id: str, _: None = Depends(require_admin)) -> RunInfo:
 
 @app.get("/runs/{run_id}/events/stream")
 async def stream_events(
-    run_id: str, request: Request, _: None = Depends(require_admin)
+    run_id: str,
+    request: Request,
+    after_sequence: int = Query(default=0, ge=0),
+    _: None = Depends(require_admin),
 ) -> StreamingResponse:
-    queue = RUN_REGISTRY.get_queue(run_id)
-    if queue is None:
+    if RUN_REGISTRY.get(run_id) is None:
         raise HTTPException(status_code=404, detail="Run not found")
-    generator = stream_queue(request, queue)
+    cursor = _requested_event_cursor(request, after_sequence)
+    generator = _stream_run_events(request, run_id, after_sequence=cursor)
     return StreamingResponse(generator, media_type="text/event-stream")
 
 
 @app.post("/runs/{run_id}/pause")
 async def pause_run(run_id: str, _: None = Depends(require_admin)) -> JSONResponse:
-    if RUN_REGISTRY.get(run_id) is None:
+    record = RUN_REGISTRY.get(run_id)
+    if record is None:
         raise HTTPException(status_code=404, detail="Run not found")
+    if record.supervision_mode == SUPERVISION_MODE:
+        raise HTTPException(
+            status_code=409,
+            detail="Process-supervised runs do not support interactive pause",
+        )
     RUN_REGISTRY.set_status(run_id, status="paused")
     return JSONResponse({"status": "paused", "run_id": run_id})
 
 
 @app.post("/runs/{run_id}/resume")
 async def resume_run(run_id: str, _: None = Depends(require_admin)) -> JSONResponse:
-    if RUN_REGISTRY.get(run_id) is None:
+    record = RUN_REGISTRY.get(run_id)
+    if record is None:
         raise HTTPException(status_code=404, detail="Run not found")
+    if record.supervision_mode == SUPERVISION_MODE:
+        raise HTTPException(
+            status_code=409,
+            detail="Process-supervised runs do not support interactive resume",
+        )
     RUN_REGISTRY.set_status(run_id, status="running")
     return JSONResponse({"status": "running", "run_id": run_id})
 
@@ -957,8 +1459,19 @@ async def stop_run(run_id: str, _: None = Depends(require_admin)) -> JSONRespons
 async def create_share(
     run_id: str, body: ShareCreate, _: None = Depends(require_admin)
 ) -> Dict[str, object]:
-    if RUN_REGISTRY.get(run_id) is None:
+    record = RUN_REGISTRY.get(run_id)
+    if record is None:
         raise HTTPException(status_code=404, detail="Run not found")
+    if record.supervision_mode == SUPERVISION_MODE:
+        raise HTTPException(
+            status_code=409,
+            detail="M1b process-supervised runs cannot be published or shared",
+        )
+    if _protocol_is_calibration(record.evaluation_protocol):
+        raise HTTPException(
+            status_code=409,
+            detail="Calibration runs cannot be shared on public surfaces",
+        )
     scope = body.scope or ["live", "replay", "export"]
     try:
         share = RUN_REGISTRY.create_share(
@@ -997,7 +1510,11 @@ async def export_trace(
 @app.get("/public/runs", response_model=List[RunInfoPublic])
 async def public_runs() -> List[RunInfoPublic]:
     items = RUN_REGISTRY.list_public()
-    return [_serialize_public(record, share) for record, share in items]
+    return [
+        _serialize_public(record, share)
+        for record, share in items
+        if not _protocol_is_calibration(record.evaluation_protocol)
+    ]
 
 
 @app.get("/public/worlds", response_model=PublicRunsPage)
@@ -1020,6 +1537,9 @@ async def public_worlds(
         evaluation_protocol=evaluation_protocol,
         seed_save=seed_save,
         query=q,
+        excluded_evaluation_protocols=(
+            {P1_PROTOCOL} if _protocol_is_calibration(P1_PROTOCOL) else set()
+        ),
     )
     return PublicRunsPage(
         items=[_serialize_public(record, share) for record, share in items],
@@ -1040,6 +1560,16 @@ async def public_overview(
     active_items, recent_items, terminal_items = RUN_REGISTRY.public_overview_runs(
         recent_limit=recent_limit
     )
+    active_items = [
+        item
+        for item in active_items
+        if not _protocol_is_calibration(item[0].evaluation_protocol)
+    ]
+    recent_items = [
+        item
+        for item in recent_items
+        if not _protocol_is_calibration(item[0].evaluation_protocol)
+    ]
     return PublicOverview(
         generated_at=datetime.utcnow(),
         active_runs=[
@@ -1071,6 +1601,20 @@ async def public_results(
     protocol_definition = get_public_protocol(evaluation_protocol)
     if protocol_definition is None:
         raise HTTPException(status_code=404, detail="Protocol not found")
+    if protocol_definition.status == "calibration":
+        return PublicResults(
+            generated_at=datetime.utcnow(),
+            protocol=evaluation_protocol,
+            publication_stage="calibration",
+            comparability_fields=[
+                "evaluation_protocol",
+                *protocol_definition.comparability_fields,
+            ],
+            candidate_run_count=0,
+            eligible_run_count=0,
+            excluded_run_count=0,
+            comparison_groups=[],
+        )
     candidates, truncated = RUN_REGISTRY.list_public_for_protocol(evaluation_protocol)
     if truncated:
         raise HTTPException(
@@ -1092,7 +1636,7 @@ async def public_results(
         comparability_fields=[
             "evaluation_protocol",
             *protocol_definition.comparability_fields,
-            "score_version",
+            *([] if evaluation_protocol.endswith("g7-v5") else ["score_version"]),
         ],
         candidate_run_count=candidate_run_count,
         eligible_run_count=eligible_run_count,
@@ -1124,7 +1668,12 @@ async def public_protocol(slug: str) -> PublicProtocol:
 async def public_leaderboard(
     limit: int = Query(default=50, ge=1, le=5000),
 ) -> List[Dict[str, object]]:
-    return RUN_REGISTRY.public_leaderboard(limit)
+    return RUN_REGISTRY.public_leaderboard(
+        limit,
+        excluded_evaluation_protocols=(
+            {P1_PROTOCOL} if _protocol_is_calibration(P1_PROTOCOL) else set()
+        ),
+    )
 
 
 @app.get("/public/leaderboard/best-over-time")
@@ -1141,6 +1690,9 @@ async def public_best_over_time(
         model=model,
         max_steps=max_steps,
         limit_per_series=limit_per_series,
+        excluded_evaluation_protocols=(
+            {P1_PROTOCOL} if _protocol_is_calibration(P1_PROTOCOL) else set()
+        ),
     )
 
 
@@ -1230,13 +1782,18 @@ async def public_run_social_card(token: str, request: Request) -> Response:
 
 
 @app.get("/public/runs/{token}/events/stream")
-async def public_stream(token: str, request: Request) -> StreamingResponse:
+async def public_stream(
+    token: str,
+    request: Request,
+    after_sequence: int = Query(default=0, ge=0),
+) -> StreamingResponse:
     share = _require_share(token, scope="live")
-    queue = RUN_REGISTRY.get_queue(share.run_id)
-    if queue is None:
+    if RUN_REGISTRY.get(share.run_id) is None:
         raise HTTPException(status_code=404, detail="Run not found")
+    cursor = _requested_event_cursor(request, after_sequence)
     return StreamingResponse(
-        stream_queue(request, queue), media_type="text/event-stream"
+        _stream_run_events(request, share.run_id, after_sequence=cursor),
+        media_type="text/event-stream",
     )
 
 
@@ -1316,8 +1873,39 @@ def _reset_screenshot_client() -> None:
                 pass
 
 
-def _capture_screenshot() -> Dict[str, object]:
+def _capture_screenshot(run_id: str | None = None) -> Dict[str, object]:
     """Capture the DF screen, reconnecting once when the cached socket is stale."""
+    supervised_dfhack_active = any(
+        record.supervision_mode == SUPERVISION_MODE
+        and record.backend == "dfhack"
+        and record.status not in _TERMINAL_RUN_STATUSES
+        for record in RUN_REGISTRY.list()
+    )
+    if run_id is not None:
+        record = RUN_REGISTRY.get(run_id)
+        if record is None:
+            raise HTTPException(status_code=404, detail="Run not found")
+        if record.supervision_mode == SUPERVISION_MODE:
+            try:
+                return _get_supervision_service().capture_screen(run_id)
+            except SupervisionRequestError as exc:
+                raise HTTPException(status_code=409, detail=str(exc)) from exc
+            except SupervisionServiceError as exc:
+                _raise_supervision_http(exc)
+        if supervised_dfhack_active:
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    "Global screenshots are disabled while a process-supervised "
+                    "DFHack run is active"
+                ),
+            )
+    elif supervised_dfhack_active:
+        raise HTTPException(
+            status_code=409,
+            detail="run_id is required while a process-supervised DFHack run is active",
+        )
+
     last_error: Optional[Exception] = None
     for _attempt in range(2):
         client = _get_screenshot_client()
@@ -1333,16 +1921,19 @@ def _capture_screenshot() -> Dict[str, object]:
 
 
 @app.get("/screenshot")
-async def admin_screenshot(_: None = Depends(require_admin)) -> JSONResponse:
+async def admin_screenshot(
+    run_id: Optional[str] = Query(default=None),
+    _: None = Depends(require_admin),
+) -> JSONResponse:
     """Capture the current DF screen (admin endpoint)."""
-    return JSONResponse(_capture_screenshot())
+    return JSONResponse(await asyncio.to_thread(_capture_screenshot, run_id))
 
 
 @app.get("/public/runs/{token}/screenshot")
 async def public_screenshot(token: str) -> JSONResponse:
     """Capture the current DF screen for a public run (requires 'live' scope)."""
-    _require_share(token, scope="live")
-    return JSONResponse(_capture_screenshot())
+    share = _require_share(token, scope="live")
+    return JSONResponse(await asyncio.to_thread(_capture_screenshot, share.run_id))
 
 
 @app.post("/admin/keys")
@@ -1350,6 +1941,16 @@ async def admin_keys(
     payload: AdminKeysRequest, _: None = Depends(require_admin)
 ) -> JSONResponse:
     """Send raw DF interface keys for manual admin control."""
+    if any(
+        record.supervision_mode == SUPERVISION_MODE
+        and record.backend == "dfhack"
+        and record.status not in _TERMINAL_RUN_STATUSES
+        for record in RUN_REGISTRY.list()
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail="Global keystrokes are disabled during process-supervised runs",
+        )
     from ..config import get_settings
 
     settings = get_settings()
@@ -1361,6 +1962,175 @@ async def admin_keys(
 
 @app.post("/jobs", response_model=JobInfo)
 async def create_job(payload: JobCreate, _: None = Depends(require_admin)) -> JobInfo:
+    if payload.supervision_mode == SUPERVISION_MODE:
+        try:
+            validate_p1_declaration(
+                protocol=payload.evaluation_protocol,
+                backend=payload.backend,
+                model=payload.model,
+                seed_save=payload.seed_save,
+                runtime_save=payload.runtime_save_prefix,
+                preserve_save=payload.preserve_save,
+                max_steps=payload.max_steps,
+                ticks_per_step=payload.ticks_per_step,
+            )
+            service = _get_supervision_service()
+            provider = _provider_policy_from_request(payload, service)
+            launch = service.reserve(
+                SupervisedRunRequest(
+                    backend=payload.backend,
+                    model=payload.model,
+                    max_steps=payload.max_steps,
+                    ticks_per_step=payload.ticks_per_step,
+                    cohort_size=payload.n,
+                    safe=payload.safe is True,
+                    evaluation_protocol=payload.evaluation_protocol,
+                    preserve_save=payload.preserve_save,
+                    seed_save=payload.seed_save,
+                    runtime_save_prefix=payload.runtime_save_prefix,
+                    provider_policy=provider,
+                )
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except SupervisionServiceError as exc:
+            _raise_supervision_http(exc)
+
+        launch_ids = tuple(launch.run_ids)
+        launch_records = tuple(launch.records)
+        launch_record_ids = tuple(
+            getattr(record, "run_id", None) for record in launch_records
+        )
+        launch_shape_valid = (
+            len(launch_ids) == payload.n
+            and len(launch_records) == payload.n
+            and all(isinstance(run_id, str) and run_id for run_id in launch_ids)
+            and len(set(launch_ids)) == payload.n
+            and launch_record_ids == launch_ids
+        )
+        persisted_records = (
+            tuple(RUN_REGISTRY.get(run_id) for run_id in launch_ids)
+            if launch_shape_valid
+            else ()
+        )
+        launch_valid = launch_shape_valid and all(
+            record is not None and record.supervision_mode == SUPERVISION_MODE
+            for record in persisted_records
+        )
+        if not launch_valid:
+            invalid_launch = RuntimeError(
+                "M1b job reservation did not produce the requested persisted cohort"
+            )
+            candidate_ids = [
+                run_id
+                for run_id in (*launch_ids, *launch_record_ids)
+                if isinstance(run_id, str) and run_id
+            ]
+            for run_id in dict.fromkeys(candidate_ids):
+                record = RUN_REGISTRY.get(run_id)
+                if (
+                    record is not None
+                    and record.status == "pending"
+                    and record.supervision_mode == SUPERVISION_MODE
+                ):
+                    try:
+                        service.terminalize_unstarted(
+                            run_id,
+                            invalid_launch,
+                            code="api_job_launch_invalid",
+                        )
+                    except Exception:
+                        pass
+            raise HTTPException(
+                status_code=500,
+                detail="M1b job reservation returned an invalid cohort",
+            )
+
+        job: RegistryJobInfo | None = None
+        try:
+            job = JOB_REGISTRY.create(
+                model=payload.model,
+                backend=payload.backend,
+                n=payload.n,
+                parallelism=payload.parallelism,
+                isolation_supervised=True,
+            )
+
+            def _terminalize_preclaim_execution_failure(
+                run_id: str, exc: BaseException
+            ) -> None:
+                record = RUN_REGISTRY.get(run_id)
+                if record is not None and record.status == "pending":
+                    service.terminalize_unstarted(
+                        run_id,
+                        exc,
+                        code="job_manager_execution_failed_before_claim",
+                    )
+
+            JOB_REGISTRY.start_reserved(
+                job.job_id,
+                launch.run_ids,
+                lambda run_id: service.run_reserved(run_id).status,
+                on_launch_failure=lambda run_id, exc: service.terminalize_unstarted(
+                    run_id,
+                    exc,
+                    code="job_manager_thread_start_failed",
+                ),
+                on_execution_failure=_terminalize_preclaim_execution_failure,
+                on_barrier_failure=lambda run_id, exc: service.terminalize_unstarted(
+                    run_id,
+                    exc,
+                    code="job_cohort_start_barrier_failed",
+                ),
+                start_barrier=True,
+            )
+        except Exception as exc:  # noqa: BLE001 - compensate reserved rows
+            if job is not None:
+                try:
+                    JOB_REGISTRY.fail_activation(job.job_id)
+                except Exception:
+                    pass
+            for run_id in launch.run_ids:
+                record = RUN_REGISTRY.get(run_id)
+                if record is not None and record.status == "pending":
+                    try:
+                        service.terminalize_unstarted(
+                            run_id,
+                            exc,
+                            code="job_activation_failed",
+                        )
+                    except Exception:
+                        pass
+            raise HTTPException(
+                status_code=500,
+                detail="M1b job activation failed after cohort reservation",
+            ) from exc
+        activated_job = JOB_REGISTRY.get(job.job_id)
+        if activated_job is None:
+            missing_job = RuntimeError(
+                "M1b job metadata disappeared after scheduler activation"
+            )
+            for run_id in launch_ids:
+                record = RUN_REGISTRY.get(run_id)
+                if record is None or record.status in _TERMINAL_RUN_STATUSES:
+                    continue
+                if record.status == "pending":
+                    try:
+                        service.terminalize_unstarted(
+                            run_id,
+                            missing_job,
+                            code="api_job_registry_missing",
+                        )
+                    except Exception:
+                        pass
+                else:
+                    RUN_REGISTRY.request_stop(run_id)
+            raise HTTPException(
+                status_code=500,
+                detail="M1b job activation lost its scheduler metadata",
+            )
+        return _serialize_job(activated_job)
+
     loop = asyncio.get_running_loop()
 
     agent_factory = _get_agent_factory(payload.model)

@@ -6,6 +6,14 @@
 -- from every existing player building and every citizen.
 
 local json = require('json')
+-- Attest preflight rejection separately from a failed/partial native write.
+local mutation_attempted = false
+local function encode_result(value)
+  if value.ok == false then
+    value.command_mutation = mutation_attempted and 'attempted' or 'not_attempted'
+  end
+  return json.encode(value)
+end
 local buildings = require('dfhack.buildings')
 local args = {...}
 
@@ -30,17 +38,17 @@ local SUBTYPES = {
 
 local subtype = SUBTYPES[kind]
 if not subtype then
-  print(json.encode({ ok = false, error = 'invalid_kind' }))
+  print(encode_result({ ok = false, error = 'invalid_kind' }))
   return
 end
 
 if not (x1 and y1 and z1) then
-  print(json.encode({ ok = false, error = 'invalid_coordinates' }))
+  print(encode_result({ ok = false, error = 'invalid_coordinates' }))
   return
 end
 
 if df.global.world.reindex_pathfinding then
-  print(json.encode({ ok = false, error = 'path_cache_stale' }))
+  print(encode_result({ ok = false, error = 'path_cache_stale' }))
   return
 end
 
@@ -48,7 +56,7 @@ local rx1, ry1 = math.min(x1, x2), math.min(y1, y2)
 local rx2, ry2 = math.max(x1, x2), math.max(y1, y2)
 local total_tiles = (rx2 - rx1 + 1) * (ry2 - ry1 + 1)
 if total_tiles > 10 then
-  print(json.encode({ ok = false, error = 'too_many_tiles' }))
+  print(encode_result({ ok = false, error = 'too_many_tiles' }))
   return
 end
 
@@ -284,6 +292,7 @@ for tx = rx1, rx2 do
       elseif not material then
         table.insert(failed, { x = tx, y = ty, z = z1, error = 'no_reachable_building_material' })
       else
+        mutation_attempted = true
         local ok, result, construct_error = pcall(function()
           return buildings.constructBuilding{
             type = df.building_type.Construction,
@@ -352,7 +361,7 @@ for tx = rx1, rx2 do
   if rollback_failed then break end
 end
 
-print(json.encode({
+print(encode_result({
   ok = #placed > 0 and #failed == 0 and not rollback_failed,
   partial = #placed > 0 and #failed > 0,
   kind = kind,

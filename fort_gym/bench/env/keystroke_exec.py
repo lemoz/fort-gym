@@ -6,122 +6,257 @@ import subprocess
 import time
 from typing import Dict, List, Tuple
 
-from ..config import dfhack_cmd
-from ..dfhack_exec import run_lua_expr
-
+from ..dfhack_exec import DFHackError, run_command, run_lua_expr
 
 # Common interface keys for Dwarf Fortress v0.47.05
 # Full list available via: dfhack-run lua "@df.interface_key"
 VALID_KEYS: set[str] = {
     # Navigation
-    "CURSOR_UP", "CURSOR_DOWN", "CURSOR_LEFT", "CURSOR_RIGHT",
-    "CURSOR_UPLEFT", "CURSOR_UPRIGHT", "CURSOR_DOWNLEFT", "CURSOR_DOWNRIGHT",
-    "CURSOR_UP_FAST", "CURSOR_DOWN_FAST", "CURSOR_LEFT_FAST", "CURSOR_RIGHT_FAST",
-    "CURSOR_UPLEFT_FAST", "CURSOR_UPRIGHT_FAST", "CURSOR_DOWNLEFT_FAST", "CURSOR_DOWNRIGHT_FAST",
-    "CURSOR_UP_Z", "CURSOR_DOWN_Z", "CURSOR_UP_Z_AUX", "CURSOR_DOWN_Z_AUX",
-
+    "CURSOR_UP",
+    "CURSOR_DOWN",
+    "CURSOR_LEFT",
+    "CURSOR_RIGHT",
+    "CURSOR_UPLEFT",
+    "CURSOR_UPRIGHT",
+    "CURSOR_DOWNLEFT",
+    "CURSOR_DOWNRIGHT",
+    "CURSOR_UP_FAST",
+    "CURSOR_DOWN_FAST",
+    "CURSOR_LEFT_FAST",
+    "CURSOR_RIGHT_FAST",
+    "CURSOR_UPLEFT_FAST",
+    "CURSOR_UPRIGHT_FAST",
+    "CURSOR_DOWNLEFT_FAST",
+    "CURSOR_DOWNRIGHT_FAST",
+    "CURSOR_UP_Z",
+    "CURSOR_DOWN_Z",
+    "CURSOR_UP_Z_AUX",
+    "CURSOR_DOWN_Z_AUX",
     # Selection and confirmation
-    "SELECT", "SEC_SELECT", "DESELECT", "SELECT_ALL", "DESELECT_ALL",
-    "LEAVESCREEN", "LEAVESCREEN_ALL",
+    "SELECT",
+    "SEC_SELECT",
+    "DESELECT",
+    "SELECT_ALL",
+    "DESELECT_ALL",
+    "LEAVESCREEN",
+    "LEAVESCREEN_ALL",
     "MENU_CONFIRM",
-
     # Scrolling
-    "STANDARDSCROLL_UP", "STANDARDSCROLL_DOWN", "STANDARDSCROLL_LEFT", "STANDARDSCROLL_RIGHT",
-    "STANDARDSCROLL_PAGEUP", "STANDARDSCROLL_PAGEDOWN",
-    "SECONDSCROLL_UP", "SECONDSCROLL_DOWN", "SECONDSCROLL_PAGEUP", "SECONDSCROLL_PAGEDOWN",
-
+    "STANDARDSCROLL_UP",
+    "STANDARDSCROLL_DOWN",
+    "STANDARDSCROLL_LEFT",
+    "STANDARDSCROLL_RIGHT",
+    "STANDARDSCROLL_PAGEUP",
+    "STANDARDSCROLL_PAGEDOWN",
+    "SECONDSCROLL_UP",
+    "SECONDSCROLL_DOWN",
+    "SECONDSCROLL_PAGEUP",
+    "SECONDSCROLL_PAGEDOWN",
     # Tab/options
-    "CHANGETAB", "SEC_CHANGETAB",
-    "OPTION1", "OPTION2", "OPTION3", "OPTION4", "OPTION5",
-    "OPTION6", "OPTION7", "OPTION8", "OPTION9", "OPTION10",
-
+    "CHANGETAB",
+    "SEC_CHANGETAB",
+    "OPTION1",
+    "OPTION2",
+    "OPTION3",
+    "OPTION4",
+    "OPTION5",
+    "OPTION6",
+    "OPTION7",
+    "OPTION8",
+    "OPTION9",
+    "OPTION10",
     # Main menus (d, b, i, p, etc.)
-    "D_DESIGNATE", "D_BUILDING", "D_BUILDJOB", "D_CIVZONE", "D_STOCKPILES",
-    "D_BUILDINGLIST", "D_UNITLIST", "D_JOBLIST", "D_MILITARY",
-    "D_NOBLES", "D_ANNOUNCE", "D_ORDERS", "D_SQUADS", "D_BURROWS",
-    "D_HAULING", "D_LOOK", "D_VIEWUNIT", "D_STATUS", "D_ARTLIST",
-    "D_LOCATIONS", "D_HOT_KEYS", "D_MOVIES", "D_REPORTS", "D_NOTE",
-
+    "D_DESIGNATE",
+    "D_BUILDING",
+    "D_BUILDJOB",
+    "D_CIVZONE",
+    "D_STOCKPILES",
+    "D_BUILDINGLIST",
+    "D_UNITLIST",
+    "D_JOBLIST",
+    "D_MILITARY",
+    "D_NOBLES",
+    "D_ANNOUNCE",
+    "D_ORDERS",
+    "D_SQUADS",
+    "D_BURROWS",
+    "D_HAULING",
+    "D_LOOK",
+    "D_VIEWUNIT",
+    "D_STATUS",
+    "D_ARTLIST",
+    "D_LOCATIONS",
+    "D_HOT_KEYS",
+    "D_MOVIES",
+    "D_REPORTS",
+    "D_NOTE",
     # Designate submenu
-    "DESIGNATE_DIG", "DESIGNATE_DIG_REMOVE_STAIRS_RAMPS",
-    "DESIGNATE_CHANNEL", "DESIGNATE_STAIR_UP", "DESIGNATE_STAIR_DOWN", "DESIGNATE_STAIR_UPDOWN",
-    "DESIGNATE_RAMP", "DESIGNATE_CHOP", "DESIGNATE_PLANTS",
-    "DESIGNATE_SMOOTH", "DESIGNATE_ENGRAVE", "DESIGNATE_FORTIFY",
-    "DESIGNATE_TRACK", "DESIGNATE_TOGGLE_ENGRAVING",
-    "DESIGNATE_TRAFFIC", "DESIGNATE_TRAFFIC_HIGH", "DESIGNATE_TRAFFIC_NORMAL",
-    "DESIGNATE_TRAFFIC_LOW", "DESIGNATE_TRAFFIC_RESTRICTED",
-    "DESIGNATE_UNDO", "DESIGNATE_REMOVE_CONSTRUCTION",
-    "DESIGNATE_BITEM", "DESIGNATE_CLAIM", "DESIGNATE_UNCLAIM",
-    "DESIGNATE_MELT", "DESIGNATE_NO_MELT", "DESIGNATE_DUMP", "DESIGNATE_NO_DUMP",
-    "DESIGNATE_HIDE", "DESIGNATE_NO_HIDE",
-    "DESIGNATE_STANDARD_MARKER", "DESIGNATE_MINE_MODE", "DESIGNATE_TOGGLE_MARKER",
-
+    "DESIGNATE_DIG",
+    "DESIGNATE_DIG_REMOVE_STAIRS_RAMPS",
+    "DESIGNATE_CHANNEL",
+    "DESIGNATE_STAIR_UP",
+    "DESIGNATE_STAIR_DOWN",
+    "DESIGNATE_STAIR_UPDOWN",
+    "DESIGNATE_RAMP",
+    "DESIGNATE_CHOP",
+    "DESIGNATE_PLANTS",
+    "DESIGNATE_SMOOTH",
+    "DESIGNATE_ENGRAVE",
+    "DESIGNATE_FORTIFY",
+    "DESIGNATE_TRACK",
+    "DESIGNATE_TOGGLE_ENGRAVING",
+    "DESIGNATE_TRAFFIC",
+    "DESIGNATE_TRAFFIC_HIGH",
+    "DESIGNATE_TRAFFIC_NORMAL",
+    "DESIGNATE_TRAFFIC_LOW",
+    "DESIGNATE_TRAFFIC_RESTRICTED",
+    "DESIGNATE_UNDO",
+    "DESIGNATE_REMOVE_CONSTRUCTION",
+    "DESIGNATE_BITEM",
+    "DESIGNATE_CLAIM",
+    "DESIGNATE_UNCLAIM",
+    "DESIGNATE_MELT",
+    "DESIGNATE_NO_MELT",
+    "DESIGNATE_DUMP",
+    "DESIGNATE_NO_DUMP",
+    "DESIGNATE_HIDE",
+    "DESIGNATE_NO_HIDE",
+    "DESIGNATE_STANDARD_MARKER",
+    "DESIGNATE_MINE_MODE",
+    "DESIGNATE_TOGGLE_MARKER",
     # Build submenu
-    "BUILDJOB_DOOR", "BUILDJOB_FLOODGATE", "BUILDJOB_HATCH",
-    "BUILDJOB_WALL", "BUILDJOB_FLOOR", "BUILDJOB_RAMP",
-    "BUILDJOB_BRIDGE", "BUILDJOB_WELL", "BUILDJOB_STAIRS_UP",
-    "BUILDJOB_STAIRS_DOWN", "BUILDJOB_STAIRS_UPDOWN",
-    "BUILDJOB_WORKSHOP", "BUILDJOB_FURNACE", "BUILDJOB_CONSTRUCTION",
-    "BUILDJOB_SIEGE", "BUILDJOB_TRAP", "BUILDJOB_MACHINE",
-    "BUILDJOB_BED", "BUILDJOB_CHAIR", "BUILDJOB_TABLE",
-    "BUILDJOB_COFFIN", "BUILDJOB_STATUE", "BUILDJOB_ARMORSTAND",
-    "BUILDJOB_WEAPONRACK", "BUILDJOB_CABINET", "BUILDJOB_CHEST",
-
+    "BUILDJOB_DOOR",
+    "BUILDJOB_FLOODGATE",
+    "BUILDJOB_HATCH",
+    "BUILDJOB_WALL",
+    "BUILDJOB_FLOOR",
+    "BUILDJOB_RAMP",
+    "BUILDJOB_BRIDGE",
+    "BUILDJOB_WELL",
+    "BUILDJOB_STAIRS_UP",
+    "BUILDJOB_STAIRS_DOWN",
+    "BUILDJOB_STAIRS_UPDOWN",
+    "BUILDJOB_WORKSHOP",
+    "BUILDJOB_FURNACE",
+    "BUILDJOB_CONSTRUCTION",
+    "BUILDJOB_SIEGE",
+    "BUILDJOB_TRAP",
+    "BUILDJOB_MACHINE",
+    "BUILDJOB_BED",
+    "BUILDJOB_CHAIR",
+    "BUILDJOB_TABLE",
+    "BUILDJOB_COFFIN",
+    "BUILDJOB_STATUE",
+    "BUILDJOB_ARMORSTAND",
+    "BUILDJOB_WEAPONRACK",
+    "BUILDJOB_CABINET",
+    "BUILDJOB_CHEST",
     # Building construction categories and workshop types
     "HOTKEY_BUILDING_WORKSHOP",
-    "HOTKEY_BUILDING_WORKSHOP_CARPENTER", "HOTKEY_BUILDING_WORKSHOP_CRAFTSMAN",
-    "HOTKEY_BUILDING_WORKSHOP_MASON", "HOTKEY_BUILDING_WORKSHOP_MECHANIC",
-    "HOTKEY_BUILDING_WORKSHOP_STILL", "HOTKEY_BUILDING_WORKSHOP_KITCHEN",
-    "HOTKEY_BUILDING_WORKSHOP_FARMER", "HOTKEY_BUILDING_WORKSHOP_BUTCHER",
-    "HOTKEY_BUILDING_WORKSHOP_TANNER", "HOTKEY_BUILDING_WORKSHOP_LEATHER",
-    "HOTKEY_BUILDING_WORKSHOP_CLOTHES", "HOTKEY_BUILDING_WORKSHOP_DYER",
-    "HOTKEY_BUILDING_WORKSHOP_LOOM", "HOTKEY_BUILDING_WORKSHOP_QUERN",
-    "HOTKEY_BUILDING_WORKSHOP_MILLSTONE", "HOTKEY_BUILDING_WORKSHOP_SIEGE",
-    "HOTKEY_BUILDING_WORKSHOP_BOWYER", "HOTKEY_BUILDING_WORKSHOP_ASHERY",
-    "HOTKEY_BUILDING_WORKSHOP_FISHERY", "HOTKEY_BUILDING_WORKSHOP_JEWELER",
+    "HOTKEY_BUILDING_WORKSHOP_CARPENTER",
+    "HOTKEY_BUILDING_WORKSHOP_CRAFTSMAN",
+    "HOTKEY_BUILDING_WORKSHOP_MASON",
+    "HOTKEY_BUILDING_WORKSHOP_MECHANIC",
+    "HOTKEY_BUILDING_WORKSHOP_STILL",
+    "HOTKEY_BUILDING_WORKSHOP_KITCHEN",
+    "HOTKEY_BUILDING_WORKSHOP_FARMER",
+    "HOTKEY_BUILDING_WORKSHOP_BUTCHER",
+    "HOTKEY_BUILDING_WORKSHOP_TANNER",
+    "HOTKEY_BUILDING_WORKSHOP_LEATHER",
+    "HOTKEY_BUILDING_WORKSHOP_CLOTHES",
+    "HOTKEY_BUILDING_WORKSHOP_DYER",
+    "HOTKEY_BUILDING_WORKSHOP_LOOM",
+    "HOTKEY_BUILDING_WORKSHOP_QUERN",
+    "HOTKEY_BUILDING_WORKSHOP_MILLSTONE",
+    "HOTKEY_BUILDING_WORKSHOP_SIEGE",
+    "HOTKEY_BUILDING_WORKSHOP_BOWYER",
+    "HOTKEY_BUILDING_WORKSHOP_ASHERY",
+    "HOTKEY_BUILDING_WORKSHOP_FISHERY",
+    "HOTKEY_BUILDING_WORKSHOP_JEWELER",
     "HOTKEY_BUILDING_WORKSHOP_METALSMITH",
-
     # Legacy workshop aliases kept for older traces/prompts.
-    "HOTKEY_MAKE_CARPENTER", "HOTKEY_MAKE_CRAFTSMAN", "HOTKEY_MAKE_MASON",
-    "HOTKEY_MAKE_METALSMITH", "HOTKEY_MAKE_JEWELER", "HOTKEY_MAKE_MECHANIC",
-    "HOTKEY_MAKE_STILL", "HOTKEY_MAKE_KITCHEN", "HOTKEY_MAKE_FARMER",
-    "HOTKEY_MAKE_BUTCHER", "HOTKEY_MAKE_TANNER", "HOTKEY_MAKE_LEATHER",
-    "HOTKEY_MAKE_CLOTHIER", "HOTKEY_MAKE_DYER", "HOTKEY_MAKE_LOOM",
-    "HOTKEY_MAKE_QUERN", "HOTKEY_MAKE_MILL", "HOTKEY_MAKE_SIEGE",
-    "HOTKEY_MAKE_BOWYER", "HOTKEY_MAKE_ASHERY",
-
+    "HOTKEY_MAKE_CARPENTER",
+    "HOTKEY_MAKE_CRAFTSMAN",
+    "HOTKEY_MAKE_MASON",
+    "HOTKEY_MAKE_METALSMITH",
+    "HOTKEY_MAKE_JEWELER",
+    "HOTKEY_MAKE_MECHANIC",
+    "HOTKEY_MAKE_STILL",
+    "HOTKEY_MAKE_KITCHEN",
+    "HOTKEY_MAKE_FARMER",
+    "HOTKEY_MAKE_BUTCHER",
+    "HOTKEY_MAKE_TANNER",
+    "HOTKEY_MAKE_LEATHER",
+    "HOTKEY_MAKE_CLOTHIER",
+    "HOTKEY_MAKE_DYER",
+    "HOTKEY_MAKE_LOOM",
+    "HOTKEY_MAKE_QUERN",
+    "HOTKEY_MAKE_MILL",
+    "HOTKEY_MAKE_SIEGE",
+    "HOTKEY_MAKE_BOWYER",
+    "HOTKEY_MAKE_ASHERY",
     # Zone controls
-    "CIVZONE_WATER_PIT", "CIVZONE_WATER_POND", "CIVZONE_GATHER",
-    "CIVZONE_HOSPITAL", "CIVZONE_DUMP", "CIVZONE_FISH",
-    "CIVZONE_MEETING_AREA", "CIVZONE_ACTIVE", "CIVZONE_REMOVE",
-
+    "CIVZONE_WATER_PIT",
+    "CIVZONE_WATER_POND",
+    "CIVZONE_GATHER",
+    "CIVZONE_HOSPITAL",
+    "CIVZONE_DUMP",
+    "CIVZONE_FISH",
+    "CIVZONE_MEETING_AREA",
+    "CIVZONE_ACTIVE",
+    "CIVZONE_REMOVE",
     # Stockpile controls
-    "STOCKPILE_ANIMAL", "STOCKPILE_FOOD", "STOCKPILE_WEAPON",
-    "STOCKPILE_ARMOR", "STOCKPILE_AMMO", "STOCKPILE_FURNITURE",
-    "STOCKPILE_CORPSE", "STOCKPILE_REFUSE", "STOCKPILE_STONE",
-    "STOCKPILE_WOOD", "STOCKPILE_CLOTH", "STOCKPILE_GEM",
-    "STOCKPILE_BAR", "STOCKPILE_FINISHED", "STOCKPILE_CUSTOM",
-
+    "STOCKPILE_ANIMAL",
+    "STOCKPILE_FOOD",
+    "STOCKPILE_WEAPON",
+    "STOCKPILE_ARMOR",
+    "STOCKPILE_AMMO",
+    "STOCKPILE_FURNITURE",
+    "STOCKPILE_CORPSE",
+    "STOCKPILE_REFUSE",
+    "STOCKPILE_STONE",
+    "STOCKPILE_WOOD",
+    "STOCKPILE_CLOTH",
+    "STOCKPILE_GEM",
+    "STOCKPILE_BAR",
+    "STOCKPILE_FINISHED",
+    "STOCKPILE_CUSTOM",
     # Workshop task controls, after D_BUILDJOB selects an existing building.
-    "BUILDJOB_ADD", "BUILDJOB_CANCEL", "BUILDJOB_NAME",
-    "BUILDJOB_PROMOTE", "BUILDJOB_NOW", "BUILDJOB_REPEAT",
-    "BUILDJOB_SUSPEND", "BUILDJOB_DETAILS",
-
+    "BUILDJOB_ADD",
+    "BUILDJOB_CANCEL",
+    "BUILDJOB_NAME",
+    "BUILDJOB_PROMOTE",
+    "BUILDJOB_NOW",
+    "BUILDJOB_REPEAT",
+    "BUILDJOB_SUSPEND",
+    "BUILDJOB_DETAILS",
     # Job list and manager/orders
-    "UNITJOB_MANAGER", "MANAGER_NEW_ORDER", "MANAGER_REMOVE",
-
+    "UNITJOB_MANAGER",
+    "MANAGER_NEW_ORDER",
+    "MANAGER_REMOVE",
     # Squad controls
-    "D_SQUADS_KILL", "D_SQUADS_MOVE", "D_SQUADS_STATION",
-    "D_SQUADS_PATROL", "D_SQUADS_CANCEL_ORDERS",
-
+    "D_SQUADS_KILL",
+    "D_SQUADS_MOVE",
+    "D_SQUADS_STATION",
+    "D_SQUADS_PATROL",
+    "D_SQUADS_CANCEL_ORDERS",
     # Misc
-    "PAUSE", "MOVIE_RECORD", "MOVIE_PLAY", "MOVIE_SAVE", "MOVIE_LOAD",
-    "ZOOM_IN", "ZOOM_OUT", "ZOOM_TOGGLE", "ZOOM_RESET",
-    "FPS_UP", "FPS_DOWN",
-    "TOGGLE_FULLSCREEN", "HELP", "OPTIONS",
+    "PAUSE",
+    "MOVIE_RECORD",
+    "MOVIE_PLAY",
+    "MOVIE_SAVE",
+    "MOVIE_LOAD",
+    "ZOOM_IN",
+    "ZOOM_OUT",
+    "ZOOM_TOGGLE",
+    "ZOOM_RESET",
+    "FPS_UP",
+    "FPS_DOWN",
+    "TOGGLE_FULLSCREEN",
+    "HELP",
+    "OPTIONS",
     # Embark/location setup
     "SETUP_EMBARK",
-
     # Extended character input (ASCII codes as STRING_A000-STRING_A127)
     # These allow typing arbitrary characters
 }
@@ -141,6 +276,7 @@ KEY_ALIASES: Dict[str, str] = {
 
 class KeystrokeError(Exception):
     """Error during keystroke execution."""
+
     pass
 
 
@@ -189,14 +325,15 @@ def send_key(key: str, timeout: float = 5.0) -> bool:
         key = _translate_key(key, _get_viewscreen_type())
         if key not in VALID_KEYS:
             return False
-        cmd = dfhack_cmd("devel/send-key", key)
-        subprocess.check_call(cmd, timeout=timeout, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        run_command("devel/send-key", [key], timeout=timeout)
         time.sleep(0.05)  # Small delay for game to process
         return True
-    except subprocess.TimeoutExpired as exc:
+    except (subprocess.TimeoutExpired, TimeoutError) as exc:
         raise KeystrokeError(f"Keystroke timeout: {key}") from exc
-    except subprocess.CalledProcessError as exc:
-        raise KeystrokeError(f"Keystroke failed: {key} (exit {exc.returncode})") from exc
+    except (subprocess.CalledProcessError, DFHackError, OSError) as exc:
+        returncode = getattr(exc, "returncode", None)
+        suffix = f" (exit {returncode})" if returncode is not None else f": {exc}"
+        raise KeystrokeError(f"Keystroke failed: {key}{suffix}") from exc
 
 
 def send_sequence(keys: List[str], delay: float = 0.05) -> Tuple[int, str]:
@@ -220,14 +357,15 @@ def send_sequence(keys: List[str], delay: float = 0.05) -> Tuple[int, str]:
             return i, f"Invalid key at position {i}: {key}"
 
         try:
-            cmd = dfhack_cmd("devel/send-key", key)
-            subprocess.check_call(cmd, timeout=5.0, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            run_command("devel/send-key", [key], timeout=5.0)
             if delay > 0:
                 time.sleep(delay)
-        except subprocess.TimeoutExpired:
+        except (subprocess.TimeoutExpired, TimeoutError):
             return i, f"Timeout at key {i}: {key}"
-        except subprocess.CalledProcessError as exc:
-            return i, f"Failed at key {i}: {key} (exit {exc.returncode})"
+        except (subprocess.CalledProcessError, DFHackError, OSError) as exc:
+            returncode = getattr(exc, "returncode", None)
+            suffix = f" (exit {returncode})" if returncode is not None else f": {exc}"
+            return i, f"Failed at key {i}: {key}{suffix}"
 
     return len(keys), ""
 

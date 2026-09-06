@@ -1,0 +1,117 @@
+{
+  "schema_version": "fortgym.local-campaign-evidence/v1",
+  "evidence_id": "local-qwen-native-20260906-b",
+  "phase": "development",
+  "code_revision": "d6fa51cced83784e942b9933a2a47ed2730d2f77",
+  "model": "qwen2.5:7b-instruct",
+  "model_manifest_sha256": "845dbda0ea48ed749caafd9e6037047aa19acfcfd82e704d7ca97d631a0b697e",
+  "model_quantization": "Q4_K_M",
+  "inference_server_version": "0.5.11",
+  "condition_id": "local-native-development-v1",
+  "config_path": "experiments/campaigns/local_native_development_v1.json",
+  "source_snapshot_receipt_sha256": "ca71bfd2032e864cced48e66f20f76827b92b9df2099f03476f2dd43234c2d3d",
+  "outcome": "bounded_segments_complete_without_game_time_progress",
+  "segments": [
+    {
+      "segment_id": "local-qwen-native-20260906-b",
+      "first_step": 0,
+      "next_step": 3,
+      "new_committed_steps": 3,
+      "cumulative_returned_tokens": 12414,
+      "cumulative_dispatches": 3,
+      "checkpoint_payload_sha256": "2b71292606d3f3c8d1489b84de83bd191920c175e926a5a8ede6ca72390869ef",
+      "checkpoint_file_sha256": "9f81cd92d75e758934215cc60346df52c421b68938941a4725f5bd0f781740f1",
+      "native_load_verified": true,
+      "cleanup_verified": true,
+      "listener_closed": true,
+      "source_sha256": {
+        "campaign-segment.json": "ae33d4dc660fe1f98017852904c5c59eb2a77f0de2c2eec3754a75e6219bf9ca",
+        "result.json": "5347c9a81a7b8393dc0252bf4066e8f75f35e4f35671f54182bc2d813ab03243",
+        "campaign/trace.jsonl": "789379f3252b637a581ff35c9c1d94d47bc0ff1fdeb86d25dfbb42ffc061a6eb",
+        "campaign-profile.json": "61a94dda1a322f9f454b91f06a4974a6eb851abf7a5f173e25564f914ccae98e",
+        "spend.jsonl": "4921324d251e586ee1f430a14fad7076d7c834bcfb6ffdcb690feccd64ead56b"
+      }
+    },
+    {
+      "segment_id": "local-qwen-native-20260906-b-resume",
+      "first_step": 3,
+      "next_step": 6,
+      "new_committed_steps": 3,
+      "cumulative_returned_tokens": 27237,
+      "cumulative_dispatches": 6,
+      "source_checkpoint_file_sha256": "9f81cd92d75e758934215cc60346df52c421b68938941a4725f5bd0f781740f1",
+      "parent_checkpoint_payload_sha256": "2b71292606d3f3c8d1489b84de83bd191920c175e926a5a8ede6ca72390869ef",
+      "checkpoint_payload_sha256": "bca9b2126494f61e2277e95abc72113e1959c5f2236eb81d26ed5a7889cb7ef3",
+      "checkpoint_file_sha256": "af6489928b8914e63d2afa80db75c51340a6c21dee7bb493018bf497bd6d16df",
+      "native_load_verified": true,
+      "cleanup_verified": true,
+      "listener_closed": true,
+      "source_sha256": {
+        "campaign-segment.json": "083e23b7910b32f563a172a341946211955468cf1037f9bc22b8466560f53cce",
+        "result.json": "0b8e4bd455cf35c708fd169868d08a96b4c6a85eb561ad9f9a7c68c411077e8d",
+        "campaign/trace.jsonl": "0042a8c1780d8048c4ca140c096431797c6bdc6326cbd778d8a6c081d0ccd265",
+        "campaign-profile.json": "41873e7fede3f5bf2bd1bfd6f4ef8fc2aceb06ce4e36916612856820a997ffce",
+        "spend.jsonl": "5cd7c913af5d56a0f520ea1d19b47edd7102c6d6b637d54c14a85189d5d96f88"
+      }
+    }
+  ],
+  "continuation": {
+    "scope": "one_real_model_selected_checkpoint_boundary",
+    "checkpoint_inventories_verified": true,
+    "parent_matches": true,
+    "trace_prefix_unchanged": true,
+    "canonical_steps": [0, 1, 2, 3, 4, 5],
+    "usage_counter_preserved": true,
+    "long_duration_recovery_verified": false
+  },
+  "actions": {
+    "unique_committed_decisions": 6,
+    "accepted": 5,
+    "rejected": 1,
+    "accepted_labor_changes": 3,
+    "accepted_labor_noops": 2,
+    "rejected_dig_reason": "tile_not_designatable",
+    "every_requested_advance_ticks": 0,
+    "diagnostic": "The model tried digging non-wall terrain, enabled two labors, disabled those same two labors after resume, then enabled an already-enabled farming labor. Accepted commands are not fortress development."
+  },
+  "native_start": {"year": 30, "year_tick": 19309, "population": 7, "food_stock": 45, "drink_stock": 60},
+  "native_final": {"year": 30, "year_tick": 19309, "population": 7, "food_stock": 45, "drink_stock": 60},
+  "native_elapsed_ticks": 0,
+  "year_two_gameplay_verified": false,
+  "functioning_fortress": "not_assessed",
+  "usage": {
+    "scope": "six_unique_campaign_decisions_across_both_segments",
+    "dispatched_requests": 6,
+    "returned_responses": 6,
+    "accounted_responses": 6,
+    "total_tokens": 27237,
+    "dispatches_without_returned_usage": 0,
+    "cost_basis": "self_hosted_no_metered_provider",
+    "metered_provider_charge_usd": "0",
+    "reported_model_cost_usd": null,
+    "infrastructure_cost_usd": null,
+    "billing_reconciled": false
+  },
+  "teardown": {
+    "independent_runtime_process_inventories_empty": true,
+    "native_ports_5532_5533_closed": true,
+    "ssh_reverse_tunnel_stopped": true,
+    "local_inference_server_stopped": true,
+    "local_model_runner_stopped": true,
+    "loopback_port_11439_closed_on_both_hosts": true
+  },
+  "new_vms_created": 0,
+  "production_code_changed": false,
+  "website_delivery_verified": false,
+  "comparison_rankings_available": false,
+  "limits": [
+    "This is one six-decision local-model development attempt with one resumed boundary, not two independent runs or a ranking.",
+    "The resumed trace and usage totals include the first segment; do not add cumulative totals together.",
+    "The model chose zero simulation advance on every decision. This proves native action execution and continuation, not fortress growth, sustainability, collapse, or year-two success.",
+    "Zero metered model API charges do not establish zero hardware, electricity, storage, or existing-host costs. This is not an aggregate project spending reconciliation.",
+    "A separate synthetic interface request used 67 tokens and is excluded from these campaign counters.",
+    "Private saves, traces, and model responses remain under the existing host's isolated test checkout. Public model weights remain in the project-owned external-volume cache; none are committed here.",
+    "The earlier startup-only attempt A remains retained and is documented separately. It executed no model decisions.",
+    "No production website feed was enabled or deployed for this experiment."
+  ]
+}
