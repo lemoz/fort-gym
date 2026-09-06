@@ -73,6 +73,28 @@ successful context checks do not establish useful autonomous gameplay.
 
 Server contract: [pinned llama.cpp documentation](https://github.com/ggml-org/llama.cpp/blob/b10516/tools/server/README.md).
 
+## Separately declared thinking-mode follow-up
+
+[The follow-up condition](../experiments/campaigns/local_native_llama_thinking_v1.json)
+enables the same model's thinking mode with a 2,048-token output allowance, eight
+maximum dispatches and four-decision segments. The original non-thinking condition
+and request serialization remain unchanged. Both modes require a real boolean,
+are included in the exact token-count request and are checkpoint-bound. A prior
+checkpoint cannot silently switch modes. All returned completion tokens count,
+including any reasoning tokens; a truncated response remains a failed response,
+not an executable command.
+
+This is a development hypothesis, not evidence that reasoning solves repeated
+waits. It keeps the original native starting save, observations, factual control
+reference, typed grammar and sampling. The mode, output allowance and execution
+bounds differ, so it is not a single-variable ablation or a model ranking. No
+additional game instructions, automatic actions or human-selected build order are
+introduced. The declared configuration alone does not establish execution.
+
+The [publisher's model card](https://huggingface.co/Qwen/Qwen3.5-9B) documents thinking
+and non-thinking modes. Local runtime behavior and native outcomes still require
+their own receipts.
+
 The website keeps both compatibility diagnostics outside the seven model-performance
 rows. Unit, endpoint and frontend test-double checks do not establish deployment,
 browser acceptance or gameplay readiness.

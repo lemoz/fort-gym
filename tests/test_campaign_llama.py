@@ -116,6 +116,39 @@ def test_unknown_transport_cannot_fall_back_to_ollama(config, tmp_path):
         verify_local_transport(ENDPOINT, config, MODEL)
 
 
+@pytest.mark.parametrize("value", [None, 0, 1, "false", [], {}])
+def test_thinking_mode_requires_a_real_boolean(config, value):
+    config["local_inference"]["enable_thinking"] = value
+    with pytest.raises(ValueError, match="explicit boolean"):
+        validate_local_settings(config, MODEL)
+
+
+def test_thinking_mode_is_exactly_requested_counted_and_checkpoint_bound(
+    config, tmp_path, monkeypatch
+):
+    calls, _ = fake_server(config, monkeypatch)
+    original = policy(config, tmp_path)
+    original._create_completion(MESSAGES)
+    saved = original.export_campaign_state()
+    thinking = deepcopy(config)
+    thinking["local_inference"]["enable_thinking"] = True
+    agent = make_agent(
+        thinking,
+        MODEL,
+        tmp_path / "thinking.jsonl",
+        persist_dispatches=True,
+        local_endpoint=ENDPOINT,
+    )
+    with pytest.raises(ValueError):
+        agent.restore_campaign_state(saved, campaign_id="llama-test")
+    agent.set_campaign_context(campaign_id="thinking-test")
+    agent._create_completion(MESSAGES)
+    body = generations(calls)[-1]
+    assert body["chat_template_kwargs"] == {"enable_thinking": True}
+    assert [body for path, body in calls if path == llama.TOKEN_PATH][-1] == body
+    assert agent.export_campaign_state()["usage"]["total_tokens"] == 49
+
+
 def test_factory_routes_pinned_local_transport_and_retains_real_usage(
     config, tmp_path, monkeypatch
 ):
@@ -303,7 +336,7 @@ def test_declared_profile_has_scheduling_allowance_and_no_ollama_launcher(config
 @pytest.mark.parametrize(
     "field,value",
     [
-        ("enable_thinking", True),
+        ("enable_thinking", "true"),
         ("top_k", True),
         ("top_p", 0),
         ("token_count_timeout_seconds", 0),

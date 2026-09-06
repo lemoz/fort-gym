@@ -23,8 +23,8 @@ def validate_llama_settings(config: dict) -> None:
     local = config["local_inference"]
     if local.get("server_version") != BUILD or local.get("token_count_profile") != TOKEN_PROFILE:
         raise ValueError("Unsupported pinned llama.cpp build or token-count profile")
-    if local.get("enable_thinking") is not False:
-        raise ValueError("This local llama.cpp profile requires thinking disabled")
+    if type(local.get("enable_thinking")) is not bool:
+        raise ValueError("Local llama.cpp thinking mode must be an explicit boolean")
     for key, lower, upper in (
         ("top_k", 1, 1000),
         ("context_headroom_tokens", 1, 4096),

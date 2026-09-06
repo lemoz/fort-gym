@@ -69,7 +69,7 @@ class LlamaCampaignAgent(LocalCampaignAgent):
                 "top_p": local["top_p"],
                 "top_k": local["top_k"],
                 "seed": local["seed"],
-                "chat_template_kwargs": {"enable_thinking": False},
+                "chat_template_kwargs": {"enable_thinking": local["enable_thinking"]},
             },
             sort_keys=True,
             ensure_ascii=True,
