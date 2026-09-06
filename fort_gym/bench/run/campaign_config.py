@@ -89,6 +89,12 @@ def validate_local_settings(config: dict, model: str) -> None:
         raise ValueError("Unsupported local campaign transport")
     if config["max_attempts"] != 1:
         raise ValueError("Local transport does not silently retry a failed inference")
+    prompt_contract = local.get("prompt_contract", "grammar_only/v1")
+    if not isinstance(prompt_contract, str) or prompt_contract not in {
+        "grammar_only/v1",
+        "visible_action_contract/v1",
+    }:
+        raise ValueError("Unsupported local prompt contract")
     for key, lower, upper in (
         ("context_tokens", 4096, 32768),
         ("timeout_seconds", 1, 180),

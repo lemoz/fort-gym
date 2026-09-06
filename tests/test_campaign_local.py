@@ -258,3 +258,50 @@ def test_local_configuration_does_not_opt_into_unknown_server_routing(config, tm
     path.write_text(json.dumps(config))
     with pytest.raises(ValueError, match="verified pre-cloud"):
         load_segment_config(path, MODEL)
+
+
+def test_visible_contract_presents_actual_schema_without_changing_it(config, tmp_path, monkeypatch):
+    config["local_inference"]["prompt_contract"] = "visible_action_contract/v1"
+    calls = fake_server(config, monkeypatch)
+    agent = policy(config, tmp_path)
+    agent.decide("Test-only observation", {})
+    prompt = calls[0]["messages"][-1]["content"]
+    visible_schema = json.loads(prompt.split("\n", 1)[1])
+    assert visible_schema == calls[0]["format"]
+    assert visible_schema["properties"]["advance_ticks"]["minimum"] == 0
+    assert visible_schema["properties"]["advance_ticks"]["maximum"] == 2000
+    assert "choose the value yourself" in prompt
+    assert calls[0]["format"]["required"] == ["type", "params", "advance_ticks"]
+
+
+def test_legacy_local_condition_keeps_original_message_and_checkpoint_identity(
+    config, tmp_path, monkeypatch
+):
+    calls = fake_server(config, monkeypatch)
+    agent = policy(config, tmp_path)
+    checkpoint = agent.export_campaign_state()
+    agent.decide("Test-only observation", {})
+    assert calls[0]["messages"][-1]["content"] == campaign_local.LEGACY_RESPONSE_INSTRUCTION
+    changed = deepcopy(config)
+    changed["local_inference"]["prompt_contract"] = "visible_action_contract/v1"
+    with pytest.raises(ValueError, match="configuration"):
+        policy(changed, tmp_path).restore_campaign_state(checkpoint, campaign_id="local-test")
+
+
+@pytest.mark.parametrize("contract", ["unknown/v1", None, False, [], {}])
+def test_unknown_prompt_contract_is_not_silently_used(config, tmp_path, contract):
+    config["local_inference"]["prompt_contract"] = contract
+    path = tmp_path / "condition.json"
+    path.write_text(json.dumps(config))
+    with pytest.raises(ValueError, match="prompt contract"):
+        load_segment_config(path, MODEL)
+
+
+def test_visible_contract_condition_preserves_baseline_execution_settings(config):
+    variant = load_segment_config(CONFIG.with_name("local_native_visible_contract_v1.json"), MODEL)
+    for key in config.keys() - {"condition_id", "hypothesis", "notes", "local_inference"}:
+        assert variant[key] == config[key]
+    assert variant["local_inference"] == {
+        **config["local_inference"],
+        "prompt_contract": "visible_action_contract/v1",
+    }

@@ -19,6 +19,7 @@ from .campaign_llm import CampaignLLMAgent
 from .governed_llm import GovernedBudgetCapError, GovernedDecisionError
 
 COST_BASIS = "self_hosted_no_metered_provider"
+LEGACY_RESPONSE_INSTRUCTION = "Return the submit_action object as JSON, without Markdown."
 
 
 class LocalInferenceError(GovernedDecisionError):
@@ -171,6 +172,22 @@ class LocalCampaignAgent(CampaignLLMAgent):
             handle.flush()
             os.fsync(handle.fileno())
 
+    def _response_instruction(self) -> str:
+        contract = self.config["local_inference"].get("prompt_contract", "grammar_only/v1")
+        if contract == "grammar_only/v1":
+            return LEGACY_RESPONSE_INSTRUCTION
+        if contract != "visible_action_contract/v1":
+            raise ValueError("Unsupported local prompt contract")
+        # The native format field constrains decoding; it is not a tool message.
+        # Explicitly present the same contract, including its runtime tick bound,
+        # without recommending an action, tick count, strategy, or build order.
+        return (
+            LEGACY_RESPONSE_INSTRUCTION
+            + " The action response contract is supplied below. Its advance_ticks bounds "
+            "are inclusive; choose the value yourself. Planning notes are optional.\n"
+            + json.dumps(self._action_tool()["function"]["parameters"], sort_keys=True)
+        )
+
     def _create_completion(self, messages):
         local = self.config["local_inference"]
         body = json.dumps(
@@ -180,7 +197,7 @@ class LocalCampaignAgent(CampaignLLMAgent):
                 + [
                     {
                         "role": "user",
-                        "content": "Return the submit_action object as JSON, without Markdown.",
+                        "content": self._response_instruction(),
                     }
                 ],
                 "format": self._action_tool()["function"]["parameters"],

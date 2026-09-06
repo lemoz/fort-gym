@@ -855,3 +855,32 @@ compare from the same starting save. Do not force WAIT actions, count labor togg
 as growth, or silently continue a checkpoint under a changed policy. Broader model
 coverage, repeated comparable campaigns, native-year endurance and the website's
 live delivery/acceptance remain open parts of the active goal.
+
+## Visible local action-contract experiment
+
+The baseline's native observations already showed terrain, stocks, enabled labors,
+the paused state and recent results. Its recorded model responses ended normally,
+not at the output-token limit. A synthetic transport check copied WAIT/2000,
+LABOR/128 and DIG/37 objects exactly: positive tick values and false booleans can
+pass the existing constrained decoder. These are formatting checks, not actions
+executed in a game. The successful diagnostic returned 321 tokens over three
+requests. Its preceding startup attempt dispatched one request before a missing
+campaign-accounting context caused failure; returned tokens for that attempt were
+not retained and remain unknown. The diagnostic now checks initialized accounting
+before dispatch, with a regression proving that this failure cannot send a request.
+
+The local adapter previously put the action schema only in the native API's
+`format` field. Its messages referred to the tool's maximum without explicitly
+presenting that numeric bound. `local-native-visible-contract-v1` tests one change:
+also place the same action schema in the model-visible response instruction.
+The tick range remains 0 through 2,000, optional notes stay optional, and the model
+still selects both its command and time advance. There is no forced WAIT, build
+order, positive-tick rule or human gameplay rescue.
+
+`prompt_contract=visible_action_contract/v1` is bound into checkpoint identity;
+the absent/default `grammar_only/v1` preserves the old request message. The new
+condition starts a fresh campaign from the baseline's digest-bound save. It must
+not resume the baseline under a changed prompt or be treated as an independent
+model comparison. Regression coverage checks schema/message equality, unchanged
+baseline bounds, and rejection of cross-condition checkpoint restoration. A
+native run is still needed to evaluate this hypothesis.
