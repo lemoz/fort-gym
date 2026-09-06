@@ -374,3 +374,42 @@ wraps campaign model events in the existing trace `tool_call` envelope and retai
 native screen text for the replay reader. The existing usage extractor now reads
 its test response cost correctly; 25 focused continuation tests passed afterward.
 These tests run with provider credentials absent and do not launch native gameplay.
+
+## Real native continuation proof: September 6, 2026 UTC
+
+`native-continuation-20260906-d` passed the provider-free restart fixture. The
+first process, at `ea13b96102a2bfcb246cd7d0a806ee8d6946f7a2`, advanced from
+year 30 tick 19309 to 19319, wrote a complete v2 checkpoint, then advanced to
+19339 for the uninterrupted comparison. After verified teardown, a new isolated
+process at `2a63c101c4a5c03739e831989a03ab1b83ad55d2` loaded the checkpoint at
+19319, restored cursor 1 and agent/history state, and produced the next WAIT-20
+decision. It reached 19339 and wrote another verified native checkpoint.
+
+This is deterministic WAIT-fixture infrastructure evidence, not model gameplay.
+The comparison and resumed intervals overlap: do not add their ticks into a
+50-tick campaign-duration claim. Both phases observed seven dwarves, but that is
+not a viability test. No provider call, new VM, production restart, or code deploy
+occurred. An independent postcheck found no processes under either copied runtime,
+no listeners on 5501/5502, both production services active, and original `region3`
+still paused at year 30 tick 19309 with no autosave pending.
+
+The source-hashed record is
+[`native_continuation_smoke_20260906.json`](../experiments/evidence/native_continuation_smoke_20260906.json).
+Detailed receipts, saves, and failure attempts remain private and unchanged.
+Attempts A/B exposed ANSI-colored native tick-deadline acknowledgements; exact
+token comparison now strips terminal color sequences, with correct/incorrect-token
+regressions. Attempt C completed the first phase but immediately reusing its port
+failed the bind preflight. D reused the completed checkpoint on a distinct port.
+
+Local campaign and native-tick regressions passed 221 tests with two opt-in native
+tests skipped. The new restart-path checks also reject reusing a first phase
+without verified successful teardown. The pushed candidate is on draft PR #125;
+its CI was still in progress at this evidence checkpoint, and it is not merged.
+
+Next: connect the bounded model configuration to this checkpointable loop,
+preserving dispatch limits across recovery; implement campaign-scoped outcomes;
+and extend website tracking. Real model inference remains blocked by the external
+observation-transfer permission review already reported above. That does not block
+these implementation and provider-free verification tasks. Full model recovery,
+the first autonomous year, comparable repeated model runs, and live website
+delivery remain required parts of the active goal.

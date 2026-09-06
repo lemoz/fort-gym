@@ -1,0 +1,75 @@
+{
+  "schema_version": "fortgym.native-continuation-evidence/v1",
+  "evidence_id": "native-continuation-20260906-d",
+  "verified_on_utc_date": "2026-09-06",
+  "code_revision": "2a63c101c4a5c03739e831989a03ab1b83ad55d2",
+  "first_code_revision": "ea13b96102a2bfcb246cd7d0a806ee8d6946f7a2",
+  "result_location": "/home/ubuntu/fort-gym-test/year-two-campaigns/artifacts/native-continuation-20260906-d/result.json",
+  "result_sha256": "1342a87dfcd863dadf62462b46c1155fcd81ef52c9606bece6e382474737f3fe",
+  "native_continuation_fixture_verified": true,
+  "first_phase": {
+    "evidence_id": "native-continuation-20260906-c/first",
+    "runtime_result_sha256": "937a37659dbe1479fcfbd70877b9341b41a41bb2ac86a3a990a0d4bf481927f0",
+    "worker_result_sha256": "bcb5d51812640b1ee809d28812120c0ee10125b8e9569dedca57e9b5796f9ca3",
+    "checkpoint_sha256": "30a3355add541a6b2a58c9f9d41950f57ced7a6087ad1ec85cacc7a525a2729b",
+    "initial_year": 30,
+    "initial_year_tick": 19309,
+    "checkpoint_year_tick": 19319,
+    "final_year_tick": 19339,
+    "observed_ticks": 30,
+    "cleanup_verified": true,
+    "listener_closed": true,
+    "remaining_live_processes": []
+  },
+  "resumed_phase": {
+    "evidence_id": "native-continuation-20260906-d/resumed",
+    "runtime_result_sha256": "360a1a6b6d8cfb3f63639a8bff3072bc0586bb71892ab72243bafdcbcd196a34",
+    "worker_result_sha256": "5fb3a1d888e54e2af0e1cc5c5b52a483a6a29be0f31d31b5cabba3e061eb39b9",
+    "checkpoint_sha256": "aec54ecb5ea65e6cb9e59485c91cf16566cdfc7e7d0bac27f20905a7e9220665",
+    "initial_year": 30,
+    "initial_year_tick": 19319,
+    "final_year_tick": 19339,
+    "restored_next_step": 1,
+    "final_next_step": 2,
+    "next_action": "WAIT 20 ticks",
+    "observed_ticks": 20,
+    "cleanup_verified": true,
+    "listener_closed": true,
+    "remaining_live_processes": []
+  },
+  "independent_postcheck": {
+    "live_processes_under_either_test_runtime": [],
+    "test_port_5501_listeners": 0,
+    "test_port_5502_listeners": 0,
+    "production_services": "fort-gym-api and dfhack-headless both active",
+    "production_fortress": "region3 still paused at year 30 tick 19309 with no autosave pending"
+  },
+  "local_regression_tests": {"passed": 221, "failed": 0, "skipped": 2},
+  "provider_calls": 0,
+  "reported_model_cost_usd": "0",
+  "new_vms_created": 0,
+  "production_code_changed": false,
+  "autonomous_gameplay": false,
+  "year_two_gameplay_verified": false,
+  "prior_attempts": [
+    {
+      "evidence_id": "native-continuation-20260906-a",
+      "result": "First action failed before tick advance; cleanup verified. Failure lacked the detailed native receipt."
+    },
+    {
+      "evidence_id": "native-continuation-20260906-b",
+      "result": "Retained receipt identified tick-deadline acknowledgement mismatch caused by native CLI ANSI color sequences; zero ticks advanced and cleanup verified."
+    },
+    {
+      "evidence_id": "native-continuation-20260906-c",
+      "result": "First phase completed both native actions and checkpoint with verified cleanup. Immediate reuse of port 5501 failed the bind preflight before resumed runtime creation. Attempt D reused this successful first phase on a distinct port."
+    }
+  ],
+  "limits": [
+    "The deterministic fixture emits WAIT 10 then WAIT 20; it is not model-selected autonomous gameplay.",
+    "The resumed 20 ticks repeat the uninterrupted comparison interval and must not be added to it as 50 ticks of unique campaign progress.",
+    "This proves a v2 native checkpoint and runner-agent continuation boundary, not long-duration recovery or campaign-scoped production and death measurement.",
+    "All native game assets, traces and detailed worker artifacts remain private on the existing host.",
+    "Model execution, year-two viability, cross-model repetitions, website deployment and remote merge remain open."
+  ]
+}
