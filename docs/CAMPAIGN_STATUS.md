@@ -2,20 +2,22 @@
 
 Verified September 6, 2026. The Year-Two Autonomous Play goal remains active.
 
-Latest published candidate: [PR #130](https://github.com/lemoz/fort-gym/pull/130)
+Latest merged delivery: [PR #130](https://github.com/lemoz/fort-gym/pull/130)
 delivers the native campaign CLI, serial checkpoint continuation, local model
 adapters, versioned campaign-only measurement hooks, and launch documentation
 from clean main. Its source `ff5944bbd0be9acebee93d38276acd503ff4b597` is verified
-on GitHub; the full local suite passed **1,800 tests with 10 skipped** and targeted
+on GitHub and merged as `e58ab9a019c86f6fced7216a9e15c9b7b47bee3e`; the source and
+merged trees are identical. The full local suite passed **1,800 tests with 10 skipped** and targeted
 campaign typing passed for 31 source files. Historical measurement hooks,
 benchmark prompts and scoring code remain unchanged. [PR CI](https://github.com/lemoz/fort-gym/actions/runs/34055072007)
-is running; this candidate is not yet merged or native-accepted. No production
+and [post-merge main CI](https://github.com/lemoz/fort-gym/actions/runs/34055309145)
+both passed. Native acceptance at this revision remains unrun. No production
 deployment, new VM or model request was performed for this source delivery.
 The broader year-two and matched cross-model gameplay goals remain open.
 
-Latest merged delivery: [PR #129](https://github.com/lemoz/fort-gym/pull/129)
+Previous merged delivery: [PR #129](https://github.com/lemoz/fort-gym/pull/129)
 merged persistent agent memory, checkpoint restoration, cumulative provider usage
-and the separate exploratory campaign policy. Main is
+and the separate exploratory campaign policy. Main at that delivery was
 `6a699246976a12b9617407dbf817fc24f3f65886`; reviewed source is
 `0fbdc96367384fafd06fc1fb4722e4559d86d0e3`. The final full local suite passed
 1,160 tests with five skips, and 77 focused foundation tests passed. Its
