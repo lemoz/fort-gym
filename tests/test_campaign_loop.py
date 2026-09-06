@@ -227,6 +227,45 @@ def test_cross_campaign_usage_is_rejected(tmp_path):
         reconciled_usage(state, loop.journal.read_bytes())
 
 
+def dispatch_journal_fixture(tmp_path):
+    loop = start(tmp_path)
+    loop.step()
+    state = loop.agent.export_campaign_state()
+    state["usage"]["dispatched_requests"] = 1
+    loop.step()
+    records = [json.loads(line) for line in loop.journal.read_text().splitlines()]
+    records[2]["usage"]["dispatched_requests"] = 1
+    records[4]["usage"]["dispatched_requests"] = 3
+    return state, records
+
+
+def test_reconciliation_retains_later_dispatches_alongside_returned_charges(tmp_path):
+    state, records = dispatch_journal_fixture(tmp_path)
+    journal = ("\n".join(json.dumps(row) for row in records) + "\n").encode()
+    usage = reconciled_usage(state, journal)
+    assert usage["dispatched_requests"] == 3
+    assert usage["returned_responses"] == 2
+    assert usage["total_cost_usd"] == "2E-13"
+    assert state["usage"]["dispatched_requests"] == 1
+
+
+@pytest.mark.parametrize("mutation", ["missing", "boolean", "regression", "fewer_than_returned"])
+def test_dispatch_reconciliation_rejects_incomplete_or_regressing_counters(tmp_path, mutation):
+    state, records = dispatch_journal_fixture(tmp_path)
+    usage = records[4]["usage"]
+    if mutation == "missing":
+        del usage["dispatched_requests"]
+    elif mutation == "boolean":
+        usage["dispatched_requests"] = True
+    elif mutation == "regression":
+        records[2]["usage"]["dispatched_requests"] = 4
+    else:
+        usage["dispatched_requests"] = 1
+    journal = ("\n".join(json.dumps(row) for row in records) + "\n").encode()
+    with pytest.raises(ValueError):
+        reconciled_usage(state, journal)
+
+
 def test_partial_tick_advance_counts_actual_time_not_requested_ticks(tmp_path, monkeypatch):
     loop = start(tmp_path)
 

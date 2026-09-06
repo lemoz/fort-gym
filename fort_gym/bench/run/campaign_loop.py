@@ -78,6 +78,13 @@ def reconciled_usage(checkpoint: dict, journal: bytes) -> dict:
     if not records or records[0] != expected:
         raise ValueError("Usage journal does not identify this campaign configuration")
     current = deepcopy(checkpoint["usage"])
+    counters: tuple[str, ...] = ("total_tokens", "returned_responses", "accounted_responses")
+    if "dispatched_requests" in current:
+        if type(current["dispatched_requests"]) is not int or current["dispatched_requests"] < 0:
+            raise ValueError("Invalid checkpoint dispatch counter")
+        if current["dispatched_requests"] < current["returned_responses"]:
+            raise ValueError("Checkpoint dispatch count is below returned responses")
+        counters += ("dispatched_requests",)
     pending = False
     pending_step = None
     last_usage = None
@@ -94,13 +101,17 @@ def reconciled_usage(checkpoint: dict, journal: bytes) -> dict:
             raise ValueError("Failed or mismatched decision has unresolved provider usage")
         pending = False
         usage = record["usage"]
-        for key in ("total_tokens", "returned_responses", "accounted_responses"):
+        for key in counters:
             if type(usage.get(key)) is not int or usage[key] < 0:
                 raise ValueError("Invalid returned usage counter")
             if last_usage is not None and usage[key] < last_usage[key]:
                 raise ValueError("Usage journal counter regressed")
         if usage["returned_responses"] != usage["accounted_responses"]:
             raise ValueError("Returned provider usage remains unaccounted")
+        if "dispatched_requests" in current and (
+            usage["dispatched_requests"] < usage["returned_responses"]
+        ):
+            raise ValueError("Usage journal dispatch count is below returned responses")
         if not isinstance(usage.get("total_cost_usd"), str):
             raise ValueError("Usage cost must retain its decimal string")
         cost = Decimal(usage["total_cost_usd"])
@@ -112,7 +123,7 @@ def reconciled_usage(checkpoint: dict, journal: bytes) -> dict:
     if pending:
         raise ValueError("Interrupted model decision has unresolved provider usage")
     if last_usage is not None:
-        for key in ("total_tokens", "returned_responses", "accounted_responses"):
+        for key in counters:
             current[key] = max(current[key], last_usage[key])
         current["total_cost_usd"] = str(
             max(Decimal(current["total_cost_usd"]), Decimal(last_usage["total_cost_usd"]))

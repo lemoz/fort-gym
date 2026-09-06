@@ -12,6 +12,7 @@ import json
 import os
 import subprocess
 import sys
+from copy import deepcopy
 from pathlib import Path
 
 from scripts.campaign_load_smoke import run_isolated
@@ -50,7 +51,7 @@ def append_event(path: Path, event: dict) -> None:
         os.fsync(handle.fileno())
 
 
-def make_agent(config: dict, model: str, journal: Path):
+def make_agent(config: dict, model: str, journal: Path, *, persist_dispatches: bool = False):
     from fort_gym.bench.agent.governed_llm import DFHackGovernedLLMAgent, GovernedBudgetCapError
 
     class DevelopmentAgent(DFHackGovernedLLMAgent):
@@ -92,7 +93,31 @@ def make_agent(config: dict, model: str, journal: Path):
                 )
 
         def _checkpoint_configuration(self):
-            return {**super()._checkpoint_configuration(), "development_bounds": config}
+            configuration = {**super()._checkpoint_configuration(), "development_bounds": config}
+            if persist_dispatches:
+                configuration["campaign_dispatch_accounting"] = "v1"
+            return configuration
+
+        def export_campaign_state(self):
+            state = super().export_campaign_state()
+            if persist_dispatches:
+                state["usage"]["dispatched_requests"] = self.dispatches
+            return state
+
+        def restore_campaign_state(self, data: dict, *, campaign_id: str) -> None:
+            state = deepcopy(data)
+            dispatches = 0
+            if persist_dispatches:
+                dispatches = state["usage"].pop("dispatched_requests", None)
+                if type(dispatches) is not int or dispatches < 0:
+                    raise ValueError("Campaign checkpoint lacks a valid dispatch counter")
+                if dispatches < state["usage"]["returned_responses"]:
+                    raise ValueError("Dispatch count is below returned response count")
+                if self.dispatches:
+                    raise ValueError("Restore into a fresh agent without prior dispatches")
+            super().restore_campaign_state(state, campaign_id=campaign_id)
+            if persist_dispatches:
+                self.dispatches = dispatches
 
     return DevelopmentAgent(
         model_override=model,

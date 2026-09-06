@@ -401,9 +401,9 @@ token comparison now strips terminal color sequences, with correct/incorrect-tok
 regressions. Attempt C completed the first phase but immediately reusing its port
 failed the bind preflight. D reused the completed checkpoint on a distinct port.
 
-Local campaign and native-tick regressions passed 221 tests with two opt-in native
-tests skipped. The new restart-path checks also reject reusing a first phase
-without verified successful teardown. The pushed candidate is on draft PR #125;
+Local campaign and native-tick regressions passed 221 tests; one Linux-only process
+test and one opt-in live-DF test were skipped. The new restart-path checks also
+reject reusing a first phase without verified successful teardown. The pushed candidate is on draft PR #125;
 its CI was still in progress at this evidence checkpoint, and it is not merged.
 
 Next: connect the bounded model configuration to this checkpointable loop,
@@ -413,3 +413,12 @@ observation-transfer permission review already reported above. That does not blo
 these implementation and provider-free verification tasks. Full model recovery,
 the first autonomous year, comparable repeated model runs, and live website
 delivery remain required parts of the active goal.
+
+The development adapter now has an explicit opt-in campaign dispatch-accounting
+mode. Its checkpoint records dispatched requests separately from returned/accounted
+responses and charges. The campaign usage journal reconciles later dispatch counts
+when restoring older game-era memory, and the adapter enforces the remaining
+dispatch allowance after restoration. Invalid, missing, or regressing counters
+are rejected. The original probe mode and its checkpoint shape remain unchanged;
+old probe snapshots cannot silently become campaign snapshots with reset counters.
+This mode is implemented and locally tested, not exercised against a provider yet.

@@ -123,3 +123,65 @@ def test_worker_initializes_campaign_and_retains_agent_state(tmp_path, agent_con
     result = json.loads((tmp_path / "experiment.json").read_text())
     assert result["status"] == "returned" and result["dispatches"] == 0
     assert json.loads((tmp_path / "agent-final.json").read_text())["campaign_id"] == tmp_path.name
+
+
+def test_campaign_dispatch_bound_survives_agent_restore(tmp_path, agent_config, monkeypatch):
+    calls = []
+    monkeypatch.setattr(
+        DFHackGovernedLLMAgent, "_dispatch_completion", lambda self, request: calls.append(request)
+    )
+    first = make_agent(
+        agent_config, agent_config["models"][0], tmp_path / "first.jsonl", persist_dispatches=True
+    )
+    first.set_campaign_context(campaign_id="campaign")
+    for _ in range(agent_config["max_dispatches"] - 1):
+        first._dispatch_completion({"messages": []})
+    state = first.export_campaign_state()
+    restored = make_agent(
+        agent_config,
+        agent_config["models"][0],
+        tmp_path / "restored.jsonl",
+        persist_dispatches=True,
+    )
+    restored.restore_campaign_state(state, campaign_id="campaign")
+    restored.set_run_context(run_id="second-segment")
+    restored._dispatch_completion({"messages": []})
+    with pytest.raises(GovernedBudgetCapError, match="dispatch"):
+        restored._dispatch_completion({"messages": []})
+    assert len(calls) == agent_config["max_dispatches"]
+    assert restored.export_campaign_state()["usage"]["dispatched_requests"] == len(calls)
+    assert state["usage"]["dispatched_requests"] == len(calls) - 1
+    events = [json.loads(line) for line in (tmp_path / "restored.jsonl").read_text().splitlines()]
+    assert events[0]["dispatch"] == agent_config["max_dispatches"]
+
+
+@pytest.mark.parametrize("counter", [None, -1, True, 1.5])
+def test_campaign_dispatch_restore_rejects_invalid_counter(tmp_path, agent_config, counter):
+    first = make_agent(
+        agent_config, agent_config["models"][0], tmp_path / "first.jsonl", persist_dispatches=True
+    )
+    first.set_campaign_context(campaign_id="campaign")
+    state = first.export_campaign_state()
+    state["usage"]["dispatched_requests"] = counter
+    restored = make_agent(
+        agent_config,
+        agent_config["models"][0],
+        tmp_path / "restored.jsonl",
+        persist_dispatches=True,
+    )
+    with pytest.raises(ValueError, match="dispatch counter"):
+        restored.restore_campaign_state(state, campaign_id="campaign")
+    assert restored._campaign_id is None and restored.dispatches == 0
+
+
+def test_legacy_probe_state_is_not_silently_upgraded_to_campaign_accounting(tmp_path, agent_config):
+    legacy = make_agent(agent_config, agent_config["models"][0], tmp_path / "legacy.jsonl")
+    legacy.set_campaign_context(campaign_id="campaign")
+    state = legacy.export_campaign_state()
+    assert "dispatched_requests" not in state["usage"]
+    assert "campaign_dispatch_accounting" not in state["configuration"]
+    updated = make_agent(
+        agent_config, agent_config["models"][0], tmp_path / "updated.jsonl", persist_dispatches=True
+    )
+    with pytest.raises(ValueError, match="dispatch counter"):
+        updated.restore_campaign_state(state, campaign_id="campaign")
