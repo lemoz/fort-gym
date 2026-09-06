@@ -809,3 +809,49 @@ The launcher now resolves its newly created runtime directory before constructin
 the child command and changing cwd. Regression cases cover both absolute and
 relative output paths, successful loading and calendar rejection, while retaining
 the same teardown requirements. This does not change the historical game hooks.
+
+## First real local-model campaign and continuation
+
+Candidate `d6fa51cced83784e942b9933a2a47ed2730d2f77` completed two three-decision
+segments of the **same** Qwen2.5 7B campaign. The second loaded the first segment's
+digest-verified native and agent checkpoint, preserved its trace and cumulative
+usage, and began at step 3. Independent verification checked both save inventories,
+parent linkage, the unchanged trace prefix, and canonical steps 0 through 5.
+This is a real model-selected continuation boundary, not the older scripted WAIT
+fixture, and not proof of long-duration recovery.
+
+The gameplay result is a short no-progress sequence. The model's dig command was
+rejected on non-wall terrain. Five labor commands were accepted, including two
+no-ops; after resume it disabled the same woodcutting and masonry labors it had
+enabled earlier. It requested **zero simulation ticks on all six decisions**.
+Native year 30, tick 19,309, population 7, food stock 45 and drink stock 60 stayed
+unchanged. No construction, sustainable production, fortress collapse or first
+anniversary is established. A valid action and a successful checkpoint are not a
+successful gameplay policy.
+
+All six local responses returned token telemetry: **27,237 cumulative tokens**,
+with zero metered provider API charges. The 12,414-token first-segment subtotal is
+already included, not added again. Hardware, electricity and existing-host costs
+remain unknown; this is not a project-wide invoice reconciliation. The separate
+67-token synthetic interface request is not counted as campaign gameplay.
+
+Both native runtimes have verified teardown receipts and empty independent process
+inventories. The temporary SSH tunnel and Ollama server were stopped; experiment
+listeners and the local model runner were independently checked absent. No new VM,
+production service change or website deployment occurred. Unique saves/traces
+remain retained, and the reproducible model cache was not deleted.
+
+The sanitized result and source hashes are versioned in
+[`local_qwen_campaign_20260906.json`](../experiments/evidence/local_qwen_campaign_20260906.json).
+The code passed [CI 34016872999](https://github.com/lemoz/fort-gym/actions/runs/34016872999),
+as did the preceding local-adapter and endurance commits. The path fix passed 82
+local targeted regressions (one Linux-only skip) and all 83 on Linux; these test
+counts are separate from the actual native/model evidence above.
+
+Next experimental question: does the no-progress behavior come from this small
+model, the observation/action presentation, or both? Preserve this unchanged
+baseline; declare any revised prompt or observation condition separately and
+compare from the same starting save. Do not force WAIT actions, count labor toggles
+as growth, or silently continue a checkpoint under a changed policy. Broader model
+coverage, repeated comparable campaigns, native-year endurance and the website's
+live delivery/acceptance remain open parts of the active goal.
