@@ -64,7 +64,8 @@ def test_campaign_http_routes_and_assets():
     assert page.status_code == 200 and "no-store" in page.headers["cache-control"]
     assert "Campaign experiments" in page.text
     assert "not a model ranking" in page.text
-    assert "Published result: local model timeout" in page.text
+    assert "Published result: a workshop and five manufactured beds" in page.text
+    assert "Earlier result: local model timeout" in page.text
     assert "Latest attempt: local model timeout" not in page.text
     response = client.get("/public/campaign-experiments")
     assert response.status_code == 200 and "no-store" in response.headers["cache-control"]

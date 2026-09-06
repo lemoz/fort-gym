@@ -39,17 +39,24 @@
         <div class="campaign-table-scroll" role="region" aria-label="Campaign comparison" tabindex="0">
           <table class="campaign-table">
             <caption>Latest reported state, committed game time, and cumulative model usage</caption>
-            <thead><tr><th scope="col">Model / campaign</th><th scope="col">Reported state</th><th scope="col">Elapsed game time</th><th scope="col">Dwarves</th><th scope="col">Food / drink stocks</th><th scope="col">Completed workshops / beds / farms</th><th scope="col">Reported model cost</th></tr></thead>
+            <thead><tr><th scope="col">Model / campaign</th><th scope="col">Reported state</th><th scope="col">Elapsed game time</th><th scope="col">Dwarves</th><th scope="col">Food / drink observations</th><th scope="col">Completed workshops / beds / farms</th><th scope="col">Reported model cost</th></tr></thead>
             <tbody id="campaign-feed-rows"></tbody>
           </table>
         </div>
         <section id="campaign-profile-detail" aria-label="Selected campaign profile"></section>
         <p class="campaign-note">Updates every 15 seconds while this page is visible. Recent reports are not proof that a worker is still running. Stock counts do not measure food or drink production; elapsed time does not establish a functioning fortress.</p>
+        <p class="campaign-note">Historical food and drink values are UI estimates. A native inventory audit found 46 drink units while the UI still reported 60. Historical traces are preserved. <a href="https://github.com/lemoz/fort-gym/blob/01c58e1d11727dc3bc415790d6c7807864e93ed4/docs/NATIVE_STOCK_OBSERVATIONS.md">Read the measurement limits and correction.</a></p>
       </div>
       <a href="/public/campaign-feed">Open campaign summary data</a>
     </section>
     <section class="campaign-condition" aria-labelledby="latest-result-title">
-      <h2 id="latest-result-title">Published result: local model timeout</h2>
+      <h2 id="latest-result-title">Published result: a workshop and five manufactured beds</h2>
+      <p>Qwen3.5 9B completed a carpenter’s workshop and manufactured five beds across 42 commands and 53,500 game ticks. None of those beds was placed, and no farm was completed. All 45 returned responses and 442,693 tokens are accounted for.</p>
+      <p class="campaign-note">The final response used all 2,048 output tokens on reasoning and returned no action. The latest periodic checkpoint covers 40 commands, not 42; later gameplay and the final response need reconciliation. The copied games, temporary model and tunnel were stopped. This is an output-limit failure, not fortress collapse, year-two success or a model ranking.</p>
+      <a href="https://github.com/lemoz/fort-gym/blob/7fa9a4fe1b0452f5f6adee6767af1aaedf2a6a75/experiments/evidence/local_native_llama_long_v2_20260906.json">Read the gameplay result and checkpoint evidence</a>
+    </section>
+    <section class="campaign-condition" aria-labelledby="timeout-result-title">
+      <h2 id="timeout-result-title">Earlier result: local model timeout</h2>
       <p>The longer Qwen3.5 9B attempt stopped when its fourth request timed out. Three responses returned, totaling 21,429 accounted tokens. Two workshop commands were rejected and one wait was accepted, advancing the game by 1,000 ticks. No workshop was completed.</p>
       <p class="campaign-note">One request has no returned token usage. The final native save was retained for investigation, but there is no resumable campaign checkpoint. The game and temporary model server were stopped. This is an inference failure, not fortress collapse or a completed campaign.</p>
       <a href="https://github.com/lemoz/fort-gym/blob/60fd08415b10adfe52a0d275c826669dad843937/experiments/evidence/local_native_llama_long_timeout_20260906.json">Read the timeout result and retained evidence</a>
