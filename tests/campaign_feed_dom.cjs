@@ -19,6 +19,17 @@ assert.equal(helpers.number(null), 'Unknown');
 assert.equal(helpers.number(0), '0');
 assert.match(helpers.duration(403200), /1.000 years/);
 assert.match(helpers.stateLabel({freshness: 'stale', lifecycle: 'running'}), /unknown/);
+const separateCondition = {
+  condition_id: 'local-native-qwen35-year-two-v1',
+  code_revision: 'fad9d80c0a2e7aace8380b47b009db5edaf6bd2e',
+  configuration_sha256: 'bd658141891e31d3e4f014ca92e484779a5330d74a75d9163ea97289d3819018'
+};
+assert.equal(helpers.configurationUrl(separateCondition),
+  'https://github.com/lemoz/fort-gym/blob/d3a8bd8d5d4588d2c26b0d0201585577bf361edd/experiments/campaigns/local_native_qwen35_year_two_v1.json');
+assert.equal(helpers.configurationUrl({...separateCondition, configuration_sha256: 'a'.repeat(64)}), null);
+assert.equal(helpers.configurationUrl({...separateCondition, configuration_sha256: undefined}), null);
+assert.equal(helpers.configurationUrl({...separateCondition, code_revision: 'javascript:alert(1)'}), null);
+assert.equal(helpers.configurationUrl({...separateCondition, condition_id: 'unpublished-condition'}), null);
 class Element {
   constructor(tag) { this.tag = tag; this.children = []; this.events = {}; }
   set textContent(value) { this.text = String(value); }

@@ -30,6 +30,15 @@
     'local-native-llama-long-v1': 'local_native_llama_long_v1.json',
     'local-native-llama-long-v2': 'local_native_llama_long_v2.json'
   };
+  // A versioned condition may be published after the frozen execution image.
+  // Bind its separate source location to the exact configuration digest.
+  const conditionPublications = {
+    'local-native-qwen35-year-two-v1': {
+      file: 'local_native_qwen35_year_two_v1.json',
+      revision: 'd3a8bd8d5d4588d2c26b0d0201585577bf361edd',
+      sha256: 'bd658141891e31d3e4f014ca92e484779a5330d74a75d9163ea97289d3819018'
+    }
+  };
   function known(value) { return typeof value === 'number' && Number.isFinite(value) && value >= 0; }
   function number(value) { return known(value) ? value.toLocaleString('en-US') : 'Unknown'; }
   function money(value) {
@@ -57,6 +66,13 @@
     return failureNames[row.failure_kind] || statusNames[row.segment_status] || 'Unknown';
   }
   function configurationUrl(row) {
+    if (!/^[a-f0-9]{40}$/.test(row.code_revision)) return null;
+    if (Object.hasOwn(conditionPublications, row.condition_id)) {
+      const publication = conditionPublications[row.condition_id];
+      return row.configuration_sha256 === publication.sha256
+        ? `https://github.com/lemoz/fort-gym/blob/${publication.revision}/experiments/campaigns/${publication.file}`
+        : null;
+    }
     return /^[a-f0-9]{40}$/.test(row.code_revision) && Object.hasOwn(conditionFiles, row.condition_id)
       ? `https://github.com/lemoz/fort-gym/blob/${row.code_revision}/experiments/campaigns/${conditionFiles[row.condition_id]}`
       : null;
