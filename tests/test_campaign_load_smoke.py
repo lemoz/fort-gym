@@ -2,6 +2,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import subprocess
+import sys
+from pathlib import Path
 
 import pytest
 
@@ -105,6 +109,62 @@ def test_wrong_runtime_identity_is_rejected_before_load(tmp_path, monkeypatch):
         smoke.read_status(tmp_path / "isolated", {})
 
 
+def test_native_terminal_colors_do_not_hide_valid_json(tmp_path, monkeypatch):
+    runtime = tmp_path / "isolated"
+    monkeypatch.setattr(
+        smoke,
+        "rpc",
+        lambda *args: "\x1b[0m"
+        + json.dumps({"dfroot": str(runtime), "map_loaded": False})
+        + "\n\x1b[0m",
+    )
+    assert smoke.read_status(runtime, {})["map_loaded"] is False
+
+
+def test_changed_pid_identity_is_not_signalled(tmp_path, monkeypatch):
+    samples = iter([{123: "old-start"}, {123: "new-start"}])
+    monkeypatch.setattr(smoke, "runtime_live_members", lambda path: next(samples))
+    signals = []
+    monkeypatch.setattr(smoke.os, "kill", lambda *args: signals.append(args))
+    smoke.signal_runtime_members(tmp_path, smoke.signal.SIGTERM)
+    assert signals == []
+
+
+def test_path_bound_separate_session_is_signalled(tmp_path, monkeypatch):
+    monkeypatch.setattr(smoke, "runtime_live_members", lambda path: {123: "same-start"})
+    signals = []
+    monkeypatch.setattr(smoke.os, "kill", lambda *args: signals.append(args))
+    smoke.signal_runtime_members(tmp_path, smoke.signal.SIGTERM)
+    assert signals == [(123, smoke.signal.SIGTERM)]
+
+
+@pytest.mark.skipif(not Path("/proc/self/stat").exists(), reason="Linux process inspection")
+def test_real_separate_session_cleanup_leaves_peer_alive(tmp_path):
+    runtime, peer_root = tmp_path / "runtime", tmp_path / "peer"
+    runtime.mkdir()
+    peer_root.mkdir()
+    command = [sys.executable, "-c", "import time; time.sleep(60)"]
+    target = subprocess.Popen(
+        command, cwd=runtime, env={"PATH": os.defpath}, start_new_session=True
+    )
+    peer = subprocess.Popen(
+        command, cwd=peer_root, env={"PATH": os.defpath}, start_new_session=True
+    )
+    try:
+        members = smoke.runtime_live_members(runtime)
+        assert target.pid in members and peer.pid not in members
+        smoke.signal_runtime_members(runtime, smoke.signal.SIGTERM)
+        target.wait(timeout=5)
+        assert target.returncode < 0
+        assert peer.poll() is None
+        assert smoke.runtime_live_members(runtime) == {}
+    finally:
+        for process in (target, peer):
+            if process.poll() is None:
+                process.kill()
+            process.wait(timeout=5)
+
+
 @pytest.mark.parametrize("tick", [19309, 19310])
 def test_load_checks_calendar_and_always_tears_down(tmp_path, sources, monkeypatch, tick):
     source, snapshot, digest = sources
@@ -132,7 +192,7 @@ def test_load_checks_calendar_and_always_tears_down(tmp_path, sources, monkeypat
     monkeypatch.setattr(smoke.subprocess, "Popen", lambda *args, **kwargs: Process())
     monkeypatch.setattr(smoke.socket, "socket", Socket)
     monkeypatch.setattr(smoke.os, "killpg", lambda pid, sig: kills.append(pid))
-    monkeypatch.setattr(smoke, "group_live_members", lambda group: [])
+    monkeypatch.setattr(smoke, "runtime_live_members", lambda runtime: {})
     monkeypatch.setattr(smoke, "rpc", lambda runtime, environment, *args: commands.append(args))
     monkeypatch.setattr(
         smoke,

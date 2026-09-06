@@ -21,6 +21,7 @@ import time
 from pathlib import Path
 from typing import Any
 
+from fort_gym.bench.dfhack_exec import _strip_ansi
 from fort_gym.bench.run.campaign_save import CampaignSaveError, save_inventory
 
 RUNTIME_DIRECTORIES = ("libs", "hack", "raw", "data", "stonesense", "sdl", "hook", "dfhack-config")
@@ -124,7 +125,7 @@ def rpc(runtime: Path, environment: dict[str, str], command: str, *args: str) ->
 
 
 def read_status(runtime: Path, environment: dict[str, str]) -> dict[str, Any]:
-    result = json.loads(rpc(runtime, environment, "lua", STATUS_LUA))
+    result = json.loads(_strip_ansi(rpc(runtime, environment, "lua", STATUS_LUA)).strip())
     if Path(result.get("dfroot", "")).resolve() != runtime.resolve():
         raise CampaignSaveError("RPC endpoint belongs to a different runtime; refusing commands")
     return result
@@ -132,33 +133,53 @@ def read_status(runtime: Path, environment: dict[str, str]) -> dict[str, Any]:
 
 def wait_status(runtime, environment, process, *, loaded, timeout=90):
     deadline = time.monotonic() + timeout
+    last_error = "no matching state observed"
     while time.monotonic() < deadline:
         if process.poll() is not None:
             raise CampaignSaveError("Isolated game exited before the expected native state")
         try:
             status = read_status(runtime, environment)
-        except (subprocess.SubprocessError, OSError, json.JSONDecodeError):
+        except (subprocess.SubprocessError, OSError, json.JSONDecodeError) as error:
+            last_error = str(error)[:2000]
             time.sleep(0.2)
             continue
         if status.get("map_loaded") is loaded:
             return status
         time.sleep(0.2)
-    raise CampaignSaveError("Isolated runtime readiness timed out")
+    raise CampaignSaveError(f"Isolated runtime readiness timed out: {last_error}")
 
 
-def group_live_members(group: int) -> list[int]:
-    """Inspect Linux process-group membership, excluding already-dead zombies."""
+def runtime_live_members(runtime: Path) -> dict[int, str]:
+    """Find this new runtime's processes, including DF's separate PTY session.
+
+    Scope is the current UID and the exact newly-created runtime working directory
+    or an executable inside that runtime. Start times protect later PID signalling.
+    """
     if not Path("/proc/self/stat").exists():
         raise CampaignSaveError("Native load smoke requires Linux process inspection")
-    members = []
+    members = {}
+    root = runtime.resolve()
     for path in Path("/proc").glob("[0-9]*/stat"):
         try:
+            if path.parent.stat().st_uid != os.getuid():
+                continue
             fields = path.read_text().rpartition(") ")[2].split()
-        except FileNotFoundError:
+            cwd = (path.parent / "cwd").resolve(strict=True)
+            executable = (path.parent / "exe").resolve(strict=True)
+        except (FileNotFoundError, PermissionError, ProcessLookupError):
             continue
-        if int(fields[2]) == group and fields[0] not in {"Z", "X"}:
-            members.append(int(path.parent.name))
-    return sorted(members)
+        if fields[0] not in {"Z", "X"} and (cwd == root or root in executable.parents):
+            members[int(path.parent.name)] = fields[19]
+    return members
+
+
+def signal_runtime_members(runtime: Path, requested_signal: int) -> None:
+    for pid, start_time in runtime_live_members(runtime).items():
+        if runtime_live_members(runtime).get(pid) == start_time:
+            try:
+                os.kill(pid, requested_signal)
+            except ProcessLookupError:
+                pass
 
 
 def run_smoke(*, source: Path, snapshot: Path, digest: str, output: Path, port: int, revision: str):
@@ -217,6 +238,9 @@ def run_smoke(*, source: Path, snapshot: Path, digest: str, output: Path, port: 
             raise
         finally:
             # The launcher started a new process group owned solely by this test.
+            # util-linux script creates another PTY session for DF, so also target
+            # processes bound to this exact new runtime path and UID.
+            signal_runtime_members(runtime, signal.SIGTERM)
             try:
                 os.killpg(process.pid, signal.SIGTERM)
             except ProcessLookupError:
@@ -226,12 +250,15 @@ def run_smoke(*, source: Path, snapshot: Path, digest: str, output: Path, port: 
             except subprocess.TimeoutExpired:
                 os.killpg(process.pid, signal.SIGKILL)
                 process.wait(timeout=5)
-            if group_live_members(process.pid):
-                os.killpg(process.pid, signal.SIGKILL)
             cleanup_deadline = time.monotonic() + 5
-            while group_live_members(process.pid) and time.monotonic() < cleanup_deadline:
+            while runtime_live_members(runtime) and time.monotonic() < cleanup_deadline:
                 time.sleep(0.1)
-            result["remaining_live_processes"] = group_live_members(process.pid)
+            if runtime_live_members(runtime):
+                signal_runtime_members(runtime, signal.SIGKILL)
+            cleanup_deadline = time.monotonic() + 5
+            while runtime_live_members(runtime) and time.monotonic() < cleanup_deadline:
+                time.sleep(0.1)
+            result["remaining_live_processes"] = sorted(runtime_live_members(runtime))
             with socket.socket() as probe:
                 result["listener_closed"] = probe.connect_ex(("127.0.0.1", port)) != 0
             result["cleanup_verified"] = (
