@@ -2410,9 +2410,10 @@ class DFHackGovernedLLMAgent(Agent):
                 cls._field(usage, "output_tokens"),
             )
         )
-        if prompt is None and completion is None:
+        # A missing component is unknown, not a zero-token component.
+        if prompt is None or completion is None:
             return None
-        return (prompt or 0) + (completion or 0)
+        return prompt + completion
 
     def _accumulate_response_usage(
         self,
@@ -2433,7 +2434,20 @@ class DFHackGovernedLLMAgent(Agent):
 
         billable_signal = any(
             value is not None
-            for value in (generation_id, response_tokens, response_cost)
+            for value in (
+                generation_id,
+                response_tokens,
+                response_cost,
+                *(
+                    self._field(usage, field)
+                    for field in (
+                        "prompt_tokens",
+                        "completion_tokens",
+                        "input_tokens",
+                        "output_tokens",
+                    )
+                ),
+            )
         )
         nonbillable_provider_error = not billable_signal and provider_error is not None
         missing_fields = [
@@ -2455,9 +2469,7 @@ class DFHackGovernedLLMAgent(Agent):
         event["output"]["accounting"] = {
             "status": status,
             "response_tokens": response_tokens,
-            "response_cost_usd": (
-                float(response_cost) if response_cost is not None else None
-            ),
+            "response_cost_usd": (float(response_cost) if response_cost is not None else None),
             "missing_fields": missing_fields,
         }
         event["output"]["budget"] = self._budget_snapshot()

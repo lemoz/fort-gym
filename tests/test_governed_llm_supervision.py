@@ -351,3 +351,50 @@ def test_nonpositive_or_nonfinite_caps_are_rejected(
             model_override="openai/test-model",
             **overrides,
         )
+
+
+@pytest.mark.parametrize(
+    "usage",
+    [
+        {"prompt_tokens": 5, "cost": 0.1},
+        {"completion_tokens": 5, "cost": 0.1},
+        {"input_tokens": 5, "cost": 0.1},
+        {"output_tokens": 5, "cost": 0.1},
+        {"prompt_tokens": 5, "completion_tokens": True, "cost": 0.1},
+    ],
+)
+def test_partial_token_usage_is_unknown_and_cannot_continue_in_strict_mode(usage) -> None:
+    returned = _response()
+    returned.usage = usage
+    agent, completions = _agent([returned])
+    with pytest.raises(GovernedUsageAccountingError):
+        agent.decide("observation", {})
+    assert len(completions.requests) == 1
+    assert agent._returned_response_count == 1
+    assert agent._accounted_response_count == 0
+    assert agent._total_tokens == 0
+    assert float(agent._total_cost_usd) == 0.1
+
+
+@pytest.mark.parametrize(
+    "usage",
+    [
+        {"prompt_tokens": 5, "completion_tokens": 0},
+        {"input_tokens": 0, "output_tokens": 5},
+        {"total_tokens": 5},
+    ],
+)
+def test_explicit_complete_token_usage_remains_accountable(usage) -> None:
+    assert DFHackGovernedLLMAgent._response_total_tokens(usage) == 5
+
+
+def test_partial_usage_with_provider_error_is_not_declared_nonbillable() -> None:
+    agent, _ = _agent([], strict_supervised=False)
+    event = {"output": {}}
+    agent._accumulate_response_usage(
+        {"error": "partial provider failure", "usage": {"prompt_tokens": 5}}, event
+    )
+    assert event["output"]["accounting"]["status"] == "unaccounted"
+    assert event["output"]["accounting"]["response_tokens"] is None
+    assert agent._returned_response_count == 1
+    assert agent._accounted_response_count == 0

@@ -2,6 +2,31 @@
 
 Verified September 6, 2026. The Year-Two Autonomous Play goal remains active.
 
+Latest remote delivery: [PR #129](https://github.com/lemoz/fort-gym/pull/129)
+merged persistent agent memory, checkpoint restoration, cumulative provider usage
+and the separate exploratory campaign policy. Main is
+`6a699246976a12b9617407dbf817fc24f3f65886`; reviewed source is
+`0fbdc96367384fafd06fc1fb4722e4559d86d0e3`. The final full local suite passed
+1,160 tests with five skips, and 77 focused foundation tests passed. Its
+[PR CI](https://github.com/lemoz/fort-gym/actions/runs/34052891694) passed.
+Post-merge main CI is a separate check. This is a Python agent API delivery,
+not the native campaign CLI, production deployment or year-two acceptance.
+
+That extraction preserves main's historical benchmark prompt, schema, and review
+logic. It is not merged back wholesale over this integration branch's later
+experimental benchmark changes. The newly corrected partial-token accounting
+and regression tests are backported here: a missing usage component remains
+unknown, and a provider error carrying partial usage is not declared nonbillable.
+All 79 focused accounting, checkpoint, policy and replay tests passed on this
+backport; changed-file Ruff and `git diff --check` also passed.
+The next runtime delivery should build from reviewed main and preserve its
+historical-protocol checks, not silently overwrite them with the integration file.
+
+The local checkout now also has an explicit `github` remote targeting
+`https://github.com/lemoz/fort-gym.git`; the existing local-clone `origin` is
+preserved. The foundation branch selects `github` as its push remote. Explicit
+GitHub head verification remains the publication proof.
+
 Remote delivery: the read-only campaign website is now merged separately from the
 large integration stack via [PR #126](https://github.com/lemoz/fort-gym/pull/126).
 That website milestone merged at `97e4533abe0194b99c463e2fffe8cfcfb9191581`; its reviewed source head
@@ -18,10 +43,10 @@ pre-merge check. The production website was not deployed or restarted. Main is
 merged back into the integration branch, preserving the immutable evidence links
 and avoiding duplicate mobile Campaigns links; 62 reconciliation regressions passed.
 
-Latest delivery: [PR #127](https://github.com/lemoz/fort-gym/pull/127) merged the
+Earlier delivery: [PR #127](https://github.com/lemoz/fort-gym/pull/127) merged the
 native drink observation correction; [PR #128](https://github.com/lemoz/fort-gym/pull/128)
 merged the audited long-v2 result and eleventh recorded website row. Remote main
-is now `3a52860e7b14bf9e3ebd6c268a59f7865f60a651`. Both PR CIs passed, as did
+was `3a52860e7b14bf9e3ebd6c268a59f7865f60a651`. Both PR CIs passed, as did
 post-merge inventory-fix CI. The full local suites passed 1,082 and 1,065 tests
 respectively, each with five skips. All three website/measurement/result milestones
 are merged back into this integration branch. No production deployment occurred.
