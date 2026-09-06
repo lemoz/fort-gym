@@ -367,3 +367,10 @@ model configuration, and complete campaign-scoped measurements and website live
 tracking. No new model call, native gameplay run, production deployment, or full
 campaign-recovery acceptance is claimed by these local checks. The website commit
 `bfd76cae7` passed full CI before this continuation slice was added.
+
+The Linux scratch checkout passed 41 continuation, native-adapter, checkpoint,
+and native-save unit tests at `031591ecf`. A subsequent compatibility correction
+wraps campaign model events in the existing trace `tool_call` envelope and retains
+native screen text for the replay reader. The existing usage extractor now reads
+its test response cost correctly; 25 focused continuation tests passed afterward.
+These tests run with provider credentials absent and do not launch native gameplay.

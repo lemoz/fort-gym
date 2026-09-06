@@ -267,3 +267,35 @@ def test_model_decision_failure_retains_usage_but_requires_reconciliation(tmp_pa
     assert usage["decision_returned"] is False
     with pytest.raises(ValueError, match="unresolved"):
         reconciled_usage(loop.agent.export_campaign_state(), loop.journal.read_bytes())
+
+
+def test_campaign_trace_remains_readable_by_existing_usage_and_replay_surfaces(
+    tmp_path, monkeypatch
+):
+    from fort_gym.bench.eval.gates import _model_usage
+
+    loop = start(tmp_path)
+    monkeypatch.setattr(
+        loop.agent,
+        "pop_tool_events",
+        lambda: [
+            {
+                "tool": "openrouter.chat.completions.create",
+                "input": {"model": "test-only"},
+                "output": {
+                    "resolved_model": "test-only",
+                    "generation_id": "test-generation",
+                    "cost": 0.12,
+                    "prompt_tokens": 8,
+                    "completion_tokens": 2,
+                    "total_tokens": 10,
+                },
+            }
+        ],
+    )
+    row = loop.step()
+    assert row["screen_text"] == "test-only screen"
+    assert row["events"][0]["type"] == "tool_call"
+    assert row["events"][0]["data"]["run_id"] == "test-campaign"
+    assert _model_usage([row])["cost_usd"] == 0.12
+    assert _model_usage([row])["calls"] == 1

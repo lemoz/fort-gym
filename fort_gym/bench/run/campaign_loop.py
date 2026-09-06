@@ -171,9 +171,10 @@ class CampaignLoop:
         self.at_boundary = False
         before = self.environment.observe()
         start = _clock(before)
+        screen = self.environment.screen()
         text, observation = encode_observation(
             before,
-            screen_text=self.environment.screen(),
+            screen_text=screen,
             action_history=self.history,
             last_action_result=self.last_result,
             governed=True,
@@ -237,11 +238,22 @@ class CampaignLoop:
             "step": self.next_step,
             "observation": observation,
             "observation_text": text,
+            "screen_text": screen,
             "action": action,
             "execute": execution,
             "state_after_advance": after,
             "tick_advance": tick_info,
-            "events": self.agent.pop_tool_events(),
+            "events": [
+                {
+                    "type": "tool_call",
+                    "data": {
+                        **event,
+                        "run_id": self.campaign_id,
+                        "step": self.next_step,
+                    },
+                }
+                for event in self.agent.pop_tool_events()
+            ],
             "campaign_mode": True,
         }
         _append(self.trace, row)
