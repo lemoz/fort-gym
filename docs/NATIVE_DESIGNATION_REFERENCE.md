@@ -41,26 +41,36 @@ body-fit and action-schema source hashes matched the frozen native implementatio
 This is historical prompt-fit evidence only, not a guarantee for future observations
 or a model call. Private audit receipts remain under the project artifact directory.
 
-## First native segment
+## Terminal native attempt
 
 [Published result and audit](../experiments/evidence/local_native_designation_reference_20260906.json):
 the new Qwen14 campaign started from the original digest-bound save at frozen code
-`8148f6d55494ad88caf46a780cfbea11d16d6a4a`. It returned six accounted responses,
-29,252 tokens and 1,200 model-requested native ticks. All six DIG responses omitted
-the mode and used the unchanged default `dig`; all were rejected, with no completed
-development. The untouched baseline explicitly returned `kind=dig` on all sixteen
-decisions. This short formatting difference does not establish causation or a
-capability improvement.
+`8148f6d55494ad88caf46a780cfbea11d16d6a4a`. Across three segments it returned fifteen
+accounted responses, 78,023 tokens and fourteen committed commands advancing 2,800
+model-requested native ticks. Twelve committed DIG responses omitted the mode and
+used the unchanged default `dig`; two specified `dig`. All fourteen were rejected,
+with no completed development. The untouched baseline explicitly returned
+`kind=dig` on all sixteen decisions. This formatting difference does not establish
+causation or a capability improvement.
 
-All six request bodies contain the exact reference prompt (SHA-256
+All fourteen committed request bodies contain the exact reference prompt (SHA-256
 `846034c3ae0ae474f62ce325dd705a26261b204439a3fc2acc052bd7ab8617de`).
-The largest request was 21,512 bytes, with no older history omitted. The cursor-6
-native/agent/trace/usage checkpoint was verified, followed by independent native,
-model-server/runner and tunnel teardown. Production remained unchanged.
+The largest request was 21,977 bytes. Eight requests omitted older history, up to
+ten rows, while retaining current facts and latest results.
 
-Next: continue this saved campaign within its ten remaining dispatches, then run
-other declared models from the original save under the same condition. The old
-Qwen14 baseline already completed sixteen dispatches, with 82,782 tokens and 3,200
-native ticks. Do not resume that old campaign under new instructions or compare
-unlike conditions as a model ranking. Full CI for the new native revision passed
-in run `34031851418`; 99 targeted checks passed on the isolated Linux host.
+The fifteenth response omitted the required third coordinate in both DIG `area`
+and `size`. It was recorded and accounted, never executed. Preserving its grammar
+correction and current facts exceeded the declared request bound, so the attempt
+stopped before a second correction dispatch. The last verified checkpoint is
+cursor 12: the two subsequent commands and fifteenth response are not contained in
+a new native/agent/trace/usage checkpoint. All three runtime process groups and
+listeners, model-server/runner and tunnel were independently stopped; production
+revision, active services and the original paused calendar remained unchanged.
+
+Do not automatically resume the older save or claim that the unused sixteenth
+dispatch completes this condition. Reliable failed-decision continuation remains
+open. The next model/harness experiment must be separately declared, retaining this
+failure and avoiding rankings across unlike conditions. The earlier cursor-6
+publication remains in Git history, not an extra campaign. Full CI for the frozen
+native revision passed in run `34031851418`; 99 targeted checks passed on the isolated
+Linux host. The earlier seven-record publication CI passed in run `34032869590`.

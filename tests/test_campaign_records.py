@@ -142,7 +142,7 @@ def test_qwen14_record_separates_native_usage_from_synthetic_feasibility():
     assert bundle["prior_candidate_feasibility"]["total_returned_tokens"] == 766
 
 
-def test_partial_reference_record_retains_prompt_and_defaulted_mode_evidence():
+def test_reference_record_retains_terminal_usage_and_unsaved_command_boundary():
     path = (
         records.PROJECT_ROOT
         / "experiments/evidence/local_native_designation_reference_20260906.json"
@@ -153,24 +153,55 @@ def test_partial_reference_record_retains_prompt_and_defaulted_mode_evidence():
         for row in records.campaign_feed(None)["campaigns"]
         if row["campaign_id"] == "local-reference-qwen14-20260906-a"
     )
-    assert (row["committed_steps"], row["elapsed_ticks"]) == (6, 1200)
-    assert row["usage"]["total_tokens"] == 29252
-    assert row["usage"]["dispatched_requests"] == row["usage"]["accounted_responses"] == 6
-    assert row["checkpoint_verified"] is True and row["cleanup_verified"] is True
-    assert row["actions"]["accepted"] == 0 and row["actions"]["rejected"] == 6
+    assert (row["committed_steps"], row["elapsed_ticks"]) == (14, 2800)
+    assert row["usage"]["total_tokens"] == 78023
+    assert row["usage"]["dispatched_requests"] == row["usage"]["accounted_responses"] == 15
+    assert row["checkpoint_verified"] is False and row["cleanup_verified"] is True
+    assert row["segment_status"] == "budget_limited_pause"
+    assert row["actions"]["accepted"] == 0 and row["actions"]["rejected"] == 14
     assert row["current_metrics"]["completed_workshops"] == 0
     assert row["code_revision"] == "8148f6d55494ad88caf46a780cfbea11d16d6a4a"
     assert row["condition_id"] == "local-native-designation-reference-v1"
     assert row["comparison_rankings_available"] is False
-    assert bundle["condition_completion"] == "partial_one_of_four_allowed_segments"
+    assert bundle["condition_completion"] == "request_bound_pause_requires_reconciliation"
     audit = bundle["audits"][0]
     assert audit["action_reference"]["every_committed_request_contains_exact_reference"] is True
-    assert audit["raw_designation_modes"] == {"omitted_default_dig": 6}
+    assert audit["raw_designation_modes"] == {"dig": 2, "omitted_default_dig": 12}
     assert bundle["baseline_raw_mode_diagnostic"]["raw_designation_modes"] == {"dig": 16}
-    assert audit["packing"]["maximum_request_bytes"] == 21512
-    assert audit["packing"]["maximum_history_rows_omitted"] == 0
+    assert audit["packing"]["maximum_request_bytes"] == 21977
+    assert audit["packing"]["maximum_history_rows_omitted"] == 10
+    assert [segment["next_step"] for segment in audit["segments"]] == [6, 12, 14]
+    assert audit["segments"][-1]["new_checkpoint_verified"] is False
+    assert audit["segments"][-1]["recovery_requires_reconciliation"] is True
+    assert bundle["recovery"]["latest_verified_checkpoint_next_step"] == 12
+    assert bundle["recovery"]["committed_steps_after_checkpoint"] == 2
+    assert bundle["recovery"]["failed_response_native_command_executed"] is False
+    assert bundle["recovery"]["automatic_resume_allowed"] is False
+    assert bundle["recovery"]["dispatch_allowance_remaining"] == 1
     assert len(bundle["configuration"]["models"]) == 4
     assert len(bundle["campaigns"]) == 1
+
+
+def test_website_separates_incomplete_checkpoint_and_new_model_compatibility():
+    from fort_gym.bench.api import server
+
+    page = TestClient(server.app).get("/campaigns").text
+    assert "Latest result: request-size pause" in page
+    assert "latest save covers 12 commands, not 14" in page
+    assert "not the spending cap" in page
+    assert "Local model compatibility, not gameplay" in page
+    assert "two of three supplied test commands exactly" in page
+    filename = "local_qwen35_9b_feasibility_20260906.json"
+    assert filename in page and filename not in records.PUBLISHED_BUNDLES
+    candidate = json.loads((records.PROJECT_ROOT / "experiments/evidence" / filename).read_text())
+    assert candidate["native_game_loaded"] is False and candidate["native_actions_executed"] == 0
+    assert candidate["all_cases_exact"] is False
+    assert candidate["usage"]["total_tokens"] == 1207
+    assert candidate["usage"]["accounted_responses"] == 3
+    assert [case["exact_match"] for case in candidate["cases"]] == [True, True, False]
+    assert candidate["cases"][-1]["omitted_field"] == "params.kind"
+    assert candidate["teardown"]["independent_listener_closed"] is True
+    assert not any("qwen35" in row["model"] for row in records.campaign_feed(None)["campaigns"])
 
 
 @pytest.fixture

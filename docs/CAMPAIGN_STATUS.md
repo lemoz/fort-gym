@@ -3,20 +3,34 @@
 Verified September 6, 2026. The Year-Two Autonomous Play goal remains active.
 
 Latest: the [factual designation-reference condition](../experiments/evidence/local_native_designation_reference_20260906.json)
-has one verified Qwen14 segment: **six responses, 29,252 tokens and 1,200 explicitly
-requested native ticks**. All six DIG responses omitted `kind`, defaulted to ordinary
-digging, and were rejected as `tile_not_designatable`; no development completed.
-The exact new reference was present in all six requests. Current facts and latest
-results were preserved, with no older history omitted and a largest request of
-21,512 bytes. Native/agent/trace/usage checkpoint cursor 6 and independent native,
-model and tunnel teardown were verified. Production remained unchanged.
+stopped at a request-size boundary: **15 accounted responses, 78,023 tokens,
+14 committed commands and 2,800 explicitly requested native ticks**. All fourteen
+DIG commands were rejected as `tile_not_designatable`; no development completed.
+Twelve raw responses omitted `kind` and defaulted to `dig`; two explicitly chose it.
+The exact reference and payload hashes were verified in all fourteen committed
+requests. The largest was 21,977 bytes; eight requests omitted older history while
+preserving current facts and latest results.
 
-This is **one of four allowed segments**, with ten dispatches remaining. Resume
-at frozen execution revision `8148f6d55494ad88caf46a780cfbea11d16d6a4a`, not a newer
-publication HEAD. The baseline explicitly returned `kind=dig` on all sixteen
-decisions; the new omission pattern is not evidence of gameplay improvement or
-causation. Only Qwen14 has begun the four-model reference condition. It is not a
-ranking, completed condition or year-two success.
+The fifteenth response omitted the required third coordinate in both DIG `area`
+and `size`. Its grammar correction could not fit alongside current facts, so no
+second correction request or native command was dispatched. The latest verified
+native/agent/trace/usage checkpoint is **cursor 12, not 14**. Two later committed
+commands and the fifteenth response require reconciliation; **do not automatically
+resume from the older checkpoint** or report the one unused dispatch as completion.
+All three native runtimes/listeners, the model server and tunnel were independently
+verified stopped. Production remained unchanged. Execution stayed frozen at
+`8148f6d55494ad88caf46a780cfbea11d16d6a4a`.
+
+Only Qwen14 has run this four-model reference condition. This is neither spending
+cap exhaustion nor established fortress collapse, a ranking or year-two success.
+
+A separately pinned [Qwen3.5 9B local compatibility check](../experiments/evidence/local_qwen35_9b_feasibility_20260906.json)
+returned three accounted responses and 1,207 tokens. WAIT and LABOR copied exactly;
+DIG retained coordinates and time but omitted `kind: gather`. No native game was
+loaded or command executed, and the temporary server was independently verified
+stopped. This is not a modern-model native integration or gameplay result. The
+unchanged loose parameter schema remains a concrete hypothesis for a separately
+versioned typed-contract test, not an established cause of earlier gameplay choices.
 
 Earlier: [Qwen2.5 14B Q3_K_M](../experiments/evidence/local_native_qwen14_q3_20260906.json)
 completed its bounded attempt: **16 responses, 82,782 tokens and 3,200
@@ -149,20 +163,16 @@ visibility or new inventory facts. The
 keeps observations and other bounds unchanged apart from factual workshop-policy
 disclosure, allowing a controlled test of the terrain repair.
 
-Next: continue the saved Qwen14
-[native designation reference](NATIVE_DESIGNATION_REFERENCE.md) attempt within its
-remaining ten-dispatch allowance, then evaluate other declared models under the
-same condition and original starting save. It supplies factual terrain eligibility
-and rectangle semantics for all four
-DIG modes, without selecting actions, coordinates, a build order or recovery steps.
-The actual system prompt is checkpoint-bound; old conditions retain their original
-identity. The condition supports four exact local manifests for future matched
-attempts, but only one Qwen14 segment has run. A read-only replay fit all
-eleven inspected historical requests under the unchanged 22,000-byte bound while
-preserving current facts, latest results, exact memory and corrections. This is
-prompt-fit evidence, not model success. Seek autonomous resource acquisition and
-completed production before allocating a longer horizon; never substitute the
-scripted fixture or resume an old campaign under new instructions.
+Next: address failed-decision continuation and test a newer inexpensive local model
+under a separately declared condition. The terminal
+[reference experiment](NATIVE_DESIGNATION_REFERENCE.md) must retain its cursor-12
+checkpoint and all newer trace/usage evidence; it is not safely resumable as-is.
+Keep factual terrain/control documentation, with no chosen action, coordinate,
+build order or gameplay rescue. A read-only replay had fit eleven historical
+requests, but the actual fifteenth response demonstrated that this did not guarantee
+future correction fit. Seek autonomous resource acquisition and completed production
+before allocating a longer horizon. Do not silently enlarge an active condition,
+discard newer actions, substitute a scripted fixture or mix unlike attempts in rankings.
 
 Local feasibility: the initial Q4_K_M candidate offloaded 45 of 49 layers to GPU.
 Two synthetic copy requests returned (766 accounted tokens); its third request
@@ -202,8 +212,8 @@ native time, resources, costs and source identity. A broken configured live sour
 still reports an error instead of pretending old data is current.
 
 There are now **seven recorded model snapshots**, including the completed bounded
-native-ground and Qwen14 baseline campaigns and the partial control-reference
-campaign. The successful
+native-ground and Qwen14 baseline campaigns and the request-bound control-reference
+campaign with its unsaved-command boundary. The successful
 scripted workshop fixture has a separate
 adapter-acceptance section and evidence link, never a model-comparison row. The
 pre-publication combined local suite passed **702 tests** with one Linux-only skip; targeted
@@ -223,7 +233,11 @@ the reference execution revision in run `34031851418`. The latest seven-record
 publication passed **720 focused local tests**, with one Linux-only skip, including
 a separate regression for its exact prompt evidence, defaulted designation modes
 and unfinished condition. Targeted static, formatting and typing checks passed;
-fresh publication CI is tracked on the PR.
+its full publication CI passed in run `34032869590`. The terminal reference update
+is a separate publication slice: **515 targeted local tests passed**, five native
+environment checks skipped, including endpoint and frontend test-double regressions.
+Targeted Ruff, Black and JavaScript syntax checks passed. Fresh remote CI is tracked
+on the PR; this local suite is not a native-model acceptance run or browser visual QA.
 
 [Draft PR #125](https://github.com/lemoz/fort-gym/pull/125) is the integration surface.
 The website/reporting code is separate from the frozen native execution revision.
