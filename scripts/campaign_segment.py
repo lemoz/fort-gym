@@ -13,36 +13,13 @@ import json
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 
-from scripts.campaign_development import load_config, make_agent
+from fort_gym.bench.run.campaign_config import decision_time_reserve, load_segment_config
+from scripts.campaign_development import make_agent
 from scripts.campaign_load_smoke import run_isolated
-
-
-def load_segment_config(path: Path, model: str) -> dict:
-    config = load_config(path, model)
-    condition = config.get("condition_id")
-    if (
-        config.get("runner") != "campaign-loop/v1"
-        or not isinstance(condition, str)
-        or not condition.strip()
-        or len(condition) > 128
-    ):
-        raise ValueError("Campaign segments require their own declared runner condition")
-    profiles = (
-        config.get("decision_profile", "governed_review/v1"),
-        config.get("observation_profile", "governed_review/v1"),
-    )
-    if not all(isinstance(profile, str) for profile in profiles) or profiles not in {
-        ("governed_review/v1", "governed_review/v1"),
-        ("campaign_action/v1", "campaign_state/v1"),
-    }:
-        raise ValueError("Unsupported or mismatched campaign profiles")
-    if profiles[0] == "campaign_action/v1" and (
-        type(config.get("schema_attempts")) is not int or not 1 <= config["schema_attempts"] <= 3
-    ):
-        raise ValueError("Campaign schema_attempts must be one to three")
-    return config
+from scripts.campaign_process import run_worker, termination_as_interrupt
 
 
 def write_result(path: Path, value: dict) -> None:
@@ -125,12 +102,20 @@ def run_segment(
             )
         result["first_step"] = loop.next_step
         report_progress(result["native_start"])
+        started = time.monotonic()
+        time_budget = config.get("segment_time_budget_seconds")
+        result["segment_stop_reason"] = "step_limit"
         for _ in range(config["max_steps"]):
             # Stop at the existing boundary when a cap is already reached, without
             # starting a failed decision or mutating the agent's gameplay memory.
             if agent.dispatches >= config["max_dispatches"]:
                 raise GovernedBudgetCapError("Campaign dispatch allowance reached")
             agent._pre_dispatch_gate()
+            if time_budget is not None and (
+                time.monotonic() - started + decision_time_reserve(config) >= time_budget
+            ):
+                result["segment_stop_reason"] = "time_slice"
+                break
             row = loop.step()
             result["segment_committed_steps"] += 1
             report_progress(row["state_after_advance"])
@@ -250,10 +235,16 @@ def main() -> None:
     if args.worker:
         worker(args, config)
         return
+    with termination_as_interrupt():
+        print(json.dumps(launch_segment(args, config), sort_keys=True))
+
+
+def launch_segment(args, config: dict) -> dict:
+    """Own exactly one isolated runtime, shared by the CLI and serial controller."""
     if args.source is None or (
         args.checkpoint is None and (args.snapshot is None or args.snapshot_sha256 is None)
     ):
-        parser.error("Supply a source runtime and a checkpoint or digest-bound snapshot")
+        raise ValueError("Supply a source runtime and a checkpoint or digest-bound snapshot")
     if not os.environ.get("OPENROUTER_API_KEY"):
         raise ValueError("The existing authorized project provider credential must be supplied")
     revision = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
@@ -319,13 +310,11 @@ def main() -> None:
         if args.public_campaign_dir is not None:
             command += ["--public-campaign-dir", str(args.public_campaign_dir.resolve())]
         with (args.output / "worker.log").open("xb") as stream:
-            subprocess.run(
+            run_worker(
                 command,
                 env=worker_env,
                 stdout=stream,
-                stderr=subprocess.STDOUT,
-                timeout=900,
-                check=True,
+                timeout=config.get("segment_time_budget_seconds", 600) + 300,
             )
         result = json.loads((args.output / "campaign-segment.json").read_text())
         return {
@@ -367,7 +356,7 @@ def main() -> None:
                     except OSError:
                         pass  # Keep the original run outcome; stderr still reports this fault.
                 print(f"Campaign reporting failed: {type(error).__name__}", file=sys.stderr)
-    print(json.dumps(result, sort_keys=True))
+    return result
 
 
 if __name__ == "__main__":

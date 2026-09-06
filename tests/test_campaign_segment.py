@@ -257,7 +257,7 @@ def test_parent_routes_checkpoint_resume_to_isolated_worker(tmp_path, monkeypatc
         output.mkdir()
         return kwargs["work"](output / "runtime", {"PATH": "/test-only"}, {})
 
-    monkeypatch.setattr(campaign_segment.subprocess, "run", fake_worker)
+    monkeypatch.setattr(campaign_segment, "run_worker", fake_worker)
     monkeypatch.setattr(campaign_segment, "run_isolated", isolated)
     monkeypatch.setattr(campaign_profile, "report_segment", lambda path: {"test_only": True})
     campaign_segment.main()

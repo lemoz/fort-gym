@@ -640,3 +640,96 @@ passed targeted mypy. Both static JavaScript files passed syntax checks, and the
 page behavior was exercised with an in-memory document/transport test double.
 HTTP tests covered the page, assets, configured feed, unconfigured feed, and 503
 source failure. No browser visual QA or deployed-site acceptance is claimed.
+
+The website-feed candidate `48215aca5db0c4eb36ee1511ec8039081f35ab4d` subsequently
+passed full GitHub CI
+([34013749912](https://github.com/lemoz/fort-gym/actions/runs/34013749912)). Its
+campaign/API/website test subset also passed on the existing Linux test checkout:
+329 passed, three Node-dependent checks skipped because that environment lacked
+Node. Those checks passed locally. This candidate is pushed, not merged or deployed.
+
+## Endurance condition and serial continuation
+
+The three-step `development-autonomous-v1` condition remains unchanged, including
+its eight cumulative dispatches. Those bounds cannot establish a full game year.
+`experiments/campaigns/endurance_autonomous_v1.json` introduces a separate
+`fortgym.campaign-condition/v1` schema with the same exploratory action/observation
+profiles and the same three declared models. Each campaign allows up to 2,048
+cumulative dispatches, ten million returned tokens, and $20 of returned-response
+cost. The last response can cross the returned-cost cap; this is not a prepaid
+reservation, an aggregate budget, a provider invoice, or new spending permission.
+Existing aggregate authorization still governs actual launches across attempts.
+
+Each segment allows 16 actions; the controller allows at most 256 segments in the
+same campaign. Neither reaching 403,200 elapsed native ticks nor failing a historical
+benchmark rubric stops this runner. The model selects the actions and requested
+tick advances, including zero when appropriate. Two grammar attempts and one
+ordinary provider attempt are declared equally for all three models; transport
+compatibility calls remain metered dispatches. The interface is still eight action
+families, not unrestricted Dwarf Fortress control.
+
+`scripts.campaign_run` freezes the condition in the private campaign directory and
+serially invokes the existing isolated segment launcher. After each segment it
+verifies native loading, exact source identity, teardown, checkpoint file/payload
+digests, game-file inventory, parent lineage, action cursor, and matching usage
+journals before starting the next. Counters and response-reported costs survive
+both segment continuation and a later controller invocation. It never automatically
+retries a failed segment or rolls back its spending to an earlier save.
+
+Example, using an already authorized project credential supplied to the process:
+
+```sh
+python -m scripts.campaign_run \
+  --config experiments/campaigns/endurance_autonomous_v1.json \
+  --model qwen/qwen3.8-flash --campaign-id endurance-qwen-attempt-01 \
+  --source /opt/dwarf-fortress \
+  --snapshot /absolute/path/to/verified-native-snapshot \
+  --snapshot-sha256 RECEIPT_SHA256 \
+  --output /absolute/project/artifacts/endurance-qwen-attempt-01 \
+  --port 5501
+```
+
+`--segments N` bounds just this invocation. Resume a clean invocation-limited pause
+with the same command's config/model/campaign/source/output/port and `--resume`,
+omitting both snapshot arguments. The controller preserves the cumulative segment
+limit. It does not accept a new condition or code revision as an invisible extension
+of the same campaign. A failed or interrupted segment requires inspection and
+usage/native-state reconciliation, not another blind invocation.
+
+The first RPC port is followed by a fresh local port for each segment, avoiding
+immediate reuse of a closed connection still in TCP TIME_WAIT. Only one copied game
+runtime runs at once; the controller creates no VM and changes no production service.
+All segment copies, saves, traces, receipts and controller journal entries are
+retained under the campaign output. Use project-owned storage with capacity for
+these artifacts; this implementation does not automatically prune them.
+
+A 600-second scheduling slice stops at a clean decision boundary when the declared
+retry allowance no longer fits. It is a scheduling allowance, not a hard provider
+latency promise. The separate worker deadline remains 900 seconds. SIGTERM unwinds
+the controller's cleanup path; interruption or timeout terminates and reaps the
+owned model-worker session before native runtime teardown. Such interruptions are
+not clean gameplay checkpoints and do not become fortress-collapse verdicts.
+
+`campaign-run.json` records controller status, cumulative attempts/cursor, source
+and checkpoint hashes, and usage provenance. If a later segment fails before a
+verified terminal report, earlier usage is explicitly marked as the last verified
+boundary only, not current total spending. `controller.jsonl` records start/finish
+intent. An intent record is not a charge. The existing optional
+`--public-campaign-dir` is passed to every segment, preserving one public campaign
+row and its recorded segment profiles; production feed configuration remains unset
+by this work. The private controller's pause record is not itself a public feed.
+
+The new controller test uses synthetic policy/native-calendar fixtures for 224
+unique decisions over 14 checkpointed segments, including a later invocation:
+448,000 elapsed ticks, with continuation beyond the first anniversary and no usage
+reset or action replay. It is not a model-generated or native-game year-two result.
+Adversarial tests cover source/checkpoint/usage mismatch, foreign identity, missing
+teardown, zero-step handoffs, changed condition, exhausted bounds, stale usage after
+failure, scheduling pauses, and worker interruption/termination.
+
+Local verification: 505 campaign, governed-agent, API and website regressions
+passed, with one Linux-process-inspection check skipped on macOS. All changed
+Python files passed Ruff and Black checks; the five execution/configuration modules
+passed targeted mypy. A real provider-free Python child was terminated and reaped
+after its test deadline. No provider calls, new VMs, native game advances, production
+changes, remote merge or year-two gameplay acceptance occurred in this slice.

@@ -1,0 +1,117 @@
+"""Versioned execution bounds, separate from frozen development probes.
+
+These are per-campaign limits, not spending authorization or an aggregate ledger.
+Checkpoint configuration identity prevents a continuation from resetting them.
+"""
+
+from __future__ import annotations
+
+import json
+import math
+from pathlib import Path
+
+DEVELOPMENT_SCHEMA = "fortgym.development-probe/v1"
+ENDURANCE_SCHEMA = "fortgym.campaign-condition/v1"
+PRICE_CEILING = {"prompt": 0.5, "completion": 2.0, "request": 0.0}
+DEVELOPMENT_LIMITS = {
+    "max_steps": 10,
+    "ticks_per_step": 2000,
+    "max_advance_ticks": 2500,
+    "max_output_tokens": 16384,
+    "max_attempts": 3,
+    "max_dispatches": 12,
+    "max_request_bytes": 200000,
+    "max_total_tokens": 262144,
+}
+ENDURANCE_LIMITS = {
+    **DEVELOPMENT_LIMITS,
+    "max_steps": 32,
+    "max_dispatches": 4096,
+    "max_total_tokens": 20000000,
+    "max_segments": 512,
+    "segment_time_budget_seconds": 1800,
+}
+
+
+def read_config(path: Path) -> dict:
+    value = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(value, dict):
+        raise ValueError("Campaign configuration must be an object")
+    return value
+
+
+def validate_bounds(config: dict, model: str, *, endurance: bool = False) -> dict:
+    schema = ENDURANCE_SCHEMA if endurance else DEVELOPMENT_SCHEMA
+    if config.get("schema_version") != schema:
+        raise ValueError(
+            "Unsupported campaign configuration"
+            if endurance
+            else "Unsupported development configuration"
+        )
+    models = config.get("models")
+    if (
+        not isinstance(models, list)
+        or not models
+        or any(not isinstance(item, str) or not item.strip() for item in models)
+        or len(set(models)) != len(models)
+        or model not in models
+        or model.lower().startswith("anthropic/")
+    ):
+        raise ValueError("Model is not declared in this development configuration")
+    for key, maximum in (ENDURANCE_LIMITS if endurance else DEVELOPMENT_LIMITS).items():
+        if type(config.get(key)) is not int or not 1 <= config[key] <= maximum:
+            raise ValueError(f"Invalid bounded development setting: {key}")
+    cost, maximum_cost = config.get("max_cost_usd"), 20 if endurance else 2
+    if (
+        isinstance(cost, bool)
+        or not isinstance(cost, (int, float))
+        or not math.isfinite(cost)
+        or not 0 < cost <= maximum_cost
+    ):
+        raise ValueError(f"Campaign returned-cost cap must be at most ${maximum_cost}")
+    if config.get("provider_max_price") != PRICE_CEILING:
+        raise ValueError("This development probe requires the declared low-price ceiling")
+    return config
+
+
+def decision_time_reserve(config: dict) -> int:
+    """Scheduling allowance, not a promise about provider/network wall time.
+
+    Each provider attempt can make an initial call and two compatibility calls.
+    Every grammar attempt can exercise that path. Workers use a 60-second provider
+    timeout; allow five seconds per dispatch for backoff and 60 for native work.
+    The independent worker deadline still handles a stalled native call or network."""
+    return 3 * config["max_attempts"] * config["schema_attempts"] * 65 + 60
+
+
+def load_segment_config(path: Path, model: str) -> dict:
+    config = read_config(path)
+    endurance = config.get("schema_version") == ENDURANCE_SCHEMA
+    validate_bounds(config, model, endurance=endurance)
+    condition = config.get("condition_id")
+    if (
+        config.get("runner") != "campaign-loop/v1"
+        or not isinstance(condition, str)
+        or not condition.strip()
+        or len(condition) > 128
+    ):
+        raise ValueError("Campaign segments require their own declared runner condition")
+    profiles = (
+        config.get("decision_profile", "governed_review/v1"),
+        config.get("observation_profile", "governed_review/v1"),
+    )
+    if not all(isinstance(profile, str) for profile in profiles) or profiles not in {
+        ("governed_review/v1", "governed_review/v1"),
+        ("campaign_action/v1", "campaign_state/v1"),
+    }:
+        raise ValueError("Unsupported or mismatched campaign profiles")
+    if profiles[0] == "campaign_action/v1" and (
+        type(config.get("schema_attempts")) is not int or not 1 <= config["schema_attempts"] <= 3
+    ):
+        raise ValueError("Campaign schema_attempts must be one to three")
+    if endurance:
+        if profiles != ("campaign_action/v1", "campaign_state/v1"):
+            raise ValueError("Endurance conditions require exploratory campaign profiles")
+        if config["segment_time_budget_seconds"] <= decision_time_reserve(config):
+            raise ValueError("Segment time budget must fit the declared decision retry allowance")
+    return config

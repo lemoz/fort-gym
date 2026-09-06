@@ -15,33 +15,12 @@ import sys
 from copy import deepcopy
 from pathlib import Path
 
+from fort_gym.bench.run.campaign_config import read_config, validate_bounds
 from scripts.campaign_load_smoke import run_isolated
 
 
 def load_config(path: Path, model: str) -> dict:
-    config = json.loads(path.read_text())
-    if config.get("schema_version") != "fortgym.development-probe/v1":
-        raise ValueError("Unsupported development configuration")
-    if model not in config["models"] or model.startswith("anthropic/"):
-        raise ValueError("Model is not declared in this development configuration")
-    limits = {
-        "max_steps": 10,
-        "ticks_per_step": 2000,
-        "max_advance_ticks": 2500,
-        "max_output_tokens": 16384,
-        "max_attempts": 3,
-        "max_dispatches": 12,
-        "max_request_bytes": 200000,
-        "max_total_tokens": 262144,
-    }
-    for key, maximum in limits.items():
-        if type(config.get(key)) is not int or not 1 <= config[key] <= maximum:
-            raise ValueError(f"Invalid bounded development setting: {key}")
-    if not 0 < config["max_cost_usd"] <= 2:
-        raise ValueError("Development probe cost cap must be at most $2")
-    if config["provider_max_price"] != {"prompt": 0.5, "completion": 2.0, "request": 0.0}:
-        raise ValueError("This development probe requires the declared low-price ceiling")
-    return config
+    return validate_bounds(read_config(path), model)
 
 
 def append_event(path: Path, event: dict) -> None:
