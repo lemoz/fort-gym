@@ -17,19 +17,32 @@ from ..dfhack_exec import run_lua_expr
 from ..env.dfhack_client import DFHackClient
 from ..env.executor import Executor
 from ..env.state_reader import StateReader
+from ..env.workshop_placement import (
+    NATIVE_GROUND,
+    STRICT_FLOOR,
+    policy_observation,
+    validate_policy,
+)
 from .campaign_save import native_save_status
 
 
 class NativeCampaignEnvironment:
     """Reuse the existing legal executor, keeping all campaign state in the loop."""
 
-    def __init__(self, *, expected_dfroot: Path) -> None:
+    def __init__(
+        self, *, expected_dfroot: Path, workshop_placement_policy: str = STRICT_FLOOR
+    ) -> None:
+        self.workshop_placement_policy = validate_policy(workshop_placement_policy)
         self.expected_dfroot = expected_dfroot.resolve()
         self._verify_runtime()
         settings = get_settings()
         self.client = DFHackClient(host=settings.DFHACK_HOST, port=settings.DFHACK_PORT)
         self.client.connect()
-        self.executor = Executor(dfhack_client=self.client, allow_assisted_dig_completion=False)
+        self.executor = Executor(
+            dfhack_client=self.client,
+            allow_assisted_dig_completion=False,
+            workshop_placement_policy=self.workshop_placement_policy,
+        )
         try:
             if ensure_paused_external(timeout=2.5, attempts=2).get("ok") is not True:
                 raise RuntimeError("Native campaign could not verify paused startup")
@@ -66,6 +79,8 @@ class NativeCampaignEnvironment:
         }
         state["fort"] = read_fort_metrics()
         state["crew"] = read_job_metrics()
+        if self.workshop_placement_policy == NATIVE_GROUND:
+            state["workshop_placement"] = policy_observation()
         # No G7 event monitor is started/reset here. Stock and structure observations
         # are retained directly; production/consumption rates remain unavailable
         # until a campaign-scoped native measurement lifecycle is implemented.

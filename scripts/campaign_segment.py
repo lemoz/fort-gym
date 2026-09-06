@@ -182,7 +182,10 @@ def worker(args, config: dict) -> dict:
     runtime = output / "runtime"
     if Path(os.environ["DFROOT"]).resolve() != runtime:
         raise ValueError("Worker DFROOT does not identify its isolated runtime")
-    environment = NativeCampaignEnvironment(expected_dfroot=runtime)
+    environment = NativeCampaignEnvironment(
+        expected_dfroot=runtime,
+        workshop_placement_policy=config.get("workshop_placement_policy", "strict_floor/v1"),
+    )
     try:
         public_feed = None
         if getattr(args, "public_campaign_dir", None) is not None:

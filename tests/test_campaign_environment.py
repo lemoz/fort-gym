@@ -15,7 +15,10 @@ def test_wrong_runtime_is_rejected_before_connect_or_gameplay(tmp_path, monkeypa
         module.NativeCampaignEnvironment(expected_dfroot=tmp_path)
 
 
-def test_native_adapter_uses_existing_executor_without_assisted_completion(tmp_path, monkeypatch):
+@pytest.mark.parametrize("placement", ["strict_floor/v1", "dfhack_047_ground/v1"])
+def test_native_adapter_uses_existing_executor_without_assisted_completion(
+    tmp_path, monkeypatch, placement
+):
     calls = []
 
     def get_state(**kwargs):
@@ -46,9 +49,13 @@ def test_native_adapter_uses_existing_executor_without_assisted_completion(tmp_p
     )
     monkeypatch.setattr(module, "read_fort_metrics", lambda: {"ok": True, "constructions": 0})
     monkeypatch.setattr(module, "read_job_metrics", lambda: {"ok": True, "citizens": {"total": 7}})
-    env = module.NativeCampaignEnvironment(expected_dfroot=tmp_path)
+    env = module.NativeCampaignEnvironment(
+        expected_dfroot=tmp_path, workshop_placement_policy=placement
+    )
     assert env.executor._allow_assisted_dig_completion is False
     state = env.observe()
+    assert env.executor._workshop_placement_policy == placement
+    assert ("workshop_placement" in state) == (placement == "dfhack_047_ground/v1")
     assert state["year"] == 30 and state["year_tick"] == 19309
     assert state["campaign_observation_quality"]["native_population_resources_validated"] is True
     assert "survival" not in state  # Do not invent cumulative G7 measurement.

@@ -22,6 +22,7 @@ STATE_FIELDS = (
     "stocks",
     "recent_events",
     "campaign_observation_quality",
+    "workshop_placement",
 )
 WORK_FIELDS = (
     "ok",

@@ -102,6 +102,8 @@ def build_workshop(
     x: int,
     y: int,
     z: int,
+    *,
+    placement_policy: str = "strict_floor/v1",
 ) -> Dict[str, object]:
     """Place a bounded safe workshop near the fort.
 
@@ -110,6 +112,12 @@ def build_workshop(
     ``too_far_from_fort``.
     """
 
+    from .env.workshop_placement import STRICT_FLOOR, validate_policy
+
+    try:
+        validate_policy(placement_policy)
+    except ValueError:
+        return _preflight_rejection("invalid_workshop_placement_policy")
     if kind not in ALLOWED_WORKSHOPS:
         return _preflight_rejection("invalid_kind")
 
@@ -124,6 +132,7 @@ def build_workshop(
             str(x_val),
             str(y_val),
             str(z_val),
+            *(() if placement_policy == STRICT_FLOOR else (placement_policy,)),
         )
     except (DFHackError, OSError) as exc:
         return {"ok": False, "error": str(exc)}

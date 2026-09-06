@@ -4,23 +4,46 @@
 -- every citizen. Supports every workshop kind in SUBTYPES below on a
 -- conservative dry visible FLOOR-only 3x3 footprint; each new kind here is a
 -- bounded action-surface addition, not a shortcut.
+-- An explicit dfhack_047_ground/v1 fifth argument accepts the six ground
+-- shapes in DFHack 0.47.05-r8 quickfort's generic workshop predicate. All
+-- other guards and native construction/material postconditions are unchanged.
+
+local args = {...}
+local placement_policy = tostring(args[5] or 'strict_floor/v1')
 
 local json = require('json')
 -- Attest preflight rejection separately from a failed/partial native write.
 local mutation_attempted = false
 local function encode_result(value)
+  if placement_policy == 'dfhack_047_ground/v1' then
+    value.workshop_placement_policy = placement_policy
+  end
   if value.ok == false then
     value.command_mutation = mutation_attempted and 'attempted' or 'not_attempted'
   end
   return json.encode(value)
 end
 local buildings = require('dfhack.buildings')
-local args = {...}
 
 local kind = tostring(args[1] or '')
 local x = tonumber(args[2])
 local y = tonumber(args[3])
 local z = tonumber(args[4]) or 0
+
+if placement_policy ~= 'strict_floor/v1' and placement_policy ~= 'dfhack_047_ground/v1' then
+  print(encode_result({ ok = false, error = 'invalid_workshop_placement_policy' }))
+  return
+end
+
+local function allowed_ground(shape)
+  if shape == df.tiletype_shape.FLOOR then return true end
+  if placement_policy == 'strict_floor/v1' then return false end
+  return shape == df.tiletype_shape.BOULDER
+    or shape == df.tiletype_shape.PEBBLES
+    or shape == df.tiletype_shape.TWIG
+    or shape == df.tiletype_shape.SAPLING
+    or shape == df.tiletype_shape.SHRUB
+end
 
 local SUBTYPES = {
   CarpenterWorkshop = df.workshop_type.Carpenters,
@@ -273,7 +296,7 @@ local function footprint_failures()
             liquid_depth = tonumber(block.designation[dx][dy].flow_size) or 0
             local tiletype_id = block.tiletype[dx][dy]
             local attr = df.tiletype.attrs[tiletype_id]
-            open_floor = attr ~= nil and attr.shape == df.tiletype_shape.FLOOR
+            open_floor = attr ~= nil and allowed_ground(attr.shape)
             frozen_liquid = attr ~= nil
               and attr.material == df.tiletype_material.FROZEN_LIQUID
             tile_shape = attr and tostring(df.tiletype_shape[attr.shape] or attr.shape) or nil
@@ -287,7 +310,8 @@ local function footprint_failures()
           elseif frozen_liquid then
             error_name = 'tile_frozen_liquid'
           elseif not open_floor then
-            error_name = 'tile_not_open_floor'
+            error_name = placement_policy == 'strict_floor/v1'
+              and 'tile_not_open_floor' or 'tile_not_workshop_ground'
           elseif liquid_depth > 0 then
             error_name = 'tile_has_liquid'
           end

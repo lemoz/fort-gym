@@ -149,6 +149,7 @@ def decision_time_reserve(config: dict) -> int:
 
 
 def load_segment_config(path: Path, model: str) -> dict:
+    from ..env.workshop_placement import STRICT_FLOOR, validate_policy
     from .campaign_advance import ACCEPTED_ONLY, POLICIES
 
     config = read_config(path)
@@ -181,6 +182,9 @@ def load_segment_config(path: Path, model: str) -> dict:
         raise ValueError("Unsupported campaign advance policy")
     if advance_policy != ACCEPTED_ONLY and profiles != ("campaign_action/v1", "campaign_state/v1"):
         raise ValueError("Requested-time policy requires exploratory campaign profiles")
+    placement_policy = validate_policy(config.get("workshop_placement_policy", STRICT_FLOOR))
+    if placement_policy != STRICT_FLOOR and profiles != ("campaign_action/v1", "campaign_state/v1"):
+        raise ValueError("Workshop ground policy requires exploratory campaign profiles")
     if endurance or local:
         if profiles != ("campaign_action/v1", "campaign_state/v1"):
             raise ValueError("Endurance conditions require exploratory campaign profiles")
