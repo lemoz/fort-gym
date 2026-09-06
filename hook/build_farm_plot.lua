@@ -13,6 +13,14 @@
 -- impossible plot through constructBuilding.
 
 local json = require('json')
+-- Attest preflight rejection separately from a failed/partial native write.
+local mutation_attempted = false
+local function encode_result(value)
+  if value.ok == false then
+    value.command_mutation = mutation_attempted and 'attempted' or 'not_attempted'
+  end
+  return json.encode(value)
+end
 local buildings = require('dfhack.buildings')
 local args = {...}
 
@@ -29,7 +37,7 @@ local x2 = to_int(args[4]) or x1
 local y2 = to_int(args[5]) or y1
 
 if not (x1 and y1 and z) then
-  print(json.encode({ ok = false, error = 'invalid_coordinates' }))
+  print(encode_result({ ok = false, error = 'invalid_coordinates' }))
   return
 end
 
@@ -39,7 +47,7 @@ local width = rx2 - rx1 + 1
 local height = ry2 - ry1 + 1
 
 if width > 5 or height > 5 then
-  print(json.encode({ ok = false, error = 'rect_too_large' }))
+  print(encode_result({ ok = false, error = 'rect_too_large' }))
   return
 end
 
@@ -97,7 +105,7 @@ local corners = {
 }
 for _, corner in ipairs(corners) do
   if not near_fort(corner[1], corner[2]) then
-    print(json.encode({ ok = false, error = 'too_far_from_fort' }))
+    print(encode_result({ ok = false, error = 'too_far_from_fort' }))
     return
   end
 end
@@ -169,7 +177,7 @@ for tx = rx1, rx2 do
 end
 
 if #failed_tiles > 0 then
-  print(json.encode({
+  print(encode_result({
     ok = false,
     error = 'tile_not_placeable',
     -- key name "failed" matches build_construction.lua's per-tile failure
@@ -200,6 +208,7 @@ local before_farm_plots = count_farm_plots()
 -- (open engine-mechanics question: verify live that constructBuilding never
 -- requires one for FarmPlot; if it does, this reports construct_failed
 -- honestly rather than guessing at a material to pass).
+mutation_attempted = true
 local ok, result = pcall(function()
   return buildings.constructBuilding{
     type = df.building_type.FarmPlot,
@@ -213,18 +222,18 @@ local ok, result = pcall(function()
 end)
 
 if not ok then
-  print(json.encode({ ok = false, error = tostring(result) }))
+  print(encode_result({ ok = false, error = tostring(result) }))
   return
 end
 if not result then
-  print(json.encode({ ok = false, error = 'construct_failed' }))
+  print(encode_result({ ok = false, error = 'construct_failed' }))
   return
 end
 
 local after_buildings = df.global.world.buildings and #df.global.world.buildings.all or before_buildings
 local after_farm_plots = count_farm_plots()
 
-print(json.encode({
+print(encode_result({
   ok = true,
   kind = 'FarmPlot',
   x = rx1,

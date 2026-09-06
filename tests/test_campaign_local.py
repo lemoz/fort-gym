@@ -444,3 +444,86 @@ def test_unknown_prompt_packing_is_rejected(config, tmp_path, packing):
     path.write_text(json.dumps(config))
     with pytest.raises(ValueError, match="prompt packing"):
         load_segment_config(path, MODEL)
+
+
+@pytest.mark.parametrize("attempts", [2, 3])
+def test_correction_packing_reduces_history_and_accounts_every_response(
+    tmp_path, monkeypatch, attempts
+):
+    from tests.test_campaign_context import extract, observation
+
+    config = packed_config()
+    config["schema_attempts"] = attempts
+    config["local_inference"]["prompt_packing"] = "bounded_history_corrections/v1"
+    response_number = 0
+
+    def invalid_until_last(response):
+        nonlocal response_number
+        response_number += 1
+        if response_number < attempts:
+            response["message"]["content"] = json.dumps(
+                {
+                    "type": "BUILD",
+                    "params": {"kind": "CarpenterWorkshop"},
+                    "advance_ticks": 2000,
+                }
+            )
+
+    calls = fake_server(config, monkeypatch, invalid_until_last)
+    agent = policy(config, tmp_path)
+    agent._memory.remember_poi(label="model's persistent note")
+    full = observation()
+    first = agent._campaign_messages("", full)
+    bound = len(agent._serialize_request(first))
+    agent.config["max_request_bytes"] = bound
+    action = agent.decide("", full)
+    assert action["type"] == "WAIT" and len(calls) == attempts
+    retained = []
+    for index, call in enumerate(calls):
+        assert len(json.dumps(call, ensure_ascii=True, allow_nan=False).encode()) <= bound
+        messages = call["messages"][:-1]  # Final transport instruction is separate.
+        projected = extract(messages)
+        retained.append(projected["prompt_projection"]["history_rows_retained"])
+        assert projected["prompt_projection"]["correction_messages_retained"] == index
+        for key in full.keys() - {"action_history"}:
+            assert projected[key] == full[key]
+        assert "model's persistent note" in messages[1]["content"]
+        assert len(messages[2:]) == index
+        assert all("No game action was executed" in item["content"] for item in messages[2:])
+        if index:
+            assert messages[2:-1] == calls[index - 1]["messages"][2:-1]
+    assert retained[0] == 12 and all(a > b for a, b in zip(retained, retained[1:]))
+    usage = agent.export_campaign_state()["usage"]
+    assert usage["dispatched_requests"] == usage["returned_responses"] == attempts
+    assert usage["accounted_responses"] == attempts and usage["total_tokens"] == attempts * 15
+    assert usage["total_cost_usd"] == "0"
+
+
+def test_legacy_packing_does_not_change_its_correction_behavior(tmp_path, monkeypatch):
+    from tests.test_campaign_context import observation
+
+    config = packed_config()
+
+    def invalid(response):
+        response["message"]["content"] = '{"type":"BUILD","params":{},"advance_ticks":2000}'
+
+    calls = fake_server(config, monkeypatch, invalid)
+    agent = policy(config, tmp_path)
+    full = observation()
+    agent.config["max_request_bytes"] = len(
+        agent._serialize_request(agent._campaign_messages("", full))
+    )
+    with pytest.raises(GovernedBudgetCapError, match="no longer fits"):
+        agent.decide("", full)
+    assert len(calls) == 1
+
+
+def test_correction_profile_is_valid_and_checkpoint_bound(tmp_path):
+    config = packed_config()
+    saved = policy(config, tmp_path).export_campaign_state()
+    config["local_inference"]["prompt_packing"] = "bounded_history_corrections/v1"
+    path = tmp_path / "condition.json"
+    path.write_text(json.dumps(config))
+    assert load_segment_config(path, MODEL) == config
+    with pytest.raises(ValueError, match="configuration"):
+        policy(config, tmp_path).restore_campaign_state(saved, campaign_id="local-test")

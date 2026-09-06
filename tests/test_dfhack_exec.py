@@ -513,7 +513,7 @@ def test_build_farm_plot_defaults_x2_y2_to_single_tile(monkeypatch) -> None:
 def test_build_farm_plot_rejects_oversized_rect() -> None:
     result = dfhack_backend.build_farm_plot(0, 0, 0, 6, 0)
 
-    assert result == {"ok": False, "error": "rect_too_large"}
+    assert result == {"ok": False, "error": "rect_too_large", "command_mutation": "not_attempted"}
 
 
 def test_set_farm_crop_hook_writes_plant_id_and_reports_before_after() -> None:
@@ -546,7 +546,8 @@ def test_set_farm_crop_hook_writes_plant_id_and_reports_before_after() -> None:
     assert "seeds_on_hand" in hook_text
     # CP437 safety and single json.encode print discipline
     assert "gsub('[^%w %p]', '?')" in hook_text
-    assert hook_text.count("print(json.encode(") >= 1
+    assert hook_text.count("print(encode_result(") >= 1
+    assert "return json.encode(value)" in hook_text
 
 
 def test_set_farm_crop_wraps_bounded_lua_hook(monkeypatch) -> None:
@@ -584,13 +585,13 @@ def test_set_farm_crop_defaults_to_all_seasons_when_omitted(monkeypatch) -> None
 def test_set_farm_crop_rejects_unknown_season() -> None:
     result = dfhack_backend.set_farm_crop(34, "RADISH", ["harvest"])
 
-    assert result == {"ok": False, "error": "invalid_season"}
+    assert result == {"ok": False, "error": "invalid_season", "command_mutation": "not_attempted"}
 
 
 def test_set_farm_crop_rejects_empty_crop() -> None:
     result = dfhack_backend.set_farm_crop(34, "   ")
 
-    assert result == {"ok": False, "error": "invalid_crop"}
+    assert result == {"ok": False, "error": "invalid_crop", "command_mutation": "not_attempted"}
 
 
 def test_order_make_hook_prefers_direct_workshop_jobs() -> None:
@@ -815,13 +816,13 @@ def test_unsuspend_jobs_wraps_bounded_lua_hook(monkeypatch) -> None:
 def test_unsuspend_jobs_rejects_oversized_rect() -> None:
     result = dfhack_backend.unsuspend_jobs(0, 0, 0, 11, 0, 0)
 
-    assert result == {"ok": False, "error": "rect_too_large"}
+    assert result == {"ok": False, "error": "rect_too_large", "command_mutation": "not_attempted"}
 
 
 def test_unsuspend_jobs_rejects_multi_z_rect() -> None:
     result = dfhack_backend.unsuspend_jobs(0, 0, 0, 2, 2, 1)
 
-    assert result == {"ok": False, "error": "z_span_not_supported"}
+    assert result == {"ok": False, "error": "z_span_not_supported", "command_mutation": "not_attempted"}
 
 
 def test_set_labor_hook_validates_citizen_and_reports_before_after() -> None:
@@ -918,7 +919,7 @@ def test_set_labor_passes_enable_false_as_zero(monkeypatch) -> None:
 def test_set_labor_rejects_non_whitelisted_labor() -> None:
     result = dfhack_backend.set_labor(243, "engraving", True)
 
-    assert result == {"ok": False, "error": "unsupported_labor", "labor": "engraving"}
+    assert result == {"ok": False, "error": "unsupported_labor", "labor": "engraving", "command_mutation": "not_attempted"}
 
 
 def test_job_metrics_hook_emits_per_citizen_list() -> None:

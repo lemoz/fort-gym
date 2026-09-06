@@ -26,6 +26,7 @@ from ..env.encoder import encode_observation
 from ..eval.campaign import TICKS_PER_YEAR
 from ..tick_receipt import MAX_REQUEST_OVERSHOOT_TICKS, validate_clean_interruption_receipt
 from .campaign_checkpoint import create_checkpoint, verify_checkpoint
+from .campaign_advance import ACCEPTED_ONLY, MODEL_REQUESTED, POLICIES, requested_ticks
 from .campaign_save import NativeSaveSnapshotter
 
 
@@ -152,17 +153,23 @@ class CampaignLoop:
         output: Path,
         max_advance_ticks: int = 2000,
         observation_profile: str = "governed_review/v1",
+        advance_policy: str = ACCEPTED_ONLY,
     ) -> None:
         if type(max_advance_ticks) is not int or not 1 <= max_advance_ticks <= 2500:
             raise ValueError("Invalid campaign advance limit")
         if observation_profile not in {"governed_review/v1", CAMPAIGN_OBSERVATION_PROFILE}:
             raise ValueError("Unsupported campaign observation profile")
+        if advance_policy not in POLICIES:
+            raise ValueError("Unsupported campaign advance policy")
+        if advance_policy != ACCEPTED_ONLY and observation_profile != CAMPAIGN_OBSERVATION_PROFILE:
+            raise ValueError("Requested-time policy requires factual campaign observations")
         agent.set_campaign_context(campaign_id=campaign_id)
         initial = agent.export_campaign_state()
         output.mkdir(mode=0o700, parents=False, exist_ok=False)
         self.agent, self.environment, self.output = agent, environment, output
         self.campaign_id, self.max_advance_ticks = campaign_id, max_advance_ticks
         self.observation_profile = observation_profile
+        self.advance_policy = advance_policy
         self.trace = output / "trace.jsonl"
         self.journal = output / "usage.jsonl"
         self.next_step = 0
@@ -226,6 +233,7 @@ class CampaignLoop:
                 screen_text=screen,
                 action_history=self.history,
                 last_action_result=self.last_result,
+                model_requested_time=self.advance_policy == MODEL_REQUESTED,
             )
         else:
             text, observation = encode_observation(
@@ -278,9 +286,11 @@ class CampaignLoop:
         if type(ticks) is not int or not 0 <= ticks <= self.max_advance_ticks:
             raise ValueError("Model action has no valid bounded advance_ticks")
         execution = self.environment.apply(action, before)
-        requested = ticks if execution.get("accepted") is True else 0
+        self.failure_context = {"action": action, "execute": execution}
+        requested = requested_ticks(ticks, execution, self.advance_policy)
         after, receipt = self.environment.advance(requested, before)
         self.failure_context = {
+            **self.failure_context,
             "tick_receipt": receipt,
             "requested_ticks": requested,
             "native_before": {
@@ -379,6 +389,7 @@ class CampaignLoop:
                 "last_result": self.last_result,
                 "max_advance_ticks": self.max_advance_ticks,
                 "observation_profile": self.observation_profile,
+                "advance_policy": self.advance_policy,
             },
             usage_path=self.journal,
         )
@@ -395,6 +406,7 @@ class CampaignLoop:
         output: Path,
         latest_usage_path: Path,
         observation_profile: str | None = None,
+        advance_policy: str | None = None,
     ) -> CampaignLoop:
         """Resume after the caller loads the verified game into its isolated runtime.
 
@@ -412,6 +424,9 @@ class CampaignLoop:
         saved_profile = runner.get("observation_profile", "governed_review/v1")
         if observation_profile is not None and observation_profile != saved_profile:
             raise ValueError("Requested observation profile differs from checkpoint")
+        saved_advance = runner.get("advance_policy", ACCEPTED_ONLY)
+        if advance_policy is not None and advance_policy != saved_advance:
+            raise ValueError("Requested advance policy differs from checkpoint")
         latest = latest_usage_path.read_bytes()
         if not latest.startswith((checkpoint / "usage.jsonl").read_bytes()):
             raise ValueError("Latest usage journal does not extend this checkpoint")
@@ -427,6 +442,7 @@ class CampaignLoop:
             output=output,
             max_advance_ticks=runner["max_advance_ticks"],
             observation_profile=saved_profile,
+            advance_policy=saved_advance,
         )
         agent.restore_campaign_state(state, campaign_id=payload["campaign_id"])
         # The new journal's header is identical; replace only this newly-created

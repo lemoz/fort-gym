@@ -160,6 +160,12 @@ class CampaignLLMAgent(DFHackGovernedLLMAgent):
             {"role": "user", "content": f"{memory}\n\n{obs_text}" if memory else obs_text},
         ]
 
+    def _correction_messages(
+        self, messages: list[dict], obs_json: dict, correction: dict
+    ) -> list[dict]:
+        messages.append(correction)
+        return messages
+
     def decide(self, obs_text: str, obs_json: dict) -> dict:
         self._record_previous_outcome(obs_text)
         messages = self._campaign_messages(obs_text, obs_json)
@@ -191,7 +197,9 @@ class CampaignLLMAgent(DFHackGovernedLLMAgent):
                 self._apply_memory_fields(action)
                 return self._store_pending(obs_text, action)
             if attempt + 1 < self._schema_attempts:
-                messages.append(
+                messages = self._correction_messages(
+                    messages,
+                    obs_json,
                     {
                         "role": "user",
                         "content": "No game action was executed. Correct the action grammar: "
@@ -199,6 +207,6 @@ class CampaignLLMAgent(DFHackGovernedLLMAgent):
                         + "\nYour submitted object: "
                         + json.dumps(payload)
                         + "\nReturn one submit_action. You choose the gameplay decision.",
-                    }
+                    },
                 )
         raise CampaignActionError(last_error, schema_attempts=self._schema_attempts)

@@ -1,6 +1,14 @@
 -- order_make.lua: enqueue a safe manager order.
 
 local json = require('json')
+-- Attest preflight rejection separately from a failed/partial native write.
+local mutation_attempted = false
+local function encode_result(value)
+  if value.ok == false then
+    value.command_mutation = mutation_attempted and 'attempted' or 'not_attempted'
+  end
+  return json.encode(value)
+end
 local utils = require('utils')
 local workshop_jobs = require('dfhack.workshops')
 local args = {...}
@@ -26,7 +34,7 @@ local ITEM_JOBS = {
 
 local spec = ITEM_JOBS[item]
 if not spec then
-  print(json.encode({ ok = false, error = 'invalid_item' }))
+  print(encode_result({ ok = false, error = 'invalid_item' }))
   return
 end
 local jobname = spec.job
@@ -35,7 +43,7 @@ if qty < 1 or qty > 5 then qty = 1 end
 
 local job_type = df.job_type[jobname]
 if not job_type then
-  print(json.encode({ ok = false, error = 'unsupported_job_type', job = jobname }))
+  print(encode_result({ ok = false, error = 'unsupported_job_type', job = jobname }))
   return
 end
 
@@ -105,6 +113,7 @@ local function job_definition_for(building, wanted_job_type, wanted_reaction)
 end
 
 local function create_workshop_job(building, entry)
+  mutation_attempted = true
   local job = df.job:new()
   job.id = df.global.job_next_id
   df.global.job_next_id = df.global.job_next_id + 1
@@ -132,7 +141,7 @@ end
 
 local workshop = first_workshop_of_subtype(spec.workshop)
 if not workshop then
-  print(json.encode({
+  print(encode_result({
     ok = false,
     error = 'required_workshop_unavailable',
     item = item,
@@ -143,7 +152,7 @@ end
 
 local entry = job_definition_for(workshop, job_type, spec.reaction)
 if not entry then
-  print(json.encode({
+  print(encode_result({
     ok = false,
     error = 'unsupported_workshop_job',
     item = item,
@@ -159,7 +168,7 @@ for _ = 1, qty do
   table.insert(created_jobs, job.id)
 end
 
-print(json.encode({
+print(encode_result({
   ok = true,
   item = item,
   qty = qty,

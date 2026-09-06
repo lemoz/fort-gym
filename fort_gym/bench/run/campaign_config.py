@@ -96,7 +96,11 @@ def validate_local_settings(config: dict, model: str) -> None:
     }:
         raise ValueError("Unsupported local prompt contract")
     packing = local.get("prompt_packing", "none")
-    if not isinstance(packing, str) or packing not in {"none", "bounded_history/v1"}:
+    if not isinstance(packing, str) or packing not in {
+        "none",
+        "bounded_history/v1",
+        "bounded_history_corrections/v1",
+    }:
         raise ValueError("Unsupported local prompt packing")
     if packing != "none" and prompt_contract != "visible_action_contract/v1":
         raise ValueError("Packed campaigns require the visible action contract")
@@ -145,6 +149,8 @@ def decision_time_reserve(config: dict) -> int:
 
 
 def load_segment_config(path: Path, model: str) -> dict:
+    from .campaign_advance import ACCEPTED_ONLY, POLICIES
+
     config = read_config(path)
     endurance = config.get("schema_version") == ENDURANCE_SCHEMA
     local = config.get("schema_version") == LOCAL_SCHEMA
@@ -170,6 +176,11 @@ def load_segment_config(path: Path, model: str) -> dict:
         type(config.get("schema_attempts")) is not int or not 1 <= config["schema_attempts"] <= 3
     ):
         raise ValueError("Campaign schema_attempts must be one to three")
+    advance_policy = config.get("advance_policy", ACCEPTED_ONLY)
+    if not isinstance(advance_policy, str) or advance_policy not in POLICIES:
+        raise ValueError("Unsupported campaign advance policy")
+    if advance_policy != ACCEPTED_ONLY and profiles != ("campaign_action/v1", "campaign_state/v1"):
+        raise ValueError("Requested-time policy requires exploratory campaign profiles")
     if endurance or local:
         if profiles != ("campaign_action/v1", "campaign_state/v1"):
             raise ValueError("Endurance conditions require exploratory campaign profiles")

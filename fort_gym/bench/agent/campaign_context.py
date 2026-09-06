@@ -13,10 +13,13 @@ from typing import Callable
 from ..env.campaign_encoder import PROFILE, render_campaign_observation
 
 PACKING = "bounded_history/v1"
+CORRECTION_PACKING = "bounded_history_corrections/v1"
 OMITTED_HISTORY_FIELDS = ("result_details", "failed_targets", "placed_targets")
 
 
-def project_observation(observation: dict, keep: int) -> dict:
+def project_observation(observation: dict, keep: int, *, packing: str = PACKING) -> dict:
+    if packing not in {PACKING, CORRECTION_PACKING}:
+        raise ValueError("Unsupported campaign prompt packing")
     history = observation.get("action_history")
     if observation.get("observation_profile") != PROFILE or not isinstance(history, list):
         raise ValueError("Prompt packing requires a factual campaign observation")
@@ -31,7 +34,7 @@ def project_observation(observation: dict, keep: int) -> dict:
     ]
     result["prompt_projection"] = {
         "schema_version": "fortgym.campaign-prompt-projection/v1",
-        "packing": PACKING,
+        "packing": packing,
         "history_rows_available": len(history),
         "history_rows_retained": keep,
         "history_rows_omitted": len(history) - keep,
@@ -50,6 +53,8 @@ def pack_messages(
     system_prompt: str,
     memory_context: str,
     fits: Callable[[list[dict]], bool],
+    packing: str = PACKING,
+    corrections: list[dict] | None = None,
 ) -> list[dict] | None:
     """Keep the largest newest history suffix fitting the caller's exact request.
 
@@ -59,12 +64,17 @@ def pack_messages(
     history = observation.get("action_history")
     if not isinstance(history, list):
         raise ValueError("Prompt packing requires explicit action history")
+    if corrections and packing != CORRECTION_PACKING:
+        raise ValueError("Corrections require their declared packing profile")
     for keep in range(min(len(history), 12), -1, -1):
-        selected = project_observation(observation, keep)
+        selected = project_observation(observation, keep, packing=packing)
+        if packing == CORRECTION_PACKING:
+            selected["prompt_projection"]["correction_messages_retained"] = len(corrections or [])
         text = render_campaign_observation(selected, compact=True)
         messages = [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": f"{memory_context}\n\n{text}" if memory_context else text},
+            *deepcopy(corrections or []),
         ]
         if fits(messages):
             return messages

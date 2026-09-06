@@ -36,22 +36,39 @@ are not reconciled total project spending or remaining budget.
   private tunnel were independently verified stopped. No VM was created. The
   production code, services and paused original fortress were unchanged.
 
-## Next implementation, before longer campaigns
+## Harness repair candidate, before longer campaigns
 
-1. Test a separately declared simulation-advance policy. The current loop discards
+1. Implemented a separately declared simulation-advance policy. The original loop discards
    the model's explicit tick request whenever a command is rejected. Mistral asked
    for 2,000 ticks after each build attempt, but the stale-cache guard rejected the
-   command and the loop advanced zero. Honor explicit model advancement after
-   confirmed no-change rejections while preserving stops for unknown execution,
+   command and the loop advanced zero. The new policy honors explicit advancement after
+   confirmed preflight/no-write rejections while preserving stops for unknown execution,
    unsafe native receipts and dialogs. Do not invent WAIT actions or tick counts,
    or change the historical condition retroactively.
-2. Make schema-correction requests fit the declared context bound. Mistral's first
+2. Implemented correction-aware history packing. Mistral's first
    request was 21,636 bytes; adding the grammar correction produced 22,175 bytes.
-   Retain current facts, diagnostics and cumulative usage when repacking. Do not
-   relabel this context limit as a need for more spending approval.
-3. Rerun the affected model under the new condition and look for completed native
+   Current facts, all corrections, latest results, persistent notes and cumulative
+   usage are retained; older history is reduced to fit. An irreducible overflow
+   after a response still requires reconciliation, not a silent usage rollback.
+3. Next: rerun the affected model under the new condition and look for completed native
    work. Then repeat matched comparisons and expand toward first-year survival.
    Solve retained-runtime disk growth before large numbers of copied segments.
+
+The [repair condition](../experiments/campaigns/local_native_harness_repair_v1.json)
+declares `model_requested/v1` and `bounded_history_corrections/v1`. All original
+model manifests, request/token/segment bounds and sampling settings are unchanged.
+It tests the two repairs together, not their isolated causal contributions.
+The clock policy is model-visible and checkpoint-bound. Nine native hooks and
+Python preflight branches now distinguish no-write rejections from attempted
+mutations; unknown/partial writes get no additional simulation time. No cache flag
+is cleared manually, no fallback action is inserted, and old results are unchanged.
+
+Candidate checks: 620 focused campaign, native-helper, clock-lifecycle and memory
+tests passed; one Linux-only test skipped. Fifteen of these execute actual Lua
+hook control flow against engine doubles, including stale-cache rejections and
+failure after a write. They are not native-game acceptance. Focused Ruff and
+targeted typing of seven changed modules passed. A native repair-condition run
+has not yet been accepted.
 
 ## Website and repository
 
@@ -65,7 +82,7 @@ The website/reporting code is separate from the frozen native execution revision
 Review, merge, production deployment and real-site acceptance remain open. Local
 endpoint and frontend regressions are not browser visual QA or deployed acceptance.
 
-Latest candidate checks: 632 focused local regressions passed, one Linux-only
+Published-comparison checkpoint checks: 632 focused local regressions passed, one Linux-only
 test skipped. The actual published three-model bundle is checked through the
 campaign page/feed routes, with measured tick counts, adapter rejection counts,
 final checkpoint status and usage retained. Focused Ruff/Black, JavaScript syntax

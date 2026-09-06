@@ -89,6 +89,7 @@ def run_segment(
                 output=output / "campaign",
                 max_advance_ticks=config["max_advance_ticks"],
                 observation_profile=config.get("observation_profile", "governed_review/v1"),
+                advance_policy=config.get("advance_policy", "accepted_only/v1"),
             )
         else:
             assert latest_usage is not None
@@ -103,6 +104,7 @@ def run_segment(
                 output=output / "campaign",
                 latest_usage_path=latest_usage,
                 observation_profile=config.get("observation_profile", "governed_review/v1"),
+                advance_policy=config.get("advance_policy", "accepted_only/v1"),
             )
         result["first_step"] = loop.next_step
         report_progress(result["native_start"])

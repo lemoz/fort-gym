@@ -15,7 +15,7 @@ from urllib.parse import urlsplit
 
 import httpx
 
-from .campaign_context import PACKING, pack_messages
+from .campaign_context import CORRECTION_PACKING, PACKING, pack_messages
 from .campaign_llm import CAMPAIGN_SYSTEM_PROMPT, CampaignLLMAgent
 from .governed_llm import GovernedBudgetCapError, GovernedDecisionError
 
@@ -202,17 +202,36 @@ class LocalCampaignAgent(CampaignLLMAgent):
         packing = self.config["local_inference"].get("prompt_packing", "none")
         if packing == "none":
             return super()._campaign_messages(obs_text, obs_json)
-        if packing != PACKING or obs_json is None:
+        if packing not in {PACKING, CORRECTION_PACKING} or obs_json is None:
             raise ValueError("Unsupported campaign prompt packing or missing observation")
+        return self._packed_messages(obs_json)
+
+    def _correction_messages(
+        self, messages: list[dict], obs_json: dict, correction: dict
+    ) -> list[dict]:
+        if self.config["local_inference"].get("prompt_packing") != CORRECTION_PACKING:
+            return super()._correction_messages(messages, obs_json, correction)
+        # All attempts in one decision observe the same paused native state.
+        # Repack only its old history, keeping every correction and current fact.
+        return self._packed_messages(obs_json, corrections=[*messages[2:], correction])
+
+    def _packed_messages(
+        self, obs_json: dict, *, corrections: list[dict] | None = None
+    ) -> list[dict]:
         self._pre_dispatch_gate()
         messages = pack_messages(
             obs_json,
             system_prompt=CAMPAIGN_SYSTEM_PROMPT,
             memory_context=self._memory.get_context(include_recent=False),
             fits=lambda candidate: self._body_fits(self._serialize_request(candidate)),
+            packing=self.config["local_inference"]["prompt_packing"],
+            corrections=corrections,
         )
         if messages is None:
-            raise GovernedBudgetCapError("Current native facts exceed the declared context bound")
+            subject = (
+                "Current native facts and corrections" if corrections else "Current native facts"
+            )
+            raise GovernedBudgetCapError(f"{subject} exceed the declared context bound")
         return messages
 
     def _serialize_request(self, messages) -> bytes:
@@ -297,7 +316,8 @@ class LocalCampaignAgent(CampaignLLMAgent):
                         "request_sha256": hashlib.sha256(body).hexdigest(),
                         **(
                             {"messages": deepcopy(messages)}
-                            if self.config["local_inference"].get("prompt_packing") == PACKING
+                            if self.config["local_inference"].get("prompt_packing")
+                            in {PACKING, CORRECTION_PACKING}
                             else {}
                         ),
                     },

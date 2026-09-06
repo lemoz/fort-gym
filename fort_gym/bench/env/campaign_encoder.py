@@ -146,6 +146,7 @@ def encode_campaign_observation(
     screen_text: str,
     action_history: list[dict],
     last_action_result: dict | None,
+    model_requested_time: bool = False,
 ) -> tuple[str, dict]:
     observation = _select(state, STATE_FIELDS)
     observation["observation_profile"] = PROFILE
@@ -155,6 +156,16 @@ def encode_campaign_observation(
     observation["action_history"] = [_select(row, HISTORY_FIELDS) for row in action_history[-12:]]
     observation["last_action_result"] = deepcopy(last_action_result)
     observation["screen_text"] = screen_text
+    if model_requested_time:
+        observation["time_control"] = {
+            "policy": "model_requested/v1",
+            "semantics": (
+                "Your advance_ticks requests native game time after an accepted command or a "
+                "preflight rejection that made no game changes. Zero means remain paused. "
+                "Partial/uncertain execution errors stop the segment without further time. "
+                "Native dialogs may interrupt advancement. No fallback action is chosen for you."
+            ),
+        }
     return render_campaign_observation(observation), observation
 
 

@@ -77,7 +77,13 @@ class NativeCampaignEnvironment:
 
     def apply(self, action: dict[str, Any], state: dict[str, Any]) -> dict[str, Any]:
         self._verify_runtime()
-        return self.executor.apply(action, backend="dfhack", state=state, allow_interact=True)
+        execution = self.executor.apply(action, backend="dfhack", state=state, allow_interact=True)
+        # Executor's result-less rejections are Python validation branches before
+        # native dispatch. Every dispatched helper (including INTERACT) returns a
+        # nested result; its native write-phase receipt must speak for itself.
+        if execution.get("accepted") is False and "result" not in execution:
+            execution = {**execution, "command_mutation": "not_attempted"}
+        return execution
 
     def advance(self, ticks: int, state: dict[str, Any]) -> tuple[dict, dict]:
         before = self.observe()

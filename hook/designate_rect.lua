@@ -2,12 +2,20 @@
 -- chop/gather.
 
 local json = require('json')
+-- Attest preflight rejection separately from a failed/partial native write.
+local mutation_attempted = false
+local function encode_result(value)
+  if value.ok == false then
+    value.command_mutation = mutation_attempted and 'attempted' or 'not_attempted'
+  end
+  return json.encode(value)
+end
 local args = {...}
 
 local kind = tostring(args[1] or '')
 local valid = { dig = true, channel = true, chop = true, gather = true }
 if not valid[kind] then
-  print(json.encode({ ok = false, error = 'invalid_kind' }))
+  print(encode_result({ ok = false, error = 'invalid_kind' }))
   return
 end
 
@@ -25,7 +33,7 @@ local y2 = to_int(args[6])
 local z2 = to_int(args[7])
 
 if not (x1 and y1 and z1 and x2 and y2 and z2) or z1 ~= z2 then
-  print(json.encode({ ok = false, error = 'bad_rect' }))
+  print(encode_result({ ok = false, error = 'bad_rect' }))
   return
 end
 
@@ -33,7 +41,7 @@ local rx1, ry1, rz = math.min(x1, x2), math.min(y1, y2), z1
 local rx2, ry2 = math.max(x1, x2), math.max(y1, y2)
 
 if (rx2 - rx1 + 1) > 30 or (ry2 - ry1 + 1) > 30 then
-  print(json.encode({ ok = false, error = 'rect_too_large' }))
+  print(encode_result({ ok = false, error = 'rect_too_large' }))
   return
 end
 
@@ -177,7 +185,7 @@ if kind == 'chop' or kind == 'gather' then
       failure.non_shrub_tiles = non_target_tiles
     end
     attach_non_target_evidence(failure)
-    print(json.encode(failure))
+    print(encode_result(failure))
     return
   end
 
@@ -198,7 +206,7 @@ if kind == 'chop' or kind == 'gather' then
       failure.non_shrub_tiles = non_target_tiles
     end
     attach_non_target_evidence(failure)
-    print(json.encode(failure))
+    print(encode_result(failure))
     return
   end
 
@@ -209,6 +217,7 @@ if kind == 'chop' or kind == 'gather' then
     end
   end
 
+  mutation_attempted = true
   local committed, commit_error = pcall(function()
     for _, record in ipairs(writes) do
       if not record.already then record.designation.dig = target end
@@ -255,7 +264,7 @@ if kind == 'chop' or kind == 'gather' then
       failure.non_shrub_tiles = non_target_tiles
     end
     attach_non_target_evidence(failure)
-    print(json.encode(failure))
+    print(encode_result(failure))
     return
   end
 
@@ -273,7 +282,7 @@ if kind == 'chop' or kind == 'gather' then
     success.non_shrub_tiles = non_target_tiles
   end
   attach_non_target_evidence(success)
-  print(json.encode(success))
+  print(encode_result(success))
   return
 end
 
@@ -385,7 +394,7 @@ for tx = rx1, rx2 do
 end
 
 if failed_count > 0 then
-  print(json.encode({
+  print(encode_result({
     ok = false,
     error = 'tile_not_designatable',
     kind = kind,
@@ -411,6 +420,7 @@ local function rollback_writes()
   end
 end
 
+mutation_attempted = true
 local committed, commit_error = pcall(function()
   for _, record in ipairs(writes) do
     if record.already then
@@ -447,7 +457,7 @@ if not committed then
       end
     end)
   end
-  print(json.encode({
+  print(encode_result({
     ok = false,
     error = 'designation_write_failed',
     detail = tostring(commit_error),
@@ -460,7 +470,7 @@ if not committed then
   return
 end
 
-print(json.encode({
+print(encode_result({
   ok = true,
   kind = kind,
   rect = { rx1, ry1, rz, rx2, ry2, rz },

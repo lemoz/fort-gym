@@ -5,7 +5,11 @@ from copy import deepcopy
 
 import pytest
 
-from fort_gym.bench.agent.campaign_context import pack_messages, project_observation
+from fort_gym.bench.agent.campaign_context import (
+    CORRECTION_PACKING,
+    pack_messages,
+    project_observation,
+)
 from fort_gym.bench.agent.memory import MemoryManager
 from fort_gym.bench.env.campaign_encoder import (
     encode_campaign_observation,
@@ -95,6 +99,70 @@ def test_irreducible_snapshot_is_never_truncated_to_force_a_fit():
     assert [item["prompt_projection"]["history_rows_retained"] for item in attempts] == list(
         range(12, -1, -1)
     )
+
+
+def test_corrections_participate_in_packing_and_are_preserved_exactly():
+    full = observation()
+    before = deepcopy(full)
+    corrections = [{"role": "user", "content": f"Exact grammar correction {i}"} for i in range(2)]
+    seen = []
+
+    def fits(messages):
+        assert messages[2:] == corrections
+        assert "persistent model note" in messages[1]["content"]
+        projected = extract(messages)
+        for key in full.keys() - {"action_history"}:
+            assert projected[key] == full[key]
+        seen.append(projected["prompt_projection"]["history_rows_retained"])
+        return len(projected["action_history"]) <= 3
+
+    messages = pack_messages(
+        full,
+        system_prompt="policy",
+        memory_context="persistent model note",
+        fits=fits,
+        packing=CORRECTION_PACKING,
+        corrections=corrections,
+    )
+    assert seen == list(range(12, 2, -1))
+    assert extract(messages)["prompt_projection"]["correction_messages_retained"] == 2
+    messages[-1]["content"] = "changed copy"
+    assert corrections[-1]["content"] == "Exact grammar correction 1"
+    assert full == before
+
+
+def test_irreducible_corrections_are_not_removed_to_force_a_fit():
+    corrections = [{"role": "user", "content": "unabridged error " * 5000}]
+    attempts = []
+
+    def reject(messages):
+        assert messages[2:] == corrections
+        attempts.append(extract(messages)["prompt_projection"]["history_rows_retained"])
+        return False
+
+    assert (
+        pack_messages(
+            observation(),
+            system_prompt="policy",
+            memory_context="note",
+            fits=reject,
+            packing=CORRECTION_PACKING,
+            corrections=corrections,
+        )
+        is None
+    )
+    assert attempts == list(range(12, -1, -1))
+
+
+def test_legacy_packing_cannot_silently_adopt_correction_repacking():
+    with pytest.raises(ValueError, match="declared packing profile"):
+        pack_messages(
+            observation(),
+            system_prompt="policy",
+            memory_context="",
+            fits=lambda _: True,
+            corrections=[{"role": "user", "content": "correction"}],
+        )
 
 
 def test_legacy_rendering_and_compact_rendering_share_identical_facts():

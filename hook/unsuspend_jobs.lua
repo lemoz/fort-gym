@@ -7,6 +7,14 @@
 -- designations, or buildings — only the suspend flag on matching jobs.
 
 local json = require('json')
+-- Attest preflight rejection separately from a failed/partial native write.
+local mutation_attempted = false
+local function encode_result(value)
+  if value.ok == false then
+    value.command_mutation = mutation_attempted and 'attempted' or 'not_attempted'
+  end
+  return json.encode(value)
+end
 local args = {...}
 
 local function to_int(v)
@@ -23,7 +31,7 @@ local y2 = to_int(args[5])
 local z2 = to_int(args[6])
 
 if not (x1 and y1 and z1 and x2 and y2 and z2) or z1 ~= z2 then
-  print(json.encode({ ok = false, error = 'bad_rect' }))
+  print(encode_result({ ok = false, error = 'bad_rect' }))
   return
 end
 
@@ -31,7 +39,7 @@ local rx1, ry1, rz = math.min(x1, x2), math.min(y1, y2), z1
 local rx2, ry2 = math.max(x1, x2), math.max(y1, y2)
 
 if (rx2 - rx1 + 1) > 10 or (ry2 - ry1 + 1) > 10 then
-  print(json.encode({ ok = false, error = 'rect_too_large' }))
+  print(encode_result({ ok = false, error = 'rect_too_large' }))
   return
 end
 
@@ -54,6 +62,7 @@ local ok_walk = pcall(function()
       local ok_flags, suspended = pcall(function() return job.flags.suspend and true or false end)
       if ok_flags and suspended and pos_in_rect(job.pos) then
         suspended_found = suspended_found + 1
+        mutation_attempted = true
         job.flags.suspend = false
         unsuspended = unsuspended + 1
       end
@@ -63,13 +72,13 @@ local ok_walk = pcall(function()
 end)
 
 if not ok_walk then
-  print(json.encode({ ok = false, error = 'job_list_unavailable' }))
+  print(encode_result({ ok = false, error = 'job_list_unavailable' }))
   return
 end
 
 -- ok=true even when unsuspended==0: an empty rect or a rect with no
 -- suspended jobs is a legitimate, honestly-reported outcome, not an error.
-print(json.encode({
+print(encode_result({
   ok = true,
   rect = { rx1, ry1, rz, rx2, ry2, rz },
   unsuspended = unsuspended,
