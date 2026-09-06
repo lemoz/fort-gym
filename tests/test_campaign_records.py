@@ -15,7 +15,7 @@ CONFIG = {"condition_id": "test-condition", "models": ["test-model"]}
 
 def test_three_published_native_attempts_preserve_distinct_failure_causes():
     result = records.campaign_feed(None)
-    assert result["configured"] is False and result["published_snapshots"] == 7
+    assert result["configured"] is False and result["published_snapshots"] == 8
     by_model = {
         row["model"]: row
         for row in result["campaigns"]
@@ -47,9 +47,47 @@ def test_recorded_comparison_is_served_without_enabling_a_live_directory(monkeyp
     client = TestClient(server.app)
     response = client.get("/public/campaign-feed")
     assert response.status_code == 200 and response.json()["configured"] is False
-    assert len(response.json()["campaigns"]) == 7
+    assert len(response.json()["campaigns"]) == 8
     assert "no-store" in response.headers["cache-control"]
     assert client.get("/campaigns").status_code == 200
+
+
+def test_llama_native_result_distinguishes_valid_waits_from_fortress_development():
+    record = next(
+        row
+        for row in records.campaign_feed(None)["campaigns"]
+        if row["condition_id"] == "local-native-llama-typed-v1"
+    )
+    assert (record["committed_steps"], record["elapsed_ticks"]) == (16, 1600)
+    assert record["actions"]["by_type"] == {"WAIT": {"accepted": 16, "rejected": 0, "unknown": 0}}
+    assert record["usage"]["total_tokens"] == 142218
+    assert record["usage"]["dispatched_requests"] == record["usage"]["accounted_responses"] == 16
+    assert record["checkpoint_verified"] is True and record["cleanup_verified"] is True
+    assert record["current_metrics"]["completed_workshops"] == 0
+    assert record["current_metrics"]["population"] == 7
+    assert record["current_metrics"]["food_stock"] == 45
+    assert record["current_metrics"]["drink_stock"] == 60
+    assert record["functioning_fortress"] == "not_assessed"
+    assert record["comparison_rankings_available"] is False
+    assert record["code_revision"] == "f04b3f92bfadf08da92039d373ee1bb62eee6e49"
+    bundle = json.loads(
+        (
+            records.PROJECT_ROOT / "experiments/evidence/local_native_llama_typed_20260906.json"
+        ).read_text()
+    )
+    assert bundle["native_audit"]["checkpoint_cursor"] == 16
+    assert (
+        bundle["native_audit"]["returned_usage_audit"]["tokens_summed_from_native_model_responses"]
+        == 142218
+    )
+    assert (
+        bundle["native_audit"]["measured_context"][
+            "all_committed_prompt_counts_match_returned_usage"
+        ]
+        is True
+    )
+    assert len(bundle["native_audit"]["segments"]) == 2
+    assert bundle["configuration"]["local_inference"]["enable_thinking"] is False
 
 
 def test_repair_record_preserves_clock_and_checkpoint_without_claiming_success():
@@ -186,12 +224,15 @@ def test_website_separates_incomplete_checkpoint_and_new_model_compatibility():
     from fort_gym.bench.api import server
 
     page = TestClient(server.app).get("/campaigns").text
-    assert "Latest result: request-size pause" in page
+    assert "Earlier result: request-size pause" in page
     assert "latest save covers 12 commands, not 14" in page
     assert "not the spending cap" in page
     assert "Local model compatibility, not gameplay" in page
     assert "two of three supplied test commands exactly" in page
     assert "typed-contract follow-up copied all three exactly" in page
+    assert "5,466 and 7,992 prompt tokens without dropping history" in page
+    assert "local_llama_adapter_20260906.json" in page
+    assert "local_llama_adapter_20260906.json" not in records.PUBLISHED_BUNDLES
     filename = "local_qwen35_9b_feasibility_20260906.json"
     assert filename in page and filename not in records.PUBLISHED_BUNDLES
     candidate = json.loads((records.PROJECT_ROOT / "experiments/evidence" / filename).read_text())
@@ -209,7 +250,11 @@ def test_website_separates_incomplete_checkpoint_and_new_model_compatibility():
     assert typed["fit_diagnostic"]["requests_fit"] == 0
     assert len(typed["fit_diagnostic"]["requests"]) == 14
     assert candidate["combined_diagnostic_usage"]["total_tokens"] == 6510
-    assert not any("qwen35" in row["model"] for row in records.campaign_feed(None)["campaigns"])
+    assert [
+        row["campaign_id"]
+        for row in records.campaign_feed(None)["campaigns"]
+        if "qwen35" in row["model"]
+    ] == ["local-llama-qwen35-20260906-a"]
 
 
 @pytest.fixture

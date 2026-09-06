@@ -2,7 +2,27 @@
 
 Verified September 6, 2026. The Year-Two Autonomous Play goal remains active.
 
-Latest: the [factual designation-reference condition](../experiments/evidence/local_native_designation_reference_20260906.json)
+Latest: [Qwen3.5 9B with the typed local adapter](../experiments/evidence/local_native_llama_typed_20260906.json)
+finished its bounded non-thinking attempt: **16 accounted responses, 142,218 tokens,
+16 WAIT commands and 1,600 native ticks**. It initiated no gathering or construction.
+Population remained seven, food 45 and drink 60. Two digest-linked checkpoints end
+at cursor 16 and cover every response and command. Every committed prompt count
+matched returned usage, with current facts and request hashes verified.
+
+Both isolated games, the local model and reverse tunnel were independently verified
+stopped. Production revision, services and original paused calendar were unchanged.
+Execution was frozen at `f04b3f92bfadf08da92039d373ee1bb62eee6e49`;
+[its CI passed](https://github.com/lemoz/fort-gym/actions/runs/34037691409).
+This is a dispatch-limited pause, not a model ranking, functioning fortress or first
+anniversary. Eight terminal model snapshots are now included in the website source;
+no production deployment or browser visual acceptance is claimed.
+
+The separately declared [thinking-mode follow-up](../experiments/campaigns/local_native_llama_thinking_v1.json)
+keeps the same weights, observations, control reference and original save, while
+changing reasoning mode and its explicit execution allowances. Its configuration
+alone is not evidence of execution or a claim that it fixes repeated waiting.
+
+Earlier: the [factual designation-reference condition](../experiments/evidence/local_native_designation_reference_20260906.json)
 stopped at a request-size boundary: **15 accounted responses, 78,023 tokens,
 14 committed commands and 2,800 explicitly requested native ticks**. All fourteen
 DIG commands were rejected as `tile_not_designatable`; no development completed.
