@@ -65,6 +65,7 @@ from ..run.supervision_service import (
     SupervisionServiceError,
 )
 from .auth import require_admin
+from .campaign_catalog import campaign_catalog
 from .rate_limit import RateLimiter, get_rate_limit_client_id, get_rate_limit_config
 from .routes_step import router as step_router
 from .schemas import (
@@ -643,6 +644,21 @@ async def serve_findings():
 async def serve_protocols():
     """Serve the public protocol catalog UI."""
     return _html_file_response("protocols.html")
+
+
+@app.get("/campaigns", response_class=FileResponse)
+async def serve_campaigns() -> FileResponse:
+    """Serve the campaign experiment tracking surface."""
+    return _html_file_response("campaigns.html")
+
+
+@app.get("/public/campaign-experiments")
+async def public_campaign_experiments() -> JSONResponse:
+    try:
+        data = campaign_catalog()
+    except (OSError, ValueError, KeyError, TypeError):
+        raise HTTPException(status_code=503, detail="Campaign evidence is unavailable") from None
+    return JSONResponse(data, headers=HTML_CACHE_HEADERS)
 
 
 @app.get("/protocols/{slug}", response_class=HTMLResponse)

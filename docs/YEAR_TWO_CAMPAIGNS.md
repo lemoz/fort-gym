@@ -287,3 +287,35 @@ external game-observation transfer to OpenRouter even after the configured
 destination and prompt scope were inspected. Do not work around that rejection.
 Local reporting and website implementation remain available work. No additional
 budget is requested, and the overall goal remains active.
+
+## Website slice: published campaign experiment evidence
+
+The `/campaigns` page now exposes the retained development probe with its model,
+attempt identity, actual native elapsed ticks, last observed population, failure
+reason, reported model cost, unreturned dispatch count, and teardown result.
+Expandable evidence includes diagnostics, limitations, source hashes, and a link
+to the exact configuration at the experiment commit. Home and Results link to it.
+The three declared models show their actual published attempt counts; a model
+without a published attempt is not presented as a tested model or a zero score.
+
+`/public/campaign-experiments` reads an explicit list of versioned public evidence
+files and an allowlist of fields. It does not scan or expose private runtime
+directories, game saves, full traces, credentials, or agent memory. Missing or
+inconsistent selected evidence returns an unavailable response, not an empty
+successful result field. The browser treats missing metrics as unknown and
+refresh failures as unavailable, without displaying stale results as current.
+
+This surface intentionally identifies its scope as **published development
+probes**, not a live activity feed or a cross-model leaderboard. It preserves the
+existing Fort Labs design and FastAPI/GCE architecture; no Sites/Cloudflare
+migration was made. The development v1 condition remains frozen for these records;
+changed conditions must receive a new version and a distinct comparison grouping.
+
+Local verification: 60 focused campaign-catalog, public-route, landing-page, and
+campaign-progress tests passed, including executed JavaScript formatting/rendering,
+evidence-detail controls, adversarial text, and network-failure checks using an
+in-memory document test double. New modules pass Ruff and JavaScript syntax checks;
+the local loopback HTML route returned HTTP 200 and the API returned the retained
+aggregate evidence. This is not browser visual QA or production acceptance.
+No website deployment, active-campaign integration, year-two success, or complete
+campaign recovery is claimed. The goal still requires all of those outcomes.

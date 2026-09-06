@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Campaign Experiments | Fort Labs</title>
+  <meta name="description" content="Track autonomous Dwarf Fortress experiments, actual game time, model outcomes, and reported costs.">
+  <link rel="canonical" href="https://fortgym.live/campaigns">
+  <link rel="icon" type="image/svg+xml" href="/static/brand/favicon.svg">
+  <link rel="stylesheet" href="/static/fort-labs.css?v=20260711-2">
+  <link rel="stylesheet" href="/static/campaigns.css?v=1">
+</head>
+<body>
+  <header class="fl-header">
+    <div class="fl-wrap fl-nav">
+      <a class="fl-brand" href="/"><span>FORT</span> LABS</a>
+      <nav class="campaign-nav" aria-label="Primary navigation">
+        <a href="/results">Results</a><a href="/campaigns" aria-current="page">Campaigns</a><a href="/worlds">Runs</a><a href="/live">Live</a>
+      </nav>
+    </div>
+  </header>
+  <main class="fl-wrap campaign-main">
+    <div class="campaign-heading">
+      <div><p class="campaign-kicker">Autonomous play research</p><h1>Campaign experiments</h1></div>
+      <button id="refresh-campaigns" type="button">Refresh evidence</button>
+    </div>
+    <p class="campaign-intro">One full game year is 403,200 elapsed ticks from the starting save. Reaching year two is a checkpoint, not the end of play.</p>
+    <p id="catalog-status" role="status" aria-live="polite">Loading published experiment evidence…</p>
+    <div id="catalog-content" hidden>
+      <section class="campaign-condition" aria-labelledby="condition-title">
+        <h2 id="condition-title">Development probes</h2>
+        <p id="condition-description"></p>
+        <p class="campaign-note">These short interface tests are not a model ranking. Live campaign tracking and verified year-two results are not available in this catalog yet.</p>
+        <div id="model-coverage" class="model-coverage"></div>
+      </section>
+      <section aria-labelledby="experiments-title">
+        <h2 id="experiments-title">Recorded attempts</h2>
+        <div class="campaign-table-scroll" role="region" aria-label="Experiment results" tabindex="0">
+          <table class="campaign-table">
+            <caption>Reported game outcomes and costs under the declared development condition</caption>
+            <thead><tr><th scope="col">Model / attempt</th><th scope="col">Outcome</th><th scope="col">Elapsed ticks</th><th scope="col">Last observed dwarves</th><th scope="col">Reported model cost</th><th scope="col">Teardown</th></tr></thead>
+            <tbody id="experiment-rows"></tbody>
+          </table>
+        </div>
+        <div id="experiment-details"></div>
+      </section>
+      <p class="campaign-note">Costs shown are response-reported usage, not reconciled invoices or remaining budget. Failed requests without returned usage are tracked separately. Missing measurements stay unknown.</p>
+      <a href="/public/campaign-experiments">Open the published evidence JSON</a>
+    </div>
+    <noscript><p>JavaScript is needed for the table. <a href="/public/campaign-experiments">Read the published evidence JSON.</a></p></noscript>
+  </main>
+  <script src="/static/campaigns.js?v=1" defer></script>
+</body>
+</html>
