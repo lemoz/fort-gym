@@ -13,21 +13,24 @@ bounded retry/correction cannot produce a valid action.
 
 from __future__ import annotations
 
+import hashlib
 import json
+import math
 import os
 import re
 import time
+from collections.abc import Mapping, Sequence
+from decimal import Decimal, InvalidOperation
 from importlib import import_module
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from ..config import get_settings
-from ..env.actions import (
-    normalized_action_fingerprint,
-    normalized_objective as normalize_objective_identity,
-    parse_action,
-)
+from ..env.actions import normalized_action_fingerprint
+from ..env.actions import normalized_objective as normalize_objective_identity
+from ..env.actions import parse_action
 from .base import Agent, register_agent
+from .checkpoint import GovernedAgentCheckpoint
 from .memory import MemoryManager
 from .minimap_render import minimap_data_url
 
@@ -39,6 +42,8 @@ _MEMORY_PATH_ENV_VAR = "FORT_GYM_GOVERNED_MEMORY_PATH"
 _MEMORY_PATH_DISABLE_VALUES = {"off", "0"}
 _HARD_REVISION_REASON = "same_objective_stalled_2"
 _BLOCKED_PROVIDER_FINISH_REASONS = {"content_filter"}
+_MAX_PROVIDER_ERROR_LENGTH = 240
+_PROVIDER_NAME_UNSET = object()
 
 
 class GovernedDecisionError(RuntimeError):
@@ -55,6 +60,40 @@ class GovernedProviderFinishError(GovernedDecisionError):
     """Provider returned a terminal response that cannot contain an action."""
 
     terminal_code = "provider_content_filter"
+
+
+class GovernedProviderResponseError(GovernedDecisionError):
+    """Provider returned a malformed envelope that cannot contain an action."""
+
+    terminal_code = "provider_invalid_response"
+
+
+class GovernedSupervisionError(GovernedDecisionError):
+    """A local supervised-run invariant rejected provider dispatch."""
+
+
+class GovernedProviderPinError(GovernedSupervisionError):
+    """Strict supervision requires an explicit upstream provider pin."""
+
+    terminal_code = "provider_pin_missing"
+
+
+class GovernedProviderIdentityError(GovernedSupervisionError):
+    """Returned provider/model identity could not satisfy the run contract."""
+
+    terminal_code = "provider_identity_unverified"
+
+
+class GovernedUsageAccountingError(GovernedSupervisionError):
+    """A returned billable response could not be accounted locally."""
+
+    terminal_code = "provider_usage_unaccounted"
+
+
+class GovernedBudgetCapError(GovernedSupervisionError):
+    """A subsequent provider dispatch was blocked by the run budget."""
+
+    terminal_code = "budget_cap_exceeded"
 
 
 class GovernedReviewContractError(GovernedDecisionError):
@@ -469,6 +508,11 @@ class DFHackGovernedLLMAgent(Agent):
     Pass ``None`` to disable persistence entirely, or an explicit path string.
     """
 
+    _total_tokens: int
+    _total_cost_usd: Decimal
+    _returned_response_count: int
+    _accounted_response_count: int
+
     def __init__(
         self,
         *,
@@ -483,6 +527,10 @@ class DFHackGovernedLLMAgent(Agent):
         omit_temperature: bool = False,
         memory_window: int | None = None,
         max_advance_ticks: int = 2000,
+        provider_name: str | None | object = _PROVIDER_NAME_UNSET,
+        strict_supervised: bool | None = None,
+        max_total_tokens: int | None = None,
+        max_cost_usd: float | None = None,
     ) -> None:
         self._vision = vision
         self._max_tokens = max_tokens
@@ -490,11 +538,31 @@ class DFHackGovernedLLMAgent(Agent):
         self._prompt_cache = prompt_cache
         self._omit_temperature = omit_temperature
         self._session_id: str | None = None
+        self._campaign_id: str | None = None
         self._max_advance_ticks = max_advance_ticks
         self._settings = get_settings()
-        self._api_key = api_key if api_key is not None else self._settings.OPENROUTER_API_KEY
-        if not self._api_key:
-            raise RuntimeError("OPENROUTER_API_KEY not configured")
+        self._api_key = self._resolve_transport_key(api_key)
+        configured_provider = (
+            self._settings.OPENROUTER_PROVIDER_NAME
+            if provider_name is _PROVIDER_NAME_UNSET
+            else provider_name
+        )
+        self._provider_name = self._normalize_provider_name(configured_provider)
+        self._strict_supervised = self._validate_strict_supervised(
+            self._settings.OPENROUTER_STRICT_SUPERVISED
+            if strict_supervised is None
+            else strict_supervised
+        )
+        self._max_total_tokens = self._validate_max_total_tokens(
+            self._settings.OPENROUTER_MAX_TOTAL_TOKENS
+            if max_total_tokens is None
+            else max_total_tokens
+        )
+        self._max_cost_usd = self._validate_max_cost_usd(
+            self._settings.OPENROUTER_MAX_COST_USD if max_cost_usd is None else max_cost_usd
+        )
+        self._max_cost_decimal = Decimal(str(self._max_cost_usd))
+        self._reset_budget_usage()
         self._model = model_override or self._settings.OPENROUTER_MODEL
         self._max_attempts = (
             self._settings.OPENROUTER_MAX_ATTEMPTS if max_attempts is None else max_attempts
@@ -502,20 +570,188 @@ class DFHackGovernedLLMAgent(Agent):
         self._client = None
         self._last_call = 0.0
         self._memory = MemoryManager(
-            window_size=(
-                self._settings.MEMORY_WINDOW if memory_window is None else memory_window
-            )
+            window_size=(self._settings.MEMORY_WINDOW if memory_window is None else memory_window)
         )
         self._tool_events: List[Dict[str, Any]] = []
         self._pending: Optional[Dict[str, Any]] = None
         self._memory_path = self._resolve_memory_path(memory_path)
         self._load_memory()
 
-    def set_run_context(self, *, run_id: str) -> None:
+    def _resolve_transport_key(self, api_key: str | None) -> str | None:
+        """Hosted transport requires its credential; local adapters own their auth."""
+        resolved = api_key if api_key is not None else self._settings.OPENROUTER_API_KEY
+        if not resolved:
+            raise RuntimeError("OPENROUTER_API_KEY not configured")
+        return resolved
+
+    def set_run_context(
+        self,
+        *,
+        run_id: str,
+        provider_name: str | None = None,
+        strict_supervised: bool | None = None,
+        max_total_tokens: int | None = None,
+        max_cost_usd: float | None = None,
+    ) -> None:
         """Keep OpenRouter routing and cache affinity stable within one run."""
-        self._session_id = f"fort-gym:{run_id}"
+
+        session_id = (
+            f"fort-gym:campaign:{self._campaign_id}"
+            if self._campaign_id is not None
+            else f"fort-gym:{run_id}"
+        )
+        if session_id != self._session_id:
+            self._reset_budget_usage()
+        self._session_id = session_id
+        if provider_name is not None:
+            self._provider_name = self._normalize_provider_name(provider_name)
+        if strict_supervised is not None:
+            self._strict_supervised = self._validate_strict_supervised(strict_supervised)
+        if max_total_tokens is not None:
+            self._max_total_tokens = self._validate_max_total_tokens(max_total_tokens)
+        if max_cost_usd is not None:
+            self._max_cost_usd = self._validate_max_cost_usd(max_cost_usd)
+            self._max_cost_decimal = Decimal(str(self._max_cost_usd))
 
     # -- memory persistence ------------------------------------------------
+
+    def set_campaign_context(self, *, campaign_id: str) -> None:
+        """Keep usage and provider affinity across segments of the same fortress."""
+        if not isinstance(campaign_id, str) or not campaign_id.strip() or len(campaign_id) > 128:
+            raise ValueError("campaign_id must be a nonempty string of at most 128 characters")
+        if self._memory_path is not None:
+            raise ValueError("Campaign agents require memory_path=None; use campaign checkpoints")
+        if self._campaign_id is None and (
+            self._returned_response_count or self._total_tokens or self._total_cost_usd
+        ):
+            raise ValueError("Set campaign context on a fresh agent before making model calls")
+        if self._campaign_id is not None and campaign_id != self._campaign_id:
+            raise ValueError("Use a fresh agent for a different campaign")
+        self._campaign_id = campaign_id
+        self.set_run_context(run_id=campaign_id)
+
+    def _checkpoint_configuration(self) -> Dict[str, Any]:
+        return {
+            "model": self._model,
+            "endpoint_sha256": hashlib.sha256(
+                str(self._settings.OPENROUTER_BASE_URL).encode()
+            ).hexdigest(),
+            "provider_name": self._provider_name,
+            "max_attempts": self._max_attempts,
+            "vision": self._vision,
+            "max_tokens": self._max_tokens or self._settings.LLM_MAX_TOKENS,
+            "reasoning_effort": self._reasoning_effort,
+            "reasoning_disabled": self._settings.OPENROUTER_DISABLE_REASONING,
+            "prompt_cache": self._prompt_cache,
+            "omit_temperature": self._omit_temperature,
+            "temperature": None if self._omit_temperature else self._settings.LLM_TEMP,
+            "max_advance_ticks": self._max_advance_ticks,
+            "strict_supervised": self._strict_supervised,
+            "prompt_sha256": hashlib.sha256(
+                (GOVERNED_SYSTEM_PROMPT + GOVERNED_OBSERVATION_PREAMBLE).encode()
+            ).hexdigest(),
+        }
+
+    def export_campaign_state(self) -> Dict[str, Any]:
+        """Snapshot at a committed action boundary; never serialize the API key.
+
+        The pending action is awaiting outcome review, not awaiting execution.
+        The campaign runner must pair this with the matching game checkpoint.
+        """
+        if self._campaign_id is None:
+            raise ValueError("Set campaign context before exporting campaign state")
+        snapshot = GovernedAgentCheckpoint.model_validate(
+            {
+                "campaign_id": self._campaign_id,
+                "configuration": self._checkpoint_configuration(),
+                "memory": self._memory.export_checkpoint(),
+                "pending_outcome": self._pending,
+                "usage": {
+                    "total_tokens": self._total_tokens,
+                    "total_cost_usd": str(self._total_cost_usd),
+                    "returned_responses": self._returned_response_count,
+                    "accounted_responses": self._accounted_response_count,
+                },
+            }
+        )
+        return snapshot.model_dump(mode="json")
+
+    def restore_campaign_state(self, data: Dict[str, Any], *, campaign_id: str) -> None:
+        """Restore before the next decision, retaining cumulative usage across runs."""
+        snapshot = GovernedAgentCheckpoint.model_validate(data)
+        if self._memory_path is not None:
+            raise ValueError("Campaign agents require memory_path=None; use campaign checkpoints")
+        if self._returned_response_count or self._total_tokens or self._total_cost_usd:
+            raise ValueError("Restore into a fresh agent to avoid rolling back spending")
+        if snapshot.campaign_id != campaign_id:
+            raise ValueError("Checkpoint belongs to a different campaign")
+        if self._campaign_id is not None and self._campaign_id != campaign_id:
+            raise ValueError("Use a fresh agent to restore a different campaign")
+        if snapshot.configuration != self._checkpoint_configuration():
+            raise ValueError("Agent configuration differs from the campaign checkpoint")
+        cost = self._nonnegative_decimal(snapshot.usage.total_cost_usd)
+        if cost is None:
+            raise ValueError("Checkpoint cost must be finite and nonnegative")
+        self._memory.restore_checkpoint(snapshot.memory.model_dump(mode="json"))
+        self._campaign_id = campaign_id
+        self._session_id = f"fort-gym:campaign:{campaign_id}"
+        self._pending = (
+            snapshot.pending_outcome.model_dump(mode="json")
+            if snapshot.pending_outcome is not None
+            else None
+        )
+        self._total_tokens = snapshot.usage.total_tokens
+        self._total_cost_usd = cost
+        self._returned_response_count = snapshot.usage.returned_responses
+        self._accounted_response_count = snapshot.usage.accounted_responses
+
+    @staticmethod
+    def _normalize_provider_name(provider_name: object) -> str | None:
+        if provider_name is None:
+            return None
+        if not isinstance(provider_name, str):
+            raise ValueError("provider_name must be a string or None")
+        return provider_name.strip() or None
+
+    @staticmethod
+    def _validate_strict_supervised(value: bool) -> bool:
+        if not isinstance(value, bool):
+            raise ValueError("strict_supervised must be a boolean")
+        return value
+
+    @staticmethod
+    def _validate_max_total_tokens(value: int) -> int:
+        if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+            raise ValueError("max_total_tokens must be a positive integer")
+        return value
+
+    @staticmethod
+    def _validate_max_cost_usd(value: float) -> float:
+        if isinstance(value, bool):
+            raise ValueError("max_cost_usd must be positive and finite")
+        try:
+            normalized = float(value)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("max_cost_usd must be positive and finite") from exc
+        if not math.isfinite(normalized) or normalized <= 0:
+            raise ValueError("max_cost_usd must be positive and finite")
+        return normalized
+
+    def _reset_budget_usage(self) -> None:
+        self._total_tokens = 0
+        self._total_cost_usd = Decimal("0")
+        self._returned_response_count = 0
+        self._accounted_response_count = 0
+
+    def _budget_snapshot(self) -> Dict[str, Any]:
+        return {
+            "returned_responses": self._returned_response_count,
+            "accounted_responses": self._accounted_response_count,
+            "total_tokens": self._total_tokens,
+            "total_cost_usd": float(self._total_cost_usd),
+            "max_total_tokens": self._max_total_tokens,
+            "max_cost_usd": self._max_cost_usd,
+        }
 
     def _resolve_memory_path(self, memory_path: str | None) -> Path | None:
         if memory_path is None:
@@ -592,6 +828,72 @@ class DFHackGovernedLLMAgent(Agent):
             time.sleep(wait)
         self._last_call = time.monotonic()
 
+    def _pre_dispatch_gate(self) -> None:
+        error: GovernedSupervisionError
+        if self._strict_supervised and self._provider_name is None:
+            error = GovernedProviderPinError(
+                "strict supervised OpenRouter dispatch requires provider_name",
+                provider_route="openrouter",
+                provider_name=None,
+            )
+            self._tool_events.append(
+                {
+                    "tool": "governed_llm.pre_dispatch_gate",
+                    "input": {"model": self._model},
+                    "output": {
+                        "allowed": False,
+                        "terminal_code": error.terminal_code,
+                    },
+                }
+            )
+            raise error
+
+        caps_reached = []
+        if self._total_tokens >= self._max_total_tokens:
+            caps_reached.append("tokens")
+        if self._total_cost_usd >= self._max_cost_decimal:
+            caps_reached.append("usd")
+        if not caps_reached:
+            return
+
+        budget = self._budget_snapshot()
+        error = GovernedBudgetCapError(
+            "OpenRouter run budget cap reached before provider dispatch",
+            caps_reached=caps_reached,
+            budget=budget,
+        )
+        self._tool_events.append(
+            {
+                "tool": "governed_llm.pre_dispatch_gate",
+                "input": {
+                    "model": self._model,
+                    "provider_name": self._provider_name,
+                },
+                "output": {
+                    "allowed": False,
+                    "terminal_code": error.terminal_code,
+                    "caps_reached": caps_reached,
+                    "budget": budget,
+                },
+            }
+        )
+        raise error
+
+    def _dispatch_completion(self, completion_kwargs: Dict[str, Any]) -> Any:
+        """Apply the same local gate to every initial, retry, and degraded call."""
+
+        self._pre_dispatch_gate()
+        self._rate_limit()
+        response = self._client_instance().chat.completions.create(**completion_kwargs)
+        return self._accept_provider_response(response)
+
+    def _action_tool(self) -> Dict[str, Any]:
+        """Versioned decision profiles may replace grammar, not transport accounting."""
+        return _submit_action_tool(max_advance_ticks=self._max_advance_ticks)
+
+    def _json_action_transport_instruction(self) -> str:
+        return _GLM52_JSON_TRANSPORT_INSTRUCTION
+
     def _create_completion(self, messages: List[Dict[str, Any]]) -> Any:
         request_messages = [dict(message) for message in messages]
         if self._prompt_cache == "explicit_ephemeral" and request_messages:
@@ -610,11 +912,11 @@ class DFHackGovernedLLMAgent(Agent):
             request_kwargs: Dict[str, Any] = {"response_format": {"type": "json_object"}}
             request_messages = [
                 *messages,
-                {"role": "user", "content": _GLM52_JSON_TRANSPORT_INSTRUCTION},
+                {"role": "user", "content": self._json_action_transport_instruction()},
             ]
         else:
             request_kwargs = {
-                "tools": [_submit_action_tool(max_advance_ticks=self._max_advance_ticks)],
+                "tools": [self._action_tool()],
                 "tool_choice": {
                     "type": "function",
                     "function": {"name": "submit_action"},
@@ -632,6 +934,11 @@ class DFHackGovernedLLMAgent(Agent):
             extra_body["session_id"] = self._session_id
             if self._prompt_cache == "automatic":
                 extra_body["prompt_cache_key"] = self._session_id
+        if self._provider_name:
+            extra_body["provider"] = {
+                "order": [self._provider_name],
+                "allow_fallbacks": False,
+            }
         if extra_body:
             request_kwargs["extra_body"] = extra_body
         completion_kwargs: Dict[str, Any] = {
@@ -646,17 +953,19 @@ class DFHackGovernedLLMAgent(Agent):
         last_exc: Exception | None = None
         for attempt in range(max_attempts):
             try:
-                self._rate_limit()
-                response = self._client_instance().chat.completions.create(
-                    **completion_kwargs
-                )
-                return self._reject_blocked_provider_finish(response)
-            except GovernedProviderFinishError as exc:
+                return self._dispatch_completion(completion_kwargs)
+            except GovernedSupervisionError:
+                raise
+            except (GovernedProviderFinishError, GovernedProviderResponseError) as exc:
                 last_exc = exc
                 will_retry = attempt + 1 < max_attempts
                 self._tool_events.append(
                     {
-                        "tool": "governed_llm.provider_finish_retry",
+                        "tool": (
+                            "governed_llm.provider_finish_retry"
+                            if isinstance(exc, GovernedProviderFinishError)
+                            else "governed_llm.provider_response_retry"
+                        ),
                         "input": {"model": self._model, "attempt": attempt + 1},
                         "output": {
                             **exc.terminal_details,
@@ -688,11 +997,9 @@ class DFHackGovernedLLMAgent(Agent):
                         }
                     )
                     try:
-                        self._rate_limit()
-                        response = self._client_instance().chat.completions.create(
-                            **completion_kwargs
-                        )
-                        return self._reject_blocked_provider_finish(response)
+                        return self._dispatch_completion(completion_kwargs)
+                    except GovernedSupervisionError:
+                        raise
                     except Exception as retry_exc:
                         exc = retry_exc
                 # some providers (e.g. Z.AI vision endpoints) reject forced
@@ -711,13 +1018,34 @@ class DFHackGovernedLLMAgent(Agent):
                         }
                     )
                     try:
-                        self._rate_limit()
-                        response = self._client_instance().chat.completions.create(
-                            **completion_kwargs
-                        )
-                        return self._reject_blocked_provider_finish(response)
+                        return self._dispatch_completion(completion_kwargs)
+                    except GovernedSupervisionError:
+                        raise
                     except Exception as retry_exc:
                         exc = retry_exc
+                if isinstance(
+                    exc,
+                    (GovernedProviderFinishError, GovernedProviderResponseError),
+                ):
+                    last_exc = exc
+                    will_retry = attempt + 1 < max_attempts
+                    self._tool_events.append(
+                        {
+                            "tool": (
+                                "governed_llm.provider_finish_retry"
+                                if isinstance(exc, GovernedProviderFinishError)
+                                else "governed_llm.provider_response_retry"
+                            ),
+                            "input": {"model": self._model, "attempt": attempt + 1},
+                            "output": {
+                                **exc.terminal_details,
+                                "retrying": will_retry,
+                            },
+                        }
+                    )
+                    if will_retry:
+                        time.sleep(min(2.0 * (attempt + 1), 5.0))
+                    continue
                 last_exc = exc
                 will_retry = attempt + 1 < max_attempts
                 self._tool_events.append(
@@ -733,18 +1061,101 @@ class DFHackGovernedLLMAgent(Agent):
                 )
                 if will_retry:
                     time.sleep(min(2.0 * (attempt + 1), 5.0))
-        if isinstance(last_exc, GovernedProviderFinishError):
+        if isinstance(
+            last_exc,
+            (GovernedProviderFinishError, GovernedProviderResponseError),
+        ):
             last_exc.terminal_details["attempts"] = max_attempts
             raise last_exc
         raise RuntimeError(f"openrouter request failed after {max_attempts} attempts") from last_exc
 
-    def _reject_blocked_provider_finish(self, response: Any) -> Any:
-        choices = list(self._field(response, "choices") or [])
+    def _accept_provider_response(self, response: Any) -> Any:
+        """Record a returned envelope once, then validate it for extraction."""
+
+        telemetry = self._record_response_telemetry(response)
+        self._verify_returned_provider_identity(telemetry)
+        choices = self._response_choices(response)
+        telemetry["output"]["choice_count"] = len(choices) if choices is not None else None
+        telemetry["output"]["finish_reasons"] = [
+            self._field(choice, "finish_reason")
+            for choice in (choices or [])
+            if self._field(choice, "finish_reason") is not None
+        ]
+        if choices is None:
+            raise GovernedProviderResponseError(
+                "provider returned a malformed choices envelope",
+                reason="malformed_choices",
+                choice_count=None,
+                provider_error=self._bounded_provider_error(response),
+                generation_id=self._field(response, "id"),
+            )
+        if not choices:
+            raise GovernedProviderResponseError(
+                "provider returned no choices",
+                reason="empty_choices",
+                choice_count=0,
+                provider_error=self._bounded_provider_error(response),
+                generation_id=self._field(response, "id"),
+            )
+        return self._reject_blocked_provider_finish(response, choices)
+
+    def _verify_returned_provider_identity(self, telemetry: Dict[str, Any]) -> None:
+        """Prove a strict response came from the exact pinned provider/model.
+
+        OpenRouter's request body expresses the routing intent, but the
+        generation record is the returned serving identity. A strict worker
+        accounts the response first, then terminates without retry when that
+        identity is absent or different. This prevents a fallback response from
+        being treated as an ordinary malformed answer and retried at more cost.
+        """
+
+        output = telemetry.get("output") or {}
+        if not self._strict_supervised:
+            output["identity_validation"] = {"status": "not_required"}
+            return
+
+        generation = output.get("generation") or {}
+        resolved_model = output.get("resolved_model")
+        generation_status = generation.get("status")
+        resolved_provider = generation.get("provider_name")
+        generation_model = generation.get("model")
+        mismatches: list[str] = []
+        if resolved_model != self._model:
+            mismatches.append("response_model")
+        if generation_status != "available":
+            mismatches.append("generation_metadata")
+        else:
+            if resolved_provider != self._provider_name:
+                mismatches.append("provider_name")
+            if generation_model != self._model:
+                mismatches.append("generation_model")
+
+        validation = {
+            "status": "verified" if not mismatches else "rejected",
+            "expected_provider_name": self._provider_name,
+            "expected_model": self._model,
+            "resolved_provider_name": resolved_provider,
+            "response_model": resolved_model,
+            "generation_model": generation_model,
+            "mismatches": mismatches,
+        }
+        output["identity_validation"] = validation
+        if mismatches:
+            raise GovernedProviderIdentityError(
+                "strict supervised OpenRouter response identity is unverified",
+                **validation,
+            )
+
+    def _reject_blocked_provider_finish(
+        self,
+        response: Any,
+        choices: List[Any] | None = None,
+    ) -> Any:
+        if choices is None:
+            choices = self._response_choices(response) or []
         finish_reasons = [
             str(reason)
-            for reason in (
-                self._field(choice, "finish_reason") for choice in choices
-            )
+            for reason in (self._field(choice, "finish_reason") for choice in choices)
             if reason is not None
         ]
         blocked = sorted(
@@ -757,7 +1168,6 @@ class DFHackGovernedLLMAgent(Agent):
         if not blocked:
             return response
 
-        self._record_response_telemetry(response, choices)
         generation_id = self._field(response, "id")
         raise GovernedProviderFinishError(
             "provider blocked the governed action response: " + ", ".join(blocked),
@@ -858,9 +1268,7 @@ class DFHackGovernedLLMAgent(Agent):
             normalized["advance_ticks"] = DEFAULT_ADVANCE_TICKS
         return normalized
 
-    def _normalize_duplicated_objective_length(
-        self, payload: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _normalize_duplicated_objective_length(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         """Bound identical duplicated objective prose at the schema boundary."""
 
         objective = payload.get("objective")
@@ -902,9 +1310,7 @@ class DFHackGovernedLLMAgent(Agent):
         )
         return normalized
 
-    def _normalize_objective_quote_artifacts(
-        self, payload: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _normalize_objective_quote_artifacts(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         """Repair one corroborated terminal quote across duplicated objectives."""
 
         plan_review = payload.get("plan_review")
@@ -918,11 +1324,7 @@ class DFHackGovernedLLMAgent(Agent):
 
         def without_lone_terminal_quote(value: str) -> str | None:
             stripped = value.strip()
-            if (
-                stripped.endswith('"')
-                and stripped.count('"') % 2 == 1
-                and stripped[:-1].strip()
-            ):
+            if stripped.endswith('"') and stripped.count('"') % 2 == 1 and stripped[:-1].strip():
                 return stripped[:-1].rstrip()
             return None
 
@@ -1128,8 +1530,7 @@ class DFHackGovernedLLMAgent(Agent):
                 errors.append("AGENT PLAN CONTROL is missing the required previous evidence id")
             last_evidence = last_review.get("evidence")
             if expected_previous_id and (
-                not isinstance(last_evidence, list)
-                or expected_previous_id not in last_evidence
+                not isinstance(last_evidence, list) or expected_previous_id not in last_evidence
             ):
                 errors.append(
                     "last_action_review.evidence must include required evidence id "
@@ -1151,8 +1552,7 @@ class DFHackGovernedLLMAgent(Agent):
                 errors.append("AGENT PLAN CONTROL is missing the previous action fingerprint")
             elif fingerprint_action is not None:
                 repeats_previous_action = (
-                    normalized_action_fingerprint(fingerprint_action)
-                    == previous_fingerprint
+                    normalized_action_fingerprint(fingerprint_action) == previous_fingerprint
                 )
                 if retry_is_bool and retry_same_action != repeats_previous_action:
                     errors.append(
@@ -1202,22 +1602,16 @@ class DFHackGovernedLLMAgent(Agent):
         )
         if plan_objective_error:
             errors.append(f"{plan_objective_error} (expected {objective!r})")
-        elif self._normalized_objective(
-            plan_review.get("objective")
-        ) != self._normalized_objective(objective):
-            errors.append(
-                "plan_review.objective must equal objective "
-                f"(expected {objective!r})"
-            )
+        elif self._normalized_objective(plan_review.get("objective")) != self._normalized_objective(
+            objective
+        ):
+            errors.append("plan_review.objective must equal objective " f"(expected {objective!r})")
 
         steps = plan_review.get("steps")
         if steps is not None and (
             not isinstance(steps, list)
             or any(
-                not isinstance(step, str)
-                or not step.strip()
-                or "\n" in step
-                or "\r" in step
+                not isinstance(step, str) or not step.strip() or "\n" in step or "\r" in step
                 for step in steps
             )
         ):
@@ -1239,9 +1633,7 @@ class DFHackGovernedLLMAgent(Agent):
                 errors.append(error)
 
         plan_evidence = plan_review.get("evidence")
-        evidence_error = self._evidence_error(
-            plan_evidence, evidence_text, "plan_review.evidence"
-        )
+        evidence_error = self._evidence_error(plan_evidence, evidence_text, "plan_review.evidence")
         if evidence_error:
             errors.append(evidence_error)
         if not isinstance(plan_evidence, list) or len(plan_evidence) < 2:
@@ -1269,9 +1661,7 @@ class DFHackGovernedLLMAgent(Agent):
                 "Previous action attempt for review:",
                 "Review evidence rule:",
             )
-            matched_contents = [
-                line.split(": ", 1)[-1] for line in matched_lines
-            ]
+            matched_contents = [line.split(": ", 1)[-1] for line in matched_lines]
             if all(line.startswith(control_prefixes) for line in matched_contents):
                 if decision == "complete":
                     errors.append(
@@ -1300,9 +1690,7 @@ class DFHackGovernedLLMAgent(Agent):
             elif decision != "revise":
                 errors.append("same_objective_stalled_2 requires decision=revise")
             if same_objective:
-                errors.append(
-                    "same_objective_stalled_2 requires a genuinely different objective"
-                )
+                errors.append("same_objective_stalled_2 requires a genuinely different objective")
             if (
                 control.get("previous_verdict") in {"rejected", "no_progress"}
                 and repeats_previous_action is True
@@ -1382,7 +1770,9 @@ class DFHackGovernedLLMAgent(Agent):
                 raise
             except Exception as exc:
                 if review_control is not None:
-                    raise RuntimeError(f"governed model call failed before gameplay: {exc}") from exc
+                    raise RuntimeError(
+                        f"governed model call failed before gameplay: {exc}"
+                    ) from exc
                 return self._store_pending(obs_text, self._fallback_wait(f"llm call failed: {exc}"))
 
             payload = self._extract_tool_payload(response)
@@ -1393,16 +1783,12 @@ class DFHackGovernedLLMAgent(Agent):
                 payload = self._normalize_objective_quote_artifacts(payload)
                 payload = self._normalize_duplicated_objective_length(payload)
                 if review_control is not None:
-                    payload = self._normalize_redundant_plan_decision(
-                        payload, review_control
-                    )
+                    payload = self._normalize_redundant_plan_decision(payload, review_control)
                 action_type = str(payload.get("type") or "").upper()
                 canonical_action = None
                 fingerprint_action = None
                 if action_type not in GOVERNED_ACTION_TYPES:
-                    contract_errors.append(
-                        f"illegal action type: {action_type or 'missing'}"
-                    )
+                    contract_errors.append(f"illegal action type: {action_type or 'missing'}")
                 else:
                     fingerprint_payload = {
                         "type": payload.get("type"),
@@ -1460,16 +1846,13 @@ class DFHackGovernedLLMAgent(Agent):
                     else "null"
                 )
                 submitted_objective = (
-                    str(payload.get("objective") or "")
-                    if isinstance(payload, dict)
-                    else None
+                    str(payload.get("objective") or "") if isinstance(payload, dict) else None
                 )
                 prior_objective = str(review_control.get("prior_objective") or "")
                 hard_revision_required = self._requires_hard_revision(review_control)
                 submitted_plan_decision = (
                     payload.get("plan_review", {}).get("decision")
-                    if isinstance(payload, dict)
-                    and isinstance(payload.get("plan_review"), dict)
+                    if isinstance(payload, dict) and isinstance(payload.get("plan_review"), dict)
                     else None
                 )
                 objective_matches_prior = (
@@ -1506,8 +1889,7 @@ class DFHackGovernedLLMAgent(Agent):
                 )
                 detected_errors = contract_errors or [last_error]
                 evidence_correction_needed = any(
-                    "evidence" in error.lower()
-                    or "current game-state fact" in error.lower()
+                    "evidence" in error.lower() or "current game-state fact" in error.lower()
                     for error in detected_errors
                 )
                 if required_plan_decision in {
@@ -1516,9 +1898,7 @@ class DFHackGovernedLLMAgent(Agent):
                     "revise",
                     "complete",
                 }:
-                    decision_correction_needed = (
-                        submitted_plan_decision != required_plan_decision
-                    )
+                    decision_correction_needed = submitted_plan_decision != required_plan_decision
                 elif required_plan_decision == "not_due or continue":
                     decision_correction_needed = submitted_plan_decision not in {
                         "not_due",
@@ -1538,9 +1918,7 @@ class DFHackGovernedLLMAgent(Agent):
                     "plan_review_reasons": review_control.get("reasons"),
                     "locked_required_plan_decision": locked_required_plan_decision,
                     "required_plan_decision_for_submitted_objective": required_plan_decision,
-                    "required_previous_evidence_id": review_control.get(
-                        "previous_evidence_id"
-                    ),
+                    "required_previous_evidence_id": review_control.get("previous_evidence_id"),
                     "submitted_objective": submitted_objective,
                     "submitted_objective_matches_prior": objective_matches_prior,
                     "submitted_plan_decision": submitted_plan_decision,
@@ -1611,9 +1989,7 @@ class DFHackGovernedLLMAgent(Agent):
                     ensure_ascii=True,
                     sort_keys=True,
                 )
-                validation_feedback = "\n".join(
-                    f"- {error}" for error in detected_errors
-                )
+                validation_feedback = "\n".join(f"- {error}" for error in detected_errors)
                 focused_repairs = " ".join(repair_instructions)
                 self._tool_events.append(
                     {
@@ -1665,25 +2041,23 @@ class DFHackGovernedLLMAgent(Agent):
         return action
 
     def _extract_tool_payload(self, response: Any) -> Optional[Dict[str, Any]]:
-        try:
-            choices = getattr(response, "choices", None) or []
-            message = getattr(choices[0], "message", None)
-            tool_calls = getattr(message, "tool_calls", None) or []
-        except (IndexError, AttributeError):
+        choices = self._response_choices(response)
+        if not choices:
             return None
-        self._record_response_telemetry(response, choices)
+        message = self._field(choices[0], "message")
+        tool_calls = self._field(message, "tool_calls") or []
         for call in tool_calls:
-            function = getattr(call, "function", None)
-            if getattr(function, "name", "") != "submit_action":
+            function = self._field(call, "function")
+            if self._field(function, "name", "") != "submit_action":
                 continue
             try:
-                arguments = json.loads(getattr(function, "arguments", "") or "{}")
+                arguments = json.loads(self._field(function, "arguments", "") or "{}")
             except json.JSONDecodeError:
                 return None
             return arguments if isinstance(arguments, dict) else None
         # some providers (e.g. Kimi with mandatory reasoning) answer with the
         # action as JSON in the text body instead of a tool call
-        payload = self._json_payload_from_text(getattr(message, "content", None))
+        payload = self._json_payload_from_text(self._field(message, "content"))
         if payload is not None:
             self._tool_events.append(
                 {
@@ -1696,15 +2070,49 @@ class DFHackGovernedLLMAgent(Agent):
 
     @staticmethod
     def _field(value: Any, name: str, default: Any = None) -> Any:
-        if isinstance(value, dict):
+        if isinstance(value, Mapping):
             return value.get(name, default)
         return getattr(value, name, default)
+
+    @classmethod
+    def _response_choices(cls, response: Any) -> List[Any] | None:
+        try:
+            choices = cls._field(response, "choices")
+        except Exception:
+            return None
+        if isinstance(choices, (str, bytes, bytearray, Mapping)):
+            return None
+        if not isinstance(choices, Sequence):
+            return None
+        return list(choices)
+
+    @classmethod
+    def _bounded_provider_error(cls, response: Any) -> str | None:
+        provider_error = cls._field(response, "error")
+        if provider_error is None:
+            return None
+        error_mapping = cls._plain_mapping(provider_error)
+        if error_mapping:
+            candidate = next(
+                (
+                    error_mapping.get(field)
+                    for field in ("message", "code", "type")
+                    if error_mapping.get(field) is not None
+                ),
+                "provider_error_present",
+            )
+        elif isinstance(provider_error, (str, int, float, bool)):
+            candidate = provider_error
+        else:
+            candidate = type(provider_error).__name__
+        sanitized = re.sub(r"\s+", " ", str(candidate)).strip()
+        return sanitized[:_MAX_PROVIDER_ERROR_LENGTH] or "provider_error_present"
 
     @classmethod
     def _plain_mapping(cls, value: Any) -> Dict[str, Any]:
         if value is None:
             return {}
-        if isinstance(value, dict):
+        if isinstance(value, Mapping):
             return dict(value)
         dump = getattr(value, "model_dump", None)
         if callable(dump):
@@ -1712,6 +2120,117 @@ class DFHackGovernedLLMAgent(Agent):
             return dict(data) if isinstance(data, dict) else {}
         data = getattr(value, "__dict__", None)
         return dict(data) if isinstance(data, dict) else {}
+
+    @staticmethod
+    def _nonnegative_integer(value: Any) -> int | None:
+        if value is None or isinstance(value, bool):
+            return None
+        try:
+            parsed = Decimal(str(value))
+        except (InvalidOperation, TypeError, ValueError):
+            return None
+        if not parsed.is_finite() or parsed < 0 or parsed != parsed.to_integral_value():
+            return None
+        return int(parsed)
+
+    @staticmethod
+    def _nonnegative_decimal(value: Any) -> Decimal | None:
+        if value is None or isinstance(value, bool):
+            return None
+        try:
+            parsed = Decimal(str(value))
+        except (InvalidOperation, TypeError, ValueError):
+            return None
+        if not parsed.is_finite() or parsed < 0:
+            return None
+        return parsed
+
+    @classmethod
+    def _response_total_tokens(cls, usage: Any) -> int | None:
+        total = cls._nonnegative_integer(cls._field(usage, "total_tokens"))
+        if total is not None:
+            return total
+        prompt = cls._nonnegative_integer(
+            cls._field(usage, "prompt_tokens", cls._field(usage, "input_tokens"))
+        )
+        completion = cls._nonnegative_integer(
+            cls._field(
+                usage,
+                "completion_tokens",
+                cls._field(usage, "output_tokens"),
+            )
+        )
+        # A missing component is unknown, not a zero-token component.
+        if prompt is None or completion is None:
+            return None
+        return prompt + completion
+
+    def _accumulate_response_usage(
+        self,
+        response: Any,
+        event: Dict[str, Any],
+    ) -> None:
+        usage = self._field(response, "usage")
+        response_tokens = self._response_total_tokens(usage)
+        response_cost = self._nonnegative_decimal(self._field(usage, "cost"))
+        generation_id = self._field(response, "id")
+        provider_error = self._bounded_provider_error(response)
+        self._returned_response_count += 1
+
+        if response_tokens is not None:
+            self._total_tokens += response_tokens
+        if response_cost is not None:
+            self._total_cost_usd += response_cost
+
+        billable_signal = any(
+            value is not None
+            for value in (
+                generation_id,
+                response_tokens,
+                response_cost,
+                *(
+                    self._field(usage, field)
+                    for field in (
+                        "prompt_tokens",
+                        "completion_tokens",
+                        "input_tokens",
+                        "output_tokens",
+                    )
+                ),
+            )
+        )
+        nonbillable_provider_error = not billable_signal and provider_error is not None
+        missing_fields = [
+            field
+            for field, value in (
+                ("total_tokens", response_tokens),
+                ("cost", response_cost),
+            )
+            if value is None
+        ]
+        if not missing_fields:
+            self._accounted_response_count += 1
+            status = "accounted"
+        elif nonbillable_provider_error:
+            status = "nonbillable_provider_error"
+        else:
+            status = "unaccounted"
+
+        event["output"]["accounting"] = {
+            "status": status,
+            "response_tokens": response_tokens,
+            "response_cost_usd": (float(response_cost) if response_cost is not None else None),
+            "missing_fields": missing_fields,
+        }
+        event["output"]["budget"] = self._budget_snapshot()
+
+        if self._strict_supervised and status == "unaccounted":
+            raise GovernedUsageAccountingError(
+                "strict supervised OpenRouter response has unaccounted billable usage",
+                generation_id=generation_id,
+                missing_fields=missing_fields,
+                budget=self._budget_snapshot(),
+            )
 
     def _generation_metadata(self, generation_id: str | None) -> Dict[str, Any]:
         if not generation_id:
@@ -1747,46 +2266,53 @@ class DFHackGovernedLLMAgent(Agent):
                 "message": str(exc)[:240],
             }
 
-    def _record_response_telemetry(self, response: Any, choices: List[Any]) -> None:
+    def _record_response_telemetry(self, response: Any) -> Dict[str, Any]:
         usage = self._field(response, "usage")
         prompt_details = self._plain_mapping(self._field(usage, "prompt_tokens_details"))
-        completion_details = self._plain_mapping(
-            self._field(usage, "completion_tokens_details")
-        )
+        completion_details = self._plain_mapping(self._field(usage, "completion_tokens_details"))
         generation_id = self._field(response, "id")
-        finish_reasons = [
-            self._field(choice, "finish_reason")
-            for choice in choices
-            if self._field(choice, "finish_reason") is not None
-        ]
-        self._tool_events.append(
-            {
-                "tool": "openrouter.chat.completions.create",
-                "input": {
-                    "model": self._model,
-                    "session_id": self._session_id,
-                    "reasoning_effort": self._reasoning_effort,
-                    "prompt_cache": self._prompt_cache or "automatic",
-                    "max_tokens": self._max_tokens or self._settings.LLM_MAX_TOKENS,
-                    "vision": self._vision,
-                },
-                "output": {
-                    "generation_id": generation_id,
-                    "resolved_model": self._field(response, "model"),
-                    "finish_reasons": finish_reasons,
-                    "prompt_tokens": self._field(usage, "prompt_tokens"),
-                    "completion_tokens": self._field(usage, "completion_tokens"),
-                    "total_tokens": self._field(usage, "total_tokens"),
-                    "cached_tokens": prompt_details.get("cached_tokens"),
-                    "cache_write_tokens": prompt_details.get("cache_write_tokens"),
-                    "reasoning_tokens": completion_details.get("reasoning_tokens"),
-                    "cost": self._field(usage, "cost"),
-                    "cost_details": self._plain_mapping(self._field(usage, "cost_details")),
-                    "is_byok": self._field(usage, "is_byok"),
-                    "generation": self._generation_metadata(generation_id),
-                },
+        event: Dict[str, Any] = {
+            "tool": "openrouter.chat.completions.create",
+            "input": {
+                "model": self._model,
+                "provider_route": "openrouter",
+                "provider_name": self._provider_name,
+                "strict_supervised": self._strict_supervised,
+                "session_id": self._session_id,
+                "reasoning_effort": self._reasoning_effort,
+                "prompt_cache": self._prompt_cache or "automatic",
+                "max_tokens": self._max_tokens or self._settings.LLM_MAX_TOKENS,
+                "vision": self._vision,
+            },
+            "output": {
+                "generation_id": generation_id,
+                "resolved_model": self._field(response, "model"),
+                "choice_count": None,
+                "provider_error": self._bounded_provider_error(response),
+                "finish_reasons": [],
+                "prompt_tokens": self._field(usage, "prompt_tokens"),
+                "completion_tokens": self._field(usage, "completion_tokens"),
+                "total_tokens": self._field(usage, "total_tokens"),
+                "cached_tokens": prompt_details.get("cached_tokens"),
+                "cache_write_tokens": prompt_details.get("cache_write_tokens"),
+                "reasoning_tokens": completion_details.get("reasoning_tokens"),
+                "cost": self._field(usage, "cost"),
+                "cost_details": self._plain_mapping(self._field(usage, "cost_details")),
+                "is_byok": self._field(usage, "is_byok"),
+                "generation": {"status": "pending"},
+            },
+        }
+        self._tool_events.append(event)
+        try:
+            self._accumulate_response_usage(response, event)
+        except GovernedUsageAccountingError:
+            event["output"]["generation"] = {
+                "status": "not_requested",
+                "reason": "usage_accounting_failed",
             }
-        )
+            raise
+        event["output"]["generation"] = self._generation_metadata(generation_id)
+        return event
 
     @staticmethod
     def _json_payload_from_text(content: Any) -> Optional[Dict[str, Any]]:

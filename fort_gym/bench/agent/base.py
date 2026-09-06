@@ -6,8 +6,8 @@ import random
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Dict, List
 
-from ..env.actions import ALLOWED_TYPES, parse_action
 from ..dfhack_backend import ALLOWED_ITEMS
+from ..env.actions import ALLOWED_TYPES, parse_action
 
 
 class Agent(ABC):
@@ -21,9 +21,25 @@ class Agent(ABC):
         """Return tool-call events emitted during the last decision step."""
         return []
 
+    def preflight_decision(self, obs_text: str, obs_json: Dict[str, Any]) -> None:
+        """Read-only decision checks: no inference, state mutation or game action."""
+        return None
+
     def set_run_context(self, *, run_id: str) -> None:
         """Attach stable, non-gameplay context for one benchmark run."""
         return None
+
+    def set_campaign_context(self, *, campaign_id: str) -> None:
+        """Opt into continuous campaign identity rather than independent runs."""
+        raise NotImplementedError("This agent does not support persistent campaigns")
+
+    def export_campaign_state(self) -> Dict[str, Any]:
+        """Export state at a committed action boundary, excluding credentials."""
+        raise NotImplementedError("This agent does not support campaign checkpoints")
+
+    def restore_campaign_state(self, data: Dict[str, Any], *, campaign_id: str) -> None:
+        """Restore a fresh agent before the next decision in the same campaign."""
+        raise NotImplementedError("This agent does not support campaign checkpoints")
 
 
 class RandomAgent(Agent):
