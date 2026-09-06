@@ -57,7 +57,9 @@ def verify_snapshot(directory: Path, expected_digest: str) -> dict[str, Any]:
     return result
 
 
-def prepare_runtime(source: Path, destination: Path, snapshot: Path, *, port: int) -> None:
+def prepare_runtime(
+    source: Path, destination: Path, snapshot: Path, *, port: int, hook_source: Path | None = None
+) -> None:
     if not 1024 <= port <= 65535 or port == 5000:
         raise CampaignSaveError("Use a dedicated non-production unprivileged RPC port")
     if (
@@ -73,7 +75,10 @@ def prepare_runtime(source: Path, destination: Path, snapshot: Path, *, port: in
     for name in RUNTIME_FILES:
         shutil.copy2(source / name, destination / name)
     for name in RUNTIME_DIRECTORIES:
-        if not (source / name).is_dir():
+        directory_source = (
+            hook_source if name == "hook" and hook_source is not None else source / name
+        )
+        if not directory_source.is_dir():
             continue
 
         def exclude(path, names):
@@ -81,7 +86,7 @@ def prepare_runtime(source: Path, destination: Path, snapshot: Path, *, port: in
                 return set(names) & {"save"}
             return set()
 
-        shutil.copytree(source / name, destination / name, ignore=exclude)
+        shutil.copytree(directory_source, destination / name, ignore=exclude)
     config = destination / "dfhack-config/remote-server.json"
     config.parent.mkdir(exist_ok=True)
     config.write_text(json.dumps({"allow_remote": False, "port": port}) + "\n")
@@ -182,7 +187,17 @@ def signal_runtime_members(runtime: Path, requested_signal: int) -> None:
                 pass
 
 
-def run_smoke(*, source: Path, snapshot: Path, digest: str, output: Path, port: int, revision: str):
+def run_isolated(
+    *,
+    source: Path,
+    snapshot: Path,
+    digest: str,
+    output: Path,
+    port: int,
+    revision: str,
+    work=None,
+    hook_source: Path | None = None,
+):
     for retained in (source, snapshot):
         if output.resolve() == retained.resolve() or retained.resolve() in output.resolve().parents:
             raise CampaignSaveError("Test output must be outside retained source and snapshot")
@@ -191,18 +206,24 @@ def run_smoke(*, source: Path, snapshot: Path, digest: str, output: Path, port: 
         probe.bind(("127.0.0.1", port))
     output.mkdir(mode=0o700, parents=False, exist_ok=False)
     runtime = output / "runtime"
-    prepare_runtime(source, runtime, snapshot / "native-snapshot", port=port)
+    prepare_runtime(
+        source, runtime, snapshot / "native-snapshot", port=port, hook_source=hook_source
+    )
     environment = runtime_environment(port)
     result: dict[str, Any] = {
-        "schema_version": "fortgym.native-load-smoke/v1",
+        "schema_version": (
+            "fortgym.native-load-smoke/v1"
+            if work is None
+            else "fortgym.isolated-experiment-runtime/v1"
+        ),
         "code_revision": revision,
         "source_snapshot_receipt_sha256": digest,
         "port": port,
         "runtime_path": str(runtime.resolve()),
         "native_load_verified": False,
         "campaign_recovery_verified": False,
-        "provider_calls": 0,
-        "gameplay_ticks_requested": 0,
+        "provider_calls": 0 if work is None else None,
+        "gameplay_ticks_requested": 0 if work is None else None,
         "cleanup_verified": False,
     }
     with (output / "runtime.log").open("xb") as log:
@@ -232,6 +253,8 @@ def run_smoke(*, source: Path, snapshot: Path, digest: str, output: Path, port: 
                 raise CampaignSaveError("Loaded fortress does not match the saved paused calendar")
             verify_snapshot(snapshot, digest)
             result["native_load_verified"] = True
+            if work is not None:
+                result["experiment"] = work(runtime, environment, loaded)
         except Exception as error:
             result["error_type"] = type(error).__name__
             result["error"] = str(error)
@@ -277,6 +300,11 @@ def run_smoke(*, source: Path, snapshot: Path, digest: str, output: Path, port: 
     if not result["cleanup_verified"]:
         raise CampaignSaveError("Test listener still present after process teardown")
     return result
+
+
+def run_smoke(**kwargs):
+    """Keep the provider-free CLI and its historical receipt unchanged."""
+    return run_isolated(**kwargs)
 
 
 def main():
