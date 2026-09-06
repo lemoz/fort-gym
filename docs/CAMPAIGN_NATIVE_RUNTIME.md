@@ -156,6 +156,10 @@ members, a free non-production port, regular owned paths and exact save bytes.
 An exclusive lock serializes callers and a durable single-use claim prevents a
 second attempt, including after a failed launch. No file is deleted or replaced
 to restore a checkpoint; a changed save is rejected, not rolled back.
+If the previous endpoint is closed but temporarily not bindable, restart waits
+up to 90 seconds before claiming or launching anything. This retries only local
+port probes, not game/model operations. A live listener, unknown connectivity,
+owned live process or any other bind error is rejected immediately.
 
 The first preflight includes one checkpoint and the growth allowance above the
 declared floor. Restart reserves no space and checks the floor plus that allowance
@@ -172,6 +176,17 @@ It does not change the historical two-runtime continuation fixture or add runtim
 reuse/retention to the campaign controller. Long campaigns still require a
 separate storage lifecycle. The command does not provision a host or grant
 runtime/deployment authority.
+
+Native observation, September 6: [the v3 recovery fixture evidence](../experiments/evidence/native_output_pause_recovery_20260906.json)
+records successful saving, process teardown, exact-state loading and fresh
+20-tick execution at source `ade9af102`. The original automatic command stopped
+before the second process because its closed port was temporarily not bindable.
+An explicitly retained operator driver completed only the second phase using the
+same frozen implementation and verified checkpoint. Both process lifetimes have
+independently verified teardown. Synthetic usage progressed from 10 to 20 fixture
+tokens, not actual model consumption. The new bounded port-wait correction is
+unit-tested but has not passed a fresh native automatic-command run. Do not
+reclassify this result as an uninterrupted CLI pass, model run or year-two proof.
 
 ## Website and historical compatibility
 

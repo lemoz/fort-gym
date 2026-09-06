@@ -6,6 +6,7 @@ The caller still owns authorization, a clean source checkout and worker bounds.
 
 from __future__ import annotations
 
+import errno
 import fcntl
 import hashlib
 import json
@@ -13,6 +14,7 @@ import os
 import shutil
 import socket
 import stat
+import time
 from pathlib import Path
 from typing import Any
 
@@ -31,6 +33,33 @@ def _owned(path: Path, *, directory: bool) -> None:
     expected = stat.S_ISDIR if directory else stat.S_ISREG
     if not expected(info.st_mode) or info.st_uid != os.getuid() or path.resolve() != path:
         raise CampaignSaveError("Restart paths must be regular, current-user-owned and non-link")
+
+
+def _wait_for_restart_port(runtime: Path, port: int, *, timeout_seconds: float = 90) -> None:
+    """Allow a closed TCP port to settle, without retrying any game operation."""
+    deadline = time.monotonic() + timeout_seconds
+    while True:
+        if runtime_live_members(runtime):
+            raise CampaignSaveError("Previous runtime still has live processes")
+        with socket.socket() as probe:
+            try:
+                probe.bind(("127.0.0.1", port))
+                return
+            except OSError as error:
+                if error.errno != errno.EADDRINUSE:
+                    raise
+        # A live listener is a different condition from delayed TCP port reuse.
+        # Never wait through or displace another service taking this endpoint.
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise CampaignSaveError("Closed restart port did not become bindable before timeout")
+        with socket.socket() as probe:
+            probe.settimeout(min(1, remaining))
+            if probe.connect_ex(("127.0.0.1", port)) != errno.ECONNREFUSED:
+                raise CampaignSaveError("Restart port has a listener or unknown connectivity")
+        if time.monotonic() >= deadline:
+            raise CampaignSaveError("Closed restart port did not become bindable before timeout")
+        time.sleep(min(0.2, max(0, deadline - time.monotonic())))
 
 
 def restart_latest_checkpoint(
@@ -105,10 +134,7 @@ def restart_latest_checkpoint(
                 raise CampaignSaveError("Runtime save differs from its latest checkpoint")
 
         verify_saved_bytes()
-        if runtime_live_members(runtime):
-            raise CampaignSaveError("Previous runtime still has live processes")
-        with socket.socket() as probe:
-            probe.bind(("127.0.0.1", port))
+        _wait_for_restart_port(runtime, port)
         available = shutil.disk_usage(output.parent).free
         if available - growth_allowance_bytes < minimum_free_bytes:
             raise CampaignSaveError("Restart allowance would cross the declared free-space floor")

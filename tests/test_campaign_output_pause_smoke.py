@@ -5,6 +5,7 @@ import json
 import shutil
 from contextlib import nullcontext
 from copy import deepcopy
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -237,3 +238,24 @@ def test_parent_rejects_dirty_source_before_output_creation(tmp_path, monkeypatc
     with pytest.raises(ValueError, match="clean committed"):
         module.run_fixture(SimpleNamespace(output=output))
     assert not output.exists()
+
+
+def test_published_native_fixture_preserves_operator_and_synthetic_proof_limits():
+    root = Path(__file__).resolve().parents[1]
+    evidence = json.loads(
+        (root / "experiments/evidence/native_output_pause_recovery_20260906.json").read_text()
+    )
+    assert evidence["native_output_pause_recovery_verified"] is True
+    assert evidence["automatic_two_phase_cli_verified"] is False
+    assert (
+        evidence["autonomous_gameplay"] is False and evidence["year_two_gameplay_verified"] is False
+    )
+    assert evidence["first_phase_commands"] == 0 and evidence["resumed_phase_commands"] == 1
+    assert evidence["provider_calls"] == 0 and evidence["usage_kind"] == "synthetic_fixture_only"
+    assert evidence["initial_failure"]["second_phase_started"] is False
+    assert evidence["initial_failure"]["time_wait_directly_observed"] is False
+    assert evidence["restored_next_step"] == 0 and evidence["final_next_step"] == 1
+    assert evidence["final_year_tick"] - evidence["initial_year_tick"] == 20
+    assert hashlib.sha256((root / evidence["operator_driver_path"]).read_bytes()).hexdigest() == (
+        evidence["operator_driver_sha256"]
+    )

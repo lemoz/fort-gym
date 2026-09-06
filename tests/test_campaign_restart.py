@@ -1,5 +1,6 @@
 """No-copy restart ownership and exact-save guards; no real game is launched."""
 
+import errno
 import fcntl
 import hashlib
 import json
@@ -273,3 +274,49 @@ def test_shared_lifetime_rechecks_save_and_always_reaps_after_spawn(tmp_path, mo
         assert events[-1] == "reap"
         assert json.loads((output / "result.json").read_text())["cleanup_verified"] is True
         assert ("load" in events) is (fail_at != "before_load")
+
+
+@pytest.mark.parametrize("fault", [None, "listener", "timeout", "live", "other_error"])
+def test_closed_port_wait_is_bounded_and_never_restarts_a_game(tmp_path, monkeypatch, fault):
+    attempts = 0
+    now = 0.0
+
+    def bind(address):
+        nonlocal attempts
+        attempts += 1
+        assert address == ("127.0.0.1", 5501)
+        if fault == "other_error":
+            raise PermissionError(errno.EACCES, "fixture permission failure")
+        if attempts == 1 or fault is not None:
+            raise OSError(errno.EADDRINUSE, "fixture delayed port reuse")
+
+    def sleep(seconds):
+        nonlocal now
+        now += seconds
+
+    monkeypatch.setattr(module.time, "monotonic", lambda: now)
+    monkeypatch.setattr(module.time, "sleep", sleep)
+    monkeypatch.setattr(
+        module, "runtime_live_members", lambda path: {1: "test"} if fault == "live" else {}
+    )
+    monkeypatch.setattr(
+        module.socket,
+        "socket",
+        lambda: nullcontext(
+            SimpleNamespace(
+                bind=bind,
+                settimeout=lambda seconds: None,
+                connect_ex=lambda address: 0 if fault == "listener" else errno.ECONNREFUSED,
+            )
+        ),
+    )
+    if fault is None:
+        module._wait_for_restart_port(tmp_path, 5501, timeout_seconds=0.5)
+        assert attempts == 2 and now == 0.2
+    else:
+        with pytest.raises((module.CampaignSaveError, OSError)):
+            module._wait_for_restart_port(tmp_path, 5501, timeout_seconds=0.5)
+        if fault == "timeout":
+            assert 0.5 <= now <= 0.7
+        else:
+            assert now == 0
