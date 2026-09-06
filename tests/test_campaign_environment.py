@@ -57,7 +57,11 @@ def test_native_adapter_uses_existing_executor_without_assisted_completion(
     assert env.executor._workshop_placement_policy == placement
     assert ("workshop_placement" in state) == (placement == "dfhack_047_ground/v1")
     assert state["year"] == 30 and state["year_tick"] == 19309
-    assert state["campaign_observation_quality"]["native_population_resources_validated"] is True
+    quality = state["campaign_observation_quality"]
+    assert quality["schema_version"] == "fortgym.campaign-observation-quality/v2"
+    assert quality["native_population_and_stock_value_types_validated"] is True
+    assert quality["food_drink_flow_measurement"] == "unavailable"
+    assert "not freshness or accessibility" in quality["stock_validation_scope"]
     assert "survival" not in state  # Do not invent cumulative G7 measurement.
     assert env.apply({"type": "WAIT", "params": {}}, state)["accepted"] is True
     assert env.advance(0, state)[1]["ticks_advanced"] == 0

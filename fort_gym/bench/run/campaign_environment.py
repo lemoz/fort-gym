@@ -72,10 +72,12 @@ class NativeCampaignEnvironment:
             time=native["year_tick"],
         )
         state["campaign_observation_quality"] = {
-            "schema_version": "fortgym.campaign-observation-quality/v1",
-            "native_population_resources_validated": True,
+            "schema_version": "fortgym.campaign-observation-quality/v2",
+            "native_population_and_stock_value_types_validated": True,
             "population_source": "active living native citizens",
-            "food_drink_source": "native ui.tasks.food counters, not production flows",
+            "stock_sources": "see stock_observations; missing source or completeness is unknown",
+            "stock_validation_scope": "nonnegative integer values, not freshness or accessibility",
+            "food_drink_flow_measurement": "unavailable",
         }
         state["fort"] = read_fort_metrics()
         state["crew"] = read_job_metrics()

@@ -20,6 +20,7 @@ STATE_FIELDS = (
     "viewscreen_type",
     "population",
     "stocks",
+    "stock_observations",
     "recent_events",
     "campaign_observation_quality",
     "workshop_placement",

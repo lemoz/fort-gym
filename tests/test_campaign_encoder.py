@@ -18,6 +18,11 @@ def test_factual_campaign_observation_preserves_native_maps_and_unknowns():
         "year_tick": 123,
         "population": 0,
         "stocks": {"food": 0, "drink": None},
+        "stock_observations": {
+            "schema_version": "fortgym.stock-observations/v1",
+            "food": {"freshness": "unverified"},
+            "drink": {"complete": False, "scanned_units": 4, "type_read_failures": 1},
+        },
         "fort": {
             "ok": True,
             "spaces_truncated": True,
@@ -30,6 +35,9 @@ def test_factual_campaign_observation_preserves_native_maps_and_unknowns():
     text, observed = encode(state)
     assert observed["population"] == 0 and observed["stocks"] == {"food": 0, "drink": None}
     assert observed["crew"] == state["crew"] and observed["fort"] == state["fort"]
+    assert observed["stock_observations"] == state["stock_observations"]
+    assert '"freshness": "unverified"' in text and '"complete": false' in text
+    observed["stock_observations"]["drink"]["scanned_units"] = 999
     assert '"drink": null' in text and "Blank=hidden/unreadable" in text
     assert observed["screen_text"] == "native test screen"
     observed["fort"]["map_rows"].append("x")
