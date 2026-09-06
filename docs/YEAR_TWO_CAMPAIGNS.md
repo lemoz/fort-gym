@@ -2,6 +2,9 @@
 
 Owner-approved goal, September 5, 2026. Status: active implementation.
 
+For the latest verified outcome and immediate next work, see
+[Campaign status](CAMPAIGN_STATUS.md).
+
 This document retains historical implementation checkpoints below. Later sections
 supersede earlier candidate-status statements without rewriting old experiment results.
 

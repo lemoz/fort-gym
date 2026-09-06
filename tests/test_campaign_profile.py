@@ -159,6 +159,18 @@ def test_acceptance_and_command_change_are_not_completed_work_or_adaptation_verd
     assert result["metrics"]["completed_workshops"]["change"] == 0
 
 
+def test_adapter_readiness_rejection_is_counted_without_claiming_illegal_placement():
+    blocked = row(accepted=False, kind="BUILD", end=0)
+    blocked["execute"]["why"] = "path_cache_stale"
+    result = profile([blocked])
+    assert result["actions"]["rejected"] == 1
+    assert result["actions"]["path_cache_stale_rejections"] == 1
+    assert result["progress"]["elapsed_ticks"] == 0
+    assert result["fortress_collapse"] == "not_assessed"
+    blocked["execute"]["why"] = "tile_not_designatable"
+    assert profile([blocked])["actions"]["path_cache_stale_rejections"] == 0
+
+
 def test_time_needs_the_canonical_prefix_and_native_calendar():
     rows = [row(step=3)]
     assert profile(rows)["progress"]["elapsed_ticks"] is None

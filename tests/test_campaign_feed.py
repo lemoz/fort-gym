@@ -248,9 +248,8 @@ def test_http_distinguishes_not_connected_from_unavailable(tmp_path, monkeypatch
         lambda: SimpleNamespace(FORT_GYM_PUBLIC_CAMPAIGN_DIR=str(publisher.root)),
     )
     response = client.get("/public/campaign-feed")
-    assert (
-        response.status_code == 200 and response.json()["campaigns"][0]["campaign_id"] == "campaign"
-    )
+    assert response.status_code == 200
+    assert any(row["campaign_id"] == "campaign" for row in response.json()["campaigns"])
     page = client.get("/campaigns")
     assert page.status_code == 200 and 'id="campaign-condition-filter"' in page.text
     assert client.get("/static/campaign-feed.js").status_code == 200

@@ -1,14 +1,51 @@
-"""Synthetic publication checks, not new gameplay or deployment evidence."""
+"""Publication checks and retained-result regressions, not new gameplay/deployment."""
 
 import hashlib
 import json
 
 import pytest
+from fastapi.testclient import TestClient
+from types import SimpleNamespace
 
 from fort_gym.bench.api import campaign_records as records
 from fort_gym.bench.run.campaign_feed import CampaignFeed, initialize_feed
 
 CONFIG = {"condition_id": "test-condition", "models": ["test-model"]}
+
+
+def test_three_published_native_attempts_preserve_distinct_failure_causes():
+    result = records.campaign_feed(None)
+    assert result["configured"] is False and result["published_snapshots"] == 3
+    by_model = {row["model"]: row for row in result["campaigns"]}
+    qwen = by_model["qwen2.5:7b-instruct"]
+    llama = by_model["llama3.1:8b-instruct-q4_K_M"]
+    mistral = by_model["mistral:7b-instruct-v0.3-q4_K_M"]
+    assert (qwen["committed_steps"], qwen["elapsed_ticks"]) == (16, 1600)
+    assert (llama["committed_steps"], llama["elapsed_ticks"]) == (16, 0)
+    assert (mistral["committed_steps"], mistral["elapsed_ticks"]) == (12, 0)
+    assert mistral["actions"]["path_cache_stale_rejections"] == 12
+    assert mistral["checkpoint_verified"] is False
+    assert qwen["checkpoint_verified"] is True and llama["checkpoint_verified"] is True
+    assert sum(row["usage"]["total_tokens"] for row in by_model.values()) == 224746
+    assert sum(row["usage"]["dispatched_requests"] for row in by_model.values()) == 45
+    assert len({row["configuration_sha256"] for row in by_model.values()}) == 1
+    assert len({row["declared_starting_snapshot_receipt_sha256"] for row in by_model.values()}) == 1
+    assert all(row["cleanup_verified"] is True for row in by_model.values())
+    assert all(row["comparison_rankings_available"] is False for row in by_model.values())
+
+
+def test_recorded_comparison_is_served_without_enabling_a_live_directory(monkeypatch):
+    from fort_gym.bench.api import server
+
+    monkeypatch.setattr(
+        server, "get_settings", lambda: SimpleNamespace(FORT_GYM_PUBLIC_CAMPAIGN_DIR=None)
+    )
+    client = TestClient(server.app)
+    response = client.get("/public/campaign-feed")
+    assert response.status_code == 200 and response.json()["configured"] is False
+    assert len(response.json()["campaigns"]) == 3
+    assert "no-store" in response.headers["cache-control"]
+    assert client.get("/campaigns").status_code == 200
 
 
 @pytest.fixture

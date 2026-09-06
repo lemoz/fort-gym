@@ -41,8 +41,10 @@ first.lifecycle = 'running'; first.freshness = 'stale';
 first.elapsed_ticks = 403200; first.current_metrics.population = 0;
 first.code_revision = 'javascript:alert(1)';
 first.usage = {...first.usage, cost_basis:'self_hosted_no_metered_provider', metered_provider_charge_usd:'0', reported_model_cost_usd:null};
-first.actions = {accepted:16, rejected:0, unknown:0, changed_command_after_rejection:0,
-  by_type:{LABOR:{accepted:16, rejected:0, unknown:0}}};
+first.committed_steps = 18;
+first.actions = {accepted:16, rejected:2, unknown:0, changed_command_after_rejection:0,
+  path_cache_stale_rejections:2,
+  by_type:{LABOR:{accepted:16, rejected:0, unknown:0}, BUILD:{accepted:0, rejected:2, unknown:0}}};
 data.campaigns.push({...first, model:'second-model', campaign_id:'second',
   condition_id:'local-native-packed-comparison-v1', code_revision:'a'.repeat(40)});
 let fail = false, malformed = false, requests = 0;
@@ -67,8 +69,9 @@ vm.runInNewContext(fs.readFileSync(process.argv[2], 'utf8'), {
   row.children[0].children[1].events.click();
   assert.match(elements['campaign-profile-detail'].textContent, /not assessed/);
   assert.match(elements['campaign-profile-detail'].textContent, /do not mean zero operating cost/);
-  assert.match(elements['campaign-profile-detail'].textContent, /16 accepted commands; 0 rejected/);
+  assert.match(elements['campaign-profile-detail'].textContent, /16 accepted commands; 2 rejected/);
   assert.match(elements['campaign-profile-detail'].textContent, /can be no-ops or queued work/);
+  assert.match(elements['campaign-profile-detail'].textContent, /2 commands were blocked because the native pathfinding cache was not ready/);
   assert.doesNotMatch(elements['campaign-profile-detail'].textContent, /Exact reported cost:/);
   assert.equal(elements['campaign-profile-detail'].children.some(child => child.href?.startsWith('javascript:')), false);
   elements['campaign-condition-filter'].value = 'local-native-packed-comparison-v1';

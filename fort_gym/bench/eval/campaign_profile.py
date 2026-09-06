@@ -174,6 +174,8 @@ def campaign_profile(
         accepted = execution.get("accepted")
         outcome = "accepted" if accepted is True else "rejected" if accepted is False else "unknown"
         totals[outcome] += 1
+        if accepted is False and execution.get("why") == "path_cache_stale":
+            totals["path_cache_stale_rejections"] += 1
         mix.setdefault(kind, Counter())[outcome] += 1
         command = json.dumps({"type": kind, "params": action.get("params")}, sort_keys=True)
         if previous_rejected and command != previous_action:
@@ -222,6 +224,7 @@ def campaign_profile(
                 for key, value in sorted(mix.items())
             },
             "changed_command_after_rejection": changed_after_rejection,
+            "path_cache_stale_rejections": totals["path_cache_stale_rejections"],
         },
         "usage": usage_profile(usage),
         "flow_measurement": {"status": "unavailable", "production": None, "consumption": None},

@@ -145,6 +145,7 @@ def public_snapshot(value: dict) -> dict:
             "rejected",
             "unknown",
             "changed_command_after_rejection",
+            "path_cache_stale_rejections",
         )
     }
     result["actions"]["by_type"] = {

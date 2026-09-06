@@ -12,7 +12,7 @@ from ..run.campaign_feed import MAX_BYTES, MAX_RECORDS, read_feed
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 # Only deliberately published bundles belong here, never private artifact scans.
-PUBLISHED_BUNDLES: tuple[str, ...] = ()
+PUBLISHED_BUNDLES = ("local_native_packed_comparison_20260906.json",)
 
 
 def published_records(root: Path = PROJECT_ROOT) -> list[dict]:

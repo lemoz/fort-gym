@@ -8,7 +8,7 @@
     completed_farms: 'Completed farms', recorded_dead_citizens: 'Recorded dead citizens'
   };
   const statusNames = {
-    bounded_segment_complete: 'Segment complete', budget_limited_pause: 'Budget-limited pause',
+    bounded_segment_complete: 'Segment complete', budget_limited_pause: 'Paused at a configured limit',
     failed: 'Failed segment', checkpoint_failed: 'Checkpoint failure', started: 'Started'
   };
   const failureNames = { model_action: 'Invalid model command', provider: 'Provider failure',
@@ -76,6 +76,9 @@
     node('p', `${number(row.committed_steps)} committed actions; ${duration(row.elapsed_ticks)}.`, panel);
     const actions = row.actions || {};
     node('p', `${number(actions.accepted)} accepted commands; ${number(actions.rejected)} rejected; ${number(actions.unknown)} with unknown outcomes. Accepted commands can be no-ops or queued work, not completed development.`, panel);
+    if (known(actions.path_cache_stale_rejections) && actions.path_cache_stale_rejections > 0) {
+      node('p', `${number(actions.path_cache_stale_rejections)} commands were blocked because the native pathfinding cache was not ready. This is an adapter readiness limitation, not evidence that those placements were illegal.`, panel);
+    }
     if (Object.keys(actions.by_type || {}).length) {
       const commands = table(panel, 'Recorded command choices', ['Control', 'Accepted', 'Rejected', 'Unknown']);
       Object.entries(actions.by_type).forEach(([kind, counts]) => {
