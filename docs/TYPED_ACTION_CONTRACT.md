@@ -102,6 +102,6 @@ observed wood stock from 3 to 12. No construction was initiated. The final curso
 checkpoint covers every command and response, and teardown was independently
 verified. This is resource acquisition, not completed development or year-two success.
 
-The website keeps compatibility diagnostics separate from its nine native campaign
+The website keeps compatibility diagnostics separate from its ten native campaign
 rows. Unit, endpoint and frontend test-double checks do not establish deployment,
 browser acceptance or gameplay success.

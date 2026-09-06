@@ -15,7 +15,7 @@ CONFIG = {"condition_id": "test-condition", "models": ["test-model"]}
 
 def test_three_published_native_attempts_preserve_distinct_failure_causes():
     result = records.campaign_feed(None)
-    assert result["configured"] is False and result["published_snapshots"] == 9
+    assert result["configured"] is False and result["published_snapshots"] == 10
     by_model = {
         row["model"]: row
         for row in result["campaigns"]
@@ -47,7 +47,7 @@ def test_recorded_comparison_is_served_without_enabling_a_live_directory(monkeyp
     client = TestClient(server.app)
     response = client.get("/public/campaign-feed")
     assert response.status_code == 200 and response.json()["configured"] is False
-    assert len(response.json()["campaigns"]) == 9
+    assert len(response.json()["campaigns"]) == 10
     assert "no-store" in response.headers["cache-control"]
     assert client.get("/campaigns").status_code == 200
 
@@ -146,8 +146,41 @@ def test_thinking_native_resource_gain_is_not_completed_development_or_a_ranking
     assert bundle["native_audit"]["thinking_mode"]["returned_responses_with_reasoning_content"] == 8
     assert bundle["configuration"]["local_inference"]["enable_thinking"] is True
     page = TestClient(server.app).get("/campaigns").text
-    assert "Latest result: autonomous wood collection" in page and filename in page
+    assert "Earlier result: autonomous wood collection" in page and filename in page
     assert "wood stock from 3 to 12" in page and "58,359 tokens" in page
+
+
+def test_long_native_timeout_preserves_missing_usage_and_nonresumable_save():
+    from fort_gym.bench.api import server
+
+    record = next(
+        row
+        for row in records.campaign_feed(None)["campaigns"]
+        if row["condition_id"] == "local-native-llama-long-v1"
+    )
+    assert (record["committed_steps"], record["elapsed_ticks"]) == (3, 1000)
+    assert record["segment_status"] == "failed" and record["failure_kind"] == "provider"
+    assert record["usage"]["dispatched_requests"] == 4
+    assert record["usage"]["accounted_responses"] == record["usage"]["returned_responses"] == 3
+    assert record["usage"]["dispatches_without_returned_usage"] == 1
+    assert record["usage"]["total_tokens"] == 21429
+    assert record["checkpoint_verified"] is False and record["cleanup_verified"] is True
+    assert record["current_metrics"]["completed_workshops"] == 0
+    assert record["fortress_collapse"] == "not_assessed"
+    assert record["comparison_rankings_available"] is False
+    filename = "local_native_llama_long_timeout_20260906.json"
+    bundle = json.loads((records.PROJECT_ROOT / "experiments/evidence" / filename).read_text())
+    assert bundle["configuration"]["local_inference"]["timeout_seconds"] == 180
+    assert bundle["native_audit"]["checkpoint_cursor"] == 0
+    segment = bundle["native_audit"]["segments"][0]
+    assert segment["next_step"] == 3 and segment["periodic_checkpoints"] == []
+    assert segment["forensic_native_save"]["inventory_verified"] is True
+    assert segment["forensic_native_save"]["resumable_checkpoint"] is False
+    assert segment["forensic_native_save"]["save_bytes"] == 8621334
+    page = TestClient(server.app).get("/campaigns").text
+    assert "Latest attempt: local model timeout" in page and filename in page
+    assert "21,429 accounted tokens" in page
+    assert "One request has no returned token usage" in page
 
 
 def test_native_workshop_fixture_is_visible_but_never_a_model_comparison_row():
@@ -286,7 +319,11 @@ def test_website_separates_incomplete_checkpoint_and_new_model_compatibility():
         row["campaign_id"]
         for row in records.campaign_feed(None)["campaigns"]
         if "qwen35" in row["model"]
-    } == {"local-llama-qwen35-20260906-a", "local-thinking-qwen35-20260906-a"}
+    } == {
+        "local-llama-qwen35-20260906-a",
+        "local-thinking-qwen35-20260906-a",
+        "local-long-qwen35-20260906-a",
+    }
 
 
 @pytest.fixture

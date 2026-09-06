@@ -49,7 +49,13 @@
       <a href="/public/campaign-feed">Open campaign summary data</a>
     </section>
     <section class="campaign-condition" aria-labelledby="latest-result-title">
-      <h2 id="latest-result-title">Latest result: autonomous wood collection</h2>
+      <h2 id="latest-result-title">Latest attempt: local model timeout</h2>
+      <p>The longer Qwen3.5 9B attempt stopped when its fourth request timed out. Three responses returned, totaling 21,429 accounted tokens. Two workshop commands were rejected and one wait was accepted, advancing the game by 1,000 ticks. No workshop was completed.</p>
+      <p class="campaign-note">One request has no returned token usage. The final native save was retained for investigation, but there is no resumable campaign checkpoint. The game and temporary model server were stopped. This is an inference failure, not fortress collapse or a completed campaign.</p>
+      <a href="https://github.com/lemoz/fort-gym/blob/codex/year-two-campaigns/experiments/evidence/local_native_llama_long_timeout_20260906.json">Read the timeout result and retained evidence</a>
+    </section>
+    <section class="campaign-condition" aria-labelledby="resource-result-title">
+      <h2 id="resource-result-title">Earlier result: autonomous wood collection</h2>
       <p>Qwen3.5 9B with thinking enabled increased wood stock from 3 to 12 in 5,000 native ticks. Its eight commands included gathering, two rejected chopping attempts, corrected chopping commands and a wait. All eight responses and 58,359 tokens are accounted for.</p>
       <p class="campaign-note">The final checkpoint covers all eight commands and responses. Seven dwarves remain, with food and drink stocks of 45 and 60. No workshop, bed or farm is completed. Both copied games and the temporary model server were stopped. This is a short resource-gain result, not year-two success or a model ranking.</p>
       <a href="https://github.com/lemoz/fort-gym/blob/codex/year-two-campaigns/experiments/evidence/local_native_llama_thinking_20260906.json">Read the autonomous resource-gain result and receipts</a>

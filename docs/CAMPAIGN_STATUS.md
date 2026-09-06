@@ -2,7 +2,33 @@
 
 Verified September 6, 2026. The Year-Two Autonomous Play goal remains active.
 
-Latest: [Qwen3.5 9B with thinking enabled](../experiments/evidence/local_native_llama_thinking_20260906.json)
+Latest: the [long local attempt](../experiments/evidence/local_native_llama_long_timeout_20260906.json)
+stopped at an inference timeout on request four. **Three returned responses,
+21,429 accounted tokens, three committed commands and 1,000 native ticks** are
+verified. One dispatched request has no returned usage. Two workshop commands
+were rejected (stale pathfinding cache and occupied footprint); one WAIT was
+accepted. Population remained seven, food 45, drink 60 and wood three. Nothing
+was constructed. This is neither a completed campaign nor fortress collapse.
+
+The failure occurred before the first scheduled cursor-8 checkpoint. Zero periodic
+native snapshots were exercised; there is no resumable campaign checkpoint. The
+final native save at year 30, tick 20309 is separately retained as forensic evidence:
+127 regular files and 8,621,334 bytes, with its inventory independently verified.
+It must not be treated as an agent/trace/usage checkpoint or silently replayed.
+The copied game, model and tunnel are independently verified stopped. Production
+is unchanged. Execution was frozen at `034a0e87a1c283763bd494dab269f3d2a2cac9c0`;
+[its CI passed](https://github.com/lemoz/fort-gym/actions/runs/34041391431).
+Ten terminal model records are included in website source, not production.
+
+Next: the separately declared [long-v2 condition](../experiments/campaigns/local_native_llama_long_v2.json)
+changes only the generation read timeout from 180 to 600 seconds. The local server
+was still generating when v1 canceled its fourth request. Keep all gameplay
+instructions, weights, sampling, token and dispatch limits unchanged and begin
+from the original save. The independent segment deadline remains 7,200 seconds;
+v2's declared decision scheduling reserve is 1,944 seconds. These are execution
+bounds, not completion estimates. This configuration is not native-game evidence.
+
+Earlier: [Qwen3.5 9B with thinking enabled](../experiments/evidence/local_native_llama_thinking_20260906.json)
 produced autonomous resource growth: **wood stock increased from 3 to 12**.
 Eight accounted responses used **58,359 tokens** and advanced **5,000 native ticks**.
 Three gathering commands were accepted, two chopping commands rejected, two changed
@@ -20,8 +46,8 @@ production remained unchanged. Execution stayed at
 No construction was initiated or completed. Population stayed seven, food 45 and
 drink 60. The dispatch cap was reached, not gameplay collapse. This is neither a
 functioning-fortress assessment nor causal proof that reasoning mode solves gameplay:
-the two short conditions also differ in output and execution bounds. Nine terminal
-native model records are now included in the website source. No production deploy,
+the two short conditions also differ in output and execution bounds. That publication
+included nine terminal native model records in the website source. No production deploy,
 merge or browser visual acceptance is claimed.
 
 Next: move from resource acquisition to completed production, then endurance.
@@ -30,7 +56,7 @@ starts from the original save and allows 32 decisions in one live copied game,
 with native/agent/trace/usage checkpoints every eight decisions. Its two-segment,
 64-dispatch and 2,000,000-token limits do not enlarge any historical campaign.
 The model, gameplay instructions, action reference and sampling are unchanged
-from the short thinking condition. This new condition has no native result yet.
+from the short thinking condition. Its timeout result is recorded above.
 
 The opt-in `periodic_checkpoints/v1` policy retains a durable checkpoint index
 before another decision. Intermediate snapshots share the segment's original

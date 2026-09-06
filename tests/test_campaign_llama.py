@@ -333,6 +333,26 @@ def test_declared_profile_has_scheduling_allowance_and_no_ollama_launcher(config
         server_environment(config, cache=tmp_path, port=11440, inherited={})
 
 
+def test_declared_slow_timeout_reaches_transport_and_cannot_resume_old_state(
+    config, tmp_path, monkeypatch
+):
+    config["checkpoint_policy"] = {
+        "profile": "periodic_checkpoints/v1",
+        "interval_steps": 8,
+        "minimum_free_bytes": 1073741824,
+    }
+    config["segment_time_budget_seconds"] = 7200
+    calls, _ = fake_server(config, monkeypatch)
+    old = policy(config, tmp_path)
+    state = old.export_campaign_state()
+    config["local_inference"]["timeout_seconds"] = 600
+    current = policy(config, tmp_path)
+    with pytest.raises(ValueError):
+        current.restore_campaign_state(state, campaign_id="llama-test")
+    current._create_completion(MESSAGES)
+    assert len(generations(calls)) == 1
+
+
 @pytest.mark.parametrize(
     "field,value",
     [

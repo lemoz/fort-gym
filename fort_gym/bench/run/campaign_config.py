@@ -133,9 +133,14 @@ def validate_local_settings(config: dict, model: str) -> None:
         raise ValueError("Unsupported local prompt packing")
     if packing != "none" and prompt_contract != "visible_action_contract/v1":
         raise ValueError("Packed campaigns require the visible action contract")
+    # A declared long, periodically saved llama.cpp run may allow slow local
+    # generation to finish. Historical conditions retain their original ceiling.
+    maximum_timeout = (
+        600 if local["transport"] == TRANSPORT and validate_retention(config) is not None else 180
+    )
     for key, lower, upper in (
         ("context_tokens", 4096, 32768),
-        ("timeout_seconds", 1, 180),
+        ("timeout_seconds", 1, maximum_timeout),
         ("seed", 0, 2147483647),
     ):
         if type(local.get(key)) is not int or not lower <= local[key] <= upper:

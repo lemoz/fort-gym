@@ -9,7 +9,11 @@ import pytest
 
 from fort_gym.bench.run import campaign_retention as retention
 from fort_gym.bench.run.campaign_checkpoint import verify_checkpoint
-from fort_gym.bench.run.campaign_config import load_segment_config, validate_bounds
+from fort_gym.bench.run.campaign_config import (
+    decision_time_reserve,
+    load_segment_config,
+    validate_bounds,
+)
 from tests.test_campaign_loop import TestEnvironment
 from tests.test_campaign_segment import segment
 
@@ -169,4 +173,36 @@ def test_checkpoint_interval_cannot_exceed_segment_steps():
     config = deepcopy(load_segment_config(CONFIG, MODEL))
     config["max_steps"] = 4
     with pytest.raises(ValueError, match="interval exceeds"):
+        validate_bounds(config, MODEL, local=True)
+
+
+def test_slow_local_timeout_is_declared_without_changing_historical_conditions():
+    old = load_segment_config(CONFIG, MODEL)
+    config = load_segment_config(CONFIG.with_name("local_native_llama_long_v2.json"), MODEL)
+    assert old["local_inference"]["timeout_seconds"] == 180
+    assert config["local_inference"]["timeout_seconds"] == 600
+    assert decision_time_reserve(config) == 1944 < config["segment_time_budget_seconds"] == 7200
+    old_local = deepcopy(old["local_inference"])
+    old_local["timeout_seconds"] = 600
+    assert config["local_inference"] == old_local
+    for key in ("max_dispatches", "max_output_tokens", "max_total_tokens", "checkpoint_policy"):
+        assert config[key] == old[key]
+    config.pop("checkpoint_policy")
+    config["segment_time_budget_seconds"] = 1800
+    with pytest.raises(ValueError, match="timeout_seconds"):
+        validate_bounds(config, MODEL, local=True)
+
+
+def test_periodic_policy_does_not_widen_legacy_ollama_timeout():
+    config = deepcopy(load_segment_config(CONFIG, MODEL))
+    config["local_inference"].update(transport="ollama-local/v1", timeout_seconds=600)
+    with pytest.raises(ValueError, match="timeout_seconds"):
+        validate_bounds(config, MODEL, local=True)
+
+
+@pytest.mark.parametrize("timeout", [True, 0, -1, 601, "600"])
+def test_long_local_timeout_remains_typed_and_bounded(timeout):
+    config = deepcopy(load_segment_config(CONFIG, MODEL))
+    config["local_inference"]["timeout_seconds"] = timeout
+    with pytest.raises(ValueError, match="timeout_seconds"):
         validate_bounds(config, MODEL, local=True)
