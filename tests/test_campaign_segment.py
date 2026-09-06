@@ -241,6 +241,15 @@ def test_parent_routes_checkpoint_resume_to_isolated_worker(tmp_path, monkeypatc
         lambda args, **kwargs: "test-revision" if args[1] == "rev-parse" else "",
     )
     workers = []
+    capacities = []
+    monkeypatch.setattr(
+        campaign_segment, "verify_load_source", lambda *args: (checkpoint / "game", {})
+    )
+    monkeypatch.setattr(
+        campaign_segment,
+        "require_runtime_capacity",
+        lambda *args, **kwargs: capacities.append((args, kwargs)),
+    )
 
     def fake_worker(command, *, env, **kwargs):
         workers.append((command, env))
@@ -252,6 +261,9 @@ def test_parent_routes_checkpoint_resume_to_isolated_worker(tmp_path, monkeypatc
 
     def isolated(**kwargs):
         assert kwargs["source_kind"] == "campaign_checkpoint"
+        assert len(capacities) == 1
+        assert capacities[0][1]["checkpoint_copies"] == kwargs["checkpoint_copies"] == 1
+        assert kwargs["minimum_free_bytes"] == 0
         assert kwargs["snapshot"] == checkpoint
         assert kwargs["port"] == 5502
         output.mkdir()

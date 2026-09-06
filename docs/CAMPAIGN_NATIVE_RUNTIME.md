@@ -28,6 +28,8 @@ and condition identities; they are not acceptance evidence for this revision.
   for the copied runtime, all retained saves, logs and the condition's free-space
   floor. Artifacts are ignored by Git. Non-ignored untracked files also prevent
   a native launch, because the recorded commit must describe executed source.
+  The launcher subtracts its planned runtime copy and retained checkpoint copies
+  before accepting the floor; checking current free space alone is insufficient.
 - Hosted calls require the existing project `OPENROUTER_API_KEY` in the calling
   environment. Local calls require an explicit loopback endpoint and a matching
   model digest/server identity. Local runs do not fall back to a hosted provider.
@@ -45,6 +47,28 @@ gameplay, and writes an output directory containing `result.json` and
 `native-snapshot/`. Bind the campaign to the SHA-256 of that exact `result.json`.
 The loader rechecks the receipt, retained save inventory and paused calendar.
 A filesystem copy alone is not this receipt.
+
+### Capacity preflight
+
+Before contacting a local model service, publishing a started feed entry, or
+launching a copied game, the segment estimates the selected runtime assets,
+starting save and planned checkpoint copies. It follows the same source selection
+as the copier, excludes old source saves/logs, uses the selected hook overlay,
+and counts followed links for each destination copy. A shortage raises a capacity
+error without a new runtime directory. The runtime owner repeats the check before
+allocation and before copying. Successful runtime receipts retain the numeric
+`capacity_preflight` report.
+
+This report is a filesystem-block-rounded estimate, not a storage reservation or
+a bound on future save, trace or log growth. Checkpoints are estimated at their
+starting save size. Existing per-decision and native-snapshot free-space checks
+remain in force. The preflight does not lower a declared floor, delete retained
+evidence, enlarge disks, provision a host or authorize spending.
+
+New runtimes do not duplicate `data/seed_saves`, `data/save_backups` or
+`data/save-quarantine`. These archives are unrelated to the selected campaign
+save, which is copied separately into `data/save/campaign-resume`. Their original
+contents, old runtime copies, receipts and historical runs remain untouched.
 
 ## Start and continue
 
