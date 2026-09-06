@@ -161,3 +161,29 @@ def test_frontend_unknowns_stale_status_filter_and_refresh_failure(tmp_path):
         capture_output=True,
         text=True,
     )
+
+
+def test_output_limit_pause_is_labelled_without_claiming_fortress_failure(tmp_path):
+    node = shutil.which("node")
+    if not node:
+        pytest.skip("Node is not installed")
+    root = Path(__file__).resolve().parents[1]
+    publisher = feed(tmp_path / "public")
+    publisher.start()
+    record = read_feed(publisher.root)["campaigns"][0]
+    record.update(
+        lifecycle="finished", segment_status="inference_output_limited_pause", failure_kind="none"
+    )
+    row = public_snapshot(record)
+    assert row["fortress_collapse"] == "not_assessed"
+    program = (
+        "const helpers = require(process.argv[1]); "
+        "console.log(helpers.stateLabel(JSON.parse(process.argv[2]), false));"
+    )
+    completed = subprocess.run(
+        [node, "-e", program, str(root / "web/static/campaign-feed.js"), json.dumps(row)],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert completed.stdout.strip() == "Paused at the model output limit"

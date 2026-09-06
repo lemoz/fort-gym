@@ -43,12 +43,8 @@ def test_governed_designation_establishes_ownership_but_not_completion() -> None
         "type": "DIG",
         "params": {"kind": "dig", "area": [10, 20, 5], "size": [1, 1, 1]},
     }
-    before = _map_snapshot(
-        {"x": 10, "y": 20, "z": 5, "category": "wall", "dig": "No"}
-    )
-    after = _map_snapshot(
-        {"x": 10, "y": 20, "z": 5, "category": "dig", "dig": "Default"}
-    )
+    before = _map_snapshot({"x": 10, "y": 20, "z": 5, "category": "wall", "dig": "No"})
+    after = _map_snapshot({"x": 10, "y": 20, "z": 5, "category": "dig", "dig": "Default"})
 
     delta = metrics.governed_action_footprint_progress_delta(action, before, after)
 
@@ -62,9 +58,7 @@ def test_governed_immediate_dig_completion_is_owned_and_completed() -> None:
         "type": "DIG",
         "params": {"kind": "dig", "area": [10, 20, 5], "size": [1, 1, 1]},
     }
-    before = _map_snapshot(
-        {"x": 10, "y": 20, "z": 5, "category": "wall", "dig": "No"}
-    )
+    before = _map_snapshot({"x": 10, "y": 20, "z": 5, "category": "wall", "dig": "No"})
     after = _map_snapshot(
         {
             "x": 10,
@@ -85,12 +79,8 @@ def test_governed_immediate_dig_completion_is_owned_and_completed() -> None:
 
 
 def test_governed_non_dig_and_mismatched_snapshots_never_own_progress() -> None:
-    before = _map_snapshot(
-        {"x": 10, "y": 20, "z": 5, "category": "wall", "dig": "No"}
-    )
-    after = _map_snapshot(
-        {"x": 10, "y": 20, "z": 5, "category": "floor", "dig": "No"}
-    )
+    before = _map_snapshot({"x": 10, "y": 20, "z": 5, "category": "wall", "dig": "No"})
+    after = _map_snapshot({"x": 10, "y": 20, "z": 5, "category": "floor", "dig": "No"})
 
     wait_delta = metrics.governed_action_footprint_progress_delta(
         {"type": "WAIT", "params": {}}, before, after
@@ -564,6 +554,7 @@ def test_place_furniture_enforces_kind_and_delegates_locality_to_hook(monkeypatc
     assert dfhack_backend.place_furniture("Throne", 1, 1, 0) == {
         "ok": False,
         "error": "invalid_kind",
+        "command_mutation": "not_attempted",
     }
     assert not calls
 
@@ -586,6 +577,7 @@ def test_build_construction_invalid_kind(monkeypatch) -> None:
     assert dfhack_backend.build_construction("Throne", 1, 1, 0) == {
         "ok": False,
         "error": "invalid_kind",
+        "command_mutation": "not_attempted",
     }
     assert not calls
 
@@ -602,7 +594,7 @@ def test_build_construction_rejects_too_many_tiles(monkeypatch) -> None:
     monkeypatch.setattr(dfhack_backend, "run_lua_file", fake_run_lua_file)
 
     too_many = dfhack_backend.build_construction("Wall", 0, 0, 0, x2=10, y2=0)
-    assert too_many == {"ok": False, "error": "too_many_tiles"}
+    assert too_many == {"ok": False, "error": "too_many_tiles", "command_mutation": "not_attempted"}
     assert not calls
 
 
@@ -621,7 +613,6 @@ def test_build_construction_passes_through_valid_line(monkeypatch) -> None:
     assert result == {"ok": True}
     assert calls[-1][1] == ("Floor", "5", "5", "1", "9", "5")
     assert calls[-1][2] == {"timeout": 10.0}
-
 
 
 def test_utility_progress_ignores_order_spam_without_production() -> None:

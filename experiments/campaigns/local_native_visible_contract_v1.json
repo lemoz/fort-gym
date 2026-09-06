@@ -1,0 +1,38 @@
+{
+  "schema_version": "fortgym.local-campaign-condition/v1",
+  "runner": "campaign-loop/v1",
+  "condition_id": "local-native-visible-contract-v1",
+  "decision_profile": "campaign_action/v1",
+  "observation_profile": "campaign_state/v1",
+  "schema_attempts": 2,
+  "phase": "development",
+  "hypothesis": "Making the existing action contract and numeric tick bound visible in the local model's messages changes its zero-tick no-progress baseline without prescribing gameplay strategy.",
+  "models": ["qwen2.5:7b-instruct"],
+  "max_steps": 3,
+  "max_segments": 8,
+  "segment_time_budget_seconds": 600,
+  "ticks_per_step": 2000,
+  "max_advance_ticks": 2000,
+  "max_output_tokens": 1024,
+  "max_attempts": 1,
+  "max_dispatches": 16,
+  "max_request_bytes": 22000,
+  "max_total_tokens": 131072,
+  "max_cost_usd": 0,
+  "local_inference": {
+    "transport": "ollama-local/v1",
+    "server_version": "0.5.11",
+    "prompt_contract": "visible_action_contract/v1",
+    "model_digests": {"qwen2.5:7b-instruct": "845dbda0ea48ed749caafd9e6037047aa19acfcfd82e704d7ca97d631a0b697e"},
+    "context_tokens": 24576,
+    "timeout_seconds": 120,
+    "temperature": 0.2,
+    "seed": 73
+  },
+  "notes": [
+    "The original local-native-development-v1 condition is preserved. Start a new campaign from the same digest-bound native snapshot; do not resume its checkpoint under this changed prompt contract.",
+    "Only presentation of the existing schema changes. Model, sampling, context, action grammar, factual observations, time bounds, token bounds and retry allowances match the original local condition.",
+    "No action or positive time advancement is forced. Failures and zero-progress outcomes remain results, not grounds for a scripted gameplay rescue.",
+    "Zero metered model API charges do not imply zero hardware, electricity or existing-host costs. No hosted inference fallback is available."
+  ]
+}

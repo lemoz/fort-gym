@@ -21,6 +21,7 @@ STATUSES = {
     "started",
     "bounded_segment_complete",
     "budget_limited_pause",
+    "inference_output_limited_pause",
     "failed",
     "checkpoint_failed",
 }

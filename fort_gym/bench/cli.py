@@ -51,6 +51,15 @@ except ImportError:  # pragma: no cover - fallback when typer missing
 
 app = typer.Typer(name="fort-gym")
 
+
+@app.command("campaign-report")
+def campaign_report(trace: Path) -> None:
+    """Report elapsed campaign time from an existing trace without launching gameplay."""
+    from .eval.campaign import read_campaign_progress
+
+    typer.echo(json.dumps(read_campaign_progress(trace), indent=2))
+
+
 PUBLIC_REHEARSAL_PATHS = (
     "/health",
     "/leaderboard",

@@ -82,9 +82,14 @@ def _work_rect_from_env() -> tuple[int, int, int, int, int, int]:
         return DEFAULT_WORK_RECT
 
 
+def _preflight_rejection(error: str, **details: object) -> Dict[str, object]:
+    """Only for validation before dispatch, never a caught native/transport error."""
+    return {"ok": False, "error": error, **details, "command_mutation": "not_attempted"}
+
+
 def queue_manager_order(item: str, qty: int) -> Dict[str, object]:
     if item not in ALLOWED_ITEMS:
-        return {"ok": False, "error": "invalid_item"}
+        return _preflight_rejection("invalid_item")
     qty_clamped = max(1, min(int(qty), MAX_QTY))
     try:
         return run_lua_file(_hook_path("order_make.lua"), item, str(qty_clamped))
@@ -97,6 +102,8 @@ def build_workshop(
     x: int,
     y: int,
     z: int,
+    *,
+    placement_policy: str = "strict_floor/v1",
 ) -> Dict[str, object]:
     """Place a bounded safe workshop near the fort.
 
@@ -105,8 +112,14 @@ def build_workshop(
     ``too_far_from_fort``.
     """
 
+    from .env.workshop_placement import STRICT_FLOOR, validate_policy
+
+    try:
+        validate_policy(placement_policy)
+    except ValueError:
+        return _preflight_rejection("invalid_workshop_placement_policy")
     if kind not in ALLOWED_WORKSHOPS:
-        return {"ok": False, "error": "invalid_kind"}
+        return _preflight_rejection("invalid_kind")
 
     x_val = int(x)
     y_val = int(y)
@@ -119,6 +132,7 @@ def build_workshop(
             str(x_val),
             str(y_val),
             str(z_val),
+            *(() if placement_policy == STRICT_FLOOR else (placement_policy,)),
         )
     except (DFHackError, OSError) as exc:
         return {"ok": False, "error": str(exc)}
@@ -139,7 +153,7 @@ def place_furniture(
     """
 
     if kind not in ALLOWED_FURNITURE:
-        return {"ok": False, "error": "invalid_kind"}
+        return _preflight_rejection("invalid_kind")
 
     x_val = int(x)
     y_val = int(y)
@@ -173,7 +187,7 @@ def build_construction(
     """
 
     if kind not in ALLOWED_CONSTRUCTIONS:
-        return {"ok": False, "error": "invalid_kind"}
+        return _preflight_rejection("invalid_kind")
 
     x1_val = int(x1)
     y1_val = int(y1)
@@ -184,7 +198,7 @@ def build_construction(
     width = abs(x2_val - x1_val) + 1
     height = abs(y2_val - y1_val) + 1
     if width * height > 10:
-        return {"ok": False, "error": "too_many_tiles"}
+        return _preflight_rejection("too_many_tiles")
 
     try:
         return run_lua_file(
@@ -226,7 +240,7 @@ def build_farm_plot(
     width = abs(x2_val - x1_val) + 1
     height = abs(y2_val - y1_val) + 1
     if width > MAX_FARM_PLOT_W or height > MAX_FARM_PLOT_H:
-        return {"ok": False, "error": "rect_too_large"}
+        return _preflight_rejection("rect_too_large")
 
     try:
         return run_lua_file(
@@ -261,11 +275,11 @@ def set_farm_crop(
     try:
         building_id_val = int(building_id)
     except (TypeError, ValueError):
-        return {"ok": False, "error": "invalid_building_id"}
+        return _preflight_rejection("invalid_building_id")
 
     crop_token = str(crop or "").strip()
     if not crop_token or len(crop_token) > MAX_CROP_TOKEN_LEN:
-        return {"ok": False, "error": "invalid_crop"}
+        return _preflight_rejection("invalid_crop")
 
     if seasons is None:
         season_list: list[str] = []
@@ -273,9 +287,9 @@ def set_farm_crop(
         season_list = [str(s).strip().lower() for s in seasons]
         for season in season_list:
             if season not in FARM_SEASONS:
-                return {"ok": False, "error": "invalid_season"}
+                return _preflight_rejection("invalid_season")
         if not season_list:
-            return {"ok": False, "error": "invalid_season"}
+            return _preflight_rejection("invalid_season")
 
     seasons_csv = ",".join(season_list)
 
@@ -296,12 +310,12 @@ def designate_rect(
 ) -> Dict[str, object]:
     kind_lower = kind.lower()
     if kind_lower not in VALID_KINDS:
-        return {"ok": False, "error": "invalid_kind"}
+        return _preflight_rejection("invalid_kind")
 
     width = abs(int(x2) - int(x1)) + 1
     height = abs(int(y2) - int(y1)) + 1
     if width > MAX_RECT_W or height > MAX_RECT_H:
-        return {"ok": False, "error": "rect_too_large"}
+        return _preflight_rejection("rect_too_large")
 
     try:
         return run_lua_file(
@@ -329,12 +343,12 @@ def unsuspend_jobs(
     """
 
     if int(z1) != int(z2):
-        return {"ok": False, "error": "z_span_not_supported"}
+        return _preflight_rejection("z_span_not_supported")
 
     width = abs(int(x2) - int(x1)) + 1
     height = abs(int(y2) - int(y1)) + 1
     if width > 10 or height > 10:
-        return {"ok": False, "error": "rect_too_large"}
+        return _preflight_rejection("rect_too_large")
 
     try:
         return run_lua_file(
@@ -362,11 +376,11 @@ def set_labor(unit_id: int, labor: str, enable: bool) -> Dict[str, object]:
     """
 
     if labor not in LABOR_WHITELIST:
-        return {"ok": False, "error": "unsupported_labor", "labor": labor}
+        return _preflight_rejection("unsupported_labor", labor=labor)
     try:
         unit_id_int = int(unit_id)
     except (TypeError, ValueError):
-        return {"ok": False, "error": "bad_unit_id"}
+        return _preflight_rejection("bad_unit_id")
 
     try:
         return run_lua_file(

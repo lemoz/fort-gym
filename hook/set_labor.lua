@@ -6,6 +6,14 @@
 -- Never mutates tiles, designations, buildings, or any other unit field.
 
 local json = require('json')
+-- Attest preflight rejection separately from a failed/partial native write.
+local mutation_attempted = false
+local function encode_result(value)
+  if value.ok == false then
+    value.command_mutation = mutation_attempted and 'attempted' or 'not_attempted'
+  end
+  return json.encode(value)
+end
 local args = {...}
 
 -- Friendly labor name -> df.unit_labor enum name. Whitelist mirrors the module
@@ -57,7 +65,7 @@ local enable_raw = args[3]
 local profession = sanitize('?')
 
 if unit_id == nil or labor_name == nil then
-  print(json.encode({ ok = false, error = 'bad_args', profession = profession }))
+  print(encode_result({ ok = false, error = 'bad_args', profession = profession }))
   return
 end
 
@@ -66,7 +74,7 @@ local enable = (enable_raw == '1' or enable_raw == 'true' or enable_raw == true)
 
 local enum_name = LABOR_WHITELIST[labor_name]
 if enum_name == nil then
-  print(json.encode({
+  print(encode_result({
     ok = false,
     error = 'unsupported_labor',
     labor = sanitize(labor_name),
@@ -79,7 +87,7 @@ end
 -- is absent on 0.47.05 rather than indexing nil and crashing.
 local ok_enum, labor_enum = pcall(function() return df.unit_labor[enum_name] end)
 if not ok_enum or labor_enum == nil then
-  print(json.encode({
+  print(encode_result({
     ok = false,
     error = 'unsupported_labor',
     labor = sanitize(labor_name),
@@ -101,7 +109,7 @@ local ok_walk = pcall(function()
 end)
 
 if not ok_walk then
-  print(json.encode({
+  print(encode_result({
     ok = false,
     error = 'unit_list_unavailable',
     profession = profession,
@@ -110,7 +118,7 @@ if not ok_walk then
 end
 
 if target == nil then
-  print(json.encode({
+  print(encode_result({
     ok = false,
     error = 'unit_not_found',
     reason = 'unit_not_found',
@@ -126,7 +134,7 @@ local ok_citizen, is_citizen = pcall(function()
   return dfhack.units.isCitizen(target) and true or false
 end)
 if not ok_citizen or not is_citizen then
-  print(json.encode({
+  print(encode_result({
     ok = false,
     error = 'not_a_citizen',
     reason = 'not_a_citizen',
@@ -143,7 +151,7 @@ local ok_adult, is_adult = pcall(function()
   return dfhack.units.isAdult(target)
 end)
 if not ok_adult or type(is_adult) ~= 'boolean' then
-  print(json.encode({
+  print(encode_result({
     ok = false,
     error = 'labor_eligibility_unavailable',
     reason = 'labor_eligibility_unavailable',
@@ -154,7 +162,7 @@ if not ok_adult or type(is_adult) ~= 'boolean' then
 end
 
 if not is_adult then
-  print(json.encode({
+  print(encode_result({
     ok = false,
     error = 'unit_not_labor_eligible',
     reason = 'unit_not_labor_eligible',
@@ -172,7 +180,7 @@ local ok_before, before = pcall(function()
   return target.status.labors[labor_enum] and true or false
 end)
 if not ok_before then
-  print(json.encode({
+  print(encode_result({
     ok = false,
     error = 'labor_read_failed',
     unit_id = unit_id,
@@ -181,6 +189,7 @@ if not ok_before then
   return
 end
 
+mutation_attempted = true
 local ok_write = pcall(function()
   target.status.labors[labor_enum] = enable
 end)
@@ -205,7 +214,7 @@ if not ok_write or not ok_after or after ~= enable then
   elseif ok_write and after ~= enable then
     commit_error = 'labor_readback_mismatch'
   end
-  print(json.encode({
+  print(encode_result({
     ok = false,
     error = commit_error,
     reason = commit_error,
@@ -225,7 +234,7 @@ if not ok_write or not ok_after or after ~= enable then
   return
 end
 
-print(json.encode({
+print(encode_result({
   ok = true,
   unit_id = unit_id,
   labor = sanitize(labor_name),

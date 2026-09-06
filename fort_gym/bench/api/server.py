@@ -432,6 +432,7 @@ _PUBLIC_SUMMARY_FIELDS = {
     "survival_score",
     "steps",
     "duration_ticks",
+    "campaign_progress",
     "peak_pop",
     "end_pop",
     "rubric",

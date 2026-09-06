@@ -6,10 +6,11 @@
 
 Fort-Gym is the harness beneath [Fort-Eval](docs/FORT_EVAL_SPEC.md), Fort Labs' benchmark for planning, spatial memory, resource management, and adaptation in a procedurally generated civilization. Official model comparisons require the same versioned protocol, code, seed cohort, score, and budgets; older runs remain public evidence rather than a universal ranking.
 
-The [persistent campaign agent foundation](docs/CAMPAIGN_AGENT_FOUNDATION.md)
-adds an exploratory policy, portable agent memory and cumulative provider usage.
-It is a library delivery toward autonomous year-two play, not yet a native
-campaign CLI or a completed year-two result.
+The [native campaign runtime](docs/CAMPAIGN_NATIVE_RUNTIME.md) adds configuration-driven
+model selection, copied native runtimes, persistent checkpoints, serial continuation,
+and inspectable progress. Its [agent foundation](docs/CAMPAIGN_AGENT_FOUNDATION.md)
+preserves memory and cumulative usage. This is an experimental checkout-based
+runtime, not a completed year-two result or a cross-model ranking.
 
 ![fort-gym leaderboard dashboard](docs/assets/leaderboard-dashboard.png)
 

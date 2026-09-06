@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
+from .campaign import campaign_progress
 from .protocol import EVALUATION_PROTOCOL_PATTERN
 from .rubric import evaluate_trace_records
 from .scoring import (
@@ -33,6 +34,7 @@ class RunSummary(BaseModel):
     scenario: Optional[str] = None
     steps: int = 0
     duration_ticks: int = 0
+    campaign_progress: Dict[str, Any] = Field(default_factory=dict)
     peak_pop: int = 0
     end_pop: int = 0
     created_wealth: Optional[int] = None
@@ -681,6 +683,7 @@ def summarize(trace_path: Path) -> RunSummary:
         run_id=run_id,
         steps=total_steps,
         duration_ticks=duration,
+        campaign_progress=campaign_progress(trace_records),
         peak_pop=peak_pop,
         end_pop=end_pop,
         created_wealth=wealth,

@@ -1,0 +1,55 @@
+{
+  "schema_version": "fortgym.local-campaign-condition/v1",
+  "runner": "campaign-loop/v1",
+  "condition_id": "local-native-designation-reference-v1",
+  "decision_profile": "campaign_action/v1",
+  "observation_profile": "campaign_state/v1",
+  "advance_policy": "model_requested/v1",
+  "schema_attempts": 2,
+  "phase": "development",
+  "hypothesis": "Test whether factual documentation of the four existing designation modes changes autonomous resource acquisition and development, after models repeatedly tried to mine open surface tiles. Native controls, model-selected actions and time, starting save and execution bounds are unchanged; this supplies no fortress-specific plan or chosen action.",
+  "models": [
+    "qwen2.5:7b-instruct",
+    "llama3.1:8b-instruct-q4_K_M",
+    "mistral:7b-instruct-v0.3-q4_K_M",
+    "qwen2.5:14b-instruct-q3_K_M"
+  ],
+  "max_steps": 8,
+  "max_segments": 4,
+  "segment_time_budget_seconds": 900,
+  "ticks_per_step": 2000,
+  "max_advance_ticks": 2000,
+  "max_output_tokens": 1024,
+  "max_attempts": 1,
+  "max_dispatches": 16,
+  "max_request_bytes": 22000,
+  "max_total_tokens": 262144,
+  "max_cost_usd": 0,
+  "local_inference": {
+    "transport": "ollama-local/v1",
+    "server_version": "0.5.11",
+    "prompt_contract": "visible_action_contract/v1",
+    "prompt_packing": "bounded_history_corrections/v1",
+    "model_digests": {
+      "qwen2.5:7b-instruct": "845dbda0ea48ed749caafd9e6037047aa19acfcfd82e704d7ca97d631a0b697e",
+      "llama3.1:8b-instruct-q4_K_M": "46e0c10c039e019119339687c3c1757cc81b9da49709a3b3924863ba87ca666e",
+      "mistral:7b-instruct-v0.3-q4_K_M": "6577803aa9a036369e481d648a2baebb381ebc6e897f2bb9a766a2aa7bfbc1cf",
+      "qwen2.5:14b-instruct-q3_K_M": "4d8dbee0507f80e83623a47984bef247a67dea5249c928fff1b3955cfa580cae"
+    },
+    "context_tokens": 24576,
+    "timeout_seconds": 180,
+    "temperature": 0.2,
+    "seed": 73,
+    "runtime_profile": "flash_q8/v1",
+    "action_reference": "native_designations/v1"
+  },
+  "notes": [
+    "Begin each new campaign from the same original digest-bound native save, never a scripted construction fixture or earlier model campaign state. Keep earlier conditions and evidence immutable.",
+    "The only model-facing policy addition is native_designations/v1: factual DIG mode, shape and rectangle transaction semantics grounded in the installed adapter. The action schema, parser, execution controls and model-chosen advance_ticks are unchanged. There is no action recommendation, coordinate, build order, material injection or human gameplay rescue.",
+    "Relative to the Qwen14 Q3 condition, preserve sampling, quantization for that model, Flash Attention/Q8 cache, context, request and cumulative usage limits and scheduling allowances. The model registry also declares three other exact local models for later matched attempts; declaring them does not mean they have been evaluated under this condition.",
+    "The selected reference is included in the actual system-prompt hash and all serialized request-size checks. Packing may omit only older history; current native facts, latest result, persistent notes and corrections remain intact. Existing checkpoints cannot silently acquire new instructions.",
+    "Use identical conditions and source saves for matched attempts. One short result per model is not a ranking, sustainability claim or first-year success.",
+    "Run one loaded local model and one isolated native runtime at a time with verified teardown. No hosted provider is used. Zero metered model API charges do not imply zero hardware, electricity or existing-host cost."
+  ],
+  "workshop_placement_policy": "dfhack_047_ground/v1"
+}
