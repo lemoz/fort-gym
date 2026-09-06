@@ -16,6 +16,7 @@ import shlex
 import shutil
 import signal
 import socket
+import stat
 import subprocess
 import time
 from pathlib import Path
@@ -26,6 +27,9 @@ from fort_gym.bench.run.campaign_save import CampaignSaveError, save_inventory
 
 RUNTIME_DIRECTORIES = ("libs", "hack", "raw", "data", "stonesense", "sdl", "hook", "dfhack-config")
 RUNTIME_FILES = ("df", "dfhack", "dfhack-run")
+# These are retained source archives, not assets for the already-selected save.
+# Skip them in NEW copies only. Never remove or rewrite the originals.
+EXCLUDED_DATA_SUBDIRS = frozenset({"save", "seed_saves", "save_backups", "save-quarantine"})
 STATUS_LUA = """
 local j=require('json')
 local loaded=dfhack.isMapLoaded()
@@ -84,8 +88,91 @@ def verify_load_source(directory: Path, digest: str, kind: str) -> tuple[Path, d
     return directory / "game", native
 
 
+def runtime_capacity(
+    source: Path,
+    snapshot: Path,
+    output_parent: Path,
+    *,
+    hook_source: Path | None = None,
+    minimum_free_bytes: int = 0,
+    checkpoint_copies: int = 0,
+) -> dict[str, Any]:
+    """Estimate selected copies using metadata only; this is not a space reservation.
+
+    Follow symlinks like copytree, count repeated files once per destination, and
+    exclude the source's old save directories exactly as prepare_runtime does.
+    Checkpoints are estimated at the starting save size. Future game/log growth
+    and concurrent writers are unknown; runtime free-space checks still apply.
+    """
+    if type(minimum_free_bytes) is not int or minimum_free_bytes < 0:
+        raise CampaignSaveError("Minimum free bytes must be a nonnegative integer")
+    if type(checkpoint_copies) is not int or not 0 <= checkpoint_copies <= 32:
+        raise CampaignSaveError("Checkpoint copy count must be between zero and 32")
+    block = max(1, os.statvfs(output_parent).f_frsize)
+
+    def copied_bytes(path: Path, ancestors: frozenset = frozenset()) -> int:
+        info = path.stat()
+        if stat.S_ISREG(info.st_mode):
+            return max(1, (info.st_size + block - 1) // block) * block
+        if not stat.S_ISDIR(info.st_mode):
+            raise CampaignSaveError("Runtime source contains an unsupported file type")
+        identity = (info.st_dev, info.st_ino)
+        if identity in ancestors:
+            raise CampaignSaveError("Runtime source contains a directory link cycle")
+        children = ancestors | {identity}
+        return block + sum(
+            copied_bytes(entry, children)
+            for entry in path.iterdir()
+            if not (path == source / "data" and entry.name in EXCLUDED_DATA_SUBDIRS)
+        )
+
+    assets = sum(copied_bytes(source / name) for name in RUNTIME_FILES)
+    for name in RUNTIME_DIRECTORIES:
+        directory = hook_source if name == "hook" and hook_source is not None else source / name
+        if directory.is_dir():
+            assets += copied_bytes(directory)
+    saved_game = copied_bytes(snapshot)
+    # Account for new runtime/output directories, config and small receipt files.
+    # This allowance does not claim to bound subsequent traces or model output.
+    copies = assets + saved_game * (1 + checkpoint_copies) + 8 * block
+    free = shutil.disk_usage(output_parent).free
+    return {
+        "schema_version": "fortgym.runtime-capacity/v1",
+        "available_bytes": free,
+        "minimum_free_bytes": minimum_free_bytes,
+        "allocation_block_bytes": block,
+        "estimated_runtime_asset_bytes": assets,
+        "estimated_starting_save_bytes": saved_game,
+        "additional_checkpoint_copies": checkpoint_copies,
+        "estimated_copy_bytes": copies,
+        "estimated_free_after_copy_bytes": free - copies,
+        "fits": free - copies >= minimum_free_bytes,
+        "future_growth_included": False,
+        "space_reserved": False,
+    }
+
+
+def require_runtime_capacity(*args, **kwargs) -> dict[str, Any]:
+    report = runtime_capacity(*args, **kwargs)
+    if not report["fits"]:
+        raise CampaignSaveError(
+            "Runtime/checkpoint copies would cross the declared free-space floor: "
+            f"available={report['available_bytes']}, "
+            f"estimated_copies={report['estimated_copy_bytes']}, "
+            f"floor={report['minimum_free_bytes']}"
+        )
+    return report
+
+
 def prepare_runtime(
-    source: Path, destination: Path, snapshot: Path, *, port: int, hook_source: Path | None = None
+    source: Path,
+    destination: Path,
+    snapshot: Path,
+    *,
+    port: int,
+    hook_source: Path | None = None,
+    minimum_free_bytes: int = 0,
+    checkpoint_copies: int = 0,
 ) -> None:
     if not 1024 <= port <= 65535 or port == 5000:
         raise CampaignSaveError("Use a dedicated non-production unprivileged RPC port")
@@ -98,6 +185,14 @@ def prepare_runtime(
         raise CampaignSaveError("Isolated runtime destination already exists")
     if "[PAUSE_ON_LOAD:YES]" not in (source / "data/init/d_init.txt").read_text():
         raise CampaignSaveError("Source game must already be configured to pause on load")
+    require_runtime_capacity(
+        source,
+        snapshot,
+        destination.parent,
+        hook_source=hook_source,
+        minimum_free_bytes=minimum_free_bytes,
+        checkpoint_copies=checkpoint_copies,
+    )
     destination.mkdir(mode=0o700)
     for name in RUNTIME_FILES:
         shutil.copy2(source / name, destination / name)
@@ -110,7 +205,7 @@ def prepare_runtime(
 
         def exclude(path, names):
             if Path(path) == source / "data":
-                return set(names) & {"save"}
+                return set(names) & EXCLUDED_DATA_SUBDIRS
             return set()
 
         shutil.copytree(directory_source, destination / name, ignore=exclude)
@@ -225,18 +320,36 @@ def run_isolated(
     work=None,
     hook_source: Path | None = None,
     source_kind: str = "native_snapshot",
+    minimum_free_bytes: int = 0,
+    checkpoint_copies: int = 0,
 ):
     for retained in (source, snapshot):
         if output.resolve() == retained.resolve() or retained.resolve() in output.resolve().parents:
             raise CampaignSaveError("Test output must be outside retained source and snapshot")
     save_source, expected = verify_load_source(snapshot, digest, source_kind)
+    capacity = require_runtime_capacity(
+        source,
+        save_source,
+        output.parent,
+        hook_source=hook_source,
+        minimum_free_bytes=minimum_free_bytes,
+        checkpoint_copies=checkpoint_copies,
+    )
     with socket.socket() as probe:
         probe.bind(("127.0.0.1", port))
     output.mkdir(mode=0o700, parents=False, exist_ok=False)
     # The child changes cwd to the copied runtime. A relative executable path
     # would otherwise be resolved a second time from inside that directory.
     runtime = output.resolve() / "runtime"
-    prepare_runtime(source, runtime, save_source, port=port, hook_source=hook_source)
+    prepare_runtime(
+        source,
+        runtime,
+        save_source,
+        port=port,
+        hook_source=hook_source,
+        minimum_free_bytes=minimum_free_bytes,
+        checkpoint_copies=checkpoint_copies,
+    )
     environment = runtime_environment(port)
     result: dict[str, Any] = {
         "schema_version": (
@@ -245,6 +358,7 @@ def run_isolated(
             else "fortgym.isolated-experiment-runtime/v1"
         ),
         "code_revision": revision,
+        "capacity_preflight": capacity,
         (
             "source_snapshot_receipt_sha256"
             if source_kind == "native_snapshot"

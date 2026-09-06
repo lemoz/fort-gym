@@ -27,7 +27,7 @@ from fort_gym.bench.run.campaign_retention import (
     validate_retention,
 )
 from scripts.campaign_development import make_agent
-from scripts.campaign_load_smoke import run_isolated
+from scripts.campaign_load_smoke import require_runtime_capacity, run_isolated, verify_load_source
 from scripts.campaign_process import run_worker, termination_as_interrupt
 
 
@@ -314,13 +314,11 @@ def launch_segment(args, config: dict) -> dict:
     ):
         raise ValueError("Supply a source runtime and a checkpoint or digest-bound snapshot")
     local = config.get("schema_version") == LOCAL_SCHEMA
-    require_disk_space(args.output.parent, validate_retention(config))
+    retention = validate_retention(config)
+    require_disk_space(args.output.parent, retention)
     if local:
-        from scripts.campaign_development import verify_local_transport
-
         if getattr(args, "local_endpoint", None) is None:
             raise ValueError("Local campaigns require an explicit loopback endpoint")
-        verify_local_transport(args.local_endpoint, config, args.model)
     elif not os.environ.get("OPENROUTER_API_KEY"):
         raise ValueError("The existing authorized project provider credential must be supplied")
     revision = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
@@ -332,6 +330,25 @@ def launch_segment(args, config: dict) -> dict:
         snapshot = args.checkpoint
         digest = hashlib.sha256((snapshot / "checkpoint.json").read_bytes()).hexdigest()
         source_kind = "campaign_checkpoint"
+    minimum_free_bytes = retention["minimum_free_bytes"] if retention is not None else 0
+    checkpoint_copies = (
+        1 + (config["max_steps"] - 1) // retention["interval_steps"] if retention is not None else 1
+    )
+    hook_source = Path(__file__).resolve().parents[1] / "hook"
+    save_source, _ = verify_load_source(snapshot, digest, source_kind)
+    # Fail before publishing a started run, allocating a game or calling a model.
+    require_runtime_capacity(
+        args.source,
+        save_source,
+        args.output.parent,
+        hook_source=hook_source,
+        minimum_free_bytes=minimum_free_bytes,
+        checkpoint_copies=checkpoint_copies,
+    )
+    if local:
+        from scripts.campaign_development import verify_local_transport
+
+        verify_local_transport(args.local_endpoint, config, args.model)
     public_feed = None
     if args.public_campaign_dir is not None:
         from fort_gym.bench.run.campaign_feed import CampaignFeed, initialize_feed
@@ -411,7 +428,9 @@ def launch_segment(args, config: dict) -> dict:
             port=args.port,
             revision=revision,
             work=play,
-            hook_source=Path(__file__).resolve().parents[1] / "hook",
+            hook_source=hook_source,
+            minimum_free_bytes=minimum_free_bytes,
+            checkpoint_copies=checkpoint_copies,
         )
         from scripts.campaign_profile import report_segment
 

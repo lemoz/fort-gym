@@ -370,6 +370,10 @@ def test_parent_reports_runtime_failure_only_after_its_teardown_receipt(
         "check_output",
         lambda args, **kwargs: REVISION if args[1] == "rev-parse" else "",
     )
+    monkeypatch.setattr(
+        campaign_segment, "verify_load_source", lambda *args: (checkpoint / "game", {})
+    )
+    monkeypatch.setattr(campaign_segment, "require_runtime_capacity", lambda *args, **kwargs: {})
 
     def isolated(**kwargs):
         assert read_feed(public)["campaigns"][0]["lifecycle"] == "starting"
