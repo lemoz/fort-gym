@@ -23,7 +23,11 @@
     'local-native-harness-repair-v1': 'local_native_harness_repair_v1.json',
     'local-native-workshop-ground-v1': 'local_native_workshop_ground_v1.json',
     'local-native-qwen14-q3-flash-q8-v1': 'local_native_qwen14_q3_flash_q8_v1.json',
-    'local-native-designation-reference-v1': 'local_native_designation_reference_v1.json'
+    'local-native-designation-reference-v1': 'local_native_designation_reference_v1.json',
+    'local-native-llama-typed-v1': 'local_native_llama_typed_v1.json',
+    'local-native-llama-thinking-v1': 'local_native_llama_thinking_v1.json',
+    'local-native-llama-long-v1': 'local_native_llama_long_v1.json',
+    'local-native-llama-long-v2': 'local_native_llama_long_v2.json'
   };
   function known(value) { return typeof value === 'number' && Number.isFinite(value) && value >= 0; }
   function number(value) { return known(value) ? value.toLocaleString('en-US') : 'Unknown'; }
@@ -51,7 +55,12 @@
     if (row.lifecycle === 'awaiting_teardown') return 'Awaiting teardown report';
     return failureNames[row.failure_kind] || statusNames[row.segment_status] || 'Unknown';
   }
-  const helpers = { number, money, modelCost, duration, stateLabel };
+  function configurationUrl(row) {
+    return /^[a-f0-9]{40}$/.test(row.code_revision) && Object.hasOwn(conditionFiles, row.condition_id)
+      ? `https://github.com/lemoz/fort-gym/blob/${row.code_revision}/experiments/campaigns/${conditionFiles[row.condition_id]}`
+      : null;
+  }
+  const helpers = { number, money, modelCost, duration, stateLabel, configurationUrl };
   if (typeof module !== 'undefined') module.exports = helpers;
   if (typeof document === 'undefined') return;
   const $ = id => document.getElementById(id);
@@ -119,9 +128,10 @@
       });
     } else node('p', 'Full metric history is available after a segment profile is recorded.', panel);
     node('p', 'Food and drink production, consumption rates, autonomous success, and fortress collapse are not assessed by these summaries.', panel);
-    if (/^[a-f0-9]{40}$/.test(row.code_revision) && conditionFiles[row.condition_id]) {
+    const configuration = configurationUrl(row);
+    if (configuration) {
       const link = node('a', 'Inspect this segment’s experiment configuration', panel);
-      link.href = `https://github.com/lemoz/fort-gym/blob/${row.code_revision}/experiments/campaigns/${conditionFiles[row.condition_id]}`;
+      link.href = configuration;
     }
     node('pre', JSON.stringify({ code_revision: row.code_revision, configuration_sha256: row.configuration_sha256,
       declared_starting_snapshot_receipt_sha256: row.declared_starting_snapshot_receipt_sha256 || null,

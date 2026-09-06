@@ -2,7 +2,36 @@
 
 Verified September 6, 2026. The Year-Two Autonomous Play goal remains active.
 
-Latest: the [long local attempt](../experiments/evidence/local_native_llama_long_timeout_20260906.json)
+Remote delivery: the read-only campaign website is now isolated from the large
+integration stack in [PR #126](https://github.com/lemoz/fort-gym/pull/126), commit
+`aa6bd2903e0b5af30ea4fc1476606f7f3919cd15`, based directly on main. Its full local
+suite passed **1,064 tests with 5 skipped**; 35 focused website tests passed.
+Ten terminal native records, two read-only evidence endpoints, the campaign page,
+and exact condition links are included. VM and gameplay-runner changes remain in
+the separate draft [PR #125](https://github.com/lemoz/fort-gym/pull/125). Remote main
+still points to its July 13 commit `82ee3e07859b2813fc4643d02aa034daecea6b18`.
+The website PR is open for review, not merged or deployed; remote CI is a separate
+check. This separates delivery milestones without waiting for year-two success.
+
+In progress: `local-long-v2-qwen35-20260906-a` is executing the frozen long-v2
+condition at `60fd08415b10adfe52a0d275c826669dad843937`. At this checkpoint review,
+ten committed commands and eleven returned/accounted responses total 87,329 tokens
+and 5,000 elapsed native ticks. Wood has increased from three to nine; population
+is seven, food 45, drink 60, and no construction is complete. This is an observation
+of a running attempt, not a terminal result or proof of sustainability.
+
+The first periodic native/agent/trace/usage checkpoint at cursor 8 was independently
+verified against its manifest and retained committed prefixes. Its native calendar
+is year 30, tick 22809; payload SHA-256 is
+`9379b89b80b53383cc6cd04cc71d71271ead6932d4a21da35cce2fd4ade2c25c`.
+Later commands have already executed, so this snapshot is not automatically the
+current recovery boundary. Final handoff, complete usage audit, and native/model/
+tunnel teardown remain required when the attempt stops. The prior 180-second
+timeout has not recurred in the observed responses. No new resource or hosted
+model was purchased for this continuation; local API charges are zero while
+infrastructure, hardware, and electricity costs remain unmeasured.
+
+Earlier: the [long local attempt](../experiments/evidence/local_native_llama_long_timeout_20260906.json)
 stopped at an inference timeout on request four. **Three returned responses,
 21,429 accounted tokens, three committed commands and 1,000 native ticks** are
 verified. One dispatched request has no returned usage. Two workshop commands
@@ -20,13 +49,14 @@ is unchanged. Execution was frozen at `034a0e87a1c283763bd494dab269f3d2a2cac9c0`
 [its CI passed](https://github.com/lemoz/fort-gym/actions/runs/34041391431).
 Ten terminal model records are included in website source, not production.
 
-Next: the separately declared [long-v2 condition](../experiments/campaigns/local_native_llama_long_v2.json)
+The separately declared [long-v2 condition](../experiments/campaigns/local_native_llama_long_v2.json)
 changes only the generation read timeout from 180 to 600 seconds. The local server
 was still generating when v1 canceled its fourth request. Keep all gameplay
 instructions, weights, sampling, token and dispatch limits unchanged and begin
 from the original save. The independent segment deadline remains 7,200 seconds;
 v2's declared decision scheduling reserve is 1,944 seconds. These are execution
-bounds, not completion estimates. This configuration is not native-game evidence.
+bounds, not completion estimates. The running follow-up is described above;
+configuration alone is not native-game evidence.
 
 Earlier: [Qwen3.5 9B with thinking enabled](../experiments/evidence/local_native_llama_thinking_20260906.json)
 produced autonomous resource growth: **wood stock increased from 3 to 12**.

@@ -2,15 +2,51 @@
 
 import hashlib
 import json
+from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
-from types import SimpleNamespace
 
 from fort_gym.bench.api import campaign_records as records
 from fort_gym.bench.run.campaign_feed import CampaignFeed, initialize_feed
 
 CONFIG = {"condition_id": "test-condition", "models": ["test-model"]}
+
+
+def test_local_campaign_configuration_links_are_exact_and_revision_bound():
+    import shutil
+    import subprocess
+
+    node = shutil.which("node")
+    if node is None:
+        pytest.skip("Node is not installed")
+    subprocess.run(
+        [
+            node,
+            "-e",
+            """
+const assert = require('node:assert/strict');
+const helpers = require(process.argv[1]);
+const revision = 'a'.repeat(40);
+for (const [condition, file] of [
+  ['local-native-llama-typed-v1', 'local_native_llama_typed_v1.json'],
+  ['local-native-llama-thinking-v1', 'local_native_llama_thinking_v1.json'],
+  ['local-native-llama-long-v1', 'local_native_llama_long_v1.json'],
+  ['local-native-llama-long-v2', 'local_native_llama_long_v2.json']
+]) {
+  assert.equal(helpers.configurationUrl({condition_id:condition,code_revision:revision}),
+    'https://github.com/lemoz/fort-gym/blob/'+revision+'/experiments/campaigns/'+file);
+}
+assert.equal(helpers.configurationUrl({condition_id:'unpublished',code_revision:revision}),null);
+assert.equal(helpers.configurationUrl({condition_id:'constructor',code_revision:revision}),null);
+assert.equal(helpers.configurationUrl({condition_id:'local-native-llama-long-v2',code_revision:'../main'}),null);
+""",
+            str(records.PROJECT_ROOT / "web/static/campaign-feed.js"),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
 
 
 def test_three_published_native_attempts_preserve_distinct_failure_causes():
