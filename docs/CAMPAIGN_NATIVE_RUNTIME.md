@@ -188,6 +188,27 @@ tokens, not actual model consumption. The new bounded port-wait correction is
 unit-tested but has not passed a fresh native automatic-command run. Do not
 reclassify this result as an uninterrupted CLI pass, model run or year-two proof.
 
+Later local observation: [the native harness checkpoint receipt](../experiments/evidence/local_native_harness_checkpoint_20260906.json)
+records source `43a53762c` running under Linux/amd64 translation on the Mac.
+A private derived image supplied pinned Python 3.11, the retained provider-free
+wheelhouse and verified generated bindings. A fresh paused seed save succeeded,
+then the first fixture process loaded it and created a valid v3 checkpoint at
+cursor zero, year 30/tick 16801. No game action or model call occurred.
+
+The automatic CLI failed during first-process cleanup: the scanner found no
+owned PIDs but the listener remained open. Its container then exited, the outer
+operator stopped both containers and the VM, and private evidence was retained.
+A follow-up process diagnostic did not run because VM SSH startup timed out;
+successful prior reboots are not a guarantee of reliable subsequent startup.
+
+The scanner now evaluates `cwd` and `exe` independently, preserving a valid
+ownership match when the other link is unavailable. Same-UID, exact runtime-path,
+terminal-process and PID-start-time checks remain. Two regressions failed before
+this correction and pass afterward; a third rejects two unresolved links. The
+precise translated process links were not captured, so this correction still
+requires native confirmation rather than claiming it explains the observed leak.
+The first checkpoint must not be resumed by rewriting its failed cleanup receipt.
+
 ## Website and historical compatibility
 
 Pass a private feed directory to the runner and configure the existing API's

@@ -139,6 +139,50 @@ def test_path_bound_separate_session_is_signalled(tmp_path, monkeypatch):
     assert signals == [(123, smoke.signal.SIGTERM)]
 
 
+@pytest.mark.parametrize("missing_link", ["exe", "cwd"])
+def test_one_runtime_identity_link_does_not_require_the_other(tmp_path, monkeypatch, missing_link):
+    """A translated executable can name an interpreter outside the mount namespace."""
+    runtime = tmp_path / "owned-runtime"
+    runtime.mkdir()
+    (runtime / "df").write_bytes(b"fixture")
+    proc = tmp_path / "proc"
+    (proc / "self").mkdir(parents=True)
+    (proc / "self/stat").touch()
+    process = proc / "123"
+    process.mkdir()
+    # State through starttime, matching the Linux /proc stat field positions.
+    (process / "stat").write_text("123 (fixture) S " + "0 " * 18 + "12345\n")
+    for name, target in {"cwd": runtime, "exe": runtime / "df"}.items():
+        (process / name).symlink_to(
+            tmp_path / "outside-container" if name == missing_link else target
+        )
+    monkeypatch.setattr(
+        smoke,
+        "Path",
+        lambda value: proc / value.removeprefix("/proc/") if value.startswith("/proc/") else proc,
+    )
+    assert smoke.runtime_live_members(runtime) == {123: "12345"}
+
+
+def test_unresolved_process_links_never_establish_runtime_ownership(tmp_path, monkeypatch):
+    runtime = tmp_path / "owned-runtime"
+    runtime.mkdir()
+    proc = tmp_path / "proc"
+    (proc / "self").mkdir(parents=True)
+    (proc / "self/stat").touch()
+    process = proc / "123"
+    process.mkdir()
+    (process / "stat").write_text("123 (fixture) S " + "0 " * 18 + "12345\n")
+    for name in ("cwd", "exe"):
+        (process / name).symlink_to(tmp_path / "outside-container")
+    monkeypatch.setattr(
+        smoke,
+        "Path",
+        lambda value: proc / value.removeprefix("/proc/") if value.startswith("/proc/") else proc,
+    )
+    assert smoke.runtime_live_members(runtime) == {}
+
+
 @pytest.mark.skipif(not Path("/proc/self/stat").exists(), reason="Linux process inspection")
 def test_real_separate_session_cleanup_leaves_peer_alive(tmp_path):
     runtime, peer_root = tmp_path / "runtime", tmp_path / "peer"

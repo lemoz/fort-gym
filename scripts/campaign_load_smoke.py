@@ -291,12 +291,21 @@ def runtime_live_members(runtime: Path) -> dict[int, str]:
             if path.parent.stat().st_uid != os.getuid():
                 continue
             fields = path.read_text().rpartition(") ")[2].split()
-            cwd = (path.parent / "cwd").resolve(strict=True)
-            executable = (path.parent / "exe").resolve(strict=True)
         except (FileNotFoundError, PermissionError, ProcessLookupError):
             continue
-        if fields[0] not in {"Z", "X"} and (cwd == root or root in executable.parents):
-            members[int(path.parent.name)] = fields[19]
+        if fields[0] in {"Z", "X"}:
+            continue
+        # These are independent ownership witnesses. Under binfmt translation,
+        # exe can point to an interpreter outside the container mount namespace;
+        # that must not discard a valid, exact cwd match (or vice versa).
+        for name in ("cwd", "exe"):
+            try:
+                target = (path.parent / name).resolve(strict=True)
+            except (FileNotFoundError, PermissionError, ProcessLookupError):
+                continue
+            if (name == "cwd" and target == root) or (name == "exe" and root in target.parents):
+                members[int(path.parent.name)] = fields[19]
+                break
     return members
 
 
