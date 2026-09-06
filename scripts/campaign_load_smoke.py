@@ -57,6 +57,30 @@ def verify_snapshot(directory: Path, expected_digest: str) -> dict[str, Any]:
     return result
 
 
+def verify_load_source(directory: Path, digest: str, kind: str) -> tuple[Path, dict[str, Any]]:
+    """Resolve one verified source format without weakening older snapshot checks."""
+    if kind == "native_snapshot":
+        return directory / "native-snapshot", verify_snapshot(directory, digest)["after"]
+    if kind != "campaign_checkpoint":
+        raise CampaignSaveError("Unsupported isolated load source")
+    from fort_gym.bench.run.campaign_checkpoint import verify_checkpoint
+
+    path = directory / "checkpoint.json"
+    if (
+        path.is_symlink()
+        or not path.is_file()
+        or hashlib.sha256(path.read_bytes()).hexdigest() != digest
+    ):
+        raise CampaignSaveError("Campaign checkpoint file digest mismatch")
+    manifest = verify_checkpoint(directory)
+    if manifest["schema_version"] != "fortgym.campaign-checkpoint/v2":
+        raise CampaignSaveError("Campaign continuation requires a v2 checkpoint")
+    native = manifest["payload"]["native_save"]
+    if native.get("paused") is not True:
+        raise CampaignSaveError("Checkpoint does not identify a paused boundary")
+    return directory / "game", native
+
+
 def prepare_runtime(
     source: Path, destination: Path, snapshot: Path, *, port: int, hook_source: Path | None = None
 ) -> None:
@@ -197,18 +221,17 @@ def run_isolated(
     revision: str,
     work=None,
     hook_source: Path | None = None,
+    source_kind: str = "native_snapshot",
 ):
     for retained in (source, snapshot):
         if output.resolve() == retained.resolve() or retained.resolve() in output.resolve().parents:
             raise CampaignSaveError("Test output must be outside retained source and snapshot")
-    receipt = verify_snapshot(snapshot, digest)
+    save_source, expected = verify_load_source(snapshot, digest, source_kind)
     with socket.socket() as probe:
         probe.bind(("127.0.0.1", port))
     output.mkdir(mode=0o700, parents=False, exist_ok=False)
     runtime = output / "runtime"
-    prepare_runtime(
-        source, runtime, snapshot / "native-snapshot", port=port, hook_source=hook_source
-    )
+    prepare_runtime(source, runtime, save_source, port=port, hook_source=hook_source)
     environment = runtime_environment(port)
     result: dict[str, Any] = {
         "schema_version": (
@@ -217,7 +240,11 @@ def run_isolated(
             else "fortgym.isolated-experiment-runtime/v1"
         ),
         "code_revision": revision,
-        "source_snapshot_receipt_sha256": digest,
+        (
+            "source_snapshot_receipt_sha256"
+            if source_kind == "native_snapshot"
+            else "source_checkpoint_file_sha256"
+        ): digest,
         "port": port,
         "runtime_path": str(runtime.resolve()),
         "native_load_verified": False,
@@ -243,7 +270,6 @@ def run_isolated(
             rpc(runtime, environment, "load-save", "campaign-resume")
             loaded = wait_status(runtime, environment, process, loaded=True)
             result["loaded"] = loaded
-            expected = receipt["after"]
             if (
                 loaded.get("save_name") != "campaign-resume"
                 or loaded.get("paused") is not True
@@ -251,7 +277,7 @@ def run_isolated(
                 != (expected["year"], expected["year_tick"])
             ):
                 raise CampaignSaveError("Loaded fortress does not match the saved paused calendar")
-            verify_snapshot(snapshot, digest)
+            verify_load_source(snapshot, digest, source_kind)
             result["native_load_verified"] = True
             if work is not None:
                 result["experiment"] = work(runtime, environment, loaded)

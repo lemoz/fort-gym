@@ -252,6 +252,30 @@ def test_tick_receipt_mismatch_cannot_be_committed(tmp_path, monkeypatch):
     assert loop.failed
 
 
+def test_bounded_native_repause_overshoot_is_counted_not_discarded(tmp_path, monkeypatch):
+    loop = start(tmp_path)
+
+    def advance(ticks, state):
+        loop.environment.state["year_tick"] += ticks + 2
+        return loop.environment.observe(), {"ok": True, "ticks_advanced": ticks + 2}
+
+    monkeypatch.setattr(loop.environment, "advance", advance)
+    row = loop.step()
+    assert row["tick_advance"]["ticks_advanced"] == 202
+
+
+def test_failed_native_tick_receipt_is_not_a_clean_boundary(tmp_path, monkeypatch):
+    loop = start(tmp_path)
+    monkeypatch.setattr(
+        loop.environment,
+        "advance",
+        lambda ticks, state: (state, {"ok": False, "ticks_advanced": 0, "error": "timeout"}),
+    )
+    with pytest.raises(ValueError, match="cleanly"):
+        loop.step()
+    assert loop.failed and not loop.at_boundary
+
+
 def test_model_decision_failure_retains_usage_but_requires_reconciliation(tmp_path, monkeypatch):
     loop = start(tmp_path)
 

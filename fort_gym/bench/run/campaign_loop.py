@@ -19,6 +19,7 @@ from ..agent.base import Agent
 from ..env.actions import parse_action
 from ..env.encoder import encode_observation
 from ..eval.campaign import TICKS_PER_YEAR
+from ..tick_receipt import MAX_REQUEST_OVERSHOOT_TICKS, validate_clean_interruption_receipt
 from .campaign_checkpoint import create_checkpoint, verify_checkpoint
 from .campaign_save import NativeSaveSnapshotter
 
@@ -214,8 +215,22 @@ class CampaignLoop:
         after, receipt = self.environment.advance(requested, before)
         end = _clock(after)
         actual = receipt.get("ticks_advanced")
-        if type(actual) is not int or actual < 0 or end - start != actual or actual > requested:
+        maximum = (
+            min(self.max_advance_ticks, requested + MAX_REQUEST_OVERSHOOT_TICKS) if requested else 0
+        )
+        if type(actual) is not int or actual < 0 or end - start != actual or actual > maximum:
             raise ValueError("Native time disagrees with the action's tick receipt")
+        if (
+            receipt.get("ok") is not True
+            and validate_clean_interruption_receipt(
+                receipt,
+                requested_ticks=requested,
+                state_after_apply=before,
+                state_after_advance=after,
+            )
+            is not None
+        ):
+            raise ValueError("Native tick operation did not finish or interrupt cleanly")
         tick_info = {
             **receipt,
             "start_year": before["year"],
