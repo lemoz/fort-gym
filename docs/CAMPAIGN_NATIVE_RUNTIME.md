@@ -14,6 +14,31 @@ and condition identities; they are not acceptance evidence for this revision.
 
 ## Requirements
 
+### Latest native verification, September 6
+
+Source `fad9d80c0a2e7aace8380b47b009db5edaf6bd2e` passed the automatic v3
+checkpoint recovery fixture on isolated Colima 0.10.3 / Lima 2.2.0 tooling.
+It saved cursor zero at year 30, tick 16801, stopped the first game process,
+restored the exact checkpoint in a second process, and executed one fresh
+20-tick WAIT. Both cleanup receipts and an independent recovery verifier passed;
+the container and VM stopped. A real translated-process probe also confirmed
+ownership detection when the executable link could not resolve.
+See the [automatic recovery receipt](../experiments/evidence/local_native_automatic_recovery_20260906.json).
+
+This provider-free fixture is not autonomous gameplay or year-two proof.
+Synthetic usage is not model consumption; no final checkpoint followed the WAIT.
+Global tools, old profiles and historical failure receipts remain unchanged.
+The new toolchain's successful boot/reboot does not explain old startup failures.
+
+The next experiment uses the [new local Qwen3.5 condition](../experiments/campaigns/local_native_qwen35_year_two_v1.json):
+existing 9B quantized weights, optional thinking disabled, 4,096 output tokens,
+and the unchanged digest-bound starting seed, not the fixture's post-WAIT state.
+It is not yet run. The changed seed, runtime and budgets are declared; this is
+not a matched historical comparison. Year-two play and repeated model evaluation
+remain open. No production deployment is claimed.
+
+### Runtime prerequisites
+
 - Run the commands from a committed Git checkout with Python 3.11. Install the
   project's dependencies with `python -m pip install -e '.[dev,agent,proto]'`.
   The `scripts.campaign_*` commands require the checkout; they are not standalone
