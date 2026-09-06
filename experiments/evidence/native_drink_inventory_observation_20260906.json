@@ -1,0 +1,82 @@
+{
+  "schema_version": "fortgym.stock-observation-diagnostic/v1",
+  "scope": "read_only_measurement_diagnostic_not_a_model_score",
+  "observed_discrepancy": {
+    "campaign_id": "local-long-v2-qwen35-20260906-a",
+    "condition_id": "local-native-llama-long-v2",
+    "code_revision": "60fd08415b10adfe52a0d275c826669dad843937",
+    "year": 30,
+    "year_tick": 67809,
+    "ui_drink": 60,
+    "inventory_drink_units": 46,
+    "inventory_drink_item_records": 11,
+    "type_read_failures": 0,
+    "stack_read_failures": 0,
+    "excluded_flags_observed": {
+      "removed": 0,
+      "garbage_collect": 0
+    },
+    "calendar_unchanged": true,
+    "gameplay_actions": 0,
+    "private_audit_sha256": "57f30f98165a5def79c6f2070a0d9926bd6ed9f4515dc0e106eece0ae8791010"
+  },
+  "candidate_read_only_acceptance": {
+    "calendar_unchanged": true,
+    "candidate_state_lua_sha256": "e63a69c3b81466165640b0431378ee7df4518e7ce03f1d22a12a0626d46dc5e0",
+    "gameplay_actions": 0,
+    "independent_excluded": 0,
+    "independent_item_records": 12,
+    "independent_units": 60,
+    "model_calls": 0,
+    "native_dfhack_version": "0.47.05-r8",
+    "native_transport_revision": "60fd08415b10adfe52a0d275c826669dad843937",
+    "pause_unchanged": true,
+    "read_only": true,
+    "schema_version": "fortgym.native-drink-inventory-acceptance/v1",
+    "scope": "read_only_original_paused_map_not_campaign_rerun_or_deployment",
+    "stock_observations": {
+      "drink": {
+        "complete": true,
+        "excluded_records": 0,
+        "forbidden_units": 0,
+        "in_job_units": 0,
+        "item_read_failures": 0,
+        "item_records": 12,
+        "list_read_failures": 0,
+        "rotten_units": 0,
+        "scanned_units": 60,
+        "scope": "existing units, not accessibility, ownership or production/consumption",
+        "source": "world.items.other.IN_PLAY DRINK stack_size",
+        "type_read_failures": 0,
+        "ui_estimate": 60,
+        "units": 60
+      },
+      "food": {
+        "freshness": "unverified",
+        "scope": "UI estimate, not production/consumption",
+        "source": "ui.tasks.food counters"
+      },
+      "schema_version": "fortgym.stock-observations/v1"
+    },
+    "stocks": {
+      "drink": 60,
+      "food": 45,
+      "stone": 0,
+      "stone_usable": 0,
+      "wealth": 9,
+      "wood": 3,
+      "wood_usable": 0
+    },
+    "year": 30,
+    "year_tick": 19309,
+    "private_audit_sha256": "f43feb298f803983e8e402abd29c13f78cef6a3111a39e5cace964a19e171267"
+  },
+  "limitations": [
+    "The discrepant campaign's frozen observations and historical result manifests were not changed.",
+    "Candidate acceptance used the separate original paused map, whose 60 inventory units matched its UI value. It did not rerun the campaign.",
+    "Drink units include forbidden, rotten, in-job, foreign-owned or inaccessible inventory unless removed or garbage-collected. Flag unit totals are observations, not accessibility claims.",
+    "Food remains an explicitly freshness-unverified UI estimate.",
+    "Stock differences do not measure production or consumption rates.",
+    "No model calls, native gameplay actions, service restart or production deployment were made for the diagnostic."
+  ]
+}
