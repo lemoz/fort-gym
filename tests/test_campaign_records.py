@@ -15,7 +15,7 @@ CONFIG = {"condition_id": "test-condition", "models": ["test-model"]}
 
 def test_three_published_native_attempts_preserve_distinct_failure_causes():
     result = records.campaign_feed(None)
-    assert result["configured"] is False and result["published_snapshots"] == 6
+    assert result["configured"] is False and result["published_snapshots"] == 7
     by_model = {
         row["model"]: row
         for row in result["campaigns"]
@@ -47,7 +47,7 @@ def test_recorded_comparison_is_served_without_enabling_a_live_directory(monkeyp
     client = TestClient(server.app)
     response = client.get("/public/campaign-feed")
     assert response.status_code == 200 and response.json()["configured"] is False
-    assert len(response.json()["campaigns"]) == 6
+    assert len(response.json()["campaigns"]) == 7
     assert "no-store" in response.headers["cache-control"]
     assert client.get("/campaigns").status_code == 200
 
@@ -140,6 +140,37 @@ def test_qwen14_record_separates_native_usage_from_synthetic_feasibility():
     assert bundle["synthetic_feasibility"]["all_cases_exact"] is False
     assert bundle["prior_candidate_feasibility"]["requests_without_returned_usage"] == 1
     assert bundle["prior_candidate_feasibility"]["total_returned_tokens"] == 766
+
+
+def test_partial_reference_record_retains_prompt_and_defaulted_mode_evidence():
+    path = (
+        records.PROJECT_ROOT
+        / "experiments/evidence/local_native_designation_reference_20260906.json"
+    )
+    bundle = json.loads(path.read_text())
+    row = next(
+        row
+        for row in records.campaign_feed(None)["campaigns"]
+        if row["campaign_id"] == "local-reference-qwen14-20260906-a"
+    )
+    assert (row["committed_steps"], row["elapsed_ticks"]) == (6, 1200)
+    assert row["usage"]["total_tokens"] == 29252
+    assert row["usage"]["dispatched_requests"] == row["usage"]["accounted_responses"] == 6
+    assert row["checkpoint_verified"] is True and row["cleanup_verified"] is True
+    assert row["actions"]["accepted"] == 0 and row["actions"]["rejected"] == 6
+    assert row["current_metrics"]["completed_workshops"] == 0
+    assert row["code_revision"] == "8148f6d55494ad88caf46a780cfbea11d16d6a4a"
+    assert row["condition_id"] == "local-native-designation-reference-v1"
+    assert row["comparison_rankings_available"] is False
+    assert bundle["condition_completion"] == "partial_one_of_four_allowed_segments"
+    audit = bundle["audits"][0]
+    assert audit["action_reference"]["every_committed_request_contains_exact_reference"] is True
+    assert audit["raw_designation_modes"] == {"omitted_default_dig": 6}
+    assert bundle["baseline_raw_mode_diagnostic"]["raw_designation_modes"] == {"dig": 16}
+    assert audit["packing"]["maximum_request_bytes"] == 21512
+    assert audit["packing"]["maximum_history_rows_omitted"] == 0
+    assert len(bundle["configuration"]["models"]) == 4
+    assert len(bundle["campaigns"]) == 1
 
 
 @pytest.fixture

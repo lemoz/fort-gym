@@ -2,7 +2,23 @@
 
 Verified September 6, 2026. The Year-Two Autonomous Play goal remains active.
 
-Latest: [Qwen2.5 14B Q3_K_M](../experiments/evidence/local_native_qwen14_q3_20260906.json)
+Latest: the [factual designation-reference condition](../experiments/evidence/local_native_designation_reference_20260906.json)
+has one verified Qwen14 segment: **six responses, 29,252 tokens and 1,200 explicitly
+requested native ticks**. All six DIG responses omitted `kind`, defaulted to ordinary
+digging, and were rejected as `tile_not_designatable`; no development completed.
+The exact new reference was present in all six requests. Current facts and latest
+results were preserved, with no older history omitted and a largest request of
+21,512 bytes. Native/agent/trace/usage checkpoint cursor 6 and independent native,
+model and tunnel teardown were verified. Production remained unchanged.
+
+This is **one of four allowed segments**, with ten dispatches remaining. Resume
+at frozen execution revision `8148f6d55494ad88caf46a780cfbea11d16d6a4a`, not a newer
+publication HEAD. The baseline explicitly returned `kind=dig` on all sixteen
+decisions; the new omission pattern is not evidence of gameplay improvement or
+causation. Only Qwen14 has begun the four-model reference condition. It is not a
+ranking, completed condition or year-two success.
+
+Earlier: [Qwen2.5 14B Q3_K_M](../experiments/evidence/local_native_qwen14_q3_20260906.json)
 completed its bounded attempt: **16 responses, 82,782 tokens and 3,200
 model-requested native ticks** across three saved segments. All sixteen DIG commands
 were rejected as `tile_not_designatable`; no development completed. Twelve commands
@@ -133,13 +149,15 @@ visibility or new inventory facts. The
 keeps observations and other bounds unchanged apart from factual workshop-policy
 disclosure, allowing a controlled test of the terrain repair.
 
-Next: evaluate the separately declared
-[native designation reference](NATIVE_DESIGNATION_REFERENCE.md) from the original
-save. It supplies factual terrain eligibility and rectangle semantics for all four
+Next: continue the saved Qwen14
+[native designation reference](NATIVE_DESIGNATION_REFERENCE.md) attempt within its
+remaining ten-dispatch allowance, then evaluate other declared models under the
+same condition and original starting save. It supplies factual terrain eligibility
+and rectangle semantics for all four
 DIG modes, without selecting actions, coordinates, a build order or recovery steps.
 The actual system prompt is checkpoint-bound; old conditions retain their original
 identity. The condition supports four exact local manifests for future matched
-attempts, but does not claim those attempts have run. A read-only replay fit all
+attempts, but only one Qwen14 segment has run. A read-only replay fit all
 eleven inspected historical requests under the unchanged 22,000-byte bound while
 preserving current facts, latest results, exact memory and corrections. This is
 prompt-fit evidence, not model success. Seek autonomous resource acquisition and
@@ -183,8 +201,9 @@ live feed is configured, with profile, command mix, adapter-readiness limitation
 native time, resources, costs and source identity. A broken configured live source
 still reports an error instead of pretending old data is current.
 
-There are now **six recorded model snapshots**, including the completed bounded
-native-ground and Qwen14 campaigns. The successful
+There are now **seven recorded model snapshots**, including the completed bounded
+native-ground and Qwen14 baseline campaigns and the partial control-reference
+campaign. The successful
 scripted workshop fixture has a separate
 adapter-acceptance section and evidence link, never a model-comparison row. The
 pre-publication combined local suite passed **702 tests** with one Linux-only skip; targeted
@@ -199,8 +218,12 @@ Linux-only skip. Its full CI passed in run `34030522017` at
 `bdaa23042bb47860ae943be462e75f29b1435812`. The reference-control implementation and
 expanded local suite passed **719 tests**, with one Linux-only skip, including the
 completed-Qwen website record and designation-condition link regressions. Focused
-Ruff, Black, typing and JavaScript syntax checks passed. Fresh remote CI is tracked
-separately on the PR.
+Ruff, Black, typing and JavaScript syntax checks passed. Full remote CI passed for
+the reference execution revision in run `34031851418`. The latest seven-record
+publication passed **720 focused local tests**, with one Linux-only skip, including
+a separate regression for its exact prompt evidence, defaulted designation modes
+and unfinished condition. Targeted static, formatting and typing checks passed;
+fresh publication CI is tracked on the PR.
 
 [Draft PR #125](https://github.com/lemoz/fort-gym/pull/125) is the integration surface.
 The website/reporting code is separate from the frozen native execution revision.
