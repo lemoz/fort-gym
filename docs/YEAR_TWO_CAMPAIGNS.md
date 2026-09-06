@@ -226,3 +226,33 @@ history, measurement baselines, and gameplay bookkeeping outside agent memory,
 and reconcile charges accrued after a checkpoint. The current bundle has not yet
 proved those properties. Website campaign views, model experiments, review/merge,
 and production delivery remain required parts of the active goal.
+
+## Real isolated native load proof: September 6, 2026 UTC
+
+`native-load-20260906-c`, at candidate `3d47392b0`, passed native loading AND
+test-process teardown. The copied runtime identified its own path on loopback
+port 5501 before receiving `load-save`; the verified snapshot loaded as
+`campaign-resume`, paused at year 30 tick 19309, exactly matching the saved
+boundary. Its process set was empty and listener closed after teardown. An
+independent `ss` check found no test listener, both production services remained
+active, and the original `region3` still reported the same paused native clock.
+
+All 19 load tests passed on Linux, including a real separate-session target/peer
+cleanup test. The source snapshot, copied runtimes, and failed attempts remain
+private in the service-account scratch checkout. The successful `result.json`
+digest is `e2ccb7b7c12a4315ad96e666ebdae8edbe0c53b334c0ac0f11b6c3aa73c17207`;
+see `experiments/evidence/native_load_smoke_20260906.json` for the versioned record.
+
+The first attempt exposed native CLI color codes and DF's separate PTY session;
+its leftover exact test PID was identified and terminated without touching
+production. The second proved loading but its immediate listener check raced
+shutdown. Both failure receipts remain unchanged. The final implementation strips
+native color codes, verifies process identity by runtime path/UID/start time,
+and waits for both process and listener disappearance.
+
+Draft PR https://github.com/lemoz/fort-gym/pull/125 contains this work. Its initial
+full CI run (`34005045563`, head `72381de9c`) passed. Newer candidate CI runs were
+still running at this checkpoint; the initial green run does not cover later code.
+No model call or gameplay advance has been made yet. Next: inexpensive model-driven
+experiments from isolated saves while completing runner-state continuation and
+website delivery. Native load success alone does not complete the active goal.

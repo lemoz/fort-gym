@@ -1,0 +1,48 @@
+{
+  "schema_version": "fortgym.native-load-evidence/v1",
+  "evidence_id": "native-load-20260906-c",
+  "verified_on_utc_date": "2026-09-06",
+  "code_revision": "3d47392b0c2567fddeed013fc0785a9b4ec90cad",
+  "source_snapshot_receipt_sha256": "ca71bfd2032e864cced48e66f20f76827b92b9df2099f03476f2dd43234c2d3d",
+  "result_location": "/home/ubuntu/fort-gym-test/year-two-campaigns/artifacts/native-load-20260906-c/result.json",
+  "result_sha256": "e2ccb7b7c12a4315ad96e666ebdae8edbe0c53b334c0ac0f11b6c3aa73c17207",
+  "native_load_verified": true,
+  "loaded_save_name": "campaign-resume",
+  "loaded_native_year": 30,
+  "loaded_native_year_tick": 19309,
+  "loaded_paused": true,
+  "cleanup_verified": true,
+  "listener_closed": true,
+  "remaining_live_processes": [],
+  "independent_postcheck": {
+    "test_port_5501_listeners": 0,
+    "production_services": "fort-gym-api and dfhack-headless both active",
+    "production_fortress": "region3 still paused at year 30 tick 19309 with no autosave pending"
+  },
+  "remote_focused_tests": {"passed": 19, "failed": 0, "skipped": 0},
+  "provider_calls": 0,
+  "reported_model_cost_usd": "0",
+  "gameplay_ticks_requested": 0,
+  "new_vms_created": 0,
+  "production_code_changed": false,
+  "campaign_recovery_verified": false,
+  "year_two_gameplay_verified": false,
+  "prior_attempts": [
+    {
+      "evidence_id": "native-load-20260906-a",
+      "native_load_verified": false,
+      "result": "Native CLI color codes prevented JSON readiness parsing; launcher-only cleanup missed a separate PTY session.",
+      "followup_cleanup": "Verified exact test PID 2955471 cwd and executable under its copied runtime, terminated it, and verified port 5501 closed. Original failure receipt retained."
+    },
+    {
+      "evidence_id": "native-load-20260906-b",
+      "native_load_verified": true,
+      "result": "Saved calendar restored exactly, but one immediate listener check raced final shutdown. Follow-up observed port closed. Original incomplete receipt retained."
+    }
+  ],
+  "limits": [
+    "This proves native saving/loading and test-runtime teardown, not a model taking the next action.",
+    "Agent plus runner-state continuation and post-checkpoint usage reconciliation remain open.",
+    "Runtime files and game saves remain private on the existing host."
+  ]
+}
