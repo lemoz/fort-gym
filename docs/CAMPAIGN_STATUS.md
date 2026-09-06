@@ -2,6 +2,19 @@
 
 Verified September 6, 2026. The Year-Two Autonomous Play goal remains active.
 
+Latest: the [Mistral harness-repair run](../experiments/evidence/local_native_harness_repair_20260906.json)
+finished at **28,000 native elapsed ticks**, with 16/16 returned and accounted
+requests, 96,919 tokens and $0 metered model API charges. Four checkpoints retain
+all 16 committed commands and usage. All four copied runtimes/listeners, the local
+model server/runner and the temporary tunnel were independently verified stopped.
+The production revision/services and original paused fortress remain unchanged.
+
+This is clock and continuation progress, **not fortress-development success**:
+all 14 BUILD commands and two INTERACT commands were rejected. Seven dwarves and
+food/drink stocks of 45/60 remain; completed workshops, beds and farms remain zero.
+The 28,000 ticks were all explicitly requested by the model, following 14 attested
+no-write rejections. There were no fallback actions or human gameplay rescue.
+
 The first matched three-model native development comparison is complete. It used
 the same digest-bound starting save, frozen code `164ffd0ab5024de22158968bcec3f48a79dbade1`,
 and [declared condition](../experiments/campaigns/local_native_packed_comparison_v1.json).
@@ -36,7 +49,7 @@ are not reconciled total project spending or remaining budget.
   private tunnel were independently verified stopped. No VM was created. The
   production code, services and paused original fortress were unchanged.
 
-## Harness repair candidate, before longer campaigns
+## Harness repairs and native findings
 
 1. Implemented a separately declared simulation-advance policy. The original loop discards
    the model's explicit tick request whenever a command is rejected. Mistral asked
@@ -50,9 +63,12 @@ are not reconciled total project spending or remaining budget.
    Current facts, all corrections, latest results, persistent notes and cumulative
    usage are retained; older history is reduced to fit. An irreducible overflow
    after a response still requires reconciliation, not a silent usage rollback.
-3. Next: rerun the affected model under the new condition and look for completed native
-   work. Then repeat matched comparisons and expand toward first-year survival.
-   Solve retained-runtime disk growth before large numbers of copied segments.
+3. The affected model has now completed its new bounded condition at native code
+   `75cc9318f09cf79f66789f83321e76ffe08b146d`. All 16 request hashes and their current
+   facts/latest results were verified; the largest request was 21,879 bytes. It
+   needed no grammar-correction retry in this run. Separately, the historical
+   failed correction reconstructs to 21,912 bytes with the repair, preserving the
+   current facts, exact correction, latest result and persistent notes.
 
 The [repair condition](../experiments/campaigns/local_native_harness_repair_v1.json)
 declares `model_requested/v1` and `bounded_history_corrections/v1`. All original
@@ -63,12 +79,30 @@ Python preflight branches now distinguish no-write rejections from attempted
 mutations; unknown/partial writes get no additional simulation time. No cache flag
 is cleared manually, no fallback action is inserted, and old results are unchanged.
 
-Candidate checks: 620 focused campaign, native-helper, clock-lifecycle and memory
-tests passed; one Linux-only test skipped. Fifteen of these execute actual Lua
-hook control flow against engine doubles, including stale-cache rejections and
-failure after a write. They are not native-game acceptance. Focused Ruff and
-targeted typing of seven changed modules passed. A native repair-condition run
-has not yet been accepted.
+The run exposed a remaining terrain restriction: the harness requires strict
+FLOOR tiles, while the installed DFHack 0.47.05-r8 Quickfort generic rule also
+permits BOULDER, PEBBLES, TWIG, SAPLING and SHRUB. Four rejected commands contain
+eight failed tiles split evenly between BOULDER and SHRUB. The source hash and
+rule locations are retained in the new bundle. This is not proof those complete
+footprints had available materials or met every other placement condition.
+
+Next: align campaign placement with ordinary native rules under a separately
+declared condition, and verify native construction/material behavior. Then seek
+completed production, repeat matched model attempts, and expand the time horizon.
+Retained runtime copies currently cost about 335 MB per segment versus about
+9 MB for its checkpoint. Use a bounded continuous-runtime/retention design before
+large endurance campaigns; no historical evidence has been deleted.
+
+Repair checks: 620 focused campaign/helper/clock/memory tests passed locally and
+188 passed on the isolated Linux host. Its 15 Lua-only tests were skipped because
+no Lua interpreter is installed there; all 15 executed locally against engine
+doubles. Full CI at the native revision passed 2,697 tests but failed three older
+exact-receipt assertions in work-metric tests. Those assertions now check the new
+no-write field; the final expanded local suite passed **651 tests**, with one
+Linux-only skip, including the actual four recorded campaigns through the page
+and feed. Focused static/typing and JavaScript syntax checks passed. Fresh remote
+CI verification is tracked on the PR.
+These test results do not substitute for native construction or website acceptance.
 
 ## Website and repository
 

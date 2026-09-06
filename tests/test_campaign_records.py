@@ -15,8 +15,12 @@ CONFIG = {"condition_id": "test-condition", "models": ["test-model"]}
 
 def test_three_published_native_attempts_preserve_distinct_failure_causes():
     result = records.campaign_feed(None)
-    assert result["configured"] is False and result["published_snapshots"] == 3
-    by_model = {row["model"]: row for row in result["campaigns"]}
+    assert result["configured"] is False and result["published_snapshots"] == 4
+    by_model = {
+        row["model"]: row
+        for row in result["campaigns"]
+        if row["condition_id"] == "local-native-packed-comparison-v1"
+    }
     qwen = by_model["qwen2.5:7b-instruct"]
     llama = by_model["llama3.1:8b-instruct-q4_K_M"]
     mistral = by_model["mistral:7b-instruct-v0.3-q4_K_M"]
@@ -43,9 +47,37 @@ def test_recorded_comparison_is_served_without_enabling_a_live_directory(monkeyp
     client = TestClient(server.app)
     response = client.get("/public/campaign-feed")
     assert response.status_code == 200 and response.json()["configured"] is False
-    assert len(response.json()["campaigns"]) == 3
+    assert len(response.json()["campaigns"]) == 4
     assert "no-store" in response.headers["cache-control"]
     assert client.get("/campaigns").status_code == 200
+
+
+def test_repair_record_preserves_clock_and_checkpoint_without_claiming_success():
+    rows = records.campaign_feed(None)["campaigns"]
+    repaired = next(row for row in rows if row["condition_id"] == "local-native-harness-repair-v1")
+    original = next(row for row in rows if row["campaign_id"] == "local-packed-mistral-20260906-a")
+    assert repaired["model"] == original["model"]
+    assert repaired["configuration_sha256"] != original["configuration_sha256"]
+    assert repaired["code_revision"] == "75cc9318f09cf79f66789f83321e76ffe08b146d"
+    assert (
+        repaired["declared_starting_snapshot_receipt_sha256"]
+        == original["declared_starting_snapshot_receipt_sha256"]
+    )
+    assert (repaired["committed_steps"], repaired["elapsed_ticks"]) == (16, 28000)
+    assert repaired["usage"]["total_tokens"] == 96919
+    assert (
+        repaired["usage"]["dispatched_requests"] == repaired["usage"]["accounted_responses"] == 16
+    )
+    assert repaired["usage"]["metered_provider_charge_usd"] == "0"
+    assert repaired["usage"]["infrastructure_cost_usd"] is None
+    assert repaired["checkpoint_verified"] is True and repaired["cleanup_verified"] is True
+    assert repaired["actions"]["accepted"] == 0 and repaired["actions"]["rejected"] == 16
+    assert repaired["actions"]["path_cache_stale_rejections"] == 4
+    assert repaired["current_metrics"]["completed_workshops"] == 0
+    assert repaired["current_metrics"]["population"] == 7
+    assert repaired["elapsed_ticks"] < 403200
+    assert repaired["functioning_fortress"] == "not_assessed"
+    assert repaired["comparison_rankings_available"] is False
 
 
 @pytest.fixture

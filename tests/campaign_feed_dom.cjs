@@ -47,6 +47,8 @@ first.actions = {accepted:16, rejected:2, unknown:0, changed_command_after_rejec
   by_type:{LABOR:{accepted:16, rejected:0, unknown:0}, BUILD:{accepted:0, rejected:2, unknown:0}}};
 data.campaigns.push({...first, model:'second-model', campaign_id:'second',
   condition_id:'local-native-packed-comparison-v1', code_revision:'a'.repeat(40)});
+data.campaigns.push({...first, model:'repair-model', campaign_id:'repair',
+  condition_id:'local-native-harness-repair-v1', code_revision:'b'.repeat(40)});
 let fail = false, malformed = false, requests = 0;
 const fetch = async url => {
   assert.equal(url, '/public/campaign-feed'); requests++;
@@ -58,7 +60,7 @@ vm.runInNewContext(fs.readFileSync(process.argv[2], 'utf8'), {
 (async () => {
   await new Promise(setImmediate);
   assert.equal(elements['campaign-feed-content'].hidden, false);
-  assert.equal(elements['campaign-feed-rows'].children.length, 2);
+  assert.equal(elements['campaign-feed-rows'].children.length, 3);
   let row = elements['campaign-feed-rows'].children[0];
   assert.equal(row.children[0].text, '<img src=x onerror=alert(1)>');
   assert.match(row.children[1].textContent, /current state unknown/);
@@ -81,6 +83,15 @@ vm.runInNewContext(fs.readFileSync(process.argv[2], 'utf8'), {
   elements['campaign-feed-rows'].children[0].children[0].children[1].events.click();
   assert.equal(elements['campaign-profile-detail'].children.find(child => child.href?.startsWith('https://github.com/')).href,
     `https://github.com/lemoz/fort-gym/blob/${'a'.repeat(40)}/experiments/campaigns/local_native_packed_comparison_v1.json`);
+  elements['campaign-condition-filter'].value = 'local-native-harness-repair-v1';
+  elements['campaign-condition-filter'].events.change();
+  assert.equal(elements['campaign-feed-rows'].children.length, 1);
+  elements['campaign-feed-rows'].children[0].children[0].children[1].events.click();
+  assert.equal(elements['campaign-profile-detail'].children.find(child => child.href?.startsWith('https://github.com/')).href,
+    `https://github.com/lemoz/fort-gym/blob/${'b'.repeat(40)}/experiments/campaigns/local_native_harness_repair_v1.json`);
+  elements['campaign-condition-filter'].value = 'local-native-packed-comparison-v1';
+  elements['campaign-condition-filter'].events.change();
+  elements['campaign-feed-rows'].children[0].children[0].children[1].events.click();
   fail = true;
   await elements['refresh-campaign-feed'].events.click();
   assert.match(elements['campaign-feed-status'].textContent, /current state is unknown/);

@@ -19,7 +19,8 @@
     'endurance-autonomous-v1': 'endurance_autonomous_v1.json',
     'local-native-development-v1': 'local_native_development_v1.json',
     'local-native-visible-contract-v1': 'local_native_visible_contract_v1.json',
-    'local-native-packed-comparison-v1': 'local_native_packed_comparison_v1.json'
+    'local-native-packed-comparison-v1': 'local_native_packed_comparison_v1.json',
+    'local-native-harness-repair-v1': 'local_native_harness_repair_v1.json'
   };
   function known(value) { return typeof value === 'number' && Number.isFinite(value) && value >= 0; }
   function number(value) { return known(value) ? value.toLocaleString('en-US') : 'Unknown'; }
