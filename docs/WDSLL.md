@@ -1,5 +1,13 @@
 # WDSLL — What Does Success Look Like
 
+Latest verified progress, September 6: the automatic native v3 recovery fixture
+passed at `fad9d80c0`, including first-process teardown, exact checkpoint restore,
+one fresh 20-tick action and second-process teardown. The local container and VM
+stopped. See the [receipt](../experiments/evidence/local_native_automatic_recovery_20260906.json).
+This provider-free fixture is not autonomous gameplay or year-two acceptance.
+The [fresh local Qwen3.5 experiment](../experiments/campaigns/local_native_qwen35_year_two_v1.json)
+is configured but unrun. PR #132 remains open and production is unchanged.
+
 ## Current direction: year-two campaigns (September 5, 2026)
 
 The owner-approved operating goal is now [Year-Two Autonomous Play and
