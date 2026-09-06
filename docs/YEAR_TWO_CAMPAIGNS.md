@@ -560,3 +560,14 @@ test skipped. Changed-file Ruff and targeted mypy checks passed. Repository-wide
 Ruff still reports 14 findings in unchanged historical files. Full-package mypy
 reports 659 errors across 37 files; no clean repository-wide typing result is
 claimed by the targeted checks.
+
+Candidate `d08c1c819c65650e29140c2b8a7659d4165e475a` is pushed to draft
+[PR #125](https://github.com/lemoz/fort-gym/pull/125); 139 targeted tests passed
+on the existing Linux test checkout. A read-only native check of the new encoder
+returned 8,529 UTF-8 observation bytes, 11 minimap rows, and 1,943 screen characters,
+with work/fort/crew readers all reporting `ok=true`. It observed seven citizens
+and verified `region3` remained paused at year 30, tick 19,309 before and after.
+There were no model calls, game advances, saves, new game processes, or new VMs.
+This verifies native observation availability, not model-chosen native actions.
+Full CI [34012306769](https://github.com/lemoz/fort-gym/actions/runs/34012306769)
+was still running at this checkpoint. The candidate is not merged or deployed.
