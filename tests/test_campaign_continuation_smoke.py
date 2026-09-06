@@ -4,6 +4,7 @@ from copy import deepcopy
 
 import pytest
 
+from scripts import campaign_continuation_smoke
 from scripts.campaign_continuation_smoke import ContinuationFixtureAgent, verify_continuation
 from scripts.campaign_load_smoke import verify_load_source
 from fort_gym.bench.run.campaign_checkpoint import create_checkpoint
@@ -126,3 +127,71 @@ def test_loader_accepts_only_digest_bound_complete_v2_checkpoint(tmp_path):
     (checkpoint / "game/world.sav").write_bytes(b"modified")
     with pytest.raises(RuntimeError, match="digest"):
         verify_load_source(checkpoint, digest, "campaign_checkpoint")
+
+
+@pytest.mark.parametrize("cleanup_verified", [True, False])
+def test_parent_reuses_only_successfully_torn_down_first_phase(
+    tmp_path, monkeypatch, cleanup_verified
+):
+    first_output, output = tmp_path / "first", tmp_path / "continuation"
+    first_output.mkdir()
+    checkpoint = first_output / "checkpoint"
+    checkpoint.mkdir()
+    (checkpoint / "checkpoint.json").write_text("{}")
+    first, resumed = worker_results()
+    (first_output / "worker-result.json").write_text(json.dumps(first))
+    (first_output / "result.json").write_text(
+        json.dumps(
+            {
+                "native_load_verified": True,
+                "cleanup_verified": cleanup_verified,
+                "runtime_path": str(first_output / "runtime"),
+                "code_revision": "first-revision",
+            }
+        )
+    )
+    calls = []
+
+    def isolated(**kwargs):
+        calls.append(kwargs)
+        kwargs["output"].mkdir()
+        (kwargs["output"] / "worker-result.json").write_text(json.dumps(resumed))
+        return {"cleanup_verified": True}
+
+    monkeypatch.setattr(campaign_continuation_smoke, "run_isolated", isolated)
+    monkeypatch.setattr(
+        campaign_continuation_smoke.subprocess,
+        "check_output",
+        lambda args, **kwargs: "resumed-revision" if args[1] == "rev-parse" else "",
+    )
+    monkeypatch.setattr(
+        campaign_continuation_smoke.sys,
+        "argv",
+        [
+            "campaign_continuation_smoke",
+            "--source",
+            str(tmp_path / "source"),
+            "--first-output",
+            str(first_output),
+            "--output",
+            str(output),
+            "--port",
+            "5501",
+            "--resume-port",
+            "5502",
+        ],
+    )
+    if not cleanup_verified:
+        with pytest.raises(ValueError, match="teardown"):
+            campaign_continuation_smoke.main()
+        assert calls == []
+        return
+    campaign_continuation_smoke.main()
+    assert len(calls) == 1
+    assert calls[0]["port"] == 5502
+    assert calls[0]["source_kind"] == "campaign_checkpoint"
+    assert calls[0]["snapshot"] == checkpoint
+    result = json.loads((output / "result.json").read_text())
+    assert result["first_code_revision"] == "first-revision"
+    assert result["code_revision"] == "resumed-revision"
+    assert result["first_output"] == str(first_output)

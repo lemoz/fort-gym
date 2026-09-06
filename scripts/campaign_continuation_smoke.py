@@ -200,6 +200,10 @@ def main() -> None:
     parser.add_argument("--snapshot-sha256")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--port", type=int, default=5501)
+    parser.add_argument("--resume-port", type=int)
+    parser.add_argument(
+        "--first-output", type=Path, help="Reuse a successfully torn-down first phase"
+    )
     parser.add_argument("--worker", action="store_true")
     parser.add_argument("--checkpoint", type=Path)
     parser.add_argument("--latest-usage", type=Path)
@@ -207,15 +211,26 @@ def main() -> None:
     if args.worker:
         worker(args.output, args.checkpoint, args.latest_usage)
         return
-    if args.source is None or args.snapshot is None or args.snapshot_sha256 is None:
+    if args.source is None or (
+        args.first_output is None and (args.snapshot is None or args.snapshot_sha256 is None)
+    ):
         parser.error("source, snapshot, and snapshot-sha256 are required")
+    resume_port = args.resume_port if args.resume_port is not None else args.port + 1
+    if (
+        any(not 1024 <= port <= 65535 or port == 5000 for port in (args.port, resume_port))
+        or resume_port == args.port
+    ):
+        parser.error("Use two distinct dedicated unprivileged non-production ports")
     revision = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
     if subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=no"]):
         raise ValueError("Native continuation requires a clean committed checkout")
     args.output.mkdir(mode=0o700, parents=False, exist_ok=False)
-    first_output, resumed_output = args.output / "first", args.output / "resumed"
+    first_output = (
+        args.first_output.resolve() if args.first_output is not None else args.output / "first"
+    )
+    resumed_output = args.output / "resumed"
 
-    def perform(output: Path, checkpoint: Path | None = None):
+    def perform(output: Path, port: int, checkpoint: Path | None = None):
         def play(runtime, environment, loaded):
             worker_env = {
                 **environment,
@@ -224,7 +239,7 @@ def main() -> None:
                 "DFHACK_ENABLED": "1",
                 "DF_PROTO_ENABLED": "1",
                 "DFHACK_HOST": "127.0.0.1",
-                "DFHACK_PORT": str(args.port),
+                "DFHACK_PORT": str(port),
                 "FORT_GYM_DFHACK_COMPLETE_DIG": "0",
                 "ARTIFACTS_DIR": str(output / "unused-artifacts"),
                 "FORT_GYM_DB_PATH": str(output / "unused-registry.sqlite"),
@@ -262,16 +277,26 @@ def main() -> None:
 
         return play
 
-    first_runtime = run_isolated(
-        source=args.source,
-        snapshot=args.snapshot,
-        digest=args.snapshot_sha256,
-        output=first_output,
-        port=args.port,
-        revision=revision,
-        work=perform(first_output),
-        hook_source=Path(__file__).resolve().parents[1] / "hook",
-    )
+    if args.first_output is None:
+        first_runtime = run_isolated(
+            source=args.source,
+            snapshot=args.snapshot,
+            digest=args.snapshot_sha256,
+            output=first_output,
+            port=args.port,
+            revision=revision,
+            work=perform(first_output, args.port),
+            hook_source=Path(__file__).resolve().parents[1] / "hook",
+        )
+    else:
+        first_runtime = json.loads((first_output / "result.json").read_text())
+        if (
+            first_runtime.get("cleanup_verified") is not True
+            or first_runtime.get("native_load_verified") is not True
+            or first_runtime.get("error")
+            or Path(first_runtime["runtime_path"]).resolve() != first_output / "runtime"
+        ):
+            raise ValueError("Reused first phase does not have verified successful teardown")
     checkpoint = first_output / "checkpoint"
     digest = hashlib.sha256((checkpoint / "checkpoint.json").read_bytes()).hexdigest()
     resumed_runtime = run_isolated(
@@ -280,9 +305,9 @@ def main() -> None:
         digest=digest,
         source_kind="campaign_checkpoint",
         output=resumed_output,
-        port=args.port,
+        port=resume_port,
         revision=revision,
-        work=perform(resumed_output, checkpoint),
+        work=perform(resumed_output, resume_port, checkpoint),
         hook_source=Path(__file__).resolve().parents[1] / "hook",
     )
     result = verify_continuation(
@@ -295,6 +320,8 @@ def main() -> None:
         first_cleanup_verified=first_runtime["cleanup_verified"],
         resumed_cleanup_verified=resumed_runtime["cleanup_verified"],
         checkpoint_file_sha256=digest,
+        first_code_revision=first_runtime["code_revision"],
+        first_output=str(first_output),
     )
     with (args.output / "result.json").open("x") as stream:
         json.dump(result, stream, indent=2, allow_nan=False)
