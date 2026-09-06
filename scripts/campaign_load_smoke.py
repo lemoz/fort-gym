@@ -230,7 +230,9 @@ def run_isolated(
     with socket.socket() as probe:
         probe.bind(("127.0.0.1", port))
     output.mkdir(mode=0o700, parents=False, exist_ok=False)
-    runtime = output / "runtime"
+    # The child changes cwd to the copied runtime. A relative executable path
+    # would otherwise be resolved a second time from inside that directory.
+    runtime = output.resolve() / "runtime"
     prepare_runtime(source, runtime, save_source, port=port, hook_source=hook_source)
     environment = runtime_environment(port)
     result: dict[str, Any] = {

@@ -796,3 +796,16 @@ tests passed; one Linux-only process-inspection test skipped on macOS. Changed
 Python files passed Ruff, new/changed standalone modules passed Black, and seven
 adapter/configuration/reporting modules passed targeted mypy. These are harness
 regressions, not evidence that the local model has played the native fortress.
+
+First native local attempt, `local-qwen-native-20260906-a`, stopped before save
+loading: the launcher passed a relative executable path after changing into the
+runtime directory. Its private log reports the copied `dfhack` path not found.
+The teardown receipt has `cleanup_verified=true`, no remaining live processes and
+a closed listener; an independent exact-runtime process inventory was also empty.
+The model decision worker was never started, so this is neither a policy failure
+nor native gameplay evidence. The failed runtime and receipt remain retained.
+
+The launcher now resolves its newly created runtime directory before constructing
+the child command and changing cwd. Regression cases cover both absolute and
+relative output paths, successful loading and calendar rejection, while retaining
+the same teardown requirements. This does not change the historical game hooks.

@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -167,8 +168,9 @@ def test_real_separate_session_cleanup_leaves_peer_alive(tmp_path):
 
 @pytest.mark.parametrize("tick", [19309, 19310])
 @pytest.mark.parametrize("listener_delay", [0, 2])
+@pytest.mark.parametrize("relative_output", [False, True])
 def test_load_checks_calendar_and_always_tears_down(
-    tmp_path, sources, monkeypatch, tick, listener_delay
+    tmp_path, sources, monkeypatch, tick, listener_delay, relative_output
 ):
     source, snapshot, digest = sources
     commands, kills = [], []
@@ -196,7 +198,15 @@ def test_load_checks_calendar_and_always_tears_down(
                 return 0
             return 111
 
-    monkeypatch.setattr(smoke.subprocess, "Popen", lambda *args, **kwargs: Process())
+    def launch(command, **kwargs):
+        expected = (tmp_path / "output/runtime").resolve()
+        assert command[2] == shlex.quote(str(expected / "dfhack"))
+        assert kwargs["cwd"] == expected
+        assert kwargs["start_new_session"] is True
+        return Process()
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(smoke.subprocess, "Popen", launch)
     monkeypatch.setattr(smoke.socket, "socket", Socket)
     monkeypatch.setattr(smoke.os, "killpg", lambda pid, sig: kills.append(pid))
     monkeypatch.setattr(smoke, "runtime_live_members", lambda runtime: {})
@@ -217,7 +227,7 @@ def test_load_checks_calendar_and_always_tears_down(
         source=source,
         snapshot=snapshot,
         digest=digest,
-        output=tmp_path / "output",
+        output=Path("output") if relative_output else tmp_path / "output",
         port=5501,
         revision="test-source",
     )
