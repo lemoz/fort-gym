@@ -16,6 +16,7 @@ from urllib.parse import urlsplit
 import httpx
 
 from .campaign_context import CORRECTION_PACKING, PACKING, pack_messages
+from .campaign_action_reference import action_reference
 from .campaign_llm import CAMPAIGN_SYSTEM_PROMPT, CampaignLLMAgent
 from .governed_llm import GovernedBudgetCapError, GovernedDecisionError
 
@@ -143,6 +144,7 @@ class LocalCampaignAgent(CampaignLLMAgent):
                 )
             },
             "local_condition": self.config,
+            "prompt_sha256": hashlib.sha256(self._campaign_system_prompt().encode()).hexdigest(),
             "transport": "ollama-local/v1",
             "endpoint_sha256": hashlib.sha256(self.endpoint.encode()).hexdigest(),
             "cost_basis": COST_BASIS,
@@ -189,6 +191,10 @@ class LocalCampaignAgent(CampaignLLMAgent):
             + json.dumps(self._action_tool()["function"]["parameters"], sort_keys=True)
         )
 
+    def _campaign_system_prompt(self) -> str:
+        reference = action_reference(self.config["local_inference"].get("action_reference", "none"))
+        return CAMPAIGN_SYSTEM_PROMPT + ("\n" + reference if reference else "")
+
     def preflight_decision(self, obs_text: str, obs_json: dict) -> None:
         # Preview the next memory review on independent state, not the live agent.
         # The same serializer/bounds are used by the actual first dispatch below.
@@ -201,7 +207,9 @@ class LocalCampaignAgent(CampaignLLMAgent):
     def _campaign_messages(self, obs_text: str, obs_json: dict | None = None) -> list[dict]:
         packing = self.config["local_inference"].get("prompt_packing", "none")
         if packing == "none":
-            return super()._campaign_messages(obs_text, obs_json)
+            messages = super()._campaign_messages(obs_text, obs_json)
+            messages[0]["content"] = self._campaign_system_prompt()
+            return messages
         if packing not in {PACKING, CORRECTION_PACKING} or obs_json is None:
             raise ValueError("Unsupported campaign prompt packing or missing observation")
         return self._packed_messages(obs_json)
@@ -221,7 +229,7 @@ class LocalCampaignAgent(CampaignLLMAgent):
         self._pre_dispatch_gate()
         messages = pack_messages(
             obs_json,
-            system_prompt=CAMPAIGN_SYSTEM_PROMPT,
+            system_prompt=self._campaign_system_prompt(),
             memory_context=self._memory.get_context(include_recent=False),
             fits=lambda candidate: self._body_fits(self._serialize_request(candidate)),
             packing=self.config["local_inference"]["prompt_packing"],

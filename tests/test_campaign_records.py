@@ -124,15 +124,17 @@ def test_qwen14_record_separates_native_usage_from_synthetic_feasibility():
         for row in records.campaign_feed(None)["campaigns"]
         if row["campaign_id"] == "local-qwen14-q3-20260906-a"
     )
-    assert (record["committed_steps"], record["elapsed_ticks"]) == (6, 1200)
+    assert (record["committed_steps"], record["elapsed_ticks"]) == (16, 3200)
     assert record["checkpoint_verified"] is True and record["cleanup_verified"] is True
-    assert record["actions"]["by_type"] == {"DIG": {"accepted": 0, "rejected": 6, "unknown": 0}}
+    assert record["actions"]["by_type"] == {"DIG": {"accepted": 0, "rejected": 16, "unknown": 0}}
     assert record["current_metrics"]["completed_workshops"] == 0
-    assert record["usage"]["total_tokens"] == 27825
-    assert record["usage"]["dispatched_requests"] == record["usage"]["accounted_responses"] == 6
+    assert record["usage"]["total_tokens"] == 82782
+    assert record["usage"]["dispatched_requests"] == record["usage"]["accounted_responses"] == 16
     assert record["code_revision"] == "82645015444759f7bcebc048c34ea704930da8f4"
     assert record["comparison_rankings_available"] is False
-    assert bundle["condition_completion"] == "partial_one_of_four_allowed_segments"
+    assert bundle["condition_completion"] == "completed_dispatch_budget"
+    assert record["segment_status"] == "budget_limited_pause"
+    assert [segment["next_step"] for segment in bundle["audits"][0]["segments"]] == [6, 11, 16]
     assert bundle["local_runtime"]["observed_gpu_layers"] == 49
     assert bundle["synthetic_feasibility"]["total_tokens"] == 1182
     assert bundle["synthetic_feasibility"]["all_cases_exact"] is False

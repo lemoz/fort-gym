@@ -11,6 +11,8 @@ import math
 import re
 from pathlib import Path
 
+from ..agent.campaign_action_reference import action_reference
+
 DEVELOPMENT_SCHEMA = "fortgym.development-probe/v1"
 ENDURANCE_SCHEMA = "fortgym.campaign-condition/v1"
 LOCAL_SCHEMA = "fortgym.local-campaign-condition/v1"
@@ -101,6 +103,10 @@ def validate_local_settings(config: dict, model: str) -> None:
         "visible_action_contract/v1",
     }:
         raise ValueError("Unsupported local prompt contract")
+    reference = local.get("action_reference", "none")
+    action_reference(reference)
+    if reference != "none" and prompt_contract != "visible_action_contract/v1":
+        raise ValueError("An action reference requires the visible action contract")
     packing = local.get("prompt_packing", "none")
     if not isinstance(packing, str) or packing not in {
         "none",
