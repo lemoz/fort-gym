@@ -32,6 +32,18 @@ is claimed. See
 [Campaign status](CAMPAIGN_STATUS.md) for the active experiment and exact proof
 boundaries; completion still requires the actual gameplay and live website.
 
+The next two focused deliveries are also merged: native drink-unit observation
+correction [PR #127](https://github.com/lemoz/fort-gym/pull/127), and audited
+long-v2 gameplay result/website row [PR #128](https://github.com/lemoz/fort-gym/pull/128).
+Main is `3a52860e7b14bf9e3ebd6c268a59f7865f60a651`, with eleven terminal native
+records. The latest run completed a workshop and manufactured five beds over
+53,500 ticks, then stopped before an action when its response exhausted the output
+allowance. All 45 responses/442,693 tokens and temporary-process teardown are
+verified. Cursor 40 is the latest periodic checkpoint, not the final cursor 42;
+automatic recovery remains unsafe without reconciliation. Historical UI food/drink
+counts are preserved and explicitly caveated. This is source delivery and native
+experimental progress, not a production deploy, sustainable fortress or year-two result.
+
 ## Success statement (the one metric)
 
 **An LLM policy, issuing only legal governed actions, takes the fixed embark

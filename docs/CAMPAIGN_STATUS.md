@@ -4,7 +4,7 @@ Verified September 6, 2026. The Year-Two Autonomous Play goal remains active.
 
 Remote delivery: the read-only campaign website is now merged separately from the
 large integration stack via [PR #126](https://github.com/lemoz/fort-gym/pull/126).
-Remote main is `97e4533abe0194b99c463e2fffe8cfcfb9191581`; the reviewed source head
+That website milestone merged at `97e4533abe0194b99c463e2fffe8cfcfb9191581`; its reviewed source head
 is `f15c47830974c5490b50df5f3f12af40d64aa8da`. Its final full local
 suite passed **1,064 tests with 5 skipped**; 35 focused website tests passed.
 Ten terminal native records, two read-only evidence endpoints, the campaign page,
@@ -18,25 +18,48 @@ pre-merge check. The production website was not deployed or restarted. Main is
 merged back into the integration branch, preserving the immutable evidence links
 and avoiding duplicate mobile Campaigns links; 62 reconciliation regressions passed.
 
-In progress: `local-long-v2-qwen35-20260906-a` is executing the frozen long-v2
-condition at `60fd08415b10adfe52a0d275c826669dad843937`. At this checkpoint review,
-24 committed commands and 25 returned/accounted responses total 237,078 tokens
-and 25,000 elapsed native ticks. A carpenter's workshop has completed; the native
-goods trace also shows beds increasing from zero to three after workshop orders,
-which is inventory output, not placed beds. At this sampled boundary wood is four,
-population seven, food 45 and drink 60. This is an observation
-of a running attempt, not a terminal result or proof of sustainability.
+Latest delivery: [PR #127](https://github.com/lemoz/fort-gym/pull/127) merged the
+native drink observation correction; [PR #128](https://github.com/lemoz/fort-gym/pull/128)
+merged the audited long-v2 result and eleventh recorded website row. Remote main
+is now `3a52860e7b14bf9e3ebd6c268a59f7865f60a651`. Both PR CIs passed, as did
+post-merge inventory-fix CI. The full local suites passed 1,082 and 1,065 tests
+respectively, each with five skips. All three website/measurement/result milestones
+are merged back into this integration branch. No production deployment occurred.
 
-The first periodic native/agent/trace/usage checkpoint at cursor 8 was independently
-verified against its manifest and retained committed prefixes. Its native calendar
-is year 30, tick 22809; payload SHA-256 is
-`9379b89b80b53383cc6cd04cc71d71271ead6932d4a21da35cce2fd4ade2c25c`.
-Later commands have already executed, so this snapshot is not automatically the
-current recovery boundary. Final handoff, complete usage audit, and native/model/
-tunnel teardown remain required when the attempt stops. The prior 180-second
-timeout has not recurred in the observed responses. No new resource or hosted
-model was purchased for this continuation; local API charges are zero while
-infrastructure, hardware, and electricity costs remain unmeasured.
+Latest native result: `local-long-v2-qwen35-20260906-a` stopped at a model output
+limit, with **42 commands, 53,500 native ticks, 45 returned/accounted responses
+and 442,693 tokens**. Execution remained frozen at `60fd084`. One carpenter's
+workshop completed and five beds were manufactured, but none was placed and no
+farm completed. Seven citizens remained; year two and sustainability are unproven.
+See the [terminal result](LOCAL_LONG_V2_RESULT.md) and its versioned evidence bundle.
+
+The last response spent its 2,048-token output allowance on reasoning and returned
+no action. All returned usage is accounted for; this was not a request timeout,
+native execution, fortress collapse, or exhaustion of the overall spending cap.
+The first segment's cursor-32 handoff was successfully resumed. Periodic checkpoints
+8/16/24/40 passed independent verification, but two later commands and the final
+response remain beyond cursor 40. The final native save is retained as verified
+forensic evidence, not a reconciled agent/trace/usage checkpoint. Do not automatically
+resume cursor 32 or 40 over those later records.
+
+Both isolated games, the model and tunnel are independently verified stopped.
+Production revision `47c035f` and services are unchanged. Local model API charges
+are zero; infrastructure, hardware and electricity costs remain unmeasured. No
+new VM, historical deletion or production deployment was performed.
+
+A read-only native inventory scan found 46 drink units while the UI still reported
+60. The separately merged reader counts native units with explicit scan quality;
+115 observation regressions and read-only native acceptance passed. Historical
+observations are unchanged; food remains a freshness-unverified UI estimate, not
+a measured production flow. This integration branch now forwards stock source/scan
+metadata into the campaign prompt and labels numeric validation separately from
+freshness/accessibility; 124 focused integration regressions passed. No new campaign
+has used the correction yet.
+
+Next: make fully-accounted no-action output-limit stops checkpointable, then test
+an explicitly declared reasoning/output allowance without enlarging or rewriting
+this historical condition. The goal remains autonomous sustained play and repeated
+cross-model evaluation, not observation tests or another infrastructure acceptance run.
 
 Earlier: the [long local attempt](../experiments/evidence/local_native_llama_long_timeout_20260906.json)
 stopped at an inference timeout on request four. **Three returned responses,
@@ -62,7 +85,7 @@ was still generating when v1 canceled its fourth request. Keep all gameplay
 instructions, weights, sampling, token and dispatch limits unchanged and begin
 from the original save. The independent segment deadline remains 7,200 seconds;
 v2's declared decision scheduling reserve is 1,944 seconds. These are execution
-bounds, not completion estimates. The running follow-up is described above;
+bounds, not completion estimates. The terminal follow-up is described above;
 configuration alone is not native-game evidence.
 
 Earlier: [Qwen3.5 9B with thinking enabled](../experiments/evidence/local_native_llama_thinking_20260906.json)
