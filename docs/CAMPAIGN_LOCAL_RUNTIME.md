@@ -1,0 +1,59 @@
+# Local native runtime investigation
+
+September 6, 2026. Status: **not ready for autonomous gameplay**.
+
+The shared native host's free-space limit motivated a local development test.
+The retained private M1b Linux/amd64 game image was checksum-verified and loaded
+into a new, isolated Colima profile on the Mac. No cloud VM was created, no
+provider was called, and no shared-host or production change was made.
+The [versioned result](../experiments/evidence/local_native_compatibility_20260906.json)
+records both attempts and their proof limits.
+
+## What actually ran
+
+The local VM had 2 CPUs, 3 GiB RAM and a 10 GiB virtual disk. Colima 0.8.1,
+Lima 1.0.7, macOS 26.6.2 and Rosetta were observed. The first start reached
+Linux SSH readiness and enabled Rosetta's binfmt handler. The game image's
+identity matched the retained packet. Docker's active host context was not
+changed. No SSH agent or home directory was shared. Colima added its standard
+read-only image-cache mount alongside the empty read-only project share.
+
+The game container had networking disabled, no published ports or host bind
+mounts, all capabilities dropped, and no-new-privileges enabled. Its stock
+DFHack launcher exited with `setarch` permission denied before RPC/map readiness.
+The container exited 70, without an OOM kill. The first container and VM stopped.
+
+A second attempt prepared a candidate syscall policy derived from the
+[versioned Moby default](https://github.com/moby/moby/blob/v27.1.1/profiles/seccomp/default.json),
+adding only `personality(262144)` while retaining default-deny behavior. The
+existing VM never regained SSH readiness within the declared 180-second startup
+bound. The local network helper reported a refused connection at its selected
+guest SSH endpoint. The new container was **not created**, so the syscall change
+has **no execution proof**. No privileged/unconfined fallback was run.
+
+## Teardown and retained state
+
+The second launcher is terminal. Independent checks observed the profile stopped,
+its known host-agent PIDs and PID files absent, and the last SSH listener absent.
+The unrelated Hermes profile remained stopped, and the Docker host context
+remained `desktop-linux`. About 1.8 GiB of allocated local VM state was retained;
+the virtual disk's maximum size is 10 GiB. Neither old data nor the failed test
+container was deleted. Detailed logs and exact operator drivers remain in the
+owning checkout's ignored `fort_gym/artifacts/native-local-20260906/` directory.
+
+No new model charge or cloud reservation was incurred by these attempts. Local
+hardware, energy, and application costs are not measured and are not reported as
+zero. The standing cloud expiry and no-production-deploy boundary are unchanged.
+
+## Next experimental decision
+
+Resolve the owned VM's SSH routing/startup failure before any further game launch,
+then test the narrow syscall policy with the same retained image. Do not delete
+shared Colima network state, prune profiles, or update global tooling as an
+unexamined reset. [Lima documents the Rosetta route](https://lima-vm.io/docs/config/multi-arch/),
+but that is not evidence this particular DFHack runtime works on it.
+
+Only after native load works should this local route run the automatic v3
+checkpoint recovery fixture and a newly declared autonomous campaign. The
+historical long-v2 tail must not be silently rolled back or reused as a clean
+continuation. No new model-comparison row or year-two progress is claimed here.

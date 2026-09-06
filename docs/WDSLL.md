@@ -59,6 +59,12 @@ delivery snapshots above, not historical gameplay evidence. Native v3 recovery,
 year-two play and production website acceptance remain open. See the current
 [campaign status](CAMPAIGN_STATUS.md) for CI and storage proof limits.
 
+A bounded [local runtime investigation](CAMPAIGN_LOCAL_RUNTIME.md) now records
+one stopped local VM and two distinct infrastructure failures: DFHack `setarch`
+permission denial, then VM SSH readiness timeout before testing a narrow syscall
+allowance. No model or gameplay progress is claimed. This leaves native local
+compatibility open without modifying the shared host or creating cloud resources.
+
 ## Success statement (the one metric)
 
 Current native recovery evidence is published in [PR #132](https://github.com/lemoz/fort-gym/pull/132):

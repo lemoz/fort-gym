@@ -1,0 +1,112 @@
+{
+  "schema_version": "fortgym.local-native-compatibility-evidence/v1",
+  "observed_date": "2026-09-06",
+  "classification": "infrastructure_failure",
+  "purpose": "Evaluate local native-game capacity before longer autonomous campaigns",
+  "host": {
+    "architecture": "arm64",
+    "memory_bytes": 17179869184,
+    "physical_cpu_count": 10,
+    "macos_version": "26.6.2",
+    "colima_version": "0.8.1",
+    "lima_version": "1.0.7",
+    "rosetta_installed": true
+  },
+  "local_vm": {
+    "profile": "fort-gym-native",
+    "created_count": 1,
+    "start_attempts": 2,
+    "cpus": 2,
+    "memory_bytes": 3221225472,
+    "virtual_disk_bytes": 10737418240,
+    "driver": "vz",
+    "guest_architecture": "aarch64",
+    "rosetta_binfmt_observed_enabled": true,
+    "auto_activate": false,
+    "ssh_config_updates": false,
+    "ssh_agent_forwarding": false,
+    "mounts": [
+      {"kind": "empty_project_guest_share", "writable": false},
+      {"kind": "colima_generated_image_cache_mount", "writable": false}
+    ],
+    "final_status": "Stopped",
+    "retained": true
+  },
+  "runtime": {
+    "provenance": "retained_private_stock_m1b_packet_r13",
+    "platform": "linux/amd64",
+    "archive_sha256": "87d66d26553cb271af1b784405d63ea6b95f3bbe20e9429f05e6412133d1f43a",
+    "image_config_sha256": "d90811a39d5edd7c0a61d9adbbe4251cbfc345df52f5fa48ba174ce8992b8a86",
+    "image_loaded_into_local_engine": true,
+    "image_published": false,
+    "network": "none",
+    "published_ports": [],
+    "host_bind_mounts": [],
+    "capabilities_added": [],
+    "capabilities_dropped": ["ALL"],
+    "no_new_privileges": true
+  },
+  "attempts": [
+    {
+      "id": "default-seccomp",
+      "vm_ready": true,
+      "container_created": true,
+      "container_exit_code": 70,
+      "container_oom_killed": false,
+      "native_map_loaded": false,
+      "failure_stage": "dfhack_launcher",
+      "observed_error": "setarch: failed to set personality to linux64: Operation not permitted",
+      "result_sha256": "852c412cbc26d78dd0ecff0640ac41157f6123a63ee490dfe2fe5e50cdf6ec40",
+      "driver_sha256": "4cc0ec7fc993eedc5b5b1beee509baeb6d263f8b65d04e4e26b0376edc59c0d8"
+    },
+    {
+      "id": "personality-allowance",
+      "vm_ready": false,
+      "container_created": false,
+      "native_map_loaded": false,
+      "failure_stage": "local_vm_ssh_readiness",
+      "startup_deadline_seconds": 180,
+      "observed_error": "SSH connection repeatedly reset; network helper reported connection refused at its selected guest endpoint",
+      "candidate_seccomp_base": "https://github.com/moby/moby/blob/v27.1.1/profiles/seccomp/default.json",
+      "candidate_additional_allowance": "personality(262144)",
+      "candidate_default_action": "SCMP_ACT_ERRNO",
+      "candidate_seccomp_executed": false,
+      "candidate_seccomp_sha256": "5ae96ce3d0a9c746765df7d4c5948312f3847b08e917174368797d788461657a",
+      "result_sha256": "7e1b53e1a8042f9a7901056a83d1b1f74035e74090dc24c51927d914dd473356",
+      "driver_sha256": "9e4bbfe0d466a04c60ef244c79b84fb59d2424b567096a79b17bcead178a8b3c"
+    }
+  ],
+  "independent_cleanup": {
+    "profile_observed_stopped": true,
+    "owned_host_agent_pids_absent": true,
+    "owned_host_agent_pid_files_absent": true,
+    "last_ssh_listener_absent": true,
+    "container_observed_exited": true,
+    "docker_context_unchanged": true,
+    "unrelated_hermes_profile_observed_stopped": true,
+    "historical_artifacts_deleted": false
+  },
+  "outcomes": {
+    "native_load_verified": false,
+    "automatic_v3_recovery_verified": false,
+    "gameplay_commands": 0,
+    "new_campaign_checkpoints": 0,
+    "provider_calls": 0,
+    "metered_model_cost_usd": "0",
+    "cloud_vms_created": 0,
+    "cloud_reservation_added_usd": "0",
+    "local_hardware_energy_and_app_cost_usd": null,
+    "autonomous_gameplay": false,
+    "year_two_verified": false,
+    "production_deployed": false,
+    "shared_host_modified": false
+  },
+  "proof_limits": [
+    "Local Linux and Intel translation readiness are not Dwarf Fortress compatibility",
+    "The narrow syscall allowance never reached container creation and remains untested",
+    "The precise cause of the local VM restart failure is unresolved",
+    "No historical model prompt, raw save or private runtime image is included in this publication",
+    "Infrastructure attempts must not be counted as model gameplay failures or comparison rows",
+    "The stopped local VM is retained and does not authorize historical cleanup"
+  ]
+}

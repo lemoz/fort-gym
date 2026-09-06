@@ -2,6 +2,15 @@
 
 Verified September 6, 2026. The Year-Two Autonomous Play goal remains active.
 
+Local capacity investigation: one isolated Colima VM was created and is now
+independently verified stopped. Linux/Rosetta and the retained game image loaded,
+but DFHack's launcher failed at `setarch` under the default syscall policy.
+A second start failed at VM SSH readiness before the narrow syscall candidate
+could execute. There were zero model calls, gameplay commands, new checkpoints,
+or cloud resources. The shared host was untouched. This is an infrastructure
+failure, not a model/gameplay result. See [local runtime evidence and next
+decision](CAMPAIGN_LOCAL_RUNTIME.md). No local native compatibility is claimed.
+
 Latest published candidate: [PR #132](https://github.com/lemoz/fort-gym/pull/132)
 contains the one-runtime native output-pause recovery fixture, bounded closed-port
 settling correction, and versioned native evidence. Source
