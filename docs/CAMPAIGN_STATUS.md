@@ -121,7 +121,7 @@ keeps observations and other bounds unchanged apart from factual workshop-policy
 disclosure, allowing a controlled test of the terrain repair.
 
 Next: test the larger Qwen2.5 14B Instruct candidate under the separately declared
-[local Flash Attention/Q8-cache condition](../experiments/campaigns/local_native_qwen14_flash_q8_v1.json).
+[Q3_K_M/Flash Attention/Q8-cache condition](../experiments/campaigns/local_native_qwen14_q3_flash_q8_v1.json).
 Its exact manifest, cache profile and scheduling allowance are explicit. Keep the
 same original save, observation/action interface, conservative request bounds and
 model-chosen ticks. The cache and scheduling changes mean it is a capability probe,
@@ -129,6 +129,16 @@ not a matched causal comparison against earlier F16-cache runs. Actual local run
 logs, not API identity alone, must verify the cache settings. Synthetic transport
 checks do not count as gameplay. Seek autonomous resource acquisition and completed
 production before allocating a longer horizon; never substitute the scripted fixture.
+
+Local feasibility: the initial Q4_K_M candidate offloaded 45 of 49 layers to GPU.
+Two synthetic copy requests returned (766 accounted tokens); its third request
+timed out without returned usage and was not retried. That server/runner was stopped.
+The separately pinned Q3_K_M candidate offloaded all 49 layers and verified Flash
+Attention and Q8_0 cache in actual runner logs. All three synthetic requests returned
+(1,182 tokens): two exact copies, one omitted the supplied DIG `kind`. This proves
+bounded transport feasibility, not exact format fidelity or autonomous gameplay.
+Both synthetic runs have zero metered model API charges; operating costs are
+unmeasured and the timed-out request's token count is unknown.
 Retained runtime copies currently cost about 335 MB per segment versus about
 9 MB for its checkpoint. Use a bounded continuous-runtime/retention design before
 large endurance campaigns; no historical evidence has been deleted.

@@ -1,0 +1,49 @@
+{
+  "schema_version": "fortgym.local-campaign-condition/v1",
+  "runner": "campaign-loop/v1",
+  "condition_id": "local-native-qwen14-q3-flash-q8-v1",
+  "decision_profile": "campaign_action/v1",
+  "observation_profile": "campaign_state/v1",
+  "advance_policy": "model_requested/v1",
+  "schema_attempts": 2,
+  "phase": "development",
+  "hypothesis": "Test whether the official Q3_K_M quantization of Qwen2.5 14B Instruct can fit fully on the existing local GPU and autonomously begin resource acquisition and development with the proven workshop-ground adapter. The prior Q4_K_M synthetic feasibility check timed out; this separately declared candidate is not a matched quantization-quality ranking.",
+  "models": [
+    "qwen2.5:14b-instruct-q3_K_M"
+  ],
+  "max_steps": 8,
+  "max_segments": 4,
+  "segment_time_budget_seconds": 900,
+  "ticks_per_step": 2000,
+  "max_advance_ticks": 2000,
+  "max_output_tokens": 1024,
+  "max_attempts": 1,
+  "max_dispatches": 16,
+  "max_request_bytes": 22000,
+  "max_total_tokens": 262144,
+  "max_cost_usd": 0,
+  "local_inference": {
+    "transport": "ollama-local/v1",
+    "server_version": "0.5.11",
+    "prompt_contract": "visible_action_contract/v1",
+    "prompt_packing": "bounded_history_corrections/v1",
+    "model_digests": {
+      "qwen2.5:14b-instruct-q3_K_M": "4d8dbee0507f80e83623a47984bef247a67dea5249c928fff1b3955cfa580cae"
+    },
+    "context_tokens": 24576,
+    "timeout_seconds": 180,
+    "temperature": 0.2,
+    "seed": 73,
+    "runtime_profile": "flash_q8/v1"
+  },
+  "notes": [
+    "Begin from the same verified original native save as the prior local campaigns, never the completed scripted workshop fixture. No build order, fallback command, gameplay rescue, material injection or manual labor change is supplied.",
+    "Preserve the native-ground condition's decision and observation profiles, model-chosen ticks, correction-aware packing, dispatch/token/request/output bounds, sampling seed and temperature. This candidate changes the model, declared cache runtime and scheduling timeouts; it is not a matched ranking against earlier F16-cache runs.",
+    "Launch only the existing Ollama 0.5.11 binary with the config-driven flash_q8/v1 profile. Retain the launch receipt and actual runner logs showing Flash Attention and Q8_0 cache; API version and model-digest checks alone do not attest those cache flags.",
+    "Run one local model and one isolated native runtime at a time. Keep the 24576-token context and conservative request-fit checks unchanged, and stop on unresolved model transport or native execution failure.",
+    "Any synthetic action-copy diagnostics test local transport and memory feasibility only. They are not autonomous gameplay, native actions or part of the campaign's usage totals.",
+    "Zero metered model API charges do not mean zero operating cost. Retain native checkpoints, model responses and usage; verify teardown before closing the experiment.",
+    "Only the exact model quantization/manifest, condition identity and hypothesis change from local-native-qwen14-flash-q8-v1. Preserve the failed Q4_K_M synthetic receipts, including its third dispatched request with no returned usage; never resume it as a fresh free call or label it native gameplay."
+  ],
+  "workshop_placement_policy": "dfhack_047_ground/v1"
+}

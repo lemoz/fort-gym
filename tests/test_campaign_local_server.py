@@ -65,15 +65,30 @@ def test_missing_cache_never_falls_back_to_application_home(tmp_path):
     assert not (tmp_path / "missing").exists()
 
 
-def test_qwen14_candidate_declares_cache_without_changing_frozen_ground_condition():
-    candidate_path = CONFIG.parent / "local_native_qwen14_flash_q8_v1.json"
-    candidate = load_segment_config(candidate_path, "qwen2.5:14b-instruct-q4_K_M")
+@pytest.mark.parametrize(
+    "filename,model,digest",
+    [
+        (
+            "local_native_qwen14_flash_q8_v1.json",
+            "qwen2.5:14b-instruct-q4_K_M",
+            "7cdf5a0187d5c58cc5d369b255592f7841d1c4696d45a8c8a9489440385b22f6",
+        ),
+        (
+            "local_native_qwen14_q3_flash_q8_v1.json",
+            "qwen2.5:14b-instruct-q3_K_M",
+            "4d8dbee0507f80e83623a47984bef247a67dea5249c928fff1b3955cfa580cae",
+        ),
+    ],
+)
+def test_qwen14_candidate_declares_cache_without_changing_frozen_ground_condition(
+    filename, model, digest
+):
+    candidate_path = CONFIG.parent / filename
+    candidate = load_segment_config(candidate_path, model)
     ground = json.loads((CONFIG.parent / "local_native_workshop_ground_v1.json").read_text())
     assert "runtime_profile" not in ground["local_inference"]
     assert candidate["local_inference"]["runtime_profile"] == "flash_q8/v1"
-    assert candidate["local_inference"]["model_digests"] == {
-        "qwen2.5:14b-instruct-q4_K_M": "7cdf5a0187d5c58cc5d369b255592f7841d1c4696d45a8c8a9489440385b22f6"
-    }
+    assert candidate["local_inference"]["model_digests"] == {model: digest}
     for key in (
         "decision_profile",
         "observation_profile",
