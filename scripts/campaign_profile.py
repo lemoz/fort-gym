@@ -50,10 +50,11 @@ def report_segment(root: Path) -> dict:
         rows = [json.loads(line) for line in read(trace_path).splitlines() if line.strip()]
         if any(not isinstance(row, dict) for row in rows):
             raise ValueError("Campaign trace rows must be objects")
+    status = segment.get("status")
     report = campaign_profile(
         rows,
         campaign_id=segment["campaign_id"],
-        status=segment.get("status"),
+        status=status if isinstance(status, str) else "unknown",
         usage=segment.get("usage"),
         initial_state=segment.get("native_start"),
         terminal_state=segment.get("native_final"),
