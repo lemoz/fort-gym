@@ -43,6 +43,8 @@ class StateReader:
             "viewscreen_type": raw.get("viewscreen_type", "unknown"),
             "work": raw.get("work", {}),
         }
+        if isinstance(raw.get("stock_observations"), dict):
+            normalized["stock_observations"] = raw["stock_observations"]
         raw_workshops = raw.get("workshops")
         workshops = raw_workshops if isinstance(raw_workshops, dict) else {}
         normalized["workshops"] = {"CarpenterWorkshop": workshops.get("CarpenterWorkshop", 0)}
