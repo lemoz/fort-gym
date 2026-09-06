@@ -51,13 +51,19 @@ class NativeCampaignEnvironment:
         native = dict(native_save_status())
         if native.get("ok") is not True or native.get("paused") is not True:
             raise RuntimeError("Native campaign observation is not a loaded paused fortress")
-        state = StateReader.from_dfhack(self.client)
+        state = StateReader.from_dfhack(self.client, require_native=True)
         state.update(
             year=native["year"],
             year_tick=native["year_tick"],
             pause_state=native["paused"],
             time=native["year_tick"],
         )
+        state["campaign_observation_quality"] = {
+            "schema_version": "fortgym.campaign-observation-quality/v1",
+            "native_population_resources_validated": True,
+            "population_source": "active living native citizens",
+            "food_drink_source": "native ui.tasks.food counters, not production flows",
+        }
         state["fort"] = read_fort_metrics()
         state["crew"] = read_job_metrics()
         # No G7 event monitor is started/reset here. Stock and structure observations

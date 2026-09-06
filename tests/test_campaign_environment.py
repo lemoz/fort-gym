@@ -17,11 +17,16 @@ def test_wrong_runtime_is_rejected_before_connect_or_gameplay(tmp_path, monkeypa
 
 def test_native_adapter_uses_existing_executor_without_assisted_completion(tmp_path, monkeypatch):
     calls = []
+
+    def get_state(**kwargs):
+        assert kwargs == {"require_native": True}
+        return {"year": 0, "population": 7, "pause_state": True}
+
     client = SimpleNamespace(
         connect=lambda: calls.append("connect"),
         close=lambda: calls.append("close"),
         set_work_metrics_global_only=lambda value: calls.append(("global", value)),
-        get_state=lambda: {"year": 0, "population": 7, "pause_state": True},
+        get_state=get_state,
         advance=lambda *args, **kwargs: calls.append(("advance", args, kwargs)),
         last_tick_info={"ticks_advanced": 50},
         get_screen_text=lambda **kwargs: "native test screen",
@@ -45,6 +50,7 @@ def test_native_adapter_uses_existing_executor_without_assisted_completion(tmp_p
     assert env.executor._allow_assisted_dig_completion is False
     state = env.observe()
     assert state["year"] == 30 and state["year_tick"] == 19309
+    assert state["campaign_observation_quality"]["native_population_resources_validated"] is True
     assert "survival" not in state  # Do not invent cumulative G7 measurement.
     assert env.apply({"type": "WAIT", "params": {}}, state)["accepted"] is True
     assert env.advance(0, state)[1]["ticks_advanced"] == 0

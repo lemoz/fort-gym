@@ -11,10 +11,10 @@ class StateReader:
     """Collect state snapshots from configured backends."""
 
     @staticmethod
-    def from_dfhack(client: DFHackClient) -> Dict[str, Any]:
+    def from_dfhack(client: DFHackClient, *, require_native: bool = False) -> Dict[str, Any]:
         """Retrieve state via DFHack client."""
 
-        raw = client.get_state()
+        raw = client.get_state(require_native=True) if require_native else client.get_state()
         stocks = raw.get("stocks") or {}
         normalized = {
             "time": raw.get("time", 0),
@@ -43,7 +43,8 @@ class StateReader:
             "viewscreen_type": raw.get("viewscreen_type", "unknown"),
             "work": raw.get("work", {}),
         }
-        workshops = raw.get("workshops") if isinstance(raw.get("workshops"), dict) else {}
+        raw_workshops = raw.get("workshops")
+        workshops = raw_workshops if isinstance(raw_workshops, dict) else {}
         normalized["workshops"] = {"CarpenterWorkshop": workshops.get("CarpenterWorkshop", 0)}
         return normalized
 

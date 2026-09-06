@@ -625,11 +625,18 @@ class DFHackClient:
     def last_tick_info(self) -> Dict[str, Any]:
         return self._last_tick_info
 
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self, *, require_native: bool = False) -> Dict[str, Any]:
         self._ensure_connection()
 
         # Use CLI-based state reading since RPC doesn't capture dfhack.print output
         data = cli_read_game_state()
+        if require_native:
+            stocks = data.get("stocks") if isinstance(data, dict) else None
+            counts = [data.get("population")] if isinstance(data, dict) else []
+            if isinstance(stocks, dict):
+                counts += [stocks.get(key) for key in ("food", "drink", "wood", "stone")]
+            if len(counts) != 5 or any(type(value) is not int or value < 0 for value in counts):
+                raise RuntimeError("Native population/resource observation is unavailable")
         if not data:
             data = {
                 "time": 0,
