@@ -458,3 +458,44 @@ foreign campaign rejection, isolated worker arguments, and credential allowlisti
 The command's help, Ruff, and targeted mypy checks pass. This implementation has
 not made a provider call or completed a model-driven native segment. It does not
 replace the existing published probe or promote its results into this condition.
+
+## Campaign performance profiles
+
+The executable segment candidate `1056940c503b61d364ac8dfe5beadca908e081ba`
+passed full remote CI (`34009907355`). Later reporting changes need their own
+validation; this green run does not cover them.
+
+Campaign observations now explicitly require valid native population and core
+resource counts. The older reader's empty-read fallback remains unchanged for
+historical callers, but the campaign path rejects it. A failed native observation
+must not become seven dead dwarves or an empty stockpile. Real observed zero counts
+are still valid. Campaign states record the native-observation quality version.
+
+`python -m scripts.campaign_profile /absolute/path/to/segment` reads retained
+segment/runtime receipts and the canonical campaign trace without modifying them
+or making provider calls. New segment commands write `campaign-profile.json` after
+the isolated runtime has returned and torn down. The profile includes source-file
+hashes, code/configuration/model identity, and the actual teardown result.
+
+The shared profile reports observed start/end/change/minimum/maximum and a timeline
+for population, food/drink/wood/stone stocks, detected functional rooms, completed
+workshops/beds/farms, and recorded dead citizens. Missing, malformed, legacy
+unverified, or truncated measurements remain unknown. If the final observation is
+missing, an earlier healthy population is not relabeled as the terminal population.
+Native UI food/drink counts are stock observations, not production or consumption;
+flow measurement and causal death attribution remain open.
+
+The profile separates committed native time, the latest segment's terminal status,
+accepted/rejected commands, changes of command after rejection, cumulative returned
+cost and request counts, and unreturned usage. Command acceptance is not finished
+work; a changed command is not a successful-adaptation verdict. One elapsed year
+does not establish a functioning or autonomous fortress. The latest trace already
+contains its checkpoint prefix, so ancestor traces and cumulative costs must not
+be added again. Missing origin steps or native calendar fields prevent complete
+duration claims.
+
+These are descriptive profiles, not a scalar ranking or a new frozen protocol.
+Binding original starting-save identity through the full campaign lineage,
+campaign-scoped flow/death measurements, real model experiments, and the website's
+active/recorded profile delivery remain open. Private states, agent memory, saves,
+and raw paths are not included in the profile's public-shaped aggregate fields.

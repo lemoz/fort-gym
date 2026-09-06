@@ -277,6 +277,9 @@ def main() -> None:
         work=play,
         hook_source=Path(__file__).resolve().parents[1] / "hook",
     )
+    from scripts.campaign_profile import report_segment
+
+    write_result(args.output / "campaign-profile.json", report_segment(args.output))
     print(json.dumps(result, sort_keys=True))
 
 

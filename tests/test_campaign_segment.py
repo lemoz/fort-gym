@@ -204,6 +204,7 @@ def test_worker_opts_into_dispatch_accounting_and_closes_its_connection(tmp_path
 
 def test_parent_routes_checkpoint_resume_to_isolated_worker(tmp_path, monkeypatch):
     from scripts import campaign_segment
+    from scripts import campaign_profile
 
     checkpoint, output = tmp_path / "checkpoint", tmp_path / "resumed"
     checkpoint.mkdir()
@@ -258,7 +259,9 @@ def test_parent_routes_checkpoint_resume_to_isolated_worker(tmp_path, monkeypatc
 
     monkeypatch.setattr(campaign_segment.subprocess, "run", fake_worker)
     monkeypatch.setattr(campaign_segment, "run_isolated", isolated)
+    monkeypatch.setattr(campaign_profile, "report_segment", lambda path: {"test_only": True})
     campaign_segment.main()
+    assert json.loads((output / "campaign-profile.json").read_text()) == {"test_only": True}
     assert len(workers) == 1
     command = workers[0][0]
     assert command[command.index("--checkpoint") + 1] == str(checkpoint)
