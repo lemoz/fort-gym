@@ -120,7 +120,7 @@ def worker(args, config):
         raise ValueError("Worker did not find the loaded paused experiment save")
     agent = make_agent(config, args.model, output / "spend.jsonl")
     run_id = output.name
-    agent.set_campaign_context(run_id)
+    agent.set_campaign_context(campaign_id=run_id)
     result = {
         "schema_version": "fortgym.development-probe-result/v1",
         "model": args.model,

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -94,3 +95,31 @@ def test_transport_failure_is_not_recorded_as_a_charge(tmp_path, agent_config, m
     events = [json.loads(line) for line in journal.read_text().splitlines()]
     assert events[-1]["usage"]["returned_responses"] == 0
     assert agent.dispatches == 1
+
+
+def test_worker_initializes_campaign_and_retains_agent_state(tmp_path, agent_config, monkeypatch):
+    from scripts.campaign_development import worker
+    from fort_gym.bench.run import campaign_save, runner
+
+    runtime = tmp_path / "runtime"
+    runtime.mkdir()
+    monkeypatch.setenv("DFROOT", str(runtime))
+    state = {"save_name": "campaign-resume", "paused": True, "year": 30, "year_tick": 19309}
+    monkeypatch.setattr(campaign_save, "native_save_status", lambda: state)
+    monkeypatch.setattr(
+        campaign_save.NativeSaveSnapshotter, "capture", lambda self, path: {"test_double": True}
+    )
+    contexts = []
+
+    def run(agent, **kwargs):
+        contexts.append((agent._campaign_id, kwargs))
+        return kwargs["run_id"]
+
+    monkeypatch.setattr(runner, "run_once", run)
+    worker(SimpleNamespace(output=tmp_path, model=agent_config["models"][0]), agent_config)
+    assert contexts[0][0] == tmp_path.name
+    assert contexts[0][1]["preserve_save"] is True
+    assert contexts[0][1]["evaluation_protocol"] is None
+    result = json.loads((tmp_path / "experiment.json").read_text())
+    assert result["status"] == "returned" and result["dispatches"] == 0
+    assert json.loads((tmp_path / "agent-final.json").read_text())["campaign_id"] == tmp_path.name
