@@ -1,0 +1,29 @@
+{
+  "schema_version": "fortgym.development-probe/v1",
+  "runner": "campaign-loop/v1",
+  "condition_id": "development-autonomous-v1",
+  "decision_profile": "campaign_action/v1",
+  "observation_profile": "campaign_state/v1",
+  "schema_attempts": 3,
+  "phase": "development",
+  "hypothesis": "Removing mandatory benchmark planning reviews while retaining native command grammar, factual observations, memory and accounting lets the model choose and execute its own strategy.",
+  "models": ["z-ai/glm-5.3-flash", "qwen/qwen3.8-flash", "deepseek/deepseek-v4-flash-0731"],
+  "max_steps": 3,
+  "ticks_per_step": 200,
+  "max_advance_ticks": 2000,
+  "max_output_tokens": 8192,
+  "max_attempts": 2,
+  "max_dispatches": 8,
+  "max_request_bytes": 100000,
+  "max_total_tokens": 131072,
+  "max_cost_usd": 1.0,
+  "provider_max_price": {"prompt": 0.5, "completion": 2.0, "request": 0.0},
+  "notes": [
+    "A new exploratory condition, not comparable as the same condition to legacy probe or continuation v1 results.",
+    "Only type, params and advance_ticks are required. Planning notes are optional; malformed notes cannot reject a valid native command.",
+    "Grammar repairs never choose gameplay or synthesize WAIT. Native legality and bounded costs remain enforced.",
+    "The eight legal action families remain a limited interface, not full Dwarf Fortress control. Observations omit benchmark targets and prescribed strategy.",
+    "max_steps bounds each segment; dispatch, token and returned-cost limits are cumulative across campaign recovery. Three steps are a development check, not the year-two horizon.",
+    "The retained starting save is not a fresh embark. This condition alone establishes neither viability nor a model ranking."
+  ]
+}

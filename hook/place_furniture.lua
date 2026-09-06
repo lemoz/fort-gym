@@ -5,6 +5,14 @@
 -- tiles (Chebyshev) from every existing player building and every citizen.
 
 local json = require('json')
+-- Attest preflight rejection separately from a failed/partial native write.
+local mutation_attempted = false
+local function encode_result(value)
+  if value.ok == false then
+    value.command_mutation = mutation_attempted and 'attempted' or 'not_attempted'
+  end
+  return json.encode(value)
+end
 local buildings = require('dfhack.buildings')
 local args = {...}
 
@@ -22,17 +30,17 @@ local FURNITURE = {
 
 local spec = FURNITURE[kind]
 if not spec then
-  print(json.encode({ ok = false, error = 'invalid_kind' }))
+  print(encode_result({ ok = false, error = 'invalid_kind' }))
   return
 end
 
 if not (x and y and z) then
-  print(json.encode({ ok = false, error = 'invalid_coordinates' }))
+  print(encode_result({ ok = false, error = 'invalid_coordinates' }))
   return
 end
 
 if df.global.world.reindex_pathfinding then
-  print(json.encode({ ok = false, error = 'path_cache_stale' }))
+  print(encode_result({ ok = false, error = 'path_cache_stale' }))
   return
 end
 
@@ -78,7 +86,7 @@ local function near_fort(tx, ty)
 end
 
 if not near_fort(x, y) then
-  print(json.encode({ ok = false, error = 'too_far_from_fort' }))
+  print(encode_result({ ok = false, error = 'too_far_from_fort' }))
   return
 end
 
@@ -216,28 +224,29 @@ end
 
 local tile_error = tile_placement_error()
 if tile_error then
-  print(json.encode({ ok = false, error = tile_error }))
+  print(encode_result({ ok = false, error = tile_error }))
   return
 end
 
 local citizens = reachable_citizens()
 if #citizens == 0 then
-  print(json.encode({ ok = false, error = 'tile_unreachable_from_citizens' }))
+  print(encode_result({ ok = false, error = 'tile_unreachable_from_citizens' }))
   return
 end
 
 local item, item_pos, valid_item_count = find_nearest_furniture_item(citizens)
 if not item and valid_item_count == 0 then
-  print(json.encode({ ok = false, error = 'no_finished_item_available' }))
+  print(encode_result({ ok = false, error = 'no_finished_item_available' }))
   return
 end
 if not item then
-  print(json.encode({ ok = false, error = 'no_reachable_finished_item' }))
+  print(encode_result({ ok = false, error = 'no_reachable_finished_item' }))
   return
 end
 
 local before_count = count_buildings_of_type(spec.building_type)
 
+mutation_attempted = true
 local ok, result, construct_error = pcall(function()
   return buildings.constructBuilding{
     type = spec.building_type,
@@ -249,11 +258,11 @@ local ok, result, construct_error = pcall(function()
 end)
 
 if not ok then
-  print(json.encode({ ok = false, error = tostring(result) }))
+  print(encode_result({ ok = false, error = tostring(result) }))
   return
 end
 if not result then
-  print(json.encode({ ok = false, error = tostring(construct_error or 'construct_failed') }))
+  print(encode_result({ ok = false, error = tostring(construct_error or 'construct_failed') }))
   return
 end
 
@@ -276,7 +285,7 @@ if not postcondition_ok then
   local rollback_call_ok, rollback_error = pcall(function() buildings.deconstruct(result) end)
   local verify_ok, removed = pcall(function() return df.building.find(building_id) == nil end)
   local rollback_ok = rollback_call_ok and verify_ok and removed
-  print(json.encode({
+  print(encode_result({
     ok = false,
     error = rollback_ok and 'construct_postcondition_failed' or 'rollback_failed',
     building_id = building_id,
@@ -287,7 +296,7 @@ if not postcondition_ok then
   return
 end
 
-print(json.encode({
+print(encode_result({
   ok = true,
   kind = kind,
   x = x,

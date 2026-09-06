@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 import time
+import uuid
 from typing import Dict
 
-from .config import DFHACK_RUN, DFROOT
 from .dfhack_exec import (
     DFHackError,
+    _strip_ansi,
     read_pause_state,
     read_tick_pause_viewscreen,
-    run_dfhack,
+    run_command,
     set_paused,
 )
 from .env.actions import (
@@ -28,6 +29,56 @@ from .tick_receipt import (
 MAX_ADVANCE_TICKS = 2000
 
 
+def _arm_tick_deadline(ticks: int, start: Dict[str, object]) -> str:
+    """Install a runtime-owned pause before any host-side resume command.
+
+    Host RPC scheduling is not a simulation clock. In particular eight workers
+    can leave DF running for many ticks while a host sample is in flight.
+    The existing calendar/final-pause checks still independently verify this
+    deadline; installing it is not itself evidence of successful advancement.
+    """
+    token = uuid.uuid4().hex
+    year, tick = int(start["cur_year"]), int(start["cur_year_tick"])
+    script = f"""
+local key = '_fortgym_tick_deadline'
+if _G[key] then error('prior tick deadline remains') end
+if df.global.pause_state ~= true then error('tick deadline requires paused baseline') end
+local remaining = {int(ticks)} - ((df.global.cur_year - {year}) * {TICKS_PER_YEAR}
+    + df.global.cur_year_tick - {tick})
+if remaining <= 0 or remaining > {int(ticks)} then error('invalid deadline calendar') end
+local state = {{token='{token}'}}
+_G[key] = state
+state.timer = dfhack.timeout(remaining, 'ticks', function()
+    if _G[key] ~= state then return end
+    dfhack.run_command('nopause', '0')
+    df.global.pause_state = true
+    state.fired = true
+end)
+if state.timer == nil then _G[key] = nil; error('tick deadline unavailable') end
+print('{token}')
+"""
+    output = run_command("lua", [script], timeout=2.5)
+    if _strip_ansi(output).strip() != token:
+        raise DFHackError("tick deadline acknowledgement differs")
+    return token
+
+
+def _cancel_tick_deadline(token: str) -> None:
+    if len(token) != 32 or any(char not in "0123456789abcdef" for char in token):
+        raise DFHackError("invalid tick deadline identity")
+    script = f"""
+local key = '_fortgym_tick_deadline'
+local state = _G[key]
+if not state or state.token ~= '{token}' then error('tick deadline identity differs') end
+if df.global.pause_state ~= true then error('tick deadline cancellation requires pause') end
+dfhack.timeout_active(state.timer, nil)
+_G[key] = nil
+print('{token}')
+"""
+    if _strip_ansi(run_command("lua", [script], timeout=2.5)).strip() != token:
+        raise DFHackError("tick deadline cancellation acknowledgement differs")
+
+
 def _safe_read_pause_state(timeout: float = 1.0) -> bool | None:
     try:
         return read_pause_state(timeout=timeout)
@@ -37,10 +88,10 @@ def _safe_read_pause_state(timeout: float = 1.0) -> bool | None:
 
 def _set_nopause(enabled: bool) -> str | None:
     try:
-        run_dfhack(
-            [str(DFHACK_RUN), "nopause", "1" if enabled else "0"],
+        run_command(
+            "nopause",
+            ["1" if enabled else "0"],
             timeout=2.0,
-            cwd=str(DFROOT),
         )
     except Exception as exc:
         return str(exc)
@@ -135,11 +186,17 @@ def advance_ticks_exact_external(
     resume_fallback: str | None = None
     nopause_enable_error: str | None = None
     repause_outcome: Dict[str, object] | None = None
+    deadline_token: str | None = None
+    deadline_error: str | None = None
     timed_out = False
     interrupted = False
     viewscreen_after: str | None = None
     viewscreen_at_interrupt: str | None = None
     pause_state_at_interrupt: bool | None = None
+    intermediate_probe_error: str | None = None
+    intermediate_probe_phase: str | None = None
+    intermediate_probe_failure_kind: str | None = None
+    interruption_detection: str | None = None
     baseline_viewscreen = str(viewscreen_before or "unknown")
     safety_ms = max(10000, want * 200)
     t_start = time.monotonic()
@@ -150,7 +207,7 @@ def advance_ticks_exact_external(
             and elapsed_ticks > want + MAX_REQUEST_OVERSHOOT_TICKS
         )
 
-    def sample(*, governed: bool, initial: bool = False) -> bool:
+    def sample(*, governed: bool, phase: str, initial: bool = False) -> bool:
         nonlocal current_sample, started_paused, error, calendar_safety_error
         nonlocal \
             interrupt_safety_error, \
@@ -158,6 +215,7 @@ def advance_ticks_exact_external(
             viewscreen_after, \
             viewscreen_at_interrupt, \
             pause_state_at_interrupt
+        nonlocal intermediate_probe_phase, intermediate_probe_failure_kind
         try:
             probe = read_tick_pause_viewscreen(timeout=2.5)
         except (DFHackError, OSError) as exc:
@@ -165,6 +223,10 @@ def advance_ticks_exact_external(
                 error = "calendar_sample_read_failed"
                 calendar_safety_error = error
                 interrupt_safety_error = error
+                intermediate_probe_phase = phase
+                intermediate_probe_failure_kind = (
+                    "dfhack_error" if isinstance(exc, DFHackError) else "os_error"
+                )
             else:
                 error = f"tick_read_failed:{exc}"
             return False
@@ -247,16 +309,28 @@ def advance_ticks_exact_external(
     try:
         initial_ok = sample(
             governed=interrupt_on_viewscreen_transition,
+            phase="initial",
             initial=interrupt_on_viewscreen_transition,
         )
         start_sample = current_sample
         if not initial_ok:
             ok = False
 
+        if error is None and start_sample is not None and repause:
+            try:
+                deadline_token = _arm_tick_deadline(want, start_sample)
+            except (DFHackError, OSError) as exc:
+                deadline_error = str(exc)
+                error = "tick_deadline_arm_failed"
+                ok = False
+
         if error is None and start_sample is not None:
             nopause_enable_error = _set_nopause(True)
             time.sleep(0.1)
-            if not sample(governed=interrupt_on_viewscreen_transition):
+            if not sample(
+                governed=interrupt_on_viewscreen_transition,
+                phase="post_nopause",
+            ):
                 ok = False
 
         if error is None and elapsed() == 0:
@@ -265,7 +339,10 @@ def advance_ticks_exact_external(
             except (DFHackError, OSError) as exc:
                 resume_error = str(exc)
             time.sleep(0.1)
-            if not sample(governed=interrupt_on_viewscreen_transition):
+            if not sample(
+                governed=interrupt_on_viewscreen_transition,
+                phase="post_resume",
+            ):
                 ok = False
 
         if (
@@ -283,12 +360,15 @@ def advance_ticks_exact_external(
                     "STRING_A032" if fallback_result.get("ok") else str(fallback_result)
                 )
             time.sleep(0.1)
-            if not sample(governed=False):
+            if not sample(governed=False, phase="fallback_resume"):
                 ok = False
 
         if error is None and start_sample is not None and current_sample is not None:
             while True:
-                if not sample(governed=interrupt_on_viewscreen_transition):
+                if not sample(
+                    governed=interrupt_on_viewscreen_transition,
+                    phase="poll",
+                ):
                     ok = False
                     break
                 observed_elapsed = elapsed()
@@ -309,6 +389,14 @@ def advance_ticks_exact_external(
                 ok = False
                 error = "nopause_disable_failed"
                 repause_outcome = ensure_paused_external(timeout=2.5, attempts=2)
+        if deadline_token is not None and repause_outcome is not None:
+            if repause_outcome.get("ok") is True:
+                try:
+                    _cancel_tick_deadline(deadline_token)
+                except (DFHackError, OSError) as exc:
+                    deadline_error = str(exc)
+                    error = "tick_deadline_cancel_failed"
+                    ok = False
 
     paused_after = (
         repause_outcome.get("paused")
@@ -320,24 +408,8 @@ def advance_ticks_exact_external(
             final_sample = read_tick_pause_viewscreen(timeout=2.5)
             current_sample = final_sample
             paused_after = final_sample["pause_state"]
-            if interrupt_on_viewscreen_transition:
-                final_viewscreen = str(final_sample["viewscreen_type"])
-                final_viewscreen_valid = (
-                    final_viewscreen in INTERACT_ALLOWED_VIEWSCREEN_TYPES
-                    if interrupted
-                    else final_viewscreen == baseline_viewscreen
-                )
-                if (
-                    final_sample["pause_state"] is not True
-                    or not final_viewscreen_valid
-                ):
-                    interrupt_safety_error = "final_interrupt_attestation_inconsistent"
-                elif interrupted:
-                    # DF can progress through a chain of blocking meeting views
-                    # while the controller is re-pausing it. Preserve the first
-                    # detected modal for audit, but hand the runner the final,
-                    # paused, allowlisted modal it will actually observe.
-                    viewscreen_after = final_viewscreen
+            final_elapsed: int | None = None
+            final_calendar_error: str | None = None
             if start_sample is not None:
                 final_elapsed, final_calendar_error = calendar_elapsed_ticks(
                     start_sample["cur_year"],
@@ -345,6 +417,50 @@ def advance_ticks_exact_external(
                     final_sample["cur_year"],
                     final_sample["cur_year_tick"],
                 )
+            if interrupt_on_viewscreen_transition:
+                final_viewscreen = str(final_sample["viewscreen_type"])
+                recoverable_final_transition = (
+                    error == "calendar_sample_read_failed"
+                    and start_sample is not None
+                    and final_sample["pause_state"] is True
+                    and final_viewscreen != baseline_viewscreen
+                    and final_viewscreen in INTERACT_ALLOWED_VIEWSCREEN_TYPES
+                    and final_calendar_error is None
+                    and final_elapsed is not None
+                    and not exceeds_request_overshoot(final_elapsed)
+                    and nopause_enable_error is None
+                    and resume_error is None
+                )
+                final_viewscreen_valid = (
+                    final_viewscreen in INTERACT_ALLOWED_VIEWSCREEN_TYPES
+                    if interrupted or recoverable_final_transition
+                    else final_viewscreen == baseline_viewscreen
+                )
+                if (
+                    final_sample["pause_state"] is not True
+                    or not final_viewscreen_valid
+                ):
+                    interrupt_safety_error = "final_interrupt_attestation_inconsistent"
+                elif recoverable_final_transition:
+                    # A DFHack calendar probe can fail while a modal transition
+                    # is occurring. If the governed start, final calendar,
+                    # repause, and final allowlisted modal are independently
+                    # attested, preserve the failed probe as audit evidence and
+                    # hand the final modal back to the runner.
+                    intermediate_probe_error = error
+                    interruption_detection = "final_attestation"
+                    interrupted = True
+                    viewscreen_after = final_viewscreen
+                    error = "blocking_viewscreen_transition"
+                    calendar_safety_error = None
+                    interrupt_safety_error = None
+                elif interrupted:
+                    # DF can progress through a chain of blocking meeting views
+                    # while the controller is re-pausing it. Preserve the first
+                    # detected modal for audit, but hand the runner the final,
+                    # paused, allowlisted modal it will actually observe.
+                    viewscreen_after = final_viewscreen
+            if start_sample is not None:
                 if final_calendar_error is not None:
                     calendar_safety_error = final_calendar_error
                     if interrupt_on_viewscreen_transition:
@@ -420,6 +536,8 @@ def advance_ticks_exact_external(
     }
     if nopause_enable_error:
         result["nopause_enable_error"] = nopause_enable_error
+    if deadline_error:
+        result["tick_deadline_error"] = deadline_error
     if resume_error:
         result["resume_error"] = resume_error
     if resume_fallback:
@@ -432,6 +550,12 @@ def advance_ticks_exact_external(
             )
     if error:
         result["error"] = error
+    if intermediate_probe_error:
+        result["intermediate_probe_error"] = intermediate_probe_error
+        result["intermediate_probe_phase"] = intermediate_probe_phase
+        result["intermediate_probe_failure_kind"] = intermediate_probe_failure_kind
+    if interruption_detection:
+        result["interruption_detection"] = interruption_detection
     if timed_out:
         result["timeout"] = True
     if interrupted:
@@ -439,11 +563,13 @@ def advance_ticks_exact_external(
             {
                 "interrupted": True,
                 "viewscreen_before": baseline_viewscreen,
-                "viewscreen_at_interrupt": viewscreen_at_interrupt,
                 "viewscreen_after": viewscreen_after,
-                "pause_state_at_interrupt": pause_state_at_interrupt,
             }
         )
+        if viewscreen_at_interrupt is not None:
+            result["viewscreen_at_interrupt"] = viewscreen_at_interrupt
+        if pause_state_at_interrupt is not None:
+            result["pause_state_at_interrupt"] = pause_state_at_interrupt
     if interrupt_on_viewscreen_transition:
         result["interrupt_safety_error"] = interrupt_safety_error is not None
         result["calendar_safety_error"] = calendar_safety_error is not None
