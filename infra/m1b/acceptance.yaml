@@ -1,0 +1,600 @@
+schema: fortgym.environment-layer.m1b-acceptance/v1
+frozen_at: 2026-08-16T22:12:47Z
+provenance_corrected_at: 2026-08-16T22:18:11Z
+provenance_correction: >-
+  OCI identity labels only: d640 is the runtime-reported image Id and manifest
+  digest; d908 is the config digest. No gate, threshold, attempt bound, or
+  authority boundary changed.
+status: preregistered_with_documented_provenance_erratum
+purpose: >-
+  Bounded provider-free process-supervision, fault-isolation, and cleanup
+  evidence. This is not a scientific cohort or authorization for M2 or E1.
+
+amendments:
+  - recorded_at: 2026-08-16T22:22:28Z
+    type: provenance_label_correction
+    scope: >-
+      Replaced the ambiguous image_id label with separate Docker
+      runtime-reported, OCI manifest, OCI config, compressed-archive, and
+      uncompressed-tar digests.
+    execution_state: >-
+      Corrected after the first pure local supervisor unit pass, but before
+      any execution of the preserved DF image or any real-runtime fault.
+    gate_changes: none
+    threshold_changes: none
+    outcome_dependent: false
+  - recorded_at: 2026-08-17T01:19:52Z
+    type: procedure_clarification
+    gate: CAP-FAKE
+    scope: >-
+      The frozen phrase "zero test cap" means zero budget remaining after the
+      first synthetic response exactly reaches a positive configured test cap;
+      it never permits configuring a zero token or USD cap.
+    execution_state: before exact CAP-FAKE execution
+    production_positive_cap_validation: unchanged
+    gate_changes: none
+    threshold_changes: none
+    outcome_dependent: false
+  - recorded_at: 2026-08-17T02:31:21Z
+    type: measurement_definition_clarification
+    gate: OOM
+    scope: >-
+      The frozen host_oom_counter_delta is the unexplained host OOM-kill
+      delta: the global /proc/vmstat oom_kill delta minus the target cgroup's
+      memory.events.local oom_kill delta. Linux increments the global VM event
+      for an intended memory-cgroup OOM kill, so requiring the raw global
+      counter itself to remain unchanged would contradict the required target
+      OOM. The target-local cgroup delta must still be at least one, and no
+      hierarchical memory.events value may substitute for memory.events.local.
+    execution_state: before any real-runtime or injected OOM execution
+    gate_changes: none
+    threshold_changes: none
+    outcome_dependent: false
+  - recorded_at: 2026-08-17T11:59:30Z
+    type: infrastructure_authority
+    scope: >-
+      The operator separately authorized up to USD 100 of new infrastructure
+      spend on 2026-08-17 America/New_York without another approval. This is a
+      hard daily ceiling, not a target; resources remain ephemeral and must be
+      deleted after the bounded M1b pass.
+    execution_state: before packet sealing, provisioning, or real-runtime execution
+    gate_changes: none
+    threshold_changes: none
+    outcome_dependent: false
+  - recorded_at: 2026-08-21T14:36:43Z
+    type: infrastructure_authority_renewal
+    scope: >-
+      The operator renewed the unused approval for exactly one disposable GCE
+      acceptance VM on 2026-08-21 America/New_York, with an USD 8 reservation
+      under the unchanged USD 100 daily ceiling, an exact
+      2026-08-22T04:00:00Z expiry, and mandatory teardown. This is a narrow
+      exception for the isolated M1b acceptance host only; it does not
+      authorize product or production deployment, paid models, production
+      mutation, publication, pushes, tags, or E1.
+    execution_state: >-
+      Recorded after the original authority expired unused and before packet
+      resealing, provisioning, or any cloud API call; prior spend was USD 0.
+    gate_changes: none
+    threshold_changes: none
+    outcome_dependent: false
+  - recorded_at: 2026-08-21T17:29:31Z
+    type: infrastructure_authority_ceiling_amendment
+    scope: >-
+      The operator authorized exactly one additional USD 8 worst-case
+      infrastructure reservation after the append-only daily ledger reached
+      USD 96 reserved, raising the hard 2026-08-21 America/New_York daily
+      ceiling from USD 100 to exactly USD 104. No further overage is
+      authorized. The existing exact 2026-08-22T04:00:00Z expiry, one
+      disposable GCE VM limit, mandatory teardown, provider-free execution,
+      and all product, production, publication, push, tag, and E1 denials are
+      unchanged.
+    execution_state: >-
+      Recorded before the authority-amended packet was sealed, before the
+      final reservation, and before the additional cloud execution.
+    gate_changes: none
+    threshold_changes: none
+    outcome_dependent: false
+  - recorded_at: 2026-08-22T15:27:31Z
+    type: infrastructure_authority_renewal
+    scope: >-
+      The operator authorized up to USD 100 of new infrastructure spend on
+      2026-08-22 America/New_York without per-attempt approval. This is a hard
+      ceiling, not a target, and unused authority need not be spent. The M1b
+      controller may operate repeated disposable GCE acceptance attempts
+      serially, with at most one VM active at a time, an exact USD 8
+      worst-case reservation per attempt, mandatory teardown and independent
+      residue verification after every attempt, and an exact
+      2026-08-23T04:00:00Z expiry. Paid models, product or production
+      deployment, production mutation, publication, pushes, tags, and E1
+      remain forbidden.
+    execution_state: >-
+      Recorded after the 2026-08-21 authority expired and its separate ledger
+      closed at USD 104 reserved, before resealing a new packet, making a new
+      reservation, or starting any 2026-08-22 cloud attempt.
+    gate_changes: none
+    threshold_changes: none
+    outcome_dependent: false
+  - recorded_at: 2026-08-22T17:11:37Z
+    type: infrastructure_authority_ceiling_amendment
+    scope: >-
+      The operator authorized up to an additional USD 100 of infrastructure
+      spend on 2026-08-22 America/New_York without per-attempt approval,
+      raising the hard daily ceiling from USD 100 to USD 200. The additional
+      authority is not a spending target and unused authority need not be
+      spent. The exact USD 8 worst-case reservation per serial attempt, at
+      most one active disposable GCE VM, mandatory teardown and independent
+      residue verification after every attempt, and exact
+      2026-08-23T04:00:00Z expiry are unchanged. Paid models, product or
+      production deployment, production mutation, publication, pushes, tags,
+      and E1 remain forbidden.
+    execution_state: >-
+      Recorded after the first tranche reached USD 96 reserved and its twelfth
+      disposable VM was deleted with independent empty instance, disk, and
+      address queries, and before packet resealing, another reservation, or
+      another cloud API call.
+    gate_changes: none
+    threshold_changes: none
+    outcome_dependent: false
+  - recorded_at: 2026-08-22T20:01:27Z
+    type: infrastructure_authority_ceiling_amendment
+    scope: >-
+      The operator authorized up to another USD 100 of infrastructure spend
+      on 2026-08-22 America/New_York without per-attempt approval, raising the
+      hard daily ceiling from USD 200 to USD 300. The additional authority is
+      not a spending target and unused authority need not be spent. The exact
+      USD 8 worst-case reservation per serial attempt, at most one active
+      disposable GCE VM, mandatory teardown and independent residue
+      verification after every attempt, and exact 2026-08-23T04:00:00Z expiry
+      are unchanged. Paid models, product or production deployment,
+      production mutation, publication, pushes, tags, and E1 remain
+      forbidden.
+    execution_state: >-
+      Recorded after the append-only 2026-08-22 ledger reached USD 192
+      reserved and the twenty-fourth disposable VM was deleted with
+      independent empty instance, disk, and address queries, and before packet
+      resealing, another reservation, or another cloud API call.
+    gate_changes: none
+    threshold_changes: none
+    outcome_dependent: false
+  - recorded_at: 2026-08-23T14:02:14Z
+    type: infrastructure_authority_renewal
+    scope: >-
+      The operator authorized exactly one disposable GCE acceptance VM on
+      2026-08-23 America/New_York under a cumulative USD 250 M1b ceiling,
+      with an exact USD 8 worst-case reservation for this renewal, mandatory
+      teardown and independent residue verification, and an exact
+      2026-08-24T04:00:00Z expiry. The prior append-only 2026-08-22 ledger
+      closed at USD 200 worst-case reserved, so this one authorized renewal
+      can bring the cumulative reservation to at most USD 208. The USD 250
+      ceiling is not a spending target and unused authority need not be spent.
+      Paid models, product or production deployment, production mutation,
+      publication, pushes, tags, and E1 remain forbidden.
+    execution_state: >-
+      Recorded after the 2026-08-22 authority expired, after independent empty
+      instance, disk, and address queries, and before packet resealing, a new
+      reservation, provisioning, or any new paid cloud execution.
+    gate_changes: none
+    threshold_changes: none
+    outcome_dependent: false
+  - recorded_at: 2026-08-23T15:21:36Z
+    type: infrastructure_authority_interpretation
+    scope: >-
+      The operator clarified that the cumulative USD 250 M1b authority is
+      standing authority to continue serial disposable acceptance attempts
+      without returning for per-attempt approval. The prior USD 200 ledger and
+      the first USD 8 reservation on 2026-08-23 leave USD 42 of cumulative
+      headroom, permitting at most five additional exact USD 8 reservations.
+      At most one disposable VM may exist at a time; mandatory teardown and
+      independent instance, disk, and address absence verification remain
+      required after every attempt. The exact 2026-08-24T04:00:00Z expiry and
+      all paid-model, production, publication, push, tag, deploy, and E1
+      prohibitions are unchanged. Unused authority need not be spent.
+    execution_state: >-
+      Recorded after the first renewed VM failed closed before the matrix,
+      after its mandatory teardown and independent empty residue queries, and
+      before resealing the corrected packet or making another reservation.
+    gate_changes: none
+    threshold_changes: none
+    outcome_dependent: false
+  - recorded_at: 2026-08-23T17:31:28Z
+    type: infrastructure_authority_ceiling_amendment
+    scope: >-
+      The operator authorized exactly one additional USD 8 worst-case
+      infrastructure reservation after six serial 2026-08-23 reservations
+      reached USD 48 and the cumulative M1b reservation reached USD 248. This
+      raises the hard 2026-08-23 America/New_York daily ceiling to USD 56 and
+      the cumulative ceiling to exactly USD 256 for one final disposable GCE
+      acceptance VM. At most one VM may exist at a time; mandatory teardown
+      and independent instance, disk, and address absence verification remain
+      required. The exact 2026-08-24T04:00:00Z expiry and all paid-model,
+      production, publication, push, tag, deploy, and E1 prohibitions are
+      unchanged. Unused authority need not be spent.
+    execution_state: >-
+      Recorded after the sixth renewed VM was deleted and independent empty
+      instance, disk, and address queries completed, and before packet
+      resealing, the seventh reservation, or any new paid cloud execution.
+    gate_changes: none
+    threshold_changes: none
+    outcome_dependent: false
+  - recorded_at: 2026-08-29T21:56:52Z
+    type: infrastructure_authority_renewal
+    scope: >-
+      The operator authorized exactly one disposable GCE VM on 2026-08-29
+      America/New_York solely for the bounded M1b acceptance run, despite the
+      standing no-deploy restriction, with one exact USD 8 worst-case
+      reservation under the existing USD 250 cap, mandatory teardown and
+      independent instance, disk, and address absence verification, and an
+      exact 2026-08-30T12:00:00Z expiry. This renewal is a one-VM exception,
+      not standing retry authority; unused authority need not be spent. The
+      prior append-only reservation ledgers remain closed historical records
+      and do not authorize any additional VM. Paid models, product or
+      production deployment, production mutation, publication, pushes, tags,
+      and E1 remain forbidden.
+    execution_state: >-
+      Recorded after the prior authority expired and after independent empty
+      instance, disk, and address queries, before packet resealing, the single
+      new reservation, provisioning, or any new paid cloud execution.
+    gate_changes: none
+    threshold_changes: none
+    outcome_dependent: false
+
+  - recorded_at: 2026-09-05T02:21:57Z
+    type: infrastructure_authority_renewal
+    scope: >-
+      The operator renewed one disposable GCE VM with one USD 8 reservation
+      under the existing USD 250 cap. This authorization is bound to
+      2026-09-04 America/New_York, solely for the two-fort DF-KILL diagnostic
+      checkpoint, with mandatory teardown and independent instance, disk,
+      and address absence verification. The execution applies a conservative
+      hard expiry of 2026-09-05T12:00:00Z and the existing eight-hour runtime
+      maximum. No second VM, retry VM, full-matrix run, paid model, production
+      change, publication, push, tag, or E1 is authorized. The frozen M1b
+      gate criteria remain unchanged; diagnostic success cannot grant GO.
+    execution_state: >-
+      Recorded before new packet construction, reservation or provisioning.
+      Historical packets and reservation ledgers remain unchanged.
+    gate_changes: none
+    threshold_changes: none
+    outcome_dependent: false
+
+  - recorded_at: 2026-09-05T02:59:28Z
+    type: infrastructure_authority_expansion
+    scope: >-
+      The operator approved spending up to USD 50 tonight to continue this
+      goal without further approval within that ceiling. The completed
+      ef30ebef765f reservation consumes USD 8, leaving USD 42 of new authority.
+      The continuation ledger therefore permits at most five additional
+      exact USD 8 reservations, at most one disposable VM active at a time,
+      only for the two-fort diagnostic and fixes needed to verify it. Mandatory
+      teardown and independent absence verification apply between attempts.
+      The unchanged hard expiry is 2026-09-05T12:00:00Z. The prior USD 8 ledger
+      remains immutable with SHA256
+      b724d0c190b34d7d650705d393fa8b99d87e887f0665371a1482cee79804293d.
+      The new USD 42 execution ceiling is the remaining allocation, not an
+      additional USD 50. No full-matrix run, paid models, production changes,
+      publication, pushes, tags or E1 are authorized.
+    execution_state: >-
+      Recorded after ef30ebef765f was deleted with independent absence proof,
+      before continuation packet construction, reservation or provisioning.
+    gate_changes: none
+    threshold_changes: none
+    outcome_dependent: false
+
+  - recorded_at: 2026-09-05T11:54:13Z
+    type: infrastructure_authority_renewal
+    scope: >-
+      The operator unblocked the requested one-VM diagnostic renewal and
+      directed continued work within the existing budget. Exactly one new
+      USD 8 reservation is allocated from the unused USD 50 allowance;
+      prior reservations total USD 32, making the maximum total USD 40.
+      This is a disposable two-fort DF-KILL diagnostic, not a full-matrix
+      run. The execution applies a conservative hard expiry at
+      2026-09-05T20:00:00Z, the existing eight-hour runtime maximum and
+      mandatory teardown with independent absence verification. Prior
+      ledgers stay immutable. No model calls are needed for this scripted
+      diagnostic; production, publication, pushes, tags and E1 stay forbidden.
+    execution_state: before new reservation or provisioning
+    gate_changes: none
+    threshold_changes: none
+    outcome_dependent: false
+
+  - recorded_at: 2026-09-05T12:18:26Z
+    type: infrastructure_authority_expansion
+    scope: >-
+      The operator explicitly directed continued execution without repeated
+      per-run approval under a USD 250 budget. This continuation includes
+      USD 40 already reserved in the current two-fort diagnostic series,
+      leaving USD 210. Permit at most 26 further exact USD 8 reservations,
+      one disposable GCE VM active at a time, solely for this diagnostic and
+      its necessary fixes. Mandatory teardown and independent absence checks
+      apply after each run. Preserve the existing 2026-09-05T20:00:00Z hard
+      expiry and eight-hour maximum runtime. Stop spending when the goal is
+      proved; the ceiling is not a requirement to exhaust funds. Prior
+      ledgers remain immutable. No paid model calls, production changes,
+      full-matrix execution, publication, push, tag or E1 are included.
+    execution_state: before new packet or continuation reservation
+    gate_changes: none
+    threshold_changes: none
+    outcome_dependent: false
+
+  - recorded_at: 2026-09-05T13:29:25Z
+    type: infrastructure_authority_scope_expansion
+    scope: >-
+      After the bounded two-fort goal passed with verified teardown, the
+      operator explicitly set the next goal to full M1b acceptance and
+      directed continued execution. Full-matrix execution and necessary
+      implementation fixes are now in scope. Preserve the existing USD 250
+      cumulative ceiling, USD 40 prior reservation baseline and shared
+      USD 210 continuation ledger, which already contains USD 16 reserved.
+      Keep exact USD 8 reservations, one active disposable VM, mandatory
+      teardown and independent absence checks, and the unchanged
+      2026-09-05T20:00:00Z hard expiry. No gate, threshold, runtime-attempt
+      bound or evidence requirement is relaxed. M1b remains provider-free;
+      production changes, publication, pushes, tags, M2 and E1 remain out
+      of scope. Earlier diagnostic-only scope is superseded, not its history.
+    execution_state: before full-matrix packet sealing or reservation
+    gate_changes: none
+    threshold_changes: none
+    outcome_dependent: false
+
+  - recorded_at: 2026-09-05T20:07:40Z
+    type: infrastructure_authority_window_renewal
+    scope: >-
+      The operator explicitly authorizes disposable GCE acceptance runs,
+      one VM at a time, through September 6 2026 12:00 UTC despite the
+      no-deploy restriction. Preserve the existing USD 250 cumulative cap,
+      USD 40 baseline and shared September 5 continuation ledger without
+      resetting it at midnight. Reserve USD 8 per attempt and independently
+      verify mandatory teardown after each VM. Retries within these bounds
+      require no further approval. All acceptance criteria, attempt bounds,
+      provider exclusion and non-production restrictions remain unchanged.
+    execution_state: before any renewed-window reservation or VM creation
+    gate_changes: none
+    threshold_changes: none
+    outcome_dependent: false
+
+authorization:
+  paid_models: forbidden
+  production_access: forbidden
+  production_mutation: forbidden
+  publication: forbidden
+  deploy: forbidden
+  push: forbidden
+  tag: forbidden
+  e1: forbidden
+  new_paid_infrastructure:
+    status: authorized
+    daily_ceiling_usd: 210
+    cumulative_ceiling_usd: 250
+    prior_reserved_usd: 40
+    authorized_vm_count: 26
+    max_concurrent_vm_count: 1
+    authorized_local_date: 2026-09-05
+    timezone: America/New_York
+    expires_at: 2026-09-06T12:00:00Z
+    ephemeral_only: true
+
+runtime_identity:
+  classification: private_stock_archive_seeded
+  runtime_reported_image_id: sha256:d6403fc04f2231a75c2a4ca4379b393fddd08d9034df07dd4ff9a8d46a15068c
+  oci_manifest_digest: sha256:d6403fc04f2231a75c2a4ca4379b393fddd08d9034df07dd4ff9a8d46a15068c
+  oci_config_digest: sha256:d90811a39d5edd7c0a61d9adbbe4251cbfc345df52f5fa48ba174ce8992b8a86
+  compressed_oci_archive_sha256: 87d66d26553cb271af1b784405d63ea6b95f3bbe20e9429f05e6412133d1f43a
+  uncompressed_oci_archive_sha256: 39e4cfce8cc65ca4f4a761fd732cc5d3c2faa8d237b85992dae6da1076f8e756
+  df_version: 0.47.05
+  df_archive_sha256: ac74a6dbb7d7d9621f430405080322ab50c35f6632352ff2ea923f6dc5affca3
+  dfhack_version: 0.47.05-r8
+  dfhack_archive_sha256: 2eab7ca38a25eb15e6b2f1005a44968d58fae53f618ea9e4a31e1cd74d31926f
+  seed_tree_sha256: 49ba1de07b62e7afda93b42059b6c566598bb0f4c83d11ae1dfdb78b54cd9ec0
+  seed_world_sha256: 070b10a3f2403e72368290eea0d09396fe06f7912b9babdea7ad26eb0498a87d
+  source_reproducible: false
+
+run_bounds:
+  agent: dfhack-governed-scripted
+  memory_enabled: false
+  max_steps: 20
+  max_ticks_per_step: 200
+  max_real_runtime_attempts: 26
+  provider_calls: 0
+  provider_cost_usd: 0
+
+terminal_order:
+  - terminal_pending_cleanup
+  - evidence_snapshot_completed
+  - harness_process_group_reaped
+  - runtime_container_removed
+  - cleanup_verified
+  - cleanup_completed
+  - immutable_terminal_classification
+
+attempt_invariants:
+  - every planned attempt has exactly one durable terminal classification
+  - terminal classification occurs only after cleanup verification
+  - Python is at least 3.11 and package installation is supported normally
+  - image, seed, configuration, and code digests are exact
+  - port has an exclusive supervisor lease before Docker or harness launch
+  - RPC nonce, run identity, port, and seed attestation match
+  - child environment equals the explicit allowlist and dotenv is disabled
+  - provider routes and credentials are absent from scripted children
+  - all attempted provider network connections are rejected and evidenced
+  - control-plane evidence is outside the faulted run workspace
+
+replacement_rule:
+  maximum_per_logical_run: 1
+  maximum_natural_startup_replacements_packet: 2
+  maximum_natural_startup_replacements_co8: 1
+  co8_minimum_ready_primaries: 7
+  allowed_before_harness_started:
+    - container_create_failure
+    - rpc_readiness_timeout
+    - map_readiness_timeout
+  never_replace:
+    - port_policy_failure
+    - nonce_mismatch
+    - cross_talk
+    - provider_policy_breach
+    - cleanup_residue
+    - any_failure_after_harness_started
+  injected_faults_are_replacements: false
+  test_injector_invalid_reruns: 1
+
+gates:
+  - id: PORT-1
+    class: local
+    procedure: race 32 supervisor requests against one port lease
+    pass:
+      winners: 1
+      durable_port_lease_conflicts: 31
+      losers_start_runtime_or_harness: false
+
+  - id: PORT-2
+    class: real_runtime
+    procedure: request an already leased and listening port while peer A remains ready
+    pass:
+      fail_closed_seconds_lte: 5
+      second_runtime_started: false
+      second_harness_started: false
+      peer_nonce_and_rpc_unchanged: true
+
+  - id: COLD-RETRY
+    class: real_runtime
+    procedure: suppress first RPC readiness in test mode, then retry exactly once
+    pass:
+      first_terminal: rpc_readiness_timeout
+      first_cleanup_verified: true
+      second_uses_fresh_identity_and_resources: true
+      second_completes: true
+      production_mode_accepts_fault_knob: false
+
+  - id: CO-8
+    class: isolated_x86_linux
+    procedure: barrier-start eight fresh runtimes and eight harness processes
+    pass:
+      logical_runs_completed: 8
+      seed_attestation_unique_count: 1
+      distinct_ports_nonces_containers_pids_homes_saves_artifacts: true
+      rpc_receipts_match_run_nonce: true
+      symmetric_cotenancy_graph: true
+      cross_run_artifact_references: 0
+
+  - id: DF-KILL
+    class: real_runtime
+    procedure: SIGKILL target A Dwarf_Fortress after step 2 while peer B continues
+    pass:
+      target_terminal: runtime_df_killed
+      target_oom_killed: false
+      detection_seconds_lte: 10
+      cleanup_seconds_lte: 30
+      peer_minimum_step: 5
+      peer_reconnected: false
+
+  - id: HARNESS-KILL
+    class: real_runtime
+    procedure: SIGKILL target A harness after step 2 while leaving descendants
+    pass:
+      target_terminal: harness_killed
+      target_process_group_reaped: true
+      target_runtime_listener_and_lease_removed: true
+      peer_minimum_step: 5
+
+  - id: OOM
+    class: isolated_x86_linux
+    procedure: run target A at 256 MiB while peer B retains the normal cap
+    pass:
+      target_terminal: runtime_oom
+      cgroup_memory_events_proves_oom: true
+      target_memory_events_local_oom_kill_delta_gte: 1
+      exit_137_alone_is_sufficient: false
+      peer_healthy: true
+      host_oom_counter_delta: 0
+      host_oom_counter_definition: >-
+        global_proc_vmstat_oom_kill_delta minus
+        target_memory_events_local_oom_kill_delta
+
+  - id: ENOSPC
+    class: isolated_x86_linux
+    procedure: fill only target A private 16 MiB workspace tmpfs at the step-2 barrier
+    pass:
+      target_terminal: workspace_enospc
+      errno: 28
+      control_plane_journal_survives: true
+      peer_continues: true
+      maximum_fault_bytes: 16777216
+
+  - id: CONTAINER-RESTART
+    class: real_runtime
+    procedure: docker restart target A at step 2
+    pass:
+      target_terminal: runtime_container_restarted
+      silent_reconnect: false
+      peer_continues: true
+
+  - id: DAEMON-RESTART
+    class: isolated_x86_linux_host_controller
+    procedure: restart Docker from outside Docker while two runs are active
+    pass:
+      affected_terminal: docker_daemon_restarted
+      silent_continuation: false
+      reconciliation_seconds_lte: 120
+      supervisor_remains_operational: true
+
+  - id: ORPHAN-1
+    class: local_and_real_runtime
+    procedure: reconcile managed orphans beside an unlabeled foreign canary
+    pass:
+      managed_orphans_removed: true
+      foreign_canary_untouched: true
+      second_reconciliation_noop: true
+
+  - id: ORPHAN-2
+    class: isolated_x86_linux
+    procedure: SIGKILL supervisor during a run, then restart from durable journal
+    pass:
+      run_resumed: false
+      target_terminal: supervisor_lost
+      all_managed_resources_reaped: true
+
+  - id: PROVIDER-ENV
+    class: local
+    procedure: launch from poisoned parent environment and poisoned temporary dotenv
+    pass:
+      child_environment_equals_allowlist: true
+      poisoned_values_present: false
+      dotenv_disabled: true
+      agent: dfhack-governed-scripted
+
+  - id: PROVIDER-NET
+    class: isolated_x86_linux
+    procedure: constrain harness network to assigned loopback RPC and capture connects
+    pass:
+      dns_connections: 0
+      port_443_connections: 0
+      poison_sink_connections: 0
+      only_assigned_dfhack_connection: true
+      provider_calls: 0
+      provider_cost_usd: 0
+
+  - id: CAP-FAKE
+    class: local
+    procedure: >-
+      emit one synthetic provider usage event that exactly reaches a positive
+      configured test cap, leaving zero remaining budget before a second dispatch
+    pass:
+      terminal: budget_cap_exceeded
+      second_fake_call: false
+      missing_cap_or_pin_rejected: true
+      real_provider_or_network_used: false
+
+  - id: CLEANUP
+    class: every_case
+    procedure: run scoped cleanup twice after every gate and after the final batch
+    pass:
+      exact_batch_containers_processes_listeners_leases_mounts_tempdirs: 0
+      retained_evidence_allowed: true
+      foreign_canary_untouched: true
+
+decision_rule:
+  go: every hard gate passes on the real runtime with complete evidence
+  incomplete_no_go: >-
+    local or mock success without CO-8, daemon restart, OOM, ENOSPC, provider
+    network exclusion, and orphan recovery on isolated x86-64 Linux

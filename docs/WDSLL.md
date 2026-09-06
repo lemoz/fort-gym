@@ -1,5 +1,15 @@
 # WDSLL — What Does Success Look Like
 
+## Current direction: year-two campaigns (September 5, 2026)
+
+The owner-approved operating goal is now [Year-Two Autonomous Play and
+Cross-Model Evaluation](YEAR_TWO_CAMPAIGNS.md): persistent, model-swappable
+campaigns, a functioning fortress after one full elapsed game year, continued
+play beyond that checkpoint, website delivery, and reproducible remote-repository
+delivery. The historical gate ladder below remains unchanged as evidence, not
+as a prerequisite ladder for the new exploratory campaign mode. Full M1b
+acceptance is complete; see the [sealed GO decision](decisions/2026-09-05-full-m1b-acceptance.md).
+
 ## Success statement (the one metric)
 
 **An LLM policy, issuing only legal governed actions, takes the fixed embark

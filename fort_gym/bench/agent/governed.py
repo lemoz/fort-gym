@@ -75,6 +75,13 @@ def _space_complete(
 class DFHackGovernedScriptedAgent(Agent):
     """Pursue the starter two-room workshop plan through structured actions."""
 
+    def __init__(self, *, ticks_per_step: int = 1000) -> None:
+        if isinstance(ticks_per_step, bool) or not isinstance(ticks_per_step, int):
+            raise ValueError("ticks_per_step must be an integer")
+        if not 1 <= ticks_per_step <= 2000:
+            raise ValueError("ticks_per_step must be between 1 and 2000")
+        self.ticks_per_step = ticks_per_step
+
     def decide(self, obs_text: str, obs_json: Dict[str, Any]) -> Dict[str, Any]:
         work = _work(obs_json)
         target_rect = work.get("target_rect") or [50, 35, 0, 54, 39, 0]
@@ -130,7 +137,7 @@ class DFHackGovernedScriptedAgent(Agent):
                         "intent": "designate the starter room for miners",
                         "objective": "Open safe interior shelter before production.",
                         "expected_simulation_result": "Miner job starts and wall tiles become floors.",
-                        "advance_ticks": 1000,
+                        "advance_ticks": self.ticks_per_step,
                     }
                 )
             return self._wait("starter room is already designated; let miners work")
@@ -145,7 +152,7 @@ class DFHackGovernedScriptedAgent(Agent):
                         "intent": "dig the east connector toward the workshop room",
                         "objective": "Broaden the fortress layout beyond the starter room.",
                         "expected_simulation_result": "Connector wall tiles become walkable floor.",
-                        "advance_ticks": 1000,
+                        "advance_ticks": self.ticks_per_step,
                     }
                 )
             return self._wait("connector mining is pending or metrics are not ready")
@@ -164,7 +171,7 @@ class DFHackGovernedScriptedAgent(Agent):
                         "intent": "place a carpenter workshop on an observed legal 3x3 floor site",
                         "objective": "Start production once enough usable floor exists, even if the annex still has rough edges.",
                         "expected_simulation_result": "A construct-building job appears, then a usable workshop.",
-                        "advance_ticks": 1000,
+                        "advance_ticks": self.ticks_per_step,
                     }
                 )
             params = _rect_action_params(workshop_room_rect)
@@ -176,7 +183,7 @@ class DFHackGovernedScriptedAgent(Agent):
                         "intent": "dig the workshop room east of the connector",
                         "objective": "Create a distinct production space.",
                         "expected_simulation_result": "Workshop-room wall tiles become floor.",
-                        "advance_ticks": 1000,
+                        "advance_ticks": self.ticks_per_step,
                     }
                 )
             return self._wait("workshop room mining is pending or metrics are not ready")
@@ -197,7 +204,7 @@ class DFHackGovernedScriptedAgent(Agent):
                     "intent": "place a carpenter workshop in the completed workshop room",
                     "objective": "Start real production in the new room.",
                     "expected_simulation_result": "A construct-building job appears, then a usable workshop.",
-                    "advance_ticks": 1000,
+                    "advance_ticks": self.ticks_per_step,
                 }
             )
 
@@ -213,7 +220,7 @@ class DFHackGovernedScriptedAgent(Agent):
                     "intent": f"queue a small {job} order through the manager order helper",
                     "objective": "Prove production demand after workshop placement.",
                     "expected_simulation_result": "Manager/workshop jobs appear and consume material through dwarf labor.",
-                    "advance_ticks": 1000,
+                    "advance_ticks": self.ticks_per_step,
                 }
             )
 
@@ -227,7 +234,7 @@ class DFHackGovernedScriptedAgent(Agent):
                 "intent": reason,
                 "objective": "Advance live simulation so dwarves can resolve queued work.",
                 "expected_simulation_result": "Existing jobs progress without issuing another command.",
-                "advance_ticks": 1000,
+                "advance_ticks": self.ticks_per_step,
             }
         )
 

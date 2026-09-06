@@ -25,6 +25,18 @@ class Agent(ABC):
         """Attach stable, non-gameplay context for one benchmark run."""
         return None
 
+    def set_campaign_context(self, *, campaign_id: str) -> None:
+        """Opt into continuous campaign identity rather than independent runs."""
+        raise NotImplementedError("This agent does not support persistent campaigns")
+
+    def export_campaign_state(self) -> Dict[str, Any]:
+        """Export state at a committed action boundary, excluding credentials."""
+        raise NotImplementedError("This agent does not support campaign checkpoints")
+
+    def restore_campaign_state(self, data: Dict[str, Any], *, campaign_id: str) -> None:
+        """Restore a fresh agent before the next decision in the same campaign."""
+        raise NotImplementedError("This agent does not support campaign checkpoints")
+
 
 class RandomAgent(Agent):
     """Random policy emitting syntactically valid actions."""

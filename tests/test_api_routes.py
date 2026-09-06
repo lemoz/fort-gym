@@ -31,6 +31,21 @@ def test_run_create_request_accepts_preserve_save() -> None:
         RunCreateRequest(evaluation_protocol="fort eval v1")
 
 
+def test_run_create_request_publish_is_explicit_and_private_by_default() -> None:
+    from pydantic import ValidationError
+
+    from fort_gym.bench.api.schemas import RunCreateRequest
+
+    request = RunCreateRequest()
+
+    assert request.publish is False
+    assert "permanent public share" in str(
+        RunCreateRequest.model_fields["publish"].description
+    )
+    with pytest.raises(ValidationError):
+        RunCreateRequest(publish="true")  # type: ignore[arg-type]
+
+
 def test_active_run_serializes_protocol_and_survives_registry_restart(tmp_path, monkeypatch) -> None:
     from datetime import datetime
 
@@ -104,6 +119,95 @@ def test_create_run_propagates_protocol_to_registry_and_runner(tmp_path, monkeyp
     persisted = registry.get(run_id)
     assert persisted is not None
     assert persisted.evaluation_protocol == "fort-eval-v1"
+
+
+def test_create_run_is_private_by_default(tmp_path, monkeypatch) -> None:
+    from fastapi.testclient import TestClient
+
+    from fort_gym.bench.api import server
+    from fort_gym.bench.run.storage import RunRegistry
+
+    class DeferredThread:
+        def __init__(self, **_kwargs) -> None:
+            pass
+
+        def start(self) -> None:
+            pass
+
+    registry = RunRegistry(db_path=tmp_path / "runs.sqlite3")
+    monkeypatch.setenv("FORT_GYM_INSECURE_ADMIN", "1")
+    monkeypatch.setattr(server, "RUN_REGISTRY", registry)
+    monkeypatch.setattr(server.threading, "Thread", DeferredThread)
+
+    response = TestClient(server.app).post(
+        "/runs",
+        json={"backend": "mock", "model": "fake"},
+    )
+
+    assert response.status_code == 200
+    assert registry.get(response.json()["id"]) is not None
+    assert registry.list_public() == []
+
+
+def test_create_run_publish_true_mints_permanent_share(tmp_path, monkeypatch) -> None:
+    from fastapi.testclient import TestClient
+
+    from fort_gym.bench.api import server
+    from fort_gym.bench.run.storage import RunRegistry
+
+    class DeferredThread:
+        def __init__(self, **_kwargs) -> None:
+            pass
+
+        def start(self) -> None:
+            pass
+
+    registry = RunRegistry(db_path=tmp_path / "runs.sqlite3")
+    monkeypatch.setenv("FORT_GYM_INSECURE_ADMIN", "1")
+    monkeypatch.setattr(server, "RUN_REGISTRY", registry)
+    monkeypatch.setattr(server.threading, "Thread", DeferredThread)
+
+    response = TestClient(server.app).post(
+        "/runs",
+        json={"backend": "mock", "model": "fake", "publish": True},
+    )
+
+    assert response.status_code == 200
+    [(run, share)] = registry.list_public()
+    assert run.run_id == response.json()["id"]
+    assert share.scope == {"live", "replay", "export"}
+    assert share.expires_at is None
+
+
+def test_create_run_rejects_calibration_publication_before_creation(
+    tmp_path, monkeypatch
+) -> None:
+    from fastapi.testclient import TestClient
+
+    from fort_gym.bench.api import server
+    from fort_gym.bench.eval.fort_eval_easy_p1 import P1_PROTOCOL
+    from fort_gym.bench.run.storage import RunRegistry
+
+    registry = RunRegistry(db_path=tmp_path / "runs.sqlite3")
+    monkeypatch.setenv("FORT_GYM_INSECURE_ADMIN", "1")
+    monkeypatch.setattr(server, "RUN_REGISTRY", registry)
+
+    response = TestClient(server.app).post(
+        "/runs",
+        json={
+            "backend": "dfhack",
+            "model": "dfhack-governed-scripted",
+            "evaluation_protocol": P1_PROTOCOL,
+            "publish": True,
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "detail": "Calibration runs cannot be published; set publish=false"
+    }
+    assert registry.list() == []
+    assert registry.list_public() == []
 
 
 def test_run_registry_migrates_legacy_rows_without_a_protocol(tmp_path) -> None:

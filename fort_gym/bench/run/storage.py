@@ -1,8 +1,8 @@
 """SQLite-backed registry tracking runs, share tokens, and streaming events.
 
-Runs and share tokens persist across API restarts via SQLite. Live SSE events are
-still delivered via in-memory asyncio queues and are not replayed from the DB
-(replay uses the persisted NDJSON trace file).
+Runs, share tokens, and the SSE event outbox persist across process restarts.
+Legacy in-memory queues remain available for low-latency delivery while the
+SQLite outbox provides cursor-based polling and replay across process roles.
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ import subprocess
 import threading
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional, Set, Tuple
 
@@ -24,6 +24,8 @@ from ..config import get_settings
 from ..eval.protocol import validate_evaluation_protocol
 
 EventPayload = Dict[str, Any]
+_DEFAULT_EVENT_PAGE_SIZE = 100
+_MAX_EVENT_PAGE_SIZE = 1000
 
 
 def _dt_to_iso(value: Optional[datetime]) -> Optional[str]:
@@ -102,6 +104,7 @@ class RunInfo:
     runtime_save: Optional[str] = None
     preserve_save: bool = False
     evaluation_protocol: Optional[str] = None
+    supervision_mode: Optional[str] = None
     artifacts_dir: Optional[str] = None
     trace_path: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict, repr=False)
@@ -119,11 +122,37 @@ class ShareToken:
     created_at: datetime
 
 
+@dataclass(frozen=True)
+class StoredRunEvent:
+    """One durable, cursor-addressable run event."""
+
+    run_id: str
+    sequence: int
+    payload: EventPayload
+    created_at: datetime
+
+
 class RunRegistry:
     """Thread-safe run registry with SQLite persistence."""
 
-    def __init__(self, *, db_path: Optional[Path] = None) -> None:
+    def __init__(
+        self,
+        *,
+        db_path: Optional[Path] = None,
+        artifacts_root: Optional[Path] = None,
+        recover_interrupted: bool = True,
+    ) -> None:
+        """Create a registry connection role.
+
+        API-owner registries keep the legacy startup recovery behavior. Worker
+        registries sharing the same database must pass
+        ``recover_interrupted=False`` so opening their connection cannot
+        relabel sibling runs that are still owned by the API supervisor.
+        """
+
         self._db_path_override = db_path
+        self._artifacts_root_override = artifacts_root
+        self._recover_interrupted = recover_interrupted
         self._conn: Optional[sqlite3.Connection] = None
         self._db_lock = threading.Lock()
         self._init_lock = threading.Lock()
@@ -134,13 +163,27 @@ class RunRegistry:
     # ------------------------------------------------------------------
     # SQLite wiring
     # ------------------------------------------------------------------
+    @property
+    def artifacts_root(self) -> Path:
+        """Return the exact root used when assigning per-run artifact paths."""
+
+        if self._artifacts_root_override is not None:
+            return Path(self._artifacts_root_override).expanduser().resolve()
+        return Path(get_settings().ARTIFACTS_DIR).expanduser().resolve()
+
+    @property
+    def database_path(self) -> Path:
+        """Return the exact SQLite path used by this registry role."""
+
+        return self._db_path().expanduser().resolve()
+
     def _db_path(self) -> Path:
         if self._db_path_override is not None:
             return self._db_path_override
         env_path = os.getenv("FORT_GYM_DB_PATH")
         if env_path:
             return Path(env_path).expanduser()
-        artifacts_dir = Path(get_settings().ARTIFACTS_DIR).resolve()
+        artifacts_dir = self.artifacts_root
         artifacts_dir.mkdir(parents=True, exist_ok=True)
         return artifacts_dir / "fort_gym.sqlite3"
 
@@ -159,7 +202,8 @@ class RunRegistry:
                 conn.execute("PRAGMA journal_mode = WAL")
                 conn.execute("PRAGMA synchronous = NORMAL")
                 self._ensure_schema(conn)
-                self._mark_interrupted_runs(conn)
+                if self._recover_interrupted:
+                    self._mark_interrupted_runs(conn)
             self._conn = conn
             return conn
 
@@ -183,6 +227,7 @@ class RunRegistry:
               runtime_save TEXT,
               preserve_save INTEGER NOT NULL DEFAULT 0,
               evaluation_protocol TEXT,
+              supervision_mode TEXT,
               artifacts_dir TEXT,
               trace_path TEXT,
               last_score REAL,
@@ -206,6 +251,12 @@ class RunRegistry:
             conn,
             table="runs",
             column="evaluation_protocol",
+            definition="TEXT",
+        )
+        RunRegistry._ensure_column(
+            conn,
+            table="runs",
+            column="supervision_mode",
             definition="TEXT",
         )
         RunRegistry._ensure_column(
@@ -239,6 +290,18 @@ class RunRegistry:
             """
         )
         conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS run_events (
+              run_id TEXT NOT NULL,
+              sequence INTEGER NOT NULL CHECK(sequence > 0),
+              event_json TEXT NOT NULL,
+              created_at TEXT NOT NULL,
+              PRIMARY KEY(run_id, sequence),
+              FOREIGN KEY(run_id) REFERENCES runs(run_id) ON DELETE CASCADE
+            )
+            """
+        )
+        conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_runs_model_sha ON runs(model, git_sha)"
         )
         conn.execute("CREATE INDEX IF NOT EXISTS idx_runs_end ON runs(ended_at)")
@@ -261,6 +324,8 @@ class RunRegistry:
 
     @staticmethod
     def _mark_interrupted_runs(conn: sqlite3.Connection) -> None:
+        """Recover legacy in-process runs without stealing supervised ownership."""
+
         now = datetime.utcnow().isoformat()
         conn.execute(
             """
@@ -272,7 +337,9 @@ class RunRegistry:
                        ELSE 'failed'
                    END,
                    ended_at = COALESCE(ended_at, ?)
-             WHERE status = 'running' AND ended_at IS NULL
+             WHERE status = 'running'
+               AND ended_at IS NULL
+               AND supervision_mode IS NULL
             """,
             (now,),
         )
@@ -293,6 +360,7 @@ class RunRegistry:
         seed_save: Optional[str] = None,
         runtime_save: Optional[str] = None,
         evaluation_protocol: Optional[str] = None,
+        supervision_mode: Optional[str] = None,
     ) -> RunInfo:
         """Register a new run and return its record.
 
@@ -303,13 +371,15 @@ class RunRegistry:
 
         conn = self._ensure_conn()
         evaluation_protocol = validate_evaluation_protocol(evaluation_protocol)
+        if supervision_mode not in {None, "m1b-process"}:
+            raise ValueError("unsupported supervision_mode")
 
         identifier = run_id or uuid.uuid4().hex
         queue: asyncio.Queue[EventPayload] = asyncio.Queue(maxsize=512)
 
         now = datetime.utcnow()
         settings = get_settings()
-        artifacts_root = Path(settings.ARTIFACTS_DIR).resolve()
+        artifacts_root = self.artifacts_root
         artifacts_dir = artifacts_root / identifier
         trace_path = artifacts_dir / "trace.jsonl"
 
@@ -328,8 +398,9 @@ class RunRegistry:
                 INSERT INTO runs (
                   run_id, backend, model, max_steps, ticks_per_step,
                   status, step, created_at, git_sha, seed_save, runtime_save,
-                  preserve_save, evaluation_protocol, artifacts_dir, trace_path
-                ) VALUES (?, ?, ?, ?, ?, 'pending', 0, ?, ?, ?, ?, ?, ?, ?, ?)
+                  preserve_save, evaluation_protocol, artifacts_dir, trace_path,
+                  supervision_mode
+                ) VALUES (?, ?, ?, ?, ?, 'pending', 0, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     identifier,
@@ -345,6 +416,7 @@ class RunRegistry:
                     evaluation_protocol,
                     str(artifacts_dir),
                     str(trace_path),
+                    supervision_mode,
                 ),
             )
             conn.commit()
@@ -367,6 +439,7 @@ class RunRegistry:
             runtime_save=runtime_save,
             preserve_save=preserve_save,
             evaluation_protocol=evaluation_protocol,
+            supervision_mode=supervision_mode,
             artifacts_dir=str(artifacts_dir),
             trace_path=str(trace_path),
         )
@@ -650,45 +723,144 @@ class RunRegistry:
             return self._queues.get(run_id)
 
     def append_event(self, run_id: str, event: EventPayload) -> None:
-        with self._db_lock:
-            queue = self._queues.get(run_id)
-            loop = self._loops.get(run_id)
-
-        if queue is None:
-            return
-
         payload = {"t": event.get("t", "message"), "data": event.get("data", {})}
         event_type = payload["t"]
         data = payload["data"] or {}
+        encoded_payload = json.dumps(payload, separators=(",", ":"), sort_keys=True)
+        created_at = datetime.now(UTC)
 
-        if event_type == "score":
-            score_value = data.get("total_score")
-            if score_value is None:
-                score_value = data.get("score")
-            if score_value is None:
-                score_value = data.get("value")
-            milestones = data.get("milestones")
-            self._update_score(run_id, score_value, milestones)
-
-        def push() -> None:
-            try:
-                queue.put_nowait(payload)
-            except asyncio.QueueFull:
-                try:
-                    queue.get_nowait()
-                except asyncio.QueueEmpty:
-                    return
-                queue.put_nowait(payload)
-
-        if loop and loop.is_running():
-            loop.call_soon_threadsafe(push)
-        else:
-            push()
-
-    def _update_score(
-        self, run_id: str, score_value: object, milestones: object
-    ) -> None:
         conn = self._ensure_conn()
+        with self._db_lock:
+            try:
+                conn.execute("BEGIN IMMEDIATE")
+                exists = conn.execute(
+                    "SELECT 1 FROM runs WHERE run_id = ?", (run_id,)
+                ).fetchone()
+                if exists is None:
+                    conn.rollback()
+                    return
+                row = conn.execute(
+                    """
+                    SELECT COALESCE(MAX(sequence), 0) + 1 AS next_sequence
+                      FROM run_events
+                     WHERE run_id = ?
+                    """,
+                    (run_id,),
+                ).fetchone()
+                sequence = int(row["next_sequence"])
+                conn.execute(
+                    """
+                    INSERT INTO run_events (run_id, sequence, event_json, created_at)
+                    VALUES (?, ?, ?, ?)
+                    """,
+                    (run_id, sequence, encoded_payload, created_at.isoformat()),
+                )
+                if event_type == "score":
+                    score_value = data.get("total_score")
+                    if score_value is None:
+                        score_value = data.get("score")
+                    if score_value is None:
+                        score_value = data.get("value")
+                    self._update_score_row(
+                        conn,
+                        run_id,
+                        score_value,
+                        data.get("milestones"),
+                    )
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                raise
+
+            queue = self._queues.get(run_id)
+            loop = self._loops.get(run_id)
+            if queue is None:
+                return
+
+            def push() -> None:
+                try:
+                    queue.put_nowait(payload)
+                except asyncio.QueueFull:
+                    try:
+                        queue.get_nowait()
+                    except asyncio.QueueEmpty:
+                        return
+                    queue.put_nowait(payload)
+
+            if loop and loop.is_running():
+                loop.call_soon_threadsafe(push)
+            else:
+                push()
+
+    def read_events_since(
+        self,
+        run_id: str,
+        *,
+        after_sequence: int = 0,
+        limit: int = _DEFAULT_EVENT_PAGE_SIZE,
+    ) -> list[StoredRunEvent]:
+        """Read one bounded, strictly-after cursor page in durable order."""
+
+        if (
+            isinstance(after_sequence, bool)
+            or not isinstance(after_sequence, int)
+            or after_sequence < 0
+        ):
+            raise ValueError("after_sequence must be a non-negative integer")
+        if isinstance(limit, bool) or not isinstance(limit, int) or limit <= 0:
+            raise ValueError("limit must be a positive integer")
+        bounded_limit = min(limit, _MAX_EVENT_PAGE_SIZE)
+
+        conn = self._ensure_conn()
+        with self._db_lock:
+            rows = conn.execute(
+                """
+                SELECT run_id, sequence, event_json, created_at
+                  FROM run_events
+                 WHERE run_id = ? AND sequence > ?
+                 ORDER BY sequence ASC
+                 LIMIT ?
+                """,
+                (run_id, after_sequence, bounded_limit),
+            ).fetchall()
+
+        events: list[StoredRunEvent] = []
+        for row in rows:
+            try:
+                payload = json.loads(row["event_json"])
+            except (TypeError, json.JSONDecodeError) as exc:
+                raise ValueError(
+                    f"Run '{run_id}' has invalid durable event JSON at "
+                    f"sequence {row['sequence']}"
+                ) from exc
+            if not isinstance(payload, dict):
+                raise ValueError(
+                    f"Run '{run_id}' has invalid durable event payload at "
+                    f"sequence {row['sequence']}"
+                )
+            event_created_at = _dt_from_iso(row["created_at"])
+            if event_created_at is None:
+                raise ValueError(
+                    f"Run '{run_id}' has invalid durable event timestamp at "
+                    f"sequence {row['sequence']}"
+                )
+            events.append(
+                StoredRunEvent(
+                    run_id=str(row["run_id"]),
+                    sequence=int(row["sequence"]),
+                    payload=payload,
+                    created_at=event_created_at,
+                )
+            )
+        return events
+
+    @staticmethod
+    def _update_score_row(
+        conn: sqlite3.Connection,
+        run_id: str,
+        score_value: object,
+        milestones: object,
+    ) -> None:
         score: Optional[float] = None
         if score_value is not None:
             try:
@@ -701,20 +873,18 @@ class RunRegistry:
                 milestones_json = json.dumps(milestones)
             except TypeError:
                 milestones_json = None
-        with self._db_lock:
-            if score is None and milestones_json is None:
-                return
-            sets: list[str] = []
-            params: list[object] = []
-            if score is not None:
-                sets.append("last_score = ?")
-                params.append(score)
-            if milestones_json is not None:
-                sets.append("milestones_json = ?")
-                params.append(milestones_json)
-            params.append(run_id)
-            conn.execute(f"UPDATE runs SET {', '.join(sets)} WHERE run_id = ?", params)
-            conn.commit()
+        if score is None and milestones_json is None:
+            return
+        sets: list[str] = []
+        params: list[object] = []
+        if score is not None:
+            sets.append("last_score = ?")
+            params.append(score)
+        if milestones_json is not None:
+            sets.append("milestones_json = ?")
+            params.append(milestones_json)
+        params.append(run_id)
+        conn.execute(f"UPDATE runs SET {', '.join(sets)} WHERE run_id = ?", params)
 
     def set_summary(self, run_id: str, summary: Dict[str, Any]) -> None:
         conn = self._ensure_conn()
@@ -1473,6 +1643,7 @@ class RunRegistry:
             runtime_save=row["runtime_save"],
             preserve_save=bool(row["preserve_save"]),
             evaluation_protocol=row["evaluation_protocol"],
+            supervision_mode=row["supervision_mode"],
             artifacts_dir=row["artifacts_dir"],
             trace_path=row["trace_path"],
             metadata=metadata,
@@ -1501,6 +1672,7 @@ class RunRegistry:
 
         conn = self._ensure_conn()
         with self._db_lock:
+            conn.execute("DELETE FROM run_events")
             conn.execute("DELETE FROM shares")
             conn.execute("DELETE FROM runs")
             conn.commit()
@@ -1512,4 +1684,10 @@ class RunRegistry:
 RUN_REGISTRY = RunRegistry()
 
 
-__all__ = ["RUN_REGISTRY", "RunInfo", "RunRegistry", "ShareToken"]
+__all__ = [
+    "RUN_REGISTRY",
+    "RunInfo",
+    "RunRegistry",
+    "ShareToken",
+    "StoredRunEvent",
+]

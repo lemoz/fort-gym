@@ -5,13 +5,16 @@ import shutil
 from pathlib import Path
 
 from fort_gym.bench.agent.base import RandomAgent
+from fort_gym.bench.config import get_settings
 from fort_gym.bench.run.runner import run_once
 
 
-def test_mock_run_produces_trace() -> None:
+def test_mock_run_produces_trace(tmp_path: Path, monkeypatch) -> None:
+    artifacts_root = (tmp_path / "artifacts").resolve()
+    monkeypatch.setenv("ARTIFACTS_DIR", str(artifacts_root))
+    get_settings.cache_clear()  # type: ignore[attr-defined]
     run_id = run_once(RandomAgent(), env="mock", max_steps=3, ticks_per_step=10)
 
-    artifacts_root = Path(__file__).resolve().parents[1] / "fort_gym" / "artifacts"
     artifact_dir = artifacts_root / run_id
     trace_path = artifact_dir / "trace.jsonl"
 
@@ -37,3 +40,4 @@ def test_mock_run_produces_trace() -> None:
     assert steps == sorted(steps)
 
     shutil.rmtree(artifact_dir, ignore_errors=True)
+    get_settings.cache_clear()  # type: ignore[attr-defined]

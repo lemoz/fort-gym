@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 import time
+import uuid
 from typing import Dict
 
-from .config import DFHACK_RUN, DFROOT
 from .dfhack_exec import (
     DFHackError,
     read_pause_state,
     read_tick_pause_viewscreen,
-    run_dfhack,
+    run_command,
     set_paused,
 )
 from .env.actions import (
@@ -28,6 +28,56 @@ from .tick_receipt import (
 MAX_ADVANCE_TICKS = 2000
 
 
+def _arm_tick_deadline(ticks: int, start: Dict[str, object]) -> str:
+    """Install a runtime-owned pause before any host-side resume command.
+
+    Host RPC scheduling is not a simulation clock. In particular eight workers
+    can leave DF running for many ticks while a host sample is in flight.
+    The existing calendar/final-pause checks still independently verify this
+    deadline; installing it is not itself evidence of successful advancement.
+    """
+    token = uuid.uuid4().hex
+    year, tick = int(start["cur_year"]), int(start["cur_year_tick"])
+    script = f"""
+local key = '_fortgym_tick_deadline'
+if _G[key] then error('prior tick deadline remains') end
+if df.global.pause_state ~= true then error('tick deadline requires paused baseline') end
+local remaining = {int(ticks)} - ((df.global.cur_year - {year}) * {TICKS_PER_YEAR}
+    + df.global.cur_year_tick - {tick})
+if remaining <= 0 or remaining > {int(ticks)} then error('invalid deadline calendar') end
+local state = {{token='{token}'}}
+_G[key] = state
+state.timer = dfhack.timeout(remaining, 'ticks', function()
+    if _G[key] ~= state then return end
+    dfhack.run_command('nopause', '0')
+    df.global.pause_state = true
+    state.fired = true
+end)
+if state.timer == nil then _G[key] = nil; error('tick deadline unavailable') end
+print('{token}')
+"""
+    output = run_command("lua", [script], timeout=2.5)
+    if output.strip() != token:
+        raise DFHackError("tick deadline acknowledgement differs")
+    return token
+
+
+def _cancel_tick_deadline(token: str) -> None:
+    if len(token) != 32 or any(char not in "0123456789abcdef" for char in token):
+        raise DFHackError("invalid tick deadline identity")
+    script = f"""
+local key = '_fortgym_tick_deadline'
+local state = _G[key]
+if not state or state.token ~= '{token}' then error('tick deadline identity differs') end
+if df.global.pause_state ~= true then error('tick deadline cancellation requires pause') end
+dfhack.timeout_active(state.timer, nil)
+_G[key] = nil
+print('{token}')
+"""
+    if run_command("lua", [script], timeout=2.5).strip() != token:
+        raise DFHackError("tick deadline cancellation acknowledgement differs")
+
+
 def _safe_read_pause_state(timeout: float = 1.0) -> bool | None:
     try:
         return read_pause_state(timeout=timeout)
@@ -37,10 +87,10 @@ def _safe_read_pause_state(timeout: float = 1.0) -> bool | None:
 
 def _set_nopause(enabled: bool) -> str | None:
     try:
-        run_dfhack(
-            [str(DFHACK_RUN), "nopause", "1" if enabled else "0"],
+        run_command(
+            "nopause",
+            ["1" if enabled else "0"],
             timeout=2.0,
-            cwd=str(DFROOT),
         )
     except Exception as exc:
         return str(exc)
@@ -135,6 +185,8 @@ def advance_ticks_exact_external(
     resume_fallback: str | None = None
     nopause_enable_error: str | None = None
     repause_outcome: Dict[str, object] | None = None
+    deadline_token: str | None = None
+    deadline_error: str | None = None
     timed_out = False
     interrupted = False
     viewscreen_after: str | None = None
@@ -263,6 +315,14 @@ def advance_ticks_exact_external(
         if not initial_ok:
             ok = False
 
+        if error is None and start_sample is not None and repause:
+            try:
+                deadline_token = _arm_tick_deadline(want, start_sample)
+            except (DFHackError, OSError) as exc:
+                deadline_error = str(exc)
+                error = "tick_deadline_arm_failed"
+                ok = False
+
         if error is None and start_sample is not None:
             nopause_enable_error = _set_nopause(True)
             time.sleep(0.1)
@@ -328,6 +388,14 @@ def advance_ticks_exact_external(
                 ok = False
                 error = "nopause_disable_failed"
                 repause_outcome = ensure_paused_external(timeout=2.5, attempts=2)
+        if deadline_token is not None and repause_outcome is not None:
+            if repause_outcome.get("ok") is True:
+                try:
+                    _cancel_tick_deadline(deadline_token)
+                except (DFHackError, OSError) as exc:
+                    deadline_error = str(exc)
+                    error = "tick_deadline_cancel_failed"
+                    ok = False
 
     paused_after = (
         repause_outcome.get("paused")
@@ -467,6 +535,8 @@ def advance_ticks_exact_external(
     }
     if nopause_enable_error:
         result["nopause_enable_error"] = nopause_enable_error
+    if deadline_error:
+        result["tick_deadline_error"] = deadline_error
     if resume_error:
         result["resume_error"] = resume_error
     if resume_fallback:

@@ -22,6 +22,10 @@ def _block_external_dfhack_mutation(monkeypatch, request):
     monkeypatch.setattr(tick_controller, "_set_nopause", blocked)
     monkeypatch.setattr(tick_controller, "set_paused", blocked)
     monkeypatch.setattr(tick_controller, "execute_keystroke_action", blocked)
+    # These receipt tests provide synthetic calendar samples. Runtime-side
+    # timer behavior is exercised independently with a Lua simulation.
+    monkeypatch.setattr(tick_controller, "_arm_tick_deadline", lambda *_args: "a" * 32)
+    monkeypatch.setattr(tick_controller, "_cancel_tick_deadline", lambda *_args: None)
 
 
 @pytest.mark.skipif(not LIVE, reason="requires live DFHack")
@@ -89,6 +93,50 @@ def test_backend_reexports_tick_controller_public_api() -> None:
         dfhack_backend.ensure_paused_external is tick_controller.ensure_paused_external
     )
     assert dfhack_backend.MAX_ADVANCE_TICKS == tick_controller.MAX_ADVANCE_TICKS
+
+
+def test_deadline_arm_failure_never_resumes_fortress(monkeypatch):
+    from fort_gym.bench import tick_controller
+
+    probe = {"cur_year": 1, "cur_year_tick": 100, "pause_state": True,
+             "viewscreen_type": "viewscreen_dwarfmodest"}
+    monkeypatch.setattr(tick_controller, "read_tick_pause_viewscreen", lambda **_kw: probe)
+    monkeypatch.setattr(tick_controller, "ensure_paused_external",
+                        lambda **_kw: {"ok": True, "paused": True})
+    def failed_arm(*_args):
+        raise tick_controller.DFHackError("runtime timer unavailable")
+    monkeypatch.setattr(tick_controller, "_arm_tick_deadline", failed_arm)
+    result = tick_controller.advance_ticks_exact_external(
+        200, interrupt_on_viewscreen_transition=True,
+        viewscreen_before="viewscreen_dwarfmodest")
+    assert result["ok"] is False
+    assert result["error"] == "tick_deadline_arm_failed"
+    assert result["ticks_advanced"] == 0
+    # The autouse mutation guards prove no resume/keystroke call occurred.
+
+
+def test_deadline_cancellation_failure_is_not_success(monkeypatch):
+    from fort_gym.bench import tick_controller
+
+    probes = iter([
+        {"cur_year": 1, "cur_year_tick": tick, "pause_state": True,
+         "viewscreen_type": "viewscreen_dwarfmodest"}
+        for tick in (100, 300, 300, 300)
+    ])
+    monkeypatch.setattr(tick_controller, "read_tick_pause_viewscreen", lambda **_kw: next(probes))
+    monkeypatch.setattr(tick_controller, "_set_nopause", lambda _enabled: None)
+    monkeypatch.setattr(tick_controller.time, "sleep", lambda _duration: None)
+    monkeypatch.setattr(tick_controller, "ensure_paused_external",
+                        lambda **_kw: {"ok": True, "paused": True})
+    def failed_cancel(*_args):
+        raise tick_controller.DFHackError("cancellation not acknowledged")
+    monkeypatch.setattr(tick_controller, "_cancel_tick_deadline", failed_cancel)
+    result = tick_controller.advance_ticks_exact_external(
+        200, interrupt_on_viewscreen_transition=True,
+        viewscreen_before="viewscreen_dwarfmodest")
+    assert result["ok"] is False
+    assert result["ticks_advanced"] == 200
+    assert result["error"] == "tick_deadline_cancel_failed"
 
 
 def test_advance_ticks_interrupts_on_paused_viewscreen_transition(monkeypatch):

@@ -1,0 +1,173 @@
+{
+  "schema_version": "fort-gym.environment-layer-preservation/v1",
+  "created_at": "2026-08-16",
+  "status": "private_local_preservation_complete",
+  "production_access": "read_only evidence retrieval",
+  "production_content_or_runtime_mutated": false,
+  "production_audit_metadata_side_effect": "An initial remote git status created and removed an optional lock, changing only the calibration checkout .git directory mtime. The index, tracked and untracked content, services, processes, saves, runs, source files, and artifacts remained unchanged.",
+  "published": false,
+  "pushed": false,
+  "tags_created": false,
+  "preservation_root": "/Users/cdossman/Documents/Open Source Projects/fort-gym-m0a-preservation-20260816",
+  "recursive_manifest": {
+    "path": "manifests/M0A_FILES.sha256z",
+    "file_records": 35369,
+    "bytes": 5344491,
+    "sha256": "797571ff2a2467816b51650e5878ead1e9597e71765b6bdf45e19c24db5e0fd6"
+  },
+  "fort_gym_source": {
+    "branch": "claude/g7v5-truth-repair",
+    "head": "236d3187c548b9bc03c4c99829d479d381a008d5",
+    "tree": "57df22144dbe75fe27255140f5b58cf2d5157408",
+    "reviewed_tip": "ccfac2c9314662e675dcd1dd685f167c8158e530",
+    "design_v0": "45c6c0c6c872788abb6f30983f58ccb834e8fbb2",
+    "production_deploy": "47c035f117f2a8663c2b276160d546c49f47a5da",
+    "bundle": {
+      "path": "source/fort-gym-g7v5-truth-repair.bundle",
+      "sha256": "4388fae06a1184b41cc37ce1cfcdb6e9153cdacba1a8d08d3e9a77b9f05299b2",
+      "verification": "complete_history_ok"
+    }
+  },
+  "calibration_checkout": {
+    "remote_path": "/var/tmp/fort-gym-calib-g7v5",
+    "head": "a8de39d03da48da32110776bf84ddfcbcb2ccefc",
+    "files": 11627,
+    "file_bytes": 393161232,
+    "remote_local_manifest_sha256": "eb64e2a5a054960ee4cc53ce482221e8d502a200d94661f3ca1f951587d78bbf",
+    "complete_archive_sha256": "158e39e24a9531426408ef184b376f0dedfc11a4452c56701c82f9c07c661ce8"
+  },
+  "calibration_terminal_evidence_sha256": {
+    "EVIDENCE_INDEX.json": "c0e963c44909acaa9232edf2970edb9d149e12d7f02ea3b8f34b3de3e37e082d",
+    "fort_eval_easy_p1_g7_v5_live_calibration.json": "f41f1a80b63cdc0e323cf57dc914a28fc613cf183905e29828ede298baf59598",
+    "fort_eval_easy_p1_provider_preflight_20260712.json": "5f53135a858e2369e615f41c19377fc97a10e5e1a5fa7c2c4af61145886bc091",
+    "p1_g7_v5_death_cause_fallback_calib-g7v5-death-20260721a.jsonl": "2385d1b3f4c100ad5737f653c98235e7292471b09cefb2d2b7600cd52af05c",
+    "p1_g7_v5_death_cause_fallback_calib-g7v5-death-20260721a_summary.json": "205016815cadb584c51acc39c1807be47c3ada8ec3108af0e4c31a9c4e2ab43f",
+    "p1_g7_v5_measurement_regressions.xml": "a2469336c9ce32cc96941cf5fa5fe6e1d341e6e6c96e2591da6d49ece96d616e",
+    "p1_g7_v5_owned_layout_and_provisioning_calib-g7v5-owned-20260721a.jsonl": "0ce3899fbaef8d90ccca7dee2e7bbc47bc62382d9e68b3f44fc38ce778403073",
+    "p1_g7_v5_owned_layout_and_provisioning_calib-g7v5-owned-20260721a_summary.json": "2c07304aa58ceededb5a51d976407443d2953ea99c65862ec340cb5fd34b4af8",
+    "p1_g7_v5_sensor_dropout_calib-g7v5-dropout-20260721a.jsonl": "47475ad8cd5d3e69668ea27f9c69e14208d0fbd8554012ed70a3dc3c874354cc",
+    "p1_g7_v5_sensor_dropout_calib-g7v5-dropout-20260721a_summary.json": "fc59b94a951dd616ab0b04046874ed9e64a11207b9421cee4d912021f7af5fca"
+  },
+  "seed_corpus": {
+    "remote_local_manifest_sha256": "d8f31e62de65d7858b9f1d7f31f698f5e996f5ca6c112ce37553538565bfbb40",
+    "seeds": [
+      {
+        "name": "seed_region1_fresh",
+        "files": 1502,
+        "file_bytes": 64952074,
+        "content_tree_sha256": "9bb38042f843865b99d5a3ac79d297935f376447d50e0418d2f0a1bef2c96ae7",
+        "world_sav_sha256": "cb868f19178eac96b7a2c33fbd7796bf4cf228c189f7e4c225fde0c16cebaaa1"
+      },
+      {
+        "name": "seed_region2_fresh",
+        "files": 1563,
+        "file_bytes": 53962393,
+        "content_tree_sha256": "cf1987cab34f6f431e15026f635234882f27b0732aca9c04b420348e7c3deafe",
+        "world_sav_sha256": "4e43de0c8d39ac969ed5996da6f6f3ccdfcb91e913381b059e7cb7fa0a4756b7"
+      },
+      {
+        "name": "seed_region3_fresh",
+        "files": 127,
+        "file_bytes": 8591055,
+        "content_tree_sha256": "49ba1de07b62e7afda93b42059b6c566598bb0f4c83d11ae1dfdb78b54cd9ec0",
+        "world_sav_sha256": "070b10a3f2403e72368290eea0d09396fe06f7912b9babdea7ad26eb0498a87d"
+      }
+    ]
+  },
+  "upstream_archives": {
+    "df_47_05_linux.tar.bz2": {
+      "bytes": 12725420,
+      "sha256": "ac74a6dbb7d7d9621f430405080322ab50c35f6632352ff2ea923f6dc5affca3"
+    },
+    "dfhack-0.47.05-r8-Linux-64bit-gcc-7.tar.bz2": {
+      "bytes": 18139358,
+      "sha256": "2eab7ca38a25eb15e6b2f1005a44968d58fae53f618ea9e4a31e1cd74d31926f"
+    }
+  },
+  "dfhack_sources": [
+    {
+      "remote_path": "/opt/dfhack",
+      "head": "fed9f763c9c9b0f64d45e8d7bec626f492c752fe",
+      "tag": "0.47.05-r8",
+      "files": 8191,
+      "file_bytes": 461156833,
+      "core_cpp_sha256": "5d86e39a102f538ce11abe4590c153c166ce894b6704115bc959d94cd3bdc053",
+      "git_index_sha256": "91aab3930180b9219ba7f9ecc14ceed8ae82eea7dc712ada80bc89565a1a4587",
+      "copy_verification": "checksum_rsync_no_differences"
+    },
+    {
+      "remote_path": "/opt/dfhack-src",
+      "head": "3b8bf517abed26a821bb81b5de7d06e6d0b0c0b0",
+      "branch": "autoboot-rpc",
+      "files": 6907,
+      "file_bytes": 421057801,
+      "core_cpp_sha256": "4c3a04f6e6f0a5a4bd6583f6aafeb33a1cab1dfad5a095a172f999f9bbb893bb",
+      "git_index_sha256": "deef6f50877ff1f8031e922384c8dbbf09513859332d045c49bf33cbdce7629b",
+      "copy_verification": "checksum_rsync_no_differences"
+    }
+  ],
+  "repository_autoboot_patch": {
+    "sha256": "a044e9b6a1b3e013f6c91a6d9eac0be595d9512399053eef0c7deba145fc4337",
+    "applies_to_official_0_47_05_r8": false,
+    "applies_to_current_50_12_worktree": false,
+    "decision": "do_not_apply_in_m1a; test stock 0.47.05-r8 listener first"
+  },
+  "binary_seed": {
+    "files": 5436,
+    "remote_local_manifest_sha256": "ee8cc66c82753206a33426b4eaef273a6a780a70dcf81b9500dc4b0645a43797",
+    "region3_runtime_archive_sha256": "e6e3d6fa31f742d2abc1213648438626e2535482d8abe672c9a822bc59706c59",
+    "role": "separately labeled fallback only"
+  },
+  "preservation_qualifications": {
+    "remote_git_status_audit": {
+      "affected_metadata": "/var/tmp/fort-gym-calib-g7v5/.git directory mtime only",
+      "content_changed": false,
+      "git_index_changed": false,
+      "followup_mode": "GIT_OPTIONAL_LOCKS=0 and direct read-only file inspection"
+    },
+    "historical_runtime_errorlog": {
+      "path": "archives/dwarf-fortress-binary-seed/errorlog.txt",
+      "bytes": 9730,
+      "sha256": "925dd7dcf68e120e08fe1a32b02b31a68627db03989a3ea34d8067b57d587841",
+      "classification": "preserved historical runtime evidence; not a clean release input"
+    },
+    "dfhack_0_47_05_libzip_gitdir": {
+      "path": "archives/dfhack-sources/dfhack-0.47.05-r8/depends/libzip/.git",
+      "value": "gitdir: /opt/dfhack/.git/modules/depends/libzip",
+      "classification": "original absolute gitdir preserved; object store present; checkout not relocatable without later repair"
+    },
+    "local_git_index_audit": {
+      "affected_copy": "archives/dfhack-sources/dfhack-50.12-working/.git/index",
+      "restored_from_unchanged_production_sha256": "deef6f50877ff1f8031e922384c8dbbf09513859332d045c49bf33cbdce7629b",
+      "post_restore_recursive_manifest": "all 35369 records verified"
+    }
+  },
+  "historical_runs": {
+    "a55b2c2cbef54825bc7784bdb8e51855": {
+      "seed_attestation.json": "9c923f9e2ee8ce25344fc88d66f54f2c0262d9f62317c1b44946cd73f6ee01e8",
+      "summary.json": "39a5000d22020f10d9bc84e4510e95828be5d2c00d54d3527e6d12fe665c2307",
+      "trace.jsonl": "5fd4611e96bef262f584cd2aac116879ca4ea0123cd59483cd933f931e231612"
+    },
+    "cb997beed6d94a3680f2637556cc529d": {
+      "analysis.json": "4292901c9d2bdb5421a0bc52c68d05e682716de925221f42dd380df110ca90a4",
+      "analysis.txt": "721011a05b98c8224e25fe14ce2594193d1ba35e0e8f892d0208584a8564fa92",
+      "seed_attestation.json": "9c923f9e2ee8ce25344fc88d66f54f2c0262d9f62317c1b44946cd73f6ee01e8",
+      "summary.json": "db5649b4d85138db23ea2aba9fc9bf98a60efd7499b0efb3db9aea2d1ca64941",
+      "trace.jsonl": "e740af41ac282a6a1bcd81419ede361656c3f36c05dd2a1f099e58da5e4a4dc7"
+    }
+  },
+  "service_units_sha256": {
+    "dfhack-headless.service": "84a1432713647ecab4cb8a62ab17123535e418df568675bb5cbe260618ab8314",
+    "fort-gym-api.service": "18177acd9842ebd308dacf45c14122dc3de4690fd4d08224a224fbe521af12d0"
+  },
+  "secrets_excluded": [
+    "/etc/fort-gym.env"
+  ],
+  "m0a_result": "complete",
+  "m0_remaining": [
+    "second off-machine storage location beyond production plus this Mac",
+    "source-rebuild proof or an explicit final binary-seeded release decision",
+    "reviewed-tip tags and branch push, which are outside this authorization",
+    "group_vars correction and df_version erratum, which are outside M0A preservation"
+  ]
+}

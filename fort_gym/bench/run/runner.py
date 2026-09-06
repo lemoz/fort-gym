@@ -7,10 +7,11 @@ import hashlib
 import json
 import os
 import uuid
+from dataclasses import dataclass
 from datetime import datetime
 from os import fsync
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Optional
+from typing import Any, Dict, List, Literal, Mapping, Optional
 
 from ..agent.base import Agent
 from ..config import get_settings
@@ -66,10 +67,10 @@ from ..eval.fort_eval_easy_p1 import (
 from ..eval.protocol import validate_evaluation_protocol
 from ..eval.summary import RunSummary, summarize
 from ..tick_receipt import validate_clean_interruption_receipt
-from .model_modes import (
-    GOVERNED_DFHACK_MODELS as GOVERNED_DFHACK_MODELS,
-    is_governed_dfhack_model,
-)
+from .fault_session import StepCommit, StepCommitObserver
+from .model_modes import GOVERNED_DFHACK_MODELS as GOVERNED_DFHACK_MODELS
+from .model_modes import is_governed_dfhack_model
+from .runtime_contract import validate_prepared_runtime_environment
 from .seed_reset import maybe_reset_dfhack_seed, pristine_seed_sha256
 from .storage import RunRegistry
 
@@ -92,6 +93,17 @@ GOVERNED_DFHACK_ACTIONS = {
     "WAIT",
     "INTERACT",
 }
+
+
+@dataclass(frozen=True)
+class RunExecutionOutcome:
+    """Child-visible result when a supervisor retains terminal ownership."""
+
+    run_id: str
+    outcome: Literal["completed", "failed", "stopped"]
+    terminal_reason: Mapping[str, Any] | None = None
+
+
 MAX_CONSECUTIVE_ZERO_TICKS = 3
 P1_BREW_INPUT_FIXTURE_STEP = 32  # WAIT immediately before owned_layout plan's early brew ORDER at index 33
 MAX_INTERACT_OPERATIONS_PER_MODAL = 8
@@ -2993,8 +3005,28 @@ def run_once(
     evaluation_protocol: Optional[str] = None,
     measurement_calibration_scenario: Optional[str] = None,
     measurement_calibration_step_limit: Optional[int] = None,
-) -> str:
-    """Execute a run and persist a JSONL trace while streaming events."""
+    supervisor_owns_terminal: bool = False,
+    step_commit_observer: StepCommitObserver | None = None,
+) -> str | RunExecutionOutcome:
+    """Execute one run and persist its trace.
+
+    By default, this function preserves the legacy in-process contract: it
+    writes the final registry status and returns the run ID. External worker
+    processes set ``supervisor_owns_terminal=True``. In that mode the child
+    returns an explicit outcome but leaves the registry row non-terminal, does
+    not clear a stop request, and does not attest that parent cleanup finished.
+    """
+
+    if supervisor_owns_terminal and registry is None:
+        raise ValueError("supervisor_owns_terminal requires a registry")
+    if supervisor_owns_terminal and run_id is None:
+        raise ValueError("supervisor_owns_terminal requires a preassigned run_id")
+    if step_commit_observer is not None and not supervisor_owns_terminal:
+        raise ValueError(
+            "step_commit_observer requires supervisor-owned terminal execution"
+        )
+    if step_commit_observer is not None and not callable(step_commit_observer):
+        raise TypeError("step_commit_observer must be callable or None")
 
     settings = get_settings()
     backend_name = env or backend
@@ -3002,6 +3034,13 @@ def run_once(
         raise ValueError("Scenarios are currently supported only by the mock backend")
     ticks = ticks_per_step if ticks_per_step is not None else settings.TICKS_PER_STEP
     run_identifier = run_id or uuid.uuid4().hex
+    prepared_runtime_identity = validate_prepared_runtime_environment(
+        os.environ,
+        backend=backend_name,
+        run_id=run_identifier,
+        seed_save=seed_save,
+        runtime_save=runtime_save,
+    )
     evaluation_protocol = validate_evaluation_protocol(evaluation_protocol)
     validate_p1_declaration(
         protocol=evaluation_protocol,
@@ -3033,6 +3072,10 @@ def run_once(
     if registry:
         record = registry.get(run_identifier)
         if record is None:
+            if supervisor_owns_terminal:
+                raise RuntimeError(
+                    f"Preassigned run '{run_identifier}' disappeared before claim"
+                )
             record = registry.create(
                 backend=backend_name,
                 model=model,
@@ -3062,6 +3105,23 @@ def run_once(
     artifacts_dir.mkdir(parents=True, exist_ok=True)
     trace_path = artifacts_dir / "trace.jsonl"
 
+    def commit_step(fh: Any, step: int) -> None:
+        """Commit trace then registry before entering an optional parent hold."""
+
+        if step_commit_observer is not None:
+            fh.flush()
+            fsync(fh.fileno())
+        if registry:
+            registry.set_status(run_identifier, step=step)
+        if step_commit_observer is not None:
+            step_commit_observer(
+                StepCommit(
+                    run_id=run_identifier,
+                    step=step,
+                    trace_path=trace_path.resolve(strict=False),
+                )
+            )
+
     executor = Executor()
     dfhack_client: Optional[DFHackClient] = None
     g7_evidence_attempted = False
@@ -3072,7 +3132,11 @@ def run_once(
     cleanup_failure_without_registry: Dict[str, Any] | None = None
     dfhack_runtime_may_be_active = False
     seed_attestation: Dict[str, Any] = {}
-    seed_world_sha256: str | None = None
+    seed_world_sha256 = (
+        prepared_runtime_identity.seed_world_sha256
+        if prepared_runtime_identity is not None
+        else None
+    )
     measurement_calibration_fixture: Dict[str, Any] = {}
 
     def cleanup_dfhack_runtime() -> Dict[str, Any]:
@@ -3092,7 +3156,7 @@ def run_once(
             }
         cleanup_outcome["attempts"] = cleanup_attempts
         if cleanup_outcome.get("ok"):
-            if registry and not cleanup_recorded:
+            if registry and not cleanup_recorded and not supervisor_owns_terminal:
                 registry.record_cleanup_completed(
                     run_identifier,
                     completed_at=datetime.utcnow(),
@@ -3117,7 +3181,7 @@ def run_once(
 
     def fail_setup_after_cleanup() -> None:
         outcome = cleanup_dfhack_runtime()
-        if registry:
+        if registry and not supervisor_owns_terminal:
             if outcome.get("ok"):
                 registry.set_status(
                     run_identifier,
@@ -3198,8 +3262,9 @@ def run_once(
 
         dfhack_runtime_may_be_active = True
 
-        # If configured, reset the save from a pristine seed before connecting.
-        if not preserve_save:
+        # A supervisor-prepared runtime has already verified and copied the
+        # exact seed. Legacy launches retain the host-side reset contract.
+        if not preserve_save and prepared_runtime_identity is None:
             try:
                 if evaluation_protocol == P1_PROTOCOL:
                     seed_world_sha256 = pristine_seed_sha256(seed_save or "")
@@ -3615,8 +3680,7 @@ def run_once(
 
                 if terminal_reason is None:
                     _write_jsonl_record(fh, record_line)
-                    if registry:
-                        registry.set_status(run_identifier, step=step)
+                    commit_step(fh, step)
                     return False
 
                 terminal_data = {
@@ -4424,7 +4488,9 @@ def run_once(
                     action = parse_action(
                         raw_action,
                         max_advance_ticks=(
-                            2500 if evaluation_protocol == P1_PROTOCOL else 2000
+                            ticks
+                            if supervisor_owns_terminal and model == "dfhack-governed-scripted"
+                            else (2500 if evaluation_protocol == P1_PROTOCOL else 2000)
                         ),
                     )
                 except (TypeError, ValueError) as exc:
@@ -5761,8 +5827,7 @@ def run_once(
                     run_failed = True
                     break
 
-                if registry:
-                    registry.set_status(run_identifier, step=step)
+                commit_step(fh, step)
 
                 if _measurement_calibration_step_limit_reached(
                     step=step,
@@ -5883,12 +5948,17 @@ def run_once(
                 scenario_pack,
                 summary=summary_payload,
             )
+        persisted_summary = _dump_model(summary)
+        if prepared_runtime_identity is not None:
+            persisted_summary["environment_contract"] = (
+                prepared_runtime_identity.summary_identity()
+            )
         summary_path = trace_path.with_name("summary.json")
         summary_path.write_text(
-            json.dumps(_dump_model(summary), indent=2), encoding="utf-8"
+            json.dumps(persisted_summary, indent=2), encoding="utf-8"
         )
         if registry:
-            registry.set_summary(run_identifier, _dump_model(summary))
+            registry.set_summary(run_identifier, persisted_summary)
             registry.append_event(
                 run_identifier,
                 {
@@ -5901,36 +5971,37 @@ def run_once(
                 },
             )
 
-            if terminal_failure_reason is not None:
-                registry.record_terminal_failure(
-                    run_identifier,
-                    terminal_reason=terminal_failure_reason,
-                    step=terminal_failure_step,
-                    ended_at=datetime.utcnow(),
-                )
-                registry.clear_stop(run_identifier)
-            elif run_failed:
-                registry.set_status(
-                    run_identifier,
-                    status="failed",
-                    step=last_step,
-                    ended_at=datetime.utcnow(),
-                )
-                registry.clear_stop(run_identifier)
-            elif run_stopped:
-                registry.set_status(
-                    run_identifier,
-                    status="stopped",
-                    step=last_step,
-                    ended_at=datetime.utcnow(),
-                )
-                registry.clear_stop(run_identifier)
-            else:
-                registry.finalize_success_after_cleanup(
-                    run_identifier,
-                    step=last_step,
-                    ended_at=datetime.utcnow(),
-                )
+            if not supervisor_owns_terminal:
+                if terminal_failure_reason is not None:
+                    registry.record_terminal_failure(
+                        run_identifier,
+                        terminal_reason=terminal_failure_reason,
+                        step=terminal_failure_step,
+                        ended_at=datetime.utcnow(),
+                    )
+                    registry.clear_stop(run_identifier)
+                elif run_failed:
+                    registry.set_status(
+                        run_identifier,
+                        status="failed",
+                        step=last_step,
+                        ended_at=datetime.utcnow(),
+                    )
+                    registry.clear_stop(run_identifier)
+                elif run_stopped:
+                    registry.set_status(
+                        run_identifier,
+                        status="stopped",
+                        step=last_step,
+                        ended_at=datetime.utcnow(),
+                    )
+                    registry.clear_stop(run_identifier)
+                else:
+                    registry.finalize_success_after_cleanup(
+                        run_identifier,
+                        step=last_step,
+                        ended_at=datetime.utcnow(),
+                    )
 
         # Auto-analyze trace with LLM (optional - requires GOOGLE_API_KEY)
         try:
@@ -5949,10 +6020,31 @@ def run_once(
             import logging
 
             logging.getLogger(__name__).warning(f"Auto-analysis skipped: {e}")
-    except Exception:
+    except Exception as exc:
         failed_cleanup = cleanup_dfhack_runtime()
         if registry:
-            if failed_cleanup.get("ok"):
+            if supervisor_owns_terminal:
+                worker_exception_reason: Dict[str, Any] = {
+                    "code": "worker_exception",
+                    "stage": "run_once",
+                    "type": type(exc).__name__,
+                    "message": str(exc),
+                }
+                if terminal_failure_reason is not None:
+                    worker_exception_reason["prior_terminal_reason"] = (
+                        terminal_failure_reason
+                    )
+                if not failed_cleanup.get("ok"):
+                    worker_exception_reason = cleanup_terminal_reason(
+                        failed_cleanup,
+                        prior_reason=worker_exception_reason,
+                    )
+                registry.record_pending_terminal_failure(
+                    run_identifier,
+                    terminal_reason=worker_exception_reason,
+                    step=last_step,
+                )
+            elif failed_cleanup.get("ok"):
                 registry.set_status(
                     run_identifier,
                     status="failed",
@@ -5969,7 +6061,8 @@ def run_once(
                     step=last_step,
                     ended_at=datetime.utcnow(),
                 )
-            registry.clear_stop(run_identifier)
+            if not supervisor_owns_terminal:
+                registry.clear_stop(run_identifier)
         raise
     finally:
         cleanup_dfhack_runtime()
@@ -5980,7 +6073,24 @@ def run_once(
             f"{cleanup_failure_without_registry.get('errors') or cleanup_failure_without_registry}"
         )
 
+    if supervisor_owns_terminal:
+        if terminal_failure_reason is not None or run_failed:
+            outcome: Literal["completed", "failed", "stopped"] = "failed"
+        elif run_stopped:
+            outcome = "stopped"
+        else:
+            outcome = "completed"
+        return RunExecutionOutcome(
+            run_id=run_identifier,
+            outcome=outcome,
+            terminal_reason=(
+                dict(terminal_failure_reason)
+                if terminal_failure_reason is not None
+                else None
+            ),
+        )
+
     return run_identifier
 
 
-__all__ = ["run_once"]
+__all__ = ["RunExecutionOutcome", "run_once"]

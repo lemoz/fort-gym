@@ -2,12 +2,30 @@
 
 from __future__ import annotations
 
+import math
 import os
 from functools import lru_cache
 from pathlib import Path
 from typing import Optional
 
 from pydantic import BaseModel
+
+_DEFAULT_OPENROUTER_MAX_TOTAL_TOKENS = 128_000
+_DEFAULT_OPENROUTER_MAX_COST_USD = 25.0
+
+
+def _positive_int_env(name: str, default: int) -> int:
+    value = int(os.getenv(name, str(default)))
+    if value <= 0:
+        raise ValueError(f"{name} must be positive")
+    return value
+
+
+def _positive_float_env(name: str, default: float) -> float:
+    value = float(os.getenv(name, str(default)))
+    if not math.isfinite(value) or value <= 0:
+        raise ValueError(f"{name} must be positive and finite")
+    return value
 
 
 # DFHack path configuration (Mac vs Linux)
@@ -30,6 +48,8 @@ def dfhack_cmd(*args: str) -> list[str]:
 
 
 def _load_dotenv() -> None:
+    if os.getenv("FORT_GYM_DISABLE_DOTENV") == "1":
+        return
     env_path = Path(".env")
     if not env_path.is_file():
         return
@@ -65,6 +85,12 @@ class Settings(BaseModel):
     OPENROUTER_DISABLE_REASONING: bool = bool(
         int(os.getenv("OPENROUTER_DISABLE_REASONING", "1"))
     )
+    OPENROUTER_PROVIDER_NAME: Optional[str] = os.getenv("OPENROUTER_PROVIDER_NAME")
+    OPENROUTER_STRICT_SUPERVISED: bool = bool(
+        int(os.getenv("OPENROUTER_STRICT_SUPERVISED", "0"))
+    )
+    OPENROUTER_MAX_TOTAL_TOKENS: int = _DEFAULT_OPENROUTER_MAX_TOTAL_TOKENS
+    OPENROUTER_MAX_COST_USD: float = _DEFAULT_OPENROUTER_MAX_COST_USD
     ANTHROPIC_API_KEY: Optional[str] = os.getenv("ANTHROPIC_API_KEY")
     ANTHROPIC_MODEL: str = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-6")
     ANTHROPIC_OPUS_MODEL: str = os.getenv("ANTHROPIC_OPUS_MODEL", "claude-opus-4-8")
@@ -111,6 +137,18 @@ def get_settings() -> Settings:
         OPENROUTER_MAX_TOOL_ROUNDS=int(os.getenv("OPENROUTER_MAX_TOOL_ROUNDS", "4")),
         OPENROUTER_DISABLE_REASONING=bool(
             int(os.getenv("OPENROUTER_DISABLE_REASONING", "1"))
+        ),
+        OPENROUTER_PROVIDER_NAME=os.getenv("OPENROUTER_PROVIDER_NAME"),
+        OPENROUTER_STRICT_SUPERVISED=bool(
+            int(os.getenv("OPENROUTER_STRICT_SUPERVISED", "0"))
+        ),
+        OPENROUTER_MAX_TOTAL_TOKENS=_positive_int_env(
+            "OPENROUTER_MAX_TOTAL_TOKENS",
+            _DEFAULT_OPENROUTER_MAX_TOTAL_TOKENS,
+        ),
+        OPENROUTER_MAX_COST_USD=_positive_float_env(
+            "OPENROUTER_MAX_COST_USD",
+            _DEFAULT_OPENROUTER_MAX_COST_USD,
         ),
         ANTHROPIC_API_KEY=os.getenv("ANTHROPIC_API_KEY"),
         ANTHROPIC_MODEL=os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-6"),

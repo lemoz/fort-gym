@@ -1,8 +1,9 @@
-"""Bounded helpers for invoking DFHack CLI scripts."""
+"""Bounded helpers for invoking DFHack scripts."""
 
 from __future__ import annotations
 
 import json
+import os
 import re
 import shlex
 import subprocess
@@ -10,11 +11,56 @@ import sys
 from shutil import which
 from typing import Dict, List
 
-from .config import DFHACK_RUN, DFROOT, dfhack_cmd
+from .config import DFHACK_RUN, DFROOT, get_settings
 
 
 class DFHackError(RuntimeError):
     """Raised when DFHack commands fail or time out."""
+
+
+_TRANSPORT_ENV = "FORT_GYM_DFHACK_TRANSPORT"
+_CLI_TRANSPORT = "cli"
+_NATIVE_RPC_TRANSPORT = "native-rpc"
+
+
+def _selected_transport() -> str:
+    value = os.getenv(_TRANSPORT_ENV, _CLI_TRANSPORT).strip().lower()
+    transport = value or _CLI_TRANSPORT
+    if transport not in {_CLI_TRANSPORT, _NATIVE_RPC_TRANSPORT}:
+        raise DFHackError(
+            f"unsupported {_TRANSPORT_ENV}={transport!r}; "
+            f"expected {_CLI_TRANSPORT!r} or {_NATIVE_RPC_TRANSPORT!r}"
+        )
+    return transport
+
+
+def _new_native_rpc_client(*, host: str, port: int, timeout: float):
+    # Lazy import avoids the intentional dfhack_client -> dfhack_exec bridge.
+    from .env.dfhack_client import DFHackClient
+
+    return DFHackClient(host=host, port=port, timeout=timeout, retries=1)
+
+
+def _run_native_rpc_command(
+    command: str,
+    arguments: list[str],
+    *,
+    timeout: float,
+) -> str:
+    from .env.dfhack_client import DFHackError as NativeRPCError
+
+    settings = get_settings()
+    host = settings.DFHACK_HOST
+    port = settings.DFHACK_PORT
+    client = _new_native_rpc_client(host=host, port=port, timeout=timeout)
+    try:
+        client.connect()
+        chunks = client.run_command(command, arguments, capture_output=True)
+        return "".join(chunks or [])
+    except (NativeRPCError, OSError) as exc:
+        raise DFHackError(f"native-rpc command failed at {host}:{port}: {exc}") from exc
+    finally:
+        client.close()
 
 
 def _maybe_wrap_with_script(args: List[str]) -> List[str]:
@@ -63,6 +109,38 @@ def run_dfhack(args: List[str], *, timeout: float = 2.5, cwd: str = str(DFROOT))
     return output.strip()
 
 
+def run_command(
+    command: str,
+    arguments: List[str] | None = None,
+    *,
+    timeout: float = 2.5,
+) -> str:
+    """Execute one DFHack command through the selected transport.
+
+    Supervised process-per-run workers select ``native-rpc`` and therefore
+    never need a host-side ``dfhack-run`` binary. Legacy callers retain the
+    existing CLI behavior.
+    """
+
+    command = str(command).strip()
+    if not command or "\x00" in command:
+        raise DFHackError("DFHack command must be a non-empty string without NUL")
+    normalized_arguments = [str(argument) for argument in (arguments or [])]
+    if any("\x00" in argument for argument in normalized_arguments):
+        raise DFHackError("DFHack command arguments cannot contain NUL")
+    if _selected_transport() == _NATIVE_RPC_TRANSPORT:
+        return _run_native_rpc_command(
+            command,
+            normalized_arguments,
+            timeout=timeout,
+        )
+    return run_dfhack(
+        [str(DFHACK_RUN), command, *normalized_arguments],
+        timeout=timeout,
+        cwd=str(DFROOT),
+    )
+
+
 # ANSI escape sequence pattern
 _ANSI_ESCAPE = re.compile(r"\x1b\[[0-9;]*m")
 
@@ -75,9 +153,7 @@ def _strip_ansi(text: str) -> str:
 def run_lua_file(path: str, *args: str, timeout: float = 2.5) -> Dict[str, object]:
     """Invoke a DFHack Lua script and parse JSON output."""
 
-    command = [str(DFHACK_RUN), "lua", "-f", path]
-    command.extend(args)
-    out = run_dfhack(command, timeout=timeout)
+    out = run_command("lua", ["-f", path, *args], timeout=timeout)
     if not out:
         return {}
     # Strip ANSI color codes before parsing JSON
@@ -87,7 +163,9 @@ def run_lua_file(path: str, *args: str, timeout: float = 2.5) -> Dict[str, objec
     try:
         return json.loads(clean)
     except json.JSONDecodeError as exc:
-        for line in reversed([line.strip() for line in clean.splitlines() if line.strip()]):
+        for line in reversed(
+            [line.strip() for line in clean.splitlines() if line.strip()]
+        ):
             if line.startswith("{") or line.startswith("["):
                 try:
                     return json.loads(line)
@@ -97,14 +175,10 @@ def run_lua_file(path: str, *args: str, timeout: float = 2.5) -> Dict[str, objec
 
 
 def run_lua_expr(expr: str, *, timeout: float = 1.0) -> str:
-    """Execute an inline Lua expression via dfhack-run and return stdout."""
+    """Execute an inline Lua expression using the selected transport."""
 
-    # Pass Lua code directly without -e flag (not supported in all DFHack versions)
-    out = run_dfhack(
-        dfhack_cmd("lua", expr),
-        timeout=timeout,
-        cwd=str(DFROOT),
-    )
+    # Pass Lua code directly without -e (not supported in all DFHack versions).
+    out = run_command("lua", [expr], timeout=timeout)
     # Strip ANSI color codes
     return _strip_ansi(out).strip()
 
@@ -205,7 +279,7 @@ def set_paused(paused: bool, timeout: float = 1.0) -> None:
 
 
 def read_game_state(timeout: float = 2.5) -> Dict[str, object]:
-    """Read game state via CLI and return as dict."""
+    """Read game state using the selected DFHack transport."""
 
     lua_script = """
 local json = require('json')
@@ -318,6 +392,7 @@ print(json.encode(state))
 
 __all__ = [
     "DFHackError",
+    "run_command",
     "run_dfhack",
     "run_lua_file",
     "run_lua_expr",

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import uuid
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -11,17 +12,20 @@ from datetime import datetime
 from pathlib import Path
 from typing import Mapping
 
+from ..agent.base import AGENT_FACTORIES, Agent
+from ..config import get_settings
+from ..eval.fort_eval_easy_p1 import P1_PROTOCOL, validate_p1_declaration
+from ..run.fault_session import step_observer_from_environment
+from ..run.runner import RunExecutionOutcome, run_once
+from ..run.storage import RUN_REGISTRY, RunRegistry
 from .config import (
     BaseRunConfig,
     ExperimentConfig,
     VariantConfig,
     load_experiment_config,
 )
-from ..agent.base import AGENT_FACTORIES, Agent
-from ..config import get_settings
-from ..eval.fort_eval_easy_p1 import P1_PROTOCOL, validate_p1_declaration
-from ..run.runner import run_once
-from ..run.storage import RUN_REGISTRY
+
+_EXTERNAL_RUN_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$")
 
 
 @dataclass(frozen=True)
@@ -29,13 +33,19 @@ class VariantRun:
     run_id: str
     run_index: int
     summary: Mapping[str, object] | None
+    worker_outcome: str | None = None
+    terminal_reason: Mapping[str, object] | None = None
 
     def to_dict(self) -> dict[str, object]:
-        return {
+        payload: dict[str, object] = {
             "run_id": self.run_id,
             "run_index": self.run_index,
             "summary": self.summary,
         }
+        if self.worker_outcome is not None:
+            payload["worker_outcome"] = self.worker_outcome
+            payload["terminal_reason"] = self.terminal_reason
+        return payload
 
 
 @dataclass(frozen=True)
@@ -103,14 +113,42 @@ class ExperimentRunner:
     def __init__(self, artifacts_root: Path | None = None) -> None:
         self._artifacts_root = artifacts_root or _artifacts_root()
 
-    def run_from_path(self, config_path: str | Path) -> ExperimentResult:
+    def run_from_path(
+        self,
+        config_path: str | Path,
+        *,
+        external_run_id: str | None = None,
+    ) -> ExperimentResult:
         resolved_path = resolve_experiment_path(config_path)
         config = load_experiment_config(resolved_path)
-        return self.run(config, config_path=resolved_path)
+        return self.run(
+            config,
+            config_path=resolved_path,
+            external_run_id=external_run_id,
+        )
 
     def run(
-        self, config: ExperimentConfig, *, config_path: Path | None = None
+        self,
+        config: ExperimentConfig,
+        *,
+        config_path: Path | None = None,
+        external_run_id: str | None = None,
     ) -> ExperimentResult:
+        worker_registry: RunRegistry | None = None
+        external_resolved: dict[str, int | str | bool | None] | None = None
+        if external_run_id is not None:
+            _validate_external_run_shape(config, external_run_id)
+            external_resolved = _resolve_variant(
+                config.base_config,
+                config.variants[0],
+            )
+            worker_registry = RunRegistry(recover_interrupted=False)
+            _require_pending_external_run(
+                worker_registry,
+                external_run_id,
+                external_resolved,
+            )
+
         _ensure_agent_factories()
         experiment_id = _new_experiment_id()
         started_at = datetime.utcnow()
@@ -124,13 +162,35 @@ class ExperimentRunner:
 
         variants_results: list[VariantResult] = []
         for variant in config.variants:
-            resolved = _resolve_variant(config.base_config, variant)
+            resolved = external_resolved or _resolve_variant(
+                config.base_config,
+                variant,
+            )
             runs: list[VariantRun] = []
             for index in range(config.runs_per_variant):
-                run_id = self._run_variant(resolved, variant)
+                execution = self._run_variant(
+                    resolved,
+                    variant,
+                    external_run_id=external_run_id,
+                    registry=worker_registry,
+                )
+                if isinstance(execution, RunExecutionOutcome):
+                    run_id = execution.run_id
+                    worker_outcome = execution.outcome
+                    terminal_reason = execution.terminal_reason
+                else:
+                    run_id = execution
+                    worker_outcome = None
+                    terminal_reason = None
                 summary = _load_summary(self._artifacts_root, run_id)
                 runs.append(
-                    VariantRun(run_id=run_id, run_index=index + 1, summary=summary)
+                    VariantRun(
+                        run_id=run_id,
+                        run_index=index + 1,
+                        summary=summary,
+                        worker_outcome=worker_outcome,
+                        terminal_reason=terminal_reason,
+                    )
                 )
             variants_results.append(
                 VariantResult(
@@ -168,11 +228,19 @@ class ExperimentRunner:
         self,
         resolved: dict[str, int | str | bool | None],
         variant: VariantConfig,
-    ) -> str:
+        *,
+        external_run_id: str | None = None,
+        registry: RunRegistry | None = None,
+    ) -> str | RunExecutionOutcome:
         agent_name = str(resolved["model"])
         ticks_per_step = int(resolved["ticks_per_step"])
         with _memory_window_context(variant.memory_window):
-            agent = _make_agent(agent_name)
+            if external_run_id is not None and agent_name == "dfhack-governed-scripted":
+                from ..agent.governed import DFHackGovernedScriptedAgent
+
+                agent = DFHackGovernedScriptedAgent(ticks_per_step=ticks_per_step)
+            else:
+                agent = _make_agent(agent_name)
             run_kwargs = {
                 "backend": str(resolved["backend"]),
                 "model": str(resolved["model"]),
@@ -201,6 +269,26 @@ class ExperimentRunner:
                 max_steps=int(resolved["max_steps"]),
                 ticks_per_step=ticks_per_step,
             )
+            if external_run_id is not None:
+                if registry is None:  # pragma: no cover - guarded by run()
+                    raise RuntimeError(
+                        "External run execution requires a worker registry"
+                    )
+                step_commit_observer = step_observer_from_environment(os.environ)
+                if step_commit_observer is not None:
+                    run_kwargs["step_commit_observer"] = step_commit_observer
+                outcome = run_once(
+                    agent,
+                    run_id=external_run_id,
+                    registry=registry,
+                    supervisor_owns_terminal=True,
+                    **run_kwargs,
+                )
+                if not isinstance(outcome, RunExecutionOutcome):
+                    raise RuntimeError(
+                        "External worker run did not return an explicit outcome"
+                    )
+                return outcome
             if resolved["evaluation_protocol"] == P1_PROTOCOL:
                 record = RUN_REGISTRY.create(**run_kwargs)
                 RUN_REGISTRY.create_share(
@@ -215,6 +303,76 @@ class ExperimentRunner:
                     **run_kwargs,
                 )
             return run_once(agent, **run_kwargs)
+
+
+def _validate_external_run_shape(
+    config: ExperimentConfig,
+    external_run_id: str,
+) -> None:
+    if not _EXTERNAL_RUN_ID_RE.fullmatch(external_run_id):
+        raise ValueError(
+            "external_run_id must be 1-128 characters using only letters, "
+            "numbers, '.', '_', or '-', and must start with a letter or number"
+        )
+    if len(config.variants) != 1 or config.runs_per_variant != 1:
+        raise ValueError(
+            "external_run_id requires exactly one variant and runs_per_variant=1"
+        )
+
+
+def _require_pending_external_run(
+    registry: RunRegistry,
+    run_id: str,
+    resolved: Mapping[str, int | str | bool | None],
+) -> None:
+    record = registry.get(run_id)
+    if record is None:
+        raise ValueError(f"Externally preassigned run '{run_id}' is not registered")
+    if record.status != "pending":
+        raise ValueError(
+            f"Externally preassigned run '{run_id}' must be pending; "
+            f"found '{record.status}'"
+        )
+
+    settings = get_settings()
+    expected: dict[str, object] = {
+        "backend": str(resolved["backend"]),
+        "model": str(resolved["model"]),
+        "max_steps": int(resolved["max_steps"]),
+        "ticks_per_step": int(resolved["ticks_per_step"]),
+        "evaluation_protocol": resolved["evaluation_protocol"],
+        "preserve_save": bool(resolved["preserve_save"]),
+        "seed_save": (
+            str(resolved["seed_save"])
+            if resolved["seed_save"]
+            else settings.FORT_GYM_SEED_SAVE
+        ),
+        "runtime_save": (
+            str(resolved["runtime_save"])
+            if resolved["runtime_save"]
+            else getattr(settings, "FORT_GYM_RUNTIME_SAVE", None)
+        ),
+    }
+    actual = {
+        "backend": record.backend,
+        "model": record.model,
+        "max_steps": record.max_steps,
+        "ticks_per_step": record.ticks_per_step,
+        "evaluation_protocol": record.evaluation_protocol,
+        "preserve_save": record.preserve_save,
+        "seed_save": record.seed_save,
+        "runtime_save": record.runtime_save,
+    }
+    mismatched = [field for field in expected if actual[field] != expected[field]]
+    if mismatched:
+        detail = ", ".join(
+            f"{field} (registered={actual[field]!r}, resolved={expected[field]!r})"
+            for field in mismatched
+        )
+        raise ValueError(
+            f"Externally preassigned run '{run_id}' does not match the resolved "
+            f"experiment config: {detail}"
+        )
 
 
 def resolve_experiment_path(config_path: str | Path) -> Path:

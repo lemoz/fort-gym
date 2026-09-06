@@ -1,0 +1,16 @@
+name: environment-layer-m1a-e0-r
+description: >-
+  Provider-free same-seed scripted replay feasibility cohort. This is private
+  engineering evidence, not a general estimate of world variance and not a g8
+  result.
+base_config:
+  backend: dfhack
+  max_steps: 10
+  model: dfhack-governed-scripted
+  ticks_per_step: 200
+  preserve_save: true
+variants:
+  - name: scripted-memory-off
+    memory_window: 0
+runs_per_variant: 1
+

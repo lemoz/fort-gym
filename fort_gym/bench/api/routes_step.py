@@ -25,7 +25,6 @@ from ..run.storage import RUN_REGISTRY, RunInfo
 from .auth import require_admin
 from .schemas import StepRequest, StepResponse
 
-
 router = APIRouter()
 
 DEFAULT_MIN_PERIOD_MS = 1000
@@ -106,11 +105,19 @@ def _emit_event(run_id: str, events: list[Dict[str, Any]], event_type: str, data
 
 @router.post("/step", response_model=StepResponse)
 async def step_endpoint(payload: StepRequest, _: None = Depends(require_admin)) -> StepResponse:
+    run = RUN_REGISTRY.get(payload.run_id)
+    if run is not None and run.supervision_mode == "m1b-process":
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "M1b process-supervised runs are owned by their isolated worker; "
+                "/step cannot open an alternate interactive control path."
+            ),
+        )
     settings = get_settings()
     if not settings.DFHACK_ENABLED:
         raise HTTPException(status_code=400, detail="DFHack backend is disabled.")
 
-    run = RUN_REGISTRY.get(payload.run_id)
     if not run:
         raise HTTPException(status_code=404, detail="Run not found.")
     if run.backend != "dfhack":

@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
+import base64
 import json
 import os
 import shutil
 import socket
 import subprocess
-import base64
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -51,6 +51,15 @@ except ImportError:  # pragma: no cover - fallback when typer missing
 
 app = typer.Typer(name="fort-gym")
 
+
+@app.command("campaign-report")
+def campaign_report(trace: Path) -> None:
+    """Report actual game-year progress from a trace without changing its score."""
+    from .eval.campaign import read_campaign_progress
+
+    typer.echo(json.dumps(read_campaign_progress(trace), indent=2))
+
+
 PUBLIC_REHEARSAL_PATHS = (
     "/health",
     "/leaderboard",
@@ -60,6 +69,9 @@ TERMINAL_RUN_STATUSES = {"completed", "failed", "stopped"}
 DEFAULT_LIVE_AGENT_MODELS = "openrouter-keystroke-perception-review,openrouter-glm-5.2"
 STATUS_MENU_KEYS = {"D_STATUS", "D_ANNOUNCE", "D_REPORTS", "STRING_A122"}
 DESIGNATION_KEYS = {"D_DESIGNATE", "DESIGNATE_DIG"}
+EXTERNAL_WORKER_EXIT_FAILED = 20
+EXTERNAL_WORKER_EXIT_STOPPED = 21
+EXTERNAL_WORKER_EXIT_EXCEPTION = 22
 
 
 def _available_port(start: int) -> int:
@@ -216,10 +228,10 @@ def _run_live_smoke(
     """Run a small end-to-end DFHack smoke test and return artifact paths."""
 
     from .agent.base import Agent
+    from .config import DFROOT
     from .dfhack_backend import designate_rect, queue_manager_order
     from .env.actions import parse_action
     from .env.dfhack_client import DFHackClient
-    from .config import DFROOT
 
     settings = get_settings()
     from .env.remote_proto import ProtoLoadError, ensure_proto_modules
@@ -2398,15 +2410,77 @@ def live_agent_suite(
 
 
 @app.command()
-def experiment(config: str) -> None:
-    """Run an experiment from a YAML configuration file."""
+def experiment(config: str, external_run_id: str | None = None) -> None:
+    """Run an experiment, optionally using one externally preassigned run ID."""
 
     from .experiment.runner import ExperimentRunner
 
     runner = ExperimentRunner()
-    result = runner.run_from_path(config)
+    try:
+        result = runner.run_from_path(config, external_run_id=external_run_id)
+        worker_payload = (
+            _external_worker_outcome_payload(result, external_run_id)
+            if external_run_id is not None
+            else None
+        )
+    except Exception as exc:
+        if external_run_id is None:
+            raise
+        typer.echo(
+            json.dumps(
+                {
+                    "schema": "fortgym.external-worker-outcome/v1",
+                    "run_id": external_run_id,
+                    "outcome": "exception",
+                    "error": {
+                        "type": type(exc).__name__,
+                        "message": " ".join(str(exc).split())[:400],
+                    },
+                },
+                sort_keys=True,
+            ),
+            err=True,
+        )
+        raise typer.Exit(EXTERNAL_WORKER_EXIT_EXCEPTION) from exc
+
     typer.echo(result.experiment_id)
     typer.echo(result.artifacts_dir)
+    if worker_payload is not None:
+        typer.echo(json.dumps(worker_payload, sort_keys=True))
+        worker_exit_code = {
+            "completed": 0,
+            "failed": EXTERNAL_WORKER_EXIT_FAILED,
+            "stopped": EXTERNAL_WORKER_EXIT_STOPPED,
+        }[worker_payload["outcome"]]
+        if worker_exit_code:
+            raise typer.Exit(worker_exit_code)
+
+
+def _external_worker_outcome_payload(
+    result: object,
+    external_run_id: str,
+) -> dict[str, object]:
+    variants = getattr(result, "variants", None)
+    if not isinstance(variants, list) or len(variants) != 1:
+        raise RuntimeError("External worker result must contain exactly one variant")
+    runs = getattr(variants[0], "runs", None)
+    if not isinstance(runs, list) or len(runs) != 1:
+        raise RuntimeError("External worker result must contain exactly one run")
+    run = runs[0]
+    run_id = getattr(run, "run_id", None)
+    if run_id != external_run_id:
+        raise RuntimeError(
+            "External worker result run ID does not match the preassigned run ID"
+        )
+    outcome = getattr(run, "worker_outcome", None)
+    if outcome not in {"completed", "failed", "stopped"}:
+        raise RuntimeError("External worker result is missing an explicit outcome")
+    return {
+        "schema": "fortgym.external-worker-outcome/v1",
+        "run_id": run_id,
+        "outcome": outcome,
+        "terminal_reason": getattr(run, "terminal_reason", None),
+    }
 
 
 @app.command()
@@ -2454,7 +2528,7 @@ def analyze(
         output_dir = Path(output) if output else trace_path.parent
         json_path, text_path = save_analysis(report, output_dir)
 
-        typer.echo(f"\nAnalysis complete!")
+        typer.echo("\nAnalysis complete!")
         typer.echo(f"  JSON: {json_path}")
         typer.echo(f"  Text: {text_path}")
         typer.echo("")
