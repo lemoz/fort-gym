@@ -2,7 +2,39 @@
 
 Verified September 7, 2026 UTC. The Year-Two Autonomous Play goal remains active.
 
-## Latest: website fix pushed and first live checkpoint verified
+## Latest: native workshop completed; continuation owner prepared
+
+The running campaign reported one completed workshop after fourteen commands
+and 31,000 actual ticks at `2026-09-07T02:50:13.872621+00:00`. Direct inspection
+of the same committed prefix confirms a complete native building scan and a
+successfully read, built workshop at year 30, tick 47,801. The exact fourteen-row
+prefix digest and public observation are in the
+[progress receipt](../experiments/evidence/local_native_qwen35_year_two_reasoning_progress_20260907.json).
+This is not a terminal website row, manufacturing proof or a functioning
+fortress. Beds and farms remain zero; unavailable room, population and stock
+measurements remain unknown. No human gameplay rescue or live source change
+occurred. The owner continues with its original bounds.
+
+A later report at `2026-09-07T02:56:39.697258+00:00` had seventeen commands,
+38,500 ticks, the same one completed workshop and all seventeen returned
+responses / 151,758 tokens accounted. The cursor-sixteen periodic checkpoint
+also passed independent verification. Its payload SHA-256 is
+`215e3de582db4821ed7c5263596f06526769d8360d7d6181331df1a208cca2a7`, and its
+manifest file SHA-256 is
+`fe5a2e195cf67de0d9a602d467ab8dc039812af291132bd393ad1fc2a8f0af00`.
+The fourteen-command workshop receipt remains an unchanged historical prefix.
+
+The [local continuation wrapper](CAMPAIGN_LOCAL_CONTINUATION.md) is prepared
+for one further segment of this same campaign, using the same image, condition,
+model arguments and evidence volume. Nineteen offline wrapper checks and 79
+tests on the frozen controller/checkpoint implementation passed. Its actual
+read-only preflight correctly finds no terminal receipt yet. It has not
+launched; the current owner and final checkpoint/teardown audit come first.
+The progress receipt passes its calendar/count consistency checks, and all 34
+record/catalog tests pass without registering a running snapshot as a terminal
+website result.
+
+## Website fix pushed and first live checkpoint verified
 
 The active-feed configuration link and real public-capture regression are pushed
 on [PR #133](https://github.com/lemoz/fort-gym/pull/133) at

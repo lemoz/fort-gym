@@ -1,0 +1,69 @@
+{
+  "schema_version": "fortgym.native-campaign-progress-observation/v1",
+  "status": "running_snapshot_not_terminal",
+  "campaign_id": "fort-gym-year-two-qwen35-reasoning-budget-v1-a",
+  "segment_id": "segment-000001",
+  "execution_revision": "de69c7a467eb0b00becfef03329bac9f58690e35",
+  "condition_id": "local-native-qwen35-year-two-reasoning-budget-v1",
+  "configuration_sha256": "13ec2fdaad2b5e63b6f1e8fc4d57feefd3f66cd307104267d7bc06743cdbb490",
+  "public_report_updated_at": "2026-09-07T02:50:13.872621+00:00",
+  "committed_commands": 14,
+  "elapsed_ticks": 31000,
+  "native_year": 30,
+  "native_year_tick": 47801,
+  "trace_prefix": {
+    "first_step": 0,
+    "last_step": 13,
+    "complete_newline_terminated_rows": 14,
+    "bytes": 1106091,
+    "sha256": "7ac28dd2ec96ea81ece9d39b3a3caf4748cf00ced8163c8b2508c9f7561fd9eb",
+    "raw_trace_published": false
+  },
+  "workshop_evidence": {
+    "crew_ok": true,
+    "building_evidence_complete": true,
+    "workshops_truncated": false,
+    "all_workshop_stages_read": true,
+    "completed_workshops": 1
+  },
+  "public_metrics": {
+    "population": null,
+    "food_stock": null,
+    "drink_stock": null,
+    "wood_stock": null,
+    "stone_stock": null,
+    "functional_rooms": null,
+    "completed_workshops": 1,
+    "completed_beds": 0,
+    "completed_farms": 0,
+    "recorded_dead_citizens": 0
+  },
+  "usage_at_public_report": {
+    "total_tokens": 119358,
+    "dispatched_requests": 14,
+    "returned_responses": 14,
+    "accounted_responses": 14,
+    "metered_provider_charge_usd": "0",
+    "cost_basis": "self_hosted_no_metered_provider",
+    "hardware_energy_and_app_cost_usd": null
+  },
+  "previous_periodic_checkpoint": {
+    "next_step": 8,
+    "independently_verified": true,
+    "payload_sha256": "319f2c008814a9e5fced59df1b09be6acbc2abe6cdf4a053a04e58a62ca8b013",
+    "manifest_file_sha256": "de9c12fc57de3476fff0f9747d6d7b5359b395af4b880fc5494bd47112fee591"
+  },
+  "final_checkpoint_verified": false,
+  "owner_teardown_verified": false,
+  "functioning_fortress": "not_assessed",
+  "year_two_gameplay_verified": false,
+  "registered_as_terminal_website_result": false,
+  "limits": [
+    "This is a historical progress observation from a then-running campaign, not its current live state or terminal result.",
+    "A completed workshop is development evidence, not demonstrated manufacturing, sustainability or a functioning fortress.",
+    "The hash covers exactly the first fourteen complete trace rows. Private observations and model content are not published.",
+    "The independently verified periodic checkpoint covers only the first eight commands, not the entire fourteen-command prefix.",
+    "Unknown public population and stock values reflect the frozen producer; do not fill them from another attempt.",
+    "One attempt with changed execution code is not a causal comparison or a model ranking. Repeated cross-model trials remain required."
+  ]
+}
