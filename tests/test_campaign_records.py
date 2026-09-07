@@ -51,7 +51,7 @@ assert.equal(helpers.configurationUrl({condition_id:'local-native-llama-long-v2'
 
 def test_three_published_native_attempts_preserve_distinct_failure_causes():
     result = records.campaign_feed(None)
-    assert result["configured"] is False and result["published_snapshots"] == 11
+    assert result["configured"] is False and result["published_snapshots"] == 12
     by_model = {
         row["model"]: row
         for row in result["campaigns"]
@@ -83,9 +83,58 @@ def test_recorded_comparison_is_served_without_enabling_a_live_directory(monkeyp
     client = TestClient(server.app)
     response = client.get("/public/campaign-feed")
     assert response.status_code == 200 and response.json()["configured"] is False
-    assert len(response.json()["campaigns"]) == 11
+    assert len(response.json()["campaigns"]) == 12
     assert "no-store" in response.headers["cache-control"]
     assert client.get("/campaigns").status_code == 200
+
+
+def test_year_two_baseline_preserves_no_development_and_complete_checkpoint():
+    from fort_gym.bench.api import server
+
+    response = TestClient(server.app).get("/public/campaign-feed")
+    assert response.status_code == 200
+    row = next(
+        item
+        for item in response.json()["campaigns"]
+        if item["campaign_id"] == "fort-gym-year-two-qwen35-20260906-a"
+    )
+    assert row["publication"] == "versioned_snapshot" and row["freshness"] == "recorded"
+    assert row["lifecycle"] == "finished"
+    assert row["segment_status"] == "bounded_segment_complete" and row["failure_kind"] == "none"
+    assert (row["committed_steps"], row["elapsed_ticks"]) == (32, 32000)
+    assert row["actions"]["by_type"] == {"WAIT": {"accepted": 32, "rejected": 0, "unknown": 0}}
+    assert row["usage"]["total_tokens"] == 321472
+    assert row["usage"]["dispatched_requests"] == row["usage"]["accounted_responses"] == 32
+    assert row["usage"]["dispatches_without_returned_usage"] == 0
+    assert row["usage"]["metered_provider_charge_usd"] == "0"
+    assert row["usage"]["infrastructure_cost_usd"] is None
+    assert row["current_metrics"]["population"] == 7
+    assert row["current_metrics"]["drink_stock"] == 53
+    assert row["metric_summaries"]["drink_stock"]["start"] == 60
+    assert row["current_metrics"]["food_stock"] is None
+    assert row["current_metrics"]["wood_stock"] is None
+    assert row["current_metrics"]["stone_stock"] is None
+    for metric in ("functional_rooms", "completed_workshops", "completed_beds", "completed_farms"):
+        assert row["current_metrics"][metric] == 0
+    assert row["checkpoint_verified"] is True and row["cleanup_verified"] is True
+    assert row["functioning_fortress"] == row["fortress_collapse"] == "not_assessed"
+    assert row["comparison_rankings_available"] is False
+    assert row["code_revision"] == "fad9d80c0a2e7aace8380b47b009db5edaf6bd2e"
+    bundle = json.loads(
+        (
+            records.PROJECT_ROOT
+            / "experiments/evidence/local_native_qwen35_year_two_baseline_20260906.json"
+        ).read_text()
+    )
+    assert bundle["reporting_code_revision"] == "73ae9c3c792127f5cd5f61b62ff6f32ce5b54049"
+    audit = bundle["native_audit"]
+    assert sorted(item["next_step"] for item in audit["checkpoints"]) == [8, 16, 24, 32]
+    assert audit["final_checkpoint_covers_all_commands_and_returned_usage"] is True
+    assert audit["tokens_summed_from_native_model_responses"] == 321472
+    assert audit["finish_reasons"] == ["stop"]
+    assert audit["all_current_fact_projections_match_observations"] is True
+    assert audit["historical_inputs_rewritten"] is False
+    assert audit["production_deployed"] is False
 
 
 def test_llama_native_result_distinguishes_valid_waits_from_fortress_development():
@@ -395,6 +444,7 @@ def test_website_separates_incomplete_checkpoint_and_new_model_compatibility():
         "local-thinking-qwen35-20260906-a",
         "local-long-qwen35-20260906-a",
         "local-long-v2-qwen35-20260906-a",
+        "fort-gym-year-two-qwen35-20260906-a",
     }
 
 
