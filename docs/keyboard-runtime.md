@@ -76,3 +76,19 @@ private response into the game directory and assume the game can read it.
 Neither courier nor publisher chooses native actions. Website publication remains
 a separate explicit non-content projection; the exchange and native evidence
 directories are private.
+
+## Verification
+
+Executed source `a004c490f` passed 96 focused runtime/checkpoint/transport tests,
+2,326 broad-suite tests with ten skips, and changed-file Ruff/scoped mypy for
+all four new source modules. The broad suite's one sandbox-denied localhost bind
+passed separately with socket access. Exact-head
+[CI passed](https://github.com/lemoz/fort-gym/actions/runs/34158366994).
+
+The reusable command has now resumed the real cursor-72 campaign, completed its
+first 16-decision segment and produced an independently re-verified cursor-88
+checkpoint. It retains 2,800,235 cumulative tokens and 25,000 elapsed native
+ticks, preserving the original model, memory and budget-extension condition.
+The next native process was observed running. This is an in-progress 128-decision
+window, not a completed window or a terminal public milestone. The final outcome,
+usage and VM teardown still require verification after the owned run stops.
