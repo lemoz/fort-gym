@@ -2,7 +2,46 @@
 
 Verified September 7, 2026 UTC. The Year-Two Autonomous Play goal remains active.
 
-## Latest: reasoning-budget acceptance passed; fresh native campaign running
+## Latest: website fix pushed and first live checkpoint verified
+
+The active-feed configuration link and real public-capture regression are pushed
+on [PR #133](https://github.com/lemoz/fort-gym/pull/133) at
+`80eea7dc7e0d1b853a6918d4f2e5b639dc081faa`. The captured report is historical, not
+an extra terminal record or a live connection. The website retains thirteen
+recorded rows. The focused suite passed 109 tests on that website branch and
+108 tests on this integration branch. The latter includes the same link fix and
+synthetic v2 publisher-to-HTTP coverage. Those checks verify native population
+and drink counts, confirmed zero values, and clearing of unknown observations.
+They do not retroactively repair the frozen runtime's older reports.
+
+The website head `80eea7dc7` passed
+[exact-head CI](https://github.com/lemoz/fort-gym/actions/runs/34076778796).
+Its complete local suite had 1,840 passes, ten skips and one sandbox-blocked
+loopback-bind test, which passed separately on the same head with socket access.
+Changed-file Ruff/Black and diff checks passed; existing full-tree lint/type
+debt remains. The preceding configuration-link head also passed its own CI.
+No merge, browser visual acceptance or production deployment is claimed.
+
+The native owner and container remain live at unchanged source `de69c7a46`.
+Its public report at `2026-09-07T02:33:47.356960+00:00` records eight committed
+commands, 16,000 ticks and all eight returned responses / 65,709 tokens accounted.
+The cursor-eight periodic checkpoint independently passed the existing verifier,
+including its saved game, agent, runner, trace and usage file digests. Its native
+calendar is year 30, tick 32,801, from the immutable tick-16,801 seed. Manifest
+payload SHA-256 is `319f2c008814a9e5fced59df1b09be6acbc2abe6cdf4a053a04e58a62ca8b013`;
+manifest file SHA-256 is `de9c12fc57de3476fff0f9747d6d7b5359b395af4b880fc5494bd47112fee591`.
+The checkpoint covers two accepted WAITs, two accepted DIGs, three rejected
+BUILDs and one rejected DIG. Acceptance is not proof of completed work: the
+report still has zero completed rooms, workshops, beds and farms. The public
+population and drink fields remain unknown under the frozen producer. Its
+`checkpoint_verified: false` refers to the not-yet-created final checkpoint;
+it does not describe this independently verified periodic save.
+
+This is progress evidence, not a terminal result or one-year success. There are
+$0 metered model API charges and unknown hardware/energy/application costs.
+The owner continues unchanged and remains responsible for final teardown.
+
+## Reasoning-budget acceptance passed; fresh native campaign running
 
 The [single-request reasoning-budget acceptance](CAMPAIGN_REASONING_BUDGET.md)
 returned one complete `DIG` action with 8,793 input plus 2,210 completion tokens,
@@ -52,7 +91,7 @@ that exact test passed separately with local socket access. Changed-file
 Ruff/Black, targeted typing and diff checks pass. Full-tree lint/type debt remains.
 [Exact-head CI](https://github.com/lemoz/fort-gym/actions/runs/34074628994) passed
 for `ebf470d83`. The [evidence-only follow-up CI](https://github.com/lemoz/fort-gym/actions/runs/34075255210)
-was observed running at `de69c7a46`; no merge or deployment is claimed.
+passed at `de69c7a46`; no merge or deployment is claimed.
 
 ## Native clock correction verified
 
