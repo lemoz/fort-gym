@@ -205,3 +205,149 @@ def test_mismatched_native_condition_is_rejected_before_output(tmp_path):
             observation_profile=TEXT_PROFILE,
         )
     assert not (tmp_path / "no-output").exists()
+
+
+def test_explicit_extension_resumes_same_campaign_and_survives_next_checkpoint(tmp_path):
+    loop = start(tmp_path, limit=1)
+    loop.step()
+    checkpoint = tmp_path / "checkpoint"
+    first_manifest = loop.checkpoint(
+        checkpoint, snapshotter=loop.environment, code_revision="fixture"
+    )
+    state = loop.agent.export_campaign_state()
+    environment = Environment()
+    environment.tick = loop.environment.tick
+    resumed = CampaignLoop.resume(
+        checkpoint,
+        agent=agent(limit=1),
+        environment=environment,
+        output=tmp_path / "second",
+        latest_usage_path=loop.journal,
+        budget_extension={"max_dispatches": 3, "max_total_tokens": 20000},
+    )
+    extended = resumed.agent.export_campaign_state()
+    assert extended["configuration"] == state["configuration"]
+    assert extended["memory"] == state["memory"] and extended["usage"] == state["usage"]
+    assert resumed.journal.read_bytes() == loop.journal.read_bytes()
+    assert extended["budget_extensions"][0]["checkpoint_sha256"] == first_manifest["sha256"]
+    resumed.step()
+    second = tmp_path / "second-checkpoint"
+    resumed.checkpoint(second, snapshotter=environment, code_revision="fixture")
+    environment2 = Environment()
+    environment2.tick = environment.tick
+    continued = CampaignLoop.resume(
+        second,
+        agent=agent(limit=1),
+        environment=environment2,
+        output=tmp_path / "third",
+        latest_usage_path=resumed.journal,
+    )
+    assert continued.agent.budget_extensions == resumed.agent.budget_extensions
+    continued.step()
+    with pytest.raises(CampaignPreDispatchPause):
+        continued.step()
+    assert continued.next_step == 3 and continued.agent.usage["total_tokens"] == 300
+    assert continued.trace.read_bytes().startswith(loop.trace.read_bytes())
+    assert (
+        reconciled_usage(continued.agent.export_campaign_state(), continued.journal.read_bytes())
+        == continued.agent.usage
+    )
+
+
+@pytest.mark.parametrize(
+    "limits",
+    [
+        {"max_dispatches": 8, "max_total_tokens": 10000},
+        {"max_dispatches": 7, "max_total_tokens": 20000},
+        {"max_dispatches": 9, "max_total_tokens": 9999},
+        {"max_dispatches": True, "max_total_tokens": 20000},
+    ],
+)
+def test_budget_extension_cannot_shrink_reset_or_silently_replace_limits(limits):
+    policy = agent()
+    policy.set_campaign_context(campaign_id="test")
+    before = policy.export_campaign_state()
+    with pytest.raises(ValueError):
+        policy.extend_budget(checkpoint_sha256="a" * 64, **limits)
+    assert policy.export_campaign_state() == before
+
+
+def test_budget_extension_restore_rejects_regressed_usage_or_duplicate_lineage():
+    policy = agent()
+    policy.set_campaign_context(campaign_id="test")
+    policy.extend_budget(checkpoint_sha256="a" * 64, max_dispatches=16, max_total_tokens=20000)
+    state = policy.export_campaign_state()
+    state["budget_extensions"][0]["usage_at_extension"]["total_tokens"] = 1
+    with pytest.raises(ValueError, match="history"):
+        agent().restore_campaign_state(state, campaign_id="test")
+    with pytest.raises(ValueError, match="lineage"):
+        policy.extend_budget(checkpoint_sha256="a" * 64, max_dispatches=32, max_total_tokens=40000)
+
+
+def admission_denied(*args):
+    return {
+        "transport_receipt": {
+            "accepted": False,
+            "dispatched": False,
+            "admission": {"allowed": False, "basis": "fresh_codex_app_server_account_read/v1"},
+        }
+    }
+
+
+def test_subscription_admission_stop_is_checkpointable_without_reset_or_dispatch(tmp_path):
+    loop = start(tmp_path)
+    loop.step()
+    state = loop.agent.export_campaign_state()
+    loop.agent.decision = admission_denied
+    with pytest.raises(CampaignPreDispatchPause):
+        loop.step()
+    assert not loop.failed and loop.at_boundary
+    assert len(loop.environment.actions) == 1
+    assert loop.agent.export_campaign_state() == state
+    checkpoint = tmp_path / "checkpoint"
+    loop.checkpoint(checkpoint, snapshotter=loop.environment, code_revision="fixture")
+    environment = Environment()
+    environment.tick = loop.environment.tick
+    resumed = CampaignLoop.resume(
+        checkpoint,
+        agent=agent(),
+        environment=environment,
+        output=tmp_path / "second",
+        latest_usage_path=loop.journal,
+    )
+    resumed.step()
+    assert resumed.next_step == 2 and resumed.agent.usage["dispatched_requests"] == 2
+    pauses = [json.loads(row) for row in (loop.output / "pauses.jsonl").read_text().splitlines()]
+    assert pauses[-1]["decision_started"] is True and pauses[-1]["events"]
+
+
+def test_initial_admission_stop_has_zero_calls_and_reconciles(tmp_path):
+    loop = start(tmp_path, admission_denied)
+    with pytest.raises(CampaignPreDispatchPause):
+        loop.step()
+    assert not loop.environment.actions and loop.at_boundary and not loop.failed
+    assert reconciled_usage(loop.agent.export_campaign_state(), loop.journal.read_bytes()) == (
+        loop.agent.usage
+    )
+    assert loop.agent.usage["dispatched_requests"] == 0
+
+
+@pytest.mark.parametrize("mutation", ["usage", "native", "model", "returned"])
+def test_admission_journal_cannot_hide_usage_or_dispatch(tmp_path, mutation):
+    loop = start(tmp_path, admission_denied)
+    with pytest.raises(CampaignPreDispatchPause):
+        loop.step()
+    rows = [json.loads(row) for row in loop.journal.read_text().splitlines()]
+    if mutation == "usage":
+        rows[-1]["usage"]["total_tokens"] = 1
+    elif mutation == "native":
+        rows[-1]["native_action_dispatched"] = True
+    elif mutation == "model":
+        rows[-1]["model_dispatched"] = True
+    else:
+        rows[-1]["decision_returned"] = True
+    with pytest.raises(ValueError, match="Cancelled"):
+        reconciled_usage(
+            loop.agent.export_campaign_state(),
+            "".join(json.dumps(row) + "\n" for row in rows).encode(),
+        )

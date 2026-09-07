@@ -16,7 +16,12 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from ..agent.base import Agent
-from ..agent.campaign_keyboard import SUBSCRIPTION_COST_BASIS, validate_usage
+from ..agent.campaign_keyboard import (
+    SUBSCRIPTION_COST_BASIS,
+    SubscriptionAdmissionPause,
+    initial_usage as initial_subscription_usage,
+    validate_usage,
+)
 from ..agent.standard_input import parse_response as parse_keyboard_response
 from ..env.native_key_catalog import NATIVE_PROFILE
 from ..env.screen_observation import TEXT_PROFILE, encode_screen
@@ -59,6 +64,14 @@ class CampaignEnvironment(Protocol):
 
 class CampaignPreDispatchPause(GovernedBudgetCapError):
     """A read-only preflight stopped before the decision/usage transaction began."""
+
+    decision_started = False
+
+
+class CampaignAdmissionPause(CampaignPreDispatchPause):
+    """A decision transaction settled without any model or native dispatch."""
+
+    decision_started = True
 
 
 class CampaignNoActionPause(RuntimeError):
@@ -125,12 +138,24 @@ def reconciled_usage(checkpoint: dict, journal: bytes) -> dict:
         if record.get("type") != "decision_finished" or not pending:
             raise ValueError("Usage journal decision sequence is invalid")
         no_action = record.get("outcome") == "accounted_no_action/v1"
+        cancelled = record.get("outcome") == "subscription_not_dispatched/v1"
         if record.get("step") != pending_step or (
-            record.get("decision_returned") is not True and not no_action
+            record.get("decision_returned") is not True and not no_action and not cancelled
         ):
             raise ValueError("Failed or mismatched decision has unresolved provider usage")
         pending = False
         usage = record["usage"]
+        if cancelled:
+            if (
+                current.get("cost_basis") != SUBSCRIPTION_COST_BASIS
+                or record.get("decision_returned") is not False
+                or record.get("model_dispatched") is not False
+                or record.get("native_action_dispatched") is not False
+                or usage != (last_usage if last_usage is not None else initial_subscription_usage())
+                or not isinstance(record.get("native_boundary"), dict)
+            ):
+                raise ValueError("Cancelled subscription decision changed usage or lacks proof")
+            _clock(record["native_boundary"])
         if no_action:
             if (
                 record.get("decision_returned") is not False
@@ -285,7 +310,12 @@ class CampaignLoop:
         except CampaignPreDispatchPause as error:
             _append(
                 self.output / "pauses.jsonl",
-                {"step": self.next_step, "reason": str(error), "decision_started": False},
+                {
+                    "step": self.next_step,
+                    "reason": str(error),
+                    "decision_started": error.decision_started,
+                    **({"events": self.agent.pop_tool_events()} if error.decision_started else {}),
+                },
             )
             raise
         except BaseException as error:
@@ -372,9 +402,19 @@ class CampaignLoop:
         _append(self.journal, {"type": "decision_started", "step": self.next_step})
         returned = False
         no_action = None
+        cancelled = None
         try:
             raw_action = self.agent.decide(text, observation)
             returned = True
+        except SubscriptionAdmissionPause as error:
+            if not keyboard or self.agent.export_campaign_state() != preflight_state:
+                raise ValueError("Admission pause changed campaign state") from error
+            after_decision = self.environment.observe()
+            if _clock(after_decision) != start or (
+                after_decision.get("viewscreen_type") != before.get("viewscreen_type")
+            ):
+                raise ValueError("Native boundary changed during admission") from error
+            cancelled = {key: before[key] for key in ("year", "year_tick", "pause_state")}
         except LocalOutputLimitPause as error:
             usage = self.agent.export_campaign_state()["usage"]
             previous_usage = preflight_state["usage"]
@@ -408,6 +448,16 @@ class CampaignLoop:
                     "usage": self.agent.export_campaign_state()["usage"],
                     **(
                         {
+                            "outcome": "subscription_not_dispatched/v1",
+                            "model_dispatched": False,
+                            "native_action_dispatched": False,
+                            "native_boundary": cancelled,
+                        }
+                        if cancelled is not None
+                        else {}
+                    ),
+                    **(
+                        {
                             "outcome": "accounted_no_action/v1",
                             "reason": "output_token_limit",
                             "native_action_dispatched": False,
@@ -418,6 +468,12 @@ class CampaignLoop:
                     ),
                 },
             )
+        if cancelled is not None:
+            current = self.agent.export_campaign_state()
+            if reconciled_usage(current, self.journal.read_bytes()) != current["usage"]:
+                raise ValueError("Cancelled subscription usage does not reconcile")
+            self.at_boundary = True
+            raise CampaignAdmissionPause("Subscription allowance stopped model admission")
         if no_action is not None:
             current = self.agent.export_campaign_state()
             if reconciled_usage(current, self.journal.read_bytes()) != current["usage"]:
@@ -621,6 +677,7 @@ class CampaignLoop:
         latest_usage_path: Path,
         observation_profile: str | None = None,
         advance_policy: str | None = None,
+        budget_extension: dict | None = None,
     ) -> CampaignLoop:
         """Resume after the caller loads the verified game into its isolated runtime.
 
@@ -702,4 +759,13 @@ class CampaignLoop:
         instance.parent = checkpoint
         instance.observation_view = saved_view
         instance.at_boundary = True
+        if budget_extension is not None:
+            from ..agent.campaign_keyboard import CodexKeyboardAgent
+
+            if not isinstance(agent, CodexKeyboardAgent) or set(budget_extension) != {
+                "max_dispatches",
+                "max_total_tokens",
+            }:
+                raise ValueError("Unsupported campaign budget extension")
+            agent.extend_budget(checkpoint_sha256=manifest["sha256"], **budget_extension)
         return instance

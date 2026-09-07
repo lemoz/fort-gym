@@ -6,16 +6,22 @@ from collections.abc import Callable
 from copy import deepcopy
 import hashlib
 import json
+from typing import Any
 
 from ..env.native_key_catalog import NATIVE_PROFILE
 from ..env.screen_observation import TEXT_PROFILE, encode_screen, raw_screen
 from .base import Agent
+from .campaign_budget import BUDGET_KEYS, effective_budget
 from .codex_transport import MODEL, REASONING_EFFORT, CodexTransportError
 from .codex_protocol import TRANSPORT
 from .governed_llm import GovernedBudgetCapError
 from .standard_input import parse_response
 
 SUBSCRIPTION_COST_BASIS = "codex_subscription_charge_unreported/v1"
+
+
+class SubscriptionAdmissionPause(GovernedBudgetCapError):
+    """A fresh host account check explicitly prevented the model invocation."""
 
 
 def initial_usage() -> dict:
@@ -61,7 +67,7 @@ class CodexKeyboardAgent(Agent):
                 raise ValueError("Positive cumulative keyboard budgets are required")
         if type(max_advance_ticks) is not int or not 1 <= max_advance_ticks <= 2500:
             raise ValueError("Invalid keyboard advance bound")
-        self.configuration = dict(
+        self.configuration: dict[str, Any] = dict(
             model=MODEL,
             reasoning_effort=REASONING_EFFORT,
             transport=TRANSPORT,
@@ -76,6 +82,7 @@ class CodexKeyboardAgent(Agent):
         self.memory = ""
         self.usage = initial_usage()
         self.events: list[dict] = []
+        self.budget_extensions: list[dict] = []
 
     def set_campaign_context(self, *, campaign_id: str) -> None:
         if not isinstance(campaign_id, str) or not campaign_id:
@@ -92,16 +99,17 @@ class CodexKeyboardAgent(Agent):
                 configuration=self.configuration,
                 memory=self.memory,
                 usage=self.usage,
+                **({"budget_extensions": self.budget_extensions} if self.budget_extensions else {}),
             )
         )
 
     def restore_campaign_state(self, data: dict, *, campaign_id: str) -> None:
-        if self.usage != initial_usage() or self.memory or self.events:
+        if self.usage != initial_usage() or self.memory or self.events or self.budget_extensions:
             raise ValueError("Restore requires a fresh keyboard agent")
         expected = self.export_campaign_state()
         if (
             not isinstance(data, dict)
-            or set(data) != set(expected)
+            or set(data) not in (set(expected), set(expected) | {"budget_extensions"})
             or data["schema_version"] != expected["schema_version"]
             or data["configuration"] != self.configuration
             or data["campaign_id"] != campaign_id
@@ -109,16 +117,46 @@ class CodexKeyboardAgent(Agent):
         ):
             raise ValueError("Keyboard checkpoint configuration or identity differs")
         validate_usage(data["usage"])
+        extensions = deepcopy(data.get("budget_extensions", []))
+        effective_budget(self.configuration, extensions, data["usage"])
         self.set_campaign_context(campaign_id=campaign_id)
         self.memory, self.usage = data["memory"], deepcopy(data["usage"])
+        self.budget_extensions = extensions
+
+    def extend_budget(
+        self, *, checkpoint_sha256: str, max_dispatches: int, max_total_tokens: int
+    ) -> dict:
+        """Declare a larger allowance after a verified, settled checkpoint resume.
+
+        The caller supplies that checkpoint's manifest digest. Original condition,
+        memory, usage and journal identity stay unchanged. Future checkpoints bind
+        this append-only history alongside the complete agent state.
+        """
+        if self.campaign_id is None or self.events:
+            raise ValueError("Budget extension requires a settled campaign")
+        limits = effective_budget(self.configuration, self.budget_extensions, self.usage)
+        extension = dict(
+            schema_version="fortgym.campaign-budget-extension/v1",
+            checkpoint_sha256=checkpoint_sha256,
+            previous=limits,
+            limits=dict(zip(BUDGET_KEYS, (max_dispatches, max_total_tokens))),
+            usage_at_extension={
+                key: self.usage[key] for key in ("dispatched_requests", "total_tokens")
+            },
+        )
+        proposed = [*self.budget_extensions, extension]
+        effective_budget(self.configuration, proposed, self.usage)
+        self.budget_extensions = proposed
+        return deepcopy(extension)
 
     def preflight_decision(self, obs_text: str, obs_json: dict) -> None:
         if self.campaign_id is None:
             raise ValueError("Keyboard campaign identity is unset")
         raw_screen(obs_json["screen_capture"])
-        if self.usage["dispatched_requests"] >= self.configuration["max_dispatches"]:
+        limits = effective_budget(self.configuration, self.budget_extensions, self.usage)
+        if self.usage["dispatched_requests"] >= limits["max_dispatches"]:
             raise GovernedBudgetCapError("Cumulative subscription dispatch limit reached")
-        if self.usage["total_tokens"] >= self.configuration["max_total_tokens"]:
+        if self.usage["total_tokens"] >= limits["max_total_tokens"]:
             raise GovernedBudgetCapError("Cumulative returned-token limit reached")
 
     def decide(self, obs_text: str, obs_json: dict) -> dict:
@@ -137,6 +175,15 @@ class CodexKeyboardAgent(Agent):
             raise CodexTransportError("Missing subscription usage receipt", result)
         if receipt.get("dispatched") is False:
             self.usage["dispatched_requests"] -= 1
+            admission = receipt.get("admission")
+            if (
+                receipt.get("accepted") is False
+                and set(receipt) == {"accepted", "dispatched", "admission"}
+                and isinstance(admission, dict)
+                and admission.get("allowed") is False
+                and admission.get("basis") == "fresh_codex_app_server_account_read/v1"
+            ):
+                raise SubscriptionAdmissionPause("Subscription allowance stopped model admission")
         tokens = receipt.get("total_tokens")
         screen_hash = hashlib.sha256(
             json.dumps(

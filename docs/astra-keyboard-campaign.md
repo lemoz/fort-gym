@@ -66,6 +66,25 @@ No native captures, maps, saves, private prompts or detailed traces are included
 Source and this condition are delivered through draft PR #137; longer campaigns,
 website acceptance and repeated three-model comparisons remain open.
 
+## Declared endurance continuation
+
+`campaign_astra_keyboard_endurance_20260907.json` continues the same fortress
+from cursor eight. Its initial operating window is four 16-decision segments,
+with cumulative limits extended to 256 invocations and eight million returned
+tokens. The original eight-decision configuration is not overwritten. A
+`fortgym.campaign-budget-extension/v1` record binds the verified source
+checkpoint, old/new limits and actual usage at extension. Later checkpoints
+preserve this history along with memory, usage and the original journal prefix.
+Model, control, observation and tick policies remain unchanged; no strategy or
+game-state intervention is part of this extension.
+
+A fresh-account admission denial now settles explicitly without a model or native
+dispatch. The runner verifies unchanged agent state and paused game calendar,
+retains the denial receipt and unchanged usage, and can checkpoint the last
+committed action. Ambiguous transport failures still remain unresolved; they
+are not converted into a free or safely retryable decision. No credits or reset
+are automatically consumed.
+
 Validation: 2,285 broad-suite passes, ten skips, and one sandbox-denied localhost
 bind; that exact test and the final keyboard checkpoint selection passed together
 with socket access (ten tests). The earlier focused integration selection passed
