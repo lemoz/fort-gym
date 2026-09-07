@@ -40,6 +40,15 @@ reconciliation and retains the exact response counters and returned tokens.
 
 ## Current evidence boundary
 
+Latest subsequent run: the declared d window at `6493cba58` accepted 16 new
+responses and reached trace cursor 200 / 46,000 ticks, but native saving timed
+out. An independent audit verifies usage and teardown. Saved game files still
+match checkpoint 184; the newer native state is not resumable. All 531,913 new
+tokens remain counted (6,465,867 campaign / 6,534,871 including historical
+failures). The checkpoint failure summary is separate from recovery evidence;
+the recorded website does not yet project this newest failure. Reliable saving
+across native menus and an explicit attempt/continuation boundary are next.
+
 The previously recovered cursor 101 is recorded separately from the newer
 interruption at 183 committed decisions / 184 responses. Its latest parent is
 181, not permission to discard the two newer actions or rejected response.
