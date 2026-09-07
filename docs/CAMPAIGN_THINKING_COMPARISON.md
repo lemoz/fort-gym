@@ -9,6 +9,12 @@ Seven citizens and 53 drink units remained; no workshop, placed bed or farm was
 completed. See the [terminal paired result](LOCAL_THINKING_PAIR_RESULT.md) and
 its versioned manifests. Neither attempt reached year two.
 
+The [clock correction](CAMPAIGN_NATIVE_TICK_LIMIT.md) now has separate native
+acceptance at `eca52a53021c8889ee9e63882f2184084590d391`; neither model trial used
+that correction. The [next local output-budget diagnostic](LOCAL_YEAR_TWO_OUTPUT_REPLAY.md)
+is declared separately. It does not resume or rewrite either campaign; consult
+[campaign status](CAMPAIGN_STATUS.md) for its current execution state.
+
 The [baseline result](https://github.com/lemoz/fort-gym/blob/5bcbfc9562837379e4a6ba78ad625b4ddef20fc3/docs/LOCAL_YEAR_TWO_BASELINE_RESULT.md)
 records 32 model-selected WAITs, 32,000 ticks, seven citizens, 53 native drink
 units and no completed development. All 321,472 reported tokens reconcile.

@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -118,3 +119,41 @@ def test_declared_limit_reaches_the_clock_controller_through_the_real_client(mon
     monkeypatch.setattr(dfhack_client, "advance_ticks_exact", clock)
     _, receipt = environment.advance(2500, {})
     assert receipt["requested"] == receipt["ticks_advanced"] == 2500
+
+
+def test_retained_native_tick_fixture_preserves_receipts_and_non_gameplay_scope():
+    from fort_gym.bench.tick_receipt import calendar_elapsed_ticks
+
+    path = (
+        Path(__file__).resolve().parents[1]
+        / "experiments/evidence/local_native_tick_limit_20260907.json"
+    )
+    record = json.loads(path.read_text())
+    assert record["execution_revision"] == "eca52a53021c8889ee9e63882f2184084590d391"
+    fixture = record["fixture"]
+    assert fixture["native_tick_limit_verified"] is True
+    assert fixture["autonomous_gameplay"] is fixture["year_two_gameplay_verified"] is False
+    assert fixture["provider_calls"] == 0 and fixture["total_observed_ticks"] == 4500
+    previous = {"year": 30, "year_tick": 16801}
+    for limit, advance in zip((2000, 2500), fixture["advances"], strict=True):
+        assert advance["before"] == previous
+        assert advance["requested_ticks"] == advance["declared_max_advance_ticks"] == limit
+        receipt = advance["receipt"]
+        assert receipt["requested"] == receipt["ticks_advanced"] == limit
+        elapsed, error = calendar_elapsed_ticks(
+            receipt["start_year"], receipt["start_tick"], receipt["end_year"], receipt["end_tick"]
+        )
+        assert error is None and elapsed == advance["calendar_elapsed_ticks"] == limit
+        assert advance["overshoot_ticks"] == 0
+        assert advance["out_of_bound_requests_rejected_without_advance"] is True
+        assert advance["zero_request_preserved_boundary"] is True
+        assert receipt["paused_after"] is receipt["repause_effective"] is True
+        assert advance["after"] == {"year": receipt["end_year"], "year_tick": receipt["end_tick"]}
+        previous = advance["after"]
+    assert previous == {"year": 30, "year_tick": 21301}
+    assert record["teardown"]["container_exit_code"] == 0
+    assert all(
+        value is True for key, value in record["teardown"].items() if key != "container_exit_code"
+    )
+    assert record["provider_calls"] == record["cloud_vms_created"] == 0
+    assert record["historical_inputs_rewritten"] is record["production_deployed"] is False

@@ -17,6 +17,24 @@ PLAN = (
 )
 
 
+def test_new_year_two_diagnostic_is_bounded_and_preserves_original_condition():
+    root = Path(__file__).resolve().parents[1]
+    plan = json.loads(
+        (root / "experiments/diagnostics/local_year_two_output_budget_v1.json").read_text()
+    )
+    baseline = root / plan["baseline_condition_file"]
+    assert replay.digest(baseline.read_bytes()) == plan["baseline_condition_file_sha256"]
+    original = json.loads(baseline.read_text())
+    assert original["max_output_tokens"] == plan["output_token_allowances"][0] == 4096
+    assert plan["output_token_allowances"] == [4096, 8192]
+    assert plan["max_dispatches"] == 2
+    assert plan["source_prompt_tokens"] * 2 + sum(plan["output_token_allowances"]) == 29874
+    assert plan["max_total_tokens"] == 30000
+    assert plan["source_step"] == 18
+    assert plan["source_campaign_id"] == "fort-gym-year-two-qwen35-thinking-v1-a"
+    assert plan["native_game_loaded"] is False and plan["native_actions_executed"] == 0
+
+
 @pytest.fixture
 def inputs(config, tmp_path):
     base = tmp_path / "base.json"
@@ -67,6 +85,42 @@ def inputs(config, tmp_path):
 
 def run(inputs, tmp_path):
     return replay.replay(*inputs, endpoint=ENDPOINT, output=tmp_path / "output", revision="a" * 40)
+
+
+def rewrite_usage(inputs, change):
+    plan_path, _, source_path = inputs
+    source = json.loads(source_path.read_text())
+    change(source["events"][0]["output"]["usage"])
+    source_path.write_text(json.dumps(source) + "\n")
+    plan = json.loads(plan_path.read_text())
+    plan["source_failure_file_sha256"] = replay.digest(source_path.read_bytes())
+    plan_path.write_text(json.dumps(plan))
+
+
+def test_retained_cache_metadata_preserves_exact_usage_and_source(
+    inputs, config, tmp_path, monkeypatch
+):
+    rewrite_usage(inputs, lambda usage: usage.update(prompt_tokens_details={"cached_tokens": 7}))
+    source_before = inputs[2].read_bytes()
+    calls, _ = fake_server(config, monkeypatch)
+    result = run(inputs, tmp_path)
+    assert result["status"] == "two_cases_completed"
+    assert result["dispatched_requests"] == result["accounted_responses"] == 2
+    assert result["total_tokens"] == 98
+    assert inputs[2].read_bytes() == source_before
+    assert len([path for path, _ in calls if path == "/v1/chat/completions"]) == 2
+
+
+@pytest.mark.parametrize("field", ["prompt_tokens", "completion_tokens", "total_tokens"])
+@pytest.mark.parametrize("value", [None, True, "42", 42.0, -1])
+def test_retained_usage_requires_exact_integer_counters(
+    inputs, config, tmp_path, monkeypatch, field, value
+):
+    rewrite_usage(inputs, lambda usage: usage.update({field: value}))
+    calls, _ = fake_server(config, monkeypatch)
+    with pytest.raises(ValueError, match="declared output-limit case"):
+        run(inputs, tmp_path)
+    assert calls == []
 
 
 def test_exact_replay_changes_only_output_limit_and_never_executes_a_game(
