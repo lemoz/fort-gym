@@ -1,0 +1,60 @@
+{
+  "schema_version": "fortgym.native-interface-acceptance-summary/v1",
+  "feature": "model-controlled-terrain-inspection",
+  "source_revision": "bbe58f9485d7ed42f288b9fa27f4d932159d9c01",
+  "source_pull_request": "https://github.com/lemoz/fort-gym/pull/136",
+  "publication_scope": "Operational test outcomes only. Captured screens, maps, coordinates, calendars, saves, traces and detailed game-state results remain local and are excluded.",
+  "attempts": [
+    {
+      "attempt_id": "local-native-map-inspection-20260907-a",
+      "fixture_version": 1,
+      "status": "failed",
+      "diagnosis": "An unchanged-state assertion failed; the fixture did not retain individual guard values.",
+      "teardown_verified": true
+    },
+    {
+      "attempt_id": "local-native-map-inspection-20260907-b",
+      "fixture_version": 2,
+      "status": "failed",
+      "diagnosis": "Instrumented control reads isolated rendered-screen variation without an action; native guard values were unchanged.",
+      "teardown_verified": true
+    },
+    {
+      "attempt_id": "local-native-map-inspection-20260907-c",
+      "fixture_version": 3,
+      "status": "passed",
+      "diagnosis": "Explicit native invariants, selection, invalid-request feedback and checkpoint process-stop/reload continuation verified; byte-identical rendering is not asserted.",
+      "teardown_verified": true
+    }
+  ],
+  "checks": {
+    "native_region_and_z_selection": true,
+    "hidden_tiles_blank": true,
+    "invalid_region_rejected": true,
+    "prior_selection_retained_on_rejection": true,
+    "native_world_command_dispatch_absent": true,
+    "native_clock_dispatch_absent": true,
+    "native_camera_unchanged": true,
+    "native_pause_and_calendar_unchanged": true,
+    "allocated_blocks_unchanged": true,
+    "selected_view_restored_after_native_save_load": true,
+    "trace_prefix_and_usage_preserved": true,
+    "original_seed_verified_unchanged": true,
+    "independent_retained_evidence_audit_passed": true,
+    "local_vm_stopped_after_each_attempt": true
+  },
+  "provider_calls": 0,
+  "metered_provider_charge_usd": "0",
+  "cloud_vms_created": 0,
+  "hardware_energy_app_and_ci_cost_usd": null,
+  "autonomous_gameplay": false,
+  "year_two_gameplay_verified": false,
+  "new_model_comparison_rows": 0,
+  "limitations": [
+    "Scripted native interface acceptance, not model-chosen gameplay",
+    "The original two failed fixture verdicts remain failed",
+    "Live dialog inspection was not exercised by this fixture",
+    "No new model attempt, merge or production deployment",
+    "Detailed recorded payload remains local after export review rejection"
+  ]
+}

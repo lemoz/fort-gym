@@ -2,6 +2,30 @@
 
 Verified September 7, 2026 UTC. The Year-Two Autonomous Play goal remains active.
 
+## Latest: native map inspection and selection continuation verified
+
+The separately declared provider-free native fixture has passed with the
+unchanged map implementation at `bbe58f9485d7ed42f288b9fa27f4d932159d9c01`.
+It verifies model-interface region/z selection, hidden-tile handling, invalid-view
+feedback and selection persistence through a native checkpoint, stopped game
+process and fresh-process reload. These actions were scripted, not model choices.
+An independent audit verified retained checkpoint/trace/usage/seed integrity and
+native/container/local-VM teardown. No model calls or cloud VM were used.
+
+Both earlier fixture failures remain failed. Their diagnostic showed rendered
+glyph changes in a no-action control read. The corrected fixture checks explicit
+native invariants and keeps rendering changes as diagnostics; byte-identical UI
+rendering is not claimed. The production reader did not need a code change.
+
+Only authored source, declarations and a non-content
+[operational test summary](../experiments/evidence/local_native_map_inspection_outcomes_20260907.json)
+are candidates for remote publication. Detailed native payload export was rejected
+and remains local; no captured maps, screens, coordinates, saves or traces are in
+that summary. No new model comparison row, fortress success, merge or deployment
+is claimed. The next model condition is a fresh Qwen3.5 run with the inspection
+profile pair and unchanged existing inference/segment budgets, not a rollback of
+the prior campaign. It is prepared in the map-inspection worktree and is not run.
+
 ## Latest: model-controlled terrain inspection pushed
 
 [PR #136](https://github.com/lemoz/fort-gym/pull/136) adds the opt-in pair
@@ -21,13 +45,12 @@ All 299 focused checks pass, including 83 inspection tests and 23 that execute
 the Lua reader against engine doubles. The full suite had 2,083 passed,
 10 skipped and one sandbox-denied socket test; the exact socket test passed
 separately. Changed-file checks and scoped mypy pass. Whole-tree findings remain
-10 Ruff errors and 464 mypy errors in 26 files. New exact-head CI is pending
-at this publication.
+10 Ruff errors and 464 mypy errors in 26 files.
+[Exact-head implementation CI passed](https://github.com/lemoz/fort-gym/actions/runs/34097397778).
 
-No native game or real model has used this hook/profile yet. Next is a separately
-declared provider-free native inspection check, then a fresh local campaign
-condition from the immutable seed. Historical conditions, saves, results and
-fixture verdicts are unchanged. No new comparison row, year-two result,
+The subsequent native acceptance above supersedes the original unrun status.
+No real model has used this profile yet. Historical conditions, saves, results
+and fixture verdicts are unchanged. No new comparison row, year-two result,
 merge or deployment is claimed.
 
 ## Latest: opt-in elapsed campaign observations pushed
