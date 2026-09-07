@@ -52,3 +52,23 @@ def test_matched_thinking_condition_changes_only_the_declared_model_setting():
         thinking.pop(metadata)
     thinking["local_inference"]["enable_thinking"] = False
     assert thinking == direct
+
+
+def test_reasoning_budget_condition_preserves_total_allowance_and_gameplay_envelope():
+    original = load_segment_config(
+        ROOT / "experiments/campaigns/local_native_qwen35_year_two_thinking_v1.json", MODEL
+    )
+    candidate = load_segment_config(
+        ROOT / "experiments/campaigns/local_native_qwen35_year_two_reasoning_budget_v1.json",
+        MODEL,
+    )
+    assert candidate["condition_id"] != original["condition_id"]
+    assert candidate["max_output_tokens"] == original["max_output_tokens"] == 4096
+    assert candidate["local_inference"].pop("reasoning_budget_tokens") == 2048
+    assert (
+        candidate["max_steps"] * candidate["max_segments"] * candidate["max_advance_ticks"] > 403200
+    )
+    for metadata in ("condition_id", "hypothesis", "notes"):
+        original.pop(metadata)
+        candidate.pop(metadata)
+    assert candidate == original

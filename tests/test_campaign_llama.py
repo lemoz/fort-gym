@@ -161,6 +161,7 @@ def test_factory_routes_pinned_local_transport_and_retains_real_usage(
     response = agent._create_completion(MESSAGES)
     assert response["usage"]["total_tokens"] == 49
     generation = generations(calls)[0]
+    assert "reasoning_budget_tokens" not in generation
     counts = [body for path, body in calls if path == llama.TOKEN_PATH]
     assert counts == [generation]
     assert generation["chat_template_kwargs"] == {"enable_thinking": False}

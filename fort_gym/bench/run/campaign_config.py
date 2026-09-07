@@ -111,6 +111,8 @@ def validate_local_settings(config: dict, model: str) -> None:
         raise ValueError("Unsupported local server runtime profile")
     if config["max_attempts"] != 1:
         raise ValueError("Local transport does not silently retry a failed inference")
+    if "reasoning_budget_tokens" in local and local["transport"] != TRANSPORT:
+        raise ValueError("A reasoning budget requires the pinned llama.cpp transport")
     prompt_contract = local.get("prompt_contract", "grammar_only/v1")
     if not isinstance(prompt_contract, str) or prompt_contract not in {
         "grammar_only/v1",
