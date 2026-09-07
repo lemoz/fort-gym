@@ -13,7 +13,37 @@ and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. The first bounded Astra native
 keyboard campaign has now completed.
 
-### Verified recovery and new continuation
+### Latest input-rejection interruption
+
+The post-recovery window executed at `d37a1b42f` and independently verified five
+new checkpoints at 117, 133, 149, 165 and 181. It then committed through decision
+183 at 44,000 elapsed native ticks. Response 184 contained unsupported key names.
+No keys or game ticks from that response were dispatched, but the original
+harness treated input validation as fatal. This is not a fortress-collapse result.
+
+Independent audit verifies every completed checkpoint, memory/configuration and
+usage prefixes, all six native-process cleanups, container exit and local VM
+teardown. No campaign worker is live. Two committed actions after checkpoint 181
+and the rejected response's usage remain in the latest retained native save and
+journals. That forensic save is not yet a resumable checkpoint. Do not rewind to
+181 or replay the rejected response as a free model call.
+
+This window returned 83 new model responses and used 2,702,162 tokens. Campaign
+usage is 5,933,954; including historical failed deliveries is 6,002,958. The rejected
+response's 32,731 tokens are included. Exact subscription charges remain unreported.
+The non-content record is `experiments/evidence/astra_native_keyboard_rejection_20260907.json`.
+
+The correction makes a fully accounted, shape-valid response with unsupported keys
+an explicit rejection-feedback event. It sends no key, advances no time, applies
+no attempted memory update and chooses no substitute action. Astra chooses its
+next response. Rejections consume budgets and can checkpoint/resume normally;
+uncertain transport or mutation remains a failure. The current focused set passes
+166 tests. Native validation and forward-only recovery of the original failed tail
+remain next; the original failed window is not relabelled success. The website's
+recorded recovery-101 view is not live tracking and does not yet include this new
+interruption. No production deployment or merge has occurred.
+
+### Previous verified recovery and continuation
 
 Forward-only native recovery passed at `914ac0721`, with
 [passing exact-source CI](https://github.com/lemoz/fort-gym/actions/runs/34162604769).
@@ -37,7 +67,7 @@ and delivered new Astra responses to the game. It allows six 16-decision segment
 preserving Astra Medium, subscription transport, native keyboard v2, raw 120x40
 screen, model-selected strategy, memory and the existing cumulative 256-dispatch/
 eight-million-token extension. No new extension or human gameplay rescue. The
-ongoing window has no terminal outcome or final usage audit yet; the recorded
+window subsequently stopped as described above; the recorded
 website remains explicitly non-live. Private owner and evidence are under
 `fort_gym/artifacts/native-local-20260906/runtime-v2/astra-native-post-recovery-v1`.
 

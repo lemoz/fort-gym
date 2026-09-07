@@ -124,4 +124,15 @@ The declared continuation at `d37a1b42f` has started from that recovered checkpo
 using six 16-decision segments and the existing cumulative 256-dispatch/eight-million-
 token extension. New Astra responses have reached the native game. No new model,
 strategy instruction, memory reset or budget extension is introduced. Terminal
-gameplay outcome and final usage audit remain pending for this ongoing window.
+gameplay outcome was subsequently an input-rejection interruption: response 184
+contained unsupported key names after 183 committed decisions and 44,000 elapsed
+ticks. No native input or clock dispatch occurred for the rejected response.
+Independent audit verifies five new checkpoints through 181, all usage, and full
+game/container/VM teardown. The newest state must be reconciled without rollback.
+
+A correction now records a fully accounted unknown-key response as rejection
+feedback, preserving its original content and usage while sending no keys or ticks.
+The model chooses its own correction; attempted memory is not applied. Offline
+checkpoint/resume and rejection tests pass. Native validation and recovery remain
+pending. This is a harness handling issue after a model typo, not evidence of
+fortress collapse or completion of the full experimental goal.

@@ -8,7 +8,19 @@ fortress through year two and beyond. Website evidence and remote source deliver
 remain requirements. The app goal is verified active; early native Astra gameplay
 and checkpoint-continuation evidence are now verified.
 
-Latest result: native recovery at `914ac0721` created verified checkpoint 101 from
+Latest result: the post-recovery window reached 183 committed decisions and
+44,000 elapsed ticks before model response 184 used unsupported key names.
+The response sent no native input or ticks, but the original harness treated it
+as fatal. Independent audit verifies checkpoints 117, 133, 149, 165 and 181 and
+complete game/container/VM teardown. No worker is live. The two newer committed
+actions and all usage are retained for forward-only reconciliation, not rollback.
+Campaign usage is 5,933,954 tokens, 6,002,958 including historical failed deliveries;
+subscription charges remain unreported. A tested correction lets Astra receive
+rejection feedback and choose its own next input without a substitute action.
+Native validation/recovery and the latest website record remain pending. The
+full year-two objective remains active. See campaign status for the exact boundary.
+
+Previous result: native recovery at `914ac0721` created verified checkpoint 101 from
 the newest retained state, without a model call, replayed key or added game tick.
 Model memory, all response usage, original source bytes and the original failed
 clock receipt are unchanged. The failure remains historical, not relabelled
@@ -17,7 +29,7 @@ Recovery teardown and exact-source CI pass; 134 focused recovery/runtime tests
 pass. Recovery evidence and the next configuration are pushed at `d37a1b42f`.
 The next six-by-16-decision window has started from checkpoint 101 and returned
 new Astra decisions. It preserves the same model, controls, memory and cumulative
-budget; no terminal outcome or final usage audit exists yet. See campaign status.
+budget; its later terminal interruption is described above. See campaign status.
 
 Historical interruption: reusable source `a004c490f` reached 100 committed decisions and
 29,000 elapsed ticks before a build-menu clock timeout on model response 101.
