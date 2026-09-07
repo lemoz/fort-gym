@@ -9,6 +9,7 @@ from ..agent.codex_transport import MODEL, REASONING_EFFORT
 from ..agent.keyboard_exchange import read
 from ..env.native_key_catalog import NATIVE_PROFILE
 from ..env.screen_observation import TEXT_PROFILE
+from .keyboard_save import LEGACY_SAVE_PROFILE, SAVE_PROFILES
 
 
 def positive(value: object, name: str, *, maximum: int | None = None) -> int:
@@ -72,6 +73,8 @@ def load_window(condition_path: Path, window_path: Path) -> tuple[dict, dict]:
     positive(window.get("continuation_from_next_step"), "continuation cursor")
     positive(window.get("steps_per_segment"), "segment size", maximum=64)
     positive(window.get("max_segments"), "segment count", maximum=16)
+    if window.get("snapshot_profile", LEGACY_SAVE_PROFILE) not in SAVE_PROFILES:
+        raise ValueError("Unsupported declared snapshot profile")
     extension = window.get("budget_extension")
     if extension is not None:
         if not isinstance(extension, dict) or set(extension) != {

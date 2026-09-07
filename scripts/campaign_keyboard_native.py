@@ -29,6 +29,11 @@ from fort_gym.bench.run.campaign_loop import reconciled_usage
 from fort_gym.bench.run.campaign_save import NativeSaveSnapshotter
 from fort_gym.bench.run.keyboard_config import load_window
 from fort_gym.bench.run.keyboard_segment import run_keyboard_segment
+from fort_gym.bench.run.keyboard_save import (
+    LEGACY_SAVE_PROFILE,
+    MENU_SAVE_PROFILE,
+    MenuPreservingSnapshotter,
+)
 from scripts.campaign_load_smoke import run_isolated
 from scripts.campaign_process import run_worker, termination_as_interrupt
 
@@ -81,6 +86,18 @@ def worker(args) -> dict:
         max_advance_ticks=condition["max_advance_ticks"],
     )
     try:
+        snapshotter = (
+            MenuPreservingSnapshotter(
+                dfroot=args.runtime,
+                screen_capture=environment.screen_capture,
+                minimum_free_bytes=MINIMUM_FREE_BYTES,
+            )
+            if window.get("snapshot_profile", LEGACY_SAVE_PROFILE) == MENU_SAVE_PROFILE
+            else NativeSaveSnapshotter(
+                dfroot=args.runtime,
+                minimum_free_bytes=MINIMUM_FREE_BYTES,
+            )
+        )
         agent = CodexKeyboardAgent(
             decision=lambda screen, memory, feedback: exchange_decision(
                 args.exchange,
@@ -97,10 +114,7 @@ def worker(args) -> dict:
         return run_keyboard_segment(
             agent=agent,
             environment=environment,
-            snapshotter=NativeSaveSnapshotter(
-                dfroot=args.runtime,
-                minimum_free_bytes=MINIMUM_FREE_BYTES,
-            ),
+            snapshotter=snapshotter,
             output=args.output,
             condition=condition,
             checkpoint=args.checkpoint,
@@ -137,6 +151,7 @@ def run_window(args) -> dict:
         "schema_version": "fortgym.keyboard-window-result/v1",
         "source_revision": args.revision,
         "campaign_id": manifest["payload"]["campaign_id"],
+        "snapshot_profile": window.get("snapshot_profile", LEGACY_SAVE_PROFILE),
         "status": "failed",
         "segments": [],
         "original_checkpoint_unchanged": False,

@@ -8,6 +8,10 @@ The host-side model operation is
 The outside VM/container owner remains responsible for its own provisioning,
 read-only checkpoint mount, host courier transport and final VM teardown.
 
+An explicit `snapshot_profile` can select the new
+[menu-preserving save helper](native-menu-save.md). Omitted values preserve
+historical quicksave behavior; no past window is silently changed.
+
 ## Declared window
 
 `experiments/campaign_astra_keyboard_window_20260907b.json` starts at cursor 72

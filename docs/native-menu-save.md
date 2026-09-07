@@ -1,0 +1,43 @@
+# Menu-preserving native checkpoints
+
+The optional window setting `snapshot_profile: native_menu_preserving_save/v1`
+selects checkpoint maintenance for the version-matched DF 0.47.05 runtime.
+Omitted settings retain historical `native_quicksave/v1` behavior. Existing
+experiment files and their executed conditions are unchanged.
+
+The helper verifies the expected runtime and paused fortress, temporarily hides
+the same native menu objects using DFHack's `hideGuard`, sets the autosave flag,
+and calls the paused fortress screen's native logic once to process the save.
+It restores the original menu stack and backup preference even on Lua failure.
+It sends no keyboard events, does not unpause, and does not edit world counters
+or orders. It is not exposed to the playing model.
+
+A successful checkpoint requires a structured operational receipt, identical
+native calendar and save identity, exact menu stack restoration, unchanged raw
+screen capture, completed native save flag, changed world-save signature, and
+a stable copied file inventory. The checkpoint retains the receipt and screen
+digest. Unknown completion or RPC failure is not retried; copied partial output
+is forensic only, not an accepted checkpoint. Reloading DF still resets its UI:
+this profile preserves menus during saving, not across process restarts.
+
+## Evidence and current limitation
+
+A provider-free diagnostic on source `4802a234a415c5a4acae17453bd2e7105533fefa`
+saved and freshly reloaded a unit-menu case and a normal-quicksave control.
+Both preserved exact before/after-save observations and screens, with zero save
+keys and ticks. Independently reviewed JSON world observations matched after
+reload in both cases and between cases. The initial apparent `map_bounds`
+difference was a Python tuple versus its JSON list, not different values.
+This covers recorded observer fields, not every internal native world object.
+All four game processes, the container and isolated local VM were stopped.
+
+The committed production helper still requires its own frozen-source native
+validation before a new campaign window selects it. No model calls are part of
+this diagnostic. The historical checkpoint-200 timeout and unsaved 16-decision
+tail remain failed and retained; this fix does not recover them or authorize a
+silent rewind. Latest verified historical checkpoint remains 184.
+
+Primary implementation references: bundled DFHack 0.47.05-r8 `quicksave.lua`,
+[quicksave documentation](https://docs.dfhack.org/en/0.47.05-r8/docs/tools/quicksave.html),
+and the version-matched
+[Lua screen API](https://docs.dfhack.org/en/0.47.05-r8/docs/dev/Lua%20API.html).
