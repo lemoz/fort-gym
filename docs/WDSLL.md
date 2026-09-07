@@ -10,8 +10,10 @@ The model chooses all gameplay and inspection actions; no human rescue or live
 code change has been introduced. The previous reasoning-budget campaign remains
 a preserved terminal harness failure, not a resumed or successful campaign.
 
-The observer-side VIEW classification fix is pushed in [PR #133](https://github.com/lemoz/fort-gym/pull/133),
-with 104 focused checks passed and actual checkpoint read-only validation. See
+The observer-side VIEW classification and exact-command retry reporting are
+pushed in [PR #133](https://github.com/lemoz/fort-gym/pull/133), with 132 focused
+checks passed and read-only native validation. Exact-head CI passed with 1,841
+tests passed and 60 skipped. Retry acceptance does not imply successful recovery. See
 [current campaign status](CAMPAIGN_STATUS.md) for exact remote heads, CI and live
 execution bounds. The runtime and website PRs remain unmerged; production is
 unchanged. First-year viability, year-two play, repeated comparable three-model

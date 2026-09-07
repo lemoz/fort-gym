@@ -30,17 +30,22 @@ No human gameplay action, model fallback, new cloud VM or live code change has
 been introduced. The original seed is used, not a rollback of the failed prior
 campaign. The live owner's teardown is not yet due or claimed complete.
 
-The tracker condition-link and VIEW reporting corrections are pushed in
+The tracker condition-link, VIEW reporting and command-retry outcomes are pushed in
 [PR #133](https://github.com/lemoz/fort-gym/pull/133) at
-`abcd648a91e2ae593de57a2c116df959f5570847`. It links the exact authored
+`17fa187c1c631ab7ee8f4f9e7dcc994d8493ce33`. It links the exact authored
 configuration only when its canonical digest matches; it imports no live capture
 or result row. The offline reporter now categorizes VIEW correctly instead of
-UNKNOWN, with an explicit map-inspection label in the existing tracker. This
-observer-only correction does not change the running producer or infer VIEW from
-old UNKNOWN aggregates. All 104 focused checks pass; a local read-only checkpoint
-comparison also confirmed the defect without modifying evidence.
-[Exact-head website CI](https://github.com/lemoz/fort-gym/actions/runs/34104221476)
-passed. This is remote source delivery, not a merge or website deployment.
+UNKNOWN, with an explicit map-inspection label in the existing tracker. It also
+reports accepted, rejected-again and unknown outcomes for exact-command retries
+across intervening actions. Acceptance is not proof of recovery. These observer
+changes do not change the running producer or reconstruct missing old evidence;
+older retry aggregates remain absent and display `not recorded`.
+All 132 focused checks pass, including synthetic source-to-HTTP delivery,
+count-only projection and preservation of historical snapshots. Local read-only
+native checks corroborated the observer without modifying or exporting evidence.
+[Exact-head website CI](https://github.com/lemoz/fort-gym/actions/runs/34114394752)
+passed with 1,841 tests passed and 60 skipped. Existing whole-tree static-check
+debt remains. This is remote source delivery, not a merge or website deployment.
 
 These current observations supersede the unrun/no-live-owner statements in the
 historical sections below. Detailed native payloads remain local. Year-two
