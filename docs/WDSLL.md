@@ -8,16 +8,27 @@ fortress through year two and beyond. Website evidence and remote source deliver
 remain requirements. The app goal is verified active; early native Astra gameplay
 and checkpoint-continuation evidence are now verified.
 
-Latest result: reusable source `a004c490f` reached 100 committed decisions and
+Latest result: native recovery at `914ac0721` created verified checkpoint 101 from
+the newest retained state, without a model call, replayed key or added game tick.
+Model memory, all response usage, original source bytes and the original failed
+clock receipt are unchanged. The failure remains historical, not relabelled
+success. The native clock correction also passed its separate real-game diagnostic.
+Recovery teardown and exact-source CI pass; 134 focused recovery/runtime tests
+pass. Recovery evidence and the next configuration are pushed at `d37a1b42f`.
+The next six-by-16-decision window has started from checkpoint 101 and returned
+new Astra decisions. It preserves the same model, controls, memory and cumulative
+budget; no terminal outcome or final usage audit exists yet. See campaign status.
+
+Historical interruption: reusable source `a004c490f` reached 100 committed decisions and
 29,000 elapsed ticks before a build-menu clock timeout on model response 101.
-The latest verified checkpoint is 88; newer native state and all usage are retained
-for reconciliation, not rollback. An independent audit confirms teardown of the
-native games, container and local VM. No campaign worker remains active.
+The checkpoint at that interruption was 88; newer native state and all usage were
+retained for reconciliation, not rollback. An independent audit confirms teardown
+of the native games, container and local VM for the interrupted window.
 Campaign usage is 3,231,792 tokens, or 3,300,796 including historical failed
 deliveries, with subscription charges unreported. A tested build-menu deferral
 fix and website interruption record preserve the distinction between a harness
-failure and a failed fortress. Native validation and forward-only recovery remain
-next; the year-two goal is still active.
+failure and a failed fortress. Native validation and forward-only recovery later
+passed as described above; the year-two goal is still active.
 
 Previous completed window: Astra Medium completed 64 additional native keyboard decisions,
 bringing the same campaign to 72 decisions, 357 key events and 25,000 elapsed

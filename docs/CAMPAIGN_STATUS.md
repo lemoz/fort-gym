@@ -13,7 +13,38 @@ and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. The first bounded Astra native
 keyboard campaign has now completed.
 
-### Latest reusable-runtime interruption
+### Verified recovery and new continuation
+
+Forward-only native recovery passed at `914ac0721`, with
+[passing exact-source CI](https://github.com/lemoz/fort-gym/actions/runs/34162604769).
+An independent audit verifies a new resumable checkpoint at cursor 101, preserving
+the latest native save, model memory, all 101 responses, 29,000 elapsed ticks and
+3,231,792 campaign tokens. Recovery made zero model calls, sent zero keys and
+requested zero ticks. It retains the original failed clock receipt and source
+bytes unchanged; the earlier failed window remains failed. Native game, container
+and VM teardown verified for recovery. The checkpoint hash is
+`a412590ef8d1a663ad1f177b5a109dd5fc6551725d11d02f6a375d8c2f3981f3`.
+
+The clock correction also passed a separate native diagnostic: ordinary clock
+advance produced 100 ticks; the observed blocking build menu returned a verified
+zero-tick deferral without clock dispatch or a recovery key. This diagnostic is
+not campaign progress. Recovery code has 134 focused passing tests.
+
+Source `d37a1b42f` and the non-content recovery manifest are pushed in draft
+[PR #137](https://github.com/lemoz/fort-gym/pull/137). The declared continuation
+`campaign_astra_keyboard_window_20260907c.json` has started from checkpoint 101
+and delivered new Astra responses to the game. It allows six 16-decision segments,
+preserving Astra Medium, subscription transport, native keyboard v2, raw 120x40
+screen, model-selected strategy, memory and the existing cumulative 256-dispatch/
+eight-million-token extension. No new extension or human gameplay rescue. The
+ongoing window has no terminal outcome or final usage audit yet; the recorded
+website remains explicitly non-live. Private owner and evidence are under
+`fort_gym/artifacts/native-local-20260906/runtime-v2/astra-native-post-recovery-v1`.
+
+Year-two viability, sustained production, repeated comparable model results,
+reviewed merge, production deployment and visual acceptance remain unclaimed.
+
+### Historical reusable-runtime interruption
 
 The same fortress ran on the public reusable keyboard command and host courier
 at source `a004c490f`, pushed in draft PR #137 with
@@ -28,11 +59,11 @@ The window stopped on a native clock timeout after 100 committed decisions and
 sent three confirmed keys and then advanced zero ticks while a native build menu
 remained open. This is an infrastructure interruption, not a fortress-collapse
 or budget-limit result. Independent audit verifies both native-process cleanups,
-container exit and local VM teardown. No new model run is active.
+container exit and local VM teardown for that interrupted window.
 
-The last verified checkpoint is cursor 88, with 12 newer committed decisions and
+At interruption, the last verified checkpoint was cursor 88, with 12 newer committed decisions and
 the failed action retained in a forensic native save and journals. That save is
-not yet a resumable checkpoint. It must be reconciled without replaying the action
+not itself a resumable checkpoint. It required reconciliation without replaying the action
 or replacing newer state with cursor 88. Original configuration, budget extension,
 memory handoffs and trace/usage prefixes remain intact.
 
@@ -49,7 +80,7 @@ access. Changed-file Ruff and scoped mypy for all four new source modules passed
 The build-menu correction returns a verified zero-tick deferral to the model
 without selecting a recovery key or invoking the clock. Offline regression tests
 cover checkpoint continuation, strict native boundaries and failure retention.
-Fresh native validation and forward-only reconciliation remain next. The original
+Native validation and forward-only reconciliation subsequently passed as above. The original
 failed run is not reclassified. Production deployment and visual acceptance
 remain unclaimed.
 

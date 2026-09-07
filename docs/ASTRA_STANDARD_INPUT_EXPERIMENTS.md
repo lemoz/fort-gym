@@ -110,6 +110,18 @@ its keys were sent. Native state, usage and a cursor-88 checkpoint are retained;
 newer actions must not be replayed from that older checkpoint. Teardown and
 3,300,796 total tokens including historical failed deliveries independently
 verify. A tested correction returns blocked-clock feedback to the model without
-choosing gameplay. Native validation and forward-only recovery remain next.
+choosing gameplay. Native validation and forward-only recovery subsequently passed.
 The website now has a separate non-content interruption record; this failure is
 not retroactively turned into a successful or budget-limited campaign window.
+
+The native recovery at `914ac0721` verifies checkpoint 101 from the newest state,
+with unchanged model memory, responses, usage and 29,000 elapsed ticks. It made
+zero model calls, sent zero keys and requested zero ticks. Source bytes and the
+original failed clock receipt remain unchanged. Independent audit verifies native
+checkpoint lineage and teardown; exact-source CI and 134 focused checks pass.
+
+The declared continuation at `d37a1b42f` has started from that recovered checkpoint,
+using six 16-decision segments and the existing cumulative 256-dispatch/eight-million-
+token extension. New Astra responses have reached the native game. No new model,
+strategy instruction, memory reset or budget extension is introduced. Terminal
+gameplay outcome and final usage audit remain pending for this ongoing window.
