@@ -2,6 +2,42 @@
 
 Verified September 7, 2026 UTC. The Year-Two Autonomous Play goal remains active.
 
+## First reasoning-budget segment completed and audited
+
+The original owner exited successfully with 32 commands, 76,000 actual elapsed
+ticks and 325,234 accounted tokens. All 32 returned responses ended normally.
+Checkpoints at 8, 16, 24 and 32 verified; the final save covers every command and
+all returned usage. Native cleanup, stopped container, absent model/tunnel
+processes, closed listener and stopped local VM were independently checked.
+
+The retained observations show seven living citizens, one completed workshop,
+drink units declining from 60 to 39, and no completed beds or farms. Food/drink
+flow and a functioning fortress are not established. The earlier workshop
+progress receipt remains immutable. The terminal result is registered as the
+fourteenth recorded campaign; older live snapshots cannot roll it back.
+See [the result and limitations](LOCAL_REASONING_SEGMENT1_RESULT.md).
+
+The separate seven-segment continuation is now running. Its container started
+at `2026-09-07T03:46:04.734379218Z`; the segment-two public boundary at
+`2026-09-07T03:46:17.485341+00:00` retained cursor 32, 76,000 ticks and 325,234
+tokens. The new trace retains the exact first-segment checkpoint prefix.
+No new committed action was observed at this check; the original owner handle
+is live. Nineteen offline owner tests and the prior-owner receipt gate passed.
+The frozen `de69c7a46` source, exact model/condition and cumulative budgets are
+unchanged. This is a continuation of the same campaign, not another trial.
+
+Website-focused validation: 103 tests passed; the corresponding integration
+selection passed 102. Changed-file Ruff, Black and JavaScript syntax checks
+passed. The broader website suite finished with 1,841 passed, 10 skipped and one
+sandbox-denied socket test; the exact test passed separately with local socket
+access on the same source. The public result is pushed on PR #133 at
+`b896ee79a834ca6b673d16a0b087747c756e5568`, with successful
+[exact-head CI](https://github.com/lemoz/fort-gym/actions/runs/34080674648).
+Existing website-wide lint/type debt remains: 10 Ruff findings and
+464 mypy errors in 26 files. The root-wide mypy invocation also encounters
+duplicate modules in ignored runtime artifacts; neither is a new pass claim.
+No browser visual acceptance, merge or production deployment is claimed.
+
 ## Latest: native workshop completed; continuation owner prepared
 
 The running campaign reported one completed workshop after fourteen commands

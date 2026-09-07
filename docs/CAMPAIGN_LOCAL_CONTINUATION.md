@@ -1,6 +1,20 @@
 # Local year-two continuation
 
-September 7, 2026 UTC. Status: prepared and checked offline, **not launched**.
+September 7, 2026 UTC. Status: **running from the verified cursor-32 checkpoint**.
+
+The first owner has now completed and its final checkpoint and resource teardown
+have been independently audited. Its native cursor is 32, with 76,000 elapsed
+ticks and 325,234 accounted tokens. The final checkpoint manifest digest is
+`9107218b7c5fea3638e329e631a9e9b1d763457cb7f80092fe3a4679c67824e3`.
+The selected operator's read-only prior-owner gate passes; 19 offline tests pass
+again. This supersedes the preparation-time missing-receipt observation below.
+See [the terminal result](LOCAL_REASONING_SEGMENT1_RESULT.md). The selected
+remaining-segments owner started its container at
+`2026-09-07T03:46:04.734379218Z`. The segment-two public boundary retains
+32 commands, 76,000 elapsed ticks and 325,234 tokens; the new trace starts with
+the exact final-checkpoint trace bytes. No new action had committed at that
+observation. The original owner handle is live and will be followed without
+restart. The older preparation-time observations below are historical.
 
 ## Selected continuation: remaining declared segments
 

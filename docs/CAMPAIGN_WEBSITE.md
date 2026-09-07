@@ -1,5 +1,28 @@
 # Campaign website delivery milestone
 
+## Latest recorded result, September 7
+
+The first reasoning-budget segment is now registered as the fourteenth recorded
+campaign: 32 commands, 76,000 actual ticks, seven living citizens, one completed
+workshop, drink inventory 60 to 39, and 325,234 accounted tokens. Its checkpoint
+and outer-resource teardown were independently verified. See the
+[result and limitations](LOCAL_REASONING_SEGMENT1_RESULT.md).
+
+The historical three-command capture described below is unchanged. HTTP tests
+now verify that it cannot roll back this campaign's newer terminal record or
+create a duplicate row. The separate original-feed and helper tests retain its
+timestamp and unknown metrics. No live game, browser or deployment is started
+by serving these versioned records.
+
+The result and HTTP regression are pushed in PR #133 at
+`b896ee79a834ca6b673d16a0b087747c756e5568`.
+[Exact-head CI](https://github.com/lemoz/fort-gym/actions/runs/34080674648)
+passed. The local website suite reported 1,841 passed and 10 skipped; its one
+sandbox-blocked socket test passed separately on the same head with loopback
+access. There were 103 focused website checks and 102 in this integration
+checkout. Merge, browser visual acceptance and production deployment remain
+separate, unclaimed steps.
+
 ## Current real-data compatibility check, September 7
 
 The optional active feed now recognizes the published reasoning-budget condition

@@ -51,7 +51,7 @@ assert.equal(helpers.configurationUrl({condition_id:'local-native-llama-long-v2'
 
 def test_three_published_native_attempts_preserve_distinct_failure_causes():
     result = records.campaign_feed(None)
-    assert result["configured"] is False and result["published_snapshots"] == 13
+    assert result["configured"] is False and result["published_snapshots"] == 14
     by_model = {
         row["model"]: row
         for row in result["campaigns"]
@@ -83,7 +83,7 @@ def test_recorded_comparison_is_served_without_enabling_a_live_directory(monkeyp
     client = TestClient(server.app)
     response = client.get("/public/campaign-feed")
     assert response.status_code == 200 and response.json()["configured"] is False
-    assert len(response.json()["campaigns"]) == 13
+    assert len(response.json()["campaigns"]) == 14
     assert "no-store" in response.headers["cache-control"]
     assert client.get("/campaigns").status_code == 200
 
@@ -135,6 +135,59 @@ def test_year_two_baseline_preserves_no_development_and_complete_checkpoint():
     assert audit["all_current_fact_projections_match_observations"] is True
     assert audit["historical_inputs_rewritten"] is False
     assert audit["production_deployed"] is False
+
+
+def test_reasoning_budget_segment_preserves_development_usage_and_resume_boundary():
+    from fort_gym.bench.api import server
+
+    evidence = records.PROJECT_ROOT / "experiments/evidence"
+    path = evidence / "local_native_qwen35_year_two_reasoning_segment1_20260907.json"
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == (
+        "2ccbe8ef5b7f2f663fdebf688b9bf8faae3362603e508edf9fbf976094ebc731"
+    )
+    bundle = json.loads(path.read_text())
+    snapshot = bundle["campaigns"][0]
+    response = TestClient(server.app).get("/public/campaign-feed")
+    assert response.status_code == 200
+    matches = [
+        r for r in response.json()["campaigns"] if r["campaign_id"] == snapshot["campaign_id"]
+    ]
+    assert len(matches) == 1
+    row = matches[0]
+    assert row["lifecycle"] == "finished"
+    assert row["segment_status"] == "bounded_segment_complete"
+    assert row["failure_kind"] == "none"
+    assert (row["committed_steps"], row["elapsed_ticks"]) == (32, 76000)
+    assert row["current_metrics"]["population"] == 7
+    assert row["current_metrics"]["drink_stock"] == 39
+    assert row["metric_summaries"]["drink_stock"]["start"] == 60
+    assert row["current_metrics"]["completed_workshops"] == 1
+    assert row["current_metrics"]["completed_beds"] == 0
+    assert row["current_metrics"]["completed_farms"] == 0
+    for metric in ("food_stock", "wood_stock", "stone_stock", "functional_rooms"):
+        assert row["current_metrics"][metric] is None
+    assert row["actions"]["accepted"] == 25 and row["actions"]["rejected"] == 7
+    assert row["actions"]["by_type"]["ORDER"]["accepted"] == 1
+    assert row["usage"]["total_tokens"] == 325234
+    assert row["usage"]["dispatched_requests"] == row["usage"]["accounted_responses"] == 32
+    assert row["usage"]["dispatches_without_returned_usage"] == 0
+    assert row["usage"]["metered_provider_charge_usd"] == "0"
+    assert row["usage"]["infrastructure_cost_usd"] is None
+    assert row["checkpoint_verified"] is row["cleanup_verified"] is True
+    assert row["functioning_fortress"] == row["fortress_collapse"] == "not_assessed"
+    assert row["flow_measurement"] == "unavailable"
+    assert row["comparison_rankings_available"] is False
+    assert row["code_revision"] == "de69c7a467eb0b00becfef03329bac9f58690e35"
+    assert bundle["reporting_code_revision"] == "80eea7dc7e0d1b853a6918d4f2e5b639dc081faa"
+    audit = bundle["native_audit"]
+    assert audit["controller_status"] == "invocation_limited_pause"
+    assert [c["next_step"] for c in audit["checkpoints"]] == [8, 16, 24, 32]
+    assert audit["final_checkpoint_covers_all_commands_and_returned_usage"] is True
+    assert audit["tokens_summed_from_native_model_responses"] == 325234
+    assert audit["finish_reasons"] == ["stop"]
+    assert audit["requested_tick_mismatches"] == []
+    assert audit["local_container_stopped"] is audit["local_vm_stopped"] is True
+    assert audit["historical_inputs_rewritten"] is audit["production_deployed"] is False
 
 
 def test_year_two_thinking_pause_preserves_accounted_response_without_game_action():
@@ -548,6 +601,7 @@ def test_website_separates_incomplete_checkpoint_and_new_model_compatibility():
         "local-long-v2-qwen35-20260906-a",
         "fort-gym-year-two-qwen35-20260906-a",
         "fort-gym-year-two-qwen35-thinking-v1-a",
+        "fort-gym-year-two-qwen35-reasoning-budget-v1-a",
     }
 
 
