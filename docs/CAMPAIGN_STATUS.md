@@ -2,6 +2,28 @@
 
 Verified September 7, 2026 UTC. The Year-Two Autonomous Play goal remains active.
 
+## Latest: terminal liaison-dialog failure, owner torn down
+
+The campaign stopped at 83 committed decisions and 203,339 elapsed native ticks.
+After a clean interruption for a liaison meeting, the model requested WAIT on
+the paused dialog. The clock advanced zero ticks and returned
+`interrupt_baseline_invalid`; the harness escalated that choice to a terminal
+failure. Nine citizens were alive. This is not established fortress collapse.
+
+All 84 returned responses reconcile to 931,832 cumulative tokens, including the
+last uncommitted decision. Metered model charges were $0; hardware, energy and app
+costs remain unknown. Checkpoints through 80 verified, but no complete terminal
+save exists. Restoring 80 would roll back three committed decisions, not provide
+lossless continuation. The model/tunnel/container/local VM are stopped and owned
+teardown was independently audited.
+
+The [terminal result and next repair](LOCAL_REASONING_DIALOG_RESULT.md) replace
+the earlier website registry entry for this same campaign, keeping 14 recorded
+rows and preserving all historical bundles. No new trial, merge, deployment,
+browser acceptance or year-two success is claimed. Next work is nonfatal feedback
+for model actions blocked by an observed dialog, with no automatic dialog choice.
+Earlier live-status paragraphs below are historical and superseded by this section.
+
 ## Latest: automatic continuation through checkpoint 64
 
 The same controller completed segment two, verified native game-process cleanup,

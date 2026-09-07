@@ -75,12 +75,13 @@ def test_actual_older_public_capture_cannot_roll_back_its_verified_terminal_resu
         assert len(data["campaigns"]) == 14
         row = next(r for r in data["campaigns"] if r["campaign_id"] == original["campaign_id"])
         assert row["lifecycle"] == "finished" and row["freshness"] == "recorded"
-        assert row["committed_steps"] == 32 and row["elapsed_ticks"] == 76000
-        assert row["usage"]["total_tokens"] == 325234
-        assert row["current_metrics"]["population"] == 7
-        assert row["current_metrics"]["drink_stock"] == 39
+        assert row["committed_steps"] == 83 and row["elapsed_ticks"] == 203339
+        assert row["usage"]["total_tokens"] == 931832
+        assert row["current_metrics"]["population"] == 9
+        assert row["current_metrics"]["drink_stock"] == 25
         assert row["current_metrics"]["completed_workshops"] == 1
-        assert row["cleanup_verified"] is row["checkpoint_verified"] is True
+        assert row["cleanup_verified"] is True and row["checkpoint_verified"] is False
+        assert row["segment_status"] == "failed"
         # The original captured feed is unchanged, including its unknown metrics.
         assert public_snapshot(read_feed(root)["campaigns"][0]) == public_snapshot(original)
         key = hashlib.sha256(original["campaign_id"].encode()).hexdigest()
