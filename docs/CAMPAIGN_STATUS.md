@@ -2,6 +2,34 @@
 
 Verified September 7, 2026 UTC. The Year-Two Autonomous Play goal remains active.
 
+## Latest: model-controlled terrain inspection pushed
+
+[PR #136](https://github.com/lemoz/fort-gym/pull/136) adds the opt-in pair
+`campaign_action/v2` and `campaign_state/v3`. Models can select an in-map
+rectangle and z-level with VIEW at zero ticks. The terrain-only view remains
+alongside the fort overview and survives checkpoint continuation and accounted
+output pauses. Hidden tiles are checked before their detail is read; failed
+requests retain the prior selection. No location or action is chosen for the
+model. Inconsistent native map receipts are classified as runtime failures,
+with already-returned native tick receipts retained.
+
+The implementation is on `codex/campaign-map-inspection` at
+`bbe58f9485d7ed42f288b9fa27f4d932159d9c01`, stacked on PR #135. It is not
+cherry-picked into this integration branch. See the
+[inspection contract](https://github.com/lemoz/fort-gym/blob/bbe58f9485d7ed42f288b9fa27f4d932159d9c01/docs/CAMPAIGN_MAP_INSPECTION.md).
+All 299 focused checks pass, including 83 inspection tests and 23 that execute
+the Lua reader against engine doubles. The full suite had 2,083 passed,
+10 skipped and one sandbox-denied socket test; the exact socket test passed
+separately. Changed-file checks and scoped mypy pass. Whole-tree findings remain
+10 Ruff errors and 464 mypy errors in 26 files. New exact-head CI is pending
+at this publication.
+
+No native game or real model has used this hook/profile yet. Next is a separately
+declared provider-free native inspection check, then a fresh local campaign
+condition from the immutable seed. Historical conditions, saves, results and
+fixture verdicts are unchanged. No new comparison row, year-two result,
+merge or deployment is claimed.
+
 ## Latest: opt-in elapsed campaign observations pushed
 
 [PR #135](https://github.com/lemoz/fort-gym/pull/135) adds
@@ -19,8 +47,9 @@ tests and the mocked local-transport output-pause/restore path. The preceding
 full run had 1,999 passed, 10 skipped and one sandbox-denied socket test; that
 exact socket test passed separately. The final additional transport test is in
 the 30/82 selections. Changed-file checks and scoped mypy pass. Existing
-whole-tree lint/type findings remain. Exact-head CI for this new PR is pending
-at publication, not inferred from the dependency's successful run.
+whole-tree lint/type findings remain.
+[Exact-head CI passed](https://github.com/lemoz/fort-gym/actions/runs/34094906822)
+for the clock implementation above.
 
 The native dialog evidence publication is now pushed in PR #134 at
 `5f5700a704ed8402bb6e1a4a9a9609e3f8750e72`, with
