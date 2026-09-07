@@ -2,6 +2,35 @@
 
 Verified September 7, 2026 UTC. The Year-Two Autonomous Play goal remains active.
 
+## Latest: opt-in elapsed campaign observations pushed
+
+[PR #135](https://github.com/lemoz/fort-gym/pull/135) adds
+`campaign_state/v2`: the model sees campaign elapsed ticks and elapsed years from
+the loop's committed native receipts, separate from the world's calendar year.
+The clock survives checkpoint continuation, remains unchanged on zero-tick
+actions and stays unknown when full-prefix evidence is unavailable. Existing v1
+conditions and representative observation bytes remain unchanged. See
+[the clock contract and hypothesis](CAMPAIGN_CLOCK.md).
+
+The implementation is pushed at `47fc2b9a924cc402453581b3aa707d838d4a3604`
+and integrated in this branch at `d1c915b8b6527817b22fd6c44b3f31105a30d8c5`.
+All 82 final focused checks pass in both checkouts, including 30 clock-specific
+tests and the mocked local-transport output-pause/restore path. The preceding
+full run had 1,999 passed, 10 skipped and one sandbox-denied socket test; that
+exact socket test passed separately. The final additional transport test is in
+the 30/82 selections. Changed-file checks and scoped mypy pass. Existing
+whole-tree lint/type findings remain. Exact-head CI for this new PR is pending
+at publication, not inferred from the dependency's successful run.
+
+The native dialog evidence publication is now pushed in PR #134 at
+`5f5700a704ed8402bb6e1a4a9a9609e3f8750e72`, with
+[successful exact-head CI](https://github.com/lemoz/fort-gym/actions/runs/34094126489).
+Its original fixture-failed verdict and narrower component evidence stay intact.
+No model/native attempt has used the clock profile; no new comparison row or
+year-two result exists. The next gameplay-interface task is model-controlled,
+read-only map pan/z inspection, followed by a newly declared experiment using
+the improved interface. Nothing here merges or deploys the pending website/runtime PRs.
+
 ## Latest: terminal liaison-dialog failure, owner torn down
 
 The separately declared native dialog fixture has now run once. Its original
