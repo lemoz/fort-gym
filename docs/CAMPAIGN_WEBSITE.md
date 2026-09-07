@@ -22,10 +22,15 @@ link, reported-running/stale labels, zero model API charge and unknown operating
 costs. This is real-data route/formatting coverage, not browser visual acceptance.
 
 The frozen native producer omits population and drink-stock values in this
-running report even though the terminal reporting path supports the newer
-metrics profile. The website preserves those unknowns and does not infer them
-from another campaign. Improving future producer telemetry remains separate from
-this link fix; the active game's source and condition were not changed.
+running report. This website branch's newer shared metrics reader supports v2
+observations in both terminal reports and `CampaignFeed.progress`. Separate
+synthetic publisher-to-HTTP tests verify population and drink counts, confirmed
+zero values, and loss of incomplete or missing observations without carrying
+forward older counts. These tests do not replace the actual captured report or
+claim that the frozen producer has been upgraded. The website preserves its
+unknowns and does not infer them from another campaign. Future execution must
+include the newer reader to emit these values; the active game's source and
+condition were not changed.
 No website server, browser, hosted Site, production deployment or merge was
 started by this check. The existing FastAPI/static implementation is preserved.
 
