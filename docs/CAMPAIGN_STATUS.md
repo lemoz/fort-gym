@@ -4,6 +4,15 @@ Verified September 7, 2026 UTC. The Year-Two Autonomous Play goal remains active
 
 ## First reasoning-budget segment completed and audited
 
+First post-restore gameplay is now verified at the public boundary
+`2026-09-07T03:50:45.006612+00:00`: 34 commands, 81,000 elapsed ticks and
+345,982 accounted tokens. The model issued an accepted ORDER at step 32 and
+WAIT at step 33, advancing continuously from native tick 92,801 to 97,801.
+The exact first-segment trace is retained as a prefix. See the immutable
+[continuation observation](../experiments/evidence/local_native_qwen35_year_two_continuation_start_20260907.json).
+The second segment and its owner remain active; no second-segment final save or
+teardown is claimed. This is real native continuation, not a synthetic test.
+
 The original owner exited successfully with 32 commands, 76,000 actual elapsed
 ticks and 325,234 accounted tokens. All 32 returned responses ended normally.
 Checkpoints at 8, 16, 24 and 32 verified; the final save covers every command and

@@ -1,0 +1,69 @@
+{
+  "schema_version": "fortgym.native-campaign-continuation-observation/v1",
+  "status": "running_snapshot_not_terminal",
+  "campaign_id": "fort-gym-year-two-qwen35-reasoning-budget-v1-a",
+  "segment_id": "segment-000002",
+  "execution_revision": "de69c7a467eb0b00becfef03329bac9f58690e35",
+  "condition_sha256": "13ec2fdaad2b5e63b6f1e8fc4d57feefd3f66cd307104267d7bc06743cdbb490",
+  "operator_sha256": "f0f6676524531227c58e1dfdd94566d2e44d0fb80ce924d180b8d10b283c7218",
+  "container_started_at": "2026-09-07T03:46:04.734379218Z",
+  "public_report_updated_at": "2026-09-07T03:50:45.006612+00:00",
+  "restored_checkpoint_manifest_sha256": "9107218b7c5fea3638e329e631a9e9b1d763457cb7f80092fe3a4679c67824e3",
+  "restored_checkpoint_payload_sha256": "da0a930525210d16bfcf437657159050a1df1713332c73b5dac787b860e43129",
+  "previous_operator_receipt_sha256": "137823e7d5c9ade7e990bb36e2694bd863a529c4082a511bf2cd9128885f6423",
+  "prior_terminal_bundle": "local_native_qwen35_year_two_reasoning_segment1_20260907.json",
+  "prior_terminal_bundle_sha256": "2ccbe8ef5b7f2f663fdebf688b9bf8faae3362603e508edf9fbf976094ebc731",
+  "retained_parent_trace_is_exact_prefix": true,
+  "committed_steps": 34,
+  "prefix_bytes": 3461897,
+  "prefix_sha256": "94a66da73397b448b0e86e69585c580854ec3d72436a25624d4a0dcc03bd1d99",
+  "parent_trace_sha256": "1feea15774dbceb0bac6fa1c8221fb245e9d77f017c8b87cfd3def019fce57e5",
+  "first_post_restore_commands": [
+    {
+      "step": 32,
+      "action": "ORDER",
+      "accepted": true,
+      "requested_ticks": 2500,
+      "actual_ticks": 2500,
+      "start_year": 30,
+      "start_tick": 92801,
+      "end_year": 30,
+      "end_tick": 95301
+    },
+    {
+      "step": 33,
+      "action": "WAIT",
+      "accepted": true,
+      "requested_ticks": 2500,
+      "actual_ticks": 2500,
+      "start_year": 30,
+      "start_tick": 95301,
+      "end_year": 30,
+      "end_tick": 97801
+    }
+  ],
+  "elapsed_ticks": 81000,
+  "usage": {
+    "total_tokens": 345982,
+    "dispatched_requests": 34,
+    "returned_responses": 34,
+    "accounted_responses": 34,
+    "metered_provider_charge_usd": "0",
+    "hardware_energy_and_app_cost_usd": null
+  },
+  "seed_reset": false,
+  "condition_changed": false,
+  "human_gameplay_rescue": false,
+  "current_segment_final_checkpoint_verified": false,
+  "current_owner_teardown_verified": false,
+  "comparison_rankings_available": false,
+  "year_two_success_verified": false,
+  "production_deployed": false,
+  "notes": [
+    "The first two post-restore model actions advance continuously from native year 30 tick 92801 to tick 97801, after the verified step-32 native checkpoint.",
+    "This fixed trace prefix remains part of an active campaign. The snapshot is not a terminal result, not evidence of a completed second segment, and not a second independent trial.",
+    "The earlier first-segment owner and its resources were independently verified stopped before this continuation. The new owner remains active and still owes final evidence copy and teardown.",
+    "Keep this receipt and the first-segment bundle immutable. A later cumulative terminal bundle replaces the registry pointer for the same campaign, not its historical files.",
+    "Local model API charges are zero, not all-in execution costs. Food/drink production, sustainability and a functioning fortress remain unverified."
+  ]
+}

@@ -2,6 +2,12 @@
 
 September 7, 2026 UTC. Status: **running from the verified cursor-32 checkpoint**.
 
+Native continuation is now observed through cursor 34: an accepted ORDER and
+WAIT advance continuously from year 30 tick 92,801 to 97,801. The campaign has
+81,000 elapsed ticks and 345,982 accounted tokens. Its exact prior trace prefix
+is preserved. This [fixed observation](../experiments/evidence/local_native_qwen35_year_two_continuation_start_20260907.json)
+does not claim completion or teardown of the ongoing second segment.
+
 The first owner has now completed and its final checkpoint and resource teardown
 have been independently audited. Its native cursor is 32, with 76,000 elapsed
 ticks and 325,234 accounted tokens. The final checkpoint manifest digest is
