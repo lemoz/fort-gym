@@ -4,6 +4,19 @@ Verified September 7, 2026 UTC. The Year-Two Autonomous Play goal remains active
 
 ## Latest: terminal liaison-dialog failure, owner torn down
 
+The separately declared native dialog fixture has now run once. Its original
+overall result remains **failed**: the final assertion demanded all 100 requested
+ticks, while native time advanced 19 ticks and cleanly interrupted for the next
+meeting dialog. The seven-step retained trace verifies a natural liaison dialog,
+zero-dispatch rejection of WAIT on it, visible next-decision feedback and one
+explicit scripted confirm. The campaign loop itself did not fail. The meeting
+was not completed and no model chose these actions. See the
+[native stage result](../experiments/evidence/local_native_dialog_feedback_20260907.json)
+and [scope explanation](CAMPAIGN_DIALOG_FEEDBACK.md#native-fixture-evidence-september-7).
+All 164 focused regression checks pass in both integration and repair checkouts.
+The read-only audit reverified original checkpoint files, stopped VM and free
+model listener. No provider calls or new autonomous campaign were made.
+
 The campaign stopped at 83 committed decisions and 203,339 elapsed native ticks.
 After a clean interruption for a liaison meeting, the model requested WAIT on
 the paused dialog. The clock advanced zero ticks and returned
@@ -33,13 +46,16 @@ integration checks passed; the native-branch full suite had 1,968 passed, 10
 skipped and one sandbox-denied socket test, which passed separately with socket
 access. Changed-file checks and scoped mypy passed; existing whole-tree lint/type
 debt remains. [Repair CI](https://github.com/lemoz/fort-gym/actions/runs/34091698430)
-is running, not yet claimed successful.
+completed successfully for that exact source revision. A subsequent evidence/test
+publication must receive its own exact-head CI check.
 
 The terminal website result is pushed at
 `db4556fe1744e432f8e0c619dcc44e1e065f27b1`, with 115 focused checks and
 [successful exact-head CI](https://github.com/lemoz/fort-gym/actions/runs/34091043621).
-Next is a separately declared native dialog validation before another gameplay
-attempt. No native repair validation has run, and no model/game/VM owner is live.
+Next is improving model-visible campaign context and assessing model-controlled
+map inspection before another gameplay attempt. Native dialog-stage validation
+has run with the limited result above; autonomous meeting recovery is still
+unproven. No model/game/VM owner is live.
 Earlier live-status paragraphs below are historical and superseded by this section.
 
 ## Latest: automatic continuation through checkpoint 64
