@@ -17,6 +17,13 @@ It requires the baseline teardown receipts, rechecks stopped VM profiles and the
 loopback listener, verifies all pinned identities, and owns cleanup. There are
 no cloud VMs, hosted model calls, gameplay coaching or production deployment.
 
+The first seven thinking decisions also exposed an inherited clock cap: the
+model requested 2,500 ticks each, but the frozen adapter requested and received
+2,000 from the native controller. Baseline requests were 1,000 and did not hit
+that cap. [The observed limit and candidate correction](CAMPAIGN_NATIVE_TICK_LIMIT.md)
+are documented separately. Preserve this runtime for the matched trial and
+report actual elapsed ticks; the correction is not installed in either run.
+
 ## Observed reason for the experiment
 
 The [first twelve committed baseline actions](../experiments/evidence/local_native_qwen35_prefix12_20260906.json)

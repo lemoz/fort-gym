@@ -30,8 +30,15 @@ class NativeCampaignEnvironment:
     """Reuse the existing legal executor, keeping all campaign state in the loop."""
 
     def __init__(
-        self, *, expected_dfroot: Path, workshop_placement_policy: str = STRICT_FLOOR
+        self,
+        *,
+        expected_dfroot: Path,
+        workshop_placement_policy: str = STRICT_FLOOR,
+        max_advance_ticks: int = 2000,
     ) -> None:
+        if type(max_advance_ticks) is not int or not 1 <= max_advance_ticks <= 2500:
+            raise ValueError("Invalid campaign tick limit")
+        self.max_advance_ticks = max_advance_ticks
         self.workshop_placement_policy = validate_policy(workshop_placement_policy)
         self.expected_dfroot = expected_dfroot.resolve()
         self._verify_runtime()
@@ -103,6 +110,8 @@ class NativeCampaignEnvironment:
         return execution
 
     def advance(self, ticks: int, state: dict[str, Any]) -> tuple[dict, dict]:
+        if type(ticks) is not int or not 0 <= ticks <= self.max_advance_ticks:
+            raise ValueError("Advance exceeds the declared campaign tick limit")
         before = self.observe()
         if ticks == 0:
             return before, {"ok": True, "ticks_advanced": 0, "skipped": True}
@@ -110,6 +119,7 @@ class NativeCampaignEnvironment:
             ticks,
             interrupt_on_viewscreen_transition=True,
             viewscreen_before=str(before.get("viewscreen_type") or "unknown"),
+            max_advance_ticks=self.max_advance_ticks,
         )
         return self.observe(), dict(self.client.last_tick_info)
 
