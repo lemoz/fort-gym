@@ -1,8 +1,21 @@
 # Local Qwen3.5 thinking comparison
 
-Status: follow-up condition declared, not executed. The direct-response baseline
-is still running; its first segment must finish and its owned resources must be
-verified stopped before the follow-up starts.
+Status: the direct-response baseline finished its first segment and verified
+teardown. The matched thinking trial started on September 6 at 23:59:52 UTC in
+the same isolated local VM with the original seed and frozen runtime. It is
+running its first bounded segment; no terminal result is claimed.
+
+The [baseline result](https://github.com/lemoz/fort-gym/blob/5bcbfc9562837379e4a6ba78ad625b4ddef20fc3/docs/LOCAL_YEAR_TWO_BASELINE_RESULT.md)
+records 32 model-selected WAITs, 32,000 ticks, seven citizens, 53 native drink
+units and no completed development. All 321,472 reported tokens reconcile.
+Periodic checkpoints 8/16/24 and final checkpoint 32 independently verify.
+The baseline controller is paused at its invocation limit, not collapsed.
+
+The new thinking operator is a separate one-use launch with SHA-256
+`5db1c2515c0784019784e791cadeaae945cf24873660b2db0aa1d17ab2ebd854`.
+It requires the baseline teardown receipts, rechecks stopped VM profiles and the
+loopback listener, verifies all pinned identities, and owns cleanup. There are
+no cloud VMs, hosted model calls, gameplay coaching or production deployment.
 
 ## Observed reason for the experiment
 
