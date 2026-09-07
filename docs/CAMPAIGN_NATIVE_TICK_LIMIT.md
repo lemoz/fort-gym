@@ -13,7 +13,9 @@ The first seven committed thinking rows each contain a 2,500-tick model request,
 a native receipt requesting 2,000 ticks, and 2,000 actual elapsed ticks. Their
 total is 14,000 ticks. SHA-256 of those seven original newline-terminated trace
 rows: `4e76db45d56ce77efeeb92e25cef7a9a8e8529a4301ed3df3f4750c1cf2b09c8`.
-This is a frozen prefix of an ongoing experiment, not a terminal result. Raw
+This is a frozen historical prefix, not the terminal result. The completed
+[matched pair](LOCAL_THINKING_PAIR_RESULT.md) retained the same cap for all
+eighteen thinking commands and reports 36,000 actual elapsed ticks. Raw
 messages and game files remain private. The local campaign identifier is
 `fort-gym-year-two-qwen35-thinking-v1-a`.
 
@@ -41,8 +43,8 @@ path and its formerly silent default clamp, continuation and clock interruption
 behavior. The focused set passed 165 tests with one platform skip. These are
 test doubles and source checks, not a corrected native-run acceptance claim.
 
-The running matched pair remains at the original execution source. Do not
-hot-patch it or rewrite historical ticks. A later explicitly versioned runtime
+The completed matched pair remains bound to its original execution source. Do
+not rewrite its historical ticks. A later explicitly versioned runtime
 must verify 2,500-tick native advancement before using this corrected behavior
 for new model experiments. Full year-two gameplay and repeated cross-model
 comparison remain open.

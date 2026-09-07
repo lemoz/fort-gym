@@ -1,8 +1,21 @@
 # Campaign status
 
-Verified September 6, 2026. The Year-Two Autonomous Play goal remains active.
+Verified September 7, 2026 UTC. The Year-Two Autonomous Play goal remains active.
 
-## Latest: baseline segment complete, matched thinking trial running
+## Latest: matched pair complete with fully covered pause checkpoints
+
+The [matched-pair result](LOCAL_THINKING_PAIR_RESULT.md) and its website surface
+are delivered on [PR #133](https://github.com/lemoz/fort-gym/pull/133), source
+`fc64d2b62e8aac095b088fd957098e2829bf0c34`. The paired manifest is bound to both
+exact result bundles and their normalized launched configurations. The website
+now exposes thirteen recorded campaign rows and a direct comparison explanation.
+Its 95 focused tests passed, including the published row, immutable condition
+links, full returned-response accounting and the asymmetric native tick cap.
+Exact-head remote CI, merge and production deployment remain separate proofs.
+The complete local website suite had 1,833 passes, ten skips and one
+sandbox-blocked loopback-bind test; that exact test passed separately with
+socket access. Changed-file Ruff/Black, targeted typing, JavaScript syntax and
+diff checks passed. Full-tree checks retain ten Ruff findings and typing debt.
 
 The [direct-response baseline result](LOCAL_YEAR_TWO_BASELINE_RESULT.md) is now
 published in [PR #133](https://github.com/lemoz/fort-gym/pull/133) at
@@ -14,21 +27,33 @@ All 32 responses and 321,472 reported tokens reconcile. Periodic checkpoints
 tunnel and local VM were verified stopped. This is a fully checkpointed
 invocation-limited pause, not year-two success or fortress collapse.
 
-The [matched thinking comparison](CAMPAIGN_THINKING_COMPARISON.md) started its
-first bounded segment on September 6 at 23:59:52 UTC after that teardown. It uses
-the same original seed, Qwen3.5 9B weights, context, sampling, native image,
-budgets and frozen execution source `fad9d80c0`; only optional thinking differs
-after descriptive experiment metadata is excluded. The separate one-use operator
-owns cleanup. No terminal thinking result is claimed.
+The [matched thinking comparison](CAMPAIGN_THINKING_COMPARISON.md) ended at an
+output-limit pause after eighteen commands and 36,000 actual ticks: three
+rejected BUILDs, two accepted and two rejected chopping commands, and eleven
+WAITs. Seven citizens remained, with 53 drink units and no completed workshop,
+placed bed or farm. Its nineteenth response used all 4,096 output tokens and
+returned no action. All nineteen responses and 184,117 tokens reconcile. The
+final cursor-18 checkpoint covers the entire action and usage tail; periodic
+checkpoints 8 and 16 also verify. The owned game, model, tunnel and local VM are
+stopped. This is a checkpointed inference pause, not collapse or year-two success.
+
+The trial used the same original seed, Qwen3.5 9B weights, context, sampling,
+native image, budgets and frozen source `fad9d80c0` as the baseline. Optional
+thinking was the only configuration difference after descriptive metadata.
+There was no human gameplay rescue. One pair is exploratory, not a ranking.
 
 An audit found an inherited 2,000-tick native cap when this trial requested
 2,500 ticks. [The candidate propagation fix](CAMPAIGN_NATIVE_TICK_LIMIT.md) is
 published at `eca52a53021c8889ee9e63882f2184084590d391` in PR #132. Its 165 focused
 tests passed with one skip; corrected native execution remains unrun. The
-matched trial keeps its frozen runtime, and all results use actual elapsed ticks.
+matched pair kept its frozen runtime, and all results use actual elapsed ticks.
+Next is a separate native 2,500-tick fixture before predeclaring a new output-budget
+or continuation experiment. Do not rewrite this pair or silently resume it under
+changed conditions.
 
-The new website record is an offline projection using reporting revision
-`73ae9c3c792127f5cd5f61b62ff6f32ce5b54049`. Execution and original reports remain
+The baseline website record uses offline reporting revision
+`73ae9c3c792127f5cd5f61b62ff6f32ce5b54049`; the thinking record uses
+`5bcbfc9562837379e4a6ba78ad625b4ddef20fc3`. Execution and original reports remain
 unchanged. The baseline publication passed 85 focused tests; the full suite had
 1,830 passes, ten skips and one sandbox-blocked loopback test, which passed
 separately with socket access. Changed-file checks and targeted typing passed.
@@ -36,7 +61,7 @@ Full-tree lint/type debt remains. Exact-head CI is tracked separately from these
 local checks. PRs #132 and #133 remain open; no merge or production deployment
 is claimed.
 
-Metered model API charges for the completed baseline were $0, with no hosted
+Metered model API charges for both completed attempts were $0, with no hosted
 provider calls or cloud VMs. Hardware, electricity and application costs remain
 unmeasured. The goal still requires a functioning fortress after 403,200 elapsed
 ticks, continued year-two play, repeated comparison across at least three models,
