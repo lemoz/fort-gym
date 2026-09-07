@@ -1,0 +1,74 @@
+{
+  "schema_version": "fortgym.local-reasoning-budget-acceptance/v1",
+  "experiment_id": "local-year-two-reasoning-budget-v1",
+  "execution_revision": "ebf470d8364bf326cacd7b9985e6f5438d6d4f49",
+  "configuration_file_sha256": "ab8c2975ad4e2d2b14ce7177bbd2aae0de5164321363389522eac67a14a7a51d",
+  "operator_sha256": "4f6c1d844569d376a0dccee89b0ec0f7603afb9b60631b8b77796990a7aef0e2",
+  "original_request_sha256": "393d66c811b41be05b7ef9323a4d5109932a43f4e063fca52d2b7d46a9809eac",
+  "request_sha256": "2b0c2cc03f3236299f78085cbf5e9a19c6b8aacbd625e9e9e9cc30b450685166",
+  "source_file_sha256": "797a0981a0cad1066ffe26be89e531bdf95eddd9bec7e92323f8bf9e6ea3b365",
+  "only_serialized_request_change": {
+    "reasoning_budget_tokens": 2048
+  },
+  "max_dispatches": 1,
+  "maximum_input_output_tokens": 12889,
+  "max_output_tokens": 4096,
+  "diagnostic": {
+    "status": "action_returned",
+    "action_syntax_valid": true,
+    "action_type": "DIG",
+    "native_legality": "not_checked",
+    "elapsed_seconds": 278.73605450001196,
+    "usage": {
+      "total_tokens": 11003,
+      "total_cost_usd": "0",
+      "returned_responses": 1,
+      "accounted_responses": 1,
+      "dispatched_requests": 1,
+      "cost_basis": "self_hosted_no_metered_provider"
+    },
+    "prompt_count_matches_source": true,
+    "usage_complete": true
+  },
+  "returned_usage": {
+    "completion_tokens": 2210,
+    "prompt_tokens": 8793,
+    "total_tokens": 11003,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    }
+  },
+  "finish_reason": "stop",
+  "reasoning_token_usage": null,
+  "reasoning_token_usage_scope": "not_returned_separately_by_runtime",
+  "teardown": {
+    "worker_exit_code": 0,
+    "server_exit_code": 0,
+    "owned_processes_independently_absent": true,
+    "model_listener_independently_closed": true,
+    "source_file_unchanged": true
+  },
+  "scope": {
+    "native_game_loaded": false,
+    "native_actions_executed": 0,
+    "native_legality": "not_checked",
+    "native_utility": "not_checked",
+    "campaign_resumed": false,
+    "model_ranking_established": false,
+    "timing_comparison": "not_a_cold_cache_benchmark",
+    "conclusion": "One complete accounted syntactically valid action returned under the separately declared reasoning budget; native play and repeated performance remain unproven."
+  },
+  "cloud_vms_created": 0,
+  "hosted_provider_calls": 0,
+  "metered_provider_charge_usd": "0",
+  "hardware_energy_and_app_cost_usd": null,
+  "evidence_sha256": {
+    "result.json": "adef64f5d1cdf924e388e7175127751391996a1d07c27c4f1ddfd6607a5ad496",
+    "worker-result.json": "159fdd560dff5bafa60dfe045b34725a40d119ba8490f2bdcd176e736dd31159",
+    "model-launch.json": "e34e70b799d93274b0e8517433a9e5d2252aecd1c7521bb062f0d69c4db7b8a4",
+    "model-api-identity.json": "79a49ebf3f28990469dc65d7c7ad0d9c5fe546cb37e0ac269ecd84910cd1880b",
+    "spend.jsonl": "5819d7deeecad0b09a8d67e2b34322d50ad6556b2c2b3f63e5802918bade6291",
+    "request.json": "98c5f67daf1588783f949d42830e74e246b3a2c0351cb233ba07533c97f37dbc",
+    "private-response.json": "95a360165dce2cde0e22638db9d84cf58a7c4ef44e8a573249933d9836f5f32a"
+  }
+}

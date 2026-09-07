@@ -1,7 +1,25 @@
 # Declared reasoning budget experiment
 
-Status: implementation and condition prepared; no real-model acceptance or
-gameplay result is claimed for this new condition.
+## Recorded model acceptance
+
+The [single-request result](../experiments/evidence/local_year_two_reasoning_budget_20260907.json)
+returned a complete, syntactically valid `DIG` action with `finish_reason=stop`:
+8,793 input plus 2,210 completion tokens, all 11,003 tokens accounted, in
+278.74 seconds. Its serialized request differs from the original only by the
+2,048-token reasoning-budget field. Separate reasoning-token usage was not
+returned, so exact sampler enforcement is not independently measured here.
+
+The owned worker/model PIDs are absent, the listener is closed, and the original
+source is unchanged. No game was loaded and the returned action was not executed.
+This is model transport acceptance, not native legality, useful development,
+year-two success or a repeated-model ranking. The comparison has differing
+cache histories and is not a cold-cache timing benchmark.
+
+Next: start the declared fresh native campaign from the original seed using a
+frozen implementation with the verified tick-cap correction. Preserve the
+completed historical pair and do not execute this replay's action in their saves.
+
+## Predeclared experiment
 
 The completed thinking-v1 campaign stopped because response nineteen used all
 4,096 output tokens without an action. Its exact 4,096-token replay reproduced
@@ -29,8 +47,8 @@ transport. Conditions without it keep their exact serialized request bytes.
 The same body is used for token preflight and generation. Full condition
 identity in checkpoints prevents silently adding this setting on continuation.
 
-Next execution: one separately owned local request from the already retained
-thinking-v1 pause, with its source unchanged and no action execution. If the
+The predeclared execution was one separately owned local request from the retained
+thinking-v1 pause, with its source unchanged and no action execution. Once the
 transport returns a complete accounted action, begin a new native campaign
 from the original seed using the native-verified tick-cap correction. The old
 pair ran before that correction, so it is not a strict one-variable gameplay
