@@ -1,5 +1,32 @@
 # Campaign website delivery milestone
 
+## Map inspection is a distinct reported control
+
+The offline profile and public projection now recognize VIEW as a reporting
+category. Previously it was grouped under UNKNOWN despite being supported by the
+new native campaign interface. The tracker labels it `VIEW · map inspection` and
+explains that an accepted inspection neither advances game time nor completes
+construction. Existing action totals and command-change semantics are unchanged.
+
+This is an observer-side correction, not a new runtime permission. The live
+producer remains frozen at `48d9ed6d94a598b44c4cfbe10a0df4badcb189ad` and its old
+reports are not hot-patched. An older UNKNOWN aggregate cannot be reconstructed
+into VIEW without its source trace, so readers preserve it unchanged. A later
+offline report must identify its reporting source separately from the execution
+source; no existing captured result or published bundle is rewritten here.
+
+All new fixtures are synthetic. No captured map, action parameters, private model
+text or save payload is added to the public projection or repository. The current
+website layout and hosting remain unchanged, with no browser QA or deployment.
+
+Validation: 104 focused checks pass, including the file-to-profile-to-feed-to-HTTP
+path, exact old UNKNOWN preservation, source-byte preservation and in-memory UI
+labels. A separate read-only comparison against the retained native checkpoint
+corroborated the classification defect without changing the checkpoint, live
+producer or feed. Compilation, JavaScript syntax, changed-file Ruff/Black and
+scoped mypy pass. Existing whole-tree debt remains 10 Ruff findings and 464 mypy
+errors in 26 files. No new gameplay acceptance or captured payload is published.
+
 ## Inspection campaign condition link
 
 The tracker recognizes the authored `local-native-qwen35-year-two-inspection-v1`

@@ -69,7 +69,7 @@ first.current_furniture_item_records = {bed:11, chair:3, door:0, table:null};
 first.furniture_item_record_summaries = {bed:{start:0, end:11, observed_samples:2}};
 first.actions = {accepted:16, rejected:2, unknown:0, changed_command_after_rejection:0,
   path_cache_stale_rejections:2,
-  by_type:{LABOR:{accepted:16, rejected:0, unknown:0}, BUILD:{accepted:0, rejected:2, unknown:0}}};
+  by_type:{LABOR:{accepted:13, rejected:0, unknown:0}, VIEW:{accepted:3, rejected:0, unknown:0}, BUILD:{accepted:0, rejected:2, unknown:0}}};
 data.campaigns.push({...first, model:'second-model', campaign_id:'second',
   condition_id:'local-native-packed-comparison-v1', code_revision:'a'.repeat(40),
   current_furniture_item_records:{}, furniture_item_record_summaries:{}});
@@ -110,6 +110,9 @@ vm.runInNewContext(fs.readFileSync(process.argv[2], 'utf8'), {
   assert.match(elements['campaign-profile-detail'].textContent, /do not mean zero operating cost/);
   assert.match(elements['campaign-profile-detail'].textContent, /16 accepted commands; 2 rejected/);
   assert.match(elements['campaign-profile-detail'].textContent, /can be no-ops or queued work/);
+  assert.match(elements['campaign-profile-detail'].textContent, /VIEW · map inspection 3 0 0/);
+  assert.match(elements['campaign-profile-detail'].textContent, /VIEW inspects terrain without advancing game time or building anything/);
+  assert.match(elements['campaign-profile-detail'].textContent, /Its accepted count is not completed work/);
   assert.match(elements['campaign-profile-detail'].textContent, /2 commands were blocked because the native pathfinding cache was not ready/);
   assert.doesNotMatch(elements['campaign-profile-detail'].textContent, /Exact reported cost:/);
   assert.equal(elements['campaign-profile-detail'].children.some(child => child.href?.startsWith('javascript:')), false);

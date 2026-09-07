@@ -27,7 +27,8 @@ METRICS = (
     "completed_farms",
     "recorded_dead_citizens",
 )
-ACTION_TYPES = {"DIG", "BUILD", "ORDER", "UNSUSPEND", "FARM", "LABOR", "WAIT", "INTERACT"}
+# Reporting vocabulary only; this does not enable controls in a runtime profile.
+ACTION_TYPES = {"DIG", "BUILD", "ORDER", "UNSUSPEND", "FARM", "LABOR", "WAIT", "INTERACT", "VIEW"}
 FURNITURE_RECORDS = ("bed", "chair", "door", "table")
 
 

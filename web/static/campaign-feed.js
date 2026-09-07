@@ -128,8 +128,11 @@
       const commands = table(panel, 'Recorded command choices', ['Control', 'Accepted', 'Rejected', 'Unknown']);
       Object.entries(actions.by_type).forEach(([kind, counts]) => {
         const tr = node('tr', undefined, commands);
-        [kind, number(counts.accepted), number(counts.rejected), number(counts.unknown)].forEach(value => node('td', value, tr));
+        [kind === 'VIEW' ? 'VIEW · map inspection' : kind, number(counts.accepted), number(counts.rejected), number(counts.unknown)].forEach(value => node('td', value, tr));
       });
+      if (Object.hasOwn(actions.by_type, 'VIEW')) {
+        node('p', 'VIEW inspects terrain without advancing game time or building anything. Its accepted count is not completed work.', panel);
+      }
       node('p', `${number(actions.changed_command_after_rejection)} changed commands following rejection. Changing a command does not establish recovery.`, panel);
     }
     node('p', `Checkpoint: ${row.checkpoint_verified ? 'verified' : 'not verified'}. Teardown: ${row.cleanup_verified === true ? 'verified' : row.cleanup_verified === false ? 'not verified' : 'unknown'}.`, panel);

@@ -15,7 +15,7 @@ def test_tracker_serves_the_updated_script_without_adding_a_result_row():
 
     with TestClient(server.app) as client:
         page = client.get("/campaigns")
-        assert page.status_code == 200 and "campaign-feed.js?v=12" in page.text
+        assert page.status_code == 200 and "campaign-feed.js?v=13" in page.text
         script = client.get("/static/campaign-feed.js")
         assert script.status_code == 200
         assert "local-native-qwen35-year-two-inspection-v1" in script.text
