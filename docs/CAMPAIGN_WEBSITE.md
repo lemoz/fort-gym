@@ -1,5 +1,31 @@
 # Campaign website delivery milestone
 
+## Inspection campaign condition link
+
+The tracker recognizes the authored `local-native-qwen35-year-two-inspection-v1`
+condition and links to its immutable configuration at
+`48d9ed6d94a598b44c4cfbe10a0df4badcb189ad` only when its canonical JSON digest is
+`ec7c987aef51ce61970ba6c52ea1efd03e887e2ae7c6af87297e9dcef00a1093`.
+The GitHub source was read back and verified before this mapping was added.
+The raw-file SHA-256 is different and is deliberately rejected as a substitute
+for the report's canonical configuration digest.
+
+This update contains authored configuration identity and synthetic tests only.
+It does not import a live game report, captured maps/screens, saves or detailed
+native result payloads. It creates no terminal result or new comparison row.
+Existing historical records remain unchanged. The layout and FastAPI/static
+architecture are preserved; the asset URL changes to avoid a stale cached script.
+
+Validation: 97 focused condition-link, capture, feed, record, profile and catalog
+tests pass, including the HTTP route and exact-digest rejection cases. Python
+compilation, JavaScript syntax, changed-test Ruff and diff checks pass. Existing
+whole-tree debt remains 10 Ruff findings and 464 mypy errors in 26 files; this
+change does not modify production Python. These checks are not browser acceptance.
+
+The website-building/hosting workflow is limited to source validation and GitHub
+delivery under the standing no-deploy boundary. This background change does not
+open a browser, perform visual QA, register a hosted Site or deploy anything.
+
 ## Latest recorded result: liaison-dialog failure
 
 The reasoning-budget campaign now has a later terminal result: 83 committed
