@@ -78,6 +78,15 @@ preserve this history along with memory, usage and the original journal prefix.
 Model, control, observation and tick policies remain unchanged; no strategy or
 game-state intervention is part of this extension.
 
+The existing campaign page now includes a separate native-keyboard milestone
+section, backed by an explicit allowlist at `/public/keyboard-campaigns`. It
+shows cumulative decisions, keys, elapsed ticks, checkpoint coverage and tokens,
+with subscription charges labeled unreported. It never scans private artifacts
+or inserts unapproved fortress metrics into the older comparison feed. Milestones
+are recorded states of one campaign, not rows to sum or a live worker indicator.
+Local endpoint and JavaScript tests cover failure states and non-content export;
+production deployment and visual acceptance remain separate.
+
 A fresh-account admission denial now settles explicitly without a model or native
 dispatch. The runner verifies unchanged agent state and paused game calendar,
 retains the denial receipt and unchanged usage, and can checkpoint the last

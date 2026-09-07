@@ -335,6 +335,17 @@ async def public_campaign_feed() -> JSONResponse:
     return JSONResponse(data, headers=HTML_CACHE_HEADERS)
 
 
+@app.get("/public/keyboard-campaigns")
+async def public_keyboard_campaigns() -> JSONResponse:
+    from .campaign_keyboard_records import keyboard_campaign_records
+
+    try:
+        data = keyboard_campaign_records()
+    except (OSError, ValueError, KeyError, TypeError):
+        raise HTTPException(status_code=503, detail="Keyboard evidence is unavailable") from None
+    return JSONResponse(data, headers=HTML_CACHE_HEADERS)
+
+
 @app.get("/protocols/{slug}", response_class=HTMLResponse)
 async def serve_protocol_detail(slug: str):
     """Serve protocol-specific metadata while the client resolves the detail body."""
