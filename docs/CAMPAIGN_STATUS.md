@@ -2,55 +2,47 @@
 
 Verified September 6, 2026. The Year-Two Autonomous Play goal remains active.
 
-## Latest: automatic native recovery passed
+## Latest: baseline segment complete, matched thinking trial running
 
-The ongoing direct-response campaign has a preserved
-[twelve-action prefix audit](../experiments/evidence/local_native_qwen35_prefix12_20260906.json):
-12 model-selected WAITs, 12,000 native ticks and 106,661 reported tokens, with
-current facts reaching the model and no output-limit response in that prefix.
-The [matched thinking follow-up](CAMPAIGN_THINKING_COMPARISON.md) is declared
-but not executed. It changes only the optional thinking setting and must start
-from the same original seed after the current segment and teardown finish.
+The [direct-response baseline result](LOCAL_YEAR_TWO_BASELINE_RESULT.md) is now
+published in [PR #133](https://github.com/lemoz/fort-gym/pull/133) at
+`5bcbfc9562837379e4a6ba78ad625b4ddef20fc3`. All 32 model-selected commands were
+WAITs, advancing 32,000 native ticks. Seven citizens remained; native drink stock
+changed from 60 to 53 units, with no completed rooms, workshops, beds or farms.
+All 32 responses and 321,472 reported tokens reconcile. Periodic checkpoints
+8/16/24 and final cursor 32 independently verify. The container, owned model,
+tunnel and local VM were verified stopped. This is a fully checkpointed
+invocation-limited pause, not year-two success or fortress collapse.
 
-CI passed for recovery publication `c277e8496`
-([run](https://github.com/lemoz/fort-gym/actions/runs/34066558654)) and the separate
-reporting correction `73ae9c3c7`
-([run](https://github.com/lemoz/fort-gym/actions/runs/34066516101)). PRs #132 and
-#133 remain open. No merge or production deployment is claimed.
+The [matched thinking comparison](CAMPAIGN_THINKING_COMPARISON.md) started its
+first bounded segment on September 6 at 23:59:52 UTC after that teardown. It uses
+the same original seed, Qwen3.5 9B weights, context, sampling, native image,
+budgets and frozen execution source `fad9d80c0`; only optional thinking differs
+after descriptive experiment metadata is excluded. The separate one-use operator
+owns cleanup. No terminal thinking result is claimed.
 
-Live experiment checkpoint, September 6 at 23:17 UTC: the new local Qwen3.5
-campaign is running its first bounded segment at frozen source `fad9d80c0`.
-Six model-selected WAIT actions advanced 6,000 native ticks; the latest native
-record shows seven citizens and 60 drink units, with no completed development.
-No completed segment or resumable handoff is claimed yet. The existing local
-model and isolated local VM use an owned loopback tunnel; the bounded operator
-owns teardown. No cloud VM or hosted model charge is involved.
+The new website record is an offline projection using reporting revision
+`73ae9c3c792127f5cd5f61b62ff6f32ce5b54049`. Execution and original reports remain
+unchanged. The baseline publication passed 85 focused tests; the full suite had
+1,830 passes, ten skips and one sandbox-blocked loopback test, which passed
+separately with socket access. Changed-file checks and targeted typing passed.
+Full-tree lint/type debt remains. Exact-head CI is tracked separately from these
+local checks. PRs #132 and #133 remain open; no merge or production deployment
+is claimed.
 
-Source `fad9d80c0a2e7aace8380b47b009db5edaf6bd2e` passed the automatic v3
-checkpoint recovery fixture on isolated Colima 0.10.3 / Lima 2.2.0 tooling.
-It saved cursor zero at year 30, tick 16801, stopped the first game process,
-restored the exact checkpoint in a second process, and executed one fresh
-20-tick WAIT. Both cleanup receipts and an independent recovery verifier passed;
-the container and VM stopped. A real translated-process probe also confirmed
-ownership detection when the executable link could not resolve.
-See the [automatic recovery receipt](../experiments/evidence/local_native_automatic_recovery_20260906.json).
+Metered model API charges for the completed baseline were $0, with no hosted
+provider calls or cloud VMs. Hardware, electricity and application costs remain
+unmeasured. The goal still requires a functioning fortress after 403,200 elapsed
+ticks, continued year-two play, repeated comparison across at least three models,
+and verified website and remote delivery. The preserved
+[twelve-action prefix](../experiments/evidence/local_native_qwen35_prefix12_20260906.json)
+remains a historical prefix, not a terminal record.
 
-This provider-free fixture is not autonomous gameplay or year-two proof.
-Synthetic usage is not model consumption; no final checkpoint followed the WAIT.
-Global tools, old profiles and historical failure receipts remain unchanged.
-The new toolchain's successful boot/reboot does not explain old startup failures.
-
-The next experiment uses the [new local Qwen3.5 condition](../experiments/campaigns/local_native_qwen35_year_two_v1.json):
-existing 9B quantized weights, optional thinking disabled, 4,096 output tokens,
-and the unchanged digest-bound starting seed, not the fixture's post-WAIT state.
-Its first segment is now running. The changed seed, runtime and budgets are declared; this is
-not a matched historical comparison. Year-two play and repeated model evaluation
-remain open. No production deployment is claimed.
-
-The execution source has passing
-[exact-head CI](https://github.com/lemoz/fort-gym/actions/runs/34063944626).
-PR #132 remains open; no merge is claimed. Observations below retain the earlier
-proof states and do not supersede this latest result.
+The preceding provider-free automatic recovery fixture passed at the same
+execution source. It verified a zero-command checkpoint, stopped the first game,
+restored a second game, executed a fresh 20-tick WAIT and verified cleanup.
+See the [recovery receipt](../experiments/evidence/local_native_automatic_recovery_20260906.json).
+That fixture used no model calls and does not count as autonomous gameplay.
 
 ## Earlier observations
 
