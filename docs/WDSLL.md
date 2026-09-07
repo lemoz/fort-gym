@@ -8,20 +8,25 @@ fortress through year two and beyond. Website evidence and remote source deliver
 remain requirements. The app goal is verified active; early native Astra gameplay
 and checkpoint-continuation evidence are now verified.
 
-Latest progress: Astra Medium completed eight native keyboard decisions and
-6,000 elapsed ticks, with 62 confirmed key events. It selected its own status
-inspection, stair/room designations and simulation advances. Checkpoints at
-cursors four and eight preserve memory, usage and the exact trace prefix across
-a fresh game process. No prior action was replayed. The source and public-safe
-outcome are pushed in [PR #137](https://github.com/lemoz/fort-gym/pull/137), with
-passing exact implementation-head CI. All owned native runtimes and the VM are
-stopped. The initial eight-decision condition is complete, not the full goal.
+Latest progress: Astra Medium completed 64 additional native keyboard decisions,
+bringing the same campaign to 72 decisions, 357 key events and 25,000 elapsed
+ticks. Checkpoints at 4, 8, 24, 40, 56 and 72 preserve memory, usage and the exact
+trace prefix across native game processes. A declared budget extension preserves
+the original condition and spent usage. No prior action was replayed and no
+human chose gameplay. The source and website implementation are pushed in
+[PR #137](https://github.com/lemoz/fort-gym/pull/137), with passing CI at
+`03190cc48`. All owned native runtimes and the local VM are stopped. This is
+about 6.2 percent of one game year, not completion of the full goal.
 
-Fresh subscription checks now run before every model invocation. The campaign
-used 236,802 tokens; earlier delivery failures retain another 69,004 tokens.
-Exact dollar charges remain unknown and are not reported as zero. Longer native
-play, comparable model repetitions, reviewed delivery and the live website remain
-required. See [Campaign status](CAMPAIGN_STATUS.md) for the current proof boundary.
+Fresh subscription checks run before every invocation and a known admission
+denial can now checkpoint cleanly without model or native dispatch. Campaign
+usage is 2,318,540 tokens; earlier delivery failures retain another 69,004.
+The website's recorded keyboard milestones label subscription charges unreported,
+not zero. Production deployment, visual acceptance, sustained fortress viability,
+comparable model repetitions and reviewed merge remain required. See
+[Campaign status](CAMPAIGN_STATUS.md) for the current proof boundary.
+
+## Earlier implementation snapshots
 
 Native keyboard and viewport acceptance passed at `0ef33ff70`; source and the
 public-safe outcome summary are on `10816dfad` in draft

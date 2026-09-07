@@ -13,7 +13,41 @@ and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. The first bounded Astra native
 keyboard campaign has now completed.
 
-### Latest native result
+### Latest endurance result
+
+The same Astra campaign now covers 72 model-selected decisions, 357 confirmed
+native key events and 25,000 elapsed ticks, about 6.2 percent of a full game year.
+Source `fcdd1f662` completed four more 16-decision segments from the verified
+cursor-eight checkpoint. New checkpoints at 24, 40, 56 and 72 independently verify.
+Original configuration, memory and complete trace/usage prefixes are preserved;
+the larger cumulative budget is an explicit append-only extension, not a reset.
+The native game and isolated local VM are stopped. The run ended at its declared
+segment window, not from fortress collapse, a model failure or an account limit.
+
+The new continuation used 2,081,738 tokens. Campaign usage is 2,318,540; retaining
+the historical failed deliveries gives 2,387,544 tokens across 74 invocations.
+Displayed credit balance was unchanged, while exact subscription dollar charges
+remain unreported. No local model, API fallback, cloud VM, credit purchase or
+reset was used. Approximately 500 MB of additional private run evidence is retained.
+
+The existing website now includes a separate recorded keyboard-milestone section,
+with explicit unknown subscription charges and an allowlisted non-content
+endpoint. It does not publish private native captures or claim live-worker status.
+Implementation and website head `03190cc48` is pushed in draft
+[PR #137](https://github.com/lemoz/fort-gym/pull/137), with
+[passing CI](https://github.com/lemoz/fort-gym/actions/runs/34155673083).
+The new versioned milestone is
+`experiments/evidence/astra_native_keyboard_endurance_20260907.json`.
+Local HTTP and JavaScript checks passed; production deployment and visual
+acceptance remain unclaimed.
+
+Next: continue the preserved fortress and evaluate useful development and
+sustainability, reduce duplicated runtime/courier setup, and run the declared
+matched control-condition comparisons. No human gameplay rescue was used.
+Year-two viability, repeated comparable three-model results, reviewed merge and
+production website acceptance remain required. The full app goal remains active.
+
+### Initial eight-decision result
 
 At implementation `ea3812dd7`, Astra Medium made eight model-selected decisions
 through the readable 120x40 screen and native keyboard v2 condition: 62 confirmed

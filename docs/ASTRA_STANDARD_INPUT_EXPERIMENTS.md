@@ -92,4 +92,14 @@ four and eight preserve memory, usage and trace across process reload. The model
 selected all gameplay. Courier and local-port failures remain documented and
 accounted separately; the final continuation did not replay prior actions.
 This is early gameplay and integration evidence, not sustained fortress success.
-Longer declared attempts and website delivery are the next phase.
+The subsequent endurance window completed 64 more decisions, preserving the same
+campaign and cumulative usage through four new native checkpoints. Totals are
+72 decisions, 357 confirmed key events and 25,000 elapsed ticks. The native game
+and VM are stopped, and an independent audit verifies all checkpoint prefixes
+and the explicit budget-extension history. This is about 6.2 percent of a full
+game year, not sustained fortress success.
+
+The website implementation now exposes recorded non-content keyboard milestones
+and unreported subscription charges; source and website head `03190cc48` passed
+remote CI in draft PR #137. The final checkpoint is preserved for continuation.
+Production deployment, visual acceptance and matched comparisons remain open.
