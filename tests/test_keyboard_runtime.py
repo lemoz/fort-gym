@@ -12,11 +12,10 @@ from fort_gym.bench.run.campaign_loop import CampaignLoop
 from fort_gym.bench.run.keyboard_config import load_window, validate_condition
 from fort_gym.bench.run.keyboard_segment import run_keyboard_segment
 from scripts.campaign_keyboard_native import publish_response, run_window
+from tests.test_campaign_codex_keyboard import Environment, decision, admission_denied
 
 
 def test_post_rejection_window_preserves_condition_and_declares_larger_allowance():
-    from pathlib import Path
-
     root = Path(__file__).resolve().parents[1]
     condition, window = load_window(
         root / "experiments/campaign_astra_keyboard_20260907.json",
@@ -28,7 +27,6 @@ def test_post_rejection_window_preserves_condition_and_declares_larger_allowance
     assert window["steps_per_segment"] == 16 and window["max_segments"] == 4
     assert window["budget_extension"] == {"max_dispatches": 1024, "max_total_tokens": 40000000}
     assert window["reset_memory"] is window["reset_usage"] is window["strategy_intervention"] is False
-from tests.test_campaign_codex_keyboard import Environment, decision, admission_denied
 
 PROJECT = Path(__file__).resolve().parents[1]
 CONDITION = json.loads((PROJECT / "experiments/campaign_astra_keyboard_20260907.json").read_text())
