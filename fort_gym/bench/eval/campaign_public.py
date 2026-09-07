@@ -6,7 +6,14 @@ import re
 from datetime import datetime, timezone
 from typing import Any
 
-from .campaign_profile import ACTION_TYPES, METRICS, count, mapping, usage_profile
+from .campaign_profile import (
+    ACTION_TYPES,
+    FURNITURE_RECORDS,
+    METRICS,
+    count,
+    mapping,
+    usage_profile,
+)
 
 SCHEMA = "fortgym.public-campaign-state/v1"
 STAT_FIELDS = (
@@ -84,6 +91,10 @@ def public_snapshot(value: dict) -> dict:
         "current_metrics": {
             key: count(mapping(value.get("current_metrics")).get(key)) for key in METRICS
         },
+        "current_furniture_item_records": {
+            key: count(mapping(value.get("current_furniture_item_records")).get(key))
+            for key in FURNITURE_RECORDS
+        },
         "usage": usage_profile(value.get("usage")),
         "checkpoint_verified": value.get("checkpoint_verified") is True,
         "cleanup_verified": value.get("cleanup_verified")
@@ -110,6 +121,22 @@ def public_snapshot(value: dict) -> dict:
         start, end = fields["start"], fields["end"]
         fields["change"] = end - start if start is not None and end is not None else None
         result["metric_summaries"][key] = fields
+    furniture = mapping(value.get("furniture_item_record_summaries"))
+    result["furniture_item_record_summaries"] = {}
+    for key in FURNITURE_RECORDS:
+        if key not in furniture:
+            continue
+        item = mapping(furniture[key])
+        fields = {field: count(item.get(field)) for field in STAT_FIELDS}
+        start, end = fields["start"], fields["end"]
+        fields["change"] = end - start if start is not None and end is not None else None
+        result["furniture_item_record_summaries"][key] = fields
+    result["furniture_item_record_scope"] = {
+        "source": "legacy job_metrics.goods IN_PLAY item records",
+        "scan_completeness": "not_reported",
+        "production_attribution": "unavailable",
+        "ownership_and_accessibility": "not_reported",
+    }
     timeline = value.get("timeline")
     if not isinstance(timeline, list):
         timeline = []
@@ -127,6 +154,10 @@ def public_snapshot(value: dict) -> dict:
             "metrics": {
                 key: count(mapping(mapping(timeline[index]).get("metrics")).get(key))
                 for key in METRICS
+            },
+            "furniture_item_records": {
+                key: count(mapping(mapping(timeline[index]).get("furniture_item_records")).get(key))
+                for key in FURNITURE_RECORDS
             },
         }
         for index in indices

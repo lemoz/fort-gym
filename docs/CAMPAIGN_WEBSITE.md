@@ -1,5 +1,41 @@
 # Campaign website delivery milestone
 
+## Furniture item records in campaign profiles
+
+The profile reader, bounded public feed and profile view now carry four separate
+furniture item-record observations: beds, chairs, doors and tables. They are the
+legacy `job_metrics.goods` counts of item records in play, not installed totals,
+complete inventory, newly produced items, ownership or accessibility. Existing
+installed-bed metrics are unchanged. The view shows start/latest/change when
+available and preserves unknowns, including a missing terminal observation.
+Old published bundles are not rewritten or backfilled with assumed counts.
+
+Sample coverage only says whether each recorded boundary supplied a count. It
+does not establish scan completeness. These records do not change production or
+consumption verdicts, campaign success, or model rankings.
+
+A read-only projection of the retained first reasoning-budget segment correctly
+reported bed item records 0 to 1 with installed beds remaining 0. The source trace
+SHA-256 remained
+`1feea15774dbceb0bac6fa1c8221fb245e9d77f017c8b87cfd3def019fce57e5`.
+This was an offline reporting check, not a new game experiment or replacement
+of the original published terminal result. The currently running native source
+at `de69c7a467eb0b00becfef03329bac9f58690e35` is unchanged.
+
+The existing FastAPI/static architecture and layout are preserved under the
+website-building workflow. Background work skips browser handoff and visual QA;
+the standing no-deploy boundary means this source update is not a live release.
+
+Validation: 114 focused profile/feed/catalog/HTTP/captured-data checks passed.
+The full local run reported 1,849 passed, 10 skipped and four failures: three
+historical-capture equality assertions needed the explicit additive-field
+compatibility checks now included in the passing focused run; the loopback-port
+test passed separately with local socket access. This is a full run plus
+targeted corrections, not a fresh all-green full suite. Changed-file lint,
+formatting and JavaScript syntax checks pass. Whole-tree debt remains 10 Ruff
+findings and 464 mypy errors in 26 files, with none reported in the three changed
+production Python modules.
+
 ## Installed furniture and inventory observations
 
 The campaign table and profile now label `completed_beds` as **Installed beds**.

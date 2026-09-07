@@ -166,6 +166,12 @@ def test_public_projection_strips_private_nested_text_and_preserves_unknowns(tmp
         functioning_fortress="success",
         comparison_rankings_available=True,
         current_metrics={"population": 0, "food_stock": True, "agent_memory": "PRIVATE"},
+        current_furniture_item_records={"bed": 11, "chair": True, "secret": "PRIVATE"},
+        furniture_item_record_summaries={
+            "bed": {"start": 0, "end": 11, "change": 999, "secret": "PRIVATE"},
+            "secret": "PRIVATE",
+        },
+        furniture_item_record_scope={"source": "PRIVATE", "scan_completeness": True},
         usage={"total_cost_usd": "0.003462525", "api_key": "PRIVATE"},
         metric_summaries={"population": {"start": 7, "end": 0, "evidence": "PRIVATE"}},
         source_sha256={"/PRIVATE/path": "not-a-digest"},
@@ -183,6 +189,14 @@ def test_public_projection_strips_private_nested_text_and_preserves_unknowns(tmp
         and public["current_metrics"]["food_stock"] is None
     )
     assert public["metric_summaries"]["population"]["change"] == -7
+    assert public["current_furniture_item_records"] == {
+        "bed": 11,
+        "chair": None,
+        "door": None,
+        "table": None,
+    }
+    assert public["furniture_item_record_summaries"]["bed"]["change"] == 11
+    assert public["furniture_item_record_scope"]["scan_completeness"] == "not_reported"
     assert public["usage"]["reported_model_cost_usd"] == "0.003462525"
     assert public["actions"]["accepted"] == 0 and public["actions"]["rejected"] is None
     assert public["actions"]["by_type"] == {
@@ -208,6 +222,62 @@ def test_timeline_is_bounded_keeps_endpoints_and_does_not_fill_missing_values(tm
     assert public["timeline"][0]["boundary_index"] == 0
     assert public["timeline"][-1]["boundary_index"] == 499
     assert all(row["metrics"]["population"] is None for row in public["timeline"])
+    assert all(
+        value is None
+        for point in public["timeline"]
+        for value in point["furniture_item_records"].values()
+    )
+
+
+def test_furniture_records_flow_from_native_state_to_terminal_http_without_stale_values(
+    tmp_path, monkeypatch
+):
+    from fort_gym.bench.api import server
+
+    publisher = feed(tmp_path / "public")
+    publisher.start()
+    environment = TestEnvironment()
+    environment.state["crew"] = {
+        "ok": True,
+        "goods": {"bed": 11, "chair": 3, "secret": "PRIVATE"},
+        "building_evidence_complete": True,
+        "placed_furniture_completed": {"bed": 0},
+    }
+    output = tmp_path / "first"
+    play(output, publisher, environment=environment)
+    assert read_feed(publisher.root)["campaigns"][0]["current_furniture_item_records"]["bed"] == 11
+    finish(output, publisher)
+    monkeypatch.setattr(
+        server,
+        "get_settings",
+        lambda: SimpleNamespace(FORT_GYM_PUBLIC_CAMPAIGN_DIR=str(publisher.root)),
+    )
+    response = TestClient(server.app).get("/public/campaign-feed")
+    assert response.status_code == 200
+    terminal = next(row for row in response.json()["campaigns"] if row["campaign_id"] == "campaign")
+    assert terminal["current_furniture_item_records"]["bed"] == 11
+    assert terminal["current_metrics"]["completed_beds"] == 0
+    assert terminal["furniture_item_record_summaries"]["bed"]["change"] == 0
+    assert terminal["timeline"][-1]["furniture_item_records"]["chair"] == 3
+    assert "PRIVATE" not in json.dumps(terminal)
+    second = feed(publisher.root, "second")
+    second.start(resume=True)
+    second.progress({"status": "started"}, None, None)
+    current = read_feed(publisher.root)["campaigns"][0]
+    assert current["current_furniture_item_records"]["bed"] is None
+    assert current["furniture_item_record_summaries"] == {}
+
+
+def test_failed_terminal_read_clears_previous_furniture_counts(tmp_path):
+    publisher = feed(tmp_path / "public")
+    publisher.start()
+    publisher.progress({"status": "started"}, None, {"crew": {"ok": True, "goods": {"bed": 11}}})
+    output = tmp_path / "failed"
+    output.mkdir()
+    publisher.finish(output, None)
+    terminal = read_feed(publisher.root)["campaigns"][0]
+    assert terminal["current_furniture_item_records"]["bed"] is None
+    assert terminal["furniture_item_record_summaries"] == {}
 
 
 def test_stale_reports_do_not_claim_current_activity_or_gameplay_failure(tmp_path):

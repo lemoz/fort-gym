@@ -28,6 +28,7 @@ METRICS = (
     "recorded_dead_citizens",
 )
 ACTION_TYPES = {"DIG", "BUILD", "ORDER", "UNSUSPEND", "FARM", "LABOR", "WAIT", "INTERACT"}
+FURNITURE_RECORDS = ("bed", "chair", "door", "table")
 
 
 def count(value: Any) -> int | None:
@@ -36,6 +37,17 @@ def count(value: Any) -> int | None:
 
 def mapping(value: Any) -> dict:
     return value if isinstance(value, dict) else {}
+
+
+def furniture_records_from_state(value: Any) -> dict[str, int | None]:
+    """Observed legacy IN_PLAY item records, not production or installed totals.
+
+    job_metrics.goods skips unreadable item types and has no completeness flag.
+    Keep these descriptive counts separate from validated native stock metrics.
+    """
+    crew = mapping(mapping(value).get("crew"))
+    goods = mapping(crew.get("goods")) if crew.get("ok") is True else {}
+    return {key: count(goods.get(key)) for key in FURNITURE_RECORDS}
 
 
 def metrics_from_state(value: Any) -> dict[str, int | None]:
@@ -150,6 +162,14 @@ def usage_profile(usage: Any) -> dict:
     return result
 
 
+def furniture_record_summary(values: list[int | None]) -> dict:
+    summary = metric_summary(values)
+    summary["sample_coverage"] = summary.pop("evidence")
+    summary["scan_completeness"] = "not_reported"
+    summary["production_attribution"] = "unavailable"
+    return summary
+
+
 def campaign_profile(
     records: list[dict],
     *,
@@ -174,6 +194,7 @@ def campaign_profile(
             "year": count(mapping(state).get("year")),
             "year_tick": count(mapping(state).get("year_tick")),
             "metrics": metrics_from_state(state),
+            "furniture_item_records": furniture_records_from_state(state),
         }
         for index, state in enumerate(boundaries)
     ]
@@ -235,6 +256,12 @@ def campaign_profile(
         "metrics": {
             key: metric_summary([point["metrics"][key] for point in points]) for key in METRICS
         },
+        "furniture_item_records": {
+            key: furniture_record_summary(
+                [point["furniture_item_records"][key] for point in points]
+            )
+            for key in FURNITURE_RECORDS
+        },
         "timeline": points,
         "actions": {
             "committed_rows": len(records),
@@ -252,6 +279,7 @@ def campaign_profile(
         "autonomous_gameplay": "not_assessed",
         "fortress_collapse": "not_assessed",
         "limits": [
+            "Furniture item records count legacy IN_PLAY observations; scan completeness, ownership and accessibility are not reported. Changes are not production or installed totals.",
             "Food and drink are native UI stock counters, not production or consumption measurements.",
             "Room and building counts are unknown when the source reports an incomplete or truncated scan.",
             "Recorded dead citizens includes the starting world's history; population changes do not identify death causes.",

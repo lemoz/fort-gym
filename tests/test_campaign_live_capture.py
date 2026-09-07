@@ -24,7 +24,28 @@ def capture():
     # Reproduce the native publisher's original serialization, not fixture formatting.
     raw = json.dumps(row, allow_nan=False).encode()
     assert hashlib.sha256(raw).hexdigest() == value["source_snapshot_sha256"]
-    assert public_snapshot(row) == row
+    projected = public_snapshot(row)
+    # Preserve every captured field and its original digest. The newer reader
+    # adds only unknown furniture observations, never retrospective measurements.
+    added = {
+        "current_furniture_item_records",
+        "furniture_item_record_summaries",
+        "furniture_item_record_scope",
+    }
+    assert {key: value for key, value in projected.items() if key not in added} == row
+    assert projected["current_furniture_item_records"] == {
+        "bed": None,
+        "chair": None,
+        "door": None,
+        "table": None,
+    }
+    assert projected["furniture_item_record_summaries"] == {}
+    assert projected["furniture_item_record_scope"] == {
+        "source": "legacy job_metrics.goods IN_PLAY item records",
+        "scan_completeness": "not_reported",
+        "production_attribution": "unavailable",
+        "ownership_and_accessibility": "not_reported",
+    }
     return row
 
 
@@ -61,7 +82,9 @@ def test_actual_older_public_capture_cannot_roll_back_its_verified_terminal_resu
         assert row["current_metrics"]["completed_workshops"] == 1
         assert row["cleanup_verified"] is row["checkpoint_verified"] is True
         # The original captured feed is unchanged, including its unknown metrics.
-        assert public_snapshot(read_feed(root)["campaigns"][0]) == original
+        assert public_snapshot(read_feed(root)["campaigns"][0]) == public_snapshot(original)
+        key = hashlib.sha256(original["campaign_id"].encode()).hexdigest()
+        assert (root / f"campaign-{key}.json").read_bytes() == json.dumps(original).encode()
         assert original["current_metrics"]["population"] is None
         assert original["current_metrics"]["drink_stock"] is None
         assert row["functioning_fortress"] == "not_assessed"
