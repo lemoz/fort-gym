@@ -15,6 +15,26 @@ keyboard campaign has now completed.
 
 ### Latest native recovery and resumed Astra play
 
+Latest terminal update: window d stopped after 16 new accepted decisions at
+trace cursor 200 / 46,000 elapsed ticks. Its checkpoint failed with
+`Native save completion was not observed before timeout`. Independent audit
+verifies all responses, 531,913 new tokens, trace/journal prefixes and native,
+container and VM teardown. No worker is live. Campaign tokens are 6,465,867;
+including historical failed deliveries is 6,534,871, with charges unreported.
+
+Retained native save files still match checkpoint 184, excluding the appended
+load log. The newer 2,000 ticks and 16 decisions are retained in trace but their
+game state is not resumable. Do not claim checkpoint 200, silently restore 184
+while dropping usage, or claim the new state survived. The final UI was
+`viewscreen_unitst`; bundled quicksave documentation requires dwarf mode.
+A menu-sensitive save boundary is the leading cause, requiring focused native
+validation. Next: reliable checkpointing across menus and an explicitly recorded
+attempt/continuation boundary with all usage retained. The courier also saw a
+container-exit race; no duplicate response was dispatched.
+
+The recorded website below reflects verified recovery 184, not this newest
+checkpoint failure or live activity. No production deployment is claimed.
+
 Native validation and forward-only recovery passed at `c537e3e79`, with an
 independent retained-file audit and passing exact-source CI. New checkpoint 184
 preserves 44,000 elapsed ticks, all 184 returned responses, model memory and
@@ -35,8 +55,7 @@ Astra has now resumed from checkpoint 184 at frozen source `6493cba58`, with
 Its first response acknowledged the rejected input and reloaded menu, then
 chose its own navigation. A native trace check verified 186 committed rows,
 including two newly accepted model responses. No additional ticks were observed
-at that check. The window is running; terminal result and final usage are not
-yet audited.
+at that check. The subsequent audited checkpoint failure is described above.
 
 Declared window d allows four 16-decision segments, with a new append-only
 cumulative allowance of 1,024 dispatches / 40 million returned tokens. This

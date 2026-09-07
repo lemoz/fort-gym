@@ -8,13 +8,22 @@ fortress through year two and beyond. Website evidence and remote source deliver
 remain requirements. The app goal is verified active; early native Astra gameplay
 and checkpoint-continuation evidence are now verified.
 
-Latest result: native rejection validation and recovery passed at `c537e3e79`,
+Latest terminal result: the resumed window completed 16 accepted responses,
+reaching trace cursor 200 and 46,000 elapsed ticks, but native saving timed out.
+Independent audit confirms complete usage and teardown. No worker is live.
+The retained game save still matches checkpoint 184; the newer trace is not a
+resumable checkpoint. All 531,913 new tokens remain counted, for 6,465,867 campaign
+tokens / 6,534,871 including historical failed deliveries. Reliable saving across
+native menus and a declared attempt/continuation boundary are next. This is an
+infrastructure loss of unsaved progress, not fortress collapse or goal completion.
+
+Previous result: native rejection validation and recovery passed at `c537e3e79`,
 with independent audit, verified teardown and exact-source CI. Checkpoint 184
 preserves 44,000 elapsed ticks, all response usage and model memory, without a
 model/key/clock call. The original failed window and journal bytes remain intact.
 Astra resumed at `6493cba58` and independently acknowledged the rejection and
 changed menu before choosing navigation. Two new accepted responses reached the
-game; the new four-by-16 window is running, not terminally audited. A declared
+game; that window later stopped on the audited save failure above. A declared
 1,024-dispatch / 40-million-token cumulative allowance retains all prior usage
 and the fresh 90-percent subscription admission guard. This is not a dollar
 reservation. The updated recorded website, manifests and configuration are

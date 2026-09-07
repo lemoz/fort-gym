@@ -139,7 +139,7 @@ evidence/usage preservation with no model/key/clock calls. All recovery resource
 were stopped. This is a harness handling issue after a model typo, not evidence of
 fortress collapse or completion of the full experimental goal.
 
-The next declared window at `6493cba58` is running from checkpoint 184. Its first
+The next declared window at `6493cba58` resumed from checkpoint 184. Its first
 model response recognized the rejected input and changed menu, then chose its
 own navigation; two newly accepted responses were confirmed in the native trace.
 The window keeps Astra Medium, raw 120x40 screens and 16-decision cadence, while
@@ -147,3 +147,12 @@ declaring a larger cumulative 1,024-dispatch / 40-million-token allowance.
 Fresh per-call quota admission and no fallback/purchase/reset boundaries remain.
 The updated website records interruption 183 and recovery 184, not live activity.
 The source is pushed with passing exact-head CI; no merge or production deploy.
+
+That window later stopped after 16 accepted responses because native saving
+timed out in a unit screen. Trace cursor 200 records 46,000 elapsed ticks, but
+retained game files still match checkpoint 184. Independent audit confirms
+trace/usage preservation, all 531,913 new tokens and full teardown. No worker is
+live. Campaign usage is 6,465,867 tokens, 6,534,871 including historical failures.
+The newer trace is not a resumable native checkpoint. Fix menu-sensitive saving
+and explicitly record any discontinuity before another run; never discard usage
+or present a rollback as successful continuation.
