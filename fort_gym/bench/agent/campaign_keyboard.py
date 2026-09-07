@@ -1,0 +1,181 @@
+"""Persistent Astra keyboard policy; the caller supplies its credential-owning transport."""
+
+from __future__ import annotations
+
+from collections.abc import Callable
+from copy import deepcopy
+import hashlib
+import json
+
+from ..env.native_key_catalog import NATIVE_PROFILE
+from ..env.screen_observation import TEXT_PROFILE, encode_screen, raw_screen
+from .base import Agent
+from .codex_transport import MODEL, REASONING_EFFORT, CodexTransportError
+from .codex_protocol import TRANSPORT
+from .governed_llm import GovernedBudgetCapError
+from .standard_input import parse_response
+
+SUBSCRIPTION_COST_BASIS = "codex_subscription_charge_unreported/v1"
+
+
+def initial_usage() -> dict:
+    return dict(
+        total_tokens=0,
+        returned_responses=0,
+        accounted_responses=0,
+        dispatched_requests=0,
+        total_cost_usd=None,
+        cost_basis=SUBSCRIPTION_COST_BASIS,
+    )
+
+
+def validate_usage(usage: dict) -> None:
+    if not isinstance(usage, dict) or set(usage) != set(initial_usage()):
+        raise ValueError("Invalid subscription usage fields")
+    if usage["cost_basis"] != SUBSCRIPTION_COST_BASIS or usage["total_cost_usd"] is not None:
+        raise ValueError("Subscription charge is unreported, not zero or an API estimate")
+    for key in ("total_tokens", "returned_responses", "accounted_responses", "dispatched_requests"):
+        if type(usage[key]) is not int or usage[key] < 0:
+            raise ValueError("Invalid subscription usage counter")
+    if (
+        not usage["dispatched_requests"]
+        >= usage["returned_responses"]
+        == usage["accounted_responses"]
+    ):
+        raise ValueError("Subscription responses are not accounted")
+
+
+class CodexKeyboardAgent(Agent):
+    """Memory and usage survive native checkpoints; only the model chooses keys."""
+
+    def __init__(
+        self,
+        *,
+        decision: Callable[[dict, str, dict | None], dict],
+        max_dispatches: int,
+        max_total_tokens: int,
+        max_advance_ticks: int = 2000,
+    ) -> None:
+        for value in (max_dispatches, max_total_tokens):
+            if type(value) is not int or value < 1:
+                raise ValueError("Positive cumulative keyboard budgets are required")
+        if type(max_advance_ticks) is not int or not 1 <= max_advance_ticks <= 2500:
+            raise ValueError("Invalid keyboard advance bound")
+        self.configuration = dict(
+            model=MODEL,
+            reasoning_effort=REASONING_EFFORT,
+            transport=TRANSPORT,
+            control_profile=NATIVE_PROFILE,
+            observation_profile=TEXT_PROFILE,
+            max_dispatches=max_dispatches,
+            max_total_tokens=max_total_tokens,
+            max_advance_ticks=max_advance_ticks,
+        )
+        self.decision = decision
+        self.campaign_id: str | None = None
+        self.memory = ""
+        self.usage = initial_usage()
+        self.events: list[dict] = []
+
+    def set_campaign_context(self, *, campaign_id: str) -> None:
+        if not isinstance(campaign_id, str) or not campaign_id:
+            raise ValueError("Keyboard campaign identity is required")
+        if self.campaign_id not in (None, campaign_id):
+            raise ValueError("Cannot move an agent between campaigns")
+        self.campaign_id = campaign_id
+
+    def export_campaign_state(self) -> dict:
+        return deepcopy(
+            dict(
+                schema_version="fortgym.codex-keyboard-agent/v1",
+                campaign_id=self.campaign_id,
+                configuration=self.configuration,
+                memory=self.memory,
+                usage=self.usage,
+            )
+        )
+
+    def restore_campaign_state(self, data: dict, *, campaign_id: str) -> None:
+        if self.usage != initial_usage() or self.memory or self.events:
+            raise ValueError("Restore requires a fresh keyboard agent")
+        expected = self.export_campaign_state()
+        if (
+            not isinstance(data, dict)
+            or set(data) != set(expected)
+            or data["schema_version"] != expected["schema_version"]
+            or data["configuration"] != self.configuration
+            or data["campaign_id"] != campaign_id
+            or not isinstance(data["memory"], str)
+        ):
+            raise ValueError("Keyboard checkpoint configuration or identity differs")
+        validate_usage(data["usage"])
+        self.set_campaign_context(campaign_id=campaign_id)
+        self.memory, self.usage = data["memory"], deepcopy(data["usage"])
+
+    def preflight_decision(self, obs_text: str, obs_json: dict) -> None:
+        if self.campaign_id is None:
+            raise ValueError("Keyboard campaign identity is unset")
+        raw_screen(obs_json["screen_capture"])
+        if self.usage["dispatched_requests"] >= self.configuration["max_dispatches"]:
+            raise GovernedBudgetCapError("Cumulative subscription dispatch limit reached")
+        if self.usage["total_tokens"] >= self.configuration["max_total_tokens"]:
+            raise GovernedBudgetCapError("Cumulative returned-token limit reached")
+
+    def decide(self, obs_text: str, obs_json: dict) -> dict:
+        self.preflight_decision(obs_text, obs_json)
+        # The transport records request intent before launching. If it loses a
+        # final receipt, this invocation remains unresolved and is never replayed.
+        self.usage["dispatched_requests"] += 1
+        result = self.decision(
+            raw_screen(obs_json["screen_capture"]),
+            self.memory,
+            deepcopy(obs_json.get("last_action_feedback")),
+        )
+        self.events.append({"type": "codex_keyboard_decision", "receipt": deepcopy(result)})
+        receipt = result.get("transport_receipt")
+        if not isinstance(receipt, dict):
+            raise CodexTransportError("Missing subscription usage receipt", result)
+        if receipt.get("dispatched") is False:
+            self.usage["dispatched_requests"] -= 1
+        tokens = receipt.get("total_tokens")
+        screen_hash = hashlib.sha256(
+            json.dumps(
+                encode_screen(obs_json["screen_capture"], TEXT_PROFILE),
+                allow_nan=False,
+                sort_keys=True,
+                ensure_ascii=False,
+            ).encode()
+        ).hexdigest()
+        if type(tokens) is int and tokens >= 0 and receipt.get("usage"):
+            self.usage["total_tokens"] += tokens
+            self.usage["returned_responses"] += 1
+            self.usage["accounted_responses"] += 1
+        if (
+            receipt.get("accepted") is not True
+            or receipt.get("dispatched") is not True
+            or receipt.get("model_requested") != MODEL
+            or receipt.get("reasoning_effort_requested") != REASONING_EFFORT
+            or receipt.get("auth_mode") != "chatgpt"
+            or receipt.get("transport") != TRANSPORT
+            or receipt.get("reported_charge_usd") is not None
+            or result.get("control_profile") != NATIVE_PROFILE
+            or result.get("observation_profile") != TEXT_PROFILE
+            or result.get("screen_sha256") != screen_hash
+            or result.get("action_grammar_valid") is not True
+            or type(tokens) is not int
+            or tokens < 0
+            or not receipt.get("usage")
+        ):
+            raise CodexTransportError("Keyboard decision or subscription identity failed", result)
+        validate_usage(self.usage)
+        action = parse_response(
+            result["action"],
+            max_advance_ticks=self.configuration["max_advance_ticks"],
+            control_profile=NATIVE_PROFILE,
+        )
+        self.memory = action["memory_update"]
+        return action
+
+    def pop_tool_events(self) -> list[dict]:
+        events, self.events = self.events, []
+        return events

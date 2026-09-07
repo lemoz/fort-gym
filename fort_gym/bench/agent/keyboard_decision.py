@@ -69,6 +69,7 @@ def request_keyboard_decision(
     timeout_seconds: float = 180,
     observation_profile: str = OBSERVATION_PROFILE,
     control_profile: str = CONTROL_PROFILE,
+    feedback: dict | None = None,
 ) -> dict:
     if not isinstance(memory, str):
         raise ValueError("Agent memory must be text")
@@ -93,6 +94,12 @@ def request_keyboard_decision(
         + json.dumps(schema, sort_keys=True)
         + "\nYour retained memory:\n"
         + memory
+        + (
+            "\nPrevious native input receipt (acceptance does not prove work completed):\n"
+            + json.dumps(feedback, allow_nan=False, sort_keys=True)
+            if feedback is not None
+            else ""
+        )
         + "\nCurrent captured screen:\n"
         + observation_json
     )

@@ -16,6 +16,10 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from ..agent.base import Agent
+from ..agent.campaign_keyboard import SUBSCRIPTION_COST_BASIS, validate_usage
+from ..agent.standard_input import parse_response as parse_keyboard_response
+from ..env.native_key_catalog import NATIVE_PROFILE
+from ..env.screen_observation import TEXT_PROFILE, encode_screen
 from ..agent.campaign_local import LocalOutputLimitPause
 from ..agent.governed_llm import GovernedBudgetCapError
 from ..env.campaign_view import (
@@ -40,20 +44,17 @@ from .campaign_save import NativeSaveSnapshotter
 class CampaignEnvironment(Protocol):
     """Each operation returns with native gameplay paused."""
 
-    def observe(self) -> dict[str, Any]:
-        ...
+    def observe(self) -> dict[str, Any]: ...
 
-    def screen(self) -> str:
-        ...
+    def screen(self) -> str: ...
 
-    def inspect_map(self, selection: dict | None) -> dict:
-        ...
+    def screen_capture(self) -> dict: ...
 
-    def apply(self, action: dict[str, Any], state: dict[str, Any]) -> dict[str, Any]:
-        ...
+    def inspect_map(self, selection: dict | None) -> dict: ...
 
-    def advance(self, ticks: int, state: dict[str, Any]) -> tuple[dict, dict]:
-        ...
+    def apply(self, action: dict[str, Any], state: dict[str, Any]) -> dict[str, Any]: ...
+
+    def advance(self, ticks: int, state: dict[str, Any]) -> tuple[dict, dict]: ...
 
 
 class CampaignPreDispatchPause(GovernedBudgetCapError):
@@ -157,22 +158,30 @@ def reconciled_usage(checkpoint: dict, journal: bytes) -> dict:
             usage["dispatched_requests"] < usage["returned_responses"]
         ):
             raise ValueError("Usage journal dispatch count is below returned responses")
-        if not isinstance(usage.get("total_cost_usd"), str):
+        subscription = current.get("cost_basis") == SUBSCRIPTION_COST_BASIS
+        if subscription:
+            validate_usage(current)
+            validate_usage(usage)
+        elif usage.get("cost_basis") == SUBSCRIPTION_COST_BASIS:
+            raise ValueError("Usage cost basis changed")
+        elif not isinstance(usage.get("total_cost_usd"), str):
             raise ValueError("Usage cost must retain its decimal string")
-        cost = Decimal(usage["total_cost_usd"])
-        if not cost.is_finite() or cost < 0:
-            raise ValueError("Invalid returned model cost")
-        if last_usage is not None and cost < Decimal(last_usage["total_cost_usd"]):
-            raise ValueError("Usage journal cost regressed")
+        if not subscription:
+            cost = Decimal(usage["total_cost_usd"])
+            if not cost.is_finite() or cost < 0:
+                raise ValueError("Invalid returned model cost")
+            if last_usage is not None and cost < Decimal(last_usage["total_cost_usd"]):
+                raise ValueError("Usage journal cost regressed")
         last_usage = usage
     if pending:
         raise ValueError("Interrupted model decision has unresolved provider usage")
     if last_usage is not None:
         for key in counters:
             current[key] = max(current[key], last_usage[key])
-        current["total_cost_usd"] = str(
-            max(Decimal(current["total_cost_usd"]), Decimal(last_usage["total_cost_usd"]))
-        )
+        if current.get("cost_basis") != SUBSCRIPTION_COST_BASIS:
+            current["total_cost_usd"] = str(
+                max(Decimal(current["total_cost_usd"]), Decimal(last_usage["total_cost_usd"]))
+            )
     return current
 
 
@@ -192,7 +201,12 @@ class CampaignLoop:
     ) -> None:
         if type(max_advance_ticks) is not int or not 1 <= max_advance_ticks <= 2500:
             raise ValueError("Invalid campaign advance limit")
-        if observation_profile not in ("governed_review/v1", *CAMPAIGN_OBSERVATION_PROFILES):
+        keyboard = observation_profile == TEXT_PROFILE
+        if observation_profile not in (
+            "governed_review/v1",
+            TEXT_PROFILE,
+            *CAMPAIGN_OBSERVATION_PROFILES,
+        ):
             raise ValueError("Unsupported campaign observation profile")
         if observation_profile == INSPECTION_PROFILE and not callable(
             getattr(environment, "inspect_map", None)
@@ -203,10 +217,19 @@ class CampaignLoop:
         if (
             advance_policy != ACCEPTED_ONLY
             and observation_profile not in CAMPAIGN_OBSERVATION_PROFILES
+            and not keyboard
         ):
             raise ValueError("Requested-time policy requires factual campaign observations")
         agent.set_campaign_context(campaign_id=campaign_id)
         initial = agent.export_campaign_state()
+        if keyboard and (
+            not callable(getattr(environment, "screen_capture", None))
+            or getattr(environment, "control_profile", None) != NATIVE_PROFILE
+            or initial["configuration"].get("control_profile") != NATIVE_PROFILE
+            or initial["configuration"].get("observation_profile") != TEXT_PROFILE
+            or initial["configuration"].get("max_advance_ticks") != max_advance_ticks
+        ):
+            raise ValueError("Keyboard observation, agent and native control profiles must match")
         output.mkdir(mode=0o700, parents=False, exist_ok=False)
         self.agent, self.environment, self.output = agent, environment, output
         self.campaign_id, self.max_advance_ticks = campaign_id, max_advance_ticks
@@ -291,8 +314,28 @@ class CampaignLoop:
         start = _clock(before)
         if self.observation_profile == INSPECTION_PROFILE:
             self._observe_map(before, self.observation_view)
-        screen = self.environment.screen()
-        if self.observation_profile in CAMPAIGN_OBSERVATION_PROFILES:
+        keyboard = self.observation_profile == TEXT_PROFILE
+        if keyboard:
+            capture = self.environment.screen_capture()
+            screen = json.dumps(encode_screen(capture, TEXT_PROFILE), ensure_ascii=False)
+            feedback = None
+            if self.last_result is not None:
+                native = self.last_result.get("result", {})
+                feedback = {
+                    "accepted": self.last_result.get("accepted"),
+                    "reason": self.last_result.get("why"),
+                    "keys_confirmed": native.get("keys_confirmed"),
+                    "command_mutation": native.get("command_mutation"),
+                }
+            observation = {
+                "observation_profile": TEXT_PROFILE,
+                "screen_capture": capture,
+                "last_action_feedback": feedback,
+            }
+            text = screen
+        else:
+            screen = self.environment.screen()
+        if not keyboard and self.observation_profile in CAMPAIGN_OBSERVATION_PROFILES:
             # Dialog legality depends on the screen just read at this paused boundary.
             before["screen_text"] = screen
             text, observation = encode_campaign_observation(
@@ -305,7 +348,7 @@ class CampaignLoop:
                 committed_elapsed_ticks=self.committed_elapsed_ticks,
                 completed_decisions=self.next_step,
             )
-        else:
+        elif not keyboard:
             text, observation = encode_observation(
                 before,
                 screen_text=screen,
@@ -386,8 +429,14 @@ class CampaignLoop:
             self.no_action_boundary = no_action
             raise CampaignNoActionPause("Accounted output limit before a native action")
         allow_view = self.observation_profile == INSPECTION_PROFILE
-        action = parse_campaign_action(
-            raw_action, max_advance_ticks=self.max_advance_ticks, allow_view=allow_view
+        action = (
+            parse_keyboard_response(
+                raw_action, max_advance_ticks=self.max_advance_ticks, control_profile=NATIVE_PROFILE
+            )
+            if keyboard
+            else parse_campaign_action(
+                raw_action, max_advance_ticks=self.max_advance_ticks, allow_view=allow_view
+            )
         )
         if action.get("type") not in {
             "DIG",
@@ -399,6 +448,7 @@ class CampaignLoop:
             "WAIT",
             "INTERACT",
             *(["VIEW"] if allow_view else []),
+            *(["KEYSTROKE"] if keyboard else []),
         }:
             raise ValueError("Campaign action is outside the declared governed interface")
         ticks = action.get("advance_ticks")
@@ -423,6 +473,12 @@ class CampaignLoop:
         else:
             execution = self.environment.apply(action, before)
         self.failure_context = {"action": action, "execute": execution}
+        if keyboard and execution.get("accepted") is not True:
+            native = execution.get("result", {})
+            if native.get("command_mutation") != "not_attempted":
+                raise ValueError(
+                    "Keyboard input outcome is partial or unknown; no replay or clock step"
+                )
         requested = requested_ticks(ticks, execution, self.advance_policy)
         after, receipt = self.environment.advance(requested, before)
         self.failure_context = {
