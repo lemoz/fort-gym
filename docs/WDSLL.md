@@ -8,6 +8,13 @@ fortress through year two and beyond. Website evidence and remote source deliver
 remain requirements. The app goal was observed paused; project implementation has
 been requested and begins without claiming a new native gameplay result.
 
+First slice is now pushed in draft [PR #137](https://github.com/lemoz/fort-gym/pull/137):
+Astra's subscription-backed keyboard decision transport passed 92 focused tests
+and one live synthetic-screen call. The model selected `BUILDJOB_ADD`; no game
+action was executed. Native campaign integration, viewport readability, autonomous
+play, comparisons, and live website delivery remain open. See current campaign
+status for usage and full-suite evidence boundaries.
+
 Latest verified progress, September 7: the owner selected `gpt-6-astra` at
 `medium` reasoning through their ChatGPT subscription. The local Qwen campaign
 was operator-cancelled for this change, its evidence preserved, and its game,

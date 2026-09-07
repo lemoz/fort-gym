@@ -12,6 +12,26 @@ DFHack shortcuts as an explicit alternative condition. Compare matching starts
 and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. No Astra native run has started.
 
+The first implementation slice is pushed at `4b2fee8a0` in draft
+[PR #137](https://github.com/lemoz/fort-gym/pull/137), stacked on the frozen native
+producer in #136. It adds a keyboard-only schema, full screen-tile capture
+validation, a bounded subscription transport, and a screen-to-decision bridge.
+92 focused tests passed. The full suite had 2,155 passes, ten skips, and one
+sandbox-blocked localhost test that passed separately with socket access.
+
+One live synthetic 80x25 workshop-menu call returned `KEYSTROKE` / `BUILDJOB_ADD`.
+It consumed 33,055 input and 63 output tokens; no key was executed in DF. Account
+credit balance and rounded usage readings were unchanged before/after, while an
+exact dollar charge remains unreported. Raw tile JSON is a costly fidelity
+baseline, not the final readable observation design. The exact earlier startup
+diagnostic is now classified separately; the original smoke receipt is unchanged.
+
+Next: compact model-visible screen observations, unattended fresh subscription
+allowance and cumulative-run accounting, checkpointed agent integration, and native
+keyboard/dialog/pause receipts. Then verify native viewport resizing and start
+the autonomous keyboard experiment. No native Astra gameplay, merge, or website
+deployment is claimed by #137.
+
 ## Current: requested GPT-6 Astra Medium subscription migration
 
 The owner requested `gpt-6-astra` with reasoning effort `medium`, using their
