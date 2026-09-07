@@ -1,5 +1,25 @@
 # Campaign website delivery milestone
 
+## Latest recorded result, September 7
+
+The first reasoning-budget segment is now registered as the fourteenth recorded
+campaign: 32 commands, 76,000 actual ticks, seven living citizens, one completed
+workshop, drink inventory 60 to 39, and 325,234 accounted tokens. Its checkpoint
+and outer-resource teardown were independently verified. See the
+[result and limitations](LOCAL_REASONING_SEGMENT1_RESULT.md).
+
+The historical three-command capture described below is unchanged. HTTP tests
+now verify that it cannot roll back this campaign's newer terminal record or
+create a duplicate row. The separate original-feed and helper tests retain its
+timestamp and unknown metrics. No live game, browser or deployment is started
+by serving these versioned records.
+
+Validation for this update: 103 focused tests passed, including exact result
+bytes, HTTP publication, checkpoint/usage summaries and stale-report precedence.
+Changed-file Ruff and Black, JavaScript syntax and diff checks passed. The full
+website suite is running at this publication. Existing repository-wide debt
+remains: 10 Ruff findings and 464 mypy errors in 26 files.
+
 ## Current real-data compatibility check, September 7
 
 The optional active feed now recognizes the published reasoning-budget condition

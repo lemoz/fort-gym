@@ -37,7 +37,7 @@ def captured_feed(tmp_path):
     return root, row
 
 
-def test_actual_public_capture_combines_with_recorded_campaigns_without_invented_metrics(
+def test_actual_older_public_capture_cannot_roll_back_its_verified_terminal_result(
     tmp_path, monkeypatch
 ):
     from fort_gym.bench.api import server
@@ -50,16 +50,20 @@ def test_actual_public_capture_combines_with_recorded_campaigns_without_invented
         response = client.get("/public/campaign-feed")
         assert response.status_code == 200 and "no-store" in response.headers["cache-control"]
         data = response.json()
-        assert data["configured"] is True and data["published_snapshots"] == 13
+        assert data["configured"] is True and data["published_snapshots"] == 14
         assert len(data["campaigns"]) == 14
         row = next(r for r in data["campaigns"] if r["campaign_id"] == original["campaign_id"])
-        assert public_snapshot(row) == original
-        assert row["committed_steps"] == 3 and row["elapsed_ticks"] == 5500
-        assert row["usage"]["total_tokens"] == 22751
-        assert row["current_metrics"]["population"] is None
-        assert row["current_metrics"]["drink_stock"] is None
-        assert row["current_metrics"]["completed_workshops"] == 0
-        assert row["cleanup_verified"] is None and row["checkpoint_verified"] is False
+        assert row["lifecycle"] == "finished" and row["freshness"] == "recorded"
+        assert row["committed_steps"] == 32 and row["elapsed_ticks"] == 76000
+        assert row["usage"]["total_tokens"] == 325234
+        assert row["current_metrics"]["population"] == 7
+        assert row["current_metrics"]["drink_stock"] == 39
+        assert row["current_metrics"]["completed_workshops"] == 1
+        assert row["cleanup_verified"] is row["checkpoint_verified"] is True
+        # The original captured feed is unchanged, including its unknown metrics.
+        assert public_snapshot(read_feed(root)["campaigns"][0]) == original
+        assert original["current_metrics"]["population"] is None
+        assert original["current_metrics"]["drink_stock"] is None
         assert row["functioning_fortress"] == "not_assessed"
         assert row["comparison_rankings_available"] is False
         assert client.get("/campaigns").status_code == 200

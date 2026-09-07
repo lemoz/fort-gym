@@ -1,0 +1,893 @@
+{
+  "schema_version": "fortgym.published-campaign-bundle/v1",
+  "configuration": {
+    "schema_version": "fortgym.local-campaign-condition/v1",
+    "runner": "campaign-loop/v1",
+    "condition_id": "local-native-qwen35-year-two-reasoning-budget-v1",
+    "decision_profile": "campaign_action/v1",
+    "observation_profile": "campaign_state/v1",
+    "advance_policy": "model_requested/v1",
+    "schema_attempts": 2,
+    "phase": "development",
+    "hypothesis": "With thinking enabled and the same 4096-token total output allowance, test whether a declared 2048-token reasoning budget leaves room for a model-selected action and enables sustained fortress development. This is a new experiment, not a repair or continuation of the completed thinking-v1 campaign. Valid action syntax alone is not successful play.",
+    "models": [
+      "fort-gym-qwen35-9b-q4-03b74727a860"
+    ],
+    "max_steps": 32,
+    "max_segments": 8,
+    "segment_time_budget_seconds": 7200,
+    "ticks_per_step": 2000,
+    "max_advance_ticks": 2500,
+    "max_output_tokens": 4096,
+    "max_attempts": 1,
+    "max_dispatches": 512,
+    "max_request_bytes": 65536,
+    "max_total_tokens": 8000000,
+    "max_cost_usd": 0,
+    "local_inference": {
+      "transport": "llama-cpp-local/v1",
+      "server_version": "b10516-b95502ba9",
+      "prompt_contract": "visible_action_contract/v1",
+      "prompt_packing": "bounded_history_corrections/v1",
+      "model_digests": {
+        "fort-gym-qwen35-9b-q4-03b74727a860": "03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8"
+      },
+      "model_files": {
+        "fort-gym-qwen35-9b-q4-03b74727a860": "Qwen3.5-9B-Q4_K_M.gguf"
+      },
+      "model_metadata_sha256": {
+        "fort-gym-qwen35-9b-q4-03b74727a860": "55e0498c6d066243ffd3ebd364f7af4460596189d3d9d11e6697f9bdbfc93dea"
+      },
+      "chat_template_sha256": {
+        "fort-gym-qwen35-9b-q4-03b74727a860": "7f0e529032c25183bcd66c7f238da2d377f43be754a94e2725a58c4e16d2ed67"
+      },
+      "context_tokens": 32768,
+      "context_headroom_tokens": 512,
+      "token_count_profile": "llama-chat-input-tokens/v1",
+      "token_count_timeout_seconds": 10,
+      "timeout_seconds": 600,
+      "temperature": 0.6,
+      "top_p": 0.95,
+      "top_k": 20,
+      "seed": 73,
+      "enable_thinking": true,
+      "runtime_profile": "flash_q8/v1",
+      "action_reference": "native_designations/v1",
+      "action_schema": "typed_native_parameters/v1",
+      "reasoning_budget_tokens": 2048
+    },
+    "workshop_placement_policy": "dfhack_047_ground/v1",
+    "notes": [
+      "Declared before execution. Preserve the completed direct/thinking pair and exact output-budget replay. Do not rewrite their conditions, requests, checkpoints, measured ticks or outcomes.",
+      "Use the same original immutable native seed at year 30, tick 16801, existing Qwen3.5 9B weights, pinned llama.cpp build, prompt, action schema, sampling and total output/context allowances as thinking-v1. Only reasoning_budget_tokens changes in the execution configuration after descriptive metadata.",
+      "Use a frozen committed implementation containing the separately native-verified max_advance_ticks propagation correction. The historical pair used the older 2000-tick cap; this new run is not a strict one-variable gameplay comparison against that pair. Report actual elapsed ticks and this code difference.",
+      "Before a full campaign segment, test one retained local request with the explicit reasoning budget using a separately recorded owner and immutable source. A returned valid action only establishes model transport compatibility; do not execute that diagnostic action or resume the old campaign.",
+      "Begin a new campaign and preserve periodic/final checkpoints. Continue cleanly completed segments without resetting cumulative usage or changing configuration; retain every pause or failure. One model/game at a time, with verified owned-process teardown between owners.",
+      "The total 4096-token output allowance includes thinking, forced end-of-thinking delimiters and action content. A 2048-token reasoning budget is a sampler setting, not proof of a valid action or good planning. No injected reasoning-budget message or scripted gameplay coaching.",
+      "Compare accepted/rejected commands, actual elapsed native ticks, completed structures, population, native drink units, checkpoint continuity, returned tokens, missing usage and output/transport pauses. Preserve failures instead of manufacturing action success.",
+      "Use local inference with no hosted fallback or cloud VM. Model API charges are zero; hardware, electricity and application costs remain unmeasured. No human gameplay rescue.",
+      "A functioning fortress after 403200 elapsed ticks, continued year-two play, repeated attempts across at least three supported models, and verified website and remote delivery remain the overall goal. This single condition is not a ranking."
+    ],
+    "checkpoint_policy": {
+      "profile": "periodic_checkpoints/v1",
+      "interval_steps": 8,
+      "minimum_free_bytes": 1073741824
+    },
+    "starting_snapshot": {
+      "receipt_sha256": "eaf5fa5a40014719e6c313f33497740e536a8faa1c90a84c4e09dcc380ac0595",
+      "year": 30,
+      "year_tick": 16801,
+      "provenance": "local_native_save_smoke_43a53762"
+    }
+  },
+  "source_snapshot_receipt_sha256": "eaf5fa5a40014719e6c313f33497740e536a8faa1c90a84c4e09dcc380ac0595",
+  "reporting_code_revision": "80eea7dc7e0d1b853a6918d4f2e5b639dc081faa",
+  "campaigns": [
+    {
+      "schema_version": "fortgym.public-campaign-state/v1",
+      "campaign_id": "fort-gym-year-two-qwen35-reasoning-budget-v1-a",
+      "segment_id": "segment-000001",
+      "model": "fort-gym-qwen35-9b-q4-03b74727a860",
+      "condition_id": "local-native-qwen35-year-two-reasoning-budget-v1",
+      "code_revision": "de69c7a467eb0b00becfef03329bac9f58690e35",
+      "configuration_sha256": "13ec2fdaad2b5e63b6f1e8fc4d57feefd3f66cd307104267d7bc06743cdbb490",
+      "updated_at": "2026-09-07T03:39:52.938413+00:00",
+      "lifecycle": "finished",
+      "segment_status": "bounded_segment_complete",
+      "failure_kind": "none",
+      "committed_steps": 32,
+      "elapsed_ticks": 76000,
+      "current_metrics": {
+        "population": 7,
+        "food_stock": null,
+        "drink_stock": 39,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 1,
+        "completed_beds": 0,
+        "completed_farms": 0,
+        "recorded_dead_citizens": 0
+      },
+      "usage": {
+        "total_tokens": 325234,
+        "dispatched_requests": 32,
+        "returned_responses": 32,
+        "accounted_responses": 32,
+        "reported_model_cost_usd": null,
+        "dispatches_without_returned_usage": 0,
+        "billing_reconciled": false,
+        "cost_basis": "self_hosted_no_metered_provider",
+        "metered_provider_charge_usd": "0",
+        "infrastructure_cost_usd": null
+      },
+      "checkpoint_verified": true,
+      "cleanup_verified": true,
+      "functioning_fortress": "not_assessed",
+      "autonomous_gameplay": "not_assessed",
+      "fortress_collapse": "not_assessed",
+      "comparison_rankings_available": false,
+      "flow_measurement": "unavailable",
+      "metric_summaries": {
+        "population": {
+          "start": 7,
+          "end": 7,
+          "minimum_observed": 7,
+          "maximum_observed": 7,
+          "observed_samples": 33,
+          "missing_samples": 0,
+          "change": 0
+        },
+        "food_stock": {
+          "start": null,
+          "end": null,
+          "minimum_observed": null,
+          "maximum_observed": null,
+          "observed_samples": 0,
+          "missing_samples": 33,
+          "change": null
+        },
+        "drink_stock": {
+          "start": 60,
+          "end": 39,
+          "minimum_observed": 39,
+          "maximum_observed": 60,
+          "observed_samples": 33,
+          "missing_samples": 0,
+          "change": -21
+        },
+        "wood_stock": {
+          "start": null,
+          "end": null,
+          "minimum_observed": null,
+          "maximum_observed": null,
+          "observed_samples": 0,
+          "missing_samples": 33,
+          "change": null
+        },
+        "stone_stock": {
+          "start": null,
+          "end": null,
+          "minimum_observed": null,
+          "maximum_observed": null,
+          "observed_samples": 0,
+          "missing_samples": 33,
+          "change": null
+        },
+        "functional_rooms": {
+          "start": 0,
+          "end": null,
+          "minimum_observed": 0,
+          "maximum_observed": 0,
+          "observed_samples": 13,
+          "missing_samples": 20,
+          "change": null
+        },
+        "completed_workshops": {
+          "start": 0,
+          "end": 1,
+          "minimum_observed": 0,
+          "maximum_observed": 1,
+          "observed_samples": 33,
+          "missing_samples": 0,
+          "change": 1
+        },
+        "completed_beds": {
+          "start": 0,
+          "end": 0,
+          "minimum_observed": 0,
+          "maximum_observed": 0,
+          "observed_samples": 33,
+          "missing_samples": 0,
+          "change": 0
+        },
+        "completed_farms": {
+          "start": 0,
+          "end": 0,
+          "minimum_observed": 0,
+          "maximum_observed": 0,
+          "observed_samples": 33,
+          "missing_samples": 0,
+          "change": 0
+        },
+        "recorded_dead_citizens": {
+          "start": 0,
+          "end": 0,
+          "minimum_observed": 0,
+          "maximum_observed": 0,
+          "observed_samples": 33,
+          "missing_samples": 0,
+          "change": 0
+        }
+      },
+      "timeline": [
+        {
+          "boundary_index": 0,
+          "year": 30,
+          "year_tick": 16801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 60,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 1,
+          "year": 30,
+          "year_tick": 19301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 60,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 2,
+          "year": 30,
+          "year_tick": 19801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 60,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 3,
+          "year": 30,
+          "year_tick": 22301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 60,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 4,
+          "year": 30,
+          "year_tick": 22801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 60,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 5,
+          "year": 30,
+          "year_tick": 25301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 60,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 6,
+          "year": 30,
+          "year_tick": 27801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 60,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 7,
+          "year": 30,
+          "year_tick": 30301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 60,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 8,
+          "year": 30,
+          "year_tick": 32801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 60,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 9,
+          "year": 30,
+          "year_tick": 35301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 60,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 10,
+          "year": 30,
+          "year_tick": 37801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 54,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 11,
+          "year": 30,
+          "year_tick": 40301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 54,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 12,
+          "year": 30,
+          "year_tick": 42801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 53,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 13,
+          "year": 30,
+          "year_tick": 45301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 53,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 14,
+          "year": 30,
+          "year_tick": 47801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 53,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 15,
+          "year": 30,
+          "year_tick": 50301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 53,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 16,
+          "year": 30,
+          "year_tick": 52801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 53,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 17,
+          "year": 30,
+          "year_tick": 55301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 53,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 18,
+          "year": 30,
+          "year_tick": 57801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 53,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 19,
+          "year": 30,
+          "year_tick": 60301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 47,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 20,
+          "year": 30,
+          "year_tick": 62801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 47,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 21,
+          "year": 30,
+          "year_tick": 65301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 46,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 22,
+          "year": 30,
+          "year_tick": 67801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 46,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 23,
+          "year": 30,
+          "year_tick": 70301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 46,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 24,
+          "year": 30,
+          "year_tick": 72801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 46,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 25,
+          "year": 30,
+          "year_tick": 75301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 46,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 26,
+          "year": 30,
+          "year_tick": 77801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 46,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 27,
+          "year": 30,
+          "year_tick": 80301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 40,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 28,
+          "year": 30,
+          "year_tick": 82801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 40,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 29,
+          "year": 30,
+          "year_tick": 85301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 40,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 30,
+          "year": 30,
+          "year_tick": 87801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 40,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 31,
+          "year": 30,
+          "year_tick": 90301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 40,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 32,
+          "year": 30,
+          "year_tick": 92801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 39,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        }
+      ],
+      "timeline_sampled": false,
+      "source_sha256": {
+        "campaign-segment.json": "35ef12d277f55cbff17110b26ceebe5cb0bcd01a4e6462a231ea81b67c61159a",
+        "result.json": "3e7813fc60e0ebcb293f45665591299b2b8deaefb95c18bf6481a99554e6056c",
+        "campaign/trace.jsonl": "1feea15774dbceb0bac6fa1c8221fb245e9d77f017c8b87cfd3def019fce57e5"
+      },
+      "actions": {
+        "committed_rows": 32,
+        "accepted": 25,
+        "rejected": 7,
+        "unknown": 0,
+        "changed_command_after_rejection": 7,
+        "path_cache_stale_rejections": 1,
+        "by_type": {
+          "BUILD": {
+            "accepted": 1,
+            "rejected": 3,
+            "unknown": 0
+          },
+          "DIG": {
+            "accepted": 3,
+            "rejected": 4,
+            "unknown": 0
+          },
+          "LABOR": {
+            "accepted": 1,
+            "rejected": 0,
+            "unknown": 0
+          },
+          "ORDER": {
+            "accepted": 1,
+            "rejected": 0,
+            "unknown": 0
+          },
+          "WAIT": {
+            "accepted": 19,
+            "rejected": 0,
+            "unknown": 0
+          }
+        }
+      }
+    }
+  ],
+  "native_audit": {
+    "checkpoints": [
+      {
+        "path": "checkpoints/step-000008",
+        "next_step": 8,
+        "file_sha256": "de9c12fc57de3476fff0f9747d6d7b5359b395af4b880fc5494bd47112fee591",
+        "payload_sha256": "319f2c008814a9e5fced59df1b09be6acbc2abe6cdf4a053a04e58a62ca8b013"
+      },
+      {
+        "path": "checkpoints/step-000016",
+        "next_step": 16,
+        "file_sha256": "fe5a2e195cf67de0d9a602d467ab8dc039812af291132bd393ad1fc2a8f0af00",
+        "payload_sha256": "215e3de582db4821ed7c5263596f06526769d8360d7d6181331df1a208cca2a7"
+      },
+      {
+        "path": "checkpoints/step-000024",
+        "next_step": 24,
+        "file_sha256": "b694e5253f6240dd235e04d828a2ccbbf92c444648a0e99746e1a0b6afd103c2",
+        "payload_sha256": "7a6c2f57bbb4b54855b13588877aa7a8653e019eeba0888ead1dd94a81cf4a1a"
+      },
+      {
+        "path": "checkpoint",
+        "next_step": 32,
+        "file_sha256": "9107218b7c5fea3638e329e631a9e9b1d763457cb7f80092fe3a4679c67824e3",
+        "payload_sha256": "da0a930525210d16bfcf437657159050a1df1713332c73b5dac787b860e43129"
+      }
+    ],
+    "final_checkpoint_covers_all_commands_and_returned_usage": true,
+    "returned_responses": 32,
+    "accounted_responses": 32,
+    "returned_responses_with_incomplete_usage": 0,
+    "dispatched_without_returned_response": 0,
+    "tokens_summed_from_native_model_responses": 325234,
+    "finish_reasons": [
+      "stop"
+    ],
+    "requested_tick_mismatches": [],
+    "operator_receipt_sha256": "137823e7d5c9ade7e990bb36e2694bd863a529c4082a511bf2cd9128885f6423",
+    "operator_sha256": "8266f19bb3b67a92280e569411193a39c063836f0aeb4ed1f0e7a5ee524b20c1",
+    "local_container_stopped": true,
+    "local_model_and_tunnel_returncodes": {
+      "server": 0,
+      "tunnel": 0
+    },
+    "local_vm_stopped": true,
+    "metered_provider_charge_usd": "0",
+    "hardware_energy_and_app_cost_usd": null,
+    "historical_inputs_rewritten": false,
+    "production_deployed": false,
+    "controller_status": "invocation_limited_pause",
+    "first_workshop_prefix": {
+      "committed_steps": 14,
+      "bytes": 1106091,
+      "sha256": "7ac28dd2ec96ea81ece9d39b3a3caf4748cf00ced8163c8b2508c9f7561fd9eb"
+    },
+    "terminal_diagnostic_sha256": {
+      "campaign-segment.json": "35ef12d277f55cbff17110b26ceebe5cb0bcd01a4e6462a231ea81b67c61159a",
+      "result.json": "3e7813fc60e0ebcb293f45665591299b2b8deaefb95c18bf6481a99554e6056c",
+      "campaign/trace.jsonl": "1feea15774dbceb0bac6fa1c8221fb245e9d77f017c8b87cfd3def019fce57e5",
+      "campaign/usage.jsonl": "5970ad8dbc9e1a8fedba4bc8904c56b706814c9f59214bf7c254a4ca8403783f",
+      "spend.jsonl": "56b575460f1330169db78a7532ae2404451610a38bc9c2835985b55bb4dab305",
+      "agent-final.json": "8733a144c2a244c5738a42aa8b1c6ee6207f16b815e52c2af36f0f666e5ff07c"
+    }
+  }
+}
