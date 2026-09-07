@@ -9,17 +9,23 @@ has launched on the existing isolated local runtime. Its owner session and game
 container were both verified running. The local model has chosen genuine VIEW
 actions; this is now model execution, not another provider-free fixture. This is
 a point-in-time running observation, not a terminal campaign or fortress result.
-The first bounded segment has now completed, and the controller automatically
-continued into the second segment without operator intervention. An independent
-read-only audit verified the native save inventory, checkpoint-bound files,
-action cursor and reconciled cumulative usage. The prior periodic checkpoint
-and completed segment histories remain exact trace and usage prefixes in the
-new segment. Its first new model-selected action starts at the saved native
-calendar and advances from there; old actions were not replayed. The previous
-segment's exact native runtime had no remaining live processes, while the second
-segment was live. The auditor issued no game command or restore. Detailed audit
-and native evidence remain local; the second segment's terminal runtime receipt
-and the outer owner's teardown are not yet complete or claimed.
+Two bounded segments have now completed, and the controller automatically
+continued into the third segment without operator intervention. The second
+segment ended at its declared time-slice boundary, not a gameplay failure or
+exhaustion of the campaign's cumulative budget. Independent read-only audits
+verified the native save inventory, checkpoint-bound files, loaded-source
+identity, action cursor and reconciled cumulative usage. Prior periodic and
+completed-segment histories remain exact trace and usage prefixes after both
+handoffs, with unchanged agent configuration.
+
+The first handoff's new model-selected action started at the saved native
+calendar and advanced from there; old actions were not replayed. The second
+segment's terminal native-load and cleanup receipts now verify, and its exact
+native runtime has no remaining live processes. The third segment's runtime is
+live and its journals preserve the second segment's complete prefix; its first
+new action is not yet verified. The auditor issued no game command or restore.
+Detailed audit and native evidence remain local. The third segment's terminal
+runtime receipt and the outer owner's teardown are not yet complete or claimed.
 
 The producer remains frozen at `48d9ed6d94a598b44c4cfbe10a0df4badcb189ad` in
 [PR #136](https://github.com/lemoz/fort-gym/pull/136), whose
