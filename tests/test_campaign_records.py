@@ -138,8 +138,6 @@ def test_year_two_baseline_preserves_no_development_and_complete_checkpoint():
 
 
 def test_reasoning_budget_segment_preserves_development_usage_and_resume_boundary():
-    from fort_gym.bench.api import server
-
     evidence = records.PROJECT_ROOT / "experiments/evidence"
     path = evidence / "local_native_qwen35_year_two_reasoning_segment1_20260907.json"
     assert hashlib.sha256(path.read_bytes()).hexdigest() == (
@@ -147,13 +145,9 @@ def test_reasoning_budget_segment_preserves_development_usage_and_resume_boundar
     )
     bundle = json.loads(path.read_text())
     snapshot = bundle["campaigns"][0]
-    response = TestClient(server.app).get("/public/campaign-feed")
-    assert response.status_code == 200
-    matches = [
-        r for r in response.json()["campaigns"] if r["campaign_id"] == snapshot["campaign_id"]
-    ]
-    assert len(matches) == 1
-    row = matches[0]
+    # The immutable historical segment remains valid after the registry advances
+    # this same campaign identity to its later terminal outcome.
+    row = snapshot
     assert row["lifecycle"] == "finished"
     assert row["segment_status"] == "bounded_segment_complete"
     assert row["failure_kind"] == "none"
@@ -188,6 +182,62 @@ def test_reasoning_budget_segment_preserves_development_usage_and_resume_boundar
     assert audit["requested_tick_mismatches"] == []
     assert audit["local_container_stopped"] is audit["local_vm_stopped"] is True
     assert audit["historical_inputs_rewritten"] is audit["production_deployed"] is False
+
+
+def test_dialog_failure_replaces_same_campaign_without_hiding_history_or_costs():
+    from fort_gym.bench.api import server
+
+    filename = "local_native_qwen35_year_two_dialog_failure_20260907.json"
+    bundle = json.loads((records.PROJECT_ROOT / "experiments/evidence" / filename).read_text())
+    assert filename in records.PUBLISHED_BUNDLES
+    assert bundle["native_audit"]["prior_public_bundle"] not in records.PUBLISHED_BUNDLES
+    response = TestClient(server.app).get("/public/campaign-feed")
+    assert response.status_code == 200
+    assert response.json()["published_snapshots"] == 14
+    matches = [
+        row
+        for row in response.json()["campaigns"]
+        if row["campaign_id"] == bundle["campaigns"][0]["campaign_id"]
+    ]
+    assert len(matches) == 1
+    row = matches[0]
+    assert row["lifecycle"] == "finished" and row["segment_status"] == "failed"
+    assert row["failure_kind"] == "unclassified"  # Frozen producer has no typed failure code.
+    assert (row["committed_steps"], row["elapsed_ticks"]) == (83, 203339)
+    assert row["usage"]["total_tokens"] == 931832
+    assert row["usage"]["dispatched_requests"] == row["usage"]["accounted_responses"] == 84
+    assert row["usage"]["dispatches_without_returned_usage"] == 0
+    assert row["usage"]["metered_provider_charge_usd"] == "0"
+    assert row["usage"]["infrastructure_cost_usd"] is None
+    assert row["checkpoint_verified"] is False and row["cleanup_verified"] is True
+    assert row["current_metrics"]["population"] == 9
+    assert row["current_metrics"]["drink_stock"] == 25
+    assert row["current_metrics"]["completed_workshops"] == 1
+    assert row["current_metrics"]["completed_beds"] == 0
+    assert row["current_furniture_item_records"]["bed"] == 11
+    assert row["functioning_fortress"] == row["fortress_collapse"] == "not_assessed"
+    assert row["comparison_rankings_available"] is False
+    audit = bundle["native_audit"]
+    assert audit["tokens_summed_from_native_model_responses"] == 931832
+    assert audit["finish_reasons"] == ["stop"]
+    assert [c["next_step"] for c in audit["checkpoints"]] == list(range(8, 81, 8))
+    assert audit["last_verified_checkpoint_step"] == 80
+    assert audit["committed_steps_after_last_checkpoint"] == 3
+    assert audit["returned_decisions_after_last_checkpoint"] == 4
+    assert audit["exact_terminal_resume_available"] is False
+    assert audit["final_checkpoint_covers_all_commands_and_returned_usage"] is False
+    assert audit["recovery_requires_reconciliation"] is True
+    assert audit["failure"]["native_error"] == "interrupt_baseline_invalid"
+    assert audit["failure"]["action_type"] == "WAIT"
+    assert audit["failure"]["actual_ticks"] == 0
+    assert audit["failure"]["native_calendar_and_pause_unchanged"] is True
+    assert audit["failure"]["preceding_interrupted_ticks"] == 2339
+    assert audit["local_container_stopped"] is audit["local_vm_stopped"] is True
+    assert audit["local_model_and_tunnel_absent"] is audit["local_listener_closed"] is True
+    assert audit["historical_inputs_rewritten"] is audit["production_deployed"] is False
+    assert audit["new_independent_attempt"] is False
+    prior = records.PROJECT_ROOT / "experiments/evidence" / audit["prior_public_bundle"]
+    assert hashlib.sha256(prior.read_bytes()).hexdigest() == audit["prior_public_bundle_sha256"]
 
 
 def test_checkpoint_item_inventory_is_not_misreported_as_installed_furniture():

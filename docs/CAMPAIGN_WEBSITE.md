@@ -1,5 +1,22 @@
 # Campaign website delivery milestone
 
+## Latest recorded result: liaison-dialog failure
+
+The reasoning-budget campaign now has a later terminal result: 83 committed
+decisions, 203,339 elapsed ticks and 931,832 accounted tokens across 84 returned
+responses. The model requested WAIT while a liaison dialog blocked simulation;
+the harness escalated the blocked advance to failure. Nine citizens were alive.
+The original first-segment bundle remains immutable. Its registry pointer is
+replaced by the newer result for the same campaign ID, keeping 14 recorded rows.
+
+All checkpoints through 80 and the owned runtime teardown were audited. No full
+terminal checkpoint exists, so the current result must show checkpoint false,
+not inherit the earlier checkpoint true. Furniture item records remain separate
+from installed beds; missing measurements and unassessed collapse remain unknown.
+See [the result, costs, recovery limits and next repair](LOCAL_REASONING_DIALOG_RESULT.md).
+This data publication preserves the existing website layout. It is not a merge,
+deployment or browser acceptance claim. Earlier running-status notes are historical.
+
 ## Furniture item records in campaign profiles
 
 The profile reader, bounded public feed and profile view now carry four separate
