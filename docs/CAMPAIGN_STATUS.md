@@ -2,6 +2,22 @@
 
 Verified September 7, 2026 UTC. The Year-Two Autonomous Play goal remains active.
 
+## Continued checkpoint: furniture items versus installed furniture
+
+Checkpoint 40 verified its native save, agent/runner/trace/usage files and parent
+link to checkpoint 32. It covers 96,000 elapsed ticks and 412,664 accounted
+tokens. The owner remains live; no second-segment terminal outcome is claimed.
+The [fixed checkpoint observation](../experiments/evidence/local_native_qwen35_year_two_checkpoint40_20260907.json)
+records seven citizens, 33 native drink units, 11 bed item records and three
+chair item records. The initial item scans recorded zero beds/chairs; checkpoint
+32 recorded one bed. None of those furniture items is installed.
+
+The `completed_beds` field measures completed placements, not inventory. Its
+zero value must not hide the observed furniture item progress. The goods scan
+does not publish inventory completeness or production attribution; keep those
+limits explicit and do not convert its item counts into measured production
+flows. The frozen native source and model remain unchanged.
+
 ## First reasoning-budget segment completed and audited
 
 First post-restore gameplay is now verified at the public boundary
