@@ -37,6 +37,11 @@
       file: 'local_native_qwen35_year_two_v1.json',
       revision: 'd3a8bd8d5d4588d2c26b0d0201585577bf361edd',
       sha256: 'bd658141891e31d3e4f014ca92e484779a5330d74a75d9163ea97289d3819018'
+    },
+    'local-native-qwen35-year-two-thinking-v1': {
+      file: 'local_native_qwen35_year_two_thinking_v1.json',
+      revision: '7bc15d160ea251bf1b07eb31615c510ea80a4ff9',
+      sha256: '01505097fbf5e12cd436cf3f044ca021a0f632d83c04371607b9a0d577c3b73d'
     }
   };
   function known(value) { return typeof value === 'number' && Number.isFinite(value) && value >= 0; }
