@@ -28,14 +28,35 @@
     if (data.interruptions !== undefined && !Array.isArray(data.interruptions)) {
       throw new Error('Unsupported keyboard interruption evidence');
     }
+    if (data.recoveries !== undefined && !Array.isArray(data.recoveries)) {
+      throw new Error('Unsupported keyboard recovery evidence');
+    }
+    const recoveries = data.recoveries || [];
+    recoveries.slice().reverse().forEach(row => {
+      const section = node('section', undefined, results);
+      section.className = 'campaign-condition';
+      node('h3', `Recovery verified · checkpoint ${count(row.checkpoint_cursor)}`, section);
+      node('p', `${count(row.returned_model_decisions)} existing model responses and ${count(row.elapsed_native_ticks)} elapsed ticks preserved. Model memory and usage are unchanged.`, section);
+      node('p', `${count(row.model_calls_to_recover)} new model calls, ${count(row.native_keys_to_recover)} replayed keys, ${count(row.native_ticks_to_recover)} added ticks. Recovery preserved already-delivered input; it is not new gameplay progress.`, section);
+      node('p', 'The original interrupted window remains failed. This checkpoint is ready for continuation; it does not prove that a new run has started.', section);
+      node('p', `${count(row.usage.campaign_tokens)} campaign tokens; ${count(row.usage.all_attempt_tokens)} including historical failed deliveries. Model charge: ${cost(row.usage)}.`, section);
+      node('p', row.teardown_verified === true ? 'Game and VM teardown verified for recovery.' : 'Teardown unknown.', section);
+      if (/^experiments\/evidence\/astra_native_keyboard_[a-z0-9_]+\.json$/.test(row.evidence_path)) {
+        const link = node('a', 'Read the published recovery evidence', section);
+        link.href = 'https://github.com/lemoz/fort-gym/blob/codex/campaign-codex-subscription/' + row.evidence_path;
+      }
+    });
     (data.interruptions || []).slice().reverse().forEach(row => {
       const section = node('section', undefined, results);
       section.className = 'campaign-condition';
       const p = row.progress;
       node('h3', `Interrupted at ${count(p.committed_decisions)} committed decisions`, section);
       node('p', 'Harness clock timeout. This interruption is not a recorded fortress collapse.', section);
-      node('p', `${count(p.returned_model_decisions)} model responses; ${count(p.elapsed_native_ticks)} committed elapsed ticks. Last verified checkpoint: decision ${count(p.latest_verified_checkpoint_cursor)}.`, section);
-      node('p', 'Newer native state is retained. Recovery must reconcile it before continuing; the older checkpoint must not silently replace it.', section);
+      node('p', `${count(p.returned_model_decisions)} model responses; ${count(p.elapsed_native_ticks)} committed elapsed ticks. Checkpoint at interruption: decision ${count(p.latest_verified_checkpoint_cursor)}.`, section);
+      const recovery = recoveries.find(item => item.original_interruption === row.interruption_id);
+      node('p', recovery
+        ? `Subsequently recovered as checkpoint ${count(recovery.checkpoint_cursor)} without replay. The original failure remains recorded.`
+        : 'Newer native state is retained. Recovery must reconcile it before continuing; the older checkpoint must not silently replace it.', section);
       node('p', `${count(row.usage.campaign_tokens)} campaign tokens; ${count(row.usage.all_attempt_tokens)} including historical failed deliveries. Failed-request usage is included, not discarded.`, section);
       node('p', `Model charge: ${cost(row.usage)}.`, section);
       node('p', row.teardown_verified === true ? 'Game and VM teardown verified for this interruption.' : 'Teardown unknown.', section);
@@ -65,8 +86,8 @@
       node('p', `Executed source: ${row.source_revision}`, details);
     });
     results.hidden = false;
-    $('keyboard-status').textContent = data.milestones.length || data.interruptions?.length
-      ? 'Recorded milestones and interruptions. This is not a live activity indicator.'
+    $('keyboard-status').textContent = data.milestones.length || data.interruptions?.length || recoveries.length
+      ? 'Recorded milestones, interruptions and recoveries. This is not a live activity indicator.'
       : 'No keyboard milestones published.';
   }
   async function refresh() {

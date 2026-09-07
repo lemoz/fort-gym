@@ -12,6 +12,7 @@ PUBLISHED = (
     "astra_native_keyboard_endurance_20260907.json",
 )
 INTERRUPTIONS = ("astra_native_keyboard_interruption_20260907.json",)
+RECOVERIES = ("astra_native_keyboard_recovery_20260907.json",)
 PROGRESS_FIELDS = (
     "model_decisions",
     "native_key_events_confirmed",
@@ -74,6 +75,74 @@ def _interruption(root: Path, filename: str) -> dict:
         "teardown_verified": True,
         "recovery_requires_reconciliation": True,
         "fortress_success": "not_assessed_in_public_operational_summary",
+        "evidence_path": "experiments/evidence/" + filename,
+    }
+
+
+def _recovery(root: Path, filename: str, interruptions: list[dict]) -> dict:
+    path = root / "experiments/evidence" / filename
+    if path.is_symlink() or not path.is_file() or path.stat().st_size > 65536:
+        raise ValueError("Keyboard recovery must be a bounded regular publication")
+    source = json.loads(path.read_bytes())
+    original = next((row for row in interruptions
+                     if row["interruption_id"] == source["original_interruption"]), None)
+    if (
+        original is None
+        or source["schema_version"] != "fortgym.native-keyboard-recovery-summary/v1"
+        or source["model"] != "gpt-6-astra"
+        or source["reasoning_effort"] != "medium"
+        or source["control_profile"] != "native_keyboard/v2"
+        or source["observation_profile"] != "native_screen_text/v1"
+        or re.fullmatch("[a-f0-9]{40}", source["source_revision"]) is None
+        or re.fullmatch("[a-f0-9]{64}", source["checkpoint_sha256"]) is None
+        or source["original_failed_run_reclassified_as_success"] is not False
+        or any(source[key] is not True for key in (
+            "independent_retained_evidence_audit_passed", "native_recovery_checkpoint_verified",
+            "model_memory_and_usage_unchanged", "source_bytes_unchanged",
+            "original_failure_preserved", "teardown_verified",
+        ))
+    ):
+        raise ValueError("Published recovery has inconsistent provenance")
+    counters = {key: source[key] for key in (
+        "parent_checkpoint_cursor", "next_step", "elapsed_native_ticks",
+        "returned_model_decisions", "model_calls_to_recover", "native_keys_to_recover",
+        "native_ticks_to_recover", "campaign_tokens",
+        "all_attempt_tokens_including_historical_failures",
+    )}
+    if any(type(value) is not int or value < 0 for value in counters.values()):
+        raise ValueError("Invalid recovery counter")
+    progress, usage = original["progress"], original["usage"]
+    if (
+        counters["next_step"] != counters["returned_model_decisions"]
+        or counters["next_step"] != progress["returned_model_decisions"]
+        or counters["parent_checkpoint_cursor"] != progress["latest_verified_checkpoint_cursor"]
+        or counters["elapsed_native_ticks"] != progress["elapsed_native_ticks"]
+        or any(counters[key] != 0 for key in (
+            "model_calls_to_recover", "native_keys_to_recover", "native_ticks_to_recover",
+        ))
+        or counters["campaign_tokens"] != usage["campaign_tokens"]
+        or counters["all_attempt_tokens_including_historical_failures"] != usage["all_attempt_tokens"]
+        or source["reported_campaign_charge_usd"] is not None
+        or source["cost_basis"] != "codex_subscription_charge_unreported/v1"
+    ):
+        raise ValueError("Recovery changes the retained interruption state or usage")
+    return {
+        "recovery_id": filename.removesuffix(".json"),
+        "original_interruption": original["interruption_id"],
+        "source_revision": source["source_revision"],
+        "checkpoint_sha256": source["checkpoint_sha256"],
+        "checkpoint_cursor": counters["next_step"],
+        "parent_checkpoint_cursor": counters["parent_checkpoint_cursor"],
+        "returned_model_decisions": counters["returned_model_decisions"],
+        "elapsed_native_ticks": counters["elapsed_native_ticks"],
+        "model_calls_to_recover": 0,
+        "native_keys_to_recover": 0,
+        "native_ticks_to_recover": 0,
+        "original_failure_preserved": True,
+        "teardown_verified": True,
+        "usage": {key: usage[key] for key in (
+            "campaign_tokens", "all_attempt_tokens", "reported_charge_usd", "cost_basis",
+        )},
         "evidence_path": "experiments/evidence/" + filename,
     }
 
@@ -147,9 +216,11 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
                 "evidence_path": "experiments/evidence/" + filename,
             }
         )
+    interruptions = [_interruption(root, filename) for filename in INTERRUPTIONS]
     return {
         "schema_version": "fortgym.public-keyboard-milestones/v1",
         "live_tracking": False,
         "milestones": records,
-        "interruptions": [_interruption(root, filename) for filename in INTERRUPTIONS],
+        "interruptions": interruptions,
+        "recoveries": [_recovery(root, filename, interruptions) for filename in RECOVERIES],
     }

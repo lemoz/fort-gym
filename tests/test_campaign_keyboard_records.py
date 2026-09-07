@@ -32,7 +32,7 @@ def test_keyboard_endpoint_preserves_unknown_charges_and_separate_milestones():
 def evidence_root(tmp_path):
     folder = tmp_path / "experiments/evidence"
     folder.mkdir(parents=True)
-    for filename in (*records.PUBLISHED, *records.INTERRUPTIONS):
+    for filename in (*records.PUBLISHED, *records.INTERRUPTIONS, *records.RECOVERIES):
         shutil.copyfile(records.PROJECT_ROOT / "experiments/evidence" / filename, folder / filename)
     return tmp_path
 
@@ -113,6 +113,54 @@ def test_interruption_cannot_hide_tail_or_reset_cost(evidence_root, section, fie
         records.keyboard_campaign_records(evidence_root)
 
 
+def test_recovery_binds_original_failure_without_exposing_private_fields(evidence_root):
+    path = evidence_root / "experiments/evidence" / records.RECOVERIES[0]
+    source = json.loads(path.read_text())
+    source["native_save_path"] = "secret-save"
+    source["model_memory"] = "secret-memory"
+    path.write_text(json.dumps(source))
+    data = records.keyboard_campaign_records(evidence_root)
+    row = data["recoveries"][0]
+    assert row["checkpoint_cursor"] == 101
+    assert row["parent_checkpoint_cursor"] == 88
+    assert row["elapsed_native_ticks"] == 29000
+    assert row["model_calls_to_recover"] == row["native_keys_to_recover"] == 0
+    assert row["native_ticks_to_recover"] == 0
+    assert row["usage"]["all_attempt_tokens"] == 3300796
+    assert row["usage"]["reported_charge_usd"] is None
+    assert data["interruptions"][0]["recovery_requires_reconciliation"] is True
+    assert row["original_failure_preserved"] is True
+    assert "secret-" not in json.dumps(data)
+
+
+@pytest.mark.parametrize("field,value", [
+    ("original_interruption", "unknown"),
+    ("original_failed_run_reclassified_as_success", True),
+    ("native_recovery_checkpoint_verified", False),
+    ("checkpoint_sha256", "wrong"),
+    ("parent_checkpoint_cursor", 87),
+    ("next_step", 102),
+    ("elapsed_native_ticks", 30000),
+    ("model_calls_to_recover", 1),
+    ("native_keys_to_recover", 1),
+    ("native_ticks_to_recover", False),
+    ("campaign_tokens", 3231791),
+    ("all_attempt_tokens_including_historical_failures", 3231792),
+    ("reported_campaign_charge_usd", 0),
+    ("source_bytes_unchanged", False),
+    ("teardown_verified", False),
+])
+def test_recovery_cannot_invent_progress_discard_usage_or_relabel_failure(
+    evidence_root, field, value,
+):
+    path = evidence_root / "experiments/evidence" / records.RECOVERIES[0]
+    source = json.loads(path.read_text())
+    source[field] = value
+    path.write_text(json.dumps(source))
+    with pytest.raises(ValueError):
+        records.keyboard_campaign_records(evidence_root)
+
+
 def test_keyboard_javascript_renders_recorded_usage_and_failure():
     node = shutil.which("node")
     if not node:
@@ -157,7 +205,12 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   assert.match(elements['keyboard-results'].textContent, /Unreported/);
   assert.match(elements['keyboard-results'].textContent, /Interrupted at 100 committed decisions/);
   assert.match(elements['keyboard-results'].textContent, /101 model responses/);
-  assert.match(elements['keyboard-results'].textContent, /Last verified checkpoint: decision 88/);
+  assert.match(elements['keyboard-results'].textContent, /Checkpoint at interruption: decision 88/);
+  assert.match(elements['keyboard-results'].textContent, /Recovery verified · checkpoint 101/);
+  assert.match(elements['keyboard-results'].textContent, /0 new model calls, 0 replayed keys, 0 added ticks/);
+  assert.match(elements['keyboard-results'].textContent, /Subsequently recovered as checkpoint 101/);
+  assert.match(elements['keyboard-results'].textContent, /original interrupted window remains failed/);
+  assert.doesNotMatch(elements['keyboard-results'].textContent, /Recovery must reconcile/);
   assert.match(elements['keyboard-results'].textContent, /3,300,796 including historical/);
   assert.doesNotMatch(elements['keyboard-results'].textContent, /\$0/);
   assert.match(elements['keyboard-status'].textContent, /not a live activity/);
