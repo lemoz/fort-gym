@@ -1,14 +1,16 @@
 # WDSLL — What Does Success Look Like
 
-Latest verified progress, September 6: the automatic native v3 recovery fixture
-passed at `fad9d80c0`, including first-process teardown, exact checkpoint restore,
-one fresh 20-tick action and second-process teardown. The local container and VM
-stopped. See the [receipt](../experiments/evidence/local_native_automatic_recovery_20260906.json).
-This provider-free fixture is not autonomous gameplay or year-two acceptance.
-The [fresh local Qwen3.5 experiment](../experiments/campaigns/local_native_qwen35_year_two_v1.json)
-is running its first bounded segment. At September 6, 23:17 UTC it had recorded
-six model-selected WAIT actions and 6,000 native ticks, not a completed segment
-or functioning fortress. PR #132 remains open and production is unchanged.
+Latest verified progress, September 7: the separately declared reasoning-budget
+request returned a complete `DIG` action with all 11,003 tokens accounted and
+verified owned-process teardown. This was a no-game diagnostic, not fortress
+development. Its [versioned receipt](../experiments/evidence/local_year_two_reasoning_budget_20260907.json)
+is pushed in PR #132. The fresh native campaign under the
+[reasoning-budget condition](../experiments/campaigns/local_native_qwen35_year_two_reasoning_budget_v1.json)
+is running from the original seed with the native-verified tick-limit correction.
+At the latest observation its controller and model were running with no committed
+action yet. The completed direct/thinking pair remains unchanged and neither
+reached one year. See [current campaign status](CAMPAIGN_STATUS.md) for exact
+source, limits and evidence. PRs #132/#133 are unmerged; production is unchanged.
 
 ## Current direction: year-two campaigns (September 5, 2026)
 

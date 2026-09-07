@@ -2,7 +2,37 @@
 
 Verified September 7, 2026 UTC. The Year-Two Autonomous Play goal remains active.
 
-## Latest: output replay published; one reasoning-budget request running
+## Latest: reasoning-budget acceptance passed; fresh native campaign running
+
+The [single-request reasoning-budget acceptance](CAMPAIGN_REASONING_BUDGET.md)
+returned one complete `DIG` action with 8,793 input plus 2,210 completion tokens,
+all 11,003 accounted. Native legality and utility were not checked. Its owned
+worker and model PIDs are absent, the listener is closed, and its original source
+is unchanged. The [versioned receipt](../experiments/evidence/local_year_two_reasoning_budget_20260907.json)
+is pushed on [PR #132](https://github.com/lemoz/fort-gym/pull/132) at
+`de69c7a467eb0b00becfef03329bac9f58690e35`; 19 focused result/configuration tests
+passed on that documentation/evidence-only follow-up. The executable code is
+unchanged from `ebf470d8364bf326cacd7b9985e6f5438d6d4f49`, whose exact-head CI passed.
+
+The fresh native campaign `fort-gym-year-two-qwen35-reasoning-budget-v1-a` is now
+running its first bounded segment from the original immutable year-30/tick-16801
+seed. Its container and controller were observed running at source
+`de69c7a467eb0b00becfef03329bac9f58690e35`, with the first model decision in flight
+and no committed action yet at that observation. The derived native image is
+`sha256:ce56592ad8f8d82e7dcaa7f9d71a28a900669d523f3119278a865129214c85a3`.
+The one-use owner has SHA-256
+`8266f19bb3b67a92280e569411193a39c063836f0aeb4ed1f0e7a5ee524b20c1`.
+
+This is a new campaign, not a replay action or rescue of the old pair. It uses
+the separately native-verified tick-limit correction and the declared 2,048-token
+reasoning budget within 4,096 total output tokens. One segment allows up to 32
+decisions and 7,200 seconds, with periodic checkpoints every eight actions and
+the original cumulative campaign bounds. Follow the live owner; do not restart,
+change its source or mutate its condition. The owner must stop its own container,
+model, tunnel and isolated local VM. No cloud VM, hosted model, production change,
+functioning fortress or completed segment is claimed.
+
+## Completed output-allowance replay
 
 The [exact local output replay](LOCAL_YEAR_TWO_OUTPUT_REPLAY.md) has finished.
 The 4,096-token case reproduced the accounted no-action output limit. The
@@ -14,29 +44,15 @@ source is unchanged. The [versioned result](../experiments/evidence/local_year_t
 preserves that incomplete comparison, with $0 metered model charges and unknown
 hardware/energy costs.
 
-A separate [reasoning-budget condition](CAMPAIGN_REASONING_BUDGET.md) is prepared:
-2,048 reasoning tokens within 4,096 total output tokens, with the same original
-seed and campaign bounds. The harness now sends this optional pinned-runtime
-setting in both token preflight and generation, and binds it to checkpoints.
-Historical conditions and requests are unchanged. The isolated one-request
-acceptance owner has started the pinned local model at frozen source
-`ebf470d8364bf326cacd7b9985e6f5438d6d4f49`. Its new serialized request differs
-only by `reasoning_budget_tokens: 2048`; SHA-256 is
-`2b0c2cc03f3236299f78085cbf5e9a19c6b8aacbd625e9e9e9cc30b450685166`.
-One dispatch is allowed, with at most 12,889 input/output tokens, the unchanged
-600-second request deadline and a 700-second worker deadline. There is no VM,
-game, hosted call or action execution. The owner must tear down its own worker
-and server. No result or new native gameplay is claimed yet; do not restart or
-change this live attempt.
-
 The terminal output-replay evidence and optional reasoning-budget implementation
 are pushed to [PR #132](https://github.com/lemoz/fort-gym/pull/132) at
 `ebf470d8364bf326cacd7b9985e6f5438d6d4f49`. The focused suite passed 195 tests.
 The full suite had 1,916 passes, ten skips and one sandbox-blocked loopback test;
 that exact test passed separately with local socket access. Changed-file
 Ruff/Black, targeted typing and diff checks pass. Full-tree lint/type debt remains.
-[Exact-head CI](https://github.com/lemoz/fort-gym/actions/runs/34074628994) was
-observed running; no merge or deployment is claimed.
+[Exact-head CI](https://github.com/lemoz/fort-gym/actions/runs/34074628994) passed
+for `ebf470d83`. The [evidence-only follow-up CI](https://github.com/lemoz/fort-gym/actions/runs/34075255210)
+was observed running at `de69c7a46`; no merge or deployment is claimed.
 
 ## Native clock correction verified
 
