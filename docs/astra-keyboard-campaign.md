@@ -38,6 +38,36 @@ prefix. A fresh runtime must load the checkpoint before the next model decision.
 The old governed/shortcut conditions retain their existing accounting and action
 contracts. Website publication of the new condition is still separate work.
 
-Native outcome remains unrun until supported by the retained live receipts. No
-native captures, maps, saves, private prompts or detailed traces are authorized
-for public GitHub export by this implementation.
+## Native result, September 7
+
+The first eight-decision campaign completed on unchanged source `ea3812dd7`:
+62 confirmed native key events, 6,000 model-requested elapsed ticks, and verified
+native checkpoints at cursors four and eight. The fresh-process continuation
+preserved the complete memory, usage and trace prefix, without replaying an old
+action. Independent retained-evidence checks passed; the game and VM are stopped.
+
+The campaign retained 236,802 tokens. Two preceding delivery failures retained
+another 69,004 tokens, for 305,806 total across ten Codex invocations. Displayed
+credit balance was unchanged; exact dollar charges and internal provider dispatch
+count remain unreported. No local model server, cloud VM, API fallback, credit
+purchase or reset was used. These are early gameplay results, not year-two success.
+
+The first two failures exposed ownership and permission differences in Docker
+file copies. The working courier sends JSON to the existing unprivileged game
+user, which atomically publishes and reads its own response. It runs a separate
+courier read/write check before inference. No permissions or container boundaries
+were relaxed. The first segment then completed, but reusing the same local port
+failed before the second runtime started. A fresh local port allowed continuation
+from its saved checkpoint. Use distinct segment ports and retain terminal
+container logs in reusable runtime owners.
+
+See the [non-content outcome record](../experiments/evidence/astra_native_keyboard_outcomes_20260907.json).
+No native captures, maps, saves, private prompts or detailed traces are included.
+Source and this condition are delivered through draft PR #137; longer campaigns,
+website acceptance and repeated three-model comparisons remain open.
+
+Validation: 2,285 broad-suite passes, ten skips, and one sandbox-denied localhost
+bind; that exact test and the final keyboard checkpoint selection passed together
+with socket access (ten tests). The earlier focused integration selection passed
+68 tests. Changed-file Ruff, scoped mypy for three new source modules, and exact
+implementation-head CI passed. Existing whole-tree static-check debt is unchanged.

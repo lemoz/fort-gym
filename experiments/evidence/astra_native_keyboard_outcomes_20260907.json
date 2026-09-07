@@ -1,0 +1,100 @@
+{
+  "schema_version": "fortgym.native-interface-acceptance-summary/v1",
+  "feature": "astra-subscription-native-keyboard-campaign",
+  "source_revision": "ea3812dd78d5e5b5e2e5e726be6caa5646bb7bf4",
+  "source_pull_request": "https://github.com/lemoz/fort-gym/pull/137",
+  "publication_scope": "Authored condition and non-content operational outcomes only. Native screens, maps, coordinates, fortress identifiers, calendars, saves, private prompts and detailed traces remain local.",
+  "condition_file": "experiments/campaign_astra_keyboard_20260907.json",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "transport": "codex-exec-chatgpt/v1",
+  "auth_mode": "chatgpt",
+  "control_profile": "native_keyboard/v2",
+  "observation_profile": "native_screen_text/v1",
+  "captured_screen_size": [
+    120,
+    40
+  ],
+  "attempts": [
+    {
+      "attempt_id": "astra-native-campaign-v1",
+      "status": "failed_before_game_input",
+      "codex_invocations": 1,
+      "total_tokens": 34496,
+      "diagnosis": "Docker-created root-owned response could not be hard-linked by the game user.",
+      "teardown_verified": true
+    },
+    {
+      "attempt_id": "astra-native-campaign-v2",
+      "status": "failed_before_game_input",
+      "codex_invocations": 1,
+      "total_tokens": 34508,
+      "diagnosis": "Copied private response remained unreadable by the game user after atomic rename.",
+      "teardown_verified": true
+    },
+    {
+      "attempt_id": "astra-native-campaign-v3",
+      "status": "first_segment_completed_then_infrastructure_failure",
+      "codex_invocations": 4,
+      "total_tokens": 126182,
+      "committed_decisions": 4,
+      "checkpoint_cursor": 4,
+      "diagnosis": "Four native model decisions and checkpoint completed; subsequent runtime preflight hit local port reuse EADDRINUSE before game startup.",
+      "teardown_verified": true
+    },
+    {
+      "attempt_id": "astra-native-continuation-v1",
+      "status": "completed",
+      "continues": "astra-native-campaign-v3",
+      "codex_invocations": 4,
+      "total_tokens": 110620,
+      "cumulative_committed_decisions": 8,
+      "checkpoint_cursor": 8,
+      "diagnosis": "Same campaign resumed from the verified checkpoint on a fresh isolated local port, preserving memory, trace and usage; no prior action replayed.",
+      "teardown_verified": true
+    }
+  ],
+  "campaign_result": {
+    "model_decisions": 8,
+    "native_key_events_confirmed": 62,
+    "all_input_batches_accepted": true,
+    "elapsed_native_ticks": 6000,
+    "cumulative_tokens": 236802,
+    "checkpoint_cursors": [
+      4,
+      8
+    ],
+    "native_process_reload_verified": true,
+    "memory_preserved": true,
+    "trace_and_usage_prefix_preserved": true,
+    "independent_retained_evidence_audit_passed": true,
+    "original_seed_verified_unchanged": true
+  },
+  "usage": {
+    "codex_invocations_across_all_attempts": 10,
+    "returned_input_tokens": 304148,
+    "returned_output_tokens": 1658,
+    "total_tokens": 305806,
+    "failed_delivery_tokens": 69004,
+    "reported_charge_usd": null,
+    "displayed_credit_balance_change": "no_change_observed",
+    "atomic_account_reservation": false,
+    "fresh_account_check_before_every_invocation": true,
+    "internal_provider_dispatch_count": null
+  },
+  "cloud_vms_created": 0,
+  "local_model_servers_started": 0,
+  "api_fallback_used": false,
+  "credit_purchases": 0,
+  "resets_consumed": 0,
+  "autonomous_gameplay": true,
+  "year_two_gameplay_verified": false,
+  "website_deployed": false,
+  "limitations": [
+    "Eight decisions are preliminary native integration evidence, not sustained fortress success or a model ranking.",
+    "Input acceptance does not independently establish all desired excavation or construction outcomes.",
+    "The successful continuation required an operator-side local port correction, not gameplay rescue.",
+    "The initial eight-decision condition ended at its declared bound; its checkpoint is preserved.",
+    "Longer autonomous runs, production website acceptance and repeated comparable three-model evaluation remain required."
+  ]
+}
