@@ -289,6 +289,8 @@ def failure_kind(result: dict) -> str:
     code = result.get("terminal_code")
     if code == "campaign_invalid_action":
         return "model_action"
+    if code == "campaign_map_observation_invalid":
+        return "runtime"
     if code == "campaign_local_inference_error" or (
         isinstance(code, str) and code.startswith("provider_")
     ):

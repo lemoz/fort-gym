@@ -18,6 +18,7 @@ from ..env.actions import INTERACT_ALLOWED_VIEWSCREEN_TYPES
 from ..env.dfhack_client import DFHackClient
 from ..env.executor import Executor
 from ..env.state_reader import StateReader
+from ..env.campaign_view import MAP_SCHEMA, view_selection
 from ..env.workshop_placement import (
     NATIVE_GROUND,
     STRICT_FLOOR,
@@ -116,6 +117,18 @@ class NativeCampaignEnvironment:
     def screen(self) -> str:
         self._verify_runtime()
         return self.client.get_screen_text(include_visual_hints=True)
+
+    def inspect_map(self, selection: dict | None) -> dict:
+        """Read only the model-selected terrain window, without changing native UI."""
+        self._verify_runtime()
+        args = []
+        if selection is not None:
+            selected = view_selection(selection)
+            args = [str(n) for n in [*selected["origin"], *selected["size"]]]
+        try:
+            return run_lua_file(_hook_path("campaign_map_view_v1.lua"), *args, timeout=5.0)
+        except (DFHackError, OSError) as exc:
+            return {"schema_version": MAP_SCHEMA, "ok": False, "error": str(exc)}
 
     def apply(self, action: dict[str, Any], state: dict[str, Any]) -> dict[str, Any]:
         self._verify_runtime()
