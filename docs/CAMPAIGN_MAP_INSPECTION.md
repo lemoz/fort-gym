@@ -63,7 +63,28 @@ map edges, z selection, zero ticks, rejection, checkpoint resume, output pause,
 usage preservation and historical compatibility. These are not real native
 acceptance, model-performance or year-two fortress evidence.
 
-Next is a separately declared provider-free native inspection check, then a fresh
-local gameplay condition from the immutable seed using the new interface. Keep
-the original failed campaign and fixture verdicts intact. No experiment has been
-launched, no new result row registered, and no merge or deployment is included.
+## Native acceptance and next model condition
+
+The provider-free native check is complete. The original fixture and its
+instrumented diagnostic remain failed. The diagnostic isolated changing rendered
+glyphs during a control read with no action, while native invariants were unchanged.
+The corrected fixture therefore verifies the native calendar, pause state, camera,
+allocated blocks and viewscreen type, retaining rendered differences as diagnostics
+instead of asserting byte-identical animated rendering.
+
+The corrected fixture passed region/z selection, hidden-tile handling, rejected
+region feedback and selection persistence through an actual native checkpoint,
+game-process stop and fresh-process reload. An independent read-only audit verified
+the retained checkpoint, trace prefix, usage, original seed and completed teardown.
+No model chose these actions. This does not establish live dialog inspection or
+better gameplay. See the [operational outcome summary](../experiments/evidence/local_native_map_inspection_outcomes_20260907.json).
+Captured maps, screens, coordinates, saves and detailed game-state result payloads
+remain local; only code, declarations and non-content test outcomes are published.
+
+The next [fresh local condition](../experiments/campaigns/local_native_qwen35_year_two_inspection_v1.json)
+uses the new profile pair with unchanged Qwen3.5 weights, sampling, output/reasoning
+budgets, segment bounds and original seed. It also incorporates the dialog and clock
+implementation changes, so this is not a strict single-variable comparison. The
+model must choose its own view and all gameplay actions. Historical runs are not
+resumed or rewritten. This new model condition has not run; no new comparison row,
+year-two result, merge or deployment is claimed.

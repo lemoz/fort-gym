@@ -1,0 +1,80 @@
+{
+  "schema_version": "fortgym.local-campaign-condition/v1",
+  "runner": "campaign-loop/v1",
+  "condition_id": "local-native-qwen35-year-two-inspection-v1",
+  "decision_profile": "campaign_action/v2",
+  "observation_profile": "campaign_state/v3",
+  "advance_policy": "model_requested/v1",
+  "schema_attempts": 2,
+  "phase": "development",
+  "hypothesis": "With unchanged local model weights, sampling, reasoning/output budgets and original seed, test whether model-selected terrain inspection, verified elapsed campaign time and recoverable dialog feedback enable more effective autonomous fortress development and sustained year-two play. This is a fresh exploratory condition, not a repaired continuation or a strict single-variable comparison.",
+  "models": [
+    "fort-gym-qwen35-9b-q4-03b74727a860"
+  ],
+  "max_steps": 32,
+  "max_segments": 8,
+  "segment_time_budget_seconds": 7200,
+  "ticks_per_step": 2000,
+  "max_advance_ticks": 2500,
+  "max_output_tokens": 4096,
+  "max_attempts": 1,
+  "max_dispatches": 512,
+  "max_request_bytes": 65536,
+  "max_total_tokens": 8000000,
+  "max_cost_usd": 0,
+  "local_inference": {
+    "transport": "llama-cpp-local/v1",
+    "server_version": "b10516-b95502ba9",
+    "prompt_contract": "visible_action_contract/v1",
+    "prompt_packing": "bounded_history_corrections/v1",
+    "model_digests": {
+      "fort-gym-qwen35-9b-q4-03b74727a860": "03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8"
+    },
+    "model_files": {
+      "fort-gym-qwen35-9b-q4-03b74727a860": "Qwen3.5-9B-Q4_K_M.gguf"
+    },
+    "model_metadata_sha256": {
+      "fort-gym-qwen35-9b-q4-03b74727a860": "55e0498c6d066243ffd3ebd364f7af4460596189d3d9d11e6697f9bdbfc93dea"
+    },
+    "chat_template_sha256": {
+      "fort-gym-qwen35-9b-q4-03b74727a860": "7f0e529032c25183bcd66c7f238da2d377f43be754a94e2725a58c4e16d2ed67"
+    },
+    "context_tokens": 32768,
+    "context_headroom_tokens": 512,
+    "token_count_profile": "llama-chat-input-tokens/v1",
+    "token_count_timeout_seconds": 10,
+    "timeout_seconds": 600,
+    "temperature": 0.6,
+    "top_p": 0.95,
+    "top_k": 20,
+    "seed": 73,
+    "enable_thinking": true,
+    "runtime_profile": "flash_q8/v1",
+    "action_reference": "native_designations/v1",
+    "action_schema": "typed_native_parameters/v1",
+    "reasoning_budget_tokens": 2048
+  },
+  "workshop_placement_policy": "dfhack_047_ground/v1",
+  "notes": [
+    "Declared before model execution. Start a new campaign identity from the original immutable seed; preserve the prior failed campaign, its later committed actions and all returned usage. Never resume checkpoint 80 as the old campaign's terminal state.",
+    "Keep the reasoning-budget-v1 weights, pinned llama.cpp build, 2048 reasoning tokens within 4096 total output tokens, context size, packing, sampling, step/segment envelope and checkpoint intervals unchanged. Only the declared action/observation profile pair and descriptive metadata change in this configuration.",
+    "Use a frozen implementation containing native-validated map inspection and selection save/load, elapsed-time observations and dialog feedback. The historical baseline ran before these implementation changes; this bundle is exploratory and does not isolate the effect of VIEW alone.",
+    "The model chooses all VIEW regions/z-levels, world actions and dialog keys. There is no injected starting view, scripted game strategy, auto-dismissal, coordinate correction, human rescue or replay of fixture decisions.",
+    "VIEW is terrain-only and zero-tick; it still consumes a decision and model tokens. Hidden/unreadable blanks are not empty floor. Track the model's inspection choices and their subsequent development outcomes, not merely VIEW acceptance.",
+    "Preserve every response, actual native tick receipt and cumulative usage. Continue only digest-verified clean checkpoint boundaries without changing condition identity or silently resetting budgets.",
+    "Evaluate endurance, native population, installed/completed structures, resources with completeness qualifiers, adaptations after rejection and per-action/total cost. Acceptance is not completed work, stock level is not production, and time survived is not a functioning fortress.",
+    "Use one existing local model/game owner at a time with mandatory teardown. No hosted fallback, cloud VM or production deployment. Model API charges are zero; hardware, electricity, application and CI costs are unmeasured.",
+    "A functioning fortress after 403200 elapsed native ticks and continued year-two play remain gameplay requirements. This one exploratory run is not a model ranking; comparable repeated attempts across at least three supported models and verified website/remote delivery remain required."
+  ],
+  "checkpoint_policy": {
+    "profile": "periodic_checkpoints/v1",
+    "interval_steps": 8,
+    "minimum_free_bytes": 1073741824
+  },
+  "starting_snapshot": {
+    "receipt_sha256": "eaf5fa5a40014719e6c313f33497740e536a8faa1c90a84c4e09dcc380ac0595",
+    "year": 30,
+    "year_tick": 16801,
+    "provenance": "local_native_save_smoke_43a53762"
+  }
+}
