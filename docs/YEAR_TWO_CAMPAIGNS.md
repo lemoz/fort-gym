@@ -1,7 +1,7 @@
 # Fort Gym: Year-Two Autonomous Play and Cross-Model Evaluation
 
 Owner-approved goal, September 5, 2026. Project implementation ongoing; the app
-goal was observed paused on September 7.
+goal was verified active on September 7 after its earlier pause.
 
 Current owner-approved phase: [Astra standard-input experiments](ASTRA_STANDARD_INPUT_EXPERIMENTS.md).
 Preserve DFHack shortcuts as a separate condition; establish readable standard

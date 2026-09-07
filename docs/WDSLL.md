@@ -5,13 +5,15 @@ Current owner-approved experimental phase, September 7:
 readable native keyboard play, allow model-led strategy and recovery, retain
 optional DFHack shortcuts for matched comparisons, and pursue a functioning
 fortress through year two and beyond. Website evidence and remote source delivery
-remain requirements. The app goal was observed paused; project implementation has
-been requested and begins without claiming a new native gameplay result.
+remain requirements. The app goal is verified active; implementation continues
+without claiming a new native gameplay result.
 
-First slice is now pushed in draft [PR #137](https://github.com/lemoz/fort-gym/pull/137):
-Astra's subscription-backed keyboard decision transport passed 92 focused tests
-and one live synthetic-screen call. The model selected `BUILDJOB_ADD`; no game
-action was executed. Native campaign integration, viewport readability, autonomous
+The readable-screen slice is pushed at `33bf24fea` in draft
+[PR #137](https://github.com/lemoz/fort-gym/pull/137). Astra's subscription-backed
+keyboard decision transport and capture path passed 125 focused tests. Two live
+synthetic-screen calls selected `BUILDJOB_ADD`; the lossless readable format used
+53.8% fewer input tokens on that sparse menu. No game action was executed. Native
+campaign integration, actual viewport resizing, autonomous
 play, comparisons, and live website delivery remain open. See current campaign
 status for usage and full-suite evidence boundaries.
 

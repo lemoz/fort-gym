@@ -1,7 +1,7 @@
 # Campaign status
 
 Verified September 7, 2026 UTC. The Year-Two Autonomous Play objective remains
-unfinished; the app goal is paused. The owner has approved starting the project
+unfinished; the app goal is active. The owner has approved starting the project
 work for [Astra standard-input experiments](ASTRA_STANDARD_INPUT_EXPERIMENTS.md).
 
 ## Current phase: readable standard input, then shortcut comparison
@@ -12,24 +12,35 @@ DFHack shortcuts as an explicit alternative condition. Compare matching starts
 and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. No Astra native run has started.
 
-The first implementation slice is pushed at `4b2fee8a0` in draft
+The readable-screen implementation is pushed at `33bf24fea` in draft
 [PR #137](https://github.com/lemoz/fort-gym/pull/137), stacked on the frozen native
-producer in #136. It adds a keyboard-only schema, full screen-tile capture
-validation, a bounded subscription transport, and a screen-to-decision bridge.
-92 focused tests passed. The full suite had 2,155 passes, ten skips, and one
-sandbox-blocked localhost test that passed separately with socket access.
+producer in #136. It adds a keyboard-only schema, raw and lossless readable screen
+profiles, a bounded subscription transport, a screen-to-decision bridge, and a
+paused native CopyScreen adapter path. The latest 125 focused tests passed.
+The compact-profile full suite had 2,174 passes, ten skips, and one sandbox-blocked
+localhost test that passed separately with socket access. The final capture
+method was added after that suite started and is covered by the focused rerun.
+The prior `4b2fee8a0` head passed remote CI; the new exact-head
+[CI run](https://github.com/lemoz/fort-gym/actions/runs/34147849532) is in progress.
 
 One live synthetic 80x25 workshop-menu call returned `KEYSTROKE` / `BUILDJOB_ADD`.
 It consumed 33,055 input and 63 output tokens; no key was executed in DF. Account
 credit balance and rounded usage readings were unchanged before/after, while an
 exact dollar charge remains unreported. Raw tile JSON is a costly fidelity
-baseline, not the final readable observation design. The exact earlier startup
+baseline. The exact earlier startup
 diagnostic is now classified separately; the original smoke receipt is unchanged.
 
-Next: compact model-visible screen observations, unattended fresh subscription
-allowance and cumulative-run accounting, checkpointed agent integration, and native
-keyboard/dialog/pause receipts. Then verify native viewport resizing and start
-the autonomous keyboard experiment. No native Astra gameplay, merge, or website
+The same sparse synthetic menu through `native_screen_text/v1` returned the same
+key with 15,272 input and 79 output tokens, a 53.8% input reduction in one matched
+trial per condition. Every original glyph code and color can be reconstructed;
+tests include all CP437 codes, highlight spans, and larger synthetic grids. The
+second call also left displayed credit balance unchanged; exact dollar cost is
+unreported. Neither call dispatched game keys or proves gameplay competence.
+
+Next: native keyboard/dialog/pause receipts and short diagnostics, unattended
+fresh subscription allowance and cumulative-run accounting, and checkpointed
+agent integration. Verify native viewport resizing and post-key frame freshness,
+then start the autonomous keyboard experiment. No native Astra gameplay, merge, or website
 deployment is claimed by #137.
 
 ## Current: requested GPT-6 Astra Medium subscription migration

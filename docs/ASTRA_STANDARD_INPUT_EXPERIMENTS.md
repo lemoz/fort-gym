@@ -73,3 +73,6 @@ verified the subscription connection, not a native gameplay adapter. Implementat
 starts on `codex/campaign-codex-subscription`; no new native attempt is claimed here.
 The app's existing year-two goal was observed paused at phase start; its pause is
 controlled by the user interface, independently of this approved project work.
+It was subsequently verified active on September 7. The readable-screen profile
+and first synthetic Astra comparison are published in draft PR #137; current
+evidence and remaining native work are tracked in [Campaign status](CAMPAIGN_STATUS.md).
