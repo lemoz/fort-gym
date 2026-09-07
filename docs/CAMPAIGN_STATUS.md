@@ -8,10 +8,18 @@ The [declared fresh campaign invocation](../experiments/evidence/local_native_qw
 has launched on the existing isolated local runtime. Its owner session and game
 container were both verified running. The local model has chosen genuine VIEW
 actions; this is now model execution, not another provider-free fixture. This is
-a point-in-time running observation, not a completed segment or fortress result.
-The first periodic checkpoint has independently passed native save inventory,
-bound-file, action-cursor and cumulative-usage verification. Its trace and usage
-remain exact prefixes of the progressing live campaign. No restore was issued.
+a point-in-time running observation, not a terminal campaign or fortress result.
+The first bounded segment has now completed, and the controller automatically
+continued into the second segment without operator intervention. An independent
+read-only audit verified the native save inventory, checkpoint-bound files,
+action cursor and reconciled cumulative usage. The prior periodic checkpoint
+and completed segment histories remain exact trace and usage prefixes in the
+new segment. Its first new model-selected action starts at the saved native
+calendar and advances from there; old actions were not replayed. The previous
+segment's exact native runtime had no remaining live processes, while the second
+segment was live. The auditor issued no game command or restore. Detailed audit
+and native evidence remain local; the second segment's terminal runtime receipt
+and the outer owner's teardown are not yet complete or claimed.
 
 The producer remains frozen at `48d9ed6d94a598b44c4cfbe10a0df4badcb189ad` in
 [PR #136](https://github.com/lemoz/fort-gym/pull/136), whose

@@ -1,8 +1,11 @@
 # WDSLL — What Does Success Look Like
 
 Latest verified progress, September 7: the fresh autonomous inspection campaign
-is running from the original seed on frozen source `48d9ed6d9`. Its first periodic
-native checkpoint, bound trace and cumulative usage were independently verified.
+is running from the original seed on frozen source `48d9ed6d9`. Its first segment
+completed and automatically continued into the second. Independent read-only
+verification covered the native checkpoint, unchanged trace and usage prefixes,
+and the first new action starting at the saved native calendar. The previous
+segment's native processes were stopped; the new segment remains live.
 The model chooses all gameplay and inspection actions; no human rescue or live
 code change has been introduced. The previous reasoning-budget campaign remains
 a preserved terminal harness failure, not a resumed or successful campaign.
