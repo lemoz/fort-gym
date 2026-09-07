@@ -6,6 +6,8 @@ import json
 import re
 from pathlib import Path
 
+from .campaign_keyboard_checkpoints import CHECKPOINT_FAILURES, checkpoint_failure
+
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 PUBLISHED = (
     "astra_native_keyboard_outcomes_20260907.json",
@@ -231,10 +233,13 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
             }
         )
     interruptions = [_interruption(root, filename) for filename in INTERRUPTIONS]
+    recoveries = [_recovery(root, filename, interruptions) for filename in RECOVERIES]
     return {
         "schema_version": "fortgym.public-keyboard-milestones/v1",
         "live_tracking": False,
         "milestones": records,
         "interruptions": interruptions,
-        "recoveries": [_recovery(root, filename, interruptions) for filename in RECOVERIES],
+        "recoveries": recoveries,
+        "checkpoint_failures": [checkpoint_failure(root, filename, recoveries)
+                                for filename in CHECKPOINT_FAILURES],
     }

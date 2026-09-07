@@ -32,7 +32,8 @@ def test_keyboard_endpoint_preserves_unknown_charges_and_separate_milestones():
 def evidence_root(tmp_path):
     folder = tmp_path / "experiments/evidence"
     folder.mkdir(parents=True)
-    for filename in (*records.PUBLISHED, *records.INTERRUPTIONS, *records.RECOVERIES):
+    for filename in (*records.PUBLISHED, *records.INTERRUPTIONS, *records.RECOVERIES,
+                     *records.CHECKPOINT_FAILURES):
         shutil.copyfile(records.PROJECT_ROOT / "experiments/evidence" / filename, folder / filename)
     return tmp_path
 
@@ -215,7 +216,12 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   assert.match(elements['keyboard-results'].textContent, /184 model responses/);
   assert.match(elements['keyboard-results'].textContent, /Recovery verified · checkpoint 184/);
   assert.match(elements['keyboard-results'].textContent, /Subsequently recovered as checkpoint 184/);
-  assert.ok(elements['keyboard-results'].textContent.startsWith('Recovery verified · checkpoint 184'));
+  assert.ok(elements['keyboard-results'].textContent.startsWith('Save failed after decision 200'));
+  assert.match(elements['keyboard-results'].textContent, /16 accepted model responses and 2,000 new ticks were not preserved/);
+  assert.match(elements['keyboard-results'].textContent, /Last verified game save: decision 184, 44,000 elapsed ticks/);
+  assert.match(elements['keyboard-results'].textContent, /newer game state is not resumable/);
+  assert.match(elements['keyboard-results'].textContent, /6,534,871 including historical/);
+  assert.match(elements['keyboard-results'].textContent, /unsaved tail used 531,913 tokens, all included/);
   assert.match(elements['keyboard-results'].textContent, /6,002,958 including historical/);
   assert.ok(elements['keyboard-results'].textContent.indexOf('Interrupted at 183')
     < elements['keyboard-results'].textContent.indexOf('Recovery verified · checkpoint 101'));

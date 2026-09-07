@@ -31,11 +31,25 @@ difference was a Python tuple versus its JSON list, not different values.
 This covers recorded observer fields, not every internal native world object.
 All four game processes, the container and isolated local VM were stopped.
 
-The committed production helper still requires its own frozen-source native
-validation before a new campaign window selects it. No model calls are part of
-this diagnostic. The historical checkpoint-200 timeout and unsaved 16-decision
-tail remain failed and retained; this fix does not recover them or authorize a
-silent rewind. Latest verified historical checkpoint remains 184.
+The committed production helper at `693f1c4ccf12050f1cfa48b5a3144a4d37da3b99`
+subsequently passed save and fresh reload in the nested unit menu and normal
+fortress view. Independent audit verifies both cases, stable inventories,
+unchanged screens and observer fields, zero snapshot keys/ticks, and all five
+native-process cleanups plus container/VM teardown. A third build-menu fixture
+used an invalid diagnostic key and stopped before a save; it is untested, not
+a helper failure or a passed case. The whole fixture remains failed. See
+`experiments/evidence/astra_native_menu_save_20260907.json` for the scoped result.
+
+The source passed 80 focused checks and exact-source
+[CI](https://github.com/lemoz/fort-gym/actions/runs/34171215489).
+A broader local pass ran 2,476 tests successfully with ten skips; its sole
+sandbox-denied localhost test passed separately, and final boundary-type edits
+passed the focused run. Changed modules pass Ruff and scoped mypy.
+
+No model calls were made. The historical checkpoint-200 timeout and unsaved
+16-decision tail remain failed and retained; this fix does not recover them or
+authorize a silent rewind. Latest verified historical checkpoint remains 184.
+Build-menu validation and a loss-aware next attempt remain to be declared.
 
 Primary implementation references: bundled DFHack 0.47.05-r8 `quicksave.lua`,
 [quicksave documentation](https://docs.dfhack.org/en/0.47.05-r8/docs/tools/quicksave.html),
