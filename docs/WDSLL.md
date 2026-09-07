@@ -8,13 +8,21 @@ fortress through year two and beyond. Website evidence and remote source deliver
 remain requirements. The app goal is verified active; early native Astra gameplay
 and checkpoint-continuation evidence are now verified.
 
-Latest terminal result: the resumed window completed 16 accepted responses,
+Latest implementation progress: committed menu-preserving saving passed native
+save/reload from the affected unit menu and normal fortress view, with zero
+model calls, keys or ticks and verified teardown. Source `693f1c4cc` is pushed
+with passing CI. A separate build-menu diagnostic remains untested after an
+invalid fixture key. Website source now shows the later checkpoint failure and
+lost unsaved tail explicitly; no production deployment or new campaign is
+claimed. A loss-aware next attempt and further gameplay remain next.
+
+Latest gameplay result: the resumed window completed 16 accepted responses,
 reaching trace cursor 200 and 46,000 elapsed ticks, but native saving timed out.
 Independent audit confirms complete usage and teardown. No worker is live.
 The retained game save still matches checkpoint 184; the newer trace is not a
 resumable checkpoint. All 531,913 new tokens remain counted, for 6,465,867 campaign
-tokens / 6,534,871 including historical failed deliveries. Reliable saving across
-native menus and a declared attempt/continuation boundary are next. This is an
+tokens / 6,534,871 including historical failed deliveries. Remaining menu
+validation and a declared attempt/continuation boundary are next. This is an
 infrastructure loss of unsaved progress, not fortress collapse or goal completion.
 
 Previous result: native rejection validation and recovery passed at `c537e3e79`,

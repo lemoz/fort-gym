@@ -13,7 +13,25 @@ and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. The first bounded Astra native
 keyboard campaign has now completed.
 
-### Latest native recovery and resumed Astra play
+### Latest implementation: menu-preserving save and accurate website failure state
+
+The versioned `native_menu_preserving_save/v1` helper is pushed at `693f1c4cc`,
+with passing exact-source CI. It passed actual save and fresh reload from a
+nested unit menu and the normal fortress view, preserving the exact screen,
+recorded world observations, calendar and menu stack with zero gameplay keys or
+ticks. Independent audit verifies both cases and teardown. A third diagnostic
+used an invalid test key and stopped before saving; the whole fixture is still
+failed, and build-menu coverage is unclaimed. No new model calls were made.
+
+The website source now leads with the checkpoint-200 save failure, separating
+the 200-response trace from durable checkpoint 184 and retaining every token.
+Endpoint, non-disclosure and JavaScript rendering checks pass; local HTTP passed.
+Preview handoff was queued, not visually inspected. No production deployment.
+Next: finish the remaining menu diagnostic, explicitly record a loss-aware
+attempt boundary, then resume Astra without discarding the unsaved-tail usage.
+Private validation: `fort_gym/artifacts/native-local-20260906/runtime-v2/astra-native-save-menu-v4`.
+
+### Latest autonomous gameplay result
 
 Latest terminal update: window d stopped after 16 new accepted decisions at
 trace cursor 200 / 46,000 elapsed ticks. Its checkpoint failed with
@@ -27,13 +45,13 @@ load log. The newer 2,000 ticks and 16 decisions are retained in trace but their
 game state is not resumable. Do not claim checkpoint 200, silently restore 184
 while dropping usage, or claim the new state survived. The final UI was
 `viewscreen_unitst`; bundled quicksave documentation requires dwarf mode.
-A menu-sensitive save boundary is the leading cause, requiring focused native
-validation. Next: reliable checkpointing across menus and an explicitly recorded
-attempt/continuation boundary with all usage retained. The courier also saw a
-container-exit race; no duplicate response was dispatched.
+A menu-preserving save now passes the affected unit-menu case as described
+above. An explicitly recorded attempt/continuation boundary with all usage
+retained remains necessary. The courier also saw a container-exit race; no
+duplicate response was dispatched.
 
-The recorded website below reflects verified recovery 184, not this newest
-checkpoint failure or live activity. No production deployment is claimed.
+The updated website source includes this newest checkpoint failure separately
+from recovery 184, without claiming live activity or production deployment.
 
 Native validation and forward-only recovery passed at `c537e3e79`, with an
 independent retained-file audit and passing exact-source CI. New checkpoint 184
@@ -64,7 +82,7 @@ is not a charge or dollar reservation. It preserves the model, controls, raw
 every subscription call and no fallback, purchase or reset is allowed.
 The first resumed admission observed 82 percent usage under the 90 percent guard.
 
-The recorded website now projects interruption 183 and recovered checkpoint 184
+The preceding website revision projected interruption 183 and recovered checkpoint 184
 ahead of older evidence, without claiming live tracking. Source, non-content
 manifests and window configuration are pushed in draft PR #137; no merge or
 production deployment. Validation: 2,435 broader source tests, 193 focused
