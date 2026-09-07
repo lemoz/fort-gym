@@ -83,5 +83,13 @@ The combined native keyboard and 120x40 viewport diagnostic passed on September 
 at `0ef33ff70`. It audits the full version-matched catalog, exercises ordinary
 menu/pause events, verifies readable captures and an explicit clock step, and
 tears down the owned runtime. It does not count as model-selected play. The next
-step is Astra's live screen-to-keypress bridge, followed by sustained strategy
-and recovery experiments; no further historical gate ladder is introduced.
+step was Astra's live screen-to-keypress bridge; no further historical gate
+ladder was introduced.
+
+The subsequent native campaign completed eight Astra Medium decisions, 62 native
+key events and 6,000 elapsed ticks at `ea3812dd7`. Native checkpoints at cursors
+four and eight preserve memory, usage and trace across process reload. The model
+selected all gameplay. Courier and local-port failures remain documented and
+accounted separately; the final continuation did not replay prior actions.
+This is early gameplay and integration evidence, not sustained fortress success.
+Longer declared attempts and website delivery are the next phase.

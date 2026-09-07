@@ -5,8 +5,23 @@ Current owner-approved experimental phase, September 7:
 readable native keyboard play, allow model-led strategy and recovery, retain
 optional DFHack shortcuts for matched comparisons, and pursue a functioning
 fortress through year two and beyond. Website evidence and remote source delivery
-remain requirements. The app goal is verified active; implementation continues
-without claiming a new native gameplay result.
+remain requirements. The app goal is verified active; early native Astra gameplay
+and checkpoint-continuation evidence are now verified.
+
+Latest progress: Astra Medium completed eight native keyboard decisions and
+6,000 elapsed ticks, with 62 confirmed key events. It selected its own status
+inspection, stair/room designations and simulation advances. Checkpoints at
+cursors four and eight preserve memory, usage and the exact trace prefix across
+a fresh game process. No prior action was replayed. The source and public-safe
+outcome are pushed in [PR #137](https://github.com/lemoz/fort-gym/pull/137), with
+passing exact implementation-head CI. All owned native runtimes and the VM are
+stopped. The initial eight-decision condition is complete, not the full goal.
+
+Fresh subscription checks now run before every model invocation. The campaign
+used 236,802 tokens; earlier delivery failures retain another 69,004 tokens.
+Exact dollar charges remain unknown and are not reported as zero. Longer native
+play, comparable model repetitions, reviewed delivery and the live website remain
+required. See [Campaign status](CAMPAIGN_STATUS.md) for the current proof boundary.
 
 Native keyboard and viewport acceptance passed at `0ef33ff70`; source and the
 public-safe outcome summary are on `10816dfad` in draft
@@ -16,10 +31,10 @@ confirmed, and a separate 100-tick request advanced exactly 100 ticks. The sourc
 seed is unchanged and the native runtime, container and local VM are stopped.
 This was scripted interface validation with no model calls, not Astra gameplay.
 
-The existing Astra subscription transport and readable-screen comparison remain
-synthetic evidence. Live screen-to-keypress integration, checkpointed autonomous
-play, model comparisons, and verified website delivery remain open. See current
-campaign status for usage and full-suite evidence boundaries.
+The older readable-screen comparison remains synthetic evidence. It is now
+complemented by the native campaign above, not retroactively relabelled as
+gameplay. Sustained play, model comparisons and verified website delivery remain
+open. See current campaign status for usage and full-suite evidence boundaries.
 
 Latest verified progress, September 7: the owner selected `gpt-6-astra` at
 `medium` reasoning through their ChatGPT subscription. The local Qwen campaign

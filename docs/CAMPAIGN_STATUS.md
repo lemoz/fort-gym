@@ -4,13 +4,58 @@ Verified September 7, 2026 UTC. The Year-Two Autonomous Play objective remains
 unfinished; the app goal is active. The owner has approved starting the project
 work for [Astra standard-input experiments](ASTRA_STANDARD_INPUT_EXPERIMENTS.md).
 
-## Current phase: readable standard input, then shortcut comparison
+## Current phase: Astra native play and continuation
 
 Implement Astra Medium on native keyboard controls, verify the actual model-visible
 screen, and run autonomous fortress experiments toward year two and beyond. Keep
 DFHack shortcuts as an explicit alternative condition. Compare matching starts
 and declared observation/display settings, then extend to other models. The new
-phase retains website and remote delivery. No Astra native run has started.
+phase retains website and remote delivery. The first bounded Astra native
+keyboard campaign has now completed.
+
+### Latest native result
+
+At implementation `ea3812dd7`, Astra Medium made eight model-selected decisions
+through the readable 120x40 screen and native keyboard v2 condition: 62 confirmed
+key events and 6,000 elapsed ticks. It inspected status, selected stair and room
+designations, and chose when to advance simulation. There were no helper build or
+order actions, model fallbacks, or human-selected gameplay moves. Input acceptance
+does not independently prove all desired construction or excavation outcomes.
+
+Native checkpoints at cursors four and eight verify. A fresh-process continuation
+preserved model memory, cumulative usage, action cursor and the full trace prefix,
+without replaying prior actions. Independent retained-evidence verification passed.
+The original seed is unchanged and every owned game/container/local VM is stopped.
+
+The campaign used 236,802 tokens. Two earlier delivery failures used 69,004 more:
+305,806 total across ten Codex invocations. Displayed credit balance was unchanged;
+exact dollar charges remain unreported, not zero. Fresh account quota checks now
+run automatically before each model invocation. No local model server, GCE, API
+fallback, credit purchase or reset was used.
+
+The delivery failures were isolated to Docker ownership/private-file permissions;
+publication now runs as the existing game user and is checked before inference.
+The first segment subsequently succeeded, but its next runtime hit port-reuse
+`EADDRINUSE` before launch. Resuming the same verified checkpoint on a fresh
+local port completed the remaining four decisions. Failed attempts remain failed;
+their usage was not discarded. The port correction was infrastructure recovery,
+not gameplay rescue.
+
+Source is pushed in draft [PR #137](https://github.com/lemoz/fort-gym/pull/137);
+the non-content outcome publication is `4bbd3c81c`. Exact implementation-head
+[CI passed](https://github.com/lemoz/fort-gym/actions/runs/34152583644).
+The broad suite passed 2,285 tests with ten skips and one sandbox-denied socket
+bind; that test and final keyboard checkpoint checks passed with socket access.
+Detailed native captures, saves, prompts and traces remain private.
+
+Next: longer declared autonomous play, reusable runtime/courier packaging and
+website tracking of the new condition and unknown subscription charges. The
+eight-decision integration condition ended at its declared bound; its final
+checkpoint remains preserved. Year-two viability, repeated comparable
+three-model results, reviewed merge and production website acceptance are not
+claimed. The full goal remains active.
+
+### Earlier native interface diagnostic
 
 Native keyboard and viewport acceptance passed at implementation `0ef33ff70`.
 The source and public-safe operational summary are on `10816dfad` in draft
@@ -56,14 +101,13 @@ tests include all CP437 codes, highlight spans, and larger synthetic grids. The
 second call also left displayed credit balance unchanged; exact dollar cost is
 unreported. Neither call dispatched game keys or proves gameplay competence.
 
-Next: connect a live captured screen through Astra Medium to native key dispatch,
-retain action/memory/usage evidence, and progress into checkpointed autonomous
-play with fresh subscription and cumulative-run accounting. General post-key frame
+That earlier diagnostic's next step was the live keyboard campaign, now verified
+above. General post-key frame
 freshness, workshop ordering, placed buildings and completed digging still require
-gameplay evidence; the successful menu check does not prove them. No native Astra
-gameplay, merge, or website deployment is claimed by #137.
+gameplay evidence; the successful menu check does not prove them. No merge or
+website deployment is claimed by #137.
 
-## Current: requested GPT-6 Astra Medium subscription migration
+## Historical: requested GPT-6 Astra Medium subscription migration
 
 The owner requested `gpt-6-astra` with reasoning effort `medium`, using their
 ChatGPT subscription instead of local Qwen inference or separately billed API
