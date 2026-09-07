@@ -145,6 +145,7 @@ def run_window(args) -> dict:
     checkpoint, usage = args.checkpoint, args.latest_usage
     try:
         for index in range(window["max_segments"]):
+            result["runtime_cleanup_verified"] = False
             segment = args.output / f"segment-{index}"
             port = args.port + index
             cursor = window["continuation_from_next_step"] + index * window["steps_per_segment"]
@@ -189,14 +190,29 @@ def run_window(args) -> dict:
                 if index == 0 and window.get("budget_extension") is not None:
                     command.append("--extend-budget")
                 with (args.output / f"worker-{index}.log").open("xb") as log:
-                    run_worker(
-                        command,
-                        env=worker_env,
-                        stdout=log,
-                        timeout=window["steps_per_segment"]
-                        * (condition["exchange_timeout_seconds"] + 120)
-                        + 300,
-                    )
+                    try:
+                        run_worker(
+                            command,
+                            env=worker_env,
+                            stdout=log,
+                            timeout=window["steps_per_segment"]
+                            * (condition["exchange_timeout_seconds"] + 120)
+                            + 300,
+                        )
+                    except subprocess.CalledProcessError:
+                        # A worker writes its failed segment before exiting.
+                        # Preserve that outcome in the window rather than lose
+                        # it behind a subprocess error. Never promote success.
+                        failed = read(segment / "result.json")
+                        if (
+                            failed.get("schema_version") != "fortgym.keyboard-segment/v1"
+                            or failed.get("source_revision") != args.revision
+                            or failed.get("campaign_id") != result["campaign_id"]
+                            or failed.get("first_step") != cursor
+                            or failed.get("status") not in {"failed", "checkpoint_failed"}
+                        ):
+                            raise
+                        return failed
                 return read(segment / "result.json")
 
             native = run_isolated(
@@ -217,6 +233,7 @@ def run_window(args) -> dict:
             result["segments"].append(segment_result)
             if native["cleanup_verified"] is not True:
                 raise ValueError("Native game cleanup was not verified")
+            result["runtime_cleanup_verified"] = True
             if (
                 segment_result["status"] != "bounded_segment_complete"
                 or segment_result["checkpoint_verified"] is not True

@@ -85,10 +85,34 @@ all four new source modules. The broad suite's one sandbox-denied localhost bind
 passed separately with socket access. Exact-head
 [CI passed](https://github.com/lemoz/fort-gym/actions/runs/34158366994).
 
-The reusable command has now resumed the real cursor-72 campaign, completed its
-first 16-decision segment and produced an independently re-verified cursor-88
-checkpoint. It retains 2,800,235 cumulative tokens and 25,000 elapsed native
-ticks, preserving the original model, memory and budget-extension condition.
-The next native process was observed running. This is an in-progress 128-decision
-window, not a completed window or a terminal public milestone. The final outcome,
-usage and VM teardown still require verification after the owned run stops.
+The reusable window is now terminal and failed, not active. It retained a verified
+cursor-88 checkpoint, then committed through decision 100 at 29,000 elapsed ticks.
+The 101st model response sent three confirmed key events, followed by a 2,000-tick
+request that timed out with zero elapsed ticks while native focus remained
+`dwarfmode/Build/Type`. The newer native save and all model usage are retained;
+that forensic save is not a resumable checkpoint. Do not rewind to cursor 88.
+
+An independent retained-evidence audit verifies 913,252 new tokens and 3,231,792
+cumulative campaign tokens. Including prior failed deliveries gives 3,300,796.
+Subscription charges remain unreported. Both native processes, the container and
+owned VM are stopped. Original configuration, budget extension, memory handoffs
+and trace/journal prefixes remain intact. The public non-content interruption is
+`experiments/evidence/astra_native_keyboard_interruption_20260907.json`.
+
+## Build-menu clock correction
+
+The v2 adapter now reads the existing native keyboard probe before positive clock
+requests. For the exact observed blocking build-menu focus, two matching probes
+and paused calendar observations attest a zero-tick deferral without sending
+keys or invoking the clock. The model receives factual requested/actual tick
+feedback and chooses its next action. The boundary can checkpoint normally.
+Other focuses retain the existing clock path; historical keyboard v1 and helper
+conditions are unchanged. The original timed-out run is not reclassified.
+
+Regression tests cover unchanged native boundaries, unknown/changed evidence,
+no automatic recovery input, checkpoint continuation and failure usage retention.
+The window also retains a failed worker's detailed receipt while recording
+successful native cleanup separately. These corrections have offline test proof;
+fresh native validation and reconciliation of the retained failed tail remain
+next, before further campaign model calls. Website records distinguish the
+interruption from the older resumable checkpoint and do not claim live activity.

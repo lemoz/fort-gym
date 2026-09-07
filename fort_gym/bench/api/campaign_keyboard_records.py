@@ -11,6 +11,7 @@ PUBLISHED = (
     "astra_native_keyboard_outcomes_20260907.json",
     "astra_native_keyboard_endurance_20260907.json",
 )
+INTERRUPTIONS = ("astra_native_keyboard_interruption_20260907.json",)
 PROGRESS_FIELDS = (
     "model_decisions",
     "native_key_events_confirmed",
@@ -18,6 +19,63 @@ PROGRESS_FIELDS = (
     "cumulative_tokens",
     "checkpoint_cursors",
 )
+
+
+def _interruption(root: Path, filename: str) -> dict:
+    path = root / "experiments/evidence" / filename
+    if path.is_symlink() or not path.is_file() or path.stat().st_size > 65536:
+        raise ValueError("Keyboard interruption must be a bounded regular publication")
+    source = json.loads(path.read_bytes())
+    if (
+        source["schema_version"] != "fortgym.native-keyboard-interruption/v1"
+        or source["model"] != "gpt-6-astra"
+        or source["reasoning_effort"] != "medium"
+        or source["control_profile"] != "native_keyboard/v2"
+        or source["observation_profile"] != "native_screen_text/v1"
+        or source["captured_screen_size"] != [120, 40]
+        or re.fullmatch("[a-f0-9]{40}", source["source_revision"]) is None
+        or source["terminal_reason"] != "native_tick_timeout"
+        or source["independent_retained_evidence_audit_passed"] is not True
+        or source["teardown_verified"] is not True
+        or source["recovery_requires_reconciliation"] is not True
+        or source["forensic_save_is_resumable_checkpoint"] is not False
+    ):
+        raise ValueError("Published keyboard interruption has inconsistent provenance")
+    progress = {key: source["progress"][key] for key in (
+        "committed_decisions", "returned_model_decisions", "native_key_events_confirmed",
+        "failed_tail_key_events_confirmed", "elapsed_native_ticks",
+        "latest_verified_checkpoint_cursor", "uncheckpointed_committed_decisions",
+    )}
+    usage = {key: source["usage"][key] for key in (
+        "campaign_tokens", "all_attempt_tokens", "historical_failed_delivery_tokens",
+        "failed_tail_model_tokens_included",
+    )}
+    if any(type(value) is not int or value < 0 for value in (*progress.values(), *usage.values())):
+        raise ValueError("Invalid interruption progress or usage counter")
+    if (
+        progress["returned_model_decisions"] != progress["committed_decisions"] + 1
+        or not 0 < progress["latest_verified_checkpoint_cursor"] <= progress["committed_decisions"]
+        or progress["uncheckpointed_committed_decisions"]
+        != progress["committed_decisions"] - progress["latest_verified_checkpoint_cursor"]
+        or usage["all_attempt_tokens"]
+        != usage["campaign_tokens"] + usage["historical_failed_delivery_tokens"]
+        or not 0 < usage["failed_tail_model_tokens_included"] <= usage["campaign_tokens"]
+        or source["usage"]["reported_charge_usd"] is not None
+        or source["usage"]["cost_basis"] != "codex_subscription_charge_unreported/v1"
+    ):
+        raise ValueError("Interruption usage and checkpoint boundary do not reconcile")
+    return {
+        "interruption_id": filename.removesuffix(".json"),
+        "source_revision": source["source_revision"],
+        "terminal_reason": "native_tick_timeout",
+        "progress": progress,
+        "usage": {**usage, "reported_charge_usd": None,
+                  "cost_basis": "codex_subscription_charge_unreported/v1"},
+        "teardown_verified": True,
+        "recovery_requires_reconciliation": True,
+        "fortress_success": "not_assessed_in_public_operational_summary",
+        "evidence_path": "experiments/evidence/" + filename,
+    }
 
 
 def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
@@ -93,4 +151,5 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
         "schema_version": "fortgym.public-keyboard-milestones/v1",
         "live_tracking": False,
         "milestones": records,
+        "interruptions": [_interruption(root, filename) for filename in INTERRUPTIONS],
     }

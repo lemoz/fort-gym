@@ -302,3 +302,45 @@ def test_window_runs_serial_checkpoints_on_distinct_ports(tmp_path, saved, monke
     assert [segment["next_step"] for segment in result["segments"]] == [3, 5]
     assert all(call["screen_size"] == (120, 40) for call in calls)
     assert calls[1]["snapshot"] == args.output / "segment-0/checkpoint"
+
+
+def test_window_retains_failed_worker_outcome_and_verified_cleanup(tmp_path, saved, monkeypatch):
+    import subprocess
+    from scripts import campaign_keyboard_native as native
+
+    condition, window = tmp_path / "condition.json", tmp_path / "window.json"
+    publish(condition, CONDITION)
+    publish(window, {
+        "schema_version": "fortgym.codex-keyboard-window/v1", "condition_id": "failure",
+        "original_condition": condition.name, "continuation_from_next_step": 1,
+        "steps_per_segment": 2, "max_segments": 2, "reset_memory": False,
+        "reset_usage": False, "strategy_intervention": False,
+    })
+    args = SimpleNamespace(
+        condition=condition, window=window, checkpoint=saved[0], latest_usage=saved[1],
+        port=5530, output=tmp_path / "output", source=tmp_path / "assets", revision="fixture",
+    )
+    failure = {
+        "schema_version": "fortgym.keyboard-segment/v1", "source_revision": "fixture",
+        "campaign_id": "runtime-test", "first_step": 1, "next_step": 1,
+        "status": "failed", "checkpoint_verified": False,
+        "stop_reason": "unsettled_failure", "recovery_requires_reconciliation": True,
+    }
+
+    def worker(command, **kwargs):
+        segment = args.output / "segment-0"
+        segment.mkdir()
+        publish(segment / "result.json", failure)
+        raise subprocess.CalledProcessError(1, command)
+
+    def isolated(**options):
+        return {
+            "experiment": options["work"](args.source, {}, {}), "cleanup_verified": True,
+        }
+
+    monkeypatch.setattr(native, "run_worker", worker)
+    monkeypatch.setattr(native, "run_isolated", isolated)
+    result = run_window(args)
+    assert result["status"] == "failed" and result["segments"] == [failure]
+    assert result["runtime_cleanup_verified"] and result["original_checkpoint_unchanged"]
+    assert not (args.output / "segment-1").exists()

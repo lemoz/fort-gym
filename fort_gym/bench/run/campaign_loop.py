@@ -44,6 +44,7 @@ from ..tick_receipt import (
 from .campaign_advance import ACCEPTED_ONLY, MODEL_REQUESTED, POLICIES, requested_ticks
 from .campaign_checkpoint import create_checkpoint, verify_checkpoint
 from .campaign_save import NativeSaveSnapshotter
+from .keyboard_clock import SCHEMA as MENU_DEFERRAL_SCHEMA, validate_menu_deferral
 
 
 class CampaignEnvironment(Protocol):
@@ -357,6 +358,8 @@ class CampaignLoop:
                     "keys_confirmed": native.get("keys_confirmed"),
                     "command_mutation": native.get("command_mutation"),
                 }
+                if "tick_feedback" in self.last_result:
+                    feedback["simulation"] = deepcopy(self.last_result["tick_feedback"])
             observation = {
                 "observation_profile": TEXT_PROFILE,
                 "screen_capture": capture,
@@ -557,8 +560,17 @@ class CampaignLoop:
         )
         if type(actual) is not int or actual < 0 or end - start != actual or actual > maximum:
             raise ValueError("Native time disagrees with the action's tick receipt")
+        menu_deferral = "deferred" in receipt or receipt.get("schema_version") == MENU_DEFERRAL_SCHEMA
+        if menu_deferral and (
+            not keyboard
+            or validate_menu_deferral(
+                receipt, requested_ticks=requested, before=before, after=after
+            ) is not None
+        ):
+            raise ValueError("Native menu deferral is not an attested unchanged boundary")
         if (
             receipt.get("ok") is not True
+            and not menu_deferral
             and validate_clean_interruption_receipt(
                 receipt,
                 requested_ticks=requested,
@@ -568,6 +580,18 @@ class CampaignLoop:
             is not None
         ):
             raise ValueError("Native tick operation did not finish or interrupt cleanly")
+        if keyboard:
+            # Factual control feedback only; no private stock/crew metrics or
+            # prescribed recovery key is supplied to the campaign model.
+            execution = {
+                **execution,
+                "tick_feedback": {
+                    "requested_ticks": requested,
+                    "ticks_advanced": actual,
+                    "deferred": receipt.get("deferred") is True,
+                    "reason": receipt.get("error"),
+                },
+            }
         if allow_view:
             self._observe_map(after, next_view)
         tick_info = {

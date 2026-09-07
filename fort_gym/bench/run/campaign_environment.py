@@ -19,7 +19,7 @@ from ..env.campaign_keyboard import (
     HELPER_CONTROL_PROFILE,
     execute_campaign_keys,
 )
-from ..env.native_key_catalog import KEYBOARD_PROFILES
+from ..env.native_key_catalog import KEYBOARD_PROFILES, NATIVE_PROFILE
 from ..env.dfhack_client import DFHackClient
 from ..env.executor import Executor
 from ..env.screen_observation import raw_screen
@@ -32,6 +32,7 @@ from ..env.workshop_placement import (
     validate_policy,
 )
 from .campaign_save import native_save_status
+from .keyboard_clock import BLOCKING_FOCUS, SCHEMA as MENU_DEFERRAL_SCHEMA, validate_menu_deferral
 
 
 def read_campaign_fort_metrics() -> dict[str, Any]:
@@ -221,6 +222,36 @@ class NativeCampaignEnvironment:
         before = self.observe()
         if ticks == 0:
             return before, {"ok": True, "ticks_advanced": 0, "skipped": True}
+        if getattr(self, "control_profile", HELPER_CONTROL_PROFILE) == NATIVE_PROFILE:
+            # This v2 clock fix does not change the historical v1 condition.
+            # An empty keyboard batch is a read-only, runtime/calendar-bound
+            # probe. Never press Escape or alter a model-selected menu here.
+            def probe() -> dict:
+                execution = execute_campaign_keys(
+                    [], expected_dfroot=self.expected_dfroot,
+                    year=before.get("year"), year_tick=before.get("year_tick"),
+                    control_profile=self.control_profile,
+                )
+                if execution.get("accepted") is not True:
+                    raise RuntimeError("Keyboard clock preflight could not attest native UI")
+                return execution["result"]["native_receipts"][0]["after"]
+
+            initial = probe()
+            if initial.get("focus") == BLOCKING_FOCUS:
+                after = self.observe()
+                receipt = {
+                    "schema_version": MENU_DEFERRAL_SCHEMA,
+                    "ok": False, "deferred": True, "error": "blocking_native_menu",
+                    "requested": ticks, "ticks_advanced": 0,
+                    "clock_dispatched": False, "timeout": False,
+                    "native_before": initial, "native_after": probe(),
+                }
+                error = validate_menu_deferral(
+                    receipt, requested_ticks=ticks, before=state, after=after
+                )
+                if error is not None:
+                    raise RuntimeError(error)
+                return after, receipt
         self.client.advance(
             ticks,
             interrupt_on_viewscreen_transition=True,

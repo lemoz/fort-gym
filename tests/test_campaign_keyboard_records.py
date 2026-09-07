@@ -32,7 +32,7 @@ def test_keyboard_endpoint_preserves_unknown_charges_and_separate_milestones():
 def evidence_root(tmp_path):
     folder = tmp_path / "experiments/evidence"
     folder.mkdir(parents=True)
-    for filename in records.PUBLISHED:
+    for filename in (*records.PUBLISHED, *records.INTERRUPTIONS):
         shutil.copyfile(records.PROJECT_ROOT / "experiments/evidence" / filename, folder / filename)
     return tmp_path
 
@@ -79,6 +79,40 @@ def test_missing_publication_is_not_empty_success(monkeypatch):
     assert "private-path" not in response.text
 
 
+def test_interruption_separates_latest_usage_from_resumable_checkpoint(evidence_root):
+    path = evidence_root / "experiments/evidence" / records.INTERRUPTIONS[0]
+    source = json.loads(path.read_text())
+    source["progress"]["private_screen"] = "secret-screen"
+    source["usage"]["account_id"] = "secret-account"
+    path.write_text(json.dumps(source))
+    row = records.keyboard_campaign_records(evidence_root)["interruptions"][0]
+    assert "secret-" not in json.dumps(row)
+    assert row["progress"]["committed_decisions"] == 100
+    assert row["progress"]["returned_model_decisions"] == 101
+    assert row["progress"]["latest_verified_checkpoint_cursor"] == 88
+    assert row["recovery_requires_reconciliation"] and row["teardown_verified"]
+    assert row["usage"]["campaign_tokens"] == 3231792
+    assert row["usage"]["all_attempt_tokens"] == 3300796
+    assert row["usage"]["reported_charge_usd"] is None
+
+
+@pytest.mark.parametrize("section,field,value", [
+    ("progress", "returned_model_decisions", 100),
+    ("progress", "latest_verified_checkpoint_cursor", 100),
+    ("progress", "elapsed_native_ticks", True),
+    ("usage", "reported_charge_usd", 0),
+    ("usage", "all_attempt_tokens", 3231792),
+    ("usage", "failed_tail_model_tokens_included", 0),
+])
+def test_interruption_cannot_hide_tail_or_reset_cost(evidence_root, section, field, value):
+    path = evidence_root / "experiments/evidence" / records.INTERRUPTIONS[0]
+    source = json.loads(path.read_text())
+    source[section][field] = value
+    path.write_text(json.dumps(source))
+    with pytest.raises(ValueError):
+        records.keyboard_campaign_records(evidence_root)
+
+
 def test_keyboard_javascript_renders_recorded_usage_and_failure():
     node = shutil.which("node")
     if not node:
@@ -121,6 +155,10 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   assert.match(elements['keyboard-results'].textContent, /236,802 campaign tokens/);
   assert.match(elements['keyboard-results'].textContent, /305,806 including failed/);
   assert.match(elements['keyboard-results'].textContent, /Unreported/);
+  assert.match(elements['keyboard-results'].textContent, /Interrupted at 100 committed decisions/);
+  assert.match(elements['keyboard-results'].textContent, /101 model responses/);
+  assert.match(elements['keyboard-results'].textContent, /Last verified checkpoint: decision 88/);
+  assert.match(elements['keyboard-results'].textContent, /3,300,796 including historical/);
   assert.doesNotMatch(elements['keyboard-results'].textContent, /\$0/);
   assert.match(elements['keyboard-status'].textContent, /not a live activity/);
   fail = true;

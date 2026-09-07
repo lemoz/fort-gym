@@ -25,6 +25,25 @@
     }
     const results = $('keyboard-results');
     results.replaceChildren();
+    if (data.interruptions !== undefined && !Array.isArray(data.interruptions)) {
+      throw new Error('Unsupported keyboard interruption evidence');
+    }
+    (data.interruptions || []).slice().reverse().forEach(row => {
+      const section = node('section', undefined, results);
+      section.className = 'campaign-condition';
+      const p = row.progress;
+      node('h3', `Interrupted at ${count(p.committed_decisions)} committed decisions`, section);
+      node('p', 'Harness clock timeout. This interruption is not a recorded fortress collapse.', section);
+      node('p', `${count(p.returned_model_decisions)} model responses; ${count(p.elapsed_native_ticks)} committed elapsed ticks. Last verified checkpoint: decision ${count(p.latest_verified_checkpoint_cursor)}.`, section);
+      node('p', 'Newer native state is retained. Recovery must reconcile it before continuing; the older checkpoint must not silently replace it.', section);
+      node('p', `${count(row.usage.campaign_tokens)} campaign tokens; ${count(row.usage.all_attempt_tokens)} including historical failed deliveries. Failed-request usage is included, not discarded.`, section);
+      node('p', `Model charge: ${cost(row.usage)}.`, section);
+      node('p', row.teardown_verified === true ? 'Game and VM teardown verified for this interruption.' : 'Teardown unknown.', section);
+      if (/^experiments\/evidence\/astra_native_keyboard_[a-z0-9_]+\.json$/.test(row.evidence_path)) {
+        const link = node('a', 'Read the published interruption evidence', section);
+        link.href = 'https://github.com/lemoz/fort-gym/blob/codex/campaign-codex-subscription/' + row.evidence_path;
+      }
+    });
     data.milestones.slice().reverse().forEach(row => {
       const section = node('section', undefined, results);
       section.className = 'campaign-condition';
@@ -46,8 +65,8 @@
       node('p', `Executed source: ${row.source_revision}`, details);
     });
     results.hidden = false;
-    $('keyboard-status').textContent = data.milestones.length
-      ? 'Recorded milestones. This is not a live activity indicator.'
+    $('keyboard-status').textContent = data.milestones.length || data.interruptions?.length
+      ? 'Recorded milestones and interruptions. This is not a live activity indicator.'
       : 'No keyboard milestones published.';
   }
   async function refresh() {
