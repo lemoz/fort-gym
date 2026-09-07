@@ -1,5 +1,13 @@
 # WDSLL — What Does Success Look Like
 
+Current owner-approved experimental phase, September 7:
+[Astra standard-input experiments](ASTRA_STANDARD_INPUT_EXPERIMENTS.md). Establish
+readable native keyboard play, allow model-led strategy and recovery, retain
+optional DFHack shortcuts for matched comparisons, and pursue a functioning
+fortress through year two and beyond. Website evidence and remote source delivery
+remain requirements. The app goal was observed paused; project implementation has
+been requested and begins without claiming a new native gameplay result.
+
 Latest verified progress, September 7: the owner selected `gpt-6-astra` at
 `medium` reasoning through their ChatGPT subscription. The local Qwen campaign
 was operator-cancelled for this change, its evidence preserved, and its game,

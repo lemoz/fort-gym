@@ -1,6 +1,16 @@
 # Campaign status
 
-Verified September 7, 2026 UTC. The Year-Two Autonomous Play goal remains active.
+Verified September 7, 2026 UTC. The Year-Two Autonomous Play objective remains
+unfinished; the app goal is paused. The owner has approved starting the project
+work for [Astra standard-input experiments](ASTRA_STANDARD_INPUT_EXPERIMENTS.md).
+
+## Current phase: readable standard input, then shortcut comparison
+
+Implement Astra Medium on native keyboard controls, verify the actual model-visible
+screen, and run autonomous fortress experiments toward year two and beyond. Keep
+DFHack shortcuts as an explicit alternative condition. Compare matching starts
+and declared observation/display settings, then extend to other models. The new
+phase retains website and remote delivery. No Astra native run has started.
 
 ## Current: requested GPT-6 Astra Medium subscription migration
 
