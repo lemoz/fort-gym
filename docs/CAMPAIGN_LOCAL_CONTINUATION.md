@@ -2,6 +2,43 @@
 
 September 7, 2026 UTC. Status: prepared and checked offline, **not launched**.
 
+## Selected continuation: remaining declared segments
+
+The selected local owner now invokes the existing controller once with
+`--resume --segments 7`, covering the remaining seven segments of the original
+eight-segment envelope. The prior one-segment preparation below is retained
+unchanged and is not selected. Do not execute both preparations.
+
+This removes a manual owner launch between every subsequent segment. The frozen
+controller already validates each native load, cleanup, checkpoint, cumulative
+usage and remaining cap before starting the next segment. It stops at an
+output-limit pause or any non-ready state. One game runs at a time; model server,
+loopback tunnel, container and isolated local VM remain owned by this invocation
+and are torn down when it ends. No model parameters, prompts, conditions,
+campaign identity, evidence volume or cumulative budgets change.
+
+The selected operator SHA-256 is
+`f0f6676524531227c58e1dfdd94566d2e44d0fb80ce924d180b8d10b283c7218`;
+its local test source SHA-256 is
+`871b2e7de706ded199209d0c09ff73e0c50d3e37e5ebc1c95239e47862a108c5`.
+The container owner name ends in `-remaining`. The attached controller command
+has a 7 x 7,500-second bound and the outer owner an additional 1,500 seconds.
+The configured 7,200-second per-segment gameplay bound remains unchanged.
+
+Nineteen offline owner tests pass. A new synthetic controller regression runs
+one segment followed by all seven remaining segments, retaining all 256 commands
+and cumulative usage across eight verified checkpoints and seven continuations.
+It confirms
+sequential ports and refuses another invocation after the eight-segment cap.
+All 80 focused controller/continuation/checkpoint/retention tests pass. Synthetic
+fixtures use their own declared save and do not claim the real native seed.
+The tested controller source is unchanged from the frozen `de69c7a46` controller.
+The actual read-only gate still reports no terminal first-owner receipt, and no
+new attempt, model or VM has launched. Audit the first owner's final evidence
+and teardown before selecting this continuation for execution.
+
+## Prior one-segment preparation, retained but not selected
+
 The native reasoning-budget campaign is still running its first segment at
 `de69c7a467eb0b00becfef03329bac9f58690e35`. Its local first-owner wrapper starts
 only a fresh campaign. A separate segment-two wrapper now preserves the exact

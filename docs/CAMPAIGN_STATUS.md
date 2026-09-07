@@ -24,12 +24,24 @@ manifest file SHA-256 is
 `fe5a2e195cf67de0d9a602d467ab8dc039812af291132bd393ad1fc2a8f0af00`.
 The fourteen-command workshop receipt remains an unchanged historical prefix.
 
-The [local continuation wrapper](CAMPAIGN_LOCAL_CONTINUATION.md) is prepared
-for one further segment of this same campaign, using the same image, condition,
-model arguments and evidence volume. Nineteen offline wrapper checks and 79
-tests on the frozen controller/checkpoint implementation passed. Its actual
-read-only preflight correctly finds no terminal receipt yet. It has not
-launched; the current owner and final checkpoint/teardown audit come first.
+At `2026-09-07T03:15:32.201663+00:00`, the public report had twenty-five commands,
+58,500 ticks, one completed workshop, no completed beds or farms, and all
+twenty-five responses / 246,537 tokens accounted. The cursor-twenty-four periodic
+checkpoint independently verified, with payload SHA-256
+`7a6c2f57bbb4b54855b13588877aa7a8653e019eeba0888ead1dd94a81cf4a1a`
+and manifest file SHA-256
+`b694e5253f6240dd235e04d828a2ccbbf92c444648a0e99746e1a0b6afd103c2`.
+The owner was still live; no final segment or teardown result is implied.
+
+The selected [local continuation wrapper](CAMPAIGN_LOCAL_CONTINUATION.md) is
+prepared to invoke all seven remaining declared segments serially, using the
+same image, condition, model arguments and evidence volume. The earlier
+one-segment preparation is preserved but not selected. Nineteen offline wrapper
+checks and 80 focused controller/checkpoint tests passed, including a synthetic
+first-plus-seven run with 256 cumulative commands and refusal of a ninth segment.
+The existing eight-segment/token/dispatch caps are not increased. Its actual
+read-only preflight correctly finds no terminal receipt yet. It has not launched;
+the current owner and final checkpoint/teardown audit come first.
 The progress receipt passes its calendar/count consistency checks, and all 34
 record/catalog tests pass without registering a running snapshot as a terminal
 website result.

@@ -222,6 +222,44 @@ def test_cumulative_dispatch_cap_stops_without_allocating_another_runtime(inputs
     assert len(launcher.calls) == 2
 
 
+def test_local_year_two_envelope_continues_all_remaining_segments_without_reset(inputs):
+    """Synthetic native adapter/policy; tests the envelope, not the declared real seed."""
+    model = "fort-gym-qwen35-9b-q4-03b74727a860"
+    config = load_segment_config(
+        CONFIG.with_name("local_native_qwen35_year_two_reasoning_budget_v1.json"), model
+    )
+    # Keep the real condition's full execution envelope, but explicitly bind this
+    # synthetic fixture to its own generated seed instead of claiming native data.
+    seed = json.loads((inputs.snapshot / "result.json").read_text())["before"]
+    config["starting_snapshot"].update(
+        receipt_sha256=inputs.snapshot_sha256,
+        year=seed["year"],
+        year_tick=seed["year_tick"],
+        provenance="synthetic_controller_fixture",
+    )
+    path = inputs.output.parent / "synthetic-local-envelope.json"
+    path.write_text(json.dumps(config))
+    inputs.config, inputs.model, inputs.segments = path, model, 1
+    launcher = FakeLauncher()
+    first = campaign_run.run_campaign(inputs, launch=launcher)
+    assert first["status"] == "invocation_limited_pause"
+    assert first["segments_completed"] == 1 and first["next_step"] == 32
+    first_tokens = first["usage"]["total_tokens"]
+    inputs.resume, inputs.segments = True, config["max_segments"] - 1
+    result = campaign_run.run_campaign(inputs, launch=launcher)
+    assert result["status"] == "segment_limit_pause"
+    assert result["segments_started"] == result["segments_completed"] == 8
+    assert result["next_step"] == result["usage"]["dispatched_requests"] == 256
+    assert result["usage"]["total_tokens"] == first_tokens * 8
+    assert len(launcher.calls) == 8 and all(call["cleaned"] for call in launcher.calls)
+    assert all(call["result"]["new_checkpoint_verified"] for call in launcher.calls)
+    assert [call["port"] for call in launcher.calls] == list(range(5501, 5509))
+    assert result["year_two_gameplay_verified"] is False
+    with pytest.raises(ValueError, match="reconciliation"):
+        campaign_run.run_campaign(inputs, launch=launcher)
+    assert len(launcher.calls) == 8
+
+
 def test_segment_limit_does_not_reset_with_another_invocation(inputs):
     condition(inputs, max_segments=2)
     launcher = FakeLauncher()
