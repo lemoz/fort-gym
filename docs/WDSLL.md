@@ -7,7 +7,8 @@ verification covered both native checkpoints, source identities, unchanged
 configuration and exact trace/usage prefixes. The first handoff's new action
 started at the saved native calendar. The second completed at its declared
 time-slice boundary; its native processes were stopped, and the third runtime
-is live. The third segment's first new action remains unverified.
+is live. Its first new command and native time advancement now verify against
+the saved boundary; the command's rejection is preserved as a gameplay outcome.
 The model chooses all gameplay and inspection actions; no human rescue or live
 code change has been introduced. The previous reasoning-budget campaign remains
 a preserved terminal harness failure, not a resumed or successful campaign.

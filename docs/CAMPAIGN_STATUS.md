@@ -22,8 +22,10 @@ The first handoff's new model-selected action started at the saved native
 calendar and advanced from there; old actions were not replayed. The second
 segment's terminal native-load and cleanup receipts now verify, and its exact
 native runtime has no remaining live processes. The third segment's runtime is
-live and its journals preserve the second segment's complete prefix; its first
-new action is not yet verified. The auditor issued no game command or restore.
+live and its journals preserve the second segment's complete prefix. Its first
+new model-selected command now starts at the saved calendar with verified native
+time advancement. The command's rejection remains a gameplay outcome, not a
+failed handoff or a successful action. The auditor issued no game command or restore.
 Detailed audit and native evidence remain local. The third segment's terminal
 runtime receipt and the outer owner's teardown are not yet complete or claimed.
 
