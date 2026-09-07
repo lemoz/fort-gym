@@ -35,3 +35,29 @@ def test_published_replay_retains_failed_case_and_unknown_total_usage():
     assert result["teardown"]["source_file_unchanged"] is True
     public = path.read_text()
     assert not any(value in public for value in ("/Users/", "messages", "reasoning_content"))
+
+
+def test_reasoning_budget_receipt_is_transport_acceptance_not_gameplay():
+    path = ROOT / "experiments/evidence/local_year_two_reasoning_budget_20260907.json"
+    result = json.loads(path.read_text())
+    condition = ROOT / "experiments/campaigns/local_native_qwen35_year_two_reasoning_budget_v1.json"
+    assert result["configuration_file_sha256"] == hashlib.sha256(condition.read_bytes()).hexdigest()
+    assert result["only_serialized_request_change"] == {"reasoning_budget_tokens": 2048}
+    assert result["finish_reason"] == "stop"
+    assert result["diagnostic"]["action_type"] == "DIG"
+    assert result["diagnostic"]["action_syntax_valid"] is True
+    assert result["diagnostic"]["usage_complete"] is True
+    assert result["returned_usage"]["prompt_tokens"] == 8793
+    assert result["returned_usage"]["completion_tokens"] == 2210
+    assert result["returned_usage"]["total_tokens"] == 11003
+    assert result["diagnostic"]["usage"]["total_tokens"] == 11003
+    assert result["reasoning_token_usage"] is None
+    assert result["scope"]["native_actions_executed"] == 0
+    assert result["scope"]["native_legality"] == result["scope"]["native_utility"] == "not_checked"
+    assert result["scope"]["campaign_resumed"] is False
+    assert result["scope"]["model_ranking_established"] is False
+    assert result["teardown"]["owned_processes_independently_absent"] is True
+    assert result["teardown"]["model_listener_independently_closed"] is True
+    assert result["metered_provider_charge_usd"] == "0"
+    public = path.read_text()
+    assert not any(value in public for value in ("/Users/", "messages", "reasoning_content"))
