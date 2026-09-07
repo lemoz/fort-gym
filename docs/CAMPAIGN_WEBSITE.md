@@ -1,5 +1,40 @@
 # Campaign website delivery milestone
 
+## Outcomes when rejected commands are retried
+
+The offline profile now emits optional `actions.command_retry_outcomes` with
+schema `fortgym.command-retry-outcomes/v1`. It counts accepted, rejected-again
+and unknown outcomes when the same control and exact parameters are retried
+after a rejection, even with other commands in between. Parameter key order,
+requested waiting time and optional planning notes do not change command identity.
+An accepted or unknown outcome clears that command's rejection sequence; a later
+rejection begins a new sequence. These are observed choices and outcomes, not a
+judgment of whether waiting or retrying was sensible. Acceptance can still mean
+a no-op or queued work, and does not prove recovery or completed construction.
+
+The measure requires a contiguous trace from step zero and recognizable controls
+and parameters. Missing origins, duplicate steps, gaps or unmatchable commands
+leave it unknown. Public projection allows only its schema and three nonnegative
+integer counts, bounded by the observed action totals. No parameter, coordinate,
+command fingerprint or private model text is exported. Existing command-change
+and action-total semantics are unchanged.
+
+The tracker shows these counts in the existing campaign detail panel. Older
+aggregates without the field remain unchanged and display `not recorded`; they
+are not assigned a zero or retrospectively reconstructed. The script cache URL
+is v14. The running producer remains frozen at `48d9ed6d9`; this observer change
+does not alter its prompts, controls, records or gameplay. No current native
+capture, new comparison row, merge, browser QA or deployment is included.
+
+All 132 focused checks pass. Validation covers retry outcomes across WAIT/VIEW, exact-parameter matching,
+accepted/unknown sequence boundaries, malformed or incomplete evidence,
+count-only projection and idempotence, synthetic file-to-report-to-feed-to-HTTP
+delivery, source-byte preservation and in-memory UI labels. A local read-only
+exercise against the retained native trace also corroborated the counter without
+altering or exporting it. Changed-source lint, formatting, compilation and scoped
+mypy pass. The unchanged whole-tree baseline still has 10 Ruff findings and
+464 mypy errors in 26 files; no clean whole-tree static result is claimed.
+
 ## Map inspection is a distinct reported control
 
 The offline profile and public projection now recognize VIEW as a reporting

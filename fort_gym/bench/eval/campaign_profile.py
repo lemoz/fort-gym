@@ -30,6 +30,7 @@ METRICS = (
 # Reporting vocabulary only; this does not enable controls in a runtime profile.
 ACTION_TYPES = {"DIG", "BUILD", "ORDER", "UNSUSPEND", "FARM", "LABOR", "WAIT", "INTERACT", "VIEW"}
 FURNITURE_RECORDS = ("bed", "chair", "door", "table")
+COMMAND_RETRY_SCHEMA = "fortgym.command-retry-outcomes/v1"
 
 
 def count(value: Any) -> int | None:
@@ -38,6 +39,41 @@ def count(value: Any) -> int | None:
 
 def mapping(value: Any) -> dict:
     return value if isinstance(value, dict) else {}
+
+
+def command_retry_outcomes(records: list[dict]) -> dict | None:
+    """Count exact-command retries across intervening actions, not successful recovery.
+
+    Rejection keeps that command pending. Acceptance or an unknown outcome clears
+    it. Waiting time and optional planning notes are not command parameters.
+    Missing origins, gaps, duplicates or unrecognized commands leave this unknown.
+    Only aggregate counts leave this function; no parameters or fingerprints do.
+    """
+    pending: set[str] = set()
+    outcomes: Counter[str] = Counter()
+    for expected_step, record in enumerate(records):
+        if type(record.get("step")) is not int or record["step"] != expected_step:
+            return None
+        action = mapping(record.get("action"))
+        kind, params = action.get("type"), action.get("params")
+        if not isinstance(kind, str) or kind not in ACTION_TYPES or not isinstance(params, dict):
+            return None
+        try:
+            command = json.dumps({"type": kind, "params": params}, sort_keys=True, allow_nan=False)
+        except (TypeError, ValueError):
+            return None
+        accepted = mapping(record.get("execute")).get("accepted")
+        outcome = "accepted" if accepted is True else "rejected" if accepted is False else "unknown"
+        if command in pending:
+            outcomes[outcome] += 1
+        if accepted is False:
+            pending.add(command)
+        else:
+            pending.discard(command)
+    return {
+        "schema_version": COMMAND_RETRY_SCHEMA,
+        **{key: outcomes[key] for key in ("accepted", "rejected", "unknown")},
+    }
 
 
 def furniture_records_from_state(value: Any) -> dict[str, int | None]:
@@ -273,6 +309,7 @@ def campaign_profile(
             },
             "changed_command_after_rejection": changed_after_rejection,
             "path_cache_stale_rejections": totals["path_cache_stale_rejections"],
+            "command_retry_outcomes": command_retry_outcomes(records),
         },
         "usage": usage_profile(usage),
         "flow_measurement": {"status": "unavailable", "production": None, "consumption": None},
@@ -285,6 +322,7 @@ def campaign_profile(
             "Room and building counts are unknown when the source reports an incomplete or truncated scan.",
             "Recorded dead citizens includes the starting world's history; population changes do not identify death causes.",
             "Accepted commands and changed commands are observations, not completed-work or successful-adaptation verdicts.",
+            "Command retries match exact control and parameters across intervening actions; accepted or unknown outcomes clear that command's rejection sequence. Accepted retries are not proof of recovery.",
             "Metrics describe sampled boundaries; unseen between-sample extrema are not known.",
             "This canonical trace contains its checkpoint prefix. Do not add ancestor trace durations or cumulative costs.",
             "A budget pause or harness failure is not evidence of fortress collapse. Time alone is not autonomous success.",

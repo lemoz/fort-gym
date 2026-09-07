@@ -327,7 +327,7 @@ def test_matched_pair_page_links_immutable_evidence_and_discloses_asymmetric_lim
         publication + "experiments/evidence/local_native_qwen35_thinking_comparison_20260907.json"
         in page
     )
-    assert "campaign-feed.js?v=13" in page
+    assert "campaign-feed.js?v=14" in page
 
 
 def test_thinking_pair_reconciles_exact_published_bundles_and_declared_difference():

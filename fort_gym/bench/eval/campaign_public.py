@@ -8,6 +8,7 @@ from typing import Any
 
 from .campaign_profile import (
     ACTION_TYPES,
+    COMMAND_RETRY_SCHEMA,
     FURNITURE_RECORDS,
     METRICS,
     count,
@@ -185,4 +186,23 @@ def public_snapshot(value: dict) -> dict:
         for kind, stats in mapping(actions.get("by_type")).items()
         if kind in ACTION_TYPES | {"UNKNOWN"}
     }
+    if "command_retry_outcomes" in actions:
+        result["actions"]["command_retry_outcomes"] = _public_retry_outcomes(actions)
     return result
+
+
+def _public_retry_outcomes(actions: dict) -> dict | None:
+    """Old or malformed aggregates remain unknown; never expose command parameters."""
+    supplied = mapping(actions.get("command_retry_outcomes"))
+    if supplied.get("schema_version") != COMMAND_RETRY_SCHEMA:
+        return None
+    counts = {}
+    for key in ("accepted", "rejected", "unknown"):
+        value, total = count(supplied.get(key)), count(actions.get(key))
+        if value is None or total is None or value > total:
+            return None
+        counts[key] = value
+    committed = count(actions.get("committed_rows"))
+    if committed is None or sum(counts.values()) > committed:
+        return None
+    return {"schema_version": COMMAND_RETRY_SCHEMA, **counts}

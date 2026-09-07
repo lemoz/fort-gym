@@ -1,6 +1,7 @@
 """Synthetic reporting fixtures only, not native/model acceptance evidence."""
 
 import json
+from copy import deepcopy
 from types import SimpleNamespace
 
 import pytest
@@ -51,8 +52,12 @@ def test_inspection_report_reaches_http_without_exporting_parameters(tmp_path, m
     publisher.start()
     output = tmp_path / "segment"
     (output / "campaign").mkdir(parents=True)
-    rows = [inspection(0), inspection(1, False)]
+    rows = [inspection(0, False), row(1, 0, 0, kind="WAIT")]
     rows[0]["action"]["params"]["private_note"] = "PRIVATE-GAME-CONTENT"
+    retry = deepcopy(rows[0])
+    retry["step"] = 2
+    retry["execute"]["accepted"] = True
+    rows.append(retry)
     segment = {
         **publisher.identity,
         "schema_version": "fortgym.campaign-segment/v1",
@@ -88,6 +93,12 @@ def test_inspection_report_reaches_http_without_exporting_parameters(tmp_path, m
         item for item in response.json()["campaigns"] if item["campaign_id"] == "campaign"
     )
     assert result["actions"]["by_type"]["VIEW"] == {"accepted": 1, "rejected": 1, "unknown": 0}
+    assert result["actions"]["command_retry_outcomes"] == {
+        "schema_version": "fortgym.command-retry-outcomes/v1",
+        "accepted": 1,
+        "rejected": 0,
+        "unknown": 0,
+    }
     assert result["elapsed_ticks"] == 0
     assert result["functioning_fortress"] == "not_assessed"
     assert "PRIVATE-GAME-CONTENT" not in json.dumps(result)

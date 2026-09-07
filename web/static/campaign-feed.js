@@ -135,6 +135,14 @@
       }
       node('p', `${number(actions.changed_command_after_rejection)} changed commands following rejection. Changing a command does not establish recovery.`, panel);
     }
+    const retries = actions.command_retry_outcomes;
+    if (retries?.schema_version === 'fortgym.command-retry-outcomes/v1'
+      && ['accepted', 'rejected', 'unknown'].every(key => Number.isInteger(retries[key]) && retries[key] >= 0)) {
+      node('p', `Retries of previously rejected commands: ${number(retries.accepted)} accepted, ${number(retries.rejected)} rejected again, ${number(retries.unknown)} with unknown outcomes.`, panel);
+      node('p', 'Matches the same control and parameters, even after other actions. An accepted or unknown outcome ends that command’s rejection sequence. Acceptance alone does not establish recovery.', panel);
+    } else {
+      node('p', 'Retries of previously rejected commands: not recorded.', panel);
+    }
     node('p', `Checkpoint: ${row.checkpoint_verified ? 'verified' : 'not verified'}. Teardown: ${row.cleanup_verified === true ? 'verified' : row.cleanup_verified === false ? 'not verified' : 'unknown'}.`, panel);
     const usage = row.usage || {};
     const local = usage.cost_basis === 'self_hosted_no_metered_provider';

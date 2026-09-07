@@ -68,12 +68,15 @@ first.committed_steps = 18;
 first.current_furniture_item_records = {bed:11, chair:3, door:0, table:null};
 first.furniture_item_record_summaries = {bed:{start:0, end:11, observed_samples:2}};
 first.actions = {accepted:16, rejected:2, unknown:0, changed_command_after_rejection:0,
+  command_retry_outcomes:{schema_version:'fortgym.command-retry-outcomes/v1', accepted:0, rejected:1, unknown:0},
   path_cache_stale_rejections:2,
   by_type:{LABOR:{accepted:13, rejected:0, unknown:0}, VIEW:{accepted:3, rejected:0, unknown:0}, BUILD:{accepted:0, rejected:2, unknown:0}}};
 data.campaigns.push({...first, model:'second-model', campaign_id:'second',
   condition_id:'local-native-packed-comparison-v1', code_revision:'a'.repeat(40),
+  actions:{...first.actions, command_retry_outcomes:null},
   current_furniture_item_records:{}, furniture_item_record_summaries:{}});
 data.campaigns.push({...first, model:'repair-model', campaign_id:'repair',
+  actions:{...first.actions, command_retry_outcomes:{schema_version:'fortgym.command-retry-outcomes/v1', accepted:true, rejected:0, unknown:0}},
   condition_id:'local-native-harness-repair-v1', code_revision:'b'.repeat(40)});
 data.campaigns.push({...first, model:'reference-model', campaign_id:'reference',
   condition_id:'local-native-designation-reference-v1', code_revision:'c'.repeat(40)});
@@ -114,6 +117,8 @@ vm.runInNewContext(fs.readFileSync(process.argv[2], 'utf8'), {
   assert.match(elements['campaign-profile-detail'].textContent, /VIEW inspects terrain without advancing game time or building anything/);
   assert.match(elements['campaign-profile-detail'].textContent, /Its accepted count is not completed work/);
   assert.match(elements['campaign-profile-detail'].textContent, /2 commands were blocked because the native pathfinding cache was not ready/);
+  assert.match(elements['campaign-profile-detail'].textContent, /Retries of previously rejected commands: 0 accepted, 1 rejected again, 0 with unknown outcomes/);
+  assert.match(elements['campaign-profile-detail'].textContent, /Acceptance alone does not establish recovery/);
   assert.doesNotMatch(elements['campaign-profile-detail'].textContent, /Exact reported cost:/);
   assert.equal(elements['campaign-profile-detail'].children.some(child => child.href?.startsWith('javascript:')), false);
   elements['campaign-condition-filter'].value = 'local-native-packed-comparison-v1';
@@ -122,12 +127,14 @@ vm.runInNewContext(fs.readFileSync(process.argv[2], 'utf8'), {
   assert.equal(elements['campaign-feed-rows'].children[0].children[0].text, 'second-model');
   elements['campaign-feed-rows'].children[0].children[0].children[1].events.click();
   assert.match(elements['campaign-profile-detail'].textContent, /Furniture item counts are unavailable/);
+  assert.match(elements['campaign-profile-detail'].textContent, /Retries of previously rejected commands: not recorded/);
   assert.equal(elements['campaign-profile-detail'].children.find(child => child.href?.startsWith('https://github.com/')).href,
     `https://github.com/lemoz/fort-gym/blob/${'a'.repeat(40)}/experiments/campaigns/local_native_packed_comparison_v1.json`);
   elements['campaign-condition-filter'].value = 'local-native-harness-repair-v1';
   elements['campaign-condition-filter'].events.change();
   assert.equal(elements['campaign-feed-rows'].children.length, 1);
   elements['campaign-feed-rows'].children[0].children[0].children[1].events.click();
+  assert.match(elements['campaign-profile-detail'].textContent, /Retries of previously rejected commands: not recorded/);
   assert.equal(elements['campaign-profile-detail'].children.find(child => child.href?.startsWith('https://github.com/')).href,
     `https://github.com/lemoz/fort-gym/blob/${'b'.repeat(40)}/experiments/campaigns/local_native_harness_repair_v1.json`);
   elements['campaign-condition-filter'].value = 'local-native-designation-reference-v1';
