@@ -44,9 +44,19 @@ The previously recovered cursor 101 is recorded separately from the newer
 interruption at 183 committed decisions / 184 responses. Its latest parent is
 181, not permission to discard the two newer actions or rejected response.
 The new recovery target is cursor 184 with 44,000 elapsed native ticks and
-5,933,954 campaign tokens. Native validation of this new path is pending.
+5,933,954 campaign tokens. Native validation and independent recovery audit now
+pass at `c537e3e79`, with exact-source CI passing. The new checkpoint is
+`073ac57c4b80227368d5bd6b6367ba4e214fc629dbbaf604c498b24b7a80e642`.
+Recovery added no model calls, native keys or ticks, and teardown was verified.
+The original journal is retained with one additional reconciliation record.
+The separate synthetic-receipt native check passed without campaign calls or
+gameplay input; its synthetic usage is excluded. A preceding package-permission
+failure stopped before game load and remains retained, not overwritten.
 None of these infrastructure results establishes year-two fortress viability.
 
 Focused recovery, rejection, checkpoint, control and loop tests pass (193 tests).
 They cover unchanged historical sources, zero native/model dispatch, retained
 usage and memory, resumed feedback, and rejected mismatched evidence.
+The broader source suite passed 2,435 tests, with ten skips and one locally
+excluded socket test that passed separately earlier. Full exact-source CI:
+https://github.com/lemoz/fort-gym/actions/runs/34167561354

@@ -210,7 +210,15 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   assert.match(elements['keyboard-results'].textContent, /0 new model calls, 0 replayed keys, 0 added ticks/);
   assert.match(elements['keyboard-results'].textContent, /Subsequently recovered as checkpoint 101/);
   assert.match(elements['keyboard-results'].textContent, /original interrupted window remains failed/);
-  assert.doesNotMatch(elements['keyboard-results'].textContent, /Recovery must reconcile/);
+  assert.match(elements['keyboard-results'].textContent, /Interrupted at 183 committed decisions/);
+  assert.match(elements['keyboard-results'].textContent, /Unsupported model key names stopped the harness/);
+  assert.match(elements['keyboard-results'].textContent, /184 model responses/);
+  assert.match(elements['keyboard-results'].textContent, /Recovery verified · checkpoint 184/);
+  assert.match(elements['keyboard-results'].textContent, /Subsequently recovered as checkpoint 184/);
+  assert.ok(elements['keyboard-results'].textContent.startsWith('Recovery verified · checkpoint 184'));
+  assert.match(elements['keyboard-results'].textContent, /6,002,958 including historical/);
+  assert.ok(elements['keyboard-results'].textContent.indexOf('Interrupted at 183')
+    < elements['keyboard-results'].textContent.indexOf('Recovery verified · checkpoint 101'));
   assert.match(elements['keyboard-results'].textContent, /3,300,796 including historical/);
   assert.doesNotMatch(elements['keyboard-results'].textContent, /\$0/);
   assert.match(elements['keyboard-status'].textContent, /not a live activity/);
@@ -233,3 +241,42 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
         capture_output=True,
         text=True,
     )
+
+
+def test_rejected_input_projection_preserves_nonexecution_and_usage(evidence_root):
+    path = evidence_root / "experiments/evidence" / records.INTERRUPTIONS[1]
+    source = json.loads(path.read_text())
+    source["raw_response"] = "private-response"
+    source["progress"]["native_screen"] = "private-screen"
+    path.write_text(json.dumps(source))
+    row = records.keyboard_campaign_records(evidence_root)["interruptions"][1]
+    assert row["progress"]["committed_decisions"] == 183
+    assert row["progress"]["returned_model_decisions"] == 184
+    assert row["progress"]["latest_verified_checkpoint_cursor"] == 181
+    assert row["progress"]["failed_tail_key_events_confirmed"] == 0
+    assert row["usage"]["failed_tail_model_tokens_included"] == 32731
+    assert row["usage"]["campaign_tokens"] == 5933954
+    assert row["usage"]["all_attempt_tokens"] == 6002958
+    assert "private-" not in json.dumps(row)
+    recovered = records.keyboard_campaign_records(evidence_root)["recoveries"][1]
+    assert recovered["checkpoint_cursor"] == 184 and recovered["parent_checkpoint_cursor"] == 181
+    assert recovered["original_interruption"] == row["interruption_id"]
+    assert recovered["usage"]["campaign_tokens"] == row["usage"]["campaign_tokens"]
+    assert recovered["model_calls_to_recover"] == recovered["native_keys_to_recover"] == 0
+
+
+@pytest.mark.parametrize("kind", ["keys", "success", "tokens", "reason"])
+def test_rejection_publication_cannot_claim_dispatch_or_erase_the_failure(evidence_root, kind):
+    path = evidence_root / "experiments/evidence" / records.INTERRUPTIONS[1]
+    source = json.loads(path.read_text())
+    if kind == "keys":
+        source["progress"]["failed_tail_key_events_confirmed"] = 1
+    elif kind == "success":
+        source["historical_run_reclassified_as_success"] = True
+    elif kind == "tokens":
+        source["usage"]["rejected_response_tokens_included"] = 0
+    else:
+        source["terminal_reason"] = "fortress_collapse"
+    path.write_text(json.dumps(source))
+    with pytest.raises(ValueError):
+        records.keyboard_campaign_records(evidence_root)
