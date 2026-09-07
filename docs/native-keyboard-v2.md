@@ -36,3 +36,28 @@ Required native check: full catalog compatibility, actual enlarged capture,
 menu navigation, D_PAUSE with zero input-time ticks, explicit clock advancement,
 unchanged source save, and complete runtime/VM teardown. A successful scripted
 check is not an Astra campaign, workshop-ordering proof, or year-two acceptance.
+
+## Native result, September 7, 2026
+
+The combined check passed at source revision
+`0ef33ff7029bcf9a79cc9d320104b61ef07d2df1`. All 1,613 candidates matched the
+running game. Captures were 120x40; readable encoding reconstructed every captured
+tile and color. Eight menu/pause events were confirmed without advancing game
+time. The separately requested 100 ticks advanced exactly 100 ticks. Original
+seed verification and runtime/container/local-VM teardown passed.
+
+The three earlier diagnostic failures remain failed: menu-label mismatch,
+off-viewport expectation, and an unsupported name in the historical catalog.
+See the public-safe
+[operational summary](../experiments/evidence/local_native_keyboard_outcomes_20260907.json).
+Native captures, saves and detailed traces remain local.
+
+Validation: 128 focused tests passed, one Linux-only test skipped. The broad
+suite passed 2,254 tests with ten skips and one sandbox-denied socket bind; that
+exact socket test passed with localhost access. Changed-file Ruff and scoped
+mypy for four modified source modules passed. Existing repository-wide static
+check debt is not claimed fixed. No model calls or cloud VMs were used.
+
+Next is the live Astra screen-to-keypress bridge and retained action/memory/usage
+accounting, followed by open-ended native play. This diagnostic is not a new
+model-comparison result and does not claim completed digging or construction.
