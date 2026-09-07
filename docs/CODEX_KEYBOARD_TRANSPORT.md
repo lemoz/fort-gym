@@ -43,6 +43,29 @@ in the local user's existing store and are not installed in public CI.
 
 ## Remaining native integration
 
+### Native keyboard candidate
+
+`NativeCampaignEnvironment` now accepts an explicit `native_keyboard/v1` control
+profile. Its keyboard path allows actual native dialog/menu events without the
+historical INTERACT-only restriction, and rejects direct helper actions. The
+default `dfhack_shortcuts/v1` path retains the existing executor and behavior.
+
+`campaign_keyboard.py` prechecks the whole chosen batch against the native key
+enum, then dispatches each event once through `campaign_keyboard_v1.lua`. That
+hook uses the same `gui.simulateInput` native event route as DFHack's
+[`devel/send-key`](https://github.com/DFHack/scripts/blob/0.47.05-r8/devel/send-key.lua).
+It verifies runtime, save, calendar and pause under the core lock and restores
+pause before releasing it, including for a PAUSE event or thrown input call.
+Game time remains a separate `advance_ticks` request; PAUSE is not a wall-clock
+run command in this synchronous condition. Partial and unknown dispatches retain
+their confirmed prefix and are not replayed or represented as non-execution.
+
+Python/Lua-double tests are not a native execution claim. In particular,
+[`CopyScreen`](https://github.com/DFHack/dfhack/blob/0.47.05-r8/plugins/remotefortressreader/remotefortressreader.cpp#L2896)
+copies an existing display buffer; a successful input receipt does not prove a
+fresh rendered frame, completed work, or a functioning fortress. A short native
+diagnostic must verify the visible transitions and clock separately.
+
 1. Supply a freshly refreshed account-allowance and cumulative-run budget guard.
    Every transport request requires an admission callback, but this slice does
    not implement unattended account refresh or claim an atomic subscription
@@ -51,8 +74,9 @@ in the local user's existing store and are not installed in public CI.
    unknown subscription charges honestly; do not reuse an API-cost zero as proof
    of a free run.
 3. Add explicit keyboard and screen-only profiles to the native campaign loop.
-   Currently dialog handling permits `INTERACT`, and keyboard `PAUSE`/screen
-   transitions need verified tick and pause receipts before unattended execution.
+   The native adapter exposes the new keyboard profile, but CampaignLoop still
+   permits the historical helper action contract. Keyboard `PAUSE`/screen
+   transitions need real native validation before unattended execution.
    Do not simply expose KEYSTROKE in the schema and declare this integrated.
 4. Verify a larger native viewport and what the model actually receives. Raw tile
    JSON and the lossless readable profile are implemented and tested against
