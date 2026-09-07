@@ -20,7 +20,13 @@ from pathlib import Path
 from typing import Any
 
 from ..eval.campaign import TICKS_PER_YEAR
-from ..eval.campaign_profile import METRICS, mapping, metrics_from_state
+from ..eval.campaign_profile import (
+    FURNITURE_RECORDS,
+    METRICS,
+    furniture_records_from_state,
+    mapping,
+    metrics_from_state,
+)
 from ..eval.campaign_public import SCHEMA, now_utc, parse_update_time, public_snapshot
 
 MARKER = ".fortgym-public-campaign-feed.json"
@@ -183,6 +189,7 @@ class CampaignFeed:
                 "committed_steps": loop.next_step if loop is not None else None,
                 "elapsed_ticks": loop.committed_elapsed_ticks if loop is not None else None,
                 "current_metrics": metrics_from_state(state),
+                "current_furniture_item_records": furniture_records_from_state(state),
                 "usage": result.get("usage"),
                 "checkpoint_verified": result.get("new_checkpoint_verified"),
                 "failure_kind": failure_kind(result),
@@ -205,6 +212,8 @@ class CampaignFeed:
             "segment_status": "failed",
             "current_metrics": {},
             "metric_summaries": {},
+            "current_furniture_item_records": {},
+            "furniture_item_record_summaries": {},
             "timeline": [],
             "actions": {},
             "usage": {},
@@ -233,6 +242,11 @@ class CampaignFeed:
                     for key in METRICS
                 },
                 metric_summaries=report.get("metrics"),
+                current_furniture_item_records={
+                    key: mapping(mapping(report.get("furniture_item_records")).get(key)).get("end")
+                    for key in FURNITURE_RECORDS
+                },
+                furniture_item_record_summaries=report.get("furniture_item_records"),
                 timeline=report.get("timeline"),
                 actions=report.get("actions"),
                 usage=report.get("usage"),

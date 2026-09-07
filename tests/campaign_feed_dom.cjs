@@ -65,11 +65,14 @@ first.elapsed_ticks = 403200; first.current_metrics.population = 0;
 first.code_revision = 'javascript:alert(1)';
 first.usage = {...first.usage, cost_basis:'self_hosted_no_metered_provider', metered_provider_charge_usd:'0', reported_model_cost_usd:null};
 first.committed_steps = 18;
+first.current_furniture_item_records = {bed:11, chair:3, door:0, table:null};
+first.furniture_item_record_summaries = {bed:{start:0, end:11, observed_samples:2}};
 first.actions = {accepted:16, rejected:2, unknown:0, changed_command_after_rejection:0,
   path_cache_stale_rejections:2,
   by_type:{LABOR:{accepted:16, rejected:0, unknown:0}, BUILD:{accepted:0, rejected:2, unknown:0}}};
 data.campaigns.push({...first, model:'second-model', campaign_id:'second',
-  condition_id:'local-native-packed-comparison-v1', code_revision:'a'.repeat(40)});
+  condition_id:'local-native-packed-comparison-v1', code_revision:'a'.repeat(40),
+  current_furniture_item_records:{}, furniture_item_record_summaries:{}});
 data.campaigns.push({...first, model:'repair-model', campaign_id:'repair',
   condition_id:'local-native-harness-repair-v1', code_revision:'b'.repeat(40)});
 data.campaigns.push({...first, model:'reference-model', campaign_id:'reference',
@@ -98,6 +101,12 @@ vm.runInNewContext(fs.readFileSync(process.argv[2], 'utf8'), {
   assert.match(elements['campaign-profile-detail'].textContent, /Installed beds/);
   assert.match(elements['campaign-profile-detail'].textContent, /completed furniture placements, not bed items in inventory/);
   assert.doesNotMatch(elements['campaign-profile-detail'].textContent, /Completed beds/);
+  assert.match(elements['campaign-profile-detail'].textContent, /Observed furniture item records/);
+  assert.match(elements['campaign-profile-detail'].textContent, /Bed items 0 11 \+11/);
+  assert.match(elements['campaign-profile-detail'].textContent, /Door items Unknown 0 Unknown/);
+  assert.match(elements['campaign-profile-detail'].textContent, /Table items Unknown Unknown Unknown/);
+  assert.match(elements['campaign-profile-detail'].textContent, /not newly produced items or installed furniture totals/);
+  assert.match(elements['campaign-profile-detail'].textContent, /does not report completeness, ownership, or accessibility/);
   assert.match(elements['campaign-profile-detail'].textContent, /do not mean zero operating cost/);
   assert.match(elements['campaign-profile-detail'].textContent, /16 accepted commands; 2 rejected/);
   assert.match(elements['campaign-profile-detail'].textContent, /can be no-ops or queued work/);
@@ -109,6 +118,7 @@ vm.runInNewContext(fs.readFileSync(process.argv[2], 'utf8'), {
   assert.equal(elements['campaign-feed-rows'].children.length, 1);
   assert.equal(elements['campaign-feed-rows'].children[0].children[0].text, 'second-model');
   elements['campaign-feed-rows'].children[0].children[0].children[1].events.click();
+  assert.match(elements['campaign-profile-detail'].textContent, /Furniture item counts are unavailable/);
   assert.equal(elements['campaign-profile-detail'].children.find(child => child.href?.startsWith('https://github.com/')).href,
     `https://github.com/lemoz/fort-gym/blob/${'a'.repeat(40)}/experiments/campaigns/local_native_packed_comparison_v1.json`);
   elements['campaign-condition-filter'].value = 'local-native-harness-repair-v1';

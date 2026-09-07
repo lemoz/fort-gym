@@ -5,7 +5,12 @@ import json
 import pytest
 
 from fort_gym.bench.eval.campaign import TICKS_PER_YEAR
-from fort_gym.bench.eval.campaign_profile import campaign_profile, metrics_from_state, usage_profile
+from fort_gym.bench.eval.campaign_profile import (
+    campaign_profile,
+    furniture_records_from_state,
+    metrics_from_state,
+    usage_profile,
+)
 
 
 def state(tick=0, population=7, food=45):
@@ -211,6 +216,40 @@ def test_profile_does_not_mutate_or_publish_full_native_or_agent_state():
     result = profile(rows)
     assert rows == original
     assert "must-not-publish" not in str(result)
+
+
+@pytest.mark.parametrize("value", [None, True, False, -1, "11", {}, []])
+def test_furniture_records_reject_invalid_counts_without_changing_installed_totals(value):
+    native = state()
+    native["crew"]["goods"] = {"bed": value, "chair": 0, "secret": "PRIVATE"}
+    assert furniture_records_from_state(native) == {
+        "bed": None,
+        "chair": 0,
+        "door": None,
+        "table": None,
+    }
+    assert metrics_from_state(native)["completed_beds"] == 4
+
+
+def test_furniture_item_growth_is_separate_from_installed_beds_and_production():
+    before, after = state(), state(100)
+    for native, beds in ((before, 0), (after, 11)):
+        native["crew"]["goods"] = {"bed": beds, "chair": 3}
+        native["crew"]["placed_furniture_completed"]["bed"] = 0
+    result = profile([row(before=before, after=after)])
+    assert result["furniture_item_records"]["bed"]["change"] == 11
+    assert result["furniture_item_records"]["bed"]["sample_coverage"] == "complete"
+    assert result["furniture_item_records"]["bed"]["scan_completeness"] == "not_reported"
+    assert "evidence" not in result["furniture_item_records"]["bed"]
+    assert result["metrics"]["completed_beds"]["end"] == 0
+    assert result["timeline"][-1]["furniture_item_records"]["bed"] == 11
+    assert result["flow_measurement"]["status"] == "unavailable"
+    assert result["functioning_fortress"] == "not_assessed"
+    missing = profile([row(before=before, after=after)], terminal_state=None)
+    assert missing["furniture_item_records"]["bed"]["end"] is None
+    assert missing["furniture_item_records"]["bed"]["change"] is None
+    after["crew"]["ok"] = False
+    assert all(value is None for value in furniture_records_from_state(after).values())
 
 
 def retained_segment(tmp_path):

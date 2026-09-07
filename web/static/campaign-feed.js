@@ -144,6 +144,19 @@
       node('td', change === null ? 'Unknown' : `${change > 0 ? '+' : ''}${change}`, tr);
       node('td', `${number(summary.minimum_observed)} / ${number(summary.maximum_observed)}`, tr);
     });
+    const furniture = row.current_furniture_item_records || {};
+    const furnitureSummaries = row.furniture_item_record_summaries || {};
+    const furnitureNames = { bed: 'Bed items', chair: 'Chair items', door: 'Door items', table: 'Table items' };
+    if (Object.keys(furnitureNames).some(key => known(furniture[key]) || known(furnitureSummaries[key]?.observed_samples) && furnitureSummaries[key].observed_samples > 0)) {
+      const items = table(panel, 'Observed furniture item records', ['Item', 'Start', 'Latest', 'Observed change']);
+      Object.entries(furnitureNames).forEach(([key, label]) => {
+        const summary = furnitureSummaries[key] || {}, tr = node('tr', undefined, items);
+        const change = known(summary.start) && known(summary.end) ? summary.end - summary.start : null;
+        [label, number(summary.start), number(furniture[key]), change === null ? 'Unknown' : `${change > 0 ? '+' : ''}${change}`]
+          .forEach(text => node('td', text, tr));
+      });
+      node('p', 'These are item records in play, not newly produced items or installed furniture totals. The legacy scan does not report completeness, ownership, or accessibility.', panel);
+    } else node('p', 'Furniture item counts are unavailable in this report.', panel);
     if ((row.timeline || []).length) {
       const details = node('details', undefined, panel);
       node('summary', row.timeline_sampled ? 'Recorded boundaries (sampled; gaps are not interpolated)' : 'Recorded boundaries', details);
