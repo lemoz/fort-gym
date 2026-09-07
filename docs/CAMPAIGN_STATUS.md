@@ -13,7 +13,30 @@ and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. The first bounded Astra native
 keyboard campaign has now completed.
 
-### Latest endurance result
+### Active reusable-runtime continuation
+
+The same fortress is continuing on the public reusable keyboard command and
+host courier at source `a004c490f`, pushed in draft PR #137 with
+[passing exact-head CI](https://github.com/lemoz/fort-gym/actions/runs/34158366994).
+The declared window allows up to 128 additional decisions from cursor 72,
+in eight 16-decision segments, within the existing 256-dispatch/eight-million-token
+cumulative extension. No new extension, strategy instruction, memory reset,
+observation change, API fallback or local model was introduced.
+
+The first segment completed and its cursor-88 checkpoint was independently
+re-verified inside the owned container. It retains 2,800,235 cumulative tokens
+and 25,000 elapsed native ticks. The next native process was observed running;
+this is active work, not a completed 128-decision result or verified final teardown.
+The owner still enforces per-call quota checks and final game/container/VM teardown.
+The last fully audited terminal milestone available to the website remains
+the 72-decision result below.
+
+Validation of the reusable path: 96 focused tests, 2,326 broad-suite passes,
+ten skips, and the one sandbox-denied socket test passed separately with socket
+access. Changed-file Ruff and scoped mypy for all four new source modules passed.
+Final native outcomes, complete usage and teardown remain to be audited.
+
+### Last completed endurance result
 
 The same Astra campaign now covers 72 model-selected decisions, 357 confirmed
 native key events and 25,000 elapsed ticks, about 6.2 percent of a full game year.

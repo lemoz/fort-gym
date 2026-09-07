@@ -8,6 +8,13 @@ fortress through year two and beyond. Website evidence and remote source deliver
 remain requirements. The app goal is verified active; early native Astra gameplay
 and checkpoint-continuation evidence are now verified.
 
+Active continuation: source `a004c490f` replaces the per-experiment native fixture
+with reusable native-window and courier entrypoints. It is pushed in PR #137 with
+passing CI. The same campaign's first new checkpoint verifies at cursor 88 and
+25,000 elapsed ticks; the next game process is running under the declared
+128-additional-decision window. Final outcome and teardown are not yet claimed.
+The completed 72-decision milestone below remains the latest terminal result.
+
 Latest progress: Astra Medium completed 64 additional native keyboard decisions,
 bringing the same campaign to 72 decisions, 357 key events and 25,000 elapsed
 ticks. Checkpoints at 4, 8, 24, 40, 56 and 72 preserve memory, usage and the exact
