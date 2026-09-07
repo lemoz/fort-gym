@@ -1,5 +1,32 @@
 # Exact local output-budget replay
 
+## Terminal result
+
+The [versioned result](../experiments/evidence/local_year_two_output_budget_20260907.json)
+records two dispatched requests at frozen implementation `9e82dbc8e`:
+
+- 4,096 output tokens: reproduced the accounted output-limit pause, no action,
+  8,793 prompt plus 4,096 output tokens, 479.52 seconds.
+- 8,192 output tokens: transport failure after 600.06 seconds, with no returned
+  response or final usage. The last server progress entry reported 5,834 generated
+  tokens, but that is not a final usage receipt. The elapsed time and ongoing
+  generation are consistent with the declared 600-second read deadline; the
+  transport wrapper did not retain its underlying exception type.
+- The run stopped without retry. The 12,889 accounted tokens cover only the
+  first request; total actual tokens are unknown, not 12,889 or zero.
+- The owner reaped its worker and model server. Independent process and socket
+  checks found both PIDs absent and the model listener closed. The original
+  private source hash is unchanged. There were no native actions, cloud VMs or
+  hosted API calls. Metered model charges were $0; hardware and energy are unknown.
+
+This does not establish whether 8,192 tokens can produce an action with a longer
+deadline, nor whether either setting would improve actual fortress development.
+The next separately declared [reasoning-budget experiment](CAMPAIGN_REASONING_BUDGET.md)
+tests space for action output within the original total allowance. Historical
+inputs and both unsuccessful outcomes remain preserved.
+
+## Predeclared design and offline preflight
+
 The design and offline preflight below were recorded before execution.
 See [campaign status](CAMPAIGN_STATUS.md) for the current owned diagnostic state.
 
