@@ -17,14 +17,18 @@ glyph changes in a no-action control read. The corrected fixture checks explicit
 native invariants and keeps rendering changes as diagnostics; byte-identical UI
 rendering is not claimed. The production reader did not need a code change.
 
-Only authored source, declarations and a non-content
+Authored source, declarations and a non-content
 [operational test summary](../experiments/evidence/local_native_map_inspection_outcomes_20260907.json)
-are candidates for remote publication. Detailed native payload export was rejected
+are published remotely. Detailed native payload export was rejected
 and remains local; no captured maps, screens, coordinates, saves or traces are in
 that summary. No new model comparison row, fortress success, merge or deployment
 is claimed. The next model condition is a fresh Qwen3.5 run with the inspection
 profile pair and unchanged existing inference/segment budgets, not a rollback of
-the prior campaign. It is prepared in the map-inspection worktree and is not run.
+the prior campaign. It is published in [PR #136](https://github.com/lemoz/fort-gym/pull/136)
+at `48d9ed6d9` and is not run. The final focused selection passes 100 checks.
+The full suite had 2,087 passed, 10 skipped and one sandbox-denied socket test;
+that exact socket case passed separately. New publication-head CI is pending.
+No map implementation was cherry-picked into this integration branch.
 
 ## Latest: model-controlled terrain inspection pushed
 
