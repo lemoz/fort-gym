@@ -76,6 +76,13 @@ class LlamaCampaignAgent(LocalCampaignAgent):
                 "top_k": local["top_k"],
                 "seed": local["seed"],
                 "chat_template_kwargs": {"enable_thinking": local["enable_thinking"]},
+                # Omit the optional field for historical conditions so their exact
+                # request bytes and default runtime behavior remain unchanged.
+                **(
+                    {"reasoning_budget_tokens": local["reasoning_budget_tokens"]}
+                    if "reasoning_budget_tokens" in local
+                    else {}
+                ),
             },
             sort_keys=True,
             ensure_ascii=True,
