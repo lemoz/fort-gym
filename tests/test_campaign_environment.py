@@ -16,8 +16,9 @@ def test_wrong_runtime_is_rejected_before_connect_or_gameplay(tmp_path, monkeypa
 
 
 @pytest.mark.parametrize("placement", ["strict_floor/v1", "dfhack_047_ground/v1"])
+@pytest.mark.parametrize("tick_limit", [2000, 2500])
 def test_native_adapter_uses_existing_executor_without_assisted_completion(
-    tmp_path, monkeypatch, placement
+    tmp_path, monkeypatch, placement, tick_limit
 ):
     calls = []
 
@@ -54,7 +55,9 @@ def test_native_adapter_uses_existing_executor_without_assisted_completion(
         module, "read_campaign_job_metrics", lambda: {"ok": True, "citizens": {"total": 7}}
     )
     env = module.NativeCampaignEnvironment(
-        expected_dfroot=tmp_path, workshop_placement_policy=placement
+        expected_dfroot=tmp_path,
+        workshop_placement_policy=placement,
+        max_advance_ticks=tick_limit,
     )
     assert env.executor._allow_assisted_dig_completion is False
     state = env.observe()
@@ -72,5 +75,50 @@ def test_native_adapter_uses_existing_executor_without_assisted_completion(
     assert not any(isinstance(call, tuple) and call[0] == "advance" for call in calls)
     assert env.advance(50, state)[1]["ticks_advanced"] == 50
     assert calls[-1][2]["interrupt_on_viewscreen_transition"] is True
+    assert calls[-1][2]["max_advance_ticks"] == tick_limit
+    env.advance(tick_limit, state)
+    assert calls[-1][1] == (tick_limit,)
+    assert calls[-1][2]["max_advance_ticks"] == tick_limit
     env.close()
     assert calls[-1] == "close"
+
+
+@pytest.mark.parametrize("tick_limit", [False, True, 0, -1, 2501, 2000.0, "2500"])
+def test_invalid_campaign_tick_limit_fails_before_native_access(tmp_path, monkeypatch, tick_limit):
+    monkeypatch.setattr(
+        module, "run_lua_expr", lambda *args, **kwargs: pytest.fail("No native access")
+    )
+    with pytest.raises(ValueError, match="campaign tick limit"):
+        module.NativeCampaignEnvironment(expected_dfroot=tmp_path, max_advance_ticks=tick_limit)
+
+
+@pytest.mark.parametrize("ticks", [False, True, -1, 2501, 2500.0, "2500"])
+def test_invalid_campaign_advance_fails_before_native_access(ticks):
+    environment = module.NativeCampaignEnvironment.__new__(module.NativeCampaignEnvironment)
+    environment.max_advance_ticks = 2500
+    environment.observe = lambda: pytest.fail("No native access")
+    with pytest.raises(ValueError, match="declared campaign tick limit"):
+        environment.advance(ticks, {})
+
+
+def test_declared_limit_reaches_the_clock_controller_through_the_real_client(monkeypatch):
+    from fort_gym.bench.env import dfhack_client
+
+    environment = module.NativeCampaignEnvironment.__new__(module.NativeCampaignEnvironment)
+    environment.max_advance_ticks = 2500
+    environment.observe = lambda: {"viewscreen_type": "viewscreen_dwarfmodest"}
+    client = dfhack_client.DFHackClient.__new__(dfhack_client.DFHackClient)
+    client._ensure_connection = lambda: None
+    client.get_state = lambda: {}
+    environment.client = client
+
+    def clock(ticks, *, repause, max_advance_ticks=2000, **kwargs):
+        assert repause is True and kwargs["interrupt_on_viewscreen_transition"] is True
+        # This reproduces the clock controller's legacy default clamp. Omitting
+        # the campaign bound would silently return 2000 for the 2500 request.
+        requested = min(ticks, max_advance_ticks)
+        return {"ok": True, "requested": requested, "ticks_advanced": requested}
+
+    monkeypatch.setattr(dfhack_client, "advance_ticks_exact", clock)
+    _, receipt = environment.advance(2500, {})
+    assert receipt["requested"] == receipt["ticks_advanced"] == 2500

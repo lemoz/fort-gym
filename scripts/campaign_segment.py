@@ -231,6 +231,7 @@ def worker(args, config: dict) -> dict:
     environment = NativeCampaignEnvironment(
         expected_dfroot=runtime,
         workshop_placement_policy=config.get("workshop_placement_policy", "strict_floor/v1"),
+        max_advance_ticks=config["max_advance_ticks"],
     )
     try:
         public_feed = None
