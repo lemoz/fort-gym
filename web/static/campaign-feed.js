@@ -42,6 +42,11 @@
       file: 'local_native_qwen35_year_two_thinking_v1.json',
       revision: '7bc15d160ea251bf1b07eb31615c510ea80a4ff9',
       sha256: '01505097fbf5e12cd436cf3f044ca021a0f632d83c04371607b9a0d577c3b73d'
+    },
+    'local-native-qwen35-year-two-reasoning-budget-v1': {
+      file: 'local_native_qwen35_year_two_reasoning_budget_v1.json',
+      revision: 'ebf470d8364bf326cacd7b9985e6f5438d6d4f49',
+      sha256: '13ec2fdaad2b5e63b6f1e8fc4d57feefd3f66cd307104267d7bc06743cdbb490'
     }
   };
   function known(value) { return typeof value === 'number' && Number.isFinite(value) && value >= 0; }
