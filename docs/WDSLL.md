@@ -8,14 +8,18 @@ fortress through year two and beyond. Website evidence and remote source deliver
 remain requirements. The app goal is verified active; implementation continues
 without claiming a new native gameplay result.
 
-The readable-screen slice is pushed at `33bf24fea` in draft
-[PR #137](https://github.com/lemoz/fort-gym/pull/137). Astra's subscription-backed
-keyboard decision transport and capture path passed 125 focused tests. Two live
-synthetic-screen calls selected `BUILDJOB_ADD`; the lossless readable format used
-53.8% fewer input tokens on that sparse menu. No game action was executed. Native
-campaign integration, actual viewport resizing, autonomous
-play, comparisons, and live website delivery remain open. See current campaign
-status for usage and full-suite evidence boundaries.
+Native keyboard and viewport acceptance passed at `0ef33ff70`; source and the
+public-safe outcome summary are on `10816dfad` in draft
+[PR #137](https://github.com/lemoz/fort-gym/pull/137). All 1,613 native v2 keys
+matched the game, actual captures were 120x40, eight menu/pause inputs were
+confirmed, and a separate 100-tick request advanced exactly 100 ticks. The source
+seed is unchanged and the native runtime, container and local VM are stopped.
+This was scripted interface validation with no model calls, not Astra gameplay.
+
+The existing Astra subscription transport and readable-screen comparison remain
+synthetic evidence. Live screen-to-keypress integration, checkpointed autonomous
+play, model comparisons, and verified website delivery remain open. See current
+campaign status for usage and full-suite evidence boundaries.
 
 Latest verified progress, September 7: the owner selected `gpt-6-astra` at
 `medium` reasoning through their ChatGPT subscription. The local Qwen campaign

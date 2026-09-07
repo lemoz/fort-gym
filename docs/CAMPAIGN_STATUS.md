@@ -12,16 +12,35 @@ DFHack shortcuts as an explicit alternative condition. Compare matching starts
 and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. No Astra native run has started.
 
-The readable-screen implementation is pushed at `33bf24fea` in draft
+Native keyboard and viewport acceptance passed at implementation `0ef33ff70`.
+The source and public-safe operational summary are on `10816dfad` in draft
 [PR #137](https://github.com/lemoz/fort-gym/pull/137), stacked on the frozen native
-producer in #136. It adds a keyboard-only schema, raw and lossless readable screen
-profiles, a bounded subscription transport, a screen-to-decision bridge, and a
-paused native CopyScreen adapter path. The latest 125 focused tests passed.
-The compact-profile full suite had 2,174 passes, ten skips, and one sandbox-blocked
-localhost test that passed separately with socket access. The final capture
-method was added after that suite started and is covered by the focused rerun.
-The prior `4b2fee8a0` head passed remote CI; the new exact-head
-[CI run](https://github.com/lemoz/fort-gym/actions/runs/34147849532) is in progress.
+producer in #136. This includes the earlier subscription transport, raw/lossless
+readable observations and native capture path, plus a version-matched keyboard
+profile and owned text-terminal sizing. Historical v1 conditions stay unchanged.
+
+The native audit confirmed all 1,613 advertised v2 key names. The actual captured
+viewport is 120x40, not just a requested setting. Eight menu/pause inputs were
+confirmed with zero elapsed game time; the separate 100-tick request advanced
+exactly 100 ticks. Readable captures round-trip to the original tiles and colors.
+The source seed is unchanged, and runtime/container/local-VM teardown is verified.
+No model call, local model server or cloud VM was used. This was a scripted
+interface diagnostic, not Astra choosing moves or completed fortress work.
+
+Three earlier diagnostics remain failed: a menu-label expectation, a clipped-menu
+expectation, and the old catalog's unsupported `PAUSE` name. The new v2 catalog
+uses the actual `D_PAUSE` name and includes full native building/workshop keys.
+The output schema stays within provider enum limits while the prompt, parser and
+executor share the complete version-matched catalog.
+
+Latest focused checks: 128 passed, one Linux-only skip. The broad suite passed
+2,254 tests with ten skips and one sandbox-denied localhost bind; that exact test
+passed separately with socket access. Changed-file Ruff and scoped mypy passed.
+The preceding `28630e226` head passed remote CI. Implementation-head
+[CI run](https://github.com/lemoz/fort-gym/actions/runs/34150898638) passed;
+documentation/publication-head CI is running in the PR. Existing whole-tree static
+check debt is not claimed fixed. Detailed native evidence remains local; only
+non-content operational outcomes are published.
 
 One live synthetic 80x25 workshop-menu call returned `KEYSTROKE` / `BUILDJOB_ADD`.
 It consumed 33,055 input and 63 output tokens; no key was executed in DF. Account
@@ -37,11 +56,12 @@ tests include all CP437 codes, highlight spans, and larger synthetic grids. The
 second call also left displayed credit balance unchanged; exact dollar cost is
 unreported. Neither call dispatched game keys or proves gameplay competence.
 
-Next: native keyboard/dialog/pause receipts and short diagnostics, unattended
-fresh subscription allowance and cumulative-run accounting, and checkpointed
-agent integration. Verify native viewport resizing and post-key frame freshness,
-then start the autonomous keyboard experiment. No native Astra gameplay, merge, or website
-deployment is claimed by #137.
+Next: connect a live captured screen through Astra Medium to native key dispatch,
+retain action/memory/usage evidence, and progress into checkpointed autonomous
+play with fresh subscription and cumulative-run accounting. General post-key frame
+freshness, workshop ordering, placed buildings and completed digging still require
+gameplay evidence; the successful menu check does not prove them. No native Astra
+gameplay, merge, or website deployment is claimed by #137.
 
 ## Current: requested GPT-6 Astra Medium subscription migration
 

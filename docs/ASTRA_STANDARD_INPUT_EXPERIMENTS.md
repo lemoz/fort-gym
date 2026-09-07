@@ -76,3 +76,12 @@ controlled by the user interface, independently of this approved project work.
 It was subsequently verified active on September 7. The readable-screen profile
 and first synthetic Astra comparison are published in draft PR #137; current
 evidence and remaining native work are tracked in [Campaign status](CAMPAIGN_STATUS.md).
+
+## Latest interface result
+
+The combined native keyboard and 120x40 viewport diagnostic passed on September 7
+at `0ef33ff70`. It audits the full version-matched catalog, exercises ordinary
+menu/pause events, verifies readable captures and an explicit clock step, and
+tears down the owned runtime. It does not count as model-selected play. The next
+step is Astra's live screen-to-keypress bridge, followed by sustained strategy
+and recovery experiments; no further historical gate ladder is introduced.
