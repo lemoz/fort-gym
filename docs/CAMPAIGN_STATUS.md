@@ -2,7 +2,37 @@
 
 Verified September 7, 2026 UTC. The Year-Two Autonomous Play goal remains active.
 
-## Latest: native map inspection and selection continuation verified
+## Current: fresh autonomous inspection campaign running
+
+The [declared fresh campaign invocation](../experiments/evidence/local_native_qwen35_inspection_declaration_20260907.json)
+has launched on the existing isolated local runtime. Its owner session and game
+container were both verified running. The local model has chosen genuine VIEW
+actions; this is now model execution, not another provider-free fixture. This is
+a point-in-time running observation, not a completed segment or fortress result.
+
+The producer remains frozen at `48d9ed6d94a598b44c4cfbe10a0df4badcb189ad` in
+[PR #136](https://github.com/lemoz/fort-gym/pull/136), whose
+[exact-head CI passed](https://github.com/lemoz/fort-gym/actions/runs/34100915461).
+The invocation keeps all eight declared segment opportunities and existing
+token/action bounds, serial checkpoint continuation and mandatory owned teardown.
+No human gameplay action, model fallback, new cloud VM or live code change has
+been introduced. The original seed is used, not a rollback of the failed prior
+campaign. The live owner's teardown is not yet due or claimed complete.
+
+The tracker condition-link update is pushed in
+[PR #133](https://github.com/lemoz/fort-gym/pull/133) at
+`4b1b53398e5c3cc7e3120d34b25f11d3f68cc468`. It links the exact authored
+configuration only when its canonical digest matches; it imports no live capture
+or result row. All 97 focused checks pass.
+[Exact-head website CI](https://github.com/lemoz/fort-gym/actions/runs/34102983726)
+passed. This is remote source delivery, not a merge or website deployment.
+
+These current observations supersede the unrun/no-live-owner statements in the
+historical sections below. Detailed native payloads remain local. Year-two
+viability, autonomous dialog recovery, comparable repeated three-model results
+and the website release remain unproven. The full goal remains active.
+
+## Earlier: native map inspection and selection continuation verified
 
 The separately declared provider-free native fixture has passed with the
 unchanged map implementation at `bbe58f9485d7ed42f288b9fa27f4d932159d9c01`.
