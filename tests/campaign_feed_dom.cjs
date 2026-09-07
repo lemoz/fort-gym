@@ -30,6 +30,18 @@ assert.equal(helpers.configurationUrl({...separateCondition, configuration_sha25
 assert.equal(helpers.configurationUrl({...separateCondition, configuration_sha256: undefined}), null);
 assert.equal(helpers.configurationUrl({...separateCondition, code_revision: 'javascript:alert(1)'}), null);
 assert.equal(helpers.configurationUrl({...separateCondition, condition_id: 'unpublished-condition'}), null);
+const thinkingCondition = {
+  condition_id: 'local-native-qwen35-year-two-thinking-v1',
+  code_revision: separateCondition.code_revision,
+  configuration_sha256: '01505097fbf5e12cd436cf3f044ca021a0f632d83c04371607b9a0d577c3b73d'
+};
+assert.equal(helpers.configurationUrl(thinkingCondition),
+  'https://github.com/lemoz/fort-gym/blob/7bc15d160ea251bf1b07eb31615c510ea80a4ff9/experiments/campaigns/local_native_qwen35_year_two_thinking_v1.json');
+assert.equal(helpers.configurationUrl({...thinkingCondition, configuration_sha256: separateCondition.configuration_sha256}), null);
+assert.equal(helpers.configurationUrl({...thinkingCondition, configuration_sha256: undefined}), null);
+assert.equal(helpers.configurationUrl({...thinkingCondition, code_revision: '../main'}), null);
+assert.equal(helpers.stateLabel({lifecycle:'finished', freshness:'recorded',
+  segment_status:'inference_output_limited_pause', failure_kind:'none'}), 'Paused at the model output limit');
 class Element {
   constructor(tag) { this.tag = tag; this.children = []; this.events = {}; }
   set textContent(value) { this.text = String(value); }

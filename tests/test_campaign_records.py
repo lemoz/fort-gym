@@ -174,6 +174,23 @@ def test_year_two_thinking_pause_preserves_accounted_response_without_game_actio
     assert row["comparison_rankings_available"] is False
 
 
+def test_matched_pair_page_links_immutable_evidence_and_discloses_asymmetric_limits():
+    from fort_gym.bench.api import server
+
+    page = TestClient(server.app).get("/campaigns").text
+    assert "Matched trial: thinking on and off" in page
+    assert "checkpoint covers all 18 commands and 19 responses" in page
+    assert "clipped thinking requests from 2,500 to 2,000 ticks" in page
+    assert "different stopping points is not a ranking" in page
+    publication = "https://github.com/lemoz/fort-gym/blob/74312f0e33f301a31b890f0103eaf67ea3aeb4e7/"
+    assert publication + "docs/LOCAL_THINKING_PAIR_RESULT.md" in page
+    assert (
+        publication + "experiments/evidence/local_native_qwen35_thinking_comparison_20260907.json"
+        in page
+    )
+    assert "campaign-feed.js?v=8" in page
+
+
 def test_thinking_pair_reconciles_exact_published_bundles_and_declared_difference():
     from copy import deepcopy
 
