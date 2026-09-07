@@ -51,7 +51,7 @@ assert.equal(helpers.configurationUrl({condition_id:'local-native-llama-long-v2'
 
 def test_three_published_native_attempts_preserve_distinct_failure_causes():
     result = records.campaign_feed(None)
-    assert result["configured"] is False and result["published_snapshots"] == 12
+    assert result["configured"] is False and result["published_snapshots"] == 13
     by_model = {
         row["model"]: row
         for row in result["campaigns"]
@@ -83,7 +83,7 @@ def test_recorded_comparison_is_served_without_enabling_a_live_directory(monkeyp
     client = TestClient(server.app)
     response = client.get("/public/campaign-feed")
     assert response.status_code == 200 and response.json()["configured"] is False
-    assert len(response.json()["campaigns"]) == 12
+    assert len(response.json()["campaigns"]) == 13
     assert "no-store" in response.headers["cache-control"]
     assert client.get("/campaigns").status_code == 200
 
@@ -135,6 +135,91 @@ def test_year_two_baseline_preserves_no_development_and_complete_checkpoint():
     assert audit["all_current_fact_projections_match_observations"] is True
     assert audit["historical_inputs_rewritten"] is False
     assert audit["production_deployed"] is False
+
+
+def test_year_two_thinking_pause_preserves_accounted_response_without_game_action():
+    from fort_gym.bench.api import server
+
+    response = TestClient(server.app).get("/public/campaign-feed")
+    assert response.status_code == 200
+    row = next(
+        item
+        for item in response.json()["campaigns"]
+        if item["campaign_id"] == "fort-gym-year-two-qwen35-thinking-v1-a"
+    )
+    assert row["publication"] == "versioned_snapshot" and row["freshness"] == "recorded"
+    assert row["lifecycle"] == "finished"
+    assert row["segment_status"] == "inference_output_limited_pause"
+    assert row["failure_kind"] == "none"
+    assert (row["committed_steps"], row["elapsed_ticks"]) == (18, 36000)
+    assert row["actions"]["by_type"] == {
+        "BUILD": {"accepted": 0, "rejected": 3, "unknown": 0},
+        "DIG": {"accepted": 2, "rejected": 2, "unknown": 0},
+        "WAIT": {"accepted": 11, "rejected": 0, "unknown": 0},
+    }
+    assert row["usage"]["total_tokens"] == 184117
+    assert row["usage"]["dispatched_requests"] == row["usage"]["accounted_responses"] == 19
+    assert row["usage"]["dispatches_without_returned_usage"] == 0
+    assert row["usage"]["metered_provider_charge_usd"] == "0"
+    assert row["usage"]["infrastructure_cost_usd"] is None
+    assert row["current_metrics"]["population"] == 7
+    assert row["current_metrics"]["drink_stock"] == 53
+    assert row["metric_summaries"]["drink_stock"]["start"] == 60
+    for metric in ("food_stock", "wood_stock", "stone_stock"):
+        assert row["current_metrics"][metric] is None
+    for metric in ("functional_rooms", "completed_workshops", "completed_beds", "completed_farms"):
+        assert row["current_metrics"][metric] == 0
+    assert row["checkpoint_verified"] is True and row["cleanup_verified"] is True
+    assert row["functioning_fortress"] == row["fortress_collapse"] == "not_assessed"
+    assert row["comparison_rankings_available"] is False
+
+
+def test_thinking_pair_reconciles_exact_published_bundles_and_declared_difference():
+    from copy import deepcopy
+
+    evidence = records.PROJECT_ROOT / "experiments/evidence"
+    pair = json.loads(
+        (evidence / "local_native_qwen35_thinking_comparison_20260907.json").read_text()
+    )
+    assert pair["scope"] == "first_declared_segment_including_any_earlier_pause_or_failure"
+    assert pair["comparison_rankings_available"] is pair["year_two_success_verified"] is False
+    configs = []
+    for side in pair["attempts"]:
+        raw = (evidence / side["bundle"]).read_bytes()
+        assert hashlib.sha256(raw).hexdigest() == side["bundle_sha256"]
+        bundle = json.loads(raw)
+        config = deepcopy(bundle["configuration"])
+        row = bundle["campaigns"][0]
+        assert config["local_inference"].pop("enable_thinking") is side["thinking_enabled"]
+        assert row["code_revision"] == pair["execution_revision"]
+        assert (
+            bundle["source_snapshot_receipt_sha256"]
+            == pair["same_starting_snapshot_receipt_sha256"]
+        )
+        assert row["configuration_sha256"] == side["configuration_sha256"]
+        assert row["elapsed_ticks"] == side["progress"]["elapsed_ticks"]
+        assert row["actions"] == side["actions"]
+        assert row["usage"] == side["usage"]
+        for key in pair["normalization"]["excluded_descriptive_fields"]:
+            config.pop(key)
+        assert (
+            hashlib.sha256(json.dumps(config, sort_keys=True).encode()).hexdigest()
+            == pair["same_normalized_configuration_sha256"]
+        )
+        configs.append(config)
+        assert side["final_checkpoint_covers_all_commands_and_returned_usage"] is True
+        assert side["local_vm_stopped"] is True
+    assert configs[0] == configs[1]
+    assert [item["thinking_enabled"] for item in pair["attempts"]] == [False, True]
+    assert [item["requested_tick_mismatch_count"] for item in pair["attempts"]] == [0, 18]
+    candidate = json.loads((evidence / pair["attempts"][1]["bundle"]).read_text())
+    audit = candidate["native_audit"]
+    assert sorted(item["next_step"] for item in audit["checkpoints"]) == [8, 16, 18]
+    assert audit["finish_reasons"] == ["stop"] * 18 + ["length"]
+    assert audit["tokens_summed_from_native_model_responses"] == 184117
+    assert audit["dispatched_without_returned_response"] == 0
+    assert candidate["reporting_code_revision"] == "5bcbfc9562837379e4a6ba78ad625b4ddef20fc3"
+    assert audit["historical_inputs_rewritten"] is audit["production_deployed"] is False
 
 
 def test_llama_native_result_distinguishes_valid_waits_from_fortress_development():
@@ -445,6 +530,7 @@ def test_website_separates_incomplete_checkpoint_and_new_model_compatibility():
         "local-long-qwen35-20260906-a",
         "local-long-v2-qwen35-20260906-a",
         "fort-gym-year-two-qwen35-20260906-a",
+        "fort-gym-year-two-qwen35-thinking-v1-a",
     }
 
 

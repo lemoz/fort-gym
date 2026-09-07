@@ -1,0 +1,753 @@
+{
+  "schema_version": "fortgym.published-campaign-bundle/v1",
+  "configuration": {
+    "schema_version": "fortgym.local-campaign-condition/v1",
+    "runner": "campaign-loop/v1",
+    "condition_id": "local-native-qwen35-year-two-thinking-v1",
+    "decision_profile": "campaign_action/v1",
+    "observation_profile": "campaign_state/v1",
+    "advance_policy": "model_requested/v1",
+    "schema_attempts": 2,
+    "phase": "development",
+    "hypothesis": "With the same Qwen3.5 9B weights, starting native save, prompts, action schema, output/context allowances, sampling and campaign budgets as local-native-qwen35-year-two-v1, test whether enabling optional model thinking changes the observed repeated-WAIT behavior into model-selected fortress development. The motivating baseline prefix is still running; this follow-up is declared before its own execution. A changed action mix alone is not a successful fortress.",
+    "models": [
+      "fort-gym-qwen35-9b-q4-03b74727a860"
+    ],
+    "max_steps": 32,
+    "max_segments": 8,
+    "segment_time_budget_seconds": 7200,
+    "ticks_per_step": 2000,
+    "max_advance_ticks": 2500,
+    "max_output_tokens": 4096,
+    "max_attempts": 1,
+    "max_dispatches": 512,
+    "max_request_bytes": 65536,
+    "max_total_tokens": 8000000,
+    "max_cost_usd": 0,
+    "local_inference": {
+      "transport": "llama-cpp-local/v1",
+      "server_version": "b10516-b95502ba9",
+      "prompt_contract": "visible_action_contract/v1",
+      "prompt_packing": "bounded_history_corrections/v1",
+      "model_digests": {
+        "fort-gym-qwen35-9b-q4-03b74727a860": "03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8"
+      },
+      "model_files": {
+        "fort-gym-qwen35-9b-q4-03b74727a860": "Qwen3.5-9B-Q4_K_M.gguf"
+      },
+      "model_metadata_sha256": {
+        "fort-gym-qwen35-9b-q4-03b74727a860": "55e0498c6d066243ffd3ebd364f7af4460596189d3d9d11e6697f9bdbfc93dea"
+      },
+      "chat_template_sha256": {
+        "fort-gym-qwen35-9b-q4-03b74727a860": "7f0e529032c25183bcd66c7f238da2d377f43be754a94e2725a58c4e16d2ed67"
+      },
+      "context_tokens": 32768,
+      "context_headroom_tokens": 512,
+      "token_count_profile": "llama-chat-input-tokens/v1",
+      "token_count_timeout_seconds": 10,
+      "timeout_seconds": 600,
+      "temperature": 0.6,
+      "top_p": 0.95,
+      "top_k": 20,
+      "seed": 73,
+      "enable_thinking": true,
+      "runtime_profile": "flash_q8/v1",
+      "action_reference": "native_designations/v1",
+      "action_schema": "typed_native_parameters/v1"
+    },
+    "workshop_placement_policy": "dfhack_047_ground/v1",
+    "notes": [
+      "Matched follow-up to local-native-qwen35-year-two-v1. Apart from experiment identity, hypothesis and notes, only local_inference.enable_thinking changes. Preserve the paired condition and its completed/in-progress evidence.",
+      "Start a new campaign from the exact same immutable native seed at year 30, tick 16801, using the same frozen fad9d80c0 implementation and private derived image. Do not resume, roll back, patch or coach the running baseline.",
+      "Run one model/game at a time, after the preceding operator has finished and its owned resources are verified stopped. The first matched comparison uses up to 32 decisions in one bounded segment; preserve failures and earlier stops.",
+      "Compare accepted/rejected command types, actual elapsed native ticks, completed structures, population, native drink units, checkpoint/cleanup integrity, reported tokens and output-limit pauses. Do not equate a non-WAIT command, elapsed time or a valid checkpoint with successful development.",
+      "Use the existing quantized weights and pinned local inference runtime with identical context, sampling, action reference, schema, native seed and budgets. No hosted fallback, external model credentials, scripted build order or human gameplay rescue.",
+      "All cumulative budgets and checkpoint policies are unchanged. The 4096-token output allowance includes model thinking. If it is exhausted, retain the accounted no-action pause and verified checkpoint; do not silently raise the allowance or retry as if no usage occurred.",
+      "Missing food/drink flow evidence and unverified UI food estimates remain unknown. Model API charges are zero for this local runtime; hardware, electricity and application costs remain unmeasured.",
+      "One matched pair is exploratory evidence, not a ranking or a causal conclusion. Repeated attempts and at least three supported models, a functioning fortress after 403200 elapsed ticks, and continued year-two play remain the overall requirements."
+    ],
+    "checkpoint_policy": {
+      "profile": "periodic_checkpoints/v1",
+      "interval_steps": 8,
+      "minimum_free_bytes": 1073741824
+    },
+    "starting_snapshot": {
+      "receipt_sha256": "eaf5fa5a40014719e6c313f33497740e536a8faa1c90a84c4e09dcc380ac0595",
+      "year": 30,
+      "year_tick": 16801,
+      "provenance": "local_native_save_smoke_43a53762"
+    }
+  },
+  "source_snapshot_receipt_sha256": "eaf5fa5a40014719e6c313f33497740e536a8faa1c90a84c4e09dcc380ac0595",
+  "reporting_code_revision": "5bcbfc9562837379e4a6ba78ad625b4ddef20fc3",
+  "campaigns": [
+    {
+      "schema_version": "fortgym.public-campaign-state/v1",
+      "campaign_id": "fort-gym-year-two-qwen35-thinking-v1-a",
+      "segment_id": "segment-000001",
+      "model": "fort-gym-qwen35-9b-q4-03b74727a860",
+      "condition_id": "local-native-qwen35-year-two-thinking-v1",
+      "code_revision": "fad9d80c0a2e7aace8380b47b009db5edaf6bd2e",
+      "configuration_sha256": "01505097fbf5e12cd436cf3f044ca021a0f632d83c04371607b9a0d577c3b73d",
+      "updated_at": "2026-09-07T00:56:01.579367+00:00",
+      "lifecycle": "finished",
+      "segment_status": "inference_output_limited_pause",
+      "failure_kind": "none",
+      "committed_steps": 18,
+      "elapsed_ticks": 36000,
+      "current_metrics": {
+        "population": 7,
+        "food_stock": null,
+        "drink_stock": 53,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 0,
+        "completed_beds": 0,
+        "completed_farms": 0,
+        "recorded_dead_citizens": 0
+      },
+      "usage": {
+        "total_tokens": 184117,
+        "dispatched_requests": 19,
+        "returned_responses": 19,
+        "accounted_responses": 19,
+        "reported_model_cost_usd": null,
+        "dispatches_without_returned_usage": 0,
+        "billing_reconciled": false,
+        "cost_basis": "self_hosted_no_metered_provider",
+        "metered_provider_charge_usd": "0",
+        "infrastructure_cost_usd": null
+      },
+      "checkpoint_verified": true,
+      "cleanup_verified": true,
+      "functioning_fortress": "not_assessed",
+      "autonomous_gameplay": "not_assessed",
+      "fortress_collapse": "not_assessed",
+      "comparison_rankings_available": false,
+      "flow_measurement": "unavailable",
+      "metric_summaries": {
+        "population": {
+          "start": 7,
+          "end": 7,
+          "minimum_observed": 7,
+          "maximum_observed": 7,
+          "observed_samples": 19,
+          "missing_samples": 0,
+          "change": 0
+        },
+        "food_stock": {
+          "start": null,
+          "end": null,
+          "minimum_observed": null,
+          "maximum_observed": null,
+          "observed_samples": 0,
+          "missing_samples": 19,
+          "change": null
+        },
+        "drink_stock": {
+          "start": 60,
+          "end": 53,
+          "minimum_observed": 53,
+          "maximum_observed": 60,
+          "observed_samples": 19,
+          "missing_samples": 0,
+          "change": -7
+        },
+        "wood_stock": {
+          "start": null,
+          "end": null,
+          "minimum_observed": null,
+          "maximum_observed": null,
+          "observed_samples": 0,
+          "missing_samples": 19,
+          "change": null
+        },
+        "stone_stock": {
+          "start": null,
+          "end": null,
+          "minimum_observed": null,
+          "maximum_observed": null,
+          "observed_samples": 0,
+          "missing_samples": 19,
+          "change": null
+        },
+        "functional_rooms": {
+          "start": 0,
+          "end": 0,
+          "minimum_observed": 0,
+          "maximum_observed": 0,
+          "observed_samples": 19,
+          "missing_samples": 0,
+          "change": 0
+        },
+        "completed_workshops": {
+          "start": 0,
+          "end": 0,
+          "minimum_observed": 0,
+          "maximum_observed": 0,
+          "observed_samples": 19,
+          "missing_samples": 0,
+          "change": 0
+        },
+        "completed_beds": {
+          "start": 0,
+          "end": 0,
+          "minimum_observed": 0,
+          "maximum_observed": 0,
+          "observed_samples": 19,
+          "missing_samples": 0,
+          "change": 0
+        },
+        "completed_farms": {
+          "start": 0,
+          "end": 0,
+          "minimum_observed": 0,
+          "maximum_observed": 0,
+          "observed_samples": 19,
+          "missing_samples": 0,
+          "change": 0
+        },
+        "recorded_dead_citizens": {
+          "start": 0,
+          "end": 0,
+          "minimum_observed": 0,
+          "maximum_observed": 0,
+          "observed_samples": 19,
+          "missing_samples": 0,
+          "change": 0
+        }
+      },
+      "timeline": [
+        {
+          "boundary_index": 0,
+          "year": 30,
+          "year_tick": 16801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 60,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 1,
+          "year": 30,
+          "year_tick": 18801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 60,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 2,
+          "year": 30,
+          "year_tick": 20801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 60,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 3,
+          "year": 30,
+          "year_tick": 22801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 60,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 4,
+          "year": 30,
+          "year_tick": 24801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 60,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 5,
+          "year": 30,
+          "year_tick": 26801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 60,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 6,
+          "year": 30,
+          "year_tick": 28801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 60,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 7,
+          "year": 30,
+          "year_tick": 30801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 60,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 8,
+          "year": 30,
+          "year_tick": 32801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 60,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 9,
+          "year": 30,
+          "year_tick": 34801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 60,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 10,
+          "year": 30,
+          "year_tick": 36801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 60,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 11,
+          "year": 30,
+          "year_tick": 38801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 54,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 12,
+          "year": 30,
+          "year_tick": 40801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 53,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 13,
+          "year": 30,
+          "year_tick": 42801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 53,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 14,
+          "year": 30,
+          "year_tick": 44801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 53,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 15,
+          "year": 30,
+          "year_tick": 46801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 53,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 16,
+          "year": 30,
+          "year_tick": 48801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 53,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 17,
+          "year": 30,
+          "year_tick": 50801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 53,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        },
+        {
+          "boundary_index": 18,
+          "year": 30,
+          "year_tick": 52801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 53,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          }
+        }
+      ],
+      "timeline_sampled": false,
+      "source_sha256": {
+        "campaign-segment.json": "c28409e6704895374f6382aad511ebdef4b185960c1a0f0d22f9d82042725bd0",
+        "result.json": "04a44bb5714172aee0e5ef67cf7068d8cdc60a63a1694d37d86f5ffead86df64",
+        "campaign/trace.jsonl": "9a585d4f3b953eb8127e431fcea5fd27045bf679dec356a62ef1f85b55f88346"
+      },
+      "actions": {
+        "committed_rows": 18,
+        "accepted": 13,
+        "rejected": 5,
+        "unknown": 0,
+        "changed_command_after_rejection": 5,
+        "path_cache_stale_rejections": 1,
+        "by_type": {
+          "BUILD": {
+            "accepted": 0,
+            "rejected": 3,
+            "unknown": 0
+          },
+          "DIG": {
+            "accepted": 2,
+            "rejected": 2,
+            "unknown": 0
+          },
+          "WAIT": {
+            "accepted": 11,
+            "rejected": 0,
+            "unknown": 0
+          }
+        }
+      }
+    }
+  ],
+  "native_audit": {
+    "checkpoints": [
+      {
+        "path": "checkpoint",
+        "next_step": 18,
+        "file_sha256": "767cd951c2b925a26e79a460c606f909e73fa64678c2473c859a34d3d28b9d45",
+        "payload_sha256": "eba501a95d3c1faf03d2f31e814917361853f3f7f3c8d45318d2e19f52b02c29"
+      },
+      {
+        "path": "checkpoints/step-000008",
+        "next_step": 8,
+        "file_sha256": "78646a9c2e1280f16cf75ceeae4daf5287f8f56095e3241ae714fe148b5df388",
+        "payload_sha256": "601da5227cfa9668d496eff5c4b1943257b68b38c6ad7ce6ec649e419623da60"
+      },
+      {
+        "path": "checkpoints/step-000016",
+        "next_step": 16,
+        "file_sha256": "4fe498769a5f5bc5a2bc1b3010b43f34bf517b1418235b4cc47a1f664817d63a",
+        "payload_sha256": "a847443a8c4dc94b258a32a064d54e8bbbcd3eb3096acd2ac91db4c5625c8c14"
+      }
+    ],
+    "final_checkpoint_covers_all_commands_and_returned_usage": true,
+    "returned_responses": 19,
+    "accounted_responses": 19,
+    "returned_responses_with_incomplete_usage": 0,
+    "dispatched_without_returned_response": 0,
+    "tokens_summed_from_native_model_responses": 184117,
+    "finish_reasons": [
+      "stop",
+      "stop",
+      "stop",
+      "stop",
+      "stop",
+      "stop",
+      "stop",
+      "stop",
+      "stop",
+      "stop",
+      "stop",
+      "stop",
+      "stop",
+      "stop",
+      "stop",
+      "stop",
+      "stop",
+      "stop",
+      "length"
+    ],
+    "requested_tick_mismatches": [
+      {
+        "step": 0,
+        "model_requested_ticks": 2500,
+        "native_requested_ticks": 2000,
+        "actual_ticks": 2000
+      },
+      {
+        "step": 1,
+        "model_requested_ticks": 2500,
+        "native_requested_ticks": 2000,
+        "actual_ticks": 2000
+      },
+      {
+        "step": 2,
+        "model_requested_ticks": 2500,
+        "native_requested_ticks": 2000,
+        "actual_ticks": 2000
+      },
+      {
+        "step": 3,
+        "model_requested_ticks": 2500,
+        "native_requested_ticks": 2000,
+        "actual_ticks": 2000
+      },
+      {
+        "step": 4,
+        "model_requested_ticks": 2500,
+        "native_requested_ticks": 2000,
+        "actual_ticks": 2000
+      },
+      {
+        "step": 5,
+        "model_requested_ticks": 2500,
+        "native_requested_ticks": 2000,
+        "actual_ticks": 2000
+      },
+      {
+        "step": 6,
+        "model_requested_ticks": 2500,
+        "native_requested_ticks": 2000,
+        "actual_ticks": 2000
+      },
+      {
+        "step": 7,
+        "model_requested_ticks": 2500,
+        "native_requested_ticks": 2000,
+        "actual_ticks": 2000
+      },
+      {
+        "step": 8,
+        "model_requested_ticks": 2500,
+        "native_requested_ticks": 2000,
+        "actual_ticks": 2000
+      },
+      {
+        "step": 9,
+        "model_requested_ticks": 2500,
+        "native_requested_ticks": 2000,
+        "actual_ticks": 2000
+      },
+      {
+        "step": 10,
+        "model_requested_ticks": 2500,
+        "native_requested_ticks": 2000,
+        "actual_ticks": 2000
+      },
+      {
+        "step": 11,
+        "model_requested_ticks": 2500,
+        "native_requested_ticks": 2000,
+        "actual_ticks": 2000
+      },
+      {
+        "step": 12,
+        "model_requested_ticks": 2500,
+        "native_requested_ticks": 2000,
+        "actual_ticks": 2000
+      },
+      {
+        "step": 13,
+        "model_requested_ticks": 2500,
+        "native_requested_ticks": 2000,
+        "actual_ticks": 2000
+      },
+      {
+        "step": 14,
+        "model_requested_ticks": 2500,
+        "native_requested_ticks": 2000,
+        "actual_ticks": 2000
+      },
+      {
+        "step": 15,
+        "model_requested_ticks": 2500,
+        "native_requested_ticks": 2000,
+        "actual_ticks": 2000
+      },
+      {
+        "step": 16,
+        "model_requested_ticks": 2500,
+        "native_requested_ticks": 2000,
+        "actual_ticks": 2000
+      },
+      {
+        "step": 17,
+        "model_requested_ticks": 2500,
+        "native_requested_ticks": 2000,
+        "actual_ticks": 2000
+      }
+    ],
+    "terminal_diagnostic_sha256": {
+      "pauses.jsonl": "797a0981a0cad1066ffe26be89e531bdf95eddd9bec7e92323f8bf9e6ea3b365"
+    },
+    "operator_receipt_sha256": "db12c274230bb67ed8977d568424bed167f89af432668ee50ae6e1018ce83c1a",
+    "operator_sha256": "5db1c2515c0784019784e791cadeaae945cf24873660b2db0aa1d17ab2ebd854",
+    "local_container_stopped": true,
+    "local_model_and_tunnel_returncodes": {
+      "server_returncode": 0,
+      "tunnel_returncode": 0
+    },
+    "local_vm_stopped": true,
+    "metered_provider_charge_usd": "0",
+    "hardware_energy_and_app_cost_usd": null,
+    "historical_inputs_rewritten": false,
+    "production_deployed": false
+  }
+}

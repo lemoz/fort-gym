@@ -23,6 +23,7 @@ PUBLISHED_BUNDLES = (
     "local_native_llama_long_timeout_20260906.json",
     "local_native_llama_long_v2_20260906.json",
     "local_native_qwen35_year_two_baseline_20260906.json",
+    "local_native_qwen35_year_two_thinking_20260907.json",
 )
 
 
