@@ -94,6 +94,37 @@ committed action. Ambiguous transport failures still remain unresolved; they
 are not converted into a free or safely retryable decision. No credits or reset
 are automatically consumed.
 
+### Completed endurance window
+
+The continuation completed all 64 additional model decisions on frozen source
+`fcdd1f662`: 72 cumulative decisions, 357 confirmed key events and 25,000 elapsed
+native ticks. All four new checkpoints, at cursors 24, 40, 56 and 72, verified.
+An independent retained-evidence audit confirmed native reloads, unchanged original
+configuration, the append-only budget extension, memory and complete trace/usage
+prefixes. The final game and isolated local VM are stopped.
+
+The continuation retained 2,081,738 tokens. Cumulative campaign usage is 2,318,540;
+including the two historical failed delivery attempts, usage is 2,387,544 tokens
+across 74 Codex invocations. Displayed credit balance was unchanged. Exact
+subscription charges remain unreported. No API fallback, local model server,
+cloud VM, credit purchase or reset was used. Approximately 500 MB of private
+runtime evidence was retained; nothing was deleted.
+
+This is a useful longer keyboard baseline, not year-two acceptance: elapsed time
+is about 6.2 percent of one full game year. The last save covers every committed
+decision and permits continuation without resetting usage or replaying actions.
+Detailed fortress outcomes remain in private evidence; the website now has a
+second explicitly recorded non-content milestone, not an additional model-ranking
+row. The versioned operational summary is
+`experiments/evidence/astra_native_keyboard_endurance_20260907.json`.
+
+Validation: 2,297 broad-suite passes and ten skips; its one sandbox-denied
+localhost test passed separately with socket access. Focused continuation and
+pause checks passed 115 tests. Website endpoint/rendering checks passed 39.
+Changed-file Ruff and scoped mypy passed. Exact implementation/website head
+`03190cc48` passed remote CI. Production deployment and visual acceptance are
+not claimed.
+
 Validation: 2,285 broad-suite passes, ten skips, and one sandbox-denied localhost
 bind; that exact test and the final keyboard checkpoint selection passed together
 with socket access (ten tests). The earlier focused integration selection passed

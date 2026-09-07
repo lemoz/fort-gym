@@ -7,7 +7,10 @@ import re
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-PUBLISHED = ("astra_native_keyboard_outcomes_20260907.json",)
+PUBLISHED = (
+    "astra_native_keyboard_outcomes_20260907.json",
+    "astra_native_keyboard_endurance_20260907.json",
+)
 PROGRESS_FIELDS = (
     "model_decisions",
     "native_key_events_confirmed",
