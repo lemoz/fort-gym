@@ -13,7 +13,47 @@ and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. The first bounded Astra native
 keyboard campaign has now completed.
 
-### Latest input-rejection interruption
+### Latest native recovery and resumed Astra play
+
+Native validation and forward-only recovery passed at `c537e3e79`, with an
+independent retained-file audit and passing exact-source CI. New checkpoint 184
+preserves 44,000 elapsed ticks, all 184 returned responses, model memory and
+5,933,954 campaign tokens (6,002,958 including historical failed deliveries).
+Recovery added zero model calls, native keys or game ticks. The original failed
+window, response and original usage-journal byte prefix remain unchanged; one
+explicit reconciliation record accounts for the historical input rejection.
+Native game/container/VM teardown was verified. Checkpoint digest:
+`073ac57c4b80227368d5bd6b6367ba4e214fc629dbbaf604c498b24b7a80e642`.
+
+The isolated native rejection diagnostic also passed against a real screen,
+using a separately labeled synthetic response with no model/key/clock calls.
+Its synthetic usage is excluded. A package-ownership failure preceding the
+successful attempt stopped before game load and remains retained separately.
+
+Astra has now resumed from checkpoint 184 at frozen source `6493cba58`, with
+[passing exact-head CI](https://github.com/lemoz/fort-gym/actions/runs/34168124770).
+Its first response acknowledged the rejected input and reloaded menu, then
+chose its own navigation. A native trace check verified 186 committed rows,
+including two newly accepted model responses. No additional ticks were observed
+at that check. The window is running; terminal result and final usage are not
+yet audited.
+
+Declared window d allows four 16-decision segments, with a new append-only
+cumulative allowance of 1,024 dispatches / 40 million returned tokens. This
+is not a charge or dollar reservation. It preserves the model, controls, raw
+120x40 display, memory and checkpoint cadence; fresh quota admission precedes
+every subscription call and no fallback, purchase or reset is allowed.
+The first resumed admission observed 82 percent usage under the 90 percent guard.
+
+The recorded website now projects interruption 183 and recovered checkpoint 184
+ahead of older evidence, without claiming live tracking. Source, non-content
+manifests and window configuration are pushed in draft PR #137; no merge or
+production deployment. Validation: 2,435 broader source tests, 193 focused
+recovery/control checks, and 86 website/window/recovery checks passed. Changed
+files pass Ruff and scoped mypy; full-project mypy remains unclaimed.
+Private current operator/evidence: `fort_gym/artifacts/native-local-20260906/runtime-v2/astra-native-post-rejection-v1`.
+
+### Previous input-rejection interruption
 
 The post-recovery window executed at `d37a1b42f` and independently verified five
 new checkpoints at 117, 133, 149, 165 and 181. It then committed through decision
@@ -23,9 +63,9 @@ harness treated input validation as fatal. This is not a fortress-collapse resul
 
 Independent audit verifies every completed checkpoint, memory/configuration and
 usage prefixes, all six native-process cleanups, container exit and local VM
-teardown. No campaign worker is live. Two committed actions after checkpoint 181
+teardown for that failed window. Two committed actions after checkpoint 181
 and the rejected response's usage remain in the latest retained native save and
-journals. That forensic save is not yet a resumable checkpoint. Do not rewind to
+journals. That forensic save was not itself a resumable checkpoint. Do not rewind to
 181 or replay the rejected response as a free model call.
 
 This window returned 83 new model responses and used 2,702,162 tokens. Campaign
@@ -38,10 +78,10 @@ an explicit rejection-feedback event. It sends no key, advances no time, applies
 no attempted memory update and chooses no substitute action. Astra chooses its
 next response. Rejections consume budgets and can checkpoint/resume normally;
 uncertain transport or mutation remains a failure. The current focused set passes
-166 tests. Native validation and forward-only recovery of the original failed tail
-remain next; the original failed window is not relabelled success. The website's
-recorded recovery-101 view is not live tracking and does not yet include this new
-interruption. No production deployment or merge has occurred.
+166 tests at that earlier correction. Native validation and forward-only recovery
+subsequently passed as described above; the original failed window is not relabelled
+success. The recorded website now includes this interruption and its recovery,
+with no live-status claim. No production deployment or merge has occurred.
 
 ### Previous verified recovery and continuation
 

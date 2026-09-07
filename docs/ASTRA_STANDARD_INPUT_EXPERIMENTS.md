@@ -133,6 +133,17 @@ game/container/VM teardown. The newest state must be reconciled without rollback
 A correction now records a fully accounted unknown-key response as rejection
 feedback, preserving its original content and usage while sending no keys or ticks.
 The model chooses its own correction; attempted memory is not applied. Offline
-checkpoint/resume and rejection tests pass. Native validation and recovery remain
-pending. This is a harness handling issue after a model typo, not evidence of
+checkpoint/resume and rejection tests pass. Native validation and recovery later
+passed at `c537e3e79`, independently verifying checkpoint 184 and original
+evidence/usage preservation with no model/key/clock calls. All recovery resources
+were stopped. This is a harness handling issue after a model typo, not evidence of
 fortress collapse or completion of the full experimental goal.
+
+The next declared window at `6493cba58` is running from checkpoint 184. Its first
+model response recognized the rejected input and changed menu, then chose its
+own navigation; two newly accepted responses were confirmed in the native trace.
+The window keeps Astra Medium, raw 120x40 screens and 16-decision cadence, while
+declaring a larger cumulative 1,024-dispatch / 40-million-token allowance.
+Fresh per-call quota admission and no fallback/purchase/reset boundaries remain.
+The updated website records interruption 183 and recovery 184, not live activity.
+The source is pushed with passing exact-head CI; no merge or production deploy.

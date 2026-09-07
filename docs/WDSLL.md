@@ -8,16 +8,29 @@ fortress through year two and beyond. Website evidence and remote source deliver
 remain requirements. The app goal is verified active; early native Astra gameplay
 and checkpoint-continuation evidence are now verified.
 
-Latest result: the post-recovery window reached 183 committed decisions and
+Latest result: native rejection validation and recovery passed at `c537e3e79`,
+with independent audit, verified teardown and exact-source CI. Checkpoint 184
+preserves 44,000 elapsed ticks, all response usage and model memory, without a
+model/key/clock call. The original failed window and journal bytes remain intact.
+Astra resumed at `6493cba58` and independently acknowledged the rejection and
+changed menu before choosing navigation. Two new accepted responses reached the
+game; the new four-by-16 window is running, not terminally audited. A declared
+1,024-dispatch / 40-million-token cumulative allowance retains all prior usage
+and the fresh 90-percent subscription admission guard. This is not a dollar
+reservation. The updated recorded website, manifests and configuration are
+pushed to draft PR #137 with passing exact-head CI, not merged or deployed.
+Year-two viability and cross-model comparison remain unproven.
+
+Previous result: the post-recovery window reached 183 committed decisions and
 44,000 elapsed ticks before model response 184 used unsupported key names.
 The response sent no native input or ticks, but the original harness treated it
 as fatal. Independent audit verifies checkpoints 117, 133, 149, 165 and 181 and
-complete game/container/VM teardown. No worker is live. The two newer committed
+complete game/container/VM teardown for that window. The two newer committed
 actions and all usage are retained for forward-only reconciliation, not rollback.
 Campaign usage is 5,933,954 tokens, 6,002,958 including historical failed deliveries;
 subscription charges remain unreported. A tested correction lets Astra receive
 rejection feedback and choose its own next input without a substitute action.
-Native validation/recovery and the latest website record remain pending. The
+Native validation/recovery and the latest website record subsequently passed. The
 full year-two objective remains active. See campaign status for the exact boundary.
 
 Previous result: native recovery at `914ac0721` created verified checkpoint 101 from
