@@ -103,3 +103,13 @@ The website implementation now exposes recorded non-content keyboard milestones
 and unreported subscription charges; source and website head `03190cc48` passed
 remote CI in draft PR #137. The final checkpoint is preserved for continuation.
 Production deployment, visual acceptance and matched comparisons remain open.
+
+The next reusable-runtime window stopped at 100 committed decisions and 29,000
+elapsed ticks. Model response 101 encountered a build-menu clock timeout after
+its keys were sent. Native state, usage and a cursor-88 checkpoint are retained;
+newer actions must not be replayed from that older checkpoint. Teardown and
+3,300,796 total tokens including historical failed deliveries independently
+verify. A tested correction returns blocked-clock feedback to the model without
+choosing gameplay. Native validation and forward-only recovery remain next.
+The website now has a separate non-content interruption record; this failure is
+not retroactively turned into a successful or budget-limited campaign window.

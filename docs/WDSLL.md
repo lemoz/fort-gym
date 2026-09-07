@@ -8,14 +8,18 @@ fortress through year two and beyond. Website evidence and remote source deliver
 remain requirements. The app goal is verified active; early native Astra gameplay
 and checkpoint-continuation evidence are now verified.
 
-Active continuation: source `a004c490f` replaces the per-experiment native fixture
-with reusable native-window and courier entrypoints. It is pushed in PR #137 with
-passing CI. The same campaign's first new checkpoint verifies at cursor 88 and
-25,000 elapsed ticks; the next game process is running under the declared
-128-additional-decision window. Final outcome and teardown are not yet claimed.
-The completed 72-decision milestone below remains the latest terminal result.
+Latest result: reusable source `a004c490f` reached 100 committed decisions and
+29,000 elapsed ticks before a build-menu clock timeout on model response 101.
+The latest verified checkpoint is 88; newer native state and all usage are retained
+for reconciliation, not rollback. An independent audit confirms teardown of the
+native games, container and local VM. No campaign worker remains active.
+Campaign usage is 3,231,792 tokens, or 3,300,796 including historical failed
+deliveries, with subscription charges unreported. A tested build-menu deferral
+fix and website interruption record preserve the distinction between a harness
+failure and a failed fortress. Native validation and forward-only recovery remain
+next; the year-two goal is still active.
 
-Latest progress: Astra Medium completed 64 additional native keyboard decisions,
+Previous completed window: Astra Medium completed 64 additional native keyboard decisions,
 bringing the same campaign to 72 decisions, 357 key events and 25,000 elapsed
 ticks. Checkpoints at 4, 8, 24, 40, 56 and 72 preserve memory, usage and the exact
 trace prefix across native game processes. A declared budget extension preserves

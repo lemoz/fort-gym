@@ -13,28 +13,45 @@ and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. The first bounded Astra native
 keyboard campaign has now completed.
 
-### Active reusable-runtime continuation
+### Latest reusable-runtime interruption
 
-The same fortress is continuing on the public reusable keyboard command and
-host courier at source `a004c490f`, pushed in draft PR #137 with
+The same fortress ran on the public reusable keyboard command and host courier
+at source `a004c490f`, pushed in draft PR #137 with
 [passing exact-head CI](https://github.com/lemoz/fort-gym/actions/runs/34158366994).
 The declared window allows up to 128 additional decisions from cursor 72,
 in eight 16-decision segments, within the existing 256-dispatch/eight-million-token
 cumulative extension. No new extension, strategy instruction, memory reset,
 observation change, API fallback or local model was introduced.
 
-The first segment completed and its cursor-88 checkpoint was independently
-re-verified inside the owned container. It retains 2,800,235 cumulative tokens
-and 25,000 elapsed native ticks. The next native process was observed running;
-this is active work, not a completed 128-decision result or verified final teardown.
-The owner still enforces per-call quota checks and final game/container/VM teardown.
-The last fully audited terminal milestone available to the website remains
-the 72-decision result below.
+The window stopped on a native clock timeout after 100 committed decisions and
+101 returned model responses, at 29,000 committed elapsed ticks. The failed request
+sent three confirmed keys and then advanced zero ticks while a native build menu
+remained open. This is an infrastructure interruption, not a fortress-collapse
+or budget-limit result. Independent audit verifies both native-process cleanups,
+container exit and local VM teardown. No new model run is active.
+
+The last verified checkpoint is cursor 88, with 12 newer committed decisions and
+the failed action retained in a forensic native save and journals. That save is
+not yet a resumable checkpoint. It must be reconciled without replaying the action
+or replacing newer state with cursor 88. Original configuration, budget extension,
+memory handoffs and trace/usage prefixes remain intact.
+
+This continuation used 913,252 model tokens. Campaign usage is 3,231,792; including
+historical failed deliveries gives 3,300,796. Exact subscription charges remain
+unreported, not zero. The website implementation now presents the interruption
+separately from the older completed milestones and names the recovery boundary.
+Its non-content manifest is
+`experiments/evidence/astra_native_keyboard_interruption_20260907.json`.
 
 Validation of the reusable path: 96 focused tests, 2,326 broad-suite passes,
 ten skips, and the one sandbox-denied socket test passed separately with socket
 access. Changed-file Ruff and scoped mypy for all four new source modules passed.
-Final native outcomes, complete usage and teardown remain to be audited.
+The build-menu correction returns a verified zero-tick deferral to the model
+without selecting a recovery key or invoking the clock. Offline regression tests
+cover checkpoint continuation, strict native boundaries and failure retention.
+Fresh native validation and forward-only reconciliation remain next. The original
+failed run is not reclassified. Production deployment and visual acceptance
+remain unclaimed.
 
 ### Last completed endurance result
 
