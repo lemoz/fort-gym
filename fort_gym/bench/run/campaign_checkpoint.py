@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any
 
 from ..agent.base import Agent
-from .campaign_save import NativeSaveSnapshotter, save_inventory
+from .campaign_save import NativeSnapshotter, save_inventory
 
 
 class CampaignCheckpointError(RuntimeError):
@@ -149,7 +149,7 @@ def create_checkpoint(
     *,
     campaign_id: str,
     agent: Agent,
-    snapshotter: NativeSaveSnapshotter,
+    snapshotter: NativeSnapshotter,
     trace_path: Path,
     last_committed_step: int,
     code_revision: str,

@@ -43,7 +43,7 @@ from ..tick_receipt import (
 )
 from .campaign_advance import ACCEPTED_ONLY, MODEL_REQUESTED, POLICIES, requested_ticks
 from .campaign_checkpoint import create_checkpoint, verify_checkpoint
-from .campaign_save import NativeSaveSnapshotter
+from .campaign_save import NativeSnapshotter
 from .keyboard_clock import SCHEMA as MENU_DEFERRAL_SCHEMA, validate_menu_deferral
 
 
@@ -652,7 +652,7 @@ class CampaignLoop:
         self,
         destination: Path,
         *,
-        snapshotter: NativeSaveSnapshotter,
+        snapshotter: NativeSnapshotter,
         code_revision: str,
         advance_parent: bool = True,
     ) -> dict:

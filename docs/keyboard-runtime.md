@@ -113,6 +113,31 @@ Regression tests cover unchanged native boundaries, unknown/changed evidence,
 no automatic recovery input, checkpoint continuation and failure usage retention.
 The window also retains a failed worker's detailed receipt while recording
 successful native cleanup separately. These corrections have offline test proof;
-fresh native validation and reconciliation of the retained failed tail remain
-next, before further campaign model calls. Website records distinguish the
+reconciliation of the retained failed tail remains next, before further campaign
+model calls. Website records distinguish the
 interruption from the older resumable checkpoint and do not claim live activity.
+
+Native correction proof subsequently passed at `9d09f6961`: ordinary advancement
+produced 100 ticks, while a 2,000-tick request in the observed build menu returned
+a verified zero-tick deferral without clock dispatch. A separate read-only load
+of the newest forensic save matched the expected calendar and native structures.
+Original source files stayed unchanged and both native processes, container and
+VM stopped. No model call or campaign move occurred. The non-content diagnostic
+is `experiments/evidence/local_native_keyboard_clock_20260907.json`.
+
+## Forward-only failure reconciliation
+
+`inspect_recovery_source` validates one complete model response, its original
+screen/memory exchange, fully delivered native key sequence, accounted usage,
+unchanged calendar, verified repause and retained save inventory. Partial input,
+unknown usage, elapsed-time ambiguity or changed source bytes are not accepted.
+
+`reconcile_loaded_tail` requires the latest save loaded in the same owned runtime
+as its snapshotter. It verifies every native save file; the DFHack event log may
+only append to its original prefix. It makes no model call, sends no key, requests
+no simulation ticks, and preserves the exact model memory/configuration/usage.
+It appends one explicitly marked reconciliation row with the original failed
+clock receipt unchanged, then checkpoints the latest state. The old failed run
+and every original source remain unchanged. The model receives factual failure
+and runtime-reload feedback and chooses its next move. This is recovery of a
+known completed input, not success relabelling or replay from an earlier save.
