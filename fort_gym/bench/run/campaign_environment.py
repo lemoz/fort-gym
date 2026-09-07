@@ -14,6 +14,7 @@ from typing import Any
 from ..config import get_settings
 from ..dfhack_backend import ensure_paused_external, read_fort_metrics, read_job_metrics
 from ..dfhack_exec import run_lua_expr
+from ..env.actions import INTERACT_ALLOWED_VIEWSCREEN_TYPES
 from ..env.dfhack_client import DFHackClient
 from ..env.executor import Executor
 from ..env.state_reader import StateReader
@@ -101,6 +102,24 @@ class NativeCampaignEnvironment:
 
     def apply(self, action: dict[str, Any], state: dict[str, Any]) -> dict[str, Any]:
         self._verify_runtime()
+        viewscreen = state.get("viewscreen_type")
+        if (
+            state.get("pause_state") is True
+            and viewscreen in INTERACT_ALLOWED_VIEWSCREEN_TYPES
+            and action.get("type") != "INTERACT"
+        ):
+            # A model can make an invalid choice on a dialog and try again.
+            # Do not send a world command, advance a blocked clock, or choose
+            # a dialog option for it. The next decision gets this rejection.
+            return {
+                "accepted": False,
+                "why": (
+                    f"Native dialog {viewscreen!r} blocks simulation; choose an "
+                    "allowed INTERACT operation with advance_ticks=0."
+                ),
+                "command_mutation": "not_attempted",
+                "simulation_blocked_by": viewscreen,
+            }
         execution = self.executor.apply(action, backend="dfhack", state=state, allow_interact=True)
         # Executor's result-less rejections are Python validation branches before
         # native dispatch. Every dispatched helper (including INTERACT) returns a
