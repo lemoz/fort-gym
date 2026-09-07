@@ -2,7 +2,43 @@
 
 Verified September 7, 2026 UTC. The Year-Two Autonomous Play goal remains active.
 
-## Latest: native clock correction verified; exact output replay running
+## Latest: output replay published; one reasoning-budget request running
+
+The [exact local output replay](LOCAL_YEAR_TWO_OUTPUT_REPLAY.md) has finished.
+The 4,096-token case reproduced the accounted no-action output limit. The
+8,192-token case failed after 600.06 seconds without a returned response while
+the server was still generating. Its actual token usage is unknown; 12,889
+accounted tokens cover only the first case. No retry or gameplay action occurred.
+The owned worker/model PIDs are absent, the listener is closed, and the private
+source is unchanged. The [versioned result](../experiments/evidence/local_year_two_output_budget_20260907.json)
+preserves that incomplete comparison, with $0 metered model charges and unknown
+hardware/energy costs.
+
+A separate [reasoning-budget condition](CAMPAIGN_REASONING_BUDGET.md) is prepared:
+2,048 reasoning tokens within 4,096 total output tokens, with the same original
+seed and campaign bounds. The harness now sends this optional pinned-runtime
+setting in both token preflight and generation, and binds it to checkpoints.
+Historical conditions and requests are unchanged. The isolated one-request
+acceptance owner has started the pinned local model at frozen source
+`ebf470d8364bf326cacd7b9985e6f5438d6d4f49`. Its new serialized request differs
+only by `reasoning_budget_tokens: 2048`; SHA-256 is
+`2b0c2cc03f3236299f78085cbf5e9a19c6b8aacbd625e9e9e9cc30b450685166`.
+One dispatch is allowed, with at most 12,889 input/output tokens, the unchanged
+600-second request deadline and a 700-second worker deadline. There is no VM,
+game, hosted call or action execution. The owner must tear down its own worker
+and server. No result or new native gameplay is claimed yet; do not restart or
+change this live attempt.
+
+The terminal output-replay evidence and optional reasoning-budget implementation
+are pushed to [PR #132](https://github.com/lemoz/fort-gym/pull/132) at
+`ebf470d8364bf326cacd7b9985e6f5438d6d4f49`. The focused suite passed 195 tests.
+The full suite had 1,916 passes, ten skips and one sandbox-blocked loopback test;
+that exact test passed separately with local socket access. Changed-file
+Ruff/Black, targeted typing and diff checks pass. Full-tree lint/type debt remains.
+[Exact-head CI](https://github.com/lemoz/fort-gym/actions/runs/34074628994) was
+observed running; no merge or deployment is claimed.
+
+## Native clock correction verified
 
 The [native clock acceptance](CAMPAIGN_NATIVE_TICK_LIMIT.md) passed at frozen
 source `eca52a53021c8889ee9e63882f2184084590d391`: exactly 2,000 default ticks,
@@ -18,13 +54,11 @@ suite had 1,901 passes, ten skips and one sandbox-blocked loopback test, which
 passed separately with socket access. Changed-file checks and targeted typing
 pass; existing full-tree lint/type debt remains.
 
-The diagnostic owner has started the pinned local model and is running two
-declared requests from the already retained thinking-v1 pause: 4,096 and 8,192
-output tokens. Offline serialization reproduced the source request exactly;
-only `max_tokens` changes for the second request. The combined maximum is
-29,874 input/output tokens. No result is claimed yet. This uses no VM, game,
-hosted provider or remote artifact transfer. The one-use owner must stop its
-loopback server after the diagnostic; do not restart or alter a live attempt.
+The completed diagnostic used two declared requests from the retained
+thinking-v1 pause. Offline serialization reproduced the source request exactly;
+only `max_tokens` changed for the second request, under a combined 29,874-token
+input/output envelope. Its terminal outcome is above; the source and one-use
+operator remain frozen.
 
 ## Completed matched pair: fully covered pause checkpoints
 
