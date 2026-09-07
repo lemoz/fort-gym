@@ -1,9 +1,16 @@
 # Local Qwen3.5 thinking comparison
 
-Status: the direct-response baseline finished its first segment and verified
-teardown. The matched thinking trial started on September 6 at 23:59:52 UTC in
-the same isolated local VM with the original seed and frozen runtime. It is
-running its first bounded segment; no terminal result is claimed.
+Status: both attempts ended with complete checkpoints and verified teardown.
+The thinking trial paused at its output limit after eighteen commands and
+36,000 ticks; all nineteen responses and 184,117 tokens are accounted for.
+It completed no workshop, placed bed or farm. The
+[terminal paired result](https://github.com/lemoz/fort-gym/blob/74312f0e33f301a31b890f0103eaf67ea3aeb4e7/docs/LOCAL_THINKING_PAIR_RESULT.md)
+is published separately with its website surface. Neither attempt reached year two.
+
+The [clock correction](CAMPAIGN_NATIVE_TICK_LIMIT.md) now has separate native
+acceptance at `eca52a53021c8889ee9e63882f2184084590d391`; neither model trial used
+that correction. The [next local output-budget diagnostic](LOCAL_YEAR_TWO_OUTPUT_REPLAY.md)
+is predeclared and not yet run. It does not resume or rewrite either campaign.
 
 The [baseline result](https://github.com/lemoz/fort-gym/blob/5bcbfc9562837379e4a6ba78ad625b4ddef20fc3/docs/LOCAL_YEAR_TWO_BASELINE_RESULT.md)
 records 32 model-selected WAITs, 32,000 ticks, seven citizens, 53 native drink

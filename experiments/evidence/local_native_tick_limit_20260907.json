@@ -1,0 +1,138 @@
+{
+  "schema_version": "fortgym.native-tick-limit-acceptance/v1",
+  "execution_revision": "eca52a53021c8889ee9e63882f2184084590d391",
+  "base_image": "sha256:f6fccac0243b1e1917883acfda59cd20c648fa4204d3c71b3dbc2108d0b68cd1",
+  "derived_image": "sha256:79083606d139410bfd5ff39208bc45d6a6ffc8a0ec0ce1428edc16a9ea06f31f",
+  "source_snapshot_receipt_sha256": "eaf5fa5a40014719e6c313f33497740e536a8faa1c90a84c4e09dcc380ac0595",
+  "operator_sha256": "be6807ecfd97f2f341ec650cecff402d6ebe9d02ad4e37d1f43d5f91fdec635a",
+  "context_sha256": {
+    "Dockerfile": "e1d5622a4e7d71200bb70cc7426c636129383e201c5ffface723dc572b023130",
+    "fixture.py": "5e2302dc38485829d950f01672d3d3a36ca3d331122f6a31b07e3d135353d3c2",
+    "source.bundle": "4df93ef5a44848d35e00c3a78ec2be90314bd715f1f6c488ae86d61331ac40b7"
+  },
+  "fixture": {
+    "schema_version": "fortgym.native-tick-limit-worker/v1",
+    "code_revision": "eca52a53021c8889ee9e63882f2184084590d391",
+    "provider_calls": 0,
+    "autonomous_gameplay": false,
+    "year_two_gameplay_verified": false,
+    "native_tick_limit_verified": true,
+    "advances": [
+      {
+        "default_limit": true,
+        "declared_max_advance_ticks": 2000,
+        "requested_ticks": 2000,
+        "before": {
+          "year": 30,
+          "year_tick": 16801
+        },
+        "after": {
+          "year": 30,
+          "year_tick": 18801
+        },
+        "receipt": {
+          "ok": true,
+          "requested": 2000,
+          "ticks_advanced": 2000,
+          "start_year": 30,
+          "start_tick": 16801,
+          "end_year": 30,
+          "end_tick": 18801,
+          "paused_before": true,
+          "paused_after": true,
+          "elapsed_ms": 21095,
+          "repause_requested": true,
+          "repause_effective": true,
+          "repause": {
+            "ok": true,
+            "paused": true,
+            "attempts": 1,
+            "attempt_records": [
+              {
+                "attempt": 1,
+                "nopause_disabled": true,
+                "paused": true
+              }
+            ]
+          },
+          "interrupt_safety_error": false,
+          "calendar_safety_error": false,
+          "final_pause_state": true,
+          "final_viewscreen_type": "viewscreen_dwarfmodest"
+        },
+        "calendar_elapsed_ticks": 2000,
+        "overshoot_ticks": 0,
+        "out_of_bound_requests_rejected_without_advance": true,
+        "zero_request_preserved_boundary": true
+      },
+      {
+        "default_limit": false,
+        "declared_max_advance_ticks": 2500,
+        "requested_ticks": 2500,
+        "before": {
+          "year": 30,
+          "year_tick": 18801
+        },
+        "after": {
+          "year": 30,
+          "year_tick": 21301
+        },
+        "receipt": {
+          "ok": true,
+          "requested": 2500,
+          "ticks_advanced": 2500,
+          "start_year": 30,
+          "start_tick": 18801,
+          "end_year": 30,
+          "end_tick": 21301,
+          "paused_before": true,
+          "paused_after": true,
+          "elapsed_ms": 26138,
+          "repause_requested": true,
+          "repause_effective": true,
+          "repause": {
+            "ok": true,
+            "paused": true,
+            "attempts": 1,
+            "attempt_records": [
+              {
+                "attempt": 1,
+                "nopause_disabled": true,
+                "paused": true
+              }
+            ]
+          },
+          "interrupt_safety_error": false,
+          "calendar_safety_error": false,
+          "final_pause_state": true,
+          "final_viewscreen_type": "viewscreen_dwarfmodest"
+        },
+        "calendar_elapsed_ticks": 2500,
+        "overshoot_ticks": 0,
+        "out_of_bound_requests_rejected_without_advance": true,
+        "zero_request_preserved_boundary": true
+      }
+    ],
+    "total_observed_ticks": 4500
+  },
+  "teardown": {
+    "native_processes_absent": true,
+    "native_listener_closed": true,
+    "container_stopped": true,
+    "container_exit_code": 0,
+    "isolated_local_vm_stopped": true,
+    "docker_context_unchanged": true
+  },
+  "provider_calls": 0,
+  "cloud_vms_created": 0,
+  "metered_provider_charge_usd": "0",
+  "hardware_energy_and_app_cost_usd": null,
+  "historical_inputs_rewritten": false,
+  "production_deployed": false,
+  "evidence_sha256": {
+    "result.json": "28ba5ad33c807a6b58fad1fe1d7f60192d4787efe4896618992eeb86a2d3b6a2",
+    "container-final-state.log": "553b09d56a8524475db78d18e9d62f9ab4f9fcf2ac2f8f4a525cdbb66fb0da16",
+    "evidence/tick-limit/result.json": "37419d7761accc90ff470810195e7b8886833446f31bb117ab8ff95f2cbc0295",
+    "evidence/tick-limit/worker-result.json": "2dfca78e9a1a16802cfc692d7e6760add19f84ac11365da1c27596a7f21d9dcb"
+  }
+}

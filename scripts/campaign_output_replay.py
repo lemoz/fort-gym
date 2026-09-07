@@ -84,15 +84,24 @@ def load_inputs(
         raise ValueError("The source must retain exactly one llama.cpp response")
     event = events[0]
     response = event["output"]
+    # Provider metadata (for example cached prompt tokens) is not an extra
+    # billed response and must not invalidate otherwise exact token totals.
+    # Preserve it in the source; only the three required integer counters
+    # participate in this diagnostic's token-budget calculation.
+    usage = response.get("usage")
+    expected_usage = {
+        "prompt_tokens": plan["source_prompt_tokens"],
+        "completion_tokens": allowances[0],
+        "total_tokens": plan["source_prompt_tokens"] + allowances[0],
+    }
     if (
         response.get("model") != base["models"][0]
         or response["choices"][0]["finish_reason"] != "length"
-        or response.get("usage")
-        != {
-            "prompt_tokens": plan["source_prompt_tokens"],
-            "completion_tokens": allowances[0],
-            "total_tokens": plan["source_prompt_tokens"] + allowances[0],
-        }
+        or not isinstance(usage, dict)
+        or any(
+            type(usage.get(key)) is not int or usage[key] != value
+            for key, value in expected_usage.items()
+        )
     ):
         raise ValueError("Source response does not match the declared output-limit case")
     return plan, base, event, digest(plan_bytes)

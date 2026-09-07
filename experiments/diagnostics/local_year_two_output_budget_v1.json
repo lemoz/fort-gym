@@ -1,0 +1,27 @@
+{
+  "schema_version": "fortgym.output-budget-diagnostic/v1",
+  "experiment_id": "local-year-two-output-budget-v1",
+  "hypothesis": "On the exact local thinking-v1 response that exhausted 4096 output tokens at decision 18, compare 4096 and 8192 while preserving every other request field. Test whether the larger allowance yields a syntactically valid action. Do not execute the action or infer native legality, fortress development, sustained play or a model ranking.",
+  "baseline_condition_file": "experiments/campaigns/local_native_qwen35_year_two_thinking_v1.json",
+  "baseline_condition_file_sha256": "e868494528387bbfce07c02b2c56eed066dc144752af5ddff8861af70f7c7b50",
+  "source_campaign_id": "fort-gym-year-two-qwen35-thinking-v1-a",
+  "source_execution_revision": "fad9d80c0a2e7aace8380b47b009db5edaf6bd2e",
+  "source_step": 18,
+  "source_failure_file_sha256": "797a0981a0cad1066ffe26be89e531bdf95eddd9bec7e92323f8bf9e6ea3b365",
+  "source_prompt_tokens": 8793,
+  "output_token_allowances": [4096, 8192],
+  "max_dispatches": 2,
+  "max_total_tokens": 30000,
+  "native_game_loaded": false,
+  "native_actions_executed": 0,
+  "notes": [
+    "Use only the already retained local pauses.jsonl from the completed, owned thinking-v1 trial. No remote artifact reads or transfers are required. The older long-v2 diagnostic and its private source remain unchanged and unrun.",
+    "The exact source file digest covers its original prompt, response, usage metadata and no-action pause boundary. Neither the source nor the campaign checkpoint is rewritten.",
+    "Preflight both serialized requests before starting the model experiment. Reproduce the original request hash for 4096; changing max_tokens to 8192 must be the only serialized difference.",
+    "Two sequential requests have a combined declared maximum of 29874 input/output tokens, below the unchanged 30000-token diagnostic ceiling. No retries, hosted fallback, game connection or campaign continuation.",
+    "Keep weights, server build, chat template, context, sampling, seed and thinking enabled identical. The caller must separately verify model identity and stop its owned loopback server.",
+    "An accounted output-limit response permits the second declared case. Missing usage, identity/transport failure or invalid action syntax stops the diagnostic without retry.",
+    "Fixed order and shared prompt cache do not constitute a cold-cache latency comparison. One prompt and one attempt per allowance are exploratory, not repeated evidence or a gameplay-success claim.",
+    "Metered model API charges are zero; hardware, electricity and application costs are unknown. No cloud VM or production deployment is part of this diagnostic."
+  ]
+}

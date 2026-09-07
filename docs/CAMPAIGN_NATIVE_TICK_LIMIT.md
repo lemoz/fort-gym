@@ -13,7 +13,9 @@ The first seven committed thinking rows each contain a 2,500-tick model request,
 a native receipt requesting 2,000 ticks, and 2,000 actual elapsed ticks. Their
 total is 14,000 ticks. SHA-256 of those seven original newline-terminated trace
 rows: `4e76db45d56ce77efeeb92e25cef7a9a8e8529a4301ed3df3f4750c1cf2b09c8`.
-This is a frozen prefix of an ongoing experiment, not a terminal result. Raw
+This is a frozen historical prefix, not the terminal result. The completed
+thinking trial retained the cap for all eighteen commands and recorded 36,000
+actual ticks before its accounted output-limit pause. Raw
 messages and game files remain private. The local campaign identifier is
 `fort-gym-year-two-qwen35-thinking-v1-a`.
 
@@ -23,7 +25,24 @@ same frozen code, but model-selected requests experience its cap differently.
 Their comparison must disclose this implementation limit. Measured elapsed
 ticks remain correct; do not replace them with requested ticks.
 
-## Candidate correction
+## Corrected native execution verified
+
+A separate provider-free native fixture on September 7 executed source
+`eca52a53021c8889ee9e63882f2184084590d391` from the unchanged original seed.
+The default 2,000-tick request moved year 30 tick 16801 to 18801. A new adapter
+with the declared 2,500-tick limit moved it to 21301, exactly 2,500 more ticks.
+Both native receipts agree with independently observed calendars, with zero
+overshoot. Invalid requests were rejected without movement, and zero-tick
+requests preserved the paused boundaries. The isolated native process, listener,
+container and local VM were verified stopped. No model or cloud VM was used.
+
+See the [source-bound acceptance receipt](../experiments/evidence/local_native_tick_limit_20260907.json).
+It records the fixture/operator digests, exact clock receipts and cleanup proof.
+This is scripted adapter acceptance, not autonomous play, model performance,
+checkpoint continuation or year-two success. Neither earlier model trial was
+modified or rerun; their inherited cap remains part of their recorded conditions.
+
+## Correction scope
 
 The campaign worker now gives the declared `max_advance_ticks` to the native
 adapter. The adapter validates it within the existing campaign range, rejects
@@ -39,10 +58,11 @@ Regression checks cover worker configuration propagation, both 2,000 and 2,500
 limits, invalid booleans/types/ranges, zero-time behavior, the actual client call
 path and its formerly silent default clamp, continuation and clock interruption
 behavior. The focused set passed 165 tests with one platform skip. These are
-test doubles and source checks, not a corrected native-run acceptance claim.
+test doubles and source checks. The separate native fixture above supplies
+the corrected native advancement evidence.
 
-The running matched pair remains at the original execution source. Do not
-hot-patch it or rewrite historical ticks. A later explicitly versioned runtime
-must verify 2,500-tick native advancement before using this corrected behavior
-for new model experiments. Full year-two gameplay and repeated cross-model
+The matched pair remains bound to its original execution source and actual
+historical ticks. The corrected runtime can now be used in a newly declared
+campaign, without treating comparisons against the old capped runtime as a
+single-factor experiment. Full year-two gameplay and repeated cross-model
 comparison remain open.
