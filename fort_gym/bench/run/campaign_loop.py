@@ -23,6 +23,7 @@ from ..agent.campaign_keyboard import (
     validate_usage,
 )
 from ..agent.standard_input import parse_response as parse_keyboard_response
+from ..agent.keyboard_rejection import KeyboardInputRejected, validate_rejection_state
 from ..env.native_key_catalog import NATIVE_PROFILE
 from ..env.screen_observation import TEXT_PROFILE, encode_screen
 from ..agent.campaign_local import LocalOutputLimitPause
@@ -140,12 +141,26 @@ def reconciled_usage(checkpoint: dict, journal: bytes) -> dict:
             raise ValueError("Usage journal decision sequence is invalid")
         no_action = record.get("outcome") == "accounted_no_action/v1"
         cancelled = record.get("outcome") == "subscription_not_dispatched/v1"
+        rejected = record.get("outcome") == "model_input_rejected/v1"
         if record.get("step") != pending_step or (
             record.get("decision_returned") is not True and not no_action and not cancelled
         ):
             raise ValueError("Failed or mismatched decision has unresolved provider usage")
         pending = False
         usage = record["usage"]
+        if rejected:
+            previous = last_usage if last_usage is not None else initial_subscription_usage()
+            if (
+                current.get("cost_basis") != SUBSCRIPTION_COST_BASIS
+                or record.get("decision_returned") is not True
+                or record.get("native_action_dispatched") is not False
+                or not isinstance(record.get("native_boundary"), dict)
+                or any(usage.get(key) != previous[key] + 1 for key in (
+                    "dispatched_requests", "returned_responses", "accounted_responses",
+                ))
+            ):
+                raise ValueError("Rejected keyboard journal lacks accounted non-execution")
+            _clock(record["native_boundary"])
         if cancelled:
             if (
                 current.get("cost_basis") != SUBSCRIPTION_COST_BASIS
@@ -406,9 +421,21 @@ class CampaignLoop:
         returned = False
         no_action = None
         cancelled = None
+        rejection = None
         try:
             raw_action = self.agent.decide(text, observation)
             returned = True
+        except KeyboardInputRejected as error:
+            if not keyboard:
+                raise
+            validate_rejection_state(preflight_state, self.agent.export_campaign_state())
+            after_decision = self.environment.observe()
+            if _clock(after_decision) != start or (
+                after_decision.get("viewscreen_type") != before.get("viewscreen_type")
+            ):
+                raise ValueError("Native boundary changed during rejected keyboard input") from error
+            rejection = error
+            returned = True  # The model returned; only its native input was rejected.
         except SubscriptionAdmissionPause as error:
             if not keyboard or self.agent.export_campaign_state() != preflight_state:
                 raise ValueError("Admission pause changed campaign state") from error
@@ -451,6 +478,17 @@ class CampaignLoop:
                     "usage": self.agent.export_campaign_state()["usage"],
                     **(
                         {
+                            "outcome": "model_input_rejected/v1",
+                            "native_action_dispatched": False,
+                            "native_boundary": {
+                                key: before[key] for key in ("year", "year_tick", "pause_state")
+                            },
+                        }
+                        if rejection is not None
+                        else {}
+                    ),
+                    **(
+                        {
                             "outcome": "subscription_not_dispatched/v1",
                             "model_dispatched": False,
                             "native_action_dispatched": False,
@@ -487,6 +525,13 @@ class CampaignLoop:
                     os.fsync(stream.fileno())
             self.no_action_boundary = no_action
             raise CampaignNoActionPause("Accounted output limit before a native action")
+        if rejection is not None:
+            from .keyboard_rejection import commit_rejection
+
+            return commit_rejection(
+                self, rejection, before=before, after=after_decision,
+                observation=observation, text=text, screen=screen,
+            )
         allow_view = self.observation_profile == INSPECTION_PROFILE
         action = (
             parse_keyboard_response(
@@ -534,7 +579,7 @@ class CampaignLoop:
         self.failure_context = {"action": action, "execute": execution}
         if keyboard and execution.get("accepted") is not True:
             native = execution.get("result", {})
-            if native.get("command_mutation") != "not_attempted":
+            if not isinstance(native, dict) or native.get("command_mutation") != "not_attempted":
                 raise ValueError(
                     "Keyboard input outcome is partial or unknown; no replay or clock step"
                 )

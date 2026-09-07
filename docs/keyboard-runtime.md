@@ -156,3 +156,39 @@ The next declared window is `campaign_astra_keyboard_window_20260907c.json`:
 six 16-decision segments from cursor 101, preserving the existing cumulative
 256-dispatch/eight-million-token budget, Astra Medium, raw 120x40 screen, memory
 and model-selected strategy. Declaring this window is not proof it has executed.
+
+## Post-recovery input rejection and feedback correction
+
+The declared window executed at `d37a1b42f`, verified checkpoints 117, 133, 149,
+165 and 181, and committed through decision 183 at 44,000 elapsed ticks. Model
+response 184 contained unsupported key names. That entire response was rejected
+before native input or clock dispatch, but the original harness treated it as a
+fatal decision error. All six native processes, the container and VM stopped.
+Independent audit verifies 83 new responses, 2,702,162 new tokens, 5,933,954 campaign
+tokens and 6,002,958 including historical failed deliveries. Charges remain
+unreported. The rejection's 32,731 tokens are included. The newest native save
+preserves two committed actions after checkpoint 181; do not rewind to that
+checkpoint or drop the rejected response's usage. Forward-only reconciliation
+of this new failure remains pending. The non-content record is
+`experiments/evidence/astra_native_keyboard_rejection_20260907.json`.
+
+The keyboard agent now separates a complete, shape-valid response with unknown
+key names from transport, identity or malformed-envelope failures. Such a response
+becomes an explicit `model_input_rejection/v1` trace row and factual feedback.
+The original keys remain recorded, but no key or clock method is invoked. The
+model's previous memory remains unchanged; its attempted update is retained only
+as part of the rejected response. It can choose its own next response. Rejections
+consume cumulative decision/token budgets and can checkpoint/resume normally.
+No key spelling is repaired, no WAIT is invented, and no new strategy is supplied.
+Unknown native mutation, incomplete usage, changed identity, calendar drift and
+inconsistent rejection evidence still fail rather than being labelled harmless.
+
+Focused rejection, runtime, recovery and checkpoint validation passes 166 tests.
+These are offline checks; native validation and recovery of the original failed
+tail are separate, still-pending evidence steps. Historical failed runs stay failed.
+
+The 256-dispatch allocation cannot cover the full-year objective from the latest
+state: at checkpoint 149, 40,000 elapsed ticks plus 107 remaining maximum 2,000-tick
+decisions reaches at most 254,000 ticks, below 403,200. A later continuation needs
+an explicit append-only allocation extension, retaining spent usage and the same
+subscription admission guard. A budget stop must not become a capability claim.

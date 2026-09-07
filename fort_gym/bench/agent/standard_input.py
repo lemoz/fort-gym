@@ -46,12 +46,11 @@ def response_schema(*, max_advance_ticks: int, control_profile: str = CONTROL_PR
     }
 
 
-def parse_response(
+def parse_envelope(
     payload: object, *, max_advance_ticks: int, control_profile: str = CONTROL_PROFILE
 ) -> dict:
-    """Validate without coercing keys, inventing WAIT, or choosing a game action."""
+    """Validate the response shape and limits without authorizing its key names."""
     schema = response_schema(max_advance_ticks=max_advance_ticks, control_profile=control_profile)
-    allowed_keys = keys_for_profile(control_profile)
     if not isinstance(payload, dict) or set(payload) != set(schema["required"]):
         raise ValueError("Keyboard response fields differ from the declared contract")
     params = payload.get("params")
@@ -62,7 +61,7 @@ def parse_response(
         set(params) != {"keys"}
         or not isinstance(keys, list)
         or len(keys) > 100
-        or any(not isinstance(key, str) or key not in allowed_keys for key in keys)
+        or any(not isinstance(key, str) for key in keys)
     ):
         raise ValueError("Keyboard keys must be supported native interface events")
     ticks = payload.get("advance_ticks")
@@ -71,6 +70,19 @@ def parse_response(
     if any(not isinstance(payload[key], str) for key in ("intent", "memory_update")):
         raise ValueError("Keyboard notes must be strings; empty notes are allowed")
     return deepcopy(payload)
+
+
+def parse_response(
+    payload: object, *, max_advance_ticks: int, control_profile: str = CONTROL_PROFILE
+) -> dict:
+    """Validate without coercing keys, inventing WAIT, or choosing a game action."""
+    action = parse_envelope(
+        payload, max_advance_ticks=max_advance_ticks, control_profile=control_profile
+    )
+    allowed_keys = keys_for_profile(control_profile)
+    if any(key not in allowed_keys for key in action["params"]["keys"]):
+        raise ValueError("Keyboard keys must be supported native interface events")
+    return action
 
 
 def screen_observation(screen: object) -> dict:

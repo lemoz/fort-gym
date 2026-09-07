@@ -16,6 +16,7 @@ from .codex_transport import MODEL, REASONING_EFFORT, CodexTransportError
 from .codex_protocol import TRANSPORT
 from .governed_llm import GovernedBudgetCapError
 from .standard_input import parse_response
+from .keyboard_rejection import KeyboardInputRejected
 
 SUBSCRIPTION_COST_BASIS = "codex_subscription_charge_unreported/v1"
 
@@ -208,13 +209,28 @@ class CodexKeyboardAgent(Agent):
             or result.get("control_profile") != NATIVE_PROFILE
             or result.get("observation_profile") != TEXT_PROFILE
             or result.get("screen_sha256") != screen_hash
-            or result.get("action_grammar_valid") is not True
             or type(tokens) is not int
             or tokens < 0
             or not receipt.get("usage")
         ):
             raise CodexTransportError("Keyboard decision or subscription identity failed", result)
         validate_usage(self.usage)
+        if result.get("action_grammar_valid") is not True:
+            if (
+                result.get("action_grammar_valid") is not False
+                or result.get("action") is not None
+                or result.get("native_action_dispatched") is not False
+                or result.get("error") != "Keyboard keys must be supported native interface events"
+                or receipt.get("usage_complete") is not True
+                or type(receipt.get("native_game_commands")) is not int
+                or receipt.get("native_game_commands") != 0
+                or receipt.get("timed_out") is not False
+                or receipt.get("interrupted") is not False
+            ):
+                raise CodexTransportError("Keyboard rejection lacks complete non-execution proof", result)
+            raise KeyboardInputRejected(
+                receipt.get("response"), max_advance_ticks=self.configuration["max_advance_ticks"]
+            )
         action = parse_response(
             result["action"],
             max_advance_ticks=self.configuration["max_advance_ticks"],
