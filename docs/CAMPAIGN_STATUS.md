@@ -18,6 +18,15 @@ does not publish inventory completeness or production attribution; keep those
 limits explicit and do not convert its item counts into measured production
 flows. The frozen native source and model remain unchanged.
 
+The website reporting correction is pushed in PR #133 at
+`d31290d631bc156adcbb920bb6571b75857cf80b`. It labels the metric Installed beds
+and shows the fixed checkpoint observation without adding a terminal campaign
+row. All 104 focused website checks passed (103 in this integration checkout),
+as did changed-file Ruff/Black, JavaScript syntax and diff checks. The new
+[exact-head CI](https://github.com/lemoz/fort-gym/actions/runs/34082302731)
+is running at this observation. No merge, browser visual QA or deployment is
+claimed. The prior source's full-suite result does not substitute for this CI.
+
 ## First reasoning-budget segment completed and audited
 
 First post-restore gameplay is now verified at the public boundary

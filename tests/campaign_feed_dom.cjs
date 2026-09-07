@@ -97,6 +97,9 @@ vm.runInNewContext(fs.readFileSync(process.argv[2], 'utf8'), {
   assert.match(row.children[6].textContent, /Operating costs unknown/);
   row.children[0].children[1].events.click();
   assert.match(elements['campaign-profile-detail'].textContent, /not assessed/);
+  assert.match(elements['campaign-profile-detail'].textContent, /Installed beds/);
+  assert.match(elements['campaign-profile-detail'].textContent, /completed furniture placements, not bed items in inventory/);
+  assert.doesNotMatch(elements['campaign-profile-detail'].textContent, /Completed beds/);
   assert.match(elements['campaign-profile-detail'].textContent, /do not mean zero operating cost/);
   assert.match(elements['campaign-profile-detail'].textContent, /16 accepted commands; 2 rejected/);
   assert.match(elements['campaign-profile-detail'].textContent, /can be no-ops or queued work/);

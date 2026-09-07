@@ -1,5 +1,27 @@
 # Campaign website delivery milestone
 
+## Installed furniture and inventory observations
+
+The campaign table and profile now label `completed_beds` as **Installed beds**.
+That field counts completed placed furniture, not bed items in inventory. The
+saved checkpoint40 observation recorded 11 bed item records and three chair
+item records, but no installed beds or chairs. The page links its immutable
+source-hashed observation and does not turn that running checkpoint into a
+terminal campaign row. The original thirteen older results and first-segment
+terminal bundle are unchanged; there are still fourteen recorded campaigns.
+
+The legacy goods scan does not report scan completeness or production
+attribution. The observed inventory records are shown with those limits, not
+promoted to a complete stock audit, production flow or functioning-fortress
+claim. No gameplay setting, native source, checkpoint or model is changed.
+Browser preview/visual QA and deployment are not performed in this background
+source-only update; the existing FastAPI/static layout is preserved.
+
+Validation: 104 focused website checks passed (103 in the integration checkout),
+including the rendered-label test double, HTTP checkpoint note, immutable source
+link and evidence/placement distinction. Changed-file Ruff/Black, JavaScript
+syntax and diff checks passed. Existing whole-tree lint/type debt is unchanged.
+
 ## Latest recorded result, September 7
 
 The first reasoning-budget segment is now registered as the fourteenth recorded
