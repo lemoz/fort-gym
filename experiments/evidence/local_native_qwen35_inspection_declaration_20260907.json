@@ -1,0 +1,65 @@
+{
+  "schema_version": "fortgym.local-autonomous-invocation-declaration/v1",
+  "campaign_id": "fort-gym-year-two-qwen35-inspection-v1-a",
+  "status": "declared_not_launched",
+  "condition_path": "experiments/campaigns/local_native_qwen35_year_two_inspection_v1.json",
+  "condition_sha256": "1001cbc943c2c5747158946cc024a35919c6483ad11e516884af7b6a4b29c90c",
+  "source_revision": "48d9ed6d94a598b44c4cfbe10a0df4badcb189ad",
+  "source_pull_request": "https://github.com/lemoz/fort-gym/pull/136",
+  "exact_head_ci_run": "https://github.com/lemoz/fort-gym/actions/runs/34100915461",
+  "model": "fort-gym-qwen35-9b-q4-03b74727a860",
+  "weights_sha256": "03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8",
+  "runtime": "llama.cpp b10516-b95502ba9",
+  "operator_sha256": "e517075598c6af7420c1d6c2a7c8b1598537943b502e6111d0bb24b1346036fc",
+  "offline_owner_tests": {
+    "passed": 4,
+    "test_source_sha256": "8f0e952a110a4348a8568c5a9e4017173f3621f1662924c60a4a3c5d86ed07e7"
+  },
+  "context_sha256": {
+    "Dockerfile": "eea63d25084d44725683de464715817154e354cbe3708a247b0acc0ce6094a63",
+    "source.bundle": "308baccea554445f221640ffd957cbd23e125a8b5cca980a0c1e2fa42396f5f1"
+  },
+  "fresh_campaign": true,
+  "historical_campaign_resumed": false,
+  "starting_snapshot_source": "immutable_original_native_snapshot",
+  "starting_snapshot_receipt_sha256": "eaf5fa5a40014719e6c313f33497740e536a8faa1c90a84c4e09dcc380ac0595",
+  "starting_snapshot_read_only": true,
+  "bounds": {
+    "invocation_segments": 8,
+    "steps_per_segment": 32,
+    "segment_time_budget_seconds": 7200,
+    "max_advance_ticks": 2500,
+    "max_dispatches": 512,
+    "max_total_tokens": 8000000,
+    "max_output_tokens_per_request": 4096,
+    "reasoning_budget_tokens": 2048,
+    "checkpoint_interval_steps": 8,
+    "execution_timeout_seconds": 60000,
+    "outer_timeout_seconds": 61500,
+    "local_vms": 1,
+    "cloud_vms": 0,
+    "local_model_servers": 1,
+    "hosted_provider_calls": 0,
+    "mandatory_teardown": true
+  },
+  "continuation_policy": "Only automatic verified checkpoint continuation inside the declared condition. Stop on a terminal failure, incomplete handoff, output-limit pause, segment cap or budget pause. No blind retry, old campaign rollback, human gameplay rescue or profile change.",
+  "network": {
+    "model_listener": "host loopback only",
+    "model_route": "owned loopback reverse SSH",
+    "game_container_network": "isolated local VM host network",
+    "published_ports": [],
+    "hosted_fallback": false
+  },
+  "cost": {
+    "expected_metered_model_api_charge_usd": "0",
+    "metered_model_api_charge_before_launch_usd": "0",
+    "hardware_energy_app_and_ci_cost_usd": null,
+    "spend_reservation_usd": 0,
+    "notes": "No cloud or paid provider is involved. Zero API charges do not mean zero hardware, energy or application costs."
+  },
+  "publication_scope": "Authored pre-run configuration and invocation metadata only; captured game recordings and detailed result payloads remain local. Non-content operational summaries may be published separately.",
+  "acceptance_not_implied": [
+    "No experiment execution is claimed by this declaration",
+    "No year-two fortress, model ranking, main-branch merge or website deployment is claimed"
+  ]
+}
