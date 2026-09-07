@@ -2,7 +2,31 @@
 
 Verified September 7, 2026 UTC. The Year-Two Autonomous Play goal remains active.
 
-## Latest: matched pair complete with fully covered pause checkpoints
+## Latest: native clock correction verified; exact output replay running
+
+The [native clock acceptance](CAMPAIGN_NATIVE_TICK_LIMIT.md) passed at frozen
+source `eca52a53021c8889ee9e63882f2184084590d391`: exactly 2,000 default ticks,
+then exactly 2,500 declared ticks, with matching native receipts and observed
+calendars. Invalid and zero-tick requests preserved paused boundaries. The owned
+native process, listener, container and isolated VM are stopped. No model was
+called by that fixture, and its 4,500 scripted ticks do not count as agent play.
+
+The receipt and [new output-budget diagnostic](LOCAL_YEAR_TWO_OUTPUT_REPLAY.md)
+are published in [PR #132](https://github.com/lemoz/fort-gym/pull/132) at
+`9e82dbc8e494390a5a3a8e3a46a5438aed6fd2ab`. Its 113 focused tests passed; the full
+suite had 1,901 passes, ten skips and one sandbox-blocked loopback test, which
+passed separately with socket access. Changed-file checks and targeted typing
+pass; existing full-tree lint/type debt remains.
+
+The diagnostic owner has started the pinned local model and is running two
+declared requests from the already retained thinking-v1 pause: 4,096 and 8,192
+output tokens. Offline serialization reproduced the source request exactly;
+only `max_tokens` changes for the second request. The combined maximum is
+29,874 input/output tokens. No result is claimed yet. This uses no VM, game,
+hosted provider or remote artifact transfer. The one-use owner must stop its
+loopback server after the diagnostic; do not restart or alter a live attempt.
+
+## Completed matched pair: fully covered pause checkpoints
 
 The [matched-pair result](LOCAL_THINKING_PAIR_RESULT.md) and its website surface
 are delivered on [PR #133](https://github.com/lemoz/fort-gym/pull/133), source
@@ -47,11 +71,9 @@ There was no human gameplay rescue. One pair is exploratory, not a ranking.
 An audit found an inherited 2,000-tick native cap when this trial requested
 2,500 ticks. [The candidate propagation fix](CAMPAIGN_NATIVE_TICK_LIMIT.md) is
 published at `eca52a53021c8889ee9e63882f2184084590d391` in PR #132. Its 165 focused
-tests passed with one skip; corrected native execution remains unrun. The
-matched pair kept its frozen runtime, and all results use actual elapsed ticks.
-Next is a separate native 2,500-tick fixture before predeclaring a new output-budget
-or continuation experiment. Do not rewrite this pair or silently resume it under
-changed conditions.
+tests passed with one skip, followed by the separate native verification above.
+The matched pair kept its frozen runtime, and all results use actual elapsed
+ticks. Do not rewrite this pair or silently resume it under changed conditions.
 
 The baseline website record uses offline reporting revision
 `73ae9c3c792127f5cd5f61b62ff6f32ce5b54049`; the thinking record uses

@@ -1,5 +1,8 @@
 # Exact local output-budget replay
 
+The design and offline preflight below were recorded before execution.
+See [campaign status](CAMPAIGN_STATUS.md) for the current owned diagnostic state.
+
 The completed thinking-v1 campaign paused at decision 18. Its nineteenth model
 response used 4,096 output tokens and returned no action. The checkpoint includes
 all nineteen responses and 184,117 total tokens. The native clock correction
