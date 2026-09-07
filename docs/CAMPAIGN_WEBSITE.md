@@ -1,5 +1,36 @@
 # Campaign website delivery milestone
 
+## Current real-data compatibility check, September 7
+
+The optional active feed now recognizes the published reasoning-budget condition
+and links to its immutable configuration at `ebf470d8364bf326cacd7b9985e6f5438d6d4f49`
+only when the canonical configuration SHA-256 matches
+`13ec2fdaad2b5e63b6f1e8fc4d57feefd3f66cd307104267d7bc06743cdbb490`.
+The remote file and its digest were read back before adding the link.
+
+A captured public report from the actual native run at `de69c7a46` is retained
+as a regression fixture, bound to the original serialized snapshot digest. It
+reported three committed commands, 5,500 elapsed ticks and 22,751 accounted
+tokens at `2026-09-07T02:16:25.623321+00:00`. This is a historical running-state
+observation, not a terminal result or a live connection. It is not registered
+among the website's thirteen published terminal records.
+
+HTTP tests combine this report with the thirteen recorded rows, preserve its
+timestamp and unknown values, and verify that it becomes stale without turning
+into a game loss. JavaScript rendering-helper tests check the exact condition
+link, reported-running/stale labels, zero model API charge and unknown operating
+costs. This is real-data route/formatting coverage, not browser visual acceptance.
+
+The frozen native producer omits population and drink-stock values in this
+running report even though the terminal reporting path supports the newer
+metrics profile. The website preserves those unknowns and does not infer them
+from another campaign. Improving future producer telemetry remains separate from
+this link fix; the active game's source and condition were not changed.
+No website server, browser, hosted Site, production deployment or merge was
+started by this check. The existing FastAPI/static implementation is preserved.
+
+## Original separate website milestone
+
 This change delivers the read-only campaign tracking surface independently of
 the native campaign implementation in [PR #125](https://github.com/lemoz/fort-gym/pull/125).
 It is based directly on main at `82ee3e07859b2813fc4643d02aa034daecea6b18`.
