@@ -190,6 +190,42 @@ def test_reasoning_budget_segment_preserves_development_usage_and_resume_boundar
     assert audit["historical_inputs_rewritten"] is audit["production_deployed"] is False
 
 
+def test_checkpoint_item_inventory_is_not_misreported_as_installed_furniture():
+    from fort_gym.bench.api import server
+
+    filename = "local_native_qwen35_year_two_checkpoint40_20260907.json"
+    receipt = json.loads((records.PROJECT_ROOT / "experiments/evidence" / filename).read_text())
+    assert receipt["status"] == "running_checkpoint_not_terminal"
+    assert receipt["checkpoint_verified"] is True and receipt["next_step"] == 40
+    assert receipt["checkpoint_payload_sha256"] == (
+        "1e4d016913d56da39c0aaf670befbb8c2adafd6aca45cb34f79ff53ee00b3a06"
+    )
+    assert receipt["parent_checkpoint_payload_sha256"] == (
+        "da0a930525210d16bfcf437657159050a1df1713332c73b5dac787b860e43129"
+    )
+    points = receipt["observed_boundaries"]
+    assert [p["committed_steps"] for p in points] == [0, 32, 40]
+    assert [p["observed_item_records"]["bed"] for p in points] == [0, 1, 11]
+    assert [p["observed_item_records"]["chair"] for p in points] == [0, 0, 3]
+    assert all(p["installed_furniture"] == {"bed": 0, "chair": 0} for p in points)
+    assert receipt["inventory_scan_completeness"] == "not_reported_by_this_observer"
+    assert receipt["production_flow_verified"] is False
+    assert receipt["current_owner_teardown_verified"] is False
+    assert filename not in records.PUBLISHED_BUNDLES
+    assert len(records.published_records()) == 14
+    page = TestClient(server.app).get("/campaigns").text
+    assert 'aria-labelledby="checkpoint-furniture-title"' in page
+    assert "Completed workshops / installed beds / completed farms" in page
+    assert "11 bed items and three chair items" in page
+    assert "No beds or chairs were installed" in page
+    assert "not live status or a completed campaign" in page
+    assert "this scan does not report inventory completeness" in page
+    assert (
+        "https://github.com/lemoz/fort-gym/blob/7f89998798bbb777db8bb5e5e75902d09ea69794/"
+        "experiments/evidence/" + filename
+    ) in page
+
+
 def test_year_two_thinking_pause_preserves_accounted_response_without_game_action():
     from fort_gym.bench.api import server
 
@@ -241,7 +277,7 @@ def test_matched_pair_page_links_immutable_evidence_and_discloses_asymmetric_lim
         publication + "experiments/evidence/local_native_qwen35_thinking_comparison_20260907.json"
         in page
     )
-    assert "campaign-feed.js?v=9" in page
+    assert "campaign-feed.js?v=10" in page
 
 
 def test_thinking_pair_reconciles_exact_published_bundles_and_declared_difference():

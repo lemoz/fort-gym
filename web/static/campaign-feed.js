@@ -4,7 +4,7 @@
   const metricNames = {
     population: 'Dwarves', food_stock: 'Food stock', drink_stock: 'Drink stock',
     wood_stock: 'Wood stock', stone_stock: 'Stone stock', functional_rooms: 'Detected functional rooms',
-    completed_workshops: 'Completed workshops', completed_beds: 'Completed beds',
+    completed_workshops: 'Completed workshops', completed_beds: 'Installed beds',
     completed_farms: 'Completed farms', recorded_dead_citizens: 'Recorded dead citizens'
   };
   const statusNames = {
@@ -134,6 +134,7 @@
     if (local) node('p', 'Hardware, electricity and infrastructure costs are not measured here. Zero model API charges do not mean zero operating cost.', panel);
     if (!local && money(usage.reported_model_cost_usd) !== 'Unknown') node('p', `Exact reported cost: ${usage.reported_model_cost_usd} USD.`, panel);
     const summaries = row.metric_summaries || {};
+    node('p', 'Installed beds are completed furniture placements, not bed items in inventory.', panel);
     const body = table(panel, 'Observed state, not an inferred success score', ['Measure', 'Start', 'Latest', 'Change', 'Observed min / max']);
     Object.entries(metricNames).forEach(([key, label]) => {
       const summary = summaries[key] || {}, tr = node('tr', undefined, body);
