@@ -10,7 +10,7 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Callable
 
-from ..env.campaign_encoder import PROFILE, render_campaign_observation
+from ..env.campaign_encoder import PROFILES, render_campaign_observation
 
 PACKING = "bounded_history/v1"
 CORRECTION_PACKING = "bounded_history_corrections/v1"
@@ -21,7 +21,7 @@ def project_observation(observation: dict, keep: int, *, packing: str = PACKING)
     if packing not in {PACKING, CORRECTION_PACKING}:
         raise ValueError("Unsupported campaign prompt packing")
     history = observation.get("action_history")
-    if observation.get("observation_profile") != PROFILE or not isinstance(history, list):
+    if observation.get("observation_profile") not in PROFILES or not isinstance(history, list):
         raise ValueError("Prompt packing requires a factual campaign observation")
     if any(not isinstance(row, dict) for row in history):
         raise ValueError("Prompt history contains an invalid action record")
