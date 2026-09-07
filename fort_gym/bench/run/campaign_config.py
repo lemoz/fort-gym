@@ -13,6 +13,7 @@ from pathlib import Path
 
 from ..agent.campaign_action_reference import action_reference
 from ..agent.campaign_action_schema import LEGACY, validate_schema_profile
+from ..env.campaign_encoder import PROFILES as CAMPAIGN_OBSERVATION_PROFILES
 from .campaign_retention import validate_retention
 
 DEVELOPMENT_SCHEMA = "fortgym.development-probe/v1"
@@ -218,9 +219,12 @@ def load_segment_config(path: Path, model: str) -> dict:
         config.get("decision_profile", "governed_review/v1"),
         config.get("observation_profile", "governed_review/v1"),
     )
+    exploratory_profiles = {
+        ("campaign_action/v1", profile) for profile in CAMPAIGN_OBSERVATION_PROFILES
+    }
     if not all(isinstance(profile, str) for profile in profiles) or profiles not in {
         ("governed_review/v1", "governed_review/v1"),
-        ("campaign_action/v1", "campaign_state/v1"),
+        *exploratory_profiles,
     }:
         raise ValueError("Unsupported or mismatched campaign profiles")
     if profiles[0] == "campaign_action/v1" and (
@@ -230,13 +234,13 @@ def load_segment_config(path: Path, model: str) -> dict:
     advance_policy = config.get("advance_policy", ACCEPTED_ONLY)
     if not isinstance(advance_policy, str) or advance_policy not in POLICIES:
         raise ValueError("Unsupported campaign advance policy")
-    if advance_policy != ACCEPTED_ONLY and profiles != ("campaign_action/v1", "campaign_state/v1"):
+    if advance_policy != ACCEPTED_ONLY and profiles not in exploratory_profiles:
         raise ValueError("Requested-time policy requires exploratory campaign profiles")
     placement_policy = validate_policy(config.get("workshop_placement_policy", STRICT_FLOOR))
-    if placement_policy != STRICT_FLOOR and profiles != ("campaign_action/v1", "campaign_state/v1"):
+    if placement_policy != STRICT_FLOOR and profiles not in exploratory_profiles:
         raise ValueError("Workshop ground policy requires exploratory campaign profiles")
     if endurance or local:
-        if profiles != ("campaign_action/v1", "campaign_state/v1"):
+        if profiles not in exploratory_profiles:
             raise ValueError("Endurance conditions require exploratory campaign profiles")
         if config["segment_time_budget_seconds"] <= decision_time_reserve(config):
             raise ValueError("Segment time budget must fit the declared decision retry allowance")
