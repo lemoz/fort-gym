@@ -141,3 +141,18 @@ clock receipt unchanged, then checkpoints the latest state. The old failed run
 and every original source remain unchanged. The model receives factual failure
 and runtime-reload feedback and chooses its next move. This is recovery of a
 known completed input, not success relabelling or replay from an earlier save.
+
+The native recovery subsequently passed at `914ac0721`, with
+[passing exact-source CI](https://github.com/lemoz/fort-gym/actions/runs/34162604769).
+An independent audit verifies checkpoint cursor 101, its parent at cursor 88,
+the complete original trace prefix plus the explicitly reconciled failure row,
+unchanged model memory/usage, the preserved native state and final game/container/
+VM teardown. It made zero model calls, sent zero keys and requested zero ticks.
+Elapsed game time remains 29,000 ticks and campaign usage remains 3,231,792 tokens.
+The original failed window remains failed. The non-content record is
+`experiments/evidence/astra_native_keyboard_recovery_20260907.json`.
+
+The next declared window is `campaign_astra_keyboard_window_20260907c.json`:
+six 16-decision segments from cursor 101, preserving the existing cumulative
+256-dispatch/eight-million-token budget, Astra Medium, raw 120x40 screen, memory
+and model-selected strategy. Declaring this window is not proof it has executed.
