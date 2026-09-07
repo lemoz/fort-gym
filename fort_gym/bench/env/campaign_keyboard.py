@@ -7,15 +7,20 @@ from pathlib import Path
 
 from ..dfhack_backend import _hook_path
 from ..dfhack_exec import DFHackError, run_lua_file
-from .keystroke_exec import VALID_KEYS
+from .native_key_catalog import LEGACY_PROFILE, keys_for_profile
 
-KEYBOARD_CONTROL_PROFILE = "native_keyboard/v1"
+KEYBOARD_CONTROL_PROFILE = LEGACY_PROFILE
 HELPER_CONTROL_PROFILE = "dfhack_shortcuts/v1"
 NATIVE_SCHEMA = "fortgym.campaign-keyboard-native/v1"
 
 
 def execute_campaign_keys(
-    keys: object, *, expected_dfroot: Path, year: object, year_tick: object
+    keys: object,
+    *,
+    expected_dfroot: Path,
+    year: object,
+    year_tick: object,
+    control_profile: str = KEYBOARD_CONTROL_PROFILE,
 ) -> dict:
     """Send up to 100 chosen events, holding zero game ticks between them.
 
@@ -32,6 +37,7 @@ def execute_campaign_keys(
         "native_receipts": [],
         "frame_freshness": "not_verified",
         "simulation_policy": "paused_inputs_then_explicit_advance_ticks",
+        "control_profile": control_profile,
     }
 
     def finish(error: str | None = None) -> dict:
@@ -40,10 +46,14 @@ def execute_campaign_keys(
             result["error"] = error
         return {"accepted": result["ok"], "why": error, "result": result}
 
+    try:
+        allowed_keys = keys_for_profile(control_profile)
+    except ValueError as exc:
+        return finish(str(exc))
     if (
         not isinstance(keys, list)
         or len(keys) > 100
-        or any(not isinstance(key, str) or key not in VALID_KEYS for key in keys)
+        or any(not isinstance(key, str) or key not in allowed_keys for key in keys)
         or type(year) is not int
         or year < 0
         or type(year_tick) is not int

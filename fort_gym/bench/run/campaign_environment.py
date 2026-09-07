@@ -17,9 +17,9 @@ from ..dfhack_exec import DFHackError, run_lua_expr, run_lua_file
 from ..env.actions import INTERACT_ALLOWED_VIEWSCREEN_TYPES
 from ..env.campaign_keyboard import (
     HELPER_CONTROL_PROFILE,
-    KEYBOARD_CONTROL_PROFILE,
     execute_campaign_keys,
 )
+from ..env.native_key_catalog import KEYBOARD_PROFILES
 from ..env.dfhack_client import DFHackClient
 from ..env.executor import Executor
 from ..env.screen_observation import raw_screen
@@ -63,7 +63,7 @@ class NativeCampaignEnvironment:
     ) -> None:
         if type(max_advance_ticks) is not int or not 1 <= max_advance_ticks <= 2500:
             raise ValueError("Invalid campaign tick limit")
-        if control_profile not in (HELPER_CONTROL_PROFILE, KEYBOARD_CONTROL_PROFILE):
+        if control_profile not in (HELPER_CONTROL_PROFILE, *KEYBOARD_PROFILES):
             raise ValueError("Invalid campaign control profile")
         self.control_profile = control_profile
         self.max_advance_ticks = max_advance_ticks
@@ -174,7 +174,7 @@ class NativeCampaignEnvironment:
 
     def apply(self, action: dict[str, Any], state: dict[str, Any]) -> dict[str, Any]:
         self._verify_runtime()
-        if getattr(self, "control_profile", HELPER_CONTROL_PROFILE) == KEYBOARD_CONTROL_PROFILE:
+        if getattr(self, "control_profile", HELPER_CONTROL_PROFILE) in KEYBOARD_PROFILES:
             if action.get("type") != "KEYSTROKE":
                 return {
                     "accepted": False,
@@ -187,6 +187,7 @@ class NativeCampaignEnvironment:
                 expected_dfroot=self.expected_dfroot,
                 year=state.get("year"),
                 year_tick=state.get("year_tick"),
+                control_profile=self.control_profile,
             )
         viewscreen = state.get("viewscreen_type")
         if (

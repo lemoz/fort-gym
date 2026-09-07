@@ -24,10 +24,10 @@ local function snapshot()
 end
 local mode, expected_root, year, tick = args[1], args[2], tonumber(args[3]), tonumber(args[4])
 local expected_save = args[5]
-if (mode~='probe' and mode~='key') or type(expected_root)~='string'
+if (mode~='probe' and mode~='key' and mode~='catalog') or type(expected_root)~='string'
     or expected_root=='' or not integer(year) or year<0
     or not integer(tick) or tick<0 or tick>=403200
-    or type(expected_save)~='string' or #args>105
+    or type(expected_save)~='string' or #args>(mode=='catalog' and 2053 or 105)
     or (mode=='key' and (#args~=6 or expected_save=='')) then
   result.error='invalid_keyboard_request'
   print(json.encode(result))
@@ -46,6 +46,24 @@ local lock_ok, lock_error = pcall(dfhack.with_suspend, function()
     result.error='keyboard_boundary_mismatch'
     return
   end
+  result.mode=mode
+  if mode=='catalog' then
+    -- Bulk read-only compatibility audit. Never dispatch any candidate event.
+    -- Keep both lists so failures identify every mismatch in a single run.
+    result.supported={}
+    result.unsupported={}
+    for index=6,#args do
+      local key=args[index]
+      local supported=type(key)=='string' and df.interface_key[key]~=nil
+        and key~='NONE' and key~='KEYBINDING_COMPLETE'
+      table.insert(supported and result.supported or result.unsupported, key)
+    end
+    result.checked=#args-5
+    result.after=snapshot()
+    result.ok=#result.unsupported==0
+    if not result.ok then result.error='native_catalog_mismatch' end
+    return
+  end
   for index=6,#args do
     if type(args[index])~='string' or df.interface_key[args[index]]==nil then
       result.error='unsupported_native_key'
@@ -53,7 +71,6 @@ local lock_ok, lock_error = pcall(dfhack.with_suspend, function()
       return
     end
   end
-  result.mode=mode
   if mode=='probe' then
     result.ok=true
     result.after=snapshot()
@@ -69,7 +86,7 @@ local lock_ok, lock_error = pcall(dfhack.with_suspend, function()
   local input_ok, input_error = pcall(gui.simulateInput, view, df.interface_key[args[6]])
   result.paused_after_input=df.global.pause_state
   -- Simulation is independently requested through advance_ticks. Restore pause
-  -- inside this same core lock, even if PAUSE was pressed or input threw.
+  -- inside this same core lock, even if D_PAUSE was pressed or input threw.
   df.global.pause_state=true
   result.after=snapshot()
   if not input_ok then

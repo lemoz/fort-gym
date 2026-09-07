@@ -13,6 +13,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 from ..env.screen_observation import TEXT_PROFILE, encode_screen
+from ..env.native_key_catalog import NATIVE_PROFILE, catalog_instructions
 from .codex_transport import CodexTransportError, request_decision
 from .standard_input import (
     CONTROL_PROFILE,
@@ -67,11 +68,12 @@ def request_keyboard_decision(
     memory: str = "",
     timeout_seconds: float = 180,
     observation_profile: str = OBSERVATION_PROFILE,
+    control_profile: str = CONTROL_PROFILE,
 ) -> dict:
     if not isinstance(memory, str):
         raise ValueError("Agent memory must be text")
     observation = encode_screen(screen, observation_profile)
-    schema = response_schema(max_advance_ticks=max_advance_ticks)
+    schema = response_schema(max_advance_ticks=max_advance_ticks, control_profile=control_profile)
     observation_json = json.dumps(
         observation,
         allow_nan=False,
@@ -83,6 +85,8 @@ def request_keyboard_decision(
         if observation_profile == TEXT_PROFILE
         else INSTRUCTIONS
     )
+    if control_profile == NATIVE_PROFILE:
+        instructions += "\n" + catalog_instructions() + "\n"
     prompt = (
         instructions
         + "\nResponse contract:\n"
@@ -102,12 +106,16 @@ def request_keyboard_decision(
     )
     action, error = None, None
     try:
-        action = parse_response(receipt["response"], max_advance_ticks=max_advance_ticks)
+        action = parse_response(
+            receipt["response"],
+            max_advance_ticks=max_advance_ticks,
+            control_profile=control_profile,
+        )
     except ValueError as exc:
         error = str(exc)
     result = {
         "schema_version": "fortgym.keyboard-decision/v1",
-        "control_profile": CONTROL_PROFILE,
+        "control_profile": control_profile,
         "observation_profile": observation_profile,
         "screen_sha256": hashlib.sha256(observation_json.encode()).hexdigest(),
         "screen_width": observation["width"],

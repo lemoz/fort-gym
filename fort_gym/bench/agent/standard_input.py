@@ -4,16 +4,22 @@ from __future__ import annotations
 
 from copy import deepcopy
 
-from ..env.keystroke_exec import VALID_KEYS
+from ..env.native_key_catalog import LEGACY_PROFILE, keys_for_profile
 from ..env.screen_observation import RAW_PROFILE, raw_screen
 
-CONTROL_PROFILE = "native_keyboard/v1"
+CONTROL_PROFILE = LEGACY_PROFILE
 OBSERVATION_PROFILE = RAW_PROFILE
 
 
-def response_schema(*, max_advance_ticks: int) -> dict:
+def response_schema(*, max_advance_ticks: int, control_profile: str = CONTROL_PROFILE) -> dict:
     if type(max_advance_ticks) is not int or not 0 <= max_advance_ticks <= 2500:
         raise ValueError("Invalid keyboard simulation bound")
+    allowed_keys = keys_for_profile(control_profile)
+    # v2 has 1613 names: too many for the structured-output enum limit (1000).
+    # Keep the wire shape strict and validate membership locally before dispatch.
+    key_item: dict = {"type": "string"}
+    if control_profile == LEGACY_PROFILE:
+        key_item["enum"] = sorted(allowed_keys)
     properties = {
         "type": {"type": "string", "enum": ["KEYSTROKE"]},
         "params": {
@@ -21,7 +27,7 @@ def response_schema(*, max_advance_ticks: int) -> dict:
             "properties": {
                 "keys": {
                     "type": "array",
-                    "items": {"type": "string", "enum": sorted(VALID_KEYS)},
+                    "items": key_item,
                     "maxItems": 100,
                 }
             },
@@ -40,9 +46,12 @@ def response_schema(*, max_advance_ticks: int) -> dict:
     }
 
 
-def parse_response(payload: object, *, max_advance_ticks: int) -> dict:
+def parse_response(
+    payload: object, *, max_advance_ticks: int, control_profile: str = CONTROL_PROFILE
+) -> dict:
     """Validate without coercing keys, inventing WAIT, or choosing a game action."""
-    schema = response_schema(max_advance_ticks=max_advance_ticks)
+    schema = response_schema(max_advance_ticks=max_advance_ticks, control_profile=control_profile)
+    allowed_keys = keys_for_profile(control_profile)
     if not isinstance(payload, dict) or set(payload) != set(schema["required"]):
         raise ValueError("Keyboard response fields differ from the declared contract")
     params = payload.get("params")
@@ -53,7 +62,7 @@ def parse_response(payload: object, *, max_advance_ticks: int) -> dict:
         set(params) != {"keys"}
         or not isinstance(keys, list)
         or len(keys) > 100
-        or any(not isinstance(key, str) or key not in VALID_KEYS for key in keys)
+        or any(not isinstance(key, str) or key not in allowed_keys for key in keys)
     ):
         raise ValueError("Keyboard keys must be supported native interface events")
     ticks = payload.get("advance_ticks")

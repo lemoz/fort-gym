@@ -15,7 +15,7 @@ local current = {_type='viewscreen_dwarfmodest',focus='dwarfmode/Default'}
 df = {
   global={cur_year=30,cur_year_tick=123,pause_state=true,
     world={cur_savegame={save_dir='fixture'}}},
-  interface_key={CURSOR_UP=1,PAUSE=2,SELECT=3,LEAVESCREEN=4},
+  interface_key={CURSOR_UP=1,D_PAUSE=2,SELECT=3,LEAVESCREEN=4},
 }
 dfhack = {
   getDFPath=function() return '/isolated' end,
@@ -71,7 +71,7 @@ def run(setup, arguments, assertions):
 def test_probe_validates_all_keys_without_input_or_world_mutation():
     run(
         "",
-        "'probe','/isolated','30','123','','SELECT','PAUSE'",
+        "'probe','/isolated','30','123','','SELECT','D_PAUSE'",
         """
 assert(captured.ok and captured.keys_sent==0 and inputs==0)
 assert(captured.command_mutation=='not_attempted')
@@ -110,7 +110,7 @@ assert(captured.after.year_tick==123 and captured.after.paused)
 def test_pause_is_restored_inside_lock_even_when_input_throws(failure):
     run(
         f"input_failure={str(failure).lower()}",
-        "'key','/isolated','30','123','fixture','PAUSE'",
+        "'key','/isolated','30','123','fixture','D_PAUSE'",
         f"""
 assert(captured.ok=={str(not failure).lower()} and inputs==1)
 assert(captured.paused_after_input==false and captured.after.paused==true)
@@ -151,9 +151,37 @@ assert(not captured.ok and inputs==0 and captured.command_mutation=='not_attempt
         "'key','/isolated','31','123','fixture','SELECT'",
         "'key','/isolated','30','124','fixture','SELECT'",
         "'key','/isolated','30','123','other','SELECT'",
-        "'key','/isolated','30','123','fixture','SELECT','PAUSE'",
+        "'key','/isolated','30','123','fixture','SELECT','D_PAUSE'",
         "'key','/isolated','30','123','','SELECT'",
     ],
 )
 def test_mismatched_or_malformed_request_never_dispatches(arguments):
     run("", arguments, "assert(not captured.ok and inputs==0)")
+
+
+def test_catalog_audits_every_key_without_inputs_and_reports_all_mismatches():
+    run(
+        "",
+        "'catalog','/isolated','30','123','','SELECT','PAUSE','D_PAUSE','NONE'",
+        """
+assert(not captured.ok and inputs==0 and captured.keys_sent==0)
+assert(captured.command_mutation=='not_attempted' and captured.checked==4)
+assert(captured.supported[1]=='SELECT' and captured.supported[2]=='D_PAUSE')
+assert(captured.unsupported[1]=='PAUSE' and captured.unsupported[2]=='NONE')
+assert(captured.after.paused and captured.after.year_tick==123)
+""",
+    )
+
+
+def test_catalog_accepts_more_than_one_hundred_names_but_key_mode_does_not():
+    setup = "local names={} for i=1,1613 do names[i]='SELECT' end"
+    run(
+        setup,
+        "'catalog','/isolated','30','123','',table.unpack(names)",
+        "assert(captured.ok and captured.checked==1613 and inputs==0)",
+    )
+    run(
+        setup,
+        "'probe','/isolated','30','123','',table.unpack(names)",
+        "assert(not captured.ok and inputs==0)",
+    )
