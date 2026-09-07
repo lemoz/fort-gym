@@ -9,6 +9,9 @@ has launched on the existing isolated local runtime. Its owner session and game
 container were both verified running. The local model has chosen genuine VIEW
 actions; this is now model execution, not another provider-free fixture. This is
 a point-in-time running observation, not a completed segment or fortress result.
+The first periodic checkpoint has independently passed native save inventory,
+bound-file, action-cursor and cumulative-usage verification. Its trace and usage
+remain exact prefixes of the progressing live campaign. No restore was issued.
 
 The producer remains frozen at `48d9ed6d94a598b44c4cfbe10a0df4badcb189ad` in
 [PR #136](https://github.com/lemoz/fort-gym/pull/136), whose
@@ -19,12 +22,16 @@ No human gameplay action, model fallback, new cloud VM or live code change has
 been introduced. The original seed is used, not a rollback of the failed prior
 campaign. The live owner's teardown is not yet due or claimed complete.
 
-The tracker condition-link update is pushed in
+The tracker condition-link and VIEW reporting corrections are pushed in
 [PR #133](https://github.com/lemoz/fort-gym/pull/133) at
-`4b1b53398e5c3cc7e3120d34b25f11d3f68cc468`. It links the exact authored
+`abcd648a91e2ae593de57a2c116df959f5570847`. It links the exact authored
 configuration only when its canonical digest matches; it imports no live capture
-or result row. All 97 focused checks pass.
-[Exact-head website CI](https://github.com/lemoz/fort-gym/actions/runs/34102983726)
+or result row. The offline reporter now categorizes VIEW correctly instead of
+UNKNOWN, with an explicit map-inspection label in the existing tracker. This
+observer-only correction does not change the running producer or infer VIEW from
+old UNKNOWN aggregates. All 104 focused checks pass; a local read-only checkpoint
+comparison also confirmed the defect without modifying evidence.
+[Exact-head website CI](https://github.com/lemoz/fort-gym/actions/runs/34104221476)
 passed. This is remote source delivery, not a merge or website deployment.
 
 These current observations supersede the unrun/no-live-owner statements in the

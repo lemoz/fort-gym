@@ -1,16 +1,19 @@
 # WDSLL — What Does Success Look Like
 
-Latest verified progress, September 7: the separately declared reasoning-budget
-request returned a complete `DIG` action with all 11,003 tokens accounted and
-verified owned-process teardown. This was a no-game diagnostic, not fortress
-development. Its [versioned receipt](../experiments/evidence/local_year_two_reasoning_budget_20260907.json)
-is pushed in PR #132. The fresh native campaign under the
-[reasoning-budget condition](../experiments/campaigns/local_native_qwen35_year_two_reasoning_budget_v1.json)
-is running from the original seed with the native-verified tick-limit correction.
-At the latest observation its controller and model were running with no committed
-action yet. The completed direct/thinking pair remains unchanged and neither
-reached one year. See [current campaign status](CAMPAIGN_STATUS.md) for exact
-source, limits and evidence. PRs #132/#133 are unmerged; production is unchanged.
+Latest verified progress, September 7: the fresh autonomous inspection campaign
+is running from the original seed on frozen source `48d9ed6d9`. Its first periodic
+native checkpoint, bound trace and cumulative usage were independently verified.
+The model chooses all gameplay and inspection actions; no human rescue or live
+code change has been introduced. The previous reasoning-budget campaign remains
+a preserved terminal harness failure, not a resumed or successful campaign.
+
+The observer-side VIEW classification fix is pushed in [PR #133](https://github.com/lemoz/fort-gym/pull/133),
+with 104 focused checks passed and actual checkpoint read-only validation. See
+[current campaign status](CAMPAIGN_STATUS.md) for exact remote heads, CI and live
+execution bounds. The runtime and website PRs remain unmerged; production is
+unchanged. First-year viability, year-two play, repeated comparable three-model
+results and verified live website delivery remain required. Earlier snapshots
+below are historical and do not override the current status.
 
 ## Current direction: year-two campaigns (September 5, 2026)
 
