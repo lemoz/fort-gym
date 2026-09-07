@@ -20,8 +20,26 @@ teardown was independently audited.
 The [terminal result and next repair](LOCAL_REASONING_DIALOG_RESULT.md) replace
 the earlier website registry entry for this same campaign, keeping 14 recorded
 rows and preserving all historical bundles. No new trial, merge, deployment,
-browser acceptance or year-two success is claimed. Next work is nonfatal feedback
-for model actions blocked by an observed dialog, with no automatic dialog choice.
+browser acceptance or year-two success is claimed. The nonfatal dialog-feedback
+repair is now pushed in [PR #134](https://github.com/lemoz/fort-gym/pull/134),
+stacked on the still-unmerged native PR #132. Its source is
+`af97265ccc9983aa1356d6627457686ed6394b86`; the original experiment worktree
+remains clean at `de69c7a467eb0b00becfef03329bac9f58690e35`.
+
+The repair returns a definite zero-tick rejection for a non-INTERACT command on a
+known paused dialog, then lets the model choose its next action. It does not
+auto-dismiss the dialog or alter historical measurements. Validation: 162 focused
+integration checks passed; the native-branch full suite had 1,968 passed, 10
+skipped and one sandbox-denied socket test, which passed separately with socket
+access. Changed-file checks and scoped mypy passed; existing whole-tree lint/type
+debt remains. [Repair CI](https://github.com/lemoz/fort-gym/actions/runs/34091698430)
+is running, not yet claimed successful.
+
+The terminal website result is pushed at
+`db4556fe1744e432f8e0c619dcc44e1e065f27b1`, with 115 focused checks and
+[successful exact-head CI](https://github.com/lemoz/fort-gym/actions/runs/34091043621).
+Next is a separately declared native dialog validation before another gameplay
+attempt. No native repair validation has run, and no model/game/VM owner is live.
 Earlier live-status paragraphs below are historical and superseded by this section.
 
 ## Latest: automatic continuation through checkpoint 64
