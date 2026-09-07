@@ -17,6 +17,7 @@ from ..dfhack_exec import DFHackError, run_lua_expr, run_lua_file
 from ..env.actions import INTERACT_ALLOWED_VIEWSCREEN_TYPES
 from ..env.dfhack_client import DFHackClient
 from ..env.executor import Executor
+from ..env.screen_observation import raw_screen
 from ..env.state_reader import StateReader
 from ..env.campaign_view import MAP_SCHEMA, view_selection
 from ..env.workshop_placement import (
@@ -117,6 +118,38 @@ class NativeCampaignEnvironment:
     def screen(self) -> str:
         self._verify_runtime()
         return self.client.get_screen_text(include_visual_hints=True)
+
+    def screen_capture(self) -> dict:
+        """Read actual tiles at a stable paused boundary, without internal metrics.
+
+        This checks the loaded fortress and calendar around CopyScreen. It does
+        not force a render or prove that a frame reflects a just-dispatched key.
+        The keyboard executor still owns UI-transition/freshness validation.
+        """
+        self._verify_runtime()
+
+        def boundary() -> tuple[str, int, int]:
+            state = native_save_status()
+            name, year, tick = state.get("save_name"), state.get("year"), state.get("year_tick")
+            if (
+                state.get("ok") is not True
+                or state.get("paused") is not True
+                or not isinstance(name, str)
+                or not name
+                or type(year) is not int
+                or year < 0
+                or type(tick) is not int
+                or not 0 <= tick < 403200
+            ):
+                raise RuntimeError("Native screen capture requires a paused, identified fortress")
+            return name, year, tick
+
+        before = boundary()
+        capture = raw_screen(self.client.get_screen())
+        if boundary() != before:
+            raise RuntimeError("Native screen capture crossed a fortress or calendar boundary")
+        self._verify_runtime()
+        return capture
 
     def inspect_map(self, selection: dict | None) -> dict:
         """Read only the model-selected terrain window, without changing native UI."""

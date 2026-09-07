@@ -5,9 +5,10 @@ from __future__ import annotations
 from copy import deepcopy
 
 from ..env.keystroke_exec import VALID_KEYS
+from ..env.screen_observation import RAW_PROFILE, raw_screen
 
 CONTROL_PROFILE = "native_keyboard/v1"
-OBSERVATION_PROFILE = "native_screen_tiles/v1"
+OBSERVATION_PROFILE = RAW_PROFILE
 
 
 def response_schema(*, max_advance_ticks: int) -> dict:
@@ -69,29 +70,4 @@ def screen_observation(screen: object) -> dict:
     Dimensions are observations, not requested render sizes. Resizing the native
     runtime is a separate operation and must be verified through a new capture.
     """
-    if not isinstance(screen, dict):
-        raise ValueError("Missing native screen capture")
-    width, height, tiles = screen.get("width"), screen.get("height"), screen.get("tiles")
-    if (
-        type(width) is not int
-        or type(height) is not int
-        or not 1 <= width <= 300
-        or not 1 <= height <= 150
-        or not isinstance(tiles, list)
-        or len(tiles) != width * height
-    ):
-        raise ValueError("Native screen dimensions and tile count must agree")
-    for tile in tiles:
-        if (
-            not isinstance(tile, list)
-            or len(tile) != 3
-            or any(type(value) is not int or value < 0 for value in tile)
-        ):
-            raise ValueError("Every screen tile needs character, foreground and background")
-    return {
-        "observation_profile": OBSERVATION_PROFILE,
-        "tile_order": "column_major",
-        "width": width,
-        "height": height,
-        "tiles": deepcopy(tiles),
-    }
+    return raw_screen(screen)
