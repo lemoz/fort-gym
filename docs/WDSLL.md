@@ -1,17 +1,18 @@
 # WDSLL — What Does Success Look Like
 
-Latest verified progress, September 7: the fresh autonomous inspection campaign
-is running from the original seed on frozen source `48d9ed6d9`. Two segments
-completed and automatically continued into the third. Independent read-only
-verification covered both native checkpoints, source identities, unchanged
-configuration and exact trace/usage prefixes. The first handoff's new action
-started at the saved native calendar. The second completed at its declared
-time-slice boundary; its native processes were stopped, and the third runtime
-is live. Its first new command and native time advancement now verify against
-the saved boundary; the command's rejection is preserved as a gameplay outcome.
-The model chooses all gameplay and inspection actions; no human rescue or live
-code change has been introduced. The previous reasoning-budget campaign remains
-a preserved terminal harness failure, not a resumed or successful campaign.
+Latest verified progress, September 7: the owner selected `gpt-6-astra` at
+`medium` reasoning through their ChatGPT subscription. The local Qwen campaign
+was operator-cancelled for this change, its evidence preserved, and its game,
+model, tunnel and local VM verified stopped. Previously verified checkpoint
+handoffs remain historical evidence, not a completed fortress outcome. The
+cancelled tail requires reconciliation before any lossless-resume claim.
+
+A synthetic Astra Medium request returned structured output through the
+ChatGPT-authenticated Codex CLI without an API credential. Native gameplay has
+not yet used that transport. Adapter integration and an included-subscription
+usage guard remain to be implemented; subscription access is not unlimited and
+must not silently overflow into paid credits. The stricter smoke still reports
+the deliberately disabled Code Mode host diagnostic. See current campaign status.
 
 The observer-side VIEW classification and exact-command retry reporting are
 pushed in [PR #133](https://github.com/lemoz/fort-gym/pull/133), with 132 focused

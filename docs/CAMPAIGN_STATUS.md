@@ -2,7 +2,34 @@
 
 Verified September 7, 2026 UTC. The Year-Two Autonomous Play goal remains active.
 
-## Current: fresh autonomous inspection campaign running
+## Current: requested GPT-6 Astra Medium subscription migration
+
+The owner requested `gpt-6-astra` with reasoning effort `medium`, using their
+ChatGPT subscription instead of local Qwen inference or separately billed API
+calls. The Qwen inspection campaign was operator-cancelled for that model change.
+Its evidence was copied successfully; the game container, model server, tunnel
+and local VM were verified stopped. This is not a gameplay-collapse verdict.
+The preserved campaign controller requires tail reconciliation and must not be
+treated as a lossless latest-state continuation.
+
+The installed Codex CLI is authenticated with ChatGPT. A synthetic request with
+the exact requested model and effort returned a valid structured response, with
+token telemetry and no API credential inherited. Its CLI diagnostic reported the
+deliberately disabled Code Mode host; the stricter all-clean smoke receipt remains
+false. No game action was sent to Astra, and no captured native data was exported.
+This verifies a subscription connection, not a completed campaign adapter.
+
+Next implementation is on `codex/campaign-codex-subscription`: integrate the
+subscription transport, declare the Codex wrapper as part of the experimental
+condition, preserve action/memory/usage accounting, and enforce an included-usage
+guard before dispatch. ChatGPT sign-in is not unlimited or unmetered; usage is
+shared and paid credits can apply after included limits. No API fallback or
+automatic credit purchase is intended. The native Astra run remains unstarted.
+
+The historical running observations below are superseded by this cancellation.
+The full year-two, model-comparison, remote and live-website goal remains active.
+
+## Historical: fresh autonomous inspection campaign running
 
 The [declared fresh campaign invocation](../experiments/evidence/local_native_qwen35_inspection_declaration_20260907.json)
 has launched on the existing isolated local runtime. Its owner session and game
