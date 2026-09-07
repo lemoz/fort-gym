@@ -11,7 +11,9 @@ exact result bundles and their normalized launched configurations. The website
 now exposes thirteen recorded campaign rows and a direct comparison explanation.
 Its 95 focused tests passed, including the published row, immutable condition
 links, full returned-response accounting and the asymmetric native tick cap.
-Exact-head remote CI, merge and production deployment remain separate proofs.
+[Exact-head GitHub CI](https://github.com/lemoz/fort-gym/actions/runs/34071894579)
+passed for `fc64d2b62e8aac095b088fd957098e2829bf0c34`. PR #133 remains open;
+merge and production deployment are not claimed.
 The complete local website suite had 1,833 passes, ten skips and one
 sandbox-blocked loopback-bind test; that exact test passed separately with
 socket access. Changed-file Ruff/Black, targeted typing, JavaScript syntax and
