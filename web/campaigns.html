@@ -39,7 +39,7 @@
         <div class="campaign-table-scroll" role="region" aria-label="Campaign comparison" tabindex="0">
           <table class="campaign-table">
             <caption>Latest reported state, committed game time, and cumulative model usage</caption>
-            <thead><tr><th scope="col">Model / campaign</th><th scope="col">Reported state</th><th scope="col">Elapsed game time</th><th scope="col">Dwarves</th><th scope="col">Food / drink observations</th><th scope="col">Completed workshops / beds / farms</th><th scope="col">Reported model cost</th></tr></thead>
+            <thead><tr><th scope="col">Model / campaign</th><th scope="col">Reported state</th><th scope="col">Elapsed game time</th><th scope="col">Dwarves</th><th scope="col">Food / drink observations</th><th scope="col">Completed workshops / installed beds / completed farms</th><th scope="col">Reported model cost</th></tr></thead>
             <tbody id="campaign-feed-rows"></tbody>
           </table>
         </div>
@@ -48,6 +48,20 @@
         <p class="campaign-note">Historical food and drink values are UI estimates. A native inventory audit found 46 drink units while the UI still reported 60. Historical traces are preserved. <a href="https://github.com/lemoz/fort-gym/blob/01c58e1d11727dc3bc415790d6c7807864e93ed4/docs/NATIVE_STOCK_OBSERVATIONS.md">Read the measurement limits and correction.</a></p>
       </div>
       <a href="/public/campaign-feed">Open campaign summary data</a>
+    </section>
+    <section class="campaign-condition" aria-labelledby="checkpoint-furniture-title">
+      <h2 id="checkpoint-furniture-title">Recorded checkpoint: furniture in inventory</h2>
+      <p>At 40 decisions and 96,000 game ticks, the reasoning-budget run's native scan recorded 11 bed items and three chair items. No beds or chairs were installed. The bed item scan started at zero and recorded one at the first segment's final checkpoint.</p>
+      <p class="campaign-note">This is a saved observation, not live status or a completed campaign. Item records are not installed furniture or a measured production flow; this scan does not report inventory completeness. Seven citizens and 33 native drink units were recorded at this checkpoint. Year-two survival and sustainability remain unproven.</p>
+      <a href="https://github.com/lemoz/fort-gym/blob/7f89998798bbb777db8bb5e5e75902d09ea69794/experiments/evidence/local_native_qwen35_year_two_checkpoint40_20260907.json">Read the checkpoint observation and source hashes</a>
+    </section>
+    <section class="campaign-condition" aria-labelledby="thinking-pair-title">
+      <h2 id="thinking-pair-title">Matched trial: thinking on and off</h2>
+      <p>With thinking off, Qwen3.5 9B selected 32 waits and advanced 32,000 ticks. With thinking on, it attempted construction and designated two trees for chopping across 18 commands and 36,000 ticks. Neither attempt completed a workshop, placed bed or farm. Both ended with seven dwarves and 53 measured drink units.</p>
+      <p class="campaign-note">The thinking trial paused when its nineteenth response used all 4,096 output tokens without returning an action. Its checkpoint covers all 18 commands and 19 responses, totaling 184,117 tokens. The baseline stopped at its one-segment limit with 321,472 tokens. Both have complete checkpoints and verified cleanup. Model API charges were $0; operating costs are unknown.</p>
+      <p class="campaign-note">These runs used the same model, original save and settings except for thinking. A shared adapter limit clipped thinking requests from 2,500 to 2,000 ticks; the counts above are actual time. One pair with different stopping points is not a ranking, and neither fortress reached year two.</p>
+      <a href="https://github.com/lemoz/fort-gym/blob/74312f0e33f301a31b890f0103eaf67ea3aeb4e7/docs/LOCAL_THINKING_PAIR_RESULT.md">Read the matched comparison and its limits</a>
+      <a href="https://github.com/lemoz/fort-gym/blob/74312f0e33f301a31b890f0103eaf67ea3aeb4e7/experiments/evidence/local_native_qwen35_thinking_comparison_20260907.json">Open the paired conditions and result digests</a>
     </section>
     <section class="campaign-condition" aria-labelledby="latest-result-title">
       <h2 id="latest-result-title">Published result: a workshop and five manufactured beds</h2>
@@ -118,6 +132,6 @@
     <noscript><p>JavaScript is needed for the table. <a href="/public/campaign-experiments">Read the published evidence JSON.</a></p></noscript>
   </main>
   <script src="/static/campaigns.js?v=1" defer></script>
-  <script src="/static/campaign-feed.js?v=7" defer></script>
+  <script src="/static/campaign-feed.js?v=14" defer></script>
 </body>
 </html>

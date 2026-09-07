@@ -19,6 +19,29 @@ assert.equal(helpers.number(null), 'Unknown');
 assert.equal(helpers.number(0), '0');
 assert.match(helpers.duration(403200), /1.000 years/);
 assert.match(helpers.stateLabel({freshness: 'stale', lifecycle: 'running'}), /unknown/);
+const separateCondition = {
+  condition_id: 'local-native-qwen35-year-two-v1',
+  code_revision: 'fad9d80c0a2e7aace8380b47b009db5edaf6bd2e',
+  configuration_sha256: 'bd658141891e31d3e4f014ca92e484779a5330d74a75d9163ea97289d3819018'
+};
+assert.equal(helpers.configurationUrl(separateCondition),
+  'https://github.com/lemoz/fort-gym/blob/d3a8bd8d5d4588d2c26b0d0201585577bf361edd/experiments/campaigns/local_native_qwen35_year_two_v1.json');
+assert.equal(helpers.configurationUrl({...separateCondition, configuration_sha256: 'a'.repeat(64)}), null);
+assert.equal(helpers.configurationUrl({...separateCondition, configuration_sha256: undefined}), null);
+assert.equal(helpers.configurationUrl({...separateCondition, code_revision: 'javascript:alert(1)'}), null);
+assert.equal(helpers.configurationUrl({...separateCondition, condition_id: 'unpublished-condition'}), null);
+const thinkingCondition = {
+  condition_id: 'local-native-qwen35-year-two-thinking-v1',
+  code_revision: separateCondition.code_revision,
+  configuration_sha256: '01505097fbf5e12cd436cf3f044ca021a0f632d83c04371607b9a0d577c3b73d'
+};
+assert.equal(helpers.configurationUrl(thinkingCondition),
+  'https://github.com/lemoz/fort-gym/blob/7bc15d160ea251bf1b07eb31615c510ea80a4ff9/experiments/campaigns/local_native_qwen35_year_two_thinking_v1.json');
+assert.equal(helpers.configurationUrl({...thinkingCondition, configuration_sha256: separateCondition.configuration_sha256}), null);
+assert.equal(helpers.configurationUrl({...thinkingCondition, configuration_sha256: undefined}), null);
+assert.equal(helpers.configurationUrl({...thinkingCondition, code_revision: '../main'}), null);
+assert.equal(helpers.stateLabel({lifecycle:'finished', freshness:'recorded',
+  segment_status:'inference_output_limited_pause', failure_kind:'none'}), 'Paused at the model output limit');
 class Element {
   constructor(tag) { this.tag = tag; this.children = []; this.events = {}; }
   set textContent(value) { this.text = String(value); }
@@ -42,12 +65,18 @@ first.elapsed_ticks = 403200; first.current_metrics.population = 0;
 first.code_revision = 'javascript:alert(1)';
 first.usage = {...first.usage, cost_basis:'self_hosted_no_metered_provider', metered_provider_charge_usd:'0', reported_model_cost_usd:null};
 first.committed_steps = 18;
+first.current_furniture_item_records = {bed:11, chair:3, door:0, table:null};
+first.furniture_item_record_summaries = {bed:{start:0, end:11, observed_samples:2}};
 first.actions = {accepted:16, rejected:2, unknown:0, changed_command_after_rejection:0,
+  command_retry_outcomes:{schema_version:'fortgym.command-retry-outcomes/v1', accepted:0, rejected:1, unknown:0},
   path_cache_stale_rejections:2,
-  by_type:{LABOR:{accepted:16, rejected:0, unknown:0}, BUILD:{accepted:0, rejected:2, unknown:0}}};
+  by_type:{LABOR:{accepted:13, rejected:0, unknown:0}, VIEW:{accepted:3, rejected:0, unknown:0}, BUILD:{accepted:0, rejected:2, unknown:0}}};
 data.campaigns.push({...first, model:'second-model', campaign_id:'second',
-  condition_id:'local-native-packed-comparison-v1', code_revision:'a'.repeat(40)});
+  condition_id:'local-native-packed-comparison-v1', code_revision:'a'.repeat(40),
+  actions:{...first.actions, command_retry_outcomes:null},
+  current_furniture_item_records:{}, furniture_item_record_summaries:{}});
 data.campaigns.push({...first, model:'repair-model', campaign_id:'repair',
+  actions:{...first.actions, command_retry_outcomes:{schema_version:'fortgym.command-retry-outcomes/v1', accepted:true, rejected:0, unknown:0}},
   condition_id:'local-native-harness-repair-v1', code_revision:'b'.repeat(40)});
 data.campaigns.push({...first, model:'reference-model', campaign_id:'reference',
   condition_id:'local-native-designation-reference-v1', code_revision:'c'.repeat(40)});
@@ -72,10 +101,24 @@ vm.runInNewContext(fs.readFileSync(process.argv[2], 'utf8'), {
   assert.match(row.children[6].textContent, /Operating costs unknown/);
   row.children[0].children[1].events.click();
   assert.match(elements['campaign-profile-detail'].textContent, /not assessed/);
+  assert.match(elements['campaign-profile-detail'].textContent, /Installed beds/);
+  assert.match(elements['campaign-profile-detail'].textContent, /completed furniture placements, not bed items in inventory/);
+  assert.doesNotMatch(elements['campaign-profile-detail'].textContent, /Completed beds/);
+  assert.match(elements['campaign-profile-detail'].textContent, /Observed furniture item records/);
+  assert.match(elements['campaign-profile-detail'].textContent, /Bed items 0 11 \+11/);
+  assert.match(elements['campaign-profile-detail'].textContent, /Door items Unknown 0 Unknown/);
+  assert.match(elements['campaign-profile-detail'].textContent, /Table items Unknown Unknown Unknown/);
+  assert.match(elements['campaign-profile-detail'].textContent, /not newly produced items or installed furniture totals/);
+  assert.match(elements['campaign-profile-detail'].textContent, /does not report completeness, ownership, or accessibility/);
   assert.match(elements['campaign-profile-detail'].textContent, /do not mean zero operating cost/);
   assert.match(elements['campaign-profile-detail'].textContent, /16 accepted commands; 2 rejected/);
   assert.match(elements['campaign-profile-detail'].textContent, /can be no-ops or queued work/);
+  assert.match(elements['campaign-profile-detail'].textContent, /VIEW · map inspection 3 0 0/);
+  assert.match(elements['campaign-profile-detail'].textContent, /VIEW inspects terrain without advancing game time or building anything/);
+  assert.match(elements['campaign-profile-detail'].textContent, /Its accepted count is not completed work/);
   assert.match(elements['campaign-profile-detail'].textContent, /2 commands were blocked because the native pathfinding cache was not ready/);
+  assert.match(elements['campaign-profile-detail'].textContent, /Retries of previously rejected commands: 0 accepted, 1 rejected again, 0 with unknown outcomes/);
+  assert.match(elements['campaign-profile-detail'].textContent, /Acceptance alone does not establish recovery/);
   assert.doesNotMatch(elements['campaign-profile-detail'].textContent, /Exact reported cost:/);
   assert.equal(elements['campaign-profile-detail'].children.some(child => child.href?.startsWith('javascript:')), false);
   elements['campaign-condition-filter'].value = 'local-native-packed-comparison-v1';
@@ -83,12 +126,15 @@ vm.runInNewContext(fs.readFileSync(process.argv[2], 'utf8'), {
   assert.equal(elements['campaign-feed-rows'].children.length, 1);
   assert.equal(elements['campaign-feed-rows'].children[0].children[0].text, 'second-model');
   elements['campaign-feed-rows'].children[0].children[0].children[1].events.click();
+  assert.match(elements['campaign-profile-detail'].textContent, /Furniture item counts are unavailable/);
+  assert.match(elements['campaign-profile-detail'].textContent, /Retries of previously rejected commands: not recorded/);
   assert.equal(elements['campaign-profile-detail'].children.find(child => child.href?.startsWith('https://github.com/')).href,
     `https://github.com/lemoz/fort-gym/blob/${'a'.repeat(40)}/experiments/campaigns/local_native_packed_comparison_v1.json`);
   elements['campaign-condition-filter'].value = 'local-native-harness-repair-v1';
   elements['campaign-condition-filter'].events.change();
   assert.equal(elements['campaign-feed-rows'].children.length, 1);
   elements['campaign-feed-rows'].children[0].children[0].children[1].events.click();
+  assert.match(elements['campaign-profile-detail'].textContent, /Retries of previously rejected commands: not recorded/);
   assert.equal(elements['campaign-profile-detail'].children.find(child => child.href?.startsWith('https://github.com/')).href,
     `https://github.com/lemoz/fort-gym/blob/${'b'.repeat(40)}/experiments/campaigns/local_native_harness_repair_v1.json`);
   elements['campaign-condition-filter'].value = 'local-native-designation-reference-v1';

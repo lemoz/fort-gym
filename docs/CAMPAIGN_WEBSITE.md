@@ -1,5 +1,224 @@
 # Campaign website delivery milestone
 
+## Outcomes when rejected commands are retried
+
+The offline profile now emits optional `actions.command_retry_outcomes` with
+schema `fortgym.command-retry-outcomes/v1`. It counts accepted, rejected-again
+and unknown outcomes when the same control and exact parameters are retried
+after a rejection, even with other commands in between. Parameter key order,
+requested waiting time and optional planning notes do not change command identity.
+An accepted or unknown outcome clears that command's rejection sequence; a later
+rejection begins a new sequence. These are observed choices and outcomes, not a
+judgment of whether waiting or retrying was sensible. Acceptance can still mean
+a no-op or queued work, and does not prove recovery or completed construction.
+
+The measure requires a contiguous trace from step zero and recognizable controls
+and parameters. Missing origins, duplicate steps, gaps or unmatchable commands
+leave it unknown. Public projection allows only its schema and three nonnegative
+integer counts, bounded by the observed action totals. No parameter, coordinate,
+command fingerprint or private model text is exported. Existing command-change
+and action-total semantics are unchanged.
+
+The tracker shows these counts in the existing campaign detail panel. Older
+aggregates without the field remain unchanged and display `not recorded`; they
+are not assigned a zero or retrospectively reconstructed. The script cache URL
+is v14. The running producer remains frozen at `48d9ed6d9`; this observer change
+does not alter its prompts, controls, records or gameplay. No current native
+capture, new comparison row, merge, browser QA or deployment is included.
+
+All 132 focused checks pass. Validation covers retry outcomes across WAIT/VIEW, exact-parameter matching,
+accepted/unknown sequence boundaries, malformed or incomplete evidence,
+count-only projection and idempotence, synthetic file-to-report-to-feed-to-HTTP
+delivery, source-byte preservation and in-memory UI labels. A local read-only
+exercise against the retained native trace also corroborated the counter without
+altering or exporting it. Changed-source lint, formatting, compilation and scoped
+mypy pass. The unchanged whole-tree baseline still has 10 Ruff findings and
+464 mypy errors in 26 files; no clean whole-tree static result is claimed.
+
+## Map inspection is a distinct reported control
+
+The offline profile and public projection now recognize VIEW as a reporting
+category. Previously it was grouped under UNKNOWN despite being supported by the
+new native campaign interface. The tracker labels it `VIEW · map inspection` and
+explains that an accepted inspection neither advances game time nor completes
+construction. Existing action totals and command-change semantics are unchanged.
+
+This is an observer-side correction, not a new runtime permission. The live
+producer remains frozen at `48d9ed6d94a598b44c4cfbe10a0df4badcb189ad` and its old
+reports are not hot-patched. An older UNKNOWN aggregate cannot be reconstructed
+into VIEW without its source trace, so readers preserve it unchanged. A later
+offline report must identify its reporting source separately from the execution
+source; no existing captured result or published bundle is rewritten here.
+
+All new fixtures are synthetic. No captured map, action parameters, private model
+text or save payload is added to the public projection or repository. The current
+website layout and hosting remain unchanged, with no browser QA or deployment.
+
+Validation: 104 focused checks pass, including the file-to-profile-to-feed-to-HTTP
+path, exact old UNKNOWN preservation, source-byte preservation and in-memory UI
+labels. A separate read-only comparison against the retained native checkpoint
+corroborated the classification defect without changing the checkpoint, live
+producer or feed. Compilation, JavaScript syntax, changed-file Ruff/Black and
+scoped mypy pass. Existing whole-tree debt remains 10 Ruff findings and 464 mypy
+errors in 26 files. No new gameplay acceptance or captured payload is published.
+
+## Inspection campaign condition link
+
+The tracker recognizes the authored `local-native-qwen35-year-two-inspection-v1`
+condition and links to its immutable configuration at
+`48d9ed6d94a598b44c4cfbe10a0df4badcb189ad` only when its canonical JSON digest is
+`ec7c987aef51ce61970ba6c52ea1efd03e887e2ae7c6af87297e9dcef00a1093`.
+The GitHub source was read back and verified before this mapping was added.
+The raw-file SHA-256 is different and is deliberately rejected as a substitute
+for the report's canonical configuration digest.
+
+This update contains authored configuration identity and synthetic tests only.
+It does not import a live game report, captured maps/screens, saves or detailed
+native result payloads. It creates no terminal result or new comparison row.
+Existing historical records remain unchanged. The layout and FastAPI/static
+architecture are preserved; the asset URL changes to avoid a stale cached script.
+
+Validation: 97 focused condition-link, capture, feed, record, profile and catalog
+tests pass, including the HTTP route and exact-digest rejection cases. Python
+compilation, JavaScript syntax, changed-test Ruff and diff checks pass. Existing
+whole-tree debt remains 10 Ruff findings and 464 mypy errors in 26 files; this
+change does not modify production Python. These checks are not browser acceptance.
+
+The website-building/hosting workflow is limited to source validation and GitHub
+delivery under the standing no-deploy boundary. This background change does not
+open a browser, perform visual QA, register a hosted Site or deploy anything.
+
+## Latest recorded result: liaison-dialog failure
+
+The reasoning-budget campaign now has a later terminal result: 83 committed
+decisions, 203,339 elapsed ticks and 931,832 accounted tokens across 84 returned
+responses. The model requested WAIT while a liaison dialog blocked simulation;
+the harness escalated the blocked advance to failure. Nine citizens were alive.
+The original first-segment bundle remains immutable. Its registry pointer is
+replaced by the newer result for the same campaign ID, keeping 14 recorded rows.
+
+All checkpoints through 80 and the owned runtime teardown were audited. No full
+terminal checkpoint exists, so the current result must show checkpoint false,
+not inherit the earlier checkpoint true. Furniture item records remain separate
+from installed beds; missing measurements and unassessed collapse remain unknown.
+See [the result, costs, recovery limits and next repair](LOCAL_REASONING_DIALOG_RESULT.md).
+This data publication preserves the existing website layout. It is not a merge,
+deployment or browser acceptance claim. Earlier running-status notes are historical.
+
+## Furniture item records in campaign profiles
+
+The profile reader, bounded public feed and profile view now carry four separate
+furniture item-record observations: beds, chairs, doors and tables. They are the
+legacy `job_metrics.goods` counts of item records in play, not installed totals,
+complete inventory, newly produced items, ownership or accessibility. Existing
+installed-bed metrics are unchanged. The view shows start/latest/change when
+available and preserves unknowns, including a missing terminal observation.
+Old published bundles are not rewritten or backfilled with assumed counts.
+
+Sample coverage only says whether each recorded boundary supplied a count. It
+does not establish scan completeness. These records do not change production or
+consumption verdicts, campaign success, or model rankings.
+
+A read-only projection of the retained first reasoning-budget segment correctly
+reported bed item records 0 to 1 with installed beds remaining 0. The source trace
+SHA-256 remained
+`1feea15774dbceb0bac6fa1c8221fb245e9d77f017c8b87cfd3def019fce57e5`.
+This was an offline reporting check, not a new game experiment or replacement
+of the original published terminal result. The currently running native source
+at `de69c7a467eb0b00becfef03329bac9f58690e35` is unchanged.
+
+The existing FastAPI/static architecture and layout are preserved under the
+website-building workflow. Background work skips browser handoff and visual QA;
+the standing no-deploy boundary means this source update is not a live release.
+
+Validation: 114 focused profile/feed/catalog/HTTP/captured-data checks passed.
+The full local run reported 1,849 passed, 10 skipped and four failures: three
+historical-capture equality assertions needed the explicit additive-field
+compatibility checks now included in the passing focused run; the loopback-port
+test passed separately with local socket access. This is a full run plus
+targeted corrections, not a fresh all-green full suite. Changed-file lint,
+formatting and JavaScript syntax checks pass. Whole-tree debt remains 10 Ruff
+findings and 464 mypy errors in 26 files, with none reported in the three changed
+production Python modules.
+
+## Installed furniture and inventory observations
+
+The campaign table and profile now label `completed_beds` as **Installed beds**.
+That field counts completed placed furniture, not bed items in inventory. The
+saved checkpoint40 observation recorded 11 bed item records and three chair
+item records, but no installed beds or chairs. The page links its immutable
+source-hashed observation and does not turn that running checkpoint into a
+terminal campaign row. The original thirteen older results and first-segment
+terminal bundle are unchanged; there are still fourteen recorded campaigns.
+
+The legacy goods scan does not report scan completeness or production
+attribution. The observed inventory records are shown with those limits, not
+promoted to a complete stock audit, production flow or functioning-fortress
+claim. No gameplay setting, native source, checkpoint or model is changed.
+Browser preview/visual QA and deployment are not performed in this background
+source-only update; the existing FastAPI/static layout is preserved.
+
+Validation: 104 focused website checks passed (103 in the integration checkout),
+including the rendered-label test double, HTTP checkpoint note, immutable source
+link and evidence/placement distinction. Changed-file Ruff/Black, JavaScript
+syntax and diff checks passed. Existing whole-tree lint/type debt is unchanged.
+
+## Latest recorded result, September 7
+
+The first reasoning-budget segment is now registered as the fourteenth recorded
+campaign: 32 commands, 76,000 actual ticks, seven living citizens, one completed
+workshop, drink inventory 60 to 39, and 325,234 accounted tokens. Its checkpoint
+and outer-resource teardown were independently verified. See the
+[result and limitations](LOCAL_REASONING_SEGMENT1_RESULT.md).
+
+The historical three-command capture described below is unchanged. HTTP tests
+now verify that it cannot roll back this campaign's newer terminal record or
+create a duplicate row. The separate original-feed and helper tests retain its
+timestamp and unknown metrics. No live game, browser or deployment is started
+by serving these versioned records.
+
+Validation for this update: 103 focused tests passed, including exact result
+bytes, HTTP publication, checkpoint/usage summaries and stale-report precedence.
+Changed-file Ruff and Black, JavaScript syntax and diff checks passed. The full
+website suite is running at this publication. Existing repository-wide debt
+remains: 10 Ruff findings and 464 mypy errors in 26 files.
+
+## Current real-data compatibility check, September 7
+
+The optional active feed now recognizes the published reasoning-budget condition
+and links to its immutable configuration at `ebf470d8364bf326cacd7b9985e6f5438d6d4f49`
+only when the canonical configuration SHA-256 matches
+`13ec2fdaad2b5e63b6f1e8fc4d57feefd3f66cd307104267d7bc06743cdbb490`.
+The remote file and its digest were read back before adding the link.
+
+A captured public report from the actual native run at `de69c7a46` is retained
+as a regression fixture, bound to the original serialized snapshot digest. It
+reported three committed commands, 5,500 elapsed ticks and 22,751 accounted
+tokens at `2026-09-07T02:16:25.623321+00:00`. This is a historical running-state
+observation, not a terminal result or a live connection. It is not registered
+among the website's thirteen published terminal records.
+
+HTTP tests combine this report with the thirteen recorded rows, preserve its
+timestamp and unknown values, and verify that it becomes stale without turning
+into a game loss. JavaScript rendering-helper tests check the exact condition
+link, reported-running/stale labels, zero model API charge and unknown operating
+costs. This is real-data route/formatting coverage, not browser visual acceptance.
+
+The frozen native producer omits population and drink-stock values in this
+running report. This website branch's newer shared metrics reader supports v2
+observations in both terminal reports and `CampaignFeed.progress`. Separate
+synthetic publisher-to-HTTP tests verify population and drink counts, confirmed
+zero values, and loss of incomplete or missing observations without carrying
+forward older counts. These tests do not replace the actual captured report or
+claim that the frozen producer has been upgraded. The website preserves its
+unknowns and does not infer them from another campaign. Future execution must
+include the newer reader to emit these values; the active game's source and
+condition were not changed.
+No website server, browser, hosted Site, production deployment or merge was
+started by this check. The existing FastAPI/static implementation is preserved.
+
+## Original separate website milestone
+
 This change delivers the read-only campaign tracking surface independently of
 the native campaign implementation in [PR #125](https://github.com/lemoz/fort-gym/pull/125).
 It is based directly on main at `82ee3e07859b2813fc4643d02aa034daecea6b18`.

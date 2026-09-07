@@ -4,7 +4,7 @@
   const metricNames = {
     population: 'Dwarves', food_stock: 'Food stock', drink_stock: 'Drink stock',
     wood_stock: 'Wood stock', stone_stock: 'Stone stock', functional_rooms: 'Detected functional rooms',
-    completed_workshops: 'Completed workshops', completed_beds: 'Completed beds',
+    completed_workshops: 'Completed workshops', completed_beds: 'Installed beds',
     completed_farms: 'Completed farms', recorded_dead_citizens: 'Recorded dead citizens'
   };
   const statusNames = {
@@ -29,6 +29,30 @@
     'local-native-llama-thinking-v1': 'local_native_llama_thinking_v1.json',
     'local-native-llama-long-v1': 'local_native_llama_long_v1.json',
     'local-native-llama-long-v2': 'local_native_llama_long_v2.json'
+  };
+  // A versioned condition may be published after the frozen execution image.
+  // Bind its separate source location to the exact configuration digest.
+  const conditionPublications = {
+    'local-native-qwen35-year-two-v1': {
+      file: 'local_native_qwen35_year_two_v1.json',
+      revision: 'd3a8bd8d5d4588d2c26b0d0201585577bf361edd',
+      sha256: 'bd658141891e31d3e4f014ca92e484779a5330d74a75d9163ea97289d3819018'
+    },
+    'local-native-qwen35-year-two-thinking-v1': {
+      file: 'local_native_qwen35_year_two_thinking_v1.json',
+      revision: '7bc15d160ea251bf1b07eb31615c510ea80a4ff9',
+      sha256: '01505097fbf5e12cd436cf3f044ca021a0f632d83c04371607b9a0d577c3b73d'
+    },
+    'local-native-qwen35-year-two-reasoning-budget-v1': {
+      file: 'local_native_qwen35_year_two_reasoning_budget_v1.json',
+      revision: 'ebf470d8364bf326cacd7b9985e6f5438d6d4f49',
+      sha256: '13ec2fdaad2b5e63b6f1e8fc4d57feefd3f66cd307104267d7bc06743cdbb490'
+    },
+    'local-native-qwen35-year-two-inspection-v1': {
+      file: 'local_native_qwen35_year_two_inspection_v1.json',
+      revision: '48d9ed6d94a598b44c4cfbe10a0df4badcb189ad',
+      sha256: 'ec7c987aef51ce61970ba6c52ea1efd03e887e2ae7c6af87297e9dcef00a1093'
+    }
   };
   function known(value) { return typeof value === 'number' && Number.isFinite(value) && value >= 0; }
   function number(value) { return known(value) ? value.toLocaleString('en-US') : 'Unknown'; }
@@ -57,6 +81,13 @@
     return failureNames[row.failure_kind] || statusNames[row.segment_status] || 'Unknown';
   }
   function configurationUrl(row) {
+    if (!/^[a-f0-9]{40}$/.test(row.code_revision)) return null;
+    if (Object.hasOwn(conditionPublications, row.condition_id)) {
+      const publication = conditionPublications[row.condition_id];
+      return row.configuration_sha256 === publication.sha256
+        ? `https://github.com/lemoz/fort-gym/blob/${publication.revision}/experiments/campaigns/${publication.file}`
+        : null;
+    }
     return /^[a-f0-9]{40}$/.test(row.code_revision) && Object.hasOwn(conditionFiles, row.condition_id)
       ? `https://github.com/lemoz/fort-gym/blob/${row.code_revision}/experiments/campaigns/${conditionFiles[row.condition_id]}`
       : null;
@@ -97,9 +128,20 @@
       const commands = table(panel, 'Recorded command choices', ['Control', 'Accepted', 'Rejected', 'Unknown']);
       Object.entries(actions.by_type).forEach(([kind, counts]) => {
         const tr = node('tr', undefined, commands);
-        [kind, number(counts.accepted), number(counts.rejected), number(counts.unknown)].forEach(value => node('td', value, tr));
+        [kind === 'VIEW' ? 'VIEW · map inspection' : kind, number(counts.accepted), number(counts.rejected), number(counts.unknown)].forEach(value => node('td', value, tr));
       });
+      if (Object.hasOwn(actions.by_type, 'VIEW')) {
+        node('p', 'VIEW inspects terrain without advancing game time or building anything. Its accepted count is not completed work.', panel);
+      }
       node('p', `${number(actions.changed_command_after_rejection)} changed commands following rejection. Changing a command does not establish recovery.`, panel);
+    }
+    const retries = actions.command_retry_outcomes;
+    if (retries?.schema_version === 'fortgym.command-retry-outcomes/v1'
+      && ['accepted', 'rejected', 'unknown'].every(key => Number.isInteger(retries[key]) && retries[key] >= 0)) {
+      node('p', `Retries of previously rejected commands: ${number(retries.accepted)} accepted, ${number(retries.rejected)} rejected again, ${number(retries.unknown)} with unknown outcomes.`, panel);
+      node('p', 'Matches the same control and parameters, even after other actions. An accepted or unknown outcome ends that command’s rejection sequence. Acceptance alone does not establish recovery.', panel);
+    } else {
+      node('p', 'Retries of previously rejected commands: not recorded.', panel);
     }
     node('p', `Checkpoint: ${row.checkpoint_verified ? 'verified' : 'not verified'}. Teardown: ${row.cleanup_verified === true ? 'verified' : row.cleanup_verified === false ? 'not verified' : 'unknown'}.`, panel);
     const usage = row.usage || {};
@@ -108,6 +150,7 @@
     if (local) node('p', 'Hardware, electricity and infrastructure costs are not measured here. Zero model API charges do not mean zero operating cost.', panel);
     if (!local && money(usage.reported_model_cost_usd) !== 'Unknown') node('p', `Exact reported cost: ${usage.reported_model_cost_usd} USD.`, panel);
     const summaries = row.metric_summaries || {};
+    node('p', 'Installed beds are completed furniture placements, not bed items in inventory.', panel);
     const body = table(panel, 'Observed state, not an inferred success score', ['Measure', 'Start', 'Latest', 'Change', 'Observed min / max']);
     Object.entries(metricNames).forEach(([key, label]) => {
       const summary = summaries[key] || {}, tr = node('tr', undefined, body);
@@ -117,6 +160,19 @@
       node('td', change === null ? 'Unknown' : `${change > 0 ? '+' : ''}${change}`, tr);
       node('td', `${number(summary.minimum_observed)} / ${number(summary.maximum_observed)}`, tr);
     });
+    const furniture = row.current_furniture_item_records || {};
+    const furnitureSummaries = row.furniture_item_record_summaries || {};
+    const furnitureNames = { bed: 'Bed items', chair: 'Chair items', door: 'Door items', table: 'Table items' };
+    if (Object.keys(furnitureNames).some(key => known(furniture[key]) || known(furnitureSummaries[key]?.observed_samples) && furnitureSummaries[key].observed_samples > 0)) {
+      const items = table(panel, 'Observed furniture item records', ['Item', 'Start', 'Latest', 'Observed change']);
+      Object.entries(furnitureNames).forEach(([key, label]) => {
+        const summary = furnitureSummaries[key] || {}, tr = node('tr', undefined, items);
+        const change = known(summary.start) && known(summary.end) ? summary.end - summary.start : null;
+        [label, number(summary.start), number(furniture[key]), change === null ? 'Unknown' : `${change > 0 ? '+' : ''}${change}`]
+          .forEach(text => node('td', text, tr));
+      });
+      node('p', 'These are item records in play, not newly produced items or installed furniture totals. The legacy scan does not report completeness, ownership, or accessibility.', panel);
+    } else node('p', 'Furniture item counts are unavailable in this report.', panel);
     if ((row.timeline || []).length) {
       const details = node('details', undefined, panel);
       node('summary', row.timeline_sampled ? 'Recorded boundaries (sampled; gaps are not interpolated)' : 'Recorded boundaries', details);

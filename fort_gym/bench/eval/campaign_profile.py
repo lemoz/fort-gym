@@ -27,7 +27,10 @@ METRICS = (
     "completed_farms",
     "recorded_dead_citizens",
 )
-ACTION_TYPES = {"DIG", "BUILD", "ORDER", "UNSUSPEND", "FARM", "LABOR", "WAIT", "INTERACT"}
+# Reporting vocabulary only; this does not enable controls in a runtime profile.
+ACTION_TYPES = {"DIG", "BUILD", "ORDER", "UNSUSPEND", "FARM", "LABOR", "WAIT", "INTERACT", "VIEW"}
+FURNITURE_RECORDS = ("bed", "chair", "door", "table")
+COMMAND_RETRY_SCHEMA = "fortgym.command-retry-outcomes/v1"
 
 
 def count(value: Any) -> int | None:
@@ -36,6 +39,52 @@ def count(value: Any) -> int | None:
 
 def mapping(value: Any) -> dict:
     return value if isinstance(value, dict) else {}
+
+
+def command_retry_outcomes(records: list[dict]) -> dict | None:
+    """Count exact-command retries across intervening actions, not successful recovery.
+
+    Rejection keeps that command pending. Acceptance or an unknown outcome clears
+    it. Waiting time and optional planning notes are not command parameters.
+    Missing origins, gaps, duplicates or unrecognized commands leave this unknown.
+    Only aggregate counts leave this function; no parameters or fingerprints do.
+    """
+    pending: set[str] = set()
+    outcomes: Counter[str] = Counter()
+    for expected_step, record in enumerate(records):
+        if type(record.get("step")) is not int or record["step"] != expected_step:
+            return None
+        action = mapping(record.get("action"))
+        kind, params = action.get("type"), action.get("params")
+        if not isinstance(kind, str) or kind not in ACTION_TYPES or not isinstance(params, dict):
+            return None
+        try:
+            command = json.dumps({"type": kind, "params": params}, sort_keys=True, allow_nan=False)
+        except (TypeError, ValueError):
+            return None
+        accepted = mapping(record.get("execute")).get("accepted")
+        outcome = "accepted" if accepted is True else "rejected" if accepted is False else "unknown"
+        if command in pending:
+            outcomes[outcome] += 1
+        if accepted is False:
+            pending.add(command)
+        else:
+            pending.discard(command)
+    return {
+        "schema_version": COMMAND_RETRY_SCHEMA,
+        **{key: outcomes[key] for key in ("accepted", "rejected", "unknown")},
+    }
+
+
+def furniture_records_from_state(value: Any) -> dict[str, int | None]:
+    """Observed legacy IN_PLAY item records, not production or installed totals.
+
+    job_metrics.goods skips unreadable item types and has no completeness flag.
+    Keep these descriptive counts separate from validated native stock metrics.
+    """
+    crew = mapping(mapping(value).get("crew"))
+    goods = mapping(crew.get("goods")) if crew.get("ok") is True else {}
+    return {key: count(goods.get(key)) for key in FURNITURE_RECORDS}
 
 
 def metrics_from_state(value: Any) -> dict[str, int | None]:
@@ -51,6 +100,25 @@ def metrics_from_state(value: Any) -> dict[str, int | None]:
         metrics["population"] = count(state.get("population"))
         for key in ("food", "drink", "wood", "stone"):
             metrics[f"{key}_stock"] = count(stocks.get(key))
+    elif (
+        quality.get("schema_version") == "fortgym.campaign-observation-quality/v2"
+        and quality.get("native_population_and_stock_value_types_validated") is True
+    ):
+        if quality.get("population_source") == "active living native citizens":
+            metrics["population"] = count(state.get("population"))
+        observations = mapping(state.get("stock_observations"))
+        drink = mapping(observations.get("drink"))
+        units = count(drink.get("units"))
+        if (
+            observations.get("schema_version") == "fortgym.stock-observations/v1"
+            and drink.get("source") == "world.items.other.IN_PLAY DRINK stack_size"
+            and drink.get("complete") is True
+            and units is not None
+            and units == count(stocks.get("drink"))
+        ):
+            metrics["drink_stock"] = units
+        # The v2 flag validates value types only. Missing stock provenance and
+        # freshness-unverified UI food estimates are not native stock evidence.
     fort, crew = mapping(state.get("fort")), mapping(state.get("crew"))
     if (
         fort.get("ok") is True
@@ -131,6 +199,14 @@ def usage_profile(usage: Any) -> dict:
     return result
 
 
+def furniture_record_summary(values: list[int | None]) -> dict:
+    summary = metric_summary(values)
+    summary["sample_coverage"] = summary.pop("evidence")
+    summary["scan_completeness"] = "not_reported"
+    summary["production_attribution"] = "unavailable"
+    return summary
+
+
 def campaign_profile(
     records: list[dict],
     *,
@@ -155,6 +231,7 @@ def campaign_profile(
             "year": count(mapping(state).get("year")),
             "year_tick": count(mapping(state).get("year_tick")),
             "metrics": metrics_from_state(state),
+            "furniture_item_records": furniture_records_from_state(state),
         }
         for index, state in enumerate(boundaries)
     ]
@@ -216,6 +293,12 @@ def campaign_profile(
         "metrics": {
             key: metric_summary([point["metrics"][key] for point in points]) for key in METRICS
         },
+        "furniture_item_records": {
+            key: furniture_record_summary(
+                [point["furniture_item_records"][key] for point in points]
+            )
+            for key in FURNITURE_RECORDS
+        },
         "timeline": points,
         "actions": {
             "committed_rows": len(records),
@@ -226,6 +309,7 @@ def campaign_profile(
             },
             "changed_command_after_rejection": changed_after_rejection,
             "path_cache_stale_rejections": totals["path_cache_stale_rejections"],
+            "command_retry_outcomes": command_retry_outcomes(records),
         },
         "usage": usage_profile(usage),
         "flow_measurement": {"status": "unavailable", "production": None, "consumption": None},
@@ -233,10 +317,12 @@ def campaign_profile(
         "autonomous_gameplay": "not_assessed",
         "fortress_collapse": "not_assessed",
         "limits": [
+            "Furniture item records count legacy IN_PLAY observations; scan completeness, ownership and accessibility are not reported. Changes are not production or installed totals.",
             "Food and drink are native UI stock counters, not production or consumption measurements.",
             "Room and building counts are unknown when the source reports an incomplete or truncated scan.",
             "Recorded dead citizens includes the starting world's history; population changes do not identify death causes.",
             "Accepted commands and changed commands are observations, not completed-work or successful-adaptation verdicts.",
+            "Command retries match exact control and parameters across intervening actions; accepted or unknown outcomes clear that command's rejection sequence. Accepted retries are not proof of recovery.",
             "Metrics describe sampled boundaries; unseen between-sample extrema are not known.",
             "This canonical trace contains its checkpoint prefix. Do not add ancestor trace durations or cumulative costs.",
             "A budget pause or harness failure is not evidence of fortress collapse. Time alone is not autonomous success.",

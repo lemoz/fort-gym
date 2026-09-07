@@ -1,0 +1,2521 @@
+{
+  "schema_version": "fortgym.published-campaign-bundle/v1",
+  "configuration": {
+    "schema_version": "fortgym.local-campaign-condition/v1",
+    "runner": "campaign-loop/v1",
+    "condition_id": "local-native-qwen35-year-two-reasoning-budget-v1",
+    "decision_profile": "campaign_action/v1",
+    "observation_profile": "campaign_state/v1",
+    "advance_policy": "model_requested/v1",
+    "schema_attempts": 2,
+    "phase": "development",
+    "hypothesis": "With thinking enabled and the same 4096-token total output allowance, test whether a declared 2048-token reasoning budget leaves room for a model-selected action and enables sustained fortress development. This is a new experiment, not a repair or continuation of the completed thinking-v1 campaign. Valid action syntax alone is not successful play.",
+    "models": [
+      "fort-gym-qwen35-9b-q4-03b74727a860"
+    ],
+    "max_steps": 32,
+    "max_segments": 8,
+    "segment_time_budget_seconds": 7200,
+    "ticks_per_step": 2000,
+    "max_advance_ticks": 2500,
+    "max_output_tokens": 4096,
+    "max_attempts": 1,
+    "max_dispatches": 512,
+    "max_request_bytes": 65536,
+    "max_total_tokens": 8000000,
+    "max_cost_usd": 0,
+    "local_inference": {
+      "transport": "llama-cpp-local/v1",
+      "server_version": "b10516-b95502ba9",
+      "prompt_contract": "visible_action_contract/v1",
+      "prompt_packing": "bounded_history_corrections/v1",
+      "model_digests": {
+        "fort-gym-qwen35-9b-q4-03b74727a860": "03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8"
+      },
+      "model_files": {
+        "fort-gym-qwen35-9b-q4-03b74727a860": "Qwen3.5-9B-Q4_K_M.gguf"
+      },
+      "model_metadata_sha256": {
+        "fort-gym-qwen35-9b-q4-03b74727a860": "55e0498c6d066243ffd3ebd364f7af4460596189d3d9d11e6697f9bdbfc93dea"
+      },
+      "chat_template_sha256": {
+        "fort-gym-qwen35-9b-q4-03b74727a860": "7f0e529032c25183bcd66c7f238da2d377f43be754a94e2725a58c4e16d2ed67"
+      },
+      "context_tokens": 32768,
+      "context_headroom_tokens": 512,
+      "token_count_profile": "llama-chat-input-tokens/v1",
+      "token_count_timeout_seconds": 10,
+      "timeout_seconds": 600,
+      "temperature": 0.6,
+      "top_p": 0.95,
+      "top_k": 20,
+      "seed": 73,
+      "enable_thinking": true,
+      "runtime_profile": "flash_q8/v1",
+      "action_reference": "native_designations/v1",
+      "action_schema": "typed_native_parameters/v1",
+      "reasoning_budget_tokens": 2048
+    },
+    "workshop_placement_policy": "dfhack_047_ground/v1",
+    "notes": [
+      "Declared before execution. Preserve the completed direct/thinking pair and exact output-budget replay. Do not rewrite their conditions, requests, checkpoints, measured ticks or outcomes.",
+      "Use the same original immutable native seed at year 30, tick 16801, existing Qwen3.5 9B weights, pinned llama.cpp build, prompt, action schema, sampling and total output/context allowances as thinking-v1. Only reasoning_budget_tokens changes in the execution configuration after descriptive metadata.",
+      "Use a frozen committed implementation containing the separately native-verified max_advance_ticks propagation correction. The historical pair used the older 2000-tick cap; this new run is not a strict one-variable gameplay comparison against that pair. Report actual elapsed ticks and this code difference.",
+      "Before a full campaign segment, test one retained local request with the explicit reasoning budget using a separately recorded owner and immutable source. A returned valid action only establishes model transport compatibility; do not execute that diagnostic action or resume the old campaign.",
+      "Begin a new campaign and preserve periodic/final checkpoints. Continue cleanly completed segments without resetting cumulative usage or changing configuration; retain every pause or failure. One model/game at a time, with verified owned-process teardown between owners.",
+      "The total 4096-token output allowance includes thinking, forced end-of-thinking delimiters and action content. A 2048-token reasoning budget is a sampler setting, not proof of a valid action or good planning. No injected reasoning-budget message or scripted gameplay coaching.",
+      "Compare accepted/rejected commands, actual elapsed native ticks, completed structures, population, native drink units, checkpoint continuity, returned tokens, missing usage and output/transport pauses. Preserve failures instead of manufacturing action success.",
+      "Use local inference with no hosted fallback or cloud VM. Model API charges are zero; hardware, electricity and application costs remain unmeasured. No human gameplay rescue.",
+      "A functioning fortress after 403200 elapsed ticks, continued year-two play, repeated attempts across at least three supported models, and verified website and remote delivery remain the overall goal. This single condition is not a ranking."
+    ],
+    "checkpoint_policy": {
+      "profile": "periodic_checkpoints/v1",
+      "interval_steps": 8,
+      "minimum_free_bytes": 1073741824
+    },
+    "starting_snapshot": {
+      "receipt_sha256": "eaf5fa5a40014719e6c313f33497740e536a8faa1c90a84c4e09dcc380ac0595",
+      "year": 30,
+      "year_tick": 16801,
+      "provenance": "local_native_save_smoke_43a53762"
+    }
+  },
+  "source_snapshot_receipt_sha256": "eaf5fa5a40014719e6c313f33497740e536a8faa1c90a84c4e09dcc380ac0595",
+  "reporting_code_revision": "4dc0f3b68eac5d73043b0858866d5755af434561",
+  "campaigns": [
+    {
+      "schema_version": "fortgym.public-campaign-state/v1",
+      "campaign_id": "fort-gym-year-two-qwen35-reasoning-budget-v1-a",
+      "segment_id": "segment-000003",
+      "model": "fort-gym-qwen35-9b-q4-03b74727a860",
+      "condition_id": "local-native-qwen35-year-two-reasoning-budget-v1",
+      "code_revision": "de69c7a467eb0b00becfef03329bac9f58690e35",
+      "configuration_sha256": "13ec2fdaad2b5e63b6f1e8fc4d57feefd3f66cd307104267d7bc06743cdbb490",
+      "updated_at": "2026-09-07T06:21:55.859894+00:00",
+      "lifecycle": "finished",
+      "segment_status": "failed",
+      "failure_kind": "unclassified",
+      "committed_steps": 83,
+      "elapsed_ticks": 203339,
+      "current_metrics": {
+        "population": 9,
+        "food_stock": null,
+        "drink_stock": 25,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 1,
+        "completed_beds": 0,
+        "completed_farms": 0,
+        "recorded_dead_citizens": 0
+      },
+      "current_furniture_item_records": {
+        "bed": 11,
+        "chair": 5,
+        "door": 0,
+        "table": 0
+      },
+      "usage": {
+        "total_tokens": 931832,
+        "dispatched_requests": 84,
+        "returned_responses": 84,
+        "accounted_responses": 84,
+        "reported_model_cost_usd": null,
+        "dispatches_without_returned_usage": 0,
+        "billing_reconciled": false,
+        "cost_basis": "self_hosted_no_metered_provider",
+        "metered_provider_charge_usd": "0",
+        "infrastructure_cost_usd": null
+      },
+      "checkpoint_verified": false,
+      "cleanup_verified": true,
+      "functioning_fortress": "not_assessed",
+      "autonomous_gameplay": "not_assessed",
+      "fortress_collapse": "not_assessed",
+      "comparison_rankings_available": false,
+      "flow_measurement": "unavailable",
+      "metric_summaries": {
+        "population": {
+          "start": 7,
+          "end": 9,
+          "minimum_observed": 7,
+          "maximum_observed": 9,
+          "observed_samples": 84,
+          "missing_samples": 0,
+          "change": 2
+        },
+        "food_stock": {
+          "start": null,
+          "end": null,
+          "minimum_observed": null,
+          "maximum_observed": null,
+          "observed_samples": 0,
+          "missing_samples": 84,
+          "change": null
+        },
+        "drink_stock": {
+          "start": 60,
+          "end": 25,
+          "minimum_observed": 0,
+          "maximum_observed": 60,
+          "observed_samples": 84,
+          "missing_samples": 0,
+          "change": -35
+        },
+        "wood_stock": {
+          "start": null,
+          "end": null,
+          "minimum_observed": null,
+          "maximum_observed": null,
+          "observed_samples": 0,
+          "missing_samples": 84,
+          "change": null
+        },
+        "stone_stock": {
+          "start": null,
+          "end": null,
+          "minimum_observed": null,
+          "maximum_observed": null,
+          "observed_samples": 0,
+          "missing_samples": 84,
+          "change": null
+        },
+        "functional_rooms": {
+          "start": 0,
+          "end": null,
+          "minimum_observed": 0,
+          "maximum_observed": 0,
+          "observed_samples": 13,
+          "missing_samples": 71,
+          "change": null
+        },
+        "completed_workshops": {
+          "start": 0,
+          "end": 1,
+          "minimum_observed": 0,
+          "maximum_observed": 1,
+          "observed_samples": 84,
+          "missing_samples": 0,
+          "change": 1
+        },
+        "completed_beds": {
+          "start": 0,
+          "end": 0,
+          "minimum_observed": 0,
+          "maximum_observed": 0,
+          "observed_samples": 84,
+          "missing_samples": 0,
+          "change": 0
+        },
+        "completed_farms": {
+          "start": 0,
+          "end": 0,
+          "minimum_observed": 0,
+          "maximum_observed": 0,
+          "observed_samples": 84,
+          "missing_samples": 0,
+          "change": 0
+        },
+        "recorded_dead_citizens": {
+          "start": 0,
+          "end": 0,
+          "minimum_observed": 0,
+          "maximum_observed": 0,
+          "observed_samples": 84,
+          "missing_samples": 0,
+          "change": 0
+        }
+      },
+      "furniture_item_record_summaries": {
+        "bed": {
+          "start": 0,
+          "end": 11,
+          "minimum_observed": 0,
+          "maximum_observed": 11,
+          "observed_samples": 84,
+          "missing_samples": 0,
+          "change": 11
+        },
+        "chair": {
+          "start": 0,
+          "end": 5,
+          "minimum_observed": 0,
+          "maximum_observed": 5,
+          "observed_samples": 84,
+          "missing_samples": 0,
+          "change": 5
+        },
+        "door": {
+          "start": 0,
+          "end": 0,
+          "minimum_observed": 0,
+          "maximum_observed": 0,
+          "observed_samples": 84,
+          "missing_samples": 0,
+          "change": 0
+        },
+        "table": {
+          "start": 0,
+          "end": 0,
+          "minimum_observed": 0,
+          "maximum_observed": 0,
+          "observed_samples": 84,
+          "missing_samples": 0,
+          "change": 0
+        }
+      },
+      "furniture_item_record_scope": {
+        "source": "legacy job_metrics.goods IN_PLAY item records",
+        "scan_completeness": "not_reported",
+        "production_attribution": "unavailable",
+        "ownership_and_accessibility": "not_reported"
+      },
+      "timeline": [
+        {
+          "boundary_index": 0,
+          "year": 30,
+          "year_tick": 16801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 60,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 0,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 1,
+          "year": 30,
+          "year_tick": 19301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 60,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 0,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 2,
+          "year": 30,
+          "year_tick": 19801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 60,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 0,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 3,
+          "year": 30,
+          "year_tick": 22301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 60,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 0,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 4,
+          "year": 30,
+          "year_tick": 22801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 60,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 0,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 5,
+          "year": 30,
+          "year_tick": 25301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 60,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 0,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 6,
+          "year": 30,
+          "year_tick": 27801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 60,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 0,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 7,
+          "year": 30,
+          "year_tick": 30301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 60,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 0,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 8,
+          "year": 30,
+          "year_tick": 32801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 60,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 0,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 9,
+          "year": 30,
+          "year_tick": 35301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 60,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 0,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 10,
+          "year": 30,
+          "year_tick": 37801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 54,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 0,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 11,
+          "year": 30,
+          "year_tick": 40301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 54,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 0,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 12,
+          "year": 30,
+          "year_tick": 42801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 53,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": 0,
+            "completed_workshops": 0,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 0,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 13,
+          "year": 30,
+          "year_tick": 45301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 53,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 0,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 14,
+          "year": 30,
+          "year_tick": 47801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 53,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 0,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 15,
+          "year": 30,
+          "year_tick": 50301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 53,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 0,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 16,
+          "year": 30,
+          "year_tick": 52801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 53,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 0,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 17,
+          "year": 30,
+          "year_tick": 55301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 53,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 0,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 18,
+          "year": 30,
+          "year_tick": 57801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 53,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 0,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 19,
+          "year": 30,
+          "year_tick": 60301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 47,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 0,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 20,
+          "year": 30,
+          "year_tick": 62801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 47,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 0,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 21,
+          "year": 30,
+          "year_tick": 65301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 46,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 0,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 22,
+          "year": 30,
+          "year_tick": 67801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 46,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 0,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 23,
+          "year": 30,
+          "year_tick": 70301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 46,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 0,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 24,
+          "year": 30,
+          "year_tick": 72801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 46,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 0,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 25,
+          "year": 30,
+          "year_tick": 75301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 46,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 0,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 26,
+          "year": 30,
+          "year_tick": 77801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 46,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 0,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 27,
+          "year": 30,
+          "year_tick": 80301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 40,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 0,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 28,
+          "year": 30,
+          "year_tick": 82801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 40,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 1,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 29,
+          "year": 30,
+          "year_tick": 85301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 40,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 1,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 30,
+          "year": 30,
+          "year_tick": 87801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 40,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 1,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 31,
+          "year": 30,
+          "year_tick": 90301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 40,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 1,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 32,
+          "year": 30,
+          "year_tick": 92801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 39,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 1,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 33,
+          "year": 30,
+          "year_tick": 95301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 39,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 2,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 34,
+          "year": 30,
+          "year_tick": 97801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 39,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 4,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 35,
+          "year": 30,
+          "year_tick": 100301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 34,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 6,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 36,
+          "year": 30,
+          "year_tick": 102801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 33,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 7,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 37,
+          "year": 30,
+          "year_tick": 105301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 33,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 9,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 38,
+          "year": 30,
+          "year_tick": 107801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 33,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 0,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 39,
+          "year": 30,
+          "year_tick": 110301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 33,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 1,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 40,
+          "year": 30,
+          "year_tick": 112801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 33,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 3,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 41,
+          "year": 30,
+          "year_tick": 115301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 33,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 42,
+          "year": 30,
+          "year_tick": 117801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 32,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 43,
+          "year": 30,
+          "year_tick": 120301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 30,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 44,
+          "year": 30,
+          "year_tick": 122801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 27,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 45,
+          "year": 30,
+          "year_tick": 125301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 26,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 46,
+          "year": 30,
+          "year_tick": 127801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 26,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 47,
+          "year": 30,
+          "year_tick": 130301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 26,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 48,
+          "year": 30,
+          "year_tick": 132801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 26,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 49,
+          "year": 30,
+          "year_tick": 135301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 26,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 50,
+          "year": 30,
+          "year_tick": 137801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 26,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 51,
+          "year": 30,
+          "year_tick": 140301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 26,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 52,
+          "year": 30,
+          "year_tick": 142801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 21,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 53,
+          "year": 30,
+          "year_tick": 145301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 20,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 54,
+          "year": 30,
+          "year_tick": 147801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 19,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 55,
+          "year": 30,
+          "year_tick": 150301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 19,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 56,
+          "year": 30,
+          "year_tick": 152801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 19,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 57,
+          "year": 30,
+          "year_tick": 155301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 19,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 58,
+          "year": 30,
+          "year_tick": 157801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 19,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 59,
+          "year": 30,
+          "year_tick": 160301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 19,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 60,
+          "year": 30,
+          "year_tick": 162801,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 14,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 61,
+          "year": 30,
+          "year_tick": 165301,
+          "metrics": {
+            "population": 7,
+            "food_stock": null,
+            "drink_stock": 13,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 62,
+          "year": 30,
+          "year_tick": 167801,
+          "metrics": {
+            "population": 9,
+            "food_stock": null,
+            "drink_stock": 13,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 63,
+          "year": 30,
+          "year_tick": 170301,
+          "metrics": {
+            "population": 9,
+            "food_stock": null,
+            "drink_stock": 12,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 64,
+          "year": 30,
+          "year_tick": 172801,
+          "metrics": {
+            "population": 9,
+            "food_stock": null,
+            "drink_stock": 12,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 65,
+          "year": 30,
+          "year_tick": 175301,
+          "metrics": {
+            "population": 9,
+            "food_stock": null,
+            "drink_stock": 12,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 66,
+          "year": 30,
+          "year_tick": 177801,
+          "metrics": {
+            "population": 9,
+            "food_stock": null,
+            "drink_stock": 12,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 67,
+          "year": 30,
+          "year_tick": 180301,
+          "metrics": {
+            "population": 9,
+            "food_stock": null,
+            "drink_stock": 12,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 68,
+          "year": 30,
+          "year_tick": 182801,
+          "metrics": {
+            "population": 9,
+            "food_stock": null,
+            "drink_stock": 8,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 69,
+          "year": 30,
+          "year_tick": 185301,
+          "metrics": {
+            "population": 9,
+            "food_stock": null,
+            "drink_stock": 7,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 70,
+          "year": 30,
+          "year_tick": 187801,
+          "metrics": {
+            "population": 9,
+            "food_stock": null,
+            "drink_stock": 5,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 71,
+          "year": 30,
+          "year_tick": 190301,
+          "metrics": {
+            "population": 9,
+            "food_stock": null,
+            "drink_stock": 5,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 72,
+          "year": 30,
+          "year_tick": 192801,
+          "metrics": {
+            "population": 9,
+            "food_stock": null,
+            "drink_stock": 5,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 73,
+          "year": 30,
+          "year_tick": 195301,
+          "metrics": {
+            "population": 9,
+            "food_stock": null,
+            "drink_stock": 4,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 74,
+          "year": 30,
+          "year_tick": 197801,
+          "metrics": {
+            "population": 9,
+            "food_stock": null,
+            "drink_stock": 4,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 75,
+          "year": 30,
+          "year_tick": 200301,
+          "metrics": {
+            "population": 9,
+            "food_stock": null,
+            "drink_stock": 4,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 76,
+          "year": 30,
+          "year_tick": 202801,
+          "metrics": {
+            "population": 9,
+            "food_stock": null,
+            "drink_stock": 3,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 77,
+          "year": 30,
+          "year_tick": 205301,
+          "metrics": {
+            "population": 9,
+            "food_stock": null,
+            "drink_stock": 2,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 78,
+          "year": 30,
+          "year_tick": 207801,
+          "metrics": {
+            "population": 9,
+            "food_stock": null,
+            "drink_stock": 0,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 79,
+          "year": 30,
+          "year_tick": 210301,
+          "metrics": {
+            "population": 9,
+            "food_stock": null,
+            "drink_stock": 0,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 80,
+          "year": 30,
+          "year_tick": 212801,
+          "metrics": {
+            "population": 9,
+            "food_stock": null,
+            "drink_stock": 0,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 81,
+          "year": 30,
+          "year_tick": 215301,
+          "metrics": {
+            "population": 9,
+            "food_stock": null,
+            "drink_stock": 0,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 82,
+          "year": 30,
+          "year_tick": 217801,
+          "metrics": {
+            "population": 9,
+            "food_stock": null,
+            "drink_stock": 0,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        },
+        {
+          "boundary_index": 83,
+          "year": 30,
+          "year_tick": 220140,
+          "metrics": {
+            "population": 9,
+            "food_stock": null,
+            "drink_stock": 25,
+            "wood_stock": null,
+            "stone_stock": null,
+            "functional_rooms": null,
+            "completed_workshops": 1,
+            "completed_beds": 0,
+            "completed_farms": 0,
+            "recorded_dead_citizens": 0
+          },
+          "furniture_item_records": {
+            "bed": 11,
+            "chair": 5,
+            "door": 0,
+            "table": 0
+          }
+        }
+      ],
+      "timeline_sampled": false,
+      "source_sha256": {
+        "campaign-segment.json": "119c8de3357b42eeb77c2b323a793ae156222c353ccd8e3ea3cbc5697b5670d8",
+        "result.json": "1e3c65148df6d49d0a602e92d1ae448821328ad404a8aa67eb86765eef5282a1",
+        "campaign/trace.jsonl": "e384a9a1e9bccf0cabe14a16f8cdf6179a7e918c0c741731bf4219a863c98017"
+      },
+      "actions": {
+        "committed_rows": 83,
+        "accepted": 73,
+        "rejected": 10,
+        "unknown": 0,
+        "changed_command_after_rejection": 10,
+        "path_cache_stale_rejections": 1,
+        "by_type": {
+          "BUILD": {
+            "accepted": 1,
+            "rejected": 3,
+            "unknown": 0
+          },
+          "DIG": {
+            "accepted": 3,
+            "rejected": 7,
+            "unknown": 0
+          },
+          "LABOR": {
+            "accepted": 4,
+            "rejected": 0,
+            "unknown": 0
+          },
+          "ORDER": {
+            "accepted": 4,
+            "rejected": 0,
+            "unknown": 0
+          },
+          "WAIT": {
+            "accepted": 61,
+            "rejected": 0,
+            "unknown": 0
+          }
+        }
+      }
+    }
+  ],
+  "native_audit": {
+    "segments": [
+      {
+        "segment_id": "segment-000001",
+        "status": "bounded_segment_complete",
+        "next_step": 32,
+        "native_load_verified": true,
+        "native_cleanup_verified": true,
+        "source_sha256": {
+          "campaign-segment.json": "35ef12d277f55cbff17110b26ceebe5cb0bcd01a4e6462a231ea81b67c61159a",
+          "result.json": "3e7813fc60e0ebcb293f45665591299b2b8deaefb95c18bf6481a99554e6056c",
+          "campaign/trace.jsonl": "1feea15774dbceb0bac6fa1c8221fb245e9d77f017c8b87cfd3def019fce57e5",
+          "campaign/usage.jsonl": "5970ad8dbc9e1a8fedba4bc8904c56b706814c9f59214bf7c254a4ca8403783f",
+          "agent-final.json": "8733a144c2a244c5738a42aa8b1c6ee6207f16b815e52c2af36f0f666e5ff07c",
+          "spend.jsonl": "56b575460f1330169db78a7532ae2404451610a38bc9c2835985b55bb4dab305"
+        }
+      },
+      {
+        "segment_id": "segment-000002",
+        "status": "bounded_segment_complete",
+        "next_step": 64,
+        "native_load_verified": true,
+        "native_cleanup_verified": true,
+        "source_sha256": {
+          "campaign-segment.json": "2b1b5da0e9cda9ca4f3770492f3cefce53554551fa142527e6733e17be2ce91c",
+          "result.json": "02bf19bd314fde958774f729d8e61f4cbd0f03d452abbda08ffae0125bb4d318",
+          "campaign/trace.jsonl": "48bdfa5791c4c78fa103acc2eb869434b10a152bb9b301ddadd441a5ee099493",
+          "campaign/usage.jsonl": "e242686f3b3efca8657c1ff807372eab5d2be8148cea70171a14436ed3f289e0",
+          "agent-final.json": "2ab3d08077ad67794d2235a20bbe96f0a6fe7bd33c2d96ee08fde98364c16fff",
+          "spend.jsonl": "59e94351802aa3df278a44d6c98a42c41dae83d0a6ae5d4ea5bf7ef062d73500"
+        }
+      },
+      {
+        "segment_id": "segment-000003",
+        "status": "failed",
+        "next_step": 83,
+        "native_load_verified": true,
+        "native_cleanup_verified": true,
+        "source_sha256": {
+          "campaign-segment.json": "119c8de3357b42eeb77c2b323a793ae156222c353ccd8e3ea3cbc5697b5670d8",
+          "result.json": "1e3c65148df6d49d0a602e92d1ae448821328ad404a8aa67eb86765eef5282a1",
+          "campaign/trace.jsonl": "e384a9a1e9bccf0cabe14a16f8cdf6179a7e918c0c741731bf4219a863c98017",
+          "campaign/usage.jsonl": "b9d9fb264fdbfd0949a4f3011c39fef87291c8cdc28148e14e7e205ef2b6a6df",
+          "agent-final.json": "0013bce3373793b7ca75299e5381e677a1a8b97cbd2d810ab56c664c6428e190",
+          "spend.jsonl": "7182aff26caf5f1f56f9fdb16fb72fa96c811f64e089ea20b7f9ec81de649749"
+        }
+      }
+    ],
+    "checkpoints": [
+      {
+        "segment_id": "segment-000001",
+        "relative_path": "checkpoints/step-000008",
+        "next_step": 8,
+        "payload_sha256": "319f2c008814a9e5fced59df1b09be6acbc2abe6cdf4a053a04e58a62ca8b013",
+        "file_sha256": "de9c12fc57de3476fff0f9747d6d7b5359b395af4b880fc5494bd47112fee591",
+        "usage": {
+          "accounted_responses": 8,
+          "cost_basis": "self_hosted_no_metered_provider",
+          "dispatched_requests": 8,
+          "returned_responses": 8,
+          "total_cost_usd": "0",
+          "total_tokens": 65709
+        },
+        "native_year": 30,
+        "native_year_tick": 32801
+      },
+      {
+        "segment_id": "segment-000001",
+        "relative_path": "checkpoints/step-000016",
+        "next_step": 16,
+        "payload_sha256": "215e3de582db4821ed7c5263596f06526769d8360d7d6181331df1a208cca2a7",
+        "file_sha256": "fe5a2e195cf67de0d9a602d467ab8dc039812af291132bd393ad1fc2a8f0af00",
+        "usage": {
+          "accounted_responses": 16,
+          "cost_basis": "self_hosted_no_metered_provider",
+          "dispatched_requests": 16,
+          "returned_responses": 16,
+          "total_cost_usd": "0",
+          "total_tokens": 139889
+        },
+        "native_year": 30,
+        "native_year_tick": 52801
+      },
+      {
+        "segment_id": "segment-000001",
+        "relative_path": "checkpoints/step-000024",
+        "next_step": 24,
+        "payload_sha256": "7a6c2f57bbb4b54855b13588877aa7a8653e019eeba0888ead1dd94a81cf4a1a",
+        "file_sha256": "b694e5253f6240dd235e04d828a2ccbbf92c444648a0e99746e1a0b6afd103c2",
+        "usage": {
+          "accounted_responses": 24,
+          "cost_basis": "self_hosted_no_metered_provider",
+          "dispatched_requests": 24,
+          "returned_responses": 24,
+          "total_cost_usd": "0",
+          "total_tokens": 234880
+        },
+        "native_year": 30,
+        "native_year_tick": 72801
+      },
+      {
+        "segment_id": "segment-000001",
+        "relative_path": "checkpoint",
+        "next_step": 32,
+        "payload_sha256": "da0a930525210d16bfcf437657159050a1df1713332c73b5dac787b860e43129",
+        "file_sha256": "9107218b7c5fea3638e329e631a9e9b1d763457cb7f80092fe3a4679c67824e3",
+        "usage": {
+          "accounted_responses": 32,
+          "cost_basis": "self_hosted_no_metered_provider",
+          "dispatched_requests": 32,
+          "returned_responses": 32,
+          "total_cost_usd": "0",
+          "total_tokens": 325234
+        },
+        "native_year": 30,
+        "native_year_tick": 92801
+      },
+      {
+        "segment_id": "segment-000002",
+        "relative_path": "checkpoints/step-000040",
+        "next_step": 40,
+        "payload_sha256": "1e4d016913d56da39c0aaf670befbb8c2adafd6aca45cb34f79ff53ee00b3a06",
+        "file_sha256": "4fcbf8f90d605f8d34a7a85d0433587eb08b01b0fd787dbe0ac2c5ebadc9e52e",
+        "usage": {
+          "accounted_responses": 40,
+          "cost_basis": "self_hosted_no_metered_provider",
+          "dispatched_requests": 40,
+          "returned_responses": 40,
+          "total_cost_usd": "0",
+          "total_tokens": 412664
+        },
+        "native_year": 30,
+        "native_year_tick": 112801
+      },
+      {
+        "segment_id": "segment-000002",
+        "relative_path": "checkpoints/step-000048",
+        "next_step": 48,
+        "payload_sha256": "a5e525c213193c1a393eb5f4c28459793434c4baf4befc1d9795c8238d9e10da",
+        "file_sha256": "4690f0e27c3d9b04cf7971eb775b6626a5093ab2a09d193ac421606cb885f0d2",
+        "usage": {
+          "accounted_responses": 48,
+          "cost_basis": "self_hosted_no_metered_provider",
+          "dispatched_requests": 48,
+          "returned_responses": 48,
+          "total_cost_usd": "0",
+          "total_tokens": 504781
+        },
+        "native_year": 30,
+        "native_year_tick": 132801
+      },
+      {
+        "segment_id": "segment-000002",
+        "relative_path": "checkpoints/step-000056",
+        "next_step": 56,
+        "payload_sha256": "f2edb4eb1ca59e6059d388af84dd4694f46f7963ccf2ef3f78c8cfa501d082e3",
+        "file_sha256": "69b975268533cd3ed705b2d9c6d4192953af425e21f2dc73540efbbe80914b5c",
+        "usage": {
+          "accounted_responses": 56,
+          "cost_basis": "self_hosted_no_metered_provider",
+          "dispatched_requests": 56,
+          "returned_responses": 56,
+          "total_cost_usd": "0",
+          "total_tokens": 590669
+        },
+        "native_year": 30,
+        "native_year_tick": 152801
+      },
+      {
+        "segment_id": "segment-000002",
+        "relative_path": "checkpoint",
+        "next_step": 64,
+        "payload_sha256": "2314893afe29b53cad3611b49b24dfa4ae783e568b4e4395e4433ae3c52f5e02",
+        "file_sha256": "9bd993252a44af61213d1c2a7d296e82f15481b64b43799007b8a9555871fe86",
+        "usage": {
+          "accounted_responses": 64,
+          "cost_basis": "self_hosted_no_metered_provider",
+          "dispatched_requests": 64,
+          "returned_responses": 64,
+          "total_cost_usd": "0",
+          "total_tokens": 683802
+        },
+        "native_year": 30,
+        "native_year_tick": 172801
+      },
+      {
+        "segment_id": "segment-000003",
+        "relative_path": "checkpoints/step-000072",
+        "next_step": 72,
+        "payload_sha256": "8b55ed6ba3492f758f98a79ef7305ba6e0f8038dd982d9a57a8f778bcd24c4d3",
+        "file_sha256": "c5e504c5cd39275eb456c2734be047189f05d8801b6fbe8c802679b416b8aa93",
+        "usage": {
+          "accounted_responses": 72,
+          "cost_basis": "self_hosted_no_metered_provider",
+          "dispatched_requests": 72,
+          "returned_responses": 72,
+          "total_cost_usd": "0",
+          "total_tokens": 783004
+        },
+        "native_year": 30,
+        "native_year_tick": 192801
+      },
+      {
+        "segment_id": "segment-000003",
+        "relative_path": "checkpoints/step-000080",
+        "next_step": 80,
+        "payload_sha256": "7dd683be06dc0f1dde94b288e20d911fe2e338c9c2138a4b260d83d0c7400a30",
+        "file_sha256": "4fca5cc458cc0138719841762fb4e2f05b8bcaf7a7924552ae75397572d235c7",
+        "usage": {
+          "accounted_responses": 80,
+          "cost_basis": "self_hosted_no_metered_provider",
+          "dispatched_requests": 80,
+          "returned_responses": 80,
+          "total_cost_usd": "0",
+          "total_tokens": 881972
+        },
+        "native_year": 30,
+        "native_year_tick": 212801
+      }
+    ],
+    "last_verified_checkpoint_step": 80,
+    "committed_steps_after_last_checkpoint": 3,
+    "returned_decisions_after_last_checkpoint": 4,
+    "final_checkpoint_covers_all_commands_and_returned_usage": false,
+    "exact_terminal_resume_available": false,
+    "recovery_requires_reconciliation": true,
+    "returned_responses": 84,
+    "accounted_responses": 84,
+    "dispatched_without_returned_response": 0,
+    "tokens_summed_from_native_model_responses": 931832,
+    "finish_reasons": [
+      "stop"
+    ],
+    "committed_elapsed_ticks": 203339,
+    "native_final_year": 30,
+    "native_final_year_tick": 220140,
+    "final_recorded_dead_citizens": 0,
+    "death_evidence_complete": true,
+    "failure": {
+      "step": 83,
+      "action_type": "WAIT",
+      "requested_ticks": 2500,
+      "actual_ticks": 0,
+      "viewscreen": "viewscreen_textviewerst",
+      "visible_dialog_kind": "liaison_meeting",
+      "native_error": "interrupt_baseline_invalid",
+      "native_calendar_and_pause_unchanged": true,
+      "preceding_clean_interruption_step": 82,
+      "preceding_interrupted_ticks": 2339,
+      "source_sha256": "8cba9c0789c2fc9ec2f8dd67c42881eaffdc17e61e56d247b4f1bf6b99bc3a19",
+      "interpretation": "model requested advancement on a blocking dialog; harness escalated to terminal failure"
+    },
+    "operator_receipt_sha256": "f803b985a11f65cd2ebf1855ce0d72d09ff3e7b9e19881c008e52911004604d2",
+    "operator_sha256": "f0f6676524531227c58e1dfdd94566d2e44d0fb80ce924d180b8d10b283c7218",
+    "local_container_stopped": true,
+    "container_exit_code": 0,
+    "local_model_and_tunnel_absent": true,
+    "local_listener_closed": true,
+    "local_vm_stopped": true,
+    "docker_context_unchanged": true,
+    "cloud_vms_created": 0,
+    "hosted_provider_calls": 0,
+    "metered_provider_charge_usd": "0",
+    "hardware_energy_and_app_cost_usd": null,
+    "historical_inputs_rewritten": false,
+    "production_deployed": false,
+    "new_independent_attempt": false,
+    "controller_status": "segment_requires_reconciliation",
+    "prior_public_bundle": "local_native_qwen35_year_two_reasoning_segment1_20260907.json",
+    "prior_public_bundle_sha256": "2ccbe8ef5b7f2f663fdebf688b9bf8faae3362603e508edf9fbf976094ebc731"
+  }
+}
