@@ -2,6 +2,35 @@
 
 Verified September 7, 2026 UTC. The Year-Two Autonomous Play goal remains active.
 
+## Latest: automatic continuation through checkpoint 64
+
+The same controller completed segment two, verified native game-process cleanup,
+restored checkpoint 64 and committed the first action of segment three without
+manual gameplay intervention. The checkpoint covers 156,000 elapsed ticks and
+683,802 tokens from 64 returned responses, independently summed from their native
+response records. Its save, agent, runner, trace, usage and parent hashes verify.
+The next accepted WAIT advanced from native tick 172,801 to 175,301: 65 committed
+decisions and 158,500 elapsed ticks, with the exact checkpoint trace preserved.
+See the [automatic handoff receipt](../experiments/evidence/local_native_qwen35_year_two_auto_handoff_20260907.json).
+
+At checkpoint 64 there were nine living citizens, 12 native drink units, one
+completed workshop, no installed beds and no completed farms. The item scan
+observed 11 bed and five chair records, with scan completeness unreported.
+Population growth is observed, not attributed to model skill. Production flow,
+sustainability and a functioning first-year fortress remain unproven.
+
+The outer owner is still running, so its container/model/tunnel/VM teardown is
+not claimed. This is the same campaign, not another trial or terminal website
+row. The frozen execution source and configuration are unchanged. Earlier
+observations below are historical; this section supersedes their current-state
+claims without rewriting the original evidence.
+
+Website reporting is pushed at `4dc0f3b68eac5d73043b0858866d5755af434561`
+with 114 focused checks passing in both checkouts and successful
+[exact-head CI](https://github.com/lemoz/fort-gym/actions/runs/34084335261).
+It separates furniture item records from installed beds. No merge or deployment
+has occurred, and the frozen active producer has not been hot-patched.
+
 ## Continued checkpoint: furniture items versus installed furniture
 
 Checkpoint 40 verified its native save, agent/runner/trace/usage files and parent

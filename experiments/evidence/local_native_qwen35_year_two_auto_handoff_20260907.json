@@ -1,0 +1,104 @@
+{
+  "schema_version": "fortgym.native-campaign-automatic-continuation/v1",
+  "status": "running_campaign_completed_segment",
+  "campaign_id": "fort-gym-year-two-qwen35-reasoning-budget-v1-a",
+  "completed_segment_id": "segment-000002",
+  "active_segment_id": "segment-000003",
+  "execution_revision": "de69c7a467eb0b00becfef03329bac9f58690e35",
+  "configuration_sha256": "13ec2fdaad2b5e63b6f1e8fc4d57feefd3f66cd307104267d7bc06743cdbb490",
+  "model": "fort-gym-qwen35-9b-q4-03b74727a860",
+  "checkpoint": {
+    "next_step": 64,
+    "year": 30,
+    "year_tick": 172801,
+    "elapsed_ticks": 156000,
+    "manifest_sha256": "9bd993252a44af61213d1c2a7d296e82f15481b64b43799007b8a9555871fe86",
+    "payload_sha256": "2314893afe29b53cad3611b49b24dfa4ae783e568b4e4395e4433ae3c52f5e02",
+    "parent_payload_sha256": "da0a930525210d16bfcf437657159050a1df1713332c73b5dac787b860e43129",
+    "trace_sha256": "48bdfa5791c4c78fa103acc2eb869434b10a152bb9b301ddadd441a5ee099493",
+    "usage_sha256": "e242686f3b3efca8657c1ff807372eab5d2be8148cea70171a14436ed3f289e0",
+    "native_save_and_bound_files_verified": true,
+    "cumulative_usage_reconciled": true,
+    "original_trace_prefix_preserved": true,
+    "usage": {
+      "total_tokens": 683802,
+      "dispatched_requests": 64,
+      "returned_responses": 64,
+      "accounted_responses": 64,
+      "cost_basis": "self_hosted_no_metered_provider",
+      "metered_provider_charge_usd": "0",
+      "hardware_energy_and_app_cost_usd": null
+    },
+    "returned_tokens_independently_summed": 683802,
+    "response_finish_reasons": [
+      "stop"
+    ],
+    "requested_native_tick_mismatches": [],
+    "metrics": {
+      "population": 9,
+      "drink_units": 12,
+      "drink_scan_complete": true,
+      "drink_source": "world.items.other.IN_PLAY DRINK stack_size",
+      "completed_workshops": 1,
+      "installed_beds": 0,
+      "completed_farms": 0,
+      "recorded_dead_citizens": 0,
+      "building_evidence_complete": true,
+      "death_evidence_complete": true,
+      "furniture_item_records": {
+        "bed": 11,
+        "chair": 5,
+        "door": 0,
+        "table": 0
+      },
+      "furniture_scan_completeness": "not_reported",
+      "production_flow_verified": false
+    }
+  },
+  "completed_segment": {
+    "status": "bounded_segment_complete",
+    "native_load_verified": true,
+    "native_cleanup_verified": true,
+    "remaining_live_game_processes": [],
+    "receipt_sha256": {
+      "campaign-segment.json": "2b1b5da0e9cda9ca4f3770492f3cefce53554551fa142527e6733e17be2ce91c",
+      "result.json": "02bf19bd314fde958774f729d8e61f4cbd0f03d452abbda08ffae0125bb4d318",
+      "agent-final.json": "2ab3d08077ad67794d2235a20bbe96f0a6fe7bd33c2d96ee08fde98364c16fff",
+      "spend.jsonl": "59e94351802aa3df278a44d6c98a42c41dae83d0a6ae5d4ea5bf7ef062d73500"
+    }
+  },
+  "automatic_continuation": {
+    "same_owner_invocation": true,
+    "checkpoint_trace_prefix_preserved": true,
+    "first_post_restore_action": {
+      "step": 64,
+      "type": "WAIT",
+      "accepted": true,
+      "requested_ticks": 2500,
+      "actual_ticks": 2500,
+      "start_year": 30,
+      "start_tick": 172801,
+      "end_year": 30,
+      "end_tick": 175301,
+      "paused_after": true
+    },
+    "committed_steps": 65,
+    "elapsed_ticks": 158500,
+    "trace_prefix_65_sha256": "dae0ff25ac9dc43481faab92d34d9d2d1c76095db792d7226beb5e795594eb19",
+    "starting_seed_reloaded": false,
+    "manual_gameplay_intervention": false
+  },
+  "current_owner_teardown_verified": false,
+  "new_independent_attempt": false,
+  "year_two_success_verified": false,
+  "comparison_rankings_available": false,
+  "historical_inputs_rewritten": false,
+  "production_deployed": false,
+  "notes": [
+    "Segment two completed and its game process was cleaned up before the same controller started segment three. The outer container, model server, tunnel and local VM remain owned by the active invocation; their final teardown is not yet claimed.",
+    "Checkpoint usage is cumulative through 64 responses. The first post-restore action is separately verified at cursor 65; do not treat the checkpoint's token total as the later live total or add cumulative segment totals.",
+    "Observed population grew from seven at the starting save to nine at checkpoint64. Drink units declined from 60 to 12. These observations do not establish sustainability or attribute population growth to model skill.",
+    "Furniture item records are separate from completed placements. The legacy item scan does not report completeness, ownership, accessibility or production attribution.",
+    "This running-campaign handoff receipt is not a terminal public-campaign bundle and must not add another row for the same campaign. The previous published result remains unchanged until a newly audited cumulative terminal bundle replaces its registry pointer."
+  ]
+}

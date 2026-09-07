@@ -13,6 +13,58 @@ from fort_gym.bench.run.campaign_feed import CampaignFeed, initialize_feed
 CONFIG = {"condition_id": "test-condition", "models": ["test-model"]}
 
 
+def test_automatic_checkpoint64_handoff_is_not_another_terminal_campaign():
+    name = "local_native_qwen35_year_two_auto_handoff_20260907.json"
+    receipt = json.loads((records.PROJECT_ROOT / "experiments/evidence" / name).read_text())
+    assert receipt["schema_version"] == "fortgym.native-campaign-automatic-continuation/v1"
+    assert receipt["completed_segment_id"] == "segment-000002"
+    assert receipt["active_segment_id"] == "segment-000003"
+    checkpoint, handoff = receipt["checkpoint"], receipt["automatic_continuation"]
+    assert checkpoint["next_step"] == 64 and checkpoint["elapsed_ticks"] == 156000
+    assert checkpoint["native_save_and_bound_files_verified"] is True
+    assert checkpoint["cumulative_usage_reconciled"] is True
+    assert checkpoint["original_trace_prefix_preserved"] is True
+    assert (
+        checkpoint["usage"]["total_tokens"]
+        == checkpoint["returned_tokens_independently_summed"]
+        == 683802
+    )
+    assert checkpoint["usage"]["accounted_responses"] == 64
+    assert checkpoint["response_finish_reasons"] == ["stop"]
+    assert checkpoint["requested_native_tick_mismatches"] == []
+    action = handoff["first_post_restore_action"]
+    assert action["step"] == checkpoint["next_step"]
+    assert action["start_tick"] == checkpoint["year_tick"]
+    assert (
+        action["end_tick"] - action["start_tick"]
+        == action["actual_ticks"]
+        == action["requested_ticks"]
+        == 2500
+    )
+    assert handoff["committed_steps"] == 65 and handoff["elapsed_ticks"] == 158500
+    assert handoff["checkpoint_trace_prefix_preserved"] is True
+    assert receipt["completed_segment"]["native_cleanup_verified"] is True
+    assert receipt["completed_segment"]["remaining_live_game_processes"] == []
+    assert receipt["current_owner_teardown_verified"] is False
+    assert receipt["year_two_success_verified"] is False
+    assert receipt["new_independent_attempt"] is False
+    assert name not in records.PUBLISHED_BUNDLES
+    assert len(records.published_records()) == 14
+    assert checkpoint["metrics"]["population"] == 9
+    assert checkpoint["metrics"]["drink_units"] == 12
+    assert checkpoint["metrics"]["furniture_item_records"]["bed"] == 11
+    assert checkpoint["metrics"]["installed_beds"] == 0
+    assert checkpoint["metrics"]["production_flow_verified"] is False
+    prior = (
+        records.PROJECT_ROOT
+        / "experiments/evidence/local_native_qwen35_year_two_reasoning_segment1_20260907.json"
+    )
+    assert (
+        hashlib.sha256(prior.read_bytes()).hexdigest()
+        == "2ccbe8ef5b7f2f663fdebf688b9bf8faae3362603e508edf9fbf976094ebc731"
+    )
+
+
 def test_local_campaign_configuration_links_are_exact_and_revision_bound():
     import shutil
     import subprocess
