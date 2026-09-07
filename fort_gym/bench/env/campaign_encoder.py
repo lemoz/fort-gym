@@ -165,7 +165,9 @@ def encode_campaign_observation(
                 "Your advance_ticks requests native game time after an accepted command or a "
                 "preflight rejection that made no game changes. Zero means remain paused. "
                 "Partial/uncertain execution errors stop the segment without further time. "
-                "Native dialogs may interrupt advancement. No fallback action is chosen for you."
+                "Native dialogs may interrupt advancement. While a known dialog is open, "
+                "non-INTERACT commands are rejected with zero advancement; choose an allowed "
+                "INTERACT operation with advance_ticks=0. No fallback action is chosen for you."
             ),
         }
     return render_campaign_observation(observation), observation
