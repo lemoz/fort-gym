@@ -21,6 +21,12 @@ budgets and frozen execution source `fad9d80c0`; only optional thinking differs
 after descriptive experiment metadata is excluded. The separate one-use operator
 owns cleanup. No terminal thinking result is claimed.
 
+An audit found an inherited 2,000-tick native cap when this trial requested
+2,500 ticks. [The candidate propagation fix](CAMPAIGN_NATIVE_TICK_LIMIT.md) is
+published at `eca52a53021c8889ee9e63882f2184084590d391` in PR #132. Its 165 focused
+tests passed with one skip; corrected native execution remains unrun. The
+matched trial keeps its frozen runtime, and all results use actual elapsed ticks.
+
 The new website record is an offline projection using reporting revision
 `73ae9c3c792127f5cd5f61b62ff6f32ce5b54049`. Execution and original reports remain
 unchanged. The baseline publication passed 85 focused tests; the full suite had
