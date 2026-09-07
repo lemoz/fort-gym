@@ -27,6 +27,30 @@ def commit_rejection(
     current = loop.agent.export_campaign_state()
     if reconciled_usage(current, loop.journal.read_bytes()) != current["usage"]:
         raise ValueError("Rejected keyboard usage does not reconcile")
+    row = rejection_record(
+        campaign_id=loop.campaign_id, step=loop.next_step, rejection=rejection,
+        before=before, after=after, observation=observation, text=text, screen=screen,
+        events=loop.agent.pop_tool_events(),
+    )
+    history = _action_history_entry(
+        step=loop.next_step, action=row["action"],
+        requested_ticks=row["action"]["advance_ticks"],
+        tick_info=row["tick_advance"], execute_result=row["execute"], state_before=before,
+        advance_state=after, metrics_snapshot={},
+    )
+    _append(loop.trace, row)
+    loop.history = (loop.history + [history])[-12:]
+    loop.last_result = row["execute"]
+    loop.next_step += 1
+    loop.at_boundary = True
+    return row
+
+
+def rejection_record(
+    *, campaign_id: str, step: int, rejection: KeyboardInputRejected, before: dict,
+    after: dict, observation: dict, text: str, screen: str, events: list[dict],
+) -> dict:
+    """Build factual rejection evidence, shared by live and historical handling."""
     action = deepcopy(rejection.action)
     tick_info = {
         "schema_version": "fortgym.no-native-dispatch/v1",
@@ -62,9 +86,9 @@ def commit_rejection(
             "reason": "unsupported_native_keys",
         },
     }
-    row = {
-        "run_id": loop.campaign_id,
-        "step": loop.next_step,
+    return {
+        "run_id": campaign_id,
+        "step": step,
         "campaign_mode": True,
         "record_origin": "model_input_rejection/v1",
         "observation": observation,
@@ -75,17 +99,6 @@ def commit_rejection(
         "state_after_advance": after,
         "tick_advance": tick_info,
         "events": [{"type": "tool_call", "data": {
-            **event, "run_id": loop.campaign_id, "step": loop.next_step,
-        }} for event in loop.agent.pop_tool_events()],
+            **event, "run_id": campaign_id, "step": step,
+        }} for event in events],
     }
-    history = _action_history_entry(
-        step=loop.next_step, action=action, requested_ticks=action["advance_ticks"],
-        tick_info=tick_info, execute_result=execution, state_before=before,
-        advance_state=after, metrics_snapshot={},
-    )
-    _append(loop.trace, row)
-    loop.history = (loop.history + [history])[-12:]
-    loop.last_result = execution
-    loop.next_step += 1
-    loop.at_boundary = True
-    return row

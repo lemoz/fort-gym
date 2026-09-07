@@ -111,7 +111,9 @@ def reconciled_usage(checkpoint: dict, journal: bytes) -> dict:
     """
     if not journal.endswith(b"\n"):
         raise ValueError("Usage journal has an incomplete final record")
-    records = [json.loads(line) for line in journal.splitlines()]
+    from .keyboard_rejection_journal import effective_records
+
+    records = effective_records(checkpoint, journal)
     expected = {
         "type": "campaign_journal",
         "campaign_id": checkpoint["campaign_id"],

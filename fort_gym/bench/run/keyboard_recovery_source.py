@@ -53,6 +53,11 @@ def inspect_recovery_source(*, parent: Path, segment: Path, exchange: Path) -> d
     """Validate and fingerprint a narrow recoverable case, without any writes."""
     if segment.is_symlink() or not segment.is_dir() or exchange.is_symlink():
         raise ValueError("Recovery source must be a retained regular directory")
+    failures = _rows(segment / "loop/failures.jsonl")
+    if len(failures) == 1 and failures[0].get("error_type") == "CodexTransportError":
+        from .keyboard_rejection_recovery import inspect_input_rejection_source
+
+        return inspect_input_rejection_source(parent=parent, segment=segment, exchange=exchange)
     checkpoint = verify_checkpoint(parent)
     initial, previous, final = (
         read(parent / "agent.json"),

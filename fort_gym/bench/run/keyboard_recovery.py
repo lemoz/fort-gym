@@ -11,7 +11,8 @@ from ..env.screen_observation import TEXT_PROFILE, encode_screen
 from ..eval.campaign import read_campaign_progress
 from .campaign_loop import CampaignLoop, _append, _clock
 from .campaign_save import save_inventory
-from .keyboard_recovery_source import SCHEMA, _bytes, _rows, inspect_recovery_source
+from .keyboard_recovery_source import _bytes, _rows, inspect_recovery_source
+from .keyboard_rejection_recovery import SCHEMA as REJECTION_SCHEMA
 
 def reconcile_loaded_tail(
     *,
@@ -72,63 +73,25 @@ def reconcile_loaded_tail(
     )
     agent.restore_campaign_state(state, campaign_id=plan["campaign_id"])
     request = read(exchange / "request.json")
-    failure = _rows(segment / "loop/failures.jsonl")[0]
-    execution = {
-        **failure["execute"],
-        "tick_feedback": {
-            "requested_ticks": failure["requested_ticks"],
-            "ticks_advanced": 0,
-            "deferred": False,
-            "reason": "timeout_waiting_for_ticks",
-            "failure_reconciled": True,
-            "runtime_reloaded": True,
-        },
-    }
     screen = json.dumps(
         encode_screen(request["screen"], TEXT_PROFILE), ensure_ascii=False
     )
-    row = {
-        "run_id": plan["campaign_id"],
-        "step": plan["failed_step"],
-        "campaign_mode": True,
-        "record_origin": "verified_failure_reconciliation/v1",
-        "observation": {
-            "observation_profile": TEXT_PROFILE,
-            "screen_capture": request["screen"],
-            "last_action_feedback": request["feedback"],
-        },
-        "observation_text": screen,
-        "screen_text": screen,
-        "action": failure["action"],
-        "execute": execution,
-        "state_after_advance": read(segment / "native-after.json"),
-        "tick_advance": failure["tick_receipt"],
-        "events": [
-            {
-                "type": "tool_call",
-                "data": {
-                    **event,
-                    "run_id": plan["campaign_id"],
-                    "step": plan["failed_step"],
-                },
-            }
-            for event in failure["events"]
-        ],
-        "reconciliation": {
-            "plan": plan,
-            "original_failure": failure,
-            "loaded_native_boundary": {
-                "year": observed["year"],
-                "year_tick": observed["year_tick"],
-                "pause_state": True,
-            },
-            "original_failure_reclassified_as_success": False,
-        },
-    }
+    if plan["schema_version"] == REJECTION_SCHEMA:
+        from .keyboard_rejection_recovery import recovered_row
+
+        row = recovered_row(plan=plan, segment=segment, exchange=exchange,
+                            observed=observed, screen=screen)
+    else:
+        row = _clock_row(plan=plan, segment=segment, request=request,
+                         observed=observed, screen=screen)
     with loop.journal.open("wb") as stream:
         stream.write(_bytes(segment / "loop/usage.jsonl"))
         stream.flush()
         os.fsync(stream.fileno())
+    if plan["schema_version"] == REJECTION_SCHEMA:
+        from .keyboard_rejection_recovery import journal_record
+
+        _append(loop.journal, journal_record(segment=segment, exchange=exchange))
     with loop.trace.open("xb") as stream:
         stream.write(_bytes(segment / "loop/trace.jsonl"))
         stream.flush()
@@ -152,7 +115,7 @@ def reconcile_loaded_tail(
         )
         for item in rows[-12:]
     ]
-    loop.last_result, loop.next_step, loop.parent = execution, plan["next_step"], parent
+    loop.last_result, loop.next_step, loop.parent = row["execute"], plan["next_step"], parent
     loop.committed_elapsed_ticks = read_campaign_progress(loop.trace)["elapsed_ticks"]
     loop.at_boundary = True
     publish(output / "recovery.json", plan)
@@ -189,7 +152,7 @@ def reconcile_loaded_tail(
     if agent.export_campaign_state() != state:
         raise ValueError("Recovery changed model memory, configuration or usage")
     result = {
-        "schema_version": SCHEMA,
+        "schema_version": plan["schema_version"],
         "checkpoint_verified": True,
         "checkpoint_sha256": checkpoint["sha256"],
         "next_step": loop.next_step,
@@ -203,3 +166,37 @@ def reconcile_loaded_tail(
     }
     publish(output / "result.json", result)
     return result
+
+
+def _clock_row(*, plan: dict, segment: Path, request: dict, observed: dict, screen: str) -> dict:
+    failure = _rows(segment / "loop/failures.jsonl")[0]
+    return {
+        "run_id": plan["campaign_id"], "step": plan["failed_step"], "campaign_mode": True,
+        "record_origin": "verified_failure_reconciliation/v1",
+        "observation": {
+            "observation_profile": TEXT_PROFILE, "screen_capture": request["screen"],
+            "last_action_feedback": request["feedback"],
+        },
+        "observation_text": screen, "screen_text": screen,
+        "action": failure["action"],
+        "execute": {
+            **failure["execute"],
+            "tick_feedback": {
+                "requested_ticks": failure["requested_ticks"], "ticks_advanced": 0,
+                "deferred": False, "reason": "timeout_waiting_for_ticks",
+                "failure_reconciled": True, "runtime_reloaded": True,
+            },
+        },
+        "state_after_advance": read(segment / "native-after.json"),
+        "tick_advance": failure["tick_receipt"],
+        "events": [{"type": "tool_call", "data": {
+            **event, "run_id": plan["campaign_id"], "step": plan["failed_step"],
+        }} for event in failure["events"]],
+        "reconciliation": {
+            "plan": plan, "original_failure": failure,
+            "loaded_native_boundary": {
+                "year": observed["year"], "year_tick": observed["year_tick"], "pause_state": True,
+            },
+            "original_failure_reclassified_as_success": False,
+        },
+    }

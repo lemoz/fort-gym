@@ -16,7 +16,7 @@ from .codex_transport import MODEL, REASONING_EFFORT, CodexTransportError
 from .codex_protocol import TRANSPORT
 from .governed_llm import GovernedBudgetCapError
 from .standard_input import parse_response
-from .keyboard_rejection import KeyboardInputRejected
+from .keyboard_rejection import rejected_receipt
 
 SUBSCRIPTION_COST_BASIS = "codex_subscription_charge_unreported/v1"
 
@@ -228,8 +228,9 @@ class CodexKeyboardAgent(Agent):
                 or receipt.get("interrupted") is not False
             ):
                 raise CodexTransportError("Keyboard rejection lacks complete non-execution proof", result)
-            raise KeyboardInputRejected(
-                receipt.get("response"), max_advance_ticks=self.configuration["max_advance_ticks"]
+            raise rejected_receipt(
+                result, screen_sha256=screen_hash,
+                max_advance_ticks=self.configuration["max_advance_ticks"]
             )
         action = parse_response(
             result["action"],
