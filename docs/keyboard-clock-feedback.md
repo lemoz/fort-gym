@@ -96,3 +96,12 @@ producing independently audited checkpoint 375. Seven actions advanced game time
 exercised in this window. It demonstrates continued model-led play, not runtime
 coverage of the repaired clock branches. The original timeout stays failed.
 See `astra-keyboard-campaign.md` for the recorded outcome and continuation bounds.
+
+Window k then exercised the workshop-menu deferral at step 424. Its 2,000 requested
+ticks remained zero actual ticks, with the exact Add Job focus, matching native
+before/after boundaries, paused observations, no clock dispatch and no timeout.
+The independent retained-receipt review passed; subsequent model-selected actions
+advanced another 6,000 ticks. The completed window reached audited checkpoint 439
+and all resources stopped. The generic clock-unavailable timeout fallback was
+not exercised. An unrelated invalid model input was rejected before dispatch;
+its returned tokens and zero-key/zero-tick rejection remain fully accounted.

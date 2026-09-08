@@ -79,9 +79,13 @@
       const p = row.progress;
       node('h3', `Play continued · checkpoint ${count(row.checkpoint_cursor)}`, section);
       node('p', `${count(p.new_model_calls)} new model decisions, ${count(p.new_elapsed_ticks)} new ticks. ${count(p.retained_elapsed_ticks)} retained ticks toward the 403,200-tick full-year target.`, section);
-      node('p', `Verified saves at ${row.checkpoints.map(item => count(item.cursor)).join(', ')}. The final save has not yet had a separate fresh-process reload.`, section);
+      node('p', `Verified saves at ${row.checkpoints.map(item => count(item.cursor)).join(', ')}. At publication, this window’s final save still needed a separate fresh-process reload.`, section);
       node('p', `${count(p.cumulative_model_responses)} accounted model responses; ${count(row.usage.campaign_tokens)} campaign tokens, ${count(row.usage.all_attempt_tokens)} including historical failed deliveries. This window used ${count(row.usage.new_tokens)} tokens. Model charge: ${cost(row.usage)}.`, section);
       node('p', `Model memory and all usage continued without replay or strategy intervention. The earlier ${count(p.discarded_native_ticks)} lost ticks remain recorded. This is the same fortress, not an independent model comparison or proof of sustainability.`, section);
+      if (row.execution_counts) {
+        const execution = row.execution_counts;
+        node('p', `${count(p.new_accepted_decisions)} inputs accepted; ${count(execution.model_input_rejections)} rejected before native dispatch. ${count(execution.requested_elapsed_ticks)} ticks requested, ${count(p.new_elapsed_ticks)} actually advanced. Menu-blocked requests: ${count(execution.menu_deferrals)}; verified clock timeouts: ${count(execution.clock_unavailable_timeouts)}.`, section);
+      }
       if (row.outcome_counts) {
         const outcomes = row.outcome_counts;
         const table = node('table', undefined, section);
@@ -100,7 +104,7 @@
           node('td', count(outcomes.counts[key].start), item);
           node('td', count(outcomes.counts[key].end), item);
         }
-        node('p', `${count(outcomes.advancing_decisions)} decisions advanced game time; ${count(outcomes.zero_tick_decisions)} requested no time. Food stocks are unverified. Production and consumption were not measured; sustainability is not established.`, section);
+        node('p', `${count(outcomes.advancing_decisions)} decisions advanced game time; ${count(outcomes.zero_tick_decisions)} did not advance it. Food stocks are unverified. Production and consumption were not measured; sustainability is not established.`, section);
       }
       node('p', row.teardown_verified === true ? 'Game and VM teardown verified. Recorded result, not a running campaign.' : 'Teardown unknown.', section);
       if (/^experiments\/evidence\/astra_native_keyboard_[a-z0-9_]+\.json$/.test(row.evidence_path)) {

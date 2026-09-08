@@ -108,7 +108,7 @@ def test_completed_play_after_recovery_keeps_all_responses_and_safe_outcome_coun
     assert row["usage"]["campaign_tokens"] == 12838159
     assert row["outcome_counts"]["counts"]["completed_farms"] == {"start": 2, "end": 4}
     assert row["outcome_counts"]["food_stock"] is None
-    assert data["continuation_events"][-1] == {"kind": "continuation", "id": row["continuation_id"]}
+    assert data["continuation_events"][-2] == {"kind": "continuation", "id": row["continuation_id"]}
     assert "private-" not in json.dumps(data)
 
 
@@ -131,6 +131,47 @@ def test_outcome_counts_require_actual_integer_values(evidence_root, value):
     path = evidence_root / "experiments/evidence" / records.CONTINUATIONS[1]
     source = json.loads(path.read_text())
     source["outcome_counts"]["counts"]["completed_farms"]["end"] = value
+    path.write_text(json.dumps(source))
+    with pytest.raises(ValueError):
+        records.keyboard_campaign_records(evidence_root)
+
+
+def test_completed_keyboard_play_distinguishes_rejections_and_requested_from_actual_time(evidence_root):
+    path = evidence_root / "experiments/evidence" / records.CONTINUATIONS[2]
+    source = json.loads(path.read_text())
+    source["execution_counts"]["screen"] = "private-execution-content"
+    path.write_text(json.dumps(source))
+    data = records.keyboard_campaign_records(evidence_root)
+    row = data["continuations"][-1]
+    assert row["checkpoint_cursor"] == 439
+    assert row["parent_record"] == data["continuations"][1]["continuation_id"]
+    assert row["progress"]["cumulative_model_responses"] == 455
+    assert row["progress"]["new_accepted_decisions"] == 63
+    assert row["progress"]["new_elapsed_ticks"] == 24000
+    assert row["progress"]["retained_elapsed_ticks"] == 101000
+    assert row["usage"]["campaign_tokens"] == 14814687
+    assert row["usage"]["all_attempt_tokens"] == 14883691
+    assert row["execution_counts"] == {
+        "requested_elapsed_ticks": 26000, "model_input_rejections": 1,
+        "rejected_native_key_events": 0, "menu_deferrals": 1, "clock_unavailable_timeouts": 0,
+    }
+    assert row["outcome_counts"]["zero_tick_decisions"] == 52
+    assert row["outcome_counts"]["counts"]["completed_beds"] == {"start": 3, "end": 4}
+    assert data["continuation_events"][-1] == {"kind": "continuation", "id": row["continuation_id"]}
+    assert "private-" not in json.dumps(data)
+
+
+@pytest.mark.parametrize("field,value", [
+    ("schema_version", "other"), ("independent_private_review_passed", 1),
+    ("requested_elapsed_ticks", 23999), ("requested_elapsed_ticks", True),
+    ("model_input_rejections", 0), ("model_input_rejections", "1"),
+    ("rejected_native_key_events", 1), ("menu_deferrals", 52),
+    ("clock_unavailable_timeouts", -1), ("clock_unavailable_timeouts", 63),
+])
+def test_execution_counts_cannot_invent_time_or_hide_input_dispatch(evidence_root, field, value):
+    path = evidence_root / "experiments/evidence" / records.CONTINUATIONS[2]
+    source = json.loads(path.read_text())
+    source["execution_counts"][field] = value
     path.write_text(json.dumps(source))
     with pytest.raises(ValueError):
         records.keyboard_campaign_records(evidence_root)

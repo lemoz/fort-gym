@@ -1,6 +1,45 @@
 # Astra keyboard campaign integration
 
-## Latest result: model-led play reaches checkpoint 375
+## Latest result: checkpoint 439, past one quarter of the first year
+
+Window k completed on frozen source `7416f65b2ee464b09963d65733b692bf1a9c03b6`,
+returning all 64 decisions: 63 accepted inputs and one invalid input rejected
+before dispatch, with zero native keys or ticks. It added 24,000 actual ticks,
+reaching 101,000 retained ticks, just over one quarter of a full elapsed year.
+Checkpoint 439 is
+`69679e980dcf4164c7c0ae264a6044f4bfa8678e081079c7dd62769ccddc34e8`.
+Independent save, lineage, rejected-input and clock-receipt reviews passed.
+Game/container/VM teardown passed with no OOM kill or resource increase. A fresh
+load of this final checkpoint must verify before the next model call.
+
+Seven dwarves remain alive with zero recorded deaths. Completed farms increased
+four to five, installed beds three to four, and completed workshops stayed at
+three. Existing drink units increased 134 to 162; food stock, production and
+consumption remain unverified. These descriptive gains do not prove sustainability.
+
+The model requested 26,000 ticks; 24,000 advanced. Twelve decisions advanced time,
+52 did not, and 51 requested zero ticks. One 2,000-tick request was held in the
+workshop Add Job menu. Its native receipt independently verifies the unchanged
+calendar, no clock dispatch and no timeout. Astra later advanced another 6,000
+ticks without a correction key or strategy hint. This exercises the specific
+workshop-menu deferral, not the generic clock-unavailable timeout fallback.
+
+All 455 responses and 14,814,687 campaign tokens are retained, with 14,883,691
+tokens including historical failed deliveries. New tokens: 1,976,528. Charges are
+unreported. Memory, the inherited 2,000-tick loss and all earlier failures remain
+intact, with no new restart, replay or budget extension. The campaign page now
+separates requested and actual game time, undispatched rejection and outcome
+counts. The keyboard-type reporter repair was developed separately, replay-tested
+against retained evidence, and integrated only after this runtime stopped.
+
+Record: `experiments/evidence/astra_native_keyboard_workshop_continuation_20260908.json`.
+Window l declares another unchanged 64-decision continuation from 439 within the
+existing cumulative 1,024-dispatch / 40-million-token allowance. It is prepared,
+not yet run. No merge, production deployment, visual acceptance, independent model
+comparison or full-goal completion is claimed. Native game and model content stay
+private; only authored aggregates are published. The full goal remains active.
+
+## Previous result: model-led play reaches checkpoint 375
 
 Window j completed all 64 new accepted Astra Medium decisions on frozen source
 `bc7a23aefef1fcf4f3f9212f1059d0edf17f239c`. It added 11,400 actual native ticks,

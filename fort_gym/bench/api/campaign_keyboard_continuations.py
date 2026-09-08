@@ -9,6 +9,7 @@ from pathlib import Path
 CONTINUATIONS = (
     "astra_native_keyboard_settled_play_20260908.json",
     "astra_native_keyboard_workshop_play_20260908.json",
+    "astra_native_keyboard_workshop_continuation_20260908.json",
 )
 IDENTITIES = {
     "schema_version": "fortgym.native-keyboard-continuation-summary/v1",
@@ -103,6 +104,7 @@ def keyboard_continuation(root: Path, filename: str, parents: list[dict], failur
     ):
         raise ValueError("Continuation checkpoints must cover all new decisions and time")
     outcomes = _outcome_counts(source.get("outcome_counts"), source["new_model_calls"])
+    execution = _execution_counts(source.get("execution_counts"), counters, outcomes)
     return {
         "continuation_id": filename.removesuffix(".json"),
         "source_revision": source["source_revision"],
@@ -122,6 +124,7 @@ def keyboard_continuation(root: Path, filename: str, parents: list[dict], failur
         "fortress_success": "not_assessed_in_public_operational_summary",
         "evidence_path": "experiments/evidence/" + filename,
         **({"outcome_counts": outcomes} if outcomes is not None else {}),
+        **({"execution_counts": execution} if execution is not None else {}),
     }
 
 
@@ -158,3 +161,33 @@ def _outcome_counts(value: object, decisions: int) -> dict | None:
         raise ValueError("Outcome decisions do not reconcile with this window")
     return {"counts": counts, **time, "food_stock": None,
             "production_and_consumption": "not_measured", "sustainability": "not_established"}
+
+
+def _execution_counts(value: object, progress: dict, outcomes: dict | None) -> dict | None:
+    """Separate actual game time from model requests and undispatched rejections."""
+    if value is None:
+        return None
+    if not isinstance(value, dict) or outcomes is None or (
+        value.get("schema_version") != "fortgym.keyboard-execution-counts/v1"
+        or value.get("independent_private_review_passed") is not True
+    ):
+        raise ValueError("Invalid authored execution provenance")
+    counts = {}
+    for key in ("requested_elapsed_ticks", "model_input_rejections", "rejected_native_key_events",
+                "menu_deferrals", "clock_unavailable_timeouts"):
+        n = value.get(key)
+        if type(n) is not int or n < 0:
+            raise ValueError("Invalid authored execution count")
+        counts[key] = n
+    if (
+        counts["requested_elapsed_ticks"] < progress["new_elapsed_ticks"]
+        or counts["model_input_rejections"]
+        != progress["new_model_calls"] - progress["new_accepted_decisions"]
+        or counts["rejected_native_key_events"] != 0
+        or counts["model_input_rejections"] + counts["menu_deferrals"]
+        + counts["clock_unavailable_timeouts"] > outcomes["zero_tick_decisions"]
+        or counts["menu_deferrals"] + counts["clock_unavailable_timeouts"]
+        > progress["new_accepted_decisions"]
+    ):
+        raise ValueError("Execution counts do not reconcile with the audited window")
+    return counts
