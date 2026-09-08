@@ -1,6 +1,6 @@
 # Campaign status
 
-Verified September 7, 2026 UTC. The Year-Two Autonomous Play objective remains
+Verified September 8, 2026 UTC. The Year-Two Autonomous Play objective remains
 unfinished; the app goal is active. The owner has approved starting the project
 work for [Astra standard-input experiments](ASTRA_STANDARD_INPUT_EXPERIMENTS.md).
 
@@ -13,7 +13,40 @@ and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. The first bounded Astra native
 keyboard campaign has now completed.
 
-### Latest implementation: menu-preserving save and accurate website failure state
+### Latest result: saved new branch after explicit loss-aware restart
+
+Window e completed at source `93af69fe4866cf325dcae3a8b4099bc458b6fdfc`, whose
+exact-source CI passed. Independent audit confirms 16 new accepted Astra Medium
+decisions, 2,000 new retained ticks and verified new-branch checkpoint 200:
+`aabb513a50309812f900d9e346807710acb0935f271a200e9df4cda59aef1cdb`.
+The retained timeline is 46,000 ticks. All 216 model responses are accounted,
+including the original unsaved tail: 6,984,036 campaign tokens, or 7,053,040 with
+historical failed deliveries. The new segment used 518,169 tokens. Exact
+subscription charges remain unreported. Game/container/VM teardown passed;
+no gameplay worker is live at this result.
+
+This restored checkpoint 184 and its memory, explicitly recorded the lost tail,
+then let Astra choose new actions. The old 2,000 unsaved ticks remain lost and
+their 531,913 tokens remain counted. No historical action was replayed. Overlapping
+cursor 200 belongs to a new branch, not recovered old state or an independent
+comparison attempt. The discontinuity survives normal resume and evaluation.
+The corrected build-menu save/reload diagnostic also passed with zero model calls,
+save keys or ticks. Existing isolated VM data capacity increased from 10 to 16 GiB
+to preserve evidence; CPU, memory and isolation settings are unchanged.
+
+The website source now leads with the new saved branch while retaining the old
+failure separately. Endpoint and JavaScript checks pass, and local HTTP returns
+the current record. Preview handoff was queued, not visually inspected. No
+production deployment or merge. Evidence is authored operational counters only;
+native screens, saves and model content stay private.
+
+Next: normal window f continues from this new checkpoint with all 216-response
+usage, model memory and discontinuity intact. No repeated restart or budget
+extension. Year-two sustainability and repeated comparisons across three models
+remain unproven. Private evidence:
+`fort_gym/artifacts/native-local-20260906/runtime-v2/astra-native-save-loss-restart-v1`.
+
+### Previous implementation snapshot: menu-preserving save and failure display
 
 The versioned `native_menu_preserving_save/v1` helper is pushed at `693f1c4cc`,
 with passing exact-source CI. It passed actual save and fresh reload from a
@@ -31,7 +64,7 @@ Next: finish the remaining menu diagnostic, explicitly record a loss-aware
 attempt boundary, then resume Astra without discarding the unsaved-tail usage.
 Private validation: `fort_gym/artifacts/native-local-20260906/runtime-v2/astra-native-save-menu-v4`.
 
-### Latest autonomous gameplay result
+### Historical save failure, before the successful restart above
 
 Latest terminal update: window d stopped after 16 new accepted decisions at
 trace cursor 200 / 46,000 elapsed ticks. Its checkpoint failed with

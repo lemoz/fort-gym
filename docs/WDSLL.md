@@ -8,7 +8,20 @@ fortress through year two and beyond. Website evidence and remote source deliver
 remain requirements. The app goal is verified active; early native Astra gameplay
 and checkpoint-continuation evidence are now verified.
 
-Latest implementation progress: committed menu-preserving saving passed native
+Latest result, September 8 UTC: the explicit loss-aware Astra restart completed
+16 new accepted decisions and saved verified new-branch checkpoint 200 at source
+`93af69fe4`. Independent audit verifies 46,000 retained ticks, 216 fully accounted
+responses and complete native/container/VM teardown. New usage is 518,169 tokens;
+campaign usage is 6,984,036, or 7,053,040 including historical failed deliveries.
+Charges remain unreported. The old unsaved 2,000 ticks remain lost and their
+531,913 tokens remain counted. No old action was replayed or failure relabelled.
+The corrected build-menu save/reload diagnostic passed too. Website source now
+separates the new saved branch from the original failure; no merge/deployment or
+visual acceptance is claimed. Normal continuation from this new checkpoint is
+next, retaining memory, usage and discontinuity without another restart.
+Year-two viability and repeated cross-model comparisons remain open.
+
+Previous implementation snapshot: committed menu-preserving saving passed native
 save/reload from the affected unit menu and normal fortress view, with zero
 model calls, keys or ticks and verified teardown. Source `693f1c4cc` is pushed
 with passing CI. A separate build-menu diagnostic remains untested after an
@@ -16,7 +29,7 @@ invalid fixture key. Website source now shows the later checkpoint failure and
 lost unsaved tail explicitly; no production deployment or new campaign is
 claimed. A loss-aware next attempt and further gameplay remain next.
 
-Latest gameplay result: the resumed window completed 16 accepted responses,
+Historical save failure: the earlier window completed 16 accepted responses,
 reaching trace cursor 200 and 46,000 elapsed ticks, but native saving timed out.
 Independent audit confirms complete usage and teardown. No worker is live.
 The retained game save still matches checkpoint 184; the newer trace is not a
