@@ -8,28 +8,35 @@ fortress through year two and beyond. Website evidence and remote source deliver
 remain requirements. The objective is unfinished; early native Astra gameplay
 and checkpoint-continuation evidence are now verified.
 
-Latest result, September 8 UTC: window l completed 64 accepted decisions and
-14,000 new ticks. Independently audited checkpoint 503 retains 115,000 ticks,
-about 28.5 percent of the full elapsed-year target. Seven dwarves remain alive;
-completed farms, installed beds and workshops stay at five, four and three.
-Existing drink units increased 162 to 172. Food, production and sustainability
-remain unverified. Seven decisions advanced time and 57 requested none; there
-were no rejected inputs, menu deferrals or clock timeouts. All 519 responses,
-16,682,250 campaign tokens and 16,751,254 all-attempt tokens are retained, including
-the historical loss and failures. Parent 439 fresh native load, final save lineage,
-actual 120x40 initial capture, memory, usage and full teardown independently passed.
-Final 503 awaits its next fresh load; no worker from l remains live.
+Latest result, September 8 UTC: native window m completed 64 accepted decisions
+and 7,200 new ticks, reaching checkpoint 567 and 122,200 retained ticks (30.3
+percent of a full elapsed year). Population grew seven to twelve with zero
+recorded citizen deaths. Completed farms/beds/workshops remain five/four/three;
+drinks increased 172 to 181. Four decisions advanced time and 60 requested none.
+All 583 responses, 18,636,365 campaign tokens and 18,705,369 all-attempt tokens are
+accounted. Historical loss and failures remain unchanged; charges are unreported.
 
-Publication and unchanged next window m are pushed at `c9b8607cc` in draft PR #137.
-The recorded campaign page leads with 503. All 131 focused tests and scoped static
-checks passed; the broader suite passed 2,884 tests plus ten skips, with its sole
-localhost sandbox failure passing on the two-test scoped rerun. Exact-source CI
-`34253088052` passed 2,795 tests with 100 skips. Window m is now running on frozen
-source `c9b8607cc`, with unchanged model, controls, observation, memory and cumulative
-limits. VM/image/container startup passed and the first model request reached its
-host exchange; no completed continuation or newer audited checkpoint is claimed.
-Its unique owner keeps mandatory teardown. No merge/deploy,
-visual acceptance, repeated cross-model study or full-goal completion is claimed.
+The outer operator failed on an exchange-directory observation with exit 137.
+Its underlying cause is unverified and its original error is retained. Native
+save/lineage, gameplay, clock and usage audits and full teardown independently
+passed. This is native completion with an operator warning, not a clean run.
+
+A separate paused, provider-free native probe fresh-loaded checkpoint 567 and
+verified 27 native-predicate food units across 15 records. Independent vector,
+stack-size and repeated scans agreed. Screen, menu, calendar and saved world
+stayed unchanged, with no model calls, keys or ticks; full teardown passed.
+The collector is not integrated. Accessibility, production, sustainability and
+native prepared-meal coverage remain unverified; historical food unknowns stay.
+
+The authored 567 API/page update preserves the warning and passed 150 focused
+tests plus scoped static checks. Main commit `4e746f0fa` and isolated food-report
+commit `e15c53cd5` are pushed with exact remote heads verified. New CI is separate.
+No resources
+from m or the probe remain running; no merge, deploy or visual acceptance.
+Next: harden terminal exchange observation, integrate a declared private food
+measurement without changing model observations, then continue from 567.
+The full original year-two, repeated-model and website-delivery goal remains active.
+
 
 Previous result, September 8 UTC: window k completed 64 returned decisions, with
 63 accepted inputs and one invalid input rejected before dispatch. Independently

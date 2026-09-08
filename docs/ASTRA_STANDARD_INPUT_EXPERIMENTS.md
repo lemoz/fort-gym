@@ -244,9 +244,34 @@ All independent audits and game/container/VM teardown passed. The authored 503
 page record and unchanged window m are pushed at `c9b8607cc` in draft PR #137.
 Focused tests and static checks passed; the broader suite's only failure was a
 localhost sandbox restriction that passed on its scoped rerun. Exact-source CI
-`34253088052` passed 2,795 tests with 100 skips. Window m is now running on frozen
+`34253088052` passed 2,795 tests with 100 skips. Window m then started on frozen
 source `c9b8607cc` from checkpoint 503 with unchanged model, controls, observation,
 memory and cumulative limits. Its VM/image/container startup passed and the first
 model request reached the host exchange. No completed window or newer audited
-checkpoint is claimed. Its same unique owner must finish teardown.
+checkpoint was claimed at that early observation. Its terminal state follows.
 No merge, production deployment, visual acceptance or full-goal completion.
+
+Window m's native game subsequently completed 64 accepted decisions and 7,200
+ticks at checkpoint 567 / 122,200 retained ticks (30.3 percent of a full year).
+Population grew seven to twelve, with zero recorded citizen deaths. Completed
+farms/beds/workshops remained five/four/three; drink units increased 172 to 181.
+Four decisions advanced time and 60 requested none. All 583 responses and
+18,636,365 campaign tokens remain accounted (18,705,369 including failed attempts).
+
+The outer operator failed during exchange-directory observation after responses
+returned, with command exit 137. The cause remains unverified. Independent native
+save/lineage, gameplay, clock, usage and teardown audits passed, but the original
+outer error is retained and published as a warning, not rewritten as clean success.
+There was no new loss, replay, restart, rescue, memory reset or budget extension.
+
+A separate provider-free probe fresh-loaded 567 and verified 27 native-predicate
+food units with agreeing item-vector, stack-size and repeated-scan evidence.
+Menu, screen, calendar and world-save files stayed unchanged; no model calls,
+keys or ticks were added, and teardown passed. This remains isolated measurement,
+not a model-observation change, production count or sustainability verdict.
+The authored 567 API/page update passed 150 focused tests and scoped static checks.
+Main commit `4e746f0fa` and isolated food-report commit `e15c53cd5` are pushed
+with exact remote heads verified; new-head CI is not inferred from prior runs.
+Next work is terminal-observation handling, private measurement integration and
+unchanged autonomous continuation. Full-year survival, repeated model comparison,
+merged/deployed website delivery and full-goal completion remain open.

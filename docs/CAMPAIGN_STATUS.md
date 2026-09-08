@@ -13,67 +13,67 @@ and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. Several bounded Astra native-keyboard
 windows have completed; the same fortress remains in autonomous continuation.
 
-### Latest result: checkpoint 503, 115,000 retained ticks
+### Latest result: checkpoint 567, 122,200 retained ticks
 
-Window l completed all 64 accepted Astra Medium decisions on frozen source
-`8caa3e11acc5d19ddea8b28bd917f9659e733d21`, adding 14,000 actual ticks and reaching
-115,000 retained ticks, about 28.5 percent of one full elapsed game year.
-Checkpoint 503:
-`7bc4350c68c1ecb81bb88a7df58ea3e34db95c9bfe7f926d633858bb6de6eae7`.
-Independent save/lineage, gameplay and clock-receipt audits passed, including
-the parent 439 fresh native load and captured 120x40 initial screen. The final
-503 save must verify its next fresh load before another model decision.
-Game/container/VM teardown passed with no OOM kill or resource increase.
+Window m's native game completed 64 accepted Astra Medium decisions on frozen
+source `c9b8607cc13047bf5e5202f397ab44bc6522f59f`, adding 7,200 actual ticks.
+Checkpoint 567 retains 122,200 ticks, about 30.3 percent of one full elapsed year:
+`045fcbbfe8d34fc8b29ee1f14ece2a672b65ff1f68edce044c746dc0d3d5d17d`.
+Population increased from seven to twelve, with zero recorded citizen deaths.
+Completed farms, installed beds and workshops stayed at five, four and three.
+Existing drink units increased 172 to 181. Four decisions advanced game time;
+60 requested none. No rejected inputs, menu deferrals or clock timeouts occurred.
 
-All seven dwarves remain alive, with zero recorded deaths. Completed farms,
-installed beds and completed workshops stayed at five, four and three. Existing
-drink units increased from 162 to 172, without production or consumption
-attribution. Food and sustainability remain unverified. Seven decisions requested
-and advanced time; 57 requested none. No input rejection, menu deferral or
-clock-unavailable timeout occurred. This window does not add coverage of those
-feedback branches or establish fortress sustainability.
+The outer operator failed while polling the exchange directory after all 64
+responses returned. Its command exited 137; the underlying cause is unverified.
+The original error remains retained. Independent native save/lineage, gameplay,
+clock and usage audits passed, as did full teardown. This is native completion
+with an operator observation warning, not a wholly clean run or fortress collapse.
+No new loss, restart, replay, strategy intervention, memory reset or budget
+extension occurred. The inherited 2,000-tick loss and earlier failures remain.
+All 583 responses, 18,636,365 campaign tokens and 18,705,369 all-attempt tokens are
+accounted. New usage was 1,954,115 tokens. Model charges remain unreported.
 
-All 519 responses and 16,682,250 campaign tokens are accounted; all-attempt tokens
-are 16,751,254. New usage: 1,867,563 tokens. Charges remain unreported. Memory,
-the inherited 2,000-tick loss and every earlier failure remain retained, with no
-new loss, restart, replay, strategy hint, correction key or budget extension.
-Private proof is under `astra-native-quarter-year-continuation-v1`, including
-`independent-audit.json`, `gameplay-review.json` and `clock-feedback-review.json`.
+A separate provider-free food probe on frozen candidate `ab53e54dd321b596b0f189cadf94cbbda65dfd95`
+fresh-loaded checkpoint 567 and independently verified 27 native-predicate food
+units across 15 item records. Two native vector scans and repeated measurement
+agreed. Calendar, menu, actual 120x40 screen and world-save files stayed unchanged;
+the original checkpoint reverified. Zero model calls, gameplay keys or ticks.
+Game, container and VM teardown passed. No resources from m or this probe remain
+running. Private evidence is under `astra-native-midyear-continuation-v1` and
+`food-inventory-native-v1`.
 
-The authored 503 result and unchanged window m are pushed at
-`c9b8607cc13047bf5e5202f397ab44bc6522f59f` in open draft PR #137. The existing
-campaign page leads with 503 while retaining previous records. All 131 focused
-tests, scoped Ruff/mypy, JavaScript syntax and private-to-authored count checks
-passed. The broader local suite passed 2,884 tests with ten skips and one
-localhost-bind sandbox failure; both quickstart tests passed on the scoped rerun
-with loopback access. Exact-source CI `34253088052` passed 2,795 tests with 100
-skips. No merge,
-production deployment, visual acceptance or independent model comparison is
-claimed. Sites preserved the existing page and automated checks; no browser-only
-preview was opened during this background continuation. The full goal is active.
+The food candidate remains isolated on `codex/campaign-food-inventory-v1`.
+This is inventory under an explicit native predicate, not ready meals,
+accessibility, production or sustainability. No prepared meal was present, so
+native prepared-meal coverage remains open. It is not wired into model
+observations, campaign evaluation or website metrics. Historical food unknowns
+stay unknown. The old G7 callback ledger remains unchanged.
 
-Window m has started on frozen source `c9b8607cc`: another unchanged 64-decision segment from
-503 with the same Astra Medium, native keyboard/v2, 120x40 screen observations,
-save/v3 profile and inherited 1,024-dispatch / 40-million-token allowance. Its
-unique owner is under `astra-native-midyear-continuation-v1`. VM/image/container
-startup passed and its first model request reached the host exchange. The native
-runner checks fresh loading before requesting a model response; the completed
-window and final audit are still pending. Preserve this implementation checkout
-unchanged while its courier runs. The same owner must tear down on every terminal
-path. Fresh subscription admission passed and repeats before every invocation;
-no fallback, credits, reset, local model or GCE is introduced.
-The website currently records completed 503, not live tracking.
+The authored checkpoint-567 record and explicit outer-runner warning are now
+implemented in the existing campaign API/page with 150 focused tests and scoped
+Ruff/mypy/JavaScript checks passed. Main source/result commit
+`4e746f0fa771f9af11a85fb3ab3552a7644072cd` and isolated food-report commit
+`e15c53cd54567047e2adfaae85dafcd4a4f2f6aa` are pushed, with both remote
+branch heads verified. New-head CI is tracked separately from prior passing CI.
+The page remains recorded evidence, not live tracking. No browser-only preview
+was started during this goal continuation. No merge, deployment, visual
+acceptance, repeated cross-model study or full-goal completion is claimed.
 
-Measurement work while m runs is isolated on `codex/campaign-food-inventory-v1`
-at `ab53e54dd321b596b0f189cadf94cbbda65dfd95`. Its read-only food-inventory
-collector and validator passed 141 candidate tests, with 180 tests in the related
-food/drink/profile selection and scoped static checks. It is not integrated into
-the frozen campaign, model observations, evaluator or website. Native validation
-on a paused verified save remains pending until the current owner has completed
-and torn down. The candidate retains literal native-predicate semantics; it is
-not evidence of accessible food, production or sustainability. See
-`docs/campaign-food-measurement.md` on that branch. Historical food-stock unknowns
-and the existing run-scoped G7 hooks remain unchanged.
+Next: harden the courier's terminal observation handling without erasing errors
+or redispatching responses, integrate a private versioned food measurement
+without expanding screen-only model observations, and continue autonomous play
+from 567 under the unchanged cumulative allowance.
+
+### Previous result: checkpoint 503
+
+Window l completed 64 accepted decisions, adding 14,000 ticks to reach 115,000
+retained ticks. Seven dwarves were alive, with five completed farms, four installed
+beds and three workshops. Existing drinks increased 162 to 172. All 519 responses,
+16,682,250 campaign tokens and 16,751,254 all-attempt tokens remained accounted.
+Its parent load, final checkpoint and full teardown passed. Source/publication
+`c9b8607cc` is in draft PR #137; exact-source CI `34253088052` passed 2,795 tests
+with 100 skips. Its then-pending final reload was subsequently verified by m.
 
 ### Previous result: checkpoint 439, past the first quarter-year
 
