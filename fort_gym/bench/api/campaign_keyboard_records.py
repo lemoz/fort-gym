@@ -10,6 +10,9 @@ from .campaign_keyboard_checkpoints import (
     CHECKPOINT_FAILURES, CHECKPOINT_RECOVERIES, checkpoint_failure, settled_checkpoint_recovery,
 )
 from .campaign_keyboard_continuations import CONTINUATIONS, keyboard_continuation
+from .campaign_keyboard_tails import (
+    TAIL_INTERRUPTION, TAIL_RECOVERIES, continuation_interruption, continuation_recovery,
+)
 from .campaign_keyboard_restarts import CHECKPOINT_REVIEWS, RESTARTS, checkpoint_review, keyboard_restart
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -259,6 +262,9 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
         continuations.append(keyboard_continuation(
             root, filename, [*checkpoint_recoveries, *continuations], failures,
         ))
+    tail_interruptions = [continuation_interruption(root, TAIL_INTERRUPTION, continuations)]
+    tail_recoveries = [continuation_recovery(root, filename, tail_interruptions)
+                       for filename in TAIL_RECOVERIES]
     return {
         "schema_version": "fortgym.public-keyboard-milestones/v1",
         "live_tracking": False,
@@ -270,4 +276,6 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
         "checkpoint_reviews": reviews,
         "checkpoint_recoveries": checkpoint_recoveries,
         "continuations": continuations,
+        "tail_interruptions": tail_interruptions,
+        "tail_recoveries": tail_recoveries,
     }

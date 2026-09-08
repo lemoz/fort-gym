@@ -72,3 +72,20 @@ nested operations. Immutable trace bytes, full validation, the final clock
 receipt and the bounded history remain unchanged. Regression tests verify
 object release at both boundaries. The native retry uses the same VM and
 container memory limits; it does not compensate by increasing resources.
+
+The retry at `ae3a668f15a411987b0ac12522d91c62afbec56b` passed native recovery,
+a second fresh game load and independent audit. Checkpoint 311 is
+`e1883c88633a66a86de11ca42bc9e0e60a9ed4e6f4e6cde679cce2848611b4d5`.
+It retains all 327 responses, 65,600 ticks, unchanged model memory/usage and the
+one earlier lost branch. The new reconciliation row preserves the raw timeout;
+it does not relabel the original window as successful. Recovery made no model
+calls, keys or clock requests. Native/container/VM teardown passed. Cgroup
+evidence reports zero OOM kills, but peak memory reached the unchanged
+1,610,612,736-byte limit: this is not a memory-headroom or endurance claim.
+
+The website record now distinguishes the interruption and verified recovery,
+with explicit unknown subscription charges and no native content export.
+Window j declares the next 64-decision continuation from 311 with factual clock
+feedback and unchanged cumulative limits. New autonomous play remains a separate
+runtime outcome. Source and CI, recovery, website acceptance and the full
+year-two goal remain distinct.

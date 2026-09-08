@@ -51,6 +51,29 @@
       throw new Error('Unsupported continuation evidence');
     }
     const continuations = data.continuations || [];
+    for (const name of ['tail_interruptions', 'tail_recoveries']) {
+      if (data[name] !== undefined && !Array.isArray(data[name])) {
+        throw new Error('Unsupported continuation recovery evidence');
+      }
+    }
+    (data.tail_interruptions || []).slice().reverse().forEach(row => {
+      const recovered = (data.tail_recoveries || []).find(item => item.original_interruption === row.interruption_id);
+      if (recovered) renderRecovery(recovered);
+      const section = node('section', undefined, results);
+      section.className = 'campaign-condition';
+      const p = row.progress;
+      node('h3', `Workshop clock interrupted · decision ${count(p.trace_cursor)}`, section);
+      node('p', `${count(p.new_returned_model_decisions)} new responses, ${count(p.new_committed_decisions)} committed actions and ${count(p.new_elapsed_ticks)} new ticks. All ${count(p.failed_tail_keys_confirmed)} keys from the final response were delivered, but its clock request advanced zero ticks.`, section);
+      node('p', recovered
+        ? `Subsequently recovered as checkpoint ${count(recovered.checkpoint_cursor)} and verified in a fresh game process. The original window remains failed; no actions were replayed.`
+        : `Newer game state is retained but needs reconciliation. Last verified checkpoint at failure: ${count(p.latest_verified_checkpoint_cursor)}.`, section);
+      node('p', `${count(p.cumulative_model_responses)} accounted responses and ${count(p.trace_elapsed_ticks)} retained trace ticks. ${count(row.usage.campaign_tokens)} campaign tokens; ${count(row.usage.all_attempt_tokens)} including historical failed deliveries. Model charge: ${cost(row.usage)}.`, section);
+      node('p', row.teardown_verified === true ? 'Game and VM teardown verified. Harness failure, not a recorded fortress collapse.' : 'Teardown unknown.', section);
+      if (/^experiments\/evidence\/astra_native_keyboard_[a-z0-9_]+\.json$/.test(row.evidence_path)) {
+        const link = node('a', 'Read the published interruption evidence', section);
+        link.href = 'https://github.com/lemoz/fort-gym/blob/codex/campaign-codex-subscription/' + row.evidence_path;
+      }
+    });
     continuations.slice().reverse().forEach(row => {
       const section = node('section', undefined, results);
       section.className = 'campaign-condition';
@@ -124,7 +147,9 @@
       node('h3', `Recovery verified · checkpoint ${count(row.checkpoint_cursor)}`, section);
       node('p', `${count(row.returned_model_decisions)} existing model responses and ${count(row.elapsed_native_ticks)} elapsed ticks preserved. Model memory and usage are unchanged.`, section);
       node('p', `${count(row.model_calls_to_recover)} new model calls, ${count(row.native_keys_to_recover)} replayed keys, ${count(row.native_ticks_to_recover)} added ticks. Recovery preserved the retained state and responses; it is not new gameplay progress.`, section);
-      node('p', row.recovery_kind === 'settled_checkpoint'
+      node('p', row.recovery_kind === 'clock_tail'
+        ? 'The latest native state passed a fresh game reload. The original zero-tick clock failure, all accounted responses and the earlier lost branch remain recorded. No additional game progress was lost.'
+        : row.recovery_kind === 'settled_checkpoint'
         ? 'The checkpoint passed a fresh game reload. Save validation now checks unchanged menu identity and world observations while retaining the animated screen captures. The original validation failure and earlier lost branch remain recorded; no additional progress was lost.'
         : 'The original interrupted window remains failed. This checkpoint was verified at this point in the campaign; later records determine the latest resumable state. It does not prove that a new run has started.', section);
       if (row.snapshot_profile === 'native_menu_preserving_save/v3') {

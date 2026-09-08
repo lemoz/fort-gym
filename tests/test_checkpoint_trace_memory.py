@@ -1,4 +1,5 @@
 """Expanded trace rows must not overlap source validation during saving."""
+
 import json
 import weakref
 from types import SimpleNamespace
@@ -24,9 +25,14 @@ def test_checkpoint_releases_parsed_rows_before_native_capture(tmp_path, campaig
             references.append(weakref.ref(result))
         return result
 
-    monkeypatch.setattr(campaign_checkpoint, "json", SimpleNamespace(
-        loads=tracked_loads, dumps=json.dumps,
-    ))
+    monkeypatch.setattr(
+        campaign_checkpoint,
+        "json",
+        SimpleNamespace(
+            loads=tracked_loads,
+            dumps=json.dumps,
+        ),
+    )
     original = campaign["snapshotter"].capture
 
     def capture(destination):
@@ -60,9 +66,18 @@ def test_recovery_releases_parsed_history_before_checkpoint_creation(tmp_path, s
 
     monkeypatch.setattr(keyboard_recovery.CampaignLoop, "checkpoint", checkpoint)
     result = keyboard_recovery.reconcile_loaded_tail(
-        **source, plan=plan, agent=agent(), environment=environment, snapshotter=environment,
-        output=tmp_path / "recovered", revision="memory-regression",
+        **source,
+        plan=plan,
+        agent=agent(),
+        environment=environment,
+        snapshotter=environment,
+        output=tmp_path / "recovered",
+        revision="memory-regression",
     )
     assert result["checkpoint_verified"] is True
-    assert result["model_calls"] == result["native_input_commands"] == result["native_ticks_requested"] == 0
-
+    assert (
+        result["model_calls"]
+        == result["native_input_commands"]
+        == result["native_ticks_requested"]
+        == 0
+    )

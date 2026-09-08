@@ -34,7 +34,8 @@ def evidence_root(tmp_path):
     folder.mkdir(parents=True)
     for filename in (*records.PUBLISHED, *records.INTERRUPTIONS, *records.RECOVERIES,
                      *records.CHECKPOINT_FAILURES, *records.RESTARTS, *records.CHECKPOINT_REVIEWS,
-                     *records.CHECKPOINT_RECOVERIES, *records.CONTINUATIONS):
+                     *records.CHECKPOINT_RECOVERIES, *records.CONTINUATIONS,
+                     records.TAIL_INTERRUPTION, *records.TAIL_RECOVERIES):
         shutil.copyfile(records.PROJECT_ROOT / "experiments/evidence" / filename, folder / filename)
     return tmp_path
 
@@ -217,7 +218,13 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   assert.match(elements['keyboard-results'].textContent, /184 model responses/);
   assert.match(elements['keyboard-results'].textContent, /Recovery verified · checkpoint 184/);
   assert.match(elements['keyboard-results'].textContent, /Subsequently recovered as checkpoint 184/);
-  assert.ok(elements['keyboard-results'].textContent.startsWith('Play continued · checkpoint 296'));
+  assert.ok(elements['keyboard-results'].textContent.startsWith('Recovery verified · checkpoint 311'));
+  assert.match(elements['keyboard-results'].textContent, /327 existing model responses and 65,600 elapsed ticks preserved/);
+  assert.match(elements['keyboard-results'].textContent, /Workshop clock interrupted · decision 310/);
+  assert.match(elements['keyboard-results'].textContent, /15 new responses, 14 committed actions and 2,000 new ticks/);
+  assert.match(elements['keyboard-results'].textContent, /Subsequently recovered as checkpoint 311/);
+  assert.match(elements['keyboard-results'].textContent, /10,765,958 including historical/);
+  assert.match(elements['keyboard-results'].textContent, /Play continued · checkpoint 296/);
   assert.match(elements['keyboard-results'].textContent, /64 new model decisions, 14,400 new ticks/);
   assert.match(elements['keyboard-results'].textContent, /63,600 retained ticks/);
   assert.match(elements['keyboard-results'].textContent, /312 accounted model responses/);
