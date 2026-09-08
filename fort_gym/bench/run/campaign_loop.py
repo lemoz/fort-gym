@@ -290,6 +290,7 @@ class CampaignLoop:
         self.failed = False
         self.failure_context: dict = {}
         self.no_action_boundary: dict | None = None
+        self.discontinuities: list[dict] = []
         _append(
             self.journal,
             {
@@ -377,6 +378,13 @@ class CampaignLoop:
                 }
                 if "tick_feedback" in self.last_result:
                     feedback["simulation"] = deepcopy(self.last_result["tick_feedback"])
+                if "restart" in self.last_result:
+                    feedback["infrastructure_restart"] = {
+                        key: self.last_result["restart"][key] for key in (
+                            "restored_next_step", "lost_trace_next_step", "lost_elapsed_ticks",
+                            "memory_policy", "actions_replayed",
+                        )
+                    }
             observation = {
                 "observation_profile": TEXT_PROFILE,
                 "screen_capture": capture,
@@ -680,6 +688,7 @@ class CampaignLoop:
                 for event in self.agent.pop_tool_events()
             ],
             "campaign_mode": True,
+            **({"discontinuities": deepcopy(self.discontinuities)} if self.discontinuities else {}),
         }
         _append(self.trace, row)
         self.observation_view = deepcopy(next_view)
@@ -721,6 +730,7 @@ class CampaignLoop:
                 "max_advance_ticks": self.max_advance_ticks,
                 "observation_profile": self.observation_profile,
                 "advance_policy": self.advance_policy,
+                **({"discontinuities": deepcopy(self.discontinuities)} if self.discontinuities else {}),
                 **(
                     {"observation_view": deepcopy(self.observation_view)}
                     if self.observation_profile == INSPECTION_PROFILE
@@ -828,6 +838,9 @@ class CampaignLoop:
                 progress["elapsed_ticks"] if origin.get("step") == 0 else None
             )
         instance.parent = checkpoint
+        from .keyboard_restart import validate_discontinuities
+
+        instance.discontinuities = validate_discontinuities(runner.get("discontinuities", []))
         instance.observation_view = saved_view
         instance.at_boundary = True
         if budget_extension is not None:

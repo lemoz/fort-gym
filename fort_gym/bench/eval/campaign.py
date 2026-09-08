@@ -33,8 +33,27 @@ def campaign_progress(records: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
     previous_step: int | None = None
     seen_steps: set[int] = set()
     run_ids: set[str] = set()
+    restart_losses: dict[str, int] = {}
+    restart_metadata_invalid = False
     for record in records:
         row_count += 1
+        discontinuities = record.get("discontinuities", [])
+        if not isinstance(discontinuities, list):
+            restart_metadata_invalid = True
+        else:
+            for restart in discontinuities:
+                if not isinstance(restart, dict) or (
+                    restart.get("schema_version") != "fortgym.native-save-loss-restart/v1"
+                    or not isinstance(restart.get("source_result_sha256"), str)
+                    or _count(restart.get("lost_elapsed_ticks")) is None
+                    or restart.get("uninterrupted_campaign") is not False
+                ):
+                    restart_metadata_invalid = True
+                    continue
+                identity, loss = restart["source_result_sha256"], restart["lost_elapsed_ticks"]
+                if identity in restart_losses and restart_losses[identity] != loss:
+                    restart_metadata_invalid = True
+                restart_losses[identity] = loss
         step = _count(record.get("step"))
         duplicate = step is not None and step in seen_steps
         sequence_gap = step is None or (previous_step is not None and step != previous_step + 1)
@@ -92,6 +111,11 @@ def campaign_progress(records: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
         "mixed_run_ids": len(run_ids) > 1,
         "functioning_fortress": "not_assessed",
         "autonomous_gameplay": "not_assessed",
+        **({
+            "uninterrupted_campaign": False if not restart_metadata_invalid else None,
+            "native_save_loss_restarts": len(restart_losses) if not restart_metadata_invalid else None,
+            "discarded_native_ticks": sum(restart_losses.values()) if not restart_metadata_invalid else None,
+        } if restart_losses or restart_metadata_invalid else {}),
     }
 
 

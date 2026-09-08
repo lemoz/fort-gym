@@ -123,6 +123,8 @@ def worker(args) -> dict:
             expected_cursor=args.cursor,
             revision=args.revision,
             budget_extension=window.get("budget_extension") if args.extend_budget else None,
+            restart_declaration=window.get("restart") if getattr(args, "restart_source", None) else None,
+            restart_source=getattr(args, "restart_source", None),
         )
     finally:
         environment.close()
@@ -137,10 +139,18 @@ def run_window(args) -> dict:
         raise ValueError("Checkpoint does not match the declared continuation cursor")
     original_sha = file_digest(args.checkpoint / "checkpoint.json")
     latest = args.latest_usage.read_bytes()
-    if latest != (args.checkpoint / "usage.jsonl").read_bytes():
+    if window.get("restart") is not None:
+        from fort_gym.bench.run.keyboard_restart import prepare_restart
+
+        if getattr(args, "restart_source", None) is None:
+            raise ValueError("Declared restart requires its retained failed source")
+        prepare_restart(args.checkpoint, args.restart_source, window["restart"], latest)
+    elif getattr(args, "restart_source", None) is not None:
+        raise ValueError("Undeclared native save-loss restart")
+    elif latest != (args.checkpoint / "usage.jsonl").read_bytes():
         raise ValueError("A window requires the fully settled latest checkpoint, not an older save")
     state = read(args.checkpoint / "agent.json")
-    if reconciled_usage(state, latest) != state["usage"]:
+    if window.get("restart") is None and reconciled_usage(state, latest) != state["usage"]:
         raise ValueError("Checkpoint usage is not settled")
     args.output.mkdir(mode=0o700, exist_ok=False)
     exchange = args.output / "exchange"
@@ -204,6 +214,8 @@ def run_window(args) -> dict:
                 ]
                 if index == 0 and window.get("budget_extension") is not None:
                     command.append("--extend-budget")
+                if index == 0 and getattr(args, "restart_source", None) is not None:
+                    command.extend(["--restart-source", str(args.restart_source)])
                 with (args.output / f"worker-{index}.log").open("xb") as log:
                     try:
                         run_worker(
@@ -285,6 +297,7 @@ def main() -> None:
         for field in ("condition", "window", "checkpoint", "latest-usage", "output"):
             command.add_argument("--" + field, type=Path, required=True)
         command.add_argument("--revision", required=True)
+        command.add_argument("--restart-source", type=Path)
         if name == "run":
             command.add_argument("--source", type=Path, required=True)
             command.add_argument("--port", type=int, required=True)
@@ -323,8 +336,9 @@ def main() -> None:
         "source",
         "runtime",
         "exchange",
+        "restart_source",
     ):
-        if hasattr(args, field):
+        if getattr(args, field, None) is not None:
             setattr(args, field, getattr(args, field).resolve())
     verify_source(args.revision)
     with termination_as_interrupt():

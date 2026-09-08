@@ -32,6 +32,8 @@ def commit_rejection(
         before=before, after=after, observation=observation, text=text, screen=screen,
         events=loop.agent.pop_tool_events(),
     )
+    if loop.discontinuities:
+        row["discontinuities"] = deepcopy(loop.discontinuities)
     history = _action_history_entry(
         step=loop.next_step, action=row["action"],
         requested_ticks=row["action"]["advance_ticks"],

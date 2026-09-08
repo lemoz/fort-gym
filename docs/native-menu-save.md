@@ -49,7 +49,15 @@ passed the focused run. Changed modules pass Ruff and scoped mypy.
 No model calls were made. The historical checkpoint-200 timeout and unsaved
 16-decision tail remain failed and retained; this fix does not recover them or
 authorize a silent rewind. Latest verified historical checkpoint remains 184.
-Build-menu validation and a loss-aware next attempt remain to be declared.
+The corrected build-menu check subsequently passed on source `60c5a3eee` using
+the catalog's `D_BUILDING` key. Its two native processes, container and local VM
+were stopped. See `experiments/evidence/astra_native_build_menu_save_20260907.json`.
+No old failure is reclassified. The local VM's data-disk allowance was expanded
+from 10 to 16 GiB to preserve evidence; no other VM configuration changed.
+
+[Window e](native-save-loss-restart.md) declares a loss-aware restart, not
+recovery of the unsaved tail. It remains subject to fresh native and model-run
+evidence; configuration and local tests alone do not establish resumed play.
 
 Primary implementation references: bundled DFHack 0.47.05-r8 `quicksave.lua`,
 [quicksave documentation](https://docs.dfhack.org/en/0.47.05-r8/docs/tools/quicksave.html),
