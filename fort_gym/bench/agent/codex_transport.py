@@ -18,9 +18,9 @@ from collections.abc import Callable, Mapping
 from pathlib import Path
 
 from .codex_protocol import TRANSPORT, decode_events
+from .codex_selection import MODEL as MODEL, REASONING_EFFORT as REASONING_EFFORT
+from .codex_selection import validate_selection
 
-MODEL = "gpt-6-astra"
-REASONING_EFFORT = "medium"
 MAX_EVENT_BYTES = 16 * 1024 * 1024
 DISABLED_FEATURES = (
     "apps",
@@ -54,7 +54,11 @@ class CodexTransportError(RuntimeError):
         self.receipt = receipt
 
 
-def invocation(executable: Path, schema_path: Path) -> list[str]:
+def invocation(
+    executable: Path, schema_path: Path, *,
+    model: str = MODEL, reasoning_effort: str = REASONING_EFFORT,
+) -> list[str]:
+    validate_selection(model, reasoning_effort)
     command = [
         str(executable),
         "-a",
@@ -67,9 +71,9 @@ def invocation(executable: Path, schema_path: Path) -> list[str]:
         "--sandbox",
         "read-only",
         "--model",
-        MODEL,
+        model,
         "-c",
-        f'model_reasoning_effort="{REASONING_EFFORT}"',
+        f'model_reasoning_effort="{reasoning_effort}"',
         "-c",
         'forced_login_method="chatgpt"',
         "-c",
@@ -120,6 +124,8 @@ def request_decision(
     artifact_root: Path,
     allowance_check: Callable[[], dict],
     timeout_seconds: float = 180,
+    model: str = MODEL,
+    reasoning_effort: str = REASONING_EFFORT,
 ) -> dict:
     """Return a retained transport receipt, or raise with the same failure receipt.
 
@@ -128,6 +134,7 @@ def request_decision(
     appropriate for synthetic/offline tests. A preflight is not an atomic account
     reservation: other subscription sessions can consume allowance concurrently.
     """
+    validate_selection(model, reasoning_effort)
     if (
         not isinstance(prompt, str)
         or not prompt.strip()
@@ -161,8 +168,8 @@ def request_decision(
     metadata = {
         "schema_version": "fortgym.codex-decision-receipt/v1",
         "transport": TRANSPORT,
-        "model_requested": MODEL,
-        "reasoning_effort_requested": REASONING_EFFORT,
+        "model_requested": model,
+        "reasoning_effort_requested": reasoning_effort,
         "auth_mode": "chatgpt",
         "api_credentials_inherited": False,
         "prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),
@@ -187,7 +194,7 @@ def request_decision(
             (directory / "stderr.log").open("xb") as err,
         ):
             process = subprocess.Popen(
-                invocation(executable, schema_path),
+                invocation(executable, schema_path, model=model, reasoning_effort=reasoning_effort),
                 cwd=directory,
                 env=isolated_environment(os.environ),
                 stdin=subprocess.PIPE,

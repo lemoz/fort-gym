@@ -29,6 +29,12 @@ def run_keyboard_segment(
 ) -> dict:
     """Resume only the verified loaded game; never choose or repair gameplay."""
     validate_condition(condition)
+    for key in (
+        "model", "reasoning_effort", "transport", "control_profile", "observation_profile",
+        "max_dispatches", "max_total_tokens", "max_advance_ticks",
+    ):
+        if agent.configuration.get(key) != condition[key]:
+            raise ValueError("Keyboard agent differs from its declared condition")
     positive(steps, "segment size", maximum=64)
     manifest = verify_checkpoint(checkpoint)
     if manifest["payload"]["next_step"] != expected_cursor:

@@ -111,10 +111,17 @@ def worker(args) -> dict:
                 feedback,
                 max_advance_ticks=condition["max_advance_ticks"],
                 timeout_seconds=condition["exchange_timeout_seconds"],
+                **(
+                    {"model": condition["model"], "reasoning_effort": condition["reasoning_effort"]}
+                    if condition["schema_version"] == "fortgym.codex-keyboard-condition/v2"
+                    else {}
+                ),
             ),
             max_dispatches=condition["max_dispatches"],
             max_total_tokens=condition["max_total_tokens"],
             max_advance_ticks=condition["max_advance_ticks"],
+            model=condition["model"],
+            reasoning_effort=condition["reasoning_effort"],
         )
         return run_keyboard_segment(
             agent=agent,

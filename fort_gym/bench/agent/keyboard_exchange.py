@@ -17,6 +17,7 @@ from pathlib import Path
 
 from ..env.native_key_catalog import NATIVE_PROFILE
 from ..env.screen_observation import TEXT_PROFILE, raw_screen
+from .codex_selection import MODEL, REASONING_EFFORT, validate_selection
 
 MAX_BYTES = 2 * 1024 * 1024
 
@@ -51,7 +52,8 @@ def read(path: Path) -> dict:
 
 
 def validate_request(request: dict) -> None:
-    if set(request) != {
+    version = request.get("schema_version")
+    fields = {
         "schema_version",
         "request_id",
         "screen",
@@ -60,11 +62,16 @@ def validate_request(request: dict) -> None:
         "control_profile",
         "observation_profile",
         "max_advance_ticks",
-    }:
+    }
+    if version == "fortgym.keyboard-exchange-request/v2":
+        fields |= {"model", "reasoning_effort"}
+        validate_selection(request.get("model"), request.get("reasoning_effort"))
+    elif version != "fortgym.keyboard-exchange-request/v1":
+        raise ValueError("Keyboard exchange condition is invalid")
+    if set(request) != fields:
         raise ValueError("Keyboard exchange request fields differ")
     if (
-        request["schema_version"] != "fortgym.keyboard-exchange-request/v1"
-        or request["control_profile"] != NATIVE_PROFILE
+        request["control_profile"] != NATIVE_PROFILE
         or request["observation_profile"] != TEXT_PROFILE
         or not isinstance(request["memory"], str)
         or (request["feedback"] is not None and not isinstance(request["feedback"], dict))
@@ -77,6 +84,12 @@ def validate_request(request: dict) -> None:
     raw_screen(request["screen"])
 
 
+def request_selection(request: dict) -> tuple[str, str]:
+    """v1 always means Astra Medium; v2 binds the explicit pair to the digest."""
+    validate_request(request)
+    return request.get("model", MODEL), request.get("reasoning_effort", REASONING_EFFORT)
+
+
 def exchange_decision(
     root: Path,
     screen: dict,
@@ -85,6 +98,8 @@ def exchange_decision(
     *,
     max_advance_ticks: int = 2000,
     timeout_seconds: float = 240,
+    model: str | None = None,
+    reasoning_effort: str | None = None,
 ) -> dict:
     if type(timeout_seconds) not in (int, float) or not 1 <= timeout_seconds <= 600:
         raise ValueError("Invalid exchange deadline")
@@ -99,6 +114,12 @@ def exchange_decision(
         "observation_profile": TEXT_PROFILE,
         "max_advance_ticks": max_advance_ticks,
     }
+    if model is not None or reasoning_effort is not None:
+        validate_selection(model, reasoning_effort)
+        request.update(
+            schema_version="fortgym.keyboard-exchange-request/v2",
+            model=model, reasoning_effort=reasoning_effort,
+        )
     validate_request(request)
     directory = root / identifier
     directory.mkdir(mode=0o700, parents=False, exist_ok=False)

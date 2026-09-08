@@ -9,7 +9,7 @@ from ..run.keyboard_config import validate_condition
 from .codex_allowance import read_allowance
 from .codex_transport import CodexTransportError
 from .keyboard_decision import request_keyboard_decision
-from .keyboard_exchange import digest, publish, validate_request
+from .keyboard_exchange import digest, publish, request_selection
 
 
 def answer_request(
@@ -27,7 +27,14 @@ def answer_request(
     response to the game user. A second call at that directory cannot re-infer.
     """
     validate_condition(condition)
-    validate_request(request)
+    model, reasoning_effort = request_selection(request)
+    version = condition["schema_version"].rsplit("/", 1)[1]
+    if (
+        request["schema_version"] != f"fortgym.keyboard-exchange-request/{version}"
+        or model != condition["model"]
+        or reasoning_effort != condition["reasoning_effort"]
+    ):
+        raise ValueError("Request model differs from its declared condition")
     if request["max_advance_ticks"] != condition["max_advance_ticks"]:
         raise ValueError("Request tick bound differs from its declared condition")
     if not directory.is_absolute() or directory.is_symlink() or not directory.is_dir():
@@ -58,6 +65,8 @@ def answer_request(
             timeout_seconds=condition["model_timeout_seconds"],
             control_profile=condition["control_profile"],
             observation_profile=condition["observation_profile"],
+            model=model,
+            reasoning_effort=reasoning_effort,
         )
     except CodexTransportError as error:
         result = error.receipt

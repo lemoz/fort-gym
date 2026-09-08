@@ -15,6 +15,7 @@ from pathlib import Path
 from ..env.screen_observation import TEXT_PROFILE, encode_screen
 from ..env.native_key_catalog import NATIVE_PROFILE, catalog_instructions
 from .codex_transport import CodexTransportError, request_decision
+from .codex_selection import MODEL, REASONING_EFFORT
 from .standard_input import (
     CONTROL_PROFILE,
     OBSERVATION_PROFILE,
@@ -70,6 +71,8 @@ def request_keyboard_decision(
     observation_profile: str = OBSERVATION_PROFILE,
     control_profile: str = CONTROL_PROFILE,
     feedback: dict | None = None,
+    model: str = MODEL,
+    reasoning_effort: str = REASONING_EFFORT,
 ) -> dict:
     if not isinstance(memory, str):
         raise ValueError("Agent memory must be text")
@@ -110,6 +113,8 @@ def request_keyboard_decision(
         artifact_root=artifact_root,
         allowance_check=allowance_check,
         timeout_seconds=timeout_seconds,
+        model=model,
+        reasoning_effort=reasoning_effort,
     )
     action, error = None, None
     try:

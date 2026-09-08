@@ -6,7 +6,7 @@ import hashlib
 import json
 from copy import deepcopy
 
-from ..agent.keyboard_exchange import digest, validate_request
+from ..agent.keyboard_exchange import digest, request_selection, validate_request
 from ..agent.keyboard_rejection import rejected_receipt
 from ..env.native_key_catalog import NATIVE_PROFILE
 from ..env.screen_observation import TEXT_PROFILE, encode_screen
@@ -92,10 +92,14 @@ def effective_records(checkpoint: dict, journal: bytes) -> list[dict]:
             or config.get("transport") != receipt.get("transport")
         ):
             raise ValueError("Rejection reconciliation changed campaign condition")
+        if request_selection(request) != (config["model"], config["reasoning_effort"]):
+            raise ValueError("Rejection request changed campaign model")
         rejected_receipt(
             response["result"],
             screen_sha256=digest(encode_screen(request["screen"], TEXT_PROFILE)),
             max_advance_ticks=request["max_advance_ticks"],
+            model=config["model"],
+            reasoning_effort=config["reasoning_effort"],
         )
         _clock(record["native_boundary"])
         prior = next(
