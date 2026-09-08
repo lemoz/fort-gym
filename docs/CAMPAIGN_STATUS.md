@@ -24,9 +24,10 @@ Astra Medium, native keyboard/v2, screen text/v1, 120x40 display, memory or the
 inherited 1,024-dispatch / 40-million-token allowance.
 
 The unique owner under `astra-native-food-continuation-v1` verified startup and
-fresh subscription admission. A live read observed five returned/committed valid
-decisions and zero new ticks. Initial and current private food readings were
-complete at 27 units; the live population was twelve. Actual request fields
+fresh subscription admission. A later live read observed 37 returned valid
+responses, 36 committed decisions and 8,000 new ticks. Initial and current
+private food readings were complete at 27 and 71 units; the live population was
+twelve. These inventory changes do not identify production or consumption. Actual request fields
 remain the screen-only contract. These are in-flight observations, not a
 completed window, checkpoint 631 or a sustainability result. The same owner
 must finish and verify mandatory teardown; keep its implementation source frozen.
@@ -37,6 +38,18 @@ mypy with silent dependency following passed. The default dependency-following
 mypy invocation was not green (271 diagnostics in 16 files); no full typing-clean
 claim. Exact-source CI `34259573627` subsequently passed. Prior publication source
 `4e746f0fa` passed CI `34257628962`. No merge, deployment or visual acceptance.
+
+While n runs, an isolated dashboard/API update was implemented and pushed as
+`1f083183f623e64323960967c669efa51607343b` on
+`codex/campaign-food-outcomes-v1`, with the exact remote head verified. It supports
+authored native-food endpoint counts and complete/unknown reading coverage while
+preserving historical unknowns. Synthetic fixtures are not published run results.
+The full local suite passed 3,134 tests with ten skips after granting loopback
+socket access; the first sandboxed run denied one ephemeral-port test and passed
+the other 3,133. The 163-test focused suite, scoped Ruff/two-file mypy and JavaScript
+syntax checks passed. No separate remote-CI result is claimed for this branch.
+It is not integrated into the frozen runtime, merged or deployed. After n ends,
+audit its actual evidence before adding any result to the completed-record allowlist.
 
 ### Latest completed result: checkpoint 567, 122,200 retained ticks
 

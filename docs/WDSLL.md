@@ -40,9 +40,17 @@ local code test run passed 3,087 tests with ten skips; two later-added tests als
 passed in a 68-test focused rerun. Scoped static checks passed; this is not a
 repository-wide typing-clean claim. Exact-head CI `34259573627` subsequently passed.
 Window n is actively continuing from 567 with the same model and cumulative
-limits. Its first five valid committed decisions added zero ticks; initial and
-current private food readings were complete at 27 units. These observations are
+limits. A later read observed 37 valid responses, 36 committed decisions and 8,000
+new ticks. Complete private food readings increased from 27 to 71 units, with
+twelve living dwarves; inventory growth is not production attribution. These observations are
 not a completed window. Follow its unique owner through auditing and teardown.
+The isolated food-count API/page update is pushed and remote-verified at
+`1f083183f623e64323960967c669efa51607343b` on `codex/campaign-food-outcomes-v1`.
+It passed 163 focused tests and the full 3,134-test suite (ten skipped) after
+loopback socket access was allowed, plus scoped static checks. It preserves
+unknown versus zero and does not publish a synthetic completed run. Runtime
+integration, native-result publication, browser acceptance and deployment remain
+separate; the live source stays frozen.
 The full original year-two, repeated-model and website-delivery goal remains active.
 
 

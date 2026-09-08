@@ -278,12 +278,23 @@ draft PR #137. Full local production-code testing passed 3,087 tests with ten
 skips; two later-added tests passed in the focused rerun. Scoped static checks
 passed, without claiming repository-wide typing cleanliness.
 
-Window n is running from checkpoint 567 on that frozen source. Five valid
-committed decisions and zero new ticks were observed. Its first integrated
-private food read and the latest read both reported 27 units. Actual model
+Window n is running from checkpoint 567 on that frozen source. A later read
+observed 37 valid responses, 36 committed decisions and 8,000 new ticks. Its first
+integrated private food read was 27 units and the later complete reading was 71;
+twelve dwarves remained alive. This is inventory growth, not production attribution. Actual model
 requests retain only screen, memory and factual control feedback; the private
 evaluation count does not alter the playing condition. Source-specific CI
 `34259573627` subsequently passed; earlier source `4e746f0fa` also passed its CI.
 The unique owner must retain any error and finish teardown. No terminal n result
 is claimed. Full-year survival, repeated model comparisons, merged/deployed
 website delivery and full-goal completion remain open.
+
+The separately developed API/page food-count projection is pushed and
+remote-verified at `1f083183f623e64323960967c669efa51607343b` on
+`codex/campaign-food-outcomes-v1`. It displays reviewed endpoint units and
+complete/unknown coverage, leaves earlier food unknowns intact and keeps native
+inventory distinct from accessibility and sustainability. Full local validation
+passed 3,134 tests with ten skips after resolving a sandbox denial of a local
+socket test; 163 focused tests and scoped static checks passed. No native result
+fixture was published. The change remains isolated from the running harness;
+integration and real result publication follow terminal audit and teardown.
