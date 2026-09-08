@@ -8,7 +8,25 @@ fortress through year two and beyond. Website evidence and remote source deliver
 remain requirements. The objective is unfinished; early native Astra gameplay
 and checkpoint-continuation evidence are now verified.
 
-Latest result, September 8 UTC: window j completed all 64 new accepted decisions,
+Latest result, September 8 UTC: window k completed 64 returned decisions, with
+63 accepted inputs and one invalid input rejected before dispatch. Independently
+audited checkpoint 439 retains 101,000 ticks, just over one quarter of the full
+elapsed-year target. Seven dwarves are alive; completed farms increased four to
+five, installed beds three to four, and existing drink units 134 to 162. Food,
+production and sustainability are still unverified. All 455 responses, 14,814,687
+campaign tokens and 14,883,691 all-attempt tokens remain accounted. The 24,000 new
+actual ticks exclude a 2,000-tick workshop-menu deferral; subsequent model-led
+play resumed without a correction key. The original lost branch stays explicit.
+Full teardown passed; no worker from k remains live. A separate tested reporting
+fix is pushed, and its integration, the authored 439 page record and unchanged
+next window l are pushed at `8caa3e11a` in draft PR #137. All 2,883 local tests
+passed (ten skips); exact-source CI `34249380279` passed 2,793 tests (100 skips).
+Window l is now live from 439 with unchanged model, controls, limits and mandatory
+teardown. The first nine observed decisions committed with zero new clock ticks;
+no newer audited checkpoint is claimed.
+No merge/deploy, independent model comparison or full-goal completion.
+
+Previous result, September 8 UTC: window j completed all 64 new accepted decisions,
 adding 11,400 ticks and reaching audited checkpoint 375 / 77,000 retained ticks
 (19.1 percent of one full elapsed game year). Seven dwarves remain alive with no
 recorded deaths. Completed farms increased two to four; installed beds and completed
@@ -21,11 +39,11 @@ runtime must verify fresh loading of 375 before model dispatch. Aggregate websit
 publication and unchanged next window k are pushed at `7416f65b2` in draft PR #137,
 not merged or deployed. The campaign page source now leads with checkpoint 375 and
 the before/after counts, with earlier failures retained. Scoped checks passed;
-exact-head CI `34244374506` passed 2,777 tests with 100 skips. Window k has started
+exact-head CI `34244374506` passed 2,777 tests with 100 skips. Window k started
 from 375 under its unique teardown-owning runner and unchanged settings/limits.
 The first three observed actions committed and added 2,000 ticks; this is in-flight,
-not a completed continuation or new checkpoint. Follow the same owner to terminal
-completion before another VM.
+not themselves a completed continuation or new checkpoint. The same owner later
+completed and tore down, as recorded above.
 The full year-two / repeated cross-model objective remains active.
 
 Previous result, September 8 UTC: window i added 15 returned responses and

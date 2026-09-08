@@ -202,10 +202,28 @@ was exercised. Teardown passed. The final save still requires its next fresh loa
 Authored aggregate publication and unchanged continuation k are pushed at
 `7416f65b2ee464b09963d65733b692bf1a9c03b6` in draft PR #137. Local tests and the
 private-to-authored count reconciliation passed; exact-head CI `34244374506`
-passed 2,777 tests with 100 skips. Window k has started under its unique owner;
+passed 2,777 tests with 100 skips. Window k started under its unique owner;
 the first three observed actions committed and added 2,000 ticks, without a
 completed-window or new-checkpoint claim.
-The same owner must enforce its bound and teardown before another native run.
+The same owner subsequently completed its bound and verified teardown.
 The source page leads with checkpoint 375 and
 before/after counts, retaining older failures, not presenting a live activity feed.
 No merge, production deploy, browser visual acceptance or full-goal completion.
+
+Window k completion: checkpoint 439 retains 101,000 ticks after 64 new responses
+(63 accepted inputs, one zero-dispatch rejection) and 24,000 actual new ticks.
+All 455 responses, 14,814,687 campaign tokens and 14,883,691 all-attempt tokens
+are preserved. Seven dwarves remain alive; completed farms increased four to
+five, installed beds three to four, and existing drink units 134 to 162. No
+sustainability claim. The model requested 26,000 ticks; a verified 2,000-tick
+workshop-menu deferral was followed by 6,000 further model-led ticks without an
+operator correction. The generic clock-timeout fallback was not exercised.
+Independent save, rejection, clock and gameplay reviews and complete teardown
+passed. The authored 439 record, clock-count reporting and unchanged continuation
+l are pushed at `8caa3e11acc5d19ddea8b28bd917f9659e733d21` in draft PR #137. All
+2,883 local tests passed (ten skips); exact-source CI `34249380279` passed 2,793
+tests (100 skips). Window l has started on that frozen source; the first nine
+observed decisions committed with zero new clock ticks after the native load
+boundary. It remains in-flight under the same
+owner and mandatory teardown, not a completed window or new audited checkpoint.
+The full original goal remains active, with no merge or production deployment.

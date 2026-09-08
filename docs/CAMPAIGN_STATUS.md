@@ -10,10 +10,65 @@ Implement Astra Medium on native keyboard controls, verify the actual model-visi
 screen, and run autonomous fortress experiments toward year two and beyond. Keep
 DFHack shortcuts as an explicit alternative condition. Compare matching starts
 and declared observation/display settings, then extend to other models. The new
-phase retains website and remote delivery. The first bounded Astra native
-keyboard campaign has now completed.
+phase retains website and remote delivery. Several bounded Astra native-keyboard
+windows have completed; the same fortress remains in autonomous continuation.
 
-### Latest result: autonomous play reaches checkpoint 375
+### Latest result: checkpoint 439, past the first quarter-year
+
+Window k completed all 64 new returned decisions on frozen source
+`7416f65b2ee464b09963d65733b692bf1a9c03b6`: 63 accepted inputs and one invalid input
+rejected with zero native keys or ticks. It added 24,000 actual ticks and reached
+101,000 retained ticks, just over one quarter of the full 403,200-tick first year.
+Checkpoint 439:
+`69679e980dcf4164c7c0ae264a6044f4bfa8678e081079c7dd62769ccddc34e8`.
+Independent save/lineage, rejection and clock-receipt audits passed. Native,
+container and VM teardown passed; no OOM kill or resource increase occurred.
+The next runtime must verify fresh loading of this final checkpoint.
+
+Seven dwarves remain alive with zero recorded deaths. Completed farms increased
+four to five, installed beds three to four, and workshops stayed at three.
+Existing drink units increased 134 to 162. Food, production and consumption remain
+unverified; these observed gains do not yet establish sustainability.
+
+The model requested 26,000 ticks; 24,000 advanced. Twelve decisions advanced time,
+52 did not; 51 requested no time. A 2,000-tick request at step 424 was held in the
+workshop Add Job menu. Its receipt verifies an unchanged calendar, no clock
+dispatch and no timeout. Subsequent model-selected actions advanced 6,000 ticks
+without a correction key or strategy hint. The generic timeout fallback was not
+exercised. The undispatched invalid input and all historical failures stay recorded.
+
+All 455 responses and 14,814,687 campaign tokens are retained; all-attempt tokens
+are 14,883,691. New usage was 1,976,528 tokens; charges are unreported. No new loss,
+restart, replay, budget extension or model-memory reset. The earlier 2,000-tick
+lost branch remains explicit. Private evidence: `astra-native-workshop-continuation-v1`
+under the runtime root, including all three independent descriptive audits.
+
+The separately developed keyboard-reporting fix is pushed as `0f2e72a78` on
+`codex/keyboard-outcome-profile-v1`, and was integrated into the implementation
+checkout as `abed24207` only after the native owner stopped. Fifty focused tests
+and a read-only replay verify corrected keyboard labels with unchanged time,
+usage, metrics and verdicts. The authored 439 record, explicit requested/actual
+clock counts, and unchanged next window l are pushed at
+`8caa3e11acc5d19ddea8b28bd917f9659e733d21` in open draft PR #137. Local validation
+passed all 2,883 tests with ten skips; scoped Ruff/mypy, Node syntax and the
+private-to-authored count reconciliation passed. Exact-source CI `34249380279`
+passed 2,793 tests with 100 skips. The Sites workflow preserved the existing page
+and used automated validation without a background browser preview. No model
+prompt, control or observation profile changed. No merge, production deploy,
+visual acceptance or independent model comparison is claimed. The full goal is active.
+
+Window l has started from 439 on that frozen source, with one unchanged 64-decision
+segment, inherited memory/usage and the existing 1,024-dispatch / 40-million-token
+ceiling. The unique owner under `astra-native-quarter-year-continuation-v1` is
+live and owns mandatory teardown. The first nine observed decisions committed,
+with zero new clock ticks through step 447; this is in-flight, not a completed
+window or new audited checkpoint. Fresh subscription
+preflight passed the existing guard, with per-call admission repeated and no fallback,
+credits, reset or local model. Keep the implementation checkout unchanged until
+the same owner reaches a verified terminal state. The website records completed
+439, not live tracking.
+
+### Previous result: autonomous play reaches checkpoint 375
 
 Window j completed all 64 new accepted Astra Medium decisions on frozen source
 `bc7a23aefef1fcf4f3f9212f1059d0edf17f239c`. It added 11,400 native ticks, reaching
@@ -47,14 +102,14 @@ the existing FastAPI/plain-JavaScript page and does not open a browser-only prev
 Native captures, maps, coordinates, saves and model traces remain private.
 The full year-two and repeated cross-model goal remains active.
 
-Window k has started on frozen source `7416f65b2`, continuing 375 with the same
+Window k started on frozen source `7416f65b2`, continuing 375 with the same
 64-decision single-process bound, Astra Medium, native keyboard/display profiles
-and cumulative allowance. The unique owner is running under private root
-`astra-native-workshop-continuation-v1`; it owns mandatory teardown. The native
+and cumulative allowance. The unique owner ran under private root
+`astra-native-workshop-continuation-v1`. Its mandatory teardown is now verified. The native
 runner reached its model-exchange loop. Its first three observed actions committed
 and added 2,000 native ticks, reaching 79,000 in-flight retained ticks. These are
-not a completed window or newer verified checkpoint.
-Keep the implementation checkout unchanged while that owner imports its courier.
+not themselves a completed window or newer verified checkpoint. The completed
+result is now recorded above; its courier is terminal and source edits may proceed.
 Fresh account preflight was 17 percent used, below the existing 90 percent guard;
 per-call admission repeats. No cloud VM, local model server, budget reset or
 resource increase. The website source records completed 375, not live activity.
