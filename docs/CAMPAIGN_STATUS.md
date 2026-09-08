@@ -47,9 +47,34 @@ future traces. The synthetic regression reproduced the failure; 123 focused chec
 and the full 3375-test suite passed (10 skipped), with scoped Ruff/mypy and diff
 checks passing. Fix `c12103397c5bc220c0fa3fc32afa5e7758ff7196` is committed and
 integrated into the execution branch after teardown, pushed and independently
-read back from GitHub. Exact-head CI `34289603394` passed. Native validation,
-loss-aware restart support and website failure publication remain open. The page
-still shows recorded 711, not a live feed or an accepted new window.
+read back from GitHub. Exact-head CI `34289603394` passed. Native validation and
+website failure publication remain open. The page still shows recorded 711, not
+a live feed or an accepted new window.
+
+The explicit partial-action restart path is now implemented and pushed at
+`cdb998fb8734f40e8cc032ceb24704026219258f`. It keeps the existing all-committed
+restart paths strict and adds a declared `partial_interruption_pending_save`
+classification, including the extra response, partial ticks and digest-bound
+runtime teardown. End-to-end synthetic coverage verifies checkpoint-memory
+restore, full usage retention, no action replay, and subsequent checkpoint/resume.
+All 57 new focused checks pass; the exact source passes 3432 full-suite tests,
+10 skipped. Scoped Ruff/mypy and diff checks pass. The initial sandbox run's
+single localhost socket-permission failure was resolved by rerunning the suite
+with localhost access, without changing the test. GitHub CI `34291795345` is
+in progress at this source head.
+
+The independent read-only preparation review also passes against immutable
+window-r evidence, digest
+`74ec2fe1fa0ecc1ca043c860be8e3cc1c1d319dcf6f5ba9680f9b18fa25007e9`.
+It retains all 814 responses, 26113503 campaign tokens and 6691 unsaved ticks,
+including one uncommitted response and its 691 ticks. No restart has been attached:
+the two historical losses totaling 23200 ticks remain unchanged until execution.
+Window s declares one 64-decision restart from save 711 under the existing limits,
+with no model, profile, cadence or budget change. No new model/game call or VM
+launch occurred during this repair; a fresh profile read confirmed Stopped.
+Next: publish the classified failure on the website, then prepare and execute
+the declared native restart with mandatory teardown. The full Year-Two goal is
+active, with native acceptance and cross-model evaluation still unproven.
 
 ### Latest completed result: checkpoint 711 saved with 49,200 new game ticks
 

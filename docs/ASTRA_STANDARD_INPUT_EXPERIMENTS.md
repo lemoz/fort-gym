@@ -107,9 +107,14 @@ All 814 responses, 26113503 campaign tokens and 26182507 all-attempt tokens are
 retained. Native load, subscription receipts and full teardown were audited. The
 repair at `c12103397c5bc220c0fa3fc32afa5e7758ff7196` passes 123 focused checks and
 3375 full-suite tests (10 skipped), with exact-head GitHub CI `34289603394` passing;
-native validation and explicit loss-aware
-restart support remain open. No restart, replay or new completed-window
-claim has been made. See Campaign status for the failure audit and source identity.
+native validation remains open. Explicit partial-action restart support and
+window s are now pushed at `cdb998fb8734f40e8cc032ceb24704026219258f`:
+57 new focused checks and 3432 full-suite tests pass (10 skipped), and retained
+window-r evidence passes a separate read-only preparation review. It retains
+the 23rd response and all 6691 unsaved ticks without replay. Exact-head CI
+`34291795345` is in progress. No restart, new model call, VM launch or new
+completed-window claim has been made. Website failure publication and native
+execution are next. See Campaign status for the audit and source identities.
 
 ## Historical interface result: window h
 
