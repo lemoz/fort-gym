@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 SCHEMA = "fortgym.keyboard-menu-deferral/v1"
-# This exact focus was observed holding the native calendar fixed during the
-# 2026-09-07 campaign. Do not guess that every non-default focus blocks time.
+# These exact focuses held the native calendar fixed in retained native runs.
+# Other focuses still try the clock; no menu is dismissed by the harness.
 BLOCKING_FOCUS = "dwarfmode/Build/Type"
+WORKSHOP_JOB_FOCUS = "dwarfmode/QueryBuilding/Some/Workshop/AddJob"
+BLOCKING_FOCI = frozenset((BLOCKING_FOCUS, WORKSHOP_JOB_FOCUS))
 NATIVE_VIEW = "<type: viewscreen_dwarfmodest>"
 
 
@@ -36,7 +38,7 @@ def validate_menu_deferral(
     if not isinstance(native, dict) or not isinstance(final, dict) or native != final:
         return "menu_deferral_native_boundary_changed"
     if (
-        native.get("focus") != BLOCKING_FOCUS
+        native.get("focus") not in BLOCKING_FOCI
         or native.get("viewscreen_type") != NATIVE_VIEW
         or native.get("paused") is not True
         or any(

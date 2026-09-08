@@ -32,7 +32,10 @@ from ..env.workshop_placement import (
     validate_policy,
 )
 from .campaign_save import native_save_status
-from .keyboard_clock import BLOCKING_FOCUS, SCHEMA as MENU_DEFERRAL_SCHEMA, validate_menu_deferral
+from .keyboard_clock import BLOCKING_FOCI, SCHEMA as MENU_DEFERRAL_SCHEMA, validate_menu_deferral
+from .keyboard_clock_timeout import (
+    SCHEMA as CLOCK_UNAVAILABLE_SCHEMA, validate_clock_unavailable, validate_zero_tick_timeout,
+)
 
 
 def read_campaign_fort_metrics() -> dict[str, Any]:
@@ -237,7 +240,7 @@ class NativeCampaignEnvironment:
                 return execution["result"]["native_receipts"][0]["after"]
 
             initial = probe()
-            if initial.get("focus") == BLOCKING_FOCUS:
+            if initial.get("focus") in BLOCKING_FOCI:
                 after = self.observe()
                 receipt = {
                     "schema_version": MENU_DEFERRAL_SCHEMA,
@@ -258,7 +261,24 @@ class NativeCampaignEnvironment:
             viewscreen_before=str(before.get("viewscreen_type") or "unknown"),
             max_advance_ticks=self.max_advance_ticks,
         )
-        return self.observe(), dict(self.client.last_tick_info)
+        after, receipt = self.observe(), dict(self.client.last_tick_info)
+        if (
+            getattr(self, "control_profile", HELPER_CONTROL_PROFILE) == NATIVE_PROFILE
+            and validate_zero_tick_timeout(receipt, requested_ticks=ticks, state=after) is None
+        ):
+            # Retain the failed operation verbatim and attest its settled native
+            # boundary. Do not retry, choose a key, or report requested time as real.
+            receipt = {
+                **receipt, "schema_version": CLOCK_UNAVAILABLE_SCHEMA,
+                "clock_unavailable": True, "clock_dispatched": True,
+                "native_before": initial, "native_after": probe(),
+            }
+            error = validate_clock_unavailable(
+                receipt, requested_ticks=ticks, before=state, after=after,
+            )
+            if error is not None:
+                raise RuntimeError(error)
+        return after, receipt
 
     def close(self) -> None:
         self.client.close()

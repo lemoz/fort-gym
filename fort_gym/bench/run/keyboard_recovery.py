@@ -13,6 +13,7 @@ from .campaign_loop import CampaignLoop, _append, _clock
 from .campaign_save import save_inventory
 from .keyboard_recovery_source import _bytes, _rows, inspect_recovery_source
 from .keyboard_rejection_recovery import SCHEMA as REJECTION_SCHEMA
+from .keyboard_restart import validate_discontinuities
 
 def reconcile_loaded_tail(
     *,
@@ -62,6 +63,9 @@ def reconcile_loaded_tail(
                 "Recovery output must be outside retained inputs and runtime"
             )
     state, runner = read(segment / "agent-after.json"), read(parent / "runner.json")
+    inherited = validate_discontinuities(runner.get("discontinuities", []))
+    if inherited != plan.get("inherited_discontinuities", []):
+        raise ValueError("Recovery plan must preserve the parent loss history")
     loop = CampaignLoop(
         campaign_id=plan["campaign_id"],
         agent=agent,
@@ -116,6 +120,7 @@ def reconcile_loaded_tail(
         for item in rows[-12:]
     ]
     loop.last_result, loop.next_step, loop.parent = row["execute"], plan["next_step"], parent
+    loop.discontinuities = inherited
     loop.committed_elapsed_ticks = read_campaign_progress(loop.trace)["elapsed_ticks"]
     loop.at_boundary = True
     publish(output / "recovery.json", plan)
@@ -163,6 +168,7 @@ def reconcile_loaded_tail(
         "native_ticks_requested": 0,
         "original_failure_reclassified_as_success": False,
         "original_sources_unchanged": True,
+        **({"inherited_discontinuities": inherited} if inherited else {}),
     }
     publish(output / "result.json", result)
     return result
@@ -192,6 +198,8 @@ def _clock_row(*, plan: dict, segment: Path, request: dict, observed: dict, scre
         "events": [{"type": "tool_call", "data": {
             **event, "run_id": plan["campaign_id"], "step": plan["failed_step"],
         }} for event in failure["events"]],
+        **({"discontinuities": plan["inherited_discontinuities"]}
+           if plan.get("inherited_discontinuities") else {}),
         "reconciliation": {
             "plan": plan, "original_failure": failure,
             "loaded_native_boundary": {

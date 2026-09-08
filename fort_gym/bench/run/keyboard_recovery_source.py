@@ -15,9 +15,11 @@ from ..eval.campaign import read_campaign_progress
 from .campaign_checkpoint import verify_checkpoint
 from .campaign_loop import _clock, reconciled_usage
 from .campaign_save import save_inventory
-from .keyboard_clock import BLOCKING_FOCUS, NATIVE_VIEW
+from .keyboard_clock import BLOCKING_FOCUS, BLOCKING_FOCI, NATIVE_VIEW
+from .keyboard_restart import validate_discontinuities
 
 SCHEMA = "fortgym.keyboard-failure-recovery/v1"
+EXTENDED_SCHEMA = "fortgym.keyboard-failure-recovery/v2"
 SOURCE_FILES = (
     "result.json",
     "agent-before.json",
@@ -59,6 +61,7 @@ def inspect_recovery_source(*, parent: Path, segment: Path, exchange: Path) -> d
 
         return inspect_input_rejection_source(parent=parent, segment=segment, exchange=exchange)
     checkpoint = verify_checkpoint(parent)
+    inherited = validate_discontinuities(read(parent / "runner.json").get("discontinuities", []))
     initial, previous, final = (
         read(parent / "agent.json"),
         read(segment / "agent-before.json"),
@@ -93,6 +96,9 @@ def inspect_recovery_source(*, parent: Path, segment: Path, exchange: Path) -> d
         )
         or any(row.get("run_id") != final["campaign_id"] for row in rows)
         or any(row.get("action", {}).get("type") != "KEYSTROKE" for row in rows)
+        or result.get("discontinuities", []) != inherited
+        or any(row.get("discontinuities", []) != inherited
+               for row in rows[checkpoint["payload"]["next_step"]:])
     ):
         raise ValueError(
             "Recovery source does not identify one unchanged keyboard campaign"
@@ -110,7 +116,8 @@ def inspect_recovery_source(*, parent: Path, segment: Path, exchange: Path) -> d
         reconciled_usage(final, _bytes(segment / "loop/usage.jsonl")) != usage
         or result.get("usage") != usage
         or usage["dispatched_requests"] != usage["returned_responses"]
-        or usage["returned_responses"] != cursor + 1
+        or usage["returned_responses"]
+        != initial["usage"]["returned_responses"] + cursor - checkpoint["payload"]["next_step"] + 1
     ):
         raise ValueError("Recovery source usage is not fully accounted")
     failure = failures[0]
@@ -146,8 +153,12 @@ def inspect_recovery_source(*, parent: Path, segment: Path, exchange: Path) -> d
         )
     journal = _rows(segment / "loop/usage.jsonl")
     finished = [row for row in journal if row["type"] == "decision_finished"]
+    new_journal = [json.loads(line) for line in
+                   _bytes(segment / "loop/usage.jsonl")[len(_bytes(parent / "usage.jsonl")):].splitlines()]
+    new_finished = [row for row in new_journal if row["type"] == "decision_finished"]
     if (
-        [row["step"] for row in finished] != list(range(cursor + 1))
+        [row["step"] for row in new_finished]
+        != list(range(checkpoint["payload"]["next_step"], cursor + 1))
         or finished[-1].get("decision_returned") is not True
         or finished[-1]["usage"] != usage
         or usage["total_tokens"] - finished[-2]["usage"]["total_tokens"]
@@ -267,12 +278,13 @@ def inspect_recovery_source(*, parent: Path, segment: Path, exchange: Path) -> d
                     "Native keyboard boundary differs from the retained save"
                 )
     if (
-        receipts[-1]["after"].get("focus") != BLOCKING_FOCUS
+        receipts[-1]["after"].get("focus") not in BLOCKING_FOCI
         or receipts[-1]["after"].get("viewscreen_type") != NATIVE_VIEW
     ):
-        raise ValueError("Recovery is limited to the observed build-menu clock failure")
+        raise ValueError("Recovery is limited to an observed blocking-menu clock failure")
+    extended = bool(inherited) or receipts[-1]["after"].get("focus") != BLOCKING_FOCUS
     return {
-        "schema_version": SCHEMA,
+        "schema_version": EXTENDED_SCHEMA if extended else SCHEMA,
         "campaign_id": final["campaign_id"],
         "parent_checkpoint_sha256": checkpoint["sha256"],
         "source_files_sha256": {name: _hash(segment / name) for name in SOURCE_FILES},
@@ -288,4 +300,6 @@ def inspect_recovery_source(*, parent: Path, segment: Path, exchange: Path) -> d
         "model_calls_to_recover": 0,
         "gameplay_keys_to_recover": 0,
         "replay_allowed": False,
+        **({"inherited_discontinuities": inherited,
+            "source_focus": receipts[-1]["after"]["focus"]} if extended else {}),
     }

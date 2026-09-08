@@ -46,6 +46,7 @@ from .campaign_advance import ACCEPTED_ONLY, MODEL_REQUESTED, POLICIES, requeste
 from .campaign_checkpoint import create_checkpoint, verify_checkpoint
 from .campaign_save import NativeSnapshotter
 from .keyboard_clock import SCHEMA as MENU_DEFERRAL_SCHEMA, validate_menu_deferral
+from .keyboard_clock_timeout import SCHEMA as CLOCK_UNAVAILABLE_SCHEMA, validate_clock_unavailable
 
 
 class CampaignEnvironment(Protocol):
@@ -623,9 +624,19 @@ class CampaignLoop:
             ) is not None
         ):
             raise ValueError("Native menu deferral is not an attested unchanged boundary")
+        clock_unavailable = (
+            "clock_unavailable" in receipt or receipt.get("schema_version") == CLOCK_UNAVAILABLE_SCHEMA
+        )
+        if clock_unavailable and (
+            not keyboard or validate_clock_unavailable(
+                receipt, requested_ticks=requested, before=before, after=after,
+            ) is not None
+        ):
+            raise ValueError("Native clock timeout is not an attested unchanged boundary")
         if (
             receipt.get("ok") is not True
             and not menu_deferral
+            and not clock_unavailable
             and validate_clean_interruption_receipt(
                 receipt,
                 requested_ticks=requested,
@@ -643,7 +654,7 @@ class CampaignLoop:
                 "tick_feedback": {
                     "requested_ticks": requested,
                     "ticks_advanced": actual,
-                    "deferred": receipt.get("deferred") is True,
+                    "deferred": receipt.get("deferred") is True or clock_unavailable,
                     "reason": receipt.get("error"),
                 },
             }
