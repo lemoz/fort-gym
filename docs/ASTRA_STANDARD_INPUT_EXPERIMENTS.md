@@ -98,13 +98,17 @@ The actual result, warning display and next window r are pushed at
 `2e535166fc96633438c19017a52256b45ab36790` in draft PR #137. All 3,359 local tests
 passed, and the local page/API matches that exact committed publication. Remote
 CI `34286271507` also passed at that exact head; no merge, production deployment or browser visual
-acceptance is claimed. Window r is now running under owner session 61359, keeping
-the same model, memory, controls and inherited limits. Its read-only startup review
-verified the matching loaded calendar, unchanged complete agent state, prior usage,
-trace prefix and actual 120x40 screen. Six valid responses had returned at that
-fixed observation; final save, native-load receipt and teardown audits remain
-pending. No new completed result is claimed. The open-ended year-two attempt and
-later paired/repeated comparisons remain the full objective.
+acceptance is claimed. Window r subsequently failed after 23 responses: 22 committed
+decisions added 6000 ticks, and a dialogue interrupted the next clock request after
+691 more ticks. The loop used the pre-keypress overlay as its interruption baseline
+instead of the recorded post-input screen. The attempted save did not persist;
+checkpoint 711 remains the last verified save, with 6691 observed new ticks unsaved.
+All 814 responses, 26113503 campaign tokens and 26182507 all-attempt tokens are
+retained. Native load, subscription receipts and full teardown were audited. The
+repair at `c12103397c5bc220c0fa3fc32afa5e7758ff7196` passes 123 focused checks and
+3375 full-suite tests (10 skipped); native validation and explicit loss-aware
+restart support remain open. No restart, replay or new completed-window
+claim has been made. See Campaign status for the failure audit and source identity.
 
 ## Historical interface result: window h
 

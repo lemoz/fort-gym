@@ -13,25 +13,43 @@ and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. Several bounded Astra native-keyboard
 windows have completed; the same fortress remains in autonomous continuation.
 
-### Running now: ordinary continuation from checkpoint 711
+### Latest attempt: dialogue interrupted window r; no new saved checkpoint
 
-Window r is running under owner session **61359** on frozen publication source
-`2e535166fc96633438c19017a52256b45ab36790`. It keeps Astra Medium, native
-keyboard controls, 120-by-40 screen, complete model state and inherited limits.
-The 64-decision window declares no restart, strategy intervention or budget
-extension. Startup review independently observed the exact checkpoint digest,
-year 30 tick 209,401, unchanged full agent state, reconciled prior usage and
-preserved trace prefix. Six valid model responses had returned at this fixed
-observation; this is not a new saved checkpoint or completed-window result.
+Window r ended after 23 accounted Astra Medium responses on frozen source
+`2e535166fc96633438c19017a52256b45ab36790`. Its trace reached cursor 733 with
+22 committed decisions and 6000 additional ticks; the next action advanced a
+separately observed 691 ticks before a dialogue appeared. The harness incorrectly
+validated the dialogue interruption against the pre-keypress overlay rather than
+the post-input dwarfmode screen. The unchanged interruption receipt passes the
+existing validator when given the recorded post-input boundary.
 
-The startup review digest is
-`601e8355521cdec9bacd3511a260a9d19b2f5ef7d5f75183da03b78999fea271`.
-Private artifacts and the live-owner handoff are under
-`astra-native-continuation-711-v1` in the existing runtime root. The owner retains
-mandatory native/container/VM teardown. Do not launch another owner for this
-attempt or change its executing source worktree. Final save, native-load receipt,
-usage and teardown audits remain pending. The website still shows recorded 711,
-not a live game feed, and no new production deployment is claimed.
+The subsequent save request remained pending and did not persist this window.
+All native save files still match checkpoint 711 except the DFHack event log.
+Thus **711 / 192600 ticks remains the last verified save**; 6691 new observed
+ticks are unsaved. This is an infrastructure interruption, not fortress-collapse
+evidence. A later restart must explicitly account for this tail, including the
+23rd response that did not become a committed trace row. No restart or replay
+has been performed, and the old pre-save restart classification does not fit.
+
+All 814 responses and 26113503 campaign tokens reconcile, including 743053 new
+tokens; all-attempt usage is 26182507 tokens. Dollar charges remain unreported.
+Every new subscription-event receipt was independently redecoded. Owner session
+61359 is terminal with exit 1; native processes, listener, container and VM are
+stopped, including a separate fresh stopped-profile check. Checkpoint 711's fresh
+load is now verified in r's final runtime receipt.
+
+Private evidence and handoff are under `astra-native-continuation-711-v1`;
+passing failure-review digest:
+`0d1454acb035d8dd467349c64fed7419afebd8ae1ff61ce55411dc2e0d55f5c1`.
+The repair candidate is isolated on `codex/campaign-keyboard-clock-boundary-v1`:
+capture the post-input paused boundary before clock validation and retain it in
+future traces. The synthetic regression reproduced the failure; 123 focused checks
+and the full 3375-test suite passed (10 skipped), with scoped Ruff/mypy and diff
+checks passing. Fix `c12103397c5bc220c0fa3fc32afa5e7758ff7196` is committed and
+integrated into the execution branch after teardown, pushed and independently
+read back from GitHub. Exact-head CI `34289603394` is in progress. Native validation,
+loss-aware restart support and website failure publication remain open. The page
+still shows recorded 711, not a live feed or an accepted new window.
 
 ### Latest completed result: checkpoint 711 saved with 49,200 new game ticks
 
@@ -64,8 +82,8 @@ was observed exited with code 0. The operator retained this terminal-observation
 warning and completed cleanup. Its underlying cause remains unverified; it is
 published as a warning, not a fully clean run or a gameplay failure. Checkpoint
 647 was fresh-loaded before q; checkpoint 711 had not yet been separately loaded
-at q completion. The running r startup now observes its matching loaded boundary;
-the final runtime receipt remains pending. Do not relaunch the completed q owner.
+at q completion. The failed r attempt subsequently verified its fresh load and
+matching boundary in the final runtime receipt. Do not relaunch either old owner.
 
 Before launch, a provider-free capacity check found only 1,064,780 KiB free on
 the existing 16-GiB data disk. It was expanded to 24 GiB, leaving CPU 2, RAM 3 GiB,
@@ -93,8 +111,8 @@ http://127.0.0.1:8857/campaigns with isolated state and disabled game/admin acce
 former preview 97675 exited gracefully. No browser visual acceptance, merge or
 production deployment is claimed.
 
-Next: follow the existing r owner through its bounded result, independently audit
-the new checkpoint, usage and teardown, and publish only verified outcomes.
+Next: finish the keyboard-boundary correction and its tests, publish the classified
+failure, and prepare an explicit loss-aware continuation without replaying inputs.
 The full goal remains active, with year-two endurance and repeated comparisons
 still open.
 
