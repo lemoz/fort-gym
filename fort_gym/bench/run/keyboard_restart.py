@@ -16,6 +16,9 @@ from ..agent.campaign_keyboard import validate_usage
 from ..agent.keyboard_exchange import read
 from .campaign_checkpoint import verify_checkpoint
 from .campaign_save import save_inventory
+from .keyboard_partial_restart import (
+    PARTIAL_FIELDS, PARTIAL_KIND, PARTIAL_STAGE, inspect_partial_failure, validate_partial_discontinuity,
+)
 
 SCHEMA = "fortgym.native-save-loss-restart/v1"
 PRESAVE_STAGE = "identity_before_save"
@@ -80,11 +83,13 @@ def validate_discontinuities(records: object) -> list[dict]:
         identities.add(row["source_result_sha256"])
         if "save_failure_stage" in row or "source_save_attempt_sha256" in row:
             if (
-                row.get("save_failure_stage") != PRESAVE_STAGE
+                row.get("save_failure_stage") not in {PRESAVE_STAGE, PARTIAL_STAGE}
                 or not isinstance(row.get("source_save_attempt_sha256"), str)
                 or re.fullmatch("[a-f0-9]{64}", row["source_save_attempt_sha256"]) is None
             ):
                 raise ValueError("Pre-save restart lacks digest-bound failure-stage evidence")
+        if row.get("save_failure_stage") == PARTIAL_STAGE or PARTIAL_FIELDS.intersection(row):
+            validate_partial_discontinuity(row)
         if (
             type(row.get("restored_next_step")) is not int
             or row["restored_next_step"] < 1
@@ -108,16 +113,13 @@ def prepare_restart(checkpoint: Path, source_root: Path, declaration: dict, late
     """Verify the failed segment, fully counted journal, and unchanged native save."""
     from .campaign_loop import _clock, reconciled_usage
 
+    declaration_fields = {
+        "schema_version", "source_segment", "source_revision", "restored_next_step", "lost_trace_next_step",
+    }
+    partial = isinstance(declaration, dict) and declaration.get("failure_kind") == PARTIAL_KIND
     if (
         not isinstance(declaration, dict)
-        or set(declaration)
-        != {
-            "schema_version",
-            "source_segment",
-            "source_revision",
-            "restored_next_step",
-            "lost_trace_next_step",
-        }
+        or set(declaration) != declaration_fields | ({"failure_kind"} if partial else set())
         or declaration["schema_version"] != SCHEMA
     ):
         raise ValueError("Restart requires an explicit source declaration")
@@ -151,8 +153,8 @@ def prepare_restart(checkpoint: Path, source_root: Path, declaration: dict, late
         or result.get("status") != "checkpoint_failed"
         or result.get("checkpoint_error_type") != "CampaignSaveError"
         or result.get("checkpoint_verified") is not False
-        or result.get("recovery_requires_reconciliation") is not False
-        or result.get("stop_reason") != "segment_limit"
+        or result.get("recovery_requires_reconciliation") is not partial
+        or result.get("stop_reason") != ("unsettled_failure" if partial else "segment_limit")
         or result.get("campaign_id") != payload["campaign_id"]
         or result.get("source_revision") != declaration["source_revision"]
         or result.get("first_step") != payload["next_step"]
@@ -169,12 +171,11 @@ def prepare_restart(checkpoint: Path, source_root: Path, declaration: dict, late
         or reconciled_usage(state, latest) != returned["usage"]
         or any(
             returned["usage"][key] - state["usage"][key]
-            != result["next_step"] - result["first_step"]
+            != result["next_step"] - result["first_step"] + int(partial)
             for key in ("returned_responses", "accounted_responses", "dispatched_requests")
         )
     ):
         raise ValueError("Restart source is not a settled, fully retained native save failure")
-    failure_evidence = _failure_evidence(segment, result)
     tail = [json.loads(line) for line in trace[len(old_trace) :].splitlines()]
     if (
         not tail
@@ -187,6 +188,10 @@ def prepare_restart(checkpoint: Path, source_root: Path, declaration: dict, late
         )
     ):
         raise ValueError("Lost trace must contain exactly the declared accepted tail")
+    failure_evidence = (
+        inspect_partial_failure(segment, checkpoint, result, returned, tail, latest)
+        if partial else _failure_evidence(segment, result)
+    )
     saved = payload["native_save"]
     native = source_root / f"runtime-{index}/runtime/data/save" / saved["save_name"]
 
@@ -198,7 +203,8 @@ def prepare_restart(checkpoint: Path, source_root: Path, declaration: dict, late
         raise ValueError("Newer native state exists; do not discard it as an unsaved tail")
     after = read(segment / "native-after.json")
     final = tail[-1]["tick_advance"]
-    if _clock(after) != final["end_year"] * 403200 + final["end_tick"]:
+    if _clock(after) != (final["end_year"] * 403200 + final["end_tick"]
+                         + failure_evidence.get("lost_uncommitted_ticks", 0)):
         raise ValueError("Failed segment native boundary differs from its trace")
     lost = _clock(after) - (saved["year"] * 403200 + saved["year_tick"])
 
