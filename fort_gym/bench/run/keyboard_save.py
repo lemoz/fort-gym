@@ -11,17 +11,23 @@ from typing import Any
 from ..dfhack_exec import run_lua_expr
 from .campaign_save import CampaignSaveError, NativeSaveSnapshotter, native_save_status
 from ..env.screen_observation import raw_screen
-from .keyboard_save_lua import MENU_IDENTITY_SAVE_LUA, MENU_SAVE_LUA, MENU_SETTLED_IDENTITY_SAVE_LUA
+from .keyboard_save_lua import (
+    MENU_DFHACK_IDENTITY_SAVE_LUA, MENU_IDENTITY_SAVE_LUA, MENU_SAVE_LUA,
+    MENU_SETTLED_IDENTITY_SAVE_LUA,
+)
 from .keyboard_save_probe import (
-    MENU_IDENTITY_PROBE_LUA, validate_identity_probe, validate_menu_stack,
+    IDENTIFIED_MENU_PROBE_LUA, MENU_IDENTITY_PROBE_LUA, validate_identity_probe, validate_menu_stack,
     validate_settled_identity, validate_ui_identity,
 )
+from .keyboard_save_screens import validate_identified_stack
 
 LEGACY_SAVE_PROFILE = "native_quicksave/v1"
 MENU_SAVE_PROFILE = "native_menu_preserving_save/v1"
 MENU_IDENTITY_SAVE_PROFILE = "native_menu_preserving_save/v2"
 MENU_SETTLED_IDENTITY_SAVE_PROFILE = "native_menu_preserving_save/v3"
-SEMANTIC_SAVE_PROFILES = (MENU_IDENTITY_SAVE_PROFILE, MENU_SETTLED_IDENTITY_SAVE_PROFILE)
+MENU_DFHACK_IDENTITY_SAVE_PROFILE = "native_menu_preserving_save/v4"
+SETTLED_SAVE_PROFILES = (MENU_SETTLED_IDENTITY_SAVE_PROFILE, MENU_DFHACK_IDENTITY_SAVE_PROFILE)
+SEMANTIC_SAVE_PROFILES = (MENU_IDENTITY_SAVE_PROFILE, *SETTLED_SAVE_PROFILES)
 SAVE_PROFILES = (LEGACY_SAVE_PROFILE, MENU_SAVE_PROFILE, *SEMANTIC_SAVE_PROFILES)
 
 
@@ -58,15 +64,16 @@ def validate_menu_save(receipt: Any, dfroot: Path, *, profile: str = MENU_SAVE_P
         ):
             raise CampaignSaveError("Native menu save runtime or completion differs")
         NativeSaveSnapshotter._boundary({**boundary, "ok": True})
-    validate_menu_stack(receipt.get("original_stack"))
+    identified = profile == MENU_DFHACK_IDENTITY_SAVE_PROFILE
+    (validate_identified_stack if identified else validate_menu_stack)(receipt.get("original_stack"))
     if profile in SEMANTIC_SAVE_PROFILES:
         for key in ("ui_before", "ui_after"):
             validate_ui_identity(receipt.get(key))
     if profile == MENU_IDENTITY_SAVE_PROFILE:
         if receipt["ui_before"] != receipt["ui_after"]:
             raise CampaignSaveError("Native menu identity changed during save")
-    if profile == MENU_SETTLED_IDENTITY_SAVE_PROFILE:
-        validate_settled_identity(receipt, dfroot)
+    if profile in SETTLED_SAVE_PROFILES:
+        validate_settled_identity(receipt, dfroot, identified=identified)
     return receipt
 
 
@@ -108,10 +115,12 @@ class MenuPreservingSnapshotter:
 
     def _identity_probe(self, key: str) -> dict:
         expression = "local expected_root = " + json.dumps(str(self.dfroot), ensure_ascii=False)
-        raw = self.execute(expression + "\n" + MENU_IDENTITY_PROBE_LUA, timeout=5)
+        identified = self.profile == MENU_DFHACK_IDENTITY_SAVE_PROFILE
+        operation = IDENTIFIED_MENU_PROBE_LUA if identified else MENU_IDENTITY_PROBE_LUA
+        raw = self.execute(expression + "\n" + operation, timeout=5)
         self.attempt[key + "_raw"] = raw
         try:
-            probe = validate_identity_probe(json.loads(raw), self.dfroot)
+            probe = validate_identity_probe(json.loads(raw), self.dfroot, identified=identified)
         except (TypeError, ValueError) as error:
             raise CampaignSaveError("Native menu identity probe returned malformed JSON") from error
         self.attempt[key] = probe
@@ -123,8 +132,9 @@ class MenuPreservingSnapshotter:
             MENU_SAVE_PROFILE: MENU_SAVE_LUA,
             MENU_IDENTITY_SAVE_PROFILE: MENU_IDENTITY_SAVE_LUA,
             MENU_SETTLED_IDENTITY_SAVE_PROFILE: MENU_SETTLED_IDENTITY_SAVE_LUA,
+            MENU_DFHACK_IDENTITY_SAVE_PROFILE: MENU_DFHACK_IDENTITY_SAVE_LUA,
         }[self.profile]
-        settled = self.profile == MENU_SETTLED_IDENTITY_SAVE_PROFILE
+        settled = self.profile in SETTLED_SAVE_PROFILES
         before = self._identity_probe("identity_before") if settled else None
         raw = self.execute(expression + "\n" + operation, timeout=120)
         # Retain the unvalidated response before semantic validation can raise.

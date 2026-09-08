@@ -6,6 +6,8 @@ See the version-matched DFHack Lua API and quicksave.lua. This is operational
 snapshot maintenance, not a model-accessible action or world-editing helper.
 """
 
+from .keyboard_save_screens import SCREEN_IDENTITY_LUA
+
 MENU_SAVE_LUA = r"""
 local json = require('json')
 assert(dfhack.getDFPath() == expected_root, 'Snapshot runtime differs')
@@ -109,3 +111,15 @@ local before = boundary()
 MENU_SETTLED_IDENTITY_SAVE_LUA = MENU_IDENTITY_SAVE_LUA.replace(
     "fortgym.native-menu-save/v2", "fortgym.native-menu-save/v3"
 )
+
+# V4 preserves both native and identified DFHack screen objects through the same
+# hideGuard operation. It binds focus and dismissal state for every stack entry.
+MENU_DFHACK_IDENTITY_SAVE_LUA = MENU_SETTLED_IDENTITY_SAVE_LUA.replace(
+    "local top = dfhack.gui.getCurViewscreen(true)",
+    SCREEN_IDENTITY_LUA + "\nlocal top = dfhack.gui.getCurViewscreen(true)",
+).replace(
+    "    assert(tostring(cur._type):match('^<type: viewscreen_.*st>$'),\n"
+    "           'Snapshot cannot hide a non-native screen')\n"
+    "    table.insert(identities, {type = tostring(cur._type), address = address})",
+    "    table.insert(identities, screen_identity(cur, address))",
+).replace("fortgym.native-menu-save/v3", "fortgym.native-menu-save/v4")

@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from .campaign_save import CampaignSaveError, NativeSaveSnapshotter
+from .keyboard_save_screens import SCREEN_IDENTITY_LUA, validate_identified_stack
 
 MENU_IDENTITY_PROBE_LUA = r"""
 local json = require('json')
@@ -56,6 +57,17 @@ print(json.encode({
 """
 
 
+IDENTIFIED_MENU_PROBE_LUA = MENU_IDENTITY_PROBE_LUA.replace(
+    "local top = dfhack.gui.getCurViewscreen(true)",
+    SCREEN_IDENTITY_LUA + "\nlocal top = dfhack.gui.getCurViewscreen(true)",
+).replace(
+    "    assert(tostring(cur._type):match('^<type: viewscreen_.*st>$'),\n"
+    "           'Identity probe requires a native screen')\n"
+    "    table.insert(stack, {type = tostring(cur._type), address = address})",
+    "    table.insert(stack, screen_identity(cur, address))",
+).replace("fortgym.native-menu-identity/v1", "fortgym.native-menu-identity/v2")
+
+
 def validate_menu_stack(stack: Any) -> None:
     if not isinstance(stack, list) or not 1 <= len(stack) <= 32:
         raise CampaignSaveError("Native menu save stack is invalid")
@@ -87,11 +99,13 @@ def validate_ui_identity(ui: Any) -> None:
         raise CampaignSaveError("Native menu identity is invalid")
 
 
-def validate_identity_probe(value: Any, dfroot: Path) -> dict:
+def validate_identity_probe(value: Any, dfroot: Path, *, identified: bool = False) -> dict:
     """Reject unknown/unpaused observations before attempting a native save."""
     if not isinstance(value, dict) or (
         set(value) != {"schema_version", "native_boundary", "stack", "ui"}
-        or value["schema_version"] != "fortgym.native-menu-identity/v1"
+        or value["schema_version"] != (
+            "fortgym.native-menu-identity/v2" if identified else "fortgym.native-menu-identity/v1"
+        )
         or not isinstance(value["native_boundary"], dict)
     ):
         raise CampaignSaveError("Native menu identity probe is invalid")
@@ -101,14 +115,14 @@ def validate_identity_probe(value: Any, dfroot: Path) -> dict:
     ):
         raise CampaignSaveError("Native menu identity probe runtime or completion differs")
     NativeSaveSnapshotter._boundary({**boundary, "ok": True})
-    validate_menu_stack(value["stack"])
+    (validate_identified_stack if identified else validate_menu_stack)(value["stack"])
     validate_ui_identity(value["ui"])
     return value
 
 
-def validate_settled_identity(receipt: dict, dfroot: Path) -> None:
-    before = validate_identity_probe(receipt.get("identity_before"), dfroot)
-    after = validate_identity_probe(receipt.get("identity_after"), dfroot)
+def validate_settled_identity(receipt: dict, dfroot: Path, *, identified: bool = False) -> None:
+    before = validate_identity_probe(receipt.get("identity_before"), dfroot, identified=identified)
+    after = validate_identity_probe(receipt.get("identity_after"), dfroot, identified=identified)
     if any(probe["native_boundary"] != receipt["native_before"]
            or probe["stack"] != receipt["original_stack"] for probe in (before, after)):
         raise CampaignSaveError("Native menu identity probe boundary or stack changed")
