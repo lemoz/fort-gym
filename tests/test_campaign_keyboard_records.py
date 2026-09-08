@@ -34,7 +34,7 @@ def evidence_root(tmp_path):
     folder.mkdir(parents=True)
     for filename in (*records.PUBLISHED, *records.INTERRUPTIONS, *records.RECOVERIES,
                      *records.CHECKPOINT_FAILURES, *records.RESTARTS, *records.CHECKPOINT_REVIEWS,
-                     *records.CHECKPOINT_RECOVERIES):
+                     *records.CHECKPOINT_RECOVERIES, *records.CONTINUATIONS):
         shutil.copyfile(records.PROJECT_ROOT / "experiments/evidence" / filename, folder / filename)
     return tmp_path
 
@@ -217,7 +217,13 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   assert.match(elements['keyboard-results'].textContent, /184 model responses/);
   assert.match(elements['keyboard-results'].textContent, /Recovery verified · checkpoint 184/);
   assert.match(elements['keyboard-results'].textContent, /Subsequently recovered as checkpoint 184/);
-  assert.ok(elements['keyboard-results'].textContent.startsWith('Recovery verified · checkpoint 232'));
+  assert.ok(elements['keyboard-results'].textContent.startsWith('Play continued · checkpoint 296'));
+  assert.match(elements['keyboard-results'].textContent, /64 new model decisions, 14,400 new ticks/);
+  assert.match(elements['keyboard-results'].textContent, /63,600 retained ticks/);
+  assert.match(elements['keyboard-results'].textContent, /312 accounted model responses/);
+  assert.match(elements['keyboard-results'].textContent, /10,284,908 including historical/);
+  assert.match(elements['keyboard-results'].textContent, /final save has not yet had a separate fresh-process reload/);
+  assert.match(elements['keyboard-results'].textContent, /Recovery verified · checkpoint 232/);
   assert.match(elements['keyboard-results'].textContent, /248 existing model responses and 49,200 elapsed ticks preserved/);
   assert.match(elements['keyboard-results'].textContent, /Menu selection is verified again after the save call returns/);
   assert.match(elements['keyboard-results'].textContent, /Recovery verified · checkpoint 216/);

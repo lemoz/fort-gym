@@ -47,6 +47,25 @@
       throw new Error('Unsupported settled checkpoint recovery evidence');
     }
     const checkpointRecoveries = data.checkpoint_recoveries || [];
+    if (data.continuations !== undefined && !Array.isArray(data.continuations)) {
+      throw new Error('Unsupported continuation evidence');
+    }
+    const continuations = data.continuations || [];
+    continuations.slice().reverse().forEach(row => {
+      const section = node('section', undefined, results);
+      section.className = 'campaign-condition';
+      const p = row.progress;
+      node('h3', `Play continued · checkpoint ${count(row.checkpoint_cursor)}`, section);
+      node('p', `${count(p.new_model_calls)} new model decisions, ${count(p.new_elapsed_ticks)} new ticks. ${count(p.retained_elapsed_ticks)} retained ticks toward the 403,200-tick full-year target.`, section);
+      node('p', `Verified saves at ${row.checkpoints.map(item => count(item.cursor)).join(', ')}. The final save has not yet had a separate fresh-process reload.`, section);
+      node('p', `${count(p.cumulative_model_responses)} accounted model responses; ${count(row.usage.campaign_tokens)} campaign tokens, ${count(row.usage.all_attempt_tokens)} including historical failed deliveries. This window used ${count(row.usage.new_tokens)} tokens. Model charge: ${cost(row.usage)}.`, section);
+      node('p', `Model memory and all usage continued without replay or strategy intervention. The earlier ${count(p.discarded_native_ticks)} lost ticks remain recorded. This is the same fortress, not an independent model comparison or proof of sustainability.`, section);
+      node('p', row.teardown_verified === true ? 'Game and VM teardown verified. Recorded result, not a running campaign.' : 'Teardown unknown.', section);
+      if (/^experiments\/evidence\/astra_native_keyboard_[a-z0-9_]+\.json$/.test(row.evidence_path)) {
+        const link = node('a', 'Read the published continuation evidence', section);
+        link.href = 'https://github.com/lemoz/fort-gym/blob/codex/campaign-codex-subscription/' + row.evidence_path;
+      }
+    });
     reviews.slice().reverse().forEach(row => {
       const recovered = checkpointRecoveries.find(item => item.original_review === row.review_id);
       if (recovered) renderRecovery(recovered);
@@ -161,8 +180,8 @@
       node('p', `Executed source: ${row.source_revision}`, details);
     });
     results.hidden = false;
-    $('keyboard-status').textContent = data.milestones.length || data.interruptions?.length || recoveries.length || data.checkpoint_failures?.length || restarts.length || reviews.length || checkpointRecoveries.length
-      ? 'Recorded milestones, failures, recoveries and restarts. This is not a live activity indicator.'
+    $('keyboard-status').textContent = data.milestones.length || data.interruptions?.length || recoveries.length || data.checkpoint_failures?.length || restarts.length || reviews.length || checkpointRecoveries.length || continuations.length
+      ? 'Recorded play, failures, recoveries and restarts. This is not a live activity indicator.'
       : 'No keyboard milestones published.';
   }
   async function refresh() {

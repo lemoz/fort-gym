@@ -9,6 +9,7 @@ from pathlib import Path
 from .campaign_keyboard_checkpoints import (
     CHECKPOINT_FAILURES, CHECKPOINT_RECOVERIES, checkpoint_failure, settled_checkpoint_recovery,
 )
+from .campaign_keyboard_continuations import CONTINUATIONS, keyboard_continuation
 from .campaign_keyboard_restarts import CHECKPOINT_REVIEWS, RESTARTS, checkpoint_review, keyboard_restart
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -253,6 +254,11 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
             reviews.append(checkpoint_review(root, filename, restarts, checkpoint_recoveries))
         else:
             checkpoint_recoveries.append(settled_checkpoint_recovery(root, filename, reviews))
+    continuations: list[dict] = []
+    for filename in CONTINUATIONS:
+        continuations.append(keyboard_continuation(
+            root, filename, [*checkpoint_recoveries, *continuations], failures,
+        ))
     return {
         "schema_version": "fortgym.public-keyboard-milestones/v1",
         "live_tracking": False,
@@ -263,4 +269,5 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
         "restarts": restarts,
         "checkpoint_reviews": reviews,
         "checkpoint_recoveries": checkpoint_recoveries,
+        "continuations": continuations,
     }

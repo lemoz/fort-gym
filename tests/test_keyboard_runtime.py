@@ -42,6 +42,21 @@ def test_post_restart_window_preserves_usage_and_does_not_restart_again():
     assert window["reset_memory"] is window["reset_usage"] is window["strategy_intervention"] is False
 
 
+def test_longer_menu_continuity_changes_only_cadence_and_continuation_identity():
+    root = Path(__file__).resolve().parents[1]
+    condition_path = root / "experiments/campaign_astra_keyboard_20260907.json"
+    before, old = load_window(condition_path, root / "experiments/campaign_astra_keyboard_window_20260908h.json")
+    after, new = load_window(condition_path, root / "experiments/campaign_astra_keyboard_window_20260908i.json")
+    assert before == after
+    assert new["continuation_from_next_step"] == 296
+    assert new["steps_per_segment"] == 64 and new["max_segments"] == 1
+    assert old["steps_per_segment"] * old["max_segments"] == new["steps_per_segment"] * new["max_segments"] == 64
+    assert new["snapshot_profile"] == old["snapshot_profile"] == "native_menu_preserving_save/v3"
+    assert "budget_extension" not in new and "restart" not in new
+    for field in ("reset_memory", "reset_usage", "strategy_intervention"):
+        assert new[field] is old[field] is False
+
+
 PROJECT = Path(__file__).resolve().parents[1]
 CONDITION = json.loads((PROJECT / "experiments/campaign_astra_keyboard_20260907.json").read_text())
 

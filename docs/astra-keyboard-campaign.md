@@ -1,5 +1,37 @@
 # Astra keyboard campaign integration
 
+## Latest result: normal play through four verified saves
+
+Window h completed on source `bcac94d1b6e51c7f54e25f56661c5a42b0085b2a`.
+All 64 new Astra Medium decisions were accepted, adding 14,400 native ticks.
+Independent audit verifies four v3 saves at cursors 248, 264, 280 and 296,
+ending at 63,600 retained ticks, about 15.8 percent of a full game year.
+The last save is `f6f5ae7a888d79ec9dfc1e61e054bde58f0cfc9e8286908bfab02da3d75dbed0`.
+The first three saves were loaded by later segments; the final snapshot passed
+in-process verification but has not yet had a separate fresh-process reload.
+
+All memory, trace/journal prefixes and the inherited lost branch are preserved.
+There are 312 accounted model responses, including the historical branch loss:
+10,215,904 campaign tokens and 10,284,908 including failed deliveries. This window
+used 2,065,677 tokens; exact subscription charges remain unreported. Game,
+container and local VM teardown passed. No gameplay worker is live at this result.
+The goal is still year-two autonomous play and repeated model comparisons, not
+checkpoint acceptance alone. Detailed gameplay outcomes remain private.
+
+The website now leads with the authored non-content continuation record while
+retaining earlier failures and recoveries. No merge, production deployment or
+visual acceptance is claimed. Public evidence:
+`experiments/evidence/astra_native_keyboard_settled_play_20260908.json`.
+
+The next declared window i keeps the same total bound of 64 new decisions but
+uses one 64-decision segment instead of four 16-decision segments. This tests
+menu continuity with fewer native-process reloads. Model, prompts, controls,
+observations, memory, usage and cumulative limits stay unchanged. It increases
+the maximum unsaved tail if the runtime fails and is not a matched causal trial.
+The declaration is prepared, not an assertion that a new worker has started.
+
+## Integration
+
 The keyboard condition now uses the existing CampaignLoop checkpoint path, not
 an independent throwaway gameplay runner. A model callback receives the full
 native capture, its retained memory and a small previous-input receipt. Internal

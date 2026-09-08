@@ -1,0 +1,120 @@
+"""Allowlisted, non-content continuations of the recovered keyboard campaign."""
+
+from __future__ import annotations
+
+import json
+import re
+from pathlib import Path
+
+CONTINUATIONS = ("astra_native_keyboard_settled_play_20260908.json",)
+IDENTITIES = {
+    "schema_version": "fortgym.native-keyboard-continuation-summary/v1",
+    "status": "completed",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "medium",
+    "control_profile": "native_keyboard/v2",
+    "observation_profile": "native_screen_text/v1",
+    "snapshot_profile": "native_menu_preserving_save/v3",
+    "cost_basis": "codex_subscription_charge_unreported/v1",
+}
+COUNTERS = (
+    "parent_checkpoint_cursor", "new_model_calls", "new_accepted_decisions",
+    "cumulative_model_responses", "new_elapsed_ticks", "retained_elapsed_ticks",
+    "new_tokens", "campaign_tokens", "all_attempt_tokens", "discarded_native_ticks",
+    "native_save_loss_restarts", "steps_per_segment",
+)
+
+
+def keyboard_continuation(root: Path, filename: str, parents: list[dict], failures: list[dict]) -> dict:
+    path = root / "experiments/evidence" / filename
+    if path.is_symlink() or not path.is_file() or path.stat().st_size > 65536:
+        raise ValueError("Keyboard continuation must be a bounded regular publication")
+    source = json.loads(path.read_bytes())
+    parent = next((row for row in parents
+                   if row.get("continuation_id", row.get("recovery_id")) == source["parent_record"]), None)
+    if (
+        parent is None
+        or any(source.get(key) != value for key, value in IDENTITIES.items())
+        or source["captured_screen_size"] != [120, 40]
+        or re.fullmatch("[a-f0-9]{40}", source["source_revision"]) is None
+        or source["parent_checkpoint_sha256"] != parent["checkpoint_sha256"]
+        or source["reported_charge_usd"] is not None
+        or any(source[key] is not True for key in (
+            "independent_retained_evidence_audit_passed", "teardown_verified",
+            "original_checkpoint_unchanged", "memory_and_usage_preserved_across_segments",
+            "inherited_discontinuity_unchanged",
+        ))
+        or any(source[key] is not False for key in (
+            "uninterrupted_campaign", "new_restart_performed", "strategy_intervention",
+            "reset_memory", "reset_usage", "historical_failed_run_reclassified_as_success",
+            "final_checkpoint_fresh_reload_verified",
+        ))
+    ):
+        raise ValueError("Keyboard continuation provenance is inconsistent")
+    counters = {key: source[key] for key in COUNTERS}
+    if any(type(value) is not int or value < 0 for value in counters.values()):
+        raise ValueError("Keyboard continuation counters are invalid")
+    continued = "continuation_id" in parent
+    parent_responses = (parent["progress"]["cumulative_model_responses"] if continued
+                        else parent["returned_model_decisions"])
+    parent_ticks = (parent["progress"]["retained_elapsed_ticks"] if continued
+                    else parent["elapsed_native_ticks"])
+    if (
+        source["parent_checkpoint_cursor"] != parent["checkpoint_cursor"]
+        or not 1 <= source["steps_per_segment"] <= 64
+        or source["new_model_calls"] < 1
+        or source["new_accepted_decisions"] > source["new_model_calls"]
+        or source["cumulative_model_responses"]
+        != parent_responses + source["new_model_calls"]
+        or source["retained_elapsed_ticks"] != parent_ticks + source["new_elapsed_ticks"]
+        or source["campaign_tokens"] != parent["usage"]["campaign_tokens"] + source["new_tokens"]
+        or source["all_attempt_tokens"] != parent["usage"]["all_attempt_tokens"] + source["new_tokens"]
+        or source["native_save_loss_restarts"] != len(failures)
+        or source["discarded_native_ticks"]
+        != sum(row["progress"]["unsaved_new_native_ticks"] for row in failures)
+    ):
+        raise ValueError("Continuation must preserve parent progress, usage and loss history")
+    checkpoints = source["checkpoints"]
+    if not isinstance(checkpoints, list) or not 1 <= len(checkpoints) <= 16:
+        raise ValueError("Continuation requires bounded checkpoint coverage")
+    cursor, ticks, digest = (parent["checkpoint_cursor"], parent_ticks,
+                             parent["checkpoint_sha256"])
+    projected = []
+    for row in checkpoints:
+        if (
+            type(row["cursor"]) is not int or type(row["elapsed_native_ticks"]) is not int
+            or row["cursor"] != cursor + source["steps_per_segment"]
+            or row["elapsed_native_ticks"] < ticks
+            or re.fullmatch("[a-f0-9]{64}", row["sha256"]) is None
+            or row["sha256"] == digest or row["parent_sha256"] != digest
+            or row["checkpoint_verified"] is not True
+        ):
+            raise ValueError("Continuation checkpoint lineage does not reconcile")
+        projected.append({key: row[key] for key in (
+            "cursor", "elapsed_native_ticks", "sha256", "parent_sha256", "checkpoint_verified",
+        )})
+        cursor, ticks, digest = row["cursor"], row["elapsed_native_ticks"], row["sha256"]
+    if (
+        cursor != parent["checkpoint_cursor"] + source["new_model_calls"]
+        or ticks != source["retained_elapsed_ticks"]
+    ):
+        raise ValueError("Continuation checkpoints must cover all new decisions and time")
+    return {
+        "continuation_id": filename.removesuffix(".json"),
+        "source_revision": source["source_revision"],
+        "parent_record": source["parent_record"],
+        "checkpoint_cursor": cursor,
+        "checkpoint_sha256": digest,
+        "checkpoints": projected,
+        "progress": {key: counters[key] for key in COUNTERS if "token" not in key},
+        "usage": {key: source[key] for key in (
+            "new_tokens", "campaign_tokens", "all_attempt_tokens", "reported_charge_usd", "cost_basis",
+        )},
+        "snapshot_profile": source["snapshot_profile"],
+        "teardown_verified": True,
+        "final_checkpoint_fresh_reload_verified": False,
+        "new_restart_performed": False,
+        "uninterrupted_campaign": False,
+        "fortress_success": "not_assessed_in_public_operational_summary",
+        "evidence_path": "experiments/evidence/" + filename,
+    }
