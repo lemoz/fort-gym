@@ -7,8 +7,22 @@ meaning and existing experiment configurations are unchanged.
 Window o failed before requesting a save because a stack entry did not match a
 native `viewscreen_*st` type. The exact-version runtime enables the DFHack status
 overlay, which can sit beneath the native pets menu. A provider-free diagnostic
-on a copy of checkpoint 631 is used to reproduce and verify this path. Native
-acceptance is pending; unit tests alone are not save/reload evidence.
+on a copy of checkpoint 631 reproduced and verified this path. Native acceptance
+passed at source `d795ed6e2889fc9cc61bb38b6d23b7a0feed27ff`: v3 rejected the
+DFHack status overlay, v4 completed a save with all four screen objects and focus
+unchanged, and a fresh native process reloaded the resulting save with matching
+world observations. No model calls or game ticks were used. Both game processes,
+the container and the local VM were verified stopped.
+
+The [versioned acceptance record](../experiments/evidence/native_status_stack_acceptance_20260908.json)
+binds the private independent audit and source/receipt digests. The original
+window-o evidence remains unchanged: its exact rejected entry was not recorded,
+so the diagnostic is a reproduced path, not a retroactive stack observation.
+
+Validation: 140 focused save-profile tests; 3,217 full-suite tests passed with
+10 skips; scoped Ruff and four-file mypy checks passed; both generated Lua
+operations parsed successfully. This proves one paused status/pets path, not
+universal menu coverage or a functioning year-two fortress.
 
 V4 retains the same paused save operation and native screen objects. Each stack
 entry additionally records its focus, native/DFHack classification and dismissed

@@ -21,6 +21,13 @@ Python error reported malformed JSON. The rejected stack entry type was not
 recorded. Do not attribute the assertion to the visible menu alone or claim the
 underlying screen-stack cause is known.
 
+Follow-up: a separate provider-free diagnostic now reproduces the final
+status/pets menu path from checkpoint 631. It observes DFHack's status overlay
+between the pets and overall-status screens. The opt-in v4 save profile preserves
+that stack and passed a real save plus fresh reload. This does not alter the
+original failure record or recover its unsaved tail. See
+[DFHack screen checkpoint support](DFHACK_SCREEN_CHECKPOINTS.md).
+
 Every persisted save file still matches checkpoint 631 except the event log.
 Screen and world observations were unchanged across the failed probe. No newer
 save exists to recover the 21,200 unsaved ticks. The original checkpoint, failed
@@ -48,12 +55,9 @@ or new completed-continuation claim.
 
 ## Next work
 
-1. Reproduce the rejected screen stack in a separate provider-free diagnostic.
-   Retain exact type/chain diagnostics before changing screen eligibility.
-2. Fix and test the checkpoint path without changing model strategy, dismissing
-   its menus as gameplay rescue, or weakening save identity validation. Prove a
-   native save and fresh reload before spending more campaign inference.
-3. Expose the failure on the website, then use an explicit restart declaration
+1. Expose the failure and the new save/reload acceptance on the website. The
+   checkpoint fix has passed its independent native audit; gameplay has not resumed.
+2. Use an explicit restart declaration
    that preserves all 711 accounted model responses and records the additional
    lost time. Never silently replay the failed window or reset its counters.
 
