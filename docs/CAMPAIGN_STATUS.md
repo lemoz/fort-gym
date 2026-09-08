@@ -13,7 +13,36 @@ and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. Several bounded Astra native-keyboard
 windows have completed; the same fortress remains in autonomous continuation.
 
-### Latest attempt: window o failed before saving
+### Latest engineering result: native overlay save and reload verified
+
+The provider-free diagnostic at source `d795ed6e2889fc9cc61bb38b6d23b7a0feed27ff`
+reproduced the status/pets path from checkpoint 631. The full stack is pets,
+DFHack status overlay, overall status, dwarf mode. The v3 probe rejected the
+overlay's base `viewscreen` type; v4 preserved the same four objects, focus,
+selected unit, world, calendar and outer screen while completing one native save.
+A fresh native process reloaded that saved copy with matching world observations.
+The independent host audit passed. No model calls, simulation ticks, campaign
+restart or new campaign checkpoint were performed. Both native processes,
+container and local VM were verified stopped. The initial sandbox-start failure
+and an intervening diagnostic fixture-profile error are retained separately.
+
+The opt-in v4 profile accepts identified DFHack-owned screens, not arbitrary
+unknown screen types. It keeps legacy profiles and experiment settings unchanged.
+Validation: 140 focused save tests, 3,217 full-suite passes with 10 skips, scoped
+Ruff/four-file mypy, Lua parsing, and 35 focused publication/save tests after the
+new record. Fix and native-evidence publication are pushed and remote-verified at
+`919d332b08bddad7b53f0d13a6e6b047f71b2d23` on the existing draft PR #137 branch.
+Exact-head CI is pending readback. No merge, deployment or website update is claimed.
+
+Private evidence: `astra-native-status-stack-acceptance-v2/independent-audit.json`
+under the existing runtime root. Public evidence on the implementation branch:
+`experiments/evidence/native_status_stack_acceptance_20260908.json`.
+The diagnostic does not recover window o's unsaved tail. Campaign progress stays
+at **631 / 143,400 retained ticks**, with all **711 responses** accounted.
+Next: restore the local preview and expose the failed attempt plus save acceptance,
+then resume with an explicit loss/usage-preserving restart record and v4 saves.
+
+### Latest gameplay attempt: window o failed before saving
 
 Window o used frozen source `15af09ffeaf5022be0b2b4c91c858b718fbb522a` and returned
 64 accepted Astra Medium decisions, reaching trace boundary 695 and 164,600
@@ -35,9 +64,9 @@ The independent failure audit and public-summary reconciliation passed. Game,
 container and VM teardown were verified, including a fresh stopped-VM read.
 The failed source and all traces remain retained under
 `astra-native-food-followthrough-v1`. Do not use its unrun normal-completion
-auditors or claim checkpoint 695 exists. The next step is a provider-free
-screen-stack reproduction and save-path correction before further campaign
-inference. A later explicit restart must preserve the 711-response accounting
+auditors or claim checkpoint 695 exists. The provider-free reproduction and
+save-path correction have now passed the separate acceptance described above.
+A later explicit restart must preserve the 711-response accounting
 and record the additional lost time; it must not silently resume old counters.
 
 Separately, explicit v2 model selection is implemented and tested in commit

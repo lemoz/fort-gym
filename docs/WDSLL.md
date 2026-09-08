@@ -8,7 +8,19 @@ fortress through year two and beyond. Website evidence and remote source deliver
 remain requirements. The objective is unfinished; early native Astra gameplay
 and checkpoint-continuation evidence are now verified.
 
-Latest result, September 8 UTC: native window n completed 64 accepted decisions,
+Latest engineering result, September 8 UTC: the status/pets save failure was
+reproduced without a model on a diagnostic copy of checkpoint 631. The opt-in v4
+save profile preserved the DFHack status overlay and three native screen layers,
+completed a paused save, and passed a fresh native reload with matching world
+observations. Independent host audit and all process/container/VM teardown checks
+passed. No gameplay ticks, model calls or campaign restart. Fix source
+`d795ed6e2` passed 140 focused save tests and 3,217 full-suite tests (10 skipped);
+native evidence/docs are pushed and remote-verified at `919d332b0` in draft PR #137.
+Exact-head CI remains pending readback. Website failure/acceptance display and an
+explicit loss/usage-preserving restart are next. The goal remains unfinished;
+checkpoint 631 / 143,400 saved ticks and all 711 responses remain the campaign truth.
+
+Latest completed gameplay result, September 8 UTC: native window n completed 64 accepted decisions,
 adding 21,200 ticks and saving checkpoint 631 with 143,400 retained ticks (35.6
 percent of the first full year). Twelve dwarves remained alive with no recorded
 citizen deaths. Completed farms/beds/workshops increased five/four/three to
@@ -32,8 +44,8 @@ new ticks are unsaved; checkpoint 631 / 143,400 ticks remains the latest verifie
 save. All 711 responses and 22,888,081 all-attempt tokens remain accounted. Twelve
 dwarves were alive; no fortress-collapse or sustainability finding. Independent
 failure audit, public-summary reconciliation and mandatory teardown passed. The
-next work is provider-free reproduction and save-path correction before further
-campaign inference, followed by an explicit loss/usage-preserving restart.
+provider-free reproduction and save-path correction have now passed the native
+acceptance above; an explicit loss/usage-preserving restart remains to be done.
 
 Independent model-selection support is pushed as `99bfde62f` and integrated after
 teardown as `ad37b9b32`. Its v2 condition binds model identity without changing
