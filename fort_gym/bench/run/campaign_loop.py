@@ -594,8 +594,19 @@ class CampaignLoop:
                 raise ValueError(
                     "Keyboard input outcome is partial or unknown; no replay or clock step"
                 )
+        # Keyboard input can change the viewscreen while preserving the paused
+        # calendar. The clock and its interruption validator need that new native
+        # boundary, not the screen on which the model made its decision.
+        clock_before = self.environment.observe() if keyboard else before
+        if keyboard:
+            self.failure_context["native_after_apply"] = {
+                key: clock_before.get(key)
+                for key in ("year", "year_tick", "time", "pause_state", "viewscreen_type")
+            }
+            if clock_before.get("pause_state") is not True or _clock(clock_before) != start:
+                raise ValueError("Keyboard input changed the paused calendar boundary")
         requested = requested_ticks(ticks, execution, self.advance_policy)
-        after, receipt = self.environment.advance(requested, before)
+        after, receipt = self.environment.advance(requested, clock_before)
         self.failure_context = {
             **self.failure_context,
             "tick_receipt": receipt,
@@ -620,7 +631,7 @@ class CampaignLoop:
         if menu_deferral and (
             not keyboard
             or validate_menu_deferral(
-                receipt, requested_ticks=requested, before=before, after=after
+                receipt, requested_ticks=requested, before=clock_before, after=after
             ) is not None
         ):
             raise ValueError("Native menu deferral is not an attested unchanged boundary")
@@ -629,7 +640,7 @@ class CampaignLoop:
         )
         if clock_unavailable and (
             not keyboard or validate_clock_unavailable(
-                receipt, requested_ticks=requested, before=before, after=after,
+                receipt, requested_ticks=requested, before=clock_before, after=after,
             ) is not None
         ):
             raise ValueError("Native clock timeout is not an attested unchanged boundary")
@@ -640,7 +651,7 @@ class CampaignLoop:
             and validate_clean_interruption_receipt(
                 receipt,
                 requested_ticks=requested,
-                state_after_apply=before,
+                state_after_apply=clock_before,
                 state_after_advance=after,
             )
             is not None
@@ -666,6 +677,7 @@ class CampaignLoop:
             "start_tick": before["year_tick"],
             "end_year": after["year"],
             "end_tick": after["year_tick"],
+            **({"native_after_apply": self.failure_context["native_after_apply"]} if keyboard else {}),
         }
         history = _action_history_entry(
             step=self.next_step,
