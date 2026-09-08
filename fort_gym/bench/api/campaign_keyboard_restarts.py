@@ -5,6 +5,7 @@ import re
 from pathlib import Path
 
 RESTARTS = ("astra_native_keyboard_restart_20260908.json",)
+PRESAVE_RESTARTS = ("astra_native_keyboard_presave_restart_20260908.json",)
 CHECKPOINT_REVIEWS = (
     "astra_native_keyboard_checkpoint_review_20260908.json",
     "astra_native_keyboard_menu_identity_review_20260908.json",
@@ -16,13 +17,14 @@ def keyboard_restart(root: Path, filename: str, failures: list[dict], recoveries
     if path.is_symlink() or not path.is_file() or path.stat().st_size > 65536:
         raise ValueError("Restart evidence must be a bounded regular publication")
     source = json.loads(path.read_bytes())
+    presave = source.get("schema_version") == "fortgym.native-keyboard-restart-summary/v2"
     identities = {
-        "schema_version": "fortgym.native-keyboard-restart-summary/v1",
+        "schema_version": f"fortgym.native-keyboard-restart-summary/v{2 if presave else 1}",
         "model": "gpt-6-astra",
         "reasoning_effort": "medium",
         "control_profile": "native_keyboard/v2",
         "observation_profile": "native_screen_text/v1",
-        "snapshot_profile": "native_menu_preserving_save/v1",
+        "snapshot_profile": f"native_menu_preserving_save/v{4 if presave else 1}",
     }
     if (
         any(source.get(key) != value for key, value in identities.items())
@@ -58,24 +60,50 @@ def keyboard_restart(root: Path, filename: str, failures: list[dict], recoveries
     if failure is None or parent is None:
         raise ValueError("Restart must reference the retained failure and verified parent")
     old_progress, old_usage = failure["progress"], failure["usage"]
+    if presave:
+        if (
+            "continuation_id" not in parent or failure.get("parent_record") != parent["continuation_id"]
+            or source.get("captured_screen_size") != [120, 40]
+            or type(source.get("steps_per_segment")) is not int
+            or not 1 <= source["steps_per_segment"] <= 64
+            or source["steps_per_segment"] != progress["new_model_responses"]
+            or source.get("save_failure_stage") != "identity_before_save"
+            or source.get("final_checkpoint_fresh_reload_verified") is not False
+            or type(source.get("native_save_loss_restarts")) is not int
+            or source["native_save_loss_restarts"] != parent["progress"]["native_save_loss_restarts"] + 1
+            or any(not isinstance(source.get(key), str) or re.fullmatch("[a-f0-9]{64}", source[key]) is None
+                   for key in ("independent_audit_sha256", "source_save_attempt_sha256"))
+        ):
+            raise ValueError("Pre-save restart must retain its failure stage and inherited losses")
+        failed_cursor = failure["checkpoint_cursor"]
+        prior_responses = old_progress["accounted_model_responses"]
+        prior_ticks = parent["progress"]["retained_elapsed_ticks"]
+        total_loss = parent["progress"]["discarded_native_ticks"] + old_progress["unsaved_new_native_ticks"]
+        failed_delivery_tokens = old_usage["all_attempt_tokens"] - old_usage["campaign_tokens"]
+    else:
+        failed_cursor = old_progress["last_resumable_checkpoint_cursor"]
+        prior_responses = old_progress["returned_model_responses"]
+        prior_ticks = parent["elapsed_native_ticks"]
+        total_loss = old_progress["unsaved_new_native_ticks"]
+        failed_delivery_tokens = old_usage["historical_failed_delivery_tokens"]
     if (
         progress["restored_checkpoint_cursor"] != parent["checkpoint_cursor"]
-        or progress["restored_checkpoint_cursor"] != old_progress["last_resumable_checkpoint_cursor"]
+        or progress["restored_checkpoint_cursor"] != failed_cursor
         or source["checkpoint_sha256"] == source["parent_checkpoint_sha256"]
         or progress["new_model_responses"] <= 0
         or progress["new_accepted_decisions"] > progress["new_model_responses"]
         or progress["checkpoint_cursor"]
         != progress["restored_checkpoint_cursor"] + progress["new_model_responses"]
         or progress["cumulative_model_responses"]
-        != old_progress["returned_model_responses"] + progress["new_model_responses"]
+        != prior_responses + progress["new_model_responses"]
         or progress["retained_elapsed_ticks"]
-        != parent["elapsed_native_ticks"] + progress["new_elapsed_ticks"]
-        or progress["discarded_native_ticks"] != old_progress["unsaved_new_native_ticks"]
+        != prior_ticks + progress["new_elapsed_ticks"]
+        or progress["discarded_native_ticks"] != total_loss
         or usage["new_tokens"] <= 0
         or usage["campaign_tokens"] != old_usage["campaign_tokens"] + usage["new_tokens"]
         or usage["all_attempt_tokens"] != old_usage["all_attempt_tokens"] + usage["new_tokens"]
         or usage["lost_tail_tokens_retained"] != old_usage["new_tokens"]
-        or usage["historical_failed_delivery_tokens"] != old_usage["historical_failed_delivery_tokens"]
+        or usage["historical_failed_delivery_tokens"] != failed_delivery_tokens
         or source["usage"]["reported_charge_usd"] is not None
         or source["usage"]["cost_basis"] != "codex_subscription_charge_unreported/v1"
     ):
@@ -94,6 +122,9 @@ def keyboard_restart(root: Path, filename: str, failures: list[dict], recoveries
         "independent_comparison_attempt": False,
         "native_checkpoint_verified": True,
         "teardown_verified": True,
+        **({"recent_event": True, "snapshot_profile": source["snapshot_profile"],
+            "native_save_loss_restarts": source["native_save_loss_restarts"],
+            "final_checkpoint_fresh_reload_verified": False} if presave else {}),
         "fortress_success": "not_assessed_in_public_operational_summary",
         "evidence_path": "experiments/evidence/" + filename,
     }

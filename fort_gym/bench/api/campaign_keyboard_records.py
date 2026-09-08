@@ -16,7 +16,7 @@ from .campaign_keyboard_presave import (
 from .campaign_keyboard_tails import (
     TAIL_INTERRUPTION, TAIL_RECOVERIES, continuation_interruption, continuation_recovery,
 )
-from .campaign_keyboard_restarts import CHECKPOINT_REVIEWS, RESTARTS, checkpoint_review, keyboard_restart
+from .campaign_keyboard_restarts import CHECKPOINT_REVIEWS, PRESAVE_RESTARTS, RESTARTS, checkpoint_review, keyboard_restart
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 PUBLISHED = (
@@ -274,6 +274,8 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
         ))
     presave_failures = [presave_failure(root, filename, continuations) for filename in PRESAVE_FAILURES]
     save_acceptances = [save_acceptance(root, filename, presave_failures) for filename in SAVE_ACCEPTANCES]
+    presave_restarts = [keyboard_restart(root, filename, presave_failures, continuations)
+                       for filename in PRESAVE_RESTARTS]
     # Explicit publication order retains the interruption between its parent
     # continuation and recovery; later play must not appear below older recovery.
     recent_events = [
@@ -286,6 +288,10 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
         parent_event = {"kind": "continuation", "id": failure["parent_record"]}
         recent_events.insert(recent_events.index(parent_event) + 1,
                              {"kind": "presave_failure", "id": failure["failure_id"]})
+    for restart in presave_restarts:
+        failure_event = {"kind": "presave_failure", "id": restart["original_failure"]}
+        recent_events.insert(recent_events.index(failure_event) + 1,
+                             {"kind": "restart", "id": restart["restart_id"]})
     return {
         "schema_version": "fortgym.public-keyboard-milestones/v1",
         "live_tracking": False,
@@ -293,7 +299,7 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
         "interruptions": interruptions,
         "recoveries": recoveries,
         "checkpoint_failures": failures,
-        "restarts": restarts,
+        "restarts": [*restarts, *presave_restarts],
         "checkpoint_reviews": reviews,
         "checkpoint_recoveries": checkpoint_recoveries,
         "continuations": continuations,

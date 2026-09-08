@@ -27,7 +27,8 @@ def test_failed_attempt_does_not_advance_checkpoint_and_diagnostic_does_not_clea
     assert fix["save_verified"] is fix["fresh_reload_verified"] is True
     assert fix["gameplay_ticks"] == fix["model_calls"] == 0
     assert fix["new_campaign_checkpoint_created"] is False
-    assert data["continuation_events"][-1] == {"kind": "presave_failure", "id": failure["failure_id"]}
+    assert data["continuation_events"][-2] == {"kind": "presave_failure", "id": failure["failure_id"]}
+    assert data["continuation_events"][-1]["kind"] == "restart"
 
 
 @pytest.mark.parametrize("path,value", [

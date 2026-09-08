@@ -1,5 +1,36 @@
 # Explicit restart after lost native progress
 
+## Latest result: window p saved checkpoint 647
+
+Window p completed all 16 accepted Astra Medium native-keyboard decisions on
+source `3a708cdfe0c884273942361352297bb6b3555b0c` and saved with profile v4.
+Checkpoint 647 is verified at
+`21a2b1e25f86a2bffc673d2154e770758f32bf441f1024bea1bb792ca71e005c`.
+The model requested zero ticks throughout its status, jobs and labor-menu
+inspection. Retained game time remains **143,400 ticks**, about 35.6 percent of
+one elapsed year. This is actual restart/save acceptance, not endurance progress.
+
+All **727 responses** remain accounted: 511,720 new tokens, 23,330,797 campaign
+tokens, and 23,399,801 including historical failed deliveries. Subscription
+charges remain unreported. The restarted branch restores checkpoint 631's memory
+and retains the failed tail's usage. Its 21,200 lost ticks join the earlier 2,000
+ticks: **23,200 discarded ticks across two explicit restarts**. No input replay,
+strategy intervention, budget extension or historical failure reclassification.
+
+Twelve dwarves remained alive, with zero recorded citizen deaths. Farms/beds/
+workshops stayed at seven/five/four; food/drinks stayed at 82/179 measured units.
+Food coverage was 16 complete readings and one unknown among 17 boundaries.
+No sustainability or production finding. Save/lineage, usage/loss, gameplay,
+clock and food audits passed; native processes, container and VM were verified
+stopped, including a fresh stopped-profile read. The parent was freshly loaded
+before play; a separate fresh reload of the new checkpoint remains a next-run
+check, not a claim of this result.
+
+Public record: `experiments/evidence/astra_native_keyboard_presave_restart_20260908.json`.
+The campaign page places the new saved restart above its retained failure,
+explicitly labels zero new game time and preserves all prior records. It is
+recorded evidence, not a live activity feed or production deployment.
+
 ## Audited result, September 8, 2026 UTC
 
 Window e completed at source `93af69fe4866cf325dcae3a8b4099bc458b6fdfc`.
@@ -66,7 +97,8 @@ the native-verified v4 save profile. It retains all 711 prior responses and
 ticks alongside the inherited 2,000-tick loss. The 1,024-dispatch / 40-million-token
 cumulative limits are unchanged. The shorter save cadence is an explicit
 infrastructure condition, not a model-comparison result. This configuration and
-provider-free verification do not claim that a new native restart has run.
+provider-free verification alone did not claim a native restart; window p has
+since completed with the audited result above.
 
 ### Historical window e
 

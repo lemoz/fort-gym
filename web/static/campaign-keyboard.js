@@ -184,11 +184,28 @@
         link.href = 'https://github.com/lemoz/fort-gym/blob/codex/campaign-codex-subscription/' + row.evidence_path;
       }
     }
+    function renderRestart(row) {
+      const section = node('section', undefined, results);
+      section.className = 'campaign-condition';
+      const p = row.progress;
+      node('h3', `New branch saved · checkpoint ${count(p.checkpoint_cursor)}`, section);
+      node('p', `${count(p.new_accepted_decisions)} new accepted decisions after restarting from checkpoint ${count(p.restored_checkpoint_cursor)}. Verified game save: ${count(p.retained_elapsed_ticks)} retained elapsed ticks, including ${count(p.new_elapsed_ticks)} new ticks.`, section);
+      if (p.new_elapsed_ticks === 0) node('p', 'This window added no game time. A successful save is not progress toward the next game year.', section);
+      node('p', `Total discarded game time remains ${count(p.discarded_native_ticks)} ticks. Astra chose new actions; no historical action was replayed. This is not uninterrupted play or an independent comparison attempt.`, section);
+      node('p', `${count(p.cumulative_model_responses)} total accounted model responses. The new branch cursor is ${count(p.checkpoint_cursor)} because it replaces the lost branch, not its usage.`, section);
+      node('p', `${count(row.usage.campaign_tokens)} campaign tokens; ${count(row.usage.all_attempt_tokens)} including historical failed deliveries. This segment used ${count(row.usage.new_tokens)} tokens. The lost tail's ${count(row.usage.lost_tail_tokens_retained)} tokens are still included. Model charge: ${cost(row.usage)}.`, section);
+      node('p', row.teardown_verified === true ? 'Game and VM teardown verified. Recorded result, not a running campaign.' : 'Teardown unknown.', section);
+      if (/^experiments\/evidence\/astra_native_keyboard_[a-z0-9_]+\.json$/.test(row.evidence_path)) {
+        const link = node('a', 'Read the published restart evidence', section);
+        link.href = 'https://github.com/lemoz/fort-gym/blob/codex/campaign-codex-subscription/' + row.evidence_path;
+      }
+    }
     const recent = {
       continuation: continuations.map(row => ({id: row.continuation_id, row})),
       interruption: (data.tail_interruptions || []).map(row => ({id: row.interruption_id, row})),
       recovery: (data.tail_recoveries || []).map(row => ({id: row.recovery_id, row})),
-      presave_failure: (data.presave_failures || []).map(row => ({id: row.failure_id, row}))
+      presave_failure: (data.presave_failures || []).map(row => ({id: row.failure_id, row})),
+      restart: restarts.filter(row => row.recent_event === true).map(row => ({id: row.restart_id, row}))
     };
     const events = data.continuation_events || Object.entries(recent).flatMap(([kind, rows]) => rows.map(row => ({kind, id: row.id})));
     if (!Array.isArray(events)) throw new Error('Unsupported continuation order');
@@ -201,6 +218,7 @@
       if (event.kind === 'continuation') renderContinuation(found.row);
       else if (event.kind === 'interruption') renderTailInterruption(found.row);
       else if (event.kind === 'presave_failure') renderPresaveFailure(found.row);
+      else if (event.kind === 'restart') renderRestart(found.row);
       else renderRecovery(found.row);
     }
     if (seen.size !== Object.values(recent).reduce((n, rows) => n + rows.length, 0)) {
@@ -226,21 +244,7 @@
         link.href = 'https://github.com/lemoz/fort-gym/blob/codex/campaign-codex-subscription/' + row.evidence_path;
       }
     });
-    restarts.slice().reverse().forEach(row => {
-      const section = node('section', undefined, results);
-      section.className = 'campaign-condition';
-      const p = row.progress;
-      node('h3', `New branch saved · checkpoint ${count(p.checkpoint_cursor)}`, section);
-      node('p', `${count(p.new_accepted_decisions)} new accepted decisions after restarting from checkpoint ${count(p.restored_checkpoint_cursor)}. Verified game save: ${count(p.retained_elapsed_ticks)} retained elapsed ticks, including ${count(p.new_elapsed_ticks)} new ticks.`, section);
-      node('p', `The original unsaved ${count(p.discarded_native_ticks)} ticks remain lost. Astra chose new actions; no historical action was replayed. This is not uninterrupted play or an independent comparison attempt.`, section);
-      node('p', `${count(p.cumulative_model_responses)} total accounted model responses. The new branch cursor is ${count(p.checkpoint_cursor)} because it replaces the lost branch, not its usage.`, section);
-      node('p', `${count(row.usage.campaign_tokens)} campaign tokens; ${count(row.usage.all_attempt_tokens)} including historical failed deliveries. This segment used ${count(row.usage.new_tokens)} tokens. The lost tail's ${count(row.usage.lost_tail_tokens_retained)} tokens are still included. Model charge: ${cost(row.usage)}.`, section);
-      node('p', row.teardown_verified === true ? 'Game and VM teardown verified. Recorded result, not a running campaign.' : 'Teardown unknown.', section);
-      if (/^experiments\/evidence\/astra_native_keyboard_[a-z0-9_]+\.json$/.test(row.evidence_path)) {
-        const link = node('a', 'Read the published restart evidence', section);
-        link.href = 'https://github.com/lemoz/fort-gym/blob/codex/campaign-codex-subscription/' + row.evidence_path;
-      }
-    });
+    restarts.filter(row => row.recent_event !== true).slice().reverse().forEach(renderRestart);
     (data.checkpoint_failures || []).slice().reverse().forEach(row => {
       const section = node('section', undefined, results);
       section.className = 'campaign-condition';

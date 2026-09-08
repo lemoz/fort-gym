@@ -36,7 +36,7 @@ def evidence_root(tmp_path):
                      *records.CHECKPOINT_FAILURES, *records.RESTARTS, *records.CHECKPOINT_REVIEWS,
                      *records.CHECKPOINT_RECOVERIES, *records.CONTINUATIONS,
                      records.TAIL_INTERRUPTION, *records.TAIL_RECOVERIES,
-                     *records.PRESAVE_FAILURES, *records.SAVE_ACCEPTANCES):
+                     *records.PRESAVE_FAILURES, *records.SAVE_ACCEPTANCES, *records.PRESAVE_RESTARTS):
         shutil.copyfile(records.PROJECT_ROOT / "experiments/evidence" / filename, folder / filename)
     return tmp_path
 
@@ -220,7 +220,9 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   assert.match(elements['keyboard-results'].textContent, /184 model responses/);
   assert.match(elements['keyboard-results'].textContent, /Recovery verified · checkpoint 184/);
   assert.match(elements['keyboard-results'].textContent, /Subsequently recovered as checkpoint 184/);
-  assert.ok(elements['keyboard-results'].textContent.startsWith('Paused after save failure · checkpoint 631'));
+  assert.ok(elements['keyboard-results'].textContent.startsWith('New branch saved · checkpoint 647'));
+  assert.ok(elements['keyboard-results'].textContent.includes('This window added no game time.'));
+  assert.ok(elements['keyboard-results'].textContent.includes('Save failure before restart · checkpoint 631'));
   assert.match(elements['keyboard-results'].textContent, /Saved game time 143,400 ticks/);
   assert.match(elements['keyboard-results'].textContent, /Unsaved game time 21,200 ticks/);
   assert.match(elements['keyboard-results'].textContent, /Accounted model responses 711/);
@@ -314,7 +316,8 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   assert.match(elements['keyboard-results'].textContent, /retained trace: 47,200 ticks/);
   assert.match(elements['keyboard-results'].textContent, /216 total accounted model responses/);
   assert.match(elements['keyboard-results'].textContent, /46,000 retained elapsed ticks/);
-  assert.match(elements['keyboard-results'].textContent, /original unsaved 2,000 ticks remain lost/);
+  assert.match(elements['keyboard-results'].textContent, /Total discarded game time remains 2,000 ticks/);
+  assert.match(elements['keyboard-results'].textContent, /Total discarded game time remains 23,200 ticks/);
   assert.match(elements['keyboard-results'].textContent, /7,053,040 including historical/);
   assert.match(elements['keyboard-results'].textContent, /518,169 tokens/);
   assert.match(elements['keyboard-results'].textContent, /not uninterrupted play or an independent comparison/);
