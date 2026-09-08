@@ -8,7 +8,30 @@ fortress through year two and beyond. Website evidence and remote source deliver
 remain requirements. The objective is unfinished; early native Astra gameplay
 and checkpoint-continuation evidence are now verified.
 
-Latest result, September 8 UTC: window k completed 64 returned decisions, with
+Latest result, September 8 UTC: window l completed 64 accepted decisions and
+14,000 new ticks. Independently audited checkpoint 503 retains 115,000 ticks,
+about 28.5 percent of the full elapsed-year target. Seven dwarves remain alive;
+completed farms, installed beds and workshops stay at five, four and three.
+Existing drink units increased 162 to 172. Food, production and sustainability
+remain unverified. Seven decisions advanced time and 57 requested none; there
+were no rejected inputs, menu deferrals or clock timeouts. All 519 responses,
+16,682,250 campaign tokens and 16,751,254 all-attempt tokens are retained, including
+the historical loss and failures. Parent 439 fresh native load, final save lineage,
+actual 120x40 initial capture, memory, usage and full teardown independently passed.
+Final 503 awaits its next fresh load; no worker from l remains live.
+
+Publication and unchanged next window m are pushed at `c9b8607cc` in draft PR #137.
+The recorded campaign page leads with 503. All 131 focused tests and scoped static
+checks passed; the broader suite passed 2,884 tests plus ten skips, with its sole
+localhost sandbox failure passing on the two-test scoped rerun. Exact-source CI
+`34253088052` passed 2,795 tests with 100 skips. Window m is now running on frozen
+source `c9b8607cc`, with unchanged model, controls, observation, memory and cumulative
+limits. VM/image/container startup passed and the first model request reached its
+host exchange; no completed continuation or newer audited checkpoint is claimed.
+Its unique owner keeps mandatory teardown. No merge/deploy,
+visual acceptance, repeated cross-model study or full-goal completion is claimed.
+
+Previous result, September 8 UTC: window k completed 64 returned decisions, with
 63 accepted inputs and one invalid input rejected before dispatch. Independently
 audited checkpoint 439 retains 101,000 ticks, just over one quarter of the full
 elapsed-year target. Seven dwarves are alive; completed farms increased four to
@@ -21,9 +44,9 @@ Full teardown passed; no worker from k remains live. A separate tested reporting
 fix is pushed, and its integration, the authored 439 page record and unchanged
 next window l are pushed at `8caa3e11a` in draft PR #137. All 2,883 local tests
 passed (ten skips); exact-source CI `34249380279` passed 2,793 tests (100 skips).
-Window l is now live from 439 with unchanged model, controls, limits and mandatory
+Window l ran from 439 with unchanged model, controls, limits and mandatory
 teardown. The first nine observed decisions committed with zero new clock ticks;
-no newer audited checkpoint is claimed.
+that early read is superseded by completed checkpoint 503 above.
 No merge/deploy, independent model comparison or full-goal completion.
 
 Previous result, September 8 UTC: window j completed all 64 new accepted decisions,

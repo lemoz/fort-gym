@@ -13,7 +13,58 @@ and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. Several bounded Astra native-keyboard
 windows have completed; the same fortress remains in autonomous continuation.
 
-### Latest result: checkpoint 439, past the first quarter-year
+### Latest result: checkpoint 503, 115,000 retained ticks
+
+Window l completed all 64 accepted Astra Medium decisions on frozen source
+`8caa3e11acc5d19ddea8b28bd917f9659e733d21`, adding 14,000 actual ticks and reaching
+115,000 retained ticks, about 28.5 percent of one full elapsed game year.
+Checkpoint 503:
+`7bc4350c68c1ecb81bb88a7df58ea3e34db95c9bfe7f926d633858bb6de6eae7`.
+Independent save/lineage, gameplay and clock-receipt audits passed, including
+the parent 439 fresh native load and captured 120x40 initial screen. The final
+503 save must verify its next fresh load before another model decision.
+Game/container/VM teardown passed with no OOM kill or resource increase.
+
+All seven dwarves remain alive, with zero recorded deaths. Completed farms,
+installed beds and completed workshops stayed at five, four and three. Existing
+drink units increased from 162 to 172, without production or consumption
+attribution. Food and sustainability remain unverified. Seven decisions requested
+and advanced time; 57 requested none. No input rejection, menu deferral or
+clock-unavailable timeout occurred. This window does not add coverage of those
+feedback branches or establish fortress sustainability.
+
+All 519 responses and 16,682,250 campaign tokens are accounted; all-attempt tokens
+are 16,751,254. New usage: 1,867,563 tokens. Charges remain unreported. Memory,
+the inherited 2,000-tick loss and every earlier failure remain retained, with no
+new loss, restart, replay, strategy hint, correction key or budget extension.
+Private proof is under `astra-native-quarter-year-continuation-v1`, including
+`independent-audit.json`, `gameplay-review.json` and `clock-feedback-review.json`.
+
+The authored 503 result and unchanged window m are pushed at
+`c9b8607cc13047bf5e5202f397ab44bc6522f59f` in open draft PR #137. The existing
+campaign page leads with 503 while retaining previous records. All 131 focused
+tests, scoped Ruff/mypy, JavaScript syntax and private-to-authored count checks
+passed. The broader local suite passed 2,884 tests with ten skips and one
+localhost-bind sandbox failure; both quickstart tests passed on the scoped rerun
+with loopback access. Exact-source CI `34253088052` passed 2,795 tests with 100
+skips. No merge,
+production deployment, visual acceptance or independent model comparison is
+claimed. Sites preserved the existing page and automated checks; no browser-only
+preview was opened during this background continuation. The full goal is active.
+
+Window m has started on frozen source `c9b8607cc`: another unchanged 64-decision segment from
+503 with the same Astra Medium, native keyboard/v2, 120x40 screen observations,
+save/v3 profile and inherited 1,024-dispatch / 40-million-token allowance. Its
+unique owner is under `astra-native-midyear-continuation-v1`. VM/image/container
+startup passed and its first model request reached the host exchange. The native
+runner checks fresh loading before requesting a model response; the completed
+window and final audit are still pending. Preserve this implementation checkout
+unchanged while its courier runs. The same owner must tear down on every terminal
+path. Fresh subscription admission passed and repeats before every invocation;
+no fallback, credits, reset, local model or GCE is introduced.
+The website currently records completed 503, not live tracking.
+
+### Previous result: checkpoint 439, past the first quarter-year
 
 Window k completed all 64 new returned decisions on frozen source
 `7416f65b2ee464b09963d65733b692bf1a9c03b6`: 63 accepted inputs and one invalid input
@@ -57,10 +108,10 @@ and used automated validation without a background browser preview. No model
 prompt, control or observation profile changed. No merge, production deploy,
 visual acceptance or independent model comparison is claimed. The full goal is active.
 
-Window l has started from 439 on that frozen source, with one unchanged 64-decision
+Window l started from 439 on that frozen source, with one unchanged 64-decision
 segment, inherited memory/usage and the existing 1,024-dispatch / 40-million-token
 ceiling. The unique owner under `astra-native-quarter-year-continuation-v1` is
-live and owns mandatory teardown. The first nine observed decisions committed,
+now terminal with verified teardown. The first nine observed decisions committed,
 with zero new clock ticks through step 447; this is in-flight, not a completed
 window or new audited checkpoint. Fresh subscription
 preflight passed the existing guard, with per-call admission repeated and no fallback,

@@ -224,6 +224,29 @@ l are pushed at `8caa3e11acc5d19ddea8b28bd917f9659e733d21` in draft PR #137. All
 2,883 local tests passed (ten skips); exact-source CI `34249380279` passed 2,793
 tests (100 skips). Window l has started on that frozen source; the first nine
 observed decisions committed with zero new clock ticks after the native load
-boundary. It remains in-flight under the same
-owner and mandatory teardown, not a completed window or new audited checkpoint.
+boundary. That early in-flight read was later superseded by completion and
+verified teardown, recorded below.
 The full original goal remains active, with no merge or production deployment.
+
+Window l completion: all 64 new accepted decisions and 14,000 actual ticks reached
+independently audited checkpoint 503 / 115,000 retained ticks, about 28.5 percent
+of a full elapsed year. The parent 439 save loaded in a fresh native process with
+a verified actual 120x40 screen; final 503 awaits its next fresh load. Seven
+dwarves remain alive, completed farms/beds/workshops stayed at five/four/three,
+and existing drink units increased 162 to 172. Sustainability remains unverified.
+Seven decisions advanced time and 57 requested none. No input rejection, menu
+deferral or clock-unavailable timeout occurred; no new branch-coverage claim.
+
+All 519 responses, 16,682,250 campaign tokens and 16,751,254 all-attempt tokens
+remain accounted. No loss, replay, memory reset, strategy intervention or budget
+extension. Historical failures and the inherited 2,000-tick loss remain recorded.
+All independent audits and game/container/VM teardown passed. The authored 503
+page record and unchanged window m are pushed at `c9b8607cc` in draft PR #137.
+Focused tests and static checks passed; the broader suite's only failure was a
+localhost sandbox restriction that passed on its scoped rerun. Exact-source CI
+`34253088052` passed 2,795 tests with 100 skips. Window m is now running on frozen
+source `c9b8607cc` from checkpoint 503 with unchanged model, controls, observation,
+memory and cumulative limits. Its VM/image/container startup passed and the first
+model request reached the host exchange. No completed window or newer audited
+checkpoint is claimed. Its same unique owner must finish teardown.
+No merge, production deployment, visual acceptance or full-goal completion.
