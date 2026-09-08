@@ -5,6 +5,7 @@ import re
 from pathlib import Path
 
 RESTARTS = ("astra_native_keyboard_restart_20260908.json",)
+CHECKPOINT_REVIEWS = ("astra_native_keyboard_checkpoint_review_20260908.json",)
 
 
 def keyboard_restart(root: Path, filename: str, failures: list[dict], recoveries: list[dict]) -> dict:
@@ -91,5 +92,68 @@ def keyboard_restart(root: Path, filename: str, failures: list[dict], recoveries
         "native_checkpoint_verified": True,
         "teardown_verified": True,
         "fortress_success": "not_assessed_in_public_operational_summary",
+        "evidence_path": "experiments/evidence/" + filename,
+    }
+
+
+def checkpoint_review(root: Path, filename: str, restarts: list[dict]) -> dict:
+    """Keep a copied-but-unverified save distinct from proven loss or recovery."""
+    path = root / "experiments/evidence" / filename
+    if path.is_symlink() or not path.is_file() or path.stat().st_size > 65536:
+        raise ValueError("Checkpoint review must be a bounded regular publication")
+    source = json.loads(path.read_bytes())
+    parent = next((row for row in restarts if row["restart_id"] == source["parent_restart"]), None)
+    if (
+        parent is None
+        or source["schema_version"] != "fortgym.native-keyboard-checkpoint-review/v1"
+        or source["terminal_reason"] != "native_screen_changed_during_save"
+        or re.fullmatch("[a-f0-9]{40}", source["source_revision"]) is None
+        or source["parent_checkpoint_sha256"] != parent["checkpoint_sha256"]
+        or source["checkpoint_verified"] is not False
+        or any(source[key] is not True for key in (
+            "independent_retained_evidence_audit_passed", "copied_native_save_matches_runtime",
+            "copied_world_save_differs_from_parent", "new_native_state_requires_reload_verification",
+            "original_checkpoint_and_trace_prefix_unchanged", "inherited_discontinuity_unchanged",
+            "teardown_verified",
+        ))
+    ):
+        raise ValueError("Checkpoint review provenance is inconsistent")
+    progress = {key: source["progress"][key] for key in (
+        "trace_cursor", "latest_verified_checkpoint_cursor", "new_accepted_decisions",
+        "cumulative_model_responses", "new_elapsed_ticks", "trace_elapsed_ticks",
+        "last_verified_elapsed_ticks",
+    )}
+    usage = {key: source["usage"][key] for key in ("new_tokens", "campaign_tokens", "all_attempt_tokens")}
+    if any(type(value) is not int or value < 0 for value in (*progress.values(), *usage.values())):
+        raise ValueError("Checkpoint review counters are invalid")
+    previous = parent["progress"]
+    if (
+        progress["latest_verified_checkpoint_cursor"] != previous["checkpoint_cursor"]
+        or progress["last_verified_elapsed_ticks"] != previous["retained_elapsed_ticks"]
+        or progress["new_accepted_decisions"] <= 0
+        or progress["trace_cursor"]
+        != previous["checkpoint_cursor"] + progress["new_accepted_decisions"]
+        or progress["cumulative_model_responses"]
+        != previous["cumulative_model_responses"] + progress["new_accepted_decisions"]
+        or progress["trace_elapsed_ticks"]
+        != previous["retained_elapsed_ticks"] + progress["new_elapsed_ticks"]
+        or usage["new_tokens"] <= 0
+        or usage["campaign_tokens"] != parent["usage"]["campaign_tokens"] + usage["new_tokens"]
+        or usage["all_attempt_tokens"] != parent["usage"]["all_attempt_tokens"] + usage["new_tokens"]
+        or source["usage"]["reported_charge_usd"] is not None
+        or source["usage"]["cost_basis"] != "codex_subscription_charge_unreported/v1"
+    ):
+        raise ValueError("Checkpoint review must retain all newer progress and usage")
+    return {
+        "review_id": filename.removesuffix(".json"),
+        "source_revision": source["source_revision"],
+        "parent_restart": parent["restart_id"],
+        "terminal_reason": source["terminal_reason"],
+        "progress": progress,
+        "usage": {**usage, "reported_charge_usd": None,
+                  "cost_basis": "codex_subscription_charge_unreported/v1"},
+        "checkpoint_verified": False,
+        "new_native_state_requires_reload_verification": True,
+        "teardown_verified": True,
         "evidence_path": "experiments/evidence/" + filename,
     }

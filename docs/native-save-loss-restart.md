@@ -19,9 +19,29 @@ lost state, a comparison attempt, fortress sustainability or live activity.
 Public operational evidence:
 `experiments/evidence/astra_native_keyboard_restart_20260908.json`.
 
-Window f declares normal continuation from this new checkpoint, preserving its
-memory, full usage and inherited discontinuity. It does not repeat the restart
-or extend the cumulative budget. It is configuration, not proof of another run.
+## Subsequent window f: screen validation failure
+
+Window f executed at `1198ece397eec679c04dcf4e948b2b419bbde956` and returned
+16 accepted decisions with 1,200 new ticks before checkpoint validation failed:
+`Native screen changed during menu-preserving save`. It preserved memory, full
+usage and the inherited discontinuity without another restart or budget extension.
+All 232 responses are accounted: 7,706,555 campaign tokens, or 7,775,559 including
+historical failed deliveries. New usage is 722,519 tokens; charges are unreported.
+Independent audit verifies unchanged original prefixes and game/container/VM teardown.
+
+The helper completed a copied native save before rejecting screen equality.
+Copied files match the stopped runtime and its world save differs from checkpoint
+200. This is not proof of lost state or a resumable checkpoint 216. Last verified
+checkpoint remains 200 / 46,000 ticks; the retained trace reaches 47,200 ticks.
+Fresh reload and forward-only reconciliation are next. Do not rewind, replay
+actions, repeat the loss-aware restart or silently discard this newer save/usage.
+Public evidence: `experiments/evidence/astra_native_keyboard_checkpoint_review_20260908.json`.
+
+The executed helper did not persist the exact before/after screen pair or Lua
+receipt on validation failure, so the screen-change cause is unproven. The updated
+implementation retains these privately in `save-attempt.json` on failure, with
+any completed copy receipt. It does not retry saving or relax screen equality.
+This is diagnostic instrumentation, not a claim that the underlying issue is fixed.
 
 ## Restart protocol
 

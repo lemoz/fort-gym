@@ -156,6 +156,10 @@ def test_changed_screen_leaves_forensic_copy_but_no_success_receipt(tmp_path):
     with pytest.raises(CampaignSaveError, match="screen changed"):
         snapshotter.capture(tmp_path / "snapshot")
     assert len(calls) == 1 and (tmp_path / "snapshot/world.sav").exists()
+    assert snapshotter.attempt["screen_before"] == {"tiles": [32]}
+    assert snapshotter.attempt["screen_after"] == {"tiles": [99]}
+    assert snapshotter.attempt["save_operation"]["menu_stack_restored"] is True
+    assert snapshotter.attempt["copied_native_save"]["year_tick"] == 200
 
 
 def test_existing_destination_cannot_trigger_native_save(tmp_path):

@@ -62,6 +62,13 @@ save retains the snapshot receipt and unchanged screen, with zero save keys or
 ticks. All game/container/VM teardown is verified; see the linked result for
 retained time, complete usage and the declared next continuation.
 
+The subsequent window f failed screen equality after making a changed save copy.
+The copy matches the stopped runtime, but reload/reconciliation is still required.
+The latest implementation retains private before/after screens, a completed Lua
+receipt and copied-save metadata on failure. It preserves the original failure
+and sends no retries; the screen-change cause remains unproven. See the window
+result above before choosing a new gameplay run.
+
 Primary implementation references: bundled DFHack 0.47.05-r8 `quicksave.lua`,
 [quicksave documentation](https://docs.dfhack.org/en/0.47.05-r8/docs/tools/quicksave.html),
 and the version-matched

@@ -121,6 +121,27 @@ def test_public_segment_retains_extension_with_original_condition(tmp_path, save
     assert agent.budget_extensions[-1]["limits"]["max_dispatches"] == 16
 
 
+def test_checkpoint_failure_retains_private_save_attempt_without_retry(tmp_path, saved, monkeypatch):
+    from fort_gym.bench.run.campaign_save import CampaignSaveError
+    env = environment()
+    calls = []
+
+    def fail_capture(destination):
+        calls.append(destination)
+        env.attempt = {"schema_version": "fortgym.native-menu-save-attempt/v1",
+                       "screen_before": "private-before", "screen_after": "private-after"}
+        raise CampaignSaveError("Native screen changed during menu-preserving save")
+
+    env.capture = fail_capture
+    monkeypatch.setattr(__import__(__name__, fromlist=["environment"]), "environment", lambda: env)
+    result, _, agent, output = run(tmp_path, saved)
+    assert result["status"] == "checkpoint_failed" and result["checkpoint_verified"] is False
+    assert result["private_save_attempt_retained"] is True and len(calls) == 1
+    assert read(output / "save-attempt.json") == env.attempt
+    assert "private-before" not in json.dumps(result)
+    assert agent.usage["returned_responses"] == 4
+
+
 def test_admission_denial_produces_clean_native_checkpoint(tmp_path, saved):
     result, env, agent, output = run(tmp_path, saved, admission_denied)
     assert result["status"] == "bounded_segment_complete"

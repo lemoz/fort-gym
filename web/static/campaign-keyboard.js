@@ -39,6 +39,24 @@
       throw new Error('Unsupported restart evidence');
     }
     const restarts = data.restarts || [];
+    if (data.checkpoint_reviews !== undefined && !Array.isArray(data.checkpoint_reviews)) {
+      throw new Error('Unsupported checkpoint review evidence');
+    }
+    const reviews = data.checkpoint_reviews || [];
+    reviews.slice().reverse().forEach(row => {
+      const section = node('section', undefined, results);
+      section.className = 'campaign-condition';
+      const p = row.progress;
+      node('h3', `Checkpoint verification stopped · decision ${count(p.trace_cursor)}`, section);
+      node('p', `${count(p.new_accepted_decisions)} new accepted decisions and ${count(p.new_elapsed_ticks)} new ticks reached the game. The screen changed during saving, so checkpoint verification stopped.`, section);
+      node('p', `A changed game save was copied and retained, but it needs reload verification. These latest actions are neither confirmed lost nor confirmed recovered. Last verified checkpoint: ${count(p.latest_verified_checkpoint_cursor)}, ${count(p.last_verified_elapsed_ticks)} ticks; retained trace: ${count(p.trace_elapsed_ticks)} ticks.`, section);
+      node('p', `${count(p.cumulative_model_responses)} accounted model responses; ${count(row.usage.campaign_tokens)} campaign tokens, ${count(row.usage.all_attempt_tokens)} including historical failed deliveries. This segment used ${count(row.usage.new_tokens)} tokens. Model charge: ${cost(row.usage)}.`, section);
+      node('p', row.teardown_verified === true ? 'Game and VM teardown verified. A harness validation failure, not a recorded fortress collapse.' : 'Teardown unknown.', section);
+      if (/^experiments\/evidence\/astra_native_keyboard_[a-z0-9_]+\.json$/.test(row.evidence_path)) {
+        const link = node('a', 'Read the published checkpoint review', section);
+        link.href = 'https://github.com/lemoz/fort-gym/blob/codex/campaign-codex-subscription/' + row.evidence_path;
+      }
+    });
     restarts.slice().reverse().forEach(row => {
       const section = node('section', undefined, results);
       section.className = 'campaign-condition';
@@ -128,7 +146,7 @@
       node('p', `Executed source: ${row.source_revision}`, details);
     });
     results.hidden = false;
-    $('keyboard-status').textContent = data.milestones.length || data.interruptions?.length || recoveries.length || data.checkpoint_failures?.length || restarts.length
+    $('keyboard-status').textContent = data.milestones.length || data.interruptions?.length || recoveries.length || data.checkpoint_failures?.length || restarts.length || reviews.length
       ? 'Recorded milestones, failures, recoveries and restarts. This is not a live activity indicator.'
       : 'No keyboard milestones published.';
   }

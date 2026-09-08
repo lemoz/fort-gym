@@ -33,7 +33,7 @@ def evidence_root(tmp_path):
     folder = tmp_path / "experiments/evidence"
     folder.mkdir(parents=True)
     for filename in (*records.PUBLISHED, *records.INTERRUPTIONS, *records.RECOVERIES,
-                     *records.CHECKPOINT_FAILURES, *records.RESTARTS):
+                     *records.CHECKPOINT_FAILURES, *records.RESTARTS, *records.CHECKPOINT_REVIEWS):
         shutil.copyfile(records.PROJECT_ROOT / "experiments/evidence" / filename, folder / filename)
     return tmp_path
 
@@ -216,7 +216,12 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   assert.match(elements['keyboard-results'].textContent, /184 model responses/);
   assert.match(elements['keyboard-results'].textContent, /Recovery verified · checkpoint 184/);
   assert.match(elements['keyboard-results'].textContent, /Subsequently recovered as checkpoint 184/);
-  assert.ok(elements['keyboard-results'].textContent.startsWith('New branch saved · checkpoint 200'));
+  assert.ok(elements['keyboard-results'].textContent.startsWith('Checkpoint verification stopped · decision 216'));
+  assert.match(elements['keyboard-results'].textContent, /New branch saved · checkpoint 200/);
+  assert.match(elements['keyboard-results'].textContent, /neither confirmed lost nor confirmed recovered/);
+  assert.match(elements['keyboard-results'].textContent, /232 accounted model responses/);
+  assert.match(elements['keyboard-results'].textContent, /7,775,559 including historical/);
+  assert.match(elements['keyboard-results'].textContent, /retained trace: 47,200 ticks/);
   assert.match(elements['keyboard-results'].textContent, /216 total accounted model responses/);
   assert.match(elements['keyboard-results'].textContent, /46,000 retained elapsed ticks/);
   assert.match(elements['keyboard-results'].textContent, /original unsaved 2,000 ticks remain lost/);

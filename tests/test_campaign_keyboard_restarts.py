@@ -66,3 +66,54 @@ def test_restart_cannot_hide_loss_or_reset_usage(evidence_root, section, field, 
     path.write_text(json.dumps(source))
     with pytest.raises(ValueError):
         records.keyboard_campaign_records(evidence_root)
+
+
+def test_checkpoint_review_does_not_invent_recovery_loss_or_disclose_content(evidence_root):
+    path = evidence_root / "experiments/evidence" / records.CHECKPOINT_REVIEWS[0]
+    source = json.loads(path.read_text())
+    source["screen_before"] = "secret-screen"
+    source["progress"]["world"] = "secret-world"
+    source["usage"]["account_id"] = "secret-account"
+    path.write_text(json.dumps(source))
+    data = records.keyboard_campaign_records(evidence_root)
+    row = data["checkpoint_reviews"][0]
+    assert row["progress"]["trace_cursor"] == 216
+    assert row["progress"]["cumulative_model_responses"] == 232
+    assert row["progress"]["trace_elapsed_ticks"] == 47200
+    assert row["progress"]["latest_verified_checkpoint_cursor"] == 200
+    assert row["usage"]["all_attempt_tokens"] == 7775559
+    assert row["new_native_state_requires_reload_verification"] is True
+    assert row["checkpoint_verified"] is False and data["live_tracking"] is False
+    assert "secret-" not in json.dumps(data)
+
+
+@pytest.mark.parametrize("section,field,value", [
+    (None, "parent_restart", "unknown"),
+    (None, "parent_checkpoint_sha256", "a" * 64),
+    (None, "checkpoint_verified", True),
+    (None, "independent_retained_evidence_audit_passed", 1),
+    (None, "copied_native_save_matches_runtime", False),
+    (None, "copied_world_save_differs_from_parent", False),
+    (None, "new_native_state_requires_reload_verification", False),
+    (None, "original_checkpoint_and_trace_prefix_unchanged", False),
+    (None, "inherited_discontinuity_unchanged", False),
+    (None, "teardown_verified", False),
+    ("progress", "trace_cursor", 200),
+    ("progress", "latest_verified_checkpoint_cursor", 216),
+    ("progress", "new_accepted_decisions", 0),
+    ("progress", "cumulative_model_responses", 216),
+    ("progress", "new_elapsed_ticks", True),
+    ("progress", "trace_elapsed_ticks", 46000),
+    ("progress", "last_verified_elapsed_ticks", 47200),
+    ("usage", "new_tokens", 0),
+    ("usage", "campaign_tokens", 6984036),
+    ("usage", "all_attempt_tokens", 7706555),
+    ("usage", "reported_charge_usd", 0),
+])
+def test_checkpoint_review_cannot_promote_or_discard_state(evidence_root, section, field, value):
+    path = evidence_root / "experiments/evidence" / records.CHECKPOINT_REVIEWS[0]
+    source = json.loads(path.read_text())
+    (source[section] if section else source)[field] = value
+    path.write_text(json.dumps(source))
+    with pytest.raises(ValueError):
+        records.keyboard_campaign_records(evidence_root)

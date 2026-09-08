@@ -7,7 +7,7 @@ import re
 from pathlib import Path
 
 from .campaign_keyboard_checkpoints import CHECKPOINT_FAILURES, checkpoint_failure
-from .campaign_keyboard_restarts import RESTARTS, keyboard_restart
+from .campaign_keyboard_restarts import CHECKPOINT_REVIEWS, RESTARTS, checkpoint_review, keyboard_restart
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 PUBLISHED = (
@@ -236,6 +236,7 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
     interruptions = [_interruption(root, filename) for filename in INTERRUPTIONS]
     recoveries = [_recovery(root, filename, interruptions) for filename in RECOVERIES]
     failures = [checkpoint_failure(root, filename, recoveries) for filename in CHECKPOINT_FAILURES]
+    restarts = [keyboard_restart(root, filename, failures, recoveries) for filename in RESTARTS]
     return {
         "schema_version": "fortgym.public-keyboard-milestones/v1",
         "live_tracking": False,
@@ -243,5 +244,7 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
         "interruptions": interruptions,
         "recoveries": recoveries,
         "checkpoint_failures": failures,
-        "restarts": [keyboard_restart(root, filename, failures, recoveries) for filename in RESTARTS],
+        "restarts": restarts,
+        "checkpoint_reviews": [checkpoint_review(root, filename, restarts)
+                               for filename in CHECKPOINT_REVIEWS],
     }

@@ -88,6 +88,7 @@ class MenuPreservingSnapshotter:
             raise ValueError("Snapshot runtime path contains control characters")
         self.screen_capture, self.execute = screen_capture, execute
         self.receipt: dict | None = None
+        self.attempt: dict[str, Any] = {}
         self.snapshotter = NativeSaveSnapshotter(
             dfroot=self.dfroot,
             status=status,
@@ -100,15 +101,21 @@ class MenuPreservingSnapshotter:
         raw = self.execute(expression + "\n" + MENU_SAVE_LUA, timeout=120)
         try:
             self.receipt = validate_menu_save(json.loads(raw), self.dfroot)
+            self.attempt["save_operation"] = self.receipt
         except (TypeError, ValueError) as error:
             raise CampaignSaveError("Native menu save returned malformed JSON") from error
 
     def capture(self, destination: Path) -> dict[str, Any]:
         self.receipt = None
+        self.attempt = {"schema_version": "fortgym.native-menu-save-attempt/v1"}
         before = self.screen_capture()
         screen_bytes = json.dumps(before, sort_keys=True, allow_nan=False).encode()
+        self.attempt["screen_before"] = json.loads(screen_bytes)
         native = self.snapshotter.capture(destination)
-        after_bytes = json.dumps(self.screen_capture(), sort_keys=True, allow_nan=False).encode()
+        self.attempt["copied_native_save"] = native
+        after = self.screen_capture()
+        after_bytes = json.dumps(after, sort_keys=True, allow_nan=False).encode()
+        self.attempt["screen_after"] = json.loads(after_bytes)
         if after_bytes != screen_bytes or self.receipt is None:
             raise CampaignSaveError("Native screen changed during menu-preserving save")
         boundary = self.receipt["native_before"]
