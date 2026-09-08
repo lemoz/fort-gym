@@ -1,4 +1,4 @@
-"""Persistent Astra keyboard policy; the caller supplies its credential-owning transport."""
+"""Persistent keyboard policy; the caller supplies its credential-owning transport."""
 
 from __future__ import annotations
 
@@ -13,6 +13,7 @@ from ..env.screen_observation import TEXT_PROFILE, encode_screen, raw_screen
 from .base import Agent
 from .campaign_budget import BUDGET_KEYS, effective_budget
 from .codex_transport import MODEL, REASONING_EFFORT, CodexTransportError
+from .codex_selection import validate_selection
 from .codex_protocol import TRANSPORT
 from .governed_llm import GovernedBudgetCapError
 from .standard_input import parse_response
@@ -62,15 +63,18 @@ class CodexKeyboardAgent(Agent):
         max_dispatches: int,
         max_total_tokens: int,
         max_advance_ticks: int = 2000,
+        model: str = MODEL,
+        reasoning_effort: str = REASONING_EFFORT,
     ) -> None:
+        validate_selection(model, reasoning_effort)
         for value in (max_dispatches, max_total_tokens):
             if type(value) is not int or value < 1:
                 raise ValueError("Positive cumulative keyboard budgets are required")
         if type(max_advance_ticks) is not int or not 1 <= max_advance_ticks <= 2500:
             raise ValueError("Invalid keyboard advance bound")
         self.configuration: dict[str, Any] = dict(
-            model=MODEL,
-            reasoning_effort=REASONING_EFFORT,
+            model=model,
+            reasoning_effort=reasoning_effort,
             transport=TRANSPORT,
             control_profile=NATIVE_PROFILE,
             observation_profile=TEXT_PROFILE,
@@ -201,8 +205,8 @@ class CodexKeyboardAgent(Agent):
         if (
             receipt.get("accepted") is not True
             or receipt.get("dispatched") is not True
-            or receipt.get("model_requested") != MODEL
-            or receipt.get("reasoning_effort_requested") != REASONING_EFFORT
+            or receipt.get("model_requested") != self.configuration["model"]
+            or receipt.get("reasoning_effort_requested") != self.configuration["reasoning_effort"]
             or receipt.get("auth_mode") != "chatgpt"
             or receipt.get("transport") != TRANSPORT
             or receipt.get("reported_charge_usd") is not None
@@ -230,7 +234,9 @@ class CodexKeyboardAgent(Agent):
                 raise CodexTransportError("Keyboard rejection lacks complete non-execution proof", result)
             raise rejected_receipt(
                 result, screen_sha256=screen_hash,
-                max_advance_ticks=self.configuration["max_advance_ticks"]
+                max_advance_ticks=self.configuration["max_advance_ticks"],
+                model=self.configuration["model"],
+                reasoning_effort=self.configuration["reasoning_effort"],
             )
         action = parse_response(
             result["action"],

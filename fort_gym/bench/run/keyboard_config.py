@@ -6,6 +6,7 @@ from pathlib import Path
 
 from ..agent.codex_protocol import TRANSPORT
 from ..agent.codex_transport import MODEL, REASONING_EFFORT
+from ..agent.codex_selection import validate_selection
 from ..agent.keyboard_exchange import read
 from ..env.native_key_catalog import NATIVE_PROFILE
 from ..env.screen_observation import TEXT_PROFILE
@@ -20,10 +21,15 @@ def positive(value: object, name: str, *, maximum: int | None = None) -> int:
 
 
 def validate_condition(config: dict) -> dict:
+    version = config.get("schema_version")
+    if version == "fortgym.codex-keyboard-condition/v1":
+        if config.get("model") != MODEL or config.get("reasoning_effort") != REASONING_EFFORT:
+            raise ValueError("Keyboard condition identity differs")
+    elif version == "fortgym.codex-keyboard-condition/v2":
+        validate_selection(config.get("model"), config.get("reasoning_effort"))
+    else:
+        raise ValueError("Keyboard condition identity differs")
     identities = {
-        "schema_version": "fortgym.codex-keyboard-condition/v1",
-        "model": MODEL,
-        "reasoning_effort": REASONING_EFFORT,
         "transport": TRANSPORT,
         "control_profile": NATIVE_PROFILE,
         "observation_profile": TEXT_PROFILE,

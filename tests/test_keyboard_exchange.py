@@ -6,7 +6,12 @@ import pytest
 from fort_gym.bench.agent import keyboard_exchange as module
 
 
-def test_exchange_binds_response_to_exact_screen_memory_and_request(tmp_path):
+@pytest.mark.parametrize("selection", [
+    {}, {"model": "gpt-6-astra", "reasoning_effort": "medium"},
+    {"model": "gpt-5.6-sol", "reasoning_effort": "high"},
+    {"model": "gpt-5.6-terra", "reasoning_effort": "low"},
+])
+def test_exchange_binds_response_to_exact_screen_memory_and_request(tmp_path, selection):
     values = []
     thread = threading.Thread(
         target=lambda: values.append(
@@ -16,6 +21,7 @@ def test_exchange_binds_response_to_exact_screen_memory_and_request(tmp_path):
                 "remember",
                 None,
                 timeout_seconds=2,
+                **selection,
             )
         )
     )
@@ -30,6 +36,16 @@ def test_exchange_binds_response_to_exact_screen_memory_and_request(tmp_path):
         request = module.read(requests[0])
         module.validate_request(request)
         assert request["memory"] == "remember"
+        if selection:
+            assert request["schema_version"] == "fortgym.keyboard-exchange-request/v2"
+            assert module.request_selection(request) == (
+                selection["model"], selection["reasoning_effort"],
+            )
+            for field in selection:
+                assert module.digest(request) != module.digest({**request, field: "changed"})
+        else:
+            assert request["schema_version"] == "fortgym.keyboard-exchange-request/v1"
+            assert "model" not in request and "reasoning_effort" not in request
         module.publish(
             requests[0].parent / "response.json",
             {"request_sha256": module.digest(request), "result": {"test": "receipt"}},

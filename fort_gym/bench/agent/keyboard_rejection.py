@@ -8,6 +8,7 @@ from ..env.native_key_catalog import NATIVE_PROFILE, keys_for_profile
 from ..env.screen_observation import TEXT_PROFILE
 from .codex_protocol import TRANSPORT
 from .codex_transport import MODEL, REASONING_EFFORT
+from .codex_selection import validate_selection
 from .standard_input import parse_envelope
 
 
@@ -28,8 +29,12 @@ class KeyboardInputRejected(ValueError):
         )
 
 
-def rejected_receipt(result: dict, *, screen_sha256: str, max_advance_ticks: int) -> KeyboardInputRejected:
+def rejected_receipt(
+    result: dict, *, screen_sha256: str, max_advance_ticks: int,
+    model: str = MODEL, reasoning_effort: str = REASONING_EFFORT,
+) -> KeyboardInputRejected:
     """Validate a complete rejection receipt, without invoking any transport."""
+    validate_selection(model, reasoning_effort)
     receipt = result.get("transport_receipt")
     if not isinstance(receipt, dict) or (
         result.get("control_profile") != NATIVE_PROFILE
@@ -41,8 +46,8 @@ def rejected_receipt(result: dict, *, screen_sha256: str, max_advance_ticks: int
         or result.get("error") != "Keyboard keys must be supported native interface events"
         or receipt.get("accepted") is not True
         or receipt.get("dispatched") is not True
-        or receipt.get("model_requested") != MODEL
-        or receipt.get("reasoning_effort_requested") != REASONING_EFFORT
+        or receipt.get("model_requested") != model
+        or receipt.get("reasoning_effort_requested") != reasoning_effort
         or receipt.get("auth_mode") != "chatgpt"
         or receipt.get("transport") != TRANSPORT
         or receipt.get("reported_charge_usd") is not None
