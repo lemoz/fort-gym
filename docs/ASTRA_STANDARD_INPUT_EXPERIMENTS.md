@@ -106,7 +106,8 @@ checkpoint 711 remains the last verified save, with 6691 observed new ticks unsa
 All 814 responses, 26113503 campaign tokens and 26182507 all-attempt tokens are
 retained. Native load, subscription receipts and full teardown were audited. The
 repair at `c12103397c5bc220c0fa3fc32afa5e7758ff7196` passes 123 focused checks and
-3375 full-suite tests (10 skipped); native validation and explicit loss-aware
+3375 full-suite tests (10 skipped), with exact-head GitHub CI `34289603394` passing;
+native validation and explicit loss-aware
 restart support remain open. No restart, replay or new completed-window
 claim has been made. See Campaign status for the failure audit and source identity.
 

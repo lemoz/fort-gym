@@ -47,7 +47,7 @@ future traces. The synthetic regression reproduced the failure; 123 focused chec
 and the full 3375-test suite passed (10 skipped), with scoped Ruff/mypy and diff
 checks passing. Fix `c12103397c5bc220c0fa3fc32afa5e7758ff7196` is committed and
 integrated into the execution branch after teardown, pushed and independently
-read back from GitHub. Exact-head CI `34289603394` is in progress. Native validation,
+read back from GitHub. Exact-head CI `34289603394` passed. Native validation,
 loss-aware restart support and website failure publication remain open. The page
 still shows recorded 711, not a live feed or an accepted new window.
 
