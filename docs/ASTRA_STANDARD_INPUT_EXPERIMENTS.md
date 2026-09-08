@@ -97,7 +97,7 @@ than being relabeled clean. No gameplay rescue, restart or budget extension occu
 The actual result, warning display and next window r are pushed at
 `2e535166fc96633438c19017a52256b45ab36790` in draft PR #137. All 3,359 local tests
 passed, and the local page/API matches that exact committed publication. Remote
-CI is being checked separately; no merge, production deployment or browser visual
+CI `34286271507` also passed at that exact head; no merge, production deployment or browser visual
 acceptance is claimed. Window r continues the same model, memory, controls and
 limits from 711 after a fresh native load; it has not started. The open-ended
 year-two attempt and later paired/repeated comparisons remain the full objective.

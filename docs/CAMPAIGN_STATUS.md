@@ -61,7 +61,7 @@ in draft PR #137. All **3,359 full-suite tests passed** (ten skipped), alongside
 237 focused checks, scoped Ruff/mypy and JavaScript syntax checks. The initial
 combined suite exposed two historical tests that assumed an older continuation
 was still last; both now bind their named records, and the full suite was rerun.
-Exact-head remote CI `34286271507` is still in progress at this readback.
+Exact-head remote CI `34286271507` also passed for that publication revision.
 
 The actual local page/API and served assets match the clean committed source.
 Checkpoint 711 appears above restart 647 and the retained failure, with correct
@@ -72,7 +72,7 @@ http://127.0.0.1:8857/campaigns with isolated state and disabled game/admin acce
 former preview 97675 exited gracefully. No browser visual acceptance, merge or
 production deployment is claimed.
 
-Next: finish exact-head remote CI, then ordinary continuation from checkpoint 711
+Next: ordinary continuation from checkpoint 711
 with the same model, controls, memory and inherited limits. Window r declares 64
 decisions, no restart and no budget extension. It has not started. The full goal
 remains active, with year-two endurance and repeated comparisons still open.
