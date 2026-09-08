@@ -40,9 +40,11 @@ The versioned result is
 [the pre-save failure summary](../experiments/evidence/astra_native_keyboard_presave_failure_20260908.json).
 Its private audit digest is
 `8abba48e8f28781676bcffb0037f00226d1ea87267623192fcb75bf87154ee8d`.
-The public campaign API/page still shows completed checkpoint 631. The new failure
-record is not in its completed-continuation allowlist, and the failure surface is
-not implemented yet. No website deployment or new completed-continuation claim.
+The implementation's recorded-data adapter still ends at completed checkpoint
+631. The local preview at port 8857 was unreachable when checked; no live website
+update is claimed. The new failure record is not in the completed-continuation
+allowlist, and its failure surface is not implemented yet. No website deployment
+or new completed-continuation claim.
 
 ## Next work
 
