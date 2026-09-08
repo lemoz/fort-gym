@@ -8,7 +8,25 @@ fortress through year two and beyond. Website evidence and remote source deliver
 remain requirements. The objective is unfinished; early native Astra gameplay
 and checkpoint-continuation evidence are now verified.
 
-Latest result, September 8 UTC: checkpoint 232 is recovered and verified in a
+Latest result, September 8 UTC: normal Astra keyboard window h completed all
+64 new decisions across four verified v3 native saves. The latest checkpoint is
+296 / 63,600 retained elapsed ticks, about 15.8 percent of one full game year.
+There are 312 fully accounted model responses, 10,215,904 campaign tokens and
+10,284,908 all-attempt tokens. New progress: 14,400 ticks and 2,065,677 tokens.
+Memory and full trace/usage prefixes are preserved, including the historical
+2,000-tick lost branch. Independent audit and complete teardown passed.
+The final save is verified in process; its next fresh load remains to be checked.
+
+Source `893b7ff10` publishes the website continuation record and a declared next
+window with the same 64-decision bound in one native process instead of four.
+The sole experimental change is checkpoint cadence and its menu-reset tradeoff;
+no prompt, strategy, observation, model, usage or cumulative-limit change.
+Local validation passed 1,517 campaign/keyboard tests with one skip, scoped
+Ruff/mypy, JavaScript syntax and latest local HTTP checks. No gameplay worker is
+live, and the next window is not started. No merge, production deployment,
+visual acceptance, year-two sustainability or cross-model completion is claimed.
+
+Previous result: checkpoint 232 is recovered and verified in a
 fresh native process at source `41edaca0c37c637e8c34fa81ab96abb202e99078`.
 Independent audit confirms 49,200 retained ticks, all 248 responses, 8,150,227
 campaign tokens / 8,219,231 all-attempt tokens, unchanged memory and exact

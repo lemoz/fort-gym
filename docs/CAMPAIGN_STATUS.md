@@ -13,7 +13,43 @@ and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. The first bounded Astra native
 keyboard campaign has now completed.
 
-### Latest result: checkpoint 232 recovered and verified in a fresh native process
+### Latest result: 64 new decisions through four verified native saves
+
+Window h completed on frozen source `bcac94d1b6e51c7f54e25f56661c5a42b0085b2a`.
+Independent audit confirms 64 new accepted Astra Medium decisions and 14,400
+new native ticks. Verified checkpoints are 248, 264, 280 and 296. The retained
+timeline is 63,600 ticks, about 15.8 percent of a full game year. Final checkpoint:
+`f6f5ae7a888d79ec9dfc1e61e054bde58f0cfc9e8286908bfab02da3d75dbed0`.
+Its native snapshot and save operation passed verification; the next runtime
+must verify loading it before model dispatch. The first three saves were already
+loaded by later segments. The final save has not had a separate fresh reload yet.
+
+All 312 model responses are accounted, with 10,215,904 campaign tokens and
+10,284,908 including historical failed deliveries. The new window used 2,065,677
+tokens. Charges remain unreported, not zero. All original memory, trace/journal
+prefixes and the one inherited 2,000-tick loss are preserved; no new restart or
+loss occurred. Game/container/VM teardown passed. No gameplay worker is live.
+
+Implementation/website source `893b7ff10` contains the non-content continuation
+record and the next declared condition. Local validation: 1,517 campaign/keyboard
+tests passed, one skipped, scoped Ruff/mypy and JavaScript syntax passed. The
+latest local HTTP page and endpoint passed; browser handoff was queued, not
+visually accepted. No merge or production deployment is claimed.
+
+Next, window i preserves the same total bound of 64 new decisions in one native
+game process, instead of four 16-decision segments. This changes checkpoint
+cadence only, testing fewer menu resets while increasing the possible unsaved
+tail on failure. Astra Medium, standard controls, 120x40 screen observations,
+strategy autonomy, memory and all cumulative limits remain unchanged. The next
+window is declared but not started. This remains one fortress, not a matched
+causal trial or completed cross-model comparison. Year-two success is unproved.
+
+Private runtime proof: `astra-native-settled-play-v1/independent-audit.json` and
+`gameplay-review.json` under the existing native runtime artifact root. The
+authored public record is
+`experiments/evidence/astra_native_keyboard_settled_play_20260908.json` on PR #137.
+
+### Previous result: checkpoint 232 recovered and verified in a fresh native process
 
 Forward-only recovery at `41edaca0c37c637e8c34fa81ab96abb202e99078` passed native
 acceptance and independent audit. Checkpoint 232 is

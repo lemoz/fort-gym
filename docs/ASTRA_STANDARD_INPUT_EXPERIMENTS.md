@@ -79,6 +79,25 @@ evidence and remaining native work are tracked in [Campaign status](CAMPAIGN_STA
 
 ## Latest interface result
 
+Latest autonomous continuation, September 8: window h passed four v3 native
+saves after all 64 new Astra Medium decisions. Checkpoint 296 retains 63,600
+elapsed ticks, about 15.8 percent of one full year. Independent audit verifies
+all 312 accounted responses, 10,215,904 campaign tokens and 10,284,908 including
+historical failed deliveries. All memory and trace/journal prefixes remain
+intact, including the previous lost branch. No new restart or lost progress.
+The game/container/VM are stopped. The last save is verified in process; the
+next runtime must verify its fresh load before calling the model again.
+
+The website continuation record is authored on source `893b7ff10`; private
+gameplay evaluation remains separate from its non-content operational counters.
+The next declared window keeps 64 total decisions in one native process rather
+than reloading every 16. This tests menu continuity, not a new strategy or model,
+and exposes a longer unsaved tail on failure. No budget extension, memory reset,
+usage reset or fallback is added. The next window is not started; the full goal
+remains unfinished and no merge or production deployment is claimed.
+
+### Earlier interface and campaign results
+
 The combined native keyboard and 120x40 viewport diagnostic passed on September 7
 at `0ef33ff70`. It audits the full version-matched catalog, exercises ordinary
 menu/pause events, verifies readable captures and an explicit clock step, and
