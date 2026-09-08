@@ -113,16 +113,15 @@ def run_keyboard_segment(
                     checkpoint_error_type=type(error).__name__,
                     checkpoint_error=str(error),
                 )
-                # Keep the exact private screen pair and any completed save
-                # receipt even when validation rejects the checkpoint. Never
-                # retry the native mutation or turn forensic bytes into success.
-                attempt = getattr(snapshotter, "attempt", None)
-                if isinstance(attempt, dict) and attempt:
-                    try:
-                        publish(output / "save-attempt.json", attempt)
-                        result["private_save_attempt_retained"] = True
-                    except Exception as evidence_error:
-                        result["save_attempt_retention_error_type"] = type(evidence_error).__name__
+            # Retain successful and failed save checks for independent audit.
+            # These private captures are not a public summary or a save retry.
+            attempt = getattr(snapshotter, "attempt", None)
+            if isinstance(attempt, dict) and attempt:
+                try:
+                    publish(output / "save-attempt.json", attempt)
+                    result["private_save_attempt_retained"] = True
+                except Exception as evidence_error:
+                    result["save_attempt_retention_error_type"] = type(evidence_error).__name__
         try:
             publish(output / "native-after.json", environment.observe())
             publish(output / "final-screen.json", environment.screen_capture())

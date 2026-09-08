@@ -121,25 +121,42 @@ def test_public_segment_retains_extension_with_original_condition(tmp_path, save
     assert agent.budget_extensions[-1]["limits"]["max_dispatches"] == 16
 
 
-def test_checkpoint_failure_retains_private_save_attempt_without_retry(tmp_path, saved, monkeypatch):
+@pytest.mark.parametrize("fail", [False, True])
+def test_checkpoint_retains_private_save_attempt_without_retry(tmp_path, saved, monkeypatch, fail):
     from fort_gym.bench.run.campaign_save import CampaignSaveError
     env = environment()
     calls = []
+    original_capture = env.capture
 
-    def fail_capture(destination):
+    def capture(destination):
         calls.append(destination)
         env.attempt = {"schema_version": "fortgym.native-menu-save-attempt/v1",
                        "screen_before": "private-before", "screen_after": "private-after"}
-        raise CampaignSaveError("Native screen changed during menu-preserving save")
+        if fail:
+            raise CampaignSaveError("Native screen changed during menu-preserving save")
+        return original_capture(destination)
 
-    env.capture = fail_capture
+    env.capture = capture
     monkeypatch.setattr(__import__(__name__, fromlist=["environment"]), "environment", lambda: env)
     result, _, agent, output = run(tmp_path, saved)
-    assert result["status"] == "checkpoint_failed" and result["checkpoint_verified"] is False
+    assert result["status"] == ("checkpoint_failed" if fail else "bounded_segment_complete")
+    assert result["checkpoint_verified"] is (not fail)
     assert result["private_save_attempt_retained"] is True and len(calls) == 1
     assert read(output / "save-attempt.json") == env.attempt
     assert "private-before" not in json.dumps(result)
     assert agent.usage["returned_responses"] == 4
+
+
+def test_semantic_save_window_retains_model_condition_and_usage_limits():
+    condition, window = load_window(
+        PROJECT / "experiments/campaign_astra_keyboard_20260907.json",
+        PROJECT / "experiments/campaign_astra_keyboard_window_20260908g.json",
+    )
+    assert condition == CONDITION
+    assert window["continuation_from_next_step"] == 216
+    assert window["snapshot_profile"] == "native_menu_preserving_save/v2"
+    assert window["reset_memory"] is window["reset_usage"] is window["strategy_intervention"] is False
+    assert "restart" not in window and "budget_extension" not in window
 
 
 def test_admission_denial_produces_clean_native_checkpoint(tmp_path, saved):
