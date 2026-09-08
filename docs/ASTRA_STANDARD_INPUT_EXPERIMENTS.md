@@ -189,10 +189,23 @@ fallback for other focuses. A separate narrow memory repair releases redundant
 parsed trace copies during saving; the successful provider-free recovery stayed
 within unchanged limits. This does not prove memory headroom or year-two play.
 
-Window j at `bc7a23aef` has started from checkpoint 311 with the same 64-decision
+Window j at `bc7a23aef` completed from checkpoint 311 with the same 64-decision
 single-process bound, Astra Medium, standard input and existing cumulative
-1,024-dispatch / 40-million-token allowance. The first three observed native
-actions committed and added 1,000 ticks. This attempt remains live and bounded,
-with mandatory teardown owned by its runner. Source is pushed and exact-head CI
-passed. The website records interruption/recovery 311, not live tracking.
+1,024-dispatch / 40-million-token allowance. All 64 new decisions committed and
+added 11,400 ticks, reaching independently audited checkpoint 375 / 77,000 retained
+ticks. All 391 responses and 12,838,159 campaign tokens are preserved; all-attempt
+tokens are 12,907,163. Seven dwarves are alive, completed farms increased two to
+four, installed beds and workshops remain three each. Food stock, production and
+sustainability remain unverified. The private evaluation is not fed to the player.
+Seven decisions advanced time and 57 requested none; no clock-feedback branch
+was exercised. Teardown passed. The final save still requires its next fresh load.
+Authored aggregate publication and unchanged continuation k are pushed at
+`7416f65b2ee464b09963d65733b692bf1a9c03b6` in draft PR #137. Local tests and the
+private-to-authored count reconciliation passed; exact-head CI `34244374506`
+passed 2,777 tests with 100 skips. Window k has started under its unique owner;
+the first three observed actions committed and added 2,000 ticks, without a
+completed-window or new-checkpoint claim.
+The same owner must enforce its bound and teardown before another native run.
+The source page leads with checkpoint 375 and
+before/after counts, retaining older failures, not presenting a live activity feed.
 No merge, production deploy, browser visual acceptance or full-goal completion.

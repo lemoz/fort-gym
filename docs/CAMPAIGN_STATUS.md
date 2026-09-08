@@ -13,7 +13,53 @@ and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. The first bounded Astra native
 keyboard campaign has now completed.
 
-### Latest result: forward recovery verified at checkpoint 311
+### Latest result: autonomous play reaches checkpoint 375
+
+Window j completed all 64 new accepted Astra Medium decisions on frozen source
+`bc7a23aefef1fcf4f3f9212f1059d0edf17f239c`. It added 11,400 native ticks, reaching
+77,000 retained elapsed ticks (19.1 percent of a full game year). Checkpoint 375:
+`aeec46203d3ab51f5ce19c7070e9bcf660f6588dd55751042cb6f560b9e4e75a`.
+Independent audit and game/container/VM teardown passed. The next native runtime
+must verify loading this final save before requesting another model decision.
+
+The independently reviewed boundaries have seven living dwarves, zero recorded
+dead citizens, three installed beds and three completed workshops. Completed
+farm plots increased from two to four. Drink units were 132 then 134, without
+production/consumption attribution; food stock remains unverified. Seven decisions
+advanced game time and 57 requested zero ticks. Sustainability is not established.
+Neither clock-feedback branch was exercised in this window.
+
+All 391 model responses remain accounted: 12,838,159 campaign tokens and 12,907,163
+including historical failed deliveries. This window used 2,141,205 tokens.
+Subscription charges are unreported, not zero. No new loss, replay, budget
+extension or strategy intervention occurred. The historical 2,000-tick loss stays
+explicit. Private proof is under `astra-native-workshop-feedback-v1`:
+`independent-audit.json` and `gameplay-review.json`. Authored aggregate publication
+and the next unchanged 64-decision window k are pushed on implementation source
+`7416f65b2ee464b09963d65733b692bf1a9c03b6` in open draft PR #137. The website source
+now leads with 375 and a before/after count table, retaining earlier failure and
+recovery records. Local tests: 2,866 passed and ten skipped; the sole sandbox
+loopback restriction passed on its two-test scoped rerun. The focused 106 tests,
+scoped Ruff/mypy, JavaScript syntax and private-to-authored count reconciliation
+also passed. Exact-head CI `34244374506` passed: 2,777 tests, 100 skips. No merge,
+production deployment or visual acceptance. The background Sites workflow keeps
+the existing FastAPI/plain-JavaScript page and does not open a browser-only preview.
+Native captures, maps, coordinates, saves and model traces remain private.
+The full year-two and repeated cross-model goal remains active.
+
+Window k has started on frozen source `7416f65b2`, continuing 375 with the same
+64-decision single-process bound, Astra Medium, native keyboard/display profiles
+and cumulative allowance. The unique owner is running under private root
+`astra-native-workshop-continuation-v1`; it owns mandatory teardown. The native
+runner reached its model-exchange loop. Its first three observed actions committed
+and added 2,000 native ticks, reaching 79,000 in-flight retained ticks. These are
+not a completed window or newer verified checkpoint.
+Keep the implementation checkout unchanged while that owner imports its courier.
+Fresh account preflight was 17 percent used, below the existing 90 percent guard;
+per-call admission repeats. No cloud VM, local model server, budget reset or
+resource increase. The website source records completed 375, not live activity.
+
+### Previous result: forward recovery verified at checkpoint 311
 
 Window i returned 15 Astra Medium responses at source `893b7ff10`: 14 new
 committed actions and 2,000 new ticks, then a zero-tick timeout in the workshop
@@ -48,15 +94,12 @@ bound, Astra Medium, native keys, 120x40 screen observations, model-led strategy
 memory and cumulative 1,024-dispatch / 40-million-token limits. It tests factual
 clock feedback without giving a correction key. Window j has now started on
 frozen source `bc7a23aefef1fcf4f3f9212f1059d0edf17f239c`, with passing exact-source
-CI (`34239730451`). Its first observed native boundary contains three committed
-new actions and 1,000 new ticks. This is an in-flight observation, not a completed
-window or a newer verified save. The owned runtime remains live; its existing
-owner enforces the finite bound and mandatory teardown. Follow this same attempt
-to its terminal result before starting another. Private attempt root:
+CI (`34239730451`). Its first observed native boundary contained three committed
+new actions and 1,000 new ticks. This early in-flight observation was superseded
+by completed checkpoint 375 above. Private attempt root:
 `astra-native-workshop-feedback-v1`. Subscription preflight was 13 percent used,
 below the existing 90 percent guard, with fresh admission repeated for each call.
-The website remains recorded evidence at checkpoint 311, not a live activity
-indicator. The full year-two and repeated cross-model objective remains active.
+The website at that source recorded recovery 311, not live activity.
 
 Private proof: `astra-native-menu-continuity-v1/failure-audit.json` and
 `astra-native-workshop-recovery-v2/independent-audit.json` under the runtime root.
