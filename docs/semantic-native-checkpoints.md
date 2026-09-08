@@ -107,3 +107,18 @@ checks. Then recover cursor 232 forward from the retained runtime save, keeping
 all memory, usage and inherited loss history. The correction and recovered
 checkpoint remain unimplemented at this record. Authored diagnostic evidence:
 `experiments/evidence/astra_native_menu_identity_diagnostic_20260908.json`.
+
+## Separate-RPC identity profile candidate
+
+`native_menu_preserving_save/v3` now adds read-only identity probes immediately
+before and after the save RPC. Each probe must identify the same paused runtime,
+save calendar and exact native screen-object stack as the save operation. Their
+full UI identities must agree with one another and the inline pre-save identity.
+The inline post-save helper reading stays retained as diagnostic evidence, but
+the settled post-RPC reading is the final identity invariant. Missing, malformed,
+changed or unbound probes fail; there is no fallback or save retry.
+
+The save operation, world-observation check, copied-file inventory and input/tick
+policy are unchanged. Historical v1/v2 profiles and windows are unchanged. A
+window must explicitly select v3. Offline tests do not establish native acceptance
+or recover checkpoint 232; both remain separate required checks at this point.

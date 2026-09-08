@@ -103,3 +103,9 @@ local before = boundary()
     "schema_version = 'fortgym.native-menu-save/v2', ok = ok,\n"
     "    ui_before = ui_before, ui_after = ui_identity(),",
 )
+
+# V3 keeps the inline helper readings as diagnostics and binds verification to
+# separate read-only RPCs before and after saving. The native operation is equal.
+MENU_SETTLED_IDENTITY_SAVE_LUA = MENU_IDENTITY_SAVE_LUA.replace(
+    "fortgym.native-menu-save/v2", "fortgym.native-menu-save/v3"
+)

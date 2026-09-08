@@ -11,6 +11,7 @@ from fort_gym.bench.run.campaign_save import CampaignSaveError, NativeSaveSnapsh
 from fort_gym.bench.run.keyboard_config import load_window
 from fort_gym.bench.run.keyboard_save import (
     MENU_IDENTITY_SAVE_PROFILE,
+    MENU_SETTLED_IDENTITY_SAVE_PROFILE,
     LEGACY_SAVE_PROFILE,
     MENU_SAVE_PROFILE,
     MenuPreservingSnapshotter,
@@ -172,7 +173,7 @@ def test_existing_destination_cannot_trigger_native_save(tmp_path):
     assert calls == []
 
 
-@pytest.mark.parametrize("profile", [None, LEGACY_SAVE_PROFILE, MENU_SAVE_PROFILE, MENU_IDENTITY_SAVE_PROFILE, "unknown"])
+@pytest.mark.parametrize("profile", [None, LEGACY_SAVE_PROFILE, MENU_SAVE_PROFILE, MENU_IDENTITY_SAVE_PROFILE, MENU_SETTLED_IDENTITY_SAVE_PROFILE, "unknown"])
 def test_window_profile_is_explicit_and_legacy_defaults_stay_unchanged(tmp_path, profile):
     project = Path(__file__).resolve().parents[1]
     condition = project / "experiments/campaign_astra_keyboard_20260907.json"
@@ -198,6 +199,7 @@ def test_window_profile_is_explicit_and_legacy_defaults_stay_unchanged(tmp_path,
         (LEGACY_SAVE_PROFILE, NativeSaveSnapshotter),
         (MENU_SAVE_PROFILE, MenuPreservingSnapshotter),
         (MENU_IDENTITY_SAVE_PROFILE, MenuPreservingSnapshotter),
+        (MENU_SETTLED_IDENTITY_SAVE_PROFILE, MenuPreservingSnapshotter),
     ],
 )
 def test_native_worker_selects_only_declared_snapshotter(tmp_path, monkeypatch, profile, expected):
