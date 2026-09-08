@@ -74,3 +74,32 @@ local receipt = {
 if not ok then receipt.error = tostring(err) end
 print(json.encode(receipt))
 """
+
+# Keep the executed v1 operation intact. V2 adds semantic UI identity evidence;
+# raster animation is not a menu-state invariant in paused Dwarf Fortress.
+MENU_IDENTITY_SAVE_LUA = MENU_SAVE_LUA.replace(
+    "local before = boundary()",
+    r"""
+local function selected_id(getter)
+    local selected = getter(true)
+    return selected and selected.id or -1
+end
+local function ui_identity()
+    return {
+        focus = dfhack.gui.getFocusString(dfhack.gui.getCurViewscreen(true)),
+        unit_id = selected_id(dfhack.gui.getSelectedUnit),
+        building_id = selected_id(dfhack.gui.getSelectedBuilding),
+        job_id = selected_id(dfhack.gui.getSelectedJob),
+        item_id = selected_id(dfhack.gui.getSelectedItem),
+        cursor = {x=df.global.cursor.x, y=df.global.cursor.y, z=df.global.cursor.z},
+        viewport = {x=df.global.window_x, y=df.global.window_y, z=df.global.window_z},
+    }
+end
+local ui_before = ui_identity()
+local before = boundary()
+""",
+).replace(
+    "schema_version = 'fortgym.native-menu-save/v1', ok = ok,",
+    "schema_version = 'fortgym.native-menu-save/v2', ok = ok,\n"
+    "    ui_before = ui_before, ui_after = ui_identity(),",
+)

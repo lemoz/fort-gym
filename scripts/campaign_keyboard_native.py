@@ -32,6 +32,7 @@ from fort_gym.bench.run.keyboard_segment import run_keyboard_segment
 from fort_gym.bench.run.keyboard_save import (
     LEGACY_SAVE_PROFILE,
     MENU_SAVE_PROFILE,
+    MENU_IDENTITY_SAVE_PROFILE,
     MenuPreservingSnapshotter,
 )
 from scripts.campaign_load_smoke import run_isolated
@@ -86,13 +87,16 @@ def worker(args) -> dict:
         max_advance_ticks=condition["max_advance_ticks"],
     )
     try:
+        profile = window.get("snapshot_profile", LEGACY_SAVE_PROFILE)
         snapshotter = (
             MenuPreservingSnapshotter(
                 dfroot=args.runtime,
                 screen_capture=environment.screen_capture,
                 minimum_free_bytes=MINIMUM_FREE_BYTES,
+                profile=profile,
+                observe=environment.observe if profile == MENU_IDENTITY_SAVE_PROFILE else None,
             )
-            if window.get("snapshot_profile", LEGACY_SAVE_PROFILE) == MENU_SAVE_PROFILE
+            if profile in (MENU_SAVE_PROFILE, MENU_IDENTITY_SAVE_PROFILE)
             else NativeSaveSnapshotter(
                 dfroot=args.runtime,
                 minimum_free_bytes=MINIMUM_FREE_BYTES,

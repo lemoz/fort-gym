@@ -11,17 +11,22 @@ from typing import Any
 
 from ..dfhack_exec import run_lua_expr
 from .campaign_save import CampaignSaveError, NativeSaveSnapshotter, native_save_status
-from .keyboard_save_lua import MENU_SAVE_LUA
+from ..env.screen_observation import raw_screen
+from .keyboard_save_lua import MENU_IDENTITY_SAVE_LUA, MENU_SAVE_LUA
 
 LEGACY_SAVE_PROFILE = "native_quicksave/v1"
 MENU_SAVE_PROFILE = "native_menu_preserving_save/v1"
-SAVE_PROFILES = (LEGACY_SAVE_PROFILE, MENU_SAVE_PROFILE)
+MENU_IDENTITY_SAVE_PROFILE = "native_menu_preserving_save/v2"
+SAVE_PROFILES = (LEGACY_SAVE_PROFILE, MENU_SAVE_PROFILE, MENU_IDENTITY_SAVE_PROFILE)
 
 
-def validate_menu_save(receipt: Any, dfroot: Path) -> dict:
+def validate_menu_save(receipt: Any, dfroot: Path, *, profile: str = MENU_SAVE_PROFILE) -> dict:
     """Require one completed, identified save with unchanged native/menu state."""
+    version = "v2" if profile == MENU_IDENTITY_SAVE_PROFILE else "v1"
+    if profile not in (MENU_SAVE_PROFILE, MENU_IDENTITY_SAVE_PROFILE):
+        raise CampaignSaveError("Unsupported menu save profile")
     if not isinstance(receipt, dict) or (
-        receipt.get("schema_version") != "fortgym.native-menu-save/v1"
+        receipt.get("schema_version") != "fortgym.native-menu-save/" + version
         or any(
             receipt.get(key) is not True
             for key in (
@@ -64,6 +69,21 @@ def validate_menu_save(receipt: Any, dfroot: Path) -> dict:
         addresses.add(screen["address"])
     if stack[-1]["type"] != "<type: viewscreen_dwarfmodest>":
         raise CampaignSaveError("Native menu save lacks a fortress ancestor")
+    if profile == MENU_IDENTITY_SAVE_PROFILE:
+        for key in ("ui_before", "ui_after"):
+            ui = receipt.get(key)
+            if not isinstance(ui, dict) or (
+                set(ui) != {"focus", "unit_id", "building_id", "job_id", "item_id", "cursor", "viewport"}
+                or not isinstance(ui["focus"], str) or not ui["focus"]
+                or any(type(ui[field]) is not int or ui[field] < -1
+                       for field in ("unit_id", "building_id", "job_id", "item_id"))
+                or any(not isinstance(ui[field], dict) or set(ui[field]) != {"x", "y", "z"}
+                       or any(type(value) is not int for value in ui[field].values())
+                       for field in ("cursor", "viewport"))
+            ):
+                raise CampaignSaveError("Native menu identity is invalid")
+        if receipt["ui_before"] != receipt["ui_after"]:
+            raise CampaignSaveError("Native menu identity changed during save")
     return receipt
 
 
@@ -80,10 +100,17 @@ class MenuPreservingSnapshotter:
         dfroot: Path,
         screen_capture: Callable[[], dict],
         minimum_free_bytes: int | None = None,
+        profile: str = MENU_SAVE_PROFILE,
+        observe: Callable[[], dict] | None = None,
         status: Callable[[], Mapping[str, Any]] = native_save_status,
         execute: Callable[..., str] = run_lua_expr,
     ) -> None:
         self.dfroot = dfroot.resolve()
+        if profile not in (MENU_SAVE_PROFILE, MENU_IDENTITY_SAVE_PROFILE):
+            raise ValueError("Unsupported native menu save profile")
+        if profile == MENU_IDENTITY_SAVE_PROFILE and not callable(observe):
+            raise ValueError("Semantic menu saving requires recorded world observations")
+        self.profile, self.observe = profile, observe
         if any(ord(char) < 32 for char in str(self.dfroot)):
             raise ValueError("Snapshot runtime path contains control characters")
         self.screen_capture, self.execute = screen_capture, execute
@@ -98,9 +125,10 @@ class MenuPreservingSnapshotter:
 
     def _request(self) -> None:
         expression = "local expected_root = " + json.dumps(str(self.dfroot), ensure_ascii=False)
-        raw = self.execute(expression + "\n" + MENU_SAVE_LUA, timeout=120)
+        operation = MENU_IDENTITY_SAVE_LUA if self.profile == MENU_IDENTITY_SAVE_PROFILE else MENU_SAVE_LUA
+        raw = self.execute(expression + "\n" + operation, timeout=120)
         try:
-            self.receipt = validate_menu_save(json.loads(raw), self.dfroot)
+            self.receipt = validate_menu_save(json.loads(raw), self.dfroot, profile=self.profile)
             self.attempt["save_operation"] = self.receipt
         except (TypeError, ValueError) as error:
             raise CampaignSaveError("Native menu save returned malformed JSON") from error
@@ -108,6 +136,12 @@ class MenuPreservingSnapshotter:
     def capture(self, destination: Path) -> dict[str, Any]:
         self.receipt = None
         self.attempt = {"schema_version": "fortgym.native-menu-save-attempt/v1"}
+        semantic = self.profile == MENU_IDENTITY_SAVE_PROFILE
+        world_bytes = None
+        if semantic:
+            assert self.observe is not None
+            world_bytes = json.dumps(self.observe(), sort_keys=True, allow_nan=False).encode()
+            self.attempt["world_before"] = json.loads(world_bytes)
         before = self.screen_capture()
         screen_bytes = json.dumps(before, sort_keys=True, allow_nan=False).encode()
         self.attempt["screen_before"] = json.loads(screen_bytes)
@@ -116,8 +150,17 @@ class MenuPreservingSnapshotter:
         after = self.screen_capture()
         after_bytes = json.dumps(after, sort_keys=True, allow_nan=False).encode()
         self.attempt["screen_after"] = json.loads(after_bytes)
-        if after_bytes != screen_bytes or self.receipt is None:
+        if self.receipt is None or (not semantic and after_bytes != screen_bytes):
             raise CampaignSaveError("Native screen changed during menu-preserving save")
+        if semantic:
+            before_grid, after_grid = raw_screen(before), raw_screen(after)
+            if (before_grid["width"], before_grid["height"]) != (after_grid["width"], after_grid["height"]):
+                raise CampaignSaveError("Native screen dimensions changed during save")
+            assert self.observe is not None
+            world_after = json.dumps(self.observe(), sort_keys=True, allow_nan=False).encode()
+            self.attempt["world_after"] = json.loads(world_after)
+            if world_after != world_bytes:
+                raise CampaignSaveError("Recorded world observations changed during save")
         boundary = self.receipt["native_before"]
         if any(
             native[key] != boundary[key] for key in ("save_name", "year", "year_tick", "paused")
@@ -125,8 +168,11 @@ class MenuPreservingSnapshotter:
             raise CampaignSaveError("Native menu receipt differs from copied save")
         return {
             **native,
-            "snapshot_profile": MENU_SAVE_PROFILE,
+            "snapshot_profile": self.profile,
             "save_operation": self.receipt,
-            "screen_unchanged": True,
+            "screen_unchanged": after_bytes == screen_bytes,
             "screen_sha256": hashlib.sha256(screen_bytes).hexdigest(),
+            **({"screen_after_sha256": hashlib.sha256(after_bytes).hexdigest(),
+                "world_observations_unchanged": True, "ui_identity_unchanged": True}
+               if semantic else {}),
         }
