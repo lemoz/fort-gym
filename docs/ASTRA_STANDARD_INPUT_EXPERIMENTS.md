@@ -272,6 +272,18 @@ not a model-observation change, production count or sustainability verdict.
 The authored 567 API/page update passed 150 focused tests and scoped static checks.
 Main commit `4e746f0fa` and isolated food-report commit `e15c53cd5` are pushed
 with exact remote heads verified; new-head CI is not inferred from prior runs.
-Next work is terminal-observation handling, private measurement integration and
-unchanged autonomous continuation. Full-year survival, repeated model comparison,
-merged/deployed website delivery and full-goal completion remain open.
+Terminal-observation handling and an explicitly declared private food adapter are
+now implemented at `567251e7414795d52c87e1450eca146bfb419069`, pushed in open
+draft PR #137. Full local production-code testing passed 3,087 tests with ten
+skips; two later-added tests passed in the focused rerun. Scoped static checks
+passed, without claiming repository-wide typing cleanliness.
+
+Window n is running from checkpoint 567 on that frozen source. Five valid
+committed decisions and zero new ticks were observed. Its first integrated
+private food read and the latest read both reported 27 units. Actual model
+requests retain only screen, memory and factual control feedback; the private
+evaluation count does not alter the playing condition. Source-specific CI
+`34259573627` is still in progress; earlier source `4e746f0fa` passed its CI.
+The unique owner must retain any error and finish teardown. No terminal n result
+is claimed. Full-year survival, repeated model comparisons, merged/deployed
+website delivery and full-goal completion remain open.

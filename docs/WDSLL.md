@@ -25,16 +25,24 @@ A separate paused, provider-free native probe fresh-loaded checkpoint 567 and
 verified 27 native-predicate food units across 15 records. Independent vector,
 stack-size and repeated scans agreed. Screen, menu, calendar and saved world
 stayed unchanged, with no model calls, keys or ticks; full teardown passed.
-The collector is not integrated. Accessibility, production, sustainability and
+The collector now has an opt-in private evaluation adapter in active window n,
+without changing screen-only model observations. Accessibility, production, sustainability and
 native prepared-meal coverage remain unverified; historical food unknowns stay.
 
 The authored 567 API/page update preserves the warning and passed 150 focused
 tests plus scoped static checks. Main commit `4e746f0fa` and isolated food-report
-commit `e15c53cd5` are pushed with exact remote heads verified. New CI is separate.
+commit `e15c53cd5` are pushed with exact remote heads verified. The former's CI passed.
 No resources
 from m or the probe remain running; no merge, deploy or visual acceptance.
-Next: harden terminal exchange observation, integrate a declared private food
-measurement without changing model observations, then continue from 567.
+The next source `567251e74` integrates the tested terminal-observation handling
+and optional private food measurement and is pushed in draft PR #137. Its full
+local code test run passed 3,087 tests with ten skips; two later-added tests also
+passed in a 68-test focused rerun. Scoped static checks passed; this is not a
+repository-wide typing-clean claim. Exact-head CI `34259573627` is in progress.
+Window n is actively continuing from 567 with the same model and cumulative
+limits. Its first five valid committed decisions added zero ticks; initial and
+current private food readings were complete at 27 units. These observations are
+not a completed window. Follow its unique owner through auditing and teardown.
 The full original year-two, repeated-model and website-delivery goal remains active.
 
 

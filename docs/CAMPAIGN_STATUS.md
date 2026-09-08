@@ -13,7 +13,32 @@ and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. Several bounded Astra native-keyboard
 windows have completed; the same fortress remains in autonomous continuation.
 
-### Latest result: checkpoint 567, 122,200 retained ticks
+### Active continuation n: private measurement, unchanged model condition
+
+Window n is running from 567 on frozen source
+`567251e7414795d52c87e1450eca146bfb419069`, pushed and verified in open draft PR
+#137. The terminal-observation helper catches the actual subprocess error type,
+rechecks explicit stopped-container state and retains warnings without retrying
+a model. The optional private food adapter is declared for n. It does not change
+Astra Medium, native keyboard/v2, screen text/v1, 120x40 display, memory or the
+inherited 1,024-dispatch / 40-million-token allowance.
+
+The unique owner under `astra-native-food-continuation-v1` verified startup and
+fresh subscription admission. A live read observed five returned/committed valid
+decisions and zero new ticks. Initial and current private food readings were
+complete at 27 units; the live population was twelve. Actual request fields
+remain the screen-only contract. These are in-flight observations, not a
+completed window, checkpoint 631 or a sustainability result. The same owner
+must finish and verify mandatory teardown; keep its implementation source frozen.
+
+The full local production-code test run passed 3,087 tests with ten skips; two
+later-added tests passed in a 68-test focused rerun. Scoped Ruff and seven-file
+mypy with silent dependency following passed. The default dependency-following
+mypy invocation was not green (271 diagnostics in 16 files); no full typing-clean
+claim. Exact-source CI `34259573627` is in progress. Prior publication source
+`4e746f0fa` passed CI `34257628962`. No merge, deployment or visual acceptance.
+
+### Latest completed result: checkpoint 567, 122,200 retained ticks
 
 Window m's native game completed 64 accepted Astra Medium decisions on frozen
 source `c9b8607cc13047bf5e5202f397ab44bc6522f59f`, adding 7,200 actual ticks.
@@ -43,11 +68,12 @@ Game, container and VM teardown passed. No resources from m or this probe remain
 running. Private evidence is under `astra-native-midyear-continuation-v1` and
 `food-inventory-native-v1`.
 
-The food candidate remains isolated on `codex/campaign-food-inventory-v1`.
+The original food candidate is retained on `codex/campaign-food-inventory-v1`.
 This is inventory under an explicit native predicate, not ready meals,
 accessibility, production or sustainability. No prepared meal was present, so
-native prepared-meal coverage remains open. It is not wired into model
-observations, campaign evaluation or website metrics. Historical food unknowns
+native prepared-meal coverage remains open. Its optional private evaluation
+adapter is now enabled for n, but not added to model observations or the recorded
+website's historical metrics. Historical food unknowns
 stay unknown. The old G7 callback ledger remains unchanged.
 
 The authored checkpoint-567 record and explicit outer-runner warning are now
@@ -55,15 +81,14 @@ implemented in the existing campaign API/page with 150 focused tests and scoped
 Ruff/mypy/JavaScript checks passed. Main source/result commit
 `4e746f0fa771f9af11a85fb3ab3552a7644072cd` and isolated food-report commit
 `e15c53cd54567047e2adfaae85dafcd4a4f2f6aa` are pushed, with both remote
-branch heads verified. New-head CI is tracked separately from prior passing CI.
+branch heads verified. That main publication's exact-source CI subsequently passed.
 The page remains recorded evidence, not live tracking. No browser-only preview
 was started during this goal continuation. No merge, deployment, visual
 acceptance, repeated cross-model study or full-goal completion is claimed.
 
-Next: harden the courier's terminal observation handling without erasing errors
-or redispatching responses, integrate a private versioned food measurement
-without expanding screen-only model observations, and continue autonomous play
-from 567 under the unchanged cumulative allowance.
+Next: follow the same n owner, audit its gameplay, private measurement coverage,
+save lineage, usage and teardown, then publish the actual terminal outcome.
+Do not launch a second VM or infer completion from a polling delay.
 
 ### Previous result: checkpoint 503
 
