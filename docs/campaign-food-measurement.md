@@ -13,7 +13,9 @@ The isolated `food_inventory.py` candidate now provides a read-only native scan
 and strict result validator. It is **not connected** to campaign observations,
 the model prompt, the evaluator, the website, or the historical G7 hooks. This
 separation lets the current Astra continuation stay frozen while measurement is
-developed. Lua-double tests are not native acceptance.
+developed. A separate provider-free native check has now passed on checkpoint
+567, alongside independent retained-evidence reconciliation. This is one
+checkpoint's inventory evidence, not integration or sustainability acceptance.
 
 ## Exact candidate definition
 
@@ -60,21 +62,35 @@ the exact provenance, all counter types and totals, completeness, explicit unkno
 and removal of extra content. All 141 candidate tests passed; the combined food,
 drink and campaign-profile selection passed 180 tests. Scoped Ruff/mypy passed.
 
-## Required next native check
+## Native check completed on checkpoint 567
 
-After the current unique Astra owner has completed and verified teardown, use
-one provider-free isolated runtime under the existing local resource bounds.
-Load a verified checkpoint, leave it paused, and run only the candidate read.
-Verify the exact runtime, loaded save, calendar and UI boundary around that read.
-Compare its aggregate with a separately inspected native inventory, including
-prepared meals and available raw-food cases. Retain scan failures and compare
-predicate behavior with the exact game version. Make no gameplay input, model
-call, clock request or change to the retained save. Mandatory teardown still applies.
+Frozen candidate source `ab53e54dd321b596b0f189cadf94cbbda65dfd95` was tested
+after window m and its teardown. A fresh native process loaded verified
+checkpoint 567, remained paused, and measured **27 native-predicate units across
+15 item records**, from 1,537 in-play records. An independent enumeration through
+the all-items vector agreed with the in-play scan, and concrete stack sizes
+agreed with the virtual stack-size results for counted foods. A repeated scan
+agreed. One unit had the in-job flag; forbidden, rotten, trader and hidden unit
+counts were zero. These flags do not establish accessibility.
 
-Until that check passes, do not integrate this collector or change historical
-`food_stock: null` results. Successful future integration should add a declared
-private measurement profile without expanding the playing model's screen-only
-observation. Old results retain their original provenance and unknown fields.
+Calendar, native menu identity, actual 120x40 screen and copied world-save files
+were unchanged across the reads; the query event log was excluded from world-file
+comparison. The original checkpoint was reverified unchanged. No model calls,
+gameplay keys, clock ticks, new native save or strategy intervention were made.
+Native process/listener, container and VM teardown all verified.
+
+The raw-food cases present at this checkpoint exercised the actual native
+predicate. No prepared-meal item was present, so this probe does **not** add native
+prepared-meal coverage. The UI estimate was 28 in the preceding gameplay record;
+that difference does not establish the cause or meaning of either counter.
+The published aggregate is
+[`food_inventory_native_20260908.json`](../experiments/evidence/food_inventory_native_20260908.json).
+Raw inventory details, screens, saves and the independent audit remain private.
+
+Next, integrate a declared private measurement profile without expanding the
+playing model's screen-only observations, and test continuation and failure
+behavior. Do not rewrite historical `food_stock: null` results. Prepared-meal
+native coverage and longitudinal production/consumption measurement remain open.
 
 ## Production and consumption remain separate work
 
