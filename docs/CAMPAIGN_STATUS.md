@@ -42,7 +42,7 @@ tests (10 skipped); exact-head CI `34277747038` passed. The publication/page upd
 passed 161 focused tests and scoped static checks. Source
 `2df70f96b4fb53ff10b5b45eb1fae6efc9aa1996` is pushed and verified on GitHub in
 draft PR #137. The final combined suite passed 3,307 tests (10 skipped, seven
-warnings); exact-head CI `34279731122` was still in progress at readback.
+warnings); exact-head CI `34279731122` also passed.
 The actual local endpoint serves that exact committed page/API, with restart 647
 above the retained failure and an explicit zero-new-time notice. It keeps the
 Fort Labs layout, isolated registry and disabled admin. No browser visual

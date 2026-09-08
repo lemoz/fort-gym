@@ -25,7 +25,7 @@ Executed source `3a708cdfe` passed 85 focused tests, 3,287 full-suite tests and
 exact-head CI `34277747038`. Result/page publication `2df70f96b` is pushed and
 verified on GitHub in draft PR #137, with 161 focused tests and exact committed
 HTTP acceptance. Combined regression passed 3,307 tests (10 skipped); exact-head
-CI `34279731122` was still in progress at readback.
+CI `34279731122` also passed.
 The local Fort Labs page shows the saved restart above its original failure and
 labels zero added game time; no browser visual acceptance, merge or deployment.
 The game VM is stopped; the isolated local preview remains live. Next is normal
