@@ -13,7 +13,51 @@ and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. Several bounded Astra native-keyboard
 windows have completed; the same fortress remains in autonomous continuation.
 
-### Latest delivery: failed-attempt website and save-fix display verified
+### Latest result: native restart saved checkpoint 647; no new game time
+
+Window p completed 16 accepted Astra Medium native-keyboard decisions with v4
+saving at frozen source `3a708cdfe0c884273942361352297bb6b3555b0c`. The explicit
+restart restored checkpoint 631 and its memory, retained all failed-window
+usage, and replayed no actions. New checkpoint **647** is independently verified:
+`21a2b1e25f86a2bffc673d2154e770758f32bf441f1024bea1bb792ca71e005c`.
+
+All 16 decisions requested zero ticks while the model inspected status, jobs
+and labor menus. Retained time is still **143,400 ticks / 35.6 percent of one
+elapsed year**. Twelve dwarves remain alive; farms/beds/workshops remain 7/5/4,
+food/drinks 82/179, recorded citizen deaths zero. Food coverage was 16 complete
+readings and one unknown among 17 boundaries. This verifies the restart/save
+path in actual play, not endurance, production or sustainability improvement.
+
+All **727 responses** are accounted: **511,720 new tokens**, 23,330,797 campaign
+tokens, 23,399,801 across all attempts; subscription charges remain unreported.
+The new 21,200-tick loss and inherited 2,000-tick loss are both explicit: 23,200
+discarded ticks across two restarts. No budget extension or gameplay intervention.
+Save/lineage, usage/loss, gameplay, clock, food and publication audits passed.
+The owner exited successfully and native processes/container/VM were verified
+stopped, including an independent fresh stopped-profile read. The new checkpoint
+has not yet had a separate fresh reload; that remains a required next-run check.
+
+The implementation passed 85 focused restart/recovery tests and 3,287 full-suite
+tests (10 skipped); exact-head CI `34277747038` passed. The publication/page update
+passed 161 focused tests and scoped static checks. Source
+`2df70f96b4fb53ff10b5b45eb1fae6efc9aa1996` is pushed and verified on GitHub in
+draft PR #137. The final combined suite passed 3,307 tests (10 skipped, seven
+warnings); exact-head CI `34279731122` was still in progress at readback.
+The actual local endpoint serves that exact committed page/API, with restart 647
+above the retained failure and an explicit zero-new-time notice. It keeps the
+Fort Labs layout, isolated registry and disabled admin. No browser visual
+acceptance, merge or production deployment. Preview owner 97675 remains live
+at http://127.0.0.1:8857/campaigns; it is separate from the stopped game runtime.
+
+Private evidence: `astra-native-presave-restart-v1` under the existing runtime
+root. Public evidence: `experiments/evidence/astra_native_keyboard_presave_restart_20260908.json`.
+Next: ordinary continuation from checkpoint 647 with all 727 responses, the new
+memory and both discontinuities, after fresh native load verification. Do not
+repeat the restart declaration. Measure whether the model advances beyond menu
+inspection without supplying replacement inputs or strategy. Preserve explicit
+checkpoint cadence and verify VM data-disk capacity before another attempt.
+
+### Previous delivery: failed-attempt website and save-fix display verified
 
 The existing Fort Labs campaign page now displays window o's failure separately
 from completed gameplay: checkpoint 631 / 143,400 saved ticks, 21,200 unsaved
@@ -29,9 +73,8 @@ restored at http://127.0.0.1:8857/campaigns with an isolated registry and admin
 disabled. Browser visual acceptance, merge and production deployment are not
 claimed. Evidence is under `site-checkpoint-status-20260908`.
 
-Next: implement and verify an explicit loss/usage-preserving restart from 631,
-then resume bounded Astra play with v4 saves. No model calls or native VM were
-started during this website pass.
+This earlier website pass started no model calls or native VM. The subsequent
+loss-aware restart completed as described above.
 
 ### Previous engineering result: native overlay save and reload verified
 
@@ -57,12 +100,11 @@ Exact-head CI `34274641259` passed. No merge or deployment is claimed.
 Private evidence: `astra-native-status-stack-acceptance-v2/independent-audit.json`
 under the existing runtime root. Public evidence on the implementation branch:
 `experiments/evidence/native_status_stack_acceptance_20260908.json`.
-The diagnostic does not recover window o's unsaved tail. Campaign progress stays
-at **631 / 143,400 retained ticks**, with all **711 responses** accounted.
-The website now exposes both records as described above. Resume only with an
-explicit loss/usage-preserving restart record and v4 saves.
+The diagnostic did not recover window o's unsaved tail. At that boundary campaign
+progress remained 631 / 143,400 retained ticks with 711 responses. The later
+explicit restart is recorded separately above; this diagnostic remains unchanged.
 
-### Latest gameplay attempt: window o failed before saving
+### Preceding failed gameplay attempt: window o failed before saving
 
 Window o used frozen source `15af09ffeaf5022be0b2b4c91c858b718fbb522a` and returned
 64 accepted Astra Medium decisions, reaching trace boundary 695 and 164,600

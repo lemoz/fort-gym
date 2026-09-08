@@ -8,7 +8,31 @@ fortress through year two and beyond. Website evidence and remote source deliver
 remain requirements. The objective is unfinished; early native Astra gameplay
 and checkpoint-continuation evidence are now verified.
 
-Latest website delivery, September 8 UTC: the Fort Labs campaign page separates
+Latest result, September 8 UTC: the declared loss-aware restart completed all
+16 accepted Astra Medium native-keyboard decisions and verified v4-save
+checkpoint 647 at `21a2b1e25f86a2bffc673d2154e770758f32bf441f1024bea1bb792ca71e005c`.
+The model requested zero ticks while inspecting status, jobs and labor menus.
+Retained time stays 143,400 ticks (35.6 percent of one elapsed year), with twelve
+living dwarves and zero recorded citizen deaths. This is restart/save acceptance,
+not endurance or sustainability progress. All 727 responses and 23,330,797 campaign
+tokens remain accounted (511,720 new tokens; 23,399,801 all-attempt). Charges are
+unreported. Both losses remain explicit: 23,200 discarded ticks across two
+restarts. No old action replay, budget extension or gameplay strategy intervention.
+Independent save/lineage, usage/loss, gameplay, clock, food, publication and full
+teardown checks passed. The new checkpoint's separate fresh reload remains next.
+
+Executed source `3a708cdfe` passed 85 focused tests, 3,287 full-suite tests and
+exact-head CI `34277747038`. Result/page publication `2df70f96b` is pushed and
+verified on GitHub in draft PR #137, with 161 focused tests and exact committed
+HTTP acceptance. Combined regression passed 3,307 tests (10 skipped); exact-head
+CI `34279731122` was still in progress at readback.
+The local Fort Labs page shows the saved restart above its original failure and
+labels zero added game time; no browser visual acceptance, merge or deployment.
+The game VM is stopped; the isolated local preview remains live. Next is normal
+continuation from 647 with all usage, model memory and both discontinuities,
+after fresh-load and capacity checks. The full goal remains active and unfinished.
+
+Previous website delivery, September 8 UTC: the Fort Labs campaign page separates
 window o's 21,200 unsaved ticks from checkpoint 631 / 143,400 saved ticks, retains
 all 711 responses and usage, and labels the verified save fix separately from
 gameplay. Source `6239417fb` is pushed and remote-verified in draft PR #137;
@@ -16,7 +40,7 @@ exact-head CI `34276246376` passed. Validation: 197 focused tests, 3,259 full-su
 passes (10 skipped), scoped static checks and exact committed-source HTTP
 acceptance. The isolated, admin-disabled local preview at port 8857 is restored.
 No browser visual acceptance, merge, deployment, new model calls or native VM.
-An explicit loss/usage-preserving restart and actual Astra continuation are next.
+The subsequent explicit restart is recorded above.
 
 Previous engineering result, September 8 UTC: the status/pets save failure was
 reproduced without a model on a diagnostic copy of checkpoint 631. The opt-in v4
@@ -27,10 +51,10 @@ passed. No gameplay ticks, model calls or campaign restart. Fix source
 `d795ed6e2` passed 140 focused save tests and 3,217 full-suite tests (10 skipped);
 native evidence/docs are pushed and remote-verified at `919d332b0` in draft PR #137.
 Exact-head CI `34274641259` passed. The website failure/acceptance display is now
-verified locally; an explicit loss/usage-preserving restart is next. The goal remains unfinished;
-checkpoint 631 / 143,400 saved ticks and all 711 responses remain the campaign truth.
+verified locally; the subsequent explicit restart is recorded above. This earlier
+diagnostic boundary remained checkpoint 631 / 143,400 ticks and 711 responses.
 
-Latest completed gameplay result, September 8 UTC: native window n completed 64 accepted decisions,
+Previous completed gameplay result, September 8 UTC: native window n completed 64 accepted decisions,
 adding 21,200 ticks and saving checkpoint 631 with 143,400 retained ticks (35.6
 percent of the first full year). Twelve dwarves remained alive with no recorded
 citizen deaths. Completed farms/beds/workshops increased five/four/three to
