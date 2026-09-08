@@ -46,18 +46,21 @@ A broader local pass ran 2,476 tests successfully with ten skips; its sole
 sandbox-denied localhost test passed separately, and final boundary-type edits
 passed the focused run. Changed modules pass Ruff and scoped mypy.
 
-No model calls were made. The historical checkpoint-200 timeout and unsaved
+No model calls were made by those diagnostics. The historical checkpoint-200 timeout and unsaved
 16-decision tail remain failed and retained; this fix does not recover them or
-authorize a silent rewind. Latest verified historical checkpoint remains 184.
+authorize a silent rewind. The historical durable parent was checkpoint 184.
 The corrected build-menu check subsequently passed on source `60c5a3eee` using
 the catalog's `D_BUILDING` key. Its two native processes, container and local VM
 were stopped. See `experiments/evidence/astra_native_build_menu_save_20260907.json`.
 No old failure is reclassified. The local VM's data-disk allowance was expanded
 from 10 to 16 GiB to preserve evidence; no other VM configuration changed.
 
-[Window e](native-save-loss-restart.md) declares a loss-aware restart, not
-recovery of the unsaved tail. It remains subject to fresh native and model-run
-evidence; configuration and local tests alone do not establish resumed play.
+[Window e](native-save-loss-restart.md) subsequently completed an independently
+audited loss-aware restart with 16 new accepted Astra decisions and a verified
+new-branch checkpoint 200. It is not recovery of the old unsaved tail. The new
+save retains the snapshot receipt and unchanged screen, with zero save keys or
+ticks. All game/container/VM teardown is verified; see the linked result for
+retained time, complete usage and the declared next continuation.
 
 Primary implementation references: bundled DFHack 0.47.05-r8 `quicksave.lua`,
 [quicksave documentation](https://docs.dfhack.org/en/0.47.05-r8/docs/tools/quicksave.html),

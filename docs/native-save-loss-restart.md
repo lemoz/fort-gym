@@ -1,5 +1,30 @@
 # Explicit restart after lost native progress
 
+## Audited result, September 8, 2026 UTC
+
+Window e completed at source `93af69fe4866cf325dcae3a8b4099bc458b6fdfc`.
+Astra returned 16 new accepted decisions and advanced 2,000 retained ticks.
+New branch checkpoint 200 is independently verified at digest
+`aabb513a50309812f900d9e346807710acb0935f271a200e9df4cda59aef1cdb`.
+The retained timeline is 46,000 ticks. The original unsaved 2,000 ticks remain
+lost, and the original failed window remains immutable. All 216 model responses
+are accounted: 6,984,036 campaign tokens, including the old tail's 531,913 tokens,
+and 7,053,040 with historical failed deliveries. New usage was 518,169 tokens;
+exact subscription charges remain unreported. Native game, container and VM
+teardown are independently verified. No worker is live at this checkpoint.
+
+The recorded website source projects this new branch separately from the old
+failure and checkpoint 184. It does not claim uninterrupted play, recovered
+lost state, a comparison attempt, fortress sustainability or live activity.
+Public operational evidence:
+`experiments/evidence/astra_native_keyboard_restart_20260908.json`.
+
+Window f declares normal continuation from this new checkpoint, preserving its
+memory, full usage and inherited discontinuity. It does not repeat the restart
+or extend the cumulative budget. It is configuration, not proof of another run.
+
+## Restart protocol
+
 Window e uses the verified menu-preserving save profile and performs one
 16-decision segment from durable checkpoint 184. This is not an uninterrupted
 campaign, a recovery of the unsaved tail, or an independent comparison attempt.

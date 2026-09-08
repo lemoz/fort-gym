@@ -33,7 +33,7 @@ def evidence_root(tmp_path):
     folder = tmp_path / "experiments/evidence"
     folder.mkdir(parents=True)
     for filename in (*records.PUBLISHED, *records.INTERRUPTIONS, *records.RECOVERIES,
-                     *records.CHECKPOINT_FAILURES):
+                     *records.CHECKPOINT_FAILURES, *records.RESTARTS):
         shutil.copyfile(records.PROJECT_ROOT / "experiments/evidence" / filename, folder / filename)
     return tmp_path
 
@@ -216,9 +216,16 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   assert.match(elements['keyboard-results'].textContent, /184 model responses/);
   assert.match(elements['keyboard-results'].textContent, /Recovery verified · checkpoint 184/);
   assert.match(elements['keyboard-results'].textContent, /Subsequently recovered as checkpoint 184/);
-  assert.ok(elements['keyboard-results'].textContent.startsWith('Save failed after decision 200'));
+  assert.ok(elements['keyboard-results'].textContent.startsWith('New branch saved · checkpoint 200'));
+  assert.match(elements['keyboard-results'].textContent, /216 total accounted model responses/);
+  assert.match(elements['keyboard-results'].textContent, /46,000 retained elapsed ticks/);
+  assert.match(elements['keyboard-results'].textContent, /original unsaved 2,000 ticks remain lost/);
+  assert.match(elements['keyboard-results'].textContent, /7,053,040 including historical/);
+  assert.match(elements['keyboard-results'].textContent, /518,169 tokens/);
+  assert.match(elements['keyboard-results'].textContent, /not uninterrupted play or an independent comparison/);
+  assert.match(elements['keyboard-results'].textContent, /Save failed after decision 200/);
   assert.match(elements['keyboard-results'].textContent, /16 accepted model responses and 2,000 new ticks were not preserved/);
-  assert.match(elements['keyboard-results'].textContent, /Last verified game save: decision 184, 44,000 elapsed ticks/);
+  assert.match(elements['keyboard-results'].textContent, /Game save at this failure: decision 184, 44,000 elapsed ticks/);
   assert.match(elements['keyboard-results'].textContent, /newer game state is not resumable/);
   assert.match(elements['keyboard-results'].textContent, /6,534,871 including historical/);
   assert.match(elements['keyboard-results'].textContent, /unsaved tail used 531,913 tokens, all included/);

@@ -28,6 +28,20 @@ def test_post_rejection_window_preserves_condition_and_declares_larger_allowance
     assert window["budget_extension"] == {"max_dispatches": 1024, "max_total_tokens": 40000000}
     assert window["reset_memory"] is window["reset_usage"] is window["strategy_intervention"] is False
 
+def test_post_restart_window_preserves_usage_and_does_not_restart_again():
+    root = Path(__file__).resolve().parents[1]
+    condition, window = load_window(
+        root / "experiments/campaign_astra_keyboard_20260907.json",
+        root / "experiments/campaign_astra_keyboard_window_20260908f.json",
+    )
+    assert condition["model"] == "gpt-6-astra" and condition["reasoning_effort"] == "medium"
+    assert window["continuation_from_next_step"] == 200
+    assert window["steps_per_segment"] == 16 and window["max_segments"] == 4
+    assert window["snapshot_profile"] == "native_menu_preserving_save/v1"
+    assert "restart" not in window and "budget_extension" not in window
+    assert window["reset_memory"] is window["reset_usage"] is window["strategy_intervention"] is False
+
+
 PROJECT = Path(__file__).resolve().parents[1]
 CONDITION = json.loads((PROJECT / "experiments/campaign_astra_keyboard_20260907.json").read_text())
 

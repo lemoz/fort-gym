@@ -1,0 +1,15 @@
+{
+  "schema_version": "fortgym.codex-keyboard-window/v1",
+  "condition_id": "astra-medium-native-keyboard-v2-post-restart-continuation",
+  "original_condition": "campaign_astra_keyboard_20260907.json",
+  "continuation_from_next_step": 200,
+  "steps_per_segment": 16,
+  "max_segments": 4,
+  "reset_memory": false,
+  "reset_usage": false,
+  "strategy_intervention": false,
+  "snapshot_profile": "native_menu_preserving_save/v1",
+  "hypothesis": "The verified menu-preserving checkpoint path can support further autonomous native play and normal continuation after an explicit save-loss restart.",
+  "continuity_note": "Continue only from the audited new-branch checkpoint aabb513a50309812f900d9e346807710acb0935f271a200e9df4cda59aef1cdb. Preserve its memory, inherited discontinuity, 216 accounted responses and 6,984,036 campaign tokens. Do not repeat the restart declaration or restore checkpoint 184. This remains the same fortress with recorded lost progress, not an independent comparison attempt. Native game processes still reload at each segment and reset UI menus; no menu or strategic rescue is supplied.",
+  "budget_note": "Inherit the existing cumulative 1,024-dispatch / 40-million-token ceiling without extension or usage reset. Fresh subscription admission precedes every invocation. No API fallback, local model, purchase or reset. Charges remain unreported, not zero."
+}
