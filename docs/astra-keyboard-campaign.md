@@ -1,6 +1,38 @@
 # Astra keyboard campaign integration
 
-## Latest result: checkpoint 439, past one quarter of the first year
+## Latest result: checkpoint 503, 115,000 retained ticks
+
+Window l completed all 64 accepted Astra Medium decisions on frozen source
+`8caa3e11acc5d19ddea8b28bd917f9659e733d21`. Seven decisions requested and advanced
+14,000 ticks; 57 requested none. The campaign retains 115,000 elapsed ticks,
+about 28.5 percent of a full elapsed year. Checkpoint 503 is
+`7bc4350c68c1ecb81bb88a7df58ea3e34db95c9bfe7f926d633858bb6de6eae7`.
+Independent save/lineage, gameplay and clock reviews passed. They additionally
+verify the parent 439 save loaded in a fresh native process and the actual initial
+screen was 120x40. Final checkpoint 503 awaits its next fresh native load.
+Game/container/VM teardown passed, with no OOM kill or resource increase.
+
+Seven dwarves remain alive with zero recorded deaths. Completed farms, installed
+beds and completed workshops stayed at five, four and three. Existing drink units
+rose from 162 to 172; food, production, consumption and sustainability remain
+unverified. No invalid input, menu deferral or clock-unavailable timeout occurred;
+this does not add coverage of the two clock-feedback branches. The model received
+no evaluator observation, correction key or strategy hint.
+
+All 519 responses and 16,682,250 campaign tokens are retained; all-attempt tokens
+are 16,751,254. New tokens: 1,867,563. Charges remain unreported. Memory, the
+inherited 2,000-tick loss and all earlier failures stay intact, without restart,
+replay, usage reset or budget extension. Authored public record:
+`experiments/evidence/astra_native_keyboard_quarter_year_continuation_20260908.json`.
+The existing campaign page renders the new recorded result and preserves earlier
+milestones. Native game and model content remain private.
+
+Window m declares the next unchanged 64-decision continuation from checkpoint 503
+within the inherited 1,024-dispatch / 40-million-token allowance. It is prepared,
+not yet run. No merge, production deployment, visual acceptance, independent model
+comparison or year-two success is claimed. The full goal remains active.
+
+## Previous result: checkpoint 439, past one quarter of the first year
 
 Window k completed on frozen source `7416f65b2ee464b09963d65733b692bf1a9c03b6`,
 returning all 64 decisions: 63 accepted inputs and one invalid input rejected

@@ -218,7 +218,15 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   assert.match(elements['keyboard-results'].textContent, /184 model responses/);
   assert.match(elements['keyboard-results'].textContent, /Recovery verified · checkpoint 184/);
   assert.match(elements['keyboard-results'].textContent, /Subsequently recovered as checkpoint 184/);
-  assert.ok(elements['keyboard-results'].textContent.startsWith('Play continued · checkpoint 439'));
+  assert.ok(elements['keyboard-results'].textContent.startsWith('Play continued · checkpoint 503'));
+  assert.match(elements['keyboard-results'].textContent, /64 new model decisions, 14,000 new ticks/);
+  assert.match(elements['keyboard-results'].textContent, /115,000 retained ticks/);
+  assert.match(elements['keyboard-results'].textContent, /519 accounted model responses/);
+  assert.match(elements['keyboard-results'].textContent, /64 inputs accepted; 0 rejected before native dispatch/);
+  assert.match(elements['keyboard-results'].textContent, /14,000 ticks requested, 14,000 actually advanced/);
+  assert.match(elements['keyboard-results'].textContent, /Menu-blocked requests: 0; verified clock timeouts: 0/);
+  assert.match(elements['keyboard-results'].textContent, /Existing drink units 162 172/);
+  assert.match(elements['keyboard-results'].textContent, /Play continued · checkpoint 439/);
   assert.match(elements['keyboard-results'].textContent, /64 new model decisions, 24,000 new ticks/);
   assert.match(elements['keyboard-results'].textContent, /101,000 retained ticks/);
   assert.match(elements['keyboard-results'].textContent, /455 accounted model responses/);

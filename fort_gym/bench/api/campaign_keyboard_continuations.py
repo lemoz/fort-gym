@@ -10,6 +10,7 @@ CONTINUATIONS = (
     "astra_native_keyboard_settled_play_20260908.json",
     "astra_native_keyboard_workshop_play_20260908.json",
     "astra_native_keyboard_workshop_continuation_20260908.json",
+    "astra_native_keyboard_quarter_year_continuation_20260908.json",
 )
 IDENTITIES = {
     "schema_version": "fortgym.native-keyboard-continuation-summary/v1",
