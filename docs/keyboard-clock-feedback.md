@@ -56,3 +56,19 @@ forward recovery and subsequent continuation without replay, model rescue or
 discarded usage. The retained native failure also passes the new read-only
 source inspection. These checks are not yet proof of native recovery or further
 autonomous play; both require their own runtime evidence.
+
+## Recovery memory regression
+
+The first native recovery loaded the forensic save at the exact retained
+calendar and verified persisted observations. The worker was then killed for
+memory exhaustion (`OOMKilled: true`) before producing a checkpoint. Its trace,
+usage and partial recovery output remain retained; all resources were stopped.
+It made zero model calls and requested no game input or time.
+
+Recovery kept the complete parsed trace alive while checkpoint creation parsed
+it again, and the snapshotter independently revalidated the original source.
+The repair releases the two no-longer-needed parsed row lists before those
+nested operations. Immutable trace bytes, full validation, the final clock
+receipt and the bounded history remain unchanged. Regression tests verify
+object release at both boundaries. The native retry uses the same VM and
+container memory limits; it does not compensate by increasing resources.

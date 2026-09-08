@@ -231,6 +231,9 @@ def create_checkpoint(
     ):
         raise CampaignCheckpointError("Same-run checkpoint must extend its parent trace")
 
+    # Keep the immutable bytes and final calendar receipt, not a second expanded
+    # copy of every observation while the snapshotter validates its own source.
+    del rows
     destination.mkdir(parents=False, mode=0o700, exist_ok=False)
     native = snapshotter.capture(destination / "game")
     if (native["year"], native["year_tick"]) != (

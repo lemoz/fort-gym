@@ -119,6 +119,9 @@ def reconcile_loaded_tail(
         )
         for item in rows[-12:]
     ]
+    # History retains only its bounded projection. Do not keep the full parsed
+    # trace alive across checkpoint creation and repeated source validation.
+    del rows
     loop.last_result, loop.next_step, loop.parent = row["execute"], plan["next_step"], parent
     loop.discontinuities = inherited
     loop.committed_elapsed_ticks = read_campaign_progress(loop.trace)["elapsed_ticks"]
