@@ -13,7 +13,42 @@ and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. Several bounded Astra native-keyboard
 windows have completed; the same fortress remains in autonomous continuation.
 
-### Latest result: native restart saved checkpoint 647; no new game time
+### Active window q: ordinary continuation from checkpoint 647
+
+One 64-decision Astra Medium native-keyboard window is now running from the
+verified checkpoint 647. Frozen source `167d22945feb9c3fa031408946fcc7503ad5dc39`
+is clean, pushed and GitHub-verified in draft PR #137; its 70 focused checks and
+exact-head CI `34281244617` passed. Save/v4, screen text/v1 at 120x40, private
+food/v1, memory, usage and both prior loss records are unchanged. There is no
+new restart, budget extension, model switch, strategy intervention or paid fallback.
+
+An aggregate live read observed 23 completed accepted decisions, 9,200 newly
+advanced ticks and 12 living dwarves. This is **provisional, unsaved progress**,
+not a completed checkpoint or published outcome. Owner session 35120 remains
+responsible for the single running local game/container/VM and mandatory teardown.
+Do not relaunch it on an observation timeout or edit its executing worktree.
+
+Before launch, a provider-free capacity check found only 1,064,780 KiB free on
+the existing 16-GiB data disk. It was expanded to 24 GiB, leaving CPU 2, RAM 3 GiB,
+root disk 8 GiB and isolation unchanged. All existing volume names and image IDs
+were preserved; nothing was deleted. After expansion, 8,986,308 KiB were free and
+the VM was verified stopped before q started. The 1-GiB native-save floor remains
+in force. Evidence is retained under `data-capacity-20260908-v2`; the active run
+and prepared completion audits are under `astra-native-postrestart-continuation-v1`.
+
+The website preview still shows the last verified checkpoint 647, not this live
+window. Normal post-restart publication support passed 3,343 full-suite tests
+(10 skipped), 35 dedicated checks including rendering, and scoped Ruff/mypy.
+It is committed separately as `5ce896c41ea62d5b954ba7817a188c8c04af1e4d` on
+`codex/campaign-postrestart-records-v1`; integration into the executing worktree
+waits for q teardown. No synthetic result is published and the Fort Labs layout
+is unchanged. The first full-suite attempt encountered a sandbox-denied temporary
+test socket; the complete permitted-loopback retry passed.
+Next: retain the owner's terminal result, independently verify the save, actual
+gameplay and complete usage/loss history, confirm teardown, then publish the real
+result to the website and GitHub. The full goal remains active.
+
+### Previous result: native restart saved checkpoint 647; no new game time
 
 Window p completed 16 accepted Astra Medium native-keyboard decisions with v4
 saving at frozen source `3a708cdfe0c884273942361352297bb6b3555b0c`. The explicit
