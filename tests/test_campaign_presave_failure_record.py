@@ -37,4 +37,8 @@ def test_presave_failure_keeps_last_checkpoint_and_all_spent_usage():
     assert observed["food_unknown_measurements"] == 2
     assert observed["food_final_observation_is_saved"] is False
     # Failure data has not been added to the completed-continuation allowlist.
-    assert keyboard_campaign_records(ROOT)["continuations"][-1]["checkpoint_cursor"] == 631
+    continuations = keyboard_campaign_records(ROOT)["continuations"]
+    assert all(row["continuation_id"] != "astra_native_keyboard_presave_failure_20260908"
+               for row in continuations)
+    public_parent = next(row for row in continuations if row["continuation_id"] == value["parent_record"])
+    assert public_parent["checkpoint_cursor"] == 631

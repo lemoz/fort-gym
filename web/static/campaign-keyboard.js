@@ -139,7 +139,11 @@
       node('h3', `Play continued · checkpoint ${count(row.checkpoint_cursor)}`, section);
       if (row.operator_observation_warning) {
         const warning = row.operator_observation_warning;
-        node('p', `Runner warning: the game completed and saved, but the outer runner failed while checking its exchange directory (exit ${count(warning.command_exit_code)}). The cause is unverified; the original error is retained. This was not a fully clean run.`, section);
+        if (warning.kind === 'terminal_container_observation_error') {
+          node('p', `Runner observation warning: a final container check returned exit ${count(warning.command_exit_code)}. The container was then observed stopped with exit 0. The native save and teardown were independently verified. The check's underlying cause is unverified; the original error is retained.`, section);
+        } else {
+          node('p', `Runner warning: the game completed and saved, but the outer runner failed while checking its exchange directory (exit ${count(warning.command_exit_code)}). The cause is unverified; the original error is retained. This was not a fully clean run.`, section);
+        }
       }
       node('p', `${count(p.new_model_calls)} new model decisions, ${count(p.new_elapsed_ticks)} new ticks. ${count(p.retained_elapsed_ticks)} retained ticks toward the 403,200-tick full-year target.`, section);
       node('p', `Verified saves at ${row.checkpoints.map(item => count(item.cursor)).join(', ')}. When this gameplay window ended, its final save still needed a separate fresh-process reload.`, section);

@@ -84,7 +84,8 @@ def test_later_continuation_binds_previous_continuation_and_is_not_independent(e
     filename = "synthetic-continuation-test.json"
     (folder / filename).write_text(json.dumps(source))
     monkeypatch.setattr(records, "CONTINUATIONS", (*records.CONTINUATIONS, filename))
-    row = records.keyboard_campaign_records(evidence_root)["continuations"][-1]
+    row = next(item for item in records.keyboard_campaign_records(evidence_root)["continuations"]
+               if item["continuation_id"] == filename.removesuffix(".json"))
     assert row["checkpoint_cursor"] == 360
     assert row["parent_record"] == parent["continuation_id"]
     assert row["progress"]["cumulative_model_responses"] == 376

@@ -15,7 +15,8 @@ SAMPLE = "synthetic_postrestart_continuation.json"
 
 
 @pytest.fixture
-def postrestart(evidence_root):
+def postrestart(evidence_root, monkeypatch):
+    monkeypatch.setattr(records, "POSTRESTART_CONTINUATIONS", ())
     data = records.keyboard_campaign_records(evidence_root)
     parent = data["restarts"][-1]
     folder = evidence_root / "experiments/evidence"
@@ -215,3 +216,86 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
          json.dumps(data)], capture_output=True, text=True, check=False,
     )
     assert result.returncode == 0, result.stderr
+
+
+def test_actual_postrestart_result_preserves_progress_warning_and_usage():
+    data = records.keyboard_campaign_records()
+    row = data["continuations"][-1]
+    assert row["continuation_id"] == "astra_native_keyboard_postrestart_continuation_20260908"
+    assert row["checkpoint_cursor"] == 711
+    assert row["checkpoint_sha256"] == "34d325596121a9a6e3631b1ed0297a4c4558e0ae2fff39853f91c138e8335c57"
+    assert row["progress"]["cumulative_model_responses"] == 791
+    assert row["progress"]["new_model_calls"] == row["progress"]["new_accepted_decisions"] == 64
+    assert row["progress"]["new_elapsed_ticks"] == 49200
+    assert row["progress"]["retained_elapsed_ticks"] == 192600
+    assert row["progress"]["discarded_native_ticks"] == 23200
+    assert row["progress"]["native_save_loss_restarts"] == 2
+    assert row["usage"]["new_tokens"] == 2039653
+    assert row["usage"]["campaign_tokens"] == 25370450
+    assert row["usage"]["all_attempt_tokens"] == 25439454
+    assert row["usage"]["reported_charge_usd"] is None
+    assert row["operator_status"] == "completed_with_warning"
+    assert row["operator_observation_warning"] == {
+        "operator_status": "completed_with_warning", "native_window_status": "completed",
+        "kind": "terminal_container_observation_error", "command_exit_code": 128,
+        "underlying_cause": "unverified", "original_error_retained": True,
+    }
+    assert row["outcome_counts"]["counts"]["completed_beds"] == {"start": 5, "end": 6}
+    assert row["outcome_counts"]["counts"]["drink_units"] == {"start": 179, "end": 337}
+    assert row["outcome_counts"]["advancing_decisions"] == 25
+    assert row["outcome_counts"]["zero_tick_decisions"] == 39
+    food = row["food_inventory"]
+    assert food["initial_checkpoint_cursor"] == 647
+    assert food["initial_units"] == 82 and food["final_units"] == 56
+    assert food["observed_boundaries"] == 65 and food["complete_measurements"] == 64
+    assert food["unknown_measurements"] == 1
+    assert food["sustainability"] == "not_established"
+    assert row["execution_counts"] == {
+        "requested_elapsed_ticks": 49200, "model_input_rejections": 0,
+        "rejected_native_key_events": 0, "menu_deferrals": 0, "clock_unavailable_timeouts": 0,
+    }
+    assert row["teardown_verified"] is True
+    assert row["final_checkpoint_fresh_reload_verified"] is False
+    assert data["continuation_events"][-1] == {"kind": "continuation", "id": row["continuation_id"]}
+    assert data["continuation_events"][-2]["kind"] == "restart"
+
+
+@pytest.mark.parametrize("section,field,value", [
+    (None, "operator_status", "failed"), (None, "operator_status", "completed"),
+    (None, "operator_status", None), (None, "terminal_observation_warning_sha256", "bad"),
+    (None, "terminal_observation_warning_sha256", None),
+    (None, "operator_observation_warning", None),
+    ("operator_observation_warning", "operator_status", "failed"),
+    ("operator_observation_warning", "native_window_status", "failed"),
+    ("operator_observation_warning", "kind", "exchange_observation_error"),
+    ("operator_observation_warning", "command_exit_code", 137),
+    ("operator_observation_warning", "command_exit_code", "128"),
+    ("operator_observation_warning", "underlying_cause", "exit_race"),
+    ("operator_observation_warning", "original_error_retained", False),
+    ("operator_observation_warning", "original_error_retained", 1),
+])
+def test_terminal_warning_cannot_invent_cause_or_hide_original_error(
+    evidence_root, section, field, value,
+):
+    path = evidence_root / "experiments/evidence" / records.POSTRESTART_CONTINUATIONS[0]
+    source = json.loads(path.read_bytes())
+    (source if section is None else source[section])[field] = value
+    path.write_text(json.dumps(source))
+    with pytest.raises(ValueError):
+        records.keyboard_campaign_records(evidence_root)
+
+
+def test_next_window_preserves_model_condition_memory_and_budget():
+    from fort_gym.bench.run.keyboard_config import load_window
+
+    root = records.PROJECT_ROOT
+    condition = root / "experiments/campaign_astra_keyboard_20260907.json"
+    before, previous = load_window(condition, root / "experiments/campaign_astra_keyboard_window_20260908q.json")
+    after, following = load_window(condition, root / "experiments/campaign_astra_keyboard_window_20260908r.json")
+    assert before == after
+    assert previous["continuation_from_next_step"] == 647
+    assert following["continuation_from_next_step"] == 711
+    for key in ("steps_per_segment", "max_segments", "snapshot_profile", "private_measurement_profile"):
+        assert previous[key] == following[key]
+    assert all(following[key] is False for key in ("reset_memory", "reset_usage", "strategy_intervention"))
+    assert "budget_extension" not in following and "restart" not in following

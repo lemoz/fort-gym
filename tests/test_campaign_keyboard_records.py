@@ -221,7 +221,13 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   assert.match(elements['keyboard-results'].textContent, /184 model responses/);
   assert.match(elements['keyboard-results'].textContent, /Recovery verified · checkpoint 184/);
   assert.match(elements['keyboard-results'].textContent, /Subsequently recovered as checkpoint 184/);
-  assert.ok(elements['keyboard-results'].textContent.startsWith('New branch saved · checkpoint 647'));
+  assert.ok(elements['keyboard-results'].textContent.startsWith('Play continued · checkpoint 711'));
+  assert.match(elements['keyboard-results'].textContent, /49,200 new ticks/);
+  assert.match(elements['keyboard-results'].textContent, /192,600 retained ticks/);
+  assert.match(elements['keyboard-results'].textContent, /791 accounted model responses/);
+  assert.match(elements['keyboard-results'].textContent, /Runner observation warning: a final container check returned exit 128/);
+  assert.match(elements['keyboard-results'].textContent, /container was then observed stopped with exit 0/);
+  assert.match(elements['keyboard-results'].textContent, /New branch saved · checkpoint 647/);
   assert.ok(elements['keyboard-results'].textContent.includes('This window added no game time.'));
   assert.ok(elements['keyboard-results'].textContent.includes('Save failure before restart · checkpoint 631'));
   assert.match(elements['keyboard-results'].textContent, /Saved game time 143,400 ticks/);
@@ -250,7 +256,7 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   assert.match(elements['keyboard-results'].textContent, /583 accounted model responses/);
   assert.match(elements['keyboard-results'].textContent, /Living dwarves 7 12/);
   assert.match(elements['keyboard-results'].textContent, /Existing drink units 172 181/);
-  const latest = data.continuations.at(-1);
+  const latest = data.continuations.find(row => row.checkpoint_cursor === 631);
   if (latest.food_inventory) {
     const food = latest.food_inventory;
     const initialLabel = food.initial_units === null ? 'Unknown' : String(food.initial_units);
@@ -347,7 +353,8 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
             row.pop("food_inventory", None)
     elif food_units != "recorded":
         # Synthetic rendering fixture only, never written to published evidence.
-        data["continuations"][-1]["food_inventory"] = {
+        historical = next(row for row in data["continuations"] if row["checkpoint_cursor"] == 631)
+        historical["food_inventory"] = {
             "initial_checkpoint_cursor": 567, "initial_units": food_units, "final_units": food_units,
             "observed_boundaries": 65, "complete_measurements": 0 if food_units is None else 65,
             "unknown_measurements": 65 if food_units is None else 0,

@@ -27,7 +27,8 @@ def test_presave_restart_is_saved_but_adds_no_elapsed_time(evidence_root):  # no
     assert row["usage"]["reported_charge_usd"] is None
     assert row["final_checkpoint_fresh_reload_verified"] is False
     assert data["presave_failures"][-1]["status"] == "failed"
-    assert data["continuation_events"][-1] == {"kind": "restart", "id": row["restart_id"]}
+    offset = data["continuation_events"].index({"kind": "restart", "id": row["restart_id"]})
+    assert data["continuation_events"][offset - 1] == {"kind": "presave_failure", "id": row["original_failure"]}
     assert "private-sentinel" not in json.dumps(data)
 
 

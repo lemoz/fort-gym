@@ -17,7 +17,7 @@ CONTINUATIONS = (
     "astra_native_keyboard_food_continuation_20260908.json",
 )
 # Populated only with independently audited native results, never test fixtures.
-POSTRESTART_CONTINUATIONS: tuple[str, ...] = ()
+POSTRESTART_CONTINUATIONS = ("astra_native_keyboard_postrestart_continuation_20260908.json",)
 IDENTITIES = {
     "status": "completed",
     "model": "gpt-6-astra",
@@ -150,7 +150,7 @@ def keyboard_continuation(root: Path, filename: str, parents: list[dict], failur
         **({"outcome_counts": outcomes} if outcomes is not None else {}),
         **({"food_inventory": food} if food is not None else {}),
         **({"execution_counts": execution} if execution is not None else {}),
-        **({"operator_status": "failed", "operator_observation_warning": warning}
+        **({"operator_status": warning["operator_status"], "operator_observation_warning": warning}
            if warning is not None else {}),
     }
 
@@ -158,21 +158,33 @@ def keyboard_continuation(root: Path, filename: str, parents: list[dict], failur
 def _operator_warning(source: dict) -> dict | None:
     """Preserve native completion separately from a failed outer observation."""
     version = source.get("schema_version")
-    if version in {"fortgym.native-keyboard-continuation-summary/v1",
-                   "fortgym.native-keyboard-continuation-summary/v3"}:
+    if version == "fortgym.native-keyboard-continuation-summary/v1":
         if "operator_status" in source or "operator_observation_warning" in source:
             raise ValueError("Operator warning requires the explicit v2 publication")
         return None
-    if version != "fortgym.native-keyboard-continuation-summary/v2":
-        raise ValueError("Unsupported keyboard continuation schema")
-    value = source.get("operator_observation_warning")
     expected = {
         "operator_status": "failed", "native_window_status": "completed",
         "kind": "exchange_observation_error", "command_exit_code": 137,
         "underlying_cause": "unverified", "original_error_retained": True,
     }
+    if version == "fortgym.native-keyboard-continuation-summary/v3":
+        if not any(key in source for key in (
+            "operator_status", "operator_observation_warning", "terminal_observation_warning_sha256",
+        )):
+            return None
+        expected = {
+            "operator_status": "completed_with_warning", "native_window_status": "completed",
+            "kind": "terminal_container_observation_error", "command_exit_code": 128,
+            "underlying_cause": "unverified", "original_error_retained": True,
+        }
+        digest = source.get("terminal_observation_warning_sha256")
+        if not isinstance(digest, str) or re.fullmatch("[a-f0-9]{64}", digest) is None:
+            raise ValueError("Terminal observation warning requires retained evidence")
+    elif version != "fortgym.native-keyboard-continuation-summary/v2":
+        raise ValueError("Unsupported keyboard continuation schema")
+    value = source.get("operator_observation_warning")
     if (
-        source.get("operator_status") != "failed" or not isinstance(value, dict)
+        source.get("operator_status") != expected["operator_status"] or not isinstance(value, dict)
         or any(type(value.get(key)) is not type(target) or value[key] != target
                for key, target in expected.items())
     ):

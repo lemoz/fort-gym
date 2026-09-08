@@ -15,7 +15,8 @@ def publication(root, name):
 def test_failed_attempt_does_not_advance_checkpoint_and_diagnostic_does_not_clear_failure():
     data = records.keyboard_campaign_records()
     failure, fix = data["presave_failures"][-1], data["save_acceptances"][-1]
-    assert data["continuations"][-1]["checkpoint_cursor"] == failure["checkpoint_cursor"] == 631
+    parent = next(row for row in data["continuations"] if row["continuation_id"] == failure["parent_record"])
+    assert parent["checkpoint_cursor"] == failure["checkpoint_cursor"] == 631
     assert failure["progress"]["observed_trace_next_step"] == 695
     assert failure["progress"]["checkpointed_elapsed_ticks"] == 143400
     assert failure["progress"]["unsaved_new_native_ticks"] == 21200
@@ -27,8 +28,8 @@ def test_failed_attempt_does_not_advance_checkpoint_and_diagnostic_does_not_clea
     assert fix["save_verified"] is fix["fresh_reload_verified"] is True
     assert fix["gameplay_ticks"] == fix["model_calls"] == 0
     assert fix["new_campaign_checkpoint_created"] is False
-    assert data["continuation_events"][-2] == {"kind": "presave_failure", "id": failure["failure_id"]}
-    assert data["continuation_events"][-1]["kind"] == "restart"
+    offset = data["continuation_events"].index({"kind": "presave_failure", "id": failure["failure_id"]})
+    assert data["continuation_events"][offset + 1]["kind"] == "restart"
 
 
 @pytest.mark.parametrize("path,value", [
