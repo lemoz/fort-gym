@@ -8,7 +8,19 @@ fortress through year two and beyond. Website evidence and remote source deliver
 remain requirements. The app goal is verified active; early native Astra gameplay
 and checkpoint-continuation evidence are now verified.
 
-Latest result, September 8 UTC: the explicit loss-aware Astra restart completed
+Latest result, September 8 UTC: normal continuation returned 16 accepted decisions
+and 1,200 new ticks, then failed screen equality during saving at source `1198ece39`.
+Independent audit verifies 232 fully accounted responses, 7,706,555 campaign tokens
+(7,775,559 including historical failed deliveries), unchanged prior evidence and
+complete teardown. A changed native save copy matches the stopped runtime; latest
+state needs reload verification and forward-only reconciliation, not rollback.
+Checkpoint 200 / 46,000 ticks remains verified; trace 216 / 47,200 ticks is newer
+but not yet a resumable checkpoint. The website records that distinction. New
+diagnostic capture retains the private screen pair on future save failures without
+relaxing checks. Underlying cause remains unproven; no worker is live or new model
+run required for the next diagnostic. The full goal remains active.
+
+Previous result, September 8 UTC: the explicit loss-aware Astra restart completed
 16 new accepted decisions and saved verified new-branch checkpoint 200 at source
 `93af69fe4`. Independent audit verifies 46,000 retained ticks, 216 fully accounted
 responses and complete native/container/VM teardown. New usage is 518,169 tokens;

@@ -13,7 +13,32 @@ and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. The first bounded Astra native
 keyboard campaign has now completed.
 
-### Latest result: saved new branch after explicit loss-aware restart
+### Latest result: screen validation failure after 16 more decisions
+
+Normal continuation window f executed at `1198ece397eec679c04dcf4e948b2b419bbde956`
+with passing exact-source CI. It returned 16 accepted decisions and advanced
+1,200 ticks before `Native screen changed during menu-preserving save` stopped
+checkpoint validation. Independent audit verifies all 232 model responses,
+7,706,555 campaign tokens (7,775,559 including historical failed deliveries),
+unchanged original prefixes and complete game/container/VM teardown. New usage
+is 722,519 tokens; charges are unreported. No worker is live.
+
+The save was copied before screen equality failed. Its files match the stopped
+runtime and differ from the previous world save. The latest actions are neither
+confirmed lost nor confirmed recovered: checkpoint 216 is unverified. Last verified
+checkpoint remains 200 / 46,000 ticks; the retained trace reaches 47,200 ticks.
+Next is a provider-free reload diagnostic and forward-only reconciliation using
+the newer save, not another rewind or action replay. Inherited lost-tail history,
+model memory and all usage remain intact.
+
+The website source now leads with this validation failure above the previous
+successful restart. The save helper now retains exact private before/after
+captures and completed operation/copy receipts on failure without weakening its
+check or retrying a native save. The executed failure lacked that pair, so the
+screen-change cause remains unproven. No merge or production deployment.
+Private evidence: `fort_gym/artifacts/native-local-20260906/runtime-v2/astra-native-post-loss-restart-v1`.
+
+### Previous result: saved new branch after explicit loss-aware restart
 
 Window e completed at source `93af69fe4866cf325dcae3a8b4099bc458b6fdfc`, whose
 exact-source CI passed. Independent audit confirms 16 new accepted Astra Medium
