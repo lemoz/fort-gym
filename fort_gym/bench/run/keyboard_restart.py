@@ -18,6 +18,46 @@ from .campaign_checkpoint import verify_checkpoint
 from .campaign_save import save_inventory
 
 SCHEMA = "fortgym.native-save-loss-restart/v1"
+PRESAVE_STAGE = "identity_before_save"
+
+
+def _failure_evidence(segment: Path, result: dict) -> dict:
+    """Recognize the historical timeout or the retained pre-save Lua assertion."""
+    if result.get("checkpoint_error") == "Native save completion was not observed before timeout":
+        return {}
+    if (
+        result.get("checkpoint_error") != "Native menu identity probe returned malformed JSON"
+        or result.get("private_save_attempt_retained") is not True
+    ):
+        raise ValueError("Restart requires a recognized native save failure")
+    path = segment / "save-attempt.json"
+    attempt = read(path)
+    raw = attempt.get("identity_before_raw")
+    if (
+        set(attempt) != {
+            "schema_version", "identity_before_raw", "screen_before", "screen_after",
+            "world_before", "world_after",
+        }
+        or attempt.get("schema_version") != "fortgym.native-menu-save-attempt/v1"
+        or not isinstance(raw, str)
+        or re.match(
+            r"^\(lua command\):[0-9]+: Identity probe requires a native screen\nstack traceback:\n",
+            raw,
+        ) is None
+        or any(
+            not isinstance(attempt.get(key), dict) or not attempt[key]
+            for key in ("screen_before", "screen_after", "world_before", "world_after")
+        )
+        or attempt["screen_before"] != attempt["screen_after"]
+        or attempt["world_before"] != attempt["world_after"]
+        or attempt["world_after"] != read(segment / "native-after.json")
+        or attempt["screen_after"] != read(segment / "final-screen.json")
+    ):
+        raise ValueError("Restart lacks unchanged, pre-save identity-probe evidence")
+    return {
+        "save_failure_stage": PRESAVE_STAGE,
+        "source_save_attempt_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+    }
 
 
 def validate_discontinuities(records: object) -> list[dict]:
@@ -38,6 +78,13 @@ def validate_discontinuities(records: object) -> list[dict]:
         if row["source_result_sha256"] in identities:
             raise ValueError("Duplicate native save-loss restart")
         identities.add(row["source_result_sha256"])
+        if "save_failure_stage" in row or "source_save_attempt_sha256" in row:
+            if (
+                row.get("save_failure_stage") != PRESAVE_STAGE
+                or not isinstance(row.get("source_save_attempt_sha256"), str)
+                or re.fullmatch("[a-f0-9]{64}", row["source_save_attempt_sha256"]) is None
+            ):
+                raise ValueError("Pre-save restart lacks digest-bound failure-stage evidence")
         if (
             type(row.get("restored_next_step")) is not int
             or row["restored_next_step"] < 1
@@ -103,8 +150,6 @@ def prepare_restart(checkpoint: Path, source_root: Path, declaration: dict, late
         result.get("schema_version") != "fortgym.keyboard-segment/v1"
         or result.get("status") != "checkpoint_failed"
         or result.get("checkpoint_error_type") != "CampaignSaveError"
-        or result.get("checkpoint_error")
-        != "Native save completion was not observed before timeout"
         or result.get("checkpoint_verified") is not False
         or result.get("recovery_requires_reconciliation") is not False
         or result.get("stop_reason") != "segment_limit"
@@ -129,6 +174,7 @@ def prepare_restart(checkpoint: Path, source_root: Path, declaration: dict, late
         )
     ):
         raise ValueError("Restart source is not a settled, fully retained native save failure")
+    failure_evidence = _failure_evidence(segment, result)
     tail = [json.loads(line) for line in trace[len(old_trace) :].splitlines()]
     if (
         not tail
@@ -172,6 +218,7 @@ def prepare_restart(checkpoint: Path, source_root: Path, declaration: dict, late
         "memory_policy": "restore_checkpoint_memory",
         "uninterrupted_campaign": False,
         "actions_replayed": False,
+        **failure_evidence,
     }
     return validate_discontinuities([record])[0]
 

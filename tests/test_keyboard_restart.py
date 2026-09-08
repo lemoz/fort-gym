@@ -57,7 +57,14 @@ def prepare(failed):
     return prepare_restart(checkpoint, source, declaration, latest)
 
 
-def test_restart_retains_all_usage_memory_and_discontinuity_after_continuation(tmp_path, failed):
+@pytest.mark.parametrize("failure_kind", ["timeout", "presave"])
+def test_restart_retains_all_usage_memory_and_discontinuity_after_continuation(
+    tmp_path, failed, failure_kind
+):
+    if failure_kind == "presave":
+        from tests.test_keyboard_presave_restart import retain_presave_evidence
+
+        retain_presave_evidence(failed)
     checkpoint, source, declaration = failed
     record = prepare(failed)
     assert record["retained_usage"]["total_tokens"] == 300

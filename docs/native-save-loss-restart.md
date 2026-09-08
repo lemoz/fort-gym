@@ -45,6 +45,31 @@ This is diagnostic instrumentation, not a claim that the underlying issue is fix
 
 ## Restart protocol
 
+### Pre-save identity failure extension
+
+The verifier also recognizes the retained Lua assertion `Identity probe requires
+a native screen` before the save operation. The broad malformed-JSON label alone
+does not enable restart. The private save-attempt must contain exactly the
+before/after world and screen plus the original failed pre-probe output, with no
+save operation, post-save identity, copied-save receipt or capture error. Both
+world and screen must be unchanged and match the segment's final observations.
+The unchanged native-save, accepted-tail and full-usage checks still apply.
+
+These v1 discontinuities additionally bind `source_save_attempt_sha256` and
+`save_failure_stage: identity_before_save`; existing timeout receipts remain
+unchanged. The original evidence is never edited. This is declared loss, not
+forward recovery or an automatic save retry.
+
+Window p declares one 16-decision Astra Medium segment from checkpoint 631 with
+the native-verified v4 save profile. It retains all 711 prior responses and
+22,819,077 campaign tokens, restores checkpoint memory, and records 21,200 lost
+ticks alongside the inherited 2,000-tick loss. The 1,024-dispatch / 40-million-token
+cumulative limits are unchanged. The shorter save cadence is an explicit
+infrastructure condition, not a model-comparison result. This configuration and
+provider-free verification do not claim that a new native restart has run.
+
+### Historical window e
+
 Window e uses the verified menu-preserving save profile and performs one
 16-decision segment from durable checkpoint 184. This is not an uninterrupted
 campaign, a recovery of the unsaved tail, or an independent comparison attempt.
