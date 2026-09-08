@@ -10,6 +10,9 @@ from .campaign_keyboard_checkpoints import (
     CHECKPOINT_FAILURES, CHECKPOINT_RECOVERIES, checkpoint_failure, settled_checkpoint_recovery,
 )
 from .campaign_keyboard_continuations import CONTINUATIONS, keyboard_continuation
+from .campaign_keyboard_presave import (
+    PRESAVE_FAILURES, SAVE_ACCEPTANCES, presave_failure, save_acceptance,
+)
 from .campaign_keyboard_tails import (
     TAIL_INTERRUPTION, TAIL_RECOVERIES, continuation_interruption, continuation_recovery,
 )
@@ -269,6 +272,8 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
         continuations.append(keyboard_continuation(
             root, filename, [*checkpoint_recoveries, *tail_recoveries, *continuations], failures,
         ))
+    presave_failures = [presave_failure(root, filename, continuations) for filename in PRESAVE_FAILURES]
+    save_acceptances = [save_acceptance(root, filename, presave_failures) for filename in SAVE_ACCEPTANCES]
     # Explicit publication order retains the interruption between its parent
     # continuation and recovery; later play must not appear below older recovery.
     recent_events = [
@@ -277,6 +282,10 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
         *({"kind": "recovery", "id": row["recovery_id"]} for row in tail_recoveries),
         *({"kind": "continuation", "id": row["continuation_id"]} for row in continuations[1:]),
     ]
+    for failure in presave_failures:
+        parent_event = {"kind": "continuation", "id": failure["parent_record"]}
+        recent_events.insert(recent_events.index(parent_event) + 1,
+                             {"kind": "presave_failure", "id": failure["failure_id"]})
     return {
         "schema_version": "fortgym.public-keyboard-milestones/v1",
         "live_tracking": False,
@@ -288,6 +297,8 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
         "checkpoint_reviews": reviews,
         "checkpoint_recoveries": checkpoint_recoveries,
         "continuations": continuations,
+        "presave_failures": presave_failures,
+        "save_acceptances": save_acceptances,
         "tail_interruptions": tail_interruptions,
         "tail_recoveries": tail_recoveries,
         "continuation_events": recent_events,

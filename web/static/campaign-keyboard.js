@@ -51,9 +51,68 @@
       throw new Error('Unsupported continuation evidence');
     }
     const continuations = data.continuations || [];
-    for (const name of ['tail_interruptions', 'tail_recoveries']) {
+    for (const name of ['tail_interruptions', 'tail_recoveries', 'presave_failures', 'save_acceptances']) {
       if (data[name] !== undefined && !Array.isArray(data[name])) {
         throw new Error('Unsupported continuation recovery evidence');
+      }
+    }
+    function renderPresaveFailure(row) {
+      const section = node('section', undefined, results);
+      section.className = 'campaign-condition campaign-save-failure';
+      const p = row.progress;
+      const restarted = restarts.some(item => item.original_failure === row.failure_id);
+      node('h3', `${restarted ? 'Save failure before restart' : 'Paused after save failure'} · checkpoint ${count(row.checkpoint_cursor)}`, section);
+      const facts = node('dl', undefined, section);
+      facts.className = 'campaign-save-facts';
+      for (const [label, value] of [
+        ['Saved game time', `${count(p.checkpointed_elapsed_ticks)} ticks`],
+        ['Unsaved game time', `${count(p.unsaved_new_native_ticks)} ticks`],
+        ['Accounted model responses', count(p.accounted_model_responses)]
+      ]) {
+        const item = node('div', undefined, facts);
+        node('dt', label, item);
+        node('dd', value, item);
+      }
+      node('p', `${count(p.new_accepted_decisions)} accepted inputs reached the game, but the save check failed before requesting a save. The trace reached decision ${count(p.observed_trace_next_step)}; there is no checkpoint at that boundary. This is a harness failure, not a recorded fortress collapse.`, section);
+      node('p', `${count(row.usage.campaign_tokens)} campaign tokens; ${count(row.usage.all_attempt_tokens)} including historical failed deliveries. The failed window used ${count(row.usage.new_tokens)} tokens, all included. Model charge: ${cost(row.usage)}.`, section);
+      const details = node('details', undefined, section);
+      details.className = 'campaign-details';
+      node('summary', 'Inspect unsaved observations', details);
+      const observed = row.observed_unsaved_outcomes;
+      const table = node('table', undefined, details);
+      table.className = 'campaign-outcome-counts';
+      node('caption', 'Start of failed window vs. unsaved final observation', table);
+      const heading = node('tr', undefined, node('thead', undefined, table));
+      for (const title of ['Metric', 'Start', 'Unsaved end']) node('th', title, heading).scope = 'col';
+      const body = node('tbody', undefined, table);
+      for (const [key, label] of [
+        ['population', 'Living dwarves'], ['food_stock', 'Native-predicate food units'],
+        ['drink_stock', 'Existing drink units'], ['completed_farms', 'Completed farm plots'],
+        ['completed_beds', 'Installed beds'], ['completed_workshops', 'Completed workshops'],
+        ['recorded_dead_citizens', 'Recorded dead citizens']
+      ]) {
+        const item = node('tr', undefined, body);
+        node('th', label, item).scope = 'row';
+        node('td', count(observed.counts[key].start), item);
+        node('td', count(observed.counts[key].end), item);
+      }
+      node('p', `${count(observed.food_complete_measurements)} complete food readings and ${count(observed.food_unknown_measurements)} unknown readings across ${count(observed.food_observed_boundaries)} boundaries. These final counts were not saved. Inventory changes do not establish production or sustainability.`, details);
+      const fix = (data.save_acceptances || []).find(item => item.original_failure === row.failure_id);
+      if (fix) {
+        const followup = node('aside', undefined, section);
+        followup.className = 'campaign-save-acceptance';
+        node('h4', 'Save fix verified', followup);
+        node('p', 'A separate paused test reproduced the DFHack status-menu overlay failure, saved with the overlay intact, and reloaded that save in a fresh game process. No model calls or game ticks were used. This did not recover the unsaved progress or restart gameplay.', followup);
+        if (/^experiments\/evidence\/native_status_stack_acceptance_[0-9]+\.json$/.test(fix.evidence_path)) {
+          node('a', 'Read save/reload verification', followup).href = 'https://github.com/lemoz/fort-gym/blob/codex/campaign-codex-subscription/' + fix.evidence_path;
+        }
+      }
+      node('p', restarted
+        ? 'A later recorded restart preserves this failed-window usage and records the lost game time. The original failure remains part of this fortress history.'
+        : 'Resuming requires a recorded restart from the saved checkpoint, retaining all failed-window usage and recording the lost game time. No restart is recorded for this failure yet.', section);
+      node('p', row.teardown_verified === true ? 'Game and VM stopped. Recorded evidence, not a live run.' : 'Teardown unknown.', section);
+      if (/^experiments\/evidence\/astra_native_keyboard_[a-z0-9_]+\.json$/.test(row.evidence_path)) {
+        node('a', 'Read the original failed-attempt evidence', section).href = 'https://github.com/lemoz/fort-gym/blob/codex/campaign-codex-subscription/' + row.evidence_path;
       }
     }
     function renderTailInterruption(row) {
@@ -128,7 +187,8 @@
     const recent = {
       continuation: continuations.map(row => ({id: row.continuation_id, row})),
       interruption: (data.tail_interruptions || []).map(row => ({id: row.interruption_id, row})),
-      recovery: (data.tail_recoveries || []).map(row => ({id: row.recovery_id, row}))
+      recovery: (data.tail_recoveries || []).map(row => ({id: row.recovery_id, row})),
+      presave_failure: (data.presave_failures || []).map(row => ({id: row.failure_id, row}))
     };
     const events = data.continuation_events || Object.entries(recent).flatMap(([kind, rows]) => rows.map(row => ({kind, id: row.id})));
     if (!Array.isArray(events)) throw new Error('Unsupported continuation order');
@@ -140,6 +200,7 @@
       seen.add(identity);
       if (event.kind === 'continuation') renderContinuation(found.row);
       else if (event.kind === 'interruption') renderTailInterruption(found.row);
+      else if (event.kind === 'presave_failure') renderPresaveFailure(found.row);
       else renderRecovery(found.row);
     }
     if (seen.size !== Object.values(recent).reduce((n, rows) => n + rows.length, 0)) {

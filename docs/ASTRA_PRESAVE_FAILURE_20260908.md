@@ -48,15 +48,18 @@ The versioned result is
 Its private audit digest is
 `8abba48e8f28781676bcffb0037f00226d1ea87267623192fcb75bf87154ee8d`.
 The implementation's recorded-data adapter still ends at completed checkpoint
-631. The local preview at port 8857 was unreachable when checked; no live website
-update is claimed. The new failure record is not in the completed-continuation
-allowlist, and its failure surface is not implemented yet. No website deployment
-or new completed-continuation claim.
+631. At original publication, the local preview at port 8857 was unreachable and
+the failure surface was not implemented. The subsequent
+[failed-attempt display](CAMPAIGN_FAILURE_DISPLAY.md) now projects the failed
+window and separate save/reload acceptance into the existing campaign page. Its
+local HTTP and renderer checks passed. The failure record is still not in the
+completed-continuation allowlist. No website deployment or new completed-
+continuation claim.
 
 ## Next work
 
-1. Expose the failure and the new save/reload acceptance on the website. The
-   checkpoint fix has passed its independent native audit; gameplay has not resumed.
+1. The failure and save/reload acceptance now have a tested local website surface.
+   Public deployment and browser visual acceptance remain separate.
 2. Use an explicit restart declaration
    that preserves all 711 accounted model responses and records the additional
    lost time. Never silently replay the failed window or reset its counters.

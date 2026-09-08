@@ -40,6 +40,13 @@
 .campaign-filter { display: flex; align-items: center; gap: 12px; font-size: .875rem; margin-top: 16px; }
 .campaign-filter select { max-width: 100%; }
 .campaign-stale { color: var(--signal); }
+.campaign-save-failure h3 { color: var(--signal); }
+.campaign-save-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); gap: 1rem; margin: 1.25rem 0; }
+.campaign-save-facts div { border-left: 2px solid var(--line-strong); padding-left: 1rem; }
+.campaign-save-facts dt { font-size: .875rem; color: var(--muted); }
+.campaign-save-facts dd { margin: .35rem 0 0; font-size: 1.25rem; font-variant-numeric: tabular-nums; }
+.campaign-save-acceptance { border-left: 2px solid var(--acid); padding: .25rem 1rem 1rem; margin-top: 1rem; }
+.campaign-save-acceptance h4 { color: var(--acid); font-size: 1rem; margin: .75rem 0; }
 #campaign-profile-detail { margin-top: 24px; overflow-wrap: anywhere; }
 #campaign-profile-detail:empty { display: none; }
 #campaign-profile-detail h3 { margin: 20px 0 12px; font-size: 1.125rem; }

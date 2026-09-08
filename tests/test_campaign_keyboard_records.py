@@ -35,7 +35,8 @@ def evidence_root(tmp_path):
     for filename in (*records.PUBLISHED, *records.INTERRUPTIONS, *records.RECOVERIES,
                      *records.CHECKPOINT_FAILURES, *records.RESTARTS, *records.CHECKPOINT_REVIEWS,
                      *records.CHECKPOINT_RECOVERIES, *records.CONTINUATIONS,
-                     records.TAIL_INTERRUPTION, *records.TAIL_RECOVERIES):
+                     records.TAIL_INTERRUPTION, *records.TAIL_RECOVERIES,
+                     *records.PRESAVE_FAILURES, *records.SAVE_ACCEPTANCES):
         shutil.copyfile(records.PROJECT_ROOT / "experiments/evidence" / filename, folder / filename)
     return tmp_path
 
@@ -219,7 +220,17 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   assert.match(elements['keyboard-results'].textContent, /184 model responses/);
   assert.match(elements['keyboard-results'].textContent, /Recovery verified · checkpoint 184/);
   assert.match(elements['keyboard-results'].textContent, /Subsequently recovered as checkpoint 184/);
-  assert.ok(elements['keyboard-results'].textContent.startsWith('Play continued · checkpoint 631'));
+  assert.ok(elements['keyboard-results'].textContent.startsWith('Paused after save failure · checkpoint 631'));
+  assert.match(elements['keyboard-results'].textContent, /Saved game time 143,400 ticks/);
+  assert.match(elements['keyboard-results'].textContent, /Unsaved game time 21,200 ticks/);
+  assert.match(elements['keyboard-results'].textContent, /Accounted model responses 711/);
+  assert.match(elements['keyboard-results'].textContent, /22,819,077 campaign tokens/);
+  assert.match(elements['keyboard-results'].textContent, /22,888,081 including historical/);
+  assert.match(elements['keyboard-results'].textContent, /decision 695; there is no checkpoint/);
+  assert.match(elements['keyboard-results'].textContent, /Save fix verified/);
+  assert.match(elements['keyboard-results'].textContent, /did not recover the unsaved progress or restart gameplay/);
+  assert.match(elements['keyboard-results'].textContent, /Native-predicate food units 82 43/);
+  assert.match(elements['keyboard-results'].textContent, /63 complete food readings and 2 unknown/);
   assert.match(elements['keyboard-results'].textContent, /64 new model decisions, 21,200 new ticks/);
   assert.match(elements['keyboard-results'].textContent, /143,400 retained ticks/);
   assert.match(elements['keyboard-results'].textContent, /647 accounted model responses/);
