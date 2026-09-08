@@ -38,7 +38,7 @@ The next source `567251e74` integrates the tested terminal-observation handling
 and optional private food measurement and is pushed in draft PR #137. Its full
 local code test run passed 3,087 tests with ten skips; two later-added tests also
 passed in a 68-test focused rerun. Scoped static checks passed; this is not a
-repository-wide typing-clean claim. Exact-head CI `34259573627` is in progress.
+repository-wide typing-clean claim. Exact-head CI `34259573627` subsequently passed.
 Window n is actively continuing from 567 with the same model and cumulative
 limits. Its first five valid committed decisions added zero ticks; initial and
 current private food readings were complete at 27 units. These observations are

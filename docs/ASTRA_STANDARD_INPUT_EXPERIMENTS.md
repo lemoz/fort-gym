@@ -283,7 +283,7 @@ committed decisions and zero new ticks were observed. Its first integrated
 private food read and the latest read both reported 27 units. Actual model
 requests retain only screen, memory and factual control feedback; the private
 evaluation count does not alter the playing condition. Source-specific CI
-`34259573627` is still in progress; earlier source `4e746f0fa` passed its CI.
+`34259573627` subsequently passed; earlier source `4e746f0fa` also passed its CI.
 The unique owner must retain any error and finish teardown. No terminal n result
 is claimed. Full-year survival, repeated model comparisons, merged/deployed
 website delivery and full-goal completion remain open.

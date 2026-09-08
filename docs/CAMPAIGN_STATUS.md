@@ -35,7 +35,7 @@ The full local production-code test run passed 3,087 tests with ten skips; two
 later-added tests passed in a 68-test focused rerun. Scoped Ruff and seven-file
 mypy with silent dependency following passed. The default dependency-following
 mypy invocation was not green (271 diagnostics in 16 files); no full typing-clean
-claim. Exact-source CI `34259573627` is in progress. Prior publication source
+claim. Exact-source CI `34259573627` subsequently passed. Prior publication source
 `4e746f0fa` passed CI `34257628962`. No merge, deployment or visual acceptance.
 
 ### Latest completed result: checkpoint 567, 122,200 retained ticks
