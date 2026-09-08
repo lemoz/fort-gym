@@ -13,40 +13,69 @@ and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. Several bounded Astra native-keyboard
 windows have completed; the same fortress remains in autonomous continuation.
 
-### Active window q: ordinary continuation from checkpoint 647
+### Latest result: checkpoint 711 saved with 49,200 new game ticks
 
-One 64-decision Astra Medium native-keyboard window is now running from the
-verified checkpoint 647. Frozen source `167d22945feb9c3fa031408946fcc7503ad5dc39`
-is clean, pushed and GitHub-verified in draft PR #137; its 70 focused checks and
-exact-head CI `34281244617` passed. Save/v4, screen text/v1 at 120x40, private
-food/v1, memory, usage and both prior loss records are unchanged. There is no
-new restart, budget extension, model switch, strategy intervention or paid fallback.
+Window q completed 64 accepted Astra Medium native-keyboard decisions on frozen
+source `167d22945feb9c3fa031408946fcc7503ad5dc39`, whose exact-head CI
+`34281244617` passed. All 49,200 requested ticks advanced. Independently verified
+checkpoint **711** retains **192,600 ticks / 47.8 percent of one elapsed year**:
+`34d325596121a9a6e3631b1ed0297a4c4558e0ae2fff39853f91c138e8335c57`.
+Twenty-five decisions advanced time; 39 requested zero ticks. There were no
+input rejections, menu deferrals, clock timeouts or new save losses.
 
-An aggregate live read observed 23 completed accepted decisions, 9,200 newly
-advanced ticks and 12 living dwarves. This is **provisional, unsaved progress**,
-not a completed checkpoint or published outcome. Owner session 35120 remains
-responsible for the single running local game/container/VM and mandatory teardown.
-Do not relaunch it on an observation timeout or edit its executing worktree.
+Twelve dwarves remain alive with zero recorded citizen deaths. Installed beds
+increased five to six; completed farms/workshops remain seven/four. Drinks changed
+179 to 337 and native-predicate food 82 to 56. Food coverage includes 64 complete
+readings and one unknown across 65 boundaries. Inventory changes do not alone
+establish production, consumption, accessibility or sustainability.
+
+All **791 responses** are accounted, including **2,039,653 new tokens**,
+25,370,450 campaign tokens and 25,439,454 across all attempts. Re-decoding every
+new model-event receipt independently matched the usage totals and the retained
+request/response hashes. Individual subscription admission receipts were retained;
+dollar charges remain unreported. Both historical losses totaling 23,200 ticks
+and all prior failures remain explicit. No restart, memory/usage reset, strategy
+intervention, model switch, paid fallback or budget extension occurred.
+
+Owner session 35120 is **terminal, exit 0**. Native processes, listener, container
+and VM teardown were audited, and a separate fresh profile read confirmed Stopped.
+A final exchange-directory check returned exit 128, after which the container
+was observed exited with code 0. The operator retained this terminal-observation
+warning and completed cleanup. Its underlying cause remains unverified; it is
+published as a warning, not a fully clean run or a gameplay failure. Checkpoint
+647 was fresh-loaded before q; checkpoint 711 still needs its own separate fresh
+reload on the next run. Do not relaunch the completed q owner.
 
 Before launch, a provider-free capacity check found only 1,064,780 KiB free on
 the existing 16-GiB data disk. It was expanded to 24 GiB, leaving CPU 2, RAM 3 GiB,
 root disk 8 GiB and isolation unchanged. All existing volume names and image IDs
 were preserved; nothing was deleted. After expansion, 8,986,308 KiB were free and
 the VM was verified stopped before q started. The 1-GiB native-save floor remains
-in force. Evidence is retained under `data-capacity-20260908-v2`; the active run
-and prepared completion audits are under `astra-native-postrestart-continuation-v1`.
+in force. Evidence is retained under `data-capacity-20260908-v2`; the completed
+run and passing audits are under `astra-native-postrestart-continuation-v1`.
 
-The website preview still shows the last verified checkpoint 647, not this live
-window. Normal post-restart publication support passed 3,343 full-suite tests
-(10 skipped), 35 dedicated checks including rendering, and scoped Ruff/mypy.
-It is committed separately as `5ce896c41ea62d5b954ba7817a188c8c04af1e4d` on
-`codex/campaign-postrestart-records-v1`; integration into the executing worktree
-waits for q teardown. No synthetic result is published and the Fort Labs layout
-is unchanged. The first full-suite attempt encountered a sandbox-denied temporary
-test socket; the complete permitted-loopback retry passed.
-Next: retain the owner's terminal result, independently verify the save, actual
-gameplay and complete usage/loss history, confirm teardown, then publish the real
-result to the website and GitHub. The full goal remains active.
+Normal post-restart website support at `5ce896c41` was integrated only after q
+teardown. The real checkpoint-711 publication, warning display and next window r
+are committed and GitHub-verified at `2e535166fc96633438c19017a52256b45ab36790`
+in draft PR #137. All **3,359 full-suite tests passed** (ten skipped), alongside
+237 focused checks, scoped Ruff/mypy and JavaScript syntax checks. The initial
+combined suite exposed two historical tests that assumed an older continuation
+was still last; both now bind their named records, and the full suite was rerun.
+Exact-head remote CI `34286271507` is still in progress at this readback.
+
+The actual local page/API and served assets match the clean committed source.
+Checkpoint 711 appears above restart 647 and the retained failure, with correct
+usage, unknown charges and the terminal-check warning. HTTP acceptance and the
+authored-publication/private-evidence reconciliation passed. The Fort Labs layout
+is preserved. Preview owner **29379 / PID 89694** is live at
+http://127.0.0.1:8857/campaigns with isolated state and disabled game/admin access;
+former preview 97675 exited gracefully. No browser visual acceptance, merge or
+production deployment is claimed.
+
+Next: finish exact-head remote CI, then ordinary continuation from checkpoint 711
+with the same model, controls, memory and inherited limits. Window r declares 64
+decisions, no restart and no budget extension. It has not started. The full goal
+remains active, with year-two endurance and repeated comparisons still open.
 
 ### Previous result: native restart saved checkpoint 647; no new game time
 

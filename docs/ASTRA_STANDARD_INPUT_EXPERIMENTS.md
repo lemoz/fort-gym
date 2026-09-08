@@ -77,6 +77,31 @@ It was subsequently verified active on September 7. The readable-screen profile
 and first synthetic Astra comparison are published in draft PR #137; current
 evidence and remaining native work are tracked in [Campaign status](CAMPAIGN_STATUS.md).
 
+## Current native result: checkpoint 711
+
+Window q completed 64 accepted Astra Medium standard-input decisions on source
+`167d22945feb9c3fa031408946fcc7503ad5dc39`, using screen text/v1 at 120x40 and
+v4 native saving. The verified new checkpoint 711 preserves 49,200 added ticks
+and 192,600 retained ticks, 47.8 percent of one full elapsed year. All 12 dwarves
+remain alive; installed beds increased five to six, drinks 179 to 337, and food
+changed 82 to 56. Food coverage was 64 complete readings and one unknown.
+These counts do not establish sustainable production or accessibility.
+
+All 791 responses and 25,439,454 all-attempt tokens are retained, including both
+historical losses totaling 23,200 ticks. Independent save, gameplay, food, clock,
+subscription-event usage and teardown audits passed. The outer operator completed
+with a retained final container-check warning (exec exit 128, subsequently observed
+container exit 0). Its cause is unverified, and the warning remains visible rather
+than being relabeled clean. No gameplay rescue, restart or budget extension occurred.
+
+The actual result, warning display and next window r are pushed at
+`2e535166fc96633438c19017a52256b45ab36790` in draft PR #137. All 3,359 local tests
+passed, and the local page/API matches that exact committed publication. Remote
+CI is being checked separately; no merge, production deployment or browser visual
+acceptance is claimed. Window r continues the same model, memory, controls and
+limits from 711 after a fresh native load; it has not started. The open-ended
+year-two attempt and later paired/repeated comparisons remain the full objective.
+
 ## Historical interface result: window h
 
 Latest autonomous continuation, September 8: window h passed four v3 native
