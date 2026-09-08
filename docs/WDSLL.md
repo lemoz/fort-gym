@@ -8,7 +8,28 @@ fortress through year two and beyond. Website evidence and remote source deliver
 remain requirements. The objective is unfinished; early native Astra gameplay
 and checkpoint-continuation evidence are now verified.
 
-Latest result, September 8 UTC: normal Astra keyboard window h completed all
+Latest result, September 8 UTC: window i added 15 returned responses and
+2,000 ticks before a workshop-menu clock timeout. The original run stays failed.
+Provider-free forward recovery now verifies checkpoint 311 and a second fresh
+native load, preserving 65,600 retained ticks, all 327 responses, model memory,
+10,696,954 campaign tokens and 10,765,958 all-attempt tokens. Recovery added no
+model calls, keys, ticks or new loss. The earlier 2,000-tick loss remains recorded.
+An initial recovery OOM remains retained; the successful retry releases redundant
+trace copies without increasing resource limits. Teardown and independent audit
+passed. The full year-two / cross-model objective remains active.
+
+Source `bc7a23aef` publishes separate website interruption/recovery records and
+declares window j from checkpoint 311, keeping the same 64-decision single-process
+bound and existing cumulative spending limits. Local validation passed 1,594
+campaign/keyboard tests with one skip, scoped static/typing, JS syntax and local
+HTTP checks. Exact recovery-source and publication CI passed, including running
+source `bc7a23aef` in run `34239730451`. Window j is now live: the first observed
+three new native actions committed and advanced 1,000 ticks. Its current run
+must be followed to a terminal result and teardown before any new native attempt.
+No merge, production deployment, visual acceptance or new gameplay success is
+claimed. The live attempt tests model-led continuation using factual clock feedback.
+
+Previous result, September 8 UTC: normal Astra keyboard window h completed all
 64 new decisions across four verified v3 native saves. The latest checkpoint is
 296 / 63,600 retained elapsed ticks, about 15.8 percent of one full game year.
 There are 312 fully accounted model responses, 10,215,904 campaign tokens and

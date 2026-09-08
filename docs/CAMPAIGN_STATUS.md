@@ -13,7 +13,57 @@ and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. The first bounded Astra native
 keyboard campaign has now completed.
 
-### Latest result: 64 new decisions through four verified native saves
+### Latest result: forward recovery verified at checkpoint 311
+
+Window i returned 15 Astra Medium responses at source `893b7ff10`: 14 new
+committed actions and 2,000 new ticks, then a zero-tick timeout in the workshop
+Add Job menu. All five final keys were delivered; the original window remains
+failed. Its newer forensic save, full trace and all usage were retained.
+
+The clock-feedback repair passed CI at `56b0f69d2` (2,716 tests, 100 skips).
+The first provider-free recovery loaded that save but its worker was OOM-killed
+before checkpoint publication. Evidence and teardown passed. A narrow fix
+releases redundant parsed trace copies before nested snapshot validation.
+
+The second recovery at `ae3a668f15a411987b0ac12522d91c62afbec56b` passed native
+saving, a second fresh game load, independent audit and exact-source CI.
+Checkpoint 311:
+`e1883c88633a66a86de11ca42bc9e0e60a9ed4e6f4e6cde679cce2848611b4d5`.
+It preserves 65,600 elapsed ticks (16.3 percent of the full-year target), all 327
+responses, 10,696,954 campaign tokens and 10,765,958 including historical failed
+deliveries. Recovery added zero model calls, keys or ticks. Memory, usage and
+the earlier 2,000-tick loss are unchanged; no new loss or replay occurred.
+All native/container/VM teardown passed. The same 1.5 GiB container limit was
+retained; zero OOM kills on retry, but peak memory reached the limit. No headroom
+or long-horizon scalability claim.
+
+Website/source `bc7a23aef` publishes separate interruption and recovery records,
+leading with 311. Local campaign/keyboard validation passed 1,594 tests with one
+skip; scoped Ruff/mypy, JavaScript syntax and live local HTTP checks passed.
+The browser handoff was queued, not visually accepted. Production deployment
+and merge remain unperformed. The endpoint is recorded evidence, not live tracking.
+
+Window j is declared from checkpoint 311 with the same 64-decision single-process
+bound, Astra Medium, native keys, 120x40 screen observations, model-led strategy,
+memory and cumulative 1,024-dispatch / 40-million-token limits. It tests factual
+clock feedback without giving a correction key. Window j has now started on
+frozen source `bc7a23aefef1fcf4f3f9212f1059d0edf17f239c`, with passing exact-source
+CI (`34239730451`). Its first observed native boundary contains three committed
+new actions and 1,000 new ticks. This is an in-flight observation, not a completed
+window or a newer verified save. The owned runtime remains live; its existing
+owner enforces the finite bound and mandatory teardown. Follow this same attempt
+to its terminal result before starting another. Private attempt root:
+`astra-native-workshop-feedback-v1`. Subscription preflight was 13 percent used,
+below the existing 90 percent guard, with fresh admission repeated for each call.
+The website remains recorded evidence at checkpoint 311, not a live activity
+indicator. The full year-two and repeated cross-model objective remains active.
+
+Private proof: `astra-native-menu-continuity-v1/failure-audit.json` and
+`astra-native-workshop-recovery-v2/independent-audit.json` under the runtime root.
+The failed recovery `astra-native-workshop-recovery-v1` remains retained.
+Native game content is private; only authored operational summaries are published.
+
+### Previous result: 64 new decisions through four verified native saves
 
 Window h completed on frozen source `bcac94d1b6e51c7f54e25f56661c5a42b0085b2a`.
 Independent audit confirms 64 new accepted Astra Medium decisions and 14,400

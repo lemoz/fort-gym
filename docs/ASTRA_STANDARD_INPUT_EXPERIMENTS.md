@@ -175,3 +175,24 @@ live. Campaign usage is 6,465,867 tokens, 6,534,871 including historical failure
 The newer trace is not a resumable native checkpoint. Fix menu-sensitive saving
 and explicitly record any discontinuity before another run; never discard usage
 or present a rollback as successful continuation.
+
+September 8 continuation update: window h completed through verified checkpoint
+296. Window i then returned 15 further responses and advanced 2,000 ticks before
+a zero-tick workshop-menu timeout. The latest forensic save was recovered forward
+as checkpoint 311, with a second fresh native load and independent audit. All
+327 responses, 65,600 ticks, memory and 10,696,954 campaign tokens are preserved;
+all-attempt tokens are 10,765,958. The original interruption, an OOM recovery
+failure and the earlier 2,000-tick lost branch remain retained, not reclassified.
+
+Clock feedback now covers this exact menu, with a strictly verified zero-tick
+fallback for other focuses. A separate narrow memory repair releases redundant
+parsed trace copies during saving; the successful provider-free recovery stayed
+within unchanged limits. This does not prove memory headroom or year-two play.
+
+Window j at `bc7a23aef` has started from checkpoint 311 with the same 64-decision
+single-process bound, Astra Medium, standard input and existing cumulative
+1,024-dispatch / 40-million-token allowance. The first three observed native
+actions committed and added 1,000 ticks. This attempt remains live and bounded,
+with mandatory teardown owned by its runner. Source is pushed and exact-head CI
+passed. The website records interruption/recovery 311, not live tracking.
+No merge, production deploy, browser visual acceptance or full-goal completion.
