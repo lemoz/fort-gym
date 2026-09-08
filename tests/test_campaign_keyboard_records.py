@@ -222,12 +222,12 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   assert.match(elements['keyboard-results'].textContent, /Menu identity changed during saving/);
   assert.match(elements['keyboard-results'].textContent, /248 accounted model responses/);
   assert.match(elements['keyboard-results'].textContent, /8,219,231 including historical/);
-  assert.match(elements['keyboard-results'].textContent, /specific changed menu field is not yet known/);
+  assert.match(elements['keyboard-results'].textContent, /exact menu-field change was not captured/);
   assert.match(elements['keyboard-results'].textContent, /Checkpoint verification stopped · decision 216/);
   assert.match(elements['keyboard-results'].textContent, /Subsequently recovered as checkpoint 216 and verified in a fresh game process/);
   assert.match(elements['keyboard-results'].textContent, /no additional progress was lost/);
   assert.match(elements['keyboard-results'].textContent, /New branch saved · checkpoint 200/);
-  assert.match(elements['keyboard-results'].textContent, /neither confirmed lost nor confirmed recovered/);
+  assert.match(elements['keyboard-results'].textContent, /without a verified campaign checkpoint/);
   assert.match(elements['keyboard-results'].textContent, /232 accounted model responses/);
   assert.match(elements['keyboard-results'].textContent, /7,775,559 including historical/);
   assert.match(elements['keyboard-results'].textContent, /retained trace: 47,200 ticks/);

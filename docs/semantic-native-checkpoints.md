@@ -68,3 +68,42 @@ The original failed window and the earlier 2,000-tick lost branch remain
 unchanged. This is recovered infrastructure continuity, not new gameplay or
 proof of a functioning fortress. The authored public record is
 `experiments/evidence/astra_native_keyboard_settled_recovery_20260908.json`.
+
+## Later unit-selection helper discrepancy
+
+Window g subsequently reached trace cursor 232 / 49,200 ticks and rejected a
+changed menu identity while saving. Checkpoint 216 remains the latest verified
+campaign checkpoint. All 248 responses and 8,150,227 campaign tokens are retained;
+the newer native files have now passed a provider-free reload, but no recovered
+checkpoint 232 has been created.
+
+Two independently audited native diagnostics narrow the failed check to
+`unit_id`. The selected-unit helper reports no unit inside the save RPC after
+saving, while the unit screen's own unit reference, actual screen pixels, menu
+stack, world observations and calendar remain unchanged. A separate later RPC
+returns the same selected unit as the direct screen reference again. This is a
+transient helper-observation inconsistency in the reproduced menu, not a changed
+selected dwarf. The original failed operation did not retain its raw receipt;
+these are separate reproduced observations, not retroactively invented evidence.
+
+The pinned DFHack implementation reads `getSelectedUnit` through
+`Core::getTopViewscreen`, while `getAnyUnit` can read the unit screen directly:
+[Gui.cpp](https://github.com/DFHack/dfhack/blob/0.47.05-r8/library/modules/Gui.cpp#L847),
+[Core.h](https://github.com/DFHack/dfhack/blob/0.47.05-r8/library/include/Core.h#L177).
+That supports investigating the helper's screen-state boundary; it does not prove
+every possible native menu behaves identically.
+
+Each successful diagnostic used nine menu-navigation keys, no model call, no
+save key and no requested game tick. Input evidence was read-only and unchanged;
+all native/container/VM teardown passed. The earlier fixture failed before menu
+input on a wrong method name and remains failed. The instrumented diagnostic
+deliberately added a private observer field that the original strict receipt
+schema rejected; it is not save-profile acceptance.
+
+Next implementation: verify the selected UI state outside the save RPC's
+transient helper state, binding the second read to the same paused calendar,
+runtime and native screen stack. Preserve the inline receipt and existing world
+checks. Then recover cursor 232 forward from the retained runtime save, keeping
+all memory, usage and inherited loss history. The correction and recovered
+checkpoint remain unimplemented at this record. Authored diagnostic evidence:
+`experiments/evidence/astra_native_menu_identity_diagnostic_20260908.json`.
