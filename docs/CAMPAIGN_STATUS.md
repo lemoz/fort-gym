@@ -64,6 +64,17 @@ path. Fresh subscription admission passed and repeats before every invocation;
 no fallback, credits, reset, local model or GCE is introduced.
 The website currently records completed 503, not live tracking.
 
+Measurement work while m runs is isolated on `codex/campaign-food-inventory-v1`
+at `ab53e54dd321b596b0f189cadf94cbbda65dfd95`. Its read-only food-inventory
+collector and validator passed 141 candidate tests, with 180 tests in the related
+food/drink/profile selection and scoped static checks. It is not integrated into
+the frozen campaign, model observations, evaluator or website. Native validation
+on a paused verified save remains pending until the current owner has completed
+and torn down. The candidate retains literal native-predicate semantics; it is
+not evidence of accessible food, production or sustainability. See
+`docs/campaign-food-measurement.md` on that branch. Historical food-stock unknowns
+and the existing run-scoped G7 hooks remain unchanged.
+
 ### Previous result: checkpoint 439, past the first quarter-year
 
 Window k completed all 64 new returned decisions on frozen source
