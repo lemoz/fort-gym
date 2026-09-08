@@ -51,9 +51,38 @@
       throw new Error('Unsupported continuation evidence');
     }
     const continuations = data.continuations || [];
-    for (const name of ['tail_interruptions', 'tail_recoveries', 'presave_failures', 'save_acceptances']) {
+    for (const name of ['tail_interruptions', 'tail_recoveries', 'presave_failures', 'partial_failures', 'save_acceptances']) {
       if (data[name] !== undefined && !Array.isArray(data[name])) {
         throw new Error('Unsupported continuation recovery evidence');
+      }
+    }
+    function renderPartialFailure(row) {
+      const section = node('section', undefined, results);
+      section.className = 'campaign-condition campaign-save-failure';
+      const p = row.progress;
+      node('h3', `Harness interruption · last saved checkpoint ${count(row.checkpoint_cursor)}`, section);
+      const facts = node('dl', undefined, section);
+      facts.className = 'campaign-save-facts';
+      for (const [label, value] of [
+        ['Saved game time', `${count(p.checkpointed_elapsed_ticks)} ticks`],
+        ['Unsaved game time', `${count(p.unsaved_new_native_ticks)} ticks`],
+        ['Accounted model responses', count(p.accounted_model_responses)]
+      ]) {
+        const item = node('div', undefined, facts);
+        node('dt', label, item);
+        node('dd', value, item);
+      }
+      node('p', `${count(p.new_model_responses)} new model responses produced ${count(p.new_committed_decisions)} committed actions and one additional partial action. The committed actions advanced ${count(p.new_committed_ticks)} ticks; the partial action advanced ${count(p.uncommitted_native_ticks)} more. All ${count(p.unsaved_new_native_ticks)} ticks are unsaved, and all responses remain counted.`, section);
+      node('p', 'A dialogue interrupted game time after the model left a menu. The harness checked the interruption against the old screen and rejected it. A save was then requested but remained pending. This is a harness failure, not a recorded fortress collapse.', section);
+      node('p', `${count(row.usage.campaign_tokens)} campaign tokens; ${count(row.usage.all_attempt_tokens)} including historical failed deliveries. This failed attempt used ${count(row.usage.new_tokens)} tokens, all included. Model charge: ${cost(row.usage)}.`, section);
+      const details = node('details', undefined, section);
+      details.className = 'campaign-details';
+      node('summary', 'Inspect saved vs. unsaved progress', details);
+      node('p', `The committed trace reached decision ${count(p.committed_trace_next_step)} and ${count(p.committed_trace_elapsed_ticks)} elapsed ticks, but the last verified save remains checkpoint ${count(row.checkpoint_cursor)}. The ${count(p.uncommitted_native_ticks)} partial ticks are included in the unsaved total, not added twice.`, details);
+      node('p', `The earlier ${count(p.inherited_save_loss_restarts)} recorded restarts and ${count(p.inherited_discarded_native_ticks)} lost ticks remain in the history. No restart has been recorded for this failure yet. Preparing or testing a repair does not create a new saved checkpoint.`, details);
+      node('p', row.teardown_verified === true ? 'Game and VM stopped. Recorded evidence, not a live run.' : 'Teardown unknown.', section);
+      if (/^experiments\/evidence\/astra_native_keyboard_[a-z0-9_]+\.json$/.test(row.evidence_path)) {
+        node('a', 'Read the failed-attempt evidence', section).href = 'https://github.com/lemoz/fort-gym/blob/codex/campaign-codex-subscription/' + row.evidence_path;
       }
     }
     function renderPresaveFailure(row) {
@@ -209,6 +238,7 @@
       interruption: (data.tail_interruptions || []).map(row => ({id: row.interruption_id, row})),
       recovery: (data.tail_recoveries || []).map(row => ({id: row.recovery_id, row})),
       presave_failure: (data.presave_failures || []).map(row => ({id: row.failure_id, row})),
+      partial_failure: (data.partial_failures || []).map(row => ({id: row.failure_id, row})),
       restart: restarts.filter(row => row.recent_event === true).map(row => ({id: row.restart_id, row}))
     };
     const events = data.continuation_events || Object.entries(recent).flatMap(([kind, rows]) => rows.map(row => ({kind, id: row.id})));
@@ -222,6 +252,7 @@
       if (event.kind === 'continuation') renderContinuation(found.row);
       else if (event.kind === 'interruption') renderTailInterruption(found.row);
       else if (event.kind === 'presave_failure') renderPresaveFailure(found.row);
+      else if (event.kind === 'partial_failure') renderPartialFailure(found.row);
       else if (event.kind === 'restart') renderRestart(found.row);
       else renderRecovery(found.row);
     }

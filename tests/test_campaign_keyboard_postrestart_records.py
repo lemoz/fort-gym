@@ -17,6 +17,7 @@ SAMPLE = "synthetic_postrestart_continuation.json"
 @pytest.fixture
 def postrestart(evidence_root, monkeypatch):
     monkeypatch.setattr(records, "POSTRESTART_CONTINUATIONS", ())
+    monkeypatch.setattr(records, "PARTIAL_FAILURES", ())
     data = records.keyboard_campaign_records(evidence_root)
     parent = data["restarts"][-1]
     folder = evidence_root / "experiments/evidence"
@@ -256,8 +257,10 @@ def test_actual_postrestart_result_preserves_progress_warning_and_usage():
     }
     assert row["teardown_verified"] is True
     assert row["final_checkpoint_fresh_reload_verified"] is False
-    assert data["continuation_events"][-1] == {"kind": "continuation", "id": row["continuation_id"]}
-    assert data["continuation_events"][-2]["kind"] == "restart"
+    event = {"kind": "continuation", "id": row["continuation_id"]}
+    index = data["continuation_events"].index(event)
+    assert data["continuation_events"][index - 1]["kind"] == "restart"
+    assert data["continuation_events"][index + 1]["kind"] == "partial_failure"
 
 
 @pytest.mark.parametrize("section,field,value", [

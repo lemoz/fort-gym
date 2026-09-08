@@ -47,5 +47,14 @@ evidence, runtime identity, newer saves, and missing provenance. Retained window
 evidence is also checked read-only before launch. These checks prove restart
 preparation, not a successful native run or year-two gameplay. A continuation that
 does not encounter the relevant dialogue transition is not native acceptance of
-the clock correction by itself. Website failure publication and native acceptance
-remain separate work.
+the clock correction by itself.
+
+## Recorded website result
+
+`astra_native_keyboard_partial_failure_20260908.json` is a distinct failed-attempt
+publication, ordered after its checkpoint-711 parent. The campaign page presents
+saved and unsaved ticks separately, preserves all model responses and unknown
+charges, and keeps the parent's observation warning and historical losses visible.
+This record reports the original failure. It does not claim that the planned
+restart ran, the clock correction passed native acceptance, or a new checkpoint
+exists. Versioning this page and its data is not a production deployment.

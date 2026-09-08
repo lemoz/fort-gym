@@ -1,0 +1,61 @@
+{
+  "schema_version": "fortgym.native-keyboard-partial-failure-summary/v1",
+  "status": "failed",
+  "source_revision": "2e535166fc96633438c19017a52256b45ab36790",
+  "parent_record": "astra_native_keyboard_postrestart_continuation_20260908",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "control_profile": "native_keyboard/v2",
+  "observation_profile": "native_screen_text/v1",
+  "snapshot_profile": "native_menu_preserving_save/v4",
+  "captured_screen_size": [120, 40],
+  "independent_failure_audit_passed": true,
+  "private_failure_audit_sha256": "0d1454acb035d8dd467349c64fed7419afebd8ae1ff61ce55411dc2e0d55f5c1",
+  "teardown_verified": true,
+  "native_load_verified": true,
+  "original_failure_preserved": true,
+  "last_checkpoint_save_files_unchanged_except_event_log": true,
+  "new_checkpoint_created": false,
+  "new_restart_performed": false,
+  "gameplay_rescue_or_replay_performed": false,
+  "last_verified_checkpoint_cursor": 711,
+  "last_verified_checkpoint_sha256": "34d325596121a9a6e3631b1ed0297a4c4558e0ae2fff39853f91c138e8335c57",
+  "failure": {
+    "clock_reason": "interrupt_baseline_mismatch",
+    "save_stage": "identity_after_save_request_pending",
+    "native_save_requested": true,
+    "save_remained_pending": true,
+    "clean_interruption_with_post_input_boundary": true
+  },
+  "progress": {
+    "checkpointed_elapsed_ticks": 192600,
+    "committed_trace_next_step": 733,
+    "committed_trace_elapsed_ticks": 198600,
+    "new_committed_decisions": 22,
+    "new_model_responses": 23,
+    "new_committed_ticks": 6000,
+    "uncommitted_responses": 1,
+    "uncommitted_native_ticks": 691,
+    "unsaved_new_native_ticks": 6691,
+    "accounted_model_responses": 814,
+    "inherited_save_loss_restarts": 2,
+    "inherited_discarded_native_ticks": 23200
+  },
+  "usage": {
+    "new_tokens": 743053,
+    "campaign_tokens": 26113503,
+    "all_attempt_tokens": 26182507,
+    "historical_failed_delivery_tokens": 69004,
+    "reported_charge_usd": null,
+    "cost_basis": "codex_subscription_charge_unreported/v1"
+  },
+  "source_evidence_sha256": {
+    "segment_result": "42e63de313b7a7ccbbae017d464643a451556a6085d3d56ba3607897d7f81e92",
+    "trace": "0f1ca0ddfd50e12aa129698b8787b608af0d62e2b1c36d2f0933225bb4c78f6f",
+    "usage": "0effe80d01b3863352a8dfe3aa9d6aa12a0fd0614cf224fb38c79228acb7023e",
+    "partial_failure": "ead77a09be8f16b60f159729a2ee8e7898c578b449db15cf3c8fc3e0a8796672",
+    "save_attempt": "4b45c6cbab2c2f290de404113c3db75330dfdf32e94bfcc45b0ddfb765d09fc8",
+    "runtime": "4935c606f3c62260aef544cf318582fd4df073b6b355fe605d98fa66d7350962"
+  },
+  "interpretation": "Infrastructure failure, not evidence of fortress collapse. The old clock validator used the pre-keyboard overlay instead of the post-input dwarfmode screen. A native dialogue cleanly interrupted the next clock request, but the loop rejected its receipt and the subsequent native save remained pending. The native save files still match checkpoint 711 except for the DFHack event log. The 6691 unsaved ticks include the 691 uncommitted ticks; do not add them twice. Preserve every model response and the original failed run. Restart preparation is not an executed restart, new saved progress, native fix acceptance, sustainability, year-two success or an independent cross-model attempt."
+}

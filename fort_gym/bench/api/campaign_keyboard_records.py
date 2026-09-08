@@ -15,6 +15,7 @@ from .campaign_keyboard_continuations import (
 from .campaign_keyboard_presave import (
     PRESAVE_FAILURES, SAVE_ACCEPTANCES, presave_failure, save_acceptance,
 )
+from .campaign_keyboard_partial import PARTIAL_FAILURES, partial_failure
 from .campaign_keyboard_tails import (
     TAIL_INTERRUPTION, TAIL_RECOVERIES, continuation_interruption, continuation_recovery,
 )
@@ -283,6 +284,8 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
         postrestart_continuations.append(keyboard_continuation(
             root, filename, [*presave_restarts, *postrestart_continuations], failures,
         ))
+    partial_failures = [partial_failure(root, filename, postrestart_continuations)
+                        for filename in PARTIAL_FAILURES]
     # Explicit publication order retains the interruption between its parent
     # continuation and recovery; later play must not appear below older recovery.
     recent_events = [
@@ -304,6 +307,10 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
                             if event["id"] == continuation["parent_record"])
         recent_events.insert(recent_events.index(parent_event) + 1,
                              {"kind": "continuation", "id": continuation["continuation_id"]})
+    for failure in partial_failures:
+        parent_event = {"kind": "continuation", "id": failure["parent_record"]}
+        recent_events.insert(recent_events.index(parent_event) + 1,
+                             {"kind": "partial_failure", "id": failure["failure_id"]})
     return {
         "schema_version": "fortgym.public-keyboard-milestones/v1",
         "live_tracking": False,
@@ -316,6 +323,7 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
         "checkpoint_recoveries": checkpoint_recoveries,
         "continuations": [*continuations, *postrestart_continuations],
         "presave_failures": presave_failures,
+        "partial_failures": partial_failures,
         "save_acceptances": save_acceptances,
         "tail_interruptions": tail_interruptions,
         "tail_recoveries": tail_recoveries,
