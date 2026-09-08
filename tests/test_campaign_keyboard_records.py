@@ -164,7 +164,8 @@ def test_recovery_cannot_invent_progress_discard_usage_or_relabel_failure(
         records.keyboard_campaign_records(evidence_root)
 
 
-def test_keyboard_javascript_renders_recorded_usage_and_failure():
+@pytest.mark.parametrize("food_units", ["historical", 27, 0, None])
+def test_keyboard_javascript_renders_recorded_usage_and_failure(food_units):
     node = shutil.which("node")
     if not node:
         pytest.skip("Node is unavailable")
@@ -227,6 +228,19 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   assert.match(elements['keyboard-results'].textContent, /583 accounted model responses/);
   assert.match(elements['keyboard-results'].textContent, /Living dwarves 7 12/);
   assert.match(elements['keyboard-results'].textContent, /Existing drink units 172 181/);
+  const latest = data.continuations.at(-1);
+  if (latest.food_inventory) {
+    const food = latest.food_inventory;
+    const label = food.final_units === null ? 'Unknown' : String(food.final_units);
+    assert.match(elements['keyboard-results'].textContent, /Measured food inventory/);
+    assert.ok(elements['keyboard-results'].textContent.includes(`Native-predicate food units: ${label} at window start (checkpoint 503); ${label} at window end.`));
+    assert.match(elements['keyboard-results'].textContent, /missing or partial reading is unknown, not zero/);
+    assert.match(elements['keyboard-results'].textContent, /Earlier food unknowns remain unknown/);
+    assert.match(elements['keyboard-results'].textContent, /Accessibility was not assessed/);
+  } else {
+    assert.doesNotMatch(elements['keyboard-results'].textContent, /Measured food inventory/);
+  }
+  assert.match(elements['keyboard-results'].textContent, /Food stocks are unverified/);
   assert.match(elements['keyboard-results'].textContent, /Play continued · checkpoint 503/);
   assert.match(elements['keyboard-results'].textContent, /64 new model decisions, 14,000 new ticks/);
   assert.match(elements['keyboard-results'].textContent, /115,000 retained ticks/);
@@ -303,13 +317,21 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   assert.match(elements['keyboard-status'].textContent, /could not be loaded/);
 })().catch(error => { console.error(error); process.exitCode = 1; });
 """
+    data = records.keyboard_campaign_records()
+    if food_units != "historical":
+        # Synthetic rendering fixture only, never written to published evidence.
+        data["continuations"][-1]["food_inventory"] = {
+            "initial_checkpoint_cursor": 503, "initial_units": food_units, "final_units": food_units,
+            "observed_boundaries": 65, "complete_measurements": 0 if food_units is None else 65,
+            "unknown_measurements": 65 if food_units is None else 0,
+        }
     subprocess.run(
         [
             node,
             "-e",
             program,
             str(records.PROJECT_ROOT / "web/static/campaign-keyboard.js"),
-            json.dumps(records.keyboard_campaign_records()),
+            json.dumps(data),
         ],
         check=True,
         capture_output=True,

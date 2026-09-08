@@ -6,6 +6,8 @@ import json
 import re
 from pathlib import Path
 
+from .campaign_food_outcomes import food_inventory_outcome
+
 CONTINUATIONS = (
     "astra_native_keyboard_settled_play_20260908.json",
     "astra_native_keyboard_workshop_play_20260908.json",
@@ -106,6 +108,7 @@ def keyboard_continuation(root: Path, filename: str, parents: list[dict], failur
     ):
         raise ValueError("Continuation checkpoints must cover all new decisions and time")
     outcomes = _outcome_counts(source.get("outcome_counts"), source["new_model_calls"])
+    food = food_inventory_outcome(source, source["new_model_calls"], parent["checkpoint_cursor"])
     execution = _execution_counts(source.get("execution_counts"), counters, outcomes)
     return {
         "continuation_id": filename.removesuffix(".json"),
@@ -126,6 +129,7 @@ def keyboard_continuation(root: Path, filename: str, parents: list[dict], failur
         "fortress_success": "not_assessed_in_public_operational_summary",
         "evidence_path": "experiments/evidence/" + filename,
         **({"outcome_counts": outcomes} if outcomes is not None else {}),
+        **({"food_inventory": food} if food is not None else {}),
         **({"execution_counts": execution} if execution is not None else {}),
         **({"operator_status": "failed", "operator_observation_warning": warning}
            if warning is not None else {}),

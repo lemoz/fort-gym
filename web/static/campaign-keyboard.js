@@ -108,7 +108,16 @@
           node('td', count(outcomes.counts[key].start), item);
           node('td', count(outcomes.counts[key].end), item);
         }
-        node('p', `${count(outcomes.advancing_decisions)} decisions advanced game time; ${count(outcomes.zero_tick_decisions)} did not advance it. Food stocks are unverified. Production and consumption were not measured; sustainability is not established.`, section);
+        const foodStatus = row.food_inventory
+          ? 'Separate native food measurements are shown below.' : 'Food stocks are unverified.';
+        node('p', `${count(outcomes.advancing_decisions)} decisions advanced game time; ${count(outcomes.zero_tick_decisions)} did not advance it. ${foodStatus} Production and consumption were not measured; sustainability is not established.`, section);
+      }
+      if (row.food_inventory) {
+        const food = row.food_inventory;
+        node('h4', 'Measured food inventory', section);
+        node('p', `Native-predicate food units: ${count(food.initial_units)} at window start (checkpoint ${count(food.initial_checkpoint_cursor)}); ${count(food.final_units)} at window end. Drinks are excluded.`, section);
+        node('p', `${count(food.complete_measurements)} complete readings across ${count(food.observed_boundaries)} observation boundaries; ${count(food.unknown_measurements)} unknown readings. A missing or partial reading is unknown, not zero.`, section);
+        node('p', 'These counts use the native raw-edibility predicate, not the older screen estimate. Earlier food unknowns remain unknown. Accessibility was not assessed; inventory counts do not establish production, consumption or sustainability.', section);
       }
       node('p', row.teardown_verified === true ? 'Game and VM teardown verified. Recorded result, not a running campaign.' : 'Teardown unknown.', section);
       if (/^experiments\/evidence\/astra_native_keyboard_[a-z0-9_]+\.json$/.test(row.evidence_path)) {
