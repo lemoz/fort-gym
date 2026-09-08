@@ -52,6 +52,7 @@ def run_keyboard_segment(
         "status": "failed",
         "stop_reason": "unsettled_failure",
         "autonomous_gameplay": True,
+        "private_measurement_profile": getattr(environment, "private_measurement_profile", None),
     }
     try:
         capture = environment.screen_capture()

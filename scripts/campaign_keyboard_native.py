@@ -85,6 +85,7 @@ def worker(args) -> dict:
         expected_dfroot=args.runtime,
         control_profile=condition["control_profile"],
         max_advance_ticks=condition["max_advance_ticks"],
+        private_measurement_profile=window.get("private_measurement_profile"),
     )
     try:
         profile = window.get("snapshot_profile", LEGACY_SAVE_PROFILE)
@@ -166,6 +167,7 @@ def run_window(args) -> dict:
         "source_revision": args.revision,
         "campaign_id": manifest["payload"]["campaign_id"],
         "snapshot_profile": window.get("snapshot_profile", LEGACY_SAVE_PROFILE),
+        "private_measurement_profile": window.get("private_measurement_profile"),
         "status": "failed",
         "segments": [],
         "original_checkpoint_unchanged": False,

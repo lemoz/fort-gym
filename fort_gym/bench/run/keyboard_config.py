@@ -10,6 +10,7 @@ from ..agent.keyboard_exchange import read
 from ..env.native_key_catalog import NATIVE_PROFILE
 from ..env.screen_observation import TEXT_PROFILE
 from .keyboard_save import LEGACY_SAVE_PROFILE, SAVE_PROFILES
+from .campaign_food import validate_profile
 
 
 def positive(value: object, name: str, *, maximum: int | None = None) -> int:
@@ -75,6 +76,7 @@ def load_window(condition_path: Path, window_path: Path) -> tuple[dict, dict]:
     positive(window.get("max_segments"), "segment count", maximum=16)
     if window.get("snapshot_profile", LEGACY_SAVE_PROFILE) not in SAVE_PROFILES:
         raise ValueError("Unsupported declared snapshot profile")
+    validate_profile(window.get("private_measurement_profile"))
     extension = window.get("budget_extension")
     if extension is not None:
         if not isinstance(extension, dict) or set(extension) != {

@@ -32,6 +32,7 @@ from ..env.workshop_placement import (
     validate_policy,
 )
 from .campaign_save import native_save_status
+from .campaign_food import read_food_measurement, validate_profile
 from .keyboard_clock import BLOCKING_FOCI, SCHEMA as MENU_DEFERRAL_SCHEMA, validate_menu_deferral
 from .keyboard_clock_timeout import (
     SCHEMA as CLOCK_UNAVAILABLE_SCHEMA, validate_clock_unavailable, validate_zero_tick_timeout,
@@ -64,12 +65,14 @@ class NativeCampaignEnvironment:
         workshop_placement_policy: str = STRICT_FLOOR,
         max_advance_ticks: int = 2000,
         control_profile: str = HELPER_CONTROL_PROFILE,
+        private_measurement_profile: str | None = None,
     ) -> None:
         if type(max_advance_ticks) is not int or not 1 <= max_advance_ticks <= 2500:
             raise ValueError("Invalid campaign tick limit")
         if control_profile not in (HELPER_CONTROL_PROFILE, *KEYBOARD_PROFILES):
             raise ValueError("Invalid campaign control profile")
         self.control_profile = control_profile
+        self.private_measurement_profile = validate_profile(private_measurement_profile)
         self.max_advance_ticks = max_advance_ticks
         self.workshop_placement_policy = validate_policy(workshop_placement_policy)
         self.expected_dfroot = expected_dfroot.resolve()
@@ -121,6 +124,12 @@ class NativeCampaignEnvironment:
         }
         state["fort"] = read_campaign_fort_metrics()
         state["crew"] = read_campaign_job_metrics()
+        if getattr(self, "private_measurement_profile", None) is not None:
+            state["private_food_measurement"] = read_food_measurement(
+                expected_dfroot=self.expected_dfroot,
+                year=native["year"],
+                year_tick=native["year_tick"],
+            )
         if self.workshop_placement_policy == NATIVE_GROUND:
             state["workshop_placement"] = policy_observation()
         # No G7 event monitor is started/reset here. Stock and structure observations

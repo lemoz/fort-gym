@@ -9,13 +9,24 @@ verified food totals. The existing drink measurement scans native item units;
 neither a rising drink count nor a completed farm establishes production or
 sustainability.
 
-The isolated `food_inventory.py` candidate now provides a read-only native scan
-and strict result validator. It is **not connected** to campaign observations,
-the model prompt, the evaluator, the website, or the historical G7 hooks. This
-separation lets the current Astra continuation stay frozen while measurement is
-developed. A separate provider-free native check has now passed on checkpoint
+The `food_inventory.py` collector provides a read-only native scan and strict
+result validator. Its optional campaign adapter now retains the result as
+private evaluation data, without putting it in the playing model's prompt.
+Historical G7 hooks and UI estimates remain unchanged. A separate provider-free
+native check passed on checkpoint
 567, alongside independent retained-evidence reconciliation. This is one
-checkpoint's inventory evidence, not integration or sustainability acceptance.
+checkpoint's inventory evidence, not end-to-end integration or sustainability
+acceptance.
+
+The `fortgym.campaign-food-measurement/v1` window setting opts into the adapter.
+Omitting it preserves existing behavior and issues no new measurement RPC.
+Each reading binds the loaded paused runtime, save and calendar around the scan;
+the evaluator requires matching calendar and validated complete inventory before
+reporting units. Missing, stale or partial readings remain unknown. The original
+`stocks.food` UI estimate is not overwritten. The declared next window n keeps
+the model, native keys, screen-only observations, memory and cumulative limits.
+It is a continuation with new private measurement coverage, not a comparable
+independent trial or a retroactive update to earlier results.
 
 ## Exact candidate definition
 
@@ -87,10 +98,12 @@ The published aggregate is
 [`food_inventory_native_20260908.json`](../experiments/evidence/food_inventory_native_20260908.json).
 Raw inventory details, screens, saves and the independent audit remain private.
 
-Next, integrate a declared private measurement profile without expanding the
-playing model's screen-only observations, and test continuation and failure
-behavior. Do not rewrite historical `food_stock: null` results. Prepared-meal
-native coverage and longitudinal production/consumption measurement remain open.
+The optional private measurement adapter is now implemented and declared for
+window n, with tests for native-read failure, malformed/stale/partial counts,
+unchanged defaults, worker wiring, and absence from model inputs and feedback.
+Its first integrated native continuation remains unrun at this source revision.
+Do not rewrite historical `food_stock: null` results. Prepared-meal native
+coverage and longitudinal production/consumption measurement remain open.
 
 ## Production and consumption remain separate work
 

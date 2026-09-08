@@ -14,6 +14,7 @@ from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from .campaign import campaign_progress
+from ..run.campaign_food import validate_measurement
 
 METRICS = (
     "population",
@@ -70,6 +71,16 @@ def metrics_from_state(value: Any) -> dict[str, int | None]:
             metrics["drink_stock"] = units
         # The v2 flag validates value types only. Missing stock provenance and
         # freshness-unverified UI food estimates are not native stock evidence.
+        if type(state.get("year")) is int and type(state.get("year_tick")) is int:
+            try:
+                food = validate_measurement(
+                    state.get("private_food_measurement"),
+                    year=state["year"], year_tick=state["year_tick"],
+                )
+            except (ValueError, TypeError):
+                pass
+            else:
+                metrics["food_stock"] = count(food["inventory"]["units"])
     fort, crew = mapping(state.get("fort")), mapping(state.get("crew"))
     if (
         fort.get("ok") is True

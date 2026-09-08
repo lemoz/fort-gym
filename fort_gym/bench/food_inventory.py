@@ -1,4 +1,4 @@
-"""Candidate read-only food inventory; not yet part of campaign observations.
+"""Read-only food inventory for explicitly declared private campaign measurement.
 
 The version-pinned native predicate is recorded literally, not interpreted as
 ownership, reachability, nutrition, production, or a sustainable food supply.
