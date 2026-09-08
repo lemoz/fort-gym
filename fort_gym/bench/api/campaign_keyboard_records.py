@@ -9,7 +9,9 @@ from pathlib import Path
 from .campaign_keyboard_checkpoints import (
     CHECKPOINT_FAILURES, CHECKPOINT_RECOVERIES, checkpoint_failure, settled_checkpoint_recovery,
 )
-from .campaign_keyboard_continuations import CONTINUATIONS, keyboard_continuation
+from .campaign_keyboard_continuations import (
+    CONTINUATIONS, POSTRESTART_CONTINUATIONS, keyboard_continuation,
+)
 from .campaign_keyboard_presave import (
     PRESAVE_FAILURES, SAVE_ACCEPTANCES, presave_failure, save_acceptance,
 )
@@ -276,6 +278,11 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
     save_acceptances = [save_acceptance(root, filename, presave_failures) for filename in SAVE_ACCEPTANCES]
     presave_restarts = [keyboard_restart(root, filename, presave_failures, continuations)
                        for filename in PRESAVE_RESTARTS]
+    postrestart_continuations: list[dict] = []
+    for filename in POSTRESTART_CONTINUATIONS:
+        postrestart_continuations.append(keyboard_continuation(
+            root, filename, [*presave_restarts, *postrestart_continuations], failures,
+        ))
     # Explicit publication order retains the interruption between its parent
     # continuation and recovery; later play must not appear below older recovery.
     recent_events = [
@@ -292,6 +299,11 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
         failure_event = {"kind": "presave_failure", "id": restart["original_failure"]}
         recent_events.insert(recent_events.index(failure_event) + 1,
                              {"kind": "restart", "id": restart["restart_id"]})
+    for continuation in postrestart_continuations:
+        parent_event = next(event for event in recent_events
+                            if event["id"] == continuation["parent_record"])
+        recent_events.insert(recent_events.index(parent_event) + 1,
+                             {"kind": "continuation", "id": continuation["continuation_id"]})
     return {
         "schema_version": "fortgym.public-keyboard-milestones/v1",
         "live_tracking": False,
@@ -302,7 +314,7 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
         "restarts": [*restarts, *presave_restarts],
         "checkpoint_reviews": reviews,
         "checkpoint_recoveries": checkpoint_recoveries,
-        "continuations": continuations,
+        "continuations": [*continuations, *postrestart_continuations],
         "presave_failures": presave_failures,
         "save_acceptances": save_acceptances,
         "tail_interruptions": tail_interruptions,

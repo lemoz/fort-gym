@@ -16,6 +16,8 @@ CONTINUATIONS = (
     "astra_native_keyboard_midyear_continuation_20260908.json",
     "astra_native_keyboard_food_continuation_20260908.json",
 )
+# Populated only with independently audited native results, never test fixtures.
+POSTRESTART_CONTINUATIONS: tuple[str, ...] = ()
 IDENTITIES = {
     "status": "completed",
     "model": "gpt-6-astra",
@@ -39,11 +41,15 @@ def keyboard_continuation(root: Path, filename: str, parents: list[dict], failur
         raise ValueError("Keyboard continuation must be a bounded regular publication")
     source = json.loads(path.read_bytes())
     warning = _operator_warning(source)
+    postrestart = source.get("schema_version") == "fortgym.native-keyboard-continuation-summary/v3"
+    identities = {**IDENTITIES, "snapshot_profile":
+                  f"native_menu_preserving_save/v{4 if postrestart else 3}"}
     parent = next((row for row in parents
-                   if row.get("continuation_id", row.get("recovery_id")) == source["parent_record"]), None)
+                   if row.get("continuation_id", row.get("recovery_id", row.get("restart_id")))
+                   == source["parent_record"]), None)
     if (
         parent is None
-        or any(source.get(key) != value for key, value in IDENTITIES.items())
+        or any(source.get(key) != value for key, value in identities.items())
         or source["captured_screen_size"] != [120, 40]
         or re.fullmatch("[a-f0-9]{40}", source["source_revision"]) is None
         or source["parent_checkpoint_sha256"] != parent["checkpoint_sha256"]
@@ -63,13 +69,26 @@ def keyboard_continuation(root: Path, filename: str, parents: list[dict], failur
     counters = {key: source[key] for key in COUNTERS}
     if any(type(value) is not int or value < 0 for value in counters.values()):
         raise ValueError("Keyboard continuation counters are invalid")
-    continued = "continuation_id" in parent
+    restarted = "restart_id" in parent
+    continued = "continuation_id" in parent or restarted
+    if postrestart and (
+        not continued or parent.get("snapshot_profile") != "native_menu_preserving_save/v4"
+    ):
+        raise ValueError("Post-restart continuation requires a verified v4 parent")
+    if not postrestart and (restarted or parent.get("snapshot_profile") == "native_menu_preserving_save/v4"):
+        raise ValueError("Restart parent requires an explicit v3 continuation publication")
+    parent_cursor = parent["progress"]["checkpoint_cursor"] if restarted else parent["checkpoint_cursor"]
     parent_responses = (parent["progress"]["cumulative_model_responses"] if continued
                         else parent["returned_model_decisions"])
     parent_ticks = (parent["progress"]["retained_elapsed_ticks"] if continued
                     else parent["elapsed_native_ticks"])
+    prior_losses = ((parent["native_save_loss_restarts"] if restarted
+                     else parent["progress"]["native_save_loss_restarts"])
+                    if postrestart else len(failures))
+    prior_discarded_ticks = (parent["progress"]["discarded_native_ticks"] if postrestart
+                            else sum(row["progress"]["unsaved_new_native_ticks"] for row in failures))
     if (
-        source["parent_checkpoint_cursor"] != parent["checkpoint_cursor"]
+        source["parent_checkpoint_cursor"] != parent_cursor
         or not 1 <= source["steps_per_segment"] <= 64
         or source["new_model_calls"] < 1
         or source["new_accepted_decisions"] > source["new_model_calls"]
@@ -78,15 +97,14 @@ def keyboard_continuation(root: Path, filename: str, parents: list[dict], failur
         or source["retained_elapsed_ticks"] != parent_ticks + source["new_elapsed_ticks"]
         or source["campaign_tokens"] != parent["usage"]["campaign_tokens"] + source["new_tokens"]
         or source["all_attempt_tokens"] != parent["usage"]["all_attempt_tokens"] + source["new_tokens"]
-        or source["native_save_loss_restarts"] != len(failures)
-        or source["discarded_native_ticks"]
-        != sum(row["progress"]["unsaved_new_native_ticks"] for row in failures)
+        or source["native_save_loss_restarts"] != prior_losses
+        or source["discarded_native_ticks"] != prior_discarded_ticks
     ):
         raise ValueError("Continuation must preserve parent progress, usage and loss history")
     checkpoints = source["checkpoints"]
     if not isinstance(checkpoints, list) or not 1 <= len(checkpoints) <= 16:
         raise ValueError("Continuation requires bounded checkpoint coverage")
-    cursor, ticks, digest = (parent["checkpoint_cursor"], parent_ticks,
+    cursor, ticks, digest = (parent_cursor, parent_ticks,
                              parent["checkpoint_sha256"])
     projected = []
     for row in checkpoints:
@@ -104,12 +122,12 @@ def keyboard_continuation(root: Path, filename: str, parents: list[dict], failur
         )})
         cursor, ticks, digest = row["cursor"], row["elapsed_native_ticks"], row["sha256"]
     if (
-        cursor != parent["checkpoint_cursor"] + source["new_model_calls"]
+        cursor != parent_cursor + source["new_model_calls"]
         or ticks != source["retained_elapsed_ticks"]
     ):
         raise ValueError("Continuation checkpoints must cover all new decisions and time")
     outcomes = _outcome_counts(source.get("outcome_counts"), source["new_model_calls"])
-    food = food_inventory_outcome(source, source["new_model_calls"], parent["checkpoint_cursor"])
+    food = food_inventory_outcome(source, source["new_model_calls"], parent_cursor)
     execution = _execution_counts(source.get("execution_counts"), counters, outcomes)
     return {
         "continuation_id": filename.removesuffix(".json"),
@@ -140,7 +158,8 @@ def keyboard_continuation(root: Path, filename: str, parents: list[dict], failur
 def _operator_warning(source: dict) -> dict | None:
     """Preserve native completion separately from a failed outer observation."""
     version = source.get("schema_version")
-    if version == "fortgym.native-keyboard-continuation-summary/v1":
+    if version in {"fortgym.native-keyboard-continuation-summary/v1",
+                   "fortgym.native-keyboard-continuation-summary/v3"}:
         if "operator_status" in source or "operator_observation_warning" in source:
             raise ValueError("Operator warning requires the explicit v2 publication")
         return None
