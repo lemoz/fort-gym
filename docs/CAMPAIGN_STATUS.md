@@ -13,45 +13,55 @@ and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. Several bounded Astra native-keyboard
 windows have completed; the same fortress remains in autonomous continuation.
 
-### Active continuation n: private measurement, unchanged model condition
+### Latest completed result: checkpoint 631, 143,400 retained ticks
 
-Window n is running from 567 on frozen source
-`567251e7414795d52c87e1450eca146bfb419069`, pushed and verified in open draft PR
-#137. The terminal-observation helper catches the actual subprocess error type,
-rechecks explicit stopped-container state and retains warnings without retrying
-a model. The optional private food adapter is declared for n. It does not change
-Astra Medium, native keyboard/v2, screen text/v1, 120x40 display, memory or the
-inherited 1,024-dispatch / 40-million-token allowance.
+Window n completed all 64 accepted Astra Medium decisions on frozen source
+`567251e7414795d52c87e1450eca146bfb419069`, adding 21,200 ticks. Independently
+audited checkpoint 631 retains 143,400 ticks, about 35.6 percent of the first
+full elapsed game year:
+`7ea1b53b0ce6081ab935cd68a720d81330d08b3c6dfbcfd2ec4b01ecc8c2b283`.
+Twelve dwarves remain alive with zero recorded citizen deaths. Completed farms
+increased five to seven, installed beds four to five and workshops three to four.
+Drink units changed 181 to 179. Eleven decisions advanced time and 53 did not;
+all 21,200 requested ticks advanced, with no rejected inputs, menu deferrals or
+clock timeouts. Final functional-room measurement is unknown.
 
-The unique owner under `astra-native-food-continuation-v1` verified startup and
-fresh subscription admission. A later live read observed 37 returned valid
-responses, 36 committed decisions and 8,000 new ticks. Initial and current
-private food readings were complete at 27 and 71 units; the live population was
-twelve. These inventory changes do not identify production or consumption. Actual request fields
-remain the screen-only contract. These are in-flight observations, not a
-completed window, checkpoint 631 or a sustainability result. The same owner
-must finish and verify mandatory teardown; keep its implementation source frozen.
+The first integrated private-food profile measured 27 initial and 82 final
+native-predicate units. All 65 boundaries were complete; the final count matched
+the saved state. Historical food unknowns and UI estimates remain unchanged.
+Inventory changes do not establish accessibility, production, consumption or
+sustainability. Actual requests preserved the screen/memory/control-feedback
+contract, without private evaluation counts or strategy intervention.
 
-The full local production-code test run passed 3,087 tests with ten skips; two
-later-added tests passed in a 68-test focused rerun. Scoped Ruff and seven-file
-mypy with silent dependency following passed. The default dependency-following
-mypy invocation was not green (271 diagnostics in 16 files); no full typing-clean
-claim. Exact-source CI `34259573627` subsequently passed. Prior publication source
-`4e746f0fa` passed CI `34257628962`. No merge, deployment or visual acceptance.
+Save/lineage, gameplay, clock, food-coverage and authored-publication audits passed.
+The outer owner exited successfully without a terminal-observation warning;
+the earlier failed owner remains recorded. Native, container and VM teardown
+passed, and the local VM profile was freshly observed stopped. Do not restart
+the terminal owner. No new loss, replay, restart, reset or budget extension
+occurred. All 647 responses, 20,850,223 campaign tokens and 20,919,227 all-attempt
+tokens are accounted; new usage was 2,213,858 tokens. Charges remain unreported.
+The inherited 2,000-tick loss and all earlier failures remain explicit. Private
+evidence is under `astra-native-food-continuation-v1`.
 
-While n runs, an isolated dashboard/API update was implemented and pushed as
-`1f083183f623e64323960967c669efa51607343b` on
-`codex/campaign-food-outcomes-v1`, with the exact remote head verified. It supports
-authored native-food endpoint counts and complete/unknown reading coverage while
-preserving historical unknowns. Synthetic fixtures are not published run results.
-The full local suite passed 3,134 tests with ten skips after granting loopback
-socket access; the first sandboxed run denied one ephemeral-port test and passed
-the other 3,133. The 163-test focused suite, scoped Ruff/two-file mypy and JavaScript
-syntax checks passed. No separate remote-CI result is claimed for this branch.
-It is not integrated into the frozen runtime, merged or deployed. After n ends,
-audit its actual evidence before adding any result to the completed-record allowlist.
+The food-display source `1f083183f623e64323960967c669efa51607343b` was developed
+and pushed independently while n ran. Only after teardown and audits was it
+integrated into the implementation branch as `1eacaa581`, alongside the real
+checkpoint-631 publication. The combined focused suite passed 166 tests, the
+full local suite passed 3,137 tests with ten skips, and scoped Ruff/two-file
+mypy/JavaScript checks passed. Publication commit
+`15af09ffeaf5022be0b2b4c91c858b718fbb522a` is pushed and remote-verified in OPEN,
+DRAFT PR #137. Its exact-head CI `34265344540` completed successfully. The native
+run's source also passed its own CI `34259573627`.
+No repository-wide typing-clean, browser visual acceptance, merge or deployment
+claim. The page remains recorded evidence, not a live campaign feed.
 
-### Latest completed result: checkpoint 567, 122,200 retained ticks
+Declared next window o preserves Astra Medium, native keyboard/v2, screen
+text/v1, 120x40, save/v3, private food measurement and the cumulative
+1,024-dispatch / 40-million-token ceiling. It has not started. Its native process
+must verify a fresh load of checkpoint 631 before another model response.
+Year-two success, repeated cross-model comparison and website delivery remain open.
+
+### Previous completed result: checkpoint 567, 122,200 retained ticks
 
 Window m's native game completed 64 accepted Astra Medium decisions on frozen
 source `c9b8607cc13047bf5e5202f397ab44bc6522f59f`, adding 7,200 actual ticks.

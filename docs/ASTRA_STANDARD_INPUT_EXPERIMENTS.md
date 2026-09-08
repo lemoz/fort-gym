@@ -77,7 +77,7 @@ It was subsequently verified active on September 7. The readable-screen profile
 and first synthetic Astra comparison are published in draft PR #137; current
 evidence and remaining native work are tracked in [Campaign status](CAMPAIGN_STATUS.md).
 
-## Latest interface result
+## Historical interface result: window h
 
 Latest autonomous continuation, September 8: window h passed four v3 native
 saves after all 64 new Astra Medium decisions. Checkpoint 296 retains 63,600
@@ -278,15 +278,21 @@ draft PR #137. Full local production-code testing passed 3,087 tests with ten
 skips; two later-added tests passed in the focused rerun. Scoped static checks
 passed, without claiming repository-wide typing cleanliness.
 
-Window n is running from checkpoint 567 on that frozen source. A later read
-observed 37 valid responses, 36 committed decisions and 8,000 new ticks. Its first
-integrated private food read was 27 units and the later complete reading was 71;
-twelve dwarves remained alive. This is inventory growth, not production attribution. Actual model
+Window n completed from checkpoint 567 on that frozen source. All 64 responses
+were accepted and all 21,200 requested ticks advanced, reaching independently
+audited checkpoint 631 and 143,400 retained ticks. Its first integrated private
+food reading was 27 units and its final complete reading was 82; all 65 boundaries
+were complete and the final count matched the saved state. Twelve dwarves remained
+alive. Completed farms/beds/workshops increased five/four/three to seven/five/four;
+drinks changed 181 to 179. This is inventory growth, not production attribution. Actual model
 requests retain only screen, memory and factual control feedback; the private
 evaluation count does not alter the playing condition. Source-specific CI
 `34259573627` subsequently passed; earlier source `4e746f0fa` also passed its CI.
-The unique owner must retain any error and finish teardown. No terminal n result
-is claimed. Full-year survival, repeated model comparisons, merged/deployed
+The owner exited successfully without a terminal-observation warning. All retained
+evidence audits and teardown passed, and the local VM profile was freshly observed
+stopped. All 647 responses and 20,850,223 campaign tokens are accounted, with
+20,919,227 all-attempt tokens; historical loss, failed runs and unknown charges
+remain explicit. Full-year survival, repeated model comparisons, merged/deployed
 website delivery and full-goal completion remain open.
 
 The separately developed API/page food-count projection is pushed and
@@ -296,5 +302,10 @@ complete/unknown coverage, leaves earlier food unknowns intact and keeps native
 inventory distinct from accessibility and sustainability. Full local validation
 passed 3,134 tests with ten skips after resolving a sandbox denial of a local
 socket test; 163 focused tests and scoped static checks passed. No native result
-fixture was published. The change remains isolated from the running harness;
-integration and real result publication follow terminal audit and teardown.
+fixture was published. After n's teardown and audits, the display was integrated
+as `1eacaa581` with its real checkpoint-631 result; 166 combined focused tests,
+all 3,137 local tests (ten skipped) and scoped static checks passed. Publication
+commit `15af09ffeaf5022be0b2b4c91c858b718fbb522a` is pushed and remote-verified in
+draft PR #137. Exact-head CI `34265344540` passed. Declared window o keeps
+all conditions, memory and limits,
+but has not started; it must verify fresh loading of checkpoint 631 first.

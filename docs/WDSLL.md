@@ -8,7 +8,29 @@ fortress through year two and beyond. Website evidence and remote source deliver
 remain requirements. The objective is unfinished; early native Astra gameplay
 and checkpoint-continuation evidence are now verified.
 
-Latest result, September 8 UTC: native window m completed 64 accepted decisions
+Latest result, September 8 UTC: native window n completed 64 accepted decisions,
+adding 21,200 ticks and saving checkpoint 631 with 143,400 retained ticks (35.6
+percent of the first full year). Twelve dwarves remained alive with no recorded
+citizen deaths. Completed farms/beds/workshops increased five/four/three to
+seven/five/four. Drinks changed 181 to 179 units. The first integrated private-food
+profile measured 27 initial and 82 final native-predicate units, with complete
+readings at all 65 boundaries and the final count matching the saved state.
+These are inventory counts, not production attribution or sustainability proof.
+
+Save/lineage, gameplay, clock, food-coverage and authored-publication audits passed.
+The owner exited successfully without a terminal-observation warning, and native,
+container and VM teardown passed with a fresh stopped-profile check. All 647
+responses, 20,850,223 campaign tokens and 20,919,227 all-attempt tokens are retained;
+the earlier loss/failures and unknown charges remain unchanged. No new restart,
+replay, hint, memory reset or budget extension. The food-count display was
+integrated only after teardown and audit; 166 combined focused tests, all 3,137
+local tests (ten skipped) and scoped static checks passed. Publication commit
+`15af09ffeaf5022be0b2b4c91c858b718fbb522a` is pushed and remote-verified in draft
+PR #137; exact-head CI `34265344540` passed. Window o is declared but
+not started, and must verify a fresh load
+of checkpoint 631. Full year-two, repeated-model and website-delivery work remains.
+
+Previous result, September 8 UTC: native window m completed 64 accepted decisions
 and 7,200 new ticks, reaching checkpoint 567 and 122,200 retained ticks (30.3
 percent of a full elapsed year). Population grew seven to twelve with zero
 recorded citizen deaths. Completed farms/beds/workshops remain five/four/three;
@@ -39,18 +61,16 @@ and optional private food measurement and is pushed in draft PR #137. Its full
 local code test run passed 3,087 tests with ten skips; two later-added tests also
 passed in a 68-test focused rerun. Scoped static checks passed; this is not a
 repository-wide typing-clean claim. Exact-head CI `34259573627` subsequently passed.
-Window n is actively continuing from 567 with the same model and cumulative
-limits. A later read observed 37 valid responses, 36 committed decisions and 8,000
-new ticks. Complete private food readings increased from 27 to 71 units, with
-twelve living dwarves; inventory growth is not production attribution. These observations are
-not a completed window. Follow its unique owner through auditing and teardown.
+Window n subsequently completed from 567 with the same model and cumulative
+limits, as recorded above. Its earlier in-flight observations are superseded by
+the audited checkpoint 631 and verified teardown.
 The isolated food-count API/page update is pushed and remote-verified at
 `1f083183f623e64323960967c669efa51607343b` on `codex/campaign-food-outcomes-v1`.
 It passed 163 focused tests and the full 3,134-test suite (ten skipped) after
 loopback socket access was allowed, plus scoped static checks. It preserves
-unknown versus zero and does not publish a synthetic completed run. Runtime
-integration, native-result publication, browser acceptance and deployment remain
-separate; the live source stays frozen.
+unknown versus zero and does not publish a synthetic completed run. Integration
+and native-result publication followed its teardown and audit;
+browser acceptance and deployment remain separate.
 The full original year-two, repeated-model and website-delivery goal remains active.
 
 
