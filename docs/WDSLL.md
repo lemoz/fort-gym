@@ -8,17 +8,33 @@ fortress through year two and beyond. Website evidence and remote source deliver
 remain requirements. The app goal is verified active; early native Astra gameplay
 and checkpoint-continuation evidence are now verified.
 
-Latest result, September 8 UTC: normal continuation returned 16 accepted decisions
-and 1,200 new ticks, then failed screen equality during saving at source `1198ece39`.
-Independent audit verifies 232 fully accounted responses, 7,706,555 campaign tokens
-(7,775,559 including historical failed deliveries), unchanged prior evidence and
-complete teardown. A changed native save copy matches the stopped runtime; latest
-state needs reload verification and forward-only reconciliation, not rollback.
-Checkpoint 200 / 46,000 ticks remains verified; trace 216 / 47,200 ticks is newer
-but not yet a resumable checkpoint. The website records that distinction. New
-diagnostic capture retains the private screen pair on future save failures without
-relaxing checks. Underlying cause remains unproven; no worker is live or new model
-run required for the next diagnostic. The full goal remains active.
+Latest result, September 8 UTC: window g returned 16 accepted decisions and 2,000
+new ticks, then rejected a changed native menu identity during saving at source
+`dcc475a42`. Independent audit verifies all 248 responses, 8,150,227 campaign tokens
+(8,219,231 including historical failed deliveries), preserved prior evidence and
+complete teardown. The retained trace reaches 232 / 49,200 ticks; the latest
+verified checkpoint remains 216 / 47,200 ticks. The newer runtime save differs
+from its parent but needs fresh reload verification. The exact changed UI field
+is unknown because the rejected raw operation receipt was not retained. Added
+diagnostics retain it and read-only post-failure captures on future checks without
+weakening the invariant or retrying saving. No worker is live. Next is provider-free
+native investigation and forward reconciliation, not rollback or erased usage.
+
+Previous result: forward recovery created verified checkpoint 216
+and passed a fresh native reload at source `2a158ae19`. Independent audit verifies
+47,200 retained ticks, all 232 responses, 7,706,555 campaign tokens (7,775,559 with
+historical failed deliveries), unchanged memory/journals and complete teardown.
+No model call, replay, requested tick or new discontinuity was added. Paused screen
+animation made pixel equality an invalid save invariant. Explicit save profile v2
+checks unchanged menu identity and world observations while retaining the screen
+evidence; historical v1 and the original failed window remain unchanged. The
+earlier genuinely lost 2,000 ticks remain lost and their usage is still counted.
+Website source now leads with this recovery, with local HTTP/endpoint checks and
+pushed source `e6376a6a3` passing CI. Follow-up `dcc475a42` retains successful private
+save diagnostics. Window g continues from 216 without resetting model memory,
+usage or limits. No merge, production deployment, visual acceptance, year-two
+sustainability or completed cross-model comparison is claimed. The full goal
+remains active.
 
 Previous result, September 8 UTC: the explicit loss-aware Astra restart completed
 16 new accepted decisions and saved verified new-branch checkpoint 200 at source

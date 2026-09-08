@@ -13,7 +13,64 @@ and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. The first bounded Astra native
 keyboard campaign has now completed.
 
-### Latest result: screen validation failure after 16 more decisions
+### Latest result: 16 further decisions, then a menu-identity save failure
+
+Window g at `dcc475a42872d35918eaefdc4d3f0a5f5b1203a2` returned 16 accepted
+decisions and advanced 2,000 ticks. It stopped at trace cursor 232 / 49,200 retained
+ticks on `Native menu identity changed during save`. Independent audit verifies
+248 fully accounted responses, 443,672 new tokens, 8,150,227 campaign tokens and
+8,219,231 including historical failed deliveries. Charges remain unreported.
+Checkpoint 216 / 47,200 ticks is still the latest verified resumable checkpoint.
+
+The runtime's world save changed from the parent and is retained, but has not had
+a fresh reload verification. The trace and model memory/usage are settled and
+unchanged observations bracket the save operation. Its specific changed UI field
+is unknown because validation rejected the raw operation receipt before it was
+retained. Follow-up diagnostics now retain that unvalidated receipt and read-only
+post-failure captures without retrying the save or relaxing the identity check.
+All game/container/VM teardown passed. No worker is live; no new model call is
+needed to investigate the retained state. Do not rewind or discard the latest
+16 decisions and their usage. This is not a recorded fortress collapse.
+
+Private evidence:
+`fort_gym/artifacts/native-local-20260906/runtime-v2/astra-native-semantic-continuation-v1`.
+The authored latest review is
+`experiments/evidence/astra_native_keyboard_menu_identity_review_20260908.json`.
+
+### Previous result: checkpoint 216 recovered and verified by fresh native reload
+
+Provider-free recovery at `2a158ae19d2bd6dcfdd1a4bb0013e6c8d42ad57f` passed
+independent audit and a second native-game reload. Verified checkpoint 216 is
+`36142c131e444003dd8dc7616f330800946566ab614d2f7509b32bbda8f4bca3`, retaining
+47,200 elapsed ticks, all 232 responses, unchanged model memory and byte-identical
+trace/usage journals. Usage remains 7,706,555 campaign tokens and 7,775,559 with
+historical failed deliveries. There were zero additional model calls, gameplay
+keys, requested ticks or new loss boundaries. All native processes, the container
+and the local VM were stopped and verified; subscription charges are unreported.
+
+The cause was a bad pixel-equality check: paused screen tiles changed even between
+read-only captures, while menu identity and world observations stayed unchanged.
+The explicit `native_menu_preserving_save/v2` profile checks unchanged menu
+identity and recorded world state while retaining screen captures and both
+digests. Historical v1 remains unchanged. Fresh-load connectivity-to-unknown
+changes are accepted only under the observed native pending-reindex flag; no
+game tick or reindex command is used to force agreement.
+
+The website source now leads with recovered checkpoint 216, while preserving the
+original validation failure and the earlier genuinely lost 2,000-tick branch.
+Source `e6376a6a3` is pushed with passing CI; follow-up `dcc475a42` retains successful
+private save diagnostics as well as failures. Website/API checks and local HTTP
+passed. Preview handoff was queued and requests were observed; no visual QA,
+merge or production deployment is claimed. Window g is declared from checkpoint
+216 with the new save profile, unchanged Astra Medium/native-keyboard conditions,
+memory, all usage and cumulative limits. It adds no budget extension or restart.
+
+Private recovery evidence:
+`fort_gym/artifacts/native-local-20260906/runtime-v2/astra-native-settled-recovery-v1`.
+Authored public evidence:
+`experiments/evidence/astra_native_keyboard_settled_recovery_20260908.json`.
+
+### Previous result: screen validation failure after 16 more decisions
 
 Normal continuation window f executed at `1198ece397eec679c04dcf4e948b2b419bbde956`
 with passing exact-source CI. It returned 16 accepted decisions and advanced
@@ -23,19 +80,16 @@ checkpoint validation. Independent audit verifies all 232 model responses,
 unchanged original prefixes and complete game/container/VM teardown. New usage
 is 722,519 tokens; charges are unreported. No worker is live.
 
-The save was copied before screen equality failed. Its files match the stopped
-runtime and differ from the previous world save. The latest actions are neither
-confirmed lost nor confirmed recovered: checkpoint 216 is unverified. Last verified
-checkpoint remains 200 / 46,000 ticks; the retained trace reaches 47,200 ticks.
-Next is a provider-free reload diagnostic and forward-only reconciliation using
-the newer save, not another rewind or action replay. Inherited lost-tail history,
-model memory and all usage remain intact.
+The save was copied before screen equality failed. At this failure, checkpoint
+200 / 46,000 ticks was the latest verified boundary, while the retained trace and
+newer save reached 47,200 ticks. The subsequent forward recovery above verified
+the newer state without another rewind or action replay. Inherited lost-tail
+history, model memory and all usage remain intact.
 
-The website source now leads with this validation failure above the previous
-successful restart. The save helper now retains exact private before/after
-captures and completed operation/copy receipts on failure without weakening its
-check or retrying a native save. The executed failure lacked that pair, so the
-screen-change cause remains unproven. No merge or production deployment.
+The original failure remains recorded below its subsequent recovery. The
+executed failed run lacked exact before/after captures; later provider-free
+diagnostics established the invalid pixel invariant described above. No native
+save was retried and no failure was reclassified as a successful original run.
 Private evidence: `fort_gym/artifacts/native-local-20260906/runtime-v2/astra-native-post-loss-restart-v1`.
 
 ### Previous result: saved new branch after explicit loss-aware restart
