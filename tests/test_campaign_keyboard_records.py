@@ -218,7 +218,14 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   assert.match(elements['keyboard-results'].textContent, /184 model responses/);
   assert.match(elements['keyboard-results'].textContent, /Recovery verified · checkpoint 184/);
   assert.match(elements['keyboard-results'].textContent, /Subsequently recovered as checkpoint 184/);
-  assert.ok(elements['keyboard-results'].textContent.startsWith('Recovery verified · checkpoint 311'));
+  assert.ok(elements['keyboard-results'].textContent.startsWith('Play continued · checkpoint 375'));
+  assert.match(elements['keyboard-results'].textContent, /64 new model decisions, 11,400 new ticks/);
+  assert.match(elements['keyboard-results'].textContent, /77,000 retained ticks/);
+  assert.match(elements['keyboard-results'].textContent, /391 accounted model responses/);
+  assert.match(elements['keyboard-results'].textContent, /12,907,163 including historical/);
+  assert.match(elements['keyboard-results'].textContent, /Completed farm plots 2 4/);
+  assert.match(elements['keyboard-results'].textContent, /7 decisions advanced game time; 57 requested no time/);
+  assert.match(elements['keyboard-results'].textContent, /Recovery verified · checkpoint 311/);
   assert.match(elements['keyboard-results'].textContent, /327 existing model responses and 65,600 elapsed ticks preserved/);
   assert.match(elements['keyboard-results'].textContent, /Workshop clock interrupted · decision 310/);
   assert.match(elements['keyboard-results'].textContent, /15 new responses, 14 committed actions and 2,000 new ticks/);

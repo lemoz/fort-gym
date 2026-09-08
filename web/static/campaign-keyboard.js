@@ -56,9 +56,8 @@
         throw new Error('Unsupported continuation recovery evidence');
       }
     }
-    (data.tail_interruptions || []).slice().reverse().forEach(row => {
+    function renderTailInterruption(row) {
       const recovered = (data.tail_recoveries || []).find(item => item.original_interruption === row.interruption_id);
-      if (recovered) renderRecovery(recovered);
       const section = node('section', undefined, results);
       section.className = 'campaign-condition';
       const p = row.progress;
@@ -73,8 +72,8 @@
         const link = node('a', 'Read the published interruption evidence', section);
         link.href = 'https://github.com/lemoz/fort-gym/blob/codex/campaign-codex-subscription/' + row.evidence_path;
       }
-    });
-    continuations.slice().reverse().forEach(row => {
+    }
+    function renderContinuation(row) {
       const section = node('section', undefined, results);
       section.className = 'campaign-condition';
       const p = row.progress;
@@ -83,12 +82,52 @@
       node('p', `Verified saves at ${row.checkpoints.map(item => count(item.cursor)).join(', ')}. The final save has not yet had a separate fresh-process reload.`, section);
       node('p', `${count(p.cumulative_model_responses)} accounted model responses; ${count(row.usage.campaign_tokens)} campaign tokens, ${count(row.usage.all_attempt_tokens)} including historical failed deliveries. This window used ${count(row.usage.new_tokens)} tokens. Model charge: ${cost(row.usage)}.`, section);
       node('p', `Model memory and all usage continued without replay or strategy intervention. The earlier ${count(p.discarded_native_ticks)} lost ticks remain recorded. This is the same fortress, not an independent model comparison or proof of sustainability.`, section);
+      if (row.outcome_counts) {
+        const outcomes = row.outcome_counts;
+        const table = node('table', undefined, section);
+        table.className = 'campaign-outcome-counts';
+        node('caption', 'Observed fortress counts', table);
+        const header = node('tr', undefined, node('thead', undefined, table));
+        for (const title of ['Metric', 'Before', 'After']) node('th', title, header).scope = 'col';
+        const body = node('tbody', undefined, table);
+        for (const [key, label] of [
+          ['population', 'Living dwarves'], ['completed_farms', 'Completed farm plots'],
+          ['completed_beds', 'Installed beds'], ['completed_workshops', 'Completed workshops'],
+          ['recorded_dead_citizens', 'Recorded dead citizens'], ['drink_units', 'Existing drink units']
+        ]) {
+          const item = node('tr', undefined, body);
+          node('th', label, item).scope = 'row';
+          node('td', count(outcomes.counts[key].start), item);
+          node('td', count(outcomes.counts[key].end), item);
+        }
+        node('p', `${count(outcomes.advancing_decisions)} decisions advanced game time; ${count(outcomes.zero_tick_decisions)} requested no time. Food stocks are unverified. Production and consumption were not measured; sustainability is not established.`, section);
+      }
       node('p', row.teardown_verified === true ? 'Game and VM teardown verified. Recorded result, not a running campaign.' : 'Teardown unknown.', section);
       if (/^experiments\/evidence\/astra_native_keyboard_[a-z0-9_]+\.json$/.test(row.evidence_path)) {
         const link = node('a', 'Read the published continuation evidence', section);
         link.href = 'https://github.com/lemoz/fort-gym/blob/codex/campaign-codex-subscription/' + row.evidence_path;
       }
-    });
+    }
+    const recent = {
+      continuation: continuations.map(row => ({id: row.continuation_id, row})),
+      interruption: (data.tail_interruptions || []).map(row => ({id: row.interruption_id, row})),
+      recovery: (data.tail_recoveries || []).map(row => ({id: row.recovery_id, row}))
+    };
+    const events = data.continuation_events || Object.entries(recent).flatMap(([kind, rows]) => rows.map(row => ({kind, id: row.id})));
+    if (!Array.isArray(events)) throw new Error('Unsupported continuation order');
+    const seen = new Set();
+    for (const event of events.slice().reverse()) {
+      const found = recent[event.kind]?.find(item => item.id === event.id);
+      const identity = `${event.kind}:${event.id}`;
+      if (!found || seen.has(identity)) throw new Error('Invalid continuation order');
+      seen.add(identity);
+      if (event.kind === 'continuation') renderContinuation(found.row);
+      else if (event.kind === 'interruption') renderTailInterruption(found.row);
+      else renderRecovery(found.row);
+    }
+    if (seen.size !== Object.values(recent).reduce((n, rows) => n + rows.length, 0)) {
+      throw new Error('Incomplete continuation order');
+    }
     reviews.slice().reverse().forEach(row => {
       const recovered = checkpointRecoveries.find(item => item.original_review === row.review_id);
       if (recovered) renderRecovery(recovered);

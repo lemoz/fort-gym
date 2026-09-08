@@ -258,13 +258,25 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
         else:
             checkpoint_recoveries.append(settled_checkpoint_recovery(root, filename, reviews))
     continuations: list[dict] = []
-    for filename in CONTINUATIONS:
+    for filename in CONTINUATIONS[:1]:
         continuations.append(keyboard_continuation(
             root, filename, [*checkpoint_recoveries, *continuations], failures,
         ))
     tail_interruptions = [continuation_interruption(root, TAIL_INTERRUPTION, continuations)]
     tail_recoveries = [continuation_recovery(root, filename, tail_interruptions)
                        for filename in TAIL_RECOVERIES]
+    for filename in CONTINUATIONS[1:]:
+        continuations.append(keyboard_continuation(
+            root, filename, [*checkpoint_recoveries, *tail_recoveries, *continuations], failures,
+        ))
+    # Explicit publication order retains the interruption between its parent
+    # continuation and recovery; later play must not appear below older recovery.
+    recent_events = [
+        *({"kind": "continuation", "id": row["continuation_id"]} for row in continuations[:1]),
+        *({"kind": "interruption", "id": row["interruption_id"]} for row in tail_interruptions),
+        *({"kind": "recovery", "id": row["recovery_id"]} for row in tail_recoveries),
+        *({"kind": "continuation", "id": row["continuation_id"]} for row in continuations[1:]),
+    ]
     return {
         "schema_version": "fortgym.public-keyboard-milestones/v1",
         "live_tracking": False,
@@ -278,4 +290,5 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
         "continuations": continuations,
         "tail_interruptions": tail_interruptions,
         "tail_recoveries": tail_recoveries,
+        "continuation_events": recent_events,
     }

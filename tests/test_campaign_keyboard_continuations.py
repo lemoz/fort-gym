@@ -91,3 +91,46 @@ def test_later_continuation_binds_previous_continuation_and_is_not_independent(e
     assert row["progress"]["discarded_native_ticks"] == 2000
     assert row["usage"]["all_attempt_tokens"] == 10285008
     assert row["uninterrupted_campaign"] is False
+
+
+def test_completed_play_after_recovery_keeps_all_responses_and_safe_outcome_counts(evidence_root):
+    path = evidence_root / "experiments/evidence" / records.CONTINUATIONS[1]
+    source = json.loads(path.read_text())
+    source["outcome_counts"]["screen"] = "private-screen"
+    source["outcome_counts"]["counts"]["population"]["position"] = "private-position"
+    path.write_text(json.dumps(source))
+    data = records.keyboard_campaign_records(evidence_root)
+    row = data["continuations"][1]
+    assert row["parent_record"] == data["tail_recoveries"][0]["recovery_id"]
+    assert row["checkpoint_cursor"] == 375
+    assert row["progress"]["cumulative_model_responses"] == 391
+    assert row["progress"]["retained_elapsed_ticks"] == 77000
+    assert row["usage"]["campaign_tokens"] == 12838159
+    assert row["outcome_counts"]["counts"]["completed_farms"] == {"start": 2, "end": 4}
+    assert row["outcome_counts"]["food_stock"] is None
+    assert data["continuation_events"][-1] == {"kind": "continuation", "id": row["continuation_id"]}
+    assert "private-" not in json.dumps(data)
+
+
+@pytest.mark.parametrize("field,value", [
+    ("independent_private_review_passed", False), ("food_stock", 45),
+    ("advancing_decisions", True), ("zero_tick_decisions", 56),
+    ("production_and_consumption", "self_sufficient"), ("sustainability", "proved"),
+])
+def test_outcome_summary_cannot_invent_measurement(evidence_root, field, value):
+    path = evidence_root / "experiments/evidence" / records.CONTINUATIONS[1]
+    source = json.loads(path.read_text())
+    source["outcome_counts"][field] = value
+    path.write_text(json.dumps(source))
+    with pytest.raises(ValueError):
+        records.keyboard_campaign_records(evidence_root)
+
+
+@pytest.mark.parametrize("value", [True, -1, "4", None])
+def test_outcome_counts_require_actual_integer_values(evidence_root, value):
+    path = evidence_root / "experiments/evidence" / records.CONTINUATIONS[1]
+    source = json.loads(path.read_text())
+    source["outcome_counts"]["counts"]["completed_farms"]["end"] = value
+    path.write_text(json.dumps(source))
+    with pytest.raises(ValueError):
+        records.keyboard_campaign_records(evidence_root)

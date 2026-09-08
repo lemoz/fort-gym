@@ -6,7 +6,10 @@ import json
 import re
 from pathlib import Path
 
-CONTINUATIONS = ("astra_native_keyboard_settled_play_20260908.json",)
+CONTINUATIONS = (
+    "astra_native_keyboard_settled_play_20260908.json",
+    "astra_native_keyboard_workshop_play_20260908.json",
+)
 IDENTITIES = {
     "schema_version": "fortgym.native-keyboard-continuation-summary/v1",
     "status": "completed",
@@ -99,6 +102,7 @@ def keyboard_continuation(root: Path, filename: str, parents: list[dict], failur
         or ticks != source["retained_elapsed_ticks"]
     ):
         raise ValueError("Continuation checkpoints must cover all new decisions and time")
+    outcomes = _outcome_counts(source.get("outcome_counts"), source["new_model_calls"])
     return {
         "continuation_id": filename.removesuffix(".json"),
         "source_revision": source["source_revision"],
@@ -117,4 +121,40 @@ def keyboard_continuation(root: Path, filename: str, parents: list[dict], failur
         "uninterrupted_campaign": False,
         "fortress_success": "not_assessed_in_public_operational_summary",
         "evidence_path": "experiments/evidence/" + filename,
+        **({"outcome_counts": outcomes} if outcomes is not None else {}),
     }
+
+
+def _outcome_counts(value: object, decisions: int) -> dict | None:
+    """Project authored aggregate counts, never captured game/model content."""
+    if value is None:
+        return None
+    if not isinstance(value, dict) or (
+        value.get("schema_version") != "fortgym.keyboard-outcome-counts/v1"
+        or value.get("independent_private_review_passed") is not True
+        or value.get("food_stock", "missing") is not None
+        or value.get("production_and_consumption") != "not_measured"
+        or value.get("sustainability") != "not_established"
+    ):
+        raise ValueError("Invalid authored outcome provenance")
+    counts = {}
+    source = value.get("counts")
+    if not isinstance(source, dict):
+        raise ValueError("Outcome counts are missing")
+    for key in ("population", "completed_farms", "completed_beds", "completed_workshops",
+                "recorded_dead_citizens", "drink_units"):
+        row = source.get(key)
+        if not isinstance(row, dict) or any(type(row.get(k)) is not int or row[k] < 0
+                                            for k in ("start", "end")):
+            raise ValueError("Invalid authored outcome count")
+        counts[key] = {k: row[k] for k in ("start", "end")}
+    time: dict[str, int] = {}
+    for key in ("advancing_decisions", "zero_tick_decisions"):
+        n = value.get(key)
+        if type(n) is not int or n < 0:
+            raise ValueError("Invalid outcome decision count")
+        time[key] = n
+    if sum(time.values()) != decisions:
+        raise ValueError("Outcome decisions do not reconcile with this window")
+    return {"counts": counts, **time, "food_stock": None,
+            "production_and_consumption": "not_measured", "sustainability": "not_established"}

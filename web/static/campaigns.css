@@ -23,6 +23,11 @@
 .campaign-table small { display: block; color: var(--muted); margin-top: 6px; font-size: .8125rem; overflow-wrap: anywhere; }
 .campaign-table a { color: var(--cyan); }
 .campaign-table td:first-child a { display: block; margin-top: 6px; }
+.campaign-outcome-counts { width: 100%; max-width: 42rem; border-collapse: collapse; font-size: .875rem; text-align: left; }
+.campaign-outcome-counts caption { text-align: left; padding-block: .5rem; color: var(--muted); }
+.campaign-outcome-counts th, .campaign-outcome-counts td { padding: .5rem; border-bottom: 1px solid var(--line); }
+.campaign-outcome-counts th { font-weight: 500; }
+.campaign-outcome-counts tr > :not(:first-child) { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .campaign-details { border: 1px solid var(--line); padding: 16px; margin-top: 16px; overflow-wrap: anywhere; }
 .campaign-details summary { cursor: pointer; font-weight: 600; font-size: 1rem; }
 .campaign-details li { margin-bottom: 8px; font-size: .875rem; }

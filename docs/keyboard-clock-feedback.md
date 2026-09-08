@@ -89,3 +89,10 @@ Window j declares the next 64-decision continuation from 311 with factual clock
 feedback and unchanged cumulative limits. New autonomous play remains a separate
 runtime outcome. Source and CI, recovery, website acceptance and the full
 year-two goal remain distinct.
+
+Window j subsequently completed all 64 new decisions, adding 11,400 ticks and
+producing independently audited checkpoint 375. Seven actions advanced game time;
+57 requested zero ticks. No menu deferral or clock-unavailable fallback was
+exercised in this window. It demonstrates continued model-led play, not runtime
+coverage of the repaired clock branches. The original timeout stays failed.
+See `astra-keyboard-campaign.md` for the recorded outcome and continuation bounds.

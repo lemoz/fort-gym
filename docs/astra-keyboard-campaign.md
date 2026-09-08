@@ -1,6 +1,40 @@
 # Astra keyboard campaign integration
 
-## Latest result: normal play through four verified saves
+## Latest result: model-led play reaches checkpoint 375
+
+Window j completed all 64 new accepted Astra Medium decisions on frozen source
+`bc7a23aefef1fcf4f3f9212f1059d0edf17f239c`. It added 11,400 actual native ticks,
+reaching 77,000 retained ticks, about 19.1 percent of a full elapsed game year.
+Checkpoint 375 is
+`aeec46203d3ab51f5ce19c7070e9bcf660f6588dd55751042cb6f560b9e4e75a`.
+Independent save/lineage audit and game/container/VM teardown passed. A separate
+fresh load of this final checkpoint must pass before the next model invocation.
+
+The private boundary review records seven living dwarves and zero recorded dead
+citizens at both ends. Completed farm plots increased from two to four; installed
+beds stayed at three and completed workshops at three. Drink units were 132 then
+134, without production or consumption attribution. Food stock remains unverified.
+Seven decisions advanced game time and 57 requested none. These observations do
+not establish sustainability. The v2 metric reader now recognizes only attested
+native population and complete drink-unit evidence, using the existing tested
+reader repair; it does not change the player's screen-only observation.
+
+All 391 responses are accounted: 12,838,159 campaign tokens and 12,907,163 including
+historical failed deliveries. This window used 2,141,205 tokens. Subscription
+charges remain unreported. The inherited 2,000-tick lost branch remains explicit;
+there was no new loss, replay, memory reset, budget extension or strategy rescue.
+Neither clock-deferral branch was exercised, so this completion is not branch
+coverage proof. Earlier failures and recoveries remain separate recorded events.
+
+The campaign page leads with this continuation and authored aggregate counts.
+Native captures, maps, coordinates, saves and model traces stay private. Endpoint
+and frontend tests are not visual acceptance, merge or production deployment.
+Published record: `experiments/evidence/astra_native_keyboard_workshop_play_20260908.json`.
+Window k declares the next unchanged 64-decision continuation from 375, retaining
+the existing cumulative 1,024-dispatch / 40-million-token allowance. Declaration
+alone is not a started run. The full year-two and cross-model goal remains active.
+
+## Previous result: normal play through four verified saves
 
 Window h completed on source `bcac94d1b6e51c7f54e25f56661c5a42b0085b2a`.
 All 64 new Astra Medium decisions were accepted, adding 14,400 native ticks.
