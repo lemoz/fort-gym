@@ -204,9 +204,9 @@ def test_next_completed_window_preserves_lineage_without_inventing_branch_covera
     assert row["outcome_counts"]["food_stock"] is None
     assert row["final_checkpoint_fresh_reload_verified"] is False
     assert row["uninterrupted_campaign"] is row["new_restart_performed"] is False
-    assert data["continuation_events"][-3:-1] == [
-        {"kind": "continuation", "id": item["continuation_id"]} for item in (parent, row)
-    ]
+    events = [{"kind": "continuation", "id": item["continuation_id"]} for item in (parent, row)]
+    offset = data["continuation_events"].index(events[0])
+    assert data["continuation_events"][offset:offset + 2] == events
     assert "private-" not in json.dumps(data)
 
 
@@ -216,7 +216,7 @@ def test_native_completion_preserves_outer_runner_failure(evidence_root):
     source["operator_observation_warning"]["raw_error"] = "private-command-path"
     path.write_text(json.dumps(source))
     data = records.keyboard_campaign_records(evidence_root)
-    parent, row = data["continuations"][-2:]
+    parent, row = data["continuations"][3:5]
     assert row["parent_record"] == parent["continuation_id"]
     assert row["checkpoint_cursor"] == 567
     assert row["progress"]["retained_elapsed_ticks"] == 122200
@@ -238,7 +238,7 @@ def test_native_completion_preserves_outer_runner_failure(evidence_root):
     assert row["teardown_verified"] is True
     assert row["new_restart_performed"] is row["uninterrupted_campaign"] is False
     assert "private-" not in json.dumps(data)
-    assert data["continuation_events"][-1] == {"kind": "continuation", "id": row["continuation_id"]}
+    assert {"kind": "continuation", "id": row["continuation_id"]} in data["continuation_events"]
 
 
 @pytest.mark.parametrize("field,value", [
@@ -284,5 +284,68 @@ def test_declared_next_window_keeps_model_and_all_budget_state():
     assert following["steps_per_segment"] == previous["steps_per_segment"] == 64
     assert following["max_segments"] == previous["max_segments"] == 1
     assert following["snapshot_profile"] == previous["snapshot_profile"]
+    assert all(following[key] is False for key in ("reset_memory", "reset_usage", "strategy_intervention"))
+    assert "budget_extension" not in following and "restart" not in following
+
+
+def test_measured_food_window_preserves_history_and_actual_completed_development(evidence_root):
+    data = records.keyboard_campaign_records(evidence_root)
+    parent, row = data["continuations"][4:6]
+    assert row["parent_record"] == parent["continuation_id"]
+    assert row["checkpoints"][0]["parent_sha256"] == parent["checkpoint_sha256"]
+    assert row["checkpoint_cursor"] == 631
+    assert row["progress"]["new_accepted_decisions"] == row["progress"]["new_model_calls"] == 64
+    assert row["progress"]["cumulative_model_responses"] == 647
+    assert row["progress"]["retained_elapsed_ticks"] == 143400
+    assert row["progress"]["new_elapsed_ticks"] == 21200
+    assert row["usage"]["new_tokens"] == 2213858
+    assert row["usage"]["campaign_tokens"] == 20850223
+    assert row["usage"]["all_attempt_tokens"] == 20919227
+    assert row["usage"]["reported_charge_usd"] is None
+    assert row["outcome_counts"]["counts"] == {
+        "population": {"start": 12, "end": 12},
+        "completed_farms": {"start": 5, "end": 7},
+        "completed_beds": {"start": 4, "end": 5},
+        "completed_workshops": {"start": 3, "end": 4},
+        "recorded_dead_citizens": {"start": 0, "end": 0},
+        "drink_units": {"start": 181, "end": 179},
+    }
+    food = row["food_inventory"]
+    assert food["initial_checkpoint_cursor"] == 567
+    assert food["initial_units"] == 27 and food["final_units"] == 82
+    assert food["complete_measurements"] == food["observed_boundaries"] == 65
+    assert food["unknown_measurements"] == 0
+    assert food["historical_food_unknowns_preserved"] is True
+    assert food["model_requests_remain_screen_only"] is True
+    assert food["sustainability"] == "not_established"
+    assert row["outcome_counts"]["food_stock"] is None
+    assert row["outcome_counts"]["advancing_decisions"] == 11
+    assert row["outcome_counts"]["zero_tick_decisions"] == 53
+    assert row["execution_counts"] == {
+        "requested_elapsed_ticks": 21200, "model_input_rejections": 0,
+        "rejected_native_key_events": 0, "menu_deferrals": 0, "clock_unavailable_timeouts": 0,
+    }
+    assert row["teardown_verified"] is True
+    assert row["final_checkpoint_fresh_reload_verified"] is False
+    assert row["new_restart_performed"] is row["uninterrupted_campaign"] is False
+    assert "operator_status" not in row and "operator_observation_warning" not in row
+    assert parent["operator_status"] == "failed"
+    events = [{"kind": "continuation", "id": item["continuation_id"]} for item in (parent, row)]
+    offset = data["continuation_events"].index(events[0])
+    assert data["continuation_events"][offset:offset + 2] == events
+
+
+def test_next_food_window_preserves_condition_and_cumulative_budget():
+    from fort_gym.bench.run.keyboard_config import load_window
+
+    root = records.PROJECT_ROOT
+    condition = root / "experiments/campaign_astra_keyboard_20260907.json"
+    before, previous = load_window(condition, root / "experiments/campaign_astra_keyboard_window_20260908n.json")
+    after, following = load_window(condition, root / "experiments/campaign_astra_keyboard_window_20260908o.json")
+    assert before == after
+    assert previous["continuation_from_next_step"] == 567
+    assert following["continuation_from_next_step"] == 631
+    for key in ("snapshot_profile", "private_measurement_profile", "steps_per_segment", "max_segments"):
+        assert following[key] == previous[key]
     assert all(following[key] is False for key in ("reset_memory", "reset_usage", "strategy_intervention"))
     assert "budget_extension" not in following and "restart" not in following

@@ -164,7 +164,7 @@ def test_recovery_cannot_invent_progress_discard_usage_or_relabel_failure(
         records.keyboard_campaign_records(evidence_root)
 
 
-@pytest.mark.parametrize("food_units", ["historical", 27, 0, None])
+@pytest.mark.parametrize("food_units", ["recorded", "historical", 27, 0, None])
 def test_keyboard_javascript_renders_recorded_usage_and_failure(food_units):
     node = shutil.which("node")
     if not node:
@@ -219,7 +219,15 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   assert.match(elements['keyboard-results'].textContent, /184 model responses/);
   assert.match(elements['keyboard-results'].textContent, /Recovery verified · checkpoint 184/);
   assert.match(elements['keyboard-results'].textContent, /Subsequently recovered as checkpoint 184/);
-  assert.ok(elements['keyboard-results'].textContent.startsWith('Play continued · checkpoint 567'));
+  assert.ok(elements['keyboard-results'].textContent.startsWith('Play continued · checkpoint 631'));
+  assert.match(elements['keyboard-results'].textContent, /64 new model decisions, 21,200 new ticks/);
+  assert.match(elements['keyboard-results'].textContent, /143,400 retained ticks/);
+  assert.match(elements['keyboard-results'].textContent, /647 accounted model responses/);
+  assert.match(elements['keyboard-results'].textContent, /Completed farm plots 5 7/);
+  assert.match(elements['keyboard-results'].textContent, /Installed beds 4 5/);
+  assert.match(elements['keyboard-results'].textContent, /Completed workshops 3 4/);
+  assert.match(elements['keyboard-results'].textContent, /Existing drink units 181 179/);
+  assert.match(elements['keyboard-results'].textContent, /Play continued · checkpoint 567/);
   assert.match(elements['keyboard-results'].textContent, /Runner warning: the game completed and saved/);
   assert.match(elements['keyboard-results'].textContent, /exit 137/);
   assert.match(elements['keyboard-results'].textContent, /The cause is unverified; the original error is retained/);
@@ -231,9 +239,10 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   const latest = data.continuations.at(-1);
   if (latest.food_inventory) {
     const food = latest.food_inventory;
-    const label = food.final_units === null ? 'Unknown' : String(food.final_units);
+    const initialLabel = food.initial_units === null ? 'Unknown' : String(food.initial_units);
+    const finalLabel = food.final_units === null ? 'Unknown' : String(food.final_units);
     assert.match(elements['keyboard-results'].textContent, /Measured food inventory/);
-    assert.ok(elements['keyboard-results'].textContent.includes(`Native-predicate food units: ${label} at window start (checkpoint 503); ${label} at window end.`));
+    assert.ok(elements['keyboard-results'].textContent.includes(`Native-predicate food units: ${initialLabel} at window start (checkpoint 567); ${finalLabel} at window end.`));
     assert.match(elements['keyboard-results'].textContent, /missing or partial reading is unknown, not zero/);
     assert.match(elements['keyboard-results'].textContent, /Earlier food unknowns remain unknown/);
     assert.match(elements['keyboard-results'].textContent, /Accessibility was not assessed/);
@@ -318,10 +327,13 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
 })().catch(error => { console.error(error); process.exitCode = 1; });
 """
     data = records.keyboard_campaign_records()
-    if food_units != "historical":
+    if food_units == "historical":
+        for row in data["continuations"]:
+            row.pop("food_inventory", None)
+    elif food_units != "recorded":
         # Synthetic rendering fixture only, never written to published evidence.
         data["continuations"][-1]["food_inventory"] = {
-            "initial_checkpoint_cursor": 503, "initial_units": food_units, "final_units": food_units,
+            "initial_checkpoint_cursor": 567, "initial_units": food_units, "final_units": food_units,
             "observed_boundaries": 65, "complete_measurements": 0 if food_units is None else 65,
             "unknown_measurements": 65 if food_units is None else 0,
         }

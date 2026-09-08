@@ -2,7 +2,7 @@
 
 ## Current proof state
 
-The keyboard campaign's food stock is unknown, not zero. Its current native
+Historical keyboard campaign food stock is unknown, not zero. The native
 observation copies `ui.tasks.food` counters but explicitly marks their freshness
 unverified. The descriptive evaluator correctly leaves those values out of
 verified food totals. The existing drink measurement scans native item units;
@@ -14,16 +14,18 @@ result validator. Its optional campaign adapter now retains the result as
 private evaluation data, without putting it in the playing model's prompt.
 Historical G7 hooks and UI estimates remain unchanged. A separate provider-free
 native check passed on checkpoint
-567, alongside independent retained-evidence reconciliation. This is one
-checkpoint's inventory evidence, not end-to-end integration or sustainability
-acceptance.
+567, alongside independent retained-evidence reconciliation. The following
+integrated window n also completed: all 65 observation boundaries had complete
+readings, from 27 initial to 82 final native-predicate units. The final count
+matched the saved state, and independent save/usage/measurement audit and full
+teardown passed. This is inventory integration evidence, not sustainability.
 
 The `fortgym.campaign-food-measurement/v1` window setting opts into the adapter.
 Omitting it preserves existing behavior and issues no new measurement RPC.
 Each reading binds the loaded paused runtime, save and calendar around the scan;
 the evaluator requires matching calendar and validated complete inventory before
 reporting units. Missing, stale or partial readings remain unknown. The original
-`stocks.food` UI estimate is not overwritten. The declared next window n keeps
+`stocks.food` UI estimate is not overwritten. Completed window n kept
 the model, native keys, screen-only observations, memory and cumulative limits.
 It is a continuation with new private measurement coverage, not a comparable
 independent trial or a retroactive update to earlier results.
@@ -98,10 +100,22 @@ The published aggregate is
 [`food_inventory_native_20260908.json`](../experiments/evidence/food_inventory_native_20260908.json).
 Raw inventory details, screens, saves and the independent audit remain private.
 
-The optional private measurement adapter is now implemented and declared for
-window n, with tests for native-read failure, malformed/stale/partial counts,
+The optional private measurement adapter was exercised in completed window n,
+with tests for native-read failure, malformed/stale/partial counts,
 unchanged defaults, worker wiring, and absence from model inputs and feedback.
-Its first integrated native continuation remains unrun at this source revision.
+The native run used frozen source `567251e7414795d52c87e1450eca146bfb419069`.
+It completed 64 accepted decisions and added 21,200 ticks, saving checkpoint 631
+with 143,400 retained ticks. Native-predicate food units increased 27 to 82,
+drinks changed 181 to 179, and twelve dwarves remained alive. Completed farms,
+beds and workshops increased from five/four/three to seven/five/four. These are
+observed changes, not production attribution. Final functional-room measurement
+is unknown. The model requests retained only the declared screen/memory/control
+feedback contract. There were zero unknown food readings in this window; partial
+and unavailable synthetic coverage cases remain explicitly unknown in the audit.
+The authored aggregate is
+[`astra_native_keyboard_food_continuation_20260908.json`](../experiments/evidence/astra_native_keyboard_food_continuation_20260908.json).
+The optional measurement remains enabled in declared next window o, whose native
+process must verify fresh loading of checkpoint 631 before another model call.
 Do not rewrite historical `food_stock: null` results. Prepared-meal native
 coverage and longitudinal production/consumption measurement remain open.
 

@@ -45,7 +45,12 @@ The existing campaign page displays initial/final native-predicate food units
 and complete/unknown reading coverage. Unknown and measured zero are distinct.
 Synthetic API and Node rendering fixtures exercise those cases and historical
 compatibility. No fixture is a completed native-run publication, and no running
-window is added to the completed-results allowlist. This update is prepared in
-an isolated worktree while window n runs on frozen source `567251e7414795d52c87e1450eca146bfb419069`.
-Browser visual acceptance, audited window-n publication and deployment remain
-separate work.
+window is added to the completed-results allowlist. This update was prepared in
+an isolated worktree while window n ran on frozen source `567251e7414795d52c87e1450eca146bfb419069`.
+Only after the owner exited, the VM was independently observed stopped and all
+four retained-evidence audits passed was the display integrated with the actual
+checkpoint-631 publication. It shows 27 initial and 82 final food units with 65
+complete readings and zero unknowns. Older food unknowns and the checkpoint-567
+outer-runner failure remain unchanged. The new window had no terminal-observation
+warning, which does not erase that earlier failure. Browser visual acceptance,
+fresh loading of the latest save and deployment remain separate work.

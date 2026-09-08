@@ -1,0 +1,114 @@
+{
+  "schema_version": "fortgym.native-keyboard-continuation-summary/v1",
+  "status": "completed",
+  "source_revision": "567251e7414795d52c87e1450eca146bfb419069",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "control_profile": "native_keyboard/v2",
+  "observation_profile": "native_screen_text/v1",
+  "captured_screen_size": [
+    120,
+    40
+  ],
+  "snapshot_profile": "native_menu_preserving_save/v3",
+  "private_measurement_profile": "fortgym.campaign-food-measurement/v1",
+  "parent_record": "astra_native_keyboard_midyear_continuation_20260908",
+  "parent_checkpoint_sha256": "045fcbbfe8d34fc8b29ee1f14ece2a672b65ff1f68edce044c746dc0d3d5d17d",
+  "parent_checkpoint_cursor": 567,
+  "steps_per_segment": 64,
+  "checkpoints": [
+    {
+      "cursor": 631,
+      "sha256": "7ea1b53b0ce6081ab935cd68a720d81330d08b3c6dfbcfd2ec4b01ecc8c2b283",
+      "elapsed_native_ticks": 143400,
+      "parent_sha256": "045fcbbfe8d34fc8b29ee1f14ece2a672b65ff1f68edce044c746dc0d3d5d17d",
+      "checkpoint_verified": true
+    }
+  ],
+  "new_model_calls": 64,
+  "new_accepted_decisions": 64,
+  "cumulative_model_responses": 647,
+  "new_elapsed_ticks": 21200,
+  "retained_elapsed_ticks": 143400,
+  "new_tokens": 2213858,
+  "campaign_tokens": 20850223,
+  "all_attempt_tokens": 20919227,
+  "discarded_native_ticks": 2000,
+  "native_save_loss_restarts": 1,
+  "reported_charge_usd": null,
+  "cost_basis": "codex_subscription_charge_unreported/v1",
+  "independent_retained_evidence_audit_passed": true,
+  "original_checkpoint_unchanged": true,
+  "memory_and_usage_preserved_across_segments": true,
+  "inherited_discontinuity_unchanged": true,
+  "uninterrupted_campaign": false,
+  "new_restart_performed": false,
+  "reset_memory": false,
+  "reset_usage": false,
+  "strategy_intervention": false,
+  "historical_failed_run_reclassified_as_success": false,
+  "final_checkpoint_fresh_reload_verified": false,
+  "teardown_verified": true,
+  "scope": "Astra completed 64 accepted native-keyboard decisions from checkpoint 567, advanced 21,200 ticks and saved checkpoint 631. Independent save, lineage, gameplay, clock, usage and private-food audits passed, as did game/container/VM teardown. The outer runner completed without a terminal-observation warning; the earlier failed outer operator remains recorded in its original publication. Twelve dwarves remained alive with zero recorded citizen deaths. Completed farm plots increased five to seven, installed beds four to five and workshops three to four. Drinks changed 181 to 179 units. The new private food profile measured 27 initial and 82 final native-predicate units, with all 65 observation boundaries complete and the final count matching the saved state. Historical food unknowns remain unknown. These inventory changes are not production, consumption or accessibility evidence; final functional-room measurement is unknown. The model continued to receive only its declared screen, memory and control feedback, not private evaluation counts. The final save still needs a separate fresh-process reload. No new loss, replay, restart, strategy intervention, memory reset or budget extension occurred. The inherited 2,000-tick loss and all earlier failures remain explicit. Native game content, saves, coordinates and model traces remain private. No year-two sustainability, independent model comparison, merge or deployment claim.",
+  "outcome_counts": {
+    "schema_version": "fortgym.keyboard-outcome-counts/v1",
+    "independent_private_review_passed": true,
+    "counts": {
+      "population": {
+        "start": 12,
+        "end": 12
+      },
+      "completed_farms": {
+        "start": 5,
+        "end": 7
+      },
+      "completed_beds": {
+        "start": 4,
+        "end": 5
+      },
+      "completed_workshops": {
+        "start": 3,
+        "end": 4
+      },
+      "recorded_dead_citizens": {
+        "start": 0,
+        "end": 0
+      },
+      "drink_units": {
+        "start": 181,
+        "end": 179
+      }
+    },
+    "advancing_decisions": 11,
+    "zero_tick_decisions": 53,
+    "food_stock": null,
+    "production_and_consumption": "not_measured",
+    "sustainability": "not_established"
+  },
+  "execution_counts": {
+    "schema_version": "fortgym.keyboard-execution-counts/v1",
+    "independent_private_review_passed": true,
+    "requested_elapsed_ticks": 21200,
+    "model_input_rejections": 0,
+    "rejected_native_key_events": 0,
+    "menu_deferrals": 0,
+    "clock_unavailable_timeouts": 0
+  },
+  "food_inventory": {
+    "schema_version": "fortgym.keyboard-food-inventory-outcome/v1",
+    "measurement_profile": "fortgym.campaign-food-measurement/v1",
+    "independent_private_review_passed": true,
+    "historical_food_unknowns_preserved": true,
+    "model_requests_remain_screen_only": true,
+    "scope": "native_edible_raw_predicate_excluding_drinks",
+    "accessibility": "not_assessed",
+    "production_and_consumption": "not_measured",
+    "sustainability": "not_established",
+    "initial_checkpoint_cursor": 567,
+    "observed_boundaries": 65,
+    "complete_measurements": 65,
+    "unknown_measurements": 0,
+    "initial_units": 27,
+    "final_units": 82
+  }
+}

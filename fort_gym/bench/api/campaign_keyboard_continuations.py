@@ -14,6 +14,7 @@ CONTINUATIONS = (
     "astra_native_keyboard_workshop_continuation_20260908.json",
     "astra_native_keyboard_quarter_year_continuation_20260908.json",
     "astra_native_keyboard_midyear_continuation_20260908.json",
+    "astra_native_keyboard_food_continuation_20260908.json",
 )
 IDENTITIES = {
     "status": "completed",
