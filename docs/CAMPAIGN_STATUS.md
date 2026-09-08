@@ -13,7 +13,27 @@ and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. Several bounded Astra native-keyboard
 windows have completed; the same fortress remains in autonomous continuation.
 
-### Latest engineering result: native overlay save and reload verified
+### Latest delivery: failed-attempt website and save-fix display verified
+
+The existing Fort Labs campaign page now displays window o's failure separately
+from completed gameplay: checkpoint 631 / 143,400 saved ticks, 21,200 unsaved
+ticks, all 711 responses and their retained usage. Unsaved food/drink observations
+are explicitly labeled. The separate native save/reload acceptance appears as a
+verified fix, not recovered gameplay or a campaign restart.
+
+Source `6239417fb2a6c5c03f117b3f96c399e607769b24` is pushed and remote-verified in
+draft PR #137; exact-head CI `34276246376` completed successfully. Validation:
+197 focused tests, 3,259 full-suite passes (10 skipped), scoped static checks,
+and exact committed-source HTTP acceptance. The read-only local preview is
+restored at http://127.0.0.1:8857/campaigns with an isolated registry and admin
+disabled. Browser visual acceptance, merge and production deployment are not
+claimed. Evidence is under `site-checkpoint-status-20260908`.
+
+Next: implement and verify an explicit loss/usage-preserving restart from 631,
+then resume bounded Astra play with v4 saves. No model calls or native VM were
+started during this website pass.
+
+### Previous engineering result: native overlay save and reload verified
 
 The provider-free diagnostic at source `d795ed6e2889fc9cc61bb38b6d23b7a0feed27ff`
 reproduced the status/pets path from checkpoint 631. The full stack is pets,
@@ -32,15 +52,15 @@ Validation: 140 focused save tests, 3,217 full-suite passes with 10 skips, scope
 Ruff/four-file mypy, Lua parsing, and 35 focused publication/save tests after the
 new record. Fix and native-evidence publication are pushed and remote-verified at
 `919d332b08bddad7b53f0d13a6e6b047f71b2d23` on the existing draft PR #137 branch.
-Exact-head CI is pending readback. No merge, deployment or website update is claimed.
+Exact-head CI `34274641259` passed. No merge or deployment is claimed.
 
 Private evidence: `astra-native-status-stack-acceptance-v2/independent-audit.json`
 under the existing runtime root. Public evidence on the implementation branch:
 `experiments/evidence/native_status_stack_acceptance_20260908.json`.
 The diagnostic does not recover window o's unsaved tail. Campaign progress stays
 at **631 / 143,400 retained ticks**, with all **711 responses** accounted.
-Next: restore the local preview and expose the failed attempt plus save acceptance,
-then resume with an explicit loss/usage-preserving restart record and v4 saves.
+The website now exposes both records as described above. Resume only with an
+explicit loss/usage-preserving restart record and v4 saves.
 
 ### Latest gameplay attempt: window o failed before saving
 
@@ -132,8 +152,7 @@ Failed window o preserved Astra Medium, native keyboard/v2, screen text/v1,
 120x40, save/v3, private food measurement and the cumulative 1,024-dispatch /
 40-million-token ceiling. Its load of checkpoint 631 was verified; its new save
 failed as described above. The recorded-data adapter still ends at completed
-checkpoint 631; the preview is unavailable and a separate failed-attempt surface
-remains to be implemented.
+checkpoint 631; the restored preview now includes the separate failed-attempt surface.
 Year-two success, repeated cross-model comparison and website delivery remain open.
 
 ### Previous completed result: checkpoint 567, 122,200 retained ticks

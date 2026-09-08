@@ -8,7 +8,17 @@ fortress through year two and beyond. Website evidence and remote source deliver
 remain requirements. The objective is unfinished; early native Astra gameplay
 and checkpoint-continuation evidence are now verified.
 
-Latest engineering result, September 8 UTC: the status/pets save failure was
+Latest website delivery, September 8 UTC: the Fort Labs campaign page separates
+window o's 21,200 unsaved ticks from checkpoint 631 / 143,400 saved ticks, retains
+all 711 responses and usage, and labels the verified save fix separately from
+gameplay. Source `6239417fb` is pushed and remote-verified in draft PR #137;
+exact-head CI `34276246376` passed. Validation: 197 focused tests, 3,259 full-suite
+passes (10 skipped), scoped static checks and exact committed-source HTTP
+acceptance. The isolated, admin-disabled local preview at port 8857 is restored.
+No browser visual acceptance, merge, deployment, new model calls or native VM.
+An explicit loss/usage-preserving restart and actual Astra continuation are next.
+
+Previous engineering result, September 8 UTC: the status/pets save failure was
 reproduced without a model on a diagnostic copy of checkpoint 631. The opt-in v4
 save profile preserved the DFHack status overlay and three native screen layers,
 completed a paused save, and passed a fresh native reload with matching world
@@ -16,8 +26,8 @@ observations. Independent host audit and all process/container/VM teardown check
 passed. No gameplay ticks, model calls or campaign restart. Fix source
 `d795ed6e2` passed 140 focused save tests and 3,217 full-suite tests (10 skipped);
 native evidence/docs are pushed and remote-verified at `919d332b0` in draft PR #137.
-Exact-head CI remains pending readback. Website failure/acceptance display and an
-explicit loss/usage-preserving restart are next. The goal remains unfinished;
+Exact-head CI `34274641259` passed. The website failure/acceptance display is now
+verified locally; an explicit loss/usage-preserving restart is next. The goal remains unfinished;
 checkpoint 631 / 143,400 saved ticks and all 711 responses remain the campaign truth.
 
 Latest completed gameplay result, September 8 UTC: native window n completed 64 accepted decisions,
@@ -54,9 +64,9 @@ plus scoped Ruff and 11-file mypy. Combined source/failure publication is pushed
 and remote-verified at `04ee719b3` in draft PR #137; exact-head CI `34271339605`
 and 214 combined focused tests passed. Documentation clarification `d0f00e225`
 follows; no other model was called. Recorded data still ends at completed
-checkpoint 631, but the local preview at port 8857 was unreachable. Preview
-restoration, the new failure surface, the full year-two outcome,
-repeated-model evaluation and website delivery remain open.
+checkpoint 631. The local preview was unreachable at that earlier check and has
+now been restored with the failure surface. The full year-two outcome,
+repeated-model evaluation and production website delivery remain open.
 
 Previous result, September 8 UTC: native window m completed 64 accepted decisions
 and 7,200 new ticks, reaching checkpoint 567 and 122,200 retained ticks (30.3
