@@ -217,7 +217,9 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   assert.match(elements['keyboard-results'].textContent, /184 model responses/);
   assert.match(elements['keyboard-results'].textContent, /Recovery verified · checkpoint 184/);
   assert.match(elements['keyboard-results'].textContent, /Subsequently recovered as checkpoint 184/);
-  assert.ok(elements['keyboard-results'].textContent.startsWith('Checkpoint verification stopped · decision 232'));
+  assert.ok(elements['keyboard-results'].textContent.startsWith('Recovery verified · checkpoint 232'));
+  assert.match(elements['keyboard-results'].textContent, /248 existing model responses and 49,200 elapsed ticks preserved/);
+  assert.match(elements['keyboard-results'].textContent, /Menu selection is verified again after the save call returns/);
   assert.match(elements['keyboard-results'].textContent, /Recovery verified · checkpoint 216/);
   assert.match(elements['keyboard-results'].textContent, /Menu identity changed during saving/);
   assert.match(elements['keyboard-results'].textContent, /248 accounted model responses/);
@@ -227,7 +229,7 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   assert.match(elements['keyboard-results'].textContent, /Subsequently recovered as checkpoint 216 and verified in a fresh game process/);
   assert.match(elements['keyboard-results'].textContent, /no additional progress was lost/);
   assert.match(elements['keyboard-results'].textContent, /New branch saved · checkpoint 200/);
-  assert.match(elements['keyboard-results'].textContent, /without a verified campaign checkpoint/);
+  assert.match(elements['keyboard-results'].textContent, /Subsequently recovered as checkpoint 232 and verified in a fresh game process/);
   assert.match(elements['keyboard-results'].textContent, /232 accounted model responses/);
   assert.match(elements['keyboard-results'].textContent, /7,775,559 including historical/);
   assert.match(elements['keyboard-results'].textContent, /retained trace: 47,200 ticks/);

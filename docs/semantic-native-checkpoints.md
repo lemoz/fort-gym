@@ -138,3 +138,25 @@ failure and world observations, binds the declared window and entire retained
 runtime inventory, then uses the same fresh-load and history-preservation checks.
 The original copied-snapshot recovery plan and results remain unchanged. Native
 checkpoint-232 recovery remains pending until its own acceptance run completes.
+
+## Verified recovery of the retained runtime save
+
+Source `41edaca0c37c637e8c34fa81ab96abb202e99078` subsequently created checkpoint
+232 (`d7c802ba88aa29a418d216d41cdd33df22b678403e5f68b9d508b6b4131059e7`)
+using v3 and verified it in a fresh native process. Independent audit confirms
+49,200 retained ticks, byte-identical trace/journals, unchanged memory, all 248
+responses, 8,150,227 campaign tokens and 8,219,231 all-attempt tokens. No model
+calls, input, requested ticks or new discontinuity were added. The original
+failure and one older genuinely lost branch remain unchanged; charges remain
+unreported. Complete native/container/VM teardown passed.
+
+The website's allowlisted recorded results now lead with recovery 232 and keep
+the original review, recovery 216 and older failures visible. This is not live
+tracking, year-two success or production deployment. Normal continuation from
+232 with explicit v3 saving is next. Public evidence:
+`experiments/evidence/astra_native_keyboard_runtime_recovery_20260908.json`.
+
+Window h declares that next continuation from checkpoint 232: up to four
+16-decision segments, unchanged Astra Medium/native-keyboard conditions and
+inherited cumulative limits, with explicit v3 saving and no restart or reset.
+It is prepared but unrun at this record.

@@ -168,6 +168,19 @@ def test_admission_denial_produces_clean_native_checkpoint(tmp_path, saved):
     assert (output / "loop/pauses.jsonl").exists()
 
 
+def test_settled_identity_window_preserves_the_campaign_and_accounting():
+    condition, window = load_window(
+        PROJECT / "experiments/campaign_astra_keyboard_20260907.json",
+        PROJECT / "experiments/campaign_astra_keyboard_window_20260908h.json",
+    )
+    assert condition == CONDITION
+    assert window["continuation_from_next_step"] == 232
+    assert window["snapshot_profile"] == "native_menu_preserving_save/v3"
+    assert window["steps_per_segment"] == 16 and window["max_segments"] == 4
+    assert window["reset_memory"] is window["reset_usage"] is window["strategy_intervention"] is False
+    assert "restart" not in window and "budget_extension" not in window
+
+
 def test_uncertain_model_tail_is_forensic_not_resumable(tmp_path, saved):
     result, env, agent, output = run(tmp_path, saved, lambda *args: {})
     assert result["status"] == "failed"

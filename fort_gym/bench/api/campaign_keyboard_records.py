@@ -36,6 +36,7 @@ CHECKPOINT_EVENTS = (
     ("review", CHECKPOINT_REVIEWS[0]),
     ("recovery", CHECKPOINT_RECOVERIES[0]),
     ("review", CHECKPOINT_REVIEWS[1]),
+    ("recovery", CHECKPOINT_RECOVERIES[1]),
 )
 
 

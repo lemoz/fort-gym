@@ -64,3 +64,36 @@ def test_settled_recovery_cannot_reset_usage_or_invent_proof(evidence_root, fiel
     path.write_text(json.dumps(source))
     with pytest.raises(ValueError):
         records.keyboard_campaign_records(evidence_root)
+
+
+def test_latest_runtime_recovery_leaves_the_historical_failures_unchanged(evidence_root):
+    data = records.keyboard_campaign_records(evidence_root)
+    row = data["checkpoint_recoveries"][-1]
+    assert row["checkpoint_cursor"] == 232 and row["parent_checkpoint_cursor"] == 216
+    assert row["snapshot_profile"] == "native_menu_preserving_save/v3"
+    assert row["returned_model_decisions"] == 248 and row["elapsed_native_ticks"] == 49200
+    assert row["usage"]["campaign_tokens"] == 8150227
+    assert row["usage"]["all_attempt_tokens"] == 8219231
+    assert row["usage"]["reported_charge_usd"] is None
+    assert row["new_discontinuity_created"] is False
+    assert all(review["checkpoint_verified"] is False for review in data["checkpoint_reviews"])
+    assert data["checkpoint_failures"][0]["newer_native_state_resumable"] is False
+
+
+@pytest.mark.parametrize("field,value", [
+    ("schema_version", "fortgym.native-keyboard-settled-recovery-summary/v1"),
+    ("recovery_source_kind", "copied_snapshot/v1"),
+    ("snapshot_profile", "native_menu_preserving_save/v2"),
+    ("original_review", "astra_native_keyboard_checkpoint_review_20260908"),
+    ("fresh_native_reload_verified", False),
+    ("campaign_tokens", 7706555),
+    ("checkpoint_cursor", 216),
+    ("model_calls_to_recover", 1),
+])
+def test_runtime_recovery_cannot_mix_profiles_or_proof(evidence_root, field, value):
+    path = evidence_root / "experiments/evidence" / records.CHECKPOINT_RECOVERIES[-1]
+    source = json.loads(path.read_text())
+    source[field] = value
+    path.write_text(json.dumps(source))
+    with pytest.raises(ValueError):
+        records.keyboard_campaign_records(evidence_root)

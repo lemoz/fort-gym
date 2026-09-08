@@ -5,7 +5,10 @@ import re
 from pathlib import Path
 
 CHECKPOINT_FAILURES = ("astra_native_keyboard_checkpoint_failure_20260907.json",)
-CHECKPOINT_RECOVERIES = ("astra_native_keyboard_settled_recovery_20260908.json",)
+CHECKPOINT_RECOVERIES = (
+    "astra_native_keyboard_settled_recovery_20260908.json",
+    "astra_native_keyboard_runtime_recovery_20260908.json",
+)
 
 
 def checkpoint_failure(root: Path, filename: str, recoveries: list[dict]) -> dict:
@@ -113,16 +116,21 @@ def settled_checkpoint_recovery(root: Path, filename: str, reviews: list[dict]) 
         raise ValueError("Checkpoint recovery must be a bounded regular publication")
     source = json.loads(path.read_bytes())
     original = next((row for row in reviews if row["review_id"] == source["original_review"]), None)
+    runtime_source = source.get("schema_version") == "fortgym.native-keyboard-settled-recovery-summary/v2"
     identities = {
-        "schema_version": "fortgym.native-keyboard-settled-recovery-summary/v1",
+        "schema_version": "fortgym.native-keyboard-settled-recovery-summary/" + ("v2" if runtime_source else "v1"),
         "model": "gpt-6-astra",
         "reasoning_effort": "medium",
         "control_profile": "native_keyboard/v2",
         "observation_profile": "native_screen_text/v1",
-        "snapshot_profile": "native_menu_preserving_save/v2",
+        "snapshot_profile": "native_menu_preserving_save/v3" if runtime_source else "native_menu_preserving_save/v2",
+        **({"recovery_source_kind": "retained_runtime_save/v1"} if runtime_source else {}),
     }
     if (
         original is None
+        or original["terminal_reason"] != (
+            "native_menu_identity_changed_during_save" if runtime_source else "native_screen_changed_during_save"
+        )
         or any(source.get(key) != value for key, value in identities.items())
         or re.fullmatch("[a-f0-9]{40}", source["source_revision"]) is None
         or re.fullmatch("[a-f0-9]{64}", source["checkpoint_sha256"]) is None

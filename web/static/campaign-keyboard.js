@@ -108,6 +108,9 @@
       node('p', row.recovery_kind === 'settled_checkpoint'
         ? 'The checkpoint passed a fresh game reload. Save validation now checks unchanged menu identity and world observations while retaining the animated screen captures. The original validation failure and earlier lost branch remain recorded; no additional progress was lost.'
         : 'The original interrupted window remains failed. This checkpoint was verified at this point in the campaign; later records determine the latest resumable state. It does not prove that a new run has started.', section);
+      if (row.snapshot_profile === 'native_menu_preserving_save/v3') {
+        node('p', 'Menu selection is verified again after the save call returns, when the native selection helper is consistent. The transient helper reading remains recorded; the world-state checks are unchanged.', section);
+      }
       node('p', `${count(row.usage.campaign_tokens)} campaign tokens; ${count(row.usage.all_attempt_tokens)} including historical failed deliveries. Model charge: ${cost(row.usage)}.`, section);
       node('p', row.teardown_verified === true ? 'Game and VM teardown verified for recovery.' : 'Teardown unknown.', section);
       if (/^experiments\/evidence\/astra_native_keyboard_[a-z0-9_]+\.json$/.test(row.evidence_path)) {
