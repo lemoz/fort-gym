@@ -112,7 +112,7 @@ window s are now pushed at `cdb998fb8734f40e8cc032ceb24704026219258f`:
 57 new focused checks and 3432 full-suite tests pass (10 skipped), and retained
 window-r evidence passes a separate read-only preparation review. It retains
 the 23rd response and all 6691 unsaved ticks without replay. Exact-head CI
-`34291795345` is in progress. No restart, new model call, VM launch or new
+`34291795345` passed. No restart, new model call, VM launch or new
 completed-window claim has been made. Website failure publication and native
 execution are next. See Campaign status for the audit and source identities.
 

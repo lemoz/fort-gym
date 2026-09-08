@@ -60,8 +60,8 @@ restore, full usage retention, no action replay, and subsequent checkpoint/resum
 All 57 new focused checks pass; the exact source passes 3432 full-suite tests,
 10 skipped. Scoped Ruff/mypy and diff checks pass. The initial sandbox run's
 single localhost socket-permission failure was resolved by rerunning the suite
-with localhost access, without changing the test. GitHub CI `34291795345` is
-in progress at this source head.
+with localhost access, without changing the test. GitHub CI `34291795345` passed
+at this exact source head.
 
 The independent read-only preparation review also passes against immutable
 window-r evidence, digest
