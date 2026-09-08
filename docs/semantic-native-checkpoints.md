@@ -122,3 +122,19 @@ The save operation, world-observation check, copied-file inventory and input/tic
 policy are unchanged. Historical v1/v2 profiles and windows are unchanged. A
 window must explicitly select v3. Offline tests do not establish native acceptance
 or recover checkpoint 232; both remain separate required checks at this point.
+
+The provider-free native acceptance on source
+`adc2aeafcceba1159cb0c624f3c68318846ab398` subsequently passed: v3 saved the
+reproduced unit-labor menu, preserved settled identity and world state, and a
+second process reloaded the resulting native save with matching observations.
+The inline helper discrepancy remained visible. The independent audit verified
+all copied files, original evidence preservation and complete teardown. Nine
+menu-only setup keys, zero model calls and zero requested game ticks were used.
+This establishes the save correction, not a recovered campaign checkpoint.
+
+Recovery now also supports an explicitly selected `retained_runtime_save/v1`
+source, identified by a v2 recovery plan. It validates the original semantic
+failure and world observations, binds the declared window and entire retained
+runtime inventory, then uses the same fresh-load and history-preservation checks.
+The original copied-snapshot recovery plan and results remain unchanged. Native
+checkpoint-232 recovery remains pending until its own acceptance run completes.

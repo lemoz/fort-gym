@@ -17,6 +17,8 @@ from .keyboard_recovery_source import _bytes, _rows
 from .keyboard_restart import validate_discontinuities
 
 SCHEMA = "fortgym.settled-keyboard-checkpoint-recovery/v1"
+RUNTIME_SOURCE = "retained_runtime_save/v1"
+COPIED_SOURCE = "copied_snapshot/v1"
 SOURCE_FILES = (
     "result.json",
     "agent-before.json",
@@ -99,7 +101,25 @@ def compare_reloaded_observations(expected: dict, loaded: dict, *, reindex_pendi
     }
 
 
-def inspect_settled_checkpoint_source(*, parent: Path, segment: Path) -> dict:
+def _source_save(segment: Path, source_kind: str) -> Path:
+    if source_kind == COPIED_SOURCE:
+        return segment / "checkpoint/game"
+    if source_kind != RUNTIME_SOURCE or re.fullmatch(r"segment-[0-9]+", segment.name) is None:
+        raise ValueError("Unknown settled checkpoint save source")
+    root = segment.parent / ("runtime-" + segment.name.removeprefix("segment-"))
+    saved = root / "runtime/data/save/campaign-resume"
+    for directory in (root, root / "runtime", root / "runtime/data",
+                      root / "runtime/data/save", saved):
+        # Check the actual ancestors below the retained runtime, not a resolved
+        # symlink target. These inputs must never alias another runtime/save.
+        if directory.is_symlink() or not directory.is_dir():
+            raise ValueError("Retained runtime save has an invalid directory boundary")
+    return saved
+
+
+def inspect_settled_checkpoint_source(
+    *, parent: Path, segment: Path, source_kind: str = COPIED_SOURCE,
+) -> dict:
     """Attest complete committed gameplay plus a copied, not yet accepted save."""
     for directory in (parent, segment, segment / "loop", segment / "checkpoint"):
         if directory.is_symlink() or not directory.is_dir():
@@ -111,6 +131,7 @@ def inspect_settled_checkpoint_source(*, parent: Path, segment: Path) -> dict:
         if path.exists() and _bytes(path):
             raise ValueError("Unsettled or no-action tails require their own reconciliation")
     original = verify_checkpoint(parent)
+    saved = _source_save(segment, source_kind)
     state, before, final = (
         read(parent / "agent.json"),
         read(segment / "agent-before.json"),
@@ -125,7 +146,10 @@ def inspect_settled_checkpoint_source(*, parent: Path, segment: Path) -> dict:
         or result.get("stop_reason") != "segment_limit"
         or result.get("checkpoint_verified") is not False
         or result.get("recovery_requires_reconciliation") is not False
-        or result.get("checkpoint_error") != "Native screen changed during menu-preserving save"
+        or result.get("checkpoint_error") != (
+            "Native menu identity changed during save" if source_kind == RUNTIME_SOURCE
+            else "Native screen changed during menu-preserving save"
+        )
         or re.fullmatch("[a-f0-9]{40}", result.get("source_revision", "")) is None
         or result.get("campaign_id") != state["campaign_id"]
         or result.get("first_step") != first
@@ -172,6 +196,19 @@ def inspect_settled_checkpoint_source(*, parent: Path, segment: Path) -> dict:
     if native != rows[-1]["state_after_advance"]:
         raise ValueError("Save validation changed the last committed observation")
     _clock(native)
+    source_files: tuple[str, ...] = SOURCE_FILES
+    if source_kind == RUNTIME_SOURCE:
+        attempt, window = read(segment / "save-attempt.json"), read(segment.parent / "window.json")
+        if (
+            (segment / "checkpoint/game").exists()
+            or result.get("checkpoint_error_type") != "CampaignSaveError"
+            or attempt.get("schema_version") != "fortgym.native-menu-save-attempt/v1"
+            or attempt.get("world_before") != native
+            or attempt.get("world_after", native) != native
+            or window.get("snapshot_profile") != "native_menu_preserving_save/v2"
+        ):
+            raise ValueError("Retained runtime source lacks its unchanged semantic save boundary")
+        source_files = (*SOURCE_FILES, "save-attempt.json", "../window.json")
     progress = read_campaign_progress(segment / "loop/trace.jsonl")
     if (
         progress["elapsed_ticks"] is None
@@ -179,7 +216,8 @@ def inspect_settled_checkpoint_source(*, parent: Path, segment: Path) -> dict:
     ):
         raise ValueError("Retained trace does not establish cumulative native time")
     return {
-        "schema_version": SCHEMA,
+        "schema_version": SCHEMA if source_kind == COPIED_SOURCE else SCHEMA.replace("/v1", "/v2"),
+        **({"source_kind": source_kind} if source_kind == RUNTIME_SOURCE else {}),
         "campaign_id": state["campaign_id"],
         "source_revision": result["source_revision"],
         "parent_sha256": original["sha256"],
@@ -191,9 +229,9 @@ def inspect_settled_checkpoint_source(*, parent: Path, segment: Path) -> dict:
         "usage": final["usage"],
         "discontinuities": inherited,
         "source_files": {
-            name: hashlib.sha256(_bytes(segment / name)).hexdigest() for name in SOURCE_FILES
+            name: hashlib.sha256(_bytes(segment / name)).hexdigest() for name in source_files
         },
-        "forensic_save_inventory": save_inventory(segment / "checkpoint/game"),
+        "forensic_save_inventory": save_inventory(saved),
     }
 
 
@@ -210,16 +248,18 @@ def recover_settled_checkpoint(
     revision: str,
 ) -> dict:
     """Checkpoint a freshly loaded latest save, preserving every committed row."""
+    source_kind = plan.get("source_kind", COPIED_SOURCE)
+    source_save = _source_save(segment, source_kind)
 
     def unchanged():
-        if inspect_settled_checkpoint_source(parent=parent, segment=segment) != plan:
+        if inspect_settled_checkpoint_source(parent=parent, segment=segment, source_kind=source_kind) != plan:
             raise ValueError("Retained checkpoint recovery source changed")
 
     unchanged()
     runtime = environment.expected_dfroot.resolve()
     if snapshotter.dfroot.resolve() != runtime:
         raise ValueError("Snapshotter differs from the loaded recovery runtime")
-    for retained in (parent, segment, runtime):
+    for retained in (parent, segment, source_save, runtime):
         if output.resolve() == retained.resolve() or retained.resolve() in output.resolve().parents:
             raise ValueError("Recovery output must be outside retained inputs and runtime")
     saved = runtime / "data/save/campaign-resume"
@@ -230,7 +270,7 @@ def recover_settled_checkpoint(
 
     if without_log(files) != without_log(plan["forensic_save_inventory"]):
         raise ValueError("Loaded native files differ from the latest copied save")
-    old_log = segment / "checkpoint/game/events-dfhack.log"
+    old_log = source_save / "events-dfhack.log"
     if old_log.exists() and not _bytes(saved / "events-dfhack.log").startswith(_bytes(old_log)):
         raise ValueError("Reload changed the original load-log prefix")
     probe, observed = native_probe(), environment.observe()
@@ -299,7 +339,7 @@ def recover_settled_checkpoint(
     )
     unchanged()
     result = {
-        "schema_version": SCHEMA,
+        "schema_version": plan["schema_version"],
         "checkpoint_verified": True,
         "checkpoint_sha256": checkpoint["sha256"],
         "next_step": plan["next_step"],
