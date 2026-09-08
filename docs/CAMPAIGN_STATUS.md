@@ -13,6 +13,50 @@ and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. Several bounded Astra native-keyboard
 windows have completed; the same fortress remains in autonomous continuation.
 
+### Latest attempt: window o failed before saving
+
+Window o used frozen source `15af09ffeaf5022be0b2b4c91c858b718fbb522a` and returned
+64 accepted Astra Medium decisions, reaching trace boundary 695 and 164,600
+observed elapsed ticks. The pre-save identity probe then asserted that a screen
+stack entry was not native. Its exact type was not recorded; the deeper cause is
+unverified. The error label said malformed JSON, but the retained raw response
+is a Lua assertion. The native save request was never issued.
+
+All persisted save files still match checkpoint 631 except the event log. Thus
+the last verified save is **631 / 143,400 ticks**, and the new **21,200 ticks are
+unsaved**, not checkpointed progress. All 711 model responses and 22,819,077
+campaign tokens remain accounted (22,888,081 across all attempts; dollar charges
+unreported). No restart, replay, usage reset or strategy intervention occurred.
+Twelve dwarves remained alive, with zero recorded citizen deaths. Unsaved final
+drinks were 228 and food 43; food readings were complete at 63 of 65 boundaries
+and unknown at two. No sustainability or fortress-collapse finding.
+
+The independent failure audit and public-summary reconciliation passed. Game,
+container and VM teardown were verified, including a fresh stopped-VM read.
+The failed source and all traces remain retained under
+`astra-native-food-followthrough-v1`. Do not use its unrun normal-completion
+auditors or claim checkpoint 695 exists. The next step is a provider-free
+screen-stack reproduction and save-path correction before further campaign
+inference. A later explicit restart must preserve the 711-response accounting
+and record the additional lost time; it must not silently resume old counters.
+
+Separately, explicit v2 model selection is implemented and tested in commit
+`99bfde62fe023d668f6b9bdb75ab25fe9b621392`, pushed and remote-verified on
+`codex/campaign-model-selection-v1`. It keeps v1 Astra Medium unchanged and binds
+model/effort through request, receipt and checkpoint identity. OpenAI Docs guided
+the per-run CLI setting; no alternative model was called. Validation: 180 focused
+tests, 3,181 full-suite passes (10 skipped), scoped Ruff and 11-file mypy. The
+initial sandbox-only loopback failure passed in the socket-enabled rerun. This
+was integrated after teardown as `ad37b9b32`; it is not cross-model gameplay proof.
+The failure record/docs and combined source are pushed and remote-verified at
+`04ee719b379ac65f091493727bd50ca6c6523a40` in open draft PR #137. Its exact-head
+CI `34271339605` passed, as did 214 combined focused tests. Documentation-only
+clarification `d0f00e225` follows that tested implementation: the local preview
+at port 8857 was unreachable when checked, so no live website update is claimed.
+The actual checkpoint
+631 and its original v1 agent state were also verified under the new source with
+zero model/game calls. No merge or deployment was performed.
+
 ### Latest completed result: checkpoint 631, 143,400 retained ticks
 
 Window n completed all 64 accepted Astra Medium decisions on frozen source
@@ -55,10 +99,12 @@ run's source also passed its own CI `34259573627`.
 No repository-wide typing-clean, browser visual acceptance, merge or deployment
 claim. The page remains recorded evidence, not a live campaign feed.
 
-Declared next window o preserves Astra Medium, native keyboard/v2, screen
-text/v1, 120x40, save/v3, private food measurement and the cumulative
-1,024-dispatch / 40-million-token ceiling. It has not started. Its native process
-must verify a fresh load of checkpoint 631 before another model response.
+Failed window o preserved Astra Medium, native keyboard/v2, screen text/v1,
+120x40, save/v3, private food measurement and the cumulative 1,024-dispatch /
+40-million-token ceiling. Its load of checkpoint 631 was verified; its new save
+failed as described above. The recorded-data adapter still ends at completed
+checkpoint 631; the preview is unavailable and a separate failed-attempt surface
+remains to be implemented.
 Year-two success, repeated cross-model comparison and website delivery remain open.
 
 ### Previous completed result: checkpoint 567, 122,200 retained ticks

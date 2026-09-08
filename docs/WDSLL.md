@@ -26,9 +26,25 @@ replay, hint, memory reset or budget extension. The food-count display was
 integrated only after teardown and audit; 166 combined focused tests, all 3,137
 local tests (ten skipped) and scoped static checks passed. Publication commit
 `15af09ffeaf5022be0b2b4c91c858b718fbb522a` is pushed and remote-verified in draft
-PR #137; exact-head CI `34265344540` passed. Window o is declared but
-not started, and must verify a fresh load
-of checkpoint 631. Full year-two, repeated-model and website-delivery work remains.
+PR #137; exact-head CI `34265344540` passed. Subsequent window o returned 64
+accepted inputs but failed its pre-save screen-stack identity probe. Its 21,200
+new ticks are unsaved; checkpoint 631 / 143,400 ticks remains the latest verified
+save. All 711 responses and 22,888,081 all-attempt tokens remain accounted. Twelve
+dwarves were alive; no fortress-collapse or sustainability finding. Independent
+failure audit, public-summary reconciliation and mandatory teardown passed. The
+next work is provider-free reproduction and save-path correction before further
+campaign inference, followed by an explicit loss/usage-preserving restart.
+
+Independent model-selection support is pushed as `99bfde62f` and integrated after
+teardown as `ad37b9b32`. Its v2 condition binds model identity without changing
+legacy Astra v1; 180 focused tests and 3,181 full-suite tests passed (10 skipped),
+plus scoped Ruff and 11-file mypy. Combined source/failure publication is pushed
+and remote-verified at `04ee719b3` in draft PR #137; exact-head CI `34271339605`
+and 214 combined focused tests passed. Documentation clarification `d0f00e225`
+follows; no other model was called. Recorded data still ends at completed
+checkpoint 631, but the local preview at port 8857 was unreachable. Preview
+restoration, the new failure surface, the full year-two outcome,
+repeated-model evaluation and website delivery remain open.
 
 Previous result, September 8 UTC: native window m completed 64 accepted decisions
 and 7,200 new ticks, reaching checkpoint 567 and 122,200 retained ticks (30.3

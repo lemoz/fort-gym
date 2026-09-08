@@ -306,6 +306,26 @@ fixture was published. After n's teardown and audits, the display was integrated
 as `1eacaa581` with its real checkpoint-631 result; 166 combined focused tests,
 all 3,137 local tests (ten skipped) and scoped static checks passed. Publication
 commit `15af09ffeaf5022be0b2b4c91c858b718fbb522a` is pushed and remote-verified in
-draft PR #137. Exact-head CI `34265344540` passed. Declared window o keeps
-all conditions, memory and limits,
-but has not started; it must verify fresh loading of checkpoint 631 first.
+draft PR #137. Exact-head CI `34265344540` passed. Window o used that frozen source
+and unchanged conditions, memory and limits. Its fresh load matched checkpoint
+631, but after 64 accepted inputs and 21,200 new ticks the pre-save identity probe
+rejected a screen-stack entry before issuing the save request. The entry type
+was not recorded; the underlying cause remains unverified. The error label says
+malformed JSON, while the raw response is a Lua assertion. Checkpoint 695 does
+not exist; the runtime save files still match checkpoint 631 except the event log.
+
+Independent failure and publication audits passed. All 711 responses, 22,819,077
+campaign tokens and 22,888,081 all-attempt tokens remain retained. Twelve dwarves
+were alive, with unsaved drinks 228 and food 43; 63 food measurements were complete
+and two unknown. Teardown was verified. The 21,200 unsaved ticks must not be
+silently lost from future restart accounting or counted as saved progress.
+Next is a provider-free reproduction and save-path fix, not another model window.
+The separate v2 model-selection change is pushed as `99bfde62f`, integrated after
+teardown as `ad37b9b32`, and passed 3,181 full-suite tests with ten skipped. No
+alternative model was called or evaluated. Combined source and the audited failed
+attempt are pushed and remote-verified at `04ee719b3`; exact-head CI `34271339605`
+and 214 combined focused tests passed. Documentation clarification `d0f00e225`
+records that the local preview at port 8857 was unreachable; the data adapter
+still ends at completed checkpoint 631, not the failed attempt. No live website
+update, merge or deployment. The full year-two,
+repeated-model and website-delivery goal remains active.
