@@ -50,3 +50,21 @@ loss boundary. Original failed evidence stays unchanged. The previous clock and
 input-rejection recovery protocols are not repurposed for this settled case.
 Offline tests and the reload diagnostic are not proof that native recovery has
 completed; that requires its own verified checkpoint and fresh reload.
+
+## Verified native recovery
+
+The provider-free native run on source `2a158ae19d2bd6dcfdd1a4bb0013e6c8d42ad57f`
+created checkpoint 216 (`36142c131e444003dd8dc7616f330800946566ab614d2f7509b32bbda8f4bca3`)
+and verified it in a second native process. The independent audit confirms
+47,200 retained elapsed ticks, byte-identical trace and usage journals, unchanged
+model memory, all 232 responses and 7,706,555 campaign tokens. All-attempt usage,
+including historical failed deliveries, remains 7,775,559 tokens. Subscription
+charges are unreported, not zero.
+
+The semantic save check passed despite changed screen pixels. There were zero
+model calls, gameplay keys, requested ticks or new discontinuities. Both native
+processes, the container and the disposable local VM were stopped and verified.
+The original failed window and the earlier 2,000-tick lost branch remain
+unchanged. This is recovered infrastructure continuity, not new gameplay or
+proof of a functioning fortress. The authored public record is
+`experiments/evidence/astra_native_keyboard_settled_recovery_20260908.json`.

@@ -43,13 +43,21 @@
       throw new Error('Unsupported checkpoint review evidence');
     }
     const reviews = data.checkpoint_reviews || [];
+    if (data.checkpoint_recoveries !== undefined && !Array.isArray(data.checkpoint_recoveries)) {
+      throw new Error('Unsupported settled checkpoint recovery evidence');
+    }
+    const checkpointRecoveries = data.checkpoint_recoveries || [];
+    checkpointRecoveries.slice().reverse().forEach(renderRecovery);
     reviews.slice().reverse().forEach(row => {
       const section = node('section', undefined, results);
       section.className = 'campaign-condition';
       const p = row.progress;
+      const recovered = checkpointRecoveries.find(item => item.original_review === row.review_id);
       node('h3', `Checkpoint verification stopped · decision ${count(p.trace_cursor)}`, section);
       node('p', `${count(p.new_accepted_decisions)} new accepted decisions and ${count(p.new_elapsed_ticks)} new ticks reached the game. The screen changed during saving, so checkpoint verification stopped.`, section);
-      node('p', `A changed game save was copied and retained, but it needs reload verification. These latest actions are neither confirmed lost nor confirmed recovered. Last verified checkpoint: ${count(p.latest_verified_checkpoint_cursor)}, ${count(p.last_verified_elapsed_ticks)} ticks; retained trace: ${count(p.trace_elapsed_ticks)} ticks.`, section);
+      node('p', recovered
+        ? `Subsequently recovered as checkpoint ${count(recovered.checkpoint_cursor)} and verified in a fresh game process, without replay. This original validation failure remains recorded. At the failure, the last verified checkpoint was ${count(p.latest_verified_checkpoint_cursor)} and the retained trace: ${count(p.trace_elapsed_ticks)} ticks.`
+        : `A changed game save was copied and retained, but it needs reload verification. These latest actions are neither confirmed lost nor confirmed recovered. Last verified checkpoint: ${count(p.latest_verified_checkpoint_cursor)}, ${count(p.last_verified_elapsed_ticks)} ticks; retained trace: ${count(p.trace_elapsed_ticks)} ticks.`, section);
       node('p', `${count(p.cumulative_model_responses)} accounted model responses; ${count(row.usage.campaign_tokens)} campaign tokens, ${count(row.usage.all_attempt_tokens)} including historical failed deliveries. This segment used ${count(row.usage.new_tokens)} tokens. Model charge: ${cost(row.usage)}.`, section);
       node('p', row.teardown_verified === true ? 'Game and VM teardown verified. A harness validation failure, not a recorded fortress collapse.' : 'Teardown unknown.', section);
       if (/^experiments\/evidence\/astra_native_keyboard_[a-z0-9_]+\.json$/.test(row.evidence_path)) {
@@ -95,7 +103,9 @@
       node('h3', `Recovery verified · checkpoint ${count(row.checkpoint_cursor)}`, section);
       node('p', `${count(row.returned_model_decisions)} existing model responses and ${count(row.elapsed_native_ticks)} elapsed ticks preserved. Model memory and usage are unchanged.`, section);
       node('p', `${count(row.model_calls_to_recover)} new model calls, ${count(row.native_keys_to_recover)} replayed keys, ${count(row.native_ticks_to_recover)} added ticks. Recovery preserved the retained state and responses; it is not new gameplay progress.`, section);
-      node('p', 'The original interrupted window remains failed. This checkpoint was verified at this point in the campaign; later records determine the latest resumable state. It does not prove that a new run has started.', section);
+      node('p', row.recovery_kind === 'settled_checkpoint'
+        ? 'The checkpoint passed a fresh game reload. Save validation now checks unchanged menu identity and world observations while retaining the animated screen captures. The original validation failure and earlier lost branch remain recorded; no additional progress was lost.'
+        : 'The original interrupted window remains failed. This checkpoint was verified at this point in the campaign; later records determine the latest resumable state. It does not prove that a new run has started.', section);
       node('p', `${count(row.usage.campaign_tokens)} campaign tokens; ${count(row.usage.all_attempt_tokens)} including historical failed deliveries. Model charge: ${cost(row.usage)}.`, section);
       node('p', row.teardown_verified === true ? 'Game and VM teardown verified for recovery.' : 'Teardown unknown.', section);
       if (/^experiments\/evidence\/astra_native_keyboard_[a-z0-9_]+\.json$/.test(row.evidence_path)) {
@@ -146,7 +156,7 @@
       node('p', `Executed source: ${row.source_revision}`, details);
     });
     results.hidden = false;
-    $('keyboard-status').textContent = data.milestones.length || data.interruptions?.length || recoveries.length || data.checkpoint_failures?.length || restarts.length || reviews.length
+    $('keyboard-status').textContent = data.milestones.length || data.interruptions?.length || recoveries.length || data.checkpoint_failures?.length || restarts.length || reviews.length || checkpointRecoveries.length
       ? 'Recorded milestones, failures, recoveries and restarts. This is not a live activity indicator.'
       : 'No keyboard milestones published.';
   }

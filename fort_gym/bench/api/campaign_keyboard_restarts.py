@@ -146,6 +146,7 @@ def checkpoint_review(root: Path, filename: str, restarts: list[dict]) -> dict:
         raise ValueError("Checkpoint review must retain all newer progress and usage")
     return {
         "review_id": filename.removesuffix(".json"),
+        "parent_checkpoint_sha256": source["parent_checkpoint_sha256"],
         "source_revision": source["source_revision"],
         "parent_restart": parent["restart_id"],
         "terminal_reason": source["terminal_reason"],
