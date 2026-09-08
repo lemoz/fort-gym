@@ -218,7 +218,16 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   assert.match(elements['keyboard-results'].textContent, /184 model responses/);
   assert.match(elements['keyboard-results'].textContent, /Recovery verified · checkpoint 184/);
   assert.match(elements['keyboard-results'].textContent, /Subsequently recovered as checkpoint 184/);
-  assert.ok(elements['keyboard-results'].textContent.startsWith('Play continued · checkpoint 503'));
+  assert.ok(elements['keyboard-results'].textContent.startsWith('Play continued · checkpoint 567'));
+  assert.match(elements['keyboard-results'].textContent, /Runner warning: the game completed and saved/);
+  assert.match(elements['keyboard-results'].textContent, /exit 137/);
+  assert.match(elements['keyboard-results'].textContent, /The cause is unverified; the original error is retained/);
+  assert.match(elements['keyboard-results'].textContent, /64 new model decisions, 7,200 new ticks/);
+  assert.match(elements['keyboard-results'].textContent, /122,200 retained ticks/);
+  assert.match(elements['keyboard-results'].textContent, /583 accounted model responses/);
+  assert.match(elements['keyboard-results'].textContent, /Living dwarves 7 12/);
+  assert.match(elements['keyboard-results'].textContent, /Existing drink units 172 181/);
+  assert.match(elements['keyboard-results'].textContent, /Play continued · checkpoint 503/);
   assert.match(elements['keyboard-results'].textContent, /64 new model decisions, 14,000 new ticks/);
   assert.match(elements['keyboard-results'].textContent, /115,000 retained ticks/);
   assert.match(elements['keyboard-results'].textContent, /519 accounted model responses/);
@@ -252,7 +261,7 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   assert.match(elements['keyboard-results'].textContent, /63,600 retained ticks/);
   assert.match(elements['keyboard-results'].textContent, /312 accounted model responses/);
   assert.match(elements['keyboard-results'].textContent, /10,284,908 including historical/);
-  assert.match(elements['keyboard-results'].textContent, /At publication, this window.s final save still needed a separate fresh-process reload/);
+  assert.match(elements['keyboard-results'].textContent, /When this gameplay window ended, its final save still needed a separate fresh-process reload/);
   assert.match(elements['keyboard-results'].textContent, /Recovery verified · checkpoint 232/);
   assert.match(elements['keyboard-results'].textContent, /248 existing model responses and 49,200 elapsed ticks preserved/);
   assert.match(elements['keyboard-results'].textContent, /Menu selection is verified again after the save call returns/);

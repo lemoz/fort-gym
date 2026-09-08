@@ -184,7 +184,7 @@ def test_next_completed_window_preserves_lineage_without_inventing_branch_covera
     source["outcome_counts"]["counts"]["drink_units"]["items"] = "private-item-content"
     path.write_text(json.dumps(source))
     data = records.keyboard_campaign_records(evidence_root)
-    parent, row = data["continuations"][-2:]
+    parent, row = data["continuations"][2:4]
     assert row["parent_record"] == parent["continuation_id"]
     assert row["checkpoints"][0]["parent_sha256"] == parent["checkpoint_sha256"]
     assert row["checkpoint_cursor"] == 503
@@ -204,10 +204,71 @@ def test_next_completed_window_preserves_lineage_without_inventing_branch_covera
     assert row["outcome_counts"]["food_stock"] is None
     assert row["final_checkpoint_fresh_reload_verified"] is False
     assert row["uninterrupted_campaign"] is row["new_restart_performed"] is False
-    assert data["continuation_events"][-2:] == [
+    assert data["continuation_events"][-3:-1] == [
         {"kind": "continuation", "id": item["continuation_id"]} for item in (parent, row)
     ]
     assert "private-" not in json.dumps(data)
+
+
+def test_native_completion_preserves_outer_runner_failure(evidence_root):
+    path = evidence_root / "experiments/evidence" / records.CONTINUATIONS[4]
+    source = json.loads(path.read_text())
+    source["operator_observation_warning"]["raw_error"] = "private-command-path"
+    path.write_text(json.dumps(source))
+    data = records.keyboard_campaign_records(evidence_root)
+    parent, row = data["continuations"][-2:]
+    assert row["parent_record"] == parent["continuation_id"]
+    assert row["checkpoint_cursor"] == 567
+    assert row["progress"]["retained_elapsed_ticks"] == 122200
+    assert row["progress"]["new_elapsed_ticks"] == 7200
+    assert row["progress"]["cumulative_model_responses"] == 583
+    assert row["usage"]["campaign_tokens"] == 18636365
+    assert row["usage"]["all_attempt_tokens"] == 18705369
+    assert row["outcome_counts"]["counts"]["population"] == {"start": 7, "end": 12}
+    assert row["outcome_counts"]["counts"]["drink_units"] == {"start": 172, "end": 181}
+    assert row["outcome_counts"]["advancing_decisions"] == 4
+    assert row["outcome_counts"]["zero_tick_decisions"] == 60
+    assert row["outcome_counts"]["food_stock"] is None
+    assert row["operator_status"] == "failed"
+    assert row["operator_observation_warning"] == {
+        "operator_status": "failed", "native_window_status": "completed",
+        "kind": "exchange_observation_error", "command_exit_code": 137,
+        "underlying_cause": "unverified", "original_error_retained": True,
+    }
+    assert row["teardown_verified"] is True
+    assert row["new_restart_performed"] is row["uninterrupted_campaign"] is False
+    assert "private-" not in json.dumps(data)
+    assert data["continuation_events"][-1] == {"kind": "continuation", "id": row["continuation_id"]}
+
+
+@pytest.mark.parametrize("field,value", [
+    ("operator_status", "completed"), ("native_window_status", "failed"),
+    ("kind", "no_error"), ("command_exit_code", 0), ("command_exit_code", "137"),
+    ("underlying_cause", "exit_race"), ("original_error_retained", 1),
+    ("original_error_retained", False),
+])
+def test_operator_warning_cannot_hide_error_or_invent_cause(evidence_root, field, value):
+    path = evidence_root / "experiments/evidence" / records.CONTINUATIONS[4]
+    source = json.loads(path.read_text())
+    source["operator_observation_warning"][field] = value
+    path.write_text(json.dumps(source))
+    with pytest.raises(ValueError):
+        records.keyboard_campaign_records(evidence_root)
+
+
+@pytest.mark.parametrize("field,value", [
+    ("operator_status", "completed"), ("operator_status", None),
+    ("operator_observation_warning", None), ("operator_observation_warning", {}),
+    ("schema_version", "fortgym.native-keyboard-continuation-summary/v1"),
+    ("schema_version", "fortgym.native-keyboard-continuation-summary/v3"),
+])
+def test_warning_publication_requires_explicit_schema_and_operator_state(evidence_root, field, value):
+    path = evidence_root / "experiments/evidence" / records.CONTINUATIONS[4]
+    source = json.loads(path.read_text())
+    source[field] = value
+    path.write_text(json.dumps(source))
+    with pytest.raises(ValueError):
+        records.keyboard_campaign_records(evidence_root)
 
 
 def test_declared_next_window_keeps_model_and_all_budget_state():

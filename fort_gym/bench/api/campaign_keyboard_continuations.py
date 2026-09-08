@@ -11,9 +11,9 @@ CONTINUATIONS = (
     "astra_native_keyboard_workshop_play_20260908.json",
     "astra_native_keyboard_workshop_continuation_20260908.json",
     "astra_native_keyboard_quarter_year_continuation_20260908.json",
+    "astra_native_keyboard_midyear_continuation_20260908.json",
 )
 IDENTITIES = {
-    "schema_version": "fortgym.native-keyboard-continuation-summary/v1",
     "status": "completed",
     "model": "gpt-6-astra",
     "reasoning_effort": "medium",
@@ -35,6 +35,7 @@ def keyboard_continuation(root: Path, filename: str, parents: list[dict], failur
     if path.is_symlink() or not path.is_file() or path.stat().st_size > 65536:
         raise ValueError("Keyboard continuation must be a bounded regular publication")
     source = json.loads(path.read_bytes())
+    warning = _operator_warning(source)
     parent = next((row for row in parents
                    if row.get("continuation_id", row.get("recovery_id")) == source["parent_record"]), None)
     if (
@@ -126,7 +127,33 @@ def keyboard_continuation(root: Path, filename: str, parents: list[dict], failur
         "evidence_path": "experiments/evidence/" + filename,
         **({"outcome_counts": outcomes} if outcomes is not None else {}),
         **({"execution_counts": execution} if execution is not None else {}),
+        **({"operator_status": "failed", "operator_observation_warning": warning}
+           if warning is not None else {}),
     }
+
+
+def _operator_warning(source: dict) -> dict | None:
+    """Preserve native completion separately from a failed outer observation."""
+    version = source.get("schema_version")
+    if version == "fortgym.native-keyboard-continuation-summary/v1":
+        if "operator_status" in source or "operator_observation_warning" in source:
+            raise ValueError("Operator warning requires the explicit v2 publication")
+        return None
+    if version != "fortgym.native-keyboard-continuation-summary/v2":
+        raise ValueError("Unsupported keyboard continuation schema")
+    value = source.get("operator_observation_warning")
+    expected = {
+        "operator_status": "failed", "native_window_status": "completed",
+        "kind": "exchange_observation_error", "command_exit_code": 137,
+        "underlying_cause": "unverified", "original_error_retained": True,
+    }
+    if (
+        source.get("operator_status") != "failed" or not isinstance(value, dict)
+        or any(type(value.get(key)) is not type(target) or value[key] != target
+               for key, target in expected.items())
+    ):
+        raise ValueError("Native completion must retain the audited operator warning")
+    return expected
 
 
 def _outcome_counts(value: object, decisions: int) -> dict | None:

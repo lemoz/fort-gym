@@ -78,8 +78,12 @@
       section.className = 'campaign-condition';
       const p = row.progress;
       node('h3', `Play continued · checkpoint ${count(row.checkpoint_cursor)}`, section);
+      if (row.operator_observation_warning) {
+        const warning = row.operator_observation_warning;
+        node('p', `Runner warning: the game completed and saved, but the outer runner failed while checking its exchange directory (exit ${count(warning.command_exit_code)}). The cause is unverified; the original error is retained. This was not a fully clean run.`, section);
+      }
       node('p', `${count(p.new_model_calls)} new model decisions, ${count(p.new_elapsed_ticks)} new ticks. ${count(p.retained_elapsed_ticks)} retained ticks toward the 403,200-tick full-year target.`, section);
-      node('p', `Verified saves at ${row.checkpoints.map(item => count(item.cursor)).join(', ')}. At publication, this window’s final save still needed a separate fresh-process reload.`, section);
+      node('p', `Verified saves at ${row.checkpoints.map(item => count(item.cursor)).join(', ')}. When this gameplay window ended, its final save still needed a separate fresh-process reload.`, section);
       node('p', `${count(p.cumulative_model_responses)} accounted model responses; ${count(row.usage.campaign_tokens)} campaign tokens, ${count(row.usage.all_attempt_tokens)} including historical failed deliveries. This window used ${count(row.usage.new_tokens)} tokens. Model charge: ${cost(row.usage)}.`, section);
       node('p', `Model memory and all usage continued without replay or strategy intervention. The earlier ${count(p.discarded_native_ticks)} lost ticks remain recorded. This is the same fortress, not an independent model comparison or proof of sustainability.`, section);
       if (row.execution_counts) {
