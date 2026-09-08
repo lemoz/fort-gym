@@ -5,7 +5,10 @@ import re
 from pathlib import Path
 
 RESTARTS = ("astra_native_keyboard_restart_20260908.json",)
-CHECKPOINT_REVIEWS = ("astra_native_keyboard_checkpoint_review_20260908.json",)
+CHECKPOINT_REVIEWS = (
+    "astra_native_keyboard_checkpoint_review_20260908.json",
+    "astra_native_keyboard_menu_identity_review_20260908.json",
+)
 
 
 def keyboard_restart(root: Path, filename: str, failures: list[dict], recoveries: list[dict]) -> dict:
@@ -96,23 +99,53 @@ def keyboard_restart(root: Path, filename: str, failures: list[dict], recoveries
     }
 
 
-def checkpoint_review(root: Path, filename: str, restarts: list[dict]) -> dict:
+def checkpoint_review(
+    root: Path, filename: str, restarts: list[dict], recoveries: list[dict] | None = None,
+) -> dict:
     """Keep a copied-but-unverified save distinct from proven loss or recovery."""
     path = root / "experiments/evidence" / filename
     if path.is_symlink() or not path.is_file() or path.stat().st_size > 65536:
         raise ValueError("Checkpoint review must be a bounded regular publication")
     source = json.loads(path.read_bytes())
-    parent = next((row for row in restarts if row["restart_id"] == source["parent_restart"]), None)
+    identity_failure = source.get("terminal_reason") == "native_menu_identity_changed_during_save"
+    if identity_failure:
+        recovery = next((row for row in recoveries or []
+                         if row["recovery_id"] == source.get("parent_recovery")), None)
+        parent = None if recovery is None or "parent_restart" in source else {
+            "checkpoint_sha256": recovery["checkpoint_sha256"],
+            "progress": {
+                "checkpoint_cursor": recovery["checkpoint_cursor"],
+                "retained_elapsed_ticks": recovery["elapsed_native_ticks"],
+                "cumulative_model_responses": recovery["returned_model_decisions"],
+            },
+            "usage": recovery["usage"],
+        }
+    else:
+        parent = next((row for row in restarts
+                       if row["restart_id"] == source.get("parent_restart")), None)
+        if "parent_recovery" in source:
+            parent = None
+    save_proof = ("native_save_retained_in_runtime", "world_save_differs_from_parent",
+                  "recorded_world_observations_unchanged_during_save") if identity_failure else (
+                      "copied_native_save_matches_runtime", "copied_world_save_differs_from_parent",
+                  )
     if (
         parent is None
         or source["schema_version"] != "fortgym.native-keyboard-checkpoint-review/v1"
-        or source["terminal_reason"] != "native_screen_changed_during_save"
+        or source["terminal_reason"] not in {
+            "native_screen_changed_during_save", "native_menu_identity_changed_during_save",
+        }
+        or (identity_failure and (
+            source.get("snapshot_profile") != "native_menu_preserving_save/v2"
+            or source.get("rejected_operation_receipt_retained") is not False
+            or source.get("specific_changed_ui_field", "missing") is not None
+        ))
         or re.fullmatch("[a-f0-9]{40}", source["source_revision"]) is None
         or source["parent_checkpoint_sha256"] != parent["checkpoint_sha256"]
         or source["checkpoint_verified"] is not False
         or any(source[key] is not True for key in (
-            "independent_retained_evidence_audit_passed", "copied_native_save_matches_runtime",
-            "copied_world_save_differs_from_parent", "new_native_state_requires_reload_verification",
+            "independent_retained_evidence_audit_passed", *save_proof,
+            "new_native_state_requires_reload_verification",
             "original_checkpoint_and_trace_prefix_unchanged", "inherited_discontinuity_unchanged",
             "teardown_verified",
         ))
@@ -148,7 +181,8 @@ def checkpoint_review(root: Path, filename: str, restarts: list[dict]) -> dict:
         "review_id": filename.removesuffix(".json"),
         "parent_checkpoint_sha256": source["parent_checkpoint_sha256"],
         "source_revision": source["source_revision"],
-        "parent_restart": parent["restart_id"],
+        **({"parent_recovery": source["parent_recovery"]} if identity_failure else
+           {"parent_restart": source["parent_restart"]}),
         "terminal_reason": source["terminal_reason"],
         "progress": progress,
         "usage": {**usage, "reported_charge_usd": None,

@@ -31,6 +31,12 @@ PROGRESS_FIELDS = (
     "cumulative_tokens",
     "checkpoint_cursors",
 )
+# Dependency order is explicit; later reviews can start from verified recovery.
+CHECKPOINT_EVENTS = (
+    ("review", CHECKPOINT_REVIEWS[0]),
+    ("recovery", CHECKPOINT_RECOVERIES[0]),
+    ("review", CHECKPOINT_REVIEWS[1]),
+)
 
 
 def _interruption(root: Path, filename: str) -> dict:
@@ -239,7 +245,13 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
     recoveries = [_recovery(root, filename, interruptions) for filename in RECOVERIES]
     failures = [checkpoint_failure(root, filename, recoveries) for filename in CHECKPOINT_FAILURES]
     restarts = [keyboard_restart(root, filename, failures, recoveries) for filename in RESTARTS]
-    reviews = [checkpoint_review(root, filename, restarts) for filename in CHECKPOINT_REVIEWS]
+    reviews: list[dict] = []
+    checkpoint_recoveries: list[dict] = []
+    for kind, filename in CHECKPOINT_EVENTS:
+        if kind == "review":
+            reviews.append(checkpoint_review(root, filename, restarts, checkpoint_recoveries))
+        else:
+            checkpoint_recoveries.append(settled_checkpoint_recovery(root, filename, reviews))
     return {
         "schema_version": "fortgym.public-keyboard-milestones/v1",
         "live_tracking": False,
@@ -249,6 +261,5 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
         "checkpoint_failures": failures,
         "restarts": restarts,
         "checkpoint_reviews": reviews,
-        "checkpoint_recoveries": [settled_checkpoint_recovery(root, filename, reviews)
-                                  for filename in CHECKPOINT_RECOVERIES],
+        "checkpoint_recoveries": checkpoint_recoveries,
     }

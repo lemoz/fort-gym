@@ -61,3 +61,39 @@ def test_pixel_animation_is_telemetry_but_world_mutation_still_fails(tmp_path, w
 def test_semantic_save_requires_explicit_world_observer(tmp_path):
     with pytest.raises(ValueError, match="world observations"):
         MenuPreservingSnapshotter(dfroot=tmp_path, profile=MENU_IDENTITY_SAVE_PROFILE, screen_capture=lambda: {})
+
+
+@pytest.mark.parametrize("after_capture_fails", [False, True])
+def test_rejected_native_receipt_retained_before_validation_without_retry(tmp_path, after_capture_fails):
+    native = NativeSaveSimulation(tmp_path)
+    calls = []
+    value = semantic_receipt(native.dfroot)
+    value["ui_after"]["viewport"]["x"] += 1
+
+    def execute(expression, *, timeout):
+        calls.append(expression)
+        native.request()
+        native.status()
+        native.status()
+        return json.dumps(value)
+
+    def screen():
+        if calls and after_capture_fails:
+            raise OSError("diagnostic capture unavailable")
+        return {"width": 1, "height": 1, "tiles": [[99 if calls else 32, 7, 0]]}
+
+    snapshotter = MenuPreservingSnapshotter(
+        dfroot=native.dfroot, profile=MENU_IDENTITY_SAVE_PROFILE, execute=execute,
+        status=native.status, screen_capture=screen, observe=lambda: {"population": 7},
+    )
+    with pytest.raises(CampaignSaveError, match="Native menu identity changed during save"):
+        snapshotter.capture(tmp_path / "snapshot")
+    assert len(calls) == 1
+    assert snapshotter.receipt is None and "save_operation" not in snapshotter.attempt
+    assert json.loads(snapshotter.attempt["save_operation_raw"]) == value
+    assert snapshotter.attempt["world_before"] == snapshotter.attempt["world_after"]
+    if after_capture_fails:
+        assert snapshotter.attempt["capture_errors"]["screen_after"] == "OSError"
+    else:
+        assert snapshotter.attempt["screen_before"] != snapshotter.attempt["screen_after"]
+    assert not (tmp_path / "snapshot").exists()

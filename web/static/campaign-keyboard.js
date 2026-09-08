@@ -47,17 +47,19 @@
       throw new Error('Unsupported settled checkpoint recovery evidence');
     }
     const checkpointRecoveries = data.checkpoint_recoveries || [];
-    checkpointRecoveries.slice().reverse().forEach(renderRecovery);
     reviews.slice().reverse().forEach(row => {
+      const recovered = checkpointRecoveries.find(item => item.original_review === row.review_id);
+      if (recovered) renderRecovery(recovered);
       const section = node('section', undefined, results);
       section.className = 'campaign-condition';
       const p = row.progress;
-      const recovered = checkpointRecoveries.find(item => item.original_review === row.review_id);
       node('h3', `Checkpoint verification stopped · decision ${count(p.trace_cursor)}`, section);
-      node('p', `${count(p.new_accepted_decisions)} new accepted decisions and ${count(p.new_elapsed_ticks)} new ticks reached the game. The screen changed during saving, so checkpoint verification stopped.`, section);
+      const identityFailure = row.terminal_reason === 'native_menu_identity_changed_during_save';
+      node('p', `${count(p.new_accepted_decisions)} new accepted decisions and ${count(p.new_elapsed_ticks)} new ticks reached the game. ${identityFailure ? 'Menu identity' : 'The screen'} changed during saving, so checkpoint verification stopped.`, section);
       node('p', recovered
         ? `Subsequently recovered as checkpoint ${count(recovered.checkpoint_cursor)} and verified in a fresh game process, without replay. This original validation failure remains recorded. At the failure, the last verified checkpoint was ${count(p.latest_verified_checkpoint_cursor)} and the retained trace: ${count(p.trace_elapsed_ticks)} ticks.`
-        : `A changed game save was copied and retained, but it needs reload verification. These latest actions are neither confirmed lost nor confirmed recovered. Last verified checkpoint: ${count(p.latest_verified_checkpoint_cursor)}, ${count(p.last_verified_elapsed_ticks)} ticks; retained trace: ${count(p.trace_elapsed_ticks)} ticks.`, section);
+        : `A changed game save was retained${identityFailure ? ' inside the stopped runtime' : ''}, but it needs reload verification. These latest actions are neither confirmed lost nor confirmed recovered. Last verified checkpoint: ${count(p.latest_verified_checkpoint_cursor)}, ${count(p.last_verified_elapsed_ticks)} ticks; retained trace: ${count(p.trace_elapsed_ticks)} ticks.`, section);
+      if (identityFailure) node('p', 'Recorded world observations stayed unchanged during saving. The rejected operation did not retain its raw receipt, so the specific changed menu field is not yet known.', section);
       node('p', `${count(p.cumulative_model_responses)} accounted model responses; ${count(row.usage.campaign_tokens)} campaign tokens, ${count(row.usage.all_attempt_tokens)} including historical failed deliveries. This segment used ${count(row.usage.new_tokens)} tokens. Model charge: ${cost(row.usage)}.`, section);
       node('p', row.teardown_verified === true ? 'Game and VM teardown verified. A harness validation failure, not a recorded fortress collapse.' : 'Teardown unknown.', section);
       if (/^experiments\/evidence\/astra_native_keyboard_[a-z0-9_]+\.json$/.test(row.evidence_path)) {

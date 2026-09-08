@@ -117,3 +117,43 @@ def test_checkpoint_review_cannot_promote_or_discard_state(evidence_root, sectio
     path.write_text(json.dumps(source))
     with pytest.raises(ValueError):
         records.keyboard_campaign_records(evidence_root)
+
+
+def test_menu_identity_review_binds_recovered_parent_without_inventing_cause(evidence_root):
+    path = evidence_root / "experiments/evidence" / records.CHECKPOINT_REVIEWS[1]
+    source = json.loads(path.read_text())
+    source["raw_native_receipt"] = "secret-receipt"
+    source["native_save_path"] = "secret-path"
+    path.write_text(json.dumps(source))
+    data = records.keyboard_campaign_records(evidence_root)
+    row = data["checkpoint_reviews"][1]
+    assert row["parent_recovery"] == data["checkpoint_recoveries"][0]["recovery_id"]
+    assert row["progress"]["latest_verified_checkpoint_cursor"] == 216
+    assert row["progress"]["trace_cursor"] == 232
+    assert row["progress"]["cumulative_model_responses"] == 248
+    assert row["progress"]["trace_elapsed_ticks"] == 49200
+    assert row["usage"]["campaign_tokens"] == 8150227
+    assert row["usage"]["all_attempt_tokens"] == 8219231
+    assert row["checkpoint_verified"] is False
+    assert "secret-" not in json.dumps(data)
+
+
+@pytest.mark.parametrize("field,value", [
+    ("parent_recovery", "unknown"),
+    ("parent_restart", "astra_native_keyboard_restart_20260908"),
+    ("parent_checkpoint_sha256", "a" * 64),
+    ("snapshot_profile", "native_menu_preserving_save/v1"),
+    ("native_save_retained_in_runtime", False),
+    ("world_save_differs_from_parent", False),
+    ("recorded_world_observations_unchanged_during_save", 1),
+    ("rejected_operation_receipt_retained", True),
+    ("specific_changed_ui_field", "guessed_cursor"),
+    ("checkpoint_verified", True),
+])
+def test_menu_identity_review_rejects_unproven_fields(evidence_root, field, value):
+    path = evidence_root / "experiments/evidence" / records.CHECKPOINT_REVIEWS[1]
+    source = json.loads(path.read_text())
+    source[field] = value
+    path.write_text(json.dumps(source))
+    with pytest.raises(ValueError):
+        records.keyboard_campaign_records(evidence_root)

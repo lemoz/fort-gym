@@ -127,6 +127,9 @@ class MenuPreservingSnapshotter:
         expression = "local expected_root = " + json.dumps(str(self.dfroot), ensure_ascii=False)
         operation = MENU_IDENTITY_SAVE_LUA if self.profile == MENU_IDENTITY_SAVE_PROFILE else MENU_SAVE_LUA
         raw = self.execute(expression + "\n" + operation, timeout=120)
+        # Retain the unvalidated response before semantic validation can raise.
+        # It is private diagnostic evidence, never a verified save receipt.
+        self.attempt["save_operation_raw"] = raw
         try:
             self.receipt = validate_menu_save(json.loads(raw), self.dfroot, profile=self.profile)
             self.attempt["save_operation"] = self.receipt
@@ -145,7 +148,22 @@ class MenuPreservingSnapshotter:
         before = self.screen_capture()
         screen_bytes = json.dumps(before, sort_keys=True, allow_nan=False).encode()
         self.attempt["screen_before"] = json.loads(screen_bytes)
-        native = self.snapshotter.capture(destination)
+        try:
+            native = self.snapshotter.capture(destination)
+        except Exception:
+            # The native save may already have completed when receipt validation
+            # fails. Read the aftermath without retrying or masking that failure.
+            captures = {"screen_after": self.screen_capture}
+            if semantic and self.observe is not None:
+                captures["world_after"] = self.observe
+            for key, capture in captures.items():
+                try:
+                    self.attempt[key] = json.loads(
+                        json.dumps(capture(), sort_keys=True, allow_nan=False)
+                    )
+                except Exception as error:
+                    self.attempt.setdefault("capture_errors", {})[key] = type(error).__name__
+            raise
         self.attempt["copied_native_save"] = native
         after = self.screen_capture()
         after_bytes = json.dumps(after, sort_keys=True, allow_nan=False).encode()
