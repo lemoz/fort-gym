@@ -1,7 +1,7 @@
 # Campaign status
 
 Verified September 8, 2026 UTC. The Year-Two Autonomous Play objective remains
-unfinished; the app goal is active. The owner has approved starting the project
+unfinished; work continues toward the same objective. The owner has approved starting the project
 work for [Astra standard-input experiments](ASTRA_STANDARD_INPUT_EXPERIMENTS.md).
 
 ## Current phase: Astra native play and continuation
@@ -13,17 +13,45 @@ and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. The first bounded Astra native
 keyboard campaign has now completed.
 
-### Latest result: 16 further decisions, then a menu-identity save failure
+### Latest result: checkpoint 232 recovered and verified in a fresh native process
+
+Forward-only recovery at `41edaca0c37c637e8c34fa81ab96abb202e99078` passed native
+acceptance and independent audit. Checkpoint 232 is
+`d7c802ba88aa29a418d216d41cdd33df22b678403e5f68b9d508b6b4131059e7`, preserving
+49,200 retained ticks, all 248 responses, 8,150,227 campaign tokens and 8,219,231
+all-attempt tokens. Full trace/journal bytes, memory and the one inherited loss
+boundary are unchanged. No model call, key, requested tick or replay was added.
+All native/container/VM teardown passed. No worker is currently live.
+
+Explicit save profile `native_menu_preserving_save/v3` reads menu identity in
+separate RPCs immediately before and after saving, with the same native runtime,
+calendar and exact screen-object stack. The full identities must match. The
+transient inline helper reading stays retained; world-state and copied-save
+checks are unchanged. The unit-menu save correction passed its own native test
+and fresh reload before recovery. Historical profiles and failures remain intact.
+
+The website source leads with recovery 232 and retains the original failure and
+older records. No production deployment or visual acceptance is claimed. Next is
+normal Astra Medium/native-keyboard continuation from 232 with explicit v3 saving,
+unchanged memory, usage and cumulative limits. Year-two fortress sustainability
+and repeated cross-model comparisons remain unproved; this is checkpoint
+continuity, not completion of the full goal.
+
+Private acceptance/recovery evidence under the runtime artifact root:
+`astra-native-settled-identity-acceptance-v1` and `astra-native-runtime-recovery-v1`.
+Public evidence: `experiments/evidence/astra_native_keyboard_runtime_recovery_20260908.json`.
+
+### Previous result: 16 further decisions, then a menu-identity save failure
 
 Window g at `dcc475a42872d35918eaefdc4d3f0a5f5b1203a2` returned 16 accepted
 decisions and advanced 2,000 ticks. It stopped at trace cursor 232 / 49,200 retained
 ticks on `Native menu identity changed during save`. Independent audit verifies
 248 fully accounted responses, 443,672 new tokens, 8,150,227 campaign tokens and
 8,219,231 including historical failed deliveries. Charges remain unreported.
-Checkpoint 216 / 47,200 ticks is still the latest verified resumable checkpoint.
+At that failure, checkpoint 216 / 47,200 ticks was the latest verified checkpoint.
 
-The runtime's world save changed from the parent and is retained, but has not had
-a fresh reload verification. The trace and model memory/usage are settled and
+The runtime's world save changed from the parent and was retained, awaiting
+fresh reload verification. The trace and model memory/usage were settled and
 unchanged observations bracket the save operation. Its specific changed UI field
 is unknown because validation rejected the raw operation receipt before it was
 retained. Follow-up diagnostics now retain that unvalidated receipt and read-only
@@ -36,6 +64,20 @@ Private evidence:
 `fort_gym/artifacts/native-local-20260906/runtime-v2/astra-native-semantic-continuation-v1`.
 The authored latest review is
 `experiments/evidence/astra_native_keyboard_menu_identity_review_20260908.json`.
+
+Follow-up diagnostics now verify the newer native save reloads with matching
+persistent observations. A reproduced unit-menu save reveals the selection helper
+temporarily reports no unit inside the save RPC, while the actual unit-screen
+reference, screen pixels, menu stack, world observations and calendar stay
+unchanged; a later helper RPC agrees with the direct unit again. Both successful
+diagnostics passed independent audit and teardown, using nine menu-only setup
+keys each, zero model calls and zero requested ticks. The first fixture failed
+before any input on a wrong method name and remains failed. Those diagnostics
+led to the separate-RPC identity correction and verified forward recovery above.
+Private proof: `astra-native-menu-identity-diagnostic-v2` and `-v3` under the same
+runtime artifact root. Public details: `docs/semantic-native-checkpoints.md` and
+`experiments/evidence/astra_native_menu_identity_diagnostic_20260908.json` on the
+implementation branch.
 
 ### Previous result: checkpoint 216 recovered and verified by fresh native reload
 

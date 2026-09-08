@@ -5,20 +5,42 @@ Current owner-approved experimental phase, September 7:
 readable native keyboard play, allow model-led strategy and recovery, retain
 optional DFHack shortcuts for matched comparisons, and pursue a functioning
 fortress through year two and beyond. Website evidence and remote source delivery
-remain requirements. The app goal is verified active; early native Astra gameplay
+remain requirements. The objective is unfinished; early native Astra gameplay
 and checkpoint-continuation evidence are now verified.
 
-Latest result, September 8 UTC: window g returned 16 accepted decisions and 2,000
+Latest result, September 8 UTC: checkpoint 232 is recovered and verified in a
+fresh native process at source `41edaca0c37c637e8c34fa81ab96abb202e99078`.
+Independent audit confirms 49,200 retained ticks, all 248 responses, 8,150,227
+campaign tokens / 8,219,231 all-attempt tokens, unchanged memory and exact
+trace/journal bytes. Recovery added no model call, key, requested tick, replay
+or loss boundary. All game/container/VM teardown passed; no worker is live.
+
+The separately tested v3 save profile compares settled menu identity across
+RPCs, binding it to the same runtime, calendar and native screen stack. It keeps
+the transient inline helper evidence and all world/save checks. The website
+source now leads with recovery 232 while keeping historical failures visible.
+Next is normal Astra Medium/native-keyboard continuation from that checkpoint,
+with unchanged usage, memory and cumulative limits. No production deployment,
+year-two sustainability or cross-model completion is claimed.
+
+Previous result: window g returned 16 accepted decisions and 2,000
 new ticks, then rejected a changed native menu identity during saving at source
 `dcc475a42`. Independent audit verifies all 248 responses, 8,150,227 campaign tokens
 (8,219,231 including historical failed deliveries), preserved prior evidence and
 complete teardown. The retained trace reaches 232 / 49,200 ticks; the latest
-verified checkpoint remains 216 / 47,200 ticks. The newer runtime save differs
-from its parent but needs fresh reload verification. The exact changed UI field
+verified checkpoint then remained 216 / 47,200 ticks. The newer runtime save differed
+from its parent and needed fresh reload verification. The exact changed UI field
 is unknown because the rejected raw operation receipt was not retained. Added
 diagnostics retain it and read-only post-failure captures on future checks without
-weakening the invariant or retrying saving. No worker is live. Next is provider-free
-native investigation and forward reconciliation, not rollback or erased usage.
+weakening the invariant or retrying saving. The subsequent investigation and
+forward reconciliation preserved those decisions without rollback or erased usage.
+
+The subsequent provider-free native diagnostics verified the newer save reloads
+and reproduced a transient selected-unit helper mismatch. The actual selected
+unit, visible screen, native menu stack, world observations and calendar stayed
+unchanged; the helper agrees again in a later RPC. Independent audits and complete
+teardown passed. This identified the save-observer correction; its implementation
+and checkpoint-232 recovery are verified above, without completing the full goal.
 
 Previous result: forward recovery created verified checkpoint 216
 and passed a fresh native reload at source `2a158ae19`. Independent audit verifies
