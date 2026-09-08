@@ -27,7 +27,7 @@ METRICS = (
     "completed_farms",
     "recorded_dead_citizens",
 )
-ACTION_TYPES = {"DIG", "BUILD", "ORDER", "UNSUSPEND", "FARM", "LABOR", "WAIT", "INTERACT"}
+ACTION_TYPES = {"DIG", "BUILD", "ORDER", "UNSUSPEND", "FARM", "LABOR", "WAIT", "INTERACT", "KEYSTROKE"}
 
 
 def count(value: Any) -> int | None:
@@ -252,7 +252,8 @@ def campaign_profile(
         "autonomous_gameplay": "not_assessed",
         "fortress_collapse": "not_assessed",
         "limits": [
-            "Food and drink are native UI stock counters, not production or consumption measurements.",
+            "Resource counts require recognized native provenance; unverified UI estimates stay unknown.",
+            "Stock changes are not production or consumption measurements.",
             "Room and building counts are unknown when the source reports an incomplete or truncated scan.",
             "Recorded dead citizens includes the starting world's history; population changes do not identify death causes.",
             "Accepted commands and changed commands are observations, not completed-work or successful-adaptation verdicts.",
