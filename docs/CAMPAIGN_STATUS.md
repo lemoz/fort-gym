@@ -13,7 +13,27 @@ and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. Several bounded Astra native-keyboard
 windows have completed; the same fortress remains in autonomous continuation.
 
-### Latest result: checkpoint 711 saved with 49,200 new game ticks
+### Running now: ordinary continuation from checkpoint 711
+
+Window r is running under owner session **61359** on frozen publication source
+`2e535166fc96633438c19017a52256b45ab36790`. It keeps Astra Medium, native
+keyboard controls, 120-by-40 screen, complete model state and inherited limits.
+The 64-decision window declares no restart, strategy intervention or budget
+extension. Startup review independently observed the exact checkpoint digest,
+year 30 tick 209,401, unchanged full agent state, reconciled prior usage and
+preserved trace prefix. Six valid model responses had returned at this fixed
+observation; this is not a new saved checkpoint or completed-window result.
+
+The startup review digest is
+`601e8355521cdec9bacd3511a260a9d19b2f5ef7d5f75183da03b78999fea271`.
+Private artifacts and the live-owner handoff are under
+`astra-native-continuation-711-v1` in the existing runtime root. The owner retains
+mandatory native/container/VM teardown. Do not launch another owner for this
+attempt or change its executing source worktree. Final save, native-load receipt,
+usage and teardown audits remain pending. The website still shows recorded 711,
+not a live game feed, and no new production deployment is claimed.
+
+### Latest completed result: checkpoint 711 saved with 49,200 new game ticks
 
 Window q completed 64 accepted Astra Medium native-keyboard decisions on frozen
 source `167d22945feb9c3fa031408946fcc7503ad5dc39`, whose exact-head CI
@@ -43,8 +63,9 @@ A final exchange-directory check returned exit 128, after which the container
 was observed exited with code 0. The operator retained this terminal-observation
 warning and completed cleanup. Its underlying cause remains unverified; it is
 published as a warning, not a fully clean run or a gameplay failure. Checkpoint
-647 was fresh-loaded before q; checkpoint 711 still needs its own separate fresh
-reload on the next run. Do not relaunch the completed q owner.
+647 was fresh-loaded before q; checkpoint 711 had not yet been separately loaded
+at q completion. The running r startup now observes its matching loaded boundary;
+the final runtime receipt remains pending. Do not relaunch the completed q owner.
 
 Before launch, a provider-free capacity check found only 1,064,780 KiB free on
 the existing 16-GiB data disk. It was expanded to 24 GiB, leaving CPU 2, RAM 3 GiB,
@@ -72,10 +93,10 @@ http://127.0.0.1:8857/campaigns with isolated state and disabled game/admin acce
 former preview 97675 exited gracefully. No browser visual acceptance, merge or
 production deployment is claimed.
 
-Next: ordinary continuation from checkpoint 711
-with the same model, controls, memory and inherited limits. Window r declares 64
-decisions, no restart and no budget extension. It has not started. The full goal
-remains active, with year-two endurance and repeated comparisons still open.
+Next: follow the existing r owner through its bounded result, independently audit
+the new checkpoint, usage and teardown, and publish only verified outcomes.
+The full goal remains active, with year-two endurance and repeated comparisons
+still open.
 
 ### Previous result: native restart saved checkpoint 647; no new game time
 

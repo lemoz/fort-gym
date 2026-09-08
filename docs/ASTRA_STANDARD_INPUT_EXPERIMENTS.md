@@ -98,9 +98,13 @@ The actual result, warning display and next window r are pushed at
 `2e535166fc96633438c19017a52256b45ab36790` in draft PR #137. All 3,359 local tests
 passed, and the local page/API matches that exact committed publication. Remote
 CI `34286271507` also passed at that exact head; no merge, production deployment or browser visual
-acceptance is claimed. Window r continues the same model, memory, controls and
-limits from 711 after a fresh native load; it has not started. The open-ended
-year-two attempt and later paired/repeated comparisons remain the full objective.
+acceptance is claimed. Window r is now running under owner session 61359, keeping
+the same model, memory, controls and inherited limits. Its read-only startup review
+verified the matching loaded calendar, unchanged complete agent state, prior usage,
+trace prefix and actual 120x40 screen. Six valid responses had returned at that
+fixed observation; final save, native-load receipt and teardown audits remain
+pending. No new completed result is claimed. The open-ended year-two attempt and
+later paired/repeated comparisons remain the full objective.
 
 ## Historical interface result: window h
 
