@@ -115,10 +115,14 @@ def test_private_fields_and_unlisted_files_are_not_projected(evidence_root, monk
     assert records.keyboard_campaign_records(evidence_root) == before
     monkeypatch.setattr(records, "MODAL_TRIALS", ())
     monkeypatch.setattr(records, "SAVED_SEGMENTS", ())
+    monkeypatch.setattr(records, "COMPLETED_WINDOWS", ())
     file.unlink()
     after = records.keyboard_campaign_records(evidence_root)
     assert after["modal_trials"] == []
-    assert after["continuation_events"] == before["continuation_events"][:-2]
+    assert after["continuation_events"] == [
+        event for event in before["continuation_events"]
+        if event["kind"] not in {"modal_trial", "saved_segment", "completed_window"}
+    ]
 
 
 def test_dialog_trial_renderer_keeps_unknown_time_and_latest_first_order():
@@ -147,7 +151,8 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   await new Promise(setImmediate);
   const rendered = elements['keyboard-results'].textContent;
   assert.equal(elements['keyboard-results'].hidden, false);
-  assert.ok(rendered.startsWith('Checkpoint 807 saved · restart interrupted'));
+  assert.ok(rendered.startsWith('Checkpoint 839 saved · window complete'));
+  assert.ok(rendered.includes('Checkpoint 807 saved · restart interrupted'));
   const trial = rendered.slice(rendered.indexOf('Dialog handling worked'), rendered.indexOf('Memory experiment interrupted'));
   for (const text of ['198,600 ticks', '12,724 ticks', 'Final uncommitted game time Unknown',
     '4 paused-dialog receipts', 'Unknown time is not zero', 'underlying read failure is unknown',

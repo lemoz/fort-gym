@@ -127,10 +127,11 @@ def test_extra_private_fields_and_unlisted_records_are_not_exposed(evidence_root
     monkeypatch.setattr(records, "PROMPT_TRIALS", ())
     monkeypatch.setattr(records, "MODAL_TRIALS", ())
     monkeypatch.setattr(records, "SAVED_SEGMENTS", ())
+    monkeypatch.setattr(records, "COMPLETED_WINDOWS", ())
     without = records.keyboard_campaign_records(evidence_root)
     assert without["oom_failures"] == []
     assert without["continuation_events"] == [event for event in before["continuation_events"]
-                                              if event["kind"] not in {"oom_failure", "resumed", "prompt_trial", "modal_trial", "saved_segment"}]
+                                              if event["kind"] not in {"oom_failure", "resumed", "prompt_trial", "modal_trial", "saved_segment", "completed_window"}]
     assert without["partial_failures"] == before["partial_failures"]
 
 
@@ -180,7 +181,8 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   await new Promise(setImmediate);
   const rendered = elements['keyboard-results'].textContent;
   assert.equal(elements['keyboard-results'].hidden, false);
-  assert.ok(rendered.startsWith('Checkpoint 807 saved · restart interrupted'));
+  assert.ok(rendered.startsWith('Checkpoint 839 saved · window complete'));
+  assert.ok(rendered.includes('Checkpoint 807 saved · restart interrupted'));
   const latest = rendered.slice(rendered.indexOf('Play resumed after restart'), rendered.indexOf('Memory-related interruption'));
   for (const text of ['198,600 retained ticks', '64 new model decisions, 6,000 new ticks',
     '906 accounted model responses', '4 loss records', 'at least 35,091 ticks',

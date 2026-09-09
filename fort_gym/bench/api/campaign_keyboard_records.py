@@ -21,6 +21,7 @@ from .campaign_keyboard_resumed import RESUMED_WINDOWS, resumed_window
 from .campaign_keyboard_trials import PROMPT_TRIALS, prompt_trial
 from .campaign_keyboard_modal_trials import MODAL_TRIALS, modal_trial
 from .campaign_keyboard_saved_segments import SAVED_SEGMENTS, saved_segment
+from .campaign_keyboard_windows import COMPLETED_WINDOWS, completed_window
 from .campaign_keyboard_tails import (
     TAIL_INTERRUPTION, TAIL_RECOVERIES, continuation_interruption, continuation_recovery,
 )
@@ -296,6 +297,9 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
     prompt_trials = [prompt_trial(root, filename, resumed_windows) for filename in PROMPT_TRIALS]
     modal_trials = [modal_trial(root, filename, resumed_windows, prompt_trials) for filename in MODAL_TRIALS]
     saved_segments = [saved_segment(root, filename, resumed_windows, modal_trials) for filename in SAVED_SEGMENTS]
+    completed_windows: list[dict] = []
+    for filename in COMPLETED_WINDOWS:
+        completed_windows.append(completed_window(root, filename, [*saved_segments, *completed_windows]))
     # Explicit publication order retains the interruption between its parent
     # continuation and recovery; later play must not appear below older recovery.
     recent_events = [
@@ -341,6 +345,10 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
         previous_event = {"kind": "modal_trial", "id": saved["previous_trial"]}
         recent_events.insert(recent_events.index(previous_event) + 1,
                              {"kind": "saved_segment", "id": saved["saved_segment_id"]})
+    for window in completed_windows:
+        previous_event = next(event for event in recent_events if event["id"] == window["parent_record"])
+        recent_events.insert(recent_events.index(previous_event) + 1,
+                             {"kind": "completed_window", "id": window["window_id"]})
     return {
         "schema_version": "fortgym.public-keyboard-milestones/v1",
         "live_tracking": False,
@@ -359,6 +367,7 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
         "prompt_trials": prompt_trials,
         "modal_trials": modal_trials,
         "saved_segments": saved_segments,
+        "completed_windows": completed_windows,
         "save_acceptances": save_acceptances,
         "tail_interruptions": tail_interruptions,
         "tail_recoveries": tail_recoveries,

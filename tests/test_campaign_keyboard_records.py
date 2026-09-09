@@ -39,7 +39,7 @@ def evidence_root(tmp_path):
                      *records.PRESAVE_FAILURES, *records.SAVE_ACCEPTANCES, *records.PRESAVE_RESTARTS,
                      *records.POSTRESTART_CONTINUATIONS, *records.PARTIAL_FAILURES, *records.OOM_FAILURES,
                      *records.RESUMED_WINDOWS, *records.PROMPT_TRIALS, *records.MODAL_TRIALS,
-                     *records.SAVED_SEGMENTS):
+                     *records.SAVED_SEGMENTS, *records.COMPLETED_WINDOWS):
         shutil.copyfile(records.PROJECT_ROOT / "experiments/evidence" / filename, folder / filename)
     return tmp_path
 
@@ -223,7 +223,8 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   assert.match(elements['keyboard-results'].textContent, /184 model responses/);
   assert.match(elements['keyboard-results'].textContent, /Recovery verified · checkpoint 184/);
   assert.match(elements['keyboard-results'].textContent, /Subsequently recovered as checkpoint 184/);
-  assert.ok(elements['keyboard-results'].textContent.startsWith('Checkpoint 807 saved · restart interrupted'));
+  assert.ok(elements['keyboard-results'].textContent.startsWith('Checkpoint 839 saved · window complete'));
+  assert.ok(elements['keyboard-results'].textContent.includes('Checkpoint 807 saved · restart interrupted'));
   assert.match(elements['keyboard-results'].textContent, /614 new game ticks are unsaved/);
   assert.match(elements['keyboard-results'].textContent, /507,860 new tokens/);
   assert.match(elements['keyboard-results'].textContent, /not a matched comparison/);

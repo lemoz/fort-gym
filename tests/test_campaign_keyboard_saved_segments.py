@@ -25,7 +25,9 @@ def test_saved_progress_and_failed_window_are_both_visible():
     assert response.status_code == 200 and "no-store" in response.headers["cache-control"]
     data = response.json()
     row = data["saved_segments"][-1]
-    assert data["continuation_events"][-2:] == [
+    event = {"kind": "saved_segment", "id": row["saved_segment_id"]}
+    index = data["continuation_events"].index(event)
+    assert data["continuation_events"][index - 1:index + 1] == [
         {"kind": "modal_trial", "id": row["previous_trial"]},
         {"kind": "saved_segment", "id": row["saved_segment_id"]},
     ]
@@ -145,8 +147,9 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
 (async () => {
   await new Promise(setImmediate);
   const rendered = elements['keyboard-results'].textContent;
-  assert.ok(rendered.startsWith('Checkpoint 807 saved · restart interrupted'));
-  const latest = rendered.slice(0, rendered.indexOf('Dialog handling worked'));
+  const start = rendered.indexOf('Checkpoint 807 saved · restart interrupted');
+  assert.ok(start >= 0);
+  const latest = rendered.slice(start, rendered.indexOf('Dialog handling worked'));
   for (const text of ['206,582 ticks', '51.2%', '7,982 ticks', '32 new decisions were saved',
     '0 recorded deaths', '404 drinks', '7 completed farms', '1 unfinished farm',
     '6 beds', '4 workshops', 'Food: Unknown', '989 responses', '861,928 tokens',

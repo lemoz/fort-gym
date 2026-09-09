@@ -144,11 +144,12 @@ def test_partial_publication_requires_allowlisting_and_drops_private_fields(
     monkeypatch.setattr(records, "PROMPT_TRIALS", ())
     monkeypatch.setattr(records, "MODAL_TRIALS", ())
     monkeypatch.setattr(records, "SAVED_SEGMENTS", ())
+    monkeypatch.setattr(records, "COMPLETED_WINDOWS", ())
     without = records.keyboard_campaign_records(evidence_root)
     assert without["partial_failures"] == []
     assert without["continuations"] == before["continuations"]
     assert without["continuation_events"] == [event for event in before["continuation_events"]
-                                              if event["kind"] not in {"partial_failure", "oom_failure", "resumed", "prompt_trial", "modal_trial", "saved_segment"}]
+                                              if event["kind"] not in {"partial_failure", "oom_failure", "resumed", "prompt_trial", "modal_trial", "saved_segment", "completed_window"}]
     assert "private-sentinel" not in json.dumps(without)
 
 
@@ -181,8 +182,9 @@ def test_partial_failure_renderer_orders_failed_attempt_above_saved_parent():
     data["prompt_trials"] = []
     data["modal_trials"] = []
     data["saved_segments"] = []
+    data["completed_windows"] = []
     data["continuation_events"] = [row for row in data["continuation_events"]
-                                   if row["kind"] not in {"oom_failure", "resumed", "prompt_trial", "modal_trial", "saved_segment"}]
+                                   if row["kind"] not in {"oom_failure", "resumed", "prompt_trial", "modal_trial", "saved_segment", "completed_window"}]
     program = r"""
 const assert = require('node:assert/strict');
 const vm = require('node:vm');

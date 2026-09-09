@@ -62,10 +62,11 @@ def test_private_trial_fields_never_projected(evidence_root, monkeypatch):
     monkeypatch.setattr(records, "PROMPT_TRIALS", ())
     monkeypatch.setattr(records, "MODAL_TRIALS", ())
     monkeypatch.setattr(records, "SAVED_SEGMENTS", ())
+    monkeypatch.setattr(records, "COMPLETED_WINDOWS", ())
     after = records.keyboard_campaign_records(evidence_root)
     assert after["prompt_trials"] == []
     assert after["continuation_events"] == [event for event in before["continuation_events"]
-                                            if event["kind"] not in {"prompt_trial", "modal_trial", "saved_segment"}]
+                                            if event["kind"] not in {"prompt_trial", "modal_trial", "saved_segment", "completed_window"}]
 
 
 @pytest.mark.parametrize("kind", ["missing", "symlink", "oversized", "wrong_parent"])

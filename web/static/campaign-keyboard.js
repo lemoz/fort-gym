@@ -51,9 +51,42 @@
       throw new Error('Unsupported continuation evidence');
     }
     const continuations = data.continuations || [];
-    for (const name of ['tail_interruptions', 'tail_recoveries', 'presave_failures', 'partial_failures', 'oom_failures', 'resumed_windows', 'prompt_trials', 'modal_trials', 'saved_segments', 'save_acceptances']) {
+    for (const name of ['tail_interruptions', 'tail_recoveries', 'presave_failures', 'partial_failures', 'oom_failures', 'resumed_windows', 'prompt_trials', 'modal_trials', 'saved_segments', 'completed_windows', 'save_acceptances']) {
       if (data[name] !== undefined && !Array.isArray(data[name])) {
         throw new Error('Unsupported continuation recovery evidence');
+      }
+    }
+    function renderCompletedWindow(row) {
+      const section = node('section', undefined, results);
+      section.className = 'campaign-condition';
+      const p = row.progress, o = row.saved_observation, food = row.food, resource = row.resources;
+      node('h3', `Checkpoint ${count(p.checkpoint_cursor)} saved · window complete`, section);
+      node('p', `${row.model} · ${row.reasoning_effort} · native keyboard`, section);
+      const facts = node('dl', undefined, section);
+      facts.className = 'campaign-save-facts';
+      for (const [label, value] of [
+        ['Saved game time', `${count(p.saved_elapsed_ticks)} ticks`],
+        ['First year elapsed', `${(100 * p.saved_elapsed_ticks / 403200).toFixed(1)}%`],
+        ['New saved progress', `${count(p.new_saved_ticks)} ticks`],
+        ['Living dwarves', count(o.population)]
+      ]) {
+        const item = node('div', undefined, facts);
+        node('dt', label, item); node('dd', value, item);
+      }
+      node('p', `${count(p.new_model_responses)} new decisions saved. ${count(o.recorded_dead_citizens)} recorded deaths, ${count(o.drink_stock)} drinks, ${count(o.completed_farms)} completed farms, ${count(o.planned_unfinished_farms)} unfinished farms, ${count(o.completed_beds)} beds and ${count(o.completed_workshops)} workshops.`, section);
+      node('p', food.available === true
+        ? `Food scan: ${count(food.raw_edible_units)} raw-edible units, including ${count(food.trader_flagged_units)} trader-flagged units. This is not a count of accessible fortress-owned food. Production and consumption rates remain unmeasured.`
+        : 'Food measurement unavailable. Missing food is unknown, not zero.', section);
+      const details = node('details', undefined, section);
+      details.className = 'campaign-details';
+      node('summary', 'Usage, continuity and runtime limits', details);
+      node('p', `${count(p.cumulative_model_responses)} responses accounted for. This window added ${count(row.usage.new_tokens)} tokens: ${count(row.usage.campaign_tokens)} campaign tokens, ${count(row.usage.all_attempt_tokens)} including historical failed deliveries. Charge: ${cost(row.usage)}.`, details);
+      node('p', `${count(p.loss_records)} historical losses retain at least ${count(p.known_lost_ticks)} lost ticks plus an unknown remainder. No new rollback or replay occurred. The new save is verified in process; a fresh reload has not yet been verified.`, details);
+      node('p', `${count(row.clock_outcomes.zero_tick_timeouts)} zero-tick clock timeouts were retained; the model received failure feedback. ${count(food.after_action_complete_readings)} complete and ${count(food.after_action_unknown_readings)} unknown after-action food readings used the declared ${row.private_measurement_timeout_seconds}-second scan limit.`, details);
+      node('p', `Memory peak: ${count(resource.memory_peak_bytes)} bytes against a ${count(resource.memory_limit_bytes)}-byte limit; ${count(resource.memory_max_events)} memory-limit events, ${count(resource.oom_events)} OOM events and ${count(resource.oom_kill_events)} OOM kills. Task peak: ${count(resource.task_peak)} of ${count(resource.task_limit)}; ${count(resource.task_limit_events)} task-limit events, ${count(resource.max_observed_zombies)} observed zombies. Memory headroom is not established.`, details);
+      node('p', 'Game and VM teardown verified. Saved elapsed time is not proof of sustainable production or a matched model comparison.', section);
+      if (/^experiments\/evidence\/[a-z0-9_]+\.json$/.test(row.evidence_path)) {
+        node('a', 'Read the completed-window evidence', section).href = 'https://github.com/lemoz/fort-gym/blob/codex/campaign-codex-subscription/' + row.evidence_path;
       }
     }
     function renderSavedSegment(row) {
@@ -349,6 +382,7 @@
       prompt_trial: (data.prompt_trials || []).map(row => ({id: row.trial_id, row})),
       modal_trial: (data.modal_trials || []).map(row => ({id: row.trial_id, row})),
       saved_segment: (data.saved_segments || []).map(row => ({id: row.saved_segment_id, row})),
+      completed_window: (data.completed_windows || []).map(row => ({id: row.window_id, row})),
       restart: restarts.filter(row => row.recent_event === true).map(row => ({id: row.restart_id, row}))
     };
     const events = data.continuation_events || Object.entries(recent).flatMap(([kind, rows]) => rows.map(row => ({kind, id: row.id})));
@@ -367,6 +401,7 @@
       else if (event.kind === 'prompt_trial') renderPromptTrial(found.row);
       else if (event.kind === 'modal_trial') renderModalTrial(found.row);
       else if (event.kind === 'saved_segment') renderSavedSegment(found.row);
+      else if (event.kind === 'completed_window') renderCompletedWindow(found.row);
       else if (event.kind === 'restart') renderRestart(found.row);
       else renderRecovery(found.row);
     }
