@@ -18,6 +18,7 @@ from .codex_protocol import TRANSPORT
 from .governed_llm import GovernedBudgetCapError
 from .standard_input import parse_response
 from .keyboard_rejection import rejected_receipt
+from .keyboard_prompt import BASE_PROMPT, effective_prompt, declared_prompt_change
 
 SUBSCRIPTION_COST_BASIS = "codex_subscription_charge_unreported/v1"
 
@@ -88,6 +89,23 @@ class CodexKeyboardAgent(Agent):
         self.usage = initial_usage()
         self.events: list[dict] = []
         self.budget_extensions: list[dict] = []
+        self.prompt_changes: list[dict] = []
+
+    @property
+    def prompt_profile(self) -> str:
+        return effective_prompt(self.prompt_changes, self.usage)
+
+    def change_prompt(self, declaration: dict, *, profile: str,
+                      checkpoint_sha256: str, next_step: int) -> dict:
+        if self.campaign_id is None or self.events:
+            raise ValueError("Prompt change requires a settled campaign")
+        change = declared_prompt_change(
+            self.export_campaign_state(), declaration, profile=profile,
+            checkpoint_sha256=checkpoint_sha256, next_step=next_step,
+        )
+        assert change is not None
+        self.prompt_changes.append(change)
+        return deepcopy(change)
 
     def set_campaign_context(self, *, campaign_id: str) -> None:
         if not isinstance(campaign_id, str) or not campaign_id:
@@ -105,16 +123,17 @@ class CodexKeyboardAgent(Agent):
                 memory=self.memory,
                 usage=self.usage,
                 **({"budget_extensions": self.budget_extensions} if self.budget_extensions else {}),
+                **({"prompt_changes": self.prompt_changes} if self.prompt_changes else {}),
             )
         )
 
     def restore_campaign_state(self, data: dict, *, campaign_id: str) -> None:
-        if self.usage != initial_usage() or self.memory or self.events or self.budget_extensions:
+        if self.usage != initial_usage() or self.memory or self.events or self.budget_extensions or self.prompt_changes:
             raise ValueError("Restore requires a fresh keyboard agent")
         expected = self.export_campaign_state()
         if (
             not isinstance(data, dict)
-            or set(data) not in (set(expected), set(expected) | {"budget_extensions"})
+            or set(data) - {"budget_extensions", "prompt_changes"} != set(expected)
             or data["schema_version"] != expected["schema_version"]
             or data["configuration"] != self.configuration
             or data["campaign_id"] != campaign_id
@@ -124,9 +143,12 @@ class CodexKeyboardAgent(Agent):
         validate_usage(data["usage"])
         extensions = deepcopy(data.get("budget_extensions", []))
         effective_budget(self.configuration, extensions, data["usage"])
+        changes = deepcopy(data.get("prompt_changes", []))
+        effective_prompt(changes, data["usage"])
         self.set_campaign_context(campaign_id=campaign_id)
         self.memory, self.usage = data["memory"], deepcopy(data["usage"])
         self.budget_extensions = extensions
+        self.prompt_changes = changes
 
     def extend_budget(
         self, *, checkpoint_sha256: str, max_dispatches: int, max_total_tokens: int
@@ -213,6 +235,7 @@ class CodexKeyboardAgent(Agent):
             or result.get("control_profile") != NATIVE_PROFILE
             or result.get("observation_profile") != TEXT_PROFILE
             or result.get("screen_sha256") != screen_hash
+            or result.get("prompt_profile", BASE_PROMPT) != self.prompt_profile
             or type(tokens) is not int
             or tokens < 0
             or not receipt.get("usage")

@@ -10,6 +10,8 @@ from fort_gym.bench.agent import keyboard_exchange as module
     {}, {"model": "gpt-6-astra", "reasoning_effort": "medium"},
     {"model": "gpt-5.6-sol", "reasoning_effort": "high"},
     {"model": "gpt-5.6-terra", "reasoning_effort": "low"},
+    {"model": "gpt-6-astra", "reasoning_effort": "medium",
+     "prompt_profile": "native_keyboard_memory_replacement/v1"},
 ])
 def test_exchange_binds_response_to_exact_screen_memory_and_request(tmp_path, selection):
     values = []
@@ -37,7 +39,8 @@ def test_exchange_binds_response_to_exact_screen_memory_and_request(tmp_path, se
         module.validate_request(request)
         assert request["memory"] == "remember"
         if selection:
-            assert request["schema_version"] == "fortgym.keyboard-exchange-request/v2"
+            version = 3 if "prompt_profile" in selection else 2
+            assert request["schema_version"] == f"fortgym.keyboard-exchange-request/v{version}"
             assert module.request_selection(request) == (
                 selection["model"], selection["reasoning_effort"],
             )

@@ -8,6 +8,7 @@ from ..agent.codex_protocol import TRANSPORT
 from ..agent.codex_transport import MODEL, REASONING_EFFORT
 from ..agent.codex_selection import validate_selection
 from ..agent.keyboard_exchange import read
+from ..agent.keyboard_prompt import BASE_PROMPT, validate_prompt_profile
 from ..env.native_key_catalog import NATIVE_PROFILE
 from ..env.screen_observation import TEXT_PROFILE
 from .keyboard_save import LEGACY_SAVE_PROFILE, SAVE_PROFILES
@@ -25,10 +26,14 @@ def validate_condition(config: dict) -> dict:
     if version == "fortgym.codex-keyboard-condition/v1":
         if config.get("model") != MODEL or config.get("reasoning_effort") != REASONING_EFFORT:
             raise ValueError("Keyboard condition identity differs")
-    elif version == "fortgym.codex-keyboard-condition/v2":
+    elif version in ("fortgym.codex-keyboard-condition/v2", "fortgym.codex-keyboard-condition/v3"):
         validate_selection(config.get("model"), config.get("reasoning_effort"))
     else:
         raise ValueError("Keyboard condition identity differs")
+    if version == "fortgym.codex-keyboard-condition/v3":
+        validate_prompt_profile(config.get("prompt_profile"))
+    elif "prompt_profile" in config:
+        raise ValueError("Historical keyboard conditions cannot change prompt profiles")
     identities = {
         "transport": TRANSPORT,
         "control_profile": NATIVE_PROFILE,
@@ -83,6 +88,17 @@ def load_window(condition_path: Path, window_path: Path) -> tuple[dict, dict]:
     if window.get("snapshot_profile", LEGACY_SAVE_PROFILE) not in SAVE_PROFILES:
         raise ValueError("Unsupported declared snapshot profile")
     validate_profile(window.get("private_measurement_profile"))
+    change = window.get("prompt_change")
+    if change is not None:
+        if (not isinstance(change, dict) or set(change) != {
+                "schema_version", "checkpoint_sha256", "next_step", "previous", "profile",
+            } or change.get("schema_version") != "fortgym.keyboard-prompt-change-declaration/v1"
+                or change.get("next_step") != window["continuation_from_next_step"]
+                or type(change.get("next_step")) is not int
+                or change.get("profile") != condition.get("prompt_profile", BASE_PROMPT)):
+            raise ValueError("Invalid declared prompt change")
+        validate_prompt_profile(change["previous"])
+        validate_prompt_profile(change["profile"])
     extension = window.get("budget_extension")
     if extension is not None:
         if not isinstance(extension, dict) or set(extension) != {

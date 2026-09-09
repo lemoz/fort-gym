@@ -16,6 +16,7 @@ from ..env.screen_observation import TEXT_PROFILE, encode_screen
 from ..env.native_key_catalog import NATIVE_PROFILE, catalog_instructions
 from .codex_transport import CodexTransportError, request_decision
 from .codex_selection import MODEL, REASONING_EFFORT
+from .keyboard_prompt import BASE_PROMPT, MEMORY_PROMPT, MEMORY_CONTRACT, validate_prompt_profile
 from .standard_input import (
     CONTROL_PROFILE,
     OBSERVATION_PROFILE,
@@ -73,7 +74,9 @@ def request_keyboard_decision(
     feedback: dict | None = None,
     model: str = MODEL,
     reasoning_effort: str = REASONING_EFFORT,
+    prompt_profile: str = BASE_PROMPT,
 ) -> dict:
+    validate_prompt_profile(prompt_profile)
     if not isinstance(memory, str):
         raise ValueError("Agent memory must be text")
     observation = encode_screen(screen, observation_profile)
@@ -91,6 +94,8 @@ def request_keyboard_decision(
     )
     if control_profile == NATIVE_PROFILE:
         instructions += "\n" + catalog_instructions() + "\n"
+    if prompt_profile == MEMORY_PROMPT:
+        instructions += "\n" + MEMORY_CONTRACT + "\n"
     prompt = (
         instructions
         + "\nResponse contract:\n"
@@ -137,6 +142,7 @@ def request_keyboard_decision(
         "native_action_dispatched": False,
         "error": error,
         "transport_receipt": receipt,
+        **({"prompt_profile": prompt_profile} if prompt_profile != BASE_PROMPT else {}),
     }
     path = Path(receipt["run_directory"]) / "keyboard-decision.json"
     with path.open("x", encoding="utf-8") as stream:

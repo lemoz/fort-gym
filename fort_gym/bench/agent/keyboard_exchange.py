@@ -18,6 +18,7 @@ from pathlib import Path
 from ..env.native_key_catalog import NATIVE_PROFILE
 from ..env.screen_observation import TEXT_PROFILE, raw_screen
 from .codex_selection import MODEL, REASONING_EFFORT, validate_selection
+from .keyboard_prompt import validate_prompt_profile
 
 MAX_BYTES = 2 * 1024 * 1024
 
@@ -63,9 +64,12 @@ def validate_request(request: dict) -> None:
         "observation_profile",
         "max_advance_ticks",
     }
-    if version == "fortgym.keyboard-exchange-request/v2":
+    if version in ("fortgym.keyboard-exchange-request/v2", "fortgym.keyboard-exchange-request/v3"):
         fields |= {"model", "reasoning_effort"}
         validate_selection(request.get("model"), request.get("reasoning_effort"))
+        if version == "fortgym.keyboard-exchange-request/v3":
+            fields.add("prompt_profile")
+            validate_prompt_profile(request.get("prompt_profile"))
     elif version != "fortgym.keyboard-exchange-request/v1":
         raise ValueError("Keyboard exchange condition is invalid")
     if set(request) != fields:
@@ -100,6 +104,7 @@ def exchange_decision(
     timeout_seconds: float = 240,
     model: str | None = None,
     reasoning_effort: str | None = None,
+    prompt_profile: str | None = None,
 ) -> dict:
     if type(timeout_seconds) not in (int, float) or not 1 <= timeout_seconds <= 600:
         raise ValueError("Invalid exchange deadline")
@@ -120,6 +125,12 @@ def exchange_decision(
             schema_version="fortgym.keyboard-exchange-request/v2",
             model=model, reasoning_effort=reasoning_effort,
         )
+    if prompt_profile is not None:
+        validate_prompt_profile(prompt_profile)
+        if model is None or reasoning_effort is None:
+            raise ValueError("A prompt profile requires explicit model selection")
+        request.update(schema_version="fortgym.keyboard-exchange-request/v3",
+                       prompt_profile=prompt_profile)
     validate_request(request)
     directory = root / identifier
     directory.mkdir(mode=0o700, parents=False, exist_ok=False)

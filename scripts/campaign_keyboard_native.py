@@ -28,6 +28,7 @@ from fort_gym.bench.run.campaign_environment import NativeCampaignEnvironment
 from fort_gym.bench.run.campaign_loop import reconciled_usage
 from fort_gym.bench.run.campaign_save import NativeSaveSnapshotter
 from fort_gym.bench.run.keyboard_config import load_window
+from fort_gym.bench.agent.keyboard_prompt import BASE_PROMPT, declared_prompt_change
 from fort_gym.bench.run.keyboard_segment import run_keyboard_segment
 from fort_gym.bench.run.keyboard_save import (
     LEGACY_SAVE_PROFILE,
@@ -113,9 +114,11 @@ def worker(args) -> dict:
                 timeout_seconds=condition["exchange_timeout_seconds"],
                 **(
                     {"model": condition["model"], "reasoning_effort": condition["reasoning_effort"]}
-                    if condition["schema_version"] == "fortgym.codex-keyboard-condition/v2"
+                    if condition["schema_version"] != "fortgym.codex-keyboard-condition/v1"
                     else {}
                 ),
+                **({"prompt_profile": condition["prompt_profile"]}
+                   if condition["schema_version"] == "fortgym.codex-keyboard-condition/v3" else {}),
             ),
             max_dispatches=condition["max_dispatches"],
             max_total_tokens=condition["max_total_tokens"],
@@ -137,6 +140,8 @@ def worker(args) -> dict:
             budget_extension=window.get("budget_extension") if args.extend_budget else None,
             restart_declaration=window.get("restart") if getattr(args, "restart_source", None) else None,
             restart_source=getattr(args, "restart_source", None),
+            prompt_change=(window.get("prompt_change")
+                           if args.cursor == window.get("continuation_from_next_step") else None),
         )
     finally:
         environment.close()
@@ -162,6 +167,10 @@ def run_window(args) -> dict:
     elif latest != (args.checkpoint / "usage.jsonl").read_bytes():
         raise ValueError("A window requires the fully settled latest checkpoint, not an older save")
     state = read(args.checkpoint / "agent.json")
+    declared_prompt_change(
+        state, window.get("prompt_change"), profile=condition.get("prompt_profile", BASE_PROMPT),
+        checkpoint_sha256=manifest["sha256"], next_step=window["continuation_from_next_step"],
+    )
     if window.get("restart") is None and reconciled_usage(state, latest) != state["usage"]:
         raise ValueError("Checkpoint usage is not settled")
     args.output.mkdir(mode=0o700, exist_ok=False)

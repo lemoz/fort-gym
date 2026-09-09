@@ -10,6 +10,7 @@ from .codex_allowance import read_allowance
 from .codex_transport import CodexTransportError
 from .keyboard_decision import request_keyboard_decision
 from .keyboard_exchange import digest, publish, request_selection
+from .keyboard_prompt import BASE_PROMPT
 
 
 def answer_request(
@@ -33,6 +34,7 @@ def answer_request(
         request["schema_version"] != f"fortgym.keyboard-exchange-request/{version}"
         or model != condition["model"]
         or reasoning_effort != condition["reasoning_effort"]
+        or request.get("prompt_profile", BASE_PROMPT) != condition.get("prompt_profile", BASE_PROMPT)
     ):
         raise ValueError("Request model differs from its declared condition")
     if request["max_advance_ticks"] != condition["max_advance_ticks"]:
@@ -67,6 +69,7 @@ def answer_request(
             observation_profile=condition["observation_profile"],
             model=model,
             reasoning_effort=reasoning_effort,
+            **({"prompt_profile": condition["prompt_profile"]} if version == "v3" else {}),
         )
     except CodexTransportError as error:
         result = error.receipt

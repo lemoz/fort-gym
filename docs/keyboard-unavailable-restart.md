@@ -36,12 +36,26 @@ with empty retained memory. The current prompt permits empty updates but does no
 say that the field replaces all previous memory. This may contribute to repeated
 inspection, but a single run does not prove that cause.
 
-Prepare an opt-in, versioned prompt condition that explains only the memory
+The new opt-in, versioned prompt condition explains only the memory
 contract: the field is a complete replacement, anything to retain must be included,
-and an empty value clears it. Preserve the baseline prompt and all historical
-conditions. Keep Astra Medium, screen/controls, model-chosen time, checkpoint
-memory and usage, and cumulative limits unchanged. Bind the selected prompt to
-the exchange request and receipt; reject a mismatch before model dispatch.
+and an empty value clears it. The baseline prompt and historical conditions are
+unchanged. Astra Medium, screen/controls, model-chosen time, checkpoint memory,
+usage and cumulative limits stay the same. Condition/exchange v3 binds the
+selected prompt to the request and decision receipt. A mismatch rejects before
+dispatch; a wrong returned profile retains usage but does not execute game input.
+
+`prompt_changes` is append-only checkpoint state, with the source checkpoint,
+cursor, previous/new profiles and usage boundary. Resume preserves that history;
+switching profiles without a declaration rejects before inference. The change
+does not append, clear or fill the model's saved memory. Window
+`campaign_astra_keyboard_window_20260909u.json` declares the change at checkpoint
+775 and up to 64 decisions, with no further restart or budget extension.
+
+Validation for this implementation: 3,674 full-suite tests passed, 10 skipped;
+changed-file Ruff and scoped mypy across eight source files passed. Offline tests
+cover unchanged baseline prompt bytes, the actual courier-to-prompt path,
+profile-mismatch accounting, declared checkpoint changes and subsequent resumes.
+These checks do not establish the native experiment's outcome.
 
 Measure game ticks per decision, zero-tick decisions, repeated screens, memory
 clears, fortress outcomes and tokens. A continuation has a different starting

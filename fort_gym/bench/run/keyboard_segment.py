@@ -5,7 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 
 from ..agent.campaign_keyboard import CodexKeyboardAgent
-from ..agent.keyboard_exchange import publish
+from ..agent.keyboard_exchange import publish, read
+from ..agent.keyboard_prompt import BASE_PROMPT, declared_prompt_change
 from .campaign_checkpoint import verify_checkpoint
 from .campaign_loop import CampaignLoop, CampaignPreDispatchPause
 from .keyboard_config import validate_condition, positive
@@ -26,6 +27,7 @@ def run_keyboard_segment(
     budget_extension: dict | None = None,
     restart_declaration: dict | None = None,
     restart_source: Path | None = None,
+    prompt_change: dict | None = None,
 ) -> dict:
     """Resume only the verified loaded game; never choose or repair gameplay."""
     validate_condition(condition)
@@ -39,6 +41,11 @@ def run_keyboard_segment(
     manifest = verify_checkpoint(checkpoint)
     if manifest["payload"]["next_step"] != expected_cursor:
         raise ValueError("Source checkpoint cursor differs from the declared window")
+    selected_prompt = condition.get("prompt_profile", BASE_PROMPT)
+    declared_prompt_change(
+        read(checkpoint / "agent.json"), prompt_change, profile=selected_prompt,
+        checkpoint_sha256=manifest["sha256"], next_step=expected_cursor,
+    )
     restart = None
     if (restart_declaration is None) != (restart_source is None):
         raise ValueError("Restart source and explicit declaration are required together")
@@ -84,6 +91,15 @@ def run_keyboard_segment(
             apply_restart(loop, restart, prior_discontinuities=history)
             publish(output / "restart.json", restart)
             result["discontinuities"] = loop.discontinuities
+        if prompt_change is not None:
+            changed = agent.change_prompt(
+                prompt_change, profile=selected_prompt,
+                checkpoint_sha256=manifest["sha256"], next_step=expected_cursor,
+            )
+            publish(output / "prompt-change.json", changed)
+            result["prompt_change"] = changed
+        if agent.prompt_profile != selected_prompt:
+            raise ValueError("Resumed prompt differs from the declared condition")
         publish(output / "agent-before.json", agent.export_campaign_state())
         publish(output / "native-before.json", environment.observe())
         result["stop_reason"] = "segment_limit"
