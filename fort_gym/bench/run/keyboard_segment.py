@@ -101,6 +101,7 @@ def run_keyboard_segment(
             result["prompt_change"] = changed
         if agent.prompt_profile != selected_prompt:
             raise ValueError("Resumed prompt differs from the declared condition")
+        publish(output / "history-before.json", {"discontinuities": loop.discontinuities})
         publish(output / "agent-before.json", agent.export_campaign_state())
         publish(output / "native-before.json", environment.observe())
         result["stop_reason"] = "segment_limit"

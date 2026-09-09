@@ -53,13 +53,29 @@ def validate_unavailable_discontinuity(row: dict) -> None:
 
 def restart_history(checkpoint: Path, segment: Path, record: dict) -> list[dict]:
     """Carry additional, already-recorded losses without recursively nesting them."""
-    from .keyboard_restart import validate_discontinuities
+    from .keyboard_terminated_restart import TERMINATED_KIND, terminated_history, history_digest
+
+    if record.get("failure_kind") == TERMINATED_KIND:
+        if (digest(segment.parent / "result.json") != record["source_result_sha256"]
+            or digest(segment / "loop/trace.jsonl") != record["source_trace_sha256"]):
+            raise ValueError("Restart history source differs from the prepared failure")
+        history = terminated_history(checkpoint, segment)
+        if history_digest(history) != record["source_prior_history_sha256"]:
+            raise ValueError("Termination prior history differs from its prepared digest")
+        return history
 
     result = read(segment / "result.json")
     if digest(segment / "result.json") != record["source_result_sha256"]:
         raise ValueError("Restart history source differs from the prepared failure")
+    return validated_restart_history(checkpoint, segment, result.get("discontinuities", []))
+
+
+def validated_restart_history(checkpoint: Path, segment: Path, records: object) -> list[dict]:
+    """Bind a source history to the saved prefix and original restart artifact."""
+    from .keyboard_restart import validate_discontinuities
+
     saved = validate_discontinuities(read(checkpoint / "runner.json").get("discontinuities", []))
-    history = validate_discontinuities(result.get("discontinuities", []))
+    history = validate_discontinuities(records)
     if history[: len(saved)] != saved:
         raise ValueError("Restart cannot erase or change checkpoint loss history")
     if len(history) > len(saved):
@@ -72,6 +88,8 @@ def restart_history(checkpoint: Path, segment: Path, record: dict) -> list[dict]
             or started["retained_usage"] != read(segment / "agent-before.json")["usage"]
         ):
             raise ValueError("Additional losses lack their original restart and usage boundary")
+    elif (segment / "restart.json").exists():
+        raise ValueError("Restart artifact is absent from the source loss history")
     return deepcopy(history)
 
 

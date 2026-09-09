@@ -8,19 +8,18 @@ from ..agent.keyboard_exchange import read
 from ..agent.keyboard_prompt import declared_prompt_change, effective_prompt
 
 
-def inspect_restart_initial(checkpoint: Path, segment: Path, result: dict) -> dict:
+def inspect_restart_initial(
+    checkpoint: Path, segment: Path, result: dict, *, history: list[dict] | None = None
+) -> dict:
     """Reconstruct the initial state from the save and original restart/change records."""
-    from .keyboard_unavailable_restart import digest, restart_history
+    from .keyboard_unavailable_restart import digest, restart_history, validated_restart_history
 
     saved = read(checkpoint / "agent.json")
     initial = read(segment / "agent-before.json")
     expected = deepcopy(saved)
-    history = restart_history(
-        checkpoint,
-        segment,
-        {
-            "source_result_sha256": digest(segment / "result.json"),
-        },
+    history = (
+        restart_history(checkpoint, segment, {"source_result_sha256": digest(segment / "result.json")})
+        if history is None else validated_restart_history(checkpoint, segment, history)
     )
     inherited = read(checkpoint / "runner.json").get("discontinuities", [])
     if len(history) > len(inherited):

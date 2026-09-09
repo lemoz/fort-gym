@@ -95,7 +95,8 @@ class UnavailableEnvironment(Environment):
         return super().capture(destination)
 
 
-def source_failure(folder, checkpoint, latest, *, fail_after=3, restart=None, revision="a" * 40):
+def source_failure(folder, checkpoint, latest, *, fail_after=3, restart=None, revision="a" * 40,
+                   declared_condition=CONDITION, model_callback=model):
     folder.mkdir()
     manifest = verify_checkpoint(checkpoint)
     native = folder / "runtime-0/runtime"
@@ -106,11 +107,11 @@ def source_failure(folder, checkpoint, latest, *, fail_after=3, restart=None, re
     if restart is not None:
         options = {"restart_source": restart[1], "restart_declaration": restart[2]}
     result = run_keyboard_segment(
-        agent=policy(CONDITION, model),
+        agent=policy(declared_condition, model_callback),
         environment=env,
         snapshotter=env,
         output=folder / "segment-0",
-        condition=CONDITION,
+        condition=declared_condition,
         checkpoint=checkpoint,
         latest_usage=latest,
         steps=fail_after,

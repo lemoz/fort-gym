@@ -21,6 +21,9 @@ from .keyboard_partial_restart import (
 )
 from .keyboard_modal_restart import MODAL_KIND, PROMPT_FIELDS, validate_modal_discontinuity
 from .keyboard_restart_prompt import inspect_restart_initial, restart_prompt_state
+from .keyboard_terminated_restart import (
+    TERMINATED_KIND, prepare_terminated_restart, validate_terminated_discontinuity,
+)
 
 from .keyboard_unavailable_restart import (
     UNAVAILABLE_KIND, UNAVAILABLE_STAGE, prepare_unavailable_restart, validate_unavailable_discontinuity,
@@ -93,7 +96,9 @@ def validate_discontinuities(records: object) -> list[dict]:
                 or re.fullmatch("[a-f0-9]{64}", row["source_save_attempt_sha256"]) is None
             ):
                 raise ValueError("Pre-save restart lacks digest-bound failure-stage evidence")
-        if row.get("failure_kind") == MODAL_KIND:
+        if row.get("failure_kind") == TERMINATED_KIND or "termination_stage" in row:
+            validate_terminated_discontinuity(row)
+        elif row.get("failure_kind") == MODAL_KIND:
             validate_modal_discontinuity(row)
         elif PROMPT_FIELDS.intersection(row):
             raise ValueError("Retained prompt history requires an audited modal restart")
@@ -109,7 +114,7 @@ def validate_discontinuities(records: object) -> list[dict]:
             or type(row.get("lost_trace_next_step")) is not int
             or row["lost_trace_next_step"] < row["restored_next_step"]
             or (row["lost_trace_next_step"] == row["restored_next_step"]
-                and row.get("failure_kind") != UNAVAILABLE_KIND)
+                and row.get("failure_kind") not in (UNAVAILABLE_KIND, TERMINATED_KIND))
             or type(row.get("lost_elapsed_ticks")) is not int
             or row["lost_elapsed_ticks"] < 0
             or row.get("memory_policy") != "restore_checkpoint_memory"
@@ -135,9 +140,10 @@ def prepare_restart(checkpoint: Path, source_root: Path, declaration: dict, late
     modal = isinstance(declaration, dict) and declaration.get("failure_kind") == MODAL_KIND
     unsettled = partial or modal
     unavailable = isinstance(declaration, dict) and declaration.get("failure_kind") == UNAVAILABLE_KIND
+    terminated = isinstance(declaration, dict) and declaration.get("failure_kind") == TERMINATED_KIND
     if (
         not isinstance(declaration, dict)
-        or set(declaration) != declaration_fields | ({"failure_kind"} if unsettled or unavailable else set())
+        or set(declaration) != declaration_fields | ({"failure_kind"} if unsettled or unavailable or terminated else set())
         or declaration["schema_version"] != SCHEMA
     ):
         raise ValueError("Restart requires an explicit source declaration")
@@ -152,13 +158,15 @@ def prepare_restart(checkpoint: Path, source_root: Path, declaration: dict, late
             for key in ("restored_next_step", "lost_trace_next_step")
         )
         or declaration["lost_trace_next_step"] < declaration["restored_next_step"]
-        or (declaration["lost_trace_next_step"] == declaration["restored_next_step"] and not unavailable)
+        or (declaration["lost_trace_next_step"] == declaration["restored_next_step"] and not (unavailable or terminated))
     ):
         raise ValueError("Invalid restart source identity or cursor")
     if source_root.is_symlink() or not source_root.is_dir():
         raise ValueError("Restart source must be a retained regular directory")
     if unavailable:
         return prepare_unavailable_restart(checkpoint, source_root, declaration, latest)
+    if terminated:
+        return prepare_terminated_restart(checkpoint, source_root, declaration, latest)
     segment = source_root / f"segment-{index}"
     manifest = verify_checkpoint(checkpoint)
     payload, state = manifest["payload"], read(checkpoint / "agent.json")
@@ -257,6 +265,11 @@ def apply_restart(loop, record: dict, *, prior_discontinuities: list[dict] | Non
     if loop.agent.export_campaign_state()["usage"] != record["retained_usage"]:
         raise ValueError("Restart discarded prior model usage")
     history = loop.discontinuities if prior_discontinuities is None else validate_discontinuities(prior_discontinuities)
+    if record.get("failure_kind") == TERMINATED_KIND:
+        from .keyboard_terminated_restart import history_digest
+
+        if history_digest(history) != record["source_prior_history_sha256"]:
+            raise ValueError("Terminated-worker restart changed the retained prior loss history")
     if history[:len(loop.discontinuities)] != loop.discontinuities:
         raise ValueError("Restart cannot erase earlier checkpoint loss history")
     validated = validate_discontinuities([*history, record])
@@ -278,3 +291,7 @@ def apply_restart(loop, record: dict, *, prior_discontinuities: list[dict] | Non
     }
     if record.get("lost_elapsed_ticks_complete") is False:
         loop.last_result["why"] += " The lost tick count is a confirmed lower bound; final uncommitted game time is unknown."
+    if record.get("failure_kind") == TERMINATED_KIND:
+        loop.last_result["why"] = loop.last_result["why"].replace(
+            "the previous game save failed", "the previous run was interrupted without a new verified save"
+        )
