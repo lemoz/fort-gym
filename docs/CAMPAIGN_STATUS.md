@@ -13,10 +13,41 @@ and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. Several bounded Astra native-keyboard
 windows have completed; the same fortress remains in autonomous continuation.
 
-### Current window s: Astra has resumed from save 711 with explicit loss accounting
+### Current outcome: window s stopped with an OOM flag; checkpoint 711 remains saved
 
-Window s is running on frozen source `7e7366871011fd54305c80ebbdf10986b39b4eb3`.
-Owner 56024 is live; VM start, image build, container creation and native execution
+Owner 56024 terminated with exit 1. The container recorded OOMKilled=true;
+native processes, listener, container and local VM were torn down. Independent
+failure review verifies 28 returned subscription responses, 27 committed decisions
+and 5200 new committed but unsaved ticks. The final action sent five confirmed
+keys but has no clock receipt or final calendar observation. No new checkpoint
+exists. Last observed population was 12 with zero recorded deaths. This is an
+infrastructure failure, not evidence of fortress collapse or a clean model score.
+
+The live operator-side diagnostic parsed the entire 97 MiB trace inside the
+1536 MiB game container. Reconstructing that read on the host used 844972032 bytes
+peak RSS. This is a likely contributor to memory pressure, not a proven OOM victim
+or complete causal diagnosis. Commit `e80e9f0b76cef9dca347d7805ebec415551da71b`
+adds a host-only streaming reader that used 20643840 bytes on the same trace and
+passed 18 focused tests. Ruff and mypy pass. No model/game resource limits were
+raised, and no replacement run has been started.
+
+The failure audit retains all 842 responses / 26990171 campaign tokens /
+27059175 all-attempt tokens. Charges remain unreported. The last saved checkpoint
+is still 711 / 192600 ticks. Three existing loss records total 29891 ticks; the
+new unsaved branch has not yet been restarted and its terminal clock remains
+unknown. Failure-review SHA256:
+`8350ba26e2eb74e509cade992a6e8081aef4be7b9bd109b1b6cc9b6b7f46d0b4`.
+
+The versioned OOM failure record is repository evidence; website integration is
+still pending. The current local page displays recorded r, not the latest s
+failure. Next: deliver this distinct failure to the website, preserve its usage
+and unknown tail in continuation, and continue native play with host-side
+diagnostics. No new user approval is needed for this in-scope work.
+
+### Historical startup of window s (superseded by terminal result above)
+
+Window s ran on frozen source `7e7366871011fd54305c80ebbdf10986b39b4eb3`.
+At startup owner 56024 was live; VM start, image build, container creation and native execution
 succeeded. An independent startup review confirms checkpoint 711's calendar
 (year 30 tick 209401), 120x40 screen, saved model memory/configuration, trace prefix
 and all 814 prior responses/26113503 campaign tokens. The third loss record is
@@ -36,7 +67,7 @@ Startup review digest:
 `b2efd61924a50a08c673895bca3f11fe93c353925a56d1907df32691c2a1c200`.
 Private handoff: `astra-native-partial-restart-v1/ACTIVE_RUN_HANDOFF.md`.
 Startup proves neither native dialogue-fix acceptance nor sustainability/year two;
-the final runtime load/cleanup receipt and any new checkpoint remain pending.
+the terminal failure review above now verifies load/cleanup and absence of a new checkpoint.
 
 The campaign website now separately displays r's failed partial action and pending
 save, saved 192600 ticks versus unsaved 6691 ticks, and all retained usage. Source
