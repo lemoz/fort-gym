@@ -112,9 +112,15 @@ window s are now pushed at `cdb998fb8734f40e8cc032ceb24704026219258f`:
 57 new focused checks and 3432 full-suite tests pass (10 skipped), and retained
 window-r evidence passes a separate read-only preparation review. It retains
 the 23rd response and all 6691 unsaved ticks without replay. Exact-head CI
-`34291795345` passed. No restart, new model call, VM launch or new
-completed-window claim has been made. Website failure publication and native
-execution are next. See Campaign status for the audit and source identities.
+`34291795345` passed. That preparation phase made no new model/game call.
+Website publication and native execution then progressed: source
+`7e7366871011fd54305c80ebbdf10986b39b4eb3` is pushed, 3486 tests and exact-head CI
+34292910946 pass, and the local page/API match the distinct partial-failure record.
+Window s is live under owner 56024. Startup independently verifies save 711,
+its memory, full prior usage and the third loss record. A fixed trace read observed
+seven new committed decisions and 2000 unsaved new ticks. No new checkpoint,
+terminal result or native dialogue-fix acceptance is yet established. See
+Campaign status for the audit and source identities.
 
 ## Historical interface result: window h
 

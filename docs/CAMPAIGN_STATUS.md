@@ -13,7 +13,42 @@ and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. Several bounded Astra native-keyboard
 windows have completed; the same fortress remains in autonomous continuation.
 
-### Latest attempt: dialogue interrupted window r; no new saved checkpoint
+### Current window s: Astra has resumed from save 711 with explicit loss accounting
+
+Window s is running on frozen source `7e7366871011fd54305c80ebbdf10986b39b4eb3`.
+Owner 56024 is live; VM start, image build, container creation and native execution
+succeeded. An independent startup review confirms checkpoint 711's calendar
+(year 30 tick 209401), 120x40 screen, saved model memory/configuration, trace prefix
+and all 814 prior responses/26113503 campaign tokens. The third loss record is
+attached: 6691 newly lost ticks, including one uncommitted response and its 691
+ticks, for 29891 total recorded lost ticks. No action was replayed.
+
+A fixed live trace read observed seven new committed decisions and 2000 new
+ticks, with no tick-receipt errors in those seven rows. This is unsaved live
+progress, not a new checkpoint or final result. One 64-decision segment preserves
+Astra Medium, native-keyboard/screen-only input, v4 save, food measurement and the
+existing 1024-dispatch / 40-million-token ceiling. Subscription admission remains
+per-call; no API fallback, local model, purchase, reset or cloud VM. The owned
+local VM retains its limits and mandatory game/container/VM teardown. Keep the
+execution worktree frozen until owner termination.
+
+Startup review digest:
+`b2efd61924a50a08c673895bca3f11fe93c353925a56d1907df32691c2a1c200`.
+Private handoff: `astra-native-partial-restart-v1/ACTIVE_RUN_HANDOFF.md`.
+Startup proves neither native dialogue-fix acceptance nor sustainability/year two;
+the final runtime load/cleanup receipt and any new checkpoint remain pending.
+
+The campaign website now separately displays r's failed partial action and pending
+save, saved 192600 ticks versus unsaved 6691 ticks, and all retained usage. Source
+7e7366871 is pushed/read back; 469 focused website checks and 3486 full-suite tests
+pass (10 skipped), with exact-head CI 34292910946 passing. Local preview port 8857
+matches the versioned page/API/static assets. Native integration is disabled there;
+it displays recorded r evidence, not live s tracking. Publication-review digest:
+`c1d6745ce6407790208ad8833fb72353b0106c7254846eb9e98dfd85cb224ea1`.
+The parent publication and historical warnings remain unchanged. No browser visual
+QA, production deployment or PR merge is claimed.
+
+### Previous attempt: dialogue interrupted window r; no new saved checkpoint
 
 Window r ended after 23 accounted Astra Medium responses on frozen source
 `2e535166fc96633438c19017a52256b45ab36790`. Its trace reached cursor 733 with
