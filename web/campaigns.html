@@ -25,6 +25,15 @@
       <button id="refresh-campaigns" type="button">Refresh evidence</button>
     </div>
     <p class="campaign-intro">One full game year is 403,200 elapsed ticks from the starting save. Reaching year two is a checkpoint, not the end of play.</p>
+    <section class="campaign-tracking" aria-labelledby="keyboard-live-title">
+      <div class="campaign-tracking-heading">
+        <h2 id="keyboard-live-title">Live native run</h2>
+        <button id="refresh-keyboard-live" type="button">Refresh live status</button>
+      </div>
+      <p id="keyboard-live-status" role="status" aria-live="polite">Checking live status…</p>
+      <div id="keyboard-live-content" hidden></div>
+      <a href="/public/keyboard-active">Open live status data</a>
+    </section>
     <section class="campaign-tracking" aria-labelledby="keyboard-title">
       <div class="campaign-tracking-heading">
         <h2 id="keyboard-title">Astra Medium · native keyboard play</h2>
@@ -131,5 +140,6 @@
   <script src="/static/campaigns.js?v=1" defer></script>
   <script src="/static/campaign-feed.js?v=7" defer></script>
   <script src="/static/campaign-keyboard.js?v=8" defer></script>
+  <script src="/static/campaign-keyboard-live.js?v=1" defer></script>
 </body>
 </html>
