@@ -18,7 +18,7 @@ def test_failed_prompt_experiment_follows_last_saved_checkpoint():
     data = records.keyboard_campaign_records()
     trial = data["prompt_trials"][-1]
     assert trial["status"] == "failed" and trial["teardown_verified"] is True
-    assert data["continuation_events"][-1] == {"kind": "prompt_trial", "id": trial["trial_id"]}
+    assert {"kind": "prompt_trial", "id": trial["trial_id"]} in data["continuation_events"]
     assert trial["progress"]["parent_checkpoint_cursor"] == 775
     assert trial["progress"]["new_committed_unsaved_ticks"] == 614
     assert trial["progress"]["checkpointed_elapsed_ticks"] == 198600
@@ -60,9 +60,11 @@ def test_private_trial_fields_never_projected(evidence_root, monkeypatch):
     path.write_text(json.dumps(value))
     assert records.keyboard_campaign_records(evidence_root) == before
     monkeypatch.setattr(records, "PROMPT_TRIALS", ())
+    monkeypatch.setattr(records, "MODAL_TRIALS", ())
     after = records.keyboard_campaign_records(evidence_root)
     assert after["prompt_trials"] == []
-    assert after["continuation_events"] == before["continuation_events"][:-1]
+    assert after["continuation_events"] == [event for event in before["continuation_events"]
+                                            if event["kind"] not in {"prompt_trial", "modal_trial"}]
 
 
 @pytest.mark.parametrize("kind", ["missing", "symlink", "oversized", "wrong_parent"])

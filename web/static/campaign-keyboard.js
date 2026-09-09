@@ -51,9 +51,34 @@
       throw new Error('Unsupported continuation evidence');
     }
     const continuations = data.continuations || [];
-    for (const name of ['tail_interruptions', 'tail_recoveries', 'presave_failures', 'partial_failures', 'oom_failures', 'resumed_windows', 'prompt_trials', 'save_acceptances']) {
+    for (const name of ['tail_interruptions', 'tail_recoveries', 'presave_failures', 'partial_failures', 'oom_failures', 'resumed_windows', 'prompt_trials', 'modal_trials', 'save_acceptances']) {
       if (data[name] !== undefined && !Array.isArray(data[name])) {
         throw new Error('Unsupported continuation recovery evidence');
+      }
+    }
+    function renderModalTrial(row) {
+      const section = node('section', undefined, results);
+      section.className = 'campaign-condition campaign-save-failure';
+      const p = row.progress, o = row.last_unsaved_observation;
+      node('h3', 'Dialog handling worked · host interruption prevented a save', section);
+      const facts = node('dl', undefined, section);
+      facts.className = 'campaign-save-facts';
+      for (const [label, value] of [
+        ['Saved game time', `${count(p.checkpointed_elapsed_ticks)} ticks`],
+        ['New unsaved game time', `${count(p.new_committed_unsaved_ticks)} ticks`],
+        ['Final uncommitted game time', count(p.final_uncommitted_ticks)],
+        ['New model responses', count(p.new_responses)]
+      ]) {
+        const item = node('div', undefined, facts);
+        node('dt', label, item); node('dd', value, item);
+      }
+      node('p', `${count(p.native_modal_deferrals_verified)} paused-dialog receipts were verified. Astra chose the next inputs and resumed game time. The host later failed to read the exchange directory and stopped the run; the underlying read failure is unknown.`, section);
+      node('p', `The final input sent ${count(p.final_input_keys_confirmed)} confirmed keys and requested no time advance, but its final clock receipt is missing. Unknown time is not zero. Checkpoint ${count(p.parent_checkpoint_cursor)} remains the latest save for this attempt.`, section);
+      node('p', `${count(p.existing_loss_records)} earlier losses retain at least ${count(p.existing_known_lost_ticks)} lost ticks plus an unknown remainder. This attempt's unsaved time is additional. All ${count(row.usage.new_tokens)} new tokens are included: ${count(row.usage.campaign_tokens)} campaign tokens, ${count(row.usage.all_attempt_tokens)} including historical failed deliveries. Charge: ${cost(row.usage)}.`, section);
+      node('p', `Last unsaved observation: ${count(o.population)} living dwarves, ${count(o.recorded_dead_citizens)} recorded deaths, ${count(o.drink_stock)} drinks, ${count(o.completed_farms)} farms, ${count(o.completed_beds)} beds and ${count(o.completed_workshops)} workshops. Food: ${count(o.food_stock)}.`, section);
+      node('p', 'Game and VM teardown verified for this recorded attempt. No new save, sustainability result, year-two success or matched model comparison. The later read-retry repair was not tested by this run.', section);
+      if (/^experiments\/evidence\/astra_native_keyboard_[a-z0-9_]+\.json$/.test(row.evidence_path)) {
+        node('a', 'Read the recorded dialog trial', section).href = 'https://github.com/lemoz/fort-gym/blob/codex/campaign-codex-subscription/' + row.evidence_path;
       }
     }
     function renderPromptTrial(row) {
@@ -294,6 +319,7 @@
       oom_failure: (data.oom_failures || []).map(row => ({id: row.failure_id, row})),
       resumed: (data.resumed_windows || []).map(row => ({id: row.resumed_id, row})),
       prompt_trial: (data.prompt_trials || []).map(row => ({id: row.trial_id, row})),
+      modal_trial: (data.modal_trials || []).map(row => ({id: row.trial_id, row})),
       restart: restarts.filter(row => row.recent_event === true).map(row => ({id: row.restart_id, row}))
     };
     const events = data.continuation_events || Object.entries(recent).flatMap(([kind, rows]) => rows.map(row => ({kind, id: row.id})));
@@ -310,6 +336,7 @@
       else if (event.kind === 'partial_failure') renderPartialFailure(found.row);
       else if (event.kind === 'oom_failure') renderOomFailure(found.row);
       else if (event.kind === 'prompt_trial') renderPromptTrial(found.row);
+      else if (event.kind === 'modal_trial') renderModalTrial(found.row);
       else if (event.kind === 'restart') renderRestart(found.row);
       else renderRecovery(found.row);
     }

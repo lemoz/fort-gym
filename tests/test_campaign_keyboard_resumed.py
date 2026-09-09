@@ -33,7 +33,7 @@ def test_saved_window_retains_failed_parent_usage_and_unknown_loss():
     assert row["food_inventory"]["final_units"] is None
     assert row["food_inventory"]["unknown_measurements"] == 2
     assert row["operator_observation_warning"]["command_exit_code"] == 1
-    assert data["continuation_events"][-2] == {"kind": "resumed", "id": row["resumed_id"]}
+    assert {"kind": "resumed", "id": row["resumed_id"]} in data["continuation_events"]
 
 
 @pytest.mark.parametrize("field,value", [
@@ -108,7 +108,9 @@ def test_private_fields_not_projected_and_unlisted_record_not_loaded(evidence_ro
     assert records.keyboard_campaign_records(evidence_root) == before
     monkeypatch.setattr(records, "RESUMED_WINDOWS", ())
     monkeypatch.setattr(records, "PROMPT_TRIALS", ())
+    monkeypatch.setattr(records, "MODAL_TRIALS", ())
     after = records.keyboard_campaign_records(evidence_root)
     assert after["resumed_windows"] == []
-    assert after["continuation_events"] == before["continuation_events"][:-2]
+    assert after["continuation_events"] == [event for event in before["continuation_events"]
+                                            if event["kind"] not in {"resumed", "prompt_trial", "modal_trial"}]
     assert after["oom_failures"] == before["oom_failures"]
