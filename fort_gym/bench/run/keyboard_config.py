@@ -13,6 +13,7 @@ from ..env.native_key_catalog import NATIVE_PROFILE
 from ..env.screen_observation import TEXT_PROFILE
 from .keyboard_save import LEGACY_SAVE_PROFILE, SAVE_PROFILES
 from .campaign_food import validate_profile
+from .campaign_resources import PROFILE as RESOURCE_PROFILE
 
 
 def positive(value: object, name: str, *, maximum: int | None = None) -> int:
@@ -88,6 +89,10 @@ def load_window(condition_path: Path, window_path: Path) -> tuple[dict, dict]:
     if window.get("snapshot_profile", LEGACY_SAVE_PROFILE) not in SAVE_PROFILES:
         raise ValueError("Unsupported declared snapshot profile")
     validate_profile(window.get("private_measurement_profile"))
+    if window.get("runtime_rpc_transport", "cli") not in ("cli", "native-rpc"):
+        raise ValueError("Unsupported declared runtime RPC transport")
+    if window.get("resource_observation_profile") not in (None, RESOURCE_PROFILE):
+        raise ValueError("Unsupported declared resource observation profile")
     change = window.get("prompt_change")
     if change is not None:
         if (not isinstance(change, dict) or set(change) != {

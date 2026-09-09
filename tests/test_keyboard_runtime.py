@@ -398,7 +398,8 @@ def test_window_runs_serial_checkpoints_on_distinct_ports(tmp_path, saved, monke
     assert calls[1]["snapshot"] == args.output / "segment-0/checkpoint"
 
 
-def test_window_retains_failed_worker_outcome_and_verified_cleanup(tmp_path, saved, monkeypatch):
+@pytest.mark.parametrize("rpc_transport", [None, "cli", "native-rpc"])
+def test_window_retains_failed_worker_outcome_and_verified_cleanup(tmp_path, saved, monkeypatch, rpc_transport):
     import subprocess
     from scripts import campaign_keyboard_native as native
 
@@ -409,6 +410,9 @@ def test_window_retains_failed_worker_outcome_and_verified_cleanup(tmp_path, sav
         "original_condition": condition.name, "continuation_from_next_step": 1,
         "steps_per_segment": 2, "max_segments": 2, "reset_memory": False,
         "reset_usage": False, "strategy_intervention": False,
+        **({"runtime_rpc_transport": rpc_transport,
+            "resource_observation_profile": "fortgym.native-resource-observations/v1"}
+           if rpc_transport is not None else {}),
     })
     args = SimpleNamespace(
         condition=condition, window=window, checkpoint=saved[0], latest_usage=saved[1],
@@ -422,6 +426,7 @@ def test_window_retains_failed_worker_outcome_and_verified_cleanup(tmp_path, sav
     }
 
     def worker(command, **kwargs):
+        assert kwargs["env"]["FORT_GYM_DFHACK_TRANSPORT"] == (rpc_transport or "cli")
         segment = args.output / "segment-0"
         segment.mkdir()
         publish(segment / "result.json", failure)
@@ -433,8 +438,18 @@ def test_window_retains_failed_worker_outcome_and_verified_cleanup(tmp_path, sav
         }
 
     monkeypatch.setattr(native, "run_worker", worker)
+    monkeypatch.setattr(native, "capture_resources", lambda: {"measurement": "fixture"})
     monkeypatch.setattr(native, "run_isolated", isolated)
     result = run_window(args)
     assert result["status"] == "failed" and result["segments"] == [failure]
     assert result["runtime_cleanup_verified"] and result["original_checkpoint_unchanged"]
     assert not (args.output / "segment-1").exists()
+    if rpc_transport is None:
+        assert "resource_observations" not in result and "runtime_rpc_transport" not in result
+    else:
+        assert result["runtime_rpc_transport"] == rpc_transport
+        assert [row["stage"] for row in result["resource_observations"]] == [
+            "segment-0-before-runtime", "segment-0-loaded-before-worker",
+            "segment-0-after-worker", "segment-0-after-runtime-cleanup",
+            "window-final-after-runtime-unwind",
+        ]

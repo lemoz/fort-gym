@@ -28,6 +28,7 @@ from fort_gym.bench.run.campaign_environment import NativeCampaignEnvironment
 from fort_gym.bench.run.campaign_loop import reconciled_usage
 from fort_gym.bench.run.campaign_save import NativeSaveSnapshotter
 from fort_gym.bench.run.keyboard_config import load_window
+from fort_gym.bench.run.campaign_resources import capture_resources
 from fort_gym.bench.agent.keyboard_prompt import BASE_PROMPT, declared_prompt_change
 from fort_gym.bench.run.keyboard_segment import run_keyboard_segment
 from fort_gym.bench.run.keyboard_save import (
@@ -193,6 +194,15 @@ def run_window(args) -> dict:
         "original_checkpoint_unchanged": False,
         "runtime_cleanup_verified": False,
     }
+    if "runtime_rpc_transport" in window:
+        result["runtime_rpc_transport"] = window["runtime_rpc_transport"]
+
+    def retain_resources(stage: str) -> None:
+        if window.get("resource_observation_profile") is not None:
+            result.setdefault("resource_observations", []).append(
+                {"stage": stage, **capture_resources()}
+            )
+
     checkpoint, usage = args.checkpoint, args.latest_usage
     try:
         for index in range(window["max_segments"]):
@@ -210,6 +220,7 @@ def run_window(args) -> dict:
                     "DF_PROTO_ENABLED": "1",
                     "DFHACK_HOST": "127.0.0.1",
                     "DFHACK_PORT": str(port),
+                    "FORT_GYM_DFHACK_TRANSPORT": window.get("runtime_rpc_transport", "cli"),
                     "FORT_GYM_DFHACK_COMPLETE_DIG": "0",
                     "ARTIFACTS_DIR": str(args.output / "unused-artifacts"),
                     "FORT_GYM_DB_PATH": str(args.output / "unused-registry.sqlite"),
@@ -243,6 +254,7 @@ def run_window(args) -> dict:
                 if index == 0 and getattr(args, "restart_source", None) is not None:
                     command.extend(["--restart-source", str(args.restart_source)])
                 with (args.output / f"worker-{index}.log").open("xb") as log:
+                    retain_resources(f"segment-{index}-loaded-before-worker")
                     try:
                         run_worker(
                             command,
@@ -266,8 +278,11 @@ def run_window(args) -> dict:
                         ):
                             raise
                         return failed
+                    finally:
+                        retain_resources(f"segment-{index}-after-worker")
                 return read(segment / "result.json")
 
+            retain_resources(f"segment-{index}-before-runtime")
             native = run_isolated(
                 source=args.source,
                 snapshot=checkpoint,
@@ -282,6 +297,7 @@ def run_window(args) -> dict:
                 checkpoint_copies=1,
                 screen_size=tuple(condition["screen_size"]),
             )
+            retain_resources(f"segment-{index}-after-runtime-cleanup")
             segment_result = native["experiment"]
             result["segments"].append(segment_result)
             if native["cleanup_verified"] is not True:
@@ -302,6 +318,7 @@ def run_window(args) -> dict:
     except Exception as error:
         result.update(error_type=type(error).__name__, error=str(error))
     finally:
+        retain_resources("window-final-after-runtime-unwind")
         try:
             verify_checkpoint(args.checkpoint)
             result["original_checkpoint_unchanged"] = (
