@@ -41,8 +41,8 @@ The recorded campaign page and sanitized manifest are pushed/read back at
 `a7874340d1ca4dcbda4920d7a65d5be0e274ea39` on the PR #137 branch. The public
 record was reconciled against private terminal results and audit digests. All
 3656 full-suite tests passed (10 skipped), plus changed-file Ruff/scoped mypy.
-Exact-head CI for this new publication was not yet established at push; previous
-source CI 34382352495 passed. PR #137 remains open/draft, not merged or deployed.
+Exact-head CI 34388160244 subsequently passed for this publication; previous
+source CI 34382352495 also passed. PR #137 remains open/draft, not merged or deployed.
 
 The actual local HTTP page, API and JavaScript serve checkpoint 775 at 8857.
 Preview session 96469 / PID 8213 has game integration disabled. This is recorded
