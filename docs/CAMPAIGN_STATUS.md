@@ -11,11 +11,52 @@ screen, and run autonomous fortress experiments toward year two and beyond. Keep
 DFHack shortcuts as an explicit alternative condition. Compare matching starts
 and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. Several bounded Astra native-keyboard
-windows have completed. Window w is now running after the audited loss-aware
-restart from window v's host-side read failure. Saved progress remains unchanged
-until the new window produces a verified checkpoint.
+windows have completed. Window w has now stopped after a successful first save
+and a process-creation failure during its second runtime.
 
-### Active window w: partial-evidence recovery and shorter save segments
+### Current: checkpoint 807 saved; direct-RPC repair under validation
+
+Independent verification passed for checkpoint 807, manifest
+`80d83164866f078a0e65254d953dac8e5b34298ca8c2bb85043e822d44fe0ce4`.
+It contains 206582 saved elapsed ticks, 7982 more than checkpoint 775, or 51.24%
+of the full-year target. The second native runtime freshly loaded that save at
+year 30 tick 223383. The saved observations show 12 living citizens, zero deaths
+and 404 drink units. Food measurement is unavailable, and sustainability remains
+unproven.
+
+All 32 new responses are retained: 989 cumulative responses, 31207909 campaign
+tokens and 31276913 all-attempt tokens. Actual charge is unreported. Six existing
+loss records retain 48429 known ticks plus unknown remainders. W's second segment
+made no new model request and added no trace or usage row; its final native clock
+is unknown. Do not count the newly saved 7982 ticks as lost.
+
+Three host read attempts retained `/bin/sh: 1: Cannot fork`. This is a specific
+process-creation error, not a proven PID-limit, zombie, memory or gameplay cause.
+The owner and observer have exited; both individual runtimes verified cleanup,
+the final container exited 130 without an OOM flag, and the VM is Stopped.
+Private terminal audit SHA256:
+`1153128a67ffe0a35b9f82865f35807679e2a473c135df6fce4264d97904d13d`.
+
+The next repair declares direct DFHack RPC for helper calls, eliminating their
+per-read CLI/PTY subprocess path. It adds opt-in process/thread/zombie and cgroup
+counter observations and requires a reaping init in the next container. Native
+keyboard controls and model/prompt/memory remain unchanged. A provider-free
+two-load observation probe precedes model window x from 807. No new paid model
+calls, gameplay success, matched comparison, merge or deployment is claimed.
+The live website derivative still describes the old 775 baseline; its recorded
+807 result has not yet been published.
+
+Repair source `77382474f626ce19d8d2ba99c1b91185243ec6b2` is clean, pushed
+and read back on draft PR #137. The final full suite passed 3931 tests with
+10 skips after enabling local loopback for socket tests; the initial sandboxed
+suite's one failure was a denied socket bind. Changed-file Ruff and scoped mypy
+passed. CI 34408572862 is pending at this entry.
+The provider-free two-load probe passed checkpoint-bound preflight and launched
+as owner exec session 14754 in `astra-native-rpc-probe-v1`. The source is frozen
+while that owner runs. Native probe outcome and mandatory teardown remain pending;
+there are no new model responses, year-two or sustainability claims.
+
+### Historical startup of window w, superseded above
 
 Source `b3c7393bd695ea6d0bd2149a30e66353732cfd70` is clean, pushed and read
 back on draft PR #137; exact-head CI 34403689610 passed. The final local suite
