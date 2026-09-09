@@ -26,7 +26,7 @@ All 180 focused recovery checks pass, including repeated rollback and original
 prompt-history preservation. The exact committed source passed 3783 full-suite
 tests with 10 skips, changed-file Ruff and scoped mypy. The actual retained
 source passed the host-only recovery preflight without model/game calls or
-modifying its original evidence. CI 34396428039 is pending at this update.
+modifying its original evidence. Exact-head CI 34396428039 passed.
 
 Owner session 67692 / verified PID 39871 owns one local VM and container
 `fort-gym-astra-native-20260909-ak-modal-restart-775`. VM start, image build,
@@ -34,6 +34,15 @@ container creation and start succeeded. Astra Medium, controls, prompt, 120x40
 screen and existing 1024-dispatch/40M-token ceiling are unchanged. Mandatory
 teardown remains in the owner. No API fallback, local model, purchase or reset.
 Private handoff: `astra-native-modal-restart-v1/ACTIVE_RUN_HANDOFF.md`.
+
+Native startup audit passed: source image, checkpoint calendar, saved memory,
+original prompt history, all usage and five loss records match the preflight.
+The first actual model prompt and restart-feedback projection were checked on
+the host without gameplay or model calls. At the latest receipt check, four
+valid new responses used 147991 tokens. Feedback reports 503 new unsaved ticks
+before a blocking-screen transition; this is not another saved checkpoint.
+Startup audit SHA256:
+`10a0201859ca85f6b02fba4d908c8fc52b615a2a697fec6fabd62b83ffb8b5f1`.
 
 No new save or native modal-fix acceptance is claimed yet. Checkpoint 775 remains
 the latest saved result at 198600 ticks. The website continues to show recorded
