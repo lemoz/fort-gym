@@ -48,7 +48,7 @@ older publication fixture that removed the saved parent but retained the new
 trial. The fixture-only correction is pushed/read back at
 `eeda57bc980f9ac87dc37d6d950ad8fd731931e6`; all 698 campaign-publication and
 clock tests pass. The final full local suite passed 3741 tests with 10 skips;
-CI 34393487100 is running at this update.
+Exact-head CI 34393487100 passed for eeda57bc9.
 Live native acceptance and recovery remain outstanding.
 
 The actual local HTTP page/API/version-8 JavaScript show the failed trial above
