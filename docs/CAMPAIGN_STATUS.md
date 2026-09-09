@@ -11,45 +11,70 @@ screen, and run autonomous fortress experiments toward year two and beyond. Keep
 DFHack shortcuts as an explicit alternative condition. Compare matching starts
 and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. Several bounded Astra native-keyboard
-windows have completed; the same fortress remains in autonomous continuation.
+windows have completed. The same exploratory fortress is currently stopped after
+window v's host-side read failure; continuation work preserves its saved state.
 
-### Active attempt: window v, loss-aware native modal restart
+### Latest terminal attempt: v exercised dialog recovery, then host read failed
 
-Window v has started on exact source
-`806793b665627ada130f76efeeecfee77aa790ed`, pushed/read back on PR #137.
-The recovery preserves window u's original prompt-change boundary and all 924
-responses / 29418907 campaign tokens while restoring saved gameplay memory from
-checkpoint 775. It appends the exact 614-tick loss; five losses retain at least
-35705 ticks plus an earlier unknown remainder. No actions are replayed.
+Exact source `806793b665627ada130f76efeeecfee77aa790ed` ran 33 Astra Medium
+responses after the loss-aware restart from checkpoint 775. Four actual native
+modal-deferral receipts returned factual zero-time feedback; Astra chose the next
+inputs and resumed simulation. This establishes that the dialog path worked in
+this run, not a completed window, new save or matched model comparison.
 
-All 180 focused recovery checks pass, including repeated rollback and original
-prompt-history preservation. The exact committed source passed 3783 full-suite
-tests with 10 skips, changed-file Ruff and scoped mypy. The actual retained
-source passed the host-only recovery preflight without model/game calls or
-modifying its original evidence. Exact-head CI 34396428039 passed.
+The host's read-only exchange listing later returned exit 128 while the container
+was still live. The owner entered mandatory teardown. Its command output was not
+retained, so the underlying read failure cause is unknown. The worker was
+interrupted after three confirmed final key inputs, without a final clock receipt.
+Thirty-two decisions committed trace rows and 12724 new ticks. These ticks are
+unsaved; the missing final time remains unknown despite a zero-advance request.
 
-Owner session 67692 / verified PID 39871 owns one local VM and container
-`fort-gym-astra-native-20260909-ak-modal-restart-775`. VM start, image build,
-container creation and start succeeded. Astra Medium, controls, prompt, 120x40
-screen and existing 1024-dispatch/40M-token ceiling are unchanged. Mandatory
-teardown remains in the owner. No API fallback, local model, purchase or reset.
-Private handoff: `astra-native-modal-restart-v1/ACTIVE_RUN_HANDOFF.md`.
+All 957 responses / 30345981 campaign tokens / 30414985 all-attempt tokens are
+accounted, including 927074 new tokens. Actual charges remain unreported. All
+actual prompt and memory handoffs were verified; zero memory clears. Five prior
+loss records still retain at least 35705 ticks plus an unknown older remainder.
+The current 12724-tick loss is additional, not added to saved game progress.
 
-Native startup audit passed: source image, checkpoint calendar, saved memory,
-original prompt history, all usage and five loss records match the preflight.
-The first actual model prompt and restart-feedback projection were checked on
-the host without gameplay or model calls. At the latest receipt check, four
-valid new responses used 147991 tokens. Feedback reports 503 new unsaved ticks
-before a blocking-screen transition; this is not another saved checkpoint.
-Startup audit SHA256:
-`10a0201859ca85f6b02fba4d908c8fc52b615a2a697fec6fabd62b83ffb8b5f1`.
+Checkpoint 775 remains unchanged at 198600 saved ticks, 49.26% of a full elapsed
+year. Last unsaved observation: 12 living dwarves, zero recorded deaths, 420 drinks,
+seven farms, six beds and four workshops; food and sustainability remain unproven.
+Owner session 67692 is terminal and PID 39871 is absent. Container exit 130,
+OOMKilled=false, native runtime cleanup and owned VM stopped are verified.
+No new owner was started, and the historical operator must not be relaunched.
 
-No new save or native modal-fix acceptance is claimed yet. Checkpoint 775 remains
-the latest saved result at 198600 ticks. The website continues to show recorded
-window-u failure and checkpoint 775; it is not a live tracker. Await actual native
-receipts and saved progress before publishing another result. No merge or deploy.
+The immutable host audit `astra-native-modal-restart-v1/terminal-review.json`
+has SHA256 `3ad120d042eb6c3c61560536515198778fd6ca00ae50ac3001a03c45792ab095`.
+Its published summary and follow-up are in the PR worktree's
+`experiments/evidence/astra_native_keyboard_modal_trial_20260909.json` and
+`docs/NATIVE_MODAL_TRIAL.md`. Native source CI 34396428039 passed with 3783 tests.
 
-### Latest terminal attempt: memory-contract window u failed without a new save
+### Website and transport follow-up
+
+The isolated live-status website feature is pushed on PR #137 at
+`68bcceb538c50463466bc0c539791dd9fe8d52e5`. The existing local route at port
+8857 now separates current host receipts from recorded saved progress. It was
+verified against the live 32-response window and then the stopped/stale 33-response
+window, with no cache, private prompt exposure or enabled admin. A missing update
+expires the live status after 30 seconds. The recorded result section still shows
+u and checkpoint 775; v's audited terminal summary is not yet wired into that section.
+Preview session 55218 / PID 49748 remains on the isolated website worktree, with
+no game integration, dotenv or model credentials. The host observer session 31189
+ended after recording the native owner's exit. No browser visual QA or deployment.
+Exact-head website CI 34400227078 passed.
+
+The full website test pass recorded 3799 passes, 10 skips and one sandbox-only
+loopback permission failure; that same test passed with loopback access. New
+transport repair covers exact read-only probe retries, fresh live-state checks and
+private diagnostics. It does not retry model calls, gameplay keys or response
+publication. The combined focused suite passes 53 tests. Native acceptance of the
+retry path and a loss-aware continuation with shorter save segments remain next.
+The repair and privacy-filtered terminal result are committed at
+`239692d64348b6dbe3ecab0f81ec9c608a06f218`. The final combined full suite
+passed 3821 tests with 10 skips; changed-file Ruff and scoped mypy passed. Retained
+XML SHA256: `cb179230f7eb665579a125a7354b2f8c0a5d6f45e774a84f0f3c2f5d3db63e13`.
+No new approval is needed within existing bounds. No merge or deploy.
+
+### Earlier terminal attempt: memory-contract window u failed without a new save
 
 Source `52ed94a5c22f84cd25ed1d7f6015c9ee8f82084d` ran 18 Astra Medium
 responses. Seventeen decisions committed trace rows, four advancing a total of
