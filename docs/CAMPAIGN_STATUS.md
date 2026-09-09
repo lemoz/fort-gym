@@ -13,6 +13,30 @@ and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. Several bounded Astra native-keyboard
 windows have completed; the same fortress remains in autonomous continuation.
 
+### Current run: memory-contract experiment u is live
+
+Source `52ed94a5c22f84cd25ed1d7f6015c9ee8f82084d` is pushed/read back.
+All 3674 local tests passed (10 skipped), changed-file Ruff/scoped mypy passed,
+and exact-head CI 34390081649 passed. The new opt-in condition explains that
+memory_update is a complete replacement, with a checkpoint-bound prompt history.
+The original prompt, model, controls, display, memory and usage are preserved.
+
+Owner session 2330 / PID 12024 is running one 64-decision window from checkpoint
+775. Native startup, image build and subscription admission succeeded. Actual
+startup files verify calendar 30/215401, 120x40 screen, unchanged agent state plus
+the declared prompt change, and the new paragraph in the first model request.
+The first five returned responses had valid grammar and 147823 tokens; none
+cleared memory. The fifth requested 2000 ticks after four zero-tick decisions.
+This is early requested behavior, not a new checkpoint or evidence of causality.
+
+The execution worktree stays frozen while the owner is live. Same cumulative
+1024-dispatch / 40M-token limits, fresh subscription admission, and mandatory
+native/container/local-VM teardown. No API fallback, local model, purchase/reset
+or cloud VM. No new approval is required. Private current handoff:
+`astra-native-memory-contract-v1/ACTIVE_RUN_HANDOFF.md`. The campaign website still
+records checkpoint 775 from t, not this live experiment. Its final saved outcome
+will be published after the run ends and its evidence is checked.
+
 ### Latest saved result: window t completed at checkpoint 775
 
 The native owner exited 0 after 64 accepted model decisions; the container exited
