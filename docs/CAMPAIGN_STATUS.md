@@ -1,6 +1,6 @@
 # Campaign status
 
-Verified September 8, 2026 UTC. The Year-Two Autonomous Play objective remains
+Verified September 9, 2026 UTC. The Year-Two Autonomous Play objective remains
 unfinished; work continues toward the same objective. The owner has approved starting the project
 work for [Astra standard-input experiments](ASTRA_STANDARD_INPUT_EXPERIMENTS.md).
 
@@ -13,7 +13,39 @@ and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. Several bounded Astra native-keyboard
 windows have completed; the same fortress remains in autonomous continuation.
 
-### Current outcome: window s stopped with an OOM flag; checkpoint 711 remains saved
+### Current run: window t is live on the loss-preserving recovery implementation
+
+Source `fea2971a6852f330654bc68b06824785db75c95b` is committed, pushed, and
+read back from the PR #137 branch. Full regression validation passed 3618 tests
+with 10 skips; changed-file Ruff and scoped mypy passed. Exact-head CI run
+34382352495 passed. The new checkpoint path decodes
+one observation at a time, avoiding whole-history expansion beside the game.
+
+Owner session 21577 / PID 94685 is live for the single 64-decision window t.
+VM start, image build, container creation and native start succeeded; the first
+model response returned 33771 tokens with valid input grammar. A host-only startup
+review verifies the same checkpoint-711 calendar (year 30 tick 209401), 120x40
+screen, saved memory/configuration, and all 842 prior responses / 26990171 tokens.
+It copied four small immutable artifacts and ran no extra Python inside the game.
+Keep the execution worktree frozen until this owner is terminal.
+
+The fourth restart is attached. It inherits the three earlier losses and records
+5200 known lost ticks plus an unknown uncommitted remainder. The combined known
+lower bound is 35091 ticks; exact discarded time remains null, not zero. The last
+verified saved elapsed time remains 192600 ticks until the new run checkpoints.
+Startup and returned model responses do not prove sustainability or year two.
+
+Private evidence: `astra-native-unavailable-restart-v1/ACTIVE_RUN_HANDOFF.md`.
+Startup review SHA256:
+`49168699b5067bd7bbe51110e6c134f6f4cbcb03c0a3b012b6235098e0cefdb3`.
+The same Astra Medium, native keyboard, screen-text, save and food-measurement
+profiles and existing cumulative 1024-dispatch / 40-million-token ceiling apply.
+Fresh subscription admission was allowed and is checked per call. No cloud VM,
+local model, API fallback, purchase or reset; mandatory native/container/VM teardown.
+The website still records the earlier s failure, not this live runtime. Final t
+audit, website publication, three-model comparisons and year-two proof remain open.
+
+### Historical outcome: window s stopped with an OOM flag; checkpoint 711 remained saved
 
 Owner 56024 terminated with exit 1. The container recorded OOMKilled=true;
 native processes, listener, container and local VM were torn down. Independent
