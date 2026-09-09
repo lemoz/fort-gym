@@ -13,7 +13,34 @@ and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. Several bounded Astra native-keyboard
 windows have completed; the same fortress remains in autonomous continuation.
 
-### Latest attempt: memory-contract window u failed without a new save
+### Active attempt: window v, loss-aware native modal restart
+
+Window v has started on exact source
+`806793b665627ada130f76efeeecfee77aa790ed`, pushed/read back on PR #137.
+The recovery preserves window u's original prompt-change boundary and all 924
+responses / 29418907 campaign tokens while restoring saved gameplay memory from
+checkpoint 775. It appends the exact 614-tick loss; five losses retain at least
+35705 ticks plus an earlier unknown remainder. No actions are replayed.
+
+All 180 focused recovery checks pass, including repeated rollback and original
+prompt-history preservation. The exact committed source passed 3783 full-suite
+tests with 10 skips, changed-file Ruff and scoped mypy. The actual retained
+source passed the host-only recovery preflight without model/game calls or
+modifying its original evidence. CI 34396428039 is pending at this update.
+
+Owner session 67692 / verified PID 39871 owns one local VM and container
+`fort-gym-astra-native-20260909-ak-modal-restart-775`. VM start, image build,
+container creation and start succeeded. Astra Medium, controls, prompt, 120x40
+screen and existing 1024-dispatch/40M-token ceiling are unchanged. Mandatory
+teardown remains in the owner. No API fallback, local model, purchase or reset.
+Private handoff: `astra-native-modal-restart-v1/ACTIVE_RUN_HANDOFF.md`.
+
+No new save or native modal-fix acceptance is claimed yet. Checkpoint 775 remains
+the latest saved result at 198600 ticks. The website continues to show recorded
+window-u failure and checkpoint 775; it is not a live tracker. Await actual native
+receipts and saved progress before publishing another result. No merge or deploy.
+
+### Latest terminal attempt: memory-contract window u failed without a new save
 
 Source `52ed94a5c22f84cd25ed1d7f6015c9ee8f82084d` ran 18 Astra Medium
 responses. Seventeen decisions committed trace rows, four advancing a total of
