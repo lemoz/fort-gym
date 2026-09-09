@@ -1,14 +1,38 @@
-"""Attest a keyboard-selected build menu without advancing or dismissing it."""
+"""Attest a keyboard-selected menu without advancing or dismissing it."""
 
 from __future__ import annotations
 
+import re
+
 SCHEMA = "fortgym.keyboard-menu-deferral/v1"
+MODAL_SCHEMA = "fortgym.keyboard-modal-deferral/v1"
+DEFERRAL_SCHEMAS = (SCHEMA, MODAL_SCHEMA)
 # These exact focuses held the native calendar fixed in retained native runs.
-# Other focuses still try the clock; no menu is dismissed by the harness.
+# Other dwarfmode focuses still try the clock; no menu is dismissed here.
 BLOCKING_FOCUS = "dwarfmode/Build/Type"
 WORKSHOP_JOB_FOCUS = "dwarfmode/QueryBuilding/Some/Workshop/AddJob"
 BLOCKING_FOCI = frozenset((BLOCKING_FOCUS, WORKSHOP_JOB_FOCUS))
 NATIVE_VIEW = "<type: viewscreen_dwarfmodest>"
+
+
+def deferral_schema(native: dict) -> str | None:
+    """Select factual feedback when the current UI cannot start the clock.
+
+    The governed clock requires dwarfmode. A different identified native screen
+    is not a malformed clock baseline: leave it to the model to navigate. Keep
+    historical build-menu receipts separate from this newly supported case.
+    """
+    view, focus = native.get("viewscreen_type"), native.get("focus")
+    if not isinstance(focus, str) or not focus:
+        return None
+    if view == NATIVE_VIEW:
+        return SCHEMA if focus in BLOCKING_FOCI else None
+    if (
+        isinstance(view, str)
+        and re.fullmatch(r"<type: viewscreen_\w+st>", view)
+    ):
+        return MODAL_SCHEMA
+    return None
 
 
 def validate_menu_deferral(
@@ -20,7 +44,7 @@ def validate_menu_deferral(
     The chosen keys may have placed an order; only simulation is deferred.
     """
     if (
-        receipt.get("schema_version") != SCHEMA
+        receipt.get("schema_version") not in DEFERRAL_SCHEMAS
         or receipt.get("ok") is not False
         or receipt.get("deferred") is not True
         or receipt.get("error") != "blocking_native_menu"
@@ -38,8 +62,7 @@ def validate_menu_deferral(
     if not isinstance(native, dict) or not isinstance(final, dict) or native != final:
         return "menu_deferral_native_boundary_changed"
     if (
-        native.get("focus") not in BLOCKING_FOCI
-        or native.get("viewscreen_type") != NATIVE_VIEW
+        deferral_schema(native) != receipt["schema_version"]
         or native.get("paused") is not True
         or any(
             not isinstance(native.get(k), str) or not native[k]
@@ -54,7 +77,7 @@ def validate_menu_deferral(
     for state in (before, after):
         if (
             state.get("pause_state") is not True
-            or state.get("viewscreen_type") != "viewscreen_dwarfmodest"
+            or "<type: " + str(state.get("viewscreen_type")) + ">" != native["viewscreen_type"]
             or type(state.get("year")) is not int
             or type(state.get("year_tick")) is not int
             or (state["year"], state["year_tick"])

@@ -33,7 +33,7 @@ from ..env.workshop_placement import (
 )
 from .campaign_save import native_save_status
 from .campaign_food import read_food_measurement, validate_profile
-from .keyboard_clock import BLOCKING_FOCI, SCHEMA as MENU_DEFERRAL_SCHEMA, validate_menu_deferral
+from .keyboard_clock import deferral_schema, validate_menu_deferral
 from .keyboard_clock_timeout import (
     SCHEMA as CLOCK_UNAVAILABLE_SCHEMA, validate_clock_unavailable, validate_zero_tick_timeout,
 )
@@ -249,10 +249,11 @@ class NativeCampaignEnvironment:
                 return execution["result"]["native_receipts"][0]["after"]
 
             initial = probe()
-            if initial.get("focus") in BLOCKING_FOCI:
+            schema = deferral_schema(initial)
+            if schema is not None:
                 after = self.observe()
                 receipt = {
-                    "schema_version": MENU_DEFERRAL_SCHEMA,
+                    "schema_version": schema,
                     "ok": False, "deferred": True, "error": "blocking_native_menu",
                     "requested": ticks, "ticks_advanced": 0,
                     "clock_dispatched": False, "timeout": False,

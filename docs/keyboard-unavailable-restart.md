@@ -29,7 +29,54 @@ are public. Validation: 244 focused tests; 3,656 full-suite passes, 10 skips;
 changed-file Ruff and scoped mypy pass. The actual local HTTP page, API and
 JavaScript serve this record. No browser visual QA or production deployment.
 
-## Next declared hypothesis, not yet executed
+## Memory-contract window u: interrupted, no new checkpoint
+
+Window u ran on source `52ed94a5c22f84cd25ed1d7f6015c9ee8f82084d` and returned
+18 Astra Medium responses. The host-only integrity audit reconciles every actual
+prompt, response, memory handoff and usage receipt. All 18 memory updates were
+nonempty. Seventeen actions reached the trace; four advanced 614 total game ticks
+and thirteen advanced zero. The final input was accepted, but its clock attempt
+failed with `interrupt_baseline_invalid` while `viewscreen_topicmeetingst` remained
+open. Its confirmed elapsed time is zero. The following save operation left
+autosave pending and did not restore the menu stack; no new checkpoint exists.
+
+Checkpoint 775 remains intact at 198,600 saved ticks and passed a fresh native
+reload at u startup. The 614 new ticks are unsaved, not campaign progress toward
+year two. The four earlier losses still contain at least 35,091 ticks and an
+unknown remainder. All 924 responses and 29,418,907 campaign tokens remain
+accounted; 29,487,911 includes the 69,004 historical failed-delivery tokens.
+This attempt used 507,860 tokens. Charges remain unreported. The terminal
+observation had 12 living dwarves, zero recorded deaths and 410 drink units;
+final food is unknown. The game/container/local VM are stopped, with no OOM flag.
+
+The [recorded trial](../experiments/evidence/astra_native_keyboard_memory_contract_20260909.json)
+binds private audit SHA256
+`577a734fbaeb8faf96b70aff17d10184bfe8865cce5ac41a72933fc32e60fa0c`.
+The existing campaign page now has a distinct failed-experiment card above the
+saved parent, with only reviewed public counters. This sequential, interrupted
+continuation does not establish that the memory change improves play. Evaluation
+keeps the concrete harness failure separate from model performance, following
+[OpenAI evaluation guidance](https://developers.openai.com/api/docs/guides/evaluation-best-practices).
+
+The clock fix introduces `fortgym.keyboard-modal-deferral/v1` for an identified,
+paused non-dwarfmode native screen. Two unchanged read-only probes attest zero
+ticks and no clock dispatch; the model receives factual feedback and chooses all
+subsequent keys. Existing build-menu receipts and historical v1 controls retain
+their original behavior. The failed u receipt is never rewritten as a deferral.
+Offline regression verifies this case and its next-decision feedback; live native
+acceptance of this new fix and pending-save recovery remain outstanding.
+
+Validation: the clock-only full-suite run passed 3,707 tests with 10 skips; after
+the tracker update, all 324 focused clock/publication/renderer tests passed.
+Changed-file Ruff and scoped mypy across five sources pass. The actual local
+HTTP page, API and version-8 JavaScript serve the audited failed trial. No browser
+visual QA, merge or production deployment is claimed.
+
+Next: preserve u's usage and prompt-change history during recovery, validate the
+modal-clock path in the bounded native runtime, then resume autonomous play.
+Do not relaunch u's single-use operator or silently restore the old usage totals.
+
+## Historical memory-contract hypothesis and declaration
 
 The first 17 decisions included one empty memory update, followed by a request
 with empty retained memory. The current prompt permits empty updates but does not

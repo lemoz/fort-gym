@@ -50,7 +50,7 @@ def test_recorded_failure_preserves_saved_game_and_extra_response():
     assert failure["status"] == "failed" and failure["new_checkpoint_created"] is False
     assert failure["new_restart_performed"] is False
     assert failure["teardown_verified"] is failure["native_load_verified"] is True
-    assert data["continuation_events"][-4:-2] == [
+    assert data["continuation_events"][-5:-3] == [
         {"kind": "continuation", "id": parent["continuation_id"]},
         {"kind": "partial_failure", "id": failure["failure_id"]},
     ]
@@ -139,10 +139,11 @@ def test_partial_publication_requires_allowlisting_and_drops_private_fields(
     monkeypatch.setattr(records, "PARTIAL_FAILURES", ())
     monkeypatch.setattr(records, "OOM_FAILURES", ())
     monkeypatch.setattr(records, "RESUMED_WINDOWS", ())
+    monkeypatch.setattr(records, "PROMPT_TRIALS", ())
     without = records.keyboard_campaign_records(evidence_root)
     assert without["partial_failures"] == []
     assert without["continuations"] == before["continuations"]
-    assert without["continuation_events"] == before["continuation_events"][:-3]
+    assert without["continuation_events"] == before["continuation_events"][:-4]
     assert "private-sentinel" not in json.dumps(without)
 
 
@@ -172,8 +173,9 @@ def test_partial_failure_renderer_orders_failed_attempt_above_saved_parent():
     data = records.keyboard_campaign_records()
     data["oom_failures"] = []
     data["resumed_windows"] = []
+    data["prompt_trials"] = []
     data["continuation_events"] = [row for row in data["continuation_events"]
-                                   if row["kind"] not in {"oom_failure", "resumed"}]
+                                   if row["kind"] not in {"oom_failure", "resumed", "prompt_trial"}]
     program = r"""
 const assert = require('node:assert/strict');
 const vm = require('node:vm');

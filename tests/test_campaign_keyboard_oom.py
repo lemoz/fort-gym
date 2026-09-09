@@ -36,7 +36,7 @@ def test_oom_result_keeps_save_usage_unknown_tail_and_three_losses():
     assert row["new_checkpoint_created"] is row["another_restart_performed"] is False
     assert row["possible_observer_contribution"] is True
     assert row["teardown_verified"] is True
-    assert data["continuation_events"][-3:-1] == [
+    assert data["continuation_events"][-4:-2] == [
         {"kind": "partial_failure", "id": parent["failure_id"]},
         {"kind": "oom_failure", "id": row["failure_id"]},
     ]
@@ -122,9 +122,10 @@ def test_extra_private_fields_and_unlisted_records_are_not_exposed(evidence_root
     assert records.keyboard_campaign_records(evidence_root) == before
     monkeypatch.setattr(records, "OOM_FAILURES", ())
     monkeypatch.setattr(records, "RESUMED_WINDOWS", ())
+    monkeypatch.setattr(records, "PROMPT_TRIALS", ())
     without = records.keyboard_campaign_records(evidence_root)
     assert without["oom_failures"] == []
-    assert without["continuation_events"] == before["continuation_events"][:-2]
+    assert without["continuation_events"] == before["continuation_events"][:-3]
     assert without["partial_failures"] == before["partial_failures"]
 
 
@@ -174,7 +175,7 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   await new Promise(setImmediate);
   const rendered = elements['keyboard-results'].textContent;
   assert.equal(elements['keyboard-results'].hidden, false);
-  assert.ok(rendered.startsWith('Play resumed after restart · checkpoint 775'));
+  assert.ok(rendered.startsWith('Memory experiment interrupted · last saved checkpoint 775'));
   const latest = rendered.slice(0, rendered.indexOf('Memory-related interruption'));
   for (const text of ['198,600 retained ticks', '64 new model decisions, 6,000 new ticks',
     '906 accounted model responses', '4 loss records', 'at least 35,091 ticks',

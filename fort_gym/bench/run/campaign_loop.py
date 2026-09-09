@@ -45,7 +45,7 @@ from ..tick_receipt import (
 from .campaign_advance import ACCEPTED_ONLY, MODEL_REQUESTED, POLICIES, requested_ticks
 from .campaign_checkpoint import create_checkpoint, verify_checkpoint
 from .campaign_save import NativeSnapshotter
-from .keyboard_clock import SCHEMA as MENU_DEFERRAL_SCHEMA, validate_menu_deferral
+from .keyboard_clock import DEFERRAL_SCHEMAS, validate_menu_deferral
 from .keyboard_clock_timeout import SCHEMA as CLOCK_UNAVAILABLE_SCHEMA, validate_clock_unavailable
 
 
@@ -630,7 +630,7 @@ class CampaignLoop:
         )
         if type(actual) is not int or actual < 0 or end - start != actual or actual > maximum:
             raise ValueError("Native time disagrees with the action's tick receipt")
-        menu_deferral = "deferred" in receipt or receipt.get("schema_version") == MENU_DEFERRAL_SCHEMA
+        menu_deferral = "deferred" in receipt or receipt.get("schema_version") in DEFERRAL_SCHEMAS
         if menu_deferral and (
             not keyboard
             or validate_menu_deferral(

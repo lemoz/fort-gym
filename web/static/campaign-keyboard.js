@@ -51,9 +51,23 @@
       throw new Error('Unsupported continuation evidence');
     }
     const continuations = data.continuations || [];
-    for (const name of ['tail_interruptions', 'tail_recoveries', 'presave_failures', 'partial_failures', 'oom_failures', 'resumed_windows', 'save_acceptances']) {
+    for (const name of ['tail_interruptions', 'tail_recoveries', 'presave_failures', 'partial_failures', 'oom_failures', 'resumed_windows', 'prompt_trials', 'save_acceptances']) {
       if (data[name] !== undefined && !Array.isArray(data[name])) {
         throw new Error('Unsupported continuation recovery evidence');
+      }
+    }
+    function renderPromptTrial(row) {
+      const section = node('section', undefined, results);
+      section.className = 'campaign-condition campaign-save-failure';
+      const p = row.progress;
+      node('h3', `Memory experiment interrupted · last saved checkpoint ${count(p.parent_checkpoint_cursor)}`, section);
+      node('p', `Astra Medium returned ${count(p.new_responses)} decisions with ${count(p.memory_clears)} empty memory updates. ${count(p.advancing_decisions)} completed decisions advanced time; ${count(p.zero_tick_committed_decisions)} advanced none.`, section);
+      node('p', `A liaison dialogue remained open after the model’s key. The harness rejected the clock baseline, then could not complete its save. The ${count(p.new_committed_unsaved_ticks)} new game ticks are unsaved; saved progress remains ${count(p.checkpointed_elapsed_ticks)} ticks.`, section);
+      node('p', `All ${count(p.new_tokens)} new tokens are included in ${count(p.campaign_tokens)} campaign tokens, or ${count(p.all_attempt_tokens)} including historical failed deliveries. Model charge: ${cost(row.usage)}.`, section);
+      node('p', `The last unsaved observation had ${count(row.counts.population.end)} living dwarves and ${count(row.counts.recorded_dead_citizens.end)} recorded deaths. Food and sustainability remain unproven. This interrupted continuation is not a matched comparison or proof that the memory change improved play.`, section);
+      node('p', `The previous ${count(p.existing_loss_records)} losses remain recorded, with at least ${count(p.existing_known_lost_ticks)} lost ticks and an unknown remainder. The original checkpoint is intact. Game and VM stopped.`, section);
+      if (/^experiments\/evidence\/astra_native_keyboard_[a-z0-9_]+\.json$/.test(row.evidence_path)) {
+        node('a', 'Read the recorded experiment', section).href = 'https://github.com/lemoz/fort-gym/blob/codex/campaign-codex-subscription/' + row.evidence_path;
       }
     }
     function renderOomFailure(row) {
@@ -279,6 +293,7 @@
       partial_failure: (data.partial_failures || []).map(row => ({id: row.failure_id, row})),
       oom_failure: (data.oom_failures || []).map(row => ({id: row.failure_id, row})),
       resumed: (data.resumed_windows || []).map(row => ({id: row.resumed_id, row})),
+      prompt_trial: (data.prompt_trials || []).map(row => ({id: row.trial_id, row})),
       restart: restarts.filter(row => row.recent_event === true).map(row => ({id: row.restart_id, row}))
     };
     const events = data.continuation_events || Object.entries(recent).flatMap(([kind, rows]) => rows.map(row => ({kind, id: row.id})));
@@ -294,6 +309,7 @@
       else if (event.kind === 'presave_failure') renderPresaveFailure(found.row);
       else if (event.kind === 'partial_failure') renderPartialFailure(found.row);
       else if (event.kind === 'oom_failure') renderOomFailure(found.row);
+      else if (event.kind === 'prompt_trial') renderPromptTrial(found.row);
       else if (event.kind === 'restart') renderRestart(found.row);
       else renderRecovery(found.row);
     }
