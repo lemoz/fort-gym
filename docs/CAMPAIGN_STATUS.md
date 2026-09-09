@@ -13,29 +13,50 @@ and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. Several bounded Astra native-keyboard
 windows have completed; the same fortress remains in autonomous continuation.
 
-### Current run: memory-contract experiment u is live
+### Latest attempt: memory-contract window u failed without a new save
 
-Source `52ed94a5c22f84cd25ed1d7f6015c9ee8f82084d` is pushed/read back.
-All 3674 local tests passed (10 skipped), changed-file Ruff/scoped mypy passed,
-and exact-head CI 34390081649 passed. The new opt-in condition explains that
-memory_update is a complete replacement, with a checkpoint-bound prompt history.
-The original prompt, model, controls, display, memory and usage are preserved.
+Source `52ed94a5c22f84cd25ed1d7f6015c9ee8f82084d` ran 18 Astra Medium
+responses. Seventeen decisions committed trace rows, four advancing a total of
+614 ticks and thirteen advancing zero. The final input left the liaison dialogue
+open, then the clock rejected its non-dwarfmode baseline. Its final clock receipt
+confirms zero ticks. The attempted save remained pending and did not restore the
+menu stack. No new checkpoint was created.
 
-Owner session 2330 / PID 12024 is running one 64-decision window from checkpoint
-775. Native startup, image build and subscription admission succeeded. Actual
-startup files verify calendar 30/215401, 120x40 screen, unchanged agent state plus
-the declared prompt change, and the new paragraph in the first model request.
-The first five returned responses had valid grammar and 147823 tokens; none
-cleared memory. The fifth requested 2000 ticks after four zero-tick decisions.
-This is early requested behavior, not a new checkpoint or evidence of causality.
+Checkpoint 775 remains verified and unchanged at 198600 saved ticks. Its fresh
+native reload was verified at u startup. The 614 new ticks are unsaved, not added
+to retained progress. All 924 responses / 29418907 campaign tokens / 29487911
+all-attempt tokens remain accounted, including this run's 507860 tokens. Charges
+remain unreported. The four earlier loss records remain at least 35091 ticks
+with an unknown remainder. All 18 actual prompts and memory handoffs were
+verified, with zero empty updates; no causal improvement claim is established.
 
-The execution worktree stays frozen while the owner is live. Same cumulative
-1024-dispatch / 40M-token limits, fresh subscription admission, and mandatory
-native/container/local-VM teardown. No API fallback, local model, purchase/reset
-or cloud VM. No new approval is required. Private current handoff:
-`astra-native-memory-contract-v1/ACTIVE_RUN_HANDOFF.md`. The campaign website still
-records checkpoint 775 from t, not this live experiment. Its final saved outcome
-will be published after the run ends and its evidence is checked.
+The terminal observation had 12 living dwarves, zero recorded deaths, 410 drink
+units and unknown food inventory. Owner session 2330 exited 1; PID 12024 is absent.
+Container stopped with exit 1 and OOMKilled=false; native cleanup and local-VM
+teardown verified. The single-use owner must not be relaunched. Private audit:
+`astra-native-memory-contract-v1/failure-review.json`, SHA256
+`577a734fbaeb8faf96b70aff17d10184bfe8865cce5ac41a72933fc32e60fa0c`.
+
+The modal-clock fix and audited website record are pushed/read back at
+`da34ce594059ec01dd3c9001f9add525718b5e90` on the PR #137 branch. The fix
+returns an attested zero-tick menu deferral for identified native dialogs,
+without sending recovery keys or rewriting historical failures. Astra retains
+all input choices. The clock-only full suite passed 3707 tests, 10 skipped;
+the final combined publication/clock/renderer checks passed 324 focused tests.
+Changed-file Ruff and scoped mypy across five sources pass. Initial CI found an
+older publication fixture that removed the saved parent but retained the new
+trial. The fixture-only correction is pushed/read back at
+`eeda57bc980f9ac87dc37d6d950ad8fd731931e6`; all 698 campaign-publication and
+clock tests pass. The final full local suite passed 3741 tests with 10 skips;
+CI 34393487100 is running at this update.
+Live native acceptance and recovery remain outstanding.
+
+The actual local HTTP page/API/version-8 JavaScript show the failed trial above
+the saved parent. Preview session 27376 / PID 19699 uses unchanged storage and
+disabled game integration. No browser visual QA, merge or deploy was done.
+Next: retain all u usage and prompt history while reconciling the unsaved branch,
+validate the modal-clock path natively, then resume autonomous play. No new
+approval is needed for this in-scope work.
 
 ### Latest saved result: window t completed at checkpoint 775
 
@@ -51,8 +72,8 @@ Checkpoint digest:
 `7b69e64913adce2a9bfe3ecf539a8e91ea93edb4ce5c38e19c91279bb3b4e1bd`.
 Source was `fea2971a6852f330654bc68b06824785db75c95b`. Independent checkpoint,
 gameplay, food, clock, usage and teardown checks completed. The starting save
-passed fresh native reload; the new final checkpoint has not yet had a separate
-fresh reload. No interruption exercised the targeted dialogue repair. An exit-1
+passed fresh native reload; checkpoint 775 subsequently passed its fresh reload
+at u startup. No interruption in t exercised the targeted dialogue repair. An exit-1
 terminal observation warning is retained separately from verified native save
 completion. Its underlying cause remains unverified.
 
@@ -68,18 +89,18 @@ record was reconciled against private terminal results and audit digests. All
 Exact-head CI 34388160244 subsequently passed for this publication; previous
 source CI 34382352495 also passed. PR #137 remains open/draft, not merged or deployed.
 
-The actual local HTTP page, API and JavaScript serve checkpoint 775 at 8857.
-Preview session 96469 / PID 8213 has game integration disabled. This is recorded
-evidence, not live gameplay; no browser visual QA was requested. Private owner
+The local HTTP page, API and JavaScript served checkpoint 775 at this publication.
+That preview has since been refreshed with u's failed result as recorded above.
+This is recorded evidence, not live gameplay. Private owner
 handoff remains `astra-native-unavailable-restart-v1/ACTIVE_RUN_HANDOFF.md`.
 
-Next: implement and test an opt-in prompt condition explaining that memory_update
+The next hypothesis at t publication was an opt-in condition explaining that memory_update
 fully replaces previous memory and empty clears it. Keep Astra Medium, native
 controls, screen text and model-chosen game time unchanged. Preserve old prompt
 conditions, saved memory, every usage/loss record and cumulative limits. The
 observed memory clear and repeated inspection motivate this hypothesis, but do
 not prove it; a continuation is not a matched model comparison. The next native
-window has not started. No new approval is needed for this in-scope work.
+window subsequently ran as u; its terminal outcome is recorded above.
 
 ### Historical outcome: window s stopped with an OOM flag; checkpoint 711 remained saved
 
