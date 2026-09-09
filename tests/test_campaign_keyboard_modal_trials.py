@@ -26,10 +26,12 @@ def test_recorded_dialog_trial_keeps_partial_success_and_terminal_failure_separa
     data = response.json()
     row = data["modal_trials"][-1]
     prior = data["prompt_trials"][-1]
-    assert data["continuation_events"][-2:] == [
+    expected_events = [
         {"kind": "prompt_trial", "id": prior["trial_id"]},
         {"kind": "modal_trial", "id": row["trial_id"]},
     ]
+    offset = data["continuation_events"].index(expected_events[0])
+    assert data["continuation_events"][offset:offset + len(expected_events)] == expected_events
     assert row["status"] == "failed" and row["new_checkpoint_verified"] is False
     assert row["teardown_verified"] is True
     assert row["progress"]["native_modal_deferrals_verified"] == 4
@@ -112,10 +114,11 @@ def test_private_fields_and_unlisted_files_are_not_projected(evidence_root, monk
     file.write_text(json.dumps(source))
     assert records.keyboard_campaign_records(evidence_root) == before
     monkeypatch.setattr(records, "MODAL_TRIALS", ())
+    monkeypatch.setattr(records, "SAVED_SEGMENTS", ())
     file.unlink()
     after = records.keyboard_campaign_records(evidence_root)
     assert after["modal_trials"] == []
-    assert after["continuation_events"] == before["continuation_events"][:-1]
+    assert after["continuation_events"] == before["continuation_events"][:-2]
 
 
 def test_dialog_trial_renderer_keeps_unknown_time_and_latest_first_order():
@@ -144,8 +147,8 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   await new Promise(setImmediate);
   const rendered = elements['keyboard-results'].textContent;
   assert.equal(elements['keyboard-results'].hidden, false);
-  assert.ok(rendered.startsWith('Dialog handling worked · host interruption prevented a save'));
-  const trial = rendered.slice(0, rendered.indexOf('Memory experiment interrupted'));
+  assert.ok(rendered.startsWith('Checkpoint 807 saved · restart interrupted'));
+  const trial = rendered.slice(rendered.indexOf('Dialog handling worked'), rendered.indexOf('Memory experiment interrupted'));
   for (const text of ['198,600 ticks', '12,724 ticks', 'Final uncommitted game time Unknown',
     '4 paused-dialog receipts', 'Unknown time is not zero', 'underlying read failure is unknown',
     'Checkpoint 775', '35,705 lost ticks', '927,074 new tokens', '30,345,981 campaign tokens',

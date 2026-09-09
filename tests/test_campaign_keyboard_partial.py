@@ -50,10 +50,12 @@ def test_recorded_failure_preserves_saved_game_and_extra_response():
     assert failure["status"] == "failed" and failure["new_checkpoint_created"] is False
     assert failure["new_restart_performed"] is False
     assert failure["teardown_verified"] is failure["native_load_verified"] is True
-    assert data["continuation_events"][-6:-4] == [
+    expected_events = [
         {"kind": "continuation", "id": parent["continuation_id"]},
         {"kind": "partial_failure", "id": failure["failure_id"]},
     ]
+    offset = data["continuation_events"].index(expected_events[0])
+    assert data["continuation_events"][offset:offset + len(expected_events)] == expected_events
     assert parent["operator_observation_warning"]["underlying_cause"] == "unverified"
     assert data["presave_failures"][-1]["checkpoint_cursor"] == 631
     assert data["restarts"][-1]["native_save_loss_restarts"] == 2
@@ -141,11 +143,12 @@ def test_partial_publication_requires_allowlisting_and_drops_private_fields(
     monkeypatch.setattr(records, "RESUMED_WINDOWS", ())
     monkeypatch.setattr(records, "PROMPT_TRIALS", ())
     monkeypatch.setattr(records, "MODAL_TRIALS", ())
+    monkeypatch.setattr(records, "SAVED_SEGMENTS", ())
     without = records.keyboard_campaign_records(evidence_root)
     assert without["partial_failures"] == []
     assert without["continuations"] == before["continuations"]
     assert without["continuation_events"] == [event for event in before["continuation_events"]
-                                              if event["kind"] not in {"partial_failure", "oom_failure", "resumed", "prompt_trial", "modal_trial"}]
+                                              if event["kind"] not in {"partial_failure", "oom_failure", "resumed", "prompt_trial", "modal_trial", "saved_segment"}]
     assert "private-sentinel" not in json.dumps(without)
 
 
@@ -177,8 +180,9 @@ def test_partial_failure_renderer_orders_failed_attempt_above_saved_parent():
     data["resumed_windows"] = []
     data["prompt_trials"] = []
     data["modal_trials"] = []
+    data["saved_segments"] = []
     data["continuation_events"] = [row for row in data["continuation_events"]
-                                   if row["kind"] not in {"oom_failure", "resumed", "prompt_trial", "modal_trial"}]
+                                   if row["kind"] not in {"oom_failure", "resumed", "prompt_trial", "modal_trial", "saved_segment"}]
     program = r"""
 const assert = require('node:assert/strict');
 const vm = require('node:vm');

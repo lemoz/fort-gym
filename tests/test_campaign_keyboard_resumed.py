@@ -109,8 +109,9 @@ def test_private_fields_not_projected_and_unlisted_record_not_loaded(evidence_ro
     monkeypatch.setattr(records, "RESUMED_WINDOWS", ())
     monkeypatch.setattr(records, "PROMPT_TRIALS", ())
     monkeypatch.setattr(records, "MODAL_TRIALS", ())
+    monkeypatch.setattr(records, "SAVED_SEGMENTS", ())
     after = records.keyboard_campaign_records(evidence_root)
     assert after["resumed_windows"] == []
     assert after["continuation_events"] == [event for event in before["continuation_events"]
-                                            if event["kind"] not in {"resumed", "prompt_trial", "modal_trial"}]
+                                            if event["kind"] not in {"resumed", "prompt_trial", "modal_trial", "saved_segment"}]
     assert after["oom_failures"] == before["oom_failures"]

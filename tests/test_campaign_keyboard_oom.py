@@ -36,10 +36,12 @@ def test_oom_result_keeps_save_usage_unknown_tail_and_three_losses():
     assert row["new_checkpoint_created"] is row["another_restart_performed"] is False
     assert row["possible_observer_contribution"] is True
     assert row["teardown_verified"] is True
-    assert data["continuation_events"][-5:-3] == [
+    expected_events = [
         {"kind": "partial_failure", "id": parent["failure_id"]},
         {"kind": "oom_failure", "id": row["failure_id"]},
     ]
+    offset = data["continuation_events"].index(expected_events[0])
+    assert data["continuation_events"][offset:offset + len(expected_events)] == expected_events
 
 
 @pytest.mark.parametrize(
@@ -124,10 +126,11 @@ def test_extra_private_fields_and_unlisted_records_are_not_exposed(evidence_root
     monkeypatch.setattr(records, "RESUMED_WINDOWS", ())
     monkeypatch.setattr(records, "PROMPT_TRIALS", ())
     monkeypatch.setattr(records, "MODAL_TRIALS", ())
+    monkeypatch.setattr(records, "SAVED_SEGMENTS", ())
     without = records.keyboard_campaign_records(evidence_root)
     assert without["oom_failures"] == []
     assert without["continuation_events"] == [event for event in before["continuation_events"]
-                                              if event["kind"] not in {"oom_failure", "resumed", "prompt_trial", "modal_trial"}]
+                                              if event["kind"] not in {"oom_failure", "resumed", "prompt_trial", "modal_trial", "saved_segment"}]
     assert without["partial_failures"] == before["partial_failures"]
 
 
@@ -177,7 +180,7 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   await new Promise(setImmediate);
   const rendered = elements['keyboard-results'].textContent;
   assert.equal(elements['keyboard-results'].hidden, false);
-  assert.ok(rendered.startsWith('Dialog handling worked · host interruption prevented a save'));
+  assert.ok(rendered.startsWith('Checkpoint 807 saved · restart interrupted'));
   const latest = rendered.slice(rendered.indexOf('Play resumed after restart'), rendered.indexOf('Memory-related interruption'));
   for (const text of ['198,600 retained ticks', '64 new model decisions, 6,000 new ticks',
     '906 accounted model responses', '4 loss records', 'at least 35,091 ticks',

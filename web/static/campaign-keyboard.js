@@ -51,9 +51,37 @@
       throw new Error('Unsupported continuation evidence');
     }
     const continuations = data.continuations || [];
-    for (const name of ['tail_interruptions', 'tail_recoveries', 'presave_failures', 'partial_failures', 'oom_failures', 'resumed_windows', 'prompt_trials', 'modal_trials', 'save_acceptances']) {
+    for (const name of ['tail_interruptions', 'tail_recoveries', 'presave_failures', 'partial_failures', 'oom_failures', 'resumed_windows', 'prompt_trials', 'modal_trials', 'saved_segments', 'save_acceptances']) {
       if (data[name] !== undefined && !Array.isArray(data[name])) {
         throw new Error('Unsupported continuation recovery evidence');
+      }
+    }
+    function renderSavedSegment(row) {
+      const section = node('section', undefined, results);
+      section.className = 'campaign-condition';
+      const p = row.progress, o = row.saved_observation;
+      node('h3', `Checkpoint ${count(p.checkpoint_cursor)} saved · restart interrupted`, section);
+      const facts = node('dl', undefined, section);
+      facts.className = 'campaign-save-facts';
+      for (const [label, value] of [
+        ['Saved game time', `${count(p.saved_elapsed_ticks)} ticks`],
+        ['First year elapsed', `${(100 * p.saved_elapsed_ticks / 403200).toFixed(1)}%`],
+        ['New saved progress', `${count(p.new_saved_ticks)} ticks`],
+        ['Living dwarves', count(o.population)]
+      ]) {
+        const item = node('div', undefined, facts);
+        node('dt', label, item); node('dd', value, item);
+      }
+      node('p', `All ${count(p.new_model_responses)} new decisions were saved. A fresh game process loaded checkpoint ${count(p.checkpoint_cursor)} successfully. The next segment then hit a process-creation error before another model request; the underlying resource cause is unverified.`, section);
+      node('p', `Saved observation: ${count(o.recorded_dead_citizens)} recorded deaths, ${count(o.drink_stock)} drinks, ${count(o.completed_farms)} completed farms, ${count(o.planned_unfinished_farms)} unfinished farm, ${count(o.completed_beds)} beds and ${count(o.completed_workshops)} workshops. Food: ${count(o.food_stock)}. Stocks alone do not prove sustainable production.`, section);
+      const details = node('details', undefined, section);
+      details.className = 'campaign-details';
+      node('summary', 'Usage, earlier losses and the interrupted restart', details);
+      node('p', `${count(p.cumulative_model_responses)} responses remain accounted for. This window added ${count(row.usage.new_tokens)} tokens: ${count(row.usage.campaign_tokens)} campaign tokens, ${count(row.usage.all_attempt_tokens)} including historical failed deliveries. Charge: ${cost(row.usage)}.`, details);
+      node('p', `${count(p.loss_records)} historical losses retain at least ${count(p.known_lost_ticks)} lost ticks plus an unknown remainder. The newly saved ${count(p.new_saved_ticks)} ticks are not a loss. The second segment's final clock is ${count(row.window_outcome.second_segment_final_clock)}; its trace and usage added no new row.`, details);
+      node('p', 'Game and VM teardown verified. The full window remains failed; the first segment is saved. This is not year-two success or a matched model comparison.', section);
+      if (/^experiments\/evidence\/astra_native_keyboard_[a-z0-9_]+\.json$/.test(row.evidence_path)) {
+        node('a', 'Read the saved-segment evidence', section).href = 'https://github.com/lemoz/fort-gym/blob/codex/campaign-codex-subscription/' + row.evidence_path;
       }
     }
     function renderModalTrial(row) {
@@ -320,6 +348,7 @@
       resumed: (data.resumed_windows || []).map(row => ({id: row.resumed_id, row})),
       prompt_trial: (data.prompt_trials || []).map(row => ({id: row.trial_id, row})),
       modal_trial: (data.modal_trials || []).map(row => ({id: row.trial_id, row})),
+      saved_segment: (data.saved_segments || []).map(row => ({id: row.saved_segment_id, row})),
       restart: restarts.filter(row => row.recent_event === true).map(row => ({id: row.restart_id, row}))
     };
     const events = data.continuation_events || Object.entries(recent).flatMap(([kind, rows]) => rows.map(row => ({kind, id: row.id})));
@@ -337,6 +366,7 @@
       else if (event.kind === 'oom_failure') renderOomFailure(found.row);
       else if (event.kind === 'prompt_trial') renderPromptTrial(found.row);
       else if (event.kind === 'modal_trial') renderModalTrial(found.row);
+      else if (event.kind === 'saved_segment') renderSavedSegment(found.row);
       else if (event.kind === 'restart') renderRestart(found.row);
       else renderRecovery(found.row);
     }

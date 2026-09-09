@@ -20,6 +20,7 @@ from .campaign_keyboard_oom import OOM_FAILURES, oom_failure
 from .campaign_keyboard_resumed import RESUMED_WINDOWS, resumed_window
 from .campaign_keyboard_trials import PROMPT_TRIALS, prompt_trial
 from .campaign_keyboard_modal_trials import MODAL_TRIALS, modal_trial
+from .campaign_keyboard_saved_segments import SAVED_SEGMENTS, saved_segment
 from .campaign_keyboard_tails import (
     TAIL_INTERRUPTION, TAIL_RECOVERIES, continuation_interruption, continuation_recovery,
 )
@@ -294,6 +295,7 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
     resumed_windows = [resumed_window(root, filename, oom_failures) for filename in RESUMED_WINDOWS]
     prompt_trials = [prompt_trial(root, filename, resumed_windows) for filename in PROMPT_TRIALS]
     modal_trials = [modal_trial(root, filename, resumed_windows, prompt_trials) for filename in MODAL_TRIALS]
+    saved_segments = [saved_segment(root, filename, resumed_windows, modal_trials) for filename in SAVED_SEGMENTS]
     # Explicit publication order retains the interruption between its parent
     # continuation and recovery; later play must not appear below older recovery.
     recent_events = [
@@ -335,6 +337,10 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
         previous_event = {"kind": "prompt_trial", "id": trial["previous_trial"]}
         recent_events.insert(recent_events.index(previous_event) + 1,
                              {"kind": "modal_trial", "id": trial["trial_id"]})
+    for saved in saved_segments:
+        previous_event = {"kind": "modal_trial", "id": saved["previous_trial"]}
+        recent_events.insert(recent_events.index(previous_event) + 1,
+                             {"kind": "saved_segment", "id": saved["saved_segment_id"]})
     return {
         "schema_version": "fortgym.public-keyboard-milestones/v1",
         "live_tracking": False,
@@ -352,6 +358,7 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
         "resumed_windows": resumed_windows,
         "prompt_trials": prompt_trials,
         "modal_trials": modal_trials,
+        "saved_segments": saved_segments,
         "save_acceptances": save_acceptances,
         "tail_interruptions": tail_interruptions,
         "tail_recoveries": tail_recoveries,
