@@ -38,11 +38,23 @@ new unsaved branch has not yet been restarted and its terminal clock remains
 unknown. Failure-review SHA256:
 `8350ba26e2eb74e509cade992a6e8081aef4be7b9bd109b1b6cc9b6b7f46d0b4`.
 
-The versioned OOM failure record is repository evidence; website integration is
-still pending. The current local page displays recorded r, not the latest s
-failure. Next: deliver this distinct failure to the website, preserve its usage
-and unknown tail in continuation, and continue native play with host-side
-diagnostics. No new user approval is needed for this in-scope work.
+The local campaign page now serves the distinct OOM failure above r while retaining
+the older records. Source `41d4ceb3f83bd76946dda1d968abf6c475c22945` is pushed
+and read back. All 3564 local tests pass (10 skipped); 60 new OOM publication tests
+cover unknown time, prior losses, usage, provenance, privacy and rendered ordering.
+The actual HTTP page, API and JavaScript match the committed publication. Review
+SHA256: `488328560f0a46d73afc73f2fe7d6560c4d96c497be577eb84c56da5fb4ca3e0`.
+New preview session 98480 / PID 14385 retains port 8857 with game integration
+disabled. The old preview stopped cleanly. This is recorded s, not a live run;
+there was no browser visual QA, merge or production deployment. Exact-head CI
+34296459913 was in progress at the initial check; diagnostic-fix CI 34295524568
+passed. Next: preserve s usage and the unknown tail in continuation, then continue
+native play with host-side diagnostics. No new approval is needed for in-scope work.
+
+The continuation repair must inherit the three losses recorded in s, even though
+the older saved checkpoint q contains only two. It must retain all 842 responses,
+record the known 5200 lost ticks separately from unknown terminal game time, and
+not force this failure into the older pending-save failure classification.
 
 ### Historical startup of window s (superseded by terminal result above)
 

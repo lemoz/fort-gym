@@ -125,9 +125,13 @@ game container; host reconstruction used about 806 MiB, a possible observer-side
 contributor rather than a proven complete OOM diagnosis. Commit e80e9f0b7 replaces
 that pattern with a host-only streaming reader, about 20 MiB on the same trace,
 with 18 passing focused tests. Native dialogue-fix acceptance remains open.
-The failure record is versioned in the repository; the local website still shows
-r, so separate s integration and a usage/loss-preserving continuation remain next.
-See Campaign status for the audit and source identities.
+The local website now shows the distinct s OOM failure above r, retaining unknown
+terminal time, possible observer contribution, all usage and prior losses. Source
+41d4ceb3f83bd76946dda1d968abf6c475c22945 is pushed/read back; 3564 local tests pass,
+and an independent review matches the actual HTTP page/API/static asset to the
+audited native evidence. A usage/loss-preserving continuation remains next; there
+is no new game run, saved progress, PR merge or production deployment. See Campaign
+status for the audit, preview and CI identities.
 
 ## Historical interface result: window h
 
