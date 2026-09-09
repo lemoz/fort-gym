@@ -77,8 +77,11 @@ def run_keyboard_segment(
         )
         if restart is not None:
             from .keyboard_restart import apply_restart
+            from .keyboard_unavailable_restart import restart_history
 
-            apply_restart(loop, restart)
+            assert restart_source is not None and restart_declaration is not None
+            history = restart_history(checkpoint, restart_source / f"segment-{restart_declaration['source_segment']}", restart)
+            apply_restart(loop, restart, prior_discontinuities=history)
             publish(output / "restart.json", restart)
             result["discontinuities"] = loop.discontinuities
         publish(output / "agent-before.json", agent.export_campaign_state())

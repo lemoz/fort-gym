@@ -385,6 +385,7 @@ class CampaignLoop:
                             "restored_next_step", "lost_trace_next_step", "lost_elapsed_ticks",
                             "memory_policy", "actions_replayed",
                             "lost_uncommitted_ticks", "lost_uncommitted_decisions",
+                            "lost_elapsed_ticks_complete",
                         )
                         if key in self.last_result["restart"]
                     }

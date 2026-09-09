@@ -20,9 +20,12 @@ from .keyboard_partial_restart import (
     PARTIAL_FIELDS, PARTIAL_KIND, PARTIAL_STAGE, inspect_partial_failure, validate_partial_discontinuity,
 )
 
+from .keyboard_unavailable_restart import (
+    UNAVAILABLE_KIND, UNAVAILABLE_STAGE, prepare_unavailable_restart, validate_unavailable_discontinuity,
+)
+
 SCHEMA = "fortgym.native-save-loss-restart/v1"
 PRESAVE_STAGE = "identity_before_save"
-
 
 def _failure_evidence(segment: Path, result: dict) -> dict:
     """Recognize the historical timeout or the retained pre-save Lua assertion."""
@@ -83,18 +86,24 @@ def validate_discontinuities(records: object) -> list[dict]:
         identities.add(row["source_result_sha256"])
         if "save_failure_stage" in row or "source_save_attempt_sha256" in row:
             if (
-                row.get("save_failure_stage") not in {PRESAVE_STAGE, PARTIAL_STAGE}
+                row.get("save_failure_stage") not in {PRESAVE_STAGE, PARTIAL_STAGE, UNAVAILABLE_STAGE}
                 or not isinstance(row.get("source_save_attempt_sha256"), str)
                 or re.fullmatch("[a-f0-9]{64}", row["source_save_attempt_sha256"]) is None
             ):
                 raise ValueError("Pre-save restart lacks digest-bound failure-stage evidence")
-        if row.get("save_failure_stage") == PARTIAL_STAGE or PARTIAL_FIELDS.intersection(row):
+        if (row.get("failure_kind") == UNAVAILABLE_KIND
+            or row.get("save_failure_stage") == UNAVAILABLE_STAGE
+            or "lost_elapsed_ticks_complete" in row or "source_start_agent_sha256" in row):
+            validate_unavailable_discontinuity(row)
+        elif row.get("save_failure_stage") == PARTIAL_STAGE or PARTIAL_FIELDS.intersection(row):
             validate_partial_discontinuity(row)
         if (
             type(row.get("restored_next_step")) is not int
             or row["restored_next_step"] < 1
             or type(row.get("lost_trace_next_step")) is not int
-            or row["lost_trace_next_step"] <= row["restored_next_step"]
+            or row["lost_trace_next_step"] < row["restored_next_step"]
+            or (row["lost_trace_next_step"] == row["restored_next_step"]
+                and row.get("failure_kind") != UNAVAILABLE_KIND)
             or type(row.get("lost_elapsed_ticks")) is not int
             or row["lost_elapsed_ticks"] < 0
             or row.get("memory_policy") != "restore_checkpoint_memory"
@@ -117,9 +126,10 @@ def prepare_restart(checkpoint: Path, source_root: Path, declaration: dict, late
         "schema_version", "source_segment", "source_revision", "restored_next_step", "lost_trace_next_step",
     }
     partial = isinstance(declaration, dict) and declaration.get("failure_kind") == PARTIAL_KIND
+    unavailable = isinstance(declaration, dict) and declaration.get("failure_kind") == UNAVAILABLE_KIND
     if (
         not isinstance(declaration, dict)
-        or set(declaration) != declaration_fields | ({"failure_kind"} if partial else set())
+        or set(declaration) != declaration_fields | ({"failure_kind"} if partial or unavailable else set())
         or declaration["schema_version"] != SCHEMA
     ):
         raise ValueError("Restart requires an explicit source declaration")
@@ -133,11 +143,14 @@ def prepare_restart(checkpoint: Path, source_root: Path, declaration: dict, late
             type(declaration[key]) is not int or declaration[key] < 1
             for key in ("restored_next_step", "lost_trace_next_step")
         )
-        or declaration["lost_trace_next_step"] <= declaration["restored_next_step"]
+        or declaration["lost_trace_next_step"] < declaration["restored_next_step"]
+        or (declaration["lost_trace_next_step"] == declaration["restored_next_step"] and not unavailable)
     ):
         raise ValueError("Invalid restart source identity or cursor")
     if source_root.is_symlink() or not source_root.is_dir():
         raise ValueError("Restart source must be a retained regular directory")
+    if unavailable:
+        return prepare_unavailable_restart(checkpoint, source_root, declaration, latest)
     segment = source_root / f"segment-{index}"
     manifest = verify_checkpoint(checkpoint)
     payload, state = manifest["payload"], read(checkpoint / "agent.json")
@@ -171,7 +184,7 @@ def prepare_restart(checkpoint: Path, source_root: Path, declaration: dict, late
         or reconciled_usage(state, latest) != returned["usage"]
         or any(
             returned["usage"][key] - state["usage"][key]
-            != result["next_step"] - result["first_step"] + int(partial)
+            != result["next_step"] - result["first_step"] + (1 if partial else 0)
             for key in ("returned_responses", "accounted_responses", "dispatched_requests")
         )
     ):
@@ -229,11 +242,14 @@ def prepare_restart(checkpoint: Path, source_root: Path, declaration: dict, late
     return validate_discontinuities([record])[0]
 
 
-def apply_restart(loop, record: dict) -> None:
+def apply_restart(loop, record: dict, *, prior_discontinuities: list[dict] | None = None) -> None:
     """Attach factual loss feedback, not replacement gameplay or strategy."""
     if loop.agent.export_campaign_state()["usage"] != record["retained_usage"]:
         raise ValueError("Restart discarded prior model usage")
-    loop.discontinuities = validate_discontinuities([*loop.discontinuities, record])
+    history = loop.discontinuities if prior_discontinuities is None else validate_discontinuities(prior_discontinuities)
+    if history[:len(loop.discontinuities)] != loop.discontinuities:
+        raise ValueError("Restart cannot erase earlier checkpoint loss history")
+    loop.discontinuities = validate_discontinuities([*history, record])
     loop.last_result = {
         "accepted": False,
         "why": "Infrastructure restart: the previous game save failed. The declared tail was not "
@@ -242,3 +258,5 @@ def apply_restart(loop, record: dict) -> None:
         "restart": deepcopy(record),
         "previous_game_feedback": loop.last_result,
     }
+    if record.get("lost_elapsed_ticks_complete") is False:
+        loop.last_result["why"] += " The lost tick count is a confirmed lower bound; final uncommitted game time is unknown."
