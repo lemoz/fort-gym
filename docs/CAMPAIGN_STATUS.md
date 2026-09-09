@@ -50,11 +50,25 @@ Repair source `77382474f626ce19d8d2ba99c1b91185243ec6b2` is clean, pushed
 and read back on draft PR #137. The final full suite passed 3931 tests with
 10 skips after enabling local loopback for socket tests; the initial sandboxed
 suite's one failure was a denied socket bind. Changed-file Ruff and scoped mypy
-passed. CI 34408572862 is pending at this entry.
-The provider-free two-load probe passed checkpoint-bound preflight and launched
-as owner exec session 14754 in `astra-native-rpc-probe-v1`. The source is frozen
-while that owner runs. Native probe outcome and mandatory teardown remain pending;
-there are no new model responses, year-two or sustainability claims.
+passed. Exact-source CI 34408572862 passed.
+
+The provider-free two-load probe is now terminal. Both fresh loads and cleanups
+passed. The first worker retained 16 observations, an unchanged calendar/screen,
+11-13 observed tasks (peak 15), no zombies, PID-limit events or OOM events.
+The second worker failed exact-screen equality. Its frames and partial readings
+were not retained, so the pixel change and cause remain unknown. All 16 retained
+food readings were unavailable. The original probe remains failed, not a full
+transport acceptance. Container and VM teardown passed, with the VM freshly
+observed Stopped and checkpoint 807 unchanged.
+Private probe audit SHA256:
+`dcc83dc99d93b8df1e83744695714d8bed8eac4be54c8d41b5d918f072e446ee`.
+
+Follow-up source `a76be7b84b10b6b4cbc53c75af908f7d105fd284` retains
+partial observations, both native frames and bounded food-error diagnostics even
+when the comparison fails. It keeps the screen assertion. Its 80 focused tests
+passed with 4 skips; changed-file Ruff/scoped mypy passed. New exact-head CI and
+a provider-free v2 probe precede model window x. No model calls were made by this
+probe, no gameplay advanced, and no year-two/sustainability claim is established.
 
 ### Historical startup of window w, superseded above
 
