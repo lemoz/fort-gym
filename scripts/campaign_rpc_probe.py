@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -24,36 +25,59 @@ def worker(args) -> dict:
 
     dfhack_exec.run_dfhack = forbidden_cli
     before = capture_resources()
-    observations = []
-    environment = NativeCampaignEnvironment(
-        expected_dfroot=args.runtime, control_profile=NATIVE_PROFILE,
-        private_measurement_profile="fortgym.campaign-food-measurement/v1",
-    )
+    observations: list[dict] = []
+    environment = None
+    result = {
+        "schema_version": "fortgym.direct-rpc-native-probe/v2",
+        "status": "failed", "model_calls": 0, "gameplay_actions": 0,
+        "gameplay_ticks_requested": 0, "transport": "native-rpc",
+        "cli_fallback_forbidden": True, "before": before,
+        "calendar_unchanged": None, "screen_unchanged": None,
+        "observations": observations,
+    }
     try:
+        environment = NativeCampaignEnvironment(
+            expected_dfroot=args.runtime, control_profile=NATIVE_PROFILE,
+            private_measurement_profile="fortgym.campaign-food-measurement/v1",
+        )
         screen = environment.screen_capture()
+        result["screen_before"] = screen
         for _ in range(16):
             state = environment.observe()
-            assert (state["year"], state["year_tick"], state["pause_state"]) == (30, 223383, True)
             food = state["private_food_measurement"]
+            error_text = food.get("error")
             observations.append({
                 "year": state["year"], "year_tick": state["year_tick"],
+                "paused": state["pause_state"],
                 "population": state["population"], "drink": state["stocks"]["drink"],
                 "food_available": food["available"],
                 "food_inventory": food.get("inventory"),
                 "food_error_type": food.get("error_type"),
+                "food_error_excerpt": error_text[:2048] if isinstance(error_text, str) else None,
+                "food_error_sha256": (
+                    hashlib.sha256(error_text.encode()).hexdigest()
+                    if isinstance(error_text, str) else None
+                ),
                 "resources": capture_resources(),
             })
-        assert environment.screen_capture() == screen
+            if (state["year"], state["year_tick"], state["pause_state"]) != (30, 223383, True):
+                result["calendar_unchanged"] = False
+                raise AssertionError("Probe calendar or pause state changed")
+        result["calendar_unchanged"] = True
+        result["screen_after"] = environment.screen_capture()
+        result["screen_unchanged"] = result["screen_after"] == screen
+        assert result["screen_unchanged"], "Probe screen changed; retained both native captures"
+        result["status"] = "completed"
+    except BaseException as error:
+        result.update(error_type=type(error).__name__, error=str(error))
+        raise
     finally:
-        environment.close()
-    result = {
-        "schema_version": "fortgym.direct-rpc-native-probe/v1",
-        "model_calls": 0, "gameplay_actions": 0, "gameplay_ticks_requested": 0,
-        "transport": "native-rpc", "cli_fallback_forbidden": True,
-        "calendar_unchanged": True, "screen_unchanged": True,
-        "before": before, "after": capture_resources(), "observations": observations,
-    }
-    publish(args.output, result)
+        try:
+            if environment is not None:
+                environment.close()
+        finally:
+            result["after"] = capture_resources()
+            publish(args.output, result)
     return result
 
 
