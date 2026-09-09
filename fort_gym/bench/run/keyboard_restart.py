@@ -19,6 +19,8 @@ from .campaign_save import save_inventory
 from .keyboard_partial_restart import (
     PARTIAL_FIELDS, PARTIAL_KIND, PARTIAL_STAGE, inspect_partial_failure, validate_partial_discontinuity,
 )
+from .keyboard_modal_restart import MODAL_KIND, PROMPT_FIELDS, validate_modal_discontinuity
+from .keyboard_restart_prompt import inspect_restart_initial, restart_prompt_state
 
 from .keyboard_unavailable_restart import (
     UNAVAILABLE_KIND, UNAVAILABLE_STAGE, prepare_unavailable_restart, validate_unavailable_discontinuity,
@@ -91,7 +93,11 @@ def validate_discontinuities(records: object) -> list[dict]:
                 or re.fullmatch("[a-f0-9]{64}", row["source_save_attempt_sha256"]) is None
             ):
                 raise ValueError("Pre-save restart lacks digest-bound failure-stage evidence")
-        if (row.get("failure_kind") == UNAVAILABLE_KIND
+        if row.get("failure_kind") == MODAL_KIND:
+            validate_modal_discontinuity(row)
+        elif PROMPT_FIELDS.intersection(row):
+            raise ValueError("Retained prompt history requires an audited modal restart")
+        elif (row.get("failure_kind") == UNAVAILABLE_KIND
             or row.get("save_failure_stage") == UNAVAILABLE_STAGE
             or "lost_elapsed_ticks_complete" in row or "source_start_agent_sha256" in row):
             validate_unavailable_discontinuity(row)
@@ -126,10 +132,12 @@ def prepare_restart(checkpoint: Path, source_root: Path, declaration: dict, late
         "schema_version", "source_segment", "source_revision", "restored_next_step", "lost_trace_next_step",
     }
     partial = isinstance(declaration, dict) and declaration.get("failure_kind") == PARTIAL_KIND
+    modal = isinstance(declaration, dict) and declaration.get("failure_kind") == MODAL_KIND
+    unsettled = partial or modal
     unavailable = isinstance(declaration, dict) and declaration.get("failure_kind") == UNAVAILABLE_KIND
     if (
         not isinstance(declaration, dict)
-        or set(declaration) != declaration_fields | ({"failure_kind"} if partial or unavailable else set())
+        or set(declaration) != declaration_fields | ({"failure_kind"} if unsettled or unavailable else set())
         or declaration["schema_version"] != SCHEMA
     ):
         raise ValueError("Restart requires an explicit source declaration")
@@ -155,6 +163,7 @@ def prepare_restart(checkpoint: Path, source_root: Path, declaration: dict, late
     manifest = verify_checkpoint(checkpoint)
     payload, state = manifest["payload"], read(checkpoint / "agent.json")
     result, returned = read(segment / "result.json"), read(segment / "agent-after.json")
+    initial = inspect_restart_initial(checkpoint, segment, result) if modal else state
     trace_path, usage_path = segment / "loop/trace.jsonl", segment / "loop/usage.jsonl"
     trace = trace_path.read_bytes()
     old_trace, old_usage = (
@@ -166,8 +175,8 @@ def prepare_restart(checkpoint: Path, source_root: Path, declaration: dict, late
         or result.get("status") != "checkpoint_failed"
         or result.get("checkpoint_error_type") != "CampaignSaveError"
         or result.get("checkpoint_verified") is not False
-        or result.get("recovery_requires_reconciliation") is not partial
-        or result.get("stop_reason") != ("unsettled_failure" if partial else "segment_limit")
+        or result.get("recovery_requires_reconciliation") is not unsettled
+        or result.get("stop_reason") != ("unsettled_failure" if unsettled else "segment_limit")
         or result.get("campaign_id") != payload["campaign_id"]
         or result.get("source_revision") != declaration["source_revision"]
         or result.get("first_step") != payload["next_step"]
@@ -182,9 +191,10 @@ def prepare_restart(checkpoint: Path, source_root: Path, declaration: dict, late
         or returned.get("campaign_id") != state["campaign_id"]
         or returned.get("usage") != result.get("usage")
         or reconciled_usage(state, latest) != returned["usage"]
+        or reconciled_usage(initial, latest) != returned["usage"]
         or any(
-            returned["usage"][key] - state["usage"][key]
-            != result["next_step"] - result["first_step"] + (1 if partial else 0)
+            returned["usage"][key] - initial["usage"][key]
+            != result["next_step"] - result["first_step"] + (1 if unsettled else 0)
             for key in ("returned_responses", "accounted_responses", "dispatched_requests")
         )
     ):
@@ -202,8 +212,8 @@ def prepare_restart(checkpoint: Path, source_root: Path, declaration: dict, late
     ):
         raise ValueError("Lost trace must contain exactly the declared accepted tail")
     failure_evidence = (
-        inspect_partial_failure(segment, checkpoint, result, returned, tail, latest)
-        if partial else _failure_evidence(segment, result)
+        inspect_partial_failure(segment, checkpoint, result, returned, tail, latest, modal=modal)
+        if unsettled else _failure_evidence(segment, result)
     )
     saved = payload["native_save"]
     native = source_root / f"runtime-{index}/runtime/data/save" / saved["save_name"]
@@ -249,7 +259,15 @@ def apply_restart(loop, record: dict, *, prior_discontinuities: list[dict] | Non
     history = loop.discontinuities if prior_discontinuities is None else validate_discontinuities(prior_discontinuities)
     if history[:len(loop.discontinuities)] != loop.discontinuities:
         raise ValueError("Restart cannot erase earlier checkpoint loss history")
-    loop.discontinuities = validate_discontinuities([*history, record])
+    validated = validate_discontinuities([*history, record])
+    state = restart_prompt_state(loop.agent.export_campaign_state(), record)
+    if "retained_prompt_changes" in record:
+        from ..agent.campaign_keyboard import CodexKeyboardAgent
+
+        if not isinstance(loop.agent, CodexKeyboardAgent) or not loop.at_boundary or loop.agent.events:
+            raise ValueError("Prompt history restore requires a settled keyboard restart")
+        loop.agent.prompt_changes = deepcopy(state.get("prompt_changes", []))
+    loop.discontinuities = validated
     loop.last_result = {
         "accepted": False,
         "why": "Infrastructure restart: the previous game save failed. The declared tail was not "

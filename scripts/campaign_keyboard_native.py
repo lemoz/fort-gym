@@ -156,17 +156,21 @@ def run_window(args) -> dict:
         raise ValueError("Checkpoint does not match the declared continuation cursor")
     original_sha = file_digest(args.checkpoint / "checkpoint.json")
     latest = args.latest_usage.read_bytes()
+    restart = None
     if window.get("restart") is not None:
         from fort_gym.bench.run.keyboard_restart import prepare_restart
 
         if getattr(args, "restart_source", None) is None:
             raise ValueError("Declared restart requires its retained failed source")
-        prepare_restart(args.checkpoint, args.restart_source, window["restart"], latest)
+        restart = prepare_restart(args.checkpoint, args.restart_source, window["restart"], latest)
     elif getattr(args, "restart_source", None) is not None:
         raise ValueError("Undeclared native save-loss restart")
     elif latest != (args.checkpoint / "usage.jsonl").read_bytes():
         raise ValueError("A window requires the fully settled latest checkpoint, not an older save")
     state = read(args.checkpoint / "agent.json")
+    from fort_gym.bench.run.keyboard_restart_prompt import restart_prompt_state
+
+    state = restart_prompt_state(state, restart)
     declared_prompt_change(
         state, window.get("prompt_change"), profile=condition.get("prompt_profile", BASE_PROMPT),
         checkpoint_sha256=manifest["sha256"], next_step=window["continuation_from_next_step"],

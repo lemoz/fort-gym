@@ -10,6 +10,7 @@ from ..agent.keyboard_prompt import BASE_PROMPT, declared_prompt_change
 from .campaign_checkpoint import verify_checkpoint
 from .campaign_loop import CampaignLoop, CampaignPreDispatchPause
 from .keyboard_config import validate_condition, positive
+from .keyboard_restart_prompt import restart_prompt_state
 
 
 def run_keyboard_segment(
@@ -42,10 +43,6 @@ def run_keyboard_segment(
     if manifest["payload"]["next_step"] != expected_cursor:
         raise ValueError("Source checkpoint cursor differs from the declared window")
     selected_prompt = condition.get("prompt_profile", BASE_PROMPT)
-    declared_prompt_change(
-        read(checkpoint / "agent.json"), prompt_change, profile=selected_prompt,
-        checkpoint_sha256=manifest["sha256"], next_step=expected_cursor,
-    )
     restart = None
     if (restart_declaration is None) != (restart_source is None):
         raise ValueError("Restart source and explicit declaration are required together")
@@ -54,6 +51,10 @@ def run_keyboard_segment(
 
         assert restart_declaration is not None
         restart = prepare_restart(checkpoint, restart_source, restart_declaration, latest_usage.read_bytes())
+    declared_prompt_change(
+        restart_prompt_state(read(checkpoint / "agent.json"), restart), prompt_change,
+        profile=selected_prompt, checkpoint_sha256=manifest["sha256"], next_step=expected_cursor,
+    )
     output.mkdir(mode=0o700, exist_ok=False)
     loop = None
     result = {

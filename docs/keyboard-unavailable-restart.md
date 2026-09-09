@@ -72,9 +72,38 @@ Changed-file Ruff and scoped mypy across five sources pass. The actual local
 HTTP page, API and version-8 JavaScript serve the audited failed trial. No browser
 visual QA, merge or production deployment is claimed.
 
-Next: preserve u's usage and prompt-change history during recovery, validate the
-modal-clock path in the bounded native runtime, then resume autonomous play.
-Do not relaunch u's single-use operator or silently restore the old usage totals.
+## Declared recovery from window u
+
+Window `campaign_astra_keyboard_window_20260909v.json` declares a bounded restart
+from checkpoint 775 using the unchanged memory-contract condition. The recovery
+validator recognizes u's original attempted-clock failure and pending-save
+evidence, without converting it to a successful deferral. It checks the complete
+native input receipts, zero final time, final pause, unchanged native save,
+runtime cleanup, original prompt-change artifact, matching decision profiles and
+the complete accounted usage journal.
+
+Only saved gameplay memory is restored. The original prompt-change boundary stays
+at 906 responses and 28,911,047 tokens; all 924 responses and 29,418,907 campaign
+tokens remain charged to the campaign. The additional loss is exactly 614 ticks.
+Five restart records retain at least 35,705 lost ticks; the earlier unknown
+remainder stays unknown. No key is replayed and no gameplay memory is filled in.
+
+Repeated rollback is covered: a source that already restarted from the same older
+save must retain its original restart artifact, all earlier loss records, and
+its initial usage boundary. The next restart cannot discard that history or
+reapply the original prompt change. Both the outer runtime preflight and segment
+restore use this audited prompt state before checking the selected condition.
+
+The declared run keeps Astra Medium, native controls, the 120x40 screen,
+model-selected advancement, save/measurement profiles and cumulative
+1,024-dispatch/40-million-token limits. Admission uses the documented read-only
+[Codex account rate-limit surface](https://learn.chatgpt.com/docs/app-server#6-rate-limits-chatgpt).
+No API fallback, local model, purchase or reset is introduced.
+
+Offline recovery and a declared window do not prove native dialog recovery or
+additional saved gameplay. Next: execute the bounded native run and audit actual
+modal receipts, model-selected continuation, saving and teardown. Do not relaunch
+u's single-use operator or silently restore the old usage totals.
 
 ## Historical memory-contract hypothesis and declaration
 

@@ -23,9 +23,13 @@ from tests.test_keyboard_save_dfhack import identified_receipt
 
 @pytest.fixture
 def partial(tmp_path, saved, monkeypatch):
+    return pending_failure(tmp_path, saved, monkeypatch)
+
+
+def pending_failure(tmp_path, saved, monkeypatch, *, modal=False, prompt_changed=False, restart=None):
     checkpoint, usage, tick = saved
     source = tmp_path / "partial-source"
-    source.mkdir()
+    source.mkdir(parents=True)
     native = source / "runtime-0/runtime"
 
     class PartialEnvironment(BoundaryEnvironment):
@@ -34,13 +38,16 @@ def partial(tmp_path, saved, monkeypatch):
 
         def apply(self, action, state):
             super().apply(action, state)
+            if modal and len(self.actions) == 3:
+                self.view = "viewscreen_topicmeetingst"
             boundary = {
                 "dfroot": str(native),
                 "save_name": "fixture",
                 "year": 30,
                 "year_tick": self.tick,
                 "paused": True,
-                "viewscreen_type": "<type: viewscreen_dwarfmodest>",
+                "viewscreen_type": "<type: " + self.view + ">",
+                "focus": "topicmeeting" if modal and len(self.actions) == 3 else "dwarfmode/Default",
             }
             keys = action["params"]["keys"]
             receipts = []
@@ -72,8 +79,20 @@ def partial(tmp_path, saved, monkeypatch):
 
         def advance(self, ticks, state):
             if len(self.actions) < 3:
-                self.view = "viewscreen"
+                self.view = "viewscreen_topicmeetingst" if modal and len(self.actions) == 2 else "viewscreen"
                 return Environment.advance(self, ticks, state)
+            if modal:
+                return self.observe(), {
+                    "ok": False, "requested": ticks, "ticks_advanced": 0,
+                    "start_year": 30, "start_tick": self.tick, "end_year": 30, "end_tick": self.tick,
+                    "paused_before": True, "paused_after": True, "elapsed_ms": 620,
+                    "repause_requested": True, "repause_effective": True,
+                    "repause": {"ok": True, "paused": True, "attempts": 1,
+                                "attempt_records": [{"attempt": 1, "nopause_disabled": True, "paused": True}]},
+                    "error": "interrupt_baseline_invalid", "interrupt_safety_error": True,
+                    "calendar_safety_error": False, "final_pause_state": True,
+                    "final_viewscreen_type": self.view,
+                }
             return super().advance(ticks, state)
 
         def capture(self, destination):
@@ -113,6 +132,9 @@ def partial(tmp_path, saved, monkeypatch):
                 },
             ]
             before["ui"]["focus"] = "textviewer"
+            if modal:
+                before["stack"][0].update(type="<type: viewscreen_topicmeetingst>", focus="topicmeeting")
+                before["ui"]["focus"] = "topicmeeting"
             operation.update(
                 native_before=boundary,
                 native_after={**boundary, "autosave_requested": True},
@@ -137,6 +159,13 @@ def partial(tmp_path, saved, monkeypatch):
 
     env = PartialEnvironment()
     env.tick = tick
+    condition, callback, prompt = CONDITION, decision, None
+    if prompt_changed or restart:
+        from tests.test_keyboard_prompt import condition as changed_condition, changed_decision, declaration
+
+        condition, callback = changed_condition(), changed_decision
+        if prompt_changed:
+            prompt = declaration(checkpoint)
     original_validator = campaign_loop.validate_clean_interruption_receipt
 
     def old_baseline(receipt, **options):
@@ -150,19 +179,22 @@ def partial(tmp_path, saved, monkeypatch):
     with monkeypatch.context() as old_source:
         old_source.setattr(campaign_loop, "validate_clean_interruption_receipt", old_baseline)
         result = run_keyboard_segment(
-            agent=policy(CONDITION),
+            agent=policy(condition, callback),
             environment=env,
             snapshotter=env,
             output=source / "segment-0",
-            condition=CONDITION,
+            condition=condition,
             checkpoint=checkpoint,
             latest_usage=usage,
             steps=3,
             expected_cursor=1,
             revision="a" * 40,
+            prompt_change=prompt,
+            restart_declaration=restart[2] if restart else None,
+            restart_source=restart[1] if restart else None,
         )
     assert result["status"] == "checkpoint_failed" and result["next_step"] == 3
-    assert result["usage"]["accounted_responses"] == 4
+    assert result["usage"]["accounted_responses"] == (7 if restart else 4)
     native.parent.mkdir(parents=True)
     shutil.copytree(checkpoint / "game", native / "data/save/fixture")
     runtime = {
@@ -188,7 +220,7 @@ def partial(tmp_path, saved, monkeypatch):
             "source_revision": "a" * 40,
             "restored_next_step": 1,
             "lost_trace_next_step": 3,
-            "failure_kind": PARTIAL_KIND,
+            "failure_kind": "modal_clock_baseline_pending_save" if modal else PARTIAL_KIND,
         },
     )
 

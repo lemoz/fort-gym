@@ -17,6 +17,7 @@ from ..env.native_key_catalog import NATIVE_PROFILE
 from ..tick_receipt import validate_clean_interruption_receipt
 from .campaign_save import CampaignSaveError
 from .keyboard_save_probe import validate_identity_probe
+from .keyboard_modal_restart import MODAL_KIND, validate_modal_clock_failure
 
 PARTIAL_KIND = "partial_interruption_pending_save"
 PARTIAL_STAGE = "identity_after_save_request_pending"
@@ -55,7 +56,8 @@ def validate_partial_discontinuity(row: dict) -> None:
         raise ValueError("Partial restart lacks its accounted uncommitted failure")
 
 
-def _post_input(failure: dict, action: dict, root: str, save_name: str) -> dict:
+def _post_input(failure: dict, action: dict, root: str, save_name: str,
+                viewscreen: str = "viewscreen_dwarfmodest") -> dict:
     execution = failure.get("execute", {})
     result = execution.get("result", {})
     keys = action["params"]["keys"]
@@ -100,14 +102,14 @@ def _post_input(failure: dict, action: dict, root: str, save_name: str) -> dict:
             ):
                 raise ValueError("Partial restart input crossed its paused native calendar")
     last = receipts[-1]["after"]
-    if last.get("viewscreen_type") != "<type: viewscreen_dwarfmodest>":
+    if last.get("viewscreen_type") != "<type: " + viewscreen + ">":
         raise ValueError("Partial restart lacks the recorded post-input gameplay screen")
     return {
         "year": last["year"],
         "year_tick": last["year_tick"],
         "time": last["year_tick"],
         "pause_state": True,
-        "viewscreen_type": "viewscreen_dwarfmodest",
+        "viewscreen_type": viewscreen,
     }
 
 
@@ -169,10 +171,11 @@ def inspect_partial_failure(
     returned: dict,
     tail: list[dict],
     latest: bytes,
+    *, modal: bool = False,
 ) -> dict:
     """Reject malformed source structures through the restart validation boundary."""
     try:
-        return _inspect_partial_failure(segment, checkpoint, result, returned, tail, latest)
+        return _inspect_partial_failure(segment, checkpoint, result, returned, tail, latest, modal=modal)
     except (
         KeyError,
         IndexError,
@@ -190,6 +193,7 @@ def _inspect_partial_failure(
     returned: dict,
     tail: list[dict],
     latest: bytes,
+    *, modal: bool = False,
 ) -> dict:
     from .campaign_loop import _clock
 
@@ -212,10 +216,20 @@ def _inspect_partial_failure(
     ):
         raise ValueError("Partial restart does not match its original clock and save failure")
     initial = read(checkpoint / "agent.json")
+    prompt_evidence = {}
+    if modal:
+        from .keyboard_restart_prompt import inspect_restart_prompt
+
+        prompt_evidence = inspect_restart_prompt(checkpoint, segment, result, returned, tail,
+                                                failure["events"][0]["receipt"])
     runner = read(checkpoint / "runner.json")
     inherited = runner.get("discontinuities", [])
+    if modal:
+        # inspect_restart_prompt has checked the original restart artifact and saved prefix.
+        inherited = result.get("discontinuities", [])
+        initial = read(segment / "agent-before.json")
     if (
-        read(segment / "agent-before.json") != initial
+        (not modal and read(segment / "agent-before.json") != initial)
         or returned.get("budget_extensions") != initial.get("budget_extensions")
         or result.get("discontinuities", []) != inherited
         or any(row.get("discontinuities", []) != inherited for row in tail)
@@ -231,11 +245,9 @@ def _inspect_partial_failure(
         control_profile=NATIVE_PROFILE,
     )
     receipt = decision["transport_receipt"]
-    journal = [
-        json.loads(line)
-        for line in latest[len((checkpoint / "usage.jsonl").read_bytes()) :].splitlines()
-    ]
-    completed = [row for row in journal if row.get("type") == "decision_finished"]
+    completed = [row for row in (json.loads(line) for line in latest.splitlines())
+                 if row.get("type") == "decision_finished"]
+    count = result["next_step"] - result["first_step"] + 1
     if (
         decision.get("action") != action
         or decision.get("action_grammar_valid") is not True
@@ -244,7 +256,9 @@ def _inspect_partial_failure(
         or receipt.get("dispatched") is not True
         or receipt.get("model_requested") != initial["configuration"]["model"]
         or receipt.get("reasoning_effort_requested") != initial["configuration"]["reasoning_effort"]
-        or [row.get("step") for row in completed]
+        or len(completed) <= count
+        or completed[-count - 1].get("usage") != initial["usage"]
+        or [row.get("step") for row in completed[-count:]]
         != list(range(result["first_step"], result["next_step"] + 1))
         or completed[-1].get("decision_returned") is not True
         or completed[-1].get("usage") != returned["usage"]
@@ -291,7 +305,8 @@ def _inspect_partial_failure(
         != read_campaign_progress(segment / "loop/trace.jsonl")["elapsed_ticks"]
     ):
         raise ValueError("Partial restart committed progress differs from its trace")
-    post_input = _post_input(failure, action, root, save_name)
+    screen = failure["native_after_apply"]["viewscreen_type"] if modal else "viewscreen_dwarfmodest"
+    post_input = _post_input(failure, action, root, save_name, screen)
     native, tick = read(segment / "native-after.json"), failure["tick_receipt"]
     before = {**failure["native_before"], "time": failure["native_before"]["year_tick"]}
     after = {**failure["native_after"], "time": failure["native_after"]["year_tick"]}
@@ -301,8 +316,11 @@ def _inspect_partial_failure(
         or _clock(after) != _clock(native)
         or after["viewscreen_type"] != native["viewscreen_type"]
         or type(tick.get("ticks_advanced")) is not int
-        or tick["ticks_advanced"] <= 0
-        or validate_clean_interruption_receipt(
+    ):
+        raise ValueError("Pending-save restart native clock differs from its trace")
+    if modal:
+        validate_modal_clock_failure(failure, post_input, after)
+    elif (tick["ticks_advanced"] <= 0 or validate_clean_interruption_receipt(
             tick,
             requested_ticks=action["advance_ticks"],
             state_after_apply=before,
@@ -319,11 +337,12 @@ def _inspect_partial_failure(
     ):
         raise ValueError("Partial restart is not the attested post-input clock-baseline mismatch")
     return {
-        "failure_kind": PARTIAL_KIND,
+        "failure_kind": MODAL_KIND if modal else PARTIAL_KIND,
         "save_failure_stage": PARTIAL_STAGE,
         "source_save_attempt_sha256": _pending_save(segment, native, root, save_name),
         "source_failure_sha256": failure_digest,
         "source_runtime_sha256": _hash(runtime_path),
         "lost_uncommitted_decisions": 1,
         "lost_uncommitted_ticks": tick["ticks_advanced"],
+        **prompt_evidence,
     }
