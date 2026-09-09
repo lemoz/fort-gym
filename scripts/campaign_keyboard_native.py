@@ -88,6 +88,8 @@ def worker(args) -> dict:
         control_profile=condition["control_profile"],
         max_advance_ticks=condition["max_advance_ticks"],
         private_measurement_profile=window.get("private_measurement_profile"),
+        **({"private_measurement_timeout_seconds": window["private_measurement_timeout_seconds"]}
+           if "private_measurement_timeout_seconds" in window else {}),
     )
     try:
         profile = window.get("snapshot_profile", LEGACY_SAVE_PROFILE)
@@ -194,8 +196,9 @@ def run_window(args) -> dict:
         "original_checkpoint_unchanged": False,
         "runtime_cleanup_verified": False,
     }
-    if "runtime_rpc_transport" in window:
-        result["runtime_rpc_transport"] = window["runtime_rpc_transport"]
+    for field in ("runtime_rpc_transport", "private_measurement_timeout_seconds"):
+        if field in window:
+            result[field] = window[field]
 
     def retain_resources(stage: str) -> None:
         if window.get("resource_observation_profile") is not None:

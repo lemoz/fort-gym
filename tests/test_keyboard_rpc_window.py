@@ -15,6 +15,7 @@ def test_direct_rpc_window_preserves_gameplay_and_existing_budget():
     assert window["runtime_rpc_transport"] == "native-rpc"
     assert window["resource_observation_profile"] == "fortgym.native-resource-observations/v1"
     assert window["container_init_required"] is True
+    assert window["private_measurement_timeout_seconds"] == 15
     assert window["continuation_from_next_step"] == 807
     assert window["max_segments"] == 1 and window["steps_per_segment"] == 32
     assert "restart" not in window and "prompt_change" not in window

@@ -9,6 +9,14 @@ from ..dfhack_exec import DFHackError, run_lua_expr
 from ..food_inventory import FOOD_INVENTORY_LUA, validate_food_inventory
 
 PROFILE = "fortgym.campaign-food-measurement/v1"
+DEFAULT_TIMEOUT_SECONDS = 5.0
+
+
+def validate_timeout_seconds(value: object) -> float:
+    """Keep historical reads at five seconds; bound explicit future overrides."""
+    if not isinstance(value, (int, float)) or isinstance(value, bool) or not 1 <= value <= 30:
+        raise ValueError("Private food measurement timeout must be between 1 and 30 seconds")
+    return float(value)
 
 
 def validate_profile(value: object) -> str | None:
@@ -43,15 +51,23 @@ def validate_measurement(value: object, *, year: int, year_tick: int, root: str 
     after = _boundary(value.get("after"), year=year, year_tick=year_tick, root=root)
     if before != after:
         raise ValueError("Food measurement native boundary changed")
+    metadata = {}
+    if "read_timeout_seconds" in value:
+        metadata["read_timeout_seconds"] = validate_timeout_seconds(value["read_timeout_seconds"])
     return {
         "schema_version": PROFILE, "available": True, "before": before, "after": after,
-        "inventory": validate_food_inventory(value.get("inventory")),
+        "inventory": validate_food_inventory(value.get("inventory")), **metadata,
     }
 
 
-def read_food_measurement(*, expected_dfroot: Path, year: int, year_tick: int) -> dict:
+def read_food_measurement(
+    *, expected_dfroot: Path, year: int, year_tick: int,
+    timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS,
+) -> dict:
     """Retain unreadable scans as unknown metadata, not a gameplay stop condition."""
     root = str(expected_dfroot.resolve())
+    timeout = validate_timeout_seconds(timeout_seconds)
+    metadata = {"read_timeout_seconds": timeout} if timeout != DEFAULT_TIMEOUT_SECONDS else {}
     if type(year) is not int or year < 0 or type(year_tick) is not int or not 0 <= year_tick < 403200:
         raise ValueError("Invalid private food measurement calendar")
     script = FOOD_INVENTORY_LUA + """
@@ -72,10 +88,12 @@ print(json.encode({schema_version='fortgym.campaign-food-measurement/v1',
         + f"local expected_year={year}; local expected_tick={year_tick}\n"
     )
     try:
-        value = json.loads(run_lua_expr(prefix + script, timeout=5.0))
+        value = json.loads(run_lua_expr(prefix + script, timeout=timeout))
+        if isinstance(value, dict):
+            value.update(metadata)
         return validate_measurement(value, year=year, year_tick=year_tick, root=root)
     except (DFHackError, OSError, ValueError, TypeError) as error:
         return {
             "schema_version": PROFILE, "available": False, "inventory": None,
-            "error_type": type(error).__name__, "error": str(error),
+            "error_type": type(error).__name__, "error": str(error), **metadata,
         }

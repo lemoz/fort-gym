@@ -32,7 +32,7 @@ from ..env.workshop_placement import (
     validate_policy,
 )
 from .campaign_save import native_save_status
-from .campaign_food import read_food_measurement, validate_profile
+from .campaign_food import read_food_measurement, validate_profile, validate_timeout_seconds
 from .keyboard_clock import deferral_schema, validate_menu_deferral
 from .keyboard_clock_timeout import (
     SCHEMA as CLOCK_UNAVAILABLE_SCHEMA, validate_clock_unavailable, validate_zero_tick_timeout,
@@ -66,6 +66,7 @@ class NativeCampaignEnvironment:
         max_advance_ticks: int = 2000,
         control_profile: str = HELPER_CONTROL_PROFILE,
         private_measurement_profile: str | None = None,
+        private_measurement_timeout_seconds: float = 5.0,
     ) -> None:
         if type(max_advance_ticks) is not int or not 1 <= max_advance_ticks <= 2500:
             raise ValueError("Invalid campaign tick limit")
@@ -73,6 +74,7 @@ class NativeCampaignEnvironment:
             raise ValueError("Invalid campaign control profile")
         self.control_profile = control_profile
         self.private_measurement_profile = validate_profile(private_measurement_profile)
+        self.private_measurement_timeout_seconds = validate_timeout_seconds(private_measurement_timeout_seconds)
         self.max_advance_ticks = max_advance_ticks
         self.workshop_placement_policy = validate_policy(workshop_placement_policy)
         self.expected_dfroot = expected_dfroot.resolve()
@@ -129,6 +131,8 @@ class NativeCampaignEnvironment:
                 expected_dfroot=self.expected_dfroot,
                 year=native["year"],
                 year_tick=native["year_tick"],
+                **({"timeout_seconds": self.private_measurement_timeout_seconds}
+                   if getattr(self, "private_measurement_timeout_seconds", 5.0) != 5.0 else {}),
             )
         if self.workshop_placement_policy == NATIVE_GROUND:
             state["workshop_placement"] = policy_observation()

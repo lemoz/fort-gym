@@ -12,7 +12,7 @@ from ..agent.keyboard_prompt import BASE_PROMPT, validate_prompt_profile
 from ..env.native_key_catalog import NATIVE_PROFILE
 from ..env.screen_observation import TEXT_PROFILE
 from .keyboard_save import LEGACY_SAVE_PROFILE, SAVE_PROFILES
-from .campaign_food import validate_profile
+from .campaign_food import validate_profile, validate_timeout_seconds
 from .campaign_resources import PROFILE as RESOURCE_PROFILE
 
 
@@ -89,6 +89,10 @@ def load_window(condition_path: Path, window_path: Path) -> tuple[dict, dict]:
     if window.get("snapshot_profile", LEGACY_SAVE_PROFILE) not in SAVE_PROFILES:
         raise ValueError("Unsupported declared snapshot profile")
     validate_profile(window.get("private_measurement_profile"))
+    if "private_measurement_timeout_seconds" in window:
+        validate_timeout_seconds(window["private_measurement_timeout_seconds"])
+        if window.get("private_measurement_profile") is None:
+            raise ValueError("Private measurement timeout requires a declared measurement profile")
     if window.get("runtime_rpc_transport", "cli") not in ("cli", "native-rpc"):
         raise ValueError("Unsupported declared runtime RPC transport")
     if window.get("resource_observation_profile") not in (None, RESOURCE_PROFILE):

@@ -45,6 +45,33 @@ def test_native_measurement_reads_only_once_and_normalizes_extra_content(tmp_pat
     assert len(calls) == 1
 
 
+@pytest.mark.parametrize("fails", [False, True])
+def test_declared_timeout_is_bounded_retained_and_does_not_change_inventory(tmp_path, monkeypatch, fails):
+    calls = []
+    def run(script, **kwargs):
+        calls.append(kwargs)
+        if fails:
+            raise module.DFHackError("timeout")
+        return json.dumps(measurement(tmp_path))
+    monkeypatch.setattr(module, "run_lua_expr", run)
+    value = module.read_food_measurement(expected_dfroot=tmp_path, year=30, year_tick=123,
+                                         timeout_seconds=15)
+    assert calls == [{"timeout": 15.0}]
+    assert value["read_timeout_seconds"] == 15.0
+    if fails:
+        assert value["available"] is False and value["inventory"] is None
+    else:
+        assert value == {**measurement(tmp_path), "read_timeout_seconds": 15.0}
+
+
+@pytest.mark.parametrize("timeout", [None, True, "15", 0, 31, float("inf"), float("nan")])
+def test_invalid_timeout_fails_before_native_access(tmp_path, monkeypatch, timeout):
+    monkeypatch.setattr(module, "run_lua_expr", lambda *args, **kwargs: pytest.fail("Native call forbidden"))
+    with pytest.raises(ValueError, match="timeout"):
+        module.read_food_measurement(expected_dfroot=tmp_path, year=30, year_tick=123,
+                                     timeout_seconds=timeout)
+
+
 @pytest.mark.parametrize("failure", [
     module.DFHackError("native unavailable"), OSError("transport unavailable"), "invalid-json",
 ])
@@ -109,7 +136,8 @@ def test_unavailable_partial_or_stale_private_counts_remain_unknown(change):
     assert metrics_from_state(current)["food_stock"] is None
 
 
-def test_measurement_persists_in_trace_but_never_enters_model_inputs_or_feedback(tmp_path):
+@pytest.mark.parametrize("extended_timeout", [False, True])
+def test_measurement_persists_in_trace_but_never_enters_model_inputs_or_feedback(tmp_path, extended_timeout):
     sent = []
     def callback(screen, memory, feedback):
         sent.append((screen, memory, feedback))
@@ -119,6 +147,8 @@ def test_measurement_persists_in_trace_but_never_enters_model_inputs_or_feedback
     def private_observation():
         current = observe()
         value = measurement()
+        if extended_timeout:
+            value["read_timeout_seconds"] = 15.0
         value["before"]["year_tick"] = value["after"]["year_tick"] = current["year_tick"]
         current["private_food_measurement"] = value
         return current
@@ -153,7 +183,8 @@ def test_declared_window_changes_only_private_measurement_and_continuation_ident
     assert "budget_extension" not in new and "restart" not in new
 
 
-def test_worker_passes_declared_measurement_profile_without_changing_agent(tmp_path, monkeypatch):
+@pytest.mark.parametrize("window_name,expected_timeout", [("20260908n", None), ("20260909x", 15)])
+def test_worker_passes_declared_measurement_profile_without_changing_agent(tmp_path, monkeypatch, window_name, expected_timeout):
     from pathlib import Path
     from types import SimpleNamespace
     from scripts import campaign_keyboard_native as native
@@ -176,11 +207,28 @@ def test_worker_passes_declared_measurement_profile_without_changing_agent(tmp_p
         return {"fixture": True}
     monkeypatch.setattr(native, "run_keyboard_segment", segment)
     args = SimpleNamespace(
-        condition=root / "experiments/campaign_astra_keyboard_20260907.json",
-        window=root / "experiments/campaign_astra_keyboard_window_20260908n.json",
+        condition=root / ("experiments/campaign_astra_keyboard_20260907.json" if expected_timeout is None
+                          else "experiments/campaign_astra_keyboard_memory_contract_20260909.json"),
+        window=root / f"experiments/campaign_astra_keyboard_window_{window_name}.json",
         runtime=tmp_path, exchange=tmp_path, output=tmp_path, checkpoint=tmp_path,
         latest_usage=tmp_path, cursor=567, revision="test-only", extend_budget=False,
     )
     assert native.worker(args) == {"fixture": True}
     assert supplied[0]["private_measurement_profile"] == module.PROFILE
+    assert supplied[0].get("private_measurement_timeout_seconds") == expected_timeout
     assert closed == [True]
+
+
+@pytest.mark.parametrize("timeout,profile", [(31, module.PROFILE), (True, module.PROFILE), (15, None)])
+def test_window_rejects_unbounded_or_unscoped_measurement_timeout(tmp_path, timeout, profile):
+    from pathlib import Path
+    from fort_gym.bench.run.keyboard_config import load_window
+    root = Path(__file__).resolve().parents[1]
+    source = root / "experiments/campaign_astra_keyboard_window_20260909x.json"
+    value = json.loads(source.read_text())
+    value["private_measurement_timeout_seconds"] = timeout
+    value["private_measurement_profile"] = profile
+    path = tmp_path / source.name
+    path.write_text(json.dumps(value))
+    with pytest.raises(ValueError):
+        load_window(root / "experiments/campaign_astra_keyboard_memory_contract_20260909.json", path)
