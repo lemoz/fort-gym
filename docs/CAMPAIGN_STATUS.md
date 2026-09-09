@@ -11,8 +11,54 @@ screen, and run autonomous fortress experiments toward year two and beyond. Keep
 DFHack shortcuts as an explicit alternative condition. Compare matching starts
 and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. Several bounded Astra native-keyboard
-windows have completed. The same exploratory fortress is currently stopped after
-window v's host-side read failure; continuation work preserves its saved state.
+windows have completed. Window w is now running after the audited loss-aware
+restart from window v's host-side read failure. Saved progress remains unchanged
+until the new window produces a verified checkpoint.
+
+### Active window w: partial-evidence recovery and shorter save segments
+
+Source `b3c7393bd695ea6d0bd2149a30e66353732cfd70` is clean, pushed and read
+back on draft PR #137; exact-head CI 34403689610 passed. The final local suite
+passed 3854 tests with 10 skips. Changed-file Ruff and scoped mypy passed;
+dependency-inclusive mypy still reports older errors outside the five changed
+sources, so repository-wide typing is not claimed clean.
+
+The new recovery path validates the interrupted worker's original trace, usage,
+initial agent, failure receipt, native load and teardown. It does not fabricate
+missing final agent/result/save-attempt files. The actual immutable preflight
+passed with zero model or game calls. Saved gameplay memory and configuration
+remain from checkpoint 775 at 198600 ticks, while all 957 responses / 30345981
+campaign tokens / 30414985 all-attempt tokens are retained. Six losses have a
+48429-tick known lower bound plus explicitly unknown remainders. The original
+prompt-change boundary is preserved without reapplying it.
+
+The window allows two segments of 32 decisions, with the same Astra Medium native
+keyboard/screen condition. The host opts into at most three attempts only for
+exact owned read-only exchange probes, retaining private failure diagnostics.
+Model calls and game inputs are not retried. Cumulative limits stay at 1024
+dispatches / 40M tokens. No cloud VM, local model, API fallback, purchase or reset.
+
+Owner exec session 26780 / PID 58206 started the single owned local VM and
+container successfully. Launch subscription admission was allowed at 72% used.
+Mandatory evidence export and native/container/VM teardown remain owned by the
+operator. Startup/first-prompt auditing passed: saved memory, usage, all six losses,
+the original prompt and initial calendar matched. Two grammar-valid responses
+were observed using 61271 new tokens. No new saved progress, retry acceptance,
+fortress sustainability or year-two success is established yet.
+Private handoff: `astra-native-controller-restart-v1/ACTIVE_RUN_HANDOFF.md`.
+
+The existing local campaign page now follows window w through observer session
+27200, with immutable HTTP acceptance retained in w's run folder. It reads only
+host receipts and keeps the 198600 saved ticks separate from later unsaved
+feedback. The isolated preview remains session 55218 / PID 49748, with admin and
+game integration disabled. Recorded result history is unchanged; native outcome
+publication follows the terminal save/usage/teardown audit. No browser visual QA.
+
+Preflight SHA256:
+`dea3b11590d0523f80a303c0394c4d16ad55b15a40471b5d4c7aed480ad2b69a`.
+Full-suite XML SHA256:
+`9fdd1c7b1d26db8a1fe22ca30a05a0737cc968834f4093d73bc5fce4f83a3e1b`.
+PR #137 remains open/draft; no merge or production deployment.
 
 ### Latest terminal attempt: v exercised dialog recovery, then host read failed
 
