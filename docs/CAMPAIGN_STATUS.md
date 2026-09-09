@@ -14,7 +14,7 @@ phase retains website and remote delivery. Several bounded Astra native-keyboard
 windows have completed. Window w has now stopped after a successful first save
 and a process-creation failure during its second runtime.
 
-### Current: checkpoint 807 saved; direct-RPC repair under validation
+### Current: checkpoint 807 recorded; two-load diagnostics retained
 
 Independent verification passed for checkpoint 807, manifest
 `80d83164866f078a0e65254d953dac8e5b34298ca8c2bb85043e822d44fe0ce4`.
@@ -43,8 +43,9 @@ counter observations and requires a reaping init in the next container. Native
 keyboard controls and model/prompt/memory remain unchanged. A provider-free
 two-load observation probe precedes model window x from 807. No new paid model
 calls, gameplay success, matched comparison, merge or deployment is claimed.
-The live website derivative still describes the old 775 baseline; its recorded
-807 result has not yet been published.
+The live website derivative still describes the stopped window's old 775 baseline.
+The separate recorded 807 result is now delivered on the local campaign page and
+pushed to the existing remote draft branch; no production deployment is claimed.
 
 Repair source `77382474f626ce19d8d2ba99c1b91185243ec6b2` is clean, pushed
 and read back on draft PR #137. The final full suite passed 3931 tests with
@@ -66,9 +67,41 @@ Private probe audit SHA256:
 Follow-up source `a76be7b84b10b6b4cbc53c75af908f7d105fd284` retains
 partial observations, both native frames and bounded food-error diagnostics even
 when the comparison fails. It keeps the screen assertion. Its 80 focused tests
-passed with 4 skips; changed-file Ruff/scoped mypy passed. New exact-head CI and
-a provider-free v2 probe precede model window x. No model calls were made by this
-probe, no gameplay advanced, and no year-two/sustainability claim is established.
+passed with 4 skips; changed-file Ruff/scoped mypy passed. Exact-head CI 34409473820
+passed. The v2 probe is terminal and retains all 32 observations across both fresh
+loads, at the same paused year 30 tick 223383. The first worker's captures match;
+the second differs at 13 of 4800 tiles, with unchanged metadata and other tiles.
+Exact-screen equality therefore remains failed; animation is not a proven cause.
+Both workers recorded 12 citizens and 404 drinks. All private food scans timed out
+over native RPC. Observed tasks remained 11-13, peak 15, with no zombies, PID-limit
+events or OOM events. Both runtime cleanups passed; the container exited 1 without
+an OOM flag and the VM was freshly verified Stopped. Audit SHA256:
+`4dfd2a245a08342fb2800fba2fbdb2846a5cadd6b264b1bf4aa93fafd66f59ef`.
+No model calls were made by either probe and no gameplay ticks were requested.
+No year-two/sustainability claim is established. Model window x has not started.
+
+Website source `1a581c4483c653cfb1e2215bf8e7de3bd42a7fad` is clean, pushed
+and read back on the existing draft PR #137. The recorded card puts saved progress
+above earlier failed attempts and preserves unknown time, food and charges.
+It reports seven completed farms plus one unfinished farm, six beds and four
+completed workshops. Nineteen original private source files were reverified.
+Full suite: 3978 passed / 10 skipped; final-source focused suite: 46 passed;
+changed-file Ruff, scoped mypy and JavaScript syntax passed. Exact-head CI is
+pending verification. Full-suite XML SHA256:
+`91e1eb52c592a542b6a3da68f563e7dde4e4ea6235481c57b0fb3dd52515f32c`.
+Publication audit SHA256:
+`f08449bfc31f458042b037b0fdae9223c7b092f41aa10cf13b4287ba25b6eb07`.
+HTTP acceptance matched the exact page/JS bytes and recorded API against the
+public manifest while preserving the separate stopped live payload. Preview
+exec 44490 / PID 77136 replaced 21832 / PID 61281 on the existing localhost port
+8857. Dotenv, DFHack access and admin remain disabled. No browser visual QA,
+new browser handoff, merge or production deployment.
+
+Next: resolve whether exact tile identity belongs in the transport probe's
+acceptance criteria, investigate the private food-scan timeout, then run the
+declared 32-decision window x from checkpoint 807 with Astra Medium and unchanged
+keyboard, screen, prompt and saved memory. Retain all earlier failed receipts;
+do not turn the original screen-drift probe into a passing run.
 
 ### Historical startup of window w, superseded above
 
