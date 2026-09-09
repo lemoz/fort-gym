@@ -36,8 +36,13 @@ Actual dollar charges remain unreported. Three earlier recorded losses total
 29891 ticks; this new unsaved branch has not yet been restarted. Its missing
 terminal clock evidence remains unknown, not zero.
 
-The record is committed experiment evidence, **not yet website-integrated**.
-The local campaign page still displays the preceding r record. The next delivery
-step is a distinct website failure record and a restart path that retains s usage,
-its three inherited losses and its unresolved final action. No new run, new save,
-clock-fix native acceptance, PR merge or production deployment is implied.
+The campaign page and API project this as a distinct OOM failure above the
+preceding r record. Saved time, confirmed unsaved time and unknown terminal time
+remain separate. The earlier r card explains that its loss was carried into the
+following restart without rewriting the historical failure. The display includes
+the possible observer contribution, prior losses, all usage and stopped runtime.
+
+Website integration does not repair or restart the game. The next runtime step is
+a continuation path retaining s usage, its three inherited losses and unresolved
+final action. No new run, new save, clock-fix native acceptance, PR merge or
+production deployment is implied. The existing preview is local only.

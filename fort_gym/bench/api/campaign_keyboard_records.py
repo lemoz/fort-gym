@@ -16,6 +16,7 @@ from .campaign_keyboard_presave import (
     PRESAVE_FAILURES, SAVE_ACCEPTANCES, presave_failure, save_acceptance,
 )
 from .campaign_keyboard_partial import PARTIAL_FAILURES, partial_failure
+from .campaign_keyboard_oom import OOM_FAILURES, oom_failure
 from .campaign_keyboard_tails import (
     TAIL_INTERRUPTION, TAIL_RECOVERIES, continuation_interruption, continuation_recovery,
 )
@@ -286,6 +287,7 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
         ))
     partial_failures = [partial_failure(root, filename, postrestart_continuations)
                         for filename in PARTIAL_FAILURES]
+    oom_failures = [oom_failure(root, filename, partial_failures) for filename in OOM_FAILURES]
     # Explicit publication order retains the interruption between its parent
     # continuation and recovery; later play must not appear below older recovery.
     recent_events = [
@@ -311,6 +313,10 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
         parent_event = {"kind": "continuation", "id": failure["parent_record"]}
         recent_events.insert(recent_events.index(parent_event) + 1,
                              {"kind": "partial_failure", "id": failure["failure_id"]})
+    for failure in oom_failures:
+        parent_event = {"kind": "partial_failure", "id": failure["parent_record"]}
+        recent_events.insert(recent_events.index(parent_event) + 1,
+                             {"kind": "oom_failure", "id": failure["failure_id"]})
     return {
         "schema_version": "fortgym.public-keyboard-milestones/v1",
         "live_tracking": False,
@@ -324,6 +330,7 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
         "continuations": [*continuations, *postrestart_continuations],
         "presave_failures": presave_failures,
         "partial_failures": partial_failures,
+        "oom_failures": oom_failures,
         "save_acceptances": save_acceptances,
         "tail_interruptions": tail_interruptions,
         "tail_recoveries": tail_recoveries,

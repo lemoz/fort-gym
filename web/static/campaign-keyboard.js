@@ -51,9 +51,40 @@
       throw new Error('Unsupported continuation evidence');
     }
     const continuations = data.continuations || [];
-    for (const name of ['tail_interruptions', 'tail_recoveries', 'presave_failures', 'partial_failures', 'save_acceptances']) {
+    for (const name of ['tail_interruptions', 'tail_recoveries', 'presave_failures', 'partial_failures', 'oom_failures', 'save_acceptances']) {
       if (data[name] !== undefined && !Array.isArray(data[name])) {
         throw new Error('Unsupported continuation recovery evidence');
+      }
+    }
+    function renderOomFailure(row) {
+      const section = node('section', undefined, results);
+      section.className = 'campaign-condition campaign-save-failure';
+      const p = row.progress;
+      node('h3', `Memory-related interruption · last saved checkpoint ${count(row.checkpoint_cursor)}`, section);
+      const facts = node('dl', undefined, section);
+      facts.className = 'campaign-save-facts';
+      for (const [label, value] of [
+        ['Saved game time', `${count(p.checkpointed_elapsed_ticks)} ticks`],
+        ['Confirmed unsaved game time', `${count(p.new_committed_unsaved_ticks)} ticks`],
+        ['Final uncommitted game time', count(p.uncommitted_elapsed_ticks)],
+        ['Accounted model responses', count(p.accounted_responses)]
+      ]) {
+        const item = node('div', undefined, facts);
+        node('dt', label, item);
+        node('dd', value, item);
+      }
+      node('p', `${count(p.new_model_responses)} new responses produced ${count(p.new_committed_decisions)} committed actions. The final action sent ${count(p.uncommitted_native_keys_confirmed)} confirmed keys but has no clock receipt or final calendar reading. No new save was produced.`, section);
+      node('p', 'The container reported an out-of-memory event. A live diagnostic loaded the full trace inside the game container and may have contributed. The exact cause and affected process are unverified. This is an infrastructure failure, not a clean model-performance result or proof of fortress collapse.', section);
+      node('p', `Last recorded observation: ${count(p.last_population)} living dwarves and ${count(p.last_recorded_dead)} recorded deaths. These are not measurements after the interruption.`, section);
+      node('p', `${count(row.usage.campaign_tokens)} campaign tokens; ${count(row.usage.all_attempt_tokens)} including historical failed deliveries. This attempt used ${count(row.usage.new_tokens)} tokens, all included. Model charge: ${cost(row.usage)}.`, section);
+      const details = node('details', undefined, section);
+      details.className = 'campaign-details';
+      node('summary', 'Inspect interrupted progress and prior losses', details);
+      node('p', `This attempt restored checkpoint ${count(row.checkpoint_cursor)} and retained ${count(p.existing_loss_records)} earlier loss records totaling ${count(p.existing_lost_ticks)} ticks. Its ${count(p.new_committed_unsaved_ticks)} newly unsaved ticks are additional; missing terminal game time remains unknown, not zero. The trace reached decision ${count(p.committed_trace_cursor)}, not a saved checkpoint.`, details);
+      node('p', 'All prior usage is retained. Another restart has not been recorded for this attempt. Diagnostic changes do not prove sustainable production or year-two survival.', details);
+      node('p', row.teardown_verified === true ? 'Game and VM stopped. Recorded evidence, not a live run.' : 'Teardown unknown.', section);
+      if (/^experiments\/evidence\/astra_native_keyboard_[a-z0-9_]+\.json$/.test(row.evidence_path)) {
+        node('a', 'Read the interrupted-attempt evidence', section).href = 'https://github.com/lemoz/fort-gym/blob/codex/campaign-codex-subscription/' + row.evidence_path;
       }
     }
     function renderPartialFailure(row) {
@@ -79,7 +110,8 @@
       details.className = 'campaign-details';
       node('summary', 'Inspect saved vs. unsaved progress', details);
       node('p', `The committed trace reached decision ${count(p.committed_trace_next_step)} and ${count(p.committed_trace_elapsed_ticks)} elapsed ticks, but the last verified save remains checkpoint ${count(row.checkpoint_cursor)}. The ${count(p.uncommitted_native_ticks)} partial ticks are included in the unsaved total, not added twice.`, details);
-      node('p', `The earlier ${count(p.inherited_save_loss_restarts)} recorded restarts and ${count(p.inherited_discarded_native_ticks)} lost ticks remain in the history. No restart has been recorded for this failure yet. Preparing or testing a repair does not create a new saved checkpoint.`, details);
+      const followingRestart = (data.oom_failures || []).some(item => item.parent_record === row.failure_id);
+      node('p', `The earlier ${count(p.inherited_save_loss_restarts)} recorded restarts and ${count(p.inherited_discarded_native_ticks)} lost ticks remain in the history. ${followingRestart ? 'This loss was retained by the following restarted attempt.' : 'No restart has been recorded for this failure yet.'} Preparing or testing a repair does not create a new saved checkpoint.`, details);
       node('p', row.teardown_verified === true ? 'Game and VM stopped. Recorded evidence, not a live run.' : 'Teardown unknown.', section);
       if (/^experiments\/evidence\/astra_native_keyboard_[a-z0-9_]+\.json$/.test(row.evidence_path)) {
         node('a', 'Read the failed-attempt evidence', section).href = 'https://github.com/lemoz/fort-gym/blob/codex/campaign-codex-subscription/' + row.evidence_path;
@@ -239,6 +271,7 @@
       recovery: (data.tail_recoveries || []).map(row => ({id: row.recovery_id, row})),
       presave_failure: (data.presave_failures || []).map(row => ({id: row.failure_id, row})),
       partial_failure: (data.partial_failures || []).map(row => ({id: row.failure_id, row})),
+      oom_failure: (data.oom_failures || []).map(row => ({id: row.failure_id, row})),
       restart: restarts.filter(row => row.recent_event === true).map(row => ({id: row.restart_id, row}))
     };
     const events = data.continuation_events || Object.entries(recent).flatMap(([kind, rows]) => rows.map(row => ({kind, id: row.id})));
@@ -253,6 +286,7 @@
       else if (event.kind === 'interruption') renderTailInterruption(found.row);
       else if (event.kind === 'presave_failure') renderPresaveFailure(found.row);
       else if (event.kind === 'partial_failure') renderPartialFailure(found.row);
+      else if (event.kind === 'oom_failure') renderOomFailure(found.row);
       else if (event.kind === 'restart') renderRestart(found.row);
       else renderRecovery(found.row);
     }

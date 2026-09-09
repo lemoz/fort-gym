@@ -65,5 +65,5 @@
   "independent_failure_audit_sha256": "8350ba26e2eb74e509cade992a6e8081aef4be7b9bd109b1b6cc9b6b7f46d0b4",
   "independent_failure_audit_script_sha256": "77e31d2d6947d3b9d2628b0a67b906e0f18915db553c98cb895ff012d62b14af",
   "live_tracking": false,
-  "website_integrated": false
+  "independent_failure_audit_passed": true
 }
