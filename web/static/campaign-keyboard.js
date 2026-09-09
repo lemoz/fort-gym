@@ -51,7 +51,7 @@
       throw new Error('Unsupported continuation evidence');
     }
     const continuations = data.continuations || [];
-    for (const name of ['tail_interruptions', 'tail_recoveries', 'presave_failures', 'partial_failures', 'oom_failures', 'save_acceptances']) {
+    for (const name of ['tail_interruptions', 'tail_recoveries', 'presave_failures', 'partial_failures', 'oom_failures', 'resumed_windows', 'save_acceptances']) {
       if (data[name] !== undefined && !Array.isArray(data[name])) {
         throw new Error('Unsupported continuation recovery evidence');
       }
@@ -81,7 +81,8 @@
       details.className = 'campaign-details';
       node('summary', 'Inspect interrupted progress and prior losses', details);
       node('p', `This attempt restored checkpoint ${count(row.checkpoint_cursor)} and retained ${count(p.existing_loss_records)} earlier loss records totaling ${count(p.existing_lost_ticks)} ticks. Its ${count(p.new_committed_unsaved_ticks)} newly unsaved ticks are additional; missing terminal game time remains unknown, not zero. The trace reached decision ${count(p.committed_trace_cursor)}, not a saved checkpoint.`, details);
-      node('p', 'All prior usage is retained. Another restart has not been recorded for this attempt. Diagnostic changes do not prove sustainable production or year-two survival.', details);
+      const resumed = (data.resumed_windows || []).some(item => item.parent_record === row.failure_id);
+      node('p', `All prior usage is retained. ${resumed ? 'The following saved window retained this loss, including its unknown terminal time.' : 'Another restart has not been recorded for this attempt.'} Diagnostic changes do not prove sustainable production or year-two survival.`, details);
       node('p', row.teardown_verified === true ? 'Game and VM stopped. Recorded evidence, not a live run.' : 'Teardown unknown.', section);
       if (/^experiments\/evidence\/astra_native_keyboard_[a-z0-9_]+\.json$/.test(row.evidence_path)) {
         node('a', 'Read the interrupted-attempt evidence', section).href = 'https://github.com/lemoz/fort-gym/blob/codex/campaign-codex-subscription/' + row.evidence_path;
@@ -197,7 +198,7 @@
       const section = node('section', undefined, results);
       section.className = 'campaign-condition';
       const p = row.progress;
-      node('h3', `Play continued · checkpoint ${count(row.checkpoint_cursor)}`, section);
+      node('h3', `${row.new_restart_performed ? 'Play resumed after restart' : 'Play continued'} · checkpoint ${count(row.checkpoint_cursor)}`, section);
       if (row.operator_observation_warning) {
         const warning = row.operator_observation_warning;
         if (warning.kind === 'terminal_container_observation_error') {
@@ -209,7 +210,12 @@
       node('p', `${count(p.new_model_calls)} new model decisions, ${count(p.new_elapsed_ticks)} new ticks. ${count(p.retained_elapsed_ticks)} retained ticks toward the 403,200-tick full-year target.`, section);
       node('p', `Verified saves at ${row.checkpoints.map(item => count(item.cursor)).join(', ')}. When this gameplay window ended, its final save still needed a separate fresh-process reload.`, section);
       node('p', `${count(p.cumulative_model_responses)} accounted model responses; ${count(row.usage.campaign_tokens)} campaign tokens, ${count(row.usage.all_attempt_tokens)} including historical failed deliveries. This window used ${count(row.usage.new_tokens)} tokens. Model charge: ${cost(row.usage)}.`, section);
-      node('p', `Model memory and all usage continued without replay or strategy intervention. The earlier ${count(p.discarded_native_ticks)} lost ticks remain recorded. This is the same fortress, not an independent model comparison or proof of sustainability.`, section);
+      if (row.new_restart_performed) {
+        node('p', `Restored checkpoint ${count(p.parent_checkpoint_cursor)} with its saved model memory and all prior usage retained. No actions were replayed and no gameplay strategy was supplied.`, section);
+        node('p', `${count(p.native_save_loss_restarts)} loss records remain: at least ${count(p.confirmed_discarded_native_ticks)} ticks were lost. Total discarded time is Unknown because the previous attempt's final clock was unavailable. This is not uninterrupted play, an independent model comparison, or proof of sustainability.`, section);
+      } else {
+        node('p', `Model memory and all usage continued without replay or strategy intervention. The earlier ${count(p.discarded_native_ticks)} lost ticks remain recorded. This is the same fortress, not an independent model comparison or proof of sustainability.`, section);
+      }
       if (row.execution_counts) {
         const execution = row.execution_counts;
         node('p', `${count(p.new_accepted_decisions)} inputs accepted; ${count(execution.model_input_rejections)} rejected before native dispatch. ${count(execution.requested_elapsed_ticks)} ticks requested, ${count(p.new_elapsed_ticks)} actually advanced. Menu-blocked requests: ${count(execution.menu_deferrals)}; verified clock timeouts: ${count(execution.clock_unavailable_timeouts)}.`, section);
@@ -272,6 +278,7 @@
       presave_failure: (data.presave_failures || []).map(row => ({id: row.failure_id, row})),
       partial_failure: (data.partial_failures || []).map(row => ({id: row.failure_id, row})),
       oom_failure: (data.oom_failures || []).map(row => ({id: row.failure_id, row})),
+      resumed: (data.resumed_windows || []).map(row => ({id: row.resumed_id, row})),
       restart: restarts.filter(row => row.recent_event === true).map(row => ({id: row.restart_id, row}))
     };
     const events = data.continuation_events || Object.entries(recent).flatMap(([kind, rows]) => rows.map(row => ({kind, id: row.id})));
@@ -282,7 +289,7 @@
       const identity = `${event.kind}:${event.id}`;
       if (!found || seen.has(identity)) throw new Error('Invalid continuation order');
       seen.add(identity);
-      if (event.kind === 'continuation') renderContinuation(found.row);
+      if (event.kind === 'continuation' || event.kind === 'resumed') renderContinuation(found.row);
       else if (event.kind === 'interruption') renderTailInterruption(found.row);
       else if (event.kind === 'presave_failure') renderPresaveFailure(found.row);
       else if (event.kind === 'partial_failure') renderPartialFailure(found.row);

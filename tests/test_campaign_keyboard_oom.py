@@ -36,7 +36,7 @@ def test_oom_result_keeps_save_usage_unknown_tail_and_three_losses():
     assert row["new_checkpoint_created"] is row["another_restart_performed"] is False
     assert row["possible_observer_contribution"] is True
     assert row["teardown_verified"] is True
-    assert data["continuation_events"][-2:] == [
+    assert data["continuation_events"][-3:-1] == [
         {"kind": "partial_failure", "id": parent["failure_id"]},
         {"kind": "oom_failure", "id": row["failure_id"]},
     ]
@@ -121,9 +121,10 @@ def test_extra_private_fields_and_unlisted_records_are_not_exposed(evidence_root
     path.write_text(json.dumps(source))
     assert records.keyboard_campaign_records(evidence_root) == before
     monkeypatch.setattr(records, "OOM_FAILURES", ())
+    monkeypatch.setattr(records, "RESUMED_WINDOWS", ())
     without = records.keyboard_campaign_records(evidence_root)
     assert without["oom_failures"] == []
-    assert without["continuation_events"] == before["continuation_events"][:-1]
+    assert without["continuation_events"] == before["continuation_events"][:-2]
     assert without["partial_failures"] == before["partial_failures"]
 
 
@@ -173,8 +174,18 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   await new Promise(setImmediate);
   const rendered = elements['keyboard-results'].textContent;
   assert.equal(elements['keyboard-results'].hidden, false);
-  assert.ok(rendered.startsWith('Memory-related interruption · last saved checkpoint 711'));
-  const current = rendered.slice(0, rendered.indexOf('Harness interruption'));
+  assert.ok(rendered.startsWith('Play resumed after restart · checkpoint 775'));
+  const latest = rendered.slice(0, rendered.indexOf('Memory-related interruption'));
+  for (const text of ['198,600 retained ticks', '64 new model decisions, 6,000 new ticks',
+    '906 accounted model responses', '4 loss records', 'at least 35,091 ticks',
+    'Total discarded time is Unknown', '28,911,047 campaign tokens', '28,980,051 including',
+    '1,920,876 tokens', '3 decisions advanced game time; 61 did not advance it',
+    '56 at window start', 'Unknown at window end', '63 complete readings', '2 unknown readings',
+    'returned exit 1', 'separate fresh-process reload', 'not a running campaign']) {
+    assert.ok(latest.includes(text), text);
+  }
+  assert.doesNotMatch(latest, /\$0|lost 0 ticks|year.two success/i);
+  const current = rendered.slice(rendered.indexOf('Memory-related interruption'), rendered.indexOf('Harness interruption'));
   for (const text of ['192,600 ticks', '5,200 ticks', 'Final uncommitted game time Unknown',
     '842', '28 new responses', '27 committed actions', '5 confirmed keys', 'No new save',
     'may have contributed', 'cause and affected process are unverified',

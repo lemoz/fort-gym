@@ -37,7 +37,8 @@ def evidence_root(tmp_path):
                      *records.CHECKPOINT_RECOVERIES, *records.CONTINUATIONS,
                      records.TAIL_INTERRUPTION, *records.TAIL_RECOVERIES,
                      *records.PRESAVE_FAILURES, *records.SAVE_ACCEPTANCES, *records.PRESAVE_RESTARTS,
-                     *records.POSTRESTART_CONTINUATIONS, *records.PARTIAL_FAILURES, *records.OOM_FAILURES):
+                     *records.POSTRESTART_CONTINUATIONS, *records.PARTIAL_FAILURES, *records.OOM_FAILURES,
+                     *records.RESUMED_WINDOWS):
         shutil.copyfile(records.PROJECT_ROOT / "experiments/evidence" / filename, folder / filename)
     return tmp_path
 
@@ -221,7 +222,7 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   assert.match(elements['keyboard-results'].textContent, /184 model responses/);
   assert.match(elements['keyboard-results'].textContent, /Recovery verified · checkpoint 184/);
   assert.match(elements['keyboard-results'].textContent, /Subsequently recovered as checkpoint 184/);
-  assert.ok(elements['keyboard-results'].textContent.startsWith('Memory-related interruption · last saved checkpoint 711'));
+  assert.ok(elements['keyboard-results'].textContent.startsWith('Play resumed after restart · checkpoint 775'));
   assert.match(elements['keyboard-results'].textContent, /49,200 new ticks/);
   assert.match(elements['keyboard-results'].textContent, /192,600 retained ticks/);
   assert.match(elements['keyboard-results'].textContent, /791 accounted model responses/);
@@ -349,7 +350,7 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
 """
     data = records.keyboard_campaign_records()
     if food_units == "historical":
-        for row in data["continuations"]:
+        for row in [*data["continuations"], *data["resumed_windows"]]:
             row.pop("food_inventory", None)
     elif food_units != "recorded":
         # Synthetic rendering fixture only, never written to published evidence.

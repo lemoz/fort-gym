@@ -19,6 +19,7 @@ def postrestart(evidence_root, monkeypatch):
     monkeypatch.setattr(records, "POSTRESTART_CONTINUATIONS", ())
     monkeypatch.setattr(records, "PARTIAL_FAILURES", ())
     monkeypatch.setattr(records, "OOM_FAILURES", ())
+    monkeypatch.setattr(records, "RESUMED_WINDOWS", ())
     data = records.keyboard_campaign_records(evidence_root)
     parent = data["restarts"][-1]
     folder = evidence_root / "experiments/evidence"
