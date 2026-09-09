@@ -42,17 +42,36 @@ Owner exec session 26780 / PID 58206 started the single owned local VM and
 container successfully. Launch subscription admission was allowed at 72% used.
 Mandatory evidence export and native/container/VM teardown remain owned by the
 operator. Startup/first-prompt auditing passed: saved memory, usage, all six losses,
-the original prompt and initial calendar matched. Two grammar-valid responses
-were observed using 61271 new tokens. No new saved progress, retry acceptance,
+the original prompt and initial calendar matched. An independent host audit of
+the first 21 completed responses verified actual prompt/usage receipts and memory
+handoffs, with zero memory clears. Those responses used 559972 new tokens;
+978 campaign responses / 30905953 campaign tokens / 30974957 all-attempt tokens
+are confirmed lower bounds. Latest observed feedback had 2782 unsaved ticks.
+No new saved progress, retry acceptance,
 fortress sustainability or year-two success is established yet.
 Private handoff: `astra-native-controller-restart-v1/ACTIVE_RUN_HANDOFF.md`.
 
-The existing local campaign page now follows window w through observer session
-27200, with immutable HTTP acceptance retained in w's run folder. It reads only
-host receipts and keeps the 198600 saved ticks separate from later unsaved
-feedback. The isolated preview remains session 55218 / PID 49748, with admin and
-game integration disabled. Recorded result history is unchanged; native outcome
-publication follows the terminal save/usage/teardown audit. No browser visual QA.
+The existing local campaign page follows window w through observer session 27200.
+It reads only host receipts and keeps the 198600 saved ticks separate from later
+unsaved feedback. The recorded history now also includes v's failed dialog trial
+above u and the saved parent. Website source
+`1d53e0dac24aa2526d8a4f30688d1e50def88a62` is clean and pushed/read back on
+draft PR #137. All 3906 full-suite tests passed, 10 skipped; 330 focused
+publication/renderer tests, changed-file Ruff and scoped mypy passed. Exact-head
+CI 34405704785 passed. The native worktree is still frozen at
+b3c7393bd while its owner runs; the newer website source is isolated.
+
+Old preview 55218 / PID 49748 stopped cleanly. Replacement preview 21832 / PID
+61281 serves the same port 8857 from the isolated website worktree, with cleared
+environment, dotenv/DFHack/admin disabled and separate preview-only storage.
+HTTP acceptance binds exact page/JS bytes and the recorded API card to the
+unchanged original public/private trial evidence. The live API remains separate.
+Private HTTP receipt SHA256:
+`bae1c39586c50302820d91d43ee4d09637964081f7d026fbb8cfa2d7e12f4eb4`.
+Website full-suite XML SHA256:
+`e3349e281d2f3e8337266528552ea217546f7429d73fea19f7310a645dd2f3ca`.
+No browser visual QA, merge or production deployment. The queued browser handoff
+does not establish that the user saw the updated page.
 
 Preflight SHA256:
 `dea3b11590d0523f80a303c0394c4d16ad55b15a40471b5d4c7aed480ad2b69a`.
