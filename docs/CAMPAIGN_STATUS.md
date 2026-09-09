@@ -14,7 +14,69 @@ phase retains website and remote delivery. Several bounded Astra native-keyboard
 windows have completed. Window w has now stopped after a successful first save
 and a process-creation failure during its second runtime.
 
-### Current: window x running from recorded checkpoint 807
+### Current: checkpoint 839 saved and recorded on the website
+
+Window x completed all 32 Astra Medium decisions on source
+`3fc8d56ab4b5a6994b92f7483d9cdad8701848c9`. Independently verified checkpoint
+839 retains 216582 elapsed ticks, 10000 new ticks, or 53.7158% of a full elapsed
+year. Its manifest is `b58d576fa2c609a6933a061a679e13e3a4e0b6eef5a6336353338e1dcf816073`.
+The original 807 checkpoint remains unchanged. Window y has now freshly loaded
+839 with its exact saved memory/configuration and only the declared budget extension.
+
+The saved state has 12 living dwarves, zero deaths and 420 drinks. Completed farms
+rose from seven to eight and installed beds from six to eight; four workshops
+remain complete. All 32 after-action food scans completed. Final raw-edible count
+is 259, including 210 trader-flagged units, not 259 accessible fortress-owned food
+units. Production/consumption rates and sustainability remain unproven.
+
+The window retained one zero-tick labor-menu timeout. Astra chose its own recovery
+keys, then advanced time in five decisions. All 1021 responses, 32362233 campaign
+tokens and 32431237 all-attempt tokens are retained; the new window used 1154324
+tokens. Actual charge is unreported. Six historical losses retain 48429 known
+ticks plus unknown remainders; there was no new rollback, loss or human rescue.
+
+Owner 88896 and observer 18144 exited zero. Native cleanup, container exit zero,
+evidence export and VM shutdown passed; the VM was freshly observed Stopped.
+Memory reached its 1610612736-byte limit with 791 memory-limit events, but no OOM
+or OOM kill. Task peak was 21 of 256 with zero task-limit events and zero observed
+zombies. Headroom is not established; the historical Cannot fork cause stays
+unverified. Terminal audit SHA256:
+`27cf34be209b04494bd7f2c00a2651ae7585a1b15a97ebaaf0c7f010ae74c03e`.
+
+Recorded source `8f914d56ec3aec2951740d0276d0b8500cb4414d` passed 4053 tests
+with 10 skips, 433 focused checks, changed-file Ruff and JavaScript syntax. It is
+pushed to the existing remote draft branch; exact-head CI 34417758733 passed.
+The local page at http://127.0.0.1:8857/campaigns now serves that exact source,
+with recorded checkpoint 839, the unchanged historical 807 failure/save record,
+and a separate stale host-only live receipt. Admin and game integrations remain
+disabled. HTTP/public/private acceptance passed, receipt SHA256
+`d57865c6190bbe814394c88cadeb0871d723f9d8b3171c566bf932e189c6cca9`.
+No browser visual QA or forced reload of the open browser page is claimed.
+
+Window y is declared in source `5332d8fe17ddd67a84308fecdf9cce17470acf95`,
+also pushed and read back. It permits two 32-decision segments from 839 to test
+fresh reload and serial continuation under unchanged native keyboard, memory,
+prompt, direct RPC and private measurement settings. It appends a checkpoint-bound
+increase from 1024 to 1152 cumulative dispatches, preserving the existing 40M-token
+ceiling and all usage; this is not a dollar charge or reservation. The two-file
+configuration/test change passed 61 focused checks, exact-head CI 34418051121,
+and a no-model/no-game preflight. Owner exec 52505 / PID 98790 is now running;
+VM start, image build, container creation and native start returned zero. Native
+source stays frozen at 5332d8fe1 until the owner finishes and tears down.
+Fresh loaded-state/first-prompt audit passed with the same paused year 30 tick
+233383, all saved memory/configuration and the one declared budget extension.
+Startup audit SHA256:
+`b0e0be70e95e15067688197f3218b56713e75bd7ad1228217059c0e04070f0a6`.
+Read-only observer exec 52529 / PID 99772 now follows the exact owner. The existing
+local page passed HTTP checks for running y beside recorded x/839. That snapshot
+retains three new responses / 76891 new tokens, 1024 cumulative responses and
+32439124 campaign tokens; charges remain unreported. No new saved ticks or new
+campaign outcome are claimed. The original x publication truth is unchanged:
+its fresh-reload field describes what was verified at publication, while y's
+startup receipt is the separate later verification.
+No PR merge, production deployment, year-two success or model comparison yet.
+
+### Historical: window x startup and the saved checkpoint 807
 
 Independent verification passed for checkpoint 807, manifest
 `80d83164866f078a0e65254d953dac8e5b34298ca8c2bb85043e822d44fe0ce4`.
