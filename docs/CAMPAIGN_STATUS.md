@@ -13,37 +13,49 @@ and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. Several bounded Astra native-keyboard
 windows have completed; the same fortress remains in autonomous continuation.
 
-### Current run: window t is live on the loss-preserving recovery implementation
+### Latest saved result: window t completed at checkpoint 775
 
-Source `fea2971a6852f330654bc68b06824785db75c95b` is committed, pushed, and
-read back from the PR #137 branch. Full regression validation passed 3618 tests
-with 10 skips; changed-file Ruff and scoped mypy passed. Exact-head CI run
-34382352495 passed. The new checkpoint path decodes
-one observation at a time, avoiding whole-history expansion beside the game.
+The native owner exited 0 after 64 accepted model decisions; the container exited
+0 with OOMKilled=false, and the game/container/VM are stopped. Three decisions
+advanced 6000 ticks; 61 requested zero time. The checkpoint retains 198600 ticks,
+49.26% of the 403200-tick first-year target. Twelve dwarves remain alive, with zero
+recorded deaths. Drinks rose 337 to 411; farms 7, installed beds 6 and workshops 4
+were unchanged. Final food inventory is unknown after a measurement timeout;
+63 of 65 boundaries have complete readings. Sustainability remains unproven.
 
-Owner session 21577 / PID 94685 is live for the single 64-decision window t.
-VM start, image build, container creation and native start succeeded; the first
-model response returned 33771 tokens with valid input grammar. A host-only startup
-review verifies the same checkpoint-711 calendar (year 30 tick 209401), 120x40
-screen, saved memory/configuration, and all 842 prior responses / 26990171 tokens.
-It copied four small immutable artifacts and ran no extra Python inside the game.
-Keep the execution worktree frozen until this owner is terminal.
+Checkpoint digest:
+`7b69e64913adce2a9bfe3ecf539a8e91ea93edb4ce5c38e19c91279bb3b4e1bd`.
+Source was `fea2971a6852f330654bc68b06824785db75c95b`. Independent checkpoint,
+gameplay, food, clock, usage and teardown checks completed. The starting save
+passed fresh native reload; the new final checkpoint has not yet had a separate
+fresh reload. No interruption exercised the targeted dialogue repair. An exit-1
+terminal observation warning is retained separately from verified native save
+completion. Its underlying cause remains unverified.
 
-The fourth restart is attached. It inherits the three earlier losses and records
-5200 known lost ticks plus an unknown uncommitted remainder. The combined known
-lower bound is 35091 ticks; exact discarded time remains null, not zero. The last
-verified saved elapsed time remains 192600 ticks until the new run checkpoints.
-Startup and returned model responses do not prove sustainability or year two.
+All 906 responses / 28911047 campaign tokens / 28980051 all-attempt tokens remain
+accounted. Dollar charges are unreported, not zero. Four loss records retain at
+least 35091 discarded ticks; total discarded time is unknown because the prior
+terminal clock is missing. No historical failure was reclassified as success.
 
-Private evidence: `astra-native-unavailable-restart-v1/ACTIVE_RUN_HANDOFF.md`.
-Startup review SHA256:
-`49168699b5067bd7bbe51110e6c134f6f4cbcb03c0a3b012b6235098e0cefdb3`.
-The same Astra Medium, native keyboard, screen-text, save and food-measurement
-profiles and existing cumulative 1024-dispatch / 40-million-token ceiling apply.
-Fresh subscription admission was allowed and is checked per call. No cloud VM,
-local model, API fallback, purchase or reset; mandatory native/container/VM teardown.
-The website still records the earlier s failure, not this live runtime. Final t
-audit, website publication, three-model comparisons and year-two proof remain open.
+The recorded campaign page and sanitized manifest are pushed/read back at
+`a7874340d1ca4dcbda4920d7a65d5be0e274ea39` on the PR #137 branch. The public
+record was reconciled against private terminal results and audit digests. All
+3656 full-suite tests passed (10 skipped), plus changed-file Ruff/scoped mypy.
+Exact-head CI for this new publication was not yet established at push; previous
+source CI 34382352495 passed. PR #137 remains open/draft, not merged or deployed.
+
+The actual local HTTP page, API and JavaScript serve checkpoint 775 at 8857.
+Preview session 96469 / PID 8213 has game integration disabled. This is recorded
+evidence, not live gameplay; no browser visual QA was requested. Private owner
+handoff remains `astra-native-unavailable-restart-v1/ACTIVE_RUN_HANDOFF.md`.
+
+Next: implement and test an opt-in prompt condition explaining that memory_update
+fully replaces previous memory and empty clears it. Keep Astra Medium, native
+controls, screen text and model-chosen game time unchanged. Preserve old prompt
+conditions, saved memory, every usage/loss record and cumulative limits. The
+observed memory clear and repeated inspection motivate this hypothesis, but do
+not prove it; a continuation is not a matched model comparison. The next native
+window has not started. No new approval is needed for this in-scope work.
 
 ### Historical outcome: window s stopped with an OOM flag; checkpoint 711 remained saved
 
