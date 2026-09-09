@@ -14,14 +14,15 @@ phase retains website and remote delivery. Several bounded Astra native-keyboard
 windows have completed. Window w has now stopped after a successful first save
 and a process-creation failure during its second runtime.
 
-### Current: checkpoint 807 recorded; two-load diagnostics retained
+### Current: window x running from recorded checkpoint 807
 
 Independent verification passed for checkpoint 807, manifest
 `80d83164866f078a0e65254d953dac8e5b34298ca8c2bb85043e822d44fe0ce4`.
 It contains 206582 saved elapsed ticks, 7982 more than checkpoint 775, or 51.24%
 of the full-year target. The second native runtime freshly loaded that save at
 year 30 tick 223383. The saved observations show 12 living citizens, zero deaths
-and 404 drink units. Food measurement is unavailable, and sustainability remains
+and 404 drink units. The original saved food measurement remains unavailable;
+the later read-only diagnostic below does not rewrite it. Sustainability remains
 unproven.
 
 All 32 new responses are retained: 989 cumulative responses, 31207909 campaign
@@ -78,7 +79,7 @@ events or OOM events. Both runtime cleanups passed; the container exited 1 witho
 an OOM flag and the VM was freshly verified Stopped. Audit SHA256:
 `4dfd2a245a08342fb2800fba2fbdb2846a5cadd6b264b1bf4aa93fafd66f59ef`.
 No model calls were made by either probe and no gameplay ticks were requested.
-No year-two/sustainability claim is established. Model window x has not started.
+No year-two/sustainability claim is established by these historical probes.
 
 Website source `1a581c4483c653cfb1e2215bf8e7de3bd42a7fad` is clean, pushed
 and read back on the existing draft PR #137. The recorded card puts saved progress
@@ -86,22 +87,65 @@ above earlier failed attempts and preserves unknown time, food and charges.
 It reports seven completed farms plus one unfinished farm, six beds and four
 completed workshops. Nineteen original private source files were reverified.
 Full suite: 3978 passed / 10 skipped; final-source focused suite: 46 passed;
-changed-file Ruff, scoped mypy and JavaScript syntax passed. Exact-head CI is
-pending verification. Full-suite XML SHA256:
+changed-file Ruff, scoped mypy and JavaScript syntax passed. Exact-head CI
+34411226722 passed. Full-suite XML SHA256:
 `91e1eb52c592a542b6a3da68f563e7dde4e4ea6235481c57b0fb3dd52515f32c`.
 Publication audit SHA256:
 `f08449bfc31f458042b037b0fdae9223c7b092f41aa10cf13b4287ba25b6eb07`.
 HTTP acceptance matched the exact page/JS bytes and recorded API against the
-public manifest while preserving the separate stopped live payload. Preview
+public manifest while preserving the separate older stale live payload. Preview
 exec 44490 / PID 77136 replaced 21832 / PID 61281 on the existing localhost port
 8857. Dotenv, DFHack access and admin remain disabled. No browser visual QA,
 new browser handoff, merge or production deployment.
 
-Next: resolve whether exact tile identity belongs in the transport probe's
-acceptance criteria, investigate the private food-scan timeout, then run the
-declared 32-decision window x from checkpoint 807 with Astra Medium and unchanged
-keyboard, screen, prompt and saved memory. Retain all earlier failed receipts;
-do not turn the original screen-drift probe into a passing run.
+The read-only food diagnostic now completed on source 1a581c448. Scalar, padded
+4/8-KiB payloads, definition-only and inventory enumeration calls returned in
+under 0.03 seconds. The historical five-second inventory read timed out; the
+identical query with a 30-second diagnostic limit completed in 5.886016712 seconds.
+It scanned 2077 records and counted 263 raw-edible units, including 210 trader-
+flagged units and three job-flagged units. This is not 263 units of accessible
+fortress-owned food. All query boundaries retained the same paused save and
+calendar; native/container/VM teardown passed. The first food diagnostic failed
+at worker import before any query; its setup failure and receipts are preserved.
+Independent diagnostic review SHA256:
+`ef3a67b29f826e3d685f4e5c5f63a67f659bd3f88f7060e07de898cf6efe53ec`.
+
+Repair `3fc8d56ab4b5a6994b92f7483d9cdad8701848c9` is committed, pushed and
+read back on draft PR #137. Window x explicitly opts into 15-second private
+measurement reads; historical windows remain at five seconds. The predicate,
+trader/job flags, Astra Medium model, keyboard controls, screen, prompt and
+saved memory are unchanged. The configured timeout is retained with future
+measurements and the window result. Full suite passed 3996 tests with 10 skips;
+final-source focused suite passed 125; changed-file Ruff and scoped mypy passed.
+Exact-head CI 34413039261 passed. Full-suite XML SHA256:
+`9737f699a216bc4acc67713a0e9b7e8c6e6caa39fffc31debf2c2fde140eca25`.
+
+The declared 32-decision window x is now running from settled checkpoint 807.
+Owner exec 88896 / PID 83077 owns the single local VM/container and mandatory
+teardown; the native worktree remains frozen at 3fc8d56ab. Final preflight and
+actual startup/first-prompt auditing passed with the saved agent, memory, usage,
+all six losses and paused calendar unchanged. The initial private food scan
+completed with the same 263 raw-edible units including 210 trader-flagged units.
+The first eight host responses independently passed prompt, memory-handoff and
+usage-event reconciliation: 345300 new tokens, 997 campaign responses,
+31553209 campaign tokens, 31622213 all-attempt tokens. These are host lower
+bounds, not a new save. Eight distinct requested screens were retained and no
+memory was cleared; the available subsequent feedback had zero advanced ticks.
+Actual charge remains unreported. Observer exec 18144 / PID 84606 now publishes
+x's receipt counters to the existing local campaign page, with saved 807 kept
+separate. HTTP acceptance passed for exact page/JS bytes, the recorded manifest,
+the active x payload and disabled admin. No browser visual QA was performed.
+Startup audit SHA256:
+`ba39d9b00959cea5500df1588744ee96cd7322f9f6ff0b94c133e9d7c8e2dc11`.
+HTTP audit SHA256:
+`64bf7b82dbb441f788c2262173c3ddf71290c8a2dd0874cdd8cdd187c5279c2a`.
+Private handoff: `astra-native-rpc-resume-v1/ACTIVE_RUN_HANDOFF.md`.
+
+Next: finish the bounded run, audit its native/save/usage/teardown outcome and
+publish the recorded result. Exact tile identity is recorded by
+diagnostics, not used as a proxy for game-clock movement. Loaded identity and
+paused calendar remain mandatory. Original failed screen-equality probes stay
+failed; no new saved outcome, year-two success, merge or deployment is claimed.
 
 ### Historical startup of window w, superseded above
 
