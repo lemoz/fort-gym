@@ -157,7 +157,10 @@ usage, and preserves 64-decision save boundaries after admission pauses. Four
 actual 64-to-128 configurations are checked in; the remaining two must be added
 after their source audits. There is no budget extension or gameplay rescue.
 All 4,694 local regression tests passed with 10 skips, along with 89 focused tests,
-changed-file Ruff/format and scoped mypy. Exact-head GitHub CI is pending.
+changed-file Ruff/format and scoped mypy. Exact-head GitHub CI passed in run
+`34543476760`. The [preparation receipt](../experiments/evidence/keyboard_matched_endurance_preparation_20260910.json)
+binds the source revision, tests and four exact generated configurations; it
+does not claim private input validation, launch admission or further game time.
 The old 32-to-64 native owner/auditor remain frozen; a new bounded version and
 complete six-attempt private input verification are required before longer
 windows launch. The generator and tests are preparation, not new gameplay.

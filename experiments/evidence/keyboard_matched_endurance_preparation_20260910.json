@@ -1,0 +1,119 @@
+{
+  "schema_version": "fortgym.public-matched-endurance-preparation/v1",
+  "artifact_kind": "configuration_readiness",
+  "source_revision": "74d75bb6410384de8cc72809d535eb7bc10a398d",
+  "source_pr": "https://github.com/lemoz/fort-gym/pull/150",
+  "cohort_id": "keyboard-matched-pilot-20260910",
+  "passed": true,
+  "scope": "Public lineage and generated configuration verification only. Private native reload, receipt, state and teardown audits remain separate; synthetic future tests are not gameplay.",
+  "local_tests": {
+    "passed": 4694,
+    "skipped": 10
+  },
+  "focused_tests": 89,
+  "full_suite_xml_sha256": "66bb6b81dfcdf9800330be0a407c5ccbb8db3435e236e8ec49b30322b728cbab",
+  "changed_file_ruff_passed": true,
+  "changed_file_format_passed": true,
+  "scoped_mypy_passed": true,
+  "existing_repository_ruff_errors": 10,
+  "existing_repository_mypy_errors": 465,
+  "ci": {
+    "conclusion": "success",
+    "headSha": "74d75bb6410384de8cc72809d535eb7bc10a398d",
+    "status": "completed",
+    "url": "https://github.com/lemoz/fort-gym/actions/runs/34543476760"
+  },
+  "prepared_windows": [
+    {
+      "campaign_id": "matched-20260910-astra-r1",
+      "window_path": "experiments/keyboard_matched_endurance_20260910/astra_r1-64-128.json",
+      "window_sha256": "37d2ed8db264f5941b8879543376110330294403274c2815922b6c3a057bc19f",
+      "source_result_chain_sha256": [
+        "59e3fe7a4a3edddcf6a6d1264c748237868b87f71a345d66e2c72c4c183906a1",
+        "2c8abe1f7135d94ed27aea51e18ebc59e0599205caf3f268f4480b0e377f3d29"
+      ],
+      "checkpoint_sha256": "b3e4b087b1ea36759cd8023b58645d5f741d1db617982cb1014637d8bf33ba50",
+      "source_audit_sha256": "8a692ca4a42b10f89bfddfea750229838d54530c69dcbca59a5b364b56c564d5",
+      "from_decision": 64,
+      "to_decision": 128,
+      "comparison_target_decision": 128,
+      "steps_per_segment": 64,
+      "max_segments": 1,
+      "saved_elapsed_ticks_before_window": 18200,
+      "returned_tokens_before_window": 2468751
+    },
+    {
+      "campaign_id": "matched-20260910-sol-r1",
+      "window_path": "experiments/keyboard_matched_endurance_20260910/sol_r1-64-128.json",
+      "window_sha256": "f562e190020aa381508f0be375468303c314e3e9e1de2d36e8d937db4b2f0ef3",
+      "source_result_chain_sha256": [
+        "0b213a6074777eb5d016cb885bb3df296c4096a8c47e88e43f443eec04142fda",
+        "a624a9687257157aa91029d950ca1735a0e8f1baaa224cb66bba7efac50a1dbd"
+      ],
+      "checkpoint_sha256": "abe16a8c5cdd9c3447c3f9443d8e79843552c60e715a0d8fbbecfa447f247020",
+      "source_audit_sha256": "072b62fa8581830f7922f94669827bdd5e9b1eaef4f6039c7454d4856e379c3b",
+      "from_decision": 64,
+      "to_decision": 128,
+      "comparison_target_decision": 128,
+      "steps_per_segment": 64,
+      "max_segments": 1,
+      "saved_elapsed_ticks_before_window": 5500,
+      "returned_tokens_before_window": 1493253
+    },
+    {
+      "campaign_id": "matched-20260910-terra-r1",
+      "window_path": "experiments/keyboard_matched_endurance_20260910/terra_r1-64-128.json",
+      "window_sha256": "a35611af7ade99d0880d403c4e3ed1fbe648f5a349c86ed19754ca7d85f7badb",
+      "source_result_chain_sha256": [
+        "9670b0e1e542df80f48abbecc39eec3f0e36ba071a0b6d0555d8f86724b92c7b",
+        "e81a20836eb6959a529b657a72339bca2e299203c73188006fb32d682c734e11"
+      ],
+      "checkpoint_sha256": "86657110d8c1ba674f5a3da8ce2e058c9e691af31c924bbd97eedeaa9096ae89",
+      "source_audit_sha256": "fa74987d3bd792426a45f927f0f9c4978c6950802d7888d5668c5a14cd3d61d3",
+      "from_decision": 64,
+      "to_decision": 128,
+      "comparison_target_decision": 128,
+      "steps_per_segment": 64,
+      "max_segments": 1,
+      "saved_elapsed_ticks_before_window": 13000,
+      "returned_tokens_before_window": 1537901
+    },
+    {
+      "campaign_id": "matched-20260910-terra-r2",
+      "window_path": "experiments/keyboard_matched_endurance_20260910/terra_r2-64-128.json",
+      "window_sha256": "785939093d94880f3c142f05c0aff4b35df291ae412f53b2f6a9e4920641310e",
+      "source_result_chain_sha256": [
+        "8f18ce3a115bc01435cf07fb699fb187a3c3003583e076442775e25b249b0b72",
+        "1966bf1e8229e8fbfd7a161d84c78da272dd3f5c9aa86040f59a8baa415ef1b8"
+      ],
+      "checkpoint_sha256": "4b291937cc0a70a063d8a1987baafe99a3a48014ac5df7dbc4dd7c41f4fac837",
+      "source_audit_sha256": "611418257e0d0a85868c676bfe627c33d8b196cd6b4fe1dd7bd357db15eab092",
+      "from_decision": 64,
+      "to_decision": 128,
+      "comparison_target_decision": 128,
+      "steps_per_segment": 64,
+      "max_segments": 1,
+      "saved_elapsed_ticks_before_window": 19000,
+      "returned_tokens_before_window": 2265470
+    }
+  ],
+  "comparison_decision_boundaries": [
+    32,
+    64,
+    128,
+    256,
+    512,
+    1024,
+    1280
+  ],
+  "all_six_inputs_ready": false,
+  "private_input_validation_included": false,
+  "native_reload_executed": false,
+  "launch_admitted": false,
+  "new_model_calls_by_preparation": 0,
+  "new_game_ticks_by_preparation": 0,
+  "original_runtime_and_observer_unchanged": true,
+  "public_deployment": false,
+  "main_merge": false,
+  "goal_complete": false
+}

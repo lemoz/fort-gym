@@ -14,6 +14,7 @@ TERRA_RESULT = "keyboard_matched_terra_r1_continuation_32_64_20260910.json"
 TERRA_TWO_RESULT = "keyboard_matched_terra_r2_continuation_32_64_20260910.json"
 WEBSITE = "keyboard_matched_continuation_website_20260910.json"
 SAVED_WEBSITE = "keyboard_matched_saved_windows_website_20260910.json"
+ENDURANCE = "keyboard_matched_endurance_preparation_20260910.json"
 
 
 @pytest.mark.parametrize(
@@ -26,6 +27,7 @@ SAVED_WEBSITE = "keyboard_matched_saved_windows_website_20260910.json"
         (TERRA_TWO_RESULT, "1966bf1e8229e8fbfd7a161d84c78da272dd3f5c9aa86040f59a8baa415ef1b8"),
         (WEBSITE, "c5cb272a0b62646fa6c495d5157b68a51a758544fc9c538bd715bf08dbf3f8c9"),
         (SAVED_WEBSITE, "a2d9a1ef556697a734c425a6c9c8571069d409719bd9d86ef16477926d79b57f"),
+        (ENDURANCE, "46a6320ca1c2a23045a5d98df4d7ae30992d10e36e810b774df8f842e29939d9"),
     ],
 )
 def test_exact_versioned_projections_and_private_state_exclusion(filename, expected):
@@ -218,3 +220,37 @@ def test_saved_website_receipt_keeps_initial_and_continued_results_distinct():
     assert record["live_observation"]["campaign_id"] == "matched-20260910-terra-r2"
     assert record["live_observation"]["new_save_verified"] is False
     assert record["public_deployment"] is record["browser_visual_qa"] is False
+
+
+def test_endurance_preparation_is_remote_tested_configuration_not_gameplay():
+    record = json.loads((EVIDENCE / ENDURANCE).read_bytes())
+    assert record["passed"] is True
+    assert (
+        record["source_revision"]
+        == record["ci"]["headSha"]
+        == ("74d75bb6410384de8cc72809d535eb7bc10a398d")
+    )
+    assert record["ci"]["status"] == "completed" and record["ci"]["conclusion"] == "success"
+    assert record["local_tests"] == {"passed": 4694, "skipped": 10}
+    assert record["focused_tests"] == 89
+    assert record["comparison_decision_boundaries"] == [32, 64, 128, 256, 512, 1024, 1280]
+    assert record["new_model_calls_by_preparation"] == record["new_game_ticks_by_preparation"] == 0
+    assert all(
+        record[key] is False
+        for key in (
+            "all_six_inputs_ready",
+            "private_input_validation_included",
+            "native_reload_executed",
+            "launch_admitted",
+            "public_deployment",
+            "main_merge",
+            "goal_complete",
+        )
+    )
+    windows = record["prepared_windows"]
+    assert len(windows) == 4 and len({w["checkpoint_sha256"] for w in windows}) == 4
+    for window in windows:
+        assert (window["from_decision"], window["to_decision"]) == (64, 128)
+        assert window["comparison_target_decision"] == 128
+        assert window["steps_per_segment"] == 64 and window["max_segments"] == 1
+        assert len(window["source_result_chain_sha256"]) == 2
