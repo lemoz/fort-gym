@@ -74,3 +74,25 @@ The displayed event order follows the same validated dependencies.
 Regression fixtures exercise completed-to-paused-to-completed rendering and
 unchanged historical records. They are temporary test data, not experiment
 publications. This reader change adds no result manifest for an ongoing run.
+
+## Intermediate saves in the live feed
+
+The live observer can now project a retained `segment-boundary-N-review.json`
+and its hash-bound metadata, after confirming the matching receipt prefix and
+next-worker request. It does not make game or model calls. The dashboard keeps
+the original window-start checkpoint and cumulative usage, and separately shows
+the latest verified save/reload and subsequent reported time. It excludes the
+first reloaded request's feedback from post-save time because that feedback
+belongs to the last step already included in the save. Unknown time stays null.
+
+The optional `latest_verified_save` live field explicitly means audited save
+metadata plus next-worker reload, not a full inventory/trace audit or a completed
+window. The legacy `unsaved_ticks_lower_bound` field retains its original numeric
+meaning (all feedback-reported new ticks since window start); the display calls
+it "Time reported this window" to avoid calling intermediate saved time unsaved.
+`ticks_since_verified_save_lower_bound` describes only feedback after the latest
+intermediate save. Stale/stopped status and unknown charges remain explicit.
+
+The isolated `campaign-live-save-boundaries` worktree preserves the running
+harness revision. Native code, prompts, controls, recorded manifests, dependencies
+and existing local preview paths are unchanged by authoring this display change.

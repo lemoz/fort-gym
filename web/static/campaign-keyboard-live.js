@@ -9,6 +9,22 @@
         || !Number.isSafeInteger(data.observed_at_unix) || data.observed_at_unix > now + 5
         || data.fresh_for_seconds !== 30 || data.new_save_verified !== false
         || data.reported_charge_usd !== null) throw new Error('Invalid live status');
+    const saved = data.latest_verified_save;
+    if (saved !== undefined) {
+      if (!saved || !['checkpoint_cursor', 'elapsed_ticks', 'window_responses', 'campaign_tokens'].every(k => Number.isSafeInteger(saved[k]) && saved[k] >= 0)
+          || !['report_sha256', 'checkpoint_sha256'].every(k => typeof saved[k] === 'string' && /^[a-f0-9]{64}$/.test(saved[k]))
+          || saved.evidence_basis !== 'audited_save_metadata_and_next_worker_reload'
+          || saved.full_inventory_and_trace_audit_complete !== false
+          || saved.window_responses < 1 || saved.window_responses >= data.new_responses
+          || saved.checkpoint_cursor !== data.saved_checkpoint_cursor + saved.window_responses
+          || saved.elapsed_ticks < data.saved_elapsed_ticks
+          || saved.campaign_tokens < data.campaign_tokens - data.new_tokens || saved.campaign_tokens > data.campaign_tokens
+          || (data.ticks_since_verified_save_lower_bound !== null
+            && (!Number.isSafeInteger(data.ticks_since_verified_save_lower_bound)
+              || data.ticks_since_verified_save_lower_bound < 0
+              || data.unsaved_ticks_lower_bound === null
+              || data.ticks_since_verified_save_lower_bound > data.unsaved_ticks_lower_bound))) throw new Error('Invalid saved boundary');
+    } else if (data.ticks_since_verified_save_lower_bound !== undefined) throw new Error('Missing saved boundary');
     return now - data.observed_at_unix > 30 ? 'stale' : data.status;
   }
   if (typeof module !== 'undefined') module.exports = { state, count };
@@ -41,15 +57,21 @@
     facts.className = 'campaign-save-facts';
     content.append(facts);
     for (const [label, value] of [
-      ['Saved at last live observation', `${count(data.saved_elapsed_ticks)} ticks`],
+      ['Saved when this window started', `${count(data.saved_elapsed_ticks)} ticks`],
       ['Responses this window', `${count(data.new_responses)} / ${count(data.window_response_limit)}`],
       ['New tokens', count(data.new_tokens)],
-      ['Unsaved time observed', data.unsaved_ticks_lower_bound === null ? 'Unknown' : `At least ${count(data.unsaved_ticks_lower_bound)} ticks`],
+      ['Time reported this window', data.unsaved_ticks_lower_bound === null ? 'Unknown' : `At least ${count(data.unsaved_ticks_lower_bound)} ticks`],
+      ...(data.latest_verified_save ? [
+        ['Latest verified save and reload', `Checkpoint ${count(data.latest_verified_save.checkpoint_cursor)} · ${count(data.latest_verified_save.elapsed_ticks)} ticks`],
+        ['Time reported since that save', data.ticks_since_verified_save_lower_bound === null ? 'Unknown' : `At least ${count(data.ticks_since_verified_save_lower_bound)} ticks`],
+      ] : []),
     ]) {
       const item = document.createElement('div');
       facts.append(item); node('dt', label, item); node('dd', value, item);
     }
-    node('p', `At the last live observation, the verified save was checkpoint ${count(data.saved_checkpoint_cursor)}. In-progress time comes from the model’s subsequent feedback, not a newly verified save. Check the recorded results below for later verification.`, content);
+    node('p', data.latest_verified_save
+      ? `This window started from checkpoint ${count(data.saved_checkpoint_cursor)}. Save metadata and the next worker’s reload are verified through checkpoint ${count(data.latest_verified_save.checkpoint_cursor)}. The full save-file and gameplay-trace audit is still pending. Later reported time is not yet verified as saved.`
+      : `At the last live observation, this window’s starting save was checkpoint ${count(data.saved_checkpoint_cursor)}. Reported time comes from the model’s subsequent feedback, not a newly verified save. Check the recorded results below for later verification.`, content);
     node('p', `${count(data.campaign_responses)} campaign responses and ${count(data.campaign_tokens)} campaign tokens so far; ${count(data.all_attempt_tokens)} tokens including historical failed deliveries. Charges are unreported, not zero.`, content);
     node('p', `Last host observation: ${new Date(data.observed_at_unix * 1000).toISOString()}. Refreshes while this page is visible.`, content).className = 'campaign-note';
   }
