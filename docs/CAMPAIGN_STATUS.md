@@ -11,10 +11,43 @@ screen, and run autonomous fortress experiments toward year two and beyond. Keep
 DFHack shortcuts as an explicit alternative condition. Compare matching starts
 and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. Several bounded Astra native-keyboard
-windows have completed. Window w has now stopped after a successful first save
-and a process-creation failure during its second runtime.
+windows have completed. Window x completed after the earlier window-w runtime
+failure. Window y is continuing from its newly saved first segment.
 
-### Current: checkpoint 839 saved and recorded on the website
+### Current: checkpoint 871 saved and freshly loaded; window y still running
+
+Window y's first 32 decisions saved 20000 additional ticks, reaching checkpoint
+871 and 236582 elapsed ticks, or 58.68% of one full elapsed year. Its manifest is
+`20e22afd9a122254f4018690a697b935e0dcc1863e5f146cf411806fd6a93044`.
+Independent settled-metadata review matched the second worker's native clock,
+observations and saved agent memory to that checkpoint. The first runtime cleaned
+up before the second began. The owner remains active on frozen source
+`5332d8fe17ddd67a84308fecdf9cce17470acf95`; the full window and teardown are pending.
+This is not yet an independent host audit of the full exported save inventory.
+
+Saved observations show 16 citizens, zero recorded deaths, 11 completed beds,
+8 completed farms, 4 completed workshops and 483 drinks. Raw edible inventory is
+269 units including 210 trader-flagged units. Verified model-visible workshop
+screens show repeating barrel and brewing jobs placed through native keyboard
+actions. Completed production attribution, accessible food and sustainability
+remain unproven; stock increases alone do not establish them.
+
+All 32 first-segment host receipts passed: 1073142 new tokens, 1053 cumulative
+responses, 33435375 campaign tokens and 33504379 all-attempt tokens. Charges are
+unreported. Six historical loss records, including unknown remainders, remain.
+The 32 subsequent feedback records corroborate 20000 ticks, with 21 zero-time
+management decisions and 11 positive-time requests. No prompt or strategy change
+was made during this window. Boundary review SHA256:
+`07e95c36c94141c9af6a4c145dbae869f04aa5fa98e66c75bccb627a54ee3683`.
+
+The local website's recorded baseline is still x/839, with separate running-y
+usage/feedback. The receipt-only observer does not publish intermediate saved
+checkpoints. Its older baseline does not undo save 871. Terminal inventory,
+trace, usage and teardown checks must precede the next recorded publication.
+The prepared two-segment private auditor passed 11 focused tests and unused-name
+checks; that preparation is not terminal acceptance. No merge or deployment.
+
+### Recorded: checkpoint 839 saved and published on the local website
 
 Window x completed all 32 Astra Medium decisions on source
 `3fc8d56ab4b5a6994b92f7483d9cdad8701848c9`. Independently verified checkpoint

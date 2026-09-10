@@ -77,7 +77,19 @@ It was subsequently verified active on September 7. The readable-screen profile
 and first synthetic Astra comparison are published in draft PR #137; current
 evidence and remaining native work are tracked in [Campaign status](CAMPAIGN_STATUS.md).
 
-## Current native result: checkpoint 711
+## Current native progress
+
+Window y has saved checkpoint 871 at 236582 elapsed ticks and freshly loaded it
+into its second segment. Saved observations show 16 citizens, zero recorded
+deaths, 11 completed beds, 8 farms and 4 workshops. Astra placed repeating barrel
+and brewing orders through standard workshop menus; sustainable production is
+not yet established. The two-segment window remains active. The local website
+still records the fully audited prior checkpoint 839, alongside live-y usage.
+See [Campaign status](CAMPAIGN_STATUS.md) for current evidence, publication state,
+usage and remaining checks. Historical results below are retained, not current
+campaign or website state.
+
+## Historical native result: checkpoint 711
 
 Window q completed 64 accepted Astra Medium standard-input decisions on source
 `167d22945feb9c3fa031408946fcc7503ad5dc39`, using screen text/v1 at 120x40 and
