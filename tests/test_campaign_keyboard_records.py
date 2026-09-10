@@ -39,7 +39,7 @@ def evidence_root(tmp_path):
                      *records.PRESAVE_FAILURES, *records.SAVE_ACCEPTANCES, *records.PRESAVE_RESTARTS,
                      *records.POSTRESTART_CONTINUATIONS, *records.PARTIAL_FAILURES, *records.OOM_FAILURES,
                      *records.RESUMED_WINDOWS, *records.PROMPT_TRIALS, *records.MODAL_TRIALS,
-                     *records.SAVED_SEGMENTS, *records.COMPLETED_WINDOWS):
+                     *records.SAVED_SEGMENTS, *records.COMPLETED_WINDOWS, *records.CHECKPOINT_RELOADS):
         shutil.copyfile(records.PROJECT_ROOT / "experiments/evidence" / filename, folder / filename)
     return tmp_path
 

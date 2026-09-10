@@ -56,6 +56,22 @@
         throw new Error('Unsupported continuation recovery evidence');
       }
     }
+    const reloads = Array.isArray(data.checkpoint_reloads) ? data.checkpoint_reloads : [];
+    function verifiedReload(row) {
+      return data.checkpoint_reload_status === 'available' && reloads.find(check =>
+        check?.recorded_only === true && check.parent_record === row.window_id
+        && check.checkpoint_sha256 === row.checkpoint_sha256
+        && check.checkpoint_cursor === row.progress.checkpoint_cursor
+        && check.saved_elapsed_ticks === row.progress.saved_elapsed_ticks
+        && check.fresh_native_reload_verified === true && check.normal_campaign_loop_restored === true
+        && check.original_checkpoint_unchanged === true && check.agent_history_usage_unchanged === true
+        && check.model_calls === 0 && check.new_tokens === 0 && check.new_game_ticks === 0
+        && check.new_checkpoint_created === false && check.gameplay_result === false
+        && check.teardown_verified === true && check.disposable_save_tree_byte_identical === false
+        && check.actual_screen_size?.[0] === 120 && check.actual_screen_size?.[1] === 40
+        && check.disposable_save_tree_difference?.path === 'events-dfhack.log'
+        && check.disposable_save_tree_difference?.world_sav_unchanged === true);
+    }
     function renderCompletedWindow(row) {
       const section = node('section', undefined, results);
       section.className = 'campaign-condition';
@@ -92,6 +108,20 @@
       node('p', `${count(row.clock_outcomes.zero_tick_timeouts)} zero-tick clock timeouts were retained; the model received failure feedback. ${count(food.after_action_complete_readings)} complete and ${count(food.after_action_unknown_readings)} unknown after-action food readings used the declared ${row.private_measurement_timeout_seconds}-second scan limit.`, details);
       node('p', `Memory peak: ${count(resource.memory_peak_bytes)} bytes against a ${count(resource.memory_limit_bytes)}-byte limit; ${count(resource.memory_max_events)} memory-limit events, ${count(resource.oom_events)} OOM events and ${count(resource.oom_kill_events)} OOM kills. Task peak: ${count(resource.task_peak)} of ${count(resource.task_limit)}; ${count(resource.task_limit_events)} task-limit events, ${count(resource.max_observed_zombies)} observed zombies. Memory headroom is not established.`, details);
       node('p', 'Game and VM teardown verified. Saved elapsed time is not proof of sustainable production or a matched model comparison.', section);
+      const reload = verifiedReload(row);
+      if (reload) {
+        const later = node('div', undefined, section);
+        later.className = 'campaign-checkpoint-verification campaign-save-acceptance';
+        node('h4', 'Later checkpoint verification', later);
+        node('p', `Checkpoint ${count(reload.checkpoint_cursor)} reopened in a fresh game process. Its 120 × 40 screen and saved agent memory, history and usage were verified. This check added 0 game ticks, 0 model calls and no new checkpoint.`, later);
+        const proof = node('details', undefined, later);
+        node('summary', 'Reload evidence and file changes', proof);
+        node('p', 'The original checkpoint is unchanged. The disposable copy appended two DFHack load-log lines; all other save files matched. Game, container and VM teardown passed. This later check does not change what was known when the window finished.', proof);
+        if (/^[a-f0-9]{40}$/.test(reload.evidence_revision)
+            && /^experiments\/evidence\/[a-z0-9_]+\.json$/.test(reload.evidence_path)) {
+          node('a', 'Read the later reload verification', proof).href = 'https://github.com/lemoz/fort-gym/blob/' + reload.evidence_revision + '/' + reload.evidence_path;
+        }
+      }
       if (/^experiments\/evidence\/[a-z0-9_]+\.json$/.test(row.evidence_path)) {
         node('a', 'Read the completed-window evidence', section).href = 'https://github.com/lemoz/fort-gym/blob/codex/campaign-codex-subscription/' + row.evidence_path;
       }
@@ -520,6 +550,9 @@
     $('keyboard-status').textContent = data.milestones.length || data.interruptions?.length || recoveries.length || data.checkpoint_failures?.length || restarts.length || reviews.length || checkpointRecoveries.length || continuations.length
       ? 'Recorded play, failures, recoveries and restarts. This is not a live activity indicator.'
       : 'No keyboard milestones published.';
+    if (data.checkpoint_reload_status === 'unavailable') {
+      $('keyboard-status').textContent += ' Later checkpoint verification is unavailable; original results remain available.';
+    }
   }
   async function refresh() {
     $('refresh-keyboard-campaigns').disabled = true;

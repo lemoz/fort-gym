@@ -119,3 +119,11 @@ all 126 other files, including world.sav, matched. See the
 [versioned reload receipt](../experiments/evidence/astra_native_keyboard_checkpoint903_reload_20260910.json).
 This establishes that checkpoint's fresh reload, not native fresh-start trial
 acceptance, model availability, new gameplay or a cross-model comparison.
+
+The campaign page now presents that receipt as a later verification beside its
+matching saved window, not as another gameplay event. The existing
+`/public/keyboard-campaigns` response includes separate `checkpoint_reloads` and
+`checkpoint_reload_status` fields. It preserves the original window's
+publication-time reload status and all counters. Missing or invalid later
+evidence leaves the original campaign history available with an unavailable
+verification notice; private fields are not projected.

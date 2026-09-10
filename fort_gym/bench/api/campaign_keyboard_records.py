@@ -22,6 +22,7 @@ from .campaign_keyboard_trials import PROMPT_TRIALS, prompt_trial
 from .campaign_keyboard_modal_trials import MODAL_TRIALS, modal_trial
 from .campaign_keyboard_saved_segments import SAVED_SEGMENTS, saved_segment
 from .campaign_keyboard_windows import COMPLETED_WINDOWS, completed_window
+from .campaign_keyboard_reloads import CHECKPOINT_RELOADS, checkpoint_reload
 from .campaign_keyboard_tails import (
     TAIL_INTERRUPTION, TAIL_RECOVERIES, continuation_interruption, continuation_recovery,
 )
@@ -300,6 +301,14 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
     completed_windows: list[dict] = []
     for filename in COMPLETED_WINDOWS:
         completed_windows.append(completed_window(root, filename, [*saved_segments, *completed_windows]))
+    # A later verification cannot rewrite publication-time facts or make the
+    # original gameplay history unavailable when its own record is missing.
+    try:
+        checkpoint_reloads = [checkpoint_reload(root, filename, completed_windows)
+                              for filename in CHECKPOINT_RELOADS]
+        checkpoint_reload_status = "available"
+    except (OSError, ValueError, KeyError, TypeError):
+        checkpoint_reloads, checkpoint_reload_status = [], "unavailable"
     # Explicit publication order retains the interruption between its parent
     # continuation and recovery; later play must not appear below older recovery.
     recent_events = [
@@ -368,6 +377,8 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
         "modal_trials": modal_trials,
         "saved_segments": saved_segments,
         "completed_windows": completed_windows,
+        "checkpoint_reloads": checkpoint_reloads,
+        "checkpoint_reload_status": checkpoint_reload_status,
         "save_acceptances": save_acceptances,
         "tail_interruptions": tail_interruptions,
         "tail_recoveries": tail_recoveries,
