@@ -14,6 +14,44 @@ phase retains website and remote delivery. Several bounded Astra native-keyboard
 windows have completed. Window x completed after the earlier window-w runtime
 failure. Window y completed both serial segments and its result is now recorded.
 
+### Latest native acceptance: independent fresh start, save and continuation
+
+A provider-free fixture ran the unmodified fresh-trial and ordinary continuation
+CLIs against the real game at source
+`f970ba4382cf3b83452ae0ff1f8a240cd9507c1b`. It loaded the shared seed with empty
+memory and usage, saved checkpoint 1 after one scripted camera key, resumed and
+saved checkpoint 2 after a second key, then freshly loaded that final checkpoint
+in a third game process. Prompt origin, accumulated memory, trace and usage
+passed independent audit. All native loads stayed paused at year 30 / tick 16801
+with an actual 120x40 screen and zero elapsed ticks.
+
+There were no model calls. The two response receipts and 200 ledger tokens are
+synthetic fixtures, not Astra usage or performance. No fixture record was added
+to campaign/comparison website data. The shared seed was mounted read-only;
+the existing Astra campaign was not mounted and remains unchanged at 903.
+Game, container and local VM teardown passed with zero exit codes, and stopped
+state was independently rechecked. Memory peaked at 1375010816 bytes under the
+1536 MiB limit, with no limit events or OOM kills; task peak was 16 of 256.
+This does not establish capacity for a long campaign on the developed fortress.
+
+The native run passed on its first attempt. Two audit-only schema assumptions
+were corrected using the retained receipts; no game rerun or evidence rewrite.
+Private audit SHA256:
+`1086e6dae1a0bd794543a5fcaab7602e778564cd5d6f075f00405f5e626c9a95`.
+All 137 focused fresh-trial, launcher and campaign-record/reload regressions
+passed, as did separate public-receipt binding checks. The shareable acceptance
+receipt and documentation are committed, pushed and remotely read back at
+`f1a3b2eb7709aadafc510bae546f6d41b98c5029` in draft PR #137. No production
+harness or website code changed. The acceptance source's CI passed; the new
+receipt commit has pending CI `34430388327`. The private evidence adds about
+320 MiB to the
+existing project artifact tree; it is retained, not authorized for deletion.
+
+Provider-free native fresh-start/save/continuation acceptance is now verified.
+Actual independent model runs and repeated comparisons remain unproven. Next
+gameplay remains a new admitted continuation from checkpoint 903 under its
+unchanged condition and limits. The year-two and cross-model goal is incomplete.
+
 ### Latest website delivery: later verification beside recorded checkpoint 903
 
 The existing local page at http://127.0.0.1:8857/campaigns now serves tested
@@ -30,10 +68,10 @@ acceptance verified the served revision, additive reload data and disabled admin
 Acceptance SHA256:
 `86dfbce62bca5d856c50eeccd8d2211c7ba26db10582d315024bd21fff65bfa4`.
 Existing layout and preview data were retained. The browser was not force-reloaded
-or visually tested. Exact-head CI `34429026341` is in progress at this update.
+or visually tested. Exact-head CI `34429026341` subsequently passed.
 No game/model call, new gameplay, merge or production deployment is claimed.
 
-### Latest native verification: checkpoint 903 freshly reloaded
+### Earlier native verification: checkpoint 903 freshly reloaded
 
 A provider-free diagnostic on source `88d1f4659893ecdb1d59a621638cada2d37e5876`
 loaded checkpoint 903 in a new native game process and restored the ordinary
@@ -59,7 +97,8 @@ private-evidence binding audit; 103 focused regressions passed, with one skip.
 Its exact-head CI `34428156723` subsequently passed. The later verification is
 now served separately on the local website as recorded above. No merge or
 deployment. Next: continue an admitted campaign from 903 and validate independent
-native fresh-start trials, which remain unproven.
+native fresh-start trials. The later provider-free fresh-start acceptance is
+recorded above; actual independent model performance remains unproven.
 
 ### Latest implementation: independent native-keyboard campaign starts
 
@@ -79,9 +118,9 @@ prompt, usage and limits and rejected fresh initialization on that used agent.
 Compatibility audit SHA256:
 `f5e0d7fbe04e9a6b86cbd085d49737821ce97bb44252c40f292ed9cea9667d25`.
 
-No VM, game or model call was made for that implementation increment. Actual
-native fresh-start acceptance and independent repeated comparisons remain
-unproven; the later provider-free 903 reload is recorded above. Exact-head
+No VM, game or model call was made for that implementation increment. The later
+provider-free fresh-start acceptance and 903 reload are recorded above.
+Independent repeated model comparisons remain unproven. Exact-head
 remote CI `34426912429` completed successfully. That core implementation did not
 publish a new campaign outcome. The later website delivery is recorded above.
 No merge or deployment is claimed.

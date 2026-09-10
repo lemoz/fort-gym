@@ -91,13 +91,29 @@ static checks. Actual checkpoint 903's agent state was restored unchanged in a
 read-only compatibility check. The Astra/Sol/Terra test exchanges are synthetic,
 not completed native comparisons. This implementation increment made no VM,
 game or model call and did not change the website's recorded game outcome.
-Native fresh-start acceptance and repeated comparable attempts remain next-stage
-evidence requirements. See [Campaign status](CAMPAIGN_STATUS.md) for exact CI
-and delivery status.
+The later provider-free native fresh-start acceptance is recorded below.
+Actual independent model runs and repeated comparable attempts remain evidence
+requirements. See [Campaign status](CAMPAIGN_STATUS.md) for exact CI and delivery.
 
 ## Current native progress
 
-A later provider-free diagnostic freshly loaded checkpoint 903 at source
+At source `f970ba4382cf3b83452ae0ff1f8a240cd9507c1b`, the production fresh-trial
+CLI started independently from the shared native seed with empty memory and
+usage. A provider-free fixture sent two scripted camera keys across a first
+save and ordinary continuation, then freshly reloaded the final checkpoint in
+a third game process. Prompt origin, memory, trace, usage, actual 120x40 screen
+and paused calendar passed independent audit. No game ticks advanced and all
+game/container/local-VM teardown passed. The two synthetic receipts and 200
+ledger tokens are not model calls, usage or performance.
+
+The audited receipt and documentation are pushed and remotely read back at
+`f1a3b2eb7709aadafc510bae546f6d41b98c5029` in draft PR #137. All 137 focused
+regressions and public-receipt binding checks passed. This closes provider-free
+native fresh-start/save/continuation acceptance, not independent model
+performance, repeated comparison or year-two gameplay. No synthetic campaign
+was added to website data; Astra's existing checkpoint 903 was not mounted.
+
+An earlier provider-free diagnostic freshly loaded checkpoint 903 at source
 `88d1f4659893ecdb1d59a621638cada2d37e5876` and restored the normal campaign loop
 without stepping it. The paused calendar, actual 120x40 screen, agent state,
 history, trace and usage passed independent audit. No model call or new game
