@@ -11,11 +11,45 @@ RECORDS = {
     "sol_r1": "0b213a6074777eb5d016cb885bb3df296c4096a8c47e88e43f443eec04142fda",
     "terra_r1": "9670b0e1e542df80f48abbecc39eec3f0e36ba071a0b6d0555d8f86724b92c7b",
     "terra_r2": "8f18ce3a115bc01435cf07fb699fb187a3c3003583e076442775e25b249b0b72",
+    "sol_r2": "316a46641bb609350005ae734b74b881ad0d876b9f907fb2fc4eda1964b92ec3",
+    "astra_r2": "8bd2a2c69ed08ed4c8c063dd955ae793873899ad24678109404e7b4d5b5a5dfb",
 }
 
 
 def record_path(identity):
     return module.PROJECT / f"experiments/evidence/keyboard_matched_{identity}_20260910.json"
+
+
+def test_all_six_readiness_projection_binds_each_independent_result():
+    path = (
+        module.PROJECT
+        / "experiments/evidence/keyboard_matched_all_six_continuation_inputs_20260910.json"
+    )
+    proof = json.loads(path.read_text())
+    assert proof["passed"] is proof["full_six_trial_initial_cohort_audited"] is True
+    assert proof["new_model_calls"] == proof["new_game_ticks"] == 0
+    assert proof["launch_admitted"] is proof["vm_started"] is False
+    rows = proof["inputs"]
+    assert len(rows) == len(RECORDS) == 6
+    assert len({row["checkpoint_sha256"] for row in rows}) == 6
+    for identity, expected_digest in RECORDS.items():
+        record = json.loads(record_path(identity).read_text())
+        row = next(row for row in rows if row["campaign_id"] == record["campaign_id"])
+        assert row["public_result_sha256"] == expected_digest == module.sha(record_path(identity))
+        assert row["checkpoint_sha256"] == record["checkpoint_sha256"]
+        assert row["terminal_audit_sha256"] == record["audit_sha256"]
+        assert row["returned_tokens"] == record["usage"]["returned_tokens"]
+        assert row["saved_elapsed_ticks"] == record["saved_elapsed_ticks"]
+        assert row["model"] == record["model"]
+        assert row["cursor"] == row["additional_response_limit"] == 32
+        assert row["fresh_native_reload_verified"] is False
+        declaration = (
+            module.PROJECT
+            / "experiments/keyboard_matched_continuations_20260910"
+            / (identity + "-32-64.json")
+        )
+        assert row["declaration_sha256"] == module.sha(declaration)
+        assert not {"memory", "agent_state_sha256", "trace_sha256", "usage_sha256"} & row.keys()
 
 
 @pytest.mark.parametrize("identity", RECORDS)

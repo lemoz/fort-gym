@@ -40,3 +40,32 @@ Generate a proposal using scripts.campaign_matched_window and the exact publishe
 result SHA-256. The generator calls no model or game and does not grant launch
 authority. Its tests also exercise wrong-model/result hashes, unsettled usage,
 missing audit/teardown evidence and preserved original condition files.
+
+Native reload preserves the saved world and paused calendar; identical open UI
+menus are not promised across process restarts. Retain the reloaded screen as
+evidence. Saving within a running process preserves its menu, but that is a
+different property. No human navigation or model-specific menu repair is added.
+
+## Initial cohort now audited
+
+All six initial 32-response windows are saved and audited. The six declarations
+are present. Their real local save inventories, model memory, prompt lineage,
+unchanged configurations and complete settled trace/usage prefixes were checked
+in the all-six input receipt. The earlier four-input receipt is retained as its
+original historical snapshot. No continuation or fresh reload is claimed here.
+
+| Model | Attempt | Saved ticks | Returned tokens | Workshops | Farms |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Astra | 1 | 11200 | 1043596 | 1 | 1 |
+| Astra | 2 | 9000 | 988564 | 1 | 1 |
+| Sol | 1 | 2500 | 792764 | 0 | 0 |
+| Sol | 2 | 5200 | 853715 | 0 | 0 |
+| Terra | 1 | 7000 | 859063 | 0 | 0 |
+| Terra | 2 | 9000 | 1105515 | 0 | 0 |
+
+Each retained seven living citizens, zero recorded dead citizens, 50 raw food
+units, 60 drinks and zero placed beds. These are short-window observations,
+not sustainable-production or strong model-ranking claims. Individual source
+manifests include per-decision timelines and all measurement limitations. The
+all-six input receipt binds their exact hashes. Reported dollar charges remain
+unknown, not zero; there were no new model calls in the input audit.

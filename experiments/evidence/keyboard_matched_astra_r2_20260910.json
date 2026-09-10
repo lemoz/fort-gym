@@ -1,0 +1,705 @@
+{
+  "schema_version": "fortgym.public-matched-keyboard-result/v1",
+  "campaign_id": "matched-20260910-astra-r2",
+  "cohort_id": "keyboard-matched-pilot-20260910",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "replicate": 2,
+  "recorded_date_utc": "2026-09-10",
+  "condition_id": "matched-pilot-astra-medium-native-keyboard-120x40",
+  "execution": {
+    "source_revision": "1bc49b9675b1c82ad502bbd6d8461c9cdbf077e9",
+    "image_id": "sha256:ebc48ef1e63dabcae0e624e92eb114bbfd5e21d96bb9d5a2a3e0f0c2a0426cc9",
+    "seed_receipt_sha256": "eaf5fa5a40014719e6c313f33497740e536a8faa1c90a84c4e09dcc380ac0595",
+    "cohort_plan_sha256": "a724c04c94e27976820cb7fc8b071b7a15cd42973e69d3eb9a185bd97c632098",
+    "condition_file_sha256": "064ff83d17177719bd7b6c82d1502b713c5b127c4dda5e8ae98d56eedb47286e",
+    "trial_file_sha256": "54b1e9368af0125837d8c45154b2b015412a3e0722e6099004ef68fde2a55ae0",
+    "binding_sha256": "81b60b43fffdad75b1a3d9bdc7a3014a99e9890344dae532c4ba0406ed483779"
+  },
+  "control_profile": "native_keyboard/v2",
+  "observation_profile": "native_screen_text/v1",
+  "screen_size": [
+    120,
+    40
+  ],
+  "prompt_profile": "native_keyboard_memory_replacement/v1",
+  "status": "completed",
+  "stop_reason": "segment_limit",
+  "response_limit": 32,
+  "responses": 32,
+  "saved_elapsed_ticks": 9000,
+  "year_two_reached": false,
+  "checkpoint_sha256": "66582a3d8fa05b8e8379456054fcc56786ef4a88214500aedfe9e8f4cea43679",
+  "checkpoint_verified": true,
+  "final_fresh_reload_verified": false,
+  "initial_memory_empty": true,
+  "inherited_usage": false,
+  "historical_loss_records": 0,
+  "new_native_save_losses": 0,
+  "human_gameplay_rescue": false,
+  "usage": {
+    "returned_tokens": 988564,
+    "dispatched_requests": 32,
+    "accounted_responses": 32,
+    "reported_charge_usd": null,
+    "cost_basis": "codex_subscription_charge_unreported/v1"
+  },
+  "initial_metrics": {
+    "completed_beds": 0,
+    "completed_farms": 0,
+    "completed_workshops": 0,
+    "drink_stock": 60,
+    "food_stock": 50,
+    "functional_rooms": 0,
+    "population": 7,
+    "recorded_dead_citizens": 0,
+    "stone_stock": null,
+    "wood_stock": null
+  },
+  "saved_metrics": {
+    "completed_beds": 0,
+    "completed_farms": 1,
+    "completed_workshops": 1,
+    "drink_stock": 60,
+    "food_stock": 50,
+    "functional_rooms": null,
+    "population": 7,
+    "recorded_dead_citizens": 0,
+    "stone_stock": null,
+    "wood_stock": null
+  },
+  "food": {
+    "available": true,
+    "raw_edible_units": 50,
+    "trader_flagged_units": 0,
+    "ownership_accessibility_assessed": false,
+    "complete_after_action_samples": 32,
+    "after_action_samples": 32
+  },
+  "actions": {
+    "accepted": 32,
+    "by_type": {
+      "KEYSTROKE": {
+        "accepted": 32,
+        "rejected": 0,
+        "unknown": 0
+      }
+    },
+    "changed_command_after_rejection": 0,
+    "committed_rows": 32,
+    "path_cache_stale_rejections": 0,
+    "rejected": 0,
+    "unknown": 0
+  },
+  "timeline": [
+    {
+      "decision": 1,
+      "elapsed_ticks": 0,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 0,
+        "completed_workshops": 0,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": 0,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 2,
+      "elapsed_ticks": 0,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 0,
+        "completed_workshops": 0,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": 0,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 3,
+      "elapsed_ticks": 0,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 0,
+        "completed_workshops": 0,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": 0,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 4,
+      "elapsed_ticks": 0,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 0,
+        "completed_workshops": 0,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": 0,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 5,
+      "elapsed_ticks": 2000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 0,
+        "completed_workshops": 0,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": 0,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 6,
+      "elapsed_ticks": 2000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 0,
+        "completed_workshops": 0,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": 0,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 7,
+      "elapsed_ticks": 4000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 0,
+        "completed_workshops": 0,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": 0,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 8,
+      "elapsed_ticks": 4000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 0,
+        "completed_workshops": 0,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": 0,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 9,
+      "elapsed_ticks": 4000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 0,
+        "completed_workshops": 0,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": 0,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 10,
+      "elapsed_ticks": 4000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 0,
+        "completed_workshops": 0,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": 0,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 11,
+      "elapsed_ticks": 6000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 0,
+        "completed_workshops": 1,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 12,
+      "elapsed_ticks": 6000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 0,
+        "completed_workshops": 1,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 13,
+      "elapsed_ticks": 8000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 0,
+        "completed_workshops": 1,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 14,
+      "elapsed_ticks": 8000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 0,
+        "completed_workshops": 1,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 15,
+      "elapsed_ticks": 8000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 0,
+        "completed_workshops": 1,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 16,
+      "elapsed_ticks": 9000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "completed_workshops": 1,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 17,
+      "elapsed_ticks": 9000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "completed_workshops": 1,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 18,
+      "elapsed_ticks": 9000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "completed_workshops": 1,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 19,
+      "elapsed_ticks": 9000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "completed_workshops": 1,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 20,
+      "elapsed_ticks": 9000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "completed_workshops": 1,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 21,
+      "elapsed_ticks": 9000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "completed_workshops": 1,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 22,
+      "elapsed_ticks": 9000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "completed_workshops": 1,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 23,
+      "elapsed_ticks": 9000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "completed_workshops": 1,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 24,
+      "elapsed_ticks": 9000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "completed_workshops": 1,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 25,
+      "elapsed_ticks": 9000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "completed_workshops": 1,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 26,
+      "elapsed_ticks": 9000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "completed_workshops": 1,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 27,
+      "elapsed_ticks": 9000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "completed_workshops": 1,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 28,
+      "elapsed_ticks": 9000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "completed_workshops": 1,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 29,
+      "elapsed_ticks": 9000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "completed_workshops": 1,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 30,
+      "elapsed_ticks": 9000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "completed_workshops": 1,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 31,
+      "elapsed_ticks": 9000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "completed_workshops": 1,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 32,
+      "elapsed_ticks": 9000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "completed_workshops": 1,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    }
+  ],
+  "activity": {
+    "available_boundaries": 32,
+    "observed_boundaries": 32,
+    "boundaries_with_job_type": {
+      "ConstructBed": 20,
+      "Dig": 8,
+      "FellTree": 4,
+      "Fish": 20,
+      "PickupEquipment": 4,
+      "no_current_job": 32
+    },
+    "final": {
+      "available": true,
+      "job_counts": {
+        "ConstructBed": 1,
+        "Fish": 1,
+        "no_current_job": 5
+      },
+      "step": 31,
+      "unknown_citizens": 0,
+      "year": 30,
+      "year_tick": 25801
+    }
+  },
+  "production_rates": null,
+  "consumption_rates": null,
+  "sustainability_established": false,
+  "functioning_fortress": "not_assessed",
+  "matched_comparison_complete": false,
+  "native_cleanup_verified": true,
+  "vm_teardown_verified": true,
+  "shutdown": {
+    "guest_command_warning": true,
+    "guest_poweroff_returncode": 1,
+    "vm_observed_stopped": true,
+    "vm_stop_returncode": 0
+  },
+  "storage_amendment": {
+    "amendment_id": "keyboard-matched-storage-20260910",
+    "data_disk_gib_before": 24,
+    "data_disk_gib_after": 32,
+    "parent_execution_sha256": "bb3c140c583c3d1462f48fe78cd3a8980713a860d512fceff337dd733f995312",
+    "plan_sha256": "7bb71cd099a1b945e8f9cafb184acfaa15ca906ffa1b57e250ac7615e9b23339",
+    "operation_sha256": "9034ebaf21974e71c44b795aa7c23a5cf6f67802e9a1ff679860485f81d04b8f",
+    "plan_url": "https://github.com/lemoz/fort-gym/blob/e753ab3d32a2e18ef1159f79e7810dcc963dd850/experiments/keyboard_matched_storage_amendment_20260910.json",
+    "identical_host_configuration_to_first_two_trials": false,
+    "source_image_seed_compute_and_gameplay_conditions_unchanged": true,
+    "wall_clock_performance_comparison_excluded": true
+  },
+  "resources": {
+    "observed_boundaries": 4,
+    "memory_limit_bytes": 1610612736,
+    "memory_peak_bytes": 1239564288,
+    "memory_limit_events": 0,
+    "oom_events": 0,
+    "oom_kills": 0,
+    "task_limit": 256,
+    "task_peak": 22,
+    "task_limit_events": 0,
+    "maximum_observed_zombies": 0,
+    "process_scans_complete": true,
+    "tasks_include_threads": true
+  },
+  "audit_sha256": "778cd59483f154b9620ab3e84dc31525747f4c77b8837e1db651182bb12ae363",
+  "scope": "One independently started model trial. Saved gameplay and actual returned usage, not a ranking or proof of sustainable production. Job samples are not completed jobs. Private prompts, maps and native saves are excluded."
+}
