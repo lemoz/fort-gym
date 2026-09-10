@@ -111,8 +111,15 @@ native cleanup and VM teardown passed. Its final new save has not yet had a
 separate fresh reload. The observed early lack of game-time movement followed
 the model's zero-tick menu-navigation requests, not a forced harness pause.
 
-Terra attempt 1 has now started its own predeclared continuation. Its outcome is
-not yet verified. Native reload preserves the saved world and
+Terra attempt 1 completed its continuation and passed the independent save,
+receipt and teardown audit. Its [record](../experiments/evidence/keyboard_matched_terra_r1_continuation_32_64_20260910.json)
+retains 6,000 new saved ticks (13,000 cumulative), 678,838 new tokens (1,537,901
+cumulative) and seven living dwarves. Completed workshops, farms and placed beds
+remain zero, with food50 and drinks60. One unsupported native-key response is
+retained among 32 responses; no save loss occurred. Source fresh load, memory and
+usage lineage passed; the new final checkpoint has no separate fresh reload yet.
+Terra attempt 2 is next in the same predeclared continuation sequence.
+Native reload preserves the saved world and
 paused calendar, not a promise of identical open UI menus; initial screens are
 retained without human navigation. Continue in the declared
 order Astra1, Sol1, Terra1, Terra2, Sol2, Astra2. The native source remains frozen

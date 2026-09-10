@@ -9,6 +9,7 @@ import pytest
 EVIDENCE = Path(__file__).resolve().parents[1] / "experiments/evidence"
 RESULT = "keyboard_matched_astra_r1_continuation_32_64_20260910.json"
 SOL_RESULT = "keyboard_matched_sol_r1_continuation_32_64_20260910.json"
+TERRA_RESULT = "keyboard_matched_terra_r1_continuation_32_64_20260910.json"
 WEBSITE = "keyboard_matched_continuation_website_20260910.json"
 
 
@@ -17,6 +18,7 @@ WEBSITE = "keyboard_matched_continuation_website_20260910.json"
     [
         (RESULT, "2c8abe1f7135d94ed27aea51e18ebc59e0599205caf3f268f4480b0e377f3d29"),
         (SOL_RESULT, "a624a9687257157aa91029d950ca1735a0e8f1baaa224cb66bba7efac50a1dbd"),
+        (TERRA_RESULT, "e81a20836eb6959a529b657a72339bca2e299203c73188006fb32d682c734e11"),
         (WEBSITE, "c5cb272a0b62646fa6c495d5157b68a51a758544fc9c538bd715bf08dbf3f8c9"),
     ],
 )
@@ -124,3 +126,21 @@ def test_sol_continuation_retains_its_own_save_and_unimproved_development():
     assert record["new_window_timeline"][-1]["campaign_elapsed_ticks"] == 5500
     assert record["source_checkpoint_fresh_load_verified"] is True
     assert record["final_fresh_reload_verified"] is record["sustainability_established"] is False
+
+
+def test_terra_saved_outcome_preserves_unsupported_key_evidence():
+    record = json.loads((EVIDENCE / TERRA_RESULT).read_bytes())
+    assert record["campaign_id"] == "matched-20260910-terra-r1"
+    assert record["new_responses"] == 32 and record["next_decision"] == 64
+    assert record["new_saved_ticks"] == 6000 and record["saved_elapsed_ticks"] == 13000
+    assert record["usage"]["new_returned_tokens"] == 678838
+    assert record["usage"]["campaign_returned_tokens"] == 1537901
+    assert (
+        record["checkpoint_sha256"]
+        == "86657110d8c1ba674f5a3da8ce2e058c9e691af31c924bbd97eedeaa9096ae89"
+    )
+    assert record["new_window_clock_outcomes"] == {"no_error": 31, "unsupported_native_keys": 1}
+    assert record["new_window_timeline"][-1]["campaign_elapsed_ticks"] == 13000
+    assert record["saved_metrics"]["population"] == 7
+    assert record["saved_metrics"]["completed_workshops"] == 0
+    assert record["native_cleanup_verified"] is record["vm_teardown_verified"] is True
