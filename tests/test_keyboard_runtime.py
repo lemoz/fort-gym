@@ -337,7 +337,8 @@ def test_window_rejects_old_save_or_changed_identity_before_launch(tmp_path, sav
     assert not args.output.exists()
 
 
-def test_window_runs_serial_checkpoints_on_distinct_ports(tmp_path, saved, monkeypatch):
+@pytest.mark.parametrize("pinned", [False, True])
+def test_window_runs_serial_checkpoints_on_distinct_ports(tmp_path, saved, monkeypatch, pinned):
     from scripts import campaign_keyboard_native as native
 
     condition_path, window_path = tmp_path / "condition.json", tmp_path / "window.json"
@@ -349,6 +350,8 @@ def test_window_runs_serial_checkpoints_on_distinct_ports(tmp_path, saved, monke
             "condition_id": "test",
             "original_condition": condition_path.name,
             "continuation_from_next_step": 1,
+            **({"continuation_checkpoint_sha256": native.verify_checkpoint(saved[0])["sha256"]}
+               if pinned else {}),
             "steps_per_segment": 2,
             "max_segments": 2,
             "reset_memory": False,

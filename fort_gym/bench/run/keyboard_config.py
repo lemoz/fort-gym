@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 
 from ..agent.codex_protocol import TRANSPORT
 from ..agent.codex_transport import MODEL, REASONING_EFFORT
@@ -84,6 +85,10 @@ def load_window(condition_path: Path, window_path: Path) -> tuple[dict, dict]:
     ):
         raise ValueError("Continuation window must preserve its declared condition")
     positive(window.get("continuation_from_next_step"), "continuation cursor")
+    if "continuation_checkpoint_sha256" in window:
+        checkpoint = window["continuation_checkpoint_sha256"]
+        if not isinstance(checkpoint, str) or re.fullmatch(r"[a-f0-9]{64}", checkpoint) is None:
+            raise ValueError("Invalid declared continuation checkpoint digest")
     positive(window.get("steps_per_segment"), "segment size", maximum=64)
     positive(window.get("max_segments"), "segment count", maximum=16)
     if window.get("snapshot_profile", LEGACY_SAVE_PROFILE) not in SAVE_PROFILES:

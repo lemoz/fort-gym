@@ -171,6 +171,9 @@ def run_window(args) -> dict:
     if type(args.port) is not int or not 1024 <= args.port <= 65535 - window["max_segments"]:
         raise ValueError("The declared window needs distinct bounded local ports")
     manifest = verify_checkpoint(args.checkpoint)
+    if (window.get("continuation_checkpoint_sha256") is not None
+            and manifest["sha256"] != window["continuation_checkpoint_sha256"]):
+        raise ValueError("Checkpoint does not match the declared continuation digest")
     if manifest["payload"]["next_step"] != window["continuation_from_next_step"]:
         raise ValueError("Checkpoint does not match the declared continuation cursor")
     original_sha = file_digest(args.checkpoint / "checkpoint.json")
