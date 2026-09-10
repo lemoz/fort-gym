@@ -404,6 +404,17 @@ async def public_keyboard_continuation_active() -> JSONResponse:
     return JSONResponse(data, headers=HTML_CACHE_HEADERS)
 
 
+@app.get("/public/keyboard-cohort-continuations")
+async def public_keyboard_continuations() -> JSONResponse:
+    from .keyboard_continuations import keyboard_continuations
+
+    try:
+        data = keyboard_continuations()
+    except (OSError, ValueError, KeyError, TypeError):
+        raise HTTPException(status_code=503, detail="Recorded continuations are unavailable") from None
+    return JSONResponse(data, headers=HTML_CACHE_HEADERS)
+
+
 @app.get("/protocols/{slug}", response_class=HTMLResponse)
 async def serve_protocol_detail(slug: str):
     """Serve protocol-specific metadata while the client resolves the detail body."""

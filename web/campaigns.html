@@ -50,6 +50,16 @@
         <div id="matched-live-content" hidden></div>
         <a href="/public/keyboard-cohort-active">Open current trial data</a>
       </details>
+      <div class="campaign-condition" aria-labelledby="continuation-records-title">
+        <div class="campaign-tracking-heading">
+          <h3 id="continuation-records-title">Verified continuation saves</h3>
+          <button id="refresh-continuation-records" type="button">Refresh saved results</button>
+        </div>
+        <p id="continuation-records-status" role="status" aria-live="polite">Loading saved continuation results…</p>
+        <div id="continuation-records-content" hidden></div>
+        <a href="/public/keyboard-cohort-continuations">Open saved continuation data</a>
+      </div>
+      <h3>Initial 32-decision windows</h3>
       <p id="keyboard-cohort-status" role="status" aria-live="polite">Loading matched trial results…</p>
       <div id="keyboard-cohort-content" hidden></div>
       <a href="/public/keyboard-cohort">Open matched trial data</a>
@@ -175,5 +185,6 @@
   <script src="/static/campaign-matched.js?v=2" defer></script>
   <script src="/static/campaign-matched-live.js?v=1" defer></script>
   <script src="/static/campaign-continuation-live.js?v=1" defer></script>
+  <script src="/static/campaign-continuation-records.js?v=1" defer></script>
 </body>
 </html>
