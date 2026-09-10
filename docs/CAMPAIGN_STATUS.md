@@ -4,6 +4,49 @@ Verified September 10, 2026 UTC. The Year-Two Autonomous Play objective remains
 unfinished; work continues toward the same objective. The owner has approved starting the project
 work for [Astra standard-input experiments](ASTRA_STANDARD_INPUT_EXPERIMENTS.md).
 
+## Latest matched pilot: four audited windows, live website verified
+
+The matched cohort now has verified Astra attempt 1, Sol attempt 1 and both Terra
+attempts. Terra retained 7,000 and 9,000 ticks respectively, with 32 responses per
+window and 859,063 / 1,105,515 returned tokens. Both ended with seven living
+dwarves, 50 raw edible food units, 60 drinks and no completed workshop, farm or
+placed bed. Neither proves sustainable production. The final saves are verified
+but have not yet had fresh-load continuation tests.
+
+Terra attempt 2's guest poweroff returned 1; the subsequent VM stop returned zero
+and stopped state was independently verified. Its original audit retains this
+warning. Its [public result](../experiments/evidence/keyboard_matched_terra_r2_20260910.json)
+is versioned separately from the earlier first-window records.
+
+The next declared Sol attempt 2 has started under the same frozen native
+source/image, 32-response bound, subscription admission checks and mandatory
+teardown. No GCE VM, paid API fallback, credit purchase or reset was used.
+Storage remains the predeclared 32 GiB amendment; CPU, RAM and game controls
+are unchanged. Model dollar charges remain unreported, not zero.
+
+The local website now serves clean revision
+`2a63972fb56e06e019e566b5b34bd2c5962e36db`, pushed and remote-readback verified in
+[draft PR #146](https://github.com/lemoz/fort-gym/pull/146). It shows three published
+first-window records, all 96 decision boundaries, and the current matched trial.
+Terra attempt 2 is audited and separately versioned, but is not yet registered
+in the recorded comparison table. Its registration remains a next step.
+
+The new live observer reads only host receipts/process identity and adds no game
+or model calls. It labels running controllers, unsettled usage, provisional time
+and owner-reported teardown separately from verified saves. Missing observations
+expire after 30 seconds, including after a failed refresh.
+
+All 4,517 local tests passed with ten skips. Changed-file Ruff, scoped mypy and
+JavaScript syntax checks passed. Existing repository-wide debt remains ten Ruff
+and 465 mypy errors. GitHub CI for the exact revision is in progress in run
+`34530711434`; success is not yet claimed.
+[Actual local HTTP acceptance](../experiments/evidence/keyboard_matched_live_website_20260910.json)
+passed against the live Sol repeat, including unchanged historical evidence,
+matching source/assets, three recorded rows, expiring live data and disabled admin.
+The first active-state check correctly failed after Terra's controller had already
+ended; the check was not weakened. No browser visual QA, public deployment or main
+merge occurred. This is progress, not completion of the full Year-Two goal.
+
 ## Current phase: Astra native play and continuation
 
 Implement Astra Medium on native keyboard controls, verify the actual model-visible
