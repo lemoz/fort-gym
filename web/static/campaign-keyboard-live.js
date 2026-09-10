@@ -70,7 +70,7 @@
       facts.append(item); node('dt', label, item); node('dd', value, item);
     }
     node('p', data.latest_verified_save
-      ? `This window started from checkpoint ${count(data.saved_checkpoint_cursor)}. Save metadata and the next worker’s reload are verified through checkpoint ${count(data.latest_verified_save.checkpoint_cursor)}. The full save-file and gameplay-trace audit is still pending. Later reported time is not yet verified as saved.`
+      ? `At the last live observation, this window started from checkpoint ${count(data.saved_checkpoint_cursor)}. Save metadata and the next worker’s reload were verified through checkpoint ${count(data.latest_verified_save.checkpoint_cursor)}; the full save-file and gameplay-trace audit was pending. Check recorded results below for later verification of saved progress.`
       : `At the last live observation, this window’s starting save was checkpoint ${count(data.saved_checkpoint_cursor)}. Reported time comes from the model’s subsequent feedback, not a newly verified save. Check the recorded results below for later verification.`, content);
     node('p', `${count(data.campaign_responses)} campaign responses and ${count(data.campaign_tokens)} campaign tokens so far; ${count(data.all_attempt_tokens)} tokens including historical failed deliveries. Charges are unreported, not zero.`, content);
     node('p', `Last host observation: ${new Date(data.observed_at_unix * 1000).toISOString()}. Refreshes while this page is visible.`, content).className = 'campaign-note';

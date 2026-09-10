@@ -13,6 +13,12 @@ from tests.test_campaign_keyboard_records import evidence_root as evidence_root
 
 
 def add_completed_fixture(root, monkeypatch):
+    # This synthetic branch replaces the not-yet-published child of historical AA.
+    # The real AB lineage is covered separately by the recorded year-two tests.
+    monkeypatch.setattr(records, "COMPLETED_WINDOWS", (
+        "astra_native_keyboard_completed_window_20260909x.json",
+        "astra_native_keyboard_completed_window_20260909y.json",
+    ))
     before = records.keyboard_campaign_records(root)
     parent = before["paused_windows"][-1]
     source = json.loads((root / "experiments/evidence" / records.PAUSED_WINDOWS[-1]).read_bytes())

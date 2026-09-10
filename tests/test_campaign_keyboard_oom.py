@@ -182,8 +182,9 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   await new Promise(setImmediate);
   const rendered = elements['keyboard-results'].textContent;
   assert.equal(elements['keyboard-results'].hidden, false);
-  const newest = (data.paused_windows || []).at(-1) || data.completed_windows.at(-1);
-  assert.ok(rendered.startsWith(`Checkpoint ${newest.progress.checkpoint_cursor} saved · window ${newest.status === 'paused' ? 'paused' : 'complete'}`));
+  const newest = [...(data.paused_windows || []), ...data.completed_windows]
+    .find(row => row.window_id === data.continuation_events.at(-1).id);
+  assert.ok(rendered.startsWith(`Checkpoint ${newest.progress.checkpoint_cursor.toLocaleString('en-US')} saved · window ${newest.status === 'paused' ? 'paused' : 'complete'}`));
   assert.ok(rendered.includes('Checkpoint 807 saved · restart interrupted'));
   const latest = rendered.slice(rendered.indexOf('Play resumed after restart'), rendered.indexOf('Memory-related interruption'));
   for (const text of ['198,600 retained ticks', '64 new model decisions, 6,000 new ticks',

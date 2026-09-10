@@ -29,7 +29,9 @@ def test_later_reload_preserves_the_saved_pause_and_earlier_verification():
     assert pause["progress"]["cumulative_model_responses"] == 1111
     assert pause["usage"]["campaign_tokens"] == 35385830
     assert pause["pause"]["unattempted_decisions"] == 6
-    assert data["continuation_events"][-1] == {"kind": "paused_window", "id": pause["window_id"]}
+    event = {"kind": "paused_window", "id": pause["window_id"]}
+    assert data["continuation_events"].count(event) == 1
+    assert not any(row["id"] == later["verification_id"] for row in data["continuation_events"])
 
 
 def test_reload_does_not_guess_between_duplicate_checkpoint_parents():

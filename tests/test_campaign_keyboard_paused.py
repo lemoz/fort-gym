@@ -20,10 +20,12 @@ def publication(root):
 def test_paused_window_preserves_completed_history_and_usage():
     data = records.keyboard_campaign_records()
     row = data["paused_windows"][0]
-    parent = data["completed_windows"][-1]
+    parent = next(window for window in data["completed_windows"]
+                  if window["window_id"] == row["parent_record"])
     assert row["status"] == "paused"
     assert parent["status"] == "completed" and parent["progress"]["checkpoint_cursor"] == 903
-    assert data["continuation_events"][-2:] == [
+    pause_index = data["continuation_events"].index({"kind": "paused_window", "id": row["window_id"]})
+    assert data["continuation_events"][pause_index - 1:pause_index + 1] == [
         {"kind": "completed_window", "id": parent["window_id"]},
         {"kind": "paused_window", "id": row["window_id"]},
     ]
@@ -124,8 +126,8 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
 (async () => {
   await new Promise(setImmediate);
   const full = elements['keyboard-results'].textContent;
-  assert.ok(full.startsWith('Checkpoint 929 saved · window paused'));
-  const row = full.slice(0, full.indexOf('Checkpoint 903 saved'));
+  assert.ok(full.includes('Checkpoint 929 saved · window paused'));
+  const row = full.slice(full.indexOf('Checkpoint 929 saved'), full.indexOf('Checkpoint 903 saved'));
   for (const expected of ['26 of 32', '0 model tokens', '6 decision slots remain unattempted',
     'harness threshold, not proof that the provider limit was reached', '90% to a 98% cutoff',
     '292,582 ticks', '72.6%', '24,000 ticks', '16', '567 drinks', '57 raw-edible units',
