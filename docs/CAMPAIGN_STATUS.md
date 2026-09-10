@@ -43,12 +43,39 @@ lower bound, not a new verified save or a terminal result; checkpoint 929 /
 existing owner without making game or model calls. Live HTTP audit SHA256:
 `79c58e990c3df825fc27749778d0f537d43018295d0bec40d7129e845788b83f`.
 
-The native owner and observer were both freshly polled running at this update.
-Continue observing these same handles, then audit actual saves, usage, native
-outcomes and teardown before publishing a recorded result. The existing local
+The first batch subsequently saved checkpoint 961, and the second native worker
+freshly loaded it with identical saved agent state, memory, usage and native
+metrics. The bounded metadata audit verified 340582 retained elapsed ticks
+(84.5 percent of one full game year), adding 48000 ticks across 32 responses.
+Sixteen living citizens and zero recorded deaths remain, with 78 raw-edible food
+units, 533 drink units, eleven beds, eight farms and four workshops. Tables grew
+from two to three and chairs from one to three. All 32 subscription event receipts
+reconciled: 1143 cumulative responses and 36454338 campaign tokens. This is a
+verified intermediate save/load boundary, not full terminal inventory/trace
+acceptance or a completed window. The second batch is running. Boundary audit
+SHA256: `d1651434d821d6f9c9246fe43e86aee6411752f6e388beb743bde821f498c0bb`.
+
+The native owner and observer were freshly polled running at this update.
+Continue observing these same handles, then audit full saved inventories, traces,
+usage, native outcomes and teardown before publishing a recorded result. The existing local
 preview shows active progress separately from the unchanged recorded pause and
 reload history. No year-two outcome, repeated model comparison, merge or public
 deployment is established by this launch.
+
+A separately isolated website fix now loads completed and paused windows in
+checkpoint-parent order. This supports a completed continuation after a pause
+while preserving that pause, its unused decisions and the complete older data.
+The full canonical historical public response hashes identically before/after.
+Source `fde8bbab4134ef279de6ef0a66c3715d8379d9ce` is pushed and read back on
+`codex/campaign-window-ab-records`, in draft
+[PR #138](https://github.com/lemoz/fort-gym/pull/138) against the harness branch.
+Validation passed 177 focused tests, 4337 full-suite tests with ten skips, and
+the final 11-test sequence/renderer regression. The renderer test was added after
+full-suite collection, so the final source still requires its own CI result.
+Changed-file Ruff and scoped mypy passed. CI `34506914909` is currently running.
+The active harness and live website remain on unchanged source `3ab9fc4c9`;
+integration waits for the owned game run to finish and tear down. No ongoing
+run result was added to recorded publications, and no merge or deployment occurred.
 
 ### Latest checkpoint verification: 929 freshly reloaded, no new gameplay
 

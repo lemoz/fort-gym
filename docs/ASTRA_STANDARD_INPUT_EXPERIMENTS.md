@@ -109,6 +109,15 @@ terminal outcome or teardown is claimed yet. Continue the same bounded owner;
 do not restart based on an observation timeout. See
 [Campaign status](CAMPAIGN_STATUS.md) for exact receipts and remaining work.
 
+Its first 32-decision batch has since saved checkpoint 961 and freshly loaded
+the next native worker with the same memory and usage. This intermediate boundary
+retains 340582 elapsed ticks, 84.5 percent of one full year, with 16 living
+citizens, 78 raw-edible food units and 533 drink units. Tables/chairs increased
+to three each. The second batch is running; complete inventory/trace audit and
+final teardown remain pending. A separate tested website ordering fix is pushed
+in draft PR #138 so completed play can follow a recorded pause without changing
+that history. Its CI is pending; the running harness and preview are untouched.
+
 Window aa saved 26 of 32 declared Astra Medium decisions as checkpoint 929 at
 292582 retained elapsed ticks, 72.6% of the first-year target. The fortress has
 16 living citizens, no recorded deaths, 567 drink units and 57 raw-edible food
