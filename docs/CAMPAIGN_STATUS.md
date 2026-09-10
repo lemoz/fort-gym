@@ -143,12 +143,51 @@ published result, not no activity or zero performance. Live matched-trial
 observation is still pending; the older live feed remains stale and unchanged.
 No public deployment, main merge or browser visual QA is claimed.
 
-Next: add the audited Sol result to the page, check retained-data disk capacity
-before Terra attempt 1, then finish the remaining starts and continue each trial's
-own saved fortress. Sol's disk preflight observed 1667272 KiB available before
-its run. Preserve all retained evidence; do not silently resize the bound VM,
-alter the frozen operator or delete prior volumes to make the next start fit.
-The full Year-Two/Cross-Model/Website/Remote goal remains active.
+### Two-model website delivered; Terra attempt 1 started
+
+The local comparison now includes both audited Astra and Sol results. Its exact
+clean source `526d999dbc7552f00348a9913807f4f51ba26913` is pushed and read back
+in draft [PR #145](https://github.com/lemoz/fort-gym/pull/145), stacked on #144.
+All 4485 local regression tests passed (10 skipped); 16 matched-cohort checks
+passed, including mismatched-source/control rejection and both decision histories.
+Exact-head GitHub CI `34527621751` passed. PR #144 CI also passed.
+Actual HTTP acceptance verified the two-model endpoint and exact source bytes,
+preserving Astra's original row, unpublished slots and all historical/admission/live
+data. Receipt SHA256:
+`db5064ed1adbc9f7eac8770f477c289ddde5820acde8d9078995224aeb7ba2fb`.
+Full-suite receipt SHA256:
+`178cfbb5f8109f37e7192dcacc461de3b393ad638e808a0d2cedae906ae92243`.
+New-module Ruff/scoped mypy passed; the old global static issues remain.
+This is local and remote delivery, not merge or public deployment.
+
+A provider-free capacity check then found 1544820 KiB available, below the
+unchanged 1572864 KiB next-run floor. No Terra trial was consumed by that check.
+The [storage-only amendment](../experiments/keyboard_matched_storage_amendment_20260910.json)
+was committed and published before enlarging the existing data disk from 24 to
+32 GiB. A verified stopped-disk APFS rollback copy was retained; it is not an
+independent backup. Actual usable space rose to 9462240 KiB. The operation
+started no game/model, preserved the 78 volumes and 78 stopped containers, changed
+only the data-disk configuration, and verified VM teardown. No deletion, migration,
+compute-budget change, model fallback or cloud VM was used.
+The [operation result](../experiments/evidence/keyboard_matched_storage_expansion_20260910.json)
+is separate from live status. Original bindings, operators, source image, configs
+and first-two-result audits remain unchanged.
+
+Terra's `matched-20260910-terra-r1` is now active under a separately versioned
+host operator and execution binding. Native source/image/seed, CPU/RAM/task limits,
+model budget, screen and gameplay/memory profiles are unchanged. Storage capacity
+is an explicit deviation from the first two trials; identical host configuration
+or wall-clock performance comparisons across that change are not claimed.
+The new runner passed 24 offline tests, including original cleanup/control-code
+equivalence, fault cleanup and refusal to relaunch the first two trials.
+Its first real subscription-backed Terra Medium receipt was independently decoded:
+33470 returned tokens, fresh admission at 34 percent used under the 98-percent
+cutoff. At the latest observation six responses had returned, all grammar-valid.
+This is active progress, not a completed save or model outcome.
+
+Next: finish and audit this exact Terra owner, disclose its storage amendment on
+the comparison page, add live matched-trial observation, complete the remaining
+starts and continue each trial's own saved fortress. The full goal remains active.
 
 ### Earlier launch observation: Astra replicate 1
 
