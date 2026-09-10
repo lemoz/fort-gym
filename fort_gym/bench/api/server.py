@@ -346,6 +346,17 @@ async def public_keyboard_campaigns() -> JSONResponse:
     return JSONResponse(data, headers=HTML_CACHE_HEADERS)
 
 
+@app.get("/public/keyboard-cohort")
+async def public_keyboard_cohort() -> JSONResponse:
+    from .keyboard_cohort import keyboard_cohort
+
+    try:
+        data = keyboard_cohort()
+    except (OSError, ValueError, KeyError, TypeError):
+        raise HTTPException(status_code=503, detail="Matched trial evidence is unavailable") from None
+    return JSONResponse(data, headers=HTML_CACHE_HEADERS)
+
+
 @app.get("/public/keyboard-admission")
 async def public_keyboard_admission() -> JSONResponse:
     from .keyboard_admission import admission_record
