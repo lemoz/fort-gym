@@ -1,6 +1,6 @@
 # Campaign status
 
-Verified September 9, 2026 UTC. The Year-Two Autonomous Play objective remains
+Verified September 10, 2026 UTC. The Year-Two Autonomous Play objective remains
 unfinished; work continues toward the same objective. The owner has approved starting the project
 work for [Astra standard-input experiments](ASTRA_STANDARD_INPUT_EXPERIMENTS.md).
 
@@ -12,9 +12,48 @@ DFHack shortcuts as an explicit alternative condition. Compare matching starts
 and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. Several bounded Astra native-keyboard
 windows have completed. Window x completed after the earlier window-w runtime
-failure. Window y is continuing from its newly saved first segment.
+failure. Window y completed both serial segments and its result is now recorded.
 
-### Current: checkpoint 871 saved and freshly loaded; window y still running
+### Current: checkpoint 903 saved and recorded on the local website
+
+Window y completed all 64 Astra Medium decisions with two verified serial saves,
+871 then 903. It added 52000 ticks, reaching 268582 saved elapsed ticks, or 66.61%
+of one full elapsed game year. Checkpoint 903 manifest:
+`08142546e6f470fe0d83e91bdc50db9efe332378ffaaf30613a27e91d72e5e37`.
+The fresh loads of parent 839 and intermediate 871 passed; final 903 has not yet
+had a separate fresh-process reload. Full native inventories, saved lineage,
+trace/usage prefixes, all 64 model receipts and retained losses passed audit.
+
+The saved fortress has 16 citizens, zero recorded deaths, 520 drinks, 11 beds,
+8 completed farms, 4 completed workshops, one completed table and one chair.
+All 64 after-action food scans completed; final raw edible inventory is 47 units,
+with zero trader-flagged or in-job units. Initial raw food included 210 trader
+units, so the gross decrease from 259 is not a consumption measurement. Ownership,
+accessibility, production attribution and sustainability remain unproven.
+
+All 1085 responses, 34521087 campaign tokens and 34590091 all-attempt tokens are
+retained; this window added 2158854 tokens. Actual charges remain unreported.
+Six historical loss records preserve 48429 known lost ticks plus unknown
+remainders. One menu-blocked advance and one zero-tick timeout remain recorded;
+26 decisions advanced time. No new loss, replay or human gameplay rescue occurred.
+
+The owner and observer exited zero, evidence export and container stop passed,
+and the local VM was independently observed Stopped. The guest poweroff command
+reported exit 1/underlying 255, retained in its log; the subsequent observed stop
+and final VM-stop command passed. Memory reached the 1536 MiB limit with 3371
+memory-limit events and no OOM/OOM kill; headroom remains unproven. Audit SHA256:
+`9c10387e847690ea1793c59dce1925673bd242a575058843a35d3598693cc4f2`.
+
+Website/result source `125aa8928b95043e06687fb80f1ce63b6eb35446` is committed,
+pushed and read back on the existing draft branch. It passed 4094 tests with
+10 skips, 795 focused checks and scoped static checks. The exact page and public
+API passed HTTP acceptance on http://127.0.0.1:8857/campaigns, retaining historical
+x/839 and w/807 evidence and separating the stale live feed from recorded 903.
+The page adds serial checkpoint/reload details and completed dining furniture.
+No browser visual QA, merge, deployment, year-two success or model comparison
+is claimed. Next: continue from 903 with the same model, controls and memory.
+
+### Historical: first save 871 while window y was still running
 
 Window y's first 32 decisions saved 20000 additional ticks, reaching checkpoint
 871 and 236582 elapsed ticks, or 58.68% of one full elapsed year. Its manifest is

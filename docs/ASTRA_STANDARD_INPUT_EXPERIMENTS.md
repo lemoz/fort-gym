@@ -79,12 +79,13 @@ evidence and remaining native work are tracked in [Campaign status](CAMPAIGN_STA
 
 ## Current native progress
 
-Window y has saved checkpoint 871 at 236582 elapsed ticks and freshly loaded it
-into its second segment. Saved observations show 16 citizens, zero recorded
-deaths, 11 completed beds, 8 farms and 4 workshops. Astra placed repeating barrel
-and brewing orders through standard workshop menus; sustainable production is
-not yet established. The two-segment window remains active. The local website
-still records the fully audited prior checkpoint 839, alongside live-y usage.
+Window y completed both segments and saved checkpoint 903 at 268582 elapsed
+ticks, adding 52000 ticks. Saved observations show 16 citizens, zero recorded
+deaths, 11 completed beds, 8 farms, 4 workshops, one table and one chair. Astra
+used standard workshop and building menus; sustainable production is not yet
+established. Both segment saves and all usage passed independent audit, and the
+VM is stopped. The local website now records 903 with its intermediate reload
+and prior history; the final save still needs its next fresh-process load.
 See [Campaign status](CAMPAIGN_STATUS.md) for current evidence, publication state,
 usage and remaining checks. Historical results below are retained, not current
 campaign or website state.
