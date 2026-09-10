@@ -111,17 +111,22 @@ paused attempt remains sealed.
 Checkpoint/receipt/usage audits and complete game/container/local-VM teardown
 passed. The save added 24000 ticks and 864743 model tokens without replay or new
 loss; 1111 cumulative responses and all older losses are retained. Dollar costs
-remain unreported. A separate fresh reload of 929, sustained production, year-two
-success and repeated cross-model comparisons are not yet verified. Next gameplay
+remain unreported. A later provider-free native reload of 929 passed, restoring
+the paused calendar, normal campaign loop, agent state and original trace/usage
+without any model call, new game time or save. The original checkpoint stayed
+unchanged and VM teardown passed. Sustained production, year-two success and
+repeated cross-model comparisons are not yet verified. Next gameplay
 must retain checkpoint 929 and version a response-budget extension: only 41
 dispatches remain under the inherited 1152 ceiling, insufficient for the remaining
 110618 ticks even at maximum advancement. Window ab now declares four serial
 32-decision segments and an append-only 1280-response ceiling, retaining the
 40-million-token ceiling and exact checkpoint-929 digest. Actual saved-agent
 restore/extension/restore checks passed offline without changing the checkpoint.
-It remains unlaunched: fresh subscription admission and a properly bounded
-native owner/load are still required. No planned progress was added to the
-website. See [Campaign status](CAMPAIGN_STATUS.md)
+The four-segment native owner is now prepared and preflight-verified at source
+`3ab9fc4c9f553171206d3d7122402ec4493ef2e6`, with finite work bounds and mandatory
+cleanup. It remains unlaunched and requires fresh subscription admission. The
+local website now attaches the actual checkpoint-929 reload verification to the
+paused save; no planned progress was added. See [Campaign status](CAMPAIGN_STATUS.md)
 for website/remote delivery and the current evidence boundary.
 
 At source `f970ba4382cf3b83452ae0ff1f8a240cd9507c1b`, the production fresh-trial

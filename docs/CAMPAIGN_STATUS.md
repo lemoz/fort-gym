@@ -15,6 +15,45 @@ windows have completed. Window x completed after the earlier window-w runtime
 failure. Window y completed both serial segments and its result is now recorded.
 Window aa then saved checkpoint 929 before a declared subscription-admission pause.
 
+### Latest checkpoint verification: 929 freshly reloaded, no new gameplay
+
+A provider-free native check at source
+`5fdb7d400ecea26725e22d45f5d2e5e49bef6af5` reopened the exact save in a fresh
+game process, paused at year 30 / tick 309383 with a 120x40 screen. The ordinary
+campaign loop restored cursor 929, 292582 elapsed ticks, the full agent state,
+history and byte-identical trace/usage journals. Sixteen living citizens and
+zero recorded deaths remained. Both before/after native observations matched.
+
+The original checkpoint stayed unchanged. Only the disposable copy's DFHack
+event log changed: two load-event lines added 304 bytes; all 126 other files,
+including `world.sav`, matched. No model call, key action, requested tick advance,
+native save, new checkpoint or human gameplay rescue occurred. The six old losses,
+48429 known lost ticks and unknown remainder remain. Native processes, container,
+guest and local VM stopped with zero cleanup exit codes and independent stopped
+state verification. Memory reached its 1536 MiB limit with 267 limit events and
+no OOM or kill; memory headroom is still not established.
+
+Native audit SHA256:
+`8786c5ab9c7cb52a956a3bdf1953a4b37aa51a60e0b1b4c567ca19e58beedbc1`.
+Public receipt SHA256:
+`e9bc835abf0b27a9aa72005e4b8293760eef4710367f90017b653d5a1d1c4ccd`.
+The receipt is committed at `b1a73c746621f17e38b08fca061b1799c6a7025d`;
+website integration is pushed at `3ab9fc4c9f553171206d3d7122402ec4493ef2e6`
+in draft PR #137. Its focused API/renderer regressions passed 111 tests, with
+changed-file Ruff and scoped mypy passing. All 4327 local tests passed, with ten
+skips; exact-head CI `34436394718` passed 4211 tests with 126 skips on its runner.
+The first restricted local run had one localhost socket-permission failure;
+that receipt remains retained, and the unchanged suite passed with socket access.
+The existing local http://127.0.0.1:8857/campaigns preview now serves source
+`3ab9fc4c9f553171206d3d7122402ec4493ef2e6`. Exact HTTP checks verified its page,
+assets and additive checkpoint-929 reload record, with all original gameplay
+records, prior checkpoint-903 verification, historical admission and stale live
+feed unchanged. Admin remains disabled. HTTP acceptance SHA256:
+`613714ecb38d1892d14a054e32b432addee1347bc54069aa90d6fcdc210b7d6c`.
+No browser visual QA, merge or production deployment is claimed.
+The private diagnostic retains about 230 MiB in the existing artifact tree.
+This closes the checkpoint-929 fresh-load check, not the year-two goal.
+
 ### Next continuation: checkpoint-pinned window ab, not launched
 
 Source `5fdb7d400ecea26725e22d45f5d2e5e49bef6af5` adds window ab with up to
@@ -39,19 +78,26 @@ reload, a new checkpoint or a launched model run. Audit SHA256:
 All 4293 local tests passed, with ten skips. Checkpoint-pin, budget/restore,
 runtime, save and account-admission checks passed, as did changed-file Ruff and
 scoped mypy. These tests and the offline audit do not establish new native play.
-The exact source was pushed to GitHub and is the head of open draft PR #137;
+The exact source was pushed to GitHub through open draft PR #137;
 [CI run 34435255827](https://github.com/lemoz/fort-gym/actions/runs/34435255827)
 passed. This is remote branch delivery, not a merge or deployment.
 
-The latest account read reported 99 percent used, above the unchanged
+During window ab preparation, the account read reported 99 percent used, above the unchanged
 98-percent harness cutoff;
 no provider-reached limit was reported, but no new model run was admitted.
 No reset, purchase or paid fallback was used. Saved gameplay remains checkpoint
-929 at 292582 elapsed ticks. The website remains on its verified result source
+929 at 292582 elapsed ticks. That preparation retained website source
 `2979716c13b0a287f143a64ec0656a6f82430eda`; planned decisions and ticks were not
-added to recorded data. A future VM owner must bind its finite runtime/courier
-limits to this four-segment declaration and freshly verify source/save/admission
-before launch. The complete year-two and multi-model goal remains unfinished.
+added to recorded data. The four-segment owner is now prepared at source
+`3ab9fc4c9f553171206d3d7122402ec4493ef2e6`, with a 26000-second courier work
+bound and 26900-second owner work bound, followed by mandatory bounded cleanup.
+Its preflight verifies the exact source, bundle, checkpoint, actual native reload,
+unchanged memory/usage and first-segment-only budget extension. It makes no model
+or game call and performs no subscription admission. Preflight SHA256:
+`5f71703f97a7837c1b1f812dd15fac721c2be45377fba17c2021bbce6a2299b1`.
+The owner has not run; fresh source/save/runtime checks and account admission
+are still required before launch. The complete year-two and multi-model goal
+remains unfinished.
 
 ### Latest native outcome: checkpoint 929 saved, window aa paused
 
@@ -76,8 +122,9 @@ a call. No purchase, reset, API fallback or local model was used.
 
 The in-process checkpoint, exact original-memory continuation, all dispatch
 receipts, usage, calendar advancement and native save passed independent audit.
-Checkpoint 903 is unchanged. The new save has not yet had a separate fresh-load
-audit. All six historical losses, 48429 known lost ticks and their unknown
+Checkpoint 903 is unchanged. At this window's publication the new save had no
+separate fresh-load audit; the later check is recorded above. All six historical
+losses, 48429 known lost ticks and their unknown
 remainder remain. There was no new rollback, replay or human gameplay rescue.
 The window added 864743 tokens: 1111 cumulative responses, 35385830 campaign
 tokens and 35454834 including historical failed deliveries. Dollar charges
@@ -94,8 +141,8 @@ Public receipt SHA256:
 
 The paused-result website and shareable receipt are committed and pushed at
 `2979716c13b0a287f143a64ec0656a6f82430eda` in draft PR #137, with exact remote
-branch readback. The existing local http://127.0.0.1:8857/campaigns preview now
-serves that source. All 4278 local tests passed, with ten skips; changed-file
+branch readback. At that delivery the local http://127.0.0.1:8857/campaigns preview
+served that source. All 4278 local tests passed, with ten skips; changed-file
 Ruff, scoped mypy and both JavaScript syntax checks passed. Exact HTTP acceptance
 verified the new paused card data, current page/assets, unchanged older
 completed/failed results, checkpoint-903 reload and historical admission record,
