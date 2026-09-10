@@ -36,27 +36,28 @@ Storage remains the predeclared 32 GiB amendment; CPU, RAM and game controls
 are unchanged. Model dollar charges remain unreported, not zero.
 
 The local website now serves clean revision
-`2a63972fb56e06e019e566b5b34bd2c5962e36db`, pushed and remote-readback verified in
-[draft PR #146](https://github.com/lemoz/fort-gym/pull/146). It shows three published
-first-window records, all 96 decision boundaries, and the expiring fresh-trial
-feed. All three second attempts are audited and separately versioned, but are
-not yet registered in the recorded comparison table. Integrate all six results
-and a continuation-aware live feed without hot-editing the current preview.
+`19b1027ae680f6eee5dc277fd288f673dd436d45`, pushed and remote-readback verified in
+[draft PR #148](https://github.com/lemoz/fort-gym/pull/148). It shows all six
+initial runs and all 192 decision boundaries, plus the continuation-aware live
+feed. The verified starting checkpoint and provisional new activity are separate,
+so carried-over usage and game time are counted once. The original initial-start
+observer and all historical campaign surfaces remain available.
 
 The new live observer reads only host receipts/process identity and adds no game
 or model calls. It labels running controllers, unsettled usage, provisional time
 and owner-reported teardown separately from verified saves. Missing observations
 expire after 30 seconds, including after a failed refresh.
 
-All 4,517 local tests passed with ten skips. Changed-file Ruff, scoped mypy and
+All 4,586 local tests passed with ten skips. Changed-file Ruff, scoped mypy and
 JavaScript syntax checks passed. Existing repository-wide debt remains ten Ruff
 and 465 mypy errors. GitHub CI for the exact revision passed in run
-`34530711434`.
-[Actual local HTTP acceptance](../experiments/evidence/keyboard_matched_live_website_20260910.json)
-passed against the live Sol repeat, including unchanged historical evidence,
-matching source/assets, three recorded rows, expiring live data and disabled admin.
-The first active-state check correctly failed after Terra's controller had already
-ended; the check was not weakened. No browser visual QA, public deployment or main
+`34538567998`.
+[Actual local HTTP acceptance](../experiments/evidence/keyboard_matched_continuation_website_20260910.json)
+passed against Sol attempt 1's active continuation, including unchanged historical
+evidence, matching source/assets, six recorded rows, correct saved/new totals and
+disabled admin. The first active-state check failed after Astra's continuation
+had already ended; the active assertion was preserved for the next declared Sol
+run. No browser visual QA, public deployment or main
 merge occurred. This is progress, not completion of the full Year-Two goal.
 
 ### Checkpoint-bound continuation preparation
@@ -87,12 +88,24 @@ calls and verified VM teardown. Their [separate failure record](../experiments/e
 preserves both attempts and the unchanged source checkpoint. This is an
 infrastructure failure, not model failure or fortress collapse.
 
-The corrected owner has started Astra1's decision-32-to-64 window. Actual config
-ownership/modes now match root-owned0444/0755; the first model request carries
-exactly the memory from its prior checkpoint. No completed continuation save is
-claimed yet. Native reload preserves the saved
-world and paused calendar, not a promise of identical open UI menus; initial
-screens will be retained without human navigation. Continue in the declared
+The corrected owner completed Astra attempt 1's decision-32-to-64 window. Its
+[continuation result](../experiments/evidence/keyboard_matched_astra_r1_continuation_32_64_20260910.json)
+passed the independent audit: 32 new responses, 1,425,155 new returned tokens and
+7,000 new saved ticks, for 18,200 cumulative saved ticks and 2,468,751 cumulative
+tokens. The fortress retains seven living dwarves, zero recorded deaths, three
+completed workshops (up from one), one farm and zero placed beds. Raw edible food
+remains 50 and drinks 60. Planting, fishing and construction jobs were sampled,
+but rates and completed production remain unmeasured. There were two clock
+timeouts, one blocking-menu outcome and no save loss. Source reload, carried-over
+memory, exact trace/usage prefixes and clean native/VM teardown passed. The new
+final checkpoint has not yet had a separate fresh reload. This is development
+progress, not proof of sustainability or year-two performance.
+
+Sol attempt 1 is now running its own predeclared decision-32-to-64 continuation,
+using its own checkpoint, model memory and unchanged conditions. Its final save
+and outcome are not yet verified. Native reload preserves the saved world and
+paused calendar, not a promise of identical open UI menus; initial screens are
+retained without human navigation. Continue in the declared
 order Astra1, Sol1, Terra1, Terra2, Sol2, Astra2. The native source remains frozen
 at `1bc49b9675b1c82ad502bbd6d8461c9cdbf077e9`.
 
