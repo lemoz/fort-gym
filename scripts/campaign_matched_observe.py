@@ -34,7 +34,9 @@ def baseline(run_dir: Path, operator: Path, execution: Path) -> dict:
     }
 
 
-def snapshot(run_dir: Path, base: dict, *, alive: bool, now: int) -> dict:
+def snapshot(run_dir: Path, base: dict, *, alive: bool, now: int,
+             initial_memory: str = "", allow_initial_feedback: bool = False,
+             projector=project_status) -> dict:
     entries = []
     claims = {p.parent.name for p in (run_dir / "model").glob("*/claim.json")}
     for path in (run_dir / "model").glob("*/summary.json"):
@@ -71,8 +73,8 @@ def snapshot(run_dir: Path, base: dict, *, alive: bool, now: int) -> dict:
         elif summary["model_dispatched"] is not False or summary["total_tokens"] is not None:
             raise ValueError("Unknown dispatch cannot become zero usage")
         if summary["decision_index"] == 0:
-            if request["memory"] != "" or request["feedback"] is not None:
-                raise ValueError("Independent trial must start with empty agent state")
+            if request["memory"] != initial_memory or (not allow_initial_feedback and request["feedback"] is not None):
+                raise ValueError("First request must match its declared initial agent state")
         else:
             simulation = (request.get("feedback") or {}).get("simulation")
             if simulation is not None:
@@ -94,15 +96,17 @@ def snapshot(run_dir: Path, base: dict, *, alive: bool, now: int) -> dict:
         "observed_elapsed_ticks_lower_bound": ticks if observed else None,
         "teardown_reported": teardown, "reported_charge_usd": None,
     }
-    project_status(value, now=now)
+    projector(value, now=now)
     return value
 
 
-def publish_status(root: Path, value: dict) -> None:
+def publish_status(root: Path, value: dict, *, projector=project_status, filename=FILENAME) -> None:
     """Replace this derivative atomically, without touching original receipts."""
-    project_status(value, now=int(time.time()))
+    projector(value, now=int(time.time()))
     root.mkdir(parents=True, exist_ok=True, mode=0o700)
-    target = root / FILENAME
+    if Path(filename).name != filename:
+        raise ValueError("Live filename must be a basename")
+    target = root / filename
     if target.is_symlink():
         raise ValueError("Live target cannot be a symlink")
     with tempfile.NamedTemporaryFile(mode="w", dir=root, prefix=".matched-live-", delete=False) as f:

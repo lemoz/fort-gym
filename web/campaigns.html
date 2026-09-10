@@ -31,15 +31,25 @@
         <button id="refresh-keyboard-cohort" type="button">Refresh matched results</button>
       </div>
       <p class="campaign-note">Astra, Sol and Terra at Medium reasoning. Two independent attempts each, starting from the same save with standard keyboard controls, a 120 × 40 screen and the same runtime. Each first window allows 32 decisions; later windows resume that attempt’s own fortress.</p>
-      <div class="campaign-condition" aria-labelledby="matched-live-title">
+      <div class="campaign-condition" aria-labelledby="continuation-live-title">
         <div class="campaign-tracking-heading">
-          <h3 id="matched-live-title">Current matched trial</h3>
+          <h3 id="continuation-live-title">Current saved-game continuation</h3>
+          <button id="refresh-continuation-live" type="button">Refresh continuation</button>
+        </div>
+        <p id="continuation-live-status" role="status" aria-live="polite">Checking saved-game continuation…</p>
+        <div id="continuation-live-content" hidden></div>
+        <a href="/public/keyboard-cohort-continuation-active">Open continuation data</a>
+      </div>
+      <details class="campaign-condition" aria-labelledby="matched-live-title">
+        <summary>Initial-start observer</summary>
+        <div class="campaign-tracking-heading">
+          <h3 id="matched-live-title">Initial-start feed</h3>
           <button id="refresh-matched-live" type="button">Refresh current trial</button>
         </div>
         <p id="matched-live-status" role="status" aria-live="polite">Checking current trial…</p>
         <div id="matched-live-content" hidden></div>
         <a href="/public/keyboard-cohort-active">Open current trial data</a>
-      </div>
+      </details>
       <p id="keyboard-cohort-status" role="status" aria-live="polite">Loading matched trial results…</p>
       <div id="keyboard-cohort-content" hidden></div>
       <a href="/public/keyboard-cohort">Open matched trial data</a>
@@ -162,7 +172,8 @@
   <script src="/static/campaign-keyboard.js?v=16" defer></script>
   <script src="/static/campaign-keyboard-live.js?v=4" defer></script>
   <script src="/static/campaign-keyboard-admission.js?v=1" defer></script>
-  <script src="/static/campaign-matched.js?v=1" defer></script>
+  <script src="/static/campaign-matched.js?v=2" defer></script>
   <script src="/static/campaign-matched-live.js?v=1" defer></script>
+  <script src="/static/campaign-continuation-live.js?v=1" defer></script>
 </body>
 </html>

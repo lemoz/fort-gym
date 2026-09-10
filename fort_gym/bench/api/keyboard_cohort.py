@@ -11,7 +11,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 PLAN_PATH = "experiments/keyboard_matched_pilot_20260910/cohort.json"
 PLAN_SHA256 = "a724c04c94e27976820cb7fc8b071b7a15cd42973e69d3eb9a185bd97c632098"
 PLAN_REVISION = "1bc49b9675b1c82ad502bbd6d8461c9cdbf077e9"
-# Adding a result requires a reviewed public projection and a data-only commit.
+# Adding a result requires a reviewed public projection and an immutable commit.
 # Never discover files from native artifact directories or accept request paths.
 RESULTS = {
     "matched-20260910-astra-r1": (
@@ -28,6 +28,21 @@ RESULTS = {
         "experiments/evidence/keyboard_matched_terra_r1_20260910.json",
         "9670b0e1e542df80f48abbecc39eec3f0e36ba071a0b6d0555d8f86724b92c7b",
         "91bf6838b40e019434152716c104716a26293574",
+    ),
+    "matched-20260910-terra-r2": (
+        "experiments/evidence/keyboard_matched_terra_r2_20260910.json",
+        "8f18ce3a115bc01435cf07fb699fb187a3c3003583e076442775e25b249b0b72",
+        "2edbf98a301507e7ec4711dcd5fbd5bf7888bca5",
+    ),
+    "matched-20260910-sol-r2": (
+        "experiments/evidence/keyboard_matched_sol_r2_20260910.json",
+        "316a46641bb609350005ae734b74b881ad0d876b9f907fb2fc4eda1964b92ec3",
+        "6531318881b6a12de8387321e02da675d299e4fb",
+    ),
+    "matched-20260910-astra-r2": (
+        "experiments/evidence/keyboard_matched_astra_r2_20260910.json",
+        "8bd2a2c69ed08ed4c8c063dd955ae793873899ad24678109404e7b4d5b5a5dfb",
+        "baee24bcef343d73922175439553306e95e3b01d",
     ),
 }
 ORIGINAL_BINDING = "bb3c140c583c3d1462f48fe78cd3a8980713a860d512fceff337dd733f995312"
@@ -126,7 +141,7 @@ def keyboard_cohort() -> dict[str, Any]:
         "limits": [
             "Storage changed from 24 to 32 GiB before Terra attempt 1. Source, image, seed, CPU, memory and gameplay settings remained unchanged; wall-clock speed is not compared.",
             "No published result does not mean not running, failed, or zero progress.",
-            "A completed 32-response window is not a completed campaign; continuation is pending.",
+            "These are historical decision-32 checkpoints, not completed campaigns. Saved-game continuation is reported separately.",
             "Same-seed repeated trials describe this pilot, not performance across worlds.",
             "Food counts are raw edible units; ownership and accessibility are not assessed.",
             "Stocks and job samples do not measure production or consumption rates.",
