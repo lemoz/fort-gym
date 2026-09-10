@@ -1,0 +1,111 @@
+{
+  "schema_version": "fortgym.keyboard-matched-cohort-plan/v1",
+  "cohort_id": "keyboard-matched-pilot-20260910",
+  "artifact_kind": "experiment_plan",
+  "model_results_included": false,
+  "hypothesis": "Under identical native keyboard, screen, memory and resource conditions, independent models can establish and maintain observable fortress work; measure differences without per-model prompt tuning.",
+  "comparison_factor": "model_at_medium_reasoning",
+  "replicates_per_model": 2,
+  "source_snapshot_receipt_sha256": "eaf5fa5a40014719e6c313f33497740e536a8faa1c90a84c4e09dcc380ac0595",
+  "execution_source_policy": "One clean committed source revision and image for all six trials; bind their exact identities in the first launch receipt and every later receipt.",
+  "runtime": {
+    "serial_trials": true,
+    "maximum_live_vms": 1,
+    "maximum_live_games": 1,
+    "vm_cpus": 2,
+    "vm_memory_gib": 3,
+    "container_memory_bytes": 1610612736,
+    "container_cpus": 2,
+    "container_pids_limit": 256,
+    "container_network": "none",
+    "mandatory_teardown": true
+  },
+  "stages": {
+    "initial_segment_responses": 32,
+    "pilot_total_response_ceiling": 192,
+    "continuation": "Resume each trial's own verified checkpoint, memory and usage with ordinary declared windows; never restart a fresh trial to continue it.",
+    "comparison_decision_boundaries": [
+      32,
+      64,
+      128,
+      256,
+      512,
+      1024,
+      1280
+    ],
+    "year_two_elapsed_ticks": 403200,
+    "year_two_is_not_terminal_success": true
+  },
+  "campaign_budget_policy": "The 1280-dispatch and 40000000-token limits are equal per-campaign ceilings, not a launch of those calls or a dollar reservation. Initial launches each own only 32 responses.",
+  "outcome_policy": {
+    "strong_ranking_claims": false,
+    "world_generalization": false,
+    "repeated_attempts_before_strong_claims": true,
+    "preserve_failed_attempts": true,
+    "unknown_cost_is_not_zero": true,
+    "provider_or_infrastructure_failure_is_not_gameplay_collapse": true,
+    "admission_pause_is_not_model_failure": true,
+    "extend_budgets_only_as_new_declared_cohort_conditions": true
+  },
+  "launch_requirements": [
+    "Finish and audit the current Astra owner, including mandatory teardown.",
+    "Verify the corrected brewing-input measurement on a disposable native copy without model calls.",
+    "Read back the exact common remote source and passing tests; bind source, image, plan and config digests.",
+    "Verify the original shared seed receipt and complete inventory; load a disposable copy.",
+    "Use fresh subscription admission and the existing spending/infrastructure bounds; no paid or local-model fallback."
+  ],
+  "outcome_dimensions": [
+    "retained_elapsed_ticks",
+    "population_and_recorded_deaths",
+    "food_and_drink_with_coverage_limits",
+    "completed_infrastructure",
+    "observed_work_and_production_evidence",
+    "action_outcomes_and_adaptation_evidence",
+    "provider_usage_and_actual_or_unknown_cost",
+    "checkpoint_continuity_and_stop_reason"
+  ],
+  "execution_order": [
+    {
+      "campaign_id": "matched-20260910-astra-r1",
+      "model": "gpt-6-astra",
+      "replicate": 1,
+      "condition": "astra-condition.json",
+      "trial": "astra-trial.json"
+    },
+    {
+      "campaign_id": "matched-20260910-sol-r1",
+      "model": "gpt-5.6-sol",
+      "replicate": 1,
+      "condition": "sol-condition.json",
+      "trial": "sol-trial.json"
+    },
+    {
+      "campaign_id": "matched-20260910-terra-r1",
+      "model": "gpt-5.6-terra",
+      "replicate": 1,
+      "condition": "terra-condition.json",
+      "trial": "terra-trial.json"
+    },
+    {
+      "campaign_id": "matched-20260910-terra-r2",
+      "model": "gpt-5.6-terra",
+      "replicate": 2,
+      "condition": "terra-condition.json",
+      "trial": "terra-trial.json"
+    },
+    {
+      "campaign_id": "matched-20260910-sol-r2",
+      "model": "gpt-5.6-sol",
+      "replicate": 2,
+      "condition": "sol-condition.json",
+      "trial": "sol-trial.json"
+    },
+    {
+      "campaign_id": "matched-20260910-astra-r2",
+      "model": "gpt-6-astra",
+      "replicate": 2,
+      "condition": "astra-condition.json",
+      "trial": "astra-trial.json"
+    }
+  ]
+}
