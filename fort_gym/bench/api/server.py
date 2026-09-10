@@ -346,6 +346,17 @@ async def public_keyboard_campaigns() -> JSONResponse:
     return JSONResponse(data, headers=HTML_CACHE_HEADERS)
 
 
+@app.get("/public/keyboard-admission")
+async def public_keyboard_admission() -> JSONResponse:
+    from .keyboard_admission import admission_record
+
+    try:
+        data = admission_record()
+    except (OSError, ValueError, KeyError, TypeError):
+        raise HTTPException(status_code=503, detail="Recorded admission evidence is unavailable") from None
+    return JSONResponse(data, headers=HTML_CACHE_HEADERS)
+
+
 @app.get("/public/keyboard-active")
 async def public_keyboard_active() -> JSONResponse:
     from .keyboard_live import live_status
