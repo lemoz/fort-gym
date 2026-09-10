@@ -36,8 +36,51 @@ def _observations(value: object) -> dict:
     return {key: value[key] for key in OBSERVATION}
 
 
+def _checkpoints(source: dict, progress: dict, usage: dict, parent: dict) -> list[dict]:
+    rows = source.get("checkpoints")
+    if not isinstance(rows, list) or not 1 <= len(rows) <= 128:
+        raise ValueError("Completed window must retain its ordered segment checkpoints")
+    cursor = progress["parent_checkpoint_cursor"]
+    elapsed = progress["parent_elapsed_ticks"]
+    responses = parent["progress"]["cumulative_model_responses"]
+    tokens = parent["usage"]["campaign_tokens"]
+    previous_hash = source["parent_checkpoint_sha256"]
+    seen = {previous_hash}
+    result = []
+    for index, row in enumerate(rows):
+        counts = _counts(row, ("cursor", "saved_elapsed_ticks", "new_saved_ticks",
+                               "new_model_responses", "cumulative_model_responses", "campaign_tokens"))
+        for key in ("checkpoint_sha256", "checkpoint_file_sha256", "parent_checkpoint_sha256"):
+            _hash(row.get(key), 64)
+        _matches(row, {"parent_checkpoint_sha256": previous_hash,
+                       "fresh_load_verified": index < len(rows) - 1})
+        if (not 1 <= counts["new_model_responses"] <= 1024
+                or counts["new_saved_ticks"] > counts["new_model_responses"] * source["max_advance_ticks"]
+                or counts["cursor"] != cursor + counts["new_model_responses"]
+                or counts["saved_elapsed_ticks"] != elapsed + counts["new_saved_ticks"]
+                or counts["cumulative_model_responses"] != responses + counts["new_model_responses"]
+                or counts["campaign_tokens"] <= tokens
+                or row["checkpoint_sha256"] in seen):
+            raise ValueError("Segment checkpoint lineage does not reconcile")
+        cursor, elapsed = counts["cursor"], counts["saved_elapsed_ticks"]
+        responses, tokens = counts["cumulative_model_responses"], counts["campaign_tokens"]
+        previous_hash = row["checkpoint_sha256"]
+        seen.add(previous_hash)
+        result.append({**counts, **{key: row[key] for key in (
+            "checkpoint_sha256", "checkpoint_file_sha256", "parent_checkpoint_sha256", "fresh_load_verified")}})
+    if ((cursor, elapsed, responses, tokens, previous_hash) != (
+            progress["checkpoint_cursor"], progress["saved_elapsed_ticks"],
+            progress["cumulative_model_responses"], usage["campaign_tokens"], source["checkpoint_sha256"])
+            or result[-1]["checkpoint_file_sha256"] != source["checkpoint_file_sha256"]):
+        raise ValueError("Final segment checkpoint differs from the completed window")
+    return result
+
+
 def completed_window(root: Path, filename: str, parents: list[dict]) -> dict:
     source = _read(root, filename)
+    schema = source.get("schema_version")
+    if schema not in ("fortgym.native-keyboard-completed-window/v1", "fortgym.native-keyboard-completed-window/v2"):
+        raise ValueError("Unsupported completed window schema")
     candidates = [row for row in parents
                   if row.get("window_id", row.get("saved_segment_id")) == source.get("parent_record")]
     if len(candidates) != 1:
@@ -46,7 +89,7 @@ def completed_window(root: Path, filename: str, parents: list[dict]) -> dict:
     if filename.removesuffix(".json") == source["parent_record"]:
         raise ValueError("Completed window cannot be its own parent")
     _matches(source, {
-        "schema_version": "fortgym.native-keyboard-completed-window/v1", "status": "completed",
+        "schema_version": schema, "status": "completed",
         "parent_checkpoint_sha256": parent["checkpoint_sha256"],
         "control_profile": "native_keyboard/v2", "observation_profile": "native_screen_text/v1",
         "prompt_profile": "native_keyboard_memory_replacement/v1", "captured_screen_size": [120, 40],
@@ -138,4 +181,6 @@ def completed_window(root: Path, filename: str, parents: list[dict]) -> dict:
         "resources": {**resources, "headroom_established": False}, "clock_outcomes": clock,
         "usage": {**usage, "reported_charge_usd": None, "cost_basis": source["usage"]["cost_basis"]},
         "evidence_path": "experiments/evidence/" + filename,
+        **({"checkpoints": _checkpoints(source, p, usage, parent)}
+           if schema == "fortgym.native-keyboard-completed-window/v2" else {}),
     }

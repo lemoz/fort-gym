@@ -81,7 +81,13 @@
       details.className = 'campaign-details';
       node('summary', 'Usage, continuity and runtime limits', details);
       node('p', `${count(p.cumulative_model_responses)} responses accounted for. This window added ${count(row.usage.new_tokens)} tokens: ${count(row.usage.campaign_tokens)} campaign tokens, ${count(row.usage.all_attempt_tokens)} including historical failed deliveries. Charge: ${cost(row.usage)}.`, details);
-      node('p', `${count(p.loss_records)} historical losses retain at least ${count(p.known_lost_ticks)} lost ticks plus an unknown remainder. No new rollback or replay occurred. The new save is verified in process; a fresh reload has not yet been verified.`, details);
+      node('p', `${count(p.loss_records)} historical losses retain at least ${count(p.known_lost_ticks)} lost ticks plus an unknown remainder. No new rollback or replay occurred. At publication, the final save was verified in process; a separate fresh reload had not yet been verified.`, details);
+      if (Array.isArray(row.checkpoints)) {
+        const checkpoints = node('ul', undefined, details);
+        for (const checkpoint of row.checkpoints) {
+          node('li', `Checkpoint ${count(checkpoint.cursor)}: ${count(checkpoint.saved_elapsed_ticks)} saved ticks · ${checkpoint.fresh_load_verified === true ? 'freshly reloaded into the next segment' : 'final save; separate fresh reload not yet verified at publication'}.`, checkpoints);
+        }
+      }
       node('p', `${count(row.clock_outcomes.zero_tick_timeouts)} zero-tick clock timeouts were retained; the model received failure feedback. ${count(food.after_action_complete_readings)} complete and ${count(food.after_action_unknown_readings)} unknown after-action food readings used the declared ${row.private_measurement_timeout_seconds}-second scan limit.`, details);
       node('p', `Memory peak: ${count(resource.memory_peak_bytes)} bytes against a ${count(resource.memory_limit_bytes)}-byte limit; ${count(resource.memory_max_events)} memory-limit events, ${count(resource.oom_events)} OOM events and ${count(resource.oom_kill_events)} OOM kills. Task peak: ${count(resource.task_peak)} of ${count(resource.task_limit)}; ${count(resource.task_limit_events)} task-limit events, ${count(resource.max_observed_zombies)} observed zombies. Memory headroom is not established.`, details);
       node('p', 'Game and VM teardown verified. Saved elapsed time is not proof of sustainable production or a matched model comparison.', section);

@@ -180,7 +180,7 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   for (const expected of ['216,582 ticks', '53.7%', '10,000 ticks', '32 new decisions saved',
     '420 drinks', '8 completed farms', '8 beds', '32,362,233 campaign tokens',
     '32,431,237 including historical', 'Unreported · Codex subscription', '48,429 lost ticks plus an unknown remainder',
-    'fresh reload has not yet been verified', '791 memory-limit events', '0 OOM events',
+    'At publication, the final save was verified in process', '791 memory-limit events', '0 OOM events',
     'Memory headroom is not established', 'teardown verified']) assert.ok(text.includes(expected), expected);
   assert.doesNotMatch(text, /\$0|sustainability established|year-two success/);
   if (JSON.parse(process.argv[2]).completed_windows[0].food.available) {
