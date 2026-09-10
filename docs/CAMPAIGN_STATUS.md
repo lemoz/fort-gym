@@ -14,7 +14,38 @@ phase retains website and remote delivery. Several bounded Astra native-keyboard
 windows have completed. Window x completed after the earlier window-w runtime
 failure. Window y completed both serial segments and its result is now recorded.
 
-### Current: checkpoint 903 saved and recorded on the local website
+### Current execution: window z paused before VM start
+
+Window z's source `0c35f3e1b43389e53d0c59725aa05a6dc6723752` passed exact-head
+CI `34423927385` and its no-model/no-game preflight. Its single-use owner then
+stopped at the declared 90-percent included-subscription-usage cutoff. The
+owner exited zero without starting the VM or game and without making any
+model call. There are zero new tokens and no additional saved game progress.
+This is an admission pause, not a fortress failure or exhaustion of the user's
+dollar spending cap. No API fallback, local model, cloud VM, purchase or reset
+was used. Do not relaunch this already-sealed attempt directory.
+
+Independent audit verifies the terminal owner, stopped local VM and unchanged
+checkpoint 903. The fresh-process reload of 903 is still unverified. All prior
+usage and loss records remain intact. Private audit SHA256:
+`b579a85d7a1cb8d47ca5999b2e85588831b4393087bab62fdd175c0157d9aa9c`.
+
+The recorded admission state is published separately from live status and saved
+campaign outcomes at source `a0f3d3bc836e27816d34db5506271d652eb86402`, committed,
+pushed and read back in open draft PR #137. All 4139 local tests passed, with
+10 skips; 61 focused tests, changed-file Ruff, scoped mypy and JavaScript syntax
+checks passed. The exact local page, admission API, unchanged 903 record and
+disabled admin passed HTTP acceptance on http://127.0.0.1:8857/campaigns.
+Account-wide quota details stay private. No browser visual QA, merge or
+production deployment is claimed. Remote CI `34425108591` was still running
+at this documentation update; local test success is not remote CI success.
+
+Native continuation remains next once the declared subscription admission
+passes; a new unique attempt must retain checkpoint 903, unchanged controls,
+memory, history and existing limits. The year-two and cross-model goal remains
+active and incomplete. This pause does not prevent offline harness work.
+
+### Latest gameplay: checkpoint 903 saved and recorded on the local website
 
 Window y completed all 64 Astra Medium decisions with two verified serial saves,
 871 then 903. It added 52000 ticks, reaching 268582 saved elapsed ticks, or 66.61%

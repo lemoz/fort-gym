@@ -79,6 +79,14 @@ evidence and remaining native work are tracked in [Campaign status](CAMPAIGN_STA
 
 ## Current native progress
 
+The next attempted window z paused at the declared included-subscription-usage
+cutoff before starting a VM or calling Astra. No new game time or tokens were
+added; checkpoint 903 and all history are unchanged. This is not a game failure
+or dollar-budget overrun. The recorded pause is now separate from live status
+and saved results on the local campaign page and remote draft branch. Native
+continuation still requires a fresh load of 903 and passing the same admission
+check, using a new unique attempt. No paid fallback or reset was used.
+
 Window y completed both segments and saved checkpoint 903 at 268582 elapsed
 ticks, adding 52000 ticks. Saved observations show 16 citizens, zero recorded
 deaths, 11 completed beds, 8 farms, 4 workshops, one table and one chair. Astra
