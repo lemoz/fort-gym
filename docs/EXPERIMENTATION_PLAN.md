@@ -1,5 +1,14 @@
 # Agent Memory, Tools & Experimentation
 
+## Scope: historical governed track
+
+The current research direction is [Year-Two Autonomous Play and Cross-Model
+Evaluation](YEAR_TWO_PROGRAM.md): Astra on standard game controls first, with
+explicit shortcuts and other models as separately declared comparisons. The
+model defaults, governed-first direction and next steps below describe the older
+governed benchmark. They are not instructions to switch the current experiment
+back to that surface. Keep its frozen protocols and recorded results unchanged.
+
 ## Status
 
 The memory, tools, and experiment systems originally planned in this document
