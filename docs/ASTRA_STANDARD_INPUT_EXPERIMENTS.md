@@ -97,6 +97,17 @@ requirements. See [Campaign status](CAMPAIGN_STATUS.md) for exact CI and deliver
 
 ## Current native progress
 
+Window aa has now started from original checkpoint 903 at committed and pushed
+source `64d6244ec9802096391cca2e6fa1a25cd515c19a`, with green CI. It is bounded
+to 32 decisions with the same model, prompt/memory, controls, measurements and
+existing cumulative limits. A new explicit operating condition moves the
+harness's included-usage cutoff from 90 to 98 percent, preserving provider-limit
+checks and prohibiting purchase, reset, API fallback or a local model. The prior
+90-percent paused attempt remains sealed. Fresh admission and actual first-prompt
+startup verification passed; real Astra responses and expiring website status
+are now being retained. The run is not yet a new verified save or a completed
+outcome. See [Campaign status](CAMPAIGN_STATUS.md) for the current evidence boundary.
+
 At source `f970ba4382cf3b83452ae0ff1f8a240cd9507c1b`, the production fresh-trial
 CLI started independently from the shared native seed with empty memory and
 usage. A provider-free fixture sent two scripted camera keys across a first
@@ -127,7 +138,7 @@ The original window's publication-time facts and all game/usage counters remain
 unchanged. Full local tests and exact HTTP page/data checks passed; browser visual
 QA, merge and production deployment are not claimed.
 
-The latest model-run attempt, window z, paused at the declared included-subscription-usage
+The previous model-run attempt, window z, paused at the declared included-subscription-usage
 cutoff before starting a VM or calling Astra. No new game time or tokens were
 added; checkpoint 903 and all history are unchanged. This is not a game failure
 or dollar-budget overrun. The recorded pause is now separate from live status

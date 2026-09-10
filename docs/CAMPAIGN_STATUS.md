@@ -14,6 +14,41 @@ phase retains website and remote delivery. Several bounded Astra native-keyboard
 windows have completed. Window x completed after the earlier window-w runtime
 failure. Window y completed both serial segments and its result is now recorded.
 
+### Active native window aa: Astra resumed with declared included headroom
+
+Source `64d6244ec9802096391cca2e6fa1a25cd515c19a` is committed, pushed and
+remotely read back in draft PR #137; exact-head CI `34430938982` passed.
+Window aa resumes original checkpoint 903 for at most 32 decisions, retaining
+the same Astra Medium model, prompt, memory, controls, measurements, loss history
+and inherited 1152-dispatch/40-million-token ceilings. No budget extension.
+
+The operating condition explicitly changes the included-usage cutoff from 90
+to 98 percent. The earlier 90-percent threshold was the harness headroom default,
+not a reached provider limit or the owner's dollar cap. The fresh account read
+admitted this run; every model invocation still checks allowance and rejects
+reached provider limits or unknown/stale state. No API fallback, local model,
+purchase or reset was enabled. The old condition and sealed window z are unchanged.
+This is an operating-policy change, not a matched comparison result, and not a
+guarantee of an atomic account reservation or a fixed remaining response count.
+
+Preflight verified unchanged source checkpoint and agent state. The first real
+prompt and 120x40 screen passed startup audit. At the first HTTP verification,
+three actual responses (93509 tokens) were retained; the live feed reported at
+least 2000 unsaved ticks. Saved progress remained 268582 ticks at checkpoint 903.
+These are startup facts, not a final window result. The local owner and read-only
+website observer are running, with mandatory native/container/local-VM teardown
+owned by the bounded run. The website's `/public/keyboard-active` endpoint served
+`running` with this source and run ID `astra-native-included-headroom-v1`.
+The separate historical admission record is not this new run's current state.
+
+The current turn made no claim of a new verified save, sustained production,
+year-two success, merge or deployment. The 71 focused declaration/admission/runtime
+tests passed. One startup audit retained an obsolete measurement tick; it was
+corrected against the already captured 903 calendar, with no gameplay intervention
+or replacement of startup evidence. Next: observe this same owner to terminal,
+verify the saved checkpoint, reconcile actual responses/tokens and losses, and
+publish the recorded outcome. Do not start a second VM or replay an uncertain call.
+
 ### Latest native acceptance: independent fresh start, save and continuation
 
 A provider-free fixture ran the unmodified fresh-trial and ordinary continuation
@@ -43,7 +78,7 @@ passed, as did separate public-receipt binding checks. The shareable acceptance
 receipt and documentation are committed, pushed and remotely read back at
 `f1a3b2eb7709aadafc510bae546f6d41b98c5029` in draft PR #137. No production
 harness or website code changed. The acceptance source's CI passed; the new
-receipt commit has pending CI `34430388327`. The private evidence adds about
+receipt commit's CI `34430388327` subsequently passed. The private evidence adds about
 320 MiB to the
 existing project artifact tree; it is retained, not authorized for deletion.
 
