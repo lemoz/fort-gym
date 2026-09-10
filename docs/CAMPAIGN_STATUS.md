@@ -68,6 +68,15 @@ The 64 new responses reconcile to 1175 cumulative responses and 37683818 campaig
 tokens. Boundary audit SHA256:
 `6ec419d89a33e29a19f69e1fcfe5fb5fb7b2787a9da283b2a653bd8e41c9feb3`.
 
+The subsequent live receipt prefix first reported crossing the full elapsed-year
+threshold at decision index 85 (86 returned responses): 112000 new reported ticks
+plus the original 292582 saved ticks gives a 404582-tick lower bound. All 86
+subscription receipts independently reconciled, totalling 3150000 new tokens.
+This is not yet a verified anniversary save or functioning-fortress verdict;
+the next intermediate native save/load and full terminal trace audit remain
+required. Retained report SHA256:
+`a26e2558e3fbd0623cc051e1b964d46b95c46bd64de4ba1c167c3d806b072a56`.
+
 The native owner and observer were freshly polled running at this update.
 Continue observing these same handles, then audit full saved inventories, traces,
 usage, native outcomes and teardown before publishing a recorded result. The existing local
@@ -105,6 +114,26 @@ is unchanged. A real HTTP snapshot showed checkpoint 993 / 386582 saved ticks,
 67 new responses and at least 2000 later ticks; unknown charges remain null.
 The existing browser tab may need refreshing to load the new display code.
 No ongoing-run terminal manifest, merge or public deployment was created.
+
+### Brewing-input measurement finding, isolated from the running game
+
+Review of the actual checkpoint-929 raw definitions exposed a campaign telemetry
+bug: the helper tested the finished-drink flag `ALCOHOL_PLANT` when counting
+structural `PLANT` ingredients. Those ingredients instead declare `DRINK_MAT` as
+a reaction product. Old brewing-input zeroes at 929/961/993 must not be taken as
+proof that the fortress had no brewing ingredients. The separately measured
+drink-stack and raw-edible-food counts are not changed by this finding.
+
+The campaign-only fix is pushed at `936d40f652d3410645554ca8854bf18b7464d2d5` in
+draft [PR #140](https://github.com/lemoz/fort-gym/pull/140). It versions that
+subsection as `fortgym.campaign-production-inputs/v2`, reads the native stack-size
+method, and leaves failed scans unknown. Historical governed hooks and the live
+native source/image remain unchanged. Final local validation passed 4393 tests
+with ten skips, plus 88 focused measurement tests and Lua syntax/scoped Ruff.
+Broad static-check debt remains the same 10 Ruff / 465 mypy errors. Exact-head
+remote CI is running; a provider-free check on an actual paused native inventory
+is still required after this owner finishes and tears down. The candidate is not
+hot-patched into the current run or used to rewrite old measurements.
 
 ### Latest checkpoint verification: 929 freshly reloaded, no new gameplay
 

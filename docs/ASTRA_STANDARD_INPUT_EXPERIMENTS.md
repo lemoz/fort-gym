@@ -127,6 +127,18 @@ and subsequent reported ticks. Its 4371-test final local suite and 51 focused
 tests passed; its exact-head remote CI also passed. Historical recorded data is unchanged,
 the native harness remains pinned, and no merge/public deployment is claimed.
 
+Later live feedback reported 404582 elapsed ticks at the first 86-response prefix;
+independent receipt reconciliation passed. This crosses the first-year threshold
+in reported live progress, not yet in a verified saved checkpoint. The same model
+continues toward the next native save and operating-outcome assessment.
+
+An evaluation-only defect was found while inspecting supplies: the old campaign
+hook's brewing-input predicate looked for finished alcohol rather than a plant's
+drink reaction product, so its zeroes are not reliable absence evidence. The
+isolated candidate in PR #140 passed 4393 local tests (ten skips) and 88 focused
+checks; real native verification remains pending after this run. It changes no
+current model observation, game control, historical benchmark hook or old result.
+
 Window aa saved 26 of 32 declared Astra Medium decisions as checkpoint 929 at
 292582 retained elapsed ticks, 72.6% of the first-year target. The fortress has
 16 living citizens, no recorded deaths, 567 drink units and 57 raw-edible food
