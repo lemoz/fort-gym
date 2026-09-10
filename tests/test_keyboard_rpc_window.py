@@ -78,3 +78,24 @@ def test_new_allowance_is_append_only_without_resetting_usage():
     assert agent.budget_extensions[:-1] == prior
     assert agent.usage == usage
     assert effective_budget(agent.configuration, agent.budget_extensions, agent.usage) == window["budget_extension"]
+
+
+def test_continuation_from_903_preserves_condition_and_uses_existing_allowance():
+    condition, previous = load_window(
+        CONDITION, PROJECT / "experiments/campaign_astra_keyboard_window_20260909y.json"
+    )
+    same, following = load_window(
+        CONDITION, PROJECT / "experiments/campaign_astra_keyboard_window_20260910z.json"
+    )
+    assert same == condition
+    assert following["continuation_from_next_step"] == 903
+    assert following["steps_per_segment"] == 32 and following["max_segments"] == 2
+    for key in ("snapshot_profile", "private_measurement_profile", "private_measurement_timeout_seconds",
+                "runtime_rpc_transport", "resource_observation_profile", "host_read_policy", "container_init_required",
+                "reset_memory", "reset_usage", "strategy_intervention"):
+        assert following[key] == previous[key]
+    assert not {"restart", "prompt_change", "budget_extension"} & following.keys()
+    assert 1085 + following["steps_per_segment"] * following["max_segments"] == 1149
+    assert 1149 <= previous["budget_extension"]["max_dispatches"]
+    assert previous["budget_extension"]["max_total_tokens"] == 40000000
+    assert condition["max_dispatches"] == 8

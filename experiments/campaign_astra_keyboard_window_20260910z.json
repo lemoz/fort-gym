@@ -1,0 +1,22 @@
+{
+  "schema_version": "fortgym.codex-keyboard-window/v1",
+  "condition_id": "astra-medium-direct-rpc-two-segments-from-903",
+  "original_condition": "campaign_astra_keyboard_memory_contract_20260909.json",
+  "continuation_from_next_step": 903,
+  "steps_per_segment": 32,
+  "max_segments": 2,
+  "reset_memory": false,
+  "reset_usage": false,
+  "strategy_intervention": false,
+  "snapshot_profile": "native_menu_preserving_save/v4",
+  "private_measurement_profile": "fortgym.campaign-food-measurement/v1",
+  "private_measurement_timeout_seconds": 15,
+  "runtime_rpc_transport": "native-rpc",
+  "resource_observation_profile": "fortgym.native-resource-observations/v1",
+  "host_read_policy": "owned_exchange_reads_three_attempts_with_private_receipts/v1",
+  "container_init_required": true,
+  "hypothesis": "Continue the same autonomous Astra fortress from checkpoint 903 through two serial segments toward the first full elapsed game year and beyond. Verify the fresh source load and serial reload while measuring continued population, food/drink reserves and completed development. This is a continuation of one exploratory campaign, not a matched model comparison or a proven sustainability result.",
+  "continuity_note": "Parent y completed 64 decisions and saved 871 then 903. Resume only final checkpoint 903, manifest 08142546e6f470fe0d83e91bdc50db9efe332378ffaaf30613a27e91d72e5e37, at 268582 elapsed ticks. Retain 1085 responses, 34521087 campaign tokens, 34590091 all-attempt tokens, exact saved memory/configuration and all six loss records with 48429 known lost ticks plus unknown remainders. No rollback, replay, prompt change or human gameplay rescue. A fresh load of final 903 is not yet verified and must be demonstrated by this run.",
+  "measurement_note": "Keep the existing private 15-second raw-edible food scan with trader/job flags, outside the model's native-screen observation. Y ended with 47 raw-edible units, zero trader/in-job units, 520 drinks, 16 living citizens and no recorded deaths; ownership, accessibility and production/consumption rates remain unmeasured. Its native evidence includes 11 beds, eight completed farms, four workshops, one table and one chair. Retain all resource readings: Y reached its 1536 MiB limit with 3371 memory-limit events and no OOM or OOM kill. Headroom remains unproven.",
+  "budget_note": "At most 64 additional decisions, in two serial 32-decision segments, reaching at most 1149 accounted responses. Preserve the existing 1152-dispatch and 40-million-token ceilings and every previous budget extension; do not extend or reset the budget. These counts are not dollar charges or spending reservations. Fresh subscription admission before each call; no API fallback, local model, purchase or reset. One owned local VM at a time, 2 CPUs, 3 GiB VM memory, 1536 MiB container memory and 256 task limit, with mandatory teardown. No merge or deployment."
+}
