@@ -9,16 +9,16 @@ from fastapi.testclient import TestClient
 from fort_gym.bench.api import keyboard_cohort as cohort
 
 
-def test_actual_recorded_trials_and_four_unpublished_slots():
+def test_actual_recorded_trials_and_three_unpublished_slots():
     data = cohort.keyboard_cohort()
-    assert data["recorded_trials"] == 2 and data["declared_trials"] == 6
+    assert data["recorded_trials"] == 3 and data["declared_trials"] == 6
     assert data["matched_initial_windows_complete"] is False
     assert data["strong_ranking_supported"] is False
     assert data["live_owner_status_included"] is False
     assert [r["model"] for r in data["trials"]] == [
         "gpt-6-astra", "gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-terra", "gpt-5.6-sol", "gpt-6-astra"
     ]
-    for row in data["trials"][2:]:
+    for row in data["trials"][3:]:
         assert row["result"] is None and row["publication_state"] == "no_published_result"
         assert row["evidence_url"] is None
     result = data["trials"][0]["result"]
@@ -50,13 +50,24 @@ def test_actual_recorded_trials_and_four_unpublished_slots():
     assert sol["shutdown"]["guest_command_warning"] is False
     assert sol["timeline"][-1]["metrics"] == sol["saved_metrics"]
     assert sol["timeline"][-1]["elapsed_ticks"] == 2500
+    terra = data["trials"][2]["result"]
+    assert terra["responses"] == 32 and terra["saved_elapsed_ticks"] == 7000
+    assert terra["usage"]["returned_tokens"] == 859063
+    assert terra["saved_metrics"]["population"] == 7
+    assert terra["saved_metrics"]["completed_workshops"] == 0
+    assert terra["saved_metrics"]["completed_beds"] == 0
+    assert terra["saved_metrics"]["completed_farms"] == 0
+    assert terra["timeline"][-1]["metrics"] == terra["saved_metrics"]
+    assert terra["storage_amendment"] == cohort.STORAGE_AMENDMENT
+    assert data["identical_host_configuration"] is False
+    assert data["wall_clock_performance_comparison_supported"] is False
     serialized = json.dumps(data)
     for private in ("/Users/", "/evidence/astra", '"account_id":', '"prompt_text":',
                     '"screen_text":', '"api_key":'):
         assert private not in serialized
 
 
-@pytest.mark.parametrize("index,model", [(0, "astra"), (1, "sol")])
+@pytest.mark.parametrize("index,model", [(0, "astra"), (1, "sol"), (2, "terra")])
 def test_declared_conditions_and_source_are_bound(index, model):
     result = cohort.keyboard_cohort()["trials"][index]["result"]
     path = cohort.PROJECT_ROOT / "experiments/keyboard_matched_pilot_20260910"
@@ -161,11 +172,15 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   await new Promise(setImmediate);
   const result = nodes['keyboard-cohort-content'];
   assert.equal(result.hidden, false);
-  assert.match(nodes['keyboard-cohort-status'].textContent, /2 of 6/);
+  assert.match(nodes['keyboard-cohort-status'].textContent, /3 of 6/);
   assert.match(result.textContent, /11,200/);
   assert.match(result.textContent, /1,043,596/);
   assert.match(result.textContent, /792,764/);
   assert.match(result.textContent, /2,500/);
+  assert.match(result.textContent, /7,000/);
+  assert.match(result.textContent, /859,063/);
+  assert.match(result.textContent, /32 GiB · amended/);
+  assert.match(result.textContent, /wall-clock speed is not compared/);
   assert.match(result.textContent, /unreported, not \$0/);
   assert.match(result.textContent, /Unknown/);
   assert.match(result.textContent, /No published result/);
@@ -175,6 +190,7 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   assert.equal(all.filter(n => n.tag === 'tbody')[0].children.length, 6);
   assert.equal(all.filter(n => n.tag === 'tbody')[1].children.length, 32);
   assert.equal(all.filter(n => n.tag === 'tbody')[2].children.length, 32);
+  assert.equal(all.filter(n => n.tag === 'tbody')[3].children.length, 32);
   assert.equal(all.find(n => n.tag === 'a').href, data.trials[0].evidence_url);
   const previous = result.textContent; fail = true;
   await nodes['refresh-keyboard-cohort'].events.click();

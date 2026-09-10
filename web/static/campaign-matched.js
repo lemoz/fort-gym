@@ -34,6 +34,11 @@
     const result = row.result, node = el('details', undefined, 'campaign-details');
     node.appendChild(el('summary', `${label(row)}: saved outcomes and decision history`));
     const saved = result.saved_metrics, initial = result.initial_metrics;
+    const amendment = result.storage_amendment;
+    node.appendChild(el('p', amendment
+      ? 'VM data disk: 32 GiB under the declared storage amendment. CPU, memory and gameplay settings unchanged; not an identical host configuration.'
+      : 'VM data disk: 24 GiB, original execution binding.', 'campaign-note'));
+    if (amendment) node.appendChild(link('Read the storage amendment', amendment.plan_url));
     node.appendChild(el('p', `Population ${number(initial.population)} → ${number(saved.population)}. Completed workshops ${number(saved.completed_workshops)}, placed beds ${number(saved.completed_beds)}, farms ${number(saved.completed_farms)}. Recorded dead citizens: ${number(saved.recorded_dead_citizens)}.`));
     node.appendChild(el('p', `${number(result.actions.accepted)} accepted key commands; ${number(result.actions.rejected)} rejected. Accepted input is not proof that its intended work completed.`, 'campaign-note'));
     node.appendChild(el('p', `Saved checkpoint verified: ${result.checkpoint_verified ? 'yes' : 'no'}. Fresh reload of this final checkpoint: ${result.final_fresh_reload_verified ? 'verified' : 'not yet verified'}. Stop reason: ${result.stop_reason}.`, 'campaign-note'));
@@ -57,17 +62,18 @@
   function render(data) {
     if (data.schema_version !== 'fortgym.public-keyboard-cohort/v1' || !Array.isArray(data.trials)) throw new Error('Unsupported matched evidence');
     const output = el('div');
-    const summary = table('Declared order, first-window results. No model ranking.', ['Model / attempt', 'Published state', 'Saved ticks / year', 'Dwarves', 'Raw food / drinks', 'Completed workshops / beds / farms', 'Returned tokens / charge']);
+    const summary = table('Declared order, first-window results. No model ranking.', ['Model / attempt', 'Published state', 'Saved ticks / year', 'Dwarves', 'Raw food / drinks', 'Completed workshops / beds / farms', 'Returned tokens / charge', 'VM data disk']);
     data.trials.forEach(row => {
       const tr = el('tr'), result = row.result;
       tr.appendChild(el('td', label(row)));
       if (result === null) {
         tr.appendChild(el('td', 'No published result'));
-        for (let i = 0; i < 5; i++) tr.appendChild(el('td', 'Not reported'));
+        for (let i = 0; i < 6; i++) tr.appendChild(el('td', 'Not reported'));
       } else {
         const m = result.saved_metrics;
         const state = result.status === 'completed' ? 'Window complete; continuation pending' : 'Paused; continuation pending';
         [state, `${number(result.saved_elapsed_ticks)} / ${number(data.year_two_elapsed_ticks)}`, number(m.population), `${number(m.food_stock)} / ${number(m.drink_stock)}`, `${number(m.completed_workshops)} / ${number(m.completed_beds)} / ${number(m.completed_farms)}`, `${number(result.usage.returned_tokens)} / ${result.usage.reported_charge_usd === null ? 'charge unreported' : '$' + number(result.usage.reported_charge_usd)}`].forEach(text => tr.appendChild(el('td', text)));
+        tr.appendChild(el('td', result.storage_amendment ? '32 GiB · amended' : '24 GiB · original'));
       }
       summary.body.appendChild(tr);
     });

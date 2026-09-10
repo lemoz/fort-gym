@@ -368,6 +368,18 @@ async def public_keyboard_admission() -> JSONResponse:
     return JSONResponse(data, headers=HTML_CACHE_HEADERS)
 
 
+@app.get("/public/keyboard-cohort-active")
+async def public_keyboard_cohort_active() -> JSONResponse:
+    from .keyboard_cohort_live import live_status
+
+    location = get_settings().FORT_GYM_PUBLIC_CAMPAIGN_DIR
+    try:
+        data = live_status(Path(location) if location else None)
+    except (OSError, ValueError, KeyError, TypeError):
+        raise HTTPException(status_code=503, detail="Live matched status is unavailable") from None
+    return JSONResponse(data, headers=HTML_CACHE_HEADERS)
+
+
 @app.get("/public/keyboard-active")
 async def public_keyboard_active() -> JSONResponse:
     from .keyboard_live import live_status
