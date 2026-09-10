@@ -53,6 +53,7 @@ def test_entire_historical_public_response_is_unchanged():
     data = deepcopy(records.keyboard_campaign_records())
     data["completed_windows"] = [r for r in data["completed_windows"] if r["window_id"] != WINDOW]
     data["continuation_events"] = [r for r in data["continuation_events"] if r["id"] != WINDOW]
+    data["checkpoint_reloads"] = [r for r in data["checkpoint_reloads"] if r["checkpoint_cursor"] != 1057]
     # Canonical response verified from the clean parent ab51ba914, before AB registration.
     digest = hashlib.sha256(json.dumps(data, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
     assert digest == "8110a8539d6c860912ab3ff3818bd56c81bf9cd10b123c41deab8e17a1c3c3f8"
@@ -81,7 +82,7 @@ def test_real_result_is_available_on_existing_endpoint():
     response = client.get("/public/keyboard-campaigns")
     assert response.status_code == 200 and "no-store" in response.headers["cache-control"]
     assert response.json()["completed_windows"][-1]["window_id"] == WINDOW
-    assert "/static/campaign-keyboard.js?v=15" in client.get("/campaigns").text
+    assert "/static/campaign-keyboard.js?v=16" in client.get("/campaigns").text
 
 
 @pytest.mark.parametrize("revision", [REVISION, "invalid/../../main", None])
@@ -115,7 +116,8 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
     '39,994,420 campaign tokens', '40,063,424 including historical', 'Unreported · Codex subscription',
     '48,429 lost ticks plus an unknown remainder', 'separate fresh reload not yet verified',
     'not proof of sustainable production or a matched model comparison']) assert.ok(text.includes(expected), expected);
-  assert.doesNotMatch(text, /113\.2%|\$0|sustainability established|Later checkpoint verification/);
+  assert.doesNotMatch(text, /113\.2%|\$0|sustainability established/);
+  assert.match(text, /Checkpoint 1,057 reopened in a fresh game process/);
   const links = first.children.filter(x => x.href).map(x => x.href);
   const revision = data.completed_windows.at(-1).evidence_revision;
   if (revision === process.argv[3]) assert.deepEqual(links, [

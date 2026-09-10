@@ -40,7 +40,7 @@ def test_later_reload_does_not_rewrite_or_add_gameplay():
     assert reload["disposable_save_tree_difference"]["other_files_unchanged"] == 126
 
 
-@pytest.mark.parametrize("publication_index", [0, 1])
+@pytest.mark.parametrize("publication_index", [0, 1, 2])
 @pytest.mark.parametrize("key,value", [
     ("schema_version", "unknown"), ("checkpoint_sha256", "a" * 64),
     ("checkpoint_cursor", 902), ("retained_elapsed_native_ticks", 268583),
@@ -69,7 +69,7 @@ def test_bad_reload_is_not_promoted_or_allowed_to_hide_history(evidence_root, ke
         key: value for key, value in after.items() if not key.startswith("checkpoint_reload")}
 
 
-@pytest.mark.parametrize("publication_index", [0, 1])
+@pytest.mark.parametrize("publication_index", [0, 1, 2])
 @pytest.mark.parametrize("kind", ["missing", "oversize", "symlink", "nonobject"])
 def test_unreadable_verification_does_not_remove_completed_window(evidence_root, kind, publication_index):
     path, source = publication(evidence_root, publication_index)
@@ -88,7 +88,7 @@ def test_unreadable_verification_does_not_remove_completed_window(evidence_root,
     assert y["progress"]["checkpoint_cursor"] == 903
 
 
-@pytest.mark.parametrize("publication_index", [0, 1])
+@pytest.mark.parametrize("publication_index", [0, 1, 2])
 def test_private_fields_do_not_reach_api(evidence_root, publication_index):
     before = records.keyboard_campaign_records(evidence_root)
     path, source = publication(evidence_root, publication_index)

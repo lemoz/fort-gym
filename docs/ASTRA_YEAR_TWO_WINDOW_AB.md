@@ -13,7 +13,7 @@ publishing this record did not change the game, prompt or observation conditions
 
 ## Saved progress
 
-| Checkpoint | Retained elapsed ticks | Subsequent fresh reload |
+| Checkpoint | Retained elapsed ticks | Subsequent fresh reload known at publication |
 | --- | ---: | --- |
 | 929, starting save | 292,582 | Verified |
 | 961 | 340,582 | Verified |
@@ -78,8 +78,16 @@ It binds native records, actual model receipts, usage, activity samples, all fou
 checkpoint inventories and cleanup. Its public projection was independently
 checked; the original detailed evidence remains in the project-owned artifacts.
 
-Next: verify a disposable reload of checkpoint 1057 and the corrected brewing
-input measurement without model calls or gameplay intervention. Then run the
+Later on September 10, the [separate checkpoint-1057 verification](../experiments/evidence/astra_native_keyboard_checkpoint1057_reload_20260910.json)
+reopened the final save and restored its original agent memory, history, usage
+and 456,582 retained ticks. It added no gameplay or model calls. The source save
+was unchanged; only two load-log lines were appended to its disposable copy.
+Full game/container/VM teardown passed. An independent native inventory scan also
+verified the corrected brewing reader: 69 units in 34 unassigned plant stacks,
+where the old reader reported zero. This is raw inventory, not completed brewing.
+The original result and its at-publication reload flags remain unchanged.
+
+Next: run the
 [declared six-start matched pilot](KEYBOARD_MATCHED_PILOT.md) across Astra, Sol
 and Terra. This exploratory campaign does not substitute for those repeated,
 matched trials. Website delivery and native gameplay are separate acceptance
