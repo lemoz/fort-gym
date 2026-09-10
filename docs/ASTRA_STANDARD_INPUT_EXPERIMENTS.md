@@ -77,6 +77,24 @@ It was subsequently verified active on September 7. The readable-screen profile
 and first synthetic Astra comparison are published in draft PR #137; current
 evidence and remaining native work are tracked in [Campaign status](CAMPAIGN_STATUS.md).
 
+## Current harness progress
+
+Independent campaign startup is implemented and pushed at
+`88d1f4659893ecdb1d59a621638cada2d37e5876` in draft PR #137. The fresh-trial CLI
+loads a verified native starting snapshot, initializes the declared model with
+empty memory and a snapshot-bound prompt origin, and saves a normal checkpoint
+for subsequent continuation. It preserves the existing Astra campaign and does
+not relabel continuation windows as independent model trials.
+
+Validation passed 4199 local tests (10 skipped), 143 focused tests and scoped
+static checks. Actual checkpoint 903's agent state was restored unchanged in a
+read-only compatibility check. The Astra/Sol/Terra test exchanges are synthetic,
+not completed native comparisons. This implementation increment made no VM,
+game or model call and did not change the website's recorded game outcome.
+Native fresh-start acceptance and repeated comparable attempts remain next-stage
+evidence requirements. See [Campaign status](CAMPAIGN_STATUS.md) for exact CI
+and delivery status.
+
 ## Current native progress
 
 The next attempted window z paused at the declared included-subscription-usage

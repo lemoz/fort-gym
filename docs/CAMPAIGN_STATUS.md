@@ -14,7 +14,32 @@ phase retains website and remote delivery. Several bounded Astra native-keyboard
 windows have completed. Window x completed after the earlier window-w runtime
 failure. Window y completed both serial segments and its result is now recorded.
 
-### Current execution: window z paused before VM start
+### Latest implementation: independent native-keyboard campaign starts
+
+Source `88d1f4659893ecdb1d59a621638cada2d37e5876` is committed, pushed and read
+back in open draft PR #137. The new `scripts.campaign_keyboard_trial` entrypoint
+starts a model-selected campaign from a verified shared native snapshot with
+empty agent memory. It binds the initial prompt to that snapshot and creates a
+normal checkpoint for subsequent continuation. It does not reuse Astra's history
+as another model's independent trial or change the ongoing campaign.
+
+All 4199 local tests passed, with 10 skips; 143 focused tests, changed-file Ruff
+and scoped mypy for seven implementation modules passed. Synthetic tests cover
+Astra, Sol and Terra identities through the actual worker setup, first save and
+ordinary continuation, including rejection, budget and failure paths. A separate
+read-only restore of actual checkpoint 903 preserved its complete agent state,
+prompt, usage and limits and rejected fresh initialization on that used agent.
+Compatibility audit SHA256:
+`f5e0d7fbe04e9a6b86cbd085d49737821ce97bb44252c40f292ed9cea9667d25`.
+
+No VM, game or model call was made for this increment. Actual native fresh-start
+acceptance and independent repeated comparisons remain unproven; final 903 still
+needs its fresh-process game load. Remote CI `34426912429` is running at this
+documentation update. The local website remains on the audited admission/result
+source `a0f3d3bc836e27816d34db5506271d652eb86402`; this core implementation does
+not publish a new campaign outcome. No merge or deployment is claimed.
+
+### Latest attempted execution: window z paused before VM start
 
 Window z's source `0c35f3e1b43389e53d0c59725aa05a6dc6723752` passed exact-head
 CI `34423927385` and its no-model/no-game preflight. Its single-use owner then
@@ -37,8 +62,8 @@ pushed and read back in open draft PR #137. All 4139 local tests passed, with
 checks passed. The exact local page, admission API, unchanged 903 record and
 disabled admin passed HTTP acceptance on http://127.0.0.1:8857/campaigns.
 Account-wide quota details stay private. No browser visual QA, merge or
-production deployment is claimed. Remote CI `34425108591` was still running
-at this documentation update; local test success is not remote CI success.
+production deployment is claimed. Exact-head remote CI `34425108591` subsequently
+completed successfully at `a0f3d3bc836e27816d34db5506271d652eb86402`.
 
 Native continuation remains next once the declared subscription admission
 passes; a new unique attempt must retain checkpoint 903, unchanged controls,
