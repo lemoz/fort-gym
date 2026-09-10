@@ -37,13 +37,13 @@ total. Confirmed empty inventories and confirmed zero-sized stacks remain zero.
 The code performs no item, job, inventory or world mutation.
 
 The historical governed `hook/job_metrics.lua` is byte-for-byte unchanged.
-The active window-ab native worktree and image remain frozen on their original
-source. This candidate is isolated in the project's registered
-`campaign-brewing-inventory` worktree; it does not hot-patch the running game or
+The completed window-ab native worktree and image remain frozen on their original
+source. The correction was developed in the project's registered
+`campaign-brewing-inventory` worktree; it did not hot-patch the running game or
 reclassify its immutable snapshots. Astra's native-keyboard condition sees the
 game screen, not this crew diagnostic.
 
-## Verification and next native check
+## Verification and native acceptance
 
 Tests execute the exact production-input block from the shipped Lua hook using
 material and item doubles. They reproduce the old false negative (brewable
@@ -51,8 +51,16 @@ structural material without an alcohol flag), reject the inverse false positive,
 check assigned stacks, real stack-method use, known zero, unreadable fields and
 safe integer overflow. Historical-hook hash tests remain required.
 
-The actual paused native inventory still needs a provider-free check on a
-disposable copy after the current owner completes and tears down. Do not run a
-second VM or interrupt this campaign to perform that check. Verify material-token
-classification and exact stack totals there before using the new version in a
-subsequent declared run. Never silently substitute new counts for old snapshots.
+The September 10 provider-free check reopened a disposable copy of final checkpoint
+1057 using source `1bc49b9675b1c82ad502bbd6d8461c9cdbf077e9`. The independent
+native inventory scan found 69 brewable units in 34 unassigned plump-helmet stacks,
+with no assigned plant stacks or read failures. All 34 plant records declared
+`DRINK_MAT` reaction products and lacked the old `ALCOHOL_PLANT` flag, reproducing
+the old false negative. The corrected campaign hook matched the direct scan.
+
+The [later verification](../experiments/evidence/astra_native_keyboard_checkpoint1057_reload_20260910.json)
+is pinned at `a542b0b732b2e59fe316b68d8140dd21bb9ecc39`. It added no model calls,
+gameplay keys, ticks, saves or checkpoints. Original evidence stayed unchanged;
+normal agent/history/usage continuation and full teardown passed. This closes the
+native reader prerequisite for the matched pilot, not the separate question of
+completed brewing or sustainable supply production.

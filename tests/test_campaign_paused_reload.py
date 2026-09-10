@@ -14,7 +14,8 @@ from fort_gym.bench.api.campaign_keyboard_reloads import CHECKPOINT_RELOADS, che
 def test_later_reload_preserves_the_saved_pause_and_earlier_verification():
     data = records.keyboard_campaign_records()
     pause = data["paused_windows"][0]
-    earlier, later = data["checkpoint_reloads"]
+    earlier = next(row for row in data["checkpoint_reloads"] if row["checkpoint_cursor"] == 903)
+    later = next(row for row in data["checkpoint_reloads"] if row["checkpoint_cursor"] == 929)
     assert data["checkpoint_reload_status"] == "available"
     assert earlier["checkpoint_cursor"] == 903
     assert earlier["evidence_revision"] == "4980cdd5e8c1961772f839eeaa848d196672ed6f"

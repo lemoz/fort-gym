@@ -127,6 +127,16 @@
         later.className = 'campaign-checkpoint-verification campaign-save-acceptance';
         node('h4', 'Later checkpoint verification', later);
         node('p', `Checkpoint ${count(reload.checkpoint_cursor)} reopened in a fresh game process. Its 120 × 40 screen and saved agent memory, history and usage were verified. This check added 0 game ticks, 0 model calls and no new checkpoint.`, later);
+        const inputs = reload.production_measurement;
+        if (inputs?.schema_version === 'fortgym.native-production-input-verification/v1'
+            && inputs.independent_inventory_scan_verified === true
+            && inputs.original_observation_unchanged === true
+            && inputs.ownership_accessibility_assessed === false
+            && inputs.completed_brewing_measured === false
+            && [inputs.brewable_plant_units, inputs.brewable_plant_stacks,
+              inputs.old_reported_brewable_plant_units].every(value => Number.isSafeInteger(value) && value >= 0)) {
+          node('p', `Corrected brewing-input scan: ${count(inputs.brewable_plant_units)} plant units in ${count(inputs.brewable_plant_stacks)} unassigned stacks. The original scan reported ${count(inputs.old_reported_brewable_plant_units)}; its record is unchanged. These are raw ingredients, not proof of ownership, accessibility or completed brewing.`, later);
+        }
         const proof = node('details', undefined, later);
         node('summary', 'Reload evidence and file changes', proof);
         node('p', 'The original checkpoint is unchanged. The disposable copy appended two DFHack load-log lines; all other save files matched. Game, container and VM teardown passed. This later check does not change what was known when the window finished.', proof);

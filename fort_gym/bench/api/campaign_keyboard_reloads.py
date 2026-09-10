@@ -2,6 +2,7 @@
 
 from datetime import date
 from pathlib import Path
+import re
 
 from .campaign_keyboard_presave import _hash, _matches, _read
 from .campaign_keyboard_windows import _counts
@@ -11,8 +12,45 @@ CHECKPOINT_RELOAD_REVISIONS = {
         "4980cdd5e8c1961772f839eeaa848d196672ed6f",
     "astra_native_keyboard_checkpoint929_reload_20260910.json":
         "b1a73c746621f17e38b08fca061b1799c6a7025d",
+    "astra_native_keyboard_checkpoint1057_reload_20260910.json":
+        "a542b0b732b2e59fe316b68d8140dd21bb9ecc39",
 }
 CHECKPOINT_RELOADS = tuple(CHECKPOINT_RELOAD_REVISIONS)
+
+
+def _production_measurement(value: object) -> dict:
+    """Project verified raw inputs, never completed production or private inventory."""
+    if not isinstance(value, dict):
+        raise ValueError("Production verification must be an object")
+    flags = {
+        "schema_version": "fortgym.native-production-input-verification/v1",
+        "hook_profile": "fortgym.campaign-production-inputs/v2",
+        "independent_inventory_scan_verified": True,
+        "ownership_accessibility_assessed": False,
+        "completed_brewing_measured": False,
+        "original_observation_unchanged": True,
+    }
+    _matches(value, flags)
+    counts = _counts(value, (
+        "brewable_plant_stacks", "brewable_plant_stacks_in_jobs", "brewable_plant_units",
+        "observed_plant_records", "old_reported_brewable_plant_units",
+        "old_false_negative_item_count",
+    ))
+    if (counts["brewable_plant_stacks"] + counts["brewable_plant_stacks_in_jobs"]
+            > counts["observed_plant_records"]
+            or counts["old_false_negative_item_count"] > counts["observed_plant_records"]):
+        raise ValueError("Production verification counts exceed observed records")
+    reproduced = counts["old_false_negative_item_count"] > 0
+    _matches(value, {"old_false_negative_reproduced": reproduced})
+    tokens = value.get("material_tokens")
+    if (not isinstance(tokens, list) or len(tokens) > 64
+            or any(not isinstance(token, str) or not re.fullmatch(r"[A-Z0-9_]{1,96}", token)
+                   for token in tokens)
+            or len(set(tokens)) != len(tokens)
+            or (counts["observed_plant_records"] > 0 and not tokens)):
+        raise ValueError("Production verification material tokens are invalid")
+    return {**flags, **counts, "material_tokens": tokens,
+            "old_false_negative_reproduced": reproduced}
 
 
 def checkpoint_reload(root: Path, filename: str, parents: list[dict]) -> dict:
@@ -73,6 +111,8 @@ def checkpoint_reload(root: Path, filename: str, parents: list[dict]) -> dict:
     delta_counts = _counts(delta, ("bytes_before", "bytes_after", "other_files_unchanged"))
     if delta_counts["bytes_after"] <= delta_counts["bytes_before"]:
         raise ValueError("Checkpoint reload must retain its observed event-log append")
+    production = ({"production_measurement": _production_measurement(source["production_measurement"])}
+                  if "production_measurement" in source else {})
     return {
         "verification_id": filename.removesuffix(".json"), "recorded_only": True,
         "parent_record": parent["window_id"], "checkpoint_sha256": parent["checkpoint_sha256"],
@@ -89,4 +129,5 @@ def checkpoint_reload(root: Path, filename: str, parents: list[dict]) -> dict:
                                             "world_sav_unchanged": True},
         "evidence_path": "experiments/evidence/" + filename,
         "evidence_revision": CHECKPOINT_RELOAD_REVISIONS[filename],
+        **production,
     }

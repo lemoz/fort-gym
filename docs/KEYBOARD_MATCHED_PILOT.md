@@ -53,8 +53,10 @@ receipt. Every later trial must use those same execution identities. This plan
 does not claim its source policy is a new runtime enforcement mechanism: the
 existing owner/preflight and result audits must check it. A runtime or measurement
 change between trials requires a new declared cohort, not an invisible repair to
-the matching condition. The brewing-input correction needs its pending native
-inventory acceptance before that source is selected.
+the matching condition. The brewing-input correction passed its
+[provider-free native inventory acceptance](CAMPAIGN_PRODUCTION_INPUTS.md#verification-and-native-acceptance)
+on source `1bc49b9675b1c82ad502bbd6d8461c9cdbf077e9`; source/image binding at actual
+pilot launch is still required.
 
 Only one game and one existing owned local VM may run at a time. Match the
 2-CPU/3-GiB VM, 2-CPU/1536-MiB networkless container and 256-task limit. Each bounded
