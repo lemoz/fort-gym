@@ -36,28 +36,30 @@ Storage remains the predeclared 32 GiB amendment; CPU, RAM and game controls
 are unchanged. Model dollar charges remain unreported, not zero.
 
 The local website now serves clean revision
-`19b1027ae680f6eee5dc277fd288f673dd436d45`, pushed and remote-readback verified in
-[draft PR #148](https://github.com/lemoz/fort-gym/pull/148). It shows all six
-initial runs and all 192 decision boundaries, plus the continuation-aware live
-feed. The verified starting checkpoint and provisional new activity are separate,
-so carried-over usage and game time are counted once. The original initial-start
-observer and all historical campaign surfaces remain available.
+`c6f9c42aecdb05b09e7e698c68d893332cefd4e3`, pushed and remote-readback verified in
+[draft PR #149](https://github.com/lemoz/fort-gym/pull/149). It shows all six
+initial runs and 192 initial decision boundaries, plus three audited continuation
+saves and their 96 new boundaries. The new table distinguishes new and cumulative
+ticks/tokens, saved metrics, clock outcomes, source reload and final fresh-reload
+proof. Its six declared slots retain unpublished outcomes as unknown, not failed.
+The continuation-aware live feed remains separate from saved results. The
+original initial-start observer and historical campaign surfaces remain available.
 
 The new live observer reads only host receipts/process identity and adds no game
 or model calls. It labels running controllers, unsettled usage, provisional time
 and owner-reported teardown separately from verified saves. Missing observations
 expire after 30 seconds, including after a failed refresh.
 
-All 4,586 local tests passed with ten skips. Changed-file Ruff, scoped mypy and
+All 4,630 local tests passed with ten skips. Changed-file Ruff, scoped mypy and
 JavaScript syntax checks passed. Existing repository-wide debt remains ten Ruff
 and 465 mypy errors. GitHub CI for the exact revision passed in run
-`34538567998`.
-[Actual local HTTP acceptance](../experiments/evidence/keyboard_matched_continuation_website_20260910.json)
-passed against Sol attempt 1's active continuation, including unchanged historical
-evidence, matching source/assets, six recorded rows, correct saved/new totals and
-disabled admin. The first active-state check failed after Astra's continuation
-had already ended; the active assertion was preserved for the next declared Sol
-run. No browser visual QA, public deployment or main
+`34541152422`.
+[Actual local HTTP acceptance](../experiments/evidence/keyboard_matched_saved_windows_website_20260910.json)
+passed against Terra attempt 2's active continuation. It verified matching source
+and assets, three saved continuation rows, all 96 continuation boundaries,
+unchanged historical and initial results, correct live saved/new totals and
+disabled admin. The [previous live-feed acceptance](../experiments/evidence/keyboard_matched_continuation_website_20260910.json)
+is retained unchanged. No browser visual QA, public deployment or main
 merge occurred. This is progress, not completion of the full Year-Two goal.
 
 ### Checkpoint-bound continuation preparation

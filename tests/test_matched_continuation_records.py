@@ -11,6 +11,7 @@ RESULT = "keyboard_matched_astra_r1_continuation_32_64_20260910.json"
 SOL_RESULT = "keyboard_matched_sol_r1_continuation_32_64_20260910.json"
 TERRA_RESULT = "keyboard_matched_terra_r1_continuation_32_64_20260910.json"
 WEBSITE = "keyboard_matched_continuation_website_20260910.json"
+SAVED_WEBSITE = "keyboard_matched_saved_windows_website_20260910.json"
 
 
 @pytest.mark.parametrize(
@@ -20,6 +21,7 @@ WEBSITE = "keyboard_matched_continuation_website_20260910.json"
         (SOL_RESULT, "a624a9687257157aa91029d950ca1735a0e8f1baaa224cb66bba7efac50a1dbd"),
         (TERRA_RESULT, "e81a20836eb6959a529b657a72339bca2e299203c73188006fb32d682c734e11"),
         (WEBSITE, "c5cb272a0b62646fa6c495d5157b68a51a758544fc9c538bd715bf08dbf3f8c9"),
+        (SAVED_WEBSITE, "a2d9a1ef556697a734c425a6c9c8571069d409719bd9d86ef16477926d79b57f"),
     ],
 )
 def test_exact_versioned_projections_and_private_state_exclusion(filename, expected):
@@ -144,3 +146,23 @@ def test_terra_saved_outcome_preserves_unsupported_key_evidence():
     assert record["saved_metrics"]["population"] == 7
     assert record["saved_metrics"]["completed_workshops"] == 0
     assert record["native_cleanup_verified"] is record["vm_teardown_verified"] is True
+
+
+def test_saved_website_receipt_keeps_initial_and_continued_results_distinct():
+    record = json.loads((EVIDENCE / SAVED_WEBSITE).read_bytes())
+    assert record["passed"] is True
+    assert record["website_revision"] == "c6f9c42aecdb05b09e7e698c68d893332cefd4e3"
+    assert (
+        record["recorded_initial_trials"] == 6
+        and record["recorded_initial_decision_boundaries"] == 192
+    )
+    assert (
+        record["recorded_continuation_windows"] == 3
+        and record["recorded_continuation_boundaries"] == 96
+    )
+    assert record["saved_continuation_data_matches_reviewed_source"] is True
+    assert record["prior_surfaces_unchanged"] is True
+    assert record["local_tests"] == {"passed": 4630, "skipped": 10}
+    assert record["live_observation"]["campaign_id"] == "matched-20260910-terra-r2"
+    assert record["live_observation"]["new_save_verified"] is False
+    assert record["public_deployment"] is record["browser_visual_qa"] is False
