@@ -12,6 +12,7 @@ import time
 from fort_gym.bench.agent.keyboard_exchange import digest, read
 from fort_gym.bench.api.keyboard_live import SCHEMA, project_status
 from fort_gym.bench.run.keyboard_config import load_window
+from scripts.campaign_keyboard_boundaries import latest_boundary
 
 
 def file_sha(path: Path) -> str:
@@ -70,6 +71,9 @@ def baseline(
         "campaign_tokens": preflight["campaign_tokens"],
         "historical_failed_delivery_tokens": historical_tokens,
         "window_response_limit": window["steps_per_segment"] * window["max_segments"],
+        "initial_checkpoint_sha256": preflight["checkpoint_sha256"],
+        "steps_per_segment": window["steps_per_segment"],
+        "max_segments": window["max_segments"],
     }
 
 
@@ -91,6 +95,8 @@ def snapshot(run_dir: Path, base: dict, *, alive: bool, now: int) -> dict:
     if [row[0]["decision_index"] for row in entries] != list(range(len(entries))):
         raise ValueError("Live receipts are not consecutive")
     calls, tokens, ticks, deferrals = 0, 0, 0, 0
+    boundary = latest_boundary(run_dir, base, entries)
+    after_save_ticks, after_save_observed = 0, False
     observed = False
     for summary, request, decision in entries:
         receipt = decision["transport_receipt"]
@@ -130,6 +136,9 @@ def snapshot(run_dir: Path, base: dict, *, alive: bool, now: int) -> dict:
             ticks += advanced
             observed = True
             deferrals += simulation.get("deferred") is True
+            if boundary and summary["decision_index"] > boundary["window_responses"]:
+                after_save_ticks += advanced
+                after_save_observed = True
     value = {
         **base,
         "owner_alive": alive,
@@ -145,6 +154,11 @@ def snapshot(run_dir: Path, base: dict, *, alive: bool, now: int) -> dict:
         "deferrals_observed": deferrals,
         "reported_charge_usd": None,
     }
+    if boundary is not None:
+        value["latest_verified_save"] = boundary
+        value["ticks_since_verified_save_lower_bound"] = (
+            after_save_ticks if after_save_observed else None
+        )
     project_status(value, now=now)
     return value
 
