@@ -8,6 +8,7 @@ import pytest
 
 EVIDENCE = Path(__file__).resolve().parents[1] / "experiments/evidence"
 RESULT = "keyboard_matched_astra_r1_continuation_32_64_20260910.json"
+SOL_RESULT = "keyboard_matched_sol_r1_continuation_32_64_20260910.json"
 WEBSITE = "keyboard_matched_continuation_website_20260910.json"
 
 
@@ -15,6 +16,7 @@ WEBSITE = "keyboard_matched_continuation_website_20260910.json"
     "filename,expected",
     [
         (RESULT, "2c8abe1f7135d94ed27aea51e18ebc59e0599205caf3f268f4480b0e377f3d29"),
+        (SOL_RESULT, "a624a9687257157aa91029d950ca1735a0e8f1baaa224cb66bba7efac50a1dbd"),
         (WEBSITE, "c5cb272a0b62646fa6c495d5157b68a51a758544fc9c538bd715bf08dbf3f8c9"),
     ],
 )
@@ -93,3 +95,32 @@ def test_website_receipt_is_historical_http_proof_not_deployment_or_gameplay():
     assert live["campaign_id"] == "matched-20260910-sol-r1"
     assert live["saved_elapsed_ticks_before_window"] == 2500
     assert live["new_save_verified"] is False and live["source_checkpoint_verified"] is True
+
+
+def test_sol_continuation_retains_its_own_save_and_unimproved_development():
+    record = json.loads((EVIDENCE / SOL_RESULT).read_bytes())
+    assert record["campaign_id"] == "matched-20260910-sol-r1"
+    assert (
+        record["prior_checkpoint_sha256"]
+        == "c0451cad5686e59d86e2436a6534f75b419c99117a8cefb67651444d3b3bac5b"
+    )
+    assert (
+        record["checkpoint_sha256"]
+        == "abe16a8c5cdd9c3447c3f9443d8e79843552c60e715a0d8fbbecfa447f247020"
+    )
+    assert record["new_responses"] == 32 and record["next_decision"] == 64
+    assert record["new_saved_ticks"] == 3000 and record["saved_elapsed_ticks"] == 5500
+    assert record["usage"]["new_returned_tokens"] == 700489
+    assert record["usage"]["campaign_returned_tokens"] == 1493253
+    assert record["saved_metrics"]["population"] == 7
+    for key in (
+        "recorded_dead_citizens",
+        "completed_workshops",
+        "completed_farms",
+        "completed_beds",
+    ):
+        assert record["saved_metrics"][key] == 0
+    assert record["new_window_clock_outcomes"] == {"no_error": 32}
+    assert record["new_window_timeline"][-1]["campaign_elapsed_ticks"] == 5500
+    assert record["source_checkpoint_fresh_load_verified"] is True
+    assert record["final_fresh_reload_verified"] is record["sustainability_established"] is False

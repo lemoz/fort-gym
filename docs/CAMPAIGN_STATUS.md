@@ -101,9 +101,18 @@ memory, exact trace/usage prefixes and clean native/VM teardown passed. The new
 final checkpoint has not yet had a separate fresh reload. This is development
 progress, not proof of sustainability or year-two performance.
 
-Sol attempt 1 is now running its own predeclared decision-32-to-64 continuation,
-using its own checkpoint, model memory and unchanged conditions. Its final save
-and outcome are not yet verified. Native reload preserves the saved world and
+Sol attempt 1 also completed its decision-32-to-64 continuation and passed the
+independent audit. Its [record](../experiments/evidence/keyboard_matched_sol_r1_continuation_32_64_20260910.json)
+retains 3,000 new saved ticks (5,500 cumulative), 700,489 new tokens (1,493,253
+cumulative), seven living dwarves and zero recorded deaths. Workshops, farms and
+placed beds remain zero; food remains 50 and drinks 60. There were no clock
+errors or save losses. Source reload, carried-over memory and trace/usage prefixes,
+native cleanup and VM teardown passed. Its final new save has not yet had a
+separate fresh reload. The observed early lack of game-time movement followed
+the model's zero-tick menu-navigation requests, not a forced harness pause.
+
+Terra attempt 1 has now started its own predeclared continuation. Its outcome is
+not yet verified. Native reload preserves the saved world and
 paused calendar, not a promise of identical open UI menus; initial screens are
 retained without human navigation. Continue in the declared
 order Astra1, Sol1, Terra1, Terra2, Sol2, Astra2. The native source remains frozen
