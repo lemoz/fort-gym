@@ -14,6 +14,25 @@ phase retains website and remote delivery. Several bounded Astra native-keyboard
 windows have completed. Window x completed after the earlier window-w runtime
 failure. Window y completed both serial segments and its result is now recorded.
 
+### Latest website delivery: later verification beside recorded checkpoint 903
+
+The existing local page at http://127.0.0.1:8857/campaigns now serves tested
+source `f970ba4382cf3b83452ae0ff1f8a240cd9507c1b`, committed, pushed and remotely
+read back in open draft PR #137. Its later-verification note belongs only to the
+matching checkpoint 903 record. The original window's publication-time reload
+facts, game progress, usage, loss history, admission pause and stale live feed
+are unchanged. Missing or invalid later verification leaves original history
+available rather than hiding it or inventing success.
+
+All 4235 local tests passed, with 10 skips; 217 focused checks, changed-file
+Ruff, scoped mypy and JavaScript syntax checks passed. Exact HTTP page/asset/API
+acceptance verified the served revision, additive reload data and disabled admin.
+Acceptance SHA256:
+`86dfbce62bca5d856c50eeccd8d2211c7ba26db10582d315024bd21fff65bfa4`.
+Existing layout and preview data were retained. The browser was not force-reloaded
+or visually tested. Exact-head CI `34429026341` is in progress at this update.
+No game/model call, new gameplay, merge or production deployment is claimed.
+
 ### Latest native verification: checkpoint 903 freshly reloaded
 
 A provider-free diagnostic on source `88d1f4659893ecdb1d59a621638cada2d37e5876`
@@ -37,11 +56,10 @@ memory headroom remains unproven. The versioned reload receipt and documentation
 are committed, pushed and remotely read back at
 `4980cdd5e8c1961772f839eeaa848d196672ed6f`. The public receipt passed a separate
 private-evidence binding audit; 103 focused regressions passed, with one skip.
-Its exact-head CI `34428156723` is in progress, not yet a verified pass. The local website
-still serves its historical publication at `a0f3d3bc836e27816d34db5506271d652eb86402`;
-this later verification is not yet shown there. No merge or deployment.
-Next: surface this later verification separately and continue an admitted
-campaign from 903. Native fresh-start model trials remain unproven.
+Its exact-head CI `34428156723` subsequently passed. The later verification is
+now served separately on the local website as recorded above. No merge or
+deployment. Next: continue an admitted campaign from 903 and validate independent
+native fresh-start trials, which remain unproven.
 
 ### Latest implementation: independent native-keyboard campaign starts
 
@@ -64,9 +82,9 @@ Compatibility audit SHA256:
 No VM, game or model call was made for that implementation increment. Actual
 native fresh-start acceptance and independent repeated comparisons remain
 unproven; the later provider-free 903 reload is recorded above. Exact-head
-remote CI `34426912429` completed successfully. The local website remains on the audited admission/result
-source `a0f3d3bc836e27816d34db5506271d652eb86402`; this core implementation does
-not publish a new campaign outcome. No merge or deployment is claimed.
+remote CI `34426912429` completed successfully. That core implementation did not
+publish a new campaign outcome. The later website delivery is recorded above.
+No merge or deployment is claimed.
 
 ### Latest model-run attempt: window z paused before VM start
 

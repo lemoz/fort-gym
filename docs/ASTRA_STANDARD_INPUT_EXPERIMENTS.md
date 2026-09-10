@@ -105,7 +105,11 @@ tick occurred, and game/container/local-VM teardown passed. All original save
 files are unchanged; the disposable copy appended two DFHack load-log lines,
 with all other files matching. This is verified restoration, not new gameplay
 or native acceptance of independent fresh-model trials. Its later verification
-still needs to be shown separately on the website.
+is now shown beside the matching recorded window on the local campaign page at
+source `f970ba4382cf3b83452ae0ff1f8a240cd9507c1b`, pushed to draft PR #137.
+The original window's publication-time facts and all game/usage counters remain
+unchanged. Full local tests and exact HTTP page/data checks passed; browser visual
+QA, merge and production deployment are not claimed.
 
 The latest model-run attempt, window z, paused at the declared included-subscription-usage
 cutoff before starting a VM or calling Astra. No new game time or tokens were
