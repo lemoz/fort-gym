@@ -101,7 +101,8 @@ also cover rejected input, quota/token pauses, unresolved responses and cleanup
 failures. They do not establish model availability, native fresh-start acceptance,
 fortress success, repeated comparable performance or a ranking. Those require
 actual serial runs and retained receipts. No new native/model run was made for
-this implementation milestone, and the website does not advertise one.
+the initial implementation milestone. The later native acceptance below uses
+scripted responses and is not advertised as a model campaign on the website.
 
 Validation for this increment: 143 focused tests and 4199 full-suite tests passed
 (10 skipped). Changed-file Ruff and scoped mypy passed for seven implementation
@@ -127,3 +128,43 @@ matching saved window, not as another gameplay event. The existing
 publication-time reload status and all counters. Missing or invalid later
 evidence leaves the original campaign history available with an unavailable
 verification notice; private fields are not projected.
+
+## Native fresh-start acceptance: scripted, provider-free
+
+At source `f970ba4382cf3b83452ae0ff1f8a240cd9507c1b`, a native fixture exercised
+the unmodified fresh-trial CLI and ordinary continuation CLI, including their
+real on-disk exchanges. It started from the shared seed with empty memory and
+usage, sent one scripted camera-right key, saved checkpoint 1, resumed in a new
+game process, sent camera-left, and saved checkpoint 2. A third native process
+loaded checkpoint 2 and restored the ordinary loop without stepping. Initial
+prompt origin, accumulated memory, trace and usage all passed independent audit.
+
+All three native loads retained the paused year 30 / tick 16801 and actual
+120x40 screen. Both keys were confirmed; no game ticks advanced. The seed was
+mounted read-only; the existing Astra checkpoint was not mounted. Game, container
+and local VM teardown passed and stopped state was independently rechecked.
+
+There were zero provider calls. The two response receipts and 200 ledger tokens
+are explicitly synthetic, not Astra usage or performance. The raw production
+segment's autonomous flag must not be interpreted as model evidence here.
+No fixture record was added to campaign/comparison website data. The existing
+Astra fortress remains at checkpoint 903 and 268582 retained elapsed ticks.
+
+The native source had green CI. Memory peaked at 1375010816 bytes under the
+1536 MiB container limit, with no limit events or OOM kills; task peak was 16
+of 256 and final visible zombies were zero. This short shared-seed diagnostic
+does not establish headroom for longer model campaigns. Two audit-only field
+assumptions were corrected against the retained receipt schemas; the native
+run was not repeated or rewritten.
+
+See the [versioned acceptance receipt](../experiments/evidence/scripted_native_keyboard_fresh_trial_20260910.json).
+Private audit SHA256:
+`1086e6dae1a0bd794543a5fcaab7602e778564cd5d6f075f00405f5e626c9a95`.
+This closes provider-free native fresh-start/save/continuation acceptance. Actual
+independent model calls, repeated comparable trials and year-two success remain
+unproven and still require the original goal's experimental work.
+
+Publication validation bound the shareable receipt to the exported native
+evidence. All 137 focused fresh-start, continuation-launcher and public campaign
+record/reload regressions passed. No production harness or website code changed
+for this acceptance receipt.
