@@ -10,6 +10,7 @@ EVIDENCE = Path(__file__).resolve().parents[1] / "experiments/evidence"
 RESULT = "keyboard_matched_astra_r1_continuation_32_64_20260910.json"
 SOL_RESULT = "keyboard_matched_sol_r1_continuation_32_64_20260910.json"
 TERRA_RESULT = "keyboard_matched_terra_r1_continuation_32_64_20260910.json"
+TERRA_TWO_RESULT = "keyboard_matched_terra_r2_continuation_32_64_20260910.json"
 WEBSITE = "keyboard_matched_continuation_website_20260910.json"
 SAVED_WEBSITE = "keyboard_matched_saved_windows_website_20260910.json"
 
@@ -20,6 +21,7 @@ SAVED_WEBSITE = "keyboard_matched_saved_windows_website_20260910.json"
         (RESULT, "2c8abe1f7135d94ed27aea51e18ebc59e0599205caf3f268f4480b0e377f3d29"),
         (SOL_RESULT, "a624a9687257157aa91029d950ca1735a0e8f1baaa224cb66bba7efac50a1dbd"),
         (TERRA_RESULT, "e81a20836eb6959a529b657a72339bca2e299203c73188006fb32d682c734e11"),
+        (TERRA_TWO_RESULT, "1966bf1e8229e8fbfd7a161d84c78da272dd3f5c9aa86040f59a8baa415ef1b8"),
         (WEBSITE, "c5cb272a0b62646fa6c495d5157b68a51a758544fc9c538bd715bf08dbf3f8c9"),
         (SAVED_WEBSITE, "a2d9a1ef556697a734c425a6c9c8571069d409719bd9d86ef16477926d79b57f"),
     ],
@@ -146,6 +148,30 @@ def test_terra_saved_outcome_preserves_unsupported_key_evidence():
     assert record["saved_metrics"]["population"] == 7
     assert record["saved_metrics"]["completed_workshops"] == 0
     assert record["native_cleanup_verified"] is record["vm_teardown_verified"] is True
+
+
+def test_terra_second_continuation_keeps_its_independent_checkpoint():
+    record = json.loads((EVIDENCE / TERRA_TWO_RESULT).read_bytes())
+    assert record["campaign_id"] == "matched-20260910-terra-r2"
+    assert (record["start_decision"], record["next_decision"]) == (32, 64)
+    assert record["new_responses"] == 32
+    assert record["new_saved_ticks"] == 10000 and record["saved_elapsed_ticks"] == 19000
+    assert record["usage"]["new_returned_tokens"] == 1159955
+    assert record["usage"]["campaign_returned_tokens"] == 2265470
+    assert record["prior_checkpoint_sha256"] == (
+        "41bd368d393813d9176c51f9dc8313ce9f9dfefe8516934ef6aaa8ffca868fd5"
+    )
+    assert record["checkpoint_sha256"] == (
+        "4b291937cc0a70a063d8a1987baafe99a3a48014ac5df7dbc4dd7c41f4fac837"
+    )
+    assert record["saved_metrics"]["population"] == 7
+    assert record["saved_metrics"]["completed_workshops"] == 0
+    assert record["new_window_clock_outcomes"] == {
+        "no_error": 30, "timeout_waiting_for_ticks": 2
+    }
+    assert record["new_window_timeline"][-1]["campaign_elapsed_ticks"] == 19000
+    assert record["native_cleanup_verified"] is record["vm_teardown_verified"] is True
+    assert record["final_fresh_reload_verified"] is record["sustainability_established"] is False
 
 
 def test_saved_website_receipt_keeps_initial_and_continued_results_distinct():

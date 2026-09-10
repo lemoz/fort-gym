@@ -11,7 +11,7 @@ Terra attempts. Terra retained 7,000 and 9,000 ticks respectively, with 32 respo
 window and 859,063 / 1,105,515 returned tokens. Both ended with seven living
 dwarves, 50 raw edible food units, 60 drinks and no completed workshop, farm or
 placed bed. Neither proves sustainable production. The final saves are verified
-but have not yet had fresh-load continuation tests.
+at those first-window boundaries; their later continuation audits are recorded below.
 
 Terra attempt 2's guest poweroff returned 1; the subsequent VM stop returned zero
 and stopped state was independently verified. Its original audit retains this
@@ -120,7 +120,18 @@ cumulative) and seven living dwarves. Completed workshops, farms and placed beds
 remain zero, with food50 and drinks60. One unsupported native-key response is
 retained among 32 responses; no save loss occurred. Source fresh load, memory and
 usage lineage passed; the new final checkpoint has no separate fresh reload yet.
-Terra attempt 2 is next in the same predeclared continuation sequence.
+Terra attempt 2 also completed all 32 continuation responses and passed its
+independent audit. Its [record](../experiments/evidence/keyboard_matched_terra_r2_continuation_32_64_20260910.json)
+retains 10,000 new saved ticks (19,000 cumulative), 1,159,955 new tokens
+(2,265,470 cumulative) and seven living dwarves. Completed workshops, farms and
+placed beds remain zero, with raw food50 and drinks60. Two clock timeouts remain
+in the evidence; no save loss occurred. The source fresh load, own memory/usage
+prefixes and native/VM teardown passed, with both shutdown commands returning0.
+The new final checkpoint still needs its separate fresh reload. This fourth
+audited continuation is versioned here; the unchanged running website revision
+above still registers the first three, pending a reviewed registry update.
+Sol attempt 2 has started in the same predeclared serial continuation sequence;
+its live observations are not a verified final save. Astra attempt 2 follows it.
 Native reload preserves the saved world and
 paused calendar, not a promise of identical open UI menus; initial screens are
 retained without human navigation. Continue in the declared
