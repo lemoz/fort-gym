@@ -104,8 +104,8 @@ native startup and first prompt preserved the saved memory, configuration,
 history and usage, with only the previously declared budget extension appended.
 The first retained live HTTP audit verified five real Astra Medium responses,
 171876 new tokens and at least 4000 additional game ticks. The website shows
-this in-flight progress separately from saved checkpoint 929. No new save,
-terminal outcome or teardown is claimed yet. Continue the same bounded owner;
+this in-flight progress separately from saved checkpoint 929. That initial audit
+claimed no new save, terminal outcome or teardown. Continue the same bounded owner;
 do not restart based on an observation timeout. See
 [Campaign status](CAMPAIGN_STATUS.md) for exact receipts and remaining work.
 
@@ -113,10 +113,19 @@ Its first 32-decision batch has since saved checkpoint 961 and freshly loaded
 the next native worker with the same memory and usage. This intermediate boundary
 retains 340582 elapsed ticks, 84.5 percent of one full year, with 16 living
 citizens, 78 raw-edible food units and 533 drink units. Tables/chairs increased
-to three each. The second batch is running; complete inventory/trace audit and
-final teardown remain pending. A separate tested website ordering fix is pushed
-in draft PR #138 so completed play can follow a recorded pause without changing
-that history. Its CI is pending; the running harness and preview are untouched.
+to three each. Its second batch then saved checkpoint 993 and loaded the third
+worker with identical state. That intermediate boundary retains 386582 elapsed
+ticks (95.9 percent of one full year), 16 living citizens, 48 food and 497 drink
+units. No deaths were recorded. Calendar year 31 has begun, but a full elapsed
+year has not yet passed. Food/drink drawdown is not sustainability proof.
+Complete inventory/trace audit and final teardown remain pending.
+
+The website ordering fix in draft PR #138 passed exact-head CI. The subsequent
+live-save display change is pushed in draft PR #139 and now serves the existing
+local dashboard with separately labelled original save, latest verified save/reload,
+and subsequent reported ticks. Its 4371-test final local suite and 51 focused
+tests passed; its remote CI is running. Historical recorded data is unchanged,
+the native harness remains pinned, and no merge/public deployment is claimed.
 
 Window aa saved 26 of 32 declared Astra Medium decisions as checkpoint 929 at
 292582 retained elapsed ticks, 72.6% of the first-year target. The fortress has

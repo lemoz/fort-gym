@@ -52,8 +52,21 @@ units, 533 drink units, eleven beds, eight farms and four workshops. Tables grew
 from two to three and chairs from one to three. All 32 subscription event receipts
 reconciled: 1143 cumulative responses and 36454338 campaign tokens. This is a
 verified intermediate save/load boundary, not full terminal inventory/trace
-acceptance or a completed window. The second batch is running. Boundary audit
+acceptance or a completed window. The second batch then continued. Boundary audit
 SHA256: `d1651434d821d6f9c9246fe43e86aee6411752f6e388beb743bde821f498c0bb`.
+
+The second batch subsequently saved checkpoint 993, and the third worker freshly
+loaded the identical agent/memory and native metrics. Its audited intermediate
+boundary retains 386582 elapsed ticks, 95.9 percent of one full year. This batch
+added 46000 ticks. Sixteen citizens remain alive with zero recorded deaths; food
+fell from 78 to 48 units and drinks from 533 to 497, while beds/farms/workshops
+remain eleven/eight/four. Three citizens were planting seeds at the saved sample;
+that is activity, not completed production or sustainability proof. The game
+calendar is year 31 / tick 183, but a full elapsed year still requires 16618 more
+ticks because this campaign did not start at calendar tick zero.
+The 64 new responses reconcile to 1175 cumulative responses and 37683818 campaign
+tokens. Boundary audit SHA256:
+`6ec419d89a33e29a19f69e1fcfe5fb5fb7b2787a9da283b2a653bd8e41c9feb3`.
 
 The native owner and observer were freshly polled running at this update.
 Continue observing these same handles, then audit full saved inventories, traces,
@@ -70,12 +83,28 @@ Source `fde8bbab4134ef279de6ef0a66c3715d8379d9ce` is pushed and read back on
 `codex/campaign-window-ab-records`, in draft
 [PR #138](https://github.com/lemoz/fort-gym/pull/138) against the harness branch.
 Validation passed 177 focused tests, 4337 full-suite tests with ten skips, and
-the final 11-test sequence/renderer regression. The renderer test was added after
-full-suite collection, so the final source still requires its own CI result.
-Changed-file Ruff and scoped mypy passed. CI `34506914909` is currently running.
-The active harness and live website remain on unchanged source `3ab9fc4c9`;
-integration waits for the owned game run to finish and tear down. No ongoing
-run result was added to recorded publications, and no merge or deployment occurred.
+the final 11-test sequence/renderer regression. Exact-head CI `34506914909` passed
+with 4222 tests and 126 skips, covering the final source. Changed-file Ruff and
+scoped mypy passed. Native integration waits for the owned game run to finish.
+
+The subsequent live-save display change is pushed and read back at
+`c4cd0b527d8f0d4d05e6cc51e9fad00748e4db44` in draft
+[PR #139](https://github.com/lemoz/fort-gym/pull/139), stacked on #138. It keeps
+window-start and cumulative usage intact while separately showing the latest
+audited intermediate save/reload and later reported time. Full save inventory
+and canonical trace audit remain explicitly pending. Local validation passed
+4371 tests with ten skips, plus 51 focused tests and scoped static checks.
+Repository-wide Ruff/mypy were also run: their 10/465 existing errors match the
+parent checkout, so global static checks are not claimed green. Remote CI
+`34509757759` is running at this update.
+
+Only the owned local preview and read-only observer were replaced; the native
+owner still uses clean `3ab9fc4c9`. The same local `/campaigns` URL returns 200,
+the served JavaScript matches the tested source, and the recorded-history digest
+is unchanged. A real HTTP snapshot showed checkpoint 993 / 386582 saved ticks,
+67 new responses and at least 2000 later ticks; unknown charges remain null.
+The existing browser tab may need refreshing to load the new display code.
+No ongoing-run terminal manifest, merge or public deployment was created.
 
 ### Latest checkpoint verification: 929 freshly reloaded, no new gameplay
 
