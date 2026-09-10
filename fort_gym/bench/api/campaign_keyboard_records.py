@@ -21,8 +21,9 @@ from .campaign_keyboard_resumed import RESUMED_WINDOWS, resumed_window
 from .campaign_keyboard_trials import PROMPT_TRIALS, prompt_trial
 from .campaign_keyboard_modal_trials import MODAL_TRIALS, modal_trial
 from .campaign_keyboard_saved_segments import SAVED_SEGMENTS, saved_segment
-from .campaign_keyboard_windows import COMPLETED_WINDOWS, completed_window
-from .campaign_keyboard_paused import PAUSED_WINDOWS, paused_window
+from .campaign_keyboard_windows import COMPLETED_WINDOWS
+from .campaign_keyboard_paused import PAUSED_WINDOWS
+from .campaign_keyboard_window_sequence import saved_window_sequence
 from .campaign_keyboard_reloads import CHECKPOINT_RELOADS, checkpoint_reload
 from .campaign_keyboard_tails import (
     TAIL_INTERRUPTION, TAIL_RECOVERIES, continuation_interruption, continuation_recovery,
@@ -299,12 +300,9 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
     prompt_trials = [prompt_trial(root, filename, resumed_windows) for filename in PROMPT_TRIALS]
     modal_trials = [modal_trial(root, filename, resumed_windows, prompt_trials) for filename in MODAL_TRIALS]
     saved_segments = [saved_segment(root, filename, resumed_windows, modal_trials) for filename in SAVED_SEGMENTS]
-    completed_windows: list[dict] = []
-    for filename in COMPLETED_WINDOWS:
-        completed_windows.append(completed_window(root, filename, [*saved_segments, *completed_windows]))
-    paused_windows: list[dict] = []
-    for filename in PAUSED_WINDOWS:
-        paused_windows.append(paused_window(root, filename, [*completed_windows, *paused_windows]))
+    saved_windows = saved_window_sequence(root, COMPLETED_WINDOWS, PAUSED_WINDOWS, saved_segments)
+    completed_windows = [row for row in saved_windows if row["status"] == "completed"]
+    paused_windows = [row for row in saved_windows if row["status"] == "paused"]
     # A later verification cannot rewrite publication-time facts or make the
     # original gameplay history unavailable when its own record is missing.
     try:
@@ -358,14 +356,10 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
         previous_event = {"kind": "modal_trial", "id": saved["previous_trial"]}
         recent_events.insert(recent_events.index(previous_event) + 1,
                              {"kind": "saved_segment", "id": saved["saved_segment_id"]})
-    for window in completed_windows:
+    for window in saved_windows:
         previous_event = next(event for event in recent_events if event["id"] == window["parent_record"])
         recent_events.insert(recent_events.index(previous_event) + 1,
-                             {"kind": "completed_window", "id": window["window_id"]})
-    for window in paused_windows:
-        previous_event = next(event for event in recent_events if event["id"] == window["parent_record"])
-        recent_events.insert(recent_events.index(previous_event) + 1,
-                             {"kind": "paused_window", "id": window["window_id"]})
+                             {"kind": f"{window['status']}_window", "id": window["window_id"]})
     return {
         "schema_version": "fortgym.public-keyboard-milestones/v1",
         "live_tracking": False,

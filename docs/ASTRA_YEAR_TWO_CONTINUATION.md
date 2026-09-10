@@ -1,8 +1,9 @@
 # Year-two continuation from checkpoint 929
 
-Window `20260910ab` is a declared but unexecuted continuation of the existing
-Astra Medium fortress. It is not a new independent model trial and must not be
-published as gameplay before real receipts exist.
+Window `20260910ab` was prepared as a continuation of the existing Astra Medium
+fortress. It is not a new independent model trial and must not be published as
+completed gameplay before real terminal receipts exist. Its later live execution
+is tracked in the owning project's campaign status and private run evidence.
 
 The window configuration pins the starting checkpoint's manifest digest as well
 as its cursor. The native window controller rejects a different save at cursor
@@ -59,4 +60,17 @@ The public receipt is
 `experiments/evidence/astra_native_keyboard_checkpoint929_reload_20260910.json`.
 The campaign page attaches it as a later verification to the saved pause without
 rewriting the original result or changing its usage, decisions or game time.
-This resolves the separate-reload check; window ab itself remains unlaunched.
+This resolved the separate-reload check before window ab's later launch.
+
+## Website ordering across saved pauses
+
+Recorded windows now load in saved-parent order across completed and paused
+statuses. A completed continuation may follow a saved pause without changing
+that pause into a completed run or discarding its unattempted decision slots.
+The individual completed/paused validators still check checkpoint, usage and
+loss lineage; missing parents, cycles and duplicate record identities fail.
+The displayed event order follows the same validated dependencies.
+
+Regression fixtures exercise completed-to-paused-to-completed rendering and
+unchanged historical records. They are temporary test data, not experiment
+publications. This reader change adds no result manifest for an ongoing run.
