@@ -19,6 +19,11 @@ RESULTS = {
         "59e3fe7a4a3edddcf6a6d1264c748237868b87f71a345d66e2c72c4c183906a1",
         "1dfb7e8250fd1dcea9410ebd3ea9d334d6bf7ce6",
     ),
+    "matched-20260910-sol-r1": (
+        "experiments/evidence/keyboard_matched_sol_r1_20260910.json",
+        "0b213a6074777eb5d016cb885bb3df296c4096a8c47e88e43f443eec04142fda",
+        "c0e37c1dc1bc90706396071798514673ac9abd5c",
+    ),
 }
 
 
@@ -65,6 +70,15 @@ def keyboard_cohort() -> dict[str, Any]:
                        evidence_url=_link(path, revision), evidence_sha256=digest)
         trials.append(row)
     recorded = [r["result"] for r in trials if r["result"] is not None]
+    if recorded:
+        common_execution = ("source_revision", "image_id", "seed_receipt_sha256", "binding_sha256")
+        common_conditions = ("reasoning_effort", "control_profile", "observation_profile",
+                             "screen_size", "prompt_profile", "response_limit")
+        for result in recorded:
+            if (any(result["execution"][key] != recorded[0]["execution"][key]
+                    for key in common_execution)
+                    or any(result[key] != recorded[0][key] for key in common_conditions)):
+                raise ValueError("Recorded trials differ in a declared matching condition")
     return {
         "schema_version": "fortgym.public-keyboard-cohort/v1",
         "cohort_id": plan["cohort_id"], "hypothesis": plan["hypothesis"],

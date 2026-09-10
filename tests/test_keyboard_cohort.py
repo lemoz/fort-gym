@@ -9,16 +9,16 @@ from fastapi.testclient import TestClient
 from fort_gym.bench.api import keyboard_cohort as cohort
 
 
-def test_actual_recorded_trial_and_five_unpublished_slots():
+def test_actual_recorded_trials_and_four_unpublished_slots():
     data = cohort.keyboard_cohort()
-    assert data["recorded_trials"] == 1 and data["declared_trials"] == 6
+    assert data["recorded_trials"] == 2 and data["declared_trials"] == 6
     assert data["matched_initial_windows_complete"] is False
     assert data["strong_ranking_supported"] is False
     assert data["live_owner_status_included"] is False
     assert [r["model"] for r in data["trials"]] == [
         "gpt-6-astra", "gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-terra", "gpt-5.6-sol", "gpt-6-astra"
     ]
-    for row in data["trials"][1:]:
+    for row in data["trials"][2:]:
         assert row["result"] is None and row["publication_state"] == "no_published_result"
         assert row["evidence_url"] is None
     result = data["trials"][0]["result"]
@@ -40,22 +40,47 @@ def test_actual_recorded_trial_and_five_unpublished_slots():
     assert result["timeline"][-1]["elapsed_ticks"] == result["saved_elapsed_ticks"]
     assert [p["decision"] for p in result["timeline"]] == list(range(1, 33))
     assert result["timeline"][-1]["metrics"] == result["saved_metrics"]
+    sol = data["trials"][1]["result"]
+    assert sol["responses"] == 32 and sol["saved_elapsed_ticks"] == 2500
+    assert sol["saved_metrics"]["population"] == 7
+    assert sol["saved_metrics"]["completed_workshops"] == 0
+    assert sol["saved_metrics"]["completed_farms"] == 0
+    assert sol["usage"]["returned_tokens"] == 792764
+    assert sol["usage"]["reported_charge_usd"] is None
+    assert sol["shutdown"]["guest_command_warning"] is False
+    assert sol["timeline"][-1]["metrics"] == sol["saved_metrics"]
+    assert sol["timeline"][-1]["elapsed_ticks"] == 2500
     serialized = json.dumps(data)
     for private in ("/Users/", "/evidence/astra", '"account_id":', '"prompt_text":',
                     '"screen_text":', '"api_key":'):
         assert private not in serialized
 
 
-def test_declared_conditions_and_source_are_bound():
-    result = cohort.keyboard_cohort()["trials"][0]["result"]
+@pytest.mark.parametrize("index,model", [(0, "astra"), (1, "sol")])
+def test_declared_conditions_and_source_are_bound(index, model):
+    result = cohort.keyboard_cohort()["trials"][index]["result"]
     path = cohort.PROJECT_ROOT / "experiments/keyboard_matched_pilot_20260910"
     for kind in ("condition", "trial"):
-        digest = hashlib.sha256((path / f"astra-{kind}.json").read_bytes()).hexdigest()
+        digest = hashlib.sha256((path / f"{model}-{kind}.json").read_bytes()).hexdigest()
         assert digest == result["execution"][f"{kind}_file_sha256"]
     assert result["execution"]["source_revision"] == cohort.PLAN_REVISION
     assert result["reasoning_effort"] == "medium"
     assert result["screen_size"] == [120, 40]
     assert result["inherited_usage"] is False and result["initial_memory_empty"] is True
+
+
+@pytest.mark.parametrize("field", ["image_id", "source_revision", "binding_sha256", "screen_size", "prompt_profile", "reasoning_effort"])
+def test_different_execution_or_controls_are_not_silently_compared(monkeypatch, field):
+    actual_read = cohort._read
+    def altered_read(path, digest):
+        value = actual_read(path, digest)
+        if value.get("model") == "gpt-5.6-sol":
+            target = value["execution"] if field in value["execution"] else value
+            target[field] = "different"
+        return value
+    monkeypatch.setattr(cohort, "_read", altered_read)
+    with pytest.raises(ValueError, match="matching condition"):
+        cohort.keyboard_cohort()
 
 
 @pytest.fixture
@@ -136,9 +161,11 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   await new Promise(setImmediate);
   const result = nodes['keyboard-cohort-content'];
   assert.equal(result.hidden, false);
-  assert.match(nodes['keyboard-cohort-status'].textContent, /1 of 6/);
+  assert.match(nodes['keyboard-cohort-status'].textContent, /2 of 6/);
   assert.match(result.textContent, /11,200/);
   assert.match(result.textContent, /1,043,596/);
+  assert.match(result.textContent, /792,764/);
+  assert.match(result.textContent, /2,500/);
   assert.match(result.textContent, /unreported, not \$0/);
   assert.match(result.textContent, /Unknown/);
   assert.match(result.textContent, /No published result/);
@@ -147,6 +174,7 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   const all = []; const walk = n => { all.push(n); n.children.forEach(walk); }; walk(result);
   assert.equal(all.filter(n => n.tag === 'tbody')[0].children.length, 6);
   assert.equal(all.filter(n => n.tag === 'tbody')[1].children.length, 32);
+  assert.equal(all.filter(n => n.tag === 'tbody')[2].children.length, 32);
   assert.equal(all.find(n => n.tag === 'a').href, data.trials[0].evidence_url);
   const previous = result.textContent; fail = true;
   await nodes['refresh-keyboard-cohort'].events.click();

@@ -5,7 +5,7 @@ read-only `/public/keyboard-cohort` endpoint. It follows the six slots in
 `experiments/keyboard_matched_pilot_20260910/cohort.json`, in declared execution
 order. The older exploratory Astra campaign remains separate.
 
-## First published window
+## First two published windows
 
 `matched-20260910-astra-r1` completed all 32 decisions and retained 11,200 ticks
 from the shared seed. Seven dwarves remained, with one completed workshop, one
@@ -19,6 +19,17 @@ the VM stop command returned 0 and a separate state check confirmed it stopped.
 The record retains both observations. Peak observed container memory was
 1,237,028,864 bytes against a 1,610,612,736-byte limit, with no recorded limit
 events or OOM kills. That short window does not establish long-run headroom.
+
+`matched-20260910-sol-r1` also completed 32 decisions, retaining 2,500 ticks with
+seven dwarves, no completed workshop or farm and no placed beds. Its final native
+stocks were 50 raw edible units and 60 drinks. All 32 responses and 792,764 tokens
+are accounted for. The new checkpoint is verified but has not had a fresh reload.
+Native game and VM teardown passed; both shutdown commands returned zero.
+
+The two records share the source revision, image, seed, execution binding,
+control/observation/memory profiles, screen size, reasoning effort and response
+limit. The endpoint rejects differences in those matched fields. Their observed
+outcomes differ, but neither is a repeated model result or proof of sustainability.
 
 ## Interpretation
 
