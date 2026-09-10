@@ -15,6 +15,41 @@ windows have completed. Window x completed after the earlier window-w runtime
 failure. Window y completed both serial segments and its result is now recorded.
 Window aa then saved checkpoint 929 before a declared subscription-admission pause.
 
+### Current execution: window ab resumed after the owner-reported usage reset
+
+Window ab launched on September 10 from checkpoint 929 using clean source
+`3ab9fc4c9f553171206d3d7122402ec4493ef2e6`. Fresh subscription admission passed
+at 11 percent used under the unchanged 98-percent cutoff. No reset was consumed
+by this run, no purchase or paid API fallback was enabled, and no cloud VM was
+created. The existing bounded local VM owns at most four serial 32-decision
+segments, with saves between batches and mandatory final teardown.
+
+The actual first native load, saved agent and first model prompt passed a
+read-only startup audit. The exact original memory, configuration, prompt
+history, 1111 responses, 35385830 campaign tokens and all six historical losses
+were preserved; only the previously declared budget extension was appended.
+The model remains Astra Medium with the same 120x40 native screen and keyboard
+controls. Private food measurements were not added to its prompt.
+Startup audit SHA256:
+`00260dabe0c3afd404e9709483669e5be39631e48c4ea24994d2f927067b3f73`.
+
+At the retained live snapshot, five actual responses added 171876 tokens and
+subsequent game feedback established at least 4000 additional ticks. The local
+website's `/public/keyboard-active` endpoint matched independently decoded model
+receipts: 1116 cumulative responses, 35557706 campaign tokens and 35626710
+all-attempt tokens. Dollar charges remain unreported. This is an in-flight
+lower bound, not a new verified save or a terminal result; checkpoint 929 /
+292582 elapsed ticks remains the last audited save. The observer follows the
+existing owner without making game or model calls. Live HTTP audit SHA256:
+`79c58e990c3df825fc27749778d0f537d43018295d0bec40d7129e845788b83f`.
+
+The native owner and observer were both freshly polled running at this update.
+Continue observing these same handles, then audit actual saves, usage, native
+outcomes and teardown before publishing a recorded result. The existing local
+preview shows active progress separately from the unchanged recorded pause and
+reload history. No year-two outcome, repeated model comparison, merge or public
+deployment is established by this launch.
+
 ### Latest checkpoint verification: 929 freshly reloaded, no new gameplay
 
 A provider-free native check at source
@@ -54,7 +89,7 @@ No browser visual QA, merge or production deployment is claimed.
 The private diagnostic retains about 230 MiB in the existing artifact tree.
 This closes the checkpoint-929 fresh-load check, not the year-two goal.
 
-### Next continuation: checkpoint-pinned window ab, not launched
+### Earlier preparation: checkpoint-pinned window ab
 
 Source `5fdb7d400ecea26725e22d45f5d2e5e49bef6af5` adds window ab with up to
 four serial 32-decision segments from checkpoint 929. Its configuration pins
@@ -95,9 +130,9 @@ Its preflight verifies the exact source, bundle, checkpoint, actual native reloa
 unchanged memory/usage and first-segment-only budget extension. It makes no model
 or game call and performs no subscription admission. Preflight SHA256:
 `5f71703f97a7837c1b1f812dd15fac721c2be45377fba17c2021bbce6a2299b1`.
-The owner has not run; fresh source/save/runtime checks and account admission
-are still required before launch. The complete year-two and multi-model goal
-remains unfinished.
+At that preparation the owner had not run. The later admitted execution is
+recorded above; its live results do not rewrite the preparation receipt. The
+complete year-two and multi-model goal remains unfinished.
 
 ### Latest native outcome: checkpoint 929 saved, window aa paused
 
@@ -152,8 +187,9 @@ or production deployment is claimed. Exact-head CI `34433999747` passed.
 HTTP acceptance SHA256:
 `f333fa689dc35ac3015aa335501fdadf857a97359daa8eea7055404dcec929cc`.
 
-Next gameplay starts from checkpoint 929, not a reset or older save, after fresh
-subscription admission. The inherited 1152-response ceiling leaves only 41
+The next gameplay start was checkpoint 929, not a reset or older save, after fresh
+subscription admission; that continuation is now running as recorded above.
+The inherited 1152-response ceiling left only 41
 dispatches, at most 82000 requested ticks, short of the remaining 110618 ticks
 even before zero-tick menu decisions. Window ab now declares the explicit
 response-budget extension described above, retaining every usage record and the

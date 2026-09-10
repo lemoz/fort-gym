@@ -97,6 +97,18 @@ requirements. See [Campaign status](CAMPAIGN_STATUS.md) for exact CI and deliver
 
 ## Current native progress
 
+Window ab is now running from checkpoint 929 at clean source
+`3ab9fc4c9f553171206d3d7122402ec4493ef2e6`, after fresh subscription admission
+passed at 11 percent used following the owner's reported reset. The actual
+native startup and first prompt preserved the saved memory, configuration,
+history and usage, with only the previously declared budget extension appended.
+The first retained live HTTP audit verified five real Astra Medium responses,
+171876 new tokens and at least 4000 additional game ticks. The website shows
+this in-flight progress separately from saved checkpoint 929. No new save,
+terminal outcome or teardown is claimed yet. Continue the same bounded owner;
+do not restart based on an observation timeout. See
+[Campaign status](CAMPAIGN_STATUS.md) for exact receipts and remaining work.
+
 Window aa saved 26 of 32 declared Astra Medium decisions as checkpoint 929 at
 292582 retained elapsed ticks, 72.6% of the first-year target. The fortress has
 16 living citizens, no recorded deaths, 567 drink units and 57 raw-edible food
@@ -115,18 +127,18 @@ remain unreported. A later provider-free native reload of 929 passed, restoring
 the paused calendar, normal campaign loop, agent state and original trace/usage
 without any model call, new game time or save. The original checkpoint stayed
 unchanged and VM teardown passed. Sustained production, year-two success and
-repeated cross-model comparisons are not yet verified. Next gameplay
-must retain checkpoint 929 and version a response-budget extension: only 41
-dispatches remain under the inherited 1152 ceiling, insufficient for the remaining
+repeated cross-model comparisons are not yet verified. The next gameplay
+was required to retain checkpoint 929 and version a response-budget extension:
+only 41 dispatches remained under the inherited 1152 ceiling, insufficient for the remaining
 110618 ticks even at maximum advancement. Window ab now declares four serial
 32-decision segments and an append-only 1280-response ceiling, retaining the
 40-million-token ceiling and exact checkpoint-929 digest. Actual saved-agent
 restore/extension/restore checks passed offline without changing the checkpoint.
-The four-segment native owner is now prepared and preflight-verified at source
+The four-segment native owner was prepared and preflight-verified at source
 `3ab9fc4c9f553171206d3d7122402ec4493ef2e6`, with finite work bounds and mandatory
-cleanup. It remains unlaunched and requires fresh subscription admission. The
-local website now attaches the actual checkpoint-929 reload verification to the
-paused save; no planned progress was added. See [Campaign status](CAMPAIGN_STATUS.md)
+cleanup. It subsequently launched after fresh subscription admission as recorded
+above. The local website also attaches the actual checkpoint-929 reload
+verification to the paused save; no planned progress was added. See [Campaign status](CAMPAIGN_STATUS.md)
 for website/remote delivery and the current evidence boundary.
 
 At source `f970ba4382cf3b83452ae0ff1f8a240cd9507c1b`, the production fresh-trial
