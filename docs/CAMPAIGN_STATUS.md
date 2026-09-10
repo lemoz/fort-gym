@@ -37,7 +37,8 @@ responses and 39994420 campaign tokens; all-attempt usage is 40063424 including
 69004 historical failed-delivery tokens. Dollar charges remain unreported.
 Six historical losses retain at least 48429 lost ticks plus an unknown remainder.
 There were no new rollbacks, OOM events or clock timeouts. Memory headroom remains
-unproven. The final checkpoint still needs a separate fresh native reload.
+unproven. The separate final-save reload subsequently passed; see the later
+verification below. The original completed-window manifest remains unchanged.
 
 Terminal audit SHA256:
 `4008fed9d6fee78132f12f422fe4ff14240c0b7fdaa8801c682ed6c29337deeb`.
@@ -62,15 +63,65 @@ identical older records/admission/live snapshot and disabled admin. Receipt
 SHA256: `14822c684b562a358a95e78fd4f7c2fccd5a9e9b58fba6ec5761758483e42fe2`.
 Full-suite receipt SHA256:
 `5e67d2c765725234af5c4f6198d412452113cad0b230484d2eb83dbe26d2597d`.
-PR #142 exact-head CI `34518336191` is running at this update.
+PR #142 exact-head CI `34518336191` passed.
 The owned preview was replaced; no browser was opened or visually tested during
 this background goal continuation, consistent with the Sites skills.
 
-Next: complete remote CI, then perform a provider-free disposable final-save
-reload and native brewing-input verification before the
-matched-model pilot. The full Year-Two/Cross-Model/Website/Remote goal remains
-active. No public deployment, paid fallback, reset or new model run occurred
-during result publication.
+### Later checkpoint-1057 verification and website delivery
+
+The final save reopened in a fresh native process at year 31 / tick 70183.
+Normal campaign continuation restored checkpoint 1057, 456582 retained ticks and
+the original agent memory, history and usage unchanged. No model calls, game
+keys, ticks, saves or checkpoints were added. The source save stayed unchanged;
+only two load-log lines were appended to the disposable copy. Full teardown passed.
+Native audit SHA256:
+`33a409540324a33d9007267941d3f30fa28f86eeb438c3ccbb676cb4ff694132`.
+
+The corrected brewing reader also passed independent native inventory inspection:
+69 units in 34 unassigned plump-helmet stacks, no assigned plant stacks, no read
+failures. All 34 lacked the old alcohol flag while declaring drink reaction
+products. The old zero was a measurement false negative, not proof of absent
+ingredients. Raw inputs still do not establish ownership, accessibility or brewing.
+
+Sanitized verification is pinned at `a542b0b732b2e59fe316b68d8140dd21bb9ecc39`.
+Its website integration is pushed and read back at
+`52cbfae75efde21b847c3cdab87874b20ed4da64` in draft
+[PR #143](https://github.com/lemoz/fort-gym/pull/143), stacked on #142.
+All 4469 local tests passed (10 skips), as did 145 focused checks and exact-head
+GitHub CI `34521488044`. The existing local preview serves this exact clean source.
+HTTP acceptance passed for exact page/script bytes, later verification, unchanged
+earlier records/live/admission and disabled admin, SHA256:
+`f3369ba07337f88cf763a917c5ee964153e50a417e337c8cdf0a056806d41588`.
+Full-suite XML SHA256:
+`0b62b1b19eb69535c35dc91b5a9b8d020c0d44129ae20b0602fe8f376252d752`.
+No public deployment or browser visual QA is claimed.
+
+### Matched pilot started: Astra replicate 1
+
+`matched-20260910-astra-r1` is the first actual trial in the declared six-start
+cohort. One bounded owner has started the existing local VM and native game,
+using source `1bc49b9675b1c82ad502bbd6d8461c9cdbf077e9` and the already
+native-validated image
+`sha256:ebc48ef1e63dabcae0e624e92eb114bbfd5e21d96bb9d5a2a3e0f0c2a0426cc9`.
+All six config files and the cohort plan are bound to the same execution record.
+The existing fresh-trial CLI runs unchanged; no image rebuild or source hot patch.
+
+Startup review passed: shared seed loaded at year 30 / tick 16801, empty memory,
+zero inherited usage and no discontinuities. The first real request used Astra
+Medium and a 120x40 native screen; subscription authentication and its returned
+usage were verified. Startup receipt SHA256:
+`b61ed60457f5c12e8cd47cf5de1b0186180cd77b8a6d67cabddffbf0f0bcedf8`.
+At this observation five responses had returned, totaling 154775 tokens. This is
+an in-flight lower bound, not a completed trial or verified checkpoint. Charges
+remain unreported. Fresh admission passed at 30 percent used under the 98-percent
+cutoff. No reset, paid API fallback or cloud VM was used.
+
+The owner is bounded to 32 responses and mandatory teardown before another
+trial. Its preparation checks passed 15 offline tests; these are not gameplay
+evidence. The website still shows the previous stale live snapshot, not this new
+pilot; new active/comparison publication remains to be implemented. VM data disk
+had 1792636 KiB available before this start; preserve evidence and recheck capacity
+before the next. The full Year-Two/Cross-Model/Website/Remote goal remains active.
 
 ### Window ab execution history after the owner-reported usage reset
 

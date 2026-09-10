@@ -90,7 +90,18 @@ matched-model performance remain unproven. The versioned result is pushed at
 Website integration follows at `1bc49b9675b1c82ad502bbd6d8461c9cdbf077e9` in
 [PR #142](https://github.com/lemoz/fort-gym/pull/142), with 4413 passing local
 tests and exact-source HTTP acceptance on the existing preview. It has not been
-publicly deployed. The remaining experiments and remote CI are tracked in
+publicly deployed. The later checkpoint-1057 reload and corrected brewing reader
+are now native-verified and shown separately on the existing local page, with
+unchanged original results. This update is pushed in
+[PR #143](https://github.com/lemoz/fort-gym/pull/143) at
+`52cbfae75efde21b847c3cdab87874b20ed4da64`; 4469 local tests, exact-source HTTP
+acceptance and exact-head GitHub CI passed.
+
+The first actual matched fresh start, `matched-20260910-astra-r1`, has launched
+under the declared 32-response bound. Startup verified the shared seed, empty
+memory/usage/history, Astra Medium and the 120x40 screen. Its native source/image
+are fixed for the six-start cohort. The remaining trials, terminal gameplay
+audits and active/comparison website delivery are tracked in
 [Campaign status](CAMPAIGN_STATUS.md). Earlier implementation history follows.
 
 Independent campaign startup is implemented and pushed at
