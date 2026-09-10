@@ -4,9 +4,9 @@ Verified September 10, 2026 UTC. The Year-Two Autonomous Play objective remains
 unfinished; work continues toward the same objective. The owner has approved starting the project
 work for [Astra standard-input experiments](ASTRA_STANDARD_INPUT_EXPERIMENTS.md).
 
-## Latest matched pilot: five audited windows, final fresh trial active
+## Latest matched pilot: all six initial windows audited
 
-The matched cohort now has verified Astra attempt 1, both Sol attempts and both
+The matched cohort now has verified both Astra attempts, both Sol attempts and both
 Terra attempts. Terra retained 7,000 and 9,000 ticks respectively, with 32 responses per
 window and 859,063 / 1,105,515 returned tokens. Both ended with seven living
 dwarves, 50 raw edible food units, 60 drinks and no completed workshop, farm or
@@ -25,21 +25,23 @@ teardown passed the independent audit; both shutdown commands returned zero.
 Its [public record](../experiments/evidence/keyboard_matched_sol_r2_20260910.json)
 is pushed at data commit `6531318881b6a12de8387321e02da675d299e4fb`.
 
-Astra attempt 2, the last declared fresh-start trial, has started under the same
-frozen native source/image, 32-response bound, subscription admission checks and
-mandatory teardown. The actual first response was independently decoded as Astra
-Medium with 34,655 returned tokens. No GCE VM, paid API fallback, credit purchase
-or reset was used.
+Astra attempt 2, the last declared fresh-start trial, completed all 32 responses
+with 9,000 saved ticks and 988,564 returned tokens. It retained seven living
+citizens, one workshop, one farm, zero placed beds, raw food50 and drinks60.
+Its actual native save, model receipts and mandatory teardown passed the audit.
+The guest poweroff returned1; VM stop returned0 and actual stopped state was
+verified. Its [public record](../experiments/evidence/keyboard_matched_astra_r2_20260910.json)
+retains that warning. No GCE VM, paid API fallback, credit purchase or reset was used.
 Storage remains the predeclared 32 GiB amendment; CPU, RAM and game controls
 are unchanged. Model dollar charges remain unreported, not zero.
 
 The local website now serves clean revision
 `2a63972fb56e06e019e566b5b34bd2c5962e36db`, pushed and remote-readback verified in
 [draft PR #146](https://github.com/lemoz/fort-gym/pull/146). It shows three published
-first-window records, all 96 decision boundaries, and the current matched trial.
-Terra attempt 2 and Sol attempt 2 are audited and separately versioned, but are
-not yet registered in the recorded comparison table. Update the repeated-result
-comparison after the last initial trial, preserving all original records.
+first-window records, all 96 decision boundaries, and the expiring fresh-trial
+feed. All three second attempts are audited and separately versioned, but are
+not yet registered in the recorded comparison table. Integrate all six results
+and a continuation-aware live feed without hot-editing the current preview.
 
 The new live observer reads only host receipts/process identity and adds no game
 or model calls. It labels running controllers, unsettled usage, provisional time
@@ -60,23 +62,39 @@ merge occurred. This is progress, not completion of the full Year-Two goal.
 ### Checkpoint-bound continuation preparation
 
 [Draft PR #147](https://github.com/lemoz/fort-gym/pull/147), exact pushed revision
-`900f2fadc0584fa7be6ea56eebcc9ed33830df79`, prepares ordinary decision-32-to-64
-windows for the four saves available when preparation began: Astra1, Sol1, Terra1
-and Terra2. The provider-free generator binds each own checkpoint and result
+`baee24bcef343d73922175439553306e95e3b01d`, now contains all six audited results
+and ordinary decision-32-to-64 windows for each own save. The provider-free generator binds each own checkpoint and result
 digest, preserves original conditions and adds no reset, prompt change, strategy
-intervention or budget extension. The real four-save input audit verified full
+intervention or budget extension. The real all-six-save input audit verified full
 inventories, unchanged memory/prompt lineage and settled trace/usage prefixes,
 with zero model/game calls and zero fresh native loads. Input readiness is not
-continued gameplay.
+continued gameplay. The earlier four-input receipt is retained unchanged.
+The [complete six-input receipt](https://github.com/lemoz/fort-gym/blob/baee24bcef343d73922175439553306e95e3b01d/experiments/evidence/keyboard_matched_all_six_continuation_inputs_20260910.json)
+binds each exact result, declaration and checkpoint digest.
 
-The full local suite passed 4,539 tests with ten skips before import/format-only
-cleanup; 59 focused tests passed afterwards. Changed-file Ruff and scoped mypy
-passed. Black/isort were unavailable, so the existing Ruff formatter was used
-without dependency changes. Exact-head GitHub CI is running in `34532711049`.
-Add Sol2 and Astra2's audited result-bound windows before this next wave. Finish
-and audit all six initial trials first, then bind a finite continuation owner and
-resume each attempt's own save and memory in the declared order. The active game
-still uses frozen source `1bc49b9675b1c82ad502bbd6d8461c9cdbf077e9`.
+The full local suite passed 4,541 tests with ten skips before the final integrity
+test; the final focused projection/window suite passed 25. Changed-file Ruff and
+diff checks passed. Black/isort were unavailable, so the existing Ruff formatter
+was used without dependency changes. Exact-head GitHub CI passed in
+`34535040094` for pushed revision `baee24bcef343d73922175439553306e95e3b01d`.
+
+The finite local continuation controller and terminal auditor are implemented,
+with 54 corrected-owner/auditor offline checks passed. They bind the prior checkpoint, complete usage and
+memory, all-six audited inputs, read-only prior evidence, immutable native
+source/image, finite response bounds, subscription admission and VM teardown.
+Two pre-courier setup attempts failed the config-ownership check, with zero model
+calls and verified VM teardown. Their [separate failure record](../experiments/evidence/keyboard_matched_continuation_setup_failures_20260910.json)
+preserves both attempts and the unchanged source checkpoint. This is an
+infrastructure failure, not model failure or fortress collapse.
+
+The corrected owner has started Astra1's decision-32-to-64 window. Actual config
+ownership/modes now match root-owned0444/0755; the first model request carries
+exactly the memory from its prior checkpoint. No completed continuation save is
+claimed yet. Native reload preserves the saved
+world and paused calendar, not a promise of identical open UI menus; initial
+screens will be retained without human navigation. Continue in the declared
+order Astra1, Sol1, Terra1, Terra2, Sol2, Astra2. The native source remains frozen
+at `1bc49b9675b1c82ad502bbd6d8461c9cdbf077e9`.
 
 ## Current phase: Astra native play and continuation
 

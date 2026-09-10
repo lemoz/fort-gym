@@ -1,0 +1,34 @@
+{
+  "schema_version": "fortgym.public-continuation-setup-failure/v1",
+  "campaign_id": "matched-20260910-astra-r1",
+  "classification": "infrastructure_config_ownership_failure",
+  "attempts": [
+    {
+      "attempt": "initial_config_copy",
+      "private_result_sha256": "4f07e2d0cf03f4f5fe497ca23accbe193b2c208c5a0657fb8ab36cfec5aa90c0",
+      "config_probe_sha256": "7a1cc81ec704b54d800711735746cf2e65901f770618e5b1f271a6a08ca7a780",
+      "observed_file_uid": 501,
+      "model_calls": 0,
+      "vm_teardown_verified": true
+    },
+    {
+      "attempt": "explicit_tar_with_archive_flag",
+      "private_result_sha256": "050dee06d021a757453af4e3e3b34f05f58a42b99008efbeb5c507630bce191e",
+      "config_probe_sha256": "c53e08f13e27fa6f5b5474f952ec8d347b0ae99164abfd99620b9d7766441fe0",
+      "observed_file_uid": 1000,
+      "model_calls": 0,
+      "vm_teardown_verified": true
+    }
+  ],
+  "source_checkpoint_sha256": "f6d0975f4af1ca532d83df98bc426f5b164815f1ff35dab7202d559bf0ca53fd",
+  "original_checkpoint_verified_unchanged": true,
+  "new_checkpoint_created": false,
+  "model_calls": 0,
+  "model_charge_usd": null,
+  "gameplay_outcome": "not_evaluated",
+  "continuation_gameplay_verified": false,
+  "evidence_retained": true,
+  "corrective_transfer_profile": "root_owned_tar_stdin_no_archive_flag/v1",
+  "scope": "Two pre-courier setup failures. No model decisions or new checkpoint were produced; original native source and game conditions are unchanged. The correction's actual runtime acceptance is separate.",
+  "docker_source_reference": "https://github.com/moby/moby/blob/v27.5.1/daemon/archive_unix.go"
+}
