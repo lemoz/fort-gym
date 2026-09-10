@@ -97,16 +97,26 @@ requirements. See [Campaign status](CAMPAIGN_STATUS.md) for exact CI and deliver
 
 ## Current native progress
 
-Window aa has now started from original checkpoint 903 at committed and pushed
-source `64d6244ec9802096391cca2e6fa1a25cd515c19a`, with green CI. It is bounded
-to 32 decisions with the same model, prompt/memory, controls, measurements and
-existing cumulative limits. A new explicit operating condition moves the
-harness's included-usage cutoff from 90 to 98 percent, preserving provider-limit
-checks and prohibiting purchase, reset, API fallback or a local model. The prior
-90-percent paused attempt remains sealed. Fresh admission and actual first-prompt
-startup verification passed; real Astra responses and expiring website status
-are now being retained. The run is not yet a new verified save or a completed
-outcome. See [Campaign status](CAMPAIGN_STATUS.md) for the current evidence boundary.
+Window aa saved 26 of 32 declared Astra Medium decisions as checkpoint 929 at
+292582 retained elapsed ticks, 72.6% of the first-year target. The fortress has
+16 living citizens, no recorded deaths, 567 drink units and 57 raw-edible food
+units. Source `64d6244ec9802096391cca2e6fa1a25cd515c19a` was committed, pushed
+and green in CI before the run. Model, prompt/memory, controls, measurements and
+cumulative limits were unchanged; its explicit operating condition raised the
+included-usage cutoff from 90 to 98 percent. The next request stopped before
+dispatch at that harness threshold, not a provider-reported call rejection.
+No purchase, reset, API fallback or local model was used. The prior 90-percent
+paused attempt remains sealed.
+
+Checkpoint/receipt/usage audits and complete game/container/local-VM teardown
+passed. The save added 24000 ticks and 864743 model tokens without replay or new
+loss; 1111 cumulative responses and all older losses are retained. Dollar costs
+remain unreported. A separate fresh reload of 929, sustained production, year-two
+success and repeated cross-model comparisons are not yet verified. Next gameplay
+must retain checkpoint 929 and version a response-budget extension: only 41
+dispatches remain under the inherited 1152 ceiling, insufficient for the remaining
+110618 ticks even at maximum advancement. See [Campaign status](CAMPAIGN_STATUS.md)
+for website/remote delivery and the current evidence boundary.
 
 At source `f970ba4382cf3b83452ae0ff1f8a240cd9507c1b`, the production fresh-trial
 CLI started independently from the shared native seed with empty memory and
@@ -132,8 +142,9 @@ tick occurred, and game/container/local-VM teardown passed. All original save
 files are unchanged; the disposable copy appended two DFHack load-log lines,
 with all other files matching. This is verified restoration, not new gameplay
 or native acceptance of independent fresh-model trials. Its later verification
-is now shown beside the matching recorded window on the local campaign page at
+was published beside the matching recorded window on the local campaign page at
 source `f970ba4382cf3b83452ae0ff1f8a240cd9507c1b`, pushed to draft PR #137.
+Window aa's later website update preserves that reload record unchanged.
 The original window's publication-time facts and all game/usage counters remain
 unchanged. Full local tests and exact HTTP page/data checks passed; browser visual
 QA, merge and production deployment are not claimed.

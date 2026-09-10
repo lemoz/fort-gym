@@ -13,41 +13,67 @@ and declared observation/display settings, then extend to other models. The new
 phase retains website and remote delivery. Several bounded Astra native-keyboard
 windows have completed. Window x completed after the earlier window-w runtime
 failure. Window y completed both serial segments and its result is now recorded.
+Window aa then saved checkpoint 929 before a declared subscription-admission pause.
 
-### Active native window aa: Astra resumed with declared included headroom
+### Latest native outcome: checkpoint 929 saved, window aa paused
 
-Source `64d6244ec9802096391cca2e6fa1a25cd515c19a` is committed, pushed and
-remotely read back in draft PR #137; exact-head CI `34430938982` passed.
-Window aa resumes original checkpoint 903 for at most 32 decisions, retaining
-the same Astra Medium model, prompt, memory, controls, measurements, loss history
-and inherited 1152-dispatch/40-million-token ceilings. No budget extension.
+Window aa completed and saved 26 of its 32 declared Astra Medium decisions.
+Checkpoint 929 retains **292582 elapsed game ticks (72.6% of the first-year
+target)**, including 24000 new ticks. Sixteen living citizens and zero recorded
+deaths remain. Native stocks rose from 520 to 567 drink units and from 47 to 57
+raw-edible food units, with no trader-flagged food. Eight farms, eleven beds,
+four workshops, two tables and one chair were complete. All 26 after-action
+food scans completed. These are stock and structure observations, not measured
+production/consumption rates or established sustainability.
 
-The operating condition explicitly changes the included-usage cutoff from 90
-to 98 percent. The earlier 90-percent threshold was the harness headroom default,
-not a reached provider limit or the owner's dollar cap. The fresh account read
-admitted this run; every model invocation still checks allowance and rejects
-reached provider limits or unknown/stale state. No API fallback, local model,
-purchase or reset was enabled. The old condition and sealed window z are unchanged.
-This is an operating-policy change, not a matched comparison result, and not a
-guarantee of an atomic account reservation or a fixed remaining response count.
+Source `64d6244ec9802096391cca2e6fa1a25cd515c19a` was committed, pushed and
+remotely read back in draft PR #137 before the run; exact-head CI `34430938982`
+passed. This window used the explicitly declared 98-percent included-usage
+cutoff instead of the earlier 90-percent default, with unchanged model, prompt,
+saved memory, controls, measurements and cumulative ceilings. The next request
+was denied at that harness cutoff before model dispatch. It added no model
+tokens; six decision slots remain unattempted. This is not a fortress failure,
+a completed 32-decision window or evidence that the provider itself rejected
+a call. No purchase, reset, API fallback or local model was used.
 
-Preflight verified unchanged source checkpoint and agent state. The first real
-prompt and 120x40 screen passed startup audit. At the first HTTP verification,
-three actual responses (93509 tokens) were retained; the live feed reported at
-least 2000 unsaved ticks. Saved progress remained 268582 ticks at checkpoint 903.
-These are startup facts, not a final window result. The local owner and read-only
-website observer are running, with mandatory native/container/local-VM teardown
-owned by the bounded run. The website's `/public/keyboard-active` endpoint served
-`running` with this source and run ID `astra-native-included-headroom-v1`.
-The separate historical admission record is not this new run's current state.
+The in-process checkpoint, exact original-memory continuation, all dispatch
+receipts, usage, calendar advancement and native save passed independent audit.
+Checkpoint 903 is unchanged. The new save has not yet had a separate fresh-load
+audit. All six historical losses, 48429 known lost ticks and their unknown
+remainder remain. There was no new rollback, replay or human gameplay rescue.
+The window added 864743 tokens: 1111 cumulative responses, 35385830 campaign
+tokens and 35454834 including historical failed deliveries. Dollar charges
+remain unreported, not zero.
 
-The current turn made no claim of a new verified save, sustained production,
-year-two success, merge or deployment. The 71 focused declaration/admission/runtime
-tests passed. One startup audit retained an obsolete measurement tick; it was
-corrected against the already captured 903 calendar, with no gameplay intervention
-or replacement of startup evidence. Next: observe this same owner to terminal,
-verify the saved checkpoint, reconcile actual responses/tokens and losses, and
-publish the recorded outcome. Do not start a second VM or replay an uncertain call.
+The game, container, guest and local VM all shut down with zero cleanup exit
+codes; stopped VM state was independently verified. Memory reached the
+1536 MiB limit with 1049 limit events, zero OOM/OOM kills, task peak 22/256
+and zero observed zombies. Memory headroom remains unproven.
+Terminal audit SHA256:
+`3e585223a6b8971b4e959ed6bf448e2dbb1b5d7cc2e57e5828c8111cb07d2cbd`.
+Public receipt SHA256:
+`aac2536da97fa3d8d85fe95b5889509a20c250e93d2d6b960a403d34d5737fbf`.
+
+The paused-result website and shareable receipt are committed and pushed at
+`2979716c13b0a287f143a64ec0656a6f82430eda` in draft PR #137, with exact remote
+branch readback. The existing local http://127.0.0.1:8857/campaigns preview now
+serves that source. All 4278 local tests passed, with ten skips; changed-file
+Ruff, scoped mypy and both JavaScript syntax checks passed. Exact HTTP acceptance
+verified the new paused card data, current page/assets, unchanged older
+completed/failed results, checkpoint-903 reload and historical admission record,
+and disabled admin. The stale live-feed wording identifies its checkpoint as
+historical and directs users to recorded results. No browser visual QA, merge
+or production deployment is claimed. Exact-head CI `34433999747` passed.
+HTTP acceptance SHA256:
+`f333fa689dc35ac3015aa335501fdadf857a97359daa8eea7055404dcec929cc`.
+
+Next gameplay starts from checkpoint 929, not a reset or older save, after fresh
+subscription admission. The inherited 1152-response ceiling leaves only 41
+dispatches, at most 82000 requested ticks, short of the remaining 110618 ticks
+even before zero-tick menu decisions. Version an explicit response-budget
+extension for further year-two play while retaining every usage record and the
+existing token/spending limits. Current year-two and repeated cross-model
+performance requirements remain unfinished.
 
 ### Latest native acceptance: independent fresh start, save and continuation
 
@@ -63,7 +89,8 @@ with an actual 120x40 screen and zero elapsed ticks.
 There were no model calls. The two response receipts and 200 ledger tokens are
 synthetic fixtures, not Astra usage or performance. No fixture record was added
 to campaign/comparison website data. The shared seed was mounted read-only;
-the existing Astra campaign was not mounted and remains unchanged at 903.
+the existing Astra campaign was not mounted and was left unchanged at 903 by
+that provider-free fixture. Window aa's later gameplay is recorded above.
 Game, container and local VM teardown passed with zero exit codes, and stopped
 state was independently rechecked. Memory peaked at 1375010816 bytes under the
 1536 MiB limit, with no limit events or OOM kills; task peak was 16 of 256.
@@ -84,12 +111,13 @@ existing project artifact tree; it is retained, not authorized for deletion.
 
 Provider-free native fresh-start/save/continuation acceptance is now verified.
 Actual independent model runs and repeated comparisons remain unproven. Next
-gameplay remains a new admitted continuation from checkpoint 903 under its
-unchanged condition and limits. The year-two and cross-model goal is incomplete.
+gameplay at that point was a new admitted continuation from checkpoint 903;
+window aa's later result and current next steps are recorded above. The year-two
+and cross-model goal is incomplete.
 
-### Latest website delivery: later verification beside recorded checkpoint 903
+### Earlier website delivery: later verification beside recorded checkpoint 903
 
-The existing local page at http://127.0.0.1:8857/campaigns now serves tested
+At that delivery, the local page at http://127.0.0.1:8857/campaigns served tested
 source `f970ba4382cf3b83452ae0ff1f8a240cd9507c1b`, committed, pushed and remotely
 read back in open draft PR #137. Its later-verification note belongs only to the
 matching checkpoint 903 record. The original window's publication-time reload
@@ -160,7 +188,7 @@ remote CI `34426912429` completed successfully. That core implementation did not
 publish a new campaign outcome. The later website delivery is recorded above.
 No merge or deployment is claimed.
 
-### Latest model-run attempt: window z paused before VM start
+### Earlier model-run attempt: window z paused before VM start
 
 Window z's source `0c35f3e1b43389e53d0c59725aa05a6dc6723752` passed exact-head
 CI `34423927385` and its no-model/no-game preflight. Its single-use owner then
