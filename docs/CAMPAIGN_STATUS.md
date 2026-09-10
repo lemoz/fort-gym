@@ -143,6 +143,31 @@ is unchanged. A real HTTP snapshot showed checkpoint 993 / 386582 saved ticks,
 The existing browser tab may need refreshing to load the new display code.
 No ongoing-run terminal manifest, merge or public deployment was created.
 
+### Matched-model pilot declared, not yet run
+
+The next comparison now has concrete conditions/trials for two independent starts
+each of Astra, Sol and Terra at Medium. Source
+`ab51ba914be01fa8d5cd2a3e644e4ae917f134c6` is pushed and read back in draft
+[PR #141](https://github.com/lemoz/fort-gym/pull/141), stacked on the isolated
+brewing-input fix. All six start from the same verified shared seed with empty
+memory/usage, identical controls, 120x40 screen, measurement profiles and budgets.
+The existing Astra continuation is not one of these matched fresh starts.
+
+The first stage is 32 responses each, at most 192 total, followed by ordinary
+continuation from each trial's own save. Equal 1280-dispatch/40000000-token
+cumulative ceilings are not dollar reservations or an instruction to launch
+all calls. Two replicates in one world support preliminary observations, not a
+strong ranking. The configuration-only plan requires one common tested source
+and image, serial ownership and teardown, and native acceptance of the pending
+brewing-input correction before launch. It neither adds a new batch scheduler
+nor changes the current game or public website.
+
+The original seed receipt and all 127 snapshot files were independently verified
+on the host. All 109 focused tests and 4405 full-suite tests passed locally
+(ten skips, seven full-suite warnings); scoped Ruff passed. Broad static debt
+remains the same 10 Ruff and 465 mypy errors. Exact-head CI `34514257246` is running.
+No actual pilot model call or cross-model result is claimed by this declaration.
+
 ### Brewing-input measurement finding, isolated from the running game
 
 Review of the actual checkpoint-929 raw definitions exposed a campaign telemetry
