@@ -1,4 +1,4 @@
-"""Recorded completed windows with additive checkpoint, usage and loss lineage."""
+"""Recorded saved windows with additive checkpoint, usage and loss lineage."""
 
 from pathlib import Path
 import re
@@ -81,10 +81,18 @@ def _checkpoints(source: dict, progress: dict, usage: dict, parent: dict) -> lis
 
 
 def completed_window(root: Path, filename: str, parents: list[dict]) -> dict:
+    return saved_window(root, filename, parents, paused=False)
+
+
+def saved_window(root: Path, filename: str, parents: list[dict], *, paused: bool) -> dict:
+    """Share save validation without reclassifying a paused window as completed."""
     source = _read(root, filename)
     schema = source.get("schema_version")
-    if schema not in ("fortgym.native-keyboard-completed-window/v1", "fortgym.native-keyboard-completed-window/v2"):
-        raise ValueError("Unsupported completed window schema")
+    schemas = (("fortgym.native-keyboard-paused-window/v1",) if paused else (
+        "fortgym.native-keyboard-completed-window/v1", "fortgym.native-keyboard-completed-window/v2"))
+    if not isinstance(schema, str) or schema not in schemas:
+        raise ValueError("Unsupported saved window schema")
+    status = "paused" if paused else "completed"
     candidates = [row for row in parents
                   if row.get("window_id", row.get("saved_segment_id")) == source.get("parent_record")]
     if len(candidates) != 1:
@@ -93,7 +101,7 @@ def completed_window(root: Path, filename: str, parents: list[dict]) -> dict:
     if filename.removesuffix(".json") == source["parent_record"]:
         raise ValueError("Completed window cannot be its own parent")
     _matches(source, {
-        "schema_version": schema, "status": "completed",
+        "schema_version": schema, "status": status,
         "parent_checkpoint_sha256": parent["checkpoint_sha256"],
         "control_profile": "native_keyboard/v2", "observation_profile": "native_screen_text/v1",
         "prompt_profile": "native_keyboard_memory_replacement/v1", "captured_screen_size": [120, 40],
@@ -133,7 +141,7 @@ def completed_window(root: Path, filename: str, parents: list[dict]) -> dict:
         or usage["all_attempt_tokens"] != usage["campaign_tokens"] + usage["historical_failed_delivery_tokens"]
     ):
         raise ValueError("Completed window checkpoint, usage or losses do not reconcile")
-    extra_furniture = ("completed_tables", "completed_chairs") if schema.endswith("/v2") else ()
+    extra_furniture = ("completed_tables", "completed_chairs") if paused or schema.endswith("/v2") else ()
     observation = _observations(source.get("saved_observation"), extra_furniture)
     food = source.get("food", {})
     _matches(food, {"ownership_accessibility_assessed": False,
@@ -170,7 +178,7 @@ def completed_window(root: Path, filename: str, parents: list[dict]) -> dict:
             or (p["new_saved_ticks"] == 0) != (clock["advancing_decisions"] == 0)):
         raise ValueError("Completed window clock counts are inconsistent")
     return {
-        "window_id": filename.removesuffix(".json"), "status": "completed",
+        "window_id": filename.removesuffix(".json"), "status": status,
         "parent_record": source["parent_record"], "source_revision": source["source_revision"],
         "model": source["model"], "reasoning_effort": source["reasoning_effort"],
         "checkpoint_sha256": source["checkpoint_sha256"], "progress": p,
@@ -187,5 +195,5 @@ def completed_window(root: Path, filename: str, parents: list[dict]) -> dict:
         "usage": {**usage, "reported_charge_usd": None, "cost_basis": source["usage"]["cost_basis"]},
         "evidence_path": "experiments/evidence/" + filename,
         **({"checkpoints": _checkpoints(source, p, usage, parent)}
-           if schema == "fortgym.native-keyboard-completed-window/v2" else {}),
+           if paused or schema == "fortgym.native-keyboard-completed-window/v2" else {}),
     }

@@ -31,7 +31,7 @@
       not_connected: 'No live run connected. Recorded results remain below.',
       running: `${data.model} · ${data.reasoning_effort} · running`,
       stopped: 'Run controller stopped. Final outcome needs verification.',
-      stale: 'Live status is stale. The run may still be active.',
+      stale: 'Live feed is stale. Check recorded results below for any verified outcome.',
     }[current];
     status.className = current === 'stale' ? 'campaign-stale' : '';
     content.replaceChildren();
@@ -41,7 +41,7 @@
     facts.className = 'campaign-save-facts';
     content.append(facts);
     for (const [label, value] of [
-      ['Saved game time', `${count(data.saved_elapsed_ticks)} ticks`],
+      ['Saved at last live observation', `${count(data.saved_elapsed_ticks)} ticks`],
       ['Responses this window', `${count(data.new_responses)} / ${count(data.window_response_limit)}`],
       ['New tokens', count(data.new_tokens)],
       ['Unsaved time observed', data.unsaved_ticks_lower_bound === null ? 'Unknown' : `At least ${count(data.unsaved_ticks_lower_bound)} ticks`],
@@ -49,7 +49,7 @@
       const item = document.createElement('div');
       facts.append(item); node('dt', label, item); node('dd', value, item);
     }
-    node('p', `Last verified save: checkpoint ${count(data.saved_checkpoint_cursor)}. In-progress time comes from the model’s subsequent feedback, not a newly verified save.`, content);
+    node('p', `At the last live observation, the verified save was checkpoint ${count(data.saved_checkpoint_cursor)}. In-progress time comes from the model’s subsequent feedback, not a newly verified save. Check the recorded results below for later verification.`, content);
     node('p', `${count(data.campaign_responses)} campaign responses and ${count(data.campaign_tokens)} campaign tokens so far; ${count(data.all_attempt_tokens)} tokens including historical failed deliveries. Charges are unreported, not zero.`, content);
     node('p', `Last host observation: ${new Date(data.observed_at_unix * 1000).toISOString()}. Refreshes while this page is visible.`, content).className = 'campaign-note';
   }

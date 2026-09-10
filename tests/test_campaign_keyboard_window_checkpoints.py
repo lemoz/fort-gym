@@ -14,6 +14,7 @@ from tests.test_campaign_keyboard_records import evidence_root as evidence_root
 @pytest.fixture
 def serial_publication(evidence_root, monkeypatch):
     monkeypatch.setattr(records, "COMPLETED_WINDOWS", (records.COMPLETED_WINDOWS[0],))
+    monkeypatch.setattr(records, "PAUSED_WINDOWS", ())
     parent = records.keyboard_campaign_records(evidence_root)["completed_windows"][-1]
     folder = evidence_root / "experiments/evidence"
     source = json.loads((folder / records.COMPLETED_WINDOWS[0]).read_bytes())

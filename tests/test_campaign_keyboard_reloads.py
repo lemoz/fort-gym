@@ -34,7 +34,7 @@ def test_later_reload_does_not_rewrite_or_add_gameplay():
     assert y["progress"]["cumulative_model_responses"] == 1085
     assert y["usage"]["campaign_tokens"] == 34521087
     assert y["usage"]["reported_charge_usd"] is None
-    assert data["continuation_events"][-1] == {"kind": "completed_window", "id": y["window_id"]}
+    assert {"kind": "completed_window", "id": y["window_id"]} in data["continuation_events"]
     assert reload["disposable_save_tree_byte_identical"] is False
     assert reload["disposable_save_tree_difference"]["other_files_unchanged"] == 126
 
@@ -132,8 +132,8 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
 (async () => {
   await new Promise(setImmediate);
   const full = elements['keyboard-results'].textContent;
-  assert.ok(full.startsWith('Checkpoint 903 saved · window complete'));
-  const y = full.slice(0, full.indexOf('Checkpoint 839 saved'));
+  assert.ok(full.includes('Checkpoint 903 saved · window complete'));
+  const y = full.slice(full.indexOf('Checkpoint 903 saved'), full.indexOf('Checkpoint 839 saved'));
   assert.match(y, /268,582 ticks/); assert.match(y, /1,085 responses/);
   assert.match(y, /At publication, the final save was verified in process/);
   assert.match(y, /separate fresh reload not yet verified at publication/);

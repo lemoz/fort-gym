@@ -16,6 +16,7 @@ def historical_x_only(monkeypatch):
     # Mutating a historical parent should not invalidate an unrelated descendant
     # fixture. The serial-publication tests cover descendant reconciliation.
     monkeypatch.setattr(records, "COMPLETED_WINDOWS", (records.COMPLETED_WINDOWS[0],))
+    monkeypatch.setattr(records, "PAUSED_WINDOWS", ())
 
 
 def publication(root):

@@ -51,7 +51,7 @@
       throw new Error('Unsupported continuation evidence');
     }
     const continuations = data.continuations || [];
-    for (const name of ['tail_interruptions', 'tail_recoveries', 'presave_failures', 'partial_failures', 'oom_failures', 'resumed_windows', 'prompt_trials', 'modal_trials', 'saved_segments', 'completed_windows', 'save_acceptances']) {
+    for (const name of ['tail_interruptions', 'tail_recoveries', 'presave_failures', 'partial_failures', 'oom_failures', 'resumed_windows', 'prompt_trials', 'modal_trials', 'saved_segments', 'completed_windows', 'paused_windows', 'save_acceptances']) {
       if (data[name] !== undefined && !Array.isArray(data[name])) {
         throw new Error('Unsupported continuation recovery evidence');
       }
@@ -76,8 +76,14 @@
       const section = node('section', undefined, results);
       section.className = 'campaign-condition';
       const p = row.progress, o = row.saved_observation, food = row.food, resource = row.resources;
-      node('h3', `Checkpoint ${count(p.checkpoint_cursor)} saved · window complete`, section);
+      const paused = row.status === 'paused';
+      node('h3', `Checkpoint ${count(p.checkpoint_cursor)} saved · ${paused ? 'window paused' : 'window complete'}`, section);
       node('p', `${row.model} · ${row.reasoning_effort} · native keyboard`, section);
+      if (paused) {
+        const pause = row.pause;
+        node('p', `${count(p.new_model_responses)} of ${count(pause.decision_limit)} declared decisions completed and saved. The next request stopped before model dispatch at the harness's ${count(pause.included_usage_cutoff_percent)}% included-usage cutoff. It added 0 model tokens; ${count(pause.unattempted_decisions)} decision slots remain unattempted. This is a saved pause, not a completed window or a fortress failure.`, section);
+        node('p', `Operating policy changed explicitly from a ${count(pause.previous_included_usage_cutoff_percent)}% to a ${count(pause.included_usage_cutoff_percent)}% cutoff for this window. That is a harness threshold, not proof that the provider limit was reached. No API fallback was used; earlier records are unchanged.`, section);
+      }
       const facts = node('dl', undefined, section);
       facts.className = 'campaign-save-facts';
       for (const [label, value] of [
@@ -123,7 +129,7 @@
         }
       }
       if (/^experiments\/evidence\/[a-z0-9_]+\.json$/.test(row.evidence_path)) {
-        node('a', 'Read the completed-window evidence', section).href = 'https://github.com/lemoz/fort-gym/blob/codex/campaign-codex-subscription/' + row.evidence_path;
+        node('a', paused ? 'Read the saved-pause evidence' : 'Read the completed-window evidence', section).href = 'https://github.com/lemoz/fort-gym/blob/codex/campaign-codex-subscription/' + row.evidence_path;
       }
     }
     function renderSavedSegment(row) {
@@ -420,6 +426,7 @@
       modal_trial: (data.modal_trials || []).map(row => ({id: row.trial_id, row})),
       saved_segment: (data.saved_segments || []).map(row => ({id: row.saved_segment_id, row})),
       completed_window: (data.completed_windows || []).map(row => ({id: row.window_id, row})),
+      paused_window: (data.paused_windows || []).map(row => ({id: row.window_id, row})),
       restart: restarts.filter(row => row.recent_event === true).map(row => ({id: row.restart_id, row}))
     };
     const events = data.continuation_events || Object.entries(recent).flatMap(([kind, rows]) => rows.map(row => ({kind, id: row.id})));
@@ -438,7 +445,7 @@
       else if (event.kind === 'prompt_trial') renderPromptTrial(found.row);
       else if (event.kind === 'modal_trial') renderModalTrial(found.row);
       else if (event.kind === 'saved_segment') renderSavedSegment(found.row);
-      else if (event.kind === 'completed_window') renderCompletedWindow(found.row);
+      else if (event.kind === 'completed_window' || event.kind === 'paused_window') renderCompletedWindow(found.row);
       else if (event.kind === 'restart') renderRestart(found.row);
       else renderRecovery(found.row);
     }

@@ -116,12 +116,13 @@ def test_private_fields_and_unlisted_files_are_not_projected(evidence_root, monk
     monkeypatch.setattr(records, "MODAL_TRIALS", ())
     monkeypatch.setattr(records, "SAVED_SEGMENTS", ())
     monkeypatch.setattr(records, "COMPLETED_WINDOWS", ())
+    monkeypatch.setattr(records, "PAUSED_WINDOWS", ())
     file.unlink()
     after = records.keyboard_campaign_records(evidence_root)
     assert after["modal_trials"] == []
     assert after["continuation_events"] == [
         event for event in before["continuation_events"]
-        if event["kind"] not in {"modal_trial", "saved_segment", "completed_window"}
+        if event["kind"] not in {"modal_trial", "saved_segment", "completed_window", "paused_window"}
     ]
 
 
@@ -151,8 +152,9 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   await new Promise(setImmediate);
   const rendered = elements['keyboard-results'].textContent;
   assert.equal(elements['keyboard-results'].hidden, false);
-  const newestCursor = JSON.parse(process.argv[2]).completed_windows.at(-1).progress.checkpoint_cursor;
-  assert.ok(rendered.startsWith(`Checkpoint ${newestCursor} saved · window complete`));
+  const data = JSON.parse(process.argv[2]);
+  const newest = (data.paused_windows || []).at(-1) || data.completed_windows.at(-1);
+  assert.ok(rendered.startsWith(`Checkpoint ${newest.progress.checkpoint_cursor} saved · window ${newest.status === 'paused' ? 'paused' : 'complete'}`));
   assert.ok(rendered.includes('Checkpoint 807 saved · restart interrupted'));
   const trial = rendered.slice(rendered.indexOf('Dialog handling worked'), rendered.indexOf('Memory experiment interrupted'));
   for (const text of ['198,600 ticks', '12,724 ticks', 'Final uncommitted game time Unknown',

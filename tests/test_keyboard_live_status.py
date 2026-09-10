@@ -191,3 +191,34 @@ assert.throws(() => state({...data, reported_charge_usd: 0}, 1001));
 assert.equal(state({schema_version:data.schema_version,status:'not_connected'}, 1001), 'not_connected');
 """
     subprocess.run(["node", "-e", program, str(script), json.dumps(data)], check=True)
+
+
+def test_stale_renderer_identifies_historical_save_and_points_to_recorded_results(value):
+    script = Path(__file__).resolve().parents[1] / "web/static/campaign-keyboard-live.js"
+    program = r'''
+const assert = require('node:assert/strict'), vm = require('node:vm'), fs = require('node:fs');
+class Element {
+  constructor() { this.children = []; }
+  append(value) { this.children.push(value); }
+  replaceChildren() { this.children = []; }
+  addEventListener() {}
+  set textContent(value) { this.text = String(value); }
+  get textContent() { return (this.text || '') + this.children.map(x => x.textContent).join(' '); }
+}
+const elements = {};
+vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
+  document: {hidden: false, addEventListener() {},
+    getElementById: id => elements[id] ||= new Element(), createElement: () => new Element()},
+  fetch: async () => ({ok: true, json: async () => JSON.parse(process.argv[2])}),
+  setTimeout, clearTimeout, setInterval: () => 0, AbortController
+});
+(async () => {
+  await new Promise(setImmediate);
+  assert.match(elements['keyboard-live-status'].textContent, /Live feed is stale/);
+  assert.match(elements['keyboard-live-status'].textContent, /Check recorded results below/);
+  assert.match(elements['keyboard-live-content'].textContent, /At the last live observation/);
+  assert.match(elements['keyboard-live-content'].textContent, /checkpoint 775/);
+  assert.doesNotMatch(elements['keyboard-live-status'].textContent, /running|may still be active/);
+})().catch(error => {console.error(error); process.exitCode = 1;});
+'''
+    subprocess.run(["node", "-e", program, str(script), json.dumps(project_status(value, now=1031))], check=True)

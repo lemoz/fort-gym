@@ -39,7 +39,8 @@ def evidence_root(tmp_path):
                      *records.PRESAVE_FAILURES, *records.SAVE_ACCEPTANCES, *records.PRESAVE_RESTARTS,
                      *records.POSTRESTART_CONTINUATIONS, *records.PARTIAL_FAILURES, *records.OOM_FAILURES,
                      *records.RESUMED_WINDOWS, *records.PROMPT_TRIALS, *records.MODAL_TRIALS,
-                     *records.SAVED_SEGMENTS, *records.COMPLETED_WINDOWS, *records.CHECKPOINT_RELOADS):
+                     *records.SAVED_SEGMENTS, *records.COMPLETED_WINDOWS, *records.PAUSED_WINDOWS,
+                     *records.CHECKPOINT_RELOADS):
         shutil.copyfile(records.PROJECT_ROOT / "experiments/evidence" / filename, folder / filename)
     return tmp_path
 
@@ -223,8 +224,9 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   assert.match(elements['keyboard-results'].textContent, /184 model responses/);
   assert.match(elements['keyboard-results'].textContent, /Recovery verified · checkpoint 184/);
   assert.match(elements['keyboard-results'].textContent, /Subsequently recovered as checkpoint 184/);
-  const newestCursor = data.completed_windows.at(-1).progress.checkpoint_cursor;
-  assert.ok(elements['keyboard-results'].textContent.startsWith(`Checkpoint ${newestCursor} saved · window complete`));
+  const newest = (data.paused_windows || []).at(-1) || data.completed_windows.at(-1);
+  const label = newest.status === 'paused' ? 'paused' : 'complete';
+  assert.ok(elements['keyboard-results'].textContent.startsWith(`Checkpoint ${newest.progress.checkpoint_cursor} saved · window ${label}`));
   assert.ok(elements['keyboard-results'].textContent.includes('Checkpoint 807 saved · restart interrupted'));
   assert.match(elements['keyboard-results'].textContent, /614 new game ticks are unsaved/);
   assert.match(elements['keyboard-results'].textContent, /507,860 new tokens/);

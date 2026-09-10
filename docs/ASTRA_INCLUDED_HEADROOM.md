@@ -34,3 +34,35 @@ The local runtime retains one VM, 2 CPUs, 3 GiB VM memory, a 1536 MiB container,
 exploratory continuation, not an independent or matched comparison attempt.
 The prior provider-free reload and fresh-trial fixture are acceptance evidence,
 not additional model decisions or elapsed campaign time.
+
+## Recorded outcome
+
+Window aa saved 26 of its 32 declared decisions as checkpoint 929. It added
+24000 game ticks, reaching 292582 retained elapsed ticks (72.6% of the first-year
+target), with 16 living citizens and no recorded deaths. Native observations
+reported 567 drink units, 57 raw-edible food units, eight farms, eleven beds,
+four workshops, two tables and one chair. Stocks increased from the preceding
+save; production and consumption rates and sustained self-sufficiency remain
+unmeasured.
+
+The next request was denied before model dispatch at the declared 98-percent
+harness cutoff. This is not evidence that the provider itself rejected a call.
+The six unused decision slots remain unattempted. The segment saved normally;
+game, container and VM teardown were verified. The new checkpoint is verified
+in process but has not yet had a separate fresh-load audit. Checkpoint 903's
+earlier independent reload record remains unchanged.
+
+All 864743 new model tokens are retained: 1111 cumulative responses,
+35385830 campaign tokens, 35454834 including historical failed delivery.
+Dollar charges remain unreported. All six older loss records, 48429 known lost
+ticks and the unknown remainder are preserved; this window added no rollback
+or replay. Memory reached the 1536 MiB limit with 1049 limit events and no OOM
+or OOM kill; headroom is not established.
+
+The safe summary is
+[`astra_native_keyboard_paused_window_20260910aa.json`](../experiments/evidence/astra_native_keyboard_paused_window_20260910aa.json).
+It is a separate `paused_windows` entry on `/public/keyboard-campaigns` and a
+"window paused" card on `/campaigns`; older completed windows are not relabeled.
+The underlying native source revision is
+`64d6244ec9802096391cca2e6fa1a25cd515c19a`. The terminal audit digest is
+`3e585223a6b8971b4e959ed6bf448e2dbb1b5d7cc2e57e5828c8111cb07d2cbd`.
