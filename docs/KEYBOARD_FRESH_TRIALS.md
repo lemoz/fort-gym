@@ -108,3 +108,14 @@ Validation for this increment: 143 focused tests and 4199 full-suite tests passe
 modules. A read-only check of actual checkpoint 903 restored the complete existing
 Astra agent state unchanged and rejected fresh-prompt initialization on that used
 agent. This was not a fresh native load or a new model invocation.
+
+Separately, a provider-free native diagnostic at the same source revision
+subsequently loaded checkpoint 903 in a new game process and restored the normal
+campaign loop without stepping it. It verified the paused calendar, actual
+120x40 screen, unchanged agent state and byte-identical trace/usage journals,
+then shut down the game, container and local VM. The retained checkpoint stayed
+unchanged. In the disposable copy, only two DFHack load-log lines were appended;
+all 126 other files, including world.sav, matched. See the
+[versioned reload receipt](../experiments/evidence/astra_native_keyboard_checkpoint903_reload_20260910.json).
+This establishes that checkpoint's fresh reload, not native fresh-start trial
+acceptance, model availability, new gameplay or a cross-model comparison.
