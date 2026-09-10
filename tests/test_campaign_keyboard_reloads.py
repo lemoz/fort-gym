@@ -20,7 +20,8 @@ def publication(root, index=0):
 
 def test_later_reload_does_not_rewrite_or_add_gameplay():
     data = records.keyboard_campaign_records()
-    y = data["completed_windows"][-1]
+    y = next(row for row in data["completed_windows"]
+             if row["window_id"] == "astra_native_keyboard_completed_window_20260909y")
     reload = data["checkpoint_reloads"][0]
     assert data["checkpoint_reload_status"] == "available"
     assert reload["parent_record"] == y["window_id"]
@@ -82,7 +83,9 @@ def test_unreadable_verification_does_not_remove_completed_window(evidence_root,
         path.write_text(" " * 65537 if kind == "oversize" else "[]")
     data = records.keyboard_campaign_records(evidence_root)
     assert data["checkpoint_reload_status"] == "unavailable"
-    assert data["completed_windows"][-1]["progress"]["checkpoint_cursor"] == 903
+    y = next(row for row in data["completed_windows"]
+             if row["window_id"] == "astra_native_keyboard_completed_window_20260909y")
+    assert y["progress"]["checkpoint_cursor"] == 903
 
 
 @pytest.mark.parametrize("publication_index", [0, 1])

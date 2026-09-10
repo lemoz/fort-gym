@@ -350,10 +350,12 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   await new Promise(setImmediate);
   const text = elements['keyboard-live-content'].textContent;
   assert.match(text, /started from checkpoint 775/);
-  assert.match(text, /reload are verified through checkpoint 777/);
+  assert.match(text, /reload were verified through checkpoint 777/);
   assert.match(text, /198,630 ticks/);
   assert.match(text, /Time reported since that save\s+At least 30 ticks/);
-  assert.match(text, /full save-file and gameplay-trace audit is still pending/);
+  assert.match(text, /At the last live observation/);
+  assert.match(text, /full save-file and gameplay-trace audit was pending/);
+  assert.match(text, /Check recorded results below for later verification/);
   assert.match(text, /Charges are unreported, not zero/);
   assert.doesNotMatch(text, /Unsaved time observed|saved memory|not for publication/);
 })().catch(error => {console.error(error); process.exitCode = 1;});

@@ -77,6 +77,8 @@
       section.className = 'campaign-condition';
       const p = row.progress, o = row.saved_observation, food = row.food, resource = row.resources;
       const paused = row.status === 'paused';
+      const elapsedYear = row.year_two_reached === true
+        && Number.isSafeInteger(p.saved_elapsed_ticks) && p.saved_elapsed_ticks >= 403200;
       node('h3', `Checkpoint ${count(p.checkpoint_cursor)} saved · ${paused ? 'window paused' : 'window complete'}`, section);
       node('p', `${row.model} · ${row.reasoning_effort} · native keyboard`, section);
       if (paused) {
@@ -88,12 +90,17 @@
       facts.className = 'campaign-save-facts';
       for (const [label, value] of [
         ['Saved game time', `${count(p.saved_elapsed_ticks)} ticks`],
-        ['First year elapsed', `${(100 * p.saved_elapsed_ticks / 403200).toFixed(1)}%`],
+        elapsedYear
+          ? ['Elapsed game years', (p.saved_elapsed_ticks / 403200).toFixed(2)]
+          : ['First year elapsed', `${(100 * p.saved_elapsed_ticks / 403200).toFixed(1)}%`],
         ['New saved progress', `${count(p.new_saved_ticks)} ticks`],
         ['Living dwarves', count(o.population)]
       ]) {
         const item = node('div', undefined, facts);
         node('dt', label, item); node('dd', value, item);
+      }
+      if (elapsedYear) {
+        node('p', `One full elapsed game year retained. The final save is ${count(p.saved_elapsed_ticks - 403200)} ticks beyond the first anniversary. This is saved gameplay, not just a calendar rollover.`, section);
       }
       const dining = o.completed_tables === undefined ? '' : `. Dining furniture: ${count(o.completed_tables)} table${o.completed_tables === 1 ? '' : 's'} and ${count(o.completed_chairs)} chair${o.completed_chairs === 1 ? '' : 's'}`;
       node('p', `${count(p.new_model_responses)} new decisions saved. ${count(o.recorded_dead_citizens)} recorded deaths, ${count(o.drink_stock)} drinks, ${count(o.completed_farms)} completed farms, ${count(o.planned_unfinished_farms)} unfinished farms, ${count(o.completed_beds)} beds and ${count(o.completed_workshops)} workshops${dining}.`, section);
@@ -129,7 +136,11 @@
         }
       }
       if (/^experiments\/evidence\/[a-z0-9_]+\.json$/.test(row.evidence_path)) {
-        node('a', paused ? 'Read the saved-pause evidence' : 'Read the completed-window evidence', section).href = 'https://github.com/lemoz/fort-gym/blob/codex/campaign-codex-subscription/' + row.evidence_path;
+        const revision = row.evidence_revision === undefined ? 'codex/campaign-codex-subscription'
+          : /^[a-f0-9]{40}$/.test(row.evidence_revision) ? row.evidence_revision : null;
+        if (revision !== null) {
+          node('a', paused ? 'Read the saved-pause evidence' : 'Read the completed-window evidence', section).href = 'https://github.com/lemoz/fort-gym/blob/' + revision + '/' + row.evidence_path;
+        }
       }
     }
     function renderSavedSegment(row) {

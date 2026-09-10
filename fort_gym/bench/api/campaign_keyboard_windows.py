@@ -8,7 +8,12 @@ from .campaign_keyboard_presave import _hash, _matches, _numbers, _read
 COMPLETED_WINDOWS = (
     "astra_native_keyboard_completed_window_20260909x.json",
     "astra_native_keyboard_completed_window_20260909y.json",
+    "astra_native_keyboard_completed_window_20260910ab.json",
 )
+COMPLETED_WINDOW_REVISIONS = {
+    "astra_native_keyboard_completed_window_20260910ab.json":
+        "18086313ee34a7df70efe1974f342df882976138",
+}
 PROGRESS = (
     "parent_checkpoint_cursor", "checkpoint_cursor", "parent_elapsed_ticks",
     "saved_elapsed_ticks", "new_saved_ticks", "new_model_responses",
@@ -194,6 +199,8 @@ def saved_window(root: Path, filename: str, parents: list[dict], *, paused: bool
         "resources": {**resources, "headroom_established": False}, "clock_outcomes": clock,
         "usage": {**usage, "reported_charge_usd": None, "cost_basis": source["usage"]["cost_basis"]},
         "evidence_path": "experiments/evidence/" + filename,
+        **({"evidence_revision": COMPLETED_WINDOW_REVISIONS[filename]}
+           if filename in COMPLETED_WINDOW_REVISIONS else {}),
         **({"checkpoints": _checkpoints(source, p, usage, parent)}
            if paused or schema == "fortgym.native-keyboard-completed-window/v2" else {}),
     }

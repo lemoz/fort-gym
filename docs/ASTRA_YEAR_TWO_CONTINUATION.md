@@ -1,5 +1,17 @@
 # Year-two continuation from checkpoint 929
 
+## Completed result
+
+Window AB subsequently completed all 128 decisions and saved checkpoint 1057 at
+456,582 retained elapsed ticks, with 16 living dwarves and zero recorded deaths.
+The terminal save/trace/usage and teardown audit passed. The
+[result and operating assessment](ASTRA_YEAR_TWO_WINDOW_AB.md) distinguish this
+year-two endpoint from unproven self-sufficiency and matched model performance.
+The original preparation and intermediate-evidence descriptions below remain
+historical context, not current instructions to restart the completed owner.
+
+## Original declaration
+
 Window `20260910ab` was prepared as a continuation of the existing Astra Medium
 fortress. It is not a new independent model trial and must not be published as
 completed gameplay before real terminal receipts exist. Its later live execution

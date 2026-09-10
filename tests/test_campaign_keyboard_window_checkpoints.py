@@ -181,7 +181,9 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
 
 def test_recorded_y_preserves_both_saves_usage_food_and_completed_dining_furniture():
     data = records.keyboard_campaign_records()
-    x, y = data["completed_windows"]
+    windows = {row["window_id"]: row for row in data["completed_windows"]}
+    x = windows["astra_native_keyboard_completed_window_20260909x"]
+    y = windows["astra_native_keyboard_completed_window_20260909y"]
     assert y["parent_record"] == x["window_id"]
     assert [row["cursor"] for row in y["checkpoints"]] == [871, 903]
     assert [row["fresh_load_verified"] for row in y["checkpoints"]] == [True, False]
