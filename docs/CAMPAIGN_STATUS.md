@@ -96,7 +96,7 @@ and canonical trace audit remain explicitly pending. Local validation passed
 4371 tests with ten skips, plus 51 focused tests and scoped static checks.
 Repository-wide Ruff/mypy were also run: their 10/465 existing errors match the
 parent checkout, so global static checks are not claimed green. Remote CI
-`34509757759` is running at this update.
+`34509757759` has completed successfully for this exact head.
 
 Only the owned local preview and read-only observer were replaced; the native
 owner still uses clean `3ab9fc4c9`. The same local `/campaigns` URL returns 200,

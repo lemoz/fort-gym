@@ -124,7 +124,7 @@ The website ordering fix in draft PR #138 passed exact-head CI. The subsequent
 live-save display change is pushed in draft PR #139 and now serves the existing
 local dashboard with separately labelled original save, latest verified save/reload,
 and subsequent reported ticks. Its 4371-test final local suite and 51 focused
-tests passed; its remote CI is running. Historical recorded data is unchanged,
+tests passed; its exact-head remote CI also passed. Historical recorded data is unchanged,
 the native harness remains pinned, and no merge/public deployment is claimed.
 
 Window aa saved 26 of 32 declared Astra Medium decisions as checkpoint 929 at
