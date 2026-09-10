@@ -73,7 +73,8 @@
         const item = node('div', undefined, facts);
         node('dt', label, item); node('dd', value, item);
       }
-      node('p', `${count(p.new_model_responses)} new decisions saved. ${count(o.recorded_dead_citizens)} recorded deaths, ${count(o.drink_stock)} drinks, ${count(o.completed_farms)} completed farms, ${count(o.planned_unfinished_farms)} unfinished farms, ${count(o.completed_beds)} beds and ${count(o.completed_workshops)} workshops.`, section);
+      const dining = o.completed_tables === undefined ? '' : `. Dining furniture: ${count(o.completed_tables)} table${o.completed_tables === 1 ? '' : 's'} and ${count(o.completed_chairs)} chair${o.completed_chairs === 1 ? '' : 's'}`;
+      node('p', `${count(p.new_model_responses)} new decisions saved. ${count(o.recorded_dead_citizens)} recorded deaths, ${count(o.drink_stock)} drinks, ${count(o.completed_farms)} completed farms, ${count(o.planned_unfinished_farms)} unfinished farms, ${count(o.completed_beds)} beds and ${count(o.completed_workshops)} workshops${dining}.`, section);
       node('p', food.available === true
         ? `Food scan: ${count(food.raw_edible_units)} raw-edible units, including ${count(food.trader_flagged_units)} trader-flagged units. This is not a count of accessible fortress-owned food. Production and consumption rates remain unmeasured.`
         : 'Food measurement unavailable. Missing food is unknown, not zero.', section);

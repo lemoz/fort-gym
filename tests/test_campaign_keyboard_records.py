@@ -223,7 +223,8 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   assert.match(elements['keyboard-results'].textContent, /184 model responses/);
   assert.match(elements['keyboard-results'].textContent, /Recovery verified · checkpoint 184/);
   assert.match(elements['keyboard-results'].textContent, /Subsequently recovered as checkpoint 184/);
-  assert.ok(elements['keyboard-results'].textContent.startsWith('Checkpoint 839 saved · window complete'));
+  const newestCursor = data.completed_windows.at(-1).progress.checkpoint_cursor;
+  assert.ok(elements['keyboard-results'].textContent.startsWith(`Checkpoint ${newestCursor} saved · window complete`));
   assert.ok(elements['keyboard-results'].textContent.includes('Checkpoint 807 saved · restart interrupted'));
   assert.match(elements['keyboard-results'].textContent, /614 new game ticks are unsaved/);
   assert.match(elements['keyboard-results'].textContent, /507,860 new tokens/);

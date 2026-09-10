@@ -12,7 +12,8 @@ from tests.test_campaign_keyboard_records import evidence_root as evidence_root
 
 
 @pytest.fixture
-def serial_publication(evidence_root):
+def serial_publication(evidence_root, monkeypatch):
+    monkeypatch.setattr(records, "COMPLETED_WINDOWS", (records.COMPLETED_WINDOWS[0],))
     parent = records.keyboard_campaign_records(evidence_root)["completed_windows"][-1]
     folder = evidence_root / "experiments/evidence"
     source = json.loads((folder / records.COMPLETED_WINDOWS[0]).read_bytes())
@@ -27,6 +28,7 @@ def serial_publication(evidence_root):
     source["usage"].update(new_tokens=6400, campaign_tokens=u["campaign_tokens"] + 6400,
                            all_attempt_tokens=u["all_attempt_tokens"] + 6400)
     source["food"].update(after_action_complete_readings=64, after_action_unknown_readings=0)
+    source["saved_observation"].update(completed_tables=None, completed_chairs=None)
     source["clock_outcomes"].update(advancing_decisions=2, zero_tick_decisions=62, zero_tick_timeouts=0)
     source["checkpoints"] = [{
         "cursor": p["checkpoint_cursor"] + 32 * (index + 1),
@@ -63,6 +65,8 @@ def test_serial_checkpoint_lineage_and_reload_evidence_are_projected(evidence_ro
     (("schema_version",), "fortgym.native-keyboard-completed-window/v3"),
     (("schema_version",), []), (("schema_version",), {}), (("schema_version",), False),
     (("checkpoints",), []), (("checkpoints",), None),
+    (("saved_observation", "completed_tables"), True),
+    (("saved_observation", "completed_chairs"), -1),
     (("checkpoints", 0, "cursor"), True), (("checkpoints", 0, "cursor"), 870),
     (("checkpoints", 0, "new_model_responses"), 0),
     (("checkpoints", 0, "saved_elapsed_ticks"), 0),
@@ -172,3 +176,24 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
     result = subprocess.run([node, "-e", program, str(records.PROJECT_ROOT / "web/static/campaign-keyboard.js"),
                              json.dumps(data)], capture_output=True, text=True)
     assert result.returncode == 0, result.stderr
+
+
+def test_recorded_y_preserves_both_saves_usage_food_and_completed_dining_furniture():
+    data = records.keyboard_campaign_records()
+    x, y = data["completed_windows"]
+    assert y["parent_record"] == x["window_id"]
+    assert [row["cursor"] for row in y["checkpoints"]] == [871, 903]
+    assert [row["fresh_load_verified"] for row in y["checkpoints"]] == [True, False]
+    assert y["progress"]["saved_elapsed_ticks"] == 268582
+    assert y["progress"]["new_saved_ticks"] == 52000
+    assert y["progress"]["cumulative_model_responses"] == 1085
+    assert y["usage"]["campaign_tokens"] == 34521087
+    assert y["usage"]["all_attempt_tokens"] == 34590091
+    assert y["usage"]["reported_charge_usd"] is None
+    assert y["saved_observation"]["completed_tables"] == y["saved_observation"]["completed_chairs"] == 1
+    assert y["saved_observation"]["completed_beds"] == 11
+    assert y["saved_observation"]["population"] == 16
+    assert y["saved_observation"]["recorded_dead_citizens"] == 0
+    assert y["food"]["raw_edible_units"] == 47 and y["food"]["trader_flagged_units"] == 0
+    assert y["food"]["after_action_complete_readings"] == 64
+    assert y["sustainability_established"] is y["year_two_reached"] is False

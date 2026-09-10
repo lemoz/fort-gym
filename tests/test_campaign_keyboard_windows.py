@@ -11,6 +11,13 @@ from fort_gym.bench.api.campaign_keyboard_windows import completed_window
 from tests.test_campaign_keyboard_records import evidence_root as evidence_root
 
 
+@pytest.fixture(autouse=True)
+def historical_x_only(monkeypatch):
+    # Mutating a historical parent should not invalidate an unrelated descendant
+    # fixture. The serial-publication tests cover descendant reconciliation.
+    monkeypatch.setattr(records, "COMPLETED_WINDOWS", (records.COMPLETED_WINDOWS[0],))
+
+
 def publication(root):
     path = root / "experiments/evidence" / records.COMPLETED_WINDOWS[0]
     return path, json.loads(path.read_bytes())

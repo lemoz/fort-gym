@@ -5,7 +5,10 @@ import re
 
 from .campaign_keyboard_presave import _hash, _matches, _numbers, _read
 
-COMPLETED_WINDOWS = ("astra_native_keyboard_completed_window_20260909x.json",)
+COMPLETED_WINDOWS = (
+    "astra_native_keyboard_completed_window_20260909x.json",
+    "astra_native_keyboard_completed_window_20260909y.json",
+)
 PROGRESS = (
     "parent_checkpoint_cursor", "checkpoint_cursor", "parent_elapsed_ticks",
     "saved_elapsed_ticks", "new_saved_ticks", "new_model_responses",
@@ -27,13 +30,14 @@ def _counts(value: object, fields: tuple[str, ...]) -> dict:
     return result
 
 
-def _observations(value: object) -> dict:
-    if not isinstance(value, dict) or any(key not in value for key in OBSERVATION):
+def _observations(value: object, extra: tuple[str, ...] = ()) -> dict:
+    fields = (*OBSERVATION, *extra)
+    if not isinstance(value, dict) or any(key not in value for key in fields):
         raise ValueError("Completed window observations must be explicit")
-    for key in OBSERVATION:
+    for key in fields:
         if value[key] is not None:
             _counts(value, (key,))
-    return {key: value[key] for key in OBSERVATION}
+    return {key: value[key] for key in fields}
 
 
 def _checkpoints(source: dict, progress: dict, usage: dict, parent: dict) -> list[dict]:
@@ -129,7 +133,8 @@ def completed_window(root: Path, filename: str, parents: list[dict]) -> dict:
         or usage["all_attempt_tokens"] != usage["campaign_tokens"] + usage["historical_failed_delivery_tokens"]
     ):
         raise ValueError("Completed window checkpoint, usage or losses do not reconcile")
-    observation = _observations(source.get("saved_observation"))
+    extra_furniture = ("completed_tables", "completed_chairs") if schema.endswith("/v2") else ()
+    observation = _observations(source.get("saved_observation"), extra_furniture)
     food = source.get("food", {})
     _matches(food, {"ownership_accessibility_assessed": False,
                     "production_consumption_measured": False})

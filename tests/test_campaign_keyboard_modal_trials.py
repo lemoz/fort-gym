@@ -151,7 +151,8 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   await new Promise(setImmediate);
   const rendered = elements['keyboard-results'].textContent;
   assert.equal(elements['keyboard-results'].hidden, false);
-  assert.ok(rendered.startsWith('Checkpoint 839 saved · window complete'));
+  const newestCursor = JSON.parse(process.argv[2]).completed_windows.at(-1).progress.checkpoint_cursor;
+  assert.ok(rendered.startsWith(`Checkpoint ${newestCursor} saved · window complete`));
   assert.ok(rendered.includes('Checkpoint 807 saved · restart interrupted'));
   const trial = rendered.slice(rendered.indexOf('Dialog handling worked'), rendered.indexOf('Memory experiment interrupted'));
   for (const text of ['198,600 ticks', '12,724 ticks', 'Final uncommitted game time Unknown',
