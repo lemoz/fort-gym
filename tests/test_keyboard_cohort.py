@@ -9,18 +9,20 @@ from fastapi.testclient import TestClient
 from fort_gym.bench.api import keyboard_cohort as cohort
 
 
-def test_actual_recorded_trials_and_three_unpublished_slots():
+def test_all_six_actual_initial_windows_are_recorded():
     data = cohort.keyboard_cohort()
-    assert data["recorded_trials"] == 3 and data["declared_trials"] == 6
-    assert data["matched_initial_windows_complete"] is False
+    assert data["recorded_trials"] == 6 and data["declared_trials"] == 6
+    assert data["matched_initial_windows_complete"] is True
     assert data["strong_ranking_supported"] is False
     assert data["live_owner_status_included"] is False
     assert [r["model"] for r in data["trials"]] == [
         "gpt-6-astra", "gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-terra", "gpt-5.6-sol", "gpt-6-astra"
     ]
-    for row in data["trials"][3:]:
-        assert row["result"] is None and row["publication_state"] == "no_published_result"
-        assert row["evidence_url"] is None
+    for row in data["trials"]:
+        assert row["result"]["responses"] == 32 and row["publication_state"] == "recorded"
+        assert row["evidence_url"] and row["evidence_sha256"]
+    assert [row["result"]["saved_elapsed_ticks"] for row in data["trials"]] == [11200, 2500, 7000, 9000, 5200, 9000]
+    assert sum(row["result"]["usage"]["returned_tokens"] for row in data["trials"]) == 5643217
     result = data["trials"][0]["result"]
     assert result["responses"] == result["response_limit"] == 32
     assert result["saved_elapsed_ticks"] == 11200
@@ -138,7 +140,7 @@ def test_endpoint_and_page_preserve_existing_keyboard_surfaces():
     assert response.json() == cohort.keyboard_cohort()
     page = client.get('/campaigns').text
     assert 'Matched model trials' in page and 'Live native run' in page
-    assert '/static/campaign-matched.js?v=1' in page
+    assert '/static/campaign-matched.js?v=2' in page
     assert client.get('/static/campaign-matched.js').status_code == 200
     assert client.get('/public/keyboard-campaigns').status_code == 200
     assert client.get('/public/keyboard-admission').status_code == 200
@@ -172,7 +174,7 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   await new Promise(setImmediate);
   const result = nodes['keyboard-cohort-content'];
   assert.equal(result.hidden, false);
-  assert.match(nodes['keyboard-cohort-status'].textContent, /3 of 6/);
+  assert.match(nodes['keyboard-cohort-status'].textContent, /6 of 6/);
   assert.match(result.textContent, /11,200/);
   assert.match(result.textContent, /1,043,596/);
   assert.match(result.textContent, /792,764/);
@@ -183,14 +185,19 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   assert.match(result.textContent, /wall-clock speed is not compared/);
   assert.match(result.textContent, /unreported, not \$0/);
   assert.match(result.textContent, /Unknown/);
-  assert.match(result.textContent, /No published result/);
-  assert.match(result.textContent, /Window complete; continuation pending/);
+  assert.match(result.textContent, /Initial window complete/);
+  assert.match(result.textContent, /988,564/);
+  assert.match(result.textContent, /853,715/);
+  assert.match(result.textContent, /1,105,515/);
   assert.match(result.textContent, /Guest shutdown command returned a warning/);
   const all = []; const walk = n => { all.push(n); n.children.forEach(walk); }; walk(result);
+  assert.doesNotMatch(all.filter(n => n.tag === 'tbody')[0].textContent, /No published result/);
   assert.equal(all.filter(n => n.tag === 'tbody')[0].children.length, 6);
   assert.equal(all.filter(n => n.tag === 'tbody')[1].children.length, 32);
   assert.equal(all.filter(n => n.tag === 'tbody')[2].children.length, 32);
   assert.equal(all.filter(n => n.tag === 'tbody')[3].children.length, 32);
+  assert.equal(all.filter(n => n.tag === 'tbody').slice(1).length, 6);
+  assert.equal(all.filter(n => n.tag === 'tbody').slice(1).reduce((sum, n) => sum + n.children.length, 0), 192);
   assert.equal(all.find(n => n.tag === 'a').href, data.trials[0].evidence_url);
   const previous = result.textContent; fail = true;
   await nodes['refresh-keyboard-cohort'].events.click();
@@ -206,3 +213,12 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
         [node, '-e', program, str(cohort.PROJECT_ROOT / 'web/static/campaign-matched.js'),
          json.dumps(cohort.keyboard_cohort())], capture_output=True, text=True, timeout=20)
     assert result.returncode == 0, result.stderr
+
+
+def test_unregistered_result_still_means_unknown_not_failed(monkeypatch):
+    monkeypatch.delitem(cohort.RESULTS, "matched-20260910-astra-r2")
+    data = cohort.keyboard_cohort()
+    assert data["recorded_trials"] == 5 and data["matched_initial_windows_complete"] is False
+    row = data["trials"][-1]
+    assert row["result"] is None and row["publication_state"] == "no_published_result"
+    assert row["evidence_url"] is None and row["evidence_sha256"] is None

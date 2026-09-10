@@ -71,7 +71,7 @@
         for (let i = 0; i < 6; i++) tr.appendChild(el('td', 'Not reported'));
       } else {
         const m = result.saved_metrics;
-        const state = result.status === 'completed' ? 'Window complete; continuation pending' : 'Paused; continuation pending';
+        const state = result.status === 'completed' ? 'Initial window complete' : 'Initial window paused';
         [state, `${number(result.saved_elapsed_ticks)} / ${number(data.year_two_elapsed_ticks)}`, number(m.population), `${number(m.food_stock)} / ${number(m.drink_stock)}`, `${number(m.completed_workshops)} / ${number(m.completed_beds)} / ${number(m.completed_farms)}`, `${number(result.usage.returned_tokens)} / ${result.usage.reported_charge_usd === null ? 'charge unreported' : '$' + number(result.usage.reported_charge_usd)}`].forEach(text => tr.appendChild(el('td', text)));
         tr.appendChild(el('td', result.storage_amendment ? '32 GiB · amended' : '24 GiB · original'));
       }
