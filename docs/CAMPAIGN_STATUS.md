@@ -130,13 +130,37 @@ prefixes and native/VM teardown passed, with both shutdown commands returning0.
 The new final checkpoint still needs its separate fresh reload. This fourth
 audited continuation is versioned here; the unchanged running website revision
 above still registers the first three, pending a reviewed registry update.
-Sol attempt 2 has started in the same predeclared serial continuation sequence;
-its live observations are not a verified final save. Astra attempt 2 follows it.
+Sol attempt 2 completed and passed the same save, receipt and teardown audit.
+Its [record](../experiments/evidence/keyboard_matched_sol_r2_continuation_32_64_20260910.json)
+retains 7,500 new saved ticks (12,700 cumulative), 807,647 new returned tokens
+(1,661,362 cumulative), seven living dwarves, zero recorded deaths and no
+completed workshops, farms or placed beds. Raw food remains 50 and drinks 60.
+One clock timeout is retained; no save loss occurred. Source fresh load, memory
+and usage prefixes passed, and both shutdown commands returned 0. The final new
+save has not yet had a separate fresh reload. This is the fifth audited
+continuation; the recorded website registry still contains the first three.
+Astra attempt 2 has started as the last declared 32-to-64 continuation. Its live
+observations are provisional until the final save and independent audit.
 Native reload preserves the saved world and
 paused calendar, not a promise of identical open UI menus; initial screens are
 retained without human navigation. Continue in the declared
 order Astra1, Sol1, Terra1, Terra2, Sol2, Astra2. The native source remains frozen
 at `1bc49b9675b1c82ad502bbd6d8461c9cdbf077e9`.
+
+### Preparing longer matched play
+
+[Draft PR #150](https://github.com/lemoz/fort-gym/pull/150), pushed revision
+`74d75bb6410384de8cc72809d535eb7bc10a398d`, adds a provider-free generator
+for the original 128, 256, 512, 1,024 and 1,280 comparison boundaries. It reproduces
+each complete public-result chain, binds the own save and unchanged cumulative
+usage, and preserves 64-decision save boundaries after admission pauses. Four
+actual 64-to-128 configurations are checked in; the remaining two must be added
+after their source audits. There is no budget extension or gameplay rescue.
+All 4,694 local regression tests passed with 10 skips, along with 89 focused tests,
+changed-file Ruff/format and scoped mypy. Exact-head GitHub CI is pending.
+The old 32-to-64 native owner/auditor remain frozen; a new bounded version and
+complete six-attempt private input verification are required before longer
+windows launch. The generator and tests are preparation, not new gameplay.
 
 ## Current phase: Astra native play and continuation
 

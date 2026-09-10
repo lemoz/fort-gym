@@ -9,6 +9,7 @@ import pytest
 EVIDENCE = Path(__file__).resolve().parents[1] / "experiments/evidence"
 RESULT = "keyboard_matched_astra_r1_continuation_32_64_20260910.json"
 SOL_RESULT = "keyboard_matched_sol_r1_continuation_32_64_20260910.json"
+SOL_TWO_RESULT = "keyboard_matched_sol_r2_continuation_32_64_20260910.json"
 TERRA_RESULT = "keyboard_matched_terra_r1_continuation_32_64_20260910.json"
 TERRA_TWO_RESULT = "keyboard_matched_terra_r2_continuation_32_64_20260910.json"
 WEBSITE = "keyboard_matched_continuation_website_20260910.json"
@@ -20,6 +21,7 @@ SAVED_WEBSITE = "keyboard_matched_saved_windows_website_20260910.json"
     [
         (RESULT, "2c8abe1f7135d94ed27aea51e18ebc59e0599205caf3f268f4480b0e377f3d29"),
         (SOL_RESULT, "a624a9687257157aa91029d950ca1735a0e8f1baaa224cb66bba7efac50a1dbd"),
+        (SOL_TWO_RESULT, "2f261d841808126b4f26cb55dcd47faae36ed37a7310c71648fae0fc531f26da"),
         (TERRA_RESULT, "e81a20836eb6959a529b657a72339bca2e299203c73188006fb32d682c734e11"),
         (TERRA_TWO_RESULT, "1966bf1e8229e8fbfd7a161d84c78da272dd3f5c9aa86040f59a8baa415ef1b8"),
         (WEBSITE, "c5cb272a0b62646fa6c495d5157b68a51a758544fc9c538bd715bf08dbf3f8c9"),
@@ -166,10 +168,34 @@ def test_terra_second_continuation_keeps_its_independent_checkpoint():
     )
     assert record["saved_metrics"]["population"] == 7
     assert record["saved_metrics"]["completed_workshops"] == 0
-    assert record["new_window_clock_outcomes"] == {
-        "no_error": 30, "timeout_waiting_for_ticks": 2
-    }
+    assert record["new_window_clock_outcomes"] == {"no_error": 30, "timeout_waiting_for_ticks": 2}
     assert record["new_window_timeline"][-1]["campaign_elapsed_ticks"] == 19000
+    assert record["native_cleanup_verified"] is record["vm_teardown_verified"] is True
+    assert record["final_fresh_reload_verified"] is record["sustainability_established"] is False
+
+
+def test_sol_second_continuation_does_not_borrow_the_first_attempt():
+    record = json.loads((EVIDENCE / SOL_TWO_RESULT).read_bytes())
+    assert record["campaign_id"] == "matched-20260910-sol-r2"
+    assert (record["start_decision"], record["next_decision"], record["new_responses"]) == (
+        32,
+        64,
+        32,
+    )
+    assert record["new_saved_ticks"] == 7500 and record["saved_elapsed_ticks"] == 12700
+    assert record["usage"]["new_returned_tokens"] == 807647
+    assert record["usage"]["campaign_returned_tokens"] == 1661362
+    assert record["prior_checkpoint_sha256"] == (
+        "7995463aa877ed87ec4cefdbce9bd7530bd395376e81f1ec0377b6b4c18391e0"
+    )
+    assert record["checkpoint_sha256"] == (
+        "8951a2fb2ede2b71e5f6831c9c1088eb02163ca6b719696d6c1365447e37777b"
+    )
+    assert record["saved_metrics"]["population"] == 7
+    assert record["saved_metrics"]["completed_workshops"] == 0
+    assert record["new_window_clock_outcomes"] == {"no_error": 31, "timeout_waiting_for_ticks": 1}
+    assert record["new_window_timeline"][-1]["campaign_elapsed_ticks"] == 12700
+    assert record["source_checkpoint_fresh_load_verified"] is True
     assert record["native_cleanup_verified"] is record["vm_teardown_verified"] is True
     assert record["final_fresh_reload_verified"] is record["sustainability_established"] is False
 
