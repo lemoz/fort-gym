@@ -5,6 +5,7 @@ import re
 
 BASE_PROMPT = "native_keyboard_prompt/v1"
 MEMORY_PROMPT = "native_keyboard_memory_replacement/v1"
+ORIGIN_SCHEMA = "fortgym.keyboard-prompt-origin/v1"
 MEMORY_CONTRACT = """Your retained memory is the only scratchpad carried between decisions. Each
 decision is a fresh model request, not a continuation of the previous conversation.
 memory_update completely replaces the previous retained memory; it is not appended
@@ -25,7 +26,21 @@ def effective_prompt(changes: list, usage: dict) -> str:
         raise ValueError("Prompt changes must be a list")
     profile = BASE_PROMPT
     previous = dict(dispatched_requests=0, total_tokens=0)
-    for change in changes:
+    for index, change in enumerate(changes):
+        if isinstance(change, dict) and change.get("schema_version") == ORIGIN_SCHEMA:
+            if (
+                index != 0
+                or set(change) != {"schema_version", "profile", "source_snapshot_receipt_sha256", "usage"}
+                or not isinstance(change["source_snapshot_receipt_sha256"], str)
+                or re.fullmatch("[a-f0-9]{64}", change["source_snapshot_receipt_sha256"]) is None
+                or not isinstance(change["usage"], dict)
+                or set(change["usage"]) != set(previous)
+                or any(type(change["usage"].get(key)) is not int or change["usage"][key] != 0
+                       for key in previous)
+            ):
+                raise ValueError("Prompt origin must identify the unused starting snapshot")
+            profile = validate_prompt_profile(change["profile"])
+            continue
         if not isinstance(change, dict) or set(change) != {
             "schema_version", "checkpoint_sha256", "next_step", "previous", "profile", "usage",
         }:

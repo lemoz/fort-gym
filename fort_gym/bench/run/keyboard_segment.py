@@ -13,6 +13,66 @@ from .keyboard_config import validate_condition, positive
 from .keyboard_restart_prompt import restart_prompt_state
 
 
+def play_segment_steps(loop: CampaignLoop, steps: int, result: dict) -> None:
+    """Run model decisions under the existing loop and admission semantics."""
+    result["stop_reason"] = "segment_limit"
+    for _ in range(steps):
+        try:
+            loop.step()
+        except CampaignPreDispatchPause as error:
+            result["stop_reason"] = "budget_limited_pause"
+            result["pause_detail"] = str(error)
+            break
+    result["status"] = "bounded_segment_complete"
+
+
+def retain_segment_terminal(*, loop, agent, environment, snapshotter, output: Path,
+                            result: dict, revision: str, fresh_start: bool = False) -> None:
+    """Share save/failure accounting between a fresh start and normal continuation."""
+    if loop is not None:
+        if loop.discontinuities:
+            result["discontinuities"] = loop.discontinuities
+        result["next_step"] = loop.next_step
+        result["committed_elapsed_ticks"] = loop.committed_elapsed_ticks
+        result["recovery_requires_reconciliation"] = loop.failed or not loop.at_boundary
+        initial_pause = (fresh_start and loop.next_step == 0
+                         and result.get("stop_reason") == "budget_limited_pause"
+                         and agent.usage["dispatched_requests"] == 0
+                         and agent.usage["total_tokens"] == 0 and not loop.failed)
+        try:
+            if initial_pause:
+                # A verified source snapshot remains the start. Do not invent a
+                # committed step or a zero-action campaign checkpoint.
+                result["status"] = "budget_limited_pause"
+                result["initial_snapshot_only"] = True
+                result["recovery_requires_reconciliation"] = False
+            elif loop.at_boundary:
+                loop.checkpoint(output / "checkpoint", snapshotter=snapshotter, code_revision=revision)
+                verify_checkpoint(output / "checkpoint")
+                result["checkpoint_verified"] = True
+            else:
+                snapshotter.capture(output / "unreconciled-native-save")
+                result["unreconciled_native_snapshot_retained"] = True
+        except Exception as error:
+            result.update(status="checkpoint_failed", checkpoint_error_type=type(error).__name__,
+                          checkpoint_error=str(error))
+        attempt = getattr(snapshotter, "attempt", None)
+        if isinstance(attempt, dict) and attempt:
+            try:
+                publish(output / "save-attempt.json", attempt)
+                result["private_save_attempt_retained"] = True
+            except Exception as error:
+                result["save_attempt_retention_error_type"] = type(error).__name__
+    try:
+        publish(output / "native-after.json", environment.observe())
+        publish(output / "final-screen.json", environment.screen_capture())
+    except Exception as error:
+        result["final_observation_error_type"] = type(error).__name__
+    publish(output / "agent-after.json", agent.export_campaign_state())
+    result["usage"] = agent.export_campaign_state()["usage"]
+    publish(output / "result.json", result)
+
+
 def run_keyboard_segment(
     *,
     agent: CodexKeyboardAgent,
@@ -104,58 +164,13 @@ def run_keyboard_segment(
         publish(output / "history-before.json", {"discontinuities": loop.discontinuities})
         publish(output / "agent-before.json", agent.export_campaign_state())
         publish(output / "native-before.json", environment.observe())
-        result["stop_reason"] = "segment_limit"
-        for _ in range(steps):
-            try:
-                loop.step()
-            except CampaignPreDispatchPause as error:
-                result["stop_reason"] = "budget_limited_pause"
-                result["pause_detail"] = str(error)
-                break
-        result["status"] = "bounded_segment_complete"
+        play_segment_steps(loop, steps, result)
     except Exception as error:
         result.update(
             stop_reason="unsettled_failure", error_type=type(error).__name__, error=str(error)
         )
     finally:
-        if loop is not None:
-            if loop.discontinuities:
-                result["discontinuities"] = loop.discontinuities
-            result["next_step"] = loop.next_step
-            result["committed_elapsed_ticks"] = loop.committed_elapsed_ticks
-            result["recovery_requires_reconciliation"] = loop.failed or not loop.at_boundary
-            try:
-                if loop.at_boundary:
-                    loop.checkpoint(
-                        output / "checkpoint", snapshotter=snapshotter, code_revision=revision
-                    )
-                    verify_checkpoint(output / "checkpoint")
-                    result["checkpoint_verified"] = True
-                else:
-                    # Preserve the real native tail, but never call it resumable.
-                    snapshotter.capture(output / "unreconciled-native-save")
-                    result["unreconciled_native_snapshot_retained"] = True
-            except Exception as error:
-                result.update(
-                    status="checkpoint_failed",
-                    checkpoint_error_type=type(error).__name__,
-                    checkpoint_error=str(error),
-                )
-            # Retain successful and failed save checks for independent audit.
-            # These private captures are not a public summary or a save retry.
-            attempt = getattr(snapshotter, "attempt", None)
-            if isinstance(attempt, dict) and attempt:
-                try:
-                    publish(output / "save-attempt.json", attempt)
-                    result["private_save_attempt_retained"] = True
-                except Exception as evidence_error:
-                    result["save_attempt_retention_error_type"] = type(evidence_error).__name__
-        try:
-            publish(output / "native-after.json", environment.observe())
-            publish(output / "final-screen.json", environment.screen_capture())
-        except Exception as error:
-            result["final_observation_error_type"] = type(error).__name__
-        publish(output / "agent-after.json", agent.export_campaign_state())
-        result["usage"] = agent.export_campaign_state()["usage"]
-        publish(output / "result.json", result)
+        retain_segment_terminal(loop=loop, agent=agent, environment=environment,
+                                snapshotter=snapshotter, output=output, result=result,
+                                revision=revision)
     return result

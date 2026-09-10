@@ -18,7 +18,7 @@ from .codex_protocol import TRANSPORT
 from .governed_llm import GovernedBudgetCapError
 from .standard_input import parse_response
 from .keyboard_rejection import rejected_receipt
-from .keyboard_prompt import BASE_PROMPT, effective_prompt, declared_prompt_change
+from .keyboard_prompt import BASE_PROMPT, ORIGIN_SCHEMA, effective_prompt, declared_prompt_change
 
 SUBSCRIPTION_COST_BASIS = "codex_subscription_charge_unreported/v1"
 
@@ -106,6 +106,24 @@ class CodexKeyboardAgent(Agent):
         assert change is not None
         self.prompt_changes.append(change)
         return deepcopy(change)
+
+    def initialize_prompt(self, *, profile: str, source_snapshot_receipt_sha256: str) -> dict:
+        """Declare a fresh trial's initial prompt, never relabel existing play.
+
+        The first lineage entry is explicitly a snapshot-bound origin, not a
+        checkpoint change. Historical agents with no origin still start at v1.
+        """
+        if (self.campaign_id is not None or self.memory or self.events
+                or self.usage != initial_usage() or self.budget_extensions or self.prompt_changes):
+            raise ValueError("Initial prompt requires a fresh unused keyboard agent")
+        origin = {
+            "schema_version": ORIGIN_SCHEMA, "profile": profile,
+            "source_snapshot_receipt_sha256": source_snapshot_receipt_sha256,
+            "usage": {"dispatched_requests": 0, "total_tokens": 0},
+        }
+        effective_prompt([origin], self.usage)
+        self.prompt_changes.append(origin)
+        return deepcopy(origin)
 
     def set_campaign_context(self, *, campaign_id: str) -> None:
         if not isinstance(campaign_id, str) or not campaign_id:

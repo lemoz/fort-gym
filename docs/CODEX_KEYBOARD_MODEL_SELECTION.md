@@ -3,7 +3,8 @@
 The subscription keyboard path now accepts a declared model and reasoning effort
 under `fortgym.codex-keyboard-condition/v2`. This is configuration support, not
 evidence that another model has played successfully or is available to this
-account. The active Astra campaign keeps its original v1 condition unchanged.
+account. Historical v1 conditions keep their original meaning; the ongoing Astra
+campaign retains its own declared condition and checkpoint history.
 
 ## Condition contract
 
@@ -50,6 +51,12 @@ retained dispatch and usage evidence, and a declared comparable starting save,
 controls, observation, display, budgets and intervention policy. Use separate
 campaign identities and repeated attempts before making performance claims.
 Subscription dollar charges remain unknown when the transport does not report them.
+
+Independent starts now have a separate game-side CLI documented in
+[Independent native-keyboard trials](KEYBOARD_FRESH_TRIALS.md). It starts each
+model with empty memory from a verified snapshot, then uses ordinary checkpoint
+continuation. This closes a configuration-to-startup gap, not the live comparative
+evaluation requirement. Never switch models by rewriting an Astra checkpoint.
 
 ## CLI sources
 

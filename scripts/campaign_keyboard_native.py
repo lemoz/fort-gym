@@ -82,7 +82,13 @@ def publish_response(exchange: Path, identifier: str, value: dict) -> None:
 
 
 def worker(args) -> dict:
-    condition, window = load_window(args.condition, args.window)
+    fresh = getattr(args, "trial", None) is not None
+    if fresh:
+        from fort_gym.bench.run.keyboard_trial_config import load_trial
+
+        condition, window = load_trial(args.condition, args.trial)
+    else:
+        condition, window = load_window(args.condition, args.window)
     environment = NativeCampaignEnvironment(
         expected_dfroot=args.runtime,
         control_profile=condition["control_profile"],
@@ -129,6 +135,16 @@ def worker(args) -> dict:
             model=condition["model"],
             reasoning_effort=condition["reasoning_effort"],
         )
+        if fresh:
+            from fort_gym.bench.run.keyboard_trial import run_keyboard_trial
+
+            return run_keyboard_trial(
+                agent=agent, environment=environment, snapshotter=snapshotter,
+                output=args.output, condition=condition, campaign_id=args.campaign_id,
+                steps=window["steps_per_segment"], revision=args.revision,
+                source_snapshot_receipt_sha256=window["source_snapshot_receipt_sha256"],
+                loaded_boundary=read(args.loaded_boundary),
+            )
         return run_keyboard_segment(
             agent=agent,
             environment=environment,
