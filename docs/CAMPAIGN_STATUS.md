@@ -4,10 +4,10 @@ Verified September 10, 2026 UTC. The Year-Two Autonomous Play objective remains
 unfinished; work continues toward the same objective. The owner has approved starting the project
 work for [Astra standard-input experiments](ASTRA_STANDARD_INPUT_EXPERIMENTS.md).
 
-## Latest matched pilot: four audited windows, live website verified
+## Latest matched pilot: five audited windows, final fresh trial active
 
-The matched cohort now has verified Astra attempt 1, Sol attempt 1 and both Terra
-attempts. Terra retained 7,000 and 9,000 ticks respectively, with 32 responses per
+The matched cohort now has verified Astra attempt 1, both Sol attempts and both
+Terra attempts. Terra retained 7,000 and 9,000 ticks respectively, with 32 responses per
 window and 859,063 / 1,105,515 returned tokens. Both ended with seven living
 dwarves, 50 raw edible food units, 60 drinks and no completed workshop, farm or
 placed bed. Neither proves sustainable production. The final saves are verified
@@ -18,9 +18,18 @@ and stopped state was independently verified. Its original audit retains this
 warning. Its [public result](../experiments/evidence/keyboard_matched_terra_r2_20260910.json)
 is versioned separately from the earlier first-window records.
 
-The next declared Sol attempt 2 has started under the same frozen native
-source/image, 32-response bound, subscription admission checks and mandatory
-teardown. No GCE VM, paid API fallback, credit purchase or reset was used.
+Sol attempt 2 completed with 5,200 saved ticks, 853,715 returned tokens and seven
+living dwarves. It ended with 50 raw edible food units, 60 drinks and no completed
+workshop, farm or placed bed. Its actual save, all 32 model receipts and native/VM
+teardown passed the independent audit; both shutdown commands returned zero.
+Its [public record](../experiments/evidence/keyboard_matched_sol_r2_20260910.json)
+is pushed at data commit `6531318881b6a12de8387321e02da675d299e4fb`.
+
+Astra attempt 2, the last declared fresh-start trial, has started under the same
+frozen native source/image, 32-response bound, subscription admission checks and
+mandatory teardown. The actual first response was independently decoded as Astra
+Medium with 34,655 returned tokens. No GCE VM, paid API fallback, credit purchase
+or reset was used.
 Storage remains the predeclared 32 GiB amendment; CPU, RAM and game controls
 are unchanged. Model dollar charges remain unreported, not zero.
 
@@ -28,8 +37,9 @@ The local website now serves clean revision
 `2a63972fb56e06e019e566b5b34bd2c5962e36db`, pushed and remote-readback verified in
 [draft PR #146](https://github.com/lemoz/fort-gym/pull/146). It shows three published
 first-window records, all 96 decision boundaries, and the current matched trial.
-Terra attempt 2 is audited and separately versioned, but is not yet registered
-in the recorded comparison table. Its registration remains a next step.
+Terra attempt 2 and Sol attempt 2 are audited and separately versioned, but are
+not yet registered in the recorded comparison table. Update the repeated-result
+comparison after the last initial trial, preserving all original records.
 
 The new live observer reads only host receipts/process identity and adds no game
 or model calls. It labels running controllers, unsettled usage, provisional time
@@ -38,14 +48,35 @@ expire after 30 seconds, including after a failed refresh.
 
 All 4,517 local tests passed with ten skips. Changed-file Ruff, scoped mypy and
 JavaScript syntax checks passed. Existing repository-wide debt remains ten Ruff
-and 465 mypy errors. GitHub CI for the exact revision is in progress in run
-`34530711434`; success is not yet claimed.
+and 465 mypy errors. GitHub CI for the exact revision passed in run
+`34530711434`.
 [Actual local HTTP acceptance](../experiments/evidence/keyboard_matched_live_website_20260910.json)
 passed against the live Sol repeat, including unchanged historical evidence,
 matching source/assets, three recorded rows, expiring live data and disabled admin.
 The first active-state check correctly failed after Terra's controller had already
 ended; the check was not weakened. No browser visual QA, public deployment or main
 merge occurred. This is progress, not completion of the full Year-Two goal.
+
+### Checkpoint-bound continuation preparation
+
+[Draft PR #147](https://github.com/lemoz/fort-gym/pull/147), exact pushed revision
+`900f2fadc0584fa7be6ea56eebcc9ed33830df79`, prepares ordinary decision-32-to-64
+windows for the four saves available when preparation began: Astra1, Sol1, Terra1
+and Terra2. The provider-free generator binds each own checkpoint and result
+digest, preserves original conditions and adds no reset, prompt change, strategy
+intervention or budget extension. The real four-save input audit verified full
+inventories, unchanged memory/prompt lineage and settled trace/usage prefixes,
+with zero model/game calls and zero fresh native loads. Input readiness is not
+continued gameplay.
+
+The full local suite passed 4,539 tests with ten skips before import/format-only
+cleanup; 59 focused tests passed afterwards. Changed-file Ruff and scoped mypy
+passed. Black/isort were unavailable, so the existing Ruff formatter was used
+without dependency changes. Exact-head GitHub CI is running in `34532711049`.
+Add Sol2 and Astra2's audited result-bound windows before this next wave. Finish
+and audit all six initial trials first, then bind a finite continuation owner and
+resume each attempt's own save and memory in the declared order. The active game
+still uses frozen source `1bc49b9675b1c82ad502bbd6d8461c9cdbf077e9`.
 
 ## Current phase: Astra native play and continuation
 
