@@ -24,7 +24,38 @@ RESULTS = {
         "0b213a6074777eb5d016cb885bb3df296c4096a8c47e88e43f443eec04142fda",
         "c0e37c1dc1bc90706396071798514673ac9abd5c",
     ),
+    "matched-20260910-terra-r1": (
+        "experiments/evidence/keyboard_matched_terra_r1_20260910.json",
+        "9670b0e1e542df80f48abbecc39eec3f0e36ba071a0b6d0555d8f86724b92c7b",
+        "91bf6838b40e019434152716c104716a26293574",
+    ),
 }
+ORIGINAL_BINDING = "bb3c140c583c3d1462f48fe78cd3a8980713a860d512fceff337dd733f995312"
+STORAGE_BINDING = "81b60b43fffdad75b1a3d9bdc7a3014a99e9890344dae532c4ba0406ed483779"
+STORAGE_AMENDMENT = {
+    "amendment_id": "keyboard-matched-storage-20260910",
+    "data_disk_gib_before": 24, "data_disk_gib_after": 32,
+    "parent_execution_sha256": ORIGINAL_BINDING,
+    "plan_sha256": "7bb71cd099a1b945e8f9cafb184acfaa15ca906ffa1b57e250ac7615e9b23339",
+    "operation_sha256": "9034ebaf21974e71c44b795aa7c23a5cf6f67802e9a1ff679860485f81d04b8f",
+    "plan_url": "https://github.com/lemoz/fort-gym/blob/e753ab3d32a2e18ef1159f79e7810dcc963dd850/experiments/keyboard_matched_storage_amendment_20260910.json",
+    "identical_host_configuration_to_first_two_trials": False,
+    "source_image_seed_compute_and_gameplay_conditions_unchanged": True,
+    "wall_clock_performance_comparison_excluded": True,
+}
+
+
+def _storage_condition(result: dict[str, Any], index: int) -> None:
+    """Accept only the declared storage amendment at its declared boundary."""
+    amended = index >= 2
+    expected = STORAGE_BINDING if amended else ORIGINAL_BINDING
+    amendment = result.get("storage_amendment")
+    if result["execution"]["binding_sha256"] != expected:
+        raise ValueError("Recorded trials differ in a declared matching condition")
+    # JSON equality preserves boolean types (unlike Python's True == 1).
+    if (json.dumps(amendment, sort_keys=True)
+            != json.dumps(STORAGE_AMENDMENT if amended else None, sort_keys=True)):
+        raise ValueError("Undeclared storage condition")
 
 
 def _read(relative: str, expected: str) -> dict[str, Any]:
@@ -48,7 +79,7 @@ def keyboard_cohort() -> dict[str, Any]:
     """Return declared slots, preserving absent results as null, never zero."""
     plan = _read(PLAN_PATH, PLAN_SHA256)
     trials = []
-    for declared in plan["execution_order"]:
+    for index, declared in enumerate(plan["execution_order"]):
         identity = declared["campaign_id"]
         row = {"campaign_id": identity, "model": declared["model"],
                "replicate": declared["replicate"], "reasoning_effort": "medium",
@@ -68,10 +99,11 @@ def keyboard_cohort() -> dict[str, Any]:
                 raise ValueError("Public result does not match the declared trial")
             row.update(publication_state="recorded", result=result,
                        evidence_url=_link(path, revision), evidence_sha256=digest)
+            _storage_condition(result, index)
         trials.append(row)
     recorded = [r["result"] for r in trials if r["result"] is not None]
     if recorded:
-        common_execution = ("source_revision", "image_id", "seed_receipt_sha256", "binding_sha256")
+        common_execution = ("source_revision", "image_id", "seed_receipt_sha256")
         common_conditions = ("reasoning_effort", "control_profile", "observation_profile",
                              "screen_size", "prompt_profile", "response_limit")
         for result in recorded:
@@ -89,7 +121,10 @@ def keyboard_cohort() -> dict[str, Any]:
         "matched_initial_windows_complete": len(recorded) == len(trials)
         and all(r["responses"] == plan["stages"]["initial_segment_responses"] for r in recorded),
         "strong_ranking_supported": False, "live_owner_status_included": False,
+        "identical_host_configuration": False,
+        "wall_clock_performance_comparison_supported": False,
         "limits": [
+            "Storage changed from 24 to 32 GiB before Terra attempt 1. Source, image, seed, CPU, memory and gameplay settings remained unchanged; wall-clock speed is not compared.",
             "No published result does not mean not running, failed, or zero progress.",
             "A completed 32-response window is not a completed campaign; continuation is pending.",
             "Same-seed repeated trials describe this pilot, not performance across worlds.",

@@ -5,7 +5,7 @@ read-only `/public/keyboard-cohort` endpoint. It follows the six slots in
 `experiments/keyboard_matched_pilot_20260910/cohort.json`, in declared execution
 order. The older exploratory Astra campaign remains separate.
 
-## First two published windows
+## First three published windows
 
 `matched-20260910-astra-r1` completed all 32 decisions and retained 11,200 ticks
 from the shared seed. Seven dwarves remained, with one completed workshop, one
@@ -31,6 +31,41 @@ control/observation/memory profiles, screen size, reasoning effort and response
 limit. The endpoint rejects differences in those matched fields. Their observed
 outcomes differ, but neither is a repeated model result or proof of sustainability.
 
+`matched-20260910-terra-r1` completed 32 decisions and retained 7,000 ticks.
+Seven dwarves remained, with no completed workshops, farms or placed beds.
+The final stocks were 50 raw edible food units and 60 drinks. All 859,063 returned
+tokens were accounted for. Its checkpoint and game/VM teardown passed the audit;
+a fresh reload of this final checkpoint remains untested.
+
+Before Terra attempt 1, the VM data disk increased from 24 to 32 GiB to retain
+prior evidence. The amendment was declared before changing storage. Runtime
+source/image, common seed, CPU, RAM, container constraints and gameplay settings
+did not change. The page labels both storage conditions; it does not compare
+wall-clock performance or claim identical host configurations. Only the pinned
+amendment and execution binding are accepted, starting at the declared third slot.
+
+## Live matched-trial observations
+
+`/public/keyboard-cohort-active` is separate from the immutable result table and
+from the older exploratory campaign's `/public/keyboard-active` feed.
+`python -m scripts.campaign_matched_observe` accepts explicit `--run-dir`,
+`--operator`, `--execution`, `--public-dir`, `--owner-pid` and cohort `--index`.
+It checks the controller's start-time/command identity, launch binding, model
+request digests, consecutive receipts and returned usage. It only reads host
+receipts and process identity; it never calls the model, game, container or VM.
+
+The replaceable derivative `keyboard-cohort-active.json` contains allowlisted
+metadata, response/token counts, unsettled dispatch claims and a game-time lower
+bound from subsequent request feedback. It contains no prompt, screen, memory,
+private path, PID or account identity. Fresh starts are identified as independent
+seed trials, not a fictitious verified checkpoint zero.
+
+Both API and page expire observations after 30 seconds. Failed process inspection
+does not mean the game stopped and never triggers a restart. PID reuse ends the
+observer for the original controller. A stopped controller is not a collapsed
+fortress, and an owner teardown report is not an independent terminal audit.
+The page labels all these observations as provisional, never as a verified save.
+
 ## Interpretation
 
 - A finished 32-response window is not campaign success. Each trial must continue
@@ -44,8 +79,8 @@ outcomes differ, but neither is a repeated model result or proof of sustainabili
   repeated current-job samples do not measure production or consumption rates.
 - Equal declared settings and two trials per model are a pilot design, not enough
   for strong rankings or generalization to other worlds.
-- The Year-Two goal, continuation experiments, remaining model trials and live
-  matched-trial publication remain open.
+- The Year-Two goal, continuation experiments and remaining repeated model trials
+  remain open. These first windows support no strong model ranking.
 
 ## Publishing another recorded result
 
