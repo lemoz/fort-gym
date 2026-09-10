@@ -15,7 +15,64 @@ windows have completed. Window x completed after the earlier window-w runtime
 failure. Window y completed both serial segments and its result is now recorded.
 Window aa then saved checkpoint 929 before a declared subscription-admission pause.
 
-### Current execution: window ab resumed after the owner-reported usage reset
+### Latest verified outcome: window ab completed into year two
+
+The same bounded owner finished all 128 decisions and exited zero. Its terminal
+audit passed for all four native saves, complete checkpoint inventories,
+trace/usage prefixes, actual model receipts and game/container/local-VM teardown.
+The owner and observer are no longer running. Do not relaunch the completed owner.
+
+Final checkpoint **1057** retains **456582 elapsed ticks**, 53382 beyond the first
+full-year anniversary, with 16 living dwarves, zero recorded deaths, 13 beds,
+eight farms, four workshops, three tables, three chairs, 75 raw-edible food units
+and 613 drinks. Food scans completed at all 128 boundaries; final food has no
+trader flags, but ownership/accessibility and production rates remain unmeasured.
+The last activity sample contains two planting jobs, one harvesting job and one
+fishing job. Retained survival, new beds, supplies and ongoing work support a
+post-hoc qualitative operating-at-endpoint assessment, not a self-sufficiency
+score or a matched model comparison.
+
+This window added 164000 ticks and 4608590 tokens. Cumulative usage is 1239
+responses and 39994420 campaign tokens; all-attempt usage is 40063424 including
+69004 historical failed-delivery tokens. Dollar charges remain unreported.
+Six historical losses retain at least 48429 lost ticks plus an unknown remainder.
+There were no new rollbacks, OOM events or clock timeouts. Memory headroom remains
+unproven. The final checkpoint still needs a separate fresh native reload.
+
+Terminal audit SHA256:
+`4008fed9d6fee78132f12f422fe4ff14240c0b7fdaa8801c682ed6c29337deeb`.
+Final checkpoint manifest SHA256:
+`3ec299616cd8526cf41903f6f7584a01a5f0f0fd252098dc8e2841caa76ba82d`.
+The sanitized result is committed and remote-readback verified at
+`18086313ee34a7df70efe1974f342df882976138` on `codex/campaign-year-two-record`.
+Its recorded website integration is now pushed and remote-readback verified at
+`1bc49b9675b1c82ad502bbd6d8461c9cdbf077e9`, in draft
+[PR #142](https://github.com/lemoz/fort-gym/pull/142) stacked on #141.
+The existing local `/campaigns` preview serves this exact source and displays
+1.13 elapsed game years with the immutable result link. All 4413 local tests
+passed with ten skips; changed-file Ruff, scoped mypy and both JavaScript syntax
+checks passed. Repository-wide checks still report the pre-existing 10 Ruff and
+465 mypy errors, so global static checks are not claimed green.
+The existing live feed is stale and retains its old intermediate snapshot, not a running game.
+All older published history remains unchanged. PR #141 CI `34514257246` passed
+for the declared matched pilot; those six fresh starts have not run yet.
+
+Exact-source HTTP acceptance verified page/script bytes, the completed result,
+identical older records/admission/live snapshot and disabled admin. Receipt
+SHA256: `14822c684b562a358a95e78fd4f7c2fccd5a9e9b58fba6ec5761758483e42fe2`.
+Full-suite receipt SHA256:
+`5e67d2c765725234af5c4f6198d412452113cad0b230484d2eb83dbe26d2597d`.
+PR #142 exact-head CI `34518336191` is running at this update.
+The owned preview was replaced; no browser was opened or visually tested during
+this background goal continuation, consistent with the Sites skills.
+
+Next: complete remote CI, then perform a provider-free disposable final-save
+reload and native brewing-input verification before the
+matched-model pilot. The full Year-Two/Cross-Model/Website/Remote goal remains
+active. No public deployment, paid fallback, reset or new model run occurred
+during result publication.
+
+### Window ab execution history after the owner-reported usage reset
 
 Window ab launched on September 10 from checkpoint 929 using clean source
 `3ab9fc4c9f553171206d3d7122402ec4493ef2e6`. Fresh subscription admission passed

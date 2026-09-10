@@ -79,6 +79,20 @@ evidence and remaining native work are tracked in [Campaign status](CAMPAIGN_STA
 
 ## Current harness progress
 
+The exploratory Astra native-keyboard campaign has now retained 456582 elapsed
+ticks at checkpoint 1057, beyond the full-year anniversary. Its 128-decision
+window completed, all four saves and usage passed terminal audit, and the local
+VM was torn down. Sixteen dwarves remain alive with zero recorded deaths, 13
+beds, ongoing planting/harvesting/fishing jobs and retained supplies. This
+supports an operating-at-endpoint assessment; sustained self-sufficiency and
+matched-model performance remain unproven. The versioned result is pushed at
+`18086313ee34a7df70efe1974f342df882976138` on `codex/campaign-year-two-record`.
+Website integration follows at `1bc49b9675b1c82ad502bbd6d8461c9cdbf077e9` in
+[PR #142](https://github.com/lemoz/fort-gym/pull/142), with 4413 passing local
+tests and exact-source HTTP acceptance on the existing preview. It has not been
+publicly deployed. The remaining experiments and remote CI are tracked in
+[Campaign status](CAMPAIGN_STATUS.md). Earlier implementation history follows.
+
 Independent campaign startup is implemented and pushed at
 `88d1f4659893ecdb1d59a621638cada2d37e5876` in draft PR #137. The fresh-trial CLI
 loads a verified native starting snapshot, initializes the declared model with
