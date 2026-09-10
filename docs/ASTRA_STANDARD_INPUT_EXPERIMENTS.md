@@ -97,13 +97,24 @@ and delivery status.
 
 ## Current native progress
 
-The next attempted window z paused at the declared included-subscription-usage
+A later provider-free diagnostic freshly loaded checkpoint 903 at source
+`88d1f4659893ecdb1d59a621638cada2d37e5876` and restored the normal campaign loop
+without stepping it. The paused calendar, actual 120x40 screen, agent state,
+history, trace and usage passed independent audit. No model call or new game
+tick occurred, and game/container/local-VM teardown passed. All original save
+files are unchanged; the disposable copy appended two DFHack load-log lines,
+with all other files matching. This is verified restoration, not new gameplay
+or native acceptance of independent fresh-model trials. Its later verification
+still needs to be shown separately on the website.
+
+The latest model-run attempt, window z, paused at the declared included-subscription-usage
 cutoff before starting a VM or calling Astra. No new game time or tokens were
 added; checkpoint 903 and all history are unchanged. This is not a game failure
 or dollar-budget overrun. The recorded pause is now separate from live status
 and saved results on the local campaign page and remote draft branch. Native
-continuation still requires a fresh load of 903 and passing the same admission
-check, using a new unique attempt. No paid fallback or reset was used.
+continuation still requires its own verified load and the same admission check,
+using a new unique attempt. The separate diagnostic does not bypass either
+runtime check. No paid fallback or reset was used.
 
 Window y completed both segments and saved checkpoint 903 at 268582 elapsed
 ticks, adding 52000 ticks. Saved observations show 16 citizens, zero recorded
@@ -111,7 +122,7 @@ deaths, 11 completed beds, 8 farms, 4 workshops, one table and one chair. Astra
 used standard workshop and building menus; sustainable production is not yet
 established. Both segment saves and all usage passed independent audit, and the
 VM is stopped. The local website now records 903 with its intermediate reload
-and prior history; the final save still needs its next fresh-process load.
+and prior history; the later diagnostic now verifies final 903's fresh load.
 See [Campaign status](CAMPAIGN_STATUS.md) for current evidence, publication state,
 usage and remaining checks. Historical results below are retained, not current
 campaign or website state.

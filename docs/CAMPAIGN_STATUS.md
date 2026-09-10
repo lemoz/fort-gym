@@ -14,6 +14,35 @@ phase retains website and remote delivery. Several bounded Astra native-keyboard
 windows have completed. Window x completed after the earlier window-w runtime
 failure. Window y completed both serial segments and its result is now recorded.
 
+### Latest native verification: checkpoint 903 freshly reloaded
+
+A provider-free diagnostic on source `88d1f4659893ecdb1d59a621638cada2d37e5876`
+loaded checkpoint 903 in a new native game process and restored the ordinary
+campaign loop without stepping or saving. The paused year 30 / tick 285383,
+actual 120x40 screen, complete agent state and byte-identical trace and usage
+journals passed. Both recorded world observations matched exactly. It preserved
+268582 elapsed ticks, 1085 responses, 34521087 campaign tokens and all six
+historical loss records. No model call, new game time or human gameplay rescue.
+
+The retained checkpoint remained unchanged. In the disposable copy only
+`events-dfhack.log` gained two world/map-loaded lines; all 126 other files,
+including world.sav, matched. This observed log append is explicitly retained,
+not hidden behind whole-directory byte-equality claims. Independent audit:
+`2effdc85ed665569b3345afa1f8573dc438bc95501bde741db814f28a55de16c`.
+
+The native game, container and local VM shut down; owner exit, guest poweroff
+and VM stop were all zero, and stopped state was independently rechecked.
+Memory again reached its 1536 MiB limit, with 53 limit events and no OOM or kill;
+memory headroom remains unproven. The versioned reload receipt and documentation
+are committed, pushed and remotely read back at
+`4980cdd5e8c1961772f839eeaa848d196672ed6f`. The public receipt passed a separate
+private-evidence binding audit; 103 focused regressions passed, with one skip.
+Its exact-head CI `34428156723` is in progress, not yet a verified pass. The local website
+still serves its historical publication at `a0f3d3bc836e27816d34db5506271d652eb86402`;
+this later verification is not yet shown there. No merge or deployment.
+Next: surface this later verification separately and continue an admitted
+campaign from 903. Native fresh-start model trials remain unproven.
+
 ### Latest implementation: independent native-keyboard campaign starts
 
 Source `88d1f4659893ecdb1d59a621638cada2d37e5876` is committed, pushed and read
@@ -32,14 +61,14 @@ prompt, usage and limits and rejected fresh initialization on that used agent.
 Compatibility audit SHA256:
 `f5e0d7fbe04e9a6b86cbd085d49737821ce97bb44252c40f292ed9cea9667d25`.
 
-No VM, game or model call was made for this increment. Actual native fresh-start
-acceptance and independent repeated comparisons remain unproven; final 903 still
-needs its fresh-process game load. Remote CI `34426912429` is running at this
-documentation update. The local website remains on the audited admission/result
+No VM, game or model call was made for that implementation increment. Actual
+native fresh-start acceptance and independent repeated comparisons remain
+unproven; the later provider-free 903 reload is recorded above. Exact-head
+remote CI `34426912429` completed successfully. The local website remains on the audited admission/result
 source `a0f3d3bc836e27816d34db5506271d652eb86402`; this core implementation does
 not publish a new campaign outcome. No merge or deployment is claimed.
 
-### Latest attempted execution: window z paused before VM start
+### Latest model-run attempt: window z paused before VM start
 
 Window z's source `0c35f3e1b43389e53d0c59725aa05a6dc6723752` passed exact-head
 CI `34423927385` and its no-model/no-game preflight. Its single-use owner then
@@ -51,8 +80,9 @@ dollar spending cap. No API fallback, local model, cloud VM, purchase or reset
 was used. Do not relaunch this already-sealed attempt directory.
 
 Independent audit verifies the terminal owner, stopped local VM and unchanged
-checkpoint 903. The fresh-process reload of 903 is still unverified. All prior
-usage and loss records remain intact. Private audit SHA256:
+checkpoint 903. The later provider-free diagnostic verified its fresh-process
+reload without relaunching window z. All prior usage and loss records remain
+intact. Private admission-pause audit SHA256:
 `b579a85d7a1cb8d47ca5999b2e85588831b4393087bab62fdd175c0157d9aa9c`.
 
 The recorded admission state is published separately from live status and saved
@@ -76,8 +106,8 @@ Window y completed all 64 Astra Medium decisions with two verified serial saves,
 871 then 903. It added 52000 ticks, reaching 268582 saved elapsed ticks, or 66.61%
 of one full elapsed game year. Checkpoint 903 manifest:
 `08142546e6f470fe0d83e91bdc50db9efe332378ffaaf30613a27e91d72e5e37`.
-The fresh loads of parent 839 and intermediate 871 passed; final 903 has not yet
-had a separate fresh-process reload. Full native inventories, saved lineage,
+The fresh loads of parent 839 and intermediate 871 passed during window y;
+final 903 subsequently passed the separate diagnostic above. Full native inventories, saved lineage,
 trace/usage prefixes, all 64 model receipts and retained losses passed audit.
 
 The saved fortress has 16 citizens, zero recorded deaths, 520 drinks, 11 beds,
