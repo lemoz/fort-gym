@@ -6,6 +6,11 @@ in configuration and actually giving that model its own fresh campaign.
 It does not change the ongoing Astra campaign or turn its continuation windows
 into independent comparison attempts.
 
+The [matched pilot](KEYBOARD_MATCHED_PILOT.md) now supplies directly loadable
+conditions/trials and six distinct campaign IDs for two starts each of Astra,
+Sol and Terra at Medium. It is an experiment declaration, not completed model
+evidence; the ongoing Astra fortress is excluded from those fresh-start comparisons.
+
 ## Start contract
 
 The caller supplies a complete existing keyboard condition, a fresh-trial JSON

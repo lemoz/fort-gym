@@ -89,6 +89,8 @@ production deployment must be reported separately.
 4. Reuse the stable harness for at least three supported models, with repeated
    comparable starts and declared conditions. A model switch midway through an
    existing model's authored history is not automatically a matched comparison.
+   The [matched pilot declaration](KEYBOARD_MATCHED_PILOT.md) supplies six fresh
+   starts across Astra, Sol and Terra; actual native results remain outstanding.
 5. Publish the recorded outcomes and comparison limits on the website and keep
    the reviewed remote source and manifests synchronized with actual experiments.
 
