@@ -13,8 +13,8 @@ from fort_gym.bench.api.campaign_keyboard_reloads import checkpoint_reload, CHEC
 from tests.test_campaign_keyboard_records import evidence_root as evidence_root
 
 
-def publication(root):
-    path = root / "experiments/evidence" / CHECKPOINT_RELOADS[0]
+def publication(root, index=0):
+    path = root / "experiments/evidence" / CHECKPOINT_RELOADS[index]
     return path, json.loads(path.read_bytes())
 
 
@@ -39,6 +39,7 @@ def test_later_reload_does_not_rewrite_or_add_gameplay():
     assert reload["disposable_save_tree_difference"]["other_files_unchanged"] == 126
 
 
+@pytest.mark.parametrize("publication_index", [0, 1])
 @pytest.mark.parametrize("key,value", [
     ("schema_version", "unknown"), ("checkpoint_sha256", "a" * 64),
     ("checkpoint_cursor", 902), ("retained_elapsed_native_ticks", 268583),
@@ -53,22 +54,24 @@ def test_later_reload_does_not_rewrite_or_add_gameplay():
     ("year_two_success", True), ("cross_model_comparison", True),
     ("recorded_date_utc", "2026-99-99"), ("native_calendar", {"year": True, "year_tick": 0, "paused": True}),
 ])
-def test_bad_reload_is_not_promoted_or_allowed_to_hide_history(evidence_root, key, value):
+def test_bad_reload_is_not_promoted_or_allowed_to_hide_history(evidence_root, key, value, publication_index):
     before = records.keyboard_campaign_records(evidence_root)
-    path, source = publication(evidence_root)
+    path, source = publication(evidence_root, publication_index)
     source[key] = value
     path.write_text(json.dumps(source))
     with pytest.raises(ValueError):
-        checkpoint_reload(evidence_root, CHECKPOINT_RELOADS[0], before["completed_windows"])
+        checkpoint_reload(evidence_root, CHECKPOINT_RELOADS[publication_index],
+                          [*before["completed_windows"], *before["paused_windows"]])
     after = records.keyboard_campaign_records(evidence_root)
     assert after["checkpoint_reload_status"] == "unavailable" and after["checkpoint_reloads"] == []
     assert {key: value for key, value in before.items() if not key.startswith("checkpoint_reload")} == {
         key: value for key, value in after.items() if not key.startswith("checkpoint_reload")}
 
 
+@pytest.mark.parametrize("publication_index", [0, 1])
 @pytest.mark.parametrize("kind", ["missing", "oversize", "symlink", "nonobject"])
-def test_unreadable_verification_does_not_remove_completed_window(evidence_root, kind):
-    path, source = publication(evidence_root)
+def test_unreadable_verification_does_not_remove_completed_window(evidence_root, kind, publication_index):
+    path, source = publication(evidence_root, publication_index)
     if kind in ("missing", "symlink"):
         path.unlink()
         if kind == "symlink":
@@ -82,9 +85,10 @@ def test_unreadable_verification_does_not_remove_completed_window(evidence_root,
     assert data["completed_windows"][-1]["progress"]["checkpoint_cursor"] == 903
 
 
-def test_private_fields_do_not_reach_api(evidence_root):
+@pytest.mark.parametrize("publication_index", [0, 1])
+def test_private_fields_do_not_reach_api(evidence_root, publication_index):
     before = records.keyboard_campaign_records(evidence_root)
-    path, source = publication(evidence_root)
+    path, source = publication(evidence_root, publication_index)
     source.update(private_path="secret-path", account_id="secret-account", memory="secret-memory")
     source["native_calendar"]["map"] = "secret-map"
     source["disposable_save_tree_difference"]["private_log"] = "secret-log"

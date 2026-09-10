@@ -308,7 +308,7 @@ def keyboard_campaign_records(root: Path = PROJECT_ROOT) -> dict:
     # A later verification cannot rewrite publication-time facts or make the
     # original gameplay history unavailable when its own record is missing.
     try:
-        checkpoint_reloads = [checkpoint_reload(root, filename, completed_windows)
+        checkpoint_reloads = [checkpoint_reload(root, filename, [*completed_windows, *paused_windows])
                               for filename in CHECKPOINT_RELOADS]
         checkpoint_reload_status = "available"
     except (OSError, ValueError, KeyError, TypeError):

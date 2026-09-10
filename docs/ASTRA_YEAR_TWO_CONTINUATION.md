@@ -43,3 +43,20 @@ calendar, and stop before dispatch when admission fails. A parser test or
 offline agent-state restore is not a native reload or a completed model run.
 The local website continues to show the actual checkpoint-929 paused result;
 no planned ticks, decisions or outcomes are added to its recorded data.
+
+## Later native reload of checkpoint 929
+
+At source `5fdb7d400ecea26725e22d45f5d2e5e49bef6af5`, a separate provider-free
+native reload passed for the exact checkpoint. The real game reopened paused at
+year 30, tick 309383, and the normal campaign loop restored cursor 929 and all
+292582 retained elapsed ticks. Agent memory/configuration, history, usage and the
+original checkpoint stayed unchanged. No model call, gameplay key, tick advance,
+native save or new checkpoint was requested. The disposable save's DFHack log
+appended two load-event lines; the other 126 files, including `world.sav`, matched.
+Native processes, container and the owned local VM were stopped and verified.
+
+The public receipt is
+`experiments/evidence/astra_native_keyboard_checkpoint929_reload_20260910.json`.
+The campaign page attaches it as a later verification to the saved pause without
+rewriting the original result or changing its usage, decisions or game time.
+This resolves the separate-reload check; window ab itself remains unlaunched.

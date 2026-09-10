@@ -6,7 +6,13 @@ from pathlib import Path
 from .campaign_keyboard_presave import _hash, _matches, _read
 from .campaign_keyboard_windows import _counts
 
-CHECKPOINT_RELOADS = ("astra_native_keyboard_checkpoint903_reload_20260910.json",)
+CHECKPOINT_RELOAD_REVISIONS = {
+    "astra_native_keyboard_checkpoint903_reload_20260910.json":
+        "4980cdd5e8c1961772f839eeaa848d196672ed6f",
+    "astra_native_keyboard_checkpoint929_reload_20260910.json":
+        "b1a73c746621f17e38b08fca061b1799c6a7025d",
+}
+CHECKPOINT_RELOADS = tuple(CHECKPOINT_RELOAD_REVISIONS)
 
 
 def checkpoint_reload(root: Path, filename: str, parents: list[dict]) -> dict:
@@ -82,5 +88,5 @@ def checkpoint_reload(root: Path, filename: str, parents: list[dict]) -> dict:
         "disposable_save_tree_difference": {"path": "events-dfhack.log", **delta_counts,
                                             "world_sav_unchanged": True},
         "evidence_path": "experiments/evidence/" + filename,
-        "evidence_revision": "4980cdd5e8c1961772f839eeaa848d196672ed6f",
+        "evidence_revision": CHECKPOINT_RELOAD_REVISIONS[filename],
     }
