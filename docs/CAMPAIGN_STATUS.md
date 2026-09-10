@@ -72,17 +72,45 @@ The subsequent live receipt prefix first reported crossing the full elapsed-year
 threshold at decision index 85 (86 returned responses): 112000 new reported ticks
 plus the original 292582 saved ticks gives a 404582-tick lower bound. All 86
 subscription receipts independently reconciled, totalling 3150000 new tokens.
-This is not yet a verified anniversary save or functioning-fortress verdict;
-the next intermediate native save/load and full terminal trace audit remain
-required. Retained report SHA256:
+That live receipt did not yet verify an anniversary save or functioning-fortress
+verdict. Its subsequent native save/load was audited below; the full terminal
+trace audit remains required. Retained report SHA256:
 `a26e2558e3fbd0623cc051e1b964d46b95c46bd64de4ba1c167c3d806b072a56`.
+
+The third batch then saved checkpoint **1025**, retaining **410582 elapsed ticks**,
+7382 beyond the first-year anniversary. Its next worker freshly loaded the same
+agent, memory, usage and native state. This is the first verified intermediate
+save/load in this window beyond one full elapsed year. The batch added 24000
+ticks; 96 responses across the three batches reconcile to 1207 cumulative
+responses and 38868329 campaign tokens, with unreported dollar charges.
+
+At the saved boundary, all 16 citizens remained alive with zero recorded deaths.
+Completed beds increased from 11 to 12; farms/workshops stayed at eight/four.
+The complete food scan counted 102 raw-edible units, including 50 trader-flagged
+units. Only 52 lacked that flag, compared with 48 in the prior save; this is not
+proof of ownership or accessibility. Drinks rose from 497 to 540, but that older
+scanner has no trader breakdown, so the increase is not attributed to brewing.
+A citizen had an assigned `BREW_DRINK_FROM_PLANT` job at the built still, another
+was trading, and another drinking. These native observations establish active
+work at this sample, not completed production or indefinite self-sufficiency.
+
+Checkpoint manifest SHA256:
+`48b493dc925eebe1349aed217108357b88fcf34fc1f1e46091d43a7e3c613aa2`.
+Boundary audit SHA256:
+`817b036480255da47623e1bc9995f656f7f4e2efcb443f5e85d40043b84f56ec`.
+The audit copied only ten settled metadata files and independently reconciled
+all 96 subscription receipts. Full copied save inventory, canonical trace and
+whole-owner teardown remain pending. The same final batch continues without
+human gameplay rescue; this intermediate anniversary is not full goal completion.
+The local live API now independently shows checkpoint 1025 / 410582 saved ticks,
+separately from the original 929 start and later feedback-reported time.
 
 The native owner and observer were freshly polled running at this update.
 Continue observing these same handles, then audit full saved inventories, traces,
 usage, native outcomes and teardown before publishing a recorded result. The existing local
 preview shows active progress separately from the unchanged recorded pause and
-reload history. No year-two outcome, repeated model comparison, merge or public
-deployment is established by this launch.
+reload history. Final operating-outcome acceptance, repeated model comparison,
+merge and public deployment remain unverified.
 
 A separately isolated website fix now loads completed and paused windows in
 checkpoint-parent order. This supports a completed continuation after a pause
@@ -131,8 +159,10 @@ method, and leaves failed scans unknown. Historical governed hooks and the live
 native source/image remain unchanged. Final local validation passed 4393 tests
 with ten skips, plus 88 focused measurement tests and Lua syntax/scoped Ruff.
 Broad static-check debt remains the same 10 Ruff / 465 mypy errors. Exact-head
-remote CI is running; a provider-free check on an actual paused native inventory
-is still required after this owner finishes and tears down. The candidate is not
+remote CI `34511753756` passed with 4255 tests, 148 skips and seven warnings;
+the new Lua-dependent tests ran locally but were skipped where Lua was unavailable
+in CI. A provider-free check on an actual paused native inventory is still
+required after this owner finishes and tears down. The candidate is not
 hot-patched into the current run or used to rewrite old measurements.
 
 ### Latest checkpoint verification: 929 freshly reloaded, no new gameplay

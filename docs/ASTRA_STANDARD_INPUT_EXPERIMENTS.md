@@ -116,8 +116,9 @@ citizens, 78 raw-edible food units and 533 drink units. Tables/chairs increased
 to three each. Its second batch then saved checkpoint 993 and loaded the third
 worker with identical state. That intermediate boundary retains 386582 elapsed
 ticks (95.9 percent of one full year), 16 living citizens, 48 food and 497 drink
-units. No deaths were recorded. Calendar year 31 has begun, but a full elapsed
-year has not yet passed. Food/drink drawdown is not sustainability proof.
+units. No deaths were recorded. At that second boundary, calendar year 31 had
+begun, but a full elapsed year had not yet passed. Food/drink drawdown was not
+sustainability proof.
 Complete inventory/trace audit and final teardown remain pending.
 
 The website ordering fix in draft PR #138 passed exact-head CI. The subsequent
@@ -128,15 +129,27 @@ tests passed; its exact-head remote CI also passed. Historical recorded data is 
 the native harness remains pinned, and no merge/public deployment is claimed.
 
 Later live feedback reported 404582 elapsed ticks at the first 86-response prefix;
-independent receipt reconciliation passed. This crosses the first-year threshold
-in reported live progress, not yet in a verified saved checkpoint. The same model
-continues toward the next native save and operating-outcome assessment.
+independent receipt reconciliation passed. The subsequent third batch has now
+saved checkpoint 1025 at **410582 retained elapsed ticks**, and the fourth worker
+freshly loaded the same agent/memory/native state. This verifies an intermediate
+save/load beyond the first-year anniversary. All 96 receipts reconcile to 1207
+cumulative responses and 38868329 campaign tokens. Sixteen living citizens and
+zero recorded deaths remain, with twelve completed beds, eight farms and four
+workshops. Food is 102 raw-edible units, including 50 trader-flagged units; the
+52 non-trader-flagged units are not an ownership/accessibility guarantee. Drinks
+are 540, with no trader breakdown in the old drink scanner. An assigned native
+brewing job is present at a built still, alongside trading and drinking activity.
+Those samples are operating evidence, not a completed-production measurement.
+The same owner continues; full save inventory, canonical trace, operating-outcome
+review and final teardown remain pending. Boundary audit SHA256:
+`817b036480255da47623e1bc9995f656f7f4e2efcb443f5e85d40043b84f56ec`.
 
 An evaluation-only defect was found while inspecting supplies: the old campaign
 hook's brewing-input predicate looked for finished alcohol rather than a plant's
 drink reaction product, so its zeroes are not reliable absence evidence. The
 isolated candidate in PR #140 passed 4393 local tests (ten skips) and 88 focused
-checks; real native verification remains pending after this run. It changes no
+checks, followed by successful exact-head CI; real native verification remains
+pending after this run. It changes no
 current model observation, game control, historical benchmark hook or old result.
 
 Window aa saved 26 of 32 declared Astra Medium decisions as checkpoint 929 at
