@@ -56,7 +56,8 @@ checks passed. Repository-wide checks still report the pre-existing 10 Ruff and
 465 mypy errors, so global static checks are not claimed green.
 The existing live feed is stale and retains its old intermediate snapshot, not a running game.
 All older published history remains unchanged. PR #141 CI `34514257246` passed
-for the declared matched pilot; those six fresh starts have not run yet.
+for the declared matched pilot; its six fresh starts had not run at that earlier
+publication. The current matched-pilot outcome is recorded below.
 
 Exact-source HTTP acceptance verified page/script bytes, the completed result,
 identical older records/admission/live snapshot and disabled admin. Receipt
@@ -96,7 +97,60 @@ Full-suite XML SHA256:
 `0b62b1b19eb69535c35dc91b5a9b8d020c0d44129ae20b0602fe8f376252d752`.
 No public deployment or browser visual QA is claimed.
 
-### Matched pilot started: Astra replicate 1
+### Matched pilot: first Astra and Sol windows audited
+
+The first two declared fresh starts completed and passed independent checkpoint,
+trace, model-receipt and teardown audits. Neither owner is running; do not relaunch
+either attempt. Their native execution source/image/seed/config binding is
+unchanged. All 32 responses per model are accounted for; both native saves cover
+their full windows, with no inherited usage, historical losses or human rescue.
+
+| First window | Retained ticks | Dwarves | Workshops / farms / placed beds | Returned tokens |
+| --- | ---: | ---: | --- | ---: |
+| Astra Medium, attempt 1 | 11200 | 7 | 1 / 1 / 0 | 1043596 |
+| Sol Medium, attempt 1 | 2500 | 7 | 0 / 0 / 0 | 792764 |
+
+Both final inventories report 50 raw edible units and 60 drinks. These are early
+development observations, not sustainable-production evidence or a model ranking.
+Neither new final checkpoint has yet been tested by a fresh reload. Sol's guest
+poweroff and VM stop commands both returned 0. Astra's guest poweroff returned 1,
+with the independently verified VM stopped state retained beside that warning.
+Charges remain unreported, not zero.
+
+Astra audit SHA256:
+`8ba7a2f432d587bb78972c14f5d71a881e519f9e80d1513fc4fadf1bcf4594d2`.
+Sol audit SHA256:
+`c714225b97b43f4c3c86f75d83bd2773b92bd95f04f9e43ea0dfc085cb8b4a9d`.
+Astra's public result is pushed at `1dfb7e8250fd1dcea9410ebd3ea9d334d6bf7ce6`;
+Sol's result is pushed and remote-readback verified at
+`c0e37c1dc1bc90706396071798514673ac9abd5c` on
+`codex/campaign-matched-sol-results` for the next website integration.
+
+The comparison page and `/public/keyboard-cohort` are pushed at
+`af86f352547843e513de8430e598cf72ba3bf00e` in draft
+[PR #144](https://github.com/lemoz/fort-gym/pull/144), stacked on #143.
+All 4478 local regression tests passed (10 skipped); 195 focused checks passed.
+New-module Ruff, scoped mypy and JS syntax passed. The existing global static
+errors remain. GitHub CI `34525754016` was still running at this observation.
+Actual HTTP acceptance passed, preserving all previous recorded/admission/live
+data and disabled admin. Receipt SHA256:
+`d04c3469de9143a8c459b5933aafd9149485fe7e17e3422bd7ec9419cca85c80`.
+
+The local preview now serves this exact comparison implementation. It includes
+the audited Astra window, all six declared slots and decision history. Sol's
+result is not yet registered on the page. Unpublished slots explicitly mean no
+published result, not no activity or zero performance. Live matched-trial
+observation is still pending; the older live feed remains stale and unchanged.
+No public deployment, main merge or browser visual QA is claimed.
+
+Next: add the audited Sol result to the page, check retained-data disk capacity
+before Terra attempt 1, then finish the remaining starts and continue each trial's
+own saved fortress. Sol's disk preflight observed 1667272 KiB available before
+its run. Preserve all retained evidence; do not silently resize the bound VM,
+alter the frozen operator or delete prior volumes to make the next start fit.
+The full Year-Two/Cross-Model/Website/Remote goal remains active.
+
+### Earlier launch observation: Astra replicate 1
 
 `matched-20260910-astra-r1` is the first actual trial in the declared six-start
 cohort. One bounded owner has started the existing local VM and native game,
