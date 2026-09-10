@@ -15,6 +15,44 @@ windows have completed. Window x completed after the earlier window-w runtime
 failure. Window y completed both serial segments and its result is now recorded.
 Window aa then saved checkpoint 929 before a declared subscription-admission pause.
 
+### Next continuation: checkpoint-pinned window ab, not launched
+
+Source `5fdb7d400ecea26725e22d45f5d2e5e49bef6af5` adds window ab with up to
+four serial 32-decision segments from checkpoint 929. Its configuration pins
+the manifest digest as well as the cursor; the native window controller rejects
+a different save at the same cursor before creating output or launching a
+runtime. Historical unpinned windows are unchanged.
+
+The declaration appends a 1152-to-1280 cumulative dispatch-budget extension,
+leaving the 40000000-token ceiling unchanged. The original base configuration,
+all old budget extensions, model, controls, prompt/memory, measurement profiles,
+losses and usage remain intact. The window allows at most 128 new responses,
+1239 cumulative, and does not force advancement or promise reaching year two.
+
+An offline audit against the actual checkpoint restored the original agent,
+appended the extension only in memory, restored the extended state again and
+verified exact preservation of the original files, configuration, memory,
+prompt history and usage. This is agent-state preparation, not a fresh native
+reload, a new checkpoint or a launched model run. Audit SHA256:
+`b96e3e40383b616a7b944a4cb310eee3d05ee9ab38eeca26a1c33d9eb3f818ec`.
+
+All 4293 local tests passed, with ten skips. Checkpoint-pin, budget/restore,
+runtime, save and account-admission checks passed, as did changed-file Ruff and
+scoped mypy. These tests and the offline audit do not establish new native play.
+The exact source was pushed to GitHub and is the head of open draft PR #137;
+[CI run 34435255827](https://github.com/lemoz/fort-gym/actions/runs/34435255827)
+passed. This is remote branch delivery, not a merge or deployment.
+
+The latest account read reported 99 percent used, above the unchanged
+98-percent harness cutoff;
+no provider-reached limit was reported, but no new model run was admitted.
+No reset, purchase or paid fallback was used. Saved gameplay remains checkpoint
+929 at 292582 elapsed ticks. The website remains on its verified result source
+`2979716c13b0a287f143a64ec0656a6f82430eda`; planned decisions and ticks were not
+added to recorded data. A future VM owner must bind its finite runtime/courier
+limits to this four-segment declaration and freshly verify source/save/admission
+before launch. The complete year-two and multi-model goal remains unfinished.
+
 ### Latest native outcome: checkpoint 929 saved, window aa paused
 
 Window aa completed and saved 26 of its 32 declared Astra Medium decisions.
@@ -70,8 +108,8 @@ HTTP acceptance SHA256:
 Next gameplay starts from checkpoint 929, not a reset or older save, after fresh
 subscription admission. The inherited 1152-response ceiling leaves only 41
 dispatches, at most 82000 requested ticks, short of the remaining 110618 ticks
-even before zero-tick menu decisions. Version an explicit response-budget
-extension for further year-two play while retaining every usage record and the
+even before zero-tick menu decisions. Window ab now declares the explicit
+response-budget extension described above, retaining every usage record and the
 existing token/spending limits. Current year-two and repeated cross-model
 performance requirements remain unfinished.
 
