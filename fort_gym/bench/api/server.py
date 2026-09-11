@@ -450,6 +450,17 @@ async def public_keyboard_endurance_records() -> JSONResponse:
     return JSONResponse(data, headers=HTML_CACHE_HEADERS)
 
 
+@app.get("/public/keyboard-binding-results")
+async def public_keyboard_binding_results() -> JSONResponse:
+    from .keyboard_binding_results import keyboard_binding_result
+
+    try:
+        data = keyboard_binding_result()
+    except (OSError, ValueError, KeyError, TypeError):
+        raise HTTPException(status_code=503, detail="Displayed-key evidence is unavailable") from None
+    return JSONResponse(data, headers=HTML_CACHE_HEADERS)
+
+
 @app.get("/protocols/{slug}", response_class=HTMLResponse)
 async def serve_protocol_detail(slug: str):
     """Serve protocol-specific metadata while the client resolves the detail body."""
