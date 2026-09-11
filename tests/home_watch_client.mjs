@@ -1,0 +1,121 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {glyph, decodeScreen, frameIndex, liveState, validateRecording} from '../web/static/home-watch-model.mjs';
+
+const screen = {width:2,height:2,tile_order:'column_major',runs:[[2,219,7,0],[1,1,15,0],[1,32,0,1]]};
+const frame = decision => ({decision,screen,action:{intent:'Intent ' + decision,keys:['q'],advance_ticks:0},
+  accepted:true,before:{year:30,tick:100},after:{year:30,tick:100,population:7,ticks_advanced:0}});
+const record = id => ({schema_version:'fortgym.watch-recording/v1',id,title:id,first_decision:97,last_decision:98,
+  saved_through_decision:97,frames:[frame(97),frame(98)]});
+
+test('CP437 glyphs and column-major RLE retain all native screen codes', () => {
+  assert.equal(glyph(1),'☺'); assert.equal(glyph(219),'█'); assert.equal(glyph(127),'⌂');
+  assert.equal(glyph(255),' '); assert.equal(glyph(32),' ');
+  for (let n = 0; n < 256; n++) assert.equal(glyph(n).length,1);
+  assert.deepEqual(decodeScreen(screen),[[219,7,0],[219,7,0],[1,15,0],[32,0,1]]);
+  assert.throws(() => decodeScreen({...screen,runs:[[5,219,7,0]]}));
+  assert.throws(() => decodeScreen({...screen,tile_order:'row_major'}));
+  assert.equal(frameIndex(900,10),9); assert.equal(frameIndex(-1,10),0);
+});
+
+test('live status expires and cannot hide future timestamps', () => {
+  const live = {schema_version:'fortgym.watch-live/v1',status:'running',observed_at_unix:1000,fresh_for_seconds:30};
+  assert.equal(liveState(live,1010),'running');
+  assert.equal(liveState(live,1031),'stale');
+  assert.throws(() => liveState(live,900));
+  assert.equal(validateRecording(record('a')).frames.length,2);
+});
+
+test('every bundled real recording can be decoded', () => {
+  const catalog = JSON.parse(fs.readFileSync('web/static/recordings/catalog.json'));
+  for (const entry of catalog.recordings)
+    validateRecording(JSON.parse(fs.readFileSync('web/static/recordings/' + entry.id + '.json')));
+});
+
+test('homepage controls, replay switching and live disconnect work in memory', async () => {
+  class Element {
+    constructor(id) { this.id=id; this.listeners={}; this.children=[]; this.attributes={}; this.dataset={}; this.value='1'; this.disabled=false; this.hidden=false; this.textContent=''; }
+    setAttribute(key,value) { this.attributes[key]=value; }
+    addEventListener(key,fn) { (this.listeners[key] ||= []).push(fn); }
+    append(...items) { this.children.push(...items); }
+    replaceChildren(...items) { this.children=items; }
+    querySelectorAll() { return this.children.filter(node => node.dataset.recording); }
+    getContext() { return {fillRect(){},fillText(){}}; }
+    async emit(type, extra={}) { for (const fn of this.listeners[type] || []) await fn({target:this,...extra}); }
+  }
+  const elements=new Map();
+  const html=fs.readFileSync('web/landing.html','utf8');
+  for (const match of html.matchAll(/id="(watch-[^"]+)"/g)) elements.set(match[1],new Element(match[1]));
+  const element = id => elements.get('watch-'+id);
+  const timers=new Map(); let timerId=0;
+  const original={document:globalThis.document,fetch:globalThis.fetch,setInterval,clearInterval,now:Date.now};
+  let now=1000000;
+  Date.now=()=>now;
+  globalThis.setInterval=(fn,delay)=>{timers.set(++timerId,{fn,delay});return timerId;};
+  globalThis.clearInterval=id=>timers.delete(id);
+  globalThis.document={hidden:false,getElementById:id=>elements.get(id),createElement:tag=>new Element(tag),addEventListener(){}};
+  let live={schema_version:'fortgym.watch-live/v1',status:'not_connected'};
+  const requests=[];
+  globalThis.fetch=async url=>{
+    requests.push(url);
+    const data=url.endsWith('catalog.json') ? {schema_version:'fortgym.watch-catalog/v1',recordings:[{id:'a',title:'A',window:'97–98'},{id:'b',title:'B',window:'97–98'}]}
+      : url.includes('watch-active') ? structuredClone(live) : record(url.includes('/a.json')?'a':'b');
+    return {ok:true,json:async()=>data};
+  };
+  const settle=async()=>{for(let n=0;n<10;n++) await new Promise(resolve=>setImmediate(resolve));};
+  try {
+    await import('../web/static/home-watch.mjs?test=controls');
+    await settle();
+    assert.equal(element('decision').textContent,'Decision 97 / 98');
+    assert.equal(element('play').disabled,false);
+    await element('next').emit('click');
+    assert.match(element('boundary').textContent,/UNSAVED TAIL/);
+    await element('play').emit('click');
+    assert.equal(element('decision').textContent,'Decision 97 / 98');
+    const playback=[...timers.values()].at(-1); playback.fn();
+    assert.equal(element('play').textContent,'Play');
+    assert.equal(element('decision').textContent,'Decision 98 / 98');
+    const buttonB=element('runs').children.find(node=>node.dataset.recording==='b');
+    const buttonA=element('runs').children.find(node=>node.dataset.recording==='a');
+    const normalFetch=globalThis.fetch;
+    globalThis.fetch=async url=>{if(url.includes('/b.json')) throw Error('offline'); return normalFetch(url);};
+    await buttonB.emit('click'); await settle();
+    assert.equal(element('title').textContent,'a');
+    assert.match(element('load-status').textContent,/unavailable/);
+    assert.equal(element('play').disabled,false);
+    let resolveB;
+    globalThis.fetch=async url=>url.includes('/b.json') ? new Promise(resolve=>{resolveB=resolve;}) : normalFetch(url);
+    const pendingB=buttonB.emit('click'); await settle();
+    await buttonA.emit('click'); await settle();
+    resolveB({ok:true,json:async()=>record('b')}); await pendingB; await settle();
+    assert.equal(element('title').textContent,'a'); // A late response cannot replace the selected run.
+    globalThis.fetch=normalFetch;
+    await buttonB.emit('click'); await settle();
+    assert.equal(element('title').textContent,'b');
+    const poll=[...timers.values()].find(timer=>timer.delay===10000);
+    live={schema_version:'fortgym.watch-live/v1',status:'running',run_id:'current',model:'Astra',
+      observed_at_unix:1000,fresh_for_seconds:30,frame:{...frame(99),captured_at_unix:999,action_status:'chosen_not_execution_verified'}};
+    await poll.fn();
+    assert.equal(element('title').textContent,'b'); // A chosen replay isn't hijacked.
+    assert.equal(element('live').hidden,false);
+    await element('live').emit('click');
+    assert.match(element('badge').textContent,/LIVE/);
+    assert.match(element('execution').textContent,/does not yet verify/);
+    live.frame={...live.frame,decision:100}; await poll.fn();
+    assert.equal(element('decision').textContent,'Decision 100');
+    await element('prev').emit('click');
+    assert.equal(element('decision').textContent,'Decision 99');
+    await poll.fn();
+    assert.equal(element('decision').textContent,'Decision 99'); // Rewind remains paused.
+    now=1031000;
+    [...timers.values()].find(timer=>timer.delay===1000).fn();
+    assert.equal(element('badge').textContent,'RECORDED RUN');
+    assert.equal(element('live').hidden,true);
+    assert.match(element('connection').textContent,/expired/);
+    assert.ok(requests.every(url=>url.startsWith('/static/recordings/') || url==='/public/watch-active'));
+  } finally {
+    globalThis.document=original.document;globalThis.fetch=original.fetch;
+    globalThis.setInterval=original.setInterval;globalThis.clearInterval=original.clearInterval;Date.now=original.now;
+  }
+});
