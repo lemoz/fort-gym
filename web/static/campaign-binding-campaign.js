@@ -30,6 +30,7 @@
     const details = el('details', undefined, 'campaign-details');
     details.appendChild(el('summary', `Inspect all ${number(rows.length)} decisions: keys, intent and saved outcomes`));
     details.appendChild(el('p', 'Intent is what the model tried to do, not proof that it succeeded. Repeated adjacent keys are shown as × counts. Full uncompressed keys are in the result data.', 'campaign-note'));
+    details.appendChild(el('p', 'Raw food and drink totals can include trader goods. The latest-save breakdown does not describe earlier rows; stock changes are not production.', 'campaign-note'));
     const region = el('div', undefined, 'campaign-table-scroll');
     region.setAttribute('role', 'region'); region.setAttribute('aria-label', 'Displayed-key decision evidence'); region.setAttribute('tabindex', '0');
     const table = el('table', undefined, 'campaign-table'), head = el('thead'), labels = el('tr'), body = el('tbody');
@@ -55,6 +56,27 @@
     table.appendChild(body); region.appendChild(table); details.appendChild(region);
     return details;
   }
+  function inventoryContext(result) {
+    const context = result.stock_context;
+    if (context === undefined) return el('p', 'Trader breakdown unavailable for this record. Raw food and drink totals may include trader goods and do not establish ownership, accessibility or production.', 'campaign-note');
+    const last = result.checkpoints[result.checkpoints.length - 1];
+    if (context.schema_version !== 'fortgym.recorded-stock-context/v1' || context.scope !== 'final_checkpoint_only' ||
+        context.responses !== result.responses || context.checkpoint_sha256 !== last.checkpoint_sha256 ||
+        context.ownership_and_accessibility_verified !== false || context.production_or_sustainability_verified !== false ||
+        context.food.raw_units !== result.saved_metrics.food_stock || context.drink.raw_units !== result.saved_metrics.drink_stock ||
+        context.drink.trader_flagged_units !== null) throw new Error('Stock context differs from the saved endpoint');
+    const food = context.food, output = el('div', undefined, 'campaign-inventory-context');
+    if (food.measurement_status === 'complete') {
+      if (![food.raw_units, food.trader_flagged_units, food.units_without_trader_flag].every(value => Number.isSafeInteger(value) && value >= 0) ||
+          food.trader_flagged_units + food.units_without_trader_flag !== food.raw_units) throw new Error('Invalid food breakdown');
+      output.appendChild(el('p', `Food at the latest save: ${number(food.raw_units)} raw units; ${number(food.trader_flagged_units)} trader-flagged; ${number(food.units_without_trader_flag)} without the trader flag.`, 'campaign-note'));
+    } else {
+      if (!['unavailable', 'incomplete'].includes(food.measurement_status) || food.trader_flagged_units !== null || food.units_without_trader_flag !== null) throw new Error('Invalid unknown food breakdown');
+      output.appendChild(el('p', `Food trader breakdown: Unknown (${food.measurement_status === 'incomplete' ? 'incomplete measurement' : 'not recorded'}).`, 'campaign-note'));
+    }
+    output.appendChild(el('p', 'Without the trader flag does not mean fortress-owned or reachable. Trader share of drinks: Unknown (not recorded). These counts do not establish production or sustainability.', 'campaign-note'));
+    return output;
+  }
   function render(data) {
     if (data.schema_version !== 'fortgym.public-keyboard-binding-campaign/v1' || data.recorded_only !== true ||
         data.included_in_historical_cohort !== false || data.independent_attempts !== 1) throw new Error('Unsupported campaign evidence');
@@ -74,6 +96,7 @@
     ];
     values.forEach(([label, value]) => { const item = el('div'); item.appendChild(el('dt', label)); item.appendChild(el('dd', value)); facts.appendChild(item); });
     output.appendChild(facts);
+    output.appendChild(inventoryContext(result));
     const years = result.saved_elapsed_ticks / result.ticks_per_year;
     const duration = Number.isFinite(years) ? years.toFixed(4) : 'Unknown';
     const stop = result.stop_reason === 'segment_limit' ? 'The declared decision window completed.' :

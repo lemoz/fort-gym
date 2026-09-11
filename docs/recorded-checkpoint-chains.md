@@ -16,8 +16,10 @@ including when its decision count equals the previous save's count.
 
 This is preparatory website capability. No synthetic fixture or unfinished
 native result is registered. The current recorded campaign still contains
-96 decisions and the original checkpoints at 32, 64 and 96. Its serialized
-response remains byte-identical to the previous website version.
+96 decisions and the original checkpoints at 32, 64 and 96. The checkpoint-chain
+delivery at `c677f29a39b8a28cd72a7569d19115c9535a38b4` preserved the previous
+serialized response. The later [inventory-context addition](recorded-stock-context.md)
+adds endpoint metadata without changing those historical values.
 
 The existing FastAPI architecture, dependencies, historical endpoints and
 local-preview source are preserved. No new site registration, credentials,
