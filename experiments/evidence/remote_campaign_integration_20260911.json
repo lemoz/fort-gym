@@ -3,7 +3,7 @@
   "observed_date": "2026-09-11",
   "review_kind": "implementer_review_not_independent_approval",
   "main_before": "5c1de785bd6abdbe1bc9520529c6157e44793c0d",
-  "main_after": "58a0ae6570f8f0e1673f0152728851f04de132ca",
+  "main_after": "f1aa05f429c189b67891cf2629e8e00329222aca",
   "changes": [
     {
       "pull_request": 132,
@@ -49,6 +49,63 @@
         "passed": 1921,
         "skipped": 60
       }
+    },
+    {
+      "pull_request": 135,
+      "url": "https://github.com/lemoz/fort-gym/pull/135",
+      "review": "https://github.com/lemoz/fort-gym/pull/135#issuecomment-5638974174",
+      "head": "47fc2b9a924cc402453581b3aa707d838d4a3604",
+      "merge_commit": "0839001f85d736f6dfa41c3db215d5a0407d448e",
+      "merged_at": "2026-09-11T18:29:38Z",
+      "retargeted_from": "codex/campaign-dialog-feedback",
+      "retargeted_to": "main",
+      "retarget_base_trees_identical": true,
+      "local_tests": {
+        "passed": 2001,
+        "skipped": 10
+      },
+      "changed_file_ruff": "passed",
+      "historical_v1_observation_digest_verified": true,
+      "merge_tree_equals_reviewed_head": true,
+      "post_merge_ci": {
+        "run_id": 34633571094,
+        "conclusion": "success",
+        "passed": 1951,
+        "skipped": 60
+      }
+    },
+    {
+      "pull_request": 136,
+      "url": "https://github.com/lemoz/fort-gym/pull/136",
+      "review": "https://github.com/lemoz/fort-gym/pull/136#issuecomment-5639016603",
+      "head": "48d9ed6d94a598b44c4cfbe10a0df4badcb189ad",
+      "merge_commit": "f1aa05f429c189b67891cf2629e8e00329222aca",
+      "merged_at": "2026-09-11T18:33:32Z",
+      "retargeted_from": "codex/campaign-observation-context",
+      "retargeted_to": "main",
+      "retarget_base_trees_identical": true,
+      "local_tests": {
+        "passed": 2088,
+        "skipped": 10
+      },
+      "changed_file_ruff": "passed",
+      "original_native_artifact_recheck": {
+        "frozen_operator_and_three_context_files_verified": true,
+        "original_seed_reverified": true,
+        "native_checkpoint_reverified": true,
+        "retained_native_result_matches_owner": true,
+        "historical_cleanup_receipts_verified": true,
+        "current_vm_status_not_checked": true,
+        "game_or_model_calls": 0
+      },
+      "original_failed_native_fixtures_preserved": true,
+      "merge_tree_equals_reviewed_head": true,
+      "post_merge_ci": {
+        "run_id": 34633943664,
+        "conclusion": "success",
+        "passed": 2015,
+        "skipped": 83
+      }
     }
   ],
   "source_branches_deleted": false,
@@ -62,9 +119,12 @@
   "website_deployments": 0,
   "service_restarts": 0,
   "remaining_integration": {
-    "next_pull_request": 135,
-    "head": "47fc2b9a924cc402453581b3aa707d838d4a3604",
-    "state": "production_diff_inspected_full_review_and_fresh_tests_pending",
+    "next_pull_request": 137,
+    "head": "3ab9fc4c9f553171206d3d7122402ec4493ef2e6",
+    "state": "scope_inspected_full_review_and_fresh_tests_pending",
+    "changed_files": 271,
+    "insertions": 31717,
+    "deletions": 61,
     "entire_stack_merged": false
   },
   "year_two_goal_completed": false

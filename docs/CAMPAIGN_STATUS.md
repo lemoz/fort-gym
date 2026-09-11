@@ -54,6 +54,15 @@ completed jobs or production rates. Seven beds, three workshops and one farm
 remain unchanged. No additional construction or sustainable replenishment is
 established by this saved segment. The audit made no game or model calls.
 
+The next [saved-supply review](../experiments/evidence/keyboard_binding_astra_r1_supply_288_320_20260911.json)
+also verified all 32 native boundaries from cursor 288 to 320. Population stayed
+at 12 with zero recorded deaths. Non-trader-flagged raw-edible stock changed
+from 50 to 47, while drink stock changed from 238 to 259. Trader-flagged food was
+zero at both endpoints. Six boundaries included planting, five included a
+generic `CustomReaction` job, and two included bag storage. These samples do
+not identify a completed brewing job or establish sustainable production.
+This read-only review sent no game commands or model requests.
+
 The active run now broadcasts captured screens and chosen actions through the
 [homepage player](https://fortgym.live/#watch-root). Public frames 289 and 290
 were independently matched to original hash-bound receipts. The one-way relay
@@ -72,25 +81,36 @@ The declaration was pushed before launch at
 154 skipped before launch. It is pinned separately from native revision
 `d22f28d99f4fd103188979e964e148139d3f3efd`; no native implementation changed.
 
-## Remote integration: two reviewed recovery changes landed in main
+## Remote integration: four reviewed changes landed in main
 
-[PR132](https://github.com/lemoz/fort-gym/pull/132) and
-[PR134](https://github.com/lemoz/fort-gym/pull/134) are now merged. Remote main is
-`58a0ae6570f8f0e1673f0152728851f04de132ca`. Both merge trees equal their exact
-reviewed heads. Fresh local suites passed 1,918 and 1,971 tests respectively,
-with ten skips each. Their post-merge main CI runs passed 1,868 and 1,921 tests,
-with 60 skips each; local and CI coverage totals are deliberately separate.
+Remote main is `f1aa05f429c189b67891cf2629e8e00329222aca`. All four merge
+trees equal their exact reviewed heads. Local and CI totals are kept separate.
+
+| Change | Fresh local tests, passed / skipped | Post-merge main CI, passed / skipped |
+| --- | --- | --- |
+| [PR132: saved-runtime recovery and tick bounds](https://github.com/lemoz/fort-gym/pull/132) | 1,918 / 10 | 1,868 / 60 |
+| [PR134: blocking-dialog feedback](https://github.com/lemoz/fort-gym/pull/134) | 1,971 / 10 | 1,921 / 60 |
+| [PR135: elapsed campaign clock](https://github.com/lemoz/fort-gym/pull/135) | 2,001 / 10 | 1,951 / 60 |
+| [PR136: model-selected terrain inspection](https://github.com/lemoz/fort-gym/pull/136) | 2,088 / 10 | 2,015 / 83 |
+
 Changed-file Ruff and diff checks passed. Review was implementer review, not
-independent approval. Original tick-acceptance artifacts were rehashed, and the
-dialog fixture's historical failed assertion remains a failure in its evidence.
+independent approval. Original tick-acceptance artifacts were rehashed. For
+terrain inspection, the frozen operator/context, original seed, checkpoint,
+native result and historical cleanup receipts were reverified read-only.
+Historical failed fixtures remain failed; no native fixture was rerun.
 
-These merges add the previously tested saved-runtime recovery/tick-limit work
-and let models respond to known blocking dialogs without automatic dismissal.
-They do not deploy the website, start a game/model, change the active condition,
-or update frozen source checkouts. Source branches remain retained. The next
-unmerged dependency is PR135; its production diff was inspected, but full review
-and fresh tests remain. This does not claim the entire release stack is merged.
-See the [integration receipt](../experiments/evidence/remote_campaign_integration_20260911.json).
+The new clock reports committed game time, not a success verdict. The optional
+terrain interface lets models choose a region and z-level at zero ticks without
+hidden-tile disclosure or automatic targeting. Neither merge changes the current
+keyboard-only Astra experiment. The retained Qwen configuration is historical,
+not a new model selection or launch.
+
+These merges do not deploy the website, start a game/model, change the active
+condition, or update frozen source checkouts. Source branches remain retained.
+The next unmerged dependency is PR137. Its 271-file, 31,717-line addition has only
+been scoped for this integration; full review and fresh validation remain.
+This does not claim the entire release stack is merged. See the
+[integration receipt](../experiments/evidence/remote_campaign_integration_20260911.json).
 
 ## Latest completed result: recovery saved decision 256 and 28,345 new ticks
 
