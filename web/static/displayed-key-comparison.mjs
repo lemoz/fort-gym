@@ -1,7 +1,11 @@
 const SCHEMA = 'fortgym.public-displayed-key-comparison/v1';
 const MODELS = {'gpt-5.6-sol': 'Sol', 'gpt-5.6-terra': 'Terra', 'gpt-6-astra': 'Astra'};
 const STATUS = {saved: 'Saved', budget_limited_pause: 'Budget pause', infrastructure_failure: 'Infrastructure failure', gameplay_collapse: 'Gameplay collapse'};
-const REPLAYS = {'bindings-comparison-20260911-sol-r1': 'sol-matched-r1-1-64'};
+const REPLAYS = {
+  'bindings-comparison-20260911-sol-r1': 'sol-matched-r1-1-64',
+  'bindings-comparison-20260911-terra-r1': 'terra-matched-r1-1-64',
+  'bindings-comparison-20260911-astra-r1': 'astra-matched-r1-1-64',
+};
 const evidenceUrl = value => typeof value === 'string' && /^https:\/\/github\.com\/lemoz\/fort-gym\/blob\/[a-f0-9]{40}\/experiments\/[a-zA-Z0-9_./-]+\.json$/.test(value);
 const number = value => value === null || (Number.isSafeInteger(value) && value >= 0);
 const format = value => value === null || value === undefined ? '—' : value.toLocaleString('en-US');

@@ -259,3 +259,38 @@ test('Year-Two replay displays its endpoint and hides it for other recordings', 
     assert.match(get('recovery').textContent,/All 288 model responses/);
   } finally { Object.assign(globalThis,originals); }
 });
+
+for (const model of ['astra', 'terra']) test(model+' matched first run scrubs all audited frames', async () => {
+  const id=model+'-matched-r1-1-64';
+  const recording=JSON.parse(fs.readFileSync('web/static/recordings/'+id+'.json'));
+  const originals=Object.fromEntries(['document','fetch','location','setInterval','clearInterval'].map(key=>[key,globalThis[key]]));
+  const elements=new Map();
+  for(const match of fs.readFileSync('web/landing.html','utf8').matchAll(/id="(watch-[^"]+)"/g))
+    elements.set(match[1],new Element(match[1]));
+  const get=id=>elements.get('watch-'+id);
+  try {
+    globalThis.location={search:'?recording='+id};
+    globalThis.document={hidden:false,getElementById:id=>elements.get(id),createElement:tag=>new Element(tag),addEventListener(){}};
+    globalThis.setInterval=()=>1;globalThis.clearInterval=()=>{};
+    globalThis.fetch=async url=>({ok:true,json:async()=>url.includes('watch-active')
+      ? {schema_version:'fortgym.watch-live/v1',status:'not_connected'}
+      : JSON.parse(fs.readFileSync('web'+url))});
+    await import('../web/static/home-watch.mjs?test=matched-first-'+model);
+    for(let n=0;n<10;n++) await new Promise(resolve=>setImmediate(resolve));
+    assert.equal(get('title').textContent,recording.title);
+    assert.equal(get('decision').textContent,'Decision 1 / 64');
+    assert.equal(get('outcome').hidden,true);
+    for(const index of [15,31,63]) {
+      get('range').value=String(index);await get('range').emit('input');
+      assert.equal(get('decision').textContent,'Decision '+(index+1)+' / 64');
+      assert.equal(get('intent').textContent,recording.frames[index].action.intent);
+      assert.equal(get('population').textContent,'7');
+      assert.deepEqual(get('keys').children.map(key=>key.textContent),
+        recording.frames[index].action.keys.map(key=>key===' '?'SPACE':key));
+      assert.match(get('boundary').textContent,/saved checkpoint 64/);
+    }
+    assert.equal(get('next').disabled,true);
+    await get('prev').emit('click');
+    assert.equal(get('decision').textContent,'Decision 63 / 64');
+  } finally {Object.assign(globalThis,originals);}
+});

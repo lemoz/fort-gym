@@ -43,3 +43,28 @@ reload proof remain inspectable in their original replay.
 Release only as a checked fast-forward after tests and public asset verification.
 Preserve API/game service identities, database counts, untracked files, live-feed
 receiver and old recordings. No service restart or hosting migration is needed.
+
+## First-round update
+
+The next publication extends `dfbb874ec659eea7b09f3344d7aafefb05e4f778` without
+replacing any of its six recording files. The source report comes from goal
+revision `014f5c3d9ad2152df75c1bc469e64d01960d4c4b`, with three audited results
+and all six declared slots still visible. Second attempts without a published
+result are not represented as failures or zero progress.
+
+The added replays are `terra-matched-r1-1-64` and `astra-matched-r1-1-64`, each
+64 captured decisions exported through the existing pinned observer. Their audit
+digests are `a27991556fcffab8287eb535814ecf62ab9c2131cbbf6b891bfd76edaa79ddfe`
+and `8fcd53923a28b84763a031f4046b7831b38f0b9a6dfdbdfcf5f4c081f6396cfc`.
+
+Terra retained 4,200 game ticks, seven living citizens, no completed buildings,
+51 food and 60 drinks. Astra retained 23,000 ticks, seven living citizens, seven
+beds, two workshops, one farm, 50 food and 55 drinks. Neither short attempt
+demonstrates sustainability or Year-Two completion. Unknown measurements remain
+null. All original clock failures remain in the source evidence.
+
+The catalog has eight recording windows and 672 frames. Astra's new first
+attempt is the latest recording, while the live observer still takes priority
+unless the viewer explicitly selects a replay. Each of the three published
+comparison rows links directly to its own replay and immutable result. The
+earlier Year-Two campaign remains separate historical evidence.
