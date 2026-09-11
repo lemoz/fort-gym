@@ -1,0 +1,18 @@
+{
+  "schema_version": "fortgym.public-binding-campaign-website-ci/v1",
+  "website_revision": "132daed6ba2e43c620fa499524705183c6ced03f",
+  "pull_request": "https://github.com/lemoz/fort-gym/pull/161",
+  "publication_record_path": "experiments/evidence/keyboard_binding_64_website_20260911.json",
+  "publication_record_sha256": "2465ee6c85cfd84693919523faba7097ffb4d17312444d8dddf9e9dc2763d178",
+  "run_id": 34586640666,
+  "conclusion": "success",
+  "headSha": "132daed6ba2e43c620fa499524705183c6ced03f",
+  "status": "completed",
+  "updatedAt": "2026-09-11T10:00:55Z",
+  "url": "https://github.com/lemoz/fort-gym/actions/runs/34586640666",
+  "prior_publication_snapshot_unchanged": true,
+  "main_merged": false,
+  "public_website_deployed": false,
+  "additional_native_gameplay": false,
+  "model_calls": 0
+}

@@ -50,3 +50,22 @@ def test_tests_and_proof_limits_are_separate():
     assert record["static_checks"]["same_diagnostics_ignoring_shifted_line_numbers"] is True
     assert not any(record["proof_limits"].values())
     assert record["github_ci_at_publication"]["status"] == "in_progress"
+
+
+def test_later_ci_binds_same_revision_without_rewriting_publication_snapshot():
+    record = read_record()
+    ci = json.loads((EVIDENCE / "keyboard_binding_64_website_ci_20260911.json").read_text())
+    assert ci["website_revision"] == ci["headSha"] == record["website_revision"]
+    assert ci["run_id"] == record["github_ci_at_publication"]["run_id"] == 34586640666
+    assert ci["status"] == "completed" and ci["conclusion"] == "success"
+    assert (
+        hashlib.sha256((ROOT / ci["publication_record_path"]).read_bytes()).hexdigest()
+        == ci["publication_record_sha256"]
+    )
+    assert ci["prior_publication_snapshot_unchanged"] is True
+    assert (
+        ci["main_merged"]
+        is ci["public_website_deployed"]
+        is ci["additional_native_gameplay"]
+        is False
+    )

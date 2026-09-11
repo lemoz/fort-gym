@@ -53,7 +53,9 @@ checks passed. Actual local HTTP acceptance verified the new campaign response,
 its served script and all 11 existing public snapshots. DOM test doubles are
 not browser visual QA; no browser visual/layout acceptance is claimed.
 At the publication snapshot, exact-head GitHub CI run 34586640666 was in
-progress. The prior website snapshot and all native evidence remain unchanged.
+progress. It has since [passed](../experiments/evidence/keyboard_binding_64_website_ci_20260911.json)
+on that same website revision. The prior publication snapshot and all native
+evidence remain unchanged.
 Next: continue this same campaign from its decision-64 checkpoint and expand
 repeated three-model trials under declared comparable conditions.
 Main merge and public deployment remain open; the full goal remains active.
