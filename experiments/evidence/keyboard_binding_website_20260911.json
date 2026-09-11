@@ -1,0 +1,78 @@
+{
+  "schema_version": "fortgym.public-keyboard-binding-website-acceptance/v1",
+  "status": "local_http_accepted_remote_branch_pushed",
+  "source_revision": "c5288317b4b689e4a70ccaf979fe753aa4bb102c",
+  "source_branch": "codex/campaign-binding-results-site",
+  "pull_request": "https://github.com/lemoz/fort-gym/pull/160",
+  "base_revision": "ff350f024957af964bca3d50e1166cbffd139d8e",
+  "base_pull_request": "https://github.com/lemoz/fort-gym/pull/158",
+  "local_url": "http://127.0.0.1:8857/campaigns",
+  "result_revision": "aae122e086b4254ed6865bb5886b307a576032a1",
+  "result_sha256": "b016efeb037b321455cec9c0df6ea5e9e21553ca1e561730ed1bc3ed03b975ae",
+  "campaign_id": "bindings-20260911-astra-r1",
+  "displayed_key_pilot": {
+    "responses": 32,
+    "saved_elapsed_ticks": 15500,
+    "returned_tokens": 785690,
+    "decision_rows": 32,
+    "separate_from_historical_cohort": true,
+    "source_links_use_immutable_revisions": true,
+    "unknown_charge_shown_as_zero": false,
+    "keys_and_model_intent_are_not_completion_claims": true,
+    "fresh_final_reload_claimed": false
+  },
+  "verification": {
+    "full_suite": {
+      "passed": 4974,
+      "skipped": 10,
+      "failed": 0,
+      "receipt_sha256": "d10b589b28dcbd0b6e7582b5a5303eae381231c204347abe57ca618c1c4e2396"
+    },
+    "first_sandbox_limited_suite": {
+      "passed": 4973,
+      "skipped": 10,
+      "failed": 1,
+      "failure": "test_available_port_skips_bound_port: sandbox denied a loopback socket bind",
+      "source_unchanged_for_successful_rerun": true,
+      "receipt_sha256": "47297ee59463590e7aff0be5c2748e9cb1453376609f2ad5524017d4eff7a39f"
+    },
+    "focused_tests_passed": 45,
+    "changed_file_ruff_passed": true,
+    "changed_file_black_passed": true,
+    "javascript_syntax_passed": true,
+    "global_ruff_findings": 10,
+    "global_mypy_errors": 476,
+    "global_mypy_error_files": 29,
+    "global_static_reported_counts_match_baseline": true,
+    "globally_clean_static_checks": false,
+    "http_acceptance_passed": true,
+    "http_receipt_sha256": "48114e5b1c3568f409acb8f5572767d3d188afb6f1327a7e9b500fa1b2dd672c",
+    "http_fixture_sha256": "7b9d62f5ac72187f2c5586de1e1307f08b71c811a59e6906b8694db1c3667b74",
+    "historical_routes_byte_identical": {
+      "/public/keyboard-cohort": "86e12b6574540c72f2a01c767cffc88ab7c8af29b32d335c7a57ae58f39532ba",
+      "/public/keyboard-cohort-continuations": "d3fb3c1b5ac432772cb0e7926c9dc75402781e61ee81c5d37b33a713a8e16101",
+      "/public/keyboard-cohort-endurance-records": "d535f85746dd487f6026ab3f840c3ccd360c58ee52485ba48522e40c1795619d",
+      "/public/keyboard-campaigns": "e3f1665398788b219c15d2365445e58b449c36a7430f9c153ac815202016cfcf"
+    }
+  },
+  "preview_feed_repair": {
+    "prior_http_status": 503,
+    "cause": "The old preview's configured public feed directory lacked the initialization marker.",
+    "repair": "Use a new initialized preview directory with byte-identical copies of the five existing keyboard status records.",
+    "original_directory_unchanged": true,
+    "current_http_status": 200,
+    "published_campaign_snapshots": 11,
+    "generic_feed_validation_weakened": false
+  },
+  "proof_limits": {
+    "browser_visual_qa": false,
+    "mobile_qa": false,
+    "fresh_native_reload": false,
+    "main_merged": false,
+    "public_website_deployed": false,
+    "year_two_goal_complete": false
+  },
+  "model_calls": 0,
+  "game_vm_starts": 0,
+  "cloud_vms_created": 0
+}

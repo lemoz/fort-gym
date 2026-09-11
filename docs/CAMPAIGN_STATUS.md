@@ -38,8 +38,19 @@ This is 0.0384 elapsed years, not year two or demonstrated self-sufficiency.
 
 This new control condition is **separate from the historical six-attempt
 cohort** below. One short attempt is not a causal comparison or model ranking.
-Next: expose this distinct recorded result on the website, verify a fresh reload,
-then continue from its own decision-32 save before repeated three-model trials.
+The separate [website publication](../experiments/evidence/keyboard_binding_website_20260911.json)
+is now pushed at `c5288317b4b689e4a70ccaf979fe753aa4bb102c` in
+[draft PR #160](https://github.com/lemoz/fort-gym/pull/160), stacked on #158.
+The local page exposes all 32 decision rows with keys, intent, actual ticks and
+native outcomes. The full suite passed 4,974 tests with 10 skipped; local HTTP
+acceptance verified the exact result and four byte-identical historical endpoints.
+The earlier generic-feed 503 came from an uninitialized preview directory. A new
+initialized directory with unchanged copied status snapshots now serves all 11
+published campaign snapshots. No feed-validation rule or original artifact changed.
+No new browser visual QA, main merge or public deployment is claimed.
+
+Next: verify a fresh reload, then continue from this trial's own decision-32 save
+before widening to repeated three-model trials.
 The full Year-Two delivery objective remains active; main merge and public
 deployment remain open.
 
