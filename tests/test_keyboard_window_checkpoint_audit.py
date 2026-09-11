@@ -5,6 +5,7 @@ import json
 import pytest
 
 from fort_gym.bench.agent.keyboard_exchange import publish, read
+from fort_gym.bench.eval.campaign import read_campaign_progress
 from fort_gym.bench.run.keyboard_window_checkpoint_audit import (
     verify_window_checkpoints,
 )
@@ -16,21 +17,23 @@ from tests.test_keyboard_segment_audit import REVISION, modify, trial as trial
 def window_fixture(trial, paused=False):
     native, parent, _, metrics, run = trial
     run(1, native / "segment-0/checkpoint", admission_denied if paused else decision)
+    cursor = read(parent / "checkpoint.json")["payload"]["next_step"]
+    usage = read(parent / "agent.json")["usage"]
     window = {
         "schema_version": "fortgym.codex-keyboard-window/v1",
-        "continuation_from_next_step": 1,
+        "continuation_from_next_step": cursor,
         "steps_per_segment": 3,
         "max_segments": 2,
-        "window_end_decision": 7,
+        "window_end_decision": cursor + 6,
         "source_native_revision": REVISION,
         "expected_campaign_id": "runtime-test",
         "continuation_checkpoint_sha256": read(parent / "checkpoint.json")["sha256"],
         "reset_memory": False,
         "reset_usage": False,
         "strategy_intervention": False,
-        "accounted_responses_before_window": 1,
-        "returned_tokens_before_window": 100,
-        "saved_elapsed_ticks_before_window": 10,
+        "accounted_responses_before_window": usage["accounted_responses"],
+        "returned_tokens_before_window": usage["total_tokens"],
+        "saved_elapsed_ticks_before_window": read_campaign_progress(parent / "trace.jsonl")["elapsed_ticks"],
     }
     result = {
         "schema_version": "fortgym.keyboard-window-result/v1",
