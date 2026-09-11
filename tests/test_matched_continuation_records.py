@@ -29,11 +29,13 @@ ENDURANCE_RECORDS_WEBSITE = "keyboard_matched_endurance_records_website_20260911
 ENDURANCE_COHORT_WEBSITE = "keyboard_matched_endurance_cohort_website_20260911.json"
 SIX_128_WEBSITE = "keyboard_matched_six_128_website_20260911.json"
 ASTRA_128_256_LAUNCH = "keyboard_matched_astra_r1_128_256_launch_20260911.json"
+LIVE_V2_WEBSITE = "keyboard_matched_live_v2_website_20260911.json"
 
 
 @pytest.mark.parametrize(
     "filename,expected",
     [
+        (LIVE_V2_WEBSITE, "d4dfa621099bdd582f2ba0d3281e544f78e7633517dbee2e0b3011dc1451fd36"),
         (SIX_128_WEBSITE, "b47a8ab7b397e67fa6e8da990919c2b4bfee59c5dbd2c8dbc8f3d761486c8966"),
         (ASTRA_128_256_LAUNCH, "31058773bcbefe4c4bbd5b825d0ea5735b6fdbf31d6377e217401352a02ee55e"),
         (RESULT, "2c8abe1f7135d94ed27aea51e18ebc59e0599205caf3f268f4480b0e377f3d29"),
@@ -86,6 +88,34 @@ def test_six_result_website_is_delivered_without_claiming_the_new_live_feed():
     assert value["live_observation"]["schema_version"].endswith("/v1")
     assert value["live_observation"]["status"] == "stale"
     assert value["public_deployment"] is value["main_merge"] is value["browser_visual_qa"] is False
+    assert value["model_calls_by_verifier"] == value["game_ticks_by_verifier"] == 0
+
+
+def test_longer_window_website_keeps_live_progress_separate_from_saved_results():
+    value = json.loads((EVIDENCE / LIVE_V2_WEBSITE).read_bytes())
+    parent = json.loads((EVIDENCE / ASTRA_ENDURANCE).read_bytes())
+    observed = value["live_observation"]
+    assert value["passed"] is value["new_128_256_live_feed_in_website"] is True
+    assert value["website_revision"] == value["ci"]["head_sha"] == "a12d513d595220157bb3e4876a1ec9eb3a61cb5a"
+    assert value["ci"]["status"] == "completed" and value["ci"]["conclusion"] == "success"
+    assert value["local_tests"] == {"passed": 4960, "skipped": 10}
+    assert value["recorded_endurance_windows"] == 6
+    assert value["latest_saved_responses"] == 768 and value["latest_saved_tokens"] == 22707069
+    assert value["historical_and_recorded_surfaces_unchanged"] is True
+    assert value["prior_v1_observer_unchanged"] is True
+    assert observed["schema_version"] == "fortgym.public-matched-endurance-live/v2"
+    assert observed["campaign_id"] == parent["campaign_id"]
+    assert observed["prior_checkpoint_sha256"] == parent["checkpoint_sha256"]
+    assert observed["status"] == "controller_running"
+    assert observed["start_decision"] == 128 and observed["end_decision"] == 256
+    assert observed["source_checkpoint_verified"] is True
+    assert observed["campaign_returned_responses"] == 128 + observed["responses"]
+    assert observed["campaign_returned_tokens"] == parent["usage"]["campaign_returned_tokens"] + observed["returned_tokens"]
+    assert observed["campaign_elapsed_ticks_lower_bound"] == parent["saved_elapsed_ticks"] + observed["new_elapsed_ticks_lower_bound"]
+    assert observed["new_save_verified"] is False
+    assert observed["audited_result_url"] is observed["reported_charge_usd"] is None
+    assert value["public_deployment"] is value["main_merge"] is value["browser_visual_qa"] is False
+    assert value["year_two_goal_complete"] is False
     assert value["model_calls_by_verifier"] == value["game_ticks_by_verifier"] == 0
 
 

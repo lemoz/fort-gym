@@ -24,7 +24,11 @@ verified. These are provisional observations, not a new audited save or
 teardown result. One existing bounded local VM is running with mandatory
 shutdown in its owner. No GCE, paid API/local-model fallback, model/prompt
 change, usage reset or human gameplay rescue is involved. Its separate v2
-observer is running but is not yet connected to the website's live card.
+observer is now connected to the website's current-window card. The
+[website acceptance snapshot](../experiments/evidence/keyboard_matched_live_v2_website_20260911.json)
+records 53 new responses, 1,960,158 returned tokens and at least 28,000 new
+observed ticks: 181 cumulative responses and 79,400 saved-plus-observed ticks.
+These timestamped live counts do not replace the last audited decision-128 save.
 
 Astra attempt 1 completed its declared 64-to-128 window from its own save and
 memory. Its [audited result](../experiments/evidence/keyboard_matched_astra_r1_continuation_64_128_20260911.json)
@@ -102,8 +106,9 @@ recorded deaths, six completed beds, two farms and three workshops. Food is 40
 and drinks128; functional-room measurement is unavailable, not zero. All model
 receipts, own-save memory/usage, initial native reload, final save and VM
 teardown passed audit; both shutdown commands returned zero. Three blocking
-native-menu outcomes are retained. The observer is terminal, no next-stage
-VM is running, and the final save's separate fresh reload remains unverified.
+native-menu outcomes are retained. Its v1 observer is terminal and no VM from
+that completed window remains running. The final save's separate fresh reload
+remains unverified; the distinct Astra attempt-1 continuation above is active.
 
 ## Current delivery: recorded endurance and live continuation
 
@@ -116,7 +121,7 @@ All six real v1 windows reproduce their previous checkpoint, timeline and
 provider-review outcomes through the new helpers. Native agent, environment,
 evaluator and historical operational scripts remain unchanged.
 
-The current local preview now serves
+The previous six-result local preview served
 `4b791e700bd3d04dbb4fa3fa7f8125d22bd30ec0` from
 [draft PR #155](https://github.com/lemoz/fort-gym/pull/155). It displays all six
 audited decision-128 results: 384 new endurance boundaries, 768 cumulative
@@ -124,9 +129,21 @@ saved responses and 22,707,069 returned tokens. Full local tests passed
 4,925 with 10 skips; exact-head GitHub CI `34561931380` passed. The
 [HTTP acceptance](../experiments/evidence/keyboard_matched_six_128_website_20260911.json)
 verified the exact served source, preserved historical records and disabled
-admin route. The retained v1 live card is stale historical observation; the
-new 128-to-256 v2 feed remains a separate website integration task. No browser
-visual QA, main merge or public deployment is claimed.
+admin route. That receipt remains historical delivery evidence.
+
+The current local preview now serves the live-feed update
+`a12d513d595220157bb3e4876a1ec9eb3a61cb5a` from
+[draft PR #156](https://github.com/lemoz/fort-gym/pull/156). Full local tests:
+4,960 passed, 10 skipped; focused tests: 107 passed; exact-head GitHub CI
+`34563798268` passed. The [new HTTP acceptance](../experiments/evidence/keyboard_matched_live_v2_website_20260911.json)
+verified the exact HTML/scripts, a fresh own-save-bound Astra v2 observation,
+all six unchanged saved results and historical APIs, and disabled admin access.
+The earlier 64-to-128 live observer is retained in an Earlier window section.
+Saved starting ticks and provisional new ticks remain separate; model charges
+remain unknown, not zero. Only the local website process was replaced; the
+existing native owner and observer continued unchanged. No browser visual QA,
+main merge, public deployment, new verified game save or Year-Two success is
+claimed.
 
 Native checkpoint-chain verification is pushed at
 `a815aaf139a2bc4de3de02107c5c3909ab8b397e` in
