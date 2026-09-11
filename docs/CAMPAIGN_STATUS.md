@@ -85,7 +85,7 @@ Native checkpoint-chain verification is pushed at
 `a815aaf139a2bc4de3de02107c5c3909ab8b397e` in
 [draft PR #154](https://github.com/lemoz/fort-gym/pull/154). The reviewed full
 local suite passed 4,900 tests with 10 skips. Exact-head GitHub CI
-`34558278046` is running, not yet claimed passed. The reusable verifier checks
+`34558278046` passed. The reusable verifier checks
 each own-save inventory, loaded calendar, retained history, memory and usage,
 then reconciles all segments against the declared baseline. Actual completed
 windows reproduced their previously audited saves, tokens and ticks; synthetic
@@ -93,6 +93,24 @@ tests cover multiple segments and pauses. Provider receipts, resource limits,
 measurement coverage and VM teardown still require the full outer auditor.
 This is preparation for longer gameplay, not a decision-256 or Year-Two result.
 Scoped lint/type checks pass; full-tree lint and type checks remain unclean.
+
+The subsequent receipt-composition revision
+`4ff81c2aa9cb6b2af63f2b34790133167a201b5e` is also pushed in that PR. It adds
+Sol2's exact decision-128 parent and next configuration, and verifies complete
+request/claim/response sets, native/host copies, global ordering, model memory
+and actual provider-review totals across saved segments. The full local suite
+passed 4,923 tests with 10 skips; 76 focused checkpoint/receipt/config tests
+passed. All five completed windows reproduced their original provider reviews,
+token totals and final memory in a read-only check. Exact-head GitHub CI
+`34559721416` is running, not yet claimed passed.
+
+A separate private next-stage controller/auditor draft passed 42 offline tests,
+including failure teardown, unchanged resources and cumulative usage. Combined
+testing caught and repaired a host/frozen-package import-order issue. The five
+available decision-128 parents validate, but the full six-input packet, next-stage
+public projection, end-to-end review and next-window website behavior remain
+required before launch. No decision-256 gameplay is claimed. The current Astra2
+v1 controller, frozen native source, observer and website are unchanged.
 
 The configuration-driven endurance courier and all six own-save 64-to-128
 declarations are pushed at `45bb05c903181b6b2e4f61df3a4c0a8eca05b818` in
