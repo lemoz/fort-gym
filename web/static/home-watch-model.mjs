@@ -73,6 +73,7 @@ export function validateRecording(data) {
       !count(data.saved_through_decision) || data.saved_through_decision > data.last_decision ||
       data.last_decision - data.first_decision + 1 !== data.frames.length) throw Error('Invalid recording');
   validateRecovery(data);
+  validateCampaignOutcome(data);
   data.frames.forEach((frame, index) => {
     if (frame.decision !== data.first_decision + index) throw Error('Nonconsecutive recording');
     decodeScreen(frame.screen);
@@ -109,4 +110,56 @@ export function recoverySummary(data) {
   return 'Resumed from checkpoint ' + value.restored_checkpoint + '. Earlier ' + value.lost_decisions +
     ' decisions and ' + value.lost_ticks.toLocaleString() + ' game ticks were not saved. All ' +
     value.total_responses.toLocaleString() + ' model responses remain counted. No actions were replayed.';
+}
+
+export function validateCampaignOutcome(data) {
+  const value = data.campaign;
+  if (value === undefined) return null;
+  const count = n => Number.isSafeInteger(n) && n >= 0;
+  const hash = n => typeof n === 'string' && /^[a-f0-9]{64}$/.test(n);
+  const source = n => typeof n === 'string' && /^[a-z0-9-]{1,100}$/.test(n);
+  const evidence = n => typeof n === 'string' &&
+    /^https:\/\/github\.com\/lemoz\/fort-gym\/blob\/[a-f0-9]{40}\/experiments\/evidence\/[a-z0-9_]+\.json$/.test(n);
+  if (!value || value.schema_version !== 'fortgym.watch-campaign-outcome/v1' ||
+      !source(value.campaign_id) || !source(value.source_recording_id) || value.source_recording_id === data.id ||
+      ![value.continued_from_decision,value.saved_elapsed_ticks,value.ticks_into_year_two,
+        value.total_responses,value.total_tokens,value.historical_lost_decisions,value.historical_lost_ticks].every(count) ||
+      value.continued_from_decision + 1 !== data.first_decision || data.saved_through_decision !== data.last_decision ||
+      value.ticks_per_year !== 403200 || value.saved_elapsed_ticks < value.ticks_per_year ||
+      value.ticks_into_year_two !== value.saved_elapsed_ticks - value.ticks_per_year ||
+      !Number.isFinite(value.elapsed_years) || Math.abs(value.elapsed_years - value.saved_elapsed_ticks / value.ticks_per_year) > 1e-10 ||
+      value.total_responses < data.last_decision + value.historical_lost_decisions ||
+      ![value.source_checkpoint_sha256,value.checkpoint_sha256,value.reload_audit_sha256,
+        value.result_sha256,value.reload_record_sha256].every(hash) ||
+      !evidence(value.result_url) || !evidence(value.reload_url) ||
+      value.uninterrupted_campaign !== false || value.human_gameplay_rescue !== false ||
+      value.fresh_reload_verified !== true || value.reported_model_charge_usd !== null ||
+      value.functioning_assessment !== 'supported_qualitatively_post_hoc' ||
+      value.sustainability_proven !== false || value.repeated_matched_comparison !== false ||
+      !value.saved_metrics || !['population','recorded_dead_citizens','completed_beds',
+        'completed_workshops','completed_farms','food_stock','drink_stock'].every(key => count(value.saved_metrics[key])) ||
+      value.saved_metrics.population !== data.frames.at(-1)?.after?.population)
+    throw Error('Invalid campaign outcome');
+  return value;
+}
+
+export function campaignSummary(data) {
+  const value = validateCampaignOutcome(data);
+  if (!value) return '';
+  const metrics = value.saved_metrics;
+  return value.elapsed_years.toFixed(3) + ' elapsed game years · ' + value.ticks_into_year_two.toLocaleString() +
+    ' ticks into Year Two. ' + metrics.population + ' dwarves · ' + metrics.recorded_dead_citizens +
+    ' recorded deaths · ' + metrics.completed_beds + ' beds · ' + metrics.completed_workshops +
+    ' workshops · ' + metrics.completed_farms + ' farm. Supplies: ' + metrics.food_stock +
+    ' raw-food units and ' + metrics.drink_stock + ' drinks. Saved checkpoint ' + data.saved_through_decision +
+    ' was verified in a fresh game process.';
+}
+
+export function campaignHistory(data) {
+  const value = validateCampaignOutcome(data);
+  if (!value) return '';
+  return 'Continued from checkpoint ' + value.continued_from_decision + '. Earlier save loss: ' +
+    value.historical_lost_decisions + ' decisions and ' + value.historical_lost_ticks.toLocaleString() +
+    ' ticks. All ' + value.total_responses.toLocaleString() + ' responses and ' +
+    value.total_tokens.toLocaleString() + ' tokens remain counted. Subscription dollar charges were not reported.';
 }

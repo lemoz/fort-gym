@@ -36,3 +36,8 @@
 @media (min-width:1500px) { .watch-layout { grid-template-columns:minmax(0,1fr) 340px; } }
 @media (max-width:960px) { .watch-layout { grid-template-columns:1fr; } .watch-sidebar { border-left:0; border-top:1px solid var(--line); display:grid; grid-template-columns:1fr 1fr; gap:20px; } .watch-stats { margin-top:0; } .watch-moves { grid-column:1 / -1; } }
 @media (max-width:600px) { .home-watch { padding-top:20px; } .watch-heading { display:block; } .watch-heading p { margin-top:10px; } .watch-sidebar { display:block; padding:16px; } .watch-controls { flex-wrap:wrap; } .watch-controls input { order:-1; flex-basis:100%; } .watch-footer { display:block; } .watch-bar { align-items:start; } }
+.watch-outcome { margin-top: 18px; padding: 18px; border: 1px solid var(--line); }
+.watch-outcome h3 { margin: 0 0 12px; font-size: 1rem; }
+.watch-outcome p { font-size: 1rem; line-height: 1.6; }
+.watch-outcome .watch-note { font-size: .875rem; }
+.watch-outcome .fl-link { display: inline-block; margin: 8px 18px 0 0; }

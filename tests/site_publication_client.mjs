@@ -27,7 +27,7 @@ const text = element => all(element).map(node=>node.textContent).join(' ');
 const settle=async()=>{for(let n=0;n<10;n++)await new Promise(resolve=>setImmediate(resolve));};
 
 test('published metadata is bounded and matches every immutable recording',()=>{
-  assert.equal(validateCatalog(catalog).length,4);
+  assert.equal(validateCatalog(catalog).length,5);
   for(const row of catalog.recordings) {
     const rec=JSON.parse(fs.readFileSync('web/static/recordings/'+row.id+'.json'));
     for(const key of ['model','control_profile','first_decision','last_decision','saved_through_decision','recording_status'])
@@ -39,7 +39,7 @@ test('published metadata is bounded and matches every immutable recording',()=>{
     row=>{row.saved_through_decision=row.last_decision+1;},row=>{row.last_decision='256';},
     row=>{row.recovery.total_responses=256;},row=>{row.recovery.uninterrupted_campaign=true;}
   ]) {
-    const bad=structuredClone(catalog);mutation(bad.recordings[0]);
+    const bad=structuredClone(catalog);mutation(bad.recordings.find(row=>row.recovery));
     assert.throws(()=>validateCatalog(bad));
   }
 });
@@ -50,14 +50,14 @@ for(const name of ['landing','results']) {
       requests.push(url);return {ok:true,json:async()=>url.endsWith('catalog.json')?catalog:previews};
     });
     assert.deepEqual(requests,['/static/recordings/catalog.json','/static/recordings/previews.json']);
-    assert.equal(list.children.length,4);
+    assert.equal(list.children.length,5);
     for(const row of catalog.recordings)assert.ok(all(list).some(el=>el.href==='/?recording='+row.id+'#watch-root'));
-    assert.equal(all(list).filter(el=>el.tag==='canvas').reduce((sum,el)=>sum+el.fills,0),19200);
+    assert.equal(all(list).filter(el=>el.tag==='canvas').reduce((sum,el)=>sum+el.fills,0),24000);
     assert.match(text(list),/unsaved tail included/);
     assert.doesNotMatch(text(list),/Loading/);
     if(name==='landing') {
-      assert.equal(nodes.get('latest-model').textContent,'Astra · recovered continuation');
-      assert.equal(nodes.get('latest-save').textContent,'256');
+      assert.equal(nodes.get('latest-model').textContent,'Astra · into Year Two');
+      assert.equal(nodes.get('latest-save').textContent,'416');
       assert.equal(nodes.get('latest-ranking').textContent,'Not compared');
       assert.match(nodes.get('story-source').textContent,/Sol/);
       assert.match(nodes.get('reason-source').textContent,/Terra/);
@@ -73,7 +73,7 @@ test('catalog and preview failure states retain routes and never strand Latest o
     if(url.endsWith('previews.json'))throw Error('offline');
     return {ok:true,json:async()=>catalog};
   });
-  assert.equal(list.children.length,4);
+  assert.equal(list.children.length,5);
   assert.match(text(list),/Preview unavailable/);
   assert.ok(all(list).some(el=>el.href==='/?recording=terra-65-128#watch-root'));
 });
