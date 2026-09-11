@@ -1,0 +1,82 @@
+{
+  "schema_version": "fortgym.website-matched-first-round-release/v1",
+  "release_revision": "09d0c5cb3dd9c35b20246b0a68a16c8ffd543856",
+  "assets": {
+    "/results": {
+      "sha256": "f3be282c40ec5787a1b9a80074e9c88bca512c5cc1207cae06c27d07c285f674",
+      "mime": "text/html"
+    },
+    "/static/displayed-key-comparison.json": {
+      "sha256": "9ca00a5e652490b6963544aafbf68f99615ae0d9e2f629a80e966e76fc41a805",
+      "mime": "application/json"
+    },
+    "/static/displayed-key-comparison.mjs": {
+      "sha256": "b3ded0b7b3ca604871cdf23a4f988f93952598644e6dae74577739ff3b8c8dc6",
+      "mime": "text/javascript"
+    },
+    "/static/recordings/astra-matched-r1-1-64.json": {
+      "sha256": "24380f7d5226ef28633b6eb37776ffa905069ac1cc1006b29ffd92b14950bfcc",
+      "mime": "application/json"
+    },
+    "/static/recordings/catalog.json": {
+      "sha256": "ef32007798c1da550b868eafe9d2dcacd3ec1bc8e42149e204a777a2744a484c",
+      "mime": "application/json"
+    },
+    "/static/recordings/previews.json": {
+      "sha256": "bb5ab3d7e523165dd141cd064f0e78afa4b5d3212dcd606489d15b81a822f0bf",
+      "mime": "application/json"
+    },
+    "/static/recordings/terra-matched-r1-1-64.json": {
+      "sha256": "3499bc18073141858398ab631389155a2672ded691b3b0324aaf5d26c7d5e6bb",
+      "mime": "application/json"
+    },
+    "/worlds": {
+      "sha256": "096f9374aa2138de39249452c2ad35a43e5c33cc02b1250b1fd5e0388058fe2f",
+      "mime": "text/html"
+    }
+  },
+  "recordings": 8,
+  "captured_frames": 672,
+  "matched_rows": 6,
+  "published_results": 3,
+  "historical_recordings_unchanged": true,
+  "immutable_source_links_resolve": true,
+  "relay_snapshot": {
+    "run_id": "bindings-comparison-20260911-sol-r2",
+    "model": "gpt-5.6-sol",
+    "status": "running",
+    "observed_at_unix": 1789169442
+  },
+  "passed": true,
+  "website_url": "https://fortgym.live/results#matched-comparison",
+  "source_report_revision": "014f5c3d9ad2152df75c1bc469e64d01960d4c4b",
+  "public_acceptance_sha256": "f6dceb3c3c7f25c94804a60f52a4fe323d55a8831eb0f5a0381480de9612bcf0",
+  "build_receipt_sha256": "bf6f56a8eca67e829f74218a307643d54e676ab3c47a16d2e8b443c52d88a645",
+  "ci": {
+    "run_id": 34657859291,
+    "head_sha": "09d0c5cb3dd9c35b20246b0a68a16c8ffd543856",
+    "status": "completed",
+    "conclusion": "success"
+  },
+  "validation": {
+    "full_local_tests_passed": 1229,
+    "skipped": 5,
+    "warnings": 7,
+    "node_playback_publication_tests_passed": 35,
+    "selected_ruff_passed": true,
+    "selected_mypy_passed": true,
+    "browser_visual_qa_performed": false,
+    "sandboxed_first_run": "One loopback-bind permission failure; complete rerun with socket access passed."
+  },
+  "native_and_api_service_identities_unchanged": true,
+  "database_counts_unchanged": true,
+  "untracked_files_preserved": true,
+  "service_restarts": 0,
+  "new_hosts": 0,
+  "main_merge": false,
+  "new_model_calls_by_website_tools": 0,
+  "new_gameplay_inputs_by_website_tools": 0,
+  "second_attempt_results_in_this_website_snapshot": false,
+  "strong_model_ranking_supported": false,
+  "full_goal_complete": false
+}
