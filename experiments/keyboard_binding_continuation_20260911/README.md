@@ -54,3 +54,42 @@ The frozen owner SHA is
 `d9ce9f49be40227ae695243febe00d48cc748f29effcf2d12912d916463c8143`;
 window SHA is `c06311d32b8f4a8b5a7aee1a938488f1da1e86ccbf564744c7a152f418bd65e3`.
 Preparation is not new gameplay or a launch allowance reservation.
+
+## Completed and independently audited
+
+The ordinary continuation completed at decision 64: 32 new responses, 182
+confirmed key presses, 14,000 new saved ticks and 797,336 new returned tokens.
+Cumulative totals are 29,500 ticks and 1,583,026 tokens. Seven living dwarves,
+zero recorded dead, four completed placed beds, two workshops and one farm
+remain. Food changed from 50 to 40 and drinks from 60 to 103. All new input
+batches were accepted, with no clock errors. No operator gameplay rescue,
+memory reset, prompt change, fallback model or budget extension occurred.
+
+The [published continuation result](../evidence/keyboard_binding_astra_r1_continuation_32_64_20260911.json)
+has SHA `5f86a754fbb979a567c14a236250ccd518c171db79e598ae9adaa4745db9d8e4`.
+Its independent private audit SHA is
+`31e8f2524ad304402b72eade1e213d872485c6d4f9695319ac59cec692294c09`.
+The original save, settled trace/usage prefix and restored agent state remained
+unchanged. All 32 new actual provider receipts and native input/clock receipts
+were reconciled. The new checkpoint manifest is
+`53c0cf824da7db2bcf07b9fc4ea7859e050124af6ce1399abf0821882f9d66c9`.
+Native loading, saving and cleanup passed. The guest poweroff command returned 1
+with an SSH exit-255 warning; the separate VM stop returned zero and an
+independent live stopped check passed. The warning is preserved explicitly.
+
+The separate reviewer `terminal_review_v2.py` was prepared before terminal
+acceptance, using the checkpoint loader's actual `source_checkpoint_file_sha256`
+field instead of the fresh trial's snapshot-receipt field. Seven reviewer
+boundary checks passed. Its source SHA is
+`15f0394e816974862a2c928cf23a8dd624e1b3638ba979b7b3ea0a77ea6089c6`.
+Thirty-one public result/declaration/historical-record regressions passed,
+alongside changed-file Ruff and syntax checks. Black was unavailable in the
+selected environment/offline cache; public Python files used Ruff formatting
+at line length 100. No globally clean static-check claim is made.
+
+The exporter accepts the explicit audit digest and reconstructs the public
+manifest semantically from hash-verified private evidence. It does not perform
+model calls, restore the game, expose private memory, or claim a fresh post-run
+reload of the new checkpoint. This remains one young campaign, not Year Two or
+demonstrated sustainability. The website's earlier 32-decision snapshot remains
+unchanged pending its next reviewed update; no main merge or public deployment.

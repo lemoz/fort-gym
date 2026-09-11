@@ -1,0 +1,180 @@
+"""Export audited own-save continuation evidence, without exposing private model memory."""
+
+import argparse
+import hashlib
+import json
+from pathlib import Path
+import re
+import sys
+
+ROOT = Path(__file__).resolve().parents[2]
+RUNTIME = ROOT / "fort_gym/artifacts/native-local-20260906/runtime-v2"
+OWNER = RUNTIME / "keyboard-matched-pilot-v1/keyboard-bindings-astra-r1-32-64-v1"
+ATTEMPT = OWNER / "attempt"
+WORKTREE = ROOT / "fort_gym/artifacts/worktrees/campaign-keyboard-bindings"
+PRIOR_RESULT = ROOT / "experiments/evidence/keyboard_binding_astra_r1_20260911.json"
+PRIOR_RESULT_SHA = "b016efeb037b321455cec9c0df6ea5e9e21553ca1e561730ed1bc3ed03b975ae"
+
+
+def read(path):
+    return json.loads(path.read_text())
+
+
+def sha(path):
+    with path.open("rb") as stream:
+        return hashlib.file_digest(stream, "sha256").hexdigest()
+
+
+def build(audit_sha):
+    assert re.fullmatch(r"[0-9a-f]{64}", audit_sha)
+    audit_path = ATTEMPT / "terminal-review.json"
+    assert sha(audit_path) == audit_sha
+    audit = read(audit_path)
+    assert audit["passed"] and audit["first_step"] == 32
+    assert audit["schema_version"] == "fortgym.private-binding-continuation-terminal-review/v1"
+    for relative, expected in audit["sources"].items():
+        path = (RUNTIME / relative).resolve()
+        assert path.is_relative_to(RUNTIME.resolve())
+        assert sha(path) == expected, f"Evidence changed: {relative}"
+    assert sha(PRIOR_RESULT) == PRIOR_RESULT_SHA
+    prior = read(PRIOR_RESULT)
+    assert prior["checkpoint_sha256"] == audit["source_checkpoint_sha256"]
+    assert prior["responses"] == 32 and prior["saved_elapsed_ticks"] == 15500
+    assert prior["usage"]["total_tokens"] == 785690
+    sys.path.insert(0, str(WORKTREE))
+    from fort_gym.bench.eval.campaign_profile import metrics_from_state
+    from fort_gym.bench.run.campaign_checkpoint import verify_checkpoint
+
+    segment = ATTEMPT / "evidence/astra/segment-0"
+    checkpoint = verify_checkpoint(segment / "checkpoint")
+    assert checkpoint["sha256"] == audit["checkpoint_sha256"]
+    assert checkpoint["payload"]["parent_sha256"] == prior["checkpoint_sha256"]
+    rows = [json.loads(line) for line in (segment / "loop/trace.jsonl").read_text().splitlines()]
+    timeline, cumulative = [], prior["saved_elapsed_ticks"]
+    for index, (row, receipt) in enumerate(zip(rows[32:], audit["receipt_reviews"], strict=True)):
+        assert row["step"] == index + 32 and receipt["decision_index"] == index
+        assert row["run_id"] == audit["campaign_id"]
+        action, execute, clock = row["action"], row["execute"], row["tick_advance"]
+        cumulative += clock["ticks_advanced"]
+        timeline.append(
+            {
+                "decision": row["step"] + 1,
+                "keys": action["params"]["keys"] if action else [],
+                "model_intent": action["intent"] if action else None,
+                "input_accepted": execute["accepted"],
+                "confirmed_key_presses": execute.get("result", {}).get("keys_confirmed", 0),
+                "requested_ticks": action["advance_ticks"] if action else 0,
+                "ticks_advanced": clock["ticks_advanced"],
+                "saved_elapsed_ticks": cumulative,
+                "clock_error": clock.get("error"),
+                "metrics": metrics_from_state(row["state_after_advance"]),
+                "returned_tokens": receipt["total_tokens"],
+            }
+        )
+    assert cumulative == audit["saved_elapsed_ticks"]
+    assert len(timeline) == audit["new_responses"] == audit["responses"] - 32
+    assert sum(row["returned_tokens"] for row in timeline) == audit["new_tokens"]
+    assert sum(row["confirmed_key_presses"] for row in timeline) == audit["confirmed_key_presses"]
+    if timeline:
+        assert timeline[-1]["metrics"] == audit["saved_metrics"]
+    owner = read(ATTEMPT / "result.json")
+    condition = read(ATTEMPT / "evidence/astra/condition.json")
+    assert sha(OWNER / "operator.py") == owner["binding"]["operator_sha256"]
+    assert (
+        sha(ROOT / "experiments/keyboard_binding_continuation_20260911/window-32-64.json")
+        == owner["binding"]["window_sha256"]
+    )
+    assert sha(OWNER / "terminal_review_v2.py") == audit["audit_source_sha256"]
+    after = read(segment / "native-after.json")
+    return {
+        "schema_version": "fortgym.public-keyboard-binding-continuation-result/v1",
+        "campaign_id": audit["campaign_id"],
+        "status": audit["status"],
+        "stop_reason": audit["stop_reason"],
+        "source_revision": audit["source_revision"],
+        "image_id": audit["image_id"],
+        "implementation_pull_request": "https://github.com/lemoz/fort-gym/pull/159",
+        "declaration_revision": owner["declaration_revision"],
+        "condition": condition,
+        "window": read(ATTEMPT / "evidence/astra/window.json"),
+        "source_result_path": "experiments/evidence/keyboard_binding_astra_r1_20260911.json",
+        "source_result_sha256": PRIOR_RESULT_SHA,
+        "source_checkpoint_sha256": prior["checkpoint_sha256"],
+        "checkpoint_sha256": audit["checkpoint_sha256"],
+        "first_step": 32,
+        "responses": audit["responses"],
+        "new_responses": audit["new_responses"],
+        "new_confirmed_key_presses": audit["confirmed_key_presses"],
+        "saved_elapsed_ticks": audit["saved_elapsed_ticks"],
+        "new_saved_elapsed_ticks": audit["new_saved_elapsed_ticks"],
+        "ticks_per_year": 403200,
+        "final_boundary": {
+            "year": after["year"],
+            "year_tick": after["year_tick"],
+            "paused": after["pause_state"],
+        },
+        "initial_metrics": audit["initial_metrics"],
+        "saved_metrics": audit["saved_metrics"],
+        "new_tokens": audit["new_tokens"],
+        "usage": audit["usage"],
+        "new_clock_outcomes": audit["clock_outcomes"],
+        "activity": {
+            key: value for key, value in audit["observed_activity"].items() if key != "timeline"
+        },
+        "food_measurement": {
+            "complete_samples": audit["food_complete_samples"],
+            "samples": audit["food_samples"],
+            "final_inventory": audit["saved_food"]["inventory"],
+            "model_observation": "native_screen_text/v1; private evaluator inventory is not supplied to the model",
+        },
+        "audit": {
+            "passed": True,
+            "sha256": audit_sha,
+            "source_sha256": audit["audit_source_sha256"],
+            "provider_receipts_verified": len(audit["receipt_reviews"]),
+            "provider_receipts": audit["receipt_reviews"],
+            "native_cleanup_verified": True,
+            "vm_teardown_verified": True,
+            "shutdown": audit["shutdown"],
+            "trace_sha256": sha(segment / "loop/trace.jsonl"),
+            "usage_sha256": sha(segment / "loop/usage.jsonl"),
+        },
+        "proof_limits": {
+            "same_campaign_own_save_continuation": True,
+            "memory_or_usage_reset": False,
+            "prompt_or_budget_changed": False,
+            "fresh_final_checkpoint_reload_verified": False,
+            "same_condition_as_historical_matched_cohort": False,
+            "human_gameplay_rescue": False,
+            "sustainability_proven": False,
+            "year_two_reached": audit["saved_elapsed_ticks"] >= 403200,
+            "strong_model_ranking_supported": False,
+            "completed_production_measured": False,
+            "completed_consumption_measured": False,
+            "public_website_deployed": False,
+            "main_merged": False,
+        },
+        "cost_limits": {
+            "actual_model_charge_usd": None,
+            "hardware_energy_and_app_cost_usd": None,
+            "api_fallback": False,
+            "local_model_fallback": False,
+            "automatic_credit_purchase": False,
+            "automatic_reset_consumption": False,
+            "cloud_vms_created": 0,
+        },
+        "timeline": timeline,
+        "interpretation": [
+            "This is one continuation of the displayed-key pilot, not another independent replicate.",
+            "Completed beds count placed and completed bed buildings, not carried items or queued jobs.",
+            "Stock changes, intentions and sampled active jobs are not measured completed production or sustainability.",
+            "Keep this control condition separate from historical native-event-name model comparisons.",
+        ],
+    }
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--audit-sha256", required=True)
+    args = parser.parse_args()
+    print(json.dumps(build(args.audit_sha256), indent=2, ensure_ascii=False))

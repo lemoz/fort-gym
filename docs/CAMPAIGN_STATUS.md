@@ -12,7 +12,42 @@ and [reload verification](#later-checkpoint-1057-verification-and-website-delive
 Do not confuse that achieved duration with the younger, independent matched
 cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 
-## Current state: displayed-key Astra pilot completed and audited
+## Current state: displayed-key Astra continuation reached decision 64
+
+The [own-save continuation from 32 to 64](../experiments/evidence/keyboard_binding_astra_r1_continuation_32_64_20260911.json)
+completed with **32 new responses, 182 confirmed key presses and 14,000 new
+saved ticks**. Cumulative totals are **64 responses, 29,500 ticks and 1,583,026
+returned tokens**; the new window used 797,336 tokens. This is the same
+displayed-key campaign, not a fresh replicate or a historical-cohort result.
+The model, Medium reasoning, prompt, memory, usage limits, controls and 120x40
+display remained unchanged; no manual gameplay help was supplied.
+
+All seven dwarves remain alive with zero recorded deaths. Completed placed beds
+increased from zero to four. Two workshops and one farm remain. Raw-edible food
+changed from 50 to 40 and drinks from 60 to 103. All 32 input batches were
+accepted; clock receipts report no errors. These are observed construction and
+stock changes, not measured completed production or demonstrated sustainability.
+The campaign has reached about 0.0732 elapsed years, not its first anniversary.
+
+Independent review verified the exact restored agent state, unchanged original
+trace/usage prefix, all 32 new provider receipts, native clock and key receipts,
+the new settled checkpoint and native/container/VM cleanup. The source checkpoint
+remained unchanged. The final native save is year 30, tick 46,301, manifest
+`53c0cf824da7db2bcf07b9fc4ea7859e050124af6ce1399abf0821882f9d66c9`.
+The guest poweroff command returned 1 with an SSH exit-255 warning; the VM stop
+command returned zero and an independent live check confirmed the VM stopped.
+The warning remains in the evidence; no failed command was relabelled successful.
+The new checkpoint has not had a separate post-run fresh reload.
+
+The continuation declaration was pushed before launch at `8a92cbeb5`; the
+unchanged execution implementation remains `8b9fffa1d`. Actual dollar charges
+are unreported, not zero. No GCE, paid-API fallback, local model or automatic
+reset use occurred. The website still serves its earlier immutable 32-decision
+snapshot; update that surface with this separate audited continuation next,
+then continue this same campaign and expand repeated three-model trials.
+Main merge and public deployment remain open; the full goal remains active.
+
+## Earlier displayed-key Astra pilot completed and audited
 
 The independent [displayed-key result](../experiments/evidence/keyboard_binding_astra_r1_20260911.json)
 now retains **32 model responses, 248 confirmed key presses, 15,500 saved ticks
@@ -70,9 +105,9 @@ gameplay actions, elapsed ticks or saves. Native, container and VM shutdown pass
 The local website's immutable original-trial snapshot still describes the earlier
 pre-reload audit; this new verification is published separately here.
 
-Next: declare and run the next bounded window from the original decision-32 save
-under the unchanged displayed-key condition, then widen to repeated three-model
-trials. Do not reuse the disposable diagnostic runtime as a campaign origin.
+That next bounded window has now completed from the original decision-32 save,
+as recorded above. The disposable diagnostic runtime was not a campaign origin.
+Continue the same displayed-key campaign, then widen to repeated three-model trials.
 The full Year-Two delivery objective remains active; main merge and public
 deployment remain open.
 
