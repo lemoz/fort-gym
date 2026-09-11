@@ -12,7 +12,29 @@ and [reload verification](#later-checkpoint-1057-verification-and-website-delive
 Do not confuse that achieved duration with the younger, independent matched
 cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 
-## Current state: recovery saved decision 256 and 28,345 new ticks
+## Current state: ordinary Astra continuation is running
+
+The declared decision-256-to-416 owner has started from the recovered save with
+GPT-6 Astra Medium. Fresh subscription admission allowed the run; the same
+native image and controls are used, with at most 160 new responses, a native
+save/load boundary every 32 decisions, and mandatory local VM teardown. No new
+GCE resource, paid fallback, local model, automatic reset or human gameplay
+intervention was introduced.
+
+The initial observed action advanced another 2,000 native ticks with all ten
+dwarves alive. One completed model response used 23,707 returned tokens. This
+is an initial live observation, not a completed window or a new saved checkpoint.
+The latest audited save remains cursor 256 until the next save is verified.
+This new owner has no public live broadcast; the website exposes the completed
+recovery recording and the three preserved earlier windows.
+
+The declaration was pushed before launch at
+`d9463200785c67d9fe701f4f583d1539e5db2e96`. Read-only auditor revision
+`bb8516aa6a27d6ba92bee39f9769adcfb7095d6c` passed remote CI with 4,921 tests and
+154 skipped before launch. It is pinned separately from native revision
+`d22f28d99f4fd103188979e964e148139d3f3efd`; no native implementation changed.
+
+## Latest completed result: recovery saved decision 256 and 28,345 new ticks
 
 The [audited recovery continuation](../experiments/evidence/keyboard_binding_astra_r1_recovery_224_256_20260911.json)
 completed with **32 new responses, 41 confirmed key presses, 28,345 new saved
@@ -72,7 +94,8 @@ declares up to 160 new responses in five 32-response segments, ending at cursor
 control condition, original cumulative limits, 288 prior responses and the
 32-decision/422-tick loss record. The private owner and separately pinned
 read-only auditor passed import/source/checkpoint preflight. No game or model
-has started for this declaration yet; this is readiness, not a gameplay result.
+had started at declaration publication; the active-launch update above supersedes
+that readiness state without claiming a completed gameplay result.
 
 Next: continue actual autonomous play from this decision-256 save with the same
 conditions and inherited usage/loss record; the next ordinary continuation should
