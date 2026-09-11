@@ -41,8 +41,27 @@ No separate fresh reload of this new final checkpoint has run yet.
 
 The tested recovery implementation remains in [draft PR166](https://github.com/lemoz/fort-gym/pull/166).
 No GCE, API fallback, local model, automatic reset, disk growth or human gameplay
-rescue occurred. Actual dollar charges are unreported, not zero. The public
-website has not yet been updated with this new recovery recording.
+rescue occurred. Actual dollar charges are unreported, not zero.
+
+The recovery recording is now [published in the homepage player](https://fortgym.live/?recording=astra-recovery-225-256#watch-root),
+worlds gallery and current-results cards. Static release `41b10423178c69eb02e91f842a842e0c98209aa4`
+is pushed in [PR167](https://github.com/lemoz/fort-gym/pull/167); its CI passed
+1,192 tests with five skipped. Public HTTPS bytes and all four recording hashes
+match the release. The earlier failed Astra recording, Sol and Terra recordings,
+and historical findings are unchanged. Four windows expose 320 captured frames,
+not four independent trials or a head-to-head ranking. API/game processes,
+database and untracked server files were preserved, with no service restart.
+The live feed remains disconnected; no browser visual QA or new gameplay is
+claimed by this publication.
+
+A later read-only account check showed one percent used, clearing the earlier
+98-percent admission hold. The next owner must still run its own fresh admission.
+Continuation preparation found that the ordinary read-only audit equates saved
+trace cursor with actual accounted responses and rejects all inherited loss.
+At this saved boundary those counters are 256 and 288, respectively. A narrow
+auditor correction is being tested in `codex/campaign-inherited-loss-audit` to
+bind both counters and preserve the exact inherited loss history; no model or
+game has been launched for that work.
 
 Next: continue actual autonomous play from this decision-256 save with the same
 conditions and inherited usage/loss record; the next ordinary continuation should
@@ -90,8 +109,8 @@ revision in a derived local image using an incremental bundle and network-disabl
 build, including an explicit source-verifier check. Its model limit remains 32
 new decisions, since v1 made zero requests. No source-identity guard was weakened.
 
-The overall Year-Two/Cross-Model objective is unfinished. The Codex goal object
-is paused, but the user has explicitly resumed this bounded project work.
+The overall Year-Two/Cross-Model objective is unfinished. The earlier pause was
+superseded by the user's resumption; the goal object is now active.
 
 ## Earlier state: displayed-key Astra continuation reached decision 96
 
