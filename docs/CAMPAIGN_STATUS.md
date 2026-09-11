@@ -142,7 +142,7 @@ This is a hypothesis prompted by ineffective workshop-menu inputs, not a proven
 menu fix, gameplay improvement, or addition to the unchanged matched results.
 Focused tests: 100 passed. Full offline suite: 4,967 passed, 10 skipped.
 Changed-file lint and source-module type checks passed; broader checks retain
-existing unrelated failures. Exact-head GitHub CI `34566980293` is running.
+existing unrelated failures. Exact-head GitHub CI `34566980293` passed.
 No paid model call, new VM, main merge or public deployment was performed for
 this change.
 
