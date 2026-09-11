@@ -21,6 +21,14 @@ Observations expire after 30 seconds, including when refresh fails. An audited
 result link appears only when the corresponding window is registered in the
 versioned result chain; a later result does not change the original baseline.
 
+The published Astra attempt 1 decision-256 result now supplies this audited link.
+Its stopped observer still reports a stale lower bound of 133,400 cumulative
+ticks, while the audited saved result records 135,400. The last action's 2,000
+ticks were not available through a subsequent model request. Publication does not
+rewrite that observation, set its new-save flag, or move its 51,400-tick /
+4,544,237-token decision-128 starting baseline. The saved result is authoritative
+for the final outcome; the old live counts remain provisional.
+
 The source and Node contract tests cover all six immutable parents, invalid
 identity/counter rejection, file bounds and symlinks, unknown and stale status,
 private-field exclusion, unchanged historical routes, and audited-result links.

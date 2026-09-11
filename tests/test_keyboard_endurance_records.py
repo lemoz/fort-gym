@@ -43,7 +43,7 @@ def test_actual_astra_endurance_result_preserves_audited_outcome_and_unequal_bud
     monkeypatch,
 ):
     identity = "matched-20260910-astra-r1"
-    monkeypatch.setattr(records, "RESULTS", {identity: records.RESULTS[identity]})
+    monkeypatch.setattr(records, "RESULTS", {identity: records.RESULTS[identity][:1]})
     result = records.keyboard_endurance_records()
     assert result["recorded_endurance_windows"] == 1
     assert result["recorded_endurance_boundaries"] == 64
@@ -99,7 +99,7 @@ def test_astra_and_sol_128_records_remain_independent_before_cohort_complete(
         records,
         "RESULTS",
         {
-            identity: records.RESULTS[identity]
+            identity: records.RESULTS[identity][:1]
             for identity in ("matched-20260910-astra-r1", "matched-20260910-sol-r1")
         },
     )
@@ -164,7 +164,7 @@ def test_five_audited_128_records_keep_astra_two_at_its_actual_baseline(monkeypa
         records,
         "RESULTS",
         {
-            identity: publications
+            identity: publications[:1]
             for identity, publications in records.RESULTS.items()
             if identity != "matched-20260910-astra-r2"
         },
@@ -211,7 +211,11 @@ def test_five_audited_128_records_keep_astra_two_at_its_actual_baseline(monkeypa
     assert result["strong_ranking_supported"] is False
 
 
-def test_all_six_audited_results_share_128_decisions_without_inventing_success():
+def test_all_six_audited_results_share_128_decisions_without_inventing_success(monkeypatch):
+    # Preserve the completed equal-decision snapshot as later windows are published.
+    monkeypatch.setattr(
+        records, "RESULTS", {identity: rows[:1] for identity, rows in records.RESULTS.items()}
+    )
     result = records.keyboard_endurance_records()
     assert result["recorded_endurance_windows"] == 6
     assert result["recorded_endurance_boundaries"] == 384

@@ -11,11 +11,16 @@ import pytest
 from fastapi.testclient import TestClient
 
 from fort_gym.bench.api import keyboard_endurance_live_v2 as live
+from fort_gym.bench.api import keyboard_endurance_records as records
 from fort_gym.bench.api.keyboard_cohort import PROJECT_ROOT
 
 
 @pytest.fixture
-def value():
+def value(monkeypatch):
+    # These synthetic in-flight scenarios precede publication of the 256 result.
+    monkeypatch.setattr(
+        records, "RESULTS", {identity: rows[:1] for identity, rows in records.RESULTS.items()}
+    )
     return {
         **live.identity_fields("matched-20260910-astra-r1"),
         "controller_alive": True,
