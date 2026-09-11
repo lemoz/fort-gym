@@ -225,7 +225,7 @@ test('a recording deep link opens the chosen model without a live feed taking ov
   } finally { Object.assign(globalThis,originals); }
 });
 
-test('latest Year-Two replay displays its endpoint and hides it for live or other recordings', async () => {
+test('Year-Two replay displays its endpoint and hides it for other recordings', async () => {
   const originals = Object.fromEntries(['document','fetch','location','setInterval','clearInterval'].map(key=>[key,globalThis[key]]));
   const elements = new Map();
   for(const match of fs.readFileSync('web/landing.html','utf8').matchAll(/id="(watch-[^"]+)"/g))
@@ -233,7 +233,7 @@ test('latest Year-Two replay displays its endpoint and hides it for live or othe
   const get = id => elements.get('watch-'+id);
   const settle=async()=>{for(let n=0;n<10;n++)await new Promise(resolve=>setImmediate(resolve));};
   try {
-    globalThis.location={search:''};
+    globalThis.location={search:'?recording=astra-year-two-257-416'};
     globalThis.document={hidden:false,getElementById:id=>elements.get(id),createElement:tag=>new Element(tag),addEventListener(){}};
     globalThis.setInterval=()=>1; globalThis.clearInterval=()=>{};
     globalThis.fetch=async url=>({ok:true,json:async()=>url.includes('watch-active')

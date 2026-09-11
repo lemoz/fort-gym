@@ -3,6 +3,21 @@
   "recordings": [
     {
       "schema_version": "fortgym.watch-recording/v1",
+      "id": "sol-matched-r1-1-64",
+      "title": "gpt-5.6-sol · matched trial 1",
+      "model": "gpt-5.6-sol",
+      "control_profile": "native_keyboard_bindings/v1",
+      "first_decision": 1,
+      "last_decision": 64,
+      "saved_through_decision": 64,
+      "audit_sha256": "00dfe1b920ef9299acab6c77bcb38199317c5e423d57ebf24663264876330ed6",
+      "recording_status": "saved",
+      "window": "1–64",
+      "frame_count": 64,
+      "sha256": "50bc9a2b94b6a0de3fadf1507ec59fbde845c2cc4e5461623d2c26e0dab78741"
+    },
+    {
+      "schema_version": "fortgym.watch-recording/v1",
       "id": "astra-year-two-257-416",
       "title": "Astra · into Year Two",
       "model": "gpt-6-astra",

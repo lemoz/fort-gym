@@ -5,7 +5,7 @@
 .watch-runs { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
 .home-watch button, .home-watch select { min-height:44px; border:1px solid var(--line); background:var(--coal); color:var(--paper); padding:10px 13px; font:650 11px/1.2 var(--mono); cursor:pointer; }
 .home-watch button:hover { border-color:var(--paper); }
-.home-watch button[aria-pressed="true"] { background:var(--acid); color:var(--ink); border-color:var(--acid); }
+.home-watch button[aria-pressed="true"] { background:var(--acid); color:var(--coal); border-color:var(--acid); }
 .home-watch button:disabled { opacity:.4; cursor:default; }
 .home-watch button:focus-visible, .home-watch input:focus-visible, .home-watch select:focus-visible, .watch-screen:focus-visible { outline:2px solid var(--cyan); outline-offset:3px; }
 .watch-layout { display:grid; grid-template-columns:minmax(0,1fr) 300px; border:1px solid var(--line); background:#030503; }
