@@ -4,7 +4,7 @@ Verified September 11, 2026 UTC. The Year-Two Autonomous Play objective remains
 unfinished; work continues toward the same objective. The owner has approved starting the project
 work for [Astra standard-input experiments](ASTRA_STANDARD_INPUT_EXPERIMENTS.md).
 
-## Current run: Sol attempt 2 resumed; four decision-128 saves audited
+## Current run: Astra attempt 2 resumed; five decision-128 saves audited
 
 Astra attempt 1 completed its declared 64-to-128 window from its own save and
 memory. Its [audited result](../experiments/evidence/keyboard_matched_astra_r1_continuation_64_128_20260911.json)
@@ -33,9 +33,9 @@ All 64 clock outcomes reported no error. Its own memory/usage, native save,
 initial reload and VM teardown passed audit; both shutdown commands returned
 zero. A separate fresh reload of the new final checkpoint remains unverified.
 
-These first Astra and Sol attempts now share a 128-response boundary but not
-equal elapsed game time or token use; the remaining attempts have not yet
-reached that boundary. This is not a complete matched-cohort comparison or a
+These first Astra and Sol attempts share a 128-response boundary but not
+equal elapsed game time or token use. Five attempts have now reached that
+boundary; Astra attempt 2 is still running. This is not a complete matched-cohort comparison or a
 general model ranking. Neither result establishes sustainability or year two.
 
 Terra attempt 1 completed its own declared 64-to-128 window. Its
@@ -63,11 +63,36 @@ Own-save memory/usage, all 64 model receipts, the initial native reload, final
 save and teardown passed audit; both shutdown commands returned zero. The new
 final checkpoint's separate fresh reload has not yet been verified.
 
-After that audited teardown, Sol attempt 2 started its own declared 64-to-128
-continuation. VM/container start and read-only configuration checks passed.
-Its live activity remains provisional until independent terminal audit.
+Sol attempt 2 completed its own declared 64-to-128 continuation. Its
+[audited result](../experiments/evidence/keyboard_matched_sol_r2_continuation_64_128_20260911.json)
+retains 64 new responses and 1,100 new ticks: 128 responses, 13,800 ticks and
+3,270,294 returned tokens cumulatively. Seven dwarves remain alive with no
+recorded deaths, food50, drinks60 and no completed bed, farm or workshop.
+Fishing appeared at all 64 new observation boundaries, but these samples do
+not establish completed jobs or sustainable production. All 64 clock outcomes
+reported no error. Own-save memory/usage, all model receipts, initial native
+reload, final save and VM teardown passed audit; both shutdown commands
+returned zero. A separate fresh reload of its final save remains unverified.
+
+After that audited teardown, Astra attempt 2 started its own declared 64-to-128
+continuation from its own decision-64 save. VM/container start and read-only
+configuration checks passed. The existing observer is attached to the verified
+controller; live activity remains provisional until independent terminal audit.
 
 ## Current delivery: recorded endurance and live continuation
+
+Native checkpoint-chain verification is pushed at
+`a815aaf139a2bc4de3de02107c5c3909ab8b397e` in
+[draft PR #154](https://github.com/lemoz/fort-gym/pull/154). The reviewed full
+local suite passed 4,900 tests with 10 skips. Exact-head GitHub CI
+`34558278046` is running, not yet claimed passed. The reusable verifier checks
+each own-save inventory, loaded calendar, retained history, memory and usage,
+then reconciles all segments against the declared baseline. Actual completed
+windows reproduced their previously audited saves, tokens and ticks; synthetic
+tests cover multiple segments and pauses. Provider receipts, resource limits,
+measurement coverage and VM teardown still require the full outer auditor.
+This is preparation for longer gameplay, not a decision-256 or Year-Two result.
+Scoped lint/type checks pass; full-tree lint and type checks remain unclean.
 
 The configuration-driven endurance courier and all six own-save 64-to-128
 declarations are pushed at `45bb05c903181b6b2e4f61df3a4c0a8eca05b818` in

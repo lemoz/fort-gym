@@ -20,6 +20,7 @@ ENDURANCE_DELIVERY = "keyboard_matched_endurance_delivery_20260911.json"
 ENDURANCE_LAUNCH = "keyboard_matched_astra_r1_endurance_launch_20260911.json"
 ASTRA_ENDURANCE = "keyboard_matched_astra_r1_continuation_64_128_20260911.json"
 SOL_ENDURANCE = "keyboard_matched_sol_r1_continuation_64_128_20260911.json"
+SOL_TWO_ENDURANCE = "keyboard_matched_sol_r2_continuation_64_128_20260911.json"
 TERRA_ENDURANCE = "keyboard_matched_terra_r1_continuation_64_128_20260911.json"
 TERRA_TWO_ENDURANCE = "keyboard_matched_terra_r2_continuation_64_128_20260911.json"
 ENDURANCE_RECORDS_CODE = "keyboard_matched_endurance_records_code_20260911.json"
@@ -43,6 +44,7 @@ ENDURANCE_COHORT_WEBSITE = "keyboard_matched_endurance_cohort_website_20260911.j
         (ENDURANCE_LAUNCH, "631758a6b511a120b30c12e0767d1f714657351a5baf31eeccc92769cb644a27"),
         (ASTRA_ENDURANCE, "cb9cc0c5af8f158848493b1e7b3bb79f4f4736f185fbf7ce96fb157095e1d145"),
         (SOL_ENDURANCE, "a155f9c940e242de32d216e9795291dc2093299b64ce57760b722ee7a0a33491"),
+        (SOL_TWO_ENDURANCE, "0bff8ed59f1fd011db53ffca63c8e39f323f747cb512231b4560f8f176cbd3a8"),
         (TERRA_ENDURANCE, "3e833f88a813192f3c3190847e551439c34c7741d5bb87443d156cd244fc0b4f"),
         (TERRA_TWO_ENDURANCE, "858276b6da253f86d08f6ee8fba4ce6cd7eb28cce2005f3c6fbb67aa7b2bf3a6"),
         (
@@ -204,6 +206,52 @@ def test_sol_128_save_separates_observed_digging_from_completed_development():
     assert record["final_fresh_reload_verified"] is record["sustainability_established"] is False
     assert record["year_two_reached"] is record["human_gameplay_rescue"] is False
     assert record["usage"]["reported_charge_usd"] is None
+
+
+def test_second_sol_128_retains_limited_calendar_progress_without_development():
+    record = json.loads((EVIDENCE / SOL_TWO_ENDURANCE).read_bytes())
+    parent = json.loads((EVIDENCE / SOL_TWO_RESULT).read_bytes())
+    assert (record["start_decision"], record["next_decision"], record["new_responses"]) == (
+        64,
+        128,
+        64,
+    )
+    assert record["prior_checkpoint_sha256"] == parent["checkpoint_sha256"]
+    assert (
+        record["checkpoint_sha256"]
+        == "2f0d37ebebfac07d18c6ccb18a8480dea28d222f181c2331743d6cc461c8f188"
+    )
+    assert record["initial_metrics"] == parent["saved_metrics"]
+    assert record["new_saved_ticks"] == 1100
+    assert (
+        record["saved_elapsed_ticks"]
+        == parent["saved_elapsed_ticks"] + record["new_saved_ticks"]
+        == 13800
+    )
+    assert record["usage"]["new_returned_tokens"] == 1608932
+    assert (
+        record["usage"]["campaign_returned_tokens"]
+        == parent["usage"]["campaign_returned_tokens"] + 1608932
+        == 3270294
+    )
+    assert record["usage"]["campaign_accounted_responses"] == 128
+    assert record["usage"]["reported_charge_usd"] is None
+    metrics = record["saved_metrics"]
+    assert (metrics["population"], metrics["recorded_dead_citizens"]) == (7, 0)
+    assert (
+        metrics["completed_beds"],
+        metrics["completed_farms"],
+        metrics["completed_workshops"],
+    ) == (0, 0, 0)
+    assert (metrics["food_stock"], metrics["drink_stock"]) == (50, 60)
+    assert [row["decision"] for row in record["new_window_timeline"]] == list(range(65, 129))
+    assert record["new_window_timeline"][-1]["metrics"] == metrics
+    assert record["new_window_clock_outcomes"] == {"no_error": 64}
+    assert record["new_window_activity"]["boundaries_with_job_type"]["Fish"] == 64
+    assert record["source_checkpoint_fresh_load_verified"] is True
+    assert record["native_cleanup_verified"] is record["vm_teardown_verified"] is True
+    assert record["final_fresh_reload_verified"] is record["sustainability_established"] is False
+    assert record["year_two_reached"] is record["human_gameplay_rescue"] is False
 
 
 def test_terra_128_records_zero_gameplay_progress_without_infrastructure_failure():
