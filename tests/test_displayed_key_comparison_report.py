@@ -327,3 +327,23 @@ def test_actual_declared_cohort_index_has_no_fabricated_results():
         row["model"] in {"gpt-6-astra", "gpt-5.6-sol", "gpt-5.6-terra"} for row in data["trials"]
     )
     assert data["strong_ranking_supported"] is False
+
+
+def test_actual_saved_sol_outcome_is_preserved_without_a_success_claim():
+    data = read_comparison(
+        ROOT,
+        "experiments/evidence/keyboard_binding_comparison_20260911_index.json",
+        boundary=64,
+    )
+    row = data["trials"][0]
+    assert row["campaign_id"] == "bindings-comparison-20260911-sol-r1"
+    assert (
+        row["evidence_sha256"] == "5d0cb5ea363ef5ac4bf24d8336ea1479bbd84a1966a90f68a646d0635923af66"
+    )
+    assert row["result"]["status"] == "saved" and row["result"]["responses"] == 64
+    assert row["result"]["checkpoint"]["saved_elapsed_ticks"] == 2900
+    assert row["result"]["checkpoint"]["metrics"]["population"] == 7
+    assert row["result"]["checkpoint"]["metrics"]["completed_workshops"] == 0
+    assert row["result"]["returned_tokens"] == 1258321
+    assert row["result"]["reported_charge_usd"] is None
+    assert data["strong_ranking_supported"] is False
