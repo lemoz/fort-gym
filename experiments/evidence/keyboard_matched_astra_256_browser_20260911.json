@@ -1,0 +1,57 @@
+{
+  "schema_version": "fortgym.public-astra-256-browser-review/v1",
+  "recorded_at_utc": "2026-09-11 08:11:50 UTC",
+  "website_revision": "ff350f024957af964bca3d50e1166cbffd139d8e",
+  "pull_request": "https://github.com/lemoz/fort-gym/pull/158",
+  "local_url": "http://127.0.0.1:8857/campaigns",
+  "scope": "Desktop local-preview rendering and expansion of the existing matched results, not full website acceptance or publication.",
+  "scoped_checks_passed": true,
+  "browser": "Codex in-app browser",
+  "observed_viewport": [
+    1280,
+    720
+  ],
+  "checks": {
+    "campaign_heading_and_navigation_visible": true,
+    "current_historical_window_marked_recorded": true,
+    "provisional_133400_ticks_separate_from_saved_135400": true,
+    "six_latest_attempts_visible": true,
+    "astra_r1_saved_responses": 256,
+    "other_five_saved_responses": 128,
+    "astra_r1_saved_ticks": 135400,
+    "astra_r1_living_dwarves": 7,
+    "astra_r1_recorded_dead": 0,
+    "astra_r1_food_drinks": [
+      34,
+      199
+    ],
+    "astra_r1_completed_workshops_beds_farms": [
+      3,
+      8,
+      2
+    ],
+    "astra_r1_tokens": 10419162,
+    "unequal_budget_caveat_visible": true,
+    "saved_detail_expansion_works": true,
+    "expanded_final_row": "256 | 84,000 / 135,400 | 7 / 0 | 34 / 199 | 3 / 8 / 2",
+    "subscription_charge_unknown_visible": true
+  },
+  "open_items": [
+    "New bindings-20260911-astra-r1 condition is not yet represented on this website revision; publish separately from the historical matched cohort.",
+    "Generic Campaign performance section displayed a could-not-load message in this preview; underlying cause is not established by this visual check.",
+    "Mobile/responsive behavior, all navigation routes and public deployment were not tested in this check."
+  ],
+  "tool_observations": [
+    "The first snapshot captured asynchronous loading placeholders; later DOM and screenshots verified loaded matched results.",
+    "Expanding the Astra result changes its summary label; a follow-up locator using the old label timed out. A fresh DOM confirmed that expansion succeeded and the final decision row loaded."
+  ],
+  "screenshot_review": "Two rendered desktop viewports were visually inspected in the browser tool. No standalone screenshot file is claimed.",
+  "browser_console_errors_observed": 0,
+  "preview_launcher_sha256": "2cd91d3e02dcb31b399a2044be2f75198b8e88f3a32334778bb76e3b62e84d4c",
+  "historical_http_acceptance_preserved": true,
+  "main_merged": false,
+  "public_deployed": false,
+  "game_inputs_by_review": 0,
+  "model_calls_by_review": 0,
+  "new_vm_started_by_review": false
+}

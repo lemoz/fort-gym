@@ -50,6 +50,15 @@ The recorded result, not that stale feed, proves 135,400 saved ticks.
 No browser visual QA, main merge or public deployment is claimed. This website
 update made no model calls and started no experiment VM.
 
+A later [desktop browser review](../experiments/evidence/keyboard_matched_astra_256_browser_20260911.json)
+verified the loaded six-attempt table, the distinction between provisional
+133,400 and saved 135,400 ticks, and expansion through the actual decision-256
+row. The existing matched-result presentation passed that scoped visual check.
+The new displayed-key trial still needs a separate website section. The generic
+Campaign performance section showed a load-error message in this preview; its
+cause was not established. This is not full-site, mobile or public-deployment
+acceptance, and the original HTTP-only record remains unchanged.
+
 The subsequent provider-free
 [native input diagnostic](../experiments/keyboard_input_diagnostic_20260911/README.md)
 now establishes a specific mismatch in the carpenter AddJob menu:
