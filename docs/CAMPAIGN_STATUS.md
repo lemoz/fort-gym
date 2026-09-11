@@ -30,6 +30,21 @@ records 53 new responses, 1,960,158 returned tokens and at least 28,000 new
 observed ticks: 181 cumulative responses and 79,400 saved-plus-observed ticks.
 These timestamped live counts do not replace the last audited decision-128 save.
 
+The subsequent [decision-192 midpoint inspection](../experiments/evidence/keyboard_matched_astra_r1_midpoint_192_20260911.json)
+verified the completed first 64-response segment while the second segment
+continued automatically. Its checkpoint retains 89,400 elapsed ticks and
+7,052,820 tokens: 38,000 new saved ticks and 2,508,583 new tokens since decision
+128. Seven living dwarves, no recorded deaths, eight beds, two farms, three
+workshops, food35 and drinks129 are measured in the native saved state. The
+next segment loaded the same calendar and recognized metrics, with unchanged
+agent memory, configuration, cumulative usage and the original trace prefix.
+The first next-segment model request used that exact saved memory; its actual
+provider events were independently reviewed. Earlier captured screens show early
+summer and gathering, fishing and brewing work. UI inventory estimates are not
+used as exact stocks. This is a verified intermediate checkpoint, not the full
+128-to-256 terminal audit or VM teardown. The six fully audited comparison
+records remain at decision128; sustainability and Year Two remain unproven.
+
 Astra attempt 1 completed its declared 64-to-128 window from its own save and
 memory. Its [audited result](../experiments/evidence/keyboard_matched_astra_r1_continuation_64_128_20260911.json)
 retains all 64 new responses and 33,200 additional game ticks: 128 responses,

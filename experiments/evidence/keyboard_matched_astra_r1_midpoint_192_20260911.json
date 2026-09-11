@@ -1,0 +1,130 @@
+{
+  "schema_version": "fortgym.public-active-midpoint-inspection/v1",
+  "artifact_kind": "active_window_checkpoint_inspection",
+  "recorded_date_utc": "2026-09-11",
+  "passed": true,
+  "campaign_id": "matched-20260910-astra-r1",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "replicate": 1,
+  "source_revision": "1bc49b9675b1c82ad502bbd6d8461c9cdbf077e9",
+  "declaration_revision": "4590fc1828365c44c9a4d3be728b4168ded5c514",
+  "window_start_decision": 128,
+  "window_end_decision": 256,
+  "completed_segment_start": 128,
+  "next_saved_decision": 192,
+  "new_saved_responses": 64,
+  "prior_checkpoint_sha256": "bff0afda99c39e25fe9db7aeb01db77ab6a819cb20c5d82670a2188952cceec2",
+  "checkpoint_sha256": "e6dd48a5e87738c13534f17c986190eccccceb9154a9b61bf162d4c7c0c28386",
+  "checkpoint_verified": true,
+  "next_segment_loaded_same_calendar_and_metrics": true,
+  "agent_memory_configuration_and_usage_preserved": true,
+  "original_trace_prefix_preserved": true,
+  "next_segment_first_request_memory_matches": true,
+  "first_runtime_cleanup_verified": true,
+  "saved_clock": {
+    "year": 30,
+    "year_tick": 106201
+  },
+  "saved_elapsed_ticks": 89400,
+  "new_saved_ticks": 38000,
+  "time_evidence": "complete",
+  "saved_metrics": {
+    "population": 7,
+    "food_stock": 35,
+    "drink_stock": 129,
+    "wood_stock": null,
+    "stone_stock": null,
+    "functional_rooms": null,
+    "completed_workshops": 3,
+    "completed_beds": 8,
+    "completed_farms": 2,
+    "recorded_dead_citizens": 0
+  },
+  "usage": {
+    "accounted_responses": 192,
+    "cost_basis": "codex_subscription_charge_unreported/v1",
+    "dispatched_requests": 192,
+    "returned_responses": 192,
+    "total_cost_usd": null,
+    "total_tokens": 7052820
+  },
+  "selected_provider_receipt_reviews": [
+    {
+      "request_id": "f3a79b6902d54cb994f14bd542b64c44",
+      "decision_index": 57,
+      "request_sha256": "e287b4ce7005b87731d736fc11bc7db09413fd0dfdb84b49f749a5e9b878460b",
+      "events_sha256": "6a951f12662b8e901826f8a60e5590c8a60ff3faf7dcc15ed727bd5342127300",
+      "total_tokens": 24374,
+      "admission_captured_at_unix": 1789102867.519261
+    },
+    {
+      "request_id": "7d4edccdc7494e80b964a1743d26d551",
+      "decision_index": 59,
+      "request_sha256": "7305864797d91d0c9ff5c0a220552727bb6e89c706f6384bdce56f5e9cedddc3",
+      "events_sha256": "6fda96518594001258aecda7b48fab1109c18e3a373e89b740965535efee7419",
+      "total_tokens": 23862,
+      "admission_captured_at_unix": 1789102947.8599439
+    },
+    {
+      "request_id": "8952dbea248b406f9f665f9e922c59d6",
+      "decision_index": 64,
+      "request_sha256": "b7263a2865d77f03ddbe4e68087a759e55047705f34a1418b1f5652d583bf34d",
+      "events_sha256": "7e5e17b4dd289ed35a3723e533a8c480a972a33d248b40fe5b3ff8ccde395a66",
+      "total_tokens": 55583,
+      "admission_captured_at_unix": 1789103157.9017248
+    }
+  ],
+  "provider_review_scope": "Selected responses at new-window indices 57, 59 and 64, not a complete window receipt audit.",
+  "source_artifact_sha256": {
+    "parent_checkpoint_manifest": "e1ba02ded9af7dbbe1fcf07d93f82e39510d4a80be0c68f059acf9a068b6b118",
+    "midpoint_checkpoint_manifest": "6829dfc00e0185d7dca4dc1e518418c4c2613acac48be725c5ea011da07df9b3",
+    "midpoint_agent": "9354619388530016190b8658ca1031fdd90fdd5e6ae236a4422b154f93a9d879",
+    "midpoint_trace": "d55b63e39a0d4728558039c292ea79eeee2ac723ccf5b886f982eea5165e3d83",
+    "midpoint_usage": "8f30f4ba02440611cd88c43bc87ea5a9eca5e165920b81cf5a4e09e84354af71",
+    "first_segment_result": "8fb70fed5a0ac49961ecf36a4c54b94ea144368e8e59ca048594d03462a45c7f",
+    "first_runtime_result": "c2fdbd38a86d741e284cb6c6d1c76d5782fc82eb5429588d08c0fa334d88ec08",
+    "midpoint_native_state": "3b18ddeaeccdee7593f045b3db5730b68c94cbe6b3bf8fee0a6618409c7c051c",
+    "resumed_native_state": "8cc854998ad2ddb2d97cdaea95761e2ffcb9da5890a1b1b8469c1e9a936f0e5d",
+    "resumed_agent": "844d3e0c336dd35fd95d7425c8dd7ed2eae0e9a341e7b75b96a07fb256a3e4a7",
+    "resumed_history": "e41d4bc2878b82d8040394035d383d0a9c55058d08ace55f352fcae67519ec98"
+  },
+  "probe_source_sha256": "3555e28bf6e4af2b4d1f39eb684554350c8cc13c8296def72333334f17c64201",
+  "receipt_reviewer_sha256": "bc1654562c62b8b68c7454a501285b8da9e06688c70e0b8586552c6bc79b15eb",
+  "screen_observations": [
+    {
+      "window_decision_index": 57,
+      "view": "fortress_status",
+      "calendar_text": "2nd Hematite, 30, Early Summer",
+      "population_display": 7,
+      "food_display": "200?",
+      "drink_display": "100?",
+      "inventory_values_are_approximate": true
+    },
+    {
+      "window_decision_index": 59,
+      "view": "job_list",
+      "visible_jobs": [
+        "Gather Plants",
+        "Fish",
+        "Brew drink from plant/R"
+      ],
+      "inactive_job": "Destroy Building: Farm Plot",
+      "completion_or_production_counts_inferred": false
+    }
+  ],
+  "whole_window_terminal_audit": false,
+  "whole_window_vm_teardown_verified": false,
+  "all_window_provider_receipts_reviewed": false,
+  "new_model_calls_by_inspection": 0,
+  "new_game_ticks_by_inspection": 0,
+  "human_gameplay_rescue": false,
+  "sustainability_established": false,
+  "year_two_reached": false,
+  "matched_comparison_complete": false,
+  "public_website_registry_changed": false,
+  "public_deployment": false,
+  "main_merge": false,
+  "goal_complete": false,
+  "scope": "Read-only inspection of the already-completed decision-192 checkpoint and the next native segment's recorded initial state while the existing owner continues to decision 256. Full checkpoint inventories, original trace prefix, calendar, recognized metrics, memory, configuration and usage were verified without performing a save, reload, game action or model call. The first runtime completed cleanup, but the whole window and its VM remain active. This is not the terminal continuation result, a full provider audit, production-rate evidence, or Year-Two success. Keep the six fully audited decision-128 website records unchanged until ordinary window publication."
+}

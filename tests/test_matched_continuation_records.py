@@ -30,11 +30,13 @@ ENDURANCE_COHORT_WEBSITE = "keyboard_matched_endurance_cohort_website_20260911.j
 SIX_128_WEBSITE = "keyboard_matched_six_128_website_20260911.json"
 ASTRA_128_256_LAUNCH = "keyboard_matched_astra_r1_128_256_launch_20260911.json"
 LIVE_V2_WEBSITE = "keyboard_matched_live_v2_website_20260911.json"
+ASTRA_MIDPOINT_192 = "keyboard_matched_astra_r1_midpoint_192_20260911.json"
 
 
 @pytest.mark.parametrize(
     "filename,expected",
     [
+        (ASTRA_MIDPOINT_192, "6e579098658fffad3e63492285a4692655a18c9620803952626adccbf5e7ed27"),
         (LIVE_V2_WEBSITE, "d4dfa621099bdd582f2ba0d3281e544f78e7633517dbee2e0b3011dc1451fd36"),
         (SIX_128_WEBSITE, "b47a8ab7b397e67fa6e8da990919c2b4bfee59c5dbd2c8dbc8f3d761486c8966"),
         (ASTRA_128_256_LAUNCH, "31058773bcbefe4c4bbd5b825d0ea5735b6fdbf31d6377e217401352a02ee55e"),
@@ -89,6 +91,33 @@ def test_six_result_website_is_delivered_without_claiming_the_new_live_feed():
     assert value["live_observation"]["status"] == "stale"
     assert value["public_deployment"] is value["main_merge"] is value["browser_visual_qa"] is False
     assert value["model_calls_by_verifier"] == value["game_ticks_by_verifier"] == 0
+
+
+def test_midpoint_is_verified_saved_progress_not_a_terminal_window_result():
+    value = json.loads((EVIDENCE / ASTRA_MIDPOINT_192).read_bytes())
+    parent = json.loads((EVIDENCE / ASTRA_ENDURANCE).read_bytes())
+    assert value["passed"] is value["checkpoint_verified"] is True
+    assert value["campaign_id"] == parent["campaign_id"]
+    assert value["prior_checkpoint_sha256"] == parent["checkpoint_sha256"]
+    assert (value["window_start_decision"], value["next_saved_decision"], value["window_end_decision"]) == (128, 192, 256)
+    assert value["new_saved_responses"] == 64
+    assert value["saved_elapsed_ticks"] == parent["saved_elapsed_ticks"] + value["new_saved_ticks"] == 89400
+    assert value["usage"]["accounted_responses"] == 192
+    assert value["usage"]["total_tokens"] - parent["usage"]["campaign_returned_tokens"] == 2508583
+    assert value["usage"]["total_cost_usd"] is None
+    for key in ("next_segment_loaded_same_calendar_and_metrics", "agent_memory_configuration_and_usage_preserved",
+                "original_trace_prefix_preserved", "next_segment_first_request_memory_matches", "first_runtime_cleanup_verified"):
+        assert value[key] is True
+    assert value["saved_metrics"]["population"] == 7
+    assert value["saved_metrics"]["completed_beds"] == 8
+    assert value["saved_metrics"]["food_stock"] == 35 and value["saved_metrics"]["drink_stock"] == 129
+    assert [r["decision_index"] for r in value["selected_provider_receipt_reviews"]] == [57, 59, 64]
+    assert value["screen_observations"][0]["inventory_values_are_approximate"] is True
+    for key in ("whole_window_terminal_audit", "whole_window_vm_teardown_verified", "all_window_provider_receipts_reviewed",
+                "human_gameplay_rescue", "sustainability_established", "year_two_reached", "matched_comparison_complete",
+                "public_website_registry_changed", "public_deployment", "main_merge", "goal_complete"):
+        assert value[key] is False
+    assert value["new_model_calls_by_inspection"] == value["new_game_ticks_by_inspection"] == 0
 
 
 def test_longer_window_website_keeps_live_progress_separate_from_saved_results():
