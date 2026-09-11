@@ -93,3 +93,27 @@ restore missing historical run artifacts, connect a live feed, or launch gamepla
 Deploy with pinned fast-forward and rollback, checking public content and all
 original recording hashes. Keep API/game processes, database, untracked files,
 and the historical findings manifest unchanged. No service restart is needed.
+
+## Recovered Astra recording
+
+The next static release starts at `42c1320ffa6d46e22a472bd55ab434223ef00811`.
+It adds `astra-recovery-225-256` as a separate, newest recording: 32 decisions
+and 28,345 saved game ticks, resumed from checkpoint 224 and saved through 256.
+There are now four recordings containing 320 captured decision frames across
+three models. They are exploratory windows, not four independent trials.
+
+The original failed Astra window and both other models remain byte-for-byte
+unchanged. The recovery viewer links to the failed window and explains that its
+32 unsaved decisions and 422 ticks were lost. All 288 actual model responses
+remain counted. No actions were replayed and uninterrupted play is not claimed.
+Native screen captures and explicit action intent are exported only after
+rechecking the original provider receipts and independent native-save audit.
+No private model memory, provider payload, account data or internal reasoning
+is published. The final save has not yet passed a separate fresh-load test.
+
+Catalog cards and the worlds gallery expose the new recording. Secondary
+homepage illustrations continue to show distinct models, not two Astra windows.
+Tests cover recovery metadata rejection, live/replay transitions, the retained
+unsaved-tail warning, exact historical hashes and the new saved tick total.
+Deploy as a pinned static-only fast-forward. Preserve the API and game process
+identities, database and untracked files; no service restart or gameplay launch.

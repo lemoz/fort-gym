@@ -1,4 +1,4 @@
-import {decodeScreen, frameIndex, liveState, validateRecording, renderCapturedScreen, initialRecording} from './home-watch-model.mjs';
+import {decodeScreen, frameIndex, liveState, validateRecording, renderCapturedScreen, initialRecording, recoverySummary} from './home-watch-model.mjs?v=20260911-recovery';
 const $ = id => document.getElementById('watch-' + id);
 const root = $('root');
 if (root) {
@@ -40,7 +40,7 @@ if (root) {
     index = frameIndex(index, frames.length);
     const frame = frames[index];
     renderCapturedScreen(canvas, frame.screen, frame.decision);
-    text('badge', mode === 'live' ? 'LIVE · latest model decision' : mode === 'live-history' ? 'LIVE SESSION · earlier decision' : 'RECORDED RUN');
+    text('badge', mode === 'live' ? 'LIVE · latest model decision' : mode === 'live-history' ? 'LIVE SESSION · earlier decision' : recording.recovery ? 'RECOVERED RUN' : 'RECORDED RUN');
     $('badge').dataset.live = String(mode === 'live');
     text('title', live ? latestLive.model : recording.title);
     text('decision', 'Decision ' + frame.decision + (live ? '' : ' / ' + recording.last_decision));
@@ -65,6 +65,10 @@ if (root) {
         ? 'UNSAVED TAIL · observed actions after checkpoint ' + recording.saved_through_decision + '. The final save failed.'
         : 'This decision precedes or reaches saved checkpoint ' + recording.saved_through_decision + '.');
     $('boundary').className = 'watch-note' + (!live && frame.decision > recording.saved_through_decision ? ' watch-error' : '');
+    const recovered = !live && Boolean(recording.recovery);
+    $('recovery').hidden = $('prior').hidden = !recovered;
+    text('recovery', recovered ? recoverySummary(recording) : '');
+    $('prior').href = recovered ? '/?recording=' + encodeURIComponent(recording.recovery.source_recording_id) + '#watch-root' : '#watch-root';
     $('range').max = String(frames.length - 1); $('range').value = String(index);
     $('range').setAttribute('aria-valuetext', 'Decision ' + frame.decision);
     $('range').disabled = loading;
