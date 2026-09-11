@@ -74,9 +74,13 @@ def make_agent(
     from fort_gym.bench.agent.governed_llm import DFHackGovernedLLMAgent, GovernedBudgetCapError
 
     profile = config.get("decision_profile", "governed_review/v1")
-    if not isinstance(profile, str) or profile not in {"governed_review/v1", "campaign_action/v1"}:
+    if not isinstance(profile, str) or profile not in {
+        "governed_review/v1",
+        "campaign_action/v1",
+        "campaign_action/v2",
+    }:
         raise ValueError("Unknown development decision profile")
-    if profile == "campaign_action/v1" and not persist_dispatches:
+    if profile in {"campaign_action/v1", "campaign_action/v2"} and not persist_dispatches:
         raise ValueError("Exploratory campaigns require persistent dispatch accounting")
 
     class DevelopmentAgent(DFHackGovernedLLMAgent):
@@ -149,9 +153,10 @@ def make_agent(
 
     agent_class = DevelopmentAgent
     options = {}
-    if profile == "campaign_action/v1":
+    if profile in {"campaign_action/v1", "campaign_action/v2"}:
         agent_class = CampaignDevelopmentAgent
         options["schema_attempts"] = config["schema_attempts"]
+        options["decision_profile"] = profile
     return agent_class(
         **options,
         model_override=model,

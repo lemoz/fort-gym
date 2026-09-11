@@ -18,7 +18,7 @@ import httpx
 from .campaign_action_reference import action_reference
 from .campaign_action_schema import LEGACY, action_tool
 from .campaign_context import CORRECTION_PACKING, PACKING, pack_messages
-from .campaign_llm import CAMPAIGN_SYSTEM_PROMPT, CampaignLLMAgent
+from .campaign_llm import CampaignLLMAgent
 from .governed_llm import GovernedBudgetCapError, GovernedDecisionError
 
 COST_BASIS = "self_hosted_no_metered_provider"
@@ -100,6 +100,7 @@ class LocalCampaignAgent(CampaignLLMAgent):
             model_override=model,
             memory_path=None,
             schema_attempts=config["schema_attempts"],
+            decision_profile=config.get("decision_profile", "campaign_action/v1"),
             max_attempts=1,
             max_tokens=config["max_output_tokens"],
             max_advance_ticks=config["max_advance_ticks"],
@@ -111,7 +112,9 @@ class LocalCampaignAgent(CampaignLLMAgent):
 
     def _action_tool(self) -> dict:
         return action_tool(
-            super()._action_tool(), self.config["local_inference"].get("action_schema", LEGACY)
+            super()._action_tool(),
+            self.config["local_inference"].get("action_schema", LEGACY),
+            allow_view=self._decision_profile == "campaign_action/v2",
         )
 
     def _resolve_transport_key(self, api_key):
@@ -205,7 +208,7 @@ class LocalCampaignAgent(CampaignLLMAgent):
 
     def _campaign_system_prompt(self) -> str:
         reference = action_reference(self.config["local_inference"].get("action_reference", "none"))
-        return CAMPAIGN_SYSTEM_PROMPT + ("\n" + reference if reference else "")
+        return super()._campaign_system_prompt() + ("\n" + reference if reference else "")
 
     def preflight_decision(self, obs_text: str, obs_json: dict) -> None:
         # Preview the next memory review on independent state, not the live agent.

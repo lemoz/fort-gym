@@ -14,6 +14,7 @@ from pathlib import Path
 from ..agent.campaign_action_reference import action_reference
 from ..agent.campaign_action_schema import LEGACY, validate_schema_profile
 from ..env.campaign_encoder import PROFILES as CAMPAIGN_OBSERVATION_PROFILES
+from ..env.campaign_view import DECISION_PROFILE, OBSERVATION_PROFILE
 from .campaign_retention import validate_retention
 
 DEVELOPMENT_SCHEMA = "fortgym.development-probe/v1"
@@ -220,14 +221,17 @@ def load_segment_config(path: Path, model: str) -> dict:
         config.get("observation_profile", "governed_review/v1"),
     )
     exploratory_profiles = {
-        ("campaign_action/v1", profile) for profile in CAMPAIGN_OBSERVATION_PROFILES
+        ("campaign_action/v1", profile)
+        for profile in CAMPAIGN_OBSERVATION_PROFILES
+        if profile != OBSERVATION_PROFILE
     }
+    exploratory_profiles.add((DECISION_PROFILE, OBSERVATION_PROFILE))
     if not all(isinstance(profile, str) for profile in profiles) or profiles not in {
         ("governed_review/v1", "governed_review/v1"),
         *exploratory_profiles,
     }:
         raise ValueError("Unsupported or mismatched campaign profiles")
-    if profiles[0] == "campaign_action/v1" and (
+    if profiles in exploratory_profiles and (
         type(config.get("schema_attempts")) is not int or not 1 <= config["schema_attempts"] <= 3
     ):
         raise ValueError("Campaign schema_attempts must be one to three")

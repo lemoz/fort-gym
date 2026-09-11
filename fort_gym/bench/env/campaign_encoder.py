@@ -12,10 +12,11 @@ from copy import deepcopy
 from typing import Any
 
 from ..eval.campaign import TICKS_PER_YEAR
+from .campaign_view import OBSERVATION_PROFILE as INSPECTION_PROFILE
 
 PROFILE = "campaign_state/v1"
 CLOCK_PROFILE = "campaign_state/v2"
-PROFILES = (PROFILE, CLOCK_PROFILE)
+PROFILES = (PROFILE, CLOCK_PROFILE, INSPECTION_PROFILE)
 STATE_FIELDS = (
     "year",
     "year_tick",
@@ -161,8 +162,10 @@ def encode_campaign_observation(
         raise ValueError("Unsupported campaign observation profile")
     observation = _select(state, STATE_FIELDS)
     observation["observation_profile"] = profile
-    if profile == CLOCK_PROFILE:
+    if profile in (CLOCK_PROFILE, INSPECTION_PROFILE):
         observation["campaign_clock"] = campaign_clock(committed_elapsed_ticks, completed_decisions)
+    if profile == INSPECTION_PROFILE:
+        observation["map_view"] = deepcopy(state.get("map_view"))
     for key, fields in (("work", WORK_FIELDS), ("fort", FORT_FIELDS), ("crew", CREW_FIELDS)):
         if key in state:
             observation[key] = _select(state[key], fields)
@@ -181,6 +184,14 @@ def encode_campaign_observation(
                 "INTERACT operation with advance_ticks=0. No fallback action is chosen for you."
             ),
         }
+        if profile == INSPECTION_PROFILE:
+            observation["time_control"]["semantics"] = (
+                observation["time_control"]["semantics"].replace(
+                    "non-INTERACT commands are rejected",
+                    "world-changing commands and WAIT are rejected",
+                )
+                + " VIEW only reads terrain at zero ticks and does not dismiss a dialog."
+            )
     return render_campaign_observation(observation), observation
 
 
@@ -238,7 +249,7 @@ def render_campaign_observation(observation: dict, *, compact: bool = False) -> 
             allow_nan=not compact,
         ),
     ]
-    if observation.get("observation_profile") == CLOCK_PROFILE:
+    if observation.get("observation_profile") in (CLOCK_PROFILE, INSPECTION_PROFILE):
         clock = observation.get("campaign_clock", {})
         # Keep the historical first three lines and Last Action line stable for memory.
         lines.insert(

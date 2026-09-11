@@ -11,7 +11,12 @@ import hashlib
 import json
 from typing import Any
 
-from ..env.actions import parse_action
+from ..env.campaign_view import (
+    DECISION_PROFILE as INSPECTION_DECISION_PROFILE,
+    VIEW_FIELDS,
+    VIEW_INSTRUCTION,
+    parse_campaign_action,
+)
 from .governed_llm import (
     GOVERNED_ACTION_TYPES,
     DFHackGovernedLLMAgent,
@@ -87,11 +92,35 @@ class CampaignActionError(GovernedDecisionError):
 class CampaignLLMAgent(DFHackGovernedLLMAgent):
     """Same governed native controls, with an independently versioned decision profile."""
 
-    def __init__(self, *, schema_attempts: int = 3, **kwargs: Any) -> None:
+    def __init__(
+        self,
+        *,
+        schema_attempts: int = 3,
+        decision_profile: str = "campaign_action/v1",
+        **kwargs: Any,
+    ) -> None:
         if type(schema_attempts) is not int or not 1 <= schema_attempts <= 3:
             raise ValueError("Campaign schema attempts must be between one and three")
         self._schema_attempts = schema_attempts
+        if decision_profile not in ("campaign_action/v1", INSPECTION_DECISION_PROFILE):
+            raise ValueError("Unsupported campaign decision profile")
+        self._decision_profile = decision_profile
         super().__init__(**kwargs)
+
+    def _parameter_fields(self) -> dict:
+        return {
+            **PARAM_FIELDS,
+            **(
+                {"VIEW": VIEW_FIELDS}
+                if self._decision_profile == INSPECTION_DECISION_PROFILE
+                else {}
+            ),
+        }
+
+    def _campaign_system_prompt(self) -> str:
+        return CAMPAIGN_SYSTEM_PROMPT + (
+            VIEW_INSTRUCTION if self._decision_profile == INSPECTION_DECISION_PROFILE else ""
+        )
 
     def _action_tool(self) -> dict:
         return {
@@ -102,16 +131,29 @@ class CampaignLLMAgent(DFHackGovernedLLMAgent):
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "type": {"type": "string", "enum": list(GOVERNED_ACTION_TYPES)},
+                        "type": {
+                            "type": "string",
+                            "enum": list(GOVERNED_ACTION_TYPES)
+                            + (
+                                ["VIEW"]
+                                if self._decision_profile == INSPECTION_DECISION_PROFILE
+                                else []
+                            ),
+                        },
                         "params": {
                             "type": "object",
-                            "description": "Required fields by action: " + json.dumps(PARAM_FIELDS),
+                            "description": "Required fields by action: "
+                            + json.dumps(self._parameter_fields()),
                         },
                         "advance_ticks": {
                             "type": "integer",
                             "minimum": 0,
                             "maximum": self._max_advance_ticks,
-                            "description": "Native simulation ticks after the command. INTERACT requires 0.",
+                            "description": (
+                                "Native simulation ticks after the command. INTERACT and VIEW require 0."
+                                if self._decision_profile == INSPECTION_DECISION_PROFILE
+                                else "Native simulation ticks after the command. INTERACT requires 0."
+                            ),
                         },
                         **{key: {"type": "string"} for key in OPTIONAL_NOTES},
                     },
@@ -124,12 +166,60 @@ class CampaignLLMAgent(DFHackGovernedLLMAgent):
     def _json_action_transport_instruction(self) -> str:
         return CAMPAIGN_JSON_INSTRUCTION
 
+    def _extract_tool_payload(self, response: Any) -> dict | None:
+        if self._decision_profile != INSPECTION_DECISION_PROFILE:
+            return super()._extract_tool_payload(response)
+        choices = self._response_choices(response)
+        if not choices:
+            return None
+        message = self._field(choices[0], "message")
+        calls = self._field(message, "tool_calls") or []
+        if any(
+            self._field(self._field(call, "function"), "name", "") == "submit_action"
+            for call in calls
+        ):
+            return super()._extract_tool_payload(response)
+        payload = self._inspection_json_payload_from_text(self._field(message, "content"))
+        if payload is not None:
+            self._tool_events.append(
+                {
+                    "tool": "campaign_agent.text_payload",
+                    "input": {"model": self._model, "decision_profile": self._decision_profile},
+                    "output": {"parsed": True},
+                }
+            )
+        return payload
+
+    def _inspection_json_payload_from_text(self, content: Any) -> dict | None:
+        if isinstance(content, list):
+            content = " ".join(
+                str(part.get("text", "")) for part in content if isinstance(part, dict)
+            )
+        if not isinstance(content, str):
+            return None
+        # Preserve response order: calling the old decoder first could select a
+        # later WAIT instead of an earlier VIEW in the same model response.
+        decoder = json.JSONDecoder()
+        index = content.find("{")
+        while index != -1:
+            try:
+                candidate, _ = decoder.raw_decode(content, index)
+            except json.JSONDecodeError:
+                candidate = None
+            if (
+                isinstance(candidate, dict)
+                and str(candidate.get("type", "")).strip().upper() in self._parameter_fields()
+            ):
+                return candidate
+            index = content.find("{", index + 1)
+        return None
+
     def _checkpoint_configuration(self) -> dict:
         configuration = super()._checkpoint_configuration()
         configuration.update(
-            decision_profile="campaign_action/v1",
+            decision_profile=self._decision_profile,
             schema_attempts=self._schema_attempts,
-            prompt_sha256=hashlib.sha256(CAMPAIGN_SYSTEM_PROMPT.encode()).hexdigest(),
+            prompt_sha256=hashlib.sha256(self._campaign_system_prompt().encode()).hexdigest(),
             action_tool_sha256=hashlib.sha256(
                 json.dumps(self._action_tool(), sort_keys=True).encode()
             ).hexdigest(),
@@ -138,12 +228,13 @@ class CampaignLLMAgent(DFHackGovernedLLMAgent):
 
     def _campaign_action(self, payload: dict) -> dict:
         kind = str(payload.get("type") or "").strip().upper()
-        if kind not in PARAM_FIELDS:
+        fields = self._parameter_fields()
+        if kind not in fields:
             raise ValueError("type must name one of the declared native controls")
         params = payload.get("params")
         if not isinstance(params, dict):
             raise ValueError("params must be an explicit object")
-        missing = sorted(set(PARAM_FIELDS[kind]) - set(params))
+        missing = sorted(set(fields[kind]) - set(params))
         if missing:
             raise ValueError(f"{kind} params missing required fields: {', '.join(missing)}")
         ticks = payload.get("advance_ticks")
@@ -155,12 +246,16 @@ class CampaignLLMAgent(DFHackGovernedLLMAgent):
         action.update(
             {key: payload[key] for key in OPTIONAL_NOTES if isinstance(payload.get(key), str)}
         )
-        return parse_action(action, max_advance_ticks=self._max_advance_ticks)
+        return parse_campaign_action(
+            action,
+            max_advance_ticks=self._max_advance_ticks,
+            allow_view=self._decision_profile == INSPECTION_DECISION_PROFILE,
+        )
 
     def _campaign_messages(self, obs_text: str, obs_json: dict | None = None) -> list[dict]:
         memory = self._memory.get_context()
         return [
-            {"role": "system", "content": CAMPAIGN_SYSTEM_PROMPT},
+            {"role": "system", "content": self._campaign_system_prompt()},
             {"role": "user", "content": f"{memory}\n\n{obs_text}" if memory else obs_text},
         ]
 

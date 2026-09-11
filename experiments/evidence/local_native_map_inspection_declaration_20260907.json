@@ -1,0 +1,55 @@
+{
+  "schema_version": "fortgym.native-map-inspection-declaration/v1",
+  "attempt_id": "local-native-map-inspection-20260907-a",
+  "status": "declared_not_run",
+  "source_revision": "bbe58f9485d7ed42f288b9fa27f4d932159d9c01",
+  "source_pull_request": "https://github.com/lemoz/fort-gym/pull/136",
+  "exact_head_ci": "https://github.com/lemoz/fort-gym/actions/runs/34097397778",
+  "hypothesis": "The model-controlled VIEW interface returns native visible terrain for selected regions and z-levels, rejects invalid regions without world dispatch, and retains the selection across actual native checkpoint save/load continuation.",
+  "fixture_source": "experiments/fixtures/native_map_inspection_v1.py",
+  "fixture_sha256": "15327e57e6ab846de6551049b6bf937cd4d754fff249752f741799aafb6bd716",
+  "operator_sha256": "18cc9a6305579d58535533da42ab23e7a463c2a8ca3be5477bcc72458bf68cb4",
+  "context_sha256": {
+    "Dockerfile": "3772c49627e6daf8bed8ff912aa7e06286c721fe031c963394798c02db47ab94",
+    "fixture.py": "15327e57e6ab846de6551049b6bf937cd4d754fff249752f741799aafb6bd716",
+    "source.bundle": "01a215e4cc37bbe3d00ec2b7fa48a19937b00638b7266d69efd5802cf1b1a4e8"
+  },
+  "base_image": "sha256:f6fccac0243b1e1917883acfda59cd20c648fa4204d3c71b3dbc2108d0b68cd1",
+  "seed_receipt_sha256": "eaf5fa5a40014719e6c313f33497740e536a8faa1c90a84c4e09dcc380ac0595",
+  "source_kind": "immutable_original_native_snapshot",
+  "source_read_only": true,
+  "decision_profile": "campaign_action/v2",
+  "observation_profile": "campaign_state/v3",
+  "bounds": {
+    "local_vms": 1,
+    "cloud_vms": 0,
+    "containers": 1,
+    "native_processes_sequential": 2,
+    "scripted_decisions": 7,
+    "advancing_ticks_requested": 0,
+    "checkpoint_captures": 1,
+    "provider_calls": 0,
+    "container_network": "none",
+    "published_ports": [],
+    "native_worker_timeout_seconds": 300,
+    "container_execution_timeout_seconds": 900,
+    "outer_deadline_seconds": 1800,
+    "mandatory_teardown": true
+  },
+  "cost": {
+    "metered_provider_charge_usd": "0",
+    "cloud_charge_usd": "0",
+    "hardware_energy_app_and_ci_cost_usd": null
+  },
+  "prelaunch_validation": {
+    "fixture_logic_tests_passed": 2,
+    "native_execution": false
+  },
+  "exclusions": [
+    "No model-selected actions or autonomous gameplay credit",
+    "No new model comparison row",
+    "No prior campaign rollback, rerun or result rewrite",
+    "No proof of model meeting recovery or year-two fortress",
+    "No production deployment or merge"
+  ]
+}

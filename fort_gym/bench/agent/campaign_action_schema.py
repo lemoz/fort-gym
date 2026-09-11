@@ -19,7 +19,7 @@ def validate_schema_profile(profile: object) -> str:
     return profile
 
 
-def action_tool(legacy: dict, profile: object = LEGACY) -> dict:
+def action_tool(legacy: dict, profile: object = LEGACY, *, allow_view: bool = False) -> dict:
     """Return independent legacy or per-action typed tool definitions."""
     selected = validate_schema_profile(profile)
     tool = deepcopy(legacy)
@@ -64,6 +64,21 @@ def action_tool(legacy: dict, profile: object = LEGACY) -> dict:
         },
     }
     optional = {"BUILD": {"x2", "y2"}, "FARM": {"seasons"}}
+    if allow_view:
+        params["VIEW"] = {
+            "origin": {
+                "type": "array",
+                "items": {"type": "integer", "minimum": 0},
+                "minItems": 3,
+                "maxItems": 3,
+            },
+            "size": {
+                "type": "array",
+                "items": {"type": "integer", "minimum": 1, "maximum": 34},
+                "minItems": 2,
+                "maxItems": 2,
+            },
+        }
     original = tool["function"]["parameters"]
     kinds = original["properties"]["type"]["enum"]
     if set(kinds) != set(params):
@@ -78,7 +93,7 @@ def action_tool(legacy: dict, profile: object = LEGACY) -> dict:
             "required": [key for key in params[kind] if key not in optional.get(kind, set())],
             "additionalProperties": False,
         }
-        if kind == "INTERACT":
+        if kind in {"INTERACT", "VIEW"}:
             branch["properties"]["advance_ticks"]["maximum"] = 0
         variants.append(branch)
     tool["function"]["parameters"] = {"oneOf": variants}

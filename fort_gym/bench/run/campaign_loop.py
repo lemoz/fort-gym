@@ -18,7 +18,12 @@ from typing import Any, Protocol
 from ..agent.base import Agent
 from ..agent.campaign_local import LocalOutputLimitPause
 from ..agent.governed_llm import GovernedBudgetCapError
-from ..env.actions import parse_action
+from ..env.campaign_view import (
+    OBSERVATION_PROFILE as INSPECTION_PROFILE,
+    parse_campaign_action,
+    validate_map_read,
+    view_selection,
+)
 from ..env.campaign_encoder import PROFILES as CAMPAIGN_OBSERVATION_PROFILES
 from ..env.campaign_encoder import encode_campaign_observation
 from ..env.encoder import encode_observation
@@ -39,6 +44,9 @@ class CampaignEnvironment(Protocol):
         ...
 
     def screen(self) -> str:
+        ...
+
+    def inspect_map(self, selection: dict | None) -> dict:
         ...
 
     def apply(self, action: dict[str, Any], state: dict[str, Any]) -> dict[str, Any]:
@@ -186,6 +194,10 @@ class CampaignLoop:
             raise ValueError("Invalid campaign advance limit")
         if observation_profile not in ("governed_review/v1", *CAMPAIGN_OBSERVATION_PROFILES):
             raise ValueError("Unsupported campaign observation profile")
+        if observation_profile == INSPECTION_PROFILE and not callable(
+            getattr(environment, "inspect_map", None)
+        ):
+            raise ValueError("Inspection profile requires the native read-only map capability")
         if advance_policy not in POLICIES:
             raise ValueError("Unsupported campaign advance policy")
         if (
@@ -199,6 +211,7 @@ class CampaignLoop:
         self.agent, self.environment, self.output = agent, environment, output
         self.campaign_id, self.max_advance_ticks = campaign_id, max_advance_ticks
         self.observation_profile = observation_profile
+        self.observation_view: dict | None = None
         self.advance_policy = advance_policy
         self.trace = output / "trace.jsonl"
         self.journal = output / "usage.jsonl"
@@ -276,6 +289,8 @@ class CampaignLoop:
         self.no_action_boundary = None
         before = self.environment.observe()
         start = _clock(before)
+        if self.observation_profile == INSPECTION_PROFILE:
+            self._observe_map(before, self.observation_view)
         screen = self.environment.screen()
         if self.observation_profile in CAMPAIGN_OBSERVATION_PROFILES:
             # Dialog legality depends on the screen just read at this paused boundary.
@@ -370,7 +385,10 @@ class CampaignLoop:
                     os.fsync(stream.fileno())
             self.no_action_boundary = no_action
             raise CampaignNoActionPause("Accounted output limit before a native action")
-        action = parse_action(raw_action, max_advance_ticks=self.max_advance_ticks)
+        allow_view = self.observation_profile == INSPECTION_PROFILE
+        action = parse_campaign_action(
+            raw_action, max_advance_ticks=self.max_advance_ticks, allow_view=allow_view
+        )
         if action.get("type") not in {
             "DIG",
             "BUILD",
@@ -380,12 +398,30 @@ class CampaignLoop:
             "LABOR",
             "WAIT",
             "INTERACT",
+            *(["VIEW"] if allow_view else []),
         }:
             raise ValueError("Campaign action is outside the declared governed interface")
         ticks = action.get("advance_ticks")
         if type(ticks) is not int or not 0 <= ticks <= self.max_advance_ticks:
             raise ValueError("Model action has no valid bounded advance_ticks")
-        execution = self.environment.apply(action, before)
+        next_view = self.observation_view
+        if action["type"] == "VIEW":
+            native_read = validate_map_read(
+                self.environment.inspect_map(action["params"]), action["params"], before
+            )
+            accepted = native_read.get("ok") is True
+            execution = {
+                "accepted": accepted,
+                "command_mutation": "not_attempted",
+                "observation_changed": accepted,
+                "result": {**native_read, "command_mutation": "not_attempted"},
+            }
+            if accepted:
+                next_view = view_selection(action["params"])
+            else:
+                execution["why"] = native_read.get("error", "Native map inspection unavailable")
+        else:
+            execution = self.environment.apply(action, before)
         self.failure_context = {"action": action, "execute": execution}
         requested = requested_ticks(ticks, execution, self.advance_policy)
         after, receipt = self.environment.advance(requested, before)
@@ -420,6 +456,8 @@ class CampaignLoop:
             is not None
         ):
             raise ValueError("Native tick operation did not finish or interrupt cleanly")
+        if allow_view:
+            self._observe_map(after, next_view)
         tick_info = {
             **receipt,
             "start_year": before["year"],
@@ -461,6 +499,7 @@ class CampaignLoop:
             "campaign_mode": True,
         }
         _append(self.trace, row)
+        self.observation_view = deepcopy(next_view)
         self.history = (self.history + [history])[-12:]
         self.last_result = execution
         self.next_step += 1
@@ -468,6 +507,10 @@ class CampaignLoop:
             self.committed_elapsed_ticks += actual
         self.at_boundary = True
         return row
+
+    def _observe_map(self, state: dict, selection: dict | None) -> None:
+        native_read = validate_map_read(self.environment.inspect_map(selection), selection, state)
+        state["map_view"] = {"selection": deepcopy(selection), "native": native_read}
 
     def checkpoint(
         self,
@@ -495,6 +538,11 @@ class CampaignLoop:
                 "max_advance_ticks": self.max_advance_ticks,
                 "observation_profile": self.observation_profile,
                 "advance_policy": self.advance_policy,
+                **(
+                    {"observation_view": deepcopy(self.observation_view)}
+                    if self.observation_profile == INSPECTION_PROFILE
+                    else {}
+                ),
             },
             usage_path=self.journal,
             no_action_boundary=self.no_action_boundary,
@@ -537,6 +585,12 @@ class CampaignLoop:
         saved_profile = runner.get("observation_profile", "governed_review/v1")
         if observation_profile is not None and observation_profile != saved_profile:
             raise ValueError("Requested observation profile differs from checkpoint")
+        saved_view = None
+        if saved_profile == INSPECTION_PROFILE:
+            if "observation_view" not in runner:
+                raise ValueError("Inspection checkpoint is missing its selected view")
+            if runner["observation_view"] is not None:
+                saved_view = view_selection(runner["observation_view"])
         saved_advance = runner.get("advance_policy", ACCEPTED_ONLY)
         if advance_policy is not None and advance_policy != saved_advance:
             raise ValueError("Requested advance policy differs from checkpoint")
@@ -590,5 +644,6 @@ class CampaignLoop:
                 progress["elapsed_ticks"] if origin.get("step") == 0 else None
             )
         instance.parent = checkpoint
+        instance.observation_view = saved_view
         instance.at_boundary = True
         return instance
