@@ -20,6 +20,7 @@ ENDURANCE_DELIVERY = "keyboard_matched_endurance_delivery_20260911.json"
 ENDURANCE_LAUNCH = "keyboard_matched_astra_r1_endurance_launch_20260911.json"
 ASTRA_ENDURANCE = "keyboard_matched_astra_r1_continuation_64_128_20260911.json"
 ENDURANCE_RECORDS_CODE = "keyboard_matched_endurance_records_code_20260911.json"
+ENDURANCE_RECORDS_WEBSITE = "keyboard_matched_endurance_records_website_20260911.json"
 
 
 @pytest.mark.parametrize(
@@ -40,6 +41,10 @@ ENDURANCE_RECORDS_CODE = "keyboard_matched_endurance_records_code_20260911.json"
         (
             ENDURANCE_RECORDS_CODE,
             "c74715355b8c0a9fde359e21ec685af7d4e65c9f6952c05d3e88350b58e1cf93",
+        ),
+        (
+            ENDURANCE_RECORDS_WEBSITE,
+            "b673956ff1d5aa9686a9e796072fcfc63b80f4bfc7cc002090cdbd1999ee8626",
         ),
     ],
 )
@@ -155,6 +160,30 @@ def test_recorded_history_code_delivery_does_not_claim_a_running_replacement_or_
     assert record["native_owner_changed"] is record["running_preview_changed"] is False
     assert record["new_gameplay_result_included"] is record["year_two_goal_complete"] is False
     assert record["public_deployment"] is record["main_merge"] is False
+
+
+def test_actual_endurance_website_keeps_saved_and_live_results_separate():
+    record = json.loads((EVIDENCE / ENDURANCE_RECORDS_WEBSITE).read_bytes())
+    assert record["passed"] is True
+    assert record["source_revision"] == record["website_revision"] == record["ci"]["head_sha"]
+    assert record["ci"]["conclusion"] == "success" and record["ci"]["status"] == "completed"
+    assert record["local_tests"] == {"passed": 4804, "skipped": 10}
+    assert record["historical_and_decision_64_records_unchanged"] is True
+    assert record["recorded_endurance_windows"] == 1
+    assert record["recorded_endurance_boundaries"] == 64
+    assert record["latest_saved_responses"] == 448
+    assert record["latest_saved_tokens"] == 13479220
+    live = record["live_observation"]
+    assert live["campaign_id"] == "matched-20260910-sol-r1"
+    assert live["responses"] == 27 and live["campaign_returned_responses"] == 91
+    assert live["new_save_verified"] is False and live["source_checkpoint_verified"] is True
+    assert live["reported_charge_usd"] is None
+    assert record["admin_disabled"] is True
+    assert (
+        record["browser_visual_qa"] is record["public_deployment"] is record["main_merge"] is False
+    )
+    assert record["model_calls_by_verifier"] == record["game_ticks_by_verifier"] == 0
+    assert record["year_two_goal_complete"] is False
 
 
 def test_endurance_delivery_does_not_claim_more_gameplay():

@@ -27,7 +27,7 @@ Its VM/container start and read-only configuration verification passed. Its
 live state remains provisional until a later terminal audit; no Sol result is
 inferred from the successful launch.
 
-## Current delivery: six saved campaigns and longer-run support
+## Current delivery: recorded endurance and live continuation
 
 The configuration-driven endurance courier and all six own-save 64-to-128
 declarations are pushed at `45bb05c903181b6b2e4f61df3a4c0a8eca05b818` in
@@ -38,7 +38,7 @@ result publisher passed 17 synthetic boundary tests. The full six-input audit
 verified own native-save inventories and settled memory/usage without model
 calls or new game ticks. Native source and historical owners remain frozen.
 
-The local website now serves `941ed46961c542d2f1fa97bd8154bf0465dbdd29`, pushed
+The previous local website served `941ed46961c542d2f1fa97bd8154bf0465dbdd29`, pushed
 in [draft PR #151](https://github.com/lemoz/fort-gym/pull/151). It shows all six
 audited decision-64 outcomes and 192 new continuation boundaries, separately
 from the six initial windows. It adds a dedicated 64-to-128 live card while
@@ -53,7 +53,7 @@ binds both pushed revisions, their passing CI, tests and prelaunch HTTP checks.
 These are delivery/readiness results,
 not additional gameplay or proof of a functioning year-two fortress.
 
-The next recorded-history website implementation is pushed at
+Recorded-history website support first reached the tested remote revision
 `bf4db0341dc682a77cb53aac0414b37567b6328b` in [draft PR #152](https://github.com/lemoz/fort-gym/pull/152).
 It validates each later own-save window and displays latest saved totals
 without adding overlapping histories twice. The first CI run exposed a Linux
@@ -61,9 +61,27 @@ argument-size limit in the UI test; fixture JSON now uses stdin, retaining the
 complete data and testing histories through decision 1280. The repaired full
 local suite passed 4,803 tests with 10 skips, and exact-head GitHub CI passed
 4,665 with 148 skips in run `34550444083`. The [code-delivery receipt](../experiments/evidence/keyboard_matched_endurance_records_code_20260911.json)
-preserves that failure and repair. This revision's endurance registry is still
-empty and the live preview is unchanged; Astra's newly audited result must be
-registered and the replacement preview verified before claiming website delivery.
+preserves that failure and repair; that historical code revision registered no
+endurance results.
+
+The local preview now serves `3f63b1c3570d987a06a9180c0459fa5f5820da4a`, with
+Astra's audited decision-128 record registered by its immutable result commit
+and original declaration. Exact-head CI passed in run `34551459589` with 4,666
+tests and 148 skips. The full local suite passed 4,804 with 10 skips, and all
+24 focused recorded-history tests passed. The replacement uses the existing
+website architecture, database and artifact paths; the Sol owner and observer
+were not restarted or edited.
+
+The [HTTP delivery receipt](../experiments/evidence/keyboard_matched_endurance_records_website_20260911.json)
+verifies the actual served HTML/assets and result data against that clean
+source. Historical APIs and all six decision-64 records remain unchanged.
+The new view contains one audited endurance window with 64 new boundaries;
+latest saved totals across all six attempts are 448 responses and 13,479,220
+returned tokens, without double-counting earlier windows. Sol's live activity
+remains separately labeled provisional. Its 27-response observation in this
+receipt is historical, not current status or a completed Sol save. Admin
+remains disabled. No browser visual QA, public deployment or main merge is
+claimed; the full functioning Year-Two fortress objective remains open.
 
 ## Earlier matched pilot and website delivery history
 
