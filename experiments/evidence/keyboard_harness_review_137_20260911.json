@@ -19,7 +19,14 @@
     "fort_gym/bench/env/screen_observation.py",
     "fort_gym/bench/env/campaign_keyboard.py",
     "fort_gym/bench/run/keyboard_config.py",
-    "hook/campaign_keyboard_v1.lua"
+    "hook/campaign_keyboard_v1.lua",
+    "fort_gym/bench/run/campaign_loop.py",
+    "fort_gym/bench/run/campaign_checkpoint.py",
+    "fort_gym/bench/run/campaign_save.py",
+    "fort_gym/bench/run/keyboard_rejection_journal.py",
+    "fort_gym/bench/run/keyboard_checkpoint_recovery.py",
+    "fort_gym/bench/run/keyboard_rejection.py",
+    "fort_gym/bench/run/keyboard_rejection_recovery.py"
   ],
   "test_files_reviewed": [
     "tests/test_codex_allowance.py",
@@ -32,7 +39,13 @@
     "tests/test_campaign_keyboard_lua.py",
     "tests/test_standard_input.py",
     "tests/test_screen_observation.py",
-    "tests/test_native_key_catalog.py"
+    "tests/test_native_key_catalog.py",
+    "tests/test_campaign_loop.py",
+    "tests/test_campaign_checkpoint.py",
+    "tests/test_campaign_save.py",
+    "tests/test_keyboard_checkpoint_recovery.py",
+    "tests/test_keyboard_rejection.py",
+    "tests/test_keyboard_rejection_recovery.py"
   ],
   "reviewed_file_sha256": {
     "fort_gym/bench/agent/codex_selection.py": "04c7d19319939e13ac8fbc0f291a4450f175053a111b5ed4e1a09dc99a334bab",
@@ -59,7 +72,20 @@
     "tests/test_campaign_keyboard_lua.py": "9e034a782d618da54845168414c2612458d7eaac142f746cab069dfda221b9e5",
     "tests/test_standard_input.py": "a9f8c3e187e55de7660eccb473325aad35f0bbef0c681fb9f726367cedfc07a9",
     "tests/test_screen_observation.py": "e5869cf82a4c53cd7845c134457affeccbcc15e898e1b76036f19bbe7de660f3",
-    "tests/test_native_key_catalog.py": "478df6553d4485dd6d3302443b10cdfeee45ba2eec780325e8ac09ad76ac68e1"
+    "tests/test_native_key_catalog.py": "478df6553d4485dd6d3302443b10cdfeee45ba2eec780325e8ac09ad76ac68e1",
+    "fort_gym/bench/run/campaign_loop.py": "978e192d78c463f6b7a36317e766e6aad1bb21ff40d6cd73f3716ad87c3b1950",
+    "fort_gym/bench/run/campaign_checkpoint.py": "2f3a2d46a37aaf95f7fbca199385339ca0b0ab00865c202886b3c6c08aec5b8a",
+    "fort_gym/bench/run/campaign_save.py": "3d9561c1524b838456d3e47ffa1862c0eb555a1a080e9c1bb7ebf52ee7dfe743",
+    "fort_gym/bench/run/keyboard_rejection_journal.py": "935d68f89d362cb3b2ccb4b186da6c34adb2b451f3545ffd59c33f0ded855f44",
+    "fort_gym/bench/run/keyboard_checkpoint_recovery.py": "1f0a1cd9b78f443e815e3d99a920d8b29a1abab18ad21c78a6883209561e6505",
+    "fort_gym/bench/run/keyboard_rejection.py": "9c716898720d383dfb370641b220247a00fecc94b1675716024f818d59ffe0fc",
+    "fort_gym/bench/run/keyboard_rejection_recovery.py": "80c8e8cfe9f8a3a89c5de15752859ca9501fd5f96dc29aba7b68ec1da08be64f",
+    "tests/test_campaign_loop.py": "1b61447dba5b122275a50ba863f1d61fe94f7ce336c53bc7473f24c128793fd9",
+    "tests/test_campaign_checkpoint.py": "13840b0600af43978cd058db06d9001f95e54b78d3d3cfb7772e8fa3079e9ab8",
+    "tests/test_campaign_save.py": "c1883333f70a9032c1cc51102c8d2cb4ce066e59408db9af6b15037550046017",
+    "tests/test_keyboard_checkpoint_recovery.py": "e3e7819c7cd4ea5e08e17c71640fa5dc2d077635955aca99fef4319f461a7227",
+    "tests/test_keyboard_rejection.py": "649acc7c8a00424eb599fd67b5ce9e0d670df983ff52f59c504f94e0ce0f56cb",
+    "tests/test_keyboard_rejection_recovery.py": "6c51e2cf8f29170904cb581d0f89475c98bccb50c13a0e8695a4ba96704baadf"
   },
   "partially_inspected": [
     "fort_gym/bench/env/native_key_catalog.py"
@@ -99,10 +125,9 @@
     "https://learn.chatgpt.com/docs/app-server#api-overview-1"
   ],
   "remaining_review": [
-    "Campaign-loop integration and cumulative usage/trace reconciliation.",
-    "Clock, save identity, checkpoint/restart paths and original native evidence.",
+    "Remaining clock, menu-preserving save, launcher identity, runtime and other restart/recovery paths, including their dependencies and retained native evidence.",
     "Outcome metrics, public/API records, website changes and historical publication manifests.",
-    "All files not explicitly listed as reviewed; full merge readiness remains unproven."
+    "All files not explicitly listed as reviewed; passing local tests and reviewed component contracts do not establish full merge readiness."
   ],
   "ready_to_merge": false,
   "merged": false,
@@ -112,5 +137,33 @@
   "website_deployed": false,
   "review_url": "https://github.com/lemoz/fort-gym/pull/137#issuecomment-5639229687",
   "base": "main",
-  "draft": true
+  "draft": true,
+  "updated_at": "2026-09-11T19:03:38Z",
+  "continuation_review": {
+    "source_files_added": 7,
+    "test_files_added": 6,
+    "local_tests": [
+      {
+        "suite": "save_and_continuation",
+        "passed": 81,
+        "skipped": 0,
+        "report": "pr137-continuation-pytest.xml"
+      },
+      {
+        "suite": "rejected_input_and_recovery",
+        "passed": 47,
+        "skipped": 0,
+        "report": "pr137-rejection-pytest.xml"
+      }
+    ],
+    "selected_file_ruff": "passed",
+    "contracts_reviewed": [
+      "Checkpoint trace, agent, runner, usage and native save files are hash-bound; native snapshot completion and stable copy checks precede final manifest publication.",
+      "Normal resume restores checkpoint-era model memory and reconciles later returned usage without replaying later actions. Generic loop load checks are not a substitute for the launcher's native save-identity verification.",
+      "Unsupported keys retain the attempted response and usage but dispatch no keys or clock, and do not apply the rejected memory update; the next action remains model-selected.",
+      "Historical rejected-input reconciliation appends evidence bound to the original journal and receipt, preserving original failure and uncertainty when proof is incomplete.",
+      "Settled-save recovery checks retained files, source prefix, memory, usage and observations; documented pending pathfinding-cache differences are distinguished from persistent state changes."
+    ],
+    "new_native_acceptance_claim": false
+  }
 }

@@ -124,8 +124,11 @@ The next unmerged dependency is PR137, now retargeted to main and still draft.
 Its fresh full local suite passed 4,327 tests with ten skipped. The
 [partial review](https://github.com/lemoz/fort-gym/pull/137#issuecomment-5639229687)
 and [hash-bound review index](../experiments/evidence/keyboard_harness_review_137_20260911.json)
-cover fourteen core source files and eleven test files. Campaign-loop, save/restart,
-outcome and website review remains; passing tests alone do not establish merge
+now cover twenty-one source files and seventeen test files. The added loop,
+checkpoint, save and rejected-input review passed 81 continuation tests and 47
+rejection/recovery tests, with selected-file Ruff passing. Remaining clock,
+menu-save, launcher and restart paths, native evidence, outcomes and website
+review remain; passing tests alone do not establish merge
 readiness for this 271-file, 31,717-line addition.
 
 The transport review identified a comparison-provenance gap: decision receipts
