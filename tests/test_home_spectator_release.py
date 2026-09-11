@@ -100,7 +100,7 @@ def test_public_endpoint_no_connection_no_cache_and_no_private_errors(
 def test_recordings_match_the_reviewed_export_and_contain_no_private_fields():
     root = ROOT / "web/static/recordings"
     catalog = json.loads((root / "catalog.json").read_text())
-    assert len(catalog["recordings"]) == 3
+    assert len(catalog["recordings"]) == 4
     total = 0
     for row in catalog["recordings"]:
         path = root / (row["id"] + ".json")
@@ -118,9 +118,35 @@ def test_recordings_match_the_reviewed_export_and_contain_no_private_fields():
             }
             assert set(frame["action"]) == {"intent", "keys", "advance_ticks"}
         total += len(recording["frames"])
-    assert total == 288
+    assert total == 320
     astra = json.loads((root / "astra-97-256.json").read_text())
     assert astra["saved_through_decision"] == 224 and astra["last_decision"] == 256
+
+
+def test_recovery_is_separate_and_prior_recordings_are_immutable():
+    root = ROOT / "web/static/recordings"
+    expected = {
+        "astra-97-256": "5627f83eec939aa7b86603e9aa5d18d2eb7a839560ae3a5ff3354ab8d52a4ee0",
+        "sol-65-128": "3eb8184e5b9a5f7bffee4ce6c972556c3baf030f74c4c59baf251c9a3100e696",
+        "terra-65-128": "37dc8ce0f22df8c9a6b4630743dc443b6fdbac4505ce50ebdad30f38d5df0bfc",
+    }
+    for name, digest in expected.items():
+        assert hashlib.sha256((root / (name + ".json")).read_bytes()).hexdigest() == digest
+    data = json.loads((root / "astra-recovery-225-256.json").read_text())
+    assert (data["first_decision"], data["last_decision"], data["saved_through_decision"]) == (225, 256, 256)
+    assert len(data["frames"]) == 32
+    assert sum(frame["after"]["ticks_advanced"] for frame in data["frames"]) == 28345
+    assert data["parent_independent_audit_sha256"] == "01a9ba65e1d444dcd7c4eda7f4e46eaedbcc9c2ac0105a315dd8fe1fd166556b"
+    recovery = data["recovery"]
+    assert recovery["restored_checkpoint"] == 224
+    assert recovery["lost_decisions"] == 32 and recovery["lost_ticks"] == 422
+    assert recovery["total_responses"] == 288
+    assert recovery["source_recording_id"] == "astra-97-256"
+    assert recovery["uninterrupted_campaign"] is False
+    assert recovery["actions_replayed"] is False
+    catalog = json.loads((root / "catalog.json").read_text())["recordings"]
+    assert catalog[0]["id"] == data["id"]
+    assert catalog[0]["recovery"] == recovery
 
 
 def test_homepage_and_assets_work_on_production_baseline():
@@ -173,7 +199,7 @@ def test_worlds_recordings_and_previews_match_the_published_catalog():
     assert page.recordings == [row["id"] for row in catalog]
     assert page.recordings == [row["id"] for row in previews["recordings"]]
     assert html.index('id="recent-recordings"') < html.index('id="filters-form"')
-    assert "288 captured decisions" in html
+    assert "320 captured decisions" in html
     assert "observed, unsaved tail" in html
     for item, preview in zip(catalog, previews["recordings"], strict=True):
         recording = client.get("/static/recordings/" + item["id"] + ".json").json()
