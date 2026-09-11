@@ -1,0 +1,87 @@
+{
+  "schema_version": "fortgym.website-live-browser-acceptance/v1",
+  "observed_date_utc": "2026-09-11",
+  "website": "https://fortgym.live/",
+  "release_revision": "f90af451d540be64bc233e06b72bafff7f19603d",
+  "browser_context": "fresh isolated browser context",
+  "desktop": {
+    "viewport_css_pixels": [
+      1570,
+      957
+    ],
+    "live_decisions_observed": [
+      412,
+      413
+    ],
+    "game_screen_visually_inspected": true,
+    "chosen_key_and_stated_intent_visible": true,
+    "provisional_execution_disclosure_visible": true
+  },
+  "recorded_playback": {
+    "recording": "astra-recovery-225-256",
+    "initial_decision": 225,
+    "slider_last_decision": 256,
+    "previous_button_decision": 255,
+    "returned_to_live": true
+  },
+  "mobile": {
+    "viewport_css_pixels": [
+      390,
+      844
+    ],
+    "device_pixel_ratio": 1,
+    "live_decisions_observed": [
+      414,
+      416
+    ],
+    "game_screen_visually_inspected": true,
+    "document_scroll_width": 390,
+    "fit_canvas_width": 360,
+    "enlarge_pressed": true,
+    "enlarged_canvas_width": 1200,
+    "screen_container_scroll_width": 1200,
+    "page_wide_overflow": false
+  },
+  "console": {
+    "errors": 0,
+    "warnings": 0
+  },
+  "network_observation": {
+    "fetch_xhr_requests_seen": 31,
+    "all_methods": "GET",
+    "all_statuses": 200,
+    "game_commands_sent": false
+  },
+  "owner_completion": {
+    "relay_reported_stopped": true,
+    "owner_alive": false,
+    "public_projection": "stale",
+    "browser_returned_to_recording": true,
+    "recording_decision_after_fallback": 225,
+    "displayed_notice": "Live connection expired · showing recordings"
+  },
+  "post_run_http_check": {
+    "passed": true,
+    "release_assets_byte_identical": true,
+    "existing_recordings": 4,
+    "recorded_frames": 320,
+    "represented_models": 3,
+    "comparison_ranking_claimed": false,
+    "health": "ok",
+    "canonical_live_api": "not_connected",
+    "relay_payload_sha256": "c4b715280098fb6e4c30021e03fe133c3feb95bc5ae18f99b9bc87bde28fd5f7",
+    "verifier_sha256": "9c2064fc8217ec58ae8c960ad8736719bacdf101b0bbdff968c2097ecc94d8a5"
+  },
+  "screenshots": {
+    "inspected_inline": true,
+    "local_screenshot_file_saved": false
+  },
+  "new_website_deployment": false,
+  "service_restart": false,
+  "full_256_416_recording_published": false,
+  "limitations": [
+    "Browser acceptance covers the observed homepage live/replay interactions and two viewports, not every website route or browser.",
+    "All released route bytes were rechecked; this is not a full visual audit of every route.",
+    "Live model actions are provisional. Native execution and saved gameplay are independently verified in the separate completed-window result."
+  ]
+}

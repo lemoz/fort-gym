@@ -1,0 +1,149 @@
+{
+  "schema_version": "fortgym.keyboard-binding-continuation-result/v1",
+  "campaign_id": "bindings-20260911-astra-r1",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "replicate": 1,
+  "declared_condition": "native_keyboard_bindings/v1",
+  "screen_size": [
+    120,
+    40
+  ],
+  "observation_profile": "native_screen_text/v1",
+  "source_revision": "d22f28d99f4fd103188979e964e148139d3f3efd",
+  "auditor_revision": "bb8516aa6a27d6ba92bee39f9769adcfb7095d6c",
+  "declaration": "experiments/keyboard_binding_continuation_20260911/window-256-416.json",
+  "declaration_revision": "d9463200785c67d9fe701f4f583d1539e5db2e96",
+  "status": "completed",
+  "stop_reason": "declared_window_limit",
+  "first_step": 256,
+  "next_step": 416,
+  "new_returned_responses": 160,
+  "new_returned_tokens": 4131181,
+  "new_saved_elapsed_ticks": 200000,
+  "cumulative_usage": {
+    "accounted_responses": 448,
+    "cost_basis": "codex_subscription_charge_unreported/v1",
+    "dispatched_requests": 448,
+    "returned_responses": 448,
+    "total_cost_usd": null,
+    "total_tokens": 11866456
+  },
+  "saved_elapsed_ticks": 429845,
+  "elapsed_years": 1.0660838293650794,
+  "first_full_elapsed_year_crossed": true,
+  "ticks_into_year_two": 26645,
+  "saved_calendar": {
+    "year": 31,
+    "year_tick": 43446
+  },
+  "initial_window_metrics": {
+    "completed_beds": 7,
+    "completed_farms": 1,
+    "completed_workshops": 3,
+    "drink_stock": 413,
+    "food_stock": 447,
+    "functional_rooms": null,
+    "population": 10,
+    "recorded_dead_citizens": 0,
+    "stone_stock": null,
+    "wood_stock": null
+  },
+  "saved_metrics": {
+    "completed_beds": 12,
+    "completed_farms": 1,
+    "completed_workshops": 3,
+    "drink_stock": 389,
+    "food_stock": 43,
+    "functional_rooms": null,
+    "population": 13,
+    "recorded_dead_citizens": 0,
+    "stone_stock": null,
+    "wood_stock": null
+  },
+  "functioning_at_endpoint": {
+    "assessment": "supported_qualitatively_post_hoc",
+    "basis": [
+      "13 living citizens and zero recorded deaths at the saved endpoint.",
+      "12 completed beds, three workshops and one farm; four additional beds in the final segment.",
+      "43 raw-edible food units and 389 drinks at the endpoint, with complete raw-food scans and no trader flags on final food.",
+      "23 sampled boundaries after the first full elapsed year retain at least 12 living citizens, 33 raw-edible food units and 290 drinks.",
+      "Native job samples after the anniversary include fishing, raw-fish preparation, planting and hauling."
+    ],
+    "formal_score": false,
+    "production_rate_measured": false,
+    "consumption_rate_measured": false,
+    "indefinite_self_sufficiency_claimed": false,
+    "stock_ownership_and_accessibility_proven": false,
+    "job_samples_are_completed_job_counts": false
+  },
+  "checkpoint": {
+    "sha256": "73f90e9bb9097fe00ed056723c0cc8de36bb0b85b4c0e40878af86d071c7704a",
+    "file_sha256": "9de235fa8e7ab30684c2b82424967b5b505b7951f048118f6915d64c2a513ec9",
+    "parent_sha256": "c0ce89647d3d777370820d0a74cf5ff37db833bfe2e365ca6180683401cbb922",
+    "verified_native_saves": 5,
+    "source_fresh_load_verified": true,
+    "final_fresh_reload_verified": false
+  },
+  "history": {
+    "uninterrupted_campaign": false,
+    "inherited_save_loss_restarts": 1,
+    "inherited_lost_decisions": 32,
+    "inherited_lost_elapsed_ticks": 422,
+    "lost_responses_remain_in_usage": true,
+    "new_rollbacks": 0,
+    "human_gameplay_rescue": false
+  },
+  "verification": {
+    "frozen_terminal_audit_passed": true,
+    "second_original_receipt_audit_passed": true,
+    "independent_person_approval": false,
+    "original_evidence_unchanged": true,
+    "teardown_verified": true,
+    "container_exit_code": 0,
+    "vm_observed_stopped": true,
+    "guest_poweroff_returncode": 0,
+    "vm_stop_returncode": 0,
+    "source_checkpoint_unchanged": true
+  },
+  "costs": {
+    "transport": "codex-exec-chatgpt/v1",
+    "reported_model_charge_usd": null,
+    "billing_reconciled": false,
+    "cloud_vms_created": 0,
+    "paid_api_fallback_used": false,
+    "local_model_used": false,
+    "hardware_energy_and_app_cost_usd": null
+  },
+  "evidence_sha256": {
+    "terminal_review": "beb2760bd0516fcb884420c3fd87a3fbcc4fd54d170857e97d7cdb471d27f743",
+    "second_audit": "f0ceec94b073c9a82125be42f45a844b8be28fc065bf516f425c2843b5ee4558",
+    "second_audit_source": "266d801fb87453a89066524e928abfd13421d57a668e1a780fc66f2ad6385914",
+    "supply_review_source": "ad991aa0e05d85f95c4a139eb4bf3f43c4801d32d8913ded5530fd3e8ae28440",
+    "checkpoint": "9de235fa8e7ab30684c2b82424967b5b505b7951f048118f6915d64c2a513ec9",
+    "native_after": "7ce8462ebc4ad63697c429b387c088cd4b3fb661e42331e4850e6ddd8e5e2b93",
+    "native_result": "f2b5b61749844209114682de40d6acfa2b59d27655bf5950e1e703038264bf9b",
+    "reviewer": "266d801fb87453a89066524e928abfd13421d57a668e1a780fc66f2ad6385914",
+    "trace": "5879c3f5f98fde51ec441b90a3b4f6190b132b9c9b4deb5a22222ebd4c83cbe4",
+    "usage": "3670e197f7ace710ae76de2134d886d31a7586f6816d04e6cff31e50ff6cb1cf"
+  },
+  "supply_review": "experiments/evidence/keyboard_binding_astra_r1_supply_384_416_20260911.json",
+  "publication": {
+    "repository_result": true,
+    "full_window_recording_published": false,
+    "live_relay_finished": true
+  },
+  "limitations": [
+    "This is one Astra displayed-key trial, including an explicitly retained historical save-loss recovery, not a repeated matched model ranking.",
+    "The original generic campaign profile leaves functioning_fortress not_assessed; the separate authored qualitative assessment here uses saved native supplies, development, survival and activity evidence.",
+    "Final fresh reload is not yet verified. Earlier segments were separately reloaded from their own saves.",
+    "Resource stocks and sampled jobs do not measure production, consumption, access or indefinite sustainability.",
+    "Provider token usage is recorded; subscription dollar charges are not reported and are not treated as zero."
+  ],
+  "full_goal_complete": false,
+  "next_work": [
+    "Verify final save 416 in a fresh isolated native load without model decisions or gameplay rescue.",
+    "Publish the completed replay and result on the website.",
+    "Finish remaining harness integration and run comparable repeated displayed-key trials across at least three supported models."
+  ]
+}

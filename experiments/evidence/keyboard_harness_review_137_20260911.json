@@ -33,7 +33,14 @@
     "fort_gym/bench/run/keyboard_save_probe.py",
     "fort_gym/bench/run/keyboard_save_screens.py",
     "fort_gym/bench/run/keyboard_save_lua.py",
-    "fort_gym/bench/run/campaign_environment.py"
+    "fort_gym/bench/run/campaign_environment.py",
+    "fort_gym/bench/run/keyboard_segment.py",
+    "fort_gym/bench/run/keyboard_trial.py",
+    "fort_gym/bench/run/keyboard_trial_config.py",
+    "scripts/campaign_keyboard_native.py",
+    "scripts/campaign_load_smoke.py",
+    "scripts/campaign_process.py",
+    "scripts/campaign_keyboard_trial.py"
   ],
   "test_files_reviewed": [
     "tests/test_codex_allowance.py",
@@ -61,7 +68,12 @@
     "tests/test_keyboard_save_identity.py",
     "tests/test_keyboard_save_settled_identity.py",
     "tests/test_keyboard_save_dfhack.py",
-    "tests/test_campaign_environment.py"
+    "tests/test_campaign_environment.py",
+    "tests/test_campaign_process.py",
+    "tests/test_keyboard_runtime.py",
+    "tests/test_keyboard_fresh_trial.py",
+    "tests/test_campaign_load_smoke.py",
+    "tests/test_keyboard_trial_launcher.py"
   ],
   "reviewed_file_sha256": {
     "fort_gym/bench/agent/codex_selection.py": "04c7d19319939e13ac8fbc0f291a4450f175053a111b5ed4e1a09dc99a334bab",
@@ -117,7 +129,19 @@
     "tests/test_keyboard_save_identity.py": "1b4377e9c99e8ee78d4742921f2b6037ac6695ac1bc2e3f4853cbbcc38c78d58",
     "tests/test_keyboard_save_settled_identity.py": "963ba88ec6bbe4db30380731be94ca9fd2e61f3e675e5d2505a20f193e150ac0",
     "tests/test_keyboard_save_dfhack.py": "386e792fd794404df8fa46804a6f2817acee5fe1c924315073169ee03c77508d",
-    "tests/test_campaign_environment.py": "d42a24779f701a8d04ccb05e3dd54dcc4a5d5d475a7d56cb337cedd0aee21b7b"
+    "tests/test_campaign_environment.py": "d42a24779f701a8d04ccb05e3dd54dcc4a5d5d475a7d56cb337cedd0aee21b7b",
+    "fort_gym/bench/run/keyboard_segment.py": "795e6b79e7d4c66024d5d9df0a27ef4e038116e810f0e087cb8b2ee9cfef0068",
+    "fort_gym/bench/run/keyboard_trial.py": "e89d57e66de88f8734dcc62dbb28258b20740ad7f9c802a5315eacaed7bdc0be",
+    "fort_gym/bench/run/keyboard_trial_config.py": "d4f6b0406616ae828bc48d588762e5a1410cc67598d0003d3c9bf4ba579098de",
+    "scripts/campaign_keyboard_native.py": "977ca08c3edc2148eaabbcdd546d88a744b1c9a92efafa55ac4b99fe08d17ecf",
+    "scripts/campaign_load_smoke.py": "4f3789cc01133709278b4064adeda3095afbe8039ffa0749dcb40d8eb45889ca",
+    "scripts/campaign_process.py": "3a884feaf0e1b3f68b8519ac5db66b1c0feadd3f7aafbd96b772f181c6b789e1",
+    "scripts/campaign_keyboard_trial.py": "84b66df8d17e255e268c2b2da9c3e6b8c5d07d447f70de9c468c5551b38128cc",
+    "tests/test_campaign_process.py": "72848c8c5fbbc9067f04fe589853a2eaf2f11bd1ec34d6130ecf9e81565bb5ba",
+    "tests/test_keyboard_runtime.py": "07d2b027f3306a8e6d997df02ed5333184f989c73ab28a6c534df956542f096d",
+    "tests/test_keyboard_fresh_trial.py": "acdc795d830e3e82275af1dd2ad86bc250d59f616401cbd14614326314d5b348",
+    "tests/test_campaign_load_smoke.py": "24c8129b4db345f4e5a863b1c6c488c7a5048af08deab49333a64f0d6c3a1722",
+    "tests/test_keyboard_trial_launcher.py": "4f3e1d49c935a2d503c3b79a505d8aac21c6cd15a9518028fe779e6c5ede4eef"
   },
   "partially_inspected": [
     "fort_gym/bench/env/native_key_catalog.py"
@@ -157,7 +181,7 @@
     "https://learn.chatgpt.com/docs/app-server#api-overview-1"
   ],
   "remaining_review": [
-    "Remaining launcher/runtime identity and other restart/recovery paths and their dependencies.",
+    "Other restart/recovery dependencies and any runtime paths not explicitly listed in the reviewed index.",
     "Other retained native acceptance evidence beyond the explicitly rechecked status-stack fixture.",
     "Outcome metrics, public/API records, website changes and historical publication manifests.",
     "All files not explicitly listed as reviewed; passing tests and component review do not establish full merge readiness."
@@ -171,7 +195,7 @@
   "review_url": "https://github.com/lemoz/fort-gym/pull/137#issuecomment-5639229687",
   "base": "main",
   "draft": true,
-  "updated_at": "2026-09-11T19:12:18Z",
+  "updated_at": "2026-09-11T19:24:27Z",
   "continuation_review": {
     "source_files_added": 7,
     "test_files_added": 6,
@@ -240,5 +264,28 @@
       "new_model_calls": 0
     },
     "primary_reference": "https://docs.dfhack.org/en/0.47.05-r8/docs/dev/Lua%20API.html#screen-module"
+  },
+  "launcher_trial_review": {
+    "source_files_added": 7,
+    "test_files_added": 5,
+    "local_tests": {
+      "passed": 140,
+      "skipped": 1,
+      "warnings": 2,
+      "report": "pr137-launcher-trial-pytest.xml",
+      "skip_reason": "Linux-only real process-tree ownership test; current host is macOS"
+    },
+    "selected_file_ruff": "passed",
+    "contracts_reviewed": [
+      "Fresh trial configuration binds the seed digest and literal condition, requires empty model memory and usage, and rejects restart, budget-reset or strategy-intervention fields.",
+      "Ordinary continuation checks the checkpoint digest and cursor, restores its own model history and usage, and keeps explicit restart, prompt changes and budget extensions distinct.",
+      "Launcher verifies committed source and the original snapshot, selects the declared screen/save/RPC profiles, uses a credential-free worker environment and runs copied native processes serially.",
+      "Native load verifies the selected runtime before loading and requires the same paused calendar; source snapshots remain unchanged and failed worker or cleanup outcomes remain failed.",
+      "Timeout and interruption unwind the owned worker session. Separate native-process cleanup requires same-user runtime-path ownership and a fresh matching process start time; unrelated peers are not targeted.",
+      "Input uncertainty and failed save attempts retain forensic outcomes. An admission pause before the first dispatch keeps the seed without inventing a new checkpoint or completed campaign."
+    ],
+    "new_native_acceptance_claim": false,
+    "new_model_calls": 0,
+    "new_game_launches": 0
   }
 }

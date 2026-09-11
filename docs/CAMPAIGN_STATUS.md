@@ -12,7 +12,46 @@ and [reload verification](#later-checkpoint-1057-verification-and-website-delive
 Do not confuse that achieved duration with the younger, independent matched
 cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 
-## Current state: ordinary Astra continuation is running
+## Current state: displayed-key Astra saved into Year Two
+
+The [decision-256-to-416 continuation](../experiments/evidence/keyboard_binding_astra_r1_continuation_256_416_20260911.json)
+completed all five segments and retained **429,845 elapsed ticks**, or **1.066
+game years**. This is 26,645 ticks past the full first-year anniversary, not
+merely a calendar-year rollover. The final native checkpoint is **416**, hash
+`73f90e9bb9097fe00ed056723c0cc8de36bb0b85b4c0e40878af86d071c7704a`.
+
+The saved fortress has **13 living citizens, zero recorded deaths, 12 beds,
+three workshops, one farm, 43 raw-edible food units and 389 drinks**. Its final
+32-decision segment added four beds. The [saved-supply review](../experiments/evidence/keyboard_binding_astra_r1_supply_384_416_20260911.json)
+checks every final-segment boundary. At 23 sampled boundaries after the full
+anniversary, population stayed at least 12, food at least 33 and drinks at least
+290, with fishing, raw-fish preparation, planting and hauling observed.
+These facts support a post-hoc qualitative operating-at-endpoint assessment.
+They do not measure production rates or establish indefinite self-sufficiency;
+final food had no trader flags, but ownership/accessibility remain unmeasured.
+
+The frozen terminal audit and a second original-receipt audit passed. All 160
+new model decisions reconcile with native key receipts and the five saved
+segments. This window added 200,000 ticks and 4,131,181 returned tokens.
+Cumulative usage is **448 responses and 11,866,456 tokens**, including the
+historical 32-response/422-tick loss. No new rollback or human gameplay rescue
+occurred. Dollar charges remain unreported, not zero.
+
+The owner and public relay have exited, all cleanup commands returned zero,
+and the isolated VM is verified stopped. Do not rerun the completed owner.
+The final checkpoint has **not yet had a separate fresh reload**. Next: verify
+that save, publish the completed replay/result on the website, and continue
+comparable repeated displayed-key trials across models. The full goal remains
+active; this genuine gameplay milestone is not full project completion.
+
+Fresh [browser acceptance](../experiments/evidence/website_live_browser_acceptance_20260911.json)
+verified live screen/action updates through decision 416, recorded scrubbing,
+return to live, and mobile enlargement without page-wide overflow. After the
+owner ended, the viewer returned to recordings. The live feed is now stopped;
+the full 256-to-416 recording is not yet published. Released pages and all four
+existing recordings remain byte-identical, with no new deployment or restart.
+
+## Earlier progress observations for this completed window
 
 The declared decision-256-to-416 owner has started from the recovered save with
 GPT-6 Astra Medium. Fresh subscription admission allowed the run; the same
@@ -143,15 +182,18 @@ The next unmerged dependency is PR137, now retargeted to main and still draft.
 Its fresh full local suite passed 4,327 tests with ten skipped. The
 [partial review](https://github.com/lemoz/fort-gym/pull/137#issuecomment-5639229687)
 and [hash-bound review index](../experiments/evidence/keyboard_harness_review_137_20260911.json)
-now cover twenty-eight source files and twenty-six test files. The added loop,
+now cover thirty-five source files and thirty-one test files. The added loop,
 checkpoint, save and rejected-input review passed 81 continuation tests and 47
 rejection/recovery tests. A further clock, menu-save and native-adapter review
 passed 281 tests and selected-file Ruff. The retained status-overlay fixture's
 operator/context, parent checkpoint, saved files, fresh-reload observations and
 historical cleanup receipts reverified without running a game. Its four
 menu-save implementation modules are unchanged since accepted source d795ed6e.
-The other launcher/restart paths, native evidence, outcomes and website review
-remain; passing tests alone do not establish merge
+Seven further native-launch, process-cleanup and fresh-trial source files and
+five test files were reviewed. Their focused suite passed 140 tests, with one
+Linux-only process-tree test skipped on macOS; selected-file Ruff passed.
+Unlisted restart dependencies, other native evidence, outcomes and publication
+review remain; passing tests alone do not establish merge
 readiness for this 271-file, 31,717-line addition.
 
 The transport review identified a comparison-provenance gap: decision receipts
@@ -164,7 +206,7 @@ historical receipts remain unchanged.
 This does not claim the entire release stack is merged. See the
 [integration receipt](../experiments/evidence/remote_campaign_integration_20260911.json).
 
-## Latest completed result: recovery saved decision 256 and 28,345 new ticks
+## Earlier completed result: recovery saved decision 256 and 28,345 new ticks
 
 The [audited recovery continuation](../experiments/evidence/keyboard_binding_astra_r1_recovery_224_256_20260911.json)
 completed with **32 new responses, 41 confirmed key presses, 28,345 new saved
