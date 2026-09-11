@@ -1,0 +1,754 @@
+{
+  "schema_version": "fortgym.public-keyboard-binding-failed-window/v1",
+  "campaign_id": "bindings-20260911-astra-r1",
+  "status": "infrastructure_checkpoint_failure",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "control_profile": "native_keyboard_bindings/v1",
+  "source_revision": "8b9fffa1de4f93506cbcbdf82fd154aeb17b5697",
+  "condition_sha256": "4b331696dbae5b43c44cadead3dcba425565429c3fb98e9fc23950320d288abf",
+  "window": {
+    "schema_version": "fortgym.codex-keyboard-window/v1",
+    "condition_id": "binding-pilot-astra-medium-native-keyboard-120x40",
+    "original_condition": "astra-condition.json",
+    "continuation_from_next_step": 96,
+    "continuation_checkpoint_sha256": "9576d897a176f6f50face655a11ae25cdd9a320a37eec30566c4cdbce4f6d77d",
+    "steps_per_segment": 32,
+    "max_segments": 5,
+    "window_end_decision": 256,
+    "expected_campaign_id": "bindings-20260911-astra-r1",
+    "source_native_revision": "8b9fffa1de4f93506cbcbdf82fd154aeb17b5697",
+    "accounted_responses_before_window": 96,
+    "returned_tokens_before_window": 2567162,
+    "saved_elapsed_ticks_before_window": 59500,
+    "reset_memory": false,
+    "reset_usage": false,
+    "strategy_intervention": false,
+    "snapshot_profile": "native_menu_preserving_save/v4",
+    "runtime_rpc_transport": "native-rpc",
+    "private_measurement_profile": "fortgym.campaign-food-measurement/v1",
+    "private_measurement_timeout_seconds": 15,
+    "resource_observation_profile": "fortgym.native-resource-observations/v1",
+    "hypothesis": "With unchanged displayed-key controls and a save/load boundary every 32 responses, Astra can continue developing its own fortress across a longer autonomous window. Track elapsed time, surviving population, completed construction, food and drink, menu recovery, accepted keys and actual model receipts. Save progress on subscription admission pause. Do not infer sustainability from stock changes or intentions; do not combine this condition with the historical native-event-name cohort."
+  },
+  "source_result_path": "experiments/evidence/keyboard_binding_astra_r1_continuation_64_96_20260911.json",
+  "source_result_sha256": "2b49a0e15e8d9dc80dfd4af3b020a83b58bc94eb29e50ed4fcba1f96f043986e",
+  "responses": 256,
+  "new_responses": 160,
+  "usage": {
+    "accounted_responses": 256,
+    "cost_basis": "codex_subscription_charge_unreported/v1",
+    "dispatched_requests": 256,
+    "returned_responses": 256,
+    "total_cost_usd": null,
+    "total_tokens": 7074693
+  },
+  "new_tokens": 4507531,
+  "last_saved_responses": 224,
+  "last_checkpoint_sha256": "1e93fd51fc1b2530591cbabc226ab74d937d36e4a3c93c95a994f0edc3b048e3",
+  "saved_elapsed_ticks": 201500,
+  "observed_elapsed_ticks": 201922,
+  "ticks_per_year": 403200,
+  "unsaved_responses": 32,
+  "unsaved_elapsed_ticks": 422,
+  "checkpoint_segments": [
+    {
+      "checkpoint_sha256": "c2c9d96befe79b2be3dcdae1aed94912030e8a7e1f661d53714784afef860fb5",
+      "final_fresh_reload_verified": true,
+      "first_step": 96,
+      "initial_metrics": {
+        "completed_beds": 5,
+        "completed_farms": 1,
+        "completed_workshops": 3,
+        "drink_stock": 121,
+        "food_stock": 58,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      },
+      "native_cleanup_verified": true,
+      "new_responses": 32,
+      "new_saved_ticks": 38000,
+      "new_tokens": 983423,
+      "next_step": 128,
+      "prior_checkpoint_sha256": "9576d897a176f6f50face655a11ae25cdd9a320a37eec30566c4cdbce4f6d77d",
+      "saved_elapsed_ticks": 97500,
+      "saved_metrics": {
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "completed_workshops": 3,
+        "drink_stock": 198,
+        "food_stock": 49,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      },
+      "segment_index": 0,
+      "source_checkpoint_fresh_load_verified": true,
+      "usage": {
+        "accounted_responses": 128,
+        "cost_basis": "codex_subscription_charge_unreported/v1",
+        "dispatched_requests": 128,
+        "returned_responses": 128,
+        "total_cost_usd": null,
+        "total_tokens": 3550585
+      }
+    },
+    {
+      "checkpoint_sha256": "f26ac6fff2cfd95897d45147d8647e9a87478f9fed091576ea465888ee9f6669",
+      "final_fresh_reload_verified": true,
+      "first_step": 128,
+      "initial_metrics": {
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "completed_workshops": 3,
+        "drink_stock": 198,
+        "food_stock": 49,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      },
+      "native_cleanup_verified": true,
+      "new_responses": 32,
+      "new_saved_ticks": 30000,
+      "new_tokens": 837999,
+      "next_step": 160,
+      "prior_checkpoint_sha256": "c2c9d96befe79b2be3dcdae1aed94912030e8a7e1f661d53714784afef860fb5",
+      "saved_elapsed_ticks": 127500,
+      "saved_metrics": {
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "completed_workshops": 3,
+        "drink_stock": 230,
+        "food_stock": 55,
+        "functional_rooms": null,
+        "population": 10,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      },
+      "segment_index": 1,
+      "source_checkpoint_fresh_load_verified": true,
+      "usage": {
+        "accounted_responses": 160,
+        "cost_basis": "codex_subscription_charge_unreported/v1",
+        "dispatched_requests": 160,
+        "returned_responses": 160,
+        "total_cost_usd": null,
+        "total_tokens": 4388584
+      }
+    },
+    {
+      "checkpoint_sha256": "d64edca3393fbb921094a3dea78a36bd88569f03656c0af9b43acb26bb3eb495",
+      "final_fresh_reload_verified": true,
+      "first_step": 160,
+      "initial_metrics": {
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "completed_workshops": 3,
+        "drink_stock": 230,
+        "food_stock": 55,
+        "functional_rooms": null,
+        "population": 10,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      },
+      "native_cleanup_verified": true,
+      "new_responses": 32,
+      "new_saved_ticks": 40000,
+      "new_tokens": 824620,
+      "next_step": 192,
+      "prior_checkpoint_sha256": "f26ac6fff2cfd95897d45147d8647e9a87478f9fed091576ea465888ee9f6669",
+      "saved_elapsed_ticks": 167500,
+      "saved_metrics": {
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "completed_workshops": 3,
+        "drink_stock": 228,
+        "food_stock": 46,
+        "functional_rooms": null,
+        "population": 10,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      },
+      "segment_index": 2,
+      "source_checkpoint_fresh_load_verified": true,
+      "usage": {
+        "accounted_responses": 192,
+        "cost_basis": "codex_subscription_charge_unreported/v1",
+        "dispatched_requests": 192,
+        "returned_responses": 192,
+        "total_cost_usd": null,
+        "total_tokens": 5213204
+      }
+    },
+    {
+      "checkpoint_sha256": "1e93fd51fc1b2530591cbabc226ab74d937d36e4a3c93c95a994f0edc3b048e3",
+      "final_fresh_reload_verified": true,
+      "first_step": 192,
+      "initial_metrics": {
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "completed_workshops": 3,
+        "drink_stock": 228,
+        "food_stock": 46,
+        "functional_rooms": null,
+        "population": 10,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      },
+      "native_cleanup_verified": true,
+      "new_responses": 32,
+      "new_saved_ticks": 34000,
+      "new_tokens": 1115442,
+      "next_step": 224,
+      "prior_checkpoint_sha256": "d64edca3393fbb921094a3dea78a36bd88569f03656c0af9b43acb26bb3eb495",
+      "saved_elapsed_ticks": 201500,
+      "saved_metrics": {
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "completed_workshops": 3,
+        "drink_stock": 430,
+        "food_stock": 438,
+        "functional_rooms": null,
+        "population": 10,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      },
+      "segment_index": 3,
+      "source_checkpoint_fresh_load_verified": true,
+      "usage": {
+        "accounted_responses": 224,
+        "cost_basis": "codex_subscription_charge_unreported/v1",
+        "dispatched_requests": 224,
+        "returned_responses": 224,
+        "total_cost_usd": null,
+        "total_tokens": 6328646
+      }
+    }
+  ],
+  "saved_metrics": {
+    "completed_beds": 7,
+    "completed_farms": 1,
+    "completed_workshops": 3,
+    "drink_stock": 430,
+    "food_stock": 438,
+    "functional_rooms": null,
+    "population": 10,
+    "recorded_dead_citizens": 0,
+    "stone_stock": null,
+    "wood_stock": null
+  },
+  "observed_metrics": {
+    "completed_beds": 7,
+    "completed_farms": 1,
+    "completed_workshops": 3,
+    "drink_stock": 429,
+    "food_stock": 438,
+    "functional_rooms": null,
+    "population": 10,
+    "recorded_dead_citizens": 0,
+    "stone_stock": null,
+    "wood_stock": null
+  },
+  "saved_food_inventory": {
+    "complete": true,
+    "drink_records": 40,
+    "duplicate_records": 0,
+    "excluded_records": 0,
+    "food_records": 99,
+    "forbidden_units": 0,
+    "hidden_units": 0,
+    "in_job_units": 0,
+    "item_read_failures": 0,
+    "list_read_failures": 0,
+    "nonfood_records": 1767,
+    "predicate_argument": 0,
+    "rotten_units": 0,
+    "scanned_records": 1906,
+    "scanned_units": 438,
+    "schema_version": "fortgym.native-food-inventory/v1",
+    "scope": "native predicate at argument 0, not accessibility, ownership or production/consumption",
+    "source": "world.items.other.IN_PLAY isEdibleRaw(0) getStackSize excluding DRINK",
+    "trader_units": 395,
+    "units": 438
+  },
+  "drink_trader_flagged_units": null,
+  "save_failure": {
+    "native_save_requested": false,
+    "reason": "Snapshot cannot hide a dismissed screen",
+    "runtime_save_unchanged_except_dfhack_load_log": true,
+    "screen_unchanged_by_save_attempt": true,
+    "specific_screen_identity": null,
+    "stage": "identity_probe_before_native_save_request",
+    "world_unchanged_by_save_attempt": true
+  },
+  "unsaved_timeline": [
+    {
+      "decision": 225,
+      "keys": [
+        " "
+      ],
+      "input_accepted": true,
+      "ticks_advanced": 134,
+      "clock_error": "blocking_viewscreen_transition",
+      "year": 30,
+      "year_tick": 218435
+    },
+    {
+      "decision": 226,
+      "keys": [
+        " "
+      ],
+      "input_accepted": true,
+      "ticks_advanced": 0,
+      "clock_error": null,
+      "year": 30,
+      "year_tick": 218435
+    },
+    {
+      "decision": 227,
+      "keys": [
+        "SYM:0:Enter"
+      ],
+      "input_accepted": true,
+      "ticks_advanced": 0,
+      "clock_error": null,
+      "year": 30,
+      "year_tick": 218435
+    },
+    {
+      "decision": 228,
+      "keys": [
+        ">",
+        ">",
+        ">",
+        ">",
+        ">",
+        ">",
+        ">"
+      ],
+      "input_accepted": true,
+      "ticks_advanced": 0,
+      "clock_error": null,
+      "year": 30,
+      "year_tick": 218435
+    },
+    {
+      "decision": 229,
+      "keys": [
+        "SYM:0:F1"
+      ],
+      "input_accepted": true,
+      "ticks_advanced": 0,
+      "clock_error": null,
+      "year": 30,
+      "year_tick": 218435
+    },
+    {
+      "decision": 230,
+      "keys": [
+        ">"
+      ],
+      "input_accepted": true,
+      "ticks_advanced": 0,
+      "clock_error": null,
+      "year": 30,
+      "year_tick": 218435
+    },
+    {
+      "decision": 231,
+      "keys": [
+        "b",
+        "p"
+      ],
+      "input_accepted": true,
+      "ticks_advanced": 0,
+      "clock_error": null,
+      "year": 30,
+      "year_tick": 218435
+    },
+    {
+      "decision": 232,
+      "keys": [
+        "SYM:0:Down",
+        "k",
+        "k",
+        "u",
+        "u",
+        "SYM:0:Enter"
+      ],
+      "input_accepted": true,
+      "ticks_advanced": 0,
+      "clock_error": null,
+      "year": 30,
+      "year_tick": 218435
+    },
+    {
+      "decision": 233,
+      "keys": [
+        "p"
+      ],
+      "input_accepted": true,
+      "ticks_advanced": 0,
+      "clock_error": null,
+      "year": 30,
+      "year_tick": 218435
+    },
+    {
+      "decision": 234,
+      "keys": [
+        "SYM:0:ESC",
+        "SYM:0:ESC",
+        "q"
+      ],
+      "input_accepted": true,
+      "ticks_advanced": 0,
+      "clock_error": null,
+      "year": 30,
+      "year_tick": 218435
+    },
+    {
+      "decision": 235,
+      "keys": [
+        "SYM:0:ESC",
+        " "
+      ],
+      "input_accepted": true,
+      "ticks_advanced": 17,
+      "clock_error": "blocking_viewscreen_transition",
+      "year": 30,
+      "year_tick": 218452
+    },
+    {
+      "decision": 236,
+      "keys": [
+        "a"
+      ],
+      "input_accepted": true,
+      "ticks_advanced": 16,
+      "clock_error": "blocking_viewscreen_transition",
+      "year": 30,
+      "year_tick": 218468
+    },
+    {
+      "decision": 237,
+      "keys": [
+        "a"
+      ],
+      "input_accepted": true,
+      "ticks_advanced": 0,
+      "clock_error": null,
+      "year": 30,
+      "year_tick": 218468
+    },
+    {
+      "decision": 238,
+      "keys": [
+        "SYM:0:ESC"
+      ],
+      "input_accepted": true,
+      "ticks_advanced": 0,
+      "clock_error": null,
+      "year": 30,
+      "year_tick": 218468
+    },
+    {
+      "decision": 239,
+      "keys": [
+        "q"
+      ],
+      "input_accepted": true,
+      "ticks_advanced": 0,
+      "clock_error": null,
+      "year": 30,
+      "year_tick": 218468
+    },
+    {
+      "decision": 240,
+      "keys": [
+        "SYM:0:ESC",
+        "u"
+      ],
+      "input_accepted": true,
+      "ticks_advanced": 0,
+      "clock_error": null,
+      "year": 30,
+      "year_tick": 218468
+    },
+    {
+      "decision": 241,
+      "keys": [
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "v"
+      ],
+      "input_accepted": true,
+      "ticks_advanced": 0,
+      "clock_error": null,
+      "year": 30,
+      "year_tick": 218468
+    },
+    {
+      "decision": 242,
+      "keys": [
+        "SYM:0:ESC",
+        "SYM:0:ESC"
+      ],
+      "input_accepted": true,
+      "ticks_advanced": 0,
+      "clock_error": null,
+      "year": 30,
+      "year_tick": 218468
+    },
+    {
+      "decision": 243,
+      "keys": [
+        "u"
+      ],
+      "input_accepted": true,
+      "ticks_advanced": 0,
+      "clock_error": null,
+      "year": 30,
+      "year_tick": 218468
+    },
+    {
+      "decision": 244,
+      "keys": [
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "z",
+        "v",
+        "p",
+        "l"
+      ],
+      "input_accepted": true,
+      "ticks_advanced": 0,
+      "clock_error": null,
+      "year": 30,
+      "year_tick": 218468
+    },
+    {
+      "decision": 245,
+      "keys": [
+        "SYM:0:Right",
+        "p",
+        "l"
+      ],
+      "input_accepted": true,
+      "ticks_advanced": 0,
+      "clock_error": null,
+      "year": 30,
+      "year_tick": 218468
+    },
+    {
+      "decision": 246,
+      "keys": [
+        "SYM:0:Right",
+        "SYM:0:Right",
+        "p",
+        "l"
+      ],
+      "input_accepted": true,
+      "ticks_advanced": 0,
+      "clock_error": null,
+      "year": 30,
+      "year_tick": 218468
+    },
+    {
+      "decision": 247,
+      "keys": [
+        "v",
+        "p",
+        "l"
+      ],
+      "input_accepted": true,
+      "ticks_advanced": 0,
+      "clock_error": null,
+      "year": 30,
+      "year_tick": 218468
+    },
+    {
+      "decision": 248,
+      "keys": [
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Right"
+      ],
+      "input_accepted": true,
+      "ticks_advanced": 0,
+      "clock_error": null,
+      "year": 30,
+      "year_tick": 218468
+    },
+    {
+      "decision": 249,
+      "keys": [
+        "+",
+        "+",
+        "+",
+        "+",
+        "+",
+        "SYM:0:Enter"
+      ],
+      "input_accepted": true,
+      "ticks_advanced": 0,
+      "clock_error": null,
+      "year": 30,
+      "year_tick": 218468
+    },
+    {
+      "decision": 250,
+      "keys": [
+        "+",
+        "+",
+        "SYM:0:Enter"
+      ],
+      "input_accepted": true,
+      "ticks_advanced": 0,
+      "clock_error": null,
+      "year": 30,
+      "year_tick": 218468
+    },
+    {
+      "decision": 251,
+      "keys": [
+        "SYM:0:ESC",
+        " "
+      ],
+      "input_accepted": true,
+      "ticks_advanced": 0,
+      "clock_error": "timeout_waiting_for_ticks",
+      "year": 30,
+      "year_tick": 218468
+    },
+    {
+      "decision": 252,
+      "keys": [
+        "SYM:0:ESC",
+        "SYM:0:ESC",
+        " "
+      ],
+      "input_accepted": true,
+      "ticks_advanced": 91,
+      "clock_error": "blocking_viewscreen_transition",
+      "year": 30,
+      "year_tick": 218559
+    },
+    {
+      "decision": 253,
+      "keys": [
+        "a"
+      ],
+      "input_accepted": true,
+      "ticks_advanced": 17,
+      "clock_error": "blocking_viewscreen_transition",
+      "year": 30,
+      "year_tick": 218576
+    },
+    {
+      "decision": 254,
+      "keys": [
+        "a"
+      ],
+      "input_accepted": true,
+      "ticks_advanced": 133,
+      "clock_error": "blocking_viewscreen_transition",
+      "year": 30,
+      "year_tick": 218709
+    },
+    {
+      "decision": 255,
+      "keys": [
+        "a"
+      ],
+      "input_accepted": true,
+      "ticks_advanced": 0,
+      "clock_error": null,
+      "year": 30,
+      "year_tick": 218709
+    },
+    {
+      "decision": 256,
+      "keys": [
+        "SYM:0:ESC"
+      ],
+      "input_accepted": true,
+      "ticks_advanced": 14,
+      "clock_error": "blocking_viewscreen_transition",
+      "year": 30,
+      "year_tick": 218723
+    }
+  ],
+  "audit": {
+    "failure_classification_verified": true,
+    "sha256": "9e6f08cece70d2570bc33ef7ff2fd01b71389d344a4eb84dd43536410b550b5d",
+    "reviewer_sha256": "789fede5d30c12faf2f8f029083fca26a7b0660d8e464169a6323c5540f66bcb",
+    "provider_receipts_verified": 160,
+    "confirmed_key_presses": 550,
+    "receipt_reviews_sha256": "fe7927707efa46dd86bffa814fd7ac16c6060bfcfc530b6357dde3ae2ab91b19",
+    "native_cleanup_verified": true,
+    "vm_teardown_verified": true,
+    "container_exit_code": 1,
+    "guest_poweroff_returncode": 0,
+    "vm_stop_returncode": 0,
+    "new_model_calls_by_auditor": 0,
+    "new_game_ticks_by_auditor": 0
+  },
+  "proof_limits": {
+    "whole_window_completed": false,
+    "checkpoint_256_exists": false,
+    "year_two_reached": false,
+    "gameplay_collapse_observed": false,
+    "sustainability_proven": false,
+    "human_gameplay_rescue": false,
+    "restart_performed": false,
+    "strong_model_ranking_supported": false,
+    "public_website_deployed": false,
+    "main_merged": false
+  },
+  "cost_limits": {
+    "actual_model_charge_usd": null,
+    "hardware_energy_and_app_cost_usd": null,
+    "cloud_vms_created": 0,
+    "api_fallback": false,
+    "local_model_fallback": false,
+    "automatic_reset_consumption": false
+  },
+  "interpretation": [
+    "Four saved segments are verified through decision224; all160 new provider responses are fully accounted.",
+    "Decisions225-256 and422 game ticks were observed but not saved; they cannot be counted as resumable progress.",
+    "The pre-save probe rejected a dismissed screen before requesting a native save. The exact screen in the stack was not retained.",
+    "The failed runtime save matches checkpoint224 except the DFHack load log. Any later rewind must declare native progress loss and retain all model usage.",
+    "Raw food438 includes395 trader-flagged units;43 without that flag does not establish ownership, accessibility or sustainable production.",
+    "Drink trader share is unknown. Stocks and model intentions are not completed production.",
+    "This failure record is not registered in the website's successful-continuation chain."
+  ]
+}

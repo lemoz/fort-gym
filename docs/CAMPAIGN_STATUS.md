@@ -12,7 +12,41 @@ and [reload verification](#later-checkpoint-1057-verification-and-website-delive
 Do not confuse that achieved duration with the younger, independent matched
 cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 
-## Current state: displayed-key Astra continuation reached decision 96
+## Current state: checkpoint-224 recovery continuation is running
+
+The [audited 96-to-256 window](../experiments/evidence/keyboard_binding_astra_r1_failed_window_96_256_20260911.json)
+returned 160 new responses, but its final native save failed before writing.
+The exact error was `Snapshot cannot hide a dismissed screen`. Four preceding
+segments were saved and reloaded; checkpoint 224 remains the latest verified
+save with 201,500 elapsed ticks, 10 living dwarves, no recorded citizen deaths,
+seven completed beds, three workshops and one farm. This is infrastructure
+failure, not an observed fortress collapse or a saved decision-256 result.
+
+All 256 responses and 7,074,693 returned tokens remain counted. The failed
+32-response tail observed another 422 ticks that were not saved. Food and drink
+stocks do not prove sustainability: 395 of the 438 raw-edible units at checkpoint
+224 were trader-marked; the other 43 are not certified accessible fortress food.
+
+The narrow recovery change and one-segment declaration are pushed at
+`d22f28d99f4fd103188979e964e148139d3f3efd` in
+[draft PR166](https://github.com/lemoz/fort-gym/pull/166).
+Exact-head CI run `34619202196` passed. The change recognizes this exact
+pre-save assertion under the original evidence checks; it does not relax native
+save guards, replay actions, reset model usage or supply replacement strategy.
+
+The existing local owner has now passed fresh subscription admission and started
+one isolated game, using GPT-6 Astra Medium with the original 120x40 screen-only
+observation and displayed-key controls. It restores checkpoint 224 and its saved
+model memory, records the lost tail, and permits at most 32 new decisions with
+the same checkpoint cadence. New gameplay and checkpoint outcomes remain pending
+the owner's retained results. Container and VM teardown are mandatory. No GCE,
+API fallback, local model, reset, disk growth or website-server change is involved.
+The website is not receiving a live broadcast from this owner.
+
+The overall Year-Two/Cross-Model objective is unfinished. The Codex goal object
+is paused, but the user has explicitly resumed this bounded project work.
+
+## Earlier state: displayed-key Astra continuation reached decision 96
 
 The [audited decision-64-to-96 continuation](../experiments/evidence/keyboard_binding_astra_r1_continuation_64_96_20260911.json)
 completed with **32 new responses, 161 confirmed key presses, 30,000 new saved
