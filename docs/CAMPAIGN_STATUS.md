@@ -39,7 +39,15 @@ decision 15 matched its original native screen and explicit model action;
 desktop browser checks observed advancing live screens. The earlier
 [startup observation](../experiments/evidence/keyboard_binding_comparison_sol_r1_startup_20260911.json)
 remains immutable. No website service restarted, and the five prior recordings
-remain unchanged. The new completed Sol replay is not published yet.
+remain unchanged. The [completed Sol replay](https://fortgym.live/?recording=sol-matched-r1-1-64#watch-root)
+is now published together with the [six-attempt comparison](https://fortgym.live/results#matched-comparison).
+The [website release record](../experiments/evidence/website_displayed_key_comparison_release_20260911.json)
+binds exact source `dfbb874ec659eea7b09f3344d7aafefb05e4f778`, draft PR171,
+passing exact-head CI, 1,227 local tests and 37 Node contracts. Public browser
+checks confirmed six comparison rows, Sol replay scrubbing to64, mobile layout
+and switching back to Terra's live broadcast. All five earlier recording files,
+public API/game service identities, database counts and untracked host files
+were preserved. Six recording windows are not six independent trials.
 
 The declaration and reusable owner/audits are pushed at
 `61fcca7177d8b66ddd7e12e4be0ab53bda5ffd5b`. All 31 focused tests and selected
@@ -53,7 +61,12 @@ under the same declared conditions. Its first native seed load and subscription
 receipt passed verification, and the homepage switched correctly to Terra's
 live screen and moves. The same local VM had 2,803,612 KiB free before this
 game container was created; no disk grew. Sol's later 64-to-128 continuation
-and fresh reload remain pending. The full goal is active.
+and fresh reload remain pending. Terra was observed at51 returned responses
+after two attested zero-tick waits in the workshop-placement screen; the model
+received the harness's existing timeout feedback with no human input or protocol
+change. This is an in-progress observation, not a terminal result. Finish and
+audit this same owner before starting the next predeclared Astra attempt.
+The full goal is active.
 
 ## Latest completed milestone: displayed-key Astra saved into Year Two
 

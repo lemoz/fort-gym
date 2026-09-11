@@ -1,0 +1,160 @@
+{
+  "schema_version": "fortgym.public-displayed-key-comparison-release/v1",
+  "date_utc": "2026-09-11",
+  "status": "deployed_and_publicly_verified",
+  "comparison_url": "https://fortgym.live/results#matched-comparison",
+  "replay_url": "https://fortgym.live/?recording=sol-matched-r1-1-64#watch-root",
+  "source_revision": "dfbb874ec659eea7b09f3344d7aafefb05e4f778",
+  "previous_public_revision": "08f1b7d31855188bbef2b2ae8aac300a4bc757f0",
+  "pull_request": "https://github.com/lemoz/fort-gym/pull/171",
+  "pull_request_state": "draft_open_not_main_merged",
+  "ci": {
+    "url": "https://github.com/lemoz/fort-gym/actions/runs/34651013521",
+    "exact_head_passed": true
+  },
+  "local_tests": {
+    "passed": 1227,
+    "skipped": 5,
+    "node_contracts_passed": 37,
+    "changed_python_ruff": "passed",
+    "exporter_mypy": "passed",
+    "repository_ruff_existing_findings": 10,
+    "repository_mypy_existing_findings": 557,
+    "backend_source_unchanged": true
+  },
+  "comparison": {
+    "cohort_id": "bindings-comparison-20260911",
+    "comparison_boundary": 64,
+    "declared_attempts": 6,
+    "published_results": 1,
+    "strong_ranking_supported": false,
+    "report_sha256": "03e806f4fb88195a449e8a842275edbf750dd57d99321d9cd6bd483c9ec5468c",
+    "source_reader_revision": "4c8f3b345206cd0cc5e0f4e70e84acae6910d379",
+    "live_status_included": false
+  },
+  "recording": {
+    "id": "sol-matched-r1-1-64",
+    "first_decision": 1,
+    "last_decision": 64,
+    "saved_through_decision": 64,
+    "sha256": "50bc9a2b94b6a0de3fadf1507ec59fbde845c2cc4e5461623d2c26e0dab78741",
+    "prior_recordings_byte_identical": 5,
+    "all_recording_windows": 6,
+    "total_captured_frames": 544,
+    "models": 3,
+    "independent_trial_count_claimed": false
+  },
+  "outcome": {
+    "model": "gpt-5.6-sol",
+    "replicate": 1,
+    "saved_elapsed_ticks": 2900,
+    "population": 7,
+    "recorded_dead_citizens": 0,
+    "completed_beds": 0,
+    "completed_workshops": 0,
+    "completed_farms": 0,
+    "food_stock": 50,
+    "drink_stock": 60,
+    "returned_tokens": 1258321,
+    "reported_charge_usd": null,
+    "terminal_audit_sha256": "00dfe1b920ef9299acab6c77bcb38199317c5e423d57ebf24663264876330ed6",
+    "fresh_final_checkpoint_reload_verified": false,
+    "functioning_fortress_claimed": false
+  },
+  "public_http": {
+    "schema_version": "fortgym.public-displayed-key-website-acceptance/v1",
+    "release_revision": "dfbb874ec659eea7b09f3344d7aafefb05e4f778",
+    "assets": {
+      "/": {
+        "sha256": "e5b140fe10a75a3b36782a2da4cc563bdb6282fcc0c1cbff92ebc9babfb1ee94",
+        "mime": "text/html"
+      },
+      "/results": {
+        "sha256": "7df6209e4af1523f67262e007d22a18380bb4a2bf2cf20448b2a1e3368410808",
+        "mime": "text/html"
+      },
+      "/static/displayed-key-comparison.css": {
+        "sha256": "89b48c1e3968528d6c1aa855a3582dda9136e88aba11f6bbff2e7aac03c34fc2",
+        "mime": "text/css"
+      },
+      "/static/displayed-key-comparison.json": {
+        "sha256": "03e806f4fb88195a449e8a842275edbf750dd57d99321d9cd6bd483c9ec5468c",
+        "mime": "application/json"
+      },
+      "/static/displayed-key-comparison.mjs": {
+        "sha256": "3bcf3ee7aeb1303e784f891c11766f75241f36eb7b51e475baf14356bd7d31bc",
+        "mime": "text/javascript"
+      },
+      "/static/home-watch.css": {
+        "sha256": "d37ec81595cd1f7d4dd4ae979b68755c6331fee3fde7a794dec2a1d5eb4b2a7d",
+        "mime": "text/css"
+      },
+      "/static/recordings/catalog.json": {
+        "sha256": "d583ec02d9197185090885275c2c4920565f917f14833da3fdf2d2a9ea21acdf",
+        "mime": "application/json"
+      },
+      "/static/recordings/previews.json": {
+        "sha256": "da6cf3400ee3af90b3932250734dc0c72b7dd53e8283ec450da13ff72dd96cbb",
+        "mime": "application/json"
+      },
+      "/static/recordings/sol-matched-r1-1-64.json": {
+        "sha256": "50bc9a2b94b6a0de3fadf1507ec59fbde845c2cc4e5461623d2c26e0dab78741",
+        "mime": "application/json"
+      },
+      "/worlds": {
+        "sha256": "25619375d53367dce67110bc5fec2c3eb70f1c62e1c834b93f3013fa6209c5e9",
+        "mime": "text/html"
+      }
+    },
+    "recordings": 6,
+    "captured_frames": 544,
+    "matched_rows": 6,
+    "published_results": 1,
+    "historical_recordings_unchanged": true,
+    "immutable_source_links_resolve": true,
+    "relay_snapshot": {
+      "run_id": "bindings-comparison-20260911-terra-r1",
+      "model": "gpt-5.6-terra",
+      "status": "running",
+      "observed_at_unix": 1789163460
+    }
+  },
+  "browser": {
+    "real_public_browser": true,
+    "comparison_rows": 6,
+    "published_results": 1,
+    "clicked_comparison_replay_link": true,
+    "replay_first_decision": 1,
+    "scrubbed_to_decision": 64,
+    "observed_population": 7,
+    "mobile_viewport_width": 390,
+    "mobile_document_width": 390,
+    "comparison_horizontal_scroll_verified": true,
+    "public_console_errors": 0,
+    "public_console_warnings": 0,
+    "explicit_replay_not_taken_over_by_live": true,
+    "jump_to_live_verified": true,
+    "observed_live_decision": 51,
+    "local_old_year_two_endpoint_verified": true
+  },
+  "release_scope": {
+    "static_release_only": true,
+    "database_counts_unchanged": true,
+    "api_process_identity_unchanged": true,
+    "game_process_identity_unchanged": true,
+    "untracked_host_files_preserved": true,
+    "service_restarts": 0,
+    "new_gameplay_actions_by_release": 0,
+    "new_model_calls_by_release": 0,
+    "new_cloud_vms": 0,
+    "hidden_reasoning_published": false,
+    "original_private_artifacts_unchanged": true,
+    "isolated_preview_stopped": true
+  },
+  "full_goal_complete": false,
+  "next_work": [
+    "Finish and audit the already-running Terra first matched attempt without changing its frozen conditions.",
+    "Continue the declared fresh Astra trial and repeat sequence, then own-save 64-to-128 comparisons.",
+    "Finish native harness integration and review separately from website publication."
+  ]
+}
