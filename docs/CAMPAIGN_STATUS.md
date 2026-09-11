@@ -12,7 +12,45 @@ and [reload verification](#later-checkpoint-1057-verification-and-website-delive
 Do not confuse that achieved duration with the younger, independent matched
 cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 
-## Current state: checkpoint-224 recovery continuation is running
+## Current state: recovery saved decision 256 and 28,345 new ticks
+
+The [audited recovery continuation](../experiments/evidence/keyboard_binding_astra_r1_recovery_224_256_20260911.json)
+completed with **32 new responses, 41 confirmed key presses, 28,345 new saved
+ticks and 660,582 new returned tokens**. The saved trace now reaches cursor 256,
+with **229,845 elapsed ticks (about 57 percent of one game year)**. Cumulative
+usage is **288 responses and 7,735,275 tokens**, because the earlier unsaved
+32-response tail remains counted. The 422 lost ticks remain in the checkpoint's
+explicit discontinuity history and are not counted as saved progress.
+
+All **10 dwarves remain alive**, with no recorded citizen deaths. Seven completed
+beds, three workshops and one farm remain. No new completed construction was
+observed. Native current-job samples recorded fishing, fish preparation, planting,
+and harvesting activity; these samples do not prove completed production rates.
+Raw-edible inventory rose from 438 to 447, including the same 395 trader-marked
+units. The remaining 52 units are not certified accessible fortress-owned food.
+Drink inventory declined from 430 to 413; ownership is not measured. Sustainable
+self-sufficiency remains unproven.
+
+Both the frozen terminal reviewer and the independent original-receipt/native-key
+audit passed. The original checkpoint loaded successfully, all 32 new receipts
+and native actions reconcile, and the new checkpoint verifies at
+`646fba220cffa72952a590239cb9cb7e411ccfc77957684455057c6396bf5405`.
+Container stop, evidence export, guest poweroff and VM stop all returned zero;
+the VM was independently observed stopped. The original evidence is unchanged.
+No separate fresh reload of this new final checkpoint has run yet.
+
+The tested recovery implementation remains in [draft PR166](https://github.com/lemoz/fort-gym/pull/166).
+No GCE, API fallback, local model, automatic reset, disk growth or human gameplay
+rescue occurred. Actual dollar charges are unreported, not zero. The public
+website has not yet been updated with this new recovery recording.
+
+Next: continue actual autonomous play from this decision-256 save with the same
+conditions and inherited usage/loss record; the next ordinary continuation should
+verify its native load. Continue toward the first anniversary and Year Two, then
+repeat comparable model conditions. This bounded recovery success does not
+complete the full Year-Two/Cross-Model objective.
+
+## Earlier launch: checkpoint-224 recovery continuation
 
 The [audited 96-to-256 window](../experiments/evidence/keyboard_binding_astra_r1_failed_window_96_256_20260911.json)
 returned 160 new responses, but its final native save failed before writing.
