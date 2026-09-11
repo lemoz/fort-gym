@@ -15,7 +15,7 @@ The source-linked comparison reader verifies the selected public result, model,
 replicate, seed, native source, image, configuration digests and exact saved
 64-response boundary. Preparation additionally requires the original cohort and
 all six configuration digests, settled usage and unchanged campaign ceilings.
-It emits one 64-response own-save window ending at128, preserving the same prompt,
+It emits one 64-response own-save window ending at 128, preserving the same prompt,
 memory, usage, controls, observations, measurement profiles and save procedure.
 No restart, prompt change, budget extension or model-specific adjustment is added.
 
@@ -30,8 +30,8 @@ capacity and native reload. It must keep receipts and tear down the VM. A prepar
 configuration or offline agent-state restoration is not native gameplay, a fresh
 game reload, paid-spend admission, or completion of the broader Year-Two goal.
 Finish the predeclared fresh-attempt sequence before starting this next comparison
-stage. The existing native runner accepts these windows; a reusable bounded host
-owner and matching terminal publication must be completed before execution.
+stage. The existing native runner accepts these windows. The bounded host owner
+and terminal export are integrated below; native execution still needs validation.
 
 ## Reusable state and courier checks
 
@@ -57,5 +57,45 @@ chain and per-call subscription checks after the initial gate.
 
 The loaded-state gate has synthetic contract coverage, including all six slots
 and rejection before dispatch on a mismatch. It has not yet run in a new native
-continuation. These modules do not own a VM or publish a terminal outcome; the
-outer lifecycle and final audit/publication still need integration before launch.
+continuation. These two modules do not own a VM; the outer lifecycle below does.
+
+## Bounded execution and terminal export
+
+`local_owner.py` binds a window to its own parent evidence volume and a distinct
+unused output volume. `local_lifecycle.py` mounts the parent read-only, retains
+each cleanup outcome, and always attempts teardown of the owned VM. It does not
+delete retained evidence, grow storage, create a cloud VM, reset allowance or use
+a paid fallback. An unchanged original save is checked again at shutdown.
+
+Supply the exact pushed owner revision and its successful CI run:
+
+```sh
+.venv/bin/python experiments/keyboard_binding_comparison_continuations_20260911/local_owner.py \
+  --window experiments/keyboard_binding_comparison_continuations_20260911/sol-r1-window-64-128.json \
+  --declaration-revision REVIEWED_OWNER_SHA --ci-run PASSED_CI_RUN --preflight
+```
+
+The owner refuses continuation until all six predeclared fresh attempts have
+reported outcomes. A complete first-attempt report does not make a failed save
+eligible: the selected parent must independently pass its own-save checks.
+Remove `--preflight` only for the declared window. Each identity is write-once.
+
+After the owner exits, `terminal_review.py --window WINDOW --declaration-revision
+REVIEWED_OWNER_SHA` reconciles the native checkpoint chain, first-load gate,
+model memory, provider receipts, key execution, measured clocks and teardown.
+A controller exit alone remains `terminal_pending_audit`, not accepted gameplay.
+
+`publish_result.py --audit AUDIT --audit-sha256 AUDIT_SHA --window WINDOW --output
+NEW_RESULT_JSON` emits only allowlisted facts under `experiments/evidence`.
+Commit that immutable result before recording its digest/revision in the
+comparison index. Website publication is a separate verified step. Neither a
+saved result nor its export infers fortress success, production rates or rankings.
+
+Pre-launch allowance denials and infrastructure failures retain their private
+owner result but cannot pass the settled-save auditor. Preserve and explicitly
+classify them in the comparison; do not rerun the same identity or label them as
+saved. Their public failure projection is not supplied by this settled exporter.
+
+Validation so far covers synthetic lifecycle/audit/export contracts and offline
+specification against the real Sol and Terra saves. No new 64-to-128 native
+window or fresh final-save reload is claimed by these implementation checks.
