@@ -33,7 +33,12 @@ SCHEMA = "fortgym.native-save-loss-restart/v1"
 PRESAVE_STAGE = "identity_before_save"
 
 def _failure_evidence(segment: Path, result: dict) -> dict:
-    """Recognize the historical timeout or the retained pre-save Lua assertion."""
+    """Recognize audited save failures without retrying a save or replaying input.
+
+    Both identity assertions occur before the save operation is requested. A
+    dismissed screen still forbids saving; it only permits an explicit loss-aware
+    restart when the retained world, screen, native files and usage agree.
+    """
     if result.get("checkpoint_error") == "Native save completion was not observed before timeout":
         return {}
     if (
@@ -52,7 +57,8 @@ def _failure_evidence(segment: Path, result: dict) -> dict:
         or attempt.get("schema_version") != "fortgym.native-menu-save-attempt/v1"
         or not isinstance(raw, str)
         or re.match(
-            r"^\(lua command\):[0-9]+: Identity probe requires a native screen\nstack traceback:\n",
+            r"^\(lua command\):[0-9]+: (?:Identity probe requires a native screen|"
+            r"Snapshot cannot hide a dismissed screen)\nstack traceback:\n",
             raw,
         ) is None
         or any(
