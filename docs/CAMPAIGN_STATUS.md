@@ -39,10 +39,30 @@ occurred. Dollar charges remain unreported, not zero.
 
 The owner and public relay have exited, all cleanup commands returned zero,
 and the isolated VM is verified stopped. Do not rerun the completed owner.
-The final checkpoint has **not yet had a separate fresh reload**. Next: verify
-that save, publish the completed replay/result on the website, and continue
+The final checkpoint has now passed a separate provider-free fresh reload;
+the original completed-window result remains unchanged and the new evidence is
+linked below. Next: publish the completed replay/result on the website and continue
 comparable repeated displayed-key trials across models. The full goal remains
 active; this genuine gameplay milestone is not full project completion.
+
+### Checkpoint 416 fresh reload verified
+
+The [separate native reload](../experiments/evidence/keyboard_binding_astra_r1_reload_416_20260911.json)
+restored the exact 429,845-tick fortress, model memory/configuration, history,
+trace and all 448 responses / 11,866,456 tokens. No model call, gameplay input,
+clock advance or save request occurred. All 127 original files remain unchanged;
+the disposable copy retained all 126 non-log files byte-identically and appended
+only the two predeclared native load events to its log.
+
+The loaded game retained 13 citizens, zero recorded deaths, 12 beds, three
+workshops, one farm, 43 food and 389 drinks. It opened at the default menu instead
+of the saved workshop query; no menu navigation or human gameplay repair was
+inserted. The audit verified owned process/listener, container and VM teardown.
+This proves reload and continuation-state integrity, not new game-time progress.
+
+The unchanged 32 GiB local guest had 3,100,756 KiB available before this reload.
+Evidence was retained and no disk grew. Fresh capacity must be checked before
+the next native attempt; remaining space after shutdown was not measured.
 
 Fresh [browser acceptance](../experiments/evidence/website_live_browser_acceptance_20260911.json)
 verified live screen/action updates through decision 416, recorded scrubbing,

@@ -1,0 +1,135 @@
+{
+  "schema_version": "fortgym.public-binding-checkpoint-reload/v1",
+  "campaign_id": "bindings-20260911-astra-r1",
+  "status": "native_reload_and_loop_restore_verified",
+  "source_revision": "d22f28d99f4fd103188979e964e148139d3f3efd",
+  "fixture_declaration_revision": "88d7e947ddab08191c8b500e24bd8b731545b556",
+  "fixture_path": "experiments/keyboard_binding_reload_20260911/checkpoint416_fixture.py",
+  "fixture_sha256": "a333da3eb7eef03aa3283db8be959104e71f8dc6ca811e1ff832eebd2b403e54",
+  "image_id": "sha256:32bd022138a4772ed0c0d3a14f94feab8ad4a4cd183a20a8cd098745aedbd10d",
+  "checkpoint_sha256": "73f90e9bb9097fe00ed056723c0cc8de36bb0b85b4c0e40878af86d071c7704a",
+  "prior_trial_result_path": "experiments/evidence/keyboard_binding_astra_r1_continuation_256_416_20260911.json",
+  "prior_trial_result_sha256": "91b04230437accb4d30288a9e46aa77d0136d86f5b5d18e2b25d5492019e4d11",
+  "prior_trial_result_unchanged": true,
+  "native_load_verified": true,
+  "normal_loop_restore_verified": true,
+  "original_checkpoint_unchanged": true,
+  "source_save_files_verified": 127,
+  "copied_save_delta": {
+    "path": "events-dfhack.log",
+    "source_size_bytes": 4534,
+    "copied_size_bytes": 4838,
+    "appended_bytes": 304,
+    "appended_sha256": "744f1d086089f45aa4d2aa099e0bd8494abebf7a22ef0fc07701da800a1526fa",
+    "source_prefix_unchanged": true,
+    "appended_events": [
+      "SC_WORLD_LOADED",
+      "SC_MAP_LOADED"
+    ],
+    "non_log_files_byte_identical": 126,
+    "whole_copied_save_tree_byte_identical": false,
+    "review_scope": "predeclared_exact_load_log_classification"
+  },
+  "next_step": 416,
+  "committed_elapsed_ticks": 429845,
+  "native_boundary": {
+    "year": 31,
+    "year_tick": 43446,
+    "paused": true,
+    "screen_size": [
+      120,
+      40
+    ]
+  },
+  "restored_usage": {
+    "accounted_responses": 448,
+    "cost_basis": "codex_subscription_charge_unreported/v1",
+    "dispatched_requests": 448,
+    "returned_responses": 448,
+    "total_cost_usd": null,
+    "total_tokens": 11866456
+  },
+  "restored_metrics": {
+    "completed_beds": 12,
+    "completed_farms": 1,
+    "completed_workshops": 3,
+    "drink_stock": 389,
+    "food_stock": 43,
+    "functional_rooms": null,
+    "population": 13,
+    "recorded_dead_citizens": 0,
+    "stone_stock": null,
+    "wood_stock": null
+  },
+  "restored_agent_memory_configuration_prompt_and_history_unchanged": true,
+  "latest_original_usage_journal_used": true,
+  "menu": {
+    "saved_focus": "dwarfmode/QueryBuilding/Some/Workshop/Job",
+    "loaded_focus": "dwarfmode/Default",
+    "focus_equal": false,
+    "full_menu_equivalence_claimed": false,
+    "manual_restoration": false,
+    "interpretation": "The fresh game process opened at its default screen instead of the saved workshop-query menu. No navigation or gameplay correction was supplied."
+  },
+  "audit": {
+    "passed": true,
+    "sha256": "342beb6e3598bc41759383d2799c9a6ae87aadcb203dfc6d470d4328d4208fb2",
+    "review_source_path": "experiments/keyboard_binding_reload_20260911/checkpoint416_review.py",
+    "review_source_sha256": "404a4295683972c1b41c08ddc045732f1cc82334faa896e71c99d74705ba223e",
+    "log_classifier_sha256": "3fd89be042b5f47ade276532faea7817d6b7636d89856d15f3296526eb734b06",
+    "predeclared_exact_load_log_review": true,
+    "post_hoc_acceptance_relaxation": false
+  },
+  "preparation": {
+    "executed_fixture_tests_passed": 10,
+    "log_delta_regressions_passed": 9,
+    "selected_file_ruff": "passed",
+    "native_source_exact_head_ci": "https://github.com/lemoz/fort-gym/actions/runs/34619202196"
+  },
+  "lifecycle": {
+    "native_cleanup_verified": true,
+    "container_cleanup_verified": true,
+    "vm_teardown_verified": true,
+    "vm_live_observed_stopped": true,
+    "guest_poweroff_returncode": 0,
+    "vm_stop_returncode": 0,
+    "cpus": 2,
+    "vm_memory_gib": 3,
+    "vm_disk_gib": 32,
+    "container_network": "none",
+    "source_volume_read_only": true,
+    "vm_config_unchanged": true,
+    "evidence_deleted": false
+  },
+  "resources": {
+    "container_memory_peak_bytes": 1389649920,
+    "container_memory_limit_bytes": 1610612736,
+    "oom_events": {
+      "high": 0,
+      "low": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_group_kill": 0,
+      "oom_kill": 0
+    },
+    "guest_available_before_reload_kib": 3100756,
+    "guest_available_after_reload": "not_measured_after_vm_stop",
+    "future_runs_require_fresh_capacity_check": true,
+    "hardware_energy_and_app_cost_usd": null
+  },
+  "new_model_calls": 0,
+  "new_gameplay_actions": 0,
+  "new_gameplay_ticks": 0,
+  "new_native_saves": 0,
+  "cloud_vms_created": 0,
+  "proof_limits": {
+    "additional_autonomous_play": false,
+    "sustainability_proven": false,
+    "year_two_gameplay_was_already_saved_in_prior_trial": true,
+    "repeated_condition_ranking_supported": false,
+    "main_merged": false,
+    "public_website_deployed": false,
+    "full_goal_complete": false
+  },
+  "next": "Publish the completed checkpoint-416 replay and result on the website, then continue comparable repeated model trials. Any new game run must use the original verified checkpoint, not the disposable diagnostic runtime."
+}
