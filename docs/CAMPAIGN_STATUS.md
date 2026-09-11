@@ -129,6 +129,17 @@ main merge, and it does not establish the Year-Two gameplay objective.
 
 ## Earlier matched pilot and website delivery history
 
+Next-stage preparation is pushed at `007343c767a3e3a76549f7278688843d1e366e34`
+in [draft PR #154](https://github.com/lemoz/fort-gym/pull/154). It reproduces
+the three available own-save 128-to-256 configurations and adds a pure
+multi-segment structural checker for the forthcoming full auditor. All
+151 focused checks and the full local suite (4,851 passed, 10 skipped) passed.
+Exact-head GitHub CI run `34555496095` was still running at this update; no CI
+success is inferred. The current website and native owner remain unchanged.
+The remaining decision-128 attempts must complete and be audited in order;
+full multi-segment owner/auditor integration is still required. No next-stage
+gameplay or Year-Two success is claimed by this preparation.
+
 The matched cohort now has verified both Astra attempts, both Sol attempts and both
 Terra attempts. Terra retained 7,000 and 9,000 ticks respectively, with 32 responses per
 window and 859,063 / 1,105,515 returned tokens. Both ended with seven living
