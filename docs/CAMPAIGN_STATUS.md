@@ -32,8 +32,9 @@ and measured fortress state. Intent is not a completion verdict.
 
 Independent audit verified all 32 actual provider receipts, saved trace/usage,
 the new checkpoint, preserved source snapshot and configuration, and native/
-container/VM teardown. The final save is at year 30, tick 32,301. Its separate
-fresh reload remains unverified. Dollar charges are unreported, not zero.
+container/VM teardown. The final save is at year 30, tick 32,301. At that audit
+its separate fresh reload was unverified; the later verification below is a new
+record. Dollar charges are unreported, not zero.
 This is 0.0384 elapsed years, not year two or demonstrated self-sufficiency.
 
 This new control condition is **separate from the historical six-attempt
@@ -48,9 +49,30 @@ The earlier generic-feed 503 came from an uninitialized preview directory. A new
 initialized directory with unchanged copied status snapshots now serves all 11
 published campaign snapshots. No feed-validation rule or original artifact changed.
 No new browser visual QA, main merge or public deployment is claimed.
+Exact-head [GitHub CI has now passed](../experiments/evidence/keyboard_binding_website_ci_20260911.json)
+for that website revision, in run 34580630227.
 
-Next: verify a fresh reload, then continue from this trial's own decision-32 save
-before widening to repeated three-model trials.
+The subsequent [fresh checkpoint-32 reload](../experiments/evidence/keyboard_binding_astra_r1_reload_20260911.json)
+has now passed native loading and normal campaign-loop restoration on the same
+`8b9fffa1d` harness. All 127 original save files remain unchanged; the disposable
+copy has 126 byte-identical non-log files and only two appended DFHack load-event
+lines. The original strict whole-copy equality review is preserved as failed;
+a separately versioned, explicitly post-hoc review classified that exact 304-byte
+append and verified every other file. Memory, configuration, prompt origin,
+history, last result, canonical trace and usage all restored unchanged. The
+game remained paused at the saved calendar, and the model retained 32 accounted
+responses, 785,690 tokens and 15,500 committed elapsed ticks.
+
+The native loader returned to `dwarfmode/Default` from the prior build menu.
+No manual menu restoration or gameplay strategy was supplied. This is not full
+menu equivalence or new autonomous progress: there were zero new model calls,
+gameplay actions, elapsed ticks or saves. Native, container and VM shutdown passed.
+The local website's immutable original-trial snapshot still describes the earlier
+pre-reload audit; this new verification is published separately here.
+
+Next: declare and run the next bounded window from the original decision-32 save
+under the unchanged displayed-key condition, then widen to repeated three-model
+trials. Do not reuse the disposable diagnostic runtime as a campaign origin.
 The full Year-Two delivery objective remains active; main merge and public
 deployment remain open.
 

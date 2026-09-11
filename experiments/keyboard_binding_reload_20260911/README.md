@@ -39,3 +39,11 @@ written. Local owner/evidence live in
 `fort_gym/artifacts/native-local-20260906/runtime-v2/keyboard-matched-pilot-v1/keyboard-bindings-astra-r1-reload-v1`.
 An executed fixture is immutable; a necessary repair requires another version.
 This diagnostic does not prove additional autonomous play or sustainability.
+
+The native run passed. The original independent `review.py` then rejected whole
+copied-save byte equality: `events-dfhack.log` gained 304 bytes containing exactly
+the WORLD_LOADED and MAP_LOADED lines. All 126 non-log files and the original
+127-file checkpoint are unchanged. `review-v2.py` is an explicitly post-hoc,
+scoped review of that same run, not a rerun or a relabeling of the strict failure.
+Its log classifier requires the original prefix and exactly those two load
+events, rejects every other file difference, and records the unequal copied tree.

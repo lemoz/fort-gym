@@ -1,0 +1,13 @@
+{
+  "schema_version": "fortgym.public-keyboard-binding-website-ci/v1",
+  "source_revision": "c5288317b4b689e4a70ccaf979fe753aa4bb102c",
+  "pull_request": "https://github.com/lemoz/fort-gym/pull/160",
+  "run_id": 34580630227,
+  "url": "https://github.com/lemoz/fort-gym/actions/runs/34580630227",
+  "status": "completed",
+  "conclusion": "success",
+  "native_gameplay_proof": false,
+  "browser_visual_qa": false,
+  "main_merged": false,
+  "public_website_deployed": false
+}
