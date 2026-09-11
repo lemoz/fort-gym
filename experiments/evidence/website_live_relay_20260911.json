@@ -1,0 +1,106 @@
+{
+  "schema_version": "fortgym.website-live-relay-release/v1",
+  "revision": "f90af451d540be64bc233e06b72bafff7f19603d",
+  "pull_request": "https://github.com/lemoz/fort-gym/pull/169",
+  "ci": {
+    "run_id": 34629892530,
+    "head_sha": "f90af451d540be64bc233e06b72bafff7f19603d",
+    "conclusion": "success",
+    "passed": 1221,
+    "skipped": 5
+  },
+  "local_tests": {
+    "full_suite_passed": 1220,
+    "skipped": 5,
+    "sandbox_loopback_denied": 1,
+    "permitted_quickstart_rerun_passed": 2,
+    "relay_tests_passed": 29,
+    "node_contracts_passed": 7,
+    "changed_file_ruff": "passed",
+    "existing_ruff_errors": 10,
+    "existing_mypy_errors": 557
+  },
+  "deployment": [
+    {
+      "stage": "preflight_passed",
+      "before": "41b10423178c69eb02e91f842a842e0c98209aa4",
+      "database": {
+        "runs": [],
+        "shares": 0
+      },
+      "services": "MainPID=3140531\nId=fort-gym-api.service\nActiveState=active\nActiveEnterTimestampMonotonic=29101091144361\n\nMainPID=2530190\nId=dfhack-headless.service\nActiveState=active\nActiveEnterTimestampMonotonic=24609119519787"
+    },
+    {
+      "stage": "static_release_verified",
+      "revision": "f90af451d540be64bc233e06b72bafff7f19603d",
+      "recordings": 4,
+      "captured_decisions": 320,
+      "assets": {
+        "/": "b1cb9ae2c8fe599a78b025c335ee1a26998f27857ea87e12d3998db45b700924",
+        "/static/home-watch-model.mjs": "61035a0a27dd4d1612302fd5a5dca64f8312f9ce33e9bc1f8dfacb7c28c462a6",
+        "/static/home-watch.mjs": "52a5ac388f6cbe894e96f349a160d5e0fada9f4792a746d3e4abf27834c498eb"
+      },
+      "database_unchanged": true,
+      "api_and_game_identities_unchanged": true,
+      "untracked_files_preserved": true,
+      "service_restarts": 0,
+      "free_bytes": 1014988800
+    }
+  ],
+  "public_verification": {
+    "revision": "f90af451d540be64bc233e06b72bafff7f19603d",
+    "public_https_verified": true,
+    "assets": {
+      "/": "b1cb9ae2c8fe599a78b025c335ee1a26998f27857ea87e12d3998db45b700924",
+      "/worlds": "1802f73cf9524782c9927204e30e8555267c5cb5cd3eea435a2314e41a3efecf",
+      "/results": "16b2ea56c8b5e5a9a14cd6156f89e8c238b1bea490b604fb5a71e36b190ea57e",
+      "/static/home-watch-model.mjs": "61035a0a27dd4d1612302fd5a5dca64f8312f9ce33e9bc1f8dfacb7c28c462a6",
+      "/static/home-watch.mjs": "52a5ac388f6cbe894e96f349a160d5e0fada9f4792a746d3e4abf27834c498eb",
+      "/static/recordings/catalog.json": "ab14114be9a9774734cff20c5c30ad59cad55828b2ddb889804ddab08773fd14",
+      "/static/recordings/previews.json": "9bea34be77aa1ece3e7be89978c06800520a98172887e7ae396c62bece31f0e6",
+      "/static/findings-v1.json": "85e8196ac37a97b0bb73d2738e7696dc54609b20dc9b18d6b5ca588b191b6e9e",
+      "/static/recordings/astra-recovery-225-256.json": "7aba3fdddea9f44e9a85a42738c93bd275d168692f6d4edbbc579cc70ee4e3f0",
+      "/static/recordings/astra-97-256.json": "5627f83eec939aa7b86603e9aa5d18d2eb7a839560ae3a5ff3354ab8d52a4ee0",
+      "/static/recordings/sol-65-128.json": "3eb8184e5b9a5f7bffee4ce6c972556c3baf030f74c4c59baf251c9a3100e696",
+      "/static/recordings/terra-65-128.json": "37dc8ce0f22df8c9a6b4630743dc443b6fdbac4505ce50ebdad30f38d5df0bfc"
+    },
+    "recordings": 4,
+    "recorded_frames": 320,
+    "models": 3,
+    "live": {
+      "run_id": "bindings-20260911-astra-r1-256-416",
+      "model": "gpt-6-astra",
+      "status": "running",
+      "decision": 290,
+      "observed_at_unix": 1789149303,
+      "payload_sha256": "acddbeeaf9e4b505be6d38a43821ab6c5b8a91ea4a091ab5ed5cb87dfe89d11b",
+      "original_receipt_verified": true,
+      "action_status": "chosen_not_execution_verified"
+    },
+    "browser_visual_qa": false,
+    "original_evidence_modified": false
+  },
+  "earlier_live_observation": {
+    "run_id": "bindings-20260911-astra-r1-256-416",
+    "model": "gpt-6-astra",
+    "status": "running",
+    "decision": 289,
+    "observed_at_unix": 1789149261,
+    "payload_sha256": "34b2b1955b4932a2e007f7a1b7a4a73740c23eafd33b9ffbe5b61f49018c14ba",
+    "original_receipt_verified": true,
+    "action_status": "chosen_not_execution_verified"
+  },
+  "live_advanced": true,
+  "observer_source_revision": "2778519991899ee3360db1caf6daec29721bbc4a",
+  "receiver_source_revision": "f90af451d540be64bc233e06b72bafff7f19603d",
+  "owner_changed": false,
+  "model_inputs_changed": false,
+  "new_model_or_game_launched_by_relay": false,
+  "service_restarts": 0,
+  "uses_existing_host": true,
+  "canonical_api_live_status": "not_connected",
+  "static_relay_freshness_seconds": 30,
+  "private_data_published": false,
+  "browser_visual_qa": false,
+  "gameplay_goal_completed": false
+}

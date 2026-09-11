@@ -21,12 +21,27 @@ save/load boundary every 32 decisions, and mandatory local VM teardown. No new
 GCE resource, paid fallback, local model, automatic reset or human gameplay
 intervention was introduced.
 
-The initial observed action advanced another 2,000 native ticks with all ten
-dwarves alive. One completed model response used 23,707 returned tokens. This
-is an initial live observation, not a completed window or a new saved checkpoint.
-The latest audited save remains cursor 256 until the next save is verified.
-This new owner has no public live broadcast; the website exposes the completed
-recovery recording and the three preserved earlier windows.
+The first 32-response segment saved cursor 288 and another 50,000 native ticks,
+bringing this matched campaign to 279,845 elapsed ticks (about 69 percent of its
+first year). Its save-file hashes independently verify at
+`9d7caa8e0c733d99ea635f77a11e10be238e6bc585561203817ae3c6479438e0`.
+Actual cumulative usage is 320 responses and 8,534,909 returned tokens, retaining
+the earlier 32-response loss. The same owner has continued into its second
+segment. This is a verified intermediate save, not a completed window or a
+terminal gameplay/sustainability audit. See the
+[midpoint observation](../experiments/evidence/keyboard_binding_astra_r1_midpoint_288_20260911.json).
+
+The active run now broadcasts captured screens and chosen actions through the
+[homepage player](https://fortgym.live/#watch-root). Public frames 289 and 290
+were independently matched to original hash-bound receipts. The one-way relay
+cannot control the game; a lost observer expires after 30 seconds and the viewer
+falls back to recordings. Explicit recording links retain their selection.
+Website release `f90af451d540be64bc233e06b72bafff7f19603d` is pushed in
+[PR169](https://github.com/lemoz/fort-gym/pull/169), with exact-head CI passing
+1,221 tests and five skipped. All four recordings and historical findings remain
+byte-identical. Public API/game identities, database and unrelated files were
+preserved, without service restart. HTTP/data contracts passed; no browser
+visual QA is claimed. See the [release receipt](../experiments/evidence/website_live_relay_20260911.json).
 
 The declaration was pushed before launch at
 `d9463200785c67d9fe701f4f583d1539e5db2e96`. Read-only auditor revision
@@ -73,8 +88,8 @@ match the release. The earlier failed Astra recording, Sol and Terra recordings,
 and historical findings are unchanged. Four windows expose 320 captured frames,
 not four independent trials or a head-to-head ranking. API/game processes,
 database and untracked server files were preserved, with no service restart.
-The live feed remains disconnected; no browser visual QA or new gameplay is
-claimed by this publication.
+The live feed was disconnected at that recovery-recording publication; no
+browser visual QA or new gameplay is claimed by that earlier release.
 
 A later read-only account check showed one percent used, clearing the earlier
 98-percent admission hold. The next owner must still run its own fresh admission.

@@ -1,0 +1,42 @@
+{
+  "schema_version": "fortgym.live-save-boundary-observation/v1",
+  "campaign_id": "bindings-20260911-astra-r1",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "window_first_step": 256,
+  "window_target_step": 416,
+  "first_segment": {
+    "checkpoint_sha256": "9d7caa8e0c733d99ea635f77a11e10be238e6bc585561203817ae3c6479438e0",
+    "next_step": 288,
+    "parent_sha256": "646fba220cffa72952a590239cb9cb7e411ccfc77957684455057c6396bf5405",
+    "native_year": 30,
+    "native_year_tick": 296646,
+    "committed_elapsed_ticks": 279845,
+    "usage": {
+      "accounted_responses": 320,
+      "cost_basis": "codex_subscription_charge_unreported/v1",
+      "dispatched_requests": 320,
+      "returned_responses": 320,
+      "total_cost_usd": null,
+      "total_tokens": 8534909
+    },
+    "last_result_keys": [
+      "accepted",
+      "result",
+      "tick_feedback",
+      "why"
+    ],
+    "history_keys": "list"
+  },
+  "new_saved_responses": 32,
+  "new_saved_ticks": 50000,
+  "new_returned_tokens": 799634,
+  "save_files_hash_verified": true,
+  "owner_observed_continuing": true,
+  "full_window_terminal_audit": "pending",
+  "mandatory_vm_teardown": "owned_by_active_operator_pending_run_completion",
+  "inherited_lost_decisions": 32,
+  "inherited_lost_ticks": 422,
+  "uninterrupted_campaign": false,
+  "sustainability_proven": false
+}
