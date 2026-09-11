@@ -3,6 +3,11 @@
 from .keyboard_binding_results import REPOSITORY, SOURCE_REVISION, keyboard_binding_result
 from .keyboard_binding_results import RESULT_PATH as INITIAL_RESULT_PATH
 from .keyboard_endurance_records import read_result
+from .keyboard_binding_checkpoints import (
+    mark_source_reload,
+    validate_window_checkpoints,
+    window_checkpoints,
+)
 
 RESULT_PATH = "experiments/evidence/keyboard_binding_astra_r1_continuation_32_64_20260911.json"
 RESULT_SHA256 = "5f86a754fbb979a567c14a236250ccd518c171db79e598ae9adaa4745db9d8e4"
@@ -64,6 +69,7 @@ def validate_continuation(prior: dict, result: dict) -> None:
         or (rows and rows[-1]["metrics"] != result["saved_metrics"])
     ):
         raise ValueError("Displayed-key continuation accounting differs")
+    validate_window_checkpoints(prior, result)
 
 
 def validate_reload(prior: dict, reload: dict) -> None:
@@ -126,21 +132,8 @@ def keyboard_binding_campaign() -> dict:
         result_url = REPOSITORY + revision + "/" + path
         timeline.extend(result["timeline"])
         confirmed_keys += result["new_confirmed_key_presses"]
-        checkpoints.append(
-            {
-                "responses": result["responses"],
-                "saved_elapsed_ticks": result["saved_elapsed_ticks"],
-                "checkpoint_sha256": result["checkpoint_sha256"],
-                "save_verified": True,
-                "separate_fresh_reload_verified": result["proof_limits"][
-                    "fresh_final_checkpoint_reload_verified"
-                ],
-                "result_url": result_url,
-                "reload_url": None,
-                "reload_note": "No separate post-run fresh reload of this checkpoint has been performed.",
-                "shutdown": result["audit"]["shutdown"],
-            }
-        )
+        mark_source_reload(checkpoints, result, result_url)
+        checkpoints.extend(window_checkpoints(result, result_url))
         prior, prior_path, prior_sha = result, path, record_sha
     return {
         "schema_version": "fortgym.public-keyboard-binding-campaign/v1",

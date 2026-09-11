@@ -88,7 +88,13 @@
     const history = el('details', undefined, 'campaign-details');
     history.appendChild(el('summary', 'Save and reload history'));
     result.checkpoints.forEach(checkpoint => {
-      history.appendChild(el('p', `Decision ${number(checkpoint.responses)}: save verified; separate fresh reload ${checkpoint.separate_fresh_reload_verified ? 'verified' : 'not yet tested'}.`));
+      if (checkpoint.continuation_reload_verified === true || checkpoint.segment_index !== undefined) {
+        const reload = checkpoint.continuation_reload_verified === true ? 'continued-play reload verified' : 'following reload not yet verified';
+        history.appendChild(el('p', `Decision ${number(checkpoint.responses)}: save verified; ${reload}. ${number(checkpoint.saved_elapsed_ticks)} saved ticks.`));
+        if (checkpoint.new_responses === 0) history.appendChild(el('p', 'Pause checkpoint: no additional model decisions. This save retains its own checkpoint identity.', 'campaign-note'));
+      } else {
+        history.appendChild(el('p', `Decision ${number(checkpoint.responses)}: save verified; separate fresh reload ${checkpoint.separate_fresh_reload_verified ? 'verified' : 'not yet tested'}.`));
+      }
       history.appendChild(el('p', checkpoint.reload_note, 'campaign-note'));
       if (checkpoint.shutdown && checkpoint.shutdown.guest_command_warning) {
         history.appendChild(el('p', `Decision ${number(checkpoint.responses)}: the guest poweroff command returned an SSH warning. The separate VM stop succeeded, and an independent check confirmed it stopped.`, 'campaign-note'));
@@ -97,6 +103,10 @@
       if (checkpoint.reload_url) {
         history.appendChild(el('span', ' · '));
         history.appendChild(link('Reload verification', checkpoint.reload_url));
+      }
+      if (checkpoint.continuation_reload_url && checkpoint.continuation_reload_url !== checkpoint.result_url) {
+        history.appendChild(el('span', ' · '));
+        history.appendChild(link('Continued-play reload evidence', checkpoint.continuation_reload_url));
       }
     });
     output.appendChild(history);
