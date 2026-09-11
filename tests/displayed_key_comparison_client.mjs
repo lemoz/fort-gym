@@ -13,17 +13,21 @@ function document() {
 }
 const text = node => [node.textContent,...node.children.map(text)].join(' ');
 test('actual published result retains all six attempts without replacing blanks with zero',async()=>{
-  assert.equal(validateComparison(source).recorded_attempts,1);
+  assert.equal(validateComparison(source).recorded_attempts,3);
   const doc=document();
   await renderComparison(doc,async url=>{
     assert.equal(url,'/static/displayed-key-comparison.json'); return {ok:true,json:async()=>source};
   });
-  assert.equal(doc.nodes['matched-summary'].textContent,'1 of 6 reviewed results published · first 64 decisions');
+  assert.equal(doc.nodes['matched-summary'].textContent,'3 of 6 reviewed results published · first 64 decisions');
   const table=doc.nodes['matched-table'].children[0].children[0], rows=table.children[2].children;
   assert.equal(rows.length,6);
   assert.match(text(rows[0]),/Sol · 1 Saved 64 2,900 7 \/ 0 0 \/ 0 \/ 0 50 \/ 60 1,258,321/);
-  for(const row of rows.slice(1)) { assert.match(text(row),/No published result/); assert.equal(row.children[2].textContent,'—'); }
+  assert.match(text(rows[1]),/Terra · 1 Saved 64 4,200 7 \/ 0 0 \/ 0 \/ 0 51 \/ 60 1,589,877/);
+  assert.match(text(rows[2]),/Astra · 1 Saved 64 23,000 7 \/ 0 7 \/ 2 \/ 1 50 \/ 55 1,671,491/);
+  for(const row of rows.slice(3)) { assert.match(text(row),/No published result/); assert.equal(row.children[2].textContent,'—'); }
   assert.equal(rows[0].children.at(-1).children[1].href,'/?recording=sol-matched-r1-1-64#watch-root');
+  assert.equal(rows[1].children.at(-1).children[1].href,'/?recording=terra-matched-r1-1-64#watch-root');
+  assert.equal(rows[2].children.at(-1).children[1].href,'/?recording=astra-matched-r1-1-64#watch-root');
   assert.equal(doc.nodes['matched-plan'].href,source.plan_url);
 });
 for(const mutate of [
@@ -43,7 +47,8 @@ for(const status of ['budget_limited_pause','infrastructure_failure','gameplay_c
     Object.assign(result,{status,responses:10,checkpoint:null,returned_tokens:null});
     const doc=document(); await renderComparison(doc,async()=>({ok:true,json:async()=>data}));
     assert.match(text(doc.nodes['matched-table']),/10 — — — — —/);
-    assert.doesNotMatch(text(doc.nodes['matched-table']),/Saved 64/);
+    const first=doc.nodes['matched-table'].children[0].children[0].children[2].children[0];
+    assert.doesNotMatch(text(first),/Saved 64/);
   });
 test('unavailable data leaves an explicit error instead of fabricated results',async()=>{
   const doc=document(); await renderComparison(doc,async()=>{throw Error('offline');});

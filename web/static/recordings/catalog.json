@@ -3,6 +3,36 @@
   "recordings": [
     {
       "schema_version": "fortgym.watch-recording/v1",
+      "id": "astra-matched-r1-1-64",
+      "title": "gpt-6-astra · matched trial 1",
+      "model": "gpt-6-astra",
+      "control_profile": "native_keyboard_bindings/v1",
+      "first_decision": 1,
+      "last_decision": 64,
+      "saved_through_decision": 64,
+      "audit_sha256": "8fcd53923a28b84763a031f4046b7831b38f0b9a6dfdbdfcf5f4c081f6396cfc",
+      "recording_status": "saved",
+      "window": "1–64",
+      "frame_count": 64,
+      "sha256": "24380f7d5226ef28633b6eb37776ffa905069ac1cc1006b29ffd92b14950bfcc"
+    },
+    {
+      "schema_version": "fortgym.watch-recording/v1",
+      "id": "terra-matched-r1-1-64",
+      "title": "gpt-5.6-terra · matched trial 1",
+      "model": "gpt-5.6-terra",
+      "control_profile": "native_keyboard_bindings/v1",
+      "first_decision": 1,
+      "last_decision": 64,
+      "saved_through_decision": 64,
+      "audit_sha256": "a27991556fcffab8287eb535814ecf62ab9c2131cbbf6b891bfd76edaa79ddfe",
+      "recording_status": "saved",
+      "window": "1–64",
+      "frame_count": 64,
+      "sha256": "3499bc18073141858398ab631389155a2672ded691b3b0324aaf5d26c7d5e6bb"
+    },
+    {
+      "schema_version": "fortgym.watch-recording/v1",
       "id": "sol-matched-r1-1-64",
       "title": "gpt-5.6-sol · matched trial 1",
       "model": "gpt-5.6-sol",

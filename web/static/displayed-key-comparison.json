@@ -5,9 +5,9 @@
   "plan_url": "https://github.com/lemoz/fort-gym/blob/61fcca7177d8b66ddd7e12e4be0ab53bda5ffd5b/experiments/keyboard_binding_comparison_20260911/cohort.json",
   "plan_sha256": "da38987cb71b1bafde853d10e476e0c9539a950c9d90580ff1c2b1ba7cb839b0",
   "declared_attempts": 6,
-  "recorded_attempts": 1,
+  "recorded_attempts": 3,
   "outcome_counts": {
-    "saved": 1
+    "saved": 3
   },
   "all_attempts_reported": false,
   "all_saved_boundaries_reached": false,
@@ -53,20 +53,72 @@
       "model": "gpt-5.6-terra",
       "replicate": 1,
       "reasoning_effort": "medium",
-      "publication_state": "no_published_result",
-      "result": null,
-      "evidence_url": null,
-      "evidence_sha256": null
+      "publication_state": "recorded",
+      "result": {
+        "status": "saved",
+        "response_limit": 64,
+        "responses": 64,
+        "returned_tokens": 1589877,
+        "reported_charge_usd": null,
+        "checkpoint": {
+          "next_step": 64,
+          "sha256": "8338569453b6c517ff5e314d2f76a76de02b7735887edbbc27800a6599b12292",
+          "saved_elapsed_ticks": 4200,
+          "metrics": {
+            "population": 7,
+            "recorded_dead_citizens": 0,
+            "food_stock": 51,
+            "drink_stock": 60,
+            "completed_beds": 0,
+            "completed_workshops": 0,
+            "completed_farms": 0,
+            "functional_rooms": 0,
+            "stone_stock": null,
+            "wood_stock": null
+          }
+        },
+        "terminal_audit_sha256": "a27991556fcffab8287eb535814ecf62ab9c2131cbbf6b891bfd76edaa79ddfe",
+        "native_teardown_verified": true,
+        "vm_teardown_verified": true
+      },
+      "evidence_url": "https://github.com/lemoz/fort-gym/blob/d4dff1d76d41e7b1a13d3af93bf98e75deb7ff56/experiments/evidence/keyboard_binding_comparison_terra_r1_64_20260911.json",
+      "evidence_sha256": "b4ea68600315b7788c38e53848a47ba27513fa3bcca418b878f31a51f564b7bf"
     },
     {
       "campaign_id": "bindings-comparison-20260911-astra-r1",
       "model": "gpt-6-astra",
       "replicate": 1,
       "reasoning_effort": "medium",
-      "publication_state": "no_published_result",
-      "result": null,
-      "evidence_url": null,
-      "evidence_sha256": null
+      "publication_state": "recorded",
+      "result": {
+        "status": "saved",
+        "response_limit": 64,
+        "responses": 64,
+        "returned_tokens": 1671491,
+        "reported_charge_usd": null,
+        "checkpoint": {
+          "next_step": 64,
+          "sha256": "e718b389f37cfe11fab4121f3b3fec3e1da72e3f62e04d9f45658dde556eba63",
+          "saved_elapsed_ticks": 23000,
+          "metrics": {
+            "population": 7,
+            "recorded_dead_citizens": 0,
+            "food_stock": 50,
+            "drink_stock": 55,
+            "completed_beds": 7,
+            "completed_workshops": 2,
+            "completed_farms": 1,
+            "functional_rooms": null,
+            "stone_stock": null,
+            "wood_stock": null
+          }
+        },
+        "terminal_audit_sha256": "8fcd53923a28b84763a031f4046b7831b38f0b9a6dfdbdfcf5f4c081f6396cfc",
+        "native_teardown_verified": true,
+        "vm_teardown_verified": true
+      },
+      "evidence_url": "https://github.com/lemoz/fort-gym/blob/6130e0d24f25a7349eb0dc7e99b4579f4c40fbba/experiments/evidence/keyboard_binding_comparison_astra_r1_64_20260911.json",
+      "evidence_sha256": "ff9959cc90fe2dc63fd8e282c5229c5f52af49773dd57f327d136ae6a69e5e9c"
     },
     {
       "campaign_id": "bindings-comparison-20260911-terra-r2",
