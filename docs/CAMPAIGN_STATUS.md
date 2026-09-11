@@ -25,8 +25,10 @@ from five to eight; two farms and three workshops remain. Food changed from
 The whole-window audit verified both saves, the exact previously inspected
 decision-192 midpoint, all 128 actual provider receipts, preserved memory/usage/
 configuration/history, native cleanup and VM teardown. Both shutdown commands
-returned zero. The final decision-256 save has not yet had a separate fresh
-reload. Three blocking-menu outcomes and two zero-tick timeouts remain recorded;
+returned zero. At that window audit, the final decision-256 save had not yet
+had a separate fresh reload; the later operator-only diagnostics below loaded
+fresh copies, without resuming them as scored campaigns. Three blocking-menu
+outcomes and two zero-tick timeouts remain recorded;
 there was no new native save loss or human gameplay intervention. This matched
 campaign is at about one-third of a year, not its first anniversary.
 
@@ -63,10 +65,29 @@ explicitly post-hoc review found identical native menu/queue state and
 identical workshop-sidebar glyphs and colors. This supports the scoped event
 finding, not full-frame equivalence or a model-performance claim.
 
-The unlaunched literal-character-reference profile does not fix this measured
-case. Next is a faithful mapping between visible keyboard bindings and native
-events, with native validation before any separately declared model comparison.
-The unchanged cohort and broader Year-Two delivery objective remain open.
+The subsequent [displayed-key binding experiment](../experiments/keyboard_binding_adapter_20260911/README.md)
+passed its predeclared native menu checks on five fresh copies of that save.
+The parser reads the pinned game binding file: `b` resolves to 41 events,
+`v` to 28 and Enter to eight. Each complete set was submitted in one input call,
+letting the menu decide the effect. Translated `b` queued ConstructBed, `v`
+queued MakeBarrel and Enter queued the same MakeShield job as native SELECT.
+The original CUSTOM_B control still queued nothing. No direct job insertion,
+model call, game-time advance, native save or scored checkpoint was involved.
+All existing jobs, the source checkpoint and binding file remained unchanged;
+native cleanup and VM shutdown passed independent terminal review.
+
+The [versioned result](../experiments/evidence/keyboard_binding_native_diagnostic_20260911.json)
+retains exact script and binding hashes, all submitted native events and the
+predeclared sidebar comparison. This experiment passes its own criteria; it
+does not relabel the earlier whole-frame failure. It supports an input-level
+fix in this menu, not general physical-keyboard equivalence, text entry,
+autonomous navigation, job completion or improved model performance.
+
+The unlaunched literal-character-reference profile does not fix the earlier
+measured case. Next is a separately versioned binding-set campaign profile,
+navigation and text-entry checks, then a separately declared Astra experiment.
+Historical control profiles and matched model conditions are unchanged.
+The broader Year-Two delivery objective remains open.
 
 ### Preserved decision-128 comparison and earlier launch observations
 

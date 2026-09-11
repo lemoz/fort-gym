@@ -58,3 +58,23 @@ Success in these menus would not prove SDL/physical-device equivalence, text
 entry, all navigation, job completion, autonomous improvement or sustainability.
 Those are subsequent integration and gameplay checks, not inferred results.
 Local hardware, energy and app cost remains unmeasured, not zero.
+
+## Observed result
+
+The five-arm native run and independent terminal review passed on September 11.
+The original CUSTOM_B control queued nothing. Translated `b` queued ConstructBed,
+translated `v` queued MakeBarrel, and both native SELECT and translated Enter
+queued MakeShield. All three translated inputs used one full-set call (41, 28
+and eight events respectively). The predeclared native and sidebar boundaries
+matched, old jobs were preserved, and every game and the VM were shut down.
+
+See the [versioned result and source hashes](../evidence/keyboard_binding_native_diagnostic_20260911.json).
+The executed fixture, parser, dispatcher and menu probe are the exact files in
+this directory at commit `a095d13dc`. The full game data remains private local
+evidence. Forty-four parser/dispatcher tests and five local launch-preparation
+checks passed before execution; passing those tests alone was not the native
+acceptance result. No model calls or game ticks were consumed by this test.
+
+Next: integrate an explicit separate campaign profile, validate navigation and
+text entry, then measure Astra under that declared condition. None of this
+changes earlier scored trials or establishes that a queued bed was completed.

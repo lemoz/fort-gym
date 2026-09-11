@@ -1,0 +1,380 @@
+{
+  "schema_version": "fortgym.public-native-keyboard-binding-diagnostic/v1",
+  "recorded_date_utc": "2026-09-11",
+  "artifact_kind": "operator_controlled_native_binding_diagnostic",
+  "predeclared_native_acceptance_passed": true,
+  "source_revision": "1bc49b9675b1c82ad502bbd6d8461c9cdbf077e9",
+  "image_id": "sha256:ebc48ef1e63dabcae0e624e92eb114bbfd5e21d96bb9d5a2a3e0f0c2a0426cc9",
+  "checkpoint_sha256": "3225df254ea574ba8d477b6f166112a8defd4ae383a68cade433eac37e078342",
+  "source_checkpoint_unchanged": true,
+  "menu_comparison_scope": {
+    "basis": "predeclared_workshop_sidebar_glyphs_and_colors",
+    "x_end_exclusive": 94,
+    "x_start": 64,
+    "y_end_exclusive": 39,
+    "y_start": 1
+  },
+  "bindings_sha256": "8176d2bd7a8d96f6bb12feb654519a8361a6f262363b84ec48963be832cb7efd",
+  "binding_events_validated": 1579,
+  "arms": [
+    {
+      "arm": "custom_b",
+      "input": {
+        "native": [
+          "CUSTOM_B"
+        ]
+      },
+      "native_events": [
+        "CUSTOM_B"
+      ],
+      "native_input_calls": 1,
+      "before_focus": "dwarfmode/QueryBuilding/Some/Workshop/AddJob",
+      "after_focus": "dwarfmode/QueryBuilding/Some/Workshop/AddJob",
+      "existing_jobs": [
+        {
+          "id": 406,
+          "reaction_name": "",
+          "repeat_job": true,
+          "suspend": true,
+          "type": "MakeBarrel"
+        }
+      ],
+      "new_jobs": [],
+      "source_calendar": [
+        30,
+        152201
+      ],
+      "observed_elapsed_ticks": 0,
+      "menu_sidebar_tiles_equal": true,
+      "full_frame_glyph_differences": [],
+      "inspection_sha256": "af82b0911fcac4b84809dcb6f051e6c5e87065d827f2bc14943b7c8cec60bf1f",
+      "native_reload_sha256": "94ac0eb72adf3a2fc7f8e21cfe6f0d7ab9877861a403c554e14394f616238bf8",
+      "native_cleanup_verified": true
+    },
+    {
+      "arm": "binding_b",
+      "input": {
+        "event": {
+          "type": "character",
+          "value": "b"
+        }
+      },
+      "native_events": [
+        "ADV_CONSTRUCTION_BUILDING",
+        "ARENA_CREATURE_BLANK_LIST",
+        "A_ACTION_BUTCHER",
+        "A_CONSTRUCTION",
+        "A_LOG_BESTIARY",
+        "BUILDJOB_BED_BARRACKS",
+        "BUILDJOB_COFFIN_BURIAL",
+        "BUILDJOB_DEPOT_BROKER_ONLY",
+        "BUILDJOB_FARM_SUMMER",
+        "BUILDJOB_RACKSTAND_DEFAULTS2",
+        "BUILDJOB_RACK_MAT_BONE",
+        "BUILDJOB_STAND_MAT_BONE",
+        "CUSTOM_B",
+        "DESIGNATE_BITEM",
+        "D_BUILDING",
+        "D_BURROWS_BRUSH",
+        "HOTKEY_BUILDING_BED",
+        "HOTKEY_BUILDING_SIEGEENGINE_BALLISTA",
+        "HOTKEY_BUILDING_WORKSHOP_BOWYER",
+        "HOTKEY_BUTCHER_BUTCHER",
+        "HOTKEY_CARPENTER_BED",
+        "HOTKEY_CLOTHES_BOX",
+        "HOTKEY_CRAFTS_BONE",
+        "HOTKEY_CRAFTS_SEL_BONE",
+        "HOTKEY_GLASS_BLOCKS",
+        "HOTKEY_KITCHEN_COOK_3",
+        "HOTKEY_MASON_BLOCKS",
+        "HOTKEY_SIEGE_BALLISTA",
+        "HOTKEY_STILL_BREW",
+        "HOTKEY_TRAP_BRIDGE",
+        "KITCHEN_BREW",
+        "LOCATION_SET_NUMBER_2",
+        "OPTION2",
+        "ORDERS_BUTCHER",
+        "ORDERS_REFUSE_DUMP_BONE",
+        "PET_BUTCHER",
+        "STOCKPILE_BARBLOCK",
+        "STOCKPILE_SETTINGS_FORBID_ALL",
+        "STRING_A098",
+        "UNITJOB_ZOOM_BUILD",
+        "UNITVIEW_GEN_LABOR"
+      ],
+      "native_input_calls": 1,
+      "before_focus": "dwarfmode/QueryBuilding/Some/Workshop/AddJob",
+      "after_focus": "dwarfmode/QueryBuilding/Some/Workshop/Job",
+      "existing_jobs": [
+        {
+          "id": 406,
+          "reaction_name": "",
+          "repeat_job": true,
+          "suspend": true,
+          "type": "MakeBarrel"
+        }
+      ],
+      "new_jobs": [
+        {
+          "id": 495,
+          "reaction_name": "",
+          "repeat_job": false,
+          "suspend": false,
+          "type": "ConstructBed"
+        }
+      ],
+      "source_calendar": [
+        30,
+        152201
+      ],
+      "observed_elapsed_ticks": 0,
+      "menu_sidebar_tiles_equal": true,
+      "full_frame_glyph_differences": [
+        {
+          "x": 21,
+          "y": 19
+        },
+        {
+          "x": 22,
+          "y": 20
+        },
+        {
+          "x": 22,
+          "y": 21
+        }
+      ],
+      "inspection_sha256": "1c38a280809f65c28922900dd66bf69689c03446d46026509ab11726f7b7bc3a",
+      "native_reload_sha256": "d2455e2c2cd5ed32c9ca660e98633e81517d9e8629fde29e772401328d4ed45f",
+      "native_cleanup_verified": true
+    },
+    {
+      "arm": "binding_v",
+      "input": {
+        "event": {
+          "type": "character",
+          "value": "v"
+        }
+      },
+      "native_events": [
+        "ASSIGNTRADE_VIEW",
+        "A_BARTER_VIEW",
+        "A_CENTER",
+        "BUILDING_VIEW_ITEM",
+        "BUILDJOB_STOCKPILE_BIN_UP",
+        "CIVZONE_NEXT",
+        "CUSTOM_V",
+        "DESIGNATE_TOGGLE_ENGRAVING",
+        "D_HAULING_VEHICLE",
+        "D_VIEWUNIT",
+        "HEAVY_ATTACK",
+        "HOTKEY_BUILDING_CHAIN",
+        "HOTKEY_BUILDING_MACHINE_AXLE_VERTICAL",
+        "HOTKEY_BUILDING_WORKSHOP_LAVAMILL",
+        "HOTKEY_CARPENTER_BARREL",
+        "HOTKEY_FARMER_PROCESS_VIAL",
+        "HOTKEY_LEATHER_QUIVER",
+        "ITEM_DESCRIPTION",
+        "MILITARY_VIEW",
+        "NOBLELIST_VIEW_CANDIDATE",
+        "ORDERS_REFUSE_OUTSIDE_VERMIN",
+        "SETUPGAME_VIEW",
+        "STORES_VIEW",
+        "STRING_A118",
+        "TRADE_VIEW",
+        "UNITJOB_VIEW_UNIT",
+        "UNITVIEW_NEXT",
+        "UNITVIEW_RELATIONSHIPS_VIEW"
+      ],
+      "native_input_calls": 1,
+      "before_focus": "dwarfmode/QueryBuilding/Some/Workshop/AddJob",
+      "after_focus": "dwarfmode/QueryBuilding/Some/Workshop/Job",
+      "existing_jobs": [
+        {
+          "id": 406,
+          "reaction_name": "",
+          "repeat_job": true,
+          "suspend": true,
+          "type": "MakeBarrel"
+        }
+      ],
+      "new_jobs": [
+        {
+          "id": 495,
+          "reaction_name": "",
+          "repeat_job": false,
+          "suspend": false,
+          "type": "MakeBarrel"
+        }
+      ],
+      "source_calendar": [
+        30,
+        152201
+      ],
+      "observed_elapsed_ticks": 0,
+      "menu_sidebar_tiles_equal": true,
+      "full_frame_glyph_differences": [
+        {
+          "x": 21,
+          "y": 19
+        }
+      ],
+      "inspection_sha256": "61de0afa26b9cf9950304d8b9cb92aaa897495118534680f59d135aae8b5e857",
+      "native_reload_sha256": "674101c465bcc2ca19eab243cf4e293e32224af0fe27e059983351ef65028b09",
+      "native_cleanup_verified": true
+    },
+    {
+      "arm": "native_select",
+      "input": {
+        "native": [
+          "SELECT"
+        ]
+      },
+      "native_events": [
+        "SELECT"
+      ],
+      "native_input_calls": 1,
+      "before_focus": "dwarfmode/QueryBuilding/Some/Workshop/AddJob",
+      "after_focus": "dwarfmode/QueryBuilding/Some/Workshop/Job",
+      "existing_jobs": [
+        {
+          "id": 406,
+          "reaction_name": "",
+          "repeat_job": true,
+          "suspend": true,
+          "type": "MakeBarrel"
+        }
+      ],
+      "new_jobs": [
+        {
+          "id": 495,
+          "reaction_name": "",
+          "repeat_job": false,
+          "suspend": false,
+          "type": "MakeShield"
+        }
+      ],
+      "source_calendar": [
+        30,
+        152201
+      ],
+      "observed_elapsed_ticks": 0,
+      "menu_sidebar_tiles_equal": true,
+      "full_frame_glyph_differences": [
+        {
+          "x": 21,
+          "y": 19
+        },
+        {
+          "x": 22,
+          "y": 20
+        },
+        {
+          "x": 22,
+          "y": 21
+        }
+      ],
+      "inspection_sha256": "05d584dcb4bcc896e3f6bf49cc416757b6d8a9b0c05f79762706fea56ea88866",
+      "native_reload_sha256": "dcd97ecbdada6626c0e1df21b3212be5669418bcbb645569d6e0928bfb1a2794",
+      "native_cleanup_verified": true
+    },
+    {
+      "arm": "binding_enter",
+      "input": {
+        "event": {
+          "type": "symbol",
+          "value": "Enter",
+          "modifiers": 0
+        }
+      },
+      "native_events": [
+        "CLOSE_MEGA_ANNOUNCEMENT",
+        "CSHEET_ADD_PET",
+        "CSHEET_SELECT_BACKGROUND_OPTION",
+        "D_BURROWS_DEFINE",
+        "D_MILITARY_ALERTS_SET",
+        "SELECT",
+        "SETUPGAME_SAVE_PROFILE_GO",
+        "WORLD_PARAM_ENTER_VALUE"
+      ],
+      "native_input_calls": 1,
+      "before_focus": "dwarfmode/QueryBuilding/Some/Workshop/AddJob",
+      "after_focus": "dwarfmode/QueryBuilding/Some/Workshop/Job",
+      "existing_jobs": [
+        {
+          "id": 406,
+          "reaction_name": "",
+          "repeat_job": true,
+          "suspend": true,
+          "type": "MakeBarrel"
+        }
+      ],
+      "new_jobs": [
+        {
+          "id": 495,
+          "reaction_name": "",
+          "repeat_job": false,
+          "suspend": false,
+          "type": "MakeShield"
+        }
+      ],
+      "source_calendar": [
+        30,
+        152201
+      ],
+      "observed_elapsed_ticks": 0,
+      "menu_sidebar_tiles_equal": true,
+      "full_frame_glyph_differences": [
+        {
+          "x": 22,
+          "y": 21
+        }
+      ],
+      "inspection_sha256": "04f641ca7ed02e43c532a4567bfbd295f7d6fe61db956922e6483748f4bc1762",
+      "native_reload_sha256": "5c22996e5dfddf9cd4e0fa449afe8638d5bc3a9109827c118052825c7ffa62d3",
+      "native_cleanup_verified": true
+    }
+  ],
+  "native_cleanup_verified": true,
+  "vm_teardown_verified": true,
+  "model_calls": 0,
+  "autonomous_gameplay": false,
+  "native_saves_requested": 0,
+  "new_scored_campaign_checkpoint": false,
+  "hardware_energy_and_app_cost_usd": null,
+  "original_owner_sha256": "06028e52e9782f3f09da4ce1302f8a961192d53a207664fa4f0a9bb39616cf9e",
+  "native_result_sha256": "7ad21fda56dba12e4e4a0836a6e8027a1cf3530cc0cadcfb553a22f561210ffd",
+  "auditor_sha256": "0715e778b68ba7ec73bf8ba0143db6deb2118b4dcf19b89efdca4de96e502d44",
+  "source_result_revision": "4bb97d6c4fe3b5a1f8acc7d416c46817bcff5100",
+  "source_result_path": "experiments/evidence/keyboard_matched_astra_r1_continuation_128_256_20260911.json",
+  "experiment_source_revision": "a095d13dcf368ee3334947562f8be8830dc19863",
+  "screen_size": [
+    120,
+    40
+  ],
+  "baseline_control_profile": "native_keyboard/v2",
+  "experimental_transport": "interface_file_to_simultaneous_native_event_set/v1",
+  "campaign_control_profiles_changed": false,
+  "model_comparison_conditions_changed": false,
+  "original_owner_status": "passed",
+  "original_container_exit_code": 0,
+  "operator_ui_setup": true,
+  "observed_elapsed_ticks": 0,
+  "cloud_vms_created": 0,
+  "physical_keyboard_equivalence_verified": false,
+  "gameplay_improvement_verified": false,
+  "prior_diagnostic": {
+    "path": "experiments/evidence/keyboard_input_native_diagnostic_20260911.json",
+    "sha256": "7f625c56ac900da40986f237da7d8d78d0c24c5f49b5b684da3aa01319fbd72f",
+    "original_full_frame_acceptance_passed": false,
+    "evidence_preserved": true
+  },
+  "terminal_review_sha256": "0c9206376eb68af09446325e4362e66e5332edcd9a76c84a48a555d10fcabe1d",
+  "diagnostic_sources": {
+    "experiments/keyboard_binding_adapter_20260911/bindings.py": "ea0bbca1954c62acb5f75ccab8fc2cf8a3b1c881584a95559321e5a5f3245f6c",
+    "experiments/keyboard_binding_adapter_20260911/event_set.lua": "0dc5dd0cf6e2cdff143ff95dc06c73a3cb0aa921714fbc1a1eefd6f149bb190e",
+    "experiments/keyboard_binding_adapter_20260911/fixture.py": "45b6b28a1217d4daa1749c8176742832f17f8080b0d75a23f1104079bf10ef51",
+    "experiments/keyboard_binding_adapter_20260911/menu_probe.lua": "1df80e832ea9bcca580d901cd46aaf6a6ab613aa219e0acb571e6c2d02ce25c5"
+  },
+  "conclusion": "The predeclared carpenter menu experiment passed: character b queued ConstructBed, v queued MakeBarrel, and Enter matched SELECT, using one complete binding-set call each. This is native input-level evidence on operator-positioned disposable copies, not autonomous navigation, physical-device equivalence, job completion, or model improvement.",
+  "next_step": "Introduce this as an explicit separate campaign input profile, validate navigation and text-entry behavior, then run a separately declared Astra condition without rewriting the historical matched cohort."
+}
