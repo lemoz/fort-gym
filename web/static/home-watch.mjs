@@ -1,11 +1,11 @@
-import {PALETTE, glyph, decodeScreen, frameIndex, liveState, validateRecording} from './home-watch-model.mjs';
+import {decodeScreen, frameIndex, liveState, validateRecording, renderCapturedScreen, initialRecording} from './home-watch-model.mjs';
 const $ = id => document.getElementById('watch-' + id);
 const root = $('root');
 if (root) {
   let recording = null, catalog = [], index = 0, playing = null, generation = 0;
   let latestLive = null, mode = 'replay', autoLive = true, liveFrames = [], liveRun = null;
   let loading = false, pollBusy = false;
-  const cache = new Map(), canvas = $('canvas'), ctx = canvas.getContext('2d');
+  const cache = new Map(), canvas = $('canvas');
   const text = (id, value) => { $(id).textContent = value; };
   async function json(url) {
     const controller = new AbortController(), timeout = setTimeout(() => controller.abort(), 10000);
@@ -16,17 +16,6 @@ if (root) {
     } finally { clearTimeout(timeout); }
   }
   function stop() { clearInterval(playing); playing = null; text('play','Play'); $('play').setAttribute('aria-pressed','false'); }
-  function draw(screen, decision) {
-    const tiles = decodeScreen(screen), w = screen.width, h = screen.height;
-    canvas.width = w * 10; canvas.height = h * 16;
-    ctx.font = '14px Menlo, Consolas, monospace'; ctx.textBaseline = 'top';
-    tiles.forEach(([code, fg, bg], n) => {
-      const x = Math.floor(n / h) * 10, y = (n % h) * 16;
-      ctx.fillStyle = PALETTE[bg]; ctx.fillRect(x,y,10,16);
-      if (code && code !== 32) { ctx.fillStyle = PALETTE[fg]; ctx.fillText(glyph(code),x,y,10); }
-    });
-    canvas.setAttribute('aria-label', 'Captured Dwarf Fortress screen before decision ' + decision);
-  }
   function moves(frames, current, live) {
     $('moves').replaceChildren();
     const start = Math.max(0, current - 3);
@@ -50,7 +39,7 @@ if (root) {
     if (mode === 'live') index = frames.length - 1;
     index = frameIndex(index, frames.length);
     const frame = frames[index];
-    draw(frame.screen, frame.decision);
+    renderCapturedScreen(canvas, frame.screen, frame.decision);
     text('badge', mode === 'live' ? 'LIVE · latest model decision' : mode === 'live-history' ? 'LIVE SESSION · earlier decision' : 'RECORDED RUN');
     $('badge').dataset.live = String(mode === 'live');
     text('title', live ? latestLive.model : recording.title);
@@ -193,8 +182,9 @@ if (root) {
         button.addEventListener('click', () => select(item.id));
         $('runs').append(button);
       });
-      await select(catalog[0].id,false);
-    } catch (_) { text('load-status','Recordings unavailable. You can still explore Campaigns below.'); }
+      const initial = initialRecording(catalog, globalThis.location?.search || '');
+      await select(initial.id,initial.explicit);
+    } catch (_) { text('load-status','Recordings unavailable. Try reloading or opening Runs.'); }
     await poll();
   }
   setInterval(poll,10000);

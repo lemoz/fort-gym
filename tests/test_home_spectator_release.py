@@ -1,4 +1,5 @@
 import hashlib
+from html.parser import HTMLParser
 import json
 from pathlib import Path
 import subprocess
@@ -133,6 +134,8 @@ def test_homepage_and_assets_work_on_production_baseline():
         "/static/home-watch-model.mjs",
         "/static/home-watch.css",
         "/static/recordings/catalog.json",
+        "/static/recordings/previews.json",
+        "/static/worlds-recordings.mjs",
         "/worlds",
         "/health",
     ]:
@@ -140,9 +143,61 @@ def test_homepage_and_assets_work_on_production_baseline():
     assert "/admin" not in (ROOT / "web/static/home-watch.mjs").read_text()
 
 
+def test_worlds_recordings_and_previews_match_the_published_catalog():
+    from fort_gym.bench.api.server import app
+
+    class Page(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.ids = []
+            self.recordings = []
+            self.links = []
+
+        def handle_starttag(self, tag, attrs):
+            values = dict(attrs)
+            if "id" in values:
+                self.ids.append(values["id"])
+            if "data-recording-preview" in values:
+                self.recordings.append(values["data-recording-preview"])
+            if tag == "a":
+                self.links.append(values.get("href"))
+
+    client = TestClient(app)
+    html = client.get("/worlds").text
+    page = Page()
+    page.feed(html)
+    assert len(page.ids) == len(set(page.ids))
+    catalog = client.get("/static/recordings/catalog.json").json()["recordings"]
+    previews = client.get("/static/recordings/previews.json").json()
+    assert previews["schema_version"] == "fortgym.watch-previews/v1"
+    assert page.recordings == [row["id"] for row in catalog]
+    assert page.recordings == [row["id"] for row in previews["recordings"]]
+    assert html.index('id="recent-recordings"') < html.index('id="filters-form"')
+    assert "288 captured decisions" in html
+    assert "observed, unsaved tail" in html
+    for item, preview in zip(catalog, previews["recordings"], strict=True):
+        recording = client.get("/static/recordings/" + item["id"] + ".json").json()
+        assert preview == {
+            "id": item["id"],
+            "recording_sha256": item["sha256"],
+            "decision": recording["frames"][0]["decision"],
+            "screen": recording["frames"][0]["screen"],
+        }
+        target = "/?recording=" + item["id"] + "#watch-root"
+        assert page.links.count(target) == 2
+        assert client.get(target).status_code == 200
+        assert item["title"] in html
+        assert f'{len(recording["frames"])} frames' in html
+
+
 def test_homepage_client_contracts():
     subprocess.run(
-        ["node", "--test", str(ROOT / "tests/home_watch_client.mjs")],
+        [
+            "node",
+            "--test",
+            str(ROOT / "tests/home_watch_client.mjs"),
+            str(ROOT / "tests/worlds_recordings_client.mjs"),
+        ],
         cwd=ROOT,
         check=True,
         capture_output=True,

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {glyph, decodeScreen, frameIndex, liveState, validateRecording} from '../web/static/home-watch-model.mjs';
+import {glyph, decodeScreen, frameIndex, liveState, validateRecording, initialRecording} from '../web/static/home-watch-model.mjs';
 
 const screen = {width:2,height:2,tile_order:'column_major',runs:[[2,219,7,0],[1,1,15,0],[1,32,0,1]]};
 const frame = decision => ({decision,screen,action:{intent:'Intent ' + decision,keys:['q'],advance_ticks:0},
@@ -33,8 +33,7 @@ test('every bundled real recording can be decoded', () => {
     validateRecording(JSON.parse(fs.readFileSync('web/static/recordings/' + entry.id + '.json')));
 });
 
-test('homepage controls, replay switching and live disconnect work in memory', async () => {
-  class Element {
+class Element {
     constructor(id) { this.id=id; this.listeners={}; this.children=[]; this.attributes={}; this.dataset={}; this.value='1'; this.disabled=false; this.hidden=false; this.textContent=''; }
     setAttribute(key,value) { this.attributes[key]=value; }
     addEventListener(key,fn) { (this.listeners[key] ||= []).push(fn); }
@@ -43,7 +42,9 @@ test('homepage controls, replay switching and live disconnect work in memory', a
     querySelectorAll() { return this.children.filter(node => node.dataset.recording); }
     getContext() { return {fillRect(){},fillText(){}}; }
     async emit(type, extra={}) { for (const fn of this.listeners[type] || []) await fn({target:this,...extra}); }
-  }
+}
+
+test('homepage controls, replay switching and live disconnect work in memory', async () => {
   const elements=new Map();
   const html=fs.readFileSync('web/landing.html','utf8');
   for (const match of html.matchAll(/id="(watch-[^"]+)"/g)) elements.set(match[1],new Element(match[1]));
@@ -118,4 +119,39 @@ test('homepage controls, replay switching and live disconnect work in memory', a
     globalThis.document=original.document;globalThis.fetch=original.fetch;
     globalThis.setInterval=original.setInterval;globalThis.clearInterval=original.clearInterval;Date.now=original.now;
   }
+});
+
+test('a recording deep link opens the chosen model without a live feed taking over', async () => {
+  const catalog = JSON.parse(fs.readFileSync('web/static/recordings/catalog.json')).recordings;
+  for (const item of catalog)
+    assert.deepEqual(initialRecording(catalog,'?recording='+item.id),{id:item.id,explicit:true});
+  for (const search of ['', '?recording=missing', '?recording=../../private'])
+    assert.deepEqual(initialRecording(catalog,search),{id:catalog[0].id,explicit:false});
+  const originals = Object.fromEntries(['document','fetch','location','setInterval','clearInterval'].map(key=>[key,globalThis[key]]));
+  const elements = new Map();
+  for (const match of fs.readFileSync('web/landing.html','utf8').matchAll(/id="(watch-[^"]+)"/g))
+    elements.set(match[1],new Element(match[1]));
+  const requests=[];
+  try {
+    globalThis.location={search:'?recording=terra-65-128'};
+    globalThis.document={hidden:false,getElementById:id=>elements.get(id),createElement:tag=>new Element(tag),addEventListener(){}};
+    globalThis.setInterval=()=>1; globalThis.clearInterval=()=>{};
+    globalThis.fetch=async url=>{
+      requests.push(url);
+      const data=url.includes('watch-active')
+        ? {schema_version:'fortgym.watch-live/v1',status:'running',run_id:'live',model:'Live model',
+            observed_at_unix:Math.floor(Date.now()/1000),fresh_for_seconds:30,
+            frame:{...frame(99),captured_at_unix:Math.floor(Date.now()/1000),action_status:'chosen_not_execution_verified'}}
+        : JSON.parse(fs.readFileSync('web'+url));
+      return {ok:true,json:async()=>data};
+    };
+    await import('../web/static/home-watch.mjs?test=deep-link');
+    for(let n=0;n<10;n++) await new Promise(resolve=>setImmediate(resolve));
+    assert.equal(elements.get('watch-title').textContent,'Terra · keyboard');
+    assert.equal(elements.get('watch-decision').textContent,'Decision 65 / 128');
+    assert.equal(elements.get('watch-badge').textContent,'RECORDED RUN');
+    assert.equal(elements.get('watch-live').hidden,false);
+    assert.ok(requests.includes('/static/recordings/terra-65-128.json'));
+    assert.ok(!requests.includes('/static/recordings/astra-97-256.json'));
+  } finally { Object.assign(globalThis,originals); }
 });

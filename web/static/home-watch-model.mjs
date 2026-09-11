@@ -25,6 +25,24 @@ export function decodeScreen(screen) {
 export function frameIndex(value, length) {
   return Math.max(0, Math.min(length - 1, Math.round(Number(value) || 0)));
 }
+export function renderCapturedScreen(canvas, screen, decision) {
+  const tiles = decodeScreen(screen), h = screen.height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw Error('Canvas unavailable');
+  canvas.width = screen.width * 10; canvas.height = h * 16;
+  ctx.font = '14px Menlo, Consolas, monospace'; ctx.textBaseline = 'top';
+  tiles.forEach(([code, fg, bg], n) => {
+    const x = Math.floor(n / h) * 10, y = (n % h) * 16;
+    ctx.fillStyle = PALETTE[bg]; ctx.fillRect(x,y,10,16);
+    if (code && code !== 32) { ctx.fillStyle = PALETTE[fg]; ctx.fillText(glyph(code),x,y,10); }
+  });
+  canvas.setAttribute('aria-label', 'Captured Dwarf Fortress screen before decision ' + decision);
+}
+export function initialRecording(catalog, search = '') {
+  const requested = new URLSearchParams(search).get('recording');
+  const selected = catalog.find(row => row.id === requested);
+  return {id: (selected || catalog[0]).id, explicit: Boolean(selected)};
+}
 export function liveState(value, now = Date.now() / 1000) {
   if (value?.schema_version !== 'fortgym.watch-live/v1' ||
       !['not_connected','running','stopped','stale'].includes(value.status)) throw Error('Invalid live feed');
