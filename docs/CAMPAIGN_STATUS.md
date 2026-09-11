@@ -84,9 +84,21 @@ fix in this menu, not general physical-keyboard equivalence, text entry,
 autonomous navigation, job completion or improved model performance.
 
 The unlaunched literal-character-reference profile does not fix the earlier
-measured case. Next is a separately versioned binding-set campaign profile,
-navigation and text-entry checks, then a separately declared Astra experiment.
+measured case. A separate `native_keyboard_bindings/v1` campaign profile is now
+implemented and pushed at `8b9fffa1de4f93506cbcbdf82fd154aeb17b5697` in
+[draft PR #159](https://github.com/lemoz/fort-gym/pull/159). The
+[preparation receipt](../experiments/evidence/keyboard_binding_profile_preparation_20260911.json)
+records 5,032 passing offline tests, 10 skipped, 78 focused new checks, and no
+additional findings beyond the baseline repository lint/type errors. The
+actual retained binding file resolves all 405 declared key labels. The profile
+is wired through condition/exchange identity, agent decisions, native dispatch
+and normal checkpoint continuation, including counted invalid-input responses.
 Historical control profiles and matched model conditions are unchanged.
+
+Exact-head GitHub CI was still running at that receipt. Integrated native
+navigation/text-entry acceptance is next; the prepared independent Astra
+Medium 32-response trial has not launched. No new VM, model call, scored
+checkpoint, main merge or public deploy occurred during this integration.
 The broader Year-Two delivery objective remains open.
 
 ### Preserved decision-128 comparison and earlier launch observations
