@@ -28,6 +28,8 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/static/brand/favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
 <link rel="stylesheet" href="/static/fort-labs.css?v=20260711-2">
+<link rel="stylesheet" href="/static/home-watch.css?v=1">
+<script type="module" src="/static/home-watch.mjs?v=1"></script>
 <style>
   .worlds-rail { padding: 24px 0 20px; border-bottom: 1px solid var(--line); }
   .worlds-rail-head { display: flex; justify-content: space-between; gap: 24px; align-items: center; margin-bottom: 12px; }
@@ -176,6 +178,53 @@
 </nav>
 
 <main>
+  <section class="home-watch" id="watch-root" aria-labelledby="watch-heading">
+    <div class="fl-wrap">
+      <div class="watch-heading">
+        <div><div class="fl-kicker">Dwarf Fortress / agent spectator</div><h2 id="watch-heading">Watch the fortress unfold.</h2></div>
+        <p>See what the model sees. Follow its moves, or scrub through a recent run.</p>
+      </div>
+      <div class="watch-runs" id="watch-runs" aria-label="Choose a recording">
+        <button type="button" id="watch-live" hidden aria-pressed="false">Jump to live</button>
+      </div>
+      <p id="watch-load-status" class="watch-note" role="status">Loading the latest recording…</p>
+      <div class="watch-layout">
+        <div class="watch-main">
+          <div class="watch-bar"><span id="watch-badge" class="watch-badge">RECORDED RUN</span><span id="watch-title">Recent fortress</span><span id="watch-decision">—</span></div>
+          <div class="watch-screen" id="watch-screen" tabindex="0" aria-label="Game screen. Use left and right arrows to step through decisions.">
+            <canvas id="watch-canvas" width="1200" height="640" role="img" aria-label="Recording loading">A recording of the game's screen. Action descriptions appear beside it.</canvas>
+          </div>
+          <div class="watch-controls">
+            <button type="button" id="watch-play" aria-pressed="false" disabled>Play</button>
+            <button type="button" id="watch-prev" aria-label="Previous decision" disabled>←</button>
+            <input id="watch-range" type="range" min="0" max="0" value="0" aria-label="Recorded decision" disabled>
+            <button type="button" id="watch-next" aria-label="Next decision" disabled>→</button>
+            <select id="watch-speed" aria-label="Playback speed"><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option></select>
+            <button type="button" id="watch-zoom" aria-pressed="false">Enlarge</button>
+          </div>
+          <p class="watch-caption" id="watch-caption">Captured game screens, not a generated visualization.</p>
+        </div>
+        <aside class="watch-sidebar" aria-label="Model actions">
+          <div>
+            <h3 id="watch-intent-label">Model’s stated intent</h3>
+            <p id="watch-intent" class="watch-intent">Choose a recording to follow the agent.</p>
+            <div id="watch-keys" class="watch-keys"></div>
+            <p id="watch-execution" class="watch-note"></p>
+            <p class="watch-note">An explicit action description, not the model’s internal reasoning.</p>
+          </div>
+          <div>
+            <dl class="watch-stats"><div><dt>Population after action</dt><dd id="watch-population">—</dd></div><div><dt>Ticks advanced</dt><dd id="watch-advance">—</dd></div></dl>
+            <p id="watch-clock" class="watch-note"></p>
+            <p id="watch-boundary" class="watch-note"></p>
+            <h3>Recent moves</h3><ol id="watch-moves" class="watch-moves"></ol>
+          </div>
+        </aside>
+      </div>
+      <div class="watch-footer"><span id="watch-connection" role="status">Checking for a live broadcast…</span><a href="/campaigns">Explore campaign evidence →</a></div>
+      <p class="watch-note">Recent recording windows, updated September 11, 2026. Control conditions differ; this is not a model ranking. Spectator controls never send commands to the game.</p>
+      <noscript><p>Enable JavaScript to play the recordings. <a href="/campaigns">Campaign evidence</a> remains available.</p></noscript>
+    </div>
+  </section>
   <section class="worlds-rail" aria-labelledby="worlds-title">
     <div class="fl-wrap">
       <div class="worlds-rail-head">
