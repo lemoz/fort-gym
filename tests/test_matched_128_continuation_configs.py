@@ -17,6 +17,7 @@ PARENTS = {
     "terra_r1": "3e833f88a813192f3c3190847e551439c34c7741d5bb87443d156cd244fc0b4f",
     "terra_r2": "858276b6da253f86d08f6ee8fba4ce6cd7eb28cce2005f3c6fbb67aa7b2bf3a6",
     "sol_r2": "0bff8ed59f1fd011db53ffca63c8e39f323f747cb512231b4560f8f176cbd3a8",
+    "astra_r2": "f0b40ab005e0dfdd38a4285fd14c4e098cd5da8ea92e507943ab99c3aea2ad1d",
 }
 
 

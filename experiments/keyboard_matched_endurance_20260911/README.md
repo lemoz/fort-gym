@@ -1,22 +1,22 @@
 # Decision-128 continuation preparation
 
-These configurations reproduce from the audited Astra1, Sol1, Terra1, Terra2 and Sol2
+These configurations reproduce from the audited Astra1, Sol1, Terra1, Terra2, Sol2 and Astra2
 decision-128 results and their complete earlier public histories. Each owns
 two 64-decision save segments, up to decision 256, under the unchanged original
 campaign limits. They are preparation, not launch admission or future results.
 
-The five decision-128 source results are already on the remote campaign
+The six decision-128 source results are already on the remote campaign
 branch: Astra at `0c2aaeb63f1a209cf7ec299a473a77911ddd10ed`, Sol at
 `91cab28293ed75f968fca12b4f1acbc5908da68e`, and Terra at
 `b17449c294ab154126192ab926603dfd59589114`. Terra2 is at
 `1f3b10db4e35fb9560254cb1bd789838dedd3264`; Sol2 is at
-`840402a411d69e868a6b93429d35a8f6502ca52f`. Exact result hashes and complete
+`840402a411d69e868a6b93429d35a8f6502ca52f`; Astra2 is at
+`b40b7417b7def266eb9e8c8e4a56c5c631b78490`. Exact result hashes and complete
 own-save chains are verified by `tests/test_matched_128_continuation_configs.py`.
 
-Only these five audited parents are included in this preparation revision.
-Astra2's configuration must be derived from its own audited result;
-no parent is invented for it. Complete and audit the
-current stage for all six attempts before advancing the next stage in the
+All six audited parents are now included in this preparation revision.
+The decision-128 round is complete: 768 cumulative responses and 22,707,069
+returned tokens across the six independent saves. Continue in the
 same original order. Do not tune prompts, choose winners early, reset memory
 or substitute checkpoints. Terra1's zero-progress window remains in its chain.
 
@@ -52,15 +52,27 @@ synthetic checks cover the composition. A read-only check of all five actual
 completed 64-to-128 windows reproduced every original provider review, returned
 token total and final model memory. These are rereads, not new model calls.
 
-A separate private next-stage controller/auditor draft now binds these helpers
-and the five available decision-128 parents. Its 28 offline controller tests
+A separate private next-stage controller/auditor draft binds these helpers
+and the available decision-128 parents. Its first 28 offline controller tests
 cover startup, unchanged resource limits, failures, admission and teardown.
 Together with cumulative-usage and teardown audit checks, 42 private offline
 tests pass. Combined collection exposed a host/frozen-package import-order
 issue; the host package is now selected before loading frozen support, and
 the combined tests pass. The frozen agent/environment/evaluator code remains
 byte-unchanged relative to the native revision.
-The full next-stage publication and end-to-end integration review remain open;
+`keyboard_window_projection` extracts only the new saved action boundaries
+across declared multi-segment windows, retaining cumulative game time without
+recounting prior history. Its 30 synthetic tests cover partial and complete
+windows, pauses, and malformed trace/profile boundaries. Read-only checks of
+the first five real decision-128 windows reproduced their published timelines.
+This does not establish future native gameplay or independently audit a save.
+
+The private controller, auditor and publisher have now passed 60 combined
+offline checks, including all six real source inputs and 17 whole-publisher
+tests for complete windows, partial windows, a zero-response second segment,
+private-data exclusion and mismatched reviews. The outer auditor source has
+been reviewed against its checkpoint and receipt helpers. Actual native
+two-segment execution and its terminal audit remain unproven until the run;
 no decision-256 run is launched by this preparation work.
 
 This isolated preparation checkout does not replace the current website,
