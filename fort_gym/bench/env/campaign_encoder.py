@@ -11,7 +11,11 @@ import json
 from copy import deepcopy
 from typing import Any
 
+from ..eval.campaign import TICKS_PER_YEAR
+
 PROFILE = "campaign_state/v1"
+CLOCK_PROFILE = "campaign_state/v2"
+PROFILES = (PROFILE, CLOCK_PROFILE)
 STATE_FIELDS = (
     "year",
     "year_tick",
@@ -149,9 +153,16 @@ def encode_campaign_observation(
     action_history: list[dict],
     last_action_result: dict | None,
     model_requested_time: bool = False,
+    profile: str = PROFILE,
+    committed_elapsed_ticks: int | None = None,
+    completed_decisions: int | None = None,
 ) -> tuple[str, dict]:
+    if profile not in PROFILES:
+        raise ValueError("Unsupported campaign observation profile")
     observation = _select(state, STATE_FIELDS)
-    observation["observation_profile"] = PROFILE
+    observation["observation_profile"] = profile
+    if profile == CLOCK_PROFILE:
+        observation["campaign_clock"] = campaign_clock(committed_elapsed_ticks, completed_decisions)
     for key, fields in (("work", WORK_FIELDS), ("fort", FORT_FIELDS), ("crew", CREW_FIELDS)):
         if key in state:
             observation[key] = _select(state[key], fields)
@@ -171,6 +182,33 @@ def encode_campaign_observation(
             ),
         }
     return render_campaign_observation(observation), observation
+
+
+def campaign_clock(elapsed_ticks: int | None, completed_decisions: int | None) -> dict:
+    """Describe the loop's committed prefix, never infer it from native year."""
+    for value in (elapsed_ticks, completed_decisions):
+        if value is not None and (type(value) is not int or value < 0):
+            raise ValueError("Campaign clock counters must be nonnegative integers or unknown")
+    complete_years = None if elapsed_ticks is None else elapsed_ticks // TICKS_PER_YEAR
+    return {
+        "schema_version": "fortgym.campaign-clock/v1",
+        "basis": "committed native tick receipts from campaign start",
+        "ticks_per_year": TICKS_PER_YEAR,
+        "elapsed_ticks": elapsed_ticks,
+        "completed_elapsed_years": complete_years,
+        "current_elapsed_year": None if complete_years is None else complete_years + 1,
+        "ticks_into_current_elapsed_year": (
+            None if elapsed_ticks is None else elapsed_ticks % TICKS_PER_YEAR
+        ),
+        "completed_decisions": completed_decisions,
+        "time_evidence": "unknown" if elapsed_ticks is None else "complete_committed_prefix",
+        "semantics": (
+            "Elapsed campaign time is distinct from the world's calendar year and wall time. "
+            "A new elapsed year starts every 403200 committed native ticks. Zero-tick actions "
+            "and dialog interactions do not age the fortress. This clock does not establish "
+            "a functioning fortress or successful play."
+        ),
+    }
 
 
 def render_campaign_observation(observation: dict, *, compact: bool = False) -> str:
@@ -200,4 +238,15 @@ def render_campaign_observation(observation: dict, *, compact: bool = False) -> 
             allow_nan=not compact,
         ),
     ]
+    if observation.get("observation_profile") == CLOCK_PROFILE:
+        clock = observation.get("campaign_clock", {})
+        # Keep the historical first three lines and Last Action line stable for memory.
+        lines.insert(
+            4,
+            "Campaign elapsed: "
+            f"ticks={clock.get('elapsed_ticks')}; ticks_per_year={TICKS_PER_YEAR}; "
+            f"completed_years={clock.get('completed_elapsed_years')}; "
+            f"current_elapsed_year={clock.get('current_elapsed_year')}. "
+            "This is duration, not a fortress-success verdict.",
+        )
     return "\n".join(lines)

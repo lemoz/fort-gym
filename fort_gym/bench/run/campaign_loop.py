@@ -19,7 +19,7 @@ from ..agent.base import Agent
 from ..agent.campaign_local import LocalOutputLimitPause
 from ..agent.governed_llm import GovernedBudgetCapError
 from ..env.actions import parse_action
-from ..env.campaign_encoder import PROFILE as CAMPAIGN_OBSERVATION_PROFILE
+from ..env.campaign_encoder import PROFILES as CAMPAIGN_OBSERVATION_PROFILES
 from ..env.campaign_encoder import encode_campaign_observation
 from ..env.encoder import encode_observation
 from ..eval.campaign import TICKS_PER_YEAR
@@ -184,11 +184,14 @@ class CampaignLoop:
     ) -> None:
         if type(max_advance_ticks) is not int or not 1 <= max_advance_ticks <= 2500:
             raise ValueError("Invalid campaign advance limit")
-        if observation_profile not in {"governed_review/v1", CAMPAIGN_OBSERVATION_PROFILE}:
+        if observation_profile not in ("governed_review/v1", *CAMPAIGN_OBSERVATION_PROFILES):
             raise ValueError("Unsupported campaign observation profile")
         if advance_policy not in POLICIES:
             raise ValueError("Unsupported campaign advance policy")
-        if advance_policy != ACCEPTED_ONLY and observation_profile != CAMPAIGN_OBSERVATION_PROFILE:
+        if (
+            advance_policy != ACCEPTED_ONLY
+            and observation_profile not in CAMPAIGN_OBSERVATION_PROFILES
+        ):
             raise ValueError("Requested-time policy requires factual campaign observations")
         agent.set_campaign_context(campaign_id=campaign_id)
         initial = agent.export_campaign_state()
@@ -274,7 +277,7 @@ class CampaignLoop:
         before = self.environment.observe()
         start = _clock(before)
         screen = self.environment.screen()
-        if self.observation_profile == CAMPAIGN_OBSERVATION_PROFILE:
+        if self.observation_profile in CAMPAIGN_OBSERVATION_PROFILES:
             # Dialog legality depends on the screen just read at this paused boundary.
             before["screen_text"] = screen
             text, observation = encode_campaign_observation(
@@ -283,6 +286,9 @@ class CampaignLoop:
                 action_history=self.history,
                 last_action_result=self.last_result,
                 model_requested_time=self.advance_policy == MODEL_REQUESTED,
+                profile=self.observation_profile,
+                committed_elapsed_ticks=self.committed_elapsed_ticks,
+                completed_decisions=self.next_step,
             )
         else:
             text, observation = encode_observation(
