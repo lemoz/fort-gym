@@ -19,8 +19,8 @@ It emits one 64-response own-save window ending at128, preserving the same promp
 memory, usage, controls, observations, measurement profiles and save procedure.
 No restart, prompt change, budget extension or model-specific adjustment is added.
 
-The Sol r1 file is derived from its already published saved result. Terra and
-other attempts receive configurations only after their own settled results exist.
+The Sol and Terra r1 files are derived from their already published saved results.
+Other attempts receive configurations only after their own settled results exist.
 Incomplete/failed first attempts remain in the comparison; they are not silently
 restarted or treated as successful checkpoints by this preparation function.
 
@@ -32,3 +32,30 @@ game reload, paid-spend admission, or completion of the broader Year-Two goal.
 Finish the predeclared fresh-attempt sequence before starting this next comparison
 stage. The existing native runner accepts these windows; a reusable bounded host
 owner and matching terminal publication must be completed before execution.
+
+## Reusable state and courier checks
+
+`continuation_state.py` now replaces the one-off offline Sol check for this stage:
+
+```sh
+.venv/bin/python experiments/keyboard_binding_comparison_continuations_20260911/continuation_state.py \
+  --window experiments/keyboard_binding_comparison_continuations_20260911/terra-r1-window-64-128.json
+```
+
+It uses a separate process for the public preparation reader so its package does
+not mix with the frozen native checkout. The actual checkpoint files, parent
+terminal audit, saved agent configuration, memory, prompt, usage and history all
+verify before it emits an allowlisted offline receipt. Both real Sol and Terra
+saves passed, retaining 1,258,321 and 1,589,877 tokens respectively.
+
+`window_courier.py` wraps the existing bounded native courier. Before the first
+model invocation it checks the exact restored agent, trace/usage prefixes,
+previous-action feedback, native clock and saved fortress metrics. The current
+screen may differ because the game can reload into its default menu; the guard
+does not navigate or repair that menu. The frozen courier retains its full memory
+chain and per-call subscription checks after the initial gate.
+
+The loaded-state gate has synthetic contract coverage, including all six slots
+and rejection before dispatch on a mismatch. It has not yet run in a new native
+continuation. These modules do not own a VM or publish a terminal outcome; the
+outer lifecycle and final audit/publication still need integration before launch.
