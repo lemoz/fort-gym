@@ -199,13 +199,17 @@ def test_record_reader_rejects_escape_symlink_and_oversize(tmp_path, monkeypatch
         records.read_result("small.json", expected)
 
 
-def test_website_renders_latest_saves_and_loads_window_details_only_when_opened(published):
+@pytest.mark.parametrize("target", [128, 1280])
+def test_website_renders_latest_saves_and_loads_window_details_only_when_opened(published, target):
     from fort_gym.bench.api.keyboard_cohort import PROJECT_ROOT
 
     node = shutil.which("node")
     if not node:
         pytest.skip("Node unavailable")
-    published()
+    cursor = 64
+    while cursor < target:
+        child, _ = published()
+        cursor = child["next_decision"]
     data = records.keyboard_endurance_records()
     program = r"""
 const assert = require('node:assert/strict'), fs = require('node:fs'), vm = require('node:vm');
@@ -216,7 +220,7 @@ class Element {
   setAttribute(k,v) { this[k] = v; } appendChild(v) { this.children.push(v); }
   replaceChildren(...v) { this.children = v; this.text = ''; } addEventListener(k,v) { this.events[k] = v; }
 }
-const data = JSON.parse(process.argv[2]), nodes = {}; let fail = false;
+const data = JSON.parse(fs.readFileSync(0, 'utf8')), nodes = {}; let fail = false;
 vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   document: {getElementById: id => nodes[id] ||= new Element('div'), createElement: tag => new Element(tag)},
   fetch: async url => { assert.equal(url, '/public/keyboard-cohort-endurance-records'); return {ok: !fail, json: async () => data}; },
@@ -252,8 +256,9 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
             "-e",
             program,
             str(PROJECT_ROOT / "web/static/campaign-endurance-records.js"),
-            json.dumps(data),
         ],
+        # Histories can exceed Linux's per-argument limit; keep payloads off argv.
+        input=json.dumps(data),
         capture_output=True,
         text=True,
         timeout=20,
