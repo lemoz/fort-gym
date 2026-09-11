@@ -12,7 +12,7 @@ and [reload verification](#later-checkpoint-1057-verification-and-website-delive
 Do not confuse that achieved duration with the younger, independent matched
 cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 
-## Current state: Sol's first matched outcome saved, Terra running
+## Current state: Sol and Terra first outcomes saved, Astra running
 
 The [new declaration](../experiments/keyboard_binding_comparison_20260911/README.md)
 sets six fresh attempts, two each for Sol, Terra and Astra at Medium, with the
@@ -53,20 +53,39 @@ The declaration and reusable owner/audits are pushed at
 `61fcca7177d8b66ddd7e12e4be0ab53bda5ffd5b`. All 31 focused tests and selected
 Ruff checks pass; all three configurations load through the actual frozen
 native parser. The [shared comparison reader](DISPLAYED_KEY_COMPARISON.md)
-now loads this exact saved result and keeps the five missing outcomes visible
+now loads the Sol and Terra saved results and keeps four missing outcomes visible
 at the same decision boundary. Its source-pinned result index does not invent live
 status or silently mix in longer continuations. Do not relaunch the completed
-Sol owner. [Terra r1 is now running](../experiments/evidence/keyboard_binding_comparison_terra_r1_startup_20260911.json)
-under the same declared conditions. Its first native seed load and subscription
-receipt passed verification, and the homepage switched correctly to Terra's
-live screen and moves. The same local VM had 2,803,612 KiB free before this
-game container was created; no disk grew. Sol's later 64-to-128 continuation
-and fresh reload remain pending. Terra was observed at51 returned responses
-after three attested zero-tick waits in the workshop-placement screen; the model
-received the harness's existing timeout feedback with no human input or protocol
-change. This is an in-progress observation, not a terminal result. Finish and
-audit this same owner before starting the next predeclared Astra attempt.
-The full goal is active.
+Sol owner. [Terra r1's original startup observation](../experiments/evidence/keyboard_binding_comparison_terra_r1_startup_20260911.json)
+remains unchanged; its [completed 64-response outcome](../experiments/evidence/keyboard_binding_comparison_terra_r1_64_20260911.json)
+has now passed the frozen terminal audit. It retained 4,200 elapsed ticks,
+274 native key presses and 1,589,877 returned tokens. Seven citizens remain
+alive with zero recorded deaths, 51 food and 60 drinks, but no completed beds,
+workshops or farms. Tree-felling and plant-gathering jobs were sampled; these
+are not completed-production counts. Five game-clock requests timed out and
+one hit a blocking menu. All original feedback and actual saved ticks are
+preserved without human gameplay rescue. The guest shutdown connection returned
+nonzero, followed by a successful VM stop and verified stopped state.
+
+[Astra r1 has started next](../experiments/evidence/keyboard_binding_comparison_astra_r1_startup_20260911.json) under the unchanged declaration, after Terra's save
+and teardown audit. Its first subscription receipt and fresh native seed load
+passed verification: empty memory, zero inherited usage, year 30/tick 16801,
+120x40 screen, Astra Medium. The existing local guest had 2,664,828 KiB free
+before this game container; no disk grew. The read-only homepage relay is
+broadcasting Astra's captured screens and chosen moves. Startup and public-frame
+evidence are recorded separately from terminal acceptance. Audit this owner
+when it settles; do not start a duplicate. The next fresh attempt is Terra r2.
+
+The public comparison deployment still contains only Sol's settled result.
+Terra's source result is indexed here; its recorded replay and public table
+update remain pending. The separately pushed own-save continuation preparation
+in draft PR172 verifies Sol's actual saved agent state offline, but has not
+launched a continuation or proved a fresh game reload. That scoped work passed
+146 focused tests; full local regression reported 3,465 passed, 10 skipped and
+one unchanged historical M1b archive/source-hook mismatch. Exact-head CI
+34652752465 passed; the local mismatch remains disclosed and the PR stays draft.
+The full goal is active; repeats, common 128-response saves and remaining harness
+integration are still required.
 
 ## Latest completed milestone: displayed-key Astra saved into Year Two
 
