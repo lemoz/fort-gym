@@ -21,18 +21,28 @@ def test_actual_saved_results_keep_all_declared_slots_and_original_records():
     before = cohort.keyboard_cohort()
     data = records.keyboard_continuations()
     assert cohort.keyboard_cohort() == before
-    assert data["recorded_windows"] == len(records.RESULTS)
+    assert data["recorded_windows"] == len(records.RESULTS) == 6
     assert data["declared_windows"] == 6
     assert data["strong_ranking_supported"] is data["live_owner_status_included"] is False
     assert [row["campaign_id"] for row in data["trials"]] == [
         row["campaign_id"] for row in before["trials"]
     ]
-    assert [row["result"]["saved_elapsed_ticks"] for row in data["trials"][:3]] == [
+    assert [row["result"]["saved_elapsed_ticks"] for row in data["trials"]] == [
         18200,
         5500,
         13000,
+        19000,
+        12700,
+        19500,
     ]
     assert [row["result"]["new_saved_ticks"] for row in data["trials"][:3]] == [7000, 3000, 6000]
+    assert sum(r["result"]["new_responses"] for r in data["trials"]) == 192
+    assert sum(r["result"]["usage"]["campaign_returned_tokens"] for r in data["trials"]) == 11403734
+    astra2 = data["trials"][-1]["result"]
+    assert astra2["recorded_date_utc"] == "2026-09-11"
+    assert astra2["saved_metrics"]["completed_beds"] == 3
+    assert astra2["saved_metrics"]["completed_workshops"] == 2
+    assert astra2["saved_metrics"]["functional_rooms"] is None
     for row in data["trials"]:
         if row["campaign_id"] in records.RESULTS:
             assert row["publication_state"] == "recorded"
@@ -182,7 +192,8 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   assert.match(content.textContent, /unreported, not \$0/);
   assert.match(content.textContent, /not yet verified/);
   assert.match(content.textContent, /Window complete; campaign unfinished/);
-  assert.match(content.textContent, /No published continuation/);
+  assert.doesNotMatch(content.textContent, /No published continuation/);
+  assert.match(content.textContent, /10,500 \/ 19,500/);
   const all=[]; const walk=n=>{all.push(n);n.children.forEach(walk);}; walk(content);
   const bodies=all.filter(n=>n.tag==='tbody'); assert.equal(bodies[0].children.length,6);
   assert.equal(bodies.length-1,data.recorded_windows);

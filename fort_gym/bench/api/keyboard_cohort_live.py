@@ -17,7 +17,7 @@ IDENTITY = ("campaign_id", "model", "reasoning_effort", "source_revision",
             "seed_receipt_sha256", "execution_binding_sha256", "data_disk_gib")
 
 
-def observation_fields(value: dict, *, now: int) -> dict:
+def observation_fields(value: dict, *, now: int, response_limit: int = 32) -> dict:
     """Validate common provisional counts without choosing a campaign origin."""
     if (type(value.get("controller_alive")) is not bool
             or type(value.get("observed_at_unix")) is not int
@@ -27,7 +27,9 @@ def observation_fields(value: dict, *, now: int) -> dict:
     for key in COUNTS:
         if type(value.get(key)) is not int or not 0 <= value[key] <= 2**53 - 1:
             raise ValueError("Invalid live count")
-    if value["responses"] > 32 or value["responses"] + value["unsettled_claims"] > 32:
+    if type(response_limit) is not int or not 1 <= response_limit <= 1280:
+        raise ValueError("Invalid declared response limit")
+    if value["responses"] + value["unsettled_claims"] > response_limit:
         raise ValueError("Live calls exceed the declared window")
     ticks = value.get("observed_elapsed_ticks_lower_bound", "missing")
     teardown = value.get("teardown_reported", "missing")
@@ -41,7 +43,7 @@ def observation_fields(value: dict, *, now: int) -> dict:
     return {
         "status": state,
         **{key: value[key] for key in (*COUNTS, "observed_at_unix")},
-        "fresh_for_seconds": FRESH_SECONDS, "response_limit": 32,
+        "fresh_for_seconds": FRESH_SECONDS, "response_limit": response_limit,
         "observed_elapsed_ticks_lower_bound": ticks,
         "new_save_verified": False,
         "progress_basis": "host_receipts_and_subsequent_feedback",
