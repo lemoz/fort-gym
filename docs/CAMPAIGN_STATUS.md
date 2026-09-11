@@ -12,7 +12,35 @@ and [reload verification](#later-checkpoint-1057-verification-and-website-delive
 Do not confuse that achieved duration with the younger, independent matched
 cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 
-## Current state: displayed-key Astra saved into Year Two
+## Current state: matched displayed-key comparison running
+
+The [new declaration](../experiments/keyboard_binding_comparison_20260911/README.md)
+sets six fresh attempts, two each for Sol, Terra and Astra at Medium, with the
+same seed, displayed-key controls, 120x40 observation, prompt and resource caps.
+Compare saved decisions 64 and 128 before unequal-length continuations. The
+historical Astra Year-Two success remains context, not a relabeled replicate.
+
+Sol replicate one is running. Its [startup record](../experiments/evidence/keyboard_binding_comparison_sol_r1_startup_20260911.json)
+verifies the actual native seed load, empty memory/usage/history and first
+subscription response. The observation retained 17 returned replies and 362,871
+tokens, with no new checkpoint or terminal acceptance claimed. The owner is
+bounded to 64 responses and mandatory teardown. No cloud VM, disk growth,
+historical-evidence deletion, credit purchase or paid API fallback was introduced.
+
+The existing [public viewer](https://fortgym.live/#watch-root) now shows this
+attempt. Public decision 15 matched its original native screen and explicit
+model action; desktop browser checks observed advancing live screens. The live
+feed is provisional and does not certify key execution or a saved fortress.
+No website service restarted, and the five prior recordings remain unchanged.
+
+The declaration and reusable owner/audits are pushed at
+`61fcca7177d8b66ddd7e12e4be0ab53bda5ffd5b`. All 31 focused tests and selected
+Ruff checks pass; all three configurations load through the actual frozen
+native parser. Do not launch a duplicate Sol owner. After it settles, audit the
+saved segment and teardown, preserve the outcome, then proceed to Terra r1.
+The full gameplay/comparison/integration goal remains active.
+
+## Latest completed milestone: displayed-key Astra saved into Year Two
 
 The [decision-256-to-416 continuation](../experiments/evidence/keyboard_binding_astra_r1_continuation_256_416_20260911.json)
 completed all five segments and retained **429,845 elapsed ticks**, or **1.066
