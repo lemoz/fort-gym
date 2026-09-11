@@ -26,12 +26,17 @@ teardown and immutable evidence links remain inspectable.
 
 The current implementation preserves the existing website, prior APIs, model
 prompts, native source, running owner and observer. An isolated worktree named
-`campaign-matched-endurance-records` holds the changes for separate preview
+`campaign-matched-endurance-cohort` holds the next publication for separate preview
 verification. Astra attempt 1's audited decision-128 result is registered by
 its immutable result commit and original declared window. Its 51,400 saved
 ticks, seven living dwarves, five beds, two farms, three workshops, 29 food and
 121 drinks are recorded outcomes, not proof of sustainability or year two.
-The other five attempts retain their decision-64 baselines. Different saved
-response counts are not equal-budget comparisons. Test-generated future
+Sol attempt 1's audited decision-128 result is also registered: 20,000 saved
+ticks, seven living dwarves, no completed beds/farms/workshops, food50 and
+drinks60. Digging jobs observed at 56 boundaries do not establish completed
+job counts or excavated tiles. Both attempts retain independent saves and
+their original conditions; equal responses do not mean equal elapsed game
+time or token use. The other four attempts retain their decision-64 baselines.
+Different saved response counts are not equal-budget comparisons. Test-generated future
 windows are synthetic fixtures and are never added to the public registry.
 No browser visual QA, public deployment or main merge is claimed by these changes.

@@ -40,6 +40,16 @@ RESULTS: dict[str, tuple[Publication, ...]] = {
             "45bb05c903181b6b2e4f61df3a4c0a8eca05b818",
         ),
     ),
+    "matched-20260910-sol-r1": (
+        Publication(
+            "experiments/evidence/keyboard_matched_sol_r1_continuation_64_128_20260911.json",
+            "a155f9c940e242de32d216e9795291dc2093299b64ce57760b722ee7a0a33491",
+            "91cab28293ed75f968fca12b4f1acbc5908da68e",
+            "experiments/keyboard_matched_endurance_20260910/sol_r1-64-128.json",
+            "f562e190020aa381508f0be375468303c314e3e9e1de2d36e8d937db4b2f0ef3",
+            "45bb05c903181b6b2e4f61df3a4c0a8eca05b818",
+        ),
+    ),
 }
 
 

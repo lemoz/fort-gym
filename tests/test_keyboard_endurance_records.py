@@ -28,7 +28,9 @@ def test_actual_six_saved_baselines_do_not_invent_endurance_results(monkeypatch)
     assert keyboard_continuations() == baseline
 
 
-def test_actual_astra_endurance_result_preserves_audited_outcome_and_unequal_budgets():
+def test_actual_astra_endurance_result_preserves_audited_outcome_and_unequal_budgets(monkeypatch):
+    identity = "matched-20260910-astra-r1"
+    monkeypatch.setattr(records, "RESULTS", {identity: records.RESULTS[identity]})
     result = records.keyboard_endurance_records()
     assert result["recorded_endurance_windows"] == 1
     assert result["recorded_endurance_boundaries"] == 64
@@ -68,6 +70,54 @@ def test_actual_astra_endurance_result_preserves_audited_outcome_and_unequal_bud
         == "cb9cc0c5af8f158848493b1e7b3bb79f4f4736f185fbf7ce96fb157095e1d145"
     )
     assert "/0c2aaeb63f1a209cf7ec299a473a77911ddd10ed/" in astra["latest_result_url"]
+    assert result["strong_ranking_supported"] is result["live_owner_status_included"] is False
+
+
+def test_astra_and_sol_128_records_remain_independent_before_cohort_complete():
+    result = records.keyboard_endurance_records()
+    assert result["recorded_endurance_windows"] == 2
+    assert result["recorded_endurance_boundaries"] == 128
+    assert result["latest_saved_responses"] == 512
+    assert result["latest_saved_tokens"] == 15508434
+    astra, sol, *others = result["trials"]
+    assert all(row["latest_result"]["next_decision"] == 128 for row in (astra, sol))
+    assert all(
+        row["latest_result"]["next_decision"] == 64 and row["windows"] == [] for row in others
+    )
+    assert (
+        astra["windows"][0]["evidence_sha256"]
+        == "cb9cc0c5af8f158848493b1e7b3bb79f4f4736f185fbf7ce96fb157095e1d145"
+    )
+    assert sol["campaign_id"] == "matched-20260910-sol-r1"
+    assert (
+        sol["windows"][0]["evidence_sha256"]
+        == "a155f9c940e242de32d216e9795291dc2093299b64ce57760b722ee7a0a33491"
+    )
+    saved = sol["latest_result"]
+    assert saved["saved_elapsed_ticks"] == 20000 and saved["new_saved_ticks"] == 14500
+    assert (
+        saved["audit_sha256"] == "60134d9949f6815af0728bb9aee775f98661149295293f20993e5acd3c6cf0d9"
+    )
+    assert (
+        saved["checkpoint_sha256"]
+        == "5c8e263dcdbf12908eb33d7317eaa1f88545d3a6d0c4fbd151fe69224e391b3f"
+    )
+    assert saved["prior_checkpoint_sha256"] != astra["latest_result"]["prior_checkpoint_sha256"]
+    metrics = saved["saved_metrics"]
+    assert (metrics["population"], metrics["recorded_dead_citizens"]) == (7, 0)
+    assert (
+        metrics["completed_beds"],
+        metrics["completed_farms"],
+        metrics["completed_workshops"],
+    ) == (0, 0, 0)
+    assert (metrics["food_stock"], metrics["drink_stock"]) == (50, 60)
+    assert saved["new_window_activity"]["boundaries_with_job_type"]["Dig"] == 56
+    assert saved["usage"]["campaign_returned_tokens"] == 3522467
+    assert saved["year_two_reached"] is saved["sustainability_established"] is False
+    assert saved["final_fresh_reload_verified"] is False
+    assert saved["native_cleanup_verified"] is saved["vm_teardown_verified"] is True
+    assert saved["usage"]["reported_charge_usd"] is None
+    assert "/91cab28293ed75f968fca12b4f1acbc5908da68e/" in sol["latest_result_url"]
     assert result["strong_ranking_supported"] is result["live_owner_status_included"] is False
 
 
