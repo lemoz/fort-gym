@@ -25,6 +25,14 @@ def validate_llama_settings(config: dict) -> None:
         raise ValueError("Unsupported pinned llama.cpp build or token-count profile")
     if type(local.get("enable_thinking")) is not bool:
         raise ValueError("Local llama.cpp thinking mode must be an explicit boolean")
+    if "reasoning_budget_tokens" in local:
+        budget = local["reasoning_budget_tokens"]
+        if (
+            type(budget) is not int
+            or not 0 <= budget < config["max_output_tokens"]
+            or local["enable_thinking"] is not True
+        ):
+            raise ValueError("A reasoning budget requires thinking and space for action output")
     for key, lower, upper in (
         ("top_k", 1, 1000),
         ("context_headroom_tokens", 1, 4096),

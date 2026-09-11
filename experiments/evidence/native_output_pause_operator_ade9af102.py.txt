@@ -1,0 +1,84 @@
+"""Explicit second-phase retry at the original frozen library revision.
+
+Run through SSH stdin from the ade9af102 acceptance checkout after independently
+checking the original attempt is terminal, no restart claim/output exists, and
+the port is bindable. This is an operator-driven fixture continuation, not a pass
+of the original automatic two-phase CLI. All native/agent logic is imported from
+the original committed checkout; this small driver is retained separately.
+"""
+
+import hashlib
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+from scripts.campaign_output_pause_smoke import verify_recovery, write_new
+from scripts.campaign_process import run_worker, termination_as_interrupt
+from scripts.campaign_restart import restart_latest_checkpoint
+
+revision = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+assert revision == "ade9af102f1eef5284954f33f4d6a7695bcd679e"
+assert not subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=all"])
+root = Path("artifacts/native-output-pause-20260906-a").resolve()
+first, output = root / "first", root / "resumed"
+checkpoint = first / "checkpoint"
+digest = hashlib.sha256((checkpoint / "checkpoint.json").read_bytes()).hexdigest()
+assert digest == "eab9b6cc022daddf9739c29383a98c8307590016ff4497cd0b808a024849b6a6"
+prior_digest = hashlib.sha256((first / "result.json").read_bytes()).hexdigest()
+
+
+def play(runtime, environment, loaded):
+    worker_env = {
+        **environment,
+        "FORT_GYM_DISABLE_DOTENV": "1",
+        "DFROOT": str(runtime),
+        "DFHACK_ENABLED": "1",
+        "DF_PROTO_ENABLED": "1",
+        "DFHACK_HOST": "127.0.0.1",
+        "DFHACK_PORT": "5501",
+        "FORT_GYM_DFHACK_COMPLETE_DIG": "0",
+        "ARTIFACTS_DIR": str(output / "unused-artifacts"),
+        "FORT_GYM_DB_PATH": str(output / "unused-registry.sqlite"),
+    }
+    command = [
+        sys.executable, "-m", "scripts.campaign_output_pause_smoke", "--worker",
+        "--output", str(output), "--runtime", str(runtime), "--checkpoint", str(checkpoint),
+        "--minimum-free-bytes", "1073741824",
+    ]
+    with (output / "worker.log").open("xb") as stream:
+        run_worker(command, env=worker_env, stdout=stream, timeout=300)
+    data = json.loads((output / "worker-result.json").read_text())
+    return {"provider_calls": 0, "next_step": data["next_step"]}
+
+
+with termination_as_interrupt():
+    resumed = restart_latest_checkpoint(
+        previous_output=first,
+        previous_receipt_sha256=prior_digest,
+        checkpoint_sha256=digest,
+        output=output,
+        revision=revision,
+        minimum_free_bytes=1073741824,
+        growth_allowance_bytes=1048576,
+        work=play,
+    )
+    result = verify_recovery(
+        json.loads((first / "worker-result.json").read_text()),
+        json.loads((output / "worker-result.json").read_text()),
+        checkpoint,
+    )
+    result.update(
+        schema_version="fortgym.operator-native-output-pause-recovery/v1",
+        code_revision=revision,
+        operator_driver_sha256=sys.argv[1],
+        orchestration="explicit_second_phase_after_prelaunch_port_failure",
+        automatic_two_phase_cli_verified=False,
+        checkpoint_file_sha256=digest,
+        first_runtime_receipt_sha256=prior_digest,
+        resumed_runtime_receipt_sha256=hashlib.sha256((output / "result.json").read_bytes()).hexdigest(),
+        resumed_cleanup_verified=resumed["cleanup_verified"],
+        runtime_asset_copies=1,
+    )
+    write_new(root / "operator-recovery-result.json", result)
+    print(json.dumps(result, sort_keys=True))

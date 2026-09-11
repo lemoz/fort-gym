@@ -1,0 +1,103 @@
+{
+  "schema_version": "fortgym.local-output-replay-acceptance/v1",
+  "experiment_id": "local-year-two-output-budget-v1",
+  "execution_revision": "9e82dbc8e494390a5a3a8e3a46a5438aed6fd2ab",
+  "operator_sha256": "7500b8d80139c69152be50ceddb0ee54df8afbafed18864fcc23b044a5e187a2",
+  "plan_sha256": "b917ff5f45f9788578a837167c05d0af651a7d47150178a1227d79a7cd67fe1c",
+  "source_file_sha256": "797a0981a0cad1066ffe26be89e531bdf95eddd9bec7e92323f8bf9e6ea3b365",
+  "diagnostic": {
+    "schema_version": "fortgym.output-budget-result/v1",
+    "experiment_id": "local-year-two-output-budget-v1",
+    "code_revision": "9e82dbc8e494390a5a3a8e3a46a5438aed6fd2ab",
+    "plan_sha256": "b917ff5f45f9788578a837167c05d0af651a7d47150178a1227d79a7cd67fe1c",
+    "source_failure_file_sha256": "797a0981a0cad1066ffe26be89e531bdf95eddd9bec7e92323f8bf9e6ea3b365",
+    "source_request_sha256": "393d66c811b41be05b7ef9323a4d5109932a43f4e063fca52d2b7d46a9809eac",
+    "native_game_loaded": false,
+    "native_actions_executed": 0,
+    "native_legality": "not_checked",
+    "model": "fort-gym-qwen35-9b-q4-03b74727a860",
+    "cases": [
+      {
+        "output_token_allowance": 4096,
+        "request_sha256": "393d66c811b41be05b7ef9323a4d5109932a43f4e063fca52d2b7d46a9809eac",
+        "status": "output_limit",
+        "action_syntax_valid": false,
+        "action_type": null,
+        "elapsed_seconds": 479.5231945409905,
+        "usage": {
+          "total_tokens": 12889,
+          "total_cost_usd": "0",
+          "returned_responses": 1,
+          "accounted_responses": 1,
+          "dispatched_requests": 1,
+          "cost_basis": "self_hosted_no_metered_provider"
+        },
+        "prompt_count_matches_source": true
+      },
+      {
+        "output_token_allowance": 8192,
+        "request_sha256": "1848338a8f0c734533415d76490491adbde871d24c31ebcc945539c3f3cee343",
+        "status": "failed",
+        "action_syntax_valid": false,
+        "action_type": null,
+        "error_type": "LocalInferenceError",
+        "elapsed_seconds": 600.0635154999909,
+        "usage": {
+          "total_tokens": 0,
+          "total_cost_usd": "0",
+          "returned_responses": 0,
+          "accounted_responses": 0,
+          "dispatched_requests": 1,
+          "cost_basis": "self_hosted_no_metered_provider"
+        },
+        "prompt_count_matches_source": false
+      }
+    ],
+    "dispatched_requests": 2,
+    "returned_responses": 1,
+    "accounted_responses": 1,
+    "total_tokens": 12889,
+    "total_tokens_scope": "accounted_returned_usage",
+    "usage_complete": false,
+    "server_teardown": "not_verified_by_diagnostic",
+    "metered_provider_charge_usd": "0",
+    "infrastructure_cost_usd": null,
+    "status": "stopped_without_retry"
+  },
+  "interpretation": {
+    "output_4096": "accounted_output_limit_no_action",
+    "output_8192": "transport_failure_without_returned_response",
+    "deadline_seconds": 600,
+    "deadline_explanation": "Failure at 600.0635 seconds while generation was ongoing is consistent with the declared read deadline; the transport wrapper retained no underlying exception type.",
+    "output_8192_last_logged_generated_tokens": 5834,
+    "output_8192_logged_count_scope": "intermediate_server_progress_not_returned_or_final_usage",
+    "actual_total_tokens": null,
+    "accounted_returned_tokens": 12889,
+    "larger_output_solves_original_pause": "not_established",
+    "native_gameplay_evidence": false,
+    "model_ranking_established": false
+  },
+  "teardown": {
+    "worker_exit_code": 0,
+    "server_exit_code": 0,
+    "owned_processes_independently_absent": true,
+    "model_listener_independently_closed": true,
+    "source_file_unchanged": true
+  },
+  "native_game_loaded": false,
+  "native_actions_executed": 0,
+  "cloud_vms_created": 0,
+  "hosted_provider_calls": 0,
+  "metered_provider_charge_usd": "0",
+  "hardware_energy_and_app_cost_usd": null,
+  "historical_inputs_rewritten": false,
+  "production_deployed": false,
+  "evidence_sha256": {
+    "result.json": "43d9390b9eeeaa99e2d3ff377665285d17522d6c7b729b5935e6ebea2577245b",
+    "model-launch.json": "032f5bf0e01f64401ce109c13ee1e3f02bc5810d3f990cb14802d9df15bdb6d3",
+    "model.log": "aceac1c298114d7f4a219809bae6909adcd750517fcaab0ed50af7775ebc811e",
+    "diagnostic/result.json": "3e1c69d942a44362ed1a498b7d1e576f15a8ce184cd36842448f318f378c5a73",
+    "diagnostic/output-4096/result.json": "5c9961a97eef7fbcb9fde79ad76b32569ca3d5c20c738472e73a9658cc58242f",
+    "diagnostic/output-8192/result.json": "77523ba594cfe53c494ccd2c3df3a2406a05d610de7f56636420a943a444c24e"
+  }
+}

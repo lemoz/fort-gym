@@ -20,7 +20,7 @@ import stat
 import subprocess
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from fort_gym.bench.dfhack_exec import _strip_ansi
 from fort_gym.bench.run.campaign_save import CampaignSaveError, save_inventory
@@ -291,12 +291,21 @@ def runtime_live_members(runtime: Path) -> dict[int, str]:
             if path.parent.stat().st_uid != os.getuid():
                 continue
             fields = path.read_text().rpartition(") ")[2].split()
-            cwd = (path.parent / "cwd").resolve(strict=True)
-            executable = (path.parent / "exe").resolve(strict=True)
         except (FileNotFoundError, PermissionError, ProcessLookupError):
             continue
-        if fields[0] not in {"Z", "X"} and (cwd == root or root in executable.parents):
-            members[int(path.parent.name)] = fields[19]
+        if fields[0] in {"Z", "X"}:
+            continue
+        # These are independent ownership witnesses. Under binfmt translation,
+        # exe can point to an interpreter outside the container mount namespace;
+        # that must not discard a valid, exact cwd match (or vice versa).
+        for name in ("cwd", "exe"):
+            try:
+                target = (path.parent / name).resolve(strict=True)
+            except (FileNotFoundError, PermissionError, ProcessLookupError):
+                continue
+            if (name == "cwd" and target == root) or (name == "exe" and root in target.parents):
+                members[int(path.parent.name)] = fields[19]
+                break
     return members
 
 
@@ -372,6 +381,32 @@ def run_isolated(
         "gameplay_ticks_requested": 0 if work is None else None,
         "cleanup_verified": False,
     }
+    return _run_prepared_runtime(
+        runtime=runtime,
+        output=output,
+        environment=environment,
+        expected=expected,
+        result=result,
+        validate_source=lambda: verify_load_source(snapshot, digest, source_kind),
+        work=work,
+    )
+
+
+def _run_prepared_runtime(
+    *,
+    runtime: Path,
+    output: Path,
+    environment: dict[str, str],
+    expected: dict[str, Any],
+    result: dict[str, Any],
+    validate_source: Callable[[], Any],
+    work=None,
+    validate_runtime: Callable[[], Any] | None = None,
+) -> dict[str, Any]:
+    """Shared process lifetime; callers own preparation and any restart lock."""
+    port = result["port"]
+    if validate_runtime is not None:
+        validate_runtime()
     with (output / "runtime.log").open("xb") as log:
         process = subprocess.Popen(
             ["script", "-qefc", shlex.quote(str(runtime / "dfhack")), "/dev/null"],
@@ -386,6 +421,8 @@ def run_isolated(
         try:
             initial = wait_status(runtime, environment, process, loaded=False)
             result["initial"] = initial
+            if validate_runtime is not None:
+                validate_runtime()
             rpc(runtime, environment, "load-save", "campaign-resume")
             loaded = wait_status(runtime, environment, process, loaded=True)
             result["loaded"] = loaded
@@ -396,7 +433,7 @@ def run_isolated(
                 != (expected["year"], expected["year_tick"])
             ):
                 raise CampaignSaveError("Loaded fortress does not match the saved paused calendar")
-            verify_load_source(snapshot, digest, source_kind)
+            validate_source()
             result["native_load_verified"] = True
             if work is not None:
                 result["experiment"] = work(runtime, environment, loaded)

@@ -178,7 +178,15 @@ def test_worker_opts_into_dispatch_accounting_and_closes_its_connection(tmp_path
     monkeypatch.setenv("DFROOT", str(runtime))
     events = []
     env = SimpleNamespace(close=lambda: events.append("closed"))
-    monkeypatch.setattr(campaign_environment, "NativeCampaignEnvironment", lambda **kwargs: env)
+    config = load_segment_config(CONFIG, MODEL)
+    config["max_advance_ticks"] = 2500
+
+    def native_environment(**kwargs):
+        assert kwargs["max_advance_ticks"] == config["max_advance_ticks"]
+        assert kwargs["expected_dfroot"] == runtime
+        return env
+
+    monkeypatch.setattr(campaign_environment, "NativeCampaignEnvironment", native_environment)
 
     def make(config, model, journal, *, persist_dispatches):
         assert persist_dispatches is True
@@ -197,7 +205,7 @@ def test_worker_opts_into_dispatch_accounting_and_closes_its_connection(tmp_path
             checkpoint=None,
             latest_usage=None,
         ),
-        load_segment_config(CONFIG, MODEL),
+        config,
     )
     assert result == {"test_only": True} and events == ["closed"]
 

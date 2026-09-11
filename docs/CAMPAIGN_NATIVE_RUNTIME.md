@@ -14,6 +14,35 @@ and condition identities; they are not acceptance evidence for this revision.
 
 ## Requirements
 
+### Latest native verification, September 6
+
+Source `fad9d80c0a2e7aace8380b47b009db5edaf6bd2e` passed the automatic v3
+checkpoint recovery fixture on isolated Colima 0.10.3 / Lima 2.2.0 tooling.
+It saved cursor zero at year 30, tick 16801, stopped the first game process,
+restored the exact checkpoint in a second process, and executed one fresh
+20-tick WAIT. Both cleanup receipts and an independent recovery verifier passed;
+the container and VM stopped. A real translated-process probe also confirmed
+ownership detection when the executable link could not resolve.
+See the [automatic recovery receipt](../experiments/evidence/local_native_automatic_recovery_20260906.json).
+
+This provider-free fixture is not autonomous gameplay or year-two proof.
+Synthetic usage is not model consumption; no final checkpoint followed the WAIT.
+Global tools, old profiles and historical failure receipts remain unchanged.
+The new toolchain's successful boot/reboot does not explain old startup failures.
+
+The next experiment uses the [new local Qwen3.5 condition](../experiments/campaigns/local_native_qwen35_year_two_v1.json):
+existing 9B quantized weights, optional thinking disabled, 4,096 output tokens,
+and the unchanged digest-bound starting seed, not the fixture's post-WAIT state.
+Its first segment started September 6 on the isolated local VM with the existing
+local model and an owned loopback tunnel. At 23:17 UTC, six model-selected WAIT
+actions had advanced 6,000 native ticks. No completed segment or handoff is
+claimed; the running source is still frozen at `fad9d80c0`.
+The changed seed, runtime and budgets are declared; this is
+not a matched historical comparison. Year-two play and repeated model evaluation
+remain open. No production deployment is claimed.
+
+### Runtime prerequisites
+
 - Run the commands from a committed Git checkout with Python 3.11. Install the
   project's dependencies with `python -m pip install -e '.[dev,agent,proto]'`.
   The `scripts.campaign_*` commands require the checkout; they are not standalone
@@ -138,6 +167,76 @@ The v3 campaign loop can save an accounted no-action output-limit response as
 `inference_output_limited_pause`; it does not claim fortress collapse. Earlier
 loop versions keep their earlier failure/reconciliation semantics. Budget,
 invocation and output-limit pauses are distinct from gameplay failure.
+
+## Provider-free v3 restart acceptance fixture
+
+`python -m scripts.campaign_output_pause_smoke --help` describes the separate
+no-action recovery fixture. It uses one new runtime asset copy across two serial
+native process lifetimes, one retained v3 checkpoint, and no model/provider
+client. Its first synthetic response accounts ten fixture tokens but executes no
+game command. It saves and tears down, verifies the on-disk save still matches
+the checkpoint byte-for-byte, then restarts that same owned runtime and restores
+agent/runner/usage state before one fresh 20-tick WAIT fixture.
+
+The shared launcher checks the paused native calendar and tears down the exact
+owned process group/runtime members. Restart additionally requires the prior
+receipt digest, matching source revision, successful teardown, no live runtime
+members, a free non-production port, regular owned paths and exact save bytes.
+An exclusive lock serializes callers and a durable single-use claim prevents a
+second attempt, including after a failed launch. No file is deleted or replaced
+to restore a checkpoint; a changed save is rejected, not rolled back.
+If the previous endpoint is closed but temporarily not bindable, restart waits
+up to 90 seconds before claiming or launching anything. This retries only local
+port probes, not game/model operations. A live listener, unknown connectivity,
+owned live process or any other bind error is rejected immediately.
+
+The first preflight includes one checkpoint and the growth allowance above the
+declared floor. Restart reserves no space and checks the floor plus that allowance
+again. Defaults are a 1 GiB floor and a 1 MiB growth allowance; estimates are not
+guarantees against future growth or other writers. Source checkout/object storage
+must already be accounted for before execution.
+
+The fixture produces synthetic usage counters explicitly labeled
+`synthetic_fixture_only`, not actual model token consumption. It does not diagnose
+a real model's output limit or prove autonomous play. The resumed endpoint has no
+new final checkpoint and must not be presented as an endurance handoff. This
+candidate still requires actual native acceptance; unit tests use game doubles.
+It does not change the historical two-runtime continuation fixture or add runtime
+reuse/retention to the campaign controller. Long campaigns still require a
+separate storage lifecycle. The command does not provision a host or grant
+runtime/deployment authority.
+
+Native observation, September 6: [the v3 recovery fixture evidence](../experiments/evidence/native_output_pause_recovery_20260906.json)
+records successful saving, process teardown, exact-state loading and fresh
+20-tick execution at source `ade9af102`. The original automatic command stopped
+before the second process because its closed port was temporarily not bindable.
+An explicitly retained operator driver completed only the second phase using the
+same frozen implementation and verified checkpoint. Both process lifetimes have
+independently verified teardown. Synthetic usage progressed from 10 to 20 fixture
+tokens, not actual model consumption. The new bounded port-wait correction is
+unit-tested but has not passed a fresh native automatic-command run. Do not
+reclassify this result as an uninterrupted CLI pass, model run or year-two proof.
+
+Later local observation: [the native harness checkpoint receipt](../experiments/evidence/local_native_harness_checkpoint_20260906.json)
+records source `43a53762c` running under Linux/amd64 translation on the Mac.
+A private derived image supplied pinned Python 3.11, the retained provider-free
+wheelhouse and verified generated bindings. A fresh paused seed save succeeded,
+then the first fixture process loaded it and created a valid v3 checkpoint at
+cursor zero, year 30/tick 16801. No game action or model call occurred.
+
+The automatic CLI failed during first-process cleanup: the scanner found no
+owned PIDs but the listener remained open. Its container then exited, the outer
+operator stopped both containers and the VM, and private evidence was retained.
+A follow-up process diagnostic did not run because VM SSH startup timed out;
+successful prior reboots are not a guarantee of reliable subsequent startup.
+
+The scanner now evaluates `cwd` and `exe` independently, preserving a valid
+ownership match when the other link is unavailable. Same-UID, exact runtime-path,
+terminal-process and PID-start-time checks remain. Two regressions failed before
+this correction and pass afterward; a third rejects two unresolved links. The
+precise translated process links were not captured, so this correction still
+requires native confirmation rather than claiming it explains the observed leak.
+The first checkpoint must not be resumed by rewriting its failed cleanup receipt.
 
 ## Website and historical compatibility
 

@@ -1,0 +1,95 @@
+{
+  "schema_version": "fortgym.local-campaign-prefix-evidence/v1",
+  "observed_date": "2026-09-06",
+  "classification": "in_progress_prefix_not_terminal_campaign",
+  "campaign_id": "fort-gym-year-two-qwen35-20260906-a",
+  "executed_code_revision": "fad9d80c0a2e7aace8380b47b009db5edaf6bd2e",
+  "condition_id": "local-native-qwen35-year-two-v1",
+  "condition_file_sha256": "ad0a806369866c2ce4071661431591d82b5f24a9a300dcbf44f4ed05cfb66e09",
+  "condition_canonical_sha256": "bd658141891e31d3e4f014ca92e484779a5330d74a75d9163ea97289d3819018",
+  "source_seed_receipt_sha256": "eaf5fa5a40014719e6c313f33497740e536a8faa1c90a84c4e09dcc380ac0595",
+  "image_reference": "sha256:f6fccac0243b1e1917883acfda59cd20c648fa4204d3c71b3dbc2108d0b68cd1",
+  "operator_sha256": "cd4ec3684ba0ef6d741bf5489b0ce29a8b93f3e97801bf18cf566ec29f2be111",
+  "observation": {
+    "action_types": [
+      "WAIT",
+      "WAIT",
+      "WAIT",
+      "WAIT",
+      "WAIT",
+      "WAIT",
+      "WAIT",
+      "WAIT",
+      "WAIT",
+      "WAIT",
+      "WAIT",
+      "WAIT"
+    ],
+    "completion_tokens": [
+      110,
+      94,
+      138,
+      109,
+      129,
+      115,
+      122,
+      129,
+      136,
+      98,
+      134,
+      128
+    ],
+    "current_native_facts_reached_model": true,
+    "elapsed_ticks": 12000,
+    "final_year": 30,
+    "final_year_tick": 28801,
+    "finish_reasons": [
+      "stop",
+      "stop",
+      "stop",
+      "stop",
+      "stop",
+      "stop",
+      "stop",
+      "stop",
+      "stop",
+      "stop",
+      "stop",
+      "stop"
+    ],
+    "native_drink_units": 60,
+    "population": 7,
+    "reported_tokens": 106661,
+    "start_year": 30,
+    "start_year_tick": 16801,
+    "steps": 12,
+    "trace_prefix_sha256": "3774d0806a0f57336b358cbeebc2d498a4bebe0c7f25aa64f77876a1812b68df"
+  },
+  "checkpoint": {
+    "verified_periodic_next_step": 8,
+    "final_segment_checkpoint_verified": false
+  },
+  "cost": {
+    "returned_responses_in_prefix": 12,
+    "metered_provider_charge_usd": "0",
+    "hardware_energy_and_app_cost_usd": null,
+    "billing_reconciled": false
+  },
+  "interpretation": {
+    "fallback_wait_used": false,
+    "prefix_output_limited": false,
+    "native_dig_jobs_at_all_sampled_decisions": 0,
+    "native_construction_jobs_at_all_sampled_decisions": 0,
+    "no_development_commands_in_prefix": true,
+    "causality_established": false,
+    "next_hypothesis": "Compare optional thinking enabled under the otherwise identical versioned local condition, only after the ongoing segment and owned teardown finish."
+  },
+  "proof_limits": [
+    "This is only the first twelve committed actions of a still-running segment, not a terminal result, complete campaign, or accepted fortress.",
+    "The prefix hash covers exactly those twelve original newline-terminated trace rows. Private prompts, observations and model responses remain in the original trace; this manifest does not publish them.",
+    "Current native fact equality was checked for year, year_tick, population, work, crew and fort in every recorded packed model request.",
+    "Twelve normal-completion WAIT responses show observed behavior, not the cause of that behavior or a proof that a different reasoning mode will improve it.",
+    "A periodic checkpoint is not the terminal reconciled campaign handoff. Do not roll back the live tail or resume this prefix independently.",
+    "No year-two success, model ranking, production deployment, or cloud VM is claimed."
+  ]
+}
