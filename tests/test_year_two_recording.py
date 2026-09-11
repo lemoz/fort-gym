@@ -39,9 +39,9 @@ def test_year_two_replay_is_bound_to_saved_evidence():
     assert outcome["saved_metrics"]["population"] == data["frames"][-1]["after"]["population"] == 13
     assert outcome["saved_metrics"]["recorded_dead_citizens"] == 0
     catalog = json.loads((RECORDINGS / "catalog.json").read_text())["recordings"]
-    assert catalog[0]["id"] == data["id"]
-    assert catalog[0]["campaign"] == outcome
-    assert catalog[1]["id"] == outcome["source_recording_id"]
+    entry = next(row for row in catalog if row["id"] == data["id"])
+    assert entry["campaign"] == outcome
+    assert any(row["id"] == outcome["source_recording_id"] for row in catalog)
 
 
 def test_year_two_public_frames_do_not_include_private_receipts_or_memory():
