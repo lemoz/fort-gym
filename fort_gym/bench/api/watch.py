@@ -112,6 +112,7 @@ def receipt_action(request: dict, result: dict) -> dict:
         max_advance_ticks=request["max_advance_ticks"],
         model=request["model"],
         reasoning_effort=request["reasoning_effort"],
+        control_profile=request["control_profile"],
     ).action
 
 
