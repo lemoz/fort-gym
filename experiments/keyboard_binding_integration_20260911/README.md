@@ -30,3 +30,25 @@ The bounded owner derives a local image from the retained runtime, with no
 network during build or execution, and must stop the container and local VM.
 Raw private evidence belongs in the existing project runtime artifact tree;
 this directory contains reproducible source, not proprietary game/save files.
+
+## Observed result
+
+The [versioned result](../evidence/keyboard_binding_integration_20260911.json)
+records a passing integrated native run: 14 action batches, 18 individual key
+presses, one new ConstructBed job, and the actual workshop name FgAb after
+mixed-case typing, Backspace and Enter. Query/AddJob entry and exit and the
+one-tile cursor round trip passed. No game ticks elapsed; the original jobs,
+binding file and source checkpoint were unchanged. Native process cleanup,
+container exit and VM shutdown passed, including a separate live stopped check.
+
+The first packaging attempt failed before creating a game container. BuildKit
+interpreted the raw image ID in the original Dockerfile as a registry name and
+attempted a metadata lookup despite network-disabled build steps. Preserve that
+failure. `Dockerfile.v2` uses the already retained local tag, whose exact image
+ID the owner verifies before building. The fixture, probe, source revision and
+predeclared game checks are identical across versions. Both VM starts ended in
+verified shutdown. Neither attempt made a provider call.
+
+`review.py` independently reads the retained native receipts and screens; it
+does not launch or control a game. These results support proceeding with the
+separate Astra trial, which has not yet launched. They are not campaign progress.

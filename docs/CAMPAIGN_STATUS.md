@@ -103,6 +103,18 @@ Medium 32-response trial has not launched. No new VM, model call, scored
 checkpoint, main merge or public deploy occurred during this integration.
 The broader Year-Two delivery objective remains open.
 
+The subsequent [integrated native acceptance](../experiments/evidence/keyboard_binding_integration_20260911.json)
+passed on that same `8b9fffa1d` harness: 14 batches and 18 displayed key presses
+entered/exited query and AddJob menus, moved the cursor left and back, queued
+one ConstructBed job, typed FgAb7, backspaced to FgAb and confirmed that actual
+workshop name. All original jobs, the source checkpoint and binding file were
+unchanged, with zero game ticks. An independent receipt/screen review passed;
+native processes, container and the local VM were shut down and the stopped VM
+was checked live. The initial image-packaging failure is separately preserved;
+its corrected version changed no harness code or game acceptance criteria.
+No model calls or scored checkpoints occurred. The independent Astra Medium
+32-response trial is now the next gameplay step, not yet a completed result.
+
 ### Preserved decision-128 comparison and earlier launch observations
 
 The decision-128 round is complete: two attempts each for Astra, Sol and Terra,

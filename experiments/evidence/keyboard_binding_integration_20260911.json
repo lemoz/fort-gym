@@ -1,0 +1,112 @@
+{
+  "schema_version": "fortgym.public-keyboard-binding-integration/v1",
+  "recorded_at_utc": "2026-09-11 07:53:15 UTC",
+  "status": "passed",
+  "implementation": {
+    "revision": "8b9fffa1de4f93506cbcbdf82fd154aeb17b5697",
+    "pull_request": "https://github.com/lemoz/fort-gym/pull/159",
+    "control_profile": "native_keyboard_bindings/v1",
+    "exact_head_ci": "https://github.com/lemoz/fort-gym/actions/runs/34574921989"
+  },
+  "predeclared_source_commit": "344d77360",
+  "source_checkpoint": {
+    "campaign_id": "matched-20260910-astra-r1",
+    "next_step": 256,
+    "manifest_sha256": "3225df254ea574ba8d477b6f166112a8defd4ae383a68cade433eac37e078342",
+    "file_sha256": "538dc180db6f9c79b15a1cae5cf52f046777e13e861cdfab0738551927cab8fd",
+    "original_unchanged": true
+  },
+  "scope": {
+    "native_environment_apply": true,
+    "operator_reset_reveal_and_workshop_positioning": true,
+    "autonomous_navigation": false,
+    "autonomous_gameplay": false,
+    "model_performance_claim": false,
+    "physical_keyboard_equivalence_claim": false,
+    "naming_escape_cancellation_tested": false,
+    "human_edited_copy_eligible_for_campaign": false
+  },
+  "outcomes": {
+    "action_batches": 14,
+    "key_presses": 18,
+    "query_enter_exit_reenter": true,
+    "cursor_left_one_tile_and_right_return": true,
+    "add_job_menu_enter_exit_reenter": true,
+    "new_jobs": [
+      {
+        "id": 495,
+        "reaction_name": "",
+        "repeat_job": false,
+        "suspend": false,
+        "type": "ConstructBed"
+      }
+    ],
+    "original_jobs_unchanged": true,
+    "mixed_case_typed": "FgAb7",
+    "backspace_and_enter_result": "FgAb",
+    "native_workshop_name": "FgAb",
+    "final_menu_exit": true,
+    "year": 30,
+    "year_tick": 152201,
+    "paused": true,
+    "observed_elapsed_ticks": 0,
+    "bindings_unchanged": true,
+    "bindings_sha256": "8176d2bd7a8d96f6bb12feb654519a8361a6f262363b84ec48963be832cb7efd"
+  },
+  "attempts": [
+    {
+      "version": 1,
+      "status": "image_build_failed_before_game",
+      "cause": "BuildKit interpreted raw image ID in FROM as docker.io/library/sha256; metadata lookup failed. No game container was created.",
+      "owner_sha256": "fe97c90f9c42c6221621471123b1d63f89877cd5260ad09a398b87f6f9f14972",
+      "build_log_sha256": "0be7008157b5e8e19f8a1a54d549f90307db4c048ae7ba96b10964d2568cf7ac",
+      "vm_teardown_verified": true
+    },
+    {
+      "version": 2,
+      "status": "passed",
+      "packaging_change": "Use retained local image tag after verifying its exact ID; harness, fixture, probe and game criteria unchanged.",
+      "image_id": "sha256:a33c46c55f8b389251acf49bd127e18b8a6713a13bd25619b84b49ec6e493374",
+      "owner_sha256": "7133a48b1900cb4698f3eee37eee19091825b2846c96667a43abfedebf025e4d",
+      "native_result_sha256": "d926691aa7ab4aac961c3e2811127350f42e7018553eb6a7602906fc0b0f5fee",
+      "inspection_sha256": "559878dcb997a1e5665298c6b4da5264ed08cf89bb0bdeb459324d50bc68f4d2",
+      "native_cleanup_verified": true,
+      "container_exit_code": 0,
+      "oom_killed": false,
+      "guest_poweroff_returncode": 0,
+      "vm_stop_returncode": 0,
+      "vm_teardown_verified": true
+    }
+  ],
+  "context_sha256": {
+    "fixture.py": "ea4aaa2712281fc8e3511425b18ddab15bbcf8f5591b52a8773112fb25ea9a48",
+    "menu_probe.lua": "0dda55a6d283ef1542609aa8ae34cff6b0ad00f6700df9e6ced8b391ef89b5cf",
+    "Dockerfile.v2": "c6c9d8b7f853466d772647473fb64c1c573c241cf4e579f172710012a501a2e1",
+    "source.bundle": "71d33f54cf243f1e3008de142302341e98e4f9e881949ccc0c3489ff933d1581",
+    "review.py": "038e6c07fbb6616be599102596312fdf0f345cb0704408f472bb504f6c887e8f"
+  },
+  "resources": {
+    "local_vm_profiles_used": 1,
+    "sequential_vm_starts": 2,
+    "simultaneously_running_vms_max": 1,
+    "cpus": 2,
+    "memory_gib": 3,
+    "disk_gib": 32,
+    "game_container_memory_mib": 1536,
+    "game_container_network": "none",
+    "live_vm_stopped_verified": true,
+    "vm_config_unchanged": true,
+    "model_calls": 0,
+    "metered_provider_charge_usd": 0,
+    "hardware_energy_and_app_cost_usd": null,
+    "cloud_vms_created": 0,
+    "native_saves_requested": 0,
+    "new_scored_campaign_checkpoints": 0
+  },
+  "delivery": {
+    "main_merged": false,
+    "public_deployed": false,
+    "astra_trial_launched": false
+  },
+  "next": "Launch the separately declared Astra Medium 32-response binding-profile trial from the original matched-pilot snapshot, not this operator-edited diagnostic copy."
+}

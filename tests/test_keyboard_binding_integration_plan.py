@@ -1,6 +1,8 @@
 """Preparation invariants only; these checks cannot establish native acceptance."""
 
 import ast
+import hashlib
+import json
 from pathlib import Path
 
 
@@ -65,4 +67,58 @@ def test_predeclared_scope_does_not_claim_cancellation_or_autonomy():
     readme = (DIRECTORY / "README.md").read_text()
     assert "not cancellation semantics" in readme
     assert "must never become a scored campaign origin" in readme
-    assert "mandatory" not in readme or "teardown" in readme
+
+
+def result():
+    return json.loads(
+        (DIRECTORY.parent / "evidence/keyboard_binding_integration_20260911.json").read_text()
+    )
+
+
+def test_executed_public_sources_stay_byte_identical():
+    record = result()
+    for name in ("fixture.py", "menu_probe.lua", "Dockerfile.v2", "review.py"):
+        assert (
+            hashlib.sha256((DIRECTORY / name).read_bytes()).hexdigest()
+            == record["context_sha256"][name]
+        )
+    assert (DIRECTORY / "Dockerfile").read_text().startswith("FROM sha256:")
+    assert (
+        (DIRECTORY / "Dockerfile.v2")
+        .read_text()
+        .startswith("FROM fortgym-campaign:checkpoint-1057-production-reload-v1\n")
+    )
+
+
+def test_passing_native_controls_are_not_scored_gameplay():
+    record = result()
+    assert record["status"] == "passed" and record["scope"]["native_environment_apply"]
+    assert record["scope"]["operator_reset_reveal_and_workshop_positioning"]
+    for field in (
+        "autonomous_navigation",
+        "autonomous_gameplay",
+        "model_performance_claim",
+        "physical_keyboard_equivalence_claim",
+        "naming_escape_cancellation_tested",
+        "human_edited_copy_eligible_for_campaign",
+    ):
+        assert record["scope"][field] is False
+    assert record["outcomes"]["action_batches"] == 14 and record["outcomes"]["key_presses"] == 18
+    assert record["outcomes"]["native_workshop_name"] == "FgAb"
+    assert [job["type"] for job in record["outcomes"]["new_jobs"]] == ["ConstructBed"]
+    assert not any(record["delivery"].values())
+
+
+def test_failed_packaging_and_both_teardowns_remain_visible():
+    record = result()
+    assert [row["version"] for row in record["attempts"]] == [1, 2]
+    assert record["attempts"][0]["status"] == "image_build_failed_before_game"
+    assert record["attempts"][1]["status"] == "passed"
+    assert all(row["vm_teardown_verified"] for row in record["attempts"])
+    resources = record["resources"]
+    assert resources["sequential_vm_starts"] == 2
+    assert resources["simultaneously_running_vms_max"] == 1
+    assert resources["live_vm_stopped_verified"] and resources["vm_config_unchanged"]
+    assert resources["model_calls"] == resources["metered_provider_charge_usd"] == 0
+    assert resources["native_saves_requested"] == resources["new_scored_campaign_checkpoints"] == 0
+    assert resources["hardware_energy_and_app_cost_usd"] is None
