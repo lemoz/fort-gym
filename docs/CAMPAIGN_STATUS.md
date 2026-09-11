@@ -62,7 +62,7 @@ receipt passed verification, and the homepage switched correctly to Terra's
 live screen and moves. The same local VM had 2,803,612 KiB free before this
 game container was created; no disk grew. Sol's later 64-to-128 continuation
 and fresh reload remain pending. Terra was observed at51 returned responses
-after two attested zero-tick waits in the workshop-placement screen; the model
+after three attested zero-tick waits in the workshop-placement screen; the model
 received the harness's existing timeout feedback with no human input or protocol
 change. This is an in-progress observation, not a terminal result. Finish and
 audit this same owner before starting the next predeclared Astra attempt.
