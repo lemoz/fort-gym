@@ -55,7 +55,8 @@ def _hash(value: Any, length: int = 64) -> str:
     return value
 
 
-def _read(root: Path, relative: str, expected: str | None = None) -> dict[str, Any]:
+def read_evidence_object(root: Path, relative: str, expected: str | None = None) -> dict[str, Any]:
+    """Read one bounded project-relative object, optionally checking its exact digest."""
     if not isinstance(relative, str):
         raise ValueError("Evidence path must be project-relative")
     parts = PurePosixPath(relative)
@@ -81,7 +82,7 @@ def _reference(root: Path, reference: dict[str, Any]) -> tuple[dict[str, Any], s
     path = reference["path"]
     if not re.fullmatch(r"experiments/[A-Za-z0-9_./-]+\.json", path):
         raise ValueError("Public evidence must be an experiments JSON file")
-    value = _read(root, path, reference["sha256"])
+    value = read_evidence_object(root, path, reference["sha256"])
     revision = _hash(reference["revision"], 40)
     return value, f"https://github.com/lemoz/fort-gym/blob/{revision}/{path}"
 
@@ -173,7 +174,7 @@ def read_comparison(root: Path, index_path: str, *, boundary: int) -> dict[str, 
     The index explicitly pins every public record and declaration by digest and
     commit. No native artifact discovery, provider call, or publication occurs.
     """
-    index = _read(root, index_path)
+    index = read_evidence_object(root, index_path)
     if index.get("schema_version") != "fortgym.public-displayed-key-index/v1":
         raise ValueError("Unsupported comparison index")
     plan, plan_url = _reference(root, index["cohort"])
@@ -207,8 +208,10 @@ def read_comparison(root: Path, index_path: str, *, boundary: int) -> dict[str, 
         for key in ("condition", "trial"):
             if not re.fullmatch(r"[A-Za-z0-9_-]+\.json", row[key]):
                 raise ValueError("Trial configuration must stay beside its declaration")
-        condition = _read(root, directory + "/" + row["condition"], hashes[row["condition"]])
-        trial = _read(root, directory + "/" + row["trial"], hashes[row["trial"]])
+        condition = read_evidence_object(
+            root, directory + "/" + row["condition"], hashes[row["condition"]]
+        )
+        trial = read_evidence_object(root, directory + "/" + row["trial"], hashes[row["trial"]])
         if (
             condition.pop("model") != plan["models"][row["model"]]
             or condition.pop("condition_id", None) is None
