@@ -1,0 +1,63 @@
+{
+  "schema_version": "fortgym.public-binding-campaign-website-publication/v1",
+  "status": "local_http_accepted_remote_draft_pushed",
+  "website_revision": "132daed6ba2e43c620fa499524705183c6ced03f",
+  "website_branch": "codex/campaign-binding-continuation-site",
+  "base_revision": "c5288317b4b689e4a70ccaf979fe753aa4bb102c",
+  "pull_request": "https://github.com/lemoz/fort-gym/pull/161",
+  "local_preview_url": "http://127.0.0.1:8857/campaigns",
+  "campaign_endpoint": "/public/keyboard-binding-campaign",
+  "campaign_response_sha256": "5c777b38a5b18fab78eb8fcc256951c2b4b901ada90192cb925c79c41d37c91f",
+  "native_result_path": "experiments/evidence/keyboard_binding_astra_r1_continuation_32_64_20260911.json",
+  "native_result_sha256": "5f86a754fbb979a567c14a236250ccd518c171db79e598ae9adaa4745db9d8e4",
+  "reload_result_path": "experiments/evidence/keyboard_binding_astra_r1_reload_20260911.json",
+  "reload_result_sha256": "291bee15debe7c47d606221b61e99ce8eef0415233480042a4fa0720c5d39458",
+  "independent_campaigns": 1,
+  "displayed_decisions": 64,
+  "displayed_saved_elapsed_ticks": 29500,
+  "displayed_total_tokens": 1583026,
+  "checkpoint_reload_display": [
+    {"decisions": 32, "save_verified": true, "separate_fresh_reload_verified": true},
+    {"decisions": 64, "save_verified": true, "separate_fresh_reload_verified": false}
+  ],
+  "original_and_historical_routes_unchanged": true,
+  "stable_route_sha256": {
+    "/public/keyboard-cohort": "86e12b6574540c72f2a01c767cffc88ab7c8af29b32d335c7a57ae58f39532ba",
+    "/public/keyboard-cohort-continuations": "d3fb3c1b5ac432772cb0e7926c9dc75402781e61ee81c5d37b33a713a8e16101",
+    "/public/keyboard-cohort-endurance-records": "d535f85746dd487f6026ab3f840c3ccd360c58ee52485ba48522e40c1795619d",
+    "/public/keyboard-campaigns": "e3f1665398788b219c15d2365445e58b449c36a7430f9c153ac815202016cfcf",
+    "/public/keyboard-binding-results": "5b1b61a30aa994925617d4d1c9f4f1fbb35e8bffefc16d3b1078789cbaed9ece"
+  },
+  "generic_feed_http_status": 200,
+  "published_snapshots": 11,
+  "full_tests": {"passed": 4992, "skipped": 10, "failed": 0},
+  "focused_current_original_historical_tests_passed": 56,
+  "static_checks": {
+    "changed_file_ruff_passed": true,
+    "javascript_syntax_passed": true,
+    "ruff_findings_base_and_current": 10,
+    "mypy_errors_base_and_current": 465,
+    "mypy_files_base_and_current": 27,
+    "same_diagnostics_ignoring_shifted_line_numbers": true,
+    "globally_clean": false,
+    "python_formatter": "ruff at line length 100; Black unavailable in selected environment and offline cache"
+  },
+  "private_receipt_sha256": {
+    "full_tests_xml": "752a1696884e3504933e7f333dcd5cef35c7f1191af19bc80a9ff978f4aee3d2",
+    "before_http": "22d03af734fa08fe5cf6cd62b2eca4866bb72a5e1c2dd652dda6253062dd73fc",
+    "after_http": "0ebe0c61e2be54b68f3e15e19f2cab6f110517646e988a036ec535437246ca1c",
+    "http_acceptance_source": "5255350c5259882bd6767f890b2c7389e7ddf2a578c1b6e96a927c1e1401c573",
+    "preview_source": "9972ea9e131abd17863c1f4cde7cb6c3f279c1a4059425d07819be83a7958c7d"
+  },
+  "github_ci_at_publication": {"run_id": 34586640666, "status": "in_progress", "conclusion": null},
+  "proof_limits": {
+    "browser_visual_qa_performed": false,
+    "dom_test_double_is_browser_acceptance": false,
+    "additional_native_gameplay": false,
+    "model_calls": 0,
+    "game_vm_starts": 0,
+    "main_merged": false,
+    "public_website_deployed": false,
+    "full_year_two_goal_complete": false
+  }
+}

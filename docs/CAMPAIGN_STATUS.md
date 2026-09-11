@@ -42,9 +42,20 @@ The new checkpoint has not had a separate post-run fresh reload.
 The continuation declaration was pushed before launch at `8a92cbeb5`; the
 unchanged execution implementation remains `8b9fffa1d`. Actual dollar charges
 are unreported, not zero. No GCE, paid-API fallback, local model or automatic
-reset use occurred. The website still serves its earlier immutable 32-decision
-snapshot; update that surface with this separate audited continuation next,
-then continue this same campaign and expand repeated three-model trials.
+reset use occurred. The [website continuation update](../experiments/evidence/keyboard_binding_64_website_20260911.json)
+now serves the full 64-decision campaign at the local preview, with all decision
+rows and checkpoint-specific reload status. It preserves the original trial
+endpoint and four historical cohort endpoints byte-for-byte. The clean website
+revision `132daed6ba2e43c620fa499524705183c6ced03f` is pushed in
+[draft PR #161](https://github.com/lemoz/fort-gym/pull/161), stacked on #160.
+The full suite passed 4,992 tests with 10 skipped; 56 focused API/DOM/history
+checks passed. Actual local HTTP acceptance verified the new campaign response,
+its served script and all 11 existing public snapshots. DOM test doubles are
+not browser visual QA; no browser visual/layout acceptance is claimed.
+At the publication snapshot, exact-head GitHub CI run 34586640666 was in
+progress. The prior website snapshot and all native evidence remain unchanged.
+Next: continue this same campaign from its decision-64 checkpoint and expand
+repeated three-model trials under declared comparable conditions.
 Main merge and public deployment remain open; the full goal remains active.
 
 ## Earlier displayed-key Astra pilot completed and audited
