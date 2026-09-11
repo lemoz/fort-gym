@@ -8,7 +8,8 @@ import hashlib
 import json
 from typing import Any
 
-from ..env.native_key_catalog import NATIVE_PROFILE
+from ..env.native_key_catalog import CAMPAIGN_KEYBOARD_PROFILES, NATIVE_PROFILE
+from ..env.display_key_catalog import BINDING_PROFILE, BINDINGS_SHA256
 from ..env.screen_observation import TEXT_PROFILE, encode_screen, raw_screen
 from .base import Agent
 from .campaign_budget import BUDGET_KEYS, effective_budget
@@ -66,8 +67,11 @@ class CodexKeyboardAgent(Agent):
         max_advance_ticks: int = 2000,
         model: str = MODEL,
         reasoning_effort: str = REASONING_EFFORT,
+        control_profile: str = NATIVE_PROFILE,
     ) -> None:
         validate_selection(model, reasoning_effort)
+        if control_profile not in CAMPAIGN_KEYBOARD_PROFILES:
+            raise ValueError("Unsupported keyboard campaign control profile")
         for value in (max_dispatches, max_total_tokens):
             if type(value) is not int or value < 1:
                 raise ValueError("Positive cumulative keyboard budgets are required")
@@ -77,13 +81,15 @@ class CodexKeyboardAgent(Agent):
             model=model,
             reasoning_effort=reasoning_effort,
             transport=TRANSPORT,
-            control_profile=NATIVE_PROFILE,
+            control_profile=control_profile,
             observation_profile=TEXT_PROFILE,
             max_dispatches=max_dispatches,
             max_total_tokens=max_total_tokens,
             max_advance_ticks=max_advance_ticks,
         )
         self.decision = decision
+        if control_profile == BINDING_PROFILE:
+            self.configuration["bindings_sha256"] = BINDINGS_SHA256
         self.campaign_id: str | None = None
         self.memory = ""
         self.usage = initial_usage()
@@ -250,7 +256,7 @@ class CodexKeyboardAgent(Agent):
             or receipt.get("auth_mode") != "chatgpt"
             or receipt.get("transport") != TRANSPORT
             or receipt.get("reported_charge_usd") is not None
-            or result.get("control_profile") != NATIVE_PROFILE
+            or result.get("control_profile") != self.configuration["control_profile"]
             or result.get("observation_profile") != TEXT_PROFILE
             or result.get("screen_sha256") != screen_hash
             or result.get("prompt_profile", BASE_PROMPT) != self.prompt_profile
@@ -278,11 +284,12 @@ class CodexKeyboardAgent(Agent):
                 max_advance_ticks=self.configuration["max_advance_ticks"],
                 model=self.configuration["model"],
                 reasoning_effort=self.configuration["reasoning_effort"],
+                control_profile=self.configuration["control_profile"],
             )
         action = parse_response(
             result["action"],
             max_advance_ticks=self.configuration["max_advance_ticks"],
-            control_profile=NATIVE_PROFILE,
+            control_profile=self.configuration["control_profile"],
         )
         self.memory = action["memory_update"]
         return action

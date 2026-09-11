@@ -5,6 +5,7 @@ import re
 
 BASE_PROMPT = "native_keyboard_prompt/v1"
 MEMORY_PROMPT = "native_keyboard_memory_replacement/v1"
+BINDING_PROMPT = "native_keyboard_binding_instructions/v1"
 ORIGIN_SCHEMA = "fortgym.keyboard-prompt-origin/v1"
 MEMORY_CONTRACT = """Your retained memory is the only scratchpad carried between decisions. Each
 decision is a fresh model request, not a continuation of the previous conversation.
@@ -15,7 +16,7 @@ receipt are supplied separately on every decision."""
 
 
 def validate_prompt_profile(value: object) -> str:
-    if not isinstance(value, str) or value not in (BASE_PROMPT, MEMORY_PROMPT):
+    if not isinstance(value, str) or value not in (BASE_PROMPT, MEMORY_PROMPT, BINDING_PROMPT):
         raise ValueError("Unsupported keyboard prompt profile")
     return value
 

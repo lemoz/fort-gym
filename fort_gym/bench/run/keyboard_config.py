@@ -9,7 +9,8 @@ from ..agent.codex_protocol import TRANSPORT
 from ..agent.codex_transport import MODEL, REASONING_EFFORT
 from ..agent.codex_selection import validate_selection
 from ..agent.keyboard_exchange import read
-from ..agent.keyboard_prompt import BASE_PROMPT, validate_prompt_profile
+from ..agent.keyboard_prompt import BASE_PROMPT, BINDING_PROMPT, validate_prompt_profile
+from ..env.display_key_catalog import BINDING_PROFILE, BINDINGS_SHA256
 from ..env.native_key_catalog import NATIVE_PROFILE
 from ..env.screen_observation import TEXT_PROFILE
 from .keyboard_save import LEGACY_SAVE_PROFILE, SAVE_PROFILES
@@ -28,17 +29,24 @@ def validate_condition(config: dict) -> dict:
     if version == "fortgym.codex-keyboard-condition/v1":
         if config.get("model") != MODEL or config.get("reasoning_effort") != REASONING_EFFORT:
             raise ValueError("Keyboard condition identity differs")
-    elif version in ("fortgym.codex-keyboard-condition/v2", "fortgym.codex-keyboard-condition/v3"):
+    elif version in ("fortgym.codex-keyboard-condition/v2", "fortgym.codex-keyboard-condition/v3",
+                     "fortgym.codex-keyboard-condition/v4"):
         validate_selection(config.get("model"), config.get("reasoning_effort"))
     else:
         raise ValueError("Keyboard condition identity differs")
-    if version == "fortgym.codex-keyboard-condition/v3":
+    binding = version == "fortgym.codex-keyboard-condition/v4"
+    if version in ("fortgym.codex-keyboard-condition/v3", "fortgym.codex-keyboard-condition/v4"):
         validate_prompt_profile(config.get("prompt_profile"))
     elif "prompt_profile" in config:
         raise ValueError("Historical keyboard conditions cannot change prompt profiles")
+    if binding:
+        if config.get("bindings_sha256") != BINDINGS_SHA256 or config.get("prompt_profile") != BINDING_PROMPT:
+            raise ValueError("Displayed-key condition requires its pinned bindings and prompt")
+    elif "bindings_sha256" in config or config.get("prompt_profile") == BINDING_PROMPT:
+        raise ValueError("Historical keyboard conditions cannot change input semantics")
     identities = {
         "transport": TRANSPORT,
-        "control_profile": NATIVE_PROFILE,
+        "control_profile": BINDING_PROFILE if binding else NATIVE_PROFILE,
         "observation_profile": TEXT_PROFILE,
         "advance_policy": "model_requested/v1",
         "account_admission": "fresh_read_before_each_model_invocation",

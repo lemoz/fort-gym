@@ -8,6 +8,7 @@ from pathlib import Path
 from ..dfhack_backend import _hook_path
 from ..dfhack_exec import DFHackError, run_lua_file
 from .native_key_catalog import LEGACY_PROFILE, keys_for_profile
+from .display_key_catalog import BINDING_PROFILE
 
 KEYBOARD_CONTROL_PROFILE = LEGACY_PROFILE
 HELPER_CONTROL_PROFILE = "dfhack_shortcuts/v1"
@@ -28,6 +29,11 @@ def execute_campaign_keys(
     gameplay effect occurred. Frame freshness is not inferred from the small
     inter-event delay; native diagnostics must inspect the resulting screens.
     """
+    if control_profile == BINDING_PROFILE:
+        from .campaign_binding_keys import execute_binding_keys
+
+        return execute_binding_keys(keys, expected_dfroot=expected_dfroot,
+                                    year=year, year_tick=year_tick)
     result: dict = {
         "schema_version": "fortgym.campaign-keyboard-execution/v1",
         "ok": False,

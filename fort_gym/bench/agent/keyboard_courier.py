@@ -35,6 +35,8 @@ def answer_request(
         or model != condition["model"]
         or reasoning_effort != condition["reasoning_effort"]
         or request.get("prompt_profile", BASE_PROMPT) != condition.get("prompt_profile", BASE_PROMPT)
+        or request["control_profile"] != condition["control_profile"]
+        or request.get("bindings_sha256") != condition.get("bindings_sha256")
     ):
         raise ValueError("Request model differs from its declared condition")
     if request["max_advance_ticks"] != condition["max_advance_ticks"]:
@@ -69,7 +71,7 @@ def answer_request(
             observation_profile=condition["observation_profile"],
             model=model,
             reasoning_effort=reasoning_effort,
-            **({"prompt_profile": condition["prompt_profile"]} if version == "v3" else {}),
+            **({"prompt_profile": condition["prompt_profile"]} if version in ("v3", "v4") else {}),
         )
     except CodexTransportError as error:
         result = error.receipt
