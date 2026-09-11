@@ -4,7 +4,7 @@ Verified September 11, 2026 UTC. The Year-Two Autonomous Play objective remains
 unfinished; work continues toward the same objective. The owner has approved starting the project
 work for [Astra standard-input experiments](ASTRA_STANDARD_INPUT_EXPERIMENTS.md).
 
-## Current run: Terra resumed; Astra and Sol decision-128 saves audited
+## Current run: Terra attempt 2 resumed; three decision-128 saves audited
 
 Astra attempt 1 completed its declared 64-to-128 window from its own save and
 memory. Its [audited result](../experiments/evidence/keyboard_matched_astra_r1_continuation_64_128_20260911.json)
@@ -38,10 +38,23 @@ equal elapsed game time or token use; the remaining attempts have not yet
 reached that boundary. This is not a complete matched-cohort comparison or a
 general model ranking. Neither result establishes sustainability or year two.
 
-After Sol's audited teardown, Terra attempt 1 started its own declared
-64-to-128 continuation. VM/container start and read-only configuration checks
-passed. Its live activity remains provisional until an independent terminal
-audit; no Terra result is inferred from launch.
+Terra attempt 1 completed its own declared 64-to-128 window. Its
+[audited result](../experiments/evidence/keyboard_matched_terra_r1_continuation_64_128_20260911.json)
+retains all 64 new responses but zero new simulation ticks: 128 responses,
+13,000 ticks and 2,871,632 returned tokens cumulatively. Population remains
+seven with no recorded deaths, food50, drinks60 and no completed bed, farm or
+workshop. This is a negative gameplay outcome, not a successful fortress or an
+infrastructure crash. All 64 actions were accepted and explicitly requested
+zero ticks; 56 were a single SELECT key. Captured screens show the workshop
+material requirement. The model did not resolve that prerequisite within the
+window. No human gameplay rescue or prompt change was introduced.
+
+Its complete model receipts, own memory/usage, initial native reload, final
+save and VM teardown passed independent audit. Both shutdown commands returned
+zero; a separate fresh reload of the new final checkpoint remains unverified.
+After that audited teardown, Terra attempt 2 started its own declared 64-to-128
+continuation. VM/container start and read-only configuration checks passed.
+Its live activity remains provisional until independent terminal audit.
 
 ## Current delivery: recorded endurance and live continuation
 
@@ -80,7 +93,7 @@ local suite passed 4,803 tests with 10 skips, and exact-head GitHub CI passed
 preserves that failure and repair; that historical code revision registered no
 endurance results.
 
-The local preview now serves `3f63b1c3570d987a06a9180c0459fa5f5820da4a`, with
+The previous local preview served `3f63b1c3570d987a06a9180c0459fa5f5820da4a`, with
 Astra's audited decision-128 record registered by its immutable result commit
 and original declaration. Exact-head CI passed in run `34551459589` with 4,666
 tests and 148 skips. The full local suite passed 4,804 with 10 skips, and all
@@ -98,6 +111,21 @@ remains separately labeled provisional. Its 27-response observation in this
 receipt is historical, not current status or a completed Sol save. Admin
 remains disabled. No browser visual QA, public deployment or main merge is
 claimed; the full functioning Year-Two fortress objective remains open.
+
+The current local preview serves `942011284488e8b700682549bf391e2b0f7e128c`
+from [draft PR #153](https://github.com/lemoz/fort-gym/pull/153), with both
+Astra and Sol attempt 1's audited decision-128 results. Exact-head GitHub CI
+passed 4,667 tests with 148 skips in run `34553344706`; the full local suite
+passed 4,805 with 10 skips and all 25 focused recorded-history tests passed.
+The [two-result HTTP receipt](../experiments/evidence/keyboard_matched_endurance_cohort_website_20260911.json)
+verifies served assets and records against the clean source. Astra's earlier
+history, historical APIs and all six decision-64 baselines are unchanged.
+The two audited endurance windows contain 128 new boundaries; latest saved
+totals are 512 responses and 15,508,434 returned tokens without double-counting.
+The separate Terra observation at 53 new responses is a historical live-feed
+snapshot, not a saved result or current status. Admin remains disabled. This
+is verified local publication, not browser visual QA, public deployment or a
+main merge, and it does not establish the Year-Two gameplay objective.
 
 ## Earlier matched pilot and website delivery history
 

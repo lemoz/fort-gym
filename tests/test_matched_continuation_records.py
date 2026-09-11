@@ -20,8 +20,10 @@ ENDURANCE_DELIVERY = "keyboard_matched_endurance_delivery_20260911.json"
 ENDURANCE_LAUNCH = "keyboard_matched_astra_r1_endurance_launch_20260911.json"
 ASTRA_ENDURANCE = "keyboard_matched_astra_r1_continuation_64_128_20260911.json"
 SOL_ENDURANCE = "keyboard_matched_sol_r1_continuation_64_128_20260911.json"
+TERRA_ENDURANCE = "keyboard_matched_terra_r1_continuation_64_128_20260911.json"
 ENDURANCE_RECORDS_CODE = "keyboard_matched_endurance_records_code_20260911.json"
 ENDURANCE_RECORDS_WEBSITE = "keyboard_matched_endurance_records_website_20260911.json"
+ENDURANCE_COHORT_WEBSITE = "keyboard_matched_endurance_cohort_website_20260911.json"
 
 
 @pytest.mark.parametrize(
@@ -40,6 +42,7 @@ ENDURANCE_RECORDS_WEBSITE = "keyboard_matched_endurance_records_website_20260911
         (ENDURANCE_LAUNCH, "631758a6b511a120b30c12e0767d1f714657351a5baf31eeccc92769cb644a27"),
         (ASTRA_ENDURANCE, "cb9cc0c5af8f158848493b1e7b3bb79f4f4736f185fbf7ce96fb157095e1d145"),
         (SOL_ENDURANCE, "a155f9c940e242de32d216e9795291dc2093299b64ce57760b722ee7a0a33491"),
+        (TERRA_ENDURANCE, "3e833f88a813192f3c3190847e551439c34c7741d5bb87443d156cd244fc0b4f"),
         (
             ENDURANCE_RECORDS_CODE,
             "c74715355b8c0a9fde359e21ec685af7d4e65c9f6952c05d3e88350b58e1cf93",
@@ -47,6 +50,10 @@ ENDURANCE_RECORDS_WEBSITE = "keyboard_matched_endurance_records_website_20260911
         (
             ENDURANCE_RECORDS_WEBSITE,
             "b673956ff1d5aa9686a9e796072fcfc63b80f4bfc7cc002090cdbd1999ee8626",
+        ),
+        (
+            ENDURANCE_COHORT_WEBSITE,
+            "8b4e277cb61b500b6f3155f74886465739025d31dc04f316421f0806ad9fb75f",
         ),
     ],
 )
@@ -197,6 +204,31 @@ def test_sol_128_save_separates_observed_digging_from_completed_development():
     assert record["usage"]["reported_charge_usd"] is None
 
 
+def test_terra_128_records_zero_gameplay_progress_without_infrastructure_failure():
+    record = json.loads((EVIDENCE / TERRA_ENDURANCE).read_bytes())
+    parent = json.loads((EVIDENCE / TERRA_RESULT).read_bytes())
+    assert (record["start_decision"], record["next_decision"], record["new_responses"]) == (
+        64, 128, 64
+    )
+    assert record["status"] == "completed" and record["stop_reason"] == "segment_limit"
+    assert record["prior_checkpoint_sha256"] == parent["checkpoint_sha256"]
+    assert record["new_saved_ticks"] == 0
+    assert record["saved_elapsed_ticks"] == parent["saved_elapsed_ticks"] == 13000
+    assert record["saved_metrics"] == record["initial_metrics"] == parent["saved_metrics"]
+    assert record["usage"]["new_returned_tokens"] == 1333731
+    assert record["usage"]["campaign_returned_tokens"] == 2871632
+    assert record["usage"]["campaign_accounted_responses"] == 128
+    assert record["usage"]["reported_charge_usd"] is None
+    assert [row["decision"] for row in record["new_window_timeline"]] == list(range(65, 129))
+    assert all(row["new_elapsed_ticks"] == 0 for row in record["new_window_timeline"])
+    assert all(row["accepted"] is True for row in record["new_window_timeline"])
+    assert record["new_window_clock_outcomes"] == {"no_error": 64}
+    assert record["source_checkpoint_fresh_load_verified"] is True
+    assert record["native_cleanup_verified"] is record["vm_teardown_verified"] is True
+    assert record["final_fresh_reload_verified"] is record["sustainability_established"] is False
+    assert record["year_two_reached"] is record["human_gameplay_rescue"] is False
+
+
 def test_recorded_history_code_delivery_does_not_claim_a_running_replacement_or_game_result():
     record = json.loads((EVIDENCE / ENDURANCE_RECORDS_CODE).read_bytes())
     assert record["source_revision"] == record["ci"]["head_sha"]
@@ -223,6 +255,37 @@ def test_actual_endurance_website_keeps_saved_and_live_results_separate():
     live = record["live_observation"]
     assert live["campaign_id"] == "matched-20260910-sol-r1"
     assert live["responses"] == 27 and live["campaign_returned_responses"] == 91
+    assert live["new_save_verified"] is False and live["source_checkpoint_verified"] is True
+    assert live["reported_charge_usd"] is None
+    assert record["admin_disabled"] is True
+    assert (
+        record["browser_visual_qa"] is record["public_deployment"] is record["main_merge"] is False
+    )
+    assert record["model_calls_by_verifier"] == record["game_ticks_by_verifier"] == 0
+    assert record["year_two_goal_complete"] is False
+
+
+def test_two_record_website_preserves_prior_history_and_provisional_terra_snapshot():
+    record = json.loads((EVIDENCE / ENDURANCE_COHORT_WEBSITE).read_bytes())
+    assert record["passed"] is True
+    assert (
+        record["source_revision"]
+        == record["website_revision"]
+        == record["ci"]["head_sha"]
+        == "942011284488e8b700682549bf391e2b0f7e128c"
+    )
+    assert record["ci"]["conclusion"] == "success" and record["ci"]["status"] == "completed"
+    assert record["local_tests"] == {"passed": 4805, "skipped": 10}
+    assert record["ci"]["passed"] == 4667 and record["ci"]["skipped"] == 148
+    assert record["historical_and_decision_64_records_unchanged"] is True
+    assert record["previous_audited_endurance_windows_retained"] is True
+    assert record["recorded_endurance_windows"] == 2
+    assert record["recorded_endurance_boundaries"] == 128
+    assert record["latest_saved_responses"] == 512
+    assert record["latest_saved_tokens"] == 15508434
+    live = record["live_observation"]
+    assert live["campaign_id"] == "matched-20260910-terra-r1"
+    assert live["responses"] == 53 and live["campaign_returned_responses"] == 117
     assert live["new_save_verified"] is False and live["source_checkpoint_verified"] is True
     assert live["reported_charge_usd"] is None
     assert record["admin_disabled"] is True
