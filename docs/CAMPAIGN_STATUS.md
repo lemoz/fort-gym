@@ -59,9 +59,20 @@ A later read-only account check showed one percent used, clearing the earlier
 Continuation preparation found that the ordinary read-only audit equates saved
 trace cursor with actual accounted responses and rejects all inherited loss.
 At this saved boundary those counters are 256 and 288, respectively. A narrow
-auditor correction is being tested in `codex/campaign-inherited-loss-audit` to
-bind both counters and preserve the exact inherited loss history; no model or
-game has been launched for that work.
+auditor correction is pushed in [PR168](https://github.com/lemoz/fort-gym/pull/168)
+at `bb8516aa6a27d6ba92bee39f9769adcfb7095d6c`. Its 99 focused tests passed;
+5,064 full-suite tests passed and ten skipped, with the single sandbox-denied
+socket test passing on a permitted rerun. Existing lint/type diagnostics did
+not grow. It binds both counters and preserves exact inherited history without
+altering the native runtime. Exact-head remote CI is required before launch.
+
+The [next ordinary window](../experiments/keyboard_binding_continuation_20260911/window-256-416.json)
+declares up to 160 new responses in five 32-response segments, ending at cursor
+416 if completed. It retains the same native source, model, prompt, memory,
+control condition, original cumulative limits, 288 prior responses and the
+32-decision/422-tick loss record. The private owner and separately pinned
+read-only auditor passed import/source/checkpoint preflight. No game or model
+has started for this declaration yet; this is readiness, not a gameplay result.
 
 Next: continue actual autonomous play from this decision-256 save with the same
 conditions and inherited usage/loss record; the next ordinary continuation should
