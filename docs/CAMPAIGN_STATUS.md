@@ -4,7 +4,7 @@ Verified September 11, 2026 UTC. The Year-Two Autonomous Play objective remains
 unfinished; work continues toward the same objective. The owner has approved starting the project
 work for [Astra standard-input experiments](ASTRA_STANDARD_INPUT_EXPERIMENTS.md).
 
-## Current run: Sol resumed; Astra's decision-128 save audited
+## Current run: Terra resumed; Astra and Sol decision-128 saves audited
 
 Astra attempt 1 completed its declared 64-to-128 window from its own save and
 memory. Its [audited result](../experiments/evidence/keyboard_matched_astra_r1_continuation_64_128_20260911.json)
@@ -21,11 +21,27 @@ returned zero. A separate fresh reload of the new final checkpoint has not yet
 been performed. The earlier [launch observation](../experiments/evidence/keyboard_matched_astra_r1_endurance_launch_20260911.json)
 remains historical, not current status.
 
-After that audit and teardown, Sol attempt 1 started its own declared 64-to-128
-window using unchanged model, prompt, controls and observation conditions.
-Its VM/container start and read-only configuration verification passed. Its
-live state remains provisional until a later terminal audit; no Sol result is
-inferred from the successful launch.
+Sol attempt 1 subsequently completed its own declared 64-to-128 window under
+unchanged model, prompt, controls and observation conditions. Its
+[audited result](../experiments/evidence/keyboard_matched_sol_r1_continuation_64_128_20260911.json)
+retains all 64 new responses and 14,500 additional ticks: 128 responses,
+20,000 ticks and 3,522,467 returned tokens cumulatively. Seven dwarves remain
+alive with no recorded deaths, food50 and drinks60. No completed bed, farm or
+workshop was recorded. Digging jobs appeared at 56 new observation boundaries;
+these are activity samples, not counts of completed jobs or excavated tiles.
+All 64 clock outcomes reported no error. Its own memory/usage, native save,
+initial reload and VM teardown passed audit; both shutdown commands returned
+zero. A separate fresh reload of the new final checkpoint remains unverified.
+
+These first Astra and Sol attempts now share a 128-response boundary but not
+equal elapsed game time or token use; the remaining attempts have not yet
+reached that boundary. This is not a complete matched-cohort comparison or a
+general model ranking. Neither result establishes sustainability or year two.
+
+After Sol's audited teardown, Terra attempt 1 started its own declared
+64-to-128 continuation. VM/container start and read-only configuration checks
+passed. Its live activity remains provisional until an independent terminal
+audit; no Terra result is inferred from launch.
 
 ## Current delivery: recorded endurance and live continuation
 
