@@ -360,6 +360,42 @@ def test_actual_saved_sol_outcome_is_preserved_without_a_success_claim():
     assert data["strong_ranking_supported"] is False
 
 
+def test_actual_saved_astra_development_is_not_a_year_two_or_ranking_claim():
+    data = read_comparison(
+        ROOT,
+        "experiments/evidence/keyboard_binding_comparison_20260911_index.json",
+        boundary=64,
+    )
+    row = next(
+        item
+        for item in data["trials"]
+        if item["campaign_id"] == "bindings-comparison-20260911-astra-r1"
+    )
+    assert row["evidence_sha256"] == (
+        "ff9959cc90fe2dc63fd8e282c5229c5f52af49773dd57f327d136ae6a69e5e9c"
+    )
+    result = row["result"]
+    assert result["responses"] == 64 and result["returned_tokens"] == 1671491
+    assert result["reported_charge_usd"] is None
+    assert result["checkpoint"]["saved_elapsed_ticks"] == 23000
+    metrics = result["checkpoint"]["metrics"]
+    assert metrics["population"] == 7 and metrics["recorded_dead_citizens"] == 0
+    assert (
+        metrics["completed_beds"],
+        metrics["completed_workshops"],
+        metrics["completed_farms"],
+    ) == (7, 2, 1)
+    assert metrics["functional_rooms"] is None
+    assert data["strong_ranking_supported"] is False
+    source = json.loads(
+        (
+            ROOT / "experiments/evidence/keyboard_binding_comparison_astra_r1_64_20260911.json"
+        ).read_text()
+    )
+    assert source["assessment"]["year_two_reached"] is False
+    assert source["evidence_details"]["fresh_final_checkpoint_reload_verified"] is False
+
+
 def test_actual_saved_terra_outcome_preserves_unknowns_and_native_progress():
     data = read_comparison(
         ROOT,

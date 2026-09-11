@@ -14,6 +14,13 @@
     "terra-trial.json": "864efc0b37848dc3be7bb2c38a429ab14bd3d912ea1e0ff01c9d0a8ba97f7c40"
   },
   "results": {
+    "bindings-comparison-20260911-astra-r1": {
+      "64": {
+        "path": "experiments/evidence/keyboard_binding_comparison_astra_r1_64_20260911.json",
+        "sha256": "ff9959cc90fe2dc63fd8e282c5229c5f52af49773dd57f327d136ae6a69e5e9c",
+        "revision": "6130e0d24f25a7349eb0dc7e99b4579f4c40fbba"
+      }
+    },
     "bindings-comparison-20260911-terra-r1": {
       "64": {
         "path": "experiments/evidence/keyboard_binding_comparison_terra_r1_64_20260911.json",
