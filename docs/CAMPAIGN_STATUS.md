@@ -4,7 +4,38 @@ Verified September 11, 2026 UTC. The Year-Two Autonomous Play objective remains
 unfinished; work continues toward the same objective. The owner has approved starting the project
 work for [Astra standard-input experiments](ASTRA_STANDARD_INPUT_EXPERIMENTS.md).
 
-## Current state: all six decision-128 saves audited; Astra continuing
+The earlier exploratory Astra campaign already passed the first anniversary:
+checkpoint 1057 retains 456,582 elapsed ticks (1.13 years), 16 living dwarves and
+an operating-at-endpoint assessment. Its separate fresh reload also passed.
+See [the completed exploratory result](#latest-verified-outcome-window-ab-completed-into-year-two)
+and [reload verification](#later-checkpoint-1057-verification-and-website-delivery).
+Do not confuse that achieved duration with the younger, independent matched
+cohort below. Long-term self-sufficiency and the full delivery goal remain open.
+
+## Current state: Astra decision 256 audited; other five at decision 128
+
+Astra attempt 1 has completed its unchanged 128-to-256 continuation.
+The [audited result](../experiments/evidence/keyboard_matched_astra_r1_continuation_128_256_20260911.json)
+retains 128 new responses, 84,000 new saved ticks and 5,874,925 new tokens.
+Cumulative totals are 256 responses, 135,400 ticks and 10,419,162 tokens.
+All seven dwarves remain alive with no recorded deaths. Completed beds increased
+from five to eight; two farms and three workshops remain. Food changed from
+29 to 34 and drinks from 121 to 199. These stock changes are not production rates.
+
+The whole-window audit verified both saves, the exact previously inspected
+decision-192 midpoint, all 128 actual provider receipts, preserved memory/usage/
+configuration/history, native cleanup and VM teardown. Both shutdown commands
+returned zero. The final decision-256 save has not yet had a separate fresh
+reload. Three blocking-menu outcomes and two zero-tick timeouts remain recorded;
+there was no new native save loss or human gameplay intervention. This matched
+campaign is at about one-third of a year, not its first anniversary.
+
+The owner and observer exited zero. No experiment VM is running. The local
+website's recorded comparison still shows the six decision-128 results; the
+new decision-256 record needs registration and HTTP acceptance there. Its
+completed live observation is not a replacement for that delivery step.
+
+### Preserved decision-128 comparison and earlier launch observations
 
 The decision-128 round is complete: two attempts each for Astra, Sol and Terra,
 all under unchanged declared conditions. Across the six distinct campaigns,
@@ -14,17 +45,17 @@ Both Astra attempts completed beds, farms and workshops; neither Sol nor Terra
 attempt did at this boundary. This same-seed pilot does not establish a general
 model ranking, sustainable production or a year-two fortress.
 
-Astra attempt 1 has now started its declared 128-to-256 continuation from its
+Astra attempt 1 started its declared 128-to-256 continuation from its
 own decision-128 save and memory, using the exact green-CI host revision
 `4590fc1828365c44c9a4d3be728b4168ded5c514`. The
 [launch snapshot](../experiments/evidence/keyboard_matched_astra_r1_128_256_launch_20260911.json)
 records seven new responses, 186,485 returned tokens and at least 2,000 new
 observed game ticks. The first two provider responses were independently
 verified. These are provisional observations, not a new audited save or
-teardown result. One existing bounded local VM is running with mandatory
+teardown result. One existing bounded local VM was running with mandatory
 shutdown in its owner. No GCE, paid API/local-model fallback, model/prompt
 change, usage reset or human gameplay rescue is involved. Its separate v2
-observer is now connected to the website's current-window card. The
+observer was connected to the website's current-window card. The
 [website acceptance snapshot](../experiments/evidence/keyboard_matched_live_v2_website_20260911.json)
 records 53 new responses, 1,960,158 returned tokens and at least 28,000 new
 observed ticks: 181 cumulative responses and 79,400 saved-plus-observed ticks.
@@ -42,8 +73,9 @@ The first next-segment model request used that exact saved memory; its actual
 provider events were independently reviewed. Earlier captured screens show early
 summer and gathering, fishing and brewing work. UI inventory estimates are not
 used as exact stocks. This is a verified intermediate checkpoint, not the full
-128-to-256 terminal audit or VM teardown. The six fully audited comparison
-records remain at decision128; sustainability and Year Two remain unproven.
+128-to-256 terminal audit or VM teardown. At that inspection, the six fully audited
+comparison records remained at decision128; sustainability and Year Two in the
+matched cohort remained unproven. The completed-window audit is now recorded above.
 
 Astra attempt 1 completed its declared 64-to-128 window from its own save and
 memory. Its [audited result](../experiments/evidence/keyboard_matched_astra_r1_continuation_64_128_20260911.json)
