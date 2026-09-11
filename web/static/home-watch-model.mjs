@@ -59,6 +59,7 @@ export function validateRecording(data) {
       !count(data.first_decision) || data.first_decision < 1 || !count(data.last_decision) ||
       !count(data.saved_through_decision) || data.saved_through_decision > data.last_decision ||
       data.last_decision - data.first_decision + 1 !== data.frames.length) throw Error('Invalid recording');
+  validateRecovery(data);
   data.frames.forEach((frame, index) => {
     if (frame.decision !== data.first_decision + index) throw Error('Nonconsecutive recording');
     decodeScreen(frame.screen);
@@ -71,4 +72,28 @@ export function validateRecording(data) {
         typeof frame.accepted !== 'boolean') throw Error('Invalid recorded action');
   });
   return data;
+}
+
+export function validateRecovery(data) {
+  const value = data.recovery;
+  if (value === undefined) return null;
+  const count = n => Number.isSafeInteger(n) && n >= 0;
+  if (!value || value.schema_version !== 'fortgym.watch-recovery/v1' ||
+      ![value.restored_checkpoint,value.lost_decisions,value.lost_ticks,value.total_responses].every(count) ||
+      value.restored_checkpoint < 1 || value.lost_decisions < 1 ||
+      data.first_decision !== value.restored_checkpoint + 1 ||
+      value.total_responses < data.last_decision + value.lost_decisions ||
+      value.uninterrupted_campaign !== false || value.actions_replayed !== false ||
+      typeof value.source_recording_id !== 'string' || typeof value.source_checkpoint_sha256 !== 'string' ||
+      !/^[a-z0-9-]{1,100}$/.test(value.source_recording_id) || value.source_recording_id === data.id ||
+      !/^[a-f0-9]{64}$/.test(value.source_checkpoint_sha256)) throw Error('Invalid recovery record');
+  return value;
+}
+
+export function recoverySummary(data) {
+  const value = validateRecovery(data);
+  if (!value) return '';
+  return 'Resumed from checkpoint ' + value.restored_checkpoint + '. Earlier ' + value.lost_decisions +
+    ' decisions and ' + value.lost_ticks.toLocaleString() + ' game ticks were not saved. All ' +
+    value.total_responses.toLocaleString() + ' model responses remain counted. No actions were replayed.';
 }

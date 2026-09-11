@@ -1,13 +1,31 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {glyph, decodeScreen, frameIndex, liveState, validateRecording, initialRecording} from '../web/static/home-watch-model.mjs';
+import {glyph, decodeScreen, frameIndex, liveState, validateRecording, initialRecording, recoverySummary} from '../web/static/home-watch-model.mjs';
 
 const screen = {width:2,height:2,tile_order:'column_major',runs:[[2,219,7,0],[1,1,15,0],[1,32,0,1]]};
 const frame = decision => ({decision,screen,action:{intent:'Intent ' + decision,keys:['q'],advance_ticks:0},
   accepted:true,before:{year:30,tick:100},after:{year:30,tick:100,population:7,ticks_advanced:0}});
 const record = id => ({schema_version:'fortgym.watch-recording/v1',id,title:id,first_decision:97,last_decision:98,
   saved_through_decision:97,frames:[frame(97),frame(98)]});
+const recovered = () => ({...record('b'),saved_through_decision:98,recovery:{
+  schema_version:'fortgym.watch-recovery/v1',restored_checkpoint:96,lost_decisions:32,lost_ticks:422,
+  total_responses:130,source_recording_id:'a',source_checkpoint_sha256:'a'.repeat(64),
+  uninterrupted_campaign:false,actions_replayed:false}});
+
+test('recovery metadata preserves the lost window and cannot claim uninterrupted play', () => {
+  assert.equal(validateRecording(recovered()).saved_through_decision,98);
+  assert.match(recoverySummary(recovered()),/All 130 model responses remain counted/);
+  assert.equal(recoverySummary(record('a')),'');
+  for (const [key,value] of [['restored_checkpoint',97],['lost_decisions',0],['lost_ticks',-1],
+    ['total_responses',98],['total_responses',true],['uninterrupted_campaign',true],
+    ['actions_replayed',true],['source_recording_id','../secret'],['source_recording_id','b'],
+    ['source_recording_id',undefined],['source_recording_id',123],['source_checkpoint_sha256','wrong']]) {
+    const data=recovered(); data.recovery[key]=value;
+    assert.throws(()=>validateRecording(data),/Invalid recovery record/);
+  }
+  assert.throws(()=>validateRecording({...record('a'),recovery:null}),/Invalid recovery record/);
+});
 
 test('CP437 glyphs and column-major RLE retain all native screen codes', () => {
   assert.equal(glyph(1),'☺'); assert.equal(glyph(219),'█'); assert.equal(glyph(127),'⌂');
@@ -61,7 +79,7 @@ test('homepage controls, replay switching and live disconnect work in memory', a
   globalThis.fetch=async url=>{
     requests.push(url);
     const data=url.endsWith('catalog.json') ? {schema_version:'fortgym.watch-catalog/v1',recordings:[{id:'a',title:'A',window:'97–98'},{id:'b',title:'B',window:'97–98'}]}
-      : url.includes('watch-active') ? structuredClone(live) : record(url.includes('/a.json')?'a':'b');
+      : url.includes('watch-active') ? structuredClone(live) : url.includes('/a.json') ? record('a') : recovered();
     return {ok:true,json:async()=>data};
   };
   const settle=async()=>{for(let n=0;n<10;n++) await new Promise(resolve=>setImmediate(resolve));};
@@ -89,11 +107,21 @@ test('homepage controls, replay switching and live disconnect work in memory', a
     globalThis.fetch=async url=>url.includes('/b.json') ? new Promise(resolve=>{resolveB=resolve;}) : normalFetch(url);
     const pendingB=buttonB.emit('click'); await settle();
     await buttonA.emit('click'); await settle();
-    resolveB({ok:true,json:async()=>record('b')}); await pendingB; await settle();
+    resolveB({ok:true,json:async()=>recovered()}); await pendingB; await settle();
     assert.equal(element('title').textContent,'a'); // A late response cannot replace the selected run.
     globalThis.fetch=normalFetch;
     await buttonB.emit('click'); await settle();
     assert.equal(element('title').textContent,'b');
+    assert.equal(element('badge').textContent,'RECOVERED RUN');
+    assert.equal(element('recovery').hidden,false);
+    assert.match(element('recovery').textContent,/Earlier 32 decisions and 422 game ticks/);
+    assert.equal(element('prior').href,'/?recording=a#watch-root');
+    await buttonA.emit('click'); await settle();
+    assert.equal(element('recovery').hidden,true);
+    assert.equal(element('prior').hidden,true);
+    await element('next').emit('click');
+    assert.match(element('boundary').textContent,/UNSAVED TAIL/);
+    await buttonB.emit('click'); await settle();
     const poll=[...timers.values()].find(timer=>timer.delay===10000);
     live={schema_version:'fortgym.watch-live/v1',status:'running',run_id:'current',model:'Astra',
       observed_at_unix:1000,fresh_for_seconds:30,frame:{...frame(99),captured_at_unix:999,action_status:'chosen_not_execution_verified'}};
@@ -102,6 +130,8 @@ test('homepage controls, replay switching and live disconnect work in memory', a
     assert.equal(element('live').hidden,false);
     await element('live').emit('click');
     assert.match(element('badge').textContent,/LIVE/);
+    assert.equal(element('recovery').hidden,true);
+    assert.equal(element('prior').hidden,true);
     assert.match(element('execution').textContent,/does not yet verify/);
     live.frame={...live.frame,decision:100}; await poll.fn();
     assert.equal(element('decision').textContent,'Decision 100');
@@ -111,7 +141,8 @@ test('homepage controls, replay switching and live disconnect work in memory', a
     assert.equal(element('decision').textContent,'Decision 99'); // Rewind remains paused.
     now=1031000;
     [...timers.values()].find(timer=>timer.delay===1000).fn();
-    assert.equal(element('badge').textContent,'RECORDED RUN');
+    assert.equal(element('badge').textContent,'RECOVERED RUN');
+    assert.equal(element('recovery').hidden,false);
     assert.equal(element('live').hidden,true);
     assert.match(element('connection').textContent,/expired/);
     assert.ok(requests.every(url=>url.startsWith('/static/recordings/') || url==='/public/watch-active'));

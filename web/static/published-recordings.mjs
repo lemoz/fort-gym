@@ -1,4 +1,4 @@
-import {renderCapturedScreen} from './home-watch-model.mjs';
+import {renderCapturedScreen, validateRecovery} from './home-watch-model.mjs?v=20260911-recovery';
 
 export const recordingUrl = id => '/?recording=' + encodeURIComponent(id) + '#watch-root';
 export function validateCatalog(data) {
@@ -7,13 +7,14 @@ export function validateCatalog(data) {
   const ids = new Set();
   for (const row of data.recordings) {
     if (!/^[a-z0-9-]+$/.test(row.id) || ids.has(row.id) || typeof row.title !== 'string' ||
-        row.title.length > 160 || typeof row.control_profile !== 'string' ||
+        row.title.length > 160 || typeof row.model !== 'string' || !row.model || row.model.length > 160 || typeof row.control_profile !== 'string' ||
         ![row.first_decision,row.last_decision,row.saved_through_decision,row.frame_count].every(Number.isSafeInteger) ||
         row.first_decision < 1 || row.frame_count < 1 || row.frame_count > 1024 ||
         row.last_decision - row.first_decision + 1 !== row.frame_count ||
         row.saved_through_decision < 0 || row.saved_through_decision > row.last_decision)
       throw Error('Invalid recording metadata');
     ids.add(row.id);
+    validateRecovery(row);
   }
   return data.recordings;
 }
@@ -53,7 +54,8 @@ export async function renderPublishedRecordings(doc = document, request = fetch)
         copy.append(node(doc,'h3','',row.title),
           node(doc,'p','','Decisions '+row.first_decision+'–'+row.last_decision+' · '+row.frame_count+' frames'),
           node(doc,'p','published-boundary','Saved through '+row.saved_through_decision+
-            (row.last_decision > row.saved_through_decision ? ' · unsaved tail included' : '')),
+            (row.last_decision > row.saved_through_decision ? ' · unsaved tail included' : '') +
+            (row.recovery ? ' · recovered from checkpoint ' + row.recovery.restored_checkpoint : '')),
           caption,action);
         card.append(media,copy); list.append(card);
         screens.push({canvas,caption,id:row.id});
@@ -64,8 +66,13 @@ export async function renderPublishedRecordings(doc = document, request = fetch)
     set('latest-step',latest.first_decision+'–'+latest.last_decision);
     set('latest-save',String(latest.saved_through_decision)); set('latest-ranking','Not compared');
     link('latest-link',recordingUrl(latest.id)); link('hero-run-link',recordingUrl(latest.id));
-    link('story-link',recordingUrl((catalog[1] || latest).id));
-    for (const [prefix,row] of [['story',catalog[1] || latest],['reason',catalog[2] || latest]]) {
+    const models = new Set();
+    const representatives = catalog.filter(row => {
+      if (models.has(row.model)) return false;
+      models.add(row.model); return true;
+    });
+    link('story-link',recordingUrl((representatives[1] || latest).id));
+    for (const [prefix,row] of [['story',representatives[1] || latest],['reason',representatives[2] || latest]]) {
       const canvas = doc.getElementById(prefix+'-canvas'), caption = doc.getElementById(prefix+'-source');
       if (canvas && caption) screens.push({canvas,caption,id:row.id});
     }

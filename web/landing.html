@@ -29,7 +29,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
 <link rel="stylesheet" href="/static/fort-labs.css?v=20260911-3">
 <link rel="stylesheet" href="/static/home-watch.css?v=1">
-<script type="module" src="/static/home-watch.mjs?v=20260911-2"></script>
+<script type="module" src="/static/home-watch.mjs?v=20260911-recovery"></script>
 <style>
   .worlds-rail { padding: 24px 0 20px; border-bottom: 1px solid var(--line); }
   .worlds-rail-head { display: flex; justify-content: space-between; gap: 24px; align-items: center; margin-bottom: 12px; }
@@ -214,6 +214,8 @@
             <dl class="watch-stats"><div><dt>Population after action</dt><dd id="watch-population">—</dd></div><div><dt>Ticks advanced</dt><dd id="watch-advance">—</dd></div></dl>
             <p id="watch-clock" class="watch-note"></p>
             <p id="watch-boundary" class="watch-note"></p>
+            <p id="watch-recovery" class="watch-note" hidden></p>
+            <a id="watch-prior" class="fl-link" href="#watch-root" hidden>View the earlier failed window →</a>
             <h3>Recent moves</h3><ol id="watch-moves" class="watch-moves"></ol>
           </div>
         </aside>
@@ -419,6 +421,6 @@
   loadHome();
 })();
 </script>
-<script type="module" src="/static/published-recordings.mjs?v=20260911-1"></script>
+<script type="module" src="/static/published-recordings.mjs?v=20260911-recovery"></script>
 </body>
 </html>

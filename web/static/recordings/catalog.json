@@ -2,6 +2,31 @@
   "schema_version": "fortgym.watch-catalog/v1",
   "recordings": [
     {
+      "id": "astra-recovery-225-256",
+      "title": "Astra · recovered continuation",
+      "model": "gpt-6-astra",
+      "control_profile": "native_keyboard_bindings/v1",
+      "first_decision": 225,
+      "last_decision": 256,
+      "saved_through_decision": 256,
+      "recording_status": "saved",
+      "audit_sha256": "82587f8c8cd1e727c8f586eebd413fec281d56d848f14e69b6d0640e62613a81",
+      "recovery": {
+        "schema_version": "fortgym.watch-recovery/v1",
+        "restored_checkpoint": 224,
+        "lost_decisions": 32,
+        "lost_ticks": 422,
+        "total_responses": 288,
+        "source_recording_id": "astra-97-256",
+        "source_checkpoint_sha256": "1e93fd51fc1b2530591cbabc226ab74d937d36e4a3c93c95a994f0edc3b048e3",
+        "uninterrupted_campaign": false,
+        "actions_replayed": false
+      },
+      "window": "225–256",
+      "frame_count": 32,
+      "sha256": "7aba3fdddea9f44e9a85a42738c93bd275d168692f6d4edbbc579cc70ee4e3f0"
+    },
+    {
       "id": "astra-97-256",
       "title": "Astra · displayed keys",
       "window": "97–256",
