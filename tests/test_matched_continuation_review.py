@@ -117,9 +117,7 @@ def test_unconfirmed_native_key_receipt_fails(modules, key_receipt, field, value
 
 def test_rejected_model_response_remains_rejected(modules):
     record = {"action": None, "execute": {"accepted": False}}
-    assert modules[0].verify_keys(record, None, {}, None, None) == 0
-    record["execute"]["accepted"] = True
-    with pytest.raises(ValueError, match="became an action"):
+    with pytest.raises(ValueError, match="typed receipt"):
         modules[0].verify_keys(record, None, {}, None, None)
 
 

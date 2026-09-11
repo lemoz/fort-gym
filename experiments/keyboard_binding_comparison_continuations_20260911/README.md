@@ -99,3 +99,20 @@ saved. Their public failure projection is not supplied by this settled exporter.
 Validation so far covers synthetic lifecycle/audit/export contracts and offline
 specification against the real Sol and Terra saves. No new 64-to-128 native
 window or fresh final-save reload is claimed by these implementation checks.
+
+## Retained rejected commands
+
+Terra r2 exposed an audit mismatch: a rejected provider decision has `action=null`,
+while the native trace correctly retains its attempted typed action. The audit
+now routes this case through `rejection_review.py`, using the original request,
+screen digest, provider receipt and declared displayed-key profile. It verifies
+the exact attempted action, zero key and clock dispatch, and the paused boundary.
+The existing receipt composition keeps its token usage and leaves rejected memory
+updates unapplied. A bare `accepted=false` does not pass as sufficient evidence.
+
+All 64 retained Terra r2 receipts passed the new dispatch path, including nine
+rejections and 27 altered-action/dispatch/clock negative checks. The complete
+memory chain and 1,186,821 tokens reconcile; confirmed key presses remain 80.
+Original checkpoint and audit hashes stayed unchanged. This offline regression
+does not launch a continuation or fix the separate live/replay projection path.
+The updated focused suite passed 274 tests; selected Ruff and mypy also passed.

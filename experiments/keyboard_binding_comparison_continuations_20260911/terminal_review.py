@@ -23,6 +23,7 @@ from continuation_state import (
 )
 from local_lifecycle import verify_container
 from local_owner import specification
+from rejection_review import review_rejection
 
 
 def module(name: str, path: Path, expected: str) -> Any:
@@ -70,11 +71,12 @@ def verify_teardown(control: dict) -> dict:
 def verify_keys(
     record: dict, action: dict | None, condition: dict, index: Any, binding_event: Any
 ) -> int:
+    require(
+        action is not None, "Rejected responses require their typed receipt and no-dispatch proof"
+    )
     require(record["action"] == action, "Trace action differs from model response")
     execution = record["execute"]
-    if action is None:
-        require(execution["accepted"] is False, "A rejected response became an action")
-        return 0
+    assert action is not None
     require(execution["accepted"] is True, "Native input execution was not accepted")
     result, keys = execution["result"], action["params"]["keys"]
     require(
@@ -108,6 +110,20 @@ def verify_keys(
             "Native key receipt crossed an undeclared simulation boundary",
         )
     return len(keys)
+
+
+def verify_input(
+    record: dict, action: dict | None, folder: Path, condition: dict, index: Any, binding_event: Any
+) -> int:
+    """Route a retained rejection through its original receipt, never a substitute move."""
+    if action is None:
+        return review_rejection(
+            record,
+            read(folder / "request.json"),
+            read(folder / "response.json")["result"],
+            condition,
+        )
+    return verify_keys(record, action, condition, index, binding_event)
 
 
 def audit_window(native: Any, origin: dict, spec: dict) -> dict:
@@ -224,9 +240,11 @@ def audit_window(native: Any, origin: dict, spec: dict) -> dict:
     require([row["step"] for row in rows] == list(range(count)), "Canonical trace cursor differs")
     index = fresh.read_binding_index(evidence / "runtime-0/runtime")
     presses, samples = 0, []
-    for row, action in zip(rows[first:], receipts["actions"], strict=True):
+    for row, action, folder in zip(
+        rows[first:], receipts["actions"], folders[: count - first], strict=True
+    ):
         require(row["run_id"] == identity, "Trace includes another campaign")
-        presses += verify_keys(row, action, condition, index, fresh.binding_event)
+        presses += verify_input(row, action, folder, condition, index, fresh.binding_event)
         after = row["state_after_advance"]
         sample = fresh.validate_measurement(
             after["private_food_measurement"], year=after["year"], year_tick=after["year_tick"]
@@ -335,6 +353,7 @@ def audit_window(native: Any, origin: dict, spec: dict) -> dict:
         "new_model_calls_by_auditor": 0,
         "new_game_ticks_by_auditor": 0,
         "audit_source_sha256": sha(Path(__file__)),
+        "rejection_review_source_sha256": sha(BASE / "rejection_review.py"),
         "sources": {str(path.relative_to(ROOT)): sha(path) for path in sources},
     }
     owner.publish(out / "terminal-review.json", report)
