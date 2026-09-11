@@ -43,6 +43,15 @@ the owner's retained results. Container and VM teardown are mandatory. No GCE,
 API fallback, local model, reset, disk growth or website-server change is involved.
 The website is not receiving a live broadcast from this owner.
 
+The first packaging owner exited before loading the fortress or making any model
+request: the unchanged `verify_source` guard rejected a module-only overlay whose
+Git checkout still identified the old image revision. The original evidence and
+checkpoint were unchanged; container stop, evidence export, guest poweroff and VM
+stop all returned zero. The corrected v2 owner packages the complete tested Git
+revision in a derived local image using an incremental bundle and network-disabled
+build, including an explicit source-verifier check. Its model limit remains 32
+new decisions, since v1 made zero requests. No source-identity guard was weakened.
+
 The overall Year-Two/Cross-Model objective is unfinished. The Codex goal object
 is paused, but the user has explicitly resumed this bounded project work.
 
