@@ -41,8 +41,9 @@ The owner and public relay have exited, all cleanup commands returned zero,
 and the isolated VM is verified stopped. Do not rerun the completed owner.
 The final checkpoint has now passed a separate provider-free fresh reload;
 the original completed-window result remains unchanged and the new evidence is
-linked below. Next: publish the completed replay/result on the website and continue
-comparable repeated displayed-key trials across models. The full goal remains
+linked below. The completed replay and result are now published on the website.
+Next: continue comparable repeated displayed-key trials across models and finish
+remaining harness integration. The full goal remains
 active; this genuine gameplay milestone is not full project completion.
 
 ### Checkpoint 416 fresh reload verified
@@ -68,8 +69,30 @@ Fresh [browser acceptance](../experiments/evidence/website_live_browser_acceptan
 verified live screen/action updates through decision 416, recorded scrubbing,
 return to live, and mobile enlargement without page-wide overflow. After the
 owner ended, the viewer returned to recordings. The live feed is now stopped;
-the full 256-to-416 recording is not yet published. Released pages and all four
-existing recordings remain byte-identical, with no new deployment or restart.
+the completed 257-to-416 recording is now the newest published replay.
+
+### Year-Two replay published and verified
+
+The [public replay](https://fortgym.live/?recording=astra-year-two-257-416#watch-root)
+contains all 160 captured decisions and a separate saved-endpoint panel with
+links to the immutable original result and later fresh-reload evidence.
+The homepage, Results gallery and Worlds page include it. All four earlier
+recordings remain byte-identical: five windows, 480 frames, three models,
+not five independent trials or a repeated matched model ranking.
+
+The [release record](../experiments/evidence/website_year_two_replay_release_20260911.json)
+binds public revision `08f1b7d31855188bbef2b2ae8aac300a4bc757f0` to
+[PR 170](https://github.com/lemoz/fort-gym/pull/170), exact-head CI, 1,224 local
+passing tests and 20 Node client contracts. Public HTTPS assets and the two
+result links matched their expected digests. Real public-browser scrubbing
+reached decision 416 with population 13; mobile fit at 390 pixels with no
+console errors or warnings. Local desktop, Worlds and Results checks also passed.
+
+Only the thirteen static-website, documentation and test files were released.
+Read-only database counts, API/game process identities and untracked host
+files were preserved; no service restarted and no gameplay or model call ran.
+The source is pushed as a draft stacked PR, not merged into main. The broader
+cross-model goal remains active.
 
 ## Earlier progress observations for this completed window
 
