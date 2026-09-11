@@ -427,6 +427,17 @@ async def public_keyboard_endurance_active() -> JSONResponse:
     return JSONResponse(data, headers=HTML_CACHE_HEADERS)
 
 
+@app.get("/public/keyboard-cohort-endurance-records")
+async def public_keyboard_endurance_records() -> JSONResponse:
+    from .keyboard_endurance_records import keyboard_endurance_records
+
+    try:
+        data = keyboard_endurance_records()
+    except (OSError, ValueError, KeyError, TypeError):
+        raise HTTPException(status_code=503, detail="Recorded endurance evidence is unavailable") from None
+    return JSONResponse(data, headers=HTML_CACHE_HEADERS)
+
+
 @app.get("/protocols/{slug}", response_class=HTMLResponse)
 async def serve_protocol_detail(slug: str):
     """Serve protocol-specific metadata while the client resolves the detail body."""
