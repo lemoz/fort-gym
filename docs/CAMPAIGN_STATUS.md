@@ -4,7 +4,7 @@ Verified September 11, 2026 UTC. The Year-Two Autonomous Play objective remains
 unfinished; work continues toward the same objective. The owner has approved starting the project
 work for [Astra standard-input experiments](ASTRA_STANDARD_INPUT_EXPERIMENTS.md).
 
-## Current state: all six decision-128 saves audited; VM stopped
+## Current state: all six decision-128 saves audited; Astra continuing
 
 The decision-128 round is complete: two attempts each for Astra, Sol and Terra,
 all under unchanged declared conditions. Across the six distinct campaigns,
@@ -13,6 +13,18 @@ window totals. All six retain seven living dwarves and no recorded deaths.
 Both Astra attempts completed beds, farms and workshops; neither Sol nor Terra
 attempt did at this boundary. This same-seed pilot does not establish a general
 model ranking, sustainable production or a year-two fortress.
+
+Astra attempt 1 has now started its declared 128-to-256 continuation from its
+own decision-128 save and memory, using the exact green-CI host revision
+`4590fc1828365c44c9a4d3be728b4168ded5c514`. The
+[launch snapshot](../experiments/evidence/keyboard_matched_astra_r1_128_256_launch_20260911.json)
+records seven new responses, 186,485 returned tokens and at least 2,000 new
+observed game ticks. The first two provider responses were independently
+verified. These are provisional observations, not a new audited save or
+teardown result. One existing bounded local VM is running with mandatory
+shutdown in its owner. No GCE, paid API/local-model fallback, model/prompt
+change, usage reset or human gameplay rescue is involved. Its separate v2
+observer is running but is not yet connected to the website's live card.
 
 Astra attempt 1 completed its declared 64-to-128 window from its own save and
 memory. Its [audited result](../experiments/evidence/keyboard_matched_astra_r1_continuation_64_128_20260911.json)
@@ -95,6 +107,27 @@ VM is running, and the final save's separate fresh reload remains unverified.
 
 ## Current delivery: recorded endurance and live continuation
 
+The next-stage host and all six exact own-save configurations are pushed at
+`4590fc1828365c44c9a4d3be728b4168ded5c514` in
+[draft PR #154](https://github.com/lemoz/fort-gym/pull/154). Full local tests:
+4,954 passed, 10 skipped; exact-head GitHub CI `34561769984` passed.
+The new projection supports longer windows without recounting prior history.
+All six real v1 windows reproduce their previous checkpoint, timeline and
+provider-review outcomes through the new helpers. Native agent, environment,
+evaluator and historical operational scripts remain unchanged.
+
+The current local preview now serves
+`4b791e700bd3d04dbb4fa3fa7f8125d22bd30ec0` from
+[draft PR #155](https://github.com/lemoz/fort-gym/pull/155). It displays all six
+audited decision-128 results: 384 new endurance boundaries, 768 cumulative
+saved responses and 22,707,069 returned tokens. Full local tests passed
+4,925 with 10 skips; exact-head GitHub CI `34561931380` passed. The
+[HTTP acceptance](../experiments/evidence/keyboard_matched_six_128_website_20260911.json)
+verified the exact served source, preserved historical records and disabled
+admin route. The retained v1 live card is stale historical observation; the
+new 128-to-256 v2 feed remains a separate website integration task. No browser
+visual QA, main merge or public deployment is claimed.
+
 Native checkpoint-chain verification is pushed at
 `a815aaf139a2bc4de3de02107c5c3909ab8b397e` in
 [draft PR #154](https://github.com/lemoz/fort-gym/pull/154). The reviewed full
@@ -118,13 +151,14 @@ passed. All five completed windows reproduced their original provider reviews,
 token totals and final memory in a read-only check. Exact-head GitHub CI
 `34559721416` passed.
 
-A separate private next-stage controller/auditor draft passed 42 offline tests,
-including failure teardown, unchanged resources and cumulative usage. Combined
-testing caught and repaired a host/frozen-package import-order issue. The five
-available decision-128 parents validate, but the full six-input packet, next-stage
-public projection, end-to-end review and next-window website behavior remain
-required before launch. No decision-256 gameplay is claimed. The current Astra2
-v1 controller, frozen native source, observer and website are unchanged.
+The private next-stage controller/auditor/publisher passed 60 combined offline
+tests, including all six actual source inputs, failure teardown, unchanged
+resources, cumulative usage and complete publication of synthetic two-segment
+windows. Eight separate v2 observer projection tests passed. An earlier combined
+test caught and repaired a host/frozen-package import-order issue. The outer
+auditor source was reviewed against its verified checkpoint and provider
+helpers. Actual native two-segment continuation and its terminal audit remain
+unproven until Astra's running window reaches its own save boundaries.
 
 The configuration-driven endurance courier and all six own-save 64-to-128
 declarations are pushed at `45bb05c903181b6b2e4f61df3a4c0a8eca05b818` in

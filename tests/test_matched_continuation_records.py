@@ -27,11 +27,15 @@ TERRA_TWO_ENDURANCE = "keyboard_matched_terra_r2_continuation_64_128_20260911.js
 ENDURANCE_RECORDS_CODE = "keyboard_matched_endurance_records_code_20260911.json"
 ENDURANCE_RECORDS_WEBSITE = "keyboard_matched_endurance_records_website_20260911.json"
 ENDURANCE_COHORT_WEBSITE = "keyboard_matched_endurance_cohort_website_20260911.json"
+SIX_128_WEBSITE = "keyboard_matched_six_128_website_20260911.json"
+ASTRA_128_256_LAUNCH = "keyboard_matched_astra_r1_128_256_launch_20260911.json"
 
 
 @pytest.mark.parametrize(
     "filename,expected",
     [
+        (SIX_128_WEBSITE, "b47a8ab7b397e67fa6e8da990919c2b4bfee59c5dbd2c8dbc8f3d761486c8966"),
+        (ASTRA_128_256_LAUNCH, "31058773bcbefe4c4bbd5b825d0ea5735b6fdbf31d6377e217401352a02ee55e"),
         (RESULT, "2c8abe1f7135d94ed27aea51e18ebc59e0599205caf3f268f4480b0e377f3d29"),
         (ASTRA_TWO_RESULT, "b5b195022876f8342c26e97634a8645cfb8beb885475a493187dc5fff7d90f1e"),
         (SOL_RESULT, "a624a9687257157aa91029d950ca1735a0e8f1baaa224cb66bba7efac50a1dbd"),
@@ -68,6 +72,41 @@ def test_exact_versioned_projections_and_private_state_exclusion(filename, expec
     assert hashlib.sha256(raw).hexdigest() == expected
     for forbidden in (b"/Users/", b'"/evidence/', b'"memory":', b'"screen":', b'"account_id":'):
         assert forbidden not in raw
+
+
+def test_six_result_website_is_delivered_without_claiming_the_new_live_feed():
+    value = json.loads((EVIDENCE / SIX_128_WEBSITE).read_bytes())
+    assert value["passed"] is True
+    assert value["website_revision"] == value["ci"]["head_sha"] == "4b791e700bd3d04dbb4fa3fa7f8125d22bd30ec0"
+    assert value["ci"]["status"] == "completed" and value["ci"]["conclusion"] == "success"
+    assert value["recorded_endurance_windows"] == 6 and value["recorded_endurance_boundaries"] == 384
+    assert value["latest_saved_responses"] == 768 and value["latest_saved_tokens"] == 22707069
+    assert value["historical_and_decision_64_records_unchanged"] is True
+    assert value["new_128_256_live_feed_in_website"] is False
+    assert value["live_observation"]["schema_version"].endswith("/v1")
+    assert value["live_observation"]["status"] == "stale"
+    assert value["public_deployment"] is value["main_merge"] is value["browser_visual_qa"] is False
+    assert value["model_calls_by_verifier"] == value["game_ticks_by_verifier"] == 0
+
+
+def test_astra_two_segment_launch_is_provisional_not_an_audited_save():
+    value = json.loads((EVIDENCE / ASTRA_128_256_LAUNCH).read_bytes())
+    parent = json.loads((EVIDENCE / ASTRA_ENDURANCE).read_bytes())
+    observed = value["observation"]
+    assert (observed["start_decision"], observed["end_decision"], observed["response_limit"]) == (128, 256, 128)
+    assert observed["prior_checkpoint_sha256"] == parent["checkpoint_sha256"]
+    assert observed["responses"] == 7 and observed["returned_tokens"] == 186485
+    assert observed["campaign_returned_tokens"] == parent["usage"]["campaign_returned_tokens"] + 186485
+    assert observed["new_elapsed_ticks_lower_bound"] == 2000
+    assert observed["campaign_elapsed_ticks_lower_bound"] == 53400
+    assert observed["new_save_verified"] is False and observed["reported_charge_usd"] is None
+    assert [row["decision_index"] for row in value["first_response_reviews"]] == [0, 1]
+    assert value["auth_mode"] == "chatgpt" and value["api_credentials_inherited"] is False
+    assert all(value[key] is False for key in (
+        "final_native_audit_completed", "final_checkpoint_verified", "vm_teardown_verified",
+        "new_gameplay_result_included", "website_live_connected", "year_two_goal_complete"
+    ))
+    assert value["mandatory_teardown_on_terminal"] is True
 
 
 def test_saved_continuation_separates_new_work_from_its_own_baseline():
