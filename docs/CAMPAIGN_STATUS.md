@@ -48,10 +48,25 @@ The recorded result, not that stale feed, proves 135,400 saved ticks.
 No browser visual QA, main merge or public deployment is claimed. This website
 update made no model calls and started no experiment VM.
 
-Next is the already-declared character-input diagnostic on a disposable native
-copy, separate from scored campaigns. It must establish actual menu behavior
-before any claim that the prepared prompt profile helps. The unchanged cohort,
-separate paired trials and broader Year-Two delivery objective remain open.
+The subsequent provider-free
+[native input diagnostic](../experiments/keyboard_input_diagnostic_20260911/README.md)
+now establishes a specific mismatch in the carpenter AddJob menu:
+`CUSTOM_B` and literal `STRING_A098` did nothing, while
+`HOTKEY_CARPENTER_BED` queued a bed. Scroll-and-select queued a shield.
+All four arms used fresh copies of the same paused checkpoint and unchanged
+executor, with no game ticks or model calls. Original saves and scored
+conditions were preserved, and both diagnostic VM attempts were shut down.
+
+The strict whole-frame check failed after all arms ran because a few map
+glyphs differed; the original failure remains recorded. An independent,
+explicitly post-hoc review found identical native menu/queue state and
+identical workshop-sidebar glyphs and colors. This supports the scoped event
+finding, not full-frame equivalence or a model-performance claim.
+
+The unlaunched literal-character-reference profile does not fix this measured
+case. Next is a faithful mapping between visible keyboard bindings and native
+events, with native validation before any separately declared model comparison.
+The unchanged cohort and broader Year-Two delivery objective remain open.
 
 ### Preserved decision-128 comparison and earlier launch observations
 

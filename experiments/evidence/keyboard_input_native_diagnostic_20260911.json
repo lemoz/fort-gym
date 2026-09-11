@@ -1,0 +1,260 @@
+{
+  "schema_version": "fortgym.public-native-keyboard-input-diagnostic/v1",
+  "recorded_date_utc": "2026-09-11",
+  "artifact_kind": "operator_controlled_native_input_diagnostic",
+  "source_revision": "1bc49b9675b1c82ad502bbd6d8461c9cdbf077e9",
+  "image_id": "sha256:ebc48ef1e63dabcae0e624e92eb114bbfd5e21d96bb9d5a2a3e0f0c2a0426cc9",
+  "checkpoint_sha256": "3225df254ea574ba8d477b6f166112a8defd4ae383a68cade433eac37e078342",
+  "source_result_revision": "4bb97d6c4fe3b5a1f8acc7d416c46817bcff5100",
+  "source_result_path": "experiments/evidence/keyboard_matched_astra_r1_continuation_128_256_20260911.json",
+  "source_checkpoint_unchanged": true,
+  "screen_size": [
+    120,
+    40
+  ],
+  "control_profile": "native_keyboard/v2",
+  "model_calls": 0,
+  "autonomous_gameplay": false,
+  "operator_ui_setup": true,
+  "new_scored_campaign_checkpoint": false,
+  "native_saves_requested": 0,
+  "observed_elapsed_ticks": 0,
+  "cloud_vms_created": 0,
+  "hardware_energy_and_app_cost_usd": null,
+  "original_owner_status": "failed",
+  "original_container_exit_code": 1,
+  "original_failure": "full_screen_rows_equal_after_four_completed_arms",
+  "original_full_frame_acceptance_passed": false,
+  "posthoc_menu_boundary_review_passed": true,
+  "menu_comparison_scope": {
+    "x_start": 64,
+    "x_end_exclusive": 94,
+    "y_start": 1,
+    "y_end_exclusive": 39,
+    "basis": "posthoc_visible_workshop_sidebar_in_retained_captures"
+  },
+  "arms": [
+    {
+      "arm": "custom_b",
+      "keys": [
+        "CUSTOM_B"
+      ],
+      "key_values": {
+        "BUILDJOB_ADD": 472,
+        "CUSTOM_B": 107,
+        "D_BUILDJOB": 1114,
+        "HOTKEY_CARPENTER_BED": 772,
+        "SELECT": 1,
+        "STANDARDSCROLL_DOWN": 28,
+        "STRING_A098": 1457
+      },
+      "before_focus": "dwarfmode/QueryBuilding/Some/Workshop/AddJob",
+      "after_focus": "dwarfmode/QueryBuilding/Some/Workshop/AddJob",
+      "existing_jobs": [
+        {
+          "id": 406,
+          "reaction_name": "",
+          "repeat_job": true,
+          "suspend": true,
+          "type": "MakeBarrel"
+        }
+      ],
+      "new_jobs": [],
+      "queued_bed": false,
+      "source_calendar": [
+        30,
+        152201
+      ],
+      "observed_elapsed_ticks": 0,
+      "menu_sidebar_tiles_equal": true,
+      "full_frame_glyph_differences": [],
+      "inspection_sha256": "3673595bb531876dff0dea21843a75e0005952fdfe8396c057e8efee8919fb54",
+      "native_reload_sha256": "f0efd0218ed830e15b128fd3cb9c42c5b23699b79881bd2d1c9c6166c6c9f608",
+      "native_cleanup_verified": true
+    },
+    {
+      "arm": "literal_b",
+      "keys": [
+        "STRING_A098"
+      ],
+      "key_values": {
+        "BUILDJOB_ADD": 472,
+        "CUSTOM_B": 107,
+        "D_BUILDJOB": 1114,
+        "HOTKEY_CARPENTER_BED": 772,
+        "SELECT": 1,
+        "STANDARDSCROLL_DOWN": 28,
+        "STRING_A098": 1457
+      },
+      "before_focus": "dwarfmode/QueryBuilding/Some/Workshop/AddJob",
+      "after_focus": "dwarfmode/QueryBuilding/Some/Workshop/AddJob",
+      "existing_jobs": [
+        {
+          "id": 406,
+          "reaction_name": "",
+          "repeat_job": true,
+          "suspend": true,
+          "type": "MakeBarrel"
+        }
+      ],
+      "new_jobs": [],
+      "queued_bed": false,
+      "source_calendar": [
+        30,
+        152201
+      ],
+      "observed_elapsed_ticks": 0,
+      "menu_sidebar_tiles_equal": true,
+      "full_frame_glyph_differences": [
+        {
+          "x": 21,
+          "y": 19
+        },
+        {
+          "x": 22,
+          "y": 20
+        },
+        {
+          "x": 22,
+          "y": 21
+        }
+      ],
+      "inspection_sha256": "5840ad0faa02c23346e2f79288d965cf4e3d210463ffdc338331e316aeb4532b",
+      "native_reload_sha256": "716ff9ea2fbede08137fe3fbc4187740857dbb11dfb7c3b7df757d946fe3b1a4",
+      "native_cleanup_verified": true
+    },
+    {
+      "arm": "native_bed",
+      "keys": [
+        "HOTKEY_CARPENTER_BED"
+      ],
+      "key_values": {
+        "BUILDJOB_ADD": 472,
+        "CUSTOM_B": 107,
+        "D_BUILDJOB": 1114,
+        "HOTKEY_CARPENTER_BED": 772,
+        "SELECT": 1,
+        "STANDARDSCROLL_DOWN": 28,
+        "STRING_A098": 1457
+      },
+      "before_focus": "dwarfmode/QueryBuilding/Some/Workshop/AddJob",
+      "after_focus": "dwarfmode/QueryBuilding/Some/Workshop/Job",
+      "existing_jobs": [
+        {
+          "id": 406,
+          "reaction_name": "",
+          "repeat_job": true,
+          "suspend": true,
+          "type": "MakeBarrel"
+        }
+      ],
+      "new_jobs": [
+        {
+          "id": 495,
+          "reaction_name": "",
+          "repeat_job": false,
+          "suspend": false,
+          "type": "ConstructBed"
+        }
+      ],
+      "queued_bed": true,
+      "source_calendar": [
+        30,
+        152201
+      ],
+      "observed_elapsed_ticks": 0,
+      "menu_sidebar_tiles_equal": true,
+      "full_frame_glyph_differences": [
+        {
+          "x": 22,
+          "y": 20
+        }
+      ],
+      "inspection_sha256": "45e1336b3fad8fd111283f3ba1bd94617cc15dd8ff7ff06022ea713bf05f3431",
+      "native_reload_sha256": "3d509a32bf9a37a1636ea174b096b54db5be442e5b80f43d5edae04370c4cd04",
+      "native_cleanup_verified": true
+    },
+    {
+      "arm": "scroll_select",
+      "keys": [
+        "STANDARDSCROLL_DOWN",
+        "SELECT"
+      ],
+      "key_values": {
+        "BUILDJOB_ADD": 472,
+        "CUSTOM_B": 107,
+        "D_BUILDJOB": 1114,
+        "HOTKEY_CARPENTER_BED": 772,
+        "SELECT": 1,
+        "STANDARDSCROLL_DOWN": 28,
+        "STRING_A098": 1457
+      },
+      "before_focus": "dwarfmode/QueryBuilding/Some/Workshop/AddJob",
+      "after_focus": "dwarfmode/QueryBuilding/Some/Workshop/Job",
+      "existing_jobs": [
+        {
+          "id": 406,
+          "reaction_name": "",
+          "repeat_job": true,
+          "suspend": true,
+          "type": "MakeBarrel"
+        }
+      ],
+      "new_jobs": [
+        {
+          "id": 495,
+          "reaction_name": "",
+          "repeat_job": false,
+          "suspend": false,
+          "type": "MakeShield"
+        }
+      ],
+      "queued_bed": false,
+      "source_calendar": [
+        30,
+        152201
+      ],
+      "observed_elapsed_ticks": 0,
+      "menu_sidebar_tiles_equal": true,
+      "full_frame_glyph_differences": [
+        {
+          "x": 22,
+          "y": 20
+        },
+        {
+          "x": 22,
+          "y": 21
+        }
+      ],
+      "inspection_sha256": "77173a106178f1f5175ba5767e38673b33d0ae1d1a1c40f46d91a0d8f001b39d",
+      "native_reload_sha256": "5c1fb4495a03d74dc0e227ce1d43cce9896a653b424d1ccb885958b4305615ac",
+      "native_cleanup_verified": true
+    }
+  ],
+  "native_cleanup_verified": true,
+  "vm_teardown_verified": true,
+  "auditor_sha256": "d0bbd1b7a89f15cb01196cbe8f73d4101f9c94d6944173cb730408e3363aa964",
+  "terminal_review_sha256": "fa0929405b0e87e7f68ae4d2207382e3c78ca75a9b864bf2c3b9429bb65db803",
+  "native_result_sha256": "49a326656a5eaffdc2214e9962cd599b2f637fef07f76918b7973ab18cd886a2",
+  "original_owner_sha256": "2198872f32679d0ac0ef90b337d5457f4dd4c55d6665ee214d5b58496da09e53",
+  "prior_attempt": {
+    "status": "infrastructure_limited",
+    "completed_arms": 1,
+    "arm": "custom_b",
+    "new_jobs": [],
+    "failure": "port_bind_before_second_game",
+    "vm_teardown_verified": true,
+    "evidence_preserved": true
+  },
+  "conclusion": "In this completed carpenter workshop AddJob menu, CUSTOM_B and STRING_A098 were accepted without creating a job. HOTKEY_CARPENTER_BED created ConstructBed, while one STANDARDSCROLL_DOWN plus SELECT created MakeShield. Literal-character guidance alone does not fix this menu's hotkey mismatch.",
+  "diagnostic_sources": {
+    "experiments/keyboard_input_diagnostic_20260911/fixture.py": "6f9eb7c44c689f41a0bfc0c4d0c6364819e2af1f67421a21c8b668fc89dd5f97",
+    "experiments/keyboard_input_diagnostic_20260911/menu_probe.lua": "1df80e832ea9bcca580d901cd46aaf6a6ab613aa219e0acb571e6c2d02ce25c5"
+  },
+  "limits": [
+    "Four operator-controlled fresh copies of the same untouched checkpoint, not model trials or autonomous gameplay.",
+    "The original whole-frame equality assertion failed after all four arms ran. A post-hoc review established identical native menu/queue state and identical workshop-sidebar glyphs and colors; one to three changing map glyphs outside that sidebar remain recorded. This does not retroactively pass the original full-frame criterion.",
+    "No model benefit, production completion, sustainability or general keyboard equivalence is established.",
+    "The unlaunched character-reference profile and all historical matched conditions remain unchanged; these diagnostic copies must not seed a scored campaign."
+  ]
+}
