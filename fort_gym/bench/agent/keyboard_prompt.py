@@ -5,6 +5,7 @@ import re
 
 BASE_PROMPT = "native_keyboard_prompt/v1"
 MEMORY_PROMPT = "native_keyboard_memory_replacement/v1"
+CHARACTER_PROMPT = "native_keyboard_character_reference/v1"
 ORIGIN_SCHEMA = "fortgym.keyboard-prompt-origin/v1"
 MEMORY_CONTRACT = """Your retained memory is the only scratchpad carried between decisions. Each
 decision is a fresh model request, not a continuation of the previous conversation.
@@ -13,9 +14,19 @@ or merged. Include anything you want to retain for the next decision. An empty
 memory_update clears the retained memory. The current screen and previous input
 receipt are supplied separately on every decision."""
 
+CHARACTER_CONTRACT = """Native command events and literal character events are distinct inputs.
+CUSTOM_A is a named command event, not an alias for typing the character 'a'.
+For printable ASCII characters, STRING_A### uses the three-digit decimal character
+code: 'a' is STRING_A097, 'A' is STRING_A065, and '0' is STRING_A048.
+Character case matters. Use character events where the interface expects literal
+characters and named command events where it expects commands. A displayed letter
+alone does not identify which event a menu handles. Check the next captured screen
+and input receipt to see what changed; accepted input does not prove its intended
+menu effect. Keys are passed exactly as named, without automatic conversion."""
+
 
 def validate_prompt_profile(value: object) -> str:
-    if not isinstance(value, str) or value not in (BASE_PROMPT, MEMORY_PROMPT):
+    if not isinstance(value, str) or value not in (BASE_PROMPT, MEMORY_PROMPT, CHARACTER_PROMPT):
         raise ValueError("Unsupported keyboard prompt profile")
     return value
 

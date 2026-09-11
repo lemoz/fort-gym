@@ -7,7 +7,9 @@ import pytest
 
 from fort_gym.bench.agent.campaign_keyboard import CodexKeyboardAgent, initial_usage
 from fort_gym.bench.agent.keyboard_exchange import read
-from fort_gym.bench.agent.keyboard_prompt import BASE_PROMPT, MEMORY_PROMPT, effective_prompt
+from fort_gym.bench.agent.keyboard_prompt import (
+    BASE_PROMPT, CHARACTER_PROMPT, MEMORY_PROMPT, effective_prompt,
+)
 from fort_gym.bench.run.campaign_checkpoint import verify_checkpoint
 from fort_gym.bench.run.keyboard_segment import run_keyboard_segment
 from fort_gym.bench.run.keyboard_trial import run_keyboard_trial
@@ -75,7 +77,7 @@ def start(output, condition=None, callback=decision, **changes):
 
 
 @pytest.mark.parametrize("model", MODELS)
-@pytest.mark.parametrize("profile", [BASE_PROMPT, MEMORY_PROMPT])
+@pytest.mark.parametrize("profile", [BASE_PROMPT, MEMORY_PROMPT, CHARACTER_PROMPT])
 def test_fresh_models_start_empty_then_continue_without_reset(tmp_path, model, profile):
     condition, seen = config(model, profile), []
 
