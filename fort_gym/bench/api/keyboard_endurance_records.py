@@ -29,7 +29,18 @@ class Publication:
 
 # Add only independently audited, pushed result manifests in chronological order.
 # No globbing, caller-provided paths, inferred runs or synthetic result records.
-RESULTS: dict[str, tuple[Publication, ...]] = {}
+RESULTS: dict[str, tuple[Publication, ...]] = {
+    "matched-20260910-astra-r1": (
+        Publication(
+            "experiments/evidence/keyboard_matched_astra_r1_continuation_64_128_20260911.json",
+            "cb9cc0c5af8f158848493b1e7b3bb79f4f4736f185fbf7ce96fb157095e1d145",
+            "0c2aaeb63f1a209cf7ec299a473a77911ddd10ed",
+            "experiments/keyboard_matched_endurance_20260910/astra_r1-64-128.json",
+            "37d2ed8db264f5941b8879543376110330294403274c2815922b6c3a057bc19f",
+            "45bb05c903181b6b2e4f61df3a4c0a8eca05b818",
+        ),
+    ),
+}
 
 
 def read_result(path: str, expected: str) -> dict:

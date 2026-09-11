@@ -26,7 +26,12 @@ teardown and immutable evidence links remain inspectable.
 
 The current implementation preserves the existing website, prior APIs, model
 prompts, native source, running owner and observer. An isolated worktree named
-`campaign-matched-endurance-records` holds the changes until an audited result
-can be registered and the replacement preview can be verified. Test-generated
-future windows are synthetic fixtures and are never added to the public registry.
+`campaign-matched-endurance-records` holds the changes for separate preview
+verification. Astra attempt 1's audited decision-128 result is registered by
+its immutable result commit and original declared window. Its 51,400 saved
+ticks, seven living dwarves, five beds, two farms, three workshops, 29 food and
+121 drinks are recorded outcomes, not proof of sustainability or year two.
+The other five attempts retain their decision-64 baselines. Different saved
+response counts are not equal-budget comparisons. Test-generated future
+windows are synthetic fixtures and are never added to the public registry.
 No browser visual QA, public deployment or main merge is claimed by these changes.

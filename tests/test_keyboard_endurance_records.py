@@ -13,7 +13,8 @@ from fort_gym.bench.run.matched_result_chain import digest, encoded
 from tests.test_campaign_matched_endurance_window import synthetic_child
 
 
-def test_actual_six_saved_baselines_do_not_invent_endurance_results():
+def test_actual_six_saved_baselines_do_not_invent_endurance_results(monkeypatch):
+    monkeypatch.setattr(records, "RESULTS", {})
     baseline = keyboard_continuations()
     result = records.keyboard_endurance_records()
     assert result["recorded_endurance_windows"] == result["recorded_endurance_boundaries"] == 0
@@ -25,6 +26,49 @@ def test_actual_six_saved_baselines_do_not_invent_endurance_results():
         assert row["latest_result"] == before["result"] and row["windows"] == []
         assert row["latest_result_url"] == before["evidence_url"]
     assert keyboard_continuations() == baseline
+
+
+def test_actual_astra_endurance_result_preserves_audited_outcome_and_unequal_budgets():
+    result = records.keyboard_endurance_records()
+    assert result["recorded_endurance_windows"] == 1
+    assert result["recorded_endurance_boundaries"] == 64
+    assert result["latest_saved_responses"] == 448
+    assert result["latest_saved_tokens"] == 13479220
+    astra, *others = result["trials"]
+    assert astra["campaign_id"] == "matched-20260910-astra-r1"
+    assert astra["publication_state"] == "recorded_endurance"
+    assert all(
+        row["latest_result"]["next_decision"] == 64 and row["windows"] == [] for row in others
+    )
+    saved = astra["latest_result"]
+    assert saved["next_decision"] == 128 and saved["new_responses"] == 64
+    assert saved["saved_elapsed_ticks"] == 51400
+    assert (
+        saved["audit_sha256"] == "68afc4f0729cc37b28c41d6d7399239bace42aff5a59d9270e4c74c08c169f86"
+    )
+    assert (
+        saved["checkpoint_sha256"]
+        == "bff0afda99c39e25fe9db7aeb01db77ab6a819cb20c5d82670a2188952cceec2"
+    )
+    metrics = saved["saved_metrics"]
+    assert (metrics["population"], metrics["recorded_dead_citizens"]) == (7, 0)
+    assert (
+        metrics["completed_beds"],
+        metrics["completed_farms"],
+        metrics["completed_workshops"],
+    ) == (5, 2, 3)
+    assert (metrics["food_stock"], metrics["drink_stock"]) == (29, 121)
+    assert saved["year_two_reached"] is saved["sustainability_established"] is False
+    assert saved["native_cleanup_verified"] is saved["vm_teardown_verified"] is True
+    assert saved["source_checkpoint_fresh_load_verified"] is True
+    assert saved["final_fresh_reload_verified"] is False
+    assert saved["usage"]["reported_charge_usd"] is None
+    assert (
+        astra["windows"][0]["evidence_sha256"]
+        == "cb9cc0c5af8f158848493b1e7b3bb79f4f4736f185fbf7ce96fb157095e1d145"
+    )
+    assert "/0c2aaeb63f1a209cf7ec299a473a77911ddd10ed/" in astra["latest_result_url"]
+    assert result["strong_ranking_supported"] is result["live_owner_status_included"] is False
 
 
 @pytest.fixture
