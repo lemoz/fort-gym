@@ -1,0 +1,1400 @@
+{
+  "schema_version": "fortgym.public-keyboard-binding-continuation-result/v1",
+  "campaign_id": "bindings-20260911-astra-r1",
+  "status": "completed",
+  "stop_reason": "segment_limit",
+  "source_revision": "8b9fffa1de4f93506cbcbdf82fd154aeb17b5697",
+  "image_id": "sha256:a33c46c55f8b389251acf49bd127e18b8a6713a13bd25619b84b49ec6e493374",
+  "implementation_pull_request": "https://github.com/lemoz/fort-gym/pull/159",
+  "declaration_revision": "9012a07dfb3dfac3ca2c2945fa82b2515f87f6ae",
+  "condition": {
+    "account_admission": "fresh_read_before_each_model_invocation",
+    "actual_charge_usd": null,
+    "advance_policy": "model_requested/v1",
+    "api_fallback": false,
+    "automatic_credit_purchase": false,
+    "automatic_reset_consumption": false,
+    "bindings_sha256": "8176d2bd7a8d96f6bb12feb654519a8361a6f262363b84ec48963be832cb7efd",
+    "condition_id": "binding-pilot-astra-medium-native-keyboard-120x40",
+    "control_profile": "native_keyboard_bindings/v1",
+    "exchange_timeout_seconds": 240,
+    "max_advance_ticks": 2000,
+    "max_dispatches": 1280,
+    "max_segments": 1,
+    "max_total_tokens": 40000000,
+    "maximum_included_usage_percent": 98,
+    "model": "gpt-6-astra",
+    "model_timeout_seconds": 180,
+    "observation_profile": "native_screen_text/v1",
+    "prompt_profile": "native_keyboard_binding_instructions/v1",
+    "reasoning_effort": "medium",
+    "schema_version": "fortgym.codex-keyboard-condition/v4",
+    "screen_size": [
+      120,
+      40
+    ],
+    "steps_per_segment": 32,
+    "transport": "codex-exec-chatgpt/v1"
+  },
+  "window": {
+    "condition_id": "binding-pilot-astra-medium-native-keyboard-120x40",
+    "continuation_checkpoint_sha256": "53c0cf824da7db2bcf07b9fc4ea7859e050124af6ce1399abf0821882f9d66c9",
+    "continuation_from_next_step": 64,
+    "hypothesis": "Under unchanged displayed-key controls, Astra can resume its own saved plans and continue fortress development without manual gameplay intervention. Record construction, stock changes, population, accepted inputs, clock outcomes and model receipts without inferring sustainability from intent or stock changes.",
+    "max_segments": 1,
+    "original_condition": "astra-condition.json",
+    "private_measurement_profile": "fortgym.campaign-food-measurement/v1",
+    "private_measurement_timeout_seconds": 15,
+    "reset_memory": false,
+    "reset_usage": false,
+    "resource_observation_profile": "fortgym.native-resource-observations/v1",
+    "runtime_rpc_transport": "native-rpc",
+    "schema_version": "fortgym.codex-keyboard-window/v1",
+    "snapshot_profile": "native_menu_preserving_save/v4",
+    "steps_per_segment": 32,
+    "strategy_intervention": false
+  },
+  "source_result_path": "experiments/evidence/keyboard_binding_astra_r1_continuation_32_64_20260911.json",
+  "source_result_sha256": "5f86a754fbb979a567c14a236250ccd518c171db79e598ae9adaa4745db9d8e4",
+  "source_checkpoint_sha256": "53c0cf824da7db2bcf07b9fc4ea7859e050124af6ce1399abf0821882f9d66c9",
+  "checkpoint_sha256": "9576d897a176f6f50face655a11ae25cdd9a320a37eec30566c4cdbce4f6d77d",
+  "first_step": 64,
+  "responses": 96,
+  "new_responses": 32,
+  "new_confirmed_key_presses": 161,
+  "saved_elapsed_ticks": 59500,
+  "new_saved_elapsed_ticks": 30000,
+  "ticks_per_year": 403200,
+  "final_boundary": {
+    "year": 30,
+    "year_tick": 76301,
+    "paused": true
+  },
+  "initial_metrics": {
+    "completed_beds": 4,
+    "completed_farms": 1,
+    "completed_workshops": 2,
+    "drink_stock": 103,
+    "food_stock": 40,
+    "functional_rooms": 0,
+    "population": 7,
+    "recorded_dead_citizens": 0,
+    "stone_stock": null,
+    "wood_stock": null
+  },
+  "saved_metrics": {
+    "completed_beds": 5,
+    "completed_farms": 1,
+    "completed_workshops": 3,
+    "drink_stock": 121,
+    "food_stock": 58,
+    "functional_rooms": null,
+    "population": 7,
+    "recorded_dead_citizens": 0,
+    "stone_stock": null,
+    "wood_stock": null
+  },
+  "new_tokens": 984136,
+  "usage": {
+    "accounted_responses": 96,
+    "cost_basis": "codex_subscription_charge_unreported/v1",
+    "dispatched_requests": 96,
+    "returned_responses": 96,
+    "total_cost_usd": null,
+    "total_tokens": 2567162
+  },
+  "new_clock_outcomes": {
+    "blocking_native_menu": 3,
+    "no_error": 29
+  },
+  "activity": {
+    "available_boundaries": 32,
+    "boundaries_with_job_type": {
+      "ConstructThrone": 2,
+      "CustomReaction": 2,
+      "Drink2": 2,
+      "Fish": 23,
+      "GatherPlants": 14,
+      "MakeBarrel": 5,
+      "PlantSeeds": 7,
+      "PrepareRawFish": 4,
+      "Sleep": 12,
+      "StoreItemInStockpile": 6,
+      "no_current_job": 32
+    },
+    "completed_consumption": null,
+    "completed_production": null,
+    "first_step": 64,
+    "limits": [
+      "A current job can be traveling, waiting, interrupted or cancelled; it is not completion evidence.",
+      "Unknown citizen observations remain unknown, not zero activity.",
+      "Unseen activity between recorded boundaries is not measured."
+    ],
+    "observed_boundaries": 32,
+    "schema_version": "fortgym.private-citizen-activity-review/v1",
+    "scope": "Native citizen current-job samples; repeated samples are not distinct jobs or durations.",
+    "stop_step_exclusive": 96
+  },
+  "food_measurement": {
+    "complete_samples": 32,
+    "samples": 32,
+    "final_inventory": {
+      "complete": true,
+      "drink_records": 15,
+      "duplicate_records": 0,
+      "excluded_records": 0,
+      "food_records": 33,
+      "forbidden_units": 0,
+      "hidden_units": 0,
+      "in_job_units": 0,
+      "item_read_failures": 0,
+      "list_read_failures": 0,
+      "nonfood_records": 991,
+      "predicate_argument": 0,
+      "rotten_units": 0,
+      "scanned_records": 1039,
+      "scanned_units": 58,
+      "schema_version": "fortgym.native-food-inventory/v1",
+      "scope": "native predicate at argument 0, not accessibility, ownership or production/consumption",
+      "source": "world.items.other.IN_PLAY isEdibleRaw(0) getStackSize excluding DRINK",
+      "trader_units": 0,
+      "units": 58
+    },
+    "model_observation": "native_screen_text/v1; private evaluator inventory is not supplied to the model"
+  },
+  "audit": {
+    "passed": true,
+    "sha256": "9cd726c200a1730ae8db401afc0ee0ff041fd73ee72e87a1729754c26503f03b",
+    "source_sha256": "60016550efc1e958f4c1cc9dc0536a13a06bfcfd78675d3f6f277bc3e658dc41",
+    "provider_receipts_verified": 32,
+    "provider_receipts": [
+      {
+        "admission_captured_at_unix": 1789121562.982909,
+        "decision_index": 0,
+        "events_sha256": "0fde41cb229526172afce619805b127cca150143beced3bdd8d3a5da9928923e",
+        "request_sha256": "754a67a06457d2d5325504e14ad6abf9efa704b959ea210ca8e1cf3e6f7cc909",
+        "total_tokens": 25954
+      },
+      {
+        "admission_captured_at_unix": 1789121588.249619,
+        "decision_index": 1,
+        "events_sha256": "89125fc6b96f4bba1dd34b8fdea65fd47ae4d92cc4886fa6289ee27dc387d6c2",
+        "request_sha256": "afee5419f59516883bead4f2b5a8fa57706a0a8e14354ee9e01f5f43db045871",
+        "total_tokens": 25286
+      },
+      {
+        "admission_captured_at_unix": 1789121617.250378,
+        "decision_index": 2,
+        "events_sha256": "022574ae91d153f426a8936bace7c976fdd198af8bf1fe7d77a97ff95b5e6257",
+        "request_sha256": "6f1efb3d87f0c13def8ff7e1f559eada0bc4d369cb8f4c32b1a6654a07e4da18",
+        "total_tokens": 25506
+      },
+      {
+        "admission_captured_at_unix": 1789121666.443539,
+        "decision_index": 3,
+        "events_sha256": "d02c954d7a8a085c2606dcb6758169a3433d445351183a843b2b30caba4e409b",
+        "request_sha256": "e9e221be2cf69292deee20dfffd8d858facb06bf40388c0e3768e5a4d16c74a9",
+        "total_tokens": 26038
+      },
+      {
+        "admission_captured_at_unix": 1789121691.9914482,
+        "decision_index": 4,
+        "events_sha256": "184149c3beba480ec90965dcb53c4d55aa13b7902d4be642b7a0574b962ad39d",
+        "request_sha256": "fa489e67f0d0735747d54c5261ae65bacf4a1dc5591c3dc8c76fa79fc9e73519",
+        "total_tokens": 44081
+      },
+      {
+        "admission_captured_at_unix": 1789121752.522542,
+        "decision_index": 5,
+        "events_sha256": "c2472365657ad8853091573424b107e8ef1c5c870feb5edadd730c9536c84a13",
+        "request_sha256": "98839d6af98543a122955fb72ee5601fcb66726897bd278b4535bff5883e76fd",
+        "total_tokens": 44997
+      },
+      {
+        "admission_captured_at_unix": 1789121779.854152,
+        "decision_index": 6,
+        "events_sha256": "58ec0f10bc064b260d1a48ec4b790aad1e1f6a6f657ed7242c79444cb44da6f9",
+        "request_sha256": "e681a2ac8610b3ebdf7ae8de87f6b2bfbdf9523795b49867d4e7623aa941fceb",
+        "total_tokens": 15646
+      },
+      {
+        "admission_captured_at_unix": 1789121827.724158,
+        "decision_index": 7,
+        "events_sha256": "b81e748ed20c279b54a202f7e7e177f03fc4dd9bdd035213e133b9479c0867e0",
+        "request_sha256": "e44ed392d06080e7c5384fa197e4167d9156f84871a8f8641994fe0331829ffa",
+        "total_tokens": 44973
+      },
+      {
+        "admission_captured_at_unix": 1789121854.3518999,
+        "decision_index": 8,
+        "events_sha256": "f157260506e9a9ced0a24507f20cf4f07ee1e819c3444ae4a088f4207ce1d03b",
+        "request_sha256": "c5c251939de42d0495340de8aa31fc506ff35249ed5fb1c924e215885d831792",
+        "total_tokens": 24120
+      },
+      {
+        "admission_captured_at_unix": 1789121882.430548,
+        "decision_index": 9,
+        "events_sha256": "203df864a1aad53d7a536806fb5ec86460da41a852446a43f66ba5f96f455e83",
+        "request_sha256": "246c5fdd38c8f9d8d59297cebe7855687caf98f90a2d1c6be6208617c0df288d",
+        "total_tokens": 24049
+      },
+      {
+        "admission_captured_at_unix": 1789121911.9545689,
+        "decision_index": 10,
+        "events_sha256": "695b2e944c3fd6640f0a982fb48deaed0b128e4cbea17585fa50c7a452fb59e1",
+        "request_sha256": "c4a3438d2105463e856e6171b820882ead8b62d7e85fbbd275d086f115e033b7",
+        "total_tokens": 24036
+      },
+      {
+        "admission_captured_at_unix": 1789121958.335685,
+        "decision_index": 11,
+        "events_sha256": "9872fdcabb3093bd50f4461ecda4735ad32d521924d9e4e49410f283243c1b52",
+        "request_sha256": "5eee09d01310dc12aa72d2bea9a0d4dbca80bd881ace6bc0c36ceca74d7d0bd3",
+        "total_tokens": 24654
+      },
+      {
+        "admission_captured_at_unix": 1789122006.0487711,
+        "decision_index": 12,
+        "events_sha256": "e5d0ee9c89f034041875eefddf40a374a89fc21bfd055ad76b2a0893aeb3f365",
+        "request_sha256": "5750c4304c7474b431d77dbf0aba8e2c695fff2147b13db6cb4009fb16f43c66",
+        "total_tokens": 24658
+      },
+      {
+        "admission_captured_at_unix": 1789122053.665513,
+        "decision_index": 13,
+        "events_sha256": "f1204cb900370f09f42239dbb977b60966558dbecd87834a60c05e08356feaae",
+        "request_sha256": "e88fb726ea142161b77dbbf7e44e5cb6a8d9a845c7b23d65d5d06b89084e9de9",
+        "total_tokens": 24679
+      },
+      {
+        "admission_captured_at_unix": 1789122084.7667682,
+        "decision_index": 14,
+        "events_sha256": "4a3faa9b835eedf7448d9d4a8895aeb3242c2d38aaf8725252b363bc1a16309c",
+        "request_sha256": "198bfab5c273b70fc7b6fd54b3466d455da7d24f5b3efcb2c8e49c9c9c7ee134",
+        "total_tokens": 24131
+      },
+      {
+        "admission_captured_at_unix": 1789122133.2805288,
+        "decision_index": 15,
+        "events_sha256": "1a504d1cbbca5edb4279e33d08aa85ef236706178e1a176571fce1268d93e5be",
+        "request_sha256": "1a9c690d32207118bdbea191ff43c8e728abc8ac10777d6304ace33c4c7125c7",
+        "total_tokens": 24675
+      },
+      {
+        "admission_captured_at_unix": 1789122160.6195369,
+        "decision_index": 16,
+        "events_sha256": "0c2e55ae25750cc62675d7ca1f57a009f0f5491c5086c82a99a166725a23944b",
+        "request_sha256": "8cef57a3a1ad18d125fa41032198ff7a9ef7df51823d749ef4a37f82406f15b0",
+        "total_tokens": 24541
+      },
+      {
+        "admission_captured_at_unix": 1789122209.266094,
+        "decision_index": 17,
+        "events_sha256": "c76f2b1049296b3b5eabf21d4929f600639a855020e3fc138687de55b00d81dc",
+        "request_sha256": "e70b5e75b7f23a76edd35a9436cc10f50d91c9587e78e0d4e915780123f4cf07",
+        "total_tokens": 24771
+      },
+      {
+        "admission_captured_at_unix": 1789122236.245912,
+        "decision_index": 18,
+        "events_sha256": "1cd748157c6e580c7892e179063e483669f1570ba93da77b68b74a673f954372",
+        "request_sha256": "bc503b7f17597495ac49f7d57964cb6b1d202493ea6cd50ad5a21544590066a9",
+        "total_tokens": 24140
+      },
+      {
+        "admission_captured_at_unix": 1789122284.881527,
+        "decision_index": 19,
+        "events_sha256": "229c90aa634cc41dcbf509bb174a50b8ab3c280bccda7282f6bb5bada218205a",
+        "request_sha256": "17cc2e321eaf2481ef1c941751f6601eac691a929bc4048708d7e88bc463f753",
+        "total_tokens": 24620
+      },
+      {
+        "admission_captured_at_unix": 1789122309.351124,
+        "decision_index": 20,
+        "events_sha256": "6188bc31b6aad6cd824b5cb18edc00b1a0725fe1d175494644dc817df24ba09d",
+        "request_sha256": "234dd52f06b73873c155e47b09c1ecd972445daece54b9df9cac34ce846d30fe",
+        "total_tokens": 24216
+      },
+      {
+        "admission_captured_at_unix": 1789122354.3422048,
+        "decision_index": 21,
+        "events_sha256": "0a37d3696298b7392adff8e00559a6cf4d8ee738847afe594d265c450cd2a261",
+        "request_sha256": "c8e2fd19654b11788d6b2560db5ad2dad4dd1d1dbce5d80d52395277f3e3d0a7",
+        "total_tokens": 24653
+      },
+      {
+        "admission_captured_at_unix": 1789122403.272203,
+        "decision_index": 22,
+        "events_sha256": "fde093881a82bd99a14a196adf55ee4d40fce032ce542c60f430eb836d7b884c",
+        "request_sha256": "9cee0035f143e7431207f60343b441d015829ed5830b4e65a602955ca2c5bb23",
+        "total_tokens": 24587
+      },
+      {
+        "admission_captured_at_unix": 1789122427.4894762,
+        "decision_index": 23,
+        "events_sha256": "ad6f7575bb3dacdf8c7c842a031b393df3acb401fc6a6c7ea0784915dc297bcc",
+        "request_sha256": "c504defab847746bd449ae4520be34fc40ce0f21683dc4fcc9e1290d40aa2106",
+        "total_tokens": 16027
+      },
+      {
+        "admission_captured_at_unix": 1789122454.547072,
+        "decision_index": 24,
+        "events_sha256": "82ef09acf149f5279956b0ea5b8f1b88ac03467d327373a38433ca1448038400",
+        "request_sha256": "2240a0809971fb4f83b63673641405da9db1647faf7aa625de26b64b68852062",
+        "total_tokens": 23959
+      },
+      {
+        "admission_captured_at_unix": 1789122482.131114,
+        "decision_index": 25,
+        "events_sha256": "3971399e64758084eae06009302047ad7bbb3c45b3388ed7687b5a607aec5409",
+        "request_sha256": "246edd4689dcc0cac7c1b08016841c627c7324167540e3d88a5e83348a0e042a",
+        "total_tokens": 46007
+      },
+      {
+        "admission_captured_at_unix": 1789122508.6797671,
+        "decision_index": 26,
+        "events_sha256": "5d293b409a61916d1a77c02a98ef2d9abc617d3309266875e16a8ed7cba9e4f4",
+        "request_sha256": "c9c32a1a1b74c926cbf24b601a72cddb3a6d01708ef1e0e607dc4b7c8262fcb0",
+        "total_tokens": 46398
+      },
+      {
+        "admission_captured_at_unix": 1789122539.5610151,
+        "decision_index": 27,
+        "events_sha256": "d5b97d0e8426be52629edfc8e86497deffec144da841ff9c6d939ca8d6c43c6c",
+        "request_sha256": "09186bf49ea8e6fd61176a1eead9653beb180db4e6549e537a50931cbcee4457",
+        "total_tokens": 46612
+      },
+      {
+        "admission_captured_at_unix": 1789122588.2217972,
+        "decision_index": 28,
+        "events_sha256": "ff55f90aec9bf9e8a3d2fc6b71778d446f03d44233d74a28b19031d5f739afb3",
+        "request_sha256": "5f3f7bd890c2742741eedc3cf6c9e7e520e672a9d56ba4e8aa0e08a7e36bb910",
+        "total_tokens": 46603
+      },
+      {
+        "admission_captured_at_unix": 1789122613.699488,
+        "decision_index": 29,
+        "events_sha256": "6369aeb26fcc3ceec8aa8f517fed1049a314e802309853aa7b8876c104fd08db",
+        "request_sha256": "752dc5c18f98706c13f0c398f1337fe1510ce46d69ffad9ef8390f635864eba7",
+        "total_tokens": 46452
+      },
+      {
+        "admission_captured_at_unix": 1789122665.886134,
+        "decision_index": 30,
+        "events_sha256": "d106f9e515ffe038c2710bd5e74f2f217330da247fad59d701c24bafa571967c",
+        "request_sha256": "4dd243e5f9711040118a29f3d3f392f5d731e51c658fc812ea99034978067984",
+        "total_tokens": 46564
+      },
+      {
+        "admission_captured_at_unix": 1789122713.678237,
+        "decision_index": 31,
+        "events_sha256": "f6e6828a9752f1d7e87e36b2eacf30d56849bf104b076a9477ffd67830008a1c",
+        "request_sha256": "c444486203ae5ef90889279a46f27dc6bb19bc642db297ca28018058ea49560f",
+        "total_tokens": 46503
+      }
+    ],
+    "native_cleanup_verified": true,
+    "vm_teardown_verified": true,
+    "shutdown": {
+      "guest_command_warning": false,
+      "guest_poweroff_returncode": 0,
+      "vm_observed_stopped": true,
+      "vm_stop_returncode": 0
+    },
+    "trace_sha256": "6d6fbec576efc15564f1c31c27e9b28b9d27a6d7b1c587c4c6a7e1c59cdcf674",
+    "usage_sha256": "85e9c7af5d2c4210e5a217c3a302846faae91ad3a83da11c6e763ac4a2f67a98"
+  },
+  "proof_limits": {
+    "same_campaign_own_save_continuation": true,
+    "memory_or_usage_reset": false,
+    "prompt_or_budget_changed": false,
+    "fresh_final_checkpoint_reload_verified": false,
+    "same_condition_as_historical_matched_cohort": false,
+    "human_gameplay_rescue": false,
+    "sustainability_proven": false,
+    "year_two_reached": false,
+    "strong_model_ranking_supported": false,
+    "completed_production_measured": false,
+    "completed_consumption_measured": false,
+    "public_website_deployed": false,
+    "main_merged": false
+  },
+  "cost_limits": {
+    "actual_model_charge_usd": null,
+    "hardware_energy_and_app_cost_usd": null,
+    "api_fallback": false,
+    "local_model_fallback": false,
+    "automatic_credit_purchase": false,
+    "automatic_reset_consumption": false,
+    "cloud_vms_created": 0
+  },
+  "timeline": [
+    {
+      "decision": 65,
+      "keys": [
+        "b",
+        "b"
+      ],
+      "model_intent": "Place another bed in the communal dormitory.",
+      "input_accepted": true,
+      "confirmed_key_presses": 2,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 29500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 40,
+        "drink_stock": 103,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 4,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 25954
+    },
+    {
+      "decision": 66,
+      "keys": [
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Up",
+        "SYM:0:Enter"
+      ],
+      "model_intent": "Position the fifth bed beside the existing dormitory beds and select its material.",
+      "input_accepted": true,
+      "confirmed_key_presses": 19,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 29500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 40,
+        "drink_stock": 103,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 4,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 25286
+    },
+    {
+      "decision": 67,
+      "keys": [
+        "SYM:0:Enter",
+        "SYM:0:ESC",
+        "SYM:0:ESC",
+        " "
+      ],
+      "model_intent": "Select the fifth bed and allow construction, farming, and brewing to progress.",
+      "input_accepted": true,
+      "confirmed_key_presses": 4,
+      "requested_ticks": 2000,
+      "ticks_advanced": 2000,
+      "saved_elapsed_ticks": 31500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 35,
+        "drink_stock": 128,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 5,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 25506
+    },
+    {
+      "decision": 68,
+      "keys": [
+        "<",
+        "d",
+        "p"
+      ],
+      "model_intent": "Inspect surface plants for gathering after brewing ran out of usable plants.",
+      "input_accepted": true,
+      "confirmed_key_presses": 3,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 31500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 35,
+        "drink_stock": 128,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 5,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 26038
+    },
+    {
+      "decision": 69,
+      "keys": [
+        "p",
+        "SYM:0:Enter",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Up",
+        "SYM:0:Up",
+        "SYM:0:Up",
+        "SYM:0:Up",
+        "SYM:0:Up",
+        "SYM:0:Up",
+        "SYM:0:Up",
+        "SYM:0:Up",
+        "SYM:0:Up",
+        "SYM:0:Up",
+        "SYM:0:Up",
+        "SYM:0:Up",
+        "SYM:0:Up",
+        "SYM:0:Up",
+        "SYM:0:Up",
+        "SYM:0:Enter",
+        "SYM:0:ESC",
+        " "
+      ],
+      "model_intent": "Designate nearby surface plants for gathering and allow dwarves to work.",
+      "input_accepted": true,
+      "confirmed_key_presses": 47,
+      "requested_ticks": 2000,
+      "ticks_advanced": 2000,
+      "saved_elapsed_ticks": 33500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 37,
+        "drink_stock": 128,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 5,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 44081
+    },
+    {
+      "decision": 70,
+      "keys": [
+        "u"
+      ],
+      "model_intent": "Inspect dwarves and their current jobs to determine whether gathering and farming have workers.",
+      "input_accepted": true,
+      "confirmed_key_presses": 1,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 33500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 37,
+        "drink_stock": 128,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 5,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 44997
+    },
+    {
+      "decision": 71,
+      "keys": [
+        "SYM:0:ESC"
+      ],
+      "model_intent": "Let the active plant gathering and fishing jobs supply the fortress.",
+      "input_accepted": true,
+      "confirmed_key_presses": 1,
+      "requested_ticks": 2000,
+      "ticks_advanced": 2000,
+      "saved_elapsed_ticks": 35500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 37,
+        "drink_stock": 128,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 5,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 15646
+    },
+    {
+      "decision": 72,
+      "keys": [
+        ">",
+        "q"
+      ],
+      "model_intent": "Inspect the underground workshops and crops before restarting brewing.",
+      "input_accepted": true,
+      "confirmed_key_presses": 2,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 35500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 37,
+        "drink_stock": 128,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 5,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 44973
+    },
+    {
+      "decision": 73,
+      "keys": [
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "a"
+      ],
+      "model_intent": "Select the still and inspect available brewing jobs.",
+      "input_accepted": true,
+      "confirmed_key_presses": 13,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 35500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 37,
+        "drink_stock": 128,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 5,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 24120
+    },
+    {
+      "decision": 74,
+      "keys": [
+        "b",
+        "r",
+        "SYM:0:ESC",
+        " "
+      ],
+      "model_intent": "Queue repeat brewing and let gathering and farming proceed.",
+      "input_accepted": true,
+      "confirmed_key_presses": 4,
+      "requested_ticks": 2000,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 35500,
+      "clock_error": "blocking_native_menu",
+      "metrics": {
+        "population": 7,
+        "food_stock": 37,
+        "drink_stock": 128,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 5,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 24049
+    },
+    {
+      "decision": 75,
+      "keys": [
+        "SYM:0:ESC",
+        "SYM:0:ESC",
+        " "
+      ],
+      "model_intent": "Leave the workshop menus and resume time so gathering and farming can progress.",
+      "input_accepted": true,
+      "confirmed_key_presses": 3,
+      "requested_ticks": 2000,
+      "ticks_advanced": 2000,
+      "saved_elapsed_ticks": 37500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 38,
+        "drink_stock": 128,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 5,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 24036
+    },
+    {
+      "decision": 76,
+      "keys": [
+        " "
+      ],
+      "model_intent": "Allow gathering and farm growth to continue before checking brewing supplies.",
+      "input_accepted": true,
+      "confirmed_key_presses": 1,
+      "requested_ticks": 2000,
+      "ticks_advanced": 2000,
+      "saved_elapsed_ticks": 39500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 41,
+        "drink_stock": 128,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 5,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 24654
+    },
+    {
+      "decision": 77,
+      "keys": [
+        " "
+      ],
+      "model_intent": "Allow planted crops and plant gathering to progress.",
+      "input_accepted": true,
+      "confirmed_key_presses": 1,
+      "requested_ticks": 2000,
+      "ticks_advanced": 2000,
+      "saved_elapsed_ticks": 41500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 39,
+        "drink_stock": 124,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 5,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 24658
+    },
+    {
+      "decision": 78,
+      "keys": [
+        "q",
+        "a",
+        "b",
+        "r",
+        "SYM:0:ESC",
+        " "
+      ],
+      "model_intent": "Queue repeating brewing at the still and allow farming and gathering to continue.",
+      "input_accepted": true,
+      "confirmed_key_presses": 6,
+      "requested_ticks": 2000,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 41500,
+      "clock_error": "blocking_native_menu",
+      "metrics": {
+        "population": 7,
+        "food_stock": 39,
+        "drink_stock": 124,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 5,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 24679
+    },
+    {
+      "decision": 79,
+      "keys": [
+        "SYM:0:ESC",
+        "SYM:0:ESC",
+        " "
+      ],
+      "model_intent": "Exit the unavailable brewing menu and let gathering and farming progress.",
+      "input_accepted": true,
+      "confirmed_key_presses": 3,
+      "requested_ticks": 2000,
+      "ticks_advanced": 2000,
+      "saved_elapsed_ticks": 43500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 44,
+        "drink_stock": 123,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 5,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 24131
+    },
+    {
+      "decision": 80,
+      "keys": [
+        "q",
+        "SYM:0:Up",
+        "SYM:0:Up",
+        "SYM:0:Up",
+        "SYM:0:Up",
+        "SYM:0:Up",
+        "a"
+      ],
+      "model_intent": "Inspect carpenter jobs to produce empty barrels for brewing.",
+      "input_accepted": true,
+      "confirmed_key_presses": 7,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 43500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 44,
+        "drink_stock": 123,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 5,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 24675
+    },
+    {
+      "decision": 81,
+      "keys": [
+        "v",
+        "a",
+        "v",
+        "a",
+        "v",
+        "a",
+        "v",
+        "a",
+        "v",
+        "SYM:0:ESC",
+        " "
+      ],
+      "model_intent": "Queue five wooden barrels to provide brewing containers, then let dwarves work.",
+      "input_accepted": true,
+      "confirmed_key_presses": 11,
+      "requested_ticks": 2000,
+      "ticks_advanced": 2000,
+      "saved_elapsed_ticks": 45500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 49,
+        "drink_stock": 123,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 5,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 24541
+    },
+    {
+      "decision": 82,
+      "keys": [
+        "q",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "a"
+      ],
+      "model_intent": "Inspect the still's available jobs after barrel production.",
+      "input_accepted": true,
+      "confirmed_key_presses": 7,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 45500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 49,
+        "drink_stock": 123,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 5,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 24771
+    },
+    {
+      "decision": 83,
+      "keys": [
+        "b",
+        "r",
+        "SYM:0:ESC",
+        " "
+      ],
+      "model_intent": "Queue plant brewing on repeat now that it is available, then allow work to proceed.",
+      "input_accepted": true,
+      "confirmed_key_presses": 4,
+      "requested_ticks": 2000,
+      "ticks_advanced": 2000,
+      "saved_elapsed_ticks": 47500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 48,
+        "drink_stock": 122,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 5,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 24140
+    },
+    {
+      "decision": 84,
+      "keys": [
+        "q"
+      ],
+      "model_intent": "Inspect the still to confirm the repeating brewing job.",
+      "input_accepted": true,
+      "confirmed_key_presses": 1,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 47500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 48,
+        "drink_stock": 122,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 5,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 24620
+    },
+    {
+      "decision": 85,
+      "keys": [
+        "SYM:0:ESC",
+        " "
+      ],
+      "model_intent": "Let repeating brewing, farming, and barrel production proceed.",
+      "input_accepted": true,
+      "confirmed_key_presses": 2,
+      "requested_ticks": 2000,
+      "ticks_advanced": 2000,
+      "saved_elapsed_ticks": 49500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 48,
+        "drink_stock": 122,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 5,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 24216
+    },
+    {
+      "decision": 86,
+      "keys": [
+        " "
+      ],
+      "model_intent": "Let farming, brewing, gathering, and barrel production continue into late spring.",
+      "input_accepted": true,
+      "confirmed_key_presses": 1,
+      "requested_ticks": 2000,
+      "ticks_advanced": 2000,
+      "saved_elapsed_ticks": 51500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 48,
+        "drink_stock": 122,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 5,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 24653
+    },
+    {
+      "decision": 87,
+      "keys": [
+        "z"
+      ],
+      "model_intent": "Inspect current food and drink reserves and fortress status.",
+      "input_accepted": true,
+      "confirmed_key_presses": 1,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 51500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 48,
+        "drink_stock": 122,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 5,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 24587
+    },
+    {
+      "decision": 88,
+      "keys": [
+        "SYM:0:ESC",
+        "b",
+        "w",
+        "h"
+      ],
+      "model_intent": "Place a fishery so caught fish can be cleaned for food.",
+      "input_accepted": true,
+      "confirmed_key_presses": 4,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 51500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 48,
+        "drink_stock": 122,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 5,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 16027
+    },
+    {
+      "decision": 89,
+      "keys": [
+        "<"
+      ],
+      "model_intent": "Move fishery placement to the surface where there is room for another workshop.",
+      "input_accepted": true,
+      "confirmed_key_presses": 1,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 51500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 48,
+        "drink_stock": 122,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 5,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 23959
+    },
+    {
+      "decision": 90,
+      "keys": [
+        "SYM:0:Enter"
+      ],
+      "model_intent": "Confirm the fishery location on the surface and inspect construction materials.",
+      "input_accepted": true,
+      "confirmed_key_presses": 1,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 51500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 48,
+        "drink_stock": 122,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 5,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 46007
+    },
+    {
+      "decision": 91,
+      "keys": [
+        "SYM:0:Enter",
+        "SYM:0:ESC",
+        " "
+      ],
+      "model_intent": "Select a log for the fishery and allow construction and food production to proceed.",
+      "input_accepted": true,
+      "confirmed_key_presses": 3,
+      "requested_ticks": 2000,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 51500,
+      "clock_error": "blocking_native_menu",
+      "metrics": {
+        "population": 7,
+        "food_stock": 48,
+        "drink_stock": 122,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 5,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 46398
+    },
+    {
+      "decision": 92,
+      "keys": [
+        "SYM:0:ESC",
+        " "
+      ],
+      "model_intent": "Leave the build menu and let dwarves construct the fishery and finish queued work.",
+      "input_accepted": true,
+      "confirmed_key_presses": 2,
+      "requested_ticks": 2000,
+      "ticks_advanced": 2000,
+      "saved_elapsed_ticks": 53500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 50,
+        "drink_stock": 121,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 3,
+        "completed_beds": 5,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 46612
+    },
+    {
+      "decision": 93,
+      "keys": [
+        "q"
+      ],
+      "model_intent": "Inspect the newly constructed fishery and its processing jobs.",
+      "input_accepted": true,
+      "confirmed_key_presses": 1,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 53500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 50,
+        "drink_stock": 121,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 3,
+        "completed_beds": 5,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 46603
+    },
+    {
+      "decision": 94,
+      "keys": [
+        "r",
+        "SYM:0:ESC",
+        " "
+      ],
+      "model_intent": "Repeat raw fish preparation and let food production and hauling proceed.",
+      "input_accepted": true,
+      "confirmed_key_presses": 3,
+      "requested_ticks": 2000,
+      "ticks_advanced": 2000,
+      "saved_elapsed_ticks": 55500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 54,
+        "drink_stock": 121,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 3,
+        "completed_beds": 5,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 46452
+    },
+    {
+      "decision": 95,
+      "keys": [
+        " "
+      ],
+      "model_intent": "Let farming, brewing, fishing, and furniture production continue.",
+      "input_accepted": true,
+      "confirmed_key_presses": 1,
+      "requested_ticks": 2000,
+      "ticks_advanced": 2000,
+      "saved_elapsed_ticks": 57500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 56,
+        "drink_stock": 121,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 3,
+        "completed_beds": 5,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 46564
+    },
+    {
+      "decision": 96,
+      "keys": [
+        " "
+      ],
+      "model_intent": "Allow farming, brewing, fishing, and furniture production to continue.",
+      "input_accepted": true,
+      "confirmed_key_presses": 1,
+      "requested_ticks": 2000,
+      "ticks_advanced": 2000,
+      "saved_elapsed_ticks": 59500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 58,
+        "drink_stock": 121,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 3,
+        "completed_beds": 5,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 46503
+    }
+  ],
+  "interpretation": [
+    "This is one continuation of the displayed-key pilot, not another independent replicate.",
+    "Completed beds count placed and completed bed buildings, not carried items or queued jobs.",
+    "Stock changes, intentions and sampled active jobs are not measured completed production or sustainability.",
+    "Keep this control condition separate from historical native-event-name model comparisons."
+  ]
+}

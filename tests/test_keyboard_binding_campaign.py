@@ -19,21 +19,27 @@ def test_cumulative_campaign_and_reload_identity_are_exact():
     data = records.keyboard_binding_campaign()
     assert data["recorded_only"] is True and data["independent_attempts"] == 1
     assert data["included_in_historical_cohort"] is False
-    assert data["responses"] == 64 and data["saved_elapsed_ticks"] == 29500
-    assert data["confirmed_key_presses"] == 430
-    assert data["usage"]["total_tokens"] == 1583026
-    assert data["saved_metrics"]["completed_beds"] == 4
-    assert data["saved_metrics"]["food_stock"] == 40
-    assert data["saved_metrics"]["drink_stock"] == 103
-    assert data["latest_window"]["elapsed_ticks"] == 14000
-    assert data["latest_window"]["returned_tokens"] == 797336
+    assert data["responses"] == 96 and data["saved_elapsed_ticks"] == 59500
+    assert data["confirmed_key_presses"] == 591
+    assert data["usage"]["total_tokens"] == 2567162
+    assert data["saved_metrics"]["completed_beds"] == 5
+    assert data["saved_metrics"]["food_stock"] == 58
+    assert data["saved_metrics"]["drink_stock"] == 121
+    assert data["latest_window"]["elapsed_ticks"] == 30000
+    assert data["latest_window"]["returned_tokens"] == 984136
     assert data["timeline"][:32] == old_trial["result"]["timeline"]
-    assert [row["decision"] for row in data["timeline"]] == list(range(1, 65))
-    assert sum(row["ticks_advanced"] for row in data["timeline"]) == 29500
-    assert sum(row["returned_tokens"] for row in data["timeline"]) == 1583026
-    first, latest = data["checkpoints"]
+    assert [row["decision"] for row in data["timeline"]] == list(range(1, 97))
+    assert sum(row["ticks_advanced"] for row in data["timeline"]) == 59500
+    assert sum(row["returned_tokens"] for row in data["timeline"]) == 2567162
+    first, middle, latest = data["checkpoints"]
+    assert middle["responses"] == 64 and middle["separate_fresh_reload_verified"] is False
+    assert middle["shutdown"]["guest_command_warning"] is True
+    assert latest["shutdown"]["guest_command_warning"] is False
+    earlier = records.read_result(records.RESULT_PATH, records.RESULT_SHA256)
+    assert data["timeline"][32:64] == earlier["timeline"]
+    assert data["saved_metrics"]["functional_rooms"] is None
     assert first["responses"] == 32 and first["separate_fresh_reload_verified"] is True
-    assert latest["responses"] == 64 and latest["separate_fresh_reload_verified"] is False
+    assert latest["responses"] == 96 and latest["separate_fresh_reload_verified"] is False
     assert first["checkpoint_sha256"] != latest["checkpoint_sha256"]
     assert latest["reload_url"] is None
     assert original.keyboard_binding_result() == old_trial
@@ -41,12 +47,12 @@ def test_cumulative_campaign_and_reload_identity_are_exact():
     assert old_cohort["latest_saved_responses"] == 896
 
 
-@pytest.mark.parametrize("path_name", ["RESULT_PATH", "RELOAD_PATH"])
+@pytest.mark.parametrize("path_name", ["RESULT_PATH", "LATEST_RESULT_PATH", "RELOAD_PATH"])
 @pytest.mark.parametrize("mode", ["missing", "changed", "symlink", "oversize"])
 def test_new_registered_evidence_is_required_and_unchanged(tmp_path, monkeypatch, path_name, mode):
     payloads = {
         name: (historical.PROJECT_ROOT / getattr(records, name)).read_bytes()
-        for name in ("RESULT_PATH", "RELOAD_PATH")
+        for name in ("RESULT_PATH", "LATEST_RESULT_PATH", "RELOAD_PATH")
     }
     original_payload = (historical.PROJECT_ROOT / original.RESULT_PATH).read_bytes()
     monkeypatch.setattr(historical, "PROJECT_ROOT", tmp_path)
@@ -110,7 +116,7 @@ def test_http_preserves_older_endpoints_and_exposes_no_private_data(monkeypatch)
     assert response.json() == records.keyboard_binding_campaign()
     assert "/Users/" not in response.text and "memory_update" not in response.text
     page = client.get("/campaigns")
-    assert page.status_code == 200 and "/static/campaign-binding-campaign.js?v=1" in page.text
+    assert page.status_code == 200 and "/static/campaign-binding-campaign.js?v=2" in page.text
     assert "Original 32-decision trial" in page.text
     assert client.get("/static/campaign-binding-campaign.js").status_code == 200
     assert client.get("/static/campaign-binding-results.js").status_code == 200
@@ -137,3 +143,27 @@ def test_cumulative_frontend_safe_text_and_stale_refresh():
         capture_output=True,
         check=True,
     )
+
+
+@pytest.mark.parametrize("field", ["max_dispatches", "screen_size", "bindings_sha256"])
+def test_later_window_full_configuration_cannot_change(field):
+    prior = records.read_result(records.RESULT_PATH, records.RESULT_SHA256)
+    result = records.read_result(records.LATEST_RESULT_PATH, records.LATEST_RESULT_SHA256)
+    result["condition"][field] = "changed"
+    with pytest.raises(ValueError, match="full condition"):
+        records.validate_continuation(prior, result)
+
+
+@pytest.mark.parametrize("field", ["source_result_path", "source_result_sha256"])
+def test_registered_chain_requires_exact_parent_record(monkeypatch, field):
+    original_read = records.read_result
+
+    def changed(path, digest):
+        result = original_read(path, digest)
+        if path == records.LATEST_RESULT_PATH:
+            result[field] = "changed"
+        return result
+
+    monkeypatch.setattr(records, "read_result", changed)
+    with pytest.raises(ValueError, match="source result differs"):
+        records.keyboard_binding_campaign()
