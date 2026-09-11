@@ -1,5 +1,6 @@
 """Read-only spectator projection. Never connects website viewers to the game."""
 
+import hashlib
 import json
 import re
 import time
@@ -22,6 +23,31 @@ def label(value: Any, limit: int = 160) -> str:
     if not isinstance(value, str) or len(value) > limit or "\x00" in value:
         raise ValueError("Invalid spectator text")
     return value
+
+
+def screen_projection(value: dict) -> dict:
+    width, height = integer(value["width"], 1, 240), integer(value["height"], 1, 100)
+    if value["tile_order"] != "column_major" or len(value["tiles"]) != width * height:
+        raise ValueError("Invalid screen geometry")
+    runs: list[list[int]] = []
+    for tile in value["tiles"]:
+        if not isinstance(tile, list) or len(tile) != 3:
+            raise ValueError("Invalid screen tile")
+        cell = [
+            integer(tile[0], 0, 255),
+            integer(tile[1], 0, 15),
+            integer(tile[2], 0, 15),
+        ]
+        if runs and runs[-1][1:] == cell:
+            runs[-1][0] += 1
+        else:
+            runs.append([1, *cell])
+    return {
+        "width": width,
+        "height": height,
+        "tile_order": "column_major",
+        "runs": runs,
+    }
 
 
 def validate_screen(value: dict) -> dict:
@@ -65,6 +91,29 @@ def action_projection(value: dict | None) -> dict | None:
         "keys": [label(key, 100) for key in keys],
         "advance_ticks": integer(value["advance_ticks"], 0, 100000),
     }
+
+
+def receipt_action(request: dict, result: dict) -> dict:
+    """Recover a rejected choice only through the harness's typed receipt check."""
+    if result.get("action") is not None:
+        return result["action"]
+    from ..agent.keyboard_rejection import rejected_receipt
+    from ..env.screen_observation import TEXT_PROFILE, encode_screen
+
+    observed = json.dumps(
+        encode_screen(request["screen"], TEXT_PROFILE),
+        allow_nan=False,
+        sort_keys=True,
+        ensure_ascii=False,
+    )
+    return rejected_receipt(
+        result,
+        screen_sha256=hashlib.sha256(observed.encode()).hexdigest(),
+        max_advance_ticks=request["max_advance_ticks"],
+        model=request["model"],
+        reasoning_effort=request["reasoning_effort"],
+        control_profile=request["control_profile"],
+    ).action
 
 
 def project_live(value: dict, *, now: int) -> dict:
