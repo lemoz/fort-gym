@@ -4,16 +4,28 @@ Verified September 11, 2026 UTC. The Year-Two Autonomous Play objective remains
 unfinished; work continues toward the same objective. The owner has approved starting the project
 work for [Astra standard-input experiments](ASTRA_STANDARD_INPUT_EXPERIMENTS.md).
 
-## Current run: Astra resumed from decision 64
+## Current run: Sol resumed; Astra's decision-128 save audited
 
-Astra attempt 1 is now running its declared 64-to-128 window from its own
-verified save and memory. The first returned response passed an independent
-receipt audit: Astra Medium, subscription authentication, no inherited API
-credentials, valid action grammar and 52,304 returned tokens. A real live HTTP
-check confirmed the correct own-save baseline, new/cumulative counters and
-provisional-save labeling. The [launch observation](../experiments/evidence/keyboard_matched_astra_r1_endurance_launch_20260911.json)
-is a historical snapshot, not current process status or a final native audit.
-The bounded owner retains mandatory VM teardown; no new save is claimed yet.
+Astra attempt 1 completed its declared 64-to-128 window from its own save and
+memory. Its [audited result](../experiments/evidence/keyboard_matched_astra_r1_continuation_64_128_20260911.json)
+retains all 64 new responses and 33,200 additional game ticks: 128 responses,
+51,400 ticks and 4,544,237 returned tokens cumulatively. Seven dwarves remain
+alive with no recorded deaths. The saved fortress has five beds, two farms and
+three workshops. Drinks increased from 60 to 121 while raw food fell from 50
+to 29. Production rates and sustainability remain unproven; year two has not
+been reached. Three blocking-menu outcomes remain in the result.
+
+All model receipts, own-save memory/usage, initial native reload, final save,
+and mandatory VM teardown passed independent audit. Both shutdown commands
+returned zero. A separate fresh reload of the new final checkpoint has not yet
+been performed. The earlier [launch observation](../experiments/evidence/keyboard_matched_astra_r1_endurance_launch_20260911.json)
+remains historical, not current status.
+
+After that audit and teardown, Sol attempt 1 started its own declared 64-to-128
+window using unchanged model, prompt, controls and observation conditions.
+Its VM/container start and read-only configuration verification passed. Its
+live state remains provisional until a later terminal audit; no Sol result is
+inferred from the successful launch.
 
 ## Current delivery: six saved campaigns and longer-run support
 
@@ -40,6 +52,18 @@ deployment or main merge is claimed. The [delivery receipt](../experiments/evide
 binds both pushed revisions, their passing CI, tests and prelaunch HTTP checks.
 These are delivery/readiness results,
 not additional gameplay or proof of a functioning year-two fortress.
+
+The next recorded-history website implementation is pushed at
+`bf4db0341dc682a77cb53aac0414b37567b6328b` in [draft PR #152](https://github.com/lemoz/fort-gym/pull/152).
+It validates each later own-save window and displays latest saved totals
+without adding overlapping histories twice. The first CI run exposed a Linux
+argument-size limit in the UI test; fixture JSON now uses stdin, retaining the
+complete data and testing histories through decision 1280. The repaired full
+local suite passed 4,803 tests with 10 skips, and exact-head GitHub CI passed
+4,665 with 148 skips in run `34550444083`. The [code-delivery receipt](../experiments/evidence/keyboard_matched_endurance_records_code_20260911.json)
+preserves that failure and repair. This revision's endurance registry is still
+empty and the live preview is unchanged; Astra's newly audited result must be
+registered and the replacement preview verified before claiming website delivery.
 
 ## Earlier matched pilot and website delivery history
 

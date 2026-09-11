@@ -1,0 +1,35 @@
+{
+  "schema_version": "fortgym.public-endurance-records-code-delivery/v1",
+  "artifact_kind": "website_code_delivery",
+  "recorded_date_utc": "2026-09-11",
+  "source_revision": "bf4db0341dc682a77cb53aac0414b37567b6328b",
+  "pull_request": "https://github.com/lemoz/fort-gym/pull/152",
+  "ci": {
+    "head_sha": "bf4db0341dc682a77cb53aac0414b37567b6328b",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/lemoz/fort-gym/actions/runs/34550444083",
+    "passed": 4665,
+    "skipped": 148
+  },
+  "local_tests": {"passed": 4803, "skipped": 10},
+  "focused_record_tests": 23,
+  "local_junit_sha256": "999316c79dc88a765705a35c6bf1ce074bf49ea7782cd1c0f47ca866b5509f27",
+  "prior_ci_failure": {
+    "source_revision": "ad6df8a69ab199395e266286427d24ea67c42840",
+    "url": "https://github.com/lemoz/fort-gym/actions/runs/34549837867",
+    "cause": "The UI test sent full history JSON as one command-line argument, exceeding Linux's per-argument size limit.",
+    "repair": "Stream fixture JSON through stdin; test both 128- and 1280-decision histories without shrinking their data."
+  },
+  "registered_endurance_windows": 0,
+  "synthetic_fixture_boundaries": [128, 256, 512, 1024, 1280],
+  "new_gameplay_result_included": false,
+  "native_owner_changed": false,
+  "running_preview_changed": false,
+  "running_preview_revision": "941ed46961c542d2f1fa97bd8154bf0465dbdd29",
+  "browser_visual_qa": false,
+  "public_deployment": false,
+  "main_merge": false,
+  "year_two_goal_complete": false,
+  "scope": "Reviewed and tested remote website implementation. No new native gameplay result is registered in this revision. The existing preview, native owner, model conditions and historical evidence are unchanged. Synthetic future histories are test fixtures, not observed gameplay."
+}

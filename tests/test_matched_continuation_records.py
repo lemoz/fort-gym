@@ -18,6 +18,8 @@ SAVED_WEBSITE = "keyboard_matched_saved_windows_website_20260910.json"
 ENDURANCE = "keyboard_matched_endurance_preparation_20260910.json"
 ENDURANCE_DELIVERY = "keyboard_matched_endurance_delivery_20260911.json"
 ENDURANCE_LAUNCH = "keyboard_matched_astra_r1_endurance_launch_20260911.json"
+ASTRA_ENDURANCE = "keyboard_matched_astra_r1_continuation_64_128_20260911.json"
+ENDURANCE_RECORDS_CODE = "keyboard_matched_endurance_records_code_20260911.json"
 
 
 @pytest.mark.parametrize(
@@ -34,6 +36,11 @@ ENDURANCE_LAUNCH = "keyboard_matched_astra_r1_endurance_launch_20260911.json"
         (ENDURANCE, "46a6320ca1c2a23045a5d98df4d7ae30992d10e36e810b774df8f842e29939d9"),
         (ENDURANCE_DELIVERY, "d465e575ce547461a878b845d82ca073440d8da47a7d90aaaeaa3c4cd39a5059"),
         (ENDURANCE_LAUNCH, "631758a6b511a120b30c12e0767d1f714657351a5baf31eeccc92769cb644a27"),
+        (ASTRA_ENDURANCE, "cb9cc0c5af8f158848493b1e7b3bb79f4f4736f185fbf7ce96fb157095e1d145"),
+        (
+            ENDURANCE_RECORDS_CODE,
+            "c74715355b8c0a9fde359e21ec685af7d4e65c9f6952c05d3e88350b58e1cf93",
+        ),
     ],
 )
 def test_exact_versioned_projections_and_private_state_exclusion(filename, expected):
@@ -91,6 +98,63 @@ def test_saved_continuation_separates_new_work_from_its_own_baseline():
         "no_error": 29,
         "timeout_waiting_for_ticks": 2,
     }
+
+
+def test_astra_128_save_retains_development_and_supply_changes_without_sustainability_claim():
+    record = json.loads((EVIDENCE / ASTRA_ENDURANCE).read_bytes())
+    parent = json.loads((EVIDENCE / RESULT).read_bytes())
+    assert (record["start_decision"], record["next_decision"], record["new_responses"]) == (
+        64,
+        128,
+        64,
+    )
+    assert record["prior_checkpoint_sha256"] == parent["checkpoint_sha256"]
+    assert (
+        record["checkpoint_sha256"]
+        == "bff0afda99c39e25fe9db7aeb01db77ab6a819cb20c5d82670a2188952cceec2"
+    )
+    assert record["initial_metrics"] == parent["saved_metrics"]
+    assert (
+        record["saved_elapsed_ticks"]
+        == parent["saved_elapsed_ticks"] + record["new_saved_ticks"]
+        == 51400
+    )
+    assert record["new_saved_ticks"] == 33200
+    usage = record["usage"]
+    assert usage["new_returned_tokens"] == 2075486
+    assert (
+        usage["campaign_returned_tokens"]
+        == parent["usage"]["campaign_returned_tokens"] + 2075486
+        == 4544237
+    )
+    assert usage["campaign_accounted_responses"] == 128 and usage["reported_charge_usd"] is None
+    metrics = record["saved_metrics"]
+    assert (metrics["population"], metrics["recorded_dead_citizens"]) == (7, 0)
+    assert (
+        metrics["completed_beds"],
+        metrics["completed_farms"],
+        metrics["completed_workshops"],
+    ) == (5, 2, 3)
+    assert (metrics["food_stock"], metrics["drink_stock"]) == (29, 121)
+    assert [row["decision"] for row in record["new_window_timeline"]] == list(range(65, 129))
+    assert record["new_window_timeline"][-1]["metrics"] == metrics
+    assert record["source_checkpoint_fresh_load_verified"] is True
+    assert record["native_cleanup_verified"] is record["vm_teardown_verified"] is True
+    assert record["final_fresh_reload_verified"] is record["sustainability_established"] is False
+    assert record["year_two_reached"] is record["human_gameplay_rescue"] is False
+    assert record["new_window_clock_outcomes"] == {"blocking_native_menu": 3, "no_error": 61}
+
+
+def test_recorded_history_code_delivery_does_not_claim_a_running_replacement_or_game_result():
+    record = json.loads((EVIDENCE / ENDURANCE_RECORDS_CODE).read_bytes())
+    assert record["source_revision"] == record["ci"]["head_sha"]
+    assert record["ci"]["status"] == "completed" and record["ci"]["conclusion"] == "success"
+    assert record["local_tests"] == {"passed": 4803, "skipped": 10}
+    assert record["ci"]["passed"] == 4665 and record["ci"]["skipped"] == 148
+    assert record["registered_endurance_windows"] == 0
+    assert record["native_owner_changed"] is record["running_preview_changed"] is False
+    assert record["new_gameplay_result_included"] is record["year_two_goal_complete"] is False
+    assert record["public_deployment"] is record["main_merge"] is False
 
 
 def test_endurance_delivery_does_not_claim_more_gameplay():
