@@ -29,7 +29,9 @@ def verify_window_checkpoints(
         "Native window conditions changed",
     )
     result = read(native / "result.json")
-    spans = settled_segment_spans(result, window)
+    original = verify_checkpoint(parent)
+    history = read(parent / "runner.json").get("discontinuities", [])
+    spans = settled_segment_spans(result, window, inherited_discontinuities=history)
     limit, _ = window_bounds(condition, window)
     _require(
         all(
@@ -39,14 +41,18 @@ def verify_window_checkpoints(
                 "returned_tokens_before_window",
                 "saved_elapsed_ticks_before_window",
             )
-        )
-        and window["accounted_responses_before_window"] == spans[0].first_step,
+        ),
         "Invalid prior campaign counters",
     )
-    original = verify_checkpoint(parent)
     _require(
         original["sha256"] == window["continuation_checkpoint_sha256"],
         "Native window started from a different checkpoint",
+    )
+    initial_usage = read(parent / "agent.json")["usage"]
+    _require(
+        window["accounted_responses_before_window"] == initial_usage["accounted_responses"]
+        and window["returned_tokens_before_window"] == initial_usage["total_tokens"],
+        "Window declaration differs from the checkpoint's actual prior usage",
     )
     initial_parent = parent
     reports: list[dict] = []
@@ -104,6 +110,8 @@ def verify_window_checkpoints(
         "new_saved_ticks": ticks,
         "saved_elapsed_ticks": final["saved_elapsed_ticks"],
         "usage": final["usage"],
+        "inherited_discontinuities": final["inherited_discontinuities"],
+        "uninterrupted_campaign": final["uninterrupted_campaign"],
         "prior_checkpoint_sha256": original["sha256"],
         "checkpoint_sha256": final["checkpoint_sha256"],
         "segments": reports,
