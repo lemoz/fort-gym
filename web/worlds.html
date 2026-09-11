@@ -17,7 +17,21 @@
 <link rel="stylesheet" href="/static/fort-labs.css?v=20260711-2">
 <style>
   .worlds-hero { padding: 50px 0 38px; border-bottom: 1px solid var(--line); }
-  .worlds-hero-grid { display: grid; grid-template-columns: .78fr 1.22fr; gap: 54px; align-items: end; }
+  .worlds-hero-grid { display: grid; gap: 30px; }
+  .recording-card { min-width: 0; border: 1px solid var(--line); background: var(--coal); }
+  .recording-card:hover { border-color: var(--cyan); }
+  .recording-card:focus-within { outline: 2px solid var(--cyan); outline-offset: 3px; }
+  .recording-media { display: block; aspect-ratio: 15 / 8; background: #000; border-bottom: 1px solid var(--line); }
+  .recording-media canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+  .recording-copy { padding: 20px; }
+  .recording-copy h2 { margin: 0 0 10px; font: 750 20px/1.3 var(--mono); }
+  .recording-copy p { margin: 10px 0 18px; font: 400 14px/1.6 var(--mono); color: var(--muted); }
+  .recording-window { color: var(--cyan); font: 650 14px/1.5 var(--mono); }
+  .recording-source { padding: 10px 20px 0; color: var(--muted); font: 400 12px/1.5 var(--mono); }
+  .archive-intro { padding: 28px 0 18px; }
+  .archive-intro p { margin: 8px 0 0; color: var(--muted); font-size: 14px; }
+  .featured-world[hidden] { display: none; }
+  .library .featured-world:not([hidden]) { margin-bottom: 24px; }
   .worlds-summary { margin-top: 22px; color: var(--muted); font: 650 11px/1.6 var(--mono); }
   .featured-world { display: grid; grid-template-columns: 1.25fr .75fr; min-height: 250px; border: 1px solid var(--line); background: var(--coal); }
   .featured-media { min-height: 250px; border: 0; border-right: 1px solid var(--line); }
@@ -111,9 +125,48 @@
         <div class="fl-eyebrow">Recorded worlds</div>
         <h1 class="fl-title" id="worlds-title">Every world leaves a trace.</h1>
         <p class="fl-copy">Browse the fortresses agents built, the strategies they followed, and the moments that changed each run.</p>
-        <div class="worlds-summary" id="worlds-summary">Loading the public run archive…</div>
+        <div class="worlds-summary" id="worlds-summary">3 recordings · 288 captured decisions · Astra, Sol and Terra</div>
       </div>
-      <article class="featured-world" id="featured-world" aria-label="Featured run">
+      <div class="world-grid" id="recent-recordings" aria-label="Recent recordings">
+        <article class="recording-card" data-recording-preview="astra-97-256">
+          <a class="recording-media" href="/?recording=astra-97-256#watch-root" aria-label="Replay Astra"><canvas role="img" aria-label="Astra captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Loading captured screen…</div>
+          <div class="recording-copy"><h2>Astra · displayed keys</h2><div class="recording-window">Decisions 97–256 · 160 frames</div><p>Saved through decision 224. Decisions 225–256 are an observed, unsaved tail after the final save failed.</p><a class="fl-link" href="/?recording=astra-97-256#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="sol-65-128">
+          <a class="recording-media" href="/?recording=sol-65-128#watch-root" aria-label="Replay Sol"><canvas role="img" aria-label="Sol captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Loading captured screen…</div>
+          <div class="recording-copy"><h2>Sol · keyboard</h2><div class="recording-window">Decisions 65–128 · 64 frames</div><p>Saved through decision 128. Scrub captured game screens alongside the model’s stated intent and chosen keys.</p><a class="fl-link" href="/?recording=sol-65-128#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="terra-65-128">
+          <a class="recording-media" href="/?recording=terra-65-128#watch-root" aria-label="Replay Terra"><canvas role="img" aria-label="Terra captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Loading captured screen…</div>
+          <div class="recording-copy"><h2>Terra · keyboard</h2><div class="recording-window">Decisions 65–128 · 64 frames</div><p>Saved through decision 128. Includes a rejected key command, kept visible in the recording.</p><a class="fl-link" href="/?recording=terra-65-128#watch-root">Open replay →</a></div>
+        </article>
+      </div>
+      <p class="fl-copy">Open a replay to play or scrub the timeline. These are captured decision windows, not full campaigns or a claim of reaching Year Two.</p>
+      <noscript>Enable JavaScript to render captured screens and use the replay controls.</noscript>
+    </div>
+  </section>
+
+  <section class="archive-intro fl-wrap" aria-labelledby="archive-title">
+    <h2 class="fl-kicker" id="archive-title">Earlier published runs</h2>
+    <p>This separate archive uses the original run registry. Filters below apply only to this archive, not the three recordings above.</p>
+  </section>
+  <section class="filter-band" aria-label="Earlier run filters">
+    <form class="fl-wrap filters" id="filters-form">
+      <div class="filter-field"><input id="filter-query" name="q" type="search" maxlength="100" placeholder="Search models, protocols, seeds…" aria-label="Search recorded worlds"></div>
+      <div class="filter-field"><select id="filter-status" name="status" aria-label="Filter by status"><option value="">All statuses</option><option value="pending">Pending</option><option value="running">Live</option><option value="paused">Paused</option><option value="completed">Completed</option><option value="stopped">Stopped</option><option value="failed">Failed</option></select></div>
+      <div class="filter-field"><input id="filter-model" name="model" list="model-options" maxlength="200" placeholder="Model" aria-label="Filter by model"><datalist id="model-options"></datalist></div>
+      <div class="filter-field"><input id="filter-protocol" name="evaluation_protocol" list="protocol-options" maxlength="100" placeholder="Protocol" aria-label="Filter by protocol"><datalist id="protocol-options"></datalist></div>
+      <div class="filter-field"><input id="filter-seed" name="seed_save" list="seed-options" maxlength="200" placeholder="Seed" aria-label="Filter by seed"><datalist id="seed-options"></datalist></div>
+      <button class="fl-btn fl-btn-primary filter-submit" type="submit">Apply →</button>
+    </form>
+  </section>
+
+  <section class="library">
+    <div class="fl-wrap">
+      <article class="featured-world" id="featured-world" aria-label="Featured earlier run" hidden>
         <div class="fl-media featured-media"><canvas id="featured-canvas"></canvas><div class="fl-media-source" id="featured-source">Loading recorded world…</div></div>
         <div class="featured-copy">
           <div class="fl-kicker" id="featured-kicker">Featured world</div>
@@ -127,23 +180,7 @@
           <a class="fl-link" id="featured-link" href="/live">Open run →</a>
         </div>
       </article>
-    </div>
-  </section>
-
-  <section class="filter-band" aria-label="Run filters">
-    <form class="fl-wrap filters" id="filters-form">
-      <div class="filter-field"><input id="filter-query" name="q" type="search" maxlength="100" placeholder="Search models, protocols, seeds…" aria-label="Search recorded worlds"></div>
-      <div class="filter-field"><select id="filter-status" name="status" aria-label="Filter by status"><option value="">All statuses</option><option value="pending">Pending</option><option value="running">Live</option><option value="paused">Paused</option><option value="completed">Completed</option><option value="stopped">Stopped</option><option value="failed">Failed</option></select></div>
-      <div class="filter-field"><input id="filter-model" name="model" list="model-options" maxlength="200" placeholder="Model" aria-label="Filter by model"><datalist id="model-options"></datalist></div>
-      <div class="filter-field"><input id="filter-protocol" name="evaluation_protocol" list="protocol-options" maxlength="100" placeholder="Protocol" aria-label="Filter by protocol"><datalist id="protocol-options"></datalist></div>
-      <div class="filter-field"><input id="filter-seed" name="seed_save" list="seed-options" maxlength="200" placeholder="Seed" aria-label="Filter by seed"><datalist id="seed-options"></datalist></div>
-      <button class="fl-btn fl-btn-primary filter-submit" type="submit">Apply →</button>
-    </form>
-  </section>
-
-  <section class="library">
-    <div class="fl-wrap">
-      <div class="library-head"><div class="fl-kicker">World archive</div><div class="library-count" id="library-count">Loading…</div></div>
+      <div class="library-head"><div class="fl-kicker">Earlier run archive</div><div class="library-count" id="library-count">Loading…</div></div>
       <div class="world-grid" id="world-grid" aria-live="polite"><div class="fl-empty">Reconstructing recorded worlds…</div></div>
       <div class="pager" id="pager" hidden>
         <div class="pager-info" id="pager-info"></div>
@@ -163,6 +200,7 @@
 </footer>
 
 <script src="/static/fort-labs.js?v=20260711-2"></script>
+<script type="module" src="/static/worlds-recordings.mjs?v=20260911-1"></script>
 <script>
 (function () {
   'use strict';
@@ -208,12 +246,8 @@
   }
 
   function applyFeatured(run) {
-    if (!run) {
-      FL.renderUnavailable($('featured-canvas'));
-      $('featured-source').textContent = 'No recorded world available';
-      $('featured-model').textContent = 'The next world begins soon';
-      return;
-    }
+    $('featured-world').hidden = !run;
+    if (!run) return;
     const isRunning = FL.canWatchLive(run);
     const featureLabel = isRunning
       ? 'Live world'
@@ -271,11 +305,13 @@
   function renderPage(payload, filters) {
     state = {offset: payload.offset, total: payload.total, items: payload.items || []};
     const items = state.items;
-    $('worlds-summary').textContent = `${state.total.toLocaleString()} public worlds · real gameplay and replay evidence`;
-    $('library-count').textContent = state.total ? `Showing ${state.offset + 1}–${Math.min(state.offset + items.length, state.total)} of ${state.total}` : 'No matching worlds';
+    $('library-count').textContent = state.total ? `Showing ${state.offset + 1}–${Math.min(state.offset + items.length, state.total)} of ${state.total}` : 'No earlier runs listed';
     applyFeatured(items[0]);
     if (!items.length) {
-      $('world-grid').innerHTML = '<div class="fl-empty">No recorded worlds match these filters. Try a broader model, protocol, seed, or status.</div>';
+      const filtered = ['q','status','model','evaluation_protocol','seed_save'].some(key => filters[key]);
+      $('world-grid').innerHTML = '<div class="fl-empty">' + (filtered
+        ? 'No recorded worlds match these filters. Try a broader model, protocol, seed, or status.'
+        : 'No earlier runs are listed in this registry. The three recent recordings above are ready to replay.') + '</div>';
     } else {
       $('world-grid').innerHTML = items.map(cardHtml).join('');
       observeFrames(items);
@@ -296,7 +332,8 @@
     try {
       renderPage(await FL.fetchJson(endpoint(filters)), filters);
     } catch (_) {
-      $('world-grid').innerHTML = '<div class="fl-empty">Recorded worlds are temporarily unavailable. The archive will reconnect automatically on the next request.</div>';
+      applyFeatured(null);
+      $('world-grid').innerHTML = '<div class="fl-empty">The earlier run archive is temporarily unavailable. You can still open the recent recordings above.</div>';
       $('library-count').textContent = 'Archive unavailable';
     }
   }

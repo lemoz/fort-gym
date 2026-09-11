@@ -41,3 +41,27 @@ Verify public health, homepage marker, script/style MIME types, recording conten
 hashes, no-connected-broadcast status and unchanged DFHack service identity after
 release. HTTP/contract verification is distinct from browser visual QA or native
 live-session acceptance. Preserve a scoped release receipt alongside these docs.
+
+## Runs-page correction
+
+The first homepage release left `/worlds` connected only to the empty legacy
+`/public/worlds` registry. A successful HTTP response was not evidence that
+visitors could find the newly published recordings.
+
+This correction gives `/worlds` three permanent recording cards and small native
+screen previews. The previews are exact first-frame subsets of the existing
+hash-verified recordings, not illustrative images. Links select the matching
+recording in the homepage player, even when a live feed is available. The
+original searchable archive remains below, with an explicit separate empty
+state; an empty or failing registry cannot blank the recent recordings.
+
+The original 288 frames and save boundaries are unchanged. Tests cover preview
+provenance, matching links, CP437 rendering, failed previews, empty/unavailable
+registry responses and deep-link selection without automatic live takeover.
+Future recording publications must update the gallery and preview subset with
+the catalog; the catalog-consistency test prevents incomplete releases.
+
+This follow-up changes static website assets, tests and this document only.
+Fast-forward the pinned release branch from `84bdc44`, verify actual gallery
+content and asset hashes over public HTTPS, and preserve both API and game
+process identities. No service restart or database mutation is necessary.
