@@ -427,6 +427,18 @@ async def public_keyboard_endurance_active() -> JSONResponse:
     return JSONResponse(data, headers=HTML_CACHE_HEADERS)
 
 
+@app.get("/public/keyboard-cohort-endurance-v2-active")
+async def public_keyboard_endurance_v2_active() -> JSONResponse:
+    from .keyboard_endurance_live_v2 import live_status
+
+    location = get_settings().FORT_GYM_PUBLIC_CAMPAIGN_DIR
+    try:
+        data = live_status(Path(location) if location else None)
+    except (OSError, ValueError, KeyError, TypeError):
+        raise HTTPException(status_code=503, detail="Longer-window status is unavailable") from None
+    return JSONResponse(data, headers=HTML_CACHE_HEADERS)
+
+
 @app.get("/public/keyboard-cohort-endurance-records")
 async def public_keyboard_endurance_records() -> JSONResponse:
     from .keyboard_endurance_records import keyboard_endurance_records
