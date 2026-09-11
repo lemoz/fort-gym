@@ -335,6 +335,40 @@ async def public_campaign_feed() -> JSONResponse:
     return JSONResponse(data, headers=HTML_CACHE_HEADERS)
 
 
+@app.get("/public/keyboard-campaigns")
+async def public_keyboard_campaigns() -> JSONResponse:
+    from .campaign_keyboard_records import keyboard_campaign_records
+
+    try:
+        data = keyboard_campaign_records()
+    except (OSError, ValueError, KeyError, TypeError):
+        raise HTTPException(status_code=503, detail="Keyboard evidence is unavailable") from None
+    return JSONResponse(data, headers=HTML_CACHE_HEADERS)
+
+
+@app.get("/public/keyboard-admission")
+async def public_keyboard_admission() -> JSONResponse:
+    from .keyboard_admission import admission_record
+
+    try:
+        data = admission_record()
+    except (OSError, ValueError, KeyError, TypeError):
+        raise HTTPException(status_code=503, detail="Recorded admission evidence is unavailable") from None
+    return JSONResponse(data, headers=HTML_CACHE_HEADERS)
+
+
+@app.get("/public/keyboard-active")
+async def public_keyboard_active() -> JSONResponse:
+    from .keyboard_live import live_status
+
+    location = get_settings().FORT_GYM_PUBLIC_CAMPAIGN_DIR
+    try:
+        data = live_status(Path(location) if location else None)
+    except (OSError, ValueError, KeyError, TypeError):
+        raise HTTPException(status_code=503, detail="Live keyboard status is unavailable") from None
+    return JSONResponse(data, headers=HTML_CACHE_HEADERS)
+
+
 @app.get("/protocols/{slug}", response_class=HTMLResponse)
 async def serve_protocol_detail(slug: str):
     """Serve protocol-specific metadata while the client resolves the detail body."""

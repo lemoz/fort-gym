@@ -16,6 +16,16 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from ..agent.base import Agent
+from ..agent.campaign_keyboard import (
+    SUBSCRIPTION_COST_BASIS,
+    SubscriptionAdmissionPause,
+    initial_usage as initial_subscription_usage,
+    validate_usage,
+)
+from ..agent.standard_input import parse_response as parse_keyboard_response
+from ..agent.keyboard_rejection import KeyboardInputRejected, validate_rejection_state
+from ..env.native_key_catalog import NATIVE_PROFILE
+from ..env.screen_observation import TEXT_PROFILE, encode_screen
 from ..agent.campaign_local import LocalOutputLimitPause
 from ..agent.governed_llm import GovernedBudgetCapError
 from ..env.campaign_view import (
@@ -34,30 +44,37 @@ from ..tick_receipt import (
 )
 from .campaign_advance import ACCEPTED_ONLY, MODEL_REQUESTED, POLICIES, requested_ticks
 from .campaign_checkpoint import create_checkpoint, verify_checkpoint
-from .campaign_save import NativeSaveSnapshotter
+from .campaign_save import NativeSnapshotter
+from .keyboard_clock import DEFERRAL_SCHEMAS, validate_menu_deferral
+from .keyboard_clock_timeout import SCHEMA as CLOCK_UNAVAILABLE_SCHEMA, validate_clock_unavailable
 
 
 class CampaignEnvironment(Protocol):
     """Each operation returns with native gameplay paused."""
 
-    def observe(self) -> dict[str, Any]:
-        ...
+    def observe(self) -> dict[str, Any]: ...
 
-    def screen(self) -> str:
-        ...
+    def screen(self) -> str: ...
 
-    def inspect_map(self, selection: dict | None) -> dict:
-        ...
+    def screen_capture(self) -> dict: ...
 
-    def apply(self, action: dict[str, Any], state: dict[str, Any]) -> dict[str, Any]:
-        ...
+    def inspect_map(self, selection: dict | None) -> dict: ...
 
-    def advance(self, ticks: int, state: dict[str, Any]) -> tuple[dict, dict]:
-        ...
+    def apply(self, action: dict[str, Any], state: dict[str, Any]) -> dict[str, Any]: ...
+
+    def advance(self, ticks: int, state: dict[str, Any]) -> tuple[dict, dict]: ...
 
 
 class CampaignPreDispatchPause(GovernedBudgetCapError):
     """A read-only preflight stopped before the decision/usage transaction began."""
+
+    decision_started = False
+
+
+class CampaignAdmissionPause(CampaignPreDispatchPause):
+    """A decision transaction settled without any model or native dispatch."""
+
+    decision_started = True
 
 
 class CampaignNoActionPause(RuntimeError):
@@ -95,7 +112,9 @@ def reconciled_usage(checkpoint: dict, journal: bytes) -> dict:
     """
     if not journal.endswith(b"\n"):
         raise ValueError("Usage journal has an incomplete final record")
-    records = [json.loads(line) for line in journal.splitlines()]
+    from .keyboard_rejection_journal import effective_records
+
+    records = effective_records(checkpoint, journal)
     expected = {
         "type": "campaign_journal",
         "campaign_id": checkpoint["campaign_id"],
@@ -124,12 +143,38 @@ def reconciled_usage(checkpoint: dict, journal: bytes) -> dict:
         if record.get("type") != "decision_finished" or not pending:
             raise ValueError("Usage journal decision sequence is invalid")
         no_action = record.get("outcome") == "accounted_no_action/v1"
+        cancelled = record.get("outcome") == "subscription_not_dispatched/v1"
+        rejected = record.get("outcome") == "model_input_rejected/v1"
         if record.get("step") != pending_step or (
-            record.get("decision_returned") is not True and not no_action
+            record.get("decision_returned") is not True and not no_action and not cancelled
         ):
             raise ValueError("Failed or mismatched decision has unresolved provider usage")
         pending = False
         usage = record["usage"]
+        if rejected:
+            previous = last_usage if last_usage is not None else initial_subscription_usage()
+            if (
+                current.get("cost_basis") != SUBSCRIPTION_COST_BASIS
+                or record.get("decision_returned") is not True
+                or record.get("native_action_dispatched") is not False
+                or not isinstance(record.get("native_boundary"), dict)
+                or any(usage.get(key) != previous[key] + 1 for key in (
+                    "dispatched_requests", "returned_responses", "accounted_responses",
+                ))
+            ):
+                raise ValueError("Rejected keyboard journal lacks accounted non-execution")
+            _clock(record["native_boundary"])
+        if cancelled:
+            if (
+                current.get("cost_basis") != SUBSCRIPTION_COST_BASIS
+                or record.get("decision_returned") is not False
+                or record.get("model_dispatched") is not False
+                or record.get("native_action_dispatched") is not False
+                or usage != (last_usage if last_usage is not None else initial_subscription_usage())
+                or not isinstance(record.get("native_boundary"), dict)
+            ):
+                raise ValueError("Cancelled subscription decision changed usage or lacks proof")
+            _clock(record["native_boundary"])
         if no_action:
             if (
                 record.get("decision_returned") is not False
@@ -157,22 +202,30 @@ def reconciled_usage(checkpoint: dict, journal: bytes) -> dict:
             usage["dispatched_requests"] < usage["returned_responses"]
         ):
             raise ValueError("Usage journal dispatch count is below returned responses")
-        if not isinstance(usage.get("total_cost_usd"), str):
+        subscription = current.get("cost_basis") == SUBSCRIPTION_COST_BASIS
+        if subscription:
+            validate_usage(current)
+            validate_usage(usage)
+        elif usage.get("cost_basis") == SUBSCRIPTION_COST_BASIS:
+            raise ValueError("Usage cost basis changed")
+        elif not isinstance(usage.get("total_cost_usd"), str):
             raise ValueError("Usage cost must retain its decimal string")
-        cost = Decimal(usage["total_cost_usd"])
-        if not cost.is_finite() or cost < 0:
-            raise ValueError("Invalid returned model cost")
-        if last_usage is not None and cost < Decimal(last_usage["total_cost_usd"]):
-            raise ValueError("Usage journal cost regressed")
+        if not subscription:
+            cost = Decimal(usage["total_cost_usd"])
+            if not cost.is_finite() or cost < 0:
+                raise ValueError("Invalid returned model cost")
+            if last_usage is not None and cost < Decimal(last_usage["total_cost_usd"]):
+                raise ValueError("Usage journal cost regressed")
         last_usage = usage
     if pending:
         raise ValueError("Interrupted model decision has unresolved provider usage")
     if last_usage is not None:
         for key in counters:
             current[key] = max(current[key], last_usage[key])
-        current["total_cost_usd"] = str(
-            max(Decimal(current["total_cost_usd"]), Decimal(last_usage["total_cost_usd"]))
-        )
+        if current.get("cost_basis") != SUBSCRIPTION_COST_BASIS:
+            current["total_cost_usd"] = str(
+                max(Decimal(current["total_cost_usd"]), Decimal(last_usage["total_cost_usd"]))
+            )
     return current
 
 
@@ -192,7 +245,12 @@ class CampaignLoop:
     ) -> None:
         if type(max_advance_ticks) is not int or not 1 <= max_advance_ticks <= 2500:
             raise ValueError("Invalid campaign advance limit")
-        if observation_profile not in ("governed_review/v1", *CAMPAIGN_OBSERVATION_PROFILES):
+        keyboard = observation_profile == TEXT_PROFILE
+        if observation_profile not in (
+            "governed_review/v1",
+            TEXT_PROFILE,
+            *CAMPAIGN_OBSERVATION_PROFILES,
+        ):
             raise ValueError("Unsupported campaign observation profile")
         if observation_profile == INSPECTION_PROFILE and not callable(
             getattr(environment, "inspect_map", None)
@@ -203,10 +261,19 @@ class CampaignLoop:
         if (
             advance_policy != ACCEPTED_ONLY
             and observation_profile not in CAMPAIGN_OBSERVATION_PROFILES
+            and not keyboard
         ):
             raise ValueError("Requested-time policy requires factual campaign observations")
         agent.set_campaign_context(campaign_id=campaign_id)
         initial = agent.export_campaign_state()
+        if keyboard and (
+            not callable(getattr(environment, "screen_capture", None))
+            or getattr(environment, "control_profile", None) != NATIVE_PROFILE
+            or initial["configuration"].get("control_profile") != NATIVE_PROFILE
+            or initial["configuration"].get("observation_profile") != TEXT_PROFILE
+            or initial["configuration"].get("max_advance_ticks") != max_advance_ticks
+        ):
+            raise ValueError("Keyboard observation, agent and native control profiles must match")
         output.mkdir(mode=0o700, parents=False, exist_ok=False)
         self.agent, self.environment, self.output = agent, environment, output
         self.campaign_id, self.max_advance_ticks = campaign_id, max_advance_ticks
@@ -224,6 +291,7 @@ class CampaignLoop:
         self.failed = False
         self.failure_context: dict = {}
         self.no_action_boundary: dict | None = None
+        self.discontinuities: list[dict] = []
         _append(
             self.journal,
             {
@@ -262,7 +330,12 @@ class CampaignLoop:
         except CampaignPreDispatchPause as error:
             _append(
                 self.output / "pauses.jsonl",
-                {"step": self.next_step, "reason": str(error), "decision_started": False},
+                {
+                    "step": self.next_step,
+                    "reason": str(error),
+                    "decision_started": error.decision_started,
+                    **({"events": self.agent.pop_tool_events()} if error.decision_started else {}),
+                },
             )
             raise
         except BaseException as error:
@@ -291,8 +364,40 @@ class CampaignLoop:
         start = _clock(before)
         if self.observation_profile == INSPECTION_PROFILE:
             self._observe_map(before, self.observation_view)
-        screen = self.environment.screen()
-        if self.observation_profile in CAMPAIGN_OBSERVATION_PROFILES:
+        keyboard = self.observation_profile == TEXT_PROFILE
+        if keyboard:
+            capture = self.environment.screen_capture()
+            screen = json.dumps(encode_screen(capture, TEXT_PROFILE), ensure_ascii=False)
+            feedback = None
+            if self.last_result is not None:
+                native = self.last_result.get("result", {})
+                feedback = {
+                    "accepted": self.last_result.get("accepted"),
+                    "reason": self.last_result.get("why"),
+                    "keys_confirmed": native.get("keys_confirmed"),
+                    "command_mutation": native.get("command_mutation"),
+                }
+                if "tick_feedback" in self.last_result:
+                    feedback["simulation"] = deepcopy(self.last_result["tick_feedback"])
+                if "restart" in self.last_result:
+                    feedback["infrastructure_restart"] = {
+                        key: self.last_result["restart"][key] for key in (
+                            "restored_next_step", "lost_trace_next_step", "lost_elapsed_ticks",
+                            "memory_policy", "actions_replayed",
+                            "lost_uncommitted_ticks", "lost_uncommitted_decisions",
+                            "lost_elapsed_ticks_complete",
+                        )
+                        if key in self.last_result["restart"]
+                    }
+            observation = {
+                "observation_profile": TEXT_PROFILE,
+                "screen_capture": capture,
+                "last_action_feedback": feedback,
+            }
+            text = screen
+        else:
+            screen = self.environment.screen()
+        if not keyboard and self.observation_profile in CAMPAIGN_OBSERVATION_PROFILES:
             # Dialog legality depends on the screen just read at this paused boundary.
             before["screen_text"] = screen
             text, observation = encode_campaign_observation(
@@ -305,7 +410,7 @@ class CampaignLoop:
                 committed_elapsed_ticks=self.committed_elapsed_ticks,
                 completed_decisions=self.next_step,
             )
-        else:
+        elif not keyboard:
             text, observation = encode_observation(
                 before,
                 screen_text=screen,
@@ -329,9 +434,31 @@ class CampaignLoop:
         _append(self.journal, {"type": "decision_started", "step": self.next_step})
         returned = False
         no_action = None
+        cancelled = None
+        rejection = None
         try:
             raw_action = self.agent.decide(text, observation)
             returned = True
+        except KeyboardInputRejected as error:
+            if not keyboard:
+                raise
+            validate_rejection_state(preflight_state, self.agent.export_campaign_state())
+            after_decision = self.environment.observe()
+            if _clock(after_decision) != start or (
+                after_decision.get("viewscreen_type") != before.get("viewscreen_type")
+            ):
+                raise ValueError("Native boundary changed during rejected keyboard input") from error
+            rejection = error
+            returned = True  # The model returned; only its native input was rejected.
+        except SubscriptionAdmissionPause as error:
+            if not keyboard or self.agent.export_campaign_state() != preflight_state:
+                raise ValueError("Admission pause changed campaign state") from error
+            after_decision = self.environment.observe()
+            if _clock(after_decision) != start or (
+                after_decision.get("viewscreen_type") != before.get("viewscreen_type")
+            ):
+                raise ValueError("Native boundary changed during admission") from error
+            cancelled = {key: before[key] for key in ("year", "year_tick", "pause_state")}
         except LocalOutputLimitPause as error:
             usage = self.agent.export_campaign_state()["usage"]
             previous_usage = preflight_state["usage"]
@@ -365,6 +492,27 @@ class CampaignLoop:
                     "usage": self.agent.export_campaign_state()["usage"],
                     **(
                         {
+                            "outcome": "model_input_rejected/v1",
+                            "native_action_dispatched": False,
+                            "native_boundary": {
+                                key: before[key] for key in ("year", "year_tick", "pause_state")
+                            },
+                        }
+                        if rejection is not None
+                        else {}
+                    ),
+                    **(
+                        {
+                            "outcome": "subscription_not_dispatched/v1",
+                            "model_dispatched": False,
+                            "native_action_dispatched": False,
+                            "native_boundary": cancelled,
+                        }
+                        if cancelled is not None
+                        else {}
+                    ),
+                    **(
+                        {
                             "outcome": "accounted_no_action/v1",
                             "reason": "output_token_limit",
                             "native_action_dispatched": False,
@@ -375,6 +523,12 @@ class CampaignLoop:
                     ),
                 },
             )
+        if cancelled is not None:
+            current = self.agent.export_campaign_state()
+            if reconciled_usage(current, self.journal.read_bytes()) != current["usage"]:
+                raise ValueError("Cancelled subscription usage does not reconcile")
+            self.at_boundary = True
+            raise CampaignAdmissionPause("Subscription allowance stopped model admission")
         if no_action is not None:
             current = self.agent.export_campaign_state()
             if reconciled_usage(current, self.journal.read_bytes()) != current["usage"]:
@@ -385,9 +539,22 @@ class CampaignLoop:
                     os.fsync(stream.fileno())
             self.no_action_boundary = no_action
             raise CampaignNoActionPause("Accounted output limit before a native action")
+        if rejection is not None:
+            from .keyboard_rejection import commit_rejection
+
+            return commit_rejection(
+                self, rejection, before=before, after=after_decision,
+                observation=observation, text=text, screen=screen,
+            )
         allow_view = self.observation_profile == INSPECTION_PROFILE
-        action = parse_campaign_action(
-            raw_action, max_advance_ticks=self.max_advance_ticks, allow_view=allow_view
+        action = (
+            parse_keyboard_response(
+                raw_action, max_advance_ticks=self.max_advance_ticks, control_profile=NATIVE_PROFILE
+            )
+            if keyboard
+            else parse_campaign_action(
+                raw_action, max_advance_ticks=self.max_advance_ticks, allow_view=allow_view
+            )
         )
         if action.get("type") not in {
             "DIG",
@@ -399,6 +566,7 @@ class CampaignLoop:
             "WAIT",
             "INTERACT",
             *(["VIEW"] if allow_view else []),
+            *(["KEYSTROKE"] if keyboard else []),
         }:
             raise ValueError("Campaign action is outside the declared governed interface")
         ticks = action.get("advance_ticks")
@@ -423,8 +591,25 @@ class CampaignLoop:
         else:
             execution = self.environment.apply(action, before)
         self.failure_context = {"action": action, "execute": execution}
+        if keyboard and execution.get("accepted") is not True:
+            native = execution.get("result", {})
+            if not isinstance(native, dict) or native.get("command_mutation") != "not_attempted":
+                raise ValueError(
+                    "Keyboard input outcome is partial or unknown; no replay or clock step"
+                )
+        # Keyboard input can change the viewscreen while preserving the paused
+        # calendar. The clock and its interruption validator need that new native
+        # boundary, not the screen on which the model made its decision.
+        clock_before = self.environment.observe() if keyboard else before
+        if keyboard:
+            self.failure_context["native_after_apply"] = {
+                key: clock_before.get(key)
+                for key in ("year", "year_tick", "time", "pause_state", "viewscreen_type")
+            }
+            if clock_before.get("pause_state") is not True or _clock(clock_before) != start:
+                raise ValueError("Keyboard input changed the paused calendar boundary")
         requested = requested_ticks(ticks, execution, self.advance_policy)
-        after, receipt = self.environment.advance(requested, before)
+        after, receipt = self.environment.advance(requested, clock_before)
         self.failure_context = {
             **self.failure_context,
             "tick_receipt": receipt,
@@ -445,17 +630,48 @@ class CampaignLoop:
         )
         if type(actual) is not int or actual < 0 or end - start != actual or actual > maximum:
             raise ValueError("Native time disagrees with the action's tick receipt")
+        menu_deferral = "deferred" in receipt or receipt.get("schema_version") in DEFERRAL_SCHEMAS
+        if menu_deferral and (
+            not keyboard
+            or validate_menu_deferral(
+                receipt, requested_ticks=requested, before=clock_before, after=after
+            ) is not None
+        ):
+            raise ValueError("Native menu deferral is not an attested unchanged boundary")
+        clock_unavailable = (
+            "clock_unavailable" in receipt or receipt.get("schema_version") == CLOCK_UNAVAILABLE_SCHEMA
+        )
+        if clock_unavailable and (
+            not keyboard or validate_clock_unavailable(
+                receipt, requested_ticks=requested, before=clock_before, after=after,
+            ) is not None
+        ):
+            raise ValueError("Native clock timeout is not an attested unchanged boundary")
         if (
             receipt.get("ok") is not True
+            and not menu_deferral
+            and not clock_unavailable
             and validate_clean_interruption_receipt(
                 receipt,
                 requested_ticks=requested,
-                state_after_apply=before,
+                state_after_apply=clock_before,
                 state_after_advance=after,
             )
             is not None
         ):
             raise ValueError("Native tick operation did not finish or interrupt cleanly")
+        if keyboard:
+            # Factual control feedback only; no private stock/crew metrics or
+            # prescribed recovery key is supplied to the campaign model.
+            execution = {
+                **execution,
+                "tick_feedback": {
+                    "requested_ticks": requested,
+                    "ticks_advanced": actual,
+                    "deferred": receipt.get("deferred") is True or clock_unavailable,
+                    "reason": receipt.get("error"),
+                },
+            }
         if allow_view:
             self._observe_map(after, next_view)
         tick_info = {
@@ -464,6 +680,7 @@ class CampaignLoop:
             "start_tick": before["year_tick"],
             "end_year": after["year"],
             "end_tick": after["year_tick"],
+            **({"native_after_apply": self.failure_context["native_after_apply"]} if keyboard else {}),
         }
         history = _action_history_entry(
             step=self.next_step,
@@ -497,6 +714,7 @@ class CampaignLoop:
                 for event in self.agent.pop_tool_events()
             ],
             "campaign_mode": True,
+            **({"discontinuities": deepcopy(self.discontinuities)} if self.discontinuities else {}),
         }
         _append(self.trace, row)
         self.observation_view = deepcopy(next_view)
@@ -516,7 +734,7 @@ class CampaignLoop:
         self,
         destination: Path,
         *,
-        snapshotter: NativeSaveSnapshotter,
+        snapshotter: NativeSnapshotter,
         code_revision: str,
         advance_parent: bool = True,
     ) -> dict:
@@ -538,6 +756,7 @@ class CampaignLoop:
                 "max_advance_ticks": self.max_advance_ticks,
                 "observation_profile": self.observation_profile,
                 "advance_policy": self.advance_policy,
+                **({"discontinuities": deepcopy(self.discontinuities)} if self.discontinuities else {}),
                 **(
                     {"observation_view": deepcopy(self.observation_view)}
                     if self.observation_profile == INSPECTION_PROFILE
@@ -565,6 +784,7 @@ class CampaignLoop:
         latest_usage_path: Path,
         observation_profile: str | None = None,
         advance_policy: str | None = None,
+        budget_extension: dict | None = None,
     ) -> CampaignLoop:
         """Resume after the caller loads the verified game into its isolated runtime.
 
@@ -644,6 +864,18 @@ class CampaignLoop:
                 progress["elapsed_ticks"] if origin.get("step") == 0 else None
             )
         instance.parent = checkpoint
+        from .keyboard_restart import validate_discontinuities
+
+        instance.discontinuities = validate_discontinuities(runner.get("discontinuities", []))
         instance.observation_view = saved_view
         instance.at_boundary = True
+        if budget_extension is not None:
+            from ..agent.campaign_keyboard import CodexKeyboardAgent
+
+            if not isinstance(agent, CodexKeyboardAgent) or set(budget_extension) != {
+                "max_dispatches",
+                "max_total_tokens",
+            }:
+                raise ValueError("Unsupported campaign budget extension")
+            agent.extend_budget(checkpoint_sha256=manifest["sha256"], **budget_extension)
         return instance

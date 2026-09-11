@@ -6,11 +6,19 @@
 
 Fort-Gym is the harness beneath [Fort-Eval](docs/FORT_EVAL_SPEC.md), Fort Labs' benchmark for planning, spatial memory, resource management, and adaptation in a procedurally generated civilization. Official model comparisons require the same versioned protocol, code, seed cohort, score, and budgets; older runs remain public evidence rather than a universal ranking.
 
+The current [Year-Two Autonomous Play program](docs/YEAR_TWO_PROGRAM.md) starts
+with Astra Medium on standard game controls, retains explicitly labelled DFHack
+shortcuts as a comparison condition, and targets a functioning fortress into
+year two plus repeated evaluation across at least three models. It is not the
+historical governed-only gate ladder and has not yet achieved its full objective.
+
 The [native campaign runtime](docs/CAMPAIGN_NATIVE_RUNTIME.md) adds configuration-driven
 model selection, copied native runtimes, persistent checkpoints, serial continuation,
 and inspectable progress. Its [agent foundation](docs/CAMPAIGN_AGENT_FOUNDATION.md)
 preserves memory and cumulative usage. This is an experimental checkout-based
 runtime, not a completed year-two result or a cross-model ranking.
+The [keyboard recovery contract](docs/CAMPAIGN_KEYBOARD_RECOVERY.md) distinguishes
+model input rejection from uncertain delivery and preserves interrupted evidence.
 
 ![fort-gym leaderboard dashboard](docs/assets/leaderboard-dashboard.png)
 

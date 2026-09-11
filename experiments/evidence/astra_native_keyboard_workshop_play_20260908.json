@@ -1,0 +1,87 @@
+{
+  "schema_version": "fortgym.native-keyboard-continuation-summary/v1",
+  "status": "completed",
+  "source_revision": "bc7a23aefef1fcf4f3f9212f1059d0edf17f239c",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "control_profile": "native_keyboard/v2",
+  "observation_profile": "native_screen_text/v1",
+  "captured_screen_size": [
+    120,
+    40
+  ],
+  "snapshot_profile": "native_menu_preserving_save/v3",
+  "parent_record": "astra_native_keyboard_workshop_recovery_20260908",
+  "parent_checkpoint_sha256": "e1883c88633a66a86de11ca42bc9e0e60a9ed4e6f4e6cde679cce2848611b4d5",
+  "parent_checkpoint_cursor": 311,
+  "steps_per_segment": 64,
+  "checkpoints": [
+    {
+      "cursor": 375,
+      "sha256": "aeec46203d3ab51f5ce19c7070e9bcf660f6588dd55751042cb6f560b9e4e75a",
+      "parent_sha256": "e1883c88633a66a86de11ca42bc9e0e60a9ed4e6f4e6cde679cce2848611b4d5",
+      "elapsed_native_ticks": 77000,
+      "checkpoint_verified": true
+    }
+  ],
+  "new_model_calls": 64,
+  "new_accepted_decisions": 64,
+  "cumulative_model_responses": 391,
+  "new_elapsed_ticks": 11400,
+  "retained_elapsed_ticks": 77000,
+  "new_tokens": 2141205,
+  "campaign_tokens": 12838159,
+  "all_attempt_tokens": 12907163,
+  "discarded_native_ticks": 2000,
+  "native_save_loss_restarts": 1,
+  "reported_charge_usd": null,
+  "cost_basis": "codex_subscription_charge_unreported/v1",
+  "independent_retained_evidence_audit_passed": true,
+  "original_checkpoint_unchanged": true,
+  "memory_and_usage_preserved_across_segments": true,
+  "inherited_discontinuity_unchanged": true,
+  "uninterrupted_campaign": false,
+  "new_restart_performed": false,
+  "reset_memory": false,
+  "reset_usage": false,
+  "strategy_intervention": false,
+  "historical_failed_run_reclassified_as_success": false,
+  "final_checkpoint_fresh_reload_verified": false,
+  "teardown_verified": true,
+  "scope": "Completed one 64-decision continuation of the same fortress after verified recovery 311, with no replay, new loss, strategy intervention, budget extension or usage reset. Seven decisions advanced game time; 57 requested zero ticks. No menu deferral or clock-unavailable fallback was exercised in this window, so completion alone does not prove those branches were reached. The final native save and lineage passed independent audit, but this final checkpoint has not yet had a separate fresh game reload. Outcome counts are authored aggregates from the private reviewed boundaries, not raw captures or production attribution. Native assets, coordinates, detailed observations, saves and model traces remain private. Historical failures remain recorded. No year-two sustainability, independent comparison, merge or deployment claim.",
+  "outcome_counts": {
+    "schema_version": "fortgym.keyboard-outcome-counts/v1",
+    "independent_private_review_passed": true,
+    "counts": {
+      "population": {
+        "start": 7,
+        "end": 7
+      },
+      "completed_farms": {
+        "start": 2,
+        "end": 4
+      },
+      "completed_beds": {
+        "start": 3,
+        "end": 3
+      },
+      "completed_workshops": {
+        "start": 3,
+        "end": 3
+      },
+      "recorded_dead_citizens": {
+        "start": 0,
+        "end": 0
+      },
+      "drink_units": {
+        "start": 132,
+        "end": 134
+      }
+    },
+    "advancing_decisions": 7,
+    "zero_tick_decisions": 57,
+    "food_stock": null,
+    "production_and_consumption": "not_measured",
+    "sustainability": "not_established"
+  }
+}

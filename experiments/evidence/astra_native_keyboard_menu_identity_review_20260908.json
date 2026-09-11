@@ -1,0 +1,36 @@
+{
+  "schema_version": "fortgym.native-keyboard-checkpoint-review/v1",
+  "source_revision": "dcc475a42872d35918eaefdc4d3f0a5f5b1203a2",
+  "snapshot_profile": "native_menu_preserving_save/v2",
+  "terminal_reason": "native_menu_identity_changed_during_save",
+  "parent_recovery": "astra_native_keyboard_settled_recovery_20260908",
+  "parent_checkpoint_sha256": "36142c131e444003dd8dc7616f330800946566ab614d2f7509b32bbda8f4bca3",
+  "checkpoint_verified": false,
+  "independent_retained_evidence_audit_passed": true,
+  "native_save_retained_in_runtime": true,
+  "world_save_differs_from_parent": true,
+  "new_native_state_requires_reload_verification": true,
+  "original_checkpoint_and_trace_prefix_unchanged": true,
+  "inherited_discontinuity_unchanged": true,
+  "recorded_world_observations_unchanged_during_save": true,
+  "rejected_operation_receipt_retained": false,
+  "specific_changed_ui_field": null,
+  "teardown_verified": true,
+  "progress": {
+    "trace_cursor": 232,
+    "latest_verified_checkpoint_cursor": 216,
+    "new_accepted_decisions": 16,
+    "cumulative_model_responses": 248,
+    "new_elapsed_ticks": 2000,
+    "trace_elapsed_ticks": 49200,
+    "last_verified_elapsed_ticks": 47200
+  },
+  "usage": {
+    "new_tokens": 443672,
+    "campaign_tokens": 8150227,
+    "all_attempt_tokens": 8219231,
+    "reported_charge_usd": null,
+    "cost_basis": "codex_subscription_charge_unreported/v1"
+  },
+  "scope": "A rejected native menu-identity check, not a recorded fortress collapse or verified loss of the newer native save. The changed save remains inside the retained stopped runtime and requires fresh reload verification. The failed operation did not preserve its raw receipt, so the specific changed UI field is unknown."
+}

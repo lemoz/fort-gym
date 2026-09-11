@@ -115,9 +115,9 @@ def test_native_terminal_colors_do_not_hide_valid_json(tmp_path, monkeypatch):
     monkeypatch.setattr(
         smoke,
         "rpc",
-        lambda *args: "\x1b[0m"
-        + json.dumps({"dfroot": str(runtime), "map_loaded": False})
-        + "\n\x1b[0m",
+        lambda *args: (
+            "\x1b[0m" + json.dumps({"dfroot": str(runtime), "map_loaded": False}) + "\n\x1b[0m"
+        ),
     )
     assert smoke.read_status(runtime, {})["map_loaded"] is False
 
@@ -213,8 +213,9 @@ def test_real_separate_session_cleanup_leaves_peer_alive(tmp_path):
 @pytest.mark.parametrize("tick", [19309, 19310])
 @pytest.mark.parametrize("listener_delay", [0, 2])
 @pytest.mark.parametrize("relative_output", [False, True])
+@pytest.mark.parametrize("screen_size", [None, (120, 40)])
 def test_load_checks_calendar_and_always_tears_down(
-    tmp_path, sources, monkeypatch, tick, listener_delay, relative_output
+    tmp_path, sources, monkeypatch, tick, listener_delay, relative_output, screen_size
 ):
     source, snapshot, digest = sources
     commands, kills = [], []
@@ -244,7 +245,7 @@ def test_load_checks_calendar_and_always_tears_down(
 
     def launch(command, **kwargs):
         expected = (tmp_path / "output/runtime").resolve()
-        assert command[2] == shlex.quote(str(expected / "dfhack"))
+        assert command == smoke.runtime_launcher(expected, screen_size)
         assert kwargs["cwd"] == expected
         assert kwargs["start_new_session"] is True
         return Process()
@@ -274,6 +275,7 @@ def test_load_checks_calendar_and_always_tears_down(
         output=Path("output") if relative_output else tmp_path / "output",
         port=5501,
         revision="test-source",
+        screen_size=screen_size,
     )
     if tick == 19309:
         result = smoke.run_smoke(**options)
@@ -285,8 +287,52 @@ def test_load_checks_calendar_and_always_tears_down(
     result = json.loads((tmp_path / "output/result.json").read_text())
     assert result["cleanup_verified"] is True
     assert result["native_load_verified"] is (tick == 19309)
+    if screen_size is not None:
+        assert result["requested_screen_size"] == {"width": 120, "height": 40}
     assert commands == [("load-save", "campaign-resume")]
     assert kills == [999999]
+
+
+def test_viewport_command_affects_only_owned_pty_and_quotes_runtime_path():
+    runtime = Path("/tmp/a path with spaces and 'quotes'")
+    original = shlex.quote(str(runtime / "dfhack"))
+    assert smoke.runtime_launcher(runtime) == ["script", "-qefc", original, "/dev/null"]
+    assert smoke.runtime_launcher(runtime, (120, 40)) == [
+        "script",
+        "-qefc",
+        "stty cols 120 rows 40 && exec " + original,
+        "/dev/null",
+    ]
+
+
+@pytest.mark.parametrize(
+    "size",
+    [
+        (True, 40),
+        (120, 40.0),
+        (79, 40),
+        (120, 24),
+        (301, 40),
+        (120, 151),
+        (120,),
+        [120, 40],
+        "120;bad",
+    ],
+)
+def test_invalid_viewport_never_creates_runtime(tmp_path, sources, size):
+    source, snapshot, digest = sources
+    output = tmp_path / "output"
+    with pytest.raises(CampaignSaveError, match="screen size"):
+        smoke.run_isolated(
+            source=source,
+            snapshot=snapshot,
+            digest=digest,
+            output=output,
+            port=5501,
+            revision="fixture",
+            screen_size=size,
+        )
+    assert not output.exists()
 
 
 def test_no_output_inside_retained_snapshot(sources):

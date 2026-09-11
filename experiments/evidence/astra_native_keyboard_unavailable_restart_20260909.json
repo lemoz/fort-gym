@@ -1,0 +1,129 @@
+{
+  "schema_version": "fortgym.native-keyboard-resumed-summary/v1",
+  "status": "completed",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "control_profile": "native_keyboard/v2",
+  "observation_profile": "native_screen_text/v1",
+  "snapshot_profile": "native_menu_preserving_save/v4",
+  "captured_screen_size": [
+    120,
+    40
+  ],
+  "source_revision": "fea2971a6852f330654bc68b06824785db75c95b",
+  "parent_record": "astra_native_keyboard_oom_failure_20260908",
+  "parent_checkpoint_cursor": 711,
+  "parent_checkpoint_sha256": "34d325596121a9a6e3631b1ed0297a4c4558e0ae2fff39853f91c138e8335c57",
+  "checkpoint_cursor": 775,
+  "checkpoint_sha256": "7b69e64913adce2a9bfe3ecf539a8e91ea93edb4ce5c38e19c91279bb3b4e1bd",
+  "new_model_calls": 64,
+  "new_accepted_decisions": 64,
+  "cumulative_model_responses": 906,
+  "new_elapsed_ticks": 6000,
+  "retained_elapsed_ticks": 198600,
+  "native_save_loss_restarts": 4,
+  "confirmed_discarded_native_ticks": 35091,
+  "discarded_native_ticks": null,
+  "discarded_native_ticks_complete": false,
+  "new_lost_uncommitted_ticks": null,
+  "new_tokens": 1920876,
+  "campaign_tokens": 28911047,
+  "all_attempt_tokens": 28980051,
+  "historical_failed_delivery_tokens": 69004,
+  "reported_charge_usd": null,
+  "cost_basis": "codex_subscription_charge_unreported/v1",
+  "independent_retained_evidence_audit_passed": true,
+  "teardown_verified": true,
+  "parent_checkpoint_fresh_native_reload_verified": true,
+  "original_checkpoint_unchanged": true,
+  "all_prior_usage_retained": true,
+  "checkpoint_memory_preserved": true,
+  "inherited_discontinuities_unchanged": true,
+  "new_restart_performed": true,
+  "uninterrupted_campaign": false,
+  "actions_replayed": false,
+  "strategy_intervention": false,
+  "reset_memory": false,
+  "reset_usage": false,
+  "historical_failed_run_reclassified_as_success": false,
+  "final_checkpoint_fresh_reload_verified": false,
+  "live_tracking": false,
+  "independent_audit_sha256": "3d2672ff0ef5248158c36a92f923e3f27a78f85c9947bf2800b8e18011a897f8",
+  "gameplay_review_sha256": "4693b5a1270065d404f5781736ccae08711c30b9060615da92c6b213edbefcfe",
+  "food_review_sha256": "8c1d56552173c2f7c9382c9be7f17b51f6d860dac48fea33fb5dcc9872137d5e",
+  "usage_review_sha256": "fcc37f3f06337851c45c8728a4eb10031b1583e34b7c0eb6ce8419346b84dace",
+  "clock_review_sha256": "30e5e0afef676c4c7775d316b621be9d4125f3116b8ce89c2b7911bc5250f63a",
+  "terminal_observation_warning_sha256": "6e1bb68e3324befaffa9f608af8edb1a2262ac3d96d72563a8c3234be57a7632",
+  "restart_record_sha256": "9f0a237cebae9614cd08adcfcfefcf606f3537ffa59b9ed82442e389f85d1af9",
+  "trace_sha256": "ff480141f765b4568f93a9de2237f067dfd39e8cce035fb9a4da79f3c9426016",
+  "operator_observation_warning": {
+    "operator_status": "completed_with_warning",
+    "native_window_status": "completed",
+    "kind": "terminal_container_observation_error",
+    "command_exit_code": 1,
+    "underlying_cause": "unverified",
+    "original_error_retained": true
+  },
+  "outcome_counts": {
+    "schema_version": "fortgym.keyboard-outcome-counts/v1",
+    "independent_private_review_passed": true,
+    "food_stock": null,
+    "production_and_consumption": "not_measured",
+    "sustainability": "not_established",
+    "advancing_decisions": 3,
+    "zero_tick_decisions": 61,
+    "counts": {
+      "population": {
+        "start": 12,
+        "end": 12
+      },
+      "completed_farms": {
+        "start": 7,
+        "end": 7
+      },
+      "completed_beds": {
+        "start": 6,
+        "end": 6
+      },
+      "completed_workshops": {
+        "start": 4,
+        "end": 4
+      },
+      "recorded_dead_citizens": {
+        "start": 0,
+        "end": 0
+      },
+      "drink_units": {
+        "start": 337,
+        "end": 411
+      }
+    }
+  },
+  "execution_counts": {
+    "schema_version": "fortgym.keyboard-execution-counts/v1",
+    "independent_private_review_passed": true,
+    "requested_elapsed_ticks": 6000,
+    "model_input_rejections": 0,
+    "rejected_native_key_events": 0,
+    "menu_deferrals": 0,
+    "clock_unavailable_timeouts": 0
+  },
+  "private_measurement_profile": "fortgym.campaign-food-measurement/v1",
+  "food_inventory": {
+    "schema_version": "fortgym.keyboard-food-inventory-outcome/v1",
+    "measurement_profile": "fortgym.campaign-food-measurement/v1",
+    "independent_private_review_passed": true,
+    "historical_food_unknowns_preserved": true,
+    "model_requests_remain_screen_only": true,
+    "scope": "native_edible_raw_predicate_excluding_drinks",
+    "accessibility": "not_assessed",
+    "production_and_consumption": "not_measured",
+    "sustainability": "not_established",
+    "initial_checkpoint_cursor": 711,
+    "observed_boundaries": 65,
+    "complete_measurements": 63,
+    "unknown_measurements": 2,
+    "initial_units": 56,
+    "final_units": null
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "schema_version": "fortgym.native-keyboard-continuation-summary/v1",
+  "status": "completed",
+  "source_revision": "bcac94d1b6e51c7f54e25f56661c5a42b0085b2a",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "control_profile": "native_keyboard/v2",
+  "observation_profile": "native_screen_text/v1",
+  "captured_screen_size": [120, 40],
+  "snapshot_profile": "native_menu_preserving_save/v3",
+  "parent_record": "astra_native_keyboard_runtime_recovery_20260908",
+  "parent_checkpoint_sha256": "d7c802ba88aa29a418d216d41cdd33df22b678403e5f68b9d508b6b4131059e7",
+  "parent_checkpoint_cursor": 232,
+  "steps_per_segment": 16,
+  "checkpoints": [
+    {
+      "cursor": 248,
+      "sha256": "3fbcddb4f5741b5c0be988c608e653edb51710b0deff9bef963e2f63794f62a6",
+      "parent_sha256": "d7c802ba88aa29a418d216d41cdd33df22b678403e5f68b9d508b6b4131059e7",
+      "elapsed_native_ticks": 51200,
+      "checkpoint_verified": true
+    },
+    {
+      "cursor": 264,
+      "sha256": "031784e596498ca2d4ef83843432a7d0d382cd27acc740c3d3878e4704f89ee9",
+      "parent_sha256": "3fbcddb4f5741b5c0be988c608e653edb51710b0deff9bef963e2f63794f62a6",
+      "elapsed_native_ticks": 57200,
+      "checkpoint_verified": true
+    },
+    {
+      "cursor": 280,
+      "sha256": "4204e026c247454efa201eb1e9eca13f04d06e715785712c7ac2666450373de7",
+      "parent_sha256": "031784e596498ca2d4ef83843432a7d0d382cd27acc740c3d3878e4704f89ee9",
+      "elapsed_native_ticks": 59600,
+      "checkpoint_verified": true
+    },
+    {
+      "cursor": 296,
+      "sha256": "f6f5ae7a888d79ec9dfc1e61e054bde58f0cfc9e8286908bfab02da3d75dbed0",
+      "parent_sha256": "4204e026c247454efa201eb1e9eca13f04d06e715785712c7ac2666450373de7",
+      "elapsed_native_ticks": 63600,
+      "checkpoint_verified": true
+    }
+  ],
+  "new_model_calls": 64,
+  "new_accepted_decisions": 64,
+  "cumulative_model_responses": 312,
+  "new_elapsed_ticks": 14400,
+  "retained_elapsed_ticks": 63600,
+  "new_tokens": 2065677,
+  "campaign_tokens": 10215904,
+  "all_attempt_tokens": 10284908,
+  "discarded_native_ticks": 2000,
+  "native_save_loss_restarts": 1,
+  "reported_charge_usd": null,
+  "cost_basis": "codex_subscription_charge_unreported/v1",
+  "independent_retained_evidence_audit_passed": true,
+  "original_checkpoint_unchanged": true,
+  "memory_and_usage_preserved_across_segments": true,
+  "inherited_discontinuity_unchanged": true,
+  "uninterrupted_campaign": false,
+  "new_restart_performed": false,
+  "reset_memory": false,
+  "reset_usage": false,
+  "strategy_intervention": false,
+  "historical_failed_run_reclassified_as_success": false,
+  "final_checkpoint_fresh_reload_verified": false,
+  "teardown_verified": true,
+  "scope": "Completed four-segment continuation of the same fortress. All four native saves and complete trace/usage prefixes passed independent retained-evidence audit. The first three saves were loaded by subsequent segments. The final save is verified in process but has not yet been independently cold-reloaded. No new loss, replay, strategy intervention, budget extension or usage reset. Historical failures and their usage remain recorded. This is not year-two success or an independent comparison trial. Game captures and detailed fortress metrics remain private."
+}

@@ -1,5 +1,14 @@
 # Native campaign runtime
 
+For the current standard-input research path, see
+[Year-Two Autonomous Play and Cross-Model Evaluation](YEAR_TWO_PROGRAM.md) and
+[`scripts.campaign_keyboard_native`](../scripts/campaign_keyboard_native.py).
+The examples below document the additional structured-action campaign runner and
+its hosted/local adapters. Its dated Qwen startup note is a historical snapshot,
+not the currently selected model or a live process status. The current Astra
+keyboard condition does not start a local model or require the hosted adapter's
+OpenRouter key.
+
 This runtime lets an agent continue the same Dwarf Fortress campaign across
 bounded process lifetimes. Select a model and a versioned condition, start from a
 digest-bound native save, and retain the game, agent memory, trace, and cumulative
@@ -14,7 +23,7 @@ and condition identities; they are not acceptance evidence for this revision.
 
 ## Requirements
 
-### Latest native verification, September 6
+### Historical native verification, September 6
 
 Source `fad9d80c0a2e7aace8380b47b009db5edaf6bd2e` passed the automatic v3
 checkpoint recovery fixture on isolated Colima 0.10.3 / Lima 2.2.0 tooling.

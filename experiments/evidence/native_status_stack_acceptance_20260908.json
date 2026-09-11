@@ -1,0 +1,82 @@
+{
+  "schema_version": "fortgym.native-status-stack-acceptance-summary/v1",
+  "status": "native_save_reload_verified",
+  "source_revision": "d795ed6e2889fc9cc61bb38b6d23b7a0feed27ff",
+  "parent_failure_record": "astra_native_keyboard_presave_failure_20260908",
+  "snapshot_profile": "native_menu_preserving_save/v4",
+  "independent_audit_passed": true,
+  "independent_audit_sha256": "a3cc767d13edc26a3a4b80b04d6f854e849c4dbcde469e879ac37accb7054af7",
+  "parent_checkpoint": {
+    "cursor": 631,
+    "sha256": "7ea1b53b0ce6081ab935cd68a720d81330d08b3c6dfbcfd2ec4b01ecc8c2b283",
+    "unchanged": true
+  },
+  "reproduction": {
+    "legacy_profile": "native_menu_preserving_save/v3",
+    "legacy_rejected_before_save": true,
+    "screen_type": "<type: viewscreen>",
+    "screen_focus": "dfhack/lua/status_overlay",
+    "stack_types": [
+      "viewscreen_petst",
+      "viewscreen",
+      "viewscreen_overallstatusst",
+      "viewscreen_dwarfmodest"
+    ],
+    "scope": "Reproduced window o's final menu path on checkpoint 631; the original failed run did not record its rejected stack entry."
+  },
+  "acceptance": {
+    "save_verified": true,
+    "fresh_reload_verified": true,
+    "world_observations_unchanged": true,
+    "full_stack_identity_unchanged": true,
+    "outer_screen_unchanged": true,
+    "year": 30,
+    "year_tick": 160201,
+    "native_save_calls": 1,
+    "menu_navigation_keys": [
+      "LEAVESCREEN_ALL",
+      "D_STATUS",
+      "CURSOR_RIGHT",
+      "SELECT"
+    ],
+    "gameplay_ticks": 0,
+    "model_calls": 0,
+    "private_food_measurement": false,
+    "teardown_verified": true
+  },
+  "campaign": {
+    "new_checkpoint_created": false,
+    "new_restart_performed": false,
+    "retained_elapsed_ticks": 143400,
+    "last_verified_checkpoint_cursor": 631,
+    "accounted_model_responses": 711,
+    "campaign_tokens": 22819077,
+    "all_attempt_tokens": 22888081,
+    "unsaved_window_o_ticks": 21200,
+    "year_two_reached": false,
+    "sustainability": "not_established"
+  },
+  "cost": {
+    "metered_inference_charge_usd": "0",
+    "other_cost_usd": null,
+    "note": "Provider-free diagnostic only. Existing campaign subscription charges remain unreported, not zero."
+  },
+  "provenance": {
+    "image_id": "sha256:60640407256edfb94815a93a1f836410c83251ae14817fcac42fba8d5431a20e",
+    "operator_sha256": "e13b4ca0d0b7f5165650ab75da15279d9edf73fc849d5b2ad00e66a58e22536b",
+    "context_sha256": {
+      "Dockerfile": "29a2d4065994334883598314412d41ebfb785afb9f6113600bd1fe7057480033",
+      "fixture.py": "37ae9a02fd8f86d863bfed973ed2fda657f3fe739d96a8c750fc826b36eaffe9",
+      "source.bundle": "5137c7d1f444d4c56a1a5a39f4150de339ced48c61f23f9b52a1955fd1e986b0"
+    },
+    "save_receipt_sha256": "c7e5b8167154e5f302263317424d53e14987f761dbc27efd7f76a8de5dd21938",
+    "v4_attempt_sha256": "bb1a03efedcdae0d909358507329bff57366ad18b39184842980043313d3a760"
+  },
+  "limitations": [
+    "One paused checkpoint and one reproduced menu path, not arbitrary-menu coverage.",
+    "Diagnostic save is not campaign continuation or recovery of the failed tail.",
+    "No model called, cross-model result, website update or deployment proved by this run.",
+    "First diagnostic startup was sandbox-blocked. The next diagnostic hit a fixture profile error. Both were retained; the corrected frozen-source acceptance passed.",
+    "Guest poweroff SSH returned 1. Independent Stopped readback, successful colima stop, container exit and both native process cleanup checks establish teardown."
+  ]
+}

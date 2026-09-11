@@ -1,0 +1,23 @@
+{
+  "schema_version": "fortgym.codex-keyboard-window/v1",
+  "condition_id": "astra-medium-native-keyboard-v2-presave-loss-aware-restart-631",
+  "original_condition": "campaign_astra_keyboard_20260907.json",
+  "continuation_from_next_step": 631,
+  "steps_per_segment": 16,
+  "max_segments": 1,
+  "reset_memory": false,
+  "reset_usage": false,
+  "strategy_intervention": false,
+  "snapshot_profile": "native_menu_preserving_save/v4",
+  "private_measurement_profile": "fortgym.campaign-food-measurement/v1",
+  "restart": {
+    "schema_version": "fortgym.native-save-loss-restart/v1",
+    "source_segment": 0,
+    "source_revision": "15af09ffeaf5022be0b2b4c91c858b718fbb522a",
+    "restored_next_step": 631,
+    "lost_trace_next_step": 695
+  },
+  "hypothesis": "The independently native-verified v4 save profile can retain new Astra native-keyboard actions after an explicit restart from checkpoint 631. Use one 16-decision segment to limit unsaved exposure while checking the corrected checkpoint path in actual play.",
+  "continuity_note": "Restore checkpoint 7ea1b53b0ce6081ab935cd68a720d81330d08b3c6dfbcfd2ec4b01ecc8c2b283 and its model memory after verifying a fresh native load. Preserve all 711 prior responses and 22,819,077 campaign tokens, including the failed 64-response tail. Record that tail's 21,200 lost ticks in addition to the inherited 2,000-tick loss. Keep the original source, traces, model responses and unsaved memory immutable. No action replay or replacement strategy; this is the same fortress, not an uninterrupted run or independent comparison attempt. The shorter segment changes the checkpoint/reload cadence and must remain explicit in comparison records.",
+  "budget_note": "Inherit the existing cumulative 1,024-dispatch / 40-million-token ceiling and full budget-extension history without a new extension or usage reset. Fresh subscription admission precedes every invocation. No API fallback, local model, purchase or reset; dollar charges remain unreported. Historical failed-delivery tokens remain separately counted."
+}

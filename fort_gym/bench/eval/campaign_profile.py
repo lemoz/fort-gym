@@ -14,6 +14,7 @@ from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from .campaign import campaign_progress
+from ..run.campaign_food import validate_measurement
 
 METRICS = (
     "population",
@@ -27,7 +28,7 @@ METRICS = (
     "completed_farms",
     "recorded_dead_citizens",
 )
-ACTION_TYPES = {"DIG", "BUILD", "ORDER", "UNSUSPEND", "FARM", "LABOR", "WAIT", "INTERACT"}
+ACTION_TYPES = {"DIG", "BUILD", "ORDER", "UNSUSPEND", "FARM", "LABOR", "WAIT", "INTERACT", "KEYSTROKE"}
 
 
 def count(value: Any) -> int | None:
@@ -51,6 +52,35 @@ def metrics_from_state(value: Any) -> dict[str, int | None]:
         metrics["population"] = count(state.get("population"))
         for key in ("food", "drink", "wood", "stone"):
             metrics[f"{key}_stock"] = count(stocks.get(key))
+    elif (
+        quality.get("schema_version") == "fortgym.campaign-observation-quality/v2"
+        and quality.get("native_population_and_stock_value_types_validated") is True
+    ):
+        if quality.get("population_source") == "active living native citizens":
+            metrics["population"] = count(state.get("population"))
+        observations = mapping(state.get("stock_observations"))
+        drink = mapping(observations.get("drink"))
+        units = count(drink.get("units"))
+        if (
+            observations.get("schema_version") == "fortgym.stock-observations/v1"
+            and drink.get("source") == "world.items.other.IN_PLAY DRINK stack_size"
+            and drink.get("complete") is True
+            and units is not None
+            and units == count(stocks.get("drink"))
+        ):
+            metrics["drink_stock"] = units
+        # The v2 flag validates value types only. Missing stock provenance and
+        # freshness-unverified UI food estimates are not native stock evidence.
+        if type(state.get("year")) is int and type(state.get("year_tick")) is int:
+            try:
+                food = validate_measurement(
+                    state.get("private_food_measurement"),
+                    year=state["year"], year_tick=state["year_tick"],
+                )
+            except (ValueError, TypeError):
+                pass
+            else:
+                metrics["food_stock"] = count(food["inventory"]["units"])
     fort, crew = mapping(state.get("fort")), mapping(state.get("crew"))
     if (
         fort.get("ok") is True
@@ -233,7 +263,8 @@ def campaign_profile(
         "autonomous_gameplay": "not_assessed",
         "fortress_collapse": "not_assessed",
         "limits": [
-            "Food and drink are native UI stock counters, not production or consumption measurements.",
+            "Resource counts require recognized native provenance; unverified UI estimates stay unknown.",
+            "Stock changes are not production or consumption measurements.",
             "Room and building counts are unknown when the source reports an incomplete or truncated scan.",
             "Recorded dead citizens includes the starting world's history; population changes do not identify death causes.",
             "Accepted commands and changed commands are observations, not completed-work or successful-adaptation verdicts.",
