@@ -95,8 +95,10 @@ is wired through condition/exchange identity, agent decisions, native dispatch
 and normal checkpoint continuation, including counted invalid-input responses.
 Historical control profiles and matched model conditions are unchanged.
 
-Exact-head GitHub CI was still running at that receipt. Integrated native
-navigation/text-entry acceptance is next; the prepared independent Astra
+Exact-head GitHub CI was still running at that receipt; it subsequently
+[passed run 34574921989](https://github.com/lemoz/fort-gym/actions/runs/34574921989)
+on the same `8b9fffa1d` implementation. Integrated native navigation/text-entry
+acceptance is next; the prepared independent Astra
 Medium 32-response trial has not launched. No new VM, model call, scored
 checkpoint, main merge or public deploy occurred during this integration.
 The broader Year-Two delivery objective remains open.

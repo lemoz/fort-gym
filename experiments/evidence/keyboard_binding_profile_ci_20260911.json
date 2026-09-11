@@ -1,0 +1,18 @@
+{
+  "schema_version": "fortgym.public-keyboard-binding-profile-ci/v1",
+  "source_revision": "8b9fffa1de4f93506cbcbdf82fd154aeb17b5697",
+  "ci_run_id": 34574921989,
+  "ci_job_id": 103185086475,
+  "status": "completed",
+  "conclusion": "success",
+  "url": "https://github.com/lemoz/fort-gym/actions/runs/34574921989",
+  "preparation_receipt": "experiments/evidence/keyboard_binding_profile_preparation_20260911.json",
+  "preparation_receipt_sha256": "d226ae59ee890141f9ed12d6e00ae094e05cf6f28b74d3085c0f779f0e6cde5e",
+  "native_integrated_profile_acceptance_verified": false,
+  "model_trial_started": false,
+  "main_merged": false,
+  "public_deployment": false,
+  "model_calls": 0,
+  "local_vms_started": 0,
+  "hardware_energy_and_app_cost_usd": null
+}

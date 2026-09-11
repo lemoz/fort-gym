@@ -58,3 +58,21 @@ def test_prepared_condition_is_not_a_launched_or_shipped_gameplay_result():
         value["prepared_model"] == "gpt-6-astra" and value["prepared_reasoning_effort"] == "medium"
     )
     assert value["prepared_first_segment_responses"] == 32
+
+
+def test_later_ci_completion_preserves_earlier_snapshot_and_acceptance_limits():
+    value = json.loads(
+        (ROOT / "experiments/evidence/keyboard_binding_profile_ci_20260911.json").read_bytes()
+    )
+    prepared = json.loads(RECORD.read_bytes())
+    assert value["preparation_receipt_sha256"] == hashlib.sha256(RECORD.read_bytes()).hexdigest()
+    assert value["source_revision"] == prepared["implementation_revision"]
+    assert value["ci_run_id"] == prepared["ci"]["run_id"] == 34574921989
+    assert value["status"] == "completed" and value["conclusion"] == "success"
+    for field in (
+        "native_integrated_profile_acceptance_verified",
+        "model_trial_started",
+        "main_merged",
+        "public_deployment",
+    ):
+        assert value[field] is False
