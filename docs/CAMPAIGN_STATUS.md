@@ -14,6 +14,13 @@ cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 
 ## Current state: displayed-key Astra continuation reached decision 64
 
+The next unchanged [decision-64-to-96 window](../experiments/keyboard_binding_continuation_20260911/window-64-96.json)
+is predeclared: one 32-response segment from the original decision-64 save.
+It preserves model, prompt, memory, usage and controls, and uses the existing
+dedicated local runtime with mandatory shutdown. Preparation passed 22 checks;
+that is not additional gameplay evidence. The verified totals below remain
+authoritative until the new window is executed and audited.
+
 The [own-save continuation from 32 to 64](../experiments/evidence/keyboard_binding_astra_r1_continuation_32_64_20260911.json)
 completed with **32 new responses, 182 confirmed key presses and 14,000 new
 saved ticks**. Cumulative totals are **64 responses, 29,500 ticks and 1,583,026
