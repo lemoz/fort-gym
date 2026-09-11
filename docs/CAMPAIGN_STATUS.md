@@ -21,6 +21,17 @@ save/load boundary every 32 decisions, and mandatory local VM teardown. No new
 GCE resource, paid fallback, local model, automatic reset or human gameplay
 intervention was introduced.
 
+The second segment has now saved cursor 320, retaining 321,845 elapsed ticks
+(79.8 percent of its first year), with 12 living citizens and zero recorded
+deaths. The saved window contains 64 new responses and 92,000 new ticks.
+Cumulative usage is 352 actual responses and 9,327,557 returned tokens, including
+the earlier loss. Save-file hashes independently verify at
+`dd81b0ac66fb7c47e9e1a8e6bd56dd2dfa8f1b463feb125efa9e70847cd3229a`.
+Food is 47 raw-edible units and drink stock is 259, up from 238 at cursor 288.
+That increase is not a measured production rate. Seven beds, three workshops
+and one farm remain. The same owner entered its third segment. Full terminal
+audit and teardown remain pending. See the [latest midpoint](../experiments/evidence/keyboard_binding_astra_r1_midpoint_320_20260911.json).
+
 The first 32-response segment saved cursor 288 and another 50,000 native ticks,
 bringing this matched campaign to 279,845 elapsed ticks (about 69 percent of its
 first year). Its save-file hashes independently verify at
