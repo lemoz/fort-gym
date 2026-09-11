@@ -4,7 +4,15 @@ Verified September 11, 2026 UTC. The Year-Two Autonomous Play objective remains
 unfinished; work continues toward the same objective. The owner has approved starting the project
 work for [Astra standard-input experiments](ASTRA_STANDARD_INPUT_EXPERIMENTS.md).
 
-## Current run: Astra attempt 2 resumed; five decision-128 saves audited
+## Current state: all six decision-128 saves audited; VM stopped
+
+The decision-128 round is complete: two attempts each for Astra, Sol and Terra,
+all under unchanged declared conditions. Across the six distinct campaigns,
+768 responses and 22,707,069 returned tokens are recorded without overlapping
+window totals. All six retain seven living dwarves and no recorded deaths.
+Both Astra attempts completed beds, farms and workshops; neither Sol nor Terra
+attempt did at this boundary. This same-seed pilot does not establish a general
+model ranking, sustainable production or a year-two fortress.
 
 Astra attempt 1 completed its declared 64-to-128 window from its own save and
 memory. Its [audited result](../experiments/evidence/keyboard_matched_astra_r1_continuation_64_128_20260911.json)
@@ -33,10 +41,10 @@ All 64 clock outcomes reported no error. Its own memory/usage, native save,
 initial reload and VM teardown passed audit; both shutdown commands returned
 zero. A separate fresh reload of the new final checkpoint remains unverified.
 
-These first Astra and Sol attempts share a 128-response boundary but not
-equal elapsed game time or token use. Five attempts have now reached that
-boundary; Astra attempt 2 is still running. This is not a complete matched-cohort comparison or a
-general model ranking. Neither result establishes sustainability or year two.
+All six attempts now share a 128-response boundary but not equal elapsed game
+time or token use. This completes the declared decision-128 round, not the full
+endurance comparison or a general model ranking. Sustainability and year two
+remain unproven.
 
 Terra attempt 1 completed its own declared 64-to-128 window. Its
 [audited result](../experiments/evidence/keyboard_matched_terra_r1_continuation_64_128_20260911.json)
@@ -74,10 +82,16 @@ reported no error. Own-save memory/usage, all model receipts, initial native
 reload, final save and VM teardown passed audit; both shutdown commands
 returned zero. A separate fresh reload of its final save remains unverified.
 
-After that audited teardown, Astra attempt 2 started its own declared 64-to-128
-continuation from its own decision-64 save. VM/container start and read-only
-configuration checks passed. The existing observer is attached to the verified
-controller; live activity remains provisional until independent terminal audit.
+Astra attempt 2 completed its own declared 64-to-128 continuation. Its
+[audited result](../experiments/evidence/keyboard_matched_astra_r2_continuation_64_128_20260911.json)
+retains 64 new responses and 20,400 new ticks: 128 responses, 39,900 ticks and
+4,389,202 returned tokens cumulatively. Seven dwarves remain alive with no
+recorded deaths, six completed beds, two farms and three workshops. Food is 40
+and drinks128; functional-room measurement is unavailable, not zero. All model
+receipts, own-save memory/usage, initial native reload, final save and VM
+teardown passed audit; both shutdown commands returned zero. Three blocking
+native-menu outcomes are retained. The observer is terminal, no next-stage
+VM is running, and the final save's separate fresh reload remains unverified.
 
 ## Current delivery: recorded endurance and live continuation
 
@@ -102,7 +116,7 @@ and actual provider-review totals across saved segments. The full local suite
 passed 4,923 tests with 10 skips; 76 focused checkpoint/receipt/config tests
 passed. All five completed windows reproduced their original provider reviews,
 token totals and final memory in a read-only check. Exact-head GitHub CI
-`34559721416` is running, not yet claimed passed.
+`34559721416` passed.
 
 A separate private next-stage controller/auditor draft passed 42 offline tests,
 including failure teardown, unchanged resources and cumulative usage. Combined
