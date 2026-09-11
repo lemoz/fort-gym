@@ -100,7 +100,7 @@ def test_public_endpoint_no_connection_no_cache_and_no_private_errors(
 def test_recordings_match_the_reviewed_export_and_contain_no_private_fields():
     root = ROOT / "web/static/recordings"
     catalog = json.loads((root / "catalog.json").read_text())
-    assert len(catalog["recordings"]) == 4
+    assert len(catalog["recordings"]) == 5
     total = 0
     for row in catalog["recordings"]:
         path = root / (row["id"] + ".json")
@@ -118,7 +118,7 @@ def test_recordings_match_the_reviewed_export_and_contain_no_private_fields():
             }
             assert set(frame["action"]) == {"intent", "keys", "advance_ticks"}
         total += len(recording["frames"])
-    assert total == 320
+    assert total == 480
     astra = json.loads((root / "astra-97-256.json").read_text())
     assert astra["saved_through_decision"] == 224 and astra["last_decision"] == 256
 
@@ -129,6 +129,7 @@ def test_recovery_is_separate_and_prior_recordings_are_immutable():
         "astra-97-256": "5627f83eec939aa7b86603e9aa5d18d2eb7a839560ae3a5ff3354ab8d52a4ee0",
         "sol-65-128": "3eb8184e5b9a5f7bffee4ce6c972556c3baf030f74c4c59baf251c9a3100e696",
         "terra-65-128": "37dc8ce0f22df8c9a6b4630743dc443b6fdbac4505ce50ebdad30f38d5df0bfc",
+        "astra-recovery-225-256": "7aba3fdddea9f44e9a85a42738c93bd275d168692f6d4edbbc579cc70ee4e3f0",
     }
     for name, digest in expected.items():
         assert hashlib.sha256((root / (name + ".json")).read_bytes()).hexdigest() == digest
@@ -145,8 +146,8 @@ def test_recovery_is_separate_and_prior_recordings_are_immutable():
     assert recovery["uninterrupted_campaign"] is False
     assert recovery["actions_replayed"] is False
     catalog = json.loads((root / "catalog.json").read_text())["recordings"]
-    assert catalog[0]["id"] == data["id"]
-    assert catalog[0]["recovery"] == recovery
+    row = next(item for item in catalog if item["id"] == data["id"])
+    assert row["recovery"] == recovery
 
 
 def test_homepage_and_assets_work_on_production_baseline():
@@ -199,7 +200,7 @@ def test_worlds_recordings_and_previews_match_the_published_catalog():
     assert page.recordings == [row["id"] for row in catalog]
     assert page.recordings == [row["id"] for row in previews["recordings"]]
     assert html.index('id="recent-recordings"') < html.index('id="filters-form"')
-    assert "320 captured decisions" in html
+    assert "480 captured decisions" in html
     assert "observed, unsaved tail" in html
     for item, preview in zip(catalog, previews["recordings"], strict=True):
         recording = client.get("/static/recordings/" + item["id"] + ".json").json()

@@ -125,9 +125,14 @@
         <div class="fl-eyebrow">Recorded worlds</div>
         <h1 class="fl-title" id="worlds-title">Every world leaves a trace.</h1>
         <p class="fl-copy">Browse the fortresses agents built, the strategies they followed, and the moments that changed each run.</p>
-        <div class="worlds-summary" id="worlds-summary">4 recordings · 320 captured decisions · Astra, Sol and Terra</div>
+        <div class="worlds-summary" id="worlds-summary">5 recordings · 480 captured decisions · Astra, Sol and Terra</div>
       </div>
       <div class="world-grid" id="recent-recordings" aria-label="Recent recordings">
+        <article class="recording-card" data-recording-preview="astra-year-two-257-416">
+          <a class="recording-media" href="/?recording=astra-year-two-257-416#watch-root" aria-label="Replay Astra into Year Two"><canvas role="img" aria-label="Astra Year-Two captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Loading captured screen…</div>
+          <div class="recording-copy"><h2>Astra · into Year Two</h2><div class="recording-window">Decisions 257–416 · 160 frames</div><p>1.066 elapsed game years. Saved with 13 dwarves, 12 beds, 43 raw-food units and 389 drinks. Checkpoint 416 passed a fresh reload. Earlier save loss remains in the campaign history; this is a continuation, not another independent trial.</p><a class="fl-link" href="/?recording=astra-year-two-257-416#watch-root">Open replay →</a></div>
+        </article>
         <article class="recording-card" data-recording-preview="astra-recovery-225-256">
           <a class="recording-media" href="/?recording=astra-recovery-225-256#watch-root" aria-label="Replay Astra recovery"><canvas role="img" aria-label="Astra recovery captured screen preview"></canvas></a>
           <div class="recording-source" data-preview-status>Loading captured screen…</div>
@@ -316,7 +321,7 @@
       const filtered = ['q','status','model','evaluation_protocol','seed_save'].some(key => filters[key]);
       $('world-grid').innerHTML = '<div class="fl-empty">' + (filtered
         ? 'No recorded worlds match these filters. Try a broader model, protocol, seed, or status.'
-        : 'No earlier runs are listed in this registry. The three recent recordings above are ready to replay.') + '</div>';
+        : 'No earlier runs are listed in this registry. The recent recordings above are ready to replay.') + '</div>';
     } else {
       $('world-grid').innerHTML = items.map(cardHtml).join('');
       observeFrames(items);

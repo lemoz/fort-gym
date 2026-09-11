@@ -1,7 +1,29 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {glyph, decodeScreen, frameIndex, liveState, validateRecording, initialRecording, recoverySummary, readLiveStatus} from '../web/static/home-watch-model.mjs';
+import {glyph, decodeScreen, frameIndex, liveState, validateRecording, initialRecording, recoverySummary, readLiveStatus, campaignSummary, campaignHistory} from '../web/static/home-watch-model.mjs';
+
+const yearTwo = () => JSON.parse(fs.readFileSync('web/static/recordings/astra-year-two-257-416.json'));
+
+test('Year-Two outcome preserves the exact save, usage and qualified claims', () => {
+  const data = yearTwo();
+  assert.equal(validateRecording(data).frames.length,160);
+  assert.match(campaignSummary(data),/1.066 elapsed game years/);
+  assert.match(campaignSummary(data),/13 dwarves.*43 raw-food units and 389 drinks/);
+  assert.match(campaignHistory(data),/All 448 responses and 11,866,456 tokens remain counted/);
+  assert.match(campaignHistory(data),/dollar charges were not reported/);
+  for(const [key,value] of [['continued_from_decision',224],['saved_elapsed_ticks',0],
+    ['ticks_into_year_two',true],['elapsed_years',2],['total_responses',416],['total_tokens',true],
+    ['source_recording_id','../private'],['checkpoint_sha256','invalid'],['fresh_reload_verified',false],
+    ['uninterrupted_campaign',true],['human_gameplay_rescue',true],['reported_model_charge_usd',0],
+    ['sustainability_proven',true],['repeated_matched_comparison',true],
+    ['result_url','javascript:alert(1)'],['reload_url','https://github.com.evil.test/secret']]) {
+    const changed=yearTwo(); changed.campaign[key]=value;
+    assert.throws(()=>validateRecording(changed),/Invalid campaign outcome/);
+  }
+  for(const changed of [null,{...data.campaign,saved_metrics:{...data.campaign.saved_metrics,population:99}}])
+    assert.throws(()=>validateRecording({...data,campaign:changed}),/Invalid campaign outcome/);
+});
 
 const screen = {width:2,height:2,tile_order:'column_major',runs:[[2,219,7,0],[1,1,15,0],[1,32,0,1]]};
 const frame = decision => ({decision,screen,action:{intent:'Intent ' + decision,keys:['q'],advance_ticks:0},
@@ -200,5 +222,40 @@ test('a recording deep link opens the chosen model without a live feed taking ov
     assert.equal(elements.get('watch-live').hidden,false);
     assert.ok(requests.includes('/static/recordings/terra-65-128.json'));
     assert.ok(!requests.includes('/static/recordings/astra-97-256.json'));
+  } finally { Object.assign(globalThis,originals); }
+});
+
+test('latest Year-Two replay displays its endpoint and hides it for live or other recordings', async () => {
+  const originals = Object.fromEntries(['document','fetch','location','setInterval','clearInterval'].map(key=>[key,globalThis[key]]));
+  const elements = new Map();
+  for(const match of fs.readFileSync('web/landing.html','utf8').matchAll(/id="(watch-[^"]+)"/g))
+    elements.set(match[1],new Element(match[1]));
+  const get = id => elements.get('watch-'+id);
+  const settle=async()=>{for(let n=0;n<10;n++)await new Promise(resolve=>setImmediate(resolve));};
+  try {
+    globalThis.location={search:''};
+    globalThis.document={hidden:false,getElementById:id=>elements.get(id),createElement:tag=>new Element(tag),addEventListener(){}};
+    globalThis.setInterval=()=>1; globalThis.clearInterval=()=>{};
+    globalThis.fetch=async url=>({ok:true,json:async()=>url.includes('watch-active')
+      ? {schema_version:'fortgym.watch-live/v1',status:'not_connected'}
+      : JSON.parse(fs.readFileSync('web'+url))});
+    await import('../web/static/home-watch.mjs?test=year-two'); await settle();
+    assert.equal(get('decision').textContent,'Decision 257 / 416');
+    assert.equal(get('outcome').hidden,false);
+    assert.match(get('outcome-summary').textContent,/Saved checkpoint 416 was verified/);
+    assert.match(get('recovery').textContent,/Earlier save loss: 32 decisions/);
+    assert.equal(get('result').href,yearTwo().campaign.result_url);
+    assert.equal(get('reload').href,yearTwo().campaign.reload_url);
+    get('range').value='159'; await get('range').emit('input');
+    assert.equal(get('decision').textContent,'Decision 416 / 416');
+    assert.equal(get('population').textContent,'13');
+    assert.match(get('boundary').textContent,/saved checkpoint 416/);
+    await get('prev').emit('click');
+    assert.equal(get('decision').textContent,'Decision 415 / 416');
+    await get('runs').children.find(node=>node.dataset.recording==='astra-recovery-225-256').emit('click');
+    await settle();
+    assert.equal(get('outcome').hidden,true);
+    assert.equal(get('prior').href,'/?recording=astra-97-256#watch-root');
+    assert.match(get('recovery').textContent,/All 288 model responses/);
   } finally { Object.assign(globalThis,originals); }
 });
