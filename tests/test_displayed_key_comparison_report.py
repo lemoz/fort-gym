@@ -424,4 +424,21 @@ def test_actual_saved_terra_outcome_preserves_unknowns_and_native_progress():
     assert checkpoint["metrics"]["completed_workshops"] == 0
     assert checkpoint["metrics"]["food_stock"] == 51
     assert checkpoint["metrics"]["wood_stock"] is None
+
+
+def test_terra_second_attempt_keeps_zero_progress_as_a_saved_outcome():
+    data = read_comparison(
+        ROOT, "experiments/evidence/keyboard_binding_comparison_20260911_index.json", boundary=64
+    )
+    result = next(
+        row["result"]
+        for row in data["trials"]
+        if row["campaign_id"] == "bindings-comparison-20260911-terra-r2"
+    )
+    assert result["status"] == "saved" and result["responses"] == 64
+    assert result["returned_tokens"] == 1186821
+    assert result["checkpoint"]["saved_elapsed_ticks"] == 0
+    assert result["checkpoint"]["metrics"]["completed_workshops"] == 0
+    assert result["reported_charge_usd"] is None
+    assert data["strong_ranking_supported"] is False
     assert data["strong_ranking_supported"] is False
