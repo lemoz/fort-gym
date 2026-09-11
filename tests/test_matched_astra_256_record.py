@@ -122,3 +122,57 @@ def test_development_and_failures_do_not_become_sustainability_or_ranking():
     )
     assert value["new_window_activity"]["observed_boundaries"] == 128
     assert value["resources"]["oom_kills"] == 0
+
+
+def test_website_receipt_binds_pushed_source_and_preserves_the_older_page_assets():
+    filename = "keyboard_matched_astra_256_website_20260911.json"
+    raw = (EVIDENCE / filename).read_bytes()
+    assert hashlib.sha256(raw).hexdigest() == (
+        "49ec045b626f164f927ca517bc3a1fe60609d28bd415e5ffbac018d3e6eacdc8"
+    )
+    for private in (b"/Users/", b'"memory":', b'"screen":', b'"account_id":', b'"owner_pid":'):
+        assert private not in raw
+    value = json.loads(raw)
+    previous = read("keyboard_matched_live_v2_website_20260911.json")
+    assert value["passed"] is True
+    assert value["website_revision"] == value["ci"]["head_sha"] == (
+        "ff350f024957af964bca3d50e1166cbffd139d8e"
+    )
+    assert value["ci"]["status"] == "completed" and value["ci"]["conclusion"] == "success"
+    assert value["pull_request"] == "https://github.com/lemoz/fort-gym/pull/158"
+    assert value["local_tests"] == {"passed": 4963, "skipped": 10}
+    assert value["routes"] == previous["routes"]
+    assert value["prior_preview_revision"] == previous["website_revision"]
+    assert value["historical_surfaces_and_six_128_windows_unchanged"] is True
+    assert value["existing_html_and_javascript_unchanged"] is True
+    assert value["recorded_endurance_windows"] == 7
+    assert value["recorded_endurance_boundaries"] == 512
+    assert value["latest_saved_responses"] == 896
+    assert value["latest_saved_tokens"] == 28581994
+    for key in ("main_merge", "public_deployment", "browser_visual_qa", "year_two_goal_complete"):
+        assert value[key] is False
+    assert value["model_calls_by_verifier"] == value["game_ticks_by_verifier"] == 0
+
+
+def test_website_links_saved_result_without_promoting_the_stale_observer():
+    delivery = read("keyboard_matched_astra_256_website_20260911.json")
+    observed = delivery["live_observation"]
+    saved = read(RESULT)
+    assert delivery["new_result_sha256"] == hashlib.sha256((EVIDENCE / RESULT).read_bytes()).hexdigest()
+    assert observed["status"] == "stale"
+    assert observed["campaign_id"] == saved["campaign_id"]
+    assert observed["prior_checkpoint_sha256"] == saved["prior_checkpoint_sha256"]
+    assert observed["start_decision"] == 128
+    assert observed["saved_elapsed_ticks_before_window"] == 51400
+    assert observed["returned_tokens_before_window"] == 4544237
+    assert observed["responses"] == saved["new_responses"] == 128
+    assert observed["campaign_returned_tokens"] == saved["usage"]["campaign_returned_tokens"]
+    assert observed["campaign_elapsed_ticks_lower_bound"] == 133400
+    assert saved["saved_elapsed_ticks"] == observed["campaign_elapsed_ticks_lower_bound"] + 2000
+    assert observed["new_save_verified"] is False
+    assert observed["source_checkpoint_verified"] is True
+    assert observed["reported_charge_usd"] is None
+    assert observed["audited_result_url"] == (
+        "https://github.com/lemoz/fort-gym/blob/4bb97d6c4fe3b5a1f8acc7d416c46817bcff5100/"
+        "experiments/evidence/" + RESULT
+    )

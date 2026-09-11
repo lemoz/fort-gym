@@ -30,10 +30,28 @@ reload. Three blocking-menu outcomes and two zero-tick timeouts remain recorded;
 there was no new native save loss or human gameplay intervention. This matched
 campaign is at about one-third of a year, not its first anniversary.
 
-The owner and observer exited zero. No experiment VM is running. The local
-website's recorded comparison still shows the six decision-128 results; the
-new decision-256 record needs registration and HTTP acceptance there. Its
-completed live observation is not a replacement for that delivery step.
+The owner and observer exited zero. The subsequent
+[website acceptance](../experiments/evidence/keyboard_matched_astra_256_website_20260911.json)
+now verifies the local campaign page serving Astra attempt 1 at decision 256,
+with the other five attempts at 128. All six earlier 128-result windows remain
+unchanged and inspectable; unequal response totals are not equal-budget model
+comparisons. The page shows seven audited endurance windows, 896 latest-saved
+responses and 28,581,994 latest-saved returned tokens without double-counting.
+
+Website source `ff350f024957af964bca3d50e1166cbffd139d8e` is pushed in
+[draft PR #158](https://github.com/lemoz/fort-gym/pull/158).
+The full offline suite passed 4,963 tests with 10 skipped, and exact-head
+GitHub CI passed. Before/after HTTP checks confirmed unchanged historical data,
+HTML and JavaScript. The stale observer links to the audited result while
+retaining its 133,400-tick lower bound and original decision-128 starting save.
+The recorded result, not that stale feed, proves 135,400 saved ticks.
+No browser visual QA, main merge or public deployment is claimed. This website
+update made no model calls and started no experiment VM.
+
+Next is the already-declared character-input diagnostic on a disposable native
+copy, separate from scored campaigns. It must establish actual menu behavior
+before any claim that the prepared prompt profile helps. The unchanged cohort,
+separate paired trials and broader Year-Two delivery objective remain open.
 
 ### Preserved decision-128 comparison and earlier launch observations
 
